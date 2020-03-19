@@ -123,6 +123,38 @@ func startContainer(t TaskSpec) container.Spec {
 			},
 		})
 	}
+
+	if exp.ExperimentConfig.DataLayer.SharedFSConfig != nil {
+		SharedFSConfig := exp.ExperimentConfig.DataLayer.SharedFSConfig
+		if SharedFSConfig.HostStoragePath != nil {
+			mounts = append(mounts, mount.Mount{
+				Type:   mount.TypeBind,
+				Source: *SharedFSConfig.HostStoragePath,
+				Target: *SharedFSConfig.ContainerStoragePath,
+			})
+		}
+	}
+	if exp.ExperimentConfig.DataLayer.S3Config != nil {
+		S3Config := exp.ExperimentConfig.DataLayer.S3Config
+		if S3Config.LocalCacheHostPath != nil {
+			mounts = append(mounts, mount.Mount{
+				Type:   mount.TypeBind,
+				Source: *S3Config.LocalCacheHostPath,
+				Target: *S3Config.LocalCacheContainerPath,
+			})
+		}
+	}
+	if exp.ExperimentConfig.DataLayer.GCSConfig != nil {
+		GCSConfig := exp.ExperimentConfig.DataLayer.GCSConfig
+		if GCSConfig.LocalCacheHostPath != nil {
+			mounts = append(mounts, mount.Mount{
+				Type:   mount.TypeBind,
+				Source: *GCSConfig.LocalCacheHostPath,
+				Target: *GCSConfig.LocalCacheContainerPath,
+			})
+		}
+	}
+
 	networkMode := t.TaskContainerDefaults.NetworkMode
 	if exp.ExperimentConfig.Resources.SlotsPerTrial > 1 {
 		networkMode = hostMode
