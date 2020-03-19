@@ -42,3 +42,6 @@ class ExperimentConfig(dict):
 
     def experiment_seed(self) -> int:
         return int(self.get("reproducibility", {}).get("experiment_seed", 0))
+
+    def get_data_layer_type(self) -> str:
+        return cast(str, self["data_layer"]["type"])

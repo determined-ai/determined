@@ -32,6 +32,8 @@ setup(
         "simplejson==3.16.0",
         "GPUtil==1.4.0",
         f"determined-common=={version}",
+        "yogadl @ git+http://github.com/determined-ai/yogadl.git@"
+        "8657ef4571e0459e49cf9924f0b91db957bbcaa8#egg=yogadl",
     ],
     extras_require={
         "tf-114-cuda100": ["tensorflow-gpu==1.14.0"],

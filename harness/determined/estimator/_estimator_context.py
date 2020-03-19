@@ -34,9 +34,19 @@ class EstimatorContext:
     workflow that uses the ``tf.estimator`` API.
     """
 
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
+    def __init__(
+        self,
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+        train_context: Union[det.NativeContext, det.TrialContext],
+    ) -> None:
         self.hvd_config = hvd_config
         self.input_from_dataflow = env.experiment_config.input_from_dataflow()
+
+        self.experimental = EstimatorExperimentalContext(
+            env=env, hvd_config=hvd_config, train_context=train_context,
+        )
+
         self.optimizer_initialized = False
         self.dataset_initialized = False
         logging.debug(f"Initialized EstimatorContext with config: {self.hvd_config}.")
@@ -49,15 +59,16 @@ class EstimatorContext:
         ``build_estimator()``, they should call ``optimizer = wrap_optimizer(optimzer)``
         prior to passing the optimizer into their Estimator.
         """
-        hvd.require_horovod_type("tensorflow", "EstimatorContext.wrap_optimizer was called.")
-
         self.optimizer_initialized = True
         if not self.hvd_config.use:
             return optimizer
+
         check.check_false(
             isinstance(optimizer, str),
             "Please specify an optimizer object instead of using a string name.",
         )
+
+        hvd.require_horovod_type("tensorflow", "EstimatorContext.wrap_optimizer was called.")
         use_compression = self.hvd_config.fp16_compression
         optimizer = hvd.DistributedOptimizer(
             optimizer,
@@ -93,13 +104,13 @@ class EstimatorContext:
 class EstimatorTrialContext(det.TrialContext, EstimatorContext):
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         det.TrialContext.__init__(self, env, hvd_config)
-        EstimatorContext.__init__(self, env, hvd_config)
+        EstimatorContext.__init__(self, env, hvd_config, self)
 
 
 class EstimatorNativeContext(det.NativeContext, EstimatorContext):
-    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
+    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         det.NativeContext.__init__(self, env, hvd_config)
-        EstimatorContext.__init__(self, env, hvd_config)
+        EstimatorContext.__init__(self, env, hvd_config, self)
 
         # TODO(DET-1931): Figure out the right interface to set it.
         self.serving_input_receiver_fns = {}  # type: Dict[str, ServingInputReceiverFn]
@@ -116,3 +127,22 @@ class EstimatorNativeContext(det.NativeContext, EstimatorContext):
 
         if self._train_fn:
             self._train_fn()
+
+
+class EstimatorExperimentalContext(det._DataLayerContext):
+    """
+    Context class that contains experimental runtime information and features
+    for any Determined workflow that uses the ``tf.estimator`` API.
+
+    ``EstimatorExperimentalContext`` extends ``EstimatorTrialContext`` under
+    the ``context.experimental`` namespace.
+    """
+
+    def __init__(
+        self,
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+        train_context: Union[det.NativeContext, det.TrialContext],
+    ) -> None:
+
+        super().__init__(env=env, hvd_config=hvd_config, train_context=train_context)

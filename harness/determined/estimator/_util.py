@@ -9,7 +9,7 @@ import tensorflow as tf
 from tensorflow.python.training.checkpoint_state_pb2 import CheckpointState
 
 from determined import tensorboard
-from determined_common.check import check_eq
+from determined_common import check
 
 # TODO: DET-175 direct checkpoint file manipulation is deprecated in TF 1.13.
 
@@ -130,7 +130,7 @@ def _scan_checkpoint_directory(checkpoint_dir: str) -> List[Checkpoint]:
             old_ts = [0.0] * len(old_paths)
 
         items = [(os.path.join(checkpoint_dir, b), 0.0) for b in checkpoint_paths[cname]]
-        check_eq(len(old_paths), len(old_ts))
+        check.check_eq(len(old_paths), len(old_ts))
         items.extend(zip(old_paths, old_ts))
 
         seen = set()  # type: Set[str]
@@ -159,7 +159,7 @@ def _scan_checkpoint_directory(checkpoint_dir: str) -> List[Checkpoint]:
             all_model_checkpoint_timestamps = new_ts
             last_preserved_timestamp = new_ts[-1]
 
-        check_eq(
+        check.check_eq(
             new_paths[-1],
             checkpoint.state.model_checkpoint_path,
             "Most recent checkpoint path should not change",
