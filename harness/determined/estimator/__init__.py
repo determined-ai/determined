@@ -1,6 +1,7 @@
 from determined.estimator._estimator_context import (
     EstimatorNativeContext,
     EstimatorContext,
+    EstimatorExperimentalContext,
     EstimatorTrialContext,
     ServingInputReceiverFn,
 )

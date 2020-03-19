@@ -9,7 +9,7 @@ import pathlib
 import random
 import sys
 from abc import abstractmethod
-from typing import Any, Dict, Iterator, List, Optional, TextIO, cast
+from typing import Any, Dict, List, Optional, TextIO, cast
 
 import h5py
 import numpy as np
@@ -89,7 +89,7 @@ class WaitForInstructionsCallback(tf.keras.callbacks.Callback):  # type: ignore
 
         check.is_not_none(
             self.tf_keras_trial_controller.train_response_func,
-            "no response_func at end of train_for_step",
+            "No response_func at end of train_for_step.",
         )
         response_func = cast(
             workload.ResponseFunc, self.tf_keras_trial_controller.train_response_func
@@ -176,17 +176,15 @@ class TFKerasTrialController(det.LoopTrialController):
         self.model = model
         self.session = session
 
+        self._train_input_manager, self._validation_input_manager = keras._init_input_manager(
+            context=self.context, train_config=train_config
+        )
+
         # If callbacks are set to None, then use an empty list.
         self.tf_keras_callbacks = train_config.callbacks or []
-        self.set_data_loaders(train_config)
-
-        self.training_iterator = None  # type: Optional[Iterator]
 
         # If a load path is provided, load weights and restore the data location.
         self._load()
-
-        # Initialize training and validation iterators.
-        self._initialize_iterators()
 
         self.fit_loop_started = False
 
@@ -208,6 +206,7 @@ class TFKerasTrialController(det.LoopTrialController):
                 # We launch a horovod process per GPU. Each process
                 # needs to bind to a unique GPU.
                 session_config.gpu_options.visible_device_list = env.slot_ids[hvd.local_rank()]
+
             session = tf.compat.v1.Session(
                 graph=tf.compat.v1.get_default_graph(), config=session_config
             )
@@ -405,58 +404,6 @@ class TFKerasTrialController(det.LoopTrialController):
     def supports_multi_gpu_training() -> bool:
         return True
 
-    def set_data_loaders(self, train_config: keras.TFKerasTrainConfig) -> None:
-        if isinstance(train_config.training_data, tf.data.Dataset):
-            self.is_tf_dataset = True
-        else:
-            self.is_tf_dataset = False
-
-        if self.is_tf_dataset:
-            self.training_tf_dataset = train_config.training_data
-            self.validation_tf_dataset = train_config.validation_data
-        else:
-            self.training_keras_data_adapter = cast(
-                keras.SequenceAdapter, train_config.training_data
-            )
-            self.validation_keras_data_adapter = cast(
-                keras.SequenceAdapter, train_config.validation_data
-            )
-
-    def _initialize_keras_data_iterators(self) -> None:
-        """
-        Initialize training and validation iterator for keras sequence or
-        python generator. Given a step ID and batches_per_step, initialize the
-        training data and validation iterator to the appropriate location.
-        """
-        self.training_iterator_offset = self.env.first_step() * self.batches_per_step
-        if self.hvd_config.use:
-            # When using horovod each worker starts at a unique offset
-            # so that all workers are processing unique data on each step.
-            batch_rank_offset = (len(self.training_keras_data_adapter) // hvd.size()) * hvd.rank()
-            self.training_iterator_offset += batch_rank_offset
-
-        self.training_keras_data_adapter.start(batch_offset=self.training_iterator_offset)
-        self.training_iterator = self.training_keras_data_adapter.get_iterator()
-
-        self.validation_iterator_offset = 0
-        self.validation_num_batches = len(self.validation_keras_data_adapter)
-        if self.hvd_config.use:
-            leftover_validation_batches = len(self.validation_keras_data_adapter) % hvd.size()
-            self.validation_num_batches = len(self.validation_keras_data_adapter) // hvd.size()
-            self.validation_iterator_offset = self.validation_num_batches * hvd.rank() + min(
-                leftover_validation_batches, hvd.rank()
-            )
-            if hvd.rank() < leftover_validation_batches:
-                self.validation_num_batches += 1
-
-    def _initialize_iterators(self) -> None:
-        """
-        Initialize training and validation iterators, the training iterator
-        remains initialized throughout the lifetime of this process.
-        """
-        if not self.is_tf_dataset:
-            self._initialize_keras_data_iterators()
-
     def _load(self) -> None:
         if not self.load_path:
             return
@@ -499,14 +446,7 @@ class TFKerasTrialController(det.LoopTrialController):
                 #    tf.keras fit() training loop is already active and paused.
                 #    break to re-enter the training loop.
                 if not self.fit_loop_started:
-                    initial_epoch = 0
-                    # TODO (sidneyw): fix initial_epoch when we have proper
-                    # support for tf.data.datasets
-                    if not self.is_tf_dataset:
-                        batches_seen = wkld.step_id * self.batches_per_step
-                        initial_epoch = batches_seen // len(self.training_keras_data_adapter)
-
-                    self._launch_fit(initial_epoch)
+                    self._launch_fit()
                     if not self.expect_terminate:
                         raise AssertionError(
                             "Training loop exited unexpectedly but without throwing any errors. "
@@ -529,7 +469,7 @@ class TFKerasTrialController(det.LoopTrialController):
             else:
                 raise AssertionError(f"Unknown wkld kind {wkld.kind}.")
 
-    def _launch_fit(self, initial_epoch: int) -> None:
+    def _launch_fit(self) -> None:
         check.false(self.fit_loop_started)
         self.fit_loop_started = True
 
@@ -546,55 +486,29 @@ class TFKerasTrialController(det.LoopTrialController):
             # all other processes.
             self.tf_keras_callbacks.append(hvd.callbacks.BroadcastGlobalVariablesCallback(0))
 
-        # Tensorflow dataset doesn't provide length api so use the configured batches_per_step
-        if self.is_tf_dataset:
-            training_input = self.training_tf_dataset
-            steps_per_epoch = self.batches_per_step
-        else:
-            training_input = self.training_iterator
-            steps_per_epoch = len(self.training_keras_data_adapter)
+        (
+            training_input,
+            batches_per_epoch,
+        ) = self._train_input_manager.get_training_input_and_batches_per_epoch()
 
         _ = self.model.fit(
             training_input,
             callbacks=self.tf_keras_callbacks,
             shuffle=False,
-            steps_per_epoch=steps_per_epoch,
-            initial_epoch=initial_epoch,
+            steps_per_epoch=batches_per_epoch,
+            initial_epoch=self._train_input_manager.get_initial_epoch(),
             epochs=IMPOSSIBLY_LARGE_EPOCHS,
             validation_split=0,
             verbose=0,
         ).history
 
     def compute_validation_metrics(self) -> workload.Response:
-        if self.is_tf_dataset:
-            # Note: We use total batches of validation data as steps arg in
-            # evaluate api. Tensorflow dataset doesn't provide a way to find
-            # length of the dataset so we can't find total batches. Another
-            # option is to pass None to steps argument.
+        (
+            validation_data,
+            validation_steps,
+        ) = self._validation_input_manager.get_validation_input_and_num_batches()
 
-            # Tensorflow documentation says model.evaluate's steps can be set
-            # to None if the input is tf.data.Dataset or tf.data.Iterator.
-            # It works fine if we pass tf.data.Dataset but it fails with error
-            # "When using data tensors as input to a model, you should
-            # specify the `steps` argument" when we pass tf.data.Iterator.
-            # Tensorflow documentation is incorrect here.
-
-            validation_data = self.validation_tf_dataset
-
-            total_steps = None  # type: Optional[int]
-            num_inputs = None
-        else:
-            self.validation_keras_data_adapter.start(
-                batch_offset=self.validation_iterator_offset, is_validation=True
-            )
-            validation_data = self.validation_keras_data_adapter.get_iterator()
-            total_steps = self.validation_num_batches
-
-            num_inputs = (
-                len(self.validation_keras_data_adapter) * self.context.get_global_batch_size()
-            )
-
-        metrics_values = self.model.evaluate(validation_data, steps=total_steps, verbose=0)
+        metrics_values = self.model.evaluate(validation_data, steps=validation_steps, verbose=0)
 
         # If the model was compiled with metrics=None, metrics_value will be a single value.
         if not isinstance(metrics_values, (tuple, list)):
@@ -604,8 +518,7 @@ class TFKerasTrialController(det.LoopTrialController):
             for index, metric_value in enumerate(metrics_values):
                 metrics_values[index] = np.array(hvd.allreduce(metric_value))
 
-        if not self.is_tf_dataset:
-            self.validation_keras_data_adapter.stop()
+        num_inputs = self._validation_input_manager.stop_validation_input_and_get_num_inputs()
 
         if not self.is_chief:
             return workload.Skipped()
