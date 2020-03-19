@@ -1,3 +1,4 @@
+import functools
 import logging
 import numbers
 import os
@@ -6,7 +7,7 @@ import random
 import shutil
 import tempfile
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Callable, Dict, List, Optional, cast
 
 import numpy as np
 import tensorflow as tf
@@ -124,15 +125,6 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
     def after_run(
         self, run_context: tf.estimator.SessionRunContext, run_values: tf.estimator.SessionRunValues
     ) -> None:
-        # Check for dataset creation here because it's not initialized by TF
-        # until after the first training step.
-        check.true(
-            self.estimator_trial_controller.context.dataset_initialized,
-            "Please pass your datasets (train and test) into "
-            "`det.estimator.wrap_dataset(dataset)` "
-            "right after creating it.",
-        )
-
         # Check for optimizer creation here because when model_fn is passed in as a closure,
         # the optimizer is not initialized until the first training step.
         check.true(
@@ -418,6 +410,38 @@ class EstimatorTrialController(det.LoopTrialController):
     def support_determined_native() -> bool:
         return True
 
+    def _check_and_repeat_train_input_fn(self, f: Callable) -> Callable:
+        """
+        Modifies functions that returns a `tf.data.Dataset` to repeat. This is done
+        so that we never run out of training data.
+        """
+
+        @functools.wraps(f)
+        def wrapper(*args: Any, **kwargs: Any) -> tf.data.Dataset:
+            ds = f(*args, **kwargs)
+
+            if self.context.experimental.get_train_cacheable().is_decorator_used():
+                check.false(
+                    self.context.dataset_initialized,
+                    "Please do not use: `context.wrap_dataset(dataset)` if using "
+                    "`@context.experimental.cache_train_dataset(dataset_name, dataset_version)` "
+                    "and `@context.experimental.cache_validation_dataset(dataset_name, "
+                    "dataset_version)`.",
+                )
+            else:
+                check.true(
+                    self.context.dataset_initialized,
+                    "Please pass your datasets (train and test) into "
+                    "`context.wrap_dataset(dataset)` right after creating them.",
+                )
+
+            if isinstance(ds, tf.data.Dataset):
+                ds = ds.repeat()
+
+            return ds
+
+        return wrapper
+
     def _init_model(self) -> None:
         self._init_paths()
 
@@ -469,9 +493,10 @@ class EstimatorTrialController(det.LoopTrialController):
         # state if we are warm started. This will create an inconsistency
         # wrt saved optimizer state.
 
-        self.train_spec = tf.estimator.TrainSpec(
-            input_fn=self.user_train_spec.input_fn, hooks=all_hooks
-        )
+        # Repeat training dataset so we never run out of data.
+        repeating_train_fn = self._check_and_repeat_train_input_fn(self.user_train_spec.input_fn)
+
+        self.train_spec = tf.estimator.TrainSpec(input_fn=repeating_train_fn, hooks=all_hooks)
         self.eval_spec = tf.estimator.EvalSpec(input_fn=self.val_spec.input_fn, steps=None)
 
     def _init_run_config(self, config: tf.estimator.RunConfig) -> tf.estimator.RunConfig:
@@ -484,7 +509,9 @@ class EstimatorTrialController(det.LoopTrialController):
             if session_config is None:
                 session_config = tf.compat.v1.ConfigProto()
             session_config.gpu_options.allow_growth = True
-            session_config.gpu_options.visible_device_list = str(hvd.local_rank())
+            session_config.gpu_options.visible_device_list = self.env.slot_ids[
+                horovod.hvd.local_rank()
+            ]
         elif len(self.env.container_gpus) > 1:
             check.true(len(self.rendezvous_info.get_addrs()) == 1)
             train_distribute = tf.distribute.MirroredStrategy()
