@@ -34,6 +34,7 @@ type ExperimentConfig struct {
 	Debug               bool                      `json:"debug"`
 	Internal            *InternalConfig           `json:"internal"`
 	Entrypoint          string                    `json:"entrypoint"`
+	DataLayer           DataLayerConfig           `json:"data_layer"`
 }
 
 // Validate implements the check.Validatable interface.
