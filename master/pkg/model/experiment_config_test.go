@@ -274,6 +274,9 @@ func TestExperiment(t *testing.T) {
 				SecretKey: &secretKey,
 			},
 		},
+		DataLayer: DataLayerConfig{
+			SharedFSConfig: &SharedFSDataLayerConfig{},
+		},
 		TensorboardStorage: &TensorboardStorageConfig{
 			S3Config: &S3Config{
 				Bucket:    "my bucket",
