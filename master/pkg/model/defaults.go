@@ -38,7 +38,10 @@ func DefaultExperimentConfig() ExperimentConfig {
 			SharedFSConfig:     &SharedFSConfig{},
 		},
 		CheckpointPolicy: BestCheckpointPolicy,
-		Hyperparameters:  make(map[string]Hyperparameter),
+		DataLayer: DataLayerConfig{
+			SharedFSConfig: &SharedFSDataLayerConfig{},
+		},
+		Hyperparameters: make(map[string]Hyperparameter),
 		Searcher: SearcherConfig{
 			SmallerIsBetter: true,
 			AsyncHalvingConfig: &AsyncHalvingConfig{
