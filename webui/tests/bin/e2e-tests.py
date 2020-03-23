@@ -23,13 +23,22 @@ def run(cmd: List[str], config) -> None:
 
 
 def run_cluster_cmd(subcommand: List[str], config):
-    run(["det-deploy", "local", "--cluster-name", config["CLUSTER_NAME"]] + subcommand, config)
+    run(["det-deploy", "local"] + subcommand + ["--cluster-name", config["CLUSTER_NAME"]], config)
 
 
 def pre_e2e_tests(config):
     run(["docker", "pull", DOCKER_CYPRESS_IMAGE], config)
     run_cluster_cmd(
-        ["fixture-up", "--agents", "1", "--master-port", config["INTEGRATIONS_HOST_PORT"]], config
+        [
+            "fixture-up",
+            "--agents",
+            "1",
+            "--no-gpu",
+            "--delete-db",
+            "--master-port",
+            config["INTEGRATIONS_HOST_PORT"],
+        ],
+        config,
     )
     test_setup_path = tests_dir.joinpath("bin", "createUserAndExperiments.py")
     run(["python", str(test_setup_path)], config)
