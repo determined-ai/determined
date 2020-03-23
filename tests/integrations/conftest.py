@@ -61,6 +61,8 @@ def cluster_log_manager(request: SubRequest) -> Optional[ClusterLogManager]:
             db_password="postgres",
             hasura_secret="hasura",
             delete_db=False,
+            version=None,
+            no_gpu=False,
         )
         with ClusterLogManager("integrations") as clm:
             # Yield instead of return so that `__exit__` is called when the
