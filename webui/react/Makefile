@@ -5,7 +5,7 @@ WEBUI_ROOT := $(BUILDDIR)/share/determined/master/webui
 
 get-deps:
 	for i in `seq 3`; do \
-		yarn install --non-interactive --pure-lockfile --mutex file:/tmp/.yarn-mutex && break ; \
+		npm ci --no-audit && break ; \
 	done
 
 # HACK: It is practically impossible to get the React thing to build into
@@ -15,22 +15,22 @@ build:
 	rm -rf build
 	mkdir -p "$(WEBUI_ROOT)"/react
 	ln -s "$(WEBUI_ROOT)"/react build
-	yarn run build
+	npm run build
 
 clean:
 	rm -rf build node_modules/
 
 live:
-	yarn run start
+	npm start
 
 check:
-	yarn run lint
+	npm run lint
 
 check-fmt: ;
 
 fmt:
-	yarn run lint:js --fix
-	yarn run lint:css --fix
+	npm run lint:js -- --fix
+	npm run lint:css -- --fix
 
 test:
-	yarn run test --watchAll=false
+	npm run test -- --watchAll=false

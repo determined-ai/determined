@@ -96,14 +96,14 @@ To start React live, simply run the following and point your browser to `http://
 
 ```sh
 cd /PATH/TO/DETERMINED/webui/react
-yarn start
+npm start
 ```
 
 If the above fails, it's possible that the project dependencies are not built yet.
 
 ```sh
 # install all the dependencies according to package.json
-yarn install
+npm install
 ```
 
 Couple of things to note:

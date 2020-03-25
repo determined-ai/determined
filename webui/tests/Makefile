@@ -7,7 +7,7 @@ DET_WEBUI_ROOT ?= "$(BUILDDIR)"/share/determined/master/webui
 
 get-deps:
 	for i in `seq 3`; do \
-		yarn install --non-interactive --pure-lockfile --mutex file:/tmp/.yarn-mutex && break ; \
+		npm ci --no-audit && break ; \
 	done
 
 clean-test-artifacts:

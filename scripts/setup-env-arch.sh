@@ -5,7 +5,7 @@ set -e
 ## Specify the script/command that can install packages from both AUR and official Arch repos.
 PKG_INSTALL_COMMAND=(yay -S --needed)
 
-PKGS=(docker go yarn python36 python-virtualenvwrapper)
+PKGS=(docker go python36 python-virtualenvwrapper)
 
 if which "${PKG_INSTALL_COMMAND[0]}" > /dev/null; then
   echo "Installing packages: ${PKGS[@]}..."
