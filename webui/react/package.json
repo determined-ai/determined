@@ -5,7 +5,7 @@
   "scripts": {
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
-    "lint": " yarn run lint:js && yarn run lint:css",
+    "lint": "npm run lint:js && npm run lint:css",
     "lint:js": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:css": "stylelint --config .stylelintrc.js \"src/**/*.{css,less,scss,ts,tsx}\"",
     "test": "react-app-rewired test",
@@ -26,8 +26,8 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.1.2",
-    "react-scripts": "3.4.1",
-    "styled-components": "^5.0.1",
+    "react-scripts": "^3.4.1",
+    "styled-components": "^4.4.1",
     "styled-tools": "^1.7.1",
     "timeago-react": "^3.0.0"
   },
@@ -85,6 +85,6 @@
     "stylelint-config-standard": "^20.0.0",
     "stylelint-config-styled-components": "^0.1.1",
     "stylelint-order": "^4.0.0",
-    "typescript": "~3.8.3"
+    "typescript": "^3.8.3"
   }
 }

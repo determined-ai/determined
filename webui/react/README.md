@@ -21,7 +21,7 @@ The following are the notable main packages and libraries we are using:
 To get started, install all the dependencies for the React webapp.
 
 ```sh
-yarn install
+npm install
 ```
 
 You won't have to do this unless the dependencies change under `package.json`.
@@ -33,7 +33,7 @@ Before proceeding, check to make sure you have a database, Hasura (for graphQL),
 To start a local development environment for the React webapp, run the command below.
 
 ```sh
-yarn start
+npm start
 ```
 
 This will spin up a nodeJS webserver at [localhost:3000](http://localhost:3000). If the page is a blank, do a page refresh and it should take you the landing page for the WebUI.
@@ -48,13 +48,13 @@ We check Javascript linting with [eslint](http://eslint.org/) and CSS linting wi
 
 ```sh
 # check both CSS and JS linting
-yarn lint
+npm run lint
 
 # check JS linting
-yarn lint:js
+npm run lint:js
 
 # check CSS linting
-yarn lint:css
+npm run lint:css
 ```
 
 Our Javascript linting rules and CSS linting rules can be found in `.eslintrc.js` and `.stylelintrc.js` respectively.
@@ -64,7 +64,7 @@ Our Javascript linting rules and CSS linting rules can be found in `.eslintrc.js
 To launch the unit test runner in the interactive watch mode.
 
 ```sh
-yarn test
+npm run test
 ```
 
 See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
@@ -72,7 +72,7 @@ See the section about [running tests](https://facebook.github.io/create-react-ap
 To skip the interactive mode and run all unit tests.
 
 ```sh
-yarn test --watchAll=false
+npm run test -- --watchAll=false
 ```
 
 ### End-to-end Testing
@@ -84,7 +84,7 @@ We are using [Cypress](https://www.cypress.io/) to run end-to-end tests for both
 To run a local instance of storybook, run the following command:
 
 ```sh
-yarn storybook
+npm run storybook
 ```
 
 Point the browser to [localhost:9009](http://localhost:9009) to view storybook.
@@ -111,17 +111,17 @@ It is good practice to check the impact of the library you are adding to the pro
 
 ```sh
 # Build the project first if you haven't already
-yarn build
+npm run build
 
 # Run a bundle analysis
-yarn analyze
+npm run analyze
 ```
 
 The bundle analyzer will look at the generated source maps for the `build` directory to calculate sizes of the bundle all the different libraries and frameworks make up.
 
 ## Webpack Customization
 
-We are heavily leveraging a lot of goodness from **Create React App** discussed above. To continue benefitting from it, we need to avoid ejecting the project. Meaning we do not want to start managing the webpack configuration. The `yarn eject` command is a one-way operation and once you do it, **there is no going back**! The following describes what exactly happens when you do eject.
+We are heavily leveraging a lot of goodness from **Create React App** discussed above. To continue benefitting from it, we need to avoid ejecting the project. Meaning we do not want to start managing the webpack configuration. The `npm run eject` command is a one-way operation and once you do it, **there is no going back**! The following describes what exactly happens when you do eject.
 
 >If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
 
