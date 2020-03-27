@@ -7,19 +7,10 @@ class deployment_types:
 
 class defaults:
     KEYPAIR_NAME = "determined-keypair"
-    MASTER_INSTANCE_TYPE = "t2.medium"
-    AGENT_INSTANCE_TYPE = "p2.8xlarge"
-    BASTION_AMI = "ami-06d51e91cea0dac8d"
-    MASTER_AMI_ID = "ami-79873901"
-    AGENT_AMI_ID = "ami-0c8bb82d0e2346768"
     DEPLOYMENT_TYPE = deployment_types.SIMPLE
     DET_STACK_NAME_BASE = "determined-{}"
-    INBOUND_CIDR = "0.0.0.0/0"
     DB_PASSWORD = "postgres"
     HASURA_SECRET = "hasura"
-    REGION = "us-west-2"
-    MAX_IDLE_AGENT_PERIOD = "10m"
-    MAX_INSTANCES = 5
 
 
 class cloudformation:
@@ -54,5 +45,4 @@ class cloudformation:
 
 
 class misc:
-    DET_MASTER_YAML_PATH = "/usr/local/determined/etc/master.yaml"
     TEMPLATE_PATH = "determined_deploy.aws.templates"

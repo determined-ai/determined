@@ -21,66 +21,28 @@ class Secure(base.DeterminedDeployment):
     )
     template = "secure.yaml"
 
+    template_parameter_keys = [
+        constants.cloudformation.USER_NAME,
+        constants.cloudformation.KEYPAIR,
+        constants.cloudformation.BASTION_ID,
+        constants.cloudformation.MASTER_AMI,
+        constants.cloudformation.MASTER_INSTANCE_TYPE,
+        constants.cloudformation.AGENT_AMI,
+        constants.cloudformation.AGENT_INSTANCE_TYPE,
+        constants.cloudformation.INBOUND_CIDR,
+        constants.cloudformation.VERSION,
+        constants.cloudformation.DB_PASSWORD,
+        constants.cloudformation.HASURA_SECRET,
+        constants.cloudformation.MAX_IDLE_AGENT_PERIOD,
+        constants.cloudformation.MAX_INSTANCES,
+    ]
+
     def __init__(self, parameters: List) -> None:
         template_path = pkg_resources.resource_filename(constants.misc.TEMPLATE_PATH, self.template)
         super().__init__(template_path, parameters)
 
     def deploy(self) -> None:
-        cfn_parameters = [
-            {
-                "ParameterKey": constants.cloudformation.USER_NAME,
-                "ParameterValue": self.parameters[constants.cloudformation.USER_NAME],
-            },
-            {
-                "ParameterKey": constants.cloudformation.KEYPAIR,
-                "ParameterValue": self.parameters[constants.cloudformation.KEYPAIR],
-            },
-            {
-                "ParameterKey": constants.cloudformation.BASTION_AMI,
-                "ParameterValue": constants.defaults.BASTION_AMI,
-            },
-            {
-                "ParameterKey": constants.cloudformation.MASTER_AMI,
-                "ParameterValue": self.parameters[constants.cloudformation.MASTER_AMI],
-            },
-            {
-                "ParameterKey": constants.cloudformation.MASTER_INSTANCE_TYPE,
-                "ParameterValue": self.parameters[constants.cloudformation.MASTER_INSTANCE_TYPE],
-            },
-            {
-                "ParameterKey": constants.cloudformation.AGENT_AMI,
-                "ParameterValue": self.parameters[constants.cloudformation.AGENT_AMI],
-            },
-            {
-                "ParameterKey": constants.cloudformation.AGENT_INSTANCE_TYPE,
-                "ParameterValue": self.parameters[constants.cloudformation.AGENT_INSTANCE_TYPE],
-            },
-            {
-                "ParameterKey": constants.cloudformation.INBOUND_CIDR,
-                "ParameterValue": self.parameters[constants.cloudformation.INBOUND_CIDR],
-            },
-            {
-                "ParameterKey": constants.cloudformation.VERSION,
-                "ParameterValue": self.parameters[constants.cloudformation.VERSION],
-            },
-            {
-                "ParameterKey": constants.cloudformation.DB_PASSWORD,
-                "ParameterValue": self.parameters[constants.cloudformation.DB_PASSWORD],
-            },
-            {
-                "ParameterKey": constants.cloudformation.HASURA_SECRET,
-                "ParameterValue": self.parameters[constants.cloudformation.HASURA_SECRET],
-            },
-            {
-                "ParameterKey": constants.cloudformation.MAX_IDLE_AGENT_PERIOD,
-                "ParameterValue": self.parameters[constants.cloudformation.MAX_IDLE_AGENT_PERIOD],
-            },
-            {
-                "ParameterKey": constants.cloudformation.MAX_INSTANCES,
-                "ParameterValue": str(self.parameters[constants.cloudformation.MAX_INSTANCES]),
-            },
-        ]
-
+        cfn_parameters = self.consolidate_parameters()
         with open(self.template_path) as f:
             template = f.read()
 

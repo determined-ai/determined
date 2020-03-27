@@ -21,6 +21,7 @@
   graphql-schema \
   pin-deps \
   upgrade-deps \
+  upload-try-now-template \
   publish \
   test \
   test-all \
@@ -167,6 +168,13 @@ publish: guard-publish clean all
 	# Upload the docs last because it updates the terraform state file,
 	# which dirties the working directory.
 	$(MAKE) -C docs $@
+
+upload-try-now-template: TRY_NOW_TEMPLATE = simple.yaml
+upload-try-now-template: TRY_NOW_URL := s3://determined-ai-public/$(TRY_NOW_TEMPLATE)
+upload-try-now-template: TEMPLATE_PATH := deploy/determined_deploy/aws/templates/$(TRY_NOW_TEMPLATE)
+upload-try-now-template:
+	aws s3 cp $(TEMPLATE_PATH) $(TRY_NOW_URL) --acl public-read
+
 
 # This target assumes that a Hasura instance is running and queries it to
 # retrieve the current schema files, producing a schema file that the

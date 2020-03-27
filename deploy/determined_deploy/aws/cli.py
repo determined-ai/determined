@@ -2,7 +2,6 @@ import argparse
 
 import boto3
 
-import determined_deploy
 from determined_deploy.aws import aws, constants
 from determined_deploy.aws.deployment_types import secure, simple, vpc
 
@@ -14,13 +13,10 @@ def make_aws_parser(subparsers: argparse._SubParsersAction):
 
     parser_aws.add_argument("--delete", action="store_true", help="Delete Determined from account")
     parser_aws.add_argument(
-        "--master-ami",
-        type=str,
-        default=constants.defaults.MASTER_AMI_ID,
-        help="ami for determined master",
+        "--master-ami", type=str, help="ami for determined master",
     )
     parser_aws.add_argument(
-        "--agent-ami", type=str, default=constants.defaults.AGENT_AMI_ID, help="ami for det agent"
+        "--agent-ami", type=str, help="ami for det agent",
     )
     parser_aws.add_argument(
         "--keypair",
@@ -29,16 +25,10 @@ def make_aws_parser(subparsers: argparse._SubParsersAction):
         help="keypair for master and agent",
     )
     parser_aws.add_argument(
-        "--master-instance-type",
-        type=str,
-        default=constants.defaults.MASTER_INSTANCE_TYPE,
-        help="instance type for master",
+        "--master-instance-type", type=str, help="instance type for master",
     )
     parser_aws.add_argument(
-        "--agent-instance-type",
-        type=str,
-        default=constants.defaults.AGENT_INSTANCE_TYPE,
-        help="instance type for agent",
+        "--agent-instance-type", type=str, help="instance type for agent",
     )
     parser_aws.add_argument(
         "--deployment-type",
@@ -55,16 +45,10 @@ def make_aws_parser(subparsers: argparse._SubParsersAction):
         "--aws-profile", type=str, default=None, help="aws profile for deploying"
     )
     parser_aws.add_argument(
-        "--inbound-cidr",
-        type=str,
-        default=constants.defaults.INBOUND_CIDR,
-        help="inbound IP Range in CIDR format",
+        "--inbound-cidr", type=str, help="inbound IP Range in CIDR format",
     )
     parser_aws.add_argument(
-        "--version",
-        type=str,
-        default=determined_deploy.__version__,
-        help="Determined version or commit to deploy",
+        "--version", type=str, help="Determined version or commit to deploy",
     )
     parser_aws.add_argument(
         "--db-password",
@@ -79,16 +63,13 @@ def make_aws_parser(subparsers: argparse._SubParsersAction):
         help="password for hasura service",
     )
     parser_aws.add_argument(
-        "--region-name", type=str, default=constants.defaults.REGION, help="aws region",
+        "--region-name", type=str, help="aws region",
     )
     parser_aws.add_argument(
-        "--max-idle-agent-period",
-        type=str,
-        default=constants.defaults.MAX_IDLE_AGENT_PERIOD,
-        help="max agent idle time",
+        "--max-idle-agent-period", type=str, help="max agent idle time",
     )
     parser_aws.add_argument(
-        "--max-instances", type=int, default=constants.defaults.MAX_INSTANCES, help="max instances",
+        "--max-instances", type=int, help="max instances",
     )
 
     parser_aws.add_argument(
