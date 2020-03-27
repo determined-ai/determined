@@ -34,7 +34,6 @@ def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
         )
 
     terminate_running_agents(stack_output[constants.cloudformation.AGENT_TAG_NAME], boto3_session)
-
     delete_stack(stack_name, boto3_session)
 
 

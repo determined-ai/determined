@@ -8,49 +8,57 @@ Parameters:
 
   UserName:
     Type: String
-    Description: The User Who Deployed the Stack
+    Description: The User Who Deployed the Stack (Used to keep stacks unique)
 
   MasterAmiId:
     Type: String
     Description: AMI Id for Master
+    Default: ami-79873901
 
   MasterInstanceType:
     Type: String
     Description: Instance Type of Master
+    Default: t2.medium
 
   AgentAmiId:
     Type: String
     Description: AMI Id for Agent
+    Default: ami-0c8bb82d0e2346768
 
   AgentInstanceType:
     Type: String
     Description: Instance Type of Agent
+    Default: p2.8xlarge
 
   InboundCIDRRange:
     Type: String
     Description: Ip range for Inbound
+    Default: 0.0.0.0/0
 
   Version:
     Type: String
-    Description: Determined version or commit for master image
+    Description: Determined version or commit for master docker image
+    Default: 0.12.0
 
   DBPassword:
     Type: String
-    Description: Password for database
+    Description: Password for database (eg. "postgres")
     NoEcho: true
 
   HasuraSecret:
     Type: String
-    Description: Password for hasura
+    Description: Password for hasura (eg. "hasura")
     NoEcho: true
 
   MaxIdleAgentPeriod:
     Type: String
     Description: How long before idle agents are shutdown
+    Default: 10m
 
   MaxInstances:
     Type: String
     Description: Maximum number of agents to launch simultaneously
+    Default: 5
 
 Resources:
   CheckpointBucket:
@@ -319,7 +327,6 @@ Resources:
       ImageId: !Ref MasterAmiId
       KeyName: !Ref Keypair
       IamInstanceProfile: !Ref MasterInstanceProfile
-      DisableApiTermination: true
       SecurityGroupIds:
         - !Ref MasterSecurityGroup
       BlockDeviceMappings:

@@ -28,6 +28,10 @@ the Determined API.
 
 ## Installation
 
+### Try Now on AWS
+[![Try Now](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://determined-ai-public.s3-us-west-2.amazonaws.com/simple.yaml)
+
+
 * [Installation on AWS](https://docs.determined.ai/latest/how-to/install-aws.html)
 * [Installation on GCP](https://docs.determined.ai/latest/how-to/install-gcp.html)
 * [Manual Installation](https://docs.determined.ai/latest/how-to/install-general.html)

@@ -33,30 +33,37 @@ Parameters:
   BastionAmiId:
     Type: String
     Description: AMI Id for Bastion
+    Default: ami-06d51e91cea0dac8d
 
   MasterAmiId:
     Type: String
     Description: AMI Id for Master
+    Default: ami-79873901
 
   MasterInstanceType:
     Type: String
     Description: Instance Type of Master
+    Default: t2.medium
 
   AgentAmiId:
     Type: String
     Description: AMI Id for Agent
+    Default: ami-0c8bb82d0e2346768
 
   AgentInstanceType:
     Type: String
     Description: Instance Type of Agent
+    Default: p2.8xlarge
 
   InboundCIDRRange:
     Type: String
     Description: Ip range for Inbound
+    Default: 0.0.0.0/0
 
   Version:
     Type: String
     Description: Determined version or commit for master image
+    Default: 0.12.0
 
   DBPassword:
     Type: String
@@ -71,10 +78,12 @@ Parameters:
   MaxIdleAgentPeriod:
     Type: String
     Description: How long before idle agents are shutdown
+    Default: 10m
 
   MaxInstances:
     Type: String
     Description: Maximum number of agents to launch simultaneously
+    Default: 5
 
 Resources:
   VPC:
@@ -518,7 +527,6 @@ Resources:
       ImageId: !Ref MasterAmiId
       KeyName: !Ref Keypair
       IamInstanceProfile: !Ref MasterInstanceProfile
-      DisableApiTermination: true
       SecurityGroupIds:
         - !Ref MasterSecurityGroup
       BlockDeviceMappings:
