@@ -5,14 +5,14 @@ describe('Navigation', () => {
 
     it('path / should display dashboard', () => {
       cy.visit('/');
-      cy.get('section h2').contains('Recent Tasks');
-      cy.get('section h2').contains('Overview');
+      cy.get('section h5').contains('Recent Tasks');
+      cy.get('section h5').contains('Overview');
     });
 
     it('path /det/dashboard should display dashboard', () => {
       cy.visit('/det/dashboard');
-      cy.get('section h2').contains('Recent Tasks');
-      cy.get('section h2').contains('Overview');
+      cy.get('section h5').contains('Recent Tasks');
+      cy.get('section h5').contains('Overview');
     });
 
     it('path /ui/experiments should display experiments', () => {
@@ -86,8 +86,8 @@ describe('Navigation', () => {
     it('clicking dashboard in side menu should navigate to dashboard', () => {
       cy.visit('/ui/commands');
       cy.get('#side-menu').contains(/dashboard/i).click();
-      cy.get('section h2').contains('Recent Tasks');
-      cy.get('section h2').contains('Overview');
+      cy.get('section h5').contains('Recent Tasks');
+      cy.get('section h5').contains('Overview');
     });
   });
 });

@@ -1,6 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 
+import { ShirtSize } from 'themes';
+
 import Grid from './Grid';
 
 export default {
@@ -17,7 +19,14 @@ const GridElement = styled.div`
 const GridElements: React.ReactNodeArray =
   new Array(27).fill(0).map((_, idx) => <GridElement key={idx} />);
 
-export const Default = (): React.ReactNode => <Grid>{GridElements}</Grid>;
-export const SmallCells = (): React.ReactNode => <Grid minItemWidth={10}>{GridElements}</Grid>;
-export const BigCells = (): React.ReactNode => <Grid minItemWidth={30}>{GridElements}</Grid>;
-export const NoGap = (): React.ReactNode => <Grid gap={0}>{GridElements}</Grid>;
+export const Default = (): React.ReactNode => <Grid gap={ShirtSize.big}>{GridElements}</Grid>;
+
+export const NoGap = (): React.ReactNode => <Grid>{GridElements}</Grid>;
+
+export const SmallCells = (): React.ReactNode => (
+  <Grid gap={ShirtSize.big} minItemWidth={10}>{GridElements}</Grid>
+);
+
+export const BigCells = (): React.ReactNode => (
+  <Grid gap={ShirtSize.big} minItemWidth={30}>{GridElements}</Grid>
+);

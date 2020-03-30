@@ -18,26 +18,23 @@ const OverviewStats: React.FC<Props> = (props: PropsWithChildren<Props>) => {
 const Title = styled.div`
   color: ${theme('colors.monochrome.7')};
   font-size: ${theme('sizes.font.tiny')};
-  font-weight: bold;
-  text-transform: uppercase;
   word-break: break-word;
 `;
 
 const Info = styled.div`
   color: ${theme('colors.monochrome.0')};
-  font-size: ${theme('sizes.font.giant')};
-  font-weight: bold;
+  font-size: ${theme('sizes.font.large')};
   line-height: 1;
   padding-top: ${theme('sizes.layout.medium')};
-  & > small { font-size: ${theme('sizes.font.huge')}; }
+  & > small { font-size: ${theme('sizes.font.medium')}; }
 `;
 
 const Base = styled.div`
-  background-color: transparent;
+  background-color: ${theme('colors.monochrome.13')};
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: ${theme('sizes.layout.big')};
+  padding: ${theme('sizes.layout.medium')};
 `;
 
 export default OverviewStats;

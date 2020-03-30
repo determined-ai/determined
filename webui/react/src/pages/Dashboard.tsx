@@ -7,7 +7,7 @@ import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TaskCard from 'components/TaskCard';
-import TaskFilter, { filterTasks, getTaskCounts, TaskFilters } from 'components/TaskFilter';
+import TaskFilter, { filterTasks, TaskFilters } from 'components/TaskFilter';
 import ActiveExperiments from 'contexts/ActiveExperiments';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
@@ -19,8 +19,9 @@ import useStorage from 'hooks/useStorage';
 import { ioExperiments } from 'ioTypes';
 import { jsonToExperiments } from 'services/decoder';
 import { buildExperimentListGqlQuery } from 'services/graphql';
+import { ShirtSize } from 'themes';
 import {
-  Command, CommandState, Experiment, RecentTask, ResourceType, TaskType,
+  Command, CommandState, Experiment, RecentTask, ResourceType, RunState, TaskType,
 } from 'types';
 import { commandToTask, experimentToTask } from 'utils/types';
 
@@ -31,11 +32,24 @@ const defaultFilters: TaskFilters = {
     [TaskType.Command]: true,
     [TaskType.Experiment]: true,
     [TaskType.Notebook]: true,
-    [TaskType.Tensorboard]: true,
     [TaskType.Shell]: true,
+    [TaskType.Tensorboard]: true,
   },
   userId: undefined,
 };
+
+const activeStates = [
+  RunState.Active,
+  RunState.StoppingCanceled,
+  RunState.StoppingCompleted,
+  RunState.StoppingError,
+  CommandState.Assigned,
+  CommandState.Pending,
+  CommandState.Pulling,
+  CommandState.Running,
+  CommandState.Starting,
+  CommandState.Terminating,
+];
 
 const Dashboard: React.FC = () => {
   const auth = Auth.useStateContext();
@@ -108,63 +122,74 @@ const Dashboard: React.FC = () => {
     return <TaskCard key={props.id} {...props} />;
   });
 
-  const taskCounts = getTaskCounts(filteredTasks);
-
   const handleFilterChange = useCallback((filters: TaskFilters): void => {
     storage.set('filters', filters);
     setFilters(filters);
   }, [ setFilters, storage ]);
 
   const taskFilter = <TaskFilter
-    counts={taskCounts}
     filters={filters}
     users={users.data || []}
     onChange={handleFilterChange} />;
 
+  /* Overview */
+
+  const activeTally = loadedTasks
+    .filter(task => activeStates.includes(task.state))
+    .reduce((acc, task) => ({ ...acc, [task.type]: acc[task.type] + 1 }), {
+      [TaskType.Command]: 0,
+      [TaskType.Experiment]: 0,
+      [TaskType.Notebook]: 0,
+      [TaskType.Shell]: 0,
+      [TaskType.Tensorboard]: 0,
+    });
+
   return (
     <Base>
       <Section title="Overview">
-        <StyledGrid minItemWidth={12}>
-          <OverviewStats title="Cluster Allocation">
-            {overview.allocation}<small>%</small>
-          </OverviewStats>
-          <OverviewStats title="Available GPUs">
-            {overview[ResourceType.GPU].available}
-            <small>/{overview[ResourceType.GPU].total}</small>
-          </OverviewStats>
-          <OverviewStats title="Available CPUs">
-            {overview[ResourceType.CPU].available}
-            <small>/{overview[ResourceType.CPU].total}</small>
-          </OverviewStats>
-          <OverviewStats title="Active Experiments">
-            {activeTaskTally[TaskType.Experiment]}
-          </OverviewStats>
-          <OverviewStats title="Active Notebooks">
-            {activeTaskTally[TaskType.Notebook]}
-          </OverviewStats>
-          <OverviewStats title="Active Tensorboards">
-            {activeTaskTally[TaskType.Tensorboard]}
-          </OverviewStats>
-        </StyledGrid>
+        <Overview>
+          <Grid gap={ShirtSize.medium} minItemWidth={12} mode={GridMode.AutoFill}>
+            <OverviewStats title="Cluster Allocation">
+              {overview.allocation}<small>%</small>
+            </OverviewStats>
+            {overview[ResourceType.GPU].total ? <OverviewStats title="Available GPUs">
+              {overview[ResourceType.GPU].available}
+              <small>/{overview[ResourceType.GPU].total}</small>
+            </OverviewStats> : null}
+            {overview[ResourceType.CPU].total ? <OverviewStats title="Available CPUs">
+              {overview[ResourceType.CPU].available}
+              <small>/{overview[ResourceType.CPU].total}</small>
+            </OverviewStats> : null}
+            {activeTally[TaskType.Experiment] ? <OverviewStats title="Active Experiments">
+              {activeTaskTally[TaskType.Experiment]}
+            </OverviewStats> : null}
+            {activeTally[TaskType.Notebook] ? <OverviewStats title="Active Notebooks">
+              {activeTally[TaskType.Notebook]}
+            </OverviewStats> : null}
+            {activeTally[TaskType.Tensorboard] ? <OverviewStats title="Active Tensorboards">
+              {activeTally[TaskType.Tensorboard]}
+            </OverviewStats> : null}
+            {activeTally[TaskType.Shell] ? <OverviewStats title="Active Shells">
+              {activeTally[TaskType.Shell]}
+            </OverviewStats> : null}
+            {activeTally[TaskType.Command] ? <OverviewStats title="Active Commands">
+              {activeTally[TaskType.Command]}
+            </OverviewStats> : null}
+          </Grid>
+        </Overview>
       </Section>
       <Section divider={true} options={taskFilter} title="Recent Tasks">
-        {showTasksSpinner ? <Spinner />
-          : tasks.length !== 0 ? <Grid gap={2} mode={GridMode.AutoFill}>{tasks}</Grid>
-            : <EmptyMessage>No recent tasks matching the current filters.</EmptyMessage>}
+        {showTasksSpinner ? <Spinner /> : tasks.length !== 0
+          ? <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>{tasks}</Grid>
+          : <EmptyMessage>No recent tasks matching the current filters.</EmptyMessage>}
       </Section>
     </Base>
   );
 };
 
-const StyledGrid = styled(Grid)`
-  background-color: ${theme('colors.monochrome.14')};
-  padding: ${theme('sizes.layout.medium')};
-`;
-
 const Base = styled.div`
-  background-color: transparent;
   overflow: auto;
-  padding: ${theme('sizes.layout.giant')};
+  padding: ${theme('sizes.layout.big')};
   width: 100%;
 `;
 
@@ -173,10 +198,14 @@ const EmptyMessage = styled.div`
   background-color: ${theme('colors.monochrome.16')};
   color: ${theme('colors.monochrome.9')};
   display: flex;
-  font-size: ${theme('sizes.font.big')};
+  font-size: ${theme('sizes.font.medium')};
   font-style: italic;
   justify-content: center;
   padding: ${theme('sizes.layout.giant')};
+`;
+
+const Overview = styled.div`
+  padding-bottom: ${theme('sizes.layout.big')};
 `;
 
 export default Dashboard;

@@ -2,15 +2,16 @@ import React, { PropsWithChildren } from 'react';
 import styled, { css, FlattenSimpleInterpolation } from 'styled-components';
 import { ifProp } from 'styled-tools';
 
-import { ShirtSize, Theme } from 'themes';
+import { PropsWithTheme, ShirtSize } from 'themes';
 import { isPropTrue } from 'utils/styled';
 
 interface Props {
   center?: boolean; //  == xCenter + yCenter
   column?: boolean;
-  grow?: boolean;
   fullHeight?: boolean;
   fullWidth?: boolean;
+  gap?: ShirtSize;
+  grow?: boolean;
   padding?: ShirtSize[];
   paddingBottom?: ShirtSize;
   paddingLeft?: ShirtSize;
@@ -23,7 +24,6 @@ interface Props {
   yCenter?: boolean;
   yEnd?: boolean;
   yStart?: boolean;
-  gap?: string;
 }
 
 const xProps = new Set([ 'xStart', 'xCenter', 'xEnd' ]);
@@ -95,19 +95,15 @@ const getPlacementStyles = (props: Props): string => {
   return styles.map(css => `${css}`).join('');
 };
 
-interface PropsWithTheme extends Props {
-  theme: Theme;
-}
-
-const getSinglePadding = (props: PropsWithTheme): string => {
+const getSinglePadding = (props: PropsWithTheme<Props>): string => {
   if (!props.padding) return '';
   const paddingValue = props.padding
-    .map((s: ShirtSize) => props.theme.sizes.layout[s])
+    .map(shirtSize => props.theme.sizes.layout[shirtSize])
     .join(' ');
   return `padding: ${paddingValue};`;
 };
 
-const getIndividualPaddings = (props: PropsWithTheme): string => {
+const getIndividualPaddings = (props: PropsWithTheme<Props>): string => {
   const layoutTheme = props.theme.sizes.layout;
   return [
     props.paddingBottom ? `padding-bottom: ${layoutTheme[props.paddingBottom]};` : '',
@@ -117,13 +113,13 @@ const getIndividualPaddings = (props: PropsWithTheme): string => {
   ].join('');
 };
 
-const getGap = (props: PropsWithTheme): string => {
+const getGap = (props: PropsWithTheme<Props>): string => {
   if (!props.gap) return '';
   return `
-  & > *:not(:first-child)  {
-    margin-${props.column ? 'top' : 'left'}:
-      ${props.theme.sizes.layout[props.gap as ShirtSize]};
-  }`;
+    & > *:not(:first-child) {
+      margin-${props.column ? 'top' : 'left'}: ${props.theme.sizes.layout[props.gap]};
+    }
+  `;
 };
 
 const Base = styled.div<Props>`

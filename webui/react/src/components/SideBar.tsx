@@ -47,6 +47,7 @@ const SideBar: React.FC = () => {
 
 const Base = styled.div<Props>`
   background-color: #f7f7f7;
+  border-right: solid 1px ${theme('colors.monochrome.12')};
   display: flex;
   flex-direction: column;
   justify-content: space-between;
