@@ -9,7 +9,7 @@ import LayoutHelper from 'components/LayoutHelper';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
 import TaskActionDropdown from 'components/TaskActionDropdown';
-import { ShirtSize, Theme } from 'themes';
+import { PropsWithTheme, ShirtSize } from 'themes';
 import { RecentTask } from 'types';
 import { percent } from 'utils/number';
 
@@ -22,7 +22,7 @@ const TaskCard: React.FC<RecentTask> = (props: RecentTask) => {
         state={props.state} />
       <LayoutHelper paddingBottom={ShirtSize.medium}
         paddingRight={ShirtSize.big}>
-        <LayoutHelper gap="medium">
+        <LayoutHelper gap={ShirtSize.medium}>
           <IconBg>
             <Icon name={props.type.toLowerCase()} />
           </IconBg>
@@ -37,7 +37,7 @@ const TaskCard: React.FC<RecentTask> = (props: RecentTask) => {
       </LayoutHelper>
       <LayoutHelper>
         <LayoutHelper fullWidth spaceBetween yCenter>
-          <LayoutHelper gap="medium">
+          <LayoutHelper gap={ShirtSize.medium}>
             <Badge type={BadgeType.Default}>{props.id.slice(0,4)}</Badge>
             <Badge state={props.state} type={BadgeType.State} />
             {(props.progress !== undefined) && (props.progress !== 1)
@@ -50,22 +50,28 @@ const TaskCard: React.FC<RecentTask> = (props: RecentTask) => {
   );
 };
 
-interface RecentTaskWithTheme extends RecentTask {
-  theme: Theme;
-}
-
-const onHoverCss = (props: RecentTaskWithTheme): string => {
-  return props.url ? `&:hover { background-color: ${props.theme.colors.monochrome[13]}; }` : '';
+const onHoverCss = (props: PropsWithTheme<RecentTask>): string => {
+  return !props.url ? '' :
+    `&:hover {
+      border-color: ${props.theme.colors.core.action};
+      box-shadow: ${props.theme.shadow};
+      margin: -0.2rem 0 0 -0.2rem;
+    }`;
 };
 
 const Base = styled(Link)`
-  background-color: ${theme('colors.monochrome.14')};
+  background-color: ${theme('colors.monochrome.17')};
+  border-color: ${theme('colors.monochrome.12')};
+  border-radius: ${theme('sizes.border.radius')};
+  border-style: solid;
+  border-width: ${theme('sizes.border.width')};
   color: ${theme('colors.monochrome.5')};
   display: block;
   overflow-wrap: break-word;
   padding: ${theme('sizes.layout.big')};
   padding-right: 0;
   position: relative;
+  transition: 0.2s;
   word-break: break-all;
   &:hover { color: ${theme('colors.monochrome.5')}; }
   a { color: ${theme('colors.monochrome.5')}; }
@@ -83,7 +89,7 @@ const StyledProgressBar = styled(ProgressBar)`
 
 const IconBg = styled.div`
   align-items: center;
-  background-color: white;
+  background-color: ${theme('colors.monochrome.17')};
   border: ${theme('sizes.border.width')} solid ${theme('colors.monochrome.11')};
   border-radius: ${theme('sizes.border.radius')};
   display: flex;
@@ -104,7 +110,8 @@ const Percentage = styled.div`
 const TaskName = styled.header`
   color: ${theme('colors.monochrome.2')};
   font-size: ${theme('sizes.font.medium')};
-  font-weight: bold;
+
+  /* font-weight: bold; */
   line-height: ${theme('sizes.font.jumbo')};
   overflow: hidden;
   padding-bottom: ${theme('sizes.layout.tiny')};
@@ -118,7 +125,7 @@ const TaskAge = styled.div`
 `;
 
 const TaskEvent = styled.span`
-  padding-right: ${theme('sizes.layout.micro')};
+  padding-right: ${theme('sizes.layout.tiny')};
 `;
 
 export default TaskCard;

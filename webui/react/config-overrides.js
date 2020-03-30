@@ -1,7 +1,6 @@
 /* eslint-disable */
 const {
   addLessLoader,
-  addWebpackAlias,
   addWebpackPlugin,
   disableEsLint,
   override,
@@ -21,10 +20,6 @@ module.exports = override(
     libraryName: 'antd',
     libraryDirectory: 'es',
     style: true,
-  }),
-
-  addWebpackAlias({
-    [ '@ant-design/icons/lib/dist$' ]: path.resolve(__dirname, 'antd-icons.js')
   }),
 
   // Add LESS loader support for antd.

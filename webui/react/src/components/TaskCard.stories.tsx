@@ -2,6 +2,7 @@ import React from 'react';
 
 import Grid from 'components/Grid';
 import RouterDecorator from 'storybook/RouterDecorator';
+import { ShirtSize } from 'themes';
 import { RecentTask, RunState, TaskType } from 'types';
 import { generateTasks } from 'utils/task';
 
@@ -36,7 +37,9 @@ export const InAGrid = (): React.ReactNode => {
     generateTasks().map((props, idx) => {
       return <TaskCard key={idx} {...props} />;
     });
-  return <Grid gap={2} minItemWidth={20}>{tasks}</Grid>;
+  return (
+    <Grid gap={ShirtSize.large} minItemWidth={20}>{tasks}</Grid>
+  );
 };
 
 export const DifferentType = (): React.ReactNode => {

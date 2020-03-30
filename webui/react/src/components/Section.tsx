@@ -30,12 +30,12 @@ const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
 };
 
 const Base = styled.section`
-  padding-bottom: ${theme('sizes.layout.giant')};
+  padding-bottom: ${theme('sizes.layout.big')};
 `;
 
-const Title = styled.h2`
-  font-size: ${theme('sizes.layout.jumbo')};
-  font-weight: bold;
+const Title = styled.h5`
+  height: ${theme('sizes.layout.huge')};
+  line-height: ${theme('sizes.layout.huge')};
   margin: 0;
 `;
 
@@ -47,7 +47,7 @@ const Header = styled.div`
 `;
 
 const dividerPadding = css`
-  padding: ${theme('sizes.layout.big')} 0;
+  padding: ${theme('sizes.layout.medium')} 0;
 `;
 
 const Body = styled.div<{ divider: boolean }>`

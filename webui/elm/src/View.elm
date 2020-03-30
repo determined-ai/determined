@@ -478,5 +478,6 @@ renderSideMenu model =
         , class "flex flex-col justify-between h-full"
         , style "padding" "16px 0 0 0"
         , style "background-color" "#f7f7f7"
+        , style "border-right" "solid 1px #dddddd"
         ]
         [ sideTabs model, sideBarFooter model ]

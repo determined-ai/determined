@@ -32,6 +32,7 @@ export interface Theme {
   font: {
     family: string;
   };
+  shadow: string;
   sizes: {
     border: {
       radius: string;
@@ -93,6 +94,7 @@ export const lightTheme: Theme = {
   font: {
     family: 'Objektiv Mk3',
   },
+  shadow: '0.2rem 0.2rem 0.4rem 0 #cccccc',
   sizes: {
     border: {
       radius: '0.4rem',
@@ -123,8 +125,8 @@ export const lightTheme: Theme = {
       big: '1.6rem',
       large: '2rem',
       jumbo: '2.4rem',
-      huge: '3.6rem',
-      giant: '4rem',
+      huge: '3.2rem',
+      giant: '3.6rem',
     },
     /* eslint-enable sort-keys */
     navbar: {
@@ -136,6 +138,8 @@ export const lightTheme: Theme = {
     },
   },
 };
+
+export type PropsWithTheme<P> = P & { theme: Theme };
 
 export const getStateColor = (state: RunState | CommandState | undefined, theme: Theme): string => {
   const stateColorMapping = {

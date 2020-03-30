@@ -106,13 +106,11 @@ const Determined: React.FC = () => {
 
 const Base = styled.div`
   --navHeight: ${theme('sizes.navbar.height')};
+  background-color: ${theme('colors.monochrome.15')};
   display: flex;
   height: calc(100% - var(--navHeight));
   &:first-child { flex-grow: 0; }
-  &:last-child {
-    background-color: white;
-    flex-grow: 1;
-  }
+  &:last-child { flex-grow: 1; }
 `;
 
 export default Determined;
