@@ -220,6 +220,12 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
         self._copy_latest_checkpoint(checkpoint_path=checkpoint_path)
         self._save_serving_input_receiver_fns(checkpoint_path=str(checkpoint_path))
 
+        det.util.write_checkpoint_metadata(
+            checkpoint_path,
+            self.estimator_trial_controller.env,
+            {"tensorflow_version": tf.__version__},
+        )
+
         return {}
 
     def _save_model(self) -> None:
