@@ -9,7 +9,7 @@ from typing import Callable, Dict, List, Tuple
 
 import tensorflow as tf
 
-from determined.estimator import EstimatorTrial, EstimatorTrialContext
+from determined.estimator import EstimatorTrial, EstimatorTrialContext, ServingInputReceiverFn
 
 
 WORK_DIRECTORY = "/tmp/determined-mnist-estimator-work-dir"
@@ -110,6 +110,21 @@ class MNistTrial(EstimatorTrial):
             return dataset
 
         return _fn
+
+    # The serving input receiver is used when the model is serialized in the
+    # tensorflow saved_model format. This function defines the input the model
+    # expects when it is loaded from disk for inference purposes. Without this
+    # function the model checkpoint will only contain the weights of the model
+    # and no saved_model will be saved.
+    def build_serving_input_receiver_fns(self) -> Dict[str, ServingInputReceiverFn]:
+        input_column = tf.feature_column.numeric_column(
+            "image", shape=(IMAGE_SIZE, IMAGE_SIZE, 1), dtype=tf.float32
+        )
+        return {
+            "mnist_parsing": tf.estimator.export.build_parsing_serving_input_receiver_fn(
+                tf.feature_column.make_parse_example_spec([input_column])
+            )
+        }
 
     @staticmethod
     def _get_filenames(directory: str) -> List[str]:
