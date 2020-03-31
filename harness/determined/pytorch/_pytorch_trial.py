@@ -66,7 +66,6 @@ structures of the following types, which will be fed directly to the
 """
 
 import enum
-import json
 import logging
 import os
 import pathlib
@@ -653,7 +652,6 @@ class PyTorchTrialController(det.LoopTrialController):
         # method so long as the code is saved along with the pickled nn.Module.
         # https://pytorch.org/docs/stable/notes/serialization.html#recommend-saving-models
         pickled_model_path = path.joinpath("model.pth")
-        metadata_path = path.joinpath("metadata.json")
         code_path = path.joinpath("code")
 
         torch.save(self.model, pickled_model_path, pickle_module=cloudpickle)  # type: ignore
@@ -661,16 +659,13 @@ class PyTorchTrialController(det.LoopTrialController):
         # The model code is the current working directory.
         shutil.copytree(os.getcwd(), code_path, ignore=shutil.ignore_patterns("__pycache__"))
 
-        det_metadata = {
-            "cluster_id": self.env.det_cluster_id,
-            "det_version": det.__version__,
-            "experiment_id": self.env.det_experiment_id,
-            "trial_id": self.env.det_trial_id,
-            "torch_version": torch.__version__,  # type: ignore
-        }
-
-        with metadata_path.open("w") as f:
-            json.dump(det_metadata, f, indent=2)
+        util.write_checkpoint_metadata(
+            path,
+            self.env,
+            {
+                "torch_version": torch.__version__,  # type: ignore
+            },
+        )
 
         # PyTorch uses optimizer objects that take the model parameters to
         # optimize on construction, so we store and reload the `state_dict()`

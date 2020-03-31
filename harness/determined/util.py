@@ -1,6 +1,8 @@
 import collections
 import datetime
 import enum
+import json
+import pathlib
 import random
 import time
 import uuid
@@ -9,6 +11,8 @@ from typing import Any, Dict, List, Optional, cast
 import numpy as np
 import simplejson
 
+import determined as det
+from determined._env_context import EnvContext
 from determined_common import check
 
 
@@ -110,3 +114,17 @@ def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False)
         obj, default=json_serializer, ignore_nan=True, indent=indent, sort_keys=sort_keys
     )  # type: str
     return s
+
+
+def write_checkpoint_metadata(path: pathlib.Path, env: EnvContext, extras: Dict[str, Any]) -> None:
+    metadata_path = path.joinpath("metadata.json")
+    det_metadata = {
+        "cluster_id": env.det_cluster_id,
+        "det_version": det.__version__,
+        "experiment_id": env.det_experiment_id,
+        "trial_id": env.det_trial_id,
+        **extras,
+    }
+
+    with metadata_path.open("w") as f:
+        json.dump(det_metadata, f, indent=2)
