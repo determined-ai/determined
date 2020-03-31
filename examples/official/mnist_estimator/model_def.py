@@ -9,7 +9,7 @@ from typing import Callable, Dict, List, Tuple
 
 import tensorflow as tf
 
-from determined.estimator import EstimatorTrial, EstimatorTrialContext
+from determined.estimator import EstimatorTrial, EstimatorTrialContext, ServingInputReceiverFn
 
 
 WORK_DIRECTORY = "/tmp/determined-mnist-estimator-work-dir"
@@ -110,6 +110,16 @@ class MNistTrial(EstimatorTrial):
             return dataset
 
         return _fn
+
+    def build_serving_input_receiver_fns(self) -> Dict[str, ServingInputReceiverFn]:
+        input_column = tf.feature_column.numeric_column(
+            "image", shape=(IMAGE_SIZE, IMAGE_SIZE, 1), dtype=tf.float32
+        )
+        return {
+            "mnist_parsing": tf.estimator.export.build_parsing_serving_input_receiver_fn(
+                tf.feature_column.make_parse_example_spec([input_column])
+            )
+        }
 
     @staticmethod
     def _get_filenames(directory: str) -> List[str]:
