@@ -1,7 +1,9 @@
 from typing import Dict, List, Optional
 
 import pytest
+from tensorflow.python.training.tracking.tracking import AutoTrackable
 
+from determined.estimator import checkpoint
 from determined_common.api import gql
 from tests.integrations import cluster
 from tests.integrations import config as conf
@@ -51,6 +53,19 @@ def test_mnist_estimator_const(tf2: bool) -> None:
 
         for batch_metric in batch_metrics:
             assert batch_metric["loss"] > 0
+
+
+@pytest.mark.integ4  # type: ignore
+def test_mnist_estimator_load() -> None:
+    config = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
+    config = conf.set_tf1_image(config)
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config, conf.official_examples_path("mnist_estimator"), 1
+    )
+
+    trials = exp.experiment_trials(experiment_id)
+    model = checkpoint.load(trials[0].id, latest=True)
+    assert isinstance(model, AutoTrackable)
 
 
 @skip_test_if_not_enough_gpus(8)
