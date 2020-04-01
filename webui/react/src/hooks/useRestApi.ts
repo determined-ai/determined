@@ -2,6 +2,7 @@ import axios, { Method } from 'axios';
 import * as io from 'io-ts';
 import { Dispatch, Reducer, SetStateAction, useEffect, useReducer, useState } from 'react';
 
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { decode } from 'ioTypes';
 import { http } from 'services/api';
 import { clone } from 'utils/data';
@@ -112,6 +113,15 @@ const useRestApi = <T>(ioType: io.Mixed, options: HookOptions<T> = {}): Output<T
       } catch (error) {
         // Only report errors not related cancel exits.
         if (!axios.isCancel(error)) {
+          handleError({
+            // this does not necessarily have to be true for all usages of this hook we should
+            // allow the user of the hook to set this value or let the caller handle the error.
+            isUserTriggered: false,
+            level: ErrorLevel.Warn,
+            message: `${httpOptions.method + ' ' || ''}request to ${httpOptions.url} failed`,
+            type: ErrorType.Server,
+          }, false);
+
           dispatch({ type: ActionType.SetError, value: error });
         }
       }

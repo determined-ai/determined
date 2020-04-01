@@ -3,14 +3,13 @@ import axios, { CancelToken } from 'axios';
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { crossoverRoute } from 'routes';
 import { CommandType, RecentTask, TaskType, User } from 'types';
-import Logger from 'utils/Logger';
-
-const logger = new Logger('api');
 
 export const http = axios.create({
   responseType: 'json',
   withCredentials: true,
 });
+
+const AUTH_FAILURE_MSG = 'unauthorized';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 const hasAuthFailed = (e: any): boolean => {
@@ -44,7 +43,7 @@ export const getCurrentUser = async (cancelToken?: CancelToken): Promise<User> =
       username: result.username,
     };
   } catch (e) {
-    handleAuthFailure(e);
+    if (handleAuthFailure(e)) return Promise.reject(AUTH_FAILURE_MSG);
     throw Error('Unable to get current user.');
   }
 };
@@ -55,10 +54,8 @@ export const killExperiment =
       await http.post(`/experiments/${experimentId.toString()}/kill`,
         null, { cancelToken });
     } catch (e) {
-      if (!handleAuthFailure(e)) {
-        logger.error(e);
-        throw Error(`Error during killing experiment ${experimentId}. ${e}`);
-      }
+      if (handleAuthFailure(e)) return Promise.reject(AUTH_FAILURE_MSG);
+      throw Error(`Error during killing experiment ${experimentId}. ${e}`);
     }
   };
 
@@ -67,10 +64,8 @@ export const killCommand =
     try {
       await http.delete(`${commandToEndpoint[commandType]}/${commandId}`, { cancelToken });
     } catch (e) {
-      if (!handleAuthFailure(e)) {
-        logger.error(e);
-        throw Error(`Error during killing command ${commandId}. ${e}`);
-      }
+      if (handleAuthFailure(e)) return Promise.reject(AUTH_FAILURE_MSG);
+      throw Error(`Error during killing command ${commandId}. ${e}`);
     }
   };
 
@@ -91,10 +86,8 @@ const patchExperiment =
           headers: { 'content-type': 'application/merge-patch+json', 'withCredentials': true },
         });
     } catch (e) {
-      if (!handleAuthFailure(e)) {
-        logger.error(e);
-        throw Error(`Error during patching experiment ${experimentId}. ${e}`);
-      }
+      if (handleAuthFailure(e)) return Promise.reject(AUTH_FAILURE_MSG);
+      throw Error(`Error during patching experiment ${experimentId}. ${e}`);
     }
   };
 

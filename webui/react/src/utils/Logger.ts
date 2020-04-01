@@ -3,7 +3,12 @@ enum Level {
   Error = 'error',
 }
 
-class Logger {
+export interface LoggerInterface {
+  error(msg: unknown): void;
+  warn(msg: unknown): void;
+}
+
+class Logger implements LoggerInterface {
   private namespace: string;
 
   constructor(namespace: string) {

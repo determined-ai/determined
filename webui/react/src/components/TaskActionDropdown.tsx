@@ -6,12 +6,11 @@ import { theme } from 'styled-tools';
 
 import Icon from 'components/Icon';
 import Experiments from 'contexts/ActiveExperiments';
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { archiveExperiment, killTask } from 'services/api';
 import { Experiment, RecentTask, RunState, TaskType } from 'types';
-import Logger from 'utils/Logger';
+import { capitalize } from 'utils/string';
 import { isTaskKillable, terminalRunStates } from 'utils/types';
-
-const logger = new Logger('TaskActionDropdown');
 
 interface Props {
   task: RecentTask;
@@ -49,13 +48,20 @@ const TaskActionDropdown: React.FC<Props> = (props: Props) => {
         case 'kill':
           await killTask(props.task);
           break;
-        case 'toggleArchive':
+        case 'archive':
           await archiveExp();
           break;
       }
     } catch (e) {
-      logger.error(`failed to perform the requested ${params.key} action.`);
-      logger.error(e);
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: `Failed to ${params.key} task ${props.task.id}.`,
+        publicSubject: `${capitalize(params.key)} failed.`,
+        silent: false,
+        type: ErrorType.Server,
+      }, false);
     }
     // TODO show loading indicator when we have a button component that supports it.
   };
@@ -65,7 +71,7 @@ const TaskActionDropdown: React.FC<Props> = (props: Props) => {
   const menu = (
     <Menu onClick={handleMenuClick}>
       {isKillable && <Menu.Item key="kill">Kill</Menu.Item>}
-      {isArchivable && <Menu.Item key="toggleArchive">Archive</Menu.Item>}
+      {isArchivable && <Menu.Item key="archive">Archive</Menu.Item>}
     </Menu>
   );
 
