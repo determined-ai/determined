@@ -274,8 +274,8 @@ class TFKerasTrialController(det.LoopTrialController):
         session_config = trial.session_config()
         session = TFKerasTrialController._configure_session(env, hvd_config, session_config)
 
-        training_data = trial.build_training_data_loader()
-        validation_data = trial.build_validation_data_loader()
+        training_data = keras.adapt_keras_data(trial.build_training_data_loader())
+        validation_data = keras.adapt_keras_data(trial.build_validation_data_loader())
 
         trial.build_model()
         check.is_not_none(context.model, "Please call wrap_model(...).")
@@ -386,6 +386,38 @@ class TFKerasTrialController(det.LoopTrialController):
     def supports_multi_gpu_training() -> bool:
         return True
 
+    def set_data_loaders(self, train_config: keras.TFKerasTrainConfig) -> None:
+        if isinstance(train_config.training_data, keras._TFDatasetAdapter):
+            self.is_tf_dataset = True
+
+            # TensorFlow 1.15.0 does not allow running model.fit() with a tf.data.Iterator.  We use
+            # model.fit() with a tf.data.Iterator because creating the Iterator ourselves is the
+            # only way to access the saveable state of the iterator.
+            check.lt(
+                version.parse(tf.__version__),
+                version.parse("1.15.0"),
+                "TFKerasTrial does not accept tf.data.Dataset objects for training data with "
+                "TensorFlow 1.15.0 or higher, due to breaking changes in tf.keras.  Please "
+                "downgrade TensorFlow or use a different dataset.",
+            )
+        else:
+            self.is_tf_dataset = False
+
+        if self.is_tf_dataset:
+            self.training_tf_data_adapter = cast(
+                keras._TFDatasetAdapter, train_config.training_data
+            )
+            self.validation_tf_dataset = cast(
+                keras._TFDatasetAdapter, train_config.validation_data
+            ).dataset
+        else:
+            self.training_keras_data_adapter = cast(
+                keras._SequenceAdapter, train_config.training_data
+            )
+            self.validation_keras_data_adapter = cast(
+                keras._SequenceAdapter, train_config.validation_data
+            )
+
     def _initialize_tf_dataset_iterators(self) -> None:
         """
         Initialize training iterator for tensorflow dataset. It can be already
@@ -397,9 +429,6 @@ class TFKerasTrialController(det.LoopTrialController):
         Note: We are using validation dataset instead of dataset iterator in
         evaluate so not creating validation iterator here.
         """
-        self.training_tf_data_adapter: keras.TensorFlowDatasetAdapter = (
-            self.training_tf_data_adapter
-        )
         # self.training_iterator may be not None if we restored it from a checkpoint.
         if self.training_iterator is None:
             self.training_iterator = self.training_tf_data_adapter.get_iterator(repeat=True)
@@ -410,7 +439,6 @@ class TFKerasTrialController(det.LoopTrialController):
         python generator. Given a step ID and batches_per_step, initialize the
         training data and validation iterator to the appropriate location.
         """
-        self.training_keras_data_adapter: keras.KerasDataAdapter = self.training_keras_data_adapter
         self.training_iterator_offset = self.env.first_step() * self.batches_per_step
         if self.hvd_config.use:
             # When using horovod each worker starts at a unique offset
@@ -452,12 +480,7 @@ class TFKerasTrialController(det.LoopTrialController):
             # load the checkpoint of process 0 on all processes during restart.
             # This needs to be fixed. More details in the ticket.
             iterator_path = self.load_path.joinpath("iterator_state.pkl")
-            skip_batches = (self.env.initial_workload.step_id - 1) * self.env.experiment_config[
-                "batches_per_step"
-            ]
-            self.training_iterator = self.training_tf_data_adapter.get_iterator(
-                repeat=True, skip_batches=skip_batches
-            )
+            self.training_iterator = self.training_tf_data_adapter.get_iterator(repeat=True)
             self.training_iterator = self.training_tf_data_adapter.restore_iterator(
                 self.training_iterator, str(iterator_path), self.session
             )
@@ -620,40 +643,6 @@ class TFKerasTrialController(det.LoopTrialController):
 
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
-    def set_data_loaders(self, train_config: keras.TFKerasTrainConfig) -> None:
-        if isinstance(train_config.training_data, tf.data.Dataset):
-            self.is_tf_dataset = True
-
-            # TensorFlow 1.15.0 does not allow running model.fit() with a tf.data.Iterator.  We use
-            # model.fit() with a tf.data.Iterator because creating the Iterator ourselves is the
-            # only way to access the saveable state of the iterator.
-            check.lt(
-                version.parse(tf.__version__),
-                version.parse("1.15.0"),
-                "TFKerasTrial does not accept tf.data.Dataset objects for training data with "
-                "TensorFlow 1.15.0 or higher, due to breaking changes in tf.keras.  Please "
-                "downgrade TensorFlow or use a different dataset.",
-            )
-        else:
-            self.is_tf_dataset = False
-
-        if self.is_tf_dataset:
-            self.training_tf_data_adapter = keras.make_tensorflow_dataset_adapter(
-                train_config.training_data, self.batch_size
-            )
-            self.validation_tf_dataset = train_config.validation_data
-        else:
-            self.training_keras_data_adapter = keras.make_keras_data_adapter(
-                train_config.training_data, self.batch_size, drop_leftovers=True
-            )
-
-            # We can choose the batch size freely when evaluating the
-            # validation set. For now, we use the same batch size as
-            # this trial uses for training, but this could be improved.
-            self.validation_keras_data_adapter = keras.make_keras_data_adapter(
-                train_config.validation_data, self.batch_size
-            )
-
 
 class TFKerasTrial(det.Trial):
     """
@@ -695,7 +684,7 @@ class TFKerasTrial(det.Trial):
         pass
 
     @abstractmethod
-    def build_training_data_loader(self) -> keras.KerasInputData:
+    def build_training_data_loader(self) -> keras.InputData:
         """
         Defines the data loader to use during training.
 
@@ -713,7 +702,7 @@ class TFKerasTrial(det.Trial):
         pass
 
     @abstractmethod
-    def build_validation_data_loader(self) -> keras.KerasInputData:
+    def build_validation_data_loader(self) -> keras.InputData:
         """
         Defines the data loader to use during validation.
 

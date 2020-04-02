@@ -1,8 +1,7 @@
 import inspect
 import logging
-from typing import Any, Callable, List, NamedTuple, Optional, Union
+from typing import Any, Callable, List, NamedTuple, Optional
 
-import numpy as np
 import tensorflow as tf
 
 import determined as det
@@ -11,8 +10,8 @@ from determined.horovod import hvd
 
 
 class TFKerasTrainConfig(NamedTuple):
-    training_data: Union[keras.KerasDataAdapter, tf.data.Dataset]
-    validation_data: Union[keras.KerasDataAdapter, tf.data.Dataset]
+    training_data: keras.InputData
+    validation_data: keras.InputData
     callbacks: List[tf.keras.callbacks.Callback]
 
 
@@ -68,12 +67,12 @@ class TFKerasContext:
                 fit_generator_args = inspect.signature(model.fit_generator).bind(*args, **kwargs)
                 fit_generator_args.apply_defaults()
 
-                training_data = keras.KerasDataAdapter(
+                training_data = keras._SequenceAdapter(
                     fit_generator_args.arguments["generator"],
                     use_multiprocessing=fit_generator_args.arguments["use_multiprocessing"],
                     workers=fit_generator_args.arguments["workers"],
                 )
-                validation_data = keras.KerasDataAdapter(
+                validation_data = keras._SequenceAdapter(
                     fit_generator_args.arguments["validation_data"],
                     use_multiprocessing=fit_generator_args.arguments["use_multiprocessing"],
                     workers=fit_generator_args.arguments["workers"],
@@ -89,20 +88,33 @@ class TFKerasContext:
                     train_fn()
 
             def fit(wrapper, *args: Any, **kwargs: Any) -> None:
-                """
-                TFKerasExperiment.fit() currently handles three cases of input data:
+                """Communicate a model, data, and other training configuration with the harness.
 
-                1) x and y arguments are both specified as in-memory numpy arrays.
-                   batch_size argument is specified.
-                2) x argument is specified as a tf.keras.utils.Sequence.
-                3) x argument is specified as a Python generator.
+                Parameters:
+                    the same as tf.keras.Model.fit except for this function only handles the
+                    following cases of data
 
-                TODO(DET-2155): Support tf.dataset as input.
+                    x: Input data. It could be:
+                        1) A Numpy array (or array-like), or a list of arrays (in case the model
+                        has multiple inputs).
+                        2) A dict mapping input names to the corresponding array, if the model
+                        has named inputs.
+                        3) A tf.data dataset. Should return a tuple of either (inputs, targets) or
+                        (inputs, targets, sample_weights).
+                        4) A keras.utils.Sequence returning (inputs, targets) or (inputs, targets,
+                        sample weights).
 
-                Native tf.keras fit() supports a few more cases such as TF tensors,
-                list of in-memory arrays, and dictionaries mapping strings to
-                tensor/array values. For now, it is recommended that users implement
-                a tf.keras.utils.Sequence to support any of these unsupported cases.
+                    y: Target data. Like the input data x, it could be either Numpy array(s).
+                        If x is a dataset or keras.utils.Sequence instance, y should not be
+                        specified(since targets will be obtained from x).
+
+                    validation_data: Data on which to evaluate the loss and any model metrics
+                        at the end of each epoch. The model will not be trained on this data.
+                        validation_data will override validation_split. validation_data could be:
+                        1) tuple (x_val, y_val) of Numpy arrays
+                        2) tuple (x_val, y_val, val_sample_weights) of Numpy arrays
+                        3) dataset For the first two cases, batch_size must be provided.
+                        For the last case, validation_steps could be provided.
                 """
                 if not self.compile_args:
                     raise errors.InvalidExperimentException(
@@ -112,47 +124,20 @@ class TFKerasContext:
                 fit_args = inspect.signature(model.fit).bind(*args, **kwargs)
                 fit_args.apply_defaults()
 
-                if isinstance(fit_args.arguments["x"], np.ndarray):
-                    if not (
-                        isinstance(fit_args.arguments["y"], np.ndarray)
-                        and isinstance(fit_args.arguments["batch_size"], int)
-                    ):
-                        raise errors.InvalidExperimentException(
-                            "Detected an in-memory np.ndarray as input data. "
-                            "This type of input data requires an in-memory np.ndarray "
-                            "as the y argument and a batch_size argument."
-                        )
-
-                    sequence = keras.InMemorySequence(
-                        data=fit_args.arguments["x"],
-                        labels=fit_args.arguments["y"],
-                        batch_size=fit_args.arguments["batch_size"],
-                    )
-                    training_data = keras.KerasDataAdapter(
-                        data=sequence,
-                        use_multiprocessing=fit_args.arguments["use_multiprocessing"],
-                        workers=fit_args.arguments["workers"],
-                    )
-                elif isinstance(fit_args.arguments["x"], tf.keras.utils.Sequence):
-                    training_data = keras.KerasDataAdapter(
-                        fit_args.arguments["x"],
-                        use_multiprocessing=fit_args.arguments["use_multiprocessing"],
-                        workers=fit_args.arguments["workers"],
-                    )
-                elif isinstance(fit_args.arguments["x"], tf.data.Dataset):
-                    training_data = fit_args.arguments["x"]
-                else:
-                    raise errors.InvalidExperimentException(
-                        "Input data type '{}' unsupported by TFKerasExperiment.fit(). "
-                        "Please consider using tf.keras.utils.Sequence to represent input "
-                        "data.".format(type(fit_args.arguments["x"]))
-                    )
-
-                validation_data = keras.KerasDataAdapter(
-                    fit_args.arguments["validation_data"],
+                training_data = keras.adapt_keras_data(
+                    x=fit_args.arguments["x"],
+                    y=fit_args.arguments["y"],
+                    batch_size=fit_args.arguments["batch_size"],
                     use_multiprocessing=fit_args.arguments["use_multiprocessing"],
                     workers=fit_args.arguments["workers"],
                 )
+                validation_data = keras.adapt_validation_data(
+                    validation_data=fit_args.arguments["validation_data"],
+                    batch_size=fit_args.arguments["batch_size"],
+                    use_multiprocessing=fit_args.arguments["use_multiprocessing"],
+                    workers=fit_args.arguments["workers"],
+                )
+
                 self.train_config = TFKerasTrainConfig(
                     training_data=training_data,
                     validation_data=validation_data,
