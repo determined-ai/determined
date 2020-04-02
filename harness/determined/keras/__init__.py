@@ -1,15 +1,12 @@
 from determined.keras._data import (
-    InMemorySequence,
-    KerasBatch,
-    KerasDataAdapter,
-    KerasInputData,
-    SequenceWithOffset,
-    make_keras_data_adapter,
-)
-from determined.keras._tf_data_adapter import (
-    DatasetToTensorFlowDatasetAdapter,
-    TensorFlowDatasetAdapter,
-    make_tensorflow_dataset_adapter,
+    ArrayLike,
+    _ArrayLikeAdapter,
+    _SequenceWithOffset,
+    _SequenceAdapter,
+    _TFDatasetAdapter,
+    InputData,
+    adapt_keras_data,
+    adapt_validation_data,
 )
 from determined.keras._tensorboard_callback import TFKerasTensorBoard
 from determined.keras._tf_keras_context import (
