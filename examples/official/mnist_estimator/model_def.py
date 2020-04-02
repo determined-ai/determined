@@ -98,13 +98,13 @@ class MNistTrial(EstimatorTrial):
             dropout=self.context.get_hparam("dropout"),
         )
 
-    def _input_fn(self, files: List[str], shuffle_and_repeat: bool = False) -> Callable:
+    def _input_fn(self, files: List[str], shuffle: bool = False) -> Callable:
         def _fn() -> tf.data.TFRecordDataset:
             dataset = tf.data.TFRecordDataset(files)
             # Call `wrap_dataset` immediately after creating your dataset.
             dataset = self.context.wrap_dataset(dataset)
-            if shuffle_and_repeat:
-                dataset = dataset.apply(tf.data.experimental.shuffle_and_repeat(1000))
+            if shuffle:
+                dataset = dataset.shuffle(1000)
             dataset = dataset.batch(self.context.get_per_slot_batch_size())
             dataset = dataset.map(parse_mnist_tfrecord)
             return dataset
@@ -136,7 +136,7 @@ class MNistTrial(EstimatorTrial):
             self.data_downloaded = True
 
         train_files = self._get_filenames(os.path.join(self.download_directory, "train"))
-        return tf.estimator.TrainSpec(self._input_fn(train_files, shuffle_and_repeat=True))
+        return tf.estimator.TrainSpec(self._input_fn(train_files, shuffle=True))
 
     def build_validation_spec(self) -> tf.estimator.EvalSpec:
         if not self.data_downloaded:
@@ -144,4 +144,4 @@ class MNistTrial(EstimatorTrial):
             self.data_downloaded = True
 
         val_files = self._get_filenames(os.path.join(self.download_directory, "validation"))
-        return tf.estimator.EvalSpec(self._input_fn(val_files, shuffle_and_repeat=False))
+        return tf.estimator.EvalSpec(self._input_fn(val_files, shuffle=False))
