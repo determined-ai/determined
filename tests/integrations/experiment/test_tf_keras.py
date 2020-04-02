@@ -122,3 +122,39 @@ def test_tf_keras_mnist_parallel() -> None:
     )
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
+
+
+@pytest.mark.integ2  # type: ignore
+@pytest.mark.parametrize("tf2", [False])  # type: ignore
+@pytest.mark.parametrize("storage_type", ["lfs", "s3"])  # type: ignore
+def test_tf_keras_mnist_data_layer(tf2: bool, storage_type: str) -> None:
+    config = conf.load_config(conf.experimental_path("data_layer_mnist_tf_keras/const.yaml"))
+    config = conf.set_max_steps(config, 2)
+    config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
+    if storage_type == "lfs":
+        config = conf.set_shared_fs_data_layer(config)
+    else:
+        config = conf.set_s3_data_layer(config)
+
+    exp.run_basic_test_with_temp_config(
+        config, conf.experimental_path("data_layer_mnist_tf_keras"), 1
+    )
+
+
+@skip_test_if_not_enough_gpus(8)
+@pytest.mark.parallel  # type: ignore
+@pytest.mark.parametrize("tf2", [False])  # type: ignore
+@pytest.mark.parametrize("storage_type", ["lfs", "s3"])  # type: ignore
+def test_tf_keras_mnist_data_layer_parallel(tf2: bool, storage_type: str) -> None:
+    config = conf.load_config(conf.experimental_path("data_layer_mnist_tf_keras/const.yaml"))
+    config = conf.set_max_steps(config, 2)
+    config = conf.set_slots_per_trial(config, 8)
+    config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
+    if storage_type == "lfs":
+        config = conf.set_shared_fs_data_layer(config)
+    else:
+        config = conf.set_s3_data_layer(config)
+
+    exp.run_basic_test_with_temp_config(
+        config, conf.experimental_path("data_layer_mnist_tf_keras"), 1
+    )

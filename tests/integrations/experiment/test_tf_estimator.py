@@ -135,7 +135,6 @@ def run_dataset_experiment(
     secrets: Dict[str, str],
     tf2: bool,
     slots_per_trial: int = 1,
-    distributed: bool = False,
     source_trial_id: Optional[str] = None,
 ) -> List[gql.trials]:
     config = conf.load_config(conf.fixtures_path("estimator_dataset/const.yaml"))
@@ -184,3 +183,49 @@ def test_dataset_restore(secrets: Dict[str, str], tf2: bool) -> None:
     modified_losses = [14, 504, 163296, 1823347456]
     assert modified_losses != DATASET_EXPERIMENT_EXPECTED_LOSSES
     assert losses == modified_losses
+
+
+@pytest.mark.integ4  # type: ignore
+@pytest.mark.parametrize("tf2", [True, False])  # type: ignore
+@pytest.mark.parametrize("storage_type", ["lfs", "s3"])  # type: ignore
+def test_mnist_estimator_data_layer(tf2: bool, storage_type: str) -> None:
+    config = conf.load_config(conf.experimental_path("data_layer_mnist_estimator/const.yaml"))
+    config = conf.set_max_steps(config, 2)
+    config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
+    if storage_type == "lfs":
+        config = conf.set_shared_fs_data_layer(config)
+    else:
+        config = conf.set_s3_data_layer(config)
+
+    exp.run_basic_test_with_temp_config(
+        config, conf.experimental_path("data_layer_mnist_estimator"), 1
+    )
+
+
+@skip_test_if_not_enough_gpus(8)
+@pytest.mark.parallel  # type: ignore
+@pytest.mark.parametrize("storage_type", ["lfs", "s3"])  # type: ignore
+def test_mnist_estimator_data_layer_parallel(storage_type: str) -> None:
+    config = conf.load_config(conf.experimental_path("data_layer_mnist_estimator/const.yaml"))
+    config = conf.set_max_steps(config, 2)
+    config = conf.set_slots_per_trial(config, 8)
+    config = conf.set_tf1_image(config)
+    if storage_type == "lfs":
+        config = conf.set_shared_fs_data_layer(config)
+    else:
+        config = conf.set_s3_data_layer(config)
+
+    exp.run_basic_test_with_temp_config(
+        config, conf.experimental_path("data_layer_mnist_estimator"), 1
+    )
+
+
+@pytest.mark.integ4  # type: ignore
+def test_mnist_estimator_adaptive_with_data_layer() -> None:
+    config = conf.load_config(conf.fixtures_path("mnist_estimator/adaptive.yaml"))
+    config = conf.set_tf2_image(config)
+    config = conf.set_shared_fs_data_layer(config)
+
+    exp.run_basic_test_with_temp_config(
+        config, conf.experimental_path("data_layer_mnist_estimator"), None
+    )
