@@ -6,7 +6,7 @@ How-To guides are goal-oriented guides. They provide a detailed set of steps to 
 The full list of our how-to guides can be found below:
 
 .. toctree::
-  :maxdepth: 0
+  :maxdepth: 2
   :titlesonly:
 
   custom-env
@@ -14,11 +14,6 @@ The full list of our how-to guides can be found below:
   hyperparameter-tuning
   install-cli
   install-general
-  install-packages
-  install-docker
-  install-deploy
-  install-aws
-  install-gcp
   notebook-state
   notebook-configuration
   run-notebooks
