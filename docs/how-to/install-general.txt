@@ -3,8 +3,8 @@
 Install Determined
 ==================
 
-This document describes how to install and upgrade Determined.
-Determined consists of several components, primarily
+This document provides general information on how to install and upgrade
+Determined. Determined consists of several components, primarily
 
 -  a **master** that schedules workloads and stores metadata
 -  one or more **agents** that run workloads, typically using GPUs
@@ -69,11 +69,16 @@ Installing Determined
 We support running most components of Determined either under Docker or
 using standard package files and natively installed services. We also
 provide ``det-deploy``, a tool that helps automate the process of
-running Determined under Docker.
+running Determined under Docker either locally or on AWS instances, and
 
-- :ref:`install-using-packages`
-- :ref:`install-using-docker`
-- :ref:`install-using-deploy`
+.. toctree::
+   :titlesonly:
+
+   install-deploy
+   install-aws
+   install-gcp
+   install-packages
+   install-docker
 
 .. _install-docker:
 
