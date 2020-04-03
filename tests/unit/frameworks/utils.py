@@ -76,6 +76,7 @@ def make_default_exp_config(hparams: Dict[str, Any], batches_per_step: int) -> D
             "gradient_compression": False,
             "average_training_metrics": False,
         },
+        "data_layer": {"type": "shared_fs"},
     }
 
 
@@ -214,8 +215,10 @@ def make_trial_controller_from_trial_implementation(
     batches_per_step: int = 1,
     load_path: Optional[pathlib.Path] = None,
     trial_seed: int = 0,
+    exp_config: Optional[Dict] = None,
 ) -> det.TrialController:
-    exp_config = make_default_exp_config(hparams, batches_per_step)
+    if not exp_config:
+        exp_config = make_default_exp_config(hparams, batches_per_step)
     env = make_default_env_context(
         hparams=hparams, experiment_config=exp_config, trial_seed=trial_seed,
     )
@@ -243,9 +246,11 @@ def make_trial_controller_from_native_implementation(
     batches_per_step: int,
     load_path: Optional[pathlib.Path] = None,
     trial_seed: int = 0,
+    exp_config: Optional[Dict] = None,
 ) -> det.TrialController:
     # TODO(shiyuan): change the way to determine whether the code runs inside trial container.
-    exp_config = make_default_exp_config(hparams, batches_per_step)
+    if not exp_config:
+        exp_config = make_default_exp_config(hparams, batches_per_step)
     exp_config["internal"] = {"native": {"command": [command]}}
 
     env = make_default_env_context(

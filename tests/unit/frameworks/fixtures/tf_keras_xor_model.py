@@ -8,7 +8,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import SGD, Adam
 
 from determined import keras
-from tests.unit.frameworks.utils import make_xor_data_sequences  # noqa: I202, I100
+from tests.unit.frameworks.utils import make_xor_data_sequences, xor_data  # noqa: I202, I100
 
 
 def categorical_error(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
@@ -48,16 +48,16 @@ class XORTrial(keras.TFKerasTrial):
 
     def session_config(self) -> tf.compat.v1.ConfigProto:
         return tf.compat.v1.ConfigProto(
-            intra_op_parallelism_threads=1, inter_op_parallelism_threads=1
+            intra_op_parallelism_threads=1, inter_op_parallelism_threads=1,
         )
 
     def build_training_data_loader(self) -> keras.InputData:
         train, _ = make_xor_data_sequences(batch_size=4)
-        return train
+        return keras.SequenceAdapter(train, workers=0)
 
     def build_validation_data_loader(self) -> keras.InputData:
         _, test = make_xor_data_sequences(batch_size=4)
-        return test
+        return keras.SequenceAdapter(test, workers=0)
 
 
 class XORTrialWithTrainingMetrics(XORTrial):
@@ -124,3 +124,27 @@ class XORTrialWithOptimizerState(XORTrial):
             metrics=[categorical_error],
         )
         return cast(Sequential, model)
+
+
+class XORTrialWithDataLayer(XORTrial):
+    def build_training_data_loader(self) -> keras.InputData:
+        @self.context.experimental.cache_train_dataset("XORTrialWithDataLayer", "xor_data")
+        def make_dataset() -> tf.data.Dataset:
+            data, labels = xor_data()
+            ds = tf.data.Dataset.from_tensor_slices((data, labels))
+            return ds
+
+        dataset = make_dataset()
+        dataset = dataset.batch(batch_size=4)
+        return dataset
+
+    def build_validation_data_loader(self) -> keras.InputData:
+        @self.context.experimental.cache_validation_dataset("XORTrialWithDataLayer", "xor_data")
+        def make_dataset() -> tf.data.Dataset:
+            data, labels = xor_data()
+            ds = tf.data.Dataset.from_tensor_slices((data, labels))
+            return ds
+
+        dataset = make_dataset()
+        dataset = dataset.batch(batch_size=4)
+        return dataset

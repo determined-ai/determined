@@ -9,7 +9,7 @@ from tests.unit.frameworks.utils import xor_data
 
 
 def xor_input_fn(
-    context: EstimatorNativeContext, batch_size: int, repeat: bool = True, shuffle: bool = False
+    context: EstimatorNativeContext, batch_size: int, shuffle: bool = False
 ) -> Callable[[], Tuple[tf.Tensor, tf.Tensor]]:
     def _input_fn() -> Tuple[tf.Tensor, tf.Tensor]:
         data, labels = xor_data()
@@ -17,16 +17,14 @@ def xor_input_fn(
         dataset = context.wrap_dataset(dataset)
         if shuffle:
             dataset = dataset.shuffle(1000)
+
+        def map_dataset(x, y):
+            return {"input": x}, y
+
         dataset = dataset.batch(batch_size)
-        if repeat:
-            dataset = dataset.repeat()
-        iterator = tf.compat.v1.data.make_one_shot_iterator(dataset)
-        features, labels = iterator.get_next()
+        dataset = dataset.map(map_dataset)
 
-        tf.compat.v1.summary.tensor_summary("features", features)
-        tf.compat.v1.summary.tensor_summary("labels", labels)
-
-        return ({"input": features}, labels)
+        return dataset
 
     return _input_fn
 
@@ -77,10 +75,7 @@ if __name__ == "__main__":
     context.train_and_evaluate(
         build_estimator(context),
         tf.estimator.TrainSpec(
-            xor_input_fn(context=context, batch_size=batch_size, shuffle=shuffle, repeat=True),
-            max_steps=1,
+            xor_input_fn(context=context, batch_size=batch_size, shuffle=shuffle), max_steps=1,
         ),
-        tf.estimator.EvalSpec(
-            xor_input_fn(context=context, batch_size=batch_size, shuffle=False, repeat=False)
-        ),
+        tf.estimator.EvalSpec(xor_input_fn(context=context, batch_size=batch_size, shuffle=False)),
     )
