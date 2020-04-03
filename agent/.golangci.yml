@@ -24,6 +24,8 @@ issues:
     - should have a package comment
     - "G201: sql string formatting"
     - Consider preallocating
+    # Exclude "gosec: Errors unhandled" because it duplicates errcheck.
+    - G104
     - and that stutters
 
   # Independently from option `exclude` golangci-lint uses default exclude patterns.
@@ -38,6 +40,7 @@ linters-settings:
     include-go-root: true
     packages:
       - errors
+      - gopkg.in/yaml.v2
   dupl:
     threshold: 210
   goconst:
@@ -63,8 +66,14 @@ linters:
     - funlen
     - gochecknoglobals
     - gochecknoinits
+    - gocognit
     - gocyclo
+    - godot
     - godox
+    - goerr113
+    - gomnd
     - maligned
+    - nestif
+    - testpackage
     - unparam
     - wsl

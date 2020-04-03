@@ -11,7 +11,7 @@ require (
 	github.com/docker/go-connections v0.4.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-ole/go-ole v1.2.4 // indirect
-	github.com/golangci/golangci-lint v1.20.0
+	github.com/golangci/golangci-lint v1.27.0
 	github.com/google/uuid v1.1.1
 	github.com/goreleaser/goreleaser v0.133.0
 	github.com/gorilla/websocket v1.4.0
@@ -22,7 +22,7 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/sys v0.0.0-20191120155948-bd437916bb0e
-	golang.org/x/tools v0.0.0-20200422022333-3d57cf2e726e
+	golang.org/x/tools v0.0.0-20200502202811-ed308ab3e770
 	gotest.tools v2.2.0+incompatible
 )
 

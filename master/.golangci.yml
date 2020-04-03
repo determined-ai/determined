@@ -49,8 +49,6 @@ linters-settings:
   gocritic:
     disabled-checks:
       - singleCaseSwitch
-  gocyclo:
-    min-complexity: 35
   golint:
     min-confidence: 0
   goimports:
@@ -67,10 +65,17 @@ linters-settings:
 linters:
   enable-all: true
   disable:
+    - funlen
     - gochecknoglobals
     - gochecknoinits
-    - maligned
-    - unparam
-    - funlen
+    - gocognit
+    - gocyclo
+    - godot
     - godox
+    - goerr113
+    - gomnd
+    - maligned
+    - nestif
+    - testpackage
+    - unparam
     - wsl
