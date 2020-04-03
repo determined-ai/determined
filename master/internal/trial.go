@@ -440,22 +440,26 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.Assigned) erro
 	ctx.Log().Infof("starting trial container: %v", w)
 
 	additionalFiles := archive.Archive{
-		archive.UserItem(
+		t.agentUserGroup.OwnedArchiveItem(
 			trialEntrypointFile,
 			etc.MustStaticFile(etc.TrialEntrypointScriptResource),
 			trialEntrypointMode,
 			tar.TypeReg,
 		),
 
-		archive.UserItem(trialSSHDir, nil, trialSSHDirMode, tar.TypeDir),
-		archive.UserItem(trialAuthorizedKeysFile,
+		t.agentUserGroup.OwnedArchiveItem(trialSSHDir, nil, trialSSHDirMode, tar.TypeDir),
+		t.agentUserGroup.OwnedArchiveItem(trialAuthorizedKeysFile,
 			t.publicKey,
 			trialAuthorizedKeysMode,
 			tar.TypeReg,
 		),
-		archive.UserItem(trialRSAPublicKeyFile, t.publicKey, trialRSAPublicKeyMode, tar.TypeReg),
-		archive.UserItem(trialRSAPrivateKeyFile, t.privateKey, trialRSAPrivateKeyMode, tar.TypeReg),
-		archive.UserItem(trialSSHDConfigFile,
+		t.agentUserGroup.OwnedArchiveItem(
+			trialRSAPublicKeyFile, t.publicKey, trialRSAPublicKeyMode, tar.TypeReg,
+		),
+		t.agentUserGroup.OwnedArchiveItem(
+			trialRSAPrivateKeyFile, t.privateKey, trialRSAPrivateKeyMode, tar.TypeReg,
+		),
+		t.agentUserGroup.OwnedArchiveItem(trialSSHDConfigFile,
 			etc.MustStaticFile(etc.SSHDConfigResource),
 			trialSSHDConfigMode,
 			tar.TypeReg,

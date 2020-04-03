@@ -10,6 +10,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const (
@@ -19,7 +20,7 @@ const (
 	harnessTargetPath = "/opt/determined/wheels"
 )
 
-func harnessArchive(harnessPath string) container.RunArchive {
+func harnessArchive(harnessPath string, aug *model.AgentUserGroup) container.RunArchive {
 	var harnessFiles archive.Archive
 	wheelPaths, err := filepath.Glob(filepath.Join(harnessPath, "*.whl"))
 	if err != nil {
@@ -40,15 +41,26 @@ func harnessArchive(harnessPath string) container.RunArchive {
 			panic(errors.Wrapf(err, "error constructing relative path: %s", path))
 		}
 
+		var uid int
+		if aug != nil {
+			uid = aug.UID
+		}
+		var gid int
+		if aug != nil {
+			gid = aug.GID
+		}
+
 		harnessFiles = append(harnessFiles, archive.Item{
 			Path:         filepath.Join(harnessTargetPath, rel),
 			Type:         byte(tar.TypeReg),
 			Content:      content,
 			FileMode:     info.Mode(),
 			ModifiedTime: archive.UnixTime{Time: info.ModTime()},
+			UserID:       uid,
+			GroupID:      gid,
 		})
 	}
-	return wrapArchive(harnessFiles, "/")
+	return wrapArchive(aug.OwnArchive(harnessFiles), "/")
 }
 
 func wrapArchive(archive archive.Archive, path string) container.RunArchive {

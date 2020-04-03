@@ -19,8 +19,8 @@ class ContextItem:
     def __init__(self, path: str):
         self.path = path
         self.type = ord(tarfile.REGTYPE)
-        self.uid = -1
-        self.gid = -1
+        self.uid = 0
+        self.gid = 0
         self.content = bytes()
         self.mtime = -1
         self.mode = -1

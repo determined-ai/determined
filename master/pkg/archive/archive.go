@@ -83,18 +83,16 @@ func RootItem(path string, content []byte, mode int, fileType byte) Item {
 	}
 }
 
-// UserItem returns a new Item which will be owned by the user under which the container runs. The
-// special value -1 for UID and GID will be resolved by the agent to match the UID and GID of the
-// user used to run the container.
-func UserItem(path string, content []byte, mode int, fileType byte) Item {
+// UserItem returns a new Item which will be owned by the user under which the container runs.
+func UserItem(path string, content []byte, mode int, fileType byte, userID int, groupID int) Item {
 	return Item{
 		Path:         path,
 		Content:      content,
 		FileMode:     os.FileMode(mode),
 		Type:         fileType,
 		ModifiedTime: defaultModifiedTime,
-		UserID:       -1,
-		GroupID:      -1,
+		UserID:       userID,
+		GroupID:      groupID,
 	}
 }
 
