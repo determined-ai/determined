@@ -37,6 +37,6 @@ The full list of our topic guides can be found below:
   optimizing-distributed-training
   reproducibility
   scheduling
-  terminologies-concepts
+  terminology-concepts
   user-interfaces
   yaml
