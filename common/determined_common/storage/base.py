@@ -85,7 +85,14 @@ class StorageManager:
         if storage_id == "":
             storage_id = str(uuid.uuid4())
 
-        os.makedirs(self._base_path, exist_ok=True)
+        # Set umask to 0 in order that the storage dir allows future containers of any owner to
+        # create new checkpoints. Administrators wishing to control the permissions more
+        # specifically should just create the storage path themselves; this will not interfere.
+        old_umask = os.umask(0)
+        os.makedirs(self._base_path, exist_ok=True, mode=0o777)
+        # Restore the original umask.
+        os.umask(old_umask)
+
         storage_dir = os.path.join(self._base_path, storage_id)
         store_data.save(storage_dir)
 

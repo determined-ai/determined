@@ -1,3 +1,4 @@
+import os
 import pathlib
 import shutil
 from typing import Any
@@ -16,7 +17,13 @@ class SharedFSTensorboardManager(base.TensorboardManager):
         self.container_path = pathlib.Path(container_path)
         self.shared_fs_base = self.container_path.joinpath(self.sync_path)
 
-        self.shared_fs_base.mkdir(parents=True, exist_ok=True)
+        # Set umask to 0 in order that the storage dir allows future containers of any owner to
+        # create new checkpoints. Administrators wishing to control the permissions more
+        # specifically should just create the storage path themselves; this will not interfere.
+        old_umask = os.umask(0)
+        self.shared_fs_base.mkdir(parents=True, exist_ok=True, mode=0o777)
+        # Restore the original umask.
+        os.umask(old_umask)
 
     def sync(self) -> None:
         for path in self.to_sync():
