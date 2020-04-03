@@ -187,18 +187,20 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 		config:    config,
 		userFiles: req.UserFiles,
 		additionalFiles: archive.Archive{
-			archive.UserItem(jupyterDir, nil, 0700, tar.TypeDir),
-			archive.UserItem(jupyterConfigDir, nil, 0700, tar.TypeDir),
-			archive.UserItem(jupyterDataDir, nil, 0700, tar.TypeDir),
-			archive.UserItem(jupyterRuntimeDir, nil, 0700, tar.TypeDir),
-			archive.UserItem(
+			req.AgentUserGroup.OwnedArchiveItem(jupyterDir, nil, 0700, tar.TypeDir),
+			req.AgentUserGroup.OwnedArchiveItem(jupyterConfigDir, nil, 0700, tar.TypeDir),
+			req.AgentUserGroup.OwnedArchiveItem(jupyterDataDir, nil, 0700, tar.TypeDir),
+			req.AgentUserGroup.OwnedArchiveItem(jupyterRuntimeDir, nil, 0700, tar.TypeDir),
+			req.AgentUserGroup.OwnedArchiveItem(
 				jupyterEntrypoint,
 				etc.MustStaticFile(etc.NotebookEntrypointResource),
 				0700,
 				tar.TypeReg,
 			),
-			archive.UserItem(notebookConfigFile, notebookConfigContent, 0644, tar.TypeReg),
-			archive.UserItem(
+			req.AgentUserGroup.OwnedArchiveItem(
+				notebookConfigFile, notebookConfigContent, 0644, tar.TypeReg,
+			),
+			req.AgentUserGroup.OwnedArchiveItem(
 				notebookDefaultPage,
 				etc.MustStaticFile(etc.NotebookTemplateResource),
 				0644,

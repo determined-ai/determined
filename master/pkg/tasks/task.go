@@ -14,12 +14,34 @@ import (
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const (
-	containerWorkDir = "/run/determined/workdir"
-	rootDir          = "/"
+	containerWorkDir  = "/run/determined/workdir"
+	userPythonBaseDir = "/run/determined/pythonuserbase"
+	runDir            = "/run/determined"
+	rootDir           = "/"
 )
+
+func defaultEnvVars() []string {
+	// PYTHONUSERBASE allows us to `pip install --user` into a location guaranteed to be owned by
+	// the user inside the container.
+	envVars := []string{"PYTHONUSERBASE=" + userPythonBaseDir}
+	return envVars
+}
+
+// workDirArchive ensures that the workdir is created and owned by the user.
+func workDirArchive(aug *model.AgentUserGroup) container.RunArchive {
+	return wrapArchive(
+		archive.Archive{
+			aug.OwnedArchiveItem(runDir, nil, 0700, tar.TypeDir),
+			aug.OwnedArchiveItem(containerWorkDir, nil, 0700, tar.TypeDir),
+			aug.OwnedArchiveItem(userPythonBaseDir, nil, 0700, tar.TypeDir),
+		},
+		rootDir,
+	)
+}
 
 // ToContainerSpec returns the container spec for associated task spec. This is a bridge method
 // for the agent refactor project.
@@ -46,6 +68,9 @@ func startCommand(t TaskSpec) container.Spec {
 	if len(t.Devices) > 0 {
 		deviceType = t.Devices[0].Type
 	}
+	envVars := defaultEnvVars()
+	envVars = append(envVars, cmd.Config.Environment.EnvironmentVariables.For(deviceType)...)
+	envVars = append(envVars, fmt.Sprintf("DET_TASK_ID=%s", t.TaskID))
 	return container.Spec{
 		PullSpec: container.PullSpec{
 			Registry:  cmd.Config.Environment.RegistryAuth,
@@ -55,11 +80,10 @@ func startCommand(t TaskSpec) container.Spec {
 			ContainerConfig: docker.Config{
 				User:         user,
 				ExposedPorts: toPortSet(cmd.Config.Environment.Ports),
-				Env: append(cmd.Config.Environment.EnvironmentVariables.For(deviceType),
-					fmt.Sprintf("DET_TASK_ID=%s", t.TaskID)),
-				Cmd:        cmd.Config.Entrypoint,
-				Image:      cmd.Config.Environment.Image.For(deviceType),
-				WorkingDir: containerWorkDir,
+				Env:          envVars,
+				Cmd:          cmd.Config.Entrypoint,
+				Image:        cmd.Config.Environment.Image.For(deviceType),
+				WorkingDir:   containerWorkDir,
 			},
 			HostConfig: docker.HostConfig{
 				NetworkMode:     t.ContainerDefaults.NetworkMode,
@@ -68,9 +92,10 @@ func startCommand(t TaskSpec) container.Spec {
 				ShmSize:         t.ContainerDefaults.ShmSizeBytes,
 			},
 			Archives: []container.RunArchive{
-				wrapArchive(cmd.UserFiles, containerWorkDir),
+				workDirArchive(cmd.AgentUserGroup),
+				wrapArchive(cmd.AgentUserGroup.OwnArchive(cmd.UserFiles), containerWorkDir),
 				wrapArchive(cmd.AdditionalFiles, rootDir),
-				harnessArchive(t.HarnessPath),
+				harnessArchive(t.HarnessPath, cmd.AgentUserGroup),
 			},
 		},
 	}
@@ -115,7 +140,8 @@ func startContainer(t TaskSpec) container.Spec {
 		networkInterface = "DET_AUTO_DETECT_NETWORK_INTERFACE"
 	}
 
-	envVars := exp.ExperimentConfig.Environment.EnvironmentVariables.For(deviceType)
+	envVars := defaultEnvVars()
+	envVars = append(envVars, exp.ExperimentConfig.Environment.EnvironmentVariables.For(deviceType)...)
 	envVars = append(envVars,
 		fmt.Sprintf("DET_EXPERIMENT_ID=%d", exp.InitialWorkload.ExperimentID),
 		fmt.Sprintf("DET_TRIAL_ID=%d", exp.InitialWorkload.TrialID),
@@ -156,9 +182,10 @@ func startContainer(t TaskSpec) container.Spec {
 				PublishAllPorts: true,
 			},
 			Archives: []container.RunArchive{
+				workDirArchive(exp.AgentUserGroup),
 				wrapArchive(exp.AdditionalFiles, rootDir),
-				wrapArchive(exp.ModelDefinition, containerWorkDir),
-				harnessArchive(t.HarnessPath),
+				wrapArchive(exp.AgentUserGroup.OwnArchive(exp.ModelDefinition), containerWorkDir),
+				harnessArchive(t.HarnessPath, exp.AgentUserGroup),
 			},
 		},
 	}
@@ -179,7 +206,8 @@ func gcCheckpoint(t TaskSpec) container.Spec {
 	if len(t.Devices) > 0 {
 		deviceType = t.Devices[0].Type
 	}
-	envVars := gcc.ExperimentConfig.Environment.EnvironmentVariables.For(deviceType)
+	envVars := defaultEnvVars()
+	envVars = append(envVars, gcc.ExperimentConfig.Environment.EnvironmentVariables.For(deviceType)...)
 	envVars = append(envVars,
 		fmt.Sprintf("DET_EXPERIMENT_ID=%d", gcc.ExperimentID),
 		fmt.Sprintf("DET_EXPERIMENT_CONFIG=%s", jsonify(gcc.ExperimentConfig)),
@@ -216,9 +244,10 @@ func gcCheckpoint(t TaskSpec) container.Spec {
 				PublishAllPorts: true,
 			},
 			Archives: []container.RunArchive{
+				workDirArchive(gcc.AgentUserGroup),
 				wrapArchive(
 					archive.Archive{
-						archive.UserItem(
+						gcc.AgentUserGroup.OwnedArchiveItem(
 							etc.GCCheckpointsEntrypointResource,
 							etc.MustStaticFile(etc.GCCheckpointsEntrypointResource),
 							0700,
@@ -227,7 +256,7 @@ func gcCheckpoint(t TaskSpec) container.Spec {
 					},
 					containerWorkDir,
 				),
-				harnessArchive(t.HarnessPath),
+				harnessArchive(t.HarnessPath, gcc.AgentUserGroup),
 			},
 		},
 	}

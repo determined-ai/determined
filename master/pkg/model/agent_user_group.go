@@ -1,6 +1,10 @@
 package model
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/pkg/archive"
+)
 
 // An AgentUserGroup represents a username and primary group for a user on an
 // agent host machine. There is at most one AgentUserGroup for each User.
@@ -40,4 +44,30 @@ func (c AgentUserGroup) Validate() []error {
 	}
 
 	return errs
+}
+
+// OwnedArchiveItem will create an archive.Item owned by the AgentUserGroup, or by root if c is nil.
+func (c *AgentUserGroup) OwnedArchiveItem(
+	path string, content []byte, mode int, fileType byte,
+) archive.Item {
+	if c == nil {
+		return archive.RootItem(path, content, mode, fileType)
+	}
+	return archive.UserItem(path, content, mode, fileType, c.UID, c.GID)
+}
+
+// OwnArchive will return an archive.Archive modified to be owned by the AgentUserGroup, or
+// unmodified if c is nil.
+func (c *AgentUserGroup) OwnArchive(oldArchive archive.Archive) archive.Archive {
+	if c == nil {
+		return oldArchive
+	}
+	var newArchive archive.Archive
+	for _, item := range oldArchive {
+		newItem := item
+		newItem.UserID = c.UID
+		newItem.GroupID = c.GID
+		newArchive = append(newArchive, newItem)
+	}
+	return newArchive
 }

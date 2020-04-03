@@ -121,11 +121,17 @@ func (n *shellManager) newShell(
 	config.Entrypoint = shellEntrypoint
 
 	additionalFiles := archive.Archive{
-		archive.UserItem(shellSSHDir, nil, 0700, tar.TypeDir),
-		archive.UserItem(shellAuthorizedKeysFile, keyPair.PublicKey, 0644, tar.TypeReg),
-		archive.UserItem(shellHostPrivKeyFile, keyPair.PrivateKey, 0600, tar.TypeReg),
-		archive.UserItem(shellHostPubKeyFile, keyPair.PublicKey, 0600, tar.TypeReg),
-		archive.UserItem(
+		req.AgentUserGroup.OwnedArchiveItem(shellSSHDir, nil, 0700, tar.TypeDir),
+		req.AgentUserGroup.OwnedArchiveItem(
+			shellAuthorizedKeysFile, keyPair.PublicKey, 0644, tar.TypeReg,
+		),
+		req.AgentUserGroup.OwnedArchiveItem(
+			shellHostPrivKeyFile, keyPair.PrivateKey, 0600, tar.TypeReg,
+		),
+		req.AgentUserGroup.OwnedArchiveItem(
+			shellHostPubKeyFile, keyPair.PublicKey, 0600, tar.TypeReg,
+		),
+		req.AgentUserGroup.OwnedArchiveItem(
 			shellSSHDConfigFile,
 			etc.MustStaticFile(etc.SSHDConfigResource),
 			0644,

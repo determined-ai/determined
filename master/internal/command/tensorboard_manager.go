@@ -130,7 +130,7 @@ func (t *tensorboardManager) newTensorBoard(
 	var logDirs []string
 
 	additionalFiles := archive.Archive{
-		archive.UserItem(
+		commandReq.AgentUserGroup.OwnedArchiveItem(
 			tensorboardEntrypointFile,
 			etc.MustStaticFile(etc.TensorboardEntryScriptResource), 0700,
 			tar.TypeReg,
@@ -215,7 +215,7 @@ func (t *tensorboardManager) newTensorBoard(
 	}
 
 	additionalFiles = append(additionalFiles,
-		archive.UserItem(expConfPath, eConf, 0700, tar.TypeReg))
+		commandReq.AgentUserGroup.OwnedArchiveItem(expConfPath, eConf, 0700, tar.TypeReg))
 
 	// Multiple experiments may have different s3 credentials. We sort the
 	// experiments in ascending experiment ID order and dedupicate the
