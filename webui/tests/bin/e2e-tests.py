@@ -42,7 +42,13 @@ def post_e2e_tests(config):
 # _cypress_arguments generates an array of cypress arguments.
 def _cypress_arguments(cypress_configs, config):
     timeout_config = f"defaultCommandTimeout={config['CYPRESS_DEFAULT_COMMAND_TIMEOUT']}"
-    args = ["--config", ",".join([timeout_config, *cypress_configs]), "--browser", "electron"]
+    args = [
+        "--config",
+        ",".join([timeout_config, *cypress_configs]),
+        "--browser",
+        "chrome",
+        "--headless",
+    ]
 
     if config["CYPRESS_ARGS"]:
         args.extend(config["CYPRESS_ARGS"].split(" "))
