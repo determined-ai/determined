@@ -2,7 +2,7 @@ description: noop-single-many-long-steps
 checkpoint_storage:
   type: shared_fs
   host_path: /tmp
-  storage_path: determined-integration-tests-single-checkpoints
+  storage_path: determined-integration-checkpoints
 batches_per_step: 100
 hyperparameters:
   global_batch_size: 32

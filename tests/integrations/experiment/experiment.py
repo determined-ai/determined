@@ -538,7 +538,7 @@ def shared_fs_checkpoint_config() -> Dict[str, str]:
     return {
         "type": "shared_fs",
         "host_path": "/tmp",
-        "storage_path": "determined-integration-tests-single-checkpoints",
+        "storage_path": "determined-integration-checkpoints",
     }
 
 
