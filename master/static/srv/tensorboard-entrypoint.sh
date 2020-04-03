@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e
 
 STARTUP_HOOK=${STARTUP_HOOK_SCRIPT:-startup-hook.sh}

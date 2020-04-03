@@ -529,6 +529,18 @@ def test_link_with_existing_agent_user(auth: Authentication) -> None:
 
 
 @pytest.mark.integ3  # type: ignore
+def test_non_root_experiment(auth: Authentication) -> None:
+    user = create_linked_user(65534, "nobody", 65534, "nogroup")
+
+    with logged_in_user(user):
+        exp.run_basic_test(
+            conf.fixtures_path("no_op/single-one-short-step.yaml"),
+            conf.fixtures_path("no_op"),
+            None,
+        )
+
+
+@pytest.mark.integ3  # type: ignore
 def test_link_without_agent_user(auth: Authentication) -> None:
     user = create_test_user(ADMIN_CREDENTIALS, False)
 

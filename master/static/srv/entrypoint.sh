@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+
+set -e
 set -x
 
 WORKING_DIR="/run/determined/workdir"
