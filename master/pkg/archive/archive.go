@@ -4,10 +4,8 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
-	"database/sql/driver"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -235,26 +233,4 @@ func FromTarGz(zippedTarfile []byte) (Archive, error) {
 	}
 
 	return ar, nil
-}
-
-// Value implements the required interface for sql serialization.
-func (ar Archive) Value() (driver.Value, error) {
-	return ToTarGz(ar)
-}
-
-// Scan implements the required interface for sql deserialization.
-func (ar *Archive) Scan(value interface{}) error {
-	if value == nil {
-		*ar = Archive{}
-		return nil
-	}
-
-	bytes, ok := value.([]byte)
-	if !ok {
-		return fmt.Errorf("cannot deserialize an archive from SQL column type %T", value)
-	}
-
-	var err error
-	*ar, err = FromTarGz(bytes)
-	return err
 }
