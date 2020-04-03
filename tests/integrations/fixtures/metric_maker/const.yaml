@@ -2,7 +2,7 @@ description: metric_maker
 checkpoint_storage:
   type: shared_fs
   host_path: /tmp
-  storage_path: determined-integration-tests-single-checkpoints
+  storage_path: determined-integration-checkpoints
 hyperparameters:
   global_batch_size: 1
   # The starting base value used to calculate all metrics.

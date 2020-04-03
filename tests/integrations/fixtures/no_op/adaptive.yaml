@@ -2,7 +2,7 @@ description: noop_adaptive
 checkpoint_storage:
   type: shared_fs
   host_path: /tmp
-  storage_path: determined-integration-tests-single-checkpoints
+  storage_path: determined-integration-checkpoints
 hyperparameters:
   global_batch_size: 32
   metrics_progression: decreasing
