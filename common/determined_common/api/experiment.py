@@ -88,12 +88,10 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
             },
             "resources": {**config_test.get("resources", {"slots_per_trial": 1})},
             "max_restarts": 0,
-            "data_layer": {
-                "type": "shared_fs",
-                "container_storage_path": "/tmp/determined/data_layer",
-            },
-
         }
+    )
+    config.setdefault(
+        "data_layer", {"type": "shared_fs", "container_storage_path": "/tmp/determined"}
     )
     return config_test
 
