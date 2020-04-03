@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Tuple
+from typing import Callable, Dict, Tuple, Union
 
 import tensorflow as tf
 
@@ -12,7 +12,9 @@ from tests.unit.frameworks.utils import xor_data
 
 
 def xor_input_fn(
-    context: EstimatorNativeContext, batch_size: int, repeat: bool = True, shuffle: bool = False
+    context: Union[EstimatorNativeContext, EstimatorTrialContext],
+    batch_size: int,
+    shuffle: bool = False,
 ) -> Callable[[], Tuple[tf.Tensor, tf.Tensor]]:
     def _input_fn() -> Tuple[tf.Tensor, tf.Tensor]:
         data, labels = xor_data()
@@ -20,16 +22,46 @@ def xor_input_fn(
         dataset = context.wrap_dataset(dataset)
         if shuffle:
             dataset = dataset.shuffle(1000)
+
+        def map_dataset(x, y):
+            return {"input": x}, y
+
         dataset = dataset.batch(batch_size)
-        if repeat:
-            dataset = dataset.repeat()
-        iterator = tf.compat.v1.data.make_one_shot_iterator(dataset)
-        features, labels = iterator.get_next()
+        dataset = dataset.map(map_dataset)
 
-        tf.compat.v1.summary.tensor_summary("features", features)
-        tf.compat.v1.summary.tensor_summary("labels", labels)
+        return dataset
 
-        return ({"input": features}, labels)
+    return _input_fn
+
+
+def xor_input_fn_data_layer(
+    context: Union[EstimatorNativeContext, EstimatorTrialContext],
+    training: bool,
+    batch_size: int,
+    shuffle: bool = False,
+) -> Callable[[], Tuple[tf.Tensor, tf.Tensor]]:
+    def _input_fn() -> Tuple[tf.Tensor, tf.Tensor]:
+        cacheable = (
+            context.experimental.cache_train_dataset
+            if training
+            else context.experimental.cache_validation_dataset
+        )
+
+        @cacheable("xor_input_fn_data_layer", "xor_data", shuffle=shuffle)
+        def make_dataset() -> tf.data.Dataset:
+            data, labels = xor_data()
+            ds = tf.data.Dataset.from_tensor_slices((data, labels))
+            return ds
+
+        dataset = make_dataset()
+
+        def map_dataset(x, y):
+            return {"input": x}, y
+
+        dataset = dataset.batch(batch_size)
+        dataset = dataset.map(map_dataset)
+
+        return dataset
 
     return _input_fn
 
@@ -77,7 +109,6 @@ class XORTrial(EstimatorTrial):
                 context=self.context,
                 batch_size=self.context.get_per_slot_batch_size(),
                 shuffle=self.context.get_hparam("shuffle"),
-                repeat=True,
             )
         )
 
@@ -87,7 +118,6 @@ class XORTrial(EstimatorTrial):
                 context=self.context,
                 batch_size=self.context.get_per_slot_batch_size(),
                 shuffle=False,
-                repeat=False,
             )
         )
 
@@ -98,3 +128,25 @@ class XORTrial(EstimatorTrial):
                 tf.feature_column.make_parse_example_spec([_input])
             )
         }
+
+
+class XORTrialDataLayer(XORTrial):
+    def build_train_spec(self) -> tf.estimator.TrainSpec:
+        return tf.estimator.TrainSpec(
+            xor_input_fn_data_layer(
+                context=self.context,
+                training=True,
+                batch_size=self.context.get_per_slot_batch_size(),
+                shuffle=self.context.get_hparam("shuffle"),
+            )
+        )
+
+    def build_validation_spec(self) -> tf.estimator.EvalSpec:
+        return tf.estimator.EvalSpec(
+            xor_input_fn_data_layer(
+                context=self.context,
+                training=False,
+                batch_size=self.context.get_per_slot_batch_size(),
+                shuffle=False,
+            )
+        )

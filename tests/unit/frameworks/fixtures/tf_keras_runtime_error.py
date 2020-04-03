@@ -43,6 +43,7 @@ if __name__ == "__main__":
             "description": "keras_runtime_error",
             "hyperparameters": {"global_batch_size": det.Constant(1)},
             "searcher": {"metric": "accuracy"},
+            "data_layer": {"type": "lfs", "container_storage_path": "/tmp"},
         },
         mode=det.Mode.TEST,
         context_dir=str(pathlib.Path.cwd()),

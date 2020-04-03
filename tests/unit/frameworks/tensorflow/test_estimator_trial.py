@@ -16,6 +16,7 @@ from tests.unit.frameworks.fixtures import estimator_xor_model
     scope="function",
     params=[
         estimator_xor_model.XORTrial,
+        estimator_xor_model.XORTrialDataLayer,
         utils.fixtures_path("estimator_xor_model_experiment.py"),
     ],
 )
@@ -51,13 +52,22 @@ def xor_trial_controller(request):
             workloads: workload.Stream,
             batches_per_step: int = 1,
             load_path: Optional[str] = None,
+            exp_config: Optional[Dict] = None,
         ) -> det.TrialController:
+            if request.param == estimator_xor_model.XORTrialDataLayer:
+                exp_config = utils.make_default_exp_config(
+                    hparams=hparams, batches_per_step=batches_per_step,
+                )
+                exp_config["data"] = exp_config.get("data", {})
+                exp_config["data"]["skip_checkpointing_input"] = True
+
             return utils.make_trial_controller_from_trial_implementation(
                 trial_class=request.param,
                 hparams=hparams,
                 workloads=workloads,
                 batches_per_step=batches_per_step,
                 load_path=load_path,
+                exp_config=exp_config,
             )
 
         return _xor_trial_controller
