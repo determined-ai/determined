@@ -183,4 +183,4 @@ Next Steps
 - :ref:`command-configuration`
 - :ref:`topic-guides_yaml`
 - :ref:`benefits-of-determined`
-- :ref:`terminologies-concepts`
+- :ref:`terminology-concepts`

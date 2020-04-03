@@ -43,7 +43,7 @@ Use the links below to start learning more about Determined's capabilities.
 **General Concepts**
   - :ref:`benefits-of-determined`
   - :ref:`det-system-architecture`
-  - :ref:`terminologies-concepts`
+  - :ref:`terminology-concepts`
 
 **Tutorials**
   - :ref:`pytorch-mnist-tutorial`
