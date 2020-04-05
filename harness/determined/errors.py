@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Type
 
 
 class InternalException(Exception):
@@ -14,11 +14,20 @@ class InternalException(Exception):
 
 class InvalidExperimentException(BaseException):
     """
-    InvalidExperimentException is used if the model of an experiment is invalid.
+    InvalidExperimentException is used if an experiment is invalid.
     """
 
     def __init__(self, message: str) -> None:
         super().__init__(message)
+
+
+class InvalidDataTypeException(InvalidExperimentException):
+    """
+    InvalidDataType is used if the data type of an experiment is invalid.
+    """
+
+    def __init__(self, type: Type, message: str) -> None:
+        super().__init__(f"Invalid data type ({type.__name__}): {message}.")
 
 
 class InvalidConfigurationException(InvalidExperimentException):
@@ -27,7 +36,7 @@ class InvalidConfigurationException(InvalidExperimentException):
     """
 
     def __init__(self, config: Dict[str, Any], message: str) -> None:
-        super().__init__("{}: {}".format(message, config))
+        super().__init__(f"Invalid configuration ({config}): {message}.")
 
 
 class WorkerError(Exception):
