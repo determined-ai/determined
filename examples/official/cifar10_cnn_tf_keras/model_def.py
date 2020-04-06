@@ -55,7 +55,7 @@ class CIFARTrial(keras.TFKerasTrial):
         self.layer3_dropout = context.get_hparam("layer3_dropout")  # type: float
 
         # Create a unique download directory for each rank so they don't overwrite each other.
-        self.download_directory = f"/tmp/data-rank{self.context.get_rank()}"
+        self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.data_downloaded = False
 
     def session_config(self) -> tf.compat.v1.ConfigProto:

@@ -105,7 +105,7 @@ class CIFARTrial(PyTorchTrial):
 
     def build_training_data_loader(self) -> Any:
         # Create a unique download directory for each rank so they don't overwrite each other.
-        download_directory = f"./data-rank{self.context.get_rank()}"
+        download_directory = f"./data-rank{self.context.distributed.get_rank()}"
 
         transform = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
@@ -117,7 +117,7 @@ class CIFARTrial(PyTorchTrial):
 
     def build_validation_data_loader(self) -> Any:
         # Create a unique download directory for each rank so they don't overwrite each other.
-        download_directory = f"./data-rank{self.context.get_rank()}"
+        download_directory = f"./data-rank{self.context.distributed.get_rank()}"
 
         transform = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
