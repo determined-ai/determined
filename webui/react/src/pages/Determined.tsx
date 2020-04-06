@@ -71,8 +71,8 @@ const Determined: React.FC = () => {
     setUsers({ type: Users.ActionType.Set, value: usersResponse });
   }, [ usersResponse, setUsers ]);
   useEffect(() => {
+    setAgents({ type: Agents.ActionType.Set, value: agentsResponse });
     if (!agentsResponse.data) return;
-    setAgents({ type: Agents.ActionType.Set, value: agentsResponse.data });
     setOverview({ type: ClusterOverview.ActionType.SetAgents, value: agentsResponse.data });
   }, [ agentsResponse.data, setOverview ]);
   useEffect(() => {
