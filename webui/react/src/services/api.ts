@@ -1,6 +1,6 @@
 import axios, { CancelToken } from 'axios';
 
-import { decode, ioDeterminedInfo, ioTypeDeterminedInfo, ioTypeUser, ioUser } from 'ioTypes';
+import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { crossoverRoute } from 'routes';
 import { CommandType, RecentTask, TaskType, User } from 'types';
 import Logger from 'utils/Logger';
@@ -31,18 +31,6 @@ const commandToEndpoint: Record<CommandType, string> = {
   [CommandType.Notebook]: '/notebooks',
   [CommandType.Tensorboard]: '/tensorboard',
   [CommandType.Shell]: '/shells',
-};
-
-export const getDeterminedInfo = async (
-  cancelToken?: CancelToken,
-): Promise<ioTypeDeterminedInfo> => {
-  try {
-    const response = await http.get('/info', { cancelToken });
-    const result = decode<ioTypeDeterminedInfo>(ioDeterminedInfo, response.data);
-    return result;
-  } catch (e) {
-    throw Error('Unable to get platform info.');
-  }
 };
 
 export const getCurrentUser = async (cancelToken?: CancelToken): Promise<User> => {

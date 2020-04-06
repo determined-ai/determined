@@ -27,6 +27,7 @@ module Types exposing
     , SlotType(..)
     , Step
     , Storage(..)
+    , Telemetry
     , TensorBoard
     , TensorBoardLaunchConfig(..)
     , TrialDetail
@@ -51,11 +52,18 @@ type alias ID =
     Int
 
 
+type alias Telemetry =
+    { enabled : Bool
+    , segmentKey : Maybe String
+    }
+
+
 {-| DeterminedInfo describes a Determined platform info.
 -}
 type alias DeterminedInfo =
     { clusterId : String
     , masterId : String
+    , telemetry : Telemetry
     , version : String
     }
 

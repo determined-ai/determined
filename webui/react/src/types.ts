@@ -10,6 +10,16 @@ export interface Auth {
   user?: User;
 }
 
+export interface DeterminedInfo {
+  clusterId: string;
+  masterId: string;
+  telemetry: {
+    enabled: boolean;
+    segmentKey?: string;
+  };
+  version: string;
+}
+
 export enum ResourceType {
   CPU,
   GPU,
