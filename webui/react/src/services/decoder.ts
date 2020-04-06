@@ -1,13 +1,34 @@
 import dayjs from 'dayjs';
 
 import {
-  ioTypeAgents, ioTypeCommandAddress, ioTypeExperiments,
-  ioTypeGenericCommand, ioTypeGenericCommands, ioTypeUsers,
+  ioTypeAgents, ioTypeCommandAddress, ioTypeDeterminedInfo,
+  ioTypeExperiments, ioTypeGenericCommand, ioTypeGenericCommands, ioTypeUsers,
 } from 'ioTypes';
 import {
-  Agent, Command, CommandType, Experiment, ResourceState, ResourceType, User,
+  Agent, Command, CommandType, DeterminedInfo, Experiment, ResourceState, ResourceType, User,
 } from 'types';
 import { capitalize } from 'utils/string';
+
+export const jsonToDeterminedInfo = (data: ioTypeDeterminedInfo): DeterminedInfo => {
+  return {
+    clusterId: data.cluster_id,
+    masterId: data.master_id,
+    telemetry: {
+      enabled: data.telemetry.enabled,
+      segmentKey: data.telemetry.segment_key,
+    },
+    version: data.version,
+  };
+};
+
+export const jsonToUsers = (data: ioTypeUsers): User[] => {
+  return data.map(user => ({
+    id: user.id,
+    isActive: user.active,
+    isAdmin: user.admin,
+    username: user.username,
+  }));
+};
 
 export const jsonToAgents = (data: ioTypeAgents): Agent[] => {
   return Object.keys(data).map(agentId => {
@@ -36,15 +57,6 @@ export const jsonToAgents = (data: ioTypeAgents): Agent[] => {
       resources,
     };
   });
-};
-
-export const jsonToUsers = (data: ioTypeUsers): User[] => {
-  return data.map(user => ({
-    id: user.id,
-    isActive: user.active,
-    isAdmin: user.admin,
-    username: user.username,
-  }));
 };
 
 const jsonToGenericCommands = (data: ioTypeGenericCommands, type: CommandType): Command[] => {

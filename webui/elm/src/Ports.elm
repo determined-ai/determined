@@ -7,6 +7,7 @@ port module Ports exposing
     , exitFullscreenPort
     , jumpToPointPort
     , kickResizePort
+    , loadAnalytics
     , openNewWindowPort
     , requestFullscreenPort
     , resizeAceEditor
@@ -88,6 +89,9 @@ port setPageTitle : String -> Cmd a
 
 
 -- Segment Analytics
+
+
+port loadAnalytics : String -> Cmd msg
 
 
 port setAnalyticsIdentityPort : String -> Cmd msg

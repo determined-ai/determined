@@ -223,6 +223,12 @@ let DetShims = function() {
   }
 
   function addSegmentAnalyticsPorts(app) {
+    app.ports.loadAnalytics.subscribe((segmentKey) => {
+      if (!window.analytics) return;
+      window.analytics.load(segmentKey);
+      window.analytics.page();
+    });
+
     app.ports.setAnalyticsIdentityPort.subscribe((clusterId) => {
       if (!window.analytics) return;
       window.analytics.identify(clusterId);

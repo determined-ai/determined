@@ -4,12 +4,15 @@
 
 declare namespace NodeJS {
   export interface ProcessEnv {
+    IS_DEV: boolean;
     VERSION: string;
   }
 }
 
 export declare global {
-  /* eslint-disable @typescript-eslint/no-explicit-any */
-  interface Window { dev: any }
+  interface Window {
+    analytics: any;
+    dev: any;
+  }
 }
 

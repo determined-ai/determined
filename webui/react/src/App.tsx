@@ -10,15 +10,40 @@ import Agents from 'contexts/Agents';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
+import Info from 'contexts/Info';
 import Users from 'contexts/Users';
+import useRestApi from 'hooks/useRestApi';
 import useRouteTracker from 'hooks/useRouteTracker';
+import { ioDeterminedInfo } from 'ioTypes';
 import { appRoutes } from 'routes';
-import { getDeterminedInfo } from 'services/api';
+import { jsonToDeterminedInfo } from 'services/decoder';
 import { lightTheme } from 'themes';
+import { DeterminedInfo } from 'types';
 
 const AppView: React.FC = () => {
   const { isAuthenticated, user } = Auth.useStateContext();
+  const info = Info.useStateContext();
+  const setInfo = Info.useActionContext();
   const username = user ? user.username : undefined;
+  const [ infoResponse, requestInfo ] =
+    useRestApi<DeterminedInfo>(ioDeterminedInfo, { mappers: jsonToDeterminedInfo });
+
+  useRouteTracker();
+
+  useEffect(() => requestInfo({ url: '/info' }), [ requestInfo ]);
+
+  useEffect(() => {
+    if (!info.telemetry.enabled || !info.telemetry.segmentKey) return;
+    window.analytics.load(info.telemetry.segmentKey);
+    window.analytics.identify(info.clusterId);
+    window.analytics.page();
+  }, [ info ]);
+
+  useEffect(() => {
+    if (!infoResponse.data) return;
+    setInfo({ type: Info.ActionType.Set, value: infoResponse.data });
+  }, [ infoResponse, setInfo ]);
+
   return (
     <Base>
       {isAuthenticated && <NavBar username={username} />}
@@ -33,25 +58,10 @@ const AppView: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  useRouteTracker();
-
-  // TODO(hkang1): Rewrite this with the RestApiContext once it is available.
-  const fetchDeterminedInfo = async (): Promise<void> => {
-    try {
-      const info = await getDeterminedInfo();
-      window.analytics.identify(info.cluster_id);
-    } catch (e) {
-      window.analytics.track('Api Failed', e);
-    }
-  };
-
-  useEffect(() => {
-    fetchDeterminedInfo();
-  }, [ fetchDeterminedInfo ]);
-
   return (
     <Compose components={[
       Auth.Provider,
+      Info.Provider,
       Users.Provider,
       Agents.Provider,
       ClusterOverview.Provider,

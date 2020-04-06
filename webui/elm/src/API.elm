@@ -409,11 +409,19 @@ killShell requestHandlers id =
         }
 
 
+decodeTelemetry : Decoder Types.Telemetry
+decodeTelemetry =
+    D.succeed Types.Telemetry
+        |> required "enabled" bool
+        |> optional "segment_key" (D.map Just string) Nothing
+
+
 decodeDeterminedInfo : Decoder Types.DeterminedInfo
 decodeDeterminedInfo =
     D.succeed Types.DeterminedInfo
         |> required "cluster_id" string
         |> required "master_id" string
+        |> required "telemetry" decodeTelemetry
         |> required "version" string
 
 

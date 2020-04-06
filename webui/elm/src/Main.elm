@@ -119,7 +119,19 @@ update msg model =
             ( model, Cmd.none )
 
         GotDeterminedInfo info ->
-            ( { model | info = Just info }, Ports.setAnalyticsIdentityPort info.clusterId )
+            let
+                cmds =
+                    case ( info.telemetry.enabled, info.telemetry.segmentKey ) of
+                        ( True, Just segmentKey ) ->
+                            Cmd.batch
+                                [ Ports.loadAnalytics segmentKey
+                                , Ports.setAnalyticsIdentityPort info.clusterId
+                                ]
+
+                        _ ->
+                            Cmd.none
+            in
+            ( { model | info = Just info }, cmds )
 
         GotTimeZone zone ->
             let
@@ -191,12 +203,23 @@ update msg model =
                                 tensorboardListInfo
 
                         _ ->
-                            ( model
-                            , Cmd.batch
-                                [ Ports.setAnalyticsPagePort url.path
-                                , Navigation.pushUrl model.session.key (Url.toString url)
-                                ]
-                            )
+                            let
+                                navCmd =
+                                    Navigation.pushUrl model.session.key (Url.toString url)
+
+                                cmds =
+                                    case model.info of
+                                        Just info ->
+                                            if info.telemetry.enabled then
+                                                Cmd.batch [ Ports.setAnalyticsPagePort url.path, navCmd ]
+
+                                            else
+                                                navCmd
+
+                                        _ ->
+                                            navCmd
+                            in
+                            ( model, cmds )
 
                 Browser.External href ->
                     ( model
