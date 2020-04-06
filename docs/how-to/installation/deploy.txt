@@ -21,13 +21,17 @@ Install ``det-deploy`` by running
 
    pip install determined-deploy
 
+
+.. _configuring-cluster-install:
+
 Configuring and Starting the Cluster
 ------------------------------------
 
 A configuration file is needed to set important values in the master,
 such as where to save model checkpoints. For information about how to
-create a configuration file, see :ref:`cluster-configuration`. The
-configuration file must be named ``master.yaml`` (but it can be in any
+create a configuration file, see :ref:`cluster-configuration`. There are also
+:ref:`sample configuration files available<config-template>`.  The
+configuration file you create must be named ``master.yaml`` (but it can be in any
 directory).
 
 .. note::
@@ -43,7 +47,13 @@ On the machine where you wish to run the master, run
 
 .. code::
 
-   det-deploy local fixture-up --etc-root <directory containing master.yaml>
+   det-deploy local fixture-up
+
+
+.. note::
+
+  For production deployments, you'll want to :ref:`use a cluster configuration file.<configuring-cluster-install>`
+  To provide this configuration file to ``det-deploy``, use the flag ``--etc-root <directory containing master.yaml>``.
 
 This will start the master, listening on port 8080. To verify that the
 master is running, navigate to ``http://<master-hostname>:8080`` in a
