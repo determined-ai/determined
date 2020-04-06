@@ -7,6 +7,8 @@ from determined_common.api.experiment import (
     make_test_experiment_config,
     patch_experiment,
 )
+from determined_common.api.checkpoint import Checkpoint
+from determined_common.api.trial import Trial
 from determined_common.api.gql_query import GraphQLQuery, decode_bytes
 from determined_common.api.request import (
     WebSocket,

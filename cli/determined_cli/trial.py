@@ -2,13 +2,13 @@ import distutils.util
 import json
 import time
 from argparse import Namespace
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from termcolor import colored
 
 from determined_cli import render
-from determined_common import api, checkpoint, constants
-from determined_common.api import gql
+from determined_common import api, constants
+from determined_common.api import Trial, gql
 from determined_common.check import check_gt
 
 from .declarative_argparse import Arg, Cmd, Group
@@ -28,16 +28,16 @@ def format_checkpoint(checkpoint: gql.checkpoints) -> List[Any]:
         raise AssertionError("Invalid checkpoint state: {}".format(checkpoint.state))
 
 
-def format_validation(validation: gql.validations) -> List[Any]:
+def format_validation(validation: Dict[str, Any]) -> List[Any]:
     if not validation:
         return [None, None]
 
-    if validation.state == constants.COMPLETED:
-        return [constants.COMPLETED, json.dumps(validation.metrics, indent=4)]
-    elif validation.state in (constants.ACTIVE, constants.ERROR):
-        return [validation.state, None]
+    if validation["state"] == constants.COMPLETED:
+        return [constants.COMPLETED, json.dumps(validation["metrics"], indent=4)]
+    elif validation["state"] in (constants.ACTIVE, constants.ERROR):
+        return [validation["state"], None]
     else:
-        raise AssertionError("Invalid validation state: {}".format(validation.state))
+        raise AssertionError("Invalid validation state: {}".format(validation["state"]))
 
 
 @authentication_required
@@ -57,9 +57,9 @@ def describe_trial(args: Namespace) -> None:
     steps.start_time()
     steps.end_time()
 
-    checkpoint = steps.checkpoint()
-    checkpoint.state()
-    checkpoint.uuid()
+    checkpoint_gql = steps.checkpoint()
+    checkpoint_gql.state()
+    checkpoint_gql.uuid()
 
     validation = steps.validation()
     validation.state()
@@ -195,16 +195,15 @@ def logs(args: Namespace) -> None:
 
 @authentication_required
 def download(args: Namespace) -> None:
-    path, ckpt = checkpoint.download(
-        args.trial_id,
+    checkpoint = Trial(args.trial_id, master=args.master, attempt_auth=False).select_checkpoint(
         latest=args.latest,
         best=args.best,
-        output_dir=args.output_dir,
         uuid=args.uuid,
-        master=args.master,
-        metric_name=args.metric_name,
+        sort_by=args.sort_by,
         smaller_is_better=args.smaller_is_better,
     )
+
+    path = checkpoint.download(path=args.output_dir)
 
     if args.quiet:
         print(path)
@@ -215,14 +214,14 @@ def download(args: Namespace) -> None:
 
     # Print information about the downloaded step/checkpoint.
     table = [
-        ["Step #", ckpt.step.id],
-        ["Start Time", render.format_time(ckpt.step.start_time)],
-        ["End Time", render.format_time(ckpt.step.end_time)],
-        ["Checkpoint UUID", format_checkpoint(ckpt)[1]],
-        ["Validation Metrics", format_validation(ckpt.validation)[1]],
+        ["Batch #", checkpoint.batch_number],
+        ["Start Time", render.format_time(checkpoint.start_time)],
+        ["End Time", render.format_time(checkpoint.end_time)],
+        ["Checkpoint UUID", checkpoint.uuid],
+        ["Validation Metrics", format_validation(checkpoint.validation)[1]],
     ]
 
-    headers, values = zip(*table)
+    headers, values = zip(*table)  # type: ignore
 
     render.tabulate_or_csv(headers, [values], False)
 
@@ -282,11 +281,11 @@ args_description = [
                         help="Desired output directory for the checkpoint",
                     ),
                     Arg(
-                        "--metric-name",
+                        "--sort-by",
                         type=str,
                         default=None,
                         help="The name of the validation metric to sort on. This argument is only "
-                        "used with --best. If --best is passed without --metric-name, the "
+                        "used with --best. If --best is passed without --sort-by, the "
                         "experiment's searcher metric is assumed. If this argument is specified, "
                         "--smaller-is-better must also be specified.",
                     ),
@@ -294,9 +293,9 @@ args_description = [
                         "--smaller-is-better",
                         type=lambda s: bool(distutils.util.strtobool(s)),
                         default=None,
-                        help="The sort order for metrics when using --best with --metric-name. For "
+                        help="The sort order for metrics when using --best with --sort-by. For "
                         "example, 'accuracy' would require passing '--smaller-is-better false'. If "
-                        "--metric-name is specified, this argument must be specified.",
+                        "--sort-by is specified, this argument must be specified.",
                     ),
                     Arg(
                         "-q",

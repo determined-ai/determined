@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from determined.pytorch import load
+from determined.api import Trial
 from tests.integrations import config as conf
 from tests.integrations import experiment as exp
 from tests.integrations.cluster_utils import skip_test_if_not_enough_gpus
@@ -24,7 +24,7 @@ def test_pytorch_load() -> None:
         config, conf.official_examples_path("mnist_pytorch"), 1
     )
     trials = exp.experiment_trials(experiment_id)
-    nn = load(trials[0].id, latest=True)
+    nn = Trial(trials[0].id).select_checkpoint(latest=True).load()
     assert isinstance(nn, torch.nn.Module)
 
 
@@ -124,7 +124,7 @@ def test_pytorch_cifar10_const() -> None:
         config, conf.official_examples_path("cifar10_cnn_pytorch"), 1
     )
     trials = exp.experiment_trials(experiment_id)
-    nn = load(trials[0].id, latest=True)
+    nn = Trial(trials[0].id).select_checkpoint(latest=True).load()
     assert isinstance(nn, torch.nn.Module)
 
 
@@ -139,5 +139,5 @@ def test_pytorch_cifar10_parallel() -> None:
         config, conf.official_examples_path("cifar10_cnn_pytorch"), 1
     )
     trials = exp.experiment_trials(experiment_id)
-    nn = load(trials[0].id, latest=True)
+    nn = Trial(trials[0].id).select_checkpoint(latest=True).load()
     assert isinstance(nn, torch.nn.Module)
