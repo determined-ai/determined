@@ -215,8 +215,10 @@ class RCNNTrial(TensorpackTrial):  # type: ignore
 
     def validation_metrics(self) -> Union[List[str], Evaluator]:
         assert self.trainer_type
-        num_gpus_per_agent = self.context.get_size() // self.context.get_num_agents()
-        machine_rank = self.context.get_rank() // num_gpus_per_agent
+        num_gpus_per_agent = (
+            self.context.distributed.get_size() // self.context.distributed.get_num_agents()
+        )
+        machine_rank = self.context.distributed.get_rank() // num_gpus_per_agent
         return RCNNEvaluator(
             eval_dataset="coco_minival2014",
             in_names=["image"],
@@ -229,12 +231,16 @@ class RCNNTrial(TensorpackTrial):  # type: ignore
         )
 
     def tensorpack_callbacks(self) -> List[tp.Callback]:
-        num_workers = max(1, self.context.get_num_agents())
+        num_workers = max(1, self.context.distributed.get_num_agents())
         return [
             ScheduleSetter(
                 "learning_rate",
                 make_schedule(
-                    num_workers * len(self.context.get_size() // self.context.get_num_agents())
+                    num_workers
+                    * len(
+                        self.context.distributed.get_size()
+                        // self.context.distributed.get_num_agents()
+                    )
                 ),
             )
         ]

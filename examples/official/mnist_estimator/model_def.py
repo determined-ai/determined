@@ -72,7 +72,7 @@ class MNistTrial(EstimatorTrial):
         self.context = context
 
         # Create a unique download directory for each rank so they don't overwrite each other.
-        self.download_directory = f"/tmp/data-rank{self.context.get_rank()}"
+        self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.data_downloaded = False
 
     def build_estimator(self) -> tf.estimator.Estimator:

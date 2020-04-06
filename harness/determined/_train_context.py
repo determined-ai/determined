@@ -54,6 +54,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
         self.env = env  # type: det.EnvContext
         self.hvd_config = hvd_config  # type: horovod.HorovodContext
+        self.distributed = DistributedContext(env, hvd_config)
 
         self._per_slot_batch_size, self._global_batch_size = _calculate_batch_sizes(env)
 
@@ -120,39 +121,6 @@ class _TrainContext(metaclass=abc.ABCMeta):
             )
         return self.env.hparams[name]
 
-    def get_rank(self) -> int:
-        """
-        Return the rank of the process in the trial.
-        """
-        if not self.hvd_config.use:
-            return 0
-
-        return cast(int, horovod.hvd.rank())
-
-    def get_size(self) -> int:
-        """
-        Return the number of slots this trial is running on.
-        """
-        return self.env.experiment_config.slots_per_trial()
-
-    def get_local_rank(self) -> int:
-        """
-        Return the rank of the process on the agent.
-        """
-        if not self.hvd_config.use:
-            return 0
-
-        return cast(int, horovod.hvd.local_rank())
-
-    def get_num_agents(self) -> int:
-        """
-        Return the number of agents this trial is running on.
-        """
-        if not self.hvd_config.use:
-            return 1
-
-        return cast(int, self.get_size() // horovod.hvd.local_size())
-
 
 class TrialContext(_TrainContext):
     """
@@ -174,3 +142,42 @@ class NativeContext(_TrainContext):
 
     def set_train_fn(self, train_fn: Callable[[], None]) -> None:
         self._train_fn = train_fn
+
+
+class DistributedContext:
+    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
+        self._env = env
+        self._hvd_config = hvd_config
+
+    def get_rank(self) -> int:
+        """
+        Return the rank of the process in the trial.
+        """
+        if not self._hvd_config.use:
+            return 0
+
+        return cast(int, horovod.hvd.rank())
+
+    def get_local_rank(self) -> int:
+        """
+        Return the rank of the process on the agent.
+        """
+        if not self._hvd_config.use:
+            return 0
+
+        return cast(int, horovod.hvd.local_rank())
+
+    def get_size(self) -> int:
+        """
+        Return the number of slots this trial is running on.
+        """
+        return self._env.experiment_config.slots_per_trial()
+
+    def get_num_agents(self) -> int:
+        """
+        Return the number of agents this trial is running on.
+        """
+        if not self._hvd_config.use:
+            return 1
+
+        return cast(int, self.get_size() // horovod.hvd.local_size())

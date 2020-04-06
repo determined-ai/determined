@@ -30,7 +30,7 @@ class BertPytorch(PyTorchTrial):
         self.context = context
 
         # Create a unique download directory for each rank so they don't overwrite each other.
-        self.download_directory = f"/tmp/data-rank{self.context.get_rank()}"
+        self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.data_downloaded = False
 
     def download_dataset(self) -> None:
@@ -83,7 +83,7 @@ class BertPytorch(PyTorchTrial):
         label_list = processor.get_labels()
         num_labels = len(label_list)
 
-        cache_dir_per_rank = f"/tmp/{self.context.get_rank()}"
+        cache_dir_per_rank = f"/tmp/{self.context.distributed.get_rank()}"
         config = config_class.from_pretrained(
             self.context.get_data_config().get("model_name_or_path"),
             num_labels=num_labels,

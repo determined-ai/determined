@@ -152,7 +152,7 @@ if __name__ == "__main__":
     context = init(config, mode=det.Mode(args.mode), context_dir=str(pathlib.Path.cwd()))
 
     # Create a unique download directory for each rank so they don't overwrite each other.
-    download_directory = f"/tmp/data-rank{context.get_rank()}"
+    download_directory = f"/tmp/data-rank{context.distributed.get_rank()}"
     data_dir = download_mnist_tfrecords(download_directory)
 
     context.train_and_evaluate(

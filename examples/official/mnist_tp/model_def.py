@@ -91,7 +91,7 @@ class MNISTTrial(TensorpackTrial):
         self.context = context
 
         # Create a unique download directory for each rank so they don't overwrite each other.
-        self.download_directory = f"/tmp/data-rank{self.context.get_rank()}"
+        self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
 
     def build_model(self, trainer_type: str) -> tp.ModelDesc:
         return Model(self.context.get_hparams())
