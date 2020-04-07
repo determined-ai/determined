@@ -53,11 +53,6 @@ definition. The ``.detignore`` file uses the same syntax as
 byte-compiled Python files (e.g., ``.pyc`` files or ``__pycache__``
 directories) are always ignored.
 
-For backward compatibility, Determined also supports model definitions that consist
-of a single Python file. In this case, the ``<module>`` should be an empty
-string and ``<object reference>`` should be the name of the trial class defined
-in the Python file.
-
 .. _standard-model-definition:
 
 Model Definition Interfaces
