@@ -1,32 +1,22 @@
-.. _hp-adaptive-simple:
+.. _topic-guides_hp-tuning-det_adaptive-simple:
 
 Hyperparameter Search: Adaptive (Simple)
 ========================================
 
-The ``adaptive_simple`` search method is a theoretically principled and
-empirically state-of-the-art method that adaptively allocates resources
-to promising hyperparameter configurations while quickly eliminating
-poor ones. There are two interfaces to this search algorithm: the
-``adaptive_simple`` method is easier to configure and provides good
-defaults for most situations, whereas the :ref:`Adaptive (Advanced)
-<adaptive-advanced>` search method allows advanced users to have more
-fine-grained control over the behavior of the search.
+The ``adaptive_simple`` searcher takes two intuitive configuration options
+capturing how many configurations to search and a maximum resource budget
+allowed per configuration:
 
-The ``adaptive_simple`` search method takes two configuration settings:
-
--  ``max_steps``: The maximum number of steps that any trial that
-   survives to the end of the experiment will be trained for (a *step* is a
-   `fixed number <batches-per-step>` of batches). This quantity is
-   domain-specific and should roughly reflect the number of training steps
-   needed for the model to converge on the data set. For users who would like
-   to determine this number experimentally, train a model with reasonable
-   hyperparameters using the ``single`` search method.
 -  ``max_trials``: The maximum number of hyperparameter configurations
    that will be explored. Most of these configurations will *not* be
    trained to convergence; rather, the search method will use
    early-stopping to prune hyperparameter configurations that are not
    performing well.
-
-That is, ``max_steps`` is a property of the model itself (how long the
-model must be trained until convergence), whereas ``max_trials``
-controls how many resources the user would like the search to consume.
+-  ``max_steps``: The maximum number of steps that any trial that
+   survives to the end of the experiment will be trained for (a *step* is a
+   :ref:`fixed number <batches-per-step>` of batches). This quantity is
+   domain-specific and should roughly reflect the number of training steps
+   needed for the model to converge on the data set. For users who would like to
+   determine this number experimentally, train a model with reasonable
+   hyperparameters using the :ref:`single<topic-guides_hp-tuning-det_single>`
+   search method.

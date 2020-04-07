@@ -3,33 +3,60 @@
 Hyperparameter Tuning With Determined
 =====================================
 
-In machine learning, a common task is attempting to find good
-hyperparameters for a learning algorithm. Determined provides support for
-hyperparameter search as a first-class workflow. Several hyperparameter
-search algorithms are supported: ``single``, ``random``, ``grid``,
-``adaptive_simple``, ``adaptive``, and ``pbt``.
+Hyperparameter tuning is a common machine learning workflow that involves
+appropriately configuring the data, model architecture, and learning algorithm
+to yield an effective model. Hyperparameter tuning is a :ref:`challenging
+problem<topic-guides_hp-tuning-basics-difficulty>` in deep learning given the
+potentially large number of hyperparameters to consider. Determined provides
+support for hyperparameter search as a first-class workflow that is tightly
+integrated with Determined's job scheduler, which allows for efficient execution
+of state-of-the-art early-stopping based approaches as well as seamless
+parallelization of these methods.
 
-Here we give a brief introduction to the search methods. The fields
-mentioned in the descriptions below are specified under the ``searcher``
-field in the :ref:`experiment-configuration`.
+Adaptive Search
+---------------
+Our default recommended search method is adaptive search, an early-stopping
+based technique that speeds up traditional techniques like random search by
+periodically abandoning low-performing hyperparameter configurations in a
+principled fashion. Adaptive search builds on the two prototypical adaptive
+downsampling approaches, `Successive Halving
+<https://arxiv.org/pdf/1502.07943.pdf>`_ (SHA) and `Hyperband
+<https://arxiv.org/abs/1603.06560>`_, while also enabling seamless
+parallelization and a simpler user interface.
 
-In addition to the parameters that are specific to individual search
-algorithms, the following parameters may be provided for any algorithm.
+Determined offers two adaptive searchers that employ the same underlying
+algorithm but differ in their level of configurability.
 
--  ``metric``: The name of the validation metric to use when comparing
-   trials.
--  (optional) ``smaller_is_better``: Whether a smaller value of
-   ``metric`` is considered better performance (e.g., this would be
-   ``true`` for a loss metric and ``false`` for an accuracy metric).
-   Defaults to ``true``.
--  (optional) ``source_trial_id`` and ``source_checkpoint_uuid``: Only
-   one of these can be specified at a time. Initializes weights of all
-   trials to some prior checkpoint. If not specified, model weights are
-   initialized randomly.
+#. :ref:`Adaptive (Simple)<topic-guides_hp-tuning-det_adaptive-simple>` is
+   easier to configure and provides sensible default settings for most
+   situations. This searcher requires just two intuitive settings: the number of
+   configurations to evaluate, and the maximum allowed resource budget per
+   configuration.  We recommend starting with this searcher.
+#. :ref:`Adaptive (Advanced) <topic-guides_hp-tuning-det_adaptive-advanced>`
+   allows users to control the adaptive search behavior in a more fine-grained
+   way.
+
+Other Supported Methods
+-----------------------
+Determined also supports other common hyperparameter search algorithms:
+
+#. :ref:`Single<topic-guides_hp-tuning-det_single>` is appropriate for manual
+   hyperparameter tuning, as it trains a single hyperparameter configuration.
+#. :ref:`Grid<topic-guides_hp-tuning-det_grid>` brute force evaluates
+   all possible hyperparameter configurations and returns the best.
+#. :ref:`Random<topic-guides_hp-tuning-det_random>` evaluates a set of
+   hyperparameter configurations chosen at random and returns the best.
+#. :ref:`Population-based training (PBT)<topic-guides_hp-tuning-det_pbt>` begins
+   as random search but periodically replaces low-performing hyperparameter
+   configurations with ones *near* the high-performing points in the
+   hyperparameter space.
+
+Next Steps in Determined
+------------------------
+- :ref:`Experiment Configuration<experiment-configuration_searcher>`
 
 .. toctree::
-  :maxdepth: 0
-  :titlesonly:
+  :hidden:
 
   hp-single
   hp-grid

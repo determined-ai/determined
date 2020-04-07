@@ -47,7 +47,7 @@ searcher, search algorithm
    A type of hyperparameter search to use. The search algorithm
    determines how many trials will be run for a particular experiment
    and how the hyperparameters will be set. More information can be
-   found at :ref:`topic-guides_hp-tuning-algorithms`.
+   found at :ref:`topic-guides_hp-tuning-det`.
 
 slot
    A resource (GPU or CPU) that can be used for training. The maximum

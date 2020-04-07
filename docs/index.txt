@@ -57,8 +57,8 @@ Use the links below to start learning more about Determined's capabilities.
 
 **Hyperparameter Tuning**
 
-- :ref:`topic-guides_hp-tuning-algorithms`
 - :ref:`topic-guides_hp-tuning-basics`
+- :ref:`topic-guides_hp-tuning-det`
 
 **Distributed Training**
 
