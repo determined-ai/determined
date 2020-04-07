@@ -21,6 +21,8 @@ type Options struct {
 	BindIP     string `json:"bind_ip"`
 	BindPort   int    `json:"bind_port"`
 
+	VisibleGPUs string `json:"visible_gpus"`
+
 	TLS      bool   `json:"tls"`
 	CertFile string `json:"cert_file"`
 	KeyFile  string `json:"key_file"`
