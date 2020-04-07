@@ -4,8 +4,7 @@ import pathlib
 import subprocess
 
 determined_root_dir = pathlib.Path(__file__).absolute().parents[3]
-external_examples_dir = determined_root_dir.joinpath("examples", "official")
-experiment_dir = external_examples_dir.joinpath("mnist_tf_keras")
+experiment_dir = determined_root_dir.joinpath("tests", "integrations", "fixtures", "no_op")
 
 
 for _ in range(4):
@@ -14,7 +13,7 @@ for _ in range(4):
             "det",
             "experiment",
             "create",
-            str(experiment_dir.joinpath("const.yaml")),
+            str(experiment_dir.joinpath("single-very-many-long-steps.yaml")),
             str(experiment_dir),
         ],
         check=True,
