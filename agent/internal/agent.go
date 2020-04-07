@@ -189,7 +189,7 @@ func (a *agent) setup(ctx *actor.Context) error {
 			return err
 		case ok:
 			ctx.Log().Info("Nvidia runtime detected")
-			d, err := detectDevices()
+			d, err := detectDevices(a.Options.VisibleGPUs)
 			if err != nil {
 				return err
 			}

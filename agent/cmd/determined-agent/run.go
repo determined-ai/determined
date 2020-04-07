@@ -94,6 +94,9 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&opts.CertFile, "tls-cert", "", "Path to TLS certificate file")
 	cmd.Flags().StringVar(&opts.KeyFile, "tls-key", "", "Path to TLS key file")
 
+	// Device flags.
+	cmd.Flags().StringVar(&opts.VisibleGPUs, "visible-gpus", "", "GPUs to expose as slots")
+
 	// Debug flags.
 	cmd.Flags().IntVar(&opts.ArtificialSlots, "artificial-slots", 0, "")
 	cmd.Flags().Lookup("artificial-slots").Hidden = true

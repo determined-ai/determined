@@ -27,8 +27,8 @@ import (
 // `cpu_limit`.
 //
 // An error is returned instead if detection method failed unexpectedly
-func detectDevices() ([]device.Device, error) {
-	switch devices, err := detectGPUs(); {
+func detectDevices(visibleGPUs string) ([]device.Device, error) {
+	switch devices, err := detectGPUs(visibleGPUs); {
 	case err != nil:
 		return nil, errors.Wrap(err, "error while gathering GPU info through nvidia-smi command")
 	case len(devices) != 0:
@@ -53,11 +53,17 @@ func detectCPUs() ([]device.Device, error) {
 }
 
 var detectGPUsArgs = []string{"nvidia-smi", "--query-gpu=index,name,uuid", "--format=csv,noheader"}
+var detectGPUsIDFlagTpl = "--id=%v"
 
 // detectGPUs returns the list of available Nvidia GPUs.
-func detectGPUs() ([]device.Device, error) {
+func detectGPUs(visibleGPUs string) ([]device.Device, error) {
+	flags := detectGPUsArgs[1:]
+	if visibleGPUs != "" {
+		flags = append(flags, fmt.Sprintf(detectGPUsIDFlagTpl, visibleGPUs))
+	}
+
 	// #nosec G204
-	cmd := exec.Command(detectGPUsArgs[0], detectGPUsArgs[1:]...)
+	cmd := exec.Command(detectGPUsArgs[0], flags...)
 	out, err := cmd.Output()
 
 	if execError, ok := err.(*exec.Error); ok && execError.Err == exec.ErrNotFound {
