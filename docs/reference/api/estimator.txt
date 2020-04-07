@@ -1,10 +1,10 @@
-TensorFlow Estimator Model Definition
-=====================================
+determined.estimator
+====================
 
 .. _estimator-trial:
 
-EstimatorTrial Interface
-------------------------
+``EstimatorTrial``
+------------------
 
 .. autoclass:: determined.estimator.EstimatorTrial
     :members:
@@ -22,7 +22,7 @@ using the following Determined-provided wrappers.
 
 .. autofunction:: determined.estimator.EstimatorContext.wrap_dataset
 
-Examples for ``EstimatorTrial``
--------------------------------
+Examples
+--------
 
 -  :download:`mnist_estimator </examples/mnist_estimator.tgz>`

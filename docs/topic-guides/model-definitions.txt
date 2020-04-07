@@ -73,6 +73,6 @@ application frameworks it supports. Specifically, Determined currently
 supports five types of ``Trial`` interfaces encompassing three
 application frameworks:
 
--  :ref:`TensorFlow Estimator <estimator-trial>`,
--  :ref:`TensorFlow Keras <tf-keras-trial>`,
--  :ref:`PyTorch <pytorch-trial>`.
+-  :ref:`pytorch-trial`
+-  :ref:`tf-keras-trial`
+-  :ref:`estimator-trial`

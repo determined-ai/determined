@@ -14,7 +14,4 @@ The full list of reference guides can be found below:
   command-config
   config-template
   experiment-config
-  estimator
-  keras
-  pytorch
-  tensorpack
+  api/index
