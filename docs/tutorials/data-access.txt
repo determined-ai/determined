@@ -1,0 +1,182 @@
+.. _data-access:
+
+Data Access for Experiments
+===========================
+
+Nearly all experiments require training and validation
+data. In Determined, data access depends on the cluster infrastructure and the data storage.
+
+At the end of this tutorial, the reader should know:
+  #. Data Access Options
+  #. How To Access Your Data
+
+Overview
+---------
+Data is an important piece to model development. Each user has different storage options depending on their data characteristics, such as privacy, internal infrastructure, and data size. Determined supports the most common data storage infrastructures to allow integration into the user development environment. This tutorial highlights the three main methods to access data:
+
+#. **Data in the cloud (Recommended)**: Data stored in cloud providers, GCP or AWS
+#. **Data on premises**: Data available on the Determined cluster
+#. **Small Data**: Data smaller than 96MB
+
+The following sections will demonstrate each approach to access data.
+
+
+Data in the cloud (Recommended)
+-------------------------------
+This section describes how to access data stored in a cloud provider.
+
+A Determined cluster managed by :ref:`Dynamic Agents <dynamic-agents-overview>` requires data storage in the cloud and is recommended for on-premise deployments. It is highly recommended to store the data on the same cloud infrastructure as a Determined Cluster.
+
+Object Storage Download
+"""""""""""""""""""""""""
+
+One method for managing data storage in the cloud is using an object storage solution, such as `Amazon S3 <https://aws.amazon.com/s3/>`_ or `Google Cloud Storage <https://cloud.google.com/storage>`_.
+
+The agents and trial containers must have the proper authentication and authorization for accessing the object storage. A :ref:`custom environment<custom-env>` must be configured to ensure that the trial container image is properly configured with credentials. When using :ref:`Dynamic Agents on GCP<gcp-dynamic-agents>`, a system administrator of will need to configure a valid :ref:`service_account<cluster-configuration>` with read credentials. When using :ref:`Dynamic Agents on AWS<aws-dynamic-agents>`, the system administrator will need to configure an :ref:`iam_instance_profile_arn<cluster-configuration>` with read credentials.
+
+Once security access is configured, we can use a open-source libraries such as `boto3 <https://boto3.amazonaws.com/>`_ or `gcsfs
+<https://gcsfs.readthedocs.io/en/latest/>`_ to write our data loaders to stream directly from object storage in source code.
+
+The code below uses ``boto3`` to load data from an S3 bucket. The bucket name is accessed from the configuration file. The ``download_directory`` states where to store the data for this trial. The ``self.context.get_rank()`` helps prevent processes (one per gpu) from overriding data from each other. Once the data path has been created, ``s3.download_file(s3_bucket, data_file, filepath)`` fetches the file from S3 based on the bucket and stores in the defined file path. Now, the data can be accessed in the defined ``download_directory``. All functions that download data should be called in the trial's ``__init__`` function.
+
+.. code:: python
+
+  import boto3
+  import os
+
+  def download_data_from_s3(self):
+      s3_bucket = self.context.get_data_config()['bucket']
+      download_directory = f"/tmp/data-rank{self.context.get_rank()}"
+      data_file = 'data.csv'
+
+      s3 = boto3.client('s3')
+      os.makedirs(download_directory, exist_ok=True)
+      filepath = os.path.join(download_directory, f)
+      if not os.path.exists(filepath):
+          s3.download_file(s3_bucket, data_file, filepath)
+      return download_directory
+
+Object Storage Streaming
+"""""""""""""""""""""""""
+Similar to Object Storage Download, data can be accessed through S3 or GCS. When streaming, the data is fetched from the cloud storage as needed for training to reduce the download overhead cost for every trial startup. However, the data should be pre-batched in the cloud storage with each batch stored as a separate file. Overall, this can increase performance depending on the data structure.
+
+For streaming data, a custom ``torch.utils.data.Dataset`` or ``tf.keras.utils.Sequence`` object is required for their respective framework. These classes require a declared ``__getitem__`` function that returns a batch or specific item based on provided an index. For streaming data, this function will fetch the required data from the cloud storage.
+
+Below, we create a custom ``tf.keras.utils.Sequence`` class. In the ``__getitem__`` function, ``boto3`` fetches the data based on the provided bucket and key.
+
+.. code:: python
+
+  import boto3
+
+  class ObjectStorageSequence(tf.keras.utils.Sequence): 
+      ...
+      
+      def __init__(self):
+          self.s3_client = boto3.client('s3')
+
+      def __getitem__(self, idx):
+          bucket, key = get_s3_loc_for_batch(idx)
+          blob_data = self.s3_client.get_object(Bucket=bucket, Key=key)["Body"].read()
+          return data_to_batch(blob_data)
+
+
+Network Attached Storage
+""""""""""""""""""""""""""
+`Network-attached storage <https://en.wikipedia.org/wiki/Network-attached_storage>`_ (e.g. an `NFS mount <https://en.wikipedia.org/wiki Network_File_System>`_) typically directly mounts a file system directly to the instance. This includes AWS's `Elastic File System <https://aws.amazon.com/efs/>`_ and GCP's `Cloud Filestore <https://cloud.google.com/filestore>`_. This section describes how to configure our experiment workflows to reference data stored in on-premises infrastructure.
+
+This option assumes all Determined agent instances have the desired data available at the same filesystem path. The configuration options to automatically mount the file systems for each agent can be found :ref:`install-aws` and :ref:`install-gcp`.
+
+The network attached storage must also be mounted to the trial containers. The :ref:`experiment-configuration` contains a ``bind_mounts`` sections. Each bind mount contains a ``host_path`` and ``container_path``.  The ``host_path`` specify the absolute path to the filesystem path where the data is available on each agent instance. In otherwords, the ``host_path`` points to where the network attached storage is located on the instance. The ``container_path`` specifies where the model definition source code can access the data from inside the container filesystem. It points to where the data should be mounted in the trial container.
+
+For easier management, set the ``container_path`` to match the ``host_path`` to the same locations. It is recommended to set each bind mount setting ``read_only`` to true on each bind mount, for guarantees that the experiment should only _read_ this data instead of modifying it.
+
+The following example assumes a Determined cluster is configured with some data available at ``/mnt/data`` on each agent. We
+configure our experiment configuration as follows:
+
+.. code:: yaml
+
+    bind_mounts:
+      - host_path: /mnt/data
+        container_path: /mnt/data
+        read_only: true
+
+Now, we can write Python code in our :ref:`model-definitions` to access any data under the ``/mnt/data`` folder as follows:
+
+.. code:: python
+
+    def build_training_data_loader(self):
+        return make_data_loader(data_path="/mnt/data/training", ...)
+
+    def build_validation_data_loader(self):
+        return make_data_loader(data_path="/mnt/data/validation", ...)
+
+
+Data On-Premises
+----------------
+
+This section describes how to configure our experiment workflows to reference
+data stored in on-premises infrastructure. This option makes the following
+assumptions:
+
+* The Determined cluster and data storage are both managed on-premises.
+* All Determined agent instances have the desired data available at the same filesystem
+  path. In Determined clusters with more than a single agent, `Network-attached
+  storage <https://en.wikipedia.org/wiki/Network-attached_storage>`_ typically exposes
+  this data to each Determined agent instance at the same path.
+
+
+Similar to network attached storage, the network attached storage is mounted to the trial containers. The :ref:`experiment-configuration` contains a ``bind_mounts`` sections. Each bind mount contains a ``host_path`` and ``container_path``.  The ``host_path`` specify the absolute path to the filesystem path where the data is available on each agent instance. In otherwords, the ``host_path`` points to where the network attached storage is located on the instance. The ``container_path`` specifies where the model definition source code can access the data from inside the container filesystem. It points to where the data should be mounted in the trial container.
+
+For easier management, set the ``container_path`` to match the ``host_path`` to the same locations. It is recommended to set each bind mount setting ``read_only`` to true on each bind mount, for guarantees that the experiment should only _read_ this data instead of modifying it.
+
+The following example assumes a Determined cluster is configured with some data available at ``/mnt/data`` on each agent. We
+configure our experiment configuration as follows:
+
+.. code:: yaml
+
+    bind_mounts:
+      - host_path: /mnt/data
+        container_path: /mnt/data
+        read_only: true
+
+Now, we can write Python code in our :ref:`model-definitions` to access any data under the ``/mnt/data`` folder as follows:
+
+.. code:: python
+
+    def build_training_data_loader(self):
+        return make_data_loader(data_path="/mnt/data/training", ...)
+
+    def build_validation_data_loader(self):
+        return make_data_loader(data_path="/mnt/data/validation", ...)
+
+Embed in Model Definition
+--------------------------
+Determined requires a submission to have a defined :ref:`Model Definition<model-definitions>` directory. The model definition directory references all the training code and must be less than ``96MB``. However, Determined does not restricted file types on submission, such as ``csv`` or ``pickle``. Therefore, data less than ``96MB`` can be included in the model definition directory.
+
+For example, the model definition directory below contains the model definition and a data ``.csv`` file.
+
+.. code:: sh
+
+        .
+        ├── data.csv (5 KB)
+        ├── __init__.py (0)
+        └── model_def.py (4.1 K)
+
+As seen above, the data is 5KB and the entire contents of the directory is less than 96MB. Therefore can be submitted with the model definition using the command:
+
+.. code:: sh
+
+    det create experiment const.yaml .
+
+When a new experiment is created, Determined injects the model definition directory's contents on each agent for each trial to use. Any data placed in the directory can then be accessed through relative filepath. The code below uses the ``pandas`` library to load in the ``data.csv`` through relative filepath.
+
+.. code:: python
+
+  df = pandas.read_csv('data.csv')
+
+
+Next Steps
+-----------
+- :ref:`experiment-configuration`
+- :ref:`command-configuration`
+- :ref:`topic-guides_yaml`

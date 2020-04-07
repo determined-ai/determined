@@ -15,6 +15,7 @@ The full list of our tutorials can be found below:
   :maxdepth: 0
   :titlesonly:
 
+  data-access
   notebook-tutorial
   pytorch-mnist-tutorial
   tf-mnist-tutorial
