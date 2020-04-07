@@ -220,6 +220,14 @@ class TFKerasTrialController(det.LoopTrialController):
 
             return session
         else:
+            gpus = tf.config.experimental.list_physical_devices("GPU")
+
+            if len(gpus) > 0:
+                local_rank = hvd.local_rank() if hvd_config.use else 0
+                gpu = gpus[local_rank]
+                tf.config.set_visible_devices(gpu, "GPU")
+                tf.config.experimental.set_memory_growth(gpu, True)
+
             return None
 
     @staticmethod
