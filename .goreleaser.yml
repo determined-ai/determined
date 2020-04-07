@@ -13,6 +13,8 @@ builds:
       - CGO_ENABLED=0
     ldflags:
       - -X github.com/determined-ai/determined/master/version.Version={{.Env.VERSION}}
+      - -X github.com/determined-ai/determined/master/internal.DefaultSegmentMasterKey={{.Env.DET_SEGMENT_MASTER_KEY}}
+      - -X github.com/determined-ai/determined/master/internal.DefaultSegmentWebUIKey={{.Env.DET_SEGMENT_WEBUI_KEY}}
     goos:
       - linux
       - darwin
