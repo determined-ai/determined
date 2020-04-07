@@ -252,6 +252,5 @@ type InternalConfig struct {
 
 // NativeConfig represents configuration set by Determined native implementations.
 type NativeConfig struct {
-	Command   []string `json:"command"`
-	Framework string   `json:"framework"`
+	Command []string `json:"command"`
 }
