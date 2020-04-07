@@ -1,8 +1,4 @@
-"""
-When distributed strategy is enabled, there is significant overhead for each
-call to model.fit(). To overcome this we launch a second process called
-TFKerasTrialController which stays inside the model.fit() call until we need to
-perform validation.
+r"""
 """
 
 import copy

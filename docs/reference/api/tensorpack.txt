@@ -1,7 +1,7 @@
 .. _tensorpack:
 
-Tensorpack Model Definition
-===========================
+determined.tensorpack
+=====================
 
 This part of the documentation describes how to train a Tensorpack model
 in Determined.

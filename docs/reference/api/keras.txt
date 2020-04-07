@@ -1,0 +1,85 @@
+determined.keras
+================
+
+.. _tf-keras-trial:
+
+``TFKerasTrial``
+----------------
+
+.. autoclass:: determined.keras.TFKerasTrial
+    :members:
+    :exclude-members: trial_controller_class
+    :inherited-members:
+    :member-order: bysource
+
+.. _keras-data-loading:
+
+Data Loading
+------------
+
+There are two supported data types for loading data into ``tf.keras`` models:
+an object that implements the `tf.keras.utils.Sequence
+<https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__ interface,
+or a `tf.data.Dataset
+<https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/data/Dataset>`__.
+
+Loading data is done by defining ``build_training_data_loader`` and
+``build_validation_data_loader`` functions. Each should return one of the
+supported data types mentioned above.
+
+The behavior of ``Sequence`` objects should be
+familiar if you have used ``fit_generator``. Like in ``tf.keras``, these
+``Sequence`` objects should return batches of data (i.e.,
+either ``(inputs, targets)`` or ``(inputs, targets, sample_weights``)).
+Examples can be found in :ref:`tf-keras-trial`.
+
+.. warning::
+  If you are using ``tf.data.Dataset`` with distributed training, Deterimend's
+  support for automatically checkpointing and resuming workloads does
+  not work correctly. Therefore, using ``tf.data.Dataset`` inputs with
+  distributed training is currently not recommended.
+
+**Required Wrappers**
+
+To use ``tf.data.Dataset`` users need to wrap their datasets using
+Determined-provided wrappers.
+
+.. autofunction:: determined.keras.TFKerasContext.wrap_dataset
+
+
+Multithreading / Multiprocessing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We support multithreading and multiprocessing only for ``Sequence``\ s.  This
+can be done by returning an instance of
+``determined.keras.KerasDataAdapter`` as one of the data loaders.
+
+.. autoclass:: determined.keras.KerasDataAdapter
+
+   .. automethod:: __init__
+
+**Usage Examples**
+
+-  Use main Python process with no multithreading and no multiprocessing
+
+::
+
+   KerasDataAdapter(sequence, workers=0, use_multiprocessing=False)
+
+-  Use one background process
+
+::
+
+   KerasDataAdapter(sequence, workers=1, use_multiprocessing=True)
+
+-  Use two background threads
+
+::
+
+   KerasDataAdapter(sequence, workers=2, use_multiprocessing=False)
+
+
+Examples
+--------
+
+-  :download:`cifar10_cnn_tf_keras </examples/cifar10_cnn_tf_keras.tgz>`
