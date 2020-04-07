@@ -4,8 +4,8 @@ export VERSION := $(shell cat ../VERSION)
 
 BUILDDIR ?= ../build
 
-EXAMPLES := $(wildcard ../projects/external/*/.)
-EXAMPLES_DIRS := $(patsubst ../projects/external/%/., $(BUILDDIR)/docs-downloads/examples/%.tgz, $(EXAMPLES))
+EXAMPLES := $(wildcard ../examples/official/*/.)
+EXAMPLES_DIRS := $(patsubst ../examples/official/%/., $(BUILDDIR)/docs-downloads/examples/%.tgz, $(EXAMPLES))
 
 # You can set these variables from the command line.
 SPHINXOPTS    = -W
@@ -30,7 +30,7 @@ build: $(EXAMPLES_DIRS) sp-html
 	mkdir -p $$(dirname $(TARGETDIR))
 	cp -r $(OUTDIR)/html $(TARGETDIR)
 
-$(BUILDDIR)/docs-downloads/examples/%.tgz: ../projects/external/%/
+$(BUILDDIR)/docs-downloads/examples/%.tgz: ../examples/official/%/
 	find "$<" \( -name __pycache__ -o -name \*.pyc \) -delete
 	mkdir -p $$(dirname "$@")
 	$(TAR) -czf "$@" -C "$<" .
