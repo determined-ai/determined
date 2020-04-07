@@ -14,6 +14,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+// These are package-level variables so that they can be set at link time.
+var (
+	DefaultSegmentMasterKey = ""
+	DefaultSegmentWebUIKey  = ""
+)
+
 // DefaultConfig returns the default configuration of the master.
 func DefaultConfig() *Config {
 	defaultExp := model.DefaultExperimentConfig()
@@ -51,8 +57,8 @@ func DefaultConfig() *Config {
 		Root: "/usr/share/determined/master",
 		Telemetry: TelemetryConfig{
 			Enabled:          true,
-			SegmentMasterKey: "rpkD9yaoFe16ZrrU8oYJwabaEYpqfsSn",
-			SegmentWebUIKey:  "M73ylQEXzfZ2iF2XHnqaXWlJh9aSCb0u",
+			SegmentMasterKey: DefaultSegmentMasterKey,
+			SegmentWebUIKey:  DefaultSegmentWebUIKey,
 		},
 	}
 }

@@ -72,6 +72,10 @@ DET_DEV_AGENT_IMAGE := determinedai/determined-dev:determined-agent-$(DET_GIT_CO
 DET_DEV_MASTER_IMAGE := determinedai/determined-dev:determined-master-$(DET_GIT_COMMIT)
 export DET_IMAGES := $(DET_DEV_AGENT_IMAGE),$(DET_DEV_MASTER_IMAGE)
 
+# These variables are used in the master build; the values here are the keys for the dev sources.
+export DET_SEGMENT_MASTER_KEY ?= rpkD9yaoFe16ZrrU8oYJwabaEYpqfsSn
+export DET_SEGMENT_WEBUI_KEY ?= M73ylQEXzfZ2iF2XHnqaXWlJh9aSCb0u
+
 all: get-deps build-docker
 
 # combined-reqs.txt contains the pinned versions for all development
