@@ -1,0 +1,245 @@
+.. _gcp-dynamic-agents:
+
+Dynamic Agents on GCP
+=====================
+
+This document describes how to install, configure, and upgrade a
+deployment of Determined with Dynamic Agents on GCP
+
+System Requirements
+-------------------
+
+Compute Engine Project
+~~~~~~~~~~~~~~~~~~~~~~
+
+The Determined master and the Determined agents are intended to run in the same
+project.
+
+Instance Labels
+~~~~~~~~~~~~~~~
+
+When using Dynamic Agents on GCP, Determined identifies the Compute Engine
+instances that it is managing using a configurable instance label (see
+:ref:`gcp-cluster-configuration` for details). Administrators
+should be careful to ensure that this label is not used by other Compute
+Engine instances that are launched outside of Determined; if that assumption
+is violated, unexpected behavior may occur.
+
+Compute Engine Images
+~~~~~~~~~~~~~~~~~~~~~
+
+-  The Determined master node will run on a custom image that will be shared
+   with you by Determined AI.
+
+-  Determined agent nodes will run on a custom image that will be shared with
+   you by Determined AI.
+
+Compute Engine Machine Types
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+-  The Determined master node should be deployed on a Compute Engine instance
+   with >= 2 CPUs (Intel Broadwell or later), 4GB of RAM, and 100GB of
+   disk storage. This would be a Compute Engine ``n1-standard-2`` or
+   more powerful.
+
+.. _gcp-api-access:
+
+GCP API Access
+~~~~~~~~~~~~~~
+
+-  The Determined master *needs* to run as a service account that has the
+   permissions to manage Compute Engine instances. There are two
+   options:
+
+   1. Create a particular service account with the ``Compute Admin``
+      role. Then set the Determined master to use this account. See `Compute
+      Engine IAM
+      roles <https://cloud.google.com/compute/docs/access/iam>`__ for
+      more details on how to configure the service account.
+
+      -  In order for the Determined agent to be associated with a service
+         account, the Determined master needs to have access to service
+         accounts. Please ensure the service account of the Determined master
+         has the ``Service Account User`` role.
+
+      -  In order for the Determined agent to use a shared VPC, the service
+         account that the master runs with needs to have the
+         ``Compute Network User`` role.
+
+   2. Use the default service account and add the
+      ``Compute Engine: Read Write`` scope.
+
+-  Optionally, the Determined agent may be associated with a service account.
+
+.. note::
+  Access scopes are the legacy method of specifying permissions for your
+  instance. A best practice is to set the full cloud-platform access scope on
+  the instance, then securely limit the service account's API access with Cloud
+  IAM roles. See `Access Scopes
+  <https://cloud.google.com/compute/docs/access/service-accounts#accesscopesiam>`__
+  for details.
+
+.. _gcp-network-requirements:
+
+Network Requirements
+~~~~~~~~~~~~~~~~~~~~
+
+See :ref:`network-requirements` for details.
+
+.. _gcp-cluster-configuration:
+
+Cluster Configuration
+---------------------
+
+The Determined Cluster is configured with ``master.yaml`` file located at
+``/usr/local/determined/etc`` on the Determined master instance. Below you'll find
+an example configuration. See :ref:`cluster-configuration` for details.
+
+.. code:: yaml
+
+   provisioner:
+     master_url: <scheme://host:port>
+     startup_script: <startup script>
+     agent_docker_network: determined
+     max_idle_agent_period: 5m
+
+     provider: gcp
+     base_config: <instance resource base configuration>
+     project: <project ID>
+     zone: <zone>
+     boot_disk_size: 200
+     boot_disk_source_image: projects/<project-id>/global/images/<image-name>
+     label_key: <label key for agent discovery>
+     label_value: <label value for agent discovery>
+     name_prefix: <name prefix>
+     network_interface:
+       network: projects/<project>/global/networks/<network>
+       subnetwork: projects/<project>/regions/<region>/subnetworks/<subnetwork>
+       external_ip: false
+     network_tags: ["<tag1>", "<tag2>"]
+     service_account:
+       email: "<service account email>"
+       scopes: ["https://www.googleapis.com/auth/cloud-platform"]
+     instance_type:
+       machine_type: n1-standard-32
+       gpu_type: nvidia-tesla-v100
+       gpu_num: 4
+       preemptible: false
+     max_instances: 5
+
+.. _gcp-attach-disk:
+
+How to attach a disk to each dynamic agent
+------------------------------------------
+
+If your input data set is on a persistent disk, you can attach that disk
+to each dynamic agent by using the base instance configuration and
+preparing commands. The following is an example configuration. See `REST
+Resource:
+instances <https://cloud.google.com/compute/docs/reference/rest/v1/instances/insert>`__
+for the full list of configuration options supported by GCP. See
+`Formatting and mounting a zonal persistent
+disk <https://cloud.google.com/compute/docs/disks/add-persistent-disk#formatting>`__
+for more examples of formatting or mounting disks in GCP.
+
+Here is an example master configuration of attaching a second existing
+disk.
+
+.. code:: yaml
+
+   provisioner:
+     startup_script: |
+                     lsblk
+                     mkdir -p /mnt/disks/second
+                     mount -o discard,defaults /dev/sdb1 /mnt/disks/second
+                     lsblk
+     provider: gcp
+     base_config:
+       disks:
+         - mode: READ_ONLY
+           boot: false
+           source: zones/<zone>/disks/<the name of the existing disk>
+           autoDelete: false
+     boot_disk_size: 200
+     boot_disk_source_image: projects/<project>/global/images/<image name>
+
+.. note::
+  If a specific non-root user needs to access the disk, please run the tasks
+  linked with the POSIX UID/GID of the user (See :ref:`run-as-user` for
+  details.) and grant access to the corresponding UID/GID.
+
+After installing the master, you can use the following command to
+validate if you could read and write on the attached disk.
+
+.. code:: bash
+
+   cat > command.yaml << EOF
+   bind_mounts:
+     - host_path: /mnt/disks/second
+       container_path: /second
+   EOF
+   # Test attached read-only disk.
+   det command run --config-file command.yaml ls -l /second
+
+Installation
+------------
+
+These instructions describe how to install Determined for the first time; for
+directions on how to upgrade an existing Determined installation, see the
+:ref:`gcp-upgrades` section below.
+
+Ensure that you are using the most up-to-date Determined images. Keep the
+image IDs handy as we will need them later.
+
+Master
+~~~~~~
+
+To install the master, we will launch an instance from the Determined master
+image.
+
+Let's start by navigating to the Compute Engine Dashboard of the GCP
+Console. Click "Create Instance" and follow the instructions below:
+
+1. Choose Machine Type: we recommend a ``n1-standard-2`` or more
+   powerful.
+
+2. Configure Boot Disk:
+
+   a. Choose Boot Disk Image: find the Determined master image in "Images" and
+      click "Select".
+
+   b. Set Boot Disk Size: set ``Size`` to be at least 100GB. If you have
+      a previous Determined installation that you are upgrading, you want to
+      use the snapshot or existing disk. This disk will be used to store
+      all your experiment metadata and checkpoints.
+
+3. Configure Identity and API access: choose the ``service account``
+   according to :ref:`gcp-api-access`.
+
+4. Configure Firewalls: choose or create a security group according to
+   these :ref:`gcp-network-requirements`. Check off
+   ``Allow HTTP traffic``.
+
+5. Review and launch the instance.
+
+6. SSH into the Determined master and edit the config at
+   ``/usr/local/determined/etc/master.yaml`` according to the guide on
+   :ref:`cluster-configuration`.
+
+7. Start the Determined master by entering
+   ``make -C /usr/local/determined enable-master`` into the terminal.
+
+Agent
+~~~~~
+
+There is no installation needed for the Agent. The Determined master will dynamically
+launch Determined agent instances based on the :ref:`cluster-configuration`.
+
+.. _gcp-upgrades:
+
+Upgrades
+--------
+
+Upgrading an existing Determined installation with Dynamic Agents on GCP
+requires the same steps as an installation without dynamic agents. See
+:ref:`upgrades`.

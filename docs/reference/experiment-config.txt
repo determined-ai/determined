@@ -1,0 +1,582 @@
+.. _experiment-configuration:
+
+Experiment Configuration
+========================
+
+An experiment configuration is a YAML file that provides the pertinent
+user settings needed to run an experiment in Determined. Typically, the
+configuration is passed as a command-line argument when an experiment is
+created with the Determined CLI. It may contain the following fields:
+
+- ``description``: A human-readable description of the experiment. This
+  does not need to be unique.
+- ``labels``: A list of label names (strings). Assigning labels to
+  experiments allows you to identify experiments that share the same
+  property or should be grouped together. You can add and remove labels
+  using either the CLI (``det experiment label``) or the WebUI.
+- ``data``: Specifies the location of the data used by the experiment.
+  The content and format of this field is user-specified: it should be
+  used to specify whatever configuration is needed for loading data for
+  use by the experiment's model definition. For example, if your
+  experiment loads data from Amazon S3, the ``data`` field might
+  contain the S3 bucket name, object prefix, and AWS authentication
+  credentials.
+- ``entrypoint``: Specifies the location of the trial class in a user's model
+  definition as an `entrypoint specification string
+  <https://packaging.python.org/specifications/entry-points/>`_. The entrypoint
+  specification is expected to take the form ``<module>:<object reference>``.
+  ``<module>`` specifies the module containing the trial class within the model
+  definition, relative to the root. ``<object reference>`` specifies the naming
+  of the trial class within the module. It may be a nested object delimited by
+  dots. For more information and examples, please see :ref:`model-definitions`.
+- ``checkpoint_storage``: Specifies where model checkpoints will be
+  stored. A checkpoint contains the architecture and weights of the
+  model being trained. Determined currently supports four kinds of checkpoint
+  storage, ``gcs``, ``hdfs``, ``s3``, and ``shared_fs``, identified by
+  the ``type`` subfield. Defaults to checkpoint storage configured in
+  :ref:`cluster-configuration`.
+
+  - ``type: gcs``: Checkpoints are stored on Google Cloud Storage
+    (GCS). Authentication is done using GCP's "`Application Default
+    Credentials <https://googleapis.dev/python/google-api-core/latest/auth.html>`__"
+    approach. When using Determined inside Google Compute Engine (GCE), the
+    simplest approach is to ensure that the VMs used by Determined are
+    running in a service account that has the "Storage Object Admin"
+    role on the GCS bucket being used for checkpoints. As an
+    alternative (or when running outside of GCE), you can add the
+    appropriate `service account
+    credentials <https://cloud.google.com/docs/authentication/production#obtaining_and_providing_service_account_credentials_manually>`__
+    to your container (e.g., via a bind-mount), and then set the
+    ``GOOGLE_APPLICATION_CREDENTIALS`` environment variable to the container
+    path where the credentials are located. See :ref:`environment-variables`
+    for more details on how to set environment variables in containers.
+
+    - ``bucket``: The GCS bucket name to use.
+
+  - ``type: hdfs``: Checkpoints are stored in HDFS using the
+    `WebHDFS <http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/WebHDFS.html>`__
+    API for reading and writing checkpoint resources.
+
+    - ``hdfs_url``: Hostname or IP address of HDFS namenode, prefixed
+      with protocol, followed by WebHDFS port on namenode. Multiple
+      namenodes are allowed as a semicolon-separated list (e.g.,
+      ``"http://namenode1:50070;http://namenode2:50070"``).
+    - ``hdfs_path``: The prefix path where all checkpoints will be
+      written to and read from. The resources of each checkpoint will
+      be saved in a subdirectory of ``hdfs_path``, where the
+      subdirectory name is the checkpoint's UUID.
+    - ``user``: An optional string value that indicates the user to
+      use for all read and write requests. If left unspecified, the
+      default user of the trial runner container will be used.
+
+  - ``type: s3``: Checkpoints are stored in Amazon S3.
+
+    - ``bucket``: The S3 bucket name to use.
+    - ``access_key``: The AWS access key to use.
+    - ``secret_key``: The AWS secret key to use.
+    - ``endpoint_url``: The optional endpoint to use for S3 clones,
+      e.g., http://127.0.0.1:8080/.
+
+  - ``type: shared_fs``: Checkpoints are written to a directory on the
+    agent's file system. The assumption is that the system
+    administrator has arranged for the same directory to be mounted at
+    every agent host, and for the content of this directory to be the
+    same on all agent hosts (e.g., by using a distributed or network
+    file system such as GlusterFS or NFS).
+
+    - ``host_path``: The file system path on each agent to use.
+    - ``container_path``: The optional file system path to use as the
+      mount point in the trial runner container. Defaults to
+      ``/determined_shared_fs``.
+    - ``storage_path``: The optional path where checkpoints will be
+      written to and read from. Must be a subdirectory of the
+      ``host_path`` or an absolute path containing the ``host_path``.
+      If unset, checkpoints are written to and read from the
+      ``host_path``.
+    - ``propagation``: (Advanced users only) Optional `propagation
+      behavior <https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__
+      for replicas of the bind-mount. Defaults to ``rprivate``.
+
+  - When an experiment finishes, the system will optionally delete
+    some checkpoints to reclaim space. The ``save_experiment_best``,
+    ``save_trial_best`` and ``save_trial_latest`` parameters specify which
+    checkpoints to save. See the documentation on
+    :ref:`checkpoint-garbage-collection` for more details.
+
+- ``min_validation_period``: Instructs Determined to periodically compute
+  validation metrics for each trial during training. If set, this
+  variable specifies the maximum number of training steps that can be
+  completed for a given trial since the last validation operation for
+  that trial; if this limit is reached, a new validation operation is
+  performed. Validation metrics can be computed more frequently than
+  specified by this parameter, depending on the hyperparameter search
+  method being used by the experiment.
+- ``checkpoint_policy``: Controls how Determined performs checkpoints after
+  validation operations, if at all. Should be set to one of the
+  following values:
+
+  - ``best`` (default): A checkpoint will be taken after every
+    validation operation that performs better than all previous
+    validations for this experiment. Validation metrics are compared
+    according to the ``metric`` and ``smaller_is_better`` options in
+    the ``searcher`` configuration.
+  - ``all``: A checkpoint will be taken after every validation step,
+    no matter the validation performance of the step.
+  - ``none``: A checkpoint will never be taken *due* to a validation
+    step. However, even with this policy selected, checkpoints are
+    still expected to be taken after the last training step of a
+    trial, due to cluster scheduling decisions or due to
+    ``min_checkpoint_period``.
+
+- ``min_checkpoint_period``: Instructs Determined to take periodic
+  checkpoints of each trial during training. If set, this variable
+  specifies the maximum number of training steps that can be completed
+  for a given trial since the last checkpoint of that trial; if this
+  limit is reached, a checkpoint of the trial is taken. There are two
+  other situations in which a trial might be checkpointed: (a) during
+  training, a model may be checkpointed to allow the trial's execution
+  to be suspended and later resumed on a different Determined agent (b) when
+  the trial's experiment is completed, to allow the resulting model to
+  be exported from Determined (e.g., for deployment).
+
+.. _experiment-configuration_hyperparameters:
+
+- ``hyperparameters``: Specifies the hyperparameter space via a list of
+  user-defined subfields corresponding to the hyperparameters.
+
+  - In order to fully define a hyperparameter, the following subfields
+    can be specified:
+
+    - ``type``: Defines the type of the hyperparameter. Must be one
+      of ``const``, ``double``, ``int``, ``log``, and ``categorical``.
+    - ``const`` hyperparameters are fixed hyperparameters that take on a given
+      value.  These options apply to ``const`` hyperparameters:
+
+      - ``val``: Specifies the value of the hyperparameter, e.g., ``True``,
+        ``2``, or ``any_string``.
+
+    - ``double`` hyperparameters are floating point numerics, while ``int``
+      hyperparameters take on integer values.  These options apply to ``double``
+      and ``int`` hyperparameters:
+
+      - ``minval``, ``maxval``: Specifies the minimum and maximum
+        values for the hyperparameter.
+      - ``count``: Specifies the number of values for this
+        hyperparameter during ``grid`` search (see :ref:`hp-grid`). It is
+        ignored for any other searcher.  Values are evenly spaced between
+        ``minval`` and ``maxval``.
+
+    - ``log`` hyperparameters are floating point numerics that are searched on
+      a logarithmic scale.  These options apply to ``log`` hyperparameters:
+
+      - ``base``: The base of the logarithm.  Hyperparameter values are
+        exponents applied to this base.
+      - ``minval``, ``maxval``: Specifies the minimum and maximum
+        exponent values for the hyperparameter.
+      - ``count``: Specifies the number of values for this
+        hyperparameter during ``grid`` search (see :ref:`hp-grid`). It is
+        ignored for any other searcher.  Values are exponents evenly spaced
+        between ``minval`` and ``maxval``.
+
+    - ``categorical`` hyperparameters can take on a value within a specified set of
+      values.  These additional options apply to ``categorical``
+      hyperparameters:
+
+      - ``vals``: Specifies the list of possible values.  Values can be of any
+        type, e.g., ``True`` or ``False`` booleans, numbers, unquoted
+        strings, or even lists like ``[1, False]``.
+
+  - If a scalar value is specified instead of the subfields above, the
+    hyperparameter type will be assumed to be ``const``.
+  - The value chosen for a hyperparameter in a given trial can be
+    accessed via the context using ``context.get_hparam()``.
+    For instance, the current value of a hyperparameter named ``learning_rate``
+    is stored in the context of the of trial and can be accessed by:
+    ``context.get_hparam("learning_rate")``.
+
+    .. note::
+
+      ``global_batch_size`` is a required hyperparameter.
+      Batch size per slot is adjusted at runtime based on the number
+      of slots. The updated values should be accessed via the context
+      using: ``context.get_per_slot_batch_size()`` and
+      ``context.get_global_batch_size()``.
+
+- ``searcher``: Specifies the procedure for searching through the
+  hyperparameter space. Determined supports six search methods (``single``,
+  ``random``, ``grid``, ``adaptive_simple``, ``adaptive``, and ``pbt``), and
+  the user can specify which one to use via the ``name`` subfield. See the
+  `hp-search` documentation for more details. To use one of these search
+  methods, the following subfields must be specified:
+
+  - ``name: single``: This search method trains a single trial for a
+    fixed number of steps. By default, validation metrics are only
+    computed once, after the specified number of training steps have
+    been completed; ``min_validation_period`` (see above) can be used
+    to specify that validation metrics should be computed more
+    frequently.
+
+    - ``metric``: Specifies the name of the validation metric used to
+      evaluate the performance of a hyperparameter configuration.
+    - ``smaller_is_better``: Specifies whether to minimize or
+      maximize the metric defined above. The default value is true
+      (minimize).
+    - ``max_steps``: Specifies how many steps to allocate to the
+      trial.
+    - (optional) ``source_trial_id``: If specified, the weights of
+      this trial will be initialized to the most recent checkpoint of
+      the given trial ID. Note that this will fail if the source
+      trial's model architecture is inconsistent with the model
+      architecture of this experiment.
+    - (optional) ``source_checkpoint_uuid``: Like
+      ``source_trial_id``, but specifies an arbitrary checkpoint from
+      which to initialize weights; only one of ``source_trial_id`` or
+      ``source_checkpoint_uuid`` should be set.
+
+  - ``name: random``: This search method performs a random search.
+    Each random trial configuration is trained for the specified
+    number of steps, and then validation metrics are computed.
+    ``min_validation_period`` (see above) can be used to specify that
+    validation metrics should be computed more frequently.
+
+    - ``metric``: Specifies the name of the validation metric used to
+      evaluate the quality of different hyperparameter
+      configurations. The metric name should be a key in the
+      dictionary returned by the ``validation_metrics()`` function in
+      a :ref:`standard-model-definition`.
+    - ``smaller_is_better``: Specifies whether to minimize or
+      maximize the metric defined above. The default value is true
+      (minimize).
+    - ``max_trials``: Specifies how many trials, i.e., hyperparameter
+      configurations, to evaluate.
+    - ``max_steps``: Specifies the number of training steps to run
+      for each trial.
+    - (optional) ``source_trial_id``: If specified, the weights of
+      *every* trial in the search will be initialized to the most
+      recent checkpoint of the given trial ID. Note that this will
+      fail if the source trial's model architecture is incompatible
+      with the model architecture of any of the trials in this
+      experiment.
+    - (optional) ``source_checkpoint_uuid``: Like ``source_trial_id``
+      but specifies an arbitrary checkpoint from which to initialize
+      weights. Only one of ``source_trial_id`` or
+      ``source_checkpoint_uuid`` should be set.
+
+  - ``name: grid``: This search method performs a grid search. The
+    coordinates of the hyperparameter grid are specified through the
+    ``hyperparameters`` field. For more details see the :ref:`hp-grid`.
+
+    - ``metric``: Specifies the name of the validation metric used to
+      evaluate the performance of a hyperparameter configuration.
+    - ``smaller_is_better``: Specifies whether to minimize or
+      maximize the metric defined above. The default value is true
+      (minimize).
+    - (optional) ``source_trial_id``: If specified, the weights of
+      this trial will be initialized to the most recent checkpoint of
+      the given trial ID. Note that this will fail if the source
+      trial's model architecture is inconsistent with the model
+      architecture of this experiment.
+    - (optional) ``source_checkpoint_uuid``: Like
+      ``source_trial_id``, but specifies an arbitrary checkpoint from
+      which to initialize weights; only one of ``source_trial_id`` or
+      ``source_checkpoint_uuid`` should be set.
+
+  - ``name: adaptive``: This search method is a theoretically
+    principled and empirically state-of-the-art method that adaptively
+    allocates resources to promising hyperparameter configurations
+    while quickly eliminating poor ones.
+
+    - ``metric``: Specifies the name of the validation metric used to
+      evaluate the performance of a hyperparameter configuration.
+    - ``smaller_is_better``: Specifies whether to minimize or
+      maximize the metric defined above. The default value is true
+      (minimize).
+    - ``mode``: Specifies how aggressively to perform early stopping.
+      There are three modes: ``aggressive``, ``standard``, and
+      ``conservative``. These three modes differ in the degree to
+      which early-stopping is used. In ``aggressive`` mode, the
+      searcher quickly stops underperforming trials, which enables
+      the searcher to explore more hyperparameter configurations, but
+      at the risk of discarding a configuration too soon. On the
+      other end of the spectrum, ``conservative`` mode performs
+      significantly less downsampling, but as a consequence does not
+      explore as many configurations given the same budget. We
+      suggest using either ``aggressive`` or ``standard`` mode.
+    - ``target_trial_steps``: Specifies the maximum number of
+      training steps to allocate to any one trial. The vast majority
+      of trials will be stopped early, and thus only a small fraction
+      of trials will actually be trained for this number of steps. We
+      suggest setting this to a multiple of
+      ``divisor^(max_rungs-1)``, which is 45-1 = 256 with the default
+      values.
+    - ``step_budget``: Specifies the total number of steps to
+      allocate across all trials. We suggest setting this to be a
+      multiple of ``target_trial_steps``, which implies interpreting
+      this subfield as the effective number of complete trials to
+      evaluate. Note that some trials might be in-progress when this
+      budget is exhausted; adaptive search will allocate some
+      additional steps to complete these in-progress trials.
+    - (optional) ``divisor``: Specifies the fraction of trials to
+      keep at each rung, and also determines how many steps are
+      allocated at each rung. The default setting is ``4``; only
+      advanced users should consider changing this value.
+    - (optional) ``max_rungs``: Specifies the maximum number of times
+      we evaluate intermediate results for a trial and terminate
+      poorly performing trials. The default value is ``5``; only
+      advanced users should consider changing this value.
+    - (optional) ``source_trial_id``: If specified, the weights of
+      *every* trial in the search will be initialized to the most
+      recent checkpoint of the given trial ID. This will fail if the
+      source trial's model architecture is inconsistent with the
+      model architecture of any of the trials in this experiment.
+    - (optional) ``source_checkpoint_uuid``: Like
+      ``source_trial_id``, but specifies an arbitrary checkpoint from
+      which to initialize weights. Only one of ``source_trial_id`` or
+      ``source_checkpoint_uuid`` should be set.
+
+  - ``name: adaptive_simple``: This search method is an alternative
+    configuration to the ``adaptive`` search method (see above).
+
+    - ``metric``: Specifies the name of the validation metric used to
+      evaluate the performance of a hyperparameter configuration.
+    - ``smaller_is_better``: Specifies whether to minimize or
+      maximize the metric defined above. The default value is true
+      (minimize).
+    - ``max_steps``: Specifies the maximum number of training steps
+      to allocate to any one trial. The vast majority of trials will
+      be stopped early, and thus only a small fraction of trials will
+      actually be trained for this number of steps.
+    - ``max_trials``: Specifies how many trials, i.e., hyperparameter
+      configurations, to evaluate.
+    - (optional) ``mode``: Specifies how aggressively to perform
+      early stopping. There are three modes: ``aggressive``,
+      ``standard``, and ``conservative``. These three modes differ in
+      the degree to which early-stopping is used. In ``aggressive``
+      mode, the searcher quickly stops underperforming trials, which
+      enables the searcher to explore more hyperparameter
+      configurations, but at the risk of discarding a configuration
+      too soon. On the other end of the spectrum, ``conservative``
+      mode performs significantly less downsampling, but as a
+      consequence does not explore as many configurations given the
+      same budget. We suggest using either ``aggressive`` or
+      ``standard`` mode.
+    - (optional) ``divisor``: Specifies the fraction of trials to
+      keep at each rung, and also determines how many steps are
+      allocated at each rung. The default setting is ``4``; only
+      advanced users should consider changing this value.
+    - (optional) ``max_rungs``: Specifies the maximum number of times
+      we evaluate intermediate results for a trial and terminate
+      poorly performing trials. The default value is ``5``; only
+      advanced users should consider changing this value.
+    - (optional) ``source_trial_id``: If specified, the weights of
+      *every* trial in the search will be initialized to the most
+      recent checkpoint of the given trial ID. This will fail if the
+      source trial's model architecture is inconsistent with the
+      model architecture of any of the trials in this experiment.
+    - (optional) ``source_checkpoint_uuid``: Like
+      ``source_trial_id``, but specifies an arbitrary checkpoint from
+      which to initialize weights. Only one of ``source_trial_id`` or
+      ``source_checkpoint_uuid`` should be set.
+
+  - ``name: pbt``: This search method uses `population-based
+    training <https://deepmind.com/blog/population-based-training-neural-networks/>`__,
+    which maintains a population of active trials to train. After each
+    trial has been trained for a certain number of steps, all the
+    trials are validated. The searcher then closes some trials and
+    replaces them with altered copies of other trials. This process
+    makes up one "round"; the searcher runs some number of rounds to
+    execute a complete search. The model definition class must be able
+    to restore from a checkpoint that was created with a different set
+    of hyperparameters; in particular, you will not be able to vary
+    any hyperparameters that change the sizes of weight matrices
+    without taking special steps to save or restore models.
+
+    - ``metric``: Specifies the name of the validation metric used to
+      evaluate the performance of a hyperparameter configuration.
+    - ``smaller_is_better``: Specifies whether to minimize or
+      maximize the metric defined above. The default value is true
+      (minimize).
+    - ``population_size``: The number of trials (i.e., different
+      hyperparameter configurations) to keep active at a time.
+    - ``steps_per_round``: The number of steps to train each trial
+      between validations.
+    - ``num_rounds``: The total number of rounds to execute.
+    - ``replace_function``: Describes how to choose which trials to
+      close and which trials to copy at the end of each round.
+
+      - ``truncate_fraction``: Defines *truncation selection*, in
+        which the worst ``truncate_fraction`` (multiplied by the
+        population size) trials, ranked by validation metric, are
+        closed and the same number of top trials are copied.
+
+    - ``explore_function``: Describes how to alter a set of
+      hyperparameters when a copy of a trial is made. Each parameter
+      is either resampled (i.e., its value is chosen from the
+      configured distribution) or perturbed (i.e., its value is
+      computed based on the value in the original set).
+
+      - ``resample_probability``: The probability that a parameter
+        is replaced with a new value sampled from the original
+        distribution specified in the configuration.
+      - ``perturb_factor``: The amount by which parameters that are
+        not resampled are perturbed. Each numerical hyperparameter
+        is multiplied by either ``1 + perturb_factor`` or
+        ``1 - perturb_factor`` with equal probability;
+        ``categorical`` and ``const`` hyperparameters are left
+        unchanged.
+
+.. _exp-config-resources:
+
+- ``resources``: Describes the resources Determined allows an experiment to
+  use.
+
+  - ``max_slots``: Specifies the maximum number of scheduler slots
+    that this experiment is allowed to use at any one time. The slot
+    limit of an active experiment can be changed using
+    ``det experiment set max-slots <id> <slots>``.
+  - ``weight``: Specifies the weight of this experiment in the
+    scheduler. When multiple experiments are running at the same time,
+    the number of slots assigned to each one will be approximately
+    proportional to its weight. The weight of an active experiment can
+    be changed using ``det experiment set weight <id> <weight>``.
+  - ``slots_per_trial``: Specifies the number of slots to use for each
+    trial of this experiment. The default value is 1; specifying a
+    value greater than 1 means that multiple GPUs will be used in
+    parallel. Training on multiple GPUs is done using data
+    parallelism. Configuring ``slots_per_trial`` to be greater than
+    ``max_slots`` is not sensible and will result in an error.
+  - ``shm_size``: Specifies the size in bytes of the ``/dev/shm`` for
+    trial containers. Defaults to 4294967296 (4GiB). If set, this
+    value overrides the the value specified in ``etc/agent.conf``.
+  - *NOTE:* Using ``slots_per_trial`` to enable data parallel training
+    for ``PyTorch`` can alter the behavior of certain models, `as
+    described in the PyTorch
+    documentation <https://pytorch.org/docs/stable/nn.html#torch.nn.DataParallel>`__.
+
+.. _batches-per-step:
+
+- ``batches_per_step``: Specifies the number of batches in a single
+  training step. As discussed above, Determined divides the training of a
+  single trial into a sequence of steps; each step corresponds to a
+  certain number of model updates. Therefore, this configuration
+  parameter can be used to control how long a trial is trained at a
+  single agent:
+
+  - Doing more work in a step allows per-step overheads (such as
+    downloading training data) to be amortized over more training
+    work. However, if the step size is too large, a single trial might
+    be trained for a long time before Determined gets an opportunity to
+    suspend training of that trial and replace it with a different
+    workload.
+  - The default value is 100. As a rule of thumb, the step size should
+    be set so that training a single step takes 60--180 seconds.
+  - *NOTE:* The step size is defined as a fixed number of *batches*;
+    the size (number of records) in a batch is controlled by the
+    ``global_batch_size`` hyperparameter in the experiment's model
+    definition.
+
+- ``bind_mounts``: Specifies a collection of directories that are
+  bind-mounted into the trial containers for this experiment. This can
+  be used to allow trials to access additional data that is not
+  contained in the trial-runner image. This field should consist of an
+  array of entries. Note that users should ensure that the specified
+  host paths are accessible on all agent hosts (e.g., by configuring a
+  network file system appropriately).
+
+  - ``host_path``: (required) The file system path on each agent to
+    use. Must be an absolute filepath.
+  - ``container_path``: (required) The file system path in the
+    container to use. May be a relative filepath, in which case it
+    will be mounted relative to the working directory inside the
+    container. It is not allowed to mount directly into the working
+    directory (i.e., ``container_path == "."``) to reduce the risk of
+    cluttering the host filesystem.
+  - ``read_only``: Whether the bind-mount should be a read-only mount.
+    Defaults to ``false``.
+  - ``propagation``: (Advanced users only) Optional `propagation
+    behavior <https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__
+    for replicas of the bind-mount. Defaults to ``rprivate``.
+
+.. _exp-environment:
+
+- ``environment``: Specifies the environment of the container that is
+  used by the experiment for training the model. Default values are in
+  bold.
+
+  - ``image``: Specifies a Docker image to use when
+    executing the command. The image must be available via
+    ``docker pull`` to every Determined agent host in the cluster. Users
+    can customize environment variables for GPU vs. CPU agents differently by
+    specifying a dict with two keys, ``cpu`` and ``gpu``. Defaults to
+    ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu`` for CPU
+    agents and
+    ``determinedai/environments:cuda-10-py-3.6.9-pytorch-1.4-tf-1.14-gpu`` for
+    GPU agents.
+  - ``force_pull_image``: Forcibly pull the image from the Docker
+    registry and bypass the Docker cache. Defaults to ``false``.
+  - ``registry_auth``: Specifies the `Docker registry
+    credentials <https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__
+    to use when pulling a custom base Docker image, if needed.
+
+    - ``username`` (required)
+    - ``password`` (required)
+    - ``server`` (optional)
+    - ``email`` (optional)
+
+  - ``environment_variables``: Specifies a list of environment variables for
+    the trial runner. Each element of the list should be a string of the form
+    ``NAME=VALUE``. See :ref:`environment-variables` for more details. Users
+    can customize environment variables for GPU vs. CPU agents differently by
+    specifying a dict with two keys, ``cpu`` and ``gpu``.
+
+- ``reproducibility``: Specifies configuration options related to
+  reproducible experiments. This is an optional configuration field;
+  see :ref:`reproducibility` for more details.
+
+  - ``experiment_seed``: Specifies the random seed to be associated
+    with the experiment. Must be an integer between 0 and 231 - 1. If
+    an ``experiment_seed`` is not explicitly specified, the master
+    will automatically generate an experiment seed.
+
+- ``max_restarts``: Specifies the maximum number of times that a trial
+  will be restarted due to an error. When this limit is reached, the
+  experiment is marked as a failure and all remaining trials are
+  checkpointed and closed. If an error occurs while a trial is running
+  (e.g., a container crashes abruptly), the Determined master will
+  automatically restart the trial and continue running it. This
+  parameter specifies a limit on the number of times to try restarting
+  a trial; this ensures that Determined does not go into an infinite loop if
+  a trial encounters the same error repeatedly.
+
+- ``optimizations``: Specifies configuration options related to improving
+  performance.
+
+  - ``aggregation_frequency``: Specifies after how many batches gradients are
+    exchanged during :ref:`multi-gpu-training`. Defaults
+    to ``1``.
+
+  - ``average_aggregated_gradients``: Specifies whether gradients accumulated
+    across batches (when aggregation_frequency > 1) should be divided by
+    the aggregation_frequency. Defaults to ``true``.
+
+  - ``gradient_compression``: Whether to compress gradients when they are
+    exchanged during :ref:`multi-gpu-training`.
+    Compression may alter gradient values to achieve better space reduction.
+    Defaults to ``false``.
+
+  - ``mixed_precision``: Whether to use mixed precision training during
+    :ref:`multi-gpu-training`. Setting ``O1`` enables
+    mixed precision and loss scaling. Defaults to ``O0`` which disables
+    mixed precision training.
+
+  - ``tensor_fusion_threshold``: Specifies the threshold in MB for batching
+    together gradients that are exchanged during
+    :ref:`multi-gpu-training`. Defaults to ``64``.
+
+  - ``tensor_fusion_cycle_time``: Specifies the delay between each tensor fusion
+    in ms during :ref:`multi-gpu-training`.
+    Defaults to ``5``.
+
+  - ``auto_tune_tensor_fusion``: When enabled, configures
+    ``tensor_fusion_threshold`` and ``tensor_fusion_cycle_time`` automatically.
+    Defaults to ``false``.

@@ -1,0 +1,158 @@
+.. _custom-env:
+
+Environment Configuration
+=========================
+
+Determined launches trials of experiments and commands in Docker containers.
+The container configuration is referred to as the **environment**.
+
+There are two methods of customizing this environment without explicity
+specifying a Docker image: environment variables and the ``startup-hook.sh``.
+
+.. _environment-variables:
+
+Environment Variables
+~~~~~~~~~~~~~~~~~~~~~
+
+For both trial runners and commands, Determined allows users to configure the
+environment variables inside the container through the
+``environment -> environment_variables`` configuration field of the
+experiment config. The format is a list of strings in the format
+``NAME=VALUE``:
+
+.. code:: yaml
+
+   environment:
+     environment_variables:
+       - A=hello world
+       - B=$A
+       - C=${B}
+       # `A`, `B`, and `C` will each have the value `hello_world` in the container.
+
+Variables are set sequentially, which affect variables that depend
+on expansion of other variables.
+
+``startup-hook.sh``
+~~~~~~~~~~~~~~~~~~~
+
+The ``startup-hook.sh`` is a script that is called during startup of your
+Docker container. You can use this script to ``pip install`` packages, ``apt
+install`` packages, or practically anything else that you can do with bash.
+This script should be placed in the base directory of your model definition,
+(e.g. ``super-deep-model/startup-hook.sh`` if the base directory is
+``super-deep-model/``). An example startup script that installs the command
+line utility ``wget`` and the Python package ``pandas`` is below.
+
+.. code:: bash
+
+	apt-get update && apt-get install -y wget
+	python3.6 -m pip install pandas
+
+
+Official Docker Images in Determined
+------------------------------------
+
+Determined has a set of officially supported Docker images used to launch
+Docker containers for experiments, commands, and any other workflow in the
+Determined system.
+
+.. _default-environment:
+
+Default Image
+~~~~~~~~~~~~~
+
+In the current version of Determined, the experiments and commands are executed
+in containers with the following:
+
+-  Ubuntu 18.04
+-  CUDA 10.0
+-  Python 3.6.9
+-  TensorFlow 1.14.0
+-  PyTorch 1.4.0
+
+Determined will automatically select GPU-specific versions of each library
+when running on agents with GPUs.
+
+In addition to the above settings, all trial runner containers are
+launched with additional Determined-specific harness code that orchestrates
+model training and evaluation in the container. Trial runner containers
+are also loaded with the experiment's model definition and values of the
+hyperparameters for the current trial.
+
+
+.. note::
+
+	The default images are
+	``determinedai/environments:cuda-10-pytorch-1.4-tf-1.14-gpu-0.2.0`` and
+	``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-0.2.0`` for GPU
+	and CPU respectively.
+
+
+TF2 Environment
+~~~~~~~~~~~~~~~
+
+Determined also supports TensorFlow 2.1 and has a Docker image you can use for
+experiments and commands, it has the following:
+
+-  Ubuntu 18.04
+-  CUDA 10.0
+-  Python 3.6.9
+-  TensorFlow 2.1.0
+-  PyTorch 1.4.0
+
+This can be configured in  your experiment configuration like below:
+
+.. code:: yaml
+
+   environment:
+     image:
+     - gpu: "determinedai/environments:cuda-10-pytorch-1.4-tf-2.1-gpu-0.2.0"
+     - cpu: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.1-cpu-0.2.0"
+
+
+Custom Docker Images in Determined
+----------------------------------
+
+While our official images contain all the dependencies you need for basic
+workloads, many workloads have extra dependencies. If those extra dependencies
+are quick to install, you may want to consider using the ``startup-hook.sh``.
+However, some dependencies take too long to install via the
+``startup-hook.sh``. In this situation, we suggest building your own Docker
+image and publishing to a Docker registry like Docker Hub
+(https://hub.docker.com/). Below you will find an example of a Dockerfile. For
+more information on building and publishing Docker images to DockerHub,
+consider following https://docs.docker.com/get-started/.
+
+The example Dockerfile below installs ``conda`` and ``pip`` dependencies based
+on their respective dependency file format.
+
+.. warning::
+
+	It is important to not install the TensorFlow, PyTorch, Horovod, or Apex
+	packages as this will conflict with the base packages that are installed into
+	Determined's official environments.
+
+.. code:: docker
+
+  FROM determinedai/environments:cuda-10-py-3.6.9-pytorch-1.4-tf-1.14-gpu-0.2.0
+  RUN apt-get update && apt-get install -y unzip python-opencv graphviz
+  COPY environment.yml /tmp/environment.yml
+  COPY pip_requirements.txt /tmp/pip_requirements.txt
+  RUN conda env update --name base --file /tmp/environment.yml && \
+      conda clean --all --force-pkgs-dirs --yes
+  RUN eval "$(conda shell.bash hook)" && \
+      conda activate base && \
+      pip install --requirement /tmp/pip_requirements.txt
+
+
+Assuming this image is published as ``det-custom-registry:det-custom-tag`` then
+you can configure the environment like:
+
+.. code:: yaml
+
+   environment:
+     image: "det-custom-registry:det-custom-tag"
+
+Next Steps
+----------
+- :ref:`experiment-lifecycle`

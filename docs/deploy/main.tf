@@ -1,0 +1,18 @@
+terraform {
+  required_version = "~> 0.12"
+
+  backend "s3" {
+    bucket = "determined-ai-docs-terraform"
+    key    = "terraform.tfstate"
+    region = "us-west-2"
+  }
+}
+
+provider "aws" {
+  version = "~> 2.19.0"
+  region  = "us-west-2"
+}
+
+provider "null" {
+  version = "~> 2.1.2"
+}

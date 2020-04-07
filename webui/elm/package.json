@@ -1,0 +1,27 @@
+{
+  "name": "webui",
+  "version": "1.0.0",
+  "description": "Determined web user interface",
+  "main": "determined-ui.js",
+  "repository": "https://github.com/determined-ai/determined.git",
+  "author": "ben@determined.ai",
+  "license": "LicenseRef-LICENSE",
+  "private": true,
+  "dependencies": {
+    "@dillonkearns/elm-graphql": "^4.0.2",
+    "elm": "0.19.1",
+    "elm-analyse": "^0.16.5",
+    "postcss-cli": "^7.1.0"
+  },
+  "devDependencies": {
+    "elm-format": "^0.8.3",
+    "elm-live": "^4.0.2",
+    "elm-test": "0.19.1",
+    "tailwindcss": "^1.2.0"
+  },
+  "scripts": {
+    "elm-live-workaround": "elm-live --pushstate --proxyPrefix /api --proxyHost http://localhost:8080 --",
+    "test": "make test",
+    "lint-elm": "yarn run elm-analyse && yarn run elm-fromat"
+  }
+}

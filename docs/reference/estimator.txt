@@ -1,0 +1,28 @@
+TensorFlow Estimator Model Definition
+=====================================
+
+.. _estimator-trial:
+
+EstimatorTrial Interface
+------------------------
+
+.. autoclass:: determined.estimator.EstimatorTrial
+    :members:
+    :exclude-members: trial_controller_class
+    :inherited-members:
+    :member-order: bysource
+
+Required Wrappers
+~~~~~~~~~~~~~~~~~
+
+To use ``EstimatorTrial``, users need to wrap their optimizer and datasets
+using the following Determined-provided wrappers.
+
+.. autofunction:: determined.estimator.EstimatorContext.wrap_optimizer
+
+.. autofunction:: determined.estimator.EstimatorContext.wrap_dataset
+
+Examples for ``EstimatorTrial``
+-------------------------------
+
+-  :download:`mnist_estimator </examples/mnist_estimator.tgz>`

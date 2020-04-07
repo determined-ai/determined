@@ -1,0 +1,198 @@
+Exporting Trained Models and Checkpoints
+----------------------------------------
+
+After training a model that achieves satisfactory performance, it is
+often important to export the trained model for use outside Determined (e.g.,
+to deploy the model as part of a web service or on an embedded device).
+In the current version of Determined, exporting models is supported by copying
+the **checkpoints** that are automatically created during the training
+process.
+
+A checkpoint consists of the model architecture and the values of the
+model's parameters (i.e., weights) and hyperparameters. When using a
+stateful optimizer during training, checkpoints will also consist of
+optimizer state (i.e., learning rate). The exact checkpoint format
+depends on the application framework being used:
+
+-  TensorFlow trials are checkpointed using the
+   `SavedModel <https://www.tensorflow.org/programmers_guide/saved_model#structure_of_a_savedmodel_directory>`__
+   format. Please consult the TensorFlow documentation to restore models
+   from the SavedModel format.
+-  Keras trials are checkpointed as an HDF5 file with the weights of a
+   model and a JSON file describing the model's architecture. When using
+   a stateful optimization method, the optimizer state is also saved in
+   a separate HDF5 file. To restore the architecture and/or weights of a
+   Keras trial checkpoint, use the
+   `keras.models.model_from_json() <https://keras.io/models/about-keras-models/>`__
+   and
+   `model.load_weights() <https://keras.io/getting-started/faq/#how-can-i-save-a-keras-model>`__
+   Keras APIs, respectively. Optimizer state is currently saved in a
+   custom experimental format---to restore it outside of Determined, please
+   contact the Determined AI team for a consultation.
+-  TF Keras trials are checkpointed to a file named ``determined-keras-model``
+   using ``tf.keras.models.save_model``. You can learn more from the `TF
+   Keras
+   docs <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/models/save_model>`__.
+
+.. _pytorch-checkpoints:
+
+-  PyTorch trials are checkpointed as a checkpoint.pt file. This file is
+   created very similar to what is described in the `PyTorch
+   documentation <https://pytorch.org/tutorials/beginner/saving_loading_models.html#saving-loading-a-general-checkpoint-for-inference-and-or-resuming-training>`__.
+   Instead of the fields in the documentation linked above, there are
+   three fields for the dictionary that is saved by Determined:
+   "model_state_dict", "optimizer_state_dict", and "hparams", which are
+   the model's ``state_dict``, optimizer's ``state_dict``, and trial's
+   hyperparameters respectively.
+
+Determined will automatically create checkpoints for all the trials in an
+experiment. Checkpoints are created in three situations:
+
+1. When Determined suspends training of a trial at one agent, before later
+   resuming training that trial at a different agent.
+2. If ``min_checkpoint_period`` is set in the experiment configuration,
+   each trial will be checkpointed whenever the specified number of
+   training steps are completed since the last checkpoint.
+3. When a trial has been trained to completion (according to the
+   configuration of the experiment's trial search method).
+
+The Determined CLI can be used to view all the checkpoints associated with an
+experiment:
+
+.. code:: bash
+
+   $ det experiment list-checkpoints <experiment-id>
+
+Checkpoints are saved to external storage, as specified in the
+experiment configuration; see the discussion of ``checkpoint_storage``
+above. Each checkpoint has a UUID, which is used as the name of the
+checkpoint directory on the external storage system. For example, if the
+experiment is configured to save checkpoints to a shared file system:
+
+.. code:: yaml
+
+   checkpoint_storage:
+     type: shared_fs
+     host_path: /mnt/nfs-volume-1
+
+A checkpoint with UUID ``b3ed462c-a6c9-41e9-9202-5cb8ff00e109`` can be
+found in the directory
+``/mnt/nfs-volume-1/b3ed462c-a6c9-41e9-9202-5cb8ff00e109``.
+
+The Determined CLI can be used to download a checkpoint saved on S3 or GCS:
+
+.. code:: bash
+
+   $ det checkpoint download <trial-id> <step-id>
+
+.. _checkpoint-garbage-collection:
+
+Checkpoint Garbage Collection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Typically only some checkpoints are appropriate for deployment. Once an
+experiment has finished, Determined can optionally garbage collect some or all
+of the checkpoints taken when the experiment was running. The following
+parameters in the ``checkpoint_storage`` section of the experiment
+configuration specify which checkpoints to save:
+
+-  ``save_experiment_best``: The number of the best checkpoints with
+   validations over all trials to save (where best is measured by the
+   validation metric specified in the searcher configuration).
+-  ``save_trial_best``: The number of the best checkpoints with
+   validations of each trial to save.
+-  ``save_trial_latest``: The number of the latest checkpoints of each
+   trial to save.
+
+If multiple ``save_*`` parameters are specified, the union of the
+specified checkpoints are saved.
+
+Default GC Policy
+^^^^^^^^^^^^^^^^^
+
+Any GC policy parameter that isn't specified will default to the
+following respective value:
+
+.. code:: yaml
+
+    save_experiment_best: 0
+    save_trial_best: 1
+    save_trial_latest: 1
+
+This policy will save the most recent *and* the best checkpoint per
+trial. In other words, if the most recent checkpoint is also the *best*
+checkpoint for a given trial, only one checkpoint will be saved for that
+trial. Otherwise, two checkpoints will be saved for that trial.
+
+Example
+^^^^^^^
+
+Suppose an experiment has the following trials, checkpoints and
+validation metrics (where ``smaller_is_better`` is true):
+
+======== ============= =================
+Trial ID Checkpoint ID Validation Metric
+======== ============= =================
+1        1             null
+1        2             null
+1        3             0.6
+1        4             0.5
+1        5             0.4
+2        6             null
+2        7             0.2
+2        8             0.3
+2        9             null
+2        10            null
+======== ============= =================
+
+The effect of various policies is enumerated in the following table:
+
++----------------+----------------+----------------+----------------+
+| ``save_exp     | ``sav          | ``save_        | Saved          |
+| eriment_best`` | e_trial_best`` | trial_latest`` | Checkpoint IDs |
++================+================+================+================+
+| 0              | 0              | 0              | none           |
++----------------+----------------+----------------+----------------+
+| 2              | 0              | 0              | 8,7            |
++----------------+----------------+----------------+----------------+
+| >= 5           | 0              | 0              | 8,7,5,4,3      |
++----------------+----------------+----------------+----------------+
+| 0              | 1              | 0              | 7,5            |
++----------------+----------------+----------------+----------------+
+| 0              | >= 3           | 0              | 8,7,5,4,3      |
++----------------+----------------+----------------+----------------+
+| 0              | 0              | 1              | 10,5           |
++----------------+----------------+----------------+----------------+
+| 0              | 0              | 3              | 10,9,8,5,4,3   |
++----------------+----------------+----------------+----------------+
+| 2              | 1              | 0              | 8,7,5          |
++----------------+----------------+----------------+----------------+
+| 2              | 0              | 1              | 10,8,7,5       |
++----------------+----------------+----------------+----------------+
+| 0              | 1              | 1              | 10,7,5         |
++----------------+----------------+----------------+----------------+
+| 2              | 1              | 1              | 10,8,7,5       |
++----------------+----------------+----------------+----------------+
+
+If aggressive reclamation is desired, set ``save_experiment_best`` to a
+1 or 2 and leave the other parameters zero. For more conservative
+reclamation, set ``save_trial_best`` to 1 or 2; optionally set
+``save_trial_latest`` as well.
+
+Checkpoints of an existing experiment can be garbage collected by
+changing the GC policy using the ``det experiment set gc-policy``
+subcommand of the Determined CLI.
+
+.. _checkpoint-storage-configuration:
+
+Checkpoint Storage Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A default checkpoint storage will be used when each experiment is created. It
+is recommended to create a default checkpoint configuration that will be used
+by all pertinent tasks started by the cluster. To configure this value, edit
+the ``checkpoint_storage`` configuration in cluster configuration with the
+desired type and location of checkpoint storage. See
+:ref:`cluster-configuration` for details. However, every experiment can still
+be configured with a specific checkpoint storage. See
+:ref:`experiment-configuration` for details.

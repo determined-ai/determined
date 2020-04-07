@@ -1,0 +1,37 @@
+description: mnist-estimator-adaptive
+checkpoint_storage:
+  type: shared_fs
+  host_path: /tmp
+  storage_path: determined-integration-tests-single-checkpoints
+hyperparameters:
+  global_batch_size: 64
+  learning_rate:
+    type: log
+    minval: -4.0
+    maxval: -2.0
+    base: 10
+  hidden_layer_1:
+    type: int
+    minval: 250
+    maxval: 2500
+  hidden_layer_2:
+    type: int
+    minval: 250
+    maxval: 2500
+  hidden_layer_3:
+    type: int
+    minval: 250
+    maxval: 2500
+  dropout:
+    type: double
+    minval: 0.0
+    maxval: 0.5
+searcher:
+  name: adaptive
+  metric: accuracy
+  smaller_is_better: false
+  target_trial_steps: 2
+  step_budget: 4
+  mode: aggressive
+  max_rungs: 2
+entrypoint: model_def:MNistTrial

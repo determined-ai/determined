@@ -1,0 +1,77 @@
+@tailwind base;
+
+@tailwind components;
+
+@tailwind utilities;
+
+@font-face {
+  font-display: block;
+  font-family: 'Objektiv Mk3';
+  font-style: normal;
+  font-weight: normal;
+  src:
+    url('/public/webfonts/objektiv-mk3-regular.woff2?ada469') format('woff2'),
+    url('/public/webfonts/objektiv-mk3-regular.woff?ada469') format('woff'),
+    url('/public/webfonts/objektiv-mk3-regular.ttf?ada469') format('truetype'),
+    url('/public/webfonts/objektiv-mk3-regular.svg?ada469#determined-ai') format('svg');
+}
+
+@font-face {
+  font-display: block;
+  font-family: 'Objektiv Mk3';
+  font-style: italic;
+  font-weight: normal;
+  src:
+    url('/public/webfonts/objektiv-mk3-regular-italic.woff2?ada469') format('woff2'),
+    url('/public/webfonts/objektiv-mk3-regular-italic.woff?ada469') format('woff'),
+    url('/public/webfonts/objektiv-mk3-regular-italic.ttf?ada469') format('truetype'),
+    url('/public/webfonts/objektiv-mk3-regular-italic.svg?ada469#determined-ai') format('svg');
+}
+
+@font-face {
+  font-display: block;
+  font-family: 'Objektiv Mk3';
+  font-style: normal;
+  font-weight: bold;
+  src:
+    url('/public/webfonts/objektiv-mk3-bold.woff2?ada469') format('woff2'),
+    url('/public/webfonts/objektiv-mk3-bold.woff?ada469') format('woff'),
+    url('/public/webfonts/objektiv-mk3-bold.ttf?ada469') format('truetype'),
+    url('/public/webfonts/objektiv-mk3-bold.svg?ada469#determined-ai') format('svg');
+}
+
+@font-face {
+  font-display: block;
+  font-family: 'Objektiv Mk3';
+  font-style: italic;
+  font-weight: bold;
+  src:
+    url('/public/webfonts/objektiv-mk3-bold-italic.woff2?ada469') format('woff2'),
+    url('/public/webfonts/objektiv-mk3-bold-italic.woff?ada469') format('woff'),
+    url('/public/webfonts/objektiv-mk3-bold-italic.ttf?ada469') format('truetype'),
+    url('/public/webfonts/objektiv-mk3-bold-italic.svg?ada469#determined-ai') format('svg');
+}
+
+ul.horizontal-list li {
+  @apply inline-block;
+  @apply my-1;
+}
+
+ul.horizontal-list li:not(:last-child) {
+  @apply mr-2
+}
+
+.link {
+  @apply underline;
+}
+
+.link:hover {
+    text-shadow: 1px 1px rgba(128, 128, 128, 0.3);
+}
+
+ul.breadcrumb li+li:before {
+  @apply p-2;
+  @apply pr-1;
+  color: black;
+  content: "\003e";
+}

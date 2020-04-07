@@ -1,0 +1,118 @@
+.. _install-using-packages:
+
+Install Determined Using Debian Packages
+========================================
+
+For systems running Ubuntu 16.04 or 18.04, we support installing the
+Determined master and agent using Debian packages and running them as
+systemd services rather than Docker containers. We also provide an
+unofficial means of doing the same for Hasura, which does not otherwise
+support package-based installation. Other Debian-based systems are
+likely to work as well, but we have not tested them.
+
+For PostgreSQL, you should use either your Linux distribution's package
+and service or a :ref:`Docker container <install-using-docker>`.
+
+Preliminary Setup
+-----------------
+
+Master and Agent
+~~~~~~~~~~~~~~~~
+
+#. Go to `the webpage for the latest Determined release
+   <https://github.com/determined-ai/determined/releases/latest>`_.
+
+#. Download the appropriate package file, which will have the name
+   ``determined-master_VERSION_linux_amd64.deb`` (with ``VERSION``
+   replaced by an actual version, such as |version|).
+
+#. Run
+
+   .. code::
+
+      sudo apt-get install <path to downloaded file>
+
+Before running the Determined agent, you will have to :ref:`install
+Docker <install-docker>` on each agent machine and, if the machine
+has GPUs, ensure that the :ref:`nvidia-docker2 installation
+<validate-nvidia-docker2>` is working as expected.
+
+Apart from that, the agent follows the same process as the master,
+except that "master" should be replaced by "agent" everywhere it
+appears.
+
+Hasura
+~~~~~~
+
+We recommend running Hasura on the same machine as the master, though
+that is not required.
+
+#. Go to `the webpage for the latest Hasura packaging release
+   <https://github.com/dzhu/hasura-pkg/releases/latest>`_.
+
+#. Download the package file, which will have a name that looks like
+   ``hasura_VERSION_amd64.deb``.
+
+#. Install the package file.
+
+   .. code::
+
+      sudo apt-get install <path to downloaded file>
+
+Configuring and Starting the Cluster
+------------------------------------
+
+#. Ensure that an instance of PostgreSQL is running and accessible from
+   the machine or machines where Hasura and the master will be run.
+
+#. Edit the :ref:`YAML configuration files <topic-guides_yaml>` at
+   ``/etc/determined/master.yaml`` (for the master) and
+   ``/etc/determined/agent.yaml`` (for each agent) as appropriate for
+   your setup.
+
+#. Edit the Hasura configuration file at ``/etc/hasura/hasura.conf``.
+   That file is not a YAML file, but rather a shell script that defines
+   environment variables that are then interpreted by Hasura. See
+   `Hasura's documentation
+   <https://docs.hasura.io/1.0/graphql/manual/deployment/graphql-engine-flags/reference.html>`_
+   for more information.
+
+#. Start the Hasura service on the master machine.
+
+   .. code::
+
+      sudo systemctl start hasura
+
+#. Start the master.
+
+   .. code::
+
+      sudo systemctl start determined-master
+
+   The master can also be run directly with the command
+   ``determined-master``, which may be helpful for experimenting with
+   Determined (e.g., testing different configuration options quickly
+   before writing them to the configuration file).
+
+#. Start the agent on each agent machine.
+
+   .. code::
+
+      sudo systemctl start determined-agent
+
+   Similarly, the agent can be run with the command
+   ``determined-agent``.
+
+Managing the Cluster
+--------------------
+
+To configure a service to start running automatically when its machine
+boots up, run ``sudo systemctl enable <service>``, where the service is
+``determined-master``, ``determined-agent``, or ``hasura``. (You can
+also use ``sudo systemctl enable --now <service>`` to enable and
+immediately start a service in one command.)
+
+To view the logging output of a service, run ``journalctl -u
+<service>``.
+
+To manually stop a service, run ``sudo systemctl stop <service>``.

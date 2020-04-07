@@ -1,0 +1,3 @@
+Sphinx>=2.2.0
+sphinx-argparse>=0.2.5
+git+https://github.com/determined-ai/determined_sphinx_theme.git

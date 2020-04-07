@@ -1,0 +1,33 @@
+description: rcnn_tp_random
+data:
+hyperparameters:
+  global_batch_size: 16
+  num_workers: 8
+  warmup_iterations: 10000
+  is_aws: True
+  is_gcs: False
+  gradient_clipping: 0.0
+optimizations:
+  aggregation_frequency: 8
+searcher:
+  metric: 'mAP(bbox)/IoU=0.5:0.95'
+  smaller_is_better: false
+  name: random
+  max_trials: 1
+  max_steps: 2304
+
+bind_mounts:
+  - host_path: /tmp
+    container_path: /profiler-out
+
+entrypoint: model:RCNNTrial
+max_restarts: 3
+min_validation_period: 256
+min_checkpoint_period: 64
+checkpoint_policy: none
+batches_per_step: 64
+reproducibility:
+  experiment_seed: 12345
+
+resources:
+  slots_per_trial: 16

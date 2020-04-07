@@ -1,0 +1,12 @@
+black>=19.3b0
+flake8>=3.7.8
+flake8-bugbear>=19.8.0
+flake8-colors>=0.1.6
+flake8-commas==2.0.0
+flake8-comprehensions>=2.2.0
+flake8-docstrings>=1.4.0
+flake8-quotes>=2.1.0
+flake8-tuple>=0.4.0
+isort
+mypy==0.740
+pip-tools>=4.5

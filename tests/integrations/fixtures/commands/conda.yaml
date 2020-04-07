@@ -1,0 +1,6 @@
+name: base
+dependencies:
+  - pip:
+    # watchdog is a fast-downloading package which we can expect will never be
+    # already-present in a prebuilt image.
+    - watchdog

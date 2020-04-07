@@ -1,0 +1,8 @@
+elm-stuff/
+node_modules/
+determined-ui.js
+docs/
+examples/
+public/styles.css
+tests/cypress/videos
+tests/cypress/screenshots

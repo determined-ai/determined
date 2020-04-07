@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Determined Deep Learning Training Platform" />
+
+  <title>Determined AI</title>
+
+  <link href="/public/images/favicon.png" rel="icon" />
+  <link href="/public/styles.css" rel="stylesheet" />
+  <link href="/public/css/loading.css" rel="stylesheet" />
+  <link href="/public/css/det.css" rel="stylesheet" />
+
+  <link href="/public/css/fontawesome.v5.11.2.all.css" rel="stylesheet" />
+  <link href="/public/css/fonts.css" rel="stylesheet" />
+  <script src="/public/js/js-yaml.v3.13.1.min.js"></script>
+
+  <script src="/public/js/determined-shims.js"></script>
+  <script src="/public/js/ace.js" type="text/javascript" charset="utf-8"></script>
+  <script src="/public/determined-ui.js"></script>
+  <!-- TODO(dzhu): figure out imports and switch to non-global version -->
+  <script src="/public/ResizeObserver.global.js"></script>
+</head>
+
+<body>
+  <script>
+    !function () {
+      var analytics = window.analytics = window.analytics || []; if (!analytics.initialize) if (analytics.invoked) window.console && console.error && console.error("Segment snippet included twice."); else {
+        analytics.invoked = !0; analytics.methods = ['trackSubmit', 'trackClick', 'trackLink', 'trackForm', 'pageview', 'identify', 'reset', 'group', 'track', 'ready', 'alias', 'debug', 'page', 'once', 'off', 'on']; analytics.factory = function (t) { return function () { var e = Array.prototype.slice.call(arguments); e.unshift(t); analytics.push(e); return analytics } }; for (var t = 0; t < analytics.methods.length; t++) { var e = analytics.methods[t]; analytics[e] = analytics.factory(e) } analytics.load = function (t, e) { var n = document.createElement("script"); n.type = "text/javascript"; n.async = !0; n.src = "https://cdn.segment.com/analytics.js/v1/" + t + "/analytics.min.js"; var a = document.getElementsByTagName("script")[0]; a.parentNode.insertBefore(n, a); analytics._loadOptions = e }; analytics.SNIPPET_VERSION = "4.1.0";
+        analytics.load('M73ylQEXzfZ2iF2XHnqaXWlJh9aSCb0u');
+        analytics.page();
+      }
+    }();
+
+    let app = Elm.Main.init({ flags: '0.11.2' });
+    DetShims.addPorts(app);
+  </script>
+</body>
+
+</html>

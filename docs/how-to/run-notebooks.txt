@@ -1,0 +1,75 @@
+Run Notebooks in Determined
+===========================
+
+Jupyter Notebook is a software for interactive Python development. Notebooks are commonly used in the data science and machine learning life cycle. You can read more about Jupyter Notebooks on their `homepage <https://jupyter.org/>`_.
+
+How to access Jupyter Notebooks
+-------------------------------
+*This How-To requires the Determined CLI. For installation procedures, see* :ref:`install-cli`.
+
+There are two ways to access notebooks:
+  #. Command line
+  #. WebUI
+
+
+Command Line
+~~~~~~~~~~~~
+
+The following command will automatically start a notebook with a GPU and open in your browser.
+
+.. code-block:: bash
+
+    det notebook start
+
+The context option adds a folder or file to the notebook environment.
+
+.. code-block:: bash
+
+    det notebook start --context folder/file
+
+The config-file option can be used to create a notebook with an environment specified by a configuration file.
+
+.. code-block:: bash
+
+    det notebook start --config-file config.yaml
+
+For more information on how to write the notebook configuration file, see :ref:`notebook-configuration`.
+
+Other Useful Commands
+#####################
+
+A full list of notebook commands can be found by running:
+
+.. code-block:: bash
+
+    det notebook --help
+
+To view all running notebooks:
+
+.. code-block:: bash
+
+    det notebook list
+
+To kill a notebook, you first need to have a task_id which can be found under the list command.
+
+.. code-block:: bash
+
+    det notebook kill <task_id>
+
+WebUI
+~~~~~
+
+Notebooks can also be started from the WebUI by first going to the Determined home page. On the left-hand side, you can click the notebooks tab to take you to the notebooks page.
+
+.. image:: /assets/images/UI-Notebooks-View.png
+
+From here, you can find running notebooks. You can reopen, kill, or view logs for each notebook.
+
+To create a new notebook, click "Launch new notebook". If you would like to use a CPU-only notebook, click the dropdown arrow and select "Launch new CPU-only notebook".
+
+.. image:: /assets/images/UI-Notebooks-Dropdown.png
+
+Next Steps
+----------
+- :ref:`notebook-configuration`
+- :ref:`notebook-state`

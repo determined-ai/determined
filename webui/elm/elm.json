@@ -1,0 +1,69 @@
+{
+    "type": "application",
+    "source-directories": [
+        "src"
+    ],
+    "elm-version": "0.19.1",
+    "dependencies": {
+        "direct": {
+            "Gizra/elm-all-set": "1.0.1",
+            "NoRedInk/elm-json-decode-pipeline": "1.0.0",
+            "avh4/elm-color": "1.0.0",
+            "basti1302/elm-human-readable-filesize": "1.2.0",
+            "cuducos/elm-format-number": "6.0.2",
+            "dillonkearns/elm-graphql": "4.3.1",
+            "elm/browser": "1.0.1",
+            "elm/core": "1.0.2",
+            "elm/html": "1.0.0",
+            "elm/http": "2.0.0",
+            "elm/json": "1.1.3",
+            "elm/svg": "1.0.1",
+            "elm/time": "1.0.0",
+            "elm/url": "1.0.0",
+            "elm-community/list-extra": "8.2.2",
+            "elm-community/maybe-extra": "5.0.0",
+            "elm-community/result-extra": "2.2.1",
+            "elm-community/string-extra": "4.0.1",
+            "elm-community/typed-svg": "5.1.0",
+            "folkertdev/elm-state": "3.0.1",
+            "folkertdev/one-true-path-experiment": "4.0.3",
+            "gampleman/elm-visualization": "2.0.1",
+            "ianmackenzie/elm-units": "2.2.0",
+            "icidasset/elm-binary": "2.1.0",
+            "icidasset/elm-sha": "2.0.2",
+            "mcordova47/elm-natural-ordering": "1.0.5",
+            "myrho/elm-round": "1.0.4",
+            "rtfeldman/elm-css": "16.0.1",
+            "rtfeldman/elm-iso8601-date-strings": "1.1.3",
+            "ryannhg/date-format": "2.3.0"
+        },
+        "indirect": {
+            "Skinney/murmur3": "2.0.8",
+            "elm/bytes": "1.0.8",
+            "elm/file": "1.0.5",
+            "elm/parser": "1.1.0",
+            "elm/regex": "1.0.0",
+            "elm/virtual-dom": "1.0.2",
+            "folkertdev/elm-deque": "3.0.1",
+            "folkertdev/svg-path-lowlevel": "3.0.0",
+            "ianmackenzie/elm-float-extra": "1.1.0",
+            "ianmackenzie/elm-geometry": "1.2.1",
+            "ianmackenzie/elm-interval": "1.0.1",
+            "ianmackenzie/elm-triangular-mesh": "1.0.2",
+            "justinmimbs/date": "3.1.2",
+            "justinmimbs/time-extra": "1.1.0",
+            "kuon/elm-string-normalize": "1.0.1",
+            "lukewestby/elm-string-interpolate": "1.0.4",
+            "pzp1997/assoc-list": "1.0.0",
+            "rtfeldman/elm-hex": "1.0.0"
+        }
+    },
+    "test-dependencies": {
+        "direct": {
+            "elm-explorations/test": "1.2.1"
+        },
+        "indirect": {
+            "elm/random": "1.0.0"
+        }
+    }
+}

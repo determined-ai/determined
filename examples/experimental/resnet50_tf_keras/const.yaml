@@ -1,0 +1,20 @@
+description: ResNet50_ImageNets2
+hyperparameters:
+  global_batch_size: 32
+  learning_rate: 0.1
+searcher:
+  name: single
+  metric: val_loss
+  max_steps: 2
+data:
+  run_eagerly: False
+  use_tensor_lr: False
+  enable_xla: False
+  enable_eager: False
+  fp16_implementation: 'keras'
+  tf_dtype: 'float32'
+  data_format: 'channels_first'
+  use_synthetic_data: True
+  use_trivial_model: False
+max_restarts: 0
+entrypoint: model_def:ResNetModel

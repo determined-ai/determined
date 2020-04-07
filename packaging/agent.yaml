@@ -1,0 +1,13 @@
+## The hostname or IP address of the Determined master.
+# master_address: 0.0.0.0
+
+## The port of the Determined master.
+# master_port: 80
+
+## The ID of this agent; defaults to the hostname of the current machine. Agent IDs must be unique
+## within a cluster.
+# agent_id: AGENT_ID
+
+## The label of this agent. Agents with labels may only run workloads with the
+## corresponding label.
+# label: LABEL

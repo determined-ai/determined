@@ -1,0 +1,47 @@
+.PHONY: build cleanup get-images run-master-integration-tests run-python-integration-tests
+
+ifeq ($(origin DET_GIT_COMMIT), undefined)
+GIT_COMMIT := $(shell git rev-parse HEAD)
+GIT_DIRTY := $(if $(shell git status --porcelain),-dirty,)
+export DET_GIT_COMMIT := $(GIT_COMMIT)$(GIT_DIRTY)
+endif
+
+VERSION := $(shell cat ../../VERSION)
+INTEGRATIONS_RESOURCE_SUFFIX ?=
+DET_GPU_ENV_IMAGE := determinedai/environments:cuda-10-py-3.6.9-pytorch-1.4-tf-1.14-gpu
+DET_CPU_ENV_IMAGE := determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu
+DET_DEV_AGENT_IMAGE := determinedai/determined-dev:determined-agent-$(DET_GIT_COMMIT)
+DET_DEV_MASTER_IMAGE := determinedai/determined-dev:determined-master-$(DET_GIT_COMMIT)
+DET_IMAGES := $(DET_DEV_AGENT_IMAGE),$(DET_DEV_MASTER_IMAGE),$(DET_GPU_ENV_IMAGE),$(DET_CPU_ENV_IMAGE)
+DOCKER_REGISTRY ?=
+TEST_TAG ?= "$(DOCKER_REGISTRY)determinedai/determined-dev:determined-test-harness-$(DET_GIT_COMMIT)"
+TEST_EXPR ?=
+PYTEST_MARKS ?=
+ETC_ROOT ?=
+REPORT_ROOT ?=
+
+build:
+	docker build -f Dockerfile -t $(TEST_TAG) ../../
+
+cleanup:
+	-docker kill $$(docker ps -q)
+	-docker rm $$(docker ps -a -q)
+	docker volume prune -f
+	docker network prune -f
+
+get-images:
+	@python ci_docker_images.py --registry "$(DOCKER_REGISTRY)" --version "$(VERSION)" "$(DET_IMAGES)"
+
+get-environments-images:
+	@python ci_docker_images.py --environments-only --registry "$(DOCKER_REGISTRY)" "$(DET_GPU_ENV_IMAGE),$(DET_CPU_ENV_IMAGE)"
+
+publish-dev:
+	# Show dirty files, if there are any.
+	git status --porcelain
+	docker push $(TEST_TAG)
+
+run-master-integration-tests:
+	docker run --rm $(TEST_TAG) make -C master test-integrations
+
+run-python-integration-tests:
+	docker run --rm -e INTEGRATIONS_RESOURCE_SUFFIX=$(INTEGRATIONS_RESOURCE_SUFFIX) -e TEST_EXPR="$(TEST_EXPR)" -e PYTEST_MARKS="$(PYTEST_MARKS)" -e ETC_ROOT="$(ETC_ROOT)" -v $(REPORT_ROOT):/build -v /tmp:/tmp --network host -v /var/run/docker.sock:/var/run/docker.sock $(TEST_TAG) make test-python-integrations

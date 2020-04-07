@@ -1,0 +1,2 @@
+(*database/sql.Rows).Close
+(*github.com/jmoiron/sqlx.NamedStmt).Close

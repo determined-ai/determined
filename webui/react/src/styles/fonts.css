@@ -1,0 +1,47 @@
+@font-face {
+  font-display: block;
+  font-family: 'Objektiv Mk3';
+  font-style: normal;
+  font-weight: normal;
+  src:
+    url('/fonts/objektiv-mk3-regular.woff2?ada469') format('woff2'),
+    url('/fonts/objektiv-mk3-regular.woff?ada469') format('woff'),
+    url('/fonts/objektiv-mk3-regular.ttf?ada469') format('truetype'),
+    url('/fonts/objektiv-mk3-regular.svg?ada469#determined-ai') format('svg');
+}
+
+@font-face {
+  font-display: block;
+  font-family: 'Objektiv Mk3';
+  font-style: italic;
+  font-weight: normal;
+  src:
+    url('/fonts/objektiv-mk3-regular-italic.woff2?ada469') format('woff2'),
+    url('/fonts/objektiv-mk3-regular-italic.woff?ada469') format('woff'),
+    url('/fonts/objektiv-mk3-regular-italic.ttf?ada469') format('truetype'),
+    url('/fonts/objektiv-mk3-regular-italic.svg?ada469#determined-ai') format('svg');
+}
+
+@font-face {
+  font-display: block;
+  font-family: 'Objektiv Mk3';
+  font-style: normal;
+  font-weight: bold;
+  src:
+    url('/fonts/objektiv-mk3-bold.woff2?ada469') format('woff2'),
+    url('/fonts/objektiv-mk3-bold.woff?ada469') format('woff'),
+    url('/fonts/objektiv-mk3-bold.ttf?ada469') format('truetype'),
+    url('/fonts/objektiv-mk3-bold.svg?ada469#determined-ai') format('svg');
+}
+
+@font-face {
+  font-display: block;
+  font-family: 'Objektiv Mk3';
+  font-style: italic;
+  font-weight: bold;
+  src:
+    url('/fonts/objektiv-mk3-bold-italic.woff2?ada469') format('woff2'),
+    url('/fonts/objektiv-mk3-bold-italic.woff?ada469') format('woff'),
+    url('/fonts/objektiv-mk3-bold-italic.ttf?ada469') format('truetype'),
+    url('/fonts/objektiv-mk3-bold-italic.svg?ada469#determined-ai') format('svg');
+}

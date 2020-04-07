@@ -1,0 +1,12 @@
+[Unit]
+Description=Determined agent
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+ExecStart=/usr/bin/determined-agent run
+
+[Install]
+WantedBy=multi-user.target

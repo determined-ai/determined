@@ -1,0 +1,24 @@
+description: PyTorch_Bert
+hyperparameters:
+  global_batch_size: 24
+  learning_rate: 2e-5
+  lr_scheduler_epoch_freq: 1
+  model_type: 'bert'
+  adam_epsilon: 1e-8
+  weight_decay: 0
+  num_warmup_steps: 0
+  num_training_steps: 459
+  max_seq_length: 128
+searcher:
+  name: single
+  metric: acc
+  max_steps: 4
+  smaller_is_better: false
+max_restarts: 0
+data:
+  task: 'MRPC'
+  model_name_or_path: "bert-base-uncased"
+  output_mode: "classification"
+  path_to_mrpc: ''
+  download_data: True
+entrypoint: model_def:BertPytorch

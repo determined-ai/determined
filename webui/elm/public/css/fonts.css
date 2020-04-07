@@ -1,0 +1,69 @@
+@font-face {
+  font-family: 'determined-ai';
+  src:
+    url('../webfonts/determined-ai.woff2?308ece') format('woff2'),
+    url('../webfonts/determined-ai.woff?308ece') format('woff'),
+    url('../webfonts/determined-ai.ttf?308ece') format('truetype'),
+    url('../webfonts/determined-ai.svg?308ece#determined-ai') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'determined-ai' !important;
+  speak: none;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-dai-logo:before {
+  content: "\e900";
+}
+.icon-tensorboard:before {
+  content: "\e90c";
+}
+.icon-cluster:before {
+  content: "\e901";
+}
+.icon-command:before {
+  content: "\e902";
+}
+.icon-experiment:before {
+  content: "\e903";
+}
+.icon-grid:before {
+  content: "\e904";
+}
+.icon-list:before {
+  content: "\e905";
+}
+.icon-notebook:before {
+  content: "\e906";
+}
+.icon-overflow-horizontal:before {
+  content: "\e907";
+}
+.icon-overflow-vertical:before {
+  content: "\e908";
+}
+.icon-popout::before {
+  content: "\e910";
+}
+.icon-shell:before {
+  content: "\e909";
+}
+.icon-star:before {
+  content: "\e90a";
+}
+.icon-tensorflow:before {
+  content: "\e90b";
+}

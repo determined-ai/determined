@@ -1,0 +1,481 @@
+.. _install-aws:
+
+Install Determined on AWS
+=========================
+This document describes how to deploy a Determined cluster on Amazon Web
+Services (AWS). We provide the
+:ref:`determined_deploy <determined-deploy>` package for easy creation
+and deployment of these resources. If you would rather create the cluster manually, see the
+:ref:`Manual Deployment <manual-deployment>` section below.
+
+For more information on using Determined on AWS, see the :ref:`topic_guide_aws`
+topic guide.
+
+
+.. _determined-deploy:
+
+
+`determined_deploy` Python Package
+----------------------------------
+
+The `determined_deploy` package uses AWS CloudFormation to automatically deploy
+and configure a Determined cluster. The CloudFormation builds the necessary components
+for Determined into a single CloudFormation stack.
+
+Requirements
+~~~~~~~~~~~~
+
+-  The machine executing the `determined_deploy` package must be configured
+   with either AWS credentials or have an IAM role attached with permissions
+   to access AWS CloudFormation APIs. See the
+   `AWS Documentation <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html>`__
+   for information on how to use AWS credentials.
+
+
+Installation
+~~~~~~~~~~~~
+
+These instructions describe how to install the `determined_deploy` Python
+package.
+
+.. code::
+
+   pip install determined_deploy
+
+Deploying
+~~~~~~~~~
+
+.. code::
+
+   det-deploy aws
+
+
+.. _determined-deploy-deployment-types:
+
+Deployment Types
+~~~~~~~~~~~~~~~~
+
+Simple
+^^^^^^
+The simple deployment provides an easy way to deploy a Determined cluster in AWS.
+This creates the master instance in the default subnet for the account.
+
+VPC
+^^^
+The VPC deployment creates a separate VPC with public subnets, and the Determined
+cluster is deployed into these subnets.
+
+Secure
+^^^^^^
+The secure deployment creates resources to lock down the Determined cluster. These resources are:
+
+- A VPC with a public and private subnet
+
+- A NAT Gateway for the private subnet to make outbound connections
+
+- An S3 VPC Gateway so the private subnet can access S3
+
+- A bastion instance in the public subnet
+
+- A master instance in the private subnet
+
+
+CLI Arguments
+~~~~~~~~~~~~~
+.. list-table::
+   :widths: 25 50 25
+   :header-rows: 1
+
+   * - Argument
+     - Description
+     - Default Value
+
+   * - ``--delete``
+     - Delete the CloudFormation stack
+     - False
+
+   * - ``--master-ami``
+     - AMI for master instance
+     - ami-79873901 (AWS Ubuntu AMI)
+
+   * - ``--agent-ami``
+     - AMI for agent instances
+     - ami-0fdf46ca419aa5538 (Determined Environment AMI)
+
+   * - ``--keypair``
+     - AWS Keypair for master and agent instances
+     - determined-keypair
+
+   * - ``--master-instance-type``
+     - Instance Type for master instance
+     - t2.medium
+
+   * - ``--agent-instance-type``
+     - Instance Type for agent instances
+     - p2.8xlarge
+
+   * - ``--deployment-type``
+     - The deployment template to use -  :ref:`Deployment Types<determined-deploy-deployment-types>`
+     - simple
+
+   * - ``--user``
+     - User that deploys the stack
+     - The IAM user that deploys the stack
+
+   * - ``--aws-profile``
+     - AWS profile for deploying with specific AWS credentials
+     - None
+
+   * - ``--inbound-cidr``
+     - CIDR range for inbound traffic
+     - 0.0.0.0/0
+
+   * - ``--version``
+     - Determined version to deploy
+     - The version of ``determined_deploy``
+
+   * - ``--db-password``
+     - Password for ``postgres`` user for Database
+     - postgres
+
+   * - ``--region-name``
+     - AWS region to deploy into
+     - us-west-2
+
+   * - ``--max-idle-agent-period``
+     - Amount of idle time an agent will wait before shutting down
+     - 10m (10 minutes)
+
+   * - ``--max-instances``
+     - Maximum instances that the master instance can allocate to the cluster
+     - 5
+
+
+.. _manual-deployment:
+
+Manual Deployment
+-----------------
+
+Database
+~~~~~~~~
+Determined requires a Postgres-compatible database such as AWS Aurora. Ensure that the database `determined` exists
+in the database. Configure the cluster to use the database by updating the `master.yaml` with the database information.
+
+Security Groups
+~~~~~~~~~~~~~~~
+VPC Security Groups provide a set of rules for inbound and outbound network traffic. The requirements for a Determined
+cluster are:
+
+Master
+^^^^^^
+- Egress on all ports to agent security group
+
+- Egress outbound to the internet
+
+- Ingress on 8080 to view to the Determined UI
+
+- Ingress on 22 for SSH (not required but strongly advised)
+
+- Ingress on all ports from agent security group
+
+Example:
+
+.. code:: yaml
+
+  MasterSecurityGroupEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      DestinationSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+
+  MasterSecurityGroupInternet:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      CidrIp: 0.0.0.0/0
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+
+  MasterSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      FromPort: 8080
+      ToPort: 8080
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+
+  MasterSecurityGroupIngressUI:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      FromPort: 8080
+      ToPort: 8080
+      IpProtocol: tcp
+      CidrIp: !Ref InboundCIDRRange
+
+  MasterSSHIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref InboundCIDRRange
+
+
+Agent
+^^^^^
+
+- Egress on all ports to internet
+
+- Ingress on all ports from master security group
+
+- Ingress on all ports from agent security group
+
+- Ingress on 22 for SSH (not required but strongly advised)
+
+Example:
+
+.. code:: yaml
+
+  AgentSecurityGroupEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !GetAtt AgentSecurityGroup.GroupId
+      CidrIp: 0.0.0.0/0
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+
+  AgentSecurityGroupIngressMaster:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt AgentSecurityGroup.GroupId
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+
+  AgentSecurityGroupIngressAgent:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt AgentSecurityGroup.GroupId
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+
+  AgentSSHIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt AgentSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref InboundCIDRRange
+
+
+IAM Roles
+~~~~~~~~~
+IAM Roles are comprised of IAM Polices, which provide access to AWS APIs such as the EC2 or S3 API. The required IAM
+Policies needed for the Determined cluster are:
+
+Master
+^^^^^^
+- Allow EC2 to assume role
+
+- Allow EC2 to dynamically create and terminate instances with agent role
+
+.. code:: yaml
+
+  MasterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: determined-agent-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                  - ec2:TerminateInstances
+                  - ec2:CreateTags
+                  - ec2:RunInstances
+                Resource: "*"
+        - PolicyName: pass-role
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: !GetAtt AgentRole.Arn
+
+Agent
+^^^^^
+- Allow EC2 to assume role
+
+- Allow S3 access for checkpoint storage
+
+- Allow agent instance to describe instances
+
+.. code:: yaml
+
+  AgentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: agent-s3-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: "s3:*"
+                Resource: "*"
+        - PolicyName: determined-ec2
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                Resource: "*"
+
+
+Master Node
+~~~~~~~~~~~
+The master node should be deployed on an EC2 instance supporting >= 2 CPUs (Intel Broadwell or later), 4GB of RAM,
+and 100GB of disk storage. This corresponds to an EC2 t2.medium instance or better. The AMI should be the default
+Ubuntu 16.04 AMI.
+
+Running Determined
+^^^^^^^^^^^^^^^^^^
+#. Install Docker and create the ``determined`` Docker network.
+
+   .. code::
+
+      apt-get remove docker docker-engine docker.io containerd runc
+      apt-get update
+      apt-get install -y \
+        apt-transport-https \
+        ca-certificates \
+        curl \
+        gnupg-agent \
+        software-properties-common
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+      add-apt-repository \
+        "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+        $(lsb_release -cs) \
+        stable"
+      apt-get update
+      apt-get install -y docker-ce docker-ce-cli containerd.io
+
+      docker network create determined
+
+#. Configure the cluster with ``master.yaml``. See :ref:`Cluster Configuration<cluster-configuration>` for more
+   information.
+
+   Notes:
+
+   - ``hasura-secret`` is a user-defined random string. Ensure that the value is the same in
+     ``master.yaml`` and the ``docker run`` command for the Hasura container.
+   - ``agent-ami`` should be the latest Determined Agent AMI.
+   - ``instance-type`` should be any p2 or p3 EC2 instance type.
+
+   .. warning::
+
+      An important assumption of Determined with Dynamic Agents is that any EC2 instances with the configured
+      tag_key:tag_value pair are managed by the Determined master. This pair should be unique to your Determined installation.
+      If it is not, Determined may inadvertently manage your non-Determined EC2 instances.
+
+   .. code:: yaml
+
+     checkpoint_storage:
+       type: s3
+       bucket: ${CheckpointBucket}
+       save_experiment_best: 0
+       save_trial_best: 1
+       save_trial_latest: 1
+
+     db:
+       user: postgres
+       password: "${DBPassword}"
+       host: "${Database.Endpoint.Address}"
+       port: 5432
+       name: determined
+
+     hasura:
+       secret: <hasura-secret>
+       address: determined-graphql:8080
+
+     provisioner:
+       iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
+       image_id: ${AgentAmiId}
+       agent_docker_image: determinedai/determined-agent:${Version}
+       instance_name: determined-agent-${UserName}
+       instance_type: ${AgentInstanceType}
+       master_url: http://local-ipv4:8080
+       max_idle_agent_period: ${MaxIdleAgentPeriod}
+       max_instances: ${MaxInstances}
+       network_interface:
+         public_ip: true
+         security_group_id: ${AgentSecurityGroup.GroupId}
+       provider: aws
+       root_volume_size: 200
+       ssh_key_name: ${Keypair}
+       tag_key: determined-${UserName}
+       tag_value: determined-${UserName}-agent
+
+#. Start Hasura.
+
+   .. code::
+
+      docker run \
+        -d \
+        --rm \
+        --name determined-graphql \
+        --network determined \
+        -e HASURA_GRAPHQL_ADMIN_SECRET=<hasura-secret> \
+        -e HASURA_GRAPHQL_CONSOLE_ASSETS_DIR=/srv/console-assets \
+        -e HASURA_GRAPHQL_DATABASE_URL=postgres://postgres:${DBPassword}@${Database.Endpoint.Address}:5432/determined \
+        -e HASURA_GRAPHQL_ENABLED_APIS=graphql,metadata \
+        -e HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup \
+        -e HASURA_GRAPHQL_ENABLE_CONSOLE=false \
+        -e HASURA_GRAPHQL_ENABLE_TELEMETRY=false \
+        hasura/graphql-engine:v1.1.0
+
+#. Start the Determined master.
+
+   .. code::
+
+      docker run \
+        --rm \
+        --network determined \
+        -p 8080:8080 \
+        -v master.yaml:/etc/determined/master.yaml \
+        determinedai/determined-master:${Version}
+
+Once you have your Determined cluster running on AWS, try out some of our :ref:`tutorials<tutorials>`.

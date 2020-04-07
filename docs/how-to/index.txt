@@ -1,0 +1,25 @@
+How-To Guides
+=============
+
+How-To guides are goal-oriented guides. They provide a detailed set of steps to perform common use-cases for our product. These are in some sense advanced tutorials that assume some knowledge of how Determined works but address key use-cases.
+
+The full list of our how-to guides can be found below:
+
+.. toctree::
+  :maxdepth: 0
+  :titlesonly:
+
+  custom-env
+  distributed-training
+  hyperparameter-tuning
+  install-cli
+  install-general
+  install-packages
+  install-docker
+  install-deploy
+  install-aws
+  install-gcp
+  notebook-state
+  notebook-configuration
+  run-notebooks
+  tensorboard

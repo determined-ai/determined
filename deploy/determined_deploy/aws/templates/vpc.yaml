@@ -1,0 +1,629 @@
+Description:  This template deploys a VPC, with a public and private subnet. It deploys an internet gateway,
+  with a default route on the public subnet. It a NAT gateway, and default routes for them in the private subnet.
+
+Parameters:
+  UserName:
+    Description: An environment name that is prefixed to resource names
+    Type: String
+
+  VpcCIDR:
+    Description: Please enter the IP range (CIDR notation) for this VPC
+    Type: String
+    Default: 10.192.0.0/16
+
+  Subnet1CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+    Type: String
+    Default: 10.192.10.0/24
+
+  Subnet2CIDR:
+    Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+    Type: String
+    Default: 10.192.11.0/24
+
+  Keypair:
+    Description: Keypair for resources
+    Type: AWS::EC2::KeyPair::KeyName
+
+  MasterAmiId:
+    Type: String
+    Description: AMI Id for Master
+
+  MasterInstanceType:
+    Type: String
+    Description: Instance Type of Master
+
+  AgentAmiId:
+    Type: String
+    Description: AMI Id for Agent
+
+  AgentInstanceType:
+    Type: String
+    Description: Instance Type of Agent
+
+  InboundCIDRRange:
+    Type: String
+    Description: Ip range for Inbound
+
+  Version:
+    Type: String
+    Description: Determined version or commit for master image
+
+  DBPassword:
+    Type: String
+    Description: Password for database
+    NoEcho: true
+
+  HasuraSecret:
+    Type: String
+    Description: Password for hasura
+    NoEcho: true
+
+  MaxIdleAgentPeriod:
+    Type: String
+    Description: How long before idle agents are shutdown
+
+  MaxInstances:
+    Type: String
+    Description: Maximum number of agents to launch simultaneously
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref UserName
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Ref UserName
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  Subnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      CidrBlock: !Ref Subnet1CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${UserName} Public Subnet (AZ1)
+
+  Subnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      CidrBlock: !Ref Subnet2CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${UserName} Public Subnet (AZ2)
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${UserName} Public Routes
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  Subnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref Subnet1
+
+  Subnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref Subnet2
+
+  CheckpointBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub det-${UserName}-${AWS::Region}-${AWS::AccountId}
+
+  MasterSecurityGroupEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      DestinationSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+
+  MasterSecurityGroupInternet:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      CidrIp: 0.0.0.0/0
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+
+  MasterSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      FromPort: 8080
+      ToPort: 8080
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+
+  MasterSecurityGroupIngressUI:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      FromPort: 8080
+      ToPort: 8080
+      IpProtocol: tcp
+      CidrIp: !Ref InboundCIDRRange
+
+  MasterSSHIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt MasterSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref InboundCIDRRange
+
+  AgentSecurityGroupEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !GetAtt AgentSecurityGroup.GroupId
+      CidrIp: 0.0.0.0/0
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+
+  AgentSecurityGroupIngressMaster:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt AgentSecurityGroup.GroupId
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+
+  AgentSecurityGroupIngressAgent:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt AgentSecurityGroup.GroupId
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: tcp
+      SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+
+
+  AgentSSHIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt AgentSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref InboundCIDRRange
+
+  DatabaseEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !GetAtt DatabaseSecurityGroup.GroupId
+      CidrIp: 0.0.0.0/0
+      FromPort: 0
+      ToPort: 65535
+      IpProtocol: -1
+
+  DatabaseIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt DatabaseSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 5432
+      ToPort: 5432
+      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+
+  MasterSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group For Master
+      VpcId: !Ref VPC
+      Tags:
+        - Key: user
+          Value: !Ref UserName
+
+  AgentSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group For Agent
+      VpcId: !Ref VPC
+      Tags:
+        - Key: user
+          Value: !Ref UserName
+
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group For Database
+      VpcId: !Ref VPC
+      Tags:
+        - Key: user
+          Value: !Ref UserName
+
+  DatabaseSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: determined-db-subnet-group
+      SubnetIds:
+        - !Ref Subnet1
+        - !Ref Subnet2
+      Tags:
+        - Key: user
+          Value: !Ref UserName
+
+  Database:
+    Type: AWS::RDS::DBCluster
+    DeletionPolicy: Delete
+    Properties:
+      Engine: aurora-postgresql
+      EngineMode: serverless
+      DatabaseName: determined
+      DBClusterParameterGroupName: 'default.aurora-postgresql10'
+      DBSubnetGroupName: !Ref DatabaseSubnetGroup
+      MasterUsername: postgres
+      MasterUserPassword: !Ref DBPassword
+      Tags:
+        - Key: user
+          Value: !Ref UserName
+      VpcSecurityGroupIds:
+        - !GetAtt DatabaseSecurityGroup.GroupId
+
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /determined/det-${UserName}/journald
+
+  LogPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Roles:
+        - !Ref AgentRole
+        - !Ref MasterRole
+      PolicyName: agent-log-policy
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - logs:DescribeLogStreams
+            Resource:
+              - !Sub arn:aws:logs:*:*:log-group:/determined/det-${UserName}/journald,
+              - !Sub arn:aws:logs:*:*:log-group:/determined/det-${UserName}/journald:log-stream:*
+
+  MetricPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Roles:
+        - !Ref AgentRole
+        - !Ref MasterRole
+      PolicyName: agent-metric-policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action:
+              - cloudwatch:PutMetricData
+            Effect: Allow
+            Resource: "*"
+
+  AgentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: agent-s3-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: "s3:*"
+                Resource: "*"
+        - PolicyName: determined-ec2
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                Resource: "*"
+
+  AgentInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref AgentRole
+
+  MasterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: determined-agent-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                  - ec2:TerminateInstances
+                  - ec2:CreateTags
+                  - ec2:RunInstances
+                Resource: "*"
+        - PolicyName: pass-role
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: !GetAtt AgentRole.Arn
+        - PolicyName: master-log-policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                Resource:
+                  - arn:aws:logs:*:*:log-group:/determined/determined/journald
+                  - arn:aws:logs:*:*:log-group:/determined/determined/journald:log-stream:*
+        - PolicyName: master-metric-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action:
+                  - cloudwatch:PutMetricData
+                Effect: Allow
+                Resource: "*"
+      Tags:
+        - Key: user
+          Value: !Ref UserName
+
+  MasterInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref MasterRole
+
+  MasterInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      SubnetId: !Ref Subnet1
+      InstanceType: !Ref MasterInstanceType
+      ImageId: !Ref MasterAmiId
+      KeyName: !Ref Keypair
+      IamInstanceProfile: !Ref MasterInstanceProfile
+      DisableApiTermination: true
+      SecurityGroupIds:
+        - !Ref MasterSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 200
+            VolumeType: gp2
+      UserData:
+        Fn::Base64: !Sub |
+          Content-Type: multipart/mixed; boundary="//"
+          MIME-Version: 1.0
+
+          --//
+          Content-Type: text/cloud-config; charset="us-ascii"
+          MIME-Version: 1.0
+          Content-Transfer-Encoding: 7bit
+          Content-Disposition: attachment; filename="cloud-config.txt"
+
+          #cloud-config
+          cloud_final_modules:
+          - [scripts-user, always]
+
+          --//
+          Content-Type: text/x-shellscript; charset="us-ascii"
+          MIME-Version: 1.0
+          Content-Transfer-Encoding: 7bit
+          Content-Disposition: attachment; filename="userdata.txt"
+
+          #!/bin/bash
+          mkdir -p /usr/local/determined/etc
+          cat << EOF > /usr/local/determined/etc/master.yaml
+          checkpoint_storage:
+            type: s3
+            bucket: ${CheckpointBucket}
+            save_experiment_best: 0
+            save_trial_best: 1
+            save_trial_latest: 1
+
+          db:
+            user: postgres
+            password: "${DBPassword}"
+            host: "${Database.Endpoint.Address}"
+            port: 5432
+            name: determined
+
+          hasura:
+            secret: "${HasuraSecret}"
+            address: determined-graphql:8080
+
+          provisioner:
+            iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
+            image_id: ${AgentAmiId}
+            agent_docker_image: determinedai/determined-agent:${Version}
+            instance_name: determined-agent-${UserName}
+            instance_type: ${AgentInstanceType}
+            master_url: http://local-ipv4:8080
+            max_idle_agent_period: ${MaxIdleAgentPeriod}
+            max_instances: ${MaxInstances}
+            network_interface:
+              public_ip: true
+              security_group_id: ${AgentSecurityGroup.GroupId}
+            provider: aws
+            root_volume_size: 200
+            ssh_key_name: ${Keypair}
+            startup_script: |
+              cat << EOF > /tmp/journald-cloudwatch.conf
+              log_group = "/determined/det-${UserName}/journald"
+              EOF
+
+              rm /etc/journald-cloudwatch.conf
+              mv /tmp/journald-cloudwatch.conf /etc/journald-cloudwatch.conf
+              systemctl restart journald-cloudwatch
+            tag_key: det-${UserName}
+            tag_value: det-${UserName}-agent
+          EOF
+
+          cat << EOF > /tmp/journald-cloudwatch.conf
+          log_group = "/determined/det-${UserName}/journald"
+          field_length = 1000
+          EOF
+
+          rm /etc/journald-cloudwatch.conf
+          mv /tmp/journald-cloudwatch.conf /etc/journald-cloudwatch.conf
+          systemctl restart journald-cloudwatch
+
+          apt-get remove docker docker-engine docker.io containerd runc
+          apt-get update
+          apt-get install -y \
+              apt-transport-https \
+              ca-certificates \
+              curl \
+              gnupg-agent \
+              software-properties-common
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+          add-apt-repository \
+             "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+             $(lsb_release -cs) \
+             stable"
+          apt-get update
+          apt-get install -y docker-ce docker-ce-cli containerd.io
+
+          docker network create determined
+
+          docker stop $(docker ps -a -q)
+          docker rm $(docker ps -a -q)
+
+          docker run \
+              -d \
+              --name determined-graphql \
+              --restart unless-stopped \
+              --network determined \
+              -e HASURA_GRAPHQL_ADMIN_SECRET=${HasuraSecret} \
+              -e HASURA_GRAPHQL_CONSOLE_ASSETS_DIR=/srv/console-assets \
+              -e HASURA_GRAPHQL_DATABASE_URL=postgres://postgres:${DBPassword}@${Database.Endpoint.Address}:5432/determined \
+              -e HASURA_GRAPHQL_ENABLED_APIS=graphql,metadata \
+              -e HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup \
+              -e HASURA_GRAPHQL_ENABLE_CONSOLE=false \
+              -e HASURA_GRAPHQL_ENABLE_TELEMETRY=false \
+              hasura/graphql-engine:v1.1.0
+
+          docker run \
+              --name determined-master \
+              --network determined \
+              --restart unless-stopped \
+              -p 8080:8080 \
+              -v /usr/local/determined/etc/master.yaml:/etc/determined/master.yaml \
+              determinedai/determined-master:${Version}
+          --//
+      Tags:
+        - Key: user
+          Value: !Ref UserName
+        - Key: Name
+          Value: !Sub det-${UserName}-master
+
+  DeterminedAddress:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref MasterInstance
+      Tags:
+        - Key: user
+          Value: !Ref UserName
+Outputs:
+  VPC:
+    Description: A reference to the created VPC
+    Value: !Ref VPC
+
+  SubnetId:
+    Description: A list of the public subnets
+    Value: !Ref Subnet1
+
+  MasterId:
+    Description: Id of Master Agent
+    Value: !Ref MasterInstance
+
+  MasterSecurityGroupId:
+    Description: Id of Master Security Group
+    Value: !GetAtt MasterSecurityGroup.GroupId
+
+  AgentSecurityGroupId:
+    Description: Id of Agent Security Group
+    Value: !GetAtt AgentSecurityGroup.GroupId
+
+  AgentInstanceProfile:
+    Description: Instance Profile for Agent
+    Value: !GetAtt AgentInstanceProfile.Arn
+
+  CheckpointBucket:
+    Description: S3 Bucket for checkpoints
+    Value: !Ref CheckpointBucket
+
+  Version:
+    Description: Determined version or commit
+    Value: !Ref Version
+
+  DeterminedAddress:
+    Description: Ip address of Determined Master
+    Value: !Ref DeterminedAddress
+
+  AgentTagName:
+    Description: Tag Name for the agents
+    Value: !Sub determined-agent-${UserName}

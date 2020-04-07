@@ -1,0 +1,16 @@
+#!/bin/bash
+
+mkdir -p /usr/local/determined
+echo {{.StartupScriptBase64}} | base64 --decode > /usr/local/determined/startup_script
+echo "#### PRINTING STARTUP SCRIPT START ####"
+cat /usr/local/determined/startup_script
+echo "#### PRINTING STARTUP SCRIPT END ####"
+chmod +x /usr/local/determined/startup_script
+/usr/local/determined/startup_script
+
+docker run --init --name determined-agent --restart always --network {{.AgentNetwork}} --runtime={{.AgentDockerRuntime}} \
+    -e DET_AGENT_ID="{{.AgentID}}" \
+    -e DET_MASTER_HOST="{{.MasterHost}}" \
+    -e DET_MASTER_PORT="{{.MasterPort}}" \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    "{{.AgentDockerImage}}"

@@ -1,0 +1,7 @@
+Hyperparameter Search: Random
+=============================
+
+The ``random`` search method generates ``max_trials`` trials with
+hyperparameters chosen uniformly at random from the configured
+hyperparameter space. Each trial is trained for ``max_steps`` steps and
+then the trial's validation metrics are computed.

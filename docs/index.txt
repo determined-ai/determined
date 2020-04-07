@@ -1,0 +1,112 @@
+Determined AI (v\ |version|\ )
+==============================
+
+Overview
+--------
+Determined is an open-source Deep Learning Training Platform that incorporates cutting-edge research and years of practical experience to help deep learning teams **train models more quickly, easily share GPU resources, and effectively collaborate**. Determined allows deep learning engineers to focus on building and training models at scale, without needing to worry about DevOps or writing custom code for common tasks like fault tolerance or experiment tracking. More information about Determined can be found on the `website <https://determined.ai/>`_.
+
+What does Determined handle for you?
+------------------------------------
+You can think of Determined as a platform that bridges the gap between tools like TensorFlow and PyTorch---which work great for a single researcher with a single GPU---and the challenges that arise when doing deep learning at scale, as teams, clusters, and data sets all increase in size.
+
+Determined's key capabilities include:
+  - high-performance distributed training without any additional changes to your model code
+  - intelligent hyperparameter optimization based on cutting-edge research
+  - flexible GPU scheduling, including dynamically resizing training jobs on-the-fly and automatic management of cloud resources on AWS and GCP
+  - built-in experiment tracking, metrics storage, and visualization
+  - automatic fault tolerance for deep learning training jobs
+  - integrated support for TensorBoard and GPU-powered Jupyter notebooks
+
+To use Determined, you can continue using popular deep learning frameworks such as TensorFlow and PyTorch; you just need to modify your model code to implement the Determined API.
+
+Quick Start
+-----------
+
+Installation
+""""""""""""
+Determined can be installed on Amazon Web Services (AWS), Google Cloud Platform (GCP), or an on-premise cluster. For installation instructions, follow the How-To guide for your preferred environment.
+  - :ref:`install-cli`
+  - :ref:`install-aws`
+  - :ref:`install-gcp`
+  - :ref:`install-determined`
+
+Next Steps
+""""""""""
+Determined supports models written using TensorFlow and PyTorch. To get started using Determined, please follow the tutorial for your preferred deep learning framework:
+  - :ref:`pytorch-mnist-tutorial`
+  - :ref:`tf-mnist-tutorial`
+
+Learn More
+""""""""""
+Use the links below to start learning more about Determined's capabilities.
+
+**General Concepts**
+  - :ref:`benefits-of-determined`
+  - :ref:`det-system-architecture`
+  - :ref:`terminologies-concepts`
+
+**Tutorials**
+  - :ref:`pytorch-mnist-tutorial`
+  - :ref:`tf-mnist-tutorial`
+  - :ref:`tf-cifar-tutorial`
+
+**Hyperparameter Tuning**
+  - :ref:`topic-guides_hp-tuning-algorithms`
+  - :ref:`topic-guides_hp-tuning-basics`
+
+**Distributed Training**
+  - :ref:`optimizing-multi-gpu-training`
+  - :ref:`multi-gpu-training`
+
+**Data and Cloud Development**
+  - :ref:`topic_guide_aws`
+  - :ref:`topic_guide_gcp`
+
+.. * <<  - Data Best Practices >>
+
+**Reproducibility, TensorBoard, and Notebooks**
+  - :ref:`reproducibility`
+  - :ref:`notebooks-topic-guide`
+  - :ref:`notebook-tutorial`
+  - :ref:`how-to-tensorboard`
+
+**Installation**
+  - :ref:`install-cli`
+  - :ref:`install-aws`
+  - :ref:`install-gcp`
+  - :ref:`install-determined`
+
+Documentation Structure
+-----------------------
+The Determined documentation is divided up into five main categories:
+  - **Tutorials** are simple step-by-step guides about getting started with different topics of Determined. Tutorials are a good place to get started with using the product.
+  - **Topic Guides** discuss concepts and topics at a high level. They provide useful
+    information and explanation.
+  - **Reference** guides contain technical reference for our APIs. They describe how
+    to use it; however, these guides assume you have a working understanding of key concepts of
+    Determined.
+  - **How-to** guides take you through the steps needed to address key use-cases. You
+    can think of them as advanced tutorials that assume some knowledge of key
+    concepts of Determined.
+  - **System administration** guides take you through what's needed to set up and
+    configure the Determined system.
+
+
+.. toctree::
+  :hidden:
+  :maxdepth: 2
+
+  tutorials/index
+  how-to/index
+  topic-guides/index
+  reference/index
+  system-administration/index
+
+.. toctree::
+  :hidden:
+  :titlesonly:
+
+  faq
+  examples
+  release-notes
+  attributions

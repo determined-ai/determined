@@ -1,0 +1,7 @@
+pytest
+pexpect
+# TODO(DET-2653): Remove this line after supporting run test mode integration test
+#                 on tf2 using command.
+Keras-Preprocessing[image]
+torch
+numpy

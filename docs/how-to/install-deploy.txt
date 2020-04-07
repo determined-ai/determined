@@ -1,0 +1,110 @@
+.. _install-using-deploy:
+
+Install Determined Using det-deploy
+=======================================
+
+This document shows how to deploy Determined locally or in a production
+cluster using the ``det-deploy`` command-line tool, which automates the
+process of starting Determined as a collection of Docker containers.
+
+In a typical production setup, the master and agents will run on
+separate machines. They can also run on a single machine, which is
+especially useful for local development. This guide provides
+instructions for both scenarios.
+
+Preliminary Setup
+-----------------
+
+Install ``det-deploy`` by running
+
+.. code::
+
+   pip install determined-deploy
+
+Configuring and Starting the Cluster
+------------------------------------
+
+A configuration file is needed to set important values in the master,
+such as where to save model checkpoints. For information about how to
+create a configuration file, see :ref:`cluster-configuration`. The
+configuration file must be named ``master.yaml`` (but it can be in any
+directory).
+
+.. note::
+
+   ``det-deploy`` transparently manages PostgreSQL and Hasura along with
+   the master, so the configuration options related to those services do
+   not need to be set.
+
+Deploying the Master
+~~~~~~~~~~~~~~~~~~~~
+
+On the machine where you wish to run the master, run
+
+.. code::
+
+   det-deploy local fixture-up --etc-root <directory containing master.yaml>
+
+This will start the master, listening on port 8080. To verify that the
+master is running, navigate to ``http://<master-hostname>:8080`` in a
+browser, which should bring up the Determined WebUI. If you're using
+your local machine, for example, navigate to ``http://localhost:8080``.
+
+You can also deploy one or more agents on the same machine as the master
+by adding ``--agents <number>`` to the command line. For example:
+
+.. code::
+
+   det-deploy local fixture-up --etc-root <directory containing master.yaml> --agents 4
+
+In the WebUI, navigate to the ``Cluster`` page, where you should now see
+slots available (either CPU or GPU, depending on what hardware is
+available on the machine).
+
+Deploying Agents
+~~~~~~~~~~~~~~~~
+
+Deploying an agent by itself can also be done with a single
+``det-deploy`` command. On the machine where you wish to run an agent,
+run:
+
+..
+   NOTE: `agent-up` and `agent-down` are still in review (#4929).
+
+.. code::
+
+   det-deploy local agent-up <master_hostname>
+
+This will create an agent on that machine. To verify whether it has
+successfully connected to the master, navigate to the WebUI and check
+whether slots have appeared on the ``Cluster`` page.
+
+.. note::
+
+   The hostname used must be reachable from within Docker containers
+   running on the agent machine. In particular, ``localhost`` will
+   usually not work, even if the master and agent are running on the
+   same machine. Use the ``--agents`` option in that case instead.
+
+Managing the Cluster
+--------------------
+
+``det-deploy`` automatically configures the containers it creates so
+that Docker will handle keeping them running across machine restarts.
+
+To stop the master, PostgreSQL, and Hasura, run
+
+.. code::
+
+   det-deploy local fixture-down
+
+on the machine that is running the master. If you deployed any agents
+with ``fixture-up``, this will also stop those agents.
+
+To stop an agent, run
+
+.. code::
+
+   det-deploy local agent-down
+
+on the machine that is running the agent.

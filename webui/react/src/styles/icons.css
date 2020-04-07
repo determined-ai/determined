@@ -1,0 +1,44 @@
+@font-face {
+  font-display: block;
+  font-family: 'determined-ai';
+  font-style: normal;
+  font-weight: normal;
+  src:
+    url('/fonts/determined-ai.woff2?308ece') format('woff2'),
+    url('/fonts/determined-ai.woff?308ece') format('woff'),
+    url('/fonts/determined-ai.ttf?308ece') format('truetype'),
+    url('/fonts/determined-ai.svg?308ece#determined-ai') format('svg');
+}
+[class^='icon-'],
+[class*=' icon-'] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  /* stylelint-disable-next-line */
+  font-family: 'determined-ai' !important;
+  font-size: 2.4rem;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  line-height: 1;
+  text-transform: none;
+}
+.icon-dai-logo::before { content: '\e900'; }
+.icon-cluster::before { content: '\e901'; }
+.icon-collapse::before { content: '\e90d'; }
+.icon-command::before { content: '\e902'; }
+.icon-expand::before { content: '\e90e'; }
+.icon-experiment::before { content: '\e903'; }
+.icon-grid::before { content: '\e904'; }
+.icon-list::before { content: '\e905'; }
+.icon-notebook::before { content: '\e906'; }
+.icon-overflow-horizontal::before { content: '\e907'; }
+.icon-overflow-vertical::before { content: '\e908'; }
+.icon-popout::before { content: '\e910'; }
+.icon-shell::before { content: '\e909'; }
+.icon-spinner::before { content: '\e90f'; }
+.icon-star::before { content: '\e90a'; }
+.icon-tensorboard::before { content: '\e90c'; }
+.icon-tensorflow::before { content: '\e90b'; }

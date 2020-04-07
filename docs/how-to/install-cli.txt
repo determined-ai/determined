@@ -1,0 +1,42 @@
+.. _install-cli:
+
+Install Determined CLI
+======================
+
+Determined consists of several components:
+
+-  a **master** that schedules workloads and stores metadata
+-  one or more **agents** that run workloads, typically using GPUs
+-  a **command-line tool** (called ``det``) that ML developers can use
+   to launch new workloads and interact with Determined.
+
+The Determined master and agents should typically be installed and configured
+by a system administrator; see the :ref:`administrator install
+guide <install-determined>` for more information.
+
+Each ML developer that wants to use Determined should install a copy of the
+Determined CLI on their local development machine. The CLI is distributed as a
+Python wheel. You can install this wheel as follows:
+
+.. code::
+
+   pip install determined-*.whl
+
+We suggest installing the CLI into a
+`virtualenv <https://virtualenv.pypa.io/en/latest/>`__, although this is
+optional. To install the CLI into a virtualenv, first activate the
+virtualenv and then type the command above.
+
+After the CLI has been installed, it should be configured to connect to
+the Determined master at the appropriate IP address. This can be accomplished
+by setting the ``DET_MASTER`` environmental variable:
+
+.. code::
+
+   export DET_MASTER=<master IP>
+
+You may want to place this into the appropriate configuration file for
+your login shell (e.g., ``.bashrc``).
+
+More information about using the Determined CLI can be found with the command
+``det --help``.

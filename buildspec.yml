@@ -1,0 +1,47 @@
+---
+version: 0.2
+
+env:
+  variables:
+    GO111MODULE: on
+    PACKAGE: github.com/determined-ai/determined
+    PATH: /usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/go/bin
+
+phases:
+  install:
+    commands:
+      # Install WebUI dependencies.
+      - apt-get update
+      - apt-get install -y apt-transport-https
+      - curl -fsSL https://deb.nodesource.com/setup_11.x | bash -
+      - curl -fsSL https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+      - echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+      - apt-get update
+      - apt-get install -y nodejs yarn
+
+      # Install Go.
+      - rm -rf /usr/local/go
+      - curl -fsSL https://dl.google.com/go/go1.13.1.linux-amd64.tar.gz | tar -C /usr/local -xzf -
+
+      # Create Python virtualenv and install dependencies.
+      - pip install virtualenv
+      - virtualenv venv/
+      - . venv/bin/activate
+      - make get-deps
+
+  build:
+    commands:
+      # Build WebUI.
+      - make -C webui/elm build
+      - make -C webui/react build
+
+      # Build and package the Go components.
+      - make debs
+
+  post_build:
+    commands:
+      # Run checks and tests.
+      - make check
+      - make test-all
+      - pip install tensorflow==2.1
+      - make test-tf2

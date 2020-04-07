@@ -1,0 +1,10 @@
+{
+  "baseUrl": "http://localhost:5300",
+  "fixturesFolder": false,
+  "integrationFolder": "cypress/integration",
+  "pluginsFile": "cypress/plugins/index.js",
+  "projectId": "nr6et4",
+  "screenshotsFolder": "cypress/screenshots",
+  "supportFile": "cypress/support",
+  "videosFolder": "cypress/videos"
+}

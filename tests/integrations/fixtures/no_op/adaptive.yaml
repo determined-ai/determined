@@ -1,0 +1,25 @@
+description: noop_adaptive
+checkpoint_storage:
+  type: shared_fs
+  host_path: /tmp
+  storage_path: determined-integration-tests-single-checkpoints
+hyperparameters:
+  global_batch_size: 32
+  metrics_progression: decreasing
+  metrics_base:
+    type: double
+    minval: 0.5
+    maxval: 0.9
+  metrics_sigma: 0
+searcher:
+  name: adaptive
+  metric: validation_error
+  target_trial_steps: 640
+  step_budget: 6000
+  mode: standard
+  max_rungs: 3
+  divisor: 4
+reproducibility:
+  experiment_seed: 999
+max_restarts: 0
+entrypoint: model_def:NoOpTrial

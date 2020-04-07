@@ -1,0 +1,23 @@
+description: mnist-estimator-single
+checkpoint_storage:
+  type: shared_fs
+  host_path: /tmp
+  storage_path: determined-integration-tests-single-checkpoints
+hyperparameters:
+  learning_rate: 1e-3
+  global_batch_size: 64
+  hidden_layer_1: 2500
+  hidden_layer_2: 1000
+  hidden_layer_3: 500
+  dropout: 0.5
+searcher:
+  name: single
+  metric: accuracy
+  max_steps: 1
+  smaller_is_better: false
+resources:
+  slots_per_trial: 2
+max_restarts: 0
+reproducibility:
+  experiment_seed: 999
+entrypoint: model_def:MNistTrial

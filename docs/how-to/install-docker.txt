@@ -1,0 +1,116 @@
+.. _install-using-docker:
+
+Install Determined Using Docker
+===============================
+
+Preliminary Setup
+-----------------
+
+#. :ref:`Install Docker <install-docker>` on all machines in the
+   cluster. If the agents have GPUs, ensure that the
+   :ref:`nvidia-docker2 installation <validate-nvidia-docker2>` on each
+   one is working as expected.
+
+#. Pull the official Docker images for PostgreSQL and Hasura. We
+   recommend using the versions listed below.
+
+   .. code::
+
+      docker pull postgres:10
+      docker pull hasura/graphql-engine:v1.1.0
+
+   These images are not provided by Determined AI; please see their
+   respective Docker Hub pages (`PostgreSQL
+   <https://hub.docker.com/_/postgres>`_, `Hasura
+   <https://hub.docker.com/r/hasura/graphql-engine>`_) for more
+   information.
+
+#. Pull the Docker image for the master or agent on each machine
+   (replace ``VERSION`` with a valid Determined version, such as the
+   current version, |version|):
+
+   ..
+      It seems to be impossible to use substitutions (e.g., |version|)
+      inside code blocks, unfortunately.
+
+   .. code::
+
+      docker pull determinedai/determined-master:VERSION
+      docker pull determinedai/determined-agent:VERSION
+
+Configuring and Starting the Cluster
+------------------------------------
+
+Determined Master and Agents
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:ref:`Configuration values <cluster-configuration>` can come from a
+file, environment variables, or command-line arguments. To get a default
+configuration file for the master, which contains a listing of the
+available options and descriptions for them, run:
+
+.. code::
+
+   id="$(docker create determinedai/determined-master:VERSION)"
+   docker cp "$id":/etc/determined/master.yaml .
+   docker rm "$id"
+
+Then edit the configuration file (``master.yaml``) as appropriate and
+run
+
+.. code::
+
+   docker run -v "$PWD"/master.yaml:/etc/determined/master.yaml determinedai/determined-master:VERSION
+
+to start the master with the edited config file. The process for the
+agent is the same, except that "master" should be replaced by "agent"
+everywhere it appears.
+
+Environment variables and command-line arguments can be passed as usual
+for Docker:
+
+.. code::
+
+   docker run -e DET_DB_HOST=the-db-host determinedai/determined-master:VERSION --db-port=5432
+   docker run -e DET_MASTER_HOST=the-master-host determinedai/determined-agent:VERSION run --master-port=8080
+
+Note that the agent requires ``run`` as the first argument if any
+arguments are provided.
+
+By default, the agent will use all the GPUs on the machine to run
+Determined tasks; this behavior can be changed at startup using the
+`NVIDIA_VISIBLE_DEVICES
+<https://github.com/NVIDIA/nvidia-container-runtime#nvidia_visible_devices>`_
+environment variable. GPUs can also be disabled and enabled at runtime
+using the ``det slot disable`` and ``det slot enable`` CLI commands,
+respectively.
+
+Docker Networking for Master and Agents
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As with any Docker container, the networking mode of the master and
+agent can be changed using the ``--network`` option to ``docker run``.
+In particular, host mode networking (``--network host``) can be useful
+to optimize performance and in situations where a container needs to
+handle a large range of ports, as it does not require network address
+translation (NAT) and no "userland-proxy" is created for each port.
+
+The host networking driver only works on Linux hosts, and is not
+supported on Docker Desktop for Mac, Docker Desktop for Windows, or
+Docker EE for Windows Server.
+
+See `Docker's documentation <https://docs.docker.com/network/host/>`_
+for more details.
+
+Managing the Cluster
+--------------------
+
+By default, ``docker run`` will run in the foreground, so that a
+container can be stopped simply by pressing Control-C. If you wish to
+keep Determined running for the long term, consider running the
+containers `detached
+<https://docs.docker.com/engine/reference/run/#detached--d>`_ and/or
+with `restart policies
+<https://docs.docker.com/config/containers/start-containers-automatically/>`_.
+Using :ref:`our deployment tool <install-using-deploy>` is also an
+option.

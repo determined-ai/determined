@@ -1,0 +1,39 @@
+.. _topic-guides_hp-tuning-det:
+
+Hyperparameter Tuning With Determined
+=====================================
+
+In machine learning, a common task is attempting to find good
+hyperparameters for a learning algorithm. Determined provides support for
+hyperparameter search as a first-class workflow. Several hyperparameter
+search algorithms are supported: ``single``, ``random``, ``grid``,
+``adaptive_simple``, ``adaptive``, and ``pbt``.
+
+Here we give a brief introduction to the search methods. The fields
+mentioned in the descriptions below are specified under the ``searcher``
+field in the :ref:`experiment-configuration`.
+
+In addition to the parameters that are specific to individual search
+algorithms, the following parameters may be provided for any algorithm.
+
+-  ``metric``: The name of the validation metric to use when comparing
+   trials.
+-  (optional) ``smaller_is_better``: Whether a smaller value of
+   ``metric`` is considered better performance (e.g., this would be
+   ``true`` for a loss metric and ``false`` for an accuracy metric).
+   Defaults to ``true``.
+-  (optional) ``source_trial_id`` and ``source_checkpoint_uuid``: Only
+   one of these can be specified at a time. Initializes weights of all
+   trials to some prior checkpoint. If not specified, model weights are
+   initialized randomly.
+
+.. toctree::
+  :maxdepth: 0
+  :titlesonly:
+
+  hp-single
+  hp-grid
+  hp-random
+  hp-adaptive-simple
+  hp-adaptive-advanced
+  hp-pbt

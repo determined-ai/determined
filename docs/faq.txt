@@ -1,0 +1,72 @@
+Frequently Asked Questions
+==========================
+
+Installation
+------------
+
+Which dependencies are required to install the Determined command-line interface?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You'll need to have Python >= 3.5 and ``pip`` installed in your
+development environment. If you need to install a new version of Python,
+one tool you can use is `pyenv <https://github.com/pyenv/pyenv>`__.
+
+How do I install the Determined command-line interface?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: bash
+
+   pip install determined-cli
+
+When trying to install the Determined command-line interface, I encounter this ``distutils`` error
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+   Uninstalling a distutils installed project (...) has been deprecated and will be removed in a future version. This is due to the fact that uninstalling a distutils project will only partially uninstall the project.
+
+If a Python library has previously been installed in your environment with
+`distutils <https://docs.python.org/3/library/distutils.html>`__ or `conda
+<https://conda.io/en/latest/>`__, ``pip`` may not be able to upgrade or
+downgrade the library to the version required by Determined. There are two
+recommended solutions:
+
+#. Install the Determined command-line interface into a fresh
+   `virtualenv <https://virtualenv.pypa.io/en/latest/>`__ with no
+   previous Python packages installed.
+
+#. Use ``--ignore-installed`` with ``pip`` to force overwriting the library
+   version(s).
+
+   .. code:: bash
+
+      pip install --ignore-installed determined-cli
+
+Multi-GPU Training
+------------------
+
+Why do my multi-GPU training experiments never start?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It might be that ``slots_per_trial`` in the experiment configuration is
+not a multiple of the number of GPUs on a machine or that there are
+running tasks preventing your multi-GPU trials from acquiring all the
+GPUs on a single machine. Consider adjusting ``slots_per_trial`` or
+terminating existing tasks to free up slots in your cluster.
+
+See :ref:`multi-gpu-training` for more details.
+
+Why do my multi-machine training experiments appear to be stuck?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Multi-machine training requires that all machines be able to connect to
+each other directly. There may be firewall rules or network
+configuration that prevent machines in your cluster from communicating.
+Please check if agent machines can access each other outside of Determined
+(e.g., use the ping or netcat tools).
+
+More rarely, if agents have multiple network interfaces and some of them
+are not routable, Determined may pick one of those interfaces rather than one
+that allows one agent to contact another. In this case, it is possible
+to set the network interface used for multi-GPU training explicitly in
+the :ref:`cluster-configuration`.

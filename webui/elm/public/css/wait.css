@@ -1,0 +1,25 @@
+/* Wait page specific CSS */
+
+.middle {
+  width: 30vw;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.di-background:before {
+  content: ' ';
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0.25;
+  background-size: 50vw auto;
+  background-position: center center;
+  background-image: url("/public/images/logo.png");
+  background-repeat: no-repeat;
+  width: 100vw;
+  height: 100vh;
+}

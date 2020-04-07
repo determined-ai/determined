@@ -1,0 +1,602 @@
+{
+    "version": 2,
+    "tables": [
+        {
+            "table": {
+                "schema": "public",
+                "name": "agent_user_groups"
+            },
+            "object_relationships": [
+                {
+                    "name": "user",
+                    "using": {
+                        "foreign_key_constraint_on": "user_id"
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "gid",
+                            "id",
+                            "uid",
+                            "user_id",
+                            "group_",
+                            "user_"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "checkpoints"
+            },
+            "object_relationships": [
+                {
+                    "name": "step",
+                    "using": {
+                        "manual_configuration": {
+                            "remote_table": {
+                                "schema": "public",
+                                "name": "steps"
+                            },
+                            "column_mapping": {
+                                "trial_id": "trial_id",
+                                "step_id": "id"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "validation",
+                    "using": {
+                        "manual_configuration": {
+                            "remote_table": {
+                                "schema": "public",
+                                "name": "validations"
+                            },
+                            "column_mapping": {
+                                "trial_id": "trial_id",
+                                "step_id": "step_id"
+                            }
+                        }
+                    }
+                }
+            ],
+            "array_relationships": [
+                {
+                    "name": "trials",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "warm_start_checkpoint_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "trials"
+                            }
+                        }
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "state",
+                            "id",
+                            "step_id",
+                            "trial_id",
+                            "labels",
+                            "resources",
+                            "end_time",
+                            "start_time",
+                            "uuid"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "cluster_id"
+            },
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "cluster_id"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "config_files"
+            },
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "content",
+                            "id"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "experiments"
+            },
+            "object_relationships": [
+                {
+                    "name": "owner",
+                    "using": {
+                        "foreign_key_constraint_on": "owner_id"
+                    }
+                }
+            ],
+            "array_relationships": [
+                {
+                    "name": "searcher_events",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "experiment_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "searcher_events"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "trials",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "experiment_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "trials"
+                            }
+                        }
+                    }
+                }
+            ],
+            "computed_fields": [
+                {
+                    "name": "best_validation_history",
+                    "definition": {
+                        "function": {
+                            "schema": "public",
+                            "name": "experiments_best_validation_history"
+                        },
+                        "table_argument": "e"
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "archived",
+                            "model_definition",
+                            "model_packages",
+                            "state",
+                            "progress",
+                            "id",
+                            "owner_id",
+                            "parent_id",
+                            "config",
+                            "git_commit_date",
+                            "end_time",
+                            "start_time",
+                            "git_commit",
+                            "git_committer",
+                            "git_remote"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "searcher_events"
+            },
+            "object_relationships": [
+                {
+                    "name": "experiment",
+                    "using": {
+                        "foreign_key_constraint_on": "experiment_id"
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "experiment_id",
+                            "id",
+                            "content",
+                            "event_type"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "steps"
+            },
+            "object_relationships": [
+                {
+                    "name": "checkpoint",
+                    "using": {
+                        "manual_configuration": {
+                            "remote_table": {
+                                "schema": "public",
+                                "name": "checkpoints"
+                            },
+                            "column_mapping": {
+                                "trial_id": "trial_id",
+                                "id": "step_id"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "trial",
+                    "using": {
+                        "foreign_key_constraint_on": "trial_id"
+                    }
+                },
+                {
+                    "name": "validation",
+                    "using": {
+                        "manual_configuration": {
+                            "remote_table": {
+                                "schema": "public",
+                                "name": "validations"
+                            },
+                            "column_mapping": {
+                                "trial_id": "trial_id",
+                                "id": "step_id"
+                            }
+                        }
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "id",
+                            "trial_id",
+                            "metrics",
+                            "state",
+                            "end_time",
+                            "start_time"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "templates"
+            },
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "config",
+                            "name"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "trial_logs"
+            },
+            "object_relationships": [
+                {
+                    "name": "trial",
+                    "using": {
+                        "foreign_key_constraint_on": "trial_id"
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "message",
+                            "id",
+                            "trial_id"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "trials"
+            },
+            "object_relationships": [
+                {
+                    "name": "checkpoint",
+                    "using": {
+                        "foreign_key_constraint_on": "warm_start_checkpoint_id"
+                    }
+                },
+                {
+                    "name": "experiment",
+                    "using": {
+                        "foreign_key_constraint_on": "experiment_id"
+                    }
+                }
+            ],
+            "array_relationships": [
+                {
+                    "name": "checkpoints",
+                    "using": {
+                        "manual_configuration": {
+                            "remote_table": {
+                                "schema": "public",
+                                "name": "checkpoints"
+                            },
+                            "column_mapping": {
+                                "id": "trial_id"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "steps",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "trial_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "steps"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "trial_logs",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "trial_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "trial_logs"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "validations",
+                    "using": {
+                        "manual_configuration": {
+                            "remote_table": {
+                                "schema": "public",
+                                "name": "validations"
+                            },
+                            "column_mapping": {
+                                "id": "trial_id"
+                            }
+                        }
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "experiment_id",
+                            "id",
+                            "seed",
+                            "warm_start_checkpoint_id",
+                            "hparams",
+                            "end_time",
+                            "start_time",
+                            "state"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "users"
+            },
+            "object_relationships": [
+                {
+                    "name": "agent_user_group",
+                    "using": {
+                        "manual_configuration": {
+                            "remote_table": {
+                                "schema": "public",
+                                "name": "agent_user_groups"
+                            },
+                            "column_mapping": {
+                                "id": "user_id"
+                            }
+                        }
+                    }
+                }
+            ],
+            "array_relationships": [
+                {
+                    "name": "experiments",
+                    "using": {
+                        "foreign_key_constraint_on": {
+                            "column": "owner_id",
+                            "table": {
+                                "schema": "public",
+                                "name": "experiments"
+                            }
+                        }
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "active",
+                            "admin",
+                            "id",
+                            "username"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "validation_metrics"
+            },
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "raw",
+                            "signed",
+                            "id"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        },
+        {
+            "table": {
+                "schema": "public",
+                "name": "validations"
+            },
+            "object_relationships": [
+                {
+                    "name": "checkpoint",
+                    "using": {
+                        "manual_configuration": {
+                            "remote_table": {
+                                "schema": "public",
+                                "name": "checkpoints"
+                            },
+                            "column_mapping": {
+                                "trial_id": "trial_id",
+                                "step_id": "step_id"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "metric_values",
+                    "using": {
+                        "manual_configuration": {
+                            "remote_table": {
+                                "schema": "public",
+                                "name": "validation_metrics"
+                            },
+                            "column_mapping": {
+                                "id": "id"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "step",
+                    "using": {
+                        "manual_configuration": {
+                            "remote_table": {
+                                "schema": "public",
+                                "name": "steps"
+                            },
+                            "column_mapping": {
+                                "trial_id": "trial_id",
+                                "step_id": "id"
+                            }
+                        }
+                    }
+                }
+            ],
+            "select_permissions": [
+                {
+                    "role": "user",
+                    "permission": {
+                        "columns": [
+                            "id",
+                            "step_id",
+                            "trial_id",
+                            "metrics",
+                            "end_time",
+                            "start_time",
+                            "state"
+                        ],
+                        "filter": {},
+                        "allow_aggregations": true
+                    }
+                }
+            ]
+        }
+    ],
+    "functions": [
+        {
+            "function": {
+                "schema": "public",
+                "name": "best_checkpoint_by_metric"
+            }
+        }
+    ]
+}

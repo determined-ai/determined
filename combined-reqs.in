@@ -1,0 +1,10 @@
+-e file:common#egg=determined_common
+-e file:cli#egg=determined_cli
+-e file:harness#egg=determined
+-e file:deploy#egg=determined_deploy
+-r release-requirements.txt
+-r dev-requirements.txt
+-r docs-requirements.txt
+-r tests/cli/requirements.txt
+-r tests/unit/requirements.txt
+-r tests/integrations/requirements.txt

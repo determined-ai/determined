@@ -1,0 +1,162 @@
+.. _how-to-tensorboard:
+
+TensorBoard
+===========
+
+`TensorBoard <https://www.tensorflow.org/tensorboard>`__ is a widely
+used tool for visualizing and inspecting deep learning models. Determined
+makes it easy to use TensorBoard to examine a single experiment or to
+compare multiple experiments.
+
+TensorBoard instances can be launched via the WebUI or the CLI. To
+launch TensorBoard instances from the CLI, first :ref:`install-cli` on your
+development machine.
+
+Analyzing Experiments
+---------------------
+
+To launch TensorBoard to analyze a single Determined experiment, use
+``det tensorboard start <experiment-id>``:
+
+::
+
+   $ det tensorboard start 7
+   Scheduling TensorBoard (rarely-cute-man) (id: aab49ba5-3357-4145-861c-7e6ff2d702c5)...
+   TensorBoard (rarely-cute-man) was assigned to an agent...
+   Scheduling tensorboard tensorboard (id: c68c9fc9-7eed-475b-a50f-fd78406d7c83)...
+   TensorBoard is running at: http://localhost:8080/proxy/c68c9fc9-7eed-475b-a50f-fd78406d7c83/
+   disconnecting websocket
+
+The Determined master will schedule a TensorBoard instance in the cluster. The
+Determined CLI will wait until the TensorBoard instance is running. Then it
+will open the TensorBoard web interface in a local browser window.
+
+You view information about scheduled and running TensorBoard instances by
+executing the following command:
+
+::
+
+   $ det tensorboard list
+    Id                                   | Owner      | Description                         | State      | Experiment Id   | Trial Ids   | Exit Status
+   --------------------------------------+------------+-------------------------------------+------------+-----------------+-------------+--------------
+    aab49ba5-3357-4145-861c-7e6ff2d702c5 | determined | TensorBoard (rarely-cute-man)       | RUNNING    | 7               | N/A         | N/A
+
+TensorBoard can also be used to analyze multiple experiments. To launch
+TensorBoard for multiple experiments use
+``det tensorboard start <experiment-id> <experiment-id> ...``.
+
+.. note::
+  Initially, TensorBoard may not contain metrics when the browser window opens.
+  Data will be available after a trial step is completed. TensorBoard pulls
+  metrics from persistent storage. It may take up to 5 minutes for TensorBoard
+  to receive data and render visualizations.
+
+Analyzing Specific Trials
+-------------------------
+
+Determined also supports using TensorBoard to analyze specific trials from one
+or more experiments. This can be useful if an experiment has many trials
+but you would like to only compare a small number of them. This capability
+can also be used to compare trials from *different* experiments.
+
+To launch TensorBoard to analyze specific trials, use
+``det tensorboard start --trial-ids <trial_id 1> <trial_id 2> ...``.
+
+Data in TensorBoard
+-------------------
+
+In this section, we summarize how Determined captures data from TensorFlow
+models. For a more in depth discussion of how TensorBoard visualizes
+data see the `TensorBoard
+documentation <https://github.com/tensorflow/tensorboard/blob/master/README.md>`__.
+
+TensorBoard visualizes data captured during a TensorFlow run. Data is
+captured in tfevent files by writing `TensorFlow summary
+operations <https://www.tensorflow.org/api_docs/python/tf/summary>`__ to
+disk via a
+`tf.summary.FileWriter <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/summary/FileWriter>`__.
+We provide support in each deep learning framework to write metrics as
+tfevent files and upload them. See below for details on how to configure
+Determined with TensorBoard for your desired framework.
+
+FileWriters are configured to write log files, called tfevent files, to
+a directory known as the ``logdir``. TensorBoard watches this directory
+for changes and updates accordingly. The Determined supported ``logdir`` is
+``/tmp/tensorboard``. All tfevent files written to ``/tmp/tensorboard``
+via a trial are uploaded to persistent storage when a trial is
+configured with Determined TensorBoard support.
+
+Determined Batch Metrics
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+At the end of every Determined step, batch metrics are collected and stored in
+the database. This will give a granular view of model metrics over time.
+Batch metrics will appear in TensorBoard under the Determined group. The
+x-axis of the plots correspond to the batch number. For example, a point
+at step 5 of the plot is the metric associated with the fifth batch
+seen.
+
+Framework-specific Configuration
+--------------------------------
+
+The following examples demonstrate how to configure TensorBoard for each
+framework.
+
+TensorFlow Keras
+~~~~~~~~~~~~~~~~
+
+To add TensorBoard support for a ``TFKerasTrial`` simply add the
+``det.tensorflow.TFKerasTensorBoard`` callback to your trial:
+
+.. code:: python
+
+   from determined.keras import TFKerasTensorBoard
+
+   class MyModel(TFKerasTrial):
+       ...
+       def keras_callbacks(self, hparams):
+           return [TFKerasTensorBoard()]
+
+Estimator
+~~~~~~~~~
+
+There is no configuration necessary for trials using the
+:ref:`estimator-trial`.
+
+Tensorpack
+~~~~~~~~~~
+
+To add TensorBoard support for :ref:`tensorpack` simply add the
+``det.tensorflow.TFEventWriter`` callback to your trial:
+
+.. code:: python
+
+   from determined.tensorpack import TensorpackTrial, TFEventWriter
+
+   class MyModel(TensorpackTrial):
+       ...
+       def tensorpack_monitors(self, hparams):
+           return [TFEventWriter()]
+
+Lifecycle Management
+--------------------
+
+Once a new TensorBoard instance has been scheduled onto the cluster, it
+will remain running until you explicitly terminate it. This can be done
+with ``det tensorboard kill <tensorboard-id>``:
+
+::
+
+   $ det tensorboard kill aab49ba5-3357-4145-861c-7e6ff2d702c5
+
+To open a web browser window connected to a previously launched
+TensorBoard instance, use ``det tensorboard open``. To view the logs of
+an existing TensorBoard instance, use ``det tensorboard logs``.
+
+Implementation Details
+----------------------
+
+Determined schedules TensorBoard instances in containers that run on agent
+machines. The Determined master will proxy HTTP requests to and from the
+TensorBoard container. Although TensorBoard instances are hosted on
+agent machines, they do not occupy GPUs.

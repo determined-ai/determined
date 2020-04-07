@@ -1,0 +1,97 @@
+Hyperparameter Tuning
+=====================
+
+Determined provides state-of-the-art hyperparameter tuning through an intuitive
+interface. The machine learning engineer simply runs an experiment in which
+they:
+
+#. Configure hyperparameter ranges to search.
+#. Instrument model code to use hyperparameters from the experiment
+   configuration.
+#. Specify a searcher to find effective hyperparameter settings within the
+   predefined ranges.
+
+Configuring Hyperparameter Ranges
+---------------------------------
+The first step toward automatic hyperparameter tuning is to define the
+hyperparameter space, e.g., by :ref:`listing the
+decisions<topic-guides_hp-tuning-basics-example-hyperparameters>` that may
+impact model performance.  For each hyperparameter in the search space, the
+machine learning engineer specifies a range of possible values in the experiment
+configuration:
+
+.. code:: yaml
+
+  hyperparameters:
+    ...
+    dropout_probability:
+      type: double
+      minval: 0.2
+      maxval: 0.5
+    ...
+
+Determined supports the following searchable hyperparameter data types:
+
+#. ``int``: an integer within a range
+#. ``double``: a floating point number within a range
+#. ``log``: a logarithmically scaled floating point number---users specify a
+   ``base`` and Determined searches the space of `exponents` within a range
+#. ``categorical``: a variable that can take on a value within a specified set
+   of values---the values themselves can be of any type
+
+The :ref:`experiment configuration
+reference<experiment-configuration_hyperparameters>` details these data types
+and their associated options.
+
+Instrumenting Model Code
+------------------------
+
+Determined injects hyperparameters from the experiment configuration into model
+code via a context object in the Trial base class. This ``TrialContext`` object
+exposes a ``get_hparam`` method that takes the hyperparameter name.  At trial
+runtime, Determined injects a value for the hyperparameter. For example, to
+inject the previous section's ``dropout_probability`` into the constructor of a
+PyTorch `Dropout <https://pytorch.org/docs/stable/nn.html#dropout>`_ layer:
+
+.. code:: python
+
+  nn.Dropout(p=self.context.get_hparam("dropout_probability"))
+
+To see hyperparameter injection throughout a complete Trial implementation:
+:ref:`pytorch-mnist-tutorial`.
+
+Specifying the Searcher
+-----------------------
+The model developer configures a searcher to implement one of many
+:ref:`supported hyperparameter tuning
+algorithms<topic-guides_hp-tuning-algorithms>`. Aside from the ``single``
+searcher, a searcher runs multiple trials and decides the hyperparameter values
+to use in each trial.  Every searcher requires the optimization objective
+``metric`` field in addition to searcher-specific options. For instance, the
+``adaptive_simple`` searcher implements adaptive downsampling given the maximum
+number of trials to run and the maximum number of training steps allowed per
+trial:
+
+.. code:: yaml
+
+  searcher:
+    name: adaptive_simple
+    metric: validation_error
+    max_steps: 1024
+    max_trials: 32
+
+For details on the supported searchers and their respective configuration
+options: :ref:`topic-guides_hp-tuning-det`
+
+That's it!  After submitting a multi-trial hyperparameter tuning experiment to
+Determined, the machine learning engineer can visualize the best validation
+metric observed across all trials over time.  On experiment completion, they can
+view the best hyperparameter settings and also export the associated checkpoint
+for downstream serving.
+
+.. image:: /assets/images/adaptive-experiment-detail.png
+
+Next Steps in Determined
+------------------------
+- :ref:`experiment-configuration`
+- :ref:`topic-guides_hp-tuning-det`

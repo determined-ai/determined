@@ -1,0 +1,19 @@
+@import-normalize;
+
+@import 'icons.css';
+@import 'fonts.css';
+
+/*
+  Most default browser font size is 16px and 62.5% of 16px
+  is 10px. Which also makes 1rem equal 10px.
+  This also allows user to use browser magnification and the
+  rem items will scale accordingly.
+*/
+html,
+body,
+#root {
+  font-family: 'Objektiv Mk3', Arial, Helvetica, sans-serif;
+  font-size: 62.5%;
+  height: 100vh;
+  width: 100vw;
+}

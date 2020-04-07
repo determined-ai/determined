@@ -1,0 +1,9 @@
+description: mnist_keras_const_simple
+hyperparameters:
+  global_batch_size: 32
+searcher:
+  name: single
+  metric: val_accuracy
+  max_steps: 40
+min_validation_period: 10
+entrypoint: model_def:MNISTTrial

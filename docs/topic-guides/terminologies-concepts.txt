@@ -1,0 +1,31 @@
+.. _terminologies-concepts:
+
+Terminologies and Basic Concepts
+================================
+
+This topic guide is a high level description of commonly used terms and concepts within the Determined System, particularly related to the development workflow.
+
+Concepts and Terms
+""""""""""""""""""
+
+**Trial** is a training task with a dataset, a deep learning model, and a defined set of hyperparameters.
+
+**Experiment** is a collection of one or more trials. An experiment corresponds to a set of trials that are exploring a user-defined hyperparameter space. For example, during a learning rate hyperparameter search, an experiment can consists of three trials with ``.001``, ``.01``, and ``.1`` learning rates.
+
+**Workload** is a discrete unit of work with one purpose related to training a model. A workload will either train the model for a step, checkpoint the state, or validate the model's performance.
+
+**Step** is a unit of measurement to determine the length of a training workload. By default, a step is 100 batches. The number of batches per step can be overridden in the configuration file.
+
+**Configuration File** is a required file to run an experiment. It contains the information on number of steps, data location, hyperparameters, and other configurations. More information can be found at :ref:`topic-guides_yaml`.
+
+**Model Definition** specifies the deep learning model, e.g., via TensorFlow or Keras. The model definition references the training code that inherit ``TFKerasTrial``, ``PyTorchTrial`` or ``EstimatorTrial``. More information on model definitions can be found at :ref:`model-definitions`.
+
+**Context Directory** is the directory to upload to the master, which should contain the model definition.
+
+**Search Algorithm** is the type of hyperparameter search to use. The search algorithm determines how many trials will be ran for a particular experiment and how the hyperparameters will be set. More information can be found at :ref:`topic-guides_hp-tuning-algorithms`.
+
+**Master** is the main component of the Determined system. The master serves the frontend and manages the provisioning and de-provisioning of agents in cloud settings. More information can be found at :ref:`det-system-architecture`.
+
+**Agent** is an instance used for training, typically consists of GPUs. The master handles provisioning and de-provisioning agent instances in cloud settings.. Notebooks, commands, and shells also run on agents. More information can be found at :ref:`det-system-architecture`.
+
+**Slot** is a resource (GPU or CPU) that can be used for training. In the configuration file, you can declare how many slots an experiment can use.
