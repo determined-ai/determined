@@ -29,9 +29,15 @@
 #  startup_script: <startup script>
 
 ## The Docker network to use for the agent when using dynamic agents. If this is
-## set to "host", Docker host-mode networking will be used instead. The default
-## value is "default".
+## set to "host", Docker host-mode networking will be used instead. Defaults to "default".
 #  agent_docker_network: default
+
+## The docker runtime to use for the agent when using dynamic agent. Defaults to "nvidia".
+#  agent_docker_runtime: nvidia
+
+## The docker image to use for the agent when using dynamic agents. This value
+## must be configured.
+#  agent_docker_image: determinedai/determined-agent:<version>
 
 ## The maximum idle period of agents. The master waits for this period of time
 ## before shutting down the idle agents. Defaults to 5 min.
