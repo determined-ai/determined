@@ -5,6 +5,7 @@
 module DetQL.Object.Experiments exposing (..)
 
 import CustomScalarCodecs
+import DetQL.Enum.Checkpoints_select_column
 import DetQL.Enum.Searcher_events_select_column
 import DetQL.Enum.Trials_select_column
 import DetQL.Enum.Validations_select_column
@@ -25,6 +26,42 @@ import Json.Decode as Decode
 archived : SelectionSet Bool DetQL.Object.Experiments
 archived =
     Object.selectionForField "Bool" "archived" [] Decode.bool
+
+
+type alias BestCheckpointByMetricOptionalArguments =
+    { distinct_on : OptionalArgument (List DetQL.Enum.Checkpoints_select_column.Checkpoints_select_column)
+    , limit : OptionalArgument Int
+    , offset : OptionalArgument Int
+    , order_by : OptionalArgument (List DetQL.InputObject.Checkpoints_order_by)
+    , where_ : OptionalArgument DetQL.InputObject.Checkpoints_bool_exp
+    }
+
+
+type alias BestCheckpointByMetricRequiredArguments =
+    { args : DetQL.InputObject.Experiments_best_checkpoint_by_metric_args }
+
+
+{-| A computed field, executes function "experiments\_best\_checkpoint\_by\_metric"
+
+  - args - input parameters for function "experiments\_best\_checkpoint\_by\_metric"
+  - distinct\_on - distinct select on columns
+  - limit - limit the number of rows returned
+  - offset - skip the first n rows. Use only with order\_by
+  - order\_by - sort the rows by one or more columns
+  - where\_ - filter the rows returned
+
+-}
+best_checkpoint_by_metric : (BestCheckpointByMetricOptionalArguments -> BestCheckpointByMetricOptionalArguments) -> BestCheckpointByMetricRequiredArguments -> SelectionSet decodesTo DetQL.Object.Checkpoints -> SelectionSet (Maybe (List decodesTo)) DetQL.Object.Experiments
+best_checkpoint_by_metric fillInOptionals requiredArgs object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { distinct_on = Absent, limit = Absent, offset = Absent, order_by = Absent, where_ = Absent }
+
+        optionalArgs =
+            [ Argument.optional "distinct_on" filledInOptionals.distinct_on (Encode.enum DetQL.Enum.Checkpoints_select_column.toString |> Encode.list), Argument.optional "limit" filledInOptionals.limit Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int, Argument.optional "order_by" filledInOptionals.order_by (DetQL.InputObject.encodeCheckpoints_order_by |> Encode.list), Argument.optional "where" filledInOptionals.where_ DetQL.InputObject.encodeCheckpoints_bool_exp ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "best_checkpoint_by_metric" (optionalArgs ++ [ Argument.required "args" requiredArgs.args DetQL.InputObject.encodeExperiments_best_checkpoint_by_metric_args ]) object_ (identity >> Decode.list >> Decode.nullable)
 
 
 type alias BestValidationHistoryOptionalArguments =

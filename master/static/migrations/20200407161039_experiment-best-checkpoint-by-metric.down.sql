@@ -1,0 +1,1 @@
+DROP FUNCTION experiments_best_checkpoint_by_metric;

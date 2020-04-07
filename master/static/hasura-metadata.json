@@ -190,6 +190,17 @@
                         },
                         "table_argument": "e"
                     }
+                },
+                {
+                    "name": "best_checkpoint_by_metric",
+                    "definition": {
+                        "function": {
+                            "schema": "public",
+                            "name": "experiments_best_checkpoint_by_metric"
+                        },
+                        "table_argument": null
+                    },
+                    "comment": ""
                 }
             ],
             "select_permissions": [

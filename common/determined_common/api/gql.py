@@ -821,6 +821,14 @@ class experiments_avg_order_by(sgqlc.types.Input):
     progress = sgqlc.types.Field(order_by, graphql_name="progress")
 
 
+class experiments_best_checkpoint_by_metric_args(sgqlc.types.Input):
+    __schema__ = gql
+    __field_names__ = ("lim", "metric", "smaller_is_better")
+    lim = sgqlc.types.Field(Int, graphql_name="lim")
+    metric = sgqlc.types.Field(String, graphql_name="metric")
+    smaller_is_better = sgqlc.types.Field(Boolean, graphql_name="smaller_is_better")
+
+
 class experiments_bool_exp(sgqlc.types.Input):
     __schema__ = gql
     __field_names__ = (
@@ -2863,6 +2871,7 @@ class experiments(sgqlc.types.Type):
     __schema__ = gql
     __field_names__ = (
         "archived",
+        "best_checkpoint_by_metric",
         "best_validation_history",
         "config",
         "end_time",
@@ -2885,6 +2894,44 @@ class experiments(sgqlc.types.Type):
         "trials_aggregate",
     )
     archived = sgqlc.types.Field(sgqlc.types.non_null(Boolean), graphql_name="archived")
+    best_checkpoint_by_metric = sgqlc.types.Field(
+        sgqlc.types.list_of(sgqlc.types.non_null(checkpoints)),
+        graphql_name="best_checkpoint_by_metric",
+        args=sgqlc.types.ArgDict(
+            (
+                (
+                    "args",
+                    sgqlc.types.Arg(
+                        sgqlc.types.non_null(experiments_best_checkpoint_by_metric_args),
+                        graphql_name="args",
+                        default=None,
+                    ),
+                ),
+                (
+                    "distinct_on",
+                    sgqlc.types.Arg(
+                        sgqlc.types.list_of(sgqlc.types.non_null(checkpoints_select_column)),
+                        graphql_name="distinct_on",
+                        default=None,
+                    ),
+                ),
+                ("limit", sgqlc.types.Arg(Int, graphql_name="limit", default=None)),
+                ("offset", sgqlc.types.Arg(Int, graphql_name="offset", default=None)),
+                (
+                    "order_by",
+                    sgqlc.types.Arg(
+                        sgqlc.types.list_of(sgqlc.types.non_null(checkpoints_order_by)),
+                        graphql_name="order_by",
+                        default=None,
+                    ),
+                ),
+                (
+                    "where",
+                    sgqlc.types.Arg(checkpoints_bool_exp, graphql_name="where", default=None),
+                ),
+            )
+        ),
+    )
     best_validation_history = sgqlc.types.Field(
         sgqlc.types.list_of(sgqlc.types.non_null("validations")),
         graphql_name="best_validation_history",
