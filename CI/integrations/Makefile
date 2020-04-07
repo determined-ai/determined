@@ -8,11 +8,13 @@ endif
 
 VERSION := $(shell cat ../../VERSION)
 INTEGRATIONS_RESOURCE_SUFFIX ?=
-DET_GPU_ENV_IMAGE := determinedai/environments:cuda-10-py-3.6.9-pytorch-1.4-tf-1.14-gpu
-DET_CPU_ENV_IMAGE := determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu
+TF1_CPU_IMAGE := determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-f0545f2
+TF2_CPU_IMAGE := determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.1-cpu-f0545f2
+TF1_GPU_IMAGE := determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-f0545f2
+TF2_GPU_IMAGE := determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.1-gpu-f0545f2
 DET_DEV_AGENT_IMAGE := determinedai/determined-dev:determined-agent-$(DET_GIT_COMMIT)
 DET_DEV_MASTER_IMAGE := determinedai/determined-dev:determined-master-$(DET_GIT_COMMIT)
-DET_IMAGES := $(DET_DEV_AGENT_IMAGE),$(DET_DEV_MASTER_IMAGE),$(DET_GPU_ENV_IMAGE),$(DET_CPU_ENV_IMAGE)
+DET_IMAGES := $(DET_DEV_AGENT_IMAGE),$(DET_DEV_MASTER_IMAGE)
 DOCKER_REGISTRY ?=
 TEST_TAG ?= "$(DOCKER_REGISTRY)determinedai/determined-dev:determined-test-harness-$(DET_GIT_COMMIT)"
 TEST_EXPR ?=
@@ -32,8 +34,11 @@ cleanup:
 get-images:
 	@python ci_docker_images.py --registry "$(DOCKER_REGISTRY)" --version "$(VERSION)" "$(DET_IMAGES)"
 
-get-environments-images:
-	@python ci_docker_images.py --environments-only --registry "$(DOCKER_REGISTRY)" "$(DET_GPU_ENV_IMAGE),$(DET_CPU_ENV_IMAGE)"
+pull-environments-images:
+	docker pull $(TF1_CPU_IMAGE)
+	docker pull $(TF2_CPU_IMAGE)
+	docker pull $(TF1_GPU_IMAGE)
+	docker pull $(TF2_GPU_IMAGE)
 
 publish-dev:
 	# Show dirty files, if there are any.
