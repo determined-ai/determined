@@ -107,14 +107,15 @@ Documentation Structure
 -----------------------
 
 The Determined documentation is divided up into five main categories:
-  - **Tutorials** are simple step-by-step guides about getting started with different topics of Determined. Tutorials are a good place to get started with using the product.
-  - **Topic Guides** discuss concepts and topics at a high level. They provide useful
-    information and explanation.
-  - **Reference** guides contain technical reference for our APIs. They describe how
-    to use it; however, these guides assume you have a working understanding of key concepts of
-    Determined.
-  - **How-to** guides take you through the steps needed to address key use-cases. You
-    can think of them as advanced tutorials that assume some knowledge of key
-    concepts of Determined.
-  - **System administration** guides take you through what's needed to set up and
-    configure the Determined system.
+
+- **Tutorials** are simple step-by-step guides about getting started with different topics of Determined. Tutorials are a good place to get started with using the product.
+- **Topic Guides** discuss concepts and topics at a high level. They provide useful
+  information and explanation.
+- **Reference** guides contain technical reference for our APIs. They describe how
+  to use it; however, these guides assume you have a working understanding of key concepts of
+  Determined.
+- **How-to** guides take you through the steps needed to address key use-cases. You
+  can think of them as advanced tutorials that assume some knowledge of key
+  concepts of Determined.
+- **System administration** guides take you through what's needed to set up and
+  configure the Determined system.

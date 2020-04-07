@@ -120,5 +120,5 @@ config = {
 #
 # Next Steps:
 #
-#   * :ref:`tutorials_native-api-hparam-search`
-#   * :ref:`tutorials_native-api-dtrain`
+# * :ref:`tutorials_native-api-hparam-search`
+# * :ref:`tutorials_native-api-dtrain`

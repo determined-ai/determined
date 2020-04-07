@@ -64,5 +64,6 @@ model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=5)
 # hyperparameter in all experiments.
 #
 # Reference
-#   * :ref:`multi-gpu-training`
-#   * :ref:`experiment-configuration`
+#
+# * :ref:`multi-gpu-training`
+# * :ref:`experiment-configuration`

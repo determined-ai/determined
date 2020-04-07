@@ -68,5 +68,6 @@ model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=5)
 # for every trial executed on the cluster.
 #
 # Reference
-#   * :ref:`hyperparameter-tuning`
-#   * :ref:`experiment-configuration`
+#
+# * :ref:`hyperparameter-tuning`
+# * :ref:`experiment-configuration`

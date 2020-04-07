@@ -5,12 +5,8 @@ Jupyter Notebook is a software for interactive Python development. Notebooks are
 
 How to access Jupyter Notebooks
 -------------------------------
-*This How-To requires the Determined CLI. For installation procedures, see* :ref:`install-cli`.
 
-There are two ways to access notebooks:
-  #. Command line
-  #. WebUI
-
+There are two ways to access notebooks in Determined: the command-line interface (CLI) and the WebUI. To install the CLI, see:ref:`install-cli`.
 
 Command Line
 ~~~~~~~~~~~~
