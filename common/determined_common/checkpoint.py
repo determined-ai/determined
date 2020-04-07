@@ -38,6 +38,9 @@ def select_checkpoint(
         "metric_name and smaller_is_better must be set together",
     )
 
+    if smaller_is_better is not None:
+        check.true(best, "smaller_is_better and metric_name are only valid when best is also set")
+
     if not master:
         master = util.get_default_master_address()
 
