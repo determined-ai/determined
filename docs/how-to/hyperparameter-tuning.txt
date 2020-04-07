@@ -64,14 +64,13 @@ To see hyperparameter injection throughout a complete Trial implementation:
 Specifying the Searcher
 -----------------------
 The model developer configures a searcher to implement one of many
-:ref:`supported hyperparameter tuning
-algorithms<topic-guides_hp-tuning-algorithms>`. Aside from the ``single``
-searcher, a searcher runs multiple trials and decides the hyperparameter values
-to use in each trial.  Every searcher requires the optimization objective
-``metric`` field in addition to searcher-specific options. For instance, the
-``adaptive_simple`` searcher implements adaptive downsampling given the maximum
-number of trials to run and the maximum number of training steps allowed per
-trial:
+:ref:`supported hyperparameter tuning algorithms<topic-guides_hp-tuning-det>`.
+Aside from the ``single`` searcher, a searcher runs multiple trials and decides
+the hyperparameter values to use in each trial.  Every searcher requires the
+optimization objective ``metric`` field in addition to searcher-specific
+options. For instance, the ``adaptive_simple`` searcher implements adaptive
+downsampling given the maximum number of trials to run and the maximum number of
+training steps allowed per trial:
 
 .. code:: yaml
 

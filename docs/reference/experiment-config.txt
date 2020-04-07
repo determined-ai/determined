@@ -162,9 +162,9 @@ created with the Determined CLI. It may contain the following fields:
       - ``minval``, ``maxval``: Specifies the minimum and maximum
         values for the hyperparameter.
       - ``count``: Specifies the number of values for this
-        hyperparameter during ``grid`` search (see :ref:`hp-grid`). It is
-        ignored for any other searcher.  Values are evenly spaced between
-        ``minval`` and ``maxval``.
+        hyperparameter during ``grid`` search (see
+        :ref:`topic-guides_hp-tuning-det_grid`). It is ignored for any other
+        searcher.  Values are evenly spaced between ``minval`` and ``maxval``.
 
     - ``log`` hyperparameters are floating point numerics that are searched on
       a logarithmic scale.  These options apply to ``log`` hyperparameters:
@@ -174,9 +174,10 @@ created with the Determined CLI. It may contain the following fields:
       - ``minval``, ``maxval``: Specifies the minimum and maximum
         exponent values for the hyperparameter.
       - ``count``: Specifies the number of values for this
-        hyperparameter during ``grid`` search (see :ref:`hp-grid`). It is
-        ignored for any other searcher.  Values are exponents evenly spaced
-        between ``minval`` and ``maxval``.
+        hyperparameter during ``grid`` search (see
+        :ref:`topic-guides_hp-tuning-det_grid`). It is ignored for any other
+        searcher.  Values are exponents evenly spaced between ``minval`` and
+        ``maxval``.
 
     - ``categorical`` hyperparameters can take on a value within a specified set of
       values.  These additional options apply to ``categorical``
@@ -201,6 +202,8 @@ created with the Determined CLI. It may contain the following fields:
       of slots. The updated values should be accessed via the context
       using: ``context.get_per_slot_batch_size()`` and
       ``context.get_global_batch_size()``.
+
+.. _experiment-configuration_searcher:
 
 - ``searcher``: Specifies the procedure for searching through the
   hyperparameter space. Determined supports six search methods (``single``,
@@ -264,7 +267,8 @@ created with the Determined CLI. It may contain the following fields:
 
   - ``name: grid``: This search method performs a grid search. The
     coordinates of the hyperparameter grid are specified through the
-    ``hyperparameters`` field. For more details see the :ref:`hp-grid`.
+    ``hyperparameters`` field. For more details see the
+    :ref:`topic-guides_hp-tuning-det_grid`.
 
     - ``metric``: Specifies the name of the validation metric used to
       evaluate the performance of a hyperparameter configuration.

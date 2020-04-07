@@ -4,8 +4,8 @@ Topic Guides
 Topic guides discuss different concepts and topics about Determined and deep learning at a high level. They provide useful information and explanation. Below you will find some suggested starting guides.
 
 **HP and Distributed Training**
-  - :ref:`topic-guides_hp-tuning-algorithms`
   - :ref:`topic-guides_hp-tuning-basics`
+  - :ref:`topic-guides_hp-tuning-det`
   - :ref:`optimizing-multi-gpu-training`
   - :ref:`multi-gpu-training`
 
@@ -30,7 +30,6 @@ The full list of our topic guides can be found below:
   experiment-lifecycle
   gcp
   hp-tuning-defined
-  hp-tuning-algorithms
   hp-tuning-det/index
   jupyter-notebooks
   model-definitions

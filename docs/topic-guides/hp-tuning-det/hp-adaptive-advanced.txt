@@ -1,15 +1,15 @@
-.. _adaptive-advanced:
+.. _topic-guides_hp-tuning-det_adaptive-advanced:
 
 Hyperparameter Search: Adaptive (Advanced)
 ==========================================
 
-The ``adaptive`` search method employs the same underlying algorithm as
-the :ref:`Adaptive (Simple) <hp-adaptive-simple>` method described above,
-but it allows users to control the behavior of the search in a more
-fine-grained way, at the cost of being more difficult to configure. This
-section explains the configuration settings that influence the behavior
-of the ``adaptive`` searcher and gives recommendations for how to
-configure those settings.
+The ``adaptive`` search method employs the same underlying algorithm as the
+:ref:`Adaptive (Simple) <topic-guides_hp-tuning-det_adaptive-simple>` method
+described above, but it allows users to control the behavior of the search in a
+more fine-grained way, at the cost of being more difficult to configure. This
+section explains the configuration settings that influence the behavior of the
+``adaptive`` searcher and gives recommendations for how to configure those
+settings.
 
 Quick start
 -----------

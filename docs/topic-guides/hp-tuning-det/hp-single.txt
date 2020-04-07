@@ -1,3 +1,5 @@
+.. _topic-guides_hp-tuning-det_single:
+
 Hyperparameter Search: Single
 =============================
 
@@ -6,3 +8,6 @@ single hyperparameter configuration for ``max_steps`` steps, and then
 performs validation. This method is useful for testing or for training a
 single model configuration until convergence.
 
+Next Steps in Determined
+------------------------
+- :ref:`Experiment Configuration<experiment-configuration_searcher>`
