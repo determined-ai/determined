@@ -70,13 +70,17 @@ if __name__ == "__main__":
         help="If true, uses model.fit() instead of model.fit_generator()",
     )
     args = parser.parse_args()
-    config = json.loads(args.config)
-    config["hyperparameters"] = {
-        "global_batch_size": det.Constant(value=32),
-        "kernel_size": det.Constant(value=3),
-        "dropout": det.Double(minval=0.0, maxval=0.5),
-        "activation": det.Constant(value="relu"),
+
+    config = {
+        "hyperparameters": {
+            "global_batch_size": det.Constant(value=32),
+            "kernel_size": det.Constant(value=3),
+            "dropout": det.Double(minval=0.0, maxval=0.5),
+            "activation": det.Constant(value="relu"),
+        },
+        "searcher": {"name": "single", "metric": "val_accuracy", "max_steps": 40},
     }
+    config.update(json.loads(args.config))
 
     context = init(config, mode=det.Mode(args.mode), context_dir=str(pathlib.Path.cwd()))
 

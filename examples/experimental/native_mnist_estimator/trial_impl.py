@@ -1,5 +1,5 @@
 """
-This example demonstrates training a simple DNN with pytorch using the Determined
+This example demonstrates training a simple DNN with tf.estimator using the Determined
 Native API.
 """
 import argparse
@@ -9,7 +9,6 @@ import pathlib
 import determined as det
 
 import model_def
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -23,17 +22,24 @@ if __name__ == "__main__":
         "--mode", dest="mode", help="Specifies test mode or submit mode.", default="submit"
     )
     args = parser.parse_args()
-    config = json.loads(args.config)
-    config["hyperparameters"] = {
-        "learning_rate": det.Log(minval=-3.0, maxval=-1.0, base=10),
-        "dropout": det.Double(minval=0.2, maxval=0.8),
-        "global_batch_size": det.Constant(value=64),
-        "n_filters1": det.Constant(value=32),
-        "n_filters2": det.Constant(value=32),
+
+    config = {
+        "hyperparameters": {
+            "learning_rate": det.Log(-4.0, -2.0, 10),
+            "global_batch_size": det.Constant(64),
+            "hidden_layer_1": det.Constant(250),
+            "hidden_layer_2": det.Constant(250),
+            "hidden_layer_3": det.Constant(250),
+            "dropout": det.Double(0.0, 0.5),
+        },
+        "searcher": {
+            "name": "single",
+            "metric": "accuracy",
+            "max_steps": 10,
+            "smaller_is_better": False,
+        },
     }
-    config["data"] = {
-        "url": "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
-    }
+    config.update(json.loads(args.config))
 
     det.create(
         trial_def=model_def.MNistTrial,

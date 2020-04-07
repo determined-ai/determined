@@ -1,5 +1,5 @@
 """
-This example demonstrates training a simple DNN with tf.estimator using the Determined
+This example demonstrates training a simple CNN with tf.keras using the Determined
 Native API.
 """
 import argparse
@@ -9,6 +9,7 @@ import pathlib
 import determined as det
 
 import model_def
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -22,18 +23,20 @@ if __name__ == "__main__":
         "--mode", dest="mode", help="Specifies test mode or submit mode.", default="submit"
     )
     args = parser.parse_args()
-    config = json.loads(args.config)
-    config["hyperparameters"] = {
-        "learning_rate": det.Log(-4.0, -2.0, 10),
-        "global_batch_size": det.Constant(64),
-        "hidden_layer_1": det.Constant(250),
-        "hidden_layer_2": det.Constant(250),
-        "hidden_layer_3": det.Constant(250),
-        "dropout": det.Double(0.0, 0.5),
+
+    config = {
+        "hyperparameters": {
+            "global_batch_size": det.Constant(value=32),
+            "kernel_size": det.Constant(value=3),
+            "dropout": det.Double(minval=0.0, maxval=0.5),
+            "activation": det.Constant(value="relu"),
+        },
+        "searcher": {"name": "single", "metric": "val_accuracy", "max_steps": 40},
     }
+    config.update(json.loads(args.config))
 
     det.create(
-        trial_def=model_def.MNistTrial,
+        trial_def=model_def.MNISTTrial,
         config=config,
         mode=det.Mode(args.mode),
         context_dir=str(pathlib.Path.cwd()),
