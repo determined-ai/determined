@@ -20,6 +20,10 @@ Topic guides discuss different concepts and topics about Determined and deep lea
   - :ref:`topic_guide_aws`
   - :ref:`topic_guide_gcp`
 
+**Best Practices**
+  - :ref:`best-practices-model-definitions`
+
+
 The full list of our topic guides can be found below:
 
 .. toctree::
@@ -35,6 +39,7 @@ The full list of our topic guides can be found below:
   hp-tuning-det/index
   jupyter-notebooks
   model-definitions
+  best-practices-model-definitions
   optimizing-distributed-training
   reproducibility
   scheduling
