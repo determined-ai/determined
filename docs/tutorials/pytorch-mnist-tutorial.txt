@@ -50,6 +50,11 @@ The code snippet below demonstrates the skeleton of ``PyTorchTrial``. In the nex
     from determined.pytorch import DataLoader, PyTorchTrial
 
     class MNISTTrial(PyTorchTrial):
+        def __init__(self, context: det.TrialContext):
+            # declare class variables
+            # required: declare TrialContext as a class variable
+            self.context = context
+
         def build_training_data_loader(self):
             # create the train data
             # return a Determined DataLoader
@@ -81,7 +86,16 @@ Initializing ``PyTorchTrial``
 """""""""""""""""""""""""""""
 Determined's ``PyTorchTrial`` supports model development by having the machine learning developer focus on defining the main train objects. By inheriting the ``PyTorchTrial`` class, the user does not instantiate each required function; instead, Determined will call each function at the appropriate time to manage resources and training steps. In other words, you really only state what optimizer and model to use as Determined handles the object calls. Since the ``PyTorchTrial`` interface expects these functions to be overridden, each function needs to have the correct parameters.
 
-Also, Determined's ``PyTorchTrial`` is initialized with a single parameter a ``TrialContext``. The ``TrialContext`` object, often used as ``self.context``, contains a collection of runtime information for the particular trial, such as the hyperparameters in the yaml file. Since it is highly encouraged to store all hyperparameters (i.e. batch size, learning rate) inside the yaml file, the ``self.context`` object allows us to easily access the store hyperparameters or data configurations.
+Also, Determined's ``PyTorchTrial.__init__`` is passed a single parameter: a ``TrialContext``. The ``TrialContext`` object, often used as ``self.context``, contains a collection of runtime information for the particular trial, such as the hyperparameters in the experiment configuration file. Since it is highly encouraged to store all hyperparameters (i.e. batch size, learning rate) inside the experiment configuration file, the ``self.context`` object allows us to easily access the defined hyperparameters or data configurations. 
+
+The user must declare the ``TrialContext`` as a class variable. The code snippet below show the required ``TrialContext`` being initialized. 
+
+.. code:: python
+
+    def __init__(self, context: det.TrialContext):
+        self.context = context
+
+The code snippet below shows how to access the defined variables from the experiment configuration file.
 
 .. code:: python
 
@@ -114,7 +128,7 @@ Creating DataLoaders
 """"""""""""""""""""
 Traditionally in PyTorch, a `PyTorch DataLoader <https://pytorch.org/tutorials/beginner/data_loading_tutorial.html>`_ defines data access to an underlying Dataset. A Determined DataLoader is an iterator handled by Determined that assigns the data to the corresponding resource. For ``build_training_data_loader`` and ``build_validation_data_loader``, we return a Determined DataLoader that represents the train and validation data respectively. Behind the scenes, the Determined DataLoader wraps a PyTorch DataLoader to allow Determined to load and assign the data to the correct resource (i.e. GPU) and automatically batch for ``train_batch``. From a user perspective, the Determined DataLoader has almost the same parameters and is treated very similar to traditional PyTorch DataLoader.
 
-The code snippet below uses ``build_training_data_loader`` to load the PyTorch MNIST datasets. After loading the data, we pass the dataset into the Determined DataLoader and assign the batch size. The batch size is stored inside the yaml file and accessed through the ``TrialContext`` or ``context`` object.
+The code snippet below uses ``build_training_data_loader`` to load the PyTorch MNIST datasets. After loading the data, we pass the dataset into the Determined DataLoader and assign the batch size. The batch size is stored inside the experiment configuration file and accessed through the ``TrialContext`` or ``context`` object.
 
 .. code:: python
 
@@ -159,7 +173,7 @@ Determined calls ``build_model`` to define our model. In ``build_model``, the mo
 
 Defining the Optimizer
 """"""""""""""""""""""
-Next, Determined calls the ``optimizer`` function. This function passes the generated model from ``build_model`` as a parameter and expects a ``torch.optim`` object to be returned. We do not need to call the optimizer during training because Determined will handle ``.step()`` and ``.zero_grad()``. In the code snippet below, the learning rate is stored in the yaml configuration file and accessed through the ``TrialContext`` object: ``self.context``.
+Next, Determined calls the ``optimizer`` function. This function passes the generated model from ``build_model`` as a parameter and expects a ``torch.optim`` object to be returned. We do not need to call the optimizer during training because Determined will handle ``.step()`` and ``.zero_grad()``. In the code snippet below, the learning rate is stored in the experiment configuration file and accessed through the ``TrialContext`` object: ``self.context``.
 
 .. code:: python
 
@@ -212,13 +226,13 @@ For evaluation, Determined loops through our evaluation DataLoader defined from 
 Training the Model
 ------------------
 
-Lastly, we create a YAML file that contains all the experiment information for Determined. We set the hyperparameters, along with the name or description of the experiment. In Determined, we define length of training based on the number of steps. One step consists of 100 batches by default. For this tutorial, we set ``max_steps`` to 2, so 200 batches will run.
+Lastly, we create a experiment configuration file that contains all the experiment information for Determined. We set the hyperparameters, along with the name or description of the experiment. In Determined, we define length of training based on the number of steps. One step consists of 100 batches by default. For this tutorial, we set ``max_steps`` to 2, so 200 batches will run.
 
 More information on the experiment configuration file can be found: :ref:`experiment-configuration`. 
 
 .. code:: yaml
 
-    description: mnist_PyTorch_const
+    description: mnist_pytorch_const
     hyperparameters:
         learning_rate: 0.001
         dropout: 0.5
@@ -226,18 +240,25 @@ More information on the experiment configuration file can be found: :ref:`experi
         n_filters1: 40
         n_filters2: 40
     searcher:
-        max_steps: 2
-    ...
+        name: single
+        metric: validation_error
+        max_steps: 20
+        smaller_is_better: true
+    entrypoint: model_def:MNistTrial
 
 Running an Experiment
 ---------------------
-To start the experiment, we run:
+When a user wants to run their model, they submit an experiment. **Experiment** is a collection of one or more trials. **Trial** is a training task with a dataset, a deep learning model, and a defined set of hyperparameters. An experiment corresponds to a set of trials that are exploring a user-defined hyperparameter space. For example, during a learning rate hyperparameter search, an experiment can consists of three trials with ``.001``, ``.01``, and ``.1`` learning rates. 
+
+More information on Determined's Terminologies can be found on the topic guide: :ref:`terminologies-concepts`
+
+This tutorial will run an experiment with one trial because all the hyperparameter are specifically defined. To start the experiment, we run:
 
 .. code::
 
     det experiment create const.yaml .
 
-Here, the first argument (``const.yaml``) specifies the experiment configuration file and the second argument (``.``) the location of the directory that contains our model definition files.
+Here, the first argument (``const.yaml``) specifies the experiment configuration file and the second argument (``.``) the location of the directory that contains our model definition files. An optional flag ``-m`` allows the user to state the master's IP address inline. More information on the CLI can be found at the reference page: :ref:`cli`.
 
 Once the experiment is started, you will see a notification:
 
