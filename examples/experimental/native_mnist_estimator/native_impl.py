@@ -139,15 +139,24 @@ if __name__ == "__main__":
         "--mode", dest="mode", help="Specifies test mode or submit mode.", default="submit"
     )
     args = parser.parse_args()
-    config = json.loads(args.config)
-    config["hyperparameters"] = {
-        "learning_rate": det.Log(-4.0, -2.0, 10),
-        "global_batch_size": det.Constant(64),
-        "hidden_layer_1": det.Constant(250),
-        "hidden_layer_2": det.Constant(250),
-        "hidden_layer_3": det.Constant(250),
-        "dropout": det.Double(0.0, 0.5),
+
+    config = {
+        "hyperparameters": {
+            "learning_rate": det.Log(-4.0, -2.0, 10),
+            "global_batch_size": det.Constant(64),
+            "hidden_layer_1": det.Constant(250),
+            "hidden_layer_2": det.Constant(250),
+            "hidden_layer_3": det.Constant(250),
+            "dropout": det.Double(0.0, 0.5),
+        },
+        "searcher": {
+            "name": "single",
+            "metric": "accuracy",
+            "max_steps": 10,
+            "smaller_is_better": False,
+        },
     }
+    config.update(json.loads(args.config))
 
     context = init(config, mode=det.Mode(args.mode), context_dir=str(pathlib.Path.cwd()))
 
