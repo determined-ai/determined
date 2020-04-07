@@ -5,6 +5,7 @@ https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py
 - adaptive.yaml, accuracy comparable to Keras example after 50 steps
 """
 
+import tempfile
 from typing import Any, Dict, Sequence, Tuple, Union, cast
 
 import torch
@@ -44,6 +45,9 @@ class Flatten(nn.Module):
 class CIFARTrial(PyTorchTrial):
     def __init__(self, context: det.TrialContext) -> None:
         self.context = context
+
+        # Create a unique download directory for each rank so they don't overwrite each other.
+        self.download_directory = tempfile.mkdtemp()
 
     def build_model(self) -> nn.Module:
         model = nn.Sequential(
@@ -104,26 +108,20 @@ class CIFARTrial(PyTorchTrial):
         return {"validation_error": error}
 
     def build_training_data_loader(self) -> Any:
-        # Create a unique download directory for each rank so they don't overwrite each other.
-        download_directory = f"./data-rank{self.context.distributed.get_rank()}"
-
         transform = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
         )
         trainset = torchvision.datasets.CIFAR10(
-            root=download_directory, train=False, download=True, transform=transform
+            root=self.download_directory, train=False, download=True, transform=transform
         )
         return DataLoader(trainset, batch_size=self.context.get_per_slot_batch_size())
 
     def build_validation_data_loader(self) -> Any:
-        # Create a unique download directory for each rank so they don't overwrite each other.
-        download_directory = f"./data-rank{self.context.distributed.get_rank()}"
-
         transform = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
         )
         valset = torchvision.datasets.CIFAR10(
-            root=download_directory, train=False, download=True, transform=transform
+            root=self.download_directory, train=False, download=True, transform=transform
         )
 
         return DataLoader(valset, batch_size=self.context.get_per_slot_batch_size())
