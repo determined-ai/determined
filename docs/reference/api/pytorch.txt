@@ -36,46 +36,46 @@ structures of the following types, which will be fed directly to the
 
 -  ``np.ndarray``
 
-.. code:: python
+   .. code:: python
 
-   np.array([[0, 0], [0, 0]])
+      np.array([[0, 0], [0, 0]])
 
 -  ``torch.Tensor``
 
-.. code:: python
+   .. code:: python
 
-   torch.Tensor([[0, 0], [0, 0]])
+      torch.Tensor([[0, 0], [0, 0]])
 
 -  tuple of ``np.ndarray``\ s or ``torch.Tensor``\ s
 
-.. code:: python
+   .. code:: python
 
-   (torch.Tensor([0, 0]), torch.Tensor([[0, 0], [0, 0]]))
+      (torch.Tensor([0, 0]), torch.Tensor([[0, 0], [0, 0]]))
 
 -  list of ``np.ndarray``\ s or ``torch.Tensor``\ s
 
-.. code:: python
+   .. code:: python
 
-   [torch.Tensor([0, 0]), torch.Tensor([[0, 0], [0, 0]])]
+      [torch.Tensor([0, 0]), torch.Tensor([[0, 0], [0, 0]])]
 
 -  dictionary mapping strings to ``np.ndarray``\ s or
    ``torch.Tensor``\ s
 
-.. code:: python
+   .. code:: python
 
-   {"data": torch.Tensor([[0, 0], [0, 0]]), "label": torch.Tensor([[1, 1], [1, 1]])}
+      {"data": torch.Tensor([[0, 0], [0, 0]]), "label": torch.Tensor([[1, 1], [1, 1]])}
 
 -  combination of the above
 
-.. code:: python
+   .. code:: python
 
-   {
-       "data": [
-           {"sub_data1": torch.Tensor([[0, 0], [0, 0]])},
-           {"sub_data2": torch.Tensor([0, 0])},
-       ],
-       "label": (torch.Tensor([0, 0]), torch.Tensor([[0, 0], [0, 0]])),
-   }
+      {
+          "data": [
+              {"sub_data1": torch.Tensor([[0, 0], [0, 0]])},
+              {"sub_data2": torch.Tensor([0, 0])},
+          ],
+          "label": (torch.Tensor([0, 0]), torch.Tensor([[0, 0], [0, 0]])),
+      }
 
 Examples
 --------

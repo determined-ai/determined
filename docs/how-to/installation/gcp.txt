@@ -37,15 +37,15 @@ ___________
 
 The ``determined-deploy`` package requires credentials in order to create resources in GCP. There are two ways to provide these credentials:
 
-1. Use `gcloud <https://cloud.google.com/sdk/docs/downloads-interactive#installation_options>`__ to authenticate your user account:
+#. Use `gcloud <https://cloud.google.com/sdk/docs/downloads-interactive#installation_options>`__ to authenticate your user account:
 
-.. code::
+   .. code::
 
-   gcloud auth application-default login
+      gcloud auth application-default login
 
-This command will open a login page on your browser where you can sign-in to the Google account with access to your project. Ensure your user account has ``Owner`` access to the project you want to deploy your cluster in.
+   This command will open a login page on your browser where you can sign in to the Google account with access to your project. Ensure your user account has ``Owner`` access to the project you want to deploy your cluster in.
 
-2. Or alternatively, you can use :ref:`Service Account credentials <gcp-service-account-credentials>`.
+#. Alternatively, you can use :ref:`service account credentials <gcp-service-account-credentials>`.
 
 .. _gcp-install:
 
@@ -55,9 +55,9 @@ Install
 1. Install `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__.
 2. Install ``determined-deploy``:
 
-.. code::
+   .. code::
 
-   pip install determined-deploy
+      pip install determined-deploy
 
 
 Deploying

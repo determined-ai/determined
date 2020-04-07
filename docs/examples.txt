@@ -33,37 +33,37 @@ visualize training and/or validation metrics.
 
 To configure TensorBoard with Determined, follow these steps:
 
-1. Set up a directory on a shared file system for TensorBoard event
+#. Set up a directory on a shared file system for TensorBoard event
    files, e.g. ``/mnt/tensorboard``. All agents must be able to write to
    this directory.
-2. Add an entry to the experiment config to ensure that the shared
+#. Add an entry to the experiment config to ensure that the shared
    directory is mounted into each trial container. In this example, we
    use ``/tensorboard`` as the container path:
 
-.. code:: yaml
+   .. code:: yaml
 
-   bind_mounts:
-     - host_path: /mnt/tensorboard
-       container_path: /tensorboard
+      bind_mounts:
+        - host_path: /mnt/tensorboard
+          container_path: /tensorboard
 
-3. Implement the ``callbacks()`` interface in your model definition.
+#. Implement the ``callbacks()`` interface in your model definition.
    Use your ``container_path`` (``/tensorboard`` in this example) as the
    ``log_directory`` argument.
 
-.. code:: python
+   .. code:: python
 
-   from determined.estimator import TFEventWriter
+      from determined.estimator import TFEventWriter
 
-   class MNISTTrial(EstimatorTrial):
-      ...
-      def callbacks(self, hparams):
-          return TFEventWriter("/tensorboard")
-      ...
+      class MNISTTrial(EstimatorTrial):
+         ...
+         def callbacks(self, hparams):
+             return TFEventWriter("/tensorboard")
+         ...
 
-4. Start TensorBoard using the ``host_path`` from step 2 to view the
+#. Start TensorBoard using the ``host_path`` from step 2 to view the
    experiment metrics as the experiment is running or after it has
    ended.
 
-.. code:: bash
+   .. code:: bash
 
-   tensorboard --logdir=/mnt/tensorboard
+      tensorboard --logdir=/mnt/tensorboard
