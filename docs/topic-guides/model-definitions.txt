@@ -76,3 +76,9 @@ application frameworks:
 -  :ref:`pytorch-trial`
 -  :ref:`tf-keras-trial`
 -  :ref:`estimator-trial`
+
+Best Practices
+--------------
+
+To learn more about some best practices when writing model definitions, see
+:ref:`best-practices-model-definitions`.
