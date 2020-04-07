@@ -4,21 +4,25 @@ Topic Guides
 Topic guides discuss different concepts and topics about Determined and deep learning at a high level. They provide useful information and explanation. Below you will find some suggested starting guides.
 
 **Hyperparameter Tuning**
-  - :ref:`topic-guides_hp-tuning-basics`
-  - :ref:`topic-guides_hp-tuning-det`
+
+- :ref:`topic-guides_hp-tuning-basics`
+- :ref:`topic-guides_hp-tuning-det`
 
 **Distributed Training**
-  - :ref:`optimizing-multi-gpu-training`
+
+- :ref:`optimizing-multi-gpu-training`
 
 **System Concepts**
-  - :ref:`reproducibility`
-  - :ref:`scheduling`
-  - :ref:`det-system-architecture`
-  - :ref:`terminology-concepts`
+
+- :ref:`reproducibility`
+- :ref:`scheduling`
+- :ref:`det-system-architecture`
+- :ref:`terminology-concepts`
 
 **Cloud Development**
-  - :ref:`topic_guide_aws`
-  - :ref:`topic_guide_gcp`
+
+- :ref:`topic_guide_aws`
+- :ref:`topic_guide_gcp`
 
 **Best Practices**
   - :ref:`best-practices-model-definitions`

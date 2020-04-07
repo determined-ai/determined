@@ -37,10 +37,11 @@ configurable based on user requirements.
 Core Resources
 ~~~~~~~~~~~~~~
 - **Master Node**: A single EC2 instance that:
-    - hosts the Determined Web UI where users monitor their experiments
-    - responds to commands from the Determined CLI
-    - schedules workloads
-    - manages other EC2 instances (`agents`) which run experiments
+
+  - hosts the Determined Web UI where users monitor their experiments
+  - responds to commands from the Determined CLI
+  - schedules workloads
+  - manages other EC2 instances (`agents`) that run experiments
 
 - **Agent Node(s)**: For most Determined clusters in AWS, the number of `agents`
   varies with the volume and type of workloads currently running.
