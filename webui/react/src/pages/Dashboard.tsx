@@ -29,11 +29,11 @@ const defaultFilters: TaskFilters = {
   limit: 25,
   states: [ 'ALL' ],
   types: {
-    [TaskType.Command]: true,
-    [TaskType.Experiment]: true,
-    [TaskType.Notebook]: true,
-    [TaskType.Shell]: true,
-    [TaskType.Tensorboard]: true,
+    [TaskType.Command]: false,
+    [TaskType.Experiment]: false,
+    [TaskType.Notebook]: false,
+    [TaskType.Shell]: false,
+    [TaskType.Tensorboard]: false,
   },
   userId: undefined,
 };
