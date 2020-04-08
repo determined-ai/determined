@@ -5,17 +5,19 @@ Native API.
 import argparse
 import json
 import pathlib
+import tempfile
 from typing import Any, Dict, Tuple
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.datasets import mnist
 from tensorflow.keras.layers import Conv2D, Dense, Dropout, Flatten, MaxPooling2D
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 import determined as det
 from determined.keras import init
+
+import data
 
 NUM_CLASSES = 10
 INPUT_SHAPE = (28, 28, 1)
@@ -44,8 +46,10 @@ def cnn_model(hparams: Dict[str, Any]) -> tf.keras.Model:
 
 
 def load_mnist_data() -> Tuple[np.array, np.array]:
-    # Download and prepare the MNIST dataset.
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+    # Download and prepare the MNIST dataset to a unique download directory
+    # for each rank so they don't overwrite each other.
+    download_directory = tempfile.mkdtemp()
+    (x_train, y_train), (x_test, y_test) = data.load_data(download_directory)
     x_train = x_train.reshape(x_train.shape[0], IMG_ROWS, IMG_COLS, 1)
     x_test = x_test.reshape(x_test.shape[0], IMG_ROWS, IMG_COLS, 1)
     y_train = tf.keras.utils.to_categorical(y_train, NUM_CLASSES)
