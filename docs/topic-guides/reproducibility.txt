@@ -25,7 +25,9 @@ Determined can control and reproduce the following sources of randomness:
 3. Shuffling of training data in a trial.
 4. Dropout or other random layers.
 
-Determined currently does not offer support for:
+|
+| Determined currently does not offer support for:
+|
 
 1. Controlling non-determinism in floating-point operations. Modern deep
    learning frameworks typically implement training using floating point

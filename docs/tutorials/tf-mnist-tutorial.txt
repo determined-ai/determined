@@ -16,7 +16,8 @@ At the end of this tutorial, the reader should know:
 #. How to Write a Determined YAML Experiment Configuration.
 #. A General Procedure of a Determined Workflow
 
-Note: As we walk through the tutorial, some code has been omitted for demonstration purposes. A complete code example is available at :download:`MNIST TF.Keras </examples/mnist_tf_keras.tgz>`.
+|
+| Note: As we walk through the tutorial, some code has been omitted for demonstration purposes. A complete code example is available at :download:`MNIST TF.Keras </examples/mnist_tf_keras.tgz>`.
 
 Overview
 --------
