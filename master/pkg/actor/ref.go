@@ -150,6 +150,9 @@ func (r *Ref) deleteChild(address Address) {
 
 func (r *Ref) processMessage() bool {
 	context := r.inbox.get()
+
+	r.log.Tracef("get %T, inbox length: %v", context.message, r.inbox.len())
+
 	defer func() {
 		if context.ExpectingResponse() {
 			context.Respond(errNoResponse)

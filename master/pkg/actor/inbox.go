@@ -57,6 +57,12 @@ func (i *inbox) get() *Context {
 	return i.queue.Remove(i.queue.Front()).(*Context)
 }
 
+func (i *inbox) len() int {
+	i.qLock.Lock()
+	defer i.qLock.Unlock()
+	return i.queue.Len()
+}
+
 func (i *inbox) close() {
 	i.qLock.Lock()
 	defer i.qLock.Unlock()
