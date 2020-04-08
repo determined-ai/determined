@@ -11,3 +11,4 @@ API Reference
   tensorpack
   trial_context
   native_context
+  experimental

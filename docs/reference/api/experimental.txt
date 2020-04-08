@@ -1,0 +1,19 @@
+determined.experimental
+=======================
+
+``TrialReference``
+------------------
+
+.. autoclass:: determined.experimental.TrialReference
+    :members:
+    :inherited-members:
+    :member-order: bysource
+
+
+``Checkpoint``
+------------------
+
+.. autoclass:: determined.experimental.Checkpoint
+    :members:
+    :inherited-members:
+    :member-order: bysource
