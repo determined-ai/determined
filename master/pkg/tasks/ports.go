@@ -16,8 +16,8 @@ const (
 	hostMode container.NetworkMode = "host"
 )
 
-func rendezvousPorts(devices []device.Device, networkMode container.NetworkMode) nat.PortSet {
-	ports := make(nat.PortSet)
+func rendezvousPorts(devices []device.Device, networkMode container.NetworkMode) []nat.Port {
+	ports := make([]nat.Port, 0)
 	var min int
 	if networkMode == hostMode {
 		min = devices[0].ID
@@ -27,9 +27,9 @@ func rendezvousPorts(devices []device.Device, networkMode container.NetworkMode)
 			}
 		}
 	}
-	ports[nat.Port(fmt.Sprintf("%d/tcp", localRendezvousPort+min))] = struct{}{}
-	ports[nat.Port(fmt.Sprintf("%d/tcp",
-		localRendezvousPort+min+localRendezvousPortOffset))] = struct{}{}
+	ports = append(ports, nat.Port(fmt.Sprintf("%d/tcp", localRendezvousPort+min)))
+	ports = append(
+		ports, nat.Port(fmt.Sprintf("%d/tcp", localRendezvousPort+min+localRendezvousPortOffset)))
 	return ports
 }
 
