@@ -3,6 +3,16 @@ Reference
 
 Reference guides are raw technical references for our product. They describe how to use Determined, with the assumption you understand key concepts of the product.
 
+**Model Definitions**
+  - :ref:`tf-keras-trial`
+  - :ref:`pytorch-trial`
+  - :ref:`tensorpack`
+  - :ref:`estimator-trial`
+
+**Configurations**
+  - :ref:`config-template`
+  - :ref:`experiment-configuration`
+
 The full list of reference guides can be found below:
 
 .. toctree::
