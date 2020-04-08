@@ -42,6 +42,7 @@ if __name__ == "__main__":
         config={
             "description": "keras_runtime_error",
             "hyperparameters": {"global_batch_size": det.Constant(32)},
+            "searcher": {"metric": "accuracy"},
         },
         mode=det.Mode.TEST,
         context_dir=str(pathlib.Path.cwd()),
