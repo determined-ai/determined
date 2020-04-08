@@ -123,16 +123,16 @@ func startContainer(t TaskSpec) container.Spec {
 			},
 		})
 	}
-	ports := make(nat.PortSet)
 	networkMode := t.ContainerDefaults.NetworkMode
 	if exp.ExperimentConfig.Resources.SlotsPerTrial > 1 {
 		networkMode = hostMode
 	}
 	rPorts := rendezvousPorts(t.Devices, networkMode)
+	ports := make(nat.PortSet)
 	var rPortsEnvVars []string
-	for port, v := range rPorts {
+	for _, port := range rPorts {
 		rPortsEnvVars = append(rPortsEnvVars, port.Port())
-		ports[port] = v
+		ports[port] = struct{}{}
 	}
 
 	networkInterface := exp.TrialRunnerConfig.NetworkInterface
