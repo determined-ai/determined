@@ -1,5 +1,20 @@
-Determined AI (v\ |version|\ )
-==============================
+.. toctree::
+  :hidden:
+  :maxdepth: 2
+
+  tutorials/index
+  how-to/index
+  topic-guides/index
+  reference/index
+  system-administration/index
+  faq
+  examples
+  release-notes
+  attributions
+
+
+Determined AI
+=============
 
 Overview
 --------
@@ -91,6 +106,7 @@ Use the links below to start learning more about Determined's capabilities.
 
 Documentation Structure
 -----------------------
+
 The Determined documentation is divided up into five main categories:
   - **Tutorials** are simple step-by-step guides about getting started with different topics of Determined. Tutorials are a good place to get started with using the product.
   - **Topic Guides** discuss concepts and topics at a high level. They provide useful
@@ -103,23 +119,3 @@ The Determined documentation is divided up into five main categories:
     concepts of Determined.
   - **System administration** guides take you through what's needed to set up and
     configure the Determined system.
-
-
-.. toctree::
-  :hidden:
-  :maxdepth: 2
-
-  tutorials/index
-  how-to/index
-  topic-guides/index
-  reference/index
-  system-administration/index
-
-.. toctree::
-  :hidden:
-  :titlesonly:
-
-  faq
-  examples
-  release-notes
-  attributions
