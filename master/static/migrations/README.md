@@ -2,7 +2,7 @@
 
 ## Install migrate CLI
 
-https://github.com/golang-migrate/migrate/tree/master/cli
+https://github.com/golang-migrate/migrate/tree/master/cmd/migrate
 
 ## Example Commands
 
