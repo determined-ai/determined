@@ -32,7 +32,7 @@ describe('Notebooks List', () => {
         cy.get('tr:first-child td:last-child button').should('have.lengthOf', 3);
       });
 
-      it('should open the logs modal when clicking the logs button', () => {
+      it.skip('should open the logs modal when clicking the logs button', () => {
         cy.get('tr:first-child').contains(/logs/i).click();
         cy.get('.modal').contains(/logs for notebook/i);
         cy.get('.modal .fa-times').click();
