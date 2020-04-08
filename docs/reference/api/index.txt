@@ -2,11 +2,12 @@ API Reference
 =============
 
 .. toctree::
-  :maxdepth: 0
-  :titlesonly:
+  :maxdepth: 2
 
+  determined
   keras
   estimator
   pytorch
   tensorpack
-  context
+  trial_context
+  native_context

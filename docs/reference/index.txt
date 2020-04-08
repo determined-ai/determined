@@ -6,8 +6,7 @@ Reference guides are raw technical references for our product. They describe how
 The full list of reference guides can be found below:
 
 .. toctree::
-  :maxdepth: 0
-  :titlesonly:
+  :maxdepth: 2
 
   cli
   cluster-config

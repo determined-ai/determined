@@ -3,8 +3,8 @@ determined.estimator
 
 .. _estimator-trial:
 
-``EstimatorTrial``
-------------------
+``determined.estimator.EstimatorTrial``
+-----------------------------------------
 
 .. autoclass:: determined.estimator.EstimatorTrial
     :members:
@@ -12,15 +12,29 @@ determined.estimator
     :inherited-members:
     :member-order: bysource
 
-Required Wrappers
-~~~~~~~~~~~~~~~~~
+.. _estimator-init:
 
-To use ``EstimatorTrial``, users need to wrap their optimizer and datasets
-using the following Determined-provided wrappers.
+``determined.estimator.init()``
+-------------------------------
 
-.. autofunction:: determined.estimator.EstimatorContext.wrap_optimizer
+.. autofunction:: determined.estimator.init
 
-.. autofunction:: determined.estimator.EstimatorContext.wrap_dataset
+.. _estimator-context:
+
+``determined.estimator.EstimatorContext``
+-----------------------------------------
+
+To use ``tf.estimator`` models with Determined, users need to wrap their
+optimizer and datasets using the following functions inherited from
+:class:`determined.estimator.EstimatorContext`. Note that the concrete context
+object where these functions will be found will be either
+:class:`determined.estimator.EstimatorTrialContext` or
+:class:`determined.estimator.EstimatorNativeContext`, depending on use of Trial
+API or Native API.
+
+.. autoclass:: determined.estimator.EstimatorContext
+    :members:
+    :member-order: bysource
 
 Examples
 --------

@@ -1,0 +1,5 @@
+determined
+==========
+
+.. automodule:: determined
+    :members: create, Mode, Categorical, Constant, Double, Integer, Log
