@@ -56,6 +56,7 @@ build: build-docs build-elm build-files build-python-packages build-react
 
 build-files:
 	mkdir -p "$(BUILDDIR)"/share/determined/master
+	rm -rf "$(BUILDDIR)"/share/determined/master/static
 	cp -r static "$(BUILDDIR)"/share/determined/master
 
 # This depends on `build-python-packages` for the sake of parallel builds: the
