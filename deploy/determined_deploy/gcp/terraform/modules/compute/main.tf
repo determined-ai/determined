@@ -1,8 +1,8 @@
 // Create Master instance
 
 resource "google_compute_instance" "default" {
-  name = "det-master-${var.unique_id}"
-  machine_type = var.master_machine_type
+  name = "det-master-${var.unique_id}-${var.det_version_key}"
+  machine_type = var.master_instance_type
   tags = [var.tag_master_port, var.tag_allow_internal, var.tag_allow_ssh]
 
   boot_disk {
@@ -52,7 +52,7 @@ resource "google_compute_instance" "default" {
         email: "${var.service_account_email}"
         scopes: ["https://www.googleapis.com/auth/cloud-platform"]
       instance_type:
-        machine_type: ${var.agent_machine_type}
+        machine_type: ${var.agent_instance_type}
         gpu_type: ${var.gpu_type}
         gpu_num: ${var.gpu_num}
         preemptible: ${var.preemptible}
@@ -91,7 +91,9 @@ resource "google_compute_instance" "default" {
         hasura/graphql-engine:v1.1.0
 
     docker run \
+        --name determined-master \
         --network ${var.master_docker_network} \
+        --restart unless-stopped \
         -p ${var.port}:${var.port} \
         -v /usr/local/determined/etc/master.yaml:/etc/determined/master.yaml \
         determinedai/determined-master:${var.det_version}

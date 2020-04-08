@@ -1,7 +1,6 @@
 // AUTH
-variable "creds" {
+variable "keypath" {
   type = string
-  default = null
 }
 
 // GCP
@@ -25,7 +24,6 @@ variable "zone" {
 
 variable "network" {
   type = string
-  default = null
 }
 
 variable "subnetwork" {
@@ -56,12 +54,12 @@ variable "create_database" {
 
 // CLUSTER
 
-variable "master_machine_type" {
+variable "master_instance_type" {
   type = string
   default = "n1-standard-16"
 }
 
-variable "agent_machine_type" {
+variable "agent_instance_type" {
   type = string
   default = "n1-standard-32"
 }

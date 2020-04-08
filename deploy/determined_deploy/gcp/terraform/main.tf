@@ -1,13 +1,13 @@
 // Configure GCP provider
 provider "google" {
-  credentials = var.creds != null ? file(var.creds) : null
+  credentials = var.keypath != "gcloud" ? file(var.keypath) : null
   project = var.project_id
   region = var.region
   zone = var.zone != null ? var.zone : "${var.region}-a"
 }
 
 provider "google-beta" {
-  credentials = var.creds != null ? file(var.creds) : null
+  credentials = var.keypath != "gcloud" ? file(var.keypath) : null
   project = var.project_id
   region = var.region
   zone = var.zone != null ? var.zone : "${var.region}-a"
@@ -20,7 +20,12 @@ resource "random_integer" "naming_int" {
 }
 
 locals {
-  unique_id = "${var.identifier}-${substr(replace(var.det_version, ".", "-"), 0, 8)}-${random_integer.naming_int.result}"
+  unique_id = "${var.identifier}-${random_integer.naming_int.result}"
+  det_version_key = "${substr(replace(var.det_version, ".", "-"), 0, 8)}"
+}
+
+terraform {
+  backend "local" {}
 }
 
 
@@ -88,6 +93,8 @@ module "database" {
   db_password = var.db_password
   db_version = var.db_version
   network_self_link = module.network.network_self_link
+  service_networking_connection = module.network.service_networking_connection
+
 }
 
 
@@ -112,6 +119,7 @@ module "compute" {
   source = "./modules/compute"
 
   unique_id = local.unique_id
+  det_version_key = local.det_version_key
   project_id = var.project_id
   region = var.region
   environment_image = var.environment_image
@@ -119,9 +127,9 @@ module "compute" {
   scheme = var.scheme
   port = var.port
   master_docker_network = var.master_docker_network
-  master_machine_type = var.master_machine_type
+  master_instance_type = var.master_instance_type
   agent_docker_network = var.agent_docker_network
-  agent_machine_type = var.agent_machine_type
+  agent_instance_type = var.agent_instance_type
   max_idle_agent_period = var.max_idle_agent_period
   gpu_type = var.gpu_type
   gpu_num = var.gpu_num
@@ -142,3 +150,4 @@ module "compute" {
   tag_allow_internal = module.firewall.tag_allow_internal
   tag_allow_ssh = module.firewall.tag_allow_ssh
 }
+

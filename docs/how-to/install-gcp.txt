@@ -3,129 +3,151 @@
 Install Determined on GCP
 =========================
 This document describes how to deploy a Determined cluster on Google
-Cloud Platform (GCP). You can automatically deploy Determined on GCP
-using `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__.
-Instructions for using the Determined module can be found in the
-`Determined <https://github.com/determined-ai/determined>`__ GitHub repo, in ``/deploy/gcp``.
+Cloud Platform (GCP). We provide the `determined_deploy` package for easy creation
+and deployment of these resources in GCP.
 
-Additional information on the architecture of Determined in GCP can be found in the :ref:`topic_guide_gcp` topic guide.
+For more information on using Determined on GCP, see the :ref:`topic_guide_gcp`
+topic guide.
 
-Information from the GitHub repo is copied below for reference.
+
+`determined_deploy` Python Package
+----------------------------------
+
+The `determined_deploy` package uses `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__ to automatically deploy and configure a Determined cluster in GCP. Alternatively, if you already have a process for setting up infrastructure with Terraform, you can use the `Terraform modules <https://github.com/determined-ai/determined/tree/master/deploy/determined_deploy/gcp/terraform>`__ separately outside of `determined_deploy`.
+
 
 Requirements
 ~~~~~~~~~~~~
 
-Download service account credentials and set the environment variable ``GOOGLE_CREDENTIALS`` to the path to the key JSON file.
+`determined_deploy` requires credentials in order to create resources in GCP. There are two ways to provide these credentials:
 
-.. code::
+1. Use `gcloud <https://cloud.google.com/sdk/docs/downloads-interactive#installation_options>`__ to authenticate your user account:
 
-   export GOOGLE_CREDENTIALS=/path/to/key.json
+.. code :: sh
+    
+   gcloud auth application-default login
 
-The service account to be used with Terraform should have the following permissions:
+This command will open a login page on your browser where you can sign-in to the Google account with access to your project. Ensure your user account has at least ``Editor`` access to the project you want to deploy your cluster in.
 
-- Cloud SQL Admin
-- Compute Admin
-- Compute Network Admin
-- Security Admin
-- Service Account Admin
-- Service Account User
-- Service Networking Admin
-- Storage Admin
+2. For more security controls, you can create a `Service Account <https://cloud.google.com/docs/authentication/getting-started>`__ or select an existing Service Account from the `service account key page in the Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and ensure it has the following IAM Roles: 
+
+   - Cloud SQL Admin
+   - Compute Admin
+   - Compute Network Admin
+   - Security Admin
+   - Service Account Admin
+   - Service Account User
+   - Service Networking Admin
+   - Storage Admin
+
+Roles provide the Service Account permissions to create specific resources in your project. You can add roles to Service Accounts following this `guide <https://cloud.google.com/iam/docs/granting-roles-to-service-accounts>`__.
+
+Once you have a Service Account with the appropriate roles, go to the `service account key page in the Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and create a JSON key file. Save it to a location you'll remember; we'll refer to the  path to this key file as the ``keypath`` going forward.
+
 
 Install
 ~~~~~~~
 
 1. Install `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__.
-2. Clone the repository.
-3. In the repository, initialize Terraform.
+2. Install `determined_deploy`
 
-   .. code :: sh
+.. code :: sh
 
-      terraform init
-
-Update the ``defaults.auto.tfvars`` file
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The ``defaults.auto.tfvars`` file contains configuration variables for the cluster. All required variables should be completed by the user (see table below for a description of the variables). All optional variables can be updated by the user as needed. When Terraform runs, it will apply the variables set in this file to the build.
+   pip install determined_deploy
 
 
-Deploy a Determined cluster in GCP
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. code::
+Deploying
+~~~~~~~~~
 
-    terraform apply
+We recommend creating a new directory and running the commands below inside that directory. The deployment process will create a state file in the directory where it is run. The state file keeps track of the resources deployed and their state, which is used for future updates or to delete the cluster. Since the state file will reside in this directory, any future updates or deletions should be run inside this same directory so ``determined_deploy`` can read the state file.
 
-Required Variables
-------------------
+To deploy the cluster, run:
+     
+.. code :: sh
 
-+--------------------------+-------------------------------------------------------+-------------------+
-| Argument                 | Description                                           | Default Value     |
-+==========================+=======================================================+===================+
-| project_id               | The ID for the project.                               |                   |
-+--------------------------+-------------------------------------------------------+-------------------+
-| region                   | The region to create the resources in.                |                   |
-+--------------------------+-------------------------------------------------------+-------------------+
-| identifier               | An identifier string that will be appended to names.  |                   |
-+--------------------------+-------------------------------------------------------+-------------------+
-| version                  | The version of the software to be deployed.           |                   |
-+--------------------------+-------------------------------------------------------+-------------------+
-| environment_image        | The base image to use for deployment.                 |                   |
-+--------------------------+-------------------------------------------------------+-------------------+
+   det-deploy gcp [required args] [options]
 
-Optional Variables
-------------------
+The four required arguments are:
 
-Most standard deployments can leave the following variables as is.
+.. list-table::
+   :widths: 25 50 25
+   :header-rows: 1
 
-+--------------------------+-------------------------------------------------------+-------------------+
-| Argument                 | Description                                           | Default Value     |
-+==========================+=======================================================+===================+
-| creds                    | Path to credentials JSON file if not included in env. | null              |
-+--------------------------+-------------------------------------------------------+-------------------+
-| network                  | The name of the VPC network to create.                | to be created     |
-+--------------------------+-------------------------------------------------------+-------------------+
-| subnetwork               | The name of the subnetwork.                           | to be created     |
-+--------------------------+-------------------------------------------------------+-------------------+
-| gcs_bucket               | The GCS bucket to use.                                | to be created     |
-+--------------------------+-------------------------------------------------------+-------------------+
-| service_account_email    | The service account to use.                           | to be created     |
-+--------------------------+-------------------------------------------------------+-------------------+
-| zone                     | The zone to create resources in.                      | `region`-a        |
-+--------------------------+-------------------------------------------------------+-------------------+
-| create_static_ip         | Whether to create a static external IP for the master.| true              |
-+--------------------------+-------------------------------------------------------+-------------------+
-| create_database          | Whether to create a separate database for the master. | true              |
-+--------------------------+-------------------------------------------------------+-------------------+
-| master_machine_type      | The instance type for the master instance.            | n1-standard-16    |
-+--------------------------+-------------------------------------------------------+-------------------+
-| agent_machine_type       | The instance type for the agent instances.            | n1-standard-32    |
-+--------------------------+-------------------------------------------------------+-------------------+
-| gpu_type                 | The type of GPUs on the agent instances.              | nvidia-tesla-v100 |
-+--------------------------+-------------------------------------------------------+-------------------+
-| gpu_num                  | The number of GPUs per agent instance.                | 8                 |
-+--------------------------+-------------------------------------------------------+-------------------+
-| max_instances            | The maximum number of agent instances at any time.    | 8                 |
-+--------------------------+-------------------------------------------------------+-------------------+
-| preemptible              | Whether agent instances should be preemptible.        | false             |
-+--------------------------+-------------------------------------------------------+-------------------+
-| agent_docker_network     | The docker network to use for agent instances.        | determined        |
-+--------------------------+-------------------------------------------------------+-------------------+
-| master_docker_network    | The docker network to use for the master instance.    | determined        |
-+--------------------------+-------------------------------------------------------+-------------------+
-| max_idle_agent_period    | The time an agent can stay idle before it is removed. | 5m                |
-+--------------------------+-------------------------------------------------------+-------------------+
-| scheme                   | The URI scheme.                                       | http              |
-+--------------------------+-------------------------------------------------------+-------------------+
-| port                     | The port on the master to communicate on.             | 8080              |
-+--------------------------+-------------------------------------------------------+-------------------+
+   * - Argument
+     - Description
+     - Default Value
 
-**Notes**
+   * - ``--keypath``
+     - The path to the Service Account JSON key file or ``gcloud`` if you've authenticated with gcloud (option 1) above.
+     - None
 
-The ``service_account_email`` referenced above is applied to each GCE instance to give them access to various resources. This service account is different from the service account used to deploy Terraform scripts. Ensure this service account has the following permissions:
-- Compute Admin
-- Service Account User
+   * - ``--identifier``
+     - A string appended to resources to uniquely identify the cluster.
+     - None
 
-If setting the ``gcs_bucket`` in addition to the ``service_account_email``, ensure that the service account has read/write access to the bucket.
+   * - ``--network``
+     - The name of the network to deploy the cluster in. The network will be created if it doesn't exist.
+     - None 
+
+   * - ``--project_id``
+     - The project to deploy the cluster in.
+     - None
+
+
+The following are optional arguments that may be useful when deploying your Determined cluster:
+
+.. list-table::
+   :widths: 25 50 25
+   :header-rows: 1
+
+   * - Argument
+     - Description
+     - Default Value
+
+   * - ``--det_version``
+     - The Determined version or commit id to deploy. 
+     - The version of ``determined_deploy``. 
+
+   * - ``--local_state_path``
+     - The absolute path to store ``.tfstate`` files. The `.tfstate` file tracks the resources you've deployed, which allows you to update or delete deployments later.
+     - The current working directory where ``determined_deploy`` is being run.
+
+   * - ``--preemptible``
+     - Whether to use preemptible instances. 
+     - false
+
+   * - ``--gpu_type``
+     - The type of GPU to use for the agent instances.
+     - nvidia-tesla-v100
+
+   * - ``--gpu_num``
+     - The number of GPUs on each agent instance. Between 1-8 (more GPUs require more powerful ``agent_instance_type``)
+     - 2
+
+   * - ``--max_instances``
+     - The maximum number of agent instances at one time.
+     - 4
+
+   * - ``--max_idle_agent_period``
+     - The maximum amount of time an aagent can sit idle before being shut down.
+     - 30m
+
+   * - ``--region``
+     - The region to deploy the cluster in.
+     - us-central-1
+
+   * - ``--zone``
+     - The zone to deploy the cluster in.
+     - us-central-1a
+
+   * - ``--master_instance_type``
+     - Instance type to use for the master instance. 
+     - n1-standard-16
+
+   * - ``--agent_instance_type``
+     - Instance type to use for the agent instances.
+     - n1-standard-32
+
 
 The following ``gcloud`` commands will help to validate your configuration, including resource availability in your desired region and zone:
 
@@ -146,17 +168,25 @@ The following ``gcloud`` commands will help to validate your configuration, incl
     # List the valid gpu_type values for the configured zone
     gcloud compute accelerator-types list --filter=zone:<zone>
 
+
+Updating the cluster
+~~~~~~~~~~~~~~~~~~~~
+
+If you need to make changes to your cluster, you can re-run ``det-deploy [required args] [options]`` in the same directory and your cluster will be updated. `determined_deploy` will only replace resources that need to be replaced based on the changes you've made in the updated execution. If you previously created your cluster and set a ``local_state_path`` other than the default, you will need to include that argument again as well.
+
+
 De-provisioning the cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To bring down the cluster:
 
-.. code::
+.. code :: sh
 
-    terraform destroy
+    det-deploy --delete [required args]
 
 .. warning::
-  Terraform will not delete agents.  You must manually delete any running agents, which you can find by filtering for instances named ``det-agent-<identifier>-<version>-<random integer>-<pet name>``.
+  Terraform will not delete agents.  You must manually delete any running agents, which you can find by filtering for instances named ``det-agent-<identifier>-<random integer>-<version>-<pet name>``.
+
 
 Next Steps
 ~~~~~~~~~~

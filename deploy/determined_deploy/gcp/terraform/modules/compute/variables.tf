@@ -1,6 +1,9 @@
 variable "unique_id" {
 }
 
+variable "det_version_key" {
+}
+
 variable "project_id" {
 }
 
@@ -46,7 +49,7 @@ variable "tag_allow_internal" {
 variable "tag_allow_ssh" {
 }
 
-variable "agent_machine_type" {
+variable "agent_instance_type" {
 }
 
 variable "gpu_type" {
@@ -79,7 +82,7 @@ variable "database_name" {
 variable "hasura_secret" {
 }
 
-variable "master_machine_type" {
+variable "master_instance_type" {
 }
 
 variable "region" {
