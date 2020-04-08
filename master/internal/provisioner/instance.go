@@ -12,7 +12,7 @@ type instanceType interface {
 	slots() int
 }
 
-// InstanceState is a enum type that describes an instance state.
+// InstanceState is an enum type that describes an instance state.
 type InstanceState string
 
 const (
