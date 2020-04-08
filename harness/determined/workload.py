@@ -61,13 +61,13 @@ Response = Union[Metrics, Skipped]
 
 """
 ResponseFunc is a closure for returning a response message from a lower layer to a higher layer.
-Since all messages are synchronous, it is required for the the response function to be called.
+Since all messages are synchronous, the response function must be called.
 """
 ResponseFunc = Callable[[Response], None]
 
 
 """
-Args is auxillary information relevant to a workload which does not come from the master, such as
+Args is auxiliary information relevant to a workload which does not come from the master, such as
 the path to a checkpoint directory for a trial to save to.
 """
 Args = List[Any]
@@ -155,7 +155,7 @@ class WorkloadResponseInterceptor:
         return cast(Response, out)
 
     def metrics_result(self) -> Metrics:
-        """Identical to result but disallow workload.Skipped respones."""
+        """Identical to result but disallow workload.Skipped responses."""
         check.is_not_none(self._response, "_respond() was not called by the TrialController.")
         check.is_instance(self._response, dict, "unexpected SkippedWorkload response.")
         return cast(Metrics, self._response)

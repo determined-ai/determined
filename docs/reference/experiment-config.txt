@@ -447,7 +447,7 @@ created with the Determined CLI. It may contain the following fields:
     ``max_slots`` is not sensible and will result in an error.
   - ``shm_size``: Specifies the size in bytes of the ``/dev/shm`` for
     trial containers. Defaults to 4294967296 (4GiB). If set, this
-    value overrides the the value specified in ``etc/agent.conf``.
+    value overrides the value specified in ``etc/agent.conf``.
   - *NOTE:* Using ``slots_per_trial`` to enable data parallel training
     for ``PyTorch`` can alter the behavior of certain models, `as
     described in the PyTorch

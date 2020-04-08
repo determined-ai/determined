@@ -27,7 +27,9 @@ type agent struct {
 	containers map[container.ID]*actor.Ref
 	label      string
 
-	// uuid is an anonymous ID for correlating connect and disconnect events.
+	// uuid is an anonymous ID that is used when reporting telemetry
+	// information to allow agent connection and disconnection events
+	// to be correlated.
 	uuid uuid.UUID
 }
 

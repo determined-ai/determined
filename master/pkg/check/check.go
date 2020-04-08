@@ -21,7 +21,7 @@ func check(condition bool, msgAndArgs []interface{}, internalMsgAndArgs ...inter
 	return errors.New(strings.Join(msgs, ": "))
 }
 
-// Panic panics if the the error is not nil
+// Panic panics if the error is not nil.
 func Panic(err error) {
 	if err != nil {
 		panic(err.Error())
