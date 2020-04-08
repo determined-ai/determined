@@ -6,6 +6,7 @@ import { theme } from 'styled-tools';
 import Avatar from 'components/Avatar';
 import Logo from 'components/Logo';
 import NavItem, { NavItemType } from 'components/NavItem';
+import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 
 const NavBar: React.FC<Props> = (props: Props) => {
   const overview = ClusterOverview.useStateContext();
+  const agents = Agents.useStateContext();
 
   const menu = (
     <Menu>
@@ -32,7 +34,8 @@ const NavBar: React.FC<Props> = (props: Props) => {
           icon="cluster"
           path="/ui/cluster"
           type={NavItemType.Main}>
-          {overview.totalResources.total !== 0 ? `${overview.allocation}%` : 'No Agents'}
+          {agents.hasLoaded &&
+            (overview.totalResources.total !== 0 ? `${overview.allocation}%` : 'No Agents')}
         </NavItem>
         <NavItem
           icon=""
