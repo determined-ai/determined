@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 import pytest
 from tensorflow.python.training.tracking.tracking import AutoTrackable
 
-from determined.estimator import load
+from determined.experimental import TrialReference
 from determined_common.api import gql
 from tests.integrations import cluster
 from tests.integrations import config as conf
@@ -64,7 +64,7 @@ def test_mnist_estimator_load() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    model = load(trials[0].id, latest=True)
+    model = TrialReference(trials[0].id).top_checkpoint().load()
     assert isinstance(model, AutoTrackable)
 
 

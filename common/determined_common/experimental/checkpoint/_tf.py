@@ -4,33 +4,8 @@ from typing import List, Optional
 import tensorflow as tf
 from tensorflow.python.training.tracking.tracking import AutoTrackable
 
-from determined_common.checkpoint import download
 
-
-def load(
-    trial_id: int,
-    latest: bool = False,
-    best: bool = False,
-    uuid: Optional[str] = None,
-    ckpt_path: Optional[str] = None,
-    master: Optional[str] = None,
-    metric_name: Optional[str] = None,
-    smaller_is_better: Optional[bool] = None,
-    tags: Optional[List[str]] = None,
-) -> AutoTrackable:
-    if not ckpt_path or not pathlib.Path(ckpt_path).exists():
-        ckpt_path, _ = download(
-            trial_id,
-            latest=latest,
-            best=best,
-            uuid=uuid,
-            output_dir=ckpt_path,
-            master=master,
-            metric_name=metric_name,
-            smaller_is_better=smaller_is_better,
-        )
-
-    ckpt_dir = pathlib.Path(ckpt_path)
+def load_model(ckpt_dir: pathlib.Path, tags: Optional[List[str]] = None) -> AutoTrackable:
     saved_model_paths = list(ckpt_dir.glob("**/saved_model.pb"))
     if not saved_model_paths:
         raise FileNotFoundError(
