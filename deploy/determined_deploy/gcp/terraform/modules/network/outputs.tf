@@ -9,3 +9,7 @@ output "network_self_link" {
 output "subnetwork_name" {
   value = local.subnetwork_name
 }
+
+output "service_networking_connection" {
+  value = local.service_networking_connection 
+}

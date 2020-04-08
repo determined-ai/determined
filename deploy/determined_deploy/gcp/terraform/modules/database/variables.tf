@@ -21,3 +21,5 @@ variable "unique_id" {
   type = string
 }
 
+variable "service_networking_connection" {
+}
