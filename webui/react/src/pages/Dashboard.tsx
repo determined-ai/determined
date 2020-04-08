@@ -7,7 +7,7 @@ import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TaskCard from 'components/TaskCard';
-import TaskFilter, { filterTasks, TaskFilters } from 'components/TaskFilter';
+import TaskFilter, { ALL_VALUE, filterTasks, TaskFilters } from 'components/TaskFilter';
 import ActiveExperiments from 'contexts/ActiveExperiments';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
@@ -27,7 +27,7 @@ import { commandToTask, experimentToTask } from 'utils/types';
 
 const defaultFilters: TaskFilters = {
   limit: 25,
-  states: [ 'ALL' ],
+  states: [ ALL_VALUE ],
   types: {
     [TaskType.Command]: false,
     [TaskType.Experiment]: false,
@@ -35,7 +35,7 @@ const defaultFilters: TaskFilters = {
     [TaskType.Shell]: false,
     [TaskType.Tensorboard]: false,
   },
-  userId: undefined,
+  username: undefined,
 };
 
 const activeStates = [
@@ -63,9 +63,9 @@ const Dashboard: React.FC = () => {
   const [ experimentsResponse, requestExperiments ] =
     useRestApi<Experiment[]>(ioExperiments, { mappers: jsonToExperiments });
   const storage = useStorage('dashboard/tasks');
-  const [ filters, setFilters ] = useState<TaskFilters>(
-    storage.getWithDefault('filters', { ...defaultFilters, userId: (auth.user || {}).id }),
-  );
+  const initFilters = storage.getWithDefault('filters',
+    { ...defaultFilters, username: (auth.user || {}).username });
+  const [ filters, setFilters ] = useState<TaskFilters>(initFilters);
 
   const fetchExperiments = (): void => {
     requestExperiments({
@@ -116,7 +116,7 @@ const Dashboard: React.FC = () => {
   const sortedTasks = loadedTasks.sort(
     (a, b) => Date.parse(a.lastEvent.date) < Date.parse(b.lastEvent.date) ? 1 : -1);
 
-  const filteredTasks = filterTasks(sortedTasks, filters);
+  const filteredTasks = filterTasks(sortedTasks, filters, users.data || []);
 
   const tasks = filteredTasks.map((props: RecentTask) => {
     return <TaskCard key={props.id} {...props} />;
