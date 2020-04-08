@@ -173,6 +173,7 @@ const matchesState = (task: RecentTask, states: string[]): boolean =>  {
 export const filterTasks = (tasks: RecentTask[], filters: TaskFilters): RecentTask[] => {
   const isAllTypes = !Object.values(filters.types).includes(true);
   return tasks
+    .filter(task => !filters.userId || (task.ownerId === filters.userId))
     .filter(task => !task.archived)
     .filter(task => matchesState(task, filters.states))
     .filter(task => isAllTypes || filters.types[task.type])
