@@ -164,7 +164,7 @@ Running an Experiment
 ---------------------
 When a user wants to run their model, they submit an experiment. **Experiment** is a collection of one or more trials. **Trial** is a training task with a dataset, a deep learning model, and a defined set of hyperparameters. An experiment corresponds to a set of trials that are exploring a user-defined hyperparameter space. For example, during a learning rate hyperparameter search, an experiment can consists of three trials with ``.001``, ``.01``, and ``.1`` learning rates.
 
-More information on Determined's Terminologies can be found on the topic guide: :ref:`terminologies-concepts`
+More information on the terminology of Determined can be found at :ref:`terminology-concepts`.
 
 This tutorial will run an experiment with one trial because all the hyperparameter are specifically defined. To start the experiment, we run:
 
