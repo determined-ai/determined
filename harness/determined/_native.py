@@ -14,6 +14,12 @@ from determined_common import api, check, context, util
 
 
 class Mode(enum.Enum):
+    """
+    The mode used to create an experiment.
+
+    See :py:func:`determined.create()`.
+    """
+
     SUBMIT = "submit"
     TEST = "test"
 
@@ -69,7 +75,7 @@ def make_native_config(config: Optional[Dict[str, Any]], command: List[str]) -> 
 
 
 def set_native_experiment_defaults(
-    config: Optional[Dict[str, Any]], context_dir: str, command: Optional[List[str]] = None,
+    config: Optional[Dict[str, Any]], context_dir: str, command: Optional[List[str]] = None
 ) -> Tuple[Dict[str, Any], pathlib.Path, List[str]]:
     if context_dir == "":
         raise errors.InvalidExperimentException("Cannot specify the context directory to be empty.")
@@ -86,7 +92,9 @@ def create_experiment(
     test_mode: bool = False,
     master_url: Optional[str] = None,
 ) -> Optional[int]:
-    """Create an experiment in a Determined master.
+    """Submit an experiment to the Determined master.
+
+    Alternatively, use det.create() with a mode argument of "submit".
 
     Args:
         name (Optional[str]): The URL of the Determined master node. If None
@@ -239,15 +247,58 @@ def create(
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
 ) -> None:
+    """
+    Create an experiment.
+
+    .. TODO: Add a reference to the local development tutorial.
+
+    Arguments:
+        trial_def:
+            A class definition implementing the ``det.Trial`` interface.
+        config:
+            A dictionary representing the experiment configuration to be
+            associated with the experiment.
+        mode:
+            The :py:class:`determined.Mode` used when creating an experiment
+
+            1. ``Mode.SUBMIT`` (default): Submit the experiment to a remote
+            Determined cluster.
+
+            2. ``Mode.TEST`` (default): Test the experiment in the calling
+            Python process for development / debugging purposes. Run through a
+            minimal loop of training, validation, and checkpointing steps.
+
+        context_dir:
+            A string filepath that defines the context directory. In submit
+            mode, all files in this directory will be uploaded to the
+            Determined cluster. The total size of this directory must be under
+            96 MB.
+        command:
+            A list of strings that is used as the entrypoint of the training
+            script in the Determined task environment. When executing this
+            function via a python script, this argument is inferred to be
+            ``sys.argv`` by default. When executing this function via IPython
+            or Jupyter notebook, this argument is required.
+
+            Example: When creating an experiment by running "python train.py
+            --flag value", the default command is inferred as ["train.py",
+            "--flag", "value"].
+
+        master_url:
+            An optional string to use as the Determined master URL in submit
+            mode. If not specified, will be inferred from the environment
+            variable ``DET_MASTER``.
+    """
+
     if Mode(mode) == Mode.SUBMIT:
         if load.RunpyGlobals.is_initialized():
             load.RunpyGlobals.set_runpy_trial_result(
-                trial_def, cast(Type[det.TrialController], trial_def.trial_controller_class),
+                trial_def, cast(Type[det.TrialController], trial_def.trial_controller_class)
             )
 
         else:
             create_experiment(
-                config=config, context_dir=context_dir, command=command, master_url=master_url,
+                config=config, context_dir=context_dir, command=command, master_url=master_url
             )
 
     elif Mode(mode) == Mode.TEST:
@@ -280,7 +331,7 @@ def create(
         raise errors.InvalidExperimentException("Must use either test mode or submit mode.")
 
 
-def init_native(
+def _init_native(
     controller_cls: Type[det.TrialController],
     native_context_cls: Type[det.NativeContext],
     config: Optional[Dict[str, Any]] = None,
@@ -304,7 +355,7 @@ def init_native(
 
         else:
             create_experiment(
-                config=config, context_dir=context_dir, command=command, master_url=master_url,
+                config=config, context_dir=context_dir, command=command, master_url=master_url
             )
             print("Exiting the program after submitting the experiment.")
             sys.exit(0)
@@ -323,9 +374,7 @@ def init_native(
             f"Using a modified test config: {env.experiment_config}.\n"
             f"Using a set of random hyperparameter values: {env.hparams}."
         )
-        controller_cls.pre_execute_hook(
-            env=env, hvd_config=hvd_config,
-        )
+        controller_cls.pre_execute_hook(env=env, hvd_config=hvd_config)
         context = native_context_cls(env=env, hvd_config=hvd_config)
 
         def train_fn() -> None:
@@ -343,7 +392,7 @@ def init_native(
                 "Note: to submit a real experiment to the cluster, change mode argument to 'submit'"
             )
 
-        context.set_train_fn(train_fn)
+        context._set_train_fn(train_fn)
         return context
 
     else:

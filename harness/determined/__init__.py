@@ -14,4 +14,4 @@ from determined._trial_controller import (
 from determined import errors
 from determined import util
 
-from determined._native import Mode, create, init_native
+from determined._native import Mode, create, _init_native

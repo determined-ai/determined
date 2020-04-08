@@ -17,6 +17,11 @@ class TFKerasTrainConfig(NamedTuple):
 
 
 class TFKerasContext:
+    """
+    Base context class that contains runtime information for any Determined
+    workflow that uses the ``tf.keras`` API.
+    """
+
     def __init__(self, hvd_config: horovod.HorovodContext):
         logging.debug(f"Initialized TFKerasContext with config: {hvd_config}.")
         self.hvd_config = hvd_config
@@ -187,9 +192,7 @@ class TFKerasTrialContext(det.TrialContext, TFKerasContext):
 
 
 class TFKerasNativeContext(det.NativeContext, TFKerasContext):
-    def __init__(
-        self, env: det.EnvContext, hvd_config: horovod.HorovodContext,
-    ):
+    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
         det.NativeContext.__init__(self, env, hvd_config)
         TFKerasContext.__init__(self, hvd_config)
 
