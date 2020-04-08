@@ -408,18 +408,45 @@ WHERE id = $1`, id)
 	return &expConfig, nil
 }
 
-// ExperimentTotalStepTime returns the total time for all steps of the experiment with the given ID
-// (i.e., the sum of start_time - end_time). Any step with a NULL end_time does not contribute.
-func (db *PgDB) ExperimentTotalStepTime(id int) (time.Duration, error) {
+// ExperimentTotalStepTime returns the total elapsed time for all steps of the experiment
+// with the given ID. Any step with a NULL end_time does not contribute. Elapsed time is
+// expressed as a floating point number of seconds.
+func (db *PgDB) ExperimentTotalStepTime(id int) (float64, error) {
 	var seconds float64
 	if err := db.sql.Get(&seconds, `
-SELECT coalesce(extract(epoch FROM sum(steps.end_time - steps.start_time)), 0)
+SELECT extract(epoch from sum(steps.end_time - steps.start_time))
 FROM steps, trials
 WHERE trials.experiment_id = $1 AND steps.trial_id = trials.id
 `, id); err != nil {
-		return 0, errors.Wrapf(err, "querying for experiment total step time")
+		return 0, errors.Wrapf(err, "querying for total step time of experiment %v", id)
 	}
-	return time.Duration(seconds * float64(time.Second)), nil
+	return seconds, nil
+}
+
+// ExperimentNumTrials returns the total number of trials for the experiment.
+func (db *PgDB) ExperimentNumTrials(id int) (int64, error) {
+	var numTrials int64
+	if err := db.sql.Get(&numTrials, `
+SELECT count(*)
+FROM trials
+WHERE trials.experiment_id = $1
+`, id); err != nil {
+		return 0, errors.Wrapf(err, "querying for number of trials of experiment %v", id)
+	}
+	return numTrials, nil
+}
+
+// ExperimentNumSteps returns the total number of steps for all trials of the experiment.
+func (db *PgDB) ExperimentNumSteps(id int) (int64, error) {
+	var numSteps int64
+	if err := db.sql.Get(&numSteps, `
+SELECT count(*)
+FROM steps, trials
+WHERE trials.experiment_id = $1 AND steps.trial_id = trials.id
+`, id); err != nil {
+		return 0, errors.Wrapf(err, "querying for number of steps of experiment %v", id)
+	}
+	return numSteps, nil
 }
 
 // ExperimentModelDefinitionRaw returns the zipped model definition for an experiment as a byte
@@ -1123,34 +1150,17 @@ WHERE experiment_id IN (
 	return nil
 }
 
-// TelemetryInformation returns an anonymous summary of information about the usage of Determined.
-func (db *PgDB) TelemetryInformation() ([]byte, error) {
+// PeriodicTelemetryInfo returns anonymous information about the usage of the current
+// Determined cluster.
+func (db *PgDB) PeriodicTelemetryInfo() ([]byte, error) {
 	return db.rawQuery(`
 SELECT jsonb_build_object(
     'num_users', (SELECT count(*) FROM users),
     'num_experiments', (SELECT count(*) FROM experiments),
     'num_trials', (SELECT count(*) FROM trials),
-    'experiment_aggregates', jsonb_build_object(
-        'state', frequencies(array(SELECT state FROM experiments)),
-        'cpu_image', frequencies(array(SELECT config->'environment'->'image'->'cpu'
-                                       FROM experiments)),
-        'gpu_image', frequencies(array(SELECT config->'environment'->'image'->'gpu'
-                                       FROM experiments)),
-        'num_trials', frequencies(array(SELECT count(*)
-                                        FROM trials GROUP BY experiment_id)),
-        'num_hparams', frequencies(array(SELECT (SELECT count(*)
-                                                 FROM jsonb_object_keys(config->'hyperparameters'))
-                                         FROM experiments)),
-        'batches_per_step', frequencies(array(SELECT config->'batches_per_step' FROM experiments)),
-        'slots_per_trial', frequencies(array(SELECT config->'resources'->'slots_per_trial'
-                                             FROM experiments)),
-        'searcher_name', frequencies(array(SELECT config->'searcher'->'name' FROM experiments))
-    ),
-    'trial_aggregates', jsonb_build_object(
-        'state', frequencies(array(SELECT state FROM trials)),
-        'completed_steps', frequencies(array(SELECT count(*) FROM steps
-                                             WHERE state = 'COMPLETED' GROUP BY trial_id))
-    )
+    'experiment_states', (SELECT jsonb_agg(t) FROM
+                           (SELECT state, count(*)
+                            FROM experiments GROUP BY state) t)
 );
 `)
 }

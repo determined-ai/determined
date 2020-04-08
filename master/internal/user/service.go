@@ -143,7 +143,7 @@ func (s *Service) generateToken(user model.User) (string, error) {
 	v2 := paseto.NewV2()
 	token, err := v2.Sign(s.tokenKeys.PrivateKey, userSession, nil)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to generate authentication token")
+		return "", errors.Wrap(err, "failed to generate authentication token")
 	}
 
 	return token, nil
