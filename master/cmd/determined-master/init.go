@@ -66,7 +66,7 @@ func registerConfig() {
 		defaults.ConfigFile, "location of config file")
 
 	registerString(flags, name("log", "level"),
-		defaults.Log.Level, "choose logging level from [debug, info, warn, error, fatal]")
+		defaults.Log.Level, "choose logging level from [trace, debug, info, warn, error, fatal]")
 	registerBool(flags, name("log", "color"),
 		defaults.Log.Color, "output logs in color")
 
