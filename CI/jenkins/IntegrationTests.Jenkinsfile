@@ -24,8 +24,10 @@ config_uri = "s3://integrations-cluster-config/${config_root}/"
 pipeline {
   agent any
   environment {
-    INTEGRATIONS_RESOURCE_SUFFIX="-${env.BUILD_TAG}"
-    GOBIN="${env.WORKSPACE}/gobin"
+    DET_SEGMENT_MASTER_KEY = "1ads2YHMXEOfSNWx7dapghABlIzzzov7"
+    DET_SEGMENT_WEBUI_KEY = "Xaye00PGJfy2JBND3r52ifhHYhEUVccY"
+    GOBIN = "${env.WORKSPACE}/gobin"
+    INTEGRATIONS_RESOURCE_SUFFIX = "-${env.BUILD_TAG}"
   }
   stages {
     stage('Build and Push') {

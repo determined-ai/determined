@@ -3,8 +3,10 @@ describeNode = "echo \"Running on \${NODE_NAME} (executor: \${EXECUTOR_NUMBER})\
 pipeline {
   agent any
     environment {
+      DET_SEGMENT_MASTER_KEY = "1ads2YHMXEOfSNWx7dapghABlIzzzov7"
+      DET_SEGMENT_WEBUI_KEY = "Xaye00PGJfy2JBND3r52ifhHYhEUVccY"
+      GOBIN = "${env.WORKSPACE}/gobin"
       INTEGRATIONS_HOST_PORT = sh(script: 'python ./CI/integrations/get_port.py --run-number $EXECUTOR_NUMBER', , returnStdout: true).trim()
-      GOBIN="${env.WORKSPACE}/gobin"
     }
     stages {
       stage('Environment Setup') {

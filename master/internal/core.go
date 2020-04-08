@@ -73,11 +73,13 @@ func New(version string, logStore *logger.LogBuffer, config *Config) *Master {
 }
 
 func (m *Master) getInfo(c echo.Context) (interface{}, error) {
+	enabled := m.config.Telemetry.Enabled && m.config.Telemetry.SegmentWebUIKey != ""
+
 	// It would look a bit weird to put a Segment key in the result even when telemetry is disabled.
 	telemetryInfo := aproto.TelemetryInfo{
-		Enabled: m.config.Telemetry.Enabled,
+		Enabled: enabled,
 	}
-	if m.config.Telemetry.Enabled {
+	if enabled {
 		telemetryInfo.SegmentKey = m.config.Telemetry.SegmentWebUIKey
 	}
 
@@ -552,7 +554,7 @@ func (m *Master) Run() error {
 		return err
 	}
 
-	if m.config.Telemetry.Enabled {
+	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "" {
 		if telemetry, err := telemetry.NewActor(
 			m.db,
 			m.ClusterID,
