@@ -8,15 +8,16 @@ import Icon from 'components/Icon';
 import LayoutHelper from 'components/LayoutHelper';
 import { ShirtSize } from 'themes';
 import { CommandState, RecentTask, RunState, TaskType, User } from 'types';
-import { isNumber } from 'utils/data';
 import { commandStateToLabel, runStateToLabel } from 'utils/types';
 
 const { Option, OptGroup } = Select;
 
+export const ALL_VALUE = 'all';
+
 export interface TaskFilters {
   limit: number;
   states: string[];
-  userId?: number;
+  username?: string;
   types: Record<TaskType, boolean>;
 }
 
@@ -47,8 +48,7 @@ const TaskFilter: React.FC<Props> = (props: Props) => {
 
   const handleStateSelect = useCallback((value: SelectValue): void => {
     if (typeof value !== 'string') return;
-    const key = value.toUpperCase();
-    props.onChange({ ...props.filters, states: [ key ] });
+    props.onChange({ ...props.filters, states: [ value ] });
   }, [ props.filters, props.onChange ]);
 
   const handleUserFilter = useCallback((search: string, option) => {
@@ -56,9 +56,9 @@ const TaskFilter: React.FC<Props> = (props: Props) => {
   }, []);
 
   const handleUserSelect = useCallback((value: SelectValue) => {
-    const userId = isNumber(value) ? value as number : undefined;
-    props.onChange({ ...props.filters, userId });
-  }, [ props.filters.userId ]);
+    const username = value === ALL_VALUE ? undefined : value as string;
+    props.onChange({ ...props.filters, username });
+  }, [ props.filters.username ]);
 
   const handleLimitSelect = useCallback((limit: number): void => {
     props.onChange({ ...props.filters, limit });
@@ -83,12 +83,9 @@ const TaskFilter: React.FC<Props> = (props: Props) => {
     return <Option key={value} value={value}>{commandStateToLabel[value]}</Option>;
   }), [ Option, RunState, commandStateToLabel ]);
 
-  const defaultUserId = useMemo((): number | string => {
-    const userId = props.filters.userId;
-    const userIds = props.users.map(user => user.id);
-    if (userId && userIds.includes(userId)) return userId;
-    return 'all';
-  }, [ props.filters.userId, props.users ]);
+  const defaultUsername = useMemo((): number | string => {
+    return props.filters.username || ALL_VALUE;
+  }, [ props.filters.username ]);
 
   return (
     <LayoutHelper gap={ShirtSize.jumbo} yCenter>
@@ -99,7 +96,7 @@ const TaskFilter: React.FC<Props> = (props: Props) => {
           defaultValue={props.filters.states[0]}
           dropdownMatchSelectWidth={false}
           onSelect={handleStateSelect}>
-          <Option key="all" value="ALL">All</Option>
+          <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
           <OptGroup key="expGroup" label="Experiment States">
             {runStateOptions}
           </OptGroup>
@@ -111,16 +108,16 @@ const TaskFilter: React.FC<Props> = (props: Props) => {
       <div>
         <Label>Users</Label>
         <Select
-          defaultValue={defaultUserId}
+          defaultValue={defaultUsername}
           dropdownMatchSelectWidth={false}
           filterOption={handleUserFilter}
           optionFilterProp="children"
           showSearch={true}
           style={{ width: '10rem' }}
           onSelect={handleUserSelect}>
-          <Option key="all" value="all">All</Option>
+          <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
           {props.users.map(user => (
-            <Option key={user.id} value={user.id}>{user.username}</Option>
+            <Option key={user.id} value={user.username}>{user.username}</Option>
           ))}
         </Select>
       </div>
@@ -162,7 +159,7 @@ const Label = styled.label`
 export default TaskFilter;
 
 const matchesState = (task: RecentTask, states: string[]): boolean =>  {
-  if (states[0] === 'ALL') return true;
+  if (states[0] === ALL_VALUE) return true;
 
   const targetStateRun = states[0] as RunState;
   const targetStateCmd = states[0] as CommandState;
@@ -170,12 +167,19 @@ const matchesState = (task: RecentTask, states: string[]): boolean =>  {
   return [ targetStateRun, targetStateCmd ].includes(task.state);
 };
 
-export const filterTasks = (tasks: RecentTask[], filters: TaskFilters): RecentTask[] => {
-  const isAllTypes = !Object.values(filters.types).includes(true);
-  return tasks
-    .filter(task => !filters.userId || (task.ownerId === filters.userId))
-    .filter(task => !task.archived)
-    .filter(task => matchesState(task, filters.states))
-    .filter(task => isAllTypes || filters.types[task.type])
-    .slice(0, filters.limit);
+const matchesUser = (task: RecentTask, users: User[], username?: string): boolean =>  {
+  if (!username) return true;
+  const selectedUser = users.find(u => u.username === username);
+  return !!selectedUser && (task.ownerId === selectedUser.id);
 };
+
+export const filterTasks =
+  (tasks: RecentTask[], filters: TaskFilters, users: User[]): RecentTask[] => {
+    const isAllTypes = !Object.values(filters.types).includes(true);
+    return tasks
+      .filter(task => matchesUser(task, users, filters.username))
+      .filter(task => !task.archived)
+      .filter(task => matchesState(task, filters.states))
+      .filter(task => isAllTypes || filters.types[task.type])
+      .slice(0, filters.limit);
+  };
