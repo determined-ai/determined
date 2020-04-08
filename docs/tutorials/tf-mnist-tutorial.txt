@@ -51,8 +51,7 @@ The code snippet below demonstrates the skeleton of ``TFKerasTrial``. In the nex
 
     class MNISTTrial(TFKerasTrial):
         def __init__(self, context: det.keras.TFKerasTrialContext):
-            # declare class variables
-            # required: declare TFKerasTrialContext as a class variable
+            # required: store TFKerasTrialContext for later use
             self.context = context
 
         def build_model(self):
@@ -71,11 +70,11 @@ The code snippet below demonstrates the skeleton of ``TFKerasTrial``. In the nex
 
 Initializing ``TFKerasTrial``
 """""""""""""""""""""""""""""
-Determined's ``TFKerasTrial`` supports model development by having the machine learning developer focus on defining the main train objects. By inheriting the ``TFKerasTrial`` class, the user does not instantiate each required function; instead, Determined will call each function at the appropriate time to manage resources and training steps. In other words, you really only state the data and model to use as Determined handles the object calls.
+Determined's ``TFKerasTrial`` supports model development by having the machine learning developer focus on defining the main train objects. By inheriting the ``TFKerasTrial`` class, the user does not manually call each required function; instead, Determined will call each function at the appropriate time to manage resources and training steps. In other words, you really only state the data and model to use as Determined handles the object calls.
 
 Also, Determined's ``TFKerasTrial.__init__`` is passed a single parameter: a :class:`TFKerasTrialContext <determined.keras.TFKerasTrialContext>`. The ``TFKerasTrialContext`` object, often stored as ``self.context``, contains a collection of runtime information for the particular trial, such as the hyperparameters in the experiment configuration file. Since it is highly encouraged to store all hyperparameters (i.e. batch size, learning rate) inside the experiment configuration file, the ``self.context`` object allows us to easily access the defined hyperparameters or data configurations.
 
-The user must declare the ``TFKerasTrialContext`` as a class variable. The code snippet below show the required ``TFKerasTrialContext`` being initialized.
+The user must store the ``TFKerasTrialContext`` for later use, as shown in the code snippet below.
 
 .. code:: python
 
