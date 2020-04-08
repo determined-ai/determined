@@ -31,7 +31,7 @@ def _calculate_batch_sizes(env: det.EnvContext) -> Tuple[int, int]:
         raise AssertionError(
             "Please set the `global_batch_size` hyperparameter to be greater or equal to the "
             f"number of slots. Current batch_size: {global_batch_size}, slots_per_trial: "
-            f"{slots_per_trial}.",
+            f"{slots_per_trial}."
         )
 
     per_gpu_batch_size = global_batch_size // slots_per_trial
@@ -134,13 +134,17 @@ class TrialContext(_TrainContext):
 
 
 class NativeContext(_TrainContext):
-    def __init__(
-        self, env: det.EnvContext, hvd_config: horovod.HorovodContext,
-    ):
+    """
+    A base class that all NativeContexts will inherit when using the Native API.
+
+    The context returned by the init() function must inherit from this class.
+    """
+
+    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
         super().__init__(env, hvd_config)
         self._train_fn = None  # type: Optional[Callable[[], None]]
 
-    def set_train_fn(self, train_fn: Callable[[], None]) -> None:
+    def _set_train_fn(self, train_fn: Callable[[], None]) -> None:
         self._train_fn = train_fn
 
 

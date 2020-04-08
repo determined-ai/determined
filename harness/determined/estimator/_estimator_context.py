@@ -29,6 +29,11 @@ ServingInputReceiverFn = Callable[
 
 
 class EstimatorContext:
+    """
+    Base context class that contains runtime information for any Determined
+    workflow that uses the ``tf.estimator`` API.
+    """
+
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
         self.hvd_config = hvd_config
         self.input_from_dataflow = env.experiment_config.input_from_dataflow()
@@ -94,9 +99,7 @@ class EstimatorTrialContext(det.TrialContext, EstimatorContext):
 
 
 class EstimatorNativeContext(det.NativeContext, EstimatorContext):
-    def __init__(
-        self, env: det.EnvContext, hvd_config: horovod.HorovodContext,
-    ):
+    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
         det.NativeContext.__init__(self, env, hvd_config)
         EstimatorContext.__init__(self, env, hvd_config)
 
