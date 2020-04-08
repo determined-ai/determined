@@ -80,13 +80,13 @@ func (s *telemetryActor) enqueue(ctx *actor.Context, t analytics.Track) {
 }
 
 func (s *telemetryActor) snapshotValues() (analytics.Properties, error) {
-	dbData, err := s.db.TelemetryInformation()
+	dbInfo, err := s.db.PeriodicTelemetryInfo()
 	if err != nil {
 		return nil, err
 	}
 
 	props := analytics.Properties{}
-	if err = json.Unmarshal(dbData, &props); err != nil {
+	if err = json.Unmarshal(dbInfo, &props); err != nil {
 		return nil, err
 	}
 	return props, nil
@@ -96,13 +96,13 @@ func (s *telemetryActor) snapshotValues() (analytics.Properties, error) {
 func (s *telemetryActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		actors.NotifyAfter(ctx, 0, telemetryTick{"started"})
+		actors.NotifyAfter(ctx, 0, telemetryTick{"master_started"})
 
 	case analytics.Track:
 		s.enqueue(ctx, msg)
 
 	case telemetryTick:
-		actors.NotifyAfter(ctx, s.tickInterval, telemetryTick{"tick"})
+		actors.NotifyAfter(ctx, s.tickInterval, telemetryTick{"master_tick"})
 
 		props, err := s.snapshotValues()
 		if err != nil {
@@ -117,7 +117,7 @@ func (s *telemetryActor) Receive(ctx *actor.Context) error {
 
 	case actor.PostStop:
 		s.enqueue(ctx, analytics.Track{
-			Event: "stopped",
+			Event: "master_stopped",
 		})
 		_ = s.client.Close()
 	}

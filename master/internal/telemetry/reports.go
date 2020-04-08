@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/segmentio/analytics-go.v3"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -35,26 +36,63 @@ func ReportAgentDisconnected(system *actor.System, uuid uuid.UUID) {
 // ReportExperimentCreated reports that an experiment has been created.
 func ReportExperimentCreated(system *actor.System, e model.Experiment) {
 	report(system, "experiment_created", map[string]interface{}{
-		"id":        e.ID,
-		"searcher":  e.Config.Searcher,
-		"resources": e.Config.Resources,
+		"id":               e.ID,
+		"searcher":         e.Config.Searcher,
+		"resources":        e.Config.Resources,
+		"image":            e.Config.Environment.Image,
+		"num_hparams":      len(e.Config.Hyperparameters),
+		"batches_per_step": e.Config.BatchesPerStep,
 	})
+}
+
+func fetchNumTrials(db *db.PgDB, experimentID int) *int64 {
+	result, err := db.ExperimentNumTrials(experimentID)
+	if err != nil {
+		logrus.WithError(err).Warn("failed to fetch telemetry metrics")
+		return nil
+	}
+	return &result
+}
+
+func fetchNumSteps(db *db.PgDB, experimentID int) *int64 {
+	result, err := db.ExperimentNumSteps(experimentID)
+	if err != nil {
+		logrus.WithError(err).Warn("failed to fetch telemetry metrics")
+		return nil
+	}
+	return &result
+}
+
+func fetchTotalStepTime(db *db.PgDB, experimentID int) *float64 {
+	result, err := db.ExperimentTotalStepTime(experimentID)
+	if err != nil {
+		logrus.WithError(err).Warn("failed to fetch telemetry metrics")
+		return nil
+	}
+	return &result
 }
 
 // ReportExperimentStateChanged reports that the state of an experiment has changed.
 func ReportExperimentStateChanged(system *actor.System, db *db.PgDB, e model.Experiment) {
+	var numTrials *int64
+	var numSteps *int64
 	var totalStepTime *float64
+
 	if model.TerminalStates[e.State] {
-		if t, err := db.ExperimentTotalStepTime(e.ID); err == nil {
-			seconds := t.Seconds()
-			totalStepTime = &seconds
-		}
+		// Report additional metrics when an experiment reaches a terminal state.
+		// These metrics are null for non-terminal state transitions.
+		numTrials = fetchNumTrials(db, e.ID)
+		numSteps = fetchNumSteps(db, e.ID)
+		totalStepTime = fetchTotalStepTime(db, e.ID)
 	}
+
 	report(system, "experiment_state_changed", map[string]interface{}{
 		"id":              e.ID,
 		"state":           e.State,
 		"start_time":      e.StartTime,
 		"end_time":        e.EndTime,
+		"num_trials":      numTrials,
+		"num_steps":       numSteps,
 		"total_step_time": totalStepTime,
 	})
 }
