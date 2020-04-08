@@ -6,7 +6,9 @@ def Constant(value: Any) -> Dict:
     A hyperparameter configuration for a constant value.
 
     Arguments:
-        value: A JSON-serializable value
+        value:
+            A JSON-serializable value (int, float, str, or a some combination
+            of those types in a list or dictionary)
 
     Returns:
         A dictionary representing the configuration.
@@ -50,7 +52,9 @@ def Categorical(vals: List[Any]) -> Dict:
     a list of values.
 
     Arguments:
-        vals: A list of JSON-serializable values.
+        vals:
+            A list of JSON-serializable values (int, float, str, or a some
+            combination of those types in nested lists or dictionaries)
 
     Returns:
         A dictionary representing the configuration.

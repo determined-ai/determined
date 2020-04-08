@@ -17,24 +17,24 @@ their ``__init__()`` method:
   receive an :class:`EstimatorTrialContext
   <determined.estimator.EstimatorTrialContext>`.
 
-Base TrialContext
------------------
+``determined.TrialContext``
+---------------------------
 
 .. autoclass:: determined.TrialContext
     :members:
     :inherited-members:
     :member-order: bysource
 
-TFKerasTrialContext
--------------------
+``determined.keras.TFKerasTrialContext``
+----------------------------------------
 
 .. autoclass:: determined.keras.TFKerasTrialContext
     :members:
     :inherited-members:
     :member-order: bysource
 
-EstimatorTrialContext
----------------------
+``determined.estimator.EstimatorTrialContext``
+----------------------------------------------
 
 .. autoclass:: determined.estimator.EstimatorTrialContext
     :members:

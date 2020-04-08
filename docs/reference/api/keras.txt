@@ -3,8 +3,8 @@ determined.keras
 
 .. _tf-keras-trial:
 
-``TFKerasTrial``
-----------------
+``determined.keras.TFKerasTrial``
+----------------------------------
 
 .. autoclass:: determined.keras.TFKerasTrial
     :members:
@@ -15,7 +15,7 @@ determined.keras
 .. _keras-data-loading:
 
 Data Loading
-------------
+~~~~~~~~~~~~
 
 There are two supported data types for loading data into ``tf.keras`` models:
 an object that implements the `tf.keras.utils.Sequence
@@ -78,6 +78,28 @@ can be done by returning an instance of
 
    KerasDataAdapter(sequence, workers=2, use_multiprocessing=False)
 
+.. _keras-init:
+
+``determined.keras.init()``
+-------------------------------
+
+.. autofunction:: determined.keras.init
+
+.. _keras-context:
+
+``determined.keras.TFKerasContext``
+-----------------------------------------
+
+To use ``tf.data.Dataset`` users need to wrap their datasets using
+Determined-provided wrappers.  Note that the concrete context object where
+these functions will be found will be either
+:class:`determined.keras.TFKerasTrialContext` or
+:class:`determined.keras.TFKerasNativeContext`, depending on use of Trial
+API or Native API.
+
+.. autoclass:: determined.keras.TFKerasContext
+    :members:
+    :member-order: bysource
 
 Examples
 --------

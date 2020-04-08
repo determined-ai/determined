@@ -6,6 +6,11 @@ determined.tensorpack
 This part of the documentation describes how to train a Tensorpack model
 in Determined.
 
+.. _tensorpack-trial:
+
+``determined.tensorpack.TensorpackTrial``
+-----------------------------------------
+
 Model and Metrics
 ~~~~~~~~~~~~~~~~~
 
@@ -149,3 +154,8 @@ the following abstract methods:
 -  ``compute_validation_metrics(self)``: Defines the process for
    computing validation metrics. This function returns the validation
    metrics.
+
+Examples
+--------
+
+-  :download:`mnist_tp </examples/mnist_tp.tgz>`

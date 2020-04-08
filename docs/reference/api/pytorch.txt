@@ -3,8 +3,8 @@ determined.pytorch
 
 .. _pytorch-trial:
 
-``PyTorchTrial``
-----------------
+``determined.pytorch.PyTorchTrial``
+-----------------------------------
 
 .. autoclass:: determined.pytorch.PyTorchTrial
     :members:
@@ -22,7 +22,7 @@ determined.pytorch
 .. _pytorch-data-loading:
 
 Data Loading
-------------
+~~~~~~~~~~~~
 
 Loading data into ``PyTorchTrial`` models is done by defining a
 ``build_training_data_loader()`` and ``build_validation_data_loader()``
