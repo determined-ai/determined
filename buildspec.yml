@@ -3,6 +3,8 @@ version: 0.2
 
 env:
   variables:
+    DET_SEGMENT_MASTER_KEY: 1ads2YHMXEOfSNWx7dapghABlIzzzov7
+    DET_SEGMENT_WEBUI_KEY: Xaye00PGJfy2JBND3r52ifhHYhEUVccY
     GO111MODULE: on
     PACKAGE: github.com/determined-ai/determined
     PATH: /usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/go/bin

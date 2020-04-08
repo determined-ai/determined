@@ -6,7 +6,9 @@ pipeline {
     cron('H 1 * * *')
   }
   environment {
-    INTEGRATIONS_RESOURCE_SUFFIX="-${env.BUILD_TAG}"
+    DET_SEGMENT_MASTER_KEY = "1ads2YHMXEOfSNWx7dapghABlIzzzov7"
+    DET_SEGMENT_WEBUI_KEY = "Xaye00PGJfy2JBND3r52ifhHYhEUVccY"
+    INTEGRATIONS_RESOURCE_SUFFIX = "-${env.BUILD_TAG}"
   }
   stages {
     stage('Nightly tests') {
