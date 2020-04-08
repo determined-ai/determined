@@ -271,6 +271,27 @@ topAppBar model =
     let
         -- We use breakpoints to make the cluster usage widget disappear from the top app bar
         -- when the browser viewport hits 768px.
+        maybeClusterText =
+            Maybe.andThen
+                (\slots ->
+                    (case slots of
+                        [] ->
+                            " No Agents"
+
+                        someSlots ->
+                            View.SlotChart.allocationPercent someSlots
+                    )
+                        |> text
+                        |> List.singleton
+                        |> span
+                            [ HA.style "margin-left" "8px"
+                            , HA.style "font-size" "12px"
+                            , class "font-bold"
+                            ]
+                        |> Just
+                )
+                model.slots
+
         maybeClusterView =
             case model.session.user of
                 Just _ ->
@@ -279,18 +300,8 @@ topAppBar model =
                         , href (Route.toString Route.Cluster)
                         ]
                         [ i [ class "icon-cluster text-xl" ] []
-                        , span
-                            [ HA.style "margin-left" "8px"
-                            , HA.style "font-size" "12px"
-                            , class "font-bold"
-                            ]
-                            (case Maybe.withDefault [] model.slots of
-                                [] ->
-                                    [ text " No Agents" ]
-
-                                slots ->
-                                    [ View.SlotChart.allocationPercent slots |> text ]
-                            )
+                        , Maybe.withDefault (text "")
+                            maybeClusterText
                         ]
 
                 Nothing ->
