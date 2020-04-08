@@ -11,7 +11,7 @@ class defaults:
     AGENT_INSTANCE_TYPE = "p2.8xlarge"
     BASTION_AMI = "ami-06d51e91cea0dac8d"
     MASTER_AMI_ID = "ami-79873901"
-    AGENT_AMI_ID = "ami-0f5207d9567f7d810"
+    AGENT_AMI_ID = "ami-0c8bb82d0e2346768"
     DEPLOYMENT_TYPE = deployment_types.SIMPLE
     DET_STACK_NAME_BASE = "determined-{}"
     INBOUND_CIDR = "0.0.0.0/0"
