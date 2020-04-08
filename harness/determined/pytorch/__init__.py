@@ -1,4 +1,3 @@
-from determined.pytorch._checkpoint import load
 from determined.pytorch._data import (
     DataLoader,
     DistributedBatchSampler,
