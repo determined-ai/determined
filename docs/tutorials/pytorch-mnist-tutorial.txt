@@ -51,8 +51,7 @@ The code snippet below demonstrates the skeleton of ``PyTorchTrial``. In the nex
 
     class MNISTTrial(PyTorchTrial):
         def __init__(self, context: det.TrialContext):
-            # declare class variables
-            # required: declare TrialContext as a class variable
+            # required: store the TrialContext for later use
             self.context = context
 
         def build_training_data_loader(self):
@@ -84,11 +83,11 @@ The code snippet below demonstrates the skeleton of ``PyTorchTrial``. In the nex
 
 Initializing ``PyTorchTrial``
 """""""""""""""""""""""""""""
-Determined's ``PyTorchTrial`` supports model development by having the machine learning developer focus on defining the main train objects. By inheriting the ``PyTorchTrial`` class, the user does not instantiate each required function; instead, Determined will call each function at the appropriate time to manage resources and training steps. In other words, you really only state what optimizer and model to use as Determined handles the object calls. Since the ``PyTorchTrial`` interface expects these functions to be overridden, each function needs to have the correct parameters.
+Determined's ``PyTorchTrial`` supports model development by having the machine learning developer focus on defining the main train objects. By inheriting the ``PyTorchTrial`` class, the user does not manually call each required function; instead, Determined will call each function at the appropriate time to manage resources and training steps. In other words, you really only state what optimizer and model to use as Determined handles the object calls. Since the ``PyTorchTrial`` interface expects these functions to be overridden, each function needs to have the correct parameters.
 
 Also, Determined's ``PyTorchTrial.__init__`` is passed a single parameter: a :class:`TrialContext <determined.TrialContext>`. The ``TrialContext`` object, often stored as ``self.context``, contains a collection of runtime information for the particular trial, such as the hyperparameters in the experiment configuration file. Since it is highly encouraged to store all hyperparameters (i.e. batch size, learning rate) inside the experiment configuration file, the ``self.context`` object allows us to easily access the defined hyperparameters or data configurations.
 
-The user must declare the ``TrialContext`` as a class variable. The code snippet below show the required ``TrialContext`` being initialized.
+The user must store the ``TrialContext`` for later use, as shown in the code snippet below.
 
 .. code:: python
 
