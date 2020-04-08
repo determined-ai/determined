@@ -40,7 +40,14 @@ Quick Start
 
 Installation
 """"""""""""
-Determined can be installed on Amazon Web Services (AWS), Google Cloud Platform (GCP), or an on-premise cluster. For installation instructions, follow the How-To guide for your preferred environment.
+Two main components are required to use Determined: a Determined Cluster and the Determined CLI. A Determined Cluster is comprised of the Determined master and Determined agents to run and manage experiments. A Determined Cluster can be installed on Amazon Web Services (AWS), Google Cloud Platform (GCP), or an on-premise cluster.
+
+The Determined CLI provides users with the capability to interact with the Determined Cluster. Users can submit, monitor, and cancel experiments, along with managing a Determined Cluster from the command line. The Determined CLI is required for all users and should be installed on their development environment. Since experiments only run on the Determined Cluster, the Determined CLI does not require any training resources (i.e., GPUs).
+
+.. 
+  # TODO: add a image that illustrates the cluster and cli interactions
+
+For installation instructions, follow these how-to guide:
 
 - :ref:`install-cli`
 - :ref:`install-determined`
