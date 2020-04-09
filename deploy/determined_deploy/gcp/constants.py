@@ -1,6 +1,6 @@
 class defaults:
 
-    AGENT_INSTANCE_TYPE = "n1-standard-32"
+    AGENT_INSTANCE_TYPE = "n1-standard-16"
     DB_PASSWORD = "postgres"
     ENVIRONMENT_IMAGE = "pedl-environments-f0545f2"
     GPU_NUM = 2
@@ -12,4 +12,3 @@ class defaults:
     PORT = 8080
     PREEMPTIBLE = False
     REGION = "us-central1"
-    ZONE = "us-central1-a"

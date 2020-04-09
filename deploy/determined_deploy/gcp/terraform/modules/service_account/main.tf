@@ -24,6 +24,13 @@ resource "google_project_iam_member" "project_service" {
   count = local.create_service_account
 }
 
+resource "google_project_iam_member" "project_iam" {
+  project = var.project_id
+  role    = "roles/compute.imageUser" 
+  member  = "serviceAccount:${google_service_account.service_account.0.email}"
+  count = local.create_service_account
+}
+
 locals {
   service_account_email = local.create_service_account == 1 ? google_service_account.service_account.0.email : var.service_account_email
 }

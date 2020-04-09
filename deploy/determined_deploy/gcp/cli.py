@@ -29,18 +29,17 @@ def make_gcp_parser(subparsers: argparse._SubParsersAction) -> None:
         help="unique identifier to name and tag resources",
     )
     parser_aws.add_argument(
-        "--network",
-        type=str,
-        default=None,
-        required=True,
-        help="network name to use (the network will be created if it doesn't exist)",
-    )
-    parser_aws.add_argument(
         "--project_id",
         type=str,
         default=None,
         required=True,
         help="project ID to create the cluster in",
+    )
+    parser_aws.add_argument(
+        "--network",
+        type=str,
+        default="det-default",
+        help="network name to use (the network will be created if it doesn't exist)",
     )
     parser_aws.add_argument(
         "--det_version",
@@ -57,7 +56,7 @@ def make_gcp_parser(subparsers: argparse._SubParsersAction) -> None:
     parser_aws.add_argument(
         "--zone",
         type=str,
-        default=constants.defaults.ZONE,
+        default=None,
         help="zone to create the cluster in (defaults to us-central1-a)",
     )
     parser_aws.add_argument(
@@ -161,13 +160,15 @@ def deploy_gcp(args: argparse.Namespace) -> None:
         "local_state_path",
     ]
 
+    # Plan flag
+    if args.plan:
+        gcp.plan(det_configs, env, variables_to_exclude)
+        return
+
+    # Delete flag
     if args.delete:
         gcp.delete(det_configs, env, variables_to_exclude)
         print("Delete Successful")
-        return
-
-    if args.plan:
-        gcp.plan(det_configs, env, variables_to_exclude)
         return
 
     print("Starting Determined Deployment")

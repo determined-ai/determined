@@ -19,6 +19,22 @@ The ``determined-deploy`` package uses `Terraform <https://learn.hashicorp.com/t
 Requirements
 ~~~~~~~~~~~~
 
+Project
+_______
+
+To get started on GCP, you will need to create a `project <https://cloud.google.com/appengine/docs/standard/nodejs/building-app/creating-project>`__.
+
+The following GCP APIs must be enabled on your GCP project:
+
+* `Cloud Resource Manager API <https://console.developers.google.com/apis/library/cloudresourcemanager.googleapis.com>`__
+* `Cloud SQL Admin API <https://cloud.google.com/sql/docs/mysql/admin-api>`__
+* `IAM API <https://console.developers.google.com/apis/api/iam.googleapis.com/overview>`__
+* `Service Networking API <https://cloud.google.com/service-infrastructure/docs/service-networking/getting-started>`__
+
+
+Credentials
+___________
+
 ``determined-deploy`` requires credentials in order to create resources in GCP. There are two ways to provide these credentials:
 
 1. Use `gcloud <https://cloud.google.com/sdk/docs/downloads-interactive#installation_options>`__ to authenticate your user account:
@@ -28,6 +44,7 @@ Requirements
    gcloud auth application-default login
 
 This command will open a login page on your browser where you can sign-in to the Google account with access to your project. Ensure your user account has at least ``Editor`` access to the project you want to deploy your cluster in.
+
 
 2. For more security controls, you can create a `Service Account <https://cloud.google.com/docs/authentication/getting-started>`__ or select an existing Service Account from the `service account key page in the Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and ensure it has the following IAM Roles:
 
@@ -59,7 +76,10 @@ Install
 Deploying
 ~~~~~~~~~
 
-We recommend creating a new directory and running the commands below inside that directory. The deployment process will create a state file in the directory where it is run. The state file keeps track of the resources deployed and their state, which is used for future updates or to delete the cluster. Since the state file will reside in this directory, any future updates or deletions should be run inside this same directory so ``determined-deploy`` can read the state file.
+We recommend creating a new directory and running the commands below inside that directory. 
+
+.. note::
+  The deployment process will create a state file in the directory where it is run. The state file keeps track of the resources deployed and their state, which is used for future updates or to delete the cluster. Since the state file will reside in this directory, any future updates or deletions should be run inside this same directory so ``determined-deploy`` can read the state file.
 
 To deploy the cluster, run:
 
@@ -67,7 +87,7 @@ To deploy the cluster, run:
 
    det-deploy gcp [required args] [options]
 
-The four required arguments are:
+The three required arguments are:
 
 .. list-table::
    :widths: 25 50 25
@@ -78,15 +98,11 @@ The four required arguments are:
      - Default Value
 
    * - ``--keypath``
-     - The path to the Service Account JSON key file or ``gcloud`` if you've authenticated with gcloud (option 1) above.
+     - The path to the Service Account JSON key file or the string ``gcloud`` if you've authenticated with gcloud (option 1) above.
      - None
 
    * - ``--identifier``
      - A string appended to resources to uniquely identify the cluster.
-     - None
-
-   * - ``--network``
-     - The name of the network to deploy the cluster in. The network will be created if it doesn't exist.
      - None
 
    * - ``--project_id``
@@ -105,7 +121,7 @@ The following are optional arguments that may be useful when deploying your Dete
      - Default Value
 
    * - ``--det_version``
-     - The Determined version or commit id to deploy.
+     - The Determined version or commit id to deploy. 
      - The version of ``determined-deploy``.
 
    * - ``--local_state_path``
@@ -132,6 +148,10 @@ The following are optional arguments that may be useful when deploying your Dete
      - The maximum amount of time an aagent can sit idle before being shut down.
      - 30m
 
+   * - ``--network``
+     - The name of the network to deploy the cluster in. The network will be created if it doesn't exist.
+     - det-default 
+
    * - ``--region``
      - The region to deploy the cluster in.
      - us-central-1
@@ -146,7 +166,16 @@ The following are optional arguments that may be useful when deploying your Dete
 
    * - ``--agent_instance_type``
      - Instance type to use for the agent instances.
-     - n1-standard-32
+     - n1-standard-16
+
+.. note::
+  The deployment process may take 5-10 minutes and will return the ``web_ui`` to indicate that the resources have been created. It may take a few minutes from this point for the master instance to fully boot up and you're able to use the ``web_ui`` address to access the cluster. 
+
+.. warning::
+  Changes to ``--gpu_num`` should correspond to appropriate changes to ``--agent_instance_type``, as enforced by Google Cloud. For example, when using ``nvidia-tesla-v100`` GPUs, each GPU can correspond to at most 12vCPUs, i.e. if ``--gpu_num 2``, then ``--agent_instance_type n1-standard-16`` is the highest number of vCPUs (16) that can be used.
+
+.. warning::
+  If ``det-deploy`` is set to use an existing network, the VPC being used must have an `IP range allocated <https://cloud.google.com/vpc/docs/configure-private-services-access#procedure>`__ and a `private service connection created <https://cloud.google.com/vpc/docs/configure-private-services-access#creating-connection>`__.
 
 
 The following ``gcloud`` commands will help to validate your configuration, including resource availability in your desired region and zone:
@@ -172,8 +201,13 @@ The following ``gcloud`` commands will help to validate your configuration, incl
 Updating the cluster
 ~~~~~~~~~~~~~~~~~~~~
 
-If you need to make changes to your cluster, you can re-run ``det-deploy [required args] [options]`` in the same directory and your cluster will be updated. ``determined-deploy`` will only replace resources that need to be replaced based on the changes you've made in the updated execution. If you previously created your cluster and set a ``local_state_path`` other than the default, you will need to include that argument again as well.
+If you need to make changes to your cluster, you can re-run ``det-deploy [required args] [options]`` in the same directory and your cluster will be updated. ``determined-deploy`` will only replace resources that need to be replaced based on the changes you've made in the updated execution. 
 
+.. note::
+  If you previously created your cluster and set a ``local_state_path`` other than the default, you will need to include that argument again as well.
+
+.. note::
+  If you'd like to change the ``region`` of a deployment after it has already been deployed, we recommend deleting the cluster first, then redeploying the cluster with the new ``region``.
 
 De-provisioning the cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -185,7 +219,7 @@ To bring down the cluster:
     det-deploy --delete [required args]
 
 .. warning::
-  Terraform will not delete agents.  You must manually delete any running agents, which you can find by filtering for instances named ``det-agent-<identifier>-<random integer>-<version>-<pet name>``.
+  ``determined-deploy`` will not delete active agent instances when you de-provision the cluster. Generally, the master instance will shut down any inactive agents after an idle period, but if you'd like to de-provision the cluster while these agent instances exist, you must delete all agent instances first. You can find these agent instances by filtering for instances named ``det-agent-<identifier>`` and these agent(s) will have a full name in the form ``det-agent-<identifier>-<random integer>-<version>-<pet name>``.
 
 
 Next Steps
