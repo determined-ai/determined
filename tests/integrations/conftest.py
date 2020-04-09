@@ -60,12 +60,13 @@ def cluster_log_manager(request: SubRequest) -> Optional[ClusterLogManager]:
             cluster_name="integrations",
             db_password="postgres",
             hasura_secret="hasura",
+            delete_db=False,
         )
         with ClusterLogManager("integrations") as clm:
             # Yield instead of return so that `__exit__` is called when the
             # testing session is finished.
             yield clm
-        determined_deploy.local.cluster_utils.fixture_down("integrations")
+        determined_deploy.local.cluster_utils.fixture_down("integrations", True)
 
     return None
 

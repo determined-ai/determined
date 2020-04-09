@@ -36,6 +36,9 @@ def make_local_parser(subparsers: argparse._SubParsersAction) -> None:
     parser_local.add_argument(
         "--hasura-secret", type=str, default="hasura", help="password for hasura service",
     )
+    parser_local.add_argument(
+        "--delete-db", action="store_true", help="remove current master database",
+    )
 
 
 def deploy_local(args: argparse.Namespace) -> None:
@@ -49,6 +52,9 @@ def deploy_local(args: argparse.Namespace) -> None:
                 cluster_name=args.cluster_name,
                 db_password="postgres",
                 hasura_secret="hasura",
+                delete_db=args.delete_db,
             )
+        elif fn is cluster_utils.fixture_down:
+            fn(cluster_name=args.cluster_name, delete_db=args.delete_db)
         else:
             fn(cluster_name=args.cluster_name)
