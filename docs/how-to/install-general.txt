@@ -69,7 +69,7 @@ Installing Determined
 We support running most components of Determined either under Docker or
 using standard package files and natively installed services. We also
 provide ``det-deploy``, a tool that helps automate the process of
-running Determined under Docker either locally or on AWS instances, and
+deploying and running Determined.
 
 .. toctree::
    :titlesonly:
