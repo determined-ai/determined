@@ -85,6 +85,7 @@ def fixture_up(
     cluster_name: str,
     db_password: str,
     hasura_secret: str,
+    delete_db: bool,
 ) -> str:
     config.MASTER_PORT = port
 
@@ -100,13 +101,16 @@ def fixture_up(
         "DET_DB_PASSWORD": db_password,
         "DET_HASURA_SECRET": hasura_secret,
     }
-    fixture_down(cluster_name)
+    fixture_down(cluster_name, delete_db)
     docker_compose(command, cluster_name, env, extra_files=extra_files)
     _wait_for_master(port)
 
 
-def fixture_down(cluster_name: str) -> None:
-    docker_compose(["down", "--volumes", "-t", "1"], cluster_name)
+def fixture_down(cluster_name: str, delete_db: bool) -> None:
+    if delete_db:
+        docker_compose(["down", "--volumes", "-t", "1"], cluster_name)
+    else:
+        docker_compose(["down", "-t", "1"], cluster_name)
 
 
 def logs(cluster_name: str) -> None:

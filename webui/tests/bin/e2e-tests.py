@@ -41,7 +41,7 @@ def _cypress_container_name(config):
 
 def post_e2e_tests(config):
     clean_up_cypress(config)
-    run_cluster_cmd(["fixture-down"], config)
+    run_cluster_cmd(["fixture-down", "--delete-db"], config)
 
 
 # _cypress_arguments generates an array of cypress arguments.
