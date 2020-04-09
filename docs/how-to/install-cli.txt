@@ -15,12 +15,12 @@ by a system administrator; see the :ref:`administrator install
 guide <install-determined>` for more information.
 
 Each ML developer that wants to use Determined should install a copy of the
-Determined CLI on their local development machine. The CLI is distributed as a
-Python wheel. You can install this wheel as follows:
+Determined CLI on their local development machine. The CLI can be
+installed via ``pip``:
 
 .. code::
 
-   pip install determined-*.whl
+   pip install -U determined-cli
 
 We suggest installing the CLI into a
 `virtualenv <https://virtualenv.pypa.io/en/latest/>`__, although this is

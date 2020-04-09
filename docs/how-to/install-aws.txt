@@ -4,7 +4,7 @@ Install Determined on AWS
 =========================
 This document describes how to deploy a Determined cluster on Amazon Web
 Services (AWS). We provide the
-:ref:`determined_deploy <determined-deploy>` package for easy creation
+:ref:`determined-deploy <determined-deploy>` package for easy creation
 and deployment of these resources. If you would rather create the cluster manually, see the
 :ref:`Manual Deployment <manual-deployment>` section below.
 
@@ -15,17 +15,17 @@ topic guide.
 .. _determined-deploy:
 
 
-`determined_deploy` Python Package
-----------------------------------
+``determined-deploy`` Python Package
+------------------------------------
 
-The `determined_deploy` package uses AWS CloudFormation to automatically deploy
+The ``determined-deploy`` package uses AWS CloudFormation to automatically deploy
 and configure a Determined cluster. The CloudFormation builds the necessary components
 for Determined into a single CloudFormation stack.
 
 Requirements
 ~~~~~~~~~~~~
 
--  The machine executing the `determined_deploy` package must be configured
+-  The machine executing ``determined-deploy`` must be configured
    with either AWS credentials or have an IAM role attached with permissions
    to access AWS CloudFormation APIs. See the
    `AWS Documentation <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html>`__
@@ -35,12 +35,11 @@ Requirements
 Installation
 ~~~~~~~~~~~~
 
-These instructions describe how to install the `determined_deploy` Python
-package.
+These instructions describe how to install ``determined-deploy``:
 
 .. code::
 
-   pip install determined_deploy
+   pip install -U determined-deploy
 
 Deploying
 ~~~~~~~~~
@@ -132,7 +131,7 @@ CLI Arguments
 
    * - ``--version``
      - Determined version to deploy
-     - The version of ``determined_deploy``
+     - The version of ``determined-deploy``
 
    * - ``--db-password``
      - Password for ``postgres`` user for Database
@@ -158,8 +157,8 @@ Manual Deployment
 
 Database
 ~~~~~~~~
-Determined requires a Postgres-compatible database such as AWS Aurora. Ensure that the database `determined` exists
-in the database. Configure the cluster to use the database by updating the `master.yaml` with the database information.
+Determined requires a Postgres-compatible database such as AWS Aurora. Ensure that the database ``determined`` exists
+in the database. Configure the cluster to use the database by updating the ``master.yaml`` with the database information.
 
 Security Groups
 ~~~~~~~~~~~~~~~

@@ -3,33 +3,33 @@
 Install Determined on GCP
 =========================
 This document describes how to deploy a Determined cluster on Google
-Cloud Platform (GCP). We provide the `determined_deploy` package for easy creation
+Cloud Platform (GCP). We provide the ``determined-deploy`` package for easy creation
 and deployment of these resources in GCP.
 
 For more information on using Determined on GCP, see the :ref:`topic_guide_gcp`
 topic guide.
 
 
-`determined_deploy` Python Package
-----------------------------------
+``determined-deploy`` Python Package
+------------------------------------
 
-The `determined_deploy` package uses `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__ to automatically deploy and configure a Determined cluster in GCP. Alternatively, if you already have a process for setting up infrastructure with Terraform, you can use the `Terraform modules <https://github.com/determined-ai/determined/tree/master/deploy/determined_deploy/gcp/terraform>`__ separately outside of `determined_deploy`.
+The ``determined-deploy`` package uses `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__ to automatically deploy and configure a Determined cluster in GCP. Alternatively, if you already have a process for setting up infrastructure with Terraform, you can use the `Terraform modules <https://github.com/determined-ai/determined/tree/master/deploy/determined_deploy/gcp/terraform>`__ separately outside of `determined-deploy`.
 
 
 Requirements
 ~~~~~~~~~~~~
 
-`determined_deploy` requires credentials in order to create resources in GCP. There are two ways to provide these credentials:
+``determined-deploy`` requires credentials in order to create resources in GCP. There are two ways to provide these credentials:
 
 1. Use `gcloud <https://cloud.google.com/sdk/docs/downloads-interactive#installation_options>`__ to authenticate your user account:
 
-.. code :: sh
-    
+.. code::
+
    gcloud auth application-default login
 
 This command will open a login page on your browser where you can sign-in to the Google account with access to your project. Ensure your user account has at least ``Editor`` access to the project you want to deploy your cluster in.
 
-2. For more security controls, you can create a `Service Account <https://cloud.google.com/docs/authentication/getting-started>`__ or select an existing Service Account from the `service account key page in the Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and ensure it has the following IAM Roles: 
+2. For more security controls, you can create a `Service Account <https://cloud.google.com/docs/authentication/getting-started>`__ or select an existing Service Account from the `service account key page in the Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and ensure it has the following IAM Roles:
 
    - Cloud SQL Admin
    - Compute Admin
@@ -49,21 +49,21 @@ Install
 ~~~~~~~
 
 1. Install `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__.
-2. Install `determined_deploy`
+2. Install ``determined-deploy``
 
-.. code :: sh
+.. code::
 
-   pip install determined_deploy
+   pip install -U determined-deploy
 
 
 Deploying
 ~~~~~~~~~
 
-We recommend creating a new directory and running the commands below inside that directory. The deployment process will create a state file in the directory where it is run. The state file keeps track of the resources deployed and their state, which is used for future updates or to delete the cluster. Since the state file will reside in this directory, any future updates or deletions should be run inside this same directory so ``determined_deploy`` can read the state file.
+We recommend creating a new directory and running the commands below inside that directory. The deployment process will create a state file in the directory where it is run. The state file keeps track of the resources deployed and their state, which is used for future updates or to delete the cluster. Since the state file will reside in this directory, any future updates or deletions should be run inside this same directory so ``determined-deploy`` can read the state file.
 
 To deploy the cluster, run:
-     
-.. code :: sh
+
+.. code::
 
    det-deploy gcp [required args] [options]
 
@@ -87,7 +87,7 @@ The four required arguments are:
 
    * - ``--network``
      - The name of the network to deploy the cluster in. The network will be created if it doesn't exist.
-     - None 
+     - None
 
    * - ``--project_id``
      - The project to deploy the cluster in.
@@ -105,15 +105,15 @@ The following are optional arguments that may be useful when deploying your Dete
      - Default Value
 
    * - ``--det_version``
-     - The Determined version or commit id to deploy. 
-     - The version of ``determined_deploy``. 
+     - The Determined version or commit id to deploy.
+     - The version of ``determined-deploy``.
 
    * - ``--local_state_path``
      - The absolute path to store ``.tfstate`` files. The `.tfstate` file tracks the resources you've deployed, which allows you to update or delete deployments later.
-     - The current working directory where ``determined_deploy`` is being run.
+     - The current working directory where ``determined-deploy`` is being run.
 
    * - ``--preemptible``
-     - Whether to use preemptible instances. 
+     - Whether to use preemptible instances.
      - false
 
    * - ``--gpu_type``
@@ -141,7 +141,7 @@ The following are optional arguments that may be useful when deploying your Dete
      - us-central-1a
 
    * - ``--master_instance_type``
-     - Instance type to use for the master instance. 
+     - Instance type to use for the master instance.
      - n1-standard-16
 
    * - ``--agent_instance_type``
@@ -151,7 +151,7 @@ The following are optional arguments that may be useful when deploying your Dete
 
 The following ``gcloud`` commands will help to validate your configuration, including resource availability in your desired region and zone:
 
-.. code:: sh
+.. code::
 
     # Validate that the GCP Project ID exists
     gcloud projects list
@@ -172,7 +172,7 @@ The following ``gcloud`` commands will help to validate your configuration, incl
 Updating the cluster
 ~~~~~~~~~~~~~~~~~~~~
 
-If you need to make changes to your cluster, you can re-run ``det-deploy [required args] [options]`` in the same directory and your cluster will be updated. `determined_deploy` will only replace resources that need to be replaced based on the changes you've made in the updated execution. If you previously created your cluster and set a ``local_state_path`` other than the default, you will need to include that argument again as well.
+If you need to make changes to your cluster, you can re-run ``det-deploy [required args] [options]`` in the same directory and your cluster will be updated. ``determined-deploy`` will only replace resources that need to be replaced based on the changes you've made in the updated execution. If you previously created your cluster and set a ``local_state_path`` other than the default, you will need to include that argument again as well.
 
 
 De-provisioning the cluster
@@ -180,7 +180,7 @@ De-provisioning the cluster
 
 To bring down the cluster:
 
-.. code :: sh
+.. code::
 
     det-deploy --delete [required args]
 
