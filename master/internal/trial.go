@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
@@ -13,7 +12,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/scheduler"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -36,16 +34,6 @@ const (
 	// Each distributed trial can take up to 2 host based ports and we assume a maximum.
 	// of 16 slot per agent. MaxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1.
 	MaxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1
-
-	// logFlushInterval is the longest time that the trial will buffer logs in memory before
-	// flushing them to the database. This is set relatively low to ensure a reasonable user
-	// experience while tailing logs.
-	logFlushInterval = 1 * time.Second
-	// trialLogBuffer is the largest number of logs lines that can be buffered before flushing them to
-	// the database. For the strategy of many-rows-per-insert, performance was significantly worse
-	// below 500, and no improvements after 1000. In the current strategy, where each trial buffers
-	// its own logs, the logFlushInterval behavior will dominate except under very heavy loads.
-	trialLogBuffer = 1000
 
 	trialEntrypointFile = "/run/determined/workdir/entrypoint.sh"
 	trialEntrypointMode = 0700
@@ -75,11 +63,6 @@ const (
 type (
 	killTrial    struct{}
 	restoreTrial struct{}
-
-	// flushLogs is a message that the trial actor sends to itself via
-	// NotifyAfter(), which is used to guarantee that logs are not held too
-	// long without flushing.
-	flushLogs struct{}
 
 	containerConnected struct {
 		ContainerID scheduler.ContainerID
@@ -155,6 +138,7 @@ type trial struct {
 	idSet bool
 
 	cluster         *actor.Ref
+	logger          *actor.Ref
 	db              *db.PgDB
 	experimentState model.State
 	experiment      *model.Experiment
@@ -188,9 +172,6 @@ type trial struct {
 	// sockets maps each running container for this trial to the corresponding websocket actor.
 	sockets map[scheduler.ContainerID]*actor.Ref
 
-	pendingLogs  []*model.TrialLog
-	lastLogFlush time.Time
-
 	agentUserGroup *model.AgentUserGroup
 }
 
@@ -207,6 +188,7 @@ func newTrial(
 	}
 	return &trial{
 		cluster:               exp.cluster,
+		logger:                exp.trialLogger,
 		db:                    exp.db,
 		experimentState:       exp.State,
 		experiment:            exp.Experiment,
@@ -222,9 +204,6 @@ func newTrial(
 		containers: make(map[scheduler.ContainerID]scheduler.Container),
 		sockets:    make(map[scheduler.ContainerID]*actor.Ref),
 
-		lastLogFlush: time.Now(),
-		pendingLogs:  make([]*model.TrialLog, 0, trialLogBuffer),
-
 		agentUserGroup: exp.agentUserGroup,
 	}
 }
@@ -233,8 +212,6 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		ctx.AddLabel("experiment-id", t.experiment.ID)
-		// Start the log flush timer.
-		actors.NotifyAfter(ctx, logFlushInterval, flushLogs{})
 
 	case model.State:
 		t.experimentState = msg
@@ -262,15 +239,10 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	case agent.ContainerLog:
 		t.processLog(ctx, msg)
 
-	case flushLogs:
-		t.tryFlushLogs(ctx, true)
-		actors.NotifyAfter(ctx, logFlushInterval, flushLogs{})
-
 	case actor.PostStop:
 		if !t.idSet {
 			return nil
 		}
-		t.tryFlushLogs(ctx, true)
 		if t.restarts > t.experiment.Config.MaxRestarts {
 			if err := t.db.UpdateTrial(t.id, model.ErrorState); err != nil {
 				ctx.Log().Error(err)
@@ -757,23 +729,12 @@ func (t *trial) processLog(ctx *actor.Context, msg agent.ContainerLog) {
 		return
 	}
 
-	t.pendingLogs = append(t.pendingLogs, &model.TrialLog{TrialID: t.id, Message: msg.String() + "\n"})
-	t.tryFlushLogs(ctx, false)
-}
-
-// tryFlushLogs will flush the logs after filling the log buffer or after a fixed time interval.
-func (t *trial) tryFlushLogs(ctx *actor.Context, forceFlush bool) {
-	if t.db == nil {
-		// A trial created for a unit test does not have a database.
+	if t.logger == nil {
+		// A trial created for a unit test does not have a logger.
 		return
 	}
 
-	if forceFlush || len(t.pendingLogs) >= trialLogBuffer {
-		if err := t.db.AddTrialLogs(t.pendingLogs); err != nil {
-			ctx.Log().WithError(err).Errorf("failed to save trial logs")
-		}
-		t.pendingLogs = t.pendingLogs[:0]
-	}
+	ctx.Tell(t.logger, model.TrialLog{TrialID: t.id, Message: msg.String() + "\n"})
 }
 
 func (t *trial) processTaskTerminated(ctx *actor.Context, msg scheduler.TaskTerminated) {
