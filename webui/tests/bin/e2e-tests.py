@@ -97,9 +97,21 @@ def docker_run_e2e_tests(config):
     network_name = cluster_name + "_default"
     cypress_name = _cypress_container_name(config)
 
+    mount_arguments = [
+        "--mount",
+        f"type=bind,source={webui_dir},target=/webui",
+    ]
+
     base_url_config = f"baseUrl=http://{master_name}:8080"
-    record_config = "video=false,screenshotsFolder=/tmp/cypress/screenshots"
-    cypress_arguments = _cypress_arguments([base_url_config, record_config], config)
+    cypress_config = [base_url_config]
+    if config["OUTPUT_DIR"]:
+        output_dir = config["OUTPUT_DIR"]
+        record_config = f"videosFolder=/tmp/output/videos,screenshotsFolder=/tmp/output/screenshots"
+        cypress_config.append(record_config)
+        run(["mkdir", "-p", output_dir], config)
+        mount_arguments.extend(["--mount", f"type=bind,source={output_dir},target=/tmp/output"])
+
+    cypress_arguments = _cypress_arguments(cypress_config, config)
 
     command = [
         "docker",
@@ -108,8 +120,7 @@ def docker_run_e2e_tests(config):
         cypress_name,
         "--rm",
         f"--network={network_name}",
-        "--mount",
-        f"type=bind,source={webui_dir},target=/webui",
+        *mount_arguments,
         "-w",
         "/webui/tests",
         "--env",
@@ -162,6 +173,17 @@ def get_config(args):
     config["DET_DOCKER_MASTER_NODE"] = "localhost"
     config["CYPRESS_DEFAULT_COMMAND_TIMEOUT"] = args.cypress_default_command_timeout
     config["CYPRESS_ARGS"] = args.cypress_args
+    if args.output_dir:
+        output_dir = pathlib.Path(args.output_dir)
+        if output_dir.is_file():
+            raise ValueError(f"the specified output directory '{output_dir}' is a file.")
+        # we do not support setting the output directory under the current webui directory
+        if str(output_dir.resolve()).startswith(str(webui_dir.resolve())):
+            raise NotImplementedError(
+                "setting a custom output directory within the webui directory is not supported"
+            )
+
+        config["OUTPUT_DIR"] = str(output_dir.resolve())
 
     env = {}
     for var in ["DISPLAY", "PATH", "XAUTHORITY", "TERM"]:
@@ -191,6 +213,11 @@ def main():
     parser.add_argument("operation", help=help_msg)
     parser.add_argument("--integrations-host-port", default="5300")
     parser.add_argument("--cypress-default-command-timeout", default="4000")
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        help="the output directory for artifacts when running tests through docker mode.",
+    )
     parser.add_argument("--cypress-args", help="other cypress arguments")
     parser.add_argument("--log-level")
     parser.add_argument("--log-format")
