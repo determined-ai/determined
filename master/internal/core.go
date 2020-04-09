@@ -59,6 +59,7 @@ type Master struct {
 	rwCoordinator *actor.Ref
 	provisioner   *actor.Ref
 	db            *db.PgDB
+	trialLogger   *actor.Ref
 }
 
 // New creates an instance of the Determined master.
@@ -389,6 +390,7 @@ func (m *Master) Run() error {
 	// +- Cluster (scheduler.Cluster: cluster)
 	// +- Service Proxy (proxy.Proxy: proxy)
 	// +- Telemetry (telemetry.telemetryActor: telemetry)
+	// +- TrialLogger (internal.trialLogger: trialLogger)
 	// +- Experiments (actors.Group: experiments)
 	//     +- Experiment (internal.experiment: <experiment-id>)
 	//         +- Trial (internal.trial: <trial-request-id>)
@@ -397,6 +399,8 @@ func (m *Master) Run() error {
 	//     +- Agent (internal.agent: <agent-id>)
 	//         +- Websocket (actors.WebSocket: <remote-address>)
 	m.system = actor.NewSystem("master")
+
+	m.trialLogger, _ = m.system.ActorOf(actor.Addr("trialLogger"), newTrialLogger(m.db))
 
 	userService, err := user.New(m.db, m.system)
 	if err != nil {

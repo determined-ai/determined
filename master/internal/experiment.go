@@ -61,6 +61,7 @@ type experiment struct {
 	*model.Experiment
 	modelDefinition     archive.Archive
 	cluster             *actor.Ref
+	trialLogger         *actor.Ref
 	db                  *db.PgDB
 	searcher            *searcher.Searcher
 	warmStartCheckpoint *model.Checkpoint
@@ -114,6 +115,7 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 		Experiment:          expModel,
 		modelDefinition:     modelDefinition,
 		cluster:             master.cluster,
+		trialLogger:         master.trialLogger,
 		db:                  master.db,
 		searcher:            search,
 		warmStartCheckpoint: checkpoint,
