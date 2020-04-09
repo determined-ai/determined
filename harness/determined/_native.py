@@ -4,7 +4,6 @@ import pathlib
 import random
 import sys
 import tempfile
-import zipfile
 from typing import Any, Dict, List, Optional, Tuple, Type, cast
 
 import determined as det
@@ -65,26 +64,6 @@ def set_command_default(
     return command
 
 
-def make_native_config(config: Optional[Dict[str, Any]], command: List[str]) -> Dict[str, Any]:
-    conf = constants.DEFAULT_EXP_CFG.copy()  # type: Dict[str, Any]
-    if config is not None:
-        conf.update(config)
-    conf.setdefault("internal", {})
-    conf["internal"]["native"] = {"command": command}
-    return conf
-
-
-def set_native_experiment_defaults(
-    config: Optional[Dict[str, Any]], context_dir: str, command: Optional[List[str]] = None
-) -> Tuple[Dict[str, Any], pathlib.Path, List[str]]:
-    if context_dir == "":
-        raise errors.InvalidExperimentException("Cannot specify the context directory to be empty.")
-    exp_context_dir = pathlib.Path(context_dir)
-    command = set_command_default(exp_context_dir, command)
-    config = make_native_config(config, command)
-    return config, exp_context_dir, command
-
-
 def create_experiment(
     config: Optional[Dict[str, Any]],
     context_dir: str,
@@ -104,14 +83,19 @@ def create_experiment(
     Returns:
         The ID of the created experiment.
     """
+    if context_dir == "":
+        raise errors.InvalidExperimentException("Cannot specify the context directory to be empty.")
 
-    config, exp_context_dir, command = set_native_experiment_defaults(config, context_dir, command)
+    context_path = pathlib.Path(context_dir)
+    config = {**constants.DEFAULT_EXP_CFG, **(config or {})}
+    config.setdefault("internal", {})
+    config["internal"]["native"] = {"command": set_command_default(context_path, command)}
     print("Creating an experiment with config: {}".format(config))
 
     if master_url is None:
         master_url = util.get_default_master_address()
 
-    exp_context = context.Context.from_local(exp_context_dir)
+    exp_context = context.Context.from_local(context_path)
 
     # When a requested_user isn't specified to initialize_session(), the
     # authentication module will attempt to use the token store to grab the
@@ -187,21 +171,10 @@ def make_test_workloads(
 
 
 def make_test_experiment_env(
-    tmp_dir: pathlib.Path,
-    config: Optional[Dict[str, Any]],
-    context_dir: str,
-    command: Optional[List[str]] = None,
+    checkpoint_dir: pathlib.Path, config: Optional[Dict[str, Any]]
 ) -> Tuple[det.EnvContext, workload.Stream, det.RendezvousInfo, horovod.HorovodContext]:
-    config, exp_context_dir, command = set_native_experiment_defaults(config, context_dir, command)
-
-    # Here wraps the model file into a zip because PyTorchTrial needs a wrapped mode zip file
-    # during saving checkpoints.
-    zip_path = tmp_dir.joinpath("model_def.zip")
-    with zipfile.ZipFile(zip_path, "w") as zf:
-        zf.write(command[0], arcname="model_def/__init__.py")
-
-    config_test = det.ExperimentConfig(api.make_test_experiment_config(config))
-    hparams = generate_test_hparam_values(config_test)
+    config = det.ExperimentConfig({**constants.DEFAULT_EXP_CFG, **(config or {})})
+    hparams = generate_test_hparam_values(config)
     use_gpu, container_gpus, slot_ids = get_gpus()
     local_rendezvous_ports = (
         f"{constants.LOCAL_RENDEZVOUS_PORT},{constants.LOCAL_RENDEZVOUS_PORT+1}"
@@ -211,23 +184,23 @@ def make_test_experiment_env(
         master_addr="",
         master_port=1,
         container_id="test_mode",
-        experiment_config=config_test,
+        experiment_config=config,
         hparams=hparams,
         initial_workload=workload.train_workload(1, 1, 1),
         latest_checkpoint=None,
         use_gpu=use_gpu,
         container_gpus=container_gpus,
         slot_ids=slot_ids,
-        debug=config_test.debug_enabled(),
+        debug=config.debug_enabled(),
         workload_manager_type="",
         det_rendezvous_ports=local_rendezvous_ports,
         det_trial_runner_network_interface=constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE,
         det_trial_id="1",
         det_experiment_id="1",
         det_cluster_id="test_mode",
-        trial_seed=config_test.experiment_seed(),
+        trial_seed=config.experiment_seed(),
     )
-    workloads = make_test_workloads(tmp_dir.joinpath("checkpoint"), config_test)
+    workloads = make_test_workloads(checkpoint_dir.joinpath("checkpoint"), config)
     rendezvous_ports = env.rendezvous_ports()
     rendezvous_info = det.RendezvousInfo(
         addrs=[f"0.0.0.0:{rendezvous_ports[0]}"], addrs2=[f"0.0.0.0:{rendezvous_ports[1]}"], rank=0
@@ -237,6 +210,30 @@ def make_test_experiment_env(
     )
 
     return env, workloads, rendezvous_info, hvd_config
+
+
+def create_trial_instance(
+    trial_def: Type[det.Trial], checkpoint_dir: str, config: Optional[Dict[str, Any]] = None
+) -> det.Trial:
+    """
+    Create a trial instance from a Trial class definition. This can be a useful
+    utility for debugging your trial logic in any development environment.
+
+    Arguments:
+        trial_def: A class definition that inherits from the det.Trial interface.
+        checkpoint_dir:
+            The checkpoint directory that the trial will use for loading and
+            saving checkpoints.
+        config:
+            An optional experiment configuration that is used to initialize the
+            :class:`determined.TrialContext`. If not specified, a minimal default
+            is used.
+    """
+    env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
+        checkpoint_dir=pathlib.Path(checkpoint_dir), config=config
+    )
+    trial_context = trial_def.trial_context_class(env, hvd_config)
+    return trial_def(trial_context)
 
 
 def create(
@@ -303,12 +300,9 @@ def create(
 
     elif Mode(mode) == Mode.TEST:
         print("Running test mode locally.")
-        tmp_dir = tempfile.TemporaryDirectory()
+        checkpoint_dir = tempfile.TemporaryDirectory()
         env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
-            tmp_dir=pathlib.Path(tmp_dir.name),
-            config=config,
-            context_dir=context_dir,
-            command=command,
+            checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
         )
         print(
             "Starting a test experiment.\n"
@@ -324,7 +318,7 @@ def create(
             hvd_config=hvd_config,
         )
         controller.run()
-        tmp_dir.cleanup()
+        checkpoint_dir.cleanup()
         print("Note: to submit a real experiment to the cluster, change mode argument to 'submit'")
 
     else:
@@ -362,12 +356,9 @@ def _init_native(
 
     elif Mode(mode) == Mode.TEST:
         print("Running test mode locally.")
-        tmp_dir = tempfile.TemporaryDirectory()
+        checkpoint_dir = tempfile.TemporaryDirectory()
         env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
-            tmp_dir=pathlib.Path(tmp_dir.name),
-            config=config,
-            context_dir=context_dir,
-            command=command,
+            checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
         )
         print(
             "Starting a test experiment.\n"
@@ -387,7 +378,7 @@ def _init_native(
                 hvd_config=hvd_config,
             )
             controller.run()
-            tmp_dir.cleanup()
+            checkpoint_dir.cleanup()
             print(
                 "Note: to submit a real experiment to the cluster, change mode argument to 'submit'"
             )
