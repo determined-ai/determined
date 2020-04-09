@@ -3,10 +3,7 @@
 PyTorch MNIST Tutorial
 =============================
 
-This tutorial walks through how to implement an existing PyTorch MNIST model in Determined. MNIST consists of handwritten digits, commonly used to test image classification models. This tutorial is based on the official `PyTorch MNIST example <https://github.com/PyTorch/examples/blob/master/mnist/main.py>`_.
-
-*This tutorial requires the Determined CLI. For installation procedures:* :ref:`install-cli`.
-We will also use ``torch``, ``torchvision``, and ``numpy`` libraries to build and train our model.
+This tutorial describes how to port an existing PyTorch MNIST model to Determined. MNIST is a dataset consisting of grayscale images of handwritten digits, commonly used to test image classification models. This tutorial is based on the official `PyTorch MNIST example <https://github.com/PyTorch/examples/blob/master/mnist/main.py>`_.
 
 At the end of this tutorial, the reader should know:
 
@@ -16,7 +13,13 @@ At the end of this tutorial, the reader should know:
 #. How to Write a Determined YAML Experiment Configuration
 #. A General Procedure of a Determined Workflow
 
-Note: As we walk through the tutorial, some code has been omitted for demonstration purposes. A complete code example is available at :download:`MNIST PyTorch </examples/mnist_pytorch.tgz>`.
+The complete model code for this tutorial can be downloaded here: :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`. We suggest you download that code and use it follow along as you read through this tutorial.
+
+Prerequisites
+-------------
+
+- Access to a Determined cluster. If you have not yet installed Determined, refer to the :ref:`installation instructions <install-determined>`.
+- The Determined CLI should be installed on your local machine. For installation instructions, see :ref:`here <install-cli>`. After installing the CLI, configure it to connect to your Determined cluster by setting the ``DET_MASTER`` environment variable to the hostname or IP address where Determined is running.
 
 Overview
 --------
@@ -108,7 +111,7 @@ Download and Prepare MNIST Dataset
 Downloading Data
 """"""""""""""""
 
-First, we create our data objects. For this tutorial, we will download MNIST directly. Determined launches a separate process for each each gpu during :ref:`multi-gpu-training`, so we add a unique ID to the download directory.
+First, we create our data objects. For this tutorial, we will download MNIST directly. Determined launches a separate process for each GPU during :ref:`multi-gpu-training`, so we add a unique ID to the download directory.
 
 .. code:: python
 
@@ -225,9 +228,9 @@ For evaluation, Determined loops through our evaluation DataLoader defined from 
 Training the Model
 ------------------
 
-Lastly, we create an experiment configuration file that contains all the experiment information for Determined. We set the hyperparameters, along with the name or description of the experiment. In Determined, we define length of training based on the number of steps. One step consists of 100 batches by default. For this tutorial, we set ``max_steps`` to 2, so 200 batches will run.
+Now that we have ported our model code to Determined's API, we can use Determined to train a single instance of the model or to do a hyperparameter search. In Determined, a **trial** is a training task that consists of a dataset, a deep learning model, and values for all of the model's hyperparameters. An **experiment** is a collection of one or more trials: an experiment can either train a single model (with a single trial), or can define a search over a user-defined hyperparameter space.
 
-More information on the experiment configuration file can be found: :ref:`experiment-configuration`.
+To create an experiment, we start by writing an experiment configuration file which defines the kind of experiment we want to run. In this case, we want to train a single model for a fixed number of batches, using fixed values for the model's hyperparameters:
 
 .. code:: yaml
 
@@ -245,19 +248,19 @@ More information on the experiment configuration file can be found: :ref:`experi
         smaller_is_better: true
     entrypoint: model_def:MNistTrial
 
+Note that rather than specifying the number of batches to train for directly, we instead specify the number of "steps". By default, a step consists of 100 batches, so the config file above specifies that the model should be trained on 2000 batches of data.
+
+For more information on experiment configuration, see the :ref:`experiment configuration reference <experiment-configuration>`.
+
 Running an Experiment
 ---------------------
-When a user wants to run their model, they submit an experiment. **Experiment** is a collection of one or more trials. **Trial** is a training task with a dataset, a deep learning model, and a defined set of hyperparameters. An experiment corresponds to a set of trials that are exploring a user-defined hyperparameter space. For example, during a learning rate hyperparameter search, an experiment can consists of three trials with ``.001``, ``.01``, and ``.1`` learning rates.
-
-More information on the terminology of Determined can be found at :ref:`terminology-concepts`.
-
-This tutorial will run an experiment with one trial because all the hyperparameter are specifically defined. To start the experiment, we run:
+The Determined CLI can be used to create a new experiment, which will immediately start running on the cluster. To do this, we run:
 
 .. code::
 
     det experiment create const.yaml .
 
-Here, the first argument (``const.yaml``) specifies the experiment configuration file and the second argument (``.``) the location of the directory that contains our model definition files. An optional flag ``-m`` allows the user to state the master's IP address inline. More information on the CLI can be found at the reference page: :ref:`cli`.
+Here, the first argument (``const.yaml``) is the name of the experiment configuration file and the second argument (``.``) is the location of the directory that contains our model definition files. You may need to configure the CLI with the network address where the Determined master is running, via the ``-m`` flag or the ``DET_MASTER`` environment variable. For more information, see the :ref:`CLI reference page <cli>`.
 
 Once the experiment is started, you will see a notification:
 
@@ -269,17 +272,13 @@ Once the experiment is started, you will see a notification:
 
 Evaluating the Model
 --------------------
-
 Model evaluation is done automatically for you by Determined.
 To access information on both training and validation performance,
-simply go to the WebUI by entering the address of your ``DETERMINED_MASTER``
+simply go to the WebUI by entering the address of the Determined master
 in your web browser.
 
 Once you are on the Determined landing page, you can find your experiment
 either via the experiment ID (xxx) or via its description.
-
-This code is also available at
-:download:`MNIST PyTorch </examples/mnist_pytorch.tgz>`.
 
 Next Steps
 ----------
