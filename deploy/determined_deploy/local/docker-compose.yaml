@@ -38,8 +38,6 @@ services:
       DET_MASTER_HTTP_PORT: ${INTEGRATIONS_HOST_PORT:-8080}
       DET_DB_PASSWORD: ${DET_DB_PASSWORD}
       DET_HASURA_SECRET: ${DET_HASURA_SECRET}
-    volumes:
-      -  ${DET_ETC_ROOT:-/usr/local/determined/etc/}:/etc/determined/
 
   determined-agent:
     init: true
