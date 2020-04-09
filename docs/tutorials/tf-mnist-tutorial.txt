@@ -3,34 +3,35 @@
 TensorFlow Keras MNIST Tutorial
 ====================================
 
-This tutorial walks through how to implement an existing ``tf.keras`` MNIST model in Determined. MNIST consists of handwritten digits, commonly used to test image classification models. This tutorial is based on the official `TensorFlow Basic Image Classification Tutorial <https://www.tensorflow.org/tutorials/keras/classification>`__.
-
-*This tutorial requires the Determined CLI. For installation procedures:* :ref:`install-cli`.
-We will also use ``tensorflow`` and ``keras`` libraries to build and train our model.
+This tutorial describes how to port an existing ``tf.keras`` MNIST model to Determined. MNIST is a dataset consisting of grayscale images of handwritten digits, commonly used to test image classification models. This tutorial is based on the official `TensorFlow Basic Image Classification Tutorial <https://www.tensorflow.org/tutorials/keras/classification>`__.
 
 At the end of this tutorial, the reader should know:
 
 #. Basic Concepts of ``TFKerasTrial``
 #. Basic Understanding of ``TFKerasTrialContext``
 #. How to Implement a ``tf.keras`` Model with ``TFKerasTrial``
-#. How to Write a Determined YAML Experiment Configuration.
+#. How to Write a Determined YAML Experiment Configuration
 #. A General Procedure of a Determined Workflow
 
-Note: As we walk through the tutorial, some code has been omitted for demonstration purposes. A complete code example is available at :download:`MNIST TF.Keras </examples/mnist_tf_keras.tgz>`.
+The complete model code for this tutorial can be downloaded here: :download:`mnist_tf_keras.tgz </examples/mnist_tf_keras.tgz>`. We suggest you download that code and use it follow along as you read through this tutorial.
+
+Prerequisites
+-------------
+
+- Access to a Determined cluster. If you have not yet installed Determined, refer to the :ref:`installation instructions <install-determined>`.
+- The Determined CLI should be installed on your local machine. For installation instructions, see :ref:`here <install-cli>`. After installing the CLI, configure it to connect to your Determined cluster by setting the ``DET_MASTER`` environment variable to the hostname or IP address where Determined is running.
 
 Overview
 --------
-`TensorFlow <https://www.tensorflow.org/>`_ is an end-to-end open source platform for machine learning. Although TensorFlow provides excellent capabilities for training research prototypes, it can be challenging to convert these prototypes into production-grade applications. Using Determined for your TensorFlow models maintains the TensorFlow user experience while unlocking production-grade features such as state-of-the-art distributed training and hyperparameter tuning, experiment tracking, log management, metrics visualization, reproducibility, dependency management, along with flexibility to share compute resources on the hardware of your choice. To unlock these features, users can leverage Determined's ``TFKerasTrial`` interface.
-
-To learn more about the benefits of Determined, read: :ref:`benefits-of-determined`.
+`TensorFlow <https://www.tensorflow.org/>`_ is a popular deep learning framework. Although TensorFlow provides excellent capabilities for training research prototypes, it can be challenging to convert these prototypes into production-grade applications. Using Determined for your TensorFlow models maintains the TensorFlow user experience while unlocking production-grade features such as state-of-the-art distributed training and hyperparameter tuning, experiment tracking, log management, metrics visualization, reproducibility, dependency management, along with flexibility to share compute resources on the hardware of your choice. To unlock these features, users can leverage Determined's ``TFKerasTrial`` interface.
 
 Determined's ``TFKerasTrial`` interface has the user define a compiled model and generate the data, similar to ``tf.keras``. However, Determined connects the pieces by handling the device management, initial training or ``.fit()`` call, and other training steps, so you can focus on the task at hand---training better models.
 
 This tutorial walks through building a Determined ``TFKerasTrial`` class and the necessary steps to run an experiment. The core file will be ``model_def.py`` and contains the MNIST ``TFKerasTrial`` class. Additionally, the Determined system expects two files to be provided:
 
-#. an entrypoint (``__init__.py``)
-    - This file is our entrypoint. It imports the user defined ``TFKerasTrial`` class.
-#. an experiment configuration file (``*.yaml``)
+#. An entrypoint (``__init__.py``)
+    - This file is our entrypoint. It imports the user-defined ``TFKerasTrial`` class.
+#. An experiment configuration file (``.yaml``)
     - This file contains information on the hyperparameters and other details for model and experiment configuration used internally and by user code. This can include, but is not limited to: global_batch_size, learning_rate, and layer size.
 
 To learn more about experiment configuration files, read: :ref:`topic-guides_yaml`. To learn more about the experiment configuration file, read: :ref:`experiment-configuration`.
@@ -92,11 +93,12 @@ The code snippet below shows how to access the defined variables from the experi
 Download and Prepare MNIST Dataset
 ----------------------------------
 
-First, we create our data objects. The data functions, ``build_training_data_loader`` and ``build_validation_data_loader`` expect to a ` ``tf.keras.Sequence`` dataset https://keras.io/utils/>`_ to be returned.
+First, we create our data objects. The data functions, ``build_training_data_loader`` and ``build_validation_data_loader`` expect a ` ``tf.keras.Sequence`` dataset https://keras.io/utils/>`_ to be returned.
 
 For numpy data that can be loaded in memory, Determined provides a simple class to convert the data. The ``InMemorySequence`` class is a utility class for converting a simple in-memory supervised numpy dataset into a ``tf.keras.Sequence`` instance. This class has the user define the data, labels, and batch size, then converts the information into a ``tf.keras.Sequence`` object.
 
 The code snippet below, we can directly access the MNIST through ``keras.datasets``. We load the data the same as in traditional ``tf.keras``. Next, we use the ``TFKerasTrialContext`` object to access the batch size and then convert the data into a ``InMemorySequence``.
+
 .. code:: python
 
     def build_training_data_loader(self):
@@ -121,7 +123,7 @@ We then follow the same workflow for ``build_validation_data_loader``.
 
 Building the Model
 """"""""""""""""""
-Determined calls ``build_model`` to define our model. In ``build_model``, the model object is defined, compiled and returned. The original ``tf.keras`` example uses the Sequential API to create the model. The ``build_model`` function below mimics the original model implementation.  However, the model needs to be wrapped with ``self.context.wrap_model`` to access Determined's multi-GPU capabilities.
+Determined calls ``build_model`` to define our model. In ``build_model``, the model object is defined, compiled, and returned. The original ``tf.keras`` example uses the Sequential API to create the model. The ``build_model`` function below mimics the original model implementation.  However, the model needs to be wrapped with ``self.context.wrap_model`` to access Determined's multi-GPU capabilities.
 
 .. code:: python
 
@@ -143,9 +145,9 @@ Determined calls ``build_model`` to define our model. In ``build_model``, the mo
 
 Training the Model
 ------------------
-Lastly, we create an experiment configuration file that contains all the experiment information for Determined. We set the hyperparameters, along with the name or description of the experiment. In Determined, we define length of training based on the number of steps. One step consists of 100 batches by default. For this tutorial, we set ``max_steps`` to 40, so 4,000 batches will run.
+Now that we have ported our model code to Determined's API, we can use Determined to train a single instance of the model or to do a hyperparameter search. In Determined, a **trial** is a training task that consists of a dataset, a deep learning model, and values for all of the model's hyperparameters. An **experiment** is a collection of one or more trials: an experiment can either train a single model (with a single trial), or can define a search over a user-defined hyperparameter space.
 
-More information on the experiment configuration file can be found: :ref:`experiment-configuration`.
+To create an experiment, we start by writing an experiment configuration file which defines the kind of experiment we want to run. In this case, we want to train a single model for a fixed number of batches, using fixed values for the model's hyperparameters:
 
 .. code:: yaml
 
@@ -159,20 +161,19 @@ More information on the experiment configuration file can be found: :ref:`experi
     min_validation_period: 10
     entrypoint: model_def:MNISTTrial
 
+Note that rather than specifying the number of batches to train for directly, we instead specify the number of "steps". By default, a step consists of 100 batches, so the config file above specifies that the model should be trained on 4000 batches of data.
+
+For more information on experiment configuration, see the :ref:`experiment configuration reference <experiment-configuration>`.
 
 Running an Experiment
 ---------------------
-When a user wants to run their model, they submit an experiment. **Experiment** is a collection of one or more trials. **Trial** is a training task with a dataset, a deep learning model, and a defined set of hyperparameters. An experiment corresponds to a set of trials that are exploring a user-defined hyperparameter space. For example, during a learning rate hyperparameter search, an experiment can consists of three trials with ``.001``, ``.01``, and ``.1`` learning rates.
-
-More information on the terminology of Determined can be found at :ref:`terminology-concepts`.
-
-This tutorial will run an experiment with one trial because all the hyperparameter are specifically defined. To start the experiment, we run:
+The Determined CLI can be used to create a new experiment, which will immediately start running on the cluster. To do this, we run:
 
 .. code::
 
     det experiment create const.yaml .
 
-Here, the first argument (``const.yaml``) specifies the experiment configuration file and the second argument (``.``) the location of the directory that contains our model definition files. An optional flag ``-m`` allows the user to state the master's IP address inline. More information on the CLI can be found at the reference page: :ref:`cli`.
+Here, the first argument (``const.yaml``) is the name of the experiment configuration file and the second argument (``.``) is the location of the directory that contains our model definition files. You may need to configure the CLI with the network address where the Determined master is running, via the ``-m`` flag or the ``DET_MASTER`` environment variable. For more information, see the :ref:`CLI reference page <cli>`.
 
 Once the experiment is started, you will see a notification:
 
@@ -184,17 +185,13 @@ Once the experiment is started, you will see a notification:
 
 Evaluating the Model
 --------------------
-
 Model evaluation is done automatically for you by Determined.
 To access information on both training and validation performance,
-simply go to the WebUI by entering the address of your ``DETERMINED_MASTER``
+simply go to the WebUI by entering the address of the Determined master
 in your web browser.
 
 Once you are on the Determined landing page, you can find your experiment
 either via the experiment ID (xxx) or via its description.
-
-This code is also available at
-:download:`MNIST tf.keras </examples/mnist_tf_keras.tgz>`.
 
 Next Steps
 ----------
