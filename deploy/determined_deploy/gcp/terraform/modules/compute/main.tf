@@ -36,7 +36,7 @@ resource "google_compute_instance" "default" {
       bucket: "${var.gcs_bucket}"
 
     provisioner:
-      boot_disk_source_image: projects/${var.project_id}/global/images/${var.environment_image}
+      boot_disk_source_image: projects/determined-ai/global/images/${var.environment_image}
       agent_docker_image: determinedai/determined-agent:${var.det_version}
       master_url: ${var.scheme}://internal-ip:${var.port}
       agent_docker_network: ${var.agent_docker_network}
