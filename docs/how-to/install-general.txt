@@ -13,11 +13,6 @@ For information on these components, see :ref:`det-system-architecture`.
 
 We also run two third-party services within each cluster:
 
-..
-   TODO: Is "third-party" the right word? The point is that we didn't
-   write the software, but it's not calling out to somebody else's
-   servers or anything.
-
 - a `PostgreSQL <https://www.postgresql.org/>`_ database
 - a `Hasura <https://hasura.io>`_ server
 
