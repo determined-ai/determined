@@ -32,6 +32,7 @@ pipeline {
           sh "${describeNode}"
           sh script: '''
             . venv/bin/activate
+            python webui/tests/bin/e2e-tests.py post-e2e-tests --integrations-host-port ${INTEGRATIONS_HOST_PORT}
             python webui/tests/bin/e2e-tests.py pre-e2e-tests --integrations-host-port ${INTEGRATIONS_HOST_PORT}
             '''
         }
