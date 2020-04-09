@@ -162,8 +162,8 @@ def logs(args: Namespace) -> None:
         state_query.op.trials_by_pk(id=args.trial_id).state()
 
         no_change_count = 0
-        while True:
-            try:
+        try:
+            while True:
                 # Poll for new logs every 100 ms.
                 time.sleep(0.1)
 
@@ -180,17 +180,16 @@ def logs(args: Namespace) -> None:
                     resp = state_query.send()
                     if resp.trials_by_pk.state in constants.TERMINAL_STATES:
                         raise KeyboardInterrupt()
-            except KeyboardInterrupt:
-                resp = state_query.send()
+        except KeyboardInterrupt:
+            resp = state_query.send()
 
-                print(
-                    colored(
-                        "Trial is in the {} state. To reopen log stream, run: "
-                        "det trial logs -f {}".format(resp.trials_by_pk.state, args.trial_id),
-                        "green",
-                    )
+            print(
+                colored(
+                    "Trial is in the {} state. To reopen log stream, run: "
+                    "det trial logs -f {}".format(resp.trials_by_pk.state, args.trial_id),
+                    "green",
                 )
-                break
+            )
 
 
 @authentication_required
