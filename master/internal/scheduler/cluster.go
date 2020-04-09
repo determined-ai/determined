@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
@@ -17,6 +18,13 @@ import (
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
+
+const (
+	actionCooldown = 500 * time.Millisecond
+)
+
+// schedulerTick periodically triggers the scheduler to act.
+type schedulerTick struct{}
 
 // Cluster manages the agent and task lifecycles.
 type Cluster struct {
@@ -40,6 +48,8 @@ type Cluster struct {
 
 	saveNotifications bool
 	notifications     []<-chan struct{}
+
+	reschedule bool
 }
 
 // NewCluster initializes a new empty cluster.
@@ -71,6 +81,8 @@ func NewCluster(
 		proxy:           proxy,
 		provisioner:     provisioner,
 		provisionerView: newProvisionerView(provisionerSlotsPerInstance),
+
+		reschedule: false,
 	}
 	return c
 }
@@ -181,17 +193,17 @@ func (c *Cluster) sendProvisionerView(ctx *actor.Context) {
 
 // Receive implements the actor.Actor interface.
 func (c *Cluster) Receive(ctx *actor.Context) error {
-	// Default to rescheduling after every message, but allow messages that don't affect the cluster
-	// state to skip it.
 	reschedule := true
 	defer func() {
-		if reschedule {
-			c.scheduler.Schedule(c)
-			c.sendProvisionerView(ctx)
-		}
+		// Default to scheduling every 500ms if a message was received, but allow messages
+		// that don't affect the cluster to be skipped.
+		c.reschedule = c.reschedule || reschedule
 	}()
 
 	switch msg := ctx.Message().(type) {
+	case actor.PreStart:
+		actors.NotifyAfter(ctx, actionCooldown, schedulerTick{})
+
 	case AddAgent:
 		ctx.Log().Infof("adding agent: %s", msg.Agent.Address().Local())
 		c.agents[msg.Agent] = newAgentState(msg)
@@ -265,6 +277,15 @@ func (c *Cluster) Receive(ctx *actor.Context) error {
 	case GetTaskSummaries:
 		reschedule = false
 		ctx.Respond(c.taskList.TaskSummaries())
+
+	case schedulerTick:
+		if c.reschedule {
+			c.scheduler.Schedule(c)
+			c.sendProvisionerView(ctx)
+		}
+		c.reschedule = false
+		reschedule = false
+		actors.NotifyAfter(ctx, actionCooldown, schedulerTick{})
 
 	default:
 		reschedule = false
