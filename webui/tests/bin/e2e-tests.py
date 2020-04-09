@@ -35,7 +35,12 @@ def pre_e2e_tests(config):
     run(["python", str(test_setup_path)], config)
 
 
+def _cypress_container_name(config):
+    return config["CLUSTER_NAME"] + "_cypress"
+
+
 def post_e2e_tests(config):
+    clean_up_cypress(config)
     run_cluster_cmd(["fixture-down"], config)
 
 
@@ -56,6 +61,16 @@ def _cypress_arguments(cypress_configs, config):
     return args
 
 
+def clean_up_cypress(config):
+    # ensure that the cypress container is stopped
+    cypress_name = _cypress_container_name(config)
+    try:
+        run(["docker", "inspect", "-f", "'{{.State.Running}}'", cypress_name], config)
+        run(["docker", "stop", cypress_name], config)
+    except subprocess.CalledProcessError:
+        pass
+
+
 def run_e2e_tests(config):
     base_url_config = f"baseUrl=http://localhost:{config['INTEGRATIONS_HOST_PORT']}"
     cypress_arguments = _cypress_arguments([base_url_config], config)
@@ -71,6 +86,7 @@ def docker_run_e2e_tests(config):
     cluster_name = config["CLUSTER_NAME"]
     master_name = cluster_name + "_determined-master_1"
     network_name = cluster_name + "_default"
+    cypress_name = _cypress_container_name(config)
 
     base_url_config = f"baseUrl=http://{master_name}:8080"
     record_config = "video=false,screenshotsFolder=/tmp/cypress/screenshots"
@@ -79,6 +95,8 @@ def docker_run_e2e_tests(config):
     command = [
         "docker",
         "run",
+        "--name",
+        cypress_name,
         "--rm",
         f"--network={network_name}",
         "--mount",
