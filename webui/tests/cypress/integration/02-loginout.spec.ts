@@ -29,8 +29,17 @@ describe('Sign in/out', () => {
   it('should log back in after logging out', () => {
     // Logging out above should put us on the login page, so enter the login
     // information directly.
+    const username = 'determined';
     cy.visit('/ui/logout');
-    cy.get('input#input-username').type('determined');
+    // We directly set the value to avoid using the less reliable .type() method
+    // from Cypress. We also trigger 'input' event to keep it closer to an actual typing
+    // behavior this would help functions relying onInput.
+    cy.get('input#input-username')
+      .invoke('val', username)
+      .trigger('change')
+      .trigger('input')
+      .should('have.value', username);
+
     cy.get('button[type="submit"]').click();
     checkLoggedIn('determined');
   });
