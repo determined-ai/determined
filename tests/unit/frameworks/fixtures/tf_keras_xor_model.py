@@ -28,10 +28,6 @@ class XORTrial(keras.TFKerasTrial):
 
     def __init__(self, context: keras.TFKerasTrialContext):
         self.context = context
-        self.my_batch_size = self.context.get_per_slot_batch_size()
-        self.my_learning_rate = self.context.get_hparam("learning_rate")
-        self.hidden_size = self.context.get_hparam("hidden_size")
-        self.trial_type = self.context.get_hparam("trial_type")
 
     def build_model(self) -> Sequential:
         model = Sequential()
@@ -41,12 +37,14 @@ class XORTrial(keras.TFKerasTrial):
         model.add(Dense(1))
         model = self.context.wrap_model(model)
         model.compile(
-            SGD(lr=self.my_learning_rate), binary_crossentropy, metrics=[categorical_error]
+            SGD(lr=self.context.get_hparam("learning_rate")),
+            binary_crossentropy,
+            metrics=[categorical_error],
         )
         return cast(Sequential, model)
 
     def batch_size(self) -> int:
-        return self.my_batch_size
+        return self.context.get_per_slot_batch_size()
 
     def session_config(self) -> tf.compat.v1.ConfigProto:
         return tf.compat.v1.ConfigProto(
@@ -71,7 +69,7 @@ class XORTrialWithTrainingMetrics(XORTrial):
         model.add(Dense(1))
         model = self.context.wrap_model(model)
         model.compile(
-            SGD(lr=self.my_learning_rate),
+            SGD(lr=self.context.get_hparam("learning_rate")),
             binary_crossentropy,
             metrics=[categorical_error, categorical_accuracy, predictions],
         )
@@ -105,7 +103,7 @@ class XORTrialWithCustomObjects(XORTrial):
         model.add(Dense(1))
         model = self.context.wrap_model(model)
         model.compile(
-            CustomOptimizer(lr=self.my_learning_rate),
+            CustomOptimizer(lr=self.context.get_hparam("learning_rate")),
             loss=self.custom_loss_fn,
             metrics=[categorical_error, categorical_accuracy, predictions],
         )
@@ -121,6 +119,8 @@ class XORTrialWithOptimizerState(XORTrial):
         model.add(Dense(1))
         model = self.context.wrap_model(model)
         model.compile(
-            Adam(lr=self.my_learning_rate), binary_crossentropy, metrics=[categorical_error]
+            Adam(lr=self.context.get_hparam("learning_rate")),
+            binary_crossentropy,
+            metrics=[categorical_error],
         )
         return cast(Sequential, model)
