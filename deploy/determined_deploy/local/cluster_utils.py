@@ -46,7 +46,9 @@ def get_proxy_addr() -> str:
         return ""
 
 
-def docker_compose(args: List[str], cluster_name: str, env: Optional[Dict] = None) -> None:
+def docker_compose(
+    args: List[str], cluster_name: str, env: Optional[Dict] = None, extra_files: List[str] = None
+) -> None:
     path = Path(__file__).parent.joinpath("docker-compose.yaml")
     # Start with the user's environment to ensure that Docker and Docker Compose work correctly.
     process_env = dict(os.environ)
@@ -55,7 +57,11 @@ def docker_compose(args: List[str], cluster_name: str, env: Optional[Dict] = Non
         process_env.update(env)
     process_env["DET_VERSION"] = determined_deploy.__version__
     process_env["INTEGRATIONS_PROXY_ADDR"] = get_proxy_addr()
-    args = ["docker-compose", "-f", str(path), "-p", cluster_name] + args
+    base_command = ["docker-compose", "-f", str(path), "-p", cluster_name]
+    if extra_files is not None:
+        for extra_file in extra_files:
+            base_command += ["-f", extra_file]
+    args = base_command + args
     subprocess.run(args, env=process_env)
 
 
@@ -80,15 +86,22 @@ def fixture_up(
     db_password: str,
     hasura_secret: str,
 ) -> str:
+    config.MASTER_PORT = port
+
+    command = ["up", "-d", "--scale", f"determined-agent={num_agents}"]
+    extra_files = []
+    if etc_path is not None:
+        etc_path = Path(etc_path).resolve()
+        mount_yaml = Path(__file__).parent.joinpath("mount.yaml")
+        extra_files.append(str(mount_yaml))
     env = {
         "INTEGRATIONS_HOST_PORT": str(port),
         "DET_ETC_ROOT": str(etc_path),
         "DET_DB_PASSWORD": db_password,
         "DET_HASURA_SECRET": hasura_secret,
     }
-    config.MASTER_PORT = port
     fixture_down(cluster_name)
-    docker_compose(["up", "-d", "--scale", f"determined-agent={num_agents}"], cluster_name, env)
+    docker_compose(command, cluster_name, env, extra_files=extra_files)
     _wait_for_master(port)
 
 

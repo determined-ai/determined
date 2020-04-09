@@ -1,5 +1,4 @@
 import argparse
-import pathlib
 
 from determined_deploy.local import cluster_utils
 
@@ -21,10 +20,7 @@ def make_local_parser(subparsers: argparse._SubParsersAction) -> None:
         nargs="+",
         help="a list of operations",
     )
-    default_etc_path = pathlib.Path(__file__).parent.joinpath("configuration/")
-    parser_local.add_argument(
-        "--etc-root", type=str, default=default_etc_path, help="path to etc directory"
-    )
+    parser_local.add_argument("--etc-root", type=str, default=None, help="path to etc directory")
     parser_local.add_argument(
         "--agents", type=int, default=0, help="number of agents to start (on this machine)"
     )
