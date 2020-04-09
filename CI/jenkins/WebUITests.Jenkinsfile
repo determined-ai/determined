@@ -1,4 +1,4 @@
-describeNode = "echo \"Running on \${NODE_NAME} (executor: \${EXECUTOR_NUMBER})\""
+describeNode = "echo \"Running on \${NODE_NAME} (executor: \${EXECUTOR_NUMBER}) (build tag: \${BUILD_TAG})\""
 
 pipeline {
   agent any
@@ -40,9 +40,14 @@ pipeline {
       stage('E2E Tests') {
         steps {
           sh "${describeNode}"
+          // To avoid permission issues during Jenkins cleanup we instruct Cypress to put its output
+          // in /tmp as the Cypress docker container is running as root.
           sh script: '''
             . venv/bin/activate
-            python webui/tests/bin/e2e-tests.py docker-run-e2e-tests --integrations-host-port ${INTEGRATIONS_HOST_PORT} --cypress-default-command-timeout 30000
+            python webui/tests/bin/e2e-tests.py docker-run-e2e-tests \
+            --integrations-host-port ${INTEGRATIONS_HOST_PORT} \
+            --cypress-default-command-timeout 30000 \
+            --output-dir /tmp/cypress/${BUILD_TAG}
             '''
         }
       }
