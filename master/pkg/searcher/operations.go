@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
 )
 
@@ -79,33 +78,17 @@ func MustParse(s string) RequestID {
 type Create struct {
 	RequestID RequestID `json:"request_id"`
 	// TrialSeed must be a value between 0 and 2**31 - 1.
-	TrialSeed             uint32                      `json:"trial_seed"`
-	Hparams               hparamSample                `json:"hparams"`
-	Checkpoint            *WorkloadOperation          `json:"checkpoint"`
-	WorkloadSequencerType model.WorkloadSequencerType `json:"workload_sequencer_type"`
+	TrialSeed  uint32             `json:"trial_seed"`
+	Hparams    hparamSample       `json:"hparams"`
+	Checkpoint *WorkloadOperation `json:"checkpoint"`
 }
 
-// NewCreate initializes a new Create operation with a new request ID and the given hyperparameters.
-func NewCreate(
-	rand *nprand.State, s hparamSample, sequencerType model.WorkloadSequencerType) Create {
+func NewCreate(rand *nprand.State, s hparamSample) Create {
 	return Create{
-		RequestID:             newRequestID(rand),
-		TrialSeed:             uint32(rand.Int64n(1 << 31)),
-		Hparams:               s,
-		WorkloadSequencerType: sequencerType,
+		RequestID: newRequestID(rand),
+		TrialSeed: uint32(rand.Int64n(1 << 31)),
+		Hparams:   s,
 	}
-}
-
-// NewCreateFromCheckpoint initializes a new Create operation with a new request ID and the given
-// hyperparameters and checkpoint to initially load from.
-func NewCreateFromCheckpoint(
-	rand *nprand.State, s hparamSample, ckptRequestID RequestID, ckptStepID int,
-	sequencerType model.WorkloadSequencerType,
-) Create {
-	create := NewCreate(rand, s, sequencerType)
-	checkpoint := NewCheckpoint(ckptRequestID, ckptStepID)
-	create.Checkpoint = &checkpoint
-	return create
 }
 
 func (create Create) String() string {
@@ -124,33 +107,6 @@ type WorkloadOperation struct {
 	StepID    int       `json:"step_id"`
 }
 
-// NewTrain signals to a trial runner that it should run a training step.
-func NewTrain(requestID RequestID, stepID int) WorkloadOperation {
-	return WorkloadOperation{
-		RequestID: requestID,
-		Kind:      RunStep,
-		StepID:    stepID,
-	}
-}
-
-// NewCheckpoint signals to the trial runner that the current model state should be checkpointed.
-func NewCheckpoint(requestID RequestID, stepID int) WorkloadOperation {
-	return WorkloadOperation{
-		RequestID: requestID,
-		Kind:      CheckpointModel,
-		StepID:    stepID,
-	}
-}
-
-// NewValidate signals to a trial runner it should compute validation metrics.
-func NewValidate(requestID RequestID, stepID int) WorkloadOperation {
-	return WorkloadOperation{
-		RequestID: requestID,
-		Kind:      ComputeValidationMetrics,
-		StepID:    stepID,
-	}
-}
-
 func (wo WorkloadOperation) String() string {
 	return fmt.Sprintf("{Workload %s %s, step %d}", wo.Kind, wo.RequestID, wo.StepID)
 }
@@ -160,24 +116,12 @@ type Close struct {
 	RequestID RequestID `json:"request_id"`
 }
 
-// NewClose initializes a new Close operation for the request ID.
-func NewClose(requestID RequestID) Close {
-	return Close{
-		RequestID: requestID,
-	}
-}
-
 func (close Close) String() string {
 	return fmt.Sprintf("{Close %s}", close.RequestID)
 }
 
 // Shutdown marks the searcher as completed.
 type Shutdown struct{}
-
-// NewShutdown initializes a Shutdown operation for the searcher.
-func NewShutdown() Shutdown {
-	return Shutdown{}
-}
 
 func (shutdown Shutdown) String() string {
 	return "{Shutdown}"

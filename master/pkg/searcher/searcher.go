@@ -11,86 +11,50 @@ import (
 
 // Searcher encompasses the state as the searcher progresses using the provided search method.
 type Searcher struct {
-	rand     *nprand.State
-	hparams  model.Hyperparameters
-	eventLog *EventLog
-	method   SearchMethod
+	pendingCheckpoints map[WorkloadOperation]Create
+	pendingTrials      map[RequestID][]Operation
+	checkpoints        map[RequestID]int
+	samples            map[RequestID]hparamSample
+	steps              map[RequestID]int
+	rand               *nprand.State
+	hparams            model.Hyperparameters
+	eventLog           *EventLog
+	method             SearchMethod
 }
 
 // NewSearcher creates a new Searcher configured with the provided searcher config.
 func NewSearcher(seed uint32, method SearchMethod, hparams model.Hyperparameters) *Searcher {
-	rand := nprand.New(seed)
-	return &Searcher{rand: rand, hparams: hparams, eventLog: NewEventLog(), method: method}
-}
-
-func (s *Searcher) context() context {
-	return context{rand: s.rand, hparams: s.hparams}
-}
-
-// filterCompletedCheckpoints identifies operations which request checkpoints that have already
-// been completed and replays the corresponding WorkloadCompleted messages to the SearchMethod.
-// This situation arises when a SearchMethod requests a checkpoint after the scheduler has forced
-// that trial to checkpoint and be descheduled. The Searcher intercepts and saves that checkpoint
-// completed message, and this function is where that message gets replayed to the SearchMethod.
-// The returned operations will not include already-completed checkpoints.
-func (s *Searcher) filterCompletedCheckpoints(ops []Operation) ([]Operation, error) {
-	var filteredOps []Operation
-	for len(ops) > 0 {
-		newFilteredOps, replayMsgs := s.eventLog.FilterCompletedCheckpoints(ops)
-		filteredOps = append(filteredOps, newFilteredOps...)
-		// Replay WorkloadCompleted messges and get additional operations.
-		ops = nil
-		for _, msg := range replayMsgs {
-			// The EventLog should internally recognize the message as replayed and not duplicate
-			// the message in the searcher_events, but it should not tell us to ignore the message.
-			if !s.eventLog.WorkloadCompleted(msg) {
-				return nil, errors.Errorf("event log ignored a cached WorkloadCompleted message")
-			}
-			requestID := s.eventLog.RequestIDs[msg.Workload.TrialID]
-			moreOps, err := s.method.checkpointCompleted(
-				s.context(), requestID, msg.Workload, *msg.CheckpointMetrics)
-			if err != nil {
-				return filteredOps, errors.Wrapf(err,
-					"error while replaying WorkloadCompleted message for workload: %v",
-					msg.Workload)
-			}
-			ops = append(ops, moreOps...)
-		}
-		s.eventLog.OperationsCreated(ops...)
+	return &Searcher{
+		pendingCheckpoints: make(map[WorkloadOperation]Create),
+		pendingTrials:      make(map[RequestID][]Operation),
+		checkpoints:        make(map[RequestID]int),
+		samples:            make(map[RequestID]hparamSample),
+		steps:              make(map[RequestID]int),
+		rand:               nprand.New(seed),
+		hparams:            hparams,
+		eventLog:           NewEventLog(),
+		method:             method,
 	}
-	return filteredOps, nil
+}
+
+func (s *Searcher) context() *context {
+	return &context{searcher: s}
 }
 
 // InitialOperations return a set of initial operations that the searcher would like to take.
 // This should be called only once after the searcher has been created.
 func (s *Searcher) InitialOperations() ([]Operation, error) {
-	operations, err := s.method.initialOperations(s.context())
-	if err != nil {
-		return nil, errors.Wrap(err, "error while fetching initial operations of search method")
-	}
-	s.eventLog.OperationsCreated(operations...)
-	operations, err = s.filterCompletedCheckpoints(operations)
-	if err != nil {
-		return nil, errors.Wrap(err, "error while filtering initial operations of search method")
-	}
-	return operations, nil
+	ctx := s.context()
+	s.method.initialOperations(ctx)
+	s.eventLog.OperationsCreated(ctx.pendingOperations()...)
+	return ctx.pendingOperations(), nil
 }
 
 // TrialCreated informs the searcher that a trial has been created as a result of a Create
 // operation.
 func (s *Searcher) TrialCreated(create Create, trialID int) ([]Operation, error) {
 	s.eventLog.TrialCreated(create, trialID)
-	operations, err := s.method.trialCreated(s.context(), create.RequestID)
-	if err != nil {
-		return nil, errors.Wrapf(err,
-			"error while handling a trial created event: %s", create.RequestID)
-	}
-	s.eventLog.OperationsCreated(operations...)
-	operations, err = s.filterCompletedCheckpoints(operations)
-	if err != nil {
-		return nil, errors.Wrap(err, "error while filtering operations after trial created event")
-	}
-	return operations, nil
+	return nil, nil
 }
 
 // WorkloadCompleted informs the searcher that the given workload initiated by the same searcher
@@ -108,52 +72,44 @@ func (s *Searcher) WorkloadCompleted(message CompletedMessage) ([]Operation, err
 		return nil, nil
 	}
 
-	var operations []Operation
-	var err error
-
+	ctx := s.context()
 	switch message.Workload.Kind {
 	case RunStep:
-		operations, err = s.method.trainCompleted(
-			s.context(), requestID, message.Workload)
-	case CheckpointModel:
-		operations, err = s.method.checkpointCompleted(
-			s.context(), requestID, message.Workload, *message.CheckpointMetrics)
+		s.method.trainCompleted(ctx, requestID, message.Workload)
 	case ComputeValidationMetrics:
-		operations, err = s.method.validationCompleted(
-			s.context(), requestID, message.Workload, *message.ValidationMetrics)
+		metrics := *message.ValidationMetrics
+		err := s.method.validationCompleted(ctx, requestID, message.Workload, metrics)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error handling workload completed event: %s", requestID)
+		}
+	case CheckpointModel:
+		checkpoint := WorkloadOperation{
+			RequestID: requestID,
+			Kind:      message.Workload.Kind,
+			StepID:    message.Workload.StepID,
+		}
+		if create, ok := s.pendingCheckpoints[checkpoint]; ok {
+			ctx.ops = append(ctx.ops, create)
+			delete(s.pendingCheckpoints, checkpoint)
+			ctx.ops = append(ctx.ops, s.pendingTrials[create.RequestID]...)
+			delete(s.pendingTrials, create.RequestID)
+		}
 	default:
 		return nil, errors.Errorf("unexpected workload: %s", message.Workload.Kind)
 	}
-	if err != nil {
-		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
-	}
-	s.eventLog.OperationsCreated(operations...)
-	operations, err = s.filterCompletedCheckpoints(operations)
-	if err != nil {
-		return nil, errors.Wrap(
-			err, "error while filtering operations after workload complete event")
-	}
-	return operations, nil
+	s.eventLog.OperationsCreated(ctx.pendingOperations()...)
+	return ctx.pendingOperations(), nil
 }
 
 // TrialClosed informs the searcher that the trial has been closed as a result of a Close operation.
 func (s *Searcher) TrialClosed(requestID RequestID) ([]Operation, error) {
 	s.eventLog.TrialClosed(requestID)
-	operations, err := s.method.trialClosed(s.context(), requestID)
-	if err != nil {
-		return nil, errors.Wrapf(err, "error while handling a trial closed event: %s", requestID)
-	}
-	s.eventLog.OperationsCreated(operations...)
 	if s.eventLog.TrialsRequested == s.eventLog.TrialsClosed {
-		shutdown := NewShutdown()
+		shutdown := Shutdown{}
 		s.eventLog.OperationsCreated(shutdown)
-		operations = append(operations, shutdown)
+		return []Operation{shutdown}, nil
 	}
-	operations, err = s.filterCompletedCheckpoints(operations)
-	if err != nil {
-		return nil, errors.Wrap(err, "error while filtering operations after trial closed event")
-	}
-	return operations, nil
+	return nil, nil
 }
 
 // Progress returns experiment progress as a float between 0.0 and 1.0.

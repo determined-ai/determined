@@ -5,7 +5,6 @@ import (
 
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
 )
 
@@ -16,7 +15,7 @@ func TestEventLog(t *testing.T) {
 	trialIDs := []int{7, 11, 13, 17}
 
 	for i, trialID := range trialIDs {
-		create := NewCreate(rand, nil, model.TrialWorkloadSequencerType)
+		create := NewCreate(rand, nil)
 
 		assert.Equal(t, log.TrialsRequested, i)
 		log.OperationsCreated(create)
@@ -30,7 +29,8 @@ func TestEventLog(t *testing.T) {
 
 	for i, trialID := range trialIDs {
 		assert.Equal(t, log.TotalStepsStarted, i)
-		log.OperationsCreated(NewTrain(log.RequestIDs[trialID], 1))
+		log.OperationsCreated(WorkloadOperation{
+			RequestID: log.RequestIDs[trialID], StepID: 1, Kind: RunStep})
 		assert.Equal(t, log.TotalStepsStarted, i+1)
 
 		assert.Equal(t, log.TotalStepsCompleted, i)
@@ -54,7 +54,7 @@ func TestEventLog(t *testing.T) {
 
 	// Check that shutting down sets the appropriate flag.
 	assert.Assert(t, !log.Shutdown)
-	log.OperationsCreated(NewShutdown())
+	log.OperationsCreated(Shutdown{})
 	assert.Assert(t, log.Shutdown)
 }
 
@@ -65,7 +65,7 @@ func TestEventLogCheckpointCaching(t *testing.T) {
 	trialID := 1
 	stepID := 1
 
-	create := NewCreate(rand, nil, model.TrialWorkloadSequencerType)
+	create := NewCreate(rand, nil)
 	log.TrialCreated(create, trialID)
 
 	checkpointOperation := WorkloadOperation{
@@ -100,12 +100,6 @@ func TestEventLogCheckpointCaching(t *testing.T) {
 	assert.Assert(t, !log.WorkloadCompleted(completedMessage))
 	assert.Assert(t, !log.completedWorkloads[checkpointOperation])
 	assert.Equal(t, len(log.uncommitted), 0)
-
-	// Check that FilterCompletedCheckpoints catches the already-completed checkpoint.
-	filteredOps, replayMsgs := log.FilterCompletedCheckpoints([]Operation{checkpointOperation})
-	assert.Equal(t, len(filteredOps), 0)
-	assert.Equal(t, len(replayMsgs), 1)
-	assert.DeepEqual(t, completedMessage, replayMsgs[0])
 
 	// Tell the EventLog the SearchMethod has now asked for the CheckpointModel operation.
 	log.OperationsCreated(checkpointOperation)

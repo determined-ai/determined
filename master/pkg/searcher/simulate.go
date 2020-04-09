@@ -93,7 +93,6 @@ func Simulate(
 		}
 		operation := pending[requestID][0]
 		pending[requestID] = pending[requestID][1:]
-
 		switch operation := operation.(type) {
 		case Create:
 			simulation.Results[requestID] = []CompletedMessage{}

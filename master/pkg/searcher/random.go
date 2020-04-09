@@ -7,7 +7,6 @@ import (
 // randomSearch corresponds to the standard random search method. Each random trial configuration
 // is trained for the specified number of steps, and then validation metrics are computed.
 type randomSearch struct {
-	defaultSearchMethod
 	model.RandomConfig
 }
 
@@ -19,18 +18,19 @@ func newSingleSearch(config model.SingleConfig) SearchMethod {
 	return &randomSearch{RandomConfig: model.RandomConfig{MaxTrials: 1, MaxSteps: config.MaxSteps}}
 }
 
-func (s *randomSearch) initialOperations(ctx context) ([]Operation, error) {
-	var operations []Operation
-	for trial := 0; trial < s.MaxTrials; trial++ {
-		create := NewCreate(
-			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
-		operations = append(operations, create)
-		operations = append(operations, trainAndValidate(create.RequestID, 0, s.MaxSteps)...)
-		operations = append(operations, NewClose(create.RequestID))
+func (s *randomSearch) initialOperations(ctx Context) {
+	for i := 0; i < s.MaxTrials; i++ {
+		trial := ctx.NewTrial(RandomSampler)
+		ctx.TrainAndValidate(trial, s.MaxSteps)
+		ctx.CloseTrial(trial)
 	}
-	return operations, nil
 }
 
 func (s *randomSearch) progress(workloadsCompleted int) float64 {
 	return float64(workloadsCompleted) / float64((s.MaxSteps+1)*s.MaxTrials)
+}
+
+func (s *randomSearch) trainCompleted(Context, RequestID, Workload) {}
+func (s *randomSearch) validationCompleted(Context, RequestID, Workload, ValidationMetrics) error {
+	return nil
 }

@@ -27,10 +27,6 @@ type EventLog struct {
 	// logged the first time it is seen, regardless.
 	completedWorkloads map[WorkloadOperation]bool
 
-	// completedCheckpointMsgs are WorkloadCompleted messages for CheckpointModel operations which
-	// the searcher might request later.
-	completedCheckpointMsgs map[WorkloadOperation]CompletedMessage
-
 	// Searcher state.
 	Shutdown bool
 
@@ -49,16 +45,15 @@ type EventLog struct {
 // NewEventLog initializes an empty event log.
 func NewEventLog() *EventLog {
 	return &EventLog{
-		inFlightWorkloads:       map[WorkloadOperation]bool{},
-		completedWorkloads:      map[WorkloadOperation]bool{},
-		completedCheckpointMsgs: map[WorkloadOperation]CompletedMessage{},
-		Shutdown:                false,
-		TrialsRequested:         0,
-		TrialsClosed:            0,
-		TrialIDs:                map[RequestID]int{},
-		RequestIDs:              map[int]RequestID{},
-		TotalStepsStarted:       0,
-		TotalStepsCompleted:     0,
+		inFlightWorkloads:   map[WorkloadOperation]bool{},
+		completedWorkloads:  map[WorkloadOperation]bool{},
+		Shutdown:            false,
+		TrialsRequested:     0,
+		TrialsClosed:        0,
+		TrialIDs:            map[RequestID]int{},
+		RequestIDs:          map[int]RequestID{},
+		TotalStepsStarted:   0,
+		TotalStepsCompleted: 0,
 	}
 }
 
@@ -111,11 +106,6 @@ func (el *EventLog) WorkloadCompleted(message CompletedMessage) bool {
 
 	// Check if we did not initiate this workload.
 	if _, ok := el.inFlightWorkloads[op]; !ok {
-		// In the case of a checkpoint which wasn't requested by the search method, we cache the
-		// message to be replayed in case the search method requests this checkpoint later.
-		if op.Kind == CheckpointModel {
-			el.completedCheckpointMsgs[op] = message
-		}
 		return false
 	}
 	delete(el.inFlightWorkloads, op)
@@ -140,25 +130,4 @@ func (el *EventLog) TrialClosed(requestID RequestID) {
 	}
 	el.uncommitted = append(el.uncommitted, trialClosed)
 	el.TrialsClosed++
-}
-
-// FilterCompletedCheckpoints is meant to be called by Searcher.filterCompletedCheckpoints(). It is
-// for identifying CheckpointModel operations for which WorkloadCompleted messages have already
-// been received, and passing those messages back to the caller. The returned operations will not
-// include already-completed checkpoints.
-func (el *EventLog) FilterCompletedCheckpoints(
-	ops []Operation) ([]Operation, []CompletedMessage) {
-	var filteredOps []Operation
-	var replayMsgs []CompletedMessage
-	for _, op := range ops {
-		if workloadOp, ok := op.(WorkloadOperation); ok {
-			if msg, ok := el.completedCheckpointMsgs[workloadOp]; ok {
-				replayMsgs = append(replayMsgs, msg)
-				delete(el.completedCheckpointMsgs, workloadOp)
-				continue
-			}
-		}
-		filteredOps = append(filteredOps, op)
-	}
-	return filteredOps, replayMsgs
 }

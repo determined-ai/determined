@@ -9,9 +9,6 @@ import (
 // State is the run state of an experiment / trial / step / etc.
 type State string
 
-// WorkloadSequencerType is the type of sequencer that a trial actor should use.
-type WorkloadSequencerType string
-
 // WorkloadManagerType indicates which type of workloads the harness should prepare to receive.
 type WorkloadManagerType string
 
@@ -36,9 +33,6 @@ const (
 	StoppingCompletedState State = "STOPPING_COMPLETED"
 	// StoppingErrorState constant.
 	StoppingErrorState State = "STOPPING_ERROR"
-
-	// TrialWorkloadSequencerType constant.
-	TrialWorkloadSequencerType WorkloadSequencerType = "TRIAL_WORKLOAD_SEQUENCER"
 
 	// TrialWorkloadManagerType handles model training loads.
 	TrialWorkloadManagerType WorkloadManagerType = "TRIAL_WORKLOAD_MANAGER"

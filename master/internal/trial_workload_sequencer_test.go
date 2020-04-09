@@ -35,16 +35,23 @@ checkpoint_policy: none
 	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
 
 	rand := nprand.New(0)
-	create := searcher.NewCreate(rand, nil, model.TrialWorkloadSequencerType)
+	create := searcher.NewCreate(rand, nil)
 
 	// Sequencer input messages.
-	trainOperation1 := searcher.NewTrain(create.RequestID, 1)
-	trainOperation2 := searcher.NewTrain(create.RequestID, 2)
-	trainOperation3 := searcher.NewTrain(create.RequestID, 3)
-	trainOperation4 := searcher.NewTrain(create.RequestID, 4)
-	trainOperation5 := searcher.NewTrain(create.RequestID, 5)
-	checkpointOperation2 := searcher.NewCheckpoint(create.RequestID, 2)
-	validateOperation2 := searcher.NewValidate(create.RequestID, 2)
+	trainOperation1 := searcher.WorkloadOperation{
+		RequestID: create.RequestID, Kind: searcher.RunStep, StepID: 1}
+	trainOperation2 := searcher.WorkloadOperation{
+		RequestID: create.RequestID, Kind: searcher.RunStep, StepID: 2}
+	trainOperation3 := searcher.WorkloadOperation{
+		RequestID: create.RequestID, Kind: searcher.RunStep, StepID: 3}
+	trainOperation4 := searcher.WorkloadOperation{
+		RequestID: create.RequestID, Kind: searcher.RunStep, StepID: 4}
+	trainOperation5 := searcher.WorkloadOperation{
+		RequestID: create.RequestID, Kind: searcher.RunStep, StepID: 5}
+	checkpointOperation2 := searcher.WorkloadOperation{
+		RequestID: create.RequestID, Kind: searcher.CheckpointModel, StepID: 2}
+	validateOperation2 := searcher.WorkloadOperation{
+		RequestID: create.RequestID, Kind: searcher.ComputeValidationMetrics, StepID: 2}
 
 	trainWorkload1 := searcher.Workload{
 		Kind:         searcher.RunStep,

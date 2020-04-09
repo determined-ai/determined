@@ -12,9 +12,7 @@ import (
 // asyncHalvingSearch implements a search using the asynchronous successive halving algorithm
 // (ASHA). Technically, this is closer to SHA than ASHA as the promotions are synchronous.
 type asyncHalvingSearch struct {
-	defaultSearchMethod
 	model.AsyncHalvingConfig
-
 	rungs             []*rung
 	trialRungs        map[RequestID]int
 	expectedWorkloads int
@@ -101,71 +99,63 @@ func (r *rung) promotions(requestID RequestID, metric float64) []RequestID {
 	}
 }
 
-func (s *asyncHalvingSearch) initialOperations(ctx context) ([]Operation, error) {
-	var ops []Operation
+func (s *asyncHalvingSearch) initialOperations(ctx Context) {
 	for trial := 0; trial < s.rungs[0].startTrials; trial++ {
-		create := NewCreate(
-			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
-		ops = append(ops, create)
-		ops = append(ops, trainAndValidate(create.RequestID, 0, s.rungs[0].stepsNeeded)...)
+		trial := ctx.NewTrial(RandomSampler)
+		ctx.TrainAndValidate(trial, s.rungs[0].stepsNeeded)
 	}
-	return ops, nil
-}
-
-func (s *asyncHalvingSearch) trainCompleted(
-	ctx context, requestID RequestID, message Workload,
-) ([]Operation, error) {
-	return nil, nil
 }
 
 func (s *asyncHalvingSearch) validationCompleted(
-	ctx context, requestID RequestID, message Workload, metrics ValidationMetrics,
-) ([]Operation, error) {
+	ctx Context, requestID RequestID, _ Workload, metrics ValidationMetrics,
+) error {
 	rungIndex := s.trialRungs[requestID]
 	rung := s.rungs[rungIndex]
 
 	// If the trial has completed the top rung's validation, close the trial and do nothing else.
 	if rungIndex == s.NumRungs-1 {
 		s.trialsCompleted++
-		return []Operation{NewClose(requestID)}, nil
+		ctx.CloseTrial(requestID)
+		return nil
 	}
 
 	// Extract the relevant metric as a float.
 	metric, err := metrics.Metric(s.Metric)
 	if err != nil {
-		return nil, err
+		return errors.Wrapf(err, "")
 	}
 	if !s.SmallerIsBetter {
 		metric *= -1
 	}
 
-	var ops []Operation
 	// Since this is not the top rung, handle promotions if there are any, then close the rung if
 	// all trials have finished.
 	if toPromote := rung.promotions(requestID, metric); len(toPromote) > 0 {
 		for _, promotionID := range toPromote {
 			s.trialRungs[promotionID] = rungIndex + 1
-			ops = append(ops, trainAndValidate(
-				promotionID, rung.stepsNeeded, s.rungs[rungIndex+1].stepsNeeded)...)
+			numSteps := s.rungs[rungIndex+1].stepsNeeded - rung.stepsNeeded
+			ctx.TrainAndValidate(promotionID, numSteps)
 		}
 		// Closes the unpromoted trials in the rung once all trials in the rung finish.
 		if rung.startTrials < len(rung.metrics) {
-			return nil, errors.Errorf("number of trials exceeded initial trials for rung: %d < %d",
+			return errors.Errorf("number of trials exceeded initial trials for rung: %d < %d",
 				rung.startTrials, len(rung.metrics))
 		}
 		if len(rung.metrics) == rung.startTrials {
 			for _, trialMetric := range rung.metrics[rung.promoteTrials:] {
 				s.trialsCompleted++
-				ops = append(ops, NewClose(trialMetric.requestID))
+				ctx.CloseTrial(trialMetric.requestID)
 			}
 		}
 	}
-	return ops, nil
+	return nil
 }
 
 func (s *asyncHalvingSearch) progress(workloadsCompleted int) float64 {
 	return math.Min(1, float64(workloadsCompleted)/float64(s.expectedWorkloads))
 }
+
+func (s *asyncHalvingSearch) trainCompleted(Context, RequestID, Workload) {}
 
 func max(initial int, values ...int) int {
 	maxValue := initial

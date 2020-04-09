@@ -1,19 +1,32 @@
 package searcher
 
 import (
+	"math/rand"
 	"strconv"
 	"strings"
 	"testing"
 
-	"github.com/pkg/errors"
 	"gotest.tools/assert"
 	"gotest.tools/assert/cmp"
 
+	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/nprand"
 )
 
 const defaultMetric = "metric"
+
+type validatedTrial struct {
+	validation float64
+	steps      int
+}
+
+func CheckValidationFunction(trials []validatedTrial) ValidationFunction {
+	return func(_ *rand.Rand, trialID, stepID int) float64 {
+		trial := trials[trialID-1]
+		check.Panic(check.LessThanOrEqualTo(stepID, trial.steps))
+		return trial.validation
+	}
+}
 
 func isExpected(actual, expected []Kind) bool {
 	if len(actual) != len(expected) {
@@ -111,241 +124,4 @@ func toKinds(types string) (kinds []Kind) {
 		}
 	}
 	return kinds
-}
-
-type predefinedTrial struct {
-	Trains      map[int]bool
-	Validations map[int]float64
-	Checkpoints map[int]bool
-}
-
-func newPredefinedTrial(
-	nsteps int, validations map[int]float64, checkpoints []int,
-) predefinedTrial {
-	trainsMap := make(map[int]bool)
-	for i := 1; i <= nsteps; i++ {
-		trainsMap[i] = true
-	}
-
-	checkpointsMap := make(map[int]bool)
-	for _, i := range checkpoints {
-		checkpointsMap[i] = true
-	}
-
-	return predefinedTrial{
-		Trains:      trainsMap,
-		Validations: validations,
-		Checkpoints: checkpointsMap,
-	}
-}
-
-func newConstantPredefinedTrial(
-	validation float64, nsteps int, validations []int, checkpoints []int,
-) predefinedTrial {
-	validationsMap := make(map[int]float64)
-	for _, i := range validations {
-		validationsMap[i] = validation
-	}
-	return newPredefinedTrial(nsteps, validationsMap, checkpoints)
-}
-
-func (t *predefinedTrial) TrainForStep(stepID int) error {
-	if ok := t.Trains[stepID]; !ok {
-		return errors.Errorf("unexpected TrainForStep at step %v", stepID)
-	}
-	delete(t.Trains, stepID)
-	return nil
-}
-
-func (t *predefinedTrial) ComputeValidationMetrics(stepID int) (float64, error) {
-	validation, ok := t.Validations[stepID]
-	if !ok {
-		return 0, errors.Errorf("unexpected ComputeValidationMetrics at step %v", stepID)
-	}
-	delete(t.Validations, stepID)
-	return validation, nil
-}
-
-func (t *predefinedTrial) CheckpointModel(stepID int) error {
-	if ok := t.Checkpoints[stepID]; !ok {
-		return errors.Errorf("unexpected CheckpointModel at step %v", stepID)
-	}
-	delete(t.Checkpoints, stepID)
-	return nil
-}
-
-func (t *predefinedTrial) CheckComplete() error {
-	for stepID := range t.Trains {
-		return errors.Errorf("did not receive TrainForStep expected at step %v", stepID)
-	}
-	for stepID := range t.Validations {
-		return errors.Errorf("did not receive ComputeValidationMetrics expected at step %v", stepID)
-	}
-	for stepID := range t.Checkpoints {
-		return errors.Errorf("did not receive CheckpointModel expected at step %v", stepID)
-	}
-	return nil
-}
-
-// checkValueSimulation will run a SearchMethod until completion, using predefinedTrials
-func checkValueSimulation(
-	t *testing.T,
-	method SearchMethod,
-	params model.Hyperparameters,
-	expectedTrials []predefinedTrial,
-) error {
-	// Create requests are assigned a predefinedTrial in order.
-	var nextTrialID int
-	var pending []Operation
-	trialIDs := map[RequestID]int{}
-
-	ctx := context{
-		rand:    nprand.New(0),
-		hparams: params,
-	}
-
-	ops, err := method.initialOperations(ctx)
-	if err != nil {
-		return errors.Wrap(err, "initialOperations")
-	}
-
-	pending = append(pending, ops...)
-
-	for len(pending) > 0 {
-		operation := pending[0]
-		pending = pending[1:]
-
-		switch operation := operation.(type) {
-		case Create:
-			requestID := operation.RequestID
-			if nextTrialID >= len(expectedTrials) {
-				return errors.Errorf("search method created too many trials")
-			}
-			trialIDs[requestID] = nextTrialID
-
-			ops, err = method.trialCreated(ctx, requestID)
-			if err != nil {
-				return errors.Wrap(err, "trialCreated")
-			}
-			nextTrialID++
-
-		case WorkloadOperation:
-			requestID := operation.RequestID
-			trialID := trialIDs[requestID]
-			trial := expectedTrials[trialID]
-			ops, err = simulateWorkloadComplete(ctx, method, trial, operation, requestID)
-			if err != nil {
-				return errors.Wrapf(err, "simulateWorkloadComplete for trial %v", trialID+1)
-			}
-
-		case Close:
-			requestID := operation.RequestID
-			trialID := trialIDs[requestID]
-			trial := expectedTrials[trialID]
-			if err = trial.CheckComplete(); err != nil {
-				return errors.Wrapf(err, "trial %v closed before completion", trialID+1)
-			}
-
-			ops, err = method.trialClosed(ctx, requestID)
-			if err != nil {
-				return errors.Wrap(err, "trialClosed")
-			}
-
-		default:
-			return errors.Errorf("unexpected searcher operation: %T", operation)
-		}
-
-		pending = append(pending, ops...)
-	}
-
-	for i, trial := range expectedTrials {
-		if err = trial.CheckComplete(); err != nil {
-			return errors.Wrapf(err, "incomplete trial %v", i+1)
-		}
-	}
-
-	return nil
-}
-
-func runValueSimulationTestCases(t *testing.T, testCases []valueSimulationTestCase) {
-	for _, testCase := range testCases {
-		tc := testCase
-		t.Run(tc.name, func(t *testing.T) {
-			method := NewSearchMethod(tc.config)
-			err := checkValueSimulation(t, method, tc.hparams, tc.expectedTrials)
-			assert.NilError(t, err)
-		})
-	}
-}
-
-type valueSimulationTestCase struct {
-	name           string
-	expectedTrials []predefinedTrial
-	hparams        model.Hyperparameters
-	config         model.SearcherConfig
-}
-
-func simulateWorkloadComplete(
-	ctx context,
-	method SearchMethod,
-	trial predefinedTrial,
-	operation WorkloadOperation,
-	requestID RequestID,
-) ([]Operation, error) {
-	var ops []Operation
-	var err error
-
-	switch operation.Kind {
-	case RunStep:
-		if err = trial.TrainForStep(operation.StepID); err != nil {
-			return nil, errors.Wrap(err, "TrainForStep")
-		}
-		w := Workload{
-			Kind:   RunStep,
-			StepID: operation.StepID,
-		}
-		ops, err = method.trainCompleted(ctx, requestID, w)
-		if err != nil {
-			return nil, errors.Wrap(err, "trainCompleted")
-		}
-
-	case ComputeValidationMetrics:
-		var val float64
-		val, err = trial.ComputeValidationMetrics(operation.StepID)
-		if err != nil {
-			return nil, errors.Wrap(err, "ComputeValidationMetrics")
-		}
-		w := Workload{
-			Kind:   ComputeValidationMetrics,
-			StepID: operation.StepID,
-		}
-		metrics := ValidationMetrics{
-			Metrics: map[string]interface{}{
-				"error": val,
-			},
-		}
-		ops, err = method.validationCompleted(ctx, requestID, w, metrics)
-		if err != nil {
-			return nil, errors.Wrap(err, "validationCompleted")
-		}
-
-	case CheckpointModel:
-		if err = trial.CheckpointModel(operation.StepID); err != nil {
-			return nil, errors.Wrap(err, "CheckpointModel")
-		}
-		w := Workload{
-			Kind:   CheckpointModel,
-			StepID: operation.StepID,
-		}
-		metrics := CheckpointMetrics{}
-		ops, err = method.checkpointCompleted(ctx, requestID, w, metrics)
-		if err != nil {
-			return nil, errors.Wrap(err, "checkpointCompleted")
-		}
-
-	default:
-		return nil, errors.Errorf("invalid workload operation of kind %q", operation.Kind)
-	}
-
-	return ops, nil
 }

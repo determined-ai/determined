@@ -120,25 +120,3 @@ func TestGridSearcher(t *testing.T) {
 	}
 	checkSimulation(t, newGridSearch(actual), params, ConstantValidation, expected)
 }
-
-func TestGridSearchMethod(t *testing.T) {
-	testCases := []valueSimulationTestCase{
-		{
-			name: "test grid search method",
-			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
-				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
-				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
-				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
-				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
-				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
-			},
-			config: model.SearcherConfig{
-				GridConfig: &model.GridConfig{MaxSteps: 3},
-			},
-			hparams: generateHyperparameters([]int{2, 1, 3}),
-		},
-	}
-
-	runValueSimulationTestCases(t, testCases)
-}

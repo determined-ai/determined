@@ -10,7 +10,6 @@ import (
 // gridSearch corresponds to a grid search method. A grid of hyperparameter configs is built. Then,
 // one trial is generated per point on the grid and trained for the specified number of steps.
 type gridSearch struct {
-	defaultSearchMethod
 	model.GridConfig
 	trials int
 }
@@ -19,17 +18,14 @@ func newGridSearch(config model.GridConfig) SearchMethod {
 	return &gridSearch{GridConfig: config}
 }
 
-func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
-	var operations []Operation
-	grid := newHyperparameterGrid(ctx.hparams)
+func (s *gridSearch) initialOperations(ctx Context) {
+	grid := newHyperparameterGrid(ctx.Hyperparameters())
 	s.trials = len(grid)
 	for _, params := range grid {
-		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
-		operations = append(operations, create)
-		operations = append(operations, trainAndValidate(create.RequestID, 0, s.MaxSteps)...)
-		operations = append(operations, NewClose(create.RequestID))
+		trial := ctx.NewTrial(PreSampled(params))
+		ctx.TrainAndValidate(trial, s.MaxSteps)
+		ctx.CloseTrial(trial)
 	}
-	return operations, nil
 }
 
 func (s *gridSearch) progress(workloadsCompleted int) float64 {
@@ -131,4 +127,9 @@ func grid(h model.Hyperparameter) []interface{} {
 	default:
 		panic(fmt.Sprintf("unexpected hyperparameter type %+v", h))
 	}
+}
+
+func (s *gridSearch) trainCompleted(Context, RequestID, Workload) {}
+func (s *gridSearch) validationCompleted(Context, RequestID, Workload, ValidationMetrics) error {
+	return nil
 }
