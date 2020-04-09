@@ -82,9 +82,12 @@ Use the links below to start learning more about Determined's capabilities.
 **Installation**
 
 - :ref:`install-cli`
-- :ref:`install-aws`
-- :ref:`install-gcp`
 - :ref:`install-determined`
+
+  - :ref:`install-using-deploy`
+  - :ref:`install-aws`
+  - :ref:`install-gcp`
+  - :ref:`install-using-packages`
 
 Documentation Structure
 -----------------------
