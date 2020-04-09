@@ -102,7 +102,7 @@ requestHandlers onSuccess =
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = "Determined - Productivity engine for deep learning"
+    { title = "Determined Deep Learning Training Platform"
     , body = View.viewBody model
     }
 
