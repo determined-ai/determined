@@ -28,13 +28,14 @@ func init() {
 // 2. names of agents that are equal to the instance names
 type gcpCluster struct {
 	*GCPClusterConfig
+	clusterID string
 	masterURL url.URL
 	metadata  []*compute.MetadataItems
 
 	client *compute.Service
 }
 
-func newGCPCluster(config *Config) (*gcpCluster, error) {
+func newGCPCluster(config *Config, clusterID string) (*gcpCluster, error) {
 	if err := config.GCP.initDefaultValues(); err != nil {
 		return nil, errors.Wrap(err, "failed to initialize auto configuration")
 	}
@@ -72,6 +73,7 @@ func newGCPCluster(config *Config) (*gcpCluster, error) {
 
 	cluster := &gcpCluster{
 		GCPClusterConfig: config.GCP,
+		clusterID:        clusterID,
 		masterURL:        *masterURL,
 		metadata: []*compute.MetadataItems{
 			{
@@ -270,7 +272,7 @@ func (c *gcpCluster) newInstancesFromOperations(operations []*compute.Operation)
 func (c *gcpCluster) listInstances() ([]*compute.Instance, error) {
 	ctx := context.Background()
 	var instances []*compute.Instance
-	filter := fmt.Sprintf("labels.%s=%s", c.LabelKey, c.LabelValue)
+	filter := fmt.Sprintf("labels.%s=%s", determinedTagKey, c.clusterID)
 	req := c.client.Instances.List(c.Project, c.Zone).Filter(filter)
 	if err := req.Pages(ctx, func(page *compute.InstanceList) error {
 		instances = append(instances, page.Items...)
@@ -291,6 +293,8 @@ func (c *gcpCluster) insertInstance(instanceType gceInstanceType) (*compute.Oper
 	}
 	rb.Labels["determined-master-host"] = strings.ReplaceAll(c.masterURL.Hostname(), ".", "-")
 	rb.Labels["determined-master-port"] = c.masterURL.Port()
+	rb.Labels[determinedTagKey] = c.clusterID
+
 	if rb.Metadata == nil {
 		rb.Metadata = &compute.Metadata{}
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 // Setup initializes and registers the actor for the provisioner.
-func Setup(system *actor.System, config *Config) (*Provisioner, *actor.Ref, error) {
+func Setup(system *actor.System, config *Config, clusterID string) (*Provisioner, *actor.Ref, error) {
 	if config == nil {
 		log.Info("cannot find provisioner configuration, disabling provisioner")
 		return nil, nil, nil
@@ -20,7 +20,7 @@ func Setup(system *actor.System, config *Config) (*Provisioner, *actor.Ref, erro
 	if config.GCP != nil {
 		log.Info("connecting to GCP cluster")
 	}
-	provisioner, err := New(config)
+	provisioner, err := New(config, clusterID)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "error creating provisioner")
 	}

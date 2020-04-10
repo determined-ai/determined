@@ -405,7 +405,7 @@ func (m *Master) Run() error {
 	authFuncs := []echo.MiddlewareFunc{userService.ProcessAuthentication}
 
 	var p *provisioner.Provisioner
-	p, m.provisioner, err = provisioner.Setup(m.system, m.config.Provisioner)
+	p, m.provisioner, err = provisioner.Setup(m.system, m.config.Provisioner, m.ClusterID)
 	if err != nil {
 		return err
 	}

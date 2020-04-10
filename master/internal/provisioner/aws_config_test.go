@@ -44,8 +44,6 @@ func TestUnmarshalAWSClusterConfig(t *testing.T) {
 		"subnet_id": "test.subnet",
 		"security_group_id": "test.security"
 	},
-	"tag_key": "dai",
-	"tag_value": "agent",
 	"root_volume_size": 120,
 	"instance_type": "p2.xlarge",
 	"max_instances": 10,
@@ -61,8 +59,6 @@ func TestUnmarshalAWSClusterConfig(t *testing.T) {
 				SubnetID:        "test.subnet",
 				SecurityGroupID: "test.security",
 			},
-			TagKey:                "dai",
-			TagValue:              "agent",
 			RootVolumeSize:        120,
 			InstanceType:          "p2.xlarge",
 			MaxInstances:          10,

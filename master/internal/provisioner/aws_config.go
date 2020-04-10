@@ -6,7 +6,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/pkg"
 	"github.com/determined-ai/determined/master/pkg/check"
 )
 
@@ -17,8 +16,6 @@ type AWSClusterConfig struct {
 	RootVolumeSize int    `json:"root_volume_size"`
 	ImageID        string `json:"image_id"`
 
-	TagKey       string `json:"tag_key"`
-	TagValue     string `json:"tag_value"`
 	InstanceName string `json:"instance_name"`
 
 	SSHKeyName            string              `json:"ssh_key_name"`
@@ -32,7 +29,6 @@ type AWSClusterConfig struct {
 var defaultAWSClusterConfig = AWSClusterConfig{
 	InstanceName:   "determined-ai-agent",
 	RootVolumeSize: 200,
-	TagKey:         "managed_by",
 	NetworkInterface: ec2NetworkInterface{
 		PublicIP: true,
 	},
@@ -52,17 +48,6 @@ func (c *AWSClusterConfig) initDefaultValues() error {
 		}
 	}
 
-	// One common reason that metadata.GetInstanceIdentityDocument() fails is that the master is not
-	// running in EC2. Use a default name here rather than holding up initializing the provider.
-	identifier := pkg.DeterminedIdentifier
-	idDoc, err := metadata.GetInstanceIdentityDocument()
-	if err == nil {
-		identifier = idDoc.InstanceID
-	}
-
-	if len(c.TagValue) == 0 {
-		c.TagValue = identifier
-	}
 	return nil
 }
 

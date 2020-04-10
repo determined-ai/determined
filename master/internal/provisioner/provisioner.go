@@ -43,7 +43,7 @@ type provider interface {
 }
 
 // New creates a new Provisioner.
-func New(config *Config) (*Provisioner, error) {
+func New(config *Config, clusterID string) (*Provisioner, error) {
 	if err := config.initMasterAddress(); err != nil {
 		return nil, err
 	}
@@ -51,12 +51,12 @@ func New(config *Config) (*Provisioner, error) {
 	switch {
 	case config.AWS != nil:
 		var err error
-		if cluster, err = newAWSCluster(config); err != nil {
+		if cluster, err = newAWSCluster(config, clusterID); err != nil {
 			return nil, errors.Wrap(err, "cannot create a ec2 cluster")
 		}
 	case config.GCP != nil:
 		var err error
-		if cluster, err = newGCPCluster(config); err != nil {
+		if cluster, err = newGCPCluster(config, clusterID); err != nil {
 			return nil, errors.Wrap(err, "cannot create a gcp cluster")
 		}
 	}

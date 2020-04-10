@@ -15,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
+const determinedTagKey = "determined-cluster-id"
 const awsAgentID = `$(ec2metadata --instance-id)`
 
 func getEC2MetadataSess() (*ec2metadata.EC2Metadata, error) {
@@ -47,12 +48,13 @@ func onEC2() bool {
 // 2. names of agents that are equal to the instance IDs
 type awsCluster struct {
 	*AWSClusterConfig
+	clusterID   string
 	masterURL   url.URL
 	ec2UserData []byte
 	client      *ec2.EC2
 }
 
-func newAWSCluster(config *Config) (*awsCluster, error) {
+func newAWSCluster(config *Config, clusterID string) (*awsCluster, error) {
 	if err := config.AWS.initDefaultValues(); err != nil {
 		return nil, errors.Wrap(err, "failed to initialize auto configuration")
 	}
@@ -247,9 +249,9 @@ func (c *awsCluster) describeInstances(dryRun bool) ([]*ec2.Instance, error) {
 		DryRun: aws.Bool(dryRun),
 		Filters: []*ec2.Filter{
 			{
-				Name: aws.String(fmt.Sprintf("tag:%s", c.TagKey)),
+				Name: aws.String(fmt.Sprintf("tag:%s", determinedTagKey)),
 				Values: []*string{
-					aws.String(c.TagValue),
+					aws.String(c.clusterID),
 				},
 			},
 			{
@@ -306,12 +308,12 @@ func (c *awsCluster) launchInstances(
 						Value: aws.String(c.InstanceName),
 					},
 					{
-						Key:   aws.String(c.TagKey),
-						Value: aws.String(c.TagValue),
-					},
-					{
 						Key:   aws.String("determined-master-address"),
 						Value: aws.String(c.masterURL.String()),
+					},
+					{
+						Key:   aws.String(determinedTagKey),
+						Value: aws.String(c.clusterID),
 					},
 				},
 			},

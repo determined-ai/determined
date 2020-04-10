@@ -17,8 +17,6 @@ func newGCPTestConfig() *GCPClusterConfig {
 		Project:             "determined-ai",
 		Zone:                "us-east4-a",
 		NamePrefix:          "ci-determined-dynamic-agents-",
-		LabelKey:            "ci-cluster",
-		LabelValue:          fmt.Sprintf("ci-test-%s", uuid.New()),
 		BootDiskSize:        100,
 		BootDiskSourceImage: "projects/debian-cloud/global/images/family/debian-9",
 		InstanceType: gceInstanceType{
@@ -41,7 +39,7 @@ func TestGCPRequestWorkflowCloud(t *testing.T) {
 	config := Config{GCP: newGCPTestConfig()}
 	err := check.Validate(&config)
 	assert.NilError(t, err)
-	cluster, err := newGCPCluster(&config)
+	cluster, err := newGCPCluster(&config, fmt.Sprintf("ci-test-%s", uuid.New()))
 	assert.NilError(t, err)
 	defer cleanupGCPInstances(t, cluster)
 

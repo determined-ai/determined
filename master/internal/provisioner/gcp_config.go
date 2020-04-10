@@ -30,8 +30,6 @@ type GCPClusterConfig struct {
 	BootDiskSize        int    `json:"boot_disk_size"`
 	BootDiskSourceImage string `json:"boot_disk_source_image"`
 
-	LabelKey   string `json:"label_key"`
-	LabelValue string `json:"label_value"`
 	NamePrefix string `json:"name_prefix"`
 
 	NetworkInterface gceNetworkInterface `json:"network_interface"`
@@ -46,7 +44,6 @@ type GCPClusterConfig struct {
 func DefaultGCPClusterConfig() *GCPClusterConfig {
 	return &GCPClusterConfig{
 		BootDiskSize: 200,
-		LabelKey:     "managed-by",
 		InstanceType: gceInstanceType{
 			MachineType: "n1-standard-32",
 			GPUType:     "nvidia-tesla-v100",
@@ -100,13 +97,6 @@ func (c *GCPClusterConfig) initDefaultValues() error {
 			c.NamePrefix = identifier
 		}
 	}
-	if len(c.LabelValue) == 0 {
-		if identifier[len(identifier)-1] == '-' {
-			c.LabelValue = identifier[:len(identifier)-1]
-		} else {
-			c.LabelValue = identifier
-		}
-	}
 
 	if len(c.ServiceAccount.Email) > 0 && len(c.ServiceAccount.Scopes) == 0 {
 		c.ServiceAccount.Scopes = []string{"https://www.googleapis.com/auth/cloud-platform"}
@@ -148,13 +138,6 @@ func (c *GCPClusterConfig) merge() *compute.Instance {
 				AutoDelete: true,
 			},
 		}, rb.Disks...)
-	}
-
-	if len(c.LabelKey) > 0 && len(c.LabelValue) > 0 {
-		if rb.Labels == nil {
-			rb.Labels = make(map[string]string)
-		}
-		rb.Labels[c.LabelKey] = c.LabelValue
 	}
 
 	if len(c.NetworkInterface.Network) > 0 && len(c.NetworkInterface.Subnetwork) > 0 {

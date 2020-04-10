@@ -17,8 +17,6 @@ func newAWSTestConfig() *AWSClusterConfig {
 		ImageID:        "ami-07fbb063a8beac623",
 		InstanceName:   "ci-determined-dynamic-agents",
 		SSHKeyName:     "integrations-test",
-		TagKey:         "ci-cluster",
-		TagValue:       fmt.Sprintf("ci-test-%s", uuid.New()),
 		RootVolumeSize: 100,
 		InstanceType:   "p2.xlarge",
 		MaxInstances:   5,
@@ -39,7 +37,7 @@ func TestAWSRequestWorkflowCloud(t *testing.T) {
 	err := check.Validate(config)
 	assert.NilError(t, err)
 
-	cluster, err := newAWSCluster(config)
+	cluster, err := newAWSCluster(config, fmt.Sprintf("ci-test-%s", uuid.New()))
 	assert.NilError(t, err)
 	err = cluster.dryRunRequests()
 	assert.NilError(t, err)
