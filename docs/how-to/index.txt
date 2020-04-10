@@ -6,14 +6,14 @@ How-To guides are goal-oriented guides. They provide a detailed set of steps to 
 The full list of our how-to guides can be found below:
 
 .. toctree::
-  :maxdepth: 2
+  :maxdepth: 1
   :titlesonly:
 
   custom-env
   distributed-training
   hyperparameter-tuning
   install-cli
-  install-general
+  install-determined
   notebook-state
   notebook-configuration
   run-notebooks

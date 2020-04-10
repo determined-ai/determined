@@ -43,8 +43,6 @@ Installation
 Determined can be installed on Amazon Web Services (AWS), Google Cloud Platform (GCP), or an on-premise cluster. For installation instructions, follow the How-To guide for your preferred environment.
 
 - :ref:`install-cli`
-- :ref:`install-aws`
-- :ref:`install-gcp`
 - :ref:`install-determined`
 
 Next Steps
