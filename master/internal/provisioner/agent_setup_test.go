@@ -33,7 +33,7 @@ echo "#### PRINTING STARTUP SCRIPT END ####"
 chmod +x /usr/local/determined/startup_script
 /usr/local/determined/startup_script
 
-docker run --init --name determined-agent --restart always --network default --runtime=nvidia \
+docker run --init --name determined-agent  --restart always --network default --runtime=nvidia \
     -e DET_AGENT_ID="test.id" \
     -e DET_MASTER_HOST="test.master" \
     -e DET_MASTER_PORT="8080" \

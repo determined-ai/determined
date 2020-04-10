@@ -97,6 +97,7 @@ func newAWSCluster(config *Config) (*awsCluster, error) {
 			AgentNetwork:        config.AgentDockerNetwork,
 			AgentDockerImage:    config.AgentDockerImage,
 			AgentID:             awsAgentID,
+			LogOptions:          config.AWS.buildDockerLogString(),
 		}),
 	}
 	return cluster, nil

@@ -27,6 +27,9 @@ type AWSClusterConfig struct {
 
 	InstanceType ec2InstanceType `json:"instance_type"`
 	MaxInstances int             `json:"max_instances"`
+
+	LogGroup  string `json:"log_group"`
+	LogStream string `json:"log_stream"`
 }
 
 var defaultAWSClusterConfig = AWSClusterConfig{
@@ -38,6 +41,17 @@ var defaultAWSClusterConfig = AWSClusterConfig{
 	},
 	InstanceType: "p3.8xlarge",
 	MaxInstances: 5,
+}
+
+func (c *AWSClusterConfig) buildDockerLogString() string {
+	logString := ""
+	if c.LogGroup != "" {
+		logString += "--log-driver=awslogs --log-opt awslogs-group=" + c.LogGroup
+	}
+	if c.LogStream != "" {
+		logString += " --log-opt awslogs-stream=" + c.LogStream
+	}
+	return logString
 }
 
 func (c *AWSClusterConfig) initDefaultValues() error {
