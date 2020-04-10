@@ -1,7 +1,7 @@
 .. _install-determined:
 
-Install Determined
-==================
+How to Install Determined
+=========================
 
 This document provides general information on how to install and upgrade
 Determined. Determined consists of several components, primarily
@@ -69,11 +69,11 @@ deploying and running Determined.
 .. toctree::
    :titlesonly:
 
-   install-deploy
-   install-aws
-   install-gcp
-   install-packages
-   install-docker
+   installation/deploy
+   installation/aws
+   installation/gcp
+   installation/packages
+   installation/docker
 
 .. _install-docker:
 
