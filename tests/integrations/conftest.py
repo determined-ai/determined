@@ -18,6 +18,7 @@ _INTEG_MARKERS = {
     "integ2",
     "integ3",
     "integ4",
+    "integ5",
     "distributed",
     "cloud",
     "performance",

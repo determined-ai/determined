@@ -73,106 +73,10 @@ make -C CI/integrations publish-dev
             sh "make -C CI/integrations run-master-integration-tests"
           }
         }
-        stage("Python Integration Tests Split 1") {
+        stage("Python Integration Tests Split Temp") {
           agent { label 'integrations' }
           environment {
-            PYTEST_MARKS = "integ1"
-            ETC_ROOT = "${env.WORKSPACE}/build/cluster_config/"
-            REPORT_ROOT = "${env.WORKSPACE}/build"
-          }
-          steps {
-            sh "${describeNode}"
-            sh "make -C CI/integrations cleanup"
-            sh "${dockerLogin}"
-            sh "${dockerStrs}"
-            sh "make -C CI/integrations pull-environments-images"
-            sh "mkdir -p $ETC_ROOT"
-            sh "aws s3 cp --recursive ${config_uri} $ETC_ROOT"
-            sh "make -C CI/integrations run-python-integration-tests"
-          }
-          post {
-            always {
-              sh "make -C CI/integrations cleanup"
-              junit "**/build/test-reports/*.xml"
-            }
-          }
-        }
-        stage("Python Integration Tests Split 2") {
-          agent { label 'integrations' }
-          environment {
-            PYTEST_MARKS = "integ2"
-            ETC_ROOT = "${env.WORKSPACE}/build/cluster_config/"
-            REPORT_ROOT = "${env.WORKSPACE}/build"
-          }
-          steps {
-            sh "${describeNode}"
-            sh "make -C CI/integrations cleanup"
-            sh "${dockerLogin}"
-            sh "${dockerStrs}"
-            sh "make -C CI/integrations pull-environments-images"
-            sh "mkdir -p $ETC_ROOT"
-            sh "aws s3 cp --recursive ${config_uri} $ETC_ROOT"
-            sh "make -C CI/integrations run-python-integration-tests"
-          }
-          post {
-            always {
-              sh "make -C CI/integrations cleanup"
-              junit "**/build/test-reports/*.xml"
-            }
-          }
-        }
-        stage("Python Integration Tests Split 3") {
-          agent { label 'integrations' }
-          environment {
-            PYTEST_MARKS = "integ3"
-            ETC_ROOT = "${env.WORKSPACE}/build/cluster_config/"
-            REPORT_ROOT = "${env.WORKSPACE}/build"
-          }
-          steps {
-            sh "${describeNode}"
-            sh "make -C CI/integrations cleanup"
-            sh "${dockerLogin}"
-            sh "${dockerStrs}"
-            sh "make -C CI/integrations pull-environments-images"
-            sh "mkdir -p $ETC_ROOT"
-            sh "aws s3 cp --recursive ${config_uri} $ETC_ROOT"
-            sh "make -C CI/integrations run-python-integration-tests"
-          }
-          post {
-            always {
-              sh "make -C CI/integrations cleanup"
-              junit "**/build/test-reports/*.xml"
-            }
-          }
-        }
-        stage("Python Integration Tests Split 4") {
-          agent { label 'integrations' }
-          environment {
-            PYTEST_MARKS = "integ4"
-            ETC_ROOT = "${env.WORKSPACE}/build/cluster_config/"
-            REPORT_ROOT = "${env.WORKSPACE}/build"
-          }
-          steps {
-            sh "${describeNode}"
-            sh "make -C CI/integrations cleanup"
-            sh "${dockerLogin}"
-            sh "${dockerStrs}"
-            sh "make -C CI/integrations pull-environments-images"
-            sh "mkdir -p $ETC_ROOT"
-            sh "aws s3 cp --recursive ${config_uri} $ETC_ROOT"
-            sh "make -C CI/integrations run-python-integration-tests"
-          }
-          post {
-            always {
-              sh "make -C CI/integrations cleanup"
-              junit "**/build/test-reports/*.xml"
-            }
-          }
-        }
-        stage("Python Integration Tests Parallel Training") {
-          agent { label 'parallel' }
-          environment {
-            PYTEST_MARKS = "parallel"
+            PYTEST_MARKS = "integ5"
             ETC_ROOT = "${env.WORKSPACE}/build/cluster_config/"
             REPORT_ROOT = "${env.WORKSPACE}/build"
           }

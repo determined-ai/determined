@@ -83,7 +83,7 @@ def test_metric_gathering() -> None:
         assert structure_equal(expected, actual)
 
 
-@pytest.mark.integ1  # type: ignore
+@pytest.mark.integ5  # type: ignore
 def test_gc_checkpoints(secrets: Dict[str, str]) -> None:
     fixtures = [
         (
@@ -162,9 +162,9 @@ def test_gc_checkpoints(secrets: Dict[str, str]) -> None:
                             assert os.path.isdir(dirname)
                         elif checkpoint.state == "DELETED":
                             assert not os.path.exists(dirname)
-        except AssertionError:
+        except AssertionError as e:
             if check == max_checks - 1:
-                raise
+                raise e
         else:
             break
 
