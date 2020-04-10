@@ -96,19 +96,8 @@ The information we collect from the master periodically includes:
 - the version of Go that was used to compile the master
 - the number of registered :ref:`users <users>`
 - the number of experiments that have been created
-- aggregates of these quantities over all experiments:
-
-  - batches per step
-  - Docker images used for tasks
-  - number of hyperparameters
-  - number of trials
-  - searcher type
-  - state
-
-- aggregates of these quantities over all trials:
-
-  - number of completed steps
-  - state
+- the total number of trials across all experiments
+- the number of active, paused, completed, and canceled experiments
 
 We also record when the following events happen:
 
@@ -117,17 +106,31 @@ We also record when the following events happen:
 - an agent connects or disconnects
 - a user is created (the username is not transmitted)
 
+When an experiment is created, we report:
+
+- the ``searcher`` and ``resources`` sections of the experiment config
+- the name of the container image used
+- the total number of hyperparameters
+- the value of the ``batches_per_step`` configuration setting
+
+When an experiment terminates, we report:
+
+- the number of trials in the experiment
+- the total number of steps across all trials in the experiment
+- the total elapsed time for all steps across all trials in the experiment
+
 The information we collect from the WebUI includes:
 
 - pages that are visited
 - errors that occur (both network errors and uncaught exceptions)
 - user-triggered actions
 
-In order to disable this collection in both the master and the WebUI,
-start the master with the ``--telemetry-enabled=false`` flag (or using
-the config file or environment variables as with any other configuration
-option). Doing so will not affect the functionality of Determined in any
-way.
+In order to disable telemetry reporting in both the master and the
+WebUI, start the master with the ``--telemetry-enabled=false`` flag
+(this can also be done by editing the master config file or setting an
+environmental variable, as with any other configuration
+option). Disabling telemetry reporting will not affect the functionality
+of Determined in any way.
 
 Master Configuration
 ====================
