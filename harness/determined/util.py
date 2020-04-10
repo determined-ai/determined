@@ -38,6 +38,27 @@ def _list_to_dict(list_of_dicts: List[Dict[str, Any]]) -> Dict[str, List[Any]]:
     return dict_of_lists
 
 
+def _dict_to_list(dict_of_lists: Dict[str, List]) -> List[Dict[str, Any]]:
+    """Transpose a dict of lists to a list of dicts.
+
+        dict_to_list({"a": [1, 2], "b": [3, 4]})) -> [{"a": 1, "b": 3}, {"a": 2, "b": 4}]
+
+    In some cases _dict_to_list is the inverse of _list_to_dict. This function assumes that
+    all lists have the same length.
+    """
+
+    list_len = len(list(dict_of_lists.values())[0])
+    for lst in dict_of_lists.values():
+        check.check_len(lst, list_len, "All lists in the dict must be the same length.")
+
+    output_list = [{} for _ in range(list_len)]  # type: List[Dict[str, Any]]
+    for i in range(list_len):
+        for k in dict_of_lists.keys():
+            output_list[i][k] = dict_of_lists[k][i]
+
+    return output_list
+
+
 def validate_batch_metrics(batch_metrics: List[Dict[str, Any]]) -> None:
     metric_dict = _list_to_dict(batch_metrics)
 

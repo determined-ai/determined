@@ -74,6 +74,7 @@ def make_default_exp_config(hparams: Dict[str, Any], batches_per_step: int) -> D
             "mixed_precision": "O0",
             "aggregation_frequency": 1,
             "gradient_compression": False,
+            "average_training_metrics": False,
         },
     }
 
@@ -126,6 +127,7 @@ def make_default_hvd_config() -> horovod.HorovodContext:
         fp16_compression=False,
         grad_updates_size_file="",
         average_aggregated_gradients=True,
+        average_training_metrics=False,
     )
 
 

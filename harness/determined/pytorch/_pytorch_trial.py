@@ -219,6 +219,10 @@ class PyTorchTrialController(det.LoopTrialController):
     def supports_mixed_precision() -> bool:
         return True
 
+    @staticmethod
+    def supports_averaging_training_metrics() -> bool:
+        return True
+
     def _set_data_loaders(self) -> None:
         skip_batches = (self.env.first_step() - 1) * self.batches_per_step
 
@@ -293,6 +297,51 @@ class PyTorchTrialController(det.LoopTrialController):
         else:
             logging.debug("No gradient clipping enabled.")
 
+    def _average_training_metrics(
+        self, per_batch_metrics: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """Average training metrics across GPUs"""
+        check.true(self.hvd_config.use, "Can only average training metrics in multi-GPU training.")
+        metrics_timeseries = util._list_to_dict(per_batch_metrics)
+
+        # combined_timeseries is: dict[metric_name] -> 2d-array.
+        # A measurement is accessed via combined_timeseries[metric_name][process_idx][batch_idx].
+        combined_timeseries, _ = self._combine_metrics_across_processes(
+            metrics_timeseries, num_batches=len(per_batch_metrics)
+        )
+
+        # If the value for a metric is a single-element array, the averaging process will
+        # change that into just the element. We record what metrics are single-element arrays
+        # so we can wrap them in an array later (for perfect compatibility with non-averaging
+        # codepath).
+        array_metrics = []
+        for metric_name in per_batch_metrics[0].keys():
+            if isinstance(per_batch_metrics[0][metric_name], np.ndarray):
+                array_metrics.append(metric_name)
+
+        if self.is_chief:
+            combined_timeseries_type = Dict[str, List[List[Any]]]
+            combined_timeseries = cast(combined_timeseries_type, combined_timeseries)
+            num_batches = len(per_batch_metrics)
+            num_processes = hvd.get_size()
+            averaged_metrics_timeseries = {}  # type: Dict[str, List]
+
+            for metric_name in combined_timeseries.keys():
+                averaged_metrics_timeseries[metric_name] = []
+                for batch_idx in range(num_batches):
+                    batch = [
+                        combined_timeseries[metric_name][process_idx][batch_idx]
+                        for process_idx in range(num_processes)
+                    ]
+
+                    np_batch = np.array(batch)
+                    batch_avg = np.mean(np_batch[np_batch != None])  # noqa: E711
+                    if metric_name in array_metrics:
+                        batch_avg = np.array(batch_avg)
+                    averaged_metrics_timeseries[metric_name].append(batch_avg)
+            per_batch_metrics = util._dict_to_list(averaged_metrics_timeseries)
+        return per_batch_metrics
+
     def _train_for_step(self, step_id: int, batches_per_step: int) -> workload.Response:
         check.gt(step_id, 0)
 
@@ -304,7 +353,7 @@ class PyTorchTrialController(det.LoopTrialController):
         # between training and inference.
         self.model.train()
 
-        metrics = []  # type: List[Dict]
+        per_batch_metrics = []  # type: List[Dict]
         num_inputs = 0
 
         for batch_idx in range(start, end):
@@ -377,7 +426,10 @@ class PyTorchTrialController(det.LoopTrialController):
                 tr_metrics[name] = metric
 
             check.is_in("loss", tr_metrics, 'Please include "loss" in your training metrics.')
-            metrics.append(tr_metrics)
+            per_batch_metrics.append(tr_metrics)
+
+        if self.hvd_config.use and self.hvd_config.average_training_metrics:
+            per_batch_metrics = self._average_training_metrics(per_batch_metrics)
 
         if not self.is_chief:
             return workload.Skipped()
@@ -386,7 +438,7 @@ class PyTorchTrialController(det.LoopTrialController):
             num_inputs *= hvd.size()
 
         logging.debug(f"Done training step: {num_inputs} records in {batches_per_step} batches.")
-        return det.util.make_metrics(num_inputs, metrics)
+        return det.util.make_metrics(num_inputs, per_batch_metrics)
 
     @staticmethod
     def _convert_metrics_to_numpy(metrics: Dict[str, Any]) -> Dict[str, Any]:
@@ -501,7 +553,11 @@ class PyTorchTrialController(det.LoopTrialController):
         if self.hvd_config.use:
             # If using horovod combine metrics across all processes.
             # Only the chief process will receive all the metrics.
-            combined_metrics, batches_per_process = self._combine_metrics_across_processes(metrics)
+            self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
+            num_batches = len(self.validation_loader)
+            combined_metrics, batches_per_process = self._combine_metrics_across_processes(
+                metrics, num_batches
+            )
             if self.is_chief:
                 # Only the chief collects all the metrics.
                 combined_metrics = self._convert_metrics_to_numpy(
@@ -521,11 +577,10 @@ class PyTorchTrialController(det.LoopTrialController):
         return metrics
 
     def _combine_metrics_across_processes(
-        self, metrics: Dict[str, Any]
+        self, metrics: Dict[str, Any], num_batches: int
     ) -> Tuple[Optional[Dict[str, Any]], Optional[List[int]]]:
         # The chief receives the metric from every other training process.
         check.true(self.hvd_config.use)
-        self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
 
         metrics_lists = {}  # type: Dict[str, Any]
         batches_per_process = []  # type: List[int]
@@ -539,7 +594,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 for worker_metric in worker_metrics:
                     metrics_lists[metric_name].append(worker_metric.metrics[metric_name])
 
-            batches_per_process.append(len(self.validation_loader))
+            batches_per_process.append(num_batches)
             for worker_metric in worker_metrics:
                 batches_per_process.append(worker_metric.num_batches)
 
@@ -547,7 +602,7 @@ class PyTorchTrialController(det.LoopTrialController):
         else:
             self.train_process_comm_worker = cast(ipc.ZMQClient, self.train_process_comm_worker)
             self.train_process_comm_worker.barrier(
-                message=ipc.MetricsInfo(metrics=metrics, num_batches=len(self.validation_loader))
+                message=ipc.MetricsInfo(metrics=metrics, num_batches=num_batches)
             )
             return None, None
 

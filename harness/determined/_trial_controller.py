@@ -107,6 +107,10 @@ class TrialController(metaclass=abc.ABCMeta):
     def supports_mixed_precision() -> bool:
         return False
 
+    @staticmethod
+    def supports_averaging_training_metrics() -> bool:
+        return False
+
     def initialize_wrapper(self) -> None:
         pass
 
@@ -131,6 +135,9 @@ class TrialController(metaclass=abc.ABCMeta):
 
         if env.experiment_config.native_enabled():
             check.true(self.support_determined_native())
+
+        if env.experiment_config.averaging_training_metrics_enabled():
+            check.true(self.supports_averaging_training_metrics())
 
 
 class CallbackTrialController(TrialController):

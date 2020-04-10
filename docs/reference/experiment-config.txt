@@ -565,6 +565,12 @@ created with the Determined CLI. It may contain the following fields:
     across batches (when aggregation_frequency > 1) should be divided by
     the aggregation_frequency. Defaults to ``true``.
 
+  - ``average_training_metrics``: For multi-GPU training, whether to
+    average the training metrics across GPUs instead of only using metrics from the
+    chief GPU. This impacts the metrics shown in the Determined UI and
+    TensorBoard, but does not impact the outcome of training or hyperparameter
+    search. This option is currently only supported in PyTorch. Defaults to ``false``.
+
   - ``gradient_compression``: Whether to compress gradients when they are
     exchanged during :ref:`multi-gpu-training`.
     Compression may alter gradient values to achieve better space reduction.

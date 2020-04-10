@@ -168,12 +168,14 @@ class HorovodContext:
         fp16_compression: bool,
         grad_updates_size_file: str,
         average_aggregated_gradients: bool,
+        average_training_metrics: bool,
     ) -> None:
         self.use = use
         self.aggregation_frequency = aggregation_frequency
         self.fp16_compression = fp16_compression
         self.grad_updates_size_file = grad_updates_size_file
         self.average_aggregated_gradients = average_aggregated_gradients
+        self.average_training_metrics = average_training_metrics
 
     @staticmethod
     def from_configs(
@@ -198,6 +200,7 @@ class HorovodContext:
 
         check.is_in("aggregation_frequency", optimizations_config)
         check.is_in("gradient_compression", optimizations_config)
+        check.is_in("average_training_metrics", optimizations_config)
 
         # Help users migrate from the old locations for these settings, in hparams.
         def error_message_removed_from_hparams(removed_hparam: str) -> str:
@@ -229,6 +232,9 @@ class HorovodContext:
             grad_updates_size_file=optimizations_config.get("grad_updates_size_file", None),
             average_aggregated_gradients=cast(
                 bool, optimizations_config.get("average_aggregated_gradients")
+            ),
+            average_training_metrics=cast(
+                bool, optimizations_config.get("average_training_metrics")
             ),
         )
 
