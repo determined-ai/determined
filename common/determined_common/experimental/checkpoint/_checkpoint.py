@@ -191,3 +191,6 @@ class Checkpoint(object):
             return ModelFramework.TENSORFLOW
 
         raise AssertionError("Unknown checkpoint format at {}".format(directory))
+
+    def __repr__(self) -> str:
+        return "Checkpoint(uuid={})".format(self.uuid)

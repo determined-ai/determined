@@ -1,6 +1,15 @@
 determined.experimental
 =======================
 
+``ExperimentReference``
+-----------------------
+
+.. autoclass:: determined.experimental.ExperimentReference
+    :members:
+    :inherited-members:
+    :member-order: bysource
+
+
 ``TrialReference``
 ------------------
 

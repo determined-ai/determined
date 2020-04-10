@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 import yaml
 
+from determined.experimental import ExperimentReference
 from tests.integrations import config as conf
 from tests.integrations import experiment as exp
 from tests.integrations.cluster_utils import skip_test_if_not_enough_gpus
@@ -342,6 +343,32 @@ def test_end_to_end_adaptive() -> None:
 
     assert best is not None
     assert best > 0.93
+
+    # Check that ExperimentReference returns a sorted order of top checkpoints
+    # without gaps. The top 2 checkpoints should be the first 2 of the top k
+    # checkpoints if sorting is stable.
+    exp_ref = ExperimentReference(exp_id)
+
+    top_2 = exp_ref.top_n_checkpoints(2)
+    top_k = exp_ref.top_n_checkpoints(len(trials))
+
+    top_2_uuids = [c.uuid for c in top_2]
+    top_k_uuids = [c.uuid for c in top_k]
+
+    assert top_2_uuids == top_k_uuids[:2]
+
+    # Check that metrics are truly in sorted order.
+    metrics = [c.validation.metrics["validation_metrics"]["validation_loss"] for c in top_k]
+
+    assert metrics == sorted(metrics)
+
+    # Check that changing smaller is better reverses the checkpoint ordering.
+    top_k_reversed = exp_ref.top_n_checkpoints(
+        len(trials), sort_by="validation_loss", smaller_is_better=False
+    )
+    top_k_reversed_uuids = [c.uuid for c in top_k_reversed]
+
+    assert top_k_uuids == top_k_reversed_uuids[::-1]
 
 
 @pytest.mark.integ1  # type: ignore
