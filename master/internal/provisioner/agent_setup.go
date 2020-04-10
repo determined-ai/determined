@@ -15,6 +15,7 @@ type agentSetupScriptConfig struct {
 	AgentNetwork        string
 	AgentDockerImage    string
 	AgentID             string
+	LogOptions          string
 }
 
 func mustMakeAgentSetupScript(config agentSetupScriptConfig) []byte {

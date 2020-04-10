@@ -208,7 +208,7 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /determined/det-${UserName}/journald
+      LogGroupName: !Sub /determined/det-${UserName}
 
   LogPolicy:
     Type: AWS::IAM::Policy
@@ -226,8 +226,8 @@ Resources:
               - logs:PutLogEvents
               - logs:DescribeLogStreams
             Resource:
-              - !Sub arn:aws:logs:*:*:log-group:/determined/det-${UserName}/journald,
-              - !Sub arn:aws:logs:*:*:log-group:/determined/det-${UserName}/journald:log-stream:*
+              - !Sub arn:aws:logs:*:*:log-group:${LogGroup},
+              - !Sub arn:aws:logs:*:*:log-group:${LogGroup}:log-stream:*
 
   MetricPolicy:
     Type: AWS::IAM::Policy
@@ -382,6 +382,8 @@ Resources:
             agent_docker_image: determinedai/determined-agent:${Version}
             instance_name: determined-agent-${UserName}
             instance_type: ${AgentInstanceType}
+            log_group: ${LogGroup}
+            log_stream: determined-agent
             master_url: http://local-ipv4:8080
             max_idle_agent_period: ${MaxIdleAgentPeriod}
             max_instances: ${MaxInstances}
@@ -391,26 +393,9 @@ Resources:
             provider: aws
             root_volume_size: 200
             ssh_key_name: ${Keypair}
-            startup_script: |
-              cat << EOF > /tmp/journald-cloudwatch.conf
-              log_group = "/determined/det-${UserName}/journald"
-              EOF
-
-              rm /etc/journald-cloudwatch.conf
-              mv /tmp/journald-cloudwatch.conf /etc/journald-cloudwatch.conf
-              systemctl restart journald-cloudwatch
             tag_key: det-${UserName}
             tag_value: det-${UserName}-agent
           EOF
-
-          cat << EOF > /tmp/journald-cloudwatch.conf
-          log_group = "/determined/det-${UserName}/journald"
-          field_length = 1000
-          EOF
-
-          rm /etc/journald-cloudwatch.conf
-          mv /tmp/journald-cloudwatch.conf /etc/journald-cloudwatch.conf
-          systemctl restart journald-cloudwatch
 
           apt-get remove docker docker-engine docker.io containerd runc
           apt-get update
@@ -438,6 +423,9 @@ Resources:
               --name determined-graphql \
               --restart unless-stopped \
               --network determined \
+              --log-driver=awslogs \
+              --log-opt awslogs-group=${LogGroup} \
+              --log-opt awslogs-stream=determined-hasura \
               -e HASURA_GRAPHQL_ADMIN_SECRET=${HasuraSecret} \
               -e HASURA_GRAPHQL_CONSOLE_ASSETS_DIR=/srv/console-assets \
               -e HASURA_GRAPHQL_DATABASE_URL=postgres://postgres:${DBPassword}@${Database.Endpoint.Address}:5432/determined \
@@ -451,6 +439,9 @@ Resources:
               --name determined-master \
               --network determined \
               --restart unless-stopped \
+              --log-driver=awslogs \
+              --log-opt awslogs-group=${LogGroup} \
+              --log-opt awslogs-stream=determined-master \
               -p 8080:8080 \
               -v /usr/local/determined/etc/master.yaml:/etc/determined/master.yaml \
               determinedai/determined-master:${Version}
@@ -459,7 +450,7 @@ Resources:
         - Key: user
           Value: !Ref UserName
         - Key: Name
-          Value: !Sub det-${UserName}-master
+          Value: !Sub det-master-${UserName}
 
   DeterminedAddress:
     Type: AWS::EC2::EIP
