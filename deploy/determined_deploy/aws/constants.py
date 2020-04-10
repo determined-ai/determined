@@ -11,6 +11,7 @@ class defaults:
     DET_STACK_NAME_BASE = "determined-{}"
     DB_PASSWORD = "postgres"
     HASURA_SECRET = "hasura"
+    REGION = "us-west-2"
 
 
 class cloudformation:

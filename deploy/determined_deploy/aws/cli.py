@@ -63,7 +63,7 @@ def make_aws_parser(subparsers: argparse._SubParsersAction):
         help="password for hasura service",
     )
     parser_aws.add_argument(
-        "--region-name", type=str, help="aws region",
+        "--region-name", type=str, default=constants.defaults.REGION, help="aws region",
     )
     parser_aws.add_argument(
         "--max-idle-agent-period", type=str, help="max agent idle time",
