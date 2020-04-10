@@ -207,7 +207,7 @@ func (m *Master) updateHasuraSchema() error {
 	if err = m.hasuraMetaRequest(schemaBody); err != nil {
 		return errors.Wrap(err, "error updating Hasura schema")
 	}
-	log.Infof("successfully updated Hasura metdata")
+	log.Info("successfully updated Hasura metadata")
 	return nil
 }
 
