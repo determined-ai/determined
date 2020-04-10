@@ -24,10 +24,14 @@ The ``admin`` user can be used to create users, change other users'
 passwords, and activate/deactivate users.
 
 .. note::
-   The `admin` user initially has a blank password. The `user change-password`
-   CLI command can be used by the admin to update this password:::
 
-    det -u admin user change-password
+   The ``admin`` user initially has a blank password. The ``user
+   change-password`` CLI command can be used by the admin to update this
+   password:
+
+   .. code::
+
+      det -u admin user change-password
 
 Getting Started
 ---------------
@@ -60,7 +64,7 @@ The WebUI will automatically redirect users to a login page if there is
 no valid Determined session established on that browser. After logging in, the
 user will be redirected to the URL they initially attempted to access.
 
-A browser Determined session can be ended by clicking "Sign out" under the
+A browser Determined session can be ended by clicking "Sign Out" under the
 user menu in the top right of the WebUI.
 
 CLI
@@ -106,11 +110,11 @@ subcommand:
 Changing passwords
 ------------------
 
-Users have blank passwords by default. This might be sufficient for low
-security or experimental clusters, and it still provides the
-organizational benefits of associating each Determined object with the user
-that created it. If desired, a user can change their own password using
-the ``user change-password`` subcommand:
+Users have blank passwords by default. This might be sufficient for
+low-security or experimental clusters, and it still provides the
+organizational benefits of associating each Determined object with the
+user that created it. If desired, a user can change their own password
+using the ``user change-password`` subcommand:
 
 ::
 
@@ -123,10 +127,12 @@ An admin can also change another user's password:
    det -u admin user change-password <target-user>
 
 .. warning::
-  Although Determined supports password-based authentication, communication between
-  the CLI, WebUI, and Master does `not` take place over an encrypted channel.
-  Hence, users should not be assigned "valuable" passwords, and passwords used
-  with Determined should not be reused for other purposes.
+  Although Determined supports password-based authentication,
+  communication between the CLI, WebUI, and master does *not* take place
+  over an encrypted channel by default. See :ref:`security` for
+  information on configuring secure connections over HTTPS. Users should
+  not be assigned "valuable" passwords, and passwords used with
+  Determined should not be reused for other purposes.
 
 Listing assets
 --------------
@@ -183,10 +189,11 @@ To reactivate a user, ``user activate`` can be used:
 Running tasks as particular agent users
 ---------------------------------------
 
-If an experiment, notebook, or command task uses the ``bind_mount`` option in
-its :ref:`experiment-configuration`, it is often useful to set the user and
-group on the agent that the task runs as. This allows the file permissions on
-the agent to be reflected in the task and vice versa.
+If an experiment, notebook, or command task uses the ``bind_mount``
+option in its :ref:`experiment-configuration`, it is often useful to set
+the Unix user and group on the agent that the task runs as. This allows
+the file permissions on the agent to be reflected in the task and vice
+versa.
 
 This can be configured by linking a Determined user with the user and group
 configuration on an agent:
