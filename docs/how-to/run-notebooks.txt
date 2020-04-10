@@ -1,7 +1,7 @@
 Run Notebooks in Determined
 ===========================
 
-Jupyter Notebook is a software for interactive Python development. Notebooks are commonly used in the data science and machine learning life cycle. You can read more about Jupyter Notebooks on their `homepage <https://jupyter.org/>`_.
+Jupyter Notebook is software for interactive Python development. Notebooks are commonly used in the data science and machine learning life cycle. You can read more about Jupyter Notebooks on their `homepage <https://jupyter.org/>`_.
 
 How to access Jupyter Notebooks
 -------------------------------

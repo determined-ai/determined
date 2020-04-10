@@ -454,11 +454,13 @@ master starts. It may contain the following fields:
 
 - ``hasura``: Specifies the connection to Hasura.
 
-  - ``address``: The address of Hasura host. A valid address is in the form of
-    ``host:port``. Defaults to ``localhost:8081``.
-  - ``secret``: The secret to use. Defaults to an empty string.
+  - ``address``: The address of the host where Hasura is running. A valid
+    address is in the form of ``host:port``. Defaults to ``localhost:8081``.
+  - ``secret``: The `Hasura secret
+    <https://hasura.io/docs/1.0/graphql/manual/deployment/graphql-engine-flags/reference.html#command-flags>`__
+    to use. Defaults to an empty string.
 
 - ``telemetry``: Specifies whether we collect anonymous information about the
   usage of Determined.
 
-  - ``enabled``: Set it to be ``true`` to allow us to collect. Defaults to be ``true``.
+  - ``enabled``: Whether collection is enabled. Defaults to ``true``.

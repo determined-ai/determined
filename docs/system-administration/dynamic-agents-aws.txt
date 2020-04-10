@@ -162,7 +162,7 @@ AMI.
 Let's start by navigating to the EC2 Dashboard of the AWS Console. Click
 "Launch Instance" and follow the instructions below:
 
-1. Choose AMI: find the Determined Master AMI in "My AMIs" and click "Select".
+1. Choose AMI: find the Determined master AMI in "My AMIs" and click "Select".
 
 2. Choose Instance Type: we recommend a t2.medium or more powerful.
 
@@ -190,7 +190,7 @@ Let's start by navigating to the EC2 Dashboard of the AWS Console. Click
 Agent
 ~~~~~
 
-There is no installation needed for the Agent. The Determined master will
+There is no installation needed for the agent. The Determined master will
 dynamically launch Determined agent instances based on the
 :ref:`aws-cluster-configuration`.
 

@@ -4,7 +4,7 @@ Dynamic Agents on GCP
 =====================
 
 This document describes how to install, configure, and upgrade a
-deployment of Determined with Dynamic Agents on GCP
+deployment of Determined with Dynamic Agents on GCP.
 
 System Requirements
 -------------------
@@ -232,7 +232,7 @@ Console. Click "Create Instance" and follow the instructions below:
 Agent
 ~~~~~
 
-There is no installation needed for the Agent. The Determined master will dynamically
+There is no installation needed for the agent. The Determined master will dynamically
 launch Determined agent instances based on the :ref:`cluster-configuration`.
 
 .. _gcp-upgrades:

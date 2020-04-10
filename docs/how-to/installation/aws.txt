@@ -443,7 +443,7 @@ Running Determined
 
    - ``hasura-secret`` is a user-defined random string. Ensure that the value is the same in
      ``master.yaml`` and the ``docker run`` command for the Hasura container.
-   - ``agent-ami`` should be the latest Determined Agent AMI.
+   - ``agent-ami`` should be the latest Determined agent AMI.
    - ``instance-type`` should be any p2 or p3 EC2 instance type.
 
    .. warning::

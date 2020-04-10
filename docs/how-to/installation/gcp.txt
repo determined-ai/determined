@@ -111,7 +111,7 @@ ___________________
      - Required
 
    * - ``--keypath``
-     - The path to the Service Account JSON key file if using a Service Account. Including this flag will supersede default Google Cloud user credentials.
+     - The path to the service account JSON key file if using a service account. Including this flag will supersede default Google Cloud user credentials.
      - None
      - False
 
@@ -166,12 +166,12 @@ ___________________
      - False
 
    * - ``--min-cpu-platform-master``
-     - Minimum cpu platform for the master instance.
+     - Minimum CPU platform for the master instance.
      - Intel Skylake
      - False
 
    * - ``--min-cpu-platform-agent``
-     - Minimum cpu platform for the agent instances. Ensure the platform is compatible with your selected ``gpu-type`` and available in your selected ``region`` and ``zone`` by referring to the `GPUs on Compute Engine <https://cloud.google.com/compute/docs/gpus>`__ page.
+     - Minimum CPU platform for the agent instances. Ensure the platform is compatible with your selected ``gpu-type`` and available in your selected ``region`` and ``zone`` by referring to the `GPUs on Compute Engine <https://cloud.google.com/compute/docs/gpus>`__ page.
      - Intel Broadwell
      - False
 
@@ -230,7 +230,7 @@ By default, ``determined-deploy`` will use the ``.tfstate`` file in the current 
      - Required
 
    * - ``--keypath``
-     - The path to the Service Account JSON key file if using a Service Account. Including this flag will supersede default Google Cloud user credentials.
+     - The path to the service account JSON key file if using a service account. Including this flag will supersede default Google Cloud user credentials.
      - None
      - False
 
@@ -247,7 +247,7 @@ Appendix
 Using Service Account Credentials
 _________________________________
 
-For more security controls, you can create a `Service Account <https://cloud.google.com/docs/authentication/getting-started>`__ or select an existing Service Account from the `service account key page in the Google Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and ensure it has the following IAM Roles:
+For more security controls, you can create a `service account <https://cloud.google.com/docs/authentication/getting-started>`__ or select an existing service account from the `service account key page in the Google Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and ensure it has the following IAM Roles:
 
    - Cloud SQL Admin
    - Compute Admin
@@ -258,9 +258,9 @@ For more security controls, you can create a `Service Account <https://cloud.goo
    - Service Networking Admin
    - Storage Admin
 
-Roles provide the Service Account permissions to create specific resources in your project. You can add roles to Service Accounts following this `guide <https://cloud.google.com/iam/docs/granting-roles-to-service-accounts>`__.
+Roles provide the service account permissions to create specific resources in your project. You can add roles to service accounts following this `guide <https://cloud.google.com/iam/docs/granting-roles-to-service-accounts>`__.
 
-Once you have a Service Account with the appropriate roles, go to the `service account key page in the Google Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and create a JSON key file. Save it to a location you'll remember; we'll refer to the path to this key file as the ``keypath``, which is an optional argument you can supply when using ``determined-deploy``. Once you have the ``keypath`` you can use it to deploy a GCP cluster by continuing the :ref:`installation <gcp-install>` section.
+Once you have a service account with the appropriate roles, go to the `service account key page in the Google Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and create a JSON key file. Save it to a location you'll remember; we'll refer to the path to this key file as the ``keypath``, which is an optional argument you can supply when using ``determined-deploy``. Once you have the ``keypath`` you can use it to deploy a GCP cluster by continuing the :ref:`installation <gcp-install>` section.
 
 
 Next Steps
