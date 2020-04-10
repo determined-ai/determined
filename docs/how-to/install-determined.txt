@@ -138,8 +138,7 @@ Users
 
 Determined supports an optional *user* system, which allows teams of
 machine learning developers to organize the assets they create inside
-Determined. The user system should be configured by the system
-administrator; see :ref:`users` for more details.
+Determined. See :ref:`users` for more details.
 
 .. _upgrades:
 

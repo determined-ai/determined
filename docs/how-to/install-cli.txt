@@ -3,16 +3,8 @@
 Install Determined CLI
 ======================
 
-Determined consists of several components:
-
--  a **master** that schedules workloads and stores metadata
--  one or more **agents** that run workloads, typically using GPUs
--  a **command-line tool** (called ``det``) that ML developers can use
-   to launch new workloads and interact with Determined.
-
-The Determined master and agents should typically be installed and configured
-by a system administrator; see the :ref:`administrator install
-guide <install-determined>` for more information.
+Determined includes a **command-line tool** called ``det`` that ML developers
+can use to launch new workloads and interact with Determined.
 
 Each ML developer that wants to use Determined should install a copy of the
 Determined CLI on their local development machine. The CLI can be
@@ -29,7 +21,7 @@ virtualenv and then type the command above.
 
 After the CLI has been installed, it should be configured to connect to
 the Determined master at the appropriate IP address. This can be accomplished
-by setting the ``DET_MASTER`` environmental variable:
+by setting the ``DET_MASTER`` environment variable:
 
 .. code::
 

@@ -3,11 +3,6 @@
 Dynamic Agents Overview
 =======================
 
-Determined consists of several components:
-
--  a **master** that schedules workloads and stores metadata
--  one or more **agents** that run workloads, typically using GPUs
-
 When running Determined with Dynamic Agents, the Determined master dynamically
 provisions and terminates cloud instances to meet the needs of the
 cluster.
@@ -20,7 +15,3 @@ cluster.
    before terminating the instances. This grace period provides for a
    short interval of time for the Determined agent instance to receive new
    tasks.
-
-The Determined master and agents should typically be installed and configured
-by a system administrator. Each user of Determined should also install a copy
-of the command-line tools, see :ref:`install-cli`.
