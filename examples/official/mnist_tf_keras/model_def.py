@@ -9,7 +9,7 @@ import tempfile
 import tensorflow as tf
 from tensorflow import keras
 
-from determined.keras import InMemorySequence, TFKerasTrial, TFKerasTrialContext
+from determined.keras import TFKerasTrial, TFKerasTrialContext, adapt_keras_data
 
 import data
 
@@ -42,7 +42,7 @@ class MNISTTrial(TFKerasTrial):
         train_images = train_images / 255.0
 
         batch_size = self.context.get_per_slot_batch_size()
-        train = InMemorySequence(data=train_images, labels=train_labels, batch_size=batch_size)
+        train = adapt_keras_data(x=train_images, y=train_labels, batch_size=batch_size)
 
         return train
 
@@ -51,6 +51,6 @@ class MNISTTrial(TFKerasTrial):
         test_images = test_images / 255.0
 
         batch_size = self.context.get_per_slot_batch_size()
-        test = InMemorySequence(data=test_images, labels=test_labels, batch_size=batch_size)
+        test = adapt_keras_data(x=test_images, y=test_labels, batch_size=batch_size)
 
         return test

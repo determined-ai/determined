@@ -18,9 +18,9 @@ from tensorflow.keras.losses import categorical_crossentropy
 from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import RMSprop
-from tensorflow.keras.utils import Sequence, to_categorical
+from tensorflow.keras.utils import to_categorical
 
-from determined.keras import InMemorySequence, TFKerasTensorBoard, TFKerasTrial, TFKerasTrialContext
+from determined import keras
 
 # Constants about the data set.
 NUM_CLASSES = 3
@@ -44,8 +44,8 @@ DS_COLUMNS = [
 ]
 
 
-class IrisTrial(TFKerasTrial):
-    def __init__(self, context: TFKerasTrialContext) -> None:
+class IrisTrial(keras.TFKerasTrial):
+    def __init__(self, context: keras.TFKerasTrialContext) -> None:
         self.context = context
 
     def build_model(self) -> Model:
@@ -72,9 +72,9 @@ class IrisTrial(TFKerasTrial):
         return model
 
     def keras_callbacks(self) -> List[tf.keras.callbacks.Callback]:
-        return [TFKerasTensorBoard(update_freq="batch", profile_batch=0, histogram_freq=1)]
+        return [keras.TFKerasTensorBoard(update_freq="batch", profile_batch=0, histogram_freq=1)]
 
-    def build_training_data_loader(self) -> Sequence:
+    def build_training_data_loader(self) -> keras.InputData:
         # Ignore header line and read the training and test CSV observations into pandas DataFrame's
         train = pd.read_csv(self.context.get_data_config()["train_url"], names=DS_COLUMNS, header=0)
         train_features, train_labels = train, train.pop(LABEL_HEADER)
@@ -85,15 +85,15 @@ class IrisTrial(TFKerasTrial):
         train_labels_categorical = to_categorical(train_labels, num_classes=3)
 
         # The training and test sets are so small that we can safely use Determined's
-        # in-memory implementation of keras.utils.Sequence, InMemorySequence.
-        train = InMemorySequence(
-            data=train_features,
-            labels=train_labels_categorical,
+        # adapter of in-memory numpy, ArrayLikeDataAdapter.
+        train = keras.adapt_keras_data(
+            x=train_features.values,
+            y=train_labels_categorical,
             batch_size=self.context.get_per_slot_batch_size(),
         )
         return train
 
-    def build_validation_data_loader(self) -> Sequence:
+    def build_validation_data_loader(self) -> keras.InputData:
         # Ignore header line and read the training and test CSV observations into pandas DataFrame's
         test = pd.read_csv(self.context.get_data_config()["test_url"], names=DS_COLUMNS, header=0)
         test_features, test_labels = test, test.pop(LABEL_HEADER)
@@ -103,11 +103,10 @@ class IrisTrial(TFKerasTrial):
         # construct the Sequence data loaders that Determined expects.
         test_labels_categorical = to_categorical(test_labels, num_classes=3)
 
-        # The training and test sets are so small that we can safely use Determined's
-        # in-memory implementation of keras.utils.Sequence, InMemorySequence.
-        test = InMemorySequence(
-            data=test_features,
-            labels=test_labels_categorical,
+        # We need to adapt the data into a Sequence with adapt_keras_data.
+        test = keras.adapt_keras_data(
+            x=test_features.values,
+            y=test_labels_categorical,
             batch_size=self.context.get_per_slot_batch_size(),
         )
         return test

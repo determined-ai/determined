@@ -21,7 +21,6 @@ from tensorflow.keras.losses import categorical_crossentropy
 from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import RMSprop
-from tensorflow.keras.utils import Sequence
 
 from cifar_utils import NUM_CLASSES, augment_data, get_data, preprocess_data, preprocess_labels
 
@@ -101,7 +100,7 @@ class CIFARTrial(keras.TFKerasTrial):
     def keras_callbacks(self) -> List[tf.keras.callbacks.Callback]:
         return [keras.TFKerasTensorBoard(update_freq="batch", profile_batch=0, histogram_freq=1)]
 
-    def build_training_data_loader(self) -> Sequence:
+    def build_training_data_loader(self) -> keras.InputData:
         """
         In this example we added some fields of note under the `data` field in
         the YAML experiment configuration: the `acceleration` field. Under this
@@ -141,13 +140,13 @@ class CIFARTrial(keras.TFKerasTrial):
         if acceleration:
             workers = acceleration.get("workers", 1)
             use_multiprocessing = acceleration.get("use_multiprocessing", False)
-            return keras.KerasDataAdapter(
-                train, workers=workers, use_multiprocessing=use_multiprocessing
+            return keras.adapt_keras_data(
+                x=train, workers=workers, use_multiprocessing=use_multiprocessing
             )
 
         return train
 
-    def build_validation_data_loader(self) -> Sequence:
+    def build_validation_data_loader(self) -> keras.InputData:
         if not self.data_downloaded:
             self.download_directory = download_cifar10_tf_sequence(
                 download_directory=self.download_directory,
@@ -156,8 +155,8 @@ class CIFARTrial(keras.TFKerasTrial):
             self.data_downloaded = True
 
         (_, _), (test_data, test_labels) = get_data(self.download_directory)
-        return keras.InMemorySequence(
-            data=preprocess_data(test_data),
-            labels=preprocess_labels(test_labels),
+        return keras.adapt_keras_data(
+            x=preprocess_data(test_data),
+            y=preprocess_labels(test_labels),
             batch_size=self.context.get_per_slot_batch_size(),
         )

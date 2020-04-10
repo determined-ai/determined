@@ -14,7 +14,7 @@ from determined.keras import (
     TFKerasTensorBoard,
     TFKerasTrial,
     TFKerasTrialContext,
-    KerasInputData,
+    InputData,
 )
 from tensorflow_files.common import (
     LR_SCHEDULE,
@@ -33,7 +33,7 @@ class ResNetModel(TFKerasTrial):
     def __init__(self, context: TFKerasTrialContext) -> None:
         self.context = context
 
-    def build_training_data_loader(self) -> KerasInputData:
+    def build_training_data_loader(self) -> InputData:
         """
         Create synthetic data loaders for testing and benchmarking purposes.
         """
@@ -45,7 +45,7 @@ class ResNetModel(TFKerasTrial):
 
         return data.SyntheticData(50, data_shape, labels_shape)
 
-    def build_validation_data_loader(self) -> KerasInputData:
+    def build_validation_data_loader(self) -> InputData:
         """
         Create synthetic data loaders for testing and benchmarking purposes.
         """
