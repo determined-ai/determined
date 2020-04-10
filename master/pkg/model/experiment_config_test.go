@@ -326,6 +326,7 @@ func TestExperiment(t *testing.T) {
 		Optimizations: OptimizationsConfig{
 			AggregationFrequency:       1,
 			AverageAggregatedGradients: true,
+			AverageTrainingMetrics:     false,
 			GradientCompression:        false,
 			MixedPrecision:             "O0",
 			TensorFusionThreshold:      64,

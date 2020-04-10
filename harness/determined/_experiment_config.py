@@ -26,6 +26,9 @@ class ExperimentConfig(dict):
     def mixed_precision_enabled(self) -> bool:
         return bool(self["optimizations"]["mixed_precision"] != "O0")
 
+    def averaging_training_metrics_enabled(self) -> bool:
+        return bool(self["optimizations"]["average_training_metrics"])
+
     def input_from_dataflow(self) -> bool:
         # When using tensorpack dataflows as input, it's inefficient
         # to apply sharding, so we only apply sharding to the test set.

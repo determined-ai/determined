@@ -184,6 +184,7 @@ func (r ResourcesConfig) Validate() []error {
 type OptimizationsConfig struct {
 	AggregationFrequency       int    `json:"aggregation_frequency"`
 	AverageAggregatedGradients bool   `json:"average_aggregated_gradients"`
+	AverageTrainingMetrics     bool   `json:"average_training_metrics"`
 	GradientCompression        bool   `json:"gradient_compression"`
 	GradUpdateSizeFile         string `json:"grad_updates_size_file,omitempty"`
 	MixedPrecision             string `json:"mixed_precision"`
