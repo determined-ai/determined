@@ -48,7 +48,7 @@ The code snippet below demonstrates the skeleton of ``TFKerasTrial``. In the nex
 
 .. code:: python
 
-    from determined.keras import InMemorySequence, TFKerasTrial
+    from determined.keras import TFKerasTrial, adapt_keras_data
 
     class MNISTTrial(TFKerasTrial):
         def __init__(self, context: det.keras.TFKerasTrialContext):
@@ -61,12 +61,12 @@ The code snippet below demonstrates the skeleton of ``TFKerasTrial``. In the nex
 
         def build_training_data_loader(self):
             # create the training data
-            # Returns: a keras.Sequence Dataset
+            # Returns: a keras.Sequence or a Dataset
             return train
 
         def build_validation_data_loader(self):
             # create the validation data
-            # Returns: a keras.Sequence Dataset
+            # Returns: a keras.Sequence or a Dataset
             return test
 
 Initializing ``TFKerasTrial``
@@ -95,10 +95,9 @@ Download and Prepare MNIST Dataset
 
 First, we create our data objects. The data functions, ``build_training_data_loader`` and ``build_validation_data_loader`` expect a ` ``tf.keras.Sequence`` dataset https://keras.io/utils/>`_ to be returned.
 
-For numpy data that can be loaded in memory, Determined provides a simple class to convert the data. The ``InMemorySequence`` class is a utility class for converting a simple in-memory supervised numpy dataset into a ``tf.keras.Sequence`` instance. This class has the user define the data, labels, and batch size, then converts the information into a ``tf.keras.Sequence`` object.
+For numpy data that can be loaded in memory, Determined provides a simple class to convert the data. The ``ArrayLikeDataAdapter`` class is a utility class for converting a simple in-memory supervised numpy dataset into a ``tf.keras.Sequence`` instance. This class has the user define the data, labels, and batch size, then converts the information into a ``tf.keras.Sequence`` object.
 
-The code snippet below, we can directly access the MNIST through ``keras.datasets``. We load the data the same as in traditional ``tf.keras``. Next, we use the ``TFKerasTrialContext`` object to access the batch size and then convert the data into a ``InMemorySequence``.
-
+The code snippet below, we can directly access the MNIST through ``keras.datasets``. We load the data the same as in traditional ``tf.keras``. Next, we use the ``TFKerasTrialContext`` object to access the batch size and then convert the data using the adapting function ``adapt_keras_data``.
 .. code:: python
 
     def build_training_data_loader(self):
@@ -106,7 +105,7 @@ The code snippet below, we can directly access the MNIST through ``keras.dataset
         (train_images, train_labels), (_, _) = mnist.load_data()
 
         global_batch_size = self.context.get_hparam('global_batch_size')
-        train = data.InMemorySequence(data=train_images, labels=train_labels, batch_size=global_batch_size)
+        train = adapt_keras_data(x=train_images, y=train_labels, batch_size=global_batch_size)
         return train
 
 We then follow the same workflow for ``build_validation_data_loader``.
@@ -118,7 +117,7 @@ We then follow the same workflow for ``build_validation_data_loader``.
         (_, _), (test_images, test_labels) = mnist.load_data()
 
         batch_size = self.context.get_per_slot_batch_size()
-        test = data.InMemorySequence(data=test_images, labels=test_labels, batch_size=batch_size)
+        test = adapt_keras_data(x=test_images, y=test_labels, batch_size=batch_size)
         return test
 
 Building the Model

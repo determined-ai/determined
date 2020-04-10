@@ -103,12 +103,13 @@ We also convert the image labels to integers via ``tf.keras``'s
 
 Next, we need to pass this data to Determined by implementing the
 ``build_training_data_loader`` and ``build_validation_data_loader`` functions
-on a trial class.  Each returns a batched sequence for training and validation
-data, respectively.
+on a trial class. Each returns a batched sequence for training and validation
+data, respectively. We can use ``adapt_keras_data`` to construct a sequence
+from input data, target data, and batch size.
 
 .. code:: python
 
-    from determined.keras import InMemorySequence
+    from determined.keras import adapt_keras_data
 
     class CIFARTrial:
         def build_model(self):
@@ -117,17 +118,17 @@ data, respectively.
 
         def build_training_data_loader(self):
             ...
-            return InMemorySequence(
-                data=preprocess_data(train_images),
-                labels=preprocess_labels(train_labels),
+            return adapt_keras_data(
+                x=preprocess_data(train_images),
+                y=preprocess_labels(train_labels),
                 batch_size=batch_size
             )
 
         def build_validation_data_loader(self):
             ...
-            return InMemorySequence(
-                data=preprocess_data(validation_images),
-                labels=preprocess_labels(validation_labels),
+            return adapt_keras_data(
+                x=preprocess_data(validation_images),
+                y=preprocess_labels(validation_labels),
                 batch_size=batch_size
             )
 
@@ -243,7 +244,7 @@ Putting it all together, our ``main.py`` file looks like this.
 
         from typing import Any, Dict, List, Tuple
         from tensorflow.keras import datasets, layers, models, utils
-        from determined.keras import InMemorySequence, TFKerasTrial
+        from determined.keras import TFKerasTrial, adapt_keras_data
 
         def preprocess_data(data):
             return data.astype("float32") / 255
@@ -274,18 +275,18 @@ Putting it all together, our ``main.py`` file looks like this.
         def build_training_data_loader(self):
             (train_images, train_labels), (_, _) = datasets.cifar10.load_data()
             batch_size = self.context.get_per_slot_batch_size()
-            return InMemorySequence(
-                data=preprocess_data(train_images),
-                labels=preprocess_labels(train_labels),
+            return adapt_keras_data(
+                x=preprocess_data(train_images),
+                y=preprocess_labels(train_labels),
                 batch_size=batch_size,
             )
 
         def build_validation_data_loader(self):
             (_, _), (test_images, test_labels) = datasets.cifar10.load_data()
             batch_size = self.context.get_per_slot_batch_size()
-            return InMemorySequence(
-                data=preprocess_data(test_images),
-                labels=preprocess_labels(test_labels),
+            return adapt_keras_data(
+                x=preprocess_data(test_images),
+                y=preprocess_labels(test_labels),
                 batch_size=batch_size,
             )
 
