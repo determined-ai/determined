@@ -100,7 +100,7 @@ example:
 
 See `Using an IAM Role to Grant Permissions to Applications Running on
 Amazon EC2
-Instances <https://docs.amazonaws.cn/en_us/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html>`__
+Instances <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html>`__
 for details.
 
 .. _aws-network-requirements:
