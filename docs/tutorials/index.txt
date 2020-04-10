@@ -1,6 +1,7 @@
+.. _tutorials:
+
 Tutorials
 =========
-.. _tutorials:
 
 Tutorials are simple step-by-step guides about getting started with different topics of Determined. These are a good place to get started with using the product.
 

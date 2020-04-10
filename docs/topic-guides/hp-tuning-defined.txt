@@ -62,8 +62,8 @@ Tuning deep learning models is difficult because:
    hyperparameters. For instance, even if a model has just ten categorical
    hyperparameters with five values per hyperparameter, and each hyperparameter
    configuration takes one minute to train on average, it would take 5^10
-   minutes, which is nearly 20 compute years to evaluate all possible
-   hyperparameter configurations.
+   minutes, or nearly 20 years, to evaluate all possible hyperparameter
+   configurations.
 #. Deep learning model training is computationally expensive. It's not uncommon
    for a model to require hours or days to train on expensive hardware.
 

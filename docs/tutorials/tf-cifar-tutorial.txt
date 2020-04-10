@@ -17,28 +17,16 @@ procedures:* :ref:`install-cli`
    :local:
    :depth: 1
 
-.. .. sectnum::
-..    :depth: 2
-
-..    Need to get rid of the top most number!
-
 Overview
 --------
 In this tutorial, we will walk you through a Determined implementation
 of the CIFAR10 image classifier.
 
-.. This currently links to the wrong repo -
-.. this is because the simple implementation is in internal only.
-.. and doesn't get populated in the examples folder
-
-Determined requires two functions to build a TensorFlow Keras model:
+Determined requires three functions to build a TensorFlow Keras model:
 
 #. ``build_training_data_loader``
 #. ``build_validation_data_loader``
 #. ``build_model``
-
-.. We need to automatically insert spaces around codeblocks
-.. Unless they end in a period, comma etc.
 
 In our code example, the file ``main.py`` contains a ``TFKerasTrial``
 implementation with these functions.
@@ -98,8 +86,9 @@ We also convert the image labels to integers via ``tf.keras``'s
     def preprocess_labels(labels):
         return utils.to_categorical(labels)
 
-.. TODO file ticket to allow 'sparse_categorical_crossentropy' loss
-.. This would deprecate the .to_categorical conversion
+..
+   TODO file ticket to allow 'sparse_categorical_crossentropy' loss.
+   This would deprecate the .to_categorical conversion.
 
 Next, we need to pass this data to Determined by implementing the
 ``build_training_data_loader`` and ``build_validation_data_loader`` functions
@@ -168,8 +157,6 @@ We define our model within the ``CIFARTrial`` class by implementing the ``build_
                 optimizer="adam", loss="categorical_crossentropy", metrics=["categorical_accuracy"],
             )
             return model
-.. TODO file ticket to allow 'sparse_categorical_crossentropy' loss
-
 
 Training the Model
 ------------------
@@ -205,7 +192,7 @@ we compute validation metrics.
 Now that the experiment configuration is set up, we are ready to
 run our experiment with a single command:
 
-.. code:: python
+.. code::
 
     det experiment create const.yaml .
 

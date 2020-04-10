@@ -33,7 +33,7 @@ code), you can use Jupyter's ``File`` > ``Revert to Checkpoint``
 functionality.
 
 .. note::
-  By default, Jupyter Lab will take a checkpoint every 120 seconds in an
-  `.ipynb_checkpoints` folder in the same directory as the notebook file. To
-  modify this setting, click on `Settings` > `Advanced Settings Editor`, and
-  change the value of `"autosaveInternal"` under `Document Manager`.
+  By default, JupyterLab will take a checkpoint every 120 seconds in an
+  ``.ipynb_checkpoints`` folder in the same directory as the notebook file. To
+  modify this setting, click on ``Settings`` > ``Advanced Settings Editor`` and
+  change the value of ``"autosaveInternal"`` under ``Document Manager``.

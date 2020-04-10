@@ -45,16 +45,16 @@ Example configuration with distributed or parallel training:
 To use distributed or parallel training, ``slots_per_trial`` must be set to a multiple
 of the GPUs per machine. For example, if you have a cluster of machines that each has
 8 GPUs, you should set ``slots_per_trial`` to a multiple of 8, such as 8, 16, or 24.
-This ensures that the full network and interconnect bandwidth is available to
+This ensures that the full network and interconnect bandwidth are available to
 multi-GPU workloads and results in better performance.
 
 .. warning::
 
-  Distributed and parallel training is designed to maximize performance by
+  Distributed and parallel training are designed to maximize performance by
   training with all the resources of a machine. This can lead to situations
   where an experiment is created but never starts running on the cluster, for
-  example if the number of GPUs requested does not divide into the machines
-  available. Similarly, if a task is running on a multi-GPU machine and using
+  example if the number of GPUs requested is not a multiple of the number of GPUs
+  per machine. Similarly, if a task is running on a multi-GPU machine and using
   one or more of its GPUs, that will prevent a distributed training job from
   starting on that machine.
 

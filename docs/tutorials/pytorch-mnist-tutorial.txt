@@ -58,7 +58,7 @@ Here is what the skeleton of our trial class looks like:
             pass
 
         def evaluate_batch(self, batch: TorchData, model: nn.Module):
-            # Define how to evaluate the model by calculating loss and other metrics
+            # Define how to evaluate the model by calculating loss and other metrics.
             # for a batch of validation data.
             pass
 

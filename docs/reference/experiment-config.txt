@@ -540,8 +540,8 @@ created with the Determined CLI. It may contain the following fields:
   see :ref:`reproducibility` for more details.
 
   - ``experiment_seed``: Specifies the random seed to be associated
-    with the experiment. Must be an integer between 0 and 231 - 1. If
-    an ``experiment_seed`` is not explicitly specified, the master
+    with the experiment. Must be an integer between 0 and 2\ :sup:`31`--1.
+    If an ``experiment_seed`` is not explicitly specified, the master
     will automatically generate an experiment seed.
 
 - ``max_restarts``: Specifies the maximum number of times that a trial

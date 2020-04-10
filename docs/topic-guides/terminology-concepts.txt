@@ -10,6 +10,11 @@ agent
    settings. More information can be found at
    :ref:`det-system-architecture`.
 
+command-line interface (CLI)
+   A tool for interacting with Determined from a command line. The CLI
+   is installed with the command name ``det``. More information can be
+   found at :ref:`cli`.
+
 configuration file
    A :ref:`YAML <topic-guides_yaml>` file that contains options to pass
    to Determined. For example, an experiment configuration file contains
