@@ -5,7 +5,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 import determined as det
-from determined.keras import InMemorySequence, TFKerasTrial, TFKerasTrialContext
+from determined.keras import TFKerasTrial, TFKerasTrialContext, adapt_keras_data
 
 
 class RuntimeErrorTrial(TFKerasTrial):
@@ -30,10 +30,10 @@ class RuntimeErrorTrial(TFKerasTrial):
         return model
 
     def build_training_data_loader(self):
-        return InMemorySequence(data=np.zeros((1)), labels=np.zeros((1)), batch_size=1)
+        return adapt_keras_data(x=np.zeros((1)), y=np.zeros((1)), batch_size=1)
 
     def build_validation_data_loader(self):
-        return InMemorySequence(data=np.zeros((1)), labels=np.zeros((1)), batch_size=1)
+        return adapt_keras_data(x=np.zeros((1)), y=np.zeros((1)), batch_size=1)
 
 
 if __name__ == "__main__":

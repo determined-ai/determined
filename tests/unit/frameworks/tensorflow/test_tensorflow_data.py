@@ -6,7 +6,7 @@ import tempfile
 import pytest
 import tensorflow as tf
 
-from determined.keras import DatasetToTensorFlowDatasetAdapter
+from determined.keras import _TFDatasetAdapter
 
 
 @pytest.fixture()
@@ -23,7 +23,7 @@ def user_transformation(dataset):
     return dataset.map(lambda x: 2 * x)
 
 
-class TestTensorFlowDatasetAdapter:
+class TestTFDatasetAdapter:
     def test_iterator_saving_restoring(self, tempdir):
         tf.reset_default_graph()
         chkpt_name = os.path.join(tempdir, "chkpt")
@@ -31,7 +31,7 @@ class TestTensorFlowDatasetAdapter:
         with tf.Session() as sess:
             # Iterate through 10 batches of 3 numbers, multiplied by 2.
             ds = tf.data.Dataset.range(30).batch(3).apply(user_transformation)
-            adapter = DatasetToTensorFlowDatasetAdapter(ds)
+            adapter = _TFDatasetAdapter(ds)
             iterator = adapter.get_iterator()
             next_item = iterator.get_next()
 
@@ -57,7 +57,7 @@ class TestTensorFlowDatasetAdapter:
 
         with tf.Session() as sess:
             ds = tf.data.Dataset.range(30).batch(3).apply(user_transformation)
-            adapter = DatasetToTensorFlowDatasetAdapter(ds)
+            adapter = _TFDatasetAdapter(ds)
             iterator = adapter.get_iterator()
 
             # Reload the iterator and read the second half of the batches again.

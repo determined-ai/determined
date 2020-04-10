@@ -30,10 +30,10 @@ class OneVarTrial(keras.TFKerasTrial):
         self.my_batch_size = self.context.get_per_slot_batch_size()
         self.my_learning_rate = self.context.get_hparam("learning_rate")
 
-    def build_training_data_loader(self) -> keras.KerasInputData:
+    def build_training_data_loader(self) -> keras.InputData:
         return make_one_var_tf_dataset_loader(self.context.get_hparams(), self.my_batch_size)
 
-    def build_validation_data_loader(self) -> keras.KerasInputData:
+    def build_validation_data_loader(self) -> keras.InputData:
         return make_one_var_tf_dataset_loader(self.context.get_hparams(), self.my_batch_size)
 
     def build_model(self) -> Sequential:

@@ -51,13 +51,13 @@ class XORTrial(keras.TFKerasTrial):
             intra_op_parallelism_threads=1, inter_op_parallelism_threads=1
         )
 
-    def build_training_data_loader(self) -> keras.KerasInputData:
+    def build_training_data_loader(self) -> keras.InputData:
         train, _ = make_xor_data_sequences(batch_size=4)
-        return keras.KerasDataAdapter(train, workers=0)
+        return keras.adapt_keras_data(train, workers=0)
 
-    def build_validation_data_loader(self) -> keras.KerasInputData:
+    def build_validation_data_loader(self) -> keras.InputData:
         _, test = make_xor_data_sequences(batch_size=4)
-        return keras.KerasDataAdapter(test, workers=0)
+        return keras.adapt_keras_data(test, workers=0)
 
 
 class XORTrialWithTrainingMetrics(XORTrial):

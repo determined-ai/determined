@@ -176,8 +176,8 @@ def make_xor_data_sequences(
         training_labels = training_labels[idxs]
 
     return (
-        keras.InMemorySequence(training_data, training_labels, batch_size=batch_size),
-        keras.InMemorySequence(training_data, training_labels, batch_size=batch_size),
+        keras._ArrayLikeAdapter(training_data, training_labels, batch_size=batch_size),
+        keras._ArrayLikeAdapter(training_data, training_labels, batch_size=batch_size),
     )
 
 
