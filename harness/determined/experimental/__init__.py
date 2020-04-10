@@ -1,1 +1,1 @@
-from determined_common.experimental import Checkpoint, TrialReference
+from determined_common.experimental import Checkpoint, ExperimentReference, TrialReference
