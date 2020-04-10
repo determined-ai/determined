@@ -74,13 +74,12 @@ func New(version string, logStore *logger.LogBuffer, config *Config) *Master {
 }
 
 func (m *Master) getInfo(c echo.Context) (interface{}, error) {
-	enabled := m.config.Telemetry.Enabled && m.config.Telemetry.SegmentWebUIKey != ""
+	telemetryInfo := aproto.TelemetryInfo{}
 
-	// It would look a bit weird to put a Segment key in the result even when telemetry is disabled.
-	telemetryInfo := aproto.TelemetryInfo{
-		Enabled: enabled,
-	}
-	if enabled {
+	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentWebUIKey != "" {
+		// Only advertise a Segment WebUI key if a key has been configured and
+		// telemetry is enabled.
+		telemetryInfo.Enabled = true
 		telemetryInfo.SegmentKey = m.config.Telemetry.SegmentWebUIKey
 	}
 
@@ -569,9 +568,12 @@ func (m *Master) Run() error {
 			// We wouldn't want to totally fail just because telemetry failed; just note the error.
 			log.WithError(err).Errorf("failed to initialize telemetry")
 		} else {
-			log.Info("initializing telemetry; run with `--telemetry-enabled=false` to disable")
+			log.Info("telemetry reporting is enabled; run with `--telemetry-enabled=false` to disable")
 			m.system.ActorOf(actor.Addr("telemetry"), telemetry)
 		}
+	} else {
+		log.Info("telemetry reporting is disabled")
 	}
+
 	return m.startServers()
 }
