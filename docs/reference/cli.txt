@@ -8,44 +8,47 @@ The Determined command-line interface (CLI) is installed under the name
 to act on and the action to perform, followed by any additional
 arguments or options. For example,
 
-   ``det experiment config 17``
+.. code::
+
+   det experiment config 17
 
 displays the configuration for experiment 17. Some commands have an
 additional level of nesting:
 
-   ``det experiment label add 17 foobar``
+.. code::
+
+   det experiment label add 17 foobar
 
 adds the label "foobar" to experiment 17.
 
 The names of some objects, actions, and options may be abbreviated;
-alternative names are shown below separated by commas. For example,
-these two commands are equivalent:
+alternative names are shown in the full reference in parentheses. For
+example, these two commands are equivalent:
 
-   ``det -u admin experiment list``
+.. code::
 
-   ``det --user admin experiment list``
+   det -u admin experiment list
+   det --user admin experiment list
 
 as are these two:
 
-   ``det e config 17``
+.. code::
 
-   ``det experiment config 17``
-
-Additionally, when ``list`` is a valid action, it is the default when no
-action is specified, so ``det e`` and ``det s`` are equivalent to
-``det experiment list`` and ``det slot list``, for example.
+   det e config 17
+   det experiment config 17
 
 Additionally, when ``list`` is a valid action, it is the default when no
 action is specified, so the following pairs of commands are also equivalent:
 
-   ``det e``
+.. code::
 
-   ``det experiment list``
+   det e
+   det experiment list
 
-   ``det s``
+.. code::
 
-   ``det slot list``
-
+   det s
+   det slot list
 
 Providing ``-h`` or ``--help`` as an argument anywhere will cause the
 CLI to exit after printing help text for the object or action specified
