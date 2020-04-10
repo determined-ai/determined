@@ -1,8 +1,8 @@
 """
-This example a simple example that shows how to implemented a CNN based on the CIFAR10 in
-Determined.
+This example shows how to use Determined to implement a tf.keras-based CNN to
+perform image classification on the Fashion-MNIST dataset.
 
-Based off: https://www.tensorflow.org/tutorials/images/cnn
+Based off: https://www.tensorflow.org/tutorials/keras/classification
 """
 import tempfile
 
