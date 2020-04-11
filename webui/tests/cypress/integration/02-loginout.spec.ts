@@ -12,6 +12,11 @@ describe('Sign in/out', () => {
     cy.get('#avatar').should('not.exist');
   }
 
+  function ensureLoggedOut(): void {
+    cy.visit('/ui/logout');
+    checkLoggedOut();
+  }
+
   it('should log in', () => {
     cy.visit('/ui/experiments');
     checkLoggedIn('determined');
@@ -22,15 +27,15 @@ describe('Sign in/out', () => {
     cy.get('#avatar').click();
     cy.get('nav a[href="/ui/logout"]').should('have.lengthOf', 1);
     cy.get('nav a[href="/ui/logout"]').click();
-    cy.visit('/ui/logout');
     checkLoggedOut();
   });
 
   it('should log back in after logging out', () => {
     // Logging out above should put us on the login page, so enter the login
     // information directly.
+    ensureLoggedOut();
+    cy.visit('/ui/login');
     const username = 'determined';
-    cy.visit('/ui/logout');
     // We directly set the value to avoid using the less reliable .type() method
     // from Cypress. We also trigger 'input' event to keep it closer to an actual typing
     // behavior this would help functions relying onInput.

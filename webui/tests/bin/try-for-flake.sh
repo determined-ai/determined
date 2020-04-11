@@ -2,6 +2,7 @@
 
 # if tests are re-runnable
 re_runnable=${1:-false}
+cmd_prefix=docker-
 
 c=0
 
@@ -10,14 +11,15 @@ if $re_runnable; then
   while true; do
     c=$((c+1))
     echo "run #$c"
-    make docker-run-e2e-tests || break
+    make ${cmd_prefix}run-e2e-tests || break
   done
 else # run the whole suite
   while true; do
     c=$((c+1))
     echo "run #$c"
-    make docker-e2e-tests || break
+    make ${cmd_prefix}e2e-tests || break
   done
 fi
 
-echo "test failure at run #$c"
+echo "result: test failure at run #$c of $(git rev-parse --short HEAD)"
+# TODO use trap to show successful result upon SIGTERM SIGINT
