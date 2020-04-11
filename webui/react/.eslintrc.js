@@ -11,6 +11,7 @@ module.exports = {
     'plugin:jest/recommended',
     'plugin:jest/style',
     'plugin:@typescript-eslint/recommended',
+    'plugin:react-hooks/recommended',
   ],
   globals: {
     Atomics: 'readonly',
@@ -22,7 +23,7 @@ module.exports = {
     ecmaVersion: 2018,
     sourceType: 'module',
   },
-  plugins: [ 'import', 'react' ],
+  plugins: [ 'import', 'react', 'react-hooks' ],
   rules: {
     '@typescript-eslint/indent': [ 'error', 2 ],
     'array-bracket-spacing': [ 'error', 'always' ],

@@ -1,7 +1,6 @@
 import { render } from '@testing-library/react';
-import { createBrowserHistory } from 'history';
 import React from 'react';
-import { Router } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import sinon from 'sinon';
 
 import App from './App';
@@ -17,8 +16,7 @@ sinon.stub(window.location, 'replace');
 
 describe('App', () => {
   it('renders app', () => {
-    const history = createBrowserHistory();
-    const { container } = render(<Router history={history}><App /></Router>);
+    const { container } = render(<MemoryRouter><App /></MemoryRouter>);
     expect(container).toBeInTheDocument();
   });
 });

@@ -79,7 +79,6 @@ export const applyMappers = <T>(data: unknown, mappers: Mapper | Mapper[]): T =>
 };
 
 const useRestApi = <T>(ioType: io.Mixed, options: HookOptions<T> = {}): Output<T> => {
-  const source = axios.CancelToken.source();
   const [ httpOptions, setHttpOptions ] = useState<HttpOptions>(options.httpOptions || {});
   const [ state, dispatch ] = useReducer<Reducer<State<T>, Action<T>>>(reducer, {
     data: options.data,
@@ -89,6 +88,7 @@ const useRestApi = <T>(ioType: io.Mixed, options: HookOptions<T> = {}): Output<T
   });
 
   useEffect(() => {
+    const source = axios.CancelToken.source();
     if (!httpOptions.url) return;
 
     // cancel the previous existing request
@@ -130,7 +130,7 @@ const useRestApi = <T>(ioType: io.Mixed, options: HookOptions<T> = {}): Output<T
     fetchData();
 
     return (): void => source.cancel();
-  }, [ httpOptions ]);
+  }, [ httpOptions, ioType, options.mappers ]);
 
   return [ state, setHttpOptions ];
 };

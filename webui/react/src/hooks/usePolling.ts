@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { isAsyncFunction } from 'utils/data';
 
@@ -11,37 +11,34 @@ interface PollingOptions {
   triggers?: unknown[];
 }
 
-const usePolling = (pollingFn: PollingFn, options: PollingOptions = {}): (() => void) => {
-  const timerId = useRef<number>();
-  const countId = useRef(0);
+const usePolling =
+  (pollingFn: PollingFn, { delay, triggers }: PollingOptions = {}): (() => void) => {
+    const timerId = useRef<number>();
+    const countId = useRef(0);
 
-  const pollingRoutine = async (): Promise<void> => {
-    countId.current++;
-    isAsyncFunction(pollingFn) ? await pollingFn() : pollingFn();
-    /* eslint-disable-next-line @typescript-eslint/no-use-before-define */
-    startPolling();
-  };
+    const pollingRoutine = useCallback(async (): Promise<void> => {
+      countId.current++;
+      isAsyncFunction(pollingFn) ? await pollingFn() : pollingFn();
+      timerId.current = setTimeout(() => {
+        pollingRoutine();
+      }, delay || DEFAULT_DELAY);
+    }, [ pollingFn, delay ]);
 
-  const startPolling = (): void => {
-    timerId.current = setTimeout(() => {
+    const stopPolling = (): void => {
+      if (timerId.current) {
+        clearTimeout(timerId.current);
+        timerId.current = undefined;
+      }
+    };
+
+    useEffect(() => {
+      stopPolling();
       pollingRoutine();
-    }, options.delay || DEFAULT_DELAY);
-  };
+      return stopPolling;
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+    }, [ pollingRoutine, ...(triggers || []) ]);
 
-  const stopPolling = (): void => {
-    if (timerId.current) {
-      clearTimeout(timerId.current);
-      timerId.current = undefined;
-    }
-  };
-
-  useEffect(() => {
-    stopPolling();
-    pollingRoutine();
     return stopPolling;
-  }, options.triggers || []);
-
-  return stopPolling;
-};
+  };
 
 export default usePolling;

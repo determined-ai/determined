@@ -1,5 +1,5 @@
-import axios from 'axios';
-import React, { useEffect, useRef, useState } from 'react';
+import axios, { CancelToken } from 'axios';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Route as DomRoute, Redirect } from 'react-router-dom';
 
 import Spinner from 'components/Spinner';
@@ -11,18 +11,19 @@ import { getCurrentUser } from 'services/api';
  * A wrapper for <Route> that redirects to the login
  * screen if you're not yet authenticated.
  */
+
 const Route: React.FC<RouteConfigItem> = (props: RouteConfigItem) => {
   const mounted = useRef(false);
   const auth = Auth.useStateContext();
   const setAuth = Auth.useActionContext();
-  const source = axios.CancelToken.source();
+  const needAuth = props.needAuth;
 
   // isLoading is true at the start until useEffect overrides it.
   const [ isLoading, setIsLoading ] = useState(true);
 
-  const checkAuth = async (): Promise<void> => {
+  const checkAuth = useCallback(async (cancelToken: CancelToken): Promise<void> => {
     try {
-      const user = await getCurrentUser(source.token);
+      const user = await getCurrentUser(cancelToken);
 
       if (mounted.current) {
         setAuth({
@@ -34,19 +35,20 @@ const Route: React.FC<RouteConfigItem> = (props: RouteConfigItem) => {
       // TODO: Update to internal routing when React takes over login.
       crossoverRoute('/ui/logout');
     }
-  };
+  }, [ setAuth ]);
 
   const setLoading = (loadingStatus: boolean): void => {
     if (mounted.current) setIsLoading(loadingStatus);
   };
 
   useEffect(() => {
+    const source = axios.CancelToken.source();
     // Keeps track of whether component has mounted or not
     mounted.current = true;
 
     // Use IIFE to make block sync
     (async (): Promise<void> => {
-      if (props.needAuth) await checkAuth();
+      if (needAuth) await checkAuth(source.token);
       setLoading(false);
     })();
 
@@ -58,10 +60,10 @@ const Route: React.FC<RouteConfigItem> = (props: RouteConfigItem) => {
       mounted.current = false;
       source.cancel();
     };
-  }, []);
+  }, [ checkAuth, needAuth ]);
 
   if (isLoading) return <Spinner fullPage={true} />;
-  if (props.needAuth && !auth.isAuthenticated) return <Redirect to="/ui/login" />;
+  if (needAuth && !auth.isAuthenticated) return <Redirect to="/ui/login" />;
   return <DomRoute {...props} />;
 };
 

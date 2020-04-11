@@ -37,19 +37,19 @@ const taskTypeOrder = [
   { label: 'Commands', type: TaskType.Command },
 ];
 
-const TaskFilter: React.FC<Props> = (props: Props) => {
-  const handleTypeClick = (taskType: TaskType): (() => void) => {
-    return useCallback((): void => {
-      const types = { ...props.filters.types };
-      types[taskType] = !props.filters.types[taskType];
-      props.onChange({ ...props.filters, types });
-    }, [ props.filters.types, props.onChange ]);
-  };
+const TaskFilter: React.FC<Props> = ({ filters, onChange, users }: Props) => {
+  const handleTypeClick = useCallback((taskType: TaskType): (() => void) => {
+    return (): void => {
+      const types = { ...filters.types };
+      types[taskType] = !filters.types[taskType];
+      onChange({ ...filters, types });
+    };
+  }, [ filters, onChange ]);
 
   const handleStateSelect = useCallback((value: SelectValue): void => {
     if (typeof value !== 'string') return;
-    props.onChange({ ...props.filters, states: [ value ] });
-  }, [ props.filters, props.onChange ]);
+    onChange({ ...filters, states: [ value ] });
+  }, [ filters, onChange ]);
 
   const handleUserFilter = useCallback((search: string, option) => {
     return option.props.children.indexOf(search) !== -1;
@@ -57,18 +57,18 @@ const TaskFilter: React.FC<Props> = (props: Props) => {
 
   const handleUserSelect = useCallback((value: SelectValue) => {
     const username = value === ALL_VALUE ? undefined : value as string;
-    props.onChange({ ...props.filters, username });
-  }, [ props.filters.username ]);
+    onChange({ ...filters, username });
+  }, [ filters, onChange ]);
 
   const handleLimitSelect = useCallback((limit: number): void => {
-    props.onChange({ ...props.filters, limit });
-  }, [ props.filters, props.onChange ]);
+    onChange({ ...filters, limit });
+  }, [ filters, onChange ]);
 
   const filterTaskButtons = taskTypeOrder.map(info => (
     <Tooltip key={info.label} placement="top" title={info.label}>
       <FilterButton
         aria-label={info.label}
-        className={props.filters.types[info.type] ? 'active' : ''}
+        className={filters.types[info.type] ? 'active' : ''}
         onClick={handleTypeClick(info.type)}>
         <Icon name={info.type.toLocaleLowerCase()} />
       </FilterButton>
@@ -77,15 +77,16 @@ const TaskFilter: React.FC<Props> = (props: Props) => {
 
   const runStateOptions = useMemo(() => Object.values(RunState).map((value) => {
     return <Option key={value} value={value}>{runStateToLabel[value]}</Option>;
-  }), [ Option, RunState, runStateToLabel ]);
+  }), [ ]);
 
   const commandStateOptions = useMemo(() => Object.values(CommandState).map((value) => {
     return <Option key={value} value={value}>{commandStateToLabel[value]}</Option>;
-  }), [ Option, RunState, commandStateToLabel ]);
+  }), [ ]);
 
+  const usernameFilter = filters.username;
   const defaultUsername = useMemo((): number | string => {
-    return props.filters.username || ALL_VALUE;
-  }, [ props.filters.username ]);
+    return usernameFilter || ALL_VALUE;
+  }, [ usernameFilter ]);
 
   return (
     <LayoutHelper gap={ShirtSize.jumbo} yCenter>
@@ -93,7 +94,7 @@ const TaskFilter: React.FC<Props> = (props: Props) => {
       <div>
         <Label>State</Label>
         <Select
-          defaultValue={props.filters.states[0]}
+          defaultValue={filters.states[0]}
           dropdownMatchSelectWidth={false}
           onSelect={handleStateSelect}>
           <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
@@ -116,7 +117,7 @@ const TaskFilter: React.FC<Props> = (props: Props) => {
           style={{ width: '10rem' }}
           onSelect={handleUserSelect}>
           <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
-          {props.users.map(user => (
+          {users.map(user => (
             <Option key={user.id} value={user.username}>{user.username}</Option>
           ))}
         </Select>
@@ -124,7 +125,7 @@ const TaskFilter: React.FC<Props> = (props: Props) => {
       <div>
         <Label>Limit</Label>
         <Select
-          defaultValue={props.filters.limit}
+          defaultValue={filters.limit}
           onSelect={handleLimitSelect}>
           {limitOptions.map(limit => <Option key={limit} value={limit}>{limit}</Option>)}
         </Select>

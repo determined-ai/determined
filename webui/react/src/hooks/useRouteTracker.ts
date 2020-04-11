@@ -26,7 +26,7 @@ const useRouteTracker = (): void => {
 
     // Return listener remover
     return unlisten;
-  }, [ listen ]);
+  }, [ listen, info.telemetry.enabled, location.pathname ]);
 };
 
 export default useRouteTracker;

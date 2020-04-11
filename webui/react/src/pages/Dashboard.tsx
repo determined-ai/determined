@@ -67,13 +67,13 @@ const Dashboard: React.FC = () => {
     { ...defaultFilters, username: (auth.user || {}).username });
   const [ filters, setFilters ] = useState<TaskFilters>(initFilters);
 
-  const fetchExperiments = (): void => {
+  const fetchExperiments = useCallback((): void => {
     requestExperiments({
       body: buildExperimentListGqlQuery({ limit: 100 }),
       method: 'POST',
       url: '/graphql',
     });
-  };
+  }, [ requestExperiments ]);
 
   usePolling(fetchExperiments);
 

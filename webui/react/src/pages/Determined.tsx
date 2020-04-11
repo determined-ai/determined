@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import styled from 'styled-components';
 import { theme } from 'styled-tools';
@@ -53,16 +53,23 @@ const Determined: React.FC = () => {
   const [ tensorboardsResponse, requestTensorboards ] =
     useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToTensorboards });
 
-  const fetchAll = (): void => {
+  const fetchAll = useCallback((): void => {
     requestAgents({ url: '/agents' });
     requestCommands({ url: '/commands' });
     requestNotebooks({ url: '/notebooks' });
     requestShells({ url: '/shells' });
     requestTensorboards({ url: '/tensorboard' });
     requestExperiments({ body: query, method: 'POST', url: '/graphql' });
-  };
+  }, [
+    requestAgents,
+    requestCommands,
+    requestNotebooks,
+    requestShells,
+    requestTensorboards,
+    requestExperiments,
+  ]);
 
-  const fetchUsers = (): void => requestUsers({ url: '/users' });
+  const fetchUsers = useCallback((): void => requestUsers({ url: '/users' }), [ requestUsers ]);
 
   usePolling(fetchAll);
   usePolling(fetchUsers, { delay: 60000 });
@@ -74,7 +81,7 @@ const Determined: React.FC = () => {
     setAgents({ type: Agents.ActionType.Set, value: agentsResponse });
     if (!agentsResponse.data) return;
     setOverview({ type: ClusterOverview.ActionType.SetAgents, value: agentsResponse.data });
-  }, [ agentsResponse.data, setOverview ]);
+  }, [ agentsResponse.data, setOverview, agentsResponse, setAgents ]);
   useEffect(() => {
     setCommands({ type: Commands.ActionType.Set, value: commandsResponse });
   }, [ commandsResponse, setCommands ]);
