@@ -39,10 +39,14 @@ describe('Sign in/out', () => {
     // We directly set the value to avoid using the less reliable .type() method
     // from Cypress. We also trigger 'input' event to keep it closer to an actual typing
     // behavior this would help functions relying onInput.
+    // cy.get('input#input-username')
+    //   .invoke('val', username)
+    //   .trigger('input');
+
     cy.get('input#input-username')
-      .invoke('val', username)
-      .trigger('change')
-      .trigger('input')
+      .type(username, { delay: 50, force: true });
+
+    cy.get('input#input-username')
       .should('have.value', username);
 
     cy.get('button[type="submit"]').click();
