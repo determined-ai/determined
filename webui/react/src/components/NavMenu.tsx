@@ -31,12 +31,14 @@ const NavMenu: React.FC<Props> = (props: Props) => {
   const [ selectedId, setSelectedId ] = useState(props.defaultRouteId);
   const navItemType = menuToItemTypes[props.type || NavMenuType.Main];
 
+  const routes = props.routes;
+  const basePath = props.basePath;
   useEffect(() => {
-    const matchingPath = props.routes.find(item => {
-      return RegExp(`^${props.basePath}${item.path}`).test(location.pathname);
+    const matchingPath = routes.find(item => {
+      return RegExp(`^${basePath}${item.path}`).test(location.pathname);
     });
     if (matchingPath) setSelectedId(matchingPath.id);
-  }, [ location.pathname ]);
+  }, [ location.pathname, basePath, routes ]);
 
   return (
     <Base {...props}>

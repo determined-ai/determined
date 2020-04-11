@@ -74,6 +74,7 @@
     "eslint-plugin-import": "^2.20.1",
     "eslint-plugin-jest": "^23.8.2",
     "eslint-plugin-react": "^7.19.0",
+    "eslint-plugin-react-hooks": "^3.0.0",
     "less": "^3.11.1",
     "less-loader": "^5.0.0",
     "react-app-rewired": "^2.1.5",

@@ -21,6 +21,8 @@ const TaskActionDropdown: React.FC<Props> = (props: Props) => {
   const isArchivable = isExperiment && terminalRunStates.includes(props.task.state as RunState);
   const isKillable = isTaskKillable(props.task);
 
+  const stopPropagation = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
+
   if (!isArchivable && !isKillable) return (<div />);
 
   const experimentsResponse = Experiments.useStateContext();
@@ -65,8 +67,6 @@ const TaskActionDropdown: React.FC<Props> = (props: Props) => {
     }
     // TODO show loading indicator when we have a button component that supports it.
   };
-
-  const stopPropagation = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
 
   const menu = (
     <Menu onClick={handleMenuClick}>
