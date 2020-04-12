@@ -128,9 +128,9 @@ The information we collect from the WebUI includes:
 In order to disable telemetry reporting in both the master and the
 WebUI, start the master with the ``--telemetry-enabled=false`` flag
 (this can also be done by editing the master config file or setting an
-environmental variable, as with any other configuration
-option). Disabling telemetry reporting will not affect the functionality
-of Determined in any way.
+environment variable, as with any other configuration option).
+Disabling telemetry reporting will not affect the functionality of
+Determined in any way.
 
 Master Configuration
 ====================

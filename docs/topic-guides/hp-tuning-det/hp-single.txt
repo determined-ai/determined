@@ -8,6 +8,7 @@ single hyperparameter configuration for ``max_steps`` steps, and then
 performs validation. This method is useful for testing or for training a
 single model configuration until convergence.
 
-Next Steps in Determined
-------------------------
+Next Steps
+----------
+
 - :ref:`Experiment Configuration<experiment-configuration_searcher>`

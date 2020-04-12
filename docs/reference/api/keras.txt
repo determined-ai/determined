@@ -30,11 +30,11 @@ supported data types mentioned above.
 The behavior of ``Sequence`` objects should be
 familiar if you have used ``fit_generator``. Like in ``tf.keras``, these
 ``Sequence`` objects should return batches of data (i.e.,
-either ``(inputs, targets)`` or ``(inputs, targets, sample_weights``)).
+either ``(inputs, targets)`` or ``(inputs, targets, sample_weights)``).
 Examples can be found in :ref:`tf-keras-trial`.
 
 .. warning::
-  If you are using ``tf.data.Dataset`` with distributed training, Deterimend's
+  If you are using ``tf.data.Dataset`` with distributed training, Determined's
   support for automatically checkpointing and resuming workloads does
   not work correctly. Therefore, using ``tf.data.Dataset`` inputs with
   distributed training is currently not recommended.
@@ -89,7 +89,7 @@ When calling ``adapt_keras_data``, we can pass ``use_multiprocessing`` and
 ``determined.keras.TFKerasContext``
 -----------------------------------------
 
-To use ``tf.data.Dataset`` users need to wrap their datasets using
+To use ``tf.data.Dataset``, users need to wrap their datasets using
 Determined-provided wrappers.  Note that the concrete context object where
 these functions will be found will be either
 :class:`determined.keras.TFKerasTrialContext` or

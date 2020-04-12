@@ -51,8 +51,9 @@ Determined also supports other common hyperparameter search algorithms:
    configurations with ones *near* the high-performing points in the
    hyperparameter space.
 
-Next Steps in Determined
+Next Steps
 ------------------------
+
 - :ref:`Experiment Configuration<experiment-configuration_searcher>`
 
 .. toctree::

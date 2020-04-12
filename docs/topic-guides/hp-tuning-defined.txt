@@ -65,6 +65,7 @@ Tuning deep learning models is difficult because:
 Fortunately, there are automatic hyperparameter tuning techniques that the
 machine learning engineer can leverage to find an effective model.
 
-Next Steps in Determined
-------------------------
+Next Steps
+----------
+
 - :ref:`topic-guides_hp-tuning-det`

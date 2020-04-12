@@ -7,7 +7,6 @@ Topic guides discuss different concepts and topics about Determined and deep lea
   - :ref:`topic-guides_hp-tuning-basics`
   - :ref:`topic-guides_hp-tuning-det`
   - :ref:`optimizing-multi-gpu-training`
-  - :ref:`multi-gpu-training`
 
 **System Concepts**
   - :ref:`reproducibility`
