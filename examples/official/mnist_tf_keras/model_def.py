@@ -4,8 +4,6 @@ perform image classification on the Fashion-MNIST dataset.
 
 Based off: https://www.tensorflow.org/tutorials/keras/classification
 """
-import tempfile
-
 import tensorflow as tf
 from tensorflow import keras
 
@@ -17,9 +15,6 @@ import data
 class MNISTTrial(TFKerasTrial):
     def __init__(self, context: TFKerasTrialContext) -> None:
         self.context = context
-
-        # Create a unique download directory for each rank so they don't overwrite each other.
-        self.download_directory = tempfile.mkdtemp()
 
     def build_model(self):
         model = keras.Sequential(
@@ -38,7 +33,7 @@ class MNISTTrial(TFKerasTrial):
         return model
 
     def build_training_data_loader(self):
-        (train_images, train_labels), (_, _) = data.load_data(self.download_directory)
+        train_images, train_labels = data.load_training_data()
         train_images = train_images / 255.0
 
         batch_size = self.context.get_per_slot_batch_size()
@@ -47,7 +42,7 @@ class MNISTTrial(TFKerasTrial):
         return train
 
     def build_validation_data_loader(self):
-        (_, _), (test_images, test_labels) = data.load_data(self.download_directory)
+        test_images, test_labels = data.load_validation_data()
         test_images = test_images / 255.0
 
         batch_size = self.context.get_per_slot_batch_size()
