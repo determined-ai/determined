@@ -7,9 +7,8 @@ from tests.integrations.cluster_utils import skip_test_if_not_enough_gpus
 
 @skip_test_if_not_enough_gpus(8)
 @pytest.mark.parallel  # type: ignore
-@pytest.mark.parametrize("use_tf_dataset", [True, False])  # type: ignore
 @pytest.mark.parametrize("tf2", [False])  # type: ignore
-def test_tf_keras_native_parallel(use_tf_dataset: bool, tf2: bool) -> None:
+def test_tf_keras_native_parallel(tf2: bool) -> None:
     config = conf.load_config(conf.official_examples_path("cifar10_cnn_tf_keras/const.yaml"))
     config["checkpoint_storage"] = exp.shared_fs_checkpoint_config()
     config.get("bind_mounts", []).append(exp.root_user_home_bind_mount())
@@ -17,8 +16,6 @@ def test_tf_keras_native_parallel(use_tf_dataset: bool, tf2: bool) -> None:
     config = conf.set_native_parallel(config, True)
     config = conf.set_max_steps(config, 2)
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
-    if use_tf_dataset:
-        config["data"]["use_tf_dataset"] = True
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("cifar10_cnn_tf_keras"), 1
@@ -29,10 +26,9 @@ def test_tf_keras_native_parallel(use_tf_dataset: bool, tf2: bool) -> None:
 
 @skip_test_if_not_enough_gpus(8)
 @pytest.mark.parallel  # type: ignore
-@pytest.mark.parametrize("use_tf_dataset", [True, False])  # type: ignore
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])  # type: ignore
 @pytest.mark.parametrize("tf2", [False, True])  # type: ignore
-def test_tf_keras_parallel(use_tf_dataset: bool, aggregation_frequency: int, tf2: bool) -> None:
+def test_tf_keras_parallel(aggregation_frequency: int, tf2: bool) -> None:
     if tf2 and aggregation_frequency > 1:
         pytest.skip("TF2 does not currently support aggregation_frequency.")
 
@@ -44,8 +40,6 @@ def test_tf_keras_parallel(use_tf_dataset: bool, aggregation_frequency: int, tf2
     config = conf.set_max_steps(config, 2)
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
-    if use_tf_dataset:
-        config["data"]["use_tf_dataset"] = True
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("cifar10_cnn_tf_keras"), 1
@@ -55,17 +49,14 @@ def test_tf_keras_parallel(use_tf_dataset: bool, aggregation_frequency: int, tf2
 
 
 @pytest.mark.integ3  # type: ignore
-@pytest.mark.parametrize("use_tf_dataset", [True, False])  # type: ignore
 @pytest.mark.parametrize("tf2", [True, False])  # type: ignore
-def test_tf_keras_single_gpu(use_tf_dataset: bool, tf2: bool) -> None:
+def test_tf_keras_single_gpu(tf2: bool) -> None:
     config = conf.load_config(conf.official_examples_path("cifar10_cnn_tf_keras/const.yaml"))
     config["checkpoint_storage"] = exp.shared_fs_checkpoint_config()
     config.get("bind_mounts", []).append(exp.root_user_home_bind_mount())
     config = conf.set_slots_per_trial(config, 1)
     config = conf.set_max_steps(config, 2)
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
-    if use_tf_dataset:
-        config["data"]["use_tf_dataset"] = True
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("cifar10_cnn_tf_keras"), 1
