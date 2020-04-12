@@ -197,11 +197,13 @@ created with the Determined CLI. It may contain the following fields:
 
     .. note::
 
-      ``global_batch_size`` is a required hyperparameter.
-      Batch size per slot is adjusted at runtime based on the number
-      of slots. The updated values should be accessed via the context
-      using: ``context.get_per_slot_batch_size()`` and
-      ``context.get_global_batch_size()``.
+      ``global_batch_size`` is a required hyperparameter.  Batch size per slot is
+      computed at runtime, based on the number of slots using to train a single trial
+      of this experiment (see ``resources.slots_per_trial``). The updated values
+      should be accessed via the trial context, using
+      :func:`context.get_per_slot_batch_size() <determined.TrialContext.get_per_slot_batch_size>`
+      and
+      :func:`context.get_global_batch_size() <determined.TrialContext.get_global_batch_size>`.
 
 .. _experiment-configuration_searcher:
 

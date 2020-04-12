@@ -21,21 +21,19 @@ This how-to will focus on the third approach, demonstrating how to perform distr
 training with Determined to speed up the training of a single trial.
 
 In the :ref:`experiment-configuration`, the ``resources.slots_per_trial`` option
-controls multi-GPU behavior. The default is set to 1 and uses a single GPU to
-train a trial.
-The ``slots_per_trial`` field indicates the number of GPUs to use to
-train a trial. These GPUs may be on a single agent machine or across
-multiple machines.
+controls multi-GPU behavior. The default value is 1, which means that a single
+GPU will be used to train a trial.  The ``slots_per_trial`` field indicates the
+number of GPUs to use to train a single trial. These GPUs may be on a single
+agent machine or across multiple machines.
 
 .. note::
 
-      When the ``slots_per_trial`` option is changed, the
-      per slot batch size is set to ``global_batch_size`` // ``slots_per_trial``.
-      The per slot (gpu) and global batch size should be accessed via the context using
-      ``context.get_per_slot_batch_size()`` and ``context.get_global_batch_size()`` respectively.
-      If ``global_batch_size`` is not divisible by ``slots_per_trial`` the remainder
-      is dropped.
-
+      When the ``slots_per_trial`` option is changed, the per-slot batch size is set to
+      ``global_batch_size`` // ``slots_per_trial``.  The per-slot (per-GPU) and global batch size
+      should be accessed via the context using :func:`context.get_per_slot_batch_size()
+      <determined.TrialContext.get_per_slot_batch_size>` and :func:`context.get_global_batch_size()
+      <determined.TrialContext.get_global_batch_size>`, respectively.  If ``global_batch_size`` is
+      not evenly divisible by ``slots_per_trial``, the remainder is dropped.
 
 Example configuration with distributed or parallel training:
 
@@ -45,18 +43,20 @@ Example configuration with distributed or parallel training:
      slots_per_trial: N
 
 To use distributed or parallel training, ``slots_per_trial`` must be set to a multiple
-of the GPUs per machine. E.g., if you have a cluster of 8-GPU machines, you need
-to set ``slots_per_trial`` to 8, 16, 24, etc. This ensures that the full network
-and interconnect bandwidth is available to the multi-GPU workloads and results
-in better performance.
+of the GPUs per machine. For example, if you have a cluster of machines that each has
+8 GPUs, you should set ``slots_per_trial`` to a multiple of 8, such as 8, 16, or 24.
+This ensures that the full network and interconnect bandwidth is available to
+multi-GPU workloads and results in better performance.
 
 .. warning::
 
-  Distributed and parallel training is designed to maximize performance by training with all
-  the resources of a machine. This can lead to situations where an experiment is
-  created but never becomes active: if the number of GPUs requested does not
-  divide into the machines available, for instance, or if another experiment is
-  already using some GPUs on a machine.
+  Distributed and parallel training is designed to maximize performance by
+  training with all the resources of a machine. This can lead to situations
+  where an experiment is created but never starts running on the cluster, for
+  example if the number of GPUs requested does not divide into the machines
+  available. Similarly, if a task is running on a multi-GPU machine and using
+  one or more of its GPUs, that will prevent a distributed training job from
+  starting on that machine.
 
   If a multi-GPU experiment does not become active after a minute or so,
   please confirm that ``slots_per_trial`` is a multiple of the number of GPUs
@@ -64,7 +64,7 @@ in better performance.
   list`` to check if any other tasks are using GPUs and preventing your
   experiment from using all the GPUs on a machine.
 
-
 Next Steps
 ----------
+
 - :ref:`optimizing-multi-gpu-training`
