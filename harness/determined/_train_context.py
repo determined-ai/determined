@@ -84,7 +84,9 @@ class _TrainContext(metaclass=abc.ABCMeta):
 
     def get_per_slot_batch_size(self) -> int:
         """
-        Return the per slot batch size.
+        Return the per-slot batch size. When a model is trained with a single GPU, this is equal to
+        the global batch size. When multi-GPU training is used, this is equal to the global batch
+        size divided by the number of GPUs used to train the model.
         """
         return self._per_slot_batch_size
 
