@@ -8,6 +8,7 @@ hyperparameters chosen uniformly at random from the configured
 hyperparameter space. Each trial is trained for ``max_steps`` steps and
 then the trial's validation metrics are computed.
 
-Next Steps in Determined
-------------------------
+Next Steps
+----------
+
 - :ref:`Experiment Configuration<experiment-configuration_searcher>`

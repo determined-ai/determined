@@ -5,6 +5,7 @@ Tutorials
 Tutorials are simple step-by-step guides about getting started with different topics of Determined. These are a good place to get started with using the product.
 
 For an introduction to Determined, pick your framework of choice:
+
  - :ref:`pytorch-mnist-tutorial`
  - :ref:`tf-mnist-tutorial`
 

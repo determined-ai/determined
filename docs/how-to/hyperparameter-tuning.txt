@@ -1,3 +1,5 @@
+.. _hyperparameter-tuning:
+
 Hyperparameter Tuning
 =====================
 
@@ -91,7 +93,8 @@ for downstream serving.
 
 .. image:: /assets/images/adaptive-experiment-detail.png
 
-Next Steps in Determined
-------------------------
+Next Steps
+----------
+
 - :ref:`experiment-configuration`
 - :ref:`topic-guides_hp-tuning-det`

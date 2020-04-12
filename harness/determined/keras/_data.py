@@ -309,10 +309,11 @@ def adapt_keras_data(
 ) -> InputData:
     """adapt_keras_data adapts input and target data to a _SequenceAdapter or a
     _TFDatasetAdapter, both of which are designed to support random access efficiently,
-    for the purpose of supporting Determined managed training loop.
+    for the purpose of supporting a Determined-managed training loop.
 
     Multiprocessing or multithreading for native Python generators is not supported.
-    If you want these performance accelerations, please consider using a Sequence as x.
+    If you want these performance optimizations, please consider representing the
+    input data using a Sequence instead.
 
     Args:
         x: Input data. It could be:

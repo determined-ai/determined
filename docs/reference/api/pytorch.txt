@@ -26,7 +26,7 @@ Data Loading
 
 Loading data into ``PyTorchTrial`` models is done by defining a
 ``build_training_data_loader()`` and ``build_validation_data_loader()``
-function. These function must each return an instance of
+function. These functions must each return an instance of
 ``determined.pytorch.DataLoader``.  ``determined.pytorch.DataLoader`` behaves
 the same as ``torch.utils.data.DataLoader`` and is a drop-in replacement.
 

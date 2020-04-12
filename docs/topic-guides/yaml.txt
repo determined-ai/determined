@@ -86,13 +86,15 @@ floats, integers, strings, a map, and an array:
       - B=B
       - C=C
 
-Next Steps in Determined
-------------------------
+Next Steps
+----------
+
 - :ref:`experiment-configuration`
 - :ref:`command-configuration`
 - :ref:`cluster-configuration`
 
 Reference
 ---------
+
 - Read more about YAML: https://learnxinyminutes.com/docs/yaml/
 - Validate your YAML: http://www.yamllint.com/

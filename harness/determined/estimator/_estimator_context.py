@@ -43,12 +43,11 @@ class EstimatorContext:
 
     def wrap_optimizer(self, optimizer: Any) -> Any:
         """
-        This should be used to wrap optimizers objects immediately after they have
-        been created. Users should use the output of this wrapper as the new
-        instance of their optimizer. E.g., If users create their optimizer within
-        ``build_estimator()``, they should call ``optimizer =
-        wrap_optimizer(optimzer)`` prior to passing the optimizer into their
-        Estimator.
+        This should be used to wrap optimizer objects immediately after they have
+        been created. Users should use the output of this wrapper as the new instance
+        of their optimizer. For example, if users create their optimizer within
+        ``build_estimator()``, they should call ``optimizer = wrap_optimizer(optimzer)``
+        prior to passing the optimizer into their Estimator.
         """
         hvd.require_horovod_type("tensorflow", "EstimatorContext.wrap_optimizer was called.")
 
@@ -76,11 +75,10 @@ class EstimatorContext:
         This should be used to wrap ``tf.data.Dataset`` objects immediately after
         they have been created. Users should use the output of this wrapper as the
         new instance of their dataset. If users create multiple datasets (e.g., one
-        for training and one for testing) users should wrap each dataset
+        for training and one for testing), users should wrap each dataset
         independently. E.g., If users instantiate their training dataset within
-        ``build_train_spec()``, they should call ``dataset =
-        wrap_dataset(dataset)`` prior to passing it into
-        ``tf.estimator.TrainSpec``.
+        ``build_train_spec()``, they should call ``dataset = wrap_dataset(dataset)``
+        prior to passing it into ``tf.estimator.TrainSpec``.
         """
         hvd.require_horovod_type("tensorflow", "EstimatorContext.wrap_dataset was called.")
 
