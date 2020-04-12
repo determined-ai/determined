@@ -1,8 +1,8 @@
 """
-This example shows how to use Determined to implement a tf.keras-based CNN to
-perform image classification on the Fashion-MNIST dataset.
+This example shows how to use Determined to implement an image
+classification model for the Fashion-MNIST dataset using tf.keras.
 
-Based off: https://www.tensorflow.org/tutorials/keras/classification
+Based on: https://www.tensorflow.org/tutorials/keras/classification
 """
 import tensorflow as tf
 from tensorflow import keras
@@ -37,15 +37,11 @@ class MNISTTrial(TFKerasTrial):
         train_images = train_images / 255.0
 
         batch_size = self.context.get_per_slot_batch_size()
-        train = adapt_keras_data(x=train_images, y=train_labels, batch_size=batch_size)
-
-        return train
+        return adapt_keras_data(x=train_images, y=train_labels, batch_size=batch_size)
 
     def build_validation_data_loader(self):
         test_images, test_labels = data.load_validation_data()
         test_images = test_images / 255.0
 
         batch_size = self.context.get_per_slot_batch_size()
-        test = adapt_keras_data(x=test_images, y=test_labels, batch_size=batch_size)
-
-        return test
+        return adapt_keras_data(x=test_images, y=test_labels, batch_size=batch_size)
