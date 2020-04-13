@@ -7,10 +7,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const cnxTpl = "postgres://%s:%s@%s:%s/%s?sslmode=disable&application_name=determined-master"
+
 // Setup connects to the database and run any necessary migrations.
 func Setup(opts *Config) (*PgDB, error) {
-	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		opts.User, opts.Password, opts.Host, opts.Port, opts.Name)
+	dbURL := fmt.Sprintf(cnxTpl, opts.User, opts.Password, opts.Host, opts.Port, opts.Name)
 	log.Infof("connecting to database %s:%s", opts.Host, opts.Port)
 	db, err := ConnectPostgres(dbURL)
 	if err != nil {
