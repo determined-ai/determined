@@ -27,8 +27,6 @@
   test-cloud-integrations \
   test-python-integrations \
   test-integrations \
-  upgrade-deps \
-  upgrade-combined-reqs \
   webui
 
 export VERSION := $(shell cat VERSION)
@@ -63,6 +61,7 @@ FLAKE_RUN_ON_PYTHON_PATHS := git ls-files -z \
 	':!:examples/experimental/resnet50_tf_keras/tensorflow_files/*' \
 	':!:examples/experimental/bert_glue_pytorch/download_glue_data.py' \
 	':!:examples/experimental/nas_search/randomNAS_files/*' \
+	':!:examples/tutorials/native-tf-keras/*' \
 	| xargs -0
 
 ISORT_OPTIONS := --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --line-width=100 -o packaging

@@ -30,7 +30,7 @@ cffi==1.14.0              # via bcrypt, cryptography, pynacl
 chardet==3.0.4            # via requests
 click==7.1.1              # via black, pip-tools
 cloudpickle==0.5.3        # via determined
-cryptography==2.8         # via ansible, paramiko, secretstorage
+cryptography==2.8         # via ansible, paramiko
 cycler==0.10.0            # via matplotlib
 dai-sgqlc-3.5==0.0.1.dev20200211  # via determined-common
 git+https://github.com/determined-ai/determined_sphinx_theme.git@3849905ea870226a4bd5b3731edf9771523cecf3  # via -r docs-requirements.txt
@@ -70,7 +70,6 @@ idna==2.9                 # via requests
 imagesize==1.2.0          # via sphinx
 importlib-metadata==1.5.0  # via flake8-comprehensions, jsonschema, keyring, pluggy, pytest, twine
 isort==4.3.21             # via -r dev-requirements.txt
-jeepney==0.4.3            # via keyring, secretstorage
 jinja2==2.11.1            # via ansible, sphinx
 jmespath==0.9.5           # via boto3, botocore
 jsonschema==3.2.0         # via docker-compose
@@ -127,13 +126,13 @@ ruamel.yaml==0.16.10      # via determined-cli, determined-common
 rx==1.6.1                 # via graphql-core
 s3transfer==0.3.3         # via boto3
 scipy==1.4.1              # via keras-preprocessing
-secretstorage==3.1.2      # via keyring
 simplejson==3.16.0        # via determined, determined-common
 six==1.14.0               # via absl-py, bcrypt, bleach, cryptography, cycler, docker, docker-compose, dockerpty, flake8-tuple, google-api-core, google-auth, google-pasta, google-resumable-media, graphql-core, grpcio, h5py, hdfs, jsonschema, keras-preprocessing, lomond, packaging, pip-tools, promise, protobuf, pynacl, pyrsistent, python-dateutil, readme-renderer, requests-mock, tensorboard, tensorflow, torchvision, websocket-client
 smmap==3.0.1              # via gitdb
 snowballstemmer==2.0.0    # via pydocstyle, sphinx
 sphinx-argparse==0.2.5    # via -r docs-requirements.txt
-sphinx==2.4.4             # via -r docs-requirements.txt, determined-ai-sphinx-theme, sphinx-argparse
+sphinx-gallery==0.6.1     # via -r docs-requirements.txt
+sphinx==2.4.4             # via -r docs-requirements.txt, determined-ai-sphinx-theme, sphinx-argparse, sphinx-gallery
 sphinxcontrib-applehelp==1.0.2  # via sphinx
 sphinxcontrib-devhelp==1.0.2  # via sphinx
 sphinxcontrib-htmlhelp==1.0.3  # via sphinx

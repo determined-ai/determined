@@ -1,3 +1,4 @@
 Sphinx>=2.2.0
 sphinx-argparse>=0.2.5
 git+https://github.com/determined-ai/determined_sphinx_theme.git@3849905ea870226a4bd5b3731edf9771523cecf3
+sphinx-gallery>=0.6.1
