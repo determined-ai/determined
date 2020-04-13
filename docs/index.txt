@@ -54,7 +54,11 @@ For installation instructions, follow these how-to guide:
 
 Next Steps
 """"""""""
-Determined supports models written using TensorFlow and PyTorch. To get started using Determined, please follow the tutorial for your preferred deep learning framework:
+Determined supports models written using TensorFlow and PyTorch. 
+
+To get started using Determined, check out the :ref:`quick-start`. 
+
+Once you have finished the quick start guide, please follow the tutorial for your preferred deep learning framework to learn how to port your model:
 
 - :ref:`pytorch-mnist-tutorial`
 - :ref:`tf-mnist-tutorial`

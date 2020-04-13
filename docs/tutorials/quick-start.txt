@@ -1,0 +1,135 @@
+.. _quick-start:
+
+Quick Start Guide
+============================
+
+This guide demonstrates how to train a model, perform a hyperparameter search, and run a distributed training job, all in Determined. This guide is based on the official `PyTorch MNIST example <https://github.com/PyTorch/examples/blob/master/mnist/main.py>`_ and `TensorFlow Fashion MNIST Tutorial <https://www.tensorflow.org/tutorials/keras/classification>`__.
+
+All of the quick start guides focus on demonstrating Determined’s features at a high level. We will lightly touch on major concepts and terminology. For a more slow-paced introduction to developing models with Determined, check out :ref:`pytorch-mnist-tutorial` or :ref:`tf-mnist-tutorial`.
+
+Prerequisites
+--------------
+- Access to a Determined cluster. If you have not yet installed Determined, refer to the installation instructions at :ref:`install-determined`.
+- The Determined CLI should be installed on your local machine. For installation instructions, see here. After installing the CLI, configure it to connect to your Determined cluster by setting the DET_MASTER environment variable to the hostname or IP address where Determined is running.
+
+Preparing Your First Job
+-------------------------
+
+In this guide, we will build an image classification model for the MNIST dataset.  MNIST is a dataset consisting of grayscale images of handwritten digits, commonly used to test image classification models as seen below.
+
+|
+
+.. image:: /assets/images/mnist-example@2x.jpg
+    :align: center
+
+|
+
+The code for this guide can be downloaded here: :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`. A ``tf.keras`` implementation can be downloaded here: :download:`mnist_tf_keras.tgz </examples/mnist_tf_keras.tgz>`.
+
+Next, open a terminal window and ``cd`` into the extracted ``mnist_pytorch`` directory. The directory should contain the following files:
+
+.. code:: 
+
+    ├── mnist_pytorch
+       ├── model.py
+       ├── data.py
+       ├── layers.py
+       ├── const.yaml
+       ├── adaptive.yaml
+       ├── parallel.yaml
+
+The directory contains Python and YAML files. The python files contain the model and data pipeline definitions. The ``.yaml`` files are the experiment and job configuration files that contain information on the path to data, hyperparameters, and the number of batches for training. This file also tells Determined the entry point, or where the model class is located. For example, below is the ``const.yaml`` file:
+
+.. code:: yaml
+
+    description: mnist_pytorch_const
+    hyperparameters:
+        learning_rate: 1.0
+        global_batch_size: 64
+        n_filters1: 32
+        n_filters2: 64
+        dropout1: 0.25
+        dropout2: 0.5
+    searcher:
+        name: single
+        metric: validation_loss
+        max_steps: 9
+        smaller_is_better: true
+    entrypoint: model_def:MNistTrial
+
+
+Each yaml file is specific to the type of experiment we will run during this guide:
+
+    - ``const.yaml``: training a fixed model on a single resource.
+    - ``parallel.yaml``: distributed training of a fixed model using multiple cpus.
+    - ``adaptive.yaml``: training multiple models as part of a hyperparameter search, leveraging Determined’s adaptive hyperparameter search functionality.
+
+Running Your First Job
+-----------------------
+
+The Determined CLI can be used to submit an experiment to the Determined cluster. Determine defines an experiment as a collection of one or more trials. A :ref:`trial <concept-trial>` is a training task that consists of a dataset, a deep learning model, and values for all of the model’s hyperparameters.  An :ref:`experiment <concept-experiment>` can either train a single model (with a single trial), or can define a search over a user-defined hyperparameter space.
+
+We will start by training a single model for a fixed number of batches and with constant values for all of the hyperparameters. Run the following command in the mnist_pytorch directory:
+
+.. code::
+
+    det experiment create const.yaml .
+
+This command tells Determined to create a new experiment using the ``const.yaml`` file. Determined also needs the directory containing the model code to upload it to the cluster. In the case above, we run the command in the mnist_pytorch directory, so we tell the model to upload all the current directory files by using ``.``.
+
+Once the experiment has been submitted, you should see the following output:
+
+.. code::
+
+    Preparing files (../mnist_pytorch) to send to master... 2.5KB and 4 files
+    Created experiment 1
+
+We can view the experiment status and results in the Web UI. In a browser, go to http://DET_MASTER/, where DET_MASTER is the URL or IP address of your Determined cluster. If you installed locally via ``det-deploy local``, this will likely be http://localhost:8080/ . A Determined dashboard will be displayed similar to the one below:
+
+|
+
+.. image:: /assets/images/pytorch_dashboard@2x.jpg
+    :align: center
+
+|
+
+Here, you can see recent tasks, which includes experiments, notebooks, and tensorboards. We currently have the experiment we just submitted.
+
+Clicking on the experiment takes you to the experiment page similar to below.
+
+|
+
+.. image:: /assets/images/pytorch_experiment@2x.jpg
+    :align: center
+
+|
+
+Experiment Page
+-----------------
+
+Determined automatically tracks the metadata associated with all experiments including the hyperparameters, training and validation metrics for each model, and environment configuration. Determined is designed to foster reproducibility and collaboration among your team (or even your future self!).
+
+For this experiment, we have one trial because we define all the hyperparameters. We can drill down into a trial to view more information by clicking on it.
+
+A trial page contains detailed information about the model, the configuration, output logs and the training metrics. Typically, you have to code the metric frequency output, plots, and checkpointing while managing the configuration for each model; however, by integrating into Determined’s API, every experiment will automatically have these capabilities without any extra code.
+
+|
+
+.. image:: /assets/images/pytorch_trial_completed@2x.jpg
+
+|
+
+During training, the graph on the right will update with the most current metrics you have defined. In this case, the graph displays the loss and error rate per step. A step is a workload consisting of training a model on a certain number of batches of data, where a batch is defined by the model definition’s data loader. The default is 100 batches per step, but the number can be overridden in the configuration file.
+
+Left of the graph displays time information, the hyperparameter configuration, the best validation metric and their respective checkpoint.
+
+|
+
+.. image:: /assets/images/pytorch_trial_lhs@2x.jpg
+    :align: center
+
+|
+
+Again, model.py does not contain any code to manage the checkpoint and will automatically checkpoint after calculating metrics on the validation dataset. Once the training has completed, you can see the total time it took, and the average batch speed. On a laptop, it should take about: 2 mins to reach 98% accuracy and .05 validation loss.
+
+To begin implementing your first model: go to :ref:`pytorch-mnist-tutorial`!
