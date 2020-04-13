@@ -18,6 +18,10 @@ resource "google_sql_database_instance" "db_instance" {
       ipv4_enabled = false
       private_network = var.network_self_link
     }
+    database_flags {
+      name = "max_connections"
+      value = 2000
+    }
   }
 
 }
