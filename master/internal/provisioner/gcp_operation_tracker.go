@@ -105,7 +105,7 @@ func (t *gcpOperationTracker) pollOperation() (*trackOperationDone, error) {
 			op:     t.op,
 			doneOp: resp,
 		}, nil
-	case resp.Status == "RUNNING":
+	case resp.Status == "RUNNING" || resp.Status == "PENDING":
 		return nil, nil
 	default:
 		errOp, _ := json.Marshal(resp)
