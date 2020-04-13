@@ -2,9 +2,9 @@
 
 locals {
   tags = {
-    open_master_port = "det-port-${var.port}-${var.unique_id}"
-    allow_internal = "det-internal-${var.unique_id}"
-    allow_ssh = "det-ssh-${var.unique_id}"
+    open_master_port = "det-port-${var.port}-${var.network_name}"
+    allow_internal = "det-internal-${var.network_name}"
+    allow_ssh = "det-ssh-${var.network_name}"
   }
 }
 

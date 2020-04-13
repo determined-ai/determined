@@ -1,26 +1,20 @@
 // Configure GCP provider
 provider "google" {
-  credentials = var.keypath != "gcloud" ? file(var.keypath) : null
+  credentials = var.keypath != null ? file(var.keypath) : null
   project = var.project_id
   region = var.region
-  zone = var.zone != null ? var.zone : "${var.region}-a"
+  zone = var.zone != null ? var.zone : "${var.region}-b"
 }
 
 provider "google-beta" {
-  credentials = var.keypath != "gcloud" ? file(var.keypath) : null
+  credentials = var.keypath != null ? file(var.keypath) : null
   project = var.project_id
   region = var.region
-  zone = var.zone != null ? var.zone : "${var.region}-a"
-}
-
-// Random integer to use if identifier not given
-resource "random_integer" "naming_int" {
-  min = 1000
-  max = 9999
+  zone = var.zone != null ? var.zone : "${var.region}-b"
 }
 
 locals {
-  unique_id = "${var.identifier}-${random_integer.naming_int.result}"
+  unique_id = "${var.cluster_id}"
   det_version_key = "${substr(replace(var.det_version, ".", "-"), 0, 8)}"
 }
 
@@ -94,7 +88,6 @@ module "database" {
   db_version = var.db_version
   network_self_link = module.network.network_self_link
   service_networking_connection = module.network.service_networking_connection
-
 }
 
 
@@ -122,6 +115,7 @@ module "compute" {
   det_version_key = local.det_version_key
   project_id = var.project_id
   region = var.region
+  zone = var.zone
   environment_image = var.environment_image
   det_version = var.det_version
   scheme = var.scheme

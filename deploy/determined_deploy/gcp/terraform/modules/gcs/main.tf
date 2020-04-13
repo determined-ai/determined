@@ -1,26 +1,28 @@
-// Create GCS bucket
+// Set random integer for uniqueness
 
-locals {
-  create_gcs_bucket =  var.gcs_bucket == null ? 1 : 0
+// Random integer to use
+resource "random_integer" "naming_int" {
+  min = 100000
+  max = 999999
 }
 
+// Create GCS bucket
+
 resource "google_storage_bucket" "checkpoint_store" {
-  name = "det-checkpoints-${var.unique_id}"
+  name = "det-checkpoints-${var.unique_id}-${random_integer.naming_int.result}"
   force_destroy = true
 
-  count = local.create_gcs_bucket
 }
 
 resource "google_storage_bucket_iam_binding" "checkpoint_editor" {
-  bucket = google_storage_bucket.checkpoint_store.0.name
+  bucket = google_storage_bucket.checkpoint_store.name
   role = "roles/storage.admin"
   members = [
     "serviceAccount:${var.service_account_email}"
   ]
 
-  count = local.create_gcs_bucket
 }
 
 locals {
-  gcs_bucket = local.create_gcs_bucket == 1 ? google_storage_bucket.checkpoint_store.0.name : var.gcs_bucket
+  gcs_bucket = google_storage_bucket.checkpoint_store.name
 }

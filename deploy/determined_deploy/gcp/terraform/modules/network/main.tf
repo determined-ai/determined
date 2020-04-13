@@ -1,25 +1,14 @@
-data "google_compute_network" "private_network" {
-  provider = google-beta
-
-  name = var.network
-}
-
-locals {
-  create_network = data.google_compute_network.private_network.name == null ? 1 : 0
-}
-
 // Create Network if it doesn't exist
 
 resource "google_compute_network" "private_network" {
   provider = google-beta
 
-  name = var.network
-  count = local.create_network
+  name = "${var.network}-${var.unique_id}"
 }
 
 locals {
-  network_self_link = local.create_network == 1 ? google_compute_network.private_network.0.self_link : data.google_compute_network.private_network.self_link
-  network_name = local.create_network == 1 ? google_compute_network.private_network.0.name : data.google_compute_network.private_network.name
+  network_self_link = google_compute_network.private_network.self_link
+  network_name = google_compute_network.private_network.name
   subnetwork_name = var.subnetwork != null ? var.subnetwork : local.network_name
 }
 
@@ -31,7 +20,6 @@ resource "google_compute_global_address" "private_ip_address" {
   address_type  = "INTERNAL"
   prefix_length = 16
   network       = local.network_self_link
-  count = local.create_network
 }
 
 resource "google_service_networking_connection" "private_vpc_connection" {
@@ -39,10 +27,9 @@ resource "google_service_networking_connection" "private_vpc_connection" {
 
   network                 = local.network_self_link
   service                 = "servicenetworking.googleapis.com"
-  reserved_peering_ranges = [google_compute_global_address.private_ip_address.0.name]
-  count = local.create_network
+  reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
 }
 
 locals {
-  service_networking_connection = local.create_network == 1 ? google_service_networking_connection.private_vpc_connection.0.network : null
+  service_networking_connection = google_service_networking_connection.private_vpc_connection.network
 }

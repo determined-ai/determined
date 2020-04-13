@@ -3,6 +3,7 @@
 resource "google_compute_instance" "default" {
   name = "det-master-${var.unique_id}-${var.det_version_key}"
   machine_type = var.master_instance_type
+  zone = var.zone
   tags = [var.tag_master_port, var.tag_allow_internal, var.tag_allow_ssh]
 
   boot_disk {
@@ -81,6 +82,7 @@ resource "google_compute_instance" "default" {
         -d \
         --name determined-graphql \
         --network ${var.master_docker_network} \
+        --restart unless-stopped \
         -e HASURA_GRAPHQL_ADMIN_SECRET="${var.hasura_secret}" \
         -e HASURA_GRAPHQL_CONSOLE_ASSETS_DIR=/srv/console-assets \
         -e HASURA_GRAPHQL_DATABASE_URL=postgres://postgres:${var.db_password}@${var.database_hostname}:5432/${var.database_name} \
