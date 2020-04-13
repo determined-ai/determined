@@ -17,5 +17,6 @@ The full list of our tutorials can be found below:
 
   notebook-tutorial
   pytorch-mnist-tutorial
+  quick-start
   tf-mnist-tutorial
   tf-cifar-tutorial
