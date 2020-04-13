@@ -20,7 +20,7 @@ class MNISTTrial(TFKerasTrial):
         model = keras.Sequential(
             [
                 keras.layers.Flatten(input_shape=(28, 28)),
-                keras.layers.Dense(128, activation="relu"),
+                keras.layers.Dense(self.context.get_hparam("dense1"), activation="relu"),
                 keras.layers.Dense(10),
             ]
         )
