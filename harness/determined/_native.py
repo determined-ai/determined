@@ -45,6 +45,16 @@ def _get_current_args() -> List:
     return sys.argv[1:]
 
 
+def set_local_context_dir_default(context_dir: Optional[str]) -> pathlib.Path:
+    context_path = pathlib.Path(context_dir) if context_dir else pathlib.Path().cwd()
+    if not context_path.is_dir():
+        raise errors.InvalidExperimentException(
+            f"Context directory must be a directory, found {context_path.absolute()}"
+        )
+
+    return context_path
+
+
 def set_command_default(
     context_dir: pathlib.Path, command: Optional[List[str]] = None
 ) -> List[str]:
@@ -83,19 +93,16 @@ def create_experiment(
     Returns:
         The ID of the created experiment.
     """
-    if context_dir == "":
-        raise errors.InvalidExperimentException("Cannot specify the context directory to be empty.")
-
-    context_path = pathlib.Path(context_dir)
+    context_directory = pathlib.Path(context_dir)
     config = {**constants.DEFAULT_EXP_CFG, **(config or {})}
     config.setdefault("internal", {})
-    config["internal"]["native"] = {"command": set_command_default(context_path, command)}
+    config["internal"]["native"] = {"command": set_command_default(context_directory, command)}
     print("Creating an experiment with config: {}".format(config))
 
     if master_url is None:
         master_url = util.get_default_master_address()
 
-    exp_context = context.Context.from_local(context_path)
+    exp_context = context.Context.from_local(context_directory)
 
     # When a requested_user isn't specified to initialize_session(), the
     # authentication module will attempt to use the token store to grab the
@@ -171,7 +178,7 @@ def make_test_workloads(
 
 
 def make_test_experiment_env(
-    checkpoint_dir: pathlib.Path, config: Optional[Dict[str, Any]]
+    checkpoint_dir: pathlib.Path, config: Optional[Dict[str, Any]], context_dir: pathlib.Path
 ) -> Tuple[det.EnvContext, workload.Stream, det.RendezvousInfo, horovod.HorovodContext]:
     config = det.ExperimentConfig({**constants.DEFAULT_EXP_CFG, **(config or {})})
     hparams = generate_test_hparam_values(config)
@@ -199,6 +206,7 @@ def make_test_experiment_env(
         det_experiment_id="1",
         det_cluster_id="test_mode",
         trial_seed=config.experiment_seed(),
+        context_directory=context_dir,
     )
     workloads = make_test_workloads(checkpoint_dir.joinpath("checkpoint"), config)
     rendezvous_ports = env.rendezvous_ports()
@@ -213,7 +221,10 @@ def make_test_experiment_env(
 
 
 def create_trial_instance(
-    trial_def: Type[det.Trial], checkpoint_dir: str, config: Optional[Dict[str, Any]] = None
+    trial_def: Type[det.Trial],
+    checkpoint_dir: str,
+    config: Optional[Dict[str, Any]] = None,
+    context_dir: Optional[str] = None,
 ) -> det.Trial:
     """
     Create a trial instance from a Trial class definition. This can be a useful
@@ -228,9 +239,14 @@ def create_trial_instance(
             An optional experiment configuration that is used to initialize the
             :class:`determined.TrialContext`. If not specified, a minimal default
             is used.
+        context_dir:
+            An optional string specifying the location of the context directory
+            (returned by :class:`determined.TrialContext.get_context_dir()`).
+            If not specified, the current working directory is used by default.
     """
+    context_dir_path = set_local_context_dir_default(context_dir)
     env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
-        checkpoint_dir=pathlib.Path(checkpoint_dir), config=config
+        checkpoint_dir=pathlib.Path(checkpoint_dir), config=config, context_dir=context_dir_path
     )
     trial_context = trial_def.trial_context_class(env, hvd_config)
     return trial_def(trial_context)
@@ -240,7 +256,7 @@ def create(
     trial_def: Type[det.Trial],
     config: Optional[Dict[str, Any]] = None,
     mode: Mode = Mode.SUBMIT,
-    context_dir: str = "",
+    context_dir: Optional[str] = None,
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
 ) -> None:
@@ -294,15 +310,25 @@ def create(
             )
 
         else:
+            if not context_dir:
+                raise errors.InvalidExperimentException(
+                    "Must specify a context_dir in SUBMIT mode."
+                )
             create_experiment(
                 config=config, context_dir=context_dir, command=command, master_url=master_url
             )
 
     elif Mode(mode) == Mode.TEST:
-        print("Running test mode locally.")
+        context_dir_path = set_local_context_dir_default(context_dir)
+        print(
+            f"Running test mode locally using a context directory "
+            "of {context_dir_path.absolut()}."
+        )
         checkpoint_dir = tempfile.TemporaryDirectory()
         env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
-            checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
+            checkpoint_dir=pathlib.Path(checkpoint_dir.name),
+            config=config,
+            context_dir=context_dir_path,
         )
         print(
             "Starting a test experiment.\n"
@@ -330,7 +356,7 @@ def _init_native(
     native_context_cls: Type[det.NativeContext],
     config: Optional[Dict[str, Any]] = None,
     mode: Mode = Mode.SUBMIT,
-    context_dir: str = "",
+    context_dir: Optional[str] = None,
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
 ) -> Any:
@@ -348,6 +374,11 @@ def _init_native(
             return context
 
         else:
+            if not context_dir:
+                raise errors.InvalidExperimentException(
+                    "Must specify a context_dir in SUBMIT mode."
+                )
+
             create_experiment(
                 config=config, context_dir=context_dir, command=command, master_url=master_url
             )
@@ -355,10 +386,16 @@ def _init_native(
             sys.exit(0)
 
     elif Mode(mode) == Mode.TEST:
-        print("Running test mode locally.")
+        context_dir_path = set_local_context_dir_default(context_dir)
+        print(
+            f"Running test mode locally using a context directory of {context_dir_path.absolute()}."
+        )
+
         checkpoint_dir = tempfile.TemporaryDirectory()
         env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
-            checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
+            checkpoint_dir=pathlib.Path(checkpoint_dir.name),
+            config=config,
+            context_dir=context_dir_path,
         )
         print(
             "Starting a test experiment.\n"

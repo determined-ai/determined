@@ -1,6 +1,5 @@
 import enum
 import logging
-import os
 import pathlib
 import random
 import shutil
@@ -262,7 +261,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
     def _to_device(self, data: _Data) -> TorchData:
         return to_device(
-            data, self.device, self.warning_logged[_WarningLogs.FAILED_MOVING_TO_DEVICE],
+            data, self.device, self.warning_logged[_WarningLogs.FAILED_MOVING_TO_DEVICE]
         )
 
     @staticmethod
@@ -590,13 +589,17 @@ class PyTorchTrialController(det.LoopTrialController):
         torch.save(self.model, pickled_model_path, pickle_module=cloudpickle)  # type: ignore
 
         # The model code is the current working directory.
-        shutil.copytree(os.getcwd(), code_path, ignore=shutil.ignore_patterns("__pycache__"))
+        shutil.copytree(
+            self.context.get_context_directory(),
+            code_path,
+            ignore=shutil.ignore_patterns("__pycache__"),
+        )
 
         util.write_checkpoint_metadata(
             path,
             self.env,
             {
-                "torch_version": torch.__version__,  # type: ignore
+                "torch_version": torch.__version__  # type: ignore
             },
         )
 
@@ -614,7 +617,7 @@ class PyTorchTrialController(det.LoopTrialController):
             checkpoint["lr_scheduler"] = self.lr_helper.state_dict()
 
         torch.save(  # type: ignore
-            checkpoint, str(path.joinpath("state_dict.pth")), pickle_module=cloudpickle,
+            checkpoint, str(path.joinpath("state_dict.pth")), pickle_module=cloudpickle
         )
 
         return {}

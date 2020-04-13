@@ -1,4 +1,5 @@
 import logging
+import pathlib
 from typing import Any, Dict, List, Optional, Tuple
 
 import determined as det
@@ -27,6 +28,7 @@ class EnvContext:
         det_experiment_id: str,
         det_cluster_id: str,
         trial_seed: int,
+        context_directory: pathlib.Path,
     ):
         self.master_addr = master_addr
         self.master_port = master_port
@@ -46,6 +48,7 @@ class EnvContext:
         self.det_experiment_id = det_experiment_id
         self.det_cluster_id = det_cluster_id
         self.trial_seed = trial_seed
+        self.context_directory = context_directory
 
     def first_step(self) -> types.StepID:
         return self.initial_workload.step_id

@@ -129,11 +129,7 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
                     faulthandler.dump_traceback_later(30, repeat=True)
 
                 controller = load.prepare_controller(
-                    env,
-                    iter(workload_mgr),
-                    load_path,
-                    socket_mgr.get_rendezvous_info(),
-                    hvd_config,
+                    env, iter(workload_mgr), load_path, socket_mgr.get_rendezvous_info(), hvd_config
                 )
                 controller.run()
 
@@ -194,6 +190,7 @@ def main() -> None:
         det_experiment_id,
         det_cluster_id,
         trial_seed,
+        pathlib.Path().cwd(),
     )
 
     try:
