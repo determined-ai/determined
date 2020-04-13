@@ -1,6 +1,4 @@
 description: mnist_pytorch_const
-data:
-  url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
 hyperparameters:
   learning_rate: 1.0
   global_batch_size: 64
@@ -8,10 +6,11 @@ hyperparameters:
   n_filters2: 64
   dropout1: 0.25
   dropout2: 0.5
+resources:
+  slots_per_trial: 8
 searcher:
   name: single
   metric: validation_loss
   max_steps: 9 # 9 steps is ~ one epoch
   smaller_is_better: true
 entrypoint: model_def:MNistTrial
-max_restarts: 0

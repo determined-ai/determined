@@ -3,9 +3,14 @@ data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
 hyperparameters:
   learning_rate:
+    type: log
+    minval: -3.0
+    maxval: -1.0
+    base: 10
+  dropout:
     type: double
-    minval: .0001
-    maxval: 1.0
+    minval: .2
+    maxval: .8
   global_batch_size:
     type: const
     val: 64
@@ -16,19 +21,14 @@ hyperparameters:
   n_filters2:
     type: int
     minval: 8
-    maxval: 72
-  dropout1:
-    type: double
-    minval: .2
-    maxval: .8
-  dropout2:
-    type: double
-    minval: .2
-    maxval: .8
+    maxval: 64
 searcher:
   name: adaptive_simple
-  metric: validation_loss
+  metric: validation_error
   smaller_is_better: true
-  max_steps: 9
+  max_steps: 32
   max_trials: 16
+  mode: aggressive
+  max_rungs: 3
+  divisor: 4
 entrypoint: model_def:MNistTrial
