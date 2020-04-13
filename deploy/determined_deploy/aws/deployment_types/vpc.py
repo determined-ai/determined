@@ -11,12 +11,13 @@ class VPC(base.DeterminedDeployment):
     ssh_command = "SSH to master Instance: ssh -i <pem-file> ubuntu@{master_ip}"
     det_ui = (
         "Access Determined through cli: det -m {master_ip} \n"
-        "View the Determined UI: http://{master_ip}:8080"
+        "View the Determined UI: http://{master_ip}\n"
+        "View Logs at: https://{region}.console.aws.amazon.com/cloudwatch/home?"
+        "region={region}#logStream:group={log_group}"
     )
     template = "vpc.yaml"
 
     template_parameter_keys = [
-        constants.cloudformation.USER_NAME,
         constants.cloudformation.KEYPAIR,
         constants.cloudformation.MASTER_AMI,
         constants.cloudformation.MASTER_INSTANCE_TYPE,
@@ -40,21 +41,23 @@ class VPC(base.DeterminedDeployment):
             template = f.read()
 
         aws.deploy_stack(
-            stack_name=self.parameters[constants.cloudformation.DET_STACK_NAME],
+            stack_name=self.parameters[constants.cloudformation.CLUSTER_ID],
             template_body=template,
             boto3_session=self.parameters[constants.cloudformation.BOTO3_SESSION],
             parameters=cfn_parameters,
         )
         self.print_results(
-            self.parameters[constants.cloudformation.DET_STACK_NAME],
+            self.parameters[constants.cloudformation.CLUSTER_ID],
             self.parameters[constants.cloudformation.BOTO3_SESSION],
         )
 
     def print_results(self, stack_name: str, boto3_session: boto3.session.Session) -> None:
         output = aws.get_output(stack_name, boto3_session)
         master_ip = output[constants.cloudformation.DET_ADDRESS]
+        region = output[constants.cloudformation.REGION]
+        log_group = output[constants.cloudformation.LOG_GROUP]
 
-        ui_command = self.det_ui.format(master_ip=master_ip)
+        ui_command = self.det_ui.format(master_ip=master_ip, region=region, log_group=log_group)
         print(ui_command)
 
         ssh_command = self.ssh_command.format(master_ip=master_ip)

@@ -41,7 +41,7 @@ make publish-dev
       steps {
         sh script: """
 . venv/bin/activate
-det-deploy aws --user ${env.BRANCH_NAME} --version `git rev-parse HEAD` --keypair integrations-test
+det-deploy aws up --cluster-id ${env.BRANCH_NAME} --det-version `git rev-parse HEAD` --keypair integrations-test
 """
       }
     }
