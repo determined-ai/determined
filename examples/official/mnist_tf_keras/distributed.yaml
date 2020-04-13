@@ -1,0 +1,12 @@
+description: mnist_keras_const_distributed
+hyperparameters:
+  global_batch_size: 32
+  dense1: 128
+resources:
+  slots_per_trial: 8
+searcher:
+  name: single
+  metric: val_loss
+  max_steps: 9 # num steps = number of desired epochs (5) * (total batches per epoch (~900) / batches per step (100))
+entrypoint: model_def:MNISTTrial
+max_restarts: 0
