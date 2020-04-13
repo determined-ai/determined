@@ -28,7 +28,7 @@ class TrainAndValidate:
         self._validation_metrics = None  # type: Optional[List[Dict[str, Any]]]
 
     def send(
-        self, steps: int, validation_freq: int, initial_step_id: int = 1, batches_per_step: int = 1,
+        self, steps: int, validation_freq: int, initial_step_id: int = 1, batches_per_step: int = 1
     ) -> workload.Stream:
         self._training_metrics = []
         self._validation_metrics = []
@@ -79,7 +79,7 @@ def make_default_exp_config(hparams: Dict[str, Any], batches_per_step: int) -> D
 
 
 def make_default_env_context(
-    hparams: Dict[str, Any], experiment_config: Optional[Dict] = None, trial_seed: int = 0,
+    hparams: Dict[str, Any], experiment_config: Optional[Dict] = None, trial_seed: int = 0
 ) -> det.EnvContext:
     if experiment_config is None:
         experiment_config = make_default_exp_config(hparams, 1)
@@ -110,6 +110,7 @@ def make_default_env_context(
         det_experiment_id="1",
         det_cluster_id="uuid-123",
         trial_seed=trial_seed,
+        context_directory=pathlib.Path.cwd(),
     )
 
 
@@ -215,7 +216,7 @@ def make_trial_controller_from_trial_implementation(
 ) -> det.TrialController:
     exp_config = make_default_exp_config(hparams, batches_per_step)
     env = make_default_env_context(
-        hparams=hparams, experiment_config=exp_config, trial_seed=trial_seed,
+        hparams=hparams, experiment_config=exp_config, trial_seed=trial_seed
     )
 
     rendezvous_info = make_default_rendezvous_info()
@@ -247,7 +248,7 @@ def make_trial_controller_from_native_implementation(
     exp_config["internal"] = {"native": {"command": [command]}}
 
     env = make_default_env_context(
-        hparams=hparams, experiment_config=exp_config, trial_seed=trial_seed,
+        hparams=hparams, experiment_config=exp_config, trial_seed=trial_seed
     )
 
     rendezvous_info = make_default_rendezvous_info()
@@ -319,7 +320,7 @@ def reproducibility_test(
 
 
 OptimizerStateMakeControllerFn = Callable[
-    [workload.Stream, DefaultNamedArg(Optional[pathlib.Path], "load_path")], det.TrialController,
+    [workload.Stream, DefaultNamedArg(Optional[pathlib.Path], "load_path")], det.TrialController
 ]
 
 
