@@ -4,10 +4,16 @@ locals {
   service_networking_connection_exists = var.service_networking_connection != null ? 1 : 0
 }
 
+// Random integer to use
+resource "random_integer" "naming_int" {
+  min = 100000
+  max = 999999
+}
+
 // Create Database
 
 resource "google_sql_database_instance" "db_instance" {
-  name   = "det-db-instance-${var.unique_id}"
+  name   = "det-db-instance-${var.unique_id}-${random_integer.naming_int.result}"
   database_version = var.db_version
 
   depends_on = [var.network_self_link, var.service_networking_connection]

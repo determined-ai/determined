@@ -9,3 +9,7 @@ output "internal_ip" {
 output "master_instance_name" {
   value = google_compute_instance.default.name
 }
+
+output "master_zone" {
+  value = google_compute_instance.default.zone
+}

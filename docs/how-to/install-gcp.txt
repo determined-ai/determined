@@ -27,9 +27,9 @@ To get started on GCP, you will need to create a `project <https://cloud.google.
 The following GCP APIs must be enabled on your GCP project:
 
 * `Cloud Resource Manager API <https://console.developers.google.com/apis/library/cloudresourcemanager.googleapis.com>`__
-* `Cloud SQL Admin API <https://cloud.google.com/sql/docs/mysql/admin-api>`__
+* `Cloud SQL Admin API <https://console.developers.google.com/apis/library/sqladmin.googleapis.com>`__
 * `IAM API <https://console.developers.google.com/apis/api/iam.googleapis.com/overview>`__
-* `Service Networking API <https://cloud.google.com/service-infrastructure/docs/service-networking/getting-started>`__
+* `Service Networking API <https://console.cloud.google.com/apis/library/servicenetworking.googleapis.com>`__
 
 
 Credentials
@@ -43,24 +43,11 @@ ___________
 
    gcloud auth application-default login
 
-This command will open a login page on your browser where you can sign-in to the Google account with access to your project. Ensure your user account has at least ``Editor`` access to the project you want to deploy your cluster in.
+This command will open a login page on your browser where you can sign-in to the Google account with access to your project. Ensure your user account has ``Owner`` access to the project you want to deploy your cluster in.
 
+2. Or alternatively, you can use :ref:`Service Account credentials <gcp-service-account-credentials>`.
 
-2. For more security controls, you can create a `Service Account <https://cloud.google.com/docs/authentication/getting-started>`__ or select an existing Service Account from the `service account key page in the Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and ensure it has the following IAM Roles:
-
-   - Cloud SQL Admin
-   - Compute Admin
-   - Compute Network Admin
-   - Security Admin
-   - Service Account Admin
-   - Service Account User
-   - Service Networking Admin
-   - Storage Admin
-
-Roles provide the Service Account permissions to create specific resources in your project. You can add roles to Service Accounts following this `guide <https://cloud.google.com/iam/docs/granting-roles-to-service-accounts>`__.
-
-Once you have a Service Account with the appropriate roles, go to the `service account key page in the Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and create a JSON key file. Save it to a location you'll remember; we'll refer to the  path to this key file as the ``keypath`` going forward.
-
+.. _gcp-install:
 
 Install
 ~~~~~~~
@@ -85,94 +72,88 @@ To deploy the cluster, run:
 
 .. code::
 
-   det-deploy gcp [required args] [options]
+   det-deploy gcp up --cluster-id CLUSTER_ID --project-id PROJECT_ID
 
-The three required arguments are:
 
 .. list-table::
-   :widths: 25 50 25
+   :widths: 25 50 25 25
    :header-rows: 1
 
    * - Argument
      - Description
      - Default Value
+     - Required
 
-   * - ``--keypath``
-     - The path to the Service Account JSON key file or the string ``gcloud`` if you've authenticated with gcloud (option 1) above.
-     - None
-
-   * - ``--identifier``
+   * - ``--cluster-id``
      - A string appended to resources to uniquely identify the cluster.
      - None
+     - True
 
-   * - ``--project_id``
+   * - ``--project-id``
      - The project to deploy the cluster in.
      - None
+     - True
 
-
-The following are optional arguments that may be useful when deploying your Determined cluster:
-
-.. list-table::
-   :widths: 25 50 25
-   :header-rows: 1
-
-   * - Argument
-     - Description
-     - Default Value
-
-   * - ``--det_version``
-     - The Determined version or commit id to deploy. 
-     - The version of ``determined-deploy``.
-
-   * - ``--local_state_path``
-     - The absolute path to store ``.tfstate`` files. The `.tfstate` file tracks the resources you've deployed, which allows you to update or delete deployments later.
-     - The current working directory where ``determined-deploy`` is being run.
+   * - ``--keypath``
+     - The path to the Service Account JSON key file if using a Service Account. Including this flag will supersede default Google Cloud user credentials.
+     - None
+     - False
 
    * - ``--preemptible``
      - Whether to use preemptible instances.
      - false
+     - False
 
-   * - ``--gpu_type``
-     - The type of GPU to use for the agent instances.
-     - nvidia-tesla-v100
+   * - ``--gpu-type``
+     - The type of GPU to use for the agent instances. Ensure ``gpu_type`` is available in your selected ``region`` and ``zone``.
+     - nvidia-tesla-k80
+     - False
 
-   * - ``--gpu_num``
+   * - ``--gpu-num``
      - The number of GPUs on each agent instance. Between 1-8 (more GPUs require more powerful ``agent_instance_type``)
-     - 2
+     - 8
+     - False
 
-   * - ``--max_instances``
+   * - ``--max-instances``
      - The maximum number of agent instances at one time.
-     - 4
+     - 5
+     - False
 
-   * - ``--max_idle_agent_period``
+   * - ``--max-idle-agent-period``
      - The maximum amount of time an aagent can sit idle before being shut down.
-     - 30m
+     - 10m
+     - False
 
    * - ``--network``
-     - The name of the network to deploy the cluster in. The network will be created if it doesn't exist.
-     - det-default 
+     - The network to create (ensure there isn't a network with the same name already in the project, otherwise the deployment will fail)
+     - det-default-<cluster-id>
+     - False
 
    * - ``--region``
      - The region to deploy the cluster in.
-     - us-central-1
+     - us-west1
+     - False
 
    * - ``--zone``
      - The zone to deploy the cluster in.
-     - us-central-1a
+     - ``region``-b
+     - False
 
-   * - ``--master_instance_type``
+   * - ``--master-instance-type``
      - Instance type to use for the master instance.
-     - n1-standard-16
+     - n1-standard-2
+     - False
 
-   * - ``--agent_instance_type``
+   * - ``--agent-instance-type``
      - Instance type to use for the agent instances.
-     - n1-standard-16
+     - n1-standard-32
+     - False
 
 .. note::
   The deployment process may take 5-10 minutes and will return the ``web_ui`` to indicate that the resources have been created. It may take a few minutes from this point for the master instance to fully boot up and you're able to use the ``web_ui`` address to access the cluster. 
 
 .. warning::
-  Changes to ``--gpu_num`` should correspond to appropriate changes to ``--agent_instance_type``, as enforced by Google Cloud. For example, when using ``nvidia-tesla-v100`` GPUs, each GPU can correspond to at most 12vCPUs, i.e. if ``--gpu_num 2``, then ``--agent_instance_type n1-standard-16`` is the highest number of vCPUs (16) that can be used.
+  Changes to ``--gpu-num`` should correspond to appropriate changes to ``--agent-instance-type``, as enforced by GCP. For example, when using ``nvidia-tesla-k80`` GPUs, each GPU can correspond to at most 12vCPUs, i.e. if ``--gpu-num 2``, then ``--agent-instance-type n1-standard-16`` is the highest number of vCPUs (16) that can be used. You can check GPU requirements and regional availabilities on the `GPUs on Compute Engine <https://cloud.google.com/compute/docs/gpus>` page. 
 
 .. warning::
   If ``det-deploy`` is set to use an existing network, the VPC being used must have an `IP range allocated <https://cloud.google.com/vpc/docs/configure-private-services-access#procedure>`__ and a `private service connection created <https://cloud.google.com/vpc/docs/configure-private-services-access#creating-connection>`__.
@@ -201,25 +182,64 @@ The following ``gcloud`` commands will help to validate your configuration, incl
 Updating the cluster
 ~~~~~~~~~~~~~~~~~~~~
 
-If you need to make changes to your cluster, you can re-run ``det-deploy [required args] [options]`` in the same directory and your cluster will be updated. ``determined-deploy`` will only replace resources that need to be replaced based on the changes you've made in the updated execution. 
-
-.. note::
-  If you previously created your cluster and set a ``local_state_path`` other than the default, you will need to include that argument again as well.
+If you need to make changes to your cluster, you can re-run ``det-deploy gcp up [args]`` in the same directory and your cluster will be updated. ``determined-deploy`` will only replace resources that need to be replaced based on the changes you've made in the updated execution. 
 
 .. note::
   If you'd like to change the ``region`` of a deployment after it has already been deployed, we recommend deleting the cluster first, then redeploying the cluster with the new ``region``.
 
+
 De-provisioning the cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To bring down the cluster:
+To bring down the cluster, run the following in the same directory where you ran the deploy command:
 
 .. code::
 
-    det-deploy --delete [required args]
+    det-deploy gcp down [optional args]
+
+By default, ``determined-deploy`` will use the ``.tfstate`` file in the current directory to determined which resources to de-provision. In addition, the following are optional arguments:
+
+.. list-table::
+   :widths: 25 50 25 25
+   :header-rows: 1
+
+   * - Argument
+     - Description
+     - Default Value
+     - Required
+
+   * - ``--keypath``
+     - The path to the Service Account JSON key file if using a Service Account. Including this flag will supersede default Google Cloud user credentials.
+     - None
+     - False
+
 
 .. warning::
-  ``determined-deploy`` will not delete active agent instances when you de-provision the cluster. Generally, the master instance will shut down any inactive agents after an idle period, but if you'd like to de-provision the cluster while these agent instances exist, you must delete all agent instances first. You can find these agent instances by filtering for instances named ``det-agent-<identifier>`` and these agent(s) will have a full name in the form ``det-agent-<identifier>-<random integer>-<version>-<pet name>``.
+  ``determined-deploy`` will not delete active agent instances when you de-provision the cluster. Generally, the master instance will shut down any inactive agents after an idle period, but if you'd like to de-provision the cluster while these agent instances exist, you must delete all agent instances first. You can find these agent instances by filtering for instances named ``det-agent-<cluster-id>`` and these agent(s) will have a full name in the form ``det-agent-<cluster-id>-<pet name>``.
+
+
+Appendix
+~~~~~~~~
+
+.. _gcp-service-account-credentials:
+
+Using Service Account Credentials
+_________________________________
+
+For more security controls, you can create a `Service Account <https://cloud.google.com/docs/authentication/getting-started>`__ or select an existing Service Account from the `service account key page in the Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and ensure it has the following IAM Roles:
+
+   - Cloud SQL Admin
+   - Compute Admin
+   - Compute Network Admin
+   - Security Admin
+   - Service Account Admin
+   - Service Account User
+   - Service Networking Admin
+   - Storage Admin
+
+Roles provide the Service Account permissions to create specific resources in your project. You can add roles to Service Accounts following this `guide <https://cloud.google.com/iam/docs/granting-roles-to-service-accounts>`__.
+
+Once you have a Service Account with the appropriate roles, go to the `service account key page in the Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and create a JSON key file. Save it to a location you'll remember; we'll refer to the path to this key file as the ``keypath``, which is an additional argument you can supply when using ``determined-deploy``. Once you have the ``keypath`` you can use it to deploy a GCP cluster continuing from the :ref:`installation <gcp-install>` section.
 
 
 Next Steps

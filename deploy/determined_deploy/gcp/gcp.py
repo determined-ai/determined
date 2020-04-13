@@ -8,17 +8,17 @@ terraform_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "terraf
 
 def deploy(configs: Dict, env: Dict, variables: List):
 
-    terraform_init(configs, env, variables)
+    terraform_init(configs, env)
     return terraform_apply(configs, env, variables)
 
 
-def plan(configs: Dict, env: Dict, variables: List):
+def dry_run(configs: Dict, env: Dict, variables: List):
 
-    terraform_init(configs, env, variables)
+    terraform_init(configs, env)
     return terraform_plan(configs, env, variables)
 
 
-def terraform_init(configs: Dict, env: Dict, variables: List):
+def terraform_init(configs: Dict, env: Dict):
 
     command = ["terraform init"]
     command += [

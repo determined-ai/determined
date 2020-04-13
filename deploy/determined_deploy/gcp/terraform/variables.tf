@@ -1,15 +1,20 @@
 // AUTH
 variable "keypath" {
   type = string
+  default = null
 }
 
 // GCP
 
-variable "identifier" {
+variable "cluster_id" {
   type = string
 }
 
 variable "project_id" {
+  type = string
+}
+
+variable "network" {
   type = string
 }
 
@@ -20,10 +25,6 @@ variable "region" {
 variable "zone" {
   type = string
   default = null
-}
-
-variable "network" {
-  type = string
 }
 
 variable "subnetwork" {
@@ -46,17 +47,12 @@ variable "create_static_ip" {
   default = true
 }
 
-variable "create_database" {
-  type = bool
-  default = true
-}
-
 
 // CLUSTER
 
 variable "master_instance_type" {
   type = string
-  default = "n1-standard-16"
+  default = "n1-standard-2"
 }
 
 variable "agent_instance_type" {
@@ -66,7 +62,7 @@ variable "agent_instance_type" {
 
 variable "gpu_type" {
   type = string
-  default = "nvidia-tesla-v100"
+  default = "nvidia-tesla-k80"
 }
 
 variable "gpu_num" {
@@ -76,7 +72,7 @@ variable "gpu_num" {
 
 variable "max_instances" {
   type = number
-  default = 8
+  default = 5
 }
 
 variable "preemptible" {
@@ -96,7 +92,7 @@ variable "master_docker_network" {
 
 variable "max_idle_agent_period" {
   type = string
-  default = "5m"
+  default = "10m"
 }
 
 
@@ -112,11 +108,6 @@ variable "det_version" {
 
 
 // MASTER
-
-variable "instance_name" {
-  type = string
-  default = "det-master"
-}
 
 variable "scheme" {
   type = string
@@ -139,16 +130,6 @@ variable "db_version" {
 variable "db_tier" {
   type = string
   default = "db-f1-micro"
-}
-
-variable "db_instance_name" {
-  type = string
-  default = "det-postgres-db"
-}
-
-variable "db_name" {
-  type = string
-  default = "determined"
 }
 
 variable "db_username" {
