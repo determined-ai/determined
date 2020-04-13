@@ -7,7 +7,6 @@ from determined.estimator._estimator_context import (
 from determined.estimator._util import (
     _cleanup_after_train_step,
     _cleanup_after_validation_step,
-    _delete_input_pipeline_checkpoints,
     _update_checkpoint_path_in_state_file,
     _scan_checkpoint_directory,
 )

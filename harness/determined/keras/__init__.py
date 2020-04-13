@@ -3,7 +3,6 @@ from determined.keras._data import (
     _ArrayLikeAdapter,
     _SequenceWithOffset,
     _SequenceAdapter,
-    _TFDatasetAdapter,
     InputData,
     adapt_keras_data,
     adapt_validation_data,
