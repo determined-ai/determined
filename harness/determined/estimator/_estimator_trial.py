@@ -449,16 +449,6 @@ class EstimatorTrialController(det.LoopTrialController):
 
         all_hooks = [*self.user_train_spec.hooks]
 
-        # The following skip_checkpointing_input flag is a workaround for
-        # stateful datasets in TF 1.14. Stateful input pipeline functions
-        # cannot be serialized and therefore checkpointing them should be
-        # skipped.
-        if (
-            not self.env.experiment_config.get("data", {}).get("skip_checkpointing_input", False)
-            and not self.env.experiment_config.input_from_dataflow()
-        ):
-            all_hooks.append(tf.data.experimental.CheckpointInputPipelineHook(self.estimator))
-
         if self.hvd_config.use:
             all_hooks.append(hvd.BroadcastGlobalVariablesHook(0))
 
@@ -478,7 +468,6 @@ class EstimatorTrialController(det.LoopTrialController):
         # In the short term, behave like other trials and reset input
         # state if we are warm started. This will create an inconsistency
         # wrt saved optimizer state.
-        estimator._delete_input_pipeline_checkpoints(str(self.estimator_dir))
 
         self.train_spec = tf.estimator.TrainSpec(
             input_fn=self.user_train_spec.input_fn, hooks=all_hooks

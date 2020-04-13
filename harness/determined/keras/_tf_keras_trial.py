@@ -387,29 +387,14 @@ class TFKerasTrialController(det.LoopTrialController):
         return True
 
     def set_data_loaders(self, train_config: keras.TFKerasTrainConfig) -> None:
-        if isinstance(train_config.training_data, keras._TFDatasetAdapter):
+        if isinstance(train_config.training_data, tf.data.Dataset):
             self.is_tf_dataset = True
-
-            # TensorFlow 1.15.0 does not allow running model.fit() with a tf.data.Iterator.  We use
-            # model.fit() with a tf.data.Iterator because creating the Iterator ourselves is the
-            # only way to access the saveable state of the iterator.
-            check.lt(
-                version.parse(tf.__version__),
-                version.parse("1.15.0"),
-                "TFKerasTrial does not accept tf.data.Dataset objects for training data with "
-                "TensorFlow 1.15.0 or higher, due to breaking changes in tf.keras.  Please "
-                "downgrade TensorFlow or use a different dataset.",
-            )
         else:
             self.is_tf_dataset = False
 
         if self.is_tf_dataset:
-            self.training_tf_data_adapter = cast(
-                keras._TFDatasetAdapter, train_config.training_data
-            )
-            self.validation_tf_dataset = cast(
-                keras._TFDatasetAdapter, train_config.validation_data
-            ).dataset
+            self.training_tf_dataset = train_config.training_data
+            self.validation_tf_dataset = train_config.validation_data
         else:
             self.training_keras_data_adapter = cast(
                 keras._SequenceAdapter, train_config.training_data
@@ -417,21 +402,6 @@ class TFKerasTrialController(det.LoopTrialController):
             self.validation_keras_data_adapter = cast(
                 keras._SequenceAdapter, train_config.validation_data
             )
-
-    def _initialize_tf_dataset_iterators(self) -> None:
-        """
-        Initialize training iterator for tensorflow dataset. It can be already
-        initialized if we are resuming from the checkpoint.
-        For distributed training, we don't need to do offset calculation for
-        sharding the data like how we do in _initialize_keras_data_iterators.
-        We will use dataset's shard api instead.
-
-        Note: We are using validation dataset instead of dataset iterator in
-        evaluate so not creating validation iterator here.
-        """
-        # self.training_iterator may be not None if we restored it from a checkpoint.
-        if self.training_iterator is None:
-            self.training_iterator = self.training_tf_data_adapter.get_iterator(repeat=True)
 
     def _initialize_keras_data_iterators(self) -> None:
         """
@@ -465,25 +435,12 @@ class TFKerasTrialController(det.LoopTrialController):
         Initialize training and validation iterators, the training iterator
         remains initialized throughout the lifetime of this process.
         """
-        if self.is_tf_dataset:
-            self._initialize_tf_dataset_iterators()
-        else:
+        if not self.is_tf_dataset:
             self._initialize_keras_data_iterators()
 
     def _load(self) -> None:
         if not self.load_path:
             return
-
-        # load training keras
-        if self.is_tf_dataset:
-            # TODO (DET-1792): Currently, in distributed training, this will
-            # load the checkpoint of process 0 on all processes during restart.
-            # This needs to be fixed. More details in the ticket.
-            iterator_path = self.load_path.joinpath("iterator_state.pkl")
-            self.training_iterator = self.training_tf_data_adapter.get_iterator(repeat=True)
-            self.training_iterator = self.training_tf_data_adapter.restore_iterator(
-                self.training_iterator, str(iterator_path), self.session
-            )
 
         # load model
         full_ckpt_path = self.load_path.joinpath("determined-keras-model")
@@ -500,11 +457,6 @@ class TFKerasTrialController(det.LoopTrialController):
 
         # save training data iterator position.
         path.mkdir(parents=True, exist_ok=True)
-        if self.is_tf_dataset:
-            iterator_path = path.joinpath("iterator_state.pkl")
-            self.training_tf_data_adapter.save_iterator(
-                self.training_iterator, str(iterator_path), self.session
-            )
 
         # save model weights
         tf.keras.models.save_model(
@@ -560,7 +512,6 @@ class TFKerasTrialController(det.LoopTrialController):
 
     def _launch_fit(self, initial_epoch: int) -> None:
         check.false(self.fit_loop_started)
-        check.is_not_none(self.training_iterator)
         self.fit_loop_started = True
 
         self.tf_keras_callbacks.append(WaitForInstructionsCallback(self))
@@ -578,12 +529,14 @@ class TFKerasTrialController(det.LoopTrialController):
 
         # Tensorflow dataset doesn't provide length api so use the configured batches_per_step
         if self.is_tf_dataset:
+            training_input = self.training_tf_dataset
             steps_per_epoch = self.batches_per_step
         else:
+            training_input = self.training_iterator
             steps_per_epoch = len(self.training_keras_data_adapter)
 
         _ = self.model.fit(
-            self.training_iterator,
+            training_input,
             callbacks=self.tf_keras_callbacks,
             shuffle=False,
             steps_per_epoch=steps_per_epoch,
@@ -693,11 +646,10 @@ class TFKerasTrial(det.Trial):
         interface, or a `tf.data.Dataset
         <https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/data/Dataset>`__.
 
-        WARNING: If you are using ``tf.data.Dataset`` with
-        distributed training, Determined’s support for automatically checkpointing and
-        resuming workloads does not work correctly. Therefore, using
-        tf.data.Dataset inputs with distributed training is currently not
-        recommended.
+        WARNING: If you are using ``tf.data.Dataset``, Determined’s support for
+        automatically checkpointing the dataset does not currently work correctly.
+        This means that resuming workloads will start from the beginning of the dataset
+        if using `tf.data.Dataset`.
         """
         pass
 
@@ -710,12 +662,6 @@ class TFKerasTrial(det.Trial):
         <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__
         interface, or a `tf.data.Dataset
         <https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/data/Dataset>`__.
-
-        WARNING: If you are using ``tf.data.Dataset`` with
-        distributed training, Determined’s support for automatically checkpointing and
-        resuming workloads does not work correctly. Therefore, using
-        tf.data.Dataset inputs with distributed training is currently not
-        recommended.
         """
         pass
 

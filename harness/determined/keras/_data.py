@@ -2,17 +2,10 @@ import math
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 import numpy as np
-import tensorflow
-from packaging import version
+import tensorflow as tf
 
 import determined as det
 from determined_common import check
-
-# Handle TensorFlow compatibility issues.
-if version.parse(tensorflow.__version__) >= version.parse("1.14.0"):
-    import tensorflow.compat.v1 as tf
-else:
-    import tensorflow as tf
 
 ArrayLike = Union[np.ndarray, List[np.ndarray], Dict[str, np.ndarray]]
 
@@ -219,82 +212,7 @@ class _SequenceAdapter:
             self._enqueuer.stop(timeout=timeout)
 
 
-class _TFDatasetAdapter:
-    """
-    A class to assist with restoring and saving iterators for a dataset.
-    """
-
-    def __init__(self, dataset: tf.data.Dataset, prefetch_buffer: int = 1) -> None:
-        self.dataset = dataset
-        self.prefetch_buffer = prefetch_buffer
-
-    def get_iterator(self, repeat: bool = False) -> tf.data.Iterator:
-        """
-        Return a tf.data.Iterator
-
-        Arguments:
-            repeat:
-                Indicate if dataset should be pre-transformed with a repeat().
-        """
-        temp = self.dataset
-        if repeat:
-            # Having an extra repeat should be ok, so we don't need to check if
-            # the dataset already has one.
-            temp = temp.repeat()
-
-        if self.prefetch_buffer > 0:
-            temp = temp.prefetch(self.prefetch_buffer)
-
-        return temp.make_one_shot_iterator()
-
-    def save_iterator(
-        self, iterator: tf.data.Iterator, save_path: str, save_session: tf.Session
-    ) -> None:
-        """
-        Save an iterator to a checkpoint.
-
-        Arguments:
-            iterator:
-                The iterator to be saved.
-            save_path:
-                The path to a checkpoint used for restoring an iterator.
-            save_session:
-                The TensorFlow session which should be used for restoring an
-                iterator from a checkpoint.
-        """
-        saveable = tf.data.experimental.make_saveable_from_iterator(iterator)
-        saver = tf.train.Saver({"iterator": saveable})
-        saver.save(save_session, save_path)
-
-    def restore_iterator(
-        self,
-        iterator: tf.data.Iterator,
-        restore_path: str,
-        restore_session: tf.Session,
-        run_options: tf.RunOptions = None,
-    ) -> tf.data.Iterator:
-        """
-        Restore an iterator from a checkpoint.
-
-        Arguments:
-            iterator:
-                The iterator to be restored.
-            restore_path:
-                The path to a checkpoint used for restoring an iterator.
-            restore_session:
-                The TensorFlow session which should be used for restoring an
-                iterator from a checkpoint.
-            run_options:
-                The tf.RunOptions to pass to the tf.Session during
-                tf.Saver.restore().
-        """
-        saveable = tf.data.experimental.make_saveable_from_iterator(iterator)
-        restorer = tf.train.Saver({"iterator": saveable})
-        restorer.restore(restore_session, restore_path, options=run_options)
-        return iterator
-
-
-InputData = Union[tf.keras.utils.Sequence, tf.data.Dataset, _TFDatasetAdapter, _SequenceAdapter]
+InputData = Union[tf.keras.utils.Sequence, tf.data.Dataset, _SequenceAdapter]
 
 
 def adapt_keras_data(
@@ -307,8 +225,8 @@ def adapt_keras_data(
     max_queue_size: int = 10,
     drop_leftovers: bool = False,
 ) -> InputData:
-    """adapt_keras_data adapts input and target data to a _SequenceAdapter or a
-    _TFDatasetAdapter, both of which are designed to support random access efficiently,
+    """adapt_keras_data adapts input and target data to a _SequenceAdapter or leaves
+    it as a tf.data.Dataset, both of which are designed to support random access efficiently,
     for the purpose of supporting a Determined-managed training loop.
 
     Multiprocessing or multithreading for native Python generators is not supported.
@@ -380,9 +298,9 @@ def adapt_keras_data(
 
     elif isinstance(x, tf.data.Dataset):
         check_y_is_none(y)
-        return _TFDatasetAdapter(x)
+        return x
 
-    elif isinstance(x, (_SequenceAdapter, _TFDatasetAdapter)):
+    elif isinstance(x, _SequenceAdapter):
         check_y_is_none(y)
         return x
 
@@ -395,9 +313,7 @@ def adapt_keras_data(
         )
 
 
-ValidationData = Union[
-    tuple, tf.keras.utils.Sequence, tf.data.Dataset, _TFDatasetAdapter, _SequenceAdapter
-]
+ValidationData = Union[tuple, tf.keras.utils.Sequence, tf.data.Dataset, _SequenceAdapter]
 
 
 def adapt_validation_data(
@@ -407,7 +323,7 @@ def adapt_validation_data(
     workers: int = 1,
 ) -> InputData:
     """adapt_validation_data adapts inputs and targets of validation data to
-    a _SequenceAdapter or _TFDatasetAdapter, both of which are designed to
+    a _SequenceAdapter or leaves it as a tf.data.Dataset, both of which are designed to
     support random access efficiently, for the purpose of supporting Determined
     managed training loop.
 

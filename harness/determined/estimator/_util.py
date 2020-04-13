@@ -14,14 +14,6 @@ from determined_common.check import check_eq
 # TODO: DET-175 direct checkpoint file manipulation is deprecated in TF 1.13.
 
 
-# This is the filename prefix used by `tf.data.estimator.CheckpointInputPipelineHook`
-# to write its checkpoints.
-_INPUT_CHECKPOINT_PREFIX = "input"
-
-
-CheckpointInputPipelineHook = tf.data.experimental.CheckpointInputPipelineHook
-
-
 class Checkpoint:
     """
     The metadata about a checkpoint.
@@ -47,8 +39,6 @@ class Checkpoint:
         the "model" checkpoint data, index and metadata for step 0
     - checkpoint_input
         the "input" checkpoint state
-    - input.ckpt-0.data-00000-of-00001, input.ckpt-0.index, input.ckpt-0.meta
-        the "input" checkpoint data, index and metadata for step 0
     - graph.pbtxt
         protobuf of graph in text form; typically present but not relevant to
         `Checkpoint`
@@ -270,18 +260,6 @@ def delete_all_checkpoints_except_most_recent(model_dir: str) -> None:
             all_model_checkpoint_paths=[all_paths[-1]],
             latest_filename=os.path.basename(checkpoint.state_file),
         )
-
-
-def _delete_input_pipeline_checkpoints(model_dir: str) -> None:
-    for checkpoint in _scan_checkpoint_directory(model_dir):
-        if checkpoint.name != _INPUT_CHECKPOINT_PREFIX:
-            continue
-
-        for path in checkpoint.state.all_model_checkpoint_paths:
-            basename = os.path.basename(path)
-            for p in checkpoint.paths[basename]:
-                logging.debug("Deleting input state file %s", p)
-                os.remove(p)
 
 
 def load_global_step_from_checkpoint(checkpoint_dir: str) -> Optional[tf.Tensor]:

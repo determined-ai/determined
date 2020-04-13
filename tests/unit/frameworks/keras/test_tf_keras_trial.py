@@ -3,7 +3,6 @@ import subprocess
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
-import packaging
 import pytest
 import simplejson
 import tensorflow as tf
@@ -132,10 +131,6 @@ class TestKerasTrial:
 
     @pytest.mark.parametrize("test_checkpointing", [False, True])
     def test_one_var_training(self, test_checkpointing, tmp_path):
-        # TensorFlow >= 1.15.0 does not support TensorFlow datasets the way we need it to.
-        if packaging.version.parse(tf.__version__) >= packaging.version.parse("1.15.0"):
-            pytest.skip("tf.keras with tf.data.Datasets is not supported for TensorFlow >= 1.15.0.")
-
         checkpoint_dir = tmp_path.joinpath("checkpoint")
 
         # In the test_checkpointing case, we will call make_workloads() twice but batches and w
@@ -161,7 +156,7 @@ class TestKerasTrial:
                 # Update what the weight should be.
                 w = w - hparams["learning_rate"] * trial_class.calc_gradient(w, batch)
 
-                if test_checkpointing and idx == 1:
+                if test_checkpointing and idx == 3:
                     # Checkpoint and let the next TrialController finish the work.l
                     yield workload.checkpoint_workload(), [
                         checkpoint_dir
