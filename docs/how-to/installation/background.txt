@@ -1,0 +1,211 @@
+.. _installation-background:
+
+Installation Background
+=======================
+
+System Requirements
+-------------------
+
+Software
+~~~~~~~~
+
+- The Determined agent and master nodes must be configured with Ubuntu
+  16.04, Ubuntu 18.04, or CentOS 7.
+
+- The agent nodes must have :ref:`Docker installed <install-docker>`.
+
+- To run jobs with GPUs, the Nvidia drivers must be installed on each
+  Determined agent. Determined requires version >= 384.81 of the Nvidia
+  drivers. (The Nvidia drivers can be installed as part of installing
+  CUDA, but the rest of the CUDA toolkit is not required.)
+
+Hardware
+~~~~~~~~
+
+- The Determined master node should be configured with at least 4 CPUs
+  (Intel Broadwell or later), 8GB of RAM, and 200GB of free disk space.
+  Note that the Determined master does not use GPUs.
+
+- Each Determined agent node should be configured with at least 2 CPUs
+  (Intel Broadwell or later), 4GB of RAM, and 50GB of free disk space. If
+  using GPUs, Nvidia GPUs with compute capability 3.7 or greater are
+  required (e.g., K80, P100, V100, GTX 1080, GTX 1080 Ti, TITAN, TITAN
+  XP).
+
+.. note::
+
+   Most of the disk space required by the master is due to the
+   experiment metadata database; if PostgreSQL is set up on a different
+   machine, the disk space requirements for the master are minimal
+   (~100MB).
+
+.. _install-docker:
+
+Installing Docker
+-----------------
+
+Every agent node must have Docker installed to allow it to run
+containerized workloads.
+
+#. Install the latest release of Docker and nvidia-docker2.
+
+   On Ubuntu:
+
+   .. code::
+
+      sudo apt-get update && sudo apt-get install -y software-properties-common
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+      sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+      curl -fsSL https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+      distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+      curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+
+      sudo apt-get update && sudo apt-get install -y --no-install-recommends docker-ce nvidia-docker2
+      sudo systemctl reload docker
+      sudo usermod -aG docker $USER
+
+   On CentOS:
+
+   .. code::
+
+      sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+      sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+      distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+      curl -fsSL https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.repo | sudo tee /etc/yum.repos.d/nvidia-docker.repo
+
+      sudo yum install -y docker-ce nvidia-docker2
+      sudo systemctl start docker
+
+#. Log out and start a new terminal session. Verify that the current user
+   is in the ``docker`` group and that the ``nvidia`` Docker runtime is
+   installed:
+
+   .. code::
+
+      groups
+      docker info | grep Runtimes
+
+#. If using CentOS 7, `enable the persistent storage
+   <https://unix.stackexchange.com/a/159390>`_ of journalctl log
+   messages so that logs are saved on machine reboot.
+
+   .. code::
+
+      sudo mkdir /var/log/journal
+      sudo systemd-tmpfiles --create --prefix /var/log/journal
+      sudo systemctl restart systemd-journald
+
+Users
+-----
+
+Determined supports an optional *user* system, which allows teams of
+machine learning developers to organize the assets they create inside
+Determined. See :ref:`users` for more details.
+
+.. _upgrades:
+
+Upgrades
+--------
+
+.. warning::
+
+   Newer versions of master configuration might not be compatible with
+   older versions. Please see the breaking changes in the
+   :ref:`release-notes` for upgrading the configuration.
+
+Upgrading an existing Determined installation requires the same steps as
+installing Determined for the first time. You should additionally follow
+the steps below to safely shut down the cluster before beginning an
+upgrade. Once the upgrade is complete and Determined is restarted, all
+suspended experiments will be resumed automatically.
+
+#. Disable all Determined agents in the cluster:
+
+   .. code::
+
+      det -m <MASTER_ADDRESS> agent disable --all
+
+   where ``MASTER_ADDRESS`` is the IP address or host name where the Determined
+   master can be found. This will cause all tasks running on those agents
+   to be checkpointed and terminated. The checkpoint process might take
+   some time to complete; you can monitor which tasks are still running via
+   ``det slot list``.
+
+#. Take a backup of the Determined database using `pg_dump
+   <https://www.postgresql.org/docs/10/app-pgdump.html>`_. This is a
+   safety precaution in case any problems occur after upgrading
+   Determined.
+
+All users should also upgrade the CLI by running
+
+.. code::
+
+   pip install -U determined-cli
+
+Be sure to do this for every user or virtualenv that has installed the
+old version of the CLI.
+
+Troubleshooting Tips
+--------------------
+
+.. _validate-nvidia-docker2:
+
+Validating the nvidia-docker2 installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To verify that a Determined agent instance can run containers that use GPUs,
+run:
+
+.. code::
+
+   docker run --runtime=nvidia --rm nvidia/cuda:10.0-runtime nvidia-smi
+
+You should see output that describes the GPUs available on the agent
+instance, such as:
+
+::
+
+   +-----------------------------------------------------------------------------+
+   | NVIDIA-SMI 418.39       Driver Version: 418.39       CUDA Version: 10.1     |
+   |-------------------------------+----------------------+----------------------+
+   | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+   | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+   |===============================+======================+======================|
+   |   0  GeForce GTX 108...  Off  | 00000000:05:00.0 Off |                  N/A |
+   | 56%   84C    P2   177W / 250W |  10729MiB / 11176MiB |     76%      Default |
+   +-------------------------------+----------------------+----------------------+
+   |   1  GeForce GTX 108...  Off  | 00000000:06:00.0 Off |                  N/A |
+   | 28%   62C    P0    56W / 250W |      0MiB / 11178MiB |      0%      Default |
+   +-------------------------------+----------------------+----------------------+
+   |   2  GeForce GTX 108...  Off  | 00000000:09:00.0 Off |                  N/A |
+   | 31%   64C    P0    57W / 250W |      0MiB / 11178MiB |      0%      Default |
+   +-------------------------------+----------------------+----------------------+
+   |   3  TITAN Xp            Off  | 00000000:0A:00.0 Off |                  N/A |
+   | 20%   36C    P0    57W / 250W |      0MiB / 12196MiB |      6%      Default |
+   +-------------------------------+----------------------+----------------------+
+
+   +-----------------------------------------------------------------------------+
+   | Processes:                                                       GPU Memory |
+   |  GPU       PID   Type   Process name                             Usage      |
+   |=============================================================================|
+   |    0      4638      C   python3.6                                  10719MiB |
+   +-----------------------------------------------------------------------------+
+
+Error messages
+~~~~~~~~~~~~~~
+
+::
+
+   docker: Error response from daemon: OCI runtime create failed: container_linux.go:345: starting container process caused "process_linux.go:424: container init caused \"process_linux.go:407: running prestart hook 1 caused \\\"error running hook: exit status 1, stdout: , stderr: exec command: [/usr/bin/nvidia-container-cli --load-kmods configure --ldconfig=@/sbin/ldconfig --device=all --compute --utility --require=cuda>=10.0 brand=tesla,driver>=384,driver<385 brand=tesla,driver>=410,driver<411 --pid=35777 /var/lib/docker/devicemapper/mnt/7b5b6d59cd4fe9307b7523f1cc9ce3bc37438cc793ff4a5a18a0c0824ec03982/rootfs]\\\\nnvidia-container-cli: requirement error: unsatisfied condition: brand = tesla\\\\n\\\"\"": unknown.
+
+If you see the above error message, the GPU hardware and/or NVIDIA
+drivers installed on the agent are not compatible with CUDA 10.0. Please
+try re-running the Docker command with a version of CUDA that is
+compatible with the hardware and driver setup, e.g., the following for
+CUDA 9.0:
+
+.. code::
+
+   docker run --runtime=nvidia --rm nvidia/cuda:9.0-runtime nvidia-smi
