@@ -19,7 +19,7 @@ services:
     environment:
       HASURA_GRAPHQL_ADMIN_SECRET: "${DET_HASURA_SECRET}"
       HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: /srv/console-assets
-      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:${DET_DB_PASSWORD}@determined-db:5432/determined
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:${DET_DB_PASSWORD}@determined-db:5432/determined?application_name=hasura
       HASURA_GRAPHQL_ENABLED_APIS: graphql,metadata
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup
       HASURA_GRAPHQL_ENABLE_CONSOLE: "false"
