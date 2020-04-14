@@ -69,8 +69,9 @@ def cluster_log_manager(request: SubRequest) -> Optional[ClusterLogManager]:
             # testing session is finished.
             yield clm
         determined_deploy.local.cluster_utils.fixture_down("integrations", True)
-
-    return None
+    else:
+        # Yield `None` so that pytest handles the no log manager case correctly.
+        yield None
 
 
 def pytest_itemcollected(item: Any) -> None:
