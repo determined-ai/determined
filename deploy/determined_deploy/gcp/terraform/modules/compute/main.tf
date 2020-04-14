@@ -17,6 +17,10 @@ resource "google_compute_instance" "default" {
     scopes = ["https://www.googleapis.com/auth/cloud-platform"]
   }
 
+  min_cpu_platform = var.min_cpu_platform_master
+
+  allow_stopping_for_update = true
+
   metadata_startup_script = <<-EOT
     mkdir -p /usr/local/determined/etc
     cat << EOF > /usr/local/determined/etc/master.yaml
@@ -58,6 +62,8 @@ resource "google_compute_instance" "default" {
         gpu_num: ${var.gpu_num}
         preemptible: ${var.preemptible}
       max_instances: ${var.max_instances}
+      base_config:
+        minCpuPlatform: ${var.min_cpu_platform_agent}
     EOF
 
     apt-get remove docker docker-engine docker.io containerd runc

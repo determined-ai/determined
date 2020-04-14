@@ -39,7 +39,7 @@ ___________
 
 1. Use `gcloud <https://cloud.google.com/sdk/docs/downloads-interactive#installation_options>`__ to authenticate your user account:
 
-.. code::
+.. code:: sh
 
    gcloud auth application-default login
 
@@ -55,9 +55,9 @@ Install
 1. Install `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__.
 2. Install ``determined-deploy``
 
-.. code::
+.. code:: sh
 
-   pip install -U determined-deploy
+   pip install determined-deploy
 
 
 Deploying
@@ -70,7 +70,7 @@ We recommend creating a new directory and running the commands below inside that
 
 To deploy the cluster, run:
 
-.. code::
+.. code:: sh
 
    det-deploy gcp up --cluster-id CLUSTER_ID --project-id PROJECT_ID
 
@@ -149,6 +149,16 @@ To deploy the cluster, run:
      - n1-standard-32
      - False
 
+   * - ``--min-cpu-platform-master``
+     - Minimum cpu platform for the master instance.
+     - Intel Skylake
+     - False
+
+   * - ``--min-cpu-platform-agent``
+     - Minimum cpu platform for the agent instances. Ensure the platform is compatible with your selected ``gpu-type`` and available in your selected ``region`` and ``zone``.
+     - Intel Broadwell
+     - False
+
 .. note::
   The deployment process may take 5-10 minutes and will return the ``web_ui`` to indicate that the resources have been created. It may take a few minutes from this point for the master instance to fully boot up and you're able to use the ``web_ui`` address to access the cluster. 
 
@@ -161,7 +171,7 @@ To deploy the cluster, run:
 
 The following ``gcloud`` commands will help to validate your configuration, including resource availability in your desired region and zone:
 
-.. code::
+.. code:: sh
 
     # Validate that the GCP Project ID exists
     gcloud projects list
@@ -193,7 +203,7 @@ De-provisioning the cluster
 
 To bring down the cluster, run the following in the same directory where you ran the deploy command:
 
-.. code::
+.. code:: sh
 
     det-deploy gcp down [optional args]
 

@@ -128,6 +128,8 @@ module "compute" {
   gpu_type = var.gpu_type
   gpu_num = var.gpu_num
   max_instances = var.max_instances
+  min_cpu_platform_master = var.min_cpu_platform_master
+  min_cpu_platform_agent = var.min_cpu_platform_agent
   preemptible = var.preemptible
   db_username = var.db_username
   db_password = var.db_password
