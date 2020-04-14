@@ -116,19 +116,29 @@ def test_gc_checkpoints(secrets: Dict[str, str]) -> None:
 
             exp.wait_for_experiment_state(experiment_id, "COMPLETED")
 
-            trials = exp.experiment_trials(experiment_id)
-            assert len(trials) == 1
+            # Checkpoints are not marked as deleted until gc_checkpoint task starts.
+            retries = 5
+            for retry in range(retries):
+                trials = exp.experiment_trials(experiment_id)
+                assert len(trials) == 1
 
-            checkpoints = sorted(
-                (step.checkpoint for step in trials[0].steps), key=operator.itemgetter("step_id"),
-            )
-            assert len(checkpoints) == 10
-            by_state = {}  # type: Dict[str, Set[int]]
-            for checkpoint in checkpoints:
-                by_state.setdefault(checkpoint.state, set()).add(checkpoint.step_id)
-            assert by_state == result
+                checkpoints = sorted(
+                    (step.checkpoint for step in trials[0].steps),
+                    key=operator.itemgetter("step_id"),
+                )
+                assert len(checkpoints) == 10
+                by_state = {}  # type: Dict[str, Set[int]]
+                for checkpoint in checkpoints:
+                    by_state.setdefault(checkpoint.state, set()).add(checkpoint.step_id)
 
-            all_checkpoints.append((config, checkpoints))
+                if by_state == result:
+                    all_checkpoints.append((config, checkpoints))
+                    break
+
+                if retry + 1 == retries:
+                    assert by_state == result
+
+                time.sleep(1)
 
     # Check that the actual checkpoint storage (for shared_fs) reflects the
     # deletions. We want to wait for the GC containers to exit, so check
