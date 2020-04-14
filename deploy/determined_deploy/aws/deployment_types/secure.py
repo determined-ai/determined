@@ -16,14 +16,13 @@ class Secure(base.DeterminedDeployment):
         "To View Determined UI:\n"
         "Add Keypair: ssh-add <keypair>\n"
         "Open SSH Tunnel through Bastion:  ssh -N -L 8080:{master_ip}:8080 ubuntu@{bastion_ip}\n"
-        "Access Determined through CLI: det -m localhost:8080\n"
-        "View the Determined UI: http://localhost:8080\n"
-        "View Logs at: https://{region}.console.aws.amazon.com/cloudwatch/home?"
-        "region={region}#logStream:group={log_group}"
+        "Access Determined through cli: det -m {master_ip}\n"
+        "View the Determined UI: http://localhost:8080"
     )
     template = "secure.yaml"
 
     template_parameter_keys = [
+        constants.cloudformation.USER_NAME,
         constants.cloudformation.KEYPAIR,
         constants.cloudformation.BASTION_ID,
         constants.cloudformation.MASTER_AMI,
@@ -48,13 +47,13 @@ class Secure(base.DeterminedDeployment):
             template = f.read()
 
         aws.deploy_stack(
-            stack_name=self.parameters[constants.cloudformation.CLUSTER_ID],
-            template_body=template,
-            boto3_session=self.parameters[constants.cloudformation.BOTO3_SESSION],
+            self.parameters[constants.cloudformation.DET_STACK_NAME],
+            template,
+            self.parameters[constants.cloudformation.BOTO3_SESSION],
             parameters=cfn_parameters,
         )
         self.print_results(
-            self.parameters[constants.cloudformation.CLUSTER_ID],
+            self.parameters[constants.cloudformation.DET_STACK_NAME],
             self.parameters[constants.cloudformation.BOTO3_SESSION],
         )
 
@@ -67,17 +66,11 @@ class Secure(base.DeterminedDeployment):
         master_ip = aws.get_ec2_info(output["MasterId"], boto3_session)[
             constants.cloudformation.PRIVATE_IP_ADDRESS
         ]
-        region = output[constants.cloudformation.REGION]
-        log_group = output[constants.cloudformation.LOG_GROUP]
 
-        ui_command = self.det_ui.format(
-            master_ip=master_ip, bastion_ip=bastion_ip, region=region, log_group=log_group
-        )
+        ui_command = self.det_ui.format(master_ip=master_ip, bastion_ip=bastion_ip)
         print(ui_command)
         print()
 
-        ssh_command = self.ssh_command.format(
-            master_ip=master_ip.split(":")[0], bastion_ip=bastion_ip
-        )
+        ssh_command = self.ssh_command.format(master_ip=master_ip, bastion_ip=bastion_ip)
         print(ssh_command)
         print()

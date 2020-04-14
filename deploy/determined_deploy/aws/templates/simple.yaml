@@ -6,6 +6,10 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Keypair to SSH
 
+  UserName:
+    Type: String
+    Description: The User Who Deployed the Stack (Used to keep stacks unique)
+
   MasterAmiId:
     Type: String
     Description: AMI Id for Master
@@ -14,7 +18,7 @@ Parameters:
   MasterInstanceType:
     Type: String
     Description: Instance Type of Master
-    Default: m5.large
+    Default: t2.medium
 
   AgentAmiId:
     Type: String
@@ -60,7 +64,7 @@ Resources:
   CheckpointBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub det-${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
+      BucketName: !Sub det-${UserName}-${AWS::Region}-${AWS::AccountId}
 
   MasterSecurityGroupEgress:
     Type: AWS::EC2::SecurityGroupEgress
@@ -167,7 +171,7 @@ Resources:
       GroupDescription: Security Group For Master
       Tags:
         - Key: user
-          Value: !Ref AWS::StackName
+          Value: !Ref UserName
 
   AgentSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -175,7 +179,7 @@ Resources:
       GroupDescription: Security Group For Agent
       Tags:
         - Key: user
-          Value: !Ref AWS::StackName
+          Value: !Ref UserName
 
   DatabaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -183,7 +187,7 @@ Resources:
       GroupDescription: Security Group For Database
       Tags:
         - Key: user
-          Value: !Ref AWS::StackName
+          Value: !Ref UserName
 
   Database:
     Type: AWS::RDS::DBCluster
@@ -197,14 +201,14 @@ Resources:
       MasterUserPassword: !Ref DBPassword
       Tags:
         - Key: user
-          Value: !Ref AWS::StackName
+          Value: !Ref UserName
       VpcSecurityGroupIds:
         - !GetAtt DatabaseSecurityGroup.GroupId
 
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /determined/${AWS::StackName}
+      LogGroupName: !Sub /determined/det-${UserName}
 
   LogPolicy:
     Type: AWS::IAM::Policy
@@ -308,7 +312,7 @@ Resources:
                 Resource: !GetAtt AgentRole.Arn
       Tags:
         - Key: user
-          Value: !Ref AWS::StackName
+          Value: !Ref UserName
 
   MasterInstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -376,7 +380,7 @@ Resources:
             iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
             image_id: ${AgentAmiId}
             agent_docker_image: determinedai/determined-agent:${Version}
-            instance_name: determined-agent-${AWS::StackName}
+            instance_name: determined-agent-${UserName}
             instance_type: ${AgentInstanceType}
             log_group: ${LogGroup}
             log_stream: determined-agent
@@ -389,8 +393,8 @@ Resources:
             provider: aws
             root_volume_size: 200
             ssh_key_name: ${Keypair}
-            tag_key: det-${AWS::StackName}
-            tag_value: det-agent-${AWS::StackName}
+            tag_key: det-${UserName}
+            tag_value: det-${UserName}-agent
           EOF
 
           apt-get remove docker docker-engine docker.io containerd runc
@@ -444,9 +448,9 @@ Resources:
           --//
       Tags:
         - Key: user
-          Value: !Ref AWS::StackName
+          Value: !Ref UserName
         - Key: Name
-          Value: !Sub det-master-${AWS::StackName}
+          Value: !Sub det-master-${UserName}
 
   DeterminedAddress:
     Type: AWS::EC2::EIP
@@ -454,7 +458,7 @@ Resources:
       InstanceId: !Ref MasterInstance
       Tags:
           - Key: user
-            Value: !Ref AWS::StackName
+            Value: !Ref UserName
 
 Outputs:
   MasterId:
@@ -483,16 +487,8 @@ Outputs:
 
   DeterminedAddress:
     Description: Ip address of Determined Master
-    Value: !Sub ${DeterminedAddress}:8080
+    Value: !Ref DeterminedAddress
 
   AgentTagName:
     Description: Tag Name for the agents
-    Value: !Sub determined-agent-${AWS::StackName}
-
-  LogGroup:
-    Description: The Log Group for Determined Logs
-    Value: !Ref LogGroup
-
-  Region:
-    Description: The AWS Region the stack is deployed in
-    Value: !Ref AWS::Region
+    Value: !Sub determined-agent-${UserName}
