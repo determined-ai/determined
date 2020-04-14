@@ -7,7 +7,7 @@ STARTUP_HOOK=${STARTUP_HOOK_SCRIPT:-startup-hook.sh}
 # Source `startup-hook.sh` before running tensorboard.
 source <(python3.6 -m determined.exec.prepare_env ${STARTUP_HOOK})
 
-python3.6 -m pip install --user --upgrade --find-links /opt/determined/wheels determined
+python3.6 -m pip install --user /opt/determined/wheels/determined*.whl
 
 # S3 backed experiments must have AWS_REGION set in the environment.
 eval "$(python3.6 -m determined.exec.tensorboard s3)"
