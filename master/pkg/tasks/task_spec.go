@@ -14,12 +14,12 @@ import (
 
 // TaskSpec provides the necessary information for an agent to start a task.
 type TaskSpec struct {
-	TaskID            string                        `json:"task_id"`
-	ContainerID       string                        `json:"container_id"`
-	ClusterID         string                        `json:"cluster_id"`
-	Devices           []device.Device               `json:"devices"`
-	HarnessPath       string                        `json:"harness_path"`
-	ContainerDefaults model.ContainerDefaultsConfig `json:"container_defaults"`
+	TaskID                string                            `json:"task_id"`
+	ContainerID           string                            `json:"container_id"`
+	ClusterID             string                            `json:"cluster_id"`
+	Devices               []device.Device                   `json:"devices"`
+	HarnessPath           string                            `json:"harness_path"`
+	TaskContainerDefaults model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
 
 	StartCommand   *StartCommand   `union:"type,START_TASK" json:"-"`
 	StartContainer *StartContainer `union:"type,START_CONTAINER" json:"-"`
@@ -76,7 +76,6 @@ type StartContainer struct {
 	InitialWorkload     searcher.Workload         `json:"initial_workload"`
 	WorkloadManagerType model.WorkloadManagerType `json:"workload_manager_type"`
 	AdditionalFiles     archive.Archive           `json:"additional_files"`
-	TrialRunnerConfig   model.TrialRunnerConfig   `json:"trial_runner_config"`
 }
 
 // KillContainer is the information sent to an agent to kill a task (i.e., container or

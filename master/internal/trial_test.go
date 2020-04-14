@@ -93,7 +93,7 @@ func TestRendezvousInfo(t *testing.T) {
 			scheduler.WorstFit,
 			nil,
 			"/opt/determined",
-			model.ContainerDefaultsConfig{},
+			model.TaskContainerDefaultsConfig{},
 			nil,
 			0,
 		))

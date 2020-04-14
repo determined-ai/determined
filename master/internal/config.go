@@ -32,7 +32,7 @@ func DefaultConfig() *Config {
 		ConfigFile: "",
 		Log:        *logger.DefaultConfig(),
 		DB:         *db.DefaultConfig(),
-		ContainerDefaults: model.ContainerDefaultsConfig{
+		TaskContainerDefaults: model.TaskContainerDefaultsConfig{
 			ShmSizeBytes: 4294967296,
 			NetworkMode:  "bridge",
 		},
@@ -68,21 +68,20 @@ func DefaultConfig() *Config {
 // It is populated, in the following order, by the master configuration file,
 // environment variables and command line arguments.
 type Config struct {
-	ConfigFile        string                        `json:"config_file"`
-	Log               logger.Config                 `json:"log"`
-	DB                db.Config                     `json:"db"`
-	Scheduler         scheduler.Config              `json:"scheduler"`
-	Provisioner       *provisioner.Config           `json:"provisioner"`
-	Security          SecurityConfig                `json:"security"`
-	CheckpointStorage CheckpointStorageConfig       `json:"checkpoint_storage"`
-	ContainerDefaults model.ContainerDefaultsConfig `json:"container_defaults"`
-	TrialRunner       model.TrialRunnerConfig       `json:"trial_runner"`
-	HTTPPort          int                           `json:"http_port"`
-	HTTPSPort         int                           `json:"https_port"`
-	HarnessPath       string                        `json:"harness_path"`
-	Hasura            HasuraConfig                  `json:"hasura"`
-	Root              string                        `json:"root"`
-	Telemetry         TelemetryConfig               `json:"telemetry"`
+	ConfigFile            string                            `json:"config_file"`
+	Log                   logger.Config                     `json:"log"`
+	DB                    db.Config                         `json:"db"`
+	Scheduler             scheduler.Config                  `json:"scheduler"`
+	Provisioner           *provisioner.Config               `json:"provisioner"`
+	Security              SecurityConfig                    `json:"security"`
+	CheckpointStorage     CheckpointStorageConfig           `json:"checkpoint_storage"`
+	TaskContainerDefaults model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
+	HTTPPort              int                               `json:"http_port"`
+	HTTPSPort             int                               `json:"https_port"`
+	HarnessPath           string                            `json:"harness_path"`
+	Hasura                HasuraConfig                      `json:"hasura"`
+	Root                  string                            `json:"root"`
+	Telemetry             TelemetryConfig                   `json:"telemetry"`
 }
 
 // Printable returns a printable string.

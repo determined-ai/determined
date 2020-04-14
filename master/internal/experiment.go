@@ -67,7 +67,6 @@ type experiment struct {
 	warmStartCheckpoint *model.Checkpoint
 	bestValidation      *float64
 	replaying           bool
-	trialRunnerConfig   model.TrialRunnerConfig
 
 	pendingEvents []*model.SearcherEvent
 
@@ -119,7 +118,6 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 		db:                  master.db,
 		searcher:            search,
 		warmStartCheckpoint: checkpoint,
-		trialRunnerConfig:   master.config.TrialRunner,
 		pendingEvents:       make([]*model.SearcherEvent, 0, searcherEventBuffer),
 
 		agentUserGroup: agentUserGroup,

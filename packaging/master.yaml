@@ -3,18 +3,15 @@
 #  type: fair_share
 #  fit: best
 
-## Container default configurations.
-#container_defaults:
+## Configure the task container defaults. Tasks include trials, commands, tensorboards and more.
+## For all task containers, shm_size_bytes and network_mode are configurable. For trials, the 
+## network interface used by distributed (multi-machine) training and ports used by the NCCL and 
+## GLOO libraries during distributed training are configurable. These default to auto-discovery and 
+## random non-privileged ports, respectively.
+#task_container_defaults:
 #  shm_size_bytes: 4294967296
 #  network_mode: bridge
-
-## Trial runner configurations. Configure the network interface used by trial
-# runners for distributed (multi-machine) training, as well as the ports used
-# by NCCL and GLOO libraries during distributed training.  Network interface
-# defaults to auto-discovery, and NCCL and GLOO ports default to random
-# non-privileged ports.
-#trial_runner:
-#  network_interface: <network interface name>
+#  dtrain_network_interface: <network interface name>
 #  nccl_port_range: <MIN:MAX>
 #  gloo_port_range: <MIN:MAX>
 
