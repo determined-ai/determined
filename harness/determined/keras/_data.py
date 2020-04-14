@@ -5,6 +5,7 @@ import numpy as np
 import tensorflow as tf
 
 import determined as det
+from determined import keras
 from determined_common import check
 
 ArrayLike = Union[np.ndarray, List[np.ndarray], Dict[str, np.ndarray]]
@@ -50,24 +51,45 @@ class _ArrayLikeAdapter(tf.keras.utils.Sequence):  # type: ignore
         x: ArrayLike,
         y: ArrayLike,
         batch_size: int,
-        sample_weight: Optional[np.ndarray] = None,
+        sample_weights: Optional[np.ndarray] = None,
         drop_leftovers: bool = False,
     ):
+        """
+        If converting numpy array data to Sequence to optimize performance, consider
+        using ArrayLikeAdapter.
+
+        Args:
+            x: Input data. It could be:
+                1) A Numpy array (or array-like), or a list of arrays (in case the model
+                has multiple inputs).
+                2) A dict mapping input names to the corresponding array, if the model
+                has named inputs.
+
+            y: Target data. Like the input data x, it could be either Numpy array(s).
+
+            batch_size: Number of samples per batch.
+
+            sample_weights: Numpy array of weights for the samples.
+
+            drop_leftovers: If True, drop the data that cannot complete the last batch. This
+                argument is ignored if x is a Sequence or a Dataset.
+        """
+
         self._x_length = _length_of_multi_arraylike(x)
         self._y_length = _length_of_multi_arraylike(y)
 
         check.eq(self._x_length, self._y_length, "Length of x and y do not match.")
         check.check_gt_eq(self._x_length, batch_size, "Batch size is too large for the input data.")
-        if sample_weight is not None:
+        if sample_weights is not None:
             check.eq(
                 self._x_length,
-                len(sample_weight),
+                len(sample_weights),
                 "Lengths of input data and sample weights do not match.",
             )
 
         self.x = x
         self.y = y
-        self.sample_weight = sample_weight
+        self.sample_weight = sample_weights
 
         self.batch_size = batch_size
         self.drop_leftovers = drop_leftovers
@@ -114,9 +136,10 @@ class _SequenceWithOffset(tf.keras.utils.Sequence):  # type: ignore
         return self._sequence[index]
 
 
-class _SequenceAdapter:
+class SequenceAdapter:
     """
-    A class to assist with restoring and saving iterators for a dataset.
+    A class to assist to optimize performance of tf.keras.sequence and help
+    with restoring and saving iterators for a dataset.
     """
 
     def __init__(
@@ -132,13 +155,16 @@ class _SequenceAdapter:
 
         Args:
             sequence: A tf.keras.utils.Sequence that holds the data.
+
             use_multiprocessing: If True, use process-based threading. If unspecified,
                 `use_multiprocessing` will default to False. Note that because this implementation
                 relies on multiprocessing, you should not pass non-picklable arguments for the
                 data loaders as they can't be passed easily to children processes.
+
             workers: Maximum number of processes to spin up when using process-based threading.
                 If unspecified, workers will default to 1. If 0, will execute the data loading on
                 the main thread.
+
             max_queue_size: Maximum size for the generator queue. If unspecified, `max_queue_size`
                 will default to 10.
         """
@@ -212,10 +238,30 @@ class _SequenceAdapter:
             self._enqueuer.stop(timeout=timeout)
 
 
-InputData = Union[tf.keras.utils.Sequence, tf.data.Dataset, _SequenceAdapter]
+InputData = Union[tf.keras.utils.Sequence, tf.data.Dataset, SequenceAdapter, tuple]
 
 
-def adapt_keras_data(
+def _get_x_y_and_sample_weight(
+    input_data: Union[tf.keras.utils.Sequence, tf.data.Dataset, SequenceAdapter, tuple]
+) -> Tuple[Any, Any, Any]:
+    if isinstance(input_data, (tf.keras.utils.Sequence, tf.data.Dataset, SequenceAdapter)):
+        return input_data, None, None
+
+    elif isinstance(input_data, tuple) and len(input_data) == 2:
+        return input_data[0], input_data[1], None
+
+    elif isinstance(input_data, tuple) and len(input_data) == 3:
+        return input_data[0], input_data[1], input_data[2]
+
+    else:
+        raise det.errors.InvalidDataTypeException(
+            type(input_data),
+            "input_data is invalid type. See the instruction below for details: \n"
+            f"{keras.TFKerasTrial.build_training_data_loader.__doc__}",
+        )
+
+
+def _adapt_keras_data(
     x: Any,
     y: Any = None,
     sample_weight: Optional[np.ndarray] = None,
@@ -224,14 +270,9 @@ def adapt_keras_data(
     workers: int = 1,
     max_queue_size: int = 10,
     drop_leftovers: bool = False,
-) -> InputData:
-    """adapt_keras_data adapts input and target data to a _SequenceAdapter or leaves
-    it as a tf.data.Dataset, both of which are designed to support random access efficiently,
-    for the purpose of supporting a Determined-managed training loop.
-
-    Multiprocessing or multithreading for native Python generators is not supported.
-    If you want these performance optimizations, please consider representing the
-    input data using a Sequence instead.
+) -> Union[SequenceAdapter, tf.data.Dataset]:
+    """_adapt_keras_data adapts input and target data to a SequenceAdapter or leaves
+    it as a tf.data.Dataset.
 
     Args:
         x: Input data. It could be:
@@ -243,6 +284,8 @@ def adapt_keras_data(
             (inputs, targets, sample_weights).
             4) A keras.utils.Sequence returning (inputs, targets) or (inputs, targets,
             sample weights).
+            5) a det.keras.SequenceAdapter returning (inputs, targets) or (inputs, targets,
+            sample weights).
 
         y: Target data. Like the input data x, it could be either Numpy array(s).
             If x is a dataset or keras.utils.Sequence instance, y should not be specified
@@ -251,27 +294,36 @@ def adapt_keras_data(
         use_multiprocessing: If True, use process-based threading. If unspecified,
             `use_multiprocessing` will default to False. Note that because this implementation
             relies on multiprocessing, you should not pass non-picklable arguments for the
-            data loaders as they can't be passed easily to children processes. This argument
-            is ignored if x is a Dataset.
+            data loaders as they can't be passed easily to children processes. This argument is
+            ignored if x is a tf.data.Dataset or SequenceAdapter.
+
+        sample_weight: Optional Numpy array of weights for the training samples. This argument is
+        ignored if x is a tf.data.Dataset, SequenceAdapter, or tf.keras.Sequence.
+
+        batch_size: Number of samples per gradient update. This argument is ignored if x is a
+        tf.data.Dataset, SequenceAdapter, or tf.keras.Sequence.
 
         workers: Maximum number of processes to spin up when using process-based threading.
             If unspecified, workers will default to 1. If 0, will execute the data loading on
-            the main thread. This argument is ignored if x is a Dataset.
+            the main thread. This argument is ignored if x is a tf.data.Dataset or SequenceAdapter.
 
         max_queue_size: Maximum size for the generator queue. If unspecified, `max_queue_size`
-            will default to 10. This argument is ignored if x is a Dataset.
+            will default to 10. This argument is ignored if x is a tf.data.Dataset or
+            SequenceAdapter.
 
         drop_leftovers: If True, drop the data that cannot complete the last batch. This
-            argument is ignored if x is a Sequence or a Dataset.
+            argument is ignored if x is a Sequence or a Dataset. This argument is ignored if
+            x is a tf.data.Dataset or SequenceAdapter.
     """
 
-    def check_y_is_none(y: Any) -> None:
+    def check_y_is_none(y_data: Any) -> None:
         if y is not None:
             raise det.errors.InvalidDataTypeException(
-                type(y),
+                type(y_data),
                 "If x is a keras.utils.Sequence or a tf.data.Dataset, "
                 "y should not be specified (since targets will be obtained from x)."
-                f"See the instruction below for details: \n{adapt_keras_data.__doc__}",
+                "See the instruction below for details: "
+                f"\n{keras.TFKerasTrial.build_training_data_loader.__doc__}",
             )
 
     if isinstance(x, np.ndarray) or _is_list_of_numpy_array(x) or _is_dict_of_numpy_array(x):
@@ -283,9 +335,10 @@ def adapt_keras_data(
                 type(y),
                 "If x is a numpy array or list/dict of numpy arrays, "
                 "y must also be a numpy array. "
-                f"See the instruction below for details: \n{adapt_keras_data.__doc__}",
+                "See the instruction below for details: "
+                f"\n{keras.TFKerasTrial.build_training_data_loader.__doc__}",
             )
-        return _SequenceAdapter(
+        return SequenceAdapter(
             _ArrayLikeAdapter(x, y, batch_size, sample_weight, drop_leftovers),
             use_multiprocessing,
             workers,
@@ -294,13 +347,12 @@ def adapt_keras_data(
 
     elif isinstance(x, tf.keras.utils.Sequence):
         check_y_is_none(y)
-        return _SequenceAdapter(x, use_multiprocessing, workers, max_queue_size)
+        return SequenceAdapter(x, use_multiprocessing, workers, max_queue_size)
 
     elif isinstance(x, tf.data.Dataset):
-        check_y_is_none(y)
         return x
 
-    elif isinstance(x, _SequenceAdapter):
+    elif isinstance(x, SequenceAdapter):
         check_y_is_none(y)
         return x
 
@@ -309,79 +361,5 @@ def adapt_keras_data(
             type(x),
             f"x is invalid type. x={x}\n"
             f"See the instruction below for details: \n"
-            f"{adapt_keras_data.__doc__}",
-        )
-
-
-ValidationData = Union[tuple, tf.keras.utils.Sequence, tf.data.Dataset, _SequenceAdapter]
-
-
-def adapt_validation_data(
-    validation_data: ValidationData,
-    batch_size: Optional[int] = None,
-    use_multiprocessing: bool = False,
-    workers: int = 1,
-) -> InputData:
-    """adapt_validation_data adapts inputs and targets of validation data to
-    a _SequenceAdapter or leaves it as a tf.data.Dataset, both of which are designed to
-    support random access efficiently, for the purpose of supporting Determined
-    managed training loop.
-
-    Multiprocessing or multithreading for native Python generators is not supported.
-    If you want these performance accelerations, please consider using a Sequence as x.
-
-    Args:
-        validation_data: Data on which to evaluate the loss and any model metrics
-            at the end of each epoch. The model will not be trained on this data.
-            validation_data will override validation_split. validation_data could be:
-            1) tuple (x_val, y_val) of Numpy arrays
-            2) tuple (x_val, y_val, val_sample_weights) of Numpy arrays
-            3) dataset For the first two cases, batch_size must be provided.
-            For the last case, validation_steps could be provided.
-
-        use_multiprocessing: If True, use process-based threading. If unspecified,
-            `use_multiprocessing` will default to False. Note that because this implementation
-            relies on multiprocessing, you should not pass non-picklable arguments for the
-            data loaders as they can't be passed easily to children processes. This argument
-            is ignored if x is a Dataset.
-
-        workers: Maximum number of processes to spin up when using process-based threading.
-            If unspecified, workers will default to 1. If 0, will execute the data loading on
-            the main thread. This argument is ignored if x is a Dataset.
-    """
-
-    if isinstance(validation_data, (tf.keras.utils.Sequence, tf.data.Dataset)):
-        return adapt_keras_data(
-            x=validation_data,
-            batch_size=batch_size,
-            use_multiprocessing=use_multiprocessing,
-            workers=workers,
-        )
-
-    elif isinstance(validation_data, tuple) and len(validation_data) == 2:
-        x, y = validation_data
-        return adapt_keras_data(
-            x=x,
-            y=y,
-            batch_size=batch_size,
-            use_multiprocessing=use_multiprocessing,
-            workers=workers,
-        )
-
-    elif isinstance(validation_data, tuple) and len(validation_data) == 3:
-        x, y, sample_weight = validation_data
-        return adapt_keras_data(
-            x=x,
-            y=y,
-            sample_weight=sample_weight,
-            batch_size=batch_size,
-            use_multiprocessing=use_multiprocessing,
-            workers=workers,
-        )
-
-    else:
-        raise det.errors.InvalidDataTypeException(
-            type(validation_data),
-            "validation_data is invalid type. See the instruction below for details: \n"
-            f"{adapt_validation_data.__doc__}",
+            f"\n{keras.TFKerasTrial.build_training_data_loader.__doc__}",
         )

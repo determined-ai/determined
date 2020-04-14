@@ -120,14 +120,13 @@ class CIFARTrial(keras.TFKerasTrial):
             )
             self.data_downloaded = True
 
-        acceleration = self.context.get_data_config().get("acceleration")
         hparams = self.context.get_hparams()
         width_shift_range = hparams.get("width_shift_range", 0.0)
         height_shift_range = hparams.get("height_shift_range", 0.0)
         horizontal_flip = hparams.get("horizontal_flip", False)
         batch_size = self.context.get_per_slot_batch_size()
 
-        (train_data, train_labels), (test_data, test_labels) = get_data(self.download_directory)
+        (train_data, train_labels), (_, _) = get_data(self.download_directory)
 
         # Setup training data loader.
         data_augmentation = {
@@ -135,14 +134,9 @@ class CIFARTrial(keras.TFKerasTrial):
             "height_shift_range": height_shift_range,
             "horizontal_flip": horizontal_flip,
         }
-        train = augment_data(train_data, train_labels, batch_size, data_augmentation)
 
-        if acceleration:
-            workers = acceleration.get("workers", 1)
-            use_multiprocessing = acceleration.get("use_multiprocessing", False)
-            return keras.adapt_keras_data(
-                x=train, workers=workers, use_multiprocessing=use_multiprocessing
-            )
+        # Returns a tf.keras.Sequence.
+        train = augment_data(train_data, train_labels, batch_size, data_augmentation)
 
         return train
 
@@ -155,8 +149,5 @@ class CIFARTrial(keras.TFKerasTrial):
             self.data_downloaded = True
 
         (_, _), (test_data, test_labels) = get_data(self.download_directory)
-        return keras.adapt_keras_data(
-            x=preprocess_data(test_data),
-            y=preprocess_labels(test_labels),
-            batch_size=self.context.get_per_slot_batch_size(),
-        )
+
+        return preprocess_data(test_data), preprocess_labels(test_labels)

@@ -53,11 +53,11 @@ class XORTrial(keras.TFKerasTrial):
 
     def build_training_data_loader(self) -> keras.InputData:
         train, _ = make_xor_data_sequences(batch_size=4)
-        return keras.adapt_keras_data(train, workers=0)
+        return train
 
     def build_validation_data_loader(self) -> keras.InputData:
         _, test = make_xor_data_sequences(batch_size=4)
-        return keras.adapt_keras_data(test, workers=0)
+        return test
 
 
 class XORTrialWithTrainingMetrics(XORTrial):

@@ -274,8 +274,27 @@ class TFKerasTrialController(det.LoopTrialController):
         session_config = trial.session_config()
         session = TFKerasTrialController._configure_session(env, hvd_config, session_config)
 
-        training_data = keras.adapt_keras_data(trial.build_training_data_loader())
-        validation_data = keras.adapt_keras_data(trial.build_validation_data_loader())
+        training_x, training_y, training_sample_weight = keras._get_x_y_and_sample_weight(
+            input_data=trial.build_training_data_loader()
+        )
+        training_data = keras._adapt_keras_data(
+            x=training_x,
+            y=training_y,
+            sample_weight=training_sample_weight,
+            batch_size=context.get_per_slot_batch_size(),
+            drop_leftovers=True,
+        )
+
+        val_x, val_y, val_sample_weight = keras._get_x_y_and_sample_weight(
+            input_data=trial.build_validation_data_loader()
+        )
+        validation_data = keras._adapt_keras_data(
+            x=val_x,
+            y=val_y,
+            sample_weight=val_sample_weight,
+            batch_size=context.get_per_slot_batch_size(),
+            drop_leftovers=False,
+        )
 
         trial.build_model()
         check.is_not_none(context.model, "Please call wrap_model(...).")
@@ -397,10 +416,10 @@ class TFKerasTrialController(det.LoopTrialController):
             self.validation_tf_dataset = train_config.validation_data
         else:
             self.training_keras_data_adapter = cast(
-                keras._SequenceAdapter, train_config.training_data
+                keras.SequenceAdapter, train_config.training_data
             )
             self.validation_keras_data_adapter = cast(
-                keras._SequenceAdapter, train_config.validation_data
+                keras.SequenceAdapter, train_config.validation_data
             )
 
     def _initialize_keras_data_iterators(self) -> None:
@@ -641,15 +660,32 @@ class TFKerasTrial(det.Trial):
         """
         Defines the data loader to use during training.
 
-        Should return an object that implements the `tf.keras.utils.Sequence
-        <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__
-        interface, or a `tf.data.Dataset
-        <https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/data/Dataset>`__.
+        Should return one of the following:
+            1) A tuple (x_train, y_train) of Numpy arrays. x_train must be a Numpy array
+            (or array-like), a list of arrays (in case the model has multiple inputs), or
+            a dict mapping input names to the corresponding array, if the model has named inputs.
+            y_train should be a numpy array.
 
-        WARNING: If you are using ``tf.data.Dataset``, Determined’s support for
-        automatically checkpointing the dataset does not currently work correctly.
-        This means that resuming workloads will start from the beginning of the dataset
-        if using `tf.data.Dataset`.
+            2) A tuple (x_train, y_train, sample_weights) of
+            Numpy arrays.
+
+            3) A `tf.data.Dataset
+            <https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/data/Dataset>`__
+            returning a tuple of either (inputs, targets) or (inputs, targets, sample_weights).
+
+            4) A `keras.utils.Sequence
+            <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__
+            returning a tuple of either (inputs, targets) or (inputs, targets, sample weights).
+
+            5) A det.keras.SequenceAdapter returning a tuple of either (inputs, targets) or
+            (inputs, targets, sample weights).
+
+        .. warning::
+            If you are using ``tf.data.Dataset``, Determined’s support for
+            automatically checkpointing the dataset does not currently work correctly.
+            This means that resuming workloads will start from the beginning of the dataset
+            if using ``tf.data.Dataset``.
+
         """
         pass
 
@@ -658,10 +694,25 @@ class TFKerasTrial(det.Trial):
         """
         Defines the data loader to use during validation.
 
-        Should return an object that implements the `tf.keras.utils.Sequence
-        <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__
-        interface, or a `tf.data.Dataset
-        <https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/data/Dataset>`__.
+        Should return one of the following:
+            1) A tuple (x_val, y_val) of Numpy arrays. x_val must be a Numpy array
+            (or array-like), a list of arrays (in case the model has multiple inputs), or
+            a dict mapping input names to the corresponding array, if the model has named inputs.
+            y_train should be a numpy array.
+
+            2) A tuple (x_val, y_val, sample_weights) of
+            Numpy arrays.
+
+            3) A `tf.data.Dataset
+            <https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/data/Dataset>`__
+            returning a tuple of either (inputs, targets) or (inputs, targets, sample_weights).
+
+            4) A `keras.utils.Sequence
+            <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__
+            returning a tuple of either (inputs, targets) or (inputs, targets, sample weights).
+
+            5) A det.keras.SequenceAdapter returning a tuple of either (inputs, targets) or
+            (inputs, targets, sample weights).
         """
         pass
 

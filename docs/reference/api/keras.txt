@@ -17,45 +17,38 @@ determined.keras
 Data Loading
 ~~~~~~~~~~~~
 
-There are two supported data types for loading data into ``tf.keras`` models:
-an object that implements the `tf.keras.utils.Sequence
-<https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__ interface,
-or a `tf.data.Dataset
-<https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/data/Dataset>`__.
+There are five supported data types for loading data into ``tf.keras`` models:
+
+#. A tuple ``(x, y)`` of Numpy arrays. x must be a Numpy array (or array-like),
+   a list of arrays (in case the model has multiple inputs), or
+   a dict mapping input names to the corresponding array, if the model has named inputs.
+   y should be a numpy array.
+
+#. A tuple ``(x, y, sample_weights)``
+   of Numpy arrays.
+
+#. A ``tf.data.dataset`` returning a tuple of either (inputs, targets) or
+   (inputs, targets, sample_weights).
+
+#. A ``keras.utils.Sequence`` returning a tuple of either (inputs, targets) or
+   (inputs, targets, sample weights).
+
+#. A ``det.keras.SequenceAdapter`` returning a tuple of either (inputs, targets) or
+   (inputs, targets, sample weights).
 
 Loading data is done by defining ``build_training_data_loader`` and
 ``build_validation_data_loader`` functions. Each should return one of the
 supported data types mentioned above.
 
-The behavior of ``Sequence`` objects should be
-familiar if you have used ``fit_generator``. Like in ``tf.keras``, these
-``Sequence`` objects should return batches of data (i.e.,
-either ``(inputs, targets)`` or ``(inputs, targets, sample_weights)``).
-Examples can be found in :ref:`tf-keras-trial`.
 
-.. warning::
-  If you are using ``tf.data.Dataset`` with distributed training, Determined's
-  support for automatically checkpointing and resuming workloads does
-  not work correctly. Therefore, using ``tf.data.Dataset`` inputs with
-  distributed training is currently not recommended.
+Optimizing Keras Sequences
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**Required Wrappers**
+To optimize performance of ``tf.keras.Sequence`` which are created from generators,
+Determined provides ``determined.keras.SequenceAdapter``.
 
-To use ``tf.data.Dataset`` users need to wrap their datasets using
-Determined-provided wrappers.
-
-.. autofunction:: determined.keras.TFKerasContext.wrap_dataset
-
-
-Multithreading / Multiprocessing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-We support multithreading and multiprocessing only for ``Sequence`` and
-other data types can be adapted to ``Sequence`` using  ``adapt_keras_data``.
-When calling ``adapt_keras_data``, we can pass ``use_multiprocessing`` and
-``workers`` in the arguments to enable multithreading or multiprocessing.
-
-.. automethod:: determined.keras.adapt_keras_data
+.. autoclass:: determined.keras.SequenceAdapter
+   :members: __init__
 
 **Usage Examples**
 
@@ -63,19 +56,56 @@ When calling ``adapt_keras_data``, we can pass ``use_multiprocessing`` and
 
 ::
 
-   adapt_keras_data(sequence, workers=0, use_multiprocessing=False)
+   SequenceAdapter(sequence, workers=0, use_multiprocessing=False)
 
 -  Use one background process
 
 ::
 
-   adapt_keras_data(sequence, workers=1, use_multiprocessing=True)
+   SequenceAdapter(sequence, workers=1, use_multiprocessing=True)
 
 -  Use two background threads
 
 ::
 
-   adapt_keras_data(sequence, workers=2, use_multiprocessing=False)
+   SequenceAdapter(sequence, workers=2, use_multiprocessing=False)
+
+
+Required Wrappers
+~~~~~~~~~~~~~~~~~
+
+Users are required wrap their model prior to compiling it using the
+:func:`self.context.wrap_model <determined.keras.TFKerasTrialContext.wrap_model>`.
+This is typically done inside ``determined.keras.TFKerasTrial.build_model()``.
+
+.. autofunction:: determined.keras.TFKerasTrialContext.wrap_model
+    :noindex:
+
+If using ``tf.data.Dataset``, users are required to wrap both their training and
+validation dataset in a Determined-provided wrapper. This wrapper is used to shard
+the dataset for :ref:`multi-gpu-training`. For optimal performance, users should
+wrap dataset immediately after creating it.
+
+.. autofunction:: determined.keras.TFKerasContext.wrap_dataset
+
+
+Trial Context
+~~~~~~~~~~~~~
+
+``determined.keras.TFKerasTrialContext`` subclasses :ref:`trial-context`.
+It provides useful methods for writing ``Trial`` subclasses. It also provides
+the model and dataset wrappers.
+
+.. autoclass:: determined.keras.TFKerasTrialContext
+    :noindex:
+    :members: wrap_model, wrap_dataset
+    :member-order: bysource
+
+
+Native
+~~~~~~
+
+Disregard if using the trial API (subclassing ``determined.keras.TFKerasTrial``).
 
 .. _keras-init:
 
@@ -86,21 +116,8 @@ When calling ``adapt_keras_data``, we can pass ``use_multiprocessing`` and
 
 .. _keras-context:
 
-``determined.keras.TFKerasContext``
------------------------------------------
-
-To use ``tf.data.Dataset``, users need to wrap their datasets using
-Determined-provided wrappers.  Note that the concrete context object where
-these functions will be found will be either
-:class:`determined.keras.TFKerasTrialContext` or
-:class:`determined.keras.TFKerasNativeContext`, depending on use of Trial
-API or Native API.
-
-.. autoclass:: determined.keras.TFKerasContext
-    :members:
-    :member-order: bysource
-
 Examples
 --------
 
--  :download:`cifar10_cnn_tf_keras </examples/cifar10_cnn_tf_keras.tgz>`
+-  `MNIST <https://github.com/determined-ai/determined/tree/master/examples/official/mnist_tf_keras/>`_
+-  `Cifar10 <https://github.com/determined-ai/determined/tree/master/examples/official/cifar10_cnn_tf_keras/>`_

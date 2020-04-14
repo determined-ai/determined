@@ -1,4 +1,4 @@
-.. native_context:
+.. _native-context:
 
 determined.NativeContext
 ========================

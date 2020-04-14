@@ -1,9 +1,6 @@
 description: cifar10_keras_const
 data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-datasets/cifar10/cifar-10-python.tar.gz
-  acceleration:
-    use_multiprocessing: True
-    workers: 1
 hyperparameters:
   learning_rate: 1e-4
   learning_rate_decay: 1e-6

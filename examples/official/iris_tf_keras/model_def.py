@@ -84,14 +84,7 @@ class IrisTrial(keras.TFKerasTrial):
         # construct the Sequence data loaders that Determined expects.
         train_labels_categorical = to_categorical(train_labels, num_classes=3)
 
-        # The training and test sets are so small that we can safely use Determined's
-        # adapter of in-memory numpy, ArrayLikeDataAdapter.
-        train = keras.adapt_keras_data(
-            x=train_features.values,
-            y=train_labels_categorical,
-            batch_size=self.context.get_per_slot_batch_size(),
-        )
-        return train
+        return train_features.values, train_labels_categorical
 
     def build_validation_data_loader(self) -> keras.InputData:
         # Ignore header line and read the training and test CSV observations into pandas DataFrame's
@@ -103,10 +96,4 @@ class IrisTrial(keras.TFKerasTrial):
         # construct the Sequence data loaders that Determined expects.
         test_labels_categorical = to_categorical(test_labels, num_classes=3)
 
-        # We need to adapt the data into a Sequence with adapt_keras_data.
-        test = keras.adapt_keras_data(
-            x=test_features.values,
-            y=test_labels_categorical,
-            batch_size=self.context.get_per_slot_batch_size(),
-        )
-        return test
+        return test_features.values, test_labels_categorical
