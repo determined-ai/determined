@@ -12,9 +12,11 @@ hyperparameters:
   global_batch_size: 64
   n_filters1: 40
   n_filters2: 40
+  dropout1: 0.5
+  dropout2: 0.5
 searcher:
   name: single
-  metric: validation_error
+  metric: validation_loss
   max_steps: 2
   smaller_is_better: true
 max_restarts: 0

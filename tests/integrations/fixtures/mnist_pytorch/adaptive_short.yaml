@@ -8,14 +8,9 @@ checkpoint_storage:
   storage_path: determined-integration-checkpoints
 hyperparameters:
   learning_rate:
-    type: log
-    minval: -3.0
-    maxval: -1.0
-    base: 10
-  dropout:
     type: double
-    minval: .2
-    maxval: .8
+    minval: .0001
+    maxval: 1.0
   global_batch_size:
     type: const
     val: 64
@@ -26,10 +21,18 @@ hyperparameters:
   n_filters2:
     type: int
     minval: 8
-    maxval: 64
+    maxval: 72
+  dropout1:
+    type: double
+    minval: .2
+    maxval: .8
+  dropout2:
+    type: double
+    minval: .2
+    maxval: .8
 searcher:
   name: adaptive
-  metric: validation_error
+  metric: validation_loss
   smaller_is_better: true
   target_trial_steps: 4
   step_budget: 16
