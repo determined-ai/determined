@@ -47,12 +47,12 @@ Here is what the skeleton of our trial class looks like:
 
         def build_training_data_loader(self):
             # Create the training data loader. This should return a keras.Sequence
-            # or a tf.data.Dataset.
+            # a tf.data.Dataset, or NumPy arrays.
             pass
 
         def build_validation_data_loader(self):
             # Create the validation data loader. This should return a keras.Sequence
-            # or a tf.data.Dataset.
+            # a tf.data.Dataset, or NumPy arrays.
             pass
 
 We now discuss how to implement each of these methods in more detail.
@@ -96,7 +96,7 @@ Loading Data
 
 The last two methods we need to define are ``build_training_data_loader`` and ``build_validation_data_loader``. Determined uses these methods to load the training and validation datasets, respectively.
 
-Determined supports two ways of loading data into a ``tf.keras`` model: as a `tf.keras.utils.Sequence <https://www.tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__ or as a `tf.data.Dataset <https://www.tensorflow.org/api_docs/python/tf/data/Dataset>`__. Because the training dataset is small, the Fashion MNIST model represents the data using NumPy arrays. Determined provides a helper function, :func:`determined.keras.adapt_keras_data`, that can convert NumPy arrays into ``tf.keras`` sequences.
+Determined supports three ways of loading data into a ``tf.keras`` model: as a `tf.keras.utils.Sequence <https://www.tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__, a `tf.data.Dataset <https://www.tensorflow.org/api_docs/python/tf/data/Dataset>`__ or NumPy arrays. Because the training dataset is small, the Fashion MNIST model represents the data using NumPy arrays.
 
 .. code:: python
 
@@ -104,8 +104,7 @@ Determined supports two ways of loading data into a ``tf.keras`` model: as a `tf
         train_images, train_labels = data.load_training_data()
         train_images = train_images / 255.0
 
-        batch_size = self.context.get_per_slot_batch_size()
-        return adapt_keras_data(x=train_images, y=train_labels, batch_size=batch_size)
+        return train_images, train_labels
 
 The implementation of ``build_validation_data_loader`` is similar:
 
@@ -115,8 +114,10 @@ The implementation of ``build_validation_data_loader`` is similar:
         test_images, test_labels = data.load_validation_data()
         test_images = test_images / 255.0
 
-        batch_size = self.context.get_per_slot_batch_size()
-        return adapt_keras_data(x=test_images, y=test_labels, batch_size=batch_size)
+        return train_images, train_labels
+
+.. note::
+    When using ``tf.keras.utils.Sequence`` or ``tf.data.Dataset``, users should specify the batch size using ``self.context.get_per_slot_batch_size()``.
 
 Training the Model
 ------------------
