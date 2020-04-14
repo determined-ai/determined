@@ -6,8 +6,8 @@ Tutorials are simple step-by-step guides about getting started with different to
 
 For an introduction to Determined, pick your framework of choice:
 
- - :ref:`pytorch-mnist-tutorial`
- - :ref:`tf-mnist-tutorial`
+- :ref:`pytorch-mnist-tutorial`
+- :ref:`tf-mnist-tutorial`
 
 The full list of our tutorials can be found below:
 
