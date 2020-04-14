@@ -6,31 +6,41 @@ from determined_deploy.aws import aws, constants
 from determined_deploy.aws.deployment_types import secure, simple, vpc
 
 
-def make_aws_parser(subparsers: argparse._SubParsersAction):
-    parser_aws = subparsers.add_parser(
-        "aws", help="aws help", formatter_class=argparse.ArgumentDefaultsHelpFormatter
+def make_down_subparser(subparsers: argparse._SubParsersAction):
+    subparser = subparsers.add_parser("down", help="delete CloudFormation stack")
+    require_named = subparser.add_argument_group("required named arguments")
+    require_named.add_argument(
+        "--cluster-id", type=str, help="stack name for CloudFormation cluster", required=True
     )
 
-    parser_aws.add_argument("--delete", action="store_true", help="Delete Determined from account")
-    parser_aws.add_argument(
-        "--master-ami", type=str, help="ami for determined master",
+    subparser.add_argument(
+        "--region", type=str, default=constants.defaults.REGION, help="AWS region",
     )
-    parser_aws.add_argument(
-        "--agent-ami", type=str, help="ami for det agent",
+    subparser.add_argument("--aws-profile", type=str, default=None, help=argparse.SUPPRESS)
+
+
+def make_up_subparser(subparsers: argparse._SubParsersAction):
+    subparser = subparsers.add_parser("up", help="deploy/update CloudFormation stack")
+    require_named = subparser.add_argument_group("required named arguments")
+    require_named.add_argument(
+        "--cluster-id", type=str, help="stack name for CloudFormation cluster", required=True
     )
-    parser_aws.add_argument(
-        "--keypair",
-        type=str,
-        default=constants.defaults.KEYPAIR_NAME,
-        help="keypair for master and agent",
+    require_named.add_argument(
+        "--keypair", type=str, help="keypair for master and agent", required=True
     )
-    parser_aws.add_argument(
+    subparser.add_argument(
+        "--master-ami", type=str, help=argparse.SUPPRESS,
+    )
+    subparser.add_argument(
+        "--agent-ami", type=str, help=argparse.SUPPRESS,
+    )
+    subparser.add_argument(
         "--master-instance-type", type=str, help="instance type for master",
     )
-    parser_aws.add_argument(
+    subparser.add_argument(
         "--agent-instance-type", type=str, help="instance type for agent",
     )
-    parser_aws.add_argument(
+    subparser.add_argument(
         "--deployment-type",
         type=str,
         choices=constants.deployment_types.DEPLOYMENT_TYPES,
@@ -38,56 +48,56 @@ def make_aws_parser(subparsers: argparse._SubParsersAction):
         help=f"deployment type - "
         f'must be one of [{", ".join(constants.deployment_types.DEPLOYMENT_TYPES)}]',
     )
-    parser_aws.add_argument(
-        "--user", type=str, default=None, help="user to name stack and tag resources"
-    )
-    parser_aws.add_argument(
-        "--aws-profile", type=str, default=None, help="aws profile for deploying"
-    )
-    parser_aws.add_argument(
+    subparser.add_argument("--aws-profile", type=str, default=None, help=argparse.SUPPRESS)
+    subparser.add_argument(
         "--inbound-cidr", type=str, help="inbound IP Range in CIDR format",
     )
-    parser_aws.add_argument(
-        "--version", type=str, help="Determined version or commit to deploy",
+    subparser.add_argument(
+        "--det-version", type=str, help=argparse.SUPPRESS,
     )
-    parser_aws.add_argument(
+    subparser.add_argument(
         "--db-password",
         type=str,
         default=constants.defaults.DB_PASSWORD,
         help="password for master database",
     )
-    parser_aws.add_argument(
+    subparser.add_argument(
         "--hasura-secret",
         type=str,
         default=constants.defaults.HASURA_SECRET,
-        help="password for hasura service",
+        help="password for Hasura service",
     )
-    parser_aws.add_argument(
-        "--region-name", type=str, default=constants.defaults.REGION, help="aws region",
+    subparser.add_argument(
+        "--region", type=str, default=constants.defaults.REGION, help="AWS region",
     )
-    parser_aws.add_argument(
+    subparser.add_argument(
         "--max-idle-agent-period", type=str, help="max agent idle time",
     )
-    parser_aws.add_argument(
+    subparser.add_argument(
         "--max-instances", type=int, help="max instances",
     )
 
-    parser_aws.add_argument(
-        "--print", action="store_true", help="print deployment template",
+    subparser.add_argument(
+        "--dry-run", action="store_true", help="print deployment template",
     )
+
+
+def make_aws_parser(subparsers: argparse._SubParsersAction):
+    parser_aws = subparsers.add_parser("aws", help="AWS help")
+
+    aws_subparsers = parser_aws.add_subparsers(help="command", dest="command")
+    make_down_subparser(aws_subparsers)
+    make_up_subparser(aws_subparsers)
 
 
 def deploy_aws(args: argparse.Namespace) -> None:
     if args.aws_profile:
-        boto3_session = boto3.Session(profile_name=args.aws_profile, region_name=args.region_name)
+        boto3_session = boto3.Session(profile_name=args.aws_profile, region_name=args.region)
     else:
-        boto3_session = boto3.Session(region_name=args.region_name)
+        boto3_session = boto3.Session(region_name=args.region)
 
-    user = args.user if args.user else aws.get_user(boto3_session)
-    user = user.replace(".", "-").replace("_", "-")
-    stack_name = constants.defaults.DET_STACK_NAME_BASE.format(user)
-    if args.delete:
-        aws.delete(stack_name, boto3_session)
+    if args.command == "down":
+        aws.delete(args.cluster_id, boto3_session)
         print("Delete Successful")
         return
 
@@ -103,10 +113,9 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.cloudformation.KEYPAIR: args.keypair,
         constants.cloudformation.MASTER_INSTANCE_TYPE: args.master_instance_type,
         constants.cloudformation.AGENT_INSTANCE_TYPE: args.agent_instance_type,
-        constants.cloudformation.USER_NAME: user,
-        constants.cloudformation.DET_STACK_NAME: stack_name,
+        constants.cloudformation.CLUSTER_ID: args.cluster_id,
         constants.cloudformation.BOTO3_SESSION: boto3_session,
-        constants.cloudformation.VERSION: args.version,
+        constants.cloudformation.VERSION: args.det_version,
         constants.cloudformation.INBOUND_CIDR: args.inbound_cidr,
         constants.cloudformation.DB_PASSWORD: args.db_password,
         constants.cloudformation.HASURA_SECRET: args.hasura_secret,
@@ -116,11 +125,9 @@ def deploy_aws(args: argparse.Namespace) -> None:
 
     deployment_object = deployment_type_map[args.deployment_type](det_configs)
 
-    if args.print:
+    if args.dry_run:
         deployment_object.print()
         return
-
-    aws.check_keypair(args.keypair, boto3_session)
 
     print("Starting Determined Deployment")
     deployment_object.deploy()

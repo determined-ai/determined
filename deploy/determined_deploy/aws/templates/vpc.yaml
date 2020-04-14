@@ -2,10 +2,6 @@ Description:  This template deploys a VPC, with a public and private subnet. It 
   with a default route on the public subnet. It a NAT gateway, and default routes for them in the private subnet.
 
 Parameters:
-  UserName:
-    Description: An environment name that is prefixed to resource names
-    Type: String
-
   VpcCIDR:
     Description: Please enter the IP range (CIDR notation) for this VPC
     Type: String
@@ -33,7 +29,7 @@ Parameters:
   MasterInstanceType:
     Type: String
     Description: Instance Type of Master
-    Default: t2.medium
+    Default: m5.large
 
   AgentAmiId:
     Type: String
@@ -84,14 +80,14 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: !Ref UserName
+          Value: !Ref AWS::StackName
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Name
-          Value: !Ref UserName
+          Value: !Ref AWS::StackName
 
   InternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -108,7 +104,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub ${UserName} Public Subnet (AZ1)
+          Value: !Sub ${AWS::StackName} Public Subnet (AZ1)
 
   Subnet2:
     Type: AWS::EC2::Subnet
@@ -119,7 +115,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub ${UserName} Public Subnet (AZ2)
+          Value: !Sub ${AWS::StackName} Public Subnet (AZ2)
 
   RouteTable:
     Type: AWS::EC2::RouteTable
@@ -127,7 +123,7 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Sub ${UserName} Public Routes
+          Value: !Sub ${AWS::StackName} Public Routes
 
   DefaultPublicRoute:
     Type: AWS::EC2::Route
@@ -152,7 +148,7 @@ Resources:
   CheckpointBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub det-${UserName}-${AWS::Region}-${AWS::AccountId}
+      BucketName: !Sub det-${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
 
   MasterSecurityGroupEgress:
     Type: AWS::EC2::SecurityGroupEgress
@@ -261,7 +257,7 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: user
-          Value: !Ref UserName
+          Value: !Ref AWS::StackName
 
   AgentSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -270,7 +266,7 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: user
-          Value: !Ref UserName
+          Value: !Ref AWS::StackName
 
   DatabaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -279,7 +275,7 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: user
-          Value: !Ref UserName
+          Value: !Ref AWS::StackName
 
   DatabaseSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
@@ -290,7 +286,7 @@ Resources:
         - !Ref Subnet2
       Tags:
         - Key: user
-          Value: !Ref UserName
+          Value: !Ref AWS::StackName
 
   Database:
     Type: AWS::RDS::DBCluster
@@ -305,7 +301,7 @@ Resources:
       MasterUserPassword: !Ref DBPassword
       Tags:
         - Key: user
-          Value: !Ref UserName
+          Value: !Ref AWS::StackName
       VpcSecurityGroupIds:
         - !GetAtt DatabaseSecurityGroup.GroupId
 
@@ -313,7 +309,7 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /determined/det-${UserName}
+      LogGroupName: !Sub /determined/${AWS::StackName}
 
   LogPolicy:
     Type: AWS::IAM::Policy
@@ -437,7 +433,7 @@ Resources:
                 Resource: "*"
       Tags:
         - Key: user
-          Value: !Ref UserName
+          Value: !Ref AWS::StackName
 
   MasterInstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -506,7 +502,7 @@ Resources:
             iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
             image_id: ${AgentAmiId}
             agent_docker_image: determinedai/determined-agent:${Version}
-            instance_name: determined-agent-${UserName}
+            instance_name: determined-agent-${AWS::StackName}
             instance_type: ${AgentInstanceType}
             log_group: ${LogGroup}
             log_stream: determined-agent
@@ -520,8 +516,8 @@ Resources:
             provider: aws
             root_volume_size: 200
             ssh_key_name: ${Keypair}
-            tag_key: det-${UserName}
-            tag_value: det-agent-${UserName}
+            tag_key: det-${AWS::StackName}
+            tag_value: det-agent-${AWS::StackName}
           EOF
 
           apt-get remove docker docker-engine docker.io containerd runc
@@ -575,9 +571,9 @@ Resources:
           --//
       Tags:
         - Key: user
-          Value: !Ref UserName
+          Value: !Ref AWS::StackName
         - Key: Name
-          Value: !Sub det-master-${UserName}
+          Value: !Sub det-master-${AWS::StackName}
 
   DeterminedAddress:
     Type: AWS::EC2::EIP
@@ -585,7 +581,7 @@ Resources:
       InstanceId: !Ref MasterInstance
       Tags:
         - Key: user
-          Value: !Ref UserName
+          Value: !Ref AWS::StackName
 Outputs:
   VPC:
     Description: A reference to the created VPC
@@ -621,8 +617,16 @@ Outputs:
 
   DeterminedAddress:
     Description: Ip address of Determined Master
-    Value: !Ref DeterminedAddress
+    Value: !Sub ${DeterminedAddress}:8080
 
   AgentTagName:
     Description: Tag Name for the agents
-    Value: !Sub determined-agent-${UserName}
+    Value: !Sub determined-agent-${AWS::StackName}
+
+  LogGroup:
+    Description: The Log Group for Determined Logs
+    Value: !Ref LogGroup
+
+  Region:
+    Description: The AWS Region the stack is deployed in
+    Value: !Ref AWS::Region

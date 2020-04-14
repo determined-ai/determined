@@ -6,10 +6,6 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Keypair to SSH
 
-  UserName:
-    Type: String
-    Description: The User Who Deployed the Stack (Used to keep stacks unique)
-
   MasterAmiId:
     Type: String
     Description: AMI Id for Master
@@ -18,7 +14,7 @@ Parameters:
   MasterInstanceType:
     Type: String
     Description: Instance Type of Master
-    Default: t2.medium
+    Default: m5.large
 
   AgentAmiId:
     Type: String
@@ -64,7 +60,7 @@ Resources:
   CheckpointBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub det-${UserName}-${AWS::Region}-${AWS::AccountId}
+      BucketName: !Sub det-${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
 
   MasterSecurityGroupEgress:
     Type: AWS::EC2::SecurityGroupEgress
@@ -171,7 +167,7 @@ Resources:
       GroupDescription: Security Group For Master
       Tags:
         - Key: user
-          Value: !Ref UserName
+          Value: !Ref AWS::StackName
 
   AgentSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -179,7 +175,7 @@ Resources:
       GroupDescription: Security Group For Agent
       Tags:
         - Key: user
-          Value: !Ref UserName
+          Value: !Ref AWS::StackName
 
   DatabaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -187,7 +183,7 @@ Resources:
       GroupDescription: Security Group For Database
       Tags:
         - Key: user
-          Value: !Ref UserName
+          Value: !Ref AWS::StackName
 
   Database:
     Type: AWS::RDS::DBCluster
@@ -201,14 +197,14 @@ Resources:
       MasterUserPassword: !Ref DBPassword
       Tags:
         - Key: user
-          Value: !Ref UserName
+          Value: !Ref AWS::StackName
       VpcSecurityGroupIds:
         - !GetAtt DatabaseSecurityGroup.GroupId
 
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /determined/det-${UserName}
+      LogGroupName: !Sub /determined/${AWS::StackName}
 
   LogPolicy:
     Type: AWS::IAM::Policy
@@ -312,7 +308,7 @@ Resources:
                 Resource: !GetAtt AgentRole.Arn
       Tags:
         - Key: user
-          Value: !Ref UserName
+          Value: !Ref AWS::StackName
 
   MasterInstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -380,7 +376,7 @@ Resources:
             iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
             image_id: ${AgentAmiId}
             agent_docker_image: determinedai/determined-agent:${Version}
-            instance_name: determined-agent-${UserName}
+            instance_name: determined-agent-${AWS::StackName}
             instance_type: ${AgentInstanceType}
             log_group: ${LogGroup}
             log_stream: determined-agent
@@ -393,8 +389,8 @@ Resources:
             provider: aws
             root_volume_size: 200
             ssh_key_name: ${Keypair}
-            tag_key: det-${UserName}
-            tag_value: det-${UserName}-agent
+            tag_key: det-${AWS::StackName}
+            tag_value: det-agent-${AWS::StackName}
           EOF
 
           apt-get remove docker docker-engine docker.io containerd runc
@@ -448,9 +444,9 @@ Resources:
           --//
       Tags:
         - Key: user
-          Value: !Ref UserName
+          Value: !Ref AWS::StackName
         - Key: Name
-          Value: !Sub det-master-${UserName}
+          Value: !Sub det-master-${AWS::StackName}
 
   DeterminedAddress:
     Type: AWS::EC2::EIP
@@ -458,7 +454,7 @@ Resources:
       InstanceId: !Ref MasterInstance
       Tags:
           - Key: user
-            Value: !Ref UserName
+            Value: !Ref AWS::StackName
 
 Outputs:
   MasterId:
@@ -487,8 +483,16 @@ Outputs:
 
   DeterminedAddress:
     Description: Ip address of Determined Master
-    Value: !Ref DeterminedAddress
+    Value: !Sub ${DeterminedAddress}:8080
 
   AgentTagName:
     Description: Tag Name for the agents
-    Value: !Sub determined-agent-${UserName}
+    Value: !Sub determined-agent-${AWS::StackName}
+
+  LogGroup:
+    Description: The Log Group for Determined Logs
+    Value: !Ref LogGroup
+
+  Region:
+    Description: The AWS Region the stack is deployed in
+    Value: !Ref AWS::Region
