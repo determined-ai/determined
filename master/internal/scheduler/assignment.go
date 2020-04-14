@@ -34,10 +34,11 @@ func (a *Assigned) StartTask(spec image.TaskSpec) TaskSummary {
 		Task: a.task.handler,
 		StartContainer: agent.StartContainer{
 			Container: cproto.Container{
-				Parent:  a.task.handler.Address(),
-				ID:      cproto.ID(a.container.id),
-				State:   cproto.Assigned,
-				Devices: a.devices,
+				Parent:      a.task.handler.Address(),
+				ID:          cproto.ID(a.container.id),
+				State:       cproto.Assigned,
+				Devices:     a.devices,
+				Recoverable: spec.Recoverable,
 			},
 			Spec: image.ToContainerSpec(spec),
 		},

@@ -23,7 +23,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	proto "github.com/determined-ai/determined/master/pkg/agent"
-	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/logger"
 )
@@ -265,7 +264,7 @@ func (a *agent) connectToMaster(ctx *actor.Context) error {
 
 	a.socket, _ = ctx.ActorOf("socket", api.WrapSocket(conn, proto.AgentMessage{}, true))
 
-	containers := ctx.Ask(a.cm, recoverContainers{}).Get().([]container.Container)
+	containers := ctx.Ask(a.cm, recoverContainers{}).Get().([]proto.ContainerRecovered)
 
 	started := proto.MasterMessage{AgentStarted: &proto.AgentStarted{
 		Version: version.Version, Devices: a.Devices, Label: a.Label, RecoveredContainers: containers}}

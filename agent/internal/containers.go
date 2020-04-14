@@ -28,6 +28,7 @@ const (
 	dockerContainerIDLabel      = "ai.determined.container.id"
 	dockerContainerParentLabel  = "ai.determined.container.parent"
 	dockerContainerDevicesLabel = "ai.determined.container.devices"
+	dockerRecoverableLabel      = "ai.determined.container.recoverable"
 	dockerAgentLabel            = "ai.determined.container.agent"
 	dockerClusterLabel          = "ai.determined.container.cluster"
 	dockerMasterLabel           = "ai.determined.container.master"
@@ -137,6 +138,7 @@ func (c *containerManager) overwriteSpec(
 	}
 	spec.RunSpec.ContainerConfig.Labels[dockerContainerIDLabel] = cont.ID.String()
 	spec.RunSpec.ContainerConfig.Labels[dockerContainerParentLabel] = cont.Parent.String()
+	spec.RunSpec.ContainerConfig.Labels[dockerRecoverableLabel] = strconv.FormatBool(cont.Recoverable)
 	var slotIds []string
 	for _, d := range cont.Devices {
 		slotIds = append(slotIds, strconv.Itoa(d.ID))
@@ -171,7 +173,8 @@ func (c *containerManager) containerEnvVars(cont cproto.Container) []string {
 	}
 }
 
-func (c *containerManager) recoverContainers(ctx *actor.Context) ([]container.Container, error) {
+func (c *containerManager) recoverContainers(
+	ctx *actor.Context) ([]proto.ContainerRecovered, error) {
 	ctx.Log().Info("attempting to recover prior containers")
 	options := types.ContainerListOptions{
 		Filters: filters.NewArgs(),
@@ -180,12 +183,13 @@ func (c *containerManager) recoverContainers(ctx *actor.Context) ([]container.Co
 		dockerContainerTypeLabel, dockerContainerTypeValue))
 	options.Filters.Add("label", fmt.Sprintf("%s=%s", dockerAgentLabel, c.Options.AgentID))
 	options.Filters.Add("label", fmt.Sprintf("%s=%s", dockerClusterLabel, c.MasterInfo.ClusterID))
+	options.Filters.Add("label", fmt.Sprintf("%s=true", dockerRecoverableLabel))
 
 	dockerContainers, err := c.docker.ContainerList(context.Background(), options)
 	if err != nil {
 		return nil, errors.Wrap(err, "error listing out containers to recover")
 	}
-	var containers []container.Container
+	var containers []proto.ContainerRecovered
 	for _, cont := range dockerContainers {
 		if cont.State != "running" {
 			ctx.Log().Warnf("killing container found in %s state: %s", cont.State, cont.ID)
@@ -205,14 +209,15 @@ func (c *containerManager) recoverContainers(ctx *actor.Context) ([]container.Co
 }
 
 func (c *containerManager) recoverContainer(
-	ctx *actor.Context, dCont types.Container) (container.Container, error) {
+	ctx *actor.Context, dCont types.Container) (proto.ContainerRecovered, error) {
+	recovery := proto.ContainerRecovered{}
 	deviceIds := dCont.Labels[dockerContainerDevicesLabel]
 	var devices []device.Device
 	expectedDevices := strings.Split(deviceIds, ",")
 	for _, idStr := range expectedDevices {
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
-			return container.Container{}, errors.Wrapf(err, "error parsing device id")
+			return recovery, errors.Wrapf(err, "error parsing device id")
 		}
 		for _, d := range c.Devices {
 			if d.ID == id {
@@ -221,19 +226,19 @@ func (c *containerManager) recoverContainer(
 		}
 	}
 	if len(expectedDevices) != len(devices) {
-		return container.Container{}, errors.New("not enough devices registered with agent")
+		return recovery, errors.New("not enough devices registered with agent")
 	}
 	parentID, ok := dCont.Labels[dockerContainerParentLabel]
 	if !ok {
-		return container.Container{}, errors.New("no parent id found for container")
+		return recovery, errors.New("no parent id found for container")
 	}
 	parent := actor.Address{}
 	if err := parent.UnmarshalText([]byte(parentID)); err != nil {
-		return container.Container{}, errors.Wrap(err, "malformed container parent id")
+		return recovery, errors.Wrap(err, "malformed container parent id")
 	}
 	containerID, ok := dCont.Labels[dockerContainerIDLabel]
 	if !ok {
-		return container.Container{}, errors.New("no container id found for container")
+		return recovery, errors.New("no container id found for container")
 	}
 	cont := cproto.Container{
 		Parent:  parent,
@@ -243,12 +248,16 @@ func (c *containerManager) recoverContainer(
 	}
 	info, err := c.docker.ContainerInspect(context.Background(), dCont.ID)
 	if err != nil {
-		return container.Container{}, errors.New("error retrieving container info from docker")
+		return recovery, errors.New("error retrieving container info from docker")
 	}
 	if _, ok := ctx.ActorOf(cont.ID, recoverContainerActor(cont, info, c.docker)); !ok {
 		ctx.Log().Warnf("container already created: %s", cont.ID)
 	}
-	return cont, nil
+	recovery.Container = cont
+	recovery.ContainerStarted = proto.ContainerStarted{
+		ContainerInfo: info,
+	}
+	return recovery, nil
 }
 
 func (c *containerManager) killContainer(ctx *actor.Context, dCont types.Container) {

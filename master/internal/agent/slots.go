@@ -82,11 +82,12 @@ func (s *slots) sendToSlots(ctx *actor.Context, c container.Container, msg actor
 	}
 }
 
-func containerForDevice(target device.Device, rcs []container.Container) *container.Container {
+func containerForDevice(
+	target device.Device, rcs []aproto.ContainerRecovered) *container.Container {
 	for _, rc := range rcs {
-		for _, d := range rc.Devices {
+		for _, d := range rc.Container.Devices {
 			if d == target {
-				return &rc
+				return &rc.Container
 			}
 		}
 	}

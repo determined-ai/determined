@@ -106,15 +106,17 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 		ctx.Tell(a.slots, *msg.AgentStarted)
 		a.label = msg.AgentStarted.Label
 		for _, c := range msg.AgentStarted.RecoveredContainers {
-			ctx.Log().Infof("attempting to recover container master state: %s", c.ID)
-			if ref := ctx.Self().System().Get(c.Parent); ref != nil {
-				a.containers[c.ID] = ref
+			ctx.Log().Infof("attempting to recover container master state: %s", c.Container.ID)
+			if ref := ctx.Self().System().Get(c.Container.Parent); ref != nil {
+				a.containers[c.Container.ID] = ref
+				ctx.Tell(ref, c)
+			} else {
+				kill := aproto.AgentMessage{SignalContainer: &aproto.SignalContainer{
+					ContainerID: c.Container.ID,
+					Signal:      syscall.SIGKILL,
+				}}
+				ctx.Ask(a.socket, ws.WriteMessage{Message: kill})
 			}
-			kill := aproto.AgentMessage{SignalContainer: &aproto.SignalContainer{
-				ContainerID: c.ID,
-				Signal:      syscall.SIGKILL,
-			}}
-			ctx.Ask(a.socket, ws.WriteMessage{Message: kill})
 		}
 	case msg.ContainerStateChanged != nil:
 		a.containerStateChanged(ctx, *msg.ContainerStateChanged)
@@ -149,6 +151,14 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 	}
 	ctx.Tell(task, sc)
 	ctx.Tell(a.slots, sc)
+	// If a container stopped due to a failed agent, do not tell the cluster as it may come back
+	// at a later time. This is to ensure the proxy does not remove the reference to the container.
+	// Moving the proxy actor out of the scheduler should fix this issue.
+	if sc.ContainerStopped != nil &&
+		sc.ContainerStopped.Failure != nil &&
+		sc.ContainerStopped.Failure.FailureType == aproto.AgentFailed {
+		return
+	}
 	ctx.Tell(a.cluster, sc)
 }
 
