@@ -30,6 +30,7 @@ pipeline {
         script {
           env.MASTER_HOST = sh(script: "venv/bin/python CI/integrations/get_address.py determined-$CLUSTER_NAME", returnStdout: true).trim()
         }
+        sh "venv/bin/python CI/integrations/wait_for_master.py http://$MASTER_HOST:8080"
         sh ". venv/bin/activate && make test-python-integrations"
         sh ". venv/bin/activate && det-deploy aws down --cluster-id $CLUSTER_NAME"
       }
