@@ -25,6 +25,17 @@ their ``__init__()`` method:
     :inherited-members:
     :member-order: bysource
 
+    TrialContext always has a :class:`DistributedContext<determined._train_context.DistributedContext>`
+    accessible via ``context.distributed`` for information related to distributed training.
+
+``determined.TrialContext.distributed``
+---------------------------------------
+
+.. autoclass:: determined._train_context.DistributedContext
+    :members:
+    :inherited-members:
+    :member-order: bysource
+
 ``determined.keras.TFKerasTrialContext``
 ----------------------------------------
 
@@ -33,6 +44,9 @@ their ``__init__()`` method:
     :inherited-members:
     :member-order: bysource
 
+    TFKerasTrialContext always has a :class:`DistributedContext<determined._train_context.DistributedContext>`
+    accessible via ``context.distributed`` for information related to distributed training.
+
 ``determined.estimator.EstimatorTrialContext``
 ----------------------------------------------
 
@@ -40,3 +54,6 @@ their ``__init__()`` method:
     :members:
     :inherited-members:
     :member-order: bysource
+
+    EstimatorTrialContext always has a :class:`DistributedContext<determined._train_context.DistributedContext>`
+    accessible via ``context.distributed`` for information related to distributed training.
