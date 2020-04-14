@@ -19,9 +19,9 @@ To use a TensorFlow model in Determined, you need to port the model to Determine
 When training a ``tf.keras`` model, Determined provides a built-in training loop that feeds batches of data into your model, performs backpropagation, and computes training metrics. Determined also handles evaluating your model on the validation set, as well as other details like checkpointing, log management, and device initialization. To plug your model code into the Determined training loop, you define methods to perform the following tasks:
 
 - initialization
-- building the model graph
-- loading the training data set
-- loading the validation data set
+- build the model graph
+- load the training data set
+- load the validation data set
 
 The Determined training loop will then invoke these functions automatically. These methods should be organized into a **trial class**, which is a user-defined Python class that inherits from :class:`determined.keras.TFKerasTrial`. The following sections walk through how to write your first trial class and then how to run a training job with Determined.
 
@@ -60,7 +60,7 @@ We now discuss how to implement each of these methods in more detail.
 Initialization
 """"""""""""""
 
-As with any Python class, the ``__init__`` method is invoked to construct our trial class. Determined passes this method a single parameter, :class:`TFKerasTrialContext <determined.keras.TFKerasTrialContext>`. The trial context contains information about the trial, such as the values of the hyperparameters to use for training. For the time being, we don't need to access any properties from the trial context object, but we assign it to an instance variable so that we can use it later:
+As with any Python class, the ``__init__`` method is invoked to construct our trial class. Determined passes this method a single parameter, :class:`TrialContext <determined.TrialContext>`. The trial context contains information about the trial, such as the values of the hyperparameters to use for training. For the time being, we don't need to access any properties from the trial context object, but we assign it to an instance variable so that we can use it later:
 
 .. code:: python
 

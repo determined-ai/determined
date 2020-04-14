@@ -3,17 +3,7 @@
 PyTorch MNIST Tutorial
 =============================
 
-This tutorial describes how to port an existing PyTorch MNIST model to Determined. MNIST is a dataset consisting of grayscale images of handwritten digits, commonly used to test image classification models. This tutorial is based on the official `PyTorch MNIST example <https://github.com/PyTorch/examples/blob/master/mnist/main.py>`_.
-
-At the end of this tutorial, the reader should know:
-
-#. Basic Concepts of ``PyTorchTrial``
-#. Basic Understanding of ``TrialContext``
-#. How to Implement a PyTorch Model with ``PyTorchTrial``
-#. How to Write a Determined YAML Experiment Configuration
-#. A General Procedure of a Determined Workflow
-
-The complete model code for this tutorial can be downloaded here: :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`. We suggest you download that code and use it follow along as you read through this tutorial.
+This tutorial describes how to port an existing PyTorch model to Determined. We will port a simple image classification model for the MNIST dataset. This tutorial is based on the official `PyTorch MNIST example <https://github.com/PyTorch/examples/blob/master/mnist/main.py>`_.
 
 Prerequisites
 -------------
@@ -23,30 +13,24 @@ Prerequisites
 
 Overview
 --------
-PyTorch is a deep learning research platform used to develop models. Although PyTorch provides excellent capabilities for training research prototypes, it can be challenging to convert these prototypes into production-grade applications. Using Determined for your PyTorch models maintains the PyTorch user experience while unlocking production-grade features such as state-of-the-art distributed training and hyperparameter tuning, experiment tracking, log management, metrics visualization, reproducibility, and dependency management, along with flexibility to share compute resources on the hardware of your choice. To unlock these features, users can leverage Determined's ``PyTorchTrial`` interface.
+To use a PyTorch model in Determined, you need to port the model to Determined's API. For most models, this porting process is straightforward, and once the model has been ported, all of the features of Determined will then be available: for example, you can do :ref:`distributed training <multi-gpu-training>` or :ref:`hyperparameter search <hyperparameter-tuning>` without changing your model code, and Determined will store and visualize your model metrics automatically.
 
-Traditionally in PyTorch, the user defines a model, a data loader, and optimizer then manages the optimizer, the backprop, cross-batch metric calculations, and other training steps. Determined's ``PyTorchTrial`` interface has the user define the model, data loader and optimizer, similar to PyTorch. However, Determined connects the pieces by handling the device management, training loop, and training steps, so you can focus on the task at hand---training better models.
+When training a PyTorch model, Determined provides a built-in training loop that feeds batches of data into your forward pass, performs backpropagation, and computes training metrics. Determined also handles checkpointing, log management, and device initialization. To plug your model code into the Determined training loop, you define methods to perform the following tasks:
 
-To learn more about the benefits of Determined, read: :ref:`benefits-of-determined`.
+- initialization
+- build the model
+- define the optimizer
+- define the forward pass
+- load the training data set
+- load the validation data set
 
-This tutorial walks through building a Determined ``PyTorchTrial`` class and the necessary steps to run an experiment. The core file will be ``model_def.py`` and contains the MNIST ``PyTorchTrial`` class. Additionally, the Determined system expects two files to be provided:
+The Determined training loop will then invoke these functions automatically. These methods should be organized into a **trial class**, which is a user-defined Python class that inherits from :class:`determined.pytorch.PyTorchTrial`. The following sections walk through how to write your first trial class and then how to run a training job with Determined.
 
-#. an entrypoint (``__init__.py``)
-    - This file is our entrypoint. It imports the user defined ``PyTorchTrial`` class.
-#. an experiment configuration file (``*.yaml``)
-    - This file contains information on the hyperparameters and other details for model and experiment configuration used internally and by user code. This can include, but is not limited to: global_batch_size, learning_rate, and layer size.
-
-To learn more about yaml files, read: :ref:`topic-guides_yaml`. To learn more about the experiment configuration file, read: :ref:`experiment-configuration`.
-
-The next sections will describe how to build a ``PyTorchTrial`` class.
+The complete code for this tutorial can be downloaded here: :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`. We suggest you download that code and use it follow along as you read through this tutorial.
 
 Building a ``PyTorchTrial`` Class
 ---------------------------------
-Determined's interface requires users to implement a class that inherits a Trial class based on the user's preferred framework. This tutorial uses the ``PyTorchTrial`` interface, which requires six specific functions to be overridden: ``build_training_data_loader``, ``build_validation_data_loader``, ``build_model``, ``optimizer``, ``train_batch`` and ``evaluate_batch``.
-
-Each of these functions should contain code resembling traditional PyTorch. For example, the ``optimizer`` function should return a ``torch.optim`` object. By overriding the six functions, Determined will manage these common training objects eliminating the need to worry about when to properly calculate backprop, zero out gradients or other training steps.
-
-The code snippet below demonstrates the skeleton of ``PyTorchTrial``. In the next few sections, we will implement each function.
+Here is what the skeleton of our trial class looks like:
 
 .. code:: python
 
@@ -54,98 +38,52 @@ The code snippet below demonstrates the skeleton of ``PyTorchTrial``. In the nex
 
     class MNISTTrial(PyTorchTrial):
         def __init__(self, context: det.TrialContext):
-            # required: store the TrialContext for later use
-            self.context = context
-
-        def build_training_data_loader(self):
-            # create the train data
-            # return a Determined DataLoader
-            return DataLoader()
-
-        def build_validation_data_loader(self):
-            # create the validation data
-            # return a Determined DataLoader
-            return DataLoader()
+            # Initialize the trial class.
+            pass
 
         def build_model(self):
-            # define model
-            return model
+            # Build the model.
+            pass
 
         def optimizer(self, model: nn.Module):
-            # create optimizer
-            return optimizer
+            # Define the optimizer.
+            pass
 
         def train_batch(self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int):
-            # run the model for a batch
-            # return at least the loss function
-            return {"loss": loss}
+            # Define the training forward pass and calculate loss and other metrics
+            # for a batch of training data.
+            pass
 
         def evaluate_batch(self, batch: TorchData, model: nn.Module):
-            # return metrics to measure evaluations
-            return {"validation_error": error} ""
+            # Define how to evaluate the model by calculating loss and other metrics 
+            # for a batch of validation data.
+            pass
 
-Initializing ``PyTorchTrial``
-"""""""""""""""""""""""""""""
-Determined's ``PyTorchTrial`` supports model development by having the machine learning developer focus on defining the main train objects. By inheriting the ``PyTorchTrial`` class, the user does not manually call each required function; instead, Determined will call each function at the appropriate time to manage resources and training steps. In other words, you really only state what optimizer and model to use as Determined handles the object calls. Since the ``PyTorchTrial`` interface expects these functions to be overridden, each function needs to have the correct parameters.
+        def build_training_data_loader(self):
+            # Create the training data loader. 
+            # This should return a determined.pytorch.Dataset.
+            pass
 
-Also, Determined's ``PyTorchTrial.__init__`` is passed a single parameter: a :class:`TrialContext <determined.TrialContext>`. The ``TrialContext`` object, often stored as ``self.context``, contains a collection of runtime information for the particular trial, such as the hyperparameters in the experiment configuration file. Since it is highly encouraged to store all hyperparameters (i.e. batch size, learning rate) inside the experiment configuration file, the ``self.context`` object allows us to easily access the defined hyperparameters or data configurations.
+        def build_validation_data_loader(self):
+            # Create the validation data loader. 
+            # This should return a determined.pytorch.Dataset.
+            pass
 
-The user must store the ``TrialContext`` for later use, as shown in the code snippet below.
+We now discuss how to implement each of these methods in more detail.
+
+Initialization
+""""""""""""""
+As with any Python class, the ``__init__`` method is invoked to construct our trial class. Determined passes this method a single parameter, :class:`TrialContext <determined.TrialContext>`. The trial context contains information about the trial, such as the values of the hyperparameters to use for training. For the time being, we don't need to access any properties from the trial context object, but we assign it to an instance variable so that we can use it later:
 
 .. code:: python
 
-    def __init__(self, context: det.TrialContext):
+    def __init__(self, context: PyTorchTrialContext):
+        # Store trial context for later use.
         self.context = context
-
-The code snippet below shows how to access the defined variables from the experiment configuration file.
-
-.. code:: python
-
-    self.context.get_hparam(<variable name>)
-    self.context.get_data_config()[<variable name>]
-
-
-Download and Prepare MNIST Dataset
-----------------------------------
-
-Downloading Data
-""""""""""""""""
-
-First, we create our data objects. For this tutorial, we will download MNIST directly. Determined launches a separate process for each GPU during :ref:`multi-gpu-training`, so we add a unique ID to the download directory.
-
-.. code:: python
-
-    def download_data(self):
-        download_directory = "/tmp/work_dir/{}/MNIST".format(self.get.get_rank())
-        filepath = os.path.join(download_directory, basename)
-        logging.info("Downloading {}".format(url))
-        r = requests.get(url, stream=True)
-
-        ...
-
-        return os.path.dirname(download_directory)
-
-
-Creating DataLoaders
-""""""""""""""""""""
-Traditionally in PyTorch, a `PyTorch DataLoader <https://pytorch.org/tutorials/beginner/data_loading_tutorial.html>`_ defines data access to an underlying Dataset. A Determined DataLoader is an iterator handled by Determined that assigns the data to the corresponding resource. For ``build_training_data_loader`` and ``build_validation_data_loader``, we return a Determined DataLoader that represents the train and validation data respectively. Behind the scenes, the Determined DataLoader wraps a PyTorch DataLoader to allow Determined to load and assign the data to the correct resource (i.e. GPU) and automatically batch for ``train_batch``. From a user perspective, the Determined DataLoader has almost the same parameters and is treated very similar to traditional PyTorch DataLoader.
-
-The code snippet below uses ``build_training_data_loader`` to load the PyTorch MNIST datasets. After loading the data, we pass the dataset into the Determined DataLoader and assign the batch size. The batch size is stored inside the experiment configuration file and accessed through the ``TrialContext`` or ``context`` object.
-
-.. code:: python
-
-    from determined.pytorch import DataLoader
-
-    def build_training_data_loader(self):
-        download_data_dir = download_data()
-        train_data = datasets.MNIST(data_dir, train=True)
-        batch_size = self.context.get_per_slot_batch_size()
-        return DataLoader(train_data, batch_size=batch_size)
-
 
 Building the Model
 """"""""""""""""""
-Determined calls ``build_model`` to define our model. In ``build_model``, the model object is defined and the object is returned. The original PyTorch example uses the Sequential API to create the model. The ``build_model`` function mimics the original model implementation:
+The ``build_model`` method returns a ``torch.Module`` or ``torch.Sequential`` object. The MNIST model code uses the Torch Sequential API and we can continue to use that API in our implementation of ``build_model``. We also access the hyperparameter for our model by the trial context with the function ``get_hparam()``. 
 
 .. code:: python
 
@@ -154,51 +92,69 @@ Determined calls ``build_model`` to define our model. In ``build_model``, the mo
 
     def build_model(self):
         model = nn.Sequential(
-            nn.Conv2d(1, self.context.get_hparam("n_filters1"), kernel_size=5),
-            nn.MaxPool2d(2),
+            nn.Conv2d(1, self.context.get_hparam("n_filters1"), 3, 1),
             nn.ReLU(),
             nn.Conv2d(
-                self.context.get_hparam("n_filters1"), self.context.get_hparam("n_filters2"), kernel_size=5,
+                self.context.get_hparam("n_filters1"), self.context.get_hparam("n_filters2"), 3,
             ),
+            nn.ReLU(),
             nn.MaxPool2d(2),
-            nn.ReLU(),
+            nn.Dropout2d(self.context.get_hparam("dropout1")),
             Flatten(),
-            nn.Linear(16 * self.context.get_hparam("n_filters2"), 50),
+            nn.Linear(144 * self.context.get_hparam("n_filters2"), 128),
             nn.ReLU(),
-            nn.Dropout2d(self.context.get_hparam("dropout")),
-            nn.Linear(50, 10),
+            nn.Dropout2d(self.context.get_hparam("dropout2")),
+            nn.Linear(128, 10),
             nn.LogSoftmax(),
         )
 
-        reset_parameters(model)
-        return model
 
 Defining the Optimizer
 """"""""""""""""""""""
-Next, Determined calls the ``optimizer`` function. This function passes the generated model from ``build_model`` as a parameter and expects a ``torch.optim`` object to be returned. We do not need to call the optimizer during training because Determined will handle ``.step()`` and ``.zero_grad()``. In the code snippet below, the learning rate is stored in the experiment configuration file and accessed through the ``TrialContext`` object: ``self.context``.
+The ``optimizer`` method returns a ``torch.optim`` object. The MNIST model code uses the ``torch.optim.Adadelta`` and we can continue to use that in our implementation of ``optimizer``.
 
 .. code:: python
 
     def optimizer(self, model: nn.Module):
-        return torch.optim.SGD(
-            model.parameters(), lr=self.context.get_hparam("learning_rate"), momentum=0.9
-        )
+        return torch.optim.Adadelta(model.parameters(), lr=self.context.get_hparam("learning_rate"))
 
-Defining the Training Loop
-""""""""""""""""""""""""""
-In PyTorch, the user defines the training loop based on the ``PyTorch.DataLoader`` to access a batch of data; however, Determined handles the loop for us. The ``train_batch`` and ``evaluate_batch`` functions provide the current batch and model. At this point, the correct resource has been assigned to the current batch and model.
+Loading Data
+""""""""""""""""
 
-The ``train_batch`` computes the forward pass and calculates the loss, similar to a traditional PyTorch training loop. The expected return values include a dictionary with the calculated loss and other user defined metrics. Since Determined handles the backprop call, we do not need to call loss.backwards().
+The last two methods we need to define are ``build_training_data_loader`` and ``build_validation_data_loader``. Determined uses these methods to load the training and validation datasets, respectively. This method should return a ``determined.pytorch.DataLoader``, which is very similar to ``torch.utils.data.DataLoader``.  
 
-In this case, we calculate the loss with ``torch.nn.functional.nll_loss`` and return the result under the key ``loss``. PyTorch's framework does not handle combining the metrics; however, Determined will automatically average all the metrics returned in the dictionary. In the example code below, we return the calculated error for this batch and Determined will average all the train_error keys together.
 
 .. code:: python
 
-    def error_rate(predictions: torch.Tensor, labels: torch.Tensor) -> float:
-        matches = predictions.argmax(1) == labels.to(torch.long)
-        return 1.0 - float(matches.sum()) / predictions.shape[0]
+    def build_training_data_loader(self):
+        if not self.data_downloaded:
+            self.download_directory = data.download_dataset(
+                download_directory=self.download_directory,
+                data_config=self.context.get_data_config(),
+            )
+            self.data_downloaded = True
 
-    ...
+        train_data = data.get_dataset(self.download_directory, train=True)
+        return DataLoader(train_data, batch_size=self.context.get_per_slot_batch_size())
+
+    def build_validation_data_loader(self):
+        if not self.data_downloaded:
+            self.download_directory = data.download_dataset(
+                download_directory=self.download_directory,
+                data_config=self.context.get_data_config(),
+            )
+            self.data_downloaded = True
+
+        validation_data = data.get_dataset(self.download_directory, train=False)
+        return DataLoader(validation_data, batch_size=self.context.get_per_slot_batch_size())
+
+
+Defining the Forward Pass
+"""""""""""""""""""""""""""
+
+The ``train_batch`` computes the forward pass and calculates the loss. Determined expects a dictionary with the calculated loss and other user defined metrics and will automatically average all the metrics. Since Determined handles the backprop call, we do not need to call ``loss.backwards()`` or ``optim.zero_grad()``.
+
+.. code:: python
 
     def train_batch(self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int):
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
@@ -206,49 +162,51 @@ In this case, we calculate the loss with ``torch.nn.functional.nll_loss`` and re
 
         output = model(data)
         loss = torch.nn.functional.nll_loss(output, labels)
-        error = error_rate(output, labels)
 
-        return {"loss": loss, "train_error": error}
-
-
-For evaluation, Determined loops through our evaluation DataLoader defined from ``build_validation_data_loader``, similar to ``train_batch``. We compute the forward pass with the trained model and calculate the validation metrics. Determined will average the results.
-
-.. code:: python
+        return {"loss": loss}
 
     def evaluate_batch(self, batch: TorchData, model: nn.Module):
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
         data, labels = batch
 
         output = model(data)
-        error = error_rate(output, labels)
+        validation_loss = torch.nn.functional.nll_loss(output, labels).item()
 
-        return {"validation_error": error}
+        pred = output.argmax(dim=1, keepdim=True)
+        accuracy = pred.eq(labels.view_as(pred)).sum().item() / len(data)
+
+        return {"validation_loss": validation_loss, "accuracy": accuracy}
 
 
 Training the Model
 ------------------
 
-Now that we have ported our model code to Determined's API, we can use Determined to train a single instance of the model or to do a hyperparameter search. In Determined, a **trial** is a training task that consists of a dataset, a deep learning model, and values for all of the model's hyperparameters. An **experiment** is a collection of one or more trials: an experiment can either train a single model (with a single trial), or can define a search over a user-defined hyperparameter space.
+Now that we have ported our model code to the trial API, we can use Determined to train a single instance of the model or to do a hyperparameter search. In Determined, a :ref:`trial <concept-trial>` is a training task that consists of a dataset, a deep learning model, and values for all of the model's hyperparameters. An :ref:`experiment <concept-experiment>` is a collection of one or more trials: an experiment can either train a single model (with a single trial), or can define a search over a user-defined hyperparameter space.
 
-To create an experiment, we start by writing an experiment configuration file which defines the kind of experiment we want to run. In this case, we want to train a single model for a fixed number of batches, using fixed values for the model's hyperparameters:
+To create an experiment, we start by writing a configuration file which defines the kind of experiment we want to run. In this case, we want to train a single model for a fixed number of batches, using fixed values for the model's hyperparameters:
 
 .. code:: yaml
 
     description: mnist_pytorch_const
+    data:
+        url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
     hyperparameters:
-        learning_rate: 0.001
-        dropout: 0.5
+        learning_rate: 1.0
         global_batch_size: 64
-        n_filters1: 40
-        n_filters2: 40
+        n_filters1: 32
+        n_filters2: 64
+        dropout1: 0.25
+        dropout2: 0.5
     searcher:
         name: single
-        metric: validation_error
-        max_steps: 20
+        metric: validation_loss
+        max_steps: 9 # 9 steps is ~ one epoch
         smaller_is_better: true
     entrypoint: model_def:MNistTrial
 
-Note that rather than specifying the number of batches to train for directly, we instead specify the number of "steps". By default, a step consists of 100 batches, so the config file above specifies that the model should be trained on 2000 batches of data.
+Rather than specifying the number of batches to train for directly, we instead specify the number of :ref:`steps <concept-step>`. By default, a step consists of 100 batches, so the config file above specifies that the model should be trained on 4000 batches of data.
+
+The ``entrypoint`` specifies the name of the trial class to use. This is useful if our model code contains more than one trial class. In this case, we use an entrypoint of ``model_def:MNistTrial`` because our trial class is named ``MNistTrial`` and it is defined in a Python file named ``model_def.py``.
 
 For more information on experiment configuration, see the :ref:`experiment configuration reference <experiment-configuration>`.
 
