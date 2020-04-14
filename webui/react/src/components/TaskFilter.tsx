@@ -64,6 +64,8 @@ const TaskFilter: React.FC<Props> = ({ filters, onChange, users }: Props) => {
     onChange({ ...filters, limit });
   }, [ filters, onChange ]);
 
+  const selectIcon = <Icon name="arrow-down" size="small" />;
+
   const filterTaskButtons = taskTypeOrder.map(info => (
     <Tooltip key={info.label} placement="top" title={info.label}>
       <FilterButton
@@ -96,6 +98,7 @@ const TaskFilter: React.FC<Props> = ({ filters, onChange, users }: Props) => {
         <Select
           defaultValue={filters.states[0]}
           dropdownMatchSelectWidth={false}
+          suffixIcon={selectIcon}
           onSelect={handleStateSelect}>
           <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
           <OptGroup key="expGroup" label="Experiment States">
@@ -115,6 +118,7 @@ const TaskFilter: React.FC<Props> = ({ filters, onChange, users }: Props) => {
           optionFilterProp="children"
           showSearch={true}
           style={{ width: '10rem' }}
+          suffixIcon={selectIcon}
           onSelect={handleUserSelect}>
           <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
           {users.map(user => (
@@ -126,6 +130,7 @@ const TaskFilter: React.FC<Props> = ({ filters, onChange, users }: Props) => {
         <Label>Limit</Label>
         <Select
           defaultValue={filters.limit}
+          suffixIcon={selectIcon}
           onSelect={handleLimitSelect}>
           {limitOptions.map(limit => <Option key={limit} value={limit}>{limit}</Option>)}
         </Select>
