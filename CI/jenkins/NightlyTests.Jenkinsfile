@@ -27,7 +27,9 @@ pipeline {
         sh 'virtualenv --python="$(command -v python3.6)" --no-site-packages venv'
         sh "venv/bin/python -m pip install -r combined-reqs.txt"
         sh ". venv/bin/activate && det-deploy aws up --cluster-id $CLUSTER_NAME --version `git rev-parse HEAD` --keypair integrations-test"
-        sh "export MASTER_HOST=`venv/bin/python CI/integrations/get_address.py $CLUSTER_NAME`"
+        script {
+          env.MASTER_HOST = sh(script: "venv/bin/python CI/integrations/get_address.py determined-$CLUSTER_NAME", returnStdout: true).trim()
+        }
         sh ". venv/bin/activate && make test-python-integrations"
         sh ". venv/bin/activate && det-deploy aws down --cluster-id $CLUSTER_NAME"
       }
