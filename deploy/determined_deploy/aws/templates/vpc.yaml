@@ -38,7 +38,7 @@ Parameters:
   AgentAmiId:
     Type: String
     Description: AMI Id for Agent
-    Default: ami-0c8bb82d0e2346768
+    Default: ami-0ab5224f291ec5134
 
   AgentInstanceType:
     Type: String
