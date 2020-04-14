@@ -46,7 +46,7 @@ Deploying
 
 .. code::
 
-   det-deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR
+   det-deploy aws
 
 
 .. _determined-deploy-deployment-types:
@@ -81,101 +81,74 @@ The secure deployment creates resources to lock down the Determined cluster. The
 
 CLI Arguments
 ~~~~~~~~~~~~~
-Spinning up the cluster
-
-.. code::
-
-   det-deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR
-
 .. list-table::
-   :widths: 25 50 25 25
+   :widths: 25 50 25
    :header-rows: 1
 
    * - Argument
      - Description
      - Default Value
-     - Required
 
-   * - ``--cluster-id``
-     - Unique id for the cluster which will be used for the CloudFormation Stack Name
-     - None
-     - True
+   * - ``--delete``
+     - Delete the CloudFormation stack
+     - False
+
+   * - ``--master-ami``
+     - AMI for master instance
+     - ami-79873901 (AWS Ubuntu AMI)
+
+   * - ``--agent-ami``
+     - AMI for agent instances
+     - ami-0fdf46ca419aa5538 (Determined Environment AMI)
 
    * - ``--keypair``
      - AWS Keypair for master and agent instances
-     - None
-     - True
+     - determined-keypair
 
    * - ``--master-instance-type``
      - Instance Type for master instance
-     - m5.large
-     - False
+     - t2.medium
 
    * - ``--agent-instance-type``
      - Instance Type for agent instances
      - p2.8xlarge
-     - False
 
    * - ``--deployment-type``
      - The deployment template to use -  :ref:`Deployment Types<determined-deploy-deployment-types>`
      - simple
-     - False
+
+   * - ``--user``
+     - User that deploys the stack
+     - The IAM user that deploys the stack
+
+   * - ``--aws-profile``
+     - AWS profile for deploying with specific AWS credentials
+     - None
 
    * - ``--inbound-cidr``
      - CIDR range for inbound traffic
      - 0.0.0.0/0
-     - False
+
+   * - ``--version``
+     - Determined version to deploy
+     - The version of ``determined-deploy``
 
    * - ``--db-password``
      - Password for ``postgres`` user for Database
      - postgres
-     - False
 
-   * - ``--hasura-secret``
-     - Password for Hasura GraphQL
-     - hasura
-     - False
-
-   * - ``--region``
+   * - ``--region-name``
      - AWS region to deploy into
      - us-west-2
-     - False
 
    * - ``--max-idle-agent-period``
      - Amount of idle time an agent will wait before shutting down
      - 10m (10 minutes)
-     - False
 
    * - ``--max-instances``
      - Maximum instances that the master instance can allocate to the cluster
      - 5
-     - False
 
-   * - ``--dry-run``
-     - Print the template but do not execute it
-     - False
-     - False
-
-
-Tearing down the cluster
-
-.. code::
-
-   det-deploy aws down --cluster-id CLUSTER_ID
-
-.. list-table::
-   :widths: 25 50 25 25
-   :header-rows: 1
-
-   * - Argument
-     - Description
-     - Default Value
-     - Required
-
-   * - ``--cluster-id``
-     - Unique id for the cluster which will be used for the CloudFormation Stack Name
-     - None
-     - True
 
 .. _manual-deployment:
 

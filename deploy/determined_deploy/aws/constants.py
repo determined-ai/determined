@@ -6,14 +6,16 @@ class deployment_types:
 
 
 class defaults:
+    KEYPAIR_NAME = "determined-keypair"
     DEPLOYMENT_TYPE = deployment_types.SIMPLE
+    DET_STACK_NAME_BASE = "determined-{}"
     DB_PASSWORD = "postgres"
     HASURA_SECRET = "hasura"
     REGION = "us-west-2"
 
 
 class cloudformation:
-    CLUSTER_ID = "ClusterId"
+    USER_NAME = "UserName"
     KEYPAIR = "Keypair"
     VPC = "VPC"
     PUBLIC_SUBNET = "PublicSubnetId"
@@ -36,12 +38,11 @@ class cloudformation:
     VERSION = "Version"
     DB_PASSWORD = "DBPassword"
     HASURA_SECRET = "HasuraSecret"
+    DET_STACK_NAME = "DeterminedStackName"
     BOTO3_SESSION = "Boto3Session"
     AGENT_TAG_NAME = "AgentTagName"
     MAX_IDLE_AGENT_PERIOD = "MaxIdleAgentPeriod"
     MAX_INSTANCES = "MaxInstances"
-    LOG_GROUP = "LogGroup"
-    REGION = "Region"
 
 
 class misc:
