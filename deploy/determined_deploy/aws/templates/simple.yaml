@@ -60,7 +60,7 @@ Resources:
   CheckpointBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub det-${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
+      BucketName: !Sub ${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
 
   MasterSecurityGroupEgress:
     Type: AWS::EC2::SecurityGroupEgress

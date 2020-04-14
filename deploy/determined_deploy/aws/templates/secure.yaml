@@ -653,7 +653,7 @@ Resources:
   CheckpointBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub det-${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
+      BucketName: !Sub ${AWS::StackName}-${AWS::Region}-${AWS::AccountId}
 
 Outputs:
   VPC:
