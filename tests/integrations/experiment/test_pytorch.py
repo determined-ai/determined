@@ -30,10 +30,11 @@ def test_pytorch_load() -> None:
 
 @pytest.mark.integ2  # type: ignore
 def test_pytorch_const_multi_output() -> None:
-    exp.run_basic_test(
-        conf.official_examples_path("mnist_pytorch/const-multi-output.yaml"),
-        conf.official_examples_path("mnist_pytorch"),
-        1,
+    config = conf.load_config(conf.experimental_path("mnist_pytorch_multi_output/const.yaml"))
+    config = conf.set_max_steps(config, 2)
+
+    exp.run_basic_test_with_temp_config(
+        config, conf.experimental_path("mnist_pytorch_multi_output"), 1
     )
 
 
@@ -47,7 +48,7 @@ def test_pytorch_const_warm_start() -> None:
     config = conf.set_max_steps(config, 2)
 
     experiment_id1 = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("mnist_pytorch"), 1,
+        config, conf.official_examples_path("mnist_pytorch"), 1
     )
 
     trials = exp.experiment_trials(experiment_id1)

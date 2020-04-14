@@ -42,7 +42,7 @@ def test_metric_gathering() -> None:
     Confirm that metrics are gathered from the trial the way that we expect.
     """
     experiment_id = exp.run_basic_test(
-        conf.fixtures_path("metric_maker/const.yaml"), conf.fixtures_path("metric_maker"), 1,
+        conf.fixtures_path("metric_maker/const.yaml"), conf.fixtures_path("metric_maker"), 1
     )
 
     trials = exp.experiment_trials(experiment_id)
@@ -97,10 +97,7 @@ def test_gc_checkpoints(secrets: Dict[str, str]) -> None:
     ]
 
     # Prepare config updates for each backend we want to test.
-    config_mods = [
-        exp.shared_fs_checkpoint_config(),
-        exp.s3_checkpoint_config(secrets),
-    ]
+    config_mods = [exp.shared_fs_checkpoint_config(), exp.s3_checkpoint_config(secrets)]
 
     all_checkpoints = []
     for base_conf_path, result in fixtures:
@@ -203,7 +200,7 @@ def test_experiment_delete() -> None:
 @pytest.mark.integ1  # type: ignore
 def test_experiment_archive_unarchive() -> None:
     experiment_id = exp.create_experiment(
-        conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), ["--paused"],
+        conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), ["--paused"]
     )
 
     describe_args = [
@@ -301,7 +298,7 @@ def test_mnist_tf1_15() -> None:
 @pytest.mark.integ1  # type: ignore
 def test_labels() -> None:
     experiment_id = exp.create_experiment(
-        conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op"), None,
+        conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op"), None
     )
 
     label = "__det_test_dummy_label__"
@@ -333,18 +330,18 @@ def test_end_to_end_adaptive() -> None:
         None,
     )
 
-    # Check that validation metrics look sane (less than 7% error on MNIST).
+    # Check that validation accuracy look sane (more than 93% on MNIST).
     trials = exp.experiment_trials(exp_id)
     best = None
     for trial in trials:
         assert len(trial.steps)
         last_step = trial.steps[-1]
-        validation = last_step.validation.metrics["validation_metrics"]["validation_error"]
-        if not best or validation < best:
-            best = validation
+        accuracy = last_step.validation.metrics["validation_metrics"]["accuracy"]
+        if not best or accuracy > best:
+            best = accuracy
 
     assert best is not None
-    assert best < 0.07
+    assert best > 0.93
 
 
 @pytest.mark.integ1  # type: ignore
