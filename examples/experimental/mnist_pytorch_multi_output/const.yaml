@@ -1,4 +1,4 @@
-description: mnist_pytorch_const_multi_output
+description: mnist_pytorch_const
 data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
 hyperparameters:
@@ -10,6 +10,6 @@ hyperparameters:
 searcher:
   name: single
   metric: validation_error
-  max_steps: 2
+  max_steps: 10
   smaller_is_better: true
-entrypoint: model_def_multi_output:MultiMNistTrial
+entrypoint: model_def:MultiMNistTrial

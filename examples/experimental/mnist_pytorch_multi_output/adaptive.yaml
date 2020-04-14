@@ -1,4 +1,4 @@
-description: mnist_pytorch_adaptive_advanced
+description: mnist_pytorch_adaptive
 data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
 hyperparameters:
@@ -23,12 +23,12 @@ hyperparameters:
     minval: 8
     maxval: 64
 searcher:
-  name: adaptive
+  name: adaptive_simple
   metric: validation_error
   smaller_is_better: true
-  target_trial_steps: 16
-  step_budget: 80
+  max_steps: 32
+  max_trials: 16
   mode: aggressive
   max_rungs: 3
   divisor: 4
-entrypoint: model_def:MNistTrial
+entrypoint: model_def:MultiMNistTrial
