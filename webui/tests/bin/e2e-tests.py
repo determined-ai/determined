@@ -8,7 +8,7 @@ import subprocess
 import sys
 from typing import List
 
-DOCKER_CYPRESS_IMAGE = "cypress/included:4.2.0"
+DOCKER_CYPRESS_IMAGE = "cypress/included:4.3.0"
 logger = logging.getLogger("e2e-tests")
 
 root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"], encoding="utf-8")[:-1]
