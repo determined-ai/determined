@@ -151,6 +151,12 @@ class NativeContext(_TrainContext):
 
 
 class DistributedContext:
+    """
+    DistributedContext extends all TrialContexts and NativeContexts under
+    the ``context.distributed`` namespace. It provides useful methods for
+    effective multi-slot (parallel and distributed) training.
+    """
+
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
         self._env = env
         self._hvd_config = hvd_config

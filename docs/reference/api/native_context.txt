@@ -19,6 +19,18 @@ supported by the Native API returns a subclass of ``NativeContext``:
     :inherited-members:
     :member-order: bysource
 
+    NativeContext always has a :class:`DistributedContext<determined._train_context.DistributedContext>`
+    accessible via ``context.distributed`` for information related to distributed training.
+
+``determined.TrialContext.distributed``
+---------------------------------------
+
+.. autoclass:: determined._train_context.DistributedContext
+    :noindex:
+    :members:
+    :inherited-members:
+    :member-order: bysource
+
 ``determined.keras.TFKerasNativeContext``
 -----------------------------------------
 
@@ -27,6 +39,9 @@ supported by the Native API returns a subclass of ``NativeContext``:
     :inherited-members:
     :member-order: bysource
 
+    TFKerasNativeContext always has a :class:`DistributedContext<determined._train_context.DistributedContext>`
+    accessible via ``context.distributed`` for information related to distributed training.
+
 ``determined.estimator.EstimatorNativeContext``
 ------------------------------------------------
 
@@ -34,3 +49,6 @@ supported by the Native API returns a subclass of ``NativeContext``:
     :members:
     :inherited-members:
     :member-order: bysource
+
+    EstimatorNativeContext always has a :class:`DistributedContext<determined._train_context.DistributedContext>`
+    accessible via ``context.distributed`` for information related to distributed training.
