@@ -176,12 +176,12 @@ def deploy_gcp(args: argparse.Namespace) -> None:
     if args.command == "down":
 
         # Set placeholders for required variables
-        det_configs["cluster_id"] = "will_be_ignored"
-        det_configs["project_id"] = "will_be_ignored"
-        det_configs["network"] = "will_be_ignored"
-        det_configs["region"] = "will_be_ignored"
-        det_configs["det_version"] = "will_be_ignored"
-        det_configs["environment_image"] = "will_be_ignored"
+        det_configs["cluster_id"] = "will-be-ignored"
+        det_configs["project_id"] = "will-be-ignored"
+        det_configs["network"] = "will-be-ignored"
+        det_configs["region"] = "will-be-ignored"
+        det_configs["det_version"] = "will-be-ignored"
+        det_configs["environment_image"] = "will-be-ignored"
 
         gcp.delete(det_configs, env, variables_to_exclude)
         print("Delete Successful")
