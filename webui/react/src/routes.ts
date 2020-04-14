@@ -44,7 +44,7 @@ export const defaultAppRouteId = appRoutes[0].id;
 export const detRoutes: RouteConfigItem[] = [
   {
     component: Dashboard,
-    icon: 'star',
+    icon: 'user',
     id: 'dashboard',
     path: '/det/dashboard',
     title: 'Dashboard',

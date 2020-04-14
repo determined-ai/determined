@@ -15,7 +15,7 @@ const defaultProps: Props = {
 const sizeStyles = {
   large: '2.4rem',
   medium: '2rem',
-  small: '1.6rem',
+  small: '1.2rem',
 };
 
 const Base = styled.i`

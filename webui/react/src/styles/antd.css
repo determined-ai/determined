@@ -1,0 +1,7 @@
+.ant-select > .ant-select-arrow {
+  transform: rotate(0deg);
+  transition: transform 0.2s linear;
+}
+.ant-select.ant-select-open > .ant-select-arrow {
+  transform: rotate(180deg);
+}
