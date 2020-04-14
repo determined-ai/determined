@@ -10,7 +10,7 @@ services:
       POSTGRES_DB: determined
       POSTGRES_PASSWORD: ${DET_DB_PASSWORD}
     command:
-      - --max_connections=2000
+      - --max_connections=96
       - --shared_buffers=512MB
 
   determined-graphql:
