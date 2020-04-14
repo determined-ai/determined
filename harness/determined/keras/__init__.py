@@ -1,11 +1,11 @@
 from determined.keras._data import (
-    ArrayLike,
     _ArrayLikeAdapter,
+    _adapt_keras_data,
+    _get_x_y_and_sample_weight,
     _SequenceWithOffset,
-    _SequenceAdapter,
+    ArrayLike,
+    SequenceAdapter,
     InputData,
-    adapt_keras_data,
-    adapt_validation_data,
 )
 from determined.keras._tensorboard_callback import TFKerasTensorBoard
 from determined.keras._tf_keras_context import (

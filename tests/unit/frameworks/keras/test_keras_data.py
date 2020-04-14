@@ -41,7 +41,7 @@ def test_sequence_offset() -> None:
 
 @pytest.mark.parametrize("workers,use_multiprocessing,seq", MULTITHREADING_MULTIPROCESS_SUITE)
 def test_sequence_adapter(workers: int, use_multiprocessing: bool, seq: Sequence) -> None:
-    data = keras._SequenceAdapter(seq, workers=workers, use_multiprocessing=use_multiprocessing)
+    data = keras.SequenceAdapter(seq, workers=workers, use_multiprocessing=use_multiprocessing)
     assert len(data) == len(seq)
 
     data.start()
@@ -84,20 +84,20 @@ def test_arraylike_data_adapter_with_unmatched_batch_size() -> None:
 
 def test_adapt_invalid_data_type() -> None:
     seqs = utils.make_xor_data_sequences()
-    test = keras.adapt_keras_data(seqs[1], batch_size=1)
+    test = keras._adapt_keras_data(seqs[1], batch_size=1)
     with pytest.raises(det.errors.InvalidDataTypeException) as err:
-        keras.adapt_keras_data((None, test), batch_size=1)
+        keras._adapt_keras_data((None, test), batch_size=1)
         assert err is not None
 
 
 def test_adapt_list_of_np_arrays_as_x() -> None:
-    adapted = keras.adapt_keras_data(
+    adapted = keras._adapt_keras_data(
         x=[np.arange(0, 100), np.arange(100, 200)],
         y=np.arange(200, 300),
         batch_size=16,
         drop_leftovers=False,
     )
-    assert isinstance(adapted, keras._SequenceAdapter)
+    assert isinstance(adapted, keras.SequenceAdapter)
     assert len(adapted) == 7
     batch_x, batch_y = adapted._sequence[3]
     assert np.array_equal(batch_x[0], np.arange(48, 64))
@@ -106,13 +106,13 @@ def test_adapt_list_of_np_arrays_as_x() -> None:
 
 
 def test_adapt_list_of_np_arrays_as_y() -> None:
-    adapted = keras.adapt_keras_data(
+    adapted = keras._adapt_keras_data(
         x=np.arange(0, 100),
         y=[np.arange(100, 200), np.arange(200, 300)],
         batch_size=16,
         drop_leftovers=False,
     )
-    assert isinstance(adapted, keras._SequenceAdapter)
+    assert isinstance(adapted, keras.SequenceAdapter)
     assert len(adapted) == 7
     batch_x, batch_y = adapted._sequence[3]
     assert np.array_equal(batch_x, np.arange(48, 64))
@@ -121,13 +121,13 @@ def test_adapt_list_of_np_arrays_as_y() -> None:
 
 
 def test_adapt_dict_of_np_arrays_as_x() -> None:
-    adapted = keras.adapt_keras_data(
+    adapted = keras._adapt_keras_data(
         x={"k1": np.arange(0, 100), "k2": np.arange(100, 200)},
         y=np.arange(200, 300),
         batch_size=16,
         drop_leftovers=False,
     )
-    assert isinstance(adapted, keras._SequenceAdapter)
+    assert isinstance(adapted, keras.SequenceAdapter)
     assert len(adapted) == 7
     batch_x, batch_y = adapted._sequence[3]
     assert np.array_equal(batch_x["k1"], np.arange(48, 64))
@@ -138,17 +138,17 @@ def test_adapt_dict_of_np_arrays_as_x() -> None:
 def test_adapt_empty_sequence() -> None:
     sequence = Empty()
     with pytest.raises(ValueError):
-        keras.adapt_keras_data(sequence, batch_size=1)
+        keras._adapt_keras_data(sequence, batch_size=1)
 
 
 def test_adapt_sequence() -> None:
     seqs = utils.make_xor_data_sequences()
-    train = keras.adapt_keras_data(seqs[0], batch_size=1)
-    assert isinstance(train, keras._SequenceAdapter)
-    test = keras.adapt_keras_data(seqs[1], batch_size=1)
-    assert isinstance(test, keras._SequenceAdapter)
+    train = keras._adapt_keras_data(seqs[0], batch_size=1)
+    assert isinstance(train, keras.SequenceAdapter)
+    test = keras._adapt_keras_data(seqs[1], batch_size=1)
+    assert isinstance(test, keras.SequenceAdapter)
     assert seqs[0] is train._sequence._sequence
     assert seqs[1] is test._sequence._sequence
 
-    assert train is keras.adapt_keras_data(train, batch_size=1)
-    assert test is keras.adapt_keras_data(test, batch_size=1)
+    assert train is keras._adapt_keras_data(train, batch_size=1)
+    assert test is keras._adapt_keras_data(test, batch_size=1)

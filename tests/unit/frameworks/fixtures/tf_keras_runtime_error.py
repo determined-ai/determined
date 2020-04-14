@@ -5,7 +5,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 import determined as det
-from determined.keras import TFKerasTrial, TFKerasTrialContext, adapt_keras_data
+from determined.keras import TFKerasTrial, TFKerasTrialContext
 
 
 class RuntimeErrorTrial(TFKerasTrial):
@@ -30,10 +30,10 @@ class RuntimeErrorTrial(TFKerasTrial):
         return model
 
     def build_training_data_loader(self):
-        return adapt_keras_data(x=np.zeros((1)), y=np.zeros((1)), batch_size=1)
+        return np.zeros(1), np.zeros(1)
 
     def build_validation_data_loader(self):
-        return adapt_keras_data(x=np.zeros((1)), y=np.zeros((1)), batch_size=1)
+        return np.zeros(1), np.zeros(1)
 
 
 if __name__ == "__main__":
@@ -41,7 +41,7 @@ if __name__ == "__main__":
         trial_def=RuntimeErrorTrial,
         config={
             "description": "keras_runtime_error",
-            "hyperparameters": {"global_batch_size": det.Constant(32)},
+            "hyperparameters": {"global_batch_size": det.Constant(1)},
             "searcher": {"metric": "accuracy"},
         },
         mode=det.Mode.TEST,

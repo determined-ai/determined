@@ -7,7 +7,7 @@ Based on: https://www.tensorflow.org/tutorials/keras/classification
 import tensorflow as tf
 from tensorflow import keras
 
-from determined.keras import TFKerasTrial, TFKerasTrialContext, adapt_keras_data
+from determined.keras import TFKerasTrial, TFKerasTrialContext, InputData
 
 import data
 
@@ -32,16 +32,14 @@ class MNISTTrial(TFKerasTrial):
         )
         return model
 
-    def build_training_data_loader(self):
+    def build_training_data_loader(self) -> InputData:
         train_images, train_labels = data.load_training_data()
         train_images = train_images / 255.0
 
-        batch_size = self.context.get_per_slot_batch_size()
-        return adapt_keras_data(x=train_images, y=train_labels, batch_size=batch_size)
+        return train_images, train_labels
 
-    def build_validation_data_loader(self):
+    def build_validation_data_loader(self) -> InputData:
         test_images, test_labels = data.load_validation_data()
         test_images = test_images / 255.0
 
-        batch_size = self.context.get_per_slot_batch_size()
-        return adapt_keras_data(x=test_images, y=test_labels, batch_size=batch_size)
+        return test_images, test_labels

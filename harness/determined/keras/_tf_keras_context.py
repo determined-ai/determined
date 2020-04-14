@@ -67,12 +67,12 @@ class TFKerasContext:
                 fit_generator_args = inspect.signature(model.fit_generator).bind(*args, **kwargs)
                 fit_generator_args.apply_defaults()
 
-                training_data = keras._SequenceAdapter(
+                training_data = keras.SequenceAdapter(
                     fit_generator_args.arguments["generator"],
                     use_multiprocessing=fit_generator_args.arguments["use_multiprocessing"],
                     workers=fit_generator_args.arguments["workers"],
                 )
-                validation_data = keras._SequenceAdapter(
+                validation_data = keras.SequenceAdapter(
                     fit_generator_args.arguments["validation_data"],
                     use_multiprocessing=fit_generator_args.arguments["use_multiprocessing"],
                     workers=fit_generator_args.arguments["workers"],
@@ -124,18 +124,30 @@ class TFKerasContext:
                 fit_args = inspect.signature(model.fit).bind(*args, **kwargs)
                 fit_args.apply_defaults()
 
-                training_data = keras.adapt_keras_data(
+                # TODO: Use batch size from context instead of fit call.
+                training_data = keras._adapt_keras_data(
                     x=fit_args.arguments["x"],
                     y=fit_args.arguments["y"],
+                    sample_weight=fit_args.arguments["sample_weight"],
                     batch_size=fit_args.arguments["batch_size"],
                     use_multiprocessing=fit_args.arguments["use_multiprocessing"],
                     workers=fit_args.arguments["workers"],
+                    max_queue_size=fit_args.arguments["max_queue_size"],
+                    drop_leftovers=True,
                 )
-                validation_data = keras.adapt_validation_data(
-                    validation_data=fit_args.arguments["validation_data"],
+
+                val_x, val_y, val_sample_weight = keras._get_x_y_and_sample_weight(
+                    input_data=fit_args.arguments["validation_data"]
+                )
+                validation_data = keras._adapt_keras_data(
+                    x=val_x,
+                    y=val_y,
+                    sample_weight=val_sample_weight,
                     batch_size=fit_args.arguments["batch_size"],
                     use_multiprocessing=fit_args.arguments["use_multiprocessing"],
                     workers=fit_args.arguments["workers"],
+                    max_queue_size=fit_args.arguments["max_queue_size"],
+                    drop_leftovers=False,
                 )
 
                 self.train_config = TFKerasTrainConfig(
@@ -156,6 +168,9 @@ class TFKerasContext:
         new instance of their dataset. If users create multiple datasets (e.g.,
         one for training and one for testing), users should wrap each dataset
         independently.
+
+        Args:
+            dataset: tf.data.Dataset
         """
         hvd.require_horovod_type("tensorflow.keras", "TFKerasContext.wrap_dataset was called.")
 
@@ -178,6 +193,10 @@ class TFKerasTrialContext(det.TrialContext, TFKerasContext):
         they have been created but before they have been compiled. This function
         takes a ``tf.keras.Model`` and returns a wrapped version of the model;
         the return value should be used in place of the original model.
+
+        Args:
+            model: tf.keras.Model
+
         """
         return self._wrap_model_with_train_fn(model, None)
 
