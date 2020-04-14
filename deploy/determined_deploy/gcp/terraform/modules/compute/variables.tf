@@ -90,3 +90,9 @@ variable "region" {
 
 variable "zone" {
 }
+
+variable "min_cpu_platform_master" {
+}
+
+variable "min_cpu_platform_agent" {
+}

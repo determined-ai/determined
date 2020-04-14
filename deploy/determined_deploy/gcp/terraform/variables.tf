@@ -95,6 +95,15 @@ variable "max_idle_agent_period" {
   default = "10m"
 }
 
+variable "min_cpu_platform_master" {
+  type = string
+  default = "Intel Skylake"
+}
+
+variable "min_cpu_platform_agent" {
+  type = string
+  default = "Intel Broadwell"
+}
 
 // DETERMINED
 

@@ -119,7 +119,7 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
     )
     optional_named.add_argument(
         "--port",
-        type=str,
+        type=int,
         default=constants.defaults.PORT,
         help="port to use for communication on master instance",
     )
@@ -140,6 +140,18 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         type=int,
         default=constants.defaults.MAX_INSTANCES,
         help="maximum number of agent instances at one time",
+    )
+    optional_named.add_argument(
+        "--min-cpu-platform-master",
+        type=str,
+        default=constants.defaults.MIN_CPU_PLATFORM_MASTER,
+        help="minimum cpu platform for master instances",
+    )
+    optional_named.add_argument(
+        "--min-cpu-platform-agent",
+        type=str,
+        default=constants.defaults.MIN_CPU_PLATFORM_AGENT,
+        help="minimum cpu platform for agent instances",
     )
 
 
