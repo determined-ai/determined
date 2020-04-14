@@ -159,7 +159,7 @@ args_description = [
 
     checkpoint.args_description,
 
-    Cmd("task", None, "manage tasks", [
+    Cmd("task", None, "manage tasks (commands, experiments, notebooks, shells, tensorboards)", [
         Cmd("list", list_tasks, "list tasks in cluster", [
             Arg("--csv", action="store_true", help="print as CSV"),
         ], is_default=True),
