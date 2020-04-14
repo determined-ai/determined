@@ -29,9 +29,6 @@ def test_tf_keras_native_parallel(tf2: bool) -> None:
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])  # type: ignore
 @pytest.mark.parametrize("tf2", [False, True])  # type: ignore
 def test_tf_keras_parallel(aggregation_frequency: int, tf2: bool) -> None:
-    if tf2 and aggregation_frequency > 1:
-        pytest.skip("TF2 does not currently support aggregation_frequency.")
-
     config = conf.load_config(conf.official_examples_path("cifar10_cnn_tf_keras/const.yaml"))
     config["checkpoint_storage"] = exp.shared_fs_checkpoint_config()
     config.get("bind_mounts", []).append(exp.root_user_home_bind_mount())
