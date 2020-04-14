@@ -146,8 +146,6 @@ type trial struct {
 
 	warmStartCheckpointID *int
 
-	trialRunnerConfig model.TrialRunnerConfig
-
 	create searcher.Create
 	close  *searcher.Close
 
@@ -194,7 +192,6 @@ func newTrial(
 		experiment:            exp.Experiment,
 		modelDefinition:       exp.modelDefinition,
 		warmStartCheckpointID: warmStartCheckpointID,
-		trialRunnerConfig:     exp.trialRunnerConfig,
 
 		sequencer: newTrialWorkloadSequencer(exp.Experiment, create, firstCheckpoint),
 
@@ -456,7 +453,6 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.Assigned) erro
 			WorkloadManagerType: t.sequencer.WorkloadManagerType(),
 			AdditionalFiles:     additionalFiles,
 			AgentUserGroup:      t.agentUserGroup,
-			TrialRunnerConfig:   t.trialRunnerConfig,
 		},
 	})
 

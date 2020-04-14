@@ -425,7 +425,7 @@ func (m *Master) Run() error {
 		m.config.Scheduler.FitFunction(),
 		proxyRef,
 		filepath.Join(m.config.Root, "wheels"),
-		m.config.ContainerDefaults,
+		m.config.TaskContainerDefaults,
 		m.provisioner,
 		provisionerSlotsPerInstance,
 	)

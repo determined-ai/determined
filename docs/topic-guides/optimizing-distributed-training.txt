@@ -62,7 +62,7 @@ use all the resources of multiple machines to train a model.
     For distributed multi-machine training, Determined automatically detects
     a common network interface shared by the agent machines. If your cluster has
     multiple common network interfaces, please specify the fastest one
-    in :ref:`cluster-configuration` under ``trial_runner`` ``network_interface``
+    in :ref:`cluster-configuration` under ``task_container_defaults`` ``dtrain_network_interface``.
 
 
 Advanced Optimizations Configurations

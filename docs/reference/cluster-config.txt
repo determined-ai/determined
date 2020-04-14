@@ -57,7 +57,7 @@ Configuring Trial Runner Networking
 The master is capable of selecting the network interface that trial
 runners will use to communicate when performing distributed
 (multi-machine) training. The network interface can be configured by
-editing the ``trial_runner.network_interface``. If left unspecified,
+editing the ``task_container_defaults.dtrain_network_interface``. If left unspecified,
 which is the default setting, Determined will auto-discover a common
 network interface shared by the trial runners.
 
@@ -152,18 +152,17 @@ master starts. It may contain the following fields:
     - ``worst``: the worst-fit policy ensures that tasks will be
       placed on under-utilized agents.
 
-- ``container_defaults``: Specifies docker defaults for all task containers.
+- ``task_container_defaults``: Specifies docker defaults for all task containers.
+      A task represents a single schedulable unit, like a trial, command or tensorboard.
 
   - ``shm_size_bytes``: the size of `/dev/shm`` for the Determined task containers
     in the unit of bytes. Defaults to 4294967296.
+
   - ``network_mode``: the Docker network to use for the Determined task containers.
     If this is set to "host", Docker host-mode networking will be used
     instead. Defaults to "bridge".
 
-
-- ``trial_runner``: Specifies how trials are executed.
-
-  - ``network_interface``: The network interface to use during
+  - ``dtrain_network_interface``: The network interface to use during
     :ref:`multi-gpu-training`. If not set, Determined automatically determines
     the network interface.
 
@@ -176,12 +175,13 @@ master starts. It may contain the following fields:
     may have others.
 
     If interface detection is not finding the appropriate interface, the
-    ``network_interface`` option can be used to set it explicitly (e.g.,
+    ``dtrain_network_interface`` option can be used to set it explicitly (e.g.,
     ``eth11``).
 
   - ``nccl_port_range``: the range of ports that nccl is permitted to use
     during distributed training. A valid port range is in the format of
     ``MIN:MAX``.
+
   - ``gloo_port_range``: the range of ports that gloo is permitted to use
     during distributed training. A valid port range is in the format of
     ``MIN:MAX``.

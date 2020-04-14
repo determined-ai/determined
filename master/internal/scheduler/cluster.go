@@ -28,15 +28,15 @@ type schedulerTick struct{}
 
 // Cluster manages the agent and task lifecycles.
 type Cluster struct {
-	clusterID         string
-	scheduler         Scheduler
-	fittingMethod     SoftConstraint
-	agents            map[*actor.Ref]*agentState
-	groups            map[*actor.Ref]*group
-	proxy             *actor.Ref
-	registeredNames   map[*container][]string
-	harnessPath       string
-	containerDefaults model.ContainerDefaultsConfig
+	clusterID             string
+	scheduler             Scheduler
+	fittingMethod         SoftConstraint
+	agents                map[*actor.Ref]*agentState
+	groups                map[*actor.Ref]*group
+	proxy                 *actor.Ref
+	registeredNames       map[*container][]string
+	harnessPath           string
+	taskContainerDefaults model.TaskContainerDefaultsConfig
 
 	taskList           *taskList
 	tasksByHandler     map[*actor.Ref]*Task
@@ -59,19 +59,19 @@ func NewCluster(
 	fittingMethod SoftConstraint,
 	proxy *actor.Ref,
 	harnessPath string,
-	containerDefaults model.ContainerDefaultsConfig,
+	taskContainerDefaults model.TaskContainerDefaultsConfig,
 	provisioner *actor.Ref,
 	provisionerSlotsPerInstance int,
 ) *Cluster {
 	c := &Cluster{
-		clusterID:         clusterID,
-		scheduler:         scheduler,
-		fittingMethod:     fittingMethod,
-		agents:            make(map[*actor.Ref]*agentState),
-		groups:            make(map[*actor.Ref]*group),
-		registeredNames:   make(map[*container][]string),
-		harnessPath:       harnessPath,
-		containerDefaults: containerDefaults,
+		clusterID:             clusterID,
+		scheduler:             scheduler,
+		fittingMethod:         fittingMethod,
+		agents:                make(map[*actor.Ref]*agentState),
+		groups:                make(map[*actor.Ref]*group),
+		registeredNames:       make(map[*container][]string),
+		harnessPath:           harnessPath,
+		taskContainerDefaults: taskContainerDefaults,
 
 		taskList:           newTaskList(),
 		tasksByHandler:     make(map[*actor.Ref]*Task),
@@ -96,14 +96,14 @@ func (c *Cluster) assignContainer(task *Task, agent *agentState, slots int, numC
 	task.containers[container.id] = container
 	c.tasksByContainerID[container.id] = task
 	assigned := Assigned{
-		task:              task,
-		agent:             agent,
-		container:         container,
-		numContainers:     numContainers,
-		clusterID:         c.clusterID,
-		devices:           agent.assignFreeDevices(slots, container.id),
-		harnessPath:       c.harnessPath,
-		containerDefaults: c.containerDefaults,
+		task:                  task,
+		agent:                 agent,
+		container:             container,
+		numContainers:         numContainers,
+		clusterID:             c.clusterID,
+		devices:               agent.assignFreeDevices(slots, container.id),
+		harnessPath:           c.harnessPath,
+		taskContainerDefaults: c.taskContainerDefaults,
 	}
 	task.handler.System().Tell(task.handler, assigned)
 }

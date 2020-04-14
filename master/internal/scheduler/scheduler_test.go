@@ -137,7 +137,7 @@ func setupCluster(
 	scheduler Scheduler, fittingMethod SoftConstraint, agents []*agentState, tasks []*actor.Ref,
 ) *Cluster {
 	c := NewCluster("cluster", scheduler, fittingMethod, nil,
-		"/opt/determined", model.ContainerDefaultsConfig{}, nil, 0)
+		"/opt/determined", model.TaskContainerDefaultsConfig{}, nil, 0)
 	for _, agent := range agents {
 		c.agents[agent.handler] = agent
 	}

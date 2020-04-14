@@ -86,10 +86,10 @@ func startCommand(t TaskSpec) container.Spec {
 				WorkingDir:   containerWorkDir,
 			},
 			HostConfig: docker.HostConfig{
-				NetworkMode:     t.ContainerDefaults.NetworkMode,
+				NetworkMode:     t.TaskContainerDefaults.NetworkMode,
 				Mounts:          toDockerMounts(cmd.Config.BindMounts),
 				PublishAllPorts: true,
-				ShmSize:         t.ContainerDefaults.ShmSizeBytes,
+				ShmSize:         t.TaskContainerDefaults.ShmSizeBytes,
 			},
 			Archives: []container.RunArchive{
 				workDirArchive(cmd.AgentUserGroup),
@@ -123,7 +123,7 @@ func startContainer(t TaskSpec) container.Spec {
 			},
 		})
 	}
-	networkMode := t.ContainerDefaults.NetworkMode
+	networkMode := t.TaskContainerDefaults.NetworkMode
 	if exp.ExperimentConfig.Resources.SlotsPerTrial > 1 {
 		networkMode = hostMode
 	}
@@ -135,7 +135,7 @@ func startContainer(t TaskSpec) container.Spec {
 		ports[port] = struct{}{}
 	}
 
-	networkInterface := exp.TrialRunnerConfig.NetworkInterface
+	networkInterface := t.TaskContainerDefaults.DtrainNetworkInterface
 	if networkInterface == "" {
 		networkInterface = "DET_AUTO_DETECT_NETWORK_INTERFACE"
 	}
@@ -155,11 +155,13 @@ func startContainer(t TaskSpec) container.Spec {
 		fmt.Sprintf("DET_TRIAL_RUNNER_NETWORK_INTERFACE=%s", networkInterface),
 	)
 
-	if exp.TrialRunnerConfig.NCCLPortRange != "" {
-		envVars = append(envVars, fmt.Sprintf("NCCL_PORT_RANGE=%s", exp.TrialRunnerConfig.NCCLPortRange))
+	if t.TaskContainerDefaults.NCCLPortRange != "" {
+		envVars = append(envVars,
+			fmt.Sprintf("NCCL_PORT_RANGE=%s", t.TaskContainerDefaults.NCCLPortRange))
 	}
-	if exp.TrialRunnerConfig.GLOOPortRange != "" {
-		envVars = append(envVars, fmt.Sprintf("GLOO_PORT_RANGE=%s", exp.TrialRunnerConfig.GLOOPortRange))
+	if t.TaskContainerDefaults.NCCLPortRange != "" {
+		envVars = append(envVars,
+			fmt.Sprintf("GLOO_PORT_RANGE=%s", t.TaskContainerDefaults.NCCLPortRange))
 	}
 
 	spec := container.Spec{
@@ -189,7 +191,7 @@ func startContainer(t TaskSpec) container.Spec {
 			},
 		},
 	}
-	spec.RunSpec.HostConfig.ShmSize = t.ContainerDefaults.ShmSizeBytes
+	spec.RunSpec.HostConfig.ShmSize = t.TaskContainerDefaults.ShmSizeBytes
 	if exp.ExperimentConfig.Resources.ShmSize != nil {
 		spec.RunSpec.HostConfig.ShmSize = int64(*exp.ExperimentConfig.Resources.ShmSize)
 	}
@@ -239,7 +241,7 @@ func gcCheckpoint(t TaskSpec) container.Spec {
 				WorkingDir: containerWorkDir,
 			},
 			HostConfig: docker.HostConfig{
-				NetworkMode:     t.ContainerDefaults.NetworkMode,
+				NetworkMode:     t.TaskContainerDefaults.NetworkMode,
 				Mounts:          mounts,
 				PublishAllPorts: true,
 			},
