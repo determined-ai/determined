@@ -40,7 +40,13 @@ type AgentStarted struct {
 	Version             string
 	Label               string
 	Devices             []device.Device
-	RecoveredContainers []container.Container
+	RecoveredContainers []ContainerRecovered
+}
+
+// ContainerRecovered notifies the task that the agent recovered a container on startup.
+type ContainerRecovered struct {
+	Container        container.Container
+	ContainerStarted ContainerStarted
 }
 
 // ContainerStateChanged notifies the master that the agent transitioned the container state.

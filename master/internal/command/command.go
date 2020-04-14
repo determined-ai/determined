@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo"
 
 	"github.com/determined-ai/determined/master/internal/scheduler"
@@ -20,6 +21,8 @@ import (
 // termianted state in the master before garbage collecting.
 const terminatedDuration = 24 * time.Hour
 
+const containerLostDuration = 5 * time.Minute
+
 // TODO: readinessCheck should be defined at the agent level. Temporarily we will use log
 // messages as a proxy.
 type readinessCheck func(agent.ContainerLog) bool
@@ -27,6 +30,8 @@ type readinessCheck func(agent.ContainerLog) bool
 // terminateForGC is an internal message indicating that the command actor
 // should stop and garbage collect its state.
 type terminateForGC struct{}
+
+type lostID uuid.UUID
 
 // commandOwner describes the owner of a command.
 type commandOwner struct {
@@ -74,6 +79,8 @@ type command struct {
 
 	cluster     *actor.Ref
 	eventStream *actor.Ref
+
+	containerLost *lostID
 }
 
 // Receive implements the actor.Actor interface.
@@ -101,7 +108,14 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case agent.ContainerStateChanged:
 		c.container = &msg.Container
-		if msg.Container.State == container.Terminated {
+		switch {
+		case msg.Container.State == container.Terminated &&
+			msg.ContainerStopped.Failure != nil &&
+			msg.ContainerStopped.Failure.FailureType == agent.AgentFailed:
+			id := lostID(uuid.New())
+			c.containerLost = &id
+			actors.NotifyAfter(ctx, containerLostDuration, id)
+		case msg.Container.State == container.Terminated:
 			exitStatus := "command exited successfully"
 			if msg.ContainerStopped.Failure != nil {
 				exitStatus = msg.ContainerStopped.Failure.Error()
@@ -120,6 +134,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				AdditionalFiles: c.additionalFiles,
 			},
 			HarnessPath: c.harnessPath,
+			Recoverable: true,
 		})
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 
@@ -145,6 +160,20 @@ func (c *command) Receive(ctx *actor.Context) error {
 		log := msg.String()
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), LogEvent: &log})
 
+	case lostID:
+		if c.exitStatus == nil && c.containerLost != nil && *c.containerLost == msg {
+			exitStatus := "container was lost on agent"
+			c.exitStatus = &exitStatus
+			ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ExitedEvent: c.exitStatus})
+			actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
+		}
+
+	case agent.ContainerRecovered:
+		if c.exitStatus == nil {
+			c.container = &msg.Container
+			c.containerLost = nil
+		}
+
 	case terminateForGC:
 		ctx.Self().Stop()
 
@@ -168,6 +197,13 @@ func (c *command) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 }
 
 func (c *command) terminate(ctx *actor.Context) {
+	if c.containerLost != nil {
+		exitStatus := "container was asked to terminate while lost"
+		c.exitStatus = &exitStatus
+		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ExitedEvent: c.exitStatus})
+		actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
+		return
+	}
 	ctx.Ask(c.cluster, scheduler.TerminateTask{TaskID: c.taskID, Forcible: true}).Get()
 	if msg, ok := ctx.Message().(scheduler.TerminateRequest); ok {
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), TerminateRequestEvent: &msg})
