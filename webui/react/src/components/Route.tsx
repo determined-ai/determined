@@ -23,7 +23,7 @@ const Route: React.FC<RouteConfigItem> = (props: RouteConfigItem) => {
 
   const checkAuth = useCallback(async (cancelToken: CancelToken): Promise<void> => {
     try {
-      const user = await getCurrentUser(cancelToken);
+      const user = await getCurrentUser({ cancelToken });
 
       if (mounted.current) {
         setAuth({

@@ -1,29 +1,8 @@
-import axios, { CancelToken } from 'axios';
+import { CancelToken } from 'axios';
 
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
-import { crossoverRoute } from 'routes';
+import { Api, generateApi } from 'services/apiBuilder';
 import { CommandType, RecentTask, TaskType, User } from 'types';
-
-export const http = axios.create({
-  responseType: 'json',
-  withCredentials: true,
-});
-
-const AUTH_FAILURE_MSG = 'unauthorized';
-
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-const hasAuthFailed = (e: any): boolean => {
-  return e.response && e.response.status && e.response.status === 401;
-};
-
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-const handleAuthFailure = (e: any): boolean => {
-  if (!hasAuthFailed(e)) return false;
-
-  // TODO: Update to internal routing when React takes over login.
-  crossoverRoute('/ui/logout');
-  return true;
-};
 
 const commandToEndpoint: Record<CommandType, string> = {
   [CommandType.Command]: '/commands',
@@ -32,9 +11,10 @@ const commandToEndpoint: Record<CommandType, string> = {
   [CommandType.Shell]: '/shells',
 };
 
-export const getCurrentUser = async (cancelToken?: CancelToken): Promise<User> => {
-  try {
-    const response = await http.get('/users/me', { cancelToken });
+const userApi:  Api<{}, User> = {
+  httpOptions: () => { return { url: '/users/me' }; },
+  name: 'user',
+  postProcess: (response) => {
     const result = decode<ioTypeUser>(ioUser, response.data);
     return {
       id: result.id,
@@ -42,56 +22,76 @@ export const getCurrentUser = async (cancelToken?: CancelToken): Promise<User> =
       isAdmin: result.admin,
       username: result.username,
     };
-  } catch (e) {
-    if (handleAuthFailure(e)) return Promise.reject(AUTH_FAILURE_MSG);
-    throw Error('Unable to get current user.');
-  }
+  },
 };
 
-export const killExperiment =
-  async (experimentId: number, cancelToken?: CancelToken): Promise<void> => {
-    try {
-      await http.post(`/experiments/${experimentId.toString()}/kill`,
-        null, { cancelToken });
-    } catch (e) {
-      if (handleAuthFailure(e)) return Promise.reject(AUTH_FAILURE_MSG);
-      throw Error(`Error during killing experiment ${experimentId}. ${e}`);
-    }
-  };
+export const getCurrentUser = generateApi<{}, User>(userApi);
 
-export const killCommand =
-  async (commandId: string, commandType: CommandType, cancelToken?: CancelToken): Promise<void> => {
-    try {
-      await http.delete(`${commandToEndpoint[commandType]}/${commandId}`, { cancelToken });
-    } catch (e) {
-      if (handleAuthFailure(e)) return Promise.reject(AUTH_FAILURE_MSG);
-      throw Error(`Error during killing command ${commandId}. ${e}`);
-    }
-  };
+interface KillExpOpts {
+  experimentId: number;
+}
+
+const killExperimentApi: Api<KillExpOpts, void> = {
+  httpOptions: (opts) => {
+    return {
+      method: 'POST',
+      url: `/experiments/${opts.experimentId.toString()}/kill`,
+    };
+  },
+  name: 'killExperiment',
+};
+
+export const killExperiment = generateApi<KillExpOpts, void>(killExperimentApi);
+
+interface KillCommandOpts {
+  commandId: string;
+  commandType: CommandType;
+}
+
+const killCommandApi: Api<KillCommandOpts, void> = {
+  httpOptions: (opts) => {
+    return {
+      method: 'DELETE',
+      url: `${commandToEndpoint[opts.commandType]}/${opts.commandId}`,
+    };
+  },
+  name: 'killCommand',
+};
+
+export const killCommand = generateApi<KillCommandOpts, void>(killCommandApi);
+
+interface PatchExperimentOpts {
+  experimentId: number;
+  body: Record<keyof unknown, unknown> | string;
+}
+
+const patchExperimentApi: Api<PatchExperimentOpts, void> = {
+  httpOptions: (opts) => {
+    return {
+      body: opts.body,
+      headers: { 'content-type': 'application/merge-patch+json', 'withCredentials': true },
+      method: 'PATCH',
+      url: `/experiments/${opts.experimentId.toString()}`,
+    };
+  },
+  name: 'patchExperiment',
+};
+
+export const patchExperiment = generateApi<PatchExperimentOpts, void>(patchExperimentApi);
 
 export const killTask =
   async (task: RecentTask, cancelToken?: CancelToken): Promise<void> => {
     if (task.type === TaskType.Experiment) {
-      return killExperiment(parseInt(task.id), cancelToken);
+      return killExperiment({ cancelToken, experimentId: parseInt(task.id) });
     }
-    return killCommand(task.id, task.type as unknown as CommandType, cancelToken);
-  };
-
-const patchExperiment =
-  async (experimentId: number, body: unknown, cancelToken?: CancelToken): Promise<void> => {
-    try {
-      await axios.patch(`/experiments/${experimentId.toString()}`,
-        body, {
-          cancelToken,
-          headers: { 'content-type': 'application/merge-patch+json', 'withCredentials': true },
-        });
-    } catch (e) {
-      if (handleAuthFailure(e)) return Promise.reject(AUTH_FAILURE_MSG);
-      throw Error(`Error during patching experiment ${experimentId}. ${e}`);
-    }
+    return killCommand({
+      cancelToken,
+      commandId: task.id,
+      commandType: task.type as unknown as CommandType,
+    });
   };
 
 export const archiveExperiment =
   async (experimentId: number, isArchived: boolean, cancelToken?: CancelToken): Promise<void> => {
-    return patchExperiment(experimentId, { archived: isArchived }, cancelToken);
+    return patchExperiment({ body: { archived: isArchived }, cancelToken, experimentId });
   };

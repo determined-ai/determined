@@ -1,10 +1,10 @@
-import axios, { Method } from 'axios';
+import axios from 'axios';
 import * as io from 'io-ts';
 import { Dispatch, Reducer, SetStateAction, useEffect, useReducer, useState } from 'react';
 
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { decode } from 'ioTypes';
-import { http } from 'services/api';
+import { http, HttpOptions } from 'services/apiBuilder';
 import { clone } from 'utils/data';
 
 enum ActionType {
@@ -30,12 +30,6 @@ type Action<T> =
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Mapper = (x: any) => any;
-
-interface HttpOptions {
-  url?: string;
-  method?: Method;
-  body?: Record<keyof unknown, unknown> | string;
-}
 
 interface HookOptions<T> {
   httpOptions?: HttpOptions;
