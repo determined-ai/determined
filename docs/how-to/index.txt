@@ -6,7 +6,7 @@ How-To guides are goal-oriented guides. They provide a detailed set of steps to 
 **Installation**
 
 - :ref:`install-cli`
-- :ref:`install-determined`
+- :ref:`install-cluster`
 
 **Hyperparameter**
 
@@ -26,7 +26,7 @@ The full list of our how-to guides can be found below:
   distributed-training
   hyperparameter-tuning
   install-cli
-  install-determined
+  install-main
   notebook-state
   notebook-configuration
   run-notebooks
