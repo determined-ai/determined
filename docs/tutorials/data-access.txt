@@ -68,9 +68,9 @@ Below, we create a custom ``tf.keras.utils.Sequence`` class. In the ``__getitem_
 
   import boto3
 
-  class ObjectStorageSequence(tf.keras.utils.Sequence): 
+  class ObjectStorageSequence(tf.keras.utils.Sequence):
       ...
-      
+
       def __init__(self):
           self.s3_client = boto3.client('s3')
 
@@ -155,7 +155,7 @@ Determined requires a submission to have a defined :ref:`Model Definition<model-
 
 For example, the model definition directory below contains the model definition and a data ``.csv`` file.
 
-.. code:: sh
+.. code::
 
         .
         ├── data.csv (5 KB)
@@ -164,7 +164,7 @@ For example, the model definition directory below contains the model definition 
 
 As seen above, the data is 5KB and the entire contents of the directory is less than 96MB. Therefore can be submitted with the model definition using the command:
 
-.. code:: sh
+.. code::
 
     det create experiment const.yaml .
 

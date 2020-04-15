@@ -39,7 +39,7 @@ The ``determined-deploy`` package requires credentials in order to create resour
 
 1. Use `gcloud <https://cloud.google.com/sdk/docs/downloads-interactive#installation_options>`__ to authenticate your user account:
 
-.. code:: sh
+.. code::
 
    gcloud auth application-default login
 
@@ -55,7 +55,7 @@ Install
 1. Install `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__.
 2. Install ``determined-deploy``:
 
-.. code:: sh
+.. code::
 
    pip install determined-deploy
 
@@ -63,14 +63,14 @@ Install
 Deploying
 ~~~~~~~~~
 
-We recommend creating a new directory and running the commands below inside that directory. 
+We recommend creating a new directory and running the commands below inside that directory.
 
 .. note::
   The deployment process will create a state file in the directory where it is run. The state file keeps track of the resources deployed and their state, which is used for future updates or to delete the cluster. Since the state file will reside in this directory, any future update or deletion commands should be run inside this same directory so ``determined-deploy`` can read the state file.
 
 To deploy the cluster, run:
 
-.. code:: sh
+.. code::
 
    det-deploy gcp up --cluster-id CLUSTER_ID --project-id PROJECT_ID
 
@@ -182,7 +182,7 @@ ___________________
 
 The following ``gcloud`` commands will help to validate your configuration, including resource availability in your desired region and zone:
 
-.. code:: sh
+.. code::
 
     # Validate that the GCP Project ID exists
     gcloud projects list
@@ -214,7 +214,7 @@ De-provisioning the cluster
 
 To bring down the cluster, run the following in the same directory where you ran the deploy command:
 
-.. code:: sh
+.. code::
 
     det-deploy gcp down [optional args]
 
