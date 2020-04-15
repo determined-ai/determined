@@ -148,6 +148,10 @@ guard-publish:
 		echo "You cannot publish with a dirty git working tree."; exit 1; fi
 	@if [ "$$(git tag --points-at HEAD)" != "v$(VERSION)" ]; then \
 		echo "Ensure that the tag v$(VERSION) (and no other tag) points to the current commit."; exit 1; fi
+	@if ! command -v twine >/dev/null 2>&1; then \
+		echo "You must have twine installed."; exit 1; fi
+	@if ! [ \( -n "$$TWINE_USERNAME" -a -n "$$TWINE_PASSWORD" \) -o -f ~/.pypirc ]; then \
+		echo "You must set the TWINE_USERNAME and TWINE_PASSWORD environment variables or set up a ~/.pypirc file."; exit 1; fi
 
 # Publish release artifacts. See RELEASE.md for dependencies (awscli,
 # terraform, etc.) and details.

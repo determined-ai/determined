@@ -27,6 +27,7 @@ publish:
 
 	aws s3 cp --content-type "binary/octet-stream" $(CLI_WHEEL) $(CLI_WHEEL_URL)
 	aws s3 cp --content-type "binary/octet-stream" $(CLI_WHEEL) $(CLI_WHEEL_LATEST_URL)
+	twine upload --non-interactive $(CLI_WHEEL)
 
 BLACK_CONFIG_FILE := ../pyproject.toml
 BLACK_COMMAND := black --config $(BLACK_CONFIG_FILE) .
