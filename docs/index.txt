@@ -40,25 +40,16 @@ Quick Start
 
 Installation
 """"""""""""
-Two main components are required to use Determined: a Determined Cluster and the Determined CLI. A Determined Cluster is comprised of the Determined master and Determined agents to run and manage experiments. A Determined Cluster can be installed on Amazon Web Services (AWS), Google Cloud Platform (GCP), or an on-premise cluster.
 
-The Determined CLI provides users with the capability to interact with the Determined Cluster. Users can submit, monitor, and cancel experiments, along with managing a Determined Cluster from the command line. The Determined CLI is required for all users and should be installed on their development environment. Since experiments only run on the Determined Cluster, the Determined CLI does not require any training resources (i.e., GPUs).
+To install Determined, please follow the :ref:`installation instructions <install-determined>`. Determined can be installed on the public cloud, an on-premise cluster, or a local development machine.
 
-.. 
-  # TODO: add a image that illustrates the cluster and cli interactions
-
-For installation instructions, follow these how-to guide:
-
-- :ref:`install-cli`
-- :ref:`install-determined`
+Each user should also :ref:`install the Determined command-line tools <install-cli>` on systems they will use to access Determined.
 
 Next Steps
 """"""""""
-Determined supports models written using TensorFlow and PyTorch. 
+To get started using Determined, check out the :ref:`quick-start`.
 
-To get started using Determined, check out the :ref:`quick-start`. 
-
-Once you have finished the quick start guide, please follow the tutorial for your preferred deep learning framework to learn how to port your model:
+Next, follow the tutorial for your preferred deep learning framework:
 
 - :ref:`pytorch-mnist-tutorial`
 - :ref:`tf-mnist-tutorial`
