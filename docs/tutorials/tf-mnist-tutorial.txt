@@ -79,7 +79,7 @@ The ``build_model`` method returns a compiled ``tf.keras.Model`` object. The MNI
         model = keras.Sequential(
             [
                 keras.layers.Flatten(input_shape=(28, 28)),
-                keras.layers.Dense(128, activation="relu"),
+                keras.layers.Dense(self.context.get_hparam("dense1"), activation="relu"),
                 keras.layers.Dense(10),
             ]
         )
@@ -114,7 +114,7 @@ The implementation of ``build_validation_data_loader`` is similar:
         test_images, test_labels = data.load_validation_data()
         test_images = test_images / 255.0
 
-        return train_images, train_labels
+        return test_images, test_labels
 
 .. note::
     When using ``tf.keras.utils.Sequence`` or ``tf.data.Dataset``, users should specify the batch size using ``self.context.get_per_slot_batch_size()``.
@@ -128,17 +128,18 @@ To create an experiment, we start by writing a configuration file which defines 
 
 .. code:: yaml
 
-    description: mnist_keras_const_simple
+  
+    description: mnist_keras_const
     hyperparameters:
         global_batch_size: 32
+        dense1: 128
     searcher:
         name: single
-        metric: val_accuracy
-        max_steps: 40
-    min_validation_period: 10
+        metric: val_loss
+        max_steps: 45
     entrypoint: model_def:MNISTTrial
 
-For this model, the only hyperparameter is the batch size. Rather than specifying the number of batches to train for directly, we instead specify the number of :ref:`steps <concept-step>`. By default, a step consists of 100 batches, so the config file above specifies that the model should be trained on 4000 batches of data.
+For this model, the only hyperparameter is the batch size. Rather than specifying the number of batches to train for directly, we instead specify the number of :ref:`steps <concept-step>`. By default, a step consists of 100 batches. For our model, one epoch is about 900 batches or about nine steps, so the config file above specifies that the model should be trained on 4,500 batches of data.
 
 The ``entrypoint`` specifies the name of the trial class to use. This is useful if our model code contains more than one trial class. In this case, we use an entrypoint of ``model_def:MNISTTrial`` because our trial class is named ``MNISTTrial`` and it is defined in a Python file named ``model_def.py``.
 
