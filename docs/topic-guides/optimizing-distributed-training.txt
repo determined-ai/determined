@@ -5,22 +5,32 @@ Optimizing Distributed and Parallel Training
 
 The :ref:`multi-gpu-training` how-to guide describes how to configure distributed and parallel training.
 In this topic guide, we will describe how to optimize distributed and parallel training,
-focusing on the following topics: setting batch size, single-machine parallel training,
-multi-machine distributed training, and advanced optimization configurations.
-Determined uses data parallelism for distributed and parallel training.
+focusing on the following topics:
+
+- setting batch size,
+- single-machine parallel training,
+- multi-machine distributed training, and
+- configuring advanced optimizations.
+
+Determined uses synchronous data parallelism for distributed and parallel training.
 
 
 Setting Global Batch Size
 -------------------------
 
 When doing distributed and parallel training, the ``global_batch_size``
-specified in the :ref:`experiment-configuration`
-is partitioned across ``slots_per_trial`` GPUs. The per-GPU batch size is set to:
+specified in the :ref:`experiment-configuration` is partitioned across
+``slots_per_trial`` GPUs. The per-GPU batch size is set to:
 ``global_batch_size`` / ``slots_per_trial``. If ``slots_per_trial`` does not divide the ``global_batch_size`` evenly,
-the batch size is rounded down. For optimal performance, we recommend weak-scaling:
-increasing your ``global_batch_size`` proportionally with ``slots_per_trial``
-(e.g., change ``global_batch_size`` of 32 for ``slots_per_trial`` of 1 to
+the batch size is rounded down. For convenience, the
+per-GPU batch size can be accessed via the Trial API, using
+:func:`context.get_per_slot_batch_size <determined.TrialContext.get_per_slot_batch_size>`.
+
+For improved performance, we recommend *weak-scaling*: increasing your
+``global_batch_size`` proportionally with ``slots_per_trial`` (e.g.,
+change ``global_batch_size`` of 32 for ``slots_per_trial`` of 1 to
 ``global_batch_size`` of 128 for ``slots_per_trial`` of 4).
+
 Adjusting ``global_batch_size`` can affect your model convergence, which can affect your training and/or
 testing accuracy. You may need to adjust model hyperparameters like the learning rate and/or
 use a different optimizer when training with larger batch sizes.
@@ -45,7 +55,7 @@ configuration, trials will train using all the resources on a single machine.
 Distributed Multi-Machine Parallelism
 -------------------------------------
 
-Multi machine parallelism offers the ability to further parallelize training across more GPUs.
+Multi-machine parallelism offers the ability to further parallelize training across more GPUs.
 For distributed multi-machine training, in the experiment configuration, add:
 
 .. code:: yaml
@@ -62,13 +72,13 @@ use all the resources of multiple machines to train a model.
     For distributed multi-machine training, Determined automatically detects
     a common network interface shared by the agent machines. If your cluster has
     multiple common network interfaces, please specify the fastest one
-    in :ref:`cluster-configuration` under ``task_container_defaults`` ``dtrain_network_interface``.
+    in :ref:`cluster-configuration` under ``task_container_defaults.dtrain_network_interface``.
 
 
-Advanced Optimizations Configurations
--------------------------------------
+Configuring Advanced Optimizations
+----------------------------------
 
-Determined offers a number of optimizations to further reduce
+Determined offers several optimizations to further reduce
 training time. These optimizations are available in :ref:`experiment-configuration`
 under ``optimizations``.
 
@@ -76,7 +86,7 @@ The ``optimizations.aggregation_frequency`` option
 evaluates more batches before exchanging gradients and is helpful
 in situations where it is not possible to increase the batch size
 directly. This optimization increases your effective batch size to
-``aggergation_frequency`` * ``global_batch_size``.
+``aggregation_frequency`` * ``global_batch_size``.
 
 The ``optimizations.gradient_compression``  option reduces
 the time it takes to transfer gradients between GPUs.
@@ -84,7 +94,7 @@ The ``optimization.auto_tune_tensor_fusion`` option automatically identifies
 the optimal message size during gradient transfers, reducing
 communication overhead.
 
-If you do not see improvement in performance, there might be a
+If you do not see improved performance, there might be a
 performance bottleneck in the model that cannot be directly alleviated
 by using multiple GPUs, e.g., data loading. We suggest experimenting
 with a synthetic dataset to verify performance of multi-GPU training.
