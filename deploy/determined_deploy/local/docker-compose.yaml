@@ -5,7 +5,7 @@ services:
     image: postgres:10.8
     volumes:
       - determined-db-volume:/var/lib/postgresql/data
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_DB: determined
       POSTGRES_PASSWORD: ${DET_DB_PASSWORD}
@@ -15,7 +15,7 @@ services:
 
   determined-graphql:
     image: hasura/graphql-engine:v1.1.0
-    restart: always
+    restart: unless-stopped
     environment:
       HASURA_GRAPHQL_ADMIN_SECRET: "${DET_HASURA_SECRET}"
       HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: /srv/console-assets
@@ -27,6 +27,7 @@ services:
 
   determined-master:
     init: true
+    restart: ${DET_RESTART_POLICY:-unless-stopped}
     depends_on:
       - determined-db
       - determined-graphql

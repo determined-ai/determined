@@ -86,6 +86,7 @@ def master_up(
     db_password: str,
     hasura_secret: str,
     delete_db: bool,
+    autorestart: bool,
 ):
     config.MASTER_PORT = port
     command = ["up", "-d"]
@@ -96,12 +97,17 @@ def master_up(
         extra_files.append(str(mount_yaml))
     if version is None:
         version = determined_deploy.__version__
+    if autorestart:
+        restart_policy = "unless-stopped"
+    else:
+        restart_policy = "no"
     env = {
         "INTEGRATIONS_HOST_PORT": str(port),
         "DET_MASTER_CONFIG": str(master_config_path),
         "DET_DB_PASSWORD": db_password,
         "DET_HASURA_SECRET": hasura_secret,
         "DET_VERSION": version,
+        "DET_RESTART_POLICY": restart_policy,
     }
     master_down(master_name, delete_db)
     docker_compose(command, master_name, env, extra_files=extra_files)
@@ -125,6 +131,7 @@ def fixture_up(
     hasura_secret: str,
     delete_db: bool,
     no_gpu: bool,
+    autorestart: bool,
 ):
     fixture_down(cluster_name, delete_db)
     master_up(
@@ -135,6 +142,7 @@ def fixture_up(
         db_password=db_password,
         hasura_secret=hasura_secret,
         delete_db=delete_db,
+        autorestart=autorestart,
     )
     for agent_number in range(num_agents):
         agent_name = cluster_name + f"-agent-{agent_number}"
@@ -146,6 +154,7 @@ def fixture_up(
             version=version,
             labels=labels,
             no_gpu=no_gpu,
+            autorestart=autorestart,
         )
 
 
@@ -164,6 +173,7 @@ def agent_up(
     agent_name: Optional[str],
     version: Optional[str],
     no_gpu: bool,
+    autorestart: bool,
     labels: Dict = None,
 ) -> None:
     if version is None:
@@ -182,6 +192,10 @@ def agent_up(
     if labels is None:
         labels = {}
     labels["ai.determined.type"] = "agent"
+    if autorestart:
+        restart_policy = {"Name": "unless-stopped"}
+    else:
+        restart_policy = None
     config.MASTER_HOST = master_host
     config.MASTER_PORT = master_port
     _wait_for_master()
@@ -202,6 +216,7 @@ def agent_up(
         detach=True,
         runtime=runtime,
         labels=labels,
+        restart_policy=restart_policy,
     )
 
 
