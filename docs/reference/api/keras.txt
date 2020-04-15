@@ -101,6 +101,15 @@ the model and dataset wrappers.
     :members: wrap_model, wrap_dataset
     :member-order: bysource
 
+    TFKerasTrialContext always has a :class:`DistributedContext<determined._train_context.DistributedContext>`
+    accessible via ``context.distributed`` for information related to distributed training.
+
+    TFKerasTrialContext always has a :class:`ExperimentalContext<determined.keras.TFKerasExperimentalContext>`
+    accessible via ``context.experimental`` for information related to experimental features.
+
+.. autoclass:: determined.keras.TFKerasExperimentalContext
+    :members: cache_train_dataset, cache_validation_dataset
+    :member-order: bysource
 
 Native
 ~~~~~~
