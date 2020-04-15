@@ -56,7 +56,7 @@ make -C CI/integrations publish-dev
         }
       }
     }
-    stage('Integrations') {
+    stage('test') {
       options {
         timeout(time: 2, unit: 'HOURS')
       }
@@ -74,7 +74,7 @@ make -C CI/integrations publish-dev
           }
         }
         stage("Python Integration Tests Split 1") {
-          agent { label 'integrations' }
+          agent { label 'test' }
           environment {
             PYTEST_MARKS = "integ1"
             ETC_ROOT = "${env.WORKSPACE}/build/cluster_config/"
@@ -98,7 +98,7 @@ make -C CI/integrations publish-dev
           }
         }
         stage("Python Integration Tests Split 2") {
-          agent { label 'integrations' }
+          agent { label 'test' }
           environment {
             PYTEST_MARKS = "integ2"
             ETC_ROOT = "${env.WORKSPACE}/build/cluster_config/"
@@ -122,7 +122,7 @@ make -C CI/integrations publish-dev
           }
         }
         stage("Python Integration Tests Split 3") {
-          agent { label 'integrations' }
+          agent { label 'test' }
           environment {
             PYTEST_MARKS = "integ3"
             ETC_ROOT = "${env.WORKSPACE}/build/cluster_config/"
@@ -146,7 +146,7 @@ make -C CI/integrations publish-dev
           }
         }
         stage("Python Integration Tests Split 4") {
-          agent { label 'integrations' }
+          agent { label 'test' }
           environment {
             PYTEST_MARKS = "integ4"
             ETC_ROOT = "${env.WORKSPACE}/build/cluster_config/"
