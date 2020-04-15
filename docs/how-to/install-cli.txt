@@ -12,7 +12,7 @@ installed via ``pip``:
 
 .. code::
 
-   pip install -U determined-cli
+   pip install determined-cli
 
 We suggest installing the CLI into a
 `virtualenv <https://virtualenv.pypa.io/en/latest/>`__, although this is

@@ -142,7 +142,7 @@ All users should also upgrade the CLI by running
 
 .. code::
 
-   pip install -U determined-cli
+   pip install determined-cli
 
 Be sure to do this for every user or virtualenv that has installed the
 old version of the CLI.
