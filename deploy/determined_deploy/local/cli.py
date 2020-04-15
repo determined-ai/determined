@@ -30,6 +30,11 @@ def add_fixture_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--delete-db", action="store_true", help="remove current master database",
     )
     parser.add_argument("--no-gpu", help="enable GPU support for agent", action="store_true")
+    parser.add_argument(
+        "--no-autorestart",
+        help="disable container auto-restart (recommended for local development)",
+        action="store_true",
+    )
 
 
 def add_fixture_down_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -69,6 +74,11 @@ def add_master_up_subparser(subparsers: argparse._SubParsersAction) -> None:
     parser.add_argument(
         "--delete-db", action="store_true", help="remove current master database",
     )
+    parser.add_argument(
+        "--no-autorestart",
+        help="disable container auto-restart (recommended for local development)",
+        action="store_true",
+    )
 
 
 def add_master_down_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -107,6 +117,11 @@ def add_agent_up_subparser(subparsers: argparse._SubParsersAction) -> None:
     parser.add_argument("--det-version", type=str, default=None, help="version or commit to use")
     parser.add_argument("--agent-name", type=str, default="det-agent", help="agent name")
     parser.add_argument("--no-gpu", help="disable GPU support", action="store_true")
+    parser.add_argument(
+        "--no-autorestart",
+        help="disable container auto-restart (recommended for local development)",
+        action="store_true",
+    )
 
 
 def add_agent_down_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -145,6 +160,7 @@ def handle_fixture_up(args):
         hasura_secret=args.hasura_secret,
         delete_db=args.delete_db,
         no_gpu=args.no_gpu,
+        autorestart=(not args.no_autorestart),
     )
 
 
@@ -165,6 +181,7 @@ def handle_master_up(args):
         db_password=args.db_password,
         hasura_secret=args.hasura_secret,
         delete_db=args.delete_db,
+        autorestart=(not args.no_autorestart),
     )
 
 
@@ -180,6 +197,7 @@ def handle_agent_up(args):
         agent_name=args.agent_name,
         version=args.det_version,
         labels=None,
+        autorestart=(not args.no_autorestart),
     )
 
 

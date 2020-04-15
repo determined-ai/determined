@@ -63,6 +63,7 @@ def cluster_log_manager(request: SubRequest) -> Optional[ClusterLogManager]:
             delete_db=False,
             version=None,
             no_gpu=False,
+            autorestart=False,
         )
         with ClusterLogManager("integrations") as clm:
             # Yield instead of return so that `__exit__` is called when the

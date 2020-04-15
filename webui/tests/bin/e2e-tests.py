@@ -48,6 +48,7 @@ def pre_e2e_tests(config):
             "1",
             "--no-gpu",
             "--delete-db",
+            "--no-autorestart",
             "--master-port",
             config["INTEGRATIONS_HOST_PORT"],
         ],
