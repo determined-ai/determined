@@ -184,8 +184,21 @@ Manual Deployment
 
 Database
 ~~~~~~~~
-Determined requires a Postgres-compatible database such as AWS Aurora. Ensure that the database ``determined`` exists
-in the database. Configure the cluster to use the database by updating the ``master.yaml`` with the database information.
+Determined requires a Postgres-compatible database such as AWS Aurora. Configure the cluster to use the database by
+updating the ``master.yaml`` with the database information. Make sure to create a database before running
+the Determined Cluster. (e.g. ``CREATE DATABASE <database-name>``).
+
+Example ``master.yaml``:
+
+.. code:: yaml
+
+    db:
+      user: "${database-user}"
+      password: "${database-password}"
+      host: "${database-hostname}"
+      port: 5432
+      name: "${database-name}"
+
 
 Security Groups
 ~~~~~~~~~~~~~~~
