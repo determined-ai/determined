@@ -212,6 +212,10 @@ def make_test_experiment_env(
     return env, workloads, rendezvous_info, hvd_config
 
 
+def _stop_loading_implementation() -> None:
+    raise det.errors.StopLoadingImplementation()
+
+
 def create_trial_instance(
     trial_def: Type[det.Trial], checkpoint_dir: str, config: Optional[Dict[str, Any]] = None
 ) -> det.Trial:
@@ -292,6 +296,7 @@ def create(
             load.RunpyGlobals.set_runpy_trial_result(
                 trial_def, cast(Type[det.TrialController], trial_def.trial_controller_class)
             )
+            _stop_loading_implementation()
 
         else:
             create_experiment(
@@ -345,6 +350,7 @@ def _init_native(
                 hvd_config=load.RunpyGlobals.get_instance().hvd_config,
             )
             load.RunpyGlobals.set_runpy_native_result(context, controller_cls)
+            context._set_train_fn(_stop_loading_implementation)
             return context
 
         else:

@@ -120,6 +120,7 @@ class RunpyGlobals:
         check.true(cls.get_instance().controller_cls is None, "Please don't load twice.")
         cls.get_instance().trial_cls = trial_cls
         cls.get_instance().controller_cls = controller_cls
+        raise det.errors.StopLoadingImplementation()
 
     @classmethod
     def get_runpy_result(
@@ -183,7 +184,17 @@ def load_native_implementation(
 
     with RunpyGlobals(env, hvd_config) as loader:
         with overwrite_sys_args(command):
-            runpy.run_path(command[0], run_name="__main__")
+            try:
+                runpy.run_path(command[0], run_name="__main__")
+            except SystemExit as e:
+                logging.warning(
+                    "Model code raised a SystemExit (sys.exit()) before entering "
+                    "the training loop. Please remove this sys.exit() from your script."
+                )
+                raise e
+            except det.errors.StopLoadingImplementation:
+                # If caught this exception, will skip running the rest of the user code.
+                pass
         context, trial_cls, controller_cls = loader.get_runpy_result()
 
     return context, trial_cls, controller_cls
