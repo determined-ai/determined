@@ -39,7 +39,7 @@ These instructions describe how to install ``determined-deploy``:
 
 .. code::
 
-   pip install -U determined-deploy
+   pip install determined-deploy
 
 Deploying
 ~~~~~~~~~
