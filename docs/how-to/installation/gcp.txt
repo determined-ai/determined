@@ -13,7 +13,7 @@ topic guide.
 ``determined-deploy`` Python Package
 ------------------------------------
 
-The ``determined-deploy`` package uses `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__ to automatically deploy and configure a Determined cluster in GCP. Alternatively, if you already have a process for setting up infrastructure with Terraform, you can use the `Terraform modules <https://github.com/determined-ai/determined/tree/master/deploy/determined_deploy/gcp/terraform>`__ separately outside of `determined-deploy`.
+The ``determined-deploy`` package uses `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__ to automatically deploy and configure a Determined cluster in GCP. Alternatively, if you already have a process for setting up infrastructure with Terraform, you can use the `Terraform modules <https://github.com/determined-ai/determined/tree/master/deploy/determined_deploy/gcp/terraform>`__ separately outside of ``determined-deploy``.
 
 
 Requirements
@@ -35,7 +35,7 @@ The following GCP APIs must be enabled on your GCP project:
 Credentials
 ___________
 
-``determined-deploy`` requires credentials in order to create resources in GCP. There are two ways to provide these credentials:
+The ``determined-deploy`` package requires credentials in order to create resources in GCP. There are two ways to provide these credentials:
 
 1. Use `gcloud <https://cloud.google.com/sdk/docs/downloads-interactive#installation_options>`__ to authenticate your user account:
 
@@ -53,7 +53,7 @@ Install
 ~~~~~~~
 
 1. Install `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__.
-2. Install ``determined-deploy``
+2. Install ``determined-deploy``:
 
 .. code:: sh
 
@@ -66,7 +66,7 @@ Deploying
 We recommend creating a new directory and running the commands below inside that directory. 
 
 .. note::
-  The deployment process will create a state file in the directory where it is run. The state file keeps track of the resources deployed and their state, which is used for future updates or to delete the cluster. Since the state file will reside in this directory, any future updates or deletions should be run inside this same directory so ``determined-deploy`` can read the state file.
+  The deployment process will create a state file in the directory where it is run. The state file keeps track of the resources deployed and their state, which is used for future updates or to delete the cluster. Since the state file will reside in this directory, any future update or deletion commands should be run inside this same directory so ``determined-deploy`` can read the state file.
 
 To deploy the cluster, run:
 
@@ -74,6 +74,9 @@ To deploy the cluster, run:
 
    det-deploy gcp up --cluster-id CLUSTER_ID --project-id PROJECT_ID
 
+
+Required Arguments:
+___________________
 
 .. list-table::
    :widths: 25 50 25 25
@@ -94,23 +97,36 @@ To deploy the cluster, run:
      - None
      - True
 
+
+Optional Arguments:
+___________________
+
+.. list-table::
+   :widths: 25 50 25 25
+   :header-rows: 1
+
+   * - Argument
+     - Description
+     - Default Value
+     - Required
+
    * - ``--keypath``
      - The path to the Service Account JSON key file if using a Service Account. Including this flag will supersede default Google Cloud user credentials.
      - None
      - False
 
    * - ``--preemptible``
-     - Whether to use preemptible instances.
+     - Whether to use preemptible agent instances.
      - false
      - False
 
    * - ``--gpu-type``
-     - The type of GPU to use for the agent instances. Ensure ``gpu_type`` is available in your selected ``region`` and ``zone``.
+     - The type of GPU to use for the agent instances. Ensure ``gpu_type`` is available in your selected ``region`` and ``zone`` by referring to the `GPUs on Compute Engine <https://cloud.google.com/compute/docs/gpus>`__ page.
      - nvidia-tesla-k80
      - False
 
    * - ``--gpu-num``
-     - The number of GPUs on each agent instance. Between 1-8 (more GPUs require more powerful ``agent_instance_type``)
+     - The number of GPUs on each agent instance. Between 1-8 (more GPUs require more powerful ``agent-instance-type``). Refer to the `GPUs on Compute Engine <https://cloud.google.com/compute/docs/gpus>`__ page for specific GCP requirements.
      - 8
      - False
 
@@ -120,13 +136,13 @@ To deploy the cluster, run:
      - False
 
    * - ``--max-idle-agent-period``
-     - The maximum amount of time an aagent can sit idle before being shut down.
+     - The maximum amount of time an agent can sit idle before being shut down.
      - 10m
      - False
 
    * - ``--network``
-     - The network to create (ensure there isn't a network with the same name already in the project, otherwise the deployment will fail)
-     - det-default-<cluster-id>
+     - The network to create (ensure there isn't a network with the same name already in the project, otherwise the deployment will fail).
+     - det-default-``cluster-id``
      - False
 
    * - ``--region``
@@ -155,18 +171,13 @@ To deploy the cluster, run:
      - False
 
    * - ``--min-cpu-platform-agent``
-     - Minimum cpu platform for the agent instances. Ensure the platform is compatible with your selected ``gpu-type`` and available in your selected ``region`` and ``zone``.
+     - Minimum cpu platform for the agent instances. Ensure the platform is compatible with your selected ``gpu-type`` and available in your selected ``region`` and ``zone`` by referring to the `GPUs on Compute Engine <https://cloud.google.com/compute/docs/gpus>`__ page.
      - Intel Broadwell
      - False
 
+
 .. note::
-  The deployment process may take 5-10 minutes and will return the ``web_ui`` to indicate that the resources have been created. It may take a few minutes from this point for the master instance to fully boot up and you're able to use the ``web_ui`` address to access the cluster. 
-
-.. warning::
-  Changes to ``--gpu-num`` should correspond to appropriate changes to ``--agent-instance-type``, as enforced by GCP. For example, when using ``nvidia-tesla-k80`` GPUs, each GPU can correspond to at most 12vCPUs, i.e. if ``--gpu-num 2``, then ``--agent-instance-type n1-standard-16`` is the highest number of vCPUs (16) that can be used. You can check GPU requirements and regional availabilities on the `GPUs on Compute Engine <https://cloud.google.com/compute/docs/gpus>` page. 
-
-.. warning::
-  If ``det-deploy`` is set to use an existing network, the VPC being used must have an `IP range allocated <https://cloud.google.com/vpc/docs/configure-private-services-access#procedure>`__ and a `private service connection created <https://cloud.google.com/vpc/docs/configure-private-services-access#creating-connection>`__.
+  The deployment process may take 5-10 minutes and will return the ``Web-UI`` along with additional cluster information once resources have been created.
 
 
 The following ``gcloud`` commands will help to validate your configuration, including resource availability in your desired region and zone:
@@ -192,9 +203,9 @@ The following ``gcloud`` commands will help to validate your configuration, incl
 Updating the cluster
 ~~~~~~~~~~~~~~~~~~~~
 
-If you need to make changes to your cluster, you can re-run ``det-deploy gcp up [args]`` in the same directory and your cluster will be updated. ``determined-deploy`` will only replace resources that need to be replaced based on the changes you've made in the updated execution. 
+If you need to make changes to your cluster, you can re-run ``det-deploy gcp up [args]`` in the same directory and your cluster will be updated. The ``determined-deploy`` package will only replace resources that need to be replaced based on the changes you've made in the updated execution.
 
-.. note::
+.. warning::
   If you'd like to change the ``region`` of a deployment after it has already been deployed, we recommend deleting the cluster first, then redeploying the cluster with the new ``region``.
 
 
@@ -207,7 +218,7 @@ To bring down the cluster, run the following in the same directory where you ran
 
     det-deploy gcp down [optional args]
 
-By default, ``determined-deploy`` will use the ``.tfstate`` file in the current directory to determined which resources to de-provision. In addition, the following are optional arguments:
+By default, ``determined-deploy`` will use the ``.tfstate`` file in the current directory to determine which resources to de-provision. In addition, the following are available optional arguments:
 
 .. list-table::
    :widths: 25 50 25 25
@@ -236,7 +247,7 @@ Appendix
 Using Service Account Credentials
 _________________________________
 
-For more security controls, you can create a `Service Account <https://cloud.google.com/docs/authentication/getting-started>`__ or select an existing Service Account from the `service account key page in the Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and ensure it has the following IAM Roles:
+For more security controls, you can create a `Service Account <https://cloud.google.com/docs/authentication/getting-started>`__ or select an existing Service Account from the `service account key page in the Google Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and ensure it has the following IAM Roles:
 
    - Cloud SQL Admin
    - Compute Admin
@@ -249,7 +260,7 @@ For more security controls, you can create a `Service Account <https://cloud.goo
 
 Roles provide the Service Account permissions to create specific resources in your project. You can add roles to Service Accounts following this `guide <https://cloud.google.com/iam/docs/granting-roles-to-service-accounts>`__.
 
-Once you have a Service Account with the appropriate roles, go to the `service account key page in the Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and create a JSON key file. Save it to a location you'll remember; we'll refer to the path to this key file as the ``keypath``, which is an additional argument you can supply when using ``determined-deploy``. Once you have the ``keypath`` you can use it to deploy a GCP cluster continuing from the :ref:`installation <gcp-install>` section.
+Once you have a Service Account with the appropriate roles, go to the `service account key page in the Google Cloud Console <https://console.cloud.google.com/apis/credentials/serviceaccountkey>`__ and create a JSON key file. Save it to a location you'll remember; we'll refer to the path to this key file as the ``keypath``, which is an optional argument you can supply when using ``determined-deploy``. Once you have the ``keypath`` you can use it to deploy a GCP cluster by continuing the :ref:`installation <gcp-install>` section.
 
 
 Next Steps

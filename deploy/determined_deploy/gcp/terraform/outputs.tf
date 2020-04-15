@@ -1,41 +1,39 @@
 output "A1--Network" {
-  value = module.network.network_name
+  value = "                   ${module.network.network_name}"
 }
 
 output "A2--Region" {
-  value = var.region
+  value = "                    ${var.region}"
 }
 
 output "A3--Zone" {
-  value = "${module.compute.master_zone}\n"
+  value = "                      ${module.compute.master_zone}\n"
 }
 
-output "B1--Master-Instance-Type" {
-  value = var.master_instance_type
+output "B1--Master-Instance-Name" {
+  value = "      ${module.compute.master_instance_name}"
 }
 
-output "B2--Agent-Instance-Type" {
-  value = var.agent_instance_type
+output "B2--Master-Instance-Type" {
+  value = "      ${var.master_instance_type}"
 }
 
-output "B3--Max-number-of-Agents" {
-  value = var.max_instances
+output "B3--Agent-Instance-Type" {
+  value = "       ${var.agent_instance_type}"
 }
 
-output "B4--GPUs-per-Agent" {
-  value = "${var.gpu_num}\n"
+output "B4--Max-number-of-Agents" {
+  value = "      ${var.max_instances}"
 }
 
-output "C1--Master-Instance-Name" {
-  value = module.compute.master_instance_name
-}
-
-output "C2--Web-UI" {
-  value = "${module.compute.web_ui}\n" 
+output "B5--GPUs-per-Agent" {
+  value = "            ${var.gpu_num}\n"
 }
 
 output "NOTE" {
-  value = "> To use the Determined CLI without needing to specify the master in each command:\n\nexport DET_MASTER=${module.compute.web_ui}"
+  value = "> To use the Determined CLI without needing to specify the master in each command, run:\n\n  export DET_MASTER=${module.compute.web_ui}\n"
 }
 
-
+output "Web-UI" {
+  value = "${module.compute.web_ui}"
+}

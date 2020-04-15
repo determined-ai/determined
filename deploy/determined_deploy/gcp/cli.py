@@ -207,5 +207,5 @@ def deploy_gcp(args: argparse.Namespace) -> None:
 
     print("Starting Determined Deployment")
     gcp.deploy(det_configs, env, variables_to_exclude)
-    print("Determined Deployment Successful")
-    print("Please allow 1-5 minutes for the master instance to be accessible via the web-ui")
+    print("\nDetermined Deployment Successful")
+    print("Please allow 1-5 minutes for the master instance to be accessible via the web-ui\n")
