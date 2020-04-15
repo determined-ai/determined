@@ -39,6 +39,14 @@ class InvalidConfigurationException(InvalidExperimentException):
         super().__init__(f"Invalid configuration ({config}): {message}.")
 
 
+class StopLoadingImplementation(Exception):
+    """
+    Exception that intercepts loading the user code.
+    """
+
+    pass
+
+
 class WorkerError(Exception):
     """
     WorkerError indicates that a worker process failed but we do not know why.
