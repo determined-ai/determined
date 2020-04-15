@@ -30,7 +30,7 @@ the Determined API.
 
 ## Installation
 
-* [Installation Guide](https://docs.determined.ai/latest/how-to/install-determined.html)
+* [Installation Guide](https://docs.determined.ai/latest/how-to/install-main.html)
 
 ### Try Now on AWS
 

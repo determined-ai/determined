@@ -1,108 +1,5 @@
-.. _installation-background:
 
-Installation Background
-=======================
-
-System Requirements
--------------------
-
-Software
-~~~~~~~~
-
-- The Determined agent and master nodes must be configured with Ubuntu
-  16.04, Ubuntu 18.04, or CentOS 7.
-
-- The agent nodes must have :ref:`Docker installed <install-docker>`.
-
-- To run jobs with GPUs, the Nvidia drivers must be installed on each
-  Determined agent. Determined requires version >= 384.81 of the Nvidia
-  drivers. (The Nvidia drivers can be installed as part of installing
-  CUDA, but the rest of the CUDA toolkit is not required.)
-
-Hardware
-~~~~~~~~
-
-- The Determined master node should be configured with at least 4 CPUs
-  (Intel Broadwell or later), 8GB of RAM, and 200GB of free disk space.
-  Note that the Determined master does not use GPUs.
-
-- Each Determined agent node should be configured with at least 2 CPUs
-  (Intel Broadwell or later), 4GB of RAM, and 50GB of free disk space. If
-  using GPUs, Nvidia GPUs with compute capability 3.7 or greater are
-  required (e.g., K80, P100, V100, GTX 1080, GTX 1080 Ti, TITAN, TITAN
-  XP).
-
-.. note::
-
-   Most of the disk space required by the master is due to the
-   experiment metadata database; if PostgreSQL is set up on a different
-   machine, the disk space requirements for the master are minimal
-   (~100MB).
-
-.. _install-docker:
-
-Installing Docker
------------------
-
-Every agent node must have Docker installed to allow it to run
-containerized workloads.
-
-#. Install the latest release of Docker and nvidia-docker2.
-
-   On Ubuntu:
-
-   .. code::
-
-      sudo apt-get update && sudo apt-get install -y software-properties-common
-      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-      sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-
-      curl -fsSL https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-      distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-      curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-
-      sudo apt-get update && sudo apt-get install -y --no-install-recommends docker-ce nvidia-docker2
-      sudo systemctl reload docker
-      sudo usermod -aG docker $USER
-
-   On CentOS:
-
-   .. code::
-
-      sudo yum install -y yum-utils device-mapper-persistent-data lvm2
-      sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-
-      distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-      curl -fsSL https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.repo | sudo tee /etc/yum.repos.d/nvidia-docker.repo
-
-      sudo yum install -y docker-ce nvidia-docker2
-      sudo systemctl start docker
-
-#. Log out and start a new terminal session. Verify that the current user
-   is in the ``docker`` group and that the ``nvidia`` Docker runtime is
-   installed:
-
-   .. code::
-
-      groups
-      docker info | grep Runtimes
-
-#. If using CentOS 7, `enable the persistent storage
-   <https://unix.stackexchange.com/a/159390>`_ of journalctl log
-   messages so that logs are saved on machine reboot.
-
-   .. code::
-
-      sudo mkdir /var/log/journal
-      sudo systemd-tmpfiles --create --prefix /var/log/journal
-      sudo systemctl restart systemd-journald
-
-Users
------
-
-Determined supports an optional *user* system, which allows teams of
-machine learning developers to organize the assets they create inside
-Determined. See :ref:`users` for more details.
+.. _upgrades-troubleshootings:
 
 .. _upgrades:
 
@@ -114,6 +11,7 @@ Upgrades
    Newer versions of master configuration might not be compatible with
    older versions. Please see the breaking changes in the
    :ref:`release-notes` for upgrading the configuration.
+
 
 Upgrading an existing Determined installation requires the same steps as
 installing Determined for the first time. You should additionally follow
@@ -146,6 +44,8 @@ All users should also upgrade the CLI by running
 
 Be sure to do this for every user or virtualenv that has installed the
 old version of the CLI.
+
+.. _troubleshoot: 
 
 Troubleshooting Tips
 --------------------

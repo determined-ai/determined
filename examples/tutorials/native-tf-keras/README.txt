@@ -22,6 +22,6 @@ Prerequisites
 
 - You will need access to a Determined cluster to train your model. If you have
   not yet installed Determined, refer to the :ref:`installation instructions
-  <install-determined>`.
+  <install-cluster>`.
 - The ``determined`` Python package installed in your local development
   environment: ``pip install determined``.

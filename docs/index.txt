@@ -41,7 +41,7 @@ Quick Start
 Installation
 """"""""""""
 
-To install Determined, please follow the :ref:`installation instructions <install-determined>`. Determined can be installed on the public cloud, an on-premise cluster, or a local development machine.
+To install Determined, please follow the :ref:`installation instructions <install-cluster>`. Determined can be installed on the public cloud, an on-premise cluster, or a local development machine.
 
 Each user should also :ref:`install the Determined command-line tools <install-cli>` on systems they will use to access Determined.
 
@@ -96,7 +96,7 @@ Use the links below to start learning more about Determined's capabilities.
 **Installation**
 
 - :ref:`install-cli`
-- :ref:`install-determined`
+- :ref:`install-cluster`
 
   - :ref:`install-using-deploy`
   - :ref:`install-aws`
