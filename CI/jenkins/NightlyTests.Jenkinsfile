@@ -32,10 +32,10 @@ pipeline {
         }
         sh "venv/bin/python CI/integrations/wait_for_master.py http://$MASTER_HOST:8080"
         sh ". venv/bin/activate && make test-python-integrations"
-        sh ". venv/bin/activate && det-deploy aws down --cluster-id $CLUSTER_NAME"
       }
       post {
         always {
+          sh ". venv/bin/activate && det-deploy aws down --cluster-id $CLUSTER_NAME"
           junit "**/build/test-reports/*.xml"
         }
       }
