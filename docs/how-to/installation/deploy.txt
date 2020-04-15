@@ -34,52 +34,88 @@ create a configuration file, see :ref:`cluster-configuration`. There are also
 configuration file you create must be named ``master.yaml`` (but it can be in any
 directory).
 
+
 .. note::
 
-   ``det-deploy`` transparently manages PostgreSQL and Hasura along with
+   ``det-deploy`` will use a default configuration file if you don't provide one.
+   ``det-deploy`` also transparently manages PostgreSQL and Hasura along with
    the master, so the configuration options related to those services do
    not need to be set.
 
-Deploying the Master
-~~~~~~~~~~~~~~~~~~~~
 
-On the machine where you wish to run the master, run
+
+Deploying a Single Node Cluster
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+For local development or small clusters (such as a GPU workstation), you may wish to
+to install both a master and an agent on the same node.  To do this, run:
 
 .. code::
 
    det-deploy local fixture-up
 
 
-.. note::
-
-  For production deployments, you'll want to :ref:`use a cluster configuration file.<configuring-cluster-install>`
-  To provide this configuration file to ``det-deploy``, use the flag ``--etc-root <directory containing master.yaml>``.
-
-This will start the master, listening on port 8080. To verify that the
+This will start a master and an agent on that machine. To verify that the
 master is running, navigate to ``http://<master-hostname>:8080`` in a
 browser, which should bring up the Determined WebUI. If you're using
 your local machine, for example, navigate to ``http://localhost:8080``.
-
-You can also deploy one or more agents on the same machine as the master
-by adding ``--agents <number>`` to the command line. For example:
-
-.. code::
-
-   det-deploy local fixture-up --etc-root <directory containing master.yaml> --agents 4
 
 In the WebUI, navigate to the ``Cluster`` page, where you should now see
 slots available (either CPU or GPU, depending on what hardware is
 available on the machine).
 
+For production deployments, you'll want to :ref:`use a cluster configuration file.<configuring-cluster-install>`
+To provide this configuration file to ``det-deploy``, use:
+
+.. code::
+
+  det-deploy local fixture-up --etc-root <directory containing master.yaml>``
+
+If you want to create more than one agent locally, you can use:
+
+.. code::
+
+  det-deploy local fixture-up --agents <number of agents>
+
+
+Stopping a Single Node Cluster
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+To stop a determined cluster, on the machine where a determined cluster is currently running, run
+
+.. code::
+
+   det-deploy local fixture-down
+
+
+.. note::
+
+  ``det-deploy local fixture-down`` will not remove any agents created
+  with ``det-deploy local agent-up``.  To remove these agents,
+  use ``det-deploy local agent-down``
+
+Deploying a Standalone Master
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In many cases, your Determined cluster will be split across multiple nodes.  In this case
+you will need to start a master and agents separately.  In order to start a standalone master, run:
+
+.. code::
+
+   det-deploy local master-up
+
+.. note::
+
+  For production deployments, you'll want to :ref:`use a cluster configuration file.<configuring-cluster-install>`
+  To provide this configuration file to ``det-deploy``, use the flag ``--etc-root <directory containing master.yaml>``.
+
+To stop a running master, run:
+
+.. code::
+
+   det-deploy local master-down
+
+
 Deploying Agents
 ~~~~~~~~~~~~~~~~
-
-Deploying an agent by itself can also be done with a single
-``det-deploy`` command. On the machine where you wish to run an agent,
-run:
-
-..
-   NOTE: `agent-up` and `agent-down` are still in review (#4929).
+To deploy a standalone agent, on the machine you want to run the agent run:
 
 .. code::
 
@@ -89,26 +125,8 @@ This will create an agent on that machine. To verify whether it has
 successfully connected to the master, navigate to the WebUI and check
 whether slots have appeared on the ``Cluster`` page.
 
-
-Managing the Cluster
---------------------
-
-``det-deploy`` automatically configures the containers it creates so
-that Docker will handle keeping them running across machine restarts.
-
-To stop the master, PostgreSQL, and Hasura, run
+To stop a running agent, run:
 
 .. code::
 
-   det-deploy local fixture-down
-
-on the machine that is running the master. If you deployed any agents
-with ``fixture-up``, this will also stop those agents.
-
-To stop an agent, run
-
-.. code::
-
-   det-deploy local agent-down
-
-on the machine that is running the agent.
+  det-deploy local agent-down
