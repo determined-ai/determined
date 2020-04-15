@@ -9,7 +9,7 @@ This guide focuses on demonstrating Determined’s features at a high level. We 
 
 Prerequisites
 --------------
-- Access to an installation of Determined, either on your own machine or the public cloud. If you have not yet installed Determined, refer to the :ref:`installation instructions <install-determined>`.
+- Access to an installation of Determined, either on your own machine or the public cloud. If you have not yet installed Determined, refer to the :ref:`installation instructions <install-cluster>`.
 - The Determined CLI should be installed on your local machine. For installation instructions, see :ref:`here <install-cli>`. After installing the CLI, configure it to connect to your Determined cluster by setting the ``DET_MASTER`` environment variable to the hostname or IP address where Determined is running.
 - For Determined clusters running through ``det-deploy local``: When you run your first experiment, Determined needs to pull down Docker images that contain environment information. The Docker images are then cached for future experiments. We suggest running the following commands to help speed up this process.
 
