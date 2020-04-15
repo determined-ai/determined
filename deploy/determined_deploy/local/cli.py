@@ -127,6 +127,7 @@ def make_local_parser(subparsers: argparse._SubParsersAction) -> None:
     add_master_down_subparser(subparsers)
     add_agent_up_subparser(subparsers)
     add_agent_down_subparser(subparsers)
+    subparsers.required = True
 
 
 def handle_fixture_up(args):
