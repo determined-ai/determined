@@ -1,9 +1,9 @@
-description: mnist_keras_const
+description: fashion_mnist_keras_const
 hyperparameters:
   global_batch_size: 32
   dense1: 128
 searcher:
   name: single
-  metric: val_loss
+  metric: val_accuracy
   max_steps: 45 # num steps = number of desired epochs (5) * (total batches per epoch (~900) / batches per step (100))
-entrypoint: model_def:MNISTTrial
+entrypoint: model_def:FashionMNISTTrial
