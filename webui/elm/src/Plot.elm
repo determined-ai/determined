@@ -104,9 +104,6 @@ update msg model =
 
         Resize s ->
             let
-                _ =
-                    Debug.log "resize" s
-
                 size =
                     -- Attempting to draw a plot with zero size just produces something malformed,
                     -- so go back to drawing nothing if we get a zero-size update.
