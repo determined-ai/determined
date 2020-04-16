@@ -101,6 +101,8 @@ def deploy_aws(args: argparse.Namespace) -> None:
         print("Delete Successful")
         return
 
+    aws.check_keypair(args.keypair, boto3_session)
+
     deployment_type_map = {
         constants.deployment_types.SIMPLE: simple.Simple,
         constants.deployment_types.SECURE: secure.Secure,

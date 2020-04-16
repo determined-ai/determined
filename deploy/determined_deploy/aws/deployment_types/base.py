@@ -14,7 +14,7 @@ class DeterminedDeployment:
 
     def consolidate_parameters(self):
         return [
-            {"ParameterKey": k, "ParameterValue": self.parameters[k]}
+            {"ParameterKey": k, "ParameterValue": str(self.parameters[k])}
             for k in self.parameters.keys()
             if self.parameters[k] and k in self.template_parameter_keys
         ]
