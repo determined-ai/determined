@@ -1,7 +1,7 @@
 .. _tf-mnist-tutorial:
 
-TensorFlow Keras MNIST Tutorial
-====================================
+TensorFlow Keras Fashion MNIST Tutorial
+========================================
 
 This tutorial describes how to port an existing ``tf.keras`` model to Determined. We will port a simple image classification model for the Fashion MNIST dataset. This tutorial is based on the official `TensorFlow Basic Image Classification Tutorial <https://www.tensorflow.org/tutorials/keras/classification>`__.
 
@@ -25,7 +25,7 @@ When training a ``tf.keras`` model, Determined provides a built-in training loop
 
 The Determined training loop will then invoke these functions automatically. These methods should be organized into a **trial class**, which is a user-defined Python class that inherits from :class:`determined.keras.TFKerasTrial`. The following sections walk through how to write your first trial class and then how to run a training job with Determined.
 
-The complete code for this tutorial can be downloaded here: `mnist_tf_keras <https://github.com/determined-ai/determined/tree/master/examples/official/mnist_tf_keras>`_. We suggest you download that code and use it follow along as you read through this tutorial.
+The complete code for this tutorial can be downloaded here: `mnist_tf_keras <https://github.com/determined-ai/determined/tree/master/examples/official/fashion_mnist_tf_keras>`_. We suggest you download that code and use it follow along as you read through this tutorial.
 
 Building a Trial Class
 ----------------------
@@ -37,7 +37,7 @@ Here is what the skeleton of our trial class looks like:
     import keras
     from determined.keras import TFKerasTrial, TFKerasTrialContext
 
-    class MNISTTrial(TFKerasTrial):
+    class FashionMNISTTrial(TFKerasTrial):
         def __init__(self, context: TFKerasTrialContext):
             # Initialize the trial class.
             pass
@@ -72,7 +72,7 @@ As with any Python class, the ``__init__`` method is invoked to construct our tr
 Building the Model
 """"""""""""""""""
 
-The ``build_model`` method returns a compiled ``tf.keras.Model`` object. The MNIST model code uses the Keras Sequential API and we can continue to use that API in our implementation of ``build_model``. The only minor difference is that the model needs to be wrapped by calling :func:`self.context.wrap_model <determined.keras.TFKerasTrialContext.wrap_model>` before it is compiled.
+The ``build_model`` method returns a compiled ``tf.keras.Model`` object. The Fashion MNIST model code uses the Keras Sequential API and we can continue to use that API in our implementation of ``build_model``. The only minor difference is that the model needs to be wrapped by calling :func:`self.context.wrap_model <determined.keras.TFKerasTrialContext.wrap_model>` before it is compiled.
 
 .. code:: python
 
@@ -129,20 +129,20 @@ To create an experiment, we start by writing a configuration file which defines 
 
 .. code:: yaml
 
-    description: mnist_keras_const_simple
+    description: fashion_mnist_keras_const_simple
     hyperparameters:
         global_batch_size: 32
         dense1: 128
     searcher:
         name: single
-        metric: val_loss
+        metric: val_accuracy
         max_steps: 45
     min_validation_period: 10
-    entrypoint: model_def:MNISTTrial
+    entrypoint: model_def:FashionMNISTTrial
 
-For this model, we have two hyperparameters: the size of the ``Dense`` layer and the batch size. Rather than specifying the number of batches to train for directly, we instead specify the number of :ref:`steps <concept-step>`. For our model, one epoch is about 900 batches or about nine steps, so the config file above specifies that the model should be trained on 4,500 batches of data.
+For this model, we have two hyperparameters: the size of the ``Dense`` layer and the batch size. RRather than specifying the number of batches to train for directly, we instead specify the number of :ref:`steps <concept-step>`. By default, a step consists of 100 batches, so the config file above specifies that the model should be trained on 4500 batches of data or about five epochs. We expect to see about 85% accuracy after five epochs which mimics the original ``tf.keras`` implementation. For higher performance, increase the number of max_steps or use the ``Continue Trial`` function in the WebUI.
 
-The ``entrypoint`` specifies the name of the trial class to use. This is useful if our model code contains more than one trial class. In this case, we use an entrypoint of ``model_def:MNISTTrial`` because our trial class is named ``MNISTTrial`` and it is defined in a Python file named ``model_def.py``.
+The ``entrypoint`` specifies the name of the trial class to use. This is useful if our model code contains more than one trial class. In this case, we use an entrypoint of ``model_def:FashionMNISTTrial`` because our trial class is named ``FashionMNISTTrial`` and it is defined in a Python file named ``model_def.py``.
 
 For more information on experiment configuration, see the :ref:`experiment configuration reference <experiment-configuration>`.
 
@@ -160,7 +160,7 @@ Once the experiment is started, you will see a notification:
 
 .. code:: text
 
-    Preparing files (../mnist_tf_keras) to send to master... 2.5KB and 4 files
+    Preparing files (../fashion_mnist_tf_keras) to send to master... 2.5KB and 4 files
     Created experiment xxx
     Activated experiment xxx
 
