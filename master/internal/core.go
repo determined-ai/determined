@@ -388,6 +388,7 @@ func (m *Master) Run() error {
 	// +- Provisioner (provisioner.Provisioner: provisioner)
 	// +- Cluster (scheduler.Cluster: cluster)
 	// +- Service Proxy (proxy.Proxy: proxy)
+	// +- RWCoordinator (internal.rw_coordinator: rwCoordinator)
 	// +- Telemetry (telemetry.telemetryActor: telemetry)
 	// +- TrialLogger (internal.trialLogger: trialLogger)
 	// +- Experiments (actors.Group: experiments)
