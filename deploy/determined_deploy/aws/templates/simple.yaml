@@ -52,7 +52,7 @@ Parameters:
     Default: 10m
 
   MaxInstances:
-    Type: String
+    Type: Number
     Description: Maximum number of agents to launch simultaneously
     Default: 5
 
