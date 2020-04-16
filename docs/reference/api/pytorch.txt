@@ -80,8 +80,8 @@ structures of the following types, which will be fed directly to the
 Examples
 --------
 
--  :download:`cifar10_cnn_pytorch </examples/cifar10_cnn_pytorch.tgz>`
+-  `cifar10_cnn_pytorch <https://github.com/determined-ai/determined/tree/master/examples/official/cifar10_cnn_pytorch>`_
    (PyTorch ``Sequential`` model)
--  :download:`mnist_pytorch </examples/mnist_pytorch.tgz>`
+-  `mnist_pytorch <https://github.com/determined-ai/determined/tree/master/examples/official/mnist_pytorch>`_
    (two examples: PyTorch ``Sequential`` model and true multi-input
    multi-output model)

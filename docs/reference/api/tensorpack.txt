@@ -158,4 +158,4 @@ the following abstract methods:
 Examples
 --------
 
--  :download:`mnist_tp </examples/mnist_tp.tgz>`
+-  `mnist_tp <https://github.com/determined-ai/determined/tree/master/examples/official/mnist_tp>`_
