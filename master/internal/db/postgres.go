@@ -414,7 +414,7 @@ WHERE id = $1`, id)
 func (db *PgDB) ExperimentTotalStepTime(id int) (float64, error) {
 	var seconds float64
 	if err := db.sql.Get(&seconds, `
-SELECT extract(epoch from sum(steps.end_time - steps.start_time))
+SELECT coalesce(extract(epoch from sum(steps.end_time - steps.start_time)), 0)
 FROM steps, trials
 WHERE trials.experiment_id = $1 AND steps.trial_id = trials.id
 `, id); err != nil {
