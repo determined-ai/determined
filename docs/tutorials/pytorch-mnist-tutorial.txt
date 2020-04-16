@@ -34,6 +34,7 @@ Here is what the skeleton of our trial class looks like:
 
 .. code:: python
 
+    import torch.nn as nn
     from determined.pytorch import DataLoader, PyTorchTrial
 
     class MNISTTrial(PyTorchTrial):
@@ -204,7 +205,7 @@ To create an experiment, we start by writing a configuration file which defines 
         smaller_is_better: true
     entrypoint: model_def:MNistTrial
 
-Rather than specifying the number of batches to train for directly, we instead specify the number of :ref:`steps <concept-step>`. By default, a step consists of 100 batches, so the config file above specifies that the model should be trained on 4000 batches of data.
+Rather than specifying the number of batches to train for directly, we instead specify the number of :ref:`steps <concept-step>`. By default, a step consists of 100 batches, so the config file above specifies that the model should be trained on 900 batches of data.
 
 The ``entrypoint`` specifies the name of the trial class to use. This is useful if our model code contains more than one trial class. In this case, we use an entrypoint of ``model_def:MNistTrial`` because our trial class is named ``MNistTrial`` and it is defined in a Python file named ``model_def.py``.
 
