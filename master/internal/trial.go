@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
@@ -697,6 +698,13 @@ func (t *trial) processContainerTerminated(ctx *actor.Context, msg agent.Contain
 	delete(t.containers, scheduler.ContainerID(msg.Container.ID))
 
 	t.killAndRemoveSocket(ctx, scheduler.ContainerID(msg.Container.ID))
+
+	exitMsg := msg.ContainerStopped.String()
+	t.processLog(ctx, agent.ContainerLog{
+		Container:  msg.Container,
+		Timestamp:  time.Now(),
+		AuxMessage: &exitMsg,
+	})
 
 	if c != nil {
 		t.terminatedContainers = append(t.terminatedContainers, terminatedContainerWithState{
