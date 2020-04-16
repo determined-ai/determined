@@ -111,6 +111,12 @@ To stop the master, PostgreSQL, and Hasura, run
 on the machine that is running the master. If you deployed any agents
 with ``fixture-up``, this will also stop those agents.
 
+
+.. note::
+
+   ``fixture-down`` will not stop or remove any agents you created with ``agent-up``.
+
+
 To stop an agent, run
 
 .. code::
