@@ -53,6 +53,8 @@ func NewSearchMethod(c model.SearcherConfig) SearchMethod {
 		return newRandomSearch(*c.RandomConfig)
 	case c.GridConfig != nil:
 		return newGridSearch(*c.GridConfig)
+	case c.BayesConfig != nil:
+		return newBayesSearch(*c.BayesConfig)
 	case c.AsyncHalvingConfig != nil:
 		return newAsyncHalvingSearch(*c.AsyncHalvingConfig)
 	case c.AdaptiveConfig != nil:

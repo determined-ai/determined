@@ -23,6 +23,7 @@ type SearcherConfig struct {
 	SingleConfig         *SingleConfig         `union:"name,single" json:"-"`
 	RandomConfig         *RandomConfig         `union:"name,random" json:"-"`
 	GridConfig           *GridConfig           `union:"name,grid" json:"-"`
+	BayesConfig          *BayesConfig          `union:"name,bayes" json:"-"`
 	AsyncHalvingConfig   *AsyncHalvingConfig   `union:"name,async_halving" json:"-"`
 	AdaptiveConfig       *AdaptiveConfig       `union:"name,adaptive" json:"-"`
 	AdaptiveSimpleConfig *AdaptiveSimpleConfig `union:"name,adaptive_simple" json:"-"`
@@ -78,6 +79,27 @@ type GridConfig struct {
 func (g GridConfig) Validate() []error {
 	return []error{
 		check.GreaterThan(g.MaxSteps, 0, "max_steps must be > 0"),
+	}
+}
+
+// BayesConfig configures a bayes optimization search.
+type BayesConfig struct {
+	Metric           string  `json:"metric"`
+	SmallerIsBetter  bool    `json:"smaller_is_better"`
+	MaxSteps         int     `json:"max_steps"`
+	MaxTrials        int     `json:"max_trials"`
+	ConcurrentTrials int     `json:"concurrent_trials"`
+	Kappa            float64 `json:"kappa"`
+}
+
+// Validate implements the check.Validatable interface.
+func (r BayesConfig) Validate() []error {
+	return []error{
+		check.GreaterThan(r.MaxSteps, 0, "max_steps must be > 0"),
+		check.GreaterThan(r.MaxTrials, 0, "max_trials must be > 0"),
+		check.GreaterThan(r.ConcurrentTrials, 0, "concurrent_trials must be > 0"),
+		check.GreaterThanOrEqualTo(r.MaxTrials, r.ConcurrentTrials,
+			"max_trials must be >= concurrent_trials"),
 	}
 }
 
