@@ -2,151 +2,154 @@
 
 ## Reporting Issues
 
+Please report any issues at https://github.com/determined-ai/determined/issues.
+
 ## Contributing Changes
+
+TODO
 
 ## Installation from Source
 
-These instructions describe how to build Determined from source.
-Determined works on both Linux and Mac OS X (Linux is strongly
-recommended for production deployments). Start by cloning the Determined
-repo:
+### Setting up
 
+Determined can be developed and run on both Linux and macOS (Linux is strongly
+recommended for production deployments). Determined has been tested with Ubuntu
+16.04 LTS, Ubuntu 18.04 LTS, Arch Linux, CentOS 7, and macOS. Ubuntu is
+recommended; on AWS, a good AMI to use is a recent version of "Deep Learning
+Base AMI (Ubuntu)".
+
+Start by cloning the Determined repo:
 
 ```sh
 git clone git@github.com:determined-ai/determined.git
 ```
 
-### Linux Prerequisites
-
-Determined has been tested with Ubuntu 16.04 LTS, Ubuntu 18.04 LTS, and CentOS
-7. Ubuntu is recommended; on AWS, a good AMI to use is a recent version
-of "Deep Learning Base AMI (Ubuntu)".
-
-To install OS-level dependencies on Ubuntu 16.04 LTS,  CentOS 7, or Arch
-Linux respectively:
+To install OS-level dependencies, run the appropriate one of the scripts below
+from within your clone of the repository.
 
 ```sh
-./scripts/setup-env-ubuntu.sh
-
-./scripts/setup-env-centos.sh
-
-./scripts/setup-env-arch.sh
-```
-
-Then, logout and start a new terminal session.
-
-### Mac OS X Prerequisites
-
-1. Download and install [Docker for Mac](https://www.docker.com/docker-mac).
-
-2. Install Homebrew, if you haven't done so yet.
-
-3. Install the other prerequites via Homebrew:
-
-```sh
-brew install \
-  go \
-  libomp \
-  node \
-  python3 \
-  yarn
+scripts/setup-env-ubuntu.sh
+scripts/setup-env-centos.sh
+scripts/setup-env-arch.sh
+scripts/setup-env-macos.sh
 ```
 
 ### Building Determined
 
 ```sh
-mkvirtualenv -a $PWD/determined --python=`which python3.6` --no-site-packages det
-make get-deps all
+python3.6 -m venv ~/.virtualenvs/determined
+. ~/.virtualenvs/determined/bin/activate
+make all
 ```
 
-In the future, ensure you activate the virtualenv (`workon det`)
-whenever you want to interact with Determined.
+In the future, ensure that you activate the virtualenv (by running the
+`activate` command above) whenever you want to interact with Determined. Tools
+such as [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/)
+or [direnv](https://direnv.net/) may help streamline the process.
 
-### Starting the Master
+## Running Determined
 
-Note: If you are just interested in setting up a local development cluster,
-skip this section and [Starting the Agent](#starting-the-agent) and instead
-go straight to [Local Deployment](#local-deployment).
+### Starting with `det-deploy`
 
-After the common steps above, next do:
-
-1. Ensure that TCP port 8080 is Internet-accessible (e.g., on EC2, this
-   requires adding tcp/8080 to the instance's security group).
-
-2. `docker network create determined`
-
-3. `./dist/bin/determined-db-start`
-
-4. `./dist/bin/determined-master-start`
-
-5. Visit 'host:8080', where `host` is the public DNS name of the host.
-
-The master stores experiment metadata in a Postgres database; the
-database is stored in a persistent Docker volume. To reset the database
-and discard all of its content, use `dist/bin/determined-db-reset`.
-
-### Starting the Agent
-
-After the common steps above, start an agent by doing:
+`det-deploy` is a tool that we provide to automate the process of deploying
+Determined in Docker containers. See [the
+documentation](https://docs.determined.ai/latest/how-to/installation/deploy.html)
+for more details.
 
 ```sh
-./dist/bin/determined-agent-start $ADDR
-```
+# Set up a local Docker Compose cluster. This will automatically tear down an
+# existing cluster if there is one.
+det-deploy local fixture-up
 
-where `$ADDR` is the IP address of the master node (on EC2, use the
-master's private DNS name). Note that using "localhost" or "127.0.0.1"
-seem to run into a bug in the WebSockets library we're using (typical
-symptom is "Cannot assign requested address"), so use a routeable IP
-address or host name instead.
+# Watch stdout/stderr.
+det-deploy local logs
 
-## Local Deployment
-
-```sh
-# Setup local docker compose cluster
-python deploy/local/cluster_cmd.py fixture-up
-
-# Watch stdout/stderr
-python deploy/local/cluster_cmd.py logs
-
-# Edit code
+# Edit code.
 ...
-# Update docker images.
-#
-# Can be replaced with specific make targets based on component being updated
-make
 
-# Repeat cluster setup, etc.
+# Update Docker images and restart the cluster.
+make build-docker
+det-deploy local fixture-up
 
-# Teardown docker compose cluster
-python deploy/local/cluster_cmd.py fixture-down
+# Tear down the cluster.
+det-deploy local fixture-down
 ```
 
-### Web Development
-If you are working on UI development, you can instruct the master container to
-bind mount the `./webui` directory into itself by running `python
-deploy/local/cluster_cmd.py fixture-up --webui-root /PATH/TO/DET_DIR/master/build/webui`
-or setting the `DET_WEBUI_ROOT` environment variable to an absolute path to the
-directory with the WebUI static build files for `docs`, `elm` and `react`.
+### Starting manually
 
-## Running the MNIST example
+Running the parts of a Determined cluster individually can help speed up
+iteration during development. A minimal cluster consists of four services: a
+[PostgreSQL](https://www.postgresql.org/) database, a
+[Hasura](https://hasura.io) server, a Determined master, and a Determined agent.
 
-The `dist/examples/mnist_tf` directory contains code to train a convnet on
-MNIST (from http://yann.lecun.com/exdb/mnist/) using TensorFlow.  They
-can be executed via
+```sh
+# Create a separate Docker network for Determined.
+docker network create determined
 
-`det experiment create <config> dist/examples/mnist_tf/`
+# Start PostgreSQL.
+docker run --rm --network determined --name determined-db \
+  -p 127.0.0.1:5432:5432 \
+  -e POSTGRES_DB=determined \
+  -e POSTGRES_PASSWORD=my-postgres-password \
+  postgres:10
 
-`<config>` can be one of
+# Start Hasura.
+docker run --rm --network determined --name determined-graphql \
+  -p 127.0.0.1:8081:8080 \
+  -e HASURA_GRAPHQL_DATABASE_URL=postgres://postgres:my-postgres-password@determined-db:5432/determined \
+  -e HASURA_GRAPHQL_ADMIN_SECRET=my-hasura-secret \
+  -e HASURA_GRAPHQL_ENABLE_CONSOLE=true \
+  -e HASURA_GRAPHQL_ENABLE_TELEMETRY=false \
+  -e HASURA_GRAPHQL_CONSOLE_ASSETS_DIR=/srv/console-assets \
+  hasura/graphql-engine:v1.1.0
 
-1. `dist/examples/mnist_tf/const.yaml`: single trial, fixed hyperparameter settings
-2. `dist/examples/mnist_tf/random.yaml`: single trial, random search
-3. `dist/examples/mnist_tf/adaptive.yaml`: multiple trials, adaptive
+# Start the master.
+make -C master install-native
+determined-master \
+  --db-host localhost --db-name determined --db-port 5432 --db-user postgres --db-password my-postgres-password \
+  --hasura-address localhost:8081 --hasura-secret=my-hasura-secret \
+  --root build/share/determined/master
 
-Use the WebUI to watch progress.
+# Start the agent.
+make -C agent install-native
+determined-agent run --master-host localhost --master-port 8080
+```
+
+### Accessing Determined
+
+After following either set of instructions above, the WebUI will be available at
+http://localhost:8080. You can also use our command-line tool, `det`, to
+interact with Determined. For example, `det slot list` should print out a line
+for each GPU on your machine, if you have any, or a line for your CPU, if not.
+For more information, see [the reference
+documentation](https://docs.determined.ai/latest/reference/cli.html).
+
+## Training a Sample Model
+
+The `examples/official/mnist_pytorch` directory contains code to train a convnet
+on [MNIST](http://yann.lecun.com/exdb/mnist/) using PyTorch. To train a model,
+run
+
+```sh
+det experiment create <config> examples/official/mnist_pytorch/
+```
+
+where `<config>` can be
+
+- `examples/official/mnist_pytorch/const.yaml` to train a single model with fixed hyperparameters
+- `examples/official/mnist_pytorch/adaptive.yaml` to train multiple models using
+  an [adaptive hyperparameter search
+  algorithm](https://docs.determined.ai/latest/topic-guides/hp-tuning-det/index.html#adaptive-search)
+
+Determined also supports [several other hyperparameter search
+methods](https://docs.determined.ai/latest/topic-guides/hp-tuning-det/index.html#other-supported-methods).
+
+After starting a model, you can check on its progress using the WebUI
+or the CLI command `det experiment list`.
 
 ## Development
 
-### Linting and Typechecking
+### Linting and typechecking
 
 Run `make check`.
 
@@ -154,49 +157,46 @@ To add a commit message template and a commit-time hook to help you follow our
 commit message guidelines, you can also run `scripts/configure-repo.sh` (which
 does not need to be done repeatedly).
 
-### Unit Tests
+### Unit tests
 
 Run `make test`.
 
-### Integration Tests
+### Integration tests
 
-**Prerequisites**
+#### Prerequisites
 
-- The Determined CLI is installed in your environment. If you
-have not yet installed it, you can do so with `pip install -e .`
-- For cloud integration tests:
-    - AWS and GCP credentials are configured to run cloud-related integration tests.
-        - [AWS Credentials](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html)
-        - [GCP Credentials](https://cloud.google.com/docs/authentication/getting-started)
+For cloud integration tests, AWS and GCP credentials must be configured.
 
-**Run integration tests**
+- [AWS Credentials](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html)
+- [GCP Credentials](https://cloud.google.com/docs/authentication/getting-started)
+
+#### Run the tests
 
 ```bash
-# Run local integration tests except for cloud-related tests
+# Run local integration tests except for cloud-related tests.
 make test-integrations
 
-# Run cloud integration tests
+# Run cloud integration tests.
 make test-cloud-integrations
 ```
 
-**Customize configuration**
+#### Customize configuration
 
 By default, the master process is exposed on port 8081 of the host
-machine. To change the master port:
+machine. To change the master port, run
 
 ```sh
 make test-integrations INTEGRATIONS_HOST_PORT=<PORT>
 ```
 
-If you want to run the integration tests with GPU support enabled,
-change the default Docker container runtime to be `nvidia`:
+If you want to run the integration tests on GPUs, [change the default Docker
+container runtime to
+`nvidia`](https://github.com/NVIDIA/nvidia-docker/wiki/Advanced-topics#default-runtime).
 
-https://github.com/NVIDIA/nvidia-docker/wiki/Advanced-topics#default-runtime
+## Dependency Management
 
-## Dependency management
-
-This project uses [pip-compile](https://github.com/jazzband/pip-tools) for
-pinning dependencies versions.
+This project uses [`pip-compile`](https://github.com/jazzband/pip-tools) for
+pinning dependencies' versions.
 
 To add a dependency, edit `setup.py` or an appropriate `.in` file and then run
 `make pin-deps`. The `pip-compile` tool will then generate the appropriate
@@ -210,16 +210,16 @@ See [Releases](RELEASE.md) for cutting new releases.
 
 ## Debugging
 
-### Connecting to Postgres
+### Connecting to PostgreSQL
 
 To connect directly to the Determined metadata database, run this command from
 the Determined master host:
 
 ```sh
 docker run -it --rm \
-    --network determined \
-    -e PGPASSWORD=my-postgres-password \
-    postgres:10.8 psql -h determined-db -U postgres determined
+  --network determined \
+  -e PGPASSWORD=my-postgres-password \
+  postgres:10 psql -h determined-db -U postgres -d determined
 ```
 
 ### Get profiling information
@@ -230,18 +230,13 @@ go tool pprof http://master-ip:port/debug/pprof/heap  # for heap samples
 go tool pprof -http :8081 ~/pprof/sample-file
 ```
 
-There is also a corresponding command for local deployments:
+### GPU support
 
-```sh
-python deploy/local/cluster_cmd.py pprof-cpu
-python deploy/local/cluster_cmd.py pprof-heap
-```
+To use Determined with GPUs, the Nvidia CUDA drivers (>= 384.81) and
+[nvidia-docker2](https://docs.determined.ai/latest/how-to/installation/background.html#installing-docker)
+must be installed.
 
-### GPU Support
-
-To use Determined with GPUs, the Nvidia CUDA drivers (>= 384.81) must be
-installed. The instructions above install the nvidia-docker2 package; to
-verify that your system can run containers that use GPUs, try:
+To verify that your system can run containers that use GPUs, try:
 
 ```sh
 docker run --runtime=nvidia --rm nvidia/cuda:10.0-cudnn7-runtime-ubuntu16.04 nvidia-smi
