@@ -167,6 +167,8 @@ def agent_up(
 ) -> None:
     if version is None:
         version = determined_deploy.__version__
+    if master_host == "localhost":
+        master_host = get_proxy_addr()
     image = "determinedai/determined-agent:{}".format(version)
     environment = {
         "DET_MASTER_HOST": master_host,

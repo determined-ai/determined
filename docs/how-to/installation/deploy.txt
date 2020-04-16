@@ -89,12 +89,6 @@ This will create an agent on that machine. To verify whether it has
 successfully connected to the master, navigate to the WebUI and check
 whether slots have appeared on the ``Cluster`` page.
 
-.. note::
-
-   The hostname used must be reachable from within Docker containers
-   running on the agent machine. In particular, ``localhost`` will
-   usually not work, even if the master and agent are running on the
-   same machine. Use the ``--agents`` option in that case instead.
 
 Managing the Cluster
 --------------------
