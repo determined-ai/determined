@@ -1,37 +1,22 @@
 import React, { PropsWithChildren } from 'react';
-import styled, { css } from 'styled-components';
-import { switchProp } from 'styled-tools';
+
+import css from './Label.module.scss';
 
 export enum LabelTypes {
-  NavMain = 'nav-main',
-  NavSideBar = 'nav-side-bar',
+  NavMain = 'navMain',
+  NavSideBar = 'navSideBar',
 }
 
 interface Props {
   type?: LabelTypes;
 }
 
-const cssNavMain = css`
-  cursor: pointer;
-  font-size: 1.2rem;
-  font-weight: bold;
-`;
+const Label: React.FC<Props> = ({ children, type }: PropsWithChildren<Props>) => {
+  const classes = [ css.base ];
 
-const cssNavSideBar = css`
-  cursor: pointer;
-`;
+  if (type) classes.push(css[type]);
 
-const typeStyles = {
-  [LabelTypes.NavMain]: cssNavMain,
-  [LabelTypes.NavSideBar]: cssNavSideBar,
-};
-
-const Base = styled.div`
-  ${switchProp('type', typeStyles)}
-`;
-
-const Label: React.FC<Props> = (props: PropsWithChildren<Props>) => {
-  return React.createElement(Base, props, props.children);
+  return React.createElement('div', { className: classes.join(' ') }, children);
 };
 
 export default Label;

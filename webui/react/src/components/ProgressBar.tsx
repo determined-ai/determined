@@ -1,9 +1,9 @@
 import React from 'react';
-import styled from 'styled-components';
-import { prop } from 'styled-tools';
 
 import { getStateColor } from 'themes';
 import { CommandState, RunState } from 'types';
+
+import css from './ProgressBar.module.scss';
 
 interface Props {
   percent: number;
@@ -14,34 +14,18 @@ const defaultProps = {
   percent: 0,
 };
 
-const ProgressBar: React.FC<Props> = (props: Props) => {
+const ProgressBar: React.FC<Props> = ({ percent, state }: Props) => {
+  const style = {
+    backgroundColor: getStateColor(state),
+    width: `${percent}%`,
+  };
+
   return (
-    <Base {...props}>
-      <span />
-    </Base>
+    <div className={css.base}>
+      <span className={css.progress} style={style} />
+    </div>
   );
 };
-
-const Base = styled.div<Props>`
-  background: #ddd;
-  border-radius: 0;
-  box-shadow: inset 0 -1px 1px rgba(255, 255, 255, 0.3);
-  height: 4px;
-  margin: 0;
-  padding: 0;
-  position: relative;
-  & > span {
-    background-color: ${(props): string => getStateColor(props.state, props.theme)};
-    box-shadow:
-      inset 0 2px 9px  rgba(255, 255, 255, 0.3),
-      inset 0 -2px 6px rgba(0, 0, 0, 0.4);
-    display: block;
-    height: 100%;
-    overflow: hidden;
-    position: relative;
-    width: ${prop('percent', defaultProps.percent)}%;
-  }
-`;
 
 ProgressBar.defaultProps = defaultProps;
 

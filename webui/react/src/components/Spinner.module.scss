@@ -1,0 +1,24 @@
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.base {
+  position: relative;
+
+  .spin {
+    animation: rotate 1s linear infinite;
+    left: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+.fullPage {
+  background-color: rgba(255, 255, 255, 0.8);
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}

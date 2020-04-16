@@ -1,14 +1,12 @@
 import { Select, Tooltip } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback, useMemo } from 'react';
-import styled from 'styled-components';
-import { theme } from 'styled-tools';
+import React, { useCallback } from 'react';
 
 import Icon from 'components/Icon';
-import LayoutHelper from 'components/LayoutHelper';
-import { ShirtSize } from 'themes';
 import { CommandState, RecentTask, RunState, TaskType, User } from 'types';
 import { commandStateToLabel, runStateToLabel } from 'utils/types';
+
+import css from './TaskFilter.module.scss';
 
 const { Option, OptGroup } = Select;
 
@@ -41,8 +39,7 @@ const taskTypeOrder = [
 const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Props) => {
   const handleTypeClick = useCallback((taskType: TaskType): (() => void) => {
     return (): void => {
-      const types = { ...filters.types };
-      types[taskType] = !filters.types[taskType];
+      const types = { ...filters.types, [taskType]: !filters.types[taskType] };
       onChange({ ...filters, types });
     };
   }, [ filters, onChange ]);
@@ -65,31 +62,29 @@ const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Pro
     onChange({ ...filters, limit });
   }, [ filters, onChange ]);
 
-  const selectIcon = <Icon name="arrow-down" size="small" />;
+  const selectIcon = <Icon name="arrow-down" size="tiny" />;
 
-  const filterTaskButtons = taskTypeOrder.map(info => (
-    <Tooltip key={info.label} placement="top" title={info.label}>
-      <FilterButton
-        aria-label={info.label}
-        className={filters.types[info.type] ? 'active' : ''}
-        onClick={handleTypeClick(info.type)}>
-        <Icon name={info.type.toLocaleLowerCase()} />
-      </FilterButton>
-    </Tooltip>
-  ));
+  const filterTypeButtons = taskTypeOrder.map(info => {
+    const typeButtonClasses = [ css.typeButton ];
+    if (filters.types[info.type]) typeButtonClasses.push(css.active);
+    return (
+      <Tooltip key={info.label} placement="top" title={info.label}>
+        <button aria-label={info.label}
+          className={typeButtonClasses.join(' ')}
+          onClick={handleTypeClick(info.type)}>
+          <Icon name={info.type.toLocaleLowerCase()} />
+        </button>
+      </Tooltip>
+    );
+  });
 
-  const runStateOptions = useMemo(() => Object.values(RunState).map((value) => {
+  const runStateOptions = Object.values(RunState).map((value) => {
     return <Option key={value} value={value}>{runStateToLabel[value]}</Option>;
-  }), [ ]);
+  });
 
-  const commandStateOptions = useMemo(() => Object.values(CommandState).map((value) => {
+  const commandStateOptions = Object.values(CommandState).map((value) => {
     return <Option key={value} value={value}>{commandStateToLabel[value]}</Option>;
-  }), [ ]);
-
-  const usernameFilter = filters.username;
-  const defaultUsername = useMemo((): number | string => {
-    return usernameFilter || ALL_VALUE;
-  }, [ usernameFilter ]);
+  });
 
   const userToSelectOption = (user: User): React.ReactNode =>
     <Option key={user.id} value={user.username}>{user.username}</Option>;
@@ -109,28 +104,24 @@ const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Pro
   };
 
   return (
-    <LayoutHelper gap={ShirtSize.jumbo} yCenter>
-      <LayoutHelper gap={ShirtSize.medium}>{filterTaskButtons}</LayoutHelper>
-      <div>
-        <Label>State</Label>
+    <div className={css.base}>
+      <div className={css.typeButtons}>{filterTypeButtons}</div>
+      <div className={css.filter}>
+        <div className={css.label}>State</div>
         <Select
           defaultValue={filters.states[0]}
           dropdownMatchSelectWidth={false}
           suffixIcon={selectIcon}
           onSelect={handleStateSelect}>
           <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
-          <OptGroup key="expGroup" label="Experiment States">
-            {runStateOptions}
-          </OptGroup>
-          <OptGroup key="cmdGroup" label="Command States">
-            {commandStateOptions}
-          </OptGroup>
+          <OptGroup key="expGroup" label="Experiment States">{runStateOptions}</OptGroup>
+          <OptGroup key="cmdGroup" label="Command States">{commandStateOptions}</OptGroup>
         </Select>
       </div>
-      <div>
-        <Label>Users</Label>
+      <div className={css.filter}>
+        <div className={css.label}>Users</div>
         <Select
-          defaultValue={defaultUsername}
+          defaultValue={filters.username || ALL_VALUE}
           dropdownMatchSelectWidth={false}
           filterOption={handleUserFilter}
           optionFilterProp="children"
@@ -141,8 +132,8 @@ const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Pro
           {userOptions()}
         </Select>
       </div>
-      <div>
-        <Label>Limit</Label>
+      <div className={css.filter}>
+        <div className={css.label}>Limit</div>
         <Select
           defaultValue={filters.limit}
           suffixIcon={selectIcon}
@@ -150,32 +141,9 @@ const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Pro
           {limitOptions.map(limit => <Option key={limit} value={limit}>{limit}</Option>)}
         </Select>
       </div>
-    </LayoutHelper>
+    </div>
   );
 };
-
-const FilterButton = styled.div`
-  align-items: center;
-  background-color: ${theme('colors.monochrome.17')};
-  border: solid ${theme('sizes.border.width')} ${theme('colors.monochrome.12')};
-  border-radius: ${theme('sizes.border.radius')};
-  cursor: pointer;
-  display: flex;
-  height: ${theme('sizes.layout.huge')};
-  padding: 0 ${theme('sizes.layout.small')};
-  transition: 0.2s;
-  &.active {
-    border-color: ${theme('colors.states.active')};
-    color: ${theme('colors.states.active')};
-  }
-  &:hover { border-color: ${theme('colors.states.active')}; }
-`;
-
-const Label = styled.label`
-  font-size: ${theme('sizes.font.medium')};
-  font-weight: bold;
-  margin-right: ${theme('sizes.layout.medium')};
-`;
 
 export default TaskFilter;
 

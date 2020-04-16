@@ -1,6 +1,7 @@
-export const isPrimitive = <T>(data: T): boolean => data !== Object(data);
 export const isMap = <T>(data: T): boolean => data instanceof Map;
 export const isNumber = <T>(data: T): boolean => typeof data === 'number';
+export const isObject = <T>(data: T): boolean => typeof data === 'object' && data !== null;
+export const isPrimitive = <T>(data: T): boolean => data !== Object(data);
 export const isSet = <T>(data: T): boolean => data instanceof Set;
 
 export const isFunction = (fn: unknown): boolean => {
@@ -13,7 +14,7 @@ export const isAsyncFunction = (fn: unknown): boolean => {
 };
 
 export const isSyncFunction = (fn: unknown): boolean => {
-  return !isAsyncFunction(fn);
+  return isFunction(fn) && !isAsyncFunction(fn);
 };
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */

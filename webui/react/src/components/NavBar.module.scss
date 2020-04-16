@@ -1,0 +1,16 @@
+.base {
+  align-items: center;
+  background-color: var(--theme-colors-core-secondary);
+  display: flex;
+  flex-shrink: 0;
+  height: var(--theme-sizes-navbar-height);
+  justify-content: space-between;
+  padding: 0 var(--theme-sizes-layout-big);
+
+  .group {
+    align-items: center;
+    display: flex;
+
+    > *:not(:first-child) { margin-left: var(--theme-sizes-layout-huge); }
+  }
+}

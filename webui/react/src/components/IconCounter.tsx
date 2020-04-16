@@ -1,10 +1,9 @@
 import React from 'react';
-import styled, {  css } from 'styled-components';
-import { switchProp, theme } from 'styled-tools';
 
 import Icon from 'components/Icon';
 
-// IconCounter component.
+import css from './IconCounter.module.scss';
+
 interface Props {
   name: string;
   count: number;
@@ -12,47 +11,20 @@ interface Props {
   onClick: () => void;
 }
 
-export enum IconCounterType {
+enum IconCounterType {
   Active = 'active',
   Disabled = 'disabled',
 }
 
 const IconCounter: React.FC<Props> = (props: Props) => {
+  const classes = [ css.base ];
+  if (props.type) classes.push(css[props.type]);
   return (
-    <Base {...props} onClick={props.onClick}>
+    <a className={classes.join(' ')} onClick={props.onClick}>
       <Icon name={props.name} size="large" />
-      <Count>{props.count}</Count>
-    </Base>
+      <span className={css.count}>{props.count}</span>
+    </a>
   );
 };
-
-const cssDisabled = css`
-  color: ${theme('colors.monochrome.9')};
-  &:hover { color: ${theme('colors.monochrome.9')}; }
-`;
-
-const cssActive = css`
-  color: ${theme('colors.active')};
-`;
-
-const typeStyles = {
-  [IconCounterType.Active]: cssActive,
-  [IconCounterType.Disabled]: cssDisabled,
-};
-
-const Base = styled.a`
-  align-items: center;
-  cursor: pointer;
-  display: grid;
-  grid-gap: ${theme('sizes.layout.small')};
-  grid-template-columns: 1fr auto;
-  user-select: none;
-  ${switchProp('type', typeStyles)}
-`;
-
-const Count = styled.span`
-  font-size: ${theme('sizes.font.medium')};
-  font-weight: bold;
-`;
 
 export default IconCounter;

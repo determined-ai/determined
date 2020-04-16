@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom';
 import { Router } from 'react-router-dom';
 
 /* Import the styles first to allow components to override styles. */
-import 'styles/index.css';
+import 'styles/index.scss';
 
 import App from './App';
 import * as serviceWorker from './serviceWorker';

@@ -1,6 +1,4 @@
 import React, { useCallback, useState } from 'react';
-import styled from 'styled-components';
-import { theme } from 'styled-tools';
 
 import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
@@ -24,6 +22,8 @@ import {
   Command, CommandState, Experiment, RecentTask, ResourceType, RunState, TaskType,
 } from 'types';
 import { commandToTask, experimentToTask } from 'utils/types';
+
+import css from './Dashboard.module.scss';
 
 const defaultFilters: TaskFilters = {
   limit: 25,
@@ -145,10 +145,16 @@ const Dashboard: React.FC = () => {
       [TaskType.Tensorboard]: 0,
     });
 
+  const emptyView = (
+    <div className={css.emptyMessage}>
+      No recent tasks matching the current filters.
+    </div>
+  );
+
   return (
-    <Base>
+    <div className={css.base}>
       <Section title="Overview">
-        <Overview>
+        <div className={css.overview}>
           <Grid gap={ShirtSize.medium} minItemWidth={12} mode={GridMode.AutoFill}>
             <OverviewStats title="Cluster Allocation">
               {overview.allocation}<small>%</small>
@@ -177,36 +183,18 @@ const Dashboard: React.FC = () => {
               {activeTally[TaskType.Command]}
             </OverviewStats> : null}
           </Grid>
-        </Overview>
+        </div>
       </Section>
       <Section divider={true} options={taskFilter} title="Recent Tasks">
-        {showTasksSpinner ? <Spinner /> : tasks.length !== 0
-          ? <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>{tasks}</Grid>
-          : <EmptyMessage>No recent tasks matching the current filters.</EmptyMessage>}
+        {showTasksSpinner
+          ? <Spinner />
+          : tasks.length !== 0
+            ? <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>{tasks}</Grid>
+            : emptyView
+        }
       </Section>
-    </Base>
+    </div>
   );
 };
-
-const Base = styled.div`
-  overflow: auto;
-  padding: ${theme('sizes.layout.big')};
-  width: 100%;
-`;
-
-const EmptyMessage = styled.div`
-  align-items: center;
-  background-color: ${theme('colors.monochrome.16')};
-  color: ${theme('colors.monochrome.9')};
-  display: flex;
-  font-size: ${theme('sizes.font.medium')};
-  font-style: italic;
-  justify-content: center;
-  padding: ${theme('sizes.layout.giant')};
-`;
-
-const Overview = styled.div`
-  padding-bottom: ${theme('sizes.layout.big')};
-`;
 
 export default Dashboard;

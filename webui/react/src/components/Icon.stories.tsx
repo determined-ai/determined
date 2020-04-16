@@ -9,8 +9,10 @@ export default {
 
 export const Default = (): React.ReactNode => <Icon />;
 
+export const TinyIcon = (): React.ReactNode => <Icon size="tiny" />;
 export const SmallIcon = (): React.ReactNode => <Icon size="small" />;
 export const MediumIcon = (): React.ReactNode => <Icon size="medium" />;
+export const LargeIcon = (): React.ReactNode => <Icon size="large" />;
 
 export const ArrowDown = (): React.ReactNode => <Icon name="arrow-down" size="small" />;
 export const ArrowUp = (): React.ReactNode => <Icon name="arrow-up" size="small" />;

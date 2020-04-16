@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
-import styled, { ThemeProvider } from 'styled-components';
 
 import NavBar from 'components/NavBar';
 import Router from 'components/Router';
@@ -14,11 +13,13 @@ import Info from 'contexts/Info';
 import Users from 'contexts/Users';
 import useRestApi from 'hooks/useRestApi';
 import useRouteTracker from 'hooks/useRouteTracker';
+import useTheme from 'hooks/useTheme';
 import { ioDeterminedInfo } from 'ioTypes';
 import { appRoutes } from 'routes';
 import { jsonToDeterminedInfo } from 'services/decoder';
-import { lightTheme } from 'themes';
 import { DeterminedInfo } from 'types';
+
+import css from './App.module.scss';
 
 const AppView: React.FC = () => {
   const { isAuthenticated, user } = Auth.useStateContext();
@@ -29,6 +30,7 @@ const AppView: React.FC = () => {
     useRestApi<DeterminedInfo>(ioDeterminedInfo, { mappers: jsonToDeterminedInfo });
 
   useRouteTracker();
+  useTheme();
 
   useEffect(() => requestInfo({ url: '/info' }), [ requestInfo ]);
 
@@ -45,7 +47,7 @@ const AppView: React.FC = () => {
   }, [ infoResponse, setInfo ]);
 
   return (
-    <Base>
+    <div className={css.base}>
       {isAuthenticated && <NavBar username={username} />}
       <Switch>
         <Route exact path="/">
@@ -53,7 +55,7 @@ const AppView: React.FC = () => {
         </Route>
         <Router routes={appRoutes} />
       </Switch>
-    </Base>
+    </div>
   );
 };
 
@@ -71,20 +73,9 @@ const App: React.FC = () => {
       Shells.Provider,
       Tensorboards.Provider,
     ]}>
-      <ThemeProvider theme={lightTheme}>
-        <AppView />
-      </ThemeProvider>
+      <AppView />
     </Compose>
   );
 };
-
-const Base = styled.div`
-  background-color: white;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: 100%;
-  > *:last-child { flex-grow: 1; }
-`;
 
 export default App;

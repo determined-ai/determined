@@ -1,13 +1,13 @@
 import { Dropdown, Menu } from 'antd';
 import React from 'react';
-import styled from 'styled-components';
-import { theme } from 'styled-tools';
 
 import Avatar from 'components/Avatar';
 import Logo from 'components/Logo';
 import NavItem, { NavItemType } from 'components/NavItem';
 import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
+
+import css from './NavBar.module.scss';
 
 interface Props {
   username?: string;
@@ -26,9 +26,9 @@ const NavBar: React.FC<Props> = (props: Props) => {
   );
 
   return (
-    <Base>
+    <nav className={css.base}>
       <Logo />
-      <Group>
+      <div className={css.group}>
         <NavItem
           crossover={true}
           icon="cluster"
@@ -50,25 +50,9 @@ const NavBar: React.FC<Props> = (props: Props) => {
             <Avatar name={props.username || 'Anonymous'} />
           </a>
         </Dropdown>
-      </Group>
-    </Base>
+      </div>
+    </nav>
   );
 };
-
-const Base = styled.nav`
-  align-items: center;
-  background-color: ${theme('colors.core.secondary')};
-  display: flex;
-  flex-shrink: 0;
-  height: ${theme('sizes.navbar.height')};
-  justify-content: space-between;
-  padding: 0 1.6rem;
-`;
-
-const Group = styled.div`
-  align-items: center;
-  display: flex;
-  > *:not(:first-child) { margin-left: ${theme('sizes.layout.huge')}; }
-`;
 
 export default NavBar;

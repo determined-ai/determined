@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { PropsWithChildren, useCallback } from 'react';
 import { useHistory } from 'react-router-dom';
-import styled from 'styled-components';
+
+import css from './Link.module.scss';
 
 interface Props {
   crossover?: boolean;
@@ -8,42 +9,40 @@ interface Props {
   path: string;
   popout?: boolean;
   onClick?: (event: React.MouseEvent) => void;
-  children: React.ReactNode;
 }
 
 const defaultProps = {
   crossover: false,
 };
 
-const Link: React.FC<Props> = (props: Props) => {
+const Link: React.FC<Props> = ({
+  crossover, disabled, path, popout, onClick, children,
+}: PropsWithChildren<Props>) => {
   const history = useHistory();
+  const classes = [];
 
-  if (props.disabled) return <div {...props}>{props.children}</div>;
+  if (!disabled) classes.push(css.link);
 
-  const handleClick = (event: React.MouseEvent): void => {
+  const handleClick = useCallback((event: React.MouseEvent): void => {
     const pathPrefix = process.env.IS_DEV ? 'http://localhost:8080' : '';
-    const url = props.crossover ? `${pathPrefix}${props.path}` : props.path;
+    const url = crossover ? `${pathPrefix}${path}` : path;
 
     event.persist();
     event.preventDefault();
 
-    if (props.onClick) {
-      props.onClick(event);
-    } else if (event.metaKey || event.ctrlKey || props.popout) {
+    if (onClick) {
+      onClick(event);
+    } else if (event.metaKey || event.ctrlKey || popout) {
       window.open(url, '_blank');
-    } else if (props.crossover) {
+    } else if (crossover) {
       window.location.assign(url);
     } else {
       history.push(url);
     }
-  };
+  }, [ history, crossover, onClick, path, popout ]);
 
-  return <Base {...props} onClick={handleClick}>{props.children}</Base>;
+  return <div className={classes.join(' ')} onClick={handleClick}>{children}</div>;
 };
-
-const Base = styled.a`
-  cursor: pointer;
-`;
 
 Link.defaultProps = defaultProps;
 

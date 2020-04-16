@@ -1,5 +1,5 @@
-import 'styles/index.css';
-import 'styles/storybook.css';
+import 'styles/index.scss';
+import 'styles/storybook.scss';
 
 import { addDecorator } from "@storybook/react"
 

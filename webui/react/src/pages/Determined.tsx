@@ -1,7 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
-import styled from 'styled-components';
-import { theme } from 'styled-tools';
 
 import Router from 'components/Router';
 import SideBar from 'components/SideBar';
@@ -20,6 +18,8 @@ import {
 } from 'services/decoder';
 import { buildExperimentListGqlQuery } from 'services/graphql';
 import { Agent, Command, Experiment, RunState, User } from 'types';
+
+import css from './Determined.module.scss';
 
 // querying active experiments only
 const query = buildExperimentListGqlQuery({ states: [
@@ -99,7 +99,7 @@ const Determined: React.FC = () => {
   }, [ tensorboardsResponse, setTensorboards ]);
 
   return (
-    <Base>
+    <div className={css.base}>
       <SideBar />
       <Switch>
         <Route exact path="/det">
@@ -107,17 +107,8 @@ const Determined: React.FC = () => {
         </Route>
         <Router routes={detRoutes} />
       </Switch>
-    </Base>
+    </div>
   );
 };
-
-const Base = styled.div`
-  --navHeight: ${theme('sizes.navbar.height')};
-  background-color: ${theme('colors.monochrome.15')};
-  display: flex;
-  height: calc(100% - var(--navHeight));
-  &:first-child { flex-grow: 0; }
-  &:last-child { flex-grow: 1; }
-`;
 
 export default Determined;
