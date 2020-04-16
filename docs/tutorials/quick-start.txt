@@ -67,7 +67,7 @@ Each yaml file is specific to the type of experiment we will run during this gui
 Running Your First Job
 -----------------------
 
-The Determined CLI can be used to submit an experiment to the Determined cluster. Determine defines an :ref:`experiment <concept-experiment>` as a collection of one or more trials. A :ref:`trial <concept-trial>` is a training task that consists of a dataset, a deep learning model, and values for all of the model’s hyperparameters.  An experiment can either train a single model (with a single trial), or can define a search over a user-defined hyperparameter space.
+The Determined CLI can be used to submit an experiment to the Determined cluster. Determined defines an :ref:`experiment <concept-experiment>` as a collection of one or more trials. A :ref:`trial <concept-trial>` is a training task that consists of a dataset, a deep learning model, and values for all of the model’s hyperparameters.  An experiment can either train a single model (with a single trial), or can define a search over a user-defined hyperparameter space.
 
 We will start by training a single model for a fixed number of batches and with constant values for all of the hyperparameters. Run the following command in the ``mnist_pytorch`` directory:
 
@@ -84,7 +84,7 @@ Once the experiment has been submitted, you should see the following output:
     Preparing files (../mnist_pytorch) to send to master... 2.5KB and 4 files
     Created experiment 1
 
-We can view the experiment status and results in the Web UI. In a browser, go to http://DET_MASTER/, where DET_MASTER is the URL or IP address of your Determined cluster. If you installed locally via ``det-deploy local``, this will likely be http://localhost:8080/ . A Determined dashboard will be displayed similar to the one below:
+We can view the experiment status and results in the Web UI. In a browser, go to ``http://DET_MASTER/``, where ``DET_MASTER`` is the URL or IP address of your Determined cluster. If you installed locally via ``det-deploy local``, this will likely be ``http://localhost:8080/`` . A Determined dashboard will be displayed similar to the one below:
 
 |
 
