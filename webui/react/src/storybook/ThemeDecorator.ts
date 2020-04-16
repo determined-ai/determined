@@ -1,11 +1,11 @@
 import { DecoratorFunction } from '@storybook/addons';
 import React from 'react';
-import { ThemeProvider } from 'styled-components';
 
-import { lightTheme } from 'themes';
+import useTheme from 'hooks/useTheme';
 
 const ThemeDecorator: DecoratorFunction<React.ReactNode> = storyFn => {
-  return React.createElement(ThemeProvider, { theme: lightTheme }, storyFn());
+  useTheme();
+  return React.createElement('div', null, storyFn());
 };
 
 export default ThemeDecorator;

@@ -1,8 +1,8 @@
 import React, { PropsWithChildren } from 'react';
-import styled from 'styled-components';
-import { prop } from 'styled-tools';
 
-import { PropsWithTheme, ShirtSize } from 'themes';
+import { ShirtSize } from 'themes';
+
+import css from './Grid.module.scss';
 
 export enum GridMode {
   AutoFill = 'auto-fill', // will squeeze as many items into a given space and minimum size
@@ -21,22 +21,18 @@ const defaultProps = {
 };
 
 const Grid: React.FC<Props> = (props: PropsWithChildren<Props>) => {
-  return <Base {...props} data-test="grid">{props.children}</Base>;
-};
+  const mode = props.mode || defaultProps.mode;
+  const itemWidth = props.minItemWidth || defaultProps.minItemWidth;
+  const style = {
+    gridGap: props.gap ? `var(--theme-sizes-layout-${props.gap}) ` : '',
+    gridTemplateColumns: `repeat(${mode}, minmax(${itemWidth}rem, 1fr))`,
+  };
 
-const getGap = (props: PropsWithTheme<Props>): string => {
-  return props.gap ? `grid-gap: ${props.theme.sizes.layout[props.gap]};` : '';
+  return (
+    <div className={css.base} style={style}>
+      {props.children}</div>
+  );
 };
-
-const Base = styled.div<Props>`
-  display: grid;
-  grid-template-columns:
-    repeat(
-      ${prop('mode', defaultProps.mode)},
-      minmax(${prop('minItemWidth', defaultProps.minItemWidth)}rem, 1fr)
-    );
-  ${getGap}
-`;
 
 Grid.defaultProps = defaultProps;
 

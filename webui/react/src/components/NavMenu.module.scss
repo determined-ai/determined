@@ -1,0 +1,27 @@
+/* stylelint-disable no-descending-specificity */
+
+/*
+ * This specificity does not apply here because it is an XOR relationship between
+ * .main, .sidebar and .sidebarIconOnly, which are the different types of stylings
+ * that may get applied. They would not simultaneously get applied.
+ */
+
+.base {
+  display: flex;
+}
+.main {
+  > * { margin-right: 3.2rem; }
+  > *:last-child { margin-right: 0; }
+}
+.sidebar {
+  flex-direction: column;
+
+  > * { margin-bottom: 1.6rem; }
+  > *:last-child { margin-bottom: 0; }
+}
+.sidebarIconOnly {
+  flex-direction: column;
+
+  > * { margin-bottom: 1.6rem; }
+  > *:last-child { margin-bottom: 0; }
+}

@@ -5,13 +5,11 @@ describe('Dashboard', () => {
 
   describe('Recent Tasks', () => {
     it('should show task cards', () => {
-      cy.get('#recent-tasks').dataCy('task-card').should('have.length.gt', 0);
+      cy.get('#recent-tasks [class^="TaskCard_base"]').should('have.length.gt', 0);
     });
 
     it('should show 3 cards', () => {
-      cy.get('#recent-tasks').dataCy('task-card').should('have.length', 3);
+      cy.get('#recent-tasks [class^="TaskCard_base"]').should('have.length', 3);
     });
-
   });
-
 });

@@ -1,0 +1,88 @@
+.base {
+  background-color: var(--theme-colors-monochrome-17);
+  border-color: var(--theme-colors-monochrome-12);
+  border-radius: var(--theme-sizes-border-radius);
+  border-style: solid;
+  border-width: var(--theme-sizes-border-width);
+  color: var(--theme-colors-monochrome-5);
+  display: block;
+  overflow-wrap: break-word;
+  padding: var(--theme-sizes-layout-big);
+  padding-right: 0;
+  position: relative;
+  transition: 0.2s;
+  word-break: break-all;
+
+  :hover { color: var(--theme-colors-monochrome-5); }
+  .progressBar {
+    left: 0;
+    position: absolute;
+    top: 0;
+    visibility: visible;
+    width: 100%;
+  }
+  .upper {
+    display: flex;
+    padding-bottom: var(--theme-sizes-layout-medium);
+    padding-right: var(--theme-sizes-layout-big);
+
+    .info {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding-left: var(--theme-sizes-layout-medium);
+    }
+    .icon {
+      align-items: center;
+      background-color: var(--theme-colors-monochrome-17);
+      border: var(--theme-sizes-border-width) solid var(--theme-colors-monochrome-11);
+      border-radius: var(--theme-sizes-border-radius);
+      display: flex;
+      flex-shrink: 0;
+      height: 4.4rem;
+      justify-content: center;
+      width: 4.4rem;
+    }
+    .name {
+      color: var(--theme-colors-monochrome-2);
+      font-size: var(--theme-sizes-font-medium);
+      line-height: var(--theme-sizes-font-jumbo);
+      overflow: hidden;
+      padding-bottom: var(--theme-sizes-layout-tiny);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .age {
+      display: flex;
+      font-size: var(--theme-sizes-font-small);
+      line-height: var(--theme-sizes-font-large);
+    }
+    .event { padding-right: var(--theme-sizes-layout-tiny); }
+  }
+  .lower {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+
+    .badges {
+      display: flex;
+
+      > *:not(:first-child) { margin-left: var(--theme-sizes-layout-tiny); }
+    }
+    .percent {
+      color: black;
+      font-size: var(--theme-sizes-font-small);
+      font-weight: bold;
+      margin-bottom: auto;
+      margin-top: auto;
+    }
+  }
+}
+.link:hover {
+  border-color: var(--theme-colors-core-action);
+  box-shadow: var(--theme-shadow);
+  margin-bottom: calc(-1 * var(--theme-sizes-layout-micro));
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: calc(-1 * var(--theme-sizes-layout-micro));
+}

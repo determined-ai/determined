@@ -1,5 +1,4 @@
 import React from 'react';
-import styled from 'styled-components';
 
 import { ShirtSize } from 'themes';
 
@@ -10,11 +9,14 @@ export default {
   title: 'Grid',
 };
 
-const GridElement = styled.div`
-  background-color: #666;
-  border: 1px black solid;
-  height: 5rem;
-`;
+const GridElement: React.FC = () => {
+  const style = {
+    backgroundColor: '#666',
+    border: 'px black solid',
+    height: '5rem',
+  };
+  return <div style={style} />;
+};
 
 const GridElements: React.ReactNodeArray =
   new Array(27).fill(0).map((_, idx) => <GridElement key={idx} />);

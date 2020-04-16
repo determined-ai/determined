@@ -1,10 +1,10 @@
 import React from 'react';
-import styled from 'styled-components';
-import { switchProp } from 'styled-tools';
+
+import css from './Icon.module.scss';
 
 interface Props {
   name?: string;
-  size?: 'small' | 'medium' | 'large';
+  size?: 'tiny' | 'small' | 'medium' | 'large';
 }
 
 const defaultProps: Props = {
@@ -12,19 +12,13 @@ const defaultProps: Props = {
   size: 'medium',
 };
 
-const sizeStyles = {
-  large: '2.4rem',
-  medium: '2rem',
-  small: '1.2rem',
-};
+const Icon: React.FC<Props> = ({ name, size }: Props) => {
+  const classes = [ css.base ];
 
-const Base = styled.i`
-  font-size: ${switchProp('size', sizeStyles)};
-  user-select: none;
-`;
+  if (name) classes.push(`icon-${name}`);
+  if (size) classes.push(css[size]);
 
-const Icon: React.FC<Props> = ({ name, ...props }: Props) => {
-  return <Base className={`icon-${name}`} {...props} />;
+  return <i className={classes.join(' ')} />;
 };
 
 Icon.defaultProps = defaultProps;

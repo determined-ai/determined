@@ -1,0 +1,19 @@
+.base {
+  align-items: center;
+  cursor: pointer;
+  display: grid;
+  grid-gap: var(--theme-sizes-layout-small);
+  grid-template-columns: 1fr auto;
+  user-select: none;
+
+  .count {
+    font-size: var(--theme-sizes-font-medium);
+    font-weight: bold;
+  }
+}
+.active { color: var(--theme-colors-active); }
+.disabled {
+  color: var(--theme-colors-monochrome-9);
+
+  &:hover { color: var(--theme-colors-monochrome-9); }
+}

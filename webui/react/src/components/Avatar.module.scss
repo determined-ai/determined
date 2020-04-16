@@ -1,0 +1,11 @@
+.base {
+  align-items: center;
+  border-radius: 100%;
+  color: white;
+  display: flex;
+  font-size: 1rem;
+  font-weight: bold;
+  height: var(--theme-sizes-layout-jumbo);
+  justify-content: center;
+  width: var(--theme-sizes-layout-jumbo);
+}

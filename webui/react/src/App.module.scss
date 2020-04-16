@@ -1,0 +1,9 @@
+.base {
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+
+  > *:last-child { flex-grow: 1; }
+}

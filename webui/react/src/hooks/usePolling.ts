@@ -13,7 +13,7 @@ interface PollingOptions {
 
 const usePolling =
   (pollingFn: PollingFn, { delay, triggers }: PollingOptions = {}): (() => void) => {
-    const timerId = useRef<number>();
+    const timerId = useRef<NodeJS.Timeout>();
     const countId = useRef(0);
 
     const pollingRoutine = useCallback(async (): Promise<void> => {

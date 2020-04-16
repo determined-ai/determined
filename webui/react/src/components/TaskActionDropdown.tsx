@@ -1,8 +1,6 @@
 import { Dropdown, Menu } from 'antd';
 import { ClickParam } from 'antd/es/menu';
-import React, { useCallback } from 'react';
-import styled from 'styled-components';
-import { theme } from 'styled-tools';
+import React from 'react';
 
 import Icon from 'components/Icon';
 import Experiments from 'contexts/ActiveExperiments';
@@ -12,16 +10,18 @@ import { Experiment, RecentTask, RunState, TaskType } from 'types';
 import { capitalize } from 'utils/string';
 import { isTaskKillable, terminalRunStates } from 'utils/types';
 
+import css from './TaskActionDropdown.module.scss';
+
 interface Props {
   task: RecentTask;
 }
+
+const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const TaskActionDropdown: React.FC<Props> = (props: Props) => {
   const isExperiment = props.task.type === TaskType.Experiment;
   const isArchivable = isExperiment && terminalRunStates.includes(props.task.state as RunState);
   const isKillable = isTaskKillable(props.task);
-
-  const stopPropagation = useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
 
   if (!isArchivable && !isKillable) return (<div />);
 
@@ -76,25 +76,14 @@ const TaskActionDropdown: React.FC<Props> = (props: Props) => {
   );
 
   return (
-    <div title="Open actions menu" onClick={stopPropagation}>
+    <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
       <Dropdown overlay={menu} placement="bottomRight" trigger={[ 'click' ]}>
-        <TransparentButton onClick={stopPropagation}>
+        <button onClick={stopPropagation}>
           <Icon name="overflow-vertical" />
-        </TransparentButton>
+        </button>
       </Dropdown>
     </div>
   );
 };
-
-const TransparentButton = styled.button`
-  background: none;
-  border: none;
-  color: ${theme('colors.monochrome.8')};
-  cursor: pointer;
-  font: inherit;
-  outline: inherit;
-  padding: 0;
-  &:hover { color: ${theme('colors.core.action')}; }
-`;
 
 export default TaskActionDropdown;

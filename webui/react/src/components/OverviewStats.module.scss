@@ -1,0 +1,21 @@
+.base {
+  background-color: var(--theme-colors-monochrome-13);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--theme-sizes-layout-medium);
+
+  .title {
+    color: var(--theme-colors-monochrome-7);
+    font-size: var(--theme-sizes-font-tiny);
+    word-break: break-word;
+  }
+  .info {
+    color: var(--theme-colors-monochrome-0);
+    font-size: var(--theme-sizes-font-large);
+    line-height: 1;
+    padding-top: var(--theme-sizes-layout-medium);
+
+    & > small { font-size: var(--theme-sizes-font-medium); }
+  }
+}

@@ -1,0 +1,16 @@
+.base {
+  background-color: var(--theme-colors-monochrome-12);
+  border-radius: 0;
+  box-shadow: var(--theme-colors-monochrome-6);
+  height: var(--theme-sizes-layout-tiny);
+  margin: 0;
+  padding: 0;
+  position: relative;
+
+  .progress {
+    display: block;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+  }
+}

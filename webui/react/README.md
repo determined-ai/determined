@@ -12,7 +12,7 @@ The following are the notable main packages and libraries we are using:
 
 - [Ant Design](https://ant.design/) - UI component library
 - [Storybook](https://storybook.js.org/) - UI component testing and organization
-- [Styled Components](https://styled-components.com/) - CSS-in-JS library
+- [CSS Modules](https://create-react-app.dev/docs/adding-a-css-modules-stylesheet/) - CSS Modules for CSS organization
 - [Axios](https://github.com/axios/axios) - Promise based HTTP client
 - [io-ts](https://github.com/gcanti/io-ts) - Runtime type checking library
 

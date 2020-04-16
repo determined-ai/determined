@@ -85,9 +85,6 @@ const useRestApi = <T>(ioType: io.Mixed, options: HookOptions<T> = {}): Output<T
     const source = axios.CancelToken.source();
     if (!httpOptions.url) return;
 
-    // cancel the previous existing request
-    if (state.isLoading) source.cancel();
-
     const fetchData = async (): Promise<void> => {
       dispatch({ type: ActionType.SetLoading, value: true });
 

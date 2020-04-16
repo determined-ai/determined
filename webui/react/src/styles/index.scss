@@ -1,8 +1,8 @@
 @import-normalize;
 
-@import 'icons.css';
-@import 'fonts.css';
-@import 'antd.css';
+@import 'icons.scss';
+@import 'fonts.scss';
+@import 'antd.scss';
 
 /*
   Most default browser font size is 16px and 62.5% of 16px
@@ -10,6 +10,7 @@
   This also allows user to use browser magnification and the
   rem items will scale accordingly.
 */
+
 html,
 body,
 #root {
