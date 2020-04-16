@@ -24,7 +24,7 @@ In this guide, we will build an image classification model for the MNIST dataset
 
 |
 
-The code for this guide can be downloaded here: :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`. A ``tf.keras`` implementation can be downloaded here: :download:`mnist_tf_keras.tgz </examples/mnist_tf_keras.tgz>`.
+The code for this guide can be downloaded here: `mnist_pytorch <https://github.com/determined-ai/determined/tree/master/examples/official/mnist_pytorch>`_.
 
 Next, open a terminal window and ``cd`` into the extracted ``mnist_pytorch`` directory. The directory should contain the following files:
 

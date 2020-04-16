@@ -16,13 +16,13 @@ model definition and one or more experiment configurations.
   * - Framework
     - Dataset
   * - PyTorch
-    - :download:`MNIST </examples/mnist_pytorch.tgz>`
+    - `MNIST <https://github.com/determined-ai/determined/tree/master/examples/official/mnist_pytorch>`_
   * - PyTorch
-    - :download:`CIFAR-10 CNN </examples/cifar10_cnn_pytorch.tgz>`
+    - `CIFAR-10 <https://github.com/determined-ai/determined/tree/master/examples/officialcifar10_cnn_pytorch>`_
   * - TensorFlow (Estimator API)
-    - :download:`MNIST </examples/mnist_estimator.tgz>`
+    - `Fashion MNIST <https://github.com/determined-ai/determined/tree/master/examples/official/mnist_estimator>`_
   * - TensorFlow (tf.keras)
-    - :download:`CIFAR-10 CNN </examples/cifar10_cnn_tf_keras.tgz>`
+    - `CIFAR-10 CNN <https://github.com/determined-ai/determined/tree/master/examples/official/cifar10_cnn_tf_keras>`_
 
 TensorBoard Integration
 -----------------------
