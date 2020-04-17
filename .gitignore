@@ -69,5 +69,8 @@ node_modules/
 # VSCode
 .vscode/
 
+# JetBrains IDEs (e.g., PyCharm and GoLand)
+.idea/
+
 # gobin directory used for tests
 gobin
