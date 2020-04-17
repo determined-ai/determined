@@ -1,48 +1,9 @@
 import abc
 import logging
-from typing import Any, Callable, Dict, Optional, Tuple, Union, cast
+from typing import Any, Callable, Dict, Optional, Union, cast
 
 import determined as det
 from determined import data_layer, horovod
-from determined_common import check
-
-
-def _calculate_batch_sizes(env: det.EnvContext) -> Tuple[int, int]:
-    if "global_batch_size" not in env.hparams.keys():
-        raise AssertionError(
-            "Please specify `global_batch_size` under `hyperparameters` in experiment config."
-        )
-
-    if "batch_size" in env.hparams.keys():
-        logging.warning(
-            "Use `global_batch_size` not `batch_size` under `hyperparameters` in experiment config."
-        )
-
-    global_batch_size = env.hparams["global_batch_size"]
-    check.is_instance(global_batch_size, int, "`global_batch_size` hparam must be an int.")
-    global_batch_size = cast(int, global_batch_size)
-
-    if env.experiment_config.native_parallel_enabled():
-        return global_batch_size, global_batch_size
-
-    # Configure batch sizes.
-    slots_per_trial = env.experiment_config.slots_per_trial()
-    if global_batch_size < slots_per_trial:
-        raise AssertionError(
-            "Please set the `global_batch_size` hyperparameter to be greater or equal to the "
-            f"number of slots. Current batch_size: {global_batch_size}, slots_per_trial: "
-            f"{slots_per_trial}."
-        )
-
-    per_gpu_batch_size = global_batch_size // slots_per_trial
-    effective_batch_size = per_gpu_batch_size * slots_per_trial
-    if effective_batch_size != global_batch_size:
-        logging.warning(
-            f"`global_batch_size` changed from {global_batch_size} to {effective_batch_size} to "
-            f"divide equally across {slots_per_trial} slots."
-        )
-
-    return per_gpu_batch_size, effective_batch_size
 
 
 class _TrainContext(metaclass=abc.ABCMeta):
@@ -55,8 +16,6 @@ class _TrainContext(metaclass=abc.ABCMeta):
         self.env = env  # type: det.EnvContext
         self.hvd_config = hvd_config  # type: horovod.HorovodContext
         self.distributed = DistributedContext(env, hvd_config)
-
-        self._per_slot_batch_size, self._global_batch_size = _calculate_batch_sizes(env)
 
     def get_experiment_config(self) -> Dict[str, Any]:
         """
@@ -80,7 +39,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
         """
         Return the global batch size.
         """
-        return self._global_batch_size
+        return self.env.global_batch_size
 
     def get_per_slot_batch_size(self) -> int:
         """
@@ -88,7 +47,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
         the global batch size. When multi-GPU training is used, this is equal to the global batch
         size divided by the number of GPUs used to train the model.
         """
-        return self._per_slot_batch_size
+        return self.env.per_slot_batch_size
 
     def get_trial_id(self) -> int:
         """
