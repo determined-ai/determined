@@ -323,7 +323,7 @@ class PyTorchTrialController(det.LoopTrialController):
             combined_timeseries_type = Dict[str, List[List[Any]]]
             combined_timeseries = cast(combined_timeseries_type, combined_timeseries)
             num_batches = len(per_batch_metrics)
-            num_processes = hvd.get_size()
+            num_processes = hvd.size()
             averaged_metrics_timeseries = {}  # type: Dict[str, List]
 
             for metric_name in combined_timeseries.keys():
