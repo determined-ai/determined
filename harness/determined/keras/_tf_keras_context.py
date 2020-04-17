@@ -27,7 +27,7 @@ class TFKerasContext:
         hvd_config: horovod.HorovodContext,
         train_context: Union[det.NativeContext, det.TrialContext],
     ):
-        logging.debug(f"Initialized TFKerasContext with config: {hvd_config}.")
+        self.env = env
         self.hvd_config = hvd_config
         self.dataset_initialized = False
 
@@ -138,7 +138,7 @@ class TFKerasContext:
                     x=fit_args.arguments["x"],
                     y=fit_args.arguments["y"],
                     sample_weight=fit_args.arguments["sample_weight"],
-                    batch_size=fit_args.arguments["batch_size"],
+                    batch_size=self.env.per_slot_batch_size,
                     use_multiprocessing=fit_args.arguments["use_multiprocessing"],
                     workers=fit_args.arguments["workers"],
                     max_queue_size=fit_args.arguments["max_queue_size"],
@@ -152,7 +152,7 @@ class TFKerasContext:
                     x=val_x,
                     y=val_y,
                     sample_weight=val_sample_weight,
-                    batch_size=fit_args.arguments["batch_size"],
+                    batch_size=self.env.per_slot_batch_size,
                     use_multiprocessing=fit_args.arguments["use_multiprocessing"],
                     workers=fit_args.arguments["workers"],
                     max_queue_size=fit_args.arguments["max_queue_size"],
