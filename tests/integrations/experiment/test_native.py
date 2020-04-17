@@ -10,7 +10,7 @@ import pytest
 
 from tests.integrations import cluster_utils
 from tests.integrations import config as conf
-from tests.integrations.experiment import experiment
+from tests.integrations.experiment import create_native_experiment, experiment
 
 NativeImplementation = collections.namedtuple(
     "NativeImplementation",
@@ -157,11 +157,10 @@ def maybe_create_experiment(implementation: NativeImplementation) -> typing.Opti
 
 
 def create_experiment(implementation: NativeImplementation) -> int:
-    experiment_id = maybe_create_experiment(implementation)
-    if experiment_id is None:
-        pytest.fail(f"Failed to create experiment: {implementation}")
-
-    return experiment_id  # type: ignore
+    return create_native_experiment(
+        implementation.cwd,
+        implementation.command + ["--config", json.dumps(implementation.configuration)],
+    )
 
 
 def run_warm_start_test(implementation: NativeImplementation) -> None:
@@ -256,7 +255,7 @@ def test_tf_estimator_warm_start(implementation: NativeImplementation, tf2: bool
 
 
 @pytest.mark.parametrize(  # type: ignore
-    "implementation", [NativeImplementations.PytorchMNISTCNNSingleGeneric],
+    "implementation", [NativeImplementations.PytorchMNISTCNNSingleGeneric]
 )
 @pytest.mark.integ4  # type: ignore
 def test_pytorch_warm_start(implementation: NativeImplementation) -> None:
