@@ -1,5 +1,6 @@
 import contextlib
 import os
+import pathlib
 import re
 import time
 import uuid
@@ -11,6 +12,7 @@ from pexpect import spawn
 
 from determined_common import constants
 from determined_common.api.authentication import Authentication, Credentials, TokenStore
+from tests.common.filetree import FileTree
 from tests.integrations import command
 from tests.integrations import config as conf
 from tests.integrations import experiment as exp
@@ -529,15 +531,26 @@ def test_link_with_existing_agent_user(auth: Authentication) -> None:
 
 
 @pytest.mark.integ3  # type: ignore
-def test_non_root_experiment(auth: Authentication) -> None:
+def test_non_root_experiment(auth: Authentication, tmp_path: pathlib.Path) -> None:
     user = create_linked_user(65534, "nobody", 65534, "nogroup")
 
     with logged_in_user(user):
-        exp.run_basic_test(
-            conf.fixtures_path("no_op/single-one-short-step.yaml"),
-            conf.fixtures_path("no_op"),
-            None,
-        )
+        with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
+            config_content = f.read()
+
+        with open(conf.fixtures_path("no_op/model_def.py")) as f:
+            model_def_content = f.read()
+
+        # Call `det --version` in a startup hook to ensure that det is on the PATH.
+        with FileTree(
+            tmp_path,
+            {
+                "startup-hook.sh": "det --version || exit 77",
+                "const.yaml": config_content,
+                "model_def.py": model_def_content,
+            },
+        ) as tree:
+            exp.run_basic_test(str(tree.joinpath("const.yaml")), str(tree), None)
 
 
 @pytest.mark.integ3  # type: ignore
