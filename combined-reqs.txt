@@ -31,10 +31,10 @@ cloudpickle==0.5.3        # via determined
 cryptography==2.8         # via ansible, paramiko
 cycler==0.10.0            # via matplotlib
 dai-sgqlc-3.5==0.0.1.dev20200211  # via determined-common
-git+https://github.com/determined-ai/determined_sphinx_theme.git  # via -r docs-requirements.txt
+git+https://github.com/determined-ai/determined_sphinx_theme.git@3849905ea870226a4bd5b3731edf9771523cecf3  # via -r docs-requirements.txt
 dill==0.3.1.1             # via determined
 docker-compose==1.25.4    # via determined-deploy
-docker[ssh]==4.2.0        # via docker-compose
+docker[ssh]==4.2.0        # via determined-deploy, docker-compose
 dockerpty==0.4.1          # via docker-compose
 docopt==0.6.2             # via docker-compose, hdfs
 docutils==0.15.2          # via botocore, sphinx
@@ -81,7 +81,7 @@ mccabe==0.6.1             # via flake8
 more-itertools==8.2.0     # via pytest
 mypy-extensions==0.4.3    # via mypy
 mypy==0.740               # via -r dev-requirements.txt
-numpy==1.18.2             # via determined, h5py, keras-applications, keras-preprocessing, matplotlib, scipy, tensorboard, tensorflow, torchvision
+numpy==1.18.2             # via -r tests/integrations/requirements.txt, determined, h5py, keras-applications, keras-preprocessing, matplotlib, scipy, tensorboard, tensorflow, torchvision
 packaging==19.0           # via determined, determined-cli, pytest, sphinx
 paramiko==2.7.1           # via docker
 pathspec==0.7.0           # via black, determined-common
@@ -137,7 +137,7 @@ tensorflow==1.14.0        # via -r tests/unit/requirements.txt
 termcolor==1.1.0          # via determined-cli, tensorflow
 texttable==1.6.2          # via docker-compose
 toml==0.10.0              # via black
-torch==1.4.0              # via -r tests/unit/requirements.txt, torchvision
+torch==1.4.0              # via -r tests/integrations/requirements.txt, -r tests/unit/requirements.txt, torchvision
 torchvision==0.5.0        # via -r tests/unit/requirements.txt
 typed-ast==1.4.1          # via black, mypy
 typing-extensions==3.7.4.1  # via mypy
