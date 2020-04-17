@@ -286,3 +286,8 @@ class XORTrialUserStepLR(XORTrialMulti):
         metrics = super().train_batch(batch, model, epoch_idx, batch_idx)
         self.scheduler.step()
         return metrics
+
+
+class XORTrialPerMetricReducers(XORTrialWithMultiValidation):
+    def evaluation_reducer(self) -> Dict[str, det.pytorch.Reducer]:
+        return {"accuracy": det.pytorch.Reducer.AVG, "binary_error": det.pytorch.Reducer.AVG}
