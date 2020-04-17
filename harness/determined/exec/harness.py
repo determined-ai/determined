@@ -113,6 +113,7 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
         hvd_config = horovod.HorovodContext.from_configs(
             env.experiment_config, socket_mgr.get_rendezvous_info(), env.hparams
         )
+        logging.info(f"Horovod config: {hvd_config.__dict__}.")
 
         # Load the checkpoint, if necessary. Any possible sinks to this pipeline will need access
         # to this checkpoint.
@@ -167,14 +168,6 @@ def main() -> None:
 
     gpu_uuids = gpu.get_gpu_uuids_and_validate(use_gpu, slot_ids)
 
-    logging.info(
-        "==========================================================\n"
-        "New trial runner: agent {}, slots {}, "
-        "container ID {}, initial workload {}".format(
-            agent_id, slot_ids, container_id, initial_work
-        )
-    )
-
     env = det.EnvContext(
         master_addr,
         master_port,
@@ -194,6 +187,10 @@ def main() -> None:
         det_experiment_id,
         det_cluster_id,
         trial_seed,
+    )
+
+    logging.info(
+        f"New trial runner in (container {container_id}) on agent {agent_id}: {env.__dict__}."
     )
 
     try:
