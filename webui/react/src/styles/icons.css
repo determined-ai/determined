@@ -33,6 +33,8 @@
 .icon-command::before { content: '\e914'; }
 .icon-expand::before { content: '\e90e'; }
 .icon-experiment::before { content: '\e903'; }
+.icon-eye-close::before { content: '\e917'; }
+.icon-eye-open::before { content: '\e918'; }
 .icon-grid::before { content: '\e904'; }
 .icon-jupyter::before { content: '\e915'; }
 .icon-list::before { content: '\e905'; }
