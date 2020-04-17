@@ -28,6 +28,10 @@ def experimental_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/experimental", path)
 
 
+def tutorials_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../examples/tutorials", path)
+
+
 def load_config(config_path: str) -> Any:
     with open(config_path) as f:
         config = yaml.safe_load(f)
