@@ -37,7 +37,7 @@ contentView content =
     [ H.div [ HA.class "pl-4 p-2 flex-shrink" ]
         [ content.header ]
     , H.div
-        [ HA.class "flex-grow pl-4 p-2 overflow-y-hidden"
+        [ HA.class "flex-grow pl-4 p-2 overflow-auto"
         ]
         [ content.body ]
     ]
@@ -59,7 +59,7 @@ contentView content =
             else
                 []
            )
-        |> H.div [ HA.class "flex flex-col h-full" ]
+        |> H.div [ HA.class "flex flex-col w-full" ]
 
 
 view : Config msg -> H.Html msg
@@ -86,7 +86,7 @@ view conf =
         , H.div [ HA.class "p-1 fixed inset-0 flex justify-center items-center z-50" ]
             [ H.div
                 (conf.attributes
-                    ++ [ HA.class "p-2 bg-white rounded shadow modal relative"
+                    ++ [ HA.class "flex p-2 bg-white rounded shadow modal relative"
                        , HA.style "min-width" "25rem"
                        , HA.style "max-width" "80vw"
                        , HA.style "max-height" "80vh"

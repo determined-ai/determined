@@ -166,18 +166,10 @@ subscriptions model =
 
 
 renderModal : H.Html Msg -> H.Html Msg
-renderModal c =
+renderModal content =
     Modal.view
-        { content =
-            H.div [ HA.class "overflow-y-hidden", HA.style "height" "60vh" ]
-                [ H.div [ HA.style "height" "100%", HA.class "relative" ]
-                    [ H.div [ HA.class "absolute inset-0" ]
-                        [ c ]
-                    ]
-                ]
-        , attributes =
-            [ HA.style "width" "60vw"
-            ]
+        { content = content
+        , attributes = [ HA.style "width" "60vw" ]
         , closeMsg = CloseModal
         }
 
