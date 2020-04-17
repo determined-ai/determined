@@ -1,7 +1,6 @@
 r"""
 """
 
-import copy
 import inspect
 import logging
 import os
@@ -239,7 +238,7 @@ class TFKerasTrialController(det.LoopTrialController):
 
         # For the Native API we must configure the Session before running user code.
         if env.experiment_config.native_enabled():
-            session_config = copy.copy(tf.compat.v1.keras.backend.get_session()._config)
+            session_config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
             TFKerasTrialController._configure_session(env, hvd_config, session_config)
 
     @staticmethod
@@ -270,8 +269,7 @@ class TFKerasTrialController(det.LoopTrialController):
         check.is_instance(trial_inst, TFKerasTrial, "TFKerasTrialController needs a TFKerasTrial")
         trial = cast(TFKerasTrial, trial_inst)
 
-        session_config = trial.session_config()
-        session = TFKerasTrialController._configure_session(env, hvd_config, session_config)
+        session = TFKerasTrialController._configure_session(env, hvd_config, trial.session_config())
 
         training_x, training_y, training_sample_weight = keras._get_x_y_and_sample_weight(
             input_data=trial.build_training_data_loader()
