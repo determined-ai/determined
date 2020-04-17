@@ -1,9 +1,9 @@
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import determined as det
 from determined import constants, workload
-from determined_common import types
+from determined_common import check, types
 
 
 class EnvContext:
@@ -47,6 +47,9 @@ class EnvContext:
         self.det_cluster_id = det_cluster_id
         self.trial_seed = trial_seed
 
+        self._per_slot_batch_size = None  # type: Optional[int]
+        self._global_batch_size = None  # type: Optional[int]
+
     def first_step(self) -> types.StepID:
         return self.initial_workload.step_id
 
@@ -56,3 +59,54 @@ class EnvContext:
             logging.warning("DET_RENDEZVOUS_PORTS not set, falling back on LOCAL_RENDEZVOUS_PORTS")
             ports = [constants.LOCAL_RENDEZVOUS_PORT, constants.LOCAL_RENDEZVOUS_PORT + 1]
         return ports[0], ports[1]
+
+    def _calculate_batch_sizes(self) -> Tuple[int, int]:
+        if "global_batch_size" not in self.hparams.keys():
+            raise AssertionError(
+                "Please specify `global_batch_size` under `hyperparameters` "
+                "in experiment config."
+            )
+
+        if "batch_size" in self.hparams.keys():
+            logging.warning(
+                "Use `global_batch_size` not `batch_size` under `hyperparameters` "
+                "in experiment config."
+            )
+
+        global_batch_size = self.hparams["global_batch_size"]
+        check.is_instance(global_batch_size, int, "`global_batch_size` hparam must be an int.")
+        global_batch_size = cast(int, global_batch_size)
+
+        if self.experiment_config.native_parallel_enabled():
+            return global_batch_size, global_batch_size
+
+        # Configure batch sizes.
+        slots_per_trial = self.experiment_config.slots_per_trial()
+        if global_batch_size < slots_per_trial:
+            raise AssertionError(
+                "Please set the `global_batch_size` hyperparameter to be greater or equal to the "
+                f"number of slots. Current batch_size: {global_batch_size}, slots_per_trial: "
+                f"{slots_per_trial}."
+            )
+
+        per_gpu_batch_size = global_batch_size // slots_per_trial
+        effective_batch_size = per_gpu_batch_size * slots_per_trial
+        if effective_batch_size != global_batch_size:
+            logging.warning(
+                f"`global_batch_size` changed from {global_batch_size} to {effective_batch_size} "
+                f"to divide equally across {slots_per_trial} slots."
+            )
+
+        return per_gpu_batch_size, effective_batch_size
+
+    @property
+    def per_slot_batch_size(self) -> int:
+        if self._per_slot_batch_size is None or self._global_batch_size is None:
+            self._per_slot_batch_size, self._global_batch_size = self._calculate_batch_sizes()
+        return self._per_slot_batch_size
+
+    @property
+    def global_batch_size(self) -> int:
+        if self._per_slot_batch_size is None or self._global_batch_size is None:
+            self._per_slot_batch_size, self._global_batch_size = self._calculate_batch_sizes()
+        return self._global_batch_size
