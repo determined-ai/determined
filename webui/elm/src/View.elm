@@ -340,7 +340,7 @@ sideTabs model =
             attribute "style" "font-size: 20px; width: 20px;"
 
         tabs =
-            [ ( text "Dashboard", Route.Dashboard, i [ class "icon-star flex-grow-0", iconAttribute ] [] )
+            [ ( text "Dashboard", Route.Dashboard, i [ class "icon-user flex-grow-0", iconAttribute ] [] )
             , ( text "Experiments", Route.ExperimentList Route.defaultExperimentListOptions, i [ class "icon-experiment flex-grow-0", iconAttribute ] [] )
             , ( text "Notebooks", Route.NotebookList Route.defaultCommandLikeListOptions, i [ class "icon-notebook flex-grow-0", iconAttribute ] [] )
             , ( text "TensorBoards", Route.TensorBoardList Route.defaultCommandLikeListOptions, i [ class "icon-tensorboard flex-grow-0", iconAttribute ] [] )
