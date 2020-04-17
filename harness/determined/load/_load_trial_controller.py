@@ -1,3 +1,4 @@
+import logging
 import pathlib
 from typing import Optional, Tuple, Type, cast
 
@@ -37,6 +38,7 @@ def load_controller_from_trial(
     trial_inst = trial_class(trial_context)
 
     # Step 4: Return the TrialController.
+    logging.info(f"Creating {controller_class.__name__} with {trial_class.__name__}.")
     return controller_class.from_trial(
         trial_inst=trial_inst,
         context=trial_context,
@@ -104,6 +106,7 @@ def load_native_implementation_controller(
             "The class attribute `trial_controller_class` is "
             "not a valid subclass of `det.TrialController`",
         )
+        logging.info(f"Creating {controller_class.__name__} with {type(context).__name__}.")
         return cast(det.TrialController, controller_class).from_native(
             context=cast(det.NativeContext, context),
             env=env,

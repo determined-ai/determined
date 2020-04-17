@@ -1,6 +1,7 @@
 import contextlib
 import importlib
 import json
+import logging
 import runpy
 import sys
 from typing import Any, Iterator, List, Optional, Tuple, Type, cast
@@ -41,6 +42,7 @@ def load_trial_implementation(env: det.EnvContext) -> Type[det.Trial]:
     """
 
     entrypoint_spec = env.experiment_config["entrypoint"]
+    logging.info(f"Loading Trial implementation with entrypoint {entrypoint_spec}.")
     module, qualname_separator, qualname = entrypoint_spec.partition(":")
     obj = importlib.import_module(module)
     if qualname_separator:
@@ -172,6 +174,7 @@ def load_native_implementation(
     # For now, we assume the entrypoint_cmd is a python invocation like
     # "python <command>"
     command = env.experiment_config["internal"]["native"]["command"]  # type: List[str]
+    logging.info(f"Loading Native implementation with command {command}.")
     if len(command) < 1:
         raise AssertionError("Expected non-empty command, but was empty.")
 
