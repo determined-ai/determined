@@ -24,6 +24,7 @@ export interface TaskFilters {
 interface Props {
   filters: TaskFilters;
   onChange: (filters: TaskFilters) => void;
+  authUser?: User;
   users: User[];
 }
 
@@ -37,7 +38,7 @@ const taskTypeOrder = [
   { label: 'Commands', type: TaskType.Command },
 ];
 
-const TaskFilter: React.FC<Props> = ({ filters, onChange, users }: Props) => {
+const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Props) => {
   const handleTypeClick = useCallback((taskType: TaskType): (() => void) => {
     return (): void => {
       const types = { ...filters.types };
@@ -90,6 +91,23 @@ const TaskFilter: React.FC<Props> = ({ filters, onChange, users }: Props) => {
     return usernameFilter || ALL_VALUE;
   }, [ usernameFilter ]);
 
+  const userToSelectOption = (user: User): React.ReactNode =>
+    <Option key={user.id} value={user.username}>{user.username}</Option>;
+
+  const userOptions = (): React.ReactNode[] => {
+    const options: React.ReactNode[] = [ <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option> ];
+    if (authUser) {
+      options.push(userToSelectOption(authUser));
+    }
+    const restOfOptions = users
+      .filter(u => (!authUser || u.id !== authUser.id))
+      .sort((a, b) => a.username.localeCompare(b.username, 'en'))
+      .map(userToSelectOption);
+    options.push(...restOfOptions);
+
+    return options;
+  };
+
   return (
     <LayoutHelper gap={ShirtSize.jumbo} yCenter>
       <LayoutHelper gap={ShirtSize.medium}>{filterTaskButtons}</LayoutHelper>
@@ -120,10 +138,7 @@ const TaskFilter: React.FC<Props> = ({ filters, onChange, users }: Props) => {
           style={{ width: '10rem' }}
           suffixIcon={selectIcon}
           onSelect={handleUserSelect}>
-          <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
-          {users.map(user => (
-            <Option key={user.id} value={user.username}>{user.username}</Option>
-          ))}
+          {userOptions()}
         </Select>
       </div>
       <div>

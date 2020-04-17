@@ -128,6 +128,7 @@ const Dashboard: React.FC = () => {
   }, [ setFilters, storage ]);
 
   const taskFilter = <TaskFilter
+    authUser={auth.user}
     filters={filters}
     users={users.data || []}
     onChange={handleFilterChange} />;
