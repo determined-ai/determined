@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'determined-ai';
   src:
-    url('../webfonts/determined-ai.woff2?308ece') format('woff2'),
-    url('../webfonts/determined-ai.woff?308ece') format('woff'),
-    url('../webfonts/determined-ai.ttf?308ece') format('truetype'),
-    url('../webfonts/determined-ai.svg?308ece#determined-ai') format('svg');
+    url('../webfonts/determined-ai.woff2?eacd6f') format('woff2'),
+    url('../webfonts/determined-ai.woff?eacd6f') format('woff'),
+    url('../webfonts/determined-ai.ttf?eacd6f') format('truetype'),
+    url('../webfonts/determined-ai.svg?eacd6f#determined-ai') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -25,6 +25,12 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-arrow-down::before {
+  content: '\e901';
+}
+.icon-arrow-up::before {
+  content: '\e902';
+}
 .icon-dai-logo:before {
   content: "\e900";
 }
@@ -32,10 +38,10 @@
   content: "\e90c";
 }
 .icon-cluster:before {
-  content: "\e901";
+  content: "\e913";
 }
 .icon-command:before {
-  content: "\e902";
+  content: "\e914";
 }
 .icon-experiment:before {
   content: "\e903";
@@ -43,8 +49,14 @@
 .icon-grid:before {
   content: "\e904";
 }
+.icon-jupyter::before {
+  content: '\e915';
+}
 .icon-list:before {
   content: "\e905";
+}
+.icon-lock::before {
+  content: '\e911';
 }
 .icon-notebook:before {
   content: "\e906";
@@ -61,9 +73,21 @@
 .icon-shell:before {
   content: "\e909";
 }
+.icon-spinner::before {
+  content: '\e90f';
+}
 .icon-star:before {
   content: "\e90a";
 }
+.icon-tensorboard::before {
+  content: '\e90c';
+}
 .icon-tensorflow:before {
   content: "\e90b";
+}
+.icon-user::before {
+  content: '\e916';
+}
+.icon-user-small::before {
+  content: '\e912';
 }
