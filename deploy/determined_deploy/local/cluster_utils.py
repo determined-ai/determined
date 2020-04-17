@@ -126,6 +126,7 @@ def fixture_up(
     delete_db: bool,
     no_gpu: bool,
 ):
+    fixture_down(cluster_name, delete_db)
     master_up(
         port=port,
         etc_path=etc_path,
