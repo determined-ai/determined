@@ -37,10 +37,6 @@ def _in_ipython() -> bool:
     return True
 
 
-def _get_current_filepath() -> pathlib.Path:
-    return pathlib.Path(sys.argv[0]).resolve()
-
-
 def _get_current_args() -> List:
     return sys.argv[1:]
 
@@ -49,18 +45,22 @@ def set_command_default(
     context_dir: pathlib.Path, command: Optional[List[str]] = None
 ) -> List[str]:
     if not command or len(command) == 0:
-        if not _in_ipython():
-            exp_path = _get_current_filepath()
-            exp_rel_path = exp_path.relative_to(context_dir)
-            command = [str(exp_rel_path), *_get_current_args()]
-        else:
-            command = []
-
-        if not (len(command) > 0 and (command[0].endswith(".py") or command[0].endswith(".ipynb"))):
+        if _in_ipython():
             raise errors.InvalidExperimentException(
-                "Must specify the command to run the experiment file. "
-                "The experiment file needs to have a suffix of .py or .ipynb."
+                "Must specify the location of the notebook file "
+                "relative to the context directory when in notebook."
             )
+
+        exp_path = pathlib.Path(sys.argv[0]).resolve()
+        exp_rel_path = exp_path.relative_to(context_dir.resolve())
+        if exp_rel_path.suffix in {"py", "ipynb"}:
+            raise errors.InvalidExperimentException(
+                "Command must begin with a file with the suffix .py or .ipynb. "
+                "Found {}".format(command)
+            )
+
+        command = [str(exp_rel_path), *_get_current_args()]
+
     return command
 
 
