@@ -6,8 +6,8 @@ pipeline {
     cron('H 1 * * *')
   }
   environment {
-    DET_SEGMENT_MASTER_KEY = "1ads2YHMXEOfSNWx7dapghABlIzzzov7"
-    DET_SEGMENT_WEBUI_KEY = "Xaye00PGJfy2JBND3r52ifhHYhEUVccY"
+    DET_SEGMENT_MASTER_KEY = credentials('dev-determinedai-segment-master-key')
+    DET_SEGMENT_WEBUI_KEY = credentials('dev-determinedai-segment-webui-key')
     INTEGRATIONS_RESOURCE_SUFFIX = "-${env.BUILD_TAG}"
   }
   stages {
