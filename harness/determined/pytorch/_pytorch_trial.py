@@ -520,11 +520,13 @@ class PyTorchTrialController(det.LoopTrialController):
     def _prepare_metrics_reducers(self, keys: Any) -> Dict[str, Reducer]:
         metrics_reducers = {}  # type: Dict[str, Reducer]
         if isinstance(self.trial.evaluation_reducer(), Dict):
+            metrics_reducers = cast(Dict[str, Any], self.trial.evaluation_reducer())
             check.eq(
                 metrics_reducers.keys(),
                 keys,
                 "Please provide a single evaluation reducer or "
-                "provide a reducer for every validation metric.",
+                "provide a reducer for every validation metric. "
+                f"Expected keys: {keys}, provided keys: {metrics_reducers.keys()}.",
             )
         elif isinstance(self.trial.evaluation_reducer(), Reducer):
             for key in keys:
