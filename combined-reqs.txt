@@ -32,7 +32,7 @@ cloudpickle==0.5.3        # via determined
 cryptography==2.8         # via ansible, paramiko, secretstorage
 cycler==0.10.0            # via matplotlib
 dai-sgqlc-3.5==0.0.1.dev20200211  # via determined-common
-git+https://github.com/determined-ai/determined_sphinx_theme.git  # via -r docs-requirements.txt
+git+https://github.com/determined-ai/determined_sphinx_theme.git@3849905ea870226a4bd5b3731edf9771523cecf3  # via -r docs-requirements.txt
 dill==0.3.1.1             # via determined
 docker-compose==1.25.4    # via determined-deploy
 docker[ssh]==4.2.0        # via determined-deploy, docker-compose
