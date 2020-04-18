@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, Union
 import tensorflow as tf
 
 import determined as det
-from determined import horovod
+from determined import _data_layer, horovod
 from determined.horovod import hvd
 from determined_common import check
 
@@ -129,7 +129,7 @@ class EstimatorNativeContext(det.NativeContext, EstimatorContext):
             self._train_fn()
 
 
-class EstimatorExperimentalContext(det._DataLayerContext):
+class EstimatorExperimentalContext(_data_layer.DataLayerContext):
     """
     Context class that contains experimental runtime information and features
     for any Determined workflow that uses the ``tf.estimator`` API.
