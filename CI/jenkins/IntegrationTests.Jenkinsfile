@@ -78,6 +78,7 @@ make -C CI/integrations publish-dev
           environment {
             PYTEST_MARKS = "integ1"
             ETC_ROOT = "${env.WORKSPACE}/build/cluster_config/"
+            MASTER_CONFIG_PATH = "${env.ETC_ROOT}/master.yaml"
             REPORT_ROOT = "${env.WORKSPACE}/build"
           }
           steps {
@@ -102,6 +103,7 @@ make -C CI/integrations publish-dev
           environment {
             PYTEST_MARKS = "integ2"
             ETC_ROOT = "${env.WORKSPACE}/build/cluster_config/"
+            MASTER_CONFIG_PATH = "${env.ETC_ROOT}/master.yaml"
             REPORT_ROOT = "${env.WORKSPACE}/build"
           }
           steps {
@@ -126,6 +128,7 @@ make -C CI/integrations publish-dev
           environment {
             PYTEST_MARKS = "integ3"
             ETC_ROOT = "${env.WORKSPACE}/build/cluster_config/"
+            MASTER_CONFIG_PATH = "${env.ETC_ROOT}/master.yaml"
             REPORT_ROOT = "${env.WORKSPACE}/build"
           }
           steps {
@@ -150,6 +153,7 @@ make -C CI/integrations publish-dev
           environment {
             PYTEST_MARKS = "integ4"
             ETC_ROOT = "${env.WORKSPACE}/build/cluster_config/"
+            MASTER_CONFIG_PATH = "${env.ETC_ROOT}/master.yaml"
             REPORT_ROOT = "${env.WORKSPACE}/build"
           }
           steps {
@@ -174,6 +178,7 @@ make -C CI/integrations publish-dev
           environment {
             PYTEST_MARKS = "parallel"
             ETC_ROOT = "${env.WORKSPACE}/build/cluster_config/"
+            MASTER_CONFIG_PATH = "${env.ETC_ROOT}/master.yaml"
             REPORT_ROOT = "${env.WORKSPACE}/build"
           }
           steps {

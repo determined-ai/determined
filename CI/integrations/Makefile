@@ -19,7 +19,7 @@ DOCKER_REGISTRY ?=
 TEST_TAG ?= "$(DOCKER_REGISTRY)determinedai/determined-dev:determined-test-harness-$(DET_GIT_COMMIT)"
 TEST_EXPR ?=
 PYTEST_MARKS ?=
-ETC_ROOT ?=
+MASTER_CONFIG_PATH ?=
 REPORT_ROOT ?=
 
 build:
@@ -49,4 +49,15 @@ run-master-integration-tests:
 	docker run --rm $(TEST_TAG) make -C master test-integrations
 
 run-python-integration-tests:
-	docker run --rm -e INTEGRATIONS_RESOURCE_SUFFIX=$(INTEGRATIONS_RESOURCE_SUFFIX) -e TEST_EXPR="$(TEST_EXPR)" -e PYTEST_MARKS="$(PYTEST_MARKS)" -e ETC_ROOT="$(ETC_ROOT)" -v $(REPORT_ROOT):/build -v /tmp:/tmp --network host -v /var/run/docker.sock:/var/run/docker.sock $(TEST_TAG) make test-python-integrations
+	docker run --rm \
+		-e INTEGRATIONS_RESOURCE_SUFFIX=$(INTEGRATIONS_RESOURCE_SUFFIX) \
+		-e TEST_EXPR="$(TEST_EXPR)" \
+		-e PYTEST_MARKS="$(PYTEST_MARKS)" \
+		-e MASTER_CONFIG_PATH="$(MASTER_CONFIG_PATH)" \
+		-v $(REPORT_ROOT):/build \
+		-v /tmp:/tmp \
+		-v $(MASTER_CONFIG_PATH):$(MASTER_CONFIG_PATH) \
+		--network host \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		$(TEST_TAG) \
+		make test-python-integrations

@@ -9,7 +9,9 @@ def add_fixture_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="Create a Determined cluster",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--etc-root", type=str, default=None, help="path to etc directory")
+    parser.add_argument(
+        "--master-config-path", type=str, default=None, help="path to master configuration"
+    )
     parser.add_argument(
         "--agents", type=int, default=1, help="number of agents to start (on this machine)"
     )
@@ -50,7 +52,9 @@ def add_master_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="Start a Determined master",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--etc-root", type=str, default=None, help="path to etc directory")
+    parser.add_argument(
+        "--master-config-path", type=str, default=None, help="path to master configuration"
+    )
     parser.add_argument("--master-port", type=int, default=8080, help="port to expose master on")
     parser.add_argument(
         "--master-name", type=str, default="determined", help="name for the cluster resources"
@@ -134,7 +138,7 @@ def handle_fixture_up(args):
     cluster_utils.fixture_up(
         num_agents=args.agents,
         port=args.master_port,
-        etc_path=args.etc_root,
+        master_config_path=args.master_config_path,
         cluster_name=args.cluster_name,
         version=args.det_version,
         db_password=args.db_password,
@@ -155,7 +159,7 @@ def handle_logs(args):
 def handle_master_up(args):
     cluster_utils.master_up(
         port=args.master_port,
-        etc_path=args.etc_root,
+        master_config_path=args.master_config_path,
         master_name=args.master_name,
         version=args.det_version,
         db_password=args.db_password,

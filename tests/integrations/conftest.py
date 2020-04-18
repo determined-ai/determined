@@ -28,7 +28,7 @@ _INTEG_MARKERS = {
 
 def pytest_addoption(parser: Parser) -> None:
     parser.addoption(
-        "--etc-root", action="store", default=None, help="Path to cluster configuration files"
+        "--master-config-path", action="store", default=None, help="Path to master config path"
     )
     parser.addoption(
         "--master-host",
@@ -46,8 +46,8 @@ def pytest_addoption(parser: Parser) -> None:
 
 @pytest.fixture(scope="session", autouse=True)  # type: ignore
 def cluster_log_manager(request: SubRequest) -> Optional[ClusterLogManager]:
-    etc_root = request.config.getoption("--etc-root")
-    etc_path = Path(etc_root) if etc_root else None
+    master_config_path = request.config.getoption("--master-config-path")
+    master_config_path = Path(master_config_path) if master_config_path else None
     master_host = request.config.getoption("--master-host")
     master_port = request.config.getoption("--master-port")
     config.MASTER_IP = master_host
@@ -56,7 +56,7 @@ def cluster_log_manager(request: SubRequest) -> Optional[ClusterLogManager]:
         determined_deploy.local.cluster_utils.fixture_up(
             num_agents=1,
             port=int(master_port),
-            etc_path=etc_path,
+            master_config_path=master_config_path,
             cluster_name="integrations",
             db_password="postgres",
             hasura_secret="hasura",
