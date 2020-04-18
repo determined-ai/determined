@@ -1,7 +1,7 @@
 describeNode = "echo \"Running on \${NODE_NAME} (executor: \${EXECUTOR_NUMBER})\""
 
 pipeline {
-  agent any
+  agent { label 'test' }
   environment {
     DET_SEGMENT_MASTER_KEY = credentials('dev-determinedai-segment-master-key')
     DET_SEGMENT_WEBUI_KEY = credentials('dev-determinedai-segment-webui-key')
@@ -13,7 +13,7 @@ pipeline {
     stage('Setup') {
       steps {
         sh "${describeNode}"
-        sh 'virtualenv --python="$(command -v python3.6)" --no-site-packages venv'
+        sh 'virtualenv --python="$(command -v python3.6)" venv'
         sh "docker login -u ${env.DET_DOCKERHUB_CREDS_USR} -p ${env.DET_DOCKERHUB_CREDS_PSW}"
       }
     }

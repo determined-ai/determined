@@ -31,25 +31,16 @@ pipeline {
   }
   stages {
     stage('Build and Push') {
-      agent { label 'general' }
+      agent { label 'test' }
       steps {
         sh "${describeNode}"
         sh "${dockerLogin}"
-        sh script: '''
-virtualenv --python="$(command -v python3.6)" --no-site-packages venv
-. venv/bin/activate
-make get-deps
-'''
-        sh script: '''
-. venv/bin/activate
-make build-docker
-make -C CI/integrations build
-'''
-        sh script: '''
-. venv/bin/activate
-make publish-dev
-make -C CI/integrations publish-dev
-'''
+        sh 'virtualenv --python="$(command -v python3.6)" venv'
+        sh ". venv/bin/activate && make get-deps"
+        sh ". venv/bin/activate && make build-docker"
+        sh ". venv/bin/activate && make -C CI/integrations build"
+        sh ". venv/bin/activate && make publish-dev"
+        sh ". venv/bin/activate && make -C CI/integrations publish-dev"
         script {
           dockerStrs = sh(script: '. venv/bin/activate && make -s -C CI/integrations get-images', returnStdout: true)
           testTag = sh(script: 'printf \${DOCKER_REGISTRY}determinedai/determined-dev:determined-test-harness-\$(git rev-parse HEAD)', returnStdout: true)
@@ -65,7 +56,7 @@ make -C CI/integrations publish-dev
       }
       parallel {
         stage('Master Integration Tests') {
-          agent { label 'general' }
+          agent { label 'test' }
           steps {
             sh "${describeNode}"
             sh "${dockerLogin}"
