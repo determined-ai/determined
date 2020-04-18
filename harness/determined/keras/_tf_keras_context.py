@@ -5,7 +5,7 @@ from typing import Any, Callable, List, NamedTuple, Optional, Union
 import tensorflow as tf
 
 import determined as det
-from determined import errors, horovod, keras
+from determined import _data_layer, errors, horovod, keras
 from determined.horovod import hvd
 
 
@@ -219,7 +219,7 @@ class TFKerasNativeContext(det.NativeContext, TFKerasContext):
         return self._wrap_model_with_train_fn(model, self._train_fn)
 
 
-class TFKerasExperimentalContext(det._DataLayerContext):
+class TFKerasExperimentalContext(_data_layer.DataLayerContext):
     """
     Context class that contains experimental runtime information and features
     for any Determined workflow that uses the ``tf.keras`` API.
