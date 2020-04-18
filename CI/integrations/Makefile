@@ -8,10 +8,10 @@ endif
 
 VERSION := $(shell cat ../../VERSION)
 INTEGRATIONS_RESOURCE_SUFFIX ?=
-TF1_CPU_IMAGE := determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-f0545f2
-TF2_CPU_IMAGE := determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.1-cpu-f0545f2
-TF1_GPU_IMAGE := determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-f0545f2
-TF2_GPU_IMAGE := determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.1-gpu-f0545f2
+TF1_CPU_IMAGE := determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-90bf50b
+TF2_CPU_IMAGE := determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.1-cpu-90bf50b
+TF1_GPU_IMAGE := determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-90bf50b
+TF2_GPU_IMAGE := determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.1-gpu-90bf50b
 DET_DEV_AGENT_IMAGE := determinedai/determined-dev:determined-agent-$(DET_GIT_COMMIT)
 DET_DEV_MASTER_IMAGE := determinedai/determined-dev:determined-master-$(DET_GIT_COMMIT)
 DET_IMAGES := $(DET_DEV_AGENT_IMAGE),$(DET_DEV_MASTER_IMAGE)
