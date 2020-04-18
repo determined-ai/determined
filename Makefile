@@ -288,8 +288,8 @@ test-all:
 	$(MAKE) -C agent test
 	$(MAKE) WEBUI_TARGET=test webui
 
-test-python-integrations: ETC_ROOT ?= $(shell pwd)/deploy/determined_deploy/local/configuration/
 test-python-integrations: MASTER_HOST ?= localhost
+test-python-integrations: MASTER_CONFIG_PATH ?=
 test-python-integrations:
 	@echo "Running integration tests on port $(INTEGRATIONS_HOST_PORT)"
 	pytest -vv -s \
@@ -298,7 +298,7 @@ test-python-integrations:
 		--durations=0 \
 		--master-host="$(MASTER_HOST)" \
 		--master-port="$(INTEGRATIONS_HOST_PORT)" \
-		--etc-root="$(ETC_ROOT)" \
+		--master-config-path="$(MASTER_CONFIG_PATH)" \
 		--junit-xml=build/test-reports/integ-test.xml \
 		--require-secrets \
 		tests/integrations

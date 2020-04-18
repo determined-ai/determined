@@ -80,7 +80,7 @@ def _wait_for_master() -> None:
 
 def master_up(
     port: Optional[int],
-    etc_path: Path,
+    master_config_path: Path,
     master_name: str,
     version: str,
     db_password: str,
@@ -90,15 +90,15 @@ def master_up(
     config.MASTER_PORT = port
     command = ["up", "-d"]
     extra_files = []
-    if etc_path is not None:
-        etc_path = Path(etc_path).resolve()
+    if master_config_path is not None:
+        master_config_path = Path(master_config_path).resolve()
         mount_yaml = Path(__file__).parent.joinpath("mount.yaml").resolve()
         extra_files.append(str(mount_yaml))
     if version is None:
         version = determined_deploy.__version__
     env = {
         "INTEGRATIONS_HOST_PORT": str(port),
-        "DET_ETC_ROOT": str(etc_path),
+        "DET_MASTER_CONFIG": str(master_config_path),
         "DET_DB_PASSWORD": db_password,
         "DET_HASURA_SECRET": hasura_secret,
         "DET_VERSION": version,
@@ -118,7 +118,7 @@ def master_down(master_name: str, delete_db: bool) -> None:
 def fixture_up(
     num_agents: Optional[int],
     port: Optional[int],
-    etc_path: Path,
+    master_config_path: Path,
     cluster_name: str,
     version: str,
     db_password: str,
@@ -129,7 +129,7 @@ def fixture_up(
     fixture_down(cluster_name, delete_db)
     master_up(
         port=port,
-        etc_path=etc_path,
+        master_config_path=master_config_path,
         master_name=cluster_name,
         version=version,
         db_password=db_password,
