@@ -175,7 +175,7 @@ class TFKerasTrialController(det.LoopTrialController):
         self.model = model
         self.session = session
 
-        self._train_input_manager, self._validation_input_manager = keras._init_input_manager(
+        self._train_input_manager, self._validation_input_manager = keras._init_input_managers(
             context=self.context, train_config=train_config
         )
 

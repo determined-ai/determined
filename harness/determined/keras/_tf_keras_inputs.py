@@ -269,7 +269,7 @@ class _ValidationSequenceAdapterManager(_ValidationInputManager):
         return len(sequence_adapter) * self._context.get_per_slot_batch_size()
 
 
-def _init_input_manager(
+def _init_input_managers(
     context: Union[keras.TFKerasTrialContext, keras.TFKerasNativeContext],
     train_config: keras.TFKerasTrainConfig,
 ) -> Tuple[_TrainingInputManager, _ValidationInputManager]:
