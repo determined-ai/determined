@@ -10,10 +10,11 @@ from yogadl import storage, tensorflow
 
 import determined as det
 from determined import horovod, workload
+from determined.horovod import hvd
 from determined_common import check
 
 
-def _init_container_storage_path(configured_storage_path: Optional[str]) -> pathlib.Path:
+def init_container_storage_path(configured_storage_path: Optional[str]) -> pathlib.Path:
     if configured_storage_path:
         storage_path = pathlib.Path(configured_storage_path)
     else:
@@ -29,7 +30,7 @@ class StorageTypes(enum.Enum):
     GCS = "gcs"
 
 
-class CacheableDecorator:
+class _CacheableDecorator:
     def __init__(
         self,
         env: det.EnvContext,
@@ -68,8 +69,8 @@ class CacheableDecorator:
         if not self._hvd_config.use:
             return
 
-        self._shard_rank = horovod.hvd.rank()
-        self._num_shards = horovod.hvd.size()
+        self._shard_rank = hvd.rank()
+        self._num_shards = hvd.size()
 
     def _configure_storage(self) -> None:
         session_config = None  # type: Optional[tf.compat.v1.ConfigProto]
@@ -78,9 +79,7 @@ class CacheableDecorator:
             # that for each instantiation of `tf.Session`, the process is mapped
             # to the same GPU.
             session_config = tf.compat.v1.ConfigProto()
-            session_config.gpu_options.visible_device_list = self._env.slot_ids[
-                horovod.hvd.local_rank()
-            ]
+            session_config.gpu_options.visible_device_list = self._env.slot_ids[hvd.local_rank()]
 
         rw_coordinator_url = f"ws://{self._env.master_addr}:{self._env.master_port}/ws/data-layer/"
         data_layer_type = self._env.experiment_config.get_data_layer_type()
@@ -89,7 +88,7 @@ class CacheableDecorator:
             local_cache_dir_path = self._env.experiment_config["data_layer"].get(
                 "container_storage_path"
             )
-            local_cache_path = _init_container_storage_path(
+            local_cache_path = init_container_storage_path(
                 configured_storage_path=local_cache_dir_path
             )
 
@@ -100,7 +99,7 @@ class CacheableDecorator:
             local_cache_dir_path = self._env.experiment_config["data_layer"].get(
                 "local_cache_container_path"
             )
-            local_cache_path = _init_container_storage_path(
+            local_cache_path = init_container_storage_path(
                 configured_storage_path=local_cache_dir_path
             )
 
@@ -121,7 +120,7 @@ class CacheableDecorator:
             local_cache_dir_path = self._env.experiment_config["data_layer"].get(
                 "local_cache_container_path"
             )
-            local_cache_path = _init_container_storage_path(
+            local_cache_path = init_container_storage_path(
                 configured_storage_path=local_cache_dir_path
             )
             storage_config = storage.GCSConfigurations(
