@@ -110,7 +110,7 @@ def test_iris() -> None:
 @skip_test_if_not_enough_gpus(8)
 @pytest.mark.parallel  # type: ignore
 def test_tf_keras_mnist_parallel() -> None:
-    config = conf.load_config(conf.official_examples_path("mnist_tf_keras/const.yaml"))
+    config = conf.load_config(conf.official_examples_path("fashion_mnist_tf_keras/const.yaml"))
     config["checkpoint_storage"] = exp.shared_fs_checkpoint_config()
     config.get("bind_mounts", []).append(exp.root_user_home_bind_mount())
     config = conf.set_slots_per_trial(config, 8)
@@ -118,7 +118,7 @@ def test_tf_keras_mnist_parallel() -> None:
     config = conf.set_max_steps(config, 2)
 
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("mnist_tf_keras"), 1
+        config, conf.official_examples_path("fashion_mnist_tf_keras"), 1
     )
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1

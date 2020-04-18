@@ -128,5 +128,5 @@ Disregard if using the trial API (subclassing ``determined.keras.TFKerasTrial``)
 Examples
 --------
 
--  `MNIST <https://github.com/determined-ai/determined/tree/master/examples/official/mnist_tf_keras/>`_
+-  `MNIST <https://github.com/determined-ai/determined/tree/master/examples/official/fashion_mnist_tf_keras>`_
 -  `Cifar10 <https://github.com/determined-ai/determined/tree/master/examples/official/cifar10_cnn_tf_keras/>`_
