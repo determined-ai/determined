@@ -1,18 +1,18 @@
 describeNode = "echo \"Running on \${NODE_NAME} (executor: \${EXECUTOR_NUMBER}) (build tag: \${BUILD_TAG})\""
 
 pipeline {
-  agent any
+  agent { label 'test' }
     environment {
       DET_SEGMENT_MASTER_KEY = credentials('dev-determinedai-segment-master-key')
       DET_SEGMENT_WEBUI_KEY = credentials('dev-determinedai-segment-webui-key')
       GOBIN = "${env.WORKSPACE}/gobin"
-      INTEGRATIONS_HOST_PORT = sh(script: 'python ./CI/integrations/get_port.py --run-number $EXECUTOR_NUMBER', , returnStdout: true).trim()
+      INTEGRATIONS_HOST_PORT = sh(script: 'python3 ./CI/integrations/get_port.py --run-number $EXECUTOR_NUMBER', , returnStdout: true).trim()
     }
     stages {
       stage('Environment Setup') {
         steps {
           sh "${describeNode}"
-          sh 'virtualenv --python="$(command -v python3.6)" --no-site-packages venv'
+          sh 'virtualenv --python="$(command -v python3.6)" venv'
           sh script: '''
           . venv/bin/activate
           make get-deps

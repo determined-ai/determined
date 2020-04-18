@@ -1,7 +1,7 @@
 describeNode = "echo \"Running on \${NODE_NAME} (executor: \${EXECUTOR_NUMBER})\""
 
 pipeline {
-  agent any
+  agent { label 'test' }
   triggers {
     cron('H 1 * * *')
   }
@@ -24,7 +24,7 @@ pipeline {
       }
       steps {
         sh "${describeNode}"
-        sh 'virtualenv --python="$(command -v python3.6)" --no-site-packages venv'
+        sh 'virtualenv --python="$(command -v python3.6)" venv'
         sh "venv/bin/python -m pip install -r combined-reqs.txt"
         sh ". venv/bin/activate && det-deploy aws up --cluster-id $CLUSTER_NAME --det-version `git rev-parse HEAD` --keypair integrations-test"
         script {
