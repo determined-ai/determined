@@ -4,8 +4,6 @@ VERSION := $(shell cat ../VERSION)
 BUILDDIR ?= ../build
 DIST_DIRECTORY := "$(BUILDDIR)"/share/determined/master/wheels
 CLI_WHEEL := $(DIST_DIRECTORY)/determined_cli-$(VERSION)-py3-none-any.whl
-CLI_WHEEL_URL := s3://determined-ai-artifacts/cli/$(shell basename $(CLI_WHEEL))
-CLI_WHEEL_LATEST_URL := s3://determined-ai-artifacts/cli/determined_cli-latest-py3-none-any.whl
 
 clean:
 	rm -rf .pytest_cache/
@@ -20,13 +18,6 @@ build:
 	python setup.py -q bdist_wheel -d $(DIST_DIRECTORY)
 
 publish:
-	aws s3 ls $(CLI_WHEEL_URL); \
-	if [ $$? -eq 0 ] ; then \
-	  echo "Cannot overwrite existing package: $(CLI_WHEEL_URL)"; exit 1; \
-	fi
-
-	aws s3 cp --content-type "binary/octet-stream" $(CLI_WHEEL) $(CLI_WHEEL_URL)
-	aws s3 cp --content-type "binary/octet-stream" $(CLI_WHEEL) $(CLI_WHEEL_LATEST_URL)
 	twine upload --non-interactive $(CLI_WHEEL)
 
 BLACK_CONFIG_FILE := ../pyproject.toml
