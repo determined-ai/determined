@@ -192,11 +192,11 @@
                     }
                 },
                 {
-                    "name": "best_checkpoint_by_metric",
+                    "name": "best_checkpoints_by_metric",
                     "definition": {
                         "function": {
                             "schema": "public",
-                            "name": "experiments_best_checkpoint_by_metric"
+                            "name": "experiments_best_checkpoints_by_metric"
                         },
                         "table_argument": null
                     },
