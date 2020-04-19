@@ -27,6 +27,6 @@
     "format": "elm-format",
     "lint": "elm-analyse && elm-format",
     "test": "elm-test",
-    "graphql": "elm-graphql --base DetQL --scalar-codecs CustomScalarCodecs"
+    "graphql": "elm-graphql --base DetQL --scalar-codecs CustomScalarCodecs --introspection-file ../../master/graphql-schema.json"
   }
 }
