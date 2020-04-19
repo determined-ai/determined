@@ -3,20 +3,12 @@
 VERSION := $(shell cat ../VERSION)
 BUILDDIR ?= ../build
 DEPLOY_WHEEL := $(BUILDDIR)/determined_deploy-$(VERSION)-py3-none-any.whl
-DEPLOY_WHEEL_URL := s3://determined-ai-artifacts/deploy/$(shell basename $(DEPLOY_WHEEL))
-DEPLOY_WHEEL_LATEST_URL := s3://determined-ai-artifacts/deploy/determined_deploy-latest-py3-none-any.whl
 
 build:
 	python setup.py bdist_wheel -d $(DIST_DIRECTORY)
 
 publish:
-	aws s3 ls $(DEPLOY_WHEEL_URL); \
-	if [ $$? -eq 0 ] ; then \
-	  echo "Cannot overwrite existing package: $(DEPLOY_WHEEL_URL)"; exit 1; \
-	fi
-
-	aws s3 cp --content-type "binary/octet-stream" $(DEPLOY_WHEEL) $(DEPLOY_WHEEL_URL)
-	aws s3 cp --content-type "binary/octet-stream" $(DEPLOY_WHEEL) $(DEPLOY_WHEEL_LATEST_URL)
+	twine upload --non-interactive $(DEPLOY_WHEEL)
 
 clean:
 	rm -rf .pytest_cache/

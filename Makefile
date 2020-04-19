@@ -165,6 +165,7 @@ publish: guard-publish clean all
 	$(MAKE) -C common $@
 	$(MAKE) -C harness $@
 	$(MAKE) -C cli $@
+	$(MAKE) -C deploy $@
 
 	cp -r packaging "$(BUILDDIR)"
 	cd "$(BUILDDIR)" && $(GOBIN)/goreleaser -f $(CURDIR)/.goreleaser.yml --rm-dist

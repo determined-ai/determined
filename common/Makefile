@@ -9,8 +9,6 @@ VERSION := $(shell cat ../VERSION)
 BUILDDIR ?= ../build
 DIST_DIRECTORY := "$(BUILDDIR)"/share/determined/master/wheels
 COMMON_WHEEL := $(DIST_DIRECTORY)/determined_common-$(VERSION)-py3-none-any.whl
-COMMON_WHEEL_URL := s3://determined-ai-artifacts/common/$(shell basename $(COMMON_WHEEL))
-COMMON_WHEEL_LATEST_URL := s3://determined-ai-artifacts/common/determined_common-latest-py3-none-any.whl
 
 clean:
 	rm -rf .pytest_cache/
@@ -23,13 +21,6 @@ build:
 	python setup.py -q bdist_wheel -d $(DIST_DIRECTORY)
 
 publish:
-	aws s3 ls $(COMMON_WHEEL_URL); \
-	if [ $$? -eq 0 ] ; then \
-	  echo "Cannot overwrite existing package: $(COMMON_WHEEL_URL)"; exit 1; \
-	fi
-
-	aws s3 cp --content-type "binary/octet-stream" $(COMMON_WHEEL) $(COMMON_WHEEL_URL)
-	aws s3 cp --content-type "binary/octet-stream" $(COMMON_WHEEL) $(COMMON_WHEEL_LATEST_URL)
 	twine upload --non-interactive $(COMMON_WHEEL)
 
 BLACK_CONFIG_FILE := ../pyproject.toml
