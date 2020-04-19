@@ -84,7 +84,7 @@ class ExperimentReference:
         """
         q = api.GraphQLQuery(self._master)
         exp = q.op.experiments_by_pk(id=self.id)
-        checkpoints = exp.best_checkpoint_by_metric(
+        checkpoints = exp.best_checkpoints_by_metric(
             args={"lim": limit, "metric": sort_by, "smaller_is_better": smaller_is_better}
         )
 
@@ -105,7 +105,7 @@ class ExperimentReference:
 
         resp = q.send()
 
-        checkpoints_resp = resp.experiments_by_pk.best_checkpoint_by_metric
+        checkpoints_resp = resp.experiments_by_pk.best_checkpoints_by_metric
 
         if not checkpoints_resp:
             return []
