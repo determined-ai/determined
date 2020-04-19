@@ -1946,8 +1946,8 @@ encodeExperiments_avg_order_by input =
         [ ( "id", Encode.enum DetQL.Enum.Order_by.toString |> Encode.optional input.id ), ( "owner_id", Encode.enum DetQL.Enum.Order_by.toString |> Encode.optional input.owner_id ), ( "parent_id", Encode.enum DetQL.Enum.Order_by.toString |> Encode.optional input.parent_id ), ( "progress", Encode.enum DetQL.Enum.Order_by.toString |> Encode.optional input.progress ) ]
 
 
-buildExperiments_best_checkpoint_by_metric_args : (Experiments_best_checkpoint_by_metric_argsOptionalFields -> Experiments_best_checkpoint_by_metric_argsOptionalFields) -> Experiments_best_checkpoint_by_metric_args
-buildExperiments_best_checkpoint_by_metric_args fillOptionals =
+buildExperiments_best_checkpoints_by_metric_args : (Experiments_best_checkpoints_by_metric_argsOptionalFields -> Experiments_best_checkpoints_by_metric_argsOptionalFields) -> Experiments_best_checkpoints_by_metric_args
+buildExperiments_best_checkpoints_by_metric_args fillOptionals =
     let
         optionals =
             fillOptionals
@@ -1956,26 +1956,26 @@ buildExperiments_best_checkpoint_by_metric_args fillOptionals =
     { lim = optionals.lim, metric = optionals.metric, smaller_is_better = optionals.smaller_is_better }
 
 
-type alias Experiments_best_checkpoint_by_metric_argsOptionalFields =
+type alias Experiments_best_checkpoints_by_metric_argsOptionalFields =
     { lim : OptionalArgument Int
     , metric : OptionalArgument String
     , smaller_is_better : OptionalArgument Bool
     }
 
 
-{-| Type for the Experiments\_best\_checkpoint\_by\_metric\_args input object.
+{-| Type for the Experiments\_best\_checkpoints\_by\_metric\_args input object.
 -}
-type alias Experiments_best_checkpoint_by_metric_args =
+type alias Experiments_best_checkpoints_by_metric_args =
     { lim : OptionalArgument Int
     , metric : OptionalArgument String
     , smaller_is_better : OptionalArgument Bool
     }
 
 
-{-| Encode a Experiments\_best\_checkpoint\_by\_metric\_args into a value that can be used as an argument.
+{-| Encode a Experiments\_best\_checkpoints\_by\_metric\_args into a value that can be used as an argument.
 -}
-encodeExperiments_best_checkpoint_by_metric_args : Experiments_best_checkpoint_by_metric_args -> Value
-encodeExperiments_best_checkpoint_by_metric_args input =
+encodeExperiments_best_checkpoints_by_metric_args : Experiments_best_checkpoints_by_metric_args -> Value
+encodeExperiments_best_checkpoints_by_metric_args input =
     Encode.maybeObject
         [ ( "lim", Encode.int |> Encode.optional input.lim ), ( "metric", Encode.string |> Encode.optional input.metric ), ( "smaller_is_better", Encode.bool |> Encode.optional input.smaller_is_better ) ]
 

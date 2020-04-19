@@ -7006,14 +7006,14 @@
               "args": [
                 {
                   "defaultValue": null,
-                  "description": "input parameters for function \"experiments_best_checkpoint_by_metric\"",
+                  "description": "input parameters for function \"experiments_best_checkpoints_by_metric\"",
                   "name": "args",
                   "type": {
                     "kind": "NON_NULL",
                     "name": null,
                     "ofType": {
                       "kind": "INPUT_OBJECT",
-                      "name": "experiments_best_checkpoint_by_metric_args",
+                      "name": "experiments_best_checkpoints_by_metric_args",
                       "ofType": null
                     }
                   }
@@ -7086,9 +7086,9 @@
                 }
               ],
               "deprecationReason": null,
-              "description": "A computed field, executes function \"experiments_best_checkpoint_by_metric\"",
+              "description": "A computed field, executes function \"experiments_best_checkpoints_by_metric\"",
               "isDeprecated": false,
-              "name": "best_checkpoint_by_metric",
+              "name": "best_checkpoints_by_metric",
               "type": {
                 "kind": "LIST",
                 "name": null,
@@ -8252,7 +8252,7 @@
           ],
           "interfaces": null,
           "kind": "INPUT_OBJECT",
-          "name": "experiments_best_checkpoint_by_metric_args",
+          "name": "experiments_best_checkpoints_by_metric_args",
           "possibleTypes": null
         },
         {

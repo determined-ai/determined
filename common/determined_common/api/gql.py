@@ -821,7 +821,7 @@ class experiments_avg_order_by(sgqlc.types.Input):
     progress = sgqlc.types.Field(order_by, graphql_name="progress")
 
 
-class experiments_best_checkpoint_by_metric_args(sgqlc.types.Input):
+class experiments_best_checkpoints_by_metric_args(sgqlc.types.Input):
     __schema__ = gql
     __field_names__ = ("lim", "metric", "smaller_is_better")
     lim = sgqlc.types.Field(Int, graphql_name="lim")
@@ -2871,7 +2871,7 @@ class experiments(sgqlc.types.Type):
     __schema__ = gql
     __field_names__ = (
         "archived",
-        "best_checkpoint_by_metric",
+        "best_checkpoints_by_metric",
         "best_validation_history",
         "config",
         "end_time",
@@ -2894,15 +2894,15 @@ class experiments(sgqlc.types.Type):
         "trials_aggregate",
     )
     archived = sgqlc.types.Field(sgqlc.types.non_null(Boolean), graphql_name="archived")
-    best_checkpoint_by_metric = sgqlc.types.Field(
+    best_checkpoints_by_metric = sgqlc.types.Field(
         sgqlc.types.list_of(sgqlc.types.non_null(checkpoints)),
-        graphql_name="best_checkpoint_by_metric",
+        graphql_name="best_checkpoints_by_metric",
         args=sgqlc.types.ArgDict(
             (
                 (
                     "args",
                     sgqlc.types.Arg(
-                        sgqlc.types.non_null(experiments_best_checkpoint_by_metric_args),
+                        sgqlc.types.non_null(experiments_best_checkpoints_by_metric_args),
                         graphql_name="args",
                         default=None,
                     ),
