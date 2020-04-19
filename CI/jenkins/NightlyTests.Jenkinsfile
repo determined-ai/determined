@@ -20,7 +20,7 @@ pipeline {
         PYTEST_MARKS = "nightly"
         REPORT_ROOT = "${env.WORKSPACE}/build"
         SHORT_GIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-        CLUSTER_NAME = "${env.SHORT_GIT_HASH}-nightly"
+        CLUSTER_NAME = "determined-${env.SHORT_GIT_HASH}-nightly"
       }
       steps {
         sh "${describeNode}"
@@ -28,7 +28,7 @@ pipeline {
         sh "venv/bin/python -m pip install -r combined-reqs.txt"
         sh ". venv/bin/activate && det-deploy aws up --cluster-id $CLUSTER_NAME --det-version `git rev-parse HEAD` --keypair integrations-test"
         script {
-          env.MASTER_HOST = sh(script: "venv/bin/python CI/integrations/get_address.py determined-$CLUSTER_NAME", returnStdout: true).trim()
+          env.MASTER_HOST = sh(script: "venv/bin/python CI/integrations/get_address.py $CLUSTER_NAME", returnStdout: true).trim()
         }
         sh "venv/bin/python CI/integrations/wait_for_master.py http://$MASTER_HOST:8080"
         sh ". venv/bin/activate && make test-python-integrations"
