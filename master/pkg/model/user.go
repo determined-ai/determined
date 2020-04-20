@@ -112,7 +112,7 @@ func (user User) ValidatePassword(password string) bool {
 // techniques.
 func (user *User) UpdatePasswordHash(password string) error {
 	if password == "" {
-		user.PasswordHash = null.NewString("", false)
+		user.PasswordHash = EmptyPassword
 	} else {
 		passwordHash, err := bcrypt.GenerateFromPassword(
 			[]byte(password),
