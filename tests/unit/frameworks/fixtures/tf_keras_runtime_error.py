@@ -5,6 +5,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 import determined as det
+from determined import experimental
 from determined.keras import TFKerasTrial, TFKerasTrialContext
 
 
@@ -37,7 +38,7 @@ class RuntimeErrorTrial(TFKerasTrial):
 
 
 if __name__ == "__main__":
-    det.create(
+    experimental.create(
         trial_def=RuntimeErrorTrial,
         config={
             "description": "keras_runtime_error",
@@ -45,6 +46,6 @@ if __name__ == "__main__":
             "searcher": {"metric": "accuracy"},
             "data_layer": {"type": "lfs", "container_storage_path": "/tmp"},
         },
-        mode=det.Mode.LOCAL,
+        mode=experimental.Mode.LOCAL,
         context_dir=str(pathlib.Path.cwd()),
     )

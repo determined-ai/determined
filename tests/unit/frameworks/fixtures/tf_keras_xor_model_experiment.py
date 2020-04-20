@@ -8,8 +8,8 @@ from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import SGD
 
-import determined as det
-from determined import keras
+from determined import experimental
+from determined.experimental import keras
 from tests.unit.frameworks.utils import make_xor_data_sequences  # noqa: I202, I100
 
 
@@ -26,7 +26,7 @@ def make_xor_single_thread_loaders() -> Tuple[tf.keras.utils.Sequence, tf.keras.
 
 
 def train():
-    context = keras.init(mode=det.Mode.CLUSTER, context_dir=str(pathlib.Path.cwd()))
+    context = keras.init(mode=experimental.Mode.CLUSTER, context_dir=str(pathlib.Path.cwd()))
 
     model = Sequential()
     model.add(Dense(context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,)))

@@ -4,6 +4,7 @@ from typing import Type
 import pytest
 
 import determined as det
+from determined import experimental
 from determined_common import check
 from tests.unit.frameworks.fixtures import (
     estimator_xor_model,
@@ -18,7 +19,7 @@ from tests.unit.frameworks.fixtures import (
 )
 def test_create_trial_instance(trial_class: Type[det.Trial]) -> None:
     with tempfile.TemporaryDirectory() as td:
-        trial_instance = det.create_trial_instance(
+        trial_instance = experimental.create_trial_instance(
             trial_def=trial_class,
             config={"hyperparameters": {"global_batch_size": det.Constant(16)}},
             checkpoint_dir=td,

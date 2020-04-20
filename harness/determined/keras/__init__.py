@@ -18,7 +18,6 @@ from determined.keras._tf_keras_context import (
 from determined.keras._tf_keras_inputs import _init_input_managers
 from determined.keras._tf_keras_multi_gpu import _get_multi_gpu_model_and_optimizer
 from determined.keras._tf_keras_trial import TFKerasTrial, TFKerasTrialController
-from determined.keras._tf_keras_native import init
 
 # TODO(DET-2708): remove zmq patching.
 from determined.keras import _tf_keras_patches

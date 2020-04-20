@@ -3,8 +3,9 @@ from typing import Callable, Dict, Tuple
 
 import tensorflow as tf
 
-import determined as det
-from determined.estimator import EstimatorNativeContext, ServingInputReceiverFn, init
+from determined import experimental
+from determined.estimator import EstimatorNativeContext, ServingInputReceiverFn
+from determined.experimental import estimator
 from tests.unit.frameworks.utils import xor_data
 
 
@@ -67,7 +68,7 @@ def build_serving_input_receiver_fns() -> Dict[str, ServingInputReceiverFn]:
 
 
 if __name__ == "__main__":
-    context = init(mode=det.Mode.CLUSTER, context_dir=str(pathlib.Path.cwd()))
+    context = estimator.init(mode=experimental.Mode.CLUSTER, context_dir=str(pathlib.Path.cwd()))
 
     batch_size = context.get_per_slot_batch_size()
     shuffle = context.get_hparam("shuffle")
@@ -75,7 +76,7 @@ if __name__ == "__main__":
     context.train_and_evaluate(
         build_estimator(context),
         tf.estimator.TrainSpec(
-            xor_input_fn(context=context, batch_size=batch_size, shuffle=shuffle), max_steps=1,
+            xor_input_fn(context=context, batch_size=batch_size, shuffle=shuffle), max_steps=1
         ),
         tf.estimator.EvalSpec(xor_input_fn(context=context, batch_size=batch_size, shuffle=False)),
     )

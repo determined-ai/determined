@@ -1,18 +1,17 @@
 from typing import Any, Dict, List, Optional, cast
 
-import determined as det
-from determined import estimator
+from determined import experimental, keras
 
 
 def init(
     config: Optional[Dict[str, Any]] = None,
-    mode: det.Mode = det.Mode.CLUSTER,
+    mode: experimental.Mode = experimental.Mode.CLUSTER,
     context_dir: str = "",
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
-) -> estimator.EstimatorNativeContext:
+) -> keras.TFKerasNativeContext:
     """
-    Create a tf.estimator experiment using the Native API.
+    Create a tf.keras experiment using the Native API.
 
     .. TODO: Add a reference to Native tutorial / topic-guide.
 
@@ -21,7 +20,8 @@ def init(
             A dictionary representing the experiment configuration to be
             associated with the experiment.
         mode:
-            The :py:class:`determined.Mode` used when creating an experiment
+            The :py:class:`determined.experimental.Mode` used when creating an
+            experiment
 
             1. ``Mode.CLUSTER`` (default): Submit the experiment to a remote
             Determined cluster.
@@ -46,13 +46,13 @@ def init(
             ``DET_MASTER`` if not provided.
 
     Returns:
-        :py:class:`determined.estimator.EstimatorNativeContext`
+        :py:class:`determined.keras.TFKerasNativeContext`
     """
     return cast(
-        estimator.EstimatorNativeContext,
-        det._init_native(
-            controller_cls=estimator.EstimatorTrialController,
-            native_context_cls=estimator.EstimatorNativeContext,
+        keras.TFKerasNativeContext,
+        experimental._native._init_native(
+            controller_cls=keras.TFKerasTrialController,
+            native_context_cls=keras.TFKerasNativeContext,
             config=config,
             mode=mode,
             context_dir=context_dir,
