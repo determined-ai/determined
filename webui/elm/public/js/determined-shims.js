@@ -38,6 +38,7 @@ let DetShims = function() {
     addRequestFullscreenPort(app);
     addClipboardPorts(app);
     addSetPageTitlePort(app);
+    addAssignLocationPort(app);
     addSegmentAnalyticsPorts(app);
     addSetFavicon(app);
   }
@@ -187,6 +188,12 @@ let DetShims = function() {
   function addSetPageTitlePort(app) {
     app.ports.setPageTitle.subscribe((title) => {
       document.title = title;
+    });
+  }
+
+  function addAssignLocationPort(app) {
+    app.ports.assignLocation.subscribe((uri) => {
+      window.location.assign(uri);
     });
   }
 

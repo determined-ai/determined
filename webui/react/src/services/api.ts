@@ -2,13 +2,24 @@ import { CancelToken } from 'axios';
 
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { Api, generateApi } from 'services/apiBuilder';
-import { CommandType, RecentTask, TaskType, User } from 'types';
+import { CommandType, Credentials, RecentTask, TaskType, User } from 'types';
 
 const commandToEndpoint: Record<CommandType, string> = {
   [CommandType.Command]: '/commands',
   [CommandType.Notebook]: '/notebooks',
   [CommandType.Tensorboard]: '/tensorboard',
   [CommandType.Shell]: '/shells',
+};
+
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const isAuthFailure = (e: any): boolean => {
+  return e.response && e.response.status && e.response.status === 401;
+};
+
+// is a failure received from a failed login attempt due to bad credentials
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const isLoginFailure = (e: any): boolean => {
+  return e.response && e.response.status && e.response.status === 403;
 };
 
 const userApi:  Api<{}, User> = {
@@ -95,3 +106,28 @@ export const archiveExperiment =
   async (experimentId: number, isArchived: boolean, cancelToken?: CancelToken): Promise<void> => {
     return patchExperiment({ body: { archived: isArchived }, cancelToken, experimentId });
   };
+
+const loginApi: Api<Credentials, void> = {
+  httpOptions: ({ password, username }) => {
+    return {
+      body: { password, username },
+      method: 'POST',
+      url: '/login?cookie=true',
+    };
+  },
+  name: 'login',
+};
+
+export const login = generateApi<Credentials, void>(loginApi);
+
+const logoutApi: Api<{}, void> = {
+  httpOptions: () => {
+    return {
+      method: 'POST',
+      url: '/logout',
+    };
+  },
+  name: 'logout',
+};
+
+export const logout = generateApi<{}, void>(logoutApi);

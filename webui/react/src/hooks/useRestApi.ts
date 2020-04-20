@@ -4,6 +4,7 @@ import { Dispatch, Reducer, SetStateAction, useEffect, useReducer, useState } fr
 
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { decode } from 'ioTypes';
+import { isAuthFailure } from 'services/api';
 import { http, HttpOptions } from 'services/apiBuilder';
 import { clone } from 'utils/data';
 
@@ -104,13 +105,15 @@ const useRestApi = <T>(ioType: io.Mixed, options: HookOptions<T> = {}): Output<T
       } catch (error) {
         // Only report errors not related cancel exits.
         if (!axios.isCancel(error)) {
+
           handleError({
+            error: error,
             // this does not necessarily have to be true for all usages of this hook we should
             // allow the user of the hook to set this value or let the caller handle the error.
             isUserTriggered: false,
             level: ErrorLevel.Warn,
             message: `${httpOptions.method + ' ' || ''}request to ${httpOptions.url} failed`,
-            type: ErrorType.Server,
+            type: isAuthFailure(error) ? ErrorType.Auth : ErrorType.Server,
           });
 
           dispatch({ type: ActionType.SetError, value: error });

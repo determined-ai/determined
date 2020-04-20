@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import API
-import Authentication exposing (doLogin, getCurrentUser)
+import Authentication exposing (getCurrentUser, goToLogin, goToLogout)
 import Browser
 import Browser.Dom
 import Browser.Navigation as Navigation
@@ -14,8 +14,6 @@ import Page.CommandList
 import Page.ExperimentDetail
 import Page.ExperimentList
 import Page.LogViewer
-import Page.Login
-import Page.Logout
 import Page.NotebookList
 import Page.ShellList
 import Page.TensorBoardList
@@ -78,7 +76,7 @@ init version url key =
     in
     ( initial
     , Cmd.batch
-        [ getCurrentUser (ValidatedAuthentication False url)
+        [ getCurrentUser (ValidatedAuthentication url)
         , API.fetchDeterminedInfo (requestHandlers GotDeterminedInfo)
         , API.pollSlots (requestHandlers GotSlots)
         , Task.perform GotTimeZone Time.here
@@ -272,39 +270,21 @@ update msg model =
             ( { model | userDropdownOpen = value }, Cmd.none )
 
         -- Authentication stuff.
-        ValidatedAuthentication autoLogin url result ->
+        ValidatedAuthentication url result ->
             case result of
                 Ok user ->
                     updateWithRoute url (setSessionUser model (Just user))
 
                 Err _ ->
-                    if not autoLogin then
-                        let
-                            credentials =
-                                { username = "determined"
-                                , password = ""
-                                }
-                        in
-                        ( model, doLogin (GotAuthenticationResponse url) credentials )
-
-                    else
-                        let
-                            newUrl =
-                                Route.toString (Route.Login (Just (Url.toString url)))
-                        in
-                        ( model, Navigation.pushUrl model.session.key newUrl )
+                    ( model, goToLogin (Just url) )
 
         GotAuthenticationResponse url result ->
             case result of
                 Ok _ ->
-                    ( model, getCurrentUser (ValidatedAuthentication True url) )
+                    ( model, getCurrentUser (ValidatedAuthentication url) )
 
                 Err _ ->
-                    let
-                        newUrl =
-                            Route.toString (Route.Login (Just (Url.toString url)))
-                    in
-                    ( model, Navigation.pushUrl model.session.key newUrl )
+                    ( model, goToLogin (Just url) )
 
         -- Individual pages.
         ClusterMsg pageMsg ->
@@ -335,22 +315,6 @@ update msg model =
             case model.page of
                 ExperimentList pageModel ->
                     pageUpdate experimentListInfo pageMsg pageModel
-
-                _ ->
-                    ( model, Cmd.none )
-
-        LoginMsg pageMsg ->
-            case model.page of
-                Login pageModel ->
-                    pageUpdate loginInfo pageMsg pageModel
-
-                _ ->
-                    ( model, Cmd.none )
-
-        LogoutMsg pageMsg ->
-            case model.page of
-                Logout pageModel ->
-                    pageUpdate logoutInfo pageMsg pageModel
 
                 _ ->
                     ( model, Cmd.none )
@@ -452,11 +416,11 @@ updateWithRoute url model =
                             Page.ExperimentList.init model.previousExperimentListModel options
                                 |> mapInit model experimentListInfo
 
-                Just (Route.Login _) ->
-                    Page.Login.init |> mapInit model loginInfo
+                Just (Route.Login maybeRedirect) ->
+                    ( model, goToLogin maybeRedirect )
 
                 Just Route.Logout ->
-                    Page.Logout.init |> mapInit model logoutInfo
+                    ( model, goToLogout )
 
                 Just (Route.NotebookList options) ->
                     case model.page of
@@ -533,19 +497,13 @@ processSystemError m e =
     case e of
         Comm.AuthenticationError ->
             let
-                url =
-                    Route.toString (Route.Login Nothing)
-
-                cmd =
-                    Navigation.pushUrl m.session.key url
-
                 oldSession =
                     m.session
 
                 newSession =
                     { oldSession | user = Nothing }
             in
-            ( { m | session = newSession }, cmd )
+            ( { m | session = newSession }, goToLogin Nothing )
 
         _ ->
             -- TODO(jgevirtz): Notify users of errors.
@@ -596,12 +554,6 @@ subscriptions model =
 
                 ExperimentList childModel ->
                     pageSubs experimentListInfo childModel
-
-                Login childModel ->
-                    pageSubs loginInfo childModel
-
-                Logout childModel ->
-                    pageSubs logoutInfo childModel
 
                 NotebookList childModel ->
                     pageSubs notebookListInfo childModel
@@ -754,36 +706,6 @@ experimentListInfo =
             case msg of
                 Page.ExperimentList.SetCriticalError errorMessage ->
                     ( { model | criticalError = Just errorMessage }, Cmd.none )
-    }
-
-
-loginInfo : PageInfo Page.Login.Model Page.Login.Msg Page.Login.OutMsg
-loginInfo =
-    { pageTagger = Login
-    , msgTagger = LoginMsg
-    , subscriptions = always Sub.none
-    , update = Page.Login.update
-    , outHandler =
-        \msg model ->
-            case msg of
-                Page.Login.LoginDone user ->
-                    ( setSessionUser model (Just user), Cmd.none )
-    }
-
-
-logoutInfo : PageInfo Page.Logout.Model Page.Logout.Msg Page.Logout.OutMsg
-logoutInfo =
-    { pageTagger = Logout
-    , msgTagger = LogoutMsg
-    , subscriptions = always Sub.none
-    , update = Page.Logout.update
-    , outHandler =
-        \msg model ->
-            case msg of
-                Page.Logout.LogoutDone ->
-                    ( setSessionUser model Nothing
-                    , Navigation.pushUrl model.session.key (Route.toString (Route.Login Nothing))
-                    )
     }
 
 

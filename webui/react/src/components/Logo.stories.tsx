@@ -1,6 +1,6 @@
 import React from 'react';
 
-import Logo from './Logo';
+import Logo, { LogoTypes } from './Logo';
 
 export default {
   component: Logo,
@@ -12,4 +12,4 @@ export default {
   title: 'Logo',
 };
 
-export const Default = (): React.ReactNode => <Logo />;
+export const Default = (): React.ReactNode => <Logo type={LogoTypes.Light} />;

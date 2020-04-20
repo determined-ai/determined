@@ -5,5 +5,11 @@
   height: 100%;
   width: 100%;
 
-  & > *:last-child { flex-grow: 1; }
+  .body {
+    display: flex;
+    flex-grow: 1;
+
+    & > *:first-child { flex-grow: 0; }
+    & > *:last-child { flex-grow: 1; }
+  }
 }
