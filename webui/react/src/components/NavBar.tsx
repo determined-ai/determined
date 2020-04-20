@@ -20,7 +20,7 @@ const NavBar: React.FC<Props> = (props: Props) => {
   const menu = (
     <Menu>
       <Menu.Item>
-        <NavItem crossover={true} path={'/ui/logout'}>Sign Out</NavItem>
+        <NavItem crossover={true} path={'/logout'}>Sign Out</NavItem>
       </Menu.Item>
     </Menu>
   );
