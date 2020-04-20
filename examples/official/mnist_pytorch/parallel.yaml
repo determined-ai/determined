@@ -1,4 +1,4 @@
-description: mnist_pytorch_const
+description: mnist_pytorch_const_parallel
 data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
 hyperparameters:
@@ -8,6 +8,9 @@ hyperparameters:
   n_filters2: 64
   dropout1: 0.25
   dropout2: 0.5
+resources:
+  # parallel run assume 8 GPUs per agent instance
+  slots_per_trial: 8
 searcher:
   name: single
   metric: validation_loss

@@ -1,4 +1,4 @@
-description: mnist_estimator_adaptive
+description: mnist_estimator_adaptive_search
 hyperparameters:
   global_batch_size: 64
   learning_rate:
@@ -27,8 +27,5 @@ searcher:
   metric: accuracy
   max_steps: 64
   max_trials: 16
-  mode: aggressive
-  max_rungs: 3
-  divisor: 4
   smaller_is_better: false
 entrypoint: model_def:MNistTrial
