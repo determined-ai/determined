@@ -14,7 +14,9 @@ import requests
 import tensorflow as tf
 
 import determined as det
-from determined.estimator import EstimatorNativeContext, init
+from determined import experimental
+from determined.experimental import estimator
+from determined.estimator import EstimatorNativeContext
 
 WORK_DIRECTORY = "/tmp/determined-mnist-estimator-work-dir"
 MNIST_TF_RECORDS_FILE = "mnist-tfrecord.tar.gz"
@@ -158,7 +160,9 @@ if __name__ == "__main__":
     }
     config.update(json.loads(args.config))
 
-    context = init(config, mode=det.Mode(args.mode), context_dir=str(pathlib.Path.cwd()))
+    context = estimator.init(
+        config, mode=experimental.Mode(args.mode), context_dir=str(pathlib.Path.cwd())
+    )
 
     # Create a unique download directory for each rank so they don't overwrite each other.
     download_directory = f"/tmp/data-rank{context.distributed.get_rank()}"

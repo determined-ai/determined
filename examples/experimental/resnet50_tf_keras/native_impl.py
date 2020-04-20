@@ -6,7 +6,8 @@ from official.vision.image_classification import imagenet_preprocessing
 from official.vision.image_classification import resnet_model
 
 import determined as det
-from determined.keras import init
+from determined import experimental
+from determined.experimental import keras
 
 import data
 
@@ -32,7 +33,9 @@ if __name__ == "__main__":
             "learning_rate": det.Constant(value=0.1),
         },
     }
-    ctx = init(config=config, mode=det.Mode(args.mode), context_dir=str(pathlib.Path.cwd()))
+    ctx = keras.init(
+        config=config, mode=experimental.Mode(args.mode), context_dir=str(pathlib.Path.cwd())
+    )
 
     lr_schedule = ctx.get_hparam("learning_rate")
     if ctx.get_data_config().get("use_tensor_lr", False):

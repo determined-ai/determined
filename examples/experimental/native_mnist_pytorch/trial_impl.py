@@ -6,6 +6,7 @@ import argparse
 import json
 import pathlib
 
+from determined import experimental
 import determined as det
 
 import model_def
@@ -44,9 +45,9 @@ if __name__ == "__main__":
     }
     config.update(json.loads(args.config))
 
-    det.create(
+    experimental.create(
         trial_def=model_def.MNistTrial,
         config=config,
-        mode=det.Mode(args.mode),
+        mode=experimental.Mode(args.mode),
         context_dir=str(pathlib.Path.cwd()),
     )
