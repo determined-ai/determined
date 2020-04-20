@@ -1,4 +1,4 @@
-description: cifar10_pytorch_adaptive
+description: cifar10_pytorch_adaptive_search
 data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-datasets/cifar10/cifar-10-python.tar.gz
 hyperparameters:
@@ -27,7 +27,6 @@ hyperparameters:
 searcher:
   name: adaptive_simple
   metric: validation_error
-  mode: aggressive
   max_steps: 800
   max_trials: 16
 entrypoint: model_def:CIFARTrial

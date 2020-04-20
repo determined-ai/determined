@@ -1,4 +1,4 @@
-description: cifar10_pytorch_const
+description: cifar10_tf_keras_const_parallel
 data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-datasets/cifar10/cifar-10-python.tar.gz
 hyperparameters:
@@ -8,9 +8,15 @@ hyperparameters:
   layer2_dropout: 0.25
   layer3_dropout: 0.5
   global_batch_size: 32
+  width_shift_range: 0.1
+  height_shift_range: 0.1
+  horizontal_flip: True
+resources:
+  # parallel run assume 8 GPUs per agent instance
+  slots_per_trial: 8
 searcher:
   name: single
-  metric: validation_error
+  metric: val_categorical_error
   max_steps: 50
-  smaller_is_better: true
+min_validation_period: 10
 entrypoint: model_def:CIFARTrial

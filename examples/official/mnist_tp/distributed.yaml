@@ -1,4 +1,4 @@
-description: mnist_tp_const
+description: mnist_tp_const_distributed
 data:
   base_url: https://s3-us-west-2.amazonaws.com/determined-ai-datasets/mnist/
   training_data: train-images-idx3-ubyte.gz
@@ -11,6 +11,9 @@ hyperparameters:
   n_filters: 40
   decay_steps: 4680
   decay_rate: 0.3
+resources:
+  # 2-machine distributed run assumes 8 GPUs per agent instance
+  slots_per_trial: 16
 searcher:
   name: single
   metric: val_accuracy

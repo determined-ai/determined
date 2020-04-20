@@ -1,10 +1,10 @@
-description: fashion_mnist_tf_keras_const_distributed
+description: fashion_mnist_tf_keras_const_parallel
 hyperparameters:
   global_batch_size: 32
   dense1: 128
 resources:
-  # 2-machine distributed run assumes 8 GPUs per agent instance
-  slots_per_trial: 16
+  # parallel run assume 8 GPUs per agent instance
+  slots_per_trial: 8
 searcher:
   name: single
   metric: val_accuracy

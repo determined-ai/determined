@@ -1,4 +1,4 @@
-description: mnist_estimator_const
+description: mnist_estimator_const_parallel
 hyperparameters:
   learning_rate: 1e-3
   global_batch_size: 64
@@ -6,6 +6,9 @@ hyperparameters:
   hidden_layer_2: 1000
   hidden_layer_3: 500
   dropout: 0.5
+resources:
+  # parallel run assume 8 GPUs per agent instance
+  slots_per_trial: 8
 searcher:
   name: single
   metric: accuracy
