@@ -11,9 +11,9 @@ Prerequisites
 --------------
 - Access to an installation of Determined, either on your own machine or the public cloud. If you have not yet installed Determined, refer to the :ref:`installation instructions <install-determined>`.
 - The Determined CLI should be installed on your local machine. For installation instructions, see :ref:`here <install-cli>`. After installing the CLI, configure it to connect to your Determined cluster by setting the ``DET_MASTER`` environment variable to the hostname or IP address where Determined is running.
-- For Determined clusters running through ``det-deploy local``: When you run your first experiment, Determined needs to pull down Docker images that contain environment information. The Docker images are then cached for future experiments. We suggest running the following commands to help speed up this process. 
+- For Determined clusters running through ``det-deploy local``: When you run your first experiment, Determined needs to pull down Docker images that contain environment information. The Docker images are then cached for future experiments. We suggest running the following commands to help speed up this process.
 
-.. code:: 
+.. code::
 
     # For CPU computations
     docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-90bf50b
@@ -38,21 +38,23 @@ The code for this guide can be downloaded here: :download:`mnist_pytorch.tgz </e
 
 Next, open a terminal window and ``cd`` into the extracted ``mnist_pytorch`` directory. The directory should contain the following files:
 
-.. code:: 
+.. code::
 
     ├── mnist_pytorch
-       ├── model.py
-       ├── data.py
-       ├── layers.py
-       ├── const.yaml
        ├── adaptive.yaml
-       ├── parallel.yaml
+       ├── const.yaml
+       ├── data.py
+       ├── distributed.yaml
+       ├── layers.py
+       ├── model_def.py
 
 The directory contains Python and YAML files. The Python files contain the model and data pipeline definitions. The ``.yaml`` files are configuration files that specify the dataset location, hyperparameters, and the number of batches for training. This file also tells Determined the entry point, or where the model class is located. For example, below is the ``const.yaml`` file:
 
 .. code:: yaml
 
     description: mnist_pytorch_const
+    data:
+        url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
     hyperparameters:
         learning_rate: 1.0
         global_batch_size: 64
@@ -68,16 +70,16 @@ The directory contains Python and YAML files. The Python files contain the model
     entrypoint: model_def:MNistTrial
 
 
-Each yaml file is specific to the type of experiment we will run during this guide:
+Each YAML file is specific to the type of experiment we will run during this guide:
 
-    - ``const.yaml``: train a single model on a single GPU or CPU.
-    - ``parallel.yaml``: distributed training of a single model using multiple GPUs.
-    - ``adaptive.yaml``: training multiple models as part of a hyperparameter search, leveraging Determined’s adaptive hyperparameter search functionality.
+- ``const.yaml``: train a single model on a single GPU or CPU.
+- ``distributed.yaml``: train of a single model using multiple GPUs (:ref:`distributed training <multi-gpu-training>`).
+- ``adaptive.yaml``: train multiple models as part of a hyperparameter search, leveraging Determined’s adaptive :ref:`hyperparameter search <hyperparameter-tuning>` functionality.
 
 Running Your First Job
 -----------------------
 
-The Determined CLI can be used to submit an experiment to the Determined cluster. Determined defines an :ref:`experiment <concept-experiment>` as a collection of one or more trials. A :ref:`trial <concept-trial>` is a training task that consists of a dataset, a deep learning model, and values for all of the model’s hyperparameters.  An experiment can either train a single model (with a single trial), or can define a search over a user-defined hyperparameter space.
+The Determined CLI can be used to submit an experiment to the Determined cluster. An :ref:`experiment <concept-experiment>` is a collection of one or more trials. A :ref:`trial <concept-trial>` is a training task that consists of a dataset, a deep learning model, and values for all of the model’s hyperparameters.  An experiment can either train a single model (with a single trial) or perform a search over a user-defined hyperparameter space.
 
 We will start by training a single model for a fixed number of batches and with constant values for all of the hyperparameters. Run the following command in the ``mnist_pytorch`` directory:
 
@@ -85,11 +87,11 @@ We will start by training a single model for a fixed number of batches and with 
 
     det experiment create const.yaml .
 
-This command tells Determined to create a new experiment using the ``const.yaml`` file. Determined also needs the directory containing the model code to upload it to the cluster. In the case above, we run the command in the ``mnist_pytorch`` directory, so we tell the model to upload all the current directory files by using ``.``.
+This command tells Determined to create a new experiment using the ``const.yaml`` configuration file. Determined also needs the directory containing the model code to upload it to the cluster. In the case above, we run the command in the ``mnist_pytorch`` directory, so we tell the model to upload all the current directory files by using ``.``.
 
 Once the experiment has been submitted, you should see the following output:
 
-.. code::
+.. code:: text
 
     Preparing files (../mnist_pytorch) to send to master... 2.5KB and 4 files
     Created experiment 1
@@ -140,6 +142,11 @@ Left of the graph displays time information, the hyperparameter configuration, t
 
 |
 
-Again, ``model.py`` does not contain any code to manage the checkpoint and will automatically checkpoint after calculating metrics on the validation dataset. Once the training has completed, you can see the total time it took, and the average batch speed. On a laptop, it should take about: 2 mins to reach 98% accuracy and .05 validation loss.
+Again, ``model_def.py`` does not contain any code to manage the checkpoint and will automatically checkpoint after calculating metrics on the validation dataset. Once the training has completed, you can see the total time it took, and the average batch speed. On a typical laptop, it should take about 5 minutes to train the model to reach 98% accuracy and 0.05 validation loss.
 
-To begin implementing your first model: go to :ref:`pytorch-mnist-tutorial`!
+Next Steps
+----------
+
+To begin implementing your first model using PyTorch, go to :ref:`pytorch-mnist-tutorial`!
+
+If you prefer using TensorFlow, use the :ref:`tf-mnist-tutorial` instead.
