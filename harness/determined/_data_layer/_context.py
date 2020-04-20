@@ -28,7 +28,7 @@ class DataLayerContext:
     ) -> Callable:
         """cache_train_dataset is a decorator for creating your training dataset.  It should
         decorate a function that outputs a ``tf.data.Dataset`` object. The dataset will be
-        stored in a cache, keyed by ``dataset_id`` and ``dataset_version``. The cache is re-used
+        stored in a cache, keyed by ``dataset_id`` and ``dataset_version``. The cache is
         re-used in subsequent calls.
 
         Args:
@@ -79,7 +79,7 @@ class DataLayerContext:
     ) -> Callable:
         """cache_validation_dataset is a decorator for creating your validation dataset.  It should
         decorate a function that outputs a ``tf.data.Dataset`` object. The dataset will be
-        stored in a cache, keyed by ``dataset_id`` and ``dataset_version``. The cache is re-used
+        stored in a cache, keyed by ``dataset_id`` and ``dataset_version``. The cache is
         re-used in subsequent calls.
 
         Args:
