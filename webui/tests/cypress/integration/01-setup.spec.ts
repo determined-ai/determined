@@ -1,4 +1,8 @@
 describe('setup', () => {
+  before(() => {
+    cy.login();
+  });
+
   beforeEach(() => {
     cy.visit('/ui/experiments');
   });

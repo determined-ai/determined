@@ -21,15 +21,15 @@ Cypress.Cookies.defaults({
 
 Cypress.on('window:before:load', (window) => {
   Cypress.log({
-    name: 'console.log',
     message: 'wrap on console.log',
+    name: 'console.log',
   });
 
   // pass through cypress log so we can see log inside command execution order
   window.console.log = (...args) => {
     Cypress.log({
-      name: 'console.log',
       message: args,
+      name: 'console.log',
     });
   };
 

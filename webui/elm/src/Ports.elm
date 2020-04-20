@@ -1,6 +1,7 @@
 port module Ports exposing
     ( AceContentUpdate
     , aceContentUpdated
+    , assignLocation
     , copiedToClipboard
     , copyToClipboard
     , destroyAceEditor
@@ -89,6 +90,9 @@ port setPageTitle : String -> Cmd a
 
 
 port setFavicon : String -> Cmd a
+
+
+port assignLocation : String -> Cmd a
 
 
 

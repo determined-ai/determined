@@ -1,11 +1,7 @@
 import axios, { AxiosResponse, CancelToken, Method } from 'axios';
 
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-const isAuthFailure = (e: any): boolean => {
-  return e.response && e.response.status && e.response.status === 401;
-};
+import { isAuthFailure } from 'services/api';
 
 export const http = axios.create({
   responseType: 'json',

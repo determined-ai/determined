@@ -28,6 +28,25 @@ type alias ExperimentListOptions =
     }
 
 
+urlToPathString : Url.Url -> String
+urlToPathString url =
+    url.path
+        ++ (case url.query of
+                Just query ->
+                    "?" ++ query
+
+                Nothing ->
+                    ""
+           )
+        ++ (case url.fragment of
+                Just fragment ->
+                    "#" ++ fragment
+
+                Nothing ->
+                    ""
+           )
+
+
 {-| CommandLikeListOptions is meant to be used for command, notebook, shell, and TensorBoard list
 views since the corresponding records are so similar to one another.
 -}
@@ -125,7 +144,7 @@ type Route
     | CommandList CommandLikeListOptions
     | ExperimentDetail Int
     | ExperimentList ExperimentListOptions
-    | Login (Maybe String)
+    | Login (Maybe Url.Url)
     | Logout
     | NotebookList CommandLikeListOptions
     | ShellList CommandLikeListOptions
@@ -180,8 +199,6 @@ parser =
         , map ExperimentDetail (s "ui" </> s "experiments" </> int)
         , makeExpListRoute (s "ui" </> s "experiments")
         , makeExpListRoute (s "ui")
-        , map (Login Nothing) (s "ui" </> s "login")
-        , map Logout (s "ui" </> s "logout")
         , commandLikeListRoute (s "ui" </> s "notebooks") NotebookList
         , commandLikeListRoute (s "ui" </> s "shells") ShellList
         , commandLikeListRoute (s "ui" </> s "tensorboards") TensorBoardList
@@ -257,13 +274,17 @@ toString r =
         Login maybeRedirect ->
             case maybeRedirect of
                 Just redirect ->
-                    absolute [ "ui", "login" ] [ UB.string "redirect" redirect ]
+                    absolute
+                        [ "det", "login" ]
+                        [ urlToPathString redirect
+                            |> UB.string "redirect"
+                        ]
 
                 Nothing ->
-                    absolute [ "ui", "login" ] []
+                    absolute [ "det", "login" ] []
 
         Logout ->
-            absolute [ "ui", "logout" ] []
+            absolute [ "det", "logout" ] []
 
         NotebookList options ->
             absolute

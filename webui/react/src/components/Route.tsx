@@ -1,12 +1,8 @@
-import axios, { CancelToken } from 'axios';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { Route as DomRoute, Redirect } from 'react-router-dom';
 
-import Spinner from 'components/Spinner';
 import Auth from 'contexts/Auth';
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { RouteConfigItem } from 'routes';
-import { getCurrentUser } from 'services/api';
 
 /*
  * A wrapper for <Route> that redirects to the login
@@ -14,62 +10,13 @@ import { getCurrentUser } from 'services/api';
  */
 
 const Route: React.FC<RouteConfigItem> = (props: RouteConfigItem) => {
-  const mounted = useRef(false);
   const auth = Auth.useStateContext();
-  const setAuth = Auth.useActionContext();
-  const needAuth = props.needAuth;
 
-  // isLoading is true at the start until useEffect overrides it.
-  const [ isLoading, setIsLoading ] = useState(true);
+  if (props.needAuth && !auth.isAuthenticated) {
+    const queryString = window.location.search ? window.location.search : `?redirect=${props.path}`;
+    return <Redirect to={ `/det/login${queryString}` } />;
+  }
 
-  const checkAuth = useCallback(async (cancelToken: CancelToken): Promise<void> => {
-    try {
-      const user = await getCurrentUser({ cancelToken });
-
-      if (mounted.current) {
-        setAuth({
-          type: Auth.ActionType.Set,
-          value: { isAuthenticated: true, user },
-        });
-      }
-    } catch (e) {
-      handleError({
-        error: e,
-        level: ErrorLevel.Fatal,
-        message: `unauthenticated route request ${props.path}`,
-        silent: true,
-        type: ErrorType.Auth,
-      });
-    }
-  }, [ setAuth, props.path ]);
-
-  const setLoading = (loadingStatus: boolean): void => {
-    if (mounted.current) setIsLoading(loadingStatus);
-  };
-
-  useEffect(() => {
-    const source = axios.CancelToken.source();
-    // Keeps track of whether component has mounted or not
-    mounted.current = true;
-
-    // Use IIFE to make block sync
-    (async (): Promise<void> => {
-      if (needAuth) await checkAuth(source.token);
-      setLoading(false);
-    })();
-
-    /*
-     * Return cancellable function to interrupt fetchUser if we are
-     * removing this component before the HTTP call completes.
-     */
-    return (): void => {
-      mounted.current = false;
-      source.cancel();
-    };
-  }, [ checkAuth, needAuth ]);
-
-  if (isLoading) return <Spinner fullPage={true} />;
-  if (needAuth && !auth.isAuthenticated) return <Redirect to="/ui/login" />;
   return <DomRoute {...props} />;
 };
 

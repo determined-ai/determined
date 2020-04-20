@@ -1,5 +1,6 @@
 describe('experiment List', () => {
   before(() => {
+    cy.login();
     cy.visit('/ui/experiments');
   });
 

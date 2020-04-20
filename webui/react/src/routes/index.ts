@@ -1,3 +1,6 @@
+import { RouteProps } from 'react-router';
+
+import Authentication from 'pages/Authentication';
 import Dashboard from 'pages/Dashboard';
 import Determined from 'pages/Determined';
 
@@ -7,20 +10,30 @@ import Determined from 'pages/Determined';
  * meaning React will attempt to load the path outside of the internal routing
  * mechanism.
  */
-export interface RouteConfigItem {
+export interface RouteConfigItem extends RouteProps {
   id: string;
   icon?: string;
   path: string;
   popout?: boolean;
   suffixIcon?: string;
   title: string;
-  component?: React.FC;
   needAuth?: boolean;
 }
 
+export const isFullPath = (path: string): boolean => {
+  return path.startsWith('http');
+};
+
+export const isCrossoverRoute = (path: string): boolean => {
+  return path.startsWith('/ui') || path.includes(':8080/ui');
+};
+
 export const crossoverRoute = (path: string): void => {
-  const pathPrefix = process.env.IS_DEV ? 'http://localhost:8080' : '';
-  window.location.assign(`${pathPrefix}${path}`);
+  if (!isFullPath(path)) {
+    const pathPrefix = process.env.IS_DEV ? 'http://localhost:8080' : '';
+    path = `${pathPrefix}${path}`;
+  }
+  window.location.assign(path);
 };
 
 export const appRoutes: RouteConfigItem[] = [
@@ -28,8 +41,22 @@ export const appRoutes: RouteConfigItem[] = [
     component: Determined,
     id: 'det',
     needAuth: true,
-    path: '/det',
+    path: '/det/dashboard',
     title: 'Determined',
+  },
+  {
+    component: Authentication,
+    id: 'login',
+    needAuth: false,
+    path: '/det/login',
+    title: 'Login',
+  },
+  {
+    component: Authentication,
+    id: 'logout',
+    needAuth: false,
+    path: '/det/logout',
+    title: 'Logout',
   },
   {
     id: 'docs',
@@ -46,6 +73,7 @@ export const detRoutes: RouteConfigItem[] = [
     component: Dashboard,
     icon: 'user',
     id: 'dashboard',
+    needAuth: true,
     path: '/det/dashboard',
     title: 'Dashboard',
   },

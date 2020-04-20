@@ -10,6 +10,11 @@ export interface Auth {
   user?: User;
 }
 
+export interface Credentials {
+  password: string;
+  username: string;
+}
+
 export interface DeterminedInfo {
   clusterId: string;
   masterId: string;
@@ -172,3 +177,5 @@ export interface RecentTask {
   url?: string;
   state: RunState | CommandState;
 }
+
+export type PropsWithClassName<T> = T & {className?: string};

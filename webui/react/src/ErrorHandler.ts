@@ -1,6 +1,6 @@
 import { notification } from 'antd';
 
-import { crossoverRoute } from 'routes';
+import history from 'routes/history';
 import { isAsyncFunction } from 'utils/data';
 import Logger, { LoggerInterface } from 'utils/Logger';
 
@@ -63,8 +63,10 @@ const handleError = (e: DaError): Error => {
   const error = e.error ? e.error : new Error(e.message);
 
   if (e.type === ErrorType.Auth) {
-    // TODO: Update to internal routing when React takes over login.
-    crossoverRoute('/ui/logout');
+    if (!window.location.pathname.endsWith('login')) {
+      const destination = `/det/login${window.location.search}`;
+      history.replace(destination);
+    }
     return error;
   }
 
