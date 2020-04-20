@@ -58,7 +58,7 @@ pipeline {
         stage("Python Integration Tests Split 1") {
           agent { label 'integrations' }
           environment {
-            PYTEST_MARKS = "integ5"
+            PYTEST_MARKS = "integ2"
             ETC_ROOT = "${env.WORKSPACE}/build/cluster_config/"
             MASTER_CONFIG_PATH = "${env.ETC_ROOT}/master.yaml"
             REPORT_ROOT = "${env.WORKSPACE}/build"

@@ -17,7 +17,7 @@ def test_noop_long_train_step() -> None:
     )
 
 
-@pytest.mark.integ5  # type: ignore
+@pytest.mark.integ2  # type: ignore
 def test_noop_pause() -> None:
     """
     Walk through starting, pausing, and resuming a single no-op experiment.
