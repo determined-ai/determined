@@ -20,6 +20,7 @@ The full list of our how-to guides can be found below:
   :titlesonly:
 
   custom-env
+  data-layer
   distributed-training
   hyperparameter-tuning
   install-cli
