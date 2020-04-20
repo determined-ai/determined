@@ -19,8 +19,8 @@ class Mode(enum.Enum):
     See :py:func:`determined.create()`.
     """
 
-    SUBMIT = "submit"
-    TEST = "test"
+    CLUSTER = "cluster"
+    LOCAL = "local"
 
 
 def _in_ipython() -> bool:
@@ -239,7 +239,7 @@ def create_trial_instance(
 def create(
     trial_def: Type[det.Trial],
     config: Optional[Dict[str, Any]] = None,
-    mode: Mode = Mode.SUBMIT,
+    mode: Mode = Mode.CLUSTER,
     context_dir: str = "",
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
@@ -258,12 +258,12 @@ def create(
         mode:
             The :py:class:`determined.Mode` used when creating an experiment
 
-            1. ``Mode.SUBMIT`` (default): Submit the experiment to a remote
+            1. ``Mode.CLUSTER`` (default): Submit the experiment to a remote
             Determined cluster.
 
-            2. ``Mode.TEST`` (default): Test the experiment in the calling
-            Python process for development / debugging purposes. Run through a
-            minimal loop of training, validation, and checkpointing steps.
+            2. ``Mode.LOCAL``: Test the experiment in the calling
+            Python process for local development / debugging purposes.
+            Run through a minimal loop of training, validation, and checkpointing steps.
 
         context_dir:
             A string filepath that defines the context directory. In submit
@@ -287,7 +287,7 @@ def create(
             variable ``DET_MASTER``.
     """
 
-    if Mode(mode) == Mode.SUBMIT:
+    if Mode(mode) == Mode.CLUSTER:
         if load.RunpyGlobals.is_initialized():
             load.RunpyGlobals.set_runpy_trial_result(
                 trial_def, cast(Type[det.TrialController], trial_def.trial_controller_class)
@@ -298,14 +298,13 @@ def create(
                 config=config, context_dir=context_dir, command=command, master_url=master_url
             )
 
-    elif Mode(mode) == Mode.TEST:
-        print("Running test mode locally.")
+    elif Mode(mode) == Mode.LOCAL:
+        print("Starting a test experiment locally.")
         checkpoint_dir = tempfile.TemporaryDirectory()
         env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
             checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
         )
         print(
-            "Starting a test experiment.\n"
             f"Using a modified test config: {env.experiment_config}.\n"
             f"Using a set of random hyperparameter values: {env.hparams}."
         )
@@ -319,22 +318,22 @@ def create(
         )
         controller.run()
         checkpoint_dir.cleanup()
-        print("Note: to submit a real experiment to the cluster, change mode argument to 'submit'")
+        print("Note: to submit an experiment to the cluster, change mode argument to Mode.CLUSTER")
 
     else:
-        raise errors.InvalidExperimentException("Must use either test mode or submit mode.")
+        raise errors.InvalidExperimentException("Must use either local mode or cluster mode.")
 
 
 def _init_native(
     controller_cls: Type[det.TrialController],
     native_context_cls: Type[det.NativeContext],
     config: Optional[Dict[str, Any]] = None,
-    mode: Mode = Mode.SUBMIT,
+    mode: Mode = Mode.CLUSTER,
     context_dir: str = "",
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
 ) -> Any:
-    if Mode(mode) == Mode.SUBMIT:
+    if Mode(mode) == Mode.CLUSTER:
         if load.RunpyGlobals.is_initialized():
             controller_cls.pre_execute_hook(
                 env=load.RunpyGlobals.get_instance().env,
@@ -354,14 +353,13 @@ def _init_native(
             print("Exiting the program after submitting the experiment.")
             sys.exit(0)
 
-    elif Mode(mode) == Mode.TEST:
-        print("Running test mode locally.")
+    elif Mode(mode) == Mode.LOCAL:
+        print("Starting a test experiment locally.")
         checkpoint_dir = tempfile.TemporaryDirectory()
         env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
             checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
         )
         print(
-            "Starting a test experiment.\n"
             f"Using a modified test config: {env.experiment_config}.\n"
             f"Using a set of random hyperparameter values: {env.hparams}."
         )
@@ -379,12 +377,10 @@ def _init_native(
             )
             controller.run()
             checkpoint_dir.cleanup()
-            print(
-                "Note: to submit a real experiment to the cluster, change mode argument to 'submit'"
-            )
+            print("Note: to submit an experiment to a cluster change mode argument to Mode.CLUSTER")
 
         context._set_train_fn(train_fn)
         return context
 
     else:
-        raise errors.InvalidExperimentException("Must use either test mode or submit mode.")
+        raise errors.InvalidExperimentException("Must use either local mode or cluster mode.")

@@ -198,13 +198,13 @@ def run_warm_start_test(implementation: NativeImplementation) -> None:
         assert trial.warm_start_checkpoint_id == first_checkpoint_id
 
 
-def run_test_mode(implementation: NativeImplementation) -> None:
+def run_local_mode(implementation: NativeImplementation) -> None:
     # TODO(DET-2653): Support run test mode integration test on tf2 using command.
     logging.debug(implementation)
 
     with subprocess.Popen(
         implementation.command
-        + ["--config", json.dumps(implementation.configuration), "--mode", "test"],
+        + ["--config", json.dumps(implementation.configuration), "--mode", "local"],
         cwd=implementation.cwd,
         env={"PYTHONUNBUFFERED": "1", **os.environ},
     ) as p:
@@ -275,6 +275,6 @@ def test_pytorch_warm_start(implementation: NativeImplementation) -> None:
     ],
 )
 @pytest.mark.integ4  # type: ignore
-def test_test_mode(implementation: NativeImplementation) -> None:
+def test_local_mode(implementation: NativeImplementation) -> None:
     cluster_utils.skip_if_not_enough_gpus(implementation.min_num_gpus_required)
-    run_test_mode(implementation)
+    run_local_mode(implementation)

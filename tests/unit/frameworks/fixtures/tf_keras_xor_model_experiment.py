@@ -26,7 +26,7 @@ def make_xor_single_thread_loaders() -> Tuple[tf.keras.utils.Sequence, tf.keras.
 
 
 def train():
-    context = keras.init(mode=det.Mode.SUBMIT, context_dir=str(pathlib.Path.cwd()))
+    context = keras.init(mode=det.Mode.CLUSTER, context_dir=str(pathlib.Path.cwd()))
 
     model = Sequential()
     model.add(Dense(context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,)))
