@@ -15,7 +15,8 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 import determined as det
-from determined.keras import init
+from determined import experimental
+from determined.experimental import keras
 
 import data
 
@@ -86,7 +87,9 @@ if __name__ == "__main__":
     }
     config.update(json.loads(args.config))
 
-    context = init(config, mode=det.Mode(args.mode), context_dir=str(pathlib.Path.cwd()))
+    context = keras.init(
+        config, mode=experimental.Mode(args.mode), context_dir=str(pathlib.Path.cwd())
+    )
 
     (x_train, y_train), (x_test, y_test) = load_mnist_data()
     # Create training and test data generators using Keras' ImageDataGenerator.
