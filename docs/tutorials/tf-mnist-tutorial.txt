@@ -20,8 +20,8 @@ When training a ``tf.keras`` model, Determined provides a built-in training loop
 
 - initialization
 - build the model graph
-- load the training data set
-- load the validation data set
+- load the training dataset
+- load the validation dataset
 
 The Determined training loop will then invoke these functions automatically. These methods should be organized into a **trial class**, which is a user-defined Python class that inherits from :class:`determined.keras.TFKerasTrial`. The following sections walk through how to write your first trial class and then how to run a training job with Determined.
 
@@ -47,12 +47,12 @@ Here is what the skeleton of our trial class looks like:
             pass
 
         def build_training_data_loader(self):
-            # Create the training data loader. This should return a keras.Sequence
+            # Create the training data loader. This should return a keras.Sequence,
             # a tf.data.Dataset, or NumPy arrays.
             pass
 
         def build_validation_data_loader(self):
-            # Create the validation data loader. This should return a keras.Sequence
+            # Create the validation data loader. This should return a keras.Sequence,
             # a tf.data.Dataset, or NumPy arrays.
             pass
 
