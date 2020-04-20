@@ -104,9 +104,14 @@ def wait_for_experiment_state(
 
 
 def experiment_has_active_workload(experiment_id: int) -> bool:
+    def p(*args, **kwargs):
+        print(time.ctime(), *args, **kwargs)
+
     r = api.get(conf.make_master_url(), "tasks").json()
+    # p("all tasks:", r.values())
     for task in r.values():
         if "Experiment {}".format(experiment_id) in task["name"] and len(task["containers"]) > 0:
+            p("active task:", task)
             return True
 
     return False

@@ -17,63 +17,70 @@ def test_noop_long_train_step() -> None:
     )
 
 
-@pytest.mark.integ2  # type: ignore
+@pytest.mark.integ5  # type: ignore
 def test_noop_pause() -> None:
     """
     Walk through starting, pausing, and resuming a single no-op experiment.
     """
+
+    def p(*args, **kwargs):
+        print("=" * 10, time.ctime(), *args, **kwargs)
+
+    p("start")
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
         conf.fixtures_path("no_op"),
         None,
     )
+    p("id", experiment_id)
     exp.wait_for_experiment_state(experiment_id, "ACTIVE")
+    p("active")
 
     # Wait for the only trial to get scheduled.
-    workload_active = False
     for _ in range(conf.MAX_TASK_SCHEDULED_SECS):
-        workload_active = exp.experiment_has_active_workload(experiment_id)
-        if workload_active:
+        if exp.experiment_has_active_workload(experiment_id):
             break
-        else:
-            time.sleep(1)
-    check.true(
-        workload_active,
-        f"The only trial cannot be scheduled within {conf.MAX_TASK_SCHEDULED_SECS} seconds.",
-    )
+        time.sleep(1)
+    else:
+        raise AssertionError(
+            f"The only trial cannot be scheduled within {conf.MAX_TASK_SCHEDULED_SECS} seconds."
+        )
+    p("workload active")
 
     # Wait for the only trial to show progress, indicating the image is built and running.
-    num_steps = 0
     for _ in range(conf.MAX_TRIAL_BUILD_SECS):
         trials = exp.experiment_trials(experiment_id)
-        if len(trials) > 0:
-            only_trial = trials[0]
-            num_steps = len(only_trial["steps"])
-            if num_steps > 1:
-                break
+        if trials and len(trials[0]["steps"]) > 1:
+            break
         time.sleep(1)
-    check.true(
-        num_steps > 1,
-        f"The only trial cannot start training within {conf.MAX_TRIAL_BUILD_SECS} seconds.",
-    )
+    else:
+        raise AssertionError(
+            f"The only trial cannot start training within {conf.MAX_TRIAL_BUILD_SECS} seconds."
+        )
+    p("found steps")
 
     # Pause the experiment. Note that Determined does not currently differentiate
     # between a "stopping paused" and a "paused" state, so we follow this check
     # up by ensuring the experiment cleared all scheduled workloads.
+    p("pausing")
     exp.pause_experiment(experiment_id)
+    p("finished pause command")
     exp.wait_for_experiment_state(experiment_id, "PAUSED")
+    p("found paused")
 
     # Wait at most 20 seconds for the experiment to clear all workloads (each
     # train step should take 5 seconds).
     for _ in range(20):
-        workload_active = exp.experiment_has_active_workload(experiment_id)
-        if not workload_active:
+        if not exp.experiment_has_active_workload(experiment_id):
             break
-        else:
-            time.sleep(1)
-    check.true(
-        not workload_active, f"The experiment cannot be paused within 20 seconds.",
-    )
+        time.sleep(1)
+    else:
+        p("failed clear workloads")
+        print("".join(exp.trial_logs(exp.experiment_trials(experiment_id)[0]["id"])))
+        raise AssertionError(f"The experiment cannot be paused within 20 seconds.")
+    p("workloads cleared")
+
+    print("".join(exp.trial_logs(exp.experiment_trials(experiment_id)[0]["id"])))
 
     # Resume the experiment and wait for completion.
     exp.activate_experiment(experiment_id)
