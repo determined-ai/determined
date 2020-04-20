@@ -13,5 +13,3 @@ from determined._trial_controller import (
 
 from determined import errors
 from determined import util
-
-from determined._native import Mode, create, create_trial_instance, _init_native
