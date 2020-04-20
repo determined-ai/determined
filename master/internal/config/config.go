@@ -163,6 +163,8 @@ type Config struct {
 	// Internal contains "hidden" useful debugging configurations.
 	InternalConfig InternalConfig `json:"__internal"`
 
+	Scim         ScimConfig         `json:"scim"`
+	OIDC         OIDCConfig         `json:"oidc"`
 	Integrations IntegrationsConfig `json:"integrations"`
 }
 
@@ -207,6 +209,8 @@ func (c Config) Printable() ([]byte, error) {
 			c.TaskContainerDefaults.RegistryAuth = &printable
 		}
 	}
+	c.Scim.Username = hiddenValue
+	c.Scim.Password = hiddenValue
 
 	c.CheckpointStorage = c.CheckpointStorage.Printable()
 
