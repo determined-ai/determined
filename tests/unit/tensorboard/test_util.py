@@ -11,7 +11,7 @@ def get_dummy_env() -> det.EnvContext:
         master_addr="",
         master_port=0,
         container_id="",
-        experiment_config={},
+        experiment_config={"resources": {"slots_per_trial": 1, "native_parallel": False}},
         initial_workload=workload.Workload(
             workload.Workload.Kind.RUN_STEP,
             determined_common.types.ExperimentID(1),
@@ -24,7 +24,7 @@ def get_dummy_env() -> det.EnvContext:
         slot_ids=[],
         debug=False,
         workload_manager_type="",
-        hparams={},
+        hparams={"global_batch_size": 1},
         det_rendezvous_ports="",
         det_trial_runner_network_interface=constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE,
         det_trial_id="1",

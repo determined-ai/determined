@@ -22,18 +22,13 @@ class TFKerasContext:
     """
 
     def __init__(
-        self,
-        env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
-        train_context: Union[det.NativeContext, det.TrialContext],
+        self, env: det.EnvContext, hvd_config: horovod.HorovodContext,
     ):
         self.env = env
         self.hvd_config = hvd_config
         self.dataset_initialized = False
 
-        self.experimental = TFKerasExperimentalContext(
-            env=env, hvd_config=hvd_config, train_context=train_context,
-        )
+        self.experimental = TFKerasExperimentalContext(env=env, hvd_config=hvd_config)
 
         # The following three attributes are initialized during the lifetime of a
         # TFKerasContext instance by the user calling compile() and
@@ -194,7 +189,7 @@ class TFKerasContext:
 class TFKerasTrialContext(det.TrialContext, TFKerasContext):
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         det.TrialContext.__init__(self, env, hvd_config)
-        TFKerasContext.__init__(self, env, hvd_config, self)
+        TFKerasContext.__init__(self, env, hvd_config)
 
     def wrap_model(self, model: Any) -> Any:
         """
@@ -213,7 +208,7 @@ class TFKerasTrialContext(det.TrialContext, TFKerasContext):
 class TFKerasNativeContext(det.NativeContext, TFKerasContext):
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
         det.NativeContext.__init__(self, env, hvd_config)
-        TFKerasContext.__init__(self, env, hvd_config, self)
+        TFKerasContext.__init__(self, env, hvd_config)
 
     def wrap_model(self, model: Any) -> Any:
         return self._wrap_model_with_train_fn(model, self._train_fn)
@@ -228,11 +223,5 @@ class TFKerasExperimentalContext(_data_layer.DataLayerContext):
     the ``context.experimental`` namespace.
     """
 
-    def __init__(
-        self,
-        env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
-        train_context: Union[det.NativeContext, det.TrialContext],
-    ) -> None:
-
-        super().__init__(env=env, hvd_config=hvd_config, train_context=train_context)
+    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
+        super().__init__(env=env, hvd_config=hvd_config)

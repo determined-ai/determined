@@ -120,7 +120,7 @@ def test_broadcast_server_client() -> None:
 
 
 def test_subprocess_launcher_receiver() -> None:
-    env = utils.make_default_env_context({})
+    env = utils.make_default_env_context(hparams={"global_batch_size": 1})
     rendezvous_info = utils.make_default_rendezvous_info()
     hvd_config = utils.make_default_hvd_config()
 

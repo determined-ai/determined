@@ -1,27 +1,22 @@
-from typing import Callable, Union
+from typing import Callable
 
 import determined as det
 from determined import _data_layer, horovod
 
 
 class DataLayerContext:
-    def __init__(
-        self,
-        env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
-        train_context: Union[det.NativeContext, det.TrialContext],
-    ) -> None:
+    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         self._training_cacheable = _data_layer._CacheableDecorator(
             env=env,
             hvd_config=hvd_config,
             training=True,
-            per_slot_batch_size=train_context.get_per_slot_batch_size(),
+            per_slot_batch_size=env.per_slot_batch_size,
         )
         self._validation_cacheable = _data_layer._CacheableDecorator(
             env=env,
             hvd_config=hvd_config,
             training=False,
-            per_slot_batch_size=train_context.get_per_slot_batch_size(),
+            per_slot_batch_size=env.per_slot_batch_size,
         )
 
     def cache_train_dataset(

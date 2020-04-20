@@ -34,18 +34,11 @@ class EstimatorContext:
     workflow that uses the ``tf.estimator`` API.
     """
 
-    def __init__(
-        self,
-        env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
-        train_context: Union[det.NativeContext, det.TrialContext],
-    ) -> None:
+    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         self.hvd_config = hvd_config
         self.input_from_dataflow = env.experiment_config.input_from_dataflow()
 
-        self.experimental = EstimatorExperimentalContext(
-            env=env, hvd_config=hvd_config, train_context=train_context,
-        )
+        self.experimental = EstimatorExperimentalContext(env=env, hvd_config=hvd_config)
 
         self.optimizer_initialized = False
         self.dataset_initialized = False
@@ -104,13 +97,13 @@ class EstimatorContext:
 class EstimatorTrialContext(det.TrialContext, EstimatorContext):
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         det.TrialContext.__init__(self, env, hvd_config)
-        EstimatorContext.__init__(self, env, hvd_config, self)
+        EstimatorContext.__init__(self, env, hvd_config)
 
 
 class EstimatorNativeContext(det.NativeContext, EstimatorContext):
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         det.NativeContext.__init__(self, env, hvd_config)
-        EstimatorContext.__init__(self, env, hvd_config, self)
+        EstimatorContext.__init__(self, env, hvd_config)
 
         # TODO(DET-1931): Figure out the right interface to set it.
         self.serving_input_receiver_fns = {}  # type: Dict[str, ServingInputReceiverFn]
@@ -138,11 +131,5 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
     the ``context.experimental`` namespace.
     """
 
-    def __init__(
-        self,
-        env: det.EnvContext,
-        hvd_config: horovod.HorovodContext,
-        train_context: Union[det.NativeContext, det.TrialContext],
-    ) -> None:
-
-        super().__init__(env=env, hvd_config=hvd_config, train_context=train_context)
+    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
+        super().__init__(env=env, hvd_config=hvd_config)

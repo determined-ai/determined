@@ -47,8 +47,7 @@ class EnvContext:
         self.det_cluster_id = det_cluster_id
         self.trial_seed = trial_seed
 
-        self._per_slot_batch_size = None  # type: Optional[int]
-        self._global_batch_size = None  # type: Optional[int]
+        self._per_slot_batch_size, self._global_batch_size = self._calculate_batch_sizes()
 
     def first_step(self) -> types.StepID:
         return self.initial_workload.step_id
@@ -101,12 +100,8 @@ class EnvContext:
 
     @property
     def per_slot_batch_size(self) -> int:
-        if self._per_slot_batch_size is None or self._global_batch_size is None:
-            self._per_slot_batch_size, self._global_batch_size = self._calculate_batch_sizes()
         return self._per_slot_batch_size
 
     @property
     def global_batch_size(self) -> int:
-        if self._per_slot_batch_size is None or self._global_batch_size is None:
-            self._per_slot_batch_size, self._global_batch_size = self._calculate_batch_sizes()
         return self._global_batch_size
