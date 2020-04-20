@@ -30,21 +30,22 @@ the Determined API.
 
 ## Installation
 
+* [Installation Guide](https://docs.determined.ai/latest/how-to/install-determined.html)
+
 ### Try Now on AWS
+
 [![Try Now](https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/create/review?templateURL=https://determined-ai-public.s3-us-west-2.amazonaws.com/simple.yaml)
-
-
-* [Installation on AWS](https://docs.determined.ai/latest/how-to/install-aws.html)
-* [Installation on GCP](https://docs.determined.ai/latest/how-to/install-gcp.html)
-* [Manual Installation](https://docs.determined.ai/latest/how-to/install-general.html)
 
 ## Next Steps
 
-Determined supports models written using TensorFlow or PyTorch. To get started
-using Determined, follow the tutorial for your preferred deep learning framework:
+For a brief introduction to using Determined, start with the
+[Quick Start Guide](https://docs.determined.ai/latest/tutorials/quick-start.html).
 
-* [TensorFlow MNIST Tutorial](https://docs.determined.ai/latest/tutorials/tf-mnist-tutorial.html)
+To port an existing deep learning model to Determined, follow the
+tutorial for your preferred deep learning framework:
+
 * [PyTorch MNIST Tutorial](https://docs.determined.ai/latest/tutorials/pytorch-mnist-tutorial.html)
+* [TensorFlow Keras MNIST Tutorial](https://docs.determined.ai/latest/tutorials/tf-mnist-tutorial.html)
 
 ## Documentation
 
