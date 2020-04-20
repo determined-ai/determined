@@ -7,6 +7,16 @@ import (
 	"gopkg.in/guregu/null.v3"
 )
 
+var (
+	// EmptyPassword is the empty password (i.e., the empty string).
+	EmptyPassword = null.NewString("", false)
+
+	// NoPasswordLogin is a password that prevents the user from logging in
+	// directly. They can still login via external authentication methods like
+	// OAuth.
+	NoPasswordLogin = null.NewString("", true)
+)
+
 // BCryptCost is a stopgap until we implement sane master-configuration.
 const BCryptCost = 15
 
@@ -102,7 +112,7 @@ func (user User) ActiveCanBeModifiedBy(other User) bool {
 // techniques.
 func (user *User) UpdatePasswordHash(password string) error {
 	if password == "" {
-		user.PasswordHash = null.NewString("", false)
+		user.PasswordHash = EmptyPassword
 	} else {
 		passwordHash, err := bcrypt.GenerateFromPassword(
 			[]byte(password),

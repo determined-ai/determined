@@ -17,6 +17,10 @@ TF1_GPU_IMAGE = "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-1de
 TF2_GPU_IMAGE = "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-1def2ee"
 
 
+SCIM_USERNAME = "determined"
+SCIM_PASSWORD = "U4lCz36wDDfPfc0q"
+
+
 def fixtures_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "fixtures", path)
 

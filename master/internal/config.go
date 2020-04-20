@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/internal/scim"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -86,6 +87,8 @@ type Config struct {
 	Provisioner *provisioner.Config      `json:"provisioner"`
 	*resourcemanagers.ResourcePoolsConfig
 	ResourceManager *resourcemanagers.ResourceManagerConfig `json:"resource_manager"`
+
+	Scim scim.Config `json:"scim"`
 }
 
 // Printable returns a printable string.
@@ -94,6 +97,8 @@ func (c Config) Printable() ([]byte, error) {
 	c.DB.Password = hiddenValue
 	c.Telemetry.SegmentMasterKey = hiddenValue
 	c.Telemetry.SegmentWebUIKey = hiddenValue
+	c.Scim.Username = hiddenValue
+	c.Scim.Password = hiddenValue
 
 	cs, err := c.CheckpointStorage.printable()
 	if err != nil {

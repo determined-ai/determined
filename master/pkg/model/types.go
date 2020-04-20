@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
 
@@ -60,5 +61,105 @@ func (s *RawString) Scan(src interface{}) error {
 	default:
 		return errors.Errorf("unexpected type: %T", src)
 	}
+	return nil
+}
+
+// UUID is a UUID that converts to a nullable string in SQL queries.
+type UUID struct {
+	UUID  uuid.UUID
+	Valid bool
+}
+
+// NewUUID creates a new, non-null and random UUID.
+func NewUUID() UUID {
+	return UUID{
+		UUID:  uuid.New(),
+		Valid: true,
+	}
+}
+
+// ParseUUID initializes a non-null UUID from a string. It returns an error if
+// the string does not follow the format of a UUID.
+func ParseUUID(s string) (UUID, error) {
+	x, err := uuid.Parse(s)
+	if err != nil {
+		return UUID{}, errors.WithStack(err)
+	}
+
+	return UUID{
+		UUID:  x,
+		Valid: true,
+	}, nil
+}
+
+// String returns the string representation of the UUID. If this UUID is null,
+// return the empty string.
+func (u UUID) String() string {
+	if !u.Valid {
+		return ""
+	}
+	return u.UUID.String()
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (u UUID) MarshalJSON() ([]byte, error) {
+	bs, err := json.Marshal(u.String())
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+	return bs, nil
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (u *UUID) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return errors.WithStack(err)
+	}
+
+	x, err := ParseUUID(s)
+	if err != nil {
+		return err
+	}
+
+	*u = x
+
+	return nil
+}
+
+// Value implements the sql.Driver interface.
+func (u UUID) Value() (driver.Value, error) {
+	if !u.Valid {
+		return nil, nil
+	}
+	return u.String(), nil
+}
+
+// Scan implements the sql.Scanner interface.
+func (u *UUID) Scan(value interface{}) error {
+	if value == nil {
+		u.UUID = uuid.UUID{}
+		u.Valid = false
+		return nil
+	}
+
+	var x uuid.UUID
+	var err error
+
+	switch v := value.(type) {
+	case string:
+		x, err = uuid.Parse(v)
+	case []byte:
+		x, err = uuid.Parse(string(v))
+	default:
+		return errors.Errorf("unknown type %T", v)
+	}
+
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	u.UUID = x
+	u.Valid = true
 	return nil
 }

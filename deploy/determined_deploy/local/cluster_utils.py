@@ -4,7 +4,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import docker
 import requests
@@ -118,6 +118,7 @@ def master_up(
     delete_db: bool,
     autorestart: bool,
     cluster_name: str,
+    scim_credentials: Optional[Tuple[str, str]],
 ) -> None:
     command = ["up", "-d"]
     extra_files = []
@@ -138,6 +139,17 @@ def master_up(
         "DET_VERSION": version,
         "DET_RESTART_POLICY": restart_policy,
     }
+    if scim_credentials is not None:
+        scim_username, scim_password = scim_credentials
+        env.update(
+            {
+                "DET_SCIM_ENABLED": "true",
+                "DET_SCIM_USERNAME": scim_username,
+                "DET_SCIM_PASSWORD": scim_password,
+            }
+        )
+    else:
+        env.update({"DET_SCIM_ENABLED": "false", "DET_SCIM_USERNAME": "", "DET_SCIM_PASSWORD": ""})
     master_down(master_name, delete_db)
     docker_compose(command, master_name, env, extra_files=extra_files)
     _wait_for_master("localhost", port, cluster_name)
@@ -160,6 +172,7 @@ def cluster_up(
     delete_db: bool,
     no_gpu: bool,
     autorestart: bool,
+    scim_credentials: Optional[Tuple[str, str]],
 ) -> None:
     cluster_down(cluster_name, delete_db)
     master_up(
@@ -171,6 +184,7 @@ def cluster_up(
         delete_db=delete_db,
         autorestart=autorestart,
         cluster_name=cluster_name,
+        scim_credentials=scim_credentials,
     )
     for agent_number in range(num_agents):
         agent_name = cluster_name + f"-agent-{agent_number}"

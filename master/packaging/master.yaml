@@ -118,3 +118,9 @@ db:
 ## Determined.
 # telemetry:
 #   enabled: true
+
+## Configure the credentials for using the SCIM server to provision users.
+# scim:
+#   enabled: false
+#   username: scim_username
+#   password: scim_password

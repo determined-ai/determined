@@ -712,6 +712,13 @@ The master supports the following configuration settings:
 
    -  ``enabled``: Whether telemetry is enabled. Defaults to ``true``.
 
+- ``scim``: Specifies whether the SCIM service is enabled and the credentials for clients
+  to use it. Only basic authentication is supported.
+
+  - ``enabled``: Set it to be ``true`` to enable SCIM. Defaults to be ``false``.
+  - ``username``: The username that will be required in a basic auth header.
+  - ``password``: The password that will be required in a basic auth header.
+
 .. _agent-configuration:
 
 *********************

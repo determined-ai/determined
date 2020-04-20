@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/pprof"
+	"net/url"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -30,6 +31,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/internal/scim"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/template"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -211,6 +213,23 @@ func convertDBErrorsToNotFound(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 		return err
 	}
+}
+
+func getMasterURL(config *Config) (*url.URL, error) {
+	// DET-2035: move master URL field out of provisioner and avoid brittle
+	// inference of the master URL.
+	var s string
+	if p := config.Provisioner; p == nil {
+		s = "http://localhost:8080"
+	} else {
+		s = p.MasterURL
+	}
+	u, err := url.Parse(s)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return u, nil
 }
 
 func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) error {
@@ -543,6 +562,17 @@ func (m *Master) Run() error {
 		}
 	} else {
 		log.Info("telemetry reporting is disabled")
+	}
+
+	if m.config.Scim.Enabled && m.config.Scim.Username != "" && m.config.Scim.Password != "" {
+		masterURL, err := getMasterURL(m.config)
+		if err != nil {
+			return errors.Wrap(err, "couldn't parse masterURL for SCIM")
+		}
+		log.Infof("SCIM is enabled at %v/scim/v2", masterURL)
+		scim.RegisterAPIHandler(m.echo, m.db, &m.config.Scim, masterURL)
+	} else {
+		log.Info("SCIM is disabled")
 	}
 
 	return m.startServers(cert)

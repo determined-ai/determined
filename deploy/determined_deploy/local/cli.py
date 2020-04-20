@@ -182,6 +182,7 @@ def handle_cluster_up(args: argparse.Namespace) -> None:
         delete_db=args.delete_db,
         no_gpu=args.no_gpu,
         autorestart=(not args.no_autorestart),
+        scim_credentials=None,
     )
 
 
@@ -203,6 +204,7 @@ def handle_master_up(args: argparse.Namespace) -> None:
         delete_db=args.delete_db,
         autorestart=(not args.no_autorestart),
         cluster_name=args.cluster_name,
+        scim_credentials=None,
     )
 
 
