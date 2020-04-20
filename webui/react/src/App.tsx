@@ -3,6 +3,7 @@ import { Redirect, Route, Switch } from 'react-router-dom';
 
 import NavBar from 'components/NavBar';
 import Router from 'components/Router';
+import SideBar from 'components/SideBar';
 import Compose from 'Compose';
 import ActiveExperiments from 'contexts/ActiveExperiments';
 import Agents from 'contexts/Agents';
@@ -46,15 +47,19 @@ const AppView: React.FC = () => {
     setInfo({ type: Info.ActionType.Set, value: infoResponse.data });
   }, [ infoResponse, setInfo ]);
 
+  // FIXME layout
   return (
     <div className={css.base}>
       {isAuthenticated && <NavBar username={username} />}
-      <Switch>
-        <Route exact path="/">
-          <Redirect to="/det" />
-        </Route>
-        <Router routes={appRoutes} />
-      </Switch>
+      <div className={css.body}>
+        {isAuthenticated && <SideBar />}
+        <Switch>
+          <Route exact path="/">
+            <Redirect to="/det" />
+          </Route>
+          <Router routes={appRoutes} />
+        </Switch>
+      </div>
     </div>
   );
 };

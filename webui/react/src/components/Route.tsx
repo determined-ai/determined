@@ -1,5 +1,6 @@
 import axios, { CancelToken } from 'axios';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useHistory } from 'react-router';
 import { Route as DomRoute, Redirect } from 'react-router-dom';
 
 import Spinner from 'components/Spinner';
@@ -18,6 +19,7 @@ const Route: React.FC<RouteConfigItem> = (props: RouteConfigItem) => {
   const auth = Auth.useStateContext();
   const setAuth = Auth.useActionContext();
   const needAuth = props.needAuth;
+  const history = useHistory();
 
   // isLoading is true at the start until useEffect overrides it.
   const [ isLoading, setIsLoading ] = useState(true);
@@ -69,7 +71,8 @@ const Route: React.FC<RouteConfigItem> = (props: RouteConfigItem) => {
   }, [ checkAuth, needAuth ]);
 
   if (isLoading) return <Spinner fullPage={true} />;
-  if (needAuth && !auth.isAuthenticated) return <Redirect to="/ui/login" />;
+  // DISCUSS tack on a rediret path for coming back here?
+  if (needAuth && !auth.isAuthenticated) return <Redirect to="/det/login" />;
   return <DomRoute {...props} />;
 };
 

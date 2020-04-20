@@ -11,7 +11,7 @@ enum ActionType {
 type State = Auth;
 
 type Action =
-  | { type: ActionType.Reset; value: Auth }
+  | { type: ActionType.Reset}
   | { type: ActionType.Set; value: Auth }
   | { type: ActionType.SetUser; value: User }
   | { type: ActionType.SetIsAuthenticated; value: boolean }
@@ -19,6 +19,7 @@ type Action =
 const defaultAuth: Auth = { isAuthenticated: false };
 
 const reducer = (state: State, action: Action): State => {
+  // TODO also reset the cookie here?
   switch (action.type) {
     case ActionType.Reset:
       return defaultAuth;

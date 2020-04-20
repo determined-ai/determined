@@ -10,6 +10,11 @@ export interface Auth {
   user?: User;
 }
 
+export interface Credentials {
+  username: string;
+  password: string;
+}
+
 export interface DeterminedInfo {
   clusterId: string;
   masterId: string;

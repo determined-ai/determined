@@ -1,3 +1,6 @@
+import { RouteProps } from 'react-router';
+
+import Authentication from 'pages/Authentication';
 import Dashboard from 'pages/Dashboard';
 import Determined from 'pages/Determined';
 
@@ -7,7 +10,7 @@ import Determined from 'pages/Determined';
  * meaning React will attempt to load the path outside of the internal routing
  * mechanism.
  */
-export interface RouteConfigItem {
+export interface RouteConfigItem extends RouteProps {
   id: string;
   icon?: string;
   path: string;
@@ -30,6 +33,20 @@ export const appRoutes: RouteConfigItem[] = [
     needAuth: true,
     path: '/det',
     title: 'Determined',
+  },
+  {
+    component: Authentication,
+    id: 'login',
+    needAuth: false,
+    path: '/det/login',
+    title: 'Login',
+  },
+  {
+    component: Authentication,
+    id: 'logout',
+    needAuth: false,
+    path: '/det/logout',
+    title: 'Logout',
   },
   {
     id: 'docs',

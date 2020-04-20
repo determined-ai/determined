@@ -2,7 +2,7 @@ import { CancelToken } from 'axios';
 
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { Api, generateApi } from 'services/apiBuilder';
-import { CommandType, RecentTask, TaskType, User } from 'types';
+import { CommandType, Credentials, RecentTask, TaskType, User } from 'types';
 
 const commandToEndpoint: Record<CommandType, string> = {
   [CommandType.Command]: '/commands',
@@ -95,3 +95,28 @@ export const archiveExperiment =
   async (experimentId: number, isArchived: boolean, cancelToken?: CancelToken): Promise<void> => {
     return patchExperiment({ body: { archived: isArchived }, cancelToken, experimentId });
   };
+
+const loginApi: Api<Credentials, void> = {
+  httpOptions: ({ password, username }) => {
+    return {
+      body: { password, username },
+      method: 'POST',
+      url: '/login?cookie=true',
+    };
+  },
+  name: 'login',
+};
+
+export const login = generateApi<Credentials, void>(loginApi);
+
+const logoutApi: Api<{}, void> = {
+  httpOptions: () => {
+    return {
+      method: 'POST',
+      url: '/logout',
+    };
+  },
+  name: 'logout',
+};
+
+export const logout = generateApi<{}, void>(logoutApi);

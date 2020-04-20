@@ -2,7 +2,7 @@ import { Dropdown, Menu } from 'antd';
 import React from 'react';
 
 import Avatar from 'components/Avatar';
-import Logo from 'components/Logo';
+import Logo, { LogoTypes } from 'components/Logo';
 import NavItem, { NavItemType } from 'components/NavItem';
 import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
@@ -20,14 +20,14 @@ const NavBar: React.FC<Props> = (props: Props) => {
   const menu = (
     <Menu>
       <Menu.Item>
-        <NavItem crossover={true} path={'/ui/logout'}>Sign Out</NavItem>
+        <NavItem  path={'/det/logout'}>Sign Out</NavItem>
       </Menu.Item>
     </Menu>
   );
 
   return (
     <nav className={css.base}>
-      <Logo />
+      <Logo type={LogoTypes.Light} />
       <div className={css.group}>
         <NavItem
           crossover={true}

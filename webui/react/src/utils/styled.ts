@@ -6,3 +6,5 @@ export const isPropTrue = (props: Record<string, any>, propName: string): boolea
   }
   return false;
 };
+
+export type PropsWithClassName<T> = T & {className?: string};

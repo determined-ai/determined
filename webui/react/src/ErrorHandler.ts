@@ -64,7 +64,7 @@ const handleError = (e: DaError): Error => {
 
   if (e.type === ErrorType.Auth) {
     // TODO: Update to internal routing when React takes over login.
-    crossoverRoute('/ui/logout');
+    if (!window.location.pathname.endsWith('login')) window.location.assign('/det/login');
     return error;
   }
 

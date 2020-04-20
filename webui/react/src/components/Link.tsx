@@ -41,6 +41,7 @@ const Link: React.FC<Props> = ({
     }
   }, [ history, crossover, onClick, path, popout ]);
 
+  // DISCUSSION didn't we turn links into anchor tags?
   return <div className={classes.join(' ')} onClick={handleClick}>{children}</div>;
 };
 
