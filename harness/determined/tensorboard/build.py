@@ -54,7 +54,11 @@ def build(env: det.EnvContext, checkpoint_config: Dict[str, Any]) -> base.Tensor
 
     if type_name == "shared_fs":
         return shared.SharedFSTensorboardManager(
-            checkpoint_config["container_path"], base_path, sync_path
+            checkpoint_config["host_path"],
+            checkpoint_config["container_path"],
+            checkpoint_config.get("storage_path", None),
+            base_path,
+            sync_path,
         )
 
     elif type_name == "gcs":
