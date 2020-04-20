@@ -84,8 +84,8 @@ func DefaultExperimentConfig() ExperimentConfig {
 		BatchesPerStep: 100,
 		Environment: Environment{
 			Image: RuntimeItem{
-				CPU: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-90bf50b",
-				GPU: "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-90bf50b",
+				CPU: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-4bd937a",
+				GPU: "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-4bd937a",
 			},
 		},
 		Reproducibility: ReproducibilityConfig{
