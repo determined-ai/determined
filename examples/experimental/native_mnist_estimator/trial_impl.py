@@ -19,7 +19,7 @@ if __name__ == "__main__":
         default="{}",
     )
     parser.add_argument(
-        "--mode", dest="mode", help="Specifies test mode or submit mode.", default="submit"
+        "--mode", dest="mode", help="Specifies local mode or cluster mode.", default="cluster"
     )
     args = parser.parse_args()
 

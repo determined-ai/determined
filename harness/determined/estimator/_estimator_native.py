@@ -6,7 +6,7 @@ from determined import estimator
 
 def init(
     config: Optional[Dict[str, Any]] = None,
-    mode: det.Mode = det.Mode.SUBMIT,
+    mode: det.Mode = det.Mode.CLUSTER,
     context_dir: str = "",
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
@@ -23,10 +23,10 @@ def init(
         mode:
             The :py:class:`determined.Mode` used when creating an experiment
 
-            1. ``Mode.SUBMIT`` (default): Submit the experiment to a remote
+            1. ``Mode.CLUSTER`` (default): Submit the experiment to a remote
             Determined cluster.
 
-            2. ``Mode.TEST`` (default): Test the experiment in the calling
+            2. ``Mode.LOCAL``: Test the experiment in the calling
             Python process for development / debugging purposes. Run through a
             minimal loop of training, validation, and checkpointing steps.
 

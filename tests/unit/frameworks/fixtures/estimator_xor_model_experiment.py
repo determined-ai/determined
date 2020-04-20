@@ -67,7 +67,7 @@ def build_serving_input_receiver_fns() -> Dict[str, ServingInputReceiverFn]:
 
 
 if __name__ == "__main__":
-    context = init(mode=det.Mode.SUBMIT, context_dir=str(pathlib.Path.cwd()))
+    context = init(mode=det.Mode.CLUSTER, context_dir=str(pathlib.Path.cwd()))
 
     batch_size = context.get_per_slot_batch_size()
     shuffle = context.get_hparam("shuffle")
