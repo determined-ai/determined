@@ -95,3 +95,11 @@ export const archiveExperiment =
   async (experimentId: number, isArchived: boolean, cancelToken?: CancelToken): Promise<void> => {
     return patchExperiment(experimentId, { archived: isArchived }, cancelToken);
   };
+
+export const logout = async (cancelToken?: CancelToken): Promise<void> => {
+  try {
+    await http.get('/logout', { cancelToken });
+  } catch (e) {
+    throw Error('failed to logout');
+  }
+};
