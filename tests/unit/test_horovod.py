@@ -18,7 +18,7 @@ def create_default_env_context(experiment_config: Dict[str, Any]) -> det.EnvCont
         master_addr="",
         master_port=0,
         container_id="",
-        hparams={},
+        hparams={"global_batch_size": 32},
         latest_checkpoint=None,
         use_gpu=False,
         container_gpus=[],
@@ -48,7 +48,10 @@ def test_create_run_command(
         "tensor_fusion_threshold": tensor_fusion_threshold,
         "tensor_fusion_cycle_time": tensor_fusion_cycle_time,
     }
-    experiment_config = {"optimizations": optimizations}
+    experiment_config = {
+        "optimizations": optimizations,
+        "resources": {"slots_per_trial": 1, "native_parallel": False},
+    }
     env = create_default_env_context(experiment_config)
 
     expected_horovod_run_cmd = [
