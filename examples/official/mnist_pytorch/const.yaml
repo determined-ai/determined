@@ -14,4 +14,3 @@ searcher:
   max_steps: 9 # 9 steps is ~ one epoch
   smaller_is_better: true
 entrypoint: model_def:MNistTrial
-max_restarts: 0
