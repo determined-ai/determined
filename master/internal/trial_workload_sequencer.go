@@ -115,7 +115,7 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 		if msg.Workload != w {
 			if msg.Workload.Kind != searcher.CheckpointModel {
 				return errors.Errorf(
-					"illegal non-checkpoint workload completed message received: %s", msg.Workload)
+					"illegal completed message received: expected checkpoint or %s, got %s", w, msg.Workload)
 			}
 		}
 	}
