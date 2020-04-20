@@ -13,6 +13,7 @@ Prerequisites
 
 Overview
 --------
+
 To use a PyTorch model in Determined, you need to port the model to Determined's API. For most models, this porting process is straightforward, and once the model has been ported, all of the features of Determined will then be available: for example, you can do :ref:`distributed training <multi-gpu-training>` or :ref:`hyperparameter search <hyperparameter-tuning>` without changing your model code, and Determined will store and visualize your model metrics automatically.
 
 When training a PyTorch model, Determined provides a built-in training loop that feeds batches of data into your forward pass, performs backpropagation, and computes training metrics. Determined also handles checkpointing, log management, and device initialization. To plug your model code into the Determined training loop, you define methods to perform the following tasks:
@@ -30,6 +31,7 @@ The complete code for this tutorial can be found here: `mnist_pytorch <https://g
 
 Building a ``PyTorchTrial`` Class
 ---------------------------------
+
 Here is what the skeleton of our trial class looks like:
 
 .. code:: python
@@ -56,17 +58,17 @@ Here is what the skeleton of our trial class looks like:
             pass
 
         def evaluate_batch(self, batch: TorchData, model: nn.Module):
-            # Define how to evaluate the model by calculating loss and other metrics 
+            # Define how to evaluate the model by calculating loss and other metrics
             # for a batch of validation data.
             pass
 
         def build_training_data_loader(self):
-            # Create the training data loader. 
+            # Create the training data loader.
             # This should return a determined.pytorch.Dataset.
             pass
 
         def build_validation_data_loader(self):
-            # Create the validation data loader. 
+            # Create the validation data loader.
             # This should return a determined.pytorch.Dataset.
             pass
 
@@ -74,6 +76,7 @@ We now discuss how to implement each of these methods in more detail.
 
 Initialization
 """"""""""""""
+
 As with any Python class, the ``__init__`` method is invoked to construct our trial class. Determined passes this method a single parameter, :class:`TrialContext <determined.TrialContext>`. The trial context contains information about the trial, such as the values of the hyperparameters to use for training. For the time being, we don't need to access any properties from the trial context object, but we assign it to an instance variable so that we can use it later:
 
 .. code:: python
@@ -84,7 +87,8 @@ As with any Python class, the ``__init__`` method is invoked to construct our tr
 
 Building the Model
 """"""""""""""""""
-The ``build_model`` method returns a ``torch.Module`` or ``torch.Sequential`` object. The MNIST model code uses the Torch Sequential API and we can continue to use that API in our implementation of ``build_model``. We also access the hyperparameter for our model by the trial context with the function ``get_hparam()``. 
+
+The ``build_model`` method returns a ``torch.Module`` or ``torch.Sequential`` object. The MNIST model code uses the Torch Sequential API and we can continue to use that API in our implementation of ``build_model``. The current values of the model's hyperparameters can be accessed via the :func:`get_hparam <determined.TrialContext.get_hparam>` method of the trial context.
 
 .. code:: python
 
@@ -109,10 +113,12 @@ The ``build_model`` method returns a ``torch.Module`` or ``torch.Sequential`` ob
             nn.LogSoftmax(),
         )
 
+        reset_parameters(model)
+        return model
 
 Defining the Optimizer
 """"""""""""""""""""""
-The ``optimizer`` method returns a ``torch.optim`` object. The MNIST model code uses the ``torch.optim.Adadelta`` and we can continue to use that in our implementation of ``optimizer``.
+The ``optimizer`` method returns a ``torch.optim`` object. The MNIST model code uses ``torch.optim.Adadelta`` and we can continue to use that in our implementation of ``optimizer``.
 
 .. code:: python
 
@@ -122,8 +128,7 @@ The ``optimizer`` method returns a ``torch.optim`` object. The MNIST model code 
 Loading Data
 """"""""""""""""
 
-The last two methods we need to define are ``build_training_data_loader`` and ``build_validation_data_loader``. Determined uses these methods to load the training and validation datasets, respectively. This method should return a ``determined.pytorch.DataLoader``, which is very similar to ``torch.utils.data.DataLoader``.  
-
+The last two methods we need to define are ``build_training_data_loader`` and ``build_validation_data_loader``. Determined uses these methods to load the training and validation datasets, respectively. This method should return a :ref:`determined.pytorch.DataLoader <pytorch-data-loading>`, which is very similar to ``torch.utils.data.DataLoader``.
 
 .. code:: python
 
@@ -213,6 +218,7 @@ For more information on experiment configuration, see the :ref:`experiment confi
 
 Running an Experiment
 ---------------------
+
 The Determined CLI can be used to create a new experiment, which will immediately start running on the cluster. To do this, we run:
 
 .. code::
@@ -231,6 +237,7 @@ Once the experiment is started, you will see a notification:
 
 Evaluating the Model
 --------------------
+
 Model evaluation is done automatically for you by Determined.
 To access information on both training and validation performance,
 simply go to the WebUI by entering the address of the Determined master
@@ -241,6 +248,7 @@ either via the experiment ID (xxx) or via its description.
 
 Next Steps
 ----------
+
 - :ref:`tf-cifar-tutorial`
 - :ref:`experiment-configuration`
 - :ref:`command-configuration`
