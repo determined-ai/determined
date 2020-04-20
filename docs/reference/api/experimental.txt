@@ -1,3 +1,5 @@
+.. _experimental:
+
 determined.experimental
 =======================
 

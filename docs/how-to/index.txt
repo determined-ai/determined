@@ -31,3 +31,4 @@ The full list of our how-to guides can be found below:
   notebook-configuration
   run-notebooks
   tensorboard
+  use-trained-models

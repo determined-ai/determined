@@ -1,0 +1,188 @@
+.. _use-trained-models:
+
+Using Trained Checkpoints
+=================================
+
+Determined provides APIs for downloading trained checkpoints and loading them
+into memory in a python process.
+
+Querying Checkpoints
+--------------------
+
+The :class:`ExperimentReference <determined.experimental.ExperimentReference>`
+class contains the ``top_checkpoint`` method. Without arguments the method will
+check the experiment configuration searcher field for the ``metric`` and
+``smaller_is_better`` values. These values are used to sort the experiments
+checkpoints by validation performance. For example the following searcher
+configuration will result in `ExperimentReference.top_checkpoint` returning the
+checkpoint with the lowest "loss" metric.
+
+.. code:: yaml
+
+   searcher:
+     metric: "loss"
+     smaller_is_better: true
+
+The following snippet will return an instance of :class:`Checkpoint
+<determined.experimental.Checkpoint>` representing the checkpoint from an
+experiment with the best validation metric.
+
+.. code:: python
+
+  from determined.experimental import Experiment
+
+  checkpoint = Experiment(id).top_checkpoint()
+
+To sort checkpoints by another metric, pass ``smaller_is_better`` and
+``sort_by`` parameters to ``top_checkpoint`` where ``sort_by`` is the name of
+the metric to sort by and ``smaller_is_better`` defines whether to minimize or
+maximize the metric.
+
+.. code:: python
+
+  from determined.experimental import Experiment
+
+  checkpoint = Experiment(id).top_checkpoint(sort_by="accuracy", smaller_is_better=False)
+
+You may also query the top n checkpoints to receive a sorted list of
+checkpoints using the ``top_n_checkpoints`` method. This method also accepts
+``sort_by`` and ``smaller_is_better`` arguments.
+
+The following snippet returns the top 5 checkpoints for a specified experiment.
+
+.. code:: python
+
+  from determined.experimental import Experiment
+
+  checkpoints = Experiment(id).top_n_checkpoints(5)
+
+
+The :class:`TrialReference <determined.experimental.TrialReference>` is used for
+more fine grained control over checkpoint selection. It contains a
+``top_checkpoint`` method which mirrors the above ``top_checkpoint`` for an
+experiment. It also contains ``select_checkpoint`` which offers 3 ways to query
+checkpoints.
+
+#. ``best``: returns the best checkpoint based on validation metrics as discussed above. When using ``best``, ``smaller_is_better`` and ``sort_by`` are also accepted.
+#. ``latest``: returns the most recent checkpoint for the trial.
+#. ``uuid``: returns the checkpoint for the trial that matches the specified uuid.
+
+
+The following snippet showcases how to use the different modes for selecting
+checkpoints.
+
+.. code:: python
+
+  from determined.experimental import TrialReference
+
+  trial = TrialReference(id)
+
+  best_checkpoint = trial.top_checkpoint()
+
+  most_accurate_checkpoint = trial.select_checkpoint(
+    best=True,
+    sort_by="accuracy",
+    smaller_is_better=False
+  )
+
+  most_recent_checkpoint = trial.select_checkpoint(latest=True)
+
+  specific_checkpoint = trial.select_checkpoint(uuid="uuid-for-checkpoint")
+
+Using the Checkpoint class
+--------------------------
+The :class:`Checkpoint <determined.experimental.Checkpoint>` class can both
+download the checkpoint from persistent storage and load it into memory in a
+python process.
+
+The following snippet downloads a checkpoint from persistent storage to the
+local file system.
+
+.. code:: python
+
+  from determined.experimental import Experiment
+
+  checkpoint = Experiment(id).top_checkpoint()
+  checkpoint_path = checkpoint.download()
+
+The ``load`` method of the :class:`Checkpoint
+<determined.experimental.Checkpoint>` class downloads the checkpoint if it
+does not already exist on locally and then load it into memory in a python
+process as shown in the following snippet.
+
+.. code:: python
+
+  from determined.experimental import Experiment
+
+  checkpoint = Experiment(id).top_checkpoint()
+  model = checkpoint.load()
+
+Tensorflow checkpoints are saved in the ``saved_model`` format and are loaded
+as trackable objects (see documentation for `tf.compat.v1.saved_model.load_v2 <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/saved_model/load_v2>`_ for details).
+
+PyTorch checkpoints are saved via pickle and loaded as ``nn.Module``
+(see `pytorch serialization <https://pytorch.org/docs/stable/notes/serialization.html>`_ for details).
+
+Download Checkpoints via the CLI
+--------------------------------
+Determined offers a CLI command, ``det trial download`` for downloading checkpoints locally.
+Similar to the :class:`TrialReference <determined.experimental.TrialReference>`
+above, the command accepts ``--best``, ``--latest``, and ``--uuid`` options.
+
+.. code:: bash
+
+  # download best checkpoint
+  det trial download <trial_id> --best
+
+The command should display the following upon successfully downloading the
+checkpoint.
+::
+
+  Local checkpoint path:
+  checkpoints/46985143-af68-4d48-ab91-a6447052ca49
+
+       Batch | Checkpoint UUID                      | Validation Metrics
+  -----------+--------------------------------------+---------------------------------------------
+        1000 | 46985143-af68-4d48-ab91-a6447052ca49 | {
+             |                                      |     "num_inputs": 0,
+             |                                      |     "validation_metrics": {
+             |                                      |         "loss": 7.906739711761475,
+             |                                      |         "accuracy": 0.9646000266075134,
+             |                                      |         "global_step": 1000,
+             |                                      |         "average_loss": 0.12492649257183075
+             |                                      |     }
+             |                                      | }
+
+
+The ``--latest`` and ``--uuid`` options are used as follows:
+
+.. code:: bash
+
+  # download the most recent checkpoint
+  det trial download <trial_id> --latest
+
+  # download a specific checkpoint
+  det trial download <trial_id> --uuid <uuid-for-checkpoint>
+
+
+Loading from a Local Path
+-------------------------
+:class:`Checkpoint <determined.experimental.Checkpoint>` contains a static method,
+``load_from_path``, for loading a checkpoint from a local path.
+
+.. code:: bash
+
+  det trial download --best --output-dir local_checkpoint
+
+In python, the checkpoint is loaded via:
+
+.. code:: python
+
+  from determined.experimental import Checkpoint
+
+  model = Checkpoint.load_from_path("local_checkpoint")
+
+Next Steps
+----------
+
+- :ref:`experimental`
