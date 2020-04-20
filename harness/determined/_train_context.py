@@ -107,7 +107,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
 
     def get_hparam(self, name: str) -> Any:
         """
-        Return the hyperparameter value for the given name.
+        Return the current value of the hyperparameter with the given name.
         """
         if name not in self.env.hparams:
             raise ValueError(
