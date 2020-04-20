@@ -14,10 +14,10 @@ determined.estimator
 
 .. _estimator-init:
 
-``determined.estimator.init()``
--------------------------------
+``determined.experimental.estimator.init()``
+---------------------------------------------
 
-.. autofunction:: determined.estimator.init
+.. autofunction:: determined.experimental.estimator.init
 
 .. _estimator-context:
 

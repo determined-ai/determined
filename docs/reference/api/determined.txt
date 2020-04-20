@@ -2,4 +2,4 @@ determined
 ==========
 
 .. automodule:: determined
-    :members: create, create_trial_instance, Mode, Categorical, Constant, Double, Integer, Log
+    :members: Categorical, Constant, Double, Integer, Log
