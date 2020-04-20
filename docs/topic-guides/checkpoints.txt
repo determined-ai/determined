@@ -29,7 +29,7 @@ depends on the application framework being used:
    Keras APIs, respectively. Optimizer state is currently saved in a
    custom experimental format---to restore it outside of Determined, please
    contact the Determined AI team for a consultation.
--  TF Keras trials are checkpointed to a file named ``determined-keras-model``
+-  TF Keras trials are checkpointed to a file named ``determined-keras-model.h5``
    using ``tf.keras.models.save_model``. You can learn more from the `TF
    Keras
    docs <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/models/save_model>`__.

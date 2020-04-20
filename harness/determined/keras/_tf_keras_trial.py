@@ -406,8 +406,12 @@ class TFKerasTrialController(det.LoopTrialController):
         if not self.load_path:
             return
 
-        # load model
-        full_ckpt_path = self.load_path.joinpath("determined-keras-model")
+        # Load model.
+        if self.load_path.joinpath("determined-keras-model.h5").exists():
+            full_ckpt_path = self.load_path.joinpath("determined-keras-model.h5")
+        else:
+            full_ckpt_path = self.load_path.joinpath("determined-keras-model")
+
         logging.info(f"Restoring checkpoint from {full_ckpt_path}")
         self.model.load_weights(str(full_ckpt_path))
         load_optimizer_weights(self.model, full_ckpt_path)
@@ -419,12 +423,14 @@ class TFKerasTrialController(det.LoopTrialController):
         if not self.is_chief:
             return workload.Skipped()
 
-        # save training data iterator position.
+        # Save training data iterator position.
         path.mkdir(parents=True, exist_ok=True)
 
-        # save model weights
-        tf.keras.models.save_model(
-            self.model, path.joinpath("determined-keras-model"), save_format="h5"
+        # Save model.
+        self.model.save(path.joinpath("determined-keras-model.h5"), save_format="h5")
+
+        det.util.write_checkpoint_metadata(
+            path, self.env, {"tensorflow_version": tf.__version__},
         )
 
         return {}

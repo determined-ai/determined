@@ -1,5 +1,6 @@
 import pytest
 
+from determined.experimental import Determined
 from tests.integrations import config as conf
 from tests.integrations import experiment as exp
 from tests.integrations.cluster_utils import skip_test_if_not_enough_gpus
@@ -102,7 +103,12 @@ def test_iris() -> None:
     config = conf.load_config(conf.official_examples_path("iris_tf_keras/const.yaml"))
     config = conf.set_max_steps(config, 2)
 
-    exp.run_basic_test_with_temp_config(config, conf.official_examples_path("iris_tf_keras"), 1)
+    exp_id = exp.run_basic_test_with_temp_config(
+        config, conf.official_examples_path("iris_tf_keras"), 1
+    )
+    exp_ref = Determined().get_experiment(exp_id)
+    model = exp_ref.top_checkpoint().load()
+    model.summary()
 
 
 @skip_test_if_not_enough_gpus(8)
