@@ -7,19 +7,39 @@ from tensorflow.python.training.tracking.tracking import AutoTrackable
 
 def load_model(ckpt_dir: pathlib.Path, tags: Optional[List[str]] = None) -> AutoTrackable:
     saved_model_paths = list(ckpt_dir.glob("**/saved_model.pb"))
-    if not saved_model_paths:
-        raise FileNotFoundError(
-            f"Checkpoint directory {ckpt_dir} does not contain a nested saved_model.pb"
-        )
-    elif len(saved_model_paths) > 1:
+    h5_paths = list(ckpt_dir.glob("**/*.h5"))
+
+    if not h5_paths and not saved_model_paths:
         raise AssertionError(
-            f"Checkpoint directory {ckpt_dir} contains multiple \
-            nested saved_model.pb files {saved_model_paths}"
+            "No checkpoint saved_model.pb or h5 files found at {}".format(ckpt_dir)
         )
 
-    if not tags:
-        print('No tags specified. Loading "serve" tag from saved_model.')
-        tags = ["serve"]
+    # Tensorflow 1 favors saved_models for tf.estimators and h5 for tf.keras
+    # models. Tensorflow is moving towards saved_model for both high level
+    # APIs in tf.2. For this reason we favor the saved_model below but also
+    # check for h5 models.
+    if saved_model_paths:
+        if len(saved_model_paths) > 1:
+            raise AssertionError(
+                "Checkpoint directory {} contains multiple \
+                nested saved_model.pb files: {}".format(
+                    ckpt_dir, saved_model_paths
+                )
+            )
 
-    saved_model_path = saved_model_paths[0]
-    return tf.compat.v1.saved_model.load_v2(str(saved_model_path.parent), tags)
+        if tags is None:
+            print('No tags specified. Loading "serve" tag from saved_model.')
+            tags = ["serve"]
+
+        saved_model_path = saved_model_paths[0]
+        return tf.compat.v1.saved_model.load_v2(str(saved_model_path.parent), tags)
+
+    else:
+        if len(h5_paths) > 1:
+            raise AssertionError(
+                "Checkpoint directory {} contains multiple \
+                nested .h5 files: {}".format(
+                    ckpt_dir, h5_paths
+                )
+            )
+        return tf.keras.models.load_model(h5_paths[0])
