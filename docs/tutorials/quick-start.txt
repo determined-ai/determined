@@ -105,7 +105,7 @@ We can view the experiment status and results in the Web UI. In a browser, go to
 
 |
 
-Here, you can see recent tasks, which includes experiments, notebooks, and tensorboards. We currently have the experiment we just submitted.
+Here, you can see recent tasks, which includes experiments, notebooks, and TensorBoards. We currently have the experiment we just submitted.
 
 Clicking on the experiment takes you to the experiment page similar to below.
 
@@ -143,6 +143,81 @@ Left of the graph displays time information, the hyperparameter configuration, t
 |
 
 Again, ``model_def.py`` does not contain any code to manage the checkpoint and will automatically checkpoint after calculating metrics on the validation dataset. Once the training has completed, you can see the total time it took, and the average batch speed. On a typical laptop, it should take about 5 minutes to train the model to reach 98% accuracy and 0.05 validation loss.
+
+Running a Parallel Training Job
+--------------------------------
+*For this section, we recommend using a Determined cluster with multiple GPUs.*
+
+Determined can coordinate across multiple GPUs on a single machine (parallel training) or across multiple GPUs on multiple machines (distributed training) to improve the rate of training a single trial. Parallel training performs best with complex models; therefore, this example may not demonstrate the full benefits of using parallel training.
+
+To implement :ref:`distributed and parallel training <multi-gpu-training>`, it can be as easy as setting a flag!
+
+In the experiment configuration file, we set the ``resources.slot_per_trial`` flag to a multiple of the number of GPUs on a machine to ensure the full network and interconnect bandwidth is available to the multi-GPU workloads. E.g., if you have a cluster of 8-GPU machines, you need to set slots_per_trial to 8, 16, 24, etc. If using a Determined cluster deployed in the cloud, by default the instances will be eight GPUs machines. 
+
+Below is the ``distributed.yaml`` file, which should look very similar to the ``const.yaml`` file except we now set ``resources.slots_per_trial``.
+
+.. code:: yaml
+
+    description: mnist_pytorch
+    hyperparameters:
+        learning_rate: 0.001
+        dropout: 0.5
+        global_batch_size: 64
+        n_filters1: 40
+        n_filters2: 40
+    resources:
+        slots_per_trial: 8
+    searcher:
+        name: single
+        metric: validation_error
+        max_steps: 600
+        smaller_is_better: true
+    entrypoint: model_def:MNistTrial
+
+
+Next, submit the experiment with the same command as above; however, our experiment configuration file will now be ``distributed.yaml``:
+
+.. code::
+
+    det experiment create distributed.yaml .
+
+Once again, we access the experiment’s trial in the browser. You will notice the loss curve is very similar to the single GPU experiment we previously ran. However, we reduced the time from 2 minutes and 16 seconds down to 1 minute and 5 seconds.
+
+.. image:: /assets/images/dtrain_results@2x.jpg
+    :align: center
+
+
+Tuning the Model
+-----------------
+
+Now that we have trained a model, we want to improve the model's accuracy through hyperparameter tuning. Typically, this requires a significant amount of time and code. Determined provides support for hyperparameter search through efficient execution of state-of-the-art early-stopping based approaches as well as seamless parallelization of these methods. To use Determined’s hyperparameter search feature, we only have to change the experiment configuration file.
+
+Let’s search over the hyperparameters using the ``adaptive.yaml`` experiment configuration file. The ``adaptive.yaml`` file tells the :ref:`searcher algorithm <topic-guides_hp-tuning-det>` the ranges to explore for each hyperparameter. For our model, we will use a fixed batch size and search on the dropout size, filters, and learning rate. In the ``searcher`` field, we update the ``name`` to use ``adaptive_simple`` and add ``max_trials`` to use ``16``. This tells Determined which search algorithm to use and how many model configurations to explore. 
+
+Next, run the same command as above to submit an experiment, except change the configuration file to use ``adaptive.yaml``. 
+
+.. code::
+    
+    det experiment create adaptive.yaml .
+
+In the browser, navigate to the experiment page. You should notice more trials have started running.
+
+.. image:: /assets/images/hp_experiment_page@2x.jpg
+    :align: center
+
+Determined will run the number of ``max_trials`` trials and automatically start new trials as resources become available while the hyperparameter search will stop poor performing trials. On a typical laptop, 16 trials should take around 10 minutes to train with at least one trial performing at about 98% validation accuracy.
+
+Once all the trials are completed, we want to evaluate the performance across trials. All Determined experiments integrate into TensorBoard, without you adding any extra code. On the experiment page, click ``TensorBoard`` on the left hand side.
+
+In TensorBoard, you should see a page similar to below. Determined created TensorBoard plots to show the training loss, validation loss and validation accuracy for each trial for comparison.
+
+.. image:: /assets/images/tensorboard@2x.jpg
+
+The training loss plot illustrates why certain trials had early-stopping applied. For example, the graph below shows ``trial 10`` (seen in light blue) had a significantly higher training loss than the other trials. Due to the notable difference, this trial did not require any extra training.
+
+.. image:: /assets/images/early-stopping-tensorboard@2x.jpg
+    :align: center
+
 
 Next Steps
 ----------
