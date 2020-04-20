@@ -70,9 +70,9 @@ The directory contains Python and YAML files. The Python files contain the model
 
 Each yaml file is specific to the type of experiment we will run during this guide:
 
-    - ``const.yaml``: train a single model on a single GPU or CPU.
-    - ``parallel.yaml``: distributed training of a single model using multiple GPUs.
-    - ``adaptive.yaml``: training multiple models as part of a hyperparameter search, leveraging Determined’s adaptive hyperparameter search functionality.
+- ``const.yaml``: train a single model on a single GPU or CPU.
+- ``parallel.yaml``: distributed training of a single model using multiple GPUs.
+- ``adaptive.yaml``: training multiple models as part of a hyperparameter search, leveraging Determined’s adaptive hyperparameter search functionality.
 
 Running Your First Job
 -----------------------
@@ -140,6 +140,6 @@ Left of the graph displays time information, the hyperparameter configuration, t
 
 |
 
-Again, ``model.py`` does not contain any code to manage the checkpoint and will automatically checkpoint after calculating metrics on the validation dataset. Once the training has completed, you can see the total time it took, and the average batch speed. On a laptop, it should take about: 2 mins to reach 98% accuracy and .05 validation loss.
+Again, ``model.py`` does not contain any code to manage the checkpoint and will automatically checkpoint after calculating metrics on the validation dataset. Once the training has completed, you can see the total time it took, and the average batch speed. On a laptop, the training time should take about: 5 mins to reach 98% accuracy and .05 validation loss.
 
-To begin implementing your first model: go to :ref:`pytorch-mnist-tutorial`!
+To begin implementing your first model: go to :ref:`pytorch-mnist-tutorial` or :ref:`tf-mnist-tutorial`!
