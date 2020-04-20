@@ -4,7 +4,9 @@ Tutorials
 
 Tutorials are simple step-by-step guides about getting started with different topics of Determined. These are a good place to get started with using the product.
 
-For an introduction to Determined, pick your framework of choice:
+To get started using Determined, check out the :ref:`quick-start`.
+
+Next, follow the tutorial for your preferred deep learning framework:
 
 - :ref:`pytorch-mnist-tutorial`
 - :ref:`tf-mnist-tutorial`
@@ -15,9 +17,9 @@ The full list of our tutorials can be found below:
   :maxdepth: 0
   :titlesonly:
 
-  data-access
-  notebook-tutorial
-  pytorch-mnist-tutorial
   quick-start
+  pytorch-mnist-tutorial
   tf-mnist-tutorial
   tf-cifar-tutorial
+  data-access
+  notebook-tutorial

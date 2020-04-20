@@ -83,7 +83,7 @@ training steps allowed per trial:
     max_trials: 32
 
 For details on the supported searchers and their respective configuration
-options: :ref:`topic-guides_hp-tuning-det`
+options: :ref:`topic-guides_hp-tuning-det`.
 
 That's it!  After submitting a multi-trial hyperparameter tuning experiment to
 Determined, the machine learning engineer can visualize the best validation
