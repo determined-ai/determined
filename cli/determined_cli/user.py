@@ -130,7 +130,7 @@ def log_out_user(parsed_args: Namespace) -> None:
         return
 
     try:
-        api.post(
+        api.get(
             parsed_args.master,
             "logout",
             headers={"Authorization": "Bearer {}".format(auth_inst.get_session_token())},

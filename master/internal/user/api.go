@@ -8,7 +8,7 @@ import (
 
 // RegisterAPIHandler initializes and registers the API handlers for all command related features.
 func RegisterAPIHandler(echo *echo.Echo, m *Service, middleware ...echo.MiddlewareFunc) {
-	echo.POST("/logout", api.Route(m.postLogout), middleware...)
+	echo.GET("/logout", api.Route(m.logout), middleware...)
 	echo.POST("/login", api.Route(m.postLogin))
 	usersGroup := echo.Group("/users", middleware...)
 	usersGroup.GET("", api.Route(m.getUsers))

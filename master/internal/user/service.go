@@ -176,7 +176,7 @@ func (s *Service) ValidateToken(token string) (*model.UserSession, error) {
 	return session, nil
 }
 
-func (s *Service) postLogout(c echo.Context) (interface{}, error) {
+func (s *Service) logout(c echo.Context) (interface{}, error) {
 	// Delete the cookie if one is set.
 	if cookie, err := c.Cookie("auth"); err == nil {
 		cookie.Value = ""
@@ -191,7 +191,7 @@ func (s *Service) postLogout(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	return "", nil
+	return nil, c.Redirect(307, "/ui/login")
 }
 
 func (s *Service) postLogin(c echo.Context) (interface{}, error) {
