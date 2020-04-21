@@ -197,18 +197,19 @@ graphql:
 	$(MAKE) graphql-schema
 	$(MAKE) graphql-python graphql-elm
 
-check: check-fmt check-types check-python-assert check-commit-messages
+check: check-python check-commit-messages
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
 	$(MAKE) WEBUI_TARGET=$@ webui
 
-check-fmt:
+check-python: check-python-fmt check-python-types check-python-assert
+
+check-python-fmt:
 	$(ISORT_RUN_ON_PYTHON_PATHS) isort $(ISORT_OPTIONS) --check
 	$(RUN_ON_PYTHON_PATHS) black --check
 	$(FLAKE_RUN_ON_PYTHON_PATHS) flake8
-	$(MAKE) WEBUI_TARGET=$@ webui
 
-check-types:
+check-python-types:
 	$(MYPY) $(TYPE_CHECK_PATHS)
 	$(MYPY) cli
 	$(MYPY) common

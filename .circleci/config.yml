@@ -78,6 +78,14 @@ commands:
           key: det-react-deps-v1dev-{{ checksum  "webui/react/package-lock.json" }}
           paths:
             - "webui/react/node_modules"
+  python-venv-setup:
+    description: Create Python venv and install combined dependencies.
+    steps:
+      - run: python3.6 -m venv /tmp/venv
+      - run: pip install --upgrade pip\<20
+      - restore-python-cache
+      - run: pip install combined-reqs.txt
+      - save-python-cache
 
 
 jobs:
@@ -124,37 +132,42 @@ jobs:
       - run: make -C webui/react build
       - run: make debs
 
-      - run: make check
+      - run: make check-commit-messages
+      - run: make -C master check
+      - run: make -C agent check
+      - run: make -C webui/react check
+      - run: make -C webui/elm check
 
       - run: make -C master test
       - run: make -C agent test
       - run: make -C webui/react test
       - run: make -C webui/elm test
 
+  lint-python:
+    docker:
+      - image: python:3.6.9
+    environment:
+      PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    steps:
+      - python-venv-setup
+      - run: make check-python
+
   test-unit-harness:
     docker:
       - image: python:3.6.9
     environment:
-      PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/go/bin
+      PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
-      - run: python3.6 -m venv /tmp/venv
-      - run: pip install --upgrade pip\<20
-      - restore-python-cache
-      - run: pip install combined-reqs.txt
-      - save-python-cache
+      - python-venv-setup
       - run: make test-harness
 
   test-unit-harness-tf2:
     docker:
       - image: python:3.6.9
     environment:
-      PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/go/bin
+      PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
-      - run: python3.6 -m venv /tmp/venv
-      - run: pip install --upgrade pip\<20
-      - restore-python-cache
-      - run: pip install combined-reqs.txt
-      - save-python-cache
+      - python-venv-setup
       - run: pip install tensorflow==2.1
       - run: make test-tf2
 
@@ -170,3 +183,6 @@ workflows:
       - build-and-test
       - test-unit-harness
       - test-unit-harness-tf2
+  lint:
+    jobs:
+      - lint-python
