@@ -149,7 +149,12 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case scheduler.TerminateRequest:
 		c.terminate(ctx)
 
+	case scheduler.TaskAborted:
+		c.exit(ctx, "command terminated without being scheduled")
+
 	case scheduler.TaskTerminated:
+		// This message is being deprecated; ignore it.
+
 	case agent.ContainerLog:
 		if !c.readinessMessageSent && c.readinessChecksPass(ctx, msg) {
 			c.readinessMessageSent = true

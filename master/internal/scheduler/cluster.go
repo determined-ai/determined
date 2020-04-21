@@ -481,6 +481,10 @@ func (c *Cluster) taskTerminated(task *Task, aborted bool) {
 		Task:    newTaskSummary(task),
 		Aborted: aborted,
 	})
+	// This is somewhat redundant with the message above, but we're transitioning between them.
+	if aborted {
+		task.handler.System().Tell(task.handler, TaskAborted{})
+	}
 }
 
 func toAddresses(proxy string, info types.ContainerJSON) []Address {
