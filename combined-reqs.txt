@@ -161,7 +161,7 @@ websockets==8.1           # via yogadl
 werkzeug==1.0.0           # via tensorboard
 wheel==0.34.2             # via tensorboard, tensorflow
 wrapt==1.12.1             # via tensorflow
-git+http://github.com/determined-ai/yogadl.git@8657ef4571e0459e49cf9924f0b91db957bbcaa8#egg=yogadl  # via determined
+yogadl==0.1.0             # via determined
 zipp==3.1.0               # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
