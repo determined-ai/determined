@@ -134,6 +134,8 @@ def logs(args: Namespace) -> None:
         logs = q.op.trial_logs(where=where, order_by=order_by, limit=limit)
         logs.id()
         logs.message()
+
+        q.op.trials_by_pk(id=args.trial_id).state()
         return q
 
     def process_response(logs: Any, latest_log_id: int) -> Tuple[int, bool]:
@@ -159,29 +161,24 @@ def logs(args: Namespace) -> None:
     # newer log messages have a numerically larger ID than older log
     # messages, so we keep track of the max ID seen so far.
     if args.follow:
-        state_query = api.GraphQLQuery(args.master)
-        state_query.op.trials_by_pk(id=args.trial_id).state()
-
-        no_change_count = 0
+        change_time = time.time()
         try:
             while True:
-                # Poll for new logs every 100 ms.
+                # Poll for new logs at most every 100 ms.
                 time.sleep(0.1)
 
-                # The `tail` parameter only makes sense the first time we
-                # fetch logs.
+                # The `tail` parameter only makes sense the first time we fetch logs.
                 resp = logs_query(greater_than_id=latest_log_id).send()
                 latest_log_id, changes = process_response(resp.trial_logs, latest_log_id)
-                no_change_count = 0 if changes else no_change_count + 1
 
-                # Wait for 10 poll requests before checking that the experiment is in a stopped
-                # state.
-                if no_change_count >= 10:
-                    no_change_count = 0
-                    resp = state_query.send()
-                    if resp.trials_by_pk.state in constants.TERMINAL_STATES:
-                        raise KeyboardInterrupt()
+                # Exit once the trial has, for 1 second, been in a terminal state and sent no logs.
+                if changes or resp.trials_by_pk.state not in constants.TERMINAL_STATES:
+                    change_time = time.time()
+                elif time.time() - change_time > 1:
+                    raise KeyboardInterrupt()
         except KeyboardInterrupt:
+            state_query = api.GraphQLQuery(args.master)
+            state_query.op.trials_by_pk(id=args.trial_id).state()
             resp = state_query.send()
 
             print(
