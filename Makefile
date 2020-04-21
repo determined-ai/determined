@@ -269,7 +269,7 @@ test-tf2:
 		tests/unit/frameworks/keras/test_tf_keras_trial.py \
 		tests/unit/frameworks/keras/test_keras_data.py
 
-test-all:
+test-harness:
 	pytest -v -k $(TEST_EXPR) --runslow \
 		-Wall \
 		-Wignore:::tensorflow.python.framework.tensor_util \
@@ -277,9 +277,6 @@ test-all:
 		-Wignore:::keras.utils.data_utils \
 		--durations=0 \
 		tests/unit tests/cli
-	$(MAKE) -C master test
-	$(MAKE) -C agent test
-	$(MAKE) WEBUI_TARGET=test webui
 
 test-python-integrations: MASTER_HOST ?= localhost
 test-python-integrations: MASTER_CONFIG_PATH ?=

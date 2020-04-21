@@ -126,11 +126,27 @@ jobs:
 
       - run: make check
 
-      - run: make test-all
+      - run: make -C master test
+      - run: make -C agent test
+      - run: make -C webui/react test
+      - run: make -C webui/elm test
+
+  test-unit-harness:
+    docker:
+      - image: python:3.6.9
+    environment:
+      PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/go/bin
+    steps:
+      - run: python3.6 -m venv /tmp/venv
+      - run: pip install --upgrade pip\<20
+      - restore-python-cache
+      - run: pip install combined-reqs.txt
+      - save-python-cache
+      - run: make test-harness
 
   test-unit-harness-tf2:
     docker:
-      - image: python:3.6.9-stretch
+      - image: python:3.6.9
     environment:
       PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/go/bin
     steps:
@@ -152,4 +168,5 @@ workflows:
   test-unit:
     jobs:
       - build-and-test
+      - test-unit-harness
       - test-unit-harness-tf2
