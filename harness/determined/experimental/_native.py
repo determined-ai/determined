@@ -1,10 +1,12 @@
+import contextlib
 import enum
 import math
+import os
 import pathlib
 import random
 import sys
 import tempfile
-from typing import Any, Dict, List, Optional, Tuple, Type, cast
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, cast
 
 import determined as det
 import determined_common.api.authentication as auth
@@ -304,27 +306,8 @@ def create(
             )
 
     elif Mode(mode) == Mode.LOCAL:
-        print("Starting a test experiment locally.")
-        checkpoint_dir = tempfile.TemporaryDirectory()
-        env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
-            checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
-        )
-        print(
-            f"Using a modified test config: {env.experiment_config}.\n"
-            f"Using a set of random hyperparameter values: {env.hparams}."
-        )
-        controller = load.load_controller_from_trial(
-            trial_class=trial_def,
-            env=env,
-            workloads=workloads,
-            load_path=None,
-            rendezvous_info=rendezvous_info,
-            hvd_config=hvd_config,
-        )
-        controller.run()
-        checkpoint_dir.cleanup()
-        print("Note: to submit an experiment to the cluster, change mode argument to Mode.CLUSTER")
-
+        context_path = pathlib.Path(context_dir) if context_dir else pathlib.Path.cwd()
+        test_one_batch(context_path, trial_class=trial_def, config=config)
     else:
         raise errors.InvalidExperimentException("Must use either local mode or cluster mode.")
 
@@ -383,10 +366,64 @@ def _init_native(
             )
             controller.run()
             checkpoint_dir.cleanup()
-            print("Note: to submit an experiment to a cluster change mode argument to Mode.CLUSTER")
 
         context._set_train_fn(train_fn)
         return context
 
     else:
         raise errors.InvalidExperimentException("Must use either local mode or cluster mode.")
+
+
+@contextlib.contextmanager
+def local_execution_manager(new_directory: pathlib.Path) -> Iterator:
+    """
+    A context manager that temporarily moves the current working directory and
+    appends it to syspath.
+    """
+
+    # TODO(DET-2719): Add context dir to TrainContext and remove this function.
+    current_directory = os.getcwd()
+
+    try:
+        os.chdir(new_directory)
+        yield
+    finally:
+        os.chdir(current_directory)
+
+
+def test_one_batch(
+    context_path: pathlib.Path,
+    trial_class: Optional[Type[det.Trial]] = None,
+    config: Optional[Dict[str, Any]] = None,
+) -> None:
+    # Override the batches_per_step value to 1.
+    # TODO(DET-2931): Make the validation step a single batch as well.
+    config = {**(config or {}), "batches_per_step": 1}
+
+    print("Starting a test experiment locally.")
+    checkpoint_dir = tempfile.TemporaryDirectory()
+    env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
+        checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
+    )
+    print(
+        f"Using a modified test config: {env.experiment_config}.\n"
+        f"Using a set of random hyperparameter values: {env.hparams}."
+    )
+
+    with local_execution_manager(context_path):
+        if not trial_class:
+            print("Loading trial class from experiment configuration")
+            trial_class = load.load_trial_implementation(env.experiment_config["entrypoint"])
+
+        controller = load.load_controller_from_trial(
+            trial_class=trial_class,
+            env=env,
+            workloads=workloads,
+            load_path=None,
+            rendezvous_info=rendezvous_info,
+            hvd_config=hvd_config,
+        )
+        controller.run()
+
+    checkpoint_dir.cleanup()
+    print("Note: to submit an experiment to the cluster, change mode argument to Mode.CLUSTER")
