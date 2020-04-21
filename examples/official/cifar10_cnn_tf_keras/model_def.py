@@ -3,11 +3,15 @@ This example shows how you could use Keras `Sequence`s and multiprocessing/multi
 models in Determined. Information for how this can be configured can be found in
 `make_data_loaders()`.
 
-Useful References:
-    http://docs.determined.ai/latest/keras.html
-    https://keras.io/utils/
+Tutorial based on this example:
+    https://docs.determined.ai/latest/tutorials/tf-cifar-tutorial.html
 
-Based off: https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py
+Useful References:
+    https://docs.determined.ai/latest/reference/api/keras.html
+    https://www.tensorflow.org/guide/keras
+
+Based on: https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py
+
 """
 import os
 import tarfile
