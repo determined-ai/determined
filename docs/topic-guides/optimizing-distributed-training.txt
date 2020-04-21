@@ -117,3 +117,9 @@ with a synthetic dataset to verify performance of multi-GPU training.
   available on a machine. Also, you can also use the CLI command ``det task
   list`` to check if any other tasks are using GPUs and preventing your
   experiment from using all the GPUs on a machine.
+
+
+Next Steps
+----------
+
+- :ref:`effective-distributed-training`
