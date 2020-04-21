@@ -12,7 +12,7 @@ hyperparameters:
   height_shift_range: 0.1
   horizontal_flip: True
 resources:
-  # parallel run assume 8 GPUs per agent instance
+  # parallel run assumes 8 GPUs per agent instance
   slots_per_trial: 8
 searcher:
   name: single
