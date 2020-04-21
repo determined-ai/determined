@@ -231,6 +231,27 @@ def create(args: Namespace) -> None:
         sys.exit(1)
     args.config_file.close()
 
+    if args.local:
+        try:
+            from determined import experimental
+        except ImportError as e:
+            print("--local requires that the `determined` package is installed.")
+            raise e
+
+        # Python typically initializes sys.path[0] as the empty string when
+        # invoked interactively, which directs Python to search modules in the
+        # current directory first. However, this is _not_ happening when this
+        # Python function is invoked via the cli. We add it manually here so
+        # that test_one_batch can import the entrypoint by changing the
+        # directory to model_def.
+        #
+        # Reference: https://docs.python.org/3/library/sys.html#sys.path
+        sys.path = [""] + sys.path
+        experimental.test_one_batch(
+            args.model_def.resolve(), trial_class=None, config=experiment_config
+        )
+        return
+
     model_context = context.Context.from_local(args.model_def, constants.MAX_CONTEXT_SIZE)
 
     additional_body_fields = {}
@@ -873,6 +894,13 @@ args_description = Cmd(
                     "flag assumes that git is installed, a .git repository "
                     "exists in the model definition directory, and that the "
                     "git working tree of that repository is empty.",
+                ),
+                Arg(
+                    "--local",
+                    action="store_true",
+                    help="Create the experiment in local mode instead of submitting it to the "
+                    "cluster. For more information, see documentation on det.experimental.create() "
+                    "and det.experimental.Mode.LOCAL",
                 ),
                 Arg(
                     "--template",

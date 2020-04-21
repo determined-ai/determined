@@ -57,7 +57,7 @@ def load_trial_implementation_controller(
     rendezvous_info: det.RendezvousInfo,
     hvd_config: horovod.HorovodContext,
 ) -> det.TrialController:
-    trial_class = load.load_trial_implementation(env)
+    trial_class = load.load_trial_implementation(env.experiment_config["entrypoint"])
     return load_controller_from_trial(
         trial_class=trial_class,
         env=env,
@@ -130,11 +130,11 @@ def prepare_controller(
 
     if env.experiment_config.native_enabled():
         controller = load_native_implementation_controller(
-            env, workloads, load_path, rendezvous_info, hvd_config,
+            env, workloads, load_path, rendezvous_info, hvd_config
         )
     else:
         controller = load_trial_implementation_controller(
-            env, workloads, load_path, rendezvous_info, hvd_config,
+            env, workloads, load_path, rendezvous_info, hvd_config
         )
 
     return controller
