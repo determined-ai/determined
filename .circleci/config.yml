@@ -96,7 +96,7 @@ jobs:
       - run: pip install -r tests/cli/requirements.txt
       - run: pytest tests/cli
 
-  test-unit:
+  build-and-test:
     docker:
       - image: python:3.6.9-stretch
         environment:
@@ -128,7 +128,17 @@ jobs:
 
       - run: make test-all
 
+  test-unit-harness-tf2:
+    docker:
+      - image: python:3.6.9-stretch
+    environment:
+      PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/go/bin
+    steps:
+      - run: python3.6 -m venv /tmp/venv
       - run: pip install --upgrade pip\<20
+      - restore-python-cache
+      - run: pip install combined-reqs.txt
+      - save-python-cache
       - run: pip install tensorflow==2.1
       - run: make test-tf2
 
@@ -141,4 +151,5 @@ workflows:
               executor-name: ["python-35", "python-36", "python-37", "win/default"]
   test-unit:
     jobs:
-      - test-unit
+      - build-and-test
+      - test-unit-harness-tf2
