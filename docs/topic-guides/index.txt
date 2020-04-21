@@ -11,6 +11,7 @@ Topic guides discuss different concepts and topics about Determined and deep lea
 **Distributed Training**
 
 - :ref:`optimizing-multi-gpu-training`
+- :ref:`effective-distributed-training`
 
 **System Concepts**
 
@@ -37,6 +38,7 @@ The full list of our topic guides can be found below:
   benefits-of-determined
   checkpoints
   determined-system-architecture
+  effective-distributed-training
   experiment-lifecycle
   gcp
   hp-tuning-defined
