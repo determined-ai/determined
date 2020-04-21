@@ -120,9 +120,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			if msg.ContainerStopped.Failure != nil {
 				exitStatus = msg.ContainerStopped.Failure.Error()
 			}
-			c.exitStatus = &exitStatus
-			ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ExitedEvent: c.exitStatus})
-			actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
+			c.exit(ctx, exitStatus)
 		}
 
 	case scheduler.Assigned:
@@ -162,10 +160,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case lostID:
 		if c.exitStatus == nil && c.containerLost != nil && *c.containerLost == msg {
-			exitStatus := "container was lost on agent"
-			c.exitStatus = &exitStatus
-			ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ExitedEvent: c.exitStatus})
-			actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
+			c.exit(ctx, "container was lost on agent")
 		}
 
 	case agent.ContainerRecovered:
@@ -198,10 +193,7 @@ func (c *command) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 
 func (c *command) terminate(ctx *actor.Context) {
 	if c.containerLost != nil {
-		exitStatus := "container was asked to terminate while lost"
-		c.exitStatus = &exitStatus
-		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ExitedEvent: c.exitStatus})
-		actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
+		c.exit(ctx, "container was asked to terminate while lost")
 		return
 	}
 	ctx.Ask(c.cluster, scheduler.TerminateTask{TaskID: c.taskID, Forcible: true}).Get()
@@ -218,4 +210,10 @@ func (c *command) readinessChecksPass(ctx *actor.Context, log agent.ContainerLog
 		}
 	}
 	return len(c.readinessChecks) == 0
+}
+
+func (c *command) exit(ctx *actor.Context, exitStatus string) {
+	c.exitStatus = &exitStatus
+	ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ExitedEvent: c.exitStatus})
+	actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 }
