@@ -1,5 +1,6 @@
 import re
 import subprocess
+import time
 import uuid
 from pathlib import Path
 from typing import Any, List
@@ -353,3 +354,24 @@ def test_image_pull_after_remove() -> None:
             "sleep 3; echo hello world",
         ]
     )
+
+
+@pytest.mark.slow  # type: ignore
+@pytest.mark.integ4  # type: ignore
+def test_killed_pending_command_terminates() -> None:
+    # Specify an outrageous number of slots to be sure that it can't be scheduled.
+    with cmd.interactive_command(
+        "cmd", "run", "--config", "resources.slots=1048576", "sleep infinity"
+    ) as command:
+        for _ in range(10):
+            assert cmd.get_command(command.task_id)["state"] == "PENDING"
+            time.sleep(1)
+
+    # The command is killed when the context is exited; now it should reach TERMINATED soon.
+    for _ in range(5):
+        if cmd.get_command(command.task_id)["state"] == "TERMINATED":
+            break
+        time.sleep(1)
+    else:
+        state = cmd.get_command(command.task_id)["state"]
+        raise AssertionError(f"Task was in state {state} rather than TERMINATED")

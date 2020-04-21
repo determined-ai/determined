@@ -2,7 +2,7 @@ import os
 import re
 import subprocess
 from contextlib import contextmanager
-from typing import IO, Generator, Optional
+from typing import IO, Any, Dict, Generator, Optional, cast
 
 import requests
 
@@ -83,6 +83,13 @@ def get_num_running_commands() -> int:
     assert r.status_code == requests.codes.ok, r.text
 
     return len([command for _id, command in r.json().items() if command["state"] == "RUNNING"])
+
+
+def get_command(id: str) -> Dict[str, Any]:
+    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+    r = api.get(conf.make_master_url(), "commands")
+    assert r.status_code == requests.codes.ok, r.text
+    return cast(Dict[str, Any], r.json()["/commands/" + id])
 
 
 def get_command_config(command_type: str, id: str) -> str:
