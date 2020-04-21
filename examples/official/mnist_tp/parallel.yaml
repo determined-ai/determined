@@ -12,7 +12,7 @@ hyperparameters:
   decay_steps: 4680
   decay_rate: 0.3
 resources:
-  # parallel run assume 8 GPUs per agent instance
+  # parallel run assumes 8 GPUs per agent instance
   slots_per_trial: 8
 searcher:
   name: single

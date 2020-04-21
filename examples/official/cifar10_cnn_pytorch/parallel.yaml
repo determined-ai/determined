@@ -9,7 +9,7 @@ hyperparameters:
   layer3_dropout: 0.5
   global_batch_size: 32
 resources:
-  # parallel run assume 8 GPUs per agent instance
+  # parallel run assumes 8 GPUs per agent instance
   slots_per_trial: 8
 searcher:
   name: single
