@@ -6,4 +6,142 @@ Release Notes
 Version 0.12
 ------------
 
-**Release Date:** TBD
+Version 0.12.2
+^^^^^^^^^^^^^^
+
+**Release Date:** April 21, 2020
+
+**Breaking Changes**
+
+- Rename PEDL to Determined. The canonical way to import it is via ``import determined as det``.
+
+- Reorganize source code. The frameworks module was removed, and each framework's submodules were collapsed into the main framework module. For example:
+
+  - ``det.frameworks.pytorch.pytorch_trial.PyTorchTrial`` is now ``det.pytorch.PyTorchTrial``
+  - ``det.frameworks.pytorch.data.DataLoader`` is now ``det.pytorch.DataLoader``
+  - ``det.frameworks.pytorch.checkpoint.load`` is now ``det.pytorch.load``
+  - ``det.frameworks.pytorch.util.reset_parameters`` is now ``det.pytorch.reset_parameters``
+  - ``det.frameworks.keras.tf_keras_trial.TFKerasTrial`` is now ``det.keras.TFKerasTrial``
+  - ``det.frameworks.tensorflow.estimator_trial.EstimatorTrial`` is now ``det.estimator.EstimatorTrial``
+  - ``det.frameworks.tensorpack.tensorpack_trial`` is now ``det.tensorpack.TensorPackTrial``
+  - ``det.frameworks.util`` and ``det.frameworks.pytorch.util`` have been removed entirely
+
+- Unify all plugin functions under the Trial class. ``make_data_loaders`` has been moved to two functions that should be implemented as part of the Trial class. For example, :class:`PyTorchTrial <determined.pytorch.PyTorchTrial>` data loaders should now be implemented in ``build_training_data_loader()`` and ``build_validation_data_loader()`` in the trial definition. Please see updated examples and documentation for changes in each framework.
+
+- Trial classes are now required to define a constructor function. The signature of the constructor function is:
+
+  .. code-block:: python
+
+     def __init__(self, context) -> None:
+
+  where ``context`` is an instance of the new ``det.TrialContext`` class. This new object is the primary mechanism for querying information about the system. Some of its methods include:
+
+  - ``get_hparam(name)``: get a hyperparameter by name
+  - ``get_trial_id()``: get the trial ID being trained
+  - ``get_experiment_config()``: get the experiment config for this experiment
+  - ``get_per_slot_batch_size()``: get the batch size appropriate for training (which will be adjusted from the ``global_batch_size`` hyperparameter in distributed training experiments)
+  - ``get_global_batch_size()``: get the effective batch size (which differs from per-slot batch size in distributed training experiments)
+  - ``distributed.get_rank()``: get the unique process rank (one process per slot)
+  - ``distributed.get_local_rank()``: get a unique process rank within the agent
+  - ``distributed.get_size()``: get the number of slots
+  - ``distributed.get_num_agents``: get the number of agents (machines) being used
+
+- The ``global_batch_size`` hyperparameter is required (that is, a hyperparameter with this name must be specified in the configuration of every experiment). Previously, the hyperparameter ``batch_size`` was required and was manipulated automatically for distributed training. Now ``global_batch_size`` will not be manipulated; users should train based on ``context.get_per_slot_batch_size()``. See :ref:`multi-gpu-training` for more context.
+
+- Remove ``download_data()``. If users wish to download data at runtime, they should make sure that each process (one process per slot) downloads to a unique location. This can be accomplished by appending ``context.get_rank()`` to the download path.
+
+- Remove ``det.trial_controller.util.get_rank()`` and ``det.trial_controller.util.get_container_gpus()``. Use ``context.distributed.get_rank()`` and ``context.distributed.get_num_agents()`` instead.
+
+**General Improvements**
+
+- ``tf.data.Dataset`` is now supported as input for all versions of TensorFlow (1.14, 1.15, 2.0, 2.1) for TFKerasTrial and EstimatorTrial. Please note that Determined currently does not support checkpointing ``tf.data.Dataset`` inputs. Therefore, when resuming training, it resumes from the start of the dataset. Model weights are loaded correctly as always.
+
+- ``TFKerasTrial`` now supports five different types of inputs:
+
+  1. A tuple ``(x_train, y_train)`` of NumPy arrays. ``x_train`` must be a NumPy array (or array-like), a list of arrays (in case the model has multiple inputs), or a dict mapping input names to the corresponding array, if the model has named inputs. ``y_train`` should be a NumPy array.
+
+  2. A tuple ``(x_train, y_train, sample_weights)`` of NumPy arrays.
+
+  3. A `tf.data.Dataset <https://www.tensorflow.org/api_docs/python/tf/data/Dataset>`__ returning a tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample_weights)``.
+
+  4. A `keras.utils.Sequence <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__ returning a tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
+
+  5. A ``det.keras.SequenceAdapter`` returning a tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
+
+- PyTorch trial checkpoints no longer save in MLflow's MLmodel format.
+
+- The ``det trial download`` command now accepts ``-o`` to save a checkpoint to a specific path. PyTorch checkpoints can then be loaded from a specified local filesystem path.
+
+- Allow the agent to read configuration values from a YAML file.
+
+- Include experiment ID in the downloaded trial logs.
+
+- Display checkpoint storage location in the checkpoint info modal for trials and experiments.
+
+- Preserve recent tasks' filter preferences in the WebUI.
+
+- Add task name to ``det slot list`` command output.
+
+- Model definitions are now downloaded as compressed tarfiles (.tar.gz) instead of zipfiles (.zip).
+
+- ``startup-hook.sh`` is now executed in the same directory as the model definition.
+
+- Rename ``projects`` to ``examples`` in the Determined repository.
+
+- Improve documentation:
+
+  - Add documentation page on the lifecycle of an experiment.
+  - Add how-to and topic guides for multi-GPU (both for single-machine parallel and multi-machine) training.
+  - Add a topic guide on best practices for writing model definitions.
+
+- Fix bug that occasionally caused multi-machine training to hang on initialization.
+
+- Fix bug that prevented ``TensorpackTrial`` from succesfully loading checkpoints.
+
+- Fix a bug in ``TFKerasTrial`` where runtime errors could cause the trial to hang or would silently drop the stack trace produced by Keras.
+
+- Fix trial lifecycle bugs for containers that exit during the pulling phase.
+
+- Fix bug that led to some distributed trials timing out.
+
+- Fix bug that caused ``tf.keras`` trials to fail in the multi-GPU setting when using an optimizer specified by its name.
+
+- Fix bug in the CLI for downloading model definitions.
+
+- Fix performance issues for experiments with very large numbers of trials.
+
+- Optimize performance for scheduling large hyperparameter searches.
+
+- Add configuration for telemetry in ``master.yaml``.
+
+- Add a utility function for initializing a trial class for development (det.create_trial_instance)
+
+- Add `security.txt <https://securitytxt.org/>`__.
+
+- Add ``det.estimator.load()`` to load TensorFlow Estimator ``saved_model`` checkpoints into memory.
+
+- Ensure AWS EC2 keypair exists in account before creating the CloudFormation stack.
+
+- Add support for gradient aggregation in Keras trials for TensorFlow 2.1.
+
+- Add TrialReference and Checkpoint experimental APIs for exporting and loading checkpoints.
+
+- Improve performance when starting many tasks simultaneously.
+
+**Web Improvements**
+
+- Improve discoverability of dashboard actions.
+
+- Add dropdown action menu for killing and archiving recent tasks on the dashboard.
+
+- Add telemetry for web interactions.
+
+- Fix an issue around cluster utilization status showing as "No Agent" for a brief moment during initial load.
+
+- Add Ace editor to attributions list.
+
+- Set UI preferences based on the logged-in user.
+
+- Fix an issue where the indicated user filter was not applied to the displayed tasks.
+
+- Improve error messaging for failed actions.
