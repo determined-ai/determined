@@ -1,48 +1,21 @@
 package db
 
 import (
-	"database/sql"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // TemplateList returns all of the config templates in the database.
-func (db *PgDB) TemplateList() ([]*model.Template, error) {
-	rows, err := db.sql.Queryx(`
-SELECT name, config
-FROM templates`)
-	if err == sql.ErrNoRows {
-		return nil, errors.WithStack(ErrNotFound)
-	} else if err != nil {
-		return nil, errors.Wrap(err, "querying for template list")
-	}
-
-	defer rows.Close()
-
-	var tpls []*model.Template
-	for rows.Next() {
-		var tpl model.Template
-		if err = rows.StructScan(&tpl); err != nil {
-			return nil, errors.Wrap(err, "reading template row")
-		}
-		tpls = append(tpls, &tpl)
-	}
-
-	return tpls, nil
+func (db *PgDB) TemplateList() (values []model.Template, err error) {
+	err = db.Query("list_templates", &values)
+	return values, err
 }
 
 // TemplateByName looks up a config template by name in a database.
-func (db *PgDB) TemplateByName(name string) (*model.Template, error) {
-	var template model.Template
-	if err := db.query(`
-SELECT name, config
-FROM templates
-WHERE name = $1`, &template, name); err != nil {
-		return nil, err
-	}
-	return &template, nil
+func (db *PgDB) TemplateByName(name string) (value model.Template, err error) {
+	err = db.Query("get_template", &value, name)
+	return value, err
 }
 
 // UpsertTemplate creates or updates a config template.

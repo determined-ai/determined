@@ -1,3 +1,4 @@
+import base64
 from argparse import FileType, Namespace
 from collections import namedtuple
 from typing import Any, List
@@ -15,32 +16,28 @@ TemplateClean = namedtuple("TemplateClean", ["name"])
 TemplateAll = namedtuple("TemplateAll", ["name", "config"])
 
 
+def _parse_config(field: Any) -> Any:
+    # Pretty print the config field.
+    return yaml.safe_dump(yaml.safe_load(base64.b64decode(field)), default_flow_style=False)
+
+
 @authentication_required
 def list_template(args: Namespace) -> None:
-    q = api.GraphQLQuery(args.master)
-    tmpl = q.op.templates()
-    tmpl.name()
+    templates = [
+        render.unmarshal(TemplateAll, t, {"config": _parse_config})
+        for t in api.get(args.master, path="templates").json()
+    ]
     if args.details:
-        tmpl.config()
-    resp = q.send()
-    print(resp)
-
-    if args.details:
-        res_format = [
-            {"name": item.name, "config": yaml.safe_dump(item.config, default_flow_style=False)}
-            for item in resp.templates
-        ]
-        render.render_dicts(TemplateAll, res_format, table_fmt="grid")
+        render.render_objects(TemplateAll, templates, table_fmt="grid")
     else:
-        render.render_dicts(TemplateClean, resp.templates)
+        render.render_objects(TemplateClean, templates)
 
 
 @authentication_required
 def describe_template(args: Namespace) -> None:
-    q = api.GraphQLQuery(args.master)
-    q.op.templates_by_pk(name=args.template_name).config()
-    resp = q.send()
-    print(yaml.safe_dump(resp.templates_by_pk.config, default_flow_style=False))
+    resp = api.get(args.master, path="templates/{}".format(args.template_name)).json()
+    template = render.unmarshal(TemplateAll, resp, {"config": _parse_config})
+    print(template.config)
 
 
 @authentication_required

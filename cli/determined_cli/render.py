@@ -17,11 +17,16 @@ from determined_common import util
 _FORMAT = "presto"
 
 
-def unmarshal(class_: Any, data: Dict[str, Any]) -> Any:
+def unmarshal(
+    class_: Any, data: Dict[str, Any], transforms: Optional[Dict[str, Any]] = None
+) -> Any:
+    if not transforms:
+        transforms = {}
     spec = inspect.getfullargspec(class_)
     init_args = {}
     for arg in spec.args[1:]:
-        init_args[arg] = data[arg]
+        transform = transforms.get(arg, lambda x: x)
+        init_args[arg] = transform(data[arg])
     return class_(**init_args)
 
 
