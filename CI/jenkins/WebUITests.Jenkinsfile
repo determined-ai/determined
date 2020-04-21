@@ -47,8 +47,15 @@ pipeline {
             python webui/tests/bin/e2e-tests.py docker-run-e2e-tests \
             --integrations-host-port ${INTEGRATIONS_HOST_PORT} \
             --cypress-default-command-timeout 30000 \
-            --output-dir /tmp/cypress/${BUILD_TAG}
             '''
+        }
+        post {
+          always {
+            junit 'webui/tests/results/test-results-*.xml'
+          }
+          failure {
+            archiveArtifacts "webui/tests/results/recordings/*/*"
+          }
         }
       }
     }
