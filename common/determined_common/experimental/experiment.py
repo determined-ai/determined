@@ -1,8 +1,7 @@
 from typing import List, Optional
 
-from determined_common import api, util
-from determined_common.api import authentication as auth
-from determined_common.experimental.checkpoint import Checkpoint
+from determined_common import api
+from determined_common.experimental import checkpoint
 
 
 class ExperimentReference:
@@ -12,32 +11,18 @@ class ExperimentReference:
 
     Arguments:
         experiment_id (int): The experiment ID.
-        user (string, optional): The Determined username used for
-            authentication. (default: ``determined``)
-        master (string, optional): The URL of the Determined master. If
-            this argument is not specified environment variables DET_MASTER and
-            DET_MASTER_ADDR will be checked for the master URL in that order.
-        attempt_auth (bool, optional): Whether or not to attempt creating a
-            user session. By default, the session will be created in order to
-            query checkpoint information. (default: ``True``)
+        master (string, optional): The URL of the Determined master. If this
+            class is obtained via :py:class:`det.experimental.Determined` the
+            master URL is automatically passed into this constructor.
     """
 
-    def __init__(
-        self,
-        experiment_id: int,
-        user: Optional[str] = None,
-        master: Optional[str] = None,
-        attempt_auth: bool = True,
-    ):
+    def __init__(self, experiment_id: int, master: str):
         self.id = experiment_id
-        self._master = master or util.get_default_master_address()
-
-        if attempt_auth:
-            auth.initialize_session(self._master, user, try_reauth=True)
+        self._master = master
 
     def top_checkpoint(
         self, sort_by: Optional[str] = None, smaller_is_better: Optional[bool] = None,
-    ) -> Checkpoint:
+    ) -> checkpoint.Checkpoint:
         """
         Return the :py:class:`det.experimental.Checkpoint` instance with the best
         validation metric as defined by the `sort_by` and `smaller_is_better`
@@ -65,7 +50,7 @@ class ExperimentReference:
 
     def top_n_checkpoints(
         self, limit: int, sort_by: Optional[str] = None, smaller_is_better: Optional[bool] = None
-    ) -> List[Checkpoint]:
+    ) -> List[checkpoint.Checkpoint]:
         """
         Return the n :py:class:`det.experimental.Checkpoint` instances with the best
         validation metric values as defined by the `sort_by` and `smaller_is_better`
@@ -125,7 +110,7 @@ class ExperimentReference:
         )
 
         return [
-            Checkpoint(
+            checkpoint.Checkpoint(
                 ckpt.uuid,
                 ckpt.step.trial.experiment.config["checkpoint_storage"],
                 ckpt.step.trial.experiment.config["batches_per_step"] * ckpt.step.id,
