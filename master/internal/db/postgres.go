@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -17,12 +18,14 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // PgDB represents a Postgres database connection.  The type definition is needed to define methods.
 type PgDB struct {
-	sql *sqlx.DB
+	sql     *sqlx.DB
+	queries map[string]string
 }
 
 // ConnectPostgres connects to a Postgres database.
@@ -31,7 +34,7 @@ func ConnectPostgres(url string) (*PgDB, error) {
 	for {
 		sql, err := sqlx.Connect("postgres", url)
 		if err == nil {
-			return &PgDB{sql}, nil
+			return &PgDB{sql: sql, queries: make(map[string]string)}, err
 		}
 
 		numTries++
@@ -1182,5 +1185,41 @@ func (db *PgDB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
 		return nil, err
 	default:
 		return &tokenKeypair, nil
+	}
+}
+
+// Query returns the result of the query. Any placeholder parameters are replaced
+// with supplied args.
+func (db *PgDB) Query(queryName string, v interface{}, args ...interface{}) error {
+	query, ok := db.queries[queryName]
+	if !ok {
+		query = string(etc.MustStaticFile(fmt.Sprintf("%s.sql", queryName)))
+		db.queries[queryName] = query
+	}
+	rows, err := db.sql.Queryx(query, args...)
+	if err != nil {
+		return err
+	}
+	vType := reflect.TypeOf(v).Elem()
+	switch kind := vType.Kind(); kind {
+	case reflect.Slice:
+		vValue := reflect.ValueOf(v).Elem()
+		vValue.Set(reflect.MakeSlice(vValue.Type(), 0, 0))
+		for rows.Next() {
+			sValue := reflect.New(vType.Elem())
+			if serr := rows.StructScan(sValue.Interface()); serr != nil {
+				return serr
+			}
+			vValue = reflect.Append(vValue, sValue.Elem())
+		}
+		reflect.ValueOf(v).Elem().Set(vValue)
+		return nil
+	case reflect.Struct:
+		if rows.Next() {
+			return rows.StructScan(v)
+		}
+		return errors.Errorf("record not found")
+	default:
+		panic(fmt.Sprintf("unsupported query type: %s", kind))
 	}
 }

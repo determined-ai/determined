@@ -29,18 +29,7 @@ func (m *manager) list(c echo.Context) (interface{}, error) {
 }
 
 func (m *manager) get(c echo.Context) (interface{}, error) {
-	args := struct {
-		Name string `path:"template_name"`
-	}{}
-	if err := api.BindArgs(&args, c); err != nil {
-		return nil, err
-	}
-	name := args.Name
-	dbModel, err := m.db.TemplateByName(name)
-	if err != nil {
-		return nil, errors.Wrapf(err, "getting template %q", name)
-	}
-	return dbModel, nil
+	return m.db.TemplateByName(c.Param("template_name"))
 }
 
 func (m *manager) put(c echo.Context) (interface{}, error) {
