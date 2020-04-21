@@ -11,8 +11,8 @@ from packaging import version
 import determined as det
 from determined import workload
 from determined.exec import harness
-from tests.unit.frameworks import utils  # noqa: I100
-from tests.unit.frameworks.fixtures import tf_keras_one_var_model, tf_keras_xor_model  # noqa: I100
+from tests.unit.experiment import utils  # noqa: I100
+from tests.unit.experiment.fixtures import tf_keras_one_var_model, tf_keras_xor_model  # noqa: I100
 
 
 def test_executing_eagerly():

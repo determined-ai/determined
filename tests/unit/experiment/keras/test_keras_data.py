@@ -5,7 +5,7 @@ from tensorflow.keras.utils import Sequence
 import determined as det
 from determined import keras
 from determined_common import check
-from tests.unit.frameworks import utils  # noqa: I100
+from tests.unit.experiment import utils  # noqa: I100
 
 
 class Empty(Sequence):

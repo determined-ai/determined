@@ -10,7 +10,7 @@ from tensorflow.keras.optimizers import SGD
 
 from determined import experimental
 from determined.experimental import keras
-from tests.unit.frameworks.utils import make_xor_data_sequences  # noqa: I202, I100
+from tests.unit.experiment.utils import make_xor_data_sequences  # noqa: I202, I100
 
 
 def categorical_error(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:

@@ -8,7 +8,7 @@ from determined.estimator import (
     EstimatorTrialContext,
     ServingInputReceiverFn,
 )
-from tests.unit.frameworks.utils import xor_data
+from tests.unit.experiment.utils import xor_data
 
 
 def xor_input_fn(
