@@ -149,6 +149,7 @@ jobs:
     environment:
       PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
+      - checkout
       - python-venv-setup
       - run: make check-python
 
@@ -158,6 +159,7 @@ jobs:
     environment:
       PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
+      - checkout
       - python-venv-setup
       - run: make test-harness
 
@@ -167,6 +169,7 @@ jobs:
     environment:
       PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
+      - checkout
       - python-venv-setup
       - run: pip install tensorflow==2.1
       - run: make test-tf2
