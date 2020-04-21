@@ -83,12 +83,17 @@ all: get-deps build-docker
 REQUIREMENTS_IN := combined-reqs.in
 REQUIREMENTS_OUTPUT := combined-reqs.txt
 
-get-deps:
-	pip install -r $(REQUIREMENTS_OUTPUT)
-	$(MAKE) -C master $@
+get-deps: python-get-deps go-get-deps
 	$(MAKE) WEBUI_TARGET=$@ webui
+
+go-get-deps:
+	$(MAKE) -C master get-deps
+	$(MAKE) -C agent get-deps
 	curl -fsSL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s -- -b $(GOBIN) $(GORELEASER_VERSION)
 	go get github.com/talos-systems/conform@fa7df19996ece307285da44c73f210c6cbec9207
+
+python-get-deps:
+	pip install -r $(REQUIREMENTS_OUTPUT)
 
 
 pin-deps:
@@ -197,18 +202,19 @@ graphql:
 	$(MAKE) graphql-schema
 	$(MAKE) graphql-python graphql-elm
 
-check: check-fmt check-types check-python-assert check-commit-messages
+check: check-python check-commit-messages
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
 	$(MAKE) WEBUI_TARGET=$@ webui
 
-check-fmt:
+check-python: check-python-fmt check-python-types check-python-assert
+
+check-python-fmt:
 	$(ISORT_RUN_ON_PYTHON_PATHS) isort $(ISORT_OPTIONS) --check
 	$(RUN_ON_PYTHON_PATHS) black --check
 	$(FLAKE_RUN_ON_PYTHON_PATHS) flake8
-	$(MAKE) WEBUI_TARGET=$@ webui
 
-check-types:
+check-python-types:
 	$(MYPY) $(TYPE_CHECK_PATHS)
 	$(MYPY) cli
 	$(MYPY) common
@@ -269,7 +275,7 @@ test-tf2:
 		tests/unit/frameworks/keras/test_tf_keras_trial.py \
 		tests/unit/frameworks/keras/test_keras_data.py
 
-test-all:
+test-harness:
 	pytest -v -k $(TEST_EXPR) --runslow \
 		-Wall \
 		-Wignore:::tensorflow.python.framework.tensor_util \
@@ -277,9 +283,6 @@ test-all:
 		-Wignore:::keras.utils.data_utils \
 		--durations=0 \
 		tests/unit tests/cli
-	$(MAKE) -C master test
-	$(MAKE) -C agent test
-	$(MAKE) WEBUI_TARGET=test webui
 
 test-python-integrations: MASTER_HOST ?= localhost
 test-python-integrations: MASTER_CONFIG_PATH ?=
