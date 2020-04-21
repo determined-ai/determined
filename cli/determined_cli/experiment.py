@@ -1,4 +1,5 @@
 import cgi
+import io
 import json
 import numbers
 import pathlib
@@ -223,14 +224,18 @@ def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]
     return (remote_url, commit_hash, committer, commit_date)
 
 
-@authentication_required
-def create(args: Namespace) -> None:
-    experiment_config = yaml.safe_load(args.config_file.read())
+def _parse_config_file_or_exit(config_file: io.FileIO) -> Dict:
+    experiment_config = yaml.safe_load(config_file.read())
+    config_file.close()
     if not experiment_config or not isinstance(experiment_config, dict):
-        print("Error: invalid experiment config file {}".format(args.config_file.name))
+        print("Error: invalid experiment config file {}".format(config_file.name))
         sys.exit(1)
-    args.config_file.close()
+    return experiment_config
 
+
+@authentication_required
+def submit_experiment(args: Namespace) -> None:
+    experiment_config = _parse_config_file_or_exit(args.config_file)
     model_context = context.Context.from_local(args.model_def, constants.MAX_CONTEXT_SIZE)
 
     additional_body_fields = {}
@@ -280,6 +285,36 @@ def create(args: Namespace) -> None:
         # Activate the new experiment unless "--paused" is given.
         if not args.paused and args.follow_first_trial:
             follow_experiment_logs(args.master, exp_id)
+
+
+def local_experiment(args: Namespace) -> None:
+    experiment_config = _parse_config_file_or_exit(args.config_file)
+
+    try:
+        from determined import experimental
+    except ImportError as e:
+        print("--local requires that the `determined` package is installed.")
+        raise e
+
+    # Python typically initializes sys.path[0] as the empty string when
+    # invoked interactively, which directs Python to search modules in the
+    # current directory first. However, this is _not_ happening when this
+    # Python function is invoked via the cli. We add it manually here so
+    # that test_one_batch can import the entrypoint by changing the
+    # directory to model_def.
+    #
+    # Reference: https://docs.python.org/3/library/sys.html#sys.path
+    sys.path = [""] + sys.path
+    experimental.test_one_batch(
+        args.model_def.resolve(), trial_class=None, config=experiment_config
+    )
+
+
+def create(args: Namespace) -> None:
+    if args.local:
+        local_experiment(args)
+    else:
+        submit_experiment(args)
 
 
 @authentication_required
@@ -873,6 +908,13 @@ args_description = Cmd(
                     "flag assumes that git is installed, a .git repository "
                     "exists in the model definition directory, and that the "
                     "git working tree of that repository is empty.",
+                ),
+                Arg(
+                    "--local",
+                    action="store_true",
+                    help="Create the experiment in local mode instead of submitting it to the "
+                    "cluster. For more information, see documentation on det.experimental.create() "
+                    "and det.experimental.Mode.LOCAL",
                 ),
                 Arg(
                     "--template",

@@ -11,9 +11,9 @@ from determined import horovod
 from determined_common import check
 
 
-def load_trial_implementation(env: det.EnvContext) -> Type[det.Trial]:
+def load_trial_implementation(entrypoint_spec: str) -> Type[det.Trial]:
     """
-    Load and initialize a Trial class from a model definition zip file.
+    Load and initialize a Trial class from an entrypoint specification.
 
     An entrypoint specification is expected to take the form:
 
@@ -41,7 +41,6 @@ def load_trial_implementation(env: det.EnvContext) -> Type[det.Trial]:
     [1] https://packaging.python.org/specifications/entry-points/
     """
 
-    entrypoint_spec = env.experiment_config["entrypoint"]
     logging.info(f"Loading Trial implementation with entrypoint {entrypoint_spec}.")
     module, qualname_separator, qualname = entrypoint_spec.partition(":")
     obj = importlib.import_module(module)
@@ -50,7 +49,7 @@ def load_trial_implementation(env: det.EnvContext) -> Type[det.Trial]:
             obj = getattr(obj, attr)
 
     check.check_issubclass(
-        obj, det.Trial, "Invalid type for specified 'entrypoint' ({})".format(entrypoint_spec),
+        obj, det.Trial, "Invalid type for specified 'entrypoint' ({})".format(entrypoint_spec)
     )
 
     return cast(Type[det.Trial], obj)
@@ -77,9 +76,7 @@ class RunpyGlobals:
 
     _instance = None  # type: Optional[RunpyGlobals]
 
-    def __init__(
-        self, env: det.EnvContext, hvd_config: horovod.HorovodContext,
-    ):
+    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
         self.env = env  # type: det.EnvContext
         self.hvd_config = hvd_config  # type: horovod.HorovodContext
         self.context = None  # type: Optional[det.NativeContext]
@@ -107,7 +104,7 @@ class RunpyGlobals:
 
     @classmethod
     def set_runpy_native_result(
-        cls, context: det.NativeContext, controller_cls: Type[det.TrialController],
+        cls, context: det.NativeContext, controller_cls: Type[det.TrialController]
     ) -> None:
         check.true(cls.get_instance().controller_cls is None, "Please don't load twice.")
         cls.get_instance().context = context
@@ -115,7 +112,7 @@ class RunpyGlobals:
 
     @classmethod
     def set_runpy_trial_result(
-        cls, trial_cls: Type[det.Trial], controller_cls: Type[det.TrialController],
+        cls, trial_cls: Type[det.Trial], controller_cls: Type[det.TrialController]
     ) -> None:
         check.true(cls.get_instance().controller_cls is None, "Please don't load twice.")
         cls.get_instance().trial_cls = trial_cls
@@ -125,9 +122,7 @@ class RunpyGlobals:
     @classmethod
     def get_runpy_result(
         cls,
-    ) -> Tuple[
-        Optional[det.NativeContext], Optional[Type[det.Trial]], Type[det.TrialController],
-    ]:
+    ) -> Tuple[Optional[det.NativeContext], Optional[Type[det.Trial]], Type[det.TrialController]]:
         check.true(
             cls.get_instance().controller_cls is not None, "Please load native implementation."
         )
@@ -140,15 +135,13 @@ class RunpyGlobals:
 
 def convert_notebook_to_python_script(notebook_path: str) -> str:
     check.check_true(
-        notebook_path.endswith(".ipynb"), f"Notebook file {notebook_path} must has a suffix .ipynb",
+        notebook_path.endswith(".ipynb"), f"Notebook file {notebook_path} must has a suffix .ipynb"
     )
     processed_cells_path = f"{notebook_path[:-6]}__det__.py"
 
     with open(notebook_path, "r") as f1, open(processed_cells_path, "w") as f2:
         obj = json.load(f1)
-        check.true(
-            "cells" in obj, f"Invalid notebook file {notebook_path}",
-        )
+        check.true("cells" in obj, f"Invalid notebook file {notebook_path}")
         for cell in obj["cells"]:
             if cell["cell_type"] == "code":
                 lines = [line for line in cell["source"] if not line.lstrip().startswith("!")]
@@ -168,10 +161,8 @@ def overwrite_sys_args(new_args: List[str]) -> Iterator:
 
 
 def load_native_implementation(
-    env: det.EnvContext, hvd_config: horovod.HorovodContext,
-) -> Tuple[
-    Optional[det.NativeContext], Optional[Type[det.Trial]], Type[det.TrialController],
-]:
+    env: det.EnvContext, hvd_config: horovod.HorovodContext
+) -> Tuple[Optional[det.NativeContext], Optional[Type[det.Trial]], Type[det.TrialController]]:
     # For now, we assume the entrypoint_cmd is a python invocation like
     # "python <command>"
     command = env.experiment_config["internal"]["native"]["command"]  # type: List[str]
