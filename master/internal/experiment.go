@@ -197,9 +197,18 @@ func newSearcherEventCallback(master *Master, ref *actor.Ref) func(model.Searche
 }
 
 func restoreExperiment(master *Master, expModel *model.Experiment) error {
-	if expModel.State != model.ActiveState && expModel.State != model.PausedState {
-		return errors.Errorf("cannot restore experiment %d from state %v",
-			expModel.ID, expModel.State)
+	// Experiments which were trying to stop need to be marked as terminal in the database.
+	if terminal, ok := model.StoppingToTerminalStates[expModel.State]; ok {
+		if err := master.db.TerminateExperimentInRestart(expModel.ID, terminal); err != nil {
+			return errors.Wrapf(err, "terminating experiment %d", expModel.ID)
+		}
+		expModel.State = terminal
+		telemetry.ReportExperimentStateChanged(master.system, master.db, *expModel)
+		return nil
+	} else if _, ok := model.RunningStates[expModel.State]; !ok {
+		return errors.Errorf(
+			"cannot restore experiment %d from state %v", expModel.ID, expModel.State,
+		)
 	}
 
 	e, err := newExperiment(master, expModel)

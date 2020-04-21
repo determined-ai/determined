@@ -252,6 +252,56 @@ WHERE state IN ('ACTIVE', 'PAUSED', 'STOPPING_CANCELED', 'STOPPING_COMPLETED', '
 	return exps, nil
 }
 
+// TerminateExperimentInRestart is used during master restart to properly terminate an experiment
+// which was either in the process of stopping or which is not restorable for some reason, such as
+// an invalid experiment config after a version upgrade.
+func (db *PgDB) TerminateExperimentInRestart(id int, state model.State) error {
+	if _, ok := model.TerminalStates[state]; !ok {
+		return errors.Errorf("state %v is not a terminal state", state)
+	}
+
+	now := time.Now().UTC()
+
+	tx, err := db.sql.Begin()
+	if err != nil {
+		return errors.Wrap(err, "starting transaction")
+	}
+	defer func() {
+		if tx == nil {
+			return
+		}
+
+		if rErr := tx.Rollback(); rErr != nil {
+			log.Errorf("during rollback: %v", rErr)
+		}
+	}()
+
+	// Terminate trials.
+	if _, err = tx.Exec(
+		`UPDATE trials SET state=$1, end_time=$2 WHERE experiment_id=$3 and end_time=NULL`,
+		state,
+		now,
+		id,
+	); err != nil {
+		return errors.Wrap(err, "terminating trials of a stopping experiment")
+	}
+
+	// Terminate experiment.
+	if _, err = tx.Exec(
+		`UPDATE experiments SET state=$1, end_time=$2, progress=NULL WHERE id=$3`, state, now, id,
+	); err != nil {
+		return errors.Wrap(err, "terminating a stopping experiment")
+	}
+
+	if err = tx.Commit(); err != nil {
+		return errors.Wrapf(err, "committing termination of stopping experiment %v", id)
+	}
+
+	tx = nil
+
+	return nil
+}
+
 // SaveExperimentConfig saves the current experiment config to the database.
 func (db *PgDB) SaveExperimentConfig(experiment *model.Experiment) error {
 	query := `

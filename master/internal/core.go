@@ -304,10 +304,10 @@ func (m *Master) restoreExperiment(e *model.Experiment) {
 		log.Errorf("failed to parse experiment config: %d", e.ID)
 	}
 	e.State = model.ErrorState
-	telemetry.ReportExperimentStateChanged(m.system, m.db, *e)
-	if err := m.db.SaveExperimentState(e); err != nil {
+	if err := m.db.TerminateExperimentInRestart(e.ID, e.State); err != nil {
 		log.WithError(err).Error("failed to mark experiment as errored")
 	}
+	telemetry.ReportExperimentStateChanged(m.system, m.db, *e)
 }
 
 // convertDBErrorsToNotFound helps reduce boilerplate in our handlers, by
