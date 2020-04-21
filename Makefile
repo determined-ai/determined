@@ -258,8 +258,8 @@ test-tf2:
 		-Wignore:::tensorflow.python.util.tf_inspect \
 		-Wignore:::keras.utils.data_utils \
 		--durations=0 \
-		tests/unit/frameworks/tensorflow/test_estimator_trial.py \
-		tests/unit/frameworks/tensorflow/test_util.py
+		tests/unit/experiment/tensorflow/test_estimator_trial.py \
+		tests/unit/experiment/tensorflow/test_util.py
 	# We must run these tests separately becuase estimators need to disable v2
 	# behavior (a global operation). We are explicitly testing eager execution
 	# for tf keras which needs v2 behavior enabled. You can't enable v2 behavior
@@ -271,8 +271,8 @@ test-tf2:
 		-Wignore:::tensorflow.python.util.tf_inspect \
 		-Wignore:::keras.utils.data_utils \
 		--durations=0 \
-		tests/unit/frameworks/keras/test_tf_keras_trial.py \
-		tests/unit/frameworks/keras/test_keras_data.py
+		tests/unit/experiment/keras/test_tf_keras_trial.py \
+		tests/unit/experiment/keras/test_keras_data.py
 
 test-harness:
 	pytest -v -k $(TEST_EXPR) --runslow \

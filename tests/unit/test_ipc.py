@@ -6,8 +6,8 @@ import traceback
 from typing import Any, List, Optional, cast
 
 from determined import ipc, layers, workload
+from tests.unit.experiment import utils
 from tests.unit.fixtures import fake_subprocess_receiver
-from tests.unit.frameworks import utils
 
 
 class Subproc(multiprocessing.Process):

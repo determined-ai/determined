@@ -8,7 +8,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import SGD, Adam
 
 from determined import keras
-from tests.unit.frameworks.utils import make_xor_data_sequences, xor_data  # noqa: I202, I100
+from tests.unit.experiment.utils import make_xor_data_sequences, xor_data  # noqa: I202, I100
 
 
 def categorical_error(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:

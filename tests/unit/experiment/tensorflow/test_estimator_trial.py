@@ -8,8 +8,8 @@ import tensorflow as tf
 import determined as det
 from determined import workload
 from determined.exec import harness
-from tests.unit.frameworks import utils  # noqa: I100
-from tests.unit.frameworks.fixtures import estimator_xor_model
+from tests.unit.experiment import utils  # noqa: I100
+from tests.unit.experiment.fixtures import estimator_xor_model
 
 
 @pytest.fixture(

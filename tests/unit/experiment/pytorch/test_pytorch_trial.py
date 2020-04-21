@@ -7,8 +7,8 @@ import torch
 import determined as det
 from determined import workload
 from determined_common import check
-from tests.unit.frameworks import utils  # noqa: I100
-from tests.unit.frameworks.fixtures import pytorch_xor_model
+from tests.unit.experiment import utils  # noqa: I100
+from tests.unit.experiment.fixtures import pytorch_xor_model
 
 
 def check_equal_structures(a: typing.Any, b: typing.Any) -> None:
