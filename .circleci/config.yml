@@ -78,31 +78,23 @@ commands:
           key: det-react-deps-v1dev-{{ checksum  "webui/react/package-lock.json" }}
           paths:
             - "webui/react/node_modules"
+  python-venv-setup:
+    description: Create Python venv and install combined dependencies.
+    steps:
+      - run: python3.6 -m venv /tmp/venv --system-site-packages
+      - run: pip install --upgrade pip\<20
+      - restore-python-cache
+      - run: pip install -r combined-reqs.txt
+      - save-python-cache
 
 
 jobs:
-  test-cli:
-    parameters:
-      executor-name:
-        type: string
-    executor: << parameters.executor-name >>
-    steps:
-      - checkout
-      - run: cd common; python setup.py bdist_wheel -d ../build
-      - run: cd cli; python setup.py bdist_wheel -d ../build
-      - run: pip install --find-links=build determined-common determined-cli
-      # Ensure Determined cli can run without installing cli test requirements
-      - run: det --help
-      - run: pip install -r tests/cli/requirements.txt
-      - run: pytest tests/cli
-
-  test-unit:
+  build:
     docker:
       - image: python:3.6.9-stretch
         environment:
           GO111MODULE: "on"
           PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/go/bin
-
     steps:
       - run: python3.6 -m venv /tmp/venv
       - install-node
@@ -124,13 +116,140 @@ jobs:
       - run: make -C webui/react build
       - run: make debs
 
-      - run: make check
 
-      - run: make test-all
 
+  lint-elm:
+    docker:
+      - image: node:12
+    steps:
+      - checkout
+      - restore-elm-cache
+      - run: make -C webui/elm get-deps
+      - save-elm-cache
+      - run: make -C webui/elm check
+
+  test-unit-elm:
+    docker:
+      - image: node:12
+    steps:
+      - checkout
+      - restore-elm-cache
+      - run: make -C webui/elm get-deps
+      - save-elm-cache
+      - run: make -C webui/elm test
+
+
+
+  lint-react:
+    docker:
+      - image: node:12
+    steps:
+      - checkout
+      - restore-react-cache
+      - run: make -C webui/react get-deps
+      - save-react-cache
+      - run: make -C webui/react check
+
+  test-unit-react:
+    docker:
+      - image: node:12
+    steps:
+      - checkout
+      - restore-react-cache
+      - run: make -C webui/react get-deps
+      - save-react-cache
+      - run: make -C webui/react test
+
+
+
+  lint-go:
+    docker:
+      - image: golang:1.13-stretch
+        environment:
+          GO111MODULE: "on"
+    steps:
+      - checkout
+      - restore-go-cache
+      - run: make go-get-deps
+      - save-go-cache
+      - run: make -C master check
+      - run: make -C agent check
+      - run: make check-commit-messages
+
+  test-unit-go:
+    docker:
+      - image: golang:1.13-stretch
+        environment:
+          GO111MODULE: "on"
+    steps:
+      - checkout
+      - restore-go-cache
+      - run: make go-get-deps
+      - save-go-cache
+      - run: make -C master test
+      - run: make -C agent test
+
+
+
+
+  lint-python:
+    docker:
+      - image: python:3.6.9
+    environment:
+      PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    steps:
+      - checkout
+      - python-venv-setup
+      - run: make check-python
+
+  test-unit-harness:
+    docker:
+      - image: python:3.6.9
+    environment:
+      PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    steps:
+      - checkout
+      - python-venv-setup
+      - run: make test-harness
+
+  test-unit-harness-tf2:
+    docker:
+      - image: python:3.6.9
+    environment:
+      PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    steps:
+      - checkout
+      - run: python3.6 -m venv /tmp/venv
+      - restore_cache:
+          keys:
+            - det-harness-deps-tf21-v1dev1-{{ checksum  "harness/setup.py" }}--{{ checksum  "common/setup.py" }}
       - run: pip install --upgrade pip\<20
-      - run: pip install tensorflow==2.1
+      - run: pip install wheel
+      - run: cd common; python setup.py bdist_wheel -d ../build
+      - run: cd harness; python setup.py bdist_wheel -d ../build
+      - run: pip install --find-links=build determined determined-common tensorflow==2.1.0 mypy==0.740 pytest
+      - save_cache:
+          key: det-harness-deps-tf21-v1dev1-{{ checksum  "harness/setup.py" }}--{{ checksum  "common/setup.py" }}
+          paths:
+            - "/tmp/venv"
       - run: make test-tf2
+
+  test-cli:
+    parameters:
+      executor-name:
+        type: string
+    executor: << parameters.executor-name >>
+    steps:
+      - checkout
+      - run: cd common; python setup.py bdist_wheel -d ../build
+      - run: cd cli; python setup.py bdist_wheel -d ../build
+      - run: pip install --find-links=build determined-common determined-cli
+      # Ensure Determined cli can run without installing cli test requirements
+      - run: det --help
+      - run: pip install -r tests/cli/requirements.txt
+      - run: pytest tests/cli
+
+
 
 workflows:
   test-cli:
@@ -139,6 +258,19 @@ workflows:
           matrix:
             parameters:
               executor-name: ["python-35", "python-36", "python-37", "win/default"]
+  build:
+    jobs:
+      - build
   test-unit:
     jobs:
-      - test-unit
+      - test-unit-go
+      - test-unit-elm
+      - test-unit-react
+      - test-unit-harness
+      - test-unit-harness-tf2
+  lint:
+    jobs:
+      - lint-python
+      - lint-go
+      - lint-elm
+      - lint-react
