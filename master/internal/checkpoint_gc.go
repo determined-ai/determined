@@ -70,6 +70,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 
 	case scheduler.TerminateRequest:
 	case scheduler.ContainerStarted:
+	case scheduler.TaskAborted:
 	case scheduler.TaskTerminated:
 	case actor.PostStop:
 

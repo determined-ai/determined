@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -33,8 +34,11 @@ type (
 // newSummary returns a new summary of the command.
 func newSummary(c *command) summary {
 	state := "PENDING"
-	if c.container != nil {
+	switch {
+	case c.container != nil:
 		state = c.container.State.String()
+	case c.exitStatus != nil:
+		state = container.Terminated.String()
 	}
 	return summary{
 		RegisteredTime: c.registeredTime,

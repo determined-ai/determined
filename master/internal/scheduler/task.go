@@ -49,6 +49,8 @@ type (
 		Task    TaskSummary
 		Aborted bool
 	}
+	// TaskAborted notifies the task actor that it was terminated before being scheduled.
+	TaskAborted struct{}
 )
 
 // TaskID is a unique ID assigned to tasks when added to the cluster.

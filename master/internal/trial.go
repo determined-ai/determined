@@ -331,6 +331,8 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 			t.startedContainers++
 		}
 
+	case scheduler.TaskAborted:
+
 	case scheduler.TaskTerminated:
 		t.processTaskTerminated(ctx, msg)
 
