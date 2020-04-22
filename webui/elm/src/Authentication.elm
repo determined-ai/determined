@@ -11,24 +11,13 @@ import Json.Decode as Decode
     exposing
         ( Decoder
         , bool
-        , string
         , succeed
         )
 import Json.Decode.Pipeline as DP exposing (required)
-import Json.Encode as E
 import Route
 import Session exposing (Session)
 import Types
 import Url
-import Url.Builder as UB
-
-
-{-| A structure holding user credentials. Used by Login form.
--}
-type alias LoginCredentials =
-    { username : String
-    , password : String
-    }
 
 
 {-| XHR request to get the currently-authenticated user.
@@ -39,14 +28,6 @@ getCurrentUser msg =
         { url = API.buildUrl [ "users", "me" ] []
         , expect = Http.expectJson msg decodeSessionUser
         }
-
-
-encodeLoginCredentials : LoginCredentials -> E.Value
-encodeLoginCredentials credentials =
-    E.object
-        [ ( "username", E.string credentials.username )
-        , ( "password", E.string credentials.password )
-        ]
 
 
 {-| Decode a user with extra authenticatication/privilege information.

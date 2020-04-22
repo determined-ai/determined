@@ -180,8 +180,6 @@ parser =
         , map ExperimentDetail (s "ui" </> s "experiments" </> int)
         , makeExpListRoute (s "ui" </> s "experiments")
         , makeExpListRoute (s "ui")
-        , map (Login Nothing) (s "ui" </> s "login")
-        , map Logout (s "ui" </> s "logout")
         , commandLikeListRoute (s "ui" </> s "notebooks") NotebookList
         , commandLikeListRoute (s "ui" </> s "shells") ShellList
         , commandLikeListRoute (s "ui" </> s "tensorboards") TensorBoardList

@@ -9,8 +9,6 @@ import Page.CommandList
 import Page.ExperimentDetail
 import Page.ExperimentList
 import Page.LogViewer
-import Page.Login
-import Page.Logout
 import Page.NotebookList
 import Page.ShellList
 import Page.TensorBoardList
@@ -37,8 +35,6 @@ type Msg
     | CommandListMsg Page.CommandList.Msg
     | ExperimentDetailMsg Page.ExperimentDetail.Msg
     | ExperimentListMsg Page.ExperimentList.Msg
-    | LoginMsg Page.Login.Msg
-    | LogoutMsg Page.Logout.Msg
     | NotebookListMsg Page.NotebookList.Msg
     | ShellListMsg Page.ShellList.Msg
     | TensorBoardListMsg Page.TensorBoardList.Msg

@@ -8,8 +8,6 @@ import Page.CommandList
 import Page.ExperimentDetail
 import Page.ExperimentList
 import Page.LogViewer
-import Page.Login
-import Page.Logout
 import Page.NotebookList
 import Page.ShellList
 import Page.TensorBoardList
@@ -46,8 +44,6 @@ type Page
     | CommandList Page.CommandList.Model
     | ExperimentDetail Page.ExperimentDetail.Model
     | ExperimentList Page.ExperimentList.Model
-    | Login Page.Login.Model
-    | Logout Page.Logout.Model
     | NotebookList Page.NotebookList.Model
     | ShellList Page.ShellList.Model
     | TensorBoardList Page.TensorBoardList.Model

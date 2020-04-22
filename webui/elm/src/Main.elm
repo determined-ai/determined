@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import API
-import Authentication exposing (doLogin, getCurrentUser)
+import Authentication exposing (doLogin, doLogout, getCurrentUser)
 import Browser
 import Browser.Dom
 import Browser.Navigation as Navigation
@@ -14,8 +14,6 @@ import Page.CommandList
 import Page.ExperimentDetail
 import Page.ExperimentList
 import Page.LogViewer
-import Page.Login
-import Page.Logout
 import Page.NotebookList
 import Page.ShellList
 import Page.TensorBoardList
@@ -260,13 +258,7 @@ update msg model =
 
                 Err _ ->
                     if not autoLogin then
-                        let
-                            credentials =
-                                { username = "determined"
-                                , password = ""
-                                }
-                        in
-                        ( model, doLogin (GotAuthenticationResponse url) credentials )
+                        ( model, doLogin (Just url) model.session )
 
                     else
                         let
@@ -316,22 +308,6 @@ update msg model =
             case model.page of
                 ExperimentList pageModel ->
                     pageUpdate experimentListInfo pageMsg pageModel
-
-                _ ->
-                    ( model, Cmd.none )
-
-        LoginMsg pageMsg ->
-            case model.page of
-                Login pageModel ->
-                    pageUpdate loginInfo pageMsg pageModel
-
-                _ ->
-                    ( model, Cmd.none )
-
-        LogoutMsg pageMsg ->
-            case model.page of
-                Logout pageModel ->
-                    pageUpdate logoutInfo pageMsg pageModel
 
                 _ ->
                     ( model, Cmd.none )
@@ -434,10 +410,10 @@ updateWithRoute url model =
                                 |> mapInit model experimentListInfo
 
                 Just (Route.Login _) ->
-                    Page.Login.init |> mapInit model loginInfo
+                    ( model, doLogin (Just url) model.session )
 
                 Just Route.Logout ->
-                    Page.Logout.init |> mapInit model logoutInfo
+                    ( model, doLogout model.session )
 
                 Just (Route.NotebookList options) ->
                     case model.page of
@@ -577,12 +553,6 @@ subscriptions model =
 
                 ExperimentList childModel ->
                     pageSubs experimentListInfo childModel
-
-                Login childModel ->
-                    pageSubs loginInfo childModel
-
-                Logout childModel ->
-                    pageSubs logoutInfo childModel
 
                 NotebookList childModel ->
                     pageSubs notebookListInfo childModel
@@ -735,36 +705,6 @@ experimentListInfo =
             case msg of
                 Page.ExperimentList.SetCriticalError errorMessage ->
                     ( { model | criticalError = Just errorMessage }, Cmd.none )
-    }
-
-
-loginInfo : PageInfo Page.Login.Model Page.Login.Msg Page.Login.OutMsg
-loginInfo =
-    { pageTagger = Login
-    , msgTagger = LoginMsg
-    , subscriptions = always Sub.none
-    , update = Page.Login.update
-    , outHandler =
-        \msg model ->
-            case msg of
-                Page.Login.LoginDone user ->
-                    ( setSessionUser model (Just user), Cmd.none )
-    }
-
-
-logoutInfo : PageInfo Page.Logout.Model Page.Logout.Msg Page.Logout.OutMsg
-logoutInfo =
-    { pageTagger = Logout
-    , msgTagger = LogoutMsg
-    , subscriptions = always Sub.none
-    , update = Page.Logout.update
-    , outHandler =
-        \msg model ->
-            case msg of
-                Page.Logout.LogoutDone ->
-                    ( setSessionUser model Nothing
-                    , Navigation.pushUrl model.session.key (Route.toString (Route.Login Nothing))
-                    )
     }
 
 

@@ -13,8 +13,6 @@ import Page.CommandList
 import Page.ExperimentDetail
 import Page.ExperimentList
 import Page.LogViewer
-import Page.Login
-import Page.Logout
 import Page.NotebookList
 import Page.ShellList
 import Page.TensorBoardList
@@ -30,12 +28,6 @@ viewBody model =
     let
         ( maybeTopBar, maybeSideMenu ) =
             case ( model.page, model.session.user ) of
-                ( Login _, Just _ ) ->
-                    ( text "", text "" )
-
-                ( Logout _, Just _ ) ->
-                    ( text "", text "" )
-
                 ( _, Just _ ) ->
                     ( topAppBar model, renderSideMenu model )
 
@@ -90,14 +82,6 @@ viewContent model =
         ExperimentList pageModel ->
             Page.ExperimentList.view pageModel model.session
                 |> Html.map Msg.ExperimentListMsg
-
-        Login pageModel ->
-            Page.Login.view pageModel model.session
-                |> Html.map Msg.LoginMsg
-
-        Logout pageModel ->
-            Page.Logout.view pageModel model.session
-                |> Html.map Msg.LogoutMsg
 
         ShellList pageModel ->
             Page.ShellList.view pageModel model.session
