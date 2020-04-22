@@ -282,7 +282,7 @@ test-harness:
 		-Wignore:::tensorflow.python.util.tf_inspect \
 		-Wignore:::keras.utils.data_utils \
 		--durations=0 \
-		tests/unit tests/cli
+		tests/unit
 
 test-python-integrations: MASTER_HOST ?= localhost
 test-python-integrations: MASTER_CONFIG_PATH ?=
