@@ -33,7 +33,7 @@ def test_executing_eagerly():
         tf_keras_xor_model.XORTrialWithTrainingMetrics,
         tf_keras_xor_model.XORTrialWithCustomObjects,
         tf_keras_xor_model.XORTrialWithDataLayer,
-        utils.fixtures_path("tf_keras_xor_model_experiment.py"),
+        utils.fixtures_path("tf_keras_xor_model_native.py"),
     ],
 )
 def xor_trial_controller(request):
@@ -291,3 +291,11 @@ def test_surface_native_error():
             assert b"ValueError: Shapes (None, 10) and (None, 1) are incompatible" in err
         else:
             assert b"ValueError: Input 0 of layer sequential is incompatible with the layer" in err
+
+
+def test_local_mode() -> None:
+    utils.run_local_mode(utils.fixtures_path("tf_keras_xor_model_native.py"))
+
+
+def test_create_trial_instance() -> None:
+    utils.create_trial_instance(tf_keras_xor_model.XORTrial)

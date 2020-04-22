@@ -2,6 +2,8 @@ import distutils.util
 import json
 import os
 import pathlib
+import subprocess
+import tempfile
 import zipfile
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
@@ -12,7 +14,8 @@ from mypy_extensions import DefaultNamedArg
 from tensorflow.keras import utils as keras_utils
 
 import determined as det
-from determined import constants, gpu, horovod, keras, load, workload
+from determined import constants, experimental, gpu, horovod, keras, load, workload
+from determined_common import check
 from determined_common.types import ExperimentID, StepID, TrialID
 
 
@@ -134,6 +137,10 @@ def make_default_hvd_config() -> horovod.HorovodContext:
 
 def fixtures_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "fixtures", path)
+
+
+def repo_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../../", path)
 
 
 def assert_equivalent_metrics(metrics_A: Dict[str, Any], metrics_B: Dict[str, Any]) -> None:
@@ -386,3 +393,21 @@ def optimizer_state_test(
 
 def list_all_files(directory: str) -> List[str]:
     return [f for _, _, files in os.walk(directory) for f in files]
+
+
+def run_local_mode(implementation: str) -> None:
+    subprocess.check_call(
+        args=["python", implementation, "--mode", "local"],
+        cwd=fixtures_path(""),
+        env={"PYTHONUNBUFFERED": "1", "PYTHONPATH": f"$PYTHONPATH:{repo_path('')}", **os.environ},
+    )
+
+
+def create_trial_instance(trial_def: Type[det.Trial]) -> None:
+    with tempfile.TemporaryDirectory() as td:
+        trial_instance = experimental.create_trial_instance(
+            trial_def=trial_def,
+            config={"hyperparameters": {"global_batch_size": det.Constant(16)}},
+            checkpoint_dir=td,
+        )
+    check.check_isinstance(trial_instance, det.Trial)
