@@ -46,3 +46,4 @@ class cloudformation:
 
 class misc:
     TEMPLATE_PATH = "determined_deploy.aws.templates"
+    CLOUDFORMATION_REGEX = r"^[a-zA-Z][-a-zA-Z0-9]*$"
