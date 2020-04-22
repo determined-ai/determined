@@ -257,7 +257,7 @@ update msg model =
                     updateWithRoute url (setSessionUser model (Just user))
 
                 Err _ ->
-                    ( model, doLogin (Just url) model.session )
+                    ( model, doLogin (Just url) )
 
         GotAuthenticationResponse url result ->
             case result of
@@ -402,10 +402,10 @@ updateWithRoute url model =
                                 |> mapInit model experimentListInfo
 
                 Just (Route.Login _) ->
-                    ( model, doLogin (Just url) model.session )
+                    ( model, doLogin (Just url) )
 
                 Just Route.Logout ->
-                    ( model, doLogout model.session )
+                    ( model, doLogout )
 
                 Just (Route.NotebookList options) ->
                     case model.page of

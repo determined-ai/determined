@@ -15,7 +15,6 @@ import Json.Decode as Decode
         )
 import Json.Decode.Pipeline as DP exposing (required)
 import Route
-import Session exposing (Session)
 import Types
 import Url
 
@@ -40,19 +39,19 @@ decodeSessionUser =
         |> required "active" bool
 
 
-doLogin : Maybe Url.Url -> Session -> Cmd msg
-doLogin maybeUrl session =
+doLogin : Maybe Url.Url -> Cmd msg
+doLogin maybeUrl =
     let
         newUrl =
             Route.toString (Route.Login (Maybe.andThen ((\url -> Url.toString url) >> Just) maybeUrl))
     in
-    Navigation.pushUrl session.key newUrl
+    -- load loads all new HTML. It is equivalent to typing the URL into the URL bar and pressing enter.
+    -- So whatever is happening in your Model will be thrown out, and a whole new page is loaded.
+    -- https://guide.elm-lang.org/webapps/navigation.html
+    Navigation.load newUrl
 
 
-doLogout : Session -> Cmd msg
-doLogout session =
-    let
-        newUrl =
-            Route.toString Route.Logout
-    in
-    Navigation.pushUrl session.key newUrl
+doLogout : Cmd msg
+doLogout =
+    Route.toString Route.Logout
+        |> Navigation.load
