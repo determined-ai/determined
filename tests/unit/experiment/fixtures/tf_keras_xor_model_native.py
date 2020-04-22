@@ -1,5 +1,5 @@
+import argparse
 import pathlib
-from typing import Tuple
 
 import tensorflow as tf
 from tensorflow.keras.layers import Dense
@@ -9,8 +9,8 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import SGD
 
 from determined import experimental
-from determined.experimental import keras
-from tests.unit.experiment.utils import make_xor_data_sequences  # noqa: I202, I100
+from determined.experimental.keras import init
+from tests.unit.experiment import utils
 
 
 def categorical_error(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
@@ -21,18 +21,29 @@ def predictions(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     return y_pred
 
 
-def make_xor_single_thread_loaders() -> Tuple[tf.keras.utils.Sequence, tf.keras.utils.Sequence]:
-    return make_xor_data_sequences(batch_size=4)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", dest="mode", default="cluster")
+    args = parser.parse_args()
 
+    config = {
+        "hyperparameters": {
+            "hidden_size": 2,
+            "learning_rate": 0.1,
+            "global_batch_size": 4,
+            "trial_type": "default",
+        }
+    }
 
-def train():
-    context = keras.init(mode=experimental.Mode.CLUSTER, context_dir=str(pathlib.Path.cwd()))
+    context = init(
+        config=config, mode=experimental.Mode(args.mode), context_dir=str(pathlib.Path.cwd())
+    )
 
     model = Sequential()
     model.add(Dense(context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,)))
     model.add(Dense(1))
 
-    train_data, val_data = make_xor_single_thread_loaders()
+    train_data, val_data = utils.make_xor_data_sequences(batch_size=4)
     model = context.wrap_model(model)
     model.compile(
         SGD(lr=context.get_hparam("learning_rate")),
@@ -40,7 +51,3 @@ def train():
         metrics=[categorical_error],
     )
     model.fit_generator(train_data, steps_per_epoch=100, validation_data=val_data, workers=0)
-
-
-if __name__ == "__main__":
-    train()

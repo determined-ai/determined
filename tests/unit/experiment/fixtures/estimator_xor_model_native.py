@@ -1,3 +1,4 @@
+import argparse
 import pathlib
 from typing import Callable, Dict, Tuple
 
@@ -6,14 +7,14 @@ import tensorflow as tf
 from determined import experimental
 from determined.estimator import EstimatorNativeContext, ServingInputReceiverFn
 from determined.experimental import estimator
-from tests.unit.frameworks.utils import xor_data
+from tests.unit.experiment import utils
 
 
 def xor_input_fn(
     context: EstimatorNativeContext, batch_size: int, shuffle: bool = False
 ) -> Callable[[], Tuple[tf.Tensor, tf.Tensor]]:
     def _input_fn() -> Tuple[tf.Tensor, tf.Tensor]:
-        data, labels = xor_data()
+        data, labels = utils.xor_data()
         dataset = tf.data.Dataset.from_tensor_slices((data, labels))
         dataset = context.wrap_dataset(dataset)
         if shuffle:
@@ -68,7 +69,23 @@ def build_serving_input_receiver_fns() -> Dict[str, ServingInputReceiverFn]:
 
 
 if __name__ == "__main__":
-    context = estimator.init(mode=experimental.Mode.CLUSTER, context_dir=str(pathlib.Path.cwd()))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", dest="mode", default="cluster")
+    args = parser.parse_args()
+
+    config = {
+        "hyperparameters": {
+            "hidden_size": 2,
+            "learning_rate": 0.1,
+            "global_batch_size": 4,
+            "optimizer": "sgd",
+            "shuffle": False,
+        }
+    }
+
+    context = estimator.init(
+        config=config, mode=experimental.Mode(args.mode), context_dir=str(pathlib.Path.cwd())
+    )
 
     batch_size = context.get_per_slot_batch_size()
     shuffle = context.get_hparam("shuffle")
