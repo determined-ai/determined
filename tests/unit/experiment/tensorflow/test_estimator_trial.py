@@ -17,7 +17,7 @@ from tests.unit.experiment.fixtures import estimator_xor_model
     params=[
         estimator_xor_model.XORTrial,
         estimator_xor_model.XORTrialDataLayer,
-        utils.fixtures_path("estimator_xor_model_experiment.py"),
+        utils.fixtures_path("estimator_xor_model_native.py"),
     ],
 )
 def xor_trial_controller(request):
@@ -202,3 +202,11 @@ class TestXORTrial:
             return xor_trial_controller(hparams, workloads, load_path=load_path)
 
         utils.optimizer_state_test(make_trial_controller_fn, tmp_path)
+
+
+def test_local_mode() -> None:
+    utils.run_local_mode(utils.fixtures_path("estimator_xor_model_native.py"))
+
+
+def test_create_trial_instance() -> None:
+    utils.create_trial_instance(estimator_xor_model.XORTrial)

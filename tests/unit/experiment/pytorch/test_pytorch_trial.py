@@ -462,3 +462,7 @@ class TestPyTorchTrial:
             trial_seed=self.trial_seed,
         )
         controller.run()
+
+
+def test_create_trial_instance() -> None:
+    utils.create_trial_instance(pytorch_xor_model.XORTrial)
