@@ -70,7 +70,6 @@ def create_experiment(
     config: Optional[Dict[str, Any]],
     context_dir: str,
     command: Optional[List[str]],
-    test_mode: bool = False,
     master_url: Optional[str] = None,
 ) -> Optional[int]:
     """Submit an experiment to the Determined master.
@@ -105,10 +104,7 @@ def create_experiment(
     # default to constants.DEFAULT_DETERMINED_USER.
     auth.initialize_session(master_url, requested_user=None, try_reauth=True)
 
-    if test_mode:
-        exp_id = api.create_test_experiment(master_url, config, exp_context)
-    else:
-        exp_id = api.create_experiment(master_url, config, exp_context)
+    exp_id = api.create_experiment(master_url, config, exp_context)
     print("Created experiment {}".format(exp_id))
 
     return exp_id
