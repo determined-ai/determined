@@ -257,13 +257,13 @@ toString r =
         Login maybeRedirect ->
             case maybeRedirect of
                 Just redirect ->
-                    absolute [ "ui", "login" ] [ UB.string "redirect" redirect ]
+                    absolute [ "det", "login" ] [ UB.string "redirect" redirect ]
 
                 Nothing ->
-                    absolute [ "ui", "login" ] []
+                    absolute [ "det", "login" ] []
 
         Logout ->
-            absolute [ "ui", "logout" ] []
+            absolute [ "det", "logout" ] []
 
         NotebookList options ->
             absolute
