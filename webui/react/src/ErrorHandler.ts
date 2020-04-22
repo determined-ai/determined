@@ -1,5 +1,6 @@
 import { notification } from 'antd';
 
+import { crossoverRoute } from 'routes';
 import { isAsyncFunction } from 'utils/data';
 import Logger, { LoggerInterface } from 'utils/Logger';
 
@@ -13,6 +14,7 @@ export enum ErrorLevel {
 
 export enum ErrorType {
   Server = 'server', // internal apis and server errors.
+  Auth = 'auth',
   Ui = 'ui',
   Input = 'input',
   Api = 'api', // third-party api
@@ -54,9 +56,17 @@ const defaultErrorParameters = {
   silent: false,
 };
 
-const handleError = (e: DaError, doThrow: boolean): void => {
+const handleError = (e: DaError): Error => {
   // set the defaults.
   e = { ...defaultErrorParameters, ...e };
+
+  const error = e.error ? e.error : new Error(e.message);
+
+  if (e.type === ErrorType.Auth) {
+    // TODO: Update to internal routing when React takes over login.
+    crossoverRoute('/ui/logout');
+    return error;
+  }
 
   // TODO add support and checking for saving and dismissing class of errors as user preference
   // using id.
@@ -83,23 +93,17 @@ const handleError = (e: DaError, doThrow: boolean): void => {
   // TODO SEP handle transient failures? eg only take action IF.. (requires keeping state)
   // TODO report to segment (with rate limiting? batching?). save the error stack and more for this.
 
-  if (doThrow) {
-    if (e.error !== undefined) {
-      throw e;
-    } else {
-      throw new Error(e.message);
-    }
-  }
-
   // TODO SEP capture screen shot or more context?
   // https://stackblitz.com/edit/react-screen-capture?file=index.js
+
+  return error;
 };
 
-export const handleErrorForFn = async <T>(daError: DaError, func: () => T): Promise<T|void> => {
+export const handleErrorForFn = async <T>(daError: DaError, func: () => T): Promise<T|Error> => {
   try {
     return isAsyncFunction(func) ? await func() : func();
   } catch (e) {
-    handleError({ ...daError, error: daError.error || e }, false);
+    return handleError({ ...daError, error: daError.error || e });
   }
 };
 

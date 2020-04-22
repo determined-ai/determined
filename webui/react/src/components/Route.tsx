@@ -4,7 +4,8 @@ import { Route as DomRoute, Redirect } from 'react-router-dom';
 
 import Spinner from 'components/Spinner';
 import Auth from 'contexts/Auth';
-import { crossoverRoute, RouteConfigItem } from 'routes';
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import { RouteConfigItem } from 'routes';
 import { getCurrentUser } from 'services/api';
 
 /*
@@ -32,10 +33,15 @@ const Route: React.FC<RouteConfigItem> = (props: RouteConfigItem) => {
         });
       }
     } catch (e) {
-      // TODO: Update to internal routing when React takes over login.
-      crossoverRoute('/ui/logout');
+      handleError({
+        error: e,
+        level: ErrorLevel.Fatal,
+        message: `unauthenticated route request ${props.path}`,
+        silent: true,
+        type: ErrorType.Auth,
+      });
     }
-  }, [ setAuth ]);
+  }, [ setAuth, props.path ]);
 
   const setLoading = (loadingStatus: boolean): void => {
     if (mounted.current) setIsLoading(loadingStatus);

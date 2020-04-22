@@ -63,7 +63,7 @@ const TaskActionDropdown: React.FC<Props> = (props: Props) => {
         publicSubject: `${capitalize(params.key)} failed.`,
         silent: false,
         type: ErrorType.Server,
-      }, false);
+      });
     }
     // TODO show loading indicator when we have a button component that supports it.
   };
