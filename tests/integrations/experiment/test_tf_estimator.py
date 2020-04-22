@@ -85,7 +85,7 @@ def test_mnist_estimmator_const_parallel(native_parallel: bool, tf2: bool) -> No
     exp.run_basic_test_with_temp_config(config, conf.official_examples_path("mnist_estimator"), 1)
 
 
-@pytest.mark.integ4  # type: ignore
+@pytest.mark.frameworks_cpu  # type: ignore
 @pytest.mark.parametrize("tf2", [True, False])  # type: ignore
 def test_mnist_estimator_warm_start(tf2: bool) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
@@ -185,10 +185,21 @@ def test_dataset_restore(secrets: Dict[str, str], tf2: bool) -> None:
     assert losses == modified_losses
 
 
+@pytest.mark.frameworks_cpu  # type: ignore
+@pytest.mark.parametrize("tf2", [True, False])  # type: ignore
+@pytest.mark.parametrize("storage_type", ["lfs"])  # type: ignore
+def test_mnist_estimator_data_layer_lfs(tf2: bool, storage_type: str) -> None:
+    run_mnist_estimator_data_layer_test(tf2, storage_type)
+
+
 @pytest.mark.integ4  # type: ignore
 @pytest.mark.parametrize("tf2", [True, False])  # type: ignore
-@pytest.mark.parametrize("storage_type", ["lfs", "s3"])  # type: ignore
-def test_mnist_estimator_data_layer(tf2: bool, storage_type: str) -> None:
+@pytest.mark.parametrize("storage_type", ["s3"])  # type: ignore
+def test_mnist_estimator_data_layer_s3(tf2: bool, storage_type: str) -> None:
+    run_mnist_estimator_data_layer_test(tf2, storage_type)
+
+
+def run_mnist_estimator_data_layer_test(tf2: bool, storage_type: str) -> None:
     config = conf.load_config(conf.experimental_path("data_layer_mnist_estimator/const.yaml"))
     config = conf.set_max_steps(config, 2)
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)

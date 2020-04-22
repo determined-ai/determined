@@ -92,10 +92,17 @@ commands:
       - restore-python-cache
       - run: pip install -r combined-reqs.txt
       - save-python-cache
+  build-docker:
+    description: Build Master and Agent Docker images.
+    steps:
+      - attach_workspace:
+          at: build
+      - run: make -C master build-docker
+      - run: make -C agent build-docker
 
 
 jobs:
-  build:
+  build-debs:
     docker:
       - image: python:3.6.9-stretch
         environment:
@@ -121,6 +128,35 @@ jobs:
       - run: make -C webui/elm build
       - run: make -C webui/react build
       - run: make debs
+
+      - persist_to_workspace:
+          root: build
+          paths:
+            - "dist/*linux_amd64.deb"
+
+  test-e2e:
+    parameters:
+      test-split:
+        type: string
+    machine:
+      image: ubuntu-1604:201903-01
+    resource_class: large
+    steps:
+      - checkout
+      - run: sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+      - run: sudo systemctl restart docker
+      - build-docker
+
+      - run: |
+          pyenv global 3.6.5
+          python3.6 -m venv /tmp/venv
+          . /tmp/venv/bin/activate
+          pip install --upgrade pip\<20 setuptools
+          make python-get-deps
+
+      - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-4bd937a
+
+      - run: . /tmp/venv/bin/activate && PYTEST_MARKS=<< parameters.test-split >> make test-python-integrations
 
 
 
@@ -282,9 +318,15 @@ workflows:
           matrix:
             parameters:
               executor-name: ["python-35", "python-36", "python-37", "win/default"]
-  build:
+  test-e2e:
     jobs:
-      - build
+      - build-debs
+      - test-e2e:
+          requires:
+            - build-debs
+          matrix:
+            parameters:
+              test-split: ["system", "workflows", "frameworks_cpu", "frameworks_native_cpu"]
   test-unit:
     jobs:
       - test-unit-go

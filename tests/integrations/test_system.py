@@ -20,7 +20,7 @@ from tests.integrations.fixtures.metric_maker.metric_maker import (
 )
 
 
-@pytest.mark.integ1  # type: ignore
+@pytest.mark.system  # type: ignore
 def test_trial_error() -> None:
     exp.run_failure_test(
         conf.fixtures_path("trial_error/const.yaml"),
@@ -29,7 +29,7 @@ def test_trial_error() -> None:
     )
 
 
-@pytest.mark.integ1  # type: ignore
+@pytest.mark.system  # type: ignore
 def test_invalid_experiment() -> None:
     completed_process = exp.maybe_create_experiment(
         conf.fixtures_path("invalid_experiment/const.yaml"), conf.official_examples_path("mnist_tf")
@@ -37,7 +37,7 @@ def test_invalid_experiment() -> None:
     assert completed_process.returncode != 0
 
 
-@pytest.mark.integ1  # type: ignore
+@pytest.mark.system  # type: ignore
 def test_metric_gathering() -> None:
     """
     Confirm that metrics are gathered from the trial the way that we expect.
@@ -85,7 +85,17 @@ def test_metric_gathering() -> None:
 
 
 @pytest.mark.integ1  # type: ignore
-def test_gc_checkpoints(secrets: Dict[str, str]) -> None:
+def test_gc_checkpoints_s3(secrets: Dict[str, str]) -> None:
+    config = exp.s3_checkpoint_config(secrets)
+    run_gc_checkpoints_test(config)
+
+
+@pytest.mark.system  # type: ignore
+def test_gc_checkpoints_lfs() -> None:
+    run_gc_checkpoints_test(exp.shared_fs_checkpoint_config())
+
+
+def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
     fixtures = [
         (
             conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml"),
@@ -97,46 +107,41 @@ def test_gc_checkpoints(secrets: Dict[str, str]) -> None:
         ),
     ]
 
-    # Prepare config updates for each backend we want to test.
-    config_mods = [exp.shared_fs_checkpoint_config(), exp.s3_checkpoint_config(secrets)]
-
     all_checkpoints = []
     for base_conf_path, result in fixtures:
-        for mod in config_mods:
-            config = conf.load_config(str(base_conf_path))
-            config["checkpoint_storage"].update(mod)
+        config = conf.load_config(str(base_conf_path))
+        config["checkpoint_storage"].update(checkpoint_storage)
 
-            with tempfile.NamedTemporaryFile() as tf:
-                with open(tf.name, "w") as f:
-                    yaml.dump(config, f)
+        with tempfile.NamedTemporaryFile() as tf:
+            with open(tf.name, "w") as f:
+                yaml.dump(config, f)
 
-                experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"))
+            experiment_id = exp.create_experiment(tf.name, conf.fixtures_path("no_op"))
 
-            exp.wait_for_experiment_state(experiment_id, "COMPLETED")
+        exp.wait_for_experiment_state(experiment_id, "COMPLETED")
 
-            # Checkpoints are not marked as deleted until gc_checkpoint task starts.
-            retries = 5
-            for retry in range(retries):
-                trials = exp.experiment_trials(experiment_id)
-                assert len(trials) == 1
+        # Checkpoints are not marked as deleted until gc_checkpoint task starts.
+        retries = 5
+        for retry in range(retries):
+            trials = exp.experiment_trials(experiment_id)
+            assert len(trials) == 1
 
-                checkpoints = sorted(
-                    (step.checkpoint for step in trials[0].steps),
-                    key=operator.itemgetter("step_id"),
-                )
-                assert len(checkpoints) == 10
-                by_state = {}  # type: Dict[str, Set[int]]
-                for checkpoint in checkpoints:
-                    by_state.setdefault(checkpoint.state, set()).add(checkpoint.step_id)
+            checkpoints = sorted(
+                (step.checkpoint for step in trials[0].steps), key=operator.itemgetter("step_id"),
+            )
+            assert len(checkpoints) == 10
+            by_state = {}  # type: Dict[str, Set[int]]
+            for checkpoint in checkpoints:
+                by_state.setdefault(checkpoint.state, set()).add(checkpoint.step_id)
 
-                if by_state == result:
-                    all_checkpoints.append((config, checkpoints))
-                    break
+            if by_state == result:
+                all_checkpoints.append((config, checkpoints))
+                break
 
-                if retry + 1 == retries:
-                    assert by_state == result
+            if retry + 1 == retries:
+                assert by_state == result
 
-                time.sleep(1)
+            time.sleep(1)
 
     # Check that the actual checkpoint storage (for shared_fs) reflects the
     # deletions. We want to wait for the GC containers to exit, so check
@@ -177,7 +182,7 @@ def test_gc_checkpoints(secrets: Dict[str, str]) -> None:
             break
 
 
-@pytest.mark.integ1  # type: ignore
+@pytest.mark.system  # type: ignore
 def test_experiment_delete() -> None:
     subprocess.check_call(["det", "-m", conf.make_master_url(), "user", "whoami"])
 
@@ -198,7 +203,7 @@ def test_experiment_delete() -> None:
         )
 
 
-@pytest.mark.integ1  # type: ignore
+@pytest.mark.system  # type: ignore
 def test_experiment_archive_unarchive() -> None:
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), ["--paused"]
@@ -244,7 +249,7 @@ def test_experiment_archive_unarchive() -> None:
     assert not infos[0]["archived"]
 
 
-@pytest.mark.integ1  # type: ignore
+@pytest.mark.system  # type: ignore
 def test_create_test_mode() -> None:
     # test-mode should succeed with a valid experiment.
     command = [
@@ -296,7 +301,7 @@ def test_mnist_tf1_15() -> None:
     )
 
 
-@pytest.mark.integ1  # type: ignore
+@pytest.mark.system  # type: ignore
 def test_labels() -> None:
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op"), None
@@ -323,7 +328,7 @@ def test_labels() -> None:
     assert label not in output
 
 
-@pytest.mark.integ1  # type: ignore
+@pytest.mark.system  # type: ignore
 def test_end_to_end_adaptive() -> None:
     exp_id = exp.run_basic_test(
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
@@ -371,7 +376,7 @@ def test_end_to_end_adaptive() -> None:
     assert top_k_uuids == top_k_reversed_uuids[::-1]
 
 
-@pytest.mark.integ1  # type: ignore
+@pytest.mark.system  # type: ignore
 def test_log_null_bytes() -> None:
     config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config_obj["hyperparameters"]["write_null"] = True

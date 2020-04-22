@@ -4,7 +4,7 @@ from tests.integrations import command as cmd
 
 
 @pytest.mark.slow  # type: ignore
-@pytest.mark.integ3  # type: ignore
+@pytest.mark.workflows  # type: ignore
 def test_basic_notebook_start_and_kill() -> None:
     with cmd.interactive_command("notebook", "start") as notebook:
         for line in notebook.stdout:
