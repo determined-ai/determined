@@ -15,6 +15,12 @@ executors:
     docker:
       - image: python:3.7.7
 
+parameters:
+  det-version:
+    type: string
+    default: 0.12.3.dev0
+
+
 commands:
   install-node:
     description: Install Node 12.x
@@ -227,7 +233,7 @@ jobs:
       - run: pip install wheel
       - run: cd common; python setup.py bdist_wheel -d ../build
       - run: cd harness; python setup.py bdist_wheel -d ../build
-      - run: pip install --find-links=build determined determined-common tensorflow==2.1.0 mypy==0.740 pytest
+      - run: pip install --find-links build determined==<< pipeline.parameters.det-version >> tensorflow==2.1.0 mypy==0.740 pytest
       - save_cache:
           key: det-harness-deps-tf21-v1dev1-{{ checksum  "harness/setup.py" }}--{{ checksum  "common/setup.py" }}
           paths:
@@ -243,7 +249,7 @@ jobs:
       - checkout
       - run: cd common; python setup.py bdist_wheel -d ../build
       - run: cd cli; python setup.py bdist_wheel -d ../build
-      - run: pip install --find-links=build determined-common determined-cli
+      - run: pip install --find-links build determined-cli==<< pipeline.parameters.det-version >>
       # Ensure Determined cli can run without installing cli test requirements
       - run: det --help
       - run: pip install -r tests/cli/requirements.txt
