@@ -215,7 +215,22 @@ jobs:
       PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
       - checkout
-      - python-venv-setup
+      - run: python3.6 -m venv /tmp/venv
+      - restore_cache:
+          keys:
+            - det-harness-deps-tf114-torch14-v1-{{ checksum  "harness/setup.py" }}--{{ checksum  "common/setup.py" }}
+      - run: pip install --upgrade pip\<20
+      - run: pip install wheel
+      - run: cd common; python setup.py bdist_wheel -d ../build
+      - run: cd harness; python setup.py bdist_wheel -d ../build
+      - run: pip install tensorflow==1.14.0 torch==1.4.0 torchvision==0.5.0 mypy==0.740 pytest
+      - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
+      - save_cache:
+          key: det-harness-deps-tf114-torch14-v1-{{ checksum  "harness/setup.py" }}--{{ checksum  "common/setup.py" }}
+          paths:
+            - "/tmp/venv"
+      # We force reinstall without dependencies to ensure that the code gets updated from whatever was cached.
+      - run: pip install --no-deps --force-reinstall --find-links build determined==<< pipeline.parameters.det-version >>
       - run: make test-harness
 
   test-unit-harness-tf2:
@@ -228,16 +243,19 @@ jobs:
       - run: python3.6 -m venv /tmp/venv
       - restore_cache:
           keys:
-            - det-harness-deps-tf21-v1dev1-{{ checksum  "harness/setup.py" }}--{{ checksum  "common/setup.py" }}
+            - det-harness-deps-tf21-v1-{{ checksum  "harness/setup.py" }}--{{ checksum  "common/setup.py" }}
       - run: pip install --upgrade pip\<20
       - run: pip install wheel
       - run: cd common; python setup.py bdist_wheel -d ../build
       - run: cd harness; python setup.py bdist_wheel -d ../build
-      - run: pip install --find-links build determined==<< pipeline.parameters.det-version >> tensorflow==2.1.0 mypy==0.740 pytest
+      - run: pip install tensorflow==2.1.0 mypy==0.740 pytest
+      - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
       - save_cache:
-          key: det-harness-deps-tf21-v1dev1-{{ checksum  "harness/setup.py" }}--{{ checksum  "common/setup.py" }}
+          key: det-harness-deps-tf21-v1-{{ checksum  "harness/setup.py" }}--{{ checksum  "common/setup.py" }}
           paths:
             - "/tmp/venv"
+      # We force reinstall without dependencies to ensure that the code gets updated from whatever was cached.
+      - run: pip install --no-deps --force-reinstall --find-links build determined==<< pipeline.parameters.det-version >>
       - run: make test-tf2
 
   test-cli:
