@@ -38,6 +38,7 @@ const Authentication: React.FC = () => {
     const hideLoader = message.loading('logging in..');
     login(creds as Credentials)
       .then(() => {
+        setAuth({ type: Auth.ActionType.SetIsAuthenticated, value: true });
         redirect();
       })
       .catch((e: Error) => {

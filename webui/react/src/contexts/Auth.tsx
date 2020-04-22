@@ -18,16 +18,22 @@ type Action =
 
 const defaultAuth: Auth = { isAuthenticated: false };
 
+const clearAuthCookie = () => {
+  // FIXME preserve other cookies?
+  document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+};
+
 const reducer = (state: State, action: Action): State => {
-  // TODO also reset the cookie here?
   switch (action.type) {
     case ActionType.Reset:
+      clearAuthCookie();
       return defaultAuth;
     case ActionType.Set:
       return action.value;
     case ActionType.SetUser:
       return { ...state, user: action.value };
     case ActionType.SetIsAuthenticated:
+      if (!action.value) clearAuthCookie();
       return { ...state, isAuthenticated: action.value };
     default:
       return state;
