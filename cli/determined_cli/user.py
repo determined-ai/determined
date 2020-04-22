@@ -9,7 +9,6 @@ from termcolor import colored
 
 import determined_common.api.authentication as auth
 from determined_common import api
-from determined_common.api import gql
 
 from . import render
 from .declarative_argparse import Arg, Cmd
@@ -68,32 +67,10 @@ def update_user(
 
 
 @authentication_required
-def list_users(parsed_args: Namespace) -> None:
-    q = api.GraphQLQuery(parsed_args.master)
-    users = q.op.users(order_by=[gql.users_order_by(id=gql.order_by.asc)])
-    users.id()
-    users.username()
-    users.active()
-    users.admin()
-
-    groups = users.agent_user_group()
-    groups.uid()
-    groups.gid()
-    groups.user_()
-    groups.group_()
-    resp = q.send()
-
-    def user_to_dict(u: gql.users) -> Dict[str, Any]:
-        a = u.agent_user_group.__to_json_value__()
-        return {
-            **u.__to_json_value__(),
-            "agent_uid": a.get("gid"),
-            "agent_gid": a.get("uid"),
-            "agent_user": a.get("user_"),
-            "agent_group": a.get("group_"),
-        }
-
-    render.render_dicts(FullUser, [user_to_dict(u) for u in resp.users])
+def list_users(args: Namespace) -> None:
+    render.render_objects(
+        FullUser, [render.unmarshal(FullUser, u) for u in api.get(args.master, path="users").json()]
+    )
 
 
 @authentication_required

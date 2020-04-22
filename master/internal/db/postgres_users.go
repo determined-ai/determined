@@ -1,7 +1,6 @@
 package db
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -214,21 +213,9 @@ func (db *PgDB) UpdateUser(updated *model.User, toUpdate []string, ug *model.Age
 }
 
 // UserList returns all of the users in the database.
-func (db *PgDB) UserList() ([]*model.FullUser, error) {
-	var users []*model.FullUser
-	if err := db.sql.Select(&users, `
-SELECT
-	u.id, u.username, u.admin, u.active,
-	h.uid AS agent_uid, h.gid AS agent_gid, h.user_ AS agent_user, h.group_ AS agent_group
-FROM users u
-LEFT OUTER JOIN agent_user_groups h ON (u.id = h.user_id)
-`); errors.Cause(err) == sql.ErrNoRows {
-		return nil, errors.WithStack(ErrNotFound)
-	} else if err != nil {
-		return nil, errors.Wrap(err, "error querying for users")
-	}
-
-	return users, nil
+func (db *PgDB) UserList() (values []model.FullUser, err error) {
+	err = db.Query("list_users", &values)
+	return values, err
 }
 
 // UserByID returns the full user for a given ID.
