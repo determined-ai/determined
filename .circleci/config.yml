@@ -294,6 +294,15 @@ commands:
     steps:
       - run: python CI/integrations/wait_for_master.py http://<<parameters.host>>:<<parameters.port>>
 
+  build-docker:
+    description: Build Master and Agent Docker images.
+    steps:
+      - attach_workspace:
+          at: build
+      - run: make -C master build-docker
+      - run: make -C agent build-docker
+
+
 
 jobs:
   build-docs:
@@ -337,6 +346,59 @@ jobs:
             - "dist/*linux_amd64.deb"
 
 
+  test-e2e-webui:
+    machine:
+      image: ubuntu-1604:201903-01
+    resource_class: large
+    steps:
+      - checkout
+      - run: sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+      - run: sudo systemctl restart docker
+      - build-docker
+
+      - run: pyenv global 3.6.5
+      - run: |
+          . /opt/circleci/.nvm/nvm.sh
+          nvm install v12
+          nvm alias default v12
+          make -C webui/tests get-deps
+      - run: pip install wheel
+      - run: cd common; python setup.py bdist_wheel -d ../build
+      - run: cd cli; python setup.py bdist_wheel -d ../build
+      - run: pip install --find-links build determined-cli==<< pipeline.parameters.det-version >>
+
+      - run: DET_VERSION=<< pipeline.parameters.det-version >> docker-compose -f CI/e2e/docker-compose.yaml up -d
+      - run: |
+          attempt_counter=0
+          max_attempts=10
+
+          until $(curl --output /dev/null --silent --head http://localhost:8080); do
+              if [ ${attempt_counter} -eq ${max_attempts} ];then
+                echo "Max attempts reached"
+                exit 1
+              fi
+
+              printf '.'
+              attempt_counter=$(($attempt_counter+1))
+              sleep 2
+          done
+      - run: python webui/tests/bin/createUserAndExperiments.py
+      - run: |
+          docker run \
+            --name e2e_cypress \
+            --network=e2e_default \
+            --mount type=bind,source=$(pwd)/webui,target=/webui \
+            -w /webui/tests \
+            --env DET_MASTER=determined-master:8080 \
+            cypress/included:4.3.0 \
+            --config-file cypress-docker.json \
+            --config "defaultCommandTimeout=30000,baseUrl=http://determined-master:8080" \
+            --browser chrome \
+            --headless
+      - store_test_results:
+          path: webui/tests/results/
+      - store_artifacts:
+          path: webui/tests/results/recordings
 
 
 
@@ -629,6 +691,9 @@ workflows:
           requires:
             - build-debs
       - test-e2e-tf:
+          requires:
+            - build-debs
+      - test-e2e-webui:
           requires:
             - build-debs
 
