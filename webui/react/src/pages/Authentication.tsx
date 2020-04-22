@@ -2,6 +2,7 @@ import { Button, Form, Input } from 'antd';
 import { message } from 'antd';
 import React from 'react';
 import { useHistory, useLocation } from 'react-router';
+import { Redirect } from 'react-router-dom';
 
 import Icon from 'components/Icon';
 import Link from 'components/Link';
@@ -22,8 +23,6 @@ const Authentication: React.FC = () => {
   const auth = Auth.useStateContext();
   const setAuth = Auth.useActionContext();
 
-  const redirect = (): void => history.push(DEFAULT_REDIRECT);
-
   const isLogout = location.pathname.endsWith('logout');
   if (isLogout) {
     logout({}).then(() => {
@@ -39,7 +38,6 @@ const Authentication: React.FC = () => {
     login(creds as Credentials)
       .then(() => {
         setAuth({ type: Auth.ActionType.SetIsAuthenticated, value: true });
-        redirect();
       })
       .catch((e: Error) => {
         // TODO check for the code or error type?
@@ -88,10 +86,9 @@ const Authentication: React.FC = () => {
 
   );
 
-  if (auth.isAuthenticated) redirect();
-
   return (
     <div className={css.base}>
+      {auth.isAuthenticated && <Redirect to={DEFAULT_REDIRECT} />}
       <div className={css.content}>
         {/* DISCUSSION what if we didn't need to add the logo classname and was able to
         target logo on its own using component name easily in module.scss */}
