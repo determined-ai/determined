@@ -27,57 +27,57 @@ const userApi:  Api<{}, User> = {
 
 export const getCurrentUser = generateApi<{}, User>(userApi);
 
-interface KillExpOpts {
+interface KillExpParams {
   experimentId: number;
 }
 
-const killExperimentApi: Api<KillExpOpts, void> = {
-  httpOptions: (opts) => {
+const killExperimentApi: Api<KillExpParams, void> = {
+  httpOptions: (params) => {
     return {
       method: 'POST',
-      url: `/experiments/${opts.experimentId.toString()}/kill`,
+      url: `/experiments/${params.experimentId.toString()}/kill`,
     };
   },
   name: 'killExperiment',
 };
 
-export const killExperiment = generateApi<KillExpOpts, void>(killExperimentApi);
+export const killExperiment = generateApi<KillExpParams, void>(killExperimentApi);
 
-interface KillCommandOpts {
+interface KillCommandParams {
   commandId: string;
   commandType: CommandType;
 }
 
-const killCommandApi: Api<KillCommandOpts, void> = {
-  httpOptions: (opts) => {
+const killCommandApi: Api<KillCommandParams, void> = {
+  httpOptions: (params) => {
     return {
       method: 'DELETE',
-      url: `${commandToEndpoint[opts.commandType]}/${opts.commandId}`,
+      url: `${commandToEndpoint[params.commandType]}/${params.commandId}`,
     };
   },
   name: 'killCommand',
 };
 
-export const killCommand = generateApi<KillCommandOpts, void>(killCommandApi);
+export const killCommand = generateApi<KillCommandParams, void>(killCommandApi);
 
-interface PatchExperimentOpts {
+interface PatchExperimentParams {
   experimentId: number;
   body: Record<keyof unknown, unknown> | string;
 }
 
-const patchExperimentApi: Api<PatchExperimentOpts, void> = {
-  httpOptions: (opts) => {
+const patchExperimentApi: Api<PatchExperimentParams, void> = {
+  httpOptions: (params) => {
     return {
-      body: opts.body,
+      body: params.body,
       headers: { 'content-type': 'application/merge-patch+json', 'withCredentials': true },
       method: 'PATCH',
-      url: `/experiments/${opts.experimentId.toString()}`,
+      url: `/experiments/${params.experimentId.toString()}`,
     };
   },
   name: 'patchExperiment',
 };
 
-export const patchExperiment = generateApi<PatchExperimentOpts, void>(patchExperimentApi);
+export const patchExperiment = generateApi<PatchExperimentParams, void>(patchExperimentApi);
 
 export const killTask =
   async (task: RecentTask, cancelToken?: CancelToken): Promise<void> => {

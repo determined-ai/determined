@@ -1,19 +1,10 @@
 import axios, { AxiosResponse, CancelToken, Method } from 'axios';
 
-import { crossoverRoute } from 'routes';
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-const hasAuthFailed = (e: any): boolean => {
+const isAuthFailure = (e: any): boolean => {
   return e.response && e.response.status && e.response.status === 401;
-};
-
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-const handleAuthFailure = (e: any): boolean => {
-  if (!hasAuthFailed(e)) return false;
-
-  // TODO: Update to internal routing when React takes over login.
-  crossoverRoute('/ui/logout');
-  return true;
 };
 
 export const http = axios.create({
@@ -31,8 +22,7 @@ export interface HttpOptions {
 export interface Api<Input, Output>{
   name: string;
   httpOptions: (params: Input) => HttpOptions;
-  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-  postProcess?: (response: AxiosResponse<any>) => Output; // io type decoder.
+  postProcess?: (response: AxiosResponse<unknown>) => Output; // io type decoder.
   // middlewares?: Middleware[]; // success/failure middlewares
 }
 
@@ -48,10 +38,18 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
         url: httpOpts.url as string,
       });
 
-      return api.postProcess ? api.postProcess(response) : response.data as unknown as Output;
+      return api.postProcess ? api.postProcess(response) : response.data as Output;
     } catch (e) {
-      handleAuthFailure(e);
-      throw Error(`${api.name} failed`);
+      const isAuthError = isAuthFailure(e);
+      const error = handleError({
+        error: e,
+        level: isAuthError ? ErrorLevel.Fatal : ErrorLevel.Error,
+        message: isAuthError ?
+          `unauthenticated request ${api.name}` : `request ${api.name} failed.`,
+        silent: true,
+        type: ErrorType.Auth,
+      });
+      throw error;
     }
   };
 }

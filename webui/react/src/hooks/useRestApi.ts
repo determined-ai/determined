@@ -111,7 +111,7 @@ const useRestApi = <T>(ioType: io.Mixed, options: HookOptions<T> = {}): Output<T
             level: ErrorLevel.Warn,
             message: `${httpOptions.method + ' ' || ''}request to ${httpOptions.url} failed`,
             type: ErrorType.Server,
-          }, false);
+          });
 
           dispatch({ type: ActionType.SetError, value: error });
         }
