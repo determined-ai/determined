@@ -1,7 +1,6 @@
 import re
 import subprocess
 import time
-import uuid
 from pathlib import Path
 from typing import Any, List
 
@@ -15,7 +14,7 @@ from tests.integrations import config as conf
 
 
 @pytest.mark.slow  # type: ignore
-@pytest.mark.integ3  # type: ignore
+@pytest.mark.workflows  # type: ignore
 def test_cold_and_warm_start(tmp_path: Path) -> None:
     for _ in range(3):
         subprocess.check_call(
@@ -40,7 +39,7 @@ def _run_and_verify_exit_code_zero(args: List[str], **kwargs: Any) -> None:
     assert re.search(b"command exited successfully", output) is not None
 
 
-@pytest.mark.integ3  # type: ignore
+@pytest.mark.workflows  # type: ignore
 def test_exit_code_reporting() -> None:
     """
     Confirm that failed commands are not reported as successful, and confirm
@@ -51,7 +50,7 @@ def test_exit_code_reporting() -> None:
 
 
 @pytest.mark.slow  # type: ignore
-@pytest.mark.integ3  # type: ignore
+@pytest.mark.workflows  # type: ignore
 def test_basic_workflows(tmp_path: Path) -> None:
     with FileTree(tmp_path, {"hello.py": "print('hello world')"}) as tree:
         _run_and_verify_exit_code_zero(
@@ -106,7 +105,7 @@ def test_basic_workflows(tmp_path: Path) -> None:
 
 
 @pytest.mark.slow  # type: ignore
-@pytest.mark.integ3  # type: ignore
+@pytest.mark.workflows  # type: ignore
 def test_large_uploads(tmp_path: Path) -> None:
     with pytest.raises(subprocess.CalledProcessError):
         with FileTree(tmp_path, {"hello.py": "print('hello world')"}) as tree:
@@ -155,7 +154,7 @@ def test_large_uploads(tmp_path: Path) -> None:
 
 
 @pytest.mark.slow  # type: ignore
-@pytest.mark.integ3  # type: ignore
+@pytest.mark.workflows  # type: ignore
 def test_configs(tmp_path: Path) -> None:
     with FileTree(
         tmp_path,
@@ -193,7 +192,7 @@ if test != "TEST":
 
 
 @pytest.mark.slow  # type: ignore
-@pytest.mark.integ3  # type: ignore
+@pytest.mark.workflows  # type: ignore
 def test_singleton_command() -> None:
     _run_and_verify_exit_code_zero(
         ["det", "-m", conf.make_master_url(), "cmd", "run", "echo hello && echo world"]
@@ -201,7 +200,7 @@ def test_singleton_command() -> None:
 
 
 @pytest.mark.slow  # type: ignore
-@pytest.mark.integ3  # type: ignore
+@pytest.mark.workflows  # type: ignore
 def test_absolute_bind_mount(tmp_path: Path) -> None:
     _run_and_verify_exit_code_zero(
         [
@@ -247,7 +246,7 @@ bind_mounts:
 
 
 @pytest.mark.slow  # type: ignore
-@pytest.mark.integ3  # type: ignore
+@pytest.mark.workflows  # type: ignore
 def test_relative_bind_mount(tmp_path: Path) -> None:
     _run_and_verify_exit_code_zero(
         [
@@ -292,31 +291,7 @@ bind_mounts:
 
 
 @pytest.mark.slow  # type: ignore
-@pytest.mark.integ3  # type: ignore
-def test_custom_image(tmp_path: Path) -> None:
-    target_tag = "determined-integration-tests-{}".format(uuid.uuid4())
-    with open(conf.fixtures_path("dockerfiles/py3.6-custom-workdir.Dockerfile"), "rb") as df:
-        docker.from_env().images.build(fileobj=df, tag=target_tag)
-
-    with FileTree(tmp_path, {"hello.py": "print('hello world')"}) as tree:
-        _run_and_verify_exit_code_zero(
-            [
-                "det",
-                "-m",
-                conf.make_master_url(),
-                "cmd",
-                "run",
-                "--context",
-                str(tree),
-                "--config",
-                "environment.image={}".format(target_tag),
-                "python hello.py",
-            ]
-        )
-
-
-@pytest.mark.slow  # type: ignore
-@pytest.mark.integ3  # type: ignore
+@pytest.mark.workflows  # type: ignore
 def test_cmd_kill() -> None:
     """Start a command, extract its task ID, and then kill it."""
 
@@ -331,7 +306,7 @@ def test_cmd_kill() -> None:
 
 
 @pytest.mark.slow  # type: ignore
-@pytest.mark.integ4  # type: ignore
+@pytest.mark.workflows  # type: ignore
 def test_image_pull_after_remove() -> None:
     """
     Remove pulled image and verify that it will be pulled again with auth.
@@ -357,7 +332,7 @@ def test_image_pull_after_remove() -> None:
 
 
 @pytest.mark.slow  # type: ignore
-@pytest.mark.integ4  # type: ignore
+@pytest.mark.workflows  # type: ignore
 def test_killed_pending_command_terminates() -> None:
     # Specify an outrageous number of slots to be sure that it can't be scheduled.
     with cmd.interactive_command(

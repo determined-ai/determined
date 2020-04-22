@@ -14,6 +14,10 @@ from tests.integrations import config
 from .cluster_log_manager import ClusterLogManager
 
 _INTEG_MARKERS = {
+    "system",
+    "workflows",
+    "frameworks_cpu",
+    "frameworks_native_cpu",
     "integ1",
     "integ2",
     "integ3",
