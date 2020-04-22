@@ -62,7 +62,7 @@ const handleError = (e: DaError): Error => {
   const error = e.error ? e.error : new Error(e.message);
 
   if (e.type === ErrorType.Auth) {
-    // TODO: Update to internal routing when React takes over login.
+    // FIXME using react router would require a react hook function or component
     if (!window.location.pathname.endsWith('login')) window.location.assign('/det/login');
     return error;
   }

@@ -1,4 +1,5 @@
 import { RouteProps } from 'react-router';
+import { Redirect } from 'react-router-dom';
 
 import Authentication from 'pages/Authentication';
 import Dashboard from 'pages/Dashboard';
@@ -17,7 +18,6 @@ export interface RouteConfigItem extends RouteProps {
   popout?: boolean;
   suffixIcon?: string;
   title: string;
-  component?: React.FC;
   needAuth?: boolean;
 }
 
@@ -27,7 +27,7 @@ export const crossoverRoute = (path: string): void => {
 };
 
 export const appRoutes: RouteConfigItem[] = [
-  {
+  { // FIXME some redundant re-routing is happening
     component: Determined,
     id: 'det',
     needAuth: true,
@@ -63,6 +63,7 @@ export const detRoutes: RouteConfigItem[] = [
     component: Dashboard,
     icon: 'user',
     id: 'dashboard',
+    needAuth: true,
     path: '/det/dashboard',
     title: 'Dashboard',
   },
