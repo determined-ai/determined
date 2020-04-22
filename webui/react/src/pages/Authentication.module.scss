@@ -9,7 +9,10 @@
     align-items: center;
     display: flex;
     flex-direction: column;
-    width: 25rem;
+    max-width: 30rem;
+  }
+  form {
+    width: 100%;
   }
   button {
     background-color: var(--theme-colors-core-primary);
@@ -22,7 +25,12 @@
   }
   .logo {
     height: 6rem;
-    margin-bottom: 1rem;
-    width: 20rem;
+    margin-bottom: 2rem;
+    width: 25rem;
+  }
+  .content > a {
+    padding: 0 1rem;
+    text-align: center;
+    font-size: 1.2rem;
   }
 }

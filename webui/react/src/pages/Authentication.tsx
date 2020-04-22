@@ -55,10 +55,8 @@ const Authentication: React.FC = () => {
 
   const loginForm = (
     <Form
-      initialValues={{
-        remember: true,
-      }}
       name="basic"
+      size="large"
       onFinish={onFinish}
     >
       <Form.Item
@@ -94,9 +92,9 @@ const Authentication: React.FC = () => {
         target logo on its own using component name easily in module.scss */}
         <Logo className={css.logo} type={LogoTypes.Dark} />
         {loginForm}
-        <Link path="/docs/system-administration/users.html?highlight=user">
-        Forgot your password or need to create a user? Checkout our docs
-        </Link>
+        <a href="/docs/system-administration/users.html?highlight=user" target="_blank">
+          Forgot your password or need to create a user? Checkout our docs
+        </a>
       </div>
     </div>
   );
