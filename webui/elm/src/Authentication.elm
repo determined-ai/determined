@@ -1,6 +1,11 @@
-module Authentication exposing (doLogin, doLogout, getCurrentUser)
+module Authentication exposing
+    ( doLogin
+    , doLogout
+    , getCurrentUser
+    )
 
 import API
+import Browser.Navigation as Navigation
 import Http
 import Json.Decode as Decode
     exposing
@@ -11,7 +16,10 @@ import Json.Decode as Decode
         )
 import Json.Decode.Pipeline as DP exposing (required)
 import Json.Encode as E
+import Route
+import Session exposing (Session)
 import Types
+import Url
 import Url.Builder as UB
 
 
@@ -33,28 +41,6 @@ getCurrentUser msg =
         }
 
 
-{-| POST credentials to sign in.
--}
-doLogin : (Result Http.Error () -> m) -> LoginCredentials -> Cmd m
-doLogin msgConstructor credentials =
-    Http.post
-        { url = API.buildUrl [ "login" ] [ UB.string "cookie" "true" ]
-        , body = Http.jsonBody (encodeLoginCredentials credentials)
-        , expect = Http.expectWhatever msgConstructor
-        }
-
-
-{-| POST to /logout to log out.
--}
-doLogout : (Result Http.Error () -> msg) -> Cmd msg
-doLogout tagger =
-    Http.post
-        { url = API.buildUrl [ "logout" ] []
-        , body = Http.emptyBody
-        , expect = Http.expectWhatever tagger
-        }
-
-
 encodeLoginCredentials : LoginCredentials -> E.Value
 encodeLoginCredentials credentials =
     E.object
@@ -71,3 +57,21 @@ decodeSessionUser =
         |> DP.custom API.decodeUser
         |> required "admin" bool
         |> required "active" bool
+
+
+doLogin : Maybe Url.Url -> Session -> Cmd msg
+doLogin maybeUrl session =
+    let
+        newUrl =
+            Route.toString (Route.Login (Maybe.andThen ((\url -> Url.toString url) >> Just) maybeUrl))
+    in
+    Navigation.pushUrl session.key newUrl
+
+
+doLogout : Session -> Cmd msg
+doLogout session =
+    let
+        newUrl =
+            Route.toString Route.Logout
+    in
+    Navigation.pushUrl session.key newUrl
