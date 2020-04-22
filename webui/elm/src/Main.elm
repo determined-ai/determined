@@ -75,7 +75,7 @@ init version url key =
     in
     ( initial
     , Cmd.batch
-        [ getCurrentUser (ValidatedAuthentication False url)
+        [ getCurrentUser (ValidatedAuthentication url)
         , API.fetchDeterminedInfo (requestHandlers GotDeterminedInfo)
         , API.pollSlots (requestHandlers GotSlots)
         , Task.perform GotTimeZone Time.here
@@ -251,26 +251,18 @@ update msg model =
             ( { model | userDropdownOpen = value }, Cmd.none )
 
         -- Authentication stuff.
-        ValidatedAuthentication autoLogin url result ->
+        ValidatedAuthentication url result ->
             case result of
                 Ok user ->
                     updateWithRoute url (setSessionUser model (Just user))
 
                 Err _ ->
-                    if not autoLogin then
-                        ( model, doLogin (Just url) model.session )
-
-                    else
-                        let
-                            newUrl =
-                                Route.toString (Route.Login (Just (Url.toString url)))
-                        in
-                        ( model, Navigation.pushUrl model.session.key newUrl )
+                    ( model, doLogin (Just url) model.session )
 
         GotAuthenticationResponse url result ->
             case result of
                 Ok _ ->
-                    ( model, getCurrentUser (ValidatedAuthentication True url) )
+                    ( model, getCurrentUser (ValidatedAuthentication url) )
 
                 Err _ ->
                     let

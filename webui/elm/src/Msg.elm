@@ -28,7 +28,7 @@ type Msg
     | GotSlots (List Types.Slot)
     | ToggleUserDropdownMenu Bool
       -- Authentication stuff.
-    | ValidatedAuthentication Bool Url (Result Http.Error Types.SessionUser)
+    | ValidatedAuthentication Url (Result Http.Error Types.SessionUser)
     | GotAuthenticationResponse Url (Result Http.Error ())
       -- Individual pages.
     | ClusterMsg Page.Cluster.Msg
