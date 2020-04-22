@@ -1,6 +1,7 @@
 port module Ports exposing
     ( AceContentUpdate
     , aceContentUpdated
+    , assignLocation
     , copiedToClipboard
     , copyToClipboard
     , destroyAceEditor
@@ -85,6 +86,9 @@ port copiedToClipboard : (Bool -> msg) -> Sub msg
 
 
 port setPageTitle : String -> Cmd a
+
+
+port assignLocation : String -> Cmd a
 
 
 
