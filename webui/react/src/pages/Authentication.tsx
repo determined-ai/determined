@@ -5,7 +5,6 @@ import { useHistory, useLocation } from 'react-router';
 import { Redirect } from 'react-router-dom';
 
 import Icon from 'components/Icon';
-import Link from 'components/Link';
 import Logo, { LogoTypes } from 'components/Logo';
 import Spinner from 'components/Spinner';
 import Auth from 'contexts/Auth';
@@ -15,6 +14,7 @@ import { Credentials } from 'types';
 
 import css from './Authentication.module.scss';
 
+// TODO support custom rediret param
 const DEFAULT_REDIRECT = '/det/dashboard';
 
 const Authentication: React.FC = () => {
