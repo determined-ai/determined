@@ -10,8 +10,8 @@ from determined_deploy.aws.deployment_types import base
 class VPC(base.DeterminedDeployment):
     ssh_command = "SSH to master Instance: ssh -i <pem-file> ubuntu@{master_ip}"
     det_ui = (
-        "Access Determined through cli: det -m {master_ip} \n"
-        "View the Determined UI: http://{master_ip}\n"
+        "Configure the Determined CLI: export DET_MASTER={master_ip}\n"
+        "View the Determined UI: http://{master_ip}:8080\n"
         "View Logs at: https://{region}.console.aws.amazon.com/cloudwatch/home?"
         "region={region}#logStream:group={log_group}"
     )
@@ -36,6 +36,7 @@ class VPC(base.DeterminedDeployment):
         super().__init__(template_path, parameters)
 
     def deploy(self) -> None:
+        self.before_deploy_print()
         cfn_parameters = self.consolidate_parameters()
         with open(self.template_path) as f:
             template = f.read()
@@ -43,6 +44,7 @@ class VPC(base.DeterminedDeployment):
         aws.deploy_stack(
             stack_name=self.parameters[constants.cloudformation.CLUSTER_ID],
             template_body=template,
+            keypair=self.parameters[constants.cloudformation.KEYPAIR],
             boto3_session=self.parameters[constants.cloudformation.BOTO3_SESSION],
             parameters=cfn_parameters,
         )

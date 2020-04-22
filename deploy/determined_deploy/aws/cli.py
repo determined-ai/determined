@@ -1,4 +1,6 @@
 import argparse
+import re
+import sys
 
 import boto3
 
@@ -26,7 +28,7 @@ def make_up_subparser(subparsers: argparse._SubParsersAction):
         "--cluster-id", type=str, help="stack name for CloudFormation cluster", required=True
     )
     require_named.add_argument(
-        "--keypair", type=str, help="keypair for master and agent", required=True
+        "--keypair", type=str, help="aws ec2 keypair for master and agent", required=True
     )
     subparser.add_argument(
         "--master-ami", type=str, help=argparse.SUPPRESS,
@@ -96,12 +98,18 @@ def deploy_aws(args: argparse.Namespace) -> None:
     else:
         boto3_session = boto3.Session(region_name=args.region)
 
+    if not re.match(constants.misc.CLOUDFORMATION_REGEX, args.cluster_id):
+        print("Deployment Failed - cluster-id much match ^[a-zA-Z][-a-zA-Z0-9]*$")
+        sys.exit(1)
+
     if args.command == "down":
-        aws.delete(args.cluster_id, boto3_session)
+        try:
+            aws.delete(args.cluster_id, boto3_session)
+        except Exception as e:
+            print(e)
+            print("Stack Deletion Failed. Check the AWS CloudFormation Console for details.")
         print("Delete Successful")
         return
-
-    aws.check_keypair(args.keypair, boto3_session)
 
     deployment_type_map = {
         constants.deployment_types.SIMPLE: simple.Simple,
@@ -132,5 +140,11 @@ def deploy_aws(args: argparse.Namespace) -> None:
         return
 
     print("Starting Determined Deployment")
-    deployment_object.deploy()
+    try:
+        deployment_object.deploy()
+    except Exception as e:
+        print(e)
+        print("Stack Deployment Failed. Check the AWS CloudFormation Console for details.")
+        sys.exit(1)
+
     print("Determined Deployment Successful")

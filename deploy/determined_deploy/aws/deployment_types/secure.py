@@ -16,7 +16,7 @@ class Secure(base.DeterminedDeployment):
         "To View Determined UI:\n"
         "Add Keypair: ssh-add <keypair>\n"
         "Open SSH Tunnel through Bastion:  ssh -N -L 8080:{master_ip}:8080 ubuntu@{bastion_ip}\n"
-        "Access Determined through CLI: det -m localhost:8080\n"
+        "Configure the Determined CLI: export DET_MASTER=localhost:8080\n"
         "View the Determined UI: http://localhost:8080\n"
         "View Logs at: https://{region}.console.aws.amazon.com/cloudwatch/home?"
         "region={region}#logStream:group={log_group}"
@@ -43,6 +43,7 @@ class Secure(base.DeterminedDeployment):
         super().__init__(template_path, parameters)
 
     def deploy(self) -> None:
+        self.before_deploy_print()
         cfn_parameters = self.consolidate_parameters()
         with open(self.template_path) as f:
             template = f.read()
@@ -50,6 +51,7 @@ class Secure(base.DeterminedDeployment):
         aws.deploy_stack(
             stack_name=self.parameters[constants.cloudformation.CLUSTER_ID],
             template_body=template,
+            keypair=self.parameters[constants.cloudformation.KEYPAIR],
             boto3_session=self.parameters[constants.cloudformation.BOTO3_SESSION],
             parameters=cfn_parameters,
         )

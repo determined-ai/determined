@@ -31,6 +31,8 @@ Requirements
    `AWS Documentation <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html>`__
    for information on how to use AWS credentials.
 
+-  An `AWS EC2 Keypair <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html>`__
+
 
 Installation
 ~~~~~~~~~~~~
@@ -157,8 +159,8 @@ Spinning up the cluster
      - False
 
 
-Tearing down the cluster
-
+Tearing Down The Cluster
+~~~~~~~~~~~~~~~~~~~~~~~~
 .. code::
 
    det-deploy aws down --cluster-id CLUSTER_ID

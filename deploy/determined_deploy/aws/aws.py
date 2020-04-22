@@ -41,11 +41,13 @@ def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
 def stack_exists(stack_name: str, boto3_session: boto3.session.Session) -> bool:
     cfn = boto3_session.client("cloudformation")
 
+    print(f"Checking if the CloudFormation Stack ({stack_name}) exists:", end=" ")
+
     try:
         cfn.describe_stacks(StackName=stack_name)
     except ClientError:
-        print(f"{stack_name} not found")
         return False
+
     return True
 
 
@@ -53,7 +55,14 @@ def delete_stack(stack_name: str, boto3_session: boto3.session.Session) -> None:
     cfn = boto3_session.client("cloudformation")
     delete_waiter = cfn.get_waiter("stack_delete_complete")
 
-    print(f"Deleting stack {stack_name}")
+    if stack_exists(stack_name, boto3_session):
+        print(
+            f"True - Deleting stack {stack_name}. This may take a few minutes... "
+            f"Check the CloudFormation Console for updates"
+        )
+
+    else:
+        print(f"False. {stack_name} does not exist")
     cfn.delete_stack(StackName=stack_name)
     delete_waiter.wait(StackName=stack_name, WaiterConfig={"Delay": 10})
 
@@ -64,11 +73,14 @@ def update_stack(
     boto3_session: boto3.session.Session,
     parameters: Optional[List] = None,
 ) -> None:
-    print(f"Updating stack {stack_name}")
     cfn = boto3_session.client("cloudformation")
     ec2 = boto3_session.client("ec2")
     update_waiter = cfn.get_waiter("stack_update_complete")
 
+    print(
+        f"Updating stack {stack_name}. This may take a few minutes... "
+        f"Check the CloudFormation Console for updates"
+    )
     stack_output = get_output(stack_name, boto3_session)
     ec2.stop_instances(InstanceIds=[stack_output[constants.cloudformation.MASTER_ID]])
 
@@ -114,7 +126,10 @@ def create_stack(
     boto3_session: boto3.session.Session,
     parameters: Optional[List] = None,
 ) -> None:
-    print(f"Creating stack {stack_name}")
+    print(
+        f"Creating stack {stack_name}. This may take a few minutes... "
+        f"Check the CloudFormation Console for updates"
+    )
     cfn = boto3_session.client("cloudformation")
     create_waiter = cfn.get_waiter("stack_create_complete")
 
@@ -147,15 +162,21 @@ def get_output(stack_name: str, boto3_session: boto3.session.Session) -> Dict[st
 def deploy_stack(
     stack_name: str,
     template_body: str,
+    keypair: str,
     boto3_session: boto3.session.Session,
     parameters: Optional[List] = None,
 ) -> None:
     cfn = boto3_session.client("cloudformation")
     cfn.validate_template(TemplateBody=template_body)
 
+    check_keypair(keypair, boto3_session)
     if stack_exists(stack_name, boto3_session):
+        print("True - Updating Stack")
+
         update_stack(stack_name, template_body, boto3_session, parameters)
     else:
+        print("False - Creating Stack")
+
         create_stack(stack_name, template_body, boto3_session, parameters)
 
 
@@ -170,13 +191,16 @@ def get_ec2_info(instance_id: str, boto3_session: boto3.session.Session) -> Dict
 def check_keypair(name: str, boto3_session: boto3.session.Session) -> bool:
     ec2 = boto3_session.client("ec2")
 
+    print(f"Checking if the SSH Keypair ({name}) exists:", end=" ")
     all_keys = ec2.describe_key_pairs()["KeyPairs"]
     names = [x["KeyName"] for x in all_keys]
 
     if name in names:
+        print("True")
         return True
 
-    print(f"Key pair {name} not found. Please create key pair first")
+    print("False")
+    print(f"Key pair {name} not found. Please create the key pair {name} first")
     sys.exit(1)
 
 
