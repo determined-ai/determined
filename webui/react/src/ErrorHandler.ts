@@ -1,6 +1,5 @@
 import { notification } from 'antd';
 
-import { crossoverRoute } from 'routes';
 import { isAsyncFunction } from 'utils/data';
 import Logger, { LoggerInterface } from 'utils/Logger';
 

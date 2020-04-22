@@ -1,4 +1,4 @@
-import { Button, Form, Input, Spin } from 'antd';
+import { Button, Form, Input } from 'antd';
 import { message } from 'antd';
 import React from 'react';
 import { useHistory, useLocation } from 'react-router';
@@ -8,7 +8,7 @@ import Link from 'components/Link';
 import Logo, { LogoTypes } from 'components/Logo';
 import Spinner from 'components/Spinner';
 import Auth from 'contexts/Auth';
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import handleError, { ErrorType } from 'ErrorHandler';
 import { login, logout } from 'services/api';
 import { Credentials } from 'types';
 
@@ -54,11 +54,6 @@ const Authentication: React.FC = () => {
       .finally(hideLoader);
   };
 
-  const onFinishFailed = (errorInfo: unknown): void => {
-    // ignore
-    console.log('Failed:', errorInfo);
-  };
-
   const loginForm = (
     <Form
       initialValues={{
@@ -66,7 +61,6 @@ const Authentication: React.FC = () => {
       }}
       name="basic"
       onFinish={onFinish}
-      onFinishFailed={onFinishFailed}
     >
       <Form.Item
         name="username"

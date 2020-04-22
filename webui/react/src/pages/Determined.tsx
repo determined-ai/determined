@@ -2,7 +2,6 @@ import React, { useCallback, useEffect } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 
 import Router from 'components/Router';
-import SideBar from 'components/SideBar';
 import ActiveExperiments from 'contexts/ActiveExperiments';
 import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';

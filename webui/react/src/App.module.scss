@@ -6,11 +6,11 @@
   width: 100%;
 
   > *:last-child { flex-grow: 1; }
-
   .body {
     display: flex;
 
     // FIXME
+
     > *:first-child { flex-grow: 0; }
     > *:last-child { flex-grow: 1; }
   }
