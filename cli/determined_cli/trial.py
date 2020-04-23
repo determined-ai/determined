@@ -2,14 +2,13 @@ import distutils.util
 import json
 import time
 from argparse import Namespace
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional
 
 from termcolor import colored
 
 from determined_cli import render
 from determined_common import api, constants
 from determined_common.api import gql
-from determined_common.check import check_gt
 from determined_common.experimental import Determined
 
 from .declarative_argparse import Arg, Cmd, Group
@@ -121,73 +120,37 @@ def describe_trial(args: Namespace) -> None:
 
 @authentication_required
 def logs(args: Namespace) -> None:
-    def logs_query(tail: Optional[int] = None, greater_than_id: Optional[int] = None) -> Any:
-        q = api.GraphQLQuery(args.master)
-        limit = None
-        order_by = [gql.trial_logs_order_by(id=gql.order_by.asc)]
-        where = gql.trial_logs_bool_exp(trial_id=gql.Int_comparison_exp(_eq=args.trial_id))
-        if greater_than_id is not None:
-            where.id = gql.Int_comparison_exp(_gt=greater_than_id)
-        if tail is not None:
-            order_by = [gql.trial_logs_order_by(id=gql.order_by.desc)]
-            limit = tail
-        logs = q.op.trial_logs(where=where, order_by=order_by, limit=limit)
-        logs.id()
-        logs.message()
+    offset, state = 0, None
 
-        q.op.trials_by_pk(id=args.trial_id).state()
-        return q
+    def print_logs(limit: Optional[int] = None) -> None:
+        nonlocal offset, state
+        path = "trials/{}/logsv2?offset={}".format(args.trial_id, offset)
+        if limit:
+            path = "{}&limit=?".format(limit)
+        for log in api.get(args.master, path).json():
+            print(log["message"], end="")
+            offset, state = log["id"], log["state"]
 
-    def process_response(logs: Any, latest_log_id: int) -> Tuple[int, bool]:
-        changes = False
-        for log in logs:
-            check_gt(log.id, latest_log_id)
-            latest_log_id = log.id
-            msg = api.decode_bytes(log.message)
-            print(msg, end="")
-            changes = True
+    print_logs(args.tail)
+    if not args.follow:
+        return
 
-        return latest_log_id, changes
-
-    resp = logs_query(args.tail).send()
-    logs = resp.trial_logs
-    # Due to limitations of the GraphQL API, which mimics SQL, requesting a tail means we have to
-    # get the results in descending ID order and reverse them afterward.
-    if args.tail is not None:
-        logs = reversed(logs)
-    latest_log_id, _ = process_response(logs, -1)
-
-    # "Follow" mode is implemented as a loop in the CLI. We assume that
-    # newer log messages have a numerically larger ID than older log
-    # messages, so we keep track of the max ID seen so far.
-    if args.follow:
-        change_time = time.time()
-        try:
-            while True:
-                # Poll for new logs at most every 100 ms.
-                time.sleep(0.1)
-
-                # The `tail` parameter only makes sense the first time we fetch logs.
-                resp = logs_query(greater_than_id=latest_log_id).send()
-                latest_log_id, changes = process_response(resp.trial_logs, latest_log_id)
-
-                # Exit once the trial has, for 1 second, been in a terminal state and sent no logs.
-                if changes or resp.trials_by_pk.state not in constants.TERMINAL_STATES:
-                    change_time = time.time()
-                elif time.time() - change_time > 1:
-                    raise KeyboardInterrupt()
-        except KeyboardInterrupt:
-            state_query = api.GraphQLQuery(args.master)
-            state_query.op.trials_by_pk(id=args.trial_id).state()
-            resp = state_query.send()
-
-            print(
-                colored(
-                    "Trial is in the {} state. To reopen log stream, run: "
-                    "det trial logs -f {}".format(resp.trials_by_pk.state, args.trial_id),
-                    "green",
-                )
+    try:
+        while True:
+            print_logs()
+            if state in constants.TERMINAL_STATES:
+                break
+            time.sleep(0.2)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        print(
+            colored(
+                "Trial is in the {} state. To reopen log stream, run: "
+                "det trial logs -f {}".format(state, args.trial_id),
+                "green",
             )
+        )
 
 
 def download(args: Namespace) -> None:
