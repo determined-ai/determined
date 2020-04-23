@@ -114,8 +114,6 @@ class PyTorchTrialController(det.LoopTrialController):
         self.optimizer = self.trial.optimizer(self.model)
         # TODO: Check that optimizer is not an amp optimizer.
 
-        self.lr_helper = _LRHelper(self.trial.create_lr_scheduler(self.optimizer))
-
         self._init_device()
         self.model = self.model.to(self.device)
 
@@ -138,6 +136,8 @@ class PyTorchTrialController(det.LoopTrialController):
             )
             self.model = nn.DataParallel(self.model)
             logging.debug("Initialized mode for native parallel training.")
+
+        self.lr_helper = _LRHelper(self.trial.create_lr_scheduler(self.optimizer))
 
         # If a load path is provided load weights and restore the data location.
         self._load()
