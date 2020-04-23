@@ -10,7 +10,7 @@ from determined_cli import render
 from determined_common import api, constants
 from determined_common.api import gql
 from determined_common.check import check_gt
-from determined_common.experimental import TrialReference
+from determined_common.experimental import Determined
 
 from .declarative_argparse import Arg, Cmd, Group
 from .user import authentication_required
@@ -190,16 +190,17 @@ def logs(args: Namespace) -> None:
             )
 
 
-@authentication_required
 def download(args: Namespace) -> None:
-    checkpoint = TrialReference(
-        args.trial_id, master=args.master, attempt_auth=False
-    ).select_checkpoint(
-        latest=args.latest,
-        best=args.best,
-        uuid=args.uuid,
-        sort_by=args.sort_by,
-        smaller_is_better=args.smaller_is_better,
+    checkpoint = (
+        Determined(args.master, None)
+        .get_trial(args.trial_id)
+        .select_checkpoint(
+            latest=args.latest,
+            best=args.best,
+            uuid=args.uuid,
+            sort_by=args.sort_by,
+            smaller_is_better=args.smaller_is_better,
+        )
     )
 
     path = checkpoint.download(path=args.output_dir)

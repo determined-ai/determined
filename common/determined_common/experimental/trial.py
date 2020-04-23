@@ -1,7 +1,6 @@
 from typing import List, Optional
 
-from determined_common import api, check, util
-from determined_common.api import authentication as auth
+from determined_common import api, check
 from determined_common.api import gql
 from determined_common.experimental import checkpoint
 
@@ -13,29 +12,14 @@ class TrialReference:
 
     Arguments:
         trial_id (int): the trial ID.
-        user (string, optional): the Determined username used for
-            authentication. (default: ``determined``)
-        master (string, optional): the URL of the determined master. If
-            this argument is not specified environment variables DET_MASTER and
-            DET_MASTER_ADDR will be checked for the master URL in that order.
-        attempt_auth (bool, optional): whether or not to attempt creating a
-            user session. By default, the session will be created in order to
-            query checkpoint information. (default: ``True``)
+        master (string, optional): The URL of the Determined master. If this
+            class is obtained via :py:class:`det.experimental.Determined` the
+            master URL is automatically passed into this constructor.
     """
 
-    def __init__(
-        self,
-        trial_id: int,
-        user: Optional[str] = None,
-        master: Optional[str] = None,
-        attempt_auth: bool = True,
-    ):
+    def __init__(self, trial_id: int, master: str):
         self.id = trial_id
-
-        self._master = master or util.get_default_master_address()
-
-        if attempt_auth:
-            auth.initialize_session(self._master, user, try_reauth=True)
+        self._master = master
 
     def top_checkpoint(
         self, sort_by: Optional[str] = None, smaller_is_better: Optional[bool] = None,

@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 import yaml
 
-from determined.experimental import ExperimentReference
+from determined.experimental import Determined
 from tests.integrations import config as conf
 from tests.integrations import experiment as exp
 from tests.integrations.cluster_utils import skip_test_if_not_enough_gpus
@@ -347,7 +347,7 @@ def test_end_to_end_adaptive() -> None:
     # Check that ExperimentReference returns a sorted order of top checkpoints
     # without gaps. The top 2 checkpoints should be the first 2 of the top k
     # checkpoints if sorting is stable.
-    exp_ref = ExperimentReference(exp_id)
+    exp_ref = Determined().get_experiment(exp_id)
 
     top_2 = exp_ref.top_n_checkpoints(2)
     top_k = exp_ref.top_n_checkpoints(len(trials))
