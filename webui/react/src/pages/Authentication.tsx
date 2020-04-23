@@ -16,7 +16,6 @@ import { Credentials } from 'types';
 
 import css from './Authentication.module.scss';
 
-// TODO support custom rediret param
 const DEFAULT_REDIRECT = '/det/dashboard';
 
 type WithSearch<T> = T & {location: {search: string}};
@@ -45,23 +44,17 @@ const Authentication: React.FC<WithSearch<{}>> = (props: WithSearch<{}>) => {
 
   const isLogout = location.pathname.endsWith('logout');
   if (isLogout) {
-    console.log('is in logout page');
     logout({});
     setAuth({ type: Auth.ActionType.Reset });
     history.push('/det/login' + props.location.search);
-  } else {
-    console.log('is in login page');
   }
 
   const onFinish = (creds: unknown): void => {
     // TODO validate the creds type?
     const hideLoader = message.loading('logging in..');
     login(creds as Credentials)
-      .then(() => {
-        setAuth({ type: Auth.ActionType.SetIsAuthenticated, value: true });
-      })
+      .then(() => updateAuth(setAuth)) // TODO ideally the login endpoint returns user info
       .catch((e: Error) => {
-        // TODO check for the code or error type?
         handleError({
           error: e,
           isUserTriggered: true,

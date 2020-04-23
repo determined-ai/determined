@@ -11,6 +11,11 @@ const commandToEndpoint: Record<CommandType, string> = {
   [CommandType.Shell]: '/shells',
 };
 
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const isAuthFailure = (e: any): boolean => {
+  return e.response && e.response.status && e.response.status === 401;
+};
+
 const userApi:  Api<{}, User> = {
   httpOptions: () => { return { url: '/users/me' }; },
   name: 'user',

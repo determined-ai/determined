@@ -11,10 +11,10 @@ import { RouteConfigItem } from 'routes';
 
 const Route: React.FC<RouteConfigItem> = (props: RouteConfigItem) => {
   const auth = Auth.useStateContext();
-  const needAuth = props.needAuth;
 
-  if (needAuth && !auth.isAuthenticated)
+  if (props.needAuth && !auth.isAuthenticated) {
     return <Redirect to={ `/det/login?redirect=${props.path}` } />;
+  }
 
   return <DomRoute {...props} />;
 };
