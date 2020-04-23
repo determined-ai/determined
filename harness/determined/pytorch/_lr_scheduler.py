@@ -88,12 +88,14 @@ class _LRHelper:
     def __bool__(self) -> bool:
         return self._lr_scheduler is not None
 
-    def should_step_lr(self, batch_idx: int, epoch_length: int, aggregation_frequency: int) -> bool:
+    def should_step_lr(
+        self, batches_completed: int, epoch_length: int, aggregation_frequency: int
+    ) -> bool:
         if self._lr_scheduler:
             if self._lr_scheduler.step_mode == LRScheduler.StepMode.STEP_EVERY_BATCH:
                 return True
             elif self._lr_scheduler.step_mode == LRScheduler.StepMode.STEP_EVERY_EPOCH:
-                mod = batch_idx % epoch_length
+                mod = batches_completed % epoch_length
                 if mod == 0 or mod < aggregation_frequency:
                     return True
         return False

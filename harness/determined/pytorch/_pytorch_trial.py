@@ -413,7 +413,9 @@ class PyTorchTrialController(det.LoopTrialController):
                 self.optimizer.zero_grad()
 
                 if self.lr_helper.should_step_lr(
-                    batch_idx, len(self.training_loader), self.hvd_config.aggregation_frequency
+                    batches_completed=batch_idx + 1,
+                    epoch_length=len(self.training_loader),
+                    aggregation_frequency=self.hvd_config.aggregation_frequency,
                 ):
                     self.lr_helper.step()
 
