@@ -63,7 +63,10 @@ const handleError = (e: DaError): Error => {
 
   if (e.type === ErrorType.Auth) {
     // FIXME using react router would require a react hook function or component
-    if (!window.location.pathname.endsWith('login')) window.location.assign('/det/login');
+    if (!window.location.pathname.endsWith('login')) {
+      const destination = `/det/login${window.location.search}`;
+      window.location.assign(destination);
+    }
     return error;
   }
 

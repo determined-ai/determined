@@ -1,5 +1,6 @@
 import { Button, Form, Input } from 'antd';
 import { message } from 'antd';
+import queryString from 'query-string';
 import React from 'react';
 import { useHistory, useLocation } from 'react-router';
 import { Redirect } from 'react-router-dom';
@@ -17,19 +18,30 @@ import css from './Authentication.module.scss';
 // TODO support custom rediret param
 const DEFAULT_REDIRECT = '/det/dashboard';
 
-const Authentication: React.FC = () => {
+type WithSearch<T> = T & {location: {search: string}};
+interface Queries {
+  redirect?: string;
+}
+
+const Authentication: React.FC<WithSearch<{}>> = (props: WithSearch<{}>) => {
   const history = useHistory();
   const location = useLocation();
   const auth = Auth.useStateContext();
   const setAuth = Auth.useActionContext();
 
+  const queries: Queries = queryString.parse(props.location.search);
+
+  const redirectUri= queries.redirect || DEFAULT_REDIRECT;
+
   const isLogout = location.pathname.endsWith('logout');
   if (isLogout) {
-    logout({}).then(() => {
-      setAuth({ type: Auth.ActionType.Reset });
-      history.push('/det/login');
-    });
+    console.log('is in logout page');
+    logout({});
+    setAuth({ type: Auth.ActionType.Reset });
+    history.push('/det/login' + props.location.search);
     return <Spinner fullPage />;
+  } else {
+    console.log('is in login page');
   }
 
   const onFinish = (creds: unknown): void => {
@@ -86,7 +98,7 @@ const Authentication: React.FC = () => {
 
   return (
     <div className={css.base}>
-      {auth.isAuthenticated && <Redirect to={DEFAULT_REDIRECT} />}
+      {auth.isAuthenticated && <Redirect to={redirectUri} />}
       <div className={css.content}>
         {/* DISCUSSION what if we didn't need to add the logo classname and was able to
         target logo on its own using component name easily in module.scss */}
