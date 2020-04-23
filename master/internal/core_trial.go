@@ -111,6 +111,25 @@ func (m *Master) getTrialLogs(c echo.Context) error {
 	return c.JSON(http.StatusOK, logs)
 }
 
+func (m *Master) getTrialLogsV2(c echo.Context) (interface{}, error) {
+	type Log struct {
+		ID      int    `db:"id" json:"id"`
+		State   string `db:"state" json:"state"`
+		Message string `db:"message" json:"message"`
+	}
+	var logs []Log
+	offset := c.QueryParam("offset")
+	if offset == "" {
+		offset = "0"
+	}
+	if limit := c.QueryParam("limit"); limit != "" {
+		err := m.db.Query("get_logs_limit", &logs, c.Param("trial_id"), offset, limit)
+		return logs, err
+	}
+	err := m.db.Query("get_logs", &logs, c.Param("trial_id"), offset)
+	return logs, err
+}
+
 func (m *Master) trialWebSocket(socket *websocket.Conn, c echo.Context) error {
 	args := struct {
 		ExperimentID int    `path:"experiment_id"`

@@ -527,6 +527,7 @@ func (m *Master) Run() error {
 	trialsGroup.GET("/:trial_id/details", api.Route(m.getTrialDetails))
 	trialsGroup.GET("/:trial_id/logs", m.getTrialLogs)
 	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
+	trialsGroup.GET("/:trial_id/logsv2", api.Route(m.getTrialLogsV2))
 	trialsGroup.POST("/:trial_id/kill", api.Route(m.postTrialKill))
 
 	m.echo.GET("/ws/trial/:experiment_id/:trial_id/:container_id",
