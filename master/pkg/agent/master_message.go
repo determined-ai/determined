@@ -104,6 +104,11 @@ func (c ContainerLog) String() string {
 			msg = err.Error()
 		} else {
 			msg = buf.String()
+			// Docker disables printing the progress bar in non-terminal mode.
+			if msg == "" && c.PullMessage.Progress != nil {
+				msg = c.PullMessage.Progress.String()
+			}
+			msg = strings.TrimSpace(msg)
 		}
 	default:
 		panic("unknown log message received")
