@@ -130,9 +130,14 @@ ___________________
      - 8
      - False
 
-   * - ``--max-instances``
-     - The maximum number of agent instances at one time.
+   * - ``--max-dynamic-agents``
+     - Maximum number of dynamic agent instances at one time.
      - 5
+     - False
+
+   * - ``--static-agents``
+     - Number of static agent instances.
+     - 0
      - False
 
    * - ``--max-idle-agent-period``

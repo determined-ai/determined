@@ -29,7 +29,7 @@ class Simple(base.DeterminedDeployment):
         constants.cloudformation.DB_PASSWORD,
         constants.cloudformation.HASURA_SECRET,
         constants.cloudformation.MAX_IDLE_AGENT_PERIOD,
-        constants.cloudformation.MAX_INSTANCES,
+        constants.cloudformation.MAX_DYNAMIC_AGENTS,
     ]
 
     def __init__(self, parameters: List) -> None:

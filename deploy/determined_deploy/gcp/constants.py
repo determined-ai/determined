@@ -8,7 +8,8 @@ class defaults:
     HASURA_SECRET = "secret"
     MASTER_INSTANCE_TYPE = "n1-standard-2"
     MAX_IDLE_AGENT_PERIOD = "10m"
-    MAX_INSTANCES = 5
+    MAX_DYNAMIC_AGENTS = 5
+    STATIC_AGENTS = 0
     MIN_CPU_PLATFORM_MASTER = "Intel Skylake"
     MIN_CPU_PLATFORM_AGENT = "Intel Broadwell"
     NETWORK = "det-default"
