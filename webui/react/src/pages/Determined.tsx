@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import { Redirect, Route, Switch } from 'react-router-dom';
+import { Switch } from 'react-router-dom';
 
 import Router from 'components/Router';
 import ActiveExperiments from 'contexts/ActiveExperiments';

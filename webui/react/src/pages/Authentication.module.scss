@@ -29,8 +29,11 @@
     width: 25rem;
   }
   .content > a {
+    font-size: 1.2rem;
     padding: 0 1rem;
     text-align: center;
-    font-size: 1.2rem;
+  }
+  form .error-message {
+    color: var(--theme-colors-states-failed);
   }
 }

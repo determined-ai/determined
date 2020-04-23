@@ -34,9 +34,10 @@ const reducer = (state: State, action: Action): State => {
       return defaultAuth;
     case ActionType.Set:
       return action.value;
+      // DISCUSS are setUser and setisAuthenticated shortcuts? error prone
     case ActionType.SetUser:
       return { ...state, user: action.value };
-    case ActionType.SetIsAuthenticated: // DISCUSS are setUser and setisAuthenticated shortcuts? error prone
+    case ActionType.SetIsAuthenticated:
       if (!action.value) clearAuthCookie();
       return { ...state, isAuthenticated: action.value };
     default:

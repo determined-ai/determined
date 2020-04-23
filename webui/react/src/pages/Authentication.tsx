@@ -30,6 +30,7 @@ const Authentication: React.FC<WithSearch<{}>> = (props: WithSearch<{}>) => {
   const auth = Auth.useStateContext();
   const setAuth = Auth.useActionContext();
   const [ isLoading, setIsLoading ] = useState(true);
+  const [ badCredentials, setBadCredentials ] = useState(false);
 
   const queries: Queries = queryString.parse(props.location.search);
 
@@ -56,7 +57,10 @@ const Authentication: React.FC<WithSearch<{}>> = (props: WithSearch<{}>) => {
     login(creds as Credentials)
       .then(() => updateAuth(setAuth))
       .catch((e: Error) => {
-        const badCredentials = isLoginFailure(e);
+        setBadCredentials(isLoginFailure(e));
+        if (badCredentials) return;
+        // DISCUSS do we want to potentially report it?
+        // or pass it through error handler for some reason?
         const actionMsg = badCredentials ? 'check your username and password.' : 'retry.';
         handleError({
           error: e,
@@ -91,6 +95,13 @@ const Authentication: React.FC<WithSearch<{}>> = (props: WithSearch<{}>) => {
       <Form.Item name="password">
         <Input.Password placeholder="Password" prefix={<Icon name="lock" />} />
       </Form.Item>
+
+      {
+        badCredentials &&
+          <p className={css['error-message']}>
+            Incorrect username or password, please try again.
+          </p>
+      }
 
       <Form.Item>
         <Button htmlType="submit" type="primary">
