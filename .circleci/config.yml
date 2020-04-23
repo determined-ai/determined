@@ -22,6 +22,10 @@ parameters:
 
 
 commands:
+  fix-circle-working-directory:
+    description: "Fix CIRCLE_WORKING_DIRECTORY"
+    steps:
+      - run: echo 'CIRCLE_WORKING_DIRECTORY="${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}"' >> $BASH_ENV
   install-node:
     description: Install Node 12.x
     steps:
@@ -37,57 +41,57 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - det-py-deps-v1dev-{{ checksum  "combined-reqs.txt" }}
+            - det-py-deps-v1dev3-{{ checksum  "combined-reqs.txt" }}
   restore-go-cache:
     description: Restore Go dependency cache
     steps:
       - restore_cache:
           keys:
-            - det-go-deps-v1dev-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}
+            - det-go-deps-v1dev3-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}
   restore-elm-cache:
     description: Restore Elm dependency cache
     steps:
       - restore_cache:
           keys:
-            - det-elm-deps-v1dev-{{ checksum  "webui/elm/package-lock.json" }}
+            - det-elm-deps-v1dev3-{{ checksum  "webui/elm/package-lock.json" }}
   restore-react-cache:
     description: Restore React dependency cache
     steps:
       - restore_cache:
           keys:
-            - det-react-deps-v1dev-{{ checksum  "webui/react/package-lock.json" }}
+            - det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
   save-python-cache:
     description: Save Python dependency cache
     steps:
       - save_cache:
-          key: det-py-deps-v1dev-{{ checksum  "combined-reqs.txt" }}
+          key: det-py-deps-v1dev3-{{ checksum  "combined-reqs.txt" }}
           paths:
             - "/tmp/venv"
   save-go-cache:
     description: Save Go dependency cache
     steps:
       - save_cache:
-          key: det-go-deps-v1dev-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}
+          key: det-go-deps-v1dev3-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}
           paths:
             - "/go/pkg/mod/"
   save-elm-cache:
     description: Save Elm dependency cache
     steps:
       - save_cache:
-          key: det-elm-deps-v1dev-{{ checksum  "webui/elm/package-lock.json" }}
+          key: det-elm-deps-v1dev3-{{ checksum  "webui/elm/package-lock.json" }}
           paths:
             - "webui/elm/node_modules"
   save-react-cache:
     description: Save React dependency cache
     steps:
       - save_cache:
-          key: det-react-deps-v1dev-{{ checksum  "webui/react/package-lock.json" }}
+          key: det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
           paths:
             - "webui/react/node_modules"
   python-venv-setup:
     description: Create Python venv and install combined dependencies.
     steps:
-      - run: python3.6 -m venv /tmp/venv --system-site-packages
+      - run: python3.6 -m venv /tmp/venv
       - run: pip install --upgrade pip\<20
       - restore-python-cache
       - run: pip install -r combined-reqs.txt
@@ -99,34 +103,160 @@ commands:
           at: build
       - run: make -C master build-docker
       - run: make -C agent build-docker
+  setup-python-venv:
+    description: Set up and create Python venv.
+    parameters:
+      determined:
+        type: boolean
+        default: false
+      determined-common:
+        type: boolean
+        default: false
+      determined-cli:
+        type: boolean
+        default: false
+      determined-deploy:
+        type: boolean
+        default: false
+      extras-requires:
+        type: string
+        default: ""
+      extra-requirements-file:
+        type: string
+        default: ""
+      executor:
+        type: string
+    steps:
+      - run: python3.6 -m venv /tmp/venv
+      - run: /tmp/venv/bin/python -m pip install --upgrade pip\<20 wheel setuptools
+
+
+      # Write dependencies to cachefile to help create the cachekey
+      - run: echo <<parameters.executor>> > /tmp/cachefile
+      - when:
+          condition: <<parameters.determined-common>>
+          steps:
+            - run: cat common/setup.py >> /tmp/cachefile
+      - when:
+          condition: <<parameters.determined>>
+          steps:
+            - run: cat harness/setup.py >> /tmp/cachefile
+      - when:
+          condition: <<parameters.determined-cli>>
+          steps:
+            - run: cat cli/setup.py >> /tmp/cachefile
+      - when:
+          condition: <<parameters.determined-deploy>>
+          steps:
+            - run: cat deploy/setup.py >> /tmp/cachefile
+      - run: echo <<parameters.extras-requires>> >> /tmp/cachefile
+
+
+      # Install dependencies
+      - run: |
+          if [ -n <<parameters.extra-requirements-file>> ]; then cat <<parameters.extra-requirements-file>> >> /tmp/cachefile; fi
+      - restore_cache:
+          keys:
+            - det-python-deps-v1dev0-{{ checksum "/tmp/cachefile" }}
+      - when:
+          condition: <<parameters.determined-common>>
+          steps:
+            - run: cd common; /tmp/venv/bin/python setup.py bdist_wheel -d ../build
+            - run: /tmp/venv/bin/python -m pip install --find-links build determined-common==<< pipeline.parameters.det-version >>
+            - run: /tmp/venv/bin/python -m pip install --no-deps --force-reinstall --find-links build determined-common==<< pipeline.parameters.det-version >>
+      - when:
+          condition: <<parameters.determined>>
+          steps:
+            - run: cd harness; /tmp/venv/bin/python setup.py bdist_wheel -d ../build
+            - run: /tmp/venv/bin/python -m pip install --find-links build determined==<< pipeline.parameters.det-version >>
+            - run: /tmp/venv/bin/python -m pip install --no-deps --force-reinstall --find-links build determined==<< pipeline.parameters.det-version >>
+      - when:
+          condition: <<parameters.determined-cli>>
+          steps:
+            - run: cd cli; /tmp/venv/bin/python setup.py bdist_wheel -d ../build
+            - run: /tmp/venv/bin/python -m pip install --find-links build determined-cli==<< pipeline.parameters.det-version >>
+            - run: /tmp/venv/bin/python -m pip install --no-deps --force-reinstall --find-links build determined-cli==<< pipeline.parameters.det-version >>
+      - when:
+          condition: <<parameters.determined-deploy>>
+          steps:
+            - run: cd deploy; /tmp/venv/bin/python setup.py bdist_wheel -d ../build
+            - run: /tmp/venv/bin/python -m pip install --find-links build determined-deploy==<< pipeline.parameters.det-version >>
+            - run: /tmp/venv/bin/python -m pip install --no-deps --force-reinstall --find-links build determined-deploy==<< pipeline.parameters.det-version >>
+      - run: |
+          if [ -n "<<parameters.extras-requires>>" ]; then /tmp/venv/bin/python -m pip install <<parameters.extras-requires>>; fi
+      - run: |
+          if [ -n "<<parameters.extra-requirements-file>>" ]; then /tmp/venv/bin/python -m pip install -r <<parameters.extra-requirements-file>>; fi
+      - save_cache:
+          key: det-python-deps-v1dev0-{{ checksum "/tmp/cachefile" }}
+          paths:
+            - "/tmp/venv"
 
 
 jobs:
+  build-docs:
+    docker:
+      - image: python:3.6.9
+    environment:
+      PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    steps:
+      - checkout
+      - setup-python-venv:
+          determined-common: true
+          determined-cli: true
+          determined: true
+          extras-requires: "tensorflow==1.14 torch==1.4"
+          extra-requirements-file: "docs-requirements.txt"
+          executor: python:3.6.9
+      - run: make -C master build-python-packages
+      - run: make -C docs build
+      - persist_to_workspace:
+          root: build
+          paths:
+            - "share/determined/master/webui/docs"
+            - "share/determined/master/wheels"
+
+  build-elm:
+    docker:
+      - image: cimg/node:12.16
+    steps:
+      - checkout
+      - restore-elm-cache
+      - run: make -C webui/elm build
+      - save-elm-cache
+      - persist_to_workspace:
+          root: build
+          paths:
+            - "share/determined/master/webui/elm"
+
+  build-react:
+    docker:
+      - image: cimg/node:12.16
+    steps:
+      - checkout
+      - restore-react-cache
+      - run: make -C webui/react build
+      - save-react-cache
+      - persist_to_workspace:
+          root: build
+          paths:
+            - "share/determined/master/webui/react"
+
+
   build-debs:
     docker:
-      - image: python:3.6.9-stretch
+      - image: cimg/go:1.13
         environment:
           GO111MODULE: "on"
-          PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/go/bin
     steps:
-      - run: python3.6 -m venv /tmp/venv
-      - install-node
-      - install-go
-
       - checkout
+      - attach_workspace:
+          at: build
 
-      - restore-python-cache
       - restore-go-cache
-      - restore-elm-cache
-      - restore-react-cache
-      - run: make get-deps
-      - save-python-cache
+      - run: make go-get-deps
       - save-go-cache
-      - save-elm-cache
-      - save-react-cache
 
-      - run: make -C webui/elm build
-      - run: make -C webui/react build
+      - run: make -C master build-files
       - run: make debs
 
       - persist_to_workspace:
@@ -147,12 +277,14 @@ jobs:
       - run: sudo systemctl restart docker
       - build-docker
 
-      - run: |
-          pyenv global 3.6.5
-          python3.6 -m venv /tmp/venv
-          . /tmp/venv/bin/activate
-          pip install --upgrade pip\<20 setuptools
-          make python-get-deps
+      - run: pyenv global 3.6.5
+      - setup-python-venv:
+          determined-common: true
+          determined-cli: true
+          determined: true
+          determined-deploy: true
+          extra-requirements-file: "tests/integrations/requirements.txt"
+          executor: ubuntu-1604:201903-01
 
       - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-4bd937a
 
@@ -162,7 +294,7 @@ jobs:
 
   lint-elm:
     docker:
-      - image: node:12
+      - image: cimg/node:12.16
     steps:
       - checkout
       - restore-elm-cache
@@ -172,7 +304,7 @@ jobs:
 
   test-unit-elm:
     docker:
-      - image: node:12
+      - image: cimg/node:12.16
     steps:
       - checkout
       - restore-elm-cache
@@ -184,7 +316,7 @@ jobs:
 
   lint-react:
     docker:
-      - image: node:12
+      - image: cimg/node:12.16
     steps:
       - checkout
       - restore-react-cache
@@ -194,7 +326,7 @@ jobs:
 
   test-unit-react:
     docker:
-      - image: node:12
+      - image: cimg/node:12.16
     steps:
       - checkout
       - restore-react-cache
@@ -206,7 +338,7 @@ jobs:
 
   lint-go:
     docker:
-      - image: golang:1.13-stretch
+      - image: cimg/go:1.13
         environment:
           GO111MODULE: "on"
     steps:
@@ -220,7 +352,7 @@ jobs:
 
   test-unit-go:
     docker:
-      - image: golang:1.13-stretch
+      - image: cimg/go:1.13
         environment:
           GO111MODULE: "on"
     steps:
@@ -241,7 +373,9 @@ jobs:
       PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
       - checkout
-      - python-venv-setup
+      - setup-python-venv:
+          extra-requirements-file: "combined-reqs.txt"
+          executor: python:3.6.9
       - run: make check-python
 
   test-unit-harness:
@@ -251,22 +385,12 @@ jobs:
       PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
       - checkout
-      - run: python3.6 -m venv /tmp/venv
-      - restore_cache:
-          keys:
-            - det-harness-deps-tf114-torch14-v1-{{ checksum  "harness/setup.py" }}--{{ checksum  "common/setup.py" }}
-      - run: pip install --upgrade pip\<20
-      - run: pip install wheel
-      - run: cd common; python setup.py bdist_wheel -d ../build
-      - run: cd harness; python setup.py bdist_wheel -d ../build
-      - run: pip install tensorflow==1.14.0 torch==1.4.0 torchvision==0.5.0 mypy==0.740 pytest
-      - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
-      - save_cache:
-          key: det-harness-deps-tf114-torch14-v1-{{ checksum  "harness/setup.py" }}--{{ checksum  "common/setup.py" }}
-          paths:
-            - "/tmp/venv"
-      # We force reinstall without dependencies to ensure that the code gets updated from whatever was cached.
-      - run: pip install --no-deps --force-reinstall --find-links build determined==<< pipeline.parameters.det-version >> determined_common==<< pipeline.parameters.det-version >>
+      - setup-python-venv:
+          determined-common: true
+          determined: true
+          extras-requires: "tensorflow==1.14.0 torch==1.4.0 torchvision==0.5.0"
+          extra-requirements-file: "tests/unit/requirements.txt"
+          executor: python:3.6.9
       - run: make test-harness
 
   test-unit-harness-tf2:
@@ -276,22 +400,12 @@ jobs:
       PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
       - checkout
-      - run: python3.6 -m venv /tmp/venv
-      - restore_cache:
-          keys:
-            - det-harness-deps-tf21-v1-{{ checksum  "harness/setup.py" }}--{{ checksum  "common/setup.py" }}
-      - run: pip install --upgrade pip\<20
-      - run: pip install wheel
-      - run: cd common; python setup.py bdist_wheel -d ../build
-      - run: cd harness; python setup.py bdist_wheel -d ../build
-      - run: pip install tensorflow==2.1.0 mypy==0.740 pytest
-      - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
-      - save_cache:
-          key: det-harness-deps-tf21-v1-{{ checksum  "harness/setup.py" }}--{{ checksum  "common/setup.py" }}
-          paths:
-            - "/tmp/venv"
-      # We force reinstall without dependencies to ensure that the code gets updated from whatever was cached.
-      - run: pip install --no-deps --force-reinstall --find-links build determined==<< pipeline.parameters.det-version >> determined_common==<< pipeline.parameters.det-version >>
+      - setup-python-venv:
+          determined-common: true
+          determined: true
+          extras-requires: "tensorflow==2.1.0"
+          extra-requirements-file: "tests/unit/requirements.txt"
+          executor: python:3.6.9
       - run: make test-tf2
 
   test-cli:
@@ -320,7 +434,15 @@ workflows:
               executor-name: ["python-35", "python-36", "python-37", "win/default"]
   test-e2e:
     jobs:
-      - build-debs
+      - build-elm
+      - build-react
+      - build-docs
+      - build-debs:
+          requires:
+            - build-elm
+            - build-react
+            - build-docs
+
       - test-e2e:
           requires:
             - build-debs

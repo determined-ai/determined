@@ -1,7 +1,6 @@
 pytest
 pexpect
-# TODO(DET-2653): Remove this line after supporting run test mode integration test
-#                 on tf2 using command.
-Keras-Preprocessing[image]
-torch
+torch==1.4
+torchvision==0.5.0
+tensorflow==1.14
 numpy

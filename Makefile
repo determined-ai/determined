@@ -117,11 +117,11 @@ build-agent:
 build-master:
 	$(MAKE) -C master build
 
-debs: build
+debs:
 	cp -r packaging "$(BUILDDIR)"
 	cd "$(BUILDDIR)" && GORELEASER_CURRENT_TAG=$(VERSION) $(GOBIN)/goreleaser -f $(CURDIR)/.goreleaser.yml --snapshot --rm-dist
 
-build-docker: debs
+build-docker: build debs
 	$(MAKE) build-master-docker build-agent-docker
 
 build-agent-docker:
