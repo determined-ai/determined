@@ -76,9 +76,10 @@ def make_up_subparser(subparsers: argparse._SubParsersAction):
         "--max-idle-agent-period", type=str, help="max agent idle time",
     )
     subparser.add_argument(
-        "--max-instances", type=int, help="max instances",
+        "--max-dynamic-agents",
+        type=int,
+        help="maximum number of dynamic agent instances at one time",
     )
-
     subparser.add_argument(
         "--dry-run", action="store_true", help="print deployment template",
     )
@@ -130,7 +131,7 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.cloudformation.DB_PASSWORD: args.db_password,
         constants.cloudformation.HASURA_SECRET: args.hasura_secret,
         constants.cloudformation.MAX_IDLE_AGENT_PERIOD: args.max_idle_agent_period,
-        constants.cloudformation.MAX_INSTANCES: args.max_instances,
+        constants.cloudformation.MAX_DYNAMIC_AGENTS: args.max_dynamic_agents,
     }
 
     deployment_object = deployment_type_map[args.deployment_type](det_configs)

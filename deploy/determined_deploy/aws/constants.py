@@ -39,7 +39,7 @@ class cloudformation:
     BOTO3_SESSION = "Boto3Session"
     AGENT_TAG_NAME = "AgentTagName"
     MAX_IDLE_AGENT_PERIOD = "MaxIdleAgentPeriod"
-    MAX_INSTANCES = "MaxInstances"
+    MAX_DYNAMIC_AGENTS = "MaxDynamicAgents"
     LOG_GROUP = "LogGroup"
     REGION = "Region"
 
