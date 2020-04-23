@@ -162,6 +162,9 @@ func (t *tensorboardManager) newTensorBoard(
 			}] = true
 
 			logBasePath = c.SharedFSConfig.ContainerPath.String()
+			if c.SharedFSConfig.StoragePath != nil {
+				logBasePath = fmt.Sprintf("%s/%s", logBasePath, *c.SharedFSConfig.StoragePath)
+			}
 
 		case c.S3Config != nil:
 			if c.S3Config.AccessKey != nil {
