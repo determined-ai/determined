@@ -50,16 +50,17 @@ const contextProvider = generateContext<Auth, Action>({
   reducer,
 });
 
-export const updateAuth = async (setAuth: Dispatch<Action>, cancelToken?: CancelToken): Promise<boolean> => {
-  try{
-    const user = await getCurrentUser({ cancelToken });
-    setAuth({ type: ActionType.Set, value: { isAuthenticated: true, user } });
-    return true;
-  } catch (e) {
-    // TODO check that it's an auth error otherwise throw an error
-    setAuth({ type: ActionType.Reset });
-    return false;
-  }
-};
+export const updateAuth =
+  async (setAuth: Dispatch<Action>, cancelToken?: CancelToken): Promise<boolean> => {
+    try{
+      const user = await getCurrentUser({ cancelToken });
+      setAuth({ type: ActionType.Set, value: { isAuthenticated: true, user } });
+      return true;
+    } catch (e) {
+      // could use a retry mechanism on non-credential related failures
+      setAuth({ type: ActionType.Reset });
+      return false;
+    }
+  };
 
 export default { ...contextProvider, ActionType };

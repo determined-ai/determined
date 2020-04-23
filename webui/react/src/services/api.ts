@@ -16,6 +16,12 @@ export const isAuthFailure = (e: any): boolean => {
   return e.response && e.response.status && e.response.status === 401;
 };
 
+// is a failure received from a failed login attempt due to bad credentials
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const isLoginFailure = (e: any): boolean => {
+  return e.response && e.response.status && e.response.status === 403;
+};
+
 const userApi:  Api<{}, User> = {
   httpOptions: () => { return { url: '/users/me' }; },
   name: 'user',

@@ -12,7 +12,7 @@ import Spinner from 'components/Spinner';
 import Auth, { updateAuth } from 'contexts/Auth';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { crossoverRoute, isCrossoverRoute } from 'routes';
-import { login, logout } from 'services/api';
+import { isLoginFailure, login, logout } from 'services/api';
 import { Credentials } from 'types';
 
 import css from './Authentication.module.scss';
@@ -54,15 +54,17 @@ const Authentication: React.FC<WithSearch<{}>> = (props: WithSearch<{}>) => {
     // TODO validate the creds type?
     const hideLoader = message.loading('logging in..');
     login(creds as Credentials)
-      .then(() => updateAuth(setAuth)) // TODO ideally the login endpoint returns user info
+      .then(() => updateAuth(setAuth))
       .catch((e: Error) => {
+        const badCredentials = isLoginFailure(e);
+        const actionMsg = badCredentials ? 'check your username and password.' : 'retry.';
         handleError({
           error: e,
           isUserTriggered: true,
           message: e.message,
-          publicMessage: 'Failed to login. Please check your username and password.',
+          publicMessage: `Failed to login. Please ${actionMsg}`,
           publicSubject: 'Login failed',
-          type: ErrorType.Input,
+          type: badCredentials ? ErrorType.Input : ErrorType.Server,
         });
       })
       .finally(hideLoader);
