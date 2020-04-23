@@ -52,7 +52,7 @@ describe('Notebooks List', () => {
       });
 
       it('kill should terminate the notebook', () => {
-      // Look for either terminated or terminating to avoid long delays.
+        // Look for either terminated or terminating to avoid long delays.
         cy.get('.table').should('not.contain', /terminat/i);
         cy.get('button').contains(/kill/i).click();
         cy.get('.modal button').contains(/confirm/i).click();

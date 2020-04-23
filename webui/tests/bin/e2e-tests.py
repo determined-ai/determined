@@ -68,11 +68,12 @@ def post_e2e_tests(config):
 
 
 # _cypress_arguments generates an array of cypress arguments.
-def _cypress_arguments(cypress_configs, config):
+def _cypress_arguments(cypress_configs, config, use_docker):
     timeout_config = f"defaultCommandTimeout={config['CYPRESS_DEFAULT_COMMAND_TIMEOUT']}"
+    config_file_name = "cypress-docker.json" if use_docker else "cypress.json"
     args = [
         "--config-file",
-        "cypress-docker.json",
+        config_file_name,
         "--config",
         ",".join([timeout_config, *cypress_configs]),
         "--browser",
@@ -99,7 +100,7 @@ def clean_up_cypress(config):
 
 def run_e2e_tests(config):
     base_url_config = f"baseUrl=http://localhost:{config['INTEGRATIONS_HOST_PORT']}"
-    cypress_arguments = _cypress_arguments([base_url_config], config)
+    cypress_arguments = _cypress_arguments([base_url_config], config, False)
 
     command = ["yarn", "--cwd", str(tests_dir), "run", "cypress", "run", *cypress_arguments]
 
@@ -116,7 +117,7 @@ def docker_run_e2e_tests(config):
 
     base_url_config = f"baseUrl=http://{master_name}:8080"
     cypress_config = [base_url_config]
-    cypress_arguments = _cypress_arguments(cypress_config, config)
+    cypress_arguments = _cypress_arguments(cypress_config, config, True)
 
     command = [
         "docker",
