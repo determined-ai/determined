@@ -230,7 +230,7 @@ jobs:
           paths:
             - "/tmp/venv"
       # We force reinstall without dependencies to ensure that the code gets updated from whatever was cached.
-      - run: pip install --no-deps --force-reinstall --find-links build determined==<< pipeline.parameters.det-version >>
+      - run: pip install --no-deps --force-reinstall --find-links build determined==<< pipeline.parameters.det-version >> determined_common==<< pipeline.parameters.det-version >>
       - run: make test-harness
 
   test-unit-harness-tf2:
@@ -255,7 +255,7 @@ jobs:
           paths:
             - "/tmp/venv"
       # We force reinstall without dependencies to ensure that the code gets updated from whatever was cached.
-      - run: pip install --no-deps --force-reinstall --find-links build determined==<< pipeline.parameters.det-version >>
+      - run: pip install --no-deps --force-reinstall --find-links build determined==<< pipeline.parameters.det-version >> determined_common==<< pipeline.parameters.det-version >>
       - run: make test-tf2
 
   test-cli:
