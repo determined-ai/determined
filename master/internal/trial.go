@@ -37,7 +37,7 @@ const (
 	MaxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1
 
 	trialEntrypointFile = "/run/determined/workdir/entrypoint.sh"
-	trialEntrypointMode = 0700
+	trialEntrypointMode = 0744
 
 	// Put as many ssh-related files in /run/determined as possible. In particular, it is very
 	// important that we don't overwrite the user's host $HOME/.ssh/id_rsa, if the user happens to
