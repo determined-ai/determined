@@ -1,0 +1,88 @@
+.. _native-api:
+
+Native API (experimental)
+=========================
+
+.. warning:
+
+    The Native API is currently an experimental API.
+
+The Native API allows developers to seamlessly move between training in a local
+development environment and training at cluster-scale on a Determined cluster.
+It also provides an interface to train ``tf.keras`` and ``tf.estimator`` models
+using idiomatic framework patterns, reducing (or eliminating) the effort to
+port model code for use with Determined.
+
+In this guide, we'll cover what happens under the hood when a user submits an
+experiment to Determined using the Native API. This topic guide is meant as
+deep-dive for advanced users -- for a tutorial on getting started with the
+Native API, see :ref:`tutorials_native-api`.
+
+Life of a Native API Experiment
+-------------------------------
+
+.. image:: /assets/images/life-of-a-native-experiment.png
+
+.. TODO: Add a link to show what an experiment in local development mode looks like
+
+The diagram above demonstrates the flow of execution when an experiment is
+created in :py:class:`determined.experimental.Mode.CLUSTER
+<determined.experimental.Mode>` mode.
+
+The Python script will first be executed by us in the *User environment*, such
+as a Python virtualenv or a Jupyter notebook where the ``determined`` Python
+package is installed. When the code is executed, ``init()`` will create an
+experiment by submitting the contents of the context directory and the
+:ref:`experiment configuration <terminology-concepts>` in a network request to
+the Determined master. Note that any code that comes after the ``init()`` call
+(typically involving defining the model and training loop) is *not* executed in
+the *User environment*. In the case of ``tf.keras``, building and compiling the
+model is only done on the Determined cluster.
+
+Once the Determined master has initialized a *Trial Runner environment*, the
+user script is re-executed from the beginning using `runpy.run_path
+<https://docs.python.org/3/library/runpy.html#runpy.run_path>`_. In the trial
+runner environment, ``init`` will return a :py:class:`determined.NativeContext`
+object that holds information specific to that trial (e.g. hyperparameter
+choices) and continue executing. Once the script hits the training loop
+function (in this case, ``tf.keras.Models.fit``), Determined will launch into
+the managed training loop.
+
+.. warning::
+
+    Any user code that occurs after the training loop has started will never be
+    executed!
+
+High-Level Training Loop Support
+---------------------------------
+
+In order to execute a custom Python script, Determined requires that the user
+script contains a high-level training loop that it can intercept.  Currently,
+the following training loop functions are supported:
+
+* `tf.keras.Models.fit <https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit>`_
+* `tf.estimator.train_and_evaluate <https://www.tensorflow.org/api_docs/python/tf/estimator/train_and_evaluate>`_
+
+If you are a PyTorch user, there is no standardized high-level training loop to
+hook into. However, it is still possible to submit experiments from Python by
+using the :ref:`topic-guide_native_trial-api`.
+
+.. _topic-guide_native_trial-api:
+
+Integration with the Trial API
+--------------------------------
+
+The Native API can also be used to submit experiments using the
+:ref:`pytorch-trial`, :ref:`tf-keras-trial`, or :ref:`estimator-trial` APIs. To
+do so, write a script that passes our ``Trial`` class definition and
+configuration to :py:func:`determined.experimental.create()` and execute it in
+:py:class:`determined.experimental.Mode.CLUSTER <determined.experimental.Mode>`
+mode.
+
+:func:`determined.experimental.create()` replaces ``init()`` in the lifecycle
+diagram above. Similar to ``init()``, ``create()`` will stop execution in the
+*User environment* to submit the experiment via a network request to the
+Determined master.  However, ``create()`` will not return a context object,
+because it encapsulates all the necessary information for the Determined
+training loop. Python code that comes after ``create()`` will neither be
+executed in the *User environment* nor in the *Trial Runner environment*.
