@@ -11,6 +11,7 @@ import Logo, { LogoTypes } from 'components/Logo';
 import Spinner from 'components/Spinner';
 import Auth, { updateAuth } from 'contexts/Auth';
 import handleError, { ErrorType } from 'ErrorHandler';
+import { crossoverRoute, isCrossoverRoute } from 'routes';
 import { login, logout } from 'services/api';
 import { Credentials } from 'types';
 
@@ -99,7 +100,13 @@ const Authentication: React.FC<WithSearch<{}>> = (props: WithSearch<{}>) => {
   );
 
   if (isLogout || isLoading) return <Spinner fullPage />;
-  if (auth.isAuthenticated) return <Redirect to={redirectUri} />;
+  if (auth.isAuthenticated) {
+    if (isCrossoverRoute(redirectUri)) {
+      crossoverRoute(redirectUri);
+      return <Spinner fullPage />;
+    }
+    return <Redirect to={redirectUri} />;
+  }
 
   return (
     <div className={css.base}>

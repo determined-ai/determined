@@ -1,5 +1,4 @@
 import { RouteProps } from 'react-router';
-import { Redirect } from 'react-router-dom';
 
 import Authentication from 'pages/Authentication';
 import Dashboard from 'pages/Dashboard';
@@ -21,9 +20,20 @@ export interface RouteConfigItem extends RouteProps {
   needAuth?: boolean;
 }
 
+export const isFullPath = (path: string): boolean => {
+  return path.startsWith('http');
+};
+
+export const isCrossoverRoute = (path: string): boolean => {
+  return path.startsWith('/ui') || path.includes(':8080/ui');
+};
+
 export const crossoverRoute = (path: string): void => {
-  const pathPrefix = process.env.IS_DEV ? 'http://localhost:8080' : '';
-  window.location.assign(`${pathPrefix}${path}`);
+  if (!isFullPath(path)) {
+    const pathPrefix = process.env.IS_DEV ? 'http://localhost:8080' : '';
+    path = `${pathPrefix}${path}`;
+  }
+  window.location.assign(path);
 };
 
 export const appRoutes: RouteConfigItem[] = [
