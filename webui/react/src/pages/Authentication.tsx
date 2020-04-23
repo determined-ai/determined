@@ -24,6 +24,11 @@ interface Queries {
   redirect?: string;
 }
 
+interface FromValues {
+  password?: string;
+  username?: string;
+}
+
 const Authentication: React.FC<WithSearch<{}>> = (props: WithSearch<{}>) => {
   const history = useHistory();
   const location = useLocation();
@@ -52,7 +57,7 @@ const Authentication: React.FC<WithSearch<{}>> = (props: WithSearch<{}>) => {
     history.push('/det/login' + props.location.search);
   }
 
-  const onFinish = (creds: unknown): void => {
+  const onFinish = (creds: FromValues): void => {
     // TODO validate the creds type?
     setCanSubmit(false);
     const hideLoader = message.loading('logging in..');
@@ -79,9 +84,10 @@ const Authentication: React.FC<WithSearch<{}>> = (props: WithSearch<{}>) => {
       });
   };
 
-  const onValuesChange = (): void => {
+  const onValuesChange = (changes: FromValues, values: FromValues): void => {
+    const hasUsername = !!values.username;
     setBadCredentials(false);
-    setCanSubmit(true);
+    setCanSubmit(hasUsername);
   };
 
   const loginForm = (
