@@ -31,6 +31,7 @@ const Authentication: React.FC<WithSearch<{}>> = (props: WithSearch<{}>) => {
   const setAuth = Auth.useActionContext();
   const [ isLoading, setIsLoading ] = useState(true);
   const [ badCredentials, setBadCredentials ] = useState(false);
+  const [ canSubmit, setCanSubmit ] = useState(false);
 
   const queries: Queries = queryString.parse(props.location.search);
 
@@ -53,6 +54,7 @@ const Authentication: React.FC<WithSearch<{}>> = (props: WithSearch<{}>) => {
 
   const onFinish = (creds: unknown): void => {
     // TODO validate the creds type?
+    setCanSubmit(false);
     const hideLoader = message.loading('logging in..');
     login(creds as Credentials)
       .then(() => updateAuth(setAuth))
@@ -71,7 +73,15 @@ const Authentication: React.FC<WithSearch<{}>> = (props: WithSearch<{}>) => {
           type: badCredentials ? ErrorType.Input : ErrorType.Server,
         });
       })
-      .finally(hideLoader);
+      .finally(() => {
+        setCanSubmit(true);
+        hideLoader();
+      });
+  };
+
+  const onValuesChange = (): void => {
+    setBadCredentials(false);
+    setCanSubmit(true);
   };
 
   const loginForm = (
@@ -79,6 +89,7 @@ const Authentication: React.FC<WithSearch<{}>> = (props: WithSearch<{}>) => {
       name="basic"
       size="large"
       onFinish={onFinish}
+      onValuesChange={onValuesChange}
     >
       <Form.Item
         name="username"
@@ -104,7 +115,7 @@ const Authentication: React.FC<WithSearch<{}>> = (props: WithSearch<{}>) => {
       }
 
       <Form.Item>
-        <Button htmlType="submit" type="primary">
+        <Button disabled={!canSubmit} htmlType="submit" type="primary">
           Sign In
         </Button>
       </Form.Item>
