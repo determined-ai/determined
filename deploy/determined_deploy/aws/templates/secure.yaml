@@ -76,7 +76,7 @@ Parameters:
     Description: How long before idle agents are shutdown
     Default: 10m
 
-  MaxInstances:
+  MaxDynamicAgents:
     Type: Number
     Description: Maximum number of agents to launch simultaneously
     Default: 5
@@ -582,7 +582,7 @@ Resources:
             log_stream: determined-agent
             master_url: http://local-ipv4:8080
             max_idle_agent_period: ${MaxIdleAgentPeriod}
-            max_instances: ${MaxInstances}
+            max_instances: ${MaxDynamicAgents}
             network_interface:
               public_ip: false
               security_group_id: ${AgentSecurityGroup.GroupId}

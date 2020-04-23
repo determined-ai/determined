@@ -70,9 +70,14 @@ variable "gpu_num" {
   default = 8
 }
 
-variable "max_instances" {
+variable "max_dynamic_agents" {
   type = number
   default = 5
+}
+
+variable "static_agents" {
+  type = number
+  default = 0
 }
 
 variable "preemptible" {

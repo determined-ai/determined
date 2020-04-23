@@ -1,6 +1,5 @@
 // Create Master instance
-
-resource "google_compute_instance" "default" {
+resource "google_compute_instance" "master_instance" {
   name = "det-master-${var.unique_id}-${var.det_version_key}"
   machine_type = var.master_instance_type
   zone = var.zone
@@ -47,7 +46,7 @@ resource "google_compute_instance" "default" {
       agent_docker_network: ${var.agent_docker_network}
       max_idle_agent_period: ${var.max_idle_agent_period}
       provider: gcp
-      name_prefix: det-agent-${var.unique_id}-
+      name_prefix: det-dynamic-agent-${var.unique_id}-
       network_interface:
         network: projects/${var.project_id}/global/networks/${var.network_name}
         subnetwork: projects/${var.project_id}/regions/${var.region}/subnetworks/${var.subnetwork_name}
@@ -61,7 +60,7 @@ resource "google_compute_instance" "default" {
         gpu_type: ${var.gpu_type}
         gpu_num: ${var.gpu_num}
         preemptible: ${var.preemptible}
-      max_instances: ${var.max_instances}
+      max_instances: ${var.max_dynamic_agents}
       base_config:
         minCpuPlatform: ${var.min_cpu_platform_agent}
     EOF
@@ -115,4 +114,65 @@ resource "google_compute_instance" "default" {
       nat_ip = var.static_ip
     }
   }
+}
+
+// Create configured number of static agents
+resource "google_compute_instance" "agent_instance" {
+  name = "det-static-agent-${count.index}-${var.unique_id}-${var.det_version_key}"
+  machine_type = var.agent_instance_type
+  zone = var.zone
+  tags = [var.tag_master_port, var.tag_allow_internal, var.tag_allow_ssh]
+
+  boot_disk {
+    initialize_params {
+      image = "projects/determined-ai/global/images/${var.environment_image}"
+    }
+  }
+
+  service_account {
+    email = var.service_account_email
+    scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+  }
+
+  guest_accelerator {
+    type = var.gpu_type
+    count = var.gpu_num
+  }
+
+  min_cpu_platform = var.min_cpu_platform_agent
+
+  allow_stopping_for_update = true
+
+  // Instances w/ attached GPUs must terminate on host maintenance.  Static
+  // agent provisioning (and the overall deployment) fails without this.
+  scheduling {
+    on_host_maintenance = "TERMINATE"
+  }
+
+  metadata_startup_script = <<-EOT
+    docker network create ${var.agent_docker_network}
+
+    docker run \
+        -d \
+        --name determined-agent \
+        --network ${var.agent_docker_network} \
+        --restart unless-stopped \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -e DET_MASTER_HOST=${google_compute_instance.master_instance.network_interface.0.network_ip} \
+        determinedai/determined-agent:${var.det_version}  run --master-port=${var.port}
+
+  EOT
+
+  network_interface {
+    network = var.network_name
+    subnetwork = var.subnetwork_name
+    access_config {
+    }
+  }
+
+  depends_on = [
+    google_compute_instance.master_instance
+  ]
+
+  count = var.static_agents
 }

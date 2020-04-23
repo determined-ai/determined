@@ -58,7 +58,10 @@ variable "gpu_type" {
 variable "gpu_num" {
 }
 
-variable "max_instances" {
+variable "max_dynamic_agents" {
+}
+
+variable "static_agents" {
 }
 
 variable "preemptible" {

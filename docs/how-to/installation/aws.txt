@@ -148,8 +148,8 @@ Spinning up the cluster
      - 10m (10 minutes)
      - False
 
-   * - ``--max-instances``
-     - Maximum instances that the master instance can allocate to the cluster
+   * - ``--max-dynamic-agents``
+     - Maximum number of dynamic agent instances at one time
      - 5
      - False
 

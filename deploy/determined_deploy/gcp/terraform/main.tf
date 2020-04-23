@@ -127,7 +127,8 @@ module "compute" {
   max_idle_agent_period = var.max_idle_agent_period
   gpu_type = var.gpu_type
   gpu_num = var.gpu_num
-  max_instances = var.max_instances
+  max_dynamic_agents = var.max_dynamic_agents
+  static_agents = var.static_agents
   min_cpu_platform_master = var.min_cpu_platform_master
   min_cpu_platform_agent = var.min_cpu_platform_agent
   preemptible = var.preemptible
