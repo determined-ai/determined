@@ -172,10 +172,41 @@ def make_test_workloads(
     print("The test experiment passed.")
 
 
+def make_local_experiment_config(input_config: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Create a local experiment configuration based on an input configuration and
+    defaults. Use a shallow merging policy to overwrite our default
+    configuration with each entire subconfig specified by a user.
+
+    The defaults and merging logic is not guaranteed to match the logic used by
+    the Determined master. This function also does not do experiment
+    configuration validation, which the Determined master does.
+    """
+
+    input_config = input_config or {}
+    config_keys_to_ignore = {
+        "bind_mounts",
+        "checkpoint_storage",
+        "environment",
+        "resources",
+        "optimizations",
+    }
+    for key in config_keys_to_ignore:
+        if key in input_config:
+            print(
+                "'{}' configuration key is not supported by LOCAL mode and will be ignored".format(
+                    key
+                )
+            )
+            del input_config[key]
+
+    return {**constants.DEFAULT_EXP_CFG, **input_config}
+
+
 def make_test_experiment_env(
     checkpoint_dir: pathlib.Path, config: Optional[Dict[str, Any]]
 ) -> Tuple[det.EnvContext, workload.Stream, det.RendezvousInfo, horovod.HorovodContext]:
-    config = det.ExperimentConfig({**constants.DEFAULT_EXP_CFG, **(config or {})})
+    config = det.ExperimentConfig(make_local_experiment_config(config))
     hparams = generate_test_hparam_values(config)
     use_gpu, container_gpus, slot_ids = get_gpus()
     local_rendezvous_ports = (
