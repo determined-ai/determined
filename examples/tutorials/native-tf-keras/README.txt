@@ -1,3 +1,5 @@
+.. _tutorials_native-api:
+
 Native API Tutorial (Experimental)
 ==================================
 
@@ -5,9 +7,9 @@ Native API Tutorial (Experimental)
 
     This API is currently experimental and subject to change.
 
-The Native API allows developers to seamlessly move between from training in
-local Python scripts to training at cluster-scale on a Determined cluster. It
-also provides an interface to train ``tf.keras`` and ``tf.estimator`` models
+The Native API allows developers to seamlessly move between training in a local
+development environment and training at cluster-scale on a Determined cluster.
+It also provides an interface to train ``tf.keras`` and ``tf.estimator`` models
 using idiomatic framework patterns, reducing (or eliminating) the effort to
 port model code for use with Determined.
 
