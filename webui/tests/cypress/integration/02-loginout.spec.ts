@@ -13,20 +13,20 @@ describe('Sign in/out', () => {
   }
 
   function ensureLoggedOut(): void {
-    cy.visit('/ui/logout');
+    cy.visit('/det/logout');
     checkLoggedOut();
   }
 
   it('should log in', () => {
-    cy.visit('/ui/experiments');
+    cy.visit('/det/experiments');
     checkLoggedIn('determined');
   });
 
   it('should log out', () => {
     // Open the dropdown menu and click the button to log out.
     cy.get('#avatar').click();
-    cy.get('nav a[href="/ui/logout"]').should('have.lengthOf', 1);
-    cy.get('nav a[href="/ui/logout"]').click();
+    cy.get('nav a[href="/det/logout"]').should('have.lengthOf', 1);
+    cy.get('nav a[href="/det/logout"]').click();
     checkLoggedOut();
   });
 
@@ -34,7 +34,7 @@ describe('Sign in/out', () => {
     // Logging out above should put us on the login page, so enter the login
     // information directly.
     ensureLoggedOut();
-    cy.visit('/ui/login');
+    cy.visit('/det/login');
     const username = 'determined';
     // We directly set the value to avoid using the less reliable .type() method
     // from Cypress. We also trigger 'input' event to keep it closer to an actual typing
@@ -43,10 +43,8 @@ describe('Sign in/out', () => {
     //   .invoke('val', username)
     //   .trigger('input');
 
-    cy.get('input#input-username')
-      .type(username, { delay: 50, force: true });
-
-    cy.get('input#input-username')
+    cy.get('input#basic-username')
+      .type(username, { delay: 50, force: true })
       .should('have.value', username);
 
     cy.get('button[type="submit"]').click();
