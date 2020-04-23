@@ -8,6 +8,6 @@ flake8-comprehensions>=2.2.0
 flake8-docstrings>=1.4.0
 flake8-quotes>=2.1.0
 flake8-tuple>=0.4.0
-isort
+isort==4.3.21
 mypy==0.740
 pip-tools>=4.5
