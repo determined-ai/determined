@@ -650,6 +650,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
         # The model code is the current working directory.
         shutil.copytree(os.getcwd(), code_path, ignore=shutil.ignore_patterns("__pycache__"))
+        os.chmod(code_path, 0o755)
 
         util.write_checkpoint_metadata(
             path,
