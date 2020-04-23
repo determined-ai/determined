@@ -303,10 +303,15 @@ def create(
             Run through a minimal loop of training, validation, and checkpointing steps.
 
         context_dir:
-            A string filepath that defines the context directory. In submit
-            mode, all files in this directory will be uploaded to the
-            Determined cluster. The total size of this directory must be under
-            96 MB.
+            A string filepath that defines the context directory. All model
+            code will be executed with this as the current working directory.
+
+            In CLUSTER mode, this argument is required. All files in this
+            directory will be uploaded to the Determined cluster. The total
+            size of this directory must be under 96 MB.
+
+            In LOCAL mode, this argument is optional and assumed to be the
+            current working directory by default.
         command:
             A list of strings that is used as the entrypoint of the training
             script in the Determined task environment. When executing this
