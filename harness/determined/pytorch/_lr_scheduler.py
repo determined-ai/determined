@@ -64,13 +64,13 @@ class LRScheduler:
         )
         return self.scheduler.step(*args, **kwargs)
 
-    def get_lr(self) -> typing.List:
-        """Compute the current learning rate of the scheduler.
+    def get_last_lr(self) -> typing.List:
+        """Return last computed learning rate by current scheduler.
 
-        This function is equivalent to calling get_lr() on the wrapped LRScheduler.
+        This function is equivalent to calling get_last_lr() on the wrapped LRScheduler.
         """
 
-        return self.scheduler.get_lr()  # type: ignore
+        return self.scheduler.get_last_lr()  # type: ignore
 
 
 class _LRHelper:

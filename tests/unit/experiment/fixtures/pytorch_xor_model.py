@@ -256,7 +256,7 @@ class XORTrialRestoreLR(XORTrialMulti):
         self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
         metrics = super().train_batch(batch, model, epoch_idx, batch_idx)
-        lr = self.scheduler.get_lr()[0]
+        lr = self.scheduler.get_last_lr()[0]
         metrics["lr"] = lr
         self.scheduler.set_lr(lr + 1)
         return metrics
