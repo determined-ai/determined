@@ -1,25 +1,13 @@
 describe('Sign in/out', () => {
 
-  function checkLoggedIn(username: string): void {
-    // Check for the presence/absence of the icons for the user dropdown and
-    // cluster page link in the top bar, which should be present if and only if
-    // the user is logged in.
-    cy.get('#avatar').should('exist');
-    cy.get('#avatar').should('have.text', username.charAt(0).toUpperCase());
-  }
-
-  function checkLoggedOut(): void {
-    cy.get('#avatar').should('not.exist');
-  }
-
   function ensureLoggedOut(): void {
     cy.visit('/det/logout');
-    checkLoggedOut();
+    cy.checkLoggedOut();
   }
 
   it('should log in', () => {
     cy.visit('/det/experiments');
-    checkLoggedIn('determined');
+    cy.checkLoggedIn('determined');
   });
 
   it('should log out', () => {
@@ -27,7 +15,7 @@ describe('Sign in/out', () => {
     cy.get('#avatar').click();
     cy.get('nav a[href="/det/logout"]').should('have.lengthOf', 1);
     cy.get('nav a[href="/det/logout"]').click();
-    checkLoggedOut();
+    cy.checkLoggedOut();
   });
 
   it('should log back in after logging out', () => {
@@ -48,6 +36,6 @@ describe('Sign in/out', () => {
       .should('have.value', username);
 
     cy.get('button[type="submit"]').click();
-    checkLoggedIn('determined');
+    cy.checkLoggedIn('determined');
   });
 });

@@ -42,3 +42,19 @@ Cypress.on('log:added', (options) => {
     );
   }
 });
+
+async function postData(url, data = {}) {
+  // Default options are marked with *
+  const response = await fetch(url, {
+    body: JSON.stringify(data),
+    cache: 'no-cache',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    method: 'POST',
+  });
+  return response.json(); // parses JSON response into native JavaScript objects
+}
+
+const login = credentials => postData('/login', credentials);
