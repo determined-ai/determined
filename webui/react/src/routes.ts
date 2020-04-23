@@ -41,7 +41,7 @@ export const appRoutes: RouteConfigItem[] = [
     component: Determined,
     id: 'det',
     needAuth: true,
-    path: '/det',
+    path: '/det/dashboard',
     title: 'Determined',
   },
   {

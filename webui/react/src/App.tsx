@@ -55,7 +55,7 @@ const AppView: React.FC = () => {
         {isAuthenticated && <SideBar />}
         <Switch>
           <Route exact path="/">
-            <Redirect to="/det" />
+            <Redirect to="/det/dashboard" />
           </Route>
           <Router routes={appRoutes} />
         </Switch>

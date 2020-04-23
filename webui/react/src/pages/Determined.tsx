@@ -100,9 +100,6 @@ const Determined: React.FC = () => {
   return (
     <div className={css.base}>
       <Switch>
-        <Route exact path="/det">
-          <Redirect to="/det/dashboard" />
-        </Route>
         <Router routes={detRoutes} />
       </Switch>
     </div>
