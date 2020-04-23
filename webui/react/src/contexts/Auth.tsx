@@ -1,4 +1,8 @@
+import { CancelToken } from 'axios';
+import { Dispatch } from 'react';
+
 import { generateContext } from 'contexts';
+import { getCurrentUser } from 'services/api';
 import { Auth, User } from 'types';
 
 enum ActionType {
@@ -32,7 +36,7 @@ const reducer = (state: State, action: Action): State => {
       return action.value;
     case ActionType.SetUser:
       return { ...state, user: action.value };
-    case ActionType.SetIsAuthenticated:
+    case ActionType.SetIsAuthenticated: // DISCUSS are setUser and setisAuthenticated shortcuts? error prone
       if (!action.value) clearAuthCookie();
       return { ...state, isAuthenticated: action.value };
     default:
@@ -45,5 +49,17 @@ const contextProvider = generateContext<Auth, Action>({
   name: 'Auth',
   reducer,
 });
+
+export const updateAuth = async (setAuth: Dispatch<Action>, cancelToken?: CancelToken): Promise<boolean> => {
+  try{
+    const user = await getCurrentUser({ cancelToken });
+    setAuth({ type: ActionType.Set, value: { isAuthenticated: true, user } });
+    return true;
+  } catch (e) {
+    // TODO check that it's an auth error otherwise throw an error
+    setAuth({ type: ActionType.Reset });
+    return false;
+  }
+};
 
 export default { ...contextProvider, ActionType };
