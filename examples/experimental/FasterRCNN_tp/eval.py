@@ -24,7 +24,7 @@ from tensorpack.tfutils.common import get_tf_version_tuple
 from tensorpack.utils import logger
 from tensorpack.utils.utils import get_tqdm
 
-from .data import get_eval_dataflow
+from data import get_eval_dataflow
 
 try:
     import horovod.tensorflow as hvd
