@@ -322,13 +322,14 @@ func (c *Cluster) receiveAddTask(ctx *actor.Context, msg AddTask) {
 	}
 
 	task := newTask(&Task{
-		ID:           taskID,
-		group:        group,
-		handler:      ctx.Sender(),
-		name:         name,
-		slotsNeeded:  msg.SlotsNeeded,
-		canTerminate: msg.CanTerminate,
-		agentLabel:   msg.Label,
+		ID:                  taskID,
+		group:               group,
+		handler:             ctx.Sender(),
+		name:                name,
+		slotsNeeded:         msg.SlotsNeeded,
+		canTerminate:        msg.CanTerminate,
+		agentLabel:          msg.Label,
+		fittingRequirements: msg.FittingRequirements,
 	})
 
 	c.tasksByID[task.ID] = task

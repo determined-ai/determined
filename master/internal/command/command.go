@@ -98,6 +98,10 @@ func (c *command) Receive(ctx *actor.Context) error {
 			SlotsNeeded:  c.config.Resources.Slots,
 			Label:        c.config.Resources.AgentLabel,
 			CanTerminate: true,
+			FittingRequirements: scheduler.FittingRequirements{
+				SingleAgent:    true,
+				DedicatedAgent: false,
+			},
 		})
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ScheduledEvent: &c.taskID})
 
