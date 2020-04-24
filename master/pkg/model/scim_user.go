@@ -105,9 +105,6 @@ type SCIMUser struct {
 // Validate checks that external data satisfies the expected invariants.
 func (u SCIMUser) Validate() []error {
 	var errs []error
-	if u.Meta != nil {
-		errs = append(errs, errors.New("meta set"))
-	}
 	if len(u.Username) == 0 {
 		errs = append(errs, errors.New("missing userName"))
 	}
@@ -115,12 +112,16 @@ func (u SCIMUser) Validate() []error {
 	return errs
 }
 
+// Sanitize sanitizes the user of external data that could be provided, but should
+// always be ignored. See https://tools.ietf.org/html/rfc7643#section-3.1 for why
+// meta must be cleared.
+func (u *SCIMUser) Sanitize() {
+	u.Meta = nil
+}
+
 // ValidateChanges checks that a patch for a user satisifies the expected
 // invariants.
 func (u SCIMUser) ValidateChanges() error {
-	if u.Meta != nil {
-		return errors.New("meta set")
-	}
 	if !u.ID.Valid {
 		return errors.New("missing ID")
 	}

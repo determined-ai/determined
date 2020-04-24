@@ -156,6 +156,8 @@ func (s *service) PostUser(c echo.Context) (interface{}, error) {
 		return nil, newBadRequestError(errors.New("ID set"))
 	}
 
+	user.Sanitize()
+
 	if user.Password.Valid {
 		user.Password = null.StringFrom(replicateClientSideSaltAndHash(user.Password.String))
 	}
@@ -203,6 +205,8 @@ func (s *service) PutUser(c echo.Context) (interface{}, error) {
 	} else if user.ID.String() != req.ID {
 		return nil, newBadRequestError(errors.New("ID does not match path"))
 	}
+
+	user.Sanitize()
 
 	updated, err := s.db.SetSCIMUser(req.ID, &user)
 	if err != nil {
