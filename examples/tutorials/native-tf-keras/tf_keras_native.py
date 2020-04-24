@@ -95,10 +95,11 @@ config = {
 # Determined will "assume control" of the execution of your code. It has two
 # required arguments in addition to the configuration:
 #
-# ``mode`` (:py:class:`determined.Mode`):
-#       :py:class:`determined.Mode.CLUSTER` will submit the experiment to a
-#       Determined cluster. :py:class:`determined.Mode.LOCAL` will execute
-#       a minimal training loop in your local Python environment.
+# ``mode`` (:py:class:`determined.experimenal.Mode`):
+#       :py:class:`determined.experimenal.Mode.CLUSTER` will submit the
+#       experiment to a Determined cluster.
+#       :py:class:`determined.experimenal.Mode.LOCAL` will execute a minimal
+#       training loop in your local Python environment.
 #
 # ``context_dir`` (``str``):
 #       Specifies the location of the code you want submitted to the cluster.
