@@ -16,8 +16,8 @@
 import './commands';
 
 Cypress.Cookies.defaults({
-  whitelist: /auth/
-})
+  whitelist: /auth/,
+});
 
 Cypress.on('window:before:load', (window) => {
   Cypress.log({
@@ -32,7 +32,12 @@ Cypress.on('window:before:load', (window) => {
       message: args,
     });
   };
-});
+
+  // disable actions that would result in opening new tabs/windows
+  // https://docs.cypress.io/guides/references/trade-offs.html#Permanent-trade-offs-1
+  window.open = () => {};
+
+}); // end of before:load
 
 Cypress.on('log:added', (options) => {
   if (options.instrument === 'command') {
