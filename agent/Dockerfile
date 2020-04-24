@@ -15,5 +15,9 @@ RUN ldconfig
 COPY dist/determined-agent_${VERSION}_linux_amd64.deb /tmp/agent.deb
 RUN apt-get install -y /tmp/agent.deb
 
-ENTRYPOINT ["/usr/bin/determined-agent"]
+COPY share/determined/agent/scripts/entrypoint.sh /run/determined/workdir/entrypoint.sh
+RUN chmod +x /run/determined/workdir/entrypoint.sh
+
+WORKDIR /run/determined/workdir
+ENTRYPOINT [ "/run/determined/workdir/entrypoint.sh" ]
 CMD ["run"]

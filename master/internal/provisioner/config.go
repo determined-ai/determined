@@ -44,14 +44,15 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 
 // Config describes config for provisioner.
 type Config struct {
-	MasterURL          string            `json:"master_url"`
-	StartupScript      string            `json:"startup_script"`
-	AgentDockerNetwork string            `json:"agent_docker_network"`
-	AgentDockerRuntime string            `json:"agent_docker_runtime"`
-	AgentDockerImage   string            `json:"agent_docker_image"`
-	AWS                *AWSClusterConfig `union:"provider,aws" json:"-"`
-	GCP                *GCPClusterConfig `union:"provider,gcp" json:"-"`
-	MaxIdleAgentPeriod Duration          `json:"max_idle_agent_period"`
+	MasterURL              string            `json:"master_url"`
+	StartupScript          string            `json:"startup_script"`
+	ContainerStartupScript string            `json:"container_startup_script"`
+	AgentDockerNetwork     string            `json:"agent_docker_network"`
+	AgentDockerRuntime     string            `json:"agent_docker_runtime"`
+	AgentDockerImage       string            `json:"agent_docker_image"`
+	AWS                    *AWSClusterConfig `union:"provider,aws" json:"-"`
+	GCP                    *GCPClusterConfig `union:"provider,gcp" json:"-"`
+	MaxIdleAgentPeriod     Duration          `json:"max_idle_agent_period"`
 }
 
 // DefaultConfig returns the default configuration of the provisioner.
