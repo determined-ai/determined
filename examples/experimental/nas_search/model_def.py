@@ -28,7 +28,7 @@ import determined as det
 from determined.pytorch import DataLoader, PyTorchTrial, LRScheduler
 
 
-from . import data
+import data
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 PTB_NUMBER_TOKENS = 10000
