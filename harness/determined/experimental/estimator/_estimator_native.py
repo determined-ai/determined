@@ -10,10 +10,9 @@ def init(
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
 ) -> estimator.EstimatorNativeContext:
+    # TODO: Add a reference to Native tutorial / topic-guide.
     """
     Create a tf.estimator experiment using the Native API.
-
-    .. TODO: Add a reference to Native tutorial / topic-guide.
 
     Arguments:
         config:
