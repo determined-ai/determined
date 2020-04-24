@@ -471,7 +471,11 @@ class TensorpackTrialController(det.LoopTrialController):
             logging.info(f"Not loading model")
             self.session_init = None
         else:
-            load_path = self.load_path.joinpath("checkpoint")
+            load_path = (
+                self.load_path
+                if self.trial.load_backbone_weights()
+                else self.load_path.joinpath("checkpoint")
+            )
             logging.info(f"Loading model from {load_path}")
             self.session_init = tp.get_model_loader(str(load_path))
 
