@@ -25,6 +25,14 @@ type fittingState struct {
 	Slots        int
 }
 
+// FittingRequirements allow tasks to specify requirements for their placement.
+type FittingRequirements struct {
+	// SingleAgent specifies that the task must be located within a single agent.
+	SingleAgent bool
+	// DedicatedAgent specified that there must be no other tasks running on the agent.
+	DedicatedAgent bool
+}
+
 type candidateList []*fittingState
 
 func (c candidateList) Len() int {
@@ -91,10 +99,26 @@ func findMultiSlotFits(
 		return nil
 	}
 
+	// Scheduling assumption(s):
+	// 1) Multi-agent tasks will receive the same number of slots on every agent. This is
+	//    a valid assumption, because the only multi-agent tasks are distributed experiments
+	//    which always want equal distribution across agents.
+	// 2) When a task enables `DedicatedAgent`, it will only schedule a task on a agent if it
+	//    takes up all of the agent's slots.
+
 	agentsByNumSlots := make(map[int][]*agentState)
 	for _, agent := range agentStates {
-		if isViable(task, agent, labelSatisfied) {
-			agentsByNumSlots[agent.numSlots()] = append(agentsByNumSlots[agent.numSlots()], agent)
+		if task.fittingRequirements.DedicatedAgent && agent.numUsedSlots() != 0 {
+			continue
+		}
+
+		constraints := []HardConstraint{labelSatisfied}
+		if task.fittingRequirements.SingleAgent {
+			constraints = append(constraints, slotsSatisfied)
+		}
+
+		if isViable(task, agent, constraints...) {
+			agentsByNumSlots[agent.numEmptySlots()] = append(agentsByNumSlots[agent.numEmptySlots()], agent)
 		}
 	}
 
@@ -102,7 +126,16 @@ func findMultiSlotFits(
 	for n := range agentsByNumSlots {
 		numSlots = append(numSlots, n)
 	}
-	sort.Sort(sort.Reverse(numSlots))
+
+	if task.fittingRequirements.SingleAgent {
+		// For the single agent case, we want prioritize using the smallest
+		// available agents.
+		sort.Sort(numSlots)
+	} else {
+		// For the (potentially) distributed case, we want to use as few
+		// agents as possible, thus we prioritize the largest agents.
+		sort.Sort(sort.Reverse(numSlots))
+	}
 
 	var candidateNumSlots int
 	for _, n := range numSlots {
@@ -110,28 +143,36 @@ func findMultiSlotFits(
 			continue
 		}
 
-		agents := agentsByNumSlots[n]
-		maxSlots := len(agents) * n
-		if s := task.SlotsNeeded(); maxSlots >= s && s%n == 0 {
+		var maxSlots int
+		if task.fittingRequirements.SingleAgent {
+			maxSlots = n
+		} else {
+			agents := agentsByNumSlots[n]
+			maxSlots = len(agents) * n
+		}
+
+		if s := task.SlotsNeeded(); (task.fittingRequirements.DedicatedAgent || s > n) && s%n != 0 {
+			continue
+		}
+
+		if s := task.SlotsNeeded(); maxSlots >= s {
 			candidateNumSlots = n
 			break
 		}
 	}
 
 	if candidateNumSlots == 0 {
-		log.Infof("Task: %s which requires %d slots, can not be scheduled in the current "+
-			"cluster configuration. The number of slots per trial must be either set to 1 or "+
-			"a multiple of the GPUs per agent.", task.ID, task.SlotsNeeded(),
-		)
+		if task.fittingRequirements.DedicatedAgent {
+			log.Infof("Task: %s which requires %d slots, can not be scheduled in the current "+
+				"cluster configuration. The number of slots per trial must be either set to 1 or "+
+				"a multiple of the GPUs per agent.", task.ID, task.SlotsNeeded(),
+			)
+		}
 		return nil
 	}
 
 	var candidates candidateList
 	for _, agent := range agentsByNumSlots[candidateNumSlots] {
-		if agent.numUsedSlots() != 0 {
-			continue
-		}
-
 		candidates = append(candidates, &fittingState{
 			Agent:        agent,
 			Score:        fittingMethod(task, agent),
@@ -140,10 +181,15 @@ func findMultiSlotFits(
 	}
 
 	numContainers := task.SlotsNeeded() / candidateNumSlots
+	if task.SlotsNeeded()%candidateNumSlots != 0 {
+		// For tasks that do not take up a whole agent.
+		numContainers++
+	}
+	slotsPerContainer := task.SlotsNeeded() / numContainers
 
 	if len(candidates) < numContainers {
 		log.Infof("Task: %s requires %d machines with %d slots to be scheduled. There are "+
-			"currently %d machines fully available.", task.ID, task.SlotsNeeded()/candidateNumSlots,
+			"currently %d machines fully available.", task.ID, numContainers,
 			candidateNumSlots, len(candidates),
 		)
 		return nil
@@ -153,7 +199,7 @@ func findMultiSlotFits(
 
 	fits := candidates[:numContainers]
 	for _, c := range fits {
-		c.Slots = candidateNumSlots
+		c.Slots = slotsPerContainer
 	}
 
 	return fits
@@ -164,6 +210,10 @@ func findNotMultiSlotFit(
 ) *fittingState {
 	var candidates candidateList
 	for _, agent := range agents {
+		if task.fittingRequirements.DedicatedAgent && agent.numUsedSlots() != 0 {
+			continue
+		}
+
 		if !isViable(task, agent, slotsSatisfied, labelSatisfied) {
 			continue
 		}
