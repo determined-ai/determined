@@ -465,7 +465,7 @@ initLoaded pageInfo session filterState tableState data =
     let
         model =
             { data =
-                List.map (recordToTableElement pageInfo) data
+                List.map (recordToTableElement pageInfo) data |> sortByStartTime pageInfo
             , tableState = tableState
             , filterState = filterState
             , customData = pageInfo.initInternalState data
@@ -518,13 +518,57 @@ getCustomModelData model =
             Just lm.customData
 
 
+sortByStartTime :
+    PageInfo msg cMsg data customRecordData customModelData
+    -> List (TableRecord msg cMsg data customRecordData)
+    -> List (TableRecord msg cMsg data customRecordData)
+sortByStartTime pageInfo =
+    List.sortBy
+        ((*) -1
+            << Time.posixToMillis
+            << pageInfo.getRegisteredTime
+            << .record
+        )
+
+
+updateRS :
+    PageInfo msg cMsg data customRecordData customModelData
+    -> TableRecord msg cMsg data customRecordData
+    -> data
+    -> TableRecord msg cMsg data customRecordData
+updateRS pageInfo recordState record =
+    let
+        oldKillBtn =
+            getInternalData recordState.internal
+
+        oldKillBtnConfig =
+            oldKillBtn.config
+
+        updatedConfig =
+            { oldKillBtnConfig | isActive = pageInfo.getState record /= Types.CmdTerminated }
+
+        updatedKillBtn =
+            { oldKillBtn | config = updatedConfig }
+    in
+    { recordState
+        | record = record
+        , internal = TableRecordInternalData updatedKillBtn
+    }
+
+
 updateTableRecords :
     PageInfo msg cMsg data customRecordData customModelData
     -> List (TableRecord msg cMsg data customRecordData)
     -> List data
-    -> Maybe (TableRecord msg cMsg data customRecordData -> data -> TableRecord msg cMsg data customRecordData)
+    ->
+        Maybe
+            (PageInfo msg cMsg data customRecordData customModelData
+             -> TableRecord msg cMsg data customRecordData
+             -> data
+             -> TableRecord msg cMsg data customRecordData
+            )
     -> List (TableRecord msg cMsg data customRecordData)
-updateTableRecords pageInfo recordStates records updateFnMaybe =
+updateTableRecords pageInfo recordStates newRecords updateFnMaybe =
     let
         existingRecordStates =
             List.map (\recState -> ( recState.record |> pageInfo.getId, recState )) recordStates
@@ -536,7 +580,7 @@ updateTableRecords pageInfo recordStates records updateFnMaybe =
                 Just recordState ->
                     case updateFnMaybe of
                         Just updateFn ->
-                            updateFn recordState datum
+                            updateFn pageInfo recordState datum
 
                         Nothing ->
                             { recordState | record = datum }
@@ -544,7 +588,7 @@ updateTableRecords pageInfo recordStates records updateFnMaybe =
                 Nothing ->
                     recordToTableElement pageInfo datum
     in
-    List.map mapper records
+    List.map mapper newRecords
 
 
 updateCustomModelData : customModelData -> Model msg cMsg data customRecordData customModelData -> Model msg cMsg data customRecordData customModelData
@@ -599,37 +643,9 @@ updateLoaded pageInfo session msg model =
                 filterStateUpdateFn fs =
                     { fs | ownerDropdownState = ownerDropdownState }
 
-                updateRS :
-                    TableRecord msg cMsg data customRecordData
-                    -> data
-                    -> TableRecord msg cMsg data customRecordData
-                updateRS recordState record =
-                    let
-                        oldKillBtn =
-                            getInternalData recordState.internal
-
-                        oldKillBtnConfig =
-                            oldKillBtn.config
-
-                        updatedConfig =
-                            { oldKillBtnConfig | isActive = pageInfo.getState record /= Types.CmdTerminated }
-
-                        updatedKillBtn =
-                            { oldKillBtn | config = updatedConfig }
-                    in
-                    { recordState
-                        | record = record
-                        , internal = TableRecordInternalData updatedKillBtn
-                    }
-
                 updatedRecords =
                     updateTableRecords pageInfo model.data data (Just updateRS)
-                        |> List.sortBy
-                            ((*) -1
-                                << Time.posixToMillis
-                                << pageInfo.getRegisteredTime
-                                << .record
-                            )
+                        |> sortByStartTime pageInfo
 
                 updatedModel =
                     { model | data = updatedRecords }
