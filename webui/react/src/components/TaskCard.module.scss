@@ -13,7 +13,6 @@
   transition: 0.2s;
   word-break: break-all;
 
-  :hover { color: var(--theme-colors-monochrome-5); }
   .progressBar {
     left: 0;
     position: absolute;
@@ -67,7 +66,7 @@
     .badges {
       display: flex;
 
-      > *:not(:first-child) { margin-left: var(--theme-sizes-layout-tiny); }
+      & > *:not(:first-child) { margin-left: var(--theme-sizes-layout-tiny); }
     }
     .percent {
       color: black;
@@ -78,11 +77,15 @@
     }
   }
 }
-.link:hover {
-  border-color: var(--theme-colors-core-action);
-  box-shadow: var(--theme-shadow);
-  margin-bottom: calc(-1 * var(--theme-sizes-layout-micro));
-  margin-left: 0;
-  margin-right: 0;
-  margin-top: calc(-1 * var(--theme-sizes-layout-micro));
+.link {
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--theme-colors-core-action);
+    box-shadow: var(--theme-shadow);
+    margin-bottom: calc(-1 * var(--theme-sizes-layout-micro));
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: calc(-1 * var(--theme-sizes-layout-micro));
+  }
 }
