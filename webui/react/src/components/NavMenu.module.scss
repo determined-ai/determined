@@ -10,18 +10,18 @@
   display: flex;
 }
 .main {
-  > * { margin-right: 3.2rem; }
-  > *:last-child { margin-right: 0; }
+  & > * { margin-right: 3.2rem; }
+  & > *:last-child { margin-right: 0; }
 }
 .sidebar {
   flex-direction: column;
 
-  > * { margin-bottom: 1.6rem; }
-  > *:last-child { margin-bottom: 0; }
+  & > * { margin-bottom: 1.6rem; }
+  & > *:last-child { margin-bottom: 0; }
 }
 .sidebarIconOnly {
   flex-direction: column;
 
-  > * { margin-bottom: 1.6rem; }
-  > *:last-child { margin-bottom: 0; }
+  & > * { margin-bottom: 1.6rem; }
+  & > *:last-child { margin-bottom: 0; }
 }

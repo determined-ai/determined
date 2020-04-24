@@ -14,9 +14,9 @@
   color: var(--theme-colors-monochrome-12);
   line-height: 4rem;
 
-  :hover { color: var(--theme-colors-monochrome-17); }
-  > div:not(:first-child) { padding-left: var(--theme-sizes-layout-medium); }
-  > i:not(:first-child) { padding-left: var(--theme-sizes-layout-tiny); }
+  &:hover { color: var(--theme-colors-monochrome-17); }
+  & > div:not(:first-child) { padding-left: var(--theme-sizes-layout-medium); }
+  & > i:not(:first-child) { padding-left: var(--theme-sizes-layout-tiny); }
 }
 .main.active {
   border-bottom-color: var(--theme-colors-core-primary);
@@ -29,8 +29,8 @@
   font-size: var(--theme-sizes-font-small);
   padding: var(--theme-sizes-layout-tiny) 1.2rem;
 
-  :hover { color: var(--theme-colors-core-action); }
-  > *:first-child { margin-right: 1.6rem; }
+  &:hover { color: var(--theme-colors-core-action); }
+  & > *:first-child { margin-right: 1.6rem; }
 }
 .sidebar.active {
   border-left-color: var(--theme-colors-core-action);
@@ -42,8 +42,8 @@
   color: var(--theme-colors-monochrome-6);
   padding: var(--theme-sizes-layout-tiny) 1rem;
 
-  :hover { color: var(--theme-colors-core-action); }
-  > *:not(:first-child) { display: none; }
+  &:hover { color: var(--theme-colors-core-action); }
+  & > *:not(:first-child) { display: none; }
 }
 .sidebarIconOnly.active {
   border-left-color: var(--theme-colors-core-action);
