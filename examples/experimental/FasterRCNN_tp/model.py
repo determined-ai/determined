@@ -22,9 +22,9 @@ from determined.tensorpack import (
     TensorpackTrial,
 )
 
-from .data import DatasetRegistry, get_eval_dataflow, get_train_dataflow
-from .eval import multithread_predict_dataflow, predict_dataflow
-from .modeling.generalized_rcnn import ResNetFPNModel
+from data import DatasetRegistry, get_eval_dataflow, get_train_dataflow
+from eval import multithread_predict_dataflow, predict_dataflow
+from modeling.generalized_rcnn import ResNetFPNModel
 
 try:
     import horovod.tensorflow as hvd
@@ -232,18 +232,7 @@ class RCNNTrial(TensorpackTrial):  # type: ignore
 
     def tensorpack_callbacks(self) -> List[tp.Callback]:
         num_workers = max(1, self.context.distributed.get_num_agents())
-        return [
-            ScheduleSetter(
-                "learning_rate",
-                make_schedule(
-                    num_workers
-                    * len(
-                        self.context.distributed.get_size()
-                        // self.context.distributed.get_num_agents()
-                    )
-                ),
-            )
-        ]
+        return [ScheduleSetter("learning_rate", make_schedule(self.context.distributed.get_size()))]
 
     def load_backbone_weights(self) -> Optional[str]:
         # TODO: This is a temporary way of specifying the backbone weights to load when training
