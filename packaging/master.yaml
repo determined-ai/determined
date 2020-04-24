@@ -22,8 +22,11 @@
 ## The url of the Determined master.
 #  master_url: <scheme://host:port>
 
-## The startup script for the agent.
+## The startup script for the agent. This runs on the node the agent runs on.
 #  startup_script: <startup script>
+
+## The startup script for the agent's container. This runs in the container determined-agent runs in.
+#  container_startup_script: <container startup script>
 
 ## The Docker network to use for the agent when using dynamic agents. If this is
 ## set to "host", Docker host-mode networking will be used instead. Defaults to "default".

@@ -203,10 +203,15 @@ master starts. It may contain the following fields:
     Defaults to ``http`` as scheme, local IP address as host, and
     ``8080`` as port.
 
-  - ``startup_script``: Startup script for agents. This script will
-    run right away when agent instances start up. For example, it can
-    be used for formating and mounting a disk. Defaults to an empty
-    string.
+  - ``startup_script``: Startup script for the node the agent runs on.
+    This script will run right away when agent instances start up.
+    For example, it can be used for formating and mounting a disk. Defaults
+    to an empty string.
+
+  - ``container_startup_script``: Startup script for the container 
+    ``determined-agent`` runs in. This script will run right away when
+    the agent's container starts up. For example, this script can be used
+    to configure docker so the agent can pull task images from GCR securely.
 
   - ``agent_docker_network``: The Docker network to use for the Determined
     agent and task containers. If this is set to "host", Docker
