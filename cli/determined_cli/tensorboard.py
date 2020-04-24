@@ -152,7 +152,7 @@ args_description = [
             Arg("-f", "--follow", action="store_true",
                 help="follow the logs of a TensorBoard instance, "
                      "similar to tail -f"),
-            Arg("--tail", type=int, default=10,
+            Arg("--tail", type=int, default=200,
                 help="number of lines to show, counting from the end "
                      "of the log")
         ]),
