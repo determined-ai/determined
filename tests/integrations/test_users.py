@@ -168,7 +168,7 @@ def extract_id_and_owner_from_exp_list(output: str) -> List[Tuple[int, str]]:
     return [(int(r[0]), r[1]) for r in rows]
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_logout(auth: Authentication) -> None:
     creds = create_test_user(ADMIN_CREDENTIALS, True)
 
@@ -212,7 +212,7 @@ def test_logout(auth: Authentication) -> None:
     # Clean up.
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_activate_deactivate(auth: Authentication) -> None:
     creds = create_test_user(ADMIN_CREDENTIALS, True)
 
@@ -235,7 +235,7 @@ def test_activate_deactivate(auth: Authentication) -> None:
     assert log_in_user(creds) == 0
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_change_password(auth: Authentication) -> None:
     # Create a user without a password.
     creds = create_test_user(ADMIN_CREDENTIALS, False)
@@ -252,7 +252,7 @@ def test_change_password(auth: Authentication) -> None:
     assert log_in_user(Credentials(creds.username, newPassword)) == 0
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_experiment_creation_and_listing(auth: Authentication) -> None:
     # Create 2 users.
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)
@@ -372,7 +372,7 @@ def kill_tensorboards(*tensorboard_ids: str) -> None:
         tids.remove(tensorboard_id)
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_notebook_creation_and_listing(auth: Authentication) -> None:
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)
     creds2 = create_test_user(ADMIN_CREDENTIALS, True)
@@ -400,7 +400,7 @@ def test_notebook_creation_and_listing(auth: Authentication) -> None:
     kill_notebooks(notebook_id1, notebook_id2)
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_tensorboard_creation_and_listing(auth: Authentication) -> None:
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)
     creds2 = create_test_user(ADMIN_CREDENTIALS, True)
@@ -435,7 +435,7 @@ def test_tensorboard_creation_and_listing(auth: Authentication) -> None:
     delete_experiments(experiment_id1, experiment_id2)
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_command_creation_and_listing(auth: Authentication) -> None:
     creds1 = create_test_user(ADMIN_CREDENTIALS, True)
     creds2 = create_test_user(ADMIN_CREDENTIALS, True)
@@ -485,7 +485,7 @@ def create_linked_user(uid: int, user: str, gid: int, group: str) -> Credentials
     return user_creds
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_link_with_agent_user(auth: Authentication) -> None:
     user = create_linked_user(200, "user", 300, "group")
 
@@ -500,7 +500,7 @@ def test_link_with_agent_user(auth: Authentication) -> None:
             raise AssertionError(f"Did not find {expected_regex} in output")
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_link_with_large_uid(auth: Authentication) -> None:
     user = create_linked_user(2000000000, "user", 2000000000, "group")
 
@@ -515,7 +515,7 @@ def test_link_with_large_uid(auth: Authentication) -> None:
             raise AssertionError(f"Did not find {expected_regex} in output")
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_link_with_existing_agent_user(auth: Authentication) -> None:
     user = create_linked_user(65534, "nobody", 65534, "nogroup")
 
@@ -530,7 +530,7 @@ def test_link_with_existing_agent_user(auth: Authentication) -> None:
             raise AssertionError(f"Did not find {expected_output} in output")
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_non_root_experiment(auth: Authentication, tmp_path: pathlib.Path) -> None:
     user = create_linked_user(65534, "nobody", 65534, "nogroup")
 
@@ -553,7 +553,7 @@ def test_non_root_experiment(auth: Authentication, tmp_path: pathlib.Path) -> No
             exp.run_basic_test(str(tree.joinpath("const.yaml")), str(tree), None)
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_link_without_agent_user(auth: Authentication) -> None:
     user = create_test_user(ADMIN_CREDENTIALS, False)
 

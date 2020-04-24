@@ -10,14 +10,14 @@ from tests.integrations import config as conf
 from tests.integrations import experiment as exp
 
 
-@pytest.mark.workflows  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_noop_long_train_step() -> None:
     exp.run_basic_test(
         conf.fixtures_path("no_op/single-long-train-step.yaml"), conf.fixtures_path("no_op"), 1,
     )
 
 
-@pytest.mark.workflows  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_noop_pause() -> None:
     """
     Walk through starting, pausing, and resuming a single no-op experiment.
@@ -80,7 +80,7 @@ def test_noop_pause() -> None:
     exp.wait_for_experiment_state(experiment_id, "COMPLETED")
 
 
-@pytest.mark.workflows  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_noop_pause_of_experiment_without_trials() -> None:
     """
     Walk through starting, pausing, and resuming a single no-op experiment
@@ -107,7 +107,7 @@ def test_noop_pause_of_experiment_without_trials() -> None:
     exp.cancel_single(experiment_id)
 
 
-@pytest.mark.workflows  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_noop_single_warm_start() -> None:
     experiment_id1 = exp.run_basic_test(
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
@@ -174,7 +174,7 @@ def test_noop_single_warm_start() -> None:
     ] == pytest.approx(0.9 ** 3)
 
 
-@pytest.mark.workflows  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_cancel_one_experiment() -> None:
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-many-long-steps.yaml"), conf.fixtures_path("no_op"),
@@ -183,7 +183,7 @@ def test_cancel_one_experiment() -> None:
     exp.cancel_single(experiment_id)
 
 
-@pytest.mark.workflows  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_cancel_one_active_experiment() -> None:
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-many-long-steps.yaml"), conf.fixtures_path("no_op"),
@@ -199,7 +199,7 @@ def test_cancel_one_active_experiment() -> None:
     exp.cancel_single(experiment_id, should_have_trial=True)
 
 
-@pytest.mark.workflows  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_cancel_one_paused_experiment() -> None:
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-many-long-steps.yaml"),
@@ -210,7 +210,7 @@ def test_cancel_one_paused_experiment() -> None:
     exp.cancel_single(experiment_id)
 
 
-@pytest.mark.workflows  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_cancel_ten_experiments() -> None:
     experiment_ids = [
         exp.create_experiment(
@@ -223,7 +223,7 @@ def test_cancel_ten_experiments() -> None:
         exp.cancel_single(experiment_id)
 
 
-@pytest.mark.workflows  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_cancel_ten_paused_experiments() -> None:
     experiment_ids = [
         exp.create_experiment(
@@ -238,7 +238,7 @@ def test_cancel_ten_paused_experiments() -> None:
         exp.cancel_single(experiment_id)
 
 
-@pytest.mark.workflows  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_startup_hook() -> None:
     exp.run_basic_test(
         conf.fixtures_path("no_op/startup-hook.yaml"), conf.fixtures_path("no_op"), 1,

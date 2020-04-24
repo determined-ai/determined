@@ -62,13 +62,13 @@ def test_tf_keras_single_gpu(tf2: bool) -> None:
     assert len(trials) == 1
 
 
-@pytest.mark.frameworks_cpu  # type: ignore
+@pytest.mark.tensorflow_cpu  # type: ignore
 @pytest.mark.parametrize("tf2", [True, False])  # type: ignore
 def test_tf_keras_const_warm_start(tf2: bool) -> None:
     config = conf.load_config(conf.official_examples_path("cifar10_cnn_tf_keras/const.yaml"))
     config["checkpoint_storage"] = exp.shared_fs_checkpoint_config()
     config.setdefault("bind_mounts", []).append(exp.root_user_home_bind_mount())
-    config["searcher"]["max_steps"] = 3
+    config = conf.set_max_steps(config, 2)
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
 
     experiment_id1 = exp.run_basic_test_with_temp_config(
@@ -80,8 +80,8 @@ def test_tf_keras_const_warm_start(tf2: bool) -> None:
     first_trial = trials[0]
     first_trial_id = first_trial["id"]
 
-    assert len(first_trial["steps"]) == 3
-    first_checkpoint_id = first_trial["steps"][2]["checkpoint"]["id"]
+    assert len(first_trial["steps"]) == 2
+    first_checkpoint_id = first_trial["steps"][1]["checkpoint"]["id"]
 
     # Add a source trial ID to warm start from.
     config["searcher"]["source_trial_id"] = first_trial_id
@@ -122,7 +122,7 @@ def test_tf_keras_mnist_parallel() -> None:
     assert len(trials) == 1
 
 
-@pytest.mark.frameworks_cpu  # type: ignore
+@pytest.mark.tensorflow_cpu  # type: ignore
 @pytest.mark.parametrize("tf2", [False])  # type: ignore
 @pytest.mark.parametrize("storage_type", ["lfs"])  # type: ignore
 def test_tf_keras_mnist_data_layer_lfs(tf2: bool, storage_type: str) -> None:

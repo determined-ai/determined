@@ -207,7 +207,7 @@ def run_warm_start_test(implementation: NativeImplementation) -> None:
     ],
 )
 @pytest.mark.parametrize("tf2", [True, False])  # type: ignore
-@pytest.mark.frameworks_native_cpu  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_tf_keras_warm_start(implementation: NativeImplementation, tf2: bool) -> None:
     implementation = implementation._replace(
         configuration=(
@@ -227,7 +227,7 @@ def test_tf_keras_warm_start(implementation: NativeImplementation, tf2: bool) ->
     ],
 )
 @pytest.mark.parametrize("tf2", [True, False])  # type: ignore
-@pytest.mark.frameworks_native_cpu  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_tf_estimator_warm_start(implementation: NativeImplementation, tf2: bool) -> None:
     implementation = implementation._replace(
         configuration=(
@@ -242,6 +242,6 @@ def test_tf_estimator_warm_start(implementation: NativeImplementation, tf2: bool
 @pytest.mark.parametrize(  # type: ignore
     "implementation", [NativeImplementations.PytorchMNISTCNNSingleGeneric]
 )
-@pytest.mark.frameworks_native_cpu  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_pytorch_warm_start(implementation: NativeImplementation) -> None:
     run_warm_start_test(implementation)

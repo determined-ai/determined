@@ -51,7 +51,7 @@ entrypoint: model_def:NoOpTrial
 
 
 @pytest.mark.slow  # type: ignore
-@pytest.mark.workflows  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_start_tensorboard_for_shared_fs_experiment(tmp_path: Path) -> None:
     """
     Start a random experiment configured with the shared_fs backend, start a
