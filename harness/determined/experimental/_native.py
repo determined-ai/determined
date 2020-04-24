@@ -1,5 +1,6 @@
 import contextlib
 import enum
+import logging
 import math
 import os
 import pathlib
@@ -92,7 +93,7 @@ def create_experiment(
     config = {**constants.DEFAULT_EXP_CFG, **(config or {})}
     config.setdefault("internal", {})
     config["internal"]["native"] = {"command": set_command_default(context_path, command)}
-    print("Creating an experiment with config: {}".format(config))
+    logging.info(f"Creating an experiment with config: {config}")
 
     if master_url is None:
         master_url = util.get_default_master_address()
@@ -109,7 +110,7 @@ def create_experiment(
         exp_id = api.create_test_experiment(master_url, config, exp_context)
     else:
         exp_id = api.create_experiment(master_url, config, exp_context)
-    print("Created experiment {}".format(exp_id))
+    logging.info(f"Created experiment {exp_id}")
 
     return exp_id
 
@@ -150,27 +151,25 @@ def make_test_workloads(
 ) -> workload.Stream:
     interceptor = workload.WorkloadResponseInterceptor()
 
-    print("Training one batch")
+    logging.info("Training one batch")
     yield from interceptor.send(workload.train_workload(1), [config.batches_per_step()])
     metrics = interceptor.metrics_result()
     batch_metrics = metrics["batch_metrics"]
     check.eq(len(batch_metrics), config.batches_per_step())
-    if util.debug_mode():
-        print(f"Finished training, metrics: {batch_metrics}")
+    logging.debug(f"Finished training, metrics: {batch_metrics}")
 
-    print("Validating one step")
+    logging.info("Validating one step")
     yield from interceptor.send(workload.validation_workload(1), [])
     validation = interceptor.metrics_result()
     v_metrics = validation["validation_metrics"]
-    if util.debug_mode():
-        print(f"Finished validating, validation metrics: {v_metrics}")
+    logging.debug(f"Finished validating, validation metrics: {v_metrics}")
 
-    print(f"Saving a checkpoint to {checkpoint_dir}.")
+    logging.info(f"Saving a checkpoint to {checkpoint_dir}.")
     yield workload.checkpoint_workload(), [checkpoint_dir], workload.ignore_workload_response
-    print(f"Finished saving a checkpoint to {checkpoint_dir}.")
+    logging.info(f"Finished saving a checkpoint to {checkpoint_dir}.")
 
     yield workload.terminate_workload(), [], workload.ignore_workload_response
-    print("The test experiment passed.")
+    logging.info("The test experiment passed.")
 
 
 def make_local_experiment_config(input_config: Optional[Dict[str, Any]]) -> Dict[str, Any]:
@@ -194,10 +193,8 @@ def make_local_experiment_config(input_config: Optional[Dict[str, Any]]) -> Dict
     }
     for key in config_keys_to_ignore:
         if key in input_config:
-            print(
-                "'{}' configuration key is not supported by LOCAL mode and will be ignored".format(
-                    key
-                )
+            logging.info(
+                f"'{key}' configuration key is not supported by LOCAL mode and will be ignored"
             )
             del input_config[key]
 
@@ -267,6 +264,7 @@ def create_trial_instance(
             :class:`determined.TrialContext`. If not specified, a minimal default
             is used.
     """
+    det._set_logger(util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled())
     env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
         checkpoint_dir=pathlib.Path(checkpoint_dir), config=config
     )
@@ -330,6 +328,7 @@ def create(
             variable ``DET_MASTER``.
     """
 
+    det._set_logger(util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled())
     if Mode(mode) == Mode.CLUSTER:
         if load.RunpyGlobals.is_initialized():
             load.RunpyGlobals.set_runpy_trial_result(
@@ -358,6 +357,8 @@ def _init_native(
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
 ) -> Any:
+    det._set_logger(util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled())
+
     if Mode(mode) == Mode.CLUSTER:
         if load.RunpyGlobals.is_initialized():
             controller_cls.pre_execute_hook(
@@ -376,18 +377,17 @@ def _init_native(
             create_experiment(
                 config=config, context_dir=context_dir, command=command, master_url=master_url
             )
-            print("Exiting the program after submitting the experiment.")
+            logging.info("Exiting the program after submitting the experiment.")
             sys.exit(0)
 
     elif Mode(mode) == Mode.LOCAL:
-        print("Running a minimal test experiment locally")
+        logging.info("Running a minimal test experiment locally")
         checkpoint_dir = tempfile.TemporaryDirectory()
         env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
             checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
         )
-        print(f"Using hyperparameters: {env.hparams}")
-        if util.debug_mode():
-            print(f"Using a test experiment config: {env.experiment_config}")
+        logging.info(f"Using hyperparameters: {env.hparams}")
+        logging.debug(f"Using a test experiment config: {env.experiment_config}")
 
         controller_cls.pre_execute_hook(env=env, hvd_config=hvd_config)
         context = native_context_cls(env=env, hvd_config=hvd_config)
@@ -437,19 +437,17 @@ def test_one_batch(
     # TODO(DET-2931): Make the validation step a single batch as well.
     config = {**(config or {}), "batches_per_step": 1}
 
-    print("Running a minimal test experiment locally")
+    logging.info("Running a minimal test experiment locally")
     checkpoint_dir = tempfile.TemporaryDirectory()
     env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
         checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
     )
-    print(f"Using hyperparameters: {env.hparams}")
-    if util.debug_mode():
-        print(f"Using a test experiment config: {env.experiment_config}")
+    logging.info(f"Using hyperparameters: {env.hparams}")
+    logging.debug(f"Using a test experiment config: {env.experiment_config}")
 
     with local_execution_manager(context_path):
         if not trial_class:
-            if util.debug_mode():
-                print("Loading trial class from experiment configuration")
+            logging.debug("Loading trial class from experiment configuration")
             trial_class = load.load_trial_implementation(env.experiment_config["entrypoint"])
 
         controller = load.load_controller_from_trial(
@@ -463,4 +461,6 @@ def test_one_batch(
         controller.run()
 
     checkpoint_dir.cleanup()
-    print("Note: to submit an experiment to the cluster, change mode argument to Mode.CLUSTER")
+    logging.info(
+        "Note: to submit an experiment to the cluster, change mode argument to Mode.CLUSTER"
+    )
