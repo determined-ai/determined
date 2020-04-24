@@ -26,83 +26,53 @@ commands:
     description: "Fix CIRCLE_WORKING_DIRECTORY"
     steps:
       - run: echo 'CIRCLE_WORKING_DIRECTORY="${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}"' >> $BASH_ENV
-  install-node:
-    description: Install Node 12.x
+
+
+  install-docker:
     steps:
-      - run: apt-get update && apt-get install -y apt-transport-https
-      - run: curl -fsSL https://deb.nodesource.com/setup_12.x | bash -
-      - run: apt-get update && apt-get install -y nodejs
-  install-go:
-    description: Install Go 1.13.1
-    steps:
-      - run: curl -fsSL https://dl.google.com/go/go1.13.1.linux-amd64.tar.gz | tar -C /usr/local -xzf -
-  restore-python-cache:
-    description: Restore Python dependency cache
-    steps:
-      - restore_cache:
-          keys:
-            - det-py-deps-v1dev3-{{ checksum  "combined-reqs.txt" }}
-  restore-go-cache:
-    description: Restore Go dependency cache
-    steps:
-      - restore_cache:
-          keys:
-            - det-go-deps-v1dev3-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}
-  restore-elm-cache:
-    description: Restore Elm dependency cache
-    steps:
-      - restore_cache:
-          keys:
-            - det-elm-deps-v1dev3-{{ checksum  "webui/elm/package-lock.json" }}
-  restore-react-cache:
-    description: Restore React dependency cache
-    steps:
-      - restore_cache:
-          keys:
-            - det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
-  save-python-cache:
-    description: Save Python dependency cache
-    steps:
-      - save_cache:
-          key: det-py-deps-v1dev3-{{ checksum  "combined-reqs.txt" }}
-          paths:
-            - "/tmp/venv"
-  save-go-cache:
-    description: Save Go dependency cache
-    steps:
-      - save_cache:
-          key: det-go-deps-v1dev3-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}
-          paths:
-            - "/go/pkg/mod/"
-  save-elm-cache:
-    description: Save Elm dependency cache
-    steps:
-      - save_cache:
-          key: det-elm-deps-v1dev3-{{ checksum  "webui/elm/package-lock.json" }}
-          paths:
-            - "webui/elm/node_modules"
-  save-react-cache:
-    description: Save React dependency cache
-    steps:
-      - save_cache:
-          key: det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
-          paths:
-            - "webui/react/node_modules"
-  python-venv-setup:
-    description: Create Python venv and install combined dependencies.
-    steps:
-      - run: python3.6 -m venv /tmp/venv
-      - run: pip install --upgrade pip\<20
-      - restore-python-cache
-      - run: pip install -r combined-reqs.txt
-      - save-python-cache
-  build-docker:
+      - run: sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+      - run: sudo systemctl restart docker
+
+
+  build-docker-images:
     description: Build Master and Agent Docker images.
     steps:
       - attach_workspace:
           at: build
       - run: make -C master build-docker
       - run: make -C agent build-docker
+
+
+  go-get-deps:
+    steps:
+      - restore_cache:
+          keys:
+            - det-go-deps-v1dev3-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}
+      - run: make go-get-deps
+      - save_cache:
+          key: det-go-deps-v1dev3-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}
+          paths:
+            - "/go/pkg/mod/"
+  elm-get-deps:
+    steps:
+      - restore_cache:
+          keys:
+            - det-elm-deps-v1dev3-{{ checksum  "webui/elm/package-lock.json" }}
+      - run: make -C webui/elm get-deps
+      - save_cache:
+          key: det-elm-deps-v1dev3-{{ checksum  "webui/elm/package-lock.json" }}
+          paths:
+            - "webui/elm/node_modules"
+  react-get-deps:
+    steps:
+      - restore_cache:
+          keys:
+            - det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
+      - run: make -C webui/react get-deps
+      - save_cache:
+          key: det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
+          paths:
+            - "webui/react/node_modules"
   setup-python-venv:
     description: Set up and create Python venv.
     parameters:
@@ -215,33 +185,6 @@ jobs:
             - "share/determined/master/webui/docs"
             - "share/determined/master/wheels"
 
-  build-elm:
-    docker:
-      - image: cimg/node:12.16
-    steps:
-      - checkout
-      - restore-elm-cache
-      - run: make -C webui/elm build
-      - save-elm-cache
-      - persist_to_workspace:
-          root: build
-          paths:
-            - "share/determined/master/webui/elm"
-
-  build-react:
-    docker:
-      - image: cimg/node:12.16
-    steps:
-      - checkout
-      - restore-react-cache
-      - run: make -C webui/react build
-      - save-react-cache
-      - persist_to_workspace:
-          root: build
-          paths:
-            - "share/determined/master/webui/react"
-
-
   build-debs:
     docker:
       - image: cimg/go:1.13
@@ -252,9 +195,7 @@ jobs:
       - attach_workspace:
           at: build
 
-      - restore-go-cache
-      - run: make go-get-deps
-      - save-go-cache
+      - go-get-deps
 
       - run: make -C master build-files
       - run: make debs
@@ -264,31 +205,7 @@ jobs:
           paths:
             - "dist/*linux_amd64.deb"
 
-  test-e2e:
-    parameters:
-      test-split:
-        type: string
-    machine:
-      image: ubuntu-1604:201903-01
-    resource_class: large
-    steps:
-      - checkout
-      - run: sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-      - run: sudo systemctl restart docker
-      - build-docker
 
-      - run: pyenv global 3.6.5
-      - setup-python-venv:
-          determined-common: true
-          determined-cli: true
-          determined: true
-          determined-deploy: true
-          extra-requirements-file: "tests/integrations/requirements.txt"
-          executor: ubuntu-1604:201903-01
-
-      - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-4bd937a
-
-      - run: . /tmp/venv/bin/activate && PYTEST_MARKS=<< parameters.test-split >> make test-python-integrations
 
 
 
@@ -297,19 +214,27 @@ jobs:
       - image: cimg/node:12.16
     steps:
       - checkout
-      - restore-elm-cache
-      - run: make -C webui/elm get-deps
-      - save-elm-cache
+      - elm-get-deps
       - run: make -C webui/elm check
+
+  build-elm:
+    docker:
+      - image: cimg/node:12.16
+    steps:
+      - checkout
+      - elm-get-deps
+      - run: make -C webui/elm build
+      - persist_to_workspace:
+          root: build
+          paths:
+            - "share/determined/master/webui/elm"
 
   test-unit-elm:
     docker:
       - image: cimg/node:12.16
     steps:
       - checkout
-      - restore-elm-cache
-      - run: make -C webui/elm get-deps
-      - save-elm-cache
+      - elm-get-deps
       - run: make -C webui/elm test
 
 
@@ -319,19 +244,27 @@ jobs:
       - image: cimg/node:12.16
     steps:
       - checkout
-      - restore-react-cache
-      - run: make -C webui/react get-deps
-      - save-react-cache
+      - react-get-deps
       - run: make -C webui/react check
+
+  build-react:
+    docker:
+      - image: cimg/node:12.16
+    steps:
+      - checkout
+      - react-get-deps
+      - run: make -C webui/react build
+      - persist_to_workspace:
+          root: build
+          paths:
+            - "share/determined/master/webui/react"
 
   test-unit-react:
     docker:
       - image: cimg/node:12.16
     steps:
       - checkout
-      - restore-react-cache
-      - run: make -C webui/react get-deps
-      - save-react-cache
+      - react-get-deps
       - run: make -C webui/react test
 
 
@@ -343,9 +276,7 @@ jobs:
           GO111MODULE: "on"
     steps:
       - checkout
-      - restore-go-cache
-      - run: make go-get-deps
-      - save-go-cache
+      - go-get-deps
       - run: make -C master check
       - run: make -C agent check
       - run: make check-commit-messages
@@ -357,9 +288,7 @@ jobs:
           GO111MODULE: "on"
     steps:
       - checkout
-      - restore-go-cache
-      - run: make go-get-deps
-      - save-go-cache
+      - go-get-deps
       - run: make -C master test
       - run: make -C agent test
 
@@ -422,6 +351,31 @@ jobs:
       - run: det --help
       - run: pip install -r tests/cli/requirements.txt
       - run: pytest tests/cli
+
+  test-e2e:
+    parameters:
+      test-split:
+        type: string
+    machine:
+      image: ubuntu-1604:201903-01
+    resource_class: large
+    steps:
+      - checkout
+      - install-docker
+      - build-docker-images
+
+      - run: pyenv global 3.6.5
+      - setup-python-venv:
+          determined-common: true
+          determined-cli: true
+          determined: true
+          determined-deploy: true
+          extra-requirements-file: "tests/integrations/requirements.txt"
+          executor: ubuntu-1604:201903-01
+
+      - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-4bd937a
+
+      - run: . /tmp/venv/bin/activate && PYTEST_MARKS=<< parameters.test-split >> make test-python-integrations
 
 
 
