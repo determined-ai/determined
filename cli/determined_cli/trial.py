@@ -51,7 +51,7 @@ def describe_trial(args: Namespace) -> None:
     trial.start_time()
     trial.state()
 
-    steps = trial.steps()
+    steps = trial.steps(order_by=[gql.steps_order_by(id=gql.order_by.asc)])
     steps.metrics()
     steps.id()
     steps.state()
