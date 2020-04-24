@@ -5,7 +5,7 @@ BUILDDIR ?= ../build
 DEPLOY_WHEEL := $(BUILDDIR)/determined_deploy-$(VERSION)-py3-none-any.whl
 
 build:
-	python setup.py bdist_wheel -d $(DIST_DIRECTORY)
+	python setup.py bdist_wheel -d $(BUILDDIR)
 
 upload-try-now-template: TRY_NOW_TEMPLATE = simple.yaml
 upload-try-now-template: TRY_NOW_URL := s3://determined-ai-public/$(TRY_NOW_TEMPLATE)
@@ -13,7 +13,7 @@ upload-try-now-template: TEMPLATE_PATH := determined_deploy/aws/templates/$(TRY_
 upload-try-now-template:
 	aws s3 cp $(TEMPLATE_PATH) $(TRY_NOW_URL) --acl public-read
 
-publish: upload-try-now-template
+publish: build upload-try-now-template
 	twine upload --non-interactive $(DEPLOY_WHEEL)
 
 clean:
