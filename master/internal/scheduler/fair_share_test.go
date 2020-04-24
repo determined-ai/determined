@@ -235,7 +235,7 @@ func TestFairShare_Schedule_ActiveTasks(t *testing.T) {
 	}
 
 	expected := []schedulerState{
-		{state: taskPending},
+		{state: taskRunning, containers: map[*agentState]int{agents[0]: 3}},
 		{state: taskRunning, containers: map[*agentState]int{agents[1]: 1}},
 		{state: taskRunning, containers: map[*agentState]int{agents[1]: 1}},
 		{state: taskPending},
