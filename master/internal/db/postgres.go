@@ -701,6 +701,96 @@ WHERE trial_id = $1 AND id > $2
 	return nil
 }
 
+// TrialDetailsRaw returns a trial as a JSON string. This includes checkpoints and
+// validations for every step, plus aggregated training metrics and full validation metrics.
+func (db *PgDB) TrialDetailsRaw(id int) ([]byte, error) {
+	// Find the desired metric names and construct parts of the query appropriately.
+	var metricNames []string
+	if err := db.sql.Select(&metricNames, `
+SELECT jsonb_object_keys(s.metrics->'batch_metrics'->0)
+FROM (
+    SELECT metrics
+    FROM steps
+    WHERE trial_id = $1 AND state = 'COMPLETED'
+    LIMIT 1
+) s
+`, id); err != nil {
+		return nil, errors.Wrapf(err, "failed to get metric names for trial %d", id)
+	}
+
+	averageMetrics := make([]string, 0, len(metricNames))
+	for _, name := range metricNames {
+		averageMetrics = append(averageMetrics,
+			fmt.Sprintf(`avg(try_float8_cast(value->>'%s')) AS "%s"`, name, name),
+		)
+	}
+
+	// We want to average the per-batch training metrics into per-step metrics.
+	// Newer runners compute the averages in the metrics already. For legacy
+	// data, we compute the averages on the fly.
+	//
+	// Ideally, we'd like to just cast the metric values (i.e., ::float8) but
+	// there may be non-scalar training metrics, in which case casts will cause
+	// an error in Postgres. We use the try_float8_cast function defined
+	// earlier, which makes the whole query considerably slower, but can handle
+	// that case (by returning NULL instead of aborting).
+	queryTemplate := `
+WITH const AS (
+    SELECT config->'searcher'->>'metric' AS metric_name,
+           (SELECT
+               CASE
+                   WHEN coalesce((config->'searcher'
+                                        ->>'smaller_is_better')::boolean, true)
+                   THEN 1
+                   ELSE -1
+               END) AS sign
+    FROM experiments WHERE id IN (SELECT experiment_id FROM trials WHERE id = $1)
+)
+SELECT row_to_json(r1)::text
+FROM (
+    SELECT t.end_time, t.experiment_id, t.hparams, t.id, t.seed, t.start_time, t.state,
+           t.warm_start_checkpoint_id,
+           (SELECT coalesce(jsonb_agg(row_to_json(r2) ORDER BY r2.id ASC), '[]'::jsonb)
+            FROM (
+                SELECT s.end_time, s.id, s.state, s.start_time,
+                       (SELECT CASE
+                           WHEN s.metrics->'avg_metrics' IS NOT NULL THEN
+                               (s.metrics->'avg_metrics')::json
+                           ELSE (SELECT row_to_json(r3)
+
+                                 FROM
+                                    (SELECT %s
+                                     FROM jsonb_array_elements(s.metrics->'batch_metrics')
+                                    ) r3)
+                        END) AS avg_metrics,
+                       (SELECT row_to_json(r4)
+                        FROM (
+                            SELECT v.end_time, v.id, v.metrics, v.state, v.start_time
+                            FROM validations v
+                            WHERE v.trial_id = t.id AND v.step_id = s.id AND v.metrics IS NOT NULL
+                        ) r4
+                       ) AS validation,
+                       (SELECT row_to_json(r5)
+                        FROM (
+                            SELECT c.id, c.trial_id, c.step_id, c.state, c.start_time,
+                                   c.end_time, c.uuid, c.resources, c.labels,
+                                   (v.metrics->'validation_metrics'
+                                             ->>const.metric_name)::float8 AS validation_metric
+                            FROM checkpoints c LEFT JOIN validations v
+                            ON c.trial_id = v.trial_id AND c.step_id = v.step_id, const
+                            WHERE c.trial_id = t.id AND c.step_id = s.id
+                       ) r5) AS checkpoint
+                FROM steps s
+                WHERE s.trial_id = t.id
+            ) r2
+           ) AS steps
+   FROM trials t
+   WHERE t.id = $1
+) r1;`
+
+	return db.rawQuery(fmt.Sprintf(queryTemplate, strings.Join(averageMetrics, ",")), id)
+}
+
 // AddTrialLogs adds a list of *model.TrialLog objects to the database with automatic IDs.
 func (db *PgDB) AddTrialLogs(logs []*model.TrialLog) error {
 	if len(logs) == 0 {
@@ -1272,4 +1362,15 @@ func (db *PgDB) Query(queryName string, v interface{}, args ...interface{}) erro
 	default:
 		panic(fmt.Sprintf("unsupported query type: %s", kind))
 	}
+}
+
+// RawQuery returns the result of the query as a raw byte string. Any placeholder parameters are
+// replaced with supplied args.
+func (db *PgDB) RawQuery(queryName string, args ...interface{}) ([]byte, error) {
+	query, ok := db.queries[queryName]
+	if !ok {
+		query = string(etc.MustStaticFile(fmt.Sprintf("%s.sql", queryName)))
+		db.queries[queryName] = query
+	}
+	return db.rawQuery(query, args...)
 }
