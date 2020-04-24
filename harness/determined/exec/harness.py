@@ -146,8 +146,7 @@ def main() -> None:
 
     experiment_config = simplejson.loads(os.environ["DET_EXPERIMENT_CONFIG"])
     debug = experiment_config.get("debug", False)
-    log_level = logging.DEBUG if debug else logging.INFO
-    logging.basicConfig(level=log_level, format="%(levelname)s: %(message)s")
+    det._set_logger(debug)
 
     master_addr = os.environ["DET_MASTER_ADDR"]
     master_port = int(os.environ["DET_MASTER_PORT"])

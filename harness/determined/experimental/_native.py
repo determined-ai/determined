@@ -269,6 +269,7 @@ def create_trial_instance(
     env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
         checkpoint_dir=pathlib.Path(checkpoint_dir), config=config
     )
+    det._set_logger(env.experiment_config.debug_enabled())
     trial_context = trial_def.trial_context_class(env, hvd_config)
     return trial_def(trial_context)
 
@@ -384,6 +385,7 @@ def _init_native(
         env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
             checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
         )
+        det._set_logger(env.experiment_config.debug_enabled())
         print(
             f"Using a modified test config: {env.experiment_config}.\n"
             f"Using a set of random hyperparameter values: {env.hparams}."
@@ -441,6 +443,7 @@ def test_one_batch(
     env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
         checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
     )
+    det._set_logger(env.experiment_config.debug_enabled())
     print(
         f"Using a modified test config: {env.experiment_config}.\n"
         f"Using a set of random hyperparameter values: {env.hparams}."
