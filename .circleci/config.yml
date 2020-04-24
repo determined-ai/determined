@@ -34,6 +34,19 @@ commands:
       - run: sudo systemctl restart docker
 
 
+  pull-task-images:
+    parameters:
+      tf2:
+        type: boolean
+        default: false
+    steps:
+      - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-4bd937a
+      - when:
+          condition: <<parameters.tf2>>
+          steps:
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.1-cpu-4bd937a
+
+
   build-docker-images:
     description: Build Master and Agent Docker images.
     steps:
@@ -352,10 +365,7 @@ jobs:
       - run: pip install -r tests/cli/requirements.txt
       - run: pytest tests/cli
 
-  test-e2e:
-    parameters:
-      test-split:
-        type: string
+  test-e2e-tf:
     machine:
       image: ubuntu-1604:201903-01
     resource_class: large
@@ -373,9 +383,50 @@ jobs:
           extra-requirements-file: "tests/integrations/requirements.txt"
           executor: ubuntu-1604:201903-01
 
-      - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-4bd937a
+      - pull-task-images:
+          tf2: true
 
-      - run: . /tmp/venv/bin/activate && PYTEST_MARKS=<< parameters.test-split >> make test-python-integrations
+      - run: |
+          . /tmp/venv/bin/activate && \
+          pytest -vv -s \
+          -m "tensorflow_cpu" \
+          --durations=0 \
+          --junit-xml=/tmp/test-results/e2e/tests.xml \
+          tests/integrations
+      - store_test_results:
+          path: /tmp/test-results/
+
+  test-e2e:
+    machine:
+      image: ubuntu-1604:201903-01
+    resource_class: large
+    parallelism: 3
+    steps:
+      - checkout
+      - install-docker
+      - build-docker-images
+
+      - run: pyenv global 3.6.5
+      - setup-python-venv:
+          determined-common: true
+          determined-cli: true
+          determined: true
+          determined-deploy: true
+          extra-requirements-file: "tests/integrations/requirements.txt"
+          executor: ubuntu-1604:201903-01
+
+      - pull-task-images
+
+      - run: circleci tests glob "tests/integrations/**/test*.py" | circleci tests split --split-by=timings > /tmp/tests-to-run
+      - run: |
+          . /tmp/venv/bin/activate && \
+          pytest -vv -s \
+          -m "e2e_cpu" \
+          --durations=0 \
+          --junit-xml=/tmp/test-results/e2e/tests.xml \
+          $(cat /tmp/tests-to-run)
+      - store_test_results:
+          path: /tmp/test-results/
 
 
 
@@ -400,9 +451,10 @@ workflows:
       - test-e2e:
           requires:
             - build-debs
-          matrix:
-            parameters:
-              test-split: ["system", "workflows", "frameworks_cpu", "frameworks_native_cpu"]
+      - test-e2e-tf:
+          requires:
+            - build-debs
+
   test-unit:
     jobs:
       - test-unit-go

@@ -20,7 +20,7 @@ from tests.integrations.fixtures.metric_maker.metric_maker import (
 )
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_trial_error() -> None:
     exp.run_failure_test(
         conf.fixtures_path("trial_error/const.yaml"),
@@ -29,7 +29,7 @@ def test_trial_error() -> None:
     )
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_invalid_experiment() -> None:
     completed_process = exp.maybe_create_experiment(
         conf.fixtures_path("invalid_experiment/const.yaml"), conf.official_examples_path("mnist_tf")
@@ -37,7 +37,7 @@ def test_invalid_experiment() -> None:
     assert completed_process.returncode != 0
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_metric_gathering() -> None:
     """
     Confirm that metrics are gathered from the trial the way that we expect.
@@ -90,7 +90,7 @@ def test_gc_checkpoints_s3(secrets: Dict[str, str]) -> None:
     run_gc_checkpoints_test(config)
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_gc_checkpoints_lfs() -> None:
     run_gc_checkpoints_test(exp.shared_fs_checkpoint_config())
 
@@ -182,7 +182,7 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
             break
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_experiment_delete() -> None:
     subprocess.check_call(["det", "-m", conf.make_master_url(), "user", "whoami"])
 
@@ -203,7 +203,7 @@ def test_experiment_delete() -> None:
         )
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_experiment_archive_unarchive() -> None:
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), ["--paused"]
@@ -249,7 +249,7 @@ def test_experiment_archive_unarchive() -> None:
     assert not infos[0]["archived"]
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_create_test_mode() -> None:
     # test-mode should succeed with a valid experiment.
     command = [
@@ -301,7 +301,7 @@ def test_mnist_tf1_15() -> None:
     )
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_labels() -> None:
     experiment_id = exp.create_experiment(
         conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op"), None
@@ -328,7 +328,7 @@ def test_labels() -> None:
     assert label not in output
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_end_to_end_adaptive() -> None:
     exp_id = exp.run_basic_test(
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
@@ -376,7 +376,7 @@ def test_end_to_end_adaptive() -> None:
     assert top_k_uuids == top_k_reversed_uuids[::-1]
 
 
-@pytest.mark.system  # type: ignore
+@pytest.mark.e2e_cpu  # type: ignore
 def test_log_null_bytes() -> None:
     config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config_obj["hyperparameters"]["write_null"] = True

@@ -85,7 +85,7 @@ def test_mnist_estimmator_const_parallel(native_parallel: bool, tf2: bool) -> No
     exp.run_basic_test_with_temp_config(config, conf.official_examples_path("mnist_estimator"), 1)
 
 
-@pytest.mark.frameworks_cpu  # type: ignore
+@pytest.mark.tensorflow_cpu  # type: ignore
 @pytest.mark.parametrize("tf2", [True, False])  # type: ignore
 def test_mnist_estimator_warm_start(tf2: bool) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
@@ -185,7 +185,7 @@ def test_dataset_restore(secrets: Dict[str, str], tf2: bool) -> None:
     assert losses == modified_losses
 
 
-@pytest.mark.frameworks_cpu  # type: ignore
+@pytest.mark.tensorflow_cpu  # type: ignore
 @pytest.mark.parametrize("tf2", [True, False])  # type: ignore
 @pytest.mark.parametrize("storage_type", ["lfs"])  # type: ignore
 def test_mnist_estimator_data_layer_lfs(tf2: bool, storage_type: str) -> None:
