@@ -281,10 +281,9 @@ def create(
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
 ) -> None:
+    # TODO: Add a reference to the local development tutorial.
     """
     Create an experiment.
-
-    .. TODO: Add a reference to the local development tutorial.
 
     Arguments:
         trial_def:
@@ -293,7 +292,8 @@ def create(
             A dictionary representing the experiment configuration to be
             associated with the experiment.
         mode:
-            The :py:class:`determined.Mode` used when creating an experiment
+            The :py:class:`determined.experimental.Mode` used when creating
+            an experiment
 
             1. ``Mode.CLUSTER`` (default): Submit the experiment to a remote
             Determined cluster.
