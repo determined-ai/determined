@@ -1,6 +1,6 @@
 .PHONY: all \
 	clean get-deps \
-	build build-docker \
+	build build-docker build-files \
 	install-native \
 	test \
 	check fmt \
@@ -36,7 +36,7 @@ all: clean get-deps build
 ######################
 
 clean:
-	rm -f coverage.out "$(BUILDDIR)"/bin/determined-agent
+	rm -f coverage.out "$(BUILDDIR)"/bin/determined-agent "$(BUILDDIR)"/share/determined/agent/
 
 get-deps:
 	cd buildtools && go install golang.org/x/tools/cmd/goimports github.com/rakyll/gotest
@@ -49,7 +49,12 @@ get-deps:
 # Have this here to keep the master and agent symmetric, but nothing actually needs to happen.
 build: ;
 
-build-docker:
+build-files:
+	mkdir -p "$(BUILDDIR)"/share/determined/agent
+	rm -rf "$(BUILDDIR)"/share/determined/agent/scripts
+	cp -r scripts "$(BUILDDIR)"/share/determined/agent
+
+build-docker: build-files
 	docker build \
 		--build-arg VERSION=$(VERSION) \
 		-t determinedai/determined-$(COMPONENT):$(VERSION) \

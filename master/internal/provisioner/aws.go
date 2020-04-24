@@ -85,19 +85,22 @@ func newAWSCluster(config *Config) (*awsCluster, error) {
 		return nil, errors.Wrap(err, "failed to parse master url")
 	}
 
+	startupScriptBase64 := base64.StdEncoding.EncodeToString([]byte(config.StartupScript))
+	containerScriptBase64 := base64.StdEncoding.EncodeToString([]byte(config.ContainerStartupScript))
 	cluster := &awsCluster{
 		AWSClusterConfig: config.AWS,
 		masterURL:        *masterURL,
 		client:           ec2.New(sess),
 		ec2UserData: mustMakeAgentSetupScript(agentSetupScriptConfig{
-			MasterHost:          masterURL.Hostname(),
-			MasterPort:          masterURL.Port(),
-			StartupScriptBase64: base64.StdEncoding.EncodeToString([]byte(config.StartupScript)),
-			AgentDockerRuntime:  config.AgentDockerRuntime,
-			AgentNetwork:        config.AgentDockerNetwork,
-			AgentDockerImage:    config.AgentDockerImage,
-			AgentID:             awsAgentID,
-			LogOptions:          config.AWS.buildDockerLogString(),
+			MasterHost:                   masterURL.Hostname(),
+			MasterPort:                   masterURL.Port(),
+			StartupScriptBase64:          startupScriptBase64,
+			ContainerStartupScriptBase64: containerScriptBase64,
+			AgentDockerRuntime:           config.AgentDockerRuntime,
+			AgentNetwork:                 config.AgentDockerNetwork,
+			AgentDockerImage:             config.AgentDockerImage,
+			AgentID:                      awsAgentID,
+			LogOptions:                   config.AWS.buildDockerLogString(),
 		}),
 	}
 	return cluster, nil
