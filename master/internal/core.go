@@ -523,7 +523,10 @@ func (m *Master) Run() error {
 	tasksGroup.DELETE("/:task_id", api.Route(m.deleteTask))
 
 	trialsGroup := m.echo.Group("/trials", authFuncs...)
+	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))
+	trialsGroup.GET("/:trial_id/details", api.Route(m.getTrialDetails))
 	trialsGroup.GET("/:trial_id/logs", m.getTrialLogs)
+	trialsGroup.GET("/:trial_id/metrics", api.Route(m.getTrialMetrics))
 	trialsGroup.POST("/:trial_id/kill", api.Route(m.postTrialKill))
 
 	m.echo.GET("/ws/trial/:experiment_id/:trial_id/:container_id",
