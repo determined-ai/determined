@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional
 
 from determined_common.check import check_gt, check_true, check_type
 from determined_common.storage.base import StorageManager
+from determined_common.constants import SHARED_FS_CONTAINER_PATH
 
 
 def _full_storage_dir(host_path: str, container_path: str, storage_path: Optional[str]) -> str:
@@ -39,13 +40,10 @@ class SharedFSStorageManager(StorageManager):
         super().__init__(_full_storage_dir(host_path, container_path, storage_path))
         check_type(host_path, str, "`host_path` must be a str.")
         check_true(os.path.isabs(host_path), "`host_path` must be an absolute path.")
-        check_type(container_path, str, "`container_path` must be a str.")
-        check_true(os.path.isabs(container_path), "`container_path` must be an absolute path.")
         check_type(propagation, str, "`propagation` must be a str.")
         check_gt(len(host_path), 0, "`host_path` must be non-empty.")
-        check_gt(len(container_path), 0, "`container_path` must be non-empty.")
         self.host_path = host_path
-        self.container_path = container_path
+        self.container_path = container_path or SHARED_FS_CONTAINER_PATH
         self.propagation = propagation
 
     def get_mount_config(self) -> Dict[str, Any]:

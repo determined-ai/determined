@@ -35,7 +35,10 @@ func DefaultExperimentConfig() ExperimentConfig {
 			SaveExperimentBest: 0,
 			SaveTrialBest:      1,
 			SaveTrialLatest:    1,
-			SharedFSConfig:     &SharedFSConfig{},
+			SharedFSConfig: &SharedFSConfig{
+				ContainerPath: SharedFSContainerPath,
+				Propagation:   SharedFSPropagation,
+			},
 		},
 		CheckpointPolicy: BestCheckpointPolicy,
 		DataLayer: DataLayerConfig{

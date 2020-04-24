@@ -156,12 +156,12 @@ func (t *tensorboardManager) newTensorBoard(
 			// make the logs visible to TensorBoard. Bind mounts must be unique
 			// and therefore we use a map here to deduplicate mounts.
 			uniqMounts[model.BindMount{
-				ContainerPath: c.SharedFSConfig.ContainerPath.String(),
+				ContainerPath: c.SharedFSConfig.ContainerPath,
 				HostPath:      c.SharedFSConfig.HostPath,
-				Propagation:   c.SharedFSConfig.Propagation.String(),
+				Propagation:   c.SharedFSConfig.Propagation,
 			}] = true
 
-			logBasePath = c.SharedFSConfig.ContainerPath.String()
+			logBasePath = c.SharedFSConfig.ContainerPath
 			if c.SharedFSConfig.StoragePath != nil {
 				logBasePath = fmt.Sprintf("%s/%s", logBasePath, *c.SharedFSConfig.StoragePath)
 			}
