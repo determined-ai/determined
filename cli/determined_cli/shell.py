@@ -172,7 +172,7 @@ args_description = [
             Arg("shell_id", help="shell ID"),
             Arg("-f", "--follow", action="store_true",
                 help="follow the logs of a shell, similar to tail -f"),
-            Arg("--tail", type=int, default=10,
+            Arg("--tail", type=int, default=200,
                 help="number of lines to show, counting from the end "
                      "of the log")
         ]),
