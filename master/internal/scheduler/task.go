@@ -12,12 +12,13 @@ import (
 type (
 	// AddTask adds the sender of the message to the cluster as a task.
 	AddTask struct {
-		ID           *TaskID
-		Name         string
-		Group        *actor.Ref
-		SlotsNeeded  int
-		CanTerminate bool
-		Label        string
+		ID                  *TaskID
+		Name                string
+		Group               *actor.Ref
+		SlotsNeeded         int
+		CanTerminate        bool
+		Label               string
+		FittingRequirements FittingRequirements
 	}
 	// taskStopped notifies that the task actor is stopped.
 	taskStopped struct {
@@ -102,15 +103,16 @@ func isValidTaskStateTransition(cur, next taskState) bool {
 // Task represents a single schedulable unit. A task has a lifecycle that it transitions through
 // in response to scheduling directives.
 type Task struct {
-	ID           TaskID
-	name         string
-	handler      *actor.Ref
-	group        *group
-	slotsNeeded  int
-	canTerminate bool
-	state        taskState
-	agentLabel   string
-	containers   map[ContainerID]*container
+	ID                  TaskID
+	name                string
+	handler             *actor.Ref
+	group               *group
+	slotsNeeded         int
+	canTerminate        bool
+	state               taskState
+	agentLabel          string
+	fittingRequirements FittingRequirements
+	containers          map[ContainerID]*container
 }
 
 // newTask constructs a single task in a pending state from a task template.

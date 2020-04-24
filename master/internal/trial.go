@@ -284,6 +284,10 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				SlotsNeeded:  slotsNeeded,
 				CanTerminate: true,
 				Label:        label,
+				FittingRequirements: scheduler.FittingRequirements{
+					SingleAgent:    false,
+					DedicatedAgent: slotsNeeded > 1,
+				},
 			}).Get().(*scheduler.Task)
 		}
 	} else if t.experimentState != model.ActiveState {
