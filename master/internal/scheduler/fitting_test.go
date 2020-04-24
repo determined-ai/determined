@@ -27,13 +27,14 @@ func TestFindFit(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 
 	type testCase struct {
-		SlotsNeeded        int
-		AgentCapacities    []int
-		AgentOccupiedSlots []int
-		AgentLabels        [2]string
-		FittingMethod      SoftConstraint
-		ExpectedAgentFit   int
-		TaskLabel          string
+		SlotsNeeded         int
+		AgentCapacities     []int
+		AgentOccupiedSlots  []int
+		AgentLabels         [2]string
+		FittingMethod       SoftConstraint
+		ExpectedAgentFit    int
+		TaskLabel           string
+		FittingRequirements FittingRequirements
 	}
 
 	testCases := []testCase{
@@ -42,6 +43,10 @@ func TestFindFit(t *testing.T) {
 			AgentCapacities:  []int{2, 4},
 			FittingMethod:    BestFit,
 			ExpectedAgentFit: 0,
+			FittingRequirements: FittingRequirements{
+				SingleAgent:    false,
+				DedicatedAgent: true,
+			},
 		},
 		{
 			SlotsNeeded:      1,
@@ -115,6 +120,32 @@ func TestFindFit(t *testing.T) {
 			AgentOccupiedSlots: []int{0, 0},
 			FittingMethod:      WorstFit,
 			ExpectedAgentFit:   1,
+			FittingRequirements: FittingRequirements{
+				SingleAgent:    false,
+				DedicatedAgent: true,
+			},
+		},
+		{
+			SlotsNeeded:        4,
+			AgentCapacities:    []int{8, 4},
+			AgentOccupiedSlots: []int{0, 0},
+			FittingMethod:      WorstFit,
+			ExpectedAgentFit:   1,
+			FittingRequirements: FittingRequirements{
+				SingleAgent:    true,
+				DedicatedAgent: false,
+			},
+		},
+		{
+			SlotsNeeded:        4,
+			AgentCapacities:    []int{8, 4},
+			AgentOccupiedSlots: []int{0, 0},
+			FittingMethod:      WorstFit,
+			ExpectedAgentFit:   0,
+			FittingRequirements: FittingRequirements{
+				SingleAgent:    false,
+				DedicatedAgent: false,
+			},
 		},
 		{
 			SlotsNeeded:      4,
@@ -140,9 +171,10 @@ func TestFindFit(t *testing.T) {
 
 		t.Run(strconv.Itoa(idx), func(t *testing.T) {
 			task := newTask(&Task{
-				ID:          taskID,
-				slotsNeeded: tc.SlotsNeeded,
-				agentLabel:  tc.TaskLabel,
+				ID:                  taskID,
+				slotsNeeded:         tc.SlotsNeeded,
+				agentLabel:          tc.TaskLabel,
+				fittingRequirements: tc.FittingRequirements,
 			})
 
 			agent1 := newMockAgent(
@@ -177,11 +209,12 @@ func TestFindMultiSlotFits(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 
 	type testCase struct {
-		Name             string
-		SlotsNeeded      int
-		AgentCapacities  []int
-		ExpectedAgentFit []int
-		ExpectedLength   int
+		Name                string
+		SlotsNeeded         int
+		AgentCapacities     []int
+		ExpectedAgentFit    []int
+		ExpectedLength      int
+		FittingRequirements FittingRequirements
 	}
 
 	testCases := []testCase{
@@ -196,6 +229,10 @@ func TestFindMultiSlotFits(t *testing.T) {
 			SlotsNeeded:      16,
 			AgentCapacities:  []int{8, 7, 7, 4, 4, 4, 4},
 			ExpectedAgentFit: []int{3, 4, 5, 6},
+			FittingRequirements: FittingRequirements{
+				SingleAgent:    false,
+				DedicatedAgent: true,
+			},
 		},
 		{
 			Name:            "Compound unsatisfaction",
@@ -212,6 +249,39 @@ func TestFindMultiSlotFits(t *testing.T) {
 			SlotsNeeded:     8,
 			AgentCapacities: []int{4, 4, 4, 4, 4},
 			ExpectedLength:  2,
+			FittingRequirements: FittingRequirements{
+				SingleAgent:    false,
+				DedicatedAgent: true,
+			},
+		},
+		{
+			Name:            "Scheduling a multi-slot command",
+			SlotsNeeded:     2,
+			AgentCapacities: []int{4, 4, 4, 4, 4},
+			ExpectedLength:  1,
+			FittingRequirements: FittingRequirements{
+				SingleAgent:    true,
+				DedicatedAgent: false,
+			},
+		},
+		{
+			Name:             "Scheduling a multi-slot command should pick smallest possible agent",
+			SlotsNeeded:      2,
+			AgentCapacities:  []int{4, 1, 3, 4, 4},
+			ExpectedAgentFit: []int{2},
+			FittingRequirements: FittingRequirements{
+				SingleAgent:    true,
+				DedicatedAgent: false,
+			},
+		},
+		{
+			Name:            "Scheduling a multi-slot command that's too big",
+			SlotsNeeded:     8,
+			AgentCapacities: []int{4, 4, 4},
+			FittingRequirements: FittingRequirements{
+				SingleAgent:    true,
+				DedicatedAgent: false,
+			},
 		},
 	}
 
@@ -231,7 +301,8 @@ func TestFindMultiSlotFits(t *testing.T) {
 			}
 
 			fits := findMultiSlotFits(newTask(&Task{
-				slotsNeeded: tc.SlotsNeeded,
+				slotsNeeded:         tc.SlotsNeeded,
+				fittingRequirements: tc.FittingRequirements,
 			}), agents, WorstFit)
 
 			var agentFit sort.IntSlice
