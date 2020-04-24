@@ -183,10 +183,12 @@ func newSearcherEventCallback(master *Master, ref *actor.Ref) func(model.Searche
 
 			// Pass the workload completed message to the Trial. It will pass the event along to
 			// the experiment before this Ask gets a response.
+			// TODO(1): starts here, ask and get child workload completed
 			master.system.AskAt(ref.Address().Child(requestIDs[msg.Workload.TrialID]), msg).Get()
 
 			// Wait for the experiment to handle any searcher operations due to the completed
 			// workload.
+			// TODO(7) And so this invariant isn't true and in, apparently a 1 in 6000 chance, it comes up.
 			master.system.Ask(ref, doneProcessingSearcherOperations{}).Get()
 
 		case TrialClosedEventType:

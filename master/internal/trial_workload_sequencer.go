@@ -122,6 +122,7 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 
 	switch msg.Workload.Kind {
 	case searcher.RunStep:
+		// TODO(6): so a run workload can be processed without synchronization
 		s.curStep++
 		s.curStepDone = stepInfo{}
 		if s.minValidationNeeded() {
@@ -154,6 +155,7 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 		case model.AllCheckpointPolicy:
 			s.steps[msg.Workload.StepID].hasCheckpoint = true
 		case model.BestCheckpointPolicy:
+			// TODO(5) and it comes ONLY gets polled here
 			if isBestValidation := experimentFuture.Get().(bool); isBestValidation {
 				s.steps[msg.Workload.StepID].hasCheckpoint = true
 			}
@@ -161,6 +163,9 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 	default:
 		return errors.New("invalid operation for trialWorkloadSequencer")
 	}
+
+	// for synchronization with searcher event replay in experiment restart
+	experimentFuture.Get()
 	s.curWorkloadValid = false
 	return nil
 }

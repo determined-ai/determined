@@ -307,6 +307,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		}
 
 	case searcher.CompletedMessage:
+		// TODO(2) keeps going here
 		if err := t.processCompletedWorkload(ctx, msg); err != nil {
 			return err
 		}
@@ -472,8 +473,10 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 	// Now that we have marked the workload as completed in the database, we can relay the message
 	// to the Experiment. We use Ask and not Tell because in the case of completed validation
 	// metrics, the Experiment will respond with whether or not we should take a checkpoint.
+	// TODO(3): to here.. here we just grab a future, this is supposed to synchronize us
 	experimentFuture := ctx.Ask(ctx.Self().Parent(), msg)
 
+	// TODO(4): and hop into this method with it, notice it is NOT used below here
 	if err := t.sequencer.WorkloadCompleted(msg, experimentFuture); err != nil {
 		return errors.Wrap(err, "Error passing CompletedMessage to sequencer")
 	}
