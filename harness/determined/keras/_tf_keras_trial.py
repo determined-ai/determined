@@ -88,7 +88,8 @@ class WaitForInstructionsCallback(tf.keras.callbacks.Callback):  # type: ignore
 
         check.is_not_none(
             self.tf_keras_trial_controller.train_response_func,
-            "No response_func at end of train_for_step.",
+            "Callback should avoid calling model.predict() or change model.stop_training "
+            "as this will affect Determined training behavior",
         )
         response_func = cast(
             workload.ResponseFunc, self.tf_keras_trial_controller.train_response_func
