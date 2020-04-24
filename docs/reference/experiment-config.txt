@@ -84,10 +84,8 @@ created with the Determined CLI. It may contain the following fields:
     same on all agent hosts (e.g., by using a distributed or network
     file system such as GlusterFS or NFS).
 
-    - ``host_path``: The file system path on each agent to use.
-    - ``container_path``: The optional file system path to use as the
-      mount point in the trial runner container. Defaults to
-      ``/determined_shared_fs``.
+    - ``host_path``: The file system path on each agent to use. This directory
+			will be mounted to ``/determined_shared_fs`` inside the trial container.
     - ``storage_path``: The optional path where checkpoints will be
       written to and read from. Must be a subdirectory of the
       ``host_path`` or an absolute path containing the ``host_path``.
