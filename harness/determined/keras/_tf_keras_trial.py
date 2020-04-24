@@ -648,5 +648,8 @@ class TFKerasTrial(det.Trial):
         Specifies a list of `tf.keras.callback.Callback
         <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/Callback>`__
         objects to be used during the trial’s lifetime.
+
+        Callback should avoid calling model.predict() or change model.stop_training
+        as this will affect Determined training behavior.
         """
         return []
