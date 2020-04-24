@@ -1,4 +1,1 @@
-git clone --branch v2.2.0 https://github.com/huggingface/transformers.git
-cd transformers
-pip install -e .
-pip install -r ./examples/requirements.txt
+pip install transformers==2.8.0 scikit-learn==0.22.2.post1
