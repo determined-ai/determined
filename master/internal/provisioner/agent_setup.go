@@ -8,14 +8,15 @@ import (
 )
 
 type agentSetupScriptConfig struct {
-	MasterHost          string
-	MasterPort          string
-	StartupScriptBase64 string
-	AgentDockerRuntime  string
-	AgentNetwork        string
-	AgentDockerImage    string
-	AgentID             string
-	LogOptions          string
+	MasterHost                   string
+	MasterPort                   string
+	StartupScriptBase64          string
+	ContainerStartupScriptBase64 string
+	AgentDockerRuntime           string
+	AgentNetwork                 string
+	AgentDockerImage             string
+	AgentID                      string
+	LogOptions                   string
 }
 
 func mustMakeAgentSetupScript(config agentSetupScriptConfig) []byte {

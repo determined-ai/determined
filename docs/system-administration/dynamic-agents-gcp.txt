@@ -100,6 +100,7 @@ an example configuration. See :ref:`cluster-configuration` for details.
    provisioner:
      master_url: <scheme://host:port>
      startup_script: <startup script>
+     container_startup_script: <container startup script>
      agent_docker_network: determined
      max_idle_agent_period: 5m
 
@@ -180,6 +181,35 @@ validate if you could read and write on the attached disk.
    EOF
    # Test attached read-only disk.
    det command run --config-file command.yaml ls -l /second
+
+.. _gcp-pull-gcr:
+
+How to securely pull task images from GCR
+-----------------------------------------
+
+If you have time consuming tasks to perform at startup it can be useful to
+:ref:`add custom layers<custom-env>` to the task images Determined provides. If
+you have store these images in a secure registry, such as GCR, you can pull
+these images securely by using existing tooling like `docker-credential-gcr
+<https://github.com/GoogleCloudPlatform/docker-credential-gcr>`__.
+
+Here is an example master configuration of how to allow the agent to inherit the
+permissions of the service account associated with a GCE instance, for accessing GCR.
+
+.. code:: yaml
+
+   provisioner:
+     container_startup_script: |
+         export HOME=/root
+         apt-get update && apt-get install -y curl docker.io
+         curl -fsSL "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v1.5.0/docker-credential-gcr_linux_amd64-1.5.0.tar.gz" \
+               | tar xz --to-stdout > /usr/bin/docker-credential-gcr && chmod +x /usr/bin/docker-credential-gcr
+         docker-credential-gcr configure-docker
+
+.. note::
+  This is an example of a operation that requires use of ``container_startup_script``.
+  Because docker credential helpers alter the docker client configuration to depend on the
+  helper binary by name, it must be installed and configured in the container.
 
 Installation
 ------------

@@ -124,6 +124,7 @@ an example configuration. See :ref:`cluster-configuration` for details.
   provisioner:
     master_url: <scheme://host:port>
     startup_script: <startup script>
+    container_startup_script: <container startup script>
     agent_docker_network: determined
     max_idle_agent_period: 5m
 

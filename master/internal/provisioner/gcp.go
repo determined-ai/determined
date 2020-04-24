@@ -59,13 +59,16 @@ func newGCPCluster(config *Config) (*gcpCluster, error) {
 		return nil, errors.Wrap(err, "failed to parse master url")
 	}
 
+	startupScriptBase64 := base64.StdEncoding.EncodeToString([]byte(config.StartupScript))
+	containerScriptBase64 := base64.StdEncoding.EncodeToString([]byte(config.ContainerStartupScript))
 	startupScript := string(mustMakeAgentSetupScript(agentSetupScriptConfig{
-		MasterHost:          masterURL.Hostname(),
-		MasterPort:          masterURL.Port(),
-		AgentNetwork:        config.AgentDockerNetwork,
-		AgentDockerRuntime:  config.AgentDockerRuntime,
-		AgentDockerImage:    config.AgentDockerImage,
-		StartupScriptBase64: base64.StdEncoding.EncodeToString([]byte(config.StartupScript)),
+		MasterHost:                   masterURL.Hostname(),
+		MasterPort:                   masterURL.Port(),
+		AgentNetwork:                 config.AgentDockerNetwork,
+		AgentDockerRuntime:           config.AgentDockerRuntime,
+		AgentDockerImage:             config.AgentDockerImage,
+		StartupScriptBase64:          startupScriptBase64,
+		ContainerStartupScriptBase64: containerScriptBase64,
 		AgentID: `$(curl "http://metadata.google.internal/computeMetadata/v1/instance/` +
 			`name" -H "Metadata-Flavor: Google")`,
 	}))
