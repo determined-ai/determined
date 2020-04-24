@@ -56,6 +56,22 @@ model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=5)
 
 ###############################################################################
 #
+# Paste the code above into a Python file `tf_keras_native.py` and run it as a
+# Python script.
+#
+# .. note::
+#
+#       Before submitting any experiments using the Native API, make sure the
+#       :ref:`DET_MASTER environment variable is configured to connect to the
+#       appropriate IP address <install-cli>`.
+#
+# .. code:: bash
+#
+#     $ python tf_keras_native.py
+#
+# You can also use any environment that supports Python to launch an experiment
+# with this code, such as a Jupyter notebook or an IDE.
+#
 # Let's walk through some of the concepts introduced by the Native API.
 #
 # Configuration
