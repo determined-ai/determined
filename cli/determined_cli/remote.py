@@ -124,7 +124,7 @@ args_description = [
             Arg("command_id", help="command ID"),
             Arg("-f", "--follow", action="store_true",
                 help="follow the logs of a command, similar to tail -f"),
-            Arg("--tail", type=int, default=10,
+            Arg("--tail", type=int, default=200,
                 help="number of lines to show, counting from the end "
                      "of the log")
         ]),
