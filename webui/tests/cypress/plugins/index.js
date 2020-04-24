@@ -13,8 +13,8 @@ module.exports = on => {
   // `config` is the resolved Cypress config
   on('task', {
     createExperiment: experiments.create,
-  })
-  on('file:preprocessor', wp(options))
+  });
+  on('file:preprocessor', wp(options));
 
-  require('cypress-log-to-output').install(on)
-}
+  require('cypress-log-to-output').install(on);
+};

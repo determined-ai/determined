@@ -7,7 +7,7 @@ declare namespace Cypress {
      * @example
      * cy.login({username: determined})
      */
-    login(credentials: { username: string; password?: string }): Chainable<any>;
+    login(credentials?: { username: string; password?: string }): Chainable<any>;
     /**
      * Make a request to log out and check.
      * @example

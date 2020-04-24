@@ -16,20 +16,20 @@
 import './commands';
 
 Cypress.Cookies.defaults({
-  whitelist: /auth/
-})
+  whitelist: /auth/,
+});
 
 Cypress.on('window:before:load', (window) => {
   Cypress.log({
-    name: 'console.log',
     message: 'wrap on console.log',
+    name: 'console.log',
   });
 
   // pass through cypress log so we can see log inside command execution order
   window.console.log = (...args) => {
     Cypress.log({
-      name: 'console.log',
       message: args,
+      name: 'console.log',
     });
   };
 });
@@ -42,19 +42,3 @@ Cypress.on('log:added', (options) => {
     );
   }
 });
-
-async function postData(url, data = {}) {
-  // Default options are marked with *
-  const response = await fetch(url, {
-    body: JSON.stringify(data),
-    cache: 'no-cache',
-    credentials: 'same-origin',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    method: 'POST',
-  });
-  return response.json(); // parses JSON response into native JavaScript objects
-}
-
-const login = credentials => postData('/login', credentials);

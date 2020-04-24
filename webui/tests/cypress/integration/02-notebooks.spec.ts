@@ -1,5 +1,6 @@
 describe('Notebooks List', () => {
   before(() => {
+    cy.login();
     cy.visit('/ui/notebooks');
   });
 
