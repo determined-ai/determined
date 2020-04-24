@@ -73,8 +73,8 @@ The directory contains Python and YAML files. The Python files contain the model
 Each YAML file is specific to the type of experiment we will run during this guide:
 
 - ``const.yaml``: train a single model on a single GPU or CPU.
-- ``distributed.yaml``: train of a single model using multiple GPUs (:ref:`distributed training <multi-gpu-training>`).
-- ``adaptive.yaml``: train multiple models as part of a hyperparameter search, leveraging Determined’s adaptive :ref:`hyperparameter search <hyperparameter-tuning>` functionality.
+- ``distributed.yaml``: train a single model using multiple GPUs (:ref:`distributed training <multi-gpu-training>`).
+- ``adaptive.yaml``: train multiple models as part of a hyperparameter search, using Determined’s adaptive :ref:`hyperparameter search <hyperparameter-tuning>` functionality.
 
 Running Your First Job
 -----------------------
@@ -152,7 +152,7 @@ Determined can coordinate across multiple GPUs on a single machine (parallel tra
 
 To implement :ref:`distributed and parallel training <multi-gpu-training>`, it can be as easy as setting a flag!
 
-In the experiment configuration file, we set the ``resources.slot_per_trial`` flag to a multiple of the number of GPUs on a machine to ensure the full network and interconnect bandwidth is available to the multi-GPU workloads. E.g., if you have a cluster of 8-GPU machines, you need to set slots_per_trial to 8, 16, 24, etc. If using a Determined cluster deployed in the cloud, by default the instances will be eight GPUs machines. 
+In the experiment configuration file, we set the ``resources.slot_per_trial`` flag to a multiple of the number of GPUs on a machine to ensure the full network and interconnect bandwidth is available to the multi-GPU workloads. E.g., if you have a cluster of 8-GPU machines, you need to set slots_per_trial to 8, 16, 24, etc. If using a Determined cluster deployed in the cloud, by default the instances will be eight GPUs machines.
 
 Below is the ``distributed.yaml`` file, which should look very similar to the ``const.yaml`` file except we now set ``resources.slots_per_trial``.
 
@@ -192,12 +192,12 @@ Tuning the Model
 
 Now that we have trained a model, we want to improve the model's accuracy through hyperparameter tuning. Typically, this requires a significant amount of time and code. Determined provides support for hyperparameter search through efficient execution of state-of-the-art early-stopping based approaches as well as seamless parallelization of these methods. To use Determined’s hyperparameter search feature, we only have to change the experiment configuration file.
 
-Let’s search over the hyperparameters using the ``adaptive.yaml`` experiment configuration file. The ``adaptive.yaml`` file tells the :ref:`searcher algorithm <topic-guides_hp-tuning-det>` the ranges to explore for each hyperparameter. For our model, we will use a fixed batch size and search on the dropout size, filters, and learning rate. In the ``searcher`` field, we update the ``name`` to use ``adaptive_simple`` and add ``max_trials`` to use ``16``. This tells Determined which search algorithm to use and how many model configurations to explore. 
+Let’s search over the hyperparameters using the ``adaptive.yaml`` experiment configuration file. The ``adaptive.yaml`` file tells the :ref:`searcher algorithm <topic-guides_hp-tuning-det>` the ranges to explore for each hyperparameter. For our model, we will use a fixed batch size and search on the dropout size, filters, and learning rate. In the ``searcher`` field, we update the ``name`` to use ``adaptive_simple`` and add ``max_trials`` to use ``16``. This tells Determined which search algorithm to use and how many model configurations to explore.
 
-Next, run the same command as above to submit an experiment, except change the configuration file to use ``adaptive.yaml``. 
+Next, run the same command as above to submit an experiment, except change the configuration file to use ``adaptive.yaml``.
 
 .. code::
-    
+
     det experiment create adaptive.yaml .
 
 In the browser, navigate to the experiment page. You should notice more trials have started running.
