@@ -2,12 +2,12 @@
   align-items: center;
   display: flex;
 
-  > *:not(:first-child) { margin-left: var(--theme-sizes-layout-jumbo); }
+  & > *:not(:first-child) { margin-left: var(--theme-sizes-layout-jumbo); }
   .typeButtons {
     align-items: center;
     display: flex;
 
-    > *:not(:first-child) { margin-left: var(--theme-sizes-layout-medium); }
+    & > *:not(:first-child) { margin-left: var(--theme-sizes-layout-medium); }
   }
   .typeButton {
     align-items: center;
@@ -20,7 +20,7 @@
     padding: 0 var(--theme-sizes-layout-small);
     transition: 0.2s;
 
-    :hover { border-color: var(--theme-colors-states-active); }
+    &:hover { border-color: var(--theme-colors-states-active); }
   }
   .typeButton.active {
     border-color: var(--theme-colors-states-active);
