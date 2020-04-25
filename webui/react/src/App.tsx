@@ -18,16 +18,22 @@ import { ioDeterminedInfo } from 'ioTypes';
 import { appRoutes } from 'routes';
 import { jsonToDeterminedInfo } from 'services/decoder';
 import { DeterminedInfo } from 'types';
+import { updateFavicon } from 'utils/browser';
 
 import css from './App.module.scss';
 
 const AppView: React.FC = () => {
   const { isAuthenticated, user } = Auth.useStateContext();
+  const cluster = ClusterOverview.useStateContext();
   const info = Info.useStateContext();
   const setInfo = Info.useActionContext();
   const username = user ? user.username : undefined;
   const [ infoResponse, requestInfo ] =
     useRestApi<DeterminedInfo>(ioDeterminedInfo, { mappers: jsonToDeterminedInfo });
+
+  if (!process.env.IS_DEV)
+    updateFavicon(cluster.allocation !== 0 ?
+      '/favicons/favicon-activity.png' : '/favicons/favicon.ico');
 
   useRouteTracker();
   useTheme();
