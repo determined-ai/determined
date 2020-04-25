@@ -278,7 +278,7 @@ func (db *PgDB) TerminateExperimentInRestart(id int, state model.State) error {
 
 	// Terminate trials.
 	if _, err = tx.Exec(
-		`UPDATE trials SET state=$1, end_time=$2 WHERE experiment_id=$3 and end_time=NULL`,
+		`UPDATE trials SET state=$1, end_time=$2 WHERE experiment_id=$3 and end_time IS NULL`,
 		state,
 		now,
 		id,
