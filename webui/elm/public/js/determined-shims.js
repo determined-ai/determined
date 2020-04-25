@@ -1,5 +1,5 @@
+"use strict";
 // jshint esversion: 6
-
 
 function dispatchResize(target, width, height) {
   // Elements can get resized to 0 when the logical page changes and they disappear; dispatching
@@ -39,6 +39,7 @@ let DetShims = function() {
     addClipboardPorts(app);
     addSetPageTitlePort(app);
     addSegmentAnalyticsPorts(app);
+    addSetFavicon(app);
   }
 
   let aceEditors = {};
@@ -130,6 +131,15 @@ let DetShims = function() {
   function addExitFullscreenPort(app) {
     app.ports.exitFullscreenPort.subscribe(() => {
       document.exitFullscreen();
+    });
+  }
+
+  function addSetFavicon(app) {
+    app.ports.setFavicon.subscribe((iconPath) => {
+      const linkEl = document.querySelector("link[rel*='shortcut icon']");
+      if (!linkEl) return;
+      linkEl.type = 'image/png';
+      linkEl.href = iconPath;
     });
   }
 

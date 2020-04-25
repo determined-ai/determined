@@ -495,6 +495,7 @@ func (m *Master) Run() error {
 	m.echo.File("/det/*", filepath.Join(webuiRoot, "react/index.html"))
 	m.echo.Static("/color.less", filepath.Join(webuiRoot, "/react/color.less"))
 	m.echo.Static("/manifest.json", filepath.Join(webuiRoot, "/react/manifest.json"))
+	m.echo.Static("/favicon.ico", filepath.Join(webuiRoot, "/react/favicon.ico"))
 	m.echo.Static("/favicons", filepath.Join(webuiRoot, "/react/favicons"))
 	m.echo.Static("/fonts", filepath.Join(webuiRoot, "react/fonts"))
 	m.echo.Static("/static", filepath.Join(webuiRoot, "react/static"))

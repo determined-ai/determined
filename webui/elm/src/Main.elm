@@ -30,6 +30,7 @@ import Toast
 import Types
 import Url
 import View
+import View.SlotChart
 
 
 main : Program String Model Msg
@@ -247,7 +248,25 @@ update msg model =
                 )
 
         GotSlots slots ->
-            ( { model | slots = Just slots, slotsRequestPending = False }, Cmd.none )
+            let
+                isActive =
+                    View.SlotChart.busySlots slots
+                        |> List.length
+                        |> (/=) 0
+
+                faviconSuffix =
+                    if isActive then
+                        "-active"
+
+                    else
+                        ""
+
+                updateFaviconCmd =
+                    Ports.setFavicon ("/favicons/favicon" ++ faviconSuffix ++ ".png")
+            in
+            ( { model | slots = Just slots, slotsRequestPending = False }
+            , updateFaviconCmd
+            )
 
         ToggleUserDropdownMenu value ->
             ( { model | userDropdownOpen = value }, Cmd.none )
