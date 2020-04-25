@@ -3,6 +3,7 @@ version: 2.1
 
 orbs:
   win: circleci/windows@2.3.0
+  slack: circleci/slack@3.4.2
 
 executors:
   python-35:
@@ -26,6 +27,28 @@ commands:
     description: "Fix CIRCLE_WORKING_DIRECTORY"
     steps:
       - run: echo 'CIRCLE_WORKING_DIRECTORY="${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}"' >> $BASH_ENV
+
+
+  set-slack-user-id:
+    steps:
+      - run:
+          name: Set Slack variables
+          command: |
+            if ! [ -x "$(command -v jq)" ]; then
+              apt update && apt install -y jq
+            fi
+
+            AUTHOR_EMAIL="$(git show -s --format='%ae' $CIRCLE_SHA1)"
+            LOOKUP_RESPONSE=$(curl -s "https://slack.com/api/users.lookupByEmail?token=${SLACK_API_TOKEN}&email=${AUTHOR_EMAIL}")
+            SUCCESS=$(echo "$LOOKUP_RESPONSE" | jq ".ok")
+            if [[ "$SUCCESS" == "true" ]]; then
+              SLACK_USER_ID=$(echo "$LOOKUP_RESPONSE" | jq -r ".user.id")
+              SLACK_NAME=$(echo "$LOOKUP_RESPONSE" | jq -r ".user.name")
+              echo "export SLACK_NAME=\"${SLACK_NAME}\"" >> $BASH_ENV
+              echo "export SLACK_USER_ID=\"${SLACK_USER_ID}\"" >> $BASH_ENV
+            else
+              echo "Unable to find Slack user ID for  \"${AUTHOR_EMAIL}\"."
+            fi
 
 
   install-docker:
@@ -110,7 +133,20 @@ commands:
       executor:
         type: string
     steps:
+      - run:
+          name: Install python3-venv
+          command: |
+              set +e
+              SUDO=""
+              if ! [ $(id -u) = 0 ]; then
+                SUDO="sudo"
+              fi
+              dpkg -l | grep python3-venv
+              if ! [ $? -eq 0 ]; then
+                ${SUDO} apt update && ${SUDO} apt install -y python3-venv
+              fi
       - run: python3.6 -m venv /tmp/venv
+      - run: echo "export PATH=/tmp/venv/bin:\"${PATH}\"" >> $BASH_ENV
       - run: /tmp/venv/bin/python -m pip install --upgrade pip\<20 wheel setuptools
 
 
@@ -179,8 +215,6 @@ jobs:
   build-docs:
     docker:
       - image: python:3.6.9
-    environment:
-      PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
       - checkout
       - setup-python-venv:
@@ -311,8 +345,6 @@ jobs:
   lint-python:
     docker:
       - image: python:3.6.9
-    environment:
-      PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
       - checkout
       - setup-python-venv:
@@ -323,8 +355,6 @@ jobs:
   test-unit-harness:
     docker:
       - image: python:3.6.9
-    environment:
-      PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
       - checkout
       - setup-python-venv:
@@ -338,8 +368,6 @@ jobs:
   test-unit-harness-tf2:
     docker:
       - image: python:3.6.9
-    environment:
-      PATH: /tmp/venv/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     steps:
       - checkout
       - setup-python-venv:
@@ -430,6 +458,41 @@ jobs:
 
 
 
+
+  build-and-push-docker-images:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - setup_remote_docker
+      - build-docker-images
+      - run: |
+          echo "${DOCKER_PASS}" | docker login --username ${DOCKER_USER} --password-stdin
+          make publish-dev
+
+
+  deploy:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - set-slack-user-id
+      - setup-python-venv:
+          determined-common: true
+          determined-deploy: true
+          executor: cimg/base:stable
+      - run: |
+          det-deploy aws up \
+            --cluster-id determined-${CIRCLE_BRANCH} \
+            --det-version ${CIRCLE_SHA1} \
+            --keypair integrations-test
+      - slack/status:
+          fail_only: true
+          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed!'
+          mentions: "${SLACK_USER_ID}"
+
+
+
 workflows:
   test-cli:
     jobs:
@@ -454,6 +517,23 @@ workflows:
       - test-e2e-tf:
           requires:
             - build-debs
+
+      - build-and-push-docker-images:
+          filters:
+            branches:
+              ignore:
+                - /pull\/.*/
+          requires:
+            - build-debs
+
+      - deploy:
+          context: aws
+          filters:
+            branches:
+              ignore:
+                - /pull\/.*/
+          requires:
+            - build-and-push-docker-images
 
   test-unit:
     jobs:
