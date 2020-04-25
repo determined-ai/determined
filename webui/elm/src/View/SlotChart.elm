@@ -1,5 +1,6 @@
 module View.SlotChart exposing
     ( allocationPercent
+    , busySlots
     , largeView
     , smallView
     )
@@ -185,21 +186,22 @@ smallView =
     allocationChart smallConfig
 
 
+busySlots : List Types.Slot -> List Types.Slot
+busySlots =
+    List.filter (\slot -> slot.state /= Types.Free)
+
+
 allocationPercent : List Types.Slot -> String
 allocationPercent slots =
     let
         totalSlots =
             List.length slots
 
-        busySlots =
-            List.filter (\slot -> slot.state /= Types.Free) slots
-                |> List.length
-
         precision =
             10 ^ 1
 
         percentNum =
-            toFloat busySlots
+            (busySlots >> List.length >> toFloat) slots
                 / toFloat totalSlots
                 |> (*) 100
                 |> (*) precision

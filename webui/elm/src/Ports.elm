@@ -14,6 +14,7 @@ port module Ports exposing
     , setAnalyticsEventPort
     , setAnalyticsIdentityPort
     , setAnalyticsPagePort
+    , setFavicon
     , setPageTitle
     , setUpAceEditor
     )
@@ -85,6 +86,9 @@ port copiedToClipboard : (Bool -> msg) -> Sub msg
 
 
 port setPageTitle : String -> Cmd a
+
+
+port setFavicon : String -> Cmd a
 
 
 
