@@ -241,10 +241,6 @@ PYTEST_MARKS ?= ""
 
 test:
 	pytest -v -k $(TEST_EXPR) \
-		-Wall \
-		-Wignore:::tensorflow.python.framework.tensor_util \
-		-Wignore:::tensorflow.python.util.tf_inspect \
-		-Wignore:::keras.utils.data_utils \
 		tests/unit/ tests/cli/
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
@@ -253,10 +249,6 @@ test:
 test-tf2:
 	pip freeze | grep "tensorflow==2.*"
 	pytest -v -k $(TEST_EXPR) --runslow \
-		-Wall \
-		-Wignore:::tensorflow.python.framework.tensor_util \
-		-Wignore:::tensorflow.python.util.tf_inspect \
-		-Wignore:::keras.utils.data_utils \
 		--durations=0 \
 		tests/unit/experiment/tensorflow/test_estimator_trial.py \
 		tests/unit/experiment/tensorflow/test_util.py
@@ -266,20 +258,12 @@ test-tf2:
 	# anywhere but the "start" of your program. See:
 	# https://github.com/tensorflow/tensorflow/issues/18304#issuecomment-379435515.
 	pytest -v -k $(TEST_EXPR) --runslow \
-		-Wall \
-		-Wignore:::tensorflow.python.framework.tensor_util \
-		-Wignore:::tensorflow.python.util.tf_inspect \
-		-Wignore:::keras.utils.data_utils \
 		--durations=0 \
 		tests/unit/experiment/keras/test_tf_keras_trial.py \
 		tests/unit/experiment/keras/test_keras_data.py
 
 test-harness:
 	pytest -v -k $(TEST_EXPR) --runslow \
-		-Wall \
-		-Wignore:::tensorflow.python.framework.tensor_util \
-		-Wignore:::tensorflow.python.util.tf_inspect \
-		-Wignore:::keras.utils.data_utils \
 		--durations=0 \
 		tests/unit
 
