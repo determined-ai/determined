@@ -221,6 +221,7 @@ jobs:
     docker:
       - image: cimg/node:12.16
     steps:
+      - run: env
       - checkout
       - elm-get-deps
       - run: make -C webui/elm build
@@ -388,7 +389,11 @@ workflows:
               executor-name: ["python-35", "python-36", "python-37", "win/default"]
   test-e2e:
     jobs:
-      - build-elm
+      - build-elm:
+          filters:
+            branches:
+              ignore:
+                - /pull\/.*/
       - build-react
       - build-docs
       - build-debs:
