@@ -3,6 +3,7 @@ package model
 import (
 	"time"
 
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/guregu/null.v3"
@@ -114,15 +115,12 @@ func (user *User) UpdatePasswordHash(password string) error {
 	if password == "" {
 		user.PasswordHash = EmptyPassword
 	} else {
-		passwordHash, err := bcrypt.GenerateFromPassword(
-			[]byte(password),
-			BCryptCost,
-		)
+		passwordHash, err := HashPassword(password)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "error updating user password")
 		}
 
-		user.PasswordHash = null.StringFrom(string(passwordHash))
+		user.PasswordHash = null.StringFrom(passwordHash)
 	}
 	return nil
 }
@@ -175,4 +173,16 @@ type UserWebSetting struct {
 	Key         string
 	Value       string
 	StoragePath string
+}
+
+// HashPassword hashes the user's password.
+func HashPassword(password string) (string, error) {
+	passwordHash, err := bcrypt.GenerateFromPassword(
+		[]byte(password),
+		BCryptCost,
+	)
+	if err != nil {
+		return "", err
+	}
+	return string(passwordHash), nil
 }
