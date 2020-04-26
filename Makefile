@@ -279,6 +279,7 @@ test-python-integrations:
 		--master-port="$(INTEGRATIONS_HOST_PORT)" \
 		--master-config-path="$(MASTER_CONFIG_PATH)" \
 		--junit-xml=build/test-reports/integ-test.xml \
+		--capture=fd \
 		--require-secrets \
 		tests/integrations
 
