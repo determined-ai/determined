@@ -13,9 +13,7 @@ package scim
 
 import (
 	"bytes"
-	"crypto/sha512"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -24,7 +22,6 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
-	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -158,8 +155,9 @@ func (s *service) PostUser(c echo.Context) (interface{}, error) {
 
 	user.Sanitize()
 
-	if user.Password.Valid {
-		user.Password = null.StringFrom(replicateClientSideSaltAndHash(user.Password.String))
+	err = user.UpdatePasswordHash(user.Password)
+	if err != nil {
+		return nil, errors.WithStack(err)
 	}
 
 	added, err := s.db.AddSCIMUser(&user)
@@ -207,6 +205,11 @@ func (s *service) PutUser(c echo.Context) (interface{}, error) {
 	}
 
 	user.Sanitize()
+
+	err = user.UpdatePasswordHash(user.Password)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
 
 	updated, err := s.db.SetSCIMUser(req.ID, &user)
 	if err != nil {
@@ -336,15 +339,4 @@ func (s *service) GetGroups(c echo.Context) (interface{}, error) {
 	}
 
 	return groups, nil
-}
-
-const clientSidePasswordSalt = "GubPEmmotfiK9TMD6Zdw" // #nosec G101
-
-// replicateClientSideSaltAndHash replicates the password salt and hash done on the client side.
-// We need this because we hash passwords on the client side, but when SCIM posts a user with
-// a password to password sync, it doesn't - so when we try to log in later, we get a weird,
-// unrecognizable sha512 hash from the frontend.
-func replicateClientSideSaltAndHash(password string) string {
-	sum := sha512.Sum512([]byte(clientSidePasswordSalt + password))
-	return fmt.Sprintf("%x", sum)
 }

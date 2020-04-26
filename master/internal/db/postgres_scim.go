@@ -36,16 +36,7 @@ func (db *PgDB) AddSCIMUser(suser *model.SCIMUser) (*model.SCIMUser, error) {
 	user := &model.User{
 		Username:     suser.Username,
 		Active:       true,
-		PasswordHash: model.NoPasswordLogin,
-	}
-
-	// NoPasswordLogin is null.String{ Valid: true, String: "" } so if we just check Valid to
-	// update the password, everyone with NoPasswordLogin will get "" as their password hash.
-	if suser.Password.Valid && suser.Password.String != "" {
-		err := user.UpdatePasswordHash(suser.Password.String)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
+		PasswordHash: suser.PasswordHash,
 	}
 
 	tx, err := db.sql.Beginx()
@@ -81,7 +72,6 @@ func (db *PgDB) AddSCIMUser(suser *model.SCIMUser) (*model.SCIMUser, error) {
 
 	added := *suser
 	added.ID = id
-	added.Password = model.EmptyPassword
 
 	return &added, nil
 }
@@ -223,6 +213,7 @@ func (db *PgDB) SetSCIMUser(id string, user *model.SCIMUser) (*model.SCIMUser, e
 			"external_id",
 			"name",
 			"username",
+			"password_hash",
 		})
 }
 
@@ -276,7 +267,7 @@ func (db *PgDB) updateSCIMUser(tx *sqlx.Tx, user *model.SCIMUser, fields []strin
 	}
 
 	var usersFields []string
-	for _, v := range []string{"active", "username"} {
+	for _, v := range []string{"active", "username", "password_hash"} {
 		if fieldSet[v] {
 			usersFields = append(usersFields, v)
 		}
