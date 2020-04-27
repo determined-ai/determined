@@ -223,8 +223,8 @@ def main(args: List[str] = sys.argv[1:]) -> None:
 
         parsed_args = parser.parse_args(args)
 
-        def die(message: str) -> None:
-            if os.getenv("DET_DEBUG", "").lower() in ("true", "1", "yes"):
+        def die(message: str, always_print_traceback: bool = False) -> None:
+            if always_print_traceback or os.getenv("DET_DEBUG", "").lower() in ("true", "1", "yes"):
                 import traceback
 
                 traceback.print_exc()
@@ -288,7 +288,7 @@ def main(args: List[str] = sys.argv[1:]) -> None:
                 "Failed to login: Attempted to read a corrupted token cache. "
                 "The store has been deleted; please try again."
             )
-        except Exception as e:
-            die("Failed to {}: {} ({})".format(parsed_args.func.__name__, e, type(e).__name__))
+        except Exception:
+            die("Failed to {}".format(parsed_args.func.__name__), always_print_traceback=True)
     except KeyboardInterrupt:
         parser.exit(3, colored("Interrupting...\n", "red"))
