@@ -210,6 +210,90 @@ commands:
           paths:
             - "/tmp/venv"
 
+  run-e2e-tests:
+    parameters:
+      mark:
+        type: string
+        default: ""
+      junit-path:
+        type: string
+        default: "/tmp/test-results/e2e/tests.xml"
+      master-host:
+        type: string
+        default: "localhost"
+      master-port:
+        type: string
+        default: "8080"
+    steps:
+      - run: |
+          pytest -vv -s \
+          -m <<parameters.mark>> \
+          --durations=0 \
+          --master-host="<<parameters.master-host>>" \
+          --master-port="<<parameters.master-port>>" \
+          --junit-xml="<<parameters.junit-path>>" \
+          tests/integrations
+
+  deploy-aws-cluster:
+    parameters:
+      cluster-id:
+        type: string
+      det-version:
+        type: string
+      keypair:
+        type: string
+        default: "integrations-test"
+      agent-instance-type:
+        type: string
+        default: "p2.xlarge"
+    steps:
+      - run:
+          name: Deploy AWS cluster
+          command: |
+            det-deploy aws up \
+              --cluster-id <<parameters.cluster-id>> \
+              --det-version <<parameters.det-version>> \
+              --agent-instance-type <<parameters.agent-instance-type>> \
+              --keypair <<parameters.keypair>>
+
+  terminate-aws-cluster:
+    parameters:
+      cluster-id:
+        type: string
+    steps:
+      - run:
+          name: Terminate AWS Cluster
+          when: always
+          command: |
+            det-deploy aws down \
+              --cluster-id <<parameters.cluster-id>>
+
+  set-master-address:
+    parameters:
+      cluster-id:
+        type: string
+    steps:
+      - run: |
+          MASTER_HOST=$(python CI/integrations/get_address.py <<parameters.cluster-id>>)
+          echo "export MASTER_HOST=\"${MASTER_HOST}\"" >> $BASH_ENV
+
+  set-cluster-id:
+    parameters:
+      cluster-id:
+        type: string
+    steps:
+      - run: echo "export CLUSTER_ID=\"${CLUSTER_ID}\"" >> $BASH_ENV
+
+  wait-for-master:
+    parameters:
+      host:
+        type: string
+      port:
+        type: string
+        default: "8080"
+    steps:
+      - run: python CI/integrations/wait_for_master.py http://<<parameters.host>>:<<parameters.port>>
+
 
 jobs:
   build-docs:
@@ -481,16 +565,46 @@ jobs:
           determined-common: true
           determined-deploy: true
           executor: cimg/base:stable
-      - run: |
-          det-deploy aws up \
-            --cluster-id determined-${CIRCLE_BRANCH} \
-            --det-version ${CIRCLE_SHA1} \
-            --keypair integrations-test
+      - deploy-aws-cluster:
+          cluster-id: determined-${CIRCLE_BRANCH}
+          det-version: ${CIRCLE_SHA1}
       - slack/status:
           fail_only: true
           failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed!'
           mentions: "${SLACK_USER_ID}"
 
+
+  nightly-tests:
+    docker:
+      - image: python:3.6.9
+    steps:
+      - checkout
+      - setup-python-venv:
+          determined-common: true
+          determined-cli: true
+          determined: true
+          determined-deploy: true
+          extra-requirements-file: "tests/integrations/requirements.txt"
+          executor: python:3.6.9
+      - set-cluster-id:
+          cluster-id: nightly-$(git rev-parse --short HEAD)
+      - deploy-aws-cluster:
+          cluster-id: ${CLUSTER_ID}
+          det-version: ${CIRCLE_SHA1}
+      - set-master-address:
+          cluster-id: ${CLUSTER_ID}
+      - wait-for-master:
+          host: ${MASTER_HOST}
+      - run-e2e-tests:
+          mark: "nightly"
+          master-host: ${MASTER_HOST}
+      - terminate-aws-cluster:
+          cluster-id: ${CLUSTER_ID}
+      - slack/status:
+          failure_message: ':thisisfine: \`${CIRCLE_JOB}\` have failed! @channel'
+          success_message: ':tada: \`${CIRCLE_JOB}\` finished successfully! :tada: '
+      - store_test_results:
+          path: /tmp/test-results/
 
 
 workflows:
@@ -534,6 +648,22 @@ workflows:
                 - /pull\/.*/
           requires:
             - build-and-push-docker-images
+
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 5 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - nightly-tests:
+          context: aws
+          filters:
+            branches:
+              ignore:
+                - /pull\/.*/
 
   test-unit:
     jobs:

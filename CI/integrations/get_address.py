@@ -5,11 +5,10 @@ import boto3
 
 def get_address_from_stack(stack_name: str) -> str:
     stack = boto3.resource("cloudformation").Stack(stack_name)
-    instance_id = list(filter(lambda d: d["OutputKey"] == "MasterId", stack.outputs))[0][
+    public_ip = list(filter(lambda d: d["OutputKey"] == "DeterminedAddress", stack.outputs))[0][
         "OutputValue"
-    ]
-    private_ip = boto3.resource("ec2").Instance(instance_id).private_ip_address  # type: str
-    return private_ip
+    ]  # type: str
+    return public_ip
 
 
 def main() -> None:
