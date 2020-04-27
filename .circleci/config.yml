@@ -282,7 +282,7 @@ commands:
       cluster-id:
         type: string
     steps:
-      - run: echo "export CLUSTER_ID=\"${CLUSTER_ID}\"" >> $BASH_ENV
+      - run: echo "export CLUSTER_ID=\"<<parameters.cluster-id>>\"" >> $BASH_ENV
 
   wait-for-master:
     parameters:
