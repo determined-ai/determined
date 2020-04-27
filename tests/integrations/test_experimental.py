@@ -1,6 +1,5 @@
 import pytest
 
-from tests.integrations import cluster_utils as cluster_utils
 from tests.integrations import config as conf
 from tests.integrations import experiment as exp
 
@@ -22,7 +21,6 @@ def test_bert_glue() -> None:
 
 
 @pytest.mark.nightly  # type: ignore
-@cluster_utils.skip_test_if_not_enough_gpus(1)
 def test_faster_rcnn() -> None:
     config = conf.load_config(conf.experimental_path("FasterRCNN_tp/16-gpus.yaml"))
     config = conf.set_max_steps(config, 2)

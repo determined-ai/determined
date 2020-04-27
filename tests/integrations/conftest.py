@@ -16,10 +16,7 @@ from .cluster_log_manager import ClusterLogManager
 _INTEG_MARKERS = {
     "tensorflow_cpu",
     "e2e_cpu",
-    "integ1",
-    "integ2",
-    "integ3",
-    "integ4",
+    "e2e_gpu",
     "distributed",
     "cloud",
     "performance",
