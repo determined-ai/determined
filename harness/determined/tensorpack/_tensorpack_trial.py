@@ -466,18 +466,15 @@ class TensorpackTrialController(det.LoopTrialController):
             backbone_weights_path = self.trial.load_backbone_weights()
             if backbone_weights_path:
                 self.load_path = pathlib.Path(backbone_weights_path)
+        else:
+            self.load_path = self.load_path.joinpath("checkpoint")
 
         if self.load_path is None or not self.is_chief:
             logging.info(f"Not loading model")
             self.session_init = None
         else:
-            load_path = (
-                self.load_path
-                if self.trial.load_backbone_weights()
-                else self.load_path.joinpath("checkpoint")
-            )
-            logging.info(f"Loading model from {load_path}")
-            self.session_init = tp.get_model_loader(str(load_path))
+            logging.info(f"Loading model from {self.load_path}")
+            self.session_init = tp.get_model_loader(str(self.load_path))
 
     def run(self) -> None:
         logging.info(f"Rank {self.rendezvous_info.get_rank()} calling train_with_defaults")
