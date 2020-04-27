@@ -21,6 +21,7 @@
     "webpack": "^4.42.1"
   },
   "scripts": {
+    "preinstall": "npx npm-force-resolutions",
     "test": "make e2e-tests",
     "cypress-dev": "make pre-e2e-tests && npx cypress open; make post-e2e-tests",
     "postcypress-dev": "make post-e2e-tests",
