@@ -1,3 +1,2 @@
-ansible==2.8.2
 bump2version>=1.0.0
 twine
