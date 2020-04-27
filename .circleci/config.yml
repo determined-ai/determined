@@ -640,7 +640,7 @@ jobs:
           extra-requirements-file: "tests/integrations/requirements.txt"
           executor: python:3.6.9
       - set-cluster-id:
-          cluster-id: nightly-$(git rev-parse --short HEAD)
+          cluster-id: nightly-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}
       - deploy-aws-cluster:
           cluster-id: ${CLUSTER_ID}
           det-version: ${CIRCLE_SHA1}
@@ -660,6 +660,91 @@ jobs:
           failure_message: ':thisisfine: \`${CIRCLE_JOB}\` have failed!'
           mentions: "channel"
           channel: "ml-ag"
+
+  e2e-gpu-tests:
+    docker:
+      - image: python:3.6.9
+    parallelism: 2
+    steps:
+      - checkout
+      - setup-python-venv:
+          determined-common: true
+          determined-cli: true
+          determined: true
+          determined-deploy: true
+          extra-requirements-file: "tests/integrations/requirements.txt"
+          executor: python:3.6.9
+      - set-cluster-id:
+          cluster-id: e2e-gpu-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
+      - deploy-aws-cluster:
+          cluster-id: ${CLUSTER_ID}
+          det-version: ${CIRCLE_SHA1}
+      - set-master-address:
+          cluster-id: ${CLUSTER_ID}
+      - wait-for-master:
+          host: ${MASTER_HOST}
+      - run: circleci tests glob "tests/integrations/**/test*.py" | circleci tests split --split-by=timings > /tmp/tests-to-run
+      - run: |
+          . /tmp/venv/bin/activate && \
+          pytest -vv -s \
+          -m "e2e_gpu" \
+          --durations=0 \
+          --master-host=${MASTER_HOST} \
+          --junit-xml=/tmp/test-results/e2e/tests.xml \
+          $(cat /tmp/tests-to-run)
+      - terminate-aws-cluster:
+          cluster-id: ${CLUSTER_ID}
+      - store_test_results:
+          path: /tmp/test-results/
+      - slack/status:
+          fail_only: True
+          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed!'
+          mentions: "${SLACK_USER_ID}"
+
+
+
+  parallel-tests:
+    docker:
+      - image: python:3.6.9
+    parallelism: 2
+    steps:
+      - checkout
+      - setup-python-venv:
+          determined-common: true
+          determined-cli: true
+          determined: true
+          determined-deploy: true
+          extra-requirements-file: "tests/integrations/requirements.txt"
+          executor: python:3.6.9
+      - set-cluster-id:
+          cluster-id: parallel-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
+      - deploy-aws-cluster:
+          cluster-id: ${CLUSTER_ID}
+          det-version: ${CIRCLE_SHA1}
+          agent-instance-type: "p2.8xlarge"
+      - set-master-address:
+          cluster-id: ${CLUSTER_ID}
+      - wait-for-master:
+          host: ${MASTER_HOST}
+      - run: circleci tests glob "tests/integrations/**/test*.py" | circleci tests split --split-by=timings > /tmp/tests-to-run
+      - run: |
+          . /tmp/venv/bin/activate && \
+          pytest -vv -s \
+          -m "parallel" \
+          --durations=0 \
+          --master-host=${MASTER_HOST} \
+          --junit-xml=/tmp/test-results/e2e/tests.xml \
+          $(cat /tmp/tests-to-run)
+      - terminate-aws-cluster:
+          cluster-id: ${CLUSTER_ID}
+      - store_test_results:
+          path: /tmp/test-results/
+      - slack/status:
+          fail_only: True
+          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed!'
+          mentions: "${SLACK_USER_ID}"
+
+
 
 
 workflows:
@@ -698,14 +783,83 @@ workflows:
           requires:
             - build-debs
 
+      - request-gpu-tests:
+          type: approval
+          filters:
+            branches:
+              ignore:
+                - /pull\/.*/
+                - master
+          requires:
+            - build-and-push-docker-images
+
+      - request-dev-deploy:
+          type: approval
+          filters:
+            branches:
+              ignore:
+                - /pull\/.*/
+                - master
+          requires:
+            - build-and-push-docker-images
+
+      - deploy:
+          context: aws
+          filters:
+            branches:
+              only: master
+          requires:
+            - build-and-push-docker-images
+
       - deploy:
           context: aws
           filters:
             branches:
               ignore:
+                - master
+                - /pull\/.*/
+          requires:
+            - request-dev-deploy
+
+      - parallel-tests:
+          context: aws
+          filters:
+            branches:
+              only: master
+              ignore:
                 - /pull\/.*/
           requires:
             - build-and-push-docker-images
+
+      - e2e-gpu-tests:
+          context: aws
+          filters:
+            branches:
+              only: master
+          requires:
+            - build-and-push-docker-images
+
+      - parallel-tests:
+          context: aws
+          filters:
+            branches:
+              ignore:
+                - /pull\/.*/
+                - master
+          requires:
+            - request-gpu-tests
+
+
+      - e2e-gpu-tests:
+          context: aws
+          filters:
+            branches:
+              ignore:
+                - /pull\/.*/
+                - master
+          requires:
+            - request-gpu-tests
+
 
   nightly:
     triggers:

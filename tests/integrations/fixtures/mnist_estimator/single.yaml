@@ -1,8 +1,4 @@
 description: mnist-estimator-single
-checkpoint_storage:
-  type: shared_fs
-  host_path: /tmp
-  storage_path: determined-integration-checkpoints
 hyperparameters:
   learning_rate: 1e-3
   global_batch_size: 64
