@@ -282,7 +282,6 @@ def submit_experiment(args: Namespace) -> None:
             additional_body_fields=additional_body_fields,
         )
         print("Created experiment {}".format(exp_id))
-        # Activate the new experiment unless "--paused" is given.
         if not args.paused and args.follow_first_trial:
             follow_experiment_logs(args.master, exp_id)
 
