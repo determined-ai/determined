@@ -36,7 +36,7 @@ all: clean get-deps build
 ######################
 
 clean:
-	rm -f coverage.out "$(BUILDDIR)"/bin/determined-agent "$(BUILDDIR)"/share/determined/agent/
+	rm -rf coverage.out "$(BUILDDIR)"/bin/determined-agent "$(BUILDDIR)"/share/determined/agent/
 
 get-deps:
 	cd buildtools && go install golang.org/x/tools/cmd/goimports github.com/rakyll/gotest
