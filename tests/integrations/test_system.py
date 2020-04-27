@@ -371,6 +371,7 @@ def test_log_null_bytes() -> None:
 
 @pytest.mark.e2e_gpu  # type: ignore
 def test_s3_no_creds(secrets: Dict[str, str]) -> None:
+    pytest.skip("Temporarily skipping this until we find a more secure way of testing this.")
     config = conf.load_config(conf.official_examples_path("mnist_pytorch/const.yaml"))
     config["checkpoint_storage"] = exp.s3_checkpoint_config_no_creds()
     config.setdefault("environment", {})
