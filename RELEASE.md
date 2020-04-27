@@ -72,8 +72,8 @@ git commit -m "Update release notes."
 5. Tag the release and push the tag to the main Determined repo:
 
 ```bash
-git tag v0.12.3rc1
-git push upstream v0.12.3rc1
+git tag v0.12.3rc2
+git push upstream v0.12.3rc2
 ```
 
 6. Build Determined, publish the tarball, and publish the Determined images (cloud and docker):
