@@ -233,7 +233,6 @@ Once the experiment is started, you will see a notification:
 
     Preparing files (../mnist_pytorch) to send to master... 2.5KB and 4 files
     Created experiment xxx
-    Activated experiment xxx
 
 Evaluating the Model
 --------------------

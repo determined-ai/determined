@@ -208,7 +208,6 @@ notification like this:
 
     Preparing files (/cifar10_cnn_tf_keras) to send to master... 3.2KB and 4 files
     Created experiment xxx
-    Activated experiment xxx
 
 Evaluating the Model
 --------------------
