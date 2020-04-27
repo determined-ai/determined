@@ -6,6 +6,47 @@ Release Notes
 Version 0.12
 ------------
 
+Version 0.12.3
+^^^^^^^^^^^^^^
+
+**Release Date:** April 27, 2020
+
+- Add a tutorial for the new (experimental) Native API.
+
+- Add support for locally testing experiments via ``det e create --local``.
+
+- Add :class:`determined.experimental.Determined` class for accessing :class:`ExperimentReference <determined.experimental.ExperimentReference>`, :class:`TrialReference <determined.experimental.TrialReference>`, and :class:`Checkpoint <determined.experimental.Checkpoint>` objects.
+
+- TensorBoard logs now appear under the ``storage_path`` for ``shared_fs`` checkpoint configurations.
+
+- Allow commands, notebooks, shells, and TensorBoards to be killed before they are scheduled.
+
+- Print container exit reason in trial logs.
+
+- Choose a better default for the ``--tail`` option of command logs.
+
+- Add REST API endpoints for trials.
+
+- Support the execution of a startup script inside the agent docker container
+
+- Master and agent Docker containers will have the 'unless-stopped' restart policy by default when using ``det-deploy local``.
+
+- Prevent the ``det trial logs -f`` command from waiting for too long after the trial being watched reaches a terminal state.
+
+- Fix bug where logs disappear when an image is pulled.
+
+- Fix bug that affected the use of :class:`LRScheduler <determined.pytorch.LRScheduler>` in :class:`PyTorchTrial <determined.pytorch.PyTorchTrial>` for multi-GPU training.
+
+- Fix bug after master restart where some errored experiments would show progress indicators.
+
+- Fix ordering of steps from ``det t describe --json``.
+
+- Docs: Added topic guide for effective distributed training.
+
+- Docs: Reorganize install documentation.
+
+- UI: Move the authenticated user to the top of the users list filter on the dashboard, right after "All".
+
 Version 0.12.2
 ^^^^^^^^^^^^^^
 
