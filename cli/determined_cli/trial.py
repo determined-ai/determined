@@ -12,33 +12,9 @@ from determined_common.api import gql
 from determined_common.check import check_gt
 from determined_common.experimental import Determined
 
+from .checkpoint import format_checkpoint, format_validation, render_checkpoint
 from .declarative_argparse import Arg, Cmd, Group
 from .user import authentication_required
-
-
-# TODO(neilc): Report more info about checkpoints and validations.
-def format_checkpoint(checkpoint: gql.checkpoints) -> List[Any]:
-    if not checkpoint:
-        return [None, None]
-
-    if checkpoint.state in (constants.COMPLETED, constants.DELETED):
-        return [checkpoint.state, checkpoint.uuid]
-    elif checkpoint.state in (constants.ACTIVE, constants.ERROR):
-        return [checkpoint.state, None]
-    else:
-        raise AssertionError("Invalid checkpoint state: {}".format(checkpoint.state))
-
-
-def format_validation(validation: gql.validations) -> List[Any]:
-    if not validation:
-        return [None, None]
-
-    if validation.state == constants.COMPLETED:
-        return [constants.COMPLETED, json.dumps(validation.metrics, indent=4)]
-    elif validation.state in (constants.ACTIVE, constants.ERROR):
-        return [validation.state, None]
-    else:
-        raise AssertionError("Invalid validation state: {}".format(validation.state))
 
 
 @authentication_required
@@ -207,23 +183,8 @@ def download(args: Namespace) -> None:
 
     if args.quiet:
         print(path)
-        return
-
-    print("Local checkpoint path:")
-    print(path, "\n")
-
-    # Print information about the downloaded step/checkpoint.
-    table = [
-        ["Batch #", checkpoint.batch_number],
-        ["Start Time", render.format_time(checkpoint.start_time)],
-        ["End Time", render.format_time(checkpoint.end_time)],
-        ["Checkpoint UUID", checkpoint.uuid],
-        ["Validation Metrics", format_validation(checkpoint.validation)[1]],
-    ]
-
-    headers, values = zip(*table)  # type: ignore
-
-    render.tabulate_or_csv(headers, [values], False)
+    else:
+        render_checkpoint(checkpoint, path)
 
 
 @authentication_required
