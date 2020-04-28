@@ -115,5 +115,5 @@ func (c ContainerLog) String() string {
 	}
 	shortID := c.Container.ID[:8]
 	timestamp := c.Timestamp.UTC().Format(time.RFC3339)
-	return fmt.Sprintf("%s [%s] [%s] || %s", shortID, c.Container.State, timestamp, msg)
+	return fmt.Sprintf("[%s] %s [%s] || %s", timestamp, shortID, c.Container.State, msg)
 }
