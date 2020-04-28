@@ -106,7 +106,7 @@ def test_iris() -> None:
     exp_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("iris_tf_keras"), 1
     )
-    exp_ref = Determined().get_experiment(exp_id)
+    exp_ref = Determined(conf.make_master_url()).get_experiment(exp_id)
     model = exp_ref.top_checkpoint().load()
     model.summary()
 

@@ -64,7 +64,7 @@ def test_mnist_estimator_load() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    model = Determined().get_trial(trials[0].id).top_checkpoint().load()
+    model = Determined(conf.make_master_url()).get_trial(trials[0].id).top_checkpoint().load()
     assert isinstance(model, AutoTrackable)
 
 

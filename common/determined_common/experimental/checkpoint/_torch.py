@@ -1,11 +1,12 @@
 import pathlib
 import sys
+from typing import Any
 
 import cloudpickle
 import torch
 
 
-def load_model(ckpt_dir: pathlib.Path) -> torch.nn.Module:
+def load_model(ckpt_dir: pathlib.Path, **kwargs: Any) -> torch.nn.Module:
     code_path = ckpt_dir.joinpath("code")
 
     # We used MLflow's MLmodel checkpoint format in the past. This format
@@ -24,4 +25,4 @@ def load_model(ckpt_dir: pathlib.Path) -> torch.nn.Module:
     code_subdirs = [str(x) for x in code_path.iterdir() if x.is_dir()]
     sys.path = [str(code_path)] + code_subdirs + sys.path
 
-    return torch.load(maybe_model, pickle_module=cloudpickle.pickle)  # type: ignore
+    return torch.load(maybe_model, pickle_module=cloudpickle.pickle, **kwargs)  # type: ignore

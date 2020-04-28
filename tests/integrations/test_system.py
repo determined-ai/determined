@@ -352,7 +352,7 @@ def test_end_to_end_adaptive() -> None:
     # Check that ExperimentReference returns a sorted order of top checkpoints
     # without gaps. The top 2 checkpoints should be the first 2 of the top k
     # checkpoints if sorting is stable.
-    exp_ref = Determined().get_experiment(exp_id)
+    exp_ref = Determined(conf.make_master_url()).get_experiment(exp_id)
 
     top_2 = exp_ref.top_n_checkpoints(2)
     top_k = exp_ref.top_n_checkpoints(len(trials))
