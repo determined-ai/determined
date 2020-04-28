@@ -34,8 +34,8 @@ Master and Agent
 
 Before running the Determined agent, you will have to :ref:`install
 Docker <install-docker>` on each agent machine and, if the machine
-has GPUs, ensure that the :ref:`nvidia-docker2 installation
-<validate-nvidia-docker2>` is working as expected.
+has GPUs, ensure that the :ref:`Nvidia Container Toolkit
+<validate-nvidia-container-toolkit>` is working as expected.
 
 Apart from that, the agent follows the same process as the master,
 except that "master" should be replaced by "agent" everywhere it

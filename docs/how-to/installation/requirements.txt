@@ -50,13 +50,14 @@ Hardware
 Installing Docker
 -----------------
 
-Every agent node must have Docker installed to allow it to run
-containerized workloads.
+Docker is a dependency of several components of the Determined
+system. For example, every agent node must have Docker installed to
+allow it to run containerized workloads. Similarly, 
 
 Install on Linux
 ~~~~~~~~~~~~~~~~~
 
-#. Install the latest release of Docker and nvidia-docker2.
+#. Install the latest release of Docker and the Nvidia Container Toolkit:
 
    On Ubuntu:
 
@@ -120,3 +121,13 @@ Install on MacOS
    .. code::
 
       brew cask install docker
+
+#. Start Docker.
+
+    .. code::
+
+      open /Applications/Docker.app
+
+Docker on MacOS does not support running containers that use GPUs. As a
+result, Determined agents on MacOS will only be able to run CPU-based
+workloads.

@@ -118,7 +118,7 @@ The implementation of ``build_validation_data_loader`` is similar:
         return test_images, test_labels
 
 .. note::
-    When using ``tf.keras.utils.Sequence`` or ``tf.data.Dataset``, users should specify the batch size using ``self.context.get_per_slot_batch_size()``.
+    When loading data from a ``tf.keras.utils.Sequence`` or ``tf.data.Dataset``, users should specify the batch size using :func:`self.context.get_per_slot_batch_size() <determined.TrialContext.get_per_slot_batch_size>`.
 
 Training the Model
 ------------------

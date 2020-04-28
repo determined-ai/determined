@@ -38,16 +38,19 @@ experiment
    the main grouping mechanism for training tasks.
 
 master
-   The central component of the Determined system. The master serves the
-   frontend, manages the provisioning and deprovisioning of agents in
-   cloud settings, and schedules trials onto agents. More information
+   The central component of the Determined system. The master schedules
+   workloads onto agents, manages the provisioning and deprovisioning of
+   agents in cloud settings, and serves the frontend. More information
    can be found at :ref:`det-system-architecture`.
 
 model definition
    A specification of a deep learning model written in a supported deep
    learning framework. The model definition contains training code that
    inherits from a Python class provided by Determined
-   (``TFKerasTrial``, ``PyTorchTrial``, or ``EstimatorTrial``). More
+   (:class:`TFKerasTrial <determined.keras.TFKerasTrial>`,
+   :class:`PyTorchTrial <determined.pytorch.PyTorchTrial>`,
+   :class:`EstimatorTrial <determined.estimator.EstimatorTrial>`, or
+   :class:`TensorpackTrial <determined.tensorpack.TensorpackTrial>`). More
    information can be found at :ref:`model-definitions`.
 
 searcher, search algorithm

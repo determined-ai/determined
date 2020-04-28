@@ -43,9 +43,9 @@ directory).
    not need to be set.
 
 
-
 Deploying a Single Node Cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 For local development or small clusters (such as a GPU workstation), you may wish to
 to install both a master and an agent on the same node.  To do this, run:
 
@@ -79,7 +79,8 @@ If you want to create more than one agent locally, you can use:
 
 Stopping a Single Node Cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-To stop a determined cluster, on the machine where a determined cluster is currently running, run
+
+To stop a Determined cluster, on the machine where a Determined cluster is currently running, run
 
 .. code::
 
@@ -94,6 +95,7 @@ To stop a determined cluster, on the machine where a determined cluster is curre
 
 Deploying a Standalone Master
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 In many cases, your Determined cluster will be split across multiple nodes.  In this case
 you will need to start a master and agents separately.  In order to start a standalone master, run:
 
@@ -116,7 +118,8 @@ To stop a running master, run:
 
 Deploying Agents
 ~~~~~~~~~~~~~~~~
-To deploy a standalone agent, on the machine you want to run the agent run:
+
+To deploy a standalone agent on a machine, run this command:
 
 .. code::
 

@@ -7,9 +7,9 @@ Preliminary Setup
 -----------------
 
 #. :ref:`Install Docker <install-docker>` on all machines in the
-   cluster. If the agents have GPUs, ensure that the
-   :ref:`nvidia-docker2 installation <validate-nvidia-docker2>` on each
-   one is working as expected.
+   cluster. If the agents have GPUs, ensure that the :ref:`Nvidia
+   Container Toolkit <validate-nvidia-container-toolkit>` on each one is
+   working as expected.
 
 #. Pull the official Docker images for PostgreSQL and Hasura. We
    recommend using the versions listed below.
