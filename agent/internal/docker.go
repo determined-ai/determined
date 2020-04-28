@@ -3,7 +3,6 @@ package internal
 import (
 	"bufio"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,6 +18,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 
+	"github.com/determined-ai/determined/agent/internal/credentials"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -51,16 +51,6 @@ type (
 	}
 	dockerErr struct{ Error error }
 )
-
-// registryToString converts the Registry struct to a base64 encoding for json strings.
-func registryToString(reg types.AuthConfig) (string, error) {
-	bs, err := json.Marshal(reg)
-	if err != nil {
-		return "", err
-	}
-
-	return base64.URLEncoding.EncodeToString(bs), nil
-}
 
 func (d *dockerActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
@@ -120,13 +110,10 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 		return
 	}
 
-	// TODO: replace with command.EncodeAuthToBase64
-	reg := ""
-	if msg.Registry != nil {
-		if reg, err = registryToString(*msg.Registry); err != nil {
-			sendErr(ctx, errors.Wrap(err, "error encoding registry credentials"))
-			return
-		}
+	reg, err := credentials.Get(ref, msg.Registry)
+	if err != nil {
+		sendErr(ctx, errors.Wrap(err, "error encoding registry credentials"))
+		return
 	}
 
 	opts := types.ImagePullOptions{
