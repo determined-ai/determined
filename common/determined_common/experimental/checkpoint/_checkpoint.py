@@ -4,7 +4,7 @@ import pathlib
 import shutil
 from typing import Any, Dict, List, Optional
 
-from determined_common import storage
+from determined_common import api, storage
 from determined_common.api import gql
 
 
@@ -201,3 +201,46 @@ class Checkpoint(object):
 
     def __repr__(self) -> str:
         return "Checkpoint(uuid={})".format(self.uuid)
+
+
+def get_checkpoint(uuid: str, master: str) -> Checkpoint:
+    q = api.GraphQLQuery(master)
+
+    where = gql.checkpoints_bool_exp(
+        state=gql.checkpoint_state_comparison_exp(_eq="COMPLETED"),
+        uuid=gql.uuid_comparison_exp(_eq=uuid),
+    )
+
+    checkpoint_gql = q.op.checkpoints(where=where)
+
+    checkpoint_gql.state()
+    checkpoint_gql.uuid()
+    checkpoint_gql.resources()
+
+    validation = checkpoint_gql.validation()
+    validation.metrics()
+    validation.state()
+
+    step = checkpoint_gql.step()
+    step.id()
+    step.start_time()
+    step.end_time()
+    step.trial.experiment.config()
+
+    resp = q.send()
+    result = resp.checkpoints
+
+    if not result:
+        raise AssertionError("No checkpoint found for uuid {}".format(uuid))
+
+    ckpt_gql = result[0]
+    batch_number = ckpt_gql.step.trial.experiment.config["batches_per_step"] * ckpt_gql.step.id
+    return Checkpoint(
+        ckpt_gql.uuid,
+        ckpt_gql.step.trial.experiment.config["checkpoint_storage"],
+        batch_number,
+        ckpt_gql.step.start_time,
+        ckpt_gql.step.end_time,
+        ckpt_gql.resources,
+        ckpt_gql.validation,
+    )

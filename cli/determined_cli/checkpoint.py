@@ -2,8 +2,9 @@ import json
 from argparse import Namespace
 from typing import Any, List
 
-from determined_common import api, constants, experimental, storage
+from determined_common import api, constants, experimental
 from determined_common.api import gql
+from determined_common.experimental import Determined
 
 from . import render, user
 from .declarative_argparse import Arg, Cmd
@@ -114,42 +115,15 @@ def list(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv)
 
 
-@user.authentication_required
-def download_cmd(args: Namespace) -> None:
-    download(args.master, args.trial_id, args.step_id, args.output_dir)
+def download(args: Namespace) -> None:
+    checkpoint = Determined(args.master, None).get_checkpoint(args.uuid)
 
+    path = checkpoint.download(path=args.output_dir)
 
-def download(master: str, trial_id: int, step_id: int, output_dir: str) -> None:
-    q = api.GraphQLQuery(master)
-
-    step = q.op.steps_by_pk(trial_id=trial_id, id=step_id)
-    step.checkpoint.labels()
-    step.checkpoint.resources()
-    step.checkpoint.uuid()
-    step.trial.experiment.config(path="checkpoint_storage")
-    step.trial.experiment_id()
-
-    resp = q.send()
-
-    step = resp.steps_by_pk
-    if not step:
-        raise ValueError("Trial {} step {} not found".format(trial_id, step_id))
-
-    if not step.checkpoint:
-        raise ValueError("Trial {} step {} has no checkpoint".format(trial_id, step_id))
-
-    storage_config = step.trial.experiment.config
-    manager = storage.build(storage_config)
-    if not (
-        isinstance(manager, storage.S3StorageManager)
-        or isinstance(manager, storage.GCSStorageManager)
-    ):
-        raise AssertionError(
-            "Downloading from S3 or GCS requires the experiment to be configured with "
-            "S3 or GCS checkpointing, {} found instead".format(storage_config["type"])
-        )
-    metadata = storage.StorageMetadata.from_json(step.checkpoint.__to_json_value__())
-    manager.download(metadata, output_dir)
+    if args.quiet:
+        print(path)
+    else:
+        render_checkpoint(checkpoint, path)
 
 
 args_description = Cmd(
@@ -159,12 +133,22 @@ args_description = Cmd(
     [
         Cmd(
             "download",
-            download_cmd,
-            "download checkpoint from S3 or GCS",
+            download,
+            "download checkpoint from persistent storage",
             [
-                Arg("trial_id", help="trial ID", type=int),
-                Arg("step_id", help="step ID", type=int),
-                Arg("output_dir", help="output directory", default="."),
+                Arg("uuid", type=str, help="Download a checkpoint by specifying its UUID."),
+                Arg(
+                    "-o",
+                    "--output-dir",
+                    type=str,
+                    help="Desired output directory for the checkpoint.",
+                ),
+                Arg(
+                    "-q",
+                    "--quiet",
+                    action="store_true",
+                    help="Only print the path to the checkpoint.",
+                ),
             ],
         )
     ],

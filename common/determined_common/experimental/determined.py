@@ -1,5 +1,6 @@
 from typing import Optional
 
+from determined_common.experimental.checkpoint import Checkpoint, get_checkpoint
 from determined_common.experimental.experiment import ExperimentReference
 from determined_common.experimental.session import Session
 from determined_common.experimental.trial import TrialReference
@@ -35,3 +36,10 @@ class Determined:
         trial with the provided trial ID.
         """
         return TrialReference(trial_id, self._session._master)
+
+    def get_checkpoint(self, uuid: str) -> Checkpoint:
+        """
+        Get the :py:class:`det.experimental.Checkpoint` representing the
+        checkpoint with the provided UUID.
+        """
+        return get_checkpoint(uuid, self._session._master)

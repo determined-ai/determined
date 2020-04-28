@@ -1,4 +1,4 @@
-from determined_common.experimental.checkpoint import Checkpoint
+from determined_common.experimental.checkpoint import Checkpoint, get_checkpoint
 from determined_common.experimental.determined import Determined
 from determined_common.experimental.experiment import ExperimentReference
 from determined_common.experimental.session import Session
