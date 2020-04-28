@@ -5,9 +5,9 @@
   "projectId": "nr6et4",
   "reporter": "junit",
   "reporterOptions": {
-    "mochaFile": "/output/results/test-results-[hash].xml"
+    "mochaFile": "results/test-results-[hash].xml"
   },
-  "screenshotsFolder": "/output/results/recordings/screenshots",
+  "screenshotsFolder": "results/recordings/screenshots",
   "supportFile": "cypress/support",
-  "videosFolder": "/output/results/recordings/videos"
+  "videosFolder": "results/recordings/videos"
 }
