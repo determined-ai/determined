@@ -123,7 +123,9 @@ class Checkpoint(object):
 
         return str(local_ckpt_dir)
 
-    def load(self, path: Optional[str] = None, tags: Optional[List[str]] = None) -> Any:
+    def load(
+        self, path: Optional[str] = None, tags: Optional[List[str]] = None, **kwargs: Any
+    ) -> Any:
         """
         Loads a Determined checkpoint into memory. If the checkpoint is not
         present on disk it will be downloaded from persistent storage.
@@ -136,12 +138,15 @@ class Checkpoint(object):
                 the tensoflow saved_model. See documentation for
                 `tf.compat.v1.saved_model.load_v2
                 <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/saved_model/load_v2>`_.
+            kwargs: Only relevant for PyTorch checkpoints. The keyword arguments
+                will be applied to torch.load. See documentation for `torch.load
+                <https://pytorch.org/docs/stable/torch.html?highlight=torch%20load#torch.load>`_.
         """
         ckpt_path = self.download(path)
-        return Checkpoint.load_from_path(ckpt_path, tags)
+        return Checkpoint.load_from_path(ckpt_path, tags, **kwargs)
 
     @staticmethod
-    def load_from_path(path: str, tags: Optional[List[str]] = None) -> Any:
+    def load_from_path(path: str, tags: Optional[List[str]] = None, **kwargs: Any) -> Any:
         """
         Loads a Determined checkpoint from a local file system path into
         memory. If the checkpoint is a pytorch model a ``torch.nn.Module`` is returned.
@@ -162,7 +167,9 @@ class Checkpoint(object):
         if checkpoint_type == ModelFramework.PYTORCH:
             import determined_common.experimental.checkpoint._torch
 
-            return determined_common.experimental.checkpoint._torch.load_model(checkpoint_dir)
+            return determined_common.experimental.checkpoint._torch.load_model(
+                checkpoint_dir, **kwargs
+            )
 
         elif checkpoint_type == ModelFramework.TENSORFLOW:
             import determined_common.experimental.checkpoint._tf
