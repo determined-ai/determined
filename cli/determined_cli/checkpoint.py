@@ -1,11 +1,55 @@
-import sys
+import json
 from argparse import Namespace
+from typing import Any, List
 
-from determined_common import api, storage
+from determined_common import api, constants, experimental, storage
 from determined_common.api import gql
 
 from . import render, user
 from .declarative_argparse import Arg, Cmd
+
+
+def format_validation(validation: gql.validations) -> List[Any]:
+    if not validation:
+        return [None, None]
+
+    if validation.state == constants.COMPLETED:
+        return [constants.COMPLETED, json.dumps(validation.metrics, indent=4)]
+    elif validation.state in (constants.ACTIVE, constants.ERROR):
+        return [validation.state, None]
+    else:
+        raise AssertionError("Invalid validation state: {}".format(validation.state))
+
+
+# TODO(neilc): Report more info about checkpoints and validations.
+def format_checkpoint(checkpoint: gql.checkpoints) -> List[Any]:
+    if not checkpoint:
+        return [None, None]
+
+    if checkpoint.state in (constants.COMPLETED, constants.DELETED):
+        return [checkpoint.state, checkpoint.uuid]
+    elif checkpoint.state in (constants.ACTIVE, constants.ERROR):
+        return [checkpoint.state, None]
+    else:
+        raise AssertionError("Invalid checkpoint state: {}".format(checkpoint.state))
+
+
+def render_checkpoint(checkpoint: experimental.Checkpoint, path: str) -> None:
+    print("Local checkpoint path:")
+    print(path, "\n")
+
+    # Print information about the downloaded step/checkpoint.
+    table = [
+        ["Batch #", checkpoint.batch_number],
+        ["Start Time", render.format_time(checkpoint.start_time)],
+        ["End Time", render.format_time(checkpoint.end_time)],
+        ["Checkpoint UUID", checkpoint.uuid],
+        ["Validation Metrics", json.dumps(checkpoint.validation.metrics, indent=4)],
+    ]
+
+    headers, values = zip(*table)  # type: ignore
+
+    render.tabulate_or_csv(headers, [values], False)
 
 
 @user.authentication_required
@@ -50,7 +94,6 @@ def list(args: Namespace) -> None:
     checkpoints.step.validation.metric_values.raw()
 
     resp = q.send()
-    config = resp.experiments_by_pk.config
 
     headers = ["Trial ID", "Step ID", "State", "Validation Metric", "UUID", "Resources", "Size"]
     values = [
@@ -69,28 +112,6 @@ def list(args: Namespace) -> None:
     ]
 
     render.tabulate_or_csv(headers, values, args.csv)
-
-    if args.download_dir is not None:
-        manager = storage.build(config)
-        if not (
-            isinstance(manager, storage.S3StorageManager)
-            or isinstance(manager, storage.GCSStorageManager)
-        ):
-            print(
-                "Downloading from S3 or GCS requires the experiment to be configured with "
-                "S3 or GCS checkpointing, {} found instead".format(config["type"])
-            )
-            sys.exit(1)
-
-        for checkpoint in resp.checkpoints:
-            metadata = storage.StorageMetadata.from_json(checkpoint.__to_json_value__())
-            ckpt_dir = args.download_dir.joinpath(
-                "exp-{}-trial-{}-step-{}".format(
-                    args.experiment_id, checkpoint.trial_id, checkpoint.step_id
-                )
-            )
-            print("Downloading checkpoint {} to {}".format(checkpoint.uuid, ckpt_dir))
-            manager.download(metadata, ckpt_dir)
 
 
 @user.authentication_required

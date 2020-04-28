@@ -52,9 +52,10 @@ class ExperimentReference:
         self, limit: int, sort_by: Optional[str] = None, smaller_is_better: Optional[bool] = None
     ) -> List[checkpoint.Checkpoint]:
         """
-        Return the n :py:class:`det.experimental.Checkpoint` instances with the best
+        Return the N :py:class:`det.experimental.Checkpoint` instances with the best
         validation metric values as defined by the `sort_by` and `smaller_is_better`
-        arguments.
+        arguments. This command will return the best checkpoint from the
+        top N performing distinct trials of the experiment.
 
         Arguments:
             sort_by (string, optional): The name of the validation metric to

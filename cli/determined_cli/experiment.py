@@ -1,4 +1,5 @@
 import cgi
+import distutils.util
 import io
 import json
 import numbers
@@ -21,6 +22,9 @@ from determined_cli.trial import logs
 from determined_cli.user import authentication_required
 from determined_common import api, constants, context
 from determined_common.api import gql
+from determined_common.experimental import Determined
+
+from .checkpoint import render_checkpoint
 
 # Avoid reporting BrokenPipeError when piping `tabulate` output through
 # a filter like `head`.
@@ -553,6 +557,23 @@ def download_model_def(args: Namespace) -> None:
         )
 
 
+def download(args: Namespace) -> None:
+    exp = Determined(args.master, args.user).get_experiment(args.experiment_id)
+    checkpoints = exp.top_n_checkpoints(
+        args.top_n, sort_by=args.sort_by, smaller_is_better=args.smaller_is_better
+    )
+
+    top_level = pathlib.Path(args.output_dir)
+    top_level.mkdir(parents=True, exist_ok=True)
+    for ckpt in checkpoints:
+        path = ckpt.download(str(top_level.joinpath(ckpt.uuid)))
+        if args.quiet:
+            print(path)
+        else:
+            render_checkpoint(ckpt, path)
+            print()
+
+
 @authentication_required
 def kill_experiment(args: Namespace) -> None:
     api.post(args.master, "experiments/{}/kill".format(args.experiment_id))
@@ -878,16 +899,6 @@ args_description = Cmd(
                     "If this flag is used, only checkpoints with an associated "
                     "validation metric will be considered.",
                 ),
-                Arg(
-                    "-d",
-                    "--download-dir",
-                    type=Path,
-                    help="download the listed checkpoints to this directory. "
-                    "The resources of each checkpoint will be saved in a "
-                    "subdirectory labeled with the experiment ID, trial ID, "
-                    "and step ID. This flag is only supported for experiments "
-                    "configured to use S3 or GCS checkpoint storage.",
-                ),
                 Arg("--csv", action="store_true", help="print as CSV"),
             ],
         ),
@@ -962,6 +973,55 @@ args_description = Cmd(
             unarchive,
             "unarchive experiment",
             [experiment_id_arg("experiment ID to unarchive")],
+        ),
+        Cmd(
+            "download",
+            download,
+            "download checkpoints for an experiment",
+            [
+                experiment_id_arg("experiment ID to cancel"),
+                Arg(
+                    "-o",
+                    "--output-dir",
+                    type=str,
+                    default="checkpoints",
+                    help="Desired top level directory for the checkpoints. "
+                    "Checkpoints will be downloaded to "
+                    "<output_dir>/<checkpoint_uuid>/<checkpoint_files>.",
+                ),
+                Arg(
+                    "--top-n",
+                    type=int,
+                    default=1,
+                    help="The number of checkpoints to download for the "
+                    "experiment. The checkpoints are sorted by validation "
+                    "metric as defined by --sort-by and --smaller-is-better."
+                    "This command will select the best N checkpoints from the "
+                    "top performing N trials of the experiment.",
+                ),
+                Arg(
+                    "--sort-by",
+                    type=str,
+                    default=None,
+                    help="The name of the validation metric to sort on. Without --sort-by, the "
+                    "experiment's searcher metric is assumed. If this argument is specified, "
+                    "--smaller-is-better must also be specified.",
+                ),
+                Arg(
+                    "--smaller-is-better",
+                    type=lambda s: bool(distutils.util.strtobool(s)),
+                    default=None,
+                    help="The sort order for metrics when using --sort-by. For "
+                    "example, 'accuracy' would require passing '--smaller-is-better false'. If "
+                    "--sort-by is specified, this argument must be specified.",
+                ),
+                Arg(
+                    "-q",
+                    "--quiet",
+                    action="store_true",
+                    help="Only print the paths to the checkpoints.",
+                ),
+            ],
         ),
         Cmd(
             "kill", kill_experiment, "kill experiment", [Arg("experiment_id", help="experiment ID")]
