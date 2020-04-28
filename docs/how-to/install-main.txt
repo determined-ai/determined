@@ -3,7 +3,7 @@
 How to Install Determined
 =========================
 
-Two main components are required to use Determined: 
+Two main components are required to use Determined:
 :ref:`Determined CLI <install-cli>` and a :ref:`Determined cluster <install-cluster>`.
 All users should install the Determined CLI on their local development machine. The Determined
 cluster should be installed in your training environment.
@@ -19,26 +19,23 @@ to launch new experiments and interact with a Determined cluster.
 
 Install a Determined Cluster
 -----------------------------
-A :ref:`Determined cluster <install-cluster>` is comprised of the :ref:`Determined master 
+A :ref:`Determined cluster <install-cluster>` is comprised of the :ref:`Determined master
 and Determined agents <det-system-architecture>` to run and manage experiments. A
 Determined cluster can be installed on Amazon Web Services (AWS), Google Cloud Platform
 (GCP), or an on-premise cluster.
 
-Within each cluster, Determined runs two third-party services: 
+Within each cluster, Determined runs two third-party services:
 
 - `PostgreSQL <https://www.postgresql.org/>`_ database
-- `Hasura <https://hasura.io>`_ server. 
+- `Hasura <https://hasura.io>`_ server.
 
-Determined can be installed to use `Docker <https://www.docker.com/>`_ containers 
-to run the master and agents. Depending on your installation method, some of these 
+Determined can be installed to use `Docker <https://www.docker.com/>`_ containers
+to run the master and agents. Depending on your installation method, some of these
 services will be installed for you:
 
-- On a cloud provider using ``det-deploy``, the third-party services will be installed for you. 
-- On-premise using ``det-deploy``, Docker will need to be installed. 
+- On a cloud provider using ``det-deploy``, the third-party services will be installed for you.
+- On-premise using ``det-deploy``, Docker will need to be installed.
 - Manual install, you will have to install each service yourself.
-
-Determined supports an optional :ref:`users` system, which allows teams of machine learning 
-developers to organize the assets they create inside Determined.
 
 More information on a Determined cluster can be found:
 
@@ -71,8 +68,8 @@ the option of installing most components of Determined using Debian
 packages and running them as `systemd
 <https://freedesktop.org/wiki/Software/systemd/>`__ services.
 
-For on premise, first :ref:`install Docker <install-docker>`. Then install Determined 
-by your preferred method: 
+To install Determined on-premise, first :ref:`install Docker <install-docker>`.
+Then install Determined by your preferred method:
 
 .. toctree::
    :titlesonly:
@@ -89,7 +86,7 @@ Determined can also be deployed to instances running in public cloud
 providers such as AWS and GCP. Using Determined in the cloud allows you
 to access more computational resources than you might have local access
 to; Determined can also manage your cloud resources for you
-automatically. 
+automatically.
 
 To install on the cloud, please follow the instructions for your preferred cloud deployment:
 
