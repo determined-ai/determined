@@ -367,7 +367,7 @@ jobs:
       - run: cd cli; python setup.py bdist_wheel -d ../build
       - run: pip install --find-links build determined-cli==<< pipeline.parameters.det-version >>
 
-      - run: DET_VERSION=<< pipeline.parameters.det-version >> docker-compose -f CI/e2e/docker-compose.yaml up -d
+      - run: DET_VERSION=<< pipeline.parameters.det-version >> MASTER_HOST=$(ip route | grep docker0 | sed "s/^.*src \(.*\) linkdown.*$/\1/g") docker-compose -f CI/e2e/docker-compose.yaml up -d
       - run: |
           attempt_counter=0
           max_attempts=10
@@ -383,6 +383,7 @@ jobs:
               sleep 2
           done
       - run: python webui/tests/bin/createUserAndExperiments.py
+      - run: mkdir -p webui/tests/results
       - run: |
           docker run \
             --name e2e_cypress \

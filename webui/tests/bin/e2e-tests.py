@@ -135,13 +135,7 @@ def docker_run_e2e_tests(config):
         *cypress_arguments,
     ]
 
-    try:
-        run(
-            command, config,
-        )
-    finally:
-        # collect the results
-        run(["docker", "cp", f"{cypress_name}:/output/{RESULTS_DIR_NAME}", str(tests_dir)], config)
+    run(command, config)
 
 
 def e2e_tests(config):
