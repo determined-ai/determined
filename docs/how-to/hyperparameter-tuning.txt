@@ -15,6 +15,7 @@ they:
 
 Configuring Hyperparameter Ranges
 ---------------------------------
+
 The first step toward automatic hyperparameter tuning is to define the
 hyperparameter space, e.g., by :ref:`listing the
 decisions<topic-guides_hp-tuning-basics-example-hyperparameters>` that may
@@ -48,31 +49,35 @@ and their associated options.
 Instrumenting Model Code
 ------------------------
 
-Determined injects hyperparameters from the experiment configuration into model
-code via a context object in the Trial base class. This :class:`TrialContext
-<determined.TrialContext>` object exposes a ``get_hparam`` method that takes
-the hyperparameter name.  At trial runtime, Determined injects a value for the
-hyperparameter. For example, to inject the previous section's
-``dropout_probability`` into the constructor of a PyTorch `Dropout
+Determined injects hyperparameters from the experiment configuration
+into model code via a context object in the Trial base class. This
+:class:`TrialContext <determined.TrialContext>` object exposes a
+:func:`get_hparam <determined.TrialContext.get_hparam>` method that
+takes the hyperparameter name.  At trial runtime, Determined injects a
+value for the hyperparameter. For example, to inject the value of the
+``dropout_probability`` hyperparameter defined above into the
+constructor of a PyTorch `Dropout
 <https://pytorch.org/docs/stable/nn.html#dropout>`_ layer:
 
 .. code:: python
 
   nn.Dropout(p=self.context.get_hparam("dropout_probability"))
 
-To see hyperparameter injection throughout a complete Trial implementation:
-:ref:`pytorch-mnist-tutorial`.
+To see hyperparameter injection throughout a complete Trial
+implementation, refer to the :ref:`pytorch-mnist-tutorial`.
 
-Specifying the Searcher
------------------------
-The model developer configures a searcher to implement one of many
-:ref:`supported hyperparameter tuning algorithms<topic-guides_hp-tuning-det>`.
-Aside from the ``single`` searcher, a searcher runs multiple trials and decides
-the hyperparameter values to use in each trial.  Every searcher requires the
-optimization objective ``metric`` field in addition to searcher-specific
-options. For instance, the ``adaptive_simple`` searcher implements adaptive
-downsampling given the maximum number of trials to run and the maximum number of
-training steps allowed per trial:
+Specifying the Search Algorithm
+-------------------------------
+
+Determined supports a :ref:`variety of hyperparameter search algorithms
+<topic-guides_hp-tuning-det>`.  Aside from the ``single`` searcher, a
+searcher runs multiple trials and decides the hyperparameter values to
+use in each trial.  Every searcher is configured with the name of the
+validation metric to optimize (via the ``metric`` field), in addition to
+other searcher-specific options. For example, the ``adaptive_simple``
+searcher implements adaptive downsampling, and is configured with the
+maximum number of trials to run and the maximum number of training steps
+allowed per trial:
 
 .. code:: yaml
 
@@ -83,13 +88,13 @@ training steps allowed per trial:
     max_trials: 32
 
 For details on the supported searchers and their respective configuration
-options: :ref:`topic-guides_hp-tuning-det`.
+options, refer to :ref:`topic-guides_hp-tuning-det`.
 
-That's it!  After submitting a multi-trial hyperparameter tuning experiment to
-Determined, the machine learning engineer can visualize the best validation
-metric observed across all trials over time.  On experiment completion, they can
-view the best hyperparameter settings and also export the associated checkpoint
-for downstream serving.
+That's it!  After submitting a hyperparameter tuning experiment, users
+can easily see the best validation metric observed across all trials
+over time in the WebUI.  After the experiment has completed, they can
+view the hyperparameter values for the best-performing trials, and also
+export the associated model checkpoint for downstream serving.
 
 .. image:: /assets/images/adaptive-experiment-detail.png
 

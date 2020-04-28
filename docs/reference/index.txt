@@ -6,7 +6,7 @@ Reference guides are raw technical references for our product. They describe how
 **Model Definitions**
   - :ref:`tf-keras-trial`
   - :ref:`pytorch-trial`
-  - :ref:`tensorpack`
+  - :ref:`tensorpack-trial`
   - :ref:`estimator-trial`
 
 **Configurations**

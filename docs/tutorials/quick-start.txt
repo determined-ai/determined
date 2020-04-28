@@ -11,9 +11,9 @@ Prerequisites
 --------------
 - Access to an installation of Determined, either on your own machine or the public cloud. If you have not yet installed Determined, refer to the :ref:`installation instructions <install-cluster>`.
 - The Determined CLI should be installed on your local machine. For installation instructions, see :ref:`here <install-cli>`. After installing the CLI, configure it to connect to your Determined cluster by setting the ``DET_MASTER`` environment variable to the hostname or IP address where Determined is running.
-- For Determined clusters running through ``det-deploy local``: When you run your first experiment, Determined needs to pull down Docker images that contain environment information. The Docker images are then cached for future experiments. We suggest running the following commands to help speed up this process.
+- For Determined clusters installed using ``det-deploy local``: when you run your first experiment, Determined needs to download Docker images with the dependencies needed to run deep learning workloads. This initial download can take some time, depending on the speed of your Internet connection (these images are then cached for future experiments). We suggest running the following commands to help speed up this process:
 
-.. code::
+.. code:: text
 
     # For CPU computations
     docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-e6662e6
@@ -25,7 +25,7 @@ Prerequisites
 Preparing Your First Job
 -------------------------
 
-In this guide, we will build an image classification model for the MNIST dataset.  MNIST is a dataset consisting of grayscale images of handwritten digits, commonly used to test image classification models as seen below.
+In this guide, we will build an image classification model for the MNIST dataset.  MNIST is a dataset consisting of grayscale images of handwritten digits (as seen below); it is commonly used to test image classification models.
 
 |
 
@@ -36,7 +36,7 @@ In this guide, we will build an image classification model for the MNIST dataset
 
 The code for this guide can be downloaded here: :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`.
 
-Next, open a terminal window and ``cd`` into the extracted ``mnist_pytorch`` directory. The directory should contain the following files:
+After downloading and extracting the code, open a terminal window and ``cd`` into the ``mnist_pytorch`` directory. The directory should contain the following files:
 
 .. code::
 
@@ -48,7 +48,7 @@ Next, open a terminal window and ``cd`` into the extracted ``mnist_pytorch`` dir
        ├── layers.py
        ├── model_def.py
 
-The directory contains Python and YAML files. The Python files contain the model and data pipeline definitions. The ``.yaml`` files are configuration files that specify the dataset location, hyperparameters, and the number of batches for training. This file also tells Determined the entry point, or where the model class is located. For example, below is the ``const.yaml`` file:
+The Python files contain the model and data pipeline definitions. The ``.yaml`` files are configuration files that specify the dataset location, hyperparameters, and the number of batches of data to use training. The configuration file also tells Determined the entry point, or where the model class is located. For example, below is the ``const.yaml`` file:
 
 .. code:: yaml
 
@@ -87,7 +87,7 @@ We will start by training a single model for a fixed number of batches and with 
 
     det experiment create const.yaml .
 
-This command tells Determined to create a new experiment using the ``const.yaml`` configuration file. Determined also needs the directory containing the model code to upload it to the cluster. In the case above, we run the command in the ``mnist_pytorch`` directory, so we tell the model to upload all the current directory files by using ``.``.
+This command tells Determined to create a new experiment using the ``const.yaml`` configuration file. Determined also needs the directory containing the model code to upload it to the cluster. In the case above, we run the command in the ``mnist_pytorch`` directory, so we tell the CLI to upload all the files in the current directory by using ``.``.
 
 Once the experiment has been submitted, you should see the following output:
 

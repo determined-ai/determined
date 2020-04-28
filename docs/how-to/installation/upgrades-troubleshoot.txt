@@ -50,10 +50,10 @@ old version of the CLI.
 Troubleshooting Tips
 --------------------
 
-.. _validate-nvidia-docker2:
+.. _validate-nvidia-container-toolkit:
 
-Validating the nvidia-docker2 installation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Validating Nvidia Container Toolkit
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To verify that a Determined agent instance can run containers that use GPUs,
 run:

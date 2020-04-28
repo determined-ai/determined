@@ -11,45 +11,22 @@ cluster should be installed in your training environment.
 
 Install the Determined CLI
 ----------------------------
-The :ref:`Determined CLI <install-cli>` is the command line tool that allows you
-to launch new experiments and interact with a Determined cluster.
+
+The Determined CLI is a command line tool that allows you to launch new
+experiments and interact with a Determined cluster. To install the CLI,
+refer to the :ref:`installation instructions <install-cli>`.
 
 
 .. _install-cluster:
 
 Install a Determined Cluster
 -----------------------------
-A :ref:`Determined cluster <install-cluster>` is comprised of the :ref:`Determined master
-and Determined agents <det-system-architecture>` to run and manage experiments. A
-Determined cluster can be installed on Amazon Web Services (AWS), Google Cloud Platform
-(GCP), or an on-premise cluster.
 
-Within each cluster, Determined runs two third-party services:
-
-- `PostgreSQL <https://www.postgresql.org/>`_ database
-- `Hasura <https://hasura.io>`_ server.
-
-Determined can be installed to use `Docker <https://www.docker.com/>`_ containers
-to run the master and agents. Depending on your installation method, some of these
-services will be installed for you:
-
-- On a cloud provider using ``det-deploy``, the third-party services will be installed for you.
-- On-premise using ``det-deploy``, Docker will need to be installed.
-- Manual install, you will have to install each service yourself.
-
-More information on a Determined cluster can be found:
-
-- :ref:`requirements`
-- :ref:`upgrades`
-- :ref:`troubleshoot`
-
-.. toctree::
-   :titlesonly:
-   :hidden:
-
-   installation/requirements
-   installation/upgrades-troubleshoot
-
+A :ref:`Determined cluster <install-cluster>` is comprised of a
+:ref:`master and one or more agents <det-system-architecture>`. A
+Determined cluster can be installed on Amazon Web Services (AWS), Google
+Cloud Platform (GCP), an on-premise cluster, or on a local development
+machine.
 
 On-premise Deployments
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -88,10 +65,36 @@ to access more computational resources than you might have local access
 to; Determined can also manage your cloud resources for you
 automatically.
 
-To install on the cloud, please follow the instructions for your preferred cloud deployment:
+To install on the cloud, please follow the instructions for your preferred cloud vendor:
 
 .. toctree::
    :titlesonly:
 
    installation/aws
    installation/gcp
+
+Notes
+~~~~~
+
+Each Determined cluster requires two third-party services, `PostgreSQL
+<https://www.postgresql.org/>`_ and `Hasura <https://hasura.io>`_. In
+addition, Determined can use `Docker <https://www.docker.com/>`_ to run
+the master and agents. Depending on your installation method, some of
+these services will be installed for you:
+
+- On a cloud provider using ``det-deploy``, the third-party services will be installed for you.
+- On-premise using ``det-deploy``, Docker will need to be installed.
+- When doing a manual installation, you will have to install each service yourself.
+
+More information on a Determined cluster can be found:
+
+- :ref:`requirements`
+- :ref:`upgrades`
+- :ref:`troubleshoot`
+
+.. toctree::
+   :titlesonly:
+   :hidden:
+
+   installation/requirements
+   installation/upgrades-troubleshoot

@@ -3,10 +3,10 @@
 Install Determined CLI
 ======================
 
-Determined includes a **command-line tool** called ``det`` that ML developers
+Determined includes a **command-line tool** called ``det`` that ML engineers
 can use to launch new workloads and interact with Determined.
 
-Each ML developer that wants to use Determined should install a copy of the
+Each ML engineer that wants to use Determined should install a copy of the
 Determined CLI on their local development machine. The CLI can be
 installed via ``pip``:
 
@@ -30,5 +30,5 @@ by setting the ``DET_MASTER`` environment variable:
 You may want to place this into the appropriate configuration file for
 your login shell (e.g., ``.bashrc``).
 
-More information about using the Determined CLI can be found with the command
-``det --help``.
+More information about using the Determined CLI can be found in the
+:ref:`reference documentation <cli>` or by running ``det --help``.
