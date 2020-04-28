@@ -17,9 +17,11 @@
     "elm-format": "^0.8.3",
     "elm-live": "^4.0.2",
     "elm-test": "0.19.1",
+    "npm-force-resolutions": "^0.0.3",
     "tailwindcss": "^1.2.0"
   },
   "scripts": {
+    "preinstall": "npx npm-force-resolutions",
     "build-elm": "elm make src/Main.elm",
     "build-css": "postcss styles-in.css",
     "live-workaround": "elm-live --pushstate --proxyPrefix /api --proxyHost http://localhost:8080 src/Main.elm --",
@@ -28,5 +30,8 @@
     "lint": "elm-analyse && elm-format",
     "test": "elm-test",
     "graphql": "elm-graphql --base DetQL --scalar-codecs CustomScalarCodecs --introspection-file ../../master/graphql-schema.json"
+  },
+  "resolutions": {
+    "minimist": "^1.2.3"
   }
 }

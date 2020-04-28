@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "preinstall": "npx npm-force-resolutions",
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
     "lint": "npm run lint:js && npm run lint:css",
@@ -75,6 +76,7 @@
     "less": "^3.11.1",
     "less-loader": "^5.0.0",
     "node-sass": "^4.13.1",
+    "npm-force-resolutions": "^0.0.3",
     "react-app-rewired": "^2.1.5",
     "react-docgen-typescript-loader": "^3.7.1",
     "sinon": "^9.0.1",
@@ -83,5 +85,8 @@
     "stylelint-config-standard": "^20.0.0",
     "stylelint-order": "^4.0.0",
     "typescript": "^3.8.3"
+  },
+  "resolutions": {
+    "marked": "^0.7.0"
   }
 }
