@@ -58,14 +58,21 @@ def maybe_create_experiment(
     if create_args is not None:
         command += create_args
 
-    return subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE)
+    env = os.environ.copy()
+    env["DET_DEBUG"] = "true"
+
+    return subprocess.run(
+        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
+    )
 
 
 def create_experiment(
     config_file: str, model_def_file: str, create_args: Optional[List[str]] = None
 ) -> int:
     completed_process = maybe_create_experiment(config_file, model_def_file, create_args)
-    assert completed_process.returncode == 0
+    assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
+        completed_process.stdout, completed_process.stderr
+    )
     m = re.search(r"Created experiment (\d+)\n", str(completed_process.stdout))
     assert m is not None
     return int(m.group(1))
