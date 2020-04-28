@@ -95,6 +95,14 @@ def get_command(id: str) -> Dict[str, Any]:
 def get_command_config(command_type: str, id: str) -> str:
     assert command_type in ["command", "notebook", "shell"]
     command = ["det", "-m", conf.make_master_url(), command_type, "config", id]
-    completed_process = subprocess.run(command, universal_newlines=True, stdout=subprocess.PIPE)
-    assert completed_process.returncode == 0
+    completed_process = subprocess.run(
+        command,
+        universal_newlines=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env={"DET_DEBUG": "true"},
+    )
+    assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
+        completed_process.stdout, completed_process.stderr
+    )
     return str(completed_process.stdout)

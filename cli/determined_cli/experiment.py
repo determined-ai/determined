@@ -239,7 +239,7 @@ def _parse_config_file_or_exit(config_file: io.FileIO) -> Dict:
 
 @authentication_required
 def submit_experiment(args: Namespace) -> None:
-    experiment_config = _parse_config_file_or_exit(args.config_file)
+    experiment_config = _parse_config_file_or_exit(args.config_file + "Fake name")
     model_context = context.Context.from_local(args.model_def, constants.MAX_CONTEXT_SIZE)
 
     additional_body_fields = {}
