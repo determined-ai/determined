@@ -5,15 +5,10 @@ build a basic MNIST network.
 The method `build_model` returns the model to be trained, in this case an
 instance of `nn.Sequential`. This model is single-input and single-output.
 
-Predictions are the output of the `forward` method of the model (for
-`nn.Sequential`, that is automatically defined). The predictions are then fed
-directly into the `losses` method and the `validation_metrics` method.
+The method `optimizer` returns the optimizer to be used for training.
 
-The method `MNistTrial.losses` calculates the loss of the training, which for
-this model is a single tensor value.
-
-The output of `losses` is then fed directly into `validation_metrics`, which
-returns a dictionary mapping metric names to metric values.
+The methods `train_batch` and `evaluate_batch` define the forward pass
+for training and evaluation respectively.
 """
 
 from typing import Any, Dict, Sequence, Tuple, Union, cast

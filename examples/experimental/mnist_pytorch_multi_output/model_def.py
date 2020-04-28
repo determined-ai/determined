@@ -1,12 +1,9 @@
 """
 This example shows how to interact with the Determined PyTorch interface to build a
-multi prediction MNIST network (with both binary and digit labels).  For an
-implementation of the standard MNIST digit prediction (predicting only digit
-labels), see model_def.py in the same folder.
+multi prediction MNIST network.
 
-Predictions are calculated in the `forward` method of the `MultiNet` class.
-The `MultiMNistTrial` class contains methods for calculating the losses,
-training metrics, and validation metrics.
+The `MultiMNistTrial` class contains methods for building the model, building the
+optimizer, and defining the forward pass for training and validation.
 """
 
 from typing import Any, Dict, Tuple, cast
