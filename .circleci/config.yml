@@ -600,11 +600,12 @@ jobs:
           master-host: ${MASTER_HOST}
       - terminate-aws-cluster:
           cluster-id: ${CLUSTER_ID}
-      - slack/status:
-          failure_message: ':thisisfine: \`${CIRCLE_JOB}\` have failed! @channel'
-          success_message: ':tada: \`${CIRCLE_JOB}\` finished successfully! :tada: '
       - store_test_results:
           path: /tmp/test-results/
+      - slack/status:
+          failure_message: ':thisisfine: \`${CIRCLE_JOB}\` have failed!'
+          success_message: ':tada: \`${CIRCLE_JOB}\` finished successfully! :tada: '
+          mentions: "@channel"
 
 
 workflows:
