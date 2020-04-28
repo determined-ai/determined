@@ -33,7 +33,7 @@ build: $(EXAMPLES_DIRS) sp-html
 $(BUILDDIR)/docs-downloads/examples/%.tgz: ../examples/official/%/
 	find "$<" \( -name __pycache__ -o -name \*.pyc \) -delete
 	mkdir -p $$(dirname "$@")
-	$(TAR) -czf "$@" -C "$<" .
+	$(TAR) -czf "$@" -C $$(dirname "$<") $$(basename "$<")
 
 clean:
 	rm -rf $(TARGETDIR) $(OUTDIR)
