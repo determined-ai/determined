@@ -27,6 +27,7 @@ import (
 
 type dockerActor struct {
 	*client.Client
+	credentialStores map[string]*credentialStore
 }
 
 type (
@@ -65,6 +66,11 @@ func registryToString(reg types.AuthConfig) (string, error) {
 func (d *dockerActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		stores, err := getAllCredentialStores()
+		if err != nil {
+			ctx.Log().Warn(fmt.Sprintf("can't retrieve any credential stores: %v", err))
+		}
+		d.credentialStores = stores
 
 	case pullImage:
 		go d.pullImage(ctx, msg)
@@ -125,6 +131,18 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 	if msg.Registry != nil {
 		if reg, err = registryToString(*msg.Registry); err != nil {
 			sendErr(ctx, errors.Wrap(err, "error encoding registry credentials"))
+			return
+		}
+	} else if store, ok := d.credentialStores[reference.Domain(ref)]; ok {
+		var creds types.AuthConfig
+		creds, err = store.get()
+		if err != nil {
+			sendErr(ctx, errors.Wrap(err, "unable to get credentials from helper"))
+			return
+		}
+		reg, err = registryToString(creds)
+		if err != nil {
+			sendErr(ctx, errors.Wrap(err, "error encoding registry credentials from helper"))
 			return
 		}
 	}

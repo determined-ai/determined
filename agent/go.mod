@@ -7,6 +7,7 @@ require (
 	github.com/determined-ai/determined/master v0.0.0
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v1.13.1
+	github.com/docker/docker-credential-helpers v0.6.3
 	github.com/docker/go-connections v0.4.0
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-ole/go-ole v1.2.4 // indirect
