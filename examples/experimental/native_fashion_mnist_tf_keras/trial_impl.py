@@ -28,16 +28,14 @@ if __name__ == "__main__":
     config = {
         "hyperparameters": {
             "global_batch_size": det.Constant(value=32),
-            "kernel_size": det.Constant(value=3),
-            "dropout": det.Double(minval=0.0, maxval=0.5),
-            "activation": det.Constant(value="relu"),
+            "dense1": det.Constant(value=128),
         },
         "searcher": {"name": "single", "metric": "val_accuracy", "max_steps": 40},
     }
     config.update(json.loads(args.config))
 
     experimental.create(
-        trial_def=model_def.MNISTTrial,
+        trial_def=model_def.FashionMNISTTrial,
         config=config,
         mode=experimental.Mode(args.mode),
         context_dir=str(pathlib.Path.cwd()),

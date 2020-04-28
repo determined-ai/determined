@@ -68,10 +68,10 @@ class NativeImplementations:
 
     # Train a single tf.keras model using fit().
     TFKerasMNISTCNNSingleFit = NativeImplementation(
-        cwd=conf.experimental_path("native_mnist_tf_keras"),
+        cwd=conf.experimental_path("native_fashion_mnist_tf_keras"),
         command=[
             "python",
-            conf.experimental_path("native_mnist_tf_keras/native_impl.py"),
+            conf.experimental_path("native_fashion_mnist_tf_keras/native_impl.py"),
             "--use-fit",
         ],
         configuration={
@@ -87,10 +87,10 @@ class NativeImplementations:
 
     # Train a single tf.keras model using fit() on multiple GPUs.
     TFKerasMNISTCNNSingleFitParallel = NativeImplementation(
-        cwd=conf.experimental_path("native_mnist_tf_keras"),
+        cwd=conf.experimental_path("native_fashion_mnist_tf_keras"),
         command=[
             "python",
-            conf.experimental_path("native_mnist_tf_keras/native_impl.py"),
+            conf.experimental_path("native_fashion_mnist_tf_keras/native_impl.py"),
             "--use-fit",
         ],
         configuration={
@@ -107,8 +107,8 @@ class NativeImplementations:
 
     # Train a single tf.keras model using fit_generator().
     TFKerasMNISTCNNSingleFitGenerator = NativeImplementation(
-        cwd=conf.experimental_path("native_mnist_tf_keras"),
-        command=["python", conf.experimental_path("native_mnist_tf_keras/native_impl.py")],
+        cwd=conf.experimental_path("native_fashion_mnist_tf_keras"),
+        command=["python", conf.experimental_path("native_fashion_mnist_tf_keras/native_impl.py")],
         configuration={
             "batches_per_step": 4,
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
@@ -121,8 +121,8 @@ class NativeImplementations:
     )
 
     TFKerasMNISTCNNSingleGeneric = NativeImplementation(
-        cwd=conf.experimental_path("native_mnist_tf_keras"),
-        command=["python", conf.experimental_path("native_mnist_tf_keras/trial_impl.py")],
+        cwd=conf.experimental_path("native_fashion_mnist_tf_keras"),
+        command=["python", conf.experimental_path("native_fashion_mnist_tf_keras/trial_impl.py")],
         configuration={
             "batches_per_step": 4,
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
