@@ -656,9 +656,10 @@ jobs:
       - store_test_results:
           path: /tmp/test-results/
       - slack/status:
+          fail_only: True
           failure_message: ':thisisfine: \`${CIRCLE_JOB}\` have failed!'
-          success_message: ':tada: \`${CIRCLE_JOB}\` finished successfully! :tada: '
-          mentions: "@channel"
+          mentions: "channel"
+          channel: "ml-ag"
 
 
 workflows:
