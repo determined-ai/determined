@@ -31,7 +31,7 @@ from determined_cli.version import args_description as version_args_description
 from determined_cli.version import check_version
 from determined_common import api
 from determined_common.check import check_not_none
-from determined_common.util import chunks, get_default_master_address
+from determined_common.util import chunks, debug_mode, get_default_master_address
 
 
 @authentication_required
@@ -224,7 +224,7 @@ def main(args: List[str] = sys.argv[1:]) -> None:
         parsed_args = parser.parse_args(args)
 
         def die(message: str, always_print_traceback: bool = False) -> None:
-            if always_print_traceback or os.getenv("DET_DEBUG", "").lower() in ("true", "1", "yes"):
+            if always_print_traceback or debug_mode():
                 import traceback
 
                 traceback.print_exc()
