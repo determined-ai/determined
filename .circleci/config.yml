@@ -294,15 +294,6 @@ commands:
     steps:
       - run: python CI/integrations/wait_for_master.py http://<<parameters.host>>:<<parameters.port>>
 
-  build-docker:
-    description: Build Master and Agent Docker images.
-    steps:
-      - attach_workspace:
-          at: build
-      - run: make -C master build-docker
-      - run: make -C agent build-docker
-
-
 
 jobs:
   build-docs:
@@ -352,9 +343,8 @@ jobs:
     resource_class: large
     steps:
       - checkout
-      - run: sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-      - run: sudo systemctl restart docker
-      - build-docker
+      - install-docker
+      - build-docker-images
 
       - run: pyenv global 3.6.5
       - run: |
@@ -362,10 +352,10 @@ jobs:
           nvm install v12
           nvm alias default v12
           make -C webui/tests get-deps
-      - run: pip install wheel
-      - run: cd common; python setup.py bdist_wheel -d ../build
-      - run: cd cli; python setup.py bdist_wheel -d ../build
-      - run: pip install --find-links build determined-cli==<< pipeline.parameters.det-version >>
+      - setup-python-venv:
+          determined-common: true
+          determined-cli: true
+          executor: ubuntu-1604:201903-01
 
       - run: DET_VERSION=<< pipeline.parameters.det-version >> MASTER_HOST=$(ip route | grep docker0 | sed "s/^.*src \(.*\) linkdown.*$/\1/g") docker-compose -f CI/e2e/docker-compose.yaml up -d
       - run: |
