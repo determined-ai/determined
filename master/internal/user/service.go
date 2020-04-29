@@ -247,6 +247,7 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 		cookie := new(http.Cookie)
 		cookie.Name = "auth"
 		cookie.Value = token
+		cookie.Expires = time.Now().Add(5 * 24 * time.Hour)
 		c.SetCookie(cookie)
 	}
 
