@@ -1246,7 +1246,7 @@ viewTableHead hideBatchOperations model =
                 H.text ""
     in
     H.div [ HA.class "w-full text-sm text-gray-700 pb-5" ]
-        [ Page.Common.pageHeader "Experiments"
+        [ Page.Common.pageHeader "gibberish"
         , H.div [ HA.class "w-full flex flex-wrap items-baseline pb-8 filters" ]
             [ H.div [ HA.class "pr-4 mb-4" ]
                 [ H.input
