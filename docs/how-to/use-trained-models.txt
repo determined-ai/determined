@@ -140,17 +140,53 @@ PyTorch checkpoints are saved via pickle and loaded as ``nn.Module``
 
 Download Checkpoints via the CLI
 --------------------------------
-Determined offers a CLI command, ``det trial download`` for downloading checkpoints locally.
+Determined offers the following CLI commands for downloading checkpoints locally:
+
+#. ``det checkpoint download``,
+#. ``det trial download``,
+#. ``det experiment download``
+
+The ``det checkpoint download`` command downloads a checkpoint for the given
+UUID as shown below:
+
+.. code::
+
+  # download a specific checkpoint
+  det checkpoint download 46985143-af68-4d48-ab91-a6447052ca49
+
+The command should display output resembling the following upon successfully
+downloading the checkpoint.
+::
+
+  Local checkpoint path:
+  checkpoints/46985143-af68-4d48-ab91-a6447052ca49
+
+       Batch | Checkpoint UUID                      | Validation Metrics
+  -----------+--------------------------------------+---------------------------------------------
+        1000 | 46985143-af68-4d48-ab91-a6447052ca49 | {
+             |                                      |     "num_inputs": 0,
+             |                                      |     "validation_metrics": {
+             |                                      |         "loss": 7.906739711761475,
+             |                                      |         "accuracy": 0.9646000266075134,
+             |                                      |         "global_step": 1000,
+             |                                      |         "average_loss": 0.12492649257183075
+             |                                      |     }
+             |                                      | }
+
+
+
+The ``det trial download`` command downloads checkpoints for a specified trial.
 Similar to the :class:`TrialReference <determined.experimental.TrialReference>`
-above, the command accepts ``--best``, ``--latest``, and ``--uuid`` options.
+above, the ``det trial download`` command accepts ``--best``, ``--latest``, and
+``--uuid`` options.
 
 .. code::
 
   # download best checkpoint
   det trial download <trial_id> --best
 
-The command should display the following upon successfully downloading the
-checkpoint.
+The command should display output resembling the following upon successfully
+downloading the checkpoint.
 ::
 
   Local checkpoint path:
@@ -179,6 +215,59 @@ The ``--latest`` and ``--uuid`` options are used as follows:
   # download a specific checkpoint
   det trial download <trial_id> --uuid <uuid-for-checkpoint>
 
+Finally, the ``det experiment download`` command provides a similar experience
+to using the above :class:`ExperimentReference <determined.experimental.ExperimentReference>`.
+
+.. code:: bash
+
+  # download the best checkpoint for a given experiment
+  det experiment download <experiment_id>
+
+  # download the best N checkpoints for a given experiment
+  det experiment download <experiment_id> --top-n 3
+
+The command should display output resembling the following upon successfully
+downloading the checkpoint(s).
+::
+
+  Local checkpoint path:
+  checkpoints/8d45f621-8652-4268-8445-6ae9a735e453
+
+       Batch | Checkpoint UUID                      | Validation Metrics
+  -----------+--------------------------------------+------------------------------------------
+         400 | 8d45f621-8652-4268-8445-6ae9a735e453 | {
+             |                                      |     "num_inputs": 56,
+             |                                      |     "validation_metrics": {
+             |                                      |         "val_loss": 0.26509127765893936,
+             |                                      |         "val_categorical_accuracy": 1
+             |                                      |     }
+             |                                      | }
+
+  Local checkpoint path:
+  checkpoints/62131ba1-983c-49a8-98ef-36207611d71f
+
+       Batch | Checkpoint UUID                      | Validation Metrics
+  -----------+--------------------------------------+------------------------------------------
+        1600 | 62131ba1-983c-49a8-98ef-36207611d71f | {
+             |                                      |     "num_inputs": 50,
+             |                                      |     "validation_metrics": {
+             |                                      |         "val_loss": 0.04411194706335664,
+             |                                      |         "val_categorical_accuracy": 1
+             |                                      |     }
+             |                                      | }
+
+  Local checkpoint path:
+  checkpoints/a36d2a61-a384-44f7-a84b-8b30b09cb618
+
+       Batch | Checkpoint UUID                      | Validation Metrics
+  -----------+--------------------------------------+------------------------------------------
+         400 | a36d2a61-a384-44f7-a84b-8b30b09cb618 | {
+             |                                      |     "num_inputs": 46,
+             |                                      |     "validation_metrics": {
+             |                                      |         "val_loss": 0.07265569269657135,
+             |                                      |         "val_categorical_accuracy": 1
+             |                                      |     }
+             |                                      | }
 
 Loading from a Local Path
 -------------------------
