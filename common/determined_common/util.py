@@ -38,3 +38,7 @@ def sizeof_fmt(val: Union[int, float]) -> str:
 
 def get_default_master_address() -> str:
     return os.environ.get("DET_MASTER", os.environ.get("DET_MASTER_ADDR", "localhost:8080"))
+
+
+def debug_mode() -> bool:
+    return os.getenv("DET_DEBUG", "").lower() in ("true", "1", "yes")

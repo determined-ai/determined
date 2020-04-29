@@ -148,23 +148,24 @@ def generate_test_hparam_values(config: Dict[str, Any]) -> Dict[str, Any]:
 def make_test_workloads(
     checkpoint_dir: pathlib.Path, config: det.ExperimentConfig
 ) -> workload.Stream:
-    print("Start training a test experiment.")
     interceptor = workload.WorkloadResponseInterceptor()
 
-    print("Training 1 step.")
+    print("Training one batch")
     yield from interceptor.send(workload.train_workload(1), [config.batches_per_step()])
     metrics = interceptor.metrics_result()
     batch_metrics = metrics["batch_metrics"]
     check.eq(len(batch_metrics), config.batches_per_step())
-    print(f"Finished training. Metrics: {batch_metrics}")
+    if util.debug_mode():
+        print(f"Finished training, metrics: {batch_metrics}")
 
-    print("Validating.")
+    print("Validating one step")
     yield from interceptor.send(workload.validation_workload(1), [])
     validation = interceptor.metrics_result()
     v_metrics = validation["validation_metrics"]
-    print(f"Finished validating. Validation metrics: {v_metrics}")
+    if util.debug_mode():
+        print(f"Finished validating, validation metrics: {v_metrics}")
 
-    print(f"Saving a checkpoint to {checkpoint_dir}")
+    print(f"Saving a checkpoint to {checkpoint_dir}.")
     yield workload.checkpoint_workload(), [checkpoint_dir], workload.ignore_workload_response
     print(f"Finished saving a checkpoint to {checkpoint_dir}.")
 
@@ -379,15 +380,15 @@ def _init_native(
             sys.exit(0)
 
     elif Mode(mode) == Mode.LOCAL:
-        print("Starting a test experiment locally.")
+        print("Running a minimal test experiment locally")
         checkpoint_dir = tempfile.TemporaryDirectory()
         env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
             checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
         )
-        print(
-            f"Using a modified test config: {env.experiment_config}.\n"
-            f"Using a set of random hyperparameter values: {env.hparams}."
-        )
+        print(f"Using hyperparameters: {env.hparams}")
+        if util.debug_mode():
+            print(f"Using a test experiment config: {env.experiment_config}")
+
         controller_cls.pre_execute_hook(env=env, hvd_config=hvd_config)
         context = native_context_cls(env=env, hvd_config=hvd_config)
 
@@ -436,19 +437,19 @@ def test_one_batch(
     # TODO(DET-2931): Make the validation step a single batch as well.
     config = {**(config or {}), "batches_per_step": 1}
 
-    print("Starting a test experiment locally.")
+    print("Running a minimal test experiment locally")
     checkpoint_dir = tempfile.TemporaryDirectory()
     env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
         checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
     )
-    print(
-        f"Using a modified test config: {env.experiment_config}.\n"
-        f"Using a set of random hyperparameter values: {env.hparams}."
-    )
+    print(f"Using hyperparameters: {env.hparams}")
+    if util.debug_mode():
+        print(f"Using a test experiment config: {env.experiment_config}")
 
     with local_execution_manager(context_path):
         if not trial_class:
-            print("Loading trial class from experiment configuration")
+            if util.debug_mode():
+                print("Loading trial class from experiment configuration")
             trial_class = load.load_trial_implementation(env.experiment_config["entrypoint"])
 
         controller = load.load_controller_from_trial(
