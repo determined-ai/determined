@@ -63,11 +63,11 @@ commands:
         type: boolean
         default: false
     steps:
-      - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-4bd937a
+      - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-e6662e6
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.1-cpu-4bd937a
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.1-cpu-e6662e6
 
 
   build-docker-images:

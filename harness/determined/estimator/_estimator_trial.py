@@ -620,7 +620,7 @@ class EstimatorTrial(det.Trial):
     """
     By default, experiments run with TensorFlow 1.x. To configure your trial to
     use TensorFlow 2.x, set a TF 2.x image in the experiment configuration
-    (e.g. ``determinedai/environments:cuda-10-pytorch-1.4-tf-2.1-gpu-0.2.0``).
+    (e.g. ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.1-gpu-0.3.0``).
 
     ``EstimatorTrial`` supports TF 2.x; however it uses TensorFlow V1
     behavior. We have disabled TensorFlow V2 behavior for ``EstimatorTrial``,
