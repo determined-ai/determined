@@ -200,6 +200,10 @@ Resources:
           Value: !Ref AWS::StackName
       VpcSecurityGroupIds:
         - !GetAtt DatabaseSecurityGroup.GroupId
+      ScalingConfiguration:
+        AutoPause: false
+        MinCapacity: 8
+        MaxCapacity: 32
 
   LogGroup:
     Type: AWS::Logs::LogGroup
