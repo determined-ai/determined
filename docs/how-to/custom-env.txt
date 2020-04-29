@@ -83,8 +83,8 @@ hyperparameters for the current trial.
 .. note::
 
 	The default images are
-	``determinedai/environments:cuda-10-pytorch-1.4-tf-1.14-gpu-0.2.0`` and
-	``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-0.2.0`` for GPU
+	``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-0.3.0`` and
+	``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-0.3.0`` for GPU
 	and CPU respectively.
 
 
@@ -106,8 +106,8 @@ This can be configured in  your experiment configuration like below:
 
    environment:
      image:
-     - gpu: "determinedai/environments:cuda-10-pytorch-1.4-tf-2.1-gpu-0.2.0"
-     - cpu: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.1-cpu-0.2.0"
+     - gpu: "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.1-gpu-0.3.0"
+     - cpu: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.1-cpu-0.3.0"
 
 
 Custom Docker Images in Determined
@@ -134,7 +134,7 @@ on their respective dependency file format.
 
 .. code:: docker
 
-  FROM determinedai/environments:cuda-10-py-3.6.9-pytorch-1.4-tf-1.14-gpu-0.2.0
+  FROM determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-0.3.0
   RUN apt-get update && apt-get install -y unzip python-opencv graphviz
   COPY environment.yml /tmp/environment.yml
   COPY pip_requirements.txt /tmp/pip_requirements.txt
