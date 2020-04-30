@@ -9,6 +9,7 @@ Useful References:
 
 Based on: https://pytorch.org/tutorials/intermediate/torchvision_tutorial.html
 """
+import copy
 from typing import Any, Dict, Sequence, Union
 
 import torch
@@ -91,7 +92,7 @@ class ObjectDetectionTrial(PyTorchTrial):
 
     def evaluate_batch(self, batch: TorchData, model: nn.Module) -> Dict[str, Any]:
         images, targets = batch
-        output = model(list(images), list(targets))
+        output = model(list(images), copy.deepcopy(list(targets)))
         sum_iou = 0
         num_boxes = 0
 
