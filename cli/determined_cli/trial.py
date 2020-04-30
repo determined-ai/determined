@@ -8,7 +8,6 @@ from termcolor import colored
 
 from determined_cli import render
 from determined_common import api, constants
-from determined_common.api import gql
 from determined_common.experimental import Determined
 
 from .checkpoint import format_checkpoint, format_validation, render_checkpoint
@@ -18,46 +17,32 @@ from .user import authentication_required
 
 @authentication_required
 def describe_trial(args: Namespace) -> None:
-    q = api.GraphQLQuery(args.master)
-    trial = q.op.trials_by_pk(id=args.trial_id)
-    trial.end_time()
-    trial.experiment_id()
-    trial.hparams()
-    trial.start_time()
-    trial.state()
+    if args.metrics:
+        r = api.get(args.master, "trials/{}/metrics".format(args.trial_id))
+    else:
+        r = api.get(args.master, "trials/{}".format(args.trial_id))
 
-    steps = trial.steps(order_by=[gql.steps_order_by(id=gql.order_by.asc)])
-    steps.metrics()
-    steps.id()
-    steps.state()
-    steps.start_time()
-    steps.end_time()
-
-    checkpoint_gql = steps.checkpoint()
-    checkpoint_gql.state()
-    checkpoint_gql.uuid()
-
-    validation = steps.validation()
-    validation.state()
-    validation.metrics()
-
-    resp = q.send()
+    trial = r.json()
 
     if args.json:
-        print(json.dumps(resp.trials_by_pk.__to_json_value__(), indent=4))
+        print(json.dumps(trial, indent=4))
         return
 
-    trial = resp.trials_by_pk
-
     # Print information about the trial itself.
-    headers = ["Experiment ID", "State", "H-Params", "Start Time", "End Time"]
+    headers = [
+        "Experiment ID",
+        "State",
+        "H-Params",
+        "Start Time",
+        "End Time",
+    ]
     values = [
         [
-            trial.experiment_id,
-            trial.state,
-            json.dumps(trial.hparams, indent=4),
-            render.format_time(trial.start_time),
-            render.format_time(trial.end_time),
+            trial["experiment_id"],
+            trial["state"],
+            json.dumps(trial["hparams"], indent=4),
+            render.format_time(trial["start_time"]),
+            render.format_time(trial["end_time"]),
         ]
     ]
     render.tabulate_or_csv(headers, values, args.csv)
@@ -78,15 +63,15 @@ def describe_trial(args: Namespace) -> None:
 
     values = [
         [
-            s.id,
-            s.state,
-            render.format_time(s.start_time),
-            render.format_time(s.end_time),
-            *format_checkpoint(s.checkpoint),
-            *format_validation(s.validation),
-            *([json.dumps(s.metrics, indent=4)] if args.metrics else []),
+            s["id"],
+            s["state"],
+            render.format_time(s["start_time"]),
+            render.format_time(s["end_time"]),
+            *format_checkpoint(s["checkpoint"]),
+            *format_validation(s["validation"]),
+            *([json.dumps(s["metrics"], indent=4)] if args.metrics else []),
         ]
-        for s in trial.steps
+        for s in trial["steps"]
     ]
 
     print()
