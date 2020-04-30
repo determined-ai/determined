@@ -135,10 +135,13 @@ Determined in any way.
 Master Configuration
 ====================
 
-A cluster configuration is a YAML file that controls the behavior of
-Determined as a whole. It is normally located at
-``/etc/determined/master.yaml`` on the master, and it is read when the
-master starts. It may contain the following fields:
+The Determined master supports a range of configuration settings that
+can be set via a :ref:`YAML configuration file <topic-guides_yaml>`,
+environment variables, or command-line options. The configuration file
+is normally located at ``/etc/determined/master.yaml`` on the master and
+is read when the master starts.
+
+The master supports the following configuration settings:
 
 - ``scheduler``: Specifies how Determined schedules tasks to agents.
 
@@ -205,7 +208,7 @@ master starts. It may contain the following fields:
 
   - ``startup_script``: Startup script for the node the agent runs on.
     This script will run right away when agent instances start up.
-    For example, it can be used for formating and mounting a disk. Defaults
+    For example, it can be used for formatting and mounting a disk. Defaults
     to an empty string.
 
   - ``container_startup_script``: Startup script for the container 
@@ -430,8 +433,9 @@ master starts. It may contain the following fields:
     same on all agent hosts (e.g., by using a distributed or network
     file system such as GlusterFS or NFS).
 
-    - ``host_path``: The file system path on each agent to use. This directory
-			will be mounted to ``/determined_shared_fs`` inside the trial container.
+    - ``host_path``: The file system path on each agent to use. This
+      directory will be mounted to ``/determined_shared_fs`` inside the
+      trial container.
     - ``storage_path``: The optional path where checkpoints will be
       written to and read from. Must be a subdirectory of the
       ``host_path`` or an absolute path containing the ``host_path``.

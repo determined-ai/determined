@@ -52,7 +52,7 @@ Installing Docker
 
 Docker is a dependency of several components of the Determined
 system. For example, every agent node must have Docker installed to
-allow it to run containerized workloads. Similarly, 
+allow it to run containerized workloads.
 
 Install on Linux
 ~~~~~~~~~~~~~~~~~
@@ -128,6 +128,8 @@ Install on MacOS
 
       open /Applications/Docker.app
 
-Docker on MacOS does not support running containers that use GPUs. As a
-result, Determined agents on MacOS will only be able to run CPU-based
-workloads.
+.. note::
+
+    Docker on MacOS does not support running containers that use GPUs. As a
+    result, Determined agents on MacOS will only be able to run CPU-based
+    workloads.
