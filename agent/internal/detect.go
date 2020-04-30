@@ -10,6 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/shirou/gopsutil/cpu"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/device"
 )
@@ -69,7 +70,8 @@ func detectGPUs(visibleGPUs string) ([]device.Device, error) {
 	if execError, ok := err.(*exec.Error); ok && execError.Err == exec.ErrNotFound {
 		return nil, nil
 	} else if err != nil {
-		return nil, errors.Wrapf(err, "error while executing nvidia-smi (output: %s)", string(out))
+		log.WithError(err).WithField("output", string(out)).Warnf("error while executing nvidia-smi")
+		return nil, nil
 	}
 
 	devices := make([]device.Device, 0)

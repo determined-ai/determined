@@ -9,6 +9,7 @@ import (
 
 	"github.com/docker/docker/client"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -24,7 +25,8 @@ func getNvidiaVersion() (string, error) {
 	if execError, ok := err.(*exec.Error); ok && execError.Err == exec.ErrNotFound {
 		return "", nil
 	} else if err != nil {
-		return "", errors.Wrapf(err, "error while executing nvidia-smi (output: %s)", string(out))
+		log.WithError(err).WithField("output", string(out)).Warnf("error while executing nvidia-smi")
+		return "", nil
 	}
 
 	r := csv.NewReader(strings.NewReader(string(out)))
