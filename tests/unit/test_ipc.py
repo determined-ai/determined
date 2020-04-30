@@ -110,12 +110,12 @@ def test_broadcast_server_client() -> None:
                 for subproc in subprocs:
                     assert subproc.is_alive()
 
-            gathered = broadcast_server.gather_with_polling(health_check)
+            gathered, _ = broadcast_server.gather_with_polling(health_check)
             assert all(isinstance(g, ipc.ReadyMessage) for g in gathered)
 
             for msg in msgs:
                 broadcast_server.broadcast(msg)
-                gathered = broadcast_server.gather_with_polling(health_check)
+                gathered, _ = broadcast_server.gather_with_polling(health_check)
                 assert all(g == 2 * msg for g in gathered)
 
 
