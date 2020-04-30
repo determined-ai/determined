@@ -42,7 +42,7 @@ class ConnectedMessage:
 
 class ReadyMessage:
     """
-    ReadyMessage is sent by a SubprocessLauncher to the SubprocessReceiver when it is ready to
+    ReadyMessage is sent by a SubprocessReceiver to the SubprocessLauncher when it is ready to
     start receiving workloads.
     """
 
@@ -58,6 +58,14 @@ class _SerialMessage:
     def __init__(self, serial: int, payload: Any) -> None:
         self.serial = serial
         self.payload = payload
+
+
+class _ExceptionMessage:
+    """
+    _ExceptionMessage is sent by a training subprocess to indicate that an exception has occurred.
+    """
+
+    pass
 
 
 class ZMQBroadcastServer:
@@ -133,36 +141,43 @@ class ZMQBroadcastServer:
         self._pub_socket.send_pyobj(_SerialMessage(self._send_serial, obj))
         self._send_serial += 1
 
-    def gather_with_polling(self, health_check: Callable[[], None]) -> List[Any]:
+    def gather_with_polling(self, health_check: Callable[[], None]) -> Tuple[List[Any], bool]:
         """
         Gather a response message from each connection, with a health_check callback that can raise
-        an error if something goes wrong.
+        an error if something goes wrong. Returns list of messages and whether any of the senders
+        indicate an exception.
         """
-        return self._recv_all_with_polling(health_check)
-
-    def _recv_all_with_polling(self, health_check: Callable[[], None]) -> List[Any]:
         messages = []  # type: List[Any]
         while len(messages) < self._num_connections:
             if self._pull_socket.poll(1000) == 0:
                 # Call the polling function (probably check if a subprocess is alive).
                 health_check()
                 continue
-            messages.append(self._recv_one(self._recv_serial))
+
+            message, message_type = self._recv_one()
+            messages.append(message)
+
+            if message_type is _ExceptionMessage:
+                return messages, True
 
         self._recv_serial += 1
 
-        return messages
+        return messages, False
 
-    def _recv_one(self, serial: int) -> Any:
+    def _recv_one(self) -> Tuple[Any, type]:
         """
         Receive one _SerialMessage from the socket and confirm that it is in-order.
         """
 
         obj = self._pull_socket.recv_pyobj()
 
+        if isinstance(obj, _ExceptionMessage):
+            return None, _ExceptionMessage
+
         if isinstance(obj, _SerialMessage):
-            check.eq(obj.serial, serial, "Out-of-order client message detected")
-            return obj.payload
+            check.eq(obj.serial, self._recv_serial, "Out-of-order client message detected")
+            return obj.payload, _SerialMessage
+
         raise AssertionError(f"Unexpected message type encountered: {type(obj)}")
 
 
@@ -194,6 +209,10 @@ class ZMQBroadcastClient:
     def send(self, obj: Any) -> None:
         message = _SerialMessage(self._send_serial, obj)
         self._send_serial += 1
+        self._push_socket.send_pyobj(message)
+
+    def send_exception_message(self) -> None:
+        message = _ExceptionMessage()
         self._push_socket.send_pyobj(message)
 
     def recv(self) -> Any:

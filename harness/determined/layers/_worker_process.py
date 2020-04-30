@@ -230,7 +230,13 @@ class SubprocessLauncher:
 
     def _do_startup_message_sequence(self) -> None:
         # Wait for a ReadyMessage from every worker.
-        responses = self.broadcast_server.gather_with_polling(self._health_check)
+        responses, exception_received = self.broadcast_server.gather_with_polling(
+            self._health_check
+        )
+
+        if exception_received:
+            raise det.errors.WorkerError("Training process died.")
+
         for response in responses:
             check.is_instance(
                 response,
@@ -271,11 +277,16 @@ class SubprocessLauncher:
         self.broadcast_server.broadcast((wkld, args))
 
         try:
-            responses = self.broadcast_server.gather_with_polling(self._health_check)
+            responses, exception_received = self.broadcast_server.gather_with_polling(
+                self._health_check
+            )
         except det.errors.WorkerError:
             if wkld.kind == workload.Workload.Kind.TERMINATE:
                 return {}
             raise
+
+        if exception_received:
+            raise det.errors.WorkerError("Training process died.")
 
         # Find the response from the chief worker for the trial (the only non-SkippedWorkload). The
         # chief may report to another container, in which case we will only have SkippedWorkloads.

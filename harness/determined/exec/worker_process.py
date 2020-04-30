@@ -44,7 +44,13 @@ def main() -> None:
             worker_process_env.rendezvous_info,
             worker_process_env.hvd_config,
         )
-        controller.run()
+
+        try:
+            controller.run()
+
+        except Exception as e:
+            broadcast_client.send_exception_message()
+            raise e
 
 
 if __name__ == "__main__":
