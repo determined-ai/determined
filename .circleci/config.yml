@@ -225,6 +225,7 @@ commands:
         type: string
         default: "8080"
     steps:
+      - run: circleci tests glob "tests/integrations/**/test*.py" | circleci tests split --split-by=timings > /tmp/tests-to-run
       - run: |
           pytest -vv -s \
           -m <<parameters.mark>> \
@@ -232,7 +233,7 @@ commands:
           --master-host="<<parameters.master-host>>" \
           --master-port="<<parameters.master-port>>" \
           --junit-xml="<<parameters.junit-path>>" \
-          tests/integrations
+          $(cat /tmp/tests-to-run)
 
   deploy-aws-cluster:
     parameters:
@@ -267,6 +268,66 @@ commands:
           command: |
             det-deploy aws down \
               --cluster-id <<parameters.cluster-id>>
+
+
+  setup-aws-cluster:
+    parameters:
+      cluster-id:
+        type: string
+      det-version:
+        type: string
+      agent-instance-type:
+        type: string
+        default: "p2.xlarge"
+    steps:
+      - set-cluster-id:
+          cluster-id: <<parameters.cluster-id>>
+      - deploy-aws-cluster:
+          cluster-id: ${CLUSTER_ID}
+          det-version: <<parameters.det-version>>
+          agent-instance-type: <<parameters.agent-instance-type>>
+      - set-master-address:
+          cluster-id: ${CLUSTER_ID}
+      - wait-for-master:
+          host: ${MASTER_HOST}
+
+  install-webui-test-deps:
+    steps:
+      - run: |
+          . /opt/circleci/.nvm/nvm.sh
+          nvm install v12
+          nvm alias default v12
+          make -C webui/tests get-deps
+
+
+  setup-local-cluster:
+    parameters:
+      det-version:
+        type: string
+    steps:
+      - run: |
+          export DET_VERSION=<<parameters.det-version>>
+          export MASTER_HOST=$(ip route | grep docker0 | sed "s/^.*src \(.*\) linkdown.*$/\1/g")
+          docker-compose -f CI/e2e/docker-compose.yaml up -d
+      - wait-for-master:
+          host: localhost
+
+  run-e2e-webui-tests:
+    steps:
+      - run: python webui/tests/bin/createUserAndExperiments.py
+      - run: |
+          mkdir -p webui/tests/results
+          docker run \
+            --name e2e_cypress \
+            --network=e2e_default \
+            --mount type=bind,source=$(pwd)/webui,target=/webui \
+            -w /webui/tests \
+            --env DET_MASTER=determined-master:8080 \
+            cypress/included:4.3.0 \
+            --config-file cypress-docker.json \
+            --config "defaultCommandTimeout=30000,baseUrl=http://determined-master:8080" \
+            --browser chrome \
+            --headless
 
   set-master-address:
     parameters:
@@ -346,46 +407,15 @@ jobs:
       - install-docker
       - build-docker-images
 
+      - install-webui-test-deps
       - run: pyenv global 3.6.5
-      - run: |
-          . /opt/circleci/.nvm/nvm.sh
-          nvm install v12
-          nvm alias default v12
-          make -C webui/tests get-deps
       - setup-python-venv:
           determined-common: true
           determined-cli: true
           executor: ubuntu-1604:201903-01
-
-      - run: DET_VERSION=<< pipeline.parameters.det-version >> MASTER_HOST=$(ip route | grep docker0 | sed "s/^.*src \(.*\) linkdown.*$/\1/g") docker-compose -f CI/e2e/docker-compose.yaml up -d
-      - run: |
-          attempt_counter=0
-          max_attempts=10
-
-          until $(curl --output /dev/null --silent --head http://localhost:8080); do
-              if [ ${attempt_counter} -eq ${max_attempts} ];then
-                echo "Max attempts reached"
-                exit 1
-              fi
-
-              printf '.'
-              attempt_counter=$(($attempt_counter+1))
-              sleep 2
-          done
-      - run: python webui/tests/bin/createUserAndExperiments.py
-      - run: mkdir -p webui/tests/results
-      - run: |
-          docker run \
-            --name e2e_cypress \
-            --network=e2e_default \
-            --mount type=bind,source=$(pwd)/webui,target=/webui \
-            -w /webui/tests \
-            --env DET_MASTER=determined-master:8080 \
-            cypress/included:4.3.0 \
-            --config-file cypress-docker.json \
-            --config "defaultCommandTimeout=30000,baseUrl=http://determined-master:8080" \
-            --browser chrome \
-            --headless
+      - setup-local-cluster:
+          det-version: ${CIRCLE_SHA1}
+      - run-e2e-webui-tests
       - store_test_results:
           path: webui/tests/results/
       - store_artifacts:
@@ -551,13 +581,9 @@ jobs:
       - pull-task-images:
           tf2: true
 
-      - run: |
-          . /tmp/venv/bin/activate && \
-          pytest -vv -s \
-          -m "tensorflow_cpu" \
-          --durations=0 \
-          --junit-xml=/tmp/test-results/e2e/tests.xml \
-          tests/integrations
+      - run-e2e-tests:
+          mark: "tensorflow_cpu"
+          master-host: localhost
       - store_test_results:
           path: /tmp/test-results/
 
@@ -582,14 +608,10 @@ jobs:
 
       - pull-task-images
 
-      - run: circleci tests glob "tests/integrations/**/test*.py" | circleci tests split --split-by=timings > /tmp/tests-to-run
-      - run: |
-          . /tmp/venv/bin/activate && \
-          pytest -vv -s \
-          -m "e2e_cpu" \
-          --durations=0 \
-          --junit-xml=/tmp/test-results/e2e/tests.xml \
-          $(cat /tmp/tests-to-run)
+      - run-e2e-tests:
+          mark: "e2e_cpu"
+          master-host: localhost
+
       - store_test_results:
           path: /tmp/test-results/
 
@@ -639,15 +661,9 @@ jobs:
           determined-deploy: true
           extra-requirements-file: "tests/integrations/requirements.txt"
           executor: python:3.6.9
-      - set-cluster-id:
-          cluster-id: nightly-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}
-      - deploy-aws-cluster:
-          cluster-id: ${CLUSTER_ID}
+      - setup-aws-cluster:
+          cluster-id: nightly-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
-      - set-master-address:
-          cluster-id: ${CLUSTER_ID}
-      - wait-for-master:
-          host: ${MASTER_HOST}
       - run-e2e-tests:
           mark: "nightly"
           master-host: ${MASTER_HOST}
@@ -674,24 +690,12 @@ jobs:
           determined-deploy: true
           extra-requirements-file: "tests/integrations/requirements.txt"
           executor: python:3.6.9
-      - set-cluster-id:
+      - setup-aws-cluster:
           cluster-id: e2e-gpu-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
-      - deploy-aws-cluster:
-          cluster-id: ${CLUSTER_ID}
           det-version: ${CIRCLE_SHA1}
-      - set-master-address:
-          cluster-id: ${CLUSTER_ID}
-      - wait-for-master:
-          host: ${MASTER_HOST}
-      - run: circleci tests glob "tests/integrations/**/test*.py" | circleci tests split --split-by=timings > /tmp/tests-to-run
-      - run: |
-          . /tmp/venv/bin/activate && \
-          pytest -vv -s \
-          -m "e2e_gpu" \
-          --durations=0 \
-          --master-host=${MASTER_HOST} \
-          --junit-xml=/tmp/test-results/e2e/tests.xml \
-          $(cat /tmp/tests-to-run)
+      - run-e2e-tests:
+          mark: "e2e_gpu"
+          master-host: ${MASTER_HOST}
       - terminate-aws-cluster:
           cluster-id: ${CLUSTER_ID}
       - store_test_results:
@@ -716,25 +720,13 @@ jobs:
           determined-deploy: true
           extra-requirements-file: "tests/integrations/requirements.txt"
           executor: python:3.6.9
-      - set-cluster-id:
+      - setup-aws-cluster:
           cluster-id: parallel-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
-      - deploy-aws-cluster:
-          cluster-id: ${CLUSTER_ID}
           det-version: ${CIRCLE_SHA1}
           agent-instance-type: "p2.8xlarge"
-      - set-master-address:
-          cluster-id: ${CLUSTER_ID}
-      - wait-for-master:
-          host: ${MASTER_HOST}
-      - run: circleci tests glob "tests/integrations/**/test*.py" | circleci tests split --split-by=timings > /tmp/tests-to-run
-      - run: |
-          . /tmp/venv/bin/activate && \
-          pytest -vv -s \
-          -m "parallel" \
-          --durations=0 \
-          --master-host=${MASTER_HOST} \
-          --junit-xml=/tmp/test-results/e2e/tests.xml \
-          $(cat /tmp/tests-to-run)
+      - run-e2e-tests:
+          mark: "parallel"
+          master-host: ${MASTER_HOST}
       - terminate-aws-cluster:
           cluster-id: ${CLUSTER_ID}
       - store_test_results:
