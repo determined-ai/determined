@@ -31,7 +31,7 @@ FROM
                       c.labels
                FROM checkpoints c
                WHERE c.trial_id = t.id
-                 AND c.step_id = s.id ) r3) ASCHECKPOINT,
+                 AND c.step_id = s.id ) r3) AS CHECKPOINT,
 
            (SELECT row_to_json(r4)
             FROM

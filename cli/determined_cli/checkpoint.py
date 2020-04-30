@@ -1,6 +1,6 @@
 import json
 from argparse import Namespace
-from typing import Any, List
+from typing import Any, Dict, List
 
 from determined_common import api, constants, experimental
 from determined_common.api import gql
@@ -10,29 +10,29 @@ from . import render, user
 from .declarative_argparse import Arg, Cmd
 
 
-def format_validation(validation: gql.validations) -> List[Any]:
+def format_validation(validation: Dict[str, Any]) -> List[Any]:
     if not validation:
         return [None, None]
 
-    if validation.state == constants.COMPLETED:
-        return [constants.COMPLETED, json.dumps(validation.metrics, indent=4)]
-    elif validation.state in (constants.ACTIVE, constants.ERROR):
-        return [validation.state, None]
+    if validation["state"] == constants.COMPLETED:
+        return [constants.COMPLETED, json.dumps(validation["metrics"], indent=4)]
+    elif validation["state"] in (constants.ACTIVE, constants.ERROR):
+        return [validation["state"], None]
     else:
-        raise AssertionError("Invalid validation state: {}".format(validation.state))
+        raise AssertionError("Invalid validation state: {}".format(validation["state"]))
 
 
 # TODO(neilc): Report more info about checkpoints and validations.
-def format_checkpoint(checkpoint: gql.checkpoints) -> List[Any]:
+def format_checkpoint(checkpoint: Dict[str, Any]) -> List[Any]:
     if not checkpoint:
         return [None, None]
 
-    if checkpoint.state in (constants.COMPLETED, constants.DELETED):
-        return [checkpoint.state, checkpoint.uuid]
-    elif checkpoint.state in (constants.ACTIVE, constants.ERROR):
-        return [checkpoint.state, None]
+    if checkpoint["state"] in (constants.COMPLETED, constants.DELETED):
+        return [checkpoint["state"], checkpoint["uuid"]]
+    elif checkpoint["state"] in (constants.ACTIVE, constants.ERROR):
+        return [checkpoint["state"], None]
     else:
-        raise AssertionError("Invalid checkpoint state: {}".format(checkpoint.state))
+        raise AssertionError("Invalid checkpoint state: {}".format(checkpoint["state"]))
 
 
 def render_checkpoint(checkpoint: experimental.Checkpoint, path: str) -> None:
