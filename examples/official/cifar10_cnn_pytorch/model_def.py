@@ -24,13 +24,13 @@ NUM_CLASSES = 10
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 
-def error_rate(predictions: torch.Tensor, labels: torch.Tensor) -> float:
-    """Return the error rate based on dense predictions and dense labels."""
+def accuracy_rate(predictions: torch.Tensor, labels: torch.Tensor) -> float:
+    """Return the accuracy rate based on dense predictions and sparse labels."""
     assert len(predictions) == len(labels), "Predictions and labels must have the same length."
     assert len(labels.shape) == 1, "Labels must be a column vector."
 
     return (  # type: ignore
-        1.0 - float((predictions.argmax(1) == labels.to(torch.long)).sum()) / predictions.shape[0]
+        float((predictions.argmax(1) == labels.to(torch.long)).sum()) / predictions.shape[0]
     )
 
 
@@ -91,8 +91,8 @@ class CIFARTrial(PyTorchTrial):
 
         output = model(data)
         loss = torch.nn.functional.cross_entropy(output, labels)
-        error = error_rate(output, labels)
-        return {"loss": loss, "train_error": error}
+        accuracy = accuracy_rate(output, labels)
+        return {"loss": loss, "train_error": 1.0 - accuracy, "train_accuracy": accuracy}
 
     def evaluate_batch(self, batch: TorchData, model: nn.Module) -> Dict[str, Any]:
         """
@@ -103,15 +103,15 @@ class CIFARTrial(PyTorchTrial):
         data, labels = batch
 
         output = model(data)
-        error = error_rate(output, labels)
-        return {"validation_error": error}
+        accuracy = accuracy_rate(output, labels)
+        return {"validation_accuracy": accuracy, "validation_error": 1.0 - accuracy}
 
     def build_training_data_loader(self) -> Any:
         transform = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
         )
         trainset = torchvision.datasets.CIFAR10(
-            root=self.download_directory, train=False, download=True, transform=transform
+            root=self.download_directory, train=True, download=True, transform=transform
         )
         return DataLoader(trainset, batch_size=self.context.get_per_slot_batch_size())
 
