@@ -9,6 +9,16 @@ options. (Although values from different sources will be merged, we
 generally recommend sticking to a single source for each service to keep
 things simple.)
 
+Both the master and the agent can be configured using a configuration file by
+passing the ``--config-file`` command-line option as shown below.
+
+.. code::
+
+  docker run \
+    -v `pwd`/agent-config.yaml:/etc/determined/agent-config.yaml \
+    determinedai/determined-agent
+    --config-file /etc/determined/agent-config.yaml
+
 Each option in the configuration file corresponds directly to an
 environment variable or command-line option. For example, the master
 configuration file might contain
@@ -18,10 +28,20 @@ configuration file might contain
    db:
      host: the-db-host
 
+
 to configure the host where the PostgreSQL database is running. The same
 thing could be done by starting the master with the
 ``DET_DB_HOST=the-db-host`` environment variable or ``--db-host
 the-db-host`` command-line option.
+
+The agent configuration file might contain
+
+.. code:: yaml
+
+  master_address: 127.0.0.1
+  master_port: 8080
+
+to configure the address of the Determined master.
 
 In the rest of this document, we will refer to options using their names
 in the configuration file. Periods (``.``) will be used to indicate
@@ -471,3 +491,16 @@ The master supports the following configuration settings:
   usage of Determined.
 
   - ``enabled``: Whether collection is enabled. Defaults to ``true``.
+
+Agent Configuration
+===================
+
+- ``master_address`` (required): The hostname or IP address of the Determined master.
+- ``master_port`` (required): The port of the Determined master.
+- ``agent_id``: The ID of this agent; defaults to the hostname of the current
+  machine. Agent IDs must be unique within a cluster.
+- ``label``: An agent with a label will only be assigned workloads that have been assigned the same label.
+- ``visible_gpus``: The GPUs that should be exposed as slots by the agent. A comma-separated list of GPUs,
+  each specified by a 0-based index, UUID, PCI bus ID, or board serial number.
+  The 0-based index of NVIDIA GPUs can be obtained via the ``nvidia-smi``
+  command.
