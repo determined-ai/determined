@@ -68,7 +68,6 @@ class CIFARTrial(PyTorchTrial):
             nn.ReLU(),
             nn.Dropout2d(self.context.get_hparam("layer3_dropout")),
             nn.Linear(512, NUM_CLASSES),
-            nn.Softmax(dim=0),
         )
 
         # If loading backbone weights, do not call reset_parameters() or
@@ -91,7 +90,7 @@ class CIFARTrial(PyTorchTrial):
         data, labels = batch
 
         output = model(data)
-        loss = torch.nn.functional.nll_loss(output, labels)
+        loss = torch.nn.functional.cross_entropy(output, labels)
         error = error_rate(output, labels)
         return {"loss": loss, "train_error": error}
 
