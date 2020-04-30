@@ -17,3 +17,4 @@ searcher:
   max_steps: 50
   smaller_is_better: true
 entrypoint: model_def:CIFARTrial
+min_validation_period: 10

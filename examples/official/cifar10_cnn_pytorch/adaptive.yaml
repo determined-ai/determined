@@ -30,3 +30,4 @@ searcher:
   max_steps: 800
   max_trials: 16
 entrypoint: model_def:CIFARTrial
+min_validation_period: 10
