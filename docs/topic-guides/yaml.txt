@@ -4,8 +4,8 @@ YAML Topic Guide
 ================
 
 YAML is a markup language often used for configuration. In Determined, we use YAML
-for configuring tasks such as experiment and notebooks as well as configuring
-the Determined cluster.
+for configuring tasks such as experiments and notebooks, as well as :ref:`configuring
+the Determined cluster <cluster-configuration>`.
 
 Overview
 --------
@@ -26,7 +26,6 @@ particular key. Maps can be nested and combined with other YAML structures like
 arrays. Indents should be two spaces.
 
 We use a map in the experiment configuration to configure hyperparameters:
-
 
 .. code:: yaml
 
@@ -55,7 +54,7 @@ variables:
       - C=C
 
 
-Putting it all together
+Putting It All Together
 -----------------------
 Configurations usually use some combination of key-value pairs, maps, and
 arrays. In this example experiment configuration, we use key-value pairs,
