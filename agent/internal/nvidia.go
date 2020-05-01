@@ -1,19 +1,16 @@
 package internal
 
 import (
-	"context"
 	"encoding/csv"
 	"io"
 	"os/exec"
 	"strings"
 
-	"github.com/docker/docker/client"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	nvidiaRuntime        = "nvidia"
 	unknownNvidiaVersion = "Unknown"
 )
 
@@ -41,19 +38,4 @@ func getNvidiaVersion() (string, error) {
 			"error parsing output of nvidia-smi; GPU record should have exactly 1 field")
 	}
 	return record[0], nil
-}
-
-func nvidiaRuntimeInstalled() (bool, error) {
-	c, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		return false, errors.Wrap(err, "error connecting to docker daemon")
-	}
-
-	info, err := c.Info(context.Background())
-	if err != nil {
-		return false, errors.Wrap(err, "error retrieving docker system info")
-	}
-
-	_, ok := info.Runtimes[nvidiaRuntime]
-	return ok, nil
 }
