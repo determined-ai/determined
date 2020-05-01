@@ -183,24 +183,11 @@ func (a *agent) setup(ctx *actor.Context) error {
 				ID: i, Brand: "Artificial", UUID: id, Type: device.CPU})
 		}
 	} else {
-		switch ok, err := nvidiaRuntimeInstalled(); {
-		case err != nil:
+		d, err := detectDevices(a.Options.VisibleGPUs)
+		if err != nil {
 			return err
-		case ok:
-			ctx.Log().Info("Nvidia runtime detected")
-			d, err := detectDevices(a.Options.VisibleGPUs)
-			if err != nil {
-				return err
-			}
-			a.Devices = d
-		default:
-			ctx.Log().Warn("Nvidia runtime not found; defaulting to CPU devices")
-			d, err := detectCPUs()
-			if err != nil {
-				return err
-			}
-			a.Devices = d
 		}
+		a.Devices = d
 	}
 	ctx.Log().Info("detected compute devices:")
 	for _, d := range a.Devices {
