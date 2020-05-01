@@ -1,7 +1,6 @@
 module Page.LogViewer exposing (Model, Msg, OutMsg(..), init, subscriptions, update, view)
 
 import API
-import APIQL
 import Communication as Comm
 import Components.Logs as Logs
 import Html as H
@@ -38,7 +37,7 @@ logsConfig id keepPolling =
     , getId = .id
     , getText = .message
     , keepPolling = keepPolling
-    , poll = \handlers params -> APIQL.sendQuery handlers (APIQL.trialLogsQuery id params)
+    , poll = API.pollTrialLogs id
     }
 
 

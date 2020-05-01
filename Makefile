@@ -16,7 +16,6 @@
   fmt \
   get-deps \
   graphql \
-  graphql-elm \
   graphql-python \
   graphql-schema \
   pin-deps \
@@ -178,7 +177,7 @@ publish: guard-publish clean all
 
 # This target assumes that a Hasura instance is running and queries it to
 # retrieve the current schema files, producing a schema file that the
-# `graphql-elm` and `graphql-python` targets can then use to generate code
+# `graphql-python` target can then use to generate code
 # without having to have a server running.
 graphql-schema:
 	scripts/hasura/export-metadata.sh
@@ -193,12 +192,9 @@ graphql-python:
 	black common/determined_common/api/gql.py
 	isort common/determined_common/api/gql.py
 
-graphql-elm:
-	$(MAKE) -C webui/elm graphql
-
 graphql:
 	$(MAKE) graphql-schema
-	$(MAKE) graphql-python graphql-elm
+	$(MAKE) graphql-python
 
 check: check-python check-commit-messages
 	$(MAKE) -C master $@

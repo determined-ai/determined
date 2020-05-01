@@ -9,7 +9,6 @@ module Page.ExperimentList exposing
     )
 
 import API
-import APIQL
 import Browser.Navigation as Navigation
 import Communication as Comm
 import Components.AdvancedButton as Button
@@ -553,9 +552,8 @@ type OutMsg
 
 pollExperiments : Cmd Msg
 pollExperiments =
-    -- TODO: Get rid of the whole ExperimentResult thing, now that we have better-typed responses
-    -- from GraphQL.
-    APIQL.sendQuery (requestHandlersGet (GotExperiments << List.map Ok)) APIQL.experimentListQuery
+    requestHandlersGet GotExperiments
+        |> API.pollExperiments
 
 
 {-| Update the filter state using the given function. The function that is expected as the first

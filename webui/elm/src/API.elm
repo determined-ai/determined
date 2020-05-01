@@ -1,5 +1,5 @@
 module API exposing
-    ( APIError(..)
+    ( APIError
     , RequestHandlers
     , archiveExperiment
     , buildUrl
@@ -7,10 +7,21 @@ module API exposing
     , createExperiment
     , decodeCommandState
     , decodeDeterminedInfo
+    , decodeExperiment
+    , decodeExperimentMinimal
+    , decodeExperimentResult
+    , decodeExperimentSummaries
+    , decodeGitMetadata
+    , decodeLabels
     , decodeMaybe
+    , decodeResult
+    , decodeRunState
+    , decodeTrialSummary
     , decodeUser
+    , decodeValidationHistory
     , downloadTrialLogs
     , fetchDeterminedInfo
+    , getExperimentSummary
     , killCommand
     , killExperiment
     , killNotebook
@@ -18,11 +29,14 @@ module API exposing
     , killTensorBoard
     , launchNotebook
     , launchTensorBoard
+    , parseRunState
     , patchExperiment
     , pauseExperiment
     , pollCommandLogs
     , pollCommandTypeLogs
     , pollCommands
+    , pollExperimentSummary
+    , pollExperiments
     , pollMasterLogs
     , pollNotebookLogs
     , pollNotebooks
@@ -31,6 +45,8 @@ module API exposing
     , pollSlots
     , pollTensorBoardLogs
     , pollTensorBoards
+    , pollTrialDetail
+    , pollTrialLogs
     , trialDetailsPage
     , trialLogsPage
     )
@@ -46,11 +62,13 @@ import Json.Decode as D
         , bool
         , dict
         , fail
+        , float
         , int
         , list
         , nullable
         , string
         , succeed
+        , value
         )
 import Json.Decode.Pipeline as DP
     exposing
@@ -63,7 +81,7 @@ import Json.Decode.Pipeline as DP
         )
 import Json.Encode as E
 import Maybe.Extra
-import Set
+import Set exposing (Set)
 import Types
 import Url.Builder as UB
 
@@ -99,6 +117,11 @@ buildUrl parts params =
 
         Nothing ->
             UB.absolute parts params
+
+
+decodeResult : String -> (a -> Result e b) -> Decoder a -> Decoder b
+decodeResult err fn decoder =
+    decodeMaybe err (fn >> Result.toMaybe) decoder
 
 
 decodeMaybe : String -> (a -> Maybe b) -> Decoder a -> Decoder b
@@ -203,9 +226,41 @@ createExperiment requestHandlers id rawYamlConfig =
         (buildUrl [ "experiments" ] [])
 
 
+{-| XHR request for summary information about all experiments. For now,
+we fetch summary information of all experiments and implement filtering
+in the browser.
+-}
+pollExperiments : RequestHandlers msg (List Types.ExperimentResult) -> Cmd msg
+pollExperiments requestHandlers =
+    buildUrl [ "experiments" ] [ UB.string "filter" "all" ]
+        |> get (buildExpectJson decodeExperimentSummaries requestHandlers)
+
+
+getExperimentSummary : RequestHandlers msg Types.ExperimentResult -> Types.ID -> Cmd msg
+getExperimentSummary requestHandlers id =
+    buildUrl [ "experiments", String.fromInt id, "summary" ] []
+        |> get (buildExpectJson decodeExperimentResult requestHandlers)
+
+
+{-| XHR request for detailed information about an experiment.
+-}
+pollExperimentSummary : Types.ID -> RequestHandlers msg Types.ExperimentResult -> Cmd msg
+pollExperimentSummary eid requestHandlers =
+    buildUrl [ "experiments", String.fromInt eid, "summary" ] []
+        |> get (buildExpectJson decodeExperimentResult requestHandlers)
+
+
 downloadTrialLogs : Types.ID -> String
 downloadTrialLogs trialId =
     buildUrl [ "trials", String.fromInt trialId, "logs" ] [ UB.string "format" "raw" ]
+
+
+{-| XHR request for detailed information about a trial.
+-}
+pollTrialDetail : RequestHandlers msg Types.TrialDetail -> Types.ID -> Cmd msg
+pollTrialDetail requestHandlers tid =
+    buildUrl [ "trials", String.fromInt tid, "details" ] []
+        |> get (buildExpectJson decodeTrialDetail requestHandlers)
 
 
 trialDetailsPage : Types.ID -> String
@@ -236,6 +291,26 @@ pollMasterLogs requestHandlers { greaterThanId, lessThanId, tailLimit } =
                 ]
     in
     buildUrl [ "logs" ] params
+        |> get (buildExpectJson decodeTrialLogs requestHandlers)
+
+
+{-| XHR request for a trial's log messages.
+-}
+pollTrialLogs :
+    Types.ID
+    -> RequestHandlers msg (List Types.LogEntry)
+    -> { greaterThanId : Maybe Int, lessThanId : Maybe Int, tailLimit : Maybe Int }
+    -> Cmd msg
+pollTrialLogs tid requestHandlers { greaterThanId, lessThanId, tailLimit } =
+    let
+        params =
+            Maybe.Extra.values
+                [ Maybe.map (UB.int "greater_than_id") greaterThanId
+                , Maybe.map (UB.int "less_than_id") lessThanId
+                , Maybe.map (UB.int "tail") tailLimit
+                ]
+    in
+    buildUrl [ "trials", String.fromInt tid, "logs" ] params
         |> get (buildExpectJson decodeTrialLogs requestHandlers)
 
 
@@ -425,11 +500,31 @@ decodeDeterminedInfo =
         |> required "version" string
 
 
+{-| Decode a Json list of experiment summaries.
+-}
+decodeExperimentSummaries : Decoder (List Types.ExperimentResult)
+decodeExperimentSummaries =
+    list decodeExperimentResult
+
+
 decodeUser : Decoder Types.User
 decodeUser =
     D.succeed Types.User
         |> required "username" string
         |> required "id" int
+
+
+{-| Try decoding an experiment by first attempting the full decoding
+logic, then backing up to minimal decoding logic if the previous fails. This
+protects the entire application from crashing if there exists a bug in the
+decoding logic, or if the response breaks some invariant in the decoding logic.
+-}
+decodeExperimentResult : Decoder Types.ExperimentResult
+decodeExperimentResult =
+    D.oneOf
+        [ D.map Ok decodeExperiment
+        , D.map Err decodeExperimentMinimal
+        ]
 
 
 {-| Decode the minimal set of experiment details required by the web UI to
@@ -443,6 +538,202 @@ decodeExperimentMinimal =
         |> required "archived" bool
         |> requiredAt [ "config", "description" ] string
         |> hardcoded Set.empty
+
+
+{-| Decode a Json Experiment.
+-}
+decodeExperiment : Decoder Types.Experiment
+decodeExperiment =
+    D.at [ "config", "searcher", "metric" ] string
+        |> andThen
+            (\metric ->
+                D.succeed Types.Experiment
+                    |> required "id" int
+                    |> requiredAt [ "config", "description" ] string
+                    |> required "state" decodeRunState
+                    |> required "archived" bool
+                    |> required "config" (dict value)
+                    |> required "progress" (nullable float)
+                    |> required "start_time" Iso8601.decoder
+                    |> required "end_time" (nullable Iso8601.decoder)
+                    |> optional "validation_history"
+                        (D.map Just (list decodeValidationHistory))
+                        Nothing
+                    |> optional "trials"
+                        (D.map Just (list (decodeTrialSummary metric)))
+                        Nothing
+                    |> custom (D.maybe decodeGitMetadata)
+                    |> optionalAt [ "config", "labels" ] decodeLabels Set.empty
+                    |> optionalAt [ "config", "resources", "max_slots" ] (D.maybe int) Nothing
+                    |> required "owner" decodeUser
+            )
+
+
+decodeTrialDetail : Decoder Types.TrialDetail
+decodeTrialDetail =
+    succeed Types.TrialDetail
+        |> required "id" int
+        |> required "experiment_id" int
+        |> required "state" decodeRunState
+        |> required "seed" int
+        |> required "hparams" (dict D.value)
+        |> required "start_time" Iso8601.decoder
+        |> required "end_time" (nullable Iso8601.decoder)
+        |> required "warm_start_checkpoint_id" (nullable int)
+        |> required "steps" (list decodeStep)
+
+
+decodeStep : Decoder Types.Step
+decodeStep =
+    succeed Types.Step
+        |> required "id" int
+        |> required "state" decodeRunState
+        |> required "start_time" Iso8601.decoder
+        |> required "end_time" (nullable Iso8601.decoder)
+        |> required "avg_metrics" (nullable decodeMetrics)
+        |> required "validation" (nullable decodeValidation)
+        |> required "checkpoint" (nullable decodeCheckpoint)
+
+
+decodeResources : Decoder Types.Resources
+decodeResources =
+    dict D.int
+
+
+decodeCheckpoint : Decoder Types.Checkpoint
+decodeCheckpoint =
+    succeed Types.Checkpoint
+        |> required "id" int
+        |> required "step_id" int
+        |> required "trial_id" int
+        |> required "state" decodeCheckpointState
+        |> required "start_time" Iso8601.decoder
+        |> required "end_time" (nullable Iso8601.decoder)
+        |> required "uuid" (nullable string)
+        |> required "resources" (nullable decodeResources)
+        |> required "validation_metric" (nullable float)
+
+
+decodeValidation : Decoder Types.Validation
+decodeValidation =
+    succeed Types.Validation
+        |> required "id" int
+        |> required "state" decodeRunState
+        |> required "start_time" Iso8601.decoder
+        |> required "end_time" (nullable Iso8601.decoder)
+        |> required "metrics" (nullable decodeValidationMetrics)
+
+
+decodeRunState : Decoder Types.RunState
+decodeRunState =
+    decodeMaybe "invalid experiment state" parseRunState string
+
+
+parseRunState : String -> Maybe Types.RunState
+parseRunState s =
+    case s of
+        "ACTIVE" ->
+            Just Types.Active
+
+        "CANCELED" ->
+            Just Types.Canceled
+
+        "COMPLETED" ->
+            Just Types.Completed
+
+        "ERROR" ->
+            Just Types.Error
+
+        "PAUSED" ->
+            Just Types.Paused
+
+        "STOPPING_CANCELED" ->
+            Just Types.StoppingCanceled
+
+        "STOPPING_COMPLETED" ->
+            Just Types.StoppingCompleted
+
+        "STOPPING_ERROR" ->
+            Just Types.StoppingError
+
+        _ ->
+            Nothing
+
+
+decodeCheckpointState : Decoder Types.CheckpointState
+decodeCheckpointState =
+    decodeMaybe "invalid checkpoint state" parseCheckpointState string
+
+
+parseCheckpointState : String -> Maybe Types.CheckpointState
+parseCheckpointState s =
+    case s of
+        "ACTIVE" ->
+            Just Types.CheckpointActive
+
+        "COMPLETED" ->
+            Just Types.CheckpointCompleted
+
+        "ERROR" ->
+            Just Types.CheckpointError
+
+        "DELETED" ->
+            Just Types.CheckpointDeleted
+
+        _ ->
+            Nothing
+
+
+decodeValidationHistory : Decoder Types.ValidationHistory
+decodeValidationHistory =
+    D.succeed Types.ValidationHistory
+        |> required "trial_id" int
+        |> required "end_time" Iso8601.decoder
+        |> optional "validation_error" (D.maybe float) Nothing
+
+
+decodeGitMetadata : Decoder Types.GitMetadata
+decodeGitMetadata =
+    D.succeed Types.GitMetadata
+        |> required "git_remote" D.string
+        |> required "git_commit" D.string
+        |> required "git_committer" D.string
+        |> required "git_commit_date" Iso8601.decoder
+
+
+{-| Decode a set of experiment labels. We receive the labels for an experiment
+from the server as an object mapping label names to True, but we want to work
+with the labels as a set.
+-}
+decodeLabels : Decoder (Set String)
+decodeLabels =
+    D.map Set.fromList (D.list D.string)
+
+
+decodeTrialSummary : String -> Decoder Types.TrialSummary
+decodeTrialSummary metric =
+    D.succeed Types.TrialSummary
+        |> required "id" int
+        |> required "state" decodeRunState
+        |> required "hparams" (dict D.value)
+        |> required "start_time" Iso8601.decoder
+        |> required "end_time" (nullable Iso8601.decoder)
+        |> required "num_steps" int
+        |> optionalAt [ "latest_validation_metrics", "validation_metrics", metric ]
+            (D.map Just float)
+            Nothing
+        |> optional "best_validation_metric" (D.maybe float) Nothing
+        |> required "best_available_checkpoint" (nullable decodeCheckpoint)
+
+
+decodeValidationMetrics : Decoder Types.ValidationMetrics
+decodeValidationMetrics =
+    succeed identity |> required "validation_metrics" decodeMetrics
+
+
+decodeMetrics : Decoder Types.Metrics
+decodeMetrics =
+    dict D.value
 
 
 parseCommandState : String -> Maybe Types.CommandState

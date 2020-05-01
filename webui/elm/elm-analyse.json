@@ -2,8 +2,5 @@
     "checks": {
         "DebugLog": false,
         "TriggerWords": false
-    },
-    "excludedPaths": [
-        "src/DetQL/"
-    ]
+    }
 }

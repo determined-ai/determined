@@ -1,4 +1,4 @@
-.PHONY: get-deps build clean graphql live check-fmt test fmt check
+.PHONY: get-deps build clean live check-fmt test fmt check
 
 BUILDDIR ?= ../../build
 WEBUI_ROOT := $(BUILDDIR)/share/determined/master/webui
@@ -38,7 +38,3 @@ check: check-fmt
 
 test:
 	npm run test
-
-graphql:
-	rm -rf src/DetQL/
-	npm run graphql

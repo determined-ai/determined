@@ -9,7 +9,6 @@ module Page.ExperimentDetail exposing
     )
 
 import API
-import APIQL
 import Browser.Navigation as Navigation
 import Communication as Comm
 import Components.AdvancedButton as Button
@@ -327,7 +326,8 @@ trialShowIncrement =
 
 getSummaryCmd : Maybe Action -> Int -> Cmd Msg
 getSummaryCmd action id =
-    APIQL.sendQuery (requestHandlers action (Maybe.Extra.unwrap NoOp (GotExperiment action << Ok))) (APIQL.experimentDetailQuery id)
+    requestHandlers action (GotExperiment action)
+        |> API.pollExperimentSummary id
 
 
 getBestCheckpoint : Types.Experiment -> Maybe Types.Checkpoint
