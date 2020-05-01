@@ -24,11 +24,6 @@ export GO111MODULE := on
 GOBIN ?= $(shell go env GOPATH)/bin
 GOCI_LINT_VERSION := v1.20.0
 
-DOCKER_REGISTRY ?=
-ifneq ($(DOCKER_REGISTRY),)
-	EXTRA_TAG := -t $(DOCKER_REGISTRY)determinedai/determined-dev:determined-$(COMPONENT)-$(DET_GIT_COMMIT)
-endif
-
 all: clean get-deps build
 
 ######################
@@ -58,7 +53,7 @@ build-docker: build-files
 	docker build \
 		--build-arg VERSION=$(VERSION) \
 		-t determinedai/determined-$(COMPONENT):$(VERSION) \
-		-t $(DOCKER_REGISTRY)determinedai/determined-$(COMPONENT):$(DET_GIT_COMMIT) \
+		-t determinedai/determined-$(COMPONENT):$(DET_GIT_COMMIT) \
 		-t determinedai/determined-dev:determined-$(COMPONENT)-$(DET_GIT_COMMIT) \
 		$(EXTRA_TAG) "$(BUILDDIR)" -f Dockerfile
 
@@ -94,5 +89,5 @@ publish:
 	docker push determinedai/determined-$(COMPONENT):$(VERSION)
 
 publish-dev:
-	docker push $(DOCKER_REGISTRY)determinedai/determined-$(COMPONENT):$(DET_GIT_COMMIT)
-	docker push $(DOCKER_REGISTRY)determinedai/determined-dev:determined-$(COMPONENT)-$(DET_GIT_COMMIT)
+	docker push determinedai/determined-$(COMPONENT):$(DET_GIT_COMMIT)
+	docker push determinedai/determined-dev:determined-$(COMPONENT)-$(DET_GIT_COMMIT)

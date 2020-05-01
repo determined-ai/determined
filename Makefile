@@ -44,7 +44,7 @@ GORELEASER_VERSION := v0.128.0
 BUILDDIR ?= build
 
 MYPY := mypy
-TYPE_CHECK_PATHS := CI/integrations tests webui/elm/pytests
+TYPE_CHECK_PATHS := tests webui/elm/pytests
 
 # This can be given as a prefix to a command to run that command with all staged
 # and committed Python files in the repo as arguments.
@@ -63,7 +63,8 @@ FLAKE_RUN_ON_PYTHON_PATHS := git ls-files -z \
 	':!:examples/tutorials/native-tf-keras/*' \
 	| xargs -0
 
-export DOCKER_REGISTRY ?=
+ISORT_OPTIONS := --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --line-width=100 -o packaging
+
 DET_DEV_AGENT_IMAGE := determinedai/determined-dev:determined-agent-$(DET_GIT_COMMIT)
 DET_DEV_MASTER_IMAGE := determinedai/determined-dev:determined-master-$(DET_GIT_COMMIT)
 export DET_IMAGES := $(DET_DEV_AGENT_IMAGE),$(DET_DEV_MASTER_IMAGE)
