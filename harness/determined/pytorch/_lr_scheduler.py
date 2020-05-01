@@ -5,6 +5,10 @@ import torch
 
 import determined_common.check as check
 
+TorchLRScheduler = typing.Union[
+    torch.optim.lr_scheduler._LRScheduler, torch.optim.lr_scheduler.ReduceLROnPlateau
+]
+
 
 class LRScheduler:
     class StepMode(enum.Enum):
@@ -20,7 +24,7 @@ class LRScheduler:
         STEP_EVERY_BATCH = 2
         MANUAL_STEP = 3
 
-    def __init__(self, scheduler: torch.optim.lr_scheduler._LRScheduler, step_mode: StepMode):
+    def __init__(self, scheduler: TorchLRScheduler, step_mode: StepMode):
         """Wrapper for a PyTorch LRScheduler.
 
         Usage of this wrapper is required to properly scheduler the optimizer's learning rate.
@@ -31,7 +35,7 @@ class LRScheduler:
                (every batch or every epoch).
 
         Args:
-            scheduler (:py:class:`torch.optim.lr_scheduler._LRScheduler`):
+            scheduler (:py:class:`torch.optim.lr_scheduler._LRScheduler` or :py:class:`torch.optim.lr_scheduler.ReduceLROnPlateau`):
                 Learning rate scheduler to be used by Determined.
             step_mode (:py:class:`det.pytorch.LRSchedulerStepMode`):
                 The strategy Determined will use to call (or not call) scheduler.step().
@@ -46,10 +50,18 @@ class LRScheduler:
                    It is up to the user to decide when to call scheduler.step(),
                    and whether to pass any arguments.
 
-        """
+        """  # noqa: E501
 
         check.check_not_none(scheduler)
         check.check_isinstance(step_mode, LRScheduler.StepMode)
+
+        if step_mode != LRScheduler.StepMode.MANUAL_STEP:
+            check.check_isinstance(
+                scheduler,
+                torch.optim.lr_scheduler._LRScheduler,
+                "Please use a learning rate scheduler that inherits from "
+                "`torch.optim.lr_scheduler._LRScheduler` or use the MANUAL_STEP mode.",
+            )
 
         self.scheduler = scheduler
         self.step_mode = step_mode
@@ -83,7 +95,8 @@ class _LRHelper:
                 "`create_lr_scheduler` must return a `det.pytorch.LRScheduler`",
             )
             self._lr_scheduler = lr_scheduler
-            self._lr_scheduler_count = lr_scheduler.scheduler._step_count  # type: ignore
+            if lr_scheduler.step_mode != LRScheduler.StepMode.MANUAL_STEP:
+                self._lr_scheduler_count = lr_scheduler.scheduler._step_count  # type: ignore
 
     def __bool__(self) -> bool:
         return self._lr_scheduler is not None
@@ -116,7 +129,8 @@ class _LRHelper:
         if self._lr_scheduler:
             state_dict = typing.cast(typing.Dict[typing.Any, typing.Any], state_dict)
             self._lr_scheduler.scheduler.load_state_dict(state_dict)
-            self._lr_scheduler_count = self._lr_scheduler.scheduler._step_count  # type: ignore
+            if self._lr_scheduler.step_mode != LRScheduler.StepMode.MANUAL_STEP:
+                self._lr_scheduler_count = self._lr_scheduler.scheduler._step_count  # type: ignore
 
     def state_dict(self) -> typing.Dict[typing.Any, typing.Any]:
         self._lr_scheduler = typing.cast(LRScheduler, self._lr_scheduler)

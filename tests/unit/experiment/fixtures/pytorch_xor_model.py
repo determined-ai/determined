@@ -277,14 +277,14 @@ class XORTrialUserStepLRFail(XORTrialMulti):
 
 class XORTrialUserStepLR(XORTrialMulti):
     def create_lr_scheduler(self, optimizer):
-        self.scheduler = ModifyableLRSchedule(optimizer)
+        self.scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
         return LRScheduler(self.scheduler, step_mode=LRScheduler.StepMode.MANUAL_STEP)
 
     def train_batch(
         self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
         metrics = super().train_batch(batch, model, epoch_idx, batch_idx)
-        self.scheduler.step()
+        self.scheduler.step(0)
         return metrics
 
 
