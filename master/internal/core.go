@@ -507,9 +507,17 @@ func (m *Master) Run() error {
 
 	m.echo.POST("/graphql", m.postGraphQL, authFuncs...)
 
+	m.echo.GET("/experiment-list", api.Route(m.getExperimentList), authFuncs...)
+
 	experimentsGroup := m.echo.Group("/experiments", authFuncs...)
+	experimentsGroup.GET("", api.Route(m.getExperiments))
+	experimentsGroup.GET("/:experiment_id", api.Route(m.getExperiment))
+	experimentsGroup.GET("/:experiment_id/checkpoints", api.Route(m.getExperimentCheckpoints))
+	experimentsGroup.GET("/:experiment_id/config", api.Route(m.getExperimentConfig))
 	experimentsGroup.GET("/:experiment_id/model_def", m.getExperimentModelDefinition)
 	experimentsGroup.GET("/:experiment_id/preview_gc", api.Route(m.getExperimentCheckpointsToGC))
+	experimentsGroup.GET("/:experiment_id/summary", api.Route(m.getExperimentSummary))
+	experimentsGroup.GET("/:experiment_id/metrics/summary", api.Route(m.getExperimentSummaryMetrics))
 	experimentsGroup.PATCH("/:experiment_id", api.Route(m.patchExperiment))
 	experimentsGroup.POST("", api.Route(m.postExperiment))
 	experimentsGroup.POST("/:experiment_id/kill", api.Route(m.postExperimentKill))

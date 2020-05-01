@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"strconv"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -21,6 +22,127 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
+
+// ExperimentRequestQuery contains values for the experiments request queries with defaults already
+// applied. This should to be kept in sync with the expected queries from ParseExperimentsQuery.
+type ExperimentRequestQuery struct {
+	User   string
+	Limit  int
+	Offset int
+	Filter string
+}
+
+// ParseExperimentsQuery parse queries for the experiments endpoint.
+func ParseExperimentsQuery(apiCtx echo.Context) (*ExperimentRequestQuery, error) {
+	args := struct {
+		User   *string `query:"user"`
+		Limit  *int    `query:"limit"`
+		Offset *int    `query:"offset"`
+		Filter *string `query:"filter"`
+	}{}
+	var err error
+	if err = api.BindArgs(&args, apiCtx); err != nil {
+		return nil, err
+	}
+
+	queries := ExperimentRequestQuery{}
+
+	if args.User != nil {
+		queries.User = *args.User
+	}
+
+	if args.Filter != nil {
+		queries.Filter = *args.Filter
+	}
+
+	if args.Limit == nil || *args.Limit < 0 {
+		queries.Limit = 0
+	} else {
+		queries.Limit = *args.Limit
+	}
+
+	if args.Offset == nil || *args.Offset < 0 {
+		queries.Offset = 0
+	} else {
+		queries.Offset = *args.Offset
+	}
+
+	return &queries, nil
+}
+
+func (m *Master) getExperimentList(c echo.Context) (interface{}, error) {
+	userFilter := c.QueryParam("user")
+	skipInactive, err := strconv.ParseBool(c.QueryParam("skipInactive"))
+	if err != nil {
+		skipInactive = false
+	}
+	if userFilter != "" {
+		return m.db.ExperimentDescriptorsRawForUser(true, skipInactive, userFilter)
+	}
+	return m.db.ExperimentDescriptorsRaw(true, skipInactive)
+}
+
+func (m *Master) getExperiments(c echo.Context) (interface{}, error) {
+	query, err := ParseExperimentsQuery(c)
+	if err != nil {
+		return nil, err
+	}
+
+	skipArchived := query.Filter != "all"
+
+	return m.db.ExperimentListRaw(skipArchived, query.User, query.Limit, query.Offset)
+}
+
+func (m *Master) getExperiment(c echo.Context) (interface{}, error) {
+	args := struct {
+		ExperimentID int `path:"experiment_id"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return nil, err
+	}
+	return m.db.ExperimentRaw(args.ExperimentID)
+}
+
+func (m *Master) getExperimentCheckpoints(c echo.Context) (interface{}, error) {
+	args := struct {
+		ExperimentID int  `path:"experiment_id"`
+		NumBest      *int `query:"best"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return nil, err
+	}
+	return m.db.ExperimentCheckpointsRaw(args.ExperimentID, args.NumBest)
+}
+
+func (m *Master) getExperimentSummary(c echo.Context) (interface{}, error) {
+	args := struct {
+		ExperimentID int `path:"experiment_id"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return nil, err
+	}
+	return m.db.ExperimentWithTrialSummariesRaw(args.ExperimentID)
+}
+
+func (m *Master) getExperimentConfig(c echo.Context) (interface{}, error) {
+	args := struct {
+		ExperimentID int `path:"experiment_id"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return nil, err
+	}
+	return m.db.ExperimentConfigRaw(args.ExperimentID)
+}
+
+func (m *Master) getExperimentSummaryMetrics(c echo.Context) (interface{}, error) {
+	args := struct {
+		ExperimentID int `path:"experiment_id"`
+	}{}
+	if err := api.BindArgs(&args, c); err != nil {
+		return nil, err
+	}
+	return m.db.ExperimentWithSummaryMetricsRaw(args.ExperimentID)
+}
 
 func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, error) {
 	args := struct {
