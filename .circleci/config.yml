@@ -21,6 +21,23 @@ parameters:
     type: string
     default: 0.12.4.dev0
 
+# yaml anchor filters
+release-and-rc-filters: &release-and-rc-filters
+  branches:
+    ignore:
+      - /.*/
+  tags:
+    only:
+      - /v(\d)+(\.(\d)+)+/
+      - /(v(\d)+(\.(\d)+)+)(rc)(\d)+/
+
+release-filters: &release-filters
+  branches:
+    ignore:
+      - /.*/
+  tags:
+    only:
+      - /v(\d)+(\.(\d)+)+/
 
 commands:
   fix-circle-working-directory:
@@ -69,6 +86,9 @@ commands:
           steps:
             - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.1-cpu-e6662e6
 
+  login-docker:
+    steps:
+      - run: echo "${DOCKER_PASS}" | docker login --username ${DOCKER_USER} --password-stdin
 
   build-docker-images:
     description: Build Master and Agent Docker images.
@@ -381,6 +401,15 @@ jobs:
             - "share/determined/master/webui/docs"
             - "share/determined/master/wheels"
 
+  publish-docs:
+    docker:
+      - image: hashicorp/terraform:light
+    steps:
+      - checkout
+      - attach_workspace:
+          at: build
+      - run: make -C docs/deploy publish
+
   build-debs:
     docker:
       - image: cimg/go:1.13
@@ -400,6 +429,40 @@ jobs:
           root: build
           paths:
             - "dist/*linux_amd64.deb"
+
+  publish-debs:
+    docker:
+      - image: cimg/go:1.13
+        environment:
+          GO111MODULE: "on"
+    steps:
+      - checkout
+      - attach_workspace:
+          at: build
+
+      - go-get-deps
+      - run:
+          name: publish-debs
+          command: |
+            cp -r packaging build/
+            git fetch -t
+            # Set the previous tag to the last final release, ignoring release candidates.
+            export GORELEASER_PREVIOUS_TAG=$(git tag --sort=-creatordate | grep -v "rc" | grep $(cat VERSION) -A1 | sed -n '2 p')
+            cd build && goreleaser -f ${CIRCLE_WORKING_DIRECTORY}/.goreleaser.yml --rm-dist
+
+  publish-python-package:
+    parameters:
+      path:
+        type: string
+    docker:
+      - image: python:3.6.9
+    steps:
+      - checkout
+      - setup-python-venv:
+          extras-requires: "twine"
+          executor: python:3.6.9
+      - run: make -C <<parameters.path>> build
+      - run: make -C <<parameters.path>> publish
 
 
   test-e2e-webui:
@@ -619,20 +682,30 @@ jobs:
       - store_test_results:
           path: /tmp/test-results/
 
-
-
-
   build-and-push-docker-images:
+    parameters:
+      development:
+        type: boolean
+        default: false
+      production:
+        type: boolean
+        default: false
     docker:
       - image: cimg/base:stable
     steps:
       - checkout
       - setup_remote_docker
       - build-docker-images
-      - run: |
-          echo "${DOCKER_PASS}" | docker login --username ${DOCKER_USER} --password-stdin
-          make publish-dev
-
+      - login-docker
+      - when:
+          condition: <<parameters.development>>
+          steps:
+            - run: make publish-dev
+      - when:
+          condition: <<parameters.production>>
+          steps:
+            - run: make -C master publish
+            - run: make -C agent publish
 
   deploy:
     docker:
@@ -774,6 +847,9 @@ workflows:
             - build-debs
 
       - build-and-push-docker-images:
+          matrix:
+            parameters:
+              development: [true]
           filters:
             branches:
               ignore:
@@ -888,3 +964,51 @@ workflows:
       - lint-go
       - lint-elm
       - lint-react
+
+  release:
+    jobs:
+      - build-elm:
+          context: determined-production
+          filters: *release-and-rc-filters
+      - build-react:
+          context: determined-production
+          filters: *release-and-rc-filters
+      - build-docs:
+          context: determined-production
+          filters: *release-and-rc-filters
+      - build-debs:
+          requires:
+            - build-elm
+            - build-react
+            - build-docs
+          context: determined-production
+          filters: *release-and-rc-filters
+
+      - build-and-push-docker-images:
+          matrix:
+            parameters:
+              production: [true]
+          requires:
+            - build-debs
+          context: determined-production
+          filters: *release-and-rc-filters
+
+      - publish-python-package:
+          matrix:
+            parameters:
+              path: ["common", "harness", "cli", "deploy"]
+          context: determined-production
+          filters: *release-and-rc-filters
+
+      - publish-docs:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-filters
+
+      - publish-debs:
+          requires:
+            - build-debs
+          context: determined-production
+          filters: *release-filters
+
