@@ -4,6 +4,7 @@ import tempfile
 from argparse import ONE_OR_MORE, FileType, Namespace
 from pathlib import Path
 from typing import Any, Dict, List
+from urllib.parse import urlparse
 
 from termcolor import colored
 
@@ -57,7 +58,7 @@ def start_shell(args: Namespace) -> None:
             render_event_stream(msg)
     if command:
         agent_user = get_agent_user(args.master)
-        _open_shell(command, agent_user, args.ssh_opts)
+        _open_shell(command, args.master, agent_user, args.ssh_opts)
 
 
 @authentication_required
@@ -67,20 +68,26 @@ def open_shell(args: Namespace) -> None:
     )
     check_eq(shell.state, "RUNNING", "Shell must be in a running state")
     agent_user = get_agent_user(args.master)
-    _open_shell(shell, agent_user, args.ssh_opts)
+    _open_shell(shell, args.master, agent_user, args.ssh_opts)
 
 
-def _open_shell(shell: Command, username: str, additional_opts: str) -> None:
+def _open_shell(shell: Command, master_addr: str, username: str, additional_opts: str) -> None:
+    parsed_master_addr = urlparse(master_addr)
+    hostname = (
+        parsed_master_addr.hostname
+        if parsed_master_addr.hostname
+        else parsed_master_addr.path.split(":")[0]
+    )
+
     with tempfile.NamedTemporaryFile("w") as fp:
         fp.write(shell.misc["privateKey"])
         fp.flush()
         check_len(shell.addresses, 1, "Cannot find address for shell")
 
         _, port = shell.addresses[0]["host_ip"], shell.addresses[0]["host_port"]
-        host = "localhost"
         os.system(
             "ssh -o StrictHostKeyChecking=no -tt -o IdentitiesOnly=yes -i {} -p {} {} {}@{}".format(
-                fp.name, port, additional_opts, username, host
+                fp.name, port, additional_opts, username, hostname
             )
         )
         print(colored("To reconnect, run: det shell open {}".format(shell.id), "green"))
