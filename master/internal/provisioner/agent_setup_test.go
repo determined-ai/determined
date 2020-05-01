@@ -21,7 +21,7 @@ func TestAgentSetupScript(t *testing.T) {
 		StartupScriptBase64:          encodedScript,
 		ContainerStartupScriptBase64: encodedContainerScript,
 		AgentDockerImage:             "test_docker_image",
-		AgentDockerRuntime:           "nvidia",
+		AgentDockerRuntime:           "runc",
 		AgentNetwork:                 "default",
 		AgentID:                      "test.id",
 	}
@@ -42,7 +42,7 @@ echo "#### PRINTING CONTAINER STARTUP SCRIPT START ####"
 cat /usr/local/determined/container_startup_script
 echo "#### PRINTING CONTAINER STARTUP SCRIPT END ####"
 
-docker run --init --name determined-agent  --restart always --network default --runtime=nvidia \
+docker run --init --name determined-agent  --restart always --network default --runtime=runc --gpus all \
     -e DET_AGENT_ID="test.id" \
     -e DET_MASTER_HOST="test.master" \
     -e DET_MASTER_PORT="8080" \

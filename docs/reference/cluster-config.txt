@@ -231,7 +231,7 @@ The master supports the following configuration settings:
     For example, it can be used for formatting and mounting a disk. Defaults
     to an empty string.
 
-  - ``container_startup_script``: Startup script for the container 
+  - ``container_startup_script``: Startup script for the container
     ``determined-agent`` runs in. This script will run right away when
     the agent's container starts up. For example, this script can be used
     to configure docker so the agent can pull task images from GCR securely.
@@ -242,7 +242,7 @@ The master supports the following configuration settings:
     "determined".
 
   - ``agent_docker_runtime``: The Docker runtime to use for the Determined
-    agent and task containers. Defaults to ``nvidia``.
+    agent and task containers. Defaults to ``runc``.
 
   - ``agent_docker_image``: The Docker image to use for the Determined agents.
     A valid form is ``determinedai/determined-agent:<version>``. (*Required*)
