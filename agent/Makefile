@@ -90,7 +90,7 @@ test:
 ### Publish Phase ###
 #####################
 
-publish: all
+publish:
 	docker push determinedai/determined-$(COMPONENT):$(VERSION)
 
 publish-dev:
