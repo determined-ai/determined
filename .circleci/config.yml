@@ -687,6 +687,7 @@ jobs:
     parallelism: 2
     steps:
       - checkout
+      - set-slack-user-id
       - setup-python-venv:
           determined-common: true
           determined-cli: true
@@ -717,6 +718,7 @@ jobs:
     parallelism: 2
     steps:
       - checkout
+      - set-slack-user-id
       - setup-python-venv:
           determined-common: true
           determined-cli: true
