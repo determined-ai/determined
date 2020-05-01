@@ -2,10 +2,6 @@ description: mnist_pytorch_adaptive
 data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
 entrypoint: model_def:MNistTrial
-checkpoint_storage:
-  type: shared_fs
-  host_path: /tmp
-  storage_path: determined-integration-checkpoints
 hyperparameters:
   learning_rate:
     type: double
