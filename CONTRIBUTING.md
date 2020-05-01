@@ -175,9 +175,6 @@ For cloud integration tests, AWS and GCP credentials must be configured.
 ```bash
 # Run local integration tests except for cloud-related tests.
 make test-integrations
-
-# Run cloud integration tests.
-make test-cloud-integrations
 ```
 
 #### Customize configuration

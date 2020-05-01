@@ -24,7 +24,6 @@
   publish \
   test \
   test-all \
-  test-cloud-integrations \
   test-python-integrations \
   test-integrations \
   webui
@@ -283,10 +282,7 @@ test-python-integrations:
 		--require-secrets \
 		tests/integrations
 
-test-master-integrations:
-	$(MAKE) -C master test-integrations
-
-test-integrations: test-python-integrations test-master-integrations
+test-integrations: test-python-integrations
 
 test-performance:
 	pytest -v -s tests/integrations/performance
