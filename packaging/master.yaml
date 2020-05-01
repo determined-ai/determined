@@ -32,8 +32,8 @@
 ## set to "host", Docker host-mode networking will be used instead. Defaults to "default".
 #  agent_docker_network: default
 
-## The docker runtime to use for the agent when using dynamic agent. Defaults to "nvidia".
-#  agent_docker_runtime: nvidia
+## The docker runtime to use for the agent when using dynamic agent. Defaults to "runc.
+#  agent_docker_runtime: runc
 
 ## The docker image to use for the agent when using dynamic agents. This value
 ## must be configured.

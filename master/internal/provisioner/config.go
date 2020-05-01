@@ -58,7 +58,7 @@ type Config struct {
 // DefaultConfig returns the default configuration of the provisioner.
 func DefaultConfig() *Config {
 	return &Config{
-		AgentDockerRuntime: "nvidia",
+		AgentDockerRuntime: "runc",
 		AgentDockerNetwork: "default",
 		MaxIdleAgentPeriod: Duration(300 * time.Second),
 	}

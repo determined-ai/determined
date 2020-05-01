@@ -19,7 +19,7 @@ func TestProvisionerConfigMissingFields(t *testing.T) {
 	assert.ErrorContains(t, err, "must configure aws or gcp cluster")
 	expected := Config{
 		MaxIdleAgentPeriod: Duration(5 * time.Minute),
-		AgentDockerRuntime: "nvidia",
+		AgentDockerRuntime: "runc",
 		AgentDockerNetwork: "default",
 	}
 	assert.DeepEqual(t, config, expected)
@@ -49,7 +49,7 @@ func TestUnmarshalProvisionerConfigMasterURL(t *testing.T) {
 	unmarshaled := Config{
 		MasterURL:          "http://test.master:8080",
 		AgentDockerImage:   "test_image",
-		AgentDockerRuntime: "nvidia",
+		AgentDockerRuntime: "runc",
 		AgentDockerNetwork: "default",
 		AWS:                &awsConfig,
 		MaxIdleAgentPeriod: Duration(30 * time.Second),
@@ -97,7 +97,7 @@ func TestUnmarshalProvisionerConfigWithAWS(t *testing.T) {
 		MasterURL:          "http://test.master:8080",
 		AWS:                &awsConfig,
 		AgentDockerImage:   "test_image",
-		AgentDockerRuntime: "nvidia",
+		AgentDockerRuntime: "runc",
 		AgentDockerNetwork: "default",
 		MaxIdleAgentPeriod: Duration(30 * time.Second),
 	}
@@ -128,7 +128,7 @@ func TestUnmarshalProvisionerConfigWithGCP(t *testing.T) {
 		MasterURL:          "http://test.master:8080",
 		GCP:                &expected,
 		AgentDockerImage:   "test_image",
-		AgentDockerRuntime: "nvidia",
+		AgentDockerRuntime: "runc",
 		AgentDockerNetwork: "default",
 		MaxIdleAgentPeriod: Duration(5 * time.Minute),
 	}

@@ -45,7 +45,7 @@ provisioner:
 		},
 		Scheduler: scheduler.Config{Fit: "best"},
 		Provisioner: &provisioner.Config{
-			AgentDockerRuntime: "nvidia",
+			AgentDockerRuntime: "runc",
 			AgentDockerNetwork: "default",
 			MaxIdleAgentPeriod: provisioner.Duration(30 * time.Second),
 		},
