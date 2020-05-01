@@ -11,7 +11,6 @@
             "avh4/elm-color": "1.0.0",
             "basti1302/elm-human-readable-filesize": "1.2.0",
             "cuducos/elm-format-number": "6.0.2",
-            "dillonkearns/elm-graphql": "4.3.1",
             "elm/browser": "1.0.1",
             "elm/core": "1.0.2",
             "elm/html": "1.0.0",
@@ -51,7 +50,6 @@
             "justinmimbs/date": "3.1.2",
             "justinmimbs/time-extra": "1.1.0",
             "kuon/elm-string-normalize": "1.0.1",
-            "lukewestby/elm-string-interpolate": "1.0.4",
             "pzp1997/assoc-list": "1.0.0",
             "rtfeldman/elm-hex": "1.0.0"
         }

@@ -11,7 +11,6 @@ module Modals.CreateExperiment exposing
     )
 
 import API
-import APIQL
 import Browser.Dom as Dom
 import Browser.Events
 import Communication as Comm
@@ -25,7 +24,6 @@ import Json.Encode as E
 import Maybe.Extra
 import Page.Common exposing (centeredLoadingWidget)
 import Route
-import Set
 import Task
 import Types
 import View.Modal as Modal
@@ -416,11 +414,7 @@ openForContinue : Types.TrialDetail -> ( Model, Cmd Msg )
 openForContinue trialDetail =
     let
         cmd =
-            APIQL.sendQuery
-                -- TODO: Get rid of the whole ExperimentResult thing, now that we have better-typed
-                -- responses from GraphQL.
-                (requestHandlers (GotExperiment << Maybe.Extra.unwrap (Err (Types.ExperimentDescriptor 0 False "" Set.empty)) Ok))
-                (APIQL.experimentDetailQuery trialDetail.experimentId)
+            API.getExperimentSummary (requestHandlers GotExperiment) trialDetail.experimentId
 
         loadingModel =
             { trialDetail = trialDetail

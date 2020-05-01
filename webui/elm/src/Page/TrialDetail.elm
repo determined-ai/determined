@@ -9,7 +9,6 @@ module Page.TrialDetail exposing
     )
 
 import API
-import APIQL
 import Browser.Navigation as Navigation
 import Communication as Comm
 import Components.DropdownSelect as DS
@@ -37,7 +36,6 @@ import Plot
 import Round
 import Route
 import Session exposing (Session)
-import Set
 import Time
 import Types
 import Utils
@@ -185,7 +183,7 @@ logsConfig id keepPolling =
     , getId = .id
     , getText = getLogsText
     , keepPolling = keepPolling
-    , poll = \handlers params -> APIQL.sendQuery handlers (APIQL.trialLogsQuery id params)
+    , poll = API.pollTrialLogs id
     }
 
 
@@ -322,7 +320,9 @@ stepsTableConfig trialModel =
 
 getDetailCmd : Types.ID -> Cmd Msg
 getDetailCmd id =
-    APIQL.sendQuery (requestHandlers GotTrialDetails) (APIQL.trialDetailQuery id)
+    API.pollTrialDetail
+        (requestHandlers GotTrialDetails)
+        id
 
 
 getExperimentCmd : TrialModel -> Cmd Msg
@@ -332,9 +332,8 @@ getExperimentCmd tm =
             Cmd.none
 
         Nothing ->
-            APIQL.sendQuery
-                (requestHandlers (GotExperiment << Maybe.Extra.unwrap (Err (Types.ExperimentDescriptor 0 False "" Set.empty)) Ok))
-                (APIQL.experimentDetailQuery tm.trial.experimentId)
+            API.pollExperimentSummary tm.trial.experimentId
+                (requestHandlers GotExperiment)
 
 
 getAllMetricSpecs : Types.TrialDetail -> List MetricSpec
