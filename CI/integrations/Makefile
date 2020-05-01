@@ -1,4 +1,4 @@
-.PHONY: build cleanup get-images run-master-integration-tests run-python-integration-tests
+.PHONY: build cleanup get-images run-python-integration-tests
 
 ifeq ($(origin DET_GIT_COMMIT), undefined)
 GIT_COMMIT := $(shell git rev-parse HEAD)
@@ -44,9 +44,6 @@ publish-dev:
 	# Show dirty files, if there are any.
 	git status --porcelain
 	docker push $(TEST_TAG)
-
-run-master-integration-tests:
-	docker run --rm $(TEST_TAG) make -C master test-integrations
 
 run-python-integration-tests:
 	docker run --rm \

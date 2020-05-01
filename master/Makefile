@@ -2,7 +2,7 @@
 	clean get-deps \
 	build build-docs build-docker build-elm build-files build-python-packages build-react build-static build-webui \
 	install-native \
-	test test-integrations \
+	test \
 	check fmt \
 	publish publish-dev
 
@@ -108,12 +108,6 @@ fmt:
 
 test:
 	$(GOTEST) -ldflags $(LDFLAGS) -v -short -coverprofile=coverage.out -covermode count -cover ./...
-
-test-cloud-integrations:
-	$(GOTEST) -ldflags $(LDFLAGS) -v -run Cloud -coverprofile=coverage.out -covermode count -cover ./...
-
-test-integrations:
-	$(GOTEST) -ldflags $(LDFLAGS) -v -run Integration -coverprofile=coverage.out -covermode count -cover ./...
 
 #####################
 ### Publish Phase ###
