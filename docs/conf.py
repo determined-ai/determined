@@ -49,6 +49,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinxarg.ext",
     "sphinx_gallery.gen_gallery",
+    "sphinx_copybutton",
 ]
 
 autosummary_generate = True

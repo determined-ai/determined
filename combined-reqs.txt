@@ -129,8 +129,9 @@ six==1.14.0               # via absl-py, bcrypt, bleach, cryptography, cycler, d
 smmap==3.0.2              # via gitdb
 snowballstemmer==2.0.0    # via pydocstyle, sphinx
 sphinx-argparse==0.2.5    # via -r docs-requirements.txt
+sphinx-copybutton==0.2.11  # via -r docs-requirements.txt
 sphinx-gallery==0.6.2     # via -r docs-requirements.txt
-sphinx==2.4.4             # via -r docs-requirements.txt, determined-ai-sphinx-theme, sphinx-argparse, sphinx-gallery
+sphinx==2.4.4             # via -r docs-requirements.txt, determined-ai-sphinx-theme, sphinx-argparse, sphinx-copybutton, sphinx-gallery
 sphinxcontrib-applehelp==1.0.2  # via sphinx
 sphinxcontrib-devhelp==1.0.2  # via sphinx
 sphinxcontrib-htmlhelp==1.0.3  # via sphinx
