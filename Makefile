@@ -64,8 +64,6 @@ FLAKE_RUN_ON_PYTHON_PATHS := git ls-files -z \
 	':!:examples/tutorials/native-tf-keras/*' \
 	| xargs -0
 
-ISORT_OPTIONS := --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --line-width=100 -o packaging
-
 export DOCKER_REGISTRY ?=
 DET_DEV_AGENT_IMAGE := determinedai/determined-dev:determined-agent-$(DET_GIT_COMMIT)
 DET_DEV_MASTER_IMAGE := determinedai/determined-dev:determined-master-$(DET_GIT_COMMIT)
@@ -209,7 +207,7 @@ check: check-python check-commit-messages
 check-python: check-python-fmt check-python-types check-python-assert
 
 check-python-fmt:
-	$(ISORT_RUN_ON_PYTHON_PATHS) isort $(ISORT_OPTIONS) --check
+	$(ISORT_RUN_ON_PYTHON_PATHS) isort --check
 	$(RUN_ON_PYTHON_PATHS) black --check
 	$(FLAKE_RUN_ON_PYTHON_PATHS) flake8
 
@@ -226,7 +224,7 @@ check-commit-messages:
 	$(GOBIN)/conform enforce
 
 fmt:
-	$(ISORT_RUN_ON_PYTHON_PATHS) isort $(ISORT_OPTIONS)
+	$(ISORT_RUN_ON_PYTHON_PATHS) isort
 	$(RUN_ON_PYTHON_PATHS) black
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@

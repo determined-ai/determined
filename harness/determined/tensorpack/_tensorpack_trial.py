@@ -19,15 +19,15 @@ from abc import abstractmethod
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, TypeVar, Union, cast
 
 import tensorflow as tf
-
-import determined as det
 import tensorpack as tp
-from determined import horovod, workload
-from determined.horovod import hvd
-from determined_common import check
 from tensorpack.callbacks.base import Callback
 from tensorpack.tfutils.common import get_global_step_var
 from tensorpack.train.tower import TowerTrainer
+
+import determined as det
+from determined import horovod, workload
+from determined.horovod import hvd
+from determined_common import check
 
 IMPOSSIBLY_LARGE_EPOCHS = 9999999999999
 

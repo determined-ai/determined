@@ -1,8 +1,9 @@
 import logging
 from typing import Any
 
-from determined import tensorboard
 from tensorpack import callbacks
+
+from determined import tensorboard
 
 
 class TFEventWriter(callbacks.TFEventWriter):  # type: ignore
