@@ -200,7 +200,10 @@ def check_keypair(name: str, boto3_session: boto3.session.Session) -> bool:
         return True
 
     print("False")
-    print(f"Key pair {name} not found. Please create the key pair {name} first")
+    print(
+        f"Key pair {name} not found in {boto3_session.region_name}. "
+        f"Please create the key pair {name} in {boto3_session.region_name} first"
+    )
     sys.exit(1)
 
 

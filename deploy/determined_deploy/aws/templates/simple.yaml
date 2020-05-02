@@ -1,25 +1,24 @@
 ---
 AWSTemplateFormatVersion: 2010-09-09
 Description: Determined Template
+Mappings:
+  RegionMap:
+    us-east-1:
+      Master: ami-66506c1c
+      Agent: ami-06a89515c09c669ab
+    us-west-2:
+      Master: ami-79873901
+      Agent: ami-02e0ff379a7391b99
+
 Parameters:
   Keypair:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Keypair to SSH
 
-  MasterAmiId:
-    Type: String
-    Description: AMI Id for Master
-    Default: ami-79873901
-
   MasterInstanceType:
     Type: String
     Description: Instance Type of Master
     Default: m5.large
-
-  AgentAmiId:
-    Type: String
-    Description: AMI Id for Agent
-    Default: ami-02e0ff379a7391b99
 
   AgentInstanceType:
     Type: String
@@ -324,7 +323,10 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: !Ref MasterInstanceType
-      ImageId: !Ref MasterAmiId
+      ImageId: !FindInMap
+        - RegionMap
+        - !Ref AWS::Region
+        - Master
       KeyName: !Ref Keypair
       IamInstanceProfile: !Ref MasterInstanceProfile
       SecurityGroupIds:
@@ -335,117 +337,120 @@ Resources:
             VolumeSize: 200
             VolumeType: gp2
       UserData:
-        Fn::Base64: !Sub |
-          Content-Type: multipart/mixed; boundary="//"
-          MIME-Version: 1.0
+        Fn::Base64: !Sub
+          - |
+            Content-Type: multipart/mixed; boundary="//"
+            MIME-Version: 1.0
 
-          --//
-          Content-Type: text/cloud-config; charset="us-ascii"
-          MIME-Version: 1.0
-          Content-Transfer-Encoding: 7bit
-          Content-Disposition: attachment; filename="cloud-config.txt"
+            --//
+            Content-Type: text/cloud-config; charset="us-ascii"
+            MIME-Version: 1.0
+            Content-Transfer-Encoding: 7bit
+            Content-Disposition: attachment; filename="cloud-config.txt"
 
-          #cloud-config
-          cloud_final_modules:
-          - [scripts-user, always]
+            #cloud-config
+            cloud_final_modules:
+            - [scripts-user, always]
 
-          --//
-          Content-Type: text/x-shellscript; charset="us-ascii"
-          MIME-Version: 1.0
-          Content-Transfer-Encoding: 7bit
-          Content-Disposition: attachment; filename="userdata.txt"
+            --//
+            Content-Type: text/x-shellscript; charset="us-ascii"
+            MIME-Version: 1.0
+            Content-Transfer-Encoding: 7bit
+            Content-Disposition: attachment; filename="userdata.txt"
 
-          #!/bin/bash
-          mkdir -p /usr/local/determined/etc
-          cat << EOF > /usr/local/determined/etc/master.yaml
-          checkpoint_storage:
-            type: s3
-            bucket: ${CheckpointBucket}
-            save_experiment_best: 0
-            save_trial_best: 1
-            save_trial_latest: 1
+            #!/bin/bash
+            mkdir -p /usr/local/determined/etc
+            cat << EOF > /usr/local/determined/etc/master.yaml
+            checkpoint_storage:
+              type: s3
+              bucket: ${CheckpointBucket}
+              save_experiment_best: 0
+              save_trial_best: 1
+              save_trial_latest: 1
 
-          db:
-            user: postgres
-            password: "${DBPassword}"
-            host: "${Database.Endpoint.Address}"
-            port: 5432
-            name: determined
+            db:
+              user: postgres
+              password: "${DBPassword}"
+              host: "${Database.Endpoint.Address}"
+              port: 5432
+              name: determined
 
-          hasura:
-            secret: "${HasuraSecret}"
-            address: determined-graphql:8080
+            hasura:
+              secret: "${HasuraSecret}"
+              address: determined-graphql:8080
 
-          provisioner:
-            iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
-            image_id: ${AgentAmiId}
-            agent_docker_image: determinedai/determined-agent:${Version}
-            instance_name: determined-agent-${AWS::StackName}
-            instance_type: ${AgentInstanceType}
-            log_group: ${LogGroup}
-            log_stream: determined-agent
-            master_url: http://local-ipv4:8080
-            max_idle_agent_period: ${MaxIdleAgentPeriod}
-            max_instances: ${MaxDynamicAgents}
-            network_interface:
-              public_ip: true
-              security_group_id: ${AgentSecurityGroup.GroupId}
-            provider: aws
-            root_volume_size: 200
-            ssh_key_name: ${Keypair}
-            tag_key: det-${AWS::StackName}
-            tag_value: det-agent-${AWS::StackName}
-          EOF
+            provisioner:
+              iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
+              image_id: ${AgentAmi}
+              agent_docker_image: determinedai/determined-agent:${Version}
+              instance_name: determined-agent-${AWS::StackName}
+              instance_type: ${AgentInstanceType}
+              log_group: ${LogGroup}
+              log_stream: determined-agent
+              master_url: http://local-ipv4:8080
+              max_idle_agent_period: ${MaxIdleAgentPeriod}
+              max_instances: ${MaxDynamicAgents}
+              network_interface:
+                public_ip: true
+                security_group_id: ${AgentSecurityGroup.GroupId}
+              provider: aws
+              root_volume_size: 200
+              ssh_key_name: ${Keypair}
+              tag_key: det-${AWS::StackName}
+              tag_value: det-agent-${AWS::StackName}
+            EOF
 
-          apt-get remove docker docker-engine docker.io containerd runc
-          apt-get update
-          apt-get install -y \
-              apt-transport-https \
-              ca-certificates \
-              curl \
-              gnupg-agent \
-              software-properties-common
-          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-          add-apt-repository \
-             "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-             $(lsb_release -cs) \
-             stable"
-          apt-get update
-          apt-get install -y docker-ce docker-ce-cli containerd.io
+            apt-get remove docker docker-engine docker.io containerd runc
+            apt-get update
+            apt-get install -y \
+                apt-transport-https \
+                ca-certificates \
+                curl \
+                gnupg-agent \
+                software-properties-common
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+            add-apt-repository \
+               "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+               $(lsb_release -cs) \
+               stable"
+            apt-get update
+            apt-get install -y docker-ce docker-ce-cli containerd.io
 
-          docker network create determined
+            docker network create determined
 
-          docker stop $(docker ps -a -q)
-          docker rm $(docker ps -a -q)
+            docker stop $(docker ps -a -q)
+            docker rm $(docker ps -a -q)
 
-          docker run \
-              -d \
-              --name determined-graphql \
-              --restart unless-stopped \
-              --network determined \
-              --log-driver=awslogs \
-              --log-opt awslogs-group=${LogGroup} \
-              --log-opt awslogs-stream=determined-hasura \
-              -e HASURA_GRAPHQL_ADMIN_SECRET=${HasuraSecret} \
-              -e HASURA_GRAPHQL_CONSOLE_ASSETS_DIR=/srv/console-assets \
-              -e HASURA_GRAPHQL_DATABASE_URL=postgres://postgres:${DBPassword}@${Database.Endpoint.Address}:5432/determined \
-              -e HASURA_GRAPHQL_ENABLED_APIS=graphql,metadata \
-              -e HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup \
-              -e HASURA_GRAPHQL_ENABLE_CONSOLE=false \
-              -e HASURA_GRAPHQL_ENABLE_TELEMETRY=false \
-              hasura/graphql-engine:v1.1.0
+            docker run \
+                -d \
+                --name determined-graphql \
+                --restart unless-stopped \
+                --network determined \
+                --log-driver=awslogs \
+                --log-opt awslogs-group=${LogGroup} \
+                --log-opt awslogs-stream=determined-hasura \
+                -e HASURA_GRAPHQL_ADMIN_SECRET=${HasuraSecret} \
+                -e HASURA_GRAPHQL_CONSOLE_ASSETS_DIR=/srv/console-assets \
+                -e HASURA_GRAPHQL_DATABASE_URL=postgres://postgres:${DBPassword}@${Database.Endpoint.Address}:5432/determined \
+                -e HASURA_GRAPHQL_ENABLED_APIS=graphql,metadata \
+                -e HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup \
+                -e HASURA_GRAPHQL_ENABLE_CONSOLE=false \
+                -e HASURA_GRAPHQL_ENABLE_TELEMETRY=false \
+                hasura/graphql-engine:v1.1.0
 
-          docker run \
-              --name determined-master \
-              --network determined \
-              --restart unless-stopped \
-              --log-driver=awslogs \
-              --log-opt awslogs-group=${LogGroup} \
-              --log-opt awslogs-stream=determined-master \
-              -p 8080:8080 \
-              -v /usr/local/determined/etc/master.yaml:/etc/determined/master.yaml \
-              determinedai/determined-master:${Version}
-          --//
+            docker run \
+                --name determined-master \
+                --network determined \
+                --restart unless-stopped \
+                --log-driver=awslogs \
+                --log-opt awslogs-group=${LogGroup} \
+                --log-opt awslogs-stream=determined-master \
+                -p 8080:8080 \
+                -v /usr/local/determined/etc/master.yaml:/etc/determined/master.yaml \
+                determinedai/determined-master:${Version}
+            --//
+          -  AgentAmi: !FindInMap [RegionMap, !Ref "AWS::Region", Agent]
+
       Tags:
         - Key: user
           Value: !Ref AWS::StackName
