@@ -26,9 +26,7 @@ class Secure(base.DeterminedDeployment):
     template_parameter_keys = [
         constants.cloudformation.KEYPAIR,
         constants.cloudformation.BASTION_ID,
-        constants.cloudformation.MASTER_AMI,
         constants.cloudformation.MASTER_INSTANCE_TYPE,
-        constants.cloudformation.AGENT_AMI,
         constants.cloudformation.AGENT_INSTANCE_TYPE,
         constants.cloudformation.INBOUND_CIDR,
         constants.cloudformation.VERSION,

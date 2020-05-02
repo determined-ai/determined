@@ -140,7 +140,7 @@ Spinning up the cluster
 
    * - ``--region``
      - AWS region to deploy into
-     - us-west-2
+     - The default region for the AWS User
      - False
 
    * - ``--max-idle-agent-period``

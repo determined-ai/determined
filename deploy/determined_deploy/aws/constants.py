@@ -18,9 +18,6 @@ class cloudformation:
     VPC = "VPC"
     PUBLIC_SUBNET = "PublicSubnetId"
     PRIVATE_SUBNET = "PrivateSubnetId"
-    BASTION_AMI = "BastionAmiId"
-    MASTER_AMI = "MasterAmiId"
-    AGENT_AMI = "AgentAmiId"
     AGENT_INSTANCE_PROFILE_KEY = "AgentInstanceProfile"
     AGENT_SECURITY_GROUP_ID_KEY = "AgentSecurityGroupId"
     MASTER_ID = "MasterId"
@@ -47,3 +44,4 @@ class cloudformation:
 class misc:
     TEMPLATE_PATH = "determined_deploy.aws.templates"
     CLOUDFORMATION_REGEX = r"^[a-zA-Z][-a-zA-Z0-9]*$"
+    SUPPORTED_REGIONS = ["us-west-2", "us-east-1"]

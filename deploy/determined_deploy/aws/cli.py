@@ -16,7 +16,7 @@ def make_down_subparser(subparsers: argparse._SubParsersAction):
     )
 
     subparser.add_argument(
-        "--region", type=str, default=constants.defaults.REGION, help="AWS region",
+        "--region", type=str, default=None, help="AWS region",
     )
     subparser.add_argument("--aws-profile", type=str, default=None, help=argparse.SUPPRESS)
 
@@ -29,12 +29,6 @@ def make_up_subparser(subparsers: argparse._SubParsersAction):
     )
     require_named.add_argument(
         "--keypair", type=str, help="aws ec2 keypair for master and agent", required=True
-    )
-    subparser.add_argument(
-        "--master-ami", type=str, help=argparse.SUPPRESS,
-    )
-    subparser.add_argument(
-        "--agent-ami", type=str, help=argparse.SUPPRESS,
     )
     subparser.add_argument(
         "--master-instance-type", type=str, help="instance type for master",
@@ -70,7 +64,7 @@ def make_up_subparser(subparsers: argparse._SubParsersAction):
         help="password for Hasura service",
     )
     subparser.add_argument(
-        "--region", type=str, default=constants.defaults.REGION, help="AWS region",
+        "--region", type=str, default=None, help="AWS region",
     )
     subparser.add_argument(
         "--max-idle-agent-period", type=str, help="max agent idle time",
@@ -99,6 +93,14 @@ def deploy_aws(args: argparse.Namespace) -> None:
     else:
         boto3_session = boto3.Session(region_name=args.region)
 
+    if boto3_session.region_name not in constants.misc.SUPPORTED_REGIONS:
+        print(
+            f"det-deploy is only supported in {constants.misc.SUPPORTED_REGIONS} - "
+            f"tried to deploy to {boto3_session.region_name}"
+        )
+        print("use the --region argument to deploy to a supported region")
+        sys.exit(1)
+
     if not re.match(constants.misc.CLOUDFORMATION_REGEX, args.cluster_id):
         print("Deployment Failed - cluster-id much match ^[a-zA-Z][-a-zA-Z0-9]*$")
         sys.exit(1)
@@ -119,8 +121,6 @@ def deploy_aws(args: argparse.Namespace) -> None:
     }
 
     det_configs = {
-        constants.cloudformation.MASTER_AMI: args.master_ami,
-        constants.cloudformation.AGENT_AMI: args.agent_ami,
         constants.cloudformation.KEYPAIR: args.keypair,
         constants.cloudformation.MASTER_INSTANCE_TYPE: args.master_instance_type,
         constants.cloudformation.AGENT_INSTANCE_TYPE: args.agent_instance_type,
