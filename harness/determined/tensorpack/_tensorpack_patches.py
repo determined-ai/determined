@@ -1,12 +1,12 @@
 import logging
 from typing import Any, Callable
 
+import tensorpack as tp
 import zmq
 from tensorflow.train import SessionManager
-
-import tensorpack as tp
-from determined import monkey_patch
 from tensorpack.callbacks.steps import MaintainStepCounter
+
+from determined import monkey_patch
 
 logging.debug("Applying tensorpack patches.")
 
