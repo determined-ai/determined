@@ -396,7 +396,7 @@ commands:
         type: string
         default: "8080"
     steps:
-      - run: python CI/integrations/wait_for_master.py http://<<parameters.host>>:<<parameters.port>>
+      - run: python .circleci/scripts/wait_for_master.py http://<<parameters.host>>:<<parameters.port>>
 
 
 jobs:
