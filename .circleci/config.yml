@@ -226,12 +226,20 @@ commands:
         default: "8080"
     steps:
       - run: circleci tests glob "tests/integrations/**/test*.py" | circleci tests split --split-by=timings > /tmp/tests-to-run
+
       - run: |
+          if [[ "<<parameters.master-host>>" == "localhost" ]]; then
+            FOLLOW_LOCAL_LOGS="--follow-local-logs"
+            COMPOSE_FILE="--compose-file=.circleci/compose/e2e/docker-compose.yaml"
+          fi
+
           pytest -vv -s \
           -m <<parameters.mark>> \
           --durations=0 \
           --master-host="<<parameters.master-host>>" \
           --master-port="<<parameters.master-port>>" \
+          ${FOLLOW_LOCAL_LOGS} \
+          ${COMPOSE_FILE} \
           --junit-xml="<<parameters.junit-path>>" \
           $(cat /tmp/tests-to-run)
 
@@ -604,6 +612,8 @@ jobs:
       - pull-task-images:
           tf2: true
 
+      - setup-local-cluster:
+          det-version: ${CIRCLE_SHA1}
       - run-e2e-tests:
           mark: "tensorflow_cpu"
           master-host: localhost
@@ -631,6 +641,8 @@ jobs:
 
       - pull-task-images
 
+      - setup-local-cluster:
+          det-version: ${CIRCLE_SHA1}
       - run-e2e-tests:
           mark: "e2e_cpu"
           master-host: localhost
