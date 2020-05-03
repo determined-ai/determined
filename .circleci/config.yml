@@ -331,7 +331,7 @@ commands:
       - run: |
           export DET_VERSION=<<parameters.det-version>>
           export MASTER_HOST=$(ip route | grep docker0 | sed "s/^.*src \(.*\) linkdown.*$/\1/g")
-          docker-compose -f CI/e2e/docker-compose.yaml up -d
+          docker-compose -f .circleci/compose/e2e/docker-compose.yaml up -d
       - wait-for-master:
           host: localhost
 
