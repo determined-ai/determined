@@ -1,4 +1,5 @@
 import json
+import subprocess
 from pathlib import Path
 from typing import Any, Dict, Optional, cast
 
@@ -8,7 +9,6 @@ from _pytest.config.argparsing import Parser
 from _pytest.fixtures import SubRequest
 from botocore import exceptions as boto_exc
 
-import determined_deploy.local.cluster_utils
 from tests.integrations import config
 
 from .cluster_log_manager import ClusterLogManager
@@ -41,6 +41,21 @@ def pytest_addoption(parser: Parser) -> None:
     parser.addoption(
         "--require-secrets", action="store_true", help="fail tests when s3 access fails"
     )
+    path = (
+        Path(__file__)
+        .parents[2]
+        .joinpath("deploy", "determined_deploy", "local", "docker-compose.yaml")
+    )
+    parser.addoption(
+        "--compose-file", action="store", default=str(path), help="Docker compose file"
+    )
+    parser.addoption(
+        "--compose-project-name",
+        action="store",
+        default="determined",
+        help="Docker compose project name",
+    )
+    parser.addoption("--follow-local-logs", action="store_true", help="Follow local docker logs")
 
 
 @pytest.fixture(scope="session", autouse=True)  # type: ignore
@@ -49,26 +64,21 @@ def cluster_log_manager(request: SubRequest) -> Optional[ClusterLogManager]:
     master_config_path = Path(master_config_path) if master_config_path else None
     master_host = request.config.getoption("--master-host")
     master_port = request.config.getoption("--master-port")
+    follow_local_logs = request.config.getoption("--follow-local-logs")
+    compose_file = request.config.getoption("--compose-file")
+
     config.MASTER_IP = master_host
     config.MASTER_PORT = master_port
-    if master_host == "localhost":
-        determined_deploy.local.cluster_utils.fixture_up(
-            num_agents=1,
-            port=int(master_port),
-            master_config_path=master_config_path,
-            cluster_name="integrations",
-            db_password="postgres",
-            hasura_secret="hasura",
-            delete_db=False,
-            version=None,
-            no_gpu=False,
-            autorestart=False,
-        )
-        with ClusterLogManager("integrations") as clm:
+
+    if master_host == "localhost" and follow_local_logs:
+        project_name = request.config.getoption("--compose-project-name")
+        project = ["-p", project_name] if project_name else []
+        with ClusterLogManager(
+            lambda: subprocess.run(["docker-compose", "-f", compose_file, *project, "logs", "-f"])
+        ) as clm:
             # Yield instead of return so that `__exit__` is called when the
             # testing session is finished.
             yield clm
-        determined_deploy.local.cluster_utils.fixture_down("integrations", True)
     else:
         # Yield `None` so that pytest handles the no log manager case correctly.
         yield None

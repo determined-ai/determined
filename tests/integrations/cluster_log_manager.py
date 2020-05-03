@@ -1,14 +1,12 @@
 import multiprocessing
-import typing
 from types import TracebackType
-
-from determined_deploy.local import cluster_utils
+from typing import Any, Callable, Optional
 
 
 class ClusterLogManager:
-    def __init__(self, cluster_name: str) -> None:
-        self._logs_process: typing.Optional[multiprocessing.Process] = None
-        self.cluster_name = cluster_name
+    def __init__(self, logs_func: Callable[..., Any]) -> None:
+        self._logs_process: Optional[multiprocessing.Process] = None
+        self.logs_func = logs_func
 
     def __enter__(self) -> "ClusterLogManager":
         self.setup_logs()
@@ -20,9 +18,7 @@ class ClusterLogManager:
     def setup_logs(self) -> None:
         if self._logs_process is not None:
             self._logs_process.terminate()
-        self._logs_process = multiprocessing.Process(
-            target=cluster_utils.logs, args=(self.cluster_name,), daemon=True
-        )
+        self._logs_process = multiprocessing.Process(target=self.logs_func, daemon=True)
         self._logs_process.start()
 
     def stop_logs(self) -> None:
