@@ -1,9 +1,9 @@
 .. _requirements:
 
 Installation Requirements
-==========================
+=========================
 
-.. _system-requirements: 
+.. _system-requirements:
 
 System Requirements
 -------------------
@@ -55,9 +55,10 @@ system. For example, every agent node must have Docker installed to
 allow it to run containerized workloads.
 
 Install on Linux
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 
-#. Install the latest release of Docker and the Nvidia Container Toolkit:
+#. Install Docker. We require the version of Docker 19.03 or newer on
+   the machine where the agent is running.
 
    On Ubuntu:
 
@@ -67,11 +68,7 @@ Install on Linux
       curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
       sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 
-      curl -fsSL https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-      distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-      curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-
-      sudo apt-get update && sudo apt-get install -y --no-install-recommends docker-ce nvidia-docker2
+      sudo apt-get update && sudo apt-get install -y --no-install-recommends docker-ce
       sudo systemctl reload docker
       sudo usermod -aG docker $USER
 
@@ -82,20 +79,45 @@ Install on Linux
       sudo yum install -y yum-utils device-mapper-persistent-data lvm2
       sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 
+      sudo yum install -y docker-ce
+      sudo systemctl start docker
+
+
+#. If the machine has GPUs that you would like to use with Determined,
+   install the Nvidia Container Toolkit to allow Docker to run
+   containers that use them. For more information, see the `Nvidia
+   documentation <https://github.com/NVIDIA/nvidia-docker>`__.
+
+   On Ubuntu:
+
+   .. code::
+
+      curl -fsSL https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+      distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+      curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+      sudo apt-get update
+
+      sudo apt-get install -y --no-install-recommends nvidia-container-toolkit
+      sudo systemctl restart docker
+
+   On CentOS:
+
+   .. code::
+
       distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
       curl -fsSL https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.repo | sudo tee /etc/yum.repos.d/nvidia-docker.repo
 
-      sudo yum install -y docker-ce nvidia-docker2
-      sudo systemctl start docker
+      sudo yum install -y nvidia-container-toolkit
+      sudo systemctl restart docker
 
-#. Log out and start a new terminal session. Verify that the current user
-   is in the ``docker`` group and that the ``nvidia`` Docker runtime is
-   installed:
+#. Log out and start a new terminal session. Verify that the current
+   user is in the ``docker`` group and, if the machine has GPUs, that
+   Docker can start a container using them.
 
    .. code::
 
       groups
-      docker info | grep Runtimes
+      docker run --gpus all --rm debian:10-slim nvidia-smi
 
 #. If using CentOS 7, `enable the persistent storage
    <https://unix.stackexchange.com/a/159390>`_ of journalctl log

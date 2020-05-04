@@ -47,12 +47,16 @@ Deploying a Single Node Cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For local development or small clusters (such as a GPU workstation), you may wish to
-to install both a master and an agent on the same node.  To do this, run:
+install both a master and an agent on the same node. To do this, run one of the
+following commands:
 
 .. code::
 
+   # If the machine has GPUs:
    det-deploy local fixture-up
 
+   # If the machine doesn't have GPUs:
+   det-deploy local fixture-up --no-gpu
 
 This will start a master and an agent on that machine. To verify that the
 master is running, navigate to ``http://<master-hostname>:8080`` in a
@@ -78,7 +82,7 @@ If you want to create more than one agent locally, you can use:
 
 
 Stopping a Single Node Cluster
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To stop a Determined cluster, on the machine where a Determined cluster is currently running, run
 
@@ -119,11 +123,15 @@ To stop a running master, run:
 Deploying Agents
 ~~~~~~~~~~~~~~~~
 
-To deploy a standalone agent on a machine, run this command:
+To deploy a standalone agent on a machine, run one of the following commands:
 
 .. code::
 
+   # If the machine has GPUs:
    det-deploy local agent-up <master_hostname>
+
+   # If the machine doesn't have GPUs:
+   det-deploy local agent-up --no-gpu <master_hostname>
 
 This will create an agent on that machine. To verify whether it has
 successfully connected to the master, navigate to the WebUI and check

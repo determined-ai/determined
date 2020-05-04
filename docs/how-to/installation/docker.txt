@@ -84,13 +84,24 @@ for Docker:
 Note that the agent requires ``run`` as the first argument if any
 arguments are provided.
 
-By default, the agent will use all the GPUs on the machine to run
-Determined tasks; this behavior can be changed at startup using the
-`NVIDIA_VISIBLE_DEVICES
-<https://github.com/NVIDIA/nvidia-container-runtime#nvidia_visible_devices>`_
-environment variable. GPUs can also be disabled and enabled at runtime
-using the ``det slot disable`` and ``det slot enable`` CLI commands,
-respectively.
+Selecting GPUs
+~~~~~~~~~~~~~~
+
+The ``--gpus`` flag should be used to specify which GPUs the agent will
+have access to; without it, the agent will not have access to any GPUs.
+For example:
+
+.. code::
+
+   # Use all GPUs.
+   docker run --gpus all ...
+   # Use any four GPUs (selected by Docker).
+   docker run --gpus 4 ...
+   # Use the GPUs with the given IDs or UUIDs.
+   docker run --gpus '"device=1,3"' ...
+
+GPUs can also be disabled and enabled at runtime using the ``det slot
+disable`` and ``det slot enable`` CLI commands, respectively.
 
 Docker Networking for Master and Agents
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
