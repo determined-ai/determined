@@ -123,7 +123,7 @@ def maybe_create_experiment(implementation: NativeImplementation) -> typing.Opti
 
 
 def create_experiment(implementation: NativeImplementation) -> int:
-    return create_native_experiment(
+    return create_native_experiment(  # type: ignore
         implementation.cwd,
         implementation.command + ["--config", json.dumps(implementation.configuration)],
     )

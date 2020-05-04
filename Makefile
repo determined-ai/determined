@@ -43,28 +43,6 @@ GORELEASER_VERSION := v0.128.0
 
 BUILDDIR ?= build
 
-MYPY := mypy
-TYPE_CHECK_PATHS := tests webui/elm/pytests
-
-# This can be given as a prefix to a command to run that command with all staged
-# and committed Python files in the repo as arguments.
-RUN_ON_PYTHON_PATHS := git ls-files -z '*.py' | xargs -0
-
-# Ignoring examples because isort does not play well with packages that are not
-# in the virtualenv.
-ISORT_RUN_ON_PYTHON_PATHS := git ls-files -z '*.py' ':!:*/__init__.py' ':!:examples' | xargs -0
-
-FLAKE_RUN_ON_PYTHON_PATHS := git ls-files -z \
-	'*.py' \
-	':!:examples/experimental/FasterRCNN_tp/*' \
-	':!:examples/experimental/resnet50_tf_keras/tensorflow_files/*' \
-	':!:examples/experimental/bert_glue_pytorch/download_glue_data.py' \
-	':!:examples/experimental/nas_search/randomNAS_files/*' \
-	':!:examples/tutorials/native-tf-keras/*' \
-	| xargs -0
-
-ISORT_OPTIONS := --multi-line=3 --trailing-comma --force-grid-wrap=0 --use-parentheses --line-width=100 -o packaging
-
 DET_DEV_AGENT_IMAGE := determinedai/determined-dev:determined-agent-$(DET_GIT_COMMIT)
 DET_DEV_MASTER_IMAGE := determinedai/determined-dev:determined-master-$(DET_GIT_COMMIT)
 export DET_IMAGES := $(DET_DEV_AGENT_IMAGE),$(DET_DEV_MASTER_IMAGE)
@@ -199,33 +177,25 @@ graphql:
 	$(MAKE) graphql-schema
 	$(MAKE) graphql-python graphql-elm
 
-check: check-python check-commit-messages
+check: check-commit-messages
+	$(MAKE) -C cli $@
+	$(MAKE) -C common $@
+	$(MAKE) -C harness $@
+	$(MAKE) -C deploy $@
+	$(MAKE) -C tests $@
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
 	$(MAKE) WEBUI_TARGET=$@ webui
-
-check-python: check-python-fmt check-python-types check-python-assert
-
-check-python-fmt:
-	$(ISORT_RUN_ON_PYTHON_PATHS) isort --check
-	$(RUN_ON_PYTHON_PATHS) black --check
-	$(FLAKE_RUN_ON_PYTHON_PATHS) flake8
-
-check-python-types:
-	$(MYPY) $(TYPE_CHECK_PATHS)
-	$(MYPY) cli
-	$(MYPY) common
-	$(MYPY) harness
-
-check-python-assert:
-	@scripts/lint-assert.sh
 
 check-commit-messages:
 	$(GOBIN)/conform enforce
 
 fmt:
-	$(ISORT_RUN_ON_PYTHON_PATHS) isort
-	$(RUN_ON_PYTHON_PATHS) black
+	$(MAKE) -C cli $@
+	$(MAKE) -C common $@
+	$(MAKE) -C harness $@
+	$(MAKE) -C deploy $@
+	$(MAKE) -C tests $@
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
 	$(MAKE) -C webui $@

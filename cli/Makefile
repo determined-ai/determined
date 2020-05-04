@@ -20,16 +20,15 @@ build:
 publish:
 	twine upload --non-interactive $(CLI_WHEEL)
 
-BLACK_CONFIG_FILE := ../pyproject.toml
-BLACK_COMMAND := black --config $(BLACK_CONFIG_FILE) .
-
 fmt:
-	$(BLACK_COMMAND)
+	isort -y
+	black .
 
 check:
-	$(BLACK_COMMAND) --check
-	flake8 --config ../.flake8
-	mypy . --config ../mypy.ini
+	isort --check-only
+	black . --check
+	flake8
+	mypy .
 
 test:
 	# TODO: Replace with tox.

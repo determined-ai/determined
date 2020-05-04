@@ -153,7 +153,7 @@ def run_dataset_experiment(
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.fixtures_path("estimator_dataset"), 1
     )
-    return exp.experiment_trials(experiment_id)
+    return exp.experiment_trials(experiment_id)  # type: ignore
 
 
 @pytest.mark.e2e_gpu  # type: ignore

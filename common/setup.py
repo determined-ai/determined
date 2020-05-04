@@ -16,7 +16,7 @@ setup(
     classifiers=["License :: OSI Approved :: Apache Software License"],
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     python_requires=">=3.5",
-    package_data={"determined-common": [str(version_file), "py.typed"]},
+    package_data={"determined_common": [str(version_file), "py.typed"]},
     install_requires=[
         "boto3>=1.9.220",
         "dai-sgqlc-3.5",
