@@ -333,7 +333,7 @@ commands:
     steps:
       - run:
           name: "Download AWS Logs"
-          when: always
+          when: on_fail
           command: |
             mkdir -p <<parameters.download-dir>>
             LOG_GROUP=$(python .circleci/scripts/get_output_from_stack.py <<parameters.cluster-id>> LogGroup)
