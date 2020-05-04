@@ -12,19 +12,7 @@ import determined as det
 import model_def
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--config",
-        dest="config",
-        help="Specifies Determined Experiment configuration.",
-        default="{}",
-    )
-    parser.add_argument(
-        "--mode", dest="mode", help="Specifies local mode or cluster mode.", default="cluster"
-    )
-    args = parser.parse_args()
-
+def run_trial(runtime_config=None, mode='local'):
     config = {
         "data": {
             "url": "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
@@ -43,11 +31,17 @@ if __name__ == "__main__":
             "smaller_is_better": True,
         },
     }
-    config.update(json.loads(args.config))
+
+    if config:
+        config.update(json.loads(runtime_config))
 
     experimental.create(
         trial_def=model_def.MNistTrial,
         config=config,
-        mode=experimental.Mode(args.mode),
+        mode=experimental.Mode(mode),
         context_dir=str(pathlib.Path.cwd()),
     )
+
+
+if __name__ == "__main__":
+    run_trial()
