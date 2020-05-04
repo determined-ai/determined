@@ -48,7 +48,7 @@ class XORTrial(keras.TFKerasTrial):
 
     def session_config(self) -> tf.compat.v1.ConfigProto:
         return tf.compat.v1.ConfigProto(
-            intra_op_parallelism_threads=1, inter_op_parallelism_threads=1,
+            intra_op_parallelism_threads=1, inter_op_parallelism_threads=1
         )
 
     def build_training_data_loader(self) -> keras.InputData:

@@ -21,9 +21,7 @@ class TFKerasContext:
     workflow that uses the ``tf.keras`` API.
     """
 
-    def __init__(
-        self, env: det.EnvContext, hvd_config: horovod.HorovodContext,
-    ):
+    def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
         self.env = env
         self.hvd_config = hvd_config
         self.dataset_initialized = False

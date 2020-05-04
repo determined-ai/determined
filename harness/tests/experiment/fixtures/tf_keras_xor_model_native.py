@@ -24,6 +24,7 @@ def predictions(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", dest="mode", default="cluster")
+    parser.add_argument("--use-dataset", action="store_true")
     args = parser.parse_args()
 
     config = {
@@ -43,11 +44,20 @@ if __name__ == "__main__":
     model.add(Dense(context.get_hparam("hidden_size"), activation="sigmoid", input_shape=(2,)))
     model.add(Dense(1))
 
-    train_data, val_data = utils.make_xor_data_sequences(batch_size=4)
+    if args.use_dataset:
+        data, labels = utils.xor_data()
+
+        train = context.wrap_dataset(tf.data.Dataset.from_tensor_slices((data, labels)))
+        train = train.batch(context.get_hparam("global_batch_size"))
+        valid = context.wrap_dataset(tf.data.Dataset.from_tensor_slices((data, labels)))
+        valid = valid.batch(context.get_hparam("global_batch_size"))
+    else:
+        train, valid = utils.make_xor_data_sequences(batch_size=4)
+
     model = context.wrap_model(model)
     model.compile(
         SGD(lr=context.get_hparam("learning_rate")),
         binary_crossentropy,
         metrics=[categorical_error],
     )
-    model.fit_generator(train_data, steps_per_epoch=100, validation_data=val_data, workers=0)
+    model.fit(x=train, steps_per_epoch=100, validation_data=valid, workers=0)
