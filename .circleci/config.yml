@@ -609,9 +609,18 @@ jobs:
     steps:
       - checkout
       - setup-python-venv:
-          extra-requirements-file: "combined-reqs.txt"
+          determined-common: true
+          determined-cli: true
+          determined: true
+          determined-deploy: true
+          extras-requires: "torch==1.4.0"
+          extra-requirements-file: "dev-requirements.txt"
           executor: python:3.6.9
-      - run: make check-python
+      - run: make -C cli check
+      - run: make -C common check
+      - run: make -C harness check
+      - run: make -C deploy check
+      - run: make -C tests check
 
   test-unit-harness:
     docker:
