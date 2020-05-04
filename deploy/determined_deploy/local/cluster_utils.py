@@ -4,7 +4,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 import docker
 import requests
@@ -12,6 +12,28 @@ import requests
 import determined_deploy
 from determined_common import api
 from determined_deploy import config
+
+# This object, when included in the host config in a container creation request, tells Docker to
+# expose all host GPUs inside a container.
+GPU_DEVICE_REQUEST = {"Driver": "nvidia", "Count": -1, "Capabilities": [["gpu", "utility"]]}
+
+
+# Patch the Docker library to support device requests, since it has yet to support them natively
+# (see https://github.com/docker/docker-py/issues/2395).
+def _patch_docker_for_device_requests() -> None:
+    _old_create_container_args = docker.models.containers._create_container_args
+
+    def _create_container_args(kwargs: Any) -> Any:
+        device_requests = kwargs.pop("device_requests", None)
+        create_kwargs = _old_create_container_args(kwargs)
+        if device_requests:
+            create_kwargs["host_config"]["DeviceRequests"] = device_requests
+        return create_kwargs
+
+    docker.models.containers._create_container_args = _create_container_args
+
+
+_patch_docker_for_device_requests()
 
 
 def get_shell_id() -> str:
@@ -198,12 +220,14 @@ def agent_up(
         restart_policy = None
     config.MASTER_HOST = master_host
     config.MASTER_PORT = master_port
+    if no_gpu:
+        device_requests = None
+    else:
+        device_requests = [GPU_DEVICE_REQUEST]
+
     _wait_for_master()
     docker_client = docker.from_env()
-    if "nvidia" in docker_client.info()["Runtimes"] and not no_gpu:
-        runtime = "nvidia"
-    else:
-        runtime = None
+
     print(f"Starting {agent_name}")
     docker_client.containers.run(
         image=image,
@@ -214,9 +238,9 @@ def agent_up(
         network_mode="host",
         name=agent_name,
         detach=True,
-        runtime=runtime,
         labels=labels,
         restart_policy=restart_policy,
+        device_requests=device_requests,
     )
 
 
