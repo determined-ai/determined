@@ -62,7 +62,7 @@ def maybe_create_experiment(
     env["DET_DEBUG"] = "true"
 
     return subprocess.run(
-        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
+        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env
     )
 
 
@@ -106,9 +106,12 @@ def cancel_experiment(experiment_id: int) -> None:
 
 
 def wait_for_experiment_state(
-    experiment_id: int, target_state: str, max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS
+    experiment_id: int,
+    target_state: str,
+    max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
+    log_every: int = 60,
 ) -> None:
-    for _ in range(max_wait_secs):
+    for seconds_waited in range(max_wait_secs):
         state = experiment_state(experiment_id)
         if state == target_state:
             return
@@ -124,7 +127,14 @@ def wait_for_experiment_state(
                 f"Experiment {experiment_id} terminated in {state} state, expected {target_state}"
             )
 
+        if seconds_waited > 0 and seconds_waited % log_every == 0:
+            print(
+                f"Waited {seconds_waited} seconds for experiment {experiment_id} "
+                f"(currently {state}) to reach {target_state}"
+            )
+
         time.sleep(1)
+
     else:
         pytest.fail(
             "Experiment did not reach target state {} after {} seconds".format(
