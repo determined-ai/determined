@@ -631,6 +631,12 @@ class EstimatorTrial(det.Trial):
     trial_context_class = estimator.EstimatorTrialContext
 
     def __init__(self, context: estimator.EstimatorTrialContext):
+        """
+        Initializes a trial using the provided trial_context.
+
+        Override this function to initialize any shared state between the
+        estimator, train spec, and/or validation spec.
+        """
         self.context = context  # type: estimator.EstimatorTrialContext
 
     @abstractmethod

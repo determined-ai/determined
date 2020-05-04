@@ -261,9 +261,7 @@ class TFKerasTrialController(det.LoopTrialController):
         hvd_config: horovod.HorovodContext,
     ) -> det.TrialController:
         check.is_instance(
-            context,
-            keras.TFKerasTrialContext,
-            "TFKerasTrialController needs a TFKerasTrialContext",
+            context, keras.TFKerasTrialContext, "TFKerasTrialController needs a TFKerasTrialContext"
         )
         context = cast(keras.TFKerasTrialContext, context)
 
@@ -357,7 +355,7 @@ class TFKerasTrialController(det.LoopTrialController):
 
         check.is_not_none(context.compile_args, "Please call model.compile(...).")
         check.is_not_none(
-            context.train_config, "Please call model.fit(...) or model.fit_generator(...).",
+            context.train_config, "Please call model.fit(...) or model.fit_generator(...)."
         )
 
         # For the Native API, we would break the user's model if we changed the session
@@ -430,9 +428,7 @@ class TFKerasTrialController(det.LoopTrialController):
         # Save model.
         self.model.save(path.joinpath("determined-keras-model.h5"), save_format="h5")
 
-        det.util.write_checkpoint_metadata(
-            path, self.env, {"tensorflow_version": tf.__version__},
-        )
+        det.util.write_checkpoint_metadata(path, self.env, {"tensorflow_version": tf.__version__})
 
         return {}
 
@@ -559,6 +555,12 @@ class TFKerasTrial(det.Trial):
     trial_context_class = keras.TFKerasTrialContext
 
     def __init__(self, trial_context: keras.TFKerasTrialContext) -> None:
+        """
+        Initializes a trial using the provided trial_context.
+
+        Override this function to initialize any shared state between the
+        estimator, train spec, and/or validation spec.
+        """
         self.context = trial_context
 
     @abstractmethod
