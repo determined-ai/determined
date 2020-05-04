@@ -21,7 +21,7 @@ import (
 )
 
 // sessionDuration is how long a newly created session is valid.
-const sessionDuration = 30 * 24 * time.Hour
+const sessionDuration = 7 * 24 * time.Hour
 
 type agentUserGroup struct {
 	UID   *int   `json:"uid,omitempty"`
@@ -247,7 +247,7 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 		cookie := new(http.Cookie)
 		cookie.Name = "auth"
 		cookie.Value = token
-		cookie.Expires = time.Now().Add(5 * 24 * time.Hour)
+		cookie.Expires = time.Now().Add(sessionDuration)
 		c.SetCookie(cookie)
 	}
 
