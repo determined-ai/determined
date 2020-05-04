@@ -33,7 +33,8 @@ def test_executing_eagerly():
         tf_keras_xor_model.XORTrialWithTrainingMetrics,
         tf_keras_xor_model.XORTrialWithCustomObjects,
         tf_keras_xor_model.XORTrialWithDataLayer,
-        utils.fixtures_path("tf_keras_xor_model_native.py"),
+        [utils.fixtures_path("tf_keras_xor_model_native.py")],
+        [utils.fixtures_path("tf_keras_xor_model_native.py"), "--use-dataset"],
     ],
 )
 def xor_trial_controller(request):
@@ -43,7 +44,7 @@ def xor_trial_controller(request):
     over different implementations (both native and trial), so that any test
     that uses it may test a full set of implementations.
     """
-    if isinstance(request.param, str):
+    if isinstance(request.param, list):
 
         def _xor_trial_controller(
             hparams: Dict[str, Any],
@@ -169,7 +170,7 @@ class TestKerasTrial:
         hparams = {"learning_rate": 0.001, "global_batch_size": 3, "dataset_range": 10}
         # TODO(DET-2436): Add a unit test for native implementation with tf dataset.
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class, hparams, make_workloads(), trial_seed=self.trial_seed,
+            trial_class, hparams, make_workloads(), trial_seed=self.trial_seed
         )
         controller.run()
 
@@ -278,7 +279,7 @@ class TestKerasTrial:
             )
 
         utils.reproducibility_test(
-            controller_fn=controller_fn, steps=3, validation_freq=1, batches_per_step=100,
+            controller_fn=controller_fn, steps=3, validation_freq=1, batches_per_step=100
         )
 
 

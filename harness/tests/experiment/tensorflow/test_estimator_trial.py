@@ -17,7 +17,7 @@ from tests.experiment.fixtures import estimator_xor_model
     params=[
         estimator_xor_model.XORTrial,
         estimator_xor_model.XORTrialDataLayer,
-        utils.fixtures_path("estimator_xor_model_native.py"),
+        [utils.fixtures_path("estimator_xor_model_native.py")],
     ],
 )
 def xor_trial_controller(request):
@@ -27,7 +27,7 @@ def xor_trial_controller(request):
     over different implementations (both native and trial), so that any test
     that uses it may test a full set of implementations.
     """
-    if isinstance(request.param, str):
+    if isinstance(request.param, list):
 
         def _xor_trial_controller(
             hparams: Dict[str, Any],
@@ -56,7 +56,7 @@ def xor_trial_controller(request):
         ) -> det.TrialController:
             if request.param == estimator_xor_model.XORTrialDataLayer:
                 exp_config = utils.make_default_exp_config(
-                    hparams=hparams, batches_per_step=batches_per_step,
+                    hparams=hparams, batches_per_step=batches_per_step
                 )
                 exp_config["data"] = exp_config.get("data", {})
                 exp_config["data"]["skip_checkpointing_input"] = True
@@ -118,7 +118,7 @@ class TestXORTrial:
             return xor_trial_controller(self.hparams, workloads, batches_per_step=100)
 
         utils.reproducibility_test(
-            controller_fn=controller_fn, steps=3, validation_freq=1, batches_per_step=100,
+            controller_fn=controller_fn, steps=3, validation_freq=1, batches_per_step=100
         )
 
     def test_checkpointing(self, tmp_path: Path, xor_trial_controller: Callable) -> None:
