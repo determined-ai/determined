@@ -104,14 +104,14 @@ docker run --rm --network determined --name determined-graphql \
   hasura/graphql-engine:v1.1.0
 
 # Start the master.
-make -C master install-native
+make -C master install
 determined-master \
   --db-host localhost --db-name determined --db-port 5432 --db-user postgres --db-password my-postgres-password \
   --hasura-address localhost:8081 --hasura-secret=my-hasura-secret \
   --root build/share/determined/master
 
 # Start the agent.
-make -C agent install-native
+make -C agent install
 determined-agent run --master-host localhost --master-port 8080
 ```
 

@@ -1,10 +1,11 @@
 .PHONY: all \
 	clean get-deps \
 	build build-docs build-docker build-elm build-files build-python-packages build-react build-static build-webui \
-	install-native \
+	install \
 	test \
 	check fmt \
-	publish publish-dev
+	publish publish-dev \
+	run
 
 export VERSION := $(shell cat ../VERSION)
 
@@ -85,7 +86,7 @@ build-docker:
 		-t determinedai/determined-dev:determined-$(COMPONENT)-$(DET_GIT_COMMIT) \
 		$(EXTRA_TAG) "$(BUILDDIR)" -f Dockerfile
 
-install-native:
+install:
 	go install -ldflags $(LDFLAGS) ./cmd/determined-master
 
 ####################
@@ -119,3 +120,13 @@ publish:
 publish-dev:
 	docker push $(DOCKER_REGISTRY)determinedai/determined-$(COMPONENT):$(DET_GIT_COMMIT)
 	docker push $(DOCKER_REGISTRY)determinedai/determined-dev:determined-$(COMPONENT)-$(DET_GIT_COMMIT)
+
+##################
+### Run Phase ###
+##################
+
+run:
+	determined-master \
+		--db-host localhost --db-name determined --db-port 5432 --db-user postgres --db-password pass \
+		--hasura-address localhost:8081 --hasura-secret=my-hasura-secret \
+		--root ./

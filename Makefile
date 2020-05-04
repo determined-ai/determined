@@ -26,7 +26,9 @@
   test-all \
   test-python-integrations \
   test-integrations \
-  webui
+  webui \
+  run-db \
+  run-hasura
 
 export VERSION := $(shell cat VERSION)
 export INTEGRATIONS_HOST_PORT ?= 8080
@@ -284,3 +286,20 @@ test-integrations: test-python-integrations
 
 test-performance:
 	pytest -v -s tests/integrations/performance
+
+run-db:
+	docker run --rm \
+		-p 5432:5432 \
+		-e POSTGRES_DB=determined \
+		-e POSTGRES_PASSWORD=pass \
+		postgres:10.8
+
+run-hasura:
+	docker run --rm \
+		-p 8081:8080 \
+		-e HASURA_GRAPHQL_DATABASE_URL=postgres://postgres:pass@host.docker.internal:5432/determined \
+		-e HASURA_GRAPHQL_ADMIN_SECRET=my-hasura-secret \
+		-e HASURA_GRAPHQL_ENABLE_CONSOLE=true \
+		-e HASURA_GRAPHQL_ENABLE_TELEMETRY=false \
+		-e HASURA_GRAPHQL_CONSOLE_ASSETS_DIR=/srv/console-assets \
+		hasura/graphql-engine:v1.1.0

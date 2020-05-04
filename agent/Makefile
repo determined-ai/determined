@@ -1,10 +1,11 @@
 .PHONY: all \
 	clean get-deps \
 	build build-docker build-files \
-	install-native \
+	install \
 	test \
 	check fmt \
 	publish publish-dev \
+	run
 
 export VERSION:=$(shell cat ../VERSION)
 
@@ -62,7 +63,7 @@ build-docker: build-files
 		-t determinedai/determined-dev:determined-$(COMPONENT)-$(DET_GIT_COMMIT) \
 		$(EXTRA_TAG) "$(BUILDDIR)" -f Dockerfile
 
-install-native:
+install:
 	go install -ldflags $(LDFLAGS) ./cmd/determined-agent
 
 ####################
@@ -96,3 +97,10 @@ publish:
 publish-dev:
 	docker push $(DOCKER_REGISTRY)determinedai/determined-$(COMPONENT):$(DET_GIT_COMMIT)
 	docker push $(DOCKER_REGISTRY)determinedai/determined-dev:determined-$(COMPONENT)-$(DET_GIT_COMMIT)
+
+##################
+### Run Phase ###
+##################
+
+run:
+	determined-agent run --master-host localhost --master-port 8080
