@@ -11,6 +11,7 @@ determined.keras
     :exclude-members: trial_controller_class
     :inherited-members:
     :member-order: bysource
+    :special-members: __init__
 
 .. _keras-data-loading:
 

@@ -11,6 +11,7 @@ determined.estimator
     :exclude-members: trial_controller_class
     :inherited-members:
     :member-order: bysource
+    :special-members: __init__
 
 .. _estimator-init:
 

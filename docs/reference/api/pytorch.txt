@@ -11,6 +11,7 @@ determined.pytorch
     :exclude-members: trial_controller_class
     :inherited-members:
     :member-order: bysource
+    :special-members: __init__
 
 .. autoclass:: determined.pytorch.LRScheduler
     :members:

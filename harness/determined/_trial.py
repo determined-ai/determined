@@ -22,4 +22,10 @@ class Trial(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def __init__(self, trial_context: det.TrialContext) -> None:
+        """
+        Initializes a trial using the provided trial_context.
+
+        Override this function to initialize any shared state between the
+        function implementations.
+        """
         pass
