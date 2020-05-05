@@ -19,7 +19,7 @@ declare namespace Cypress {
      * @example
      * cy.checkLoggedIn()
      */
-    checkLoggedIn(username: string): Chainable<any>;
+    checkLoggedIn(username?: string): Chainable<any>;
     /**
      * Check that the application is in a logged out state
      * @example
