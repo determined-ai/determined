@@ -15,9 +15,9 @@ The following guide will discuss:
 Querying Checkpoints
 --------------------
 
-The :class:`ExperimentReference <determined.experimental.ExperimentReference>`
+The :class:`~determined.experimental.ExperimentReference`
 class is a reference to an experiment. It is retrieved via the
-:class:`Determined <determined.experimental.Determined>` class. The reference
+:class:`~determined.experimental.Determined` class. The reference
 contains the ``top_checkpoint`` method. Without arguments, the method will
 check the experiment configuration searcher field for the ``metric`` and
 ``smaller_is_better`` values. These values are used to sort the experiment's
@@ -33,7 +33,7 @@ sorted by the loss metric in ascending order.
 
 The following snippet can be run with a python interpreter after the
 specified experiment has generated a checkpoint. It returns an
-instance of :class:`Checkpoint <determined.experimental.Checkpoint>`
+instance of :class:`~determined.experimental.Checkpoint`
 representing the checkpoint from an experiment with the best validation metric.
 
 .. code:: python
@@ -66,7 +66,7 @@ The following snippet returns the top 5 checkpoints for a specified experiment.
   checkpoints = Determined.get_experiment(id).top_n_checkpoints(5)
 
 
-The :class:`TrialReference <determined.experimental.TrialReference>` is used
+The :class:`~determined.experimental.TrialReference` is used
 for fine grained control over checkpoint selection. It contains a
 ``top_checkpoint`` method which mirrors the above ``top_checkpoint`` for an
 experiment. It also contains ``select_checkpoint`` which offers 3 ways to query
@@ -100,7 +100,7 @@ checkpoints.
 
 Using the Checkpoint class
 --------------------------
-The :class:`Checkpoint <determined.experimental.Checkpoint>` class can both
+The :class:`~determined.experimental.Checkpoint` class can both
 download the checkpoint from persistent storage and load it into memory in a
 python process.
 
@@ -118,10 +118,10 @@ which changes the checkpoint download location.
 
   specific_path = checkpoint.download(path="specific-checkpoint-path")
 
-The ``load`` method of the :class:`Checkpoint
-<determined.experimental.Checkpoint>` class downloads the checkpoint, if it
-does not exist locally, and then loads it into memory in a python
-process, as shown in the following snippet.
+The ``load`` method of the :class:`~determined.experimental.Checkpoint`
+class downloads the checkpoint, if it does not exist locally, and then
+loads it into memory in a python process, as shown in the following
+snippet.
 
 .. code:: python
 
@@ -176,9 +176,9 @@ downloading the checkpoint.
 
 
 The ``det trial download`` command downloads checkpoints for a specified trial.
-Similar to the :class:`TrialReference <determined.experimental.TrialReference>`
-above, the ``det trial download`` command accepts ``--best``, ``--latest``, and
-``--uuid`` options.
+Similar to the :class:`~determined.experimental.TrialReference` above, the
+``det trial download`` command accepts ``--best``, ``--latest``, and ``--uuid``
+options.
 
 .. code::
 
@@ -216,7 +216,7 @@ The ``--latest`` and ``--uuid`` options are used as follows:
   det trial download <trial_id> --uuid <uuid-for-checkpoint>
 
 Finally, the ``det experiment download`` command provides a similar experience
-to using the above :class:`ExperimentReference <determined.experimental.ExperimentReference>`.
+to using the above :class:`~determined.experimental.ExperimentReference`.
 
 .. code:: bash
 
@@ -271,7 +271,7 @@ downloading the checkpoint(s).
 
 Loading from a Local Path
 -------------------------
-:class:`Checkpoint <determined.experimental.Checkpoint>` contains a static method,
+:class:`~determined.experimental.Checkpoint` contains a static method,
 ``load_from_path``, for loading a checkpoint from a local path.
 
 .. code:: bash

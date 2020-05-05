@@ -1,7 +1,7 @@
 .. _tf-mnist-tutorial:
 
 TensorFlow Keras Fashion MNIST Tutorial
-========================================
+=======================================
 
 This tutorial describes how to port an existing ``tf.keras`` model to Determined. We will port a simple image classification model for the Fashion MNIST dataset. This tutorial is based on the official `TensorFlow Basic Image Classification Tutorial <https://www.tensorflow.org/tutorials/keras/classification>`__.
 
@@ -61,7 +61,7 @@ We now discuss how to implement each of these methods in more detail.
 Initialization
 """"""""""""""
 
-As with any Python class, the ``__init__`` method is invoked to construct our trial class. Determined passes this method a single parameter, :class:`TrialContext <determined.TrialContext>`. The trial context contains information about the trial, such as the values of the hyperparameters to use for training. For the time being, we don't need to access any properties from the trial context object, but we assign it to an instance variable so that we can use it later:
+As with any Python class, the ``__init__`` method is invoked to construct our trial class. Determined passes this method a single parameter, :class:`~determined.TrialContext`. The trial context contains information about the trial, such as the values of the hyperparameters to use for training. For the time being, we don't need to access any properties from the trial context object, but we assign it to an instance variable so that we can use it later:
 
 .. code:: python
 
@@ -72,7 +72,7 @@ As with any Python class, the ``__init__`` method is invoked to construct our tr
 Building the Model
 """"""""""""""""""
 
-The ``build_model`` method returns a compiled ``tf.keras.Model`` object. The Fashion MNIST model code uses the Keras Sequential API and we can continue to use that API in our implementation of ``build_model``. The only minor difference is that the model needs to be wrapped by calling :func:`self.context.wrap_model <determined.keras.TFKerasTrialContext.wrap_model>` before it is compiled.
+The ``build_model`` method returns a compiled ``tf.keras.Model`` object. The Fashion MNIST model code uses the Keras Sequential API and we can continue to use that API in our implementation of ``build_model``. The only minor difference is that the model needs to be wrapped by calling :func:`self.context.wrap_model() <determined.keras.TFKerasTrialContext.wrap_model>` before it is compiled.
 
 .. code:: python
 
@@ -93,7 +93,7 @@ The ``build_model`` method returns a compiled ``tf.keras.Model`` object. The Fas
         return model
 
 Loading Data
-""""""""""""""""
+""""""""""""
 
 The last two methods we need to define are ``build_training_data_loader`` and ``build_validation_data_loader``. Determined uses these methods to load the training and validation datasets, respectively.
 

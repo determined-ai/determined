@@ -4,7 +4,7 @@ determined.estimator
 .. _estimator-trial:
 
 ``determined.estimator.EstimatorTrial``
------------------------------------------
+---------------------------------------
 
 .. autoclass:: determined.estimator.EstimatorTrial
     :members:
@@ -16,7 +16,7 @@ determined.estimator
 .. _estimator-init:
 
 ``determined.experimental.estimator.init()``
----------------------------------------------
+--------------------------------------------
 
 .. autofunction:: determined.experimental.estimator.init
 
@@ -37,10 +37,10 @@ API or Native API.
     :members:
     :member-order: bysource
 
-    EstimatorTrialContext always has a :class:`DistributedContext<determined._train_context.DistributedContext>`
+    EstimatorTrialContext always has a :class:`~determined._train_context.DistributedContext`
     accessible via ``context.distributed`` for information related to distributed training.
 
-    EstimatorTrialContext always has a :class:`ExperimentalContext<determined.estimator.EstimatorExperimentalContext>`
+    EstimatorTrialContext always has a :class:`~determined.estimator.EstimatorExperimentalContext`
     accessible via ``context.experimental`` for information related to experimental features.
 
 .. autoclass:: determined.estimator.EstimatorExperimentalContext

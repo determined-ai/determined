@@ -7,15 +7,14 @@ The ``TrialContext`` provides useful methods for writing ``Trial`` subclasses.
 All ``Trial`` subclasses receive a ``TrialContext`` object as an argument to
 their ``__init__()`` method:
 
-- :class:`PyTorchTrial <determined.pytorch.PyTorchTrial>` subclasses receive a
-  plain :class:`TrialContext <determined.TrialContext>`.
+- :class:`~determined.pytorch.PyTorchTrial` subclasses receive a
+  plain :class:`~determined.TrialContext`.
 
-- :class:`TFKerasTrial <determined.keras.TFKerasTrial>` subclasses receive a
-  :class:`TFKerasTrialContext <determined.keras.TFKerasTrialContext>`.
+- :class:`~determined.keras.TFKerasTrial` subclasses receive a
+  :class:`~determined.keras.TFKerasTrialContext`.
 
-- :class:`EstimatorTrial <determined.estimator.EstimatorTrial>` subclasses
-  receive an :class:`EstimatorTrialContext
-  <determined.estimator.EstimatorTrialContext>`.
+- :class:`~determined.estimator.EstimatorTrial` subclasses
+  receive an :class:`~determined.estimator.EstimatorTrialContext`.
 
 ``determined.TrialContext``
 ---------------------------
@@ -25,8 +24,8 @@ their ``__init__()`` method:
     :inherited-members:
     :member-order: bysource
 
-    TrialContext always has a :class:`DistributedContext<determined._train_context.DistributedContext>`
-    accessible via ``context.distributed`` for information related to distributed training.
+    TrialContext always has an instance of :class:`~determined._train_context.DistributedContext`
+    accessible as the ``distributed`` attribute for information related to distributed training.
 
 ``determined.TrialContext.distributed``
 ---------------------------------------

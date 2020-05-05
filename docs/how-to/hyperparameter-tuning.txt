@@ -51,8 +51,8 @@ Instrumenting Model Code
 
 Determined injects hyperparameters from the experiment configuration
 into model code via a context object in the Trial base class. This
-:class:`TrialContext <determined.TrialContext>` object exposes a
-:func:`get_hparam <determined.TrialContext.get_hparam>` method that
+:class:`~determined.TrialContext` object exposes a
+:func:`~determined.TrialContext.get_hparam` method that
 takes the hyperparameter name.  At trial runtime, Determined injects a
 value for the hyperparameter. For example, to inject the value of the
 ``dropout_probability`` hyperparameter defined above into the
