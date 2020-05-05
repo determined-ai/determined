@@ -428,6 +428,8 @@ jobs:
           paths:
             - "share/determined/master/webui/docs"
             - "share/determined/master/wheels"
+      - store_artifacts:
+          path: "build/share/determined/master/webui/docs"
 
   publish-docs:
     docker:
