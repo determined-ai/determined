@@ -2,7 +2,6 @@
   all \
   build \
   build-agent-docker \
-  build-cloud-images \
   build-docker \
   build-master \
   build-master-docker \
