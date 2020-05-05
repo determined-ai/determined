@@ -740,7 +740,8 @@ jobs:
       - when:
           condition: <<parameters.development>>
           steps:
-            - run: make publish-dev
+            - run: make -C master publish-dev
+            - run: make -C agent publish-dev
       - when:
           condition: <<parameters.production>>
           steps:

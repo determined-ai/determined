@@ -21,7 +21,6 @@
   graphql-schema \
   pin-deps \
   upgrade-deps \
-  publish \
   test \
   test-all \
   test-python-integrations \
@@ -94,10 +93,6 @@ build-agent-docker:
 build-master-docker:
 	$(MAKE) -C master build-docker
 
-publish-dev:
-	$(MAKE) -C master $@
-	$(MAKE) -C agent $@
-
 clean:
 	rm -rf build
 	find . \( -name __pycache__ -o -name \*.pyc -o -name .mypy_cache \) -print0 | xargs -0 rm -rf
@@ -109,37 +104,6 @@ clean:
 	$(MAKE) -C cli $@
 	$(MAKE) -C deploy $@
 	$(MAKE) WEBUI_TARGET=$@ webui
-
-guard-publish:
-	@if [ -n "$(GIT_DIRTY)" ]; then \
-		echo "You cannot publish with a dirty git working tree."; exit 1; fi
-	@if [ "$$(git tag --points-at HEAD)" != "v$(VERSION)" ]; then \
-		echo "Ensure that the tag v$(VERSION) (and no other tag) points to the current commit."; exit 1; fi
-	@if ! command -v twine >/dev/null 2>&1; then \
-		echo "You must have twine installed."; exit 1; fi
-	@if ! [ \( -n "$$TWINE_USERNAME" -a -n "$$TWINE_PASSWORD" \) -o -f ~/.pypirc ]; then \
-		echo "You must set the TWINE_USERNAME and TWINE_PASSWORD environment variables or set up a ~/.pypirc file."; exit 1; fi
-
-# Publish release artifacts. See RELEASE.md for dependencies (awscli,
-# terraform, etc.) and details.
-#
-# For safety's sake, we make a best-effort attempt to avoid overwriting
-# existing objects. If you intend to overwrite an existing package, just
-# remove the current object from the S3 bucket manually and retry.
-publish: guard-publish clean all
-	$(MAKE) -C master $@
-	$(MAKE) -C agent $@
-	$(MAKE) -C common $@
-	$(MAKE) -C harness $@
-	$(MAKE) -C cli $@
-	$(MAKE) -C deploy $@
-
-	cp -r packaging "$(BUILDDIR)"
-	cd "$(BUILDDIR)" && $(GOBIN)/goreleaser -f $(CURDIR)/.goreleaser.yml --rm-dist
-
-	# Upload the docs last because it updates the terraform state file,
-	# which dirties the working directory.
-	$(MAKE) -C docs $@
 
 # This target assumes that a Hasura instance is running and queries it to
 # retrieve the current schema files, producing a schema file that the
