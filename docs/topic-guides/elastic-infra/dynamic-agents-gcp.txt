@@ -1,10 +1,12 @@
-.. _gcp-dynamic-agents:
+.. _dynamic-agents-gcp:
 
 Dynamic Agents on GCP
 =====================
 
 This document describes how to install, configure, and upgrade a
-deployment of Determined with Dynamic Agents on GCP.
+deployment of Determined with Dynamic Agents on GCP. See
+:ref:`elastic-infra-index` for an overview of the elastic
+infrastructure in Determined.
 
 System Requirements
 -------------------
