@@ -5,6 +5,6 @@
 -r release-requirements.txt
 -r dev-requirements.txt
 -r docs-requirements.txt
--r tests/cli/requirements.txt
--r tests/unit/requirements.txt
--r tests/integrations/requirements.txt
+-r cli/tests/requirements.txt
+-r harness/tests/requirements.txt
+-r e2e_tests/tests/requirements.txt

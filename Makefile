@@ -6,9 +6,6 @@
   build-master \
   build-master-docker \
   check \
-  check-fmt \
-  check-types \
-  check-python-assert \
   clean \
   fmt \
   get-deps \
@@ -17,10 +14,7 @@
   graphql-schema \
   pin-deps \
   upgrade-deps \
-  test \
-  test-all \
-  test-python-integrations \
-  test-integrations
+  test
 
 export VERSION := $(shell cat VERSION)
 export INTEGRATIONS_HOST_PORT ?= 8080
@@ -115,7 +109,7 @@ check: check-commit-messages
 	$(MAKE) -C common $@
 	$(MAKE) -C harness $@
 	$(MAKE) -C deploy $@
-	$(MAKE) -C tests $@
+	$(MAKE) -C e2e_tests $@
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
 	$(MAKE) -C webui $@
@@ -128,63 +122,15 @@ fmt:
 	$(MAKE) -C common $@
 	$(MAKE) -C harness $@
 	$(MAKE) -C deploy $@
-	$(MAKE) -C tests $@
+	$(MAKE) -C e2e_tests $@
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
 	$(MAKE) -C webui $@
-
-# TEST_EXPR can be used to only run tests which match the given substring
-# expression, using the pytest "-k" flag.
-# Example: `make test-integrations -e TEST_EXPR=warm_start` will only run the
-# integration tests with "warm_start" in their name
-TEST_EXPR ?= ""
-PYTEST_MARKS ?= ""
 
 test:
-	pytest -v -k $(TEST_EXPR) \
-		tests/unit/ tests/cli/
+	$(MAKE) -C harness $@
+	$(MAKE) -C cli $@
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
 	$(MAKE) -C webui $@
 
-test-tf2:
-	pip freeze | grep "tensorflow==2.*"
-	pytest -v -k $(TEST_EXPR) --runslow \
-		--durations=0 \
-		tests/unit/experiment/tensorflow/test_estimator_trial.py \
-		tests/unit/experiment/tensorflow/test_util.py
-	# We must run these tests separately becuase estimators need to disable v2
-	# behavior (a global operation). We are explicitly testing eager execution
-	# for tf keras which needs v2 behavior enabled. You can't enable v2 behavior
-	# anywhere but the "start" of your program. See:
-	# https://github.com/tensorflow/tensorflow/issues/18304#issuecomment-379435515.
-	pytest -v -k $(TEST_EXPR) --runslow \
-		--durations=0 \
-		tests/unit/experiment/keras/test_tf_keras_trial.py \
-		tests/unit/experiment/keras/test_keras_data.py
-
-test-harness:
-	pytest -v -k $(TEST_EXPR) --runslow \
-		--durations=0 \
-		tests/unit
-
-test-python-integrations: MASTER_HOST ?= localhost
-test-python-integrations: MASTER_CONFIG_PATH ?=
-test-python-integrations:
-	@echo "Running integration tests on port $(INTEGRATIONS_HOST_PORT)"
-	pytest -vv -s \
-		-k "$(TEST_EXPR)" \
-		-m "$(PYTEST_MARKS)" \
-		--durations=0 \
-		--master-host="$(MASTER_HOST)" \
-		--master-port="$(INTEGRATIONS_HOST_PORT)" \
-		--master-config-path="$(MASTER_CONFIG_PATH)" \
-		--junit-xml=build/test-reports/integ-test.xml \
-		--capture=fd \
-		--require-secrets \
-		tests/integrations
-
-test-integrations: test-python-integrations
-
-test-performance:
-	pytest -v -s tests/integrations/performance

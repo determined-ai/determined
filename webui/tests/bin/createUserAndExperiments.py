@@ -4,7 +4,7 @@ import pathlib
 import subprocess
 
 determined_root_dir = pathlib.Path(__file__).absolute().parents[3]
-experiment_dir = determined_root_dir.joinpath("tests", "integrations", "fixtures", "no_op")
+experiment_dir = determined_root_dir.joinpath("e2e_tests", "tests", "fixtures", "no_op")
 
 
 for _ in range(4):
