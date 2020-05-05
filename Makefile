@@ -48,13 +48,13 @@ export DET_SEGMENT_WEBUI_KEY ?=
 all: get-deps build-docker
 
 get-deps: python-get-deps go-get-deps
+	go get github.com/talos-systems/conform@fa7df19996ece307285da44c73f210c6cbec9207
 	$(MAKE) -C webui $@
 
 go-get-deps:
 	$(MAKE) -C master get-deps
 	$(MAKE) -C agent get-deps
 	curl -fsSL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s -- -b $(GOBIN) $(GORELEASER_VERSION)
-	go get github.com/talos-systems/conform@fa7df19996ece307285da44c73f210c6cbec9207
 
 python-get-deps:
 	pip install -r combined-reqs.txt
