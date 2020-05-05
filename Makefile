@@ -1,10 +1,8 @@
 .PHONY: \
   all \
   build \
-  build-agent-docker \
   build-docker \
   build-master \
-  build-master-docker \
   check \
   clean \
   fmt \
@@ -50,12 +48,7 @@ debs:
 	cd "$(BUILDDIR)" && GORELEASER_CURRENT_TAG=$(VERSION) $(GOBIN)/goreleaser -f $(CURDIR)/.goreleaser.yml --snapshot --rm-dist
 
 build-docker: build debs
-	$(MAKE) build-master-docker build-agent-docker
-
-build-agent-docker:
 	$(MAKE) -C agent build-docker
-
-build-master-docker:
 	$(MAKE) -C master build-docker
 
 clean:
