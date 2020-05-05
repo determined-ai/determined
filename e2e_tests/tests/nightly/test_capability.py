@@ -55,3 +55,13 @@ def test_mnist_pytorch_multi_output() -> None:
     exp.run_basic_test_with_temp_config(
         config, conf.experimental_path("mnist_pytorch_multi_output"), 1
     )
+
+
+@pytest.mark.nightly  # type: ignore
+def test_imagenet_nas() -> None:
+    config = conf.load_config(conf.experimental_path("imagenet_nas_arch_pytorch/const.yaml"))
+    config = conf.set_max_steps(config, 2)
+
+    exp.run_basic_test_with_temp_config(
+        config, conf.experimental_path("imagenet_nas_arch_pytorch"), 1
+    )
