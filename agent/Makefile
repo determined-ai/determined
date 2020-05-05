@@ -1,6 +1,6 @@
 .PHONY: all \
 	clean get-deps \
-	build build-docker build-files \
+	build-docker build-files \
 	install-native \
 	test \
 	check fmt \
@@ -24,7 +24,7 @@ export GO111MODULE := on
 GOBIN ?= $(shell go env GOPATH)/bin
 GOCI_LINT_VERSION := v1.20.0
 
-all: clean get-deps build
+all: clean get-deps
 
 ######################
 ### Validate Phase ###
@@ -40,9 +40,6 @@ get-deps:
 ###################
 ### Build Phase ###
 ###################
-
-# Have this here to keep the master and agent symmetric, but nothing actually needs to happen.
-build: ;
 
 build-files:
 	mkdir -p "$(BUILDDIR)"/share/determined/agent

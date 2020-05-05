@@ -1,7 +1,6 @@
 .PHONY: \
   all \
   build \
-  build-agent \
   build-agent-docker \
   build-cloud-images \
   build-docker \
@@ -66,10 +65,7 @@ webui:
 	$(MAKE) -C webui/elm ${WEBUI_TARGET}
 	$(MAKE) -C webui/react ${WEBUI_TARGET}
 
-build: build-master build-agent
-
-build-agent:
-	$(MAKE) -C agent build
+build: build-master
 
 build-master:
 	$(MAKE) -C master build
