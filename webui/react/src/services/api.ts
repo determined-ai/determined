@@ -1,4 +1,5 @@
 import { CancelToken } from 'axios';
+import { sha512 }  from 'js-sha512';
 
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { Api, generateApi } from 'services/apiBuilder';
@@ -20,6 +21,12 @@ export const isAuthFailure = (e: any): boolean => {
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isLoginFailure = (e: any): boolean => {
   return e.response && e.response.status && e.response.status === 403;
+};
+
+const saltAndHashPassword = (password?: string): string => {
+  if (!password) return '';
+  const passwordSalt = 'GubPEmmotfiK9TMD6Zdw';
+  return sha512(passwordSalt + password);
 };
 
 const userApi:  Api<{}, User> = {
@@ -110,7 +117,7 @@ export const archiveExperiment =
 const loginApi: Api<Credentials, void> = {
   httpOptions: ({ password, username }) => {
     return {
-      body: { password, username },
+      body: { password: saltAndHashPassword(password), username },
       method: 'POST',
       url: '/login?cookie=true',
     };

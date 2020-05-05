@@ -11,7 +11,7 @@ export interface Auth {
 }
 
 export interface Credentials {
-  password: string;
+  password?: string;
   username: string;
 }
 
