@@ -53,11 +53,6 @@ export DET_SEGMENT_WEBUI_KEY ?=
 
 all: get-deps build-docker
 
-# combined-reqs.txt contains the pinned versions for all development
-# dependencies in this repo, including transitive dependencies.
-REQUIREMENTS_IN := combined-reqs.in
-REQUIREMENTS_OUTPUT := combined-reqs.txt
-
 get-deps: python-get-deps go-get-deps
 	$(MAKE) WEBUI_TARGET=$@ webui
 
@@ -68,14 +63,7 @@ go-get-deps:
 	go get github.com/talos-systems/conform@fa7df19996ece307285da44c73f210c6cbec9207
 
 python-get-deps:
-	pip install -r $(REQUIREMENTS_OUTPUT)
-
-
-pin-deps:
-	pip-compile -q --output-file $(REQUIREMENTS_OUTPUT) $(REQUIREMENTS_IN)
-
-upgrade-deps:
-	pip-compile -q --upgrade --output-file $(REQUIREMENTS_OUTPUT) $(REQUIREMENTS_IN)
+	pip install -r combined-reqs.txt
 
 bump-version: PART?=patch
 bump-version:
