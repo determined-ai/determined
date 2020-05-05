@@ -7,7 +7,6 @@
   build-docker \
   build-master \
   build-master-docker \
-  bump-version \
   check \
   check-fmt \
   check-types \
@@ -64,10 +63,6 @@ go-get-deps:
 
 python-get-deps:
 	pip install -r combined-reqs.txt
-
-bump-version: PART?=patch
-bump-version:
-	bumpversion $(PART)
 
 webui:
 	$(MAKE) -C webui/elm ${WEBUI_TARGET}
