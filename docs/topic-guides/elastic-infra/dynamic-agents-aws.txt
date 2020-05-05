@@ -1,11 +1,12 @@
-.. _aws-dynamic-agents:
+.. _dynamic-agents-aws:
 
 Dynamic Agents on AWS
 =====================
 
 This document describes how to install, configure, and upgrade a
 deployment of Determined with Dynamic Agents on AWS. See
-:ref:`dynamic-agents-overview` for an overview of dynamic agents in Determined.
+:ref:`elastic-infra-index` for an overview of the elastic
+infrastructure in Determined.
 
 System Requirements
 -------------------
