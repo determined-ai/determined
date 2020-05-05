@@ -349,6 +349,7 @@ commands:
           nvm install v12
           nvm alias default v12
           make -C webui/tests get-deps
+      - run: docker pull cypress/included:4.3.0
 
 
   setup-local-cluster:
