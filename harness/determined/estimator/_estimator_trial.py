@@ -292,6 +292,9 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
                 path = cast(pathlib.Path, args[0])
                 response_func(self._checkpoint_model(path))
             elif wkld.kind == workload.Workload.Kind.TERMINATE:
+                response_func(
+                    {} if self.estimator_trial_controller.is_chief else workload.Skipped()
+                )
                 raise det.errors.WorkerFinishedGracefully("Exiting normally.")
             else:
                 raise AssertionError(f"Unknown wkld kind {wkld.kind}.")

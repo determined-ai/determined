@@ -257,6 +257,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 path = cast(pathlib.Path, args[0])
                 response_func(self._save(path))
             elif w.kind == workload.Workload.Kind.TERMINATE:
+                response_func({} if self.is_chief else workload.Skipped())
                 break
             else:
                 raise AssertionError("Unexpected workload: {}".format(w.kind))
