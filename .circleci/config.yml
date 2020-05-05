@@ -245,7 +245,7 @@ commands:
         type: string
         default: "8080"
     steps:
-      - run: circleci tests glob "tests/integrations/**/test*.py" | circleci tests split --split-by=timings > /tmp/tests-to-run
+      - run: circleci tests glob "e2e_tests/tests/**/test*.py" | circleci tests split --split-by=timings > /tmp/tests-to-run
 
       - run: |
           if [[ "<<parameters.master-host>>" == "localhost" ]]; then
@@ -632,7 +632,7 @@ jobs:
       - run: make -C common check
       - run: make -C harness check
       - run: make -C deploy check
-      - run: make -C tests check
+      - run: make -C e2e_tests check
 
   test-unit-harness:
     docker:
@@ -643,9 +643,9 @@ jobs:
           determined-common: true
           determined: true
           extras-requires: "tensorflow==1.14.0 torch==1.4.0 torchvision==0.5.0"
-          extra-requirements-file: "tests/unit/requirements.txt"
+          extra-requirements-file: "harness/tests/requirements.txt"
           executor: python:3.6.9
-      - run: make test-harness
+      - run: make -C harness test
 
   test-unit-harness-tf2:
     docker:
@@ -656,9 +656,9 @@ jobs:
           determined-common: true
           determined: true
           extras-requires: "tensorflow==2.1.0"
-          extra-requirements-file: "tests/unit/requirements.txt"
+          extra-requirements-file: "harness/tests/requirements.txt"
           executor: python:3.6.9
-      - run: make test-tf2
+      - run: make -C harness test-tf2
 
   test-cli:
     parameters:
@@ -672,8 +672,8 @@ jobs:
       - run: pip install --find-links build determined-cli==<< pipeline.parameters.det-version >>
       # Ensure Determined cli can run without installing cli test requirements
       - run: det --help
-      - run: pip install -r tests/cli/requirements.txt
-      - run: pytest tests/cli
+      - run: pip install -r cli/tests/requirements.txt
+      - run: pytest cli/tests
 
   test-e2e-tf:
     machine:
@@ -690,7 +690,7 @@ jobs:
           determined-cli: true
           determined: true
           determined-deploy: true
-          extra-requirements-file: "tests/integrations/requirements.txt"
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: ubuntu-1604:201903-01
 
       - pull-task-images:
@@ -720,7 +720,7 @@ jobs:
           determined-cli: true
           determined: true
           determined-deploy: true
-          extra-requirements-file: "tests/integrations/requirements.txt"
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: ubuntu-1604:201903-01
 
       - pull-task-images
@@ -789,7 +789,7 @@ jobs:
           determined-cli: true
           determined: true
           determined-deploy: true
-          extra-requirements-file: "tests/integrations/requirements.txt"
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: python:3.6.9
       - setup-aws-cluster:
           cluster-id: nightly-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
@@ -821,7 +821,7 @@ jobs:
           determined-cli: true
           determined: true
           determined-deploy: true
-          extra-requirements-file: "tests/integrations/requirements.txt"
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: python:3.6.9
       - setup-aws-cluster:
           cluster-id: e2e-gpu-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
@@ -854,7 +854,7 @@ jobs:
           determined-cli: true
           determined: true
           determined-deploy: true
-          extra-requirements-file: "tests/integrations/requirements.txt"
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: python:3.6.9
       - setup-aws-cluster:
           cluster-id: parallel-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}

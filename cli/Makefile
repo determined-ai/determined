@@ -31,8 +31,4 @@ check:
 	mypy .
 
 test:
-	# TODO: Replace with tox.
-	docker build -t determined-cli-deps -f ../tests/cli/Dockerfile.cli-deps ..
-	docker run determined-cli-deps
-	docker build -t determined-cli-tests -f ../tests/cli/Dockerfile.cli-tests ..
-	docker run -t determined-cli-tests
+	pytest tests
