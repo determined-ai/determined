@@ -26,7 +26,6 @@ interface FromValues {
   password?: string;
   username?: string;
 }
-
 const Authentication: React.FC = () => {
   const history = useHistory();
   const location = useLocation();
