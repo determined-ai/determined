@@ -12,8 +12,6 @@
   graphql \
   graphql-python \
   graphql-schema \
-  pin-deps \
-  upgrade-deps \
   test
 
 export VERSION := $(shell cat VERSION)
