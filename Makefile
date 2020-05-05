@@ -17,23 +17,12 @@
   test
 
 export VERSION := $(shell cat VERSION)
-export INTEGRATIONS_HOST_PORT ?= 8080
-export DB_HOST_PORT ?= 5433
-export INTEGRATIONS_LOG_OPTS := --no-color
-
-GIT_COMMIT := $(shell git rev-parse HEAD)
-GIT_DIRTY := $(if $(shell git status --porcelain),-dirty,)
-export DET_GIT_COMMIT := $(GIT_COMMIT)$(GIT_DIRTY)
 
 export GO111MODULE := on
 GOBIN ?= $(shell go env GOPATH)/bin
 GORELEASER_VERSION := v0.128.0
 
 BUILDDIR ?= build
-
-DET_DEV_AGENT_IMAGE := determinedai/determined-dev:determined-agent-$(DET_GIT_COMMIT)
-DET_DEV_MASTER_IMAGE := determinedai/determined-dev:determined-master-$(DET_GIT_COMMIT)
-export DET_IMAGES := $(DET_DEV_AGENT_IMAGE),$(DET_DEV_MASTER_IMAGE)
 
 # These variables are picked up by GoReleaser for the master build; we default to including no keys.
 export DET_SEGMENT_MASTER_KEY ?=
