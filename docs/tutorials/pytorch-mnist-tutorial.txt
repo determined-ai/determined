@@ -1,7 +1,7 @@
 .. _pytorch-mnist-tutorial:
 
 PyTorch MNIST Tutorial
-=============================
+======================
 
 This tutorial describes how to port an existing PyTorch model to Determined. We will port a simple image classification model for the MNIST dataset. This tutorial is based on the official `PyTorch MNIST example <https://github.com/PyTorch/examples/blob/master/mnist/main.py>`_.
 
@@ -9,7 +9,7 @@ Prerequisites
 -------------
 
 - Access to a Determined cluster. If you have not yet installed Determined, refer to the :ref:`installation instructions <install-cluster>`.
-- The Determined CLI should be installed on your local machine. For installation instructions, see :ref:`here <install-cli>`. After installing the CLI, configure it to connect to your Determined cluster by setting the ``DET_MASTER`` environment variable to the hostname or IP address where Determined is running.
+- Access to the Determined CLI on your local machine. See :ref:`the installation instructions <install-cli>` if you do not already have it installed. After installing the CLI, configure it to connect to your Determined cluster by setting the ``DET_MASTER`` environment variable to the hostname or IP address where Determined is running.
 
 Overview
 --------
@@ -18,7 +18,7 @@ To use a PyTorch model in Determined, you need to port the model to Determined's
 
 When training a PyTorch model, Determined provides a built-in training loop that feeds batches of data into your forward pass, performs backpropagation, and computes training metrics. Determined also handles checkpointing, log management, and device initialization. To plug your model code into the Determined training loop, you define methods to perform the following tasks:
 
-- initialization
+- initialize the code
 - build the model
 - define the optimizer
 - define the forward pass
@@ -126,7 +126,7 @@ The ``optimizer`` method returns a ``torch.optim`` object. The MNIST model code 
         return torch.optim.Adadelta(model.parameters(), lr=self.context.get_hparam("learning_rate"))
 
 Loading Data
-""""""""""""""""
+""""""""""""
 
 The last two methods we need to define are ``build_training_data_loader`` and ``build_validation_data_loader``. Determined uses these methods to load the training and validation datasets, respectively. This method should return a :ref:`determined.pytorch.DataLoader <pytorch-data-loading>`, which is very similar to ``torch.utils.data.DataLoader``.
 
@@ -156,9 +156,9 @@ The last two methods we need to define are ``build_training_data_loader`` and ``
 
 
 Defining the Forward Pass
-"""""""""""""""""""""""""""
+"""""""""""""""""""""""""
 
-The ``train_batch`` computes the forward pass and calculates the loss. Determined expects a dictionary with the calculated loss and other user defined metrics and will automatically average all the metrics. Since Determined handles the backprop call, we do not need to call ``loss.backwards()`` or ``optim.zero_grad()``.
+The ``train_batch`` method computes the forward pass and calculates the loss for a single batch of data. Determined expects a dictionary with the calculated loss and other user-defined metrics and will automatically average all the metrics across batches. Since Determined handles the backpropagation call, we do not need to call ``loss.backwards()`` or ``optim.zero_grad()``.
 
 .. code:: python
 
@@ -189,25 +189,25 @@ Training the Model
 
 Now that we have ported our model code to the trial API, we can use Determined to train a single instance of the model or to do a hyperparameter search. In Determined, a :ref:`trial <concept-trial>` is a training task that consists of a dataset, a deep learning model, and values for all of the model's hyperparameters. An :ref:`experiment <concept-experiment>` is a collection of one or more trials: an experiment can either train a single model (with a single trial), or can define a search over a user-defined hyperparameter space.
 
-To create an experiment, we start by writing a configuration file which defines the kind of experiment we want to run. In this case, we want to train a single model for a fixed number of batches, using fixed values for the model's hyperparameters:
+To create an experiment, we start by writing a configuration file that defines the kind of experiment we want to run. In this case, we want to train a single model for a fixed number of batches, using fixed values for the model's hyperparameters:
 
 .. code:: yaml
 
     description: mnist_pytorch_const
     data:
-        url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
+      url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
     hyperparameters:
-        learning_rate: 1.0
-        global_batch_size: 64
-        n_filters1: 32
-        n_filters2: 64
-        dropout1: 0.25
-        dropout2: 0.5
+      learning_rate: 1.0
+      global_batch_size: 64
+      n_filters1: 32
+      n_filters2: 64
+      dropout1: 0.25
+      dropout2: 0.5
     searcher:
-        name: single
-        metric: validation_loss
-        max_steps: 9 # 9 steps is ~ one epoch
-        smaller_is_better: true
+      name: single
+      metric: validation_loss
+      max_steps: 9 # 9 steps is ~ one epoch
+      smaller_is_better: true
     entrypoint: model_def:MNistTrial
 
 Rather than specifying the number of batches to train for directly, we instead specify the number of :ref:`steps <concept-step>`. By default, a step consists of 100 batches, so the config file above specifies that the model should be trained on 900 batches of data.
@@ -231,7 +231,7 @@ Once the experiment is started, you will see a notification:
 
 .. code:: text
 
-    Preparing files (../mnist_pytorch) to send to master... 2.5KB and 4 files
+    Preparing files (.../mnist_pytorch) to send to master... 2.5KB and 4 files
     Created experiment xxx
 
 Evaluating the Model
@@ -243,7 +243,7 @@ simply go to the WebUI by entering the address of the Determined master
 in your web browser.
 
 Once you are on the Determined landing page, you can find your experiment
-either via the experiment ID (xxx) or via its description.
+using the experiment's ID (``xxx`` in the example above) or description.
 
 Next Steps
 ----------

@@ -60,7 +60,7 @@ Configurations usually use some combination of key-value pairs, maps, and
 arrays. In this example experiment configuration, we use key-value pairs,
 floats, integers, strings, a map, and an array:
 
-.. code-block:: yaml
+.. code:: yaml
 
   description: mnist_tf_const
   data:

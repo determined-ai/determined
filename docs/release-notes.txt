@@ -64,14 +64,14 @@ Version 0.12.2
   - ``det.frameworks.pytorch.util.reset_parameters`` is now ``det.pytorch.reset_parameters``
   - ``det.frameworks.keras.tf_keras_trial.TFKerasTrial`` is now ``det.keras.TFKerasTrial``
   - ``det.frameworks.tensorflow.estimator_trial.EstimatorTrial`` is now ``det.estimator.EstimatorTrial``
-  - ``det.frameworks.tensorpack.tensorpack_trial`` is now ``det.tensorpack.TensorPackTrial``
+  - ``det.frameworks.tensorpack.tensorpack_trial`` is now ``det.tensorpack.TensorpackTrial``
   - ``det.frameworks.util`` and ``det.frameworks.pytorch.util`` have been removed entirely
 
 - Unify all plugin functions under the Trial class. ``make_data_loaders`` has been moved to two functions that should be implemented as part of the Trial class. For example, :class:`~determined.pytorch.PyTorchTrial` data loaders should now be implemented in ``build_training_data_loader()`` and ``build_validation_data_loader()`` in the trial definition. Please see updated examples and documentation for changes in each framework.
 
 - Trial classes are now required to define a constructor function. The signature of the constructor function is:
 
-  .. code-block:: python
+  .. code:: python
 
      def __init__(self, context) -> None:
 
@@ -137,7 +137,7 @@ Version 0.12.2
 
 - Fix bug that occasionally caused multi-machine training to hang on initialization.
 
-- Fix bug that prevented ``TensorpackTrial`` from succesfully loading checkpoints.
+- Fix bug that prevented ``TensorpackTrial`` from successfully loading checkpoints.
 
 - Fix a bug in ``TFKerasTrial`` where runtime errors could cause the trial to hang or would silently drop the stack trace produced by Keras.
 

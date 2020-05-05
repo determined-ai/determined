@@ -9,8 +9,8 @@ makes it easy to use TensorBoard to examine a single experiment or to
 compare multiple experiments.
 
 TensorBoard instances can be launched via the WebUI or the CLI. To
-launch TensorBoard instances from the CLI, first :ref:`install-cli` on your
-development machine.
+launch TensorBoard instances from the CLI, first :ref:`install the CLI
+<install-cli>` on your development machine.
 
 Analyzing Experiments
 ---------------------
@@ -18,7 +18,7 @@ Analyzing Experiments
 To launch TensorBoard to analyze a single Determined experiment, use
 ``det tensorboard start <experiment-id>``:
 
-::
+.. code:: text
 
    $ det tensorboard start 7
    Scheduling TensorBoard (rarely-cute-man) (id: aab49ba5-3357-4145-861c-7e6ff2d702c5)...
@@ -34,7 +34,7 @@ will open the TensorBoard web interface in a local browser window.
 You view information about scheduled and running TensorBoard instances by
 executing the following command:
 
-::
+.. code:: text
 
    $ det tensorboard list
     Id                                   | Owner      | Description                         | State      | Experiment Id   | Trial Ids   | Exit Status
@@ -75,13 +75,13 @@ captured in tfevent files by writing `TensorFlow summary
 operations <https://www.tensorflow.org/api_docs/python/tf/summary>`__ to
 disk via a
 `tf.summary.FileWriter <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/summary/FileWriter>`__.
-We provide support in each deep learning framework to write metrics as
-tfevent files and upload them. See below for details on how to configure
+We provide support in each deep learning framework to write and upload
+metrics as tfevent files. See below for details on how to configure
 Determined with TensorBoard for your desired framework.
 
 FileWriters are configured to write log files, called tfevent files, to
 a directory known as the ``logdir``. TensorBoard watches this directory
-for changes and updates accordingly. The Determined supported ``logdir`` is
+for changes and updates accordingly. The Determined-supported ``logdir`` is
 ``/tmp/tensorboard``. All tfevent files written to ``/tmp/tensorboard``
 via a trial are uploaded to persistent storage when a trial is
 configured with Determined TensorBoard support.
@@ -90,9 +90,9 @@ Determined Batch Metrics
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 At the end of every Determined step, batch metrics are collected and stored in
-the database. This will give a granular view of model metrics over time.
+the database, providing a granular view of model metrics over time.
 Batch metrics will appear in TensorBoard under the Determined group. The
-x-axis of the plots correspond to the batch number. For example, a point
+x-axis of each plot corresponds to the batch number. For example, a point
 at step 5 of the plot is the metric associated with the fifth batch
 seen.
 
@@ -105,8 +105,8 @@ framework.
 TensorFlow Keras
 ~~~~~~~~~~~~~~~~
 
-To add TensorBoard support for a ``TFKerasTrial`` simply add the
-``det.tensorflow.TFKerasTensorBoard`` callback to your trial:
+To add TensorBoard support for :class:`~determined.keras.TFKerasTrial`,
+add a ``det.tensorflow.TFKerasTensorBoard`` callback to your trial:
 
 .. code:: python
 
@@ -120,14 +120,14 @@ To add TensorBoard support for a ``TFKerasTrial`` simply add the
 Estimator
 ~~~~~~~~~
 
-There is no configuration necessary for trials using the
-:ref:`estimator-trial`.
+There is no configuration necessary for trials using
+:class:`~determined.estimator.EstimatorTrial`.
 
 Tensorpack
 ~~~~~~~~~~
 
-To add TensorBoard support for :ref:`tensorpack` simply add the
-``det.tensorflow.TFEventWriter`` callback to your trial:
+To add TensorBoard support for :ref:`Tensorpack <tensorpack>`,
+add a ``det.tensorflow.TFEventWriter`` callback to your trial:
 
 .. code:: python
 
@@ -145,7 +145,7 @@ Once a new TensorBoard instance has been scheduled onto the cluster, it
 will remain running until you explicitly terminate it. This can be done
 with ``det tensorboard kill <tensorboard-id>``:
 
-::
+.. code:: text
 
    $ det tensorboard kill aab49ba5-3357-4145-861c-7e6ff2d702c5
 

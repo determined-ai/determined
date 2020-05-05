@@ -63,7 +63,7 @@ Multi-machine training requires that all machines be able to connect to
 each other directly. There may be firewall rules or network
 configuration that prevent machines in your cluster from communicating.
 Please check if agent machines can access each other outside of Determined
-(e.g., use the ping or netcat tools).
+(e.g., using the ``ping`` or ``netcat`` tools).
 
 More rarely, if agents have multiple network interfaces and some of them
 are not routable, Determined may pick one of those interfaces rather than one

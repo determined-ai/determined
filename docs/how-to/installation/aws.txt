@@ -19,16 +19,15 @@ topic guide.
 ------------------------------------
 
 The ``determined-deploy`` package uses AWS CloudFormation to automatically deploy
-and configure a Determined cluster. The CloudFormation builds the necessary components
+and configure a Determined cluster. CloudFormation builds the necessary components
 for Determined into a single CloudFormation stack.
 
 Requirements
 ~~~~~~~~~~~~
 
--  The machine executing ``determined-deploy`` must be configured
-   with either AWS credentials or have an IAM role attached with permissions
-   to access AWS CloudFormation APIs. See the
-   `AWS Documentation <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html>`__
+-  Either AWS credentials or an IAM role with permissions to access AWS
+   CloudFormation APIs. See the `AWS Documentation
+   <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html>`__
    for information on how to use AWS credentials.
 
 -  An `AWS EC2 Keypair <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html>`__.
@@ -46,6 +45,8 @@ Installation
 Deploying
 ~~~~~~~~~
 
+The basic command to deploy a cluster is as follows:
+
 .. code::
 
    det-deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR
@@ -53,141 +54,126 @@ Deploying
 ``CLUSTER_ID`` is an arbitrary unique ID for the new cluster.
 We recommend choosing a cluster ID that is memorable and
 helps identify what the cluster is being used for. The cluster ID will be
-used as the AWS CloudFormation Stack Name.
+used as the AWS CloudFormation stack name.
 
-``KEYPAIR`` is the name of the AWS EC2 Keypair to use when provisioning
+``KEYPAIR`` is the name of the AWS EC2 key pair to use when provisioning
 the cluster. If the AWS CLI is installed on your machine, you can get a
 list of the available keypair names by running ``aws ec2 describe-key-pairs``.
 
-The deployment process may take 5-10 minutes. When it completes, summary information about the newly deployed cluster will be printed, including the URL of the Determined master.
+The deployment process may take 5--10 minutes. When it completes, summary information about the newly deployed cluster will be printed, including the URL of the Determined master.
 
 .. _determined-deploy-deployment-types:
 
 Deployment Types
 ~~~~~~~~~~~~~~~~
 
-Simple
-^^^^^^
-The simple deployment provides an easy way to deploy a Determined cluster in AWS.
-This creates the master instance in the default subnet for the account.
+``determined-deploy`` supports multiple different deployment types to
+work with different security needs. The deployment type can be specified
+using the ``--deployment-type`` argument (e.g., ``det-deploy
+aws --deployment-type secure``).
 
-VPC
-^^^
-The VPC deployment creates a separate VPC with public subnets, and the Determined
-cluster is deployed into these subnets.
+- ``simple``: The simple deployment provides an easy way to deploy a
+  Determined cluster in AWS. This creates the master instance in the
+  default subnet for the account.
 
-Secure
-^^^^^^
-The secure deployment creates resources to lock down the Determined cluster. These resources are:
+- ``vpc``: The VPC deployment creates a separate VPC with public
+  subnets; the Determined cluster is deployed into these subnets.
 
-- A VPC with a public and private subnet
+- ``secure``: The secure deployment creates resources to lock down the
+  Determined cluster. These resources are:
 
-- A NAT Gateway for the private subnet to make outbound connections
-
-- An S3 VPC Gateway so the private subnet can access S3
-
-- A bastion instance in the public subnet
-
-- A master instance in the private subnet
+  - A VPC with a public and private subnet
+  - A NAT gateway for the private subnet to make outbound connections
+  - An S3 VPC gateway so the private subnet can access S3
+  - A bastion instance in the public subnet
+  - A master instance in the private subnet
 
 
 CLI Arguments
 ~~~~~~~~~~~~~
-Spinning up the cluster
+
+Spinning up the Cluster
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code::
 
    det-deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR
 
 .. list-table::
-   :widths: 25 50 25 25
+   :widths: 25 50 25
    :header-rows: 1
 
    * - Argument
      - Description
      - Default Value
-     - Required
 
    * - ``--cluster-id``
-     - Unique ID for the cluster which will be used for the CloudFormation Stack Name
-     - None
-     - True
+     - Unique ID for the cluster; it will be used as the CloudFormation stack name.
+     - *required*
 
    * - ``--keypair``
-     - The name of the AWS EC2 Keypair to use for both master and agent instances
-     - None
-     - True
+     - The name of the AWS EC2 key pair to use for both master and agent instances.
+     - *required*
 
    * - ``--master-instance-type``
-     - Instance Type for master instance
+     - Instance type for master instance.
      - m5.large
-     - False
 
    * - ``--agent-instance-type``
-     - Instance Type for agent instances
+     - Instance type for agent instances.
      - p2.8xlarge
-     - False
 
    * - ``--deployment-type``
-     - The deployment template to use -  :ref:`Deployment Types<determined-deploy-deployment-types>`
+     - The :ref:`deployment template <determined-deploy-deployment-types>` to use.
      - simple
-     - False
 
    * - ``--inbound-cidr``
-     - CIDR range for inbound traffic
+     - CIDR range for inbound traffic.
      - 0.0.0.0/0
-     - False
 
    * - ``--db-password``
-     - Password for ``postgres`` user for Database
+     - The password for ``postgres`` user for database.
      - postgres
-     - False
 
    * - ``--hasura-secret``
-     - Password for Hasura GraphQL
+     - The password for the Hasura GraphQL server.
      - hasura
-     - False
 
    * - ``--region``
-     - AWS region to deploy into
-     - The default region for the AWS User
-     - False
+     - AWS region to deploy into.
+     - The default region for the AWS user
 
    * - ``--max-idle-agent-period``
      - The length of time to wait before idle dynamic agents will be automatically terminated.
      - 10m (10 minutes)
-     - False
 
    * - ``--max-dynamic-agents``
-     - Maximum number of dynamic agent instances at one time
+     - Maximum number of dynamic agent instances at one time.
      - 5
-     - False
 
    * - ``--dry-run``
-     - Print the template but do not execute it
-     - False
+     - Print the template but do not execute it.
      - False
 
 
-Tearing Down The Cluster
-~~~~~~~~~~~~~~~~~~~~~~~~
+Tearing Down the Cluster
+^^^^^^^^^^^^^^^^^^^^^^^^
+
 .. code::
 
    det-deploy aws down --cluster-id CLUSTER_ID
 
 .. list-table::
-   :widths: 25 50 25 25
+   :widths: 25 50 25
    :header-rows: 1
 
    * - Argument
      - Description
      - Default Value
-     - Required
 
    * - ``--cluster-id``
-     - Unique ID for the cluster which will be used for the CloudFormation Stack Name
-     - None
-     - True
+     - Unique ID for the cluster; it will be used for the CloudFormation stack name.
+     - *required*
 
 .. _manual-deployment:
 
@@ -196,11 +182,11 @@ Manual Deployment
 
 Database
 ~~~~~~~~
-Determined requires a Postgres-compatible database such as AWS Aurora. Configure the cluster to use the database by
-updating the ``master.yaml`` with the database information. Make sure to create a database before running
-the Determined Cluster. (e.g. ``CREATE DATABASE <database-name>``).
+Determined requires a PostgreSQL-compatible database, such as AWS Aurora. Configure the cluster to use the database by
+including the database information in ``master.yaml``. Make sure to create a database before running
+the Determined cluster (e.g., ``CREATE DATABASE <database-name>``).
 
-Example ``master.yaml``:
+Example ``master.yaml`` snippet:
 
 .. code:: yaml
 
@@ -221,11 +207,11 @@ Master
 ^^^^^^
 - Egress on all ports to agent security group
 
-- Egress outbound to the internet
+- Egress outbound to the Internet
 
-- Ingress on 8080 to view to the Determined UI
+- Ingress on port 8080 to view to the Determined WebUI
 
-- Ingress on 22 for SSH (not required but strongly advised)
+- Ingress on port 22 for SSH (not required but strongly advised)
 
 - Ingress on all ports from agent security group
 
@@ -282,13 +268,13 @@ Example:
 Agent
 ^^^^^
 
-- Egress on all ports to internet
+- Egress on all ports to the Internet
 
 - Ingress on all ports from master security group
 
 - Ingress on all ports from agent security group
 
-- Ingress on 22 for SSH (not required but strongly advised)
+- Ingress on port 22 for SSH (not required but strongly advised)
 
 Example:
 
@@ -333,8 +319,9 @@ Example:
 
 IAM Roles
 ~~~~~~~~~
-IAM Roles are comprised of IAM Polices, which provide access to AWS APIs such as the EC2 or S3 API. The required IAM
-Policies needed for the Determined cluster are:
+
+IAM roles comprise IAM polices, which provide access to AWS APIs such as the EC2 or S3 API. The IAM
+policies needed for the Determined cluster are:
 
 Master
 ^^^^^^
@@ -418,9 +405,9 @@ Agent
 
 Master Node
 ~~~~~~~~~~~
-The master node should be deployed on an EC2 instance supporting >= 2 CPUs (Intel Broadwell or later), 4GB of RAM,
-and 100GB of disk storage. This corresponds to an EC2 t2.medium instance or better. The AMI should be the default
-Ubuntu 16.04 AMI.
+The master node should be deployed on an EC2 instance with at least 4 CPUs (Intel Broadwell or later), 8GB of RAM,
+and 200GB of disk storage. This roughly corresponds to an EC2 t2.large instance or better. The AMI should be the default
+Ubuntu 18.04 AMI.
 
 Running Determined
 ^^^^^^^^^^^^^^^^^^
@@ -446,7 +433,7 @@ Running Determined
 
       docker network create determined
 
-#. Configure the cluster with ``master.yaml``. See :ref:`Cluster Configuration<cluster-configuration>` for more
+#. Configure the cluster with ``master.yaml``. See :ref:`cluster-configuration` for more
    information.
 
    Notes:

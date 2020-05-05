@@ -6,8 +6,8 @@ Environment Configuration
 Determined launches trials of experiments and commands in Docker containers.
 The container configuration is referred to as the **environment**.
 
-There are two methods of customizing this environment without explicity
-specifying a Docker image: environment variables and the ``startup-hook.sh``.
+There are two methods of customizing this environment without explicitly
+specifying a Docker image: environment variables and ``startup-hook.sh``.
 
 .. _environment-variables:
 
@@ -16,7 +16,7 @@ Environment Variables
 
 For both trial runners and commands, Determined allows users to configure the
 environment variables inside the container through the
-``environment -> environment_variables`` configuration field of the
+``environment.environment_variables`` configuration field of the
 experiment config. The format is a list of strings in the format
 ``NAME=VALUE``:
 
@@ -35,7 +35,7 @@ on expansion of other variables.
 ``startup-hook.sh``
 ~~~~~~~~~~~~~~~~~~~
 
-The ``startup-hook.sh`` is a script that is called during startup of your
+``startup-hook.sh`` is a script that is called during startup of your
 Docker container. You can use this script to ``pip install`` packages, ``apt
 install`` packages, or practically anything else that you can do with bash.
 This script should be placed in the base directory of your model definition,
@@ -45,8 +45,8 @@ line utility ``wget`` and the Python package ``pandas`` is below.
 
 .. code:: bash
 
-	apt-get update && apt-get install -y wget
-	python3.6 -m pip install pandas
+   apt-get update && apt-get install -y wget
+   python3.6 -m pip install pandas
 
 
 Official Docker Images in Determined
@@ -82,17 +82,16 @@ hyperparameters for the current trial.
 
 .. note::
 
-	The default images are
-	``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-0.3.0`` and
-	``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-0.3.0`` for GPU
-	and CPU respectively.
-
+   The default images are
+   ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-0.3.0`` and
+   ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-0.3.0`` for GPU
+   and CPU respectively.
 
 TF2 Environment
 ~~~~~~~~~~~~~~~
 
 Determined also supports TensorFlow 2.1 and has a Docker image you can use for
-experiments and commands, it has the following:
+experiments and commands containing the following:
 
 -  Ubuntu 18.04
 -  CUDA 10.0
@@ -100,7 +99,7 @@ experiments and commands, it has the following:
 -  TensorFlow 2.1.0
 -  PyTorch 1.4.0
 
-This can be configured in  your experiment configuration like below:
+This can be configured in your experiment configuration like below:
 
 .. code:: yaml
 
@@ -113,24 +112,25 @@ This can be configured in  your experiment configuration like below:
 Custom Docker Images in Determined
 ----------------------------------
 
-While our official images contain all the dependencies you need for basic
+While our official images contain all the dependencies needed for basic
 workloads, many workloads have extra dependencies. If those extra dependencies
-are quick to install, you may want to consider using the ``startup-hook.sh``.
-However, some dependencies take too long to install via the
-``startup-hook.sh``. In this situation, we suggest building your own Docker
-image and publishing to a Docker registry like Docker Hub
-(https://hub.docker.com/). Below you will find an example of a Dockerfile. For
-more information on building and publishing Docker images to DockerHub,
-consider following https://docs.docker.com/get-started/.
+are quick to install, you may want to consider using ``startup-hook.sh``.
+For situations where installing dependencies via ``startup-hook.sh``
+would take too long, we suggest building your own Docker image and
+publishing to a Docker registry like `Docker Hub
+<https://hub.docker.com/>`__. Below you will find an example of a
+Dockerfile. For more information on building and publishing Docker
+images to Docker Hub, consider following
+https://docs.docker.com/get-started/.
 
 The example Dockerfile below installs ``conda`` and ``pip`` dependencies based
 on their respective dependency file format.
 
 .. warning::
 
-	It is important to not install the TensorFlow, PyTorch, Horovod, or Apex
-	packages as this will conflict with the base packages that are installed into
-	Determined's official environments.
+   It is important to not install the TensorFlow, PyTorch, Horovod, or Apex
+   packages as this will conflict with the base packages that are installed into
+   Determined's official environments.
 
 .. code:: docker
 

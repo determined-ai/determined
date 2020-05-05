@@ -1,14 +1,14 @@
 .. _quick-start:
 
 Quick Start Guide
-============================
+=================
 
 This guide demonstrates how to train a model, perform a hyperparameter search, and run a distributed training job, all in Determined. This guide is based on the official `PyTorch MNIST example <https://github.com/PyTorch/examples/blob/master/mnist/main.py>`_ and `TensorFlow Fashion MNIST Tutorial <https://www.tensorflow.org/tutorials/keras/classification>`__.
 
 This guide focuses on demonstrating Determined's features at a high level. We will lightly touch on major concepts and terminology. For a more slow-paced introduction to developing models with Determined, check out :ref:`pytorch-mnist-tutorial` or :ref:`tf-mnist-tutorial`.
 
 Prerequisites
---------------
+-------------
 - Access to an installation of Determined, either on your own machine or the public cloud. If you have not yet installed Determined, refer to the :ref:`installation instructions <install-cluster>`.
 - The Determined CLI should be installed on your local machine. For installation instructions, see :ref:`here <install-cli>`. After installing the CLI, configure it to connect to your Determined cluster by setting the ``DET_MASTER`` environment variable to the hostname or IP address where Determined is running.
 - For Determined clusters installed using ``det-deploy local``: when you run your first experiment, Determined needs to download Docker images with the dependencies needed to run deep learning workloads. This initial download can take some time, depending on the speed of your Internet connection (these images are then cached for future experiments). We suggest running the following commands to help speed up this process:
@@ -23,7 +23,7 @@ Prerequisites
 
 
 Preparing Your First Job
--------------------------
+------------------------
 
 In this guide, we will build an image classification model for the MNIST dataset.  MNIST is a dataset consisting of grayscale images of handwritten digits (as seen below); it is commonly used to test image classification models.
 
@@ -77,7 +77,7 @@ Each YAML file is specific to the type of experiment we will run during this gui
 - ``adaptive.yaml``: train multiple models as part of a hyperparameter search, using Determined's adaptive :ref:`hyperparameter search <hyperparameter-tuning>` functionality.
 
 Running Your First Job
------------------------
+----------------------
 
 The Determined CLI can be used to submit an experiment to the Determined cluster. An :ref:`experiment <concept-experiment>` is a collection of one or more trials. A :ref:`trial <concept-trial>` is a training task that consists of a dataset, a deep learning model, and values for all of the model's hyperparameters.  An experiment can either train a single model (with a single trial) or perform a search over a user-defined hyperparameter space.
 
@@ -96,7 +96,7 @@ Once the experiment has been submitted, you should see the following output:
     Preparing files (../mnist_pytorch) to send to master... 2.5KB and 4 files
     Created experiment 1
 
-We can view the experiment status and results in the Web UI. In a browser, go to ``http://DET_MASTER/``, where ``DET_MASTER`` is the URL or IP address of your Determined cluster. If you installed locally via ``det-deploy local``, this will likely be ``http://localhost:8080/`` . A Determined dashboard will be displayed similar to the one below:
+We can view the experiment status and results in the WebUI. In a browser, go to ``http://DET_MASTER/``, where ``DET_MASTER`` is the URL or IP address of your Determined cluster. If you installed locally via ``det-deploy local``, this will likely be ``http://localhost:8080/`` . A Determined dashboard will be displayed similar to the one below:
 
 |
 
@@ -117,7 +117,7 @@ Clicking on the experiment takes you to the experiment page similar to below.
 |
 
 Experiment Page
------------------
+---------------
 
 Determined automatically tracks the metadata associated with all experiments including the hyperparameters, training and validation metrics for each model, and environment configuration. Determined is designed to foster reproducibility and collaboration among your team (or even your future self!).
 
@@ -145,7 +145,7 @@ Left of the graph displays time information, the hyperparameter configuration, t
 Again, ``model_def.py`` does not contain any code to manage the checkpoint and will automatically checkpoint after calculating metrics on the validation dataset. Once the training has completed, you can see the total time it took, and the average batch speed. On a typical laptop, it should take about 5 minutes to train the model to reach 98% accuracy and 0.05 validation loss.
 
 Running a Parallel Training Job
---------------------------------
+-------------------------------
 *For this section, we recommend using a Determined cluster with multiple GPUs.*
 
 Determined can coordinate across multiple GPUs on a single machine (parallel training) or across multiple GPUs on multiple machines (distributed training) to improve the rate of training a single trial. Parallel training performs best with complex models; therefore, this example may not demonstrate the full benefits of using parallel training.
@@ -160,18 +160,18 @@ Below is the ``distributed.yaml`` file, which should look very similar to the ``
 
     description: mnist_pytorch
     hyperparameters:
-        learning_rate: 0.001
-        dropout: 0.5
-        global_batch_size: 64
-        n_filters1: 40
-        n_filters2: 40
+      learning_rate: 0.001
+      dropout: 0.5
+      global_batch_size: 64
+      n_filters1: 40
+      n_filters2: 40
     resources:
-        slots_per_trial: 8
+      slots_per_trial: 8
     searcher:
-        name: single
-        metric: validation_error
-        max_steps: 600
-        smaller_is_better: true
+      name: single
+      metric: validation_error
+      max_steps: 600
+      smaller_is_better: true
     entrypoint: model_def:MNistTrial
 
 
@@ -188,7 +188,7 @@ Once again, we access the experiment's trial in the browser. You will notice the
 
 
 Tuning the Model
------------------
+----------------
 
 Now that we have trained a model, we want to improve the model's accuracy through hyperparameter tuning. Typically, this requires a significant amount of time and code. Determined provides support for hyperparameter search through efficient execution of state-of-the-art early-stopping based approaches as well as seamless parallelization of these methods. To use Determined's hyperparameter search feature, we only have to change the experiment configuration file.
 

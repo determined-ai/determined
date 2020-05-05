@@ -22,7 +22,7 @@ refer to the :ref:`installation instructions <install-cli>`.
 Install a Determined Cluster
 -----------------------------
 
-A :ref:`Determined cluster <install-cluster>` is comprised of a
+A :ref:`Determined cluster <install-cluster>` comprises a
 :ref:`master and one or more agents <det-system-architecture>`. A
 Determined cluster can be installed on Amazon Web Services (AWS), Google
 Cloud Platform (GCP), an on-premise cluster, or on a local development

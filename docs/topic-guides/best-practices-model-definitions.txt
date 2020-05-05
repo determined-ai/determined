@@ -3,11 +3,11 @@
 Best Practices for Model Definitions
 ====================================
 
-The deep learning software ecosystem is still in  early stages and changing
+The deep learning software ecosystem is still in its early stages and changing
 rapidly. Due to the bleeding-edge nature of this field, many code-bases
 initially optimize for quick iteration and exploration over good software
 engineering practices.  The Determined platform is designed to bring workflows
-from research to production, and our APIs are designed with this goal in mind.
+from research to production and our APIs are designed with this goal in mind.
 This topic guide discusses some of the highly recommended best practices to
 follow when writing model definitions.
 
@@ -17,10 +17,11 @@ To learn more about the basics of model definitions, see
 Separate Configuration from Code
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Determined encourages a clean separation of code from configuration via the
-:ref:`experiment-configuration`. Structured properties like the ``searcher``,
-``hyperparameters``, ``optimizations``, and ``resources`` will be stored in
-database and browsable via our Web UI, improving the **tracking** and
+Determined encourages a clean separation of code from configuration via
+the :ref:`experiment configuration <experiment-configuration>`.
+Structured properties like the ``searcher``, ``hyperparameters``,
+``optimizations``, and ``resources`` will be stored in the database and
+browsable via our WebUI, improving the **tracking** and
 **collaboration** capabilities of the platform.
 
 Do:
@@ -49,24 +50,24 @@ move between local, cloud, and on-premise cluster environments.
 Do:
 
 * Ramp up quickly by using our :ref:`default environment Docker
-  image<default-environment>` and optionally specify additional PyPI
-  dependencies by using a ``startup-hook.sh`` to ``pip install``.
+  image<default-environment>`, optionally specifying additional PyPI
+  dependencies by using ``pip install`` in ``startup-hook.sh``.
 * As your dependencies increase in complexity, invest in :ref:`building and
   using a custom Docker image<custom-env>` that meets your needs
-* Pin Python package dependencies to specific versions (e.g.
-  `<package>==<version>`) in build tools.
+* Pin Python package dependencies to specific versions (e.g.,
+  ``<package>==<version>``) in build tools.
 
 Do not:
 
-* Modify the `PYTHONPATH` / `PATH` environment variables to "import" libraries
+* Modify the ``PYTHONPATH`` or ``PATH`` environment variables to import libraries
   by circumventing the Python packaging system.
 
-Master the framework
-^^^^^^^^^^^^^^^^^^^^^
+Master the Framework
+^^^^^^^^^^^^^^^^^^^^
 
--  :ref:`TensorFlow Estimator <estimator-trial>`,
--  :ref:`TensorFlow Keras <tf-keras-trial>`,
--  :ref:`PyTorch <pytorch-trial>`.
+-  :ref:`TensorFlow Estimator <estimator-trial>`
+-  :ref:`TensorFlow Keras <tf-keras-trial>`
+-  :ref:`PyTorch <pytorch-trial>`
 
 Determined APIs are designed to conform to the best practices of the frameworks
 that we support. Standardizing on the best practices of these frameworks will
@@ -103,9 +104,9 @@ Do not:
 
 * Use instance attributes on trial class to save any state over time (e.g.
   storing metric history in a ``self`` attribute). The ``Trial`` instance will
-  only save and restore model weights and optimizer state over time; `self`
+  only save and restore model weights and optimizer state over time; ``self``
   attributes may be reset to their initial state at any time if the Determined
-  cluster reschedules the Trial to another task container.
+  cluster reschedules the trial to another task container.
 * Use "early-stopping" framework callbacks, such as
   `tf.keras.callbacks.EarlyStopping
   <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/EarlyStopping>`__.

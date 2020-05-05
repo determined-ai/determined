@@ -11,13 +11,13 @@ the notebook's environment:
    $ det notebook start --config environment.tensorflow=1.13.1
 
 More generally, notebooks may be supplied an optional **notebook
-configuration** to configure the notebook's enviornment. In addition to
+configuration** to configure the notebook's environment. In addition to
 the ``--config`` flag, configuration may also be supplied via a YAML
 file (``--config-file``):
 
 .. code::
 
-   $ cat > config.yaml << EOL
+   $ cat > config.yaml <<EOL
    description: test-notebook
    resources:
      slots: 2
@@ -31,8 +31,8 @@ file (``--config-file``):
    EOL
    $ det notebook start --config-file config.yaml
 
-See the :ref:`Notebook Configuration <command-configuration>` section for full
-documentation of the supported configuration options.
+See :ref:`command-configuration` for full documentation of the supported
+configuration options.
 
 .. _cpu-only-notebooks:
 
@@ -40,13 +40,11 @@ Example: CPU-Only Notebooks
 ---------------------------
 
 By default, each notebook is assigned a single GPU. This is useful for
-some uses of notebook (e.g., training a deep learning model) but
-unnecessary for other notebook tasks (e.g., analyzing the training
+some uses of notebooks (e.g., training a deep learning model) but
+unnecessary for other tasks (e.g., analyzing the training
 metrics of a previously trained model). To launch a notebook that does
 not use any GPUs, set ``resources.slots`` to ``0``:
 
 .. code::
 
    $ det notebook start --config resources.slots=0
-
-CPU-only notebooks will be scheduled on a randomly chosen agent.
