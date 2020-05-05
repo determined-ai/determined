@@ -28,11 +28,11 @@ def get_proxy_addr() -> str:
     # docker host. As a work-around, force agents to report their IP address as the
     # IP address of the host machine.
     if "darwin" in sys.platform:
-        # On MacOS, docker runs in a VM and host.docker.internal points to the IP
+        # On macOS, docker runs in a VM and host.docker.internal points to the IP
         # address of this VM.
         return "host.docker.internal"
     else:
-        # On non-MacOS, host.docker.internal does not exist. Instead, grab the source IP
+        # On non-macOS, host.docker.internal does not exist. Instead, grab the source IP
         # address we would use if we had to talk to the internet. The sed command
         # searches the first line of its input for "src" and prints the first field
         # after that.
