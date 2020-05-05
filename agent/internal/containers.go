@@ -18,7 +18,6 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	proto "github.com/determined-ai/determined/master/pkg/agent"
-	"github.com/determined-ai/determined/master/pkg/container"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
 )
@@ -134,8 +133,8 @@ func (c *containerManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Cont
 }
 
 func (c *containerManager) overwriteSpec(
-	cont cproto.Container, spec container.Spec,
-) container.Spec {
+	cont cproto.Container, spec cproto.Spec,
+) cproto.Spec {
 	spec.RunSpec.HostConfig.AutoRemove = true
 	spec.RunSpec.ContainerConfig.Env = append(
 		spec.RunSpec.ContainerConfig.Env, c.GlobalEnvVars...)

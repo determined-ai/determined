@@ -109,7 +109,7 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (n *notebookManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) { //nolint: dupl
+func (n *notebookManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	switch apiCtx.Request().Method {
 	case echo.GET:
 		userFilter := apiCtx.QueryParam("user")

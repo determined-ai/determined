@@ -92,7 +92,7 @@ type AsyncHalvingConfig struct {
 	TrainStragglers  bool    `json:"train_stragglers"`
 }
 
-// AdaptiveMode specifies how aggressively to perform early stopping
+// AdaptiveMode specifies how aggressively to perform early stopping.
 type AdaptiveMode string
 
 const (

@@ -38,10 +38,10 @@ func respondBadRequest(ctx *actor.Context, err error) {
 
 // parseCommandRequest parses an API request from the following components:
 //
-// - config: the command configuration
-// - template: the configuration template name
-// - user_files: the files to run with the command
-// - data: additional data for a command
+// - config: The command configuration.
+// - template: The configuration template name.
+// - user_files: The files to run with the command.
+// - data: Additional data for a command.
 func parseCommandRequest(
 	c echo.Context,
 	db *db.PgDB,

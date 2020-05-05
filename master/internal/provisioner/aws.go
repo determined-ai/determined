@@ -41,10 +41,9 @@ func onEC2() bool {
 	return ec2Metadata.Available()
 }
 
-// awsCluster wraps a ec2 client.
-// Determined recognizes agent EC2 instances by:
-// 1. a specific key/value pair tag
-// 2. names of agents that are equal to the instance IDs
+// awsCluster wraps an EC2 client. Determined recognizes agent EC2 instances by:
+// 1. A specific key/value pair tag.
+// 2. Names of agents that are equal to the instance IDs.
 type awsCluster struct {
 	*AWSClusterConfig
 	masterURL   url.URL
