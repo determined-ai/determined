@@ -940,8 +940,6 @@ workflows:
               ignore:
                 - /pull\/.*/
                 - master
-          requires:
-            - build-and-push-docker-images
 
       - request-dev-deploy:
           type: approval
@@ -950,8 +948,6 @@ workflows:
               ignore:
                 - /pull\/.*/
                 - master
-          requires:
-            - build-and-push-docker-images
 
       - deploy:
           context: aws
@@ -970,6 +966,7 @@ workflows:
                 - /pull\/.*/
           requires:
             - request-dev-deploy
+            - build-and-push-docker-images
 
       - parallel-tests:
           context: aws
@@ -998,6 +995,7 @@ workflows:
                 - master
           requires:
             - request-gpu-tests
+            - build-and-push-docker-images
 
 
       - e2e-gpu-tests:
@@ -1009,6 +1007,7 @@ workflows:
                 - master
           requires:
             - request-gpu-tests
+            - build-and-push-docker-images
 
 
   nightly:
