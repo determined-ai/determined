@@ -21,8 +21,7 @@
   test \
   test-all \
   test-python-integrations \
-  test-integrations \
-  webui
+  test-integrations
 
 export VERSION := $(shell cat VERSION)
 export INTEGRATIONS_HOST_PORT ?= 8080
@@ -50,7 +49,7 @@ export DET_SEGMENT_WEBUI_KEY ?=
 all: get-deps build-docker
 
 get-deps: python-get-deps go-get-deps
-	$(MAKE) WEBUI_TARGET=$@ webui
+	$(MAKE) -C webui $@
 
 go-get-deps:
 	$(MAKE) -C master get-deps
@@ -60,10 +59,6 @@ go-get-deps:
 
 python-get-deps:
 	pip install -r combined-reqs.txt
-
-webui:
-	$(MAKE) -C webui/elm ${WEBUI_TARGET}
-	$(MAKE) -C webui/react ${WEBUI_TARGET}
 
 build: build-master
 
@@ -93,7 +88,7 @@ clean:
 	$(MAKE) -C harness $@
 	$(MAKE) -C cli $@
 	$(MAKE) -C deploy $@
-	$(MAKE) WEBUI_TARGET=$@ webui
+	$(MAKE) -C webui $@
 
 # This target assumes that a Hasura instance is running and queries it to
 # retrieve the current schema files, producing a schema file that the
@@ -124,7 +119,7 @@ check: check-commit-messages
 	$(MAKE) -C tests $@
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
-	$(MAKE) WEBUI_TARGET=$@ webui
+	$(MAKE) -C webui $@
 
 check-commit-messages:
 	$(GOBIN)/conform enforce
@@ -151,7 +146,7 @@ test:
 		tests/unit/ tests/cli/
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
-	$(MAKE) WEBUI_TARGET=$@ webui
+	$(MAKE) -C webui $@
 
 test-tf2:
 	pip freeze | grep "tensorflow==2.*"
