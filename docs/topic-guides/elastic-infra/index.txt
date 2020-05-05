@@ -1,4 +1,4 @@
-.. _topic-guides_elastic-infra:
+.. _elastic-infra-index:
 
 Elastic Infrastructure
 =============================
@@ -52,5 +52,5 @@ The full list of our topic guides can be found below:
 .. toctree::
   :maxdepth: 1
 
-  aws
-  gcp
+  dynamic-agents-aws
+  dynamic-agents-gcp
