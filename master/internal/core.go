@@ -476,6 +476,8 @@ func (m *Master) Run() error {
 	m.echo.HTTPErrorHandler = api.JSONErrorHandler
 
 	webuiRoot := filepath.Join(m.config.Root, "webui")
+	elmRoot := filepath.Join(webuiRoot, "elm")
+	reactRoot := filepath.Join(webuiRoot, "react")
 
 	// Docs.
 	m.echo.Static("/docs", filepath.Join(webuiRoot, "docs"))
@@ -483,24 +485,57 @@ func (m *Master) Run() error {
 		return c.Redirect(301, "/docs/")
 	})
 
+	type fileRoute struct {
+		route string
+		path  string
+	}
+
 	// Elm WebUI.
-	m.echo.File("/", filepath.Join(webuiRoot, "elm/public/index.html"))
-	m.echo.File("/ui", filepath.Join(webuiRoot, "elm/public/index.html"))
-	m.echo.File("/ui/*", filepath.Join(webuiRoot, "elm/public/index.html"))
-	m.echo.File("/wait", filepath.Join(webuiRoot, "elm/public/wait.html"))
-	m.echo.Static("/public", filepath.Join(webuiRoot, "elm/public"))
+	elmFiles := [...]fileRoute{
+		{"/ui", "public/index.html"},
+		{"/ui/*", "public/index.html"},
+		{"/wait", "public/wait.html"},
+	}
+
+	elmDirs := [...]fileRoute{
+		{"/public", "public"},
+	}
 
 	// React WebUI.
-	m.echo.File("/det", filepath.Join(webuiRoot, "react/index.html"))
-	m.echo.File("/det/*", filepath.Join(webuiRoot, "react/index.html"))
-	m.echo.Static("/color.less", filepath.Join(webuiRoot, "/react/color.less"))
-	m.echo.Static("/manifest.json", filepath.Join(webuiRoot, "/react/manifest.json"))
-	m.echo.Static("/favicon.ico", filepath.Join(webuiRoot, "/react/favicon.ico"))
-	m.echo.Static("/favicons", filepath.Join(webuiRoot, "/react/favicons"))
-	m.echo.Static("/fonts", filepath.Join(webuiRoot, "react/fonts"))
-	m.echo.Static("/static", filepath.Join(webuiRoot, "react/static"))
-	m.echo.File("/.well-known/security.txt", filepath.Join(webuiRoot, "react/security.txt"))
-	m.echo.File("/security.txt", filepath.Join(webuiRoot, "react/security.txt"))
+	reactFiles := [...]fileRoute{
+		{"/", "index.html"},
+		{"/det", "index.html"},
+		{"/security.txt", "security.txt"},
+		{"/.well-known/security.txt", "security.txt"},
+		{"/color.less", "color.less"},
+		{"/manifest.json", "manifest.json"},
+		{"/favicon.ico", "favicon.ico"},
+		{"/favicon.ico", "favicon.ico"},
+		{"/det/*", "index.html"},
+	}
+
+	reactDirs := [...]fileRoute{
+		{"/favicons", "favicons"},
+		{"/fonts", "fonts"},
+		{"/static", "static"},
+	}
+
+	// Apply WebUI routes in order.
+	for _, fileRoute := range elmFiles {
+		m.echo.File(fileRoute.route, filepath.Join(elmRoot, fileRoute.path))
+	}
+
+	for _, dirRoute := range elmDirs {
+		m.echo.Static(dirRoute.route, filepath.Join(elmRoot, dirRoute.path))
+	}
+
+	for _, fileRoute := range reactFiles {
+		m.echo.File(fileRoute.route, filepath.Join(reactRoot, fileRoute.path))
+	}
+
+	for _, dirRoute := range reactDirs {
+		m.echo.Static(dirRoute.route, filepath.Join(reactRoot, dirRoute.path))
+	}
 
 	m.echo.GET("/info", api.Route(m.getInfo))
 	m.echo.GET("/logs", api.Route(m.getMasterLogs), authFuncs...)
