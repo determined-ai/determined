@@ -79,10 +79,11 @@ Use the links below to start learning more about Determined's capabilities.
 - :ref:`optimizing-multi-gpu-training`
 - :ref:`multi-gpu-training`
 
-**Cloud Deployments**
+**Elastic Infrastructure**
 
-- :ref:`topic_guide_aws`
-- :ref:`topic_guide_gcp`
+- :ref:`elastic-infra-index`
+- :ref:`dynamic-agents-aws`
+- :ref:`dynamic-agents-gcp`
 
 **Reproducibility, TensorBoard, and Notebooks**
 

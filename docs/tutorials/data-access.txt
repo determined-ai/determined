@@ -25,14 +25,14 @@ Data in the cloud (Recommended)
 -------------------------------
 This section describes how to access data stored in a cloud provider.
 
-A Determined cluster managed by :ref:`Dynamic Agents <dynamic-agents-overview>` requires data storage in the cloud and is recommended for on-premise deployments. It is highly recommended to store the data on the same cloud infrastructure as a Determined Cluster.
+A Determined cluster managed by :ref:`Elastic Infrastructure <elastic-infra-index>` requires data storage in the cloud and is recommended for on-premise deployments. It is highly recommended to store the data on the same cloud infrastructure as a Determined Cluster.
 
 Object Storage Download
 """""""""""""""""""""""""
 
 One method for managing data storage in the cloud is using an object storage solution, such as `Amazon S3 <https://aws.amazon.com/s3/>`_ or `Google Cloud Storage <https://cloud.google.com/storage>`_.
 
-The agents and trial containers must have the proper authentication and authorization for accessing the object storage. A :ref:`custom environment<custom-env>` must be configured to ensure that the trial container image is properly configured with credentials. When using :ref:`Dynamic Agents on GCP<gcp-dynamic-agents>`, a system administrator of will need to configure a valid :ref:`service_account<cluster-configuration>` with read credentials. When using :ref:`Dynamic Agents on AWS<aws-dynamic-agents>`, the system administrator will need to configure an :ref:`iam_instance_profile_arn<cluster-configuration>` with read credentials.
+The agents and trial containers must have the proper authentication and authorization for accessing the object storage. A :ref:`custom environment<custom-env>` must be configured to ensure that the trial container image is properly configured with credentials. When using :ref:`Dynamic Agents on GCP<dynamic-agents-gcp>`, a system administrator of will need to configure a valid :ref:`service_account<cluster-configuration>` with read credentials. When using :ref:`Dynamic Agents on AWS<dynamic-agents-aws>`, the system administrator will need to configure an :ref:`iam_instance_profile_arn<cluster-configuration>` with read credentials.
 
 Once security access is configured, we can use a open-source libraries such as `boto3 <https://boto3.amazonaws.com/>`_ or `gcsfs
 <https://gcsfs.readthedocs.io/en/latest/>`_ to write our data loaders to stream directly from object storage in source code.

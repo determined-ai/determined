@@ -20,10 +20,11 @@ Topic guides discuss different concepts and topics about Determined and deep lea
 - :ref:`det-system-architecture`
 - :ref:`terminology-concepts`
 
-**Cloud Development**
+**Elastic Infrastructure**
 
-- :ref:`topic_guide_aws`
-- :ref:`topic_guide_gcp`
+- :ref:`elastic-infra-index`
+- :ref:`dynamic-agents-aws`
+- :ref:`dynamic-agents-gcp`
 
 **Best Practices**
   - :ref:`best-practices-model-definitions`
@@ -36,11 +37,6 @@ The full list of our topic guides can be found below:
 
   benefits-of-determined
   best-practices-model-definitions
-  aws
-  gcp
-  dynamic-agents-overview
-  dynamic-agents-aws
-  dynamic-agents-gcp
   effective-distributed-training
   experiment-lifecycle
   checkpoints
@@ -53,6 +49,11 @@ The full list of our topic guides can be found below:
   reproducibility
   scheduling
   system-architecture
+  aws
+  gcp
+  elastic-infra/index
+  elastic-infra/dynamic-agents-aws
+  elastic-infra/dynamic-agents-gcp
   terminology-concepts
   user-interfaces
   users
