@@ -250,6 +250,7 @@ class ManagerCallback(tp.callbacks.Callback):  # type: ignore
                 path = cast(pathlib.Path, args[0])
                 response_func(self.save_checkpoint(path))
             elif wkld.kind == workload.Workload.Kind.TERMINATE:
+                response_func({} if self.is_chief else workload.Skipped())
                 raise det.errors.WorkerFinishedGracefully("Exiting normally.")
             else:
                 raise AssertionError(f"Unknown wkld kind {wkld.kind}")

@@ -466,6 +466,7 @@ class TFKerasTrialController(det.LoopTrialController):
             elif wkld.kind == workload.Workload.Kind.TERMINATE:
                 self.model.stop_training = True
                 self.expect_terminate = True
+                response_func({} if self.is_chief else workload.Skipped())
                 break
             else:
                 raise AssertionError(f"Unknown wkld kind {wkld.kind}.")
