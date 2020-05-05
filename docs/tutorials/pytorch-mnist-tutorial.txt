@@ -77,7 +77,7 @@ We now discuss how to implement each of these methods in more detail.
 Initialization
 """"""""""""""
 
-As with any Python class, the ``__init__`` method is invoked to construct our trial class. Determined passes this method a single parameter, :class:`TrialContext <determined.TrialContext>`. The trial context contains information about the trial, such as the values of the hyperparameters to use for training. For the time being, we don't need to access any properties from the trial context object, but we assign it to an instance variable so that we can use it later:
+As with any Python class, the ``__init__`` method is invoked to construct our trial class. Determined passes this method a single parameter, an instance of :class:`~determined.TrialContext`. The trial context contains information about the trial, such as the values of the hyperparameters to use for training. For the time being, we don't need to access any properties from the trial context object, but we assign it to an instance variable so that we can use it later:
 
 .. code:: python
 
@@ -88,7 +88,7 @@ As with any Python class, the ``__init__`` method is invoked to construct our tr
 Building the Model
 """"""""""""""""""
 
-The ``build_model`` method returns a ``torch.Module`` or ``torch.Sequential`` object. The MNIST model code uses the Torch Sequential API and we can continue to use that API in our implementation of ``build_model``. The current values of the model's hyperparameters can be accessed via the :func:`get_hparam <determined.TrialContext.get_hparam>` method of the trial context.
+The ``build_model`` method returns a ``torch.Module`` or ``torch.Sequential`` object. The MNIST model code uses the Torch Sequential API and we can continue to use that API in our implementation of ``build_model``. The current values of the model's hyperparameters can be accessed via the :func:`~determined.TrialContext.get_hparam` method of the trial context.
 
 .. code:: python
 

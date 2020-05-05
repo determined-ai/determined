@@ -4,7 +4,7 @@ determined.keras
 .. _tf-keras-trial:
 
 ``determined.keras.TFKerasTrial``
-----------------------------------
+---------------------------------
 
 .. autoclass:: determined.keras.TFKerasTrial
     :members:
@@ -102,10 +102,10 @@ the model and dataset wrappers.
     :members: wrap_model, wrap_dataset
     :member-order: bysource
 
-    TFKerasTrialContext always has a :class:`DistributedContext<determined._train_context.DistributedContext>`
+    TFKerasTrialContext always has a :class:`~determined._train_context.DistributedContext`
     accessible via ``context.distributed`` for information related to distributed training.
 
-    TFKerasTrialContext always has a :class:`ExperimentalContext<determined.keras.TFKerasExperimentalContext>`
+    TFKerasTrialContext always has a :class:`~determined.keras.TFKerasExperimentalContext`
     accessible via ``context.experimental`` for information related to experimental features.
 
 .. autoclass:: determined.keras.TFKerasExperimentalContext

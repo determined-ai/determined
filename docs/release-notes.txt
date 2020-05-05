@@ -15,7 +15,7 @@ Version 0.12.3
 
 - Add support for locally testing experiments via ``det e create --local``.
 
-- Add :class:`determined.experimental.Determined` class for accessing :class:`ExperimentReference <determined.experimental.ExperimentReference>`, :class:`TrialReference <determined.experimental.TrialReference>`, and :class:`Checkpoint <determined.experimental.Checkpoint>` objects.
+- Add :class:`determined.experimental.Determined` class for accessing :class:`~determined.experimental.ExperimentReference`, :class:`~determined.experimental.TrialReference`, and :class:`~determined.experimental.Checkpoint` objects.
 
 - TensorBoard logs now appear under the ``storage_path`` for ``shared_fs`` checkpoint configurations.
 
@@ -35,7 +35,7 @@ Version 0.12.3
 
 - Fix bug where logs disappear when an image is pulled.
 
-- Fix bug that affected the use of :class:`LRScheduler <determined.pytorch.LRScheduler>` in :class:`PyTorchTrial <determined.pytorch.PyTorchTrial>` for multi-GPU training.
+- Fix bug that affected the use of :class:`~determined.pytorch.LRScheduler` in :class:`~determined.pytorch.PyTorchTrial` for multi-GPU training.
 
 - Fix bug after master restart where some errored experiments would show progress indicators.
 
@@ -67,7 +67,7 @@ Version 0.12.2
   - ``det.frameworks.tensorpack.tensorpack_trial`` is now ``det.tensorpack.TensorPackTrial``
   - ``det.frameworks.util`` and ``det.frameworks.pytorch.util`` have been removed entirely
 
-- Unify all plugin functions under the Trial class. ``make_data_loaders`` has been moved to two functions that should be implemented as part of the Trial class. For example, :class:`PyTorchTrial <determined.pytorch.PyTorchTrial>` data loaders should now be implemented in ``build_training_data_loader()`` and ``build_validation_data_loader()`` in the trial definition. Please see updated examples and documentation for changes in each framework.
+- Unify all plugin functions under the Trial class. ``make_data_loaders`` has been moved to two functions that should be implemented as part of the Trial class. For example, :class:`~determined.pytorch.PyTorchTrial` data loaders should now be implemented in ``build_training_data_loader()`` and ``build_validation_data_loader()`` in the trial definition. Please see updated examples and documentation for changes in each framework.
 
 - Trial classes are now required to define a constructor function. The signature of the constructor function is:
 
