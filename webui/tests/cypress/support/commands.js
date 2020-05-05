@@ -30,7 +30,7 @@ Cypress.Commands.add('login', credentials => {
   cy.request('POST', '/login', credentials)
     .then(response => {
       expect(response.body).to.have.property('token');
-      cy.setCookie('auth', response.body.token); // Set the 'auth_key' cookie to '123key'
+      return cy.setCookie('auth', response.body.token);
     });
   cy.getCookie('auth')
     .should('exist')
@@ -45,7 +45,7 @@ Cypress.Commands.add('logout', () => {
     url: '/logout',
   })
     .then(() => {
-      cy.clearCookie('auth');
+      return cy.clearCookie('auth');
     });
   cy.checkLoggedOut();
 });
