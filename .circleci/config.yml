@@ -606,6 +606,7 @@ jobs:
       - setup-python-venv:
           determined-common: true
           determined-cli: true
+          extra-requirements-file: "webui/tests/requirements.txt"
           executor: ubuntu-1604:202004-01
       - setup-local-cluster:
           det-version: ${CIRCLE_SHA1}
