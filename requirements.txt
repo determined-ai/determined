@@ -6,6 +6,7 @@
 -r cli/tests/requirements.txt
 -r harness/tests/requirements.txt
 -r e2e_tests/tests/requirements.txt
+-r webui/tests/requirements.txt
 
 black>=19.3b0
 flake8>=3.8.0
