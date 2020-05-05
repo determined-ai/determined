@@ -6,11 +6,9 @@
   how-to/index
   topic-guides/index
   reference/index
-  system-administration/index
   faq
   examples
   release-notes
-  attributions
 
 
 Determined AI

@@ -53,7 +53,7 @@ Core Resources
   database to store metadata. In addition, Determined
   leverages a Hasura query engine on the master for GraphQL querying.
 
-- **AWS** Identity and Access Management (IAM)**: IAM roles are attached to the
+- **AWS Identity and Access Management (IAM)**: IAM roles are attached to the
   instances to manage the creation of compute (EC2) resources and access to
   Amazon Simple Storage Service (S3) buckets for checkpoints, TensorBoards,
   and other data storage as needed.
