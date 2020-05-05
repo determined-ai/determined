@@ -11,12 +11,12 @@ describe('Sign in/out', () => {
 
   it('should be logged in React side', () => {
     cy.visit('/det/dashboard');
-    cy.checkLoggedIn('determined');
+    cy.checkLoggedIn();
   });
 
   it('should be logged in Elm side', () => {
     cy.visit('/ui/experiments');
-    cy.checkLoggedIn('determined');
+    cy.checkLoggedIn();
   });
 
   it('should be able to log out from Elm', () => {

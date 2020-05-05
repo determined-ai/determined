@@ -3,6 +3,8 @@
 // https://on.cypress.io/custom-commands
 // ***********************************************
 
+const DEFAULT_TEST_USER = 'determined';
+
 Cypress.Commands.add('dataCy', (value) => {
   return cy.get(`[data-test=${value}]`);
 });
@@ -11,6 +13,7 @@ Cypress.Commands.add('checkLoggedIn', username => {
   // Check for the presence/absence of the icons for the user dropdown and
   // cluster page link in the top bar, which should be present if and only if
   // the user is logged in.
+  username = username || DEFAULT_TEST_USER;
   cy.visit('/');
   cy.get('#avatar').should('exist');
   cy.get('#avatar').should('have.text', username.charAt(0).toUpperCase());
@@ -23,7 +26,7 @@ Cypress.Commands.add('checkLoggedOut', () => {
 
 // TODO use Cypress.env to share (and bring in) some of the contants used.
 Cypress.Commands.add('login', credentials => {
-  credentials = credentials || { username: 'determined' };
+  credentials = credentials || { username: DEFAULT_TEST_USER };
   cy.request('POST', '/login', credentials)
     .then(response => {
       expect(response.body).to.have.property('token');
