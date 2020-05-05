@@ -3,31 +3,29 @@
 Users
 =====
 
-Determined is designed for teams of machine learning developers. By default,
-developers can access Determined without needing to authenticate; moreover,
-the objects (e.g., experiments and notebooks) created by one developer
-will be visible to all users of the system.
-
-While this is convenient for small teams, larger teams may prefer to
-create a Determined *user* account for each developer. After authenticating as
-a given user, the Determined objects created in that session will be
-associated with that user account. By default, the WebUI and CLI will
-only display objects created by the current user.
+Determined is designed for teams of machine learning developers. Objects, such as experiments
+and notebooks, created by a developer will be visible to all users of the system.
 
 Initially, a Determined installation has two users: ``admin`` and ``determined``.
 The ``determined`` user is the default account that is used for WebUI and CLI
-operations. If individual user accounts are not required, no additional
-configuration is needed. In this case, all assets created within Determined
-(experiments, commands, etc.) will be attributed to ``determined``.
+operations. If individual user accounts are not required, users can log in as the user
+``determined`` and no additional configuration is needed. In this case, all assets
+created within Determined (experiments, commands, etc.) will be attributed to
+``determined``.
 
 The ``admin`` user can be used to create users, change other users'
 passwords, and activate/deactivate users.
 
+While this is convenient for small teams, we encourage everyone, especially larger teams,
+to create a Determined user account for each developer. After authenticating as
+a given user, the Determined objects created in that session will be
+associated with that user account. By default, the WebUI and CLI will
+only display objects created by the current user.
+
 .. note::
 
-   The ``admin`` user initially has a blank password. The ``user
-   change-password`` CLI command can be used by the admin to update this
-   password:
+   The ``admin`` and ``determined`` users initially have blank passwords. The ``det user
+   change-password`` command can be used by the admin to change passwords; for example:
 
    .. code::
 
