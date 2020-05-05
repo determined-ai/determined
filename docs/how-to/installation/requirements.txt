@@ -14,7 +14,7 @@ Software
 ~~~~~~~~
 
 - The Determined agent and master nodes must be configured with Ubuntu
-  16.04, Ubuntu 18.04, or CentOS 7, or with MacOS 10.13 or higher.
+  16.04, Ubuntu 18.04, or CentOS 7, or with macOS 10.13 or higher.
 
 - The agent nodes must have :ref:`Docker installed <install-docker>`.
 
@@ -107,8 +107,8 @@ Install on Linux
       sudo systemd-tmpfiles --create --prefix /var/log/journal
       sudo systemctl restart systemd-journald
 
-Install on MacOS
-~~~~~~~~~~~~~~~~~
+Install on macOS
+~~~~~~~~~~~~~~~~
 
 #. Install `Homebrew <https://brew.sh/>`_.
 
@@ -124,12 +124,12 @@ Install on MacOS
 
 #. Start Docker.
 
-    .. code::
+   .. code::
 
       open /Applications/Docker.app
 
 .. note::
 
-    Docker on MacOS does not support running containers that use GPUs. As a
-    result, Determined agents on MacOS will only be able to run CPU-based
+    Docker on macOS does not support running containers that use GPUs. As a
+    result, Determined agents on macOS will only be able to run CPU-based
     workloads.
