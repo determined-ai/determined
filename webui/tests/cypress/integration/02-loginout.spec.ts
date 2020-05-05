@@ -25,7 +25,10 @@ describe('Sign in/out', () => {
     cy.visit('/ui');
     cy.get('#avatar').click();
     cy.get(`nav a[href="${LOGOUT_ROUTE}"]`).should('have.lengthOf', 1);
+    cy.server();
+    cy.route('POST', '/logout').as('logoutRequest');
     cy.get(`nav a[href="${LOGOUT_ROUTE}"]`).click();
+    cy.wait('@logoutRequest');
     cy.checkLoggedOut();
   });
 
@@ -36,7 +39,10 @@ describe('Sign in/out', () => {
     cy.get('#avatar').click();
     // TODO add better identifiers to react Link component. make it an anchor tag?
     cy.get('.ant-dropdown').contains(/sign out/i).should('have.lengthOf', 1);
+    cy.server();
+    cy.route('POST', '/logout').as('logoutRequest');
     cy.get('.ant-dropdown').contains(/sign out/i).click();
+    cy.wait('@logoutRequest');
     cy.checkLoggedOut();
   });
 
@@ -56,8 +62,11 @@ describe('Sign in/out', () => {
       .type(username, { delay: 100 })
       .should('have.value', username);
 
+    cy.server();
+    cy.route('POST', /\/login.*/).as('loginRequest');
     cy.get('button[type="submit"]').click();
-    cy.checkLoggedIn('determined');
+    cy.wait('@loginRequest');
+    cy.checkLoggedIn(username);
   });
 
   it('should redirect away from login when visiting login while logged in', () => {
