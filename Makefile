@@ -84,7 +84,8 @@ graphql:
 	$(MAKE) graphql-schema
 	$(MAKE) graphql-python
 
-check: check-commit-messages
+check:
+	$(GOBIN)/conform enforce
 	$(MAKE) -C cli $@
 	$(MAKE) -C common $@
 	$(MAKE) -C harness $@
@@ -93,9 +94,6 @@ check: check-commit-messages
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
 	$(MAKE) -C webui $@
-
-check-commit-messages:
-	$(GOBIN)/conform enforce
 
 fmt:
 	$(MAKE) -C cli $@
@@ -113,4 +111,3 @@ test:
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
 	$(MAKE) -C webui $@
-
