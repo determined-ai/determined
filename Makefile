@@ -1,8 +1,6 @@
 .PHONY: \
   all \
-  build \
   build-docker \
-  build-master \
   check \
   clean \
   fmt \
@@ -37,11 +35,6 @@ go-get-deps:
 
 python-get-deps:
 	pip install -r combined-reqs.txt
-
-build: build-master
-
-build-master:
-	$(MAKE) -C master build
 
 debs:
 	cp -r packaging "$(BUILDDIR)"
