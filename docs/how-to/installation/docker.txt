@@ -29,10 +29,6 @@ Preliminary Setup
    (replace ``VERSION`` with a valid Determined version, such as the
    current version, |version|):
 
-   ..
-      It seems to be impossible to use substitutions (e.g., |version|)
-      inside code blocks, unfortunately.
-
    .. code::
 
       docker pull determinedai/determined-master:VERSION
@@ -65,7 +61,7 @@ master with the edited configuration:
 The process for starting an agent is analogous, with the caveat that the agent
 container must bind mount the host's Docker daemon socket.  This allows the
 ``determinedai/determined-agent`` container to orchestrate the containers that
-execute trials and notebook servers:
+execute trials and other tasks:
 
 .. code::
 

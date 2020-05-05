@@ -85,7 +85,7 @@ created with the Determined CLI. It may contain the following fields:
     file system such as GlusterFS or NFS).
 
     - ``host_path``: The file system path on each agent to use. This directory
-			will be mounted to ``/determined_shared_fs`` inside the trial container.
+      will be mounted to ``/determined_shared_fs`` inside the trial container.
     - ``storage_path``: The optional path where checkpoints will be
       written to and read from. Must be a subdirectory of the
       ``host_path`` or an absolute path containing the ``host_path``.
@@ -584,8 +584,7 @@ created with the Determined CLI. It may contain the following fields:
     :ref:`multi-gpu-training`. Defaults to ``64``.
 
   - ``tensor_fusion_cycle_time``: Specifies the delay between each tensor fusion
-    in ms during :ref:`multi-gpu-training`.
-    Defaults to ``5``.
+    in milliseconds during :ref:`multi-gpu-training`. Defaults to ``5``.
 
   - ``auto_tune_tensor_fusion``: When enabled, configures
     ``tensor_fusion_threshold`` and ``tensor_fusion_cycle_time`` automatically.
@@ -613,7 +612,7 @@ created with the Determined CLI. It may contain the following fields:
      - ``local_cache_host_path``: The optional file system path, to store a local
        copy of the cache, which is synchronized with the S3 cache.
      - ``local_cache_container_path``: The optional file system path to use as the
-       mount point in the trial runner container for stroring the local cache.
+       mount point in the trial runner container for storing the local cache.
      - ``access_key``: The optional AWS access key to use.
      - ``secret_key``: The optional AWS secret key to use.
      - ``endpoint_url``: The optional endpoint to use for S3 clones, e.g., http://127.0.0.1:8080/.

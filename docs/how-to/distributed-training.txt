@@ -12,8 +12,8 @@ taking advantage of multiple machines and multiple GPUs:
 2. **Parallelism within an experiment.** Schedule multiple trials of an experiment at once: a
    :ref:`hyperparameter search <topic-guides_hp-tuning-det>` may run more than
    one trial at once, each of which will use its own GPUs.
-3. **Parallelism within a trial.** Use multiple machine to speed up the training of a trial: using
-   data parallelism. Determined can coordinate across multiple GPUs on a single machine (parallel training)
+3. **Parallelism within a trial.** Use multiple machines to speed up the training of a trial using
+   data parallelism: Determined can coordinate across multiple GPUs on a single machine (parallel training)
    or across multiple GPUs on multiple machines (distributed training) to improve the
    performance of training a single trial.
 
@@ -29,7 +29,7 @@ agent machine or across multiple machines.
 .. note::
 
       When the ``slots_per_trial`` option is changed, the per-slot batch size is set to
-      ``global_batch_size`` // ``slots_per_trial``.  The per-slot (per-GPU) and global batch size
+      ``global_batch_size // slots_per_trial``.  The per-slot (per-GPU) and global batch size
       should be accessed via the context using :func:`context.get_per_slot_batch_size()
       <determined.TrialContext.get_per_slot_batch_size>` and :func:`context.get_global_batch_size()
       <determined.TrialContext.get_global_batch_size>`, respectively.  If ``global_batch_size`` is
@@ -43,7 +43,7 @@ Example configuration with distributed or parallel training:
      slots_per_trial: N
 
 To use distributed or parallel training, ``slots_per_trial`` must be set to a multiple
-of the GPUs per machine. For example, if you have a cluster of machines that each has
+of the number of GPUs per machine. For example, if you have a cluster of machines that each has
 8 GPUs, you should set ``slots_per_trial`` to a multiple of 8, such as 8, 16, or 24.
 This ensures that the full network and interconnect bandwidth are available to
 multi-GPU workloads and results in better performance.

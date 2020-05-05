@@ -3,8 +3,8 @@
 Hyperparameter Search: Single
 =============================
 
-The ``single`` search method does not technically "search": it trains a
-single hyperparameter configuration for ``max_steps`` steps, and then
+The ``single`` search method does a very minimal "search": it trains a
+single hyperparameter configuration for ``max_steps`` steps and then
 performs validation. This method is useful for testing or for training a
 single model configuration until convergence.
 

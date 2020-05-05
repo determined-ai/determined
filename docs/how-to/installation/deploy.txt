@@ -30,20 +30,18 @@ Configuring and Starting the Cluster
 A configuration file is needed to set important values in the master,
 such as where to save model checkpoints. For information about how to
 create a configuration file, see :ref:`cluster-configuration`. There are also
-:ref:`sample configuration files available<config-template>`.  The
-configuration file you create must be named ``master.yaml`` (but it can be in any
-directory).
+:ref:`sample configuration files available <config-template>`.
 
 
 .. note::
 
    ``det-deploy`` will use a default configuration file if you don't provide one.
-   ``det-deploy`` also transparently manages PostgreSQL and Hasura along with
+   It also transparently manages PostgreSQL and Hasura along with
    the master, so the configuration options related to those services do
    not need to be set.
 
 
-Deploying a Single Node Cluster
+Deploying a Single-Node Cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For local development or small clusters (such as a GPU workstation), you may wish to
@@ -67,12 +65,13 @@ In the WebUI, navigate to the ``Cluster`` page, where you should now see
 slots available (either CPU or GPU, depending on what hardware is
 available on the machine).
 
-For production deployments, you'll want to :ref:`use a cluster configuration file.<configuring-cluster-install>`
-To provide this configuration file to ``det-deploy``, use:
+For production deployments, you'll want to :ref:`use a cluster
+configuration file <configuring-cluster-install>`. To provide this
+configuration file to ``det-deploy``, use:
 
 .. code::
 
-  det-deploy local fixture-up --master-config-path <path to master.yaml>``
+  det-deploy local fixture-up --master-config-path <path to master.yaml>
 
 If you want to create more than one agent locally, you can use:
 
@@ -81,7 +80,7 @@ If you want to create more than one agent locally, you can use:
   det-deploy local fixture-up --agents <number of agents>
 
 
-Stopping a Single Node Cluster
+Stopping a Single-Node Cluster
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To stop a Determined cluster, on the machine where a Determined cluster is currently running, run
@@ -95,7 +94,7 @@ To stop a Determined cluster, on the machine where a Determined cluster is curre
 
   ``det-deploy local fixture-down`` will not remove any agents created
   with ``det-deploy local agent-up``.  To remove these agents,
-  use ``det-deploy local agent-down``
+  use ``det-deploy local agent-down``.
 
 Deploying a Standalone Master
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

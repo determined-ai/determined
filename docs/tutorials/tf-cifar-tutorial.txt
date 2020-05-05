@@ -214,7 +214,7 @@ Evaluating the Model
 
 Thanks to Determined, model evaluation is done automatically for you.
 To access information on both training and validation performance,
-simply go to the webUI by entering the address of your ``DET_MASTER``
+simply go to the WebUI by entering the address of your ``DET_MASTER``
 in your web browser.
 
 Once you are on the Determined landing page, you can find your experiment
@@ -281,9 +281,9 @@ A similar example is available at
 
 Next Steps
 ----------
+
+- :ref:`benefits-of-determined`
+- :ref:`terminology-concepts`
 - :ref:`experiment-configuration`
 - :ref:`command-configuration`
 - :ref:`topic-guides_yaml`
-
-.. * <<Benefits of Determined>>
-.. * <<Terminology and basic concepts>>

@@ -12,10 +12,12 @@ File Structure and Entrypoint
 -----------------------------
 
 A model definition consists of a directory of Python files and an accompanying
-``entrypoint`` which specifies from where to load a trial class. The entrypoint
+``entrypoint`` that specifies from where to load a trial class. The entrypoint
 specification is expected to take the form:
 
-    ``<module>:<object reference>``
+.. code::
+
+   <module>:<object reference>
 
 ``<module>`` specifies the module containing the trial class within the model
 definition, relative to the root. It may be an empty string if the model
@@ -47,7 +49,7 @@ difference: the directory name of the model definition is prefixed to
 Since project directories might include large artifacts that should not
 be packaged as part of the model definition (e.g., data sets or compiled
 binaries), users can optionally include a ``.detignore`` file at the
-top-level that specifies file paths to be omitted from the model
+top level that specifies file paths to be omitted from the model
 definition. The ``.detignore`` file uses the same syntax as
 `.gitignore <https://git-scm.com/docs/gitignore>`__. Note that
 byte-compiled Python files (e.g., ``.pyc`` files or ``__pycache__``

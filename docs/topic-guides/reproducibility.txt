@@ -5,9 +5,9 @@ Reproducibility
 
 Determined aims to support *reproducible* machine learning experiments: that
 is, the result of running a Determined experiment should be deterministic, so
-that re-running a previous experiment should produce an identical model.
+that rerunning a previous experiment should produce an identical model.
 For example, this ensures that if the model produced from an experiment
-is ever lost, it can be recovered by re-running the experiment that
+is ever lost, it can be recovered by rerunning the experiment that
 produced it.
 
 Status
@@ -37,19 +37,19 @@ Determined currently does not offer support for:
 Random Seeds
 ------------
 
-All Determined experiments are associated with an **experiment seed**, an
-integer ranging from 0 to 2\ :sup:`31`--1. The experiment seed can be
-set in the experiment configuration (via the
-``reproducibility.experiment_seed`` field). If an experiment seed is not
-explicitly specified, the master will assign one automatically.
+Each Determined experiment is associated with an **experiment seed**:
+an integer ranging from 0 to 2\ :sup:`31`--1. The experiment seed can be
+set using the ``reproducibility.experiment_seed`` field of the
+experiment configuration. If an experiment seed is not explicitly
+specified, the master will assign one automatically.
 
 The experiment seed is used as a source of randomness for any
 hyperparameter sampling procedures. The experiment seed is also used to
 generate a **trial seed** for every trial associated with the
 experiment.
 
-In Trial interface, the trial seed is accessible within trial class via
-``self.ctx.get_trial_seed()``.
+In the ``Trial`` interface, the trial seed is accessible within the
+trial class using ``self.ctx.get_trial_seed()``.
 
 Coding Guidelines
 -----------------
@@ -74,8 +74,9 @@ Deterministic Floating Point on CPUs
 
 When doing CPU-only training with TensorFlow, it is possible to achieve
 floating-point reproducibility throughout optimization. If using the
-``TFKerasTrial`` API, implement the optional ``session_config()`` method to
-override the default session configuration:
+:class:`~determined.keras.TFKerasTrial` API, implement the optional
+:meth:`~determined.keras.TFKerasTrial.session_config` method to override
+the default session configuration:
 
 .. code:: python
 

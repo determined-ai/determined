@@ -6,26 +6,26 @@ Jupyter Notebook is software for interactive Python development. Notebooks are c
 How to access Jupyter Notebooks
 -------------------------------
 
-There are two ways to access notebooks in Determined: the command-line interface (CLI) and the WebUI. To install the CLI, see:ref:`install-cli`.
+There are two ways to access notebooks in Determined: the command-line interface (CLI) and the WebUI. To install the CLI, see :ref:`install-cli`.
 
 Command Line
 ~~~~~~~~~~~~
 
-The following command will automatically start a notebook with a GPU and open in your browser.
+The following command will automatically start a notebook with a GPU and open it in your browser.
 
-.. code-block:: bash
+.. code:: bash
 
     det notebook start
 
-The context option adds a folder or file to the notebook environment.
+The ``--context`` option adds a folder or file to the notebook environment, allowing its contents to be accessed from within the notebook.
 
-.. code-block:: bash
+.. code:: bash
 
     det notebook start --context folder/file
 
-The config-file option can be used to create a notebook with an environment specified by a configuration file.
+The ``--config-file`` option can be used to create a notebook with an environment specified by a configuration file.
 
-.. code-block:: bash
+.. code:: bash
 
     det notebook start --config-file config.yaml
 
@@ -36,21 +36,21 @@ Other Useful Commands
 
 A full list of notebook commands can be found by running:
 
-.. code-block:: bash
+.. code:: bash
 
     det notebook --help
 
 To view all running notebooks:
 
-.. code-block:: bash
+.. code:: bash
 
     det notebook list
 
-To kill a notebook, you first need to have a task_id which can be found under the list command.
+To kill a notebook, you need its ID, which can be found using the list command.
 
-.. code-block:: bash
+.. code:: bash
 
-    det notebook kill <task_id>
+    det notebook kill <id>
 
 WebUI
 ~~~~~

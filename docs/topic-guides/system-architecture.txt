@@ -30,3 +30,8 @@ like checkpointing model state. The master may then send more workloads
 or terminate the trial runner (freeing the slot). When sending a
 workload to the trial runner, the master consults with the searcher to
 determine which workload to run next.
+
+Next Steps
+----------
+
+- :ref:`terminology-concepts`

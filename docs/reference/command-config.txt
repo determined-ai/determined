@@ -72,9 +72,9 @@ fields are optional unless otherwise specified.
     for replicas of the bind-mount. Defaults to ``rprivate``.
 
 .. hint::
-  In addition to `--config-file`, `det cmd run` offers a `--config` flag to
-  directly set configuration options from the command line with `field=value`
-  syntax. `field` can use the dot character (`.`) to indicate nested fields
-  (e.g. `environment.python`). `value` will be interpreted as a comma-separated
-  list if it contains any commas. Options set by `--config` take precedence
-  over those set by `--config-file`.
+  In addition to ``--config-file``, ``det cmd run`` offers a ``--config`` flag to
+  directly set configuration options from the command line with ``field=value``
+  syntax. ``field`` can use the dot character (``.``) to indicate nested fields
+  (e.g., ``environment.python``). ``value`` will be interpreted as a comma-separated
+  list if it contains any commas. Options set by ``--config`` take precedence
+  over those set by ``--config-file``.
