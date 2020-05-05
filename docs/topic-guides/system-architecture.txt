@@ -1,7 +1,7 @@
 .. _det-system-architecture:
 
-Determined System Architecture
-==============================
+System Architecture
+===================
 
 Determined consists of a single **master** and one or more **agents**. There
 is typically one agent per compute server; a single machine can serve as

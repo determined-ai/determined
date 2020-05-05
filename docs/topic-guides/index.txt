@@ -34,22 +34,26 @@ The full list of our topic guides can be found below:
 .. toctree::
   :maxdepth: 1
 
-  aws
   benefits-of-determined
-  checkpoints
-  determined-system-architecture
+  best-practices-model-definitions
+  aws
+  gcp
+  dynamic-agents-overview
+  dynamic-agents-aws
+  dynamic-agents-gcp
   effective-distributed-training
   experiment-lifecycle
-  gcp
+  checkpoints
   hp-tuning-defined
   hp-tuning-det/index
   jupyter-notebooks
   model-definitions
-  best-practices-model-definitions
+  native-api
   optimizing-distributed-training
   reproducibility
   scheduling
+  system-architecture
   terminology-concepts
   user-interfaces
+  users
   yaml
-  native-api

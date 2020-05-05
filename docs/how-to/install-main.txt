@@ -91,6 +91,7 @@ More information on a Determined cluster can be found:
 - :ref:`requirements`
 - :ref:`upgrades`
 - :ref:`troubleshoot`
+- :ref:`network-requirements`
 
 .. toctree::
    :titlesonly:
@@ -98,3 +99,4 @@ More information on a Determined cluster can be found:
 
    installation/requirements
    installation/upgrades-troubleshoot
+   installation/network-requirements
