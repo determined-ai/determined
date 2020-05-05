@@ -22,10 +22,9 @@ func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
-// gcpCluster wraps a gce client.
-// Determined recognizes agent GCE instances by:
-// 1. a specific key/value pair label
-// 2. names of agents that are equal to the instance names
+// gcpCluster wraps a GCE client. Determined recognizes agent GCE instances by:
+// 1. A specific key/value pair label.
+// 2. Names of agents that are equal to the instance names.
 type gcpCluster struct {
 	*GCPClusterConfig
 	masterURL url.URL

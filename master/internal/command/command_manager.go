@@ -35,7 +35,7 @@ func (c *commandManager) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (c *commandManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) { //nolint: dupl
+func (c *commandManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	switch apiCtx.Request().Method {
 	case echo.GET:
 		userFilter := apiCtx.QueryParam("user")

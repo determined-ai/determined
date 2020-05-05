@@ -187,7 +187,7 @@ func (t *predefinedTrial) CheckComplete() error {
 	return nil
 }
 
-// checkValueSimulation will run a SearchMethod until completion, using predefinedTrials
+// checkValueSimulation will run a SearchMethod until completion, using predefinedTrials.
 func checkValueSimulation(
 	t *testing.T,
 	method SearchMethod,

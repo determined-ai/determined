@@ -78,9 +78,9 @@ func (s *Service) getUserFromSession(session model.UserSession) (*model.User, er
 // ProcessAuthentication is a middleware processing function that attempts
 // to authenticate incoming HTTP requests.  Note that the middleware looks
 // for an authentication in three places (in the following order):
-// 1. The HTTP Authorization header
-// 2. A cookie named "auth"
-// 3. A Query parameter named "_auth"
+// 1. The HTTP Authorization header.
+// 2. A cookie named "auth".
+// 3. A Query parameter named "_auth".
 func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		authRaw := c.Request().Header.Get("Authorization")

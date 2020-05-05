@@ -12,13 +12,12 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
-	"github.com/determined-ai/determined/master/pkg/container"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 )
 
 type containerActor struct {
 	cproto.Container
-	spec          *container.Spec
+	spec          *cproto.Spec
 	client        *client.Client
 	docker        *actor.Ref
 	containerInfo *types.ContainerJSON

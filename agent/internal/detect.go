@@ -27,7 +27,7 @@ import (
 // - If there are no GPUs, expose all CPUs present on the machine after applying the optional mask
 // `cpu_limit`.
 //
-// An error is returned instead if detection method failed unexpectedly
+// An error is returned instead if detection failed unexpectedly.
 func detectDevices(visibleGPUs string) ([]device.Device, error) {
 	switch devices, err := detectGPUs(visibleGPUs); {
 	case err != nil:
