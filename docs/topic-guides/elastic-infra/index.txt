@@ -1,0 +1,56 @@
+.. _topic-guides_elastic-infra:
+
+Elastic Infrastructure
+=============================
+
+This document describes how Determined automatically scales its cluster to
+provide adequate computation resources for workloads as well as leverage
+computational resources. It assumes some familiarity with the terms make
+in :ref:`det-system-architecture`: **master**, **agent**, **slot**, and
+**workload**.
+
+Architecture Diagram
+~~~~~~~~~~~~~~~~~~~~
+
+The diagram below outlines the high level architecture of the elastic
+infrastructure.
+
+.. image:: /assets/images/det-arch-elastic-infra.png
+
+Following the diagram, the execution would be:
+
+#. The master collects the information on the agents and the workloads.
+#. The master calculates out the ideal size of the cluster and decide how many
+   agents to launch and which agents to terminate.
+#. The master makes API calls to agent providers, such as AWS and GCP, to scale
+   up/down the cluster.
+
+Architecture Details
+~~~~~~~~~~~~~~~~~~~~
+
+The master collects information on idle agents that have no running workloads
+and on pending workloads waiting to be scheduled and uses this information
+to scale the cluster automatically.
+
+-  When workloads are pending and cannot be scheduled due to lack of
+   available agents, the master calculates the number of agents that are
+   needed to take on these pending workloads. The calculation is done
+   based on the configuration of scaling behavior and agent type.
+   Then it makes API calls to ask agent providers for more agents within
+   a few seconds of new workloads arriving. Agents will
+   spin up automatically and once these agents are able to be discovered
+   by the master, the free slots on these agents will be scheduled with
+   pending workloads. The time for the agents to be discovered varies
+   on different agent providers.
+-  When there are no workloads running on agents, these agents are marked as idle
+   agents. We give them a grace period before making API calls to terminate them.
+   This grace period gives some time to these agents to be scheduled with
+   new workloads.
+
+The full list of our topic guides can be found below:
+
+.. toctree::
+  :maxdepth: 1
+
+  aws
+  gcp
