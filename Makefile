@@ -26,7 +26,7 @@ go-get-deps:
 
 .PHONY: python-get-deps
 python-get-deps:
-	pip install -r combined-reqs.txt
+	pip install -r requirements.txt
 
 .PHONY: debs
 debs:

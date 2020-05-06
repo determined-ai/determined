@@ -1,9 +1,0 @@
--e common
--e cli
--e harness
--e deploy
--r dev-requirements.txt
--r docs/requirements.txt
--r cli/tests/requirements.txt
--r harness/tests/requirements.txt
--r e2e_tests/tests/requirements.txt
