@@ -419,7 +419,7 @@ jobs:
           determined-cli: true
           determined: true
           extras-requires: "tensorflow==1.14 torch==1.4"
-          extra-requirements-file: "docs-requirements.txt"
+          extra-requirements-file: "docs/requirements.txt"
           executor: python:3.6.9
       - run: make -C master build-python-packages
       - run: make -C docs build

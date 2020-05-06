@@ -58,7 +58,7 @@ autoclass_content = "class"
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also effect to html_static_path and html_extra_path
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "examples"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "examples", "requirements.txt"]
 
 # The suffix of source filenames.
 source_suffix = {".rst": "restructuredtext", ".txt": "restructuredtext"}
