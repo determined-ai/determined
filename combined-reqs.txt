@@ -2,7 +2,6 @@
 -e cli
 -e harness
 -e deploy
--r release-requirements.txt
 -r dev-requirements.txt
 -r docs/requirements.txt
 -r cli/tests/requirements.txt
