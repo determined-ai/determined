@@ -1,13 +1,8 @@
-import pathlib
-
 from setuptools import find_packages, setup
-
-version_file = pathlib.Path(__file__).absolute().parents[1].joinpath("VERSION")
-version = version_file.read_text()
 
 setup(
     name="determined",
-    version=version,
+    version="0.12.4.dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -16,7 +11,7 @@ setup(
     classifiers=["License :: OSI Approved :: Apache Software License"],
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     python_requires=">=3.6",
-    package_data={"determined": [str(version_file), "py.typed"]},
+    package_data={"determined": ["py.typed"]},
     install_requires=[
         "boto3>=1.9.220",
         "cloudpickle==0.5.3",
@@ -31,7 +26,7 @@ setup(
         "requests>=2.20.0",
         "simplejson==3.16.0",
         "GPUtil==1.4.0",
-        f"determined-common=={version}",
+        "determined-common==0.12.4.dev0",
         "yogadl==0.1.0",
     ],
     extras_require={

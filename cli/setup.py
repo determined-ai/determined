@@ -1,13 +1,8 @@
-import pathlib
-
 from setuptools import find_packages, setup
-
-version_file = pathlib.Path(__file__).absolute().parents[1].joinpath("VERSION")
-version = version_file.read_text()
 
 setup(
     name="determined-cli",
-    version=version,
+    version="0.12.4.dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -16,7 +11,6 @@ setup(
     classifiers=["License :: OSI Approved :: Apache Software License"],
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     python_requires=">=3.5",
-    package_data={"determined-cli": [str(version_file)]},
     install_requires=[
         "argcomplete==1.9.4",
         "gitpython==2.1.11",
@@ -26,7 +20,7 @@ setup(
         "ruamel.yaml>=0.15.78",
         "tabulate>=0.8.3",
         "termcolor==1.1.0",
-        "determined-common=={}".format(version),
+        "determined-common==0.12.4.dev0",
     ],
     entry_points={"console_scripts": ["det = determined_cli.__main__:main"]},
 )
