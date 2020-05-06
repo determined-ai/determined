@@ -201,10 +201,6 @@ pinned dependencies in `requirements.txt` files throughout the repo.
 
 To update all dependencies, run `make upgrade-deps`.
 
-## Cutting Releases
-
-See [Releases](RELEASE.md) for cutting new releases.
-
 ## Debugging
 
 ### Connecting to PostgreSQL
