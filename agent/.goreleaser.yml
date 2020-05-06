@@ -1,0 +1,53 @@
+project_name: determined-agent
+
+snapshot:
+  name_template: "{{ .Env.VERSION }}"
+
+builds:
+  - main: ./cmd/determined-agent
+    ldflags:
+      - -X github.com/determined-ai/determined/agent/version.Version={{.Env.VERSION}}
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+
+archives:
+  - wrap_in_directory: true
+    files:
+      - __nonexistent__*
+
+nfpms:
+  - maintainer: "Determined AI <hello@determined.ai>"
+    formats:
+      - deb
+      - rpm
+    config_files:
+      "packaging/agent.yaml": "/etc/determined/agent.yaml"
+    files:
+      "packaging/determined-agent.service": "/lib/systemd/system/determined-agent.service"
+    overrides:
+      deb:
+        scripts:
+          postinstall: packaging/debian/agent.postinst
+          preremove: packaging/debian/agent.prerm
+          postremove: packaging/debian/agent.postrm
+
+release:
+  github:
+    owner: determined-ai
+    name: determined
+
+dockers:
+  - goos: linux
+    goarch: amd64
+    image_templates:
+      - "determinedai/{{.ProjectName}}:{{.Env.VERSION}}"
+      - "determinedai/{{.ProjectName}}:{{.ShortCommit}}"
+      - "determinedai/{{.ProjectName}}:{{.FullCommit}}"
+      - "determinedai/determined-dev:{{.ProjectName}}-{{.ShortCommit}}"
+      - "determinedai/determined-dev:{{.ProjectName}}-{{.FullCommit}}"
+    skip_push: true
+    extra_files:
+      - packaging/entrypoint.sh
