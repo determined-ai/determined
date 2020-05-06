@@ -446,7 +446,7 @@ class PyTorchTrialController(det.LoopTrialController):
     @staticmethod
     def _convert_metrics_to_numpy(metrics: Dict[str, Any]) -> Dict[str, Any]:
         for metric_name, metric_val in metrics.items():
-            logging.debug(metric_name, metric_val)
+            logging.debug("Value of metric {metric_name}: {metric_val}")
             if isinstance(metric_val, torch.Tensor):
                 logging.debug(f"Converting {metric_name} to CPU.")
                 metrics[metric_name] = metric_val.cpu().numpy()
