@@ -7,5 +7,5 @@ import (
 )
 
 func TestVersion(t *testing.T) {
-	assert.Assert(t, Version != "unknown")
+	assert.Assert(t, Version == "unknown")
 }

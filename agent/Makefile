@@ -16,13 +16,7 @@ endif
 
 BUILDDIR ?= ../build
 
-COMPONENT := agent
-LDFLAGS := "-X github.com/determined-ai/determined/$(COMPONENT)/version.Version=$(VERSION)"
-GOTEST := $(if $(shell which gotest 2>/dev/null),gotest,go test)
 export GO111MODULE := on
-
-GOBIN ?= $(shell go env GOPATH)/bin
-GOCI_LINT_VERSION := v1.20.0
 
 all: clean get-deps
 
@@ -34,8 +28,7 @@ clean:
 	rm -rf coverage.out "$(BUILDDIR)"/bin/determined-agent "$(BUILDDIR)"/share/determined/agent/
 
 get-deps:
-	cd buildtools && go install golang.org/x/tools/cmd/goimports github.com/rakyll/gotest
-	curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/$(GOCI_LINT_VERSION)/install.sh | sh -s -- -b $(GOBIN) $(GOCI_LINT_VERSION)
+	go mod download
 
 ###################
 ### Build Phase ###
@@ -49,42 +42,38 @@ build-files:
 build-docker: build-files
 	docker build \
 		--build-arg VERSION=$(VERSION) \
-		-t determinedai/determined-$(COMPONENT):$(VERSION) \
-		-t determinedai/determined-$(COMPONENT):$(DET_GIT_COMMIT) \
-		-t determinedai/determined-dev:determined-$(COMPONENT)-$(DET_GIT_COMMIT) \
+		-t determinedai/determined-agent:$(VERSION) \
+		-t determinedai/determined-agent:$(DET_GIT_COMMIT) \
+		-t determinedai/determined-dev:determined-agent-$(DET_GIT_COMMIT) \
 		$(EXTRA_TAG) "$(BUILDDIR)" -f Dockerfile
 
 install-native:
-	go install -ldflags $(LDFLAGS) ./cmd/determined-agent
+	go install -ldflags "-X github.com/determined-ai/determined/agent/version.Version=$(VERSION)" ./cmd/determined-agent
 
 ####################
 ### Verify Phase ###
 ####################
 
 check:
-	$(GOBIN)/golangci-lint run
-	@# Since our custom goimports is more strict than golangci-lint's, run
-	@# the check separately.
-	@echo "Running goimports linter"
-	@[ -z "$$( $(GOBIN)/goimports -l -local github.com/determined-ai . )" ] || (echo please make fmt files && exit 1)
+	golangci-lint run
 
 fmt:
-	$(GOBIN)/goimports -l -local github.com/determined-ai -w .
+	goimports -l -local github.com/determined-ai -w .
 
 ##################
 ### Test Phase ###
 ##################
 
 test:
-	$(GOTEST) -ldflags $(LDFLAGS) -v -short -coverprofile=coverage.out -covermode count -cover ./...
+	go test -v -short -coverprofile=coverage.out -covermode count -cover ./...
 
 #####################
 ### Publish Phase ###
 #####################
 
 publish:
-	docker push determinedai/determined-$(COMPONENT):$(VERSION)
+	docker push determinedai/determined-agent:$(VERSION)
 
 publish-dev:
-	docker push determinedai/determined-$(COMPONENT):$(DET_GIT_COMMIT)
-	docker push determinedai/determined-dev:determined-$(COMPONENT)-$(DET_GIT_COMMIT)
+	docker push determinedai/determined-agent:$(DET_GIT_COMMIT)
+	docker push determinedai/determined-dev:determined-agent-$(DET_GIT_COMMIT)
