@@ -31,13 +31,13 @@ Requirements
    `AWS Documentation <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html>`__
    for information on how to use AWS credentials.
 
--  An `AWS EC2 Keypair <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html>`__
+-  An `AWS EC2 Keypair <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html>`__.
 
 
 Installation
 ~~~~~~~~~~~~
 
-These instructions describe how to install ``determined-deploy``:
+``determined-deploy`` can be installed using ``pip``:
 
 .. code::
 
@@ -50,6 +50,16 @@ Deploying
 
    det-deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR
 
+``CLUSTER_ID`` is an arbitrary unique ID for the new cluster.
+We recommend choosing a cluster ID that is memorable and
+helps identify what the cluster is being used for. The cluster ID will be
+used as the AWS CloudFormation Stack Name.
+
+``KEYPAIR`` is the name of the AWS EC2 Keypair to use when provisioning
+the cluster. If the AWS CLI is installed on your machine, you can get a
+list of the available keypair names by running ``aws ec2 describe-key-pairs``.
+
+The deployment process may take 5-10 minutes. When it completes, summary information about the newly deployed cluster will be printed, including the URL of the Determined master.
 
 .. _determined-deploy-deployment-types:
 
@@ -99,12 +109,12 @@ Spinning up the cluster
      - Required
 
    * - ``--cluster-id``
-     - Unique id for the cluster which will be used for the CloudFormation Stack Name
+     - Unique ID for the cluster which will be used for the CloudFormation Stack Name
      - None
      - True
 
    * - ``--keypair``
-     - AWS Keypair for master and agent instances
+     - The name of the AWS EC2 Keypair to use for both master and agent instances
      - None
      - True
 
@@ -144,7 +154,7 @@ Spinning up the cluster
      - False
 
    * - ``--max-idle-agent-period``
-     - Amount of idle time an agent will wait before shutting down
+     - The length of time to wait before idle dynamic agents will be automatically terminated.
      - 10m (10 minutes)
      - False
 
@@ -175,7 +185,7 @@ Tearing Down The Cluster
      - Required
 
    * - ``--cluster-id``
-     - Unique id for the cluster which will be used for the CloudFormation Stack Name
+     - Unique ID for the cluster which will be used for the CloudFormation Stack Name
      - None
      - True
 
