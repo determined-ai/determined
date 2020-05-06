@@ -33,6 +33,10 @@ debs:
 	cp -r packaging "$(BUILDDIR)"
 	cd "$(BUILDDIR)" && GORELEASER_CURRENT_TAG=$(VERSION) $(GOBIN)/goreleaser -f $(CURDIR)/.goreleaser.yml --snapshot --rm-dist
 
+.PHONY: build
+build:
+	$(MAKE) -C master $@
+
 .PHONY: build-docker
 build-docker: build debs
 	$(MAKE) -C agent build-docker
