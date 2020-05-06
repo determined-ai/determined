@@ -196,7 +196,7 @@ commands:
           if [ -n <<parameters.extra-requirements-file>> ]; then cat <<parameters.extra-requirements-file>> >> /tmp/cachefile; fi
       - restore_cache:
           keys:
-            - det-python-deps-v1dev1-{{ checksum "/tmp/cachefile" }}
+            - det-python-deps-v1dev2-{{ checksum "/tmp/cachefile" }}
       - when:
           condition: <<parameters.determined-common>>
           steps:
@@ -226,7 +226,7 @@ commands:
       - run: |
           if [ -n "<<parameters.extra-requirements-file>>" ]; then /tmp/venv/bin/python -m pip install -r <<parameters.extra-requirements-file>>; fi
       - save_cache:
-          key: det-python-deps-v1dev1-{{ checksum "/tmp/cachefile" }}
+          key: det-python-deps-v1dev2-{{ checksum "/tmp/cachefile" }}
           paths:
             - "/tmp/venv"
 
@@ -628,7 +628,7 @@ jobs:
           determined: true
           determined-deploy: true
           extras-requires: "torch==1.4.0"
-          extra-requirements-file: "dev-requirements.txt"
+          extra-requirements-file: "requirements.txt"
           executor: python:3.6.9
       - run: make -C cli check
       - run: make -C common check
