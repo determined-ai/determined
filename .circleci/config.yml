@@ -93,7 +93,7 @@ commands:
       - attach_workspace:
           at: build
       - run: make -C master build-docker
-      - run: make -C agent build-docker
+      - run: make -C agent package
 
 
   go-get-deps:

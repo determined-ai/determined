@@ -28,6 +28,10 @@ go-get-deps:
 python-get-deps:
 	pip install -r requirements.txt
 
+.PHONY: package
+package:
+	$(MAKE) -C agent $@
+
 .PHONY: debs
 debs:
 	cp -r packaging "$(BUILDDIR)"
@@ -38,8 +42,7 @@ build:
 	$(MAKE) -C master $@
 
 .PHONY: build-docker
-build-docker: build debs
-	$(MAKE) -C agent build-docker
+build-docker: package debs
 	$(MAKE) -C master build-docker
 
 .PHONY: clean

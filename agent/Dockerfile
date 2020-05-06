@@ -1,6 +1,5 @@
 FROM debian:10.3-slim
 MAINTAINER Determined AI <hello@determined.ai>
-ARG VERSION
 
 # For non-CUDA based images, these variables must be explicitly set for the Nvidia runtime to expose
 # the GPUs and `nvidia-smi` binary inside the container. See
@@ -12,11 +11,10 @@ ENV NVIDIA_VISIBLE_DEVICES=all NVIDIA_DRIVER_CAPABILITIES=utility
 # discussion and the origin of this workaround). Even when not necessary, it should be harmless.
 RUN ldconfig
 
-COPY dist/determined-agent_${VERSION}_linux_amd64.deb /tmp/agent.deb
-RUN apt-get install -y /tmp/agent.deb
-
-COPY share/determined/agent/scripts/entrypoint.sh /run/determined/workdir/entrypoint.sh
+COPY packaging/entrypoint.sh /run/determined/workdir/entrypoint.sh
 RUN chmod +x /run/determined/workdir/entrypoint.sh
+
+COPY determined-agent /usr/bin/determined-agent
 
 WORKDIR /run/determined/workdir
 ENTRYPOINT [ "/run/determined/workdir/entrypoint.sh" ]

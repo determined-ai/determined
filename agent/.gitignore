@@ -1,6 +1,9 @@
 # Build directory
 build/
 
+# Dist directory
+dist/
+
 # Vendor directory
 vendor/
 

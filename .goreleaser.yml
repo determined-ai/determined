@@ -20,19 +20,6 @@ builds:
       - darwin
     goarch:
       - amd64
-  - id: agent
-    dir: ../agent
-    main: ./cmd/determined-agent
-    binary: determined-agent
-    env:
-      - CGO_ENABLED=0
-    ldflags:
-      - -X github.com/determined-ai/determined/agent/version.Version={{.Env.VERSION}}
-    goos:
-      - linux
-      - darwin
-    goarch:
-      - amd64
 
 archives:
   - id: master
@@ -43,15 +30,6 @@ archives:
     wrap_in_directory: true
     files:
       - "share/determined/master/**/*"
-
-  - id: agent
-    name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
-    builds:
-      - agent
-    wrap_in_directory: true
-    # Official hack to include no other files: https://github.com/goreleaser/goreleaser/issues/602.
-    files:
-      - __nonexistent__*
 
 nfpms:
   - id: master
@@ -77,28 +55,6 @@ nfpms:
           postinstall: packaging/debian/master.postinst
           preremove: packaging/debian/master.prerm
           postremove: packaging/debian/master.postrm
-  - id: agent
-    package_name: determined-agent
-    maintainer: "Determined AI <hello@determined.ai>"
-
-    bindir: /usr/bin
-    builds:
-      - agent
-    config_files:
-      "packaging/agent.yaml": "/etc/determined/agent.yaml"
-    files:
-      "packaging/determined-agent.service": "/lib/systemd/system/determined-agent.service"
-
-    file_name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    formats:
-      - deb
-      - rpm
-    overrides:
-      deb:
-        scripts:
-          postinstall: packaging/debian/agent.postinst
-          preremove: packaging/debian/agent.prerm
-          postremove: packaging/debian/agent.postrm
 
 checksum:
   name_template: 'checksums.txt'

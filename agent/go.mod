@@ -12,15 +12,15 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/golangci/golangci-lint v1.20.0
-	github.com/google/go-cmp v0.3.1 // indirect
-	github.com/google/uuid v1.0.0
+	github.com/google/uuid v1.1.1
+	github.com/goreleaser/goreleaser v0.133.0
 	github.com/gorilla/mux v1.7.4 // indirect
 	github.com/gorilla/websocket v1.4.0
 	github.com/labstack/echo v3.3.5+incompatible
-	github.com/pkg/errors v0.8.1
+	github.com/pkg/errors v0.9.1
 	github.com/shirou/gopsutil v2.19.9+incompatible
 	github.com/sirupsen/logrus v1.4.2
-	github.com/spf13/cobra v0.0.5
+	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/sys v0.0.0-20191120155948-bd437916bb0e
 	golang.org/x/tools v0.0.0-20190930201159-7c411dea38b0

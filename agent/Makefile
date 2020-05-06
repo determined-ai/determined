@@ -1,79 +1,40 @@
-.PHONY: all \
-	clean get-deps \
-	build-docker build-files \
-	install-native \
-	test \
-	check fmt \
-	publish publish-dev \
-
 export VERSION:=$(shell cat ../VERSION)
-
-ifeq ($(origin DET_GIT_COMMIT), undefined)
-GIT_COMMIT := $(shell git rev-parse HEAD)
-GIT_DIRTY := $(if $(shell git status --porcelain),-dirty,)
-export DET_GIT_COMMIT := $(GIT_COMMIT)$(GIT_DIRTY)
-endif
-
-BUILDDIR ?= ../build
-
 export GO111MODULE := on
 
-all: clean get-deps
-
-######################
-### Validate Phase ###
-######################
-
+.PHONY: clean
 clean:
-	rm -rf coverage.out "$(BUILDDIR)"/bin/determined-agent "$(BUILDDIR)"/share/determined/agent/
+	rm -rf dist
+	rm -rf coverage.out
 
+.PHONY: get-deps
 get-deps:
 	go mod download
 
-###################
-### Build Phase ###
-###################
-
-build-files:
-	mkdir -p "$(BUILDDIR)"/share/determined/agent
-	rm -rf "$(BUILDDIR)"/share/determined/agent/scripts
-	cp -r scripts "$(BUILDDIR)"/share/determined/agent
-
-build-docker: build-files
-	docker build \
-		--build-arg VERSION=$(VERSION) \
-		-t determinedai/determined-agent:$(VERSION) \
-		-t determinedai/determined-agent:$(DET_GIT_COMMIT) \
-		-t determinedai/determined-dev:determined-agent-$(DET_GIT_COMMIT) \
-		$(EXTRA_TAG) "$(BUILDDIR)" -f Dockerfile
-
-install-native:
+.PHONY: install
+install:
 	go install -ldflags "-X github.com/determined-ai/determined/agent/version.Version=$(VERSION)" ./cmd/determined-agent
 
-####################
-### Verify Phase ###
-####################
-
+.PHONY: check
 check:
 	golangci-lint run
 
+.PHONY: fmt
 fmt:
 	goimports -l -local github.com/determined-ai -w .
 
-##################
-### Test Phase ###
-##################
-
+.PHONY: test
 test:
 	go test -v -short -coverprofile=coverage.out -covermode count -cover ./...
 
-#####################
-### Publish Phase ###
-#####################
+.PHONY: package
+package:
+	GORELEASER_CURRENT_TAG=$(VERSION) goreleaser --snapshot --rm-dist
 
+.PHONY: publish
 publish:
 	docker push determinedai/determined-agent:$(VERSION)
 
+.PHONY: publish-dev
 publish-dev:
-	docker push determinedai/determined-agent:$(DET_GIT_COMMIT)
-	docker push determinedai/determined-dev:determined-agent-$(DET_GIT_COMMIT)
+	docker push determinedai/determined-agent:$(shell git rev-parse HEAD)
+	docker push determinedai/determined-dev:determined-agent-$(shell git rev-parse HEAD)
