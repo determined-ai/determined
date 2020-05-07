@@ -92,13 +92,9 @@ install-native:
 
 check:
 	$(GOBIN)/golangci-lint run
-	@# Since our custom goimports is more strict than golangci-lint's, run
-	@# the check separately.
-	@echo "Running goimports linter"
-	@[ -z "$$( $(GOBIN)/goimports -l -local github.com/determined-ai . )" ] || (echo please make fmt files && exit 1)
 
 fmt:
-	$(GOBIN)/goimports -l -local github.com/determined-ai -w .
+	goimports -l -local github.com/determined-ai -w .
 
 ##################
 ### Test Phase ###
