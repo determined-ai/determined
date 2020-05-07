@@ -65,7 +65,9 @@ build-elm:
 	$(MAKE) -C ../webui/elm build
 
 build-python-packages: clean-python-packages
+	mkdir -p $(BUILDDIR)/share/determined/master/wheels/
 	$(MAKE) -C ../common build
+	cp ../common/dist/*.whl $(BUILDDIR)/share/determined/master/wheels/
 	$(MAKE) -C ../cli build
 	cp ../cli/dist/*.whl $(BUILDDIR)/share/determined/master/wheels/
 	$(MAKE) -C ../harness build
