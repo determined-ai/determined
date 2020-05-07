@@ -106,7 +106,7 @@ fmt:
 ##################
 
 test:
-	$(GOTEST) -ldflags $(LDFLAGS) -v -short -coverprofile=coverage.out -covermode count -cover ./...
+	$(GOTEST) -v -short -coverprofile=coverage.out -covermode count -cover ./...
 
 #####################
 ### Publish Phase ###
