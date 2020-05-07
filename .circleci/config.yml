@@ -68,12 +68,6 @@ commands:
             fi
 
 
-  install-docker:
-    steps:
-      - run: sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-      - run: sudo systemctl restart docker
-
-
   pull-task-images:
     parameters:
       tf2:
@@ -154,20 +148,11 @@ commands:
         type: string
     steps:
       - run:
-          name: Install python3-venv
+          name: Setup venv
           command: |
-              set +e
-              SUDO=""
-              if ! [ $(id -u) = 0 ]; then
-                SUDO="sudo"
-              fi
-              dpkg -l | grep python3-venv
-              if ! [ $? -eq 0 ]; then
-                ${SUDO} apt update && ${SUDO} apt install -y python3-venv
-              fi
-      - run: python3.6 -m venv /tmp/venv
-      - run: echo "export PATH=/tmp/venv/bin:\"${PATH}\"" >> $BASH_ENV
-      - run: /tmp/venv/bin/python -m pip install --upgrade pip\<20 wheel setuptools
+            python3.6 -m venv /tmp/venv
+            echo "export PATH=/tmp/venv/bin:\"${PATH}\"" >> $BASH_ENV
+            /tmp/venv/bin/python -m pip install --upgrade pip\<20 wheel setuptools
 
 
       # Write dependencies to cachefile to help create the cachekey
@@ -527,22 +512,21 @@ jobs:
 
   test-e2e-webui:
     machine:
-      image: ubuntu-1604:201903-01
+      image: ubuntu-1604:202004-01
     resource_class: large
     steps:
       - checkout
-      - install-docker
       - attach_workspace:
           at: build
       - run: docker load --input build/master.image
       - run: docker load --input build/agent.image
 
       - install-webui-test-deps
-      - run: pyenv global 3.6.5
+      - run: pyenv global 3.6.10
       - setup-python-venv:
           determined-common: true
           determined-cli: true
-          executor: ubuntu-1604:201903-01
+          executor: ubuntu-1604:202004-01
       - setup-local-cluster:
           det-version: ${CIRCLE_SHA1}
       - run-e2e-webui-tests
@@ -712,24 +696,23 @@ jobs:
 
   test-e2e-tf:
     machine:
-      image: ubuntu-1604:201903-01
+      image: ubuntu-1604:202004-01
     resource_class: large
     steps:
       - checkout
-      - install-docker
       - attach_workspace:
           at: build
       - run: docker load --input build/master.image
       - run: docker load --input build/agent.image
 
-      - run: pyenv global 3.6.5
+      - run: pyenv global 3.6.10
       - setup-python-venv:
           determined-common: true
           determined-cli: true
           determined: true
           determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: ubuntu-1604:201903-01
+          executor: ubuntu-1604:202004-01
 
       - pull-task-images:
           tf2: true
@@ -744,25 +727,24 @@ jobs:
 
   test-e2e:
     machine:
-      image: ubuntu-1604:201903-01
+      image: ubuntu-1604:202004-01
     resource_class: large
     parallelism: 3
     steps:
       - checkout
-      - install-docker
       - attach_workspace:
           at: build
       - run: docker load --input build/master.image
       - run: docker load --input build/agent.image
 
-      - run: pyenv global 3.6.5
+      - run: pyenv global 3.6.10
       - setup-python-venv:
           determined-common: true
           determined-cli: true
           determined: true
           determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: ubuntu-1604:201903-01
+          executor: ubuntu-1604:202004-01
 
       - pull-task-images
 
