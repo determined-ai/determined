@@ -2,9 +2,6 @@
 
 export INTEGRATIONS_HOST_PORT ?= 5300
 
-BUILDDIR ?= ../../build
-DET_WEBUI_ROOT ?= "$(BUILDDIR)"/share/determined/master/webui
-
 get-deps:
 	for i in `seq 3`; do \
 		npm ci --no-audit && break ; \
