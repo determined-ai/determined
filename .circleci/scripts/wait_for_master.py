@@ -7,7 +7,7 @@ from determined_common import api
 
 
 def _wait_for_master(address: str) -> None:
-    for _ in range(50):
+    for _ in range(150):
         try:
             r = api.get(address, "info", authenticated=False)
             if r.status_code == requests.codes.ok:
