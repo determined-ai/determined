@@ -17,7 +17,6 @@ endif
 BUILDDIR ?= ../build
 
 COMPONENT := master
-LDFLAGS := "-X github.com/determined-ai/determined/$(COMPONENT)/version.Version=$(VERSION)"
 export GO111MODULE := on
 
 GOBIN ?= $(shell go env GOPATH)/bin
@@ -84,7 +83,7 @@ build-docker:
 		$(EXTRA_TAG) "$(BUILDDIR)" -f Dockerfile
 
 install-native:
-	go install -ldflags $(LDFLAGS) ./cmd/determined-master
+	go install -ldflags "-X github.com/determined-ai/determined/$(COMPONENT)/version.Version=$(VERSION)" ./cmd/determined-master
 
 ####################
 ### Verify Phase ###
