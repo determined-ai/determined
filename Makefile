@@ -22,7 +22,6 @@ get-deps: python-get-deps go-get-deps
 go-get-deps:
 	$(MAKE) -C master get-deps
 	$(MAKE) -C agent get-deps
-	curl -fsSL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh -s -- -b $(GOBIN) $(GORELEASER_VERSION)
 
 .PHONY: python-get-deps
 python-get-deps:

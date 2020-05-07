@@ -18,9 +18,6 @@ BUILDDIR ?= ../build
 
 export GO111MODULE := on
 
-GOBIN ?= $(shell go env GOPATH)/bin
-GOCI_LINT_VERSION := v1.20.0
-
 all: clean get-deps build
 
 ######################
@@ -36,9 +33,10 @@ clean-python-packages:
 	$(MAKE) -C ../harness clean
 
 get-deps:
-	cd buildtools \
-	  && go install golang.org/x/tools/cmd/goimports
-	curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/$(GOCI_LINT_VERSION)/install.sh | sh -s -- -b $(GOBIN) $(GOCI_LINT_VERSION)
+	go mod download
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint
+	go install golang.org/x/tools/cmd/goimports
+	go install github.com/goreleaser/goreleaser
 
 ###################
 ### Build Phase ###
@@ -89,7 +87,7 @@ install-native:
 ####################
 
 check:
-	$(GOBIN)/golangci-lint run
+	golangci-lint run
 
 fmt:
 	goimports -l -local github.com/determined-ai -w .
