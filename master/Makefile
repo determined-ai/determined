@@ -18,7 +18,6 @@ BUILDDIR ?= ../build
 
 COMPONENT := master
 LDFLAGS := "-X github.com/determined-ai/determined/$(COMPONENT)/version.Version=$(VERSION)"
-GOTEST := $(if $(shell which gotest 2>/dev/null),gotest,go test)
 export GO111MODULE := on
 
 GOBIN ?= $(shell go env GOPATH)/bin
@@ -40,7 +39,7 @@ clean-python-packages:
 
 get-deps:
 	cd buildtools \
-	  && go install golang.org/x/tools/cmd/goimports github.com/rakyll/gotest
+	  && go install golang.org/x/tools/cmd/goimports
 	curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/$(GOCI_LINT_VERSION)/install.sh | sh -s -- -b $(GOBIN) $(GOCI_LINT_VERSION)
 
 ###################
@@ -106,7 +105,7 @@ fmt:
 ##################
 
 test:
-	$(GOTEST) -v -short -coverprofile=coverage.out -covermode count -cover ./...
+	go test -v -short -coverprofile=coverage.out -covermode count -cover ./...
 
 #####################
 ### Publish Phase ###
