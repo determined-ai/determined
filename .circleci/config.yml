@@ -759,14 +759,14 @@ jobs:
 
   deploy:
     docker:
-      - image: cimg/base:stable
+      - image: python:3.6.9
     steps:
       - checkout
       - set-slack-user-id
       - setup-python-venv:
           determined-common: true
           determined-deploy: true
-          executor: cimg/base:stable
+          executor: python:3.6.9
       - deploy-aws-cluster:
           cluster-id: determined-${CIRCLE_BRANCH}
           det-version: ${CIRCLE_SHA1}
