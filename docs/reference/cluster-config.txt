@@ -715,9 +715,19 @@ The master supports the following configuration settings:
 - ``scim``: Specifies whether the SCIM service is enabled and the credentials for clients
   to use it. Only basic authentication is supported.
 
-  - ``enabled``: Set it to be ``true`` to enable SCIM. Defaults to be ``false``.
+  - ``enabled``: Whether to enable SCIM. Defaults to be ``false``.
   - ``username``: The username that will be required in a basic auth header.
   - ``password``: The password that will be required in a basic auth header.
+
+- ``saml``: Specifies whether SAML SSO is enabled and the configuration to use it.
+
+  - ``enabled``: Whether to enable SAML SSO. Defaults to be ``false``.
+  - ``provider``: The name of the IDP. Currently (officially) supported: "okta".
+  - ``idp_recipient_url``: The URL your IDP will send SAML assertions to.
+  - ``idp_sso_url``: An IdP provided URL to redirect SAML requests to.
+  - ``idp_sso_descriptor_url``: An IDP provided URL, also known as IDP issuer. It is an identifier
+    for the IDP that issues the SAML requests and responses.
+  - ``idp_cert_path``: The path to the IDP's certificate, used to validate assertions.
 
 .. _agent-configuration:
 
