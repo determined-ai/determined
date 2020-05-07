@@ -16,7 +16,6 @@ endif
 
 BUILDDIR ?= ../build
 
-COMPONENT := master
 export GO111MODULE := on
 
 GOBIN ?= $(shell go env GOPATH)/bin
@@ -77,13 +76,13 @@ build-react:
 build-docker:
 	docker build \
 		--build-arg VERSION=$(VERSION) \
-		-t determinedai/determined-$(COMPONENT):$(VERSION) \
-		-t determinedai/determined-$(COMPONENT):$(DET_GIT_COMMIT) \
-		-t determinedai/determined-dev:determined-$(COMPONENT)-$(DET_GIT_COMMIT) \
+		-t determinedai/determined-master:$(VERSION) \
+		-t determinedai/determined-master:$(DET_GIT_COMMIT) \
+		-t determinedai/determined-dev:determined-master-$(DET_GIT_COMMIT) \
 		$(EXTRA_TAG) "$(BUILDDIR)" -f Dockerfile
 
 install-native:
-	go install -ldflags "-X github.com/determined-ai/determined/$(COMPONENT)/version.Version=$(VERSION)" ./cmd/determined-master
+	go install -ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION)" ./cmd/determined-master
 
 ####################
 ### Verify Phase ###
@@ -107,8 +106,8 @@ test:
 #####################
 
 publish:
-	docker push determinedai/determined-$(COMPONENT):$(VERSION)
+	docker push determinedai/determined-master:$(VERSION)
 
 publish-dev:
-	docker push determinedai/determined-$(COMPONENT):$(DET_GIT_COMMIT)
-	docker push determinedai/determined-dev:determined-$(COMPONENT)-$(DET_GIT_COMMIT)
+	docker push determinedai/determined-master:$(DET_GIT_COMMIT)
+	docker push determinedai/determined-dev:determined-master-$(DET_GIT_COMMIT)
