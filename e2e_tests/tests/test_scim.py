@@ -1,5 +1,6 @@
 import numbers
 import uuid
+from typing import cast
 from urllib import parse
 
 import pytest
@@ -9,7 +10,7 @@ from tests.integrations import config as conf
 
 
 def make_scim_url(path: str) -> str:
-    return str(parse.urljoin(conf.make_master_url(), "/scim/v2" + path))
+    return cast(str, parse.urljoin(conf.make_master_url(), "/scim/v2" + path))
 
 
 def get_random_string() -> str:

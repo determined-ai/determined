@@ -24,6 +24,7 @@ from determined_cli.model import args_description as model_args_description
 from determined_cli.notebook import args_description as notebook_args_description
 from determined_cli.remote import args_description as remote_args_description
 from determined_cli.shell import args_description as shell_args_description
+from determined_cli.sso import args_description as auth_args_description
 from determined_cli.template import args_description as template_args_description
 from determined_cli.tensorboard import args_description as tensorboard_args_description
 from determined_cli.trial import args_description as trial_args_description
@@ -168,6 +169,7 @@ all_args_description = (
     + remote_args_description
     + user_args_description
     + version_args_description
+    + auth_args_description
 )
 
 
