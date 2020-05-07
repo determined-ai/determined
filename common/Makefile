@@ -1,32 +1,27 @@
-.PHONY: clean build publish fmt check test
-
-# TODO: It may make sense to ultimately have this (and the CLI and harness) not
-# build directly into the master directory, supposing we'll want to have them
-# for purposes besides shipping them out from the master. But this simplifies
-# things a bit for now.
-
-VERSION := $(shell cat ../VERSION)
-BUILDDIR ?= ../build
-DIST_DIRECTORY := "$(BUILDDIR)"/share/determined/master/wheels
-COMMON_WHEEL := $(DIST_DIRECTORY)/determined_common-$(VERSION)-py3-none-any.whl
-
+.PHONY: clean
 clean:
 	rm -rf .pytest_cache/
 	rm -rf .mypy_cache/
 	rm -rf *.egg-info/
+	rm -rf pip-wheel-metadata/
+	rm -rf dist/
 	rm -rf build/
 	find . \( -name __pycache__ -o -name \*.pyc \) -delete
 
+.PHONY: build
 build:
-	python setup.py -q bdist_wheel -d $(DIST_DIRECTORY)
+	python setup.py -q bdist_wheel
 
+.PHONY: publish
 publish:
-	twine upload --non-interactive $(COMMON_WHEEL)
+	twine upload --non-interactive dist/*
 
+.PHONY: fmt
 fmt:
 	isort -y
 	black .
 
+.PHONY: check
 check:
 	isort --check-only
 	black . --check
