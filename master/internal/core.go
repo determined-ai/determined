@@ -482,7 +482,7 @@ func (m *Master) Run() error {
 	// Docs.
 	m.echo.Static("/docs", filepath.Join(webuiRoot, "docs"))
 	m.echo.GET("/docs", func(c echo.Context) error {
-		return c.Redirect(301, "/docs/")
+		return c.Redirect(http.StatusMovedPermanently, "/docs/")
 	})
 
 	type fileRoute struct {
