@@ -67,6 +67,7 @@ build-elm:
 build-python-packages: clean-python-packages
 	$(MAKE) -C ../common build
 	$(MAKE) -C ../cli build
+	cp ../cli/dist/*.whl $(BUILDDIR)/share/determined/master/wheels/
 	$(MAKE) -C ../harness build
 
 build-react:

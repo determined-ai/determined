@@ -1,34 +1,33 @@
-.PHONY: clean build publish fmt check test
-
-VERSION := $(shell cat ../VERSION)
-BUILDDIR ?= ../build
-DIST_DIRECTORY := "$(BUILDDIR)"/share/determined/master/wheels
-CLI_WHEEL := $(DIST_DIRECTORY)/determined_cli-$(VERSION)-py3-none-any.whl
-
+.PHONY: clean
 clean:
 	rm -rf .pytest_cache/
 	rm -rf .mypy_cache/
 	rm -rf *.egg-info/
 	rm -rf pip-wheel-metadata/
-	rm -rf $(DIST_DIRECTORY)
+	rm -rf dist/
 	rm -rf build/
 	find . \( -name __pycache__ -o -name \*.pyc \) -delete
 
+.PHONY: build
 build:
-	python setup.py -q bdist_wheel -d $(DIST_DIRECTORY)
+	python setup.py -q bdist_wheel
 
+.PHONY: publish
 publish:
-	twine upload --non-interactive $(CLI_WHEEL)
+	twine upload --non-interactive dist/*
 
+.PHONY: fmt
 fmt:
 	isort -y
 	black .
 
+.PHONY: check
 check:
 	isort --check-only
 	black . --check
 	flake8
 	mypy .
 
+.PHONY: test
 test:
 	pytest tests
