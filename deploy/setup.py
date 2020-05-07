@@ -14,7 +14,7 @@ setup(
     python_requires=">=3.6",
     install_requires=[
         "requests>=2.20.0",
-        "docker>=3.7.3",
+        "docker[ssh]>=3.7.3",  # ssh extra prevents paramiko dependency error
         "docker-compose>=1.13.0",
         "determined-common==0.12.4.dev0",
     ],
