@@ -1,3 +1,5 @@
+# pin docutils at 0.15.2 to avoid transitive dependency conflict with botocore (requires < 0.16)
+docutils==0.15.2
 sphinx==2.4.4
 sphinx-argparse>=0.2.5
 git+https://github.com/determined-ai/determined_sphinx_theme.git@3849905ea870226a4bd5b3731edf9771523cecf3
