@@ -5,7 +5,7 @@ Quick Start Guide
 
 This guide demonstrates how to train a model, perform a hyperparameter search, and run a distributed training job, all in Determined. This guide is based on the official `PyTorch MNIST example <https://github.com/PyTorch/examples/blob/master/mnist/main.py>`_ and `TensorFlow Fashion MNIST Tutorial <https://www.tensorflow.org/tutorials/keras/classification>`__.
 
-This guide focuses on demonstrating Determined’s features at a high level. We will lightly touch on major concepts and terminology. For a more slow-paced introduction to developing models with Determined, check out :ref:`pytorch-mnist-tutorial` or :ref:`tf-mnist-tutorial`.
+This guide focuses on demonstrating Determined's features at a high level. We will lightly touch on major concepts and terminology. For a more slow-paced introduction to developing models with Determined, check out :ref:`pytorch-mnist-tutorial` or :ref:`tf-mnist-tutorial`.
 
 Prerequisites
 --------------
@@ -74,12 +74,12 @@ Each YAML file is specific to the type of experiment we will run during this gui
 
 - ``const.yaml``: train a single model on a single GPU or CPU.
 - ``distributed.yaml``: train a single model using multiple GPUs (:ref:`distributed training <multi-gpu-training>`).
-- ``adaptive.yaml``: train multiple models as part of a hyperparameter search, using Determined’s adaptive :ref:`hyperparameter search <hyperparameter-tuning>` functionality.
+- ``adaptive.yaml``: train multiple models as part of a hyperparameter search, using Determined's adaptive :ref:`hyperparameter search <hyperparameter-tuning>` functionality.
 
 Running Your First Job
 -----------------------
 
-The Determined CLI can be used to submit an experiment to the Determined cluster. An :ref:`experiment <concept-experiment>` is a collection of one or more trials. A :ref:`trial <concept-trial>` is a training task that consists of a dataset, a deep learning model, and values for all of the model’s hyperparameters.  An experiment can either train a single model (with a single trial) or perform a search over a user-defined hyperparameter space.
+The Determined CLI can be used to submit an experiment to the Determined cluster. An :ref:`experiment <concept-experiment>` is a collection of one or more trials. A :ref:`trial <concept-trial>` is a training task that consists of a dataset, a deep learning model, and values for all of the model's hyperparameters.  An experiment can either train a single model (with a single trial) or perform a search over a user-defined hyperparameter space.
 
 We will start by training a single model for a fixed number of batches and with constant values for all of the hyperparameters. Run the following command in the ``mnist_pytorch`` directory:
 
@@ -123,7 +123,7 @@ Determined automatically tracks the metadata associated with all experiments inc
 
 For this experiment, we have one trial because we define all the hyperparameters. We can drill down into a trial to view more information by clicking on it.
 
-A trial page contains detailed information about the model, the configuration, output logs and the training metrics. Typically, you have to code the metric frequency output, plots, and checkpointing while managing the configuration for each model; however, by integrating into Determined’s API, every experiment will automatically have these capabilities without any extra code.
+A trial page contains detailed information about the model, the configuration, output logs and the training metrics. Typically, you have to code the metric frequency output, plots, and checkpointing while managing the configuration for each model; however, by integrating into Determined's API, every experiment will automatically have these capabilities without any extra code.
 
 |
 
@@ -131,7 +131,7 @@ A trial page contains detailed information about the model, the configuration, o
 
 |
 
-During training, the graph on the right will update with the most current metrics you have defined. In this case, the graph displays the loss and error rate per step. A :ref:`step <concept-step>` is a workload consisting of training a model on a certain number of batches of data, where a batch is defined by the model definition’s data loader. The default is 100 batches per step, but the number can be overridden in the configuration file.
+During training, the graph on the right will update with the most current metrics you have defined. In this case, the graph displays the loss and error rate per step. A :ref:`step <concept-step>` is a workload consisting of training a model on a certain number of batches of data, where a batch is defined by the model definition's data loader. The default is 100 batches per step, but the number can be overridden in the configuration file.
 
 Left of the graph displays time information, the hyperparameter configuration, the best validation metric and their respective checkpoint.
 
@@ -181,7 +181,7 @@ Next, submit the experiment with the same command as above; however, our experim
 
     det experiment create distributed.yaml .
 
-Once again, we access the experiment’s trial in the browser. You will notice the loss curve is very similar to the single GPU experiment we previously ran. However, we reduced the time from 2 minutes and 16 seconds down to 1 minute and 5 seconds.
+Once again, we access the experiment's trial in the browser. You will notice the loss curve is very similar to the single GPU experiment we previously ran. However, we reduced the time from 2 minutes and 16 seconds down to 1 minute and 5 seconds.
 
 .. image:: /assets/images/dtrain_results@2x.jpg
     :align: center
@@ -190,9 +190,9 @@ Once again, we access the experiment’s trial in the browser. You will notice t
 Tuning the Model
 -----------------
 
-Now that we have trained a model, we want to improve the model's accuracy through hyperparameter tuning. Typically, this requires a significant amount of time and code. Determined provides support for hyperparameter search through efficient execution of state-of-the-art early-stopping based approaches as well as seamless parallelization of these methods. To use Determined’s hyperparameter search feature, we only have to change the experiment configuration file.
+Now that we have trained a model, we want to improve the model's accuracy through hyperparameter tuning. Typically, this requires a significant amount of time and code. Determined provides support for hyperparameter search through efficient execution of state-of-the-art early-stopping based approaches as well as seamless parallelization of these methods. To use Determined's hyperparameter search feature, we only have to change the experiment configuration file.
 
-Let’s search over the hyperparameters using the ``adaptive.yaml`` experiment configuration file. The ``adaptive.yaml`` file tells the :ref:`searcher algorithm <topic-guides_hp-tuning-det>` the ranges to explore for each hyperparameter. For our model, we will use a fixed batch size and search on the dropout size, filters, and learning rate. In the ``searcher`` field, we update the ``name`` to use ``adaptive_simple`` and add ``max_trials`` to use ``16``. This tells Determined which search algorithm to use and how many model configurations to explore.
+Let's search over the hyperparameters using the ``adaptive.yaml`` experiment configuration file. The ``adaptive.yaml`` file tells the :ref:`searcher algorithm <topic-guides_hp-tuning-det>` the ranges to explore for each hyperparameter. For our model, we will use a fixed batch size and search on the dropout size, filters, and learning rate. In the ``searcher`` field, we update the ``name`` to use ``adaptive_simple`` and add ``max_trials`` to use ``16``. This tells Determined which search algorithm to use and how many model configurations to explore.
 
 Next, run the same command as above to submit an experiment, except change the configuration file to use ``adaptive.yaml``.
 
