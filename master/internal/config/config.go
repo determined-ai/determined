@@ -164,6 +164,7 @@ type Config struct {
 	InternalConfig InternalConfig `json:"__internal"`
 
 	Scim         ScimConfig         `json:"scim"`
+	SAML         SAMLConfig         `json:"saml"`
 	OIDC         OIDCConfig         `json:"oidc"`
 	Integrations IntegrationsConfig `json:"integrations"`
 }
