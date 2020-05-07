@@ -440,7 +440,17 @@ jobs:
           at: build
       - run: make -C docs/deploy publish
 
-  build-debs:
+  package-and-push-system:
+    parameters:
+      local:
+        type: boolean
+        default: false
+      development:
+        type: boolean
+        default: false
+      production:
+        type: boolean
+        default: false
     docker:
       - image: cimg/go:1.13
         environment:
@@ -455,10 +465,30 @@ jobs:
       - run: make -C master build-files
       - run: make debs
 
-      - persist_to_workspace:
-          root: build
-          paths:
-            - "dist/*linux_amd64.deb"
+      - setup_remote_docker
+      - build-docker-images
+      - when:
+          condition: <<parameters.local>>
+          steps:
+            - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
+            - run: docker save -o build/agent.image determinedai/determined-agent:${CIRCLE_SHA1}
+            - persist_to_workspace:
+                root: build
+                paths:
+                  - "dist/*linux_amd64.deb"
+                  - "*.image"
+      - when:
+          condition: <<parameters.development>>
+          steps:
+            - login-docker
+            - run: make -C master publish-dev
+            - run: make -C agent publish-dev
+      - when:
+          condition: <<parameters.production>>
+          steps:
+            - login-docker
+            - run: make -C master publish
+            - run: make -C agent publish
 
   publish-debs:
     docker:
@@ -502,7 +532,10 @@ jobs:
     steps:
       - checkout
       - install-docker
-      - build-docker-images
+      - attach_workspace:
+          at: build
+      - run: docker load --input build/master.image
+      - run: docker load --input build/agent.image
 
       - install-webui-test-deps
       - run: pyenv global 3.6.5
@@ -684,7 +717,10 @@ jobs:
     steps:
       - checkout
       - install-docker
-      - build-docker-images
+      - attach_workspace:
+          at: build
+      - run: docker load --input build/master.image
+      - run: docker load --input build/agent.image
 
       - run: pyenv global 3.6.5
       - setup-python-venv:
@@ -714,7 +750,10 @@ jobs:
     steps:
       - checkout
       - install-docker
-      - build-docker-images
+      - attach_workspace:
+          at: build
+      - run: docker load --input build/master.image
+      - run: docker load --input build/agent.image
 
       - run: pyenv global 3.6.5
       - setup-python-venv:
@@ -735,32 +774,6 @@ jobs:
 
       - store_test_results:
           path: /tmp/test-results/
-
-  build-and-push-docker-images:
-    parameters:
-      development:
-        type: boolean
-        default: false
-      production:
-        type: boolean
-        default: false
-    docker:
-      - image: cimg/base:stable
-    steps:
-      - checkout
-      - setup_remote_docker
-      - build-docker-images
-      - login-docker
-      - when:
-          condition: <<parameters.development>>
-          steps:
-            - run: make -C master publish-dev
-            - run: make -C agent publish-dev
-      - when:
-          condition: <<parameters.production>>
-          steps:
-            - run: make -C master publish
-            - run: make -C agent publish
 
   deploy:
     docker:
@@ -908,23 +921,22 @@ workflows:
       - build-elm
       - build-react
       - build-docs
-      - build-debs:
+      - package-and-push-system:
+          name: local-package-and-push-system
           requires:
             - build-elm
             - build-react
             - build-docs
+          matrix:
+            parameters:
+              local: [true]
 
-      - test-e2e:
+      - package-and-push-system:
+          name: dev-package-and-push-system
           requires:
-            - build-debs
-      - test-e2e-tf:
-          requires:
-            - build-debs
-      - test-e2e-webui:
-          requires:
-            - build-debs
-
-      - build-and-push-docker-images:
+            - build-elm
+            - build-react
+            - build-docs
           matrix:
             parameters:
               development: [true]
@@ -932,8 +944,16 @@ workflows:
             branches:
               ignore:
                 - /pull\/.*/
+
+      - test-e2e:
           requires:
-            - build-debs
+            - local-package-and-push-system
+      - test-e2e-tf:
+          requires:
+            - local-package-and-push-system
+      - test-e2e-webui:
+          requires:
+            - local-package-and-push-system
 
       - request-gpu-tests:
           type: approval
@@ -957,7 +977,7 @@ workflows:
             branches:
               only: master
           requires:
-            - build-and-push-docker-images
+            - dev-package-and-push-system
 
       - deploy:
           context: aws
@@ -968,7 +988,7 @@ workflows:
                 - /pull\/.*/
           requires:
             - request-dev-deploy
-            - build-and-push-docker-images
+            - dev-package-and-push-system
 
       - parallel-tests:
           context: aws
@@ -978,7 +998,7 @@ workflows:
               ignore:
                 - /pull\/.*/
           requires:
-            - build-and-push-docker-images
+            - dev-package-and-push-system
 
       - e2e-gpu-tests:
           context: aws
@@ -986,7 +1006,7 @@ workflows:
             branches:
               only: master
           requires:
-            - build-and-push-docker-images
+            - dev-package-and-push-system
 
       - parallel-tests:
           context: aws
@@ -997,7 +1017,7 @@ workflows:
                 - master
           requires:
             - request-gpu-tests
-            - build-and-push-docker-images
+            - dev-package-and-push-system
 
 
       - e2e-gpu-tests:
@@ -1009,7 +1029,7 @@ workflows:
                 - master
           requires:
             - request-gpu-tests
-            - build-and-push-docker-images
+            - dev-package-and-push-system
 
 
   nightly:
@@ -1035,20 +1055,15 @@ workflows:
       - build-docs:
           context: determined-production
           filters: *release-and-rc-filters
-      - build-debs:
-          requires:
-            - build-elm
-            - build-react
-            - build-docs
-          context: determined-production
-          filters: *release-and-rc-filters
 
-      - build-and-push-docker-images:
+      - package-and-push-system:
           matrix:
             parameters:
               production: [true]
           requires:
-            - build-debs
+            - build-elm
+            - build-react
+            - build-docs
           context: determined-production
           filters: *release-and-rc-filters
 
@@ -1067,6 +1082,6 @@ workflows:
 
       - publish-debs:
           requires:
-            - build-debs
+            - package-and-push-system
           context: determined-production
           filters: *release-filters
