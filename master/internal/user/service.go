@@ -170,16 +170,27 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 	// The caller of this REST endpoint can request that the master set a cookie.
 	// This is used by the WebUI for persistence of sessions.
 	if c.QueryParam("cookie") == "true" {
-		cookie := new(http.Cookie)
-		cookie.Name = "auth"
-		cookie.Value = token
-		cookie.Expires = time.Now().Add(db.SessionDuration)
-		c.SetCookie(cookie)
+		c.SetCookie(NewCookieFromToken(token))
 	}
 
 	return response{
 		Token: token,
 	}, nil
+}
+
+// NewCookieFromToken creates a new cookie from the given token.
+func NewCookieFromToken(token string) *http.Cookie {
+	cookie := new(http.Cookie)
+	cookie.Name = "auth"
+	cookie.Value = token
+	cookie.Path = "/"
+	cookie.Expires = time.Now().Add(db.SessionDuration)
+	return cookie
+}
+
+// GetUserByUserName retrieves a user by their username.
+func (s *Service) GetUserByUserName(userName string) (*model.User, error) {
+	return s.db.UserByUsername(userName)
 }
 
 // getMe returns information about the current authenticated user.

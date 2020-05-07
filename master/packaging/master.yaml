@@ -124,3 +124,12 @@ db:
 #   enabled: false
 #   username: scim_username
 #   password: scim_password
+
+## Configure the settings for using the SAML server to sign in.
+# saml:
+#   enabled: false
+#   provider: okta
+#   idp_sso_url: sso_url
+#   idp_sso_recipient_url: recipient_url
+#   idp_sso_descriptor_url: descriptor_url
+#   idp_cert_path: cert_path

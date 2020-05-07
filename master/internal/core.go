@@ -31,6 +31,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/internal/saml"
 	"github.com/determined-ai/determined/master/internal/scim"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/template"
@@ -93,12 +94,26 @@ func (m *Master) getInfo(c echo.Context) (interface{}, error) {
 		telemetryInfo.SegmentKey = m.config.Telemetry.SegmentWebUIKey
 	}
 
+	ssoProviderInfo := make([]aproto.SSOProviderInfo, 0)
+	if m.config.SAML.Enabled {
+		u, err := url.Parse(m.config.SAML.IDPRecipientURL)
+		if err != nil {
+			return nil, errors.Wrap(err, "error parsing SAML recipient URL")
+		}
+		u.Path = saml.SAMLRoot + saml.InitiatePath
+		ssoProviderInfo = append(ssoProviderInfo, aproto.SSOProviderInfo{
+			SSOInitiateURL: u.String(),
+			Name:           m.config.SAML.Provider,
+		})
+	}
+
 	return &aproto.MasterInfo{
-		ClusterID:   m.ClusterID,
-		MasterID:    m.MasterID,
-		Version:     m.Version,
-		Telemetry:   telemetryInfo,
-		ClusterName: m.config.ClusterName,
+		ClusterID:    m.ClusterID,
+		MasterID:     m.MasterID,
+		Version:      m.Version,
+		Telemetry:    telemetryInfo,
+		ClusterName:  m.config.ClusterName,
+		SSOProviders: ssoProviderInfo,
 	}, nil
 }
 
@@ -573,6 +588,17 @@ func (m *Master) Run() error {
 		scim.RegisterAPIHandler(m.echo, m.db, &m.config.Scim, masterURL)
 	} else {
 		log.Info("SCIM is disabled")
+	}
+
+	if m.config.SAML.Enabled {
+		log.Info("SAML is enabled")
+		samlService, err := saml.New(m.db, m.config.SAML)
+		if err != nil {
+			return errors.Wrap(err, "error creating SAML service")
+		}
+		saml.RegisterAPIHandler(m.echo, samlService)
+	} else {
+		log.Info("SAML is disabled")
 	}
 
 	return m.startServers(cert)

@@ -111,11 +111,4 @@ func registerConfig() {
 		defaults.Telemetry.SegmentMasterKey, "the Segment write key for the master")
 	registerString(flags, name("telemetry", "segment-webui-key"),
 		defaults.Telemetry.SegmentWebUIKey, "the Segment write key for the WebUI")
-
-	registerBool(flags, name("scim", "enabled"),
-		defaults.Scim.Enabled, "enable SCIM")
-	registerString(flags, name("scim", "username"),
-		defaults.Scim.Username, "the username your IdP uses to access Determined's SCIM service")
-	registerString(flags, name("scim", "password"),
-		defaults.Scim.Password, "the password your IdP uses to access Determined's SCIM service")
 }

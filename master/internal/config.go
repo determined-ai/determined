@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
+	"github.com/determined-ai/determined/master/internal/saml"
 	"github.com/determined-ai/determined/master/internal/scim"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -89,6 +90,7 @@ type Config struct {
 	ResourceManager *resourcemanagers.ResourceManagerConfig `json:"resource_manager"`
 
 	Scim scim.Config `json:"scim"`
+	SAML saml.Config `json:"saml"`
 }
 
 // Printable returns a printable string.

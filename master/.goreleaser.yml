@@ -35,6 +35,8 @@ nfpms:
       "build/**/*": "/usr/share/determined/master"
       "static/**/*": "/usr/share/determined/master/static"
       "packaging/determined-master.service": "/lib/systemd/system/determined-master.service"
+    dependencies:
+      - xmlsec1
     overrides:
       deb:
         scripts:
