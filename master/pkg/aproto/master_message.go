@@ -25,6 +25,12 @@ type TelemetryInfo struct {
 	OtelExportedOtlpEndpoint string `json:"otel_endpoint"`
 }
 
+// SSOProviderInfo contains the information about an SSO provider needed by the WebUI.
+type SSOProviderInfo struct {
+	SSOInitiateURL string `json:"sso_url"`
+	Name           string `json:"name"`
+}
+
 // MasterInfo contains the master information that the agent has connected to.
 type MasterInfo struct {
 	Version     string        `json:"version"`
@@ -32,6 +38,8 @@ type MasterInfo struct {
 	ClusterID   string        `json:"cluster_id"`
 	ClusterName string        `json:"cluster_name"`
 	Telemetry   TelemetryInfo `json:"telemetry"`
+
+	SSOProviders []SSOProviderInfo `json:"sso_providers"`
 }
 
 // MasterMessage is a union type for all messages sent from agents.

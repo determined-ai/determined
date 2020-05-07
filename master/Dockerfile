@@ -5,6 +5,7 @@ RUN apt-get update -yq \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       ca-certificates \
       unattended-upgrades \
+      xmlsec1 \
     && unattended-upgrade \
     && apt-get remove -y unattended-upgrades \
     && apt-get autoremove -y \

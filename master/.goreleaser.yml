@@ -134,6 +134,8 @@ nfpms:
           postinstall: packaging/debian/master.postinst
           preremove: packaging/debian/master.prerm
           postremove: packaging/debian/master.postrm
+    dependencies:
+      - xmlsec1
 
 release:
   github:
