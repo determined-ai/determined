@@ -69,6 +69,7 @@ build-python-packages: clean-python-packages
 	$(MAKE) -C ../cli build
 	cp ../cli/dist/*.whl $(BUILDDIR)/share/determined/master/wheels/
 	$(MAKE) -C ../harness build
+	cp ../harness/dist/*.whl $(BUILDDIR)/share/determined/master/wheels/
 
 build-react:
 	$(MAKE) -C ../webui/react build
