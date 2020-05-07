@@ -20,7 +20,7 @@ setup(
     package_data={"determined-deploy": [str(version_file)]},
     install_requires=[
         "requests>=2.20.0",
-        "docker>=3.7.3",
+        "docker[ssh]>=3.7.3",  # ssh extra prevents paramiko dependency error
         "docker-compose>=1.13.0",
         f"determined-common=={version}",
     ],
