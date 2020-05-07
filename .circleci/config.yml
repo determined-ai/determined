@@ -8,13 +8,16 @@ orbs:
 executors:
   python-35:
     docker:
-      - image: python:3.5.9
+      - image: cimg/python:3.5
   python-36:
     docker:
-      - image: python:3.6.9
+      - image: cimg/python:3.6
   python-37:
     docker:
-      - image: python:3.7.7
+      - image: cimg/python:3.7
+  python-38:
+    docker:
+      - image: cimg/python:3.8
 
 parameters:
   det-version:
@@ -396,7 +399,7 @@ commands:
 jobs:
   build-docs:
     docker:
-      - image: python:3.6.9
+      - image: determinedai/cimg-base:stable
     steps:
       - checkout
       - setup-python-venv:
@@ -405,7 +408,7 @@ jobs:
           determined: true
           extras-requires: "tensorflow==1.14 torch==1.4"
           extra-requirements-file: "docs/requirements.txt"
-          executor: python:3.6.9
+          executor: determinedai/cimg-base:stable
       - run: make -C master build-python-packages
       - run: make -C docs build
       - persist_to_workspace:
@@ -500,12 +503,12 @@ jobs:
       path:
         type: string
     docker:
-      - image: python:3.6.9
+      - image: determinedai/cimg-base:stable
     steps:
       - checkout
       - setup-python-venv:
           extras-requires: "twine"
-          executor: python:3.6.9
+          executor: determinedai/cimg-base:stable
       - run: make -C <<parameters.path>> build
       - run: make -C <<parameters.path>> publish
 
@@ -636,7 +639,7 @@ jobs:
 
   lint-python:
     docker:
-      - image: python:3.6.9
+      - image: determinedai/cimg-base:stable
     steps:
       - checkout
       - setup-python-venv:
@@ -646,7 +649,7 @@ jobs:
           determined-deploy: true
           extras-requires: "torch==1.4.0"
           extra-requirements-file: "requirements.txt"
-          executor: python:3.6.9
+          executor: determinedai/cimg-base:stable
       - run: make -C cli check
       - run: make -C common check
       - run: make -C harness check
@@ -655,7 +658,7 @@ jobs:
 
   test-unit-harness:
     docker:
-      - image: python:3.6.9
+      - image: determinedai/cimg-base:stable
     steps:
       - checkout
       - setup-python-venv:
@@ -663,12 +666,12 @@ jobs:
           determined: true
           extras-requires: "tensorflow==1.14.0 torch==1.4.0 torchvision==0.5.0"
           extra-requirements-file: "harness/tests/requirements.txt"
-          executor: python:3.6.9
+          executor: determinedai/cimg-base:stable
       - run: make -C harness test
 
   test-unit-harness-tf2:
     docker:
-      - image: python:3.6.9
+      - image: determinedai/cimg-base:stable
     steps:
       - checkout
       - setup-python-venv:
@@ -676,7 +679,7 @@ jobs:
           determined: true
           extras-requires: "tensorflow==2.1.0"
           extra-requirements-file: "harness/tests/requirements.txt"
-          executor: python:3.6.9
+          executor: determinedai/cimg-base:stable
       - run: make -C harness test-tf2
 
   test-cli:
@@ -686,6 +689,7 @@ jobs:
     executor: << parameters.executor-name >>
     steps:
       - checkout
+      - run: pip install wheel
       - run: cd common; python setup.py bdist_wheel -d ../build
       - run: cd cli; python setup.py bdist_wheel -d ../build
       - run: pip install --find-links build determined-cli==<< pipeline.parameters.det-version >>
@@ -759,14 +763,14 @@ jobs:
 
   deploy:
     docker:
-      - image: python:3.6.9
+      - image: determinedai/cimg-base:stable
     steps:
       - checkout
       - set-slack-user-id
       - setup-python-venv:
           determined-common: true
           determined-deploy: true
-          executor: python:3.6.9
+          executor: determinedai/cimg-base:stable
       - deploy-aws-cluster:
           cluster-id: determined-${CIRCLE_BRANCH}
           det-version: ${CIRCLE_SHA1}
@@ -778,7 +782,7 @@ jobs:
 
   nightly-tests:
     docker:
-      - image: python:3.6.9
+      - image: determinedai/cimg-base:stable
     steps:
       - checkout
       - setup-python-venv:
@@ -787,7 +791,7 @@ jobs:
           determined: true
           determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: python:3.6.9
+          executor: determinedai/cimg-base:stable
       - setup-aws-cluster:
           cluster-id: nightly-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
@@ -808,7 +812,7 @@ jobs:
 
   e2e-gpu-tests:
     docker:
-      - image: python:3.6.9
+      - image: determinedai/cimg-base:stable
     parallelism: 2
     steps:
       - checkout
@@ -819,7 +823,7 @@ jobs:
           determined: true
           determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: python:3.6.9
+          executor: determinedai/cimg-base:stable
       - setup-aws-cluster:
           cluster-id: e2e-gpu-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
@@ -841,7 +845,7 @@ jobs:
 
   parallel-tests:
     docker:
-      - image: python:3.6.9
+      - image: determinedai/cimg-base:stable
     parallelism: 2
     steps:
       - checkout
@@ -852,7 +856,7 @@ jobs:
           determined: true
           determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: python:3.6.9
+          executor: determinedai/cimg-base:stable
       - setup-aws-cluster:
           cluster-id: parallel-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
@@ -888,7 +892,7 @@ workflows:
       - test-cli:
           matrix:
             parameters:
-              executor-name: ["python-35", "python-36", "python-37", "win/default"]
+              executor-name: ["python-35", "python-36", "python-37", "python-38", "win/default"]
 
   test-unit:
     jobs:
