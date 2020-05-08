@@ -1,27 +1,27 @@
-.PHONY: clean verify init plan publish check check-fmt check-types
-
 export TF_VAR_det_version := $(shell cat ../../VERSION)
 
+.PHONY: clean
 clean:
 	-rm -r .terraform
 	-rm state/terraform.tfstate.backup
 
+.PHONY: verify
 verify:
 	terraform --version
 
+.PHONY: init
 init:
 	terraform init
 
+.PHONY: plan
 plan: init
 	terraform plan
 
+.PHONY: publish
 publish: init
 	terraform apply -auto-approve
 
-check: check-fmt check-types
-
-check-fmt:
+.PHONY: check
+check: init
 	terraform fmt -check=true -diff=true
-
-check-types: init
 	terraform validate -check-variables=false
