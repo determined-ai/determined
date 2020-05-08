@@ -409,9 +409,7 @@ jobs:
           extras-requires: "tensorflow==1.14 torch==1.4"
           extra-requirements-file: "docs/requirements.txt"
           executor: determinedai/cimg-base:stable
-      - run: make -C master build-python-packages
-      - run: make -C examples build
-      - run: make -C docs build
+      - run: make -C master build-docs
       - persist_to_workspace:
           root: build
           paths:
