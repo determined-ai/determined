@@ -53,10 +53,13 @@ build-files:
 # `build-python-packages` target depends on the `clean-python-packages` target, which removes
 # .egg-info/ directories that Sphinx will need to import Determined things. Running both at the same time
 # can cause Sphinx to fail.
-build-docs: build-python-packages
+build-docs: build-python-packages build-examples
 	mkdir -p $(BUILDDIR)/share/determined/master/webui/docs
 	$(MAKE) -C ../docs build
 	cp -r ../docs/site/html/* $(BUILDDIR)/share/determined/master/webui/docs
+
+build-examples:
+	$(MAKE) -C ../examples build
 
 build-elm:
 	$(MAKE) -C ../webui/elm build
