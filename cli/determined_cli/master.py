@@ -50,7 +50,7 @@ def logs(args: Namespace) -> None:
 # fmt: off
 
 args_description = [
-    Cmd("master", None, "manage master", [
+    Cmd("m|aster", None, "manage master", [
         Cmd("logs", logs, "fetch master logs", [
             Arg("-f", "--follow", action="store_true",
                 help="follow the logs of master, similar to tail -f"),
