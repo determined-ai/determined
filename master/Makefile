@@ -62,7 +62,9 @@ build-examples:
 	$(MAKE) -C ../examples build
 
 build-elm:
+	mkdir -p $(BUILDDIR)/share/determined/master/webui/elm
 	$(MAKE) -C ../webui/elm build
+	cp -r ../webui/elm/public $(BUILDDIR)/share/determined/master/webui/elm
 
 build-python-packages: clean-python-packages
 	mkdir -p $(BUILDDIR)/share/determined/master/wheels/
