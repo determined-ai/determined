@@ -74,7 +74,9 @@ build-python-packages: clean-python-packages
 	cp ../harness/dist/*.whl $(BUILDDIR)/share/determined/master/wheels/
 
 build-react:
+	mkdir -p $(BUILDDIR)/share/determined/master/webui/react
 	$(MAKE) -C ../webui/react build
+	cp -r ../webui/react/build/* $(BUILDDIR)/share/determined/master/webui/react
 
 build-docker:
 	docker build \

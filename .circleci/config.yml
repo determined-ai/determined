@@ -599,7 +599,7 @@ jobs:
     steps:
       - checkout
       - react-get-deps
-      - run: make -C webui/react build
+      - run: make -C master build-react
       - persist_to_workspace:
           root: build
           paths:
