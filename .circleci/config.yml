@@ -111,7 +111,12 @@ commands:
       - restore_cache:
           keys:
             - det-elm-deps-v1dev3-{{ checksum  "webui/elm/package-lock.json" }}
-      - run: make -C webui/elm get-deps
+      - run:
+          name: Get Elm dependencies
+          command: |
+            if [ ! -d "webui/elm/node_modules" ]; then
+              make -C webui/elm get-deps
+            fi
       - save_cache:
           key: det-elm-deps-v1dev3-{{ checksum  "webui/elm/package-lock.json" }}
           paths:
@@ -121,7 +126,12 @@ commands:
       - restore_cache:
           keys:
             - det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
-      - run: make -C webui/react get-deps
+      - run:
+          name: Get React dependencies
+          command: |
+            if [ ! -d "webui/react/node_modules" ]; then
+              make -C webui/react get-deps
+            fi
       - save_cache:
           key: det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
           paths:
