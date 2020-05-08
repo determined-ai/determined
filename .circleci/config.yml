@@ -410,6 +410,7 @@ jobs:
           extra-requirements-file: "docs/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C master build-python-packages
+      - run: make -C examples build
       - run: make -C docs build
       - persist_to_workspace:
           root: build
