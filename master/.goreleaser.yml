@@ -42,7 +42,7 @@ nfpms:
     config_files:
       "packaging/master.yaml": "/etc/determined/master.yaml"
     files:
-      "share/determined/master/**/*": "/usr/share/determined/master"
+      "build/share/determined/master/**/*": "/usr/share/determined/master"
       "packaging/determined-master.service": "/lib/systemd/system/determined-master.service"
 
     file_name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"

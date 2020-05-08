@@ -1,15 +1,5 @@
 export VERSION := $(shell cat VERSION)
 
-export GO111MODULE := on
-GOBIN ?= $(shell go env GOPATH)/bin
-GORELEASER_VERSION := v0.128.0
-
-BUILDDIR ?= build
-
-# These variables are picked up by GoReleaser for the master build; we default to including no keys.
-export DET_SEGMENT_MASTER_KEY ?=
-export DET_SEGMENT_WEBUI_KEY ?=
-
 .PHONY: all
 all: get-deps build-docker
 
@@ -33,8 +23,7 @@ package:
 
 .PHONY: debs
 debs:
-	cp -r packaging "$(BUILDDIR)"
-	cd "$(BUILDDIR)" && GORELEASER_CURRENT_TAG=$(VERSION) $(GOBIN)/goreleaser -f $(CURDIR)/.goreleaser.yml --snapshot --rm-dist
+	$(MAKE) -C master $@
 
 .PHONY: build
 build:
@@ -47,7 +36,6 @@ build-docker: package debs
 
 .PHONY: clean
 clean:
-	rm -rf build
 	$(MAKE) -C examples $@
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
@@ -60,7 +48,7 @@ clean:
 
 .PHONY: check
 check:
-	$(GOBIN)/conform enforce
+	conform enforce
 	$(MAKE) -C cli $@
 	$(MAKE) -C common $@
 	$(MAKE) -C harness $@

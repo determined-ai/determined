@@ -14,9 +14,13 @@ GIT_DIRTY := $(if $(shell git status --porcelain),-dirty,)
 export DET_GIT_COMMIT := $(GIT_COMMIT)$(GIT_DIRTY)
 endif
 
-BUILDDIR ?= ../build
+BUILDDIR ?= build
 
 export GO111MODULE := on
+
+# These variables are picked up by GoReleaser for the master build; we default to including no keys.
+export DET_SEGMENT_MASTER_KEY ?=
+export DET_SEGMENT_WEBUI_KEY ?=
 
 all: clean get-deps build
 
@@ -86,7 +90,7 @@ build-docker:
 		-t determinedai/determined-master:$(VERSION) \
 		-t determinedai/determined-master:$(DET_GIT_COMMIT) \
 		-t determinedai/determined-dev:determined-master-$(DET_GIT_COMMIT) \
-		$(EXTRA_TAG) "$(BUILDDIR)" -f Dockerfile
+		$(EXTRA_TAG) . -f Dockerfile
 
 install-native:
 	go install -ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION)" ./cmd/determined-master
@@ -111,6 +115,9 @@ test:
 #####################
 ### Publish Phase ###
 #####################
+
+debs:
+	GORELEASER_CURRENT_TAG=$(VERSION) goreleaser --snapshot --rm-dist
 
 publish:
 	docker push determinedai/determined-master:$(VERSION)
