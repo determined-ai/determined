@@ -71,13 +71,15 @@ def open_shell(args: Namespace) -> None:
 
 
 def _open_shell(shell: Command, username: str, additional_opts: str) -> None:
+    LOOPBACK_ADDRESS = "[::1]"
     with tempfile.NamedTemporaryFile("w") as fp:
         fp.write(shell.misc["privateKey"])
         fp.flush()
         check_len(shell.addresses, 1, "Cannot find address for shell")
+        host, port = shell.addresses[0]["host_ip"], shell.addresses[0]["host_port"]
+        if host == LOOPBACK_ADDRESS:
+            host = "localhost"
 
-        _, port = shell.addresses[0]["host_ip"], shell.addresses[0]["host_port"]
-        host = "localhost"
         os.system(
             "ssh -o StrictHostKeyChecking=no -tt -o IdentitiesOnly=yes -i {} -p {} {} {}@{}".format(
                 fp.name, port, additional_opts, username, host
