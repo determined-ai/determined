@@ -38,6 +38,7 @@ debs:
 
 .PHONY: build
 build:
+	$(MAKE) -C examples $@
 	$(MAKE) -C master $@
 
 .PHONY: build-docker
@@ -47,7 +48,7 @@ build-docker: package debs
 .PHONY: clean
 clean:
 	rm -rf build
-	find . \( -name __pycache__ -o -name \*.pyc -o -name .mypy_cache \) -print0 | xargs -0 rm -rf
+	$(MAKE) -C examples $@
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
 	$(MAKE) -C docs $@
