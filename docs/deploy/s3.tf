@@ -42,7 +42,7 @@ resource "null_resource" "upload" {
 
   provisioner "local-exec" {
     command = <<-EOT
-      aws s3 sync ${var.build_dir}/docs-output/html s3://${aws_s3_bucket.docs.id}/${var.det_version} ;
+      aws s3 sync ../site/html s3://${aws_s3_bucket.docs.id}/${var.det_version} ;
       aws cloudfront create-invalidation --distribution-id ${aws_cloudfront_distribution.distribution.id} --paths '/${var.det_version}/*'
     EOT
   }
@@ -55,7 +55,7 @@ resource "null_resource" "upload_latest" {
 
   provisioner "local-exec" {
     command = <<-EOT
-      aws s3 sync ${var.build_dir}/docs-output/html s3://${aws_s3_bucket.docs.id}/latest --delete ;
+      aws s3 sync ../site/html s3://${aws_s3_bucket.docs.id}/latest --delete ;
       aws cloudfront create-invalidation --distribution-id ${aws_cloudfront_distribution.distribution.id} --paths '/latest/*'
     EOT
   }

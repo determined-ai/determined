@@ -59,7 +59,9 @@ build-files:
 # .egg-info/ directories that Sphinx will need to import Determined things. Running both at the same time
 # can cause Sphinx to fail.
 build-docs: build-python-packages
+	mkdir -p $(BUILDDIR)/share/determined/master/webui/docs
 	$(MAKE) -C ../docs build
+	cp -r ../docs/site/html/* $(BUILDDIR)/share/determined/master/webui/docs
 
 build-elm:
 	$(MAKE) -C ../webui/elm build

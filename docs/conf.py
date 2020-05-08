@@ -76,8 +76,7 @@ source_suffix = {".rst": "restructuredtext", ".txt": "restructuredtext"}
 
 # Our custom sphinx extension uses this value to decide where to look for
 # downloadable files.
-builddir = os.environ.get("BUILDDIR", "../build")
-dai_downloads_root = os.path.join(builddir, "docs-downloads")
+dai_downloads_root = os.path.join("site", "downloads")
 
 # -- HTML theme settings ------------------------------------------------
 

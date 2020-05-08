@@ -1,8 +1,6 @@
 .PHONY: clean verify init plan publish check check-fmt check-types
 
-BUILDDIR ?= ../../build
 export TF_VAR_det_version := $(shell cat ../../VERSION)
-export TF_VAR_build_dir := $(BUILDDIR)
 
 clean:
 	-rm -r .terraform
