@@ -1,3 +1,4 @@
+import json
 import time
 from argparse import Namespace
 from typing import Any, List
@@ -9,6 +10,12 @@ from determined_common.check import check_gt
 
 from . import user
 from .declarative_argparse import Arg, Cmd
+
+
+@user.authentication_required
+def config(args: Namespace) -> None:
+    response = api.get(args.master, "config")
+    print(json.dumps(response.json(), indent=4))
 
 
 @user.authentication_required
@@ -25,7 +32,6 @@ def logs(args: Namespace) -> None:
         params["tail"] = args.tail
 
     response = api.get(args.master, "logs", params=params)
-
     latest_log_id = process_response(response, -1)
 
     # "Follow" mode is implemented as a loop in the CLI. We assume that
@@ -51,6 +57,7 @@ def logs(args: Namespace) -> None:
 
 args_description = [
     Cmd("m|aster", None, "manage master", [
+        Cmd("config", config, "fetch master config as JSON", []),
         Cmd("logs", logs, "fetch master logs", [
             Arg("-f", "--follow", action="store_true",
                 help="follow the logs of master, similar to tail -f"),

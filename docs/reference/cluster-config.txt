@@ -3,14 +3,18 @@
 Cluster Configuration
 =====================
 
-For both the master and the agent, configuration options may be set
-using a configuration file, environment variables, or command-line
-options. (Although values from different sources will be merged, we
-generally recommend sticking to a single source for each service to keep
-things simple.)
+The behavior of the master and agent can be controlled by setting
+configuration variables; this can be done using a configuration file,
+environment variables, or command-line options. (Although values from
+different sources will be merged, we generally recommend sticking to a
+single source for each service to keep things simple.)
 
-Both the master and the agent can be configured using a configuration file by
-passing the ``--config-file`` command-line option as shown below.
+The master and the agent both accept an optional ``--config-file``
+command-line option, which specifies the path of the configuration file
+to use. Note that when running the master or agent inside a container,
+you will need to make the configuration file accessible inside the
+container (e.g., via a bind mount). For example, this command starts the
+agent using a custom configuration file:
 
 .. code::
 
@@ -160,6 +164,9 @@ can be set via a :ref:`YAML configuration file <topic-guides_yaml>`,
 environment variables, or command-line options. The configuration file
 is normally located at ``/etc/determined/master.yaml`` on the master and
 is read when the master starts.
+
+The configuration of an active master can be examined using the
+Determined CLI with the command ``det master config``.
 
 The master supports the following configuration settings:
 
