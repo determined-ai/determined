@@ -233,23 +233,29 @@ commands:
         type: string
         default: "8080"
     steps:
-      - run: circleci tests glob "e2e_tests/tests/**/test*.py" | circleci tests split --split-by=timings > /tmp/tests-to-run
+      - run:
+          name: Split tests
+          working_directory: ~/project/e2e_tests
+          command: circleci tests glob "tests/**/test*.py" | circleci tests split --split-by=timings > /tmp/tests-to-run
 
-      - run: |
-          if [[ "<<parameters.master-host>>" == "localhost" ]]; then
-            FOLLOW_LOCAL_LOGS="--follow-local-logs"
-            COMPOSE_FILE="--compose-file=.circleci/compose/e2e/docker-compose.yaml"
-          fi
+      - run:
+          name: Run e2e tests
+          working_directory: ~/project/e2e_tests
+          command: |
+            if [[ "<<parameters.master-host>>" == "localhost" ]]; then
+              FOLLOW_LOCAL_LOGS="--follow-local-logs"
+              COMPOSE_FILE="--compose-file=.circleci/compose/e2e/docker-compose.yaml"
+            fi
 
-          pytest -vv -s \
-          -m <<parameters.mark>> \
-          --durations=0 \
-          --master-host="<<parameters.master-host>>" \
-          --master-port="<<parameters.master-port>>" \
-          ${FOLLOW_LOCAL_LOGS} \
-          ${COMPOSE_FILE} \
-          --junit-xml="<<parameters.junit-path>>" \
-          $(cat /tmp/tests-to-run)
+            pytest -vv -s \
+            -m <<parameters.mark>> \
+            --durations=0 \
+            --master-host="<<parameters.master-host>>" \
+            --master-port="<<parameters.master-port>>" \
+            ${FOLLOW_LOCAL_LOGS} \
+            ${COMPOSE_FILE} \
+            --junit-xml="<<parameters.junit-path>>" \
+            $(cat /tmp/tests-to-run)
 
   deploy-aws-cluster:
     parameters:
