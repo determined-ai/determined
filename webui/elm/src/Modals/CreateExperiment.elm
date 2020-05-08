@@ -216,7 +216,7 @@ updateOpenContinue msg openModel trialDetail =
                         , badSyntax = c.badSyntax
                     }
             in
-            ( OpenContinue subModel trialDetail, Cmd.none, Nothing )
+            ( OpenContinue subModel trialDetail, YamlEditor.resize openModel.editorState, Nothing )
 
         CreateExperiment ->
             ( OpenContinue openModel trialDetail, doCreateExperiment openModel, Nothing )
