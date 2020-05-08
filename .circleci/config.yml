@@ -73,11 +73,17 @@ commands:
 
   pull-task-images:
     parameters:
+      tf1:
+        type: boolean
+        default: false
       tf2:
         type: boolean
         default: false
     steps:
-      - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-e6662e6
+      - when:
+          condition: <<parameters.tf1>>
+          steps:
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-e6662e6
       - when:
           condition: <<parameters.tf2>>
           steps:
@@ -273,7 +279,7 @@ commands:
           command: |
             if [[ "<<parameters.master-host>>" == "localhost" ]]; then
               FOLLOW_LOCAL_LOGS="--follow-local-logs"
-              COMPOSE_FILE="--compose-file=.circleci/compose/e2e/docker-compose.yaml"
+              COMPOSE_FILE="--compose-file=../.circleci/compose/e2e/docker-compose.yaml"
             fi
 
             pytest -vv -s \
@@ -732,10 +738,22 @@ jobs:
       - run: pip install -r cli/tests/requirements.txt
       - run: pytest cli/tests
 
-  test-e2e-tf:
+  test-e2e:
+    parameters:
+      tf1:
+        type: boolean
+        default: false
+      tf2:
+        type: boolean
+        default: false
+      mark:
+        type: string
+      parallelism:
+        type: integer
     machine:
       image: ubuntu-1604:202004-01
     resource_class: large
+    parallelism: <<parameters.parallelism>>
     steps:
       - checkout
       - attach_workspace:
@@ -753,43 +771,13 @@ jobs:
           executor: ubuntu-1604:202004-01
 
       - pull-task-images:
-          tf2: true
+          tf1: <<parameters.tf1>>
+          tf2: <<parameters.tf2>>
 
       - setup-local-cluster:
           det-version: ${CIRCLE_SHA1}
       - run-e2e-tests:
-          mark: "tensorflow_cpu"
-          master-host: localhost
-      - store_test_results:
-          path: /tmp/test-results/
-
-  test-e2e:
-    machine:
-      image: ubuntu-1604:202004-01
-    resource_class: large
-    parallelism: 3
-    steps:
-      - checkout
-      - attach_workspace:
-          at: master/build
-      - run: docker load --input master/build/master.image
-      - run: docker load --input master/build/agent.image
-
-      - run: pyenv global 3.6.10
-      - setup-python-venv:
-          determined-common: true
-          determined-cli: true
-          determined: true
-          determined-deploy: true
-          extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: ubuntu-1604:202004-01
-
-      - pull-task-images
-
-      - setup-local-cluster:
-          det-version: ${CIRCLE_SHA1}
-      - run-e2e-tests:
-          mark: "e2e_cpu"
+          mark: <<parameters.mark>>
           master-host: localhost
 
       - store_test_results:
@@ -966,11 +954,35 @@ workflows:
                 - /pull\/.*/
 
       - test-e2e:
+          name: test-e2e-tf2
           requires:
             - local-package-and-push-system
-      - test-e2e-tf:
+          matrix:
+            parameters:
+              parallelism: [1]
+              tf2: [true]
+              mark: ["tensorflow2_cpu"]
+
+      - test-e2e:
+          name: test-e2e-tf1
           requires:
             - local-package-and-push-system
+          matrix:
+            parameters:
+              parallelism: [1]
+              tf1: [true]
+              mark: ["tensorflow1_cpu"]
+
+      - test-e2e:
+          name: test-e2e-cpu
+          requires:
+            - local-package-and-push-system
+          matrix:
+            parameters:
+              parallelism: [4]
+              tf1: [true]
+              mark: ["e2e_cpu"]
+
       - test-e2e-webui:
           requires:
             - local-package-and-push-system

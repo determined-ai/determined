@@ -14,7 +14,8 @@ from tests import config
 from .cluster_log_manager import ClusterLogManager
 
 _INTEG_MARKERS = {
-    "tensorflow_cpu",
+    "tensorflow1_cpu",
+    "tensorflow2_cpu",
     "e2e_cpu",
     "e2e_gpu",
     "distributed",

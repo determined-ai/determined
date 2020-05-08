@@ -54,8 +54,13 @@ def test_tf_keras_single_gpu(tf2: bool) -> None:
     assert len(trials) == 1
 
 
-@pytest.mark.tensorflow_cpu  # type: ignore
-@pytest.mark.parametrize("tf2", [True, False])  # type: ignore
+@pytest.mark.parametrize(  # type: ignore
+    "tf2",
+    [
+        pytest.param(True, marks=pytest.mark.tensorflow2_cpu),
+        pytest.param(False, marks=pytest.mark.tensorflow1_cpu),
+    ],
+)
 def test_tf_keras_const_warm_start(tf2: bool) -> None:
     config = conf.load_config(conf.official_examples_path("cifar10_cnn_tf_keras/const.yaml"))
     config = conf.set_max_steps(config, 2)
@@ -114,11 +119,11 @@ def test_tf_keras_mnist_parallel() -> None:
     assert len(trials) == 1
 
 
-@pytest.mark.tensorflow_cpu  # type: ignore
-@pytest.mark.parametrize("tf2", [False])  # type: ignore
-@pytest.mark.parametrize("storage_type", ["lfs"])  # type: ignore
-def test_tf_keras_mnist_data_layer_lfs(tf2: bool, storage_type: str) -> None:
-    run_tf_keras_mnist_data_layer_test(tf2, storage_type)
+@pytest.mark.parametrize(  # type: ignore
+    "tf2", [pytest.param(False, marks=pytest.mark.tensorflow1_cpu)],
+)
+def test_tf_keras_mnist_data_layer_lfs(tf2: bool) -> None:
+    run_tf_keras_mnist_data_layer_test(tf2, "lfs")
 
 
 @pytest.mark.e2e_gpu  # type: ignore
