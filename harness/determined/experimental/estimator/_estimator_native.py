@@ -55,7 +55,7 @@ def init(
     """
     return cast(
         estimator.EstimatorNativeContext,
-        experimental._init_native(
+        experimental.init_native(
             controller_cls=estimator.EstimatorTrialController,
             native_context_cls=estimator.EstimatorNativeContext,
             config=config,

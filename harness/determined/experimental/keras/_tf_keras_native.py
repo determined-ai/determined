@@ -55,7 +55,7 @@ def init(
     """
     return cast(
         keras.TFKerasNativeContext,
-        experimental._native._init_native(
+        experimental._native.init_native(
             controller_cls=keras.TFKerasTrialController,
             native_context_cls=keras.TFKerasNativeContext,
             config=config,
