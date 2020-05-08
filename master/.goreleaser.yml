@@ -1,16 +1,10 @@
-project_name: determined
+project_name: determined-master
 
-# The directory where all of the output files will be placed (relative to where GoReleaser is run,
-# typically `build/`).
-dist: dist
+snapshot:
+  name_template: "{{ .Tag }}"
 
 builds:
-  - id: master
-    dir: ../master
-    main: ./cmd/determined-master
-    binary: determined-master
-    env:
-      - CGO_ENABLED=0
+  - main: ./cmd/determined-master
     ldflags:
       - -X github.com/determined-ai/determined/master/version.Version={{.Env.VERSION}}
       - -X github.com/determined-ai/determined/master/internal.DefaultSegmentMasterKey={{.Env.DET_SEGMENT_MASTER_KEY}}
@@ -22,33 +16,20 @@ builds:
       - amd64
 
 archives:
-  - id: master
-    name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if .Mips }}_{{ .Mips }}{{ end }}"
-    builds:
-      - master
-
-    wrap_in_directory: true
+  - wrap_in_directory: true
     files:
       - "share/determined/master/**/*"
 
 nfpms:
-  - id: master
-    package_name: determined-master
-    maintainer: "Determined AI <hello@determined.ai>"
-
-    bindir: /usr/bin
-    builds:
-      - master
+  - maintainer: "Determined AI <hello@determined.ai>"
+    formats:
+      - deb
+      - rpm
     config_files:
       "packaging/master.yaml": "/etc/determined/master.yaml"
     files:
       "build/share/determined/master/**/*": "/usr/share/determined/master"
       "packaging/determined-master.service": "/lib/systemd/system/determined-master.service"
-
-    file_name_template: "{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    formats:
-      - deb
-      - rpm
     overrides:
       deb:
         scripts:
@@ -56,12 +37,21 @@ nfpms:
           preremove: packaging/debian/master.prerm
           postremove: packaging/debian/master.postrm
 
-checksum:
-  name_template: 'checksums.txt'
-snapshot:
-  name_template: "{{ .Tag }}"
-
 release:
   github:
     owner: determined-ai
     name: determined
+
+dockers:
+  - goos: linux
+    goarch: amd64
+    image_templates:
+      - "determinedai/{{.ProjectName}}:{{.Env.VERSION}}"
+      - "determinedai/{{.ProjectName}}:{{.ShortCommit}}"
+      - "determinedai/{{.ProjectName}}:{{.FullCommit}}"
+      - "determinedai/determined-dev:{{.ProjectName}}-{{.ShortCommit}}"
+      - "determinedai/determined-dev:{{.ProjectName}}-{{.FullCommit}}"
+    skip_push: true
+    extra_files:
+      - "packaging/master.yaml"
+      - "build/share/determined/master"

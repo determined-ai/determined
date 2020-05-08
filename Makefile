@@ -1,7 +1,7 @@
 export VERSION := $(shell cat VERSION)
 
 .PHONY: all
-all: get-deps build-docker
+all: get-deps package
 
 .PHONY: get-deps
 get-deps: python-get-deps go-get-deps
@@ -20,19 +20,12 @@ python-get-deps:
 .PHONY: package
 package:
 	$(MAKE) -C agent $@
-
-.PHONY: debs
-debs:
 	$(MAKE) -C master $@
 
 .PHONY: build
 build:
 	$(MAKE) -C examples $@
 	$(MAKE) -C master $@
-
-.PHONY: build-docker
-build-docker: package debs
-	$(MAKE) -C master build-docker
 
 .PHONY: clean
 clean:
