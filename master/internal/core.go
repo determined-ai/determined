@@ -73,6 +73,10 @@ func New(version string, logStore *logger.LogBuffer, config *Config) *Master {
 	}
 }
 
+func (m *Master) getConfig(c echo.Context) (interface{}, error) {
+	return m.config.Printable()
+}
+
 func (m *Master) getInfo(c echo.Context) (interface{}, error) {
 	telemetryInfo := aproto.TelemetryInfo{}
 
@@ -537,6 +541,7 @@ func (m *Master) Run() error {
 		m.echo.Static(dirRoute.route, filepath.Join(reactRoot, dirRoute.path))
 	}
 
+	m.echo.GET("/config", api.Route(m.getConfig))
 	m.echo.GET("/info", api.Route(m.getInfo))
 	m.echo.GET("/logs", api.Route(m.getMasterLogs), authFuncs...)
 
