@@ -276,7 +276,7 @@ def local_experiment(args: Namespace) -> None:
     experiment_config = _parse_config_file_or_exit(args.config_file)
 
     try:
-        from determined import experimental
+        from determined import experimental, load
     except ImportError as e:
         print("--local requires that the `determined` package is installed.")
         raise e
@@ -289,10 +289,11 @@ def local_experiment(args: Namespace) -> None:
     # directory to model_def.
     #
     # Reference: https://docs.python.org/3/library/sys.html#sys.path
-    sys.path = [""] + sys.path
-    experimental.test_one_batch(
-        args.model_def.resolve(), trial_class=None, config=experiment_config
-    )
+
+    with experimental._local_execution_manager(args.model_def.resolve()):
+        trial_class = load.load_trial_implementation(experiment_config["entrypoint"])
+        sys.path = [""] + sys.path
+        experimental.test_one_batch(trial_class=trial_class, config=experiment_config)
 
 
 def create(args: Namespace) -> None:
