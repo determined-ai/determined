@@ -53,7 +53,12 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		socket, ok := msg.Accept(ctx, aproto.MasterMessage{}, true)
 		check.Panic(check.True(ok, "failed to accept websocket connection"))
 		a.socket = socket
-		a.address = strings.SplitN(msg.Ctx.Request().RemoteAddr, ":", 2)[0]
+		lastColonIndex := strings.LastIndex(msg.Ctx.Request().RemoteAddr, ":")
+		if lastColonIndex == -1 {
+			a.address = msg.Ctx.Request().RemoteAddr
+		} else {
+			a.address = msg.Ctx.Request().RemoteAddr[0:lastColonIndex]
+		}
 	case aproto.SignalContainer:
 		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &msg}})
 	case scheduler.StartTask:
