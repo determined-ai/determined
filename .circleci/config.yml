@@ -91,7 +91,7 @@ commands:
     description: Build Master and Agent Docker images.
     steps:
       - attach_workspace:
-          at: master/build
+          at: .
       - run: make -C master build-docker
       - run: make -C agent package
 
@@ -446,10 +446,10 @@ jobs:
           executor: determinedai/cimg-base:stable
       - run: make -C master build-docs
       - persist_to_workspace:
-          root: master/build
+          root: .
           paths:
-            - "share/determined/master/webui/docs"
-            - "share/determined/master/wheels"
+            - "master/build/share/determined/master/webui/docs"
+            - "master/build/share/determined/master/wheels"
       - store_artifacts:
           path: "build/share/determined/master/webui/docs"
 
@@ -459,7 +459,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: master/build
+          at: .
       - run: make -C docs/deploy publish
 
   package-and-push-system:
@@ -480,7 +480,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: master/build
+          at: .
 
       - go-get-deps
 
@@ -495,10 +495,10 @@ jobs:
             - run: docker save -o master/build/master.image determinedai/determined-master:${CIRCLE_SHA1}
             - run: docker save -o master/build/agent.image determinedai/determined-agent:${CIRCLE_SHA1}
             - persist_to_workspace:
-                root: master/build
+                root: .
                 paths:
-                  - "dist/*linux_amd64.deb"
-                  - "*.image"
+                  - "master/build/dist/*linux_amd64.deb"
+                  - "master/build/*.image"
       - when:
           condition: <<parameters.development>>
           steps:
@@ -520,7 +520,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: master/build
+          at: .
 
       - go-get-deps
       - run:
@@ -554,7 +554,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: master/build
+          at: .
       - run: docker load --input master/build/master.image
       - run: docker load --input master/build/agent.image
 
@@ -590,9 +590,9 @@ jobs:
       - elm-get-deps
       - run: make -C master build-elm
       - persist_to_workspace:
-          root: master/build
+          root: .
           paths:
-            - "share/determined/master/webui/elm"
+            - "master/build/share/determined/master/webui/elm"
 
   test-unit-elm:
     docker:
@@ -620,9 +620,9 @@ jobs:
       - react-get-deps
       - run: make -C master build-react
       - persist_to_workspace:
-          root: master/build
+          root: .
           paths:
-            - "share/determined/master/webui/react"
+            - "master/build/share/determined/master/webui/react"
 
   test-unit-react:
     docker:
@@ -739,7 +739,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: master/build
+          at: .
       - run: docker load --input master/build/master.image
       - run: docker load --input master/build/agent.image
 
@@ -771,7 +771,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: master/build
+          at: .
       - run: docker load --input master/build/master.image
       - run: docker load --input master/build/agent.image
 
