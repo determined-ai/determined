@@ -136,6 +136,21 @@ commands:
           key: det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
           paths:
             - "webui/react/node_modules"
+
+  install-wheel:
+    parameters:
+      package-name:
+        type: string
+      package-location:
+        type: string
+    steps:
+      - run:
+          name: Install <<parameters.package-name>>
+          working_directory: <<parameters.package-location>>
+          command: |
+            make build
+            pip install --find-links dist <<parameters.package-name>>==<< pipeline.parameters.det-version >>
+            pip install --no-deps --force-reinstall --find-links dist <<parameters.package-name>>==<< pipeline.parameters.det-version >>
   setup-python-venv:
     description: Set up and create Python venv.
     parameters:
@@ -167,62 +182,66 @@ commands:
             echo "export PATH=/tmp/venv/bin:\"${PATH}\"" >> $BASH_ENV
             /tmp/venv/bin/python -m pip install --upgrade pip\<20 wheel setuptools
 
+      - run:
+          name: Write cache key
+          command: |
+            echo <<parameters.executor>> > /tmp/cachefile
+            if [ "<<parameters.determined-common>>" = "true" ]; then
+              cat common/setup.py >> /tmp/cachefile
+            fi
+            if [ "<<parameters.determined>>" = "true" ]; then
+              cat harness/setup.py >> /tmp/cachefile
+            fi
+            if [ "<<parameters.determined-cli>>" = "true" ]; then
+              cat cli/setup.py >> /tmp/cachefile
+            fi
+            if [ "<<parameters.determined-deploy>>" = "true" ]; then
+              cat deploy/setup.py >> /tmp/cachefile
+            fi
+            echo <<parameters.extras-requires>> >> /tmp/cachefile
+            if [ -n <<parameters.extra-requirements-file>> ]; then
+              cat <<parameters.extra-requirements-file>> >> /tmp/cachefile
+            fi
 
-      # Write dependencies to cachefile to help create the cachekey
-      - run: echo <<parameters.executor>> > /tmp/cachefile
-      - when:
-          condition: <<parameters.determined-common>>
-          steps:
-            - run: cat common/setup.py >> /tmp/cachefile
-      - when:
-          condition: <<parameters.determined>>
-          steps:
-            - run: cat harness/setup.py >> /tmp/cachefile
-      - when:
-          condition: <<parameters.determined-cli>>
-          steps:
-            - run: cat cli/setup.py >> /tmp/cachefile
-      - when:
-          condition: <<parameters.determined-deploy>>
-          steps:
-            - run: cat deploy/setup.py >> /tmp/cachefile
-      - run: echo <<parameters.extras-requires>> >> /tmp/cachefile
-
-
-      # Install dependencies
-      - run: |
-          if [ -n <<parameters.extra-requirements-file>> ]; then cat <<parameters.extra-requirements-file>> >> /tmp/cachefile; fi
       - restore_cache:
           keys:
             - det-python-deps-v1dev2-{{ checksum "/tmp/cachefile" }}
       - when:
           condition: <<parameters.determined-common>>
           steps:
-            - run: cd common; /tmp/venv/bin/python setup.py bdist_wheel -d ../build
-            - run: /tmp/venv/bin/python -m pip install --find-links build determined-common==<< pipeline.parameters.det-version >>
-            - run: /tmp/venv/bin/python -m pip install --no-deps --force-reinstall --find-links build determined-common==<< pipeline.parameters.det-version >>
-      - when:
-          condition: <<parameters.determined>>
-          steps:
-            - run: cd harness; /tmp/venv/bin/python setup.py bdist_wheel -d ../build
-            - run: /tmp/venv/bin/python -m pip install --find-links build determined==<< pipeline.parameters.det-version >>
-            - run: /tmp/venv/bin/python -m pip install --no-deps --force-reinstall --find-links build determined==<< pipeline.parameters.det-version >>
+            - install-wheel:
+                package-name: determined-common
+                package-location: ~/project/common
       - when:
           condition: <<parameters.determined-cli>>
           steps:
-            - run: cd cli; /tmp/venv/bin/python setup.py bdist_wheel -d ../build
-            - run: /tmp/venv/bin/python -m pip install --find-links build determined-cli==<< pipeline.parameters.det-version >>
-            - run: /tmp/venv/bin/python -m pip install --no-deps --force-reinstall --find-links build determined-cli==<< pipeline.parameters.det-version >>
+            - install-wheel:
+                package-name: determined-cli
+                package-location: ~/project/cli
+      - when:
+          condition: <<parameters.determined>>
+          steps:
+            - install-wheel:
+                package-name: determined
+                package-location: ~/project/harness
       - when:
           condition: <<parameters.determined-deploy>>
           steps:
-            - run: cd deploy; /tmp/venv/bin/python setup.py bdist_wheel -d ../build
-            - run: /tmp/venv/bin/python -m pip install --find-links build determined-deploy==<< pipeline.parameters.det-version >>
-            - run: /tmp/venv/bin/python -m pip install --no-deps --force-reinstall --find-links build determined-deploy==<< pipeline.parameters.det-version >>
-      - run: |
-          if [ -n "<<parameters.extras-requires>>" ]; then /tmp/venv/bin/python -m pip install <<parameters.extras-requires>>; fi
-      - run: |
-          if [ -n "<<parameters.extra-requirements-file>>" ]; then /tmp/venv/bin/python -m pip install -r <<parameters.extra-requirements-file>>; fi
+            - install-wheel:
+                package-name: determined-deploy
+                package-location: ~/project/deploy
+      - run:
+          name: Install <<parameters.extras-requires>>
+          command: |
+            if [ -n "<<parameters.extras-requires>>" ]; then
+              pip install <<parameters.extras-requires>>
+            fi
+      - run:
+          name: Install <<parameters.extra-requirements-file>>
+          command: |
+            if [ -n "<<parameters.extra-requirements-file>>" ]; then
+              pip install -r <<parameters.extra-requirements-file>>
+            fi
       - save_cache:
           key: det-python-deps-v1dev2-{{ checksum "/tmp/cachefile" }}
           paths:
