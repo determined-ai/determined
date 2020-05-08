@@ -93,14 +93,6 @@ commands:
     steps:
       - run: echo "${DOCKER_PASS}" | docker login --username ${DOCKER_USER} --password-stdin
 
-  build-docker-images:
-    description: Build Master and Agent Docker images.
-    steps:
-      - attach_workspace:
-          at: master/build
-      - run: make -C master build-docker
-      - run: make -C agent package
-
 
   go-get-deps:
     steps:
@@ -491,10 +483,9 @@ jobs:
       - go-get-deps
 
       - run: make -C master build-files
-      - run: make debs
 
       - setup_remote_docker
-      - build-docker-images
+      - run: make package
       - when:
           condition: <<parameters.local>>
           steps:
