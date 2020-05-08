@@ -6,13 +6,14 @@ Data Access for Experiments
 Nearly all experiments require training and validation
 data. In Determined, data access depends on the cluster infrastructure and the data storage.
 
-At the end of this tutorial, the reader should know:
-  #. Data Access Options
-  #. How To Access Your Data
+At the end of this tutorial, the reader should know best practices for:
+
+#. Data Access Options
+#. How To Access Your Data
 
 Overview
 ---------
-Data is an important piece to model development. Each user has different storage options depending on their data characteristics, such as privacy, internal infrastructure, and data size. Determined supports the most common data storage infrastructures to allow integration into the user development environment. This tutorial highlights the three main methods to access data:
+Data plays an important role in model development. Each user has different storage options depending on their data characteristics, such as privacy, internal infrastructure, and data size. Determined supports the most common data storage infrastructures to allow integration into the user development environment. This tutorial highlights three main methods for accessing data:
 
 #. **Data in the cloud (Recommended)**: Data stored in cloud providers, GCP or AWS
 #. **Data on premises**: Data available on the Determined cluster
@@ -30,14 +31,14 @@ A Determined cluster managed by :ref:`Elastic Infrastructure <elastic-infra-inde
 Object Storage Download
 """""""""""""""""""""""""
 
-One method for managing data storage in the cloud is using an object storage solution, such as `Amazon S3 <https://aws.amazon.com/s3/>`_ or `Google Cloud Storage <https://cloud.google.com/storage>`_.
+One method for managing data storage in the cloud is to use an object storage solution, such as `Amazon S3 <https://aws.amazon.com/s3/>`_ or `Google Cloud Storage <https://cloud.google.com/storage>`_.
 
 The agents and trial containers must have the proper authentication and authorization for accessing the object storage. A :ref:`custom environment<custom-env>` must be configured to ensure that the trial container image is properly configured with credentials. When using :ref:`Dynamic Agents on GCP<dynamic-agents-gcp>`, a system administrator of will need to configure a valid :ref:`service_account<cluster-configuration>` with read credentials. When using :ref:`Dynamic Agents on AWS<dynamic-agents-aws>`, the system administrator will need to configure an :ref:`iam_instance_profile_arn<cluster-configuration>` with read credentials.
 
 Once security access is configured, we can use a open-source libraries such as `boto3 <https://boto3.amazonaws.com/>`_ or `gcsfs
 <https://gcsfs.readthedocs.io/en/latest/>`_ to write our data loaders to stream directly from object storage in source code.
 
-The code below uses ``boto3`` to load data from an S3 bucket. The bucket name is accessed from the configuration file. The ``download_directory`` states where to store the data for this trial. The ``self.context.get_rank()`` helps prevent processes (one per gpu) from overriding data from each other. Once the data path has been created, ``s3.download_file(s3_bucket, data_file, filepath)`` fetches the file from S3 based on the bucket and stores in the defined file path. Now, the data can be accessed in the defined ``download_directory``. All functions that download data should be called in the trial's ``__init__`` function.
+The code below uses ``boto3`` to load data from an S3 bucket. The bucket name is accessed from the configuration file. The ``download_directory`` states where to store the data for this trial. The ``self.context.get_rank()`` helps prevent processes (one per GPU) from overriding data from each other. Once the data path has been created, ``s3.download_file(s3_bucket, data_file, filepath)`` fetches the file from S3 based on the bucket and stores in the defined file path. Now, the data can be accessed in the defined ``download_directory``. All functions that download data should be called in the trial's ``__init__`` function.
 
 .. code:: python
 

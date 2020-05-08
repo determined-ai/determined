@@ -3,28 +3,34 @@
 Distributed and Parallel Training
 =================================
 
-Determined provides three main methods to accelerate your model training by
-taking advantage of multiple machines and multiple GPUs:
+Determined provides three main methods to take advantage of multiple GPUs:
 
 1. **Parallelism across experiments.** Schedule multiple experiments at once:
    more than one experiment can
-   proceed in parallel if there are enough machines and GPUS available.
+   proceed in parallel if there are enough GPUs available.
 2. **Parallelism within an experiment.** Schedule multiple trials of an experiment at once: a
-   :ref:`hyperparameter search <topic-guides_hp-tuning-det>` may run more than
+   :ref:`hyperparameter search <topic-guides_hp-tuning-det>` may train more than
    one trial at once, each of which will use its own GPUs.
-3. **Parallelism within a trial.** Use multiple machines to speed up the training of a trial using
-   data parallelism: Determined can coordinate across multiple GPUs on a single machine (parallel training)
+3. **Parallelism within a trial.** Use multiple GPUs to speed up the
+   training of a single trial. Determined can coordinate across multiple GPUs on a single machine (parallel training)
    or across multiple GPUs on multiple machines (distributed training) to improve the
    performance of training a single trial.
 
-This how-to will focus on the third approach, demonstrating how to perform distributed or parallel
+This guide will focus on the third approach, demonstrating how to perform distributed or parallel
 training with Determined to speed up the training of a single trial.
 
-In the :ref:`experiment-configuration`, the ``resources.slots_per_trial`` option
-controls multi-GPU behavior. The default value is 1, which means that a single
-GPU will be used to train a trial.  The ``slots_per_trial`` field indicates the
-number of GPUs to use to train a single trial. These GPUs may be on a single
-agent machine or across multiple machines.
+Configuration
+-------------
+
+In the :ref:`experiment-configuration`, the ``resources.slots_per_trial`` field
+controls the number of GPUs that will be used to train a single trial. The
+default value is 1, which disables parallel and distributed training. Setting
+``slots_per_trial`` to a larger value enables multi-GPU training
+automatically. Note that these GPUs might be on a single machine or across
+multiple machines; the experiment configuration simply defines how many GPUs
+should be used for training, and the Determined job scheduler decides whether to
+schedule the task on a single agent or multiple agents, depending on the
+machines in the cluster and the other active workloads.
 
 .. note::
 
@@ -42,9 +48,12 @@ Example configuration with distributed or parallel training:
    resources:
      slots_per_trial: N
 
+Scheduling Behavior
+-------------------
+
 To use distributed or parallel training, ``slots_per_trial`` must be set to a multiple
-of the number of GPUs per machine. For example, if you have a cluster of machines that each has
-8 GPUs, you should set ``slots_per_trial`` to a multiple of 8, such as 8, 16, or 24.
+of the number of GPUs per machine. For example, if you have a cluster of machines with
+8 GPUs each, you should set ``slots_per_trial`` to a multiple of 8, such as 8, 16, or 24.
 This ensures that the full network and interconnect bandwidth are available to
 multi-GPU workloads and results in better performance.
 
@@ -68,3 +77,4 @@ Next Steps
 ----------
 
 - :ref:`optimizing-multi-gpu-training`
+- :ref:`effective-distributed-training`

@@ -22,17 +22,17 @@ How Distributed Training in Determined Works
 --------------------------------------------
 
 Distributed training in Determined utilizes data-parallelism. Data-parallelism for deep-learning
-consists of a set workers, where each worker is assigned to a unique compute accelerator such as a GPU or a TPU.
+consists of a set of workers, where each worker is assigned to a unique compute accelerator such as a GPU or a TPU.
 Each workers maintains a copy of the model parameters (weights that are being trained),
 which is synchronized across all the workers at the start of training.
 
 After initialization is completed, distributed training in Determined follows a loop where:
 
-#. Every worker performs a forward and backwards pass on a unique mini-batch of data.
-#. As the result of the backwards pass, every worker generates a unique set of updates to the solution state based on the data it processed.
+#. Every worker performs a forward and backward pass on a unique mini-batch of data.
+#. As the result of the backward pass, every worker generates a set of updates to the model parameters based on the data it processed.
 #. The workers communicate their updates to each other, so that all the workers see all the updates made during that batch.
 #. Every worker averages the updates by the number of workers.
-#. Every worker applies the updates to its copy of the solutions state, resulting in all the workers having identical solution states.
+#. Every worker applies the updates to its copy of the model parameters, resulting in all the workers having identical solution states.
 #. Return to step 1.
 
 
@@ -69,11 +69,11 @@ setting it to be ``largest batch size that fits into a single GPU`` *  ``number 
 Training with a large ``global_batch_size`` can have adverse effects on the convergence (accuracy) of the model.
 At Determined AI we have found several effective techniques for training with large batch sizes:
 
-* Starting with the ``original learning rate`` used for a single gpu and gradually increasing it to ``number of slots`` * ``original learning rate`` throughout the first several epochs. For more details see: `Large batch training with SGD <https://arxiv.org/pdf/1706.02677.pdf>`_.
+* Starting with the ``original learning rate`` used for a single GPU and gradually increasing it to ``number of slots`` * ``original learning rate`` throughout the first several epochs. For more details see: `Large batch training with SGD <https://arxiv.org/pdf/1706.02677.pdf>`_.
 * Using custom optimizers designed for large batch training including: `RAdam <https://github.com/LiyuanLucasLiu/RAdam>`_, `LARS <https://arxiv.org/pdf/1708.03888.pdf>`_, and `LAMB <https://arxiv.org/pdf/1904.00962.pdf>`_. We have found RAdam especially effective.
 
 These techniques often require hyperparameter modifications. To automate this process,
-we encourage user to utilize the :ref:`hyperparameter-tuning` capabilities in Determined.
+we encourage users to utilize the :ref:`hyperparameter-tuning` capabilities in Determined.
 
 
 Model Characteristics that Affect Performance of Distributed Training
@@ -92,13 +92,14 @@ when designing models.
 Debugging Performance Bottlenecks in Distributed Training
 ---------------------------------------------------------
 
-When scaling up distributed training, it's fairly common to see non-linear speed up from when scaling from one machine
+When scaling up distributed training, it's fairly common to see non-linear speed up when scaling from one machine
 to two machines as intra-machine communication (e.g., NVLink) is often significantly faster than inter-machine
 communication. Scaling up from two machines to larger counts often provides close to linear speed-up, but it does
 vary depending on the model characteristics.
 If observing unexpected scaling performance, assuming you have scaled your ``global_batch_size`` proportionally
-with ``slots_per_trial``, it's possible that you distributed training is being bottlenecked by communication
-or by I/O.
+with ``slots_per_trial``, it's possible that training performance is
+being bottlenecked by network communication
+or disk I/O.
 
 
 To check if your training is bottlenecked by communication we suggest setting
