@@ -24,7 +24,13 @@ package:
 
 .PHONY: build
 build:
+	$(MAKE) -C common $@
+	$(MAKE) -C harness $@
+	$(MAKE) -C cli $@
+	$(MAKE) -C deploy $@
 	$(MAKE) -C examples $@
+	$(MAKE) -C docs $@
+	$(MAKE) -C webui $@
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
 

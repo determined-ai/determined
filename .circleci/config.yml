@@ -442,14 +442,18 @@ jobs:
           extras-requires: "tensorflow==1.14 torch==1.4"
           extra-requirements-file: "docs/requirements.txt"
           executor: determinedai/cimg-base:stable
-      - run: make -C master build-docs
+      - run: make -C examples build
+      - run: make -C docs build
       - persist_to_workspace:
-          root: master/build
+          root: .
           paths:
-            - "share/determined/master/webui/docs"
-            - "share/determined/master/wheels"
+            - examples/build
+            - cli/dist
+            - common/dist
+            - harness/dist
+            - docs/site/html
       - store_artifacts:
-          path: "build/share/determined/master/webui/docs"
+          path: docs/site/html
 
   publish-docs:
     docker:
@@ -457,7 +461,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: master/build
+          at: .
       - run: make -C docs/deploy publish
 
   package-and-push-system:
@@ -478,24 +482,22 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: master/build
+          at: .
 
       - go-get-deps
-
-      - run: make -C master build-files
-
       - setup_remote_docker
       - run: make package
+
       - when:
           condition: <<parameters.local>>
           steps:
-            - run: docker save -o master/build/master.image determinedai/determined-master:${CIRCLE_SHA1}
-            - run: docker save -o master/build/agent.image determinedai/determined-agent:${CIRCLE_SHA1}
+            - run: mkdir -p build/
+            - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
+            - run: docker save -o build/agent.image determinedai/determined-agent:${CIRCLE_SHA1}
             - persist_to_workspace:
-                root: master/build
+                root: .
                 paths:
-                  - "dist/*linux_amd64.deb"
-                  - "*.image"
+                  - "build/*.image"
       - when:
           condition: <<parameters.development>>
           steps:
@@ -517,7 +519,7 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: master/build
+          at: .
 
       - go-get-deps
       - run:
@@ -551,9 +553,9 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: master/build
-      - run: docker load --input master/build/master.image
-      - run: docker load --input master/build/agent.image
+          at: .
+      - run: docker load --input build/master.image
+      - run: docker load --input build/agent.image
 
       - install-webui-test-deps
       - run: pyenv global 3.6.10
@@ -585,11 +587,11 @@ jobs:
     steps:
       - checkout
       - elm-get-deps
-      - run: make -C master build-elm
+      - run: make -C webui/elm build
       - persist_to_workspace:
-          root: master/build
+          root: .
           paths:
-            - "share/determined/master/webui/elm"
+            - webui/elm/public
 
   test-unit-elm:
     docker:
@@ -615,11 +617,11 @@ jobs:
     steps:
       - checkout
       - react-get-deps
-      - run: make -C master build-react
+      - run: make -C webui/react build
       - persist_to_workspace:
-          root: master/build
+          root: .
           paths:
-            - "share/determined/master/webui/react"
+            - webui/react/build
 
   test-unit-react:
     docker:
@@ -748,9 +750,9 @@ jobs:
     steps:
       - checkout
       - attach_workspace:
-          at: master/build
-      - run: docker load --input master/build/master.image
-      - run: docker load --input master/build/agent.image
+          at: .
+      - run: docker load --input build/master.image
+      - run: docker load --input build/agent.image
 
       - run: pyenv global 3.6.10
       - setup-python-venv:
