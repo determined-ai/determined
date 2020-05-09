@@ -1,3 +1,2 @@
 master_host: localhost
 master_port: 8080
-container_master_host: host.docker.internal
