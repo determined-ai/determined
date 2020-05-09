@@ -13,6 +13,13 @@ get-deps:
 	go install golang.org/x/tools/cmd/goimports
 	go install github.com/goreleaser/goreleaser
 
+.PHONY: build
+build:
+	go build \
+		-ldflags "-X github.com/determined-ai/determined/agent/version.Version=$(VERSION)" \
+		-o build/determined-agent \
+		./cmd/determined-agent
+
 .PHONY: install
 install:
 	go install -ldflags "-X github.com/determined-ai/determined/agent/version.Version=$(VERSION)" ./cmd/determined-agent
