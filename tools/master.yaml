@@ -17,5 +17,4 @@ hasura:
   address: localhost:8081
   secret: hasura
 
-# TODO: Set correct root paths for each determined sub-project
-root: ../master
+root: build
