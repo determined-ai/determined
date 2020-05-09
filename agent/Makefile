@@ -4,7 +4,7 @@ export GO111MODULE := on
 .PHONY: clean
 clean:
 	rm -rf dist
-	rm -rf coverage.out
+	rm -rf build
 
 .PHONY: get-deps
 get-deps:
