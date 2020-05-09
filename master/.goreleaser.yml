@@ -1,5 +1,9 @@
 project_name: determined-master
 
+before:
+  hooks:
+    - make pre-package
+
 snapshot:
   name_template: "{{ .Tag }}"
 
@@ -28,7 +32,8 @@ nfpms:
     config_files:
       "packaging/master.yaml": "/etc/determined/master.yaml"
     files:
-      "build/share/determined/master/**/*": "/usr/share/determined/master"
+      "build/**/*": "/usr/share/determined/master"
+      "static/**/*": "/usr/share/determined/master/static"
       "packaging/determined-master.service": "/lib/systemd/system/determined-master.service"
     overrides:
       deb:
@@ -54,4 +59,5 @@ dockers:
     skip_push: true
     extra_files:
       - "packaging/master.yaml"
-      - "build/share/determined/master"
+      - "build"
+      - "static"

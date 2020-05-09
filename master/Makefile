@@ -1,11 +1,3 @@
-.PHONY: all \
-	clean get-deps \
-	build build-docs build-docker build-elm build-files build-python-packages build-react build-static build-webui \
-	install \
-	test \
-	check fmt \
-	publish publish-dev
-
 export VERSION := $(shell cat ../VERSION)
 export GO111MODULE := on
 
@@ -13,102 +5,64 @@ export GO111MODULE := on
 export DET_SEGMENT_MASTER_KEY ?=
 export DET_SEGMENT_WEBUI_KEY ?=
 
-all: clean get-deps build
+.PHONY: clean
+clean:
+	rm -rf dist
+	rm -rf build
 
-######################
-### Validate Phase ###
-######################
-
-clean: clean-python-packages
-	rm -rf coverage.out build/bin/determined-master build/share/determined/master/
-
-clean-python-packages:
-	$(MAKE) -C ../common clean
-	$(MAKE) -C ../cli clean
-	$(MAKE) -C ../harness clean
-
+.PHONY: get-deps
 get-deps:
 	go mod download
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint
 	go install golang.org/x/tools/cmd/goimports
 	go install github.com/goreleaser/goreleaser
 
-###################
-### Build Phase ###
-###################
-
-build: build-docs build-elm build-files build-python-packages build-react
+.PHONY: build
+build:
 	go build \
 		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION)" \
 		-o build/determined-master \
 		./cmd/determined-master
 
-build-files:
-	mkdir -p build/share/determined/master
-	rm -rf build/share/determined/master/static
-	cp -r static build/share/determined/master
-
-# This depends on `build-python-packages` for the sake of parallel builds: the
-# `build-python-packages` target depends on the `clean-python-packages` target, which removes
-# .egg-info/ directories that Sphinx will need to import Determined things. Running both at the same time
-# can cause Sphinx to fail.
-build-docs: build-python-packages build-examples
-	mkdir -p build/share/determined/master/webui/docs
-	$(MAKE) -C ../docs build
-	cp -r ../docs/site/html/* build/share/determined/master/webui/docs
-
-build-examples:
-	$(MAKE) -C ../examples build
-
-build-elm:
-	mkdir -p build/share/determined/master/webui/elm
-	$(MAKE) -C ../webui/elm build
-	cp -r ../webui/elm/public build/share/determined/master/webui/elm
-
-build-python-packages: clean-python-packages
-	mkdir -p build/share/determined/master/wheels/
-	$(MAKE) -C ../common build
-	cp ../common/dist/*.whl build/share/determined/master/wheels/
-	$(MAKE) -C ../cli build
-	cp ../cli/dist/*.whl build/share/determined/master/wheels/
-	$(MAKE) -C ../harness build
-	cp ../harness/dist/*.whl build/share/determined/master/wheels/
-
-build-react:
-	mkdir -p build/share/determined/master/webui/react
-	$(MAKE) -C ../webui/react build
-	cp -r ../webui/react/build/* build/share/determined/master/webui/react
-
+.PHONY: install
 install:
 	go install -ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION)" ./cmd/determined-master
 
-####################
-### Verify Phase ###
-####################
-
+.PHONY: check
 check:
 	golangci-lint run
 
+.PHONY: fmt
 fmt:
 	goimports -l -local github.com/determined-ai -w .
 
-##################
-### Test Phase ###
-##################
-
+.PHONY: test
 test:
 	go test -v -short -coverprofile=coverage.out -covermode count -cover ./...
 
-#####################
-### Publish Phase ###
-#####################
+.PHONY: pre-package
+pre-package:
+	rm -rf build
+	mkdir -p build/webui/docs
+	mkdir -p build/webui/elm
+	mkdir -p build/webui/react
+	mkdir -p build/wheels/
+	cp -r ../docs/site/html/* build/webui/docs
+	cp -r ../webui/elm/public build/webui/elm
+	cp -r ../webui/react/build/* build/webui/react
+	cp ../common/dist/*.whl build/wheels/
+	cp ../cli/dist/*.whl build/wheels/
+	cp ../harness/dist/*.whl build/wheels/
 
+.PHONY: package  
 package:
 	GORELEASER_CURRENT_TAG=$(VERSION) goreleaser --snapshot --rm-dist
 
+.PHONY: publish
 publish:
 	docker push determinedai/determined-master:$(VERSION)
 
+.PHONY: publish-dev
 publish-dev:
 	docker push determinedai/determined-master:$(shell git rev-parse HEAD)
 	docker push determinedai/determined-dev:determined-master-$(shell git rev-parse HEAD)

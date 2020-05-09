@@ -6,7 +6,8 @@ RUN apt-get update -yq \
     && rm -rf /var/lib/apt/lists/*
 
 COPY packaging/master.yaml /etc/determined/master.yaml
-COPY build/share/determined/master /usr/share/determined/master
+COPY build /usr/share/determined/master
+COPY static /usr/share/determined/master/static
 COPY determined-master /usr/bin/determined-master
 
 EXPOSE 8080
