@@ -18,7 +18,7 @@ Analyzing Experiments
 To launch TensorBoard to analyze a single Determined experiment, use
 ``det tensorboard start <experiment-id>``:
 
-.. code:: text
+.. code::
 
    $ det tensorboard start 7
    Scheduling TensorBoard (rarely-cute-man) (id: aab49ba5-3357-4145-861c-7e6ff2d702c5)...
@@ -34,7 +34,7 @@ will open the TensorBoard web interface in a local browser window.
 You view information about scheduled and running TensorBoard instances by
 executing the following command:
 
-.. code:: text
+.. code::
 
    $ det tensorboard list
     Id                                   | Owner      | Description                         | State      | Experiment Id   | Trial Ids   | Exit Status
@@ -145,7 +145,7 @@ Once a new TensorBoard instance has been scheduled onto the cluster, it
 will remain running until you explicitly terminate it. This can be done
 with ``det tensorboard kill <tensorboard-id>``:
 
-.. code:: text
+.. code::
 
    $ det tensorboard kill aab49ba5-3357-4145-861c-7e6ff2d702c5
 
