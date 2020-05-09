@@ -38,6 +38,10 @@ get-deps:
 ###################
 
 build: build-docs build-elm build-files build-python-packages build-react
+	go build \
+		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION)" \
+		-o build/determined-master \
+		./cmd/determined-master
 
 build-files:
 	mkdir -p build/share/determined/master
