@@ -34,7 +34,7 @@ fmt:
 
 .PHONY: test
 test:
-	go test -v -short -coverprofile=coverage.out -covermode count -cover ./...
+	go test ./...
 
 .PHONY: package
 package:
