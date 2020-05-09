@@ -271,7 +271,9 @@ commands:
       - run:
           name: Split tests
           working_directory: ~/project/e2e_tests
-          command: circleci tests glob "tests/**/test*.py" | circleci tests split --split-by=timings > /tmp/tests-to-run
+          command: |
+            pytest -m <<parameters.mark>> --dump_test_ids=/tmp/tests || true
+            cat /tmp/tests | circleci tests split --split-by=timings --timings-type=classname > /tmp/tests-to-run
 
       - run:
           name: Run e2e tests

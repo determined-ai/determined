@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 from pathlib import Path
 from typing import Any, Dict, Optional, cast
@@ -57,6 +58,16 @@ def pytest_addoption(parser: Parser) -> None:
         help="Docker compose project name",
     )
     parser.addoption("--follow-local-logs", action="store_true", help="Follow local docker logs")
+    parser.addoption("--dump_test_ids", action="store", default=None, help="Dump test ids to file")
+
+
+def pytest_collection_finish(session):  # type: ignore
+    if session.config.option.dump_test_ids is not None:
+        with open(session.config.option.dump_test_ids, "w") as f:
+            for item in session.items:
+                path = os.path.relpath(item.fspath)
+                print(f"{path}::{item.name}", file=f)
+            pytest.exit("Done!")
 
 
 @pytest.fixture(scope="session", autouse=True)  # type: ignore
