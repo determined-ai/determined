@@ -20,10 +20,6 @@ build:
 		-o build/determined-agent \
 		./cmd/determined-agent
 
-.PHONY: install
-install:
-	go install -ldflags "-X github.com/determined-ai/determined/agent/version.Version=$(VERSION)" ./cmd/determined-agent
-
 .PHONY: check
 check:
 	golangci-lint run
