@@ -656,6 +656,22 @@ jobs:
       - run: make -C master check
       - run: make -C agent check
 
+  build-go:
+    docker:
+      - image: cimg/go:1.13
+        environment:
+          GO111MODULE: "on"
+    steps:
+      - checkout
+      - go-get-deps
+      - run: make -C master build
+      - run: make -C agent build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - "master/build"
+            - "agent/build"
+
   test-unit-go:
     docker:
       - image: cimg/go:1.13
@@ -751,8 +767,6 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run: docker load --input build/master.image
-      - run: docker load --input build/agent.image
 
       - run: pyenv global 3.6.10
       - setup-python-venv:
@@ -763,18 +777,25 @@ jobs:
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: ubuntu-1604:202004-01
 
+      - run:
+          name: Start database
+          command: make -C tools start-db
+      - run:
+          name: Start cluster
+          command: make -C tools run
+          background: true
+
       - pull-task-images:
           tf1: <<parameters.tf1>>
           tf2: <<parameters.tf2>>
 
-      - setup-local-cluster:
-          det-version: ${CIRCLE_SHA1}
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: localhost
 
       - store_test_results:
           path: /tmp/test-results/
+
 
   deploy:
     docker:
@@ -922,6 +943,7 @@ workflows:
       - build-elm
       - build-react
       - build-docs
+      - build-go
       - package-and-push-system:
           name: local-package-and-push-system
           requires:
@@ -949,7 +971,7 @@ workflows:
       - test-e2e:
           name: test-e2e-tf2
           requires:
-            - local-package-and-push-system
+            - build-go
           matrix:
             parameters:
               parallelism: [1]
@@ -959,7 +981,7 @@ workflows:
       - test-e2e:
           name: test-e2e-tf1
           requires:
-            - local-package-and-push-system
+            - build-go
           matrix:
             parameters:
               parallelism: [1]
@@ -969,7 +991,7 @@ workflows:
       - test-e2e:
           name: test-e2e-cpu
           requires:
-            - local-package-and-push-system
+            - build-go
           matrix:
             parameters:
               parallelism: [4]

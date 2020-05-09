@@ -1,7 +1,6 @@
 .PHONY: start-db
 start-db: stop-db
 	docker-compose up -d
-	docker-compose logs -f
 
 .PHONY: stop-db
 stop-db:
@@ -21,4 +20,4 @@ run:
 	@ln -s $(abspath ../common/dist/*.whl) build/wheels/
 	@ln -s $(abspath ../cli/dist/*.whl) build/wheels/
 	@ln -s $(abspath ../harness/dist/*.whl) build/wheels/
-	@./run-server.sh
+	@python3 run-server.py
