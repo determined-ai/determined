@@ -77,7 +77,7 @@
     "eslint-plugin-react-hooks": "^3.0.0",
     "less": "^3.11.1",
     "less-loader": "^5.0.0",
-    "node-sass": "^4.13.1",
+    "node-sass": "^4.14.1",
     "npm-force-resolutions": "^0.0.3",
     "react-app-rewired": "^2.1.5",
     "react-docgen-typescript-loader": "^3.7.1",
