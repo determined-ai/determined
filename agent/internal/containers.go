@@ -56,13 +56,23 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 		}
 		c.docker = d
 
+		masterHost := c.Options.ContainerMasterHost
+		if masterHost == "" {
+			masterHost = c.Options.MasterHost
+		}
+
+		masterPort := c.Options.ContainerMasterPort
+		if masterPort == 0 {
+			masterPort = c.Options.MasterPort
+		}
+
 		c.GlobalEnvVars = []string{
 			fmt.Sprintf("DET_CLUSTER_ID=%s", c.MasterInfo.ClusterID),
 			fmt.Sprintf("DET_MASTER_ID=%s", c.MasterInfo.MasterID),
-			fmt.Sprintf("DET_MASTER=%s:%d", c.Options.MasterHost, c.Options.MasterPort),
-			fmt.Sprintf("DET_MASTER_HOST=%s", c.Options.MasterHost),
-			fmt.Sprintf("DET_MASTER_ADDR=%s", c.Options.MasterHost),
-			fmt.Sprintf("DET_MASTER_PORT=%d", c.Options.MasterPort),
+			fmt.Sprintf("DET_MASTER=%s:%d", masterHost, masterPort),
+			fmt.Sprintf("DET_MASTER_HOST=%s", masterHost),
+			fmt.Sprintf("DET_MASTER_ADDR=%s", masterHost),
+			fmt.Sprintf("DET_MASTER_PORT=%d", masterPort),
 			fmt.Sprintf("DET_AGENT_ID=%s", c.Options.AgentID),
 		}
 		c.Labels = map[string]string{

@@ -15,6 +15,9 @@ type Options struct {
 	AgentID         string `json:"agent_id"`
 	ArtificialSlots int    `json:"artificial_slots"`
 
+	ContainerMasterHost string `json:"container_master_host"`
+	ContainerMasterPort int    `json:"container_master_port"`
+
 	Label string `json:"label"`
 
 	APIEnabled bool   `json:"api_enabled"`
