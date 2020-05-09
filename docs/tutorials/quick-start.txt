@@ -13,7 +13,7 @@ Prerequisites
 - The Determined CLI should be installed on your local machine. For installation instructions, see :ref:`here <install-cli>`. After installing the CLI, configure it to connect to your Determined cluster by setting the ``DET_MASTER`` environment variable to the hostname or IP address where Determined is running.
 - For Determined clusters installed using ``det-deploy local``: when you run your first experiment, Determined needs to download Docker images with the dependencies needed to run deep learning workloads. This initial download can take some time, depending on the speed of your Internet connection (these images are then cached for future experiments). We suggest running the following commands to help speed up this process:
 
-.. code:: text
+.. code::
 
     # For CPU computations
     docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-e6662e6
@@ -91,7 +91,7 @@ This command tells Determined to create a new experiment using the ``const.yaml`
 
 Once the experiment has been submitted, you should see the following output:
 
-.. code:: text
+.. code::
 
     Preparing files (../mnist_pytorch) to send to master... 2.5KB and 4 files
     Created experiment 1

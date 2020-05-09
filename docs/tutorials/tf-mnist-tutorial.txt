@@ -157,7 +157,7 @@ Here, the first argument (``const.yaml``) is the name of the experiment configur
 
 Once the experiment is started, you will see a notification:
 
-.. code:: text
+.. code::
 
     Preparing files (../fashion_mnist_tf_keras) to send to master... 2.5KB and 4 files
     Created experiment xxx

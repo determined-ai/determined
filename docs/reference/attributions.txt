@@ -191,7 +191,7 @@ Determined Agent
 @dillonkearns/elm-graphql
 -------------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2017, Dillon Kearns
 
@@ -229,7 +229,7 @@ Determined Agent
 @storybook
 ----------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -258,7 +258,7 @@ Determined Agent
 ace
 ---
 
-.. code:: text
+.. code::
 
    Copyright (c) 2010, Ajax.org B.V.
    All rights reserved.
@@ -293,7 +293,7 @@ ace
 antd
 ----
 
-.. code:: text
+.. code::
 
    MIT LICENSE
 
@@ -323,7 +323,7 @@ antd
 axios
 -----
 
-.. code:: text
+.. code::
 
    Copyright (c) 2014-present Matt Zabriskie
 
@@ -350,7 +350,7 @@ axios
 elm
 ---
 
-.. code:: text
+.. code::
 
    Copyright 2012-present Evan Czaplicki
 
@@ -385,7 +385,7 @@ elm
 fp-ts
 -----
 
-.. code:: text
+.. code::
 
    MIT License
 
@@ -414,7 +414,7 @@ fp-ts
 io-ts
 -----
 
-.. code:: text
+.. code::
 
    MIT License
 
@@ -443,7 +443,7 @@ io-ts
 react
 -----
 
-.. code:: text
+.. code::
 
    MIT License
 
@@ -472,7 +472,7 @@ react
 tailwindcss
 -----------
 
-.. code:: text
+.. code::
 
    MIT License
 
@@ -502,7 +502,7 @@ tailwindcss
 cloud.google.com/go
 -------------------
 
-.. code:: text
+.. code::
 
                                  Apache License
                            Version 2.0, January 2004
@@ -711,7 +711,7 @@ cloud.google.com/go
 github.com/aws/aws-sdk-go
 -------------------------
 
-.. code:: text
+.. code::
 
                                  Apache License
                            Version 2.0, January 2004
@@ -920,7 +920,7 @@ github.com/aws/aws-sdk-go
 github.com/Azure/go-ansiterm
 ----------------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -949,7 +949,7 @@ github.com/Azure/go-ansiterm
 github.com/containerd/containerd
 --------------------------------
 
-.. code:: text
+.. code::
 
                                  Apache License
                            Version 2.0, January 2004
@@ -1147,7 +1147,7 @@ github.com/containerd/containerd
 github.com/docker/distribution
 ------------------------------
 
-.. code:: text
+.. code::
 
                                  Apache License
                            Version 2.0, January 2004
@@ -1356,7 +1356,7 @@ github.com/docker/distribution
 github.com/docker/docker
 ------------------------
 
-.. code:: text
+.. code::
 
                                  Apache License
                            Version 2.0, January 2004
@@ -1554,7 +1554,7 @@ github.com/docker/docker
 github.com/docker/go-connections
 --------------------------------
 
-.. code:: text
+.. code::
 
                                  Apache License
                            Version 2.0, January 2004
@@ -1752,7 +1752,7 @@ github.com/docker/go-connections
 github.com/docker/go-units
 --------------------------
 
-.. code:: text
+.. code::
 
                                  Apache License
                            Version 2.0, January 2004
@@ -1950,7 +1950,7 @@ github.com/docker/go-units
 github.com/dustinkirkland/golang-petname
 ----------------------------------------
 
-.. code:: text
+.. code::
 
                                  Apache License
                            Version 2.0, January 2004
@@ -2159,7 +2159,7 @@ github.com/dustinkirkland/golang-petname
 github.com/emirpasic/gods
 -------------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2015, Emir Pasic
    All rights reserved.
@@ -2208,7 +2208,7 @@ github.com/emirpasic/gods
 github.com/ghodss/yaml
 ----------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -2266,7 +2266,7 @@ github.com/ghodss/yaml
 github.com/go-ole/go-ole
 ------------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -2295,7 +2295,7 @@ github.com/go-ole/go-ole
 github.com/go-sql-driver/mysql
 ------------------------------
 
-.. code:: text
+.. code::
 
    Mozilla Public License Version 2.0
    ==================================
@@ -2676,7 +2676,7 @@ github.com/go-sql-driver/mysql
 github.com/gobuffalo/packr
 --------------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
    Copyright (c) 2016 Mark Bates
@@ -2692,7 +2692,7 @@ github.com/gobuffalo/packr
 github.com/golang-migrate/migrate
 ---------------------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -2728,7 +2728,7 @@ github.com/golang-migrate/migrate
 github.com/golang/protobuf
 --------------------------
 
-.. code:: text
+.. code::
 
    Copyright 2010 The Go Authors.  All rights reserved.
 
@@ -2763,7 +2763,7 @@ github.com/golang/protobuf
 github.com/google/go-cmp
 ------------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2017 The Go Authors. All rights reserved.
 
@@ -2798,7 +2798,7 @@ github.com/google/go-cmp
 github.com/google/uuid
 ----------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2009,2014 Google Inc. All rights reserved.
 
@@ -2833,7 +2833,7 @@ github.com/google/uuid
 github.com/gorilla/websocket
 ----------------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2013 The Gorilla WebSocket Authors. All rights reserved.
 
@@ -2863,7 +2863,7 @@ github.com/gorilla/websocket
 github.com/hpcloud/tail
 -----------------------
 
-.. code:: text
+.. code::
 
    # The MIT License (MIT)
 
@@ -2892,7 +2892,7 @@ github.com/hpcloud/tail
 github.com/jmoiron/sqlx
 -----------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2013, Jason Moiron
 
@@ -2922,7 +2922,7 @@ github.com/jmoiron/sqlx
 github.com/labstack/echo
 ------------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -2951,7 +2951,7 @@ github.com/labstack/echo
 github.com/labstack/gommon
 --------------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -2980,7 +2980,7 @@ github.com/labstack/gommon
 github.com/lib/pq
 -----------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2011-2013, 'pq' Contributors
    Portions Copyright (C) 2011 Blake Mizerany
@@ -2996,7 +2996,7 @@ github.com/lib/pq
 github.com/mattn/go-colorable
 -----------------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -3025,7 +3025,7 @@ github.com/mattn/go-colorable
 github.com/mattn/go-isatty
 --------------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) Yasuhiro MATSUMOTO <mattn.jp@gmail.com>
 
@@ -3042,7 +3042,7 @@ github.com/mattn/go-isatty
 github.com/mattn/go-sqlite3
 ---------------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -3071,7 +3071,7 @@ github.com/mattn/go-sqlite3
 github.com/Microsoft/go-winio
 -----------------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -3100,7 +3100,7 @@ github.com/Microsoft/go-winio
 github.com/morikuni/aec
 -----------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -3129,7 +3129,7 @@ github.com/morikuni/aec
 github.com/Nvveen/Gotty
 -----------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2012, Neal van Veen (nealvanveen@gmail.com)
    All rights reserved.
@@ -3163,7 +3163,7 @@ github.com/Nvveen/Gotty
 github.com/o1egl/paseto
 -----------------------
 
-.. code:: text
+.. code::
 
    MIT License
 
@@ -3192,7 +3192,7 @@ github.com/o1egl/paseto
 github.com/onsi/ginkgo
 ----------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2013-2014 Onsi Fakhouri
 
@@ -3220,7 +3220,7 @@ github.com/onsi/ginkgo
 github.com/onsi/gomega
 ----------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2013-2014 Onsi Fakhouri
 
@@ -3248,7 +3248,7 @@ github.com/onsi/gomega
 github.com/opencontainers/go-digest
 -----------------------------------
 
-.. code:: text
+.. code::
 
                                  Apache License
                            Version 2.0, January 2004
@@ -3447,7 +3447,7 @@ github.com/opencontainers/go-digest
 github.com/opencontainers/image-spec
 ------------------------------------
 
-.. code:: text
+.. code::
 
                                  Apache License
                            Version 2.0, January 2004
@@ -3645,7 +3645,7 @@ github.com/opencontainers/image-spec
 github.com/pkg/errors
 ---------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2015, Dave Cheney <dave@cheney.net>
    All rights reserved.
@@ -3676,7 +3676,7 @@ github.com/pkg/errors
 github.com/segmentio/backo-go
 -----------------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -3705,7 +3705,7 @@ github.com/segmentio/backo-go
 github.com/shirou/gopsutil
 --------------------------
 
-.. code:: text
+.. code::
 
    gopsutil is distributed under BSD license reproduced below.
 
@@ -3774,7 +3774,7 @@ github.com/shirou/gopsutil
 github.com/sirupsen/logrus
 --------------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -3803,7 +3803,7 @@ github.com/sirupsen/logrus
 github.com/spf13/cobra
 ----------------------
 
-.. code:: text
+.. code::
 
                                 Apache License
                            Version 2.0, January 2004
@@ -3985,7 +3985,7 @@ github.com/spf13/cobra
 github.com/spf13/pflag
 ----------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2012 Alex Ogier. All rights reserved.
    Copyright (c) 2012 The Go Authors. All rights reserved.
@@ -4021,7 +4021,7 @@ github.com/spf13/pflag
 github.com/spf13/viper
 ----------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -4050,7 +4050,7 @@ github.com/spf13/viper
 github.com/stackexchange/wmi
 ----------------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -4078,7 +4078,7 @@ github.com/stackexchange/wmi
 github.com/valyala/bytebufferpool
 ---------------------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -4107,7 +4107,7 @@ github.com/valyala/bytebufferpool
 github.com/valyala/fasttemplate
 -------------------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -4136,7 +4136,7 @@ github.com/valyala/fasttemplate
 github.com/xtgo/uuid
 --------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2012 The gocql Authors. All rights reserved.
 
@@ -4171,7 +4171,7 @@ github.com/xtgo/uuid
 golang.org/x/crypto
 -------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -4206,7 +4206,7 @@ golang.org/x/crypto
 golang.org/x/net
 ----------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -4241,7 +4241,7 @@ golang.org/x/net
 golang.org/x/sys
 ----------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -4276,7 +4276,7 @@ golang.org/x/sys
 google.golang.org/api
 ---------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2011 Google Inc. All rights reserved.
 
@@ -4311,7 +4311,7 @@ google.golang.org/api
 gopkg.in/airbrake/gobrake.v2
 ----------------------------
 
-.. code:: text
+.. code::
 
    MIT License
 
@@ -4340,7 +4340,7 @@ gopkg.in/airbrake/gobrake.v2
 gopkg.in/fsnotify.v1
 --------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2012 The Go Authors. All rights reserved.
    Copyright (c) 2012-2019 fsnotify Authors. All rights reserved.
@@ -4376,7 +4376,7 @@ gopkg.in/fsnotify.v1
 gopkg.in/gemnasium/logrus-airbrake-hook.v2
 ------------------------------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -4405,7 +4405,7 @@ gopkg.in/gemnasium/logrus-airbrake-hook.v2
 gopkg.in/guregu/null.v3
 -----------------------
 
-.. code:: text
+.. code::
 
    Copyright (c) 2014, Greg Roseberry
    All rights reserved.
@@ -4423,7 +4423,7 @@ gopkg.in/guregu/null.v3
 gopkg.in/segmentio/analytics-go.v3
 ----------------------------------
 
-.. code:: text
+.. code::
 
    The MIT License (MIT)
 
@@ -4440,7 +4440,7 @@ gopkg.in/segmentio/analytics-go.v3
 gopkg.in/tomb.v1
 ----------------
 
-.. code:: text
+.. code::
 
    tomb - support for clean goroutine termination in Go.
 
@@ -4477,7 +4477,7 @@ gopkg.in/tomb.v1
 gotest.tools
 ------------
 
-.. code:: text
+.. code::
 
    Copyright 2018 gotest.tools authors
 
