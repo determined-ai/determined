@@ -26,6 +26,7 @@ package:
 build:
 	$(MAKE) -C examples $@
 	$(MAKE) -C master $@
+	$(MAKE) -C agent $@
 
 .PHONY: clean
 clean:
