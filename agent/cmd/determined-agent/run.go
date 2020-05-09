@@ -94,6 +94,12 @@ func newRunCmd() *cobra.Command {
 	cmd.Flags().StringVar(&opts.CertFile, "tls-cert", "", "Path to TLS certificate file")
 	cmd.Flags().StringVar(&opts.KeyFile, "tls-key", "", "Path to TLS key file")
 
+	// Container flags.
+	cmd.Flags().StringVar(&opts.ContainerMasterHost, "container-master-host", "",
+		"Hostname of the master that the container connect to")
+	cmd.Flags().IntVar(&opts.ContainerMasterPort, "container-master-port", 0,
+		"Port of the master that the container connect to")
+
 	// Device flags.
 	cmd.Flags().StringVar(&opts.VisibleGPUs, "visible-gpus", "", "GPUs to expose as slots")
 
