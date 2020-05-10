@@ -22,17 +22,17 @@ package:
 	$(MAKE) -C agent $@
 	$(MAKE) -C master $@
 
+.PHONY: build-%
+build-%:
+	$(MAKE) -C $(subst -,/,$(@:build-%=%)) build
+.PHONY: build-docs
+build-docs: build-common build-harness build-cli build-deploy build-examples
+	$(MAKE) -C docs build
+.PHONY: build-master
+build-master: build-docs build-webui-elm build-webui-react
+	$(MAKE) -C master build
 .PHONY: build
-build:
-	$(MAKE) -C common $@
-	$(MAKE) -C harness $@
-	$(MAKE) -C cli $@
-	$(MAKE) -C deploy $@
-	$(MAKE) -C examples $@
-	$(MAKE) -C docs $@
-	$(MAKE) -C webui $@
-	$(MAKE) -C master $@
-	$(MAKE) -C agent $@
+build: build-master build-agent
 
 .PHONY: clean
 clean:
