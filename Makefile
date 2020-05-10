@@ -30,7 +30,7 @@ build: build-master build-agent
 clean-%:
 	$(MAKE) -C $(subst -,/,$(@:clean-%=%)) clean
 .PHONY: clean
-clean: clean-common clean-harness clean-cli clean-deploy clean-examples clean-docs clean-webui clean-master clean-agent
+clean: clean-tools clean-common clean-harness clean-cli clean-deploy clean-examples clean-docs clean-webui clean-master clean-agent
 
 .PHONY: check-%
 check-%:
