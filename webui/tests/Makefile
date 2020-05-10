@@ -7,11 +7,11 @@ get-deps:
 		npm ci --no-audit && break ; \
 	done
 
-clean-test-artifacts:
+clean:
 	rm -rf cypress/screenshots/*
 	rm -rf cypress/videos/*
 
-clean: clean-test-artifacts
+clean-deps:
 	rm -rf node_modules/
 
 test: docker-e2e-tests

@@ -22,6 +22,11 @@ get-deps:
 	$(MAKE) -C elm $@
 	$(MAKE) -C tests $@
 
+clean-deps:
+	$(MAKE) -C react $@
+	$(MAKE) -C elm $@
+	$(MAKE) -C tests $@
+
 build:
 	$(MAKE) -C react $@
 	$(MAKE) -C elm $@

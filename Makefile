@@ -3,8 +3,12 @@ all:
 	$(MAKE) get-deps
 	$(MAKE) build
 
+.PHONY: clean-deps
+clean-deps:
+	$(MAKE) -C webui $@
+
 .PHONY: get-deps
-get-deps:
+get-deps: clean-deps
 	GO111MODULE=on go get github.com/talos-systems/conform@fa7df19996ece307285da44c73f210c6cbec9207
 	pip install -r requirements.txt
 	$(MAKE) -C master $@

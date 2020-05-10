@@ -10,7 +10,11 @@ build:
 
 .PHONY: clean
 clean:
-	rm -rf build node_modules/
+	rm -rf build
+
+.PHONY: clean-deps
+clean-deps:
+	rm -rf node_modules
 
 .PHONY: live
 live:

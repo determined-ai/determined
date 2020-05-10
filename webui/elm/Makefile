@@ -16,6 +16,9 @@ clean:
 	rm -f npm-debug.log
 	rm -f public/style.css
 	rm -f public/determined-ui.js
+
+.PHONY: clean-deps
+clean-deps:
 	rm -rf elm-stuff/ tests/elm-stuff/ node_modules/
 
 .PHONY: live
