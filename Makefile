@@ -1,5 +1,3 @@
-export VERSION := $(shell cat VERSION)
-
 .PHONY: all
 all: get-deps package
 
