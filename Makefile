@@ -41,16 +41,11 @@ check-%:
 check: check-common check-harness check-cli check-deploy check-e2e_tests check-master check-agent check-webui
 	conform enforce
 
+.PHONY: fmt-%
+fmt-%:
+	$(MAKE) -C $(subst -,/,$(@:fmt-%=%)) fmt
 .PHONY: fmt
-fmt:
-	$(MAKE) -C cli $@
-	$(MAKE) -C common $@
-	$(MAKE) -C harness $@
-	$(MAKE) -C deploy $@
-	$(MAKE) -C e2e_tests $@
-	$(MAKE) -C master $@
-	$(MAKE) -C agent $@
-	$(MAKE) -C webui $@
+fmt: fmt-common fmt-harness fmt-cli fmt-deploy fmt-e2e_tests fmt-master fmt-agent fmt-webui
 
 .PHONY: test
 test:
