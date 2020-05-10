@@ -1,6 +1,6 @@
 .PHONY: build
 build:
-	python setup.py bdist_wheel
+	python setup.py -q bdist_wheel
 
 .PHONY: upload-try-now-template
 upload-try-now-template: TRY_NOW_TEMPLATE = simple.yaml
