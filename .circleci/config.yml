@@ -276,18 +276,11 @@ commands:
           name: Run e2e tests
           working_directory: ~/project/e2e_tests
           command: |
-            if [[ "<<parameters.master-host>>" == "localhost" ]]; then
-              FOLLOW_LOCAL_LOGS="--follow-local-logs"
-              COMPOSE_FILE="--compose-file=../.circleci/compose/e2e/docker-compose.yaml"
-            fi
-
             pytest -vv -s \
             -m <<parameters.mark>> \
             --durations=0 \
             --master-host="<<parameters.master-host>>" \
             --master-port="<<parameters.master-port>>" \
-            ${FOLLOW_LOCAL_LOGS} \
-            ${COMPOSE_FILE} \
             --junit-xml="<<parameters.junit-path>>" \
             $(cat /tmp/tests-to-run)
 
