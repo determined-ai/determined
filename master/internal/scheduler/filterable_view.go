@@ -45,56 +45,56 @@ func (v *FilterableView) Update(cluster *Cluster) (ViewSnapshot, bool) {
 }
 
 func (v *FilterableView) updateTasks(cluster *Cluster) bool {
-	updateMade := false
-	tasks := make(map[TaskID]*TaskSummary)
+	newTasks := make(map[TaskID]*TaskSummary)
+
 	for iterator := cluster.taskList.iterator(); iterator.next(); {
 		task := iterator.value()
 
 		if v.taskFilter(task) {
 			taskSummary := newTaskSummary(task)
-			if summary, ok := v.tasks[task.ID]; !ok || !summary.equals(&taskSummary) {
-				tasks[task.ID] = &taskSummary
-				updateMade = true
-			} else {
-				tasks[task.ID] = summary
-			}
-		} else if _, ok := v.tasks[task.ID]; ok {
-			// Indicate that we've made an update since the new map
-			// does not have the task anymore.
-			updateMade = true
+			newTasks[task.ID] = &taskSummary
 		}
 	}
 
-	// The case of `updateMade` is false but `len(tasks) != len(v.tasks)`
-	// is when a task was deleted from the map but no other relevant changes were made.
-	updateMade = updateMade || len(tasks) != len(v.tasks)
-	v.tasks = tasks
+	updateMade := false
+	if len(newTasks) != len(v.tasks) {
+		updateMade = true
+	} else {
+		for _, newTask := range newTasks {
+			oldTask, ok := v.tasks[newTask.ID]
+			if !ok || !oldTask.equals(newTask) {
+				updateMade = true
+			}
+		}
+	}
+
+	v.tasks = newTasks
 	return updateMade
 }
 
 func (v *FilterableView) updateAgents(cluster *Cluster) bool {
-	updateMade := false
-	agents := make(map[*actor.Ref]*AgentSummary)
+	newAgents := make(map[*actor.Ref]*AgentSummary)
+
 	for actorRef, state := range cluster.agents {
 		if v.agentFilter(state) {
 			agentSummary := newAgentSummary(state)
-			if summary, ok := v.agents[actorRef]; !ok || *summary != agentSummary {
-				agents[actorRef] = &agentSummary
-				updateMade = true
-			} else {
-				agents[actorRef] = summary
-			}
-		} else if _, ok := v.agents[actorRef]; ok {
-			// Indicate that we've made an update since the new map
-			// does not have the agent anymore.
-			updateMade = true
+			newAgents[actorRef] = &agentSummary
 		}
 	}
 
-	// The case of `updateMade` is false but `len(agents) != len(v.agents)`
-	// is when an agent was deleted from the map but no other relevant changes were made.
-	updateMade = updateMade || len(agents) != len(v.agents)
-	v.agents = agents
+	updateMade := false
+	if len(newAgents) != len(v.agents) {
+		updateMade = true
+	} else {
+		for agentRef, newAgent := range newAgents {
+			oldAgent, ok := v.agents[agentRef]
+			if !ok || !oldAgent.equals(newAgent) {
+				updateMade = true
+			}
+		}
+	}
+
+	v.agents = newAgents
 	return updateMade
 }
 
