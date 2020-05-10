@@ -1,7 +1,7 @@
 export VERSION := $(shell cat VERSION)
 
 .PHONY: all
-all: get-deps package
+all: get-deps build
 
 .PHONY: get-deps
 get-deps:
