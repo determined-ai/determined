@@ -1,10 +1,6 @@
 export VERSION := $(shell cat ../VERSION)
 export GO111MODULE := on
 
-# These variables are picked up by GoReleaser for the master build; we default to including no keys.
-export DET_SEGMENT_MASTER_KEY ?=
-export DET_SEGMENT_WEBUI_KEY ?=
-
 .PHONY: clean
 clean:
 	rm -rf dist
@@ -50,9 +46,20 @@ pre-package:
 	cp ../cli/dist/*.whl build/wheels/
 	cp ../harness/dist/*.whl build/wheels/
 
-.PHONY: package  
+.PHONY: package
+package: export DET_SEGMENT_MASTER_KEY ?= ""
+package: export DET_SEGMENT_WEBUI_KEY ?= ""
+package: export GORELEASER_CURRENT_TAG := $(VERSION)
 package:
-	GORELEASER_CURRENT_TAG=$(VERSION) goreleaser --snapshot --rm-dist
+	goreleaser --snapshot --rm-dist
+
+.PHONY: release
+release: export DET_SEGMENT_MASTER_KEY ?= ""
+release: export DET_SEGMENT_WEBUI_KEY ?= ""
+release: export GORELEASER_CURRENT_TAG := $(VERSION)
+release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -v "rc" | grep "v$(VERSION)" -A1 | sed -n '2 p')
+release:
+	goreleaser --rm-dist
 
 .PHONY: publish
 publish:
