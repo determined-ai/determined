@@ -381,18 +381,6 @@ commands:
       - run: docker pull cypress/included:4.3.0
 
 
-  setup-local-cluster:
-    parameters:
-      det-version:
-        type: string
-    steps:
-      - run: |
-          export DET_VERSION=<<parameters.det-version>>
-          export MASTER_HOST=$(ip route | grep docker0 | sed "s/^.*src \(.*\) linkdown.*$/\1/g")
-          docker-compose -f .circleci/compose/e2e/docker-compose.yaml up -d
-      - wait-for-master:
-          host: localhost
-
   run-e2e-webui-tests:
     steps:
       - run: python webui/tests/bin/createUserAndExperiments.py
@@ -400,13 +388,13 @@ commands:
           mkdir -p webui/tests/results
           docker run \
             --name e2e_cypress \
-            --network=e2e_default \
+            --network=host \
             --mount type=bind,source=$(pwd)/webui,target=/webui \
             -w /webui/tests \
-            --env DET_MASTER=determined-master:8080 \
+            --env DET_MASTER=127.0.0.1:8080 \
             cypress/included:4.3.0 \
             --config-file cypress-docker.json \
-            --config "defaultCommandTimeout=30000,baseUrl=http://determined-master:8080" \
+            --config "defaultCommandTimeout=30000,baseUrl=http://127.0.0.1:8080" \
             --browser chrome \
             --headless
 
@@ -562,8 +550,6 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run: docker load --input build/master.image
-      - run: docker load --input build/agent.image
 
       - install-webui-test-deps
       - run: pyenv global 3.6.10
@@ -571,8 +557,15 @@ jobs:
           determined-common: true
           determined-cli: true
           executor: ubuntu-1604:202004-01
-      - setup-local-cluster:
-          det-version: ${CIRCLE_SHA1}
+      - run:
+          name: Start database
+          command: make -C tools start-db
+      - run:
+          name: Start cluster
+          command: make -C tools run
+          background: true
+      - wait-for-master:
+          host: localhost
       - run-e2e-webui-tests
       - store_test_results:
           path: webui/tests/results/
@@ -1000,7 +993,9 @@ workflows:
 
       - test-e2e-webui:
           requires:
-            - package-and-push-system-local
+            - build-elm
+            - build-react
+            - build-go
 
       - deploy:
           context: aws
