@@ -28,17 +28,11 @@ build-master: build-docs build-webui-elm build-webui-react
 .PHONY: build
 build: build-master build-agent
 
+.PHONY: clean-%
+clean-%:
+	$(MAKE) -C $(subst -,/,$(@:clean-%=%)) clean
 .PHONY: clean
-clean:
-	$(MAKE) -C examples $@
-	$(MAKE) -C master $@
-	$(MAKE) -C agent $@
-	$(MAKE) -C docs $@
-	$(MAKE) -C common $@
-	$(MAKE) -C harness $@
-	$(MAKE) -C cli $@
-	$(MAKE) -C deploy $@
-	$(MAKE) -C webui $@
+clean: clean-common clean-harness clean-cli clean-deploy clean-examples clean-docs clean-webui clean-master clean-agent
 
 .PHONY: check
 check:
