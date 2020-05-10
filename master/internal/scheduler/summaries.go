@@ -49,6 +49,10 @@ type AgentSummary struct {
 	Name string `json:"name"`
 }
 
+func (summary1 *AgentSummary) equals(summary2 *AgentSummary) bool {
+	return summary1.Name == summary2.Name
+}
+
 // ContainerSummary contains information about a task container for external display.
 type ContainerSummary struct {
 	TaskID     TaskID                  `json:"task_id"`

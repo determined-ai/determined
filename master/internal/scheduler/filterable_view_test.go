@@ -85,11 +85,10 @@ func (snapshot1 *ViewSnapshot) isSubset(snapshot2 *ViewSnapshot) bool {
 }
 
 func (snapshot1 *ViewSnapshot) difference(snapshot2 *ViewSnapshot) *ViewSnapshot {
-	snapshot := ViewSnapshot{
+	return &ViewSnapshot{
 		Tasks:  tasksDifference(snapshot1.Tasks, snapshot2.Tasks),
 		Agents: agentsDifference(snapshot1.Agents, snapshot2.Agents),
 	}
-	return &snapshot
 }
 
 func areEqual(snapshot1 *ViewSnapshot, snapshot2 *ViewSnapshot) bool {
@@ -102,61 +101,65 @@ func areEqual(snapshot1 *ViewSnapshot, snapshot2 *ViewSnapshot) bool {
 	return len(tasksDiff) == 0 && len(agentsDiff) == 0
 }
 
-func tasksIsSubset(tasks1 []*TaskSummary, tasks2 []*TaskSummary) bool {
-	tasks := make(map[*TaskSummary]bool)
-	for _, task := range tasks2 {
-		tasks[task] = true
+func taskIsMember(tasks []*TaskSummary, task *TaskSummary) bool {
+	for _, candidate := range tasks {
+		if candidate.equals(task) {
+			return true
+		}
 	}
 
+	return false
+}
+
+func tasksIsSubset(tasks1 []*TaskSummary, tasks2 []*TaskSummary) bool {
 	for _, task := range tasks1 {
-		if _, ok := tasks[task]; !ok {
+		if !taskIsMember(tasks2, task) {
 			return false
 		}
 	}
+
 	return true
 }
 
 func tasksDifference(tasks1 []*TaskSummary, tasks2 []*TaskSummary) []*TaskSummary {
 	var difference []*TaskSummary
-	tasks := make(map[*TaskSummary]bool)
-	for _, task := range tasks1 {
-		tasks[task] = true
-	}
-
 	for _, task := range tasks2 {
-		if _, ok := tasks[task]; !ok {
+		if !taskIsMember(tasks1, task) {
 			difference = append(difference, task)
 		}
 	}
+
 	return difference
 }
 
-func agentsIsSubset(agents1 []*AgentSummary, agents2 []*AgentSummary) bool {
-	agents := make(map[*AgentSummary]bool)
-	for _, agent := range agents2 {
-		agents[agent] = true
+func agentIsMember(agents []*AgentSummary, agent *AgentSummary) bool {
+	for _, candidate := range agents {
+		if candidate.equals(agent) {
+			return true
+		}
 	}
 
+	return false
+}
+
+func agentsIsSubset(agents1 []*AgentSummary, agents2 []*AgentSummary) bool {
 	for _, agent := range agents1 {
-		if _, ok := agents[agent]; !ok {
+		if !agentIsMember(agents2, agent) {
 			return false
 		}
 	}
+
 	return true
 }
 
 func agentsDifference(agents1 []*AgentSummary, agents2 []*AgentSummary) []*AgentSummary {
 	var difference []*AgentSummary
-	agents := make(map[*AgentSummary]bool)
-	for _, agent := range agents1 {
-		agents[agent] = true
-	}
-
 	for _, agent := range agents2 {
-		if _, ok := agents[agent]; !ok {
+		if !agentIsMember(agents1, agent) {
 			difference = append(difference, agent)
 		}
 	}
+
 	return difference
 }
 
