@@ -154,6 +154,7 @@ The last two methods we need to define are ``build_training_data_loader`` and ``
         validation_data = data.get_dataset(self.download_directory, train=False)
         return DataLoader(validation_data, batch_size=self.context.get_per_slot_batch_size())
 
+For more information on loading data in Determined, refer to the tutorial on :ref:`data-access`.
 
 Defining the Forward Pass
 """""""""""""""""""""""""

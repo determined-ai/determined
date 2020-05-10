@@ -75,7 +75,7 @@ class IrisTrial(keras.TFKerasTrial):
         return [keras.TFKerasTensorBoard(update_freq="batch", profile_batch=0, histogram_freq=1)]
 
     def build_training_data_loader(self) -> keras.InputData:
-        # Ignore header line and read the training and test CSV observations into pandas DataFrame's
+        # Ignore header line and read the training CSV observations into a pandas DataFrame.
         train = pd.read_csv(self.context.get_data_config()["train_url"], names=DS_COLUMNS, header=0)
         train_features, train_labels = train, train.pop(LABEL_HEADER)
 
@@ -87,7 +87,7 @@ class IrisTrial(keras.TFKerasTrial):
         return train_features.values, train_labels_categorical
 
     def build_validation_data_loader(self) -> keras.InputData:
-        # Ignore header line and read the training and test CSV observations into pandas DataFrame's
+        # Ignore header line and read the test CSV observations into a pandas DataFrame.
         test = pd.read_csv(self.context.get_data_config()["test_url"], names=DS_COLUMNS, header=0)
         test_features, test_labels = test, test.pop(LABEL_HEADER)
 

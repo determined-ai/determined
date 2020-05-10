@@ -97,7 +97,7 @@ Loading Data
 
 The last two methods we need to define are ``build_training_data_loader`` and ``build_validation_data_loader``. Determined uses these methods to load the training and validation datasets, respectively.
 
-Determined supports three ways of loading data into a ``tf.keras`` model: as a `tf.keras.utils.Sequence <https://www.tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__, a `tf.data.Dataset <https://www.tensorflow.org/api_docs/python/tf/data/Dataset>`__ or NumPy arrays. Because the training dataset is small, the Fashion MNIST model represents the data using NumPy arrays.
+Determined supports three ways of loading data into a ``tf.keras`` model: as a `tf.keras.utils.Sequence <https://www.tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__, a `tf.data.Dataset <https://www.tensorflow.org/api_docs/python/tf/data/Dataset>`__, or NumPy arrays. Because the training dataset is small, the Fashion MNIST model represents the data using NumPy arrays.
 
 .. code:: python
 
@@ -117,8 +117,7 @@ The implementation of ``build_validation_data_loader`` is similar:
 
         return test_images, test_labels
 
-.. note::
-    When loading data from a ``tf.keras.utils.Sequence`` or ``tf.data.Dataset``, users should specify the batch size using :func:`self.context.get_per_slot_batch_size() <determined.TrialContext.get_per_slot_batch_size>`.
+For more information on loading data in Determined, refer to the tutorial on :ref:`data-access`.
 
 Training the Model
 ------------------
