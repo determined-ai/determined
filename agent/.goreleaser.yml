@@ -5,8 +5,6 @@ snapshot:
 
 builds:
   - main: ./cmd/determined-agent
-    ldflags:
-      - -X github.com/determined-ai/determined/agent/version.Version={{.Env.VERSION}}
     goos:
       - linux
       - darwin

@@ -71,7 +71,7 @@ func newRunCmd() *cobra.Command {
 			}
 		}
 
-		if err := internal.Run(opts); err != nil {
+		if err := internal.Run(version, opts); err != nil {
 			logrus.Fatal(err)
 		}
 
