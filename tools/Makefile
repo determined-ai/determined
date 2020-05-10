@@ -1,3 +1,7 @@
+.PHONY: clean
+clean:
+	rm -rf build/
+
 .PHONY: start-db
 start-db: stop-db
 	docker-compose up -d
