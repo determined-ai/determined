@@ -1,5 +1,5 @@
 .PHONY: all
-all: get-deps package
+all: get-deps build
 
 .PHONY: get-deps
 get-deps:
