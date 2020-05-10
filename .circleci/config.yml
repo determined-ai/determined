@@ -33,6 +33,14 @@ release-and-rc-filters: &release-and-rc-filters
       - /v(\d)+(\.(\d)+)+/
       - /(v(\d)+(\.(\d)+)+)(rc)(\d)+/
 
+rc-filters: &rc-filters
+  branches:
+    ignore:
+      - /.*/
+  tags:
+    only:
+      - /(v(\d)+(\.(\d)+)+)(rc)(\d)+/
+
 release-filters: &release-filters
   branches:
     ignore:
@@ -471,17 +479,7 @@ jobs:
           at: .
       - run: make -C docs/deploy publish
 
-  package-and-push-system:
-    parameters:
-      local:
-        type: boolean
-        default: false
-      development:
-        type: boolean
-        default: false
-      production:
-        type: boolean
-        default: false
+  package-and-push-system-local:
     docker:
       - image: cimg/go:1.13
         environment:
@@ -490,35 +488,18 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-
       - go-get-deps
       - setup_remote_docker
       - run: make package
+      - run: mkdir -p build/
+      - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
+      - run: docker save -o build/agent.image determinedai/determined-agent:${CIRCLE_SHA1}
+      - persist_to_workspace:
+          root: .
+          paths:
+            - "build/*.image"
 
-      - when:
-          condition: <<parameters.local>>
-          steps:
-            - run: mkdir -p build/
-            - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
-            - run: docker save -o build/agent.image determinedai/determined-agent:${CIRCLE_SHA1}
-            - persist_to_workspace:
-                root: .
-                paths:
-                  - "build/*.image"
-      - when:
-          condition: <<parameters.development>>
-          steps:
-            - login-docker
-            - run: make -C master publish-dev
-            - run: make -C agent publish-dev
-      - when:
-          condition: <<parameters.production>>
-          steps:
-            - login-docker
-            - run: make -C master publish
-            - run: make -C agent publish
-
-  publish-debs:
+  package-and-push-system-dev:
     docker:
       - image: cimg/go:1.13
         environment:
@@ -527,16 +508,43 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-
       - go-get-deps
-      - run:
-          name: publish-debs
-          command: |
-            cp -r packaging build/
-            git fetch -t
-            # Set the previous tag to the last final release, ignoring release candidates.
-            export GORELEASER_PREVIOUS_TAG=$(git tag --sort=-creatordate | grep -v "rc" | grep $(cat VERSION) -A1 | sed -n '2 p')
-            cd build && goreleaser -f ${CIRCLE_WORKING_DIRECTORY}/.goreleaser.yml --rm-dist
+      - setup_remote_docker
+      - run: make package
+      - login-docker
+      - run: make -C master publish-dev
+      - run: make -C agent publish-dev
+
+  package-and-push-system-rc:
+    docker:
+      - image: cimg/go:1.13
+        environment:
+          GO111MODULE: "on"
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - go-get-deps
+      - setup_remote_docker
+      - run: make package
+      - login-docker
+      - run: make -C master publish
+      - run: make -C agent publish
+
+  package-and-push-system-release:
+    docker:
+      - image: cimg/go:1.13
+        environment:
+          GO111MODULE: "on"
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - go-get-deps
+      - setup_remote_docker
+      - login-docker
+      - run: make -C master release
+      - run: make -C agent release
 
   publish-python-package:
     parameters:
@@ -951,25 +959,17 @@ workflows:
       - build-react
       - build-docs
       - build-go
-      - package-and-push-system:
-          name: local-package-and-push-system
+      - package-and-push-system-local:
           requires:
             - build-elm
             - build-react
             - build-docs
-          matrix:
-            parameters:
-              local: [true]
 
-      - package-and-push-system:
-          name: dev-package-and-push-system
+      - package-and-push-system-dev:
           requires:
             - build-elm
             - build-react
             - build-docs
-          matrix:
-            parameters:
-              development: [true]
           filters:
             branches:
               ignore:
@@ -1007,7 +1007,7 @@ workflows:
 
       - test-e2e-webui:
           requires:
-            - local-package-and-push-system
+            - package-and-push-system-local
 
       - deploy:
           context: aws
@@ -1015,7 +1015,7 @@ workflows:
             branches:
               only: master
           requires:
-            - dev-package-and-push-system
+            - package-and-push-system-dev
 
       - parallel-tests:
           context: aws
@@ -1023,7 +1023,7 @@ workflows:
             branches:
               only: master
           requires:
-            - dev-package-and-push-system
+            - package-and-push-system-dev
 
       - e2e-gpu-tests:
           context: aws
@@ -1031,7 +1031,7 @@ workflows:
             branches:
               only: master
           requires:
-            - dev-package-and-push-system
+            - package-and-push-system-dev
 
       - request-dev-deploy:
           type: approval
@@ -1042,7 +1042,7 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-dev-deploy
-            - dev-package-and-push-system
+            - package-and-push-system-dev
 
       - request-gpu-tests:
           type: approval
@@ -1053,14 +1053,14 @@ workflows:
           filters: *upstream-feature-branch
           requires:
             - request-gpu-tests
-            - dev-package-and-push-system
+            - package-and-push-system-dev
 
       - e2e-gpu-tests:
           context: aws
           filters: *upstream-feature-branch
           requires:
             - request-gpu-tests
-            - dev-package-and-push-system
+            - package-and-push-system-dev
 
 
   nightly:
@@ -1087,17 +1087,6 @@ workflows:
           context: determined-production
           filters: *release-and-rc-filters
 
-      - package-and-push-system:
-          matrix:
-            parameters:
-              production: [true]
-          requires:
-            - build-elm
-            - build-react
-            - build-docs
-          context: determined-production
-          filters: *release-and-rc-filters
-
       - publish-python-package:
           matrix:
             parameters:
@@ -1105,14 +1094,24 @@ workflows:
           context: determined-production
           filters: *release-and-rc-filters
 
-      - publish-docs:
+      - package-and-push-system-rc:
           requires:
+            - build-elm
+            - build-react
+            - build-docs
+          context: determined-production
+          filters: *rc-filters
+
+      - package-and-push-system-release:
+          requires:
+            - build-elm
+            - build-react
             - build-docs
           context: determined-production
           filters: *release-filters
 
-      - publish-debs:
+      - publish-docs:
           requires:
-            - package-and-push-system
+            - build-docs
           context: determined-production
           filters: *release-filters
