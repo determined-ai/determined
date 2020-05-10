@@ -34,17 +34,12 @@ clean-%:
 .PHONY: clean
 clean: clean-common clean-harness clean-cli clean-deploy clean-examples clean-docs clean-webui clean-master clean-agent
 
+.PHONY: check-%
+check-%:
+	$(MAKE) -C $(subst -,/,$(@:check-%=%)) check
 .PHONY: check
-check:
+check: check-common check-harness check-cli check-deploy check-e2e_tests check-master check-agent check-webui
 	conform enforce
-	$(MAKE) -C cli $@
-	$(MAKE) -C common $@
-	$(MAKE) -C harness $@
-	$(MAKE) -C deploy $@
-	$(MAKE) -C e2e_tests $@
-	$(MAKE) -C master $@
-	$(MAKE) -C agent $@
-	$(MAKE) -C webui $@
 
 .PHONY: fmt
 fmt:
