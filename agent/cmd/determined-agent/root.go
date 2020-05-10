@@ -3,8 +3,6 @@ package main
 import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-
-	"github.com/determined-ai/determined/agent/version"
 )
 
 type options struct {
@@ -12,12 +10,16 @@ type options struct {
 	noColor  bool
 }
 
+var (
+	version = "dev"
+)
+
 func newRootCmd() *cobra.Command {
 	opts := options{}
 
 	cmd := &cobra.Command{
 		Use:     "determined-agent",
-		Version: version.Version,
+		Version: version,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			if err := bindEnv("DET_", cmd); err != nil {
 				return err

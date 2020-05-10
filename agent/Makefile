@@ -16,7 +16,7 @@ get-deps:
 .PHONY: build
 build:
 	go build \
-		-ldflags "-X github.com/determined-ai/determined/agent/version.Version=$(VERSION)" \
+		-ldflags "-X main.version=$(VERSION)" \
 		-o build/determined-agent \
 		./cmd/determined-agent
 

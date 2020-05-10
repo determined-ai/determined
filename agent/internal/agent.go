@@ -18,7 +18,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	"github.com/determined-ai/determined/agent/version"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
@@ -28,6 +27,7 @@ import (
 )
 
 type agent struct {
+	Version    string
 	Options    `json:"options"`
 	Devices    []device.Device  `json:"devices"`
 	MasterInfo proto.MasterInfo `json:"master"`
@@ -173,7 +173,7 @@ func (a *agent) getMasterInfo() error {
 }
 
 func (a *agent) setup(ctx *actor.Context) error {
-	ctx.Log().Infof("Determined agent %s (built with %s)", version.Version, runtime.Version())
+	ctx.Log().Infof("Determined agent %s (built with %s)", a.Version, runtime.Version())
 	actors.NotifyOnSignal(ctx, syscall.SIGINT, syscall.SIGTERM)
 
 	if a.ArtificialSlots > 0 {
@@ -254,13 +254,13 @@ func (a *agent) connectToMaster(ctx *actor.Context) error {
 	containers := ctx.Ask(a.cm, recoverContainers{}).Get().([]proto.ContainerRecovered)
 
 	started := proto.MasterMessage{AgentStarted: &proto.AgentStarted{
-		Version: version.Version, Devices: a.Devices, Label: a.Label, RecoveredContainers: containers}}
+		Version: a.Version, Devices: a.Devices, Label: a.Label, RecoveredContainers: containers}}
 	ctx.Ask(a.socket, api.WriteMessage{Message: started})
 	return nil
 }
 
 // Run runs a new agent system and actor with the provided options.
-func Run(options Options) error {
+func Run(version string, options Options) error {
 	printableConfig, err := options.Printable()
 	if err != nil {
 		return err
@@ -268,7 +268,7 @@ func Run(options Options) error {
 	logrus.Infof("agent configuration: %s", printableConfig)
 
 	system := actor.NewSystem(options.AgentID)
-	ref, _ := system.ActorOf(actor.Addr("agent"), &agent{Options: options})
+	ref, _ := system.ActorOf(actor.Addr("agent"), &agent{Version: version, Options: options})
 
 	server := echo.New()
 	server.Logger = logger.New()
