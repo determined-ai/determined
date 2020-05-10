@@ -8,16 +8,16 @@ orbs:
 executors:
   python-35:
     docker:
-      - image: cimg/python:3.5
+      - image: python:3.5-slim-buster
   python-36:
     docker:
-      - image: cimg/python:3.6
+      - image: python:3.6-slim-buster
   python-37:
     docker:
-      - image: cimg/python:3.7
+      - image: python:3.7-slim-buster
   python-38:
     docker:
-      - image: cimg/python:3.8
+      - image: python:3.8-slim-buster
 
 parameters:
   det-version:
