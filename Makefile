@@ -47,13 +47,11 @@ fmt-%:
 .PHONY: fmt
 fmt: fmt-common fmt-harness fmt-cli fmt-deploy fmt-e2e_tests fmt-master fmt-agent fmt-webui
 
+.PHONY: test-%
+test-%:
+	$(MAKE) -C $(subst -,/,$(@:test-%=%)) test
 .PHONY: test
-test:
-	$(MAKE) -C harness $@
-	$(MAKE) -C cli $@
-	$(MAKE) -C master $@
-	$(MAKE) -C agent $@
-	$(MAKE) -C webui $@
+test: test-harness test-cli test-master test-agent test-webui
 
 # This target assumes that a Hasura instance is running and queries it to
 # retrieve the current schema files, producing a schema file that the
