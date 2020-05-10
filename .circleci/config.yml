@@ -24,7 +24,6 @@ parameters:
     type: string
     default: 0.12.4.dev0
 
-# yaml anchor filters
 release-and-rc-filters: &release-and-rc-filters
   branches:
     ignore:
@@ -41,6 +40,13 @@ release-filters: &release-filters
   tags:
     only:
       - /v(\d)+(\.(\d)+)+/
+
+upstream-feature-branch: &upstream-feature-branch
+  branches:
+    ignore:
+      - /pull\/.*/
+      - master
+
 
 commands:
   fix-circle-working-directory:
@@ -1003,22 +1009,6 @@ workflows:
           requires:
             - local-package-and-push-system
 
-      - request-gpu-tests:
-          type: approval
-          filters:
-            branches:
-              ignore:
-                - /pull\/.*/
-                - master
-
-      - request-dev-deploy:
-          type: approval
-          filters:
-            branches:
-              ignore:
-                - /pull\/.*/
-                - master
-
       - deploy:
           context: aws
           filters:
@@ -1027,54 +1017,47 @@ workflows:
           requires:
             - dev-package-and-push-system
 
-      - deploy:
+      - parallel-tests:
           context: aws
           filters:
             branches:
-              ignore:
-                - master
-                - /pull\/.*/
+              only: master
+          requires:
+            - dev-package-and-push-system
+
+      - e2e-gpu-tests:
+          context: aws
+          filters:
+            branches:
+              only: master
+          requires:
+            - dev-package-and-push-system
+
+      - request-dev-deploy:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - deploy:
+          context: aws
+          filters: *upstream-feature-branch
           requires:
             - request-dev-deploy
             - dev-package-and-push-system
 
-      - parallel-tests:
-          context: aws
-          filters:
-            branches:
-              only: master
-              ignore:
-                - /pull\/.*/
-          requires:
-            - dev-package-and-push-system
-
-      - e2e-gpu-tests:
-          context: aws
-          filters:
-            branches:
-              only: master
-          requires:
-            - dev-package-and-push-system
+      - request-gpu-tests:
+          type: approval
+          filters: *upstream-feature-branch
 
       - parallel-tests:
           context: aws
-          filters:
-            branches:
-              ignore:
-                - /pull\/.*/
-                - master
+          filters: *upstream-feature-branch
           requires:
             - request-gpu-tests
             - dev-package-and-push-system
 
-
       - e2e-gpu-tests:
           context: aws
-          filters:
-            branches:
-              ignore:
-                - /pull\/.*/
-                - master
+          filters: *upstream-feature-branch
           requires:
             - request-gpu-tests
             - dev-package-and-push-system
