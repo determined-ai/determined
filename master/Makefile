@@ -24,10 +24,6 @@ build:
 		-o build/determined-master \
 		./cmd/determined-master
 
-.PHONY: install
-install:
-	go install -ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION)" ./cmd/determined-master
-
 .PHONY: check
 check:
 	golangci-lint run
