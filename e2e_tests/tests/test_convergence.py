@@ -20,7 +20,7 @@ def test_cifar10_pytorch_accuracy() -> None:
         if step.validation
     ]
 
-    target_accuracy = 0.745
+    target_accuracy = 0.74
     assert max(validation_errors) > target_accuracy, (
         "cifar10_cnn_pytorch did not reach minimum target accuracy {} in {} steps."
         " full validation error history: {}".format(
