@@ -4,14 +4,11 @@ export VERSION := $(shell cat VERSION)
 all: get-deps package
 
 .PHONY: get-deps
-get-deps: python-get-deps go-get-deps
+get-deps: python-get-deps
 	go get github.com/talos-systems/conform@fa7df19996ece307285da44c73f210c6cbec9207
+	$(MAKE) -C master $@
+	$(MAKE) -C agent $@
 	$(MAKE) -C webui $@
-
-.PHONY: go-get-deps
-go-get-deps:
-	$(MAKE) -C master get-deps
-	$(MAKE) -C agent get-deps
 
 .PHONY: python-get-deps
 python-get-deps:

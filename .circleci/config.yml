@@ -99,7 +99,8 @@ commands:
       - restore_cache:
           keys:
             - det-go-deps-v1dev3-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}
-      - run: make go-get-deps
+      - run: make -C master get-deps
+      - run: make -C agent get-deps
       - save_cache:
           key: det-go-deps-v1dev3-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}
           paths:
