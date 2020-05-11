@@ -51,10 +51,10 @@ following commands:
 .. code::
 
    # If the machine has GPUs:
-   det-deploy local fixture-up
+   det-deploy local cluster-up
 
    # If the machine doesn't have GPUs:
-   det-deploy local fixture-up --no-gpu
+   det-deploy local cluster-up --no-gpu
 
 This will start a master and an agent on that machine. To verify that the
 master is running, navigate to ``http://<master-hostname>:8080`` in a
@@ -71,13 +71,13 @@ configuration file to ``det-deploy``, use:
 
 .. code::
 
-  det-deploy local fixture-up --master-config-path <path to master.yaml>
+  det-deploy local cluster-up --master-config-path <path to master.yaml>
 
 If you want to create more than one agent locally, you can use:
 
 .. code::
 
-  det-deploy local fixture-up --agents <number of agents>
+  det-deploy local cluster-up --agents <number of agents>
 
 
 Stopping a Single-Node Cluster
@@ -87,12 +87,12 @@ To stop a Determined cluster, on the machine where a Determined cluster is curre
 
 .. code::
 
-   det-deploy local fixture-down
+   det-deploy local cluster-down
 
 
 .. note::
 
-  ``det-deploy local fixture-down`` will not remove any agents created
+  ``det-deploy local cluster-down`` will not remove any agents created
   with ``det-deploy local agent-up``.  To remove these agents,
   use ``det-deploy local agent-down``.
 
