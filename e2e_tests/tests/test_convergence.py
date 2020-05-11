@@ -12,11 +12,11 @@ def test_cifar10_pytorch_accuracy() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    trial_metrics = exp.trial_metrics(trials[0].id)
+    trial_metrics = exp.trial_metrics(trials[0]["id"])
 
     validation_errors = [
         step.validation.metrics["validation_metrics"]["validation_accuracy"]
-        for step in trial_metrics.steps
+        for step in trial_metrics["steps"]
         if step.validation
     ]
 
@@ -24,6 +24,6 @@ def test_cifar10_pytorch_accuracy() -> None:
     assert max(validation_errors) > target_accuracy, (
         "cifar10_cnn_pytorch did not reach minimum target accuracy {} in {} steps."
         " full validation error history: {}".format(
-            target_accuracy, len(trial_metrics.steps), validation_errors
+            target_accuracy, len(trial_metrics["steps"]), validation_errors
         )
     )

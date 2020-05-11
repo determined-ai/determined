@@ -1,10 +1,9 @@
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pytest
 from tensorflow.python.training.tracking.tracking import AutoTrackable
 
 from determined.experimental import Determined
-from determined_common.api import gql
 from tests import cluster
 from tests import config as conf
 from tests import experiment as exp
@@ -29,13 +28,13 @@ def test_mnist_estimator_const(tf2: bool) -> None:
     assert len(trials) == 1
 
     # Check validation metrics.
-    steps = trials[0].steps
+    steps = trials[0]["steps"]
     assert len(steps) == 1
 
     step = steps[0]
     assert "validation" in step
 
-    v_metrics = step.validation.metrics["validation_metrics"]
+    v_metrics = step["validation"]["metrics"]["validation_metrics"]
 
     # GPU training is non-deterministic, but on CPU we can validate that we
     # reach a consistent result.
@@ -43,9 +42,9 @@ def test_mnist_estimator_const(tf2: bool) -> None:
         assert v_metrics["accuracy"] == 0.9125999808311462
 
     # Check training metrics.
-    full_trial_metrics = exp.trial_metrics(trials[0].id)
-    for step in full_trial_metrics.steps:
-        metrics = step.metrics
+    full_trial_metrics = exp.trial_metrics(trials[0]["id"])
+    for step in full_trial_metrics["steps"]:
+        metrics = step["metrics"]
 
         batch_metrics = metrics["batch_metrics"]
         assert len(batch_metrics) == 100
@@ -63,7 +62,7 @@ def test_mnist_estimator_load() -> None:
     )
 
     trials = exp.experiment_trials(experiment_id)
-    model = Determined(conf.make_master_url()).get_trial(trials[0].id).top_checkpoint().load()
+    model = Determined(conf.make_master_url()).get_trial(trials[0]["id"]).top_checkpoint().load()
     assert isinstance(model, AutoTrackable)
 
 
@@ -101,10 +100,10 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
     assert len(trials) == 1
 
     first_trial = trials[0]
-    first_trial_id = first_trial.id
+    first_trial_id = first_trial["id"]
 
-    assert len(first_trial.steps) == 1
-    first_checkpoint_id = first_trial.steps[0].checkpoint.id
+    assert len(first_trial["steps"]) == 1
+    first_checkpoint_id = first_trial["steps"][0]["checkpoint"]["id"]
 
     config_obj = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
 
@@ -117,7 +116,7 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
 
     trials = exp.experiment_trials(experiment_id2)
     assert len(trials) == 1
-    assert trials[0].warm_start_checkpoint_id == first_checkpoint_id
+    assert trials[0]["warm_start_checkpoint_id"] == first_checkpoint_id
 
 
 @pytest.mark.e2e_gpu  # type: ignore
@@ -139,7 +138,7 @@ def run_dataset_experiment(
     tf2: bool,
     slots_per_trial: int = 1,
     source_trial_id: Optional[str] = None,
-) -> List[gql.trials]:
+) -> List[Dict[str, Any]]:
     config = conf.load_config(conf.fixtures_path("estimator_dataset/const.yaml"))
     config.setdefault("searcher", {})
     config["searcher"]["max_steps"] = searcher_max_steps
@@ -166,13 +165,13 @@ def run_dataset_experiment(
 def test_dataset_restore(secrets: Dict[str, str], tf2: bool) -> None:
     for searcher_max_steps, batches_per_step in [(4, 1), (2, 2), (1, 4)]:
         trials = run_dataset_experiment(searcher_max_steps, batches_per_step, secrets, tf2)
-        losses = exp.get_flat_metrics(trials[0].id, "loss")
+        losses = exp.get_flat_metrics(trials[0]["id"], "loss")
         assert losses == DATASET_EXPERIMENT_EXPECTED_LOSSES
 
     trials = run_dataset_experiment(1, 1, secrets, tf2)
-    next_trials = run_dataset_experiment(3, 1, secrets, tf2, source_trial_id=trials[0].id)
-    losses = exp.get_flat_metrics(trials[0].id, "loss") + exp.get_flat_metrics(
-        next_trials[0].id, "loss"
+    next_trials = run_dataset_experiment(3, 1, secrets, tf2, source_trial_id=trials[0]["id"])
+    losses = exp.get_flat_metrics(trials[0]["id"], "loss") + exp.get_flat_metrics(
+        next_trials[0]["id"], "loss"
     )
 
     # TODO(DET-834): Separate step ID from from data loader state.

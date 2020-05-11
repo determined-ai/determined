@@ -5,7 +5,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 import dateutil.parser
 import pytest
@@ -14,7 +14,6 @@ from ruamel import yaml
 
 import determined_common.api.authentication as auth
 from determined_common import api
-from determined_common.api import gql
 from tests import cluster
 from tests import config as conf
 
@@ -152,45 +151,29 @@ def experiment_has_active_workload(experiment_id: int) -> bool:
     return False
 
 
-def query() -> api.GraphQLQuery:
+def experiment_json(experiment_id: int) -> Dict[str, Any]:
     auth.initialize_session(conf.make_master_url(), try_reauth=True)
-    return api.GraphQLQuery(conf.make_master_url())
+    r = api.get(conf.make_master_url(), "experiments/{}".format(experiment_id))
+    assert r.status_code == requests.codes.ok, r.text
+    json = r.json()  # type: Dict[str, Any]
+    return json
 
 
 def experiment_state(experiment_id: int) -> str:
-    q = query()
-    q.op.experiments_by_pk(id=experiment_id).state()
-    r = q.send()
-    return cast(str, r.experiments_by_pk.state)
+    state = experiment_json(experiment_id)["state"]  # type: str
+    return state
 
 
-def experiment_trials(experiment_id: int) -> List[gql.trials]:
-    q = query()
-    trials = q.op.experiments_by_pk(id=experiment_id).trials(
-        order_by=[gql.trials_order_by(id=gql.order_by.asc)]
-    )
-    trials.id()
-    trials.state()
-    trials.warm_start_checkpoint_id()
-
-    steps = trials.steps(order_by=[gql.steps_order_by(id=gql.order_by.asc)])
-    steps.id()
-    steps.state()
-    steps.checkpoint.id()
-    steps.checkpoint.state()
-    steps.checkpoint.step_id()
-    steps.checkpoint.uuid()
-    steps.validation.metrics()
-    steps.validation.state()
-    r = q.send()
-    return cast(List[gql.trials], r.experiments_by_pk.trials)
+def experiment_trials(experiment_id: int) -> List[Dict[str, Any]]:
+    trials = experiment_json(experiment_id)["trials"]  # type: List[Dict[str, Any]]
+    return trials
 
 
 def num_experiments() -> int:
-    q = query()
-    q.op.experiments_aggregate.aggregate.count()
-    r = q.send()
-    return cast(int, r.experiments_aggregate.aggregate.count)
+    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+    r = api.get(conf.make_master_url(), "experiments")
+    assert r.status_code == requests.codes.ok, r.text
+    return len(r.json())
 
 
 def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
@@ -214,79 +197,62 @@ def is_terminal_state(state: str) -> bool:
     return state in ("CANCELED", "COMPLETED", "ERROR")
 
 
-def trial_metrics(trial_id: int) -> gql.trials:
-    q = query()
-    steps = q.op.trials_by_pk(id=trial_id).steps(order_by=[gql.steps_order_by(id=gql.order_by.asc)])
-    steps.id()
-    steps.metrics()
-    steps.validation.metrics()
-    r = q.send()
-    return cast(gql.trials, r.trials_by_pk)
+def trial_metrics(trial_id: int) -> Dict[str, Any]:
+    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+    r = api.get(conf.make_master_url(), "trials/{}/metrics".format(trial_id))
+    assert r.status_code == requests.codes.ok, r.text
+    json = r.json()  # type: Dict[str, Any]
+    return json
 
 
 def get_flat_metrics(trial_id: int, metric: str) -> List:
     full_trial_metrics = trial_metrics(trial_id)
-    metrics = [m for step in full_trial_metrics.steps for m in step.metrics["batch_metrics"]]
+    metrics = [m for step in full_trial_metrics["steps"] for m in step["metrics"]["batch_metrics"]]
     return [v[metric] for v in metrics]
 
 
 def num_trials(experiment_id: int) -> int:
-    q = query()
-    q.op.experiments_by_pk(id=experiment_id).trials_aggregate.aggregate.count()
-    r = q.send()
-    return cast(int, r.experiments_by_pk.trials_aggregate.aggregate.count)
-
-
-def num_trials_by_state(experiment_id: int, state: str) -> int:
-    q = query()
-    q.op.experiments_by_pk(id=experiment_id).trials_aggregate(
-        where=gql.trials_bool_exp(state=gql.trial_state_comparison_exp(_eq=state))
-    ).aggregate.count()
-    r = q.send()
-    return cast(int, r.experiments_by_pk.trials_aggregate.aggregate.count)
+    return len(experiment_trials(experiment_id))
 
 
 def num_active_trials(experiment_id: int) -> int:
-    return num_trials_by_state(experiment_id, "ACTIVE")
+    return sum(1 if t["state"] == "ACTIVE" else 0 for t in experiment_trials(experiment_id))
 
 
 def num_completed_trials(experiment_id: int) -> int:
-    return num_trials_by_state(experiment_id, "COMPLETED")
+    return sum(1 if t["state"] == "COMPLETED" else 0 for t in experiment_trials(experiment_id))
 
 
 def num_error_trials(experiment_id: int) -> int:
-    return num_trials_by_state(experiment_id, "ERROR")
+    return sum(1 if t["state"] == "ERROR" else 0 for t in experiment_trials(experiment_id))
 
 
 def trial_logs(trial_id: int) -> List[str]:
-    q = query()
-    q.op.trial_logs(
-        where=gql.trial_logs_bool_exp(trial_id=gql.Int_comparison_exp(_eq=trial_id)),
-        order_by=[gql.trial_logs_order_by(id=gql.order_by.asc)],
-    ).message()
-    r = q.send()
-    return [api.decode_bytes(t.message) for t in r.trial_logs]
+    auth.initialize_session(conf.make_master_url(), try_reauth=True)
+    r = api.get(conf.make_master_url(), "trials/{}/logs".format(trial_id))
+    assert r.status_code == requests.codes.ok, r.text
+    return [t["message"] for t in r.json()]
 
 
 def assert_equivalent_trials(A: int, B: int, validation_metrics: List[str]) -> None:
     full_trial_metrics1 = trial_metrics(A)
     full_trial_metrics2 = trial_metrics(B)
 
-    assert len(full_trial_metrics1.steps) == len(full_trial_metrics2.steps)
-    for step1, step2 in zip(full_trial_metrics1.steps, full_trial_metrics2.steps):
-        metric1 = step1.metrics["batch_metrics"]
-        metric2 = step2.metrics["batch_metrics"]
+    assert len(full_trial_metrics1["steps"]) == len(full_trial_metrics2["steps"])
+    for step1, step2 in zip(full_trial_metrics1["steps"], full_trial_metrics2["steps"]):
+        metric1 = step1["metrics"]["batch_metrics"]
+        metric2 = step2["metrics"]["batch_metrics"]
         for batch1, batch2 in zip(metric1, metric2):
             assert len(batch1) == len(batch2) == 2
-            assert batch1.loss == pytest.approx(batch2.loss)
+            assert batch1["loss"] == pytest.approx(batch2["loss"])
 
-        if step1.validation or step2.validation:
-            assert step1.validation
-            assert step2.validation
+        if step1["validation"] is not None or step2["validation"] is not None:
+            assert step1["validation"] is not None
+            assert step2["validation"] is not None
 
             for metric in validation_metrics:
-                val1 = step1.validation.metrics.get("validation_metrics").get(metric)
-                val2 = step2.validation.metrics.get("validation_metrics").get(metric)
+                val1 = step1.get("validation").get("metrics").get("validation_metrics").get(metric)
+                val2 = step2.get("validation").get("metrics").get("validation_metrics").get(metric)
                 assert val1 == pytest.approx(val2)
 
 
@@ -370,8 +336,8 @@ def report_failed_experiment(experiment_id: int, state: str) -> None:
     )
 
     trials = experiment_trials(experiment_id)
-    active_trials = [t for t in trials if t.state == "ACTIVE"]
-    error_trials = [t for t in trials if t.state == "ERROR"]
+    active_trials = [t for t in trials if t["state"] == "ACTIVE"]
+    error_trials = [t for t in trials if t["state"] == "ERROR"]
 
     print(
         "Experiment {}: {} trials, {} active trials, {} failed trials".format(
@@ -381,9 +347,9 @@ def report_failed_experiment(experiment_id: int, state: str) -> None:
     )
 
     for trial in error_trials:
-        print("******** Start of logs for trial {} ********".format(trial.id), file=sys.stderr)
-        print("".join(trial_logs(trial.id)), file=sys.stderr)
-        print("******** End of logs for trial {} ********".format(trial.id), file=sys.stderr)
+        print("******** Start of logs for trial {} ********".format(trial["id"]), file=sys.stderr)
+        print("".join(trial_logs(trial["id"])), file=sys.stderr)
+        print("******** End of logs for trial {} ********".format(trial["id"]), file=sys.stderr)
 
 
 def run_basic_test(
@@ -416,27 +382,30 @@ def verify_completed_experiment_metadata(
     assert len(trials) > 0
 
     for trial in trials:
-        assert trial.state == "COMPLETED"
-        assert len(trial.steps) > 0
+        assert trial["state"] == "COMPLETED"
+        assert len(trial["steps"]) > 0
 
         # Check that steps appear in increasing order of step ID.
         # Step IDs should start at 1 and have no gaps.
-        step_ids = [s.id for s in trial.steps]
+        step_ids = [s["id"] for s in trial["steps"]]
         assert step_ids == sorted(step_ids)
         assert step_ids == list(range(1, len(step_ids) + 1))
 
-        for step in trial.steps:
-            assert step.state == "COMPLETED"
+        for step in trial["steps"]:
+            assert step["state"] == "COMPLETED"
 
-            if step.validation:
-                assert step.validation.state == "COMPLETED"
+            if step["validation"]:
+                validation = step["validation"]
+                assert validation["state"] == "COMPLETED"
 
-            if step.checkpoint:
-                assert step.checkpoint.state in {"COMPLETED", "DELETED"}
+            if step["checkpoint"]:
+                checkpoint = step["checkpoint"]
+                assert checkpoint["state"] in {"COMPLETED", "DELETED"}
 
     # The last step of every trial should have a checkpoint.
     for trial in trials:
-        assert trial.steps[-1].checkpoint
+        last_step = trial["steps"][-1]
+        assert last_step["checkpoint"]
 
     # When the experiment completes, all slots should now be free. This
     # requires terminating the experiment's last container, which might
@@ -479,10 +448,10 @@ def run_failure_test(
     # For each failed trial, check for the expected error in the logs.
     trials = experiment_trials(experiment_id)
     for t in trials:
-        if t.state != "ERROR":
+        if t["state"] != "ERROR":
             continue
 
-        trial_id = t.id
+        trial_id = t["id"]
         logs = trial_logs(trial_id)
         if error_str is not None:
             assert any(error_str in line for line in logs)
@@ -492,8 +461,8 @@ def get_validation_metric_from_last_step(
     experiment_id: int, trial_id: int, validation_metric_name: str
 ) -> float:
     trial = experiment_trials(experiment_id)[trial_id]
-    last_validation = trial.steps[-1].validation
-    return last_validation.metrics["validation_metrics"][validation_metric_name]  # type: ignore
+    last_validation = trial["steps"][len(trial["steps"]) - 1]["validation"]
+    return last_validation["metrics"]["validation_metrics"][validation_metric_name]  # type: ignore
 
 
 class ExperimentDurations:
@@ -519,39 +488,25 @@ class ExperimentDurations:
 
 
 def get_experiment_durations(experiment_id: int, trial_idx: int) -> ExperimentDurations:
-    q = query()
-    exp = q.op.experiments_by_pk(id=experiment_id)
-    exp.end_time()
-    exp.start_time()
-
-    steps = exp.trials(order_by=[gql.trials_order_by(id=gql.order_by.asc)]).steps()
-    steps.end_time()
-    steps.start_time()
-    steps.checkpoint.end_time()
-    steps.checkpoint.start_time()
-    steps.validation.end_time()
-    steps.validation.start_time()
-
-    r = q.send()
-
-    end_time = dateutil.parser.parse(r.end_time)
-    start_time = dateutil.parser.parse(r.start_time)
+    experiment_metadata = experiment_json(experiment_id)
+    end_time = dateutil.parser.parse(experiment_metadata["end_time"])
+    start_time = dateutil.parser.parse(experiment_metadata["start_time"])
     experiment_duration = end_time - start_time
 
     training_duration = datetime.timedelta(seconds=0)
     validation_duration = datetime.timedelta(seconds=0)
     checkpoint_duration = datetime.timedelta(seconds=0)
-    for step in r.trials[trial_idx].steps:
-        end_time = dateutil.parser.parse(step.end_time)
-        start_time = dateutil.parser.parse(step.start_time)
+    for step in experiment_metadata["trials"][trial_idx]["steps"]:
+        end_time = dateutil.parser.parse(step["end_time"])
+        start_time = dateutil.parser.parse(step["start_time"])
         training_duration += end_time - start_time
-        if step.validation:
-            end_time = dateutil.parser.parse(step.validation.end_time)
-            start_time = dateutil.parser.parse(step.validation.start_time)
+        if "validation" in step and step["validation"]:
+            end_time = dateutil.parser.parse(step["validation"]["end_time"])
+            start_time = dateutil.parser.parse(step["validation"]["start_time"])
             validation_duration += end_time - start_time
-        if step.checkpoint:
-            end_time = dateutil.parser.parse(step.checkpoint.end_time)
-            start_time = dateutil.parser.parse(step.checkpoint.start_time)
+        if "checkpoint" in step and step["checkpoint"]:
+            end_time = dateutil.parser.parse(step["checkpoint"]["end_time"])
+            start_time = dateutil.parser.parse(step["checkpoint"]["start_time"])
             checkpoint_duration += end_time - start_time
     return ExperimentDurations(
         experiment_duration, training_duration, validation_duration, checkpoint_duration

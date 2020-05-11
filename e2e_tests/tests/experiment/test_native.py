@@ -140,9 +140,9 @@ def run_warm_start_test(implementation: NativeImplementation) -> None:
     assert len(trials) == 1
 
     first_trial = trials[0]
-    first_trial_id = first_trial.id
-    assert len(first_trial.steps) == implementation.num_expected_steps_per_trial
-    first_checkpoint_id = first_trial.steps[0].checkpoint.id
+    first_trial_id = first_trial["id"]
+    assert len(first_trial["steps"]) == implementation.num_expected_steps_per_trial
+    first_checkpoint_id = first_trial["steps"][0]["checkpoint"]["id"]
 
     # Add a source trial ID to warm start from.
     second_exp = NativeImplementation(**implementation._asdict())
@@ -158,7 +158,7 @@ def run_warm_start_test(implementation: NativeImplementation) -> None:
     trials = experiment.experiment_trials(experiment_id2)
     assert len(trials) == 1
     for trial in trials:
-        assert trial.warm_start_checkpoint_id == first_checkpoint_id
+        assert trial["warm_start_checkpoint_id"] == first_checkpoint_id
 
 
 @pytest.mark.parametrize(  # type: ignore
