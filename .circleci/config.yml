@@ -475,6 +475,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
+      - aws-cli/setup
       - run: make -C docs/deploy publish
 
   package-and-push-system-local:
