@@ -3,9 +3,9 @@ import argparse
 from determined_deploy.local import cluster_utils
 
 
-def add_fixture_up_subparser(subparsers: argparse._SubParsersAction) -> None:
+def add_cluster_up_subparser(subparsers: argparse._SubParsersAction) -> None:
     parser = subparsers.add_parser(
-        "fixture-up",
+        "cluster-up",
         help="Create a Determined cluster",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
@@ -34,9 +34,9 @@ def add_fixture_up_subparser(subparsers: argparse._SubParsersAction) -> None:
     )
 
 
-def add_fixture_down_subparser(subparsers: argparse._SubParsersAction) -> None:
+def add_cluster_down_subparser(subparsers: argparse._SubParsersAction) -> None:
     parser = subparsers.add_parser(
-        "fixture-down",
+        "cluster-down",
         help="Stop a Determined cluster",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
@@ -133,8 +133,8 @@ def make_local_parser(subparsers: argparse._SubParsersAction) -> None:
         "local", help="local help", formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     subparsers = parser_local.add_subparsers(help="command", dest="command")
-    add_fixture_up_subparser(subparsers)
-    add_fixture_down_subparser(subparsers)
+    add_cluster_up_subparser(subparsers)
+    add_cluster_down_subparser(subparsers)
     add_logs_subparser(subparsers)
     add_master_up_subparser(subparsers)
     add_master_down_subparser(subparsers)
@@ -143,8 +143,8 @@ def make_local_parser(subparsers: argparse._SubParsersAction) -> None:
     subparsers.required = True
 
 
-def handle_fixture_up(args):
-    cluster_utils.fixture_up(
+def handle_cluster_up(args):
+    cluster_utils.cluster_up(
         num_agents=args.agents,
         port=args.master_port,
         master_config_path=args.master_config_path,
@@ -157,8 +157,8 @@ def handle_fixture_up(args):
     )
 
 
-def handle_fixture_down(args):
-    cluster_utils.fixture_down(cluster_name=args.cluster_name, delete_db=args.delete_db)
+def handle_cluster_down(args):
+    cluster_utils.cluster_down(cluster_name=args.cluster_name, delete_db=args.delete_db)
 
 
 def handle_logs(args):
@@ -204,8 +204,8 @@ def deploy_local(args: argparse.Namespace) -> None:
     OPERATION_TO_FN = {
         "agent-up": handle_agent_up,
         "agent-down": handle_agent_down,
-        "fixture-up": handle_fixture_up,
-        "fixture-down": handle_fixture_down,
+        "cluster-up": handle_cluster_up,
+        "cluster-down": handle_cluster_down,
         "logs": handle_logs,
         "master-up": handle_master_up,
         "master-down": handle_master_down,

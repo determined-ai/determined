@@ -141,7 +141,7 @@ def master_down(master_name: str, delete_db: bool) -> None:
         docker_compose(["down", "-t", "1"], master_name)
 
 
-def fixture_up(
+def cluster_up(
     num_agents: Optional[int],
     port: Optional[int],
     master_config_path: Path,
@@ -152,7 +152,7 @@ def fixture_up(
     no_gpu: bool,
     autorestart: bool,
 ):
-    fixture_down(cluster_name, delete_db)
+    cluster_down(cluster_name, delete_db)
     master_up(
         port=port,
         master_config_path=master_config_path,
@@ -176,7 +176,7 @@ def fixture_up(
         )
 
 
-def fixture_down(cluster_name: str, delete_db: bool) -> None:
+def cluster_down(cluster_name: str, delete_db: bool) -> None:
     master_down(master_name=cluster_name, delete_db=delete_db)
     stop_cluster_agents(cluster_name=cluster_name)
 
