@@ -186,21 +186,6 @@ machine. To change the master port, run
 make test-integrations INTEGRATIONS_HOST_PORT=<PORT>
 ```
 
-If you want to run the integration tests on GPUs, [change the default Docker
-container runtime to
-`nvidia`](https://github.com/NVIDIA/nvidia-docker/wiki/Advanced-topics#default-runtime).
-
-## Dependency Management
-
-This project uses [`pip-compile`](https://github.com/jazzband/pip-tools) for
-pinning dependencies' versions.
-
-To add a dependency, edit `setup.py` or an appropriate `.in` file and then run
-`make pin-deps`. The `pip-compile` tool will then generate the appropriate
-pinned dependencies in `requirements.txt` files throughout the repo.
-
-To update all dependencies, run `make upgrade-deps`.
-
 ## Debugging
 
 ### Connecting to PostgreSQL
@@ -225,14 +210,14 @@ go tool pprof -http :8081 ~/pprof/sample-file
 
 ### GPU support
 
-To use Determined with GPUs, the Nvidia CUDA drivers (>= 384.81) and
-[nvidia-docker2](https://docs.determined.ai/latest/how-to/installation/background.html#installing-docker)
+To use Determined with GPUs, the Nvidia drivers (>= 384.81) and
+[`nvidia-container-toolkit`](https://docs.determined.ai/latest/how-to/installation/requirements.html#installing-docker)
 must be installed.
 
-To verify that your system can run containers that use GPUs, try:
+To verify that your system can run containers that use GPUs and CUDA, run:
 
 ```sh
-docker run --runtime=nvidia --rm nvidia/cuda:10.0-cudnn7-runtime-ubuntu16.04 nvidia-smi
+docker run --gpus all --rm nvidia/cuda:10.0-cudnn7-runtime-ubuntu16.04 nvidia-smi
 ```
 
 If this command displays one or more GPUs, the Determined agent should
