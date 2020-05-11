@@ -49,7 +49,7 @@ def interactive_command(*args: str) -> Generator:
 
         @property
         def stderr(self) -> Generator[str, None, None]:
-            return (l.decode() for l in self.process.stderr)
+            return (line.decode() for line in self.process.stderr)
 
         @property
         def stdin(self) -> IO:

@@ -27,7 +27,7 @@ class NoOpTrialController(det.CallbackTrialController):
 
         check_startup_hook_ran = self.env.hparams.get("check_startup_hook_ran", False)
         if check_startup_hook_ran:
-            check.true(os.path.isfile("startup-hook-ran"), f"File should exists.")
+            check.true(os.path.isfile("startup-hook-ran"), "File should exists.")
 
         self.chaos = random.SystemRandom()
         self._batch_size = self.context.get_per_slot_batch_size()

@@ -208,7 +208,7 @@ class SubprocessLauncher:
             if connection_attempts == 10:
                 raise AssertionError("Training process failed to start sshd.")
 
-            logging.info(f"Waiting for training process to start sshd ...")
+            logging.info("Waiting for training process to start sshd ...")
             time.sleep(1)
 
     def _launch_python_subprocess(self) -> subprocess.Popen:

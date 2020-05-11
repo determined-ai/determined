@@ -72,7 +72,7 @@ def test_noop_pause() -> None:
         else:
             time.sleep(1)
     check.true(
-        not workload_active, f"The experiment cannot be paused within 20 seconds.",
+        not workload_active, "The experiment cannot be paused within 20 seconds.",
     )
 
     # Resume the experiment and wait for completion.
