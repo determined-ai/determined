@@ -1,5 +1,7 @@
 .PHONY: all
-all: get-deps build
+all:
+	$(MAKE) get-deps
+	$(MAKE) build
 
 .PHONY: get-deps
 get-deps:
