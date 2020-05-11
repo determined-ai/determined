@@ -156,6 +156,8 @@ environment variable, as with any other configuration option).
 Disabling telemetry reporting will not affect the functionality of
 Determined in any way.
 
+.. _master-configuration:
+
 Master Configuration
 ====================
 
@@ -491,6 +493,8 @@ The master supports the following configuration settings:
   usage of Determined.
 
   - ``enabled``: Whether collection is enabled. Defaults to ``true``.
+
+.. _agent-configuration:
 
 Agent Configuration
 ===================
