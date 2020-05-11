@@ -10,8 +10,8 @@ start-db: stop-db
 stop-db:
 	docker-compose down
 
-.PHONY: run
-run:
+.PHONY: prep-root
+prep-root:
 	@rm -rf build
 	@mkdir -p build/webui/docs
 	@mkdir -p build/webui/elm
@@ -24,4 +24,7 @@ run:
 	@ln -s $(abspath ../common/dist/*.whl) build/wheels/
 	@ln -s $(abspath ../cli/dist/*.whl) build/wheels/
 	@ln -s $(abspath ../harness/dist/*.whl) build/wheels/
+
+.PHONY: run
+run: prep-root
 	@python3 run-server.py
