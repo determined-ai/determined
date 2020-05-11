@@ -220,13 +220,13 @@ def agent_up(
         restart_policy = None
     config.MASTER_HOST = master_host
     config.MASTER_PORT = master_port
-    if no_gpu:
-        device_requests = None
-    else:
-        device_requests = [GPU_DEVICE_REQUEST]
 
     _wait_for_master()
     docker_client = docker.from_env()
+    if not no_gpu and "nvidia" in docker_client.info()["Runtimes"]:
+        device_requests = [GPU_DEVICE_REQUEST]
+    else:
+        device_requests = None
 
     print(f"Starting {agent_name}")
     docker_client.containers.run(
