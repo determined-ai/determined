@@ -128,7 +128,7 @@ def test_pytorch_cifar10_const() -> None:
     trials = exp.experiment_trials(experiment_id)
     nn = (
         Determined(conf.make_master_url())
-        .get_trial(trials[0].id)
+        .get_trial(trials[0]["id"])
         .select_checkpoint(latest=True)
         .load(map_location=torch.device("cpu"))
     )
@@ -147,7 +147,7 @@ def test_pytorch_cifar10_parallel() -> None:
     trials = exp.experiment_trials(experiment_id)
     nn = (
         Determined(conf.make_master_url())
-        .get_trial(trials[0].id)
+        .get_trial(trials[0]["id"])
         .select_checkpoint(latest=True)
         .load(map_location=torch.device("cpu"))
     )

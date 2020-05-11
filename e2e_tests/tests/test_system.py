@@ -56,26 +56,26 @@ def test_metric_gathering() -> None:
     batches_per_step = 100
 
     # Check training metrics.
-    full_trial_metrics = exp.trial_metrics(trials[0].id)
-    for step in full_trial_metrics.steps:
-        metrics = step.metrics
+    full_trial_metrics = exp.trial_metrics(trials[0]["id"])
+    for step in full_trial_metrics["steps"]:
+        metrics = step["metrics"]
         assert metrics["num_inputs"] == batches_per_step
 
         actual = metrics["batch_metrics"]
         assert len(actual) == batches_per_step
 
-        first_base_value = base_value + (step.id - 1) * batches_per_step
+        first_base_value = base_value + (step["id"] - 1) * batches_per_step
         batch_values = first_base_value + gain_per_batch * np.arange(batches_per_step)
         expected = [structure_to_metrics(value, training_structure) for value in batch_values]
         assert structure_equal(expected, actual)
 
     # Check validation metrics.
-    for step in trials[0].steps:
-        validation = step.validation
-        metrics = validation.metrics
+    for step in trials[0]["steps"]:
+        validation = step["validation"]
+        metrics = validation["metrics"]
         actual = metrics["validation_metrics"]
 
-        value = base_value + step.id * batches_per_step
+        value = base_value + step["id"] * batches_per_step
         expected = structure_to_metrics(value, validation_structure)
         assert structure_equal(expected, actual)
 
@@ -123,12 +123,13 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
             assert len(trials) == 1
 
             checkpoints = sorted(
-                (step.checkpoint for step in trials[0].steps), key=operator.itemgetter("step_id"),
+                (step["checkpoint"] for step in trials[0]["steps"]),
+                key=operator.itemgetter("step_id"),
             )
             assert len(checkpoints) == 10
             by_state = {}  # type: Dict[str, Set[int]]
             for checkpoint in checkpoints:
-                by_state.setdefault(checkpoint.state, set()).add(checkpoint.step_id)
+                by_state.setdefault(checkpoint["state"], set()).add(checkpoint["step_id"])
 
             if by_state == result:
                 all_checkpoints.append((config, checkpoints))
@@ -316,9 +317,9 @@ def test_end_to_end_adaptive() -> None:
     trials = exp.experiment_trials(exp_id)
     best = None
     for trial in trials:
-        assert len(trial.steps)
-        last_step = trial.steps[-1]
-        accuracy = last_step.validation.metrics["validation_metrics"]["accuracy"]
+        assert len(trial["steps"])
+        last_step = trial["steps"][-1]
+        accuracy = last_step["validation"]["metrics"]["validation_metrics"]["accuracy"]
         if not best or accuracy > best:
             best = accuracy
 
@@ -362,7 +363,7 @@ def test_log_null_bytes() -> None:
 
     trials = exp.experiment_trials(experiment_id)
     assert len(trials) == 1
-    logs = exp.trial_logs(trials[0].id)
+    logs = exp.trial_logs(trials[0]["id"])
     assert len(logs) > 0
 
 
