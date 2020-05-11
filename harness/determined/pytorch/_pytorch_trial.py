@@ -678,6 +678,7 @@ class PyTorchTrialController(det.LoopTrialController):
             checkpoint, str(path.joinpath("state_dict.pth")), pickle_module=cloudpickle
         )
 
+        self.trial.on_checkpoint_end(path)
         return {}
 
 
@@ -792,6 +793,13 @@ class PyTorchTrial(det.Trial):
         Returns:
             :py:class:`det.pytorch.LRScheduler`:
                 Wrapper around a :obj:`torch.optim.lr_scheduler._LRScheduler`.
+        """
+        pass
+
+    def on_checkpoint_end(self, path: pathlib.Path) -> None:
+        """
+        Runs after checkpointing the trial. Users can add files to the
+        checkpoint which will be stored in persistent storage.
         """
         pass
 
