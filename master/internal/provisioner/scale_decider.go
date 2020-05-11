@@ -89,7 +89,7 @@ func (s *scaleDecider) updateInstanceSnapshot(instances []*Instance) bool {
 		instanceMap[inst.ID] = inst
 	}
 	for _, inst := range instances {
-		if other, ok := instanceMap[inst.ID]; ok && !inst.equals(*other) {
+		if other, ok := instanceMap[inst.ID]; !ok || !inst.equals(*other) {
 			updated()
 			return true
 		}
