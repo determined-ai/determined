@@ -329,7 +329,7 @@ class EstimatorTrialController(det.LoopTrialController):
 
         # Initialize random seeds.
         if env.experiment_config.input_from_dataflow():
-            logging.debug(f"Using tensorpack dataflows as input.")
+            logging.debug("Using tensorpack dataflows as input.")
             process_rank = 0 if not hvd_config.use else hvd.rank()
             EstimatorTrialController.set_random_seed(env.trial_seed + process_rank)
         else:

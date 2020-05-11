@@ -333,7 +333,8 @@ def reproducibility_test(
 
 
 OptimizerStateMakeControllerFn = Callable[
-    [workload.Stream, DefaultNamedArg(Optional[pathlib.Path], "load_path")], det.TrialController
+    [workload.Stream, DefaultNamedArg(Optional[pathlib.Path], "load_path")],  # noqa: F821
+    det.TrialController,
 ]
 
 

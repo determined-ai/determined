@@ -1,5 +1,10 @@
 [flake8]
 max-line-length = 100
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist
 
 # We ignore F401 in __init__.py because it is expected for there to be
 # "unused imports" when defining a "regular" package. (This file is

@@ -383,19 +383,19 @@ class TensorpackTrialController(det.LoopTrialController):
     def _init_model(self, training_dataflow: Any, validation_dataflow: Any) -> None:
         self._load()
 
-        logging.info(f"Calling build_model")
+        logging.info("Calling build_model")
         if self.hvd_config.use:
             trainer_type = "horovod"
         else:
             trainer_type = "replicated"
         model = self.trial.build_model(trainer_type)
-        logging.info(f"Finished build_model")
+        logging.info("Finished build_model")
 
         determined_ai_tensorpack = is_determined_ai_tensorpack()
 
         if not determined_ai_tensorpack and self.hvd_config.aggregation_frequency > 1:
             raise AssertionError(
-                f"Gradient aggregation is only supported for custom DAI version of tensorpack"
+                "Gradient aggregation is only supported for custom DAI version of tensorpack"
             )
 
         if self.hvd_config.use:
@@ -415,11 +415,11 @@ class TensorpackTrialController(det.LoopTrialController):
         if not self.env.hparams.get("disable_staging_area"):
             inp = tp.StagingInput(inp, 1)
 
-        logging.info(f"Calling setup_graph")
+        logging.info("Calling setup_graph")
         self.trainer.setup_graph(
             model.get_input_signature(), inp, model.build_graph, model.get_optimizer
         )
-        logging.info(f"Finished setup_graph")
+        logging.info("Finished setup_graph")
 
         # For validation we support users specifying an Evaluator(), or passing in
         # the validation metrics they want to track. If they pass in validation
@@ -471,7 +471,7 @@ class TensorpackTrialController(det.LoopTrialController):
             self.load_path = self.load_path.joinpath("checkpoint")
 
         if self.load_path is None or not self.is_chief:
-            logging.info(f"Not loading model")
+            logging.info("Not loading model")
             self.session_init = None
         else:
             logging.info(f"Loading model from {self.load_path}")
