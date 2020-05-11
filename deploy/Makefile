@@ -10,7 +10,7 @@ upload-try-now-template:
 	aws s3 cp $(TEMPLATE_PATH) $(TRY_NOW_URL) --acl public-read
 
 .PHONY: publish
-publish: build upload-try-now-template
+publish: build
 	twine upload --non-interactive dist/*
 
 .PHONY: clean
