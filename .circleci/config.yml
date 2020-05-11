@@ -2,6 +2,7 @@
 version: 2.1
 
 orbs:
+  aws-cli: circleci/aws-cli@1.0.0
   win: circleci/windows@2.3.0
   slack: circleci/slack@3.4.2
 
@@ -557,6 +558,13 @@ jobs:
       - run: make -C <<parameters.path>> build
       - run: make -C <<parameters.path>> publish
 
+  publish-try-now-template:
+    docker:
+      - image: python:3.6-slim-buster
+    steps:
+      - checkout
+      - aws-cli/setup
+      - run: make -C deploy publish-try-now-template
 
   test-e2e-webui:
     machine:
@@ -1110,5 +1118,9 @@ workflows:
       - publish-docs:
           requires:
             - build-docs
+          context: determined-production
+          filters: *release-filters
+
+      - publish-try-now-template:
           context: determined-production
           filters: *release-filters
