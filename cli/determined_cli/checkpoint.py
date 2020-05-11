@@ -3,7 +3,6 @@ from argparse import Namespace
 from typing import Any, Dict, List
 
 from determined_common import api, constants, experimental
-from determined_common.api import gql
 from determined_common.experimental import Determined
 
 from . import render, user
@@ -55,61 +54,29 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: str) -> None:
 
 @user.authentication_required
 def list(args: Namespace) -> None:
-    q = api.GraphQLQuery(args.master)
-    q.op.experiments_by_pk(id=args.experiment_id).config(path="checkpoint_storage")
-
-    order_by = [
-        gql.checkpoints_order_by(
-            validation=gql.validations_order_by(
-                metric_values=gql.validation_metrics_order_by(signed=gql.order_by.asc)
-            )
-        )
-    ]
-
-    limit = None
+    params = {}
     if args.best is not None:
         if args.best < 0:
             raise AssertionError("--best must be a non-negative integer")
-        limit = args.best
+        params["best"] = args.best
 
-    checkpoints = q.op.checkpoints(
-        where=gql.checkpoints_bool_exp(
-            step=gql.steps_bool_exp(
-                trial=gql.trials_bool_exp(
-                    experiment_id=gql.Int_comparison_exp(_eq=args.experiment_id)
-                )
-            )
-        ),
-        order_by=order_by,
-        limit=limit,
-    )
-    checkpoints.end_time()
-    checkpoints.labels()
-    checkpoints.resources()
-    checkpoints.start_time()
-    checkpoints.state()
-    checkpoints.step_id()
-    checkpoints.trial_id()
-    checkpoints.uuid()
-
-    checkpoints.step.validation.metric_values.raw()
-
-    resp = q.send()
+    r = api.get(
+        args.master, "experiments/{}/checkpoints".format(args.experiment_id), params=params
+    ).json()
+    searcher_metric = r["metric_name"]
 
     headers = ["Trial ID", "Step ID", "State", "Validation Metric", "UUID", "Resources", "Size"]
     values = [
         [
-            c.trial_id,
-            c.step_id,
-            c.state,
-            c.step.validation.metric_values.raw
-            if c.step.validation and c.step.validation.metric_values
-            else None,
-            c.uuid,
-            render.format_resources(c.resources),
-            render.format_resource_sizes(c.resources),
+            c["trial_id"],
+            c["step_id"],
+            c["state"],
+            api.metric.get_validation_metric(searcher_metric, c["step"]["validation"]),
+            c["uuid"],
+            render.format_resources(c["resources"]),
+            render.format_resource_sizes(c["resources"]),
         ]
-        for c in resp.checkpoints
+        for c in r["checkpoints"]
     ]
 
     render.tabulate_or_csv(headers, values, args.csv)
