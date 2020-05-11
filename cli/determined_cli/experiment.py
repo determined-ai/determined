@@ -15,13 +15,11 @@ import tabulate
 from ruamel import yaml
 from termcolor import colored
 
-import determined_common.api.authentication as auth
 from determined_cli import checkpoint, render
 from determined_cli.declarative_argparse import Arg, Cmd, Group
 from determined_cli.trial import logs
 from determined_cli.user import authentication_required
 from determined_common import api, constants, context
-from determined_common.api import gql
 from determined_common.experimental import Determined
 
 from .checkpoint import render_checkpoint
@@ -55,23 +53,15 @@ def cancel(args: Namespace) -> None:
 
 def follow_experiment_logs(master_url: str, exp_id: int) -> None:
     # Get the ID of this experiment's first trial (i.e., the one with the lowest ID).
-    q = api.GraphQLQuery(master_url)
-    trials = q.op.trials(
-        where=gql.trials_bool_exp(experiment_id=gql.Int_comparison_exp(_eq=exp_id)),
-        order_by=[gql.trials_order_by(id=gql.order_by.asc)],
-        limit=1,
-    )
-    trials.id()
-
     print("Waiting for first trial to begin...")
     while True:
-        resp = q.send()
-        if resp.trials:
+        r = api.get(master_url, "experiments/{}".format(exp_id))
+        if len(r.json()["trials"]) > 0:
             break
         else:
             time.sleep(0.1)
 
-    first_trial_id = resp.trials[0].id
+    first_trial_id = sorted(t_id["id"] for t_id in r.json()["trials"])[0]
     print("Following first trial with ID {}".format(first_trial_id))
 
     # Call `logs --follow` on the new trial.
@@ -108,30 +98,22 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
             else:
                 print(", ", end="")
 
-    q = api.GraphQLQuery(master_url)
-    exp = q.op.experiments_by_pk(id=exp_id)
-    exp.state()
-    steps = exp.trials.steps(order_by=[gql.steps_order_by(id=gql.order_by.asc)])
-    steps.checkpoint().id()
-    steps.validation().id()
-
     while True:
-        exp = q.send().experiments_by_pk
+        r = api.get(master_url, "experiments/{}".format(exp_id)).json()
 
         # Wait for experiment to start and initialize a trial and step.
-        step = None
-        if exp.trials and exp.trials[0].steps:
-            step = exp.trials[0].steps[0]
+        if len(r["trials"]) < 1 or len(r["trials"][0]["steps"]) < 1:
+            step = {}  # type: Dict
+        else:
+            step = r["trials"][0]["steps"][0]
 
-        # Update the active stage by examining the status of the experiment. The way the GraphQL
-        # library works is that the checkpoint and validation attributes of a step are always
-        # present and non-None, but they don't have any attributes of their own when the
-        # corresponding database object doesn't exist.
-        if exp.state == constants.COMPLETED:
+        # Update the active_stage by examining the result from master
+        # /experiments/<experiment-id> endpoint.
+        if r["state"] == constants.COMPLETED:
             active_stage = 4
-        elif step and hasattr(step.checkpoint, "id"):
+        elif step.get("checkpoint"):
             active_stage = 3
-        elif step and hasattr(step.validation, "id"):
+        elif step.get("validation"):
             active_stage = 2
         elif step:
             active_stage = 1
@@ -140,11 +122,11 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
 
         # If the experiment is in a terminal state, output the appropriate
         # message and exit. Otherwise, sleep and repeat.
-        if exp.state == "COMPLETED":
+        if r["state"] == constants.COMPLETED:
             print_progress(active_stage, ended=True)
             print(colored("Model definition test succeeded! 🎉", "green"))
             return
-        elif exp.state == constants.CANCELED:
+        elif r["state"] == constants.CANCELED:
             print_progress(active_stage, ended=True)
             print(
                 colored(
@@ -155,9 +137,9 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
                 )
             )
             sys.exit(1)
-        elif exp.state == constants.ERROR:
+        elif r["state"] == constants.ERROR:
             print_progress(active_stage, ended=True)
-            trial_id = exp.trials[0].id
+            trial_id = r["trials"][0]["id"]
             logs_args = Namespace(trial_id=trial_id, master=master_url, tail=None, follow=False)
             logs(logs_args)
             sys.exit(1)
@@ -337,52 +319,16 @@ def delete_experiment(args: Namespace) -> None:
 
 @authentication_required
 def describe(args: Namespace) -> None:
-    ids = [int(x) for x in args.experiment_ids.split(",")]
-
-    q = api.GraphQLQuery(args.master)
-    exps = q.op.experiments(where=gql.experiments_bool_exp(id=gql.Int_comparison_exp(_in=ids)))
-    exps.archived()
-    exps.config()
-    exps.end_time()
-    exps.id()
-    exps.progress()
-    exps.start_time()
-    exps.state()
-
-    trials = exps.trials(order_by=[gql.trials_order_by(id=gql.order_by.asc)])
-    trials.end_time()
-    trials.hparams()
-    trials.id()
-    trials.start_time()
-    trials.state()
-
-    steps = trials.steps(order_by=[gql.steps_order_by(id=gql.order_by.asc)])
-    steps.end_time()
-    steps.id()
-    steps.start_time()
-    steps.state()
-    steps.trial_id()
-
-    steps.checkpoint.end_time()
-    steps.checkpoint.start_time()
-    steps.checkpoint.state()
-
-    steps.validation.end_time()
-    steps.validation.start_time()
-    steps.validation.state()
-
-    if args.metrics:
-        steps.metrics(path="avg_metrics")
-        steps.validation.metrics()
-
-    resp = q.send()
-
-    # Re-sort the experiment objects to match the original order.
-    exps_by_id = {e.id: e for e in resp.experiments}
-    experiments = [exps_by_id[id] for id in ids]
+    docs = []
+    for experiment_id in args.experiment_ids.split(","):
+        if args.metrics:
+            r = api.get(args.master, "experiments/{}/metrics/summary".format(experiment_id))
+        else:
+            r = api.get(args.master, "experiments/{}".format(experiment_id))
+        docs.append(r.json())
 
     if args.json:
-        print(json.dumps(resp.__to_json_value__()["experiments"], indent=4))
+        print(json.dumps(docs, indent=4))
         return
 
     # Display overall experiment information.
@@ -398,16 +344,16 @@ def describe(args: Namespace) -> None:
     ]
     values = [
         [
-            e.id,
-            e.state,
-            render.format_percent(e.progress),
-            render.format_time(e.start_time),
-            render.format_time(e.end_time),
-            e.config.get("description"),
-            e.archived,
-            ", ".join(sorted(e.config.get("labels", []))),
+            doc["id"],
+            doc["state"],
+            render.format_percent(doc["progress"]),
+            render.format_time(doc.get("start_time")),
+            render.format_time(doc.get("end_time")),
+            doc["config"].get("description"),
+            doc["archived"],
+            ", ".join(sorted(doc["config"].get("labels", []))),
         ]
-        for e in experiments
+        for doc in docs
     ]
     if not args.outdir:
         outfile = None
@@ -420,15 +366,15 @@ def describe(args: Namespace) -> None:
     headers = ["Trial ID", "Experiment ID", "State", "Start Time", "End Time", "H-Params"]
     values = [
         [
-            t.id,
-            e.id,
-            t.state,
-            render.format_time(t.start_time),
-            render.format_time(t.end_time),
-            json.dumps(t.hparams, indent=4),
+            trial["id"],
+            doc["id"],
+            trial["state"],
+            render.format_time(trial.get("start_time")),
+            render.format_time(trial.get("end_time")),
+            json.dumps(trial["hparams"], indent=4),
         ]
-        for e in experiments
-        for t in e.trials
+        for doc in docs
+        for trial in doc["trials"]
     ]
     if not args.outdir:
         outfile = None
@@ -440,12 +386,10 @@ def describe(args: Namespace) -> None:
     # Display step-related information.
     if args.metrics:
         # Accumulate the scalar training and validation metric names from all provided experiments.
-        t_metrics_names = sorted({n for e in experiments for n in scalar_training_metrics_names(e)})
+        t_metrics_names = sorted({n for doc in docs for n in scalar_training_metrics_names(doc)})
         t_metrics_headers = ["Training Metric: {}".format(name) for name in t_metrics_names]
 
-        v_metrics_names = sorted(
-            {n for e in experiments for n in scalar_validation_metrics_names(e)}
-        )
+        v_metrics_names = sorted({n for doc in docs for n in scalar_validation_metrics_names(doc)})
         v_metrics_headers = ["Validation Metric: {}".format(name) for name in v_metrics_names]
     else:
         t_metrics_headers = []
@@ -466,34 +410,33 @@ def describe(args: Namespace) -> None:
     )
 
     values = []
-    for e in experiments:
-        for t in e.trials:
-            for step in t.steps:
+    for doc in docs:
+        for trial in doc["trials"]:
+            for step in trial["steps"]:
                 t_metrics_fields = []
-                if hasattr(step, "metrics"):
-                    avg_metrics = step.metrics
+                if step.get("metrics"):
+                    avg_metrics = step["metrics"]["avg_metrics"]
                     for name in t_metrics_names:
                         if name in avg_metrics:
                             t_metrics_fields.append(avg_metrics[name])
                         else:
                             t_metrics_fields.append(None)
 
-                checkpoint = step.checkpoint
+                checkpoint = step.get("checkpoint")
                 if checkpoint:
-                    checkpoint_state = checkpoint.state
-                    checkpoint_start_time = checkpoint.start_time
-                    checkpoint_end_time = checkpoint.end_time
+                    checkpoint_state = checkpoint["state"]
+                    checkpoint_start_time = checkpoint.get("start_time")
+                    checkpoint_end_time = checkpoint.get("end_time")
                 else:
                     checkpoint_state = None
                     checkpoint_start_time = None
                     checkpoint_end_time = None
 
-                validation = step.validation
+                validation = step.get("validation")
                 if validation:
-                    validation_state = validation.state
-                    validation_start_time = validation.start_time
-                    validation_end_time = validation.end_time
-
+                    validation_state = validation["state"]
+                    validation_start_time = validation.get("start_time")
+                    validation_end_time = validation.get("end_time")
                 else:
                     validation_state = None
                     validation_start_time = None
@@ -509,11 +452,11 @@ def describe(args: Namespace) -> None:
 
                 row = (
                     [
-                        step.trial_id,
-                        step.id,
-                        step.state,
-                        render.format_time(step.start_time),
-                        render.format_time(step.end_time),
+                        step["trial_id"],
+                        step["id"],
+                        step["state"],
+                        render.format_time(step.get("start_time")),
+                        render.format_time(step.get("end_time")),
                     ]
                     + t_metrics_fields
                     + [
@@ -538,10 +481,8 @@ def describe(args: Namespace) -> None:
 
 @authentication_required
 def config(args: Namespace) -> None:
-    q = api.GraphQLQuery(args.master)
-    q.op.experiments_by_pk(id=args.experiment_id).config()
-    resp = q.send()
-    yaml.safe_dump(resp.experiments_by_pk.config, stream=sys.stdout, default_flow_style=False)
+    result = api.get(args.master, "experiments/{}/config".format(args.experiment_id))
+    yaml.safe_dump(result.json(), stream=sys.stdout, default_flow_style=False)
 
 
 @authentication_required
@@ -583,14 +524,11 @@ def kill_experiment(args: Namespace) -> None:
 @authentication_required
 def wait(args: Namespace) -> None:
     while True:
-        q = api.GraphQLQuery(args.master)
-        q.op.experiments_by_pk(id=args.experiment_id).state()
-        resp = q.send()
-        state = resp.experiments_by_pk.state
+        r = api.get(args.master, "experiments/{}".format(args.experiment_id)).json()
 
-        if state in constants.TERMINAL_STATES:
-            print("Experiment {} terminated with state {}".format(args.experiment_id, state))
-            if state == constants.COMPLETED:
+        if r["state"] in constants.TERMINAL_STATES:
+            print("Experiment {} terminated with state {}".format(args.experiment_id, r["state"]))
+            if r["state"] == constants.COMPLETED:
                 sys.exit(0)
             else:
                 sys.exit(1)
@@ -600,46 +538,33 @@ def wait(args: Namespace) -> None:
 
 @authentication_required
 def list_experiments(args: Namespace) -> None:
-    where = None
-    if not args.all:
-        user = api.Authentication.instance().get_session_user()
-        where = gql.experiments_bool_exp(
-            archived=gql.Boolean_comparison_exp(_eq=False),
-            owner=gql.users_bool_exp(username=gql.String_comparison_exp(_eq=user)),
-        )
+    params = {}
+    if args.all:
+        params["filter"] = "all"
+    else:
+        params["user"] = api.Authentication.instance().get_session_user()
 
-    q = api.GraphQLQuery(args.master)
-    exps = q.op.experiments(order_by=[gql.experiments_order_by(id=gql.order_by.desc)], where=where)
-    exps.archived()
-    exps.config()
-    exps.end_time()
-    exps.id()
-    exps.owner.username()
-    exps.progress()
-    exps.start_time()
-    exps.state()
-
-    resp = q.send()
+    r = api.get(args.master, "experiments", params=params)
 
     def format_experiment(e: Any) -> List[Any]:
         result = [
-            e.id,
-            e.owner.username,
-            e.config["description"],
-            e.state,
-            render.format_percent(e.progress),
-            render.format_time(e.start_time),
-            render.format_time(e.end_time),
+            e["id"],
+            e["owner"]["username"],
+            e["config"]["description"],
+            e["state"],
+            render.format_percent(e["progress"]),
+            render.format_time(e["start_time"]),
+            render.format_time(e["end_time"]),
         ]
         if args.all:
-            result.append(e.archived)
+            result.append(e["archived"])
         return result
 
     headers = ["ID", "Owner", "Description", "State", "Progress", "Start Time", "End Time"]
     if args.all:
         headers.append("Archived")
 
-    values = [format_experiment(e) for e in resp.experiments]
+    values = [format_experiment(e) for e in r.json()]
     render.tabulate_or_csv(headers, values, args.csv)
 
 
@@ -647,7 +572,7 @@ def is_number(value: Any) -> bool:
     return isinstance(value, numbers.Number)
 
 
-def scalar_training_metrics_names(exp: Any) -> Set[str]:
+def scalar_training_metrics_names(exp: Dict[str, Any]) -> Set[str]:
     """
     Given an experiment history, return the names of training metrics
     that are associated with scalar, numeric values.
@@ -656,21 +581,21 @@ def scalar_training_metrics_names(exp: Any) -> Set[str]:
     consistent training metric names and types. Therefore, the first
     non-null batch metrics dictionary is used to extract names.
     """
-    for trial in exp.trials:
-        for step in trial.steps:
-            metrics = step.metrics
+    for trial in exp["trials"]:
+        for step in trial["steps"]:
+            metrics = step.get("metrics")
             if not metrics:
                 continue
-            return set(metrics.keys())
+            return set(metrics.get("avg_metrics", {}).keys())
 
     return set()
 
 
-def scalar_validation_metrics_names(exp: Any) -> Set[str]:
-    for trial in exp.trials:
-        for step in trial.steps:
+def scalar_validation_metrics_names(exp: Dict[str, Any]) -> Set[str]:
+    for trial in exp["trials"]:
+        for step in trial["steps"]:
             try:
-                v_metrics = step.validation.metrics["validation_metrics"]
+                v_metrics = step["validation"]["metrics"]["validation_metrics"]
                 return {metric for metric, value in v_metrics.items() if is_number(value)}
             except Exception:
                 pass
@@ -680,31 +605,20 @@ def scalar_validation_metrics_names(exp: Any) -> Set[str]:
 
 @authentication_required
 def list_trials(args: Namespace) -> None:
-    q = api.GraphQLQuery(args.master)
-    trials = q.op.trials(
-        order_by=[gql.trials_order_by(id=gql.order_by.asc)],
-        where=gql.trials_bool_exp(experiment_id=gql.Int_comparison_exp(_eq=args.experiment_id)),
-    )
-    trials.id()
-    trials.state()
-    trials.hparams()
-    trials.start_time()
-    trials.end_time()
-    trials.steps_aggregate().aggregate.count()
-
-    resp = q.send()
+    r = api.get(args.master, "experiments/{}/summary".format(args.experiment_id))
+    experiment = r.json()
 
     headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Steps"]
     values = [
         [
-            t.id,
-            t.state,
-            json.dumps(t.hparams, indent=4),
-            render.format_time(t.start_time),
-            render.format_time(t.end_time),
-            t.steps_aggregate.aggregate.count,
+            t["id"],
+            t["state"],
+            json.dumps(t["hparams"], indent=4),
+            render.format_time(t["start_time"]),
+            render.format_time(t["end_time"]),
+            t["num_steps"],
         ]
-        for t in resp.trials
+        for t in experiment["trials"]
     ]
 
     render.tabulate_or_csv(headers, values, args.csv)
@@ -821,11 +735,9 @@ def none_or_int(string: str) -> Optional[int]:
 
 
 def experiment_id_completer(prefix: str, parsed_args: Namespace, **kwargs: Any) -> List[str]:
-    auth.initialize_session(parsed_args.master, parsed_args.user, try_reauth=True)
-    q = api.GraphQLQuery(parsed_args.master)
-    q.op.experiments().id()
-    resp = q.send()
-    return [str(e["id"]) for e in resp.experiments]
+    params = {"filter": "all"}
+    r = api.get(parsed_args.master, "experiment-list", params=params)
+    return [str(e["id"]) for e in r.json()]
 
 
 def experiment_id_arg(help: str) -> Arg:
