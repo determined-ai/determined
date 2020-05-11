@@ -21,6 +21,3 @@ from determined.keras._tf_keras_trial import TFKerasTrial, TFKerasTrialControlle
 
 # TODO(DET-2708): remove zmq patching.
 from determined.keras import _tf_keras_patches
-
-# TODO(DET-2709): remove Saver.restore() patch.
-from determined.keras import _patch_saver_restore
