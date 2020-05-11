@@ -496,6 +496,10 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
+            - "master/dist/*linux_amd64.deb"
+            - "master/dist/*linux_amd64.rpm"
+            - "agent/dist/*linux_amd64.deb"
+            - "agent/dist/*linux_amd64.rpm"
             - "build/*.image"
 
   package-and-push-system-dev:
@@ -566,6 +570,24 @@ jobs:
       - checkout
       - aws-cli/setup
       - run: make -C deploy publish-try-now-template
+
+  test-debian-packaging:
+    machine:
+      image: ubuntu-1604:202004-01
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: sudo apt-get install -y $(pwd)/master/dist/determined-master*.deb
+      - run: sudo apt-get install -y $(pwd)/agent/dist/determined-agent*.deb
+      - run: sudo cp .circleci/packaging/master.yaml /etc/determined/master.yaml
+      - run: sudo cp .circleci/packaging/agent.yaml /etc/determined/agent.yaml
+      - run: make -C tools start-db
+      - run: python3 .circleci/scripts/wait_for_server.py localhost 5432
+      - run: sudo systemctl restart determined-master
+      - run: python3 .circleci/scripts/wait_for_server.py localhost 8080
+      - run: sudo systemctl restart determined-agent
+      - run: ./.circleci/scripts/sanity.sh
 
   test-e2e-webui:
     machine:
@@ -980,6 +1002,10 @@ workflows:
             branches:
               ignore:
                 - /pull\/.*/
+
+      - test-debian-packaging:
+          requires:
+            - package-and-push-system-local
 
       - test-e2e:
           name: test-e2e-tf2
