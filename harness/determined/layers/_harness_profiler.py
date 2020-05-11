@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import psutil
 import simplejson
 
+import determined.gpu
+
 MeasurementHistory = List[Tuple[float, Any]]
 
 
@@ -97,9 +99,7 @@ class HarnessProfiler(object):
         )
 
         if self._use_gpu:
-            import GPUtil
-
-            gpu_list = GPUtil.getGPUs()
+            gpu_list = determined.gpu.get_gpus()
             self._gpu_loads = {g.id: Measurement("GPU {} Load (%)".format(g.id)) for g in gpu_list}
             self._gpu_utilizations = {
                 g.id: Measurement("GPU {} Memory Utilization (%)".format(g.id)) for g in gpu_list
@@ -128,10 +128,7 @@ class HarnessProfiler(object):
             self._process_write_chars.add_measurement(process_io_stats.write_chars)
 
             if self._use_gpu:
-                import GPUtil
-
-                gpus = GPUtil.getGPUs()
-                for g in gpus:
+                for g in determined.gpu.get_gpus():
                     self._gpu_loads[g.id].add_measurement(g.load)
                     self._gpu_utilizations[g.id].add_measurement(g.memoryUtil)
 

@@ -25,7 +25,6 @@ setup(
         "pyzmq==18.1.0",
         "requests>=2.20.0",
         "simplejson==3.16.0",
-        "GPUtil==1.4.0",
         "determined-common==0.12.4.dev0",
         "yogadl==0.1.0",
     ],
