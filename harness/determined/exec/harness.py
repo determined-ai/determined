@@ -26,6 +26,7 @@ Basic workflow is:
 import contextlib
 import distutils.util
 import faulthandler
+import json
 import logging
 import os
 import pathlib
@@ -156,7 +157,7 @@ def main() -> None:
     initial_work = workload.Workload.from_json(simplejson.loads(os.environ["DET_INITIAL_WORKLOAD"]))
     latest_checkpoint = simplejson.loads(os.environ["DET_LATEST_CHECKPOINT"])
     use_gpu = distutils.util.strtobool(os.environ.get("DET_USE_GPU", "false"))
-    slot_ids = os.environ["DET_SLOT_IDS"][1:-1].split(",")
+    slot_ids = json.loads(os.environ["DET_SLOT_IDS"])
     workload_manager_type = os.environ["DET_WORKLOAD_MANAGER_TYPE"]
     det_rendezvous_ports = os.environ["DET_RENDEZVOUS_PORTS"]
     det_trial_runner_network_interface = os.environ["DET_TRIAL_RUNNER_NETWORK_INTERFACE"]

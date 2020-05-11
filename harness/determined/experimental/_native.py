@@ -115,7 +115,7 @@ def create_experiment(
     return exp_id
 
 
-def get_gpus() -> Tuple[bool, List[str], List[str]]:
+def get_gpus() -> Tuple[bool, List[str], List[int]]:
     gpu_ids, gpu_uuids = gpu.get_gpu_ids_and_uuids()
     use_gpu = len(gpu_uuids) > 0
     return use_gpu, gpu_uuids, gpu_ids

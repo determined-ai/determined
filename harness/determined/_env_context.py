@@ -18,7 +18,7 @@ class EnvContext:
         latest_checkpoint: Optional[Dict[str, Any]],
         use_gpu: bool,
         container_gpus: List[str],
-        slot_ids: List[str],
+        slot_ids: List[int],
         debug: bool,
         workload_manager_type: str,
         det_rendezvous_ports: str,
