@@ -49,59 +49,21 @@ or [direnv](https://direnv.net/) may help streamline the process.
 
 ## Running Determined
 
-### Starting with `det-deploy`
+A minimal Determined cluster consists of three services: a
+[PostgreSQL](https://www.postgresql.org/) database, a Determined master,
+and a Determined agent.
 
-`det-deploy` is a tool that we provide to automate the process of deploying
-Determined in Docker containers. See [the
-documentation](https://docs.determined.ai/latest/how-to/installation/deploy.html)
-for more details.
+To start the master and agent, along with a transient database, do:
 
 ```sh
-# Set up a local Docker Compose cluster. This will automatically tear down an
-# existing cluster if there is one.
-det-deploy local fixture-up
-
-# Watch stdout/stderr.
-det-deploy local logs
-
-# Edit code.
-...
-
-# Update Docker images and restart the cluster.
-make build-docker
-det-deploy local fixture-up
-
-# Tear down the cluster.
-det-deploy local fixture-down
+make -C tools run
 ```
 
-### Starting manually
-
-Running the parts of a Determined cluster individually can help speed up
-iteration during development. A minimal cluster consists of four services: a
-[PostgreSQL](https://www.postgresql.org/) database, a Determined master, and 
-a Determined agent.
+The database will be destroyed when the cluster is shutdown. To start a
+long-running database (running in the background), do:
 
 ```sh
-# Create a separate Docker network for Determined.
-docker network create determined
-
-# Start PostgreSQL.
-docker run --rm --network determined --name determined-db \
-  -p 127.0.0.1:5432:5432 \
-  -e POSTGRES_DB=determined \
-  -e POSTGRES_PASSWORD=my-postgres-password \
-  postgres:10
-
-# Start the master.
-make -C master install-native
-determined-master \
-  --db-host localhost --db-name determined --db-port 5432 --db-user postgres --db-password my-postgres-password \
-  --root build/share/determined/master
-
-# Start the agent.
-make -C agent install-native
-determined-agent run --master-host localhost --master-port 8080
+make -C tools start-db
 ```
 
 ### Accessing Determined
