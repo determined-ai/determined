@@ -59,6 +59,7 @@ export const jsonToDeterminedInfo = (data: unknown): DeterminedInfo => {
     clusterId: io.cluster_id,
     clusterName: io.cluster_name,
     masterId: io.master_id,
+    ssoProviders: io.sso_providers.map((sp) => ({ name: sp.name, ssoUrl: sp.sso_url })),
     telemetry: {
       enabled: io.telemetry.enabled,
       segmentKey: io.telemetry.segment_key || undefined,

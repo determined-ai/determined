@@ -6,6 +6,7 @@ const contextProvider = generateContext<DeterminedInfo>({
     clusterId: '',
     clusterName: '',
     masterId: '',
+    ssoProviders: [],
     telemetry: { enabled: false },
     version: process.env.VERSION || '',
   },

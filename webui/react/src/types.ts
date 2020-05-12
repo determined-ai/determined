@@ -21,10 +21,15 @@ export interface Credentials {
   username: string;
 }
 
+export interface SsoProvider {
+  name: string;
+  ssoUrl: string;
+}
 export interface DeterminedInfo {
   clusterId: string;
   clusterName: string;
   masterId: string;
+  ssoProviders: SsoProvider[];
   telemetry: {
     enabled: boolean;
     segmentKey?: string;

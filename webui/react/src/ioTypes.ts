@@ -43,10 +43,16 @@ export type ioTypeLogin = io.TypeOf<typeof ioLogin>;
 
 /* Info */
 
+const ioSsoProvider = io.type({
+  name: io.string,
+  sso_url: io.string,
+});
+
 export const ioDeterminedInfo = io.type({
   cluster_id: io.string,
   cluster_name: io.string,
   master_id: io.string,
+  sso_providers: io.array(ioSsoProvider),
   telemetry: io.type({
     enabled: io.boolean,
     segment_key: optional(io.string),
