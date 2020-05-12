@@ -548,6 +548,7 @@ func (m *Master) Run() error {
 	m.echo.POST("/graphql", m.postGraphQL, authFuncs...)
 
 	m.echo.GET("/experiment-list", api.Route(m.getExperimentList), authFuncs...)
+	m.echo.GET("/experiment-summaries", api.Route(m.getExperimentSummaries), authFuncs...)
 
 	experimentsGroup := m.echo.Group("/experiments", authFuncs...)
 	experimentsGroup.GET("", api.Route(m.getExperiments))
