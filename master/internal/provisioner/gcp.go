@@ -155,7 +155,9 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceType instanceType, insta
 	instType, ok := instanceType.(gceInstanceType)
 	if !ok {
 		panic("cannot pass non-gce instanceType to gcpCluster")
-	} else if instanceNum <= 0 {
+	}
+
+	if instanceNum <= 0 {
 		return
 	}
 
@@ -248,7 +250,7 @@ func (c *gcpCluster) newInstances(input []*compute.Instance) []*Instance {
 		}
 		t, err := time.Parse(time.RFC3339, inst.CreationTimestamp)
 		if err != nil {
-			panic(errors.Wrap(err, "cannot parse gce instance launching time"))
+			panic(errors.Wrap(err, "cannot parse GCE instance launching time"))
 		}
 		output = append(output, &Instance{
 			ID:         c.idFromInstance(inst),

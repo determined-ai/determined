@@ -24,10 +24,10 @@ const (
 // 3. Instances that are not associated to agents.
 //    3.a. Instances are in starting state including Instance starting and Agent starting
 //         --> For the MVP, we simply use a large ActionCoolDown time.
-//    3.b. Unhealthy instances: agents cannot connect to the master for wrong configuration or
-//         unknown reason.
+//    3.b. Unhealthy instances: agents cannot connect to the master due to misconfiguration
+//         or some unknown reason.
 //         --> For the MVP, we don't do health check.
-// 4  Instances with empty or duplicate agent names are error instances.
+// 4. Instances with empty or duplicate agent names are error instances.
 type scaleDecider struct {
 	maxAgentStartingPeriod time.Duration
 	maxIdleAgentPeriod     time.Duration
@@ -68,17 +68,15 @@ func (s *scaleDecider) needScale() bool {
 	return false
 }
 
-func (s *scaleDecider) updateSchedulerSnapshot(snapshot *scheduler.ViewSnapshot) bool {
+func (s *scaleDecider) updateSchedulerSnapshot(snapshot *scheduler.ViewSnapshot) {
 	s.schedulerSnapshot = snapshot
 	s.lastSchedulerUpdated = time.Now()
-	return true
 }
 
 func (s *scaleDecider) updateInstanceSnapshot(instances []*Instance) bool {
-	now := time.Now()
 	updated := func() {
 		s.instanceSnapshot = instances
-		s.lastProviderUpdated = now
+		s.lastProviderUpdated = time.Now()
 	}
 	if s.instanceSnapshot == nil || len(s.instanceSnapshot) != len(instances) {
 		updated()
@@ -102,7 +100,7 @@ func (s *scaleDecider) findInstancesToTerminate(
 ) []string {
 	idleAgents := s.schedulerSnapshot.Agents
 	instances := s.instanceSnapshot
-	now := time.Now()
+
 	// Terminate stopped instances.
 	stoppedInstanceIDs := make([]string, 0, len(instances))
 	candidates := make([]*Instance, 0, len(instances))
@@ -116,7 +114,7 @@ func (s *scaleDecider) findInstancesToTerminate(
 	}
 	instances = candidates
 
-	// We assume that there is no duplicate instance ID in the input.
+	// We assume that there are no duplicate instance IDs in the input.
 	// Separate out unique agents. Duplicate agents are not handled.
 	uniqueIdleAgents := make(map[string]*scheduler.AgentSummary)
 	for _, agent := range idleAgents {
@@ -148,6 +146,7 @@ func (s *scaleDecider) findInstancesToTerminate(
 	// Mark instances to terminate for some time before actually terminating them.
 	toTerminate := make(map[string]bool)
 	instancesMarked := make(map[string]time.Time)
+	now := time.Now()
 	for instID := range toMark {
 		switch t, ok := s.instancesMarked[instID]; {
 		case ok && now.After(t.Add(s.maxIdleAgentPeriod)):
@@ -190,9 +189,11 @@ func (s *scaleDecider) calculateNumInstancesToLaunch(
 	instanceType instanceType,
 	maxInstanceNum int,
 ) int {
-	pendingTasks := s.schedulerSnapshot.Tasks
+	if instanceType.slots() == 0 {
+		return 0
+	}
+
 	instances := s.instanceSnapshot
-	now := time.Now()
 	validInstances := make([]*Instance, 0, len(instances))
 	for _, inst := range instances {
 		switch inst.State {
@@ -202,10 +203,8 @@ func (s *scaleDecider) calculateNumInstancesToLaunch(
 	}
 	instances = validInstances
 
-	if instanceType.slots() == 0 {
-		return 0
-	}
-	var sum int
+	pendingTasks := s.schedulerSnapshot.Tasks
+	sum := 0
 	for _, t := range pendingTasks {
 		sum += t.SlotsNeeded
 	}
@@ -214,15 +213,16 @@ func (s *scaleDecider) calculateNumInstancesToLaunch(
 		numNeeded = 1
 	}
 
-	// Check recently launched instances and negate them from the total needed number.
+	// Check recently launched instances and subtract them from the total needed number.
+	now := time.Now()
 	numRecentlyLaunched := 0
 	for _, inst := range instances {
 		if inst.LaunchTime.Add(s.maxAgentStartingPeriod).After(now) {
 			numRecentlyLaunched++
 		}
 	}
-	numToLaunch := numNeeded - numRecentlyLaunched
 
+	numToLaunch := numNeeded - numRecentlyLaunched
 	numToLaunch = min(numToLaunch, maxInstanceNum-len(instances))
 	return max(0, numToLaunch)
 }

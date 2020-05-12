@@ -172,10 +172,11 @@ func (c *awsCluster) launch(
 	instType, ok := instanceType.(ec2InstanceType)
 	if !ok {
 		panic("cannot pass non-ec2InstanceType to ec2Cluster")
-	} else if instanceNum <= 0 {
-		return
 	}
 
+	if instanceNum <= 0 {
+		return
+	}
 	ctx.Log().Infof("launching %d EC2 instances", instanceNum)
 	instances, err := c.launchInstances(instType, instanceNum, false)
 	if err != nil {
