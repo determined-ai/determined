@@ -14,7 +14,12 @@ import (
 	"github.com/determined-ai/determined/master/internal/user"
 )
 
-const defaultRedirectPath = "/det/login"
+const (
+	defaultRedirectPath = "/det/login"
+	// This must match the value at $PROJECT_ROOT/cli/determined_cli/sso.CLI_REDIRECT_PORT.
+	cliRedirectPath = "http://localhost:49176"
+	cliRelayState   = "cli=true"
+)
 
 // New constructs a new SAML service that is capable of sending SAML requests and consuming
 // responses.
@@ -104,10 +109,12 @@ func (s *Service) consumeAssertion(c echo.Context) error {
 	}
 
 	c.SetCookie(user.NewCookieFromToken(token))
-
 	redirectPath := defaultRedirectPath
-	relayState := c.FormValue("RelayState")
-	if relayState != "" {
+	switch relayState := c.FormValue("RelayState"); relayState {
+	case cliRelayState:
+		redirectPath = cliRedirectPath + fmt.Sprintf("?token=%s", url.QueryEscape(token))
+	case "":
+	default:
 		redirectPath += fmt.Sprintf("?relayState=%s", url.QueryEscape(relayState))
 	}
 
