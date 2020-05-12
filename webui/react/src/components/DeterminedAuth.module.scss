@@ -1,0 +1,26 @@
+.base {
+  form {
+    width: 100%;
+  }
+  button {
+    background-color: var(--theme-colors-core-primary);
+    border-color: var(--theme-colors-core-primary);
+    width: 100%;
+  }
+  button:hover {
+    background-color: lighten(#f77b21, 10%);
+    border-color: lighten(#f77b21, 10%);
+  }
+  .content > a {
+    font-size: 1.2rem;
+    padding: 0 1rem;
+    text-align: center;
+  }
+  form .errorMessage {
+    color: var(--theme-colors-states-failed);
+  }
+  .message {
+    font-size: var(--theme-sizes-font-medium);
+    text-align: center;
+  }
+}
