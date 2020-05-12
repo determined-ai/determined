@@ -63,7 +63,7 @@ saved and mounted into the master's container.
   saml:
     enabled: true
     provider: "Okta"
-    idp_sso_recipient_url: "https://determined.example.com/saml/sso"
+    idp_recipient_url: "https://determined.example.com/saml/sso"
     idp_sso_url: "https://myorg.okta.com/app/.../sso/saml"
     idp_sso_descriptor_url: "http://www.okta.com/..."
     idp_cert_path: "okta.cert"
