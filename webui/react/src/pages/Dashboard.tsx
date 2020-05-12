@@ -16,7 +16,6 @@ import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
 import { ioExperiments } from 'ioTypes';
 import { jsonToExperiments } from 'services/decoder';
-import { buildExperimentListGqlQuery } from 'services/graphql';
 import { ShirtSize } from 'themes';
 import {
   Command, CommandState, Experiment, RecentTask, ResourceType, RunState, TaskType,
@@ -69,9 +68,7 @@ const Dashboard: React.FC = () => {
 
   const fetchExperiments = useCallback((): void => {
     requestExperiments({
-      body: buildExperimentListGqlQuery({ limit: 100 }),
-      method: 'POST',
-      url: '/graphql',
+      url: '/experiment-summaries',
     });
   }, [ requestExperiments ]);
 

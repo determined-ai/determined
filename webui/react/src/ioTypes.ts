@@ -138,18 +138,13 @@ export const ioExperiment = io.type({
   config: ioExperimentConfig,
   end_time: io.union([ io.string, io.null ]),
   id: io.number,
-  kind: io.union([ io.undefined, io.number ]),
   owner_id: io.number,
   progress: io.union([ io.number, io.null ]),
   start_time: io.string,
   state: runStatesIoType,
 });
 
-export const ioExperiments = io.type({
-  data: io.type({
-    experiments: io.array(ioExperiment),
-  }),
-});
+export const ioExperiments = io.array(ioExperiment);
 
 export type ioTypeExperiment = io.TypeOf<typeof ioExperiment>;
 export type ioTypeExperiments = io.TypeOf<typeof ioExperiments>;
