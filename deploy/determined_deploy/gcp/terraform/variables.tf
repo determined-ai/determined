@@ -155,3 +155,8 @@ variable "db_password" {
   type = string
   default = "postgres"
 }
+
+variable "db_ssl_enabled" {
+  type = bool
+  default = true
+}

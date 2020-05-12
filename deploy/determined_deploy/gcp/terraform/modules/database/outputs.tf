@@ -5,3 +5,7 @@ output "database_hostname" {
 output "database_name" {
   value = google_sql_database.database.name
 }
+
+output "database_ssl_root_cert" {
+  value = google_sql_database_instance.db_instance.server_ca_cert.0.cert
+}

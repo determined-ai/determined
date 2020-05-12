@@ -82,6 +82,12 @@ variable "db_password" {
 variable "database_name" {
 }
 
+variable "database_ssl_enabled"{
+}
+
+variable "database_ssl_root_cert" {
+}
+
 variable "master_instance_type" {
 }
 
