@@ -43,7 +43,7 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
         message: isAuthError ?
           `unauthenticated request ${api.name}` : `request ${api.name} failed.`,
         silent: true,
-        type: ErrorType.Auth,
+        type: isAuthError ? ErrorType.Auth : ErrorType.Server,
       });
       throw error;
     }
