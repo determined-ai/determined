@@ -1,9 +1,5 @@
 project_name: determined-master
 
-before:
-  hooks:
-    - make pre-package
-
 snapshot:
   name_template: "{{ .Tag }}"
 
@@ -22,7 +18,8 @@ builds:
 archives:
   - wrap_in_directory: true
     files:
-      - "share/determined/master/**/*"
+      - "build/root/**/*"
+      - "packaging/master.yaml"
 
 nfpms:
   - maintainer: "Determined AI <hello@determined.ai>"
@@ -32,8 +29,7 @@ nfpms:
     config_files:
       "packaging/master.yaml": "/etc/determined/master.yaml"
     files:
-      "build/**/*": "/usr/share/determined/master"
-      "static/**/*": "/usr/share/determined/master/static"
+      "build/root/**/*": "/usr/share/determined/master"
       "packaging/determined-master.service": "/lib/systemd/system/determined-master.service"
     overrides:
       deb:

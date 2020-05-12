@@ -15,6 +15,18 @@ get-deps:
 
 .PHONY: build
 build:
+	@rm -rf build/root
+	@mkdir -p build/root/webui/docs
+	@mkdir -p build/root/webui/elm
+	@mkdir -p build/root/webui/react
+	@mkdir -p build/root/wheels/
+	cp -r static/ build/root/
+	cp -r ../docs/site/html/* build/root/webui/docs
+	cp -r ../webui/react/build/* build/root/webui/react
+	cp -r ../webui/elm/public build/root/webui/elm
+	cp -r ../common/dist/*.whl build/root/wheels/
+	cp -r ../cli/dist/*.whl build/root/wheels/
+	cp -r ../harness/dist/*.whl build/root/wheels/
 	go build \
 		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION)" \
 		-o build/determined-master \
@@ -31,20 +43,6 @@ fmt:
 .PHONY: test
 test:
 	go test -v -short -coverprofile=coverage.out -covermode count -cover ./...
-
-.PHONY: pre-package
-pre-package:
-	rm -rf build
-	mkdir -p build/webui/docs
-	mkdir -p build/webui/elm
-	mkdir -p build/webui/react
-	mkdir -p build/wheels/
-	cp -r ../docs/site/html/* build/webui/docs
-	cp -r ../webui/elm/public build/webui/elm
-	cp -r ../webui/react/build/* build/webui/react
-	cp ../common/dist/*.whl build/wheels/
-	cp ../cli/dist/*.whl build/wheels/
-	cp ../harness/dist/*.whl build/wheels/
 
 .PHONY: package
 package: export DET_SEGMENT_MASTER_KEY ?= ""
