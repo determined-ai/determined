@@ -12,6 +12,8 @@ type FilterableView struct {
 	agentFilter func(*agentState) bool
 }
 
+// Return a view of the scheduler state that is relevant to the provisioner. Specifically, the
+// provisioner cares about (1) idle agents (2) pending tasks.
 func newProvisionerView(provisionerSlotsPerInstance int) *FilterableView {
 	return &FilterableView{
 		tasks:       make(map[TaskID]*TaskSummary),
@@ -22,11 +24,21 @@ func newProvisionerView(provisionerSlotsPerInstance int) *FilterableView {
 }
 
 func schedulableTaskFilter(provisionerSlotsPerInstance int) func(*Task) bool {
+	// We only tell the provisioner about pending tasks that are compatible with the
+	// provisioner's configured instance type.
 	return func(task *Task) bool {
-		pending := task.state == taskPending
-		zeroOrSingleSlotTask := task.SlotsNeeded() == 0 || task.SlotsNeeded() == 1
-		multiSlotTaskFits := task.SlotsNeeded()%provisionerSlotsPerInstance == 0
-		return pending && (zeroOrSingleSlotTask || multiSlotTaskFits)
+		slotsNeeded := task.SlotsNeeded()
+
+		switch {
+		case task.state != taskPending:
+			return false
+		case slotsNeeded == 0 || slotsNeeded == 1:
+			return true
+		case slotsNeeded%provisionerSlotsPerInstance == 0:
+			return true
+		default:
+			return false
+		}
 	}
 }
 
