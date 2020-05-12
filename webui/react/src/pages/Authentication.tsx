@@ -3,6 +3,7 @@ import queryString from 'query-string';
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 
+import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoTypes } from 'components/Logo';
 import Spinner from 'components/Spinner';
@@ -17,6 +18,7 @@ const DEFAULT_REDIRECT = '/det/dashboard';
 
 interface Queries {
   redirect?: string;
+  cli?: boolean;
 }
 const Authentication: React.FC = () => {
   const location = useLocation();
@@ -44,6 +46,9 @@ const Authentication: React.FC = () => {
 
   if (auth.isAuthenticated) {
     const redirectUrl = queries.redirect || DEFAULT_REDIRECT;
+    if (queries.cli) {
+      return <AuthToken />;
+    }
     if (isCrossoverRoute(redirectUrl)) {
       crossoverRoute(redirectUrl);
     } else {

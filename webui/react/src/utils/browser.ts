@@ -10,3 +10,9 @@ export const updateFaviconType = (active: boolean): void => {
   const suffixActive = active ? '-active' : '';
   updateFavicon(`/favicons/favicon${suffixDev}${suffixActive}.png`);
 };
+
+export const  getCookie = (name: string): string | null => {
+  const regex = new RegExp(`(?:(?:^|.*;\\s*)${name}\\s*\\=\\s*([^;]*).*$)|^.*$`);
+  const value = document.cookie.replace(regex, '$1');
+  return value ? value : null;
+};
