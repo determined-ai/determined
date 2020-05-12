@@ -1247,8 +1247,7 @@ func (db *PgDB) AddTrialLogs(logs []*model.TrialLog) error {
 	return nil
 }
 
-// TrialLogsRaw returns the logs for a trial as a JSON string. TODO(dzhu): With GraphQL, this should
-// now only be used for raw log text downloads; the query can be simplified accordingly.
+// TrialLogsRaw returns the logs for a trial as a JSON string.
 func (db *PgDB) TrialLogsRaw(
 	id int,
 	greaterThan, lessThan *int,

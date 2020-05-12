@@ -107,11 +107,6 @@ func registerConfig() {
 	registerInt(flags, name("https-port"),
 		defaults.HTTPSPort, "HTTPS server port")
 
-	registerString(flags, name("hasura", "secret"),
-		defaults.Hasura.Secret, "Hasura admin secret")
-	registerString(flags, name("hasura", "address"),
-		defaults.Hasura.Address, "Hasura address")
-
 	registerString(flags, name("root"),
 		defaults.Root, "static file root directory")
 

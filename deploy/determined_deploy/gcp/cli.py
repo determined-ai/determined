@@ -106,12 +106,6 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="password for master database",
     )
     optional_named.add_argument(
-        "--hasura-secret",
-        type=str,
-        default=constants.defaults.HASURA_SECRET,
-        help="password for hasura service",
-    )
-    optional_named.add_argument(
         "--max-idle-agent-period",
         type=str,
         default=constants.defaults.MAX_IDLE_AGENT_PERIOD,

@@ -50,11 +50,7 @@ func DefaultConfig() *Config {
 		HTTPSPort:         8443,
 		CheckpointStorage: c,
 		HarnessPath:       "/opt/determined",
-		Hasura: HasuraConfig{
-			Secret:  "",
-			Address: "localhost:8081",
-		},
-		Root: "/usr/share/determined/master",
+		Root:              "/usr/share/determined/master",
 		Telemetry: TelemetryConfig{
 			Enabled:          true,
 			SegmentMasterKey: DefaultSegmentMasterKey,
@@ -79,7 +75,6 @@ type Config struct {
 	HTTPPort              int                               `json:"http_port"`
 	HTTPSPort             int                               `json:"https_port"`
 	HarnessPath           string                            `json:"harness_path"`
-	Hasura                HasuraConfig                      `json:"hasura"`
 	Root                  string                            `json:"root"`
 	Telemetry             TelemetryConfig                   `json:"telemetry"`
 }
@@ -88,7 +83,6 @@ type Config struct {
 func (c Config) Printable() ([]byte, error) {
 	const hiddenValue = "********"
 	c.DB.Password = hiddenValue
-	c.Hasura.Secret = hiddenValue
 	c.Telemetry.SegmentMasterKey = hiddenValue
 	c.Telemetry.SegmentWebUIKey = hiddenValue
 
@@ -197,12 +191,6 @@ type SecurityConfig struct {
 type TLSConfig struct {
 	Cert string `json:"cert"`
 	Key  string `json:"key"`
-}
-
-// HasuraConfig is the configuration for connecting to Hasura.
-type HasuraConfig struct {
-	Secret  string `json:"secret"`
-	Address string `json:"address"`
 }
 
 // TelemetryConfig is the configuration for telemetry.

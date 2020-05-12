@@ -134,7 +134,6 @@ module "compute" {
   preemptible = var.preemptible
   db_username = var.db_username
   db_password = var.db_password
-  hasura_secret = var.hasura_secret
 
   network_name = module.network.network_name
   subnetwork_name = module.network.subnetwork_name

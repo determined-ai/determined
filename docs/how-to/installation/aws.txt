@@ -135,10 +135,6 @@ Spinning up the Cluster
      - The password for ``postgres`` user for database.
      - postgres
 
-   * - ``--hasura-secret``
-     - The password for the Hasura GraphQL server.
-     - hasura
-
    * - ``--region``
      - AWS region to deploy into.
      - The default region for the AWS user
@@ -438,8 +434,6 @@ Running Determined
 
    Notes:
 
-   - ``hasura-secret`` is a user-defined random string. Ensure that the value is the same in
-     ``master.yaml`` and the ``docker run`` command for the Hasura container.
    - ``agent-ami`` should be the latest Determined agent AMI.
    - ``instance-type`` should be any p2 or p3 EC2 instance type.
 
@@ -465,10 +459,6 @@ Running Determined
        port: 5432
        name: determined
 
-     hasura:
-       secret: <hasura-secret>
-       address: determined-graphql:8080
-
      provisioner:
        iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
        image_id: ${AgentAmiId}
@@ -486,24 +476,6 @@ Running Determined
        ssh_key_name: ${Keypair}
        tag_key: determined-${UserName}
        tag_value: determined-${UserName}-agent
-
-#. Start Hasura.
-
-   .. code::
-
-      docker run \
-        -d \
-        --rm \
-        --name determined-graphql \
-        --network determined \
-        -e HASURA_GRAPHQL_ADMIN_SECRET=<hasura-secret> \
-        -e HASURA_GRAPHQL_CONSOLE_ASSETS_DIR=/srv/console-assets \
-        -e HASURA_GRAPHQL_DATABASE_URL=postgres://postgres:${DBPassword}@${Database.Endpoint.Address}:5432/determined \
-        -e HASURA_GRAPHQL_ENABLED_APIS=graphql,metadata \
-        -e HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup \
-        -e HASURA_GRAPHQL_ENABLE_CONSOLE=false \
-        -e HASURA_GRAPHQL_ENABLE_TELEMETRY=false \
-        hasura/graphql-engine:v1.1.0
 
 #. Start the Determined master.
 

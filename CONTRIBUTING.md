@@ -79,8 +79,8 @@ det-deploy local fixture-down
 
 Running the parts of a Determined cluster individually can help speed up
 iteration during development. A minimal cluster consists of four services: a
-[PostgreSQL](https://www.postgresql.org/) database, a
-[Hasura](https://hasura.io) server, a Determined master, and a Determined agent.
+[PostgreSQL](https://www.postgresql.org/) database, a Determined master, and 
+a Determined agent.
 
 ```sh
 # Create a separate Docker network for Determined.
@@ -93,21 +93,10 @@ docker run --rm --network determined --name determined-db \
   -e POSTGRES_PASSWORD=my-postgres-password \
   postgres:10
 
-# Start Hasura.
-docker run --rm --network determined --name determined-graphql \
-  -p 127.0.0.1:8081:8080 \
-  -e HASURA_GRAPHQL_DATABASE_URL=postgres://postgres:my-postgres-password@determined-db:5432/determined \
-  -e HASURA_GRAPHQL_ADMIN_SECRET=my-hasura-secret \
-  -e HASURA_GRAPHQL_ENABLE_CONSOLE=true \
-  -e HASURA_GRAPHQL_ENABLE_TELEMETRY=false \
-  -e HASURA_GRAPHQL_CONSOLE_ASSETS_DIR=/srv/console-assets \
-  hasura/graphql-engine:v1.1.0
-
 # Start the master.
 make -C master install-native
 determined-master \
   --db-host localhost --db-name determined --db-port 5432 --db-user postgres --db-password my-postgres-password \
-  --hasura-address localhost:8081 --hasura-secret=my-hasura-secret \
   --root build/share/determined/master
 
 # Start the agent.

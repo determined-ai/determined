@@ -155,8 +155,3 @@ variable "db_password" {
   type = string
   default = "postgres"
 }
-
-variable "hasura_secret" {
-  type = string
-  default = "secret"
-}

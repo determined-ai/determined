@@ -45,7 +45,7 @@ Core Resources
   - manage other GCE instances (`agents`) which run experiments
 
 - **Agent Node(s)**: For most Determined clusters in GCP, the volume of active experiments dictate the number of `agents`. All `agents` are managed by the `master` and users need not interact with the `agents` directly.
-- **Database**: Determined uses a CloudSQL (Postgres) database for storing all experiment metadata. In addition, a Hasura database is also deployed to support GraphQL queries.
+- **Database**: Determined uses a CloudSQL (Postgres) database for storing all experiment metadata.
 - **Service Account**: A service account is used to manage the creation of compute (GCE) resources and access to Google Cloud Storage (GCS) buckets for checkpoints, TensorBoards, and other data storage as needed.
 - **Firewall Rules**: Firewall rules are set to ensure each node in the cluster can communicate with each other.
 

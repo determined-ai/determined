@@ -90,7 +90,6 @@ def main():
             subprocess.check_call(["docker-compose", "up", "-d"])
 
         wait_for_server(5432)
-        wait_for_server(8081)
         db_logs.start()
         master.start()
         wait_for_server(8080)

@@ -16,8 +16,4 @@ db:
   name: determined
   password: postgres
 
-hasura:
-  address: localhost:8081
-  secret: hasura
-
 root: build

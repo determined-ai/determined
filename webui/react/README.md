@@ -28,7 +28,7 @@ You won't have to do this unless the dependencies change under `package.json`.
 For example, if a new package was added to the project, simply run command above
 again.
 
-Before proceeding, check to make sure you have a database, Hasura (for graphQL), an instance of master (which serves the WebUI via Go webserver) and an agent running. Follow the instructions at [https://github.com/determined-ai/determined](https://github.com/determined-ai/determined) to get them up and running first if you haven't already.
+Before proceeding, check to make sure you have a database, an instance of master (which serves the WebUI via Go webserver) and an agent running. Follow the instructions at [https://github.com/determined-ai/determined](https://github.com/determined-ai/determined) to get them up and running first if you haven't already.
 
 To start a local development environment for the React webapp, run the command below.
 

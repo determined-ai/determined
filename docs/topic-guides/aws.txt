@@ -50,8 +50,7 @@ Core Resources
   or dynamic agents, see :ref:`elastic-infra-index`.
 
 - **Database**: Determined uses an Amazon Relational Database Service (Postgres)
-  database to store metadata. In addition, Determined
-  leverages a Hasura query engine on the master for GraphQL querying.
+  database to store metadata.
 
 - **AWS Identity and Access Management (IAM)**: IAM roles are attached to the
   instances to manage the creation of compute (EC2) resources and access to

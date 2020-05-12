@@ -1,15 +1,10 @@
 package internal
 
 import (
-	"bytes"
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"net/http/httputil"
 	"net/http/pprof"
-	"net/url"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -126,108 +121,6 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 		entries = make([]*logger.Entry, 0)
 	}
 	return entries, nil
-}
-
-func (m *Master) hasuraMetaRequest(body []byte) error {
-	const MaxRetries = 10
-	const RetryDelay = 1
-
-	client := &http.Client{}
-	url := fmt.Sprintf("http://%s/v1/query", m.config.Hasura.Address)
-
-	var err error
-
-	for i := 0; i < MaxRetries; i++ {
-		if i > 0 {
-			time.Sleep(RetryDelay * time.Second)
-		}
-
-		// Construct the request.
-		req, rErr := http.NewRequest("POST", url, bytes.NewReader(body))
-		if rErr != nil {
-			// This presumably won't change if we retry, so exit immediately.
-			return rErr
-		}
-		req.Header.Add("X-Hasura-Admin-Secret", m.config.Hasura.Secret)
-		req.Header.Add("Content-Type", "application/json")
-
-		// In the code below, the uses of err refer to the variable declared outside the loop, so that we
-		// can conveniently return its last value after exiting the loop.
-		var resp *http.Response
-		resp, err = client.Do(req)
-		if err != nil {
-			continue
-		}
-
-		var body []byte
-		body, err = ioutil.ReadAll(resp.Body)
-		if err != nil {
-			continue
-		}
-
-		if err = resp.Body.Close(); err != nil {
-			continue
-		}
-
-		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-			err = errors.Errorf("got error response from Hasura: %v %s", resp.Status, string(body))
-			continue
-		}
-
-		return nil
-	}
-	return err
-}
-
-// updateHasuraSchema sends the current Hasura schema file to Hasura, ensuring that it is always up
-// to date with the database schema.
-func (m *Master) updateHasuraSchema() error {
-	reloadBody, err := json.Marshal(map[string]interface{}{
-		"type": "reload_metadata",
-		"args": map[string]interface{}{},
-	})
-	if err != nil {
-		return err
-	}
-
-	schemaBytes, err := ioutil.ReadFile(filepath.Join(m.config.Root, "static/hasura-metadata.json"))
-	if err != nil {
-		return err
-	}
-
-	schemaBody, err := json.Marshal(map[string]interface{}{
-		"type": "replace_metadata",
-		"args": json.RawMessage(schemaBytes),
-	})
-	if err != nil {
-		return err
-	}
-
-	log.Info("telling Hasura to reload DB schema")
-	if err = m.hasuraMetaRequest(reloadBody); err != nil {
-		return errors.Wrap(err, "error updating Hasura DB metadata")
-	}
-	log.Info("updating Hasura GraphQL schema")
-	if err = m.hasuraMetaRequest(schemaBody); err != nil {
-		return errors.Wrap(err, "error updating Hasura schema")
-	}
-	log.Info("successfully updated Hasura metadata")
-	return nil
-}
-
-func (m *Master) postGraphQL(c echo.Context) error {
-	// The proxy appends the path of the current request's URL to the given base, which we don't want;
-	// instead, pretend that this request was at "/", so it forwards to exactly the URL we provide.
-	fakeURL, _ := url.Parse("/")
-	c.Request().URL = fakeURL
-	c.Request().Header.Add("X-Hasura-Admin-Secret", m.config.Hasura.Secret)
-	c.Request().Header.Add("X-Hasura-Role", "user")
-
-	graphqlURL, _ := url.Parse(fmt.Sprintf("http://%s/v1/graphql", m.config.Hasura.Address))
-	proxy := httputil.NewSingleHostReverseProxy(graphqlURL)
-	proxy.ServeHTTP(c.Response(), c.Request())
-
-	return nil
 }
 
 func (m *Master) startServers() error {
@@ -545,8 +438,6 @@ func (m *Master) Run() error {
 	m.echo.GET("/info", api.Route(m.getInfo))
 	m.echo.GET("/logs", api.Route(m.getMasterLogs), authFuncs...)
 
-	m.echo.POST("/graphql", m.postGraphQL, authFuncs...)
-
 	m.echo.GET("/experiment-list", api.Route(m.getExperimentList), authFuncs...)
 	m.echo.GET("/experiment-summaries", api.Route(m.getExperimentSummaries), authFuncs...)
 
@@ -611,10 +502,6 @@ func (m *Master) Run() error {
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
 
 	agent.Initialize(m.system, m.echo, m.cluster)
-
-	if err := m.updateHasuraSchema(); err != nil {
-		return err
-	}
 
 	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "" {
 		if telemetry, err := telemetry.NewActor(
