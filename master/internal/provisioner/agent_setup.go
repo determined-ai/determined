@@ -20,8 +20,8 @@ type agentSetupScriptConfig struct {
 }
 
 func mustMakeAgentSetupScript(config agentSetupScriptConfig) []byte {
-	tpl := template.Must(template.New("AgentSetupScript").
-		Parse(string(etc.MustStaticFile(etc.AgentSetupScriptTemplateResource))))
+	templateStr := string(etc.MustStaticFile(etc.AgentSetupScriptTemplateResource))
+	tpl := template.Must(template.New("AgentSetupScript").Parse(templateStr))
 	var buf bytes.Buffer
 	if err := tpl.Execute(&buf, config); err != nil {
 		panic("cannot generate agent setup script")

@@ -17,8 +17,8 @@ const (
 // provisionerTick periodically triggers the provisioner to act.
 type provisionerTick struct{}
 
-// Provisioner implements an actor to provision agent instances.
-// It is composed of three parts: a provisioner actor, a scaling decision maker and a provider.
+// Provisioner implements an actor to provision and terminate agent instances.
+// It is composed of three parts: a provisioner actor, a scaling decision maker, and a provider.
 // 1. The provisioner actor accepts actor messages with pending tasks and idle agents.
 //    1.1. `Scheduler` pushes an immutable view of agents and tasks to `Provisioner`. `Provisioner`
 //         pulls instance data from instance providers.
@@ -52,19 +52,19 @@ func New(config *Config) (*Provisioner, error) {
 	case config.AWS != nil:
 		var err error
 		if cluster, err = newAWSCluster(config); err != nil {
-			return nil, errors.Wrap(err, "cannot create a ec2 cluster")
+			return nil, errors.Wrap(err, "cannot create an EC2 cluster")
 		}
 	case config.GCP != nil:
 		var err error
 		if cluster, err = newGCPCluster(config); err != nil {
-			return nil, errors.Wrap(err, "cannot create a gcp cluster")
+			return nil, errors.Wrap(err, "cannot create a GCP cluster")
 		}
 	}
-	provisioner := &Provisioner{
+
+	return &Provisioner{
 		provider:     cluster,
 		scaleDecider: newScaleDecider(time.Duration(config.MaxIdleAgentPeriod)),
-	}
-	return provisioner, nil
+	}, nil
 }
 
 // Receive implements the actor.Actor interface.

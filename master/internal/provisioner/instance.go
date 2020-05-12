@@ -28,7 +28,7 @@ const (
 	Stopped InstanceState = "Stopped"
 )
 
-// Instance connects an instance provider's name for a compute resource to the Determined agent name
+// Instance connects a provider's name for a compute resource to the Determined agent name.
 type Instance struct {
 	ID         string
 	LaunchTime time.Time
