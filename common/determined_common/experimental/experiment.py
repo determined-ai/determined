@@ -68,57 +68,17 @@ class ExperimentReference:
                 this parameter is ignored. By default the smaller_is_better value
                 in the experiment configuration is used.
         """
-        q = api.GraphQLQuery(self._master)
-        exp = q.op.experiments_by_pk(id=self.id)
-        checkpoints = exp.best_checkpoints_by_metric(
-            args={"lim": limit, "metric": sort_by, "smaller_is_better": smaller_is_better}
+        r = api.get(self._master, "checkpoints", params={"experiment_id": self.id}).json()
+
+        if not r:
+            raise AssertionError("No checkpoint found for trial {}".format(self.id))
+
+        if not sort_by:
+            sort_by = r[0]["metric"]
+            smaller_is_better = r[0]["smaller_is_better"]
+
+        r.sort(
+            reverse=not smaller_is_better, key=lambda x: x["metrics"]["validation_metrics"][sort_by]
         )
 
-        checkpoints.state()
-        checkpoints.uuid()
-        checkpoints.resources()
-
-        validation = checkpoints.validation()
-        validation.metrics()
-        validation.state()
-
-        step = checkpoints.step()
-        step.id()
-        step.start_time()
-        step.end_time()
-        step.trial.experiment.config()
-        step.trial.id()
-
-        resp = q.send()
-
-        checkpoints_resp = resp.experiments_by_pk.best_checkpoints_by_metric
-
-        if not checkpoints_resp:
-            return []
-
-        experiment_conf = checkpoints_resp[0].step.trial.experiment.config
-        sib = (
-            smaller_is_better
-            if smaller_is_better is not None
-            else experiment_conf["searcher"]["smaller_is_better"]
-        )
-
-        sort_metric = sort_by if sort_by is not None else experiment_conf["searcher"]["metric"]
-        ordered_checkpoints = sorted(
-            checkpoints_resp,
-            key=lambda c: c.validation.metrics["validation_metrics"][sort_metric],
-            reverse=not sib,
-        )
-
-        return [
-            checkpoint.Checkpoint(
-                ckpt.uuid,
-                ckpt.step.trial.experiment.config["checkpoint_storage"],
-                ckpt.step.trial.experiment.config["batches_per_step"] * ckpt.step.id,
-                ckpt.step.start_time,
-                ckpt.step.end_time,
-                ckpt.resources,
-                ckpt.validation,
-            )
-            for ckpt in ordered_checkpoints
-        ]
+        return [checkpoint.from_json(ckpt) for ckpt in r[:limit]]

@@ -52,27 +52,3 @@ test-%:
 	$(MAKE) -C $(subst -,/,$(@:test-%=%)) test
 .PHONY: test
 test: test-harness test-cli test-master test-agent test-webui
-
-# This target assumes that a Hasura instance is running and queries it to
-# retrieve the current schema files, producing a schema file that the
-# `graphql-python` target can then use to generate code
-# without having to have a server running.
-.PHONY: graphql-schema
-graphql-schema:
-	scripts/hasura/export-metadata.sh
-	python -m sgqlc.introspection \
-		-H "X-Hasura-Admin-Secret: $${DET_HASURA_SECRET:-hasura}" \
-		-H "X-Hasura-Role: user" \
-		http://localhost:8081/v1/graphql \
-		master/graphql-schema.json
-
-.PHONY: graphql-python
-graphql-python:
-	sgqlc-codegen master/graphql-schema.json common/determined_common/api/gql.py
-	black common/determined_common/api/gql.py
-	isort common/determined_common/api/gql.py
-
-.PHONY: graphql
-graphql:
-	$(MAKE) graphql-schema
-	$(MAKE) graphql-python

@@ -1,7 +1,6 @@
-from typing import List, Optional
+from typing import Optional
 
 from determined_common import api, check
-from determined_common.api import gql
 from determined_common.experimental import checkpoint
 
 
@@ -97,66 +96,22 @@ class TrialReference:
                 "sort_by and smaller_is_better parameters can only be used with --best"
             )
 
-        q = api.GraphQLQuery(self._master)
+        if uuid:
+            return checkpoint.get_checkpoint(uuid, self._master)
 
-        if sort_by is not None:
-            checkpoint_gql = q.op.best_checkpoint_by_metric(
-                args={"tid": self.id, "metric": sort_by, "smaller_is_better": smaller_is_better},
-            )
-        else:
-            where = gql.checkpoints_bool_exp(
-                state=gql.checkpoint_state_comparison_exp(_eq="COMPLETED"),
-                trial_id=gql.Int_comparison_exp(_eq=self.id),
-            )
+        r = api.get(self._master, "checkpoints", params={"trial_id": self.id}).json()
 
-            order_by = []  # type: List[gql.checkpoints_order_by]
-            if uuid is not None:
-                where.uuid = gql.uuid_comparison_exp(_eq=uuid)
-            elif latest:
-                order_by = [gql.checkpoints_order_by(end_time=gql.order_by.desc)]
-            elif best:
-                where.validation = gql.validations_bool_exp(
-                    state=gql.validation_state_comparison_exp(_eq="COMPLETED")
-                )
-                order_by = [
-                    gql.checkpoints_order_by(
-                        validation=gql.validations_order_by(
-                            metric_values=gql.validation_metrics_order_by(signed=gql.order_by.asc)
-                        )
-                    )
-                ]
-
-            checkpoint_gql = q.op.checkpoints(where=where, order_by=order_by, limit=1)
-
-        checkpoint_gql.state()
-        checkpoint_gql.uuid()
-        checkpoint_gql.resources()
-
-        validation = checkpoint_gql.validation()
-        validation.metrics()
-        validation.state()
-
-        step = checkpoint_gql.step()
-        step.id()
-        step.start_time()
-        step.end_time()
-        step.trial.experiment.config()
-
-        resp = q.send()
-
-        result = resp.best_checkpoint_by_metric if sort_by is not None else resp.checkpoints
-
-        if not result:
+        if not r:
             raise AssertionError("No checkpoint found for trial {}".format(self.id))
 
-        ckpt_gql = result[0]
-        batch_number = ckpt_gql.step.trial.experiment.config["batches_per_step"] * ckpt_gql.step.id
-        return checkpoint.Checkpoint(
-            ckpt_gql.uuid,
-            ckpt_gql.step.trial.experiment.config["checkpoint_storage"],
-            batch_number,
-            ckpt_gql.step.start_time,
-            ckpt_gql.step.end_time,
-            ckpt_gql.resources,
-            ckpt_gql.validation,
+        if latest:
+            return checkpoint.from_json(r[0])
+
+        if not sort_by:
+            sort_by = r[0]["metric"]
+            smaller_is_better = r[0]["smaller_is_better"]
+
+        best_checkpoint = min if smaller_is_better else max
+        return checkpoint.from_json(
+            best_checkpoint(r, key=lambda x: x["metrics"]["validation_metrics"][sort_by])
         )
