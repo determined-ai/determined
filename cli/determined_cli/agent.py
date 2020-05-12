@@ -22,12 +22,13 @@ def list_agents(args: argparse.Namespace) -> None:
     r = api.get(args.master, "agents")
 
     agents = r.json()
-    headers = ["Agent Name", "Registered Time", "Slots", "Label"]
+    headers = ["Agent Name", "Registered Time", "Slots", "Containers", "Label"]
     values = [
         [
             local_id(agent_id),
             render.format_time(agent["registered_time"]),
             len(agent["slots"]),
+            agent["num_containers"],
             agent["label"],
         ]
         for agent_id, agent in sorted(agents.items())

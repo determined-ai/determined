@@ -37,6 +37,7 @@ type agentSummary struct {
 	ID             string       `json:"id"`
 	RegisteredTime time.Time    `json:"registered_time"`
 	Slots          slotsSummary `json:"slots"`
+	NumContainers  int          `json:"num_containers"`
 	Label          string       `json:"label"`
 }
 
@@ -172,6 +173,7 @@ func (a *agent) summarize(ctx *actor.Context) agentSummary {
 		ID:             ctx.Self().Address().Local(),
 		RegisteredTime: ctx.Self().RegisteredTime(),
 		Slots:          ctx.Ask(a.slots, slotsSummary{}).Get().(slotsSummary),
+		NumContainers:  len(a.containers),
 		Label:          a.label,
 	}
 }
