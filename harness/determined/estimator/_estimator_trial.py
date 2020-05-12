@@ -512,9 +512,9 @@ class EstimatorTrialController(det.LoopTrialController):
             if session_config is None:
                 session_config = tf.compat.v1.ConfigProto()
             session_config.gpu_options.allow_growth = True
-            session_config.gpu_options.visible_device_list = self.env.slot_ids[
-                horovod.hvd.local_rank()
-            ]
+            session_config.gpu_options.visible_device_list = str(
+                self.env.slot_ids[horovod.hvd.local_rank()]
+            )
         elif len(self.env.container_gpus) > 1:
             check.true(len(self.rendezvous_info.get_addrs()) == 1)
             train_distribute = tf.distribute.MirroredStrategy()

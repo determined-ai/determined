@@ -205,7 +205,7 @@ class TFKerasTrialController(det.LoopTrialController):
             if hvd_config.use:
                 # We launch a horovod process per GPU. Each process
                 # needs to bind to a unique GPU.
-                session_config.gpu_options.visible_device_list = env.slot_ids[hvd.local_rank()]
+                session_config.gpu_options.visible_device_list = str(env.slot_ids[hvd.local_rank()])
 
             session = tf.compat.v1.Session(
                 graph=tf.compat.v1.get_default_graph(), config=session_config
