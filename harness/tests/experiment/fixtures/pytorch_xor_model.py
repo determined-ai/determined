@@ -326,3 +326,21 @@ class XORTrialCallbacks(XORTrialMulti):
 
     def build_callbacks(self) -> Dict[str, det.pytorch.PyTorchCallback]:
         return {"counter": self.counter}
+
+
+class XORTrialAccessContext(XORTrialStepEveryEpoch):
+    def train_batch(
+        self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
+        assert self.context.get_model()
+        assert self.context.get_optimizer()
+        assert self.context.get_lr_scheduler()
+
+        return super().train_batch(batch, model, epoch_idx, batch_idx)
+
+    def evaluate_batch(self, batch: TorchData, model: nn.Module) -> Dict[str, Any]:
+        assert self.context.get_model()
+        assert self.context.get_optimizer()
+        assert self.context.get_lr_scheduler()
+
+        return super().evaluate_batch(batch, model)

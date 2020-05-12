@@ -18,6 +18,7 @@ from determined.horovod import hvd
 from determined.pytorch import (
     DataLoader,
     LRScheduler,
+    PyTorchTrialContext,
     Reducer,
     TorchData,
     _callback,
@@ -50,29 +51,31 @@ class PyTorchTrialController(det.LoopTrialController):
         self.trial = cast(PyTorchTrial, trial_inst)
         self._check_evaluate_implementation()
 
-        self.model = self.trial.build_model()
+        self._init_device()
+        self._init_model()
 
         # Validation loader will be undefined on process ranks > 0
         # when the user defines `validate_full_dataset()`.
         self.validation_loader = None  # type: Optional[torch.utils.data.DataLoader]
-
         self._set_data_loaders()
 
         # Track whether a warning logging category has already been issued to the user.
         self.warning_logged = {_WarningLogs.FAILED_MOVING_TO_DEVICE: False}
 
-        self._init_model_and_optimizer()
+        self._init_optimizer()
+
+        self.context.lr_scheduler = self.trial.create_lr_scheduler(self.context.optimizer)
+        self.lr_helper = _LRHelper(self.context.lr_scheduler)
 
         self.callbacks = self.trial.build_callbacks()
 
         # If a load path is provided load weights and restore the data location.
         self._load()
-
         self._configure_amp()
 
         if self.hvd_config.use:
-            hvd.broadcast_parameters(self.model.state_dict(), root_rank=0)
-            hvd.broadcast_optimizer_state(self.optimizer, root_rank=0)
+            hvd.broadcast_parameters(self.context.model.state_dict(), root_rank=0)
+            hvd.broadcast_optimizer_state(self.context.optimizer, root_rank=0)
 
         self.training_iterator = iter(self.training_loader)
 
@@ -124,23 +127,11 @@ class PyTorchTrialController(det.LoopTrialController):
             self.device = torch.device("cpu")
         check.is_not_none(self.device)
 
-    def _init_model_and_optimizer(self) -> None:
-        self.optimizer = self.trial.optimizer(self.model)
-        # TODO: Check that optimizer is not an amp optimizer.
+    def _init_model(self) -> None:
+        self.context.model = self.trial.build_model()
+        self.context.model = self.context.model.to(self.device)
 
-        self._init_device()
-        self.model = self.model.to(self.device)
-
-        if self.hvd_config.use:
-            use_compression = self.hvd_config.fp16_compression
-            self.optimizer = hvd.DistributedOptimizer(
-                self.optimizer,
-                named_parameters=self.model.named_parameters(),
-                backward_passes_per_step=self.hvd_config.aggregation_frequency,
-                compression=hvd.Compression.fp16 if use_compression else hvd.Compression.none,
-            )
-            logging.debug("Initialized optimizer for distributed and optimized parallel training.")
-        elif self.n_gpus > 1:
+        if self.n_gpus > 1:
             check.eq(
                 self.hvd_config.aggregation_frequency,
                 1,
@@ -148,10 +139,22 @@ class PyTorchTrialController(det.LoopTrialController):
                 "frequency greater than 1 for single machine multi-GPU "
                 "training.",
             )
-            self.model = nn.DataParallel(self.model)
+            self.context.model = nn.DataParallel(self.context.model)
             logging.debug("Initialized mode for native parallel training.")
 
-        self.lr_helper = _LRHelper(self.trial.create_lr_scheduler(self.optimizer))
+    def _init_optimizer(self) -> None:
+        # TODO: Check that optimizer is not an amp optimizer.
+        self.context.optimizer = self.trial.optimizer(self.context.model)
+
+        if self.hvd_config.use:
+            use_compression = self.hvd_config.fp16_compression
+            self.context.optimizer = hvd.DistributedOptimizer(
+                self.context.optimizer,
+                named_parameters=self.context.model.named_parameters(),
+                backward_passes_per_step=self.hvd_config.aggregation_frequency,
+                compression=hvd.Compression.fp16 if use_compression else hvd.Compression.none,
+            )
+            logging.debug("Initialized optimizer for distributed and optimized parallel training.")
 
     def _check_evaluate_implementation(self) -> None:
         """
@@ -200,9 +203,9 @@ class PyTorchTrialController(det.LoopTrialController):
             logging.info(
                 f"Enabling mixed precision training with opt_level: {self._get_amp_setting()}."
             )
-            self.model, self.optimizer = apex.amp.initialize(
-                self.model,
-                self.optimizer,
+            self.context.model, self.context.optimizer = apex.amp.initialize(
+                self.context.model,
+                self.context.optimizer,
                 opt_level=self._get_amp_setting(),
                 verbosity=1 if self.is_chief or self.env.experiment_config.debug_enabled() else 0,
             )
@@ -350,7 +353,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
         # Set the behavior of certain layers (e.g., dropout) that are different
         # between training and inference.
-        self.model.train()
+        self.context.model.train()
 
         for callback in self.callbacks.values():
             callback.on_train_step_start(step_id)
@@ -370,7 +373,7 @@ class PyTorchTrialController(det.LoopTrialController):
             # Forward pass.
             tr_metrics = self.trial.train_batch(
                 batch=batch,
-                model=self.model,
+                model=self.context.model,
                 epoch_idx=self.get_epoch_idx(batch_idx),
                 batch_idx=batch_idx,
             )
@@ -390,18 +393,18 @@ class PyTorchTrialController(det.LoopTrialController):
             loss = tr_metrics["loss"]
             communicate_and_update = (batch_idx + 1) % self.hvd_config.aggregation_frequency == 0
             if self.use_amp():
-                with apex.amp.scale_loss(loss, self.optimizer) as scaled_loss:
+                with apex.amp.scale_loss(loss, self.context.optimizer) as scaled_loss:
                     scaled_loss.backward()
                     if self.hvd_config.use and communicate_and_update:
-                        self.optimizer.synchronize()
+                        self.context.optimizer.synchronize()
             else:
                 loss.backward()
 
             if communicate_and_update:
                 parameters = (
-                    self.model.parameters()
+                    self.context.model.parameters()
                     if not self.use_amp()
-                    else apex.amp.master_params(self.optimizer)
+                    else apex.amp.master_params(self.context.optimizer)
                 )
 
                 if self.hvd_config.average_aggregated_gradients:
@@ -412,11 +415,11 @@ class PyTorchTrialController(det.LoopTrialController):
                 self._clip_grads(parameters)
 
                 if self.hvd_config.use and self.use_amp():
-                    with self.optimizer.skip_synchronize():
-                        self.optimizer.step()
+                    with self.context.optimizer.skip_synchronize():
+                        self.context.optimizer.step()
                 else:
-                    self.optimizer.step()
-                self.optimizer.zero_grad()
+                    self.context.optimizer.step()
+                self.context.optimizer.zero_grad()
 
                 if self.lr_helper.should_step_lr(
                     batches_completed=batch_idx + 1,
@@ -467,7 +470,7 @@ class PyTorchTrialController(det.LoopTrialController):
     def _compute_validation_metrics(self) -> workload.Response:
         # Set the behavior of certain layers (e.g., dropout) that are
         # different between training and inference.
-        self.model.eval()
+        self.context.model.eval()
 
         for callback in self.callbacks.values():
             callback.on_validation_step_start()
@@ -485,7 +488,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 batch = self._to_device(batch)
                 num_inputs += data_length(batch)
 
-                vld_metrics = self.trial.evaluate_batch(batch=batch, model=self.model)
+                vld_metrics = self.trial.evaluate_batch(batch=batch, model=self.context.model)
                 # Verify validation metric names are the same across batches.
                 if keys is None:
                     keys = vld_metrics.keys()
@@ -505,7 +508,6 @@ class PyTorchTrialController(det.LoopTrialController):
                 # TODO: For performance perform -> cpu() only at the end of validation.
                 batch_metrics.append(self._convert_metrics_to_numpy(vld_metrics))
 
-            keys = cast(Any, keys)
             metrics = self._reduce_metrics(
                 batch_metrics=batch_metrics,
                 keys=keys,
@@ -520,7 +522,7 @@ class PyTorchTrialController(det.LoopTrialController):
             self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
             if self.is_chief:
                 metrics = self.trial.evaluate_full_dataset(
-                    data_loader=self.validation_loader, model=self.model
+                    data_loader=self.validation_loader, model=self.context.model
                 )
 
                 check.is_instance(
@@ -652,8 +654,8 @@ class PyTorchTrialController(det.LoopTrialController):
                 checkpoint = torch.load(maybe_ckpt, map_location="cpu")  # type: ignore
                 break
 
-        self.model.load_state_dict(checkpoint["model_state_dict"])
-        self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        self.context.model.load_state_dict(checkpoint["model_state_dict"])
+        self.context.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         self.lr_helper.load_state_dict(checkpoint.get("lr_scheduler"))
 
         callback_state = checkpoint.get("callbacks", {})
@@ -682,7 +684,9 @@ class PyTorchTrialController(det.LoopTrialController):
         pickled_model_path = path.joinpath("model.pth")
         code_path = path.joinpath("code")
 
-        torch.save(self.model, pickled_model_path, pickle_module=cloudpickle)  # type: ignore
+        torch.save(  # type: ignore
+            self.context.model, pickled_model_path, pickle_module=cloudpickle
+        )
 
         # The model code is the current working directory.
         shutil.copytree(os.getcwd(), code_path, ignore=shutil.ignore_patterns("__pycache__"))
@@ -702,8 +706,8 @@ class PyTorchTrialController(det.LoopTrialController):
         # objects) to avoid breaking the connection between the model and the
         # optimizer.
         checkpoint = {
-            "model_state_dict": self.model.state_dict(),
-            "optimizer_state_dict": self.optimizer.state_dict(),
+            "model_state_dict": self.context.model.state_dict(),
+            "optimizer_state_dict": self.context.optimizer.state_dict(),
         }
 
         if self.lr_helper:
@@ -729,6 +733,7 @@ class PyTorchTrial(det.Trial):
     """
 
     trial_controller_class = PyTorchTrialController
+    trial_context_class = PyTorchTrialContext
 
     @abstractmethod
     def build_model(self) -> nn.Module:
