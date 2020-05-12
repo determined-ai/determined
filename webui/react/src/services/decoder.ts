@@ -1,8 +1,10 @@
 import dayjs from 'dayjs';
 
 import {
-  ioTypeAgents, ioTypeCommandAddress, ioTypeDeterminedInfo,
-  ioTypeExperiments, ioTypeGenericCommand, ioTypeGenericCommands, ioTypeUsers,
+  decode,
+  ioExperiments, ioTypeAgents, ioTypeCommandAddress,
+  ioTypeDeterminedInfo, ioTypeExperiments, ioTypeGenericCommand, ioTypeGenericCommands,
+  ioTypeUsers,
 } from 'ioTypes';
 import {
   Agent, Command, CommandType, DeterminedInfo, Experiment, ResourceState, ResourceType, User,
@@ -110,8 +112,9 @@ export const jsonToTensorboards = (data: ioTypeGenericCommands): Command[] => {
   return jsonToGenericCommands(data, CommandType.Tensorboard);
 };
 
-export const jsonToExperiments = (data: ioTypeExperiments): Experiment[] => {
-  return data.map(experiment => {
+export const jsonToExperiments = (data: unknown): Experiment[] => {
+  const ioType = decode<ioTypeExperiments>(ioExperiments, data);
+  return ioType.map(experiment => {
     return {
       archived: experiment.archived,
       config: experiment.config,

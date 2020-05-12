@@ -12,10 +12,9 @@ import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
-import useRestApi from 'hooks/useRestApi';
+import { useRestApiSimple } from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
-import { ioExperiments } from 'ioTypes';
-import { jsonToExperiments } from 'services/decoder';
+import { ExperimentsParams, getExperiments } from 'services/api';
 import { ShirtSize } from 'themes';
 import {
   Command, CommandState, Experiment, RecentTask, ResourceType, RunState, TaskType,
@@ -60,16 +59,14 @@ const Dashboard: React.FC = () => {
   const shells = Shells.useStateContext();
   const tensorboards = Tensorboards.useStateContext();
   const [ experimentsResponse, requestExperiments ] =
-    useRestApi<Experiment[]>(ioExperiments, { mappers: jsonToExperiments });
+    useRestApiSimple<ExperimentsParams, Experiment[]>(getExperiments, {});
   const storage = useStorage('dashboard/tasks');
   const initFilters = storage.getWithDefault('filters',
     { ...defaultFilters, username: (auth.user || {}).username });
   const [ filters, setFilters ] = useState<TaskFilters>(initFilters);
 
   const fetchExperiments = useCallback((): void => {
-    requestExperiments({
-      url: '/experiment-summaries',
-    });
+    requestExperiments({});
   }, [ requestExperiments ]);
 
   usePolling(fetchExperiments);
