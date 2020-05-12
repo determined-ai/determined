@@ -76,15 +76,15 @@ To install on the cloud, please follow the instructions for your preferred cloud
 Notes
 ~~~~~
 
-Each Determined cluster requires one third-party services, `PostgreSQL
-<https://www.postgresql.org/>`_. In addition, Determined can use
-`Docker <https://www.docker.com/>`_ to run the master and agents.
-Depending on your installation method, some of these services will
-be installed for you:
+Each Determined cluster requires access to a `PostgreSQL
+<https://www.postgresql.org/>`_ database. In addition, Determined can
+use `Docker <https://www.docker.com/>`_ to run the master and agents.
+Depending on your installation method, some of these services will be
+installed for you:
 
-- On a cloud provider using ``det-deploy``, the third-party services will be installed for you.
+- On a cloud provider using ``det-deploy``, Docker and PostgreSQL will be installed for you.
 - On-premise using ``det-deploy``, Docker will need to be installed.
-- When doing a manual installation, you will have to install each service yourself.
+- When doing a manual installation, you will have to install Docker and PostgreSQL yourself.
 
 More information on a Determined cluster can be found:
 
