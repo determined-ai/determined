@@ -44,7 +44,8 @@ func (inst Instance) String() string {
 }
 
 func (inst Instance) equals(other Instance) bool {
-	return inst.ID == other.ID && inst.AgentName == other.AgentName && inst.State == other.State
+	return inst.ID == other.ID && inst.LaunchTime.Equal(other.LaunchTime) &&
+		inst.AgentName == other.AgentName && inst.State == other.State
 }
 
 func fmtInstances(instances []*Instance) string {
