@@ -106,7 +106,6 @@ def master_up(
     master_name: str,
     version: str,
     db_password: str,
-    hasura_secret: str,
     delete_db: bool,
     autorestart: bool,
 ):
@@ -127,7 +126,6 @@ def master_up(
         "INTEGRATIONS_HOST_PORT": str(port),
         "DET_MASTER_CONFIG": str(master_config_path),
         "DET_DB_PASSWORD": db_password,
-        "DET_HASURA_SECRET": hasura_secret,
         "DET_VERSION": version,
         "DET_RESTART_POLICY": restart_policy,
     }
@@ -150,7 +148,6 @@ def fixture_up(
     cluster_name: str,
     version: str,
     db_password: str,
-    hasura_secret: str,
     delete_db: bool,
     no_gpu: bool,
     autorestart: bool,
@@ -162,7 +159,6 @@ def fixture_up(
         master_name=cluster_name,
         version=version,
         db_password=db_password,
-        hasura_secret=hasura_secret,
         delete_db=delete_db,
         autorestart=autorestart,
     )

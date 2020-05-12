@@ -58,12 +58,6 @@ def make_up_subparser(subparsers: argparse._SubParsersAction):
         help="password for master database",
     )
     subparser.add_argument(
-        "--hasura-secret",
-        type=str,
-        default=constants.defaults.HASURA_SECRET,
-        help="password for Hasura service",
-    )
-    subparser.add_argument(
         "--region", type=str, default=None, help="AWS region",
     )
     subparser.add_argument(
@@ -129,7 +123,6 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.cloudformation.VERSION: args.det_version,
         constants.cloudformation.INBOUND_CIDR: args.inbound_cidr,
         constants.cloudformation.DB_PASSWORD: args.db_password,
-        constants.cloudformation.HASURA_SECRET: args.hasura_secret,
         constants.cloudformation.MAX_IDLE_AGENT_PERIOD: args.max_idle_agent_period,
         constants.cloudformation.MAX_DYNAMIC_AGENTS: args.max_dynamic_agents,
     }

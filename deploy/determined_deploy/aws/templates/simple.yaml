@@ -40,11 +40,6 @@ Parameters:
     Description: Password for database (eg. "postgres")
     NoEcho: true
 
-  HasuraSecret:
-    Type: String
-    Description: Password for hasura (eg. "hasura")
-    NoEcho: true
-
   MaxIdleAgentPeriod:
     Type: String
     Description: How long before idle agents are shutdown
@@ -375,10 +370,6 @@ Resources:
               port: 5432
               name: determined
 
-            hasura:
-              secret: "${HasuraSecret}"
-              address: determined-graphql:8080
-
             provisioner:
               iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
               image_id: ${AgentAmi}
@@ -420,23 +411,6 @@ Resources:
 
             docker stop $(docker ps -a -q)
             docker rm $(docker ps -a -q)
-
-            docker run \
-                -d \
-                --name determined-graphql \
-                --restart unless-stopped \
-                --network determined \
-                --log-driver=awslogs \
-                --log-opt awslogs-group=${LogGroup} \
-                --log-opt awslogs-stream=determined-hasura \
-                -e HASURA_GRAPHQL_ADMIN_SECRET=${HasuraSecret} \
-                -e HASURA_GRAPHQL_CONSOLE_ASSETS_DIR=/srv/console-assets \
-                -e HASURA_GRAPHQL_DATABASE_URL=postgres://postgres:${DBPassword}@${Database.Endpoint.Address}:5432/determined \
-                -e HASURA_GRAPHQL_ENABLED_APIS=graphql,metadata \
-                -e HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup \
-                -e HASURA_GRAPHQL_ENABLE_CONSOLE=false \
-                -e HASURA_GRAPHQL_ENABLE_TELEMETRY=false \
-                hasura/graphql-engine:v1.1.0
 
             docker run \
                 --name determined-master \

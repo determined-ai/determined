@@ -82,9 +82,6 @@ variable "db_password" {
 variable "database_name" {
 }
 
-variable "hasura_secret" {
-}
-
 variable "master_instance_type" {
 }
 

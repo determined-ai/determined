@@ -25,7 +25,6 @@ class Simple(base.DeterminedDeployment):
         constants.cloudformation.INBOUND_CIDR,
         constants.cloudformation.VERSION,
         constants.cloudformation.DB_PASSWORD,
-        constants.cloudformation.HASURA_SECRET,
         constants.cloudformation.MAX_IDLE_AGENT_PERIOD,
         constants.cloudformation.MAX_DYNAMIC_AGENTS,
     ]

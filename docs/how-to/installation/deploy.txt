@@ -36,7 +36,7 @@ create a configuration file, see :ref:`cluster-configuration`. There are also
 .. note::
 
    ``det-deploy`` will use a default configuration file if you don't provide one.
-   It also transparently manages PostgreSQL and Hasura along with
+   It also transparently manages PostgreSQL along with
    the master, so the configuration options related to those services do
    not need to be set.
 

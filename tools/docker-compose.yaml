@@ -12,17 +12,3 @@ services:
     command:
       - --max_connections=96
       - --shared_buffers=512MB
-
-  determined-graphql:
-    image: hasura/graphql-engine:v1.1.0
-    ports:
-      - 8081:8080
-    restart: always
-    environment:
-      HASURA_GRAPHQL_ADMIN_SECRET: hasura
-      HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: /srv/console-assets
-      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:postgres@determined-db:5432/determined
-      HASURA_GRAPHQL_ENABLED_APIS: graphql,metadata
-      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup
-      HASURA_GRAPHQL_ENABLE_CONSOLE: "false"
-      HASURA_GRAPHQL_ENABLE_TELEMETRY: "false"

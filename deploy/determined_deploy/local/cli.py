@@ -24,9 +24,6 @@ def add_fixture_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--db-password", type=str, default="postgres", help="password for master database",
     )
     parser.add_argument(
-        "--hasura-secret", type=str, default="hasura", help="password for hasura service",
-    )
-    parser.add_argument(
         "--delete-db", action="store_true", help="remove current master database",
     )
     parser.add_argument("--no-gpu", help="enable GPU support for agent", action="store_true")
@@ -67,9 +64,6 @@ def add_master_up_subparser(subparsers: argparse._SubParsersAction) -> None:
     parser.add_argument("--det-version", type=str, default=None, help="version or commit to use")
     parser.add_argument(
         "--db-password", type=str, default="postgres", help="password for master database",
-    )
-    parser.add_argument(
-        "--hasura-secret", type=str, default="hasura", help="password for hasura service",
     )
     parser.add_argument(
         "--delete-db", action="store_true", help="remove current master database",
@@ -157,7 +151,6 @@ def handle_fixture_up(args):
         cluster_name=args.cluster_name,
         version=args.det_version,
         db_password=args.db_password,
-        hasura_secret=args.hasura_secret,
         delete_db=args.delete_db,
         no_gpu=args.no_gpu,
         autorestart=(not args.no_autorestart),
@@ -179,7 +172,6 @@ def handle_master_up(args):
         master_name=args.master_name,
         version=args.det_version,
         db_password=args.db_password,
-        hasura_secret=args.hasura_secret,
         delete_db=args.delete_db,
         autorestart=(not args.no_autorestart),
     )

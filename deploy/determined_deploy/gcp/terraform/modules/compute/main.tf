@@ -31,10 +31,6 @@ resource "google_compute_instance" "master_instance" {
       port: 5432
       name: "${var.database_name}"
 
-    hasura:
-      secret: "${var.hasura_secret}"
-      address: determined-graphql:${var.port}
-
     checkpoint_storage:
       type: gcs
       bucket: "${var.gcs_bucket}"
@@ -82,20 +78,6 @@ resource "google_compute_instance" "master_instance" {
     apt-get install -y docker-ce docker-ce-cli containerd.io
 
     docker network create ${var.master_docker_network}
-
-    docker run \
-        -d \
-        --name determined-graphql \
-        --network ${var.master_docker_network} \
-        --restart unless-stopped \
-        -e HASURA_GRAPHQL_ADMIN_SECRET="${var.hasura_secret}" \
-        -e HASURA_GRAPHQL_CONSOLE_ASSETS_DIR=/srv/console-assets \
-        -e HASURA_GRAPHQL_DATABASE_URL=postgres://postgres:${var.db_password}@${var.database_hostname}:5432/${var.database_name} \
-        -e HASURA_GRAPHQL_ENABLED_APIS=graphql,metadata \
-        -e HASURA_GRAPHQL_ENABLED_LOG_TYPES=startup \
-        -e HASURA_GRAPHQL_ENABLE_CONSOLE=false \
-        -e HASURA_GRAPHQL_ENABLE_TELEMETRY=false \
-        hasura/graphql-engine:v1.1.0
 
     docker run \
         --name determined-master \

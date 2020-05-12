@@ -8,7 +8,6 @@ class deployment_types:
 class defaults:
     DEPLOYMENT_TYPE = deployment_types.SIMPLE
     DB_PASSWORD = "postgres"
-    HASURA_SECRET = "hasura"
     REGION = "us-west-2"
 
 
@@ -32,7 +31,6 @@ class cloudformation:
     DET_ADDRESS = "DeterminedAddress"
     VERSION = "Version"
     DB_PASSWORD = "DBPassword"
-    HASURA_SECRET = "HasuraSecret"
     BOTO3_SESSION = "Boto3Session"
     AGENT_TAG_NAME = "AgentTagName"
     MAX_IDLE_AGENT_PERIOD = "MaxIdleAgentPeriod"

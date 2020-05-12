@@ -107,11 +107,6 @@ db:
   name: determined
   # password: database_password
 
-## Configure the connection to Hasura.
-hasura:
-  address: determined-graphql:8080
-  # secret: hasura_secret
-
 ## Configure whether we collect anonymous information about the usage of
 ## Determined.
 # telemetry:

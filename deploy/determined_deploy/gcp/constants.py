@@ -5,7 +5,6 @@ class defaults:
     ENVIRONMENT_IMAGE = "pedl-environments-e6662e6"
     GPU_NUM = 8
     GPU_TYPE = "nvidia-tesla-k80"
-    HASURA_SECRET = "secret"
     MASTER_INSTANCE_TYPE = "n1-standard-2"
     MAX_IDLE_AGENT_PERIOD = "10m"
     MAX_DYNAMIC_AGENTS = 5

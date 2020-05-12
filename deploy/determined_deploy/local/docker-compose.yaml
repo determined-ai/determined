@@ -13,24 +13,11 @@ services:
       - --max_connections=96
       - --shared_buffers=512MB
 
-  determined-graphql:
-    image: hasura/graphql-engine:v1.1.0
-    restart: unless-stopped
-    environment:
-      HASURA_GRAPHQL_ADMIN_SECRET: "${DET_HASURA_SECRET}"
-      HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: /srv/console-assets
-      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:${DET_DB_PASSWORD}@determined-db:5432/determined?application_name=hasura
-      HASURA_GRAPHQL_ENABLED_APIS: graphql,metadata
-      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup
-      HASURA_GRAPHQL_ENABLE_CONSOLE: "false"
-      HASURA_GRAPHQL_ENABLE_TELEMETRY: "false"
-
   determined-master:
     init: true
     restart: ${DET_RESTART_POLICY:-unless-stopped}
     depends_on:
       - determined-db
-      - determined-graphql
     image: determinedai/determined-master:${DET_VERSION}
     ports:
       - "${INTEGRATIONS_HOST_PORT:-8080}:8080"
@@ -38,7 +25,6 @@ services:
       DET_LOG_LEVEL: ${INTEGRATIONS_LOG_LEVEL:-info}
       DET_MASTER_HTTP_PORT: ${INTEGRATIONS_HOST_PORT:-8080}
       DET_DB_PASSWORD: ${DET_DB_PASSWORD}
-      DET_HASURA_SECRET: ${DET_HASURA_SECRET}
 
 volumes:
   determined-db-volume: {}

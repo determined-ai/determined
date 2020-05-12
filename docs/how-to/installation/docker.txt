@@ -11,18 +11,16 @@ Preliminary Setup
    Container Toolkit <validate-nvidia-container-toolkit>` on each one is
    working as expected.
 
-#. Pull the official Docker images for PostgreSQL and Hasura. We
-   recommend using the versions listed below.
+#. Pull the official Docker images for PostgreSQL. We
+   recommend using the version listed below.
 
    .. code::
 
       docker pull postgres:10
-      docker pull hasura/graphql-engine:v1.1.0
 
-   These images are not provided by Determined AI; please see their
-   respective Docker Hub pages (`PostgreSQL
-   <https://hub.docker.com/_/postgres>`_, `Hasura
-   <https://hub.docker.com/r/hasura/graphql-engine>`_) for more
+   This image is not provided by Determined AI; please see its
+   respective Docker Hub page (`PostgreSQL
+   <https://hub.docker.com/_/postgres>`_) for more
    information.
 
 #. Pull the Docker image for the master or agent on each machine
