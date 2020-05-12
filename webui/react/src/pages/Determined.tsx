@@ -15,18 +15,16 @@ import {
   jsonToAgents, jsonToCommands, jsonToExperiments, jsonToNotebooks,
   jsonToShells, jsonToTensorboards, jsonToUsers,
 } from 'services/decoder';
-import { buildExperimentListGqlQuery } from 'services/graphql';
 import { Agent, Command, Experiment, RunState, User } from 'types';
 
 import css from './Determined.module.scss';
 
-// querying active experiments only
-const query = buildExperimentListGqlQuery({ states: [
+const activeStates = [
   RunState.Active,
   RunState.StoppingCanceled,
   RunState.StoppingCompleted,
   RunState.StoppingError,
-] });
+];
 
 const Determined: React.FC = () => {
   const setUsers = Users.useActionContext();
@@ -58,7 +56,7 @@ const Determined: React.FC = () => {
     requestNotebooks({ url: '/notebooks' });
     requestShells({ url: '/shells' });
     requestTensorboards({ url: '/tensorboard' });
-    requestExperiments({ body: query, method: 'POST', url: '/graphql' });
+    requestExperiments({ url: `/experiment-summaries?states=${activeStates.join(',')}` });
   }, [
     requestAgents,
     requestCommands,

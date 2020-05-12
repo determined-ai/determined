@@ -111,7 +111,7 @@ export const jsonToTensorboards = (data: ioTypeGenericCommands): Command[] => {
 };
 
 export const jsonToExperiments = (data: ioTypeExperiments): Experiment[] => {
-  return (data.data.experiments || []).map(experiment => {
+  return data.map(experiment => {
     return {
       archived: experiment.archived,
       config: experiment.config,
