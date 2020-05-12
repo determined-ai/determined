@@ -215,7 +215,7 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
         det.util.write_checkpoint_metadata(
             checkpoint_path,
             self.estimator_trial_controller.env,
-            {"tensorflow_version": tf.__version__},
+            {"tensorflow_version": tf.__version__, "format": "saved_model"},
         )
 
         return {}

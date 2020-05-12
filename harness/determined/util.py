@@ -2,8 +2,10 @@ import collections
 import datetime
 import enum
 import json
+import os
 import pathlib
 import random
+import shutil
 import time
 import uuid
 from typing import Any, Dict, List, Optional, cast
@@ -138,12 +140,22 @@ def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False)
 
 
 def write_checkpoint_metadata(path: pathlib.Path, env: EnvContext, extras: Dict[str, Any]) -> None:
+    code_path = path.joinpath("code")
+
+    # Pytorch and tf.1 keras models can only be restored from a checkpoint if
+    # the original code is present. The model code is the current working
+    # directory. Therefore we save the current directory with the checkpoint.
+    shutil.copytree(os.getcwd(), code_path, ignore=shutil.ignore_patterns("__pycache__"))
+    os.chmod(code_path, 0o755)
+
     metadata_path = path.joinpath("metadata.json")
     det_metadata = {
         "cluster_id": env.det_cluster_id,
         "det_version": det.__version__,
         "experiment_id": env.det_experiment_id,
         "trial_id": env.det_trial_id,
+        "hparams": env.hparams,
+        "experiment_config": env.experiment_config,
         **extras,
     }
 

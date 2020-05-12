@@ -1,9 +1,7 @@
 import enum
 import logging
-import os
 import pathlib
 import random
-import shutil
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
@@ -645,14 +643,10 @@ class PyTorchTrialController(det.LoopTrialController):
         # method so long as the code is saved along with the pickled nn.Module.
         # https://pytorch.org/docs/stable/notes/serialization.html#recommend-saving-models
         pickled_model_path = path.joinpath("model.pth")
-        code_path = path.joinpath("code")
 
         torch.save(self.model, pickled_model_path, pickle_module=cloudpickle)  # type: ignore
 
         # The model code is the current working directory.
-        shutil.copytree(os.getcwd(), code_path, ignore=shutil.ignore_patterns("__pycache__"))
-        os.chmod(code_path, 0o755)
-
         util.write_checkpoint_metadata(
             path,
             self.env,
