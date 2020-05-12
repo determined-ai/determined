@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -68,6 +69,30 @@ func ParseExperimentsQuery(apiCtx echo.Context) (*ExperimentRequestQuery, error)
 	}
 
 	return &queries, nil
+}
+
+func (m *Master) getExperimentSummaries(c echo.Context) (interface{}, error) {
+	type ExperimentSummary struct {
+		ID        int             `db:"id" json:"id"`
+		State     string          `db:"state" json:"state"`
+		OwnerID   int             `db:"owner_id" json:"owner_id"`
+		Progress  *float64        `db:"progress" json:"progress"`
+		Archived  bool            `db:"archived" json:"archived"`
+		StartTime string          `db:"start_time" json:"start_time"`
+		EndTime   *string         `db:"end_time" json:"end_time"`
+		Config    json.RawMessage `db:"config" json:"config"`
+	}
+	states := c.QueryParam("states")
+	if states == "" {
+		var allStates []string
+		for state := range model.ExperimentTransitions {
+			allStates = append(allStates, string(state))
+		}
+		states = strings.Join(allStates, ",")
+	}
+	var results []ExperimentSummary
+	err := m.db.Query("get_experiment_summaries", &results, states)
+	return results, err
 }
 
 func (m *Master) getExperimentList(c echo.Context) (interface{}, error) {
