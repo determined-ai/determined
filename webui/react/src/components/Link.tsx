@@ -19,7 +19,7 @@ const Link: React.FC<Props> = ({
   crossover, disabled, path, popout, onClick, children,
 }: PropsWithChildren<Props>) => {
   const history = useHistory();
-  const classes = [];
+  const classes = [ css.base ];
 
   if (!disabled) classes.push(css.link);
 
@@ -41,7 +41,7 @@ const Link: React.FC<Props> = ({
     }
   }, [ history, crossover, onClick, path, popout ]);
 
-  return <div className={classes.join(' ')} onClick={handleClick}>{children}</div>;
+  return <a className={classes.join(' ')} href={path} onClick={handleClick}>{children}</a>;
 };
 
 Link.defaultProps = defaultProps;
