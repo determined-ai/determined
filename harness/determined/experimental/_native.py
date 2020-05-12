@@ -202,10 +202,12 @@ def make_local_experiment_config(input_config: Optional[Dict[str, Any]]) -> Dict
 
 
 def make_test_experiment_env(
-    checkpoint_dir: pathlib.Path, config: Optional[Dict[str, Any]]
+    checkpoint_dir: pathlib.Path,
+    config: Optional[Dict[str, Any]],
+    hparams: Optional[Dict[str, Any]] = None,
 ) -> Tuple[det.EnvContext, workload.Stream, det.RendezvousInfo, horovod.HorovodContext]:
     config = det.ExperimentConfig(make_local_experiment_config(config))
-    hparams = generate_test_hparam_values(config)
+    hparams = hparams or generate_test_hparam_values(config)
     use_gpu, container_gpus, slot_ids = get_gpus()
     local_rendezvous_ports = (
         f"{constants.LOCAL_RENDEZVOUS_PORT},{constants.LOCAL_RENDEZVOUS_PORT+1}"
@@ -248,7 +250,10 @@ def _stop_loading_implementation() -> None:
 
 
 def create_trial_instance(
-    trial_def: Type[det.Trial], checkpoint_dir: str, config: Optional[Dict[str, Any]] = None
+    trial_def: Type[det.Trial],
+    checkpoint_dir: str,
+    config: Optional[Dict[str, Any]] = None,
+    hparams: Optional[Dict[str, Any]] = None,
 ) -> det.Trial:
     """
     Create a trial instance from a Trial class definition. This can be a useful
@@ -266,7 +271,7 @@ def create_trial_instance(
     """
     det._set_logger(util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled())
     env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
-        checkpoint_dir=pathlib.Path(checkpoint_dir), config=config
+        checkpoint_dir=pathlib.Path(checkpoint_dir), config=config, hparams=hparams
     )
     trial_context = trial_def.trial_context_class(env, hvd_config)
     return trial_def(trial_context)
@@ -420,12 +425,39 @@ def local_execution_manager(new_directory: pathlib.Path) -> Iterator:
 
     # TODO(DET-2719): Add context dir to TrainContext and remove this function.
     current_directory = os.getcwd()
+    current_path = sys.path.copy()
 
     try:
         os.chdir(new_directory)
+
+        # Python typically initializes sys.path[0] as the empty string when
+        # invoked interactively, which directs Python to search modules in the
+        # current directory first. However, this is _not_ happening when this
+        # Python function is invoked via the cli. We add it manually here so
+        # that _local_trial_from_context and test_one_batch can import the
+        # entrypoint by changing the directory to model_def.
+        #
+        # Reference: https://docs.python.org/3/library/sys.html#sys.path
+        sys.path = [""] + sys.path
         yield
     finally:
         os.chdir(current_directory)
+        sys.path = current_path
+
+
+def _local_trial_from_context(
+    context_path: pathlib.Path, config: Dict[str, Any], hparams: Dict[str, Any],
+) -> det.Trial:
+    with local_execution_manager(context_path):
+        checkpoint_dir = tempfile.TemporaryDirectory()
+
+        trial_class = load.load_trial_implementation(config["entrypoint"])
+        trial = create_trial_instance(
+            trial_class, str(checkpoint_dir), config=config, hparams=hparams
+        )
+
+        checkpoint_dir.cleanup()
+        return trial
 
 
 def test_one_batch(
@@ -442,12 +474,12 @@ def test_one_batch(
     env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
         checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
     )
-    logging.info(f"Using hyperparameters: {env.hparams}")
-    logging.debug(f"Using a test experiment config: {env.experiment_config}")
+    logging.info(f"Using hyperparameters: {env.hparams}.")
+    logging.debug(f"Using a test experiment config: {env.experiment_config}.")
 
     with local_execution_manager(context_path):
         if not trial_class:
-            logging.debug("Loading trial class from experiment configuration")
+            logging.debug("Loading trial class from experiment configuration.")
             trial_class = load.load_trial_implementation(env.experiment_config["entrypoint"])
 
         controller = load.load_controller_from_trial(
@@ -462,5 +494,5 @@ def test_one_batch(
 
     checkpoint_dir.cleanup()
     logging.info(
-        "Note: to submit an experiment to the cluster, change mode argument to Mode.CLUSTER"
+        "Note: to submit an experiment to the cluster, change mode argument to Mode.CLUSTER."
     )

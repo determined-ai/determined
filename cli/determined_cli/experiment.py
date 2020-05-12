@@ -281,15 +281,6 @@ def local_experiment(args: Namespace) -> None:
         print("--local requires that the `determined` package is installed.")
         raise e
 
-    # Python typically initializes sys.path[0] as the empty string when
-    # invoked interactively, which directs Python to search modules in the
-    # current directory first. However, this is _not_ happening when this
-    # Python function is invoked via the cli. We add it manually here so
-    # that test_one_batch can import the entrypoint by changing the
-    # directory to model_def.
-    #
-    # Reference: https://docs.python.org/3/library/sys.html#sys.path
-    sys.path = [""] + sys.path
     experimental.test_one_batch(
         args.model_def.resolve(), trial_class=None, config=experiment_config
     )
