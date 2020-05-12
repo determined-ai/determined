@@ -44,7 +44,7 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: str) -> None:
         ["Start Time", render.format_time(checkpoint.start_time)],
         ["End Time", render.format_time(checkpoint.end_time)],
         ["Checkpoint UUID", checkpoint.uuid],
-        ["Validation Metrics", json.dumps(checkpoint.validation.metrics, indent=4)],
+        ["Validation Metrics", json.dumps(checkpoint.validation["metrics"], indent=4)],
     ]
 
     headers, values = zip(*table)  # type: ignore

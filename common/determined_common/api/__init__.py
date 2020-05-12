@@ -7,7 +7,6 @@ from determined_common.api.experiment import (
     make_test_experiment_config,
     patch_experiment,
 )
-from determined_common.api.gql_query import GraphQLQuery, decode_bytes
 from determined_common.api.request import (
     WebSocket,
     add_token_to_headers,

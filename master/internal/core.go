@@ -580,6 +580,10 @@ func (m *Master) Run() error {
 	trialsGroup.GET("/:trial_id/logsv2", api.Route(m.getTrialLogsV2))
 	trialsGroup.POST("/:trial_id/kill", api.Route(m.postTrialKill))
 
+	checkpointsGroup := m.echo.Group("/checkpoints", authFuncs...)
+	checkpointsGroup.GET("", api.Route(m.getCheckpoints))
+	checkpointsGroup.GET("/:checkpoint_uuid", api.Route(m.getCheckpoint))
+
 	m.echo.GET("/ws/trial/:experiment_id/:trial_id/:container_id",
 		api.WebSocketRoute(m.trialWebSocket))
 
