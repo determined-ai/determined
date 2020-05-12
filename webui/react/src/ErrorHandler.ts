@@ -1,4 +1,5 @@
 import { notification } from 'antd';
+import axios from 'axios';
 
 import history from 'routes/history';
 import { isAsyncFunction } from 'utils/data';
@@ -61,6 +62,9 @@ const handleError = (e: DaError): Error => {
   e = { ...defaultErrorParameters, ...e };
 
   const error = e.error ? e.error : new Error(e.message);
+
+  // ignore request cancellation errors
+  if (axios.isCancel(e)) return error;
 
   if (e.type === ErrorType.Auth) {
     if (!window.location.pathname.endsWith('login')) {
