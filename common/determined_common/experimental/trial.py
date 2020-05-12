@@ -111,7 +111,7 @@ class TrialReference:
             sort_by = r[0]["metric"]
             smaller_is_better = r[0]["smaller_is_better"]
 
-        best_checkpoint = min if smaller_is_better else max
+        best_checkpoint_func = min if smaller_is_better else max
         return checkpoint.from_json(
-            best_checkpoint(r, key=lambda x: x["metrics"]["validation_metrics"][sort_by])
+            best_checkpoint_func(r, key=lambda x: x["metrics"]["validation_metrics"][sort_by])
         )
