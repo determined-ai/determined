@@ -30,6 +30,7 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
       const response = await http.request({
         cancelToken: params.cancelToken,
         data: httpOpts.body,
+        headers: httpOpts.headers,
         method: httpOpts.method || 'GET',
         url: httpOpts.url as string,
       });
