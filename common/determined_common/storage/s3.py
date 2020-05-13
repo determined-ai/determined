@@ -7,12 +7,12 @@ from typing import Iterator, Optional
 import boto3
 
 import determined_common.util as util
-from determined_common.storage.base import Storable, StorageManager, StorageMetadata
+from determined_common.storage.base import StorageManager, StorageMetadata
 
 
 class S3StorageManager(StorageManager):
     """
-    Store and load Storables from S3.
+    Store and load checkpoints from S3.
     """
 
     def __init__(
@@ -31,27 +31,6 @@ class S3StorageManager(StorageManager):
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_key,
         )
-
-    def store(self, store_data: Storable, storage_id: str = "") -> StorageMetadata:
-        metadata = super().store(store_data, storage_id)
-
-        logging.info("Uploading checkpoint {} to S3".format(metadata.storage_id))
-        storage_dir = os.path.join(self._base_path, metadata.storage_id)
-        self.upload(metadata, storage_dir)
-
-        self._remove_checkpoint_directory(metadata.storage_id)
-
-        return metadata
-
-    def restore(self, checkpoint: Storable, metadata: StorageMetadata) -> None:
-        logging.info("Downloading checkpoint {} from S3".format(metadata.storage_id))
-
-        storage_dir = os.path.join(self._base_path, metadata.storage_id)
-        os.makedirs(storage_dir, exist_ok=True)
-        self.download(metadata, storage_dir)
-        super().restore(checkpoint, metadata)
-
-        self._remove_checkpoint_directory(metadata.storage_id)
 
     def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
         """post_store_path uploads the checkpoint to s3 and deletes the original files."""

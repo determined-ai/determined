@@ -1,13 +1,11 @@
 import abc
 import contextlib
-import logging
 import os
 import shutil
 import uuid
 from typing import Any, Dict, Iterator, Optional, Tuple
 
 from determined_common.check import check_gt, check_not_none, check_true, check_type
-from determined_common.util import sizeof_fmt
 
 
 class StorageMetadata:
@@ -39,29 +37,6 @@ class StorageMetadata:
         return StorageMetadata(record["uuid"], record["resources"], record.get("labels"))
 
 
-class Storable(metaclass=abc.ABCMeta):
-    """
-    An interface for objects (like trials) that support being stored.
-    This interface can be passed to a `StorageManager` to be saved to or
-    loaded from persistent storage.
-    """
-
-    @abc.abstractmethod
-    def save(self, storage_dir: str) -> None:
-        """
-        Persist the object to the storage directory. The storage
-        directory is not created prior to saving the storage.
-        """
-        raise NotImplementedError()
-
-    @abc.abstractmethod
-    def load(self, storage_dir: str) -> None:
-        """
-        Load the object from the storage directory.
-        """
-        raise NotImplementedError()
-
-
 class StorageManager:
     """
     Abstract base class for storage managers. Storage managers need to
@@ -77,54 +52,6 @@ class StorageManager:
         check_type(base_path, str)
         check_gt(len(base_path), 0)
         self._base_path = base_path
-
-    def store(self, store_data: Storable, storage_id: str = "") -> StorageMetadata:
-        """
-        Save the object to the backing persistent storage.
-        """
-        if storage_id == "":
-            storage_id = str(uuid.uuid4())
-
-        # Set umask to 0 in order that the storage dir allows future containers of any owner to
-        # create new checkpoints. Administrators wishing to control the permissions more
-        # specifically should just create the storage path themselves; this will not interfere.
-        old_umask = os.umask(0)
-        os.makedirs(self._base_path, exist_ok=True, mode=0o777)
-        # Restore the original umask.
-        os.umask(old_umask)
-
-        storage_dir = os.path.join(self._base_path, storage_id)
-        store_data.save(storage_dir)
-
-        check_true(os.path.exists(storage_dir), "Checkpoint did not create a storage directory")
-
-        directory_list = StorageManager._list_directory(storage_dir)
-
-        logging.info(
-            "Storing checkpoint {} ({})".format(
-                storage_id, sizeof_fmt(sum(directory_list.values()))
-            )
-        )
-
-        return StorageMetadata(storage_id, directory_list)
-
-    def restore(self, storage_data: Storable, metadata: StorageMetadata) -> None:
-        """
-        Load the object from the backing persistent storage.
-        """
-        storage_dir = os.path.join(self._base_path, metadata.storage_id)
-
-        check_true(
-            os.path.exists(storage_dir),
-            "Storage directory does not exist: {}. Please verify "
-            "that you are using the correct configuration value for "
-            "checkpoint_storage.host_path.".format(storage_dir),
-        )
-        check_true(
-            os.path.isdir(storage_dir), "Checkpoint path is not a directory: {}".format(storage_dir)
-        )
-
-        storage_data.load(storage_dir)
 
     def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
         """
@@ -146,6 +73,14 @@ class StorageManager:
 
         if storage_id == "":
             storage_id = str(uuid.uuid4())
+
+        # Set umask to 0 in order that the storage dir allows future containers of any owner to
+        # create new checkpoints. Administrators wishing to control the permissions more
+        # specifically should just create the storage path themselves; this will not interfere.
+        old_umask = os.umask(0)
+        os.makedirs(self._base_path, exist_ok=True, mode=0o777)
+        # Restore the original umask.
+        os.umask(old_umask)
 
         os.makedirs(self._base_path, exist_ok=True)
         storage_dir = os.path.join(self._base_path, storage_id)

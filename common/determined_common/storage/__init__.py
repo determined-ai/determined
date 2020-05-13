@@ -5,7 +5,7 @@ from typing import Any, Dict, Type
 
 from determined_common.check import check_eq, check_in, check_type
 
-from .base import Storable, StorageManager, StorageMetadata
+from .base import StorageManager, StorageMetadata
 from .gcs import GCSStorageManager
 from .hdfs import HDFSStorageManager
 from .s3 import S3StorageManager
@@ -15,7 +15,6 @@ __all__ = [
     "GCSStorageManager",
     "StorageManager",
     "StorageMetadata",
-    "Storable",
     "S3StorageManager",
     "SharedFSStorageManager",
 ]
@@ -80,9 +79,9 @@ def validate(config: Dict[str, Any]) -> None:
     deleted from. Throws an exception if any of the operations fail.
     """
 
-    class ValidationData(Storable):
+    class Validater:
         """
-        Verification for reading and writing a UUID to a checkpoint. The
+        Validater for reading and writing a UUID to a checkpoint. The
         UUID saved must match the UUID that is loaded.
         """
 
@@ -99,7 +98,10 @@ def validate(config: Dict[str, Any]) -> None:
                 check_eq(fp.read(), self.uuid, "Unable to properly load from storage")
 
     manager = build(config)
-    validation = ValidationData()
-    metadata = manager.store(validation)
-    manager.restore(validation, metadata)
+    validater = Validater()
+    with manager.store_path() as (storage_id, path):
+        validater.save(path)
+        metadata = StorageMetadata(storage_id, StorageManager._list_directory(path))
+    with manager.restore_path(metadata) as path:
+        validater.load(path)
     manager.delete(metadata)

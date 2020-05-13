@@ -8,8 +8,7 @@ import simplejson
 from determined import util
 from determined.exec.gc_checkpoints import delete_checkpoints
 from determined_common import storage
-
-from .storage import StorableFixture
+from tests.storage import util as storage_util
 
 
 @pytest.fixture()  # type: ignore
@@ -26,10 +25,13 @@ def config(tmp_path: Path) -> Dict[str, Any]:
 @pytest.fixture(params=[0, 1, 5])  # type: ignore
 def to_delete(request: Any, config: Dict[str, Any]) -> List[Dict[str, Any]]:
     manager = storage.build(config["checkpoint_storage"])
-    metadata = [manager.store(StorableFixture()) for _ in range(request.param)]
+    metadata = []
+    for _ in range(request.param):
+        with manager.store_path() as (storage_id, path):
+            storage_util.create_checkpoint(path)
+            metadata.append(storage.StorageMetadata(storage_id, manager._list_directory(path)))
 
-    host_path = config["checkpoint_storage"]["host_path"]
-    assert len(os.listdir(host_path)) == request.param
+    assert len(os.listdir(manager._base_path)) == request.param
     return [simplejson.loads(util.json_encode(m)) for m in metadata]
 
 

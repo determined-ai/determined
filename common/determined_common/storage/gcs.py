@@ -6,12 +6,12 @@ from typing import Iterator, Optional
 
 from google.cloud import storage
 
-from determined_common.storage.base import Storable, StorageManager, StorageMetadata
+from determined_common.storage.base import StorageManager, StorageMetadata
 
 
 class GCSStorageManager(StorageManager):
     """
-    Store and load Storables on GCS. Although GCS is similar to S3, some
+    Store and load checkpoints on GCS. Although GCS is similar to S3, some
     S3 APIs are not supported on GCS and vice versa. Moreover, Google
     recommends using the google-storage-python library to access GCS,
     rather than the boto library we use to access S3 -- boto uses
@@ -33,27 +33,6 @@ class GCSStorageManager(StorageManager):
         super().__init__(temp_dir if temp_dir is not None else tempfile.gettempdir())
         self.client = storage.Client()
         self.bucket = self.client.bucket(bucket)
-
-    def store(self, store_data: Storable, storage_id: str = "") -> StorageMetadata:
-        metadata = super().store(store_data, storage_id)
-
-        logging.info("Uploading checkpoint {} to GCS".format(metadata.storage_id))
-        storage_dir = os.path.join(self._base_path, metadata.storage_id)
-        self.upload(metadata, storage_dir)
-
-        self._remove_checkpoint_directory(metadata.storage_id)
-
-        return metadata
-
-    def restore(self, checkpoint: Storable, metadata: StorageMetadata) -> None:
-        logging.info("Downloading checkpoint {} from GCS".format(metadata.storage_id))
-
-        storage_dir = os.path.join(self._base_path, metadata.storage_id)
-        os.makedirs(storage_dir, exist_ok=True)
-        self.download(metadata, storage_dir)
-        super().restore(checkpoint, metadata)
-
-        self._remove_checkpoint_directory(metadata.storage_id)
 
     def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
         """post_store_path uploads the checkpoint to gcs and deletes the original files."""
