@@ -256,7 +256,9 @@ class TestPyTorchTrial:
                 trial_seed=self.trial_seed,
             )
 
-        utils.reproducibility_test(controller_fn, steps=1000, validation_freq=100)
+        utils.reproducibility_test(
+            controller_fn, steps=1000, validation_freq=100,
+        )
 
     def test_optimizer_state(self, tmp_path: pathlib.Path) -> None:
         def make_trial_controller_fn(
@@ -455,58 +457,6 @@ class TestPyTorchTrial:
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialPerMetricReducers,
-            hparams=self.hparams,
-            workloads=make_workloads(),
-            trial_seed=self.trial_seed,
-        )
-        controller.run()
-
-    def test_callbacks(self, tmp_path: pathlib.Path) -> None:
-        checkpoint_dir = tmp_path.joinpath("checkpoint")
-        controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialCallbacks, hparams=self.hparams, workloads=[]
-        )
-        controller._train_for_step(1, 1)
-        assert controller.trial.counter.__dict__ == {
-            "train_steps_started": 1,
-            "train_steps_ended": 1,
-            "validation_steps_started": 0,
-            "validation_steps_ended": 0,
-        }
-
-        controller._compute_validation_metrics()
-        assert controller.trial.counter.__dict__ == {
-            "train_steps_started": 1,
-            "train_steps_ended": 1,
-            "validation_steps_started": 1,
-            "validation_steps_ended": 1,
-        }
-
-        controller._save(checkpoint_dir)
-        del controller
-
-        controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialCallbacks,
-            hparams=self.hparams,
-            workloads=[],
-            load_path=checkpoint_dir,
-        )
-        controller._load()
-        assert controller.trial.counter.__dict__ == {
-            "train_steps_started": 1,
-            "train_steps_ended": 1,
-            "validation_steps_started": 1,
-            "validation_steps_ended": 1,
-        }
-
-    def test_context(self) -> None:
-        def make_workloads() -> workload.Stream:
-            trainer = utils.TrainAndValidate()
-            yield from trainer.send(steps=1, validation_freq=1, batches_per_step=1)
-            yield workload.terminate_workload(), [], workload.ignore_workload_response
-
-        controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialAccessContext,
             hparams=self.hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,

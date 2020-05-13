@@ -20,9 +20,6 @@ determined.pytorch
 .. autoclass:: determined.pytorch.Reducer
     :members:
 
-.. autoclass:: determined.pytorch.PyTorchCallback
-    :members:
-
 .. _pytorch-data-loading:
 
 Data Loading
@@ -80,15 +77,6 @@ structures of the following types, which will be fed directly to the
           ],
           "label": (torch.Tensor([0, 0]), torch.Tensor([[0, 0], [0, 0]])),
       }
-
-Trial Context
-~~~~~~~~~~~~~
-
-``determined.pytorch.PyTorchTrialContext`` subclasses :ref:`trial-context`.
-It provides useful methods for writing ``Trial`` subclasses.
-
-.. autoclass:: determined.pytorch.PyTorchTrialContext
-    :members:
 
 Examples
 --------
