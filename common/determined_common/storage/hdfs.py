@@ -6,12 +6,12 @@ from typing import Iterator, Optional
 
 from hdfs.client import InsecureClient
 
-from determined_common.storage.base import Storable, StorageManager, StorageMetadata
+from determined_common.storage.base import StorageManager, StorageMetadata
 
 
 class HDFSStorageManager(StorageManager):
     """
-    Store and load storages from HDFS.
+    Store and load checkpoints from HDFS.
     """
 
     def __init__(
@@ -28,28 +28,6 @@ class HDFSStorageManager(StorageManager):
         self.user = user
 
         self.client = InsecureClient(self.hdfs_url, root=self.hdfs_path, user=self.user)
-
-    def store(self, store_data: Storable, storage_id: str = "") -> StorageMetadata:
-        metadata = super().store(store_data, storage_id)
-
-        logging.info("Uploading storage {} to HDFS".format(metadata.storage_id))
-
-        storage_dir = os.path.join(self._base_path, metadata.storage_id)
-        result = self.client.upload(metadata, storage_dir)
-
-        logging.info("Uploaded storage {} to HDFS path {}".format(metadata.storage_id, result))
-
-        self._remove_checkpoint_directory(metadata.storage_id)
-        return metadata
-
-    def restore(self, storage_data: Storable, metadata: StorageMetadata) -> None:
-        logging.info("Downloading storage {} from HDFS".format(metadata.storage_id))
-
-        self.client.download(metadata.storage_id, self._base_path, overwrite=True)
-
-        super().restore(storage_data, metadata)
-
-        self._remove_checkpoint_directory(metadata.storage_id)
 
     def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
         """post_store_path uploads the checkpoint to hdfs and deletes the original files."""
