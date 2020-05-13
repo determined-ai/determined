@@ -535,15 +535,23 @@ class PyTorchTrialController(det.LoopTrialController):
                 metrics = self._convert_metrics_to_numpy(metrics)
                 num_inputs = self.context.get_per_slot_batch_size() * len(self.validation_loader)
 
-        # TODO(yoavz): If any validation step end callbacks are defined,
-        # broadcast metrics across all shards here and execute the callback
-        # function on all shards.
-
-        if not self.is_chief:
-            return workload.Skipped()
+        if self.hvd_config.use and any(
+            map(
+                lambda c: util.is_overridden(c.on_validation_step_end, _callback.PyTorchCallback),
+                self.callbacks.values(),
+            )
+        ):
+            logging.debug(
+                "Broadcasting metrics to all worker processes to execute a "
+                "validation step end callback"
+            )
+            metrics = hvd.broadcast_object(metrics, root_rank=0)
 
         for callback in self.callbacks.values():
             callback.on_validation_step_end(metrics)  # type: ignore
+
+        if not self.is_chief:
+            return workload.Skipped()
 
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
@@ -604,7 +612,7 @@ class PyTorchTrialController(det.LoopTrialController):
                     for name in keys or []
                 }
             else:
-                return None
+                return {}
 
         return metrics
 

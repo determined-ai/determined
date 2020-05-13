@@ -80,7 +80,7 @@ class ZMQBroadcastServer:
     are ConnectedMessages.
 
     ZMQBroadcastServer uses ZMQ PUB-SUB pattern to transmit messages to worker processes, and uses
-    the PUSH-PULL pattern to collect responses from workers. The reason for this assymetry is that
+    the PUSH-PULL pattern to collect responses from workers. The reason for this asymmetry is that
     PUSH-PULL connections block during send() if the remote end is dead. Therefore, PUSH-PULL
     cannot be used to transmitting from server to worker, because if all the workers die, the
     server would hang.
