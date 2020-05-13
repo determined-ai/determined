@@ -1,8 +1,9 @@
+import contextlib
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Iterator, Optional
 
 from determined_common.check import check_gt, check_true, check_type
-from determined_common.storage.base import StorageManager
+from determined_common.storage.base import StorageManager, StorageMetadata
 
 
 def _full_storage_dir(host_path: str, container_path: str, storage_path: Optional[str]) -> str:
@@ -56,3 +57,22 @@ class SharedFSStorageManager(StorageManager):
             "ReadOnly": False,
             "BindOptions": {"Propagation": self.propagation},
         }
+
+    @contextlib.contextmanager
+    def restore_path(self, metadata: StorageMetadata) -> Iterator[str]:
+        """
+        Prepare a local directory exposing the checkpoint. Do some simple checks to make sure the
+        configuration seems reasonable.
+        """
+        storage_dir = os.path.join(self._base_path, metadata.storage_id)
+        check_true(
+            os.path.exists(storage_dir),
+            "Storage directory does not exist: {}. Please verify "
+            "that you are using the correct configuration value for "
+            "checkpoint_storage.host_path and "
+            "tensorboard_storage.host_path.".format(storage_dir),
+        )
+        check_true(
+            os.path.isdir(storage_dir), "Checkpoint path is not a directory: {}".format(storage_dir)
+        )
+        yield storage_dir

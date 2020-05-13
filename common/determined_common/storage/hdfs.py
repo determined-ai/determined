@@ -1,8 +1,8 @@
+import contextlib
 import logging
 import os
 import tempfile
-from contextlib import contextmanager
-from typing import Generator, Optional, Tuple
+from typing import Iterator, Optional
 
 from hdfs.client import InsecureClient
 
@@ -51,30 +51,24 @@ class HDFSStorageManager(StorageManager):
 
         self._remove_checkpoint_directory(metadata.storage_id)
 
-    @contextmanager
-    def store_path(self, storage_id: str = "") -> Generator[Tuple[str, str], None, None]:
-        with super().store_path(storage_id) as (storage_id, path):
-            yield (storage_id, path)
-
-        metadata = StorageMetadata(storage_id, StorageManager._list_directory(path))
-
+    def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
+        """post_store_path uploads the checkpoint to hdfs and deletes the original files."""
         try:
             logging.info("Uploading storage {} to HDFS".format(storage_id))
-            result = self.client.upload(metadata, path)
+            result = self.client.upload(metadata, storage_dir)
 
             logging.info("Uploaded storage {} to HDFS path {}".format(storage_id, result))
         finally:
             self._remove_checkpoint_directory(metadata.storage_id)
 
-    @contextmanager
-    def restore_path(self, metadata: StorageMetadata) -> Generator[str, None, None]:
+    @contextlib.contextmanager
+    def restore_path(self, metadata: StorageMetadata) -> Iterator[str]:
         logging.info("Downloading storage {} from HDFS".format(metadata.storage_id))
 
         self.client.download(metadata.storage_id, self._base_path, overwrite=True)
 
         try:
-            with super().restore_path(metadata) as path:
-                yield path
+            yield os.path.join(self._base_path, metadata.storage_id)
         finally:
             self._remove_checkpoint_directory(metadata.storage_id)
 
