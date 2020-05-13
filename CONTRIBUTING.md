@@ -104,10 +104,6 @@ or the CLI command `det experiment list`.
 
 Run `make check`.
 
-To add a commit message template and a commit-time hook to help you follow our
-commit message guidelines, you can also run `scripts/configure-repo.sh` (which
-does not need to be done repeatedly).
-
 ### Unit tests
 
 Run `make test`.
