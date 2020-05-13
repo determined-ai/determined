@@ -27,7 +27,6 @@ class PyTorchTrialContext(det.TrialContext):
         """
         Get the model associated with the trial. This function should not be
         called from:
-
             * ``__init__``
             * ``build_model()``
         """
@@ -39,7 +38,6 @@ class PyTorchTrialContext(det.TrialContext):
         """
         Get the optimizer associated with the trial. This function should not be
         called from:
-
             * ``__init__``
             * ``build_model()``
             * ``optimizer()``
@@ -51,7 +49,6 @@ class PyTorchTrialContext(det.TrialContext):
         """
         Get the scheduler associated with the trial, if one is defined. This
         function should not be called from:
-
             * ``__init__``
             * ``build_model()``
             * ``optimizer()``
