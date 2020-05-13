@@ -15,9 +15,9 @@ class PyTorchCallback:
         over checkpoints.
 
     .. warning::
-        If distributed or parallel training is enabled, every GPU will
+        If distributed or parallel training is enabled, every shard will
         execute a copy of this callback (except for on_validation_step_end).
-        To configure a callback implementation to execute on a subset of GPUs,
+        To configure a callback implementation to execute on a subset of shards,
         please condition your implementation on
         ``trial.context.distributed.get_rank()``.
     """
@@ -33,12 +33,12 @@ class PyTorchCallback:
         Run after every training step ends.
 
         ..warning::
-            If distributed or parallel training is enabled, every GPU will
+            If distributed or parallel training is enabled, every shard will
             execute a copy of this callback on train step end. If
             ``optimizations.average_training_metrics`` is enabled, then the
-            ``metrics`` will be averaged across all GPUs before the callback
+            ``metrics`` will be averaged across all shards before the callback
             is executed.  If ``optimizations.average_training_metrics`` is
-            disabled, then the ``metrics`` will be local to the GPU.
+            disabled, then the ``metrics`` will be local to the shard.
         """
         pass
 
@@ -53,7 +53,7 @@ class PyTorchCallback:
         Run after every validation step ends.
 
         .. warning::
-            This callback currently only executes on the chief GPU in the
+            This callback currently only executes on the chief shard in the
             distributed and/or parallel training setting.
         """
         pass

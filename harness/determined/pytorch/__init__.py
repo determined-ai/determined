@@ -12,5 +12,4 @@ from determined.pytorch._data import (
 from determined.pytorch._callback import PyTorchCallback
 from determined.pytorch._lr_scheduler import LRScheduler, _LRHelper
 from determined.pytorch._reducer import Reducer, _reduce_metrics
-from determined.pytorch._pytorch_context import PyTorchTrialContext
 from determined.pytorch._pytorch_trial import PyTorchTrial, PyTorchTrialController, reset_parameters
