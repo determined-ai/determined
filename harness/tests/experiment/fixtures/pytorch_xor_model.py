@@ -291,3 +291,56 @@ class XORTrialUserStepLR(XORTrialMulti):
 class XORTrialPerMetricReducers(XORTrialWithMultiValidation):
     def evaluation_reducer(self) -> Dict[str, det.pytorch.Reducer]:
         return {"accuracy": det.pytorch.Reducer.AVG, "binary_error": det.pytorch.Reducer.AVG}
+
+
+class Counter(det.pytorch.PyTorchCallback):
+    def __init__(self) -> None:
+        self.train_steps_started = 0
+        self.train_steps_ended = 0
+        self.validation_steps_started = 0
+        self.validation_steps_ended = 0
+
+    def on_train_step_start(self, step_id: int) -> None:
+        self.train_steps_started += 1
+
+    def on_train_step_end(self, step_id: int, metrics: Dict[str, Any]) -> None:
+        self.train_steps_ended += 1
+
+    def on_validation_step_start(self) -> None:
+        self.validation_steps_started += 1
+
+    def on_validation_step_end(self, metrics: Dict[str, Any]) -> None:
+        self.validation_steps_ended += 1
+
+    def state_dict(self) -> Dict[str, Any]:
+        return self.__dict__
+
+    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
+        self.__dict__ = state_dict
+
+
+class XORTrialCallbacks(XORTrialMulti):
+    def __init__(self, context: det.TrialContext) -> None:
+        self.context = context
+        self.counter = Counter()
+
+    def build_callbacks(self) -> Dict[str, det.pytorch.PyTorchCallback]:
+        return {"counter": self.counter}
+
+
+class XORTrialAccessContext(XORTrialStepEveryEpoch):
+    def train_batch(
+        self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
+        assert self.context.get_model()
+        assert self.context.get_optimizer()
+        assert self.context.get_lr_scheduler()
+
+        return super().train_batch(batch, model, epoch_idx, batch_idx)
+
+    def evaluate_batch(self, batch: TorchData, model: nn.Module) -> Dict[str, Any]:
+        assert self.context.get_model()
+        assert self.context.get_optimizer()
+        assert self.context.get_lr_scheduler()
+
+        return super().evaluate_batch(batch, model)
