@@ -2,21 +2,20 @@
 ## Example first line: "feat: add support for Python 1.5".
 
 ## Specifically, the first line should contain a type and a description
-## of the change being made. The description should be suitable for use
-## in release notes, where applicable.
+## of the change being made.
 
 ## User-facing change types:
-## - docs: docs-only changes
-## - feat: new features
-## - fix: bugfixes
-## - perf: performance improvements
+## - docs: docs-only change
+## - feat: new user-facing feature
+## - fix: bug fix
+## - perf: performance improvement
 
 ## Internal change types:
-## - build: build system changes (anything run by `make build`, mostly)
-## - chore: anything that is not covered by another type
-## - ci: basically anything that touches our Jenkinsfiles
-## - refactor: internal refactors
-## - style: style changes
+## - build: build system change (anything in a `Makefile`, mostly)
+## - chore: any internal change not covered by another type
+## - ci: anything that touches `.circleci`
+## - refactor: internal refactor
+## - style: style change
 ## - test: new tests
 
 ## See https://www.conventionalcommits.org/en/v1.0.0/ for background.

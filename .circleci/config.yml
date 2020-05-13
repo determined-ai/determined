@@ -676,18 +676,6 @@ jobs:
 
 
 
-  lint-commit-message:
-    docker:
-      - image: cimg/go:1.13
-        environment:
-          GO111MODULE: "on"
-    steps:
-      - checkout
-      - run: go get github.com/talos-systems/conform@fa7df19996ece307285da44c73f210c6cbec9207
-      - run: conform enforce
-
-
-
   lint-go:
     docker:
       - image: cimg/go:1.13
@@ -960,7 +948,6 @@ jobs:
 workflows:
   lint:
     jobs:
-      - lint-commit-message
       - lint-python
       - lint-go
       - lint-elm
