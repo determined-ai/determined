@@ -20,9 +20,6 @@ determined.pytorch
 .. autoclass:: determined.pytorch.Reducer
     :members:
 
-.. autoclass:: determined.pytorch.PyTorchCallback
-    :members:
-
 .. _pytorch-data-loading:
 
 Data Loading

@@ -17,6 +17,9 @@ class InvalidExperimentException(BaseException):
     InvalidExperimentException is used if an experiment is invalid.
     """
 
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+
 
 class InvalidDataTypeException(InvalidExperimentException):
     """
