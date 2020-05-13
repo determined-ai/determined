@@ -54,6 +54,7 @@ upstream-feature-branch: &upstream-feature-branch
   branches:
     ignore:
       - /pull\/.*/
+      - /release-.*/
       - master
 
 
@@ -1032,7 +1033,9 @@ workflows:
           context: aws
           filters:
             branches:
-              only: master
+              only:
+                - master
+                - /release-.*/
           requires:
             - package-and-push-system-dev
 
