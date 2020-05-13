@@ -91,7 +91,7 @@ const DeterminedAuth: React.FC<Props> = ({ setIsLoading }: Props) => {
       {loginForm}
       <p className={css.message}>
           Forgot your password, or need to manage users? Check out our
-        <a href="/docs/system-administration/users.html?highlight=user"
+        <a href="/docs/topic-guides/users.html"
           rel="noreferrer noopener" target="_blank">
             &nbsp;docs
         </a>
