@@ -201,11 +201,13 @@ def _make_local_experiment_config(input_config: Optional[Dict[str, Any]]) -> Dic
     return {**constants.DEFAULT_EXP_CFG, **input_config}
 
 
-def _make_test_experiment_env(
-    checkpoint_dir: pathlib.Path, config: Optional[Dict[str, Any]]
+def make_test_experiment_env(
+    checkpoint_dir: pathlib.Path,
+    config: Optional[Dict[str, Any]],
+    hparams: Optional[Dict[str, Any]] = None,
 ) -> Tuple[det.EnvContext, workload.Stream, det.RendezvousInfo, horovod.HorovodContext]:
     config = det.ExperimentConfig(_make_local_experiment_config(config))
-    hparams = _generate_test_hparam_values(config)
+    hparams = hparams or _generate_test_hparam_values(config)
     use_gpu, container_gpus, slot_ids = _get_gpus()
     local_rendezvous_ports = (
         f"{constants.LOCAL_RENDEZVOUS_PORT},{constants.LOCAL_RENDEZVOUS_PORT+1}"
@@ -313,12 +315,39 @@ def _local_execution_manager(new_directory: pathlib.Path) -> Iterator:
 
     # TODO(DET-2719): Add context dir to TrainContext and remove this function.
     current_directory = os.getcwd()
+    current_path = sys.path.copy()
 
     try:
         os.chdir(new_directory)
+
+        # Python typically initializes sys.path[0] as the empty string when
+        # invoked interactively, which directs Python to search modules in the
+        # current directory first. However, this is _not_ happening when this
+        # Python function is invoked via the cli. We add it manually here so
+        # that _local_trial_from_context and test_one_batch can import the
+        # entrypoint by changing the directory to model_def.
+        #
+        # Reference: https://docs.python.org/3/library/sys.html#sys.path
+        sys.path = [""] + sys.path
         yield
     finally:
         os.chdir(current_directory)
+        sys.path = current_path
+
+
+def _local_trial_from_context(
+    context_path: pathlib.Path, config: Dict[str, Any], hparams: Dict[str, Any],
+) -> det.Trial:
+    with _local_execution_manager(context_path):
+        checkpoint_dir = tempfile.TemporaryDirectory()
+
+        trial_class = load.load_trial_implementation(config["entrypoint"])
+        trial = create_trial_instance(
+            trial_class, str(checkpoint_dir), config=config, hparams=hparams
+        )
+
+        checkpoint_dir.cleanup()
+        return trial
 
 
 def test_one_batch(
@@ -333,11 +362,11 @@ def test_one_batch(
 
     logging.info("Running a minimal test experiment locally")
     checkpoint_dir = tempfile.TemporaryDirectory()
-    env, workloads, rendezvous_info, hvd_config = _make_test_experiment_env(
+    env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
         checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
     )
-    logging.info(f"Using hyperparameters: {env.hparams}")
-    logging.debug(f"Using a test experiment config: {env.experiment_config}")
+    logging.info(f"Using hyperparameters: {env.hparams}.")
+    logging.debug(f"Using a test experiment config: {env.experiment_config}.")
 
     if native_context_cls is not None and controller_cls is not None:
         # Case 1: test one batch for Native implementation.
@@ -487,7 +516,10 @@ def create(
 
 
 def create_trial_instance(
-    trial_def: Type[det.Trial], checkpoint_dir: str, config: Optional[Dict[str, Any]] = None
+    trial_def: Type[det.Trial],
+    checkpoint_dir: str,
+    config: Optional[Dict[str, Any]] = None,
+    hparams: Optional[Dict[str, Any]] = None,
 ) -> det.Trial:
     """
     Create a trial instance from a Trial class definition. This can be a useful
@@ -504,8 +536,8 @@ def create_trial_instance(
             is used.
     """
     det._set_logger(util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled())
-    env, workloads, rendezvous_info, hvd_config = _make_test_experiment_env(
-        checkpoint_dir=pathlib.Path(checkpoint_dir), config=config
+    env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
+        checkpoint_dir=pathlib.Path(checkpoint_dir), config=config, hparams=hparams
     )
     trial_context = trial_def.trial_context_class(env, hvd_config)
     return trial_def(trial_context)
