@@ -110,27 +110,12 @@ Run `make test`.
 
 ### Integration tests
 
-#### Prerequisites
-
-For cloud integration tests, AWS and GCP credentials must be configured.
-
-- [AWS Credentials](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html)
-- [GCP Credentials](https://cloud.google.com/docs/authentication/getting-started)
-
-#### Run the tests
-
 ```bash
-# Run local integration tests except for cloud-related tests.
-make test-integrations
-```
+# Run a Determined cluster
+make -C tools run
 
-#### Customize configuration
-
-By default, the master process is exposed on port 8081 of the host
-machine. To change the master port, run
-
-```sh
-make test-integrations INTEGRATIONS_HOST_PORT=<PORT>
+# Run integration tests locally.
+pytest -m "e2e_cpu" e2e_tests/tests
 ```
 
 ## Debugging
