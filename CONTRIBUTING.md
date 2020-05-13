@@ -6,7 +6,22 @@ Please report any issues at https://github.com/determined-ai/determined/issues.
 
 ## Contributing Changes
 
-TODO
+We welcome outside contributions. If you'd like to make a contribution, please:
+
+1. Tell us about what you'd like to contribute on
+   [our Slack](https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew)
+   or [community mailing list](https://groups.google.com/a/determined.ai/forum/#!forum/community).
+   We'd hate for you to duplicate effort is already in-flight.
+
+1. Apply the linter with `make fmt` and test locally with `make test` before
+   submitting your code.
+
+1. The first time you submit code, you'll need to
+   [sign a CLA](https://determined.ai/cla/).
+
+1. Submit a pull request. Someone from the Determined AI team will review the
+   request and provide feedback. Once we agree that the code is in good shape,
+   we'll merge it into master.
 
 ## Installation from Source
 
