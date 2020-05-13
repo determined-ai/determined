@@ -57,6 +57,29 @@ func New(db *db.PgDB, system *actor.System) (*Service, error) {
 	return &Service{db, system}, nil
 }
 
+// UserAndSessionFromRequest gets the user and session corresponding to the given request.
+func (s *Service) UserAndSessionFromRequest(
+	r *http.Request,
+) (*model.User, *model.UserSession, error) {
+	authRaw := r.Header.Get("Authorization")
+	var token string
+	if authRaw != "" {
+		// We attempt to parse out the token, which should be
+		// transmitted as a Bearer authentication token.
+		if !strings.HasPrefix(authRaw, "Bearer ") {
+			return nil, nil, echo.ErrUnauthorized
+		}
+		token = strings.TrimPrefix(authRaw, "Bearer ")
+	} else if cookie, err := r.Cookie("auth"); err == nil {
+		token = cookie.Value
+	} else {
+		// If we found no token, then abort the request with an HTTP 401.
+		return nil, nil, echo.NewHTTPError(http.StatusUnauthorized)
+	}
+
+	return s.db.UserByToken(token)
+}
+
 // ProcessAuthentication is a middleware processing function that attempts
 // to authenticate incoming HTTP requests.  Note that the middleware looks
 // for an authentication in three places (in the following order):
@@ -64,27 +87,21 @@ func New(db *db.PgDB, system *actor.System) (*Service, error) {
 // 2. A cookie named "auth".
 // 3. A Query parameter named "_auth".
 func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		authRaw := c.Request().Header.Get("Authorization")
-		var token string
-		if authRaw != "" {
-			// We attempt to parse out the token, which should be
-			// transmitted as a Bearer authentication token.
-			if !strings.HasPrefix(authRaw, "Bearer ") {
-				return echo.ErrUnauthorized
-			}
-			token = strings.TrimPrefix(authRaw, "Bearer ")
-		} else if cookie, err := c.Cookie("auth"); err == nil {
-			token = cookie.Value
-		} else {
-			// If we found no token, then abort the request with an HTTP 401.
-			return echo.NewHTTPError(http.StatusUnauthorized)
-		}
+	return s.processAuthentication(next, false)
+}
 
-		user, userSession, err := s.db.UserByToken(token)
+// ProcessAdminAuthentication is a middleware processing function that authenticates requests much
+// like ProcessAuthentication but requires the user to be an admin.
+func (s *Service) ProcessAdminAuthentication(next echo.HandlerFunc) echo.HandlerFunc {
+	return s.processAuthentication(next, true)
+}
+
+func (s *Service) processAuthentication(next echo.HandlerFunc, adminOnly bool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		user, userSession, err := s.UserAndSessionFromRequest(c.Request())
 		switch err {
 		case nil:
-			if !user.Active {
+			if !user.Active || (adminOnly && !user.Admin) {
 				return echo.NewHTTPError(http.StatusForbidden)
 			}
 			// Set data on the request context that might be useful to

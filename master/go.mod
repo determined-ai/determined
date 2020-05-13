@@ -57,6 +57,7 @@ require (
 	google.golang.org/grpc v1.29.1
 	google.golang.org/protobuf v1.24.0
 	gopkg.in/guregu/null.v3 v3.4.0
+	gopkg.in/oauth2.v3 v3.12.0
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 	gotest.tools v2.1.0+incompatible
 	k8s.io/api v0.0.0-20191114100352-16d7abae0d2a

@@ -29,6 +29,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/oauth"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/resourcemanagers"
 	"github.com/determined-ai/determined/master/internal/saml"
@@ -561,14 +562,14 @@ func (m *Master) Run() error {
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
 
 	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "" {
-		if telemetry, err := telemetry.NewActor(
+		if telemetry, tErr := telemetry.NewActor(
 			m.db,
 			m.ClusterID,
 			m.MasterID,
 			m.Version,
 			resourcemanagers.GetResourceManagerType(m.config.ResourceManager),
 			m.config.Telemetry.SegmentMasterKey,
-		); err != nil {
+		); tErr != nil {
 			// We wouldn't want to totally fail just because telemetry failed; just note the error.
 			log.WithError(err).Errorf("failed to initialize telemetry")
 		} else {
@@ -579,11 +580,24 @@ func (m *Master) Run() error {
 		log.Info("telemetry reporting is disabled")
 	}
 
-	if m.config.Scim.Enabled && m.config.Scim.Username != "" && m.config.Scim.Password != "" {
-		masterURL, err := getMasterURL(m.config)
+	masterURL, err := getMasterURL(m.config)
+	if err != nil {
+		return errors.Wrap(err, "couldn't parse masterURL")
+	}
+
+	var oauthService *oauth.Service
+	if m.config.Scim.Enabled {
+		log.Infof("OAuth is enabled at %s%s", masterURL, oauth.Root)
+		oauthService, err = oauth.New(userService, m.db)
 		if err != nil {
-			return errors.Wrap(err, "couldn't parse masterURL for SCIM")
+			return err
 		}
+		oauth.RegisterAPIHandler(m.echo, oauthService)
+	} else {
+		log.Info("OAuth is disabled")
+	}
+
+	if m.config.Scim.Enabled && m.config.Scim.Username != "" && m.config.Scim.Password != "" {
 		log.Infof("SCIM is enabled at %v/scim/v2", masterURL)
 		scim.RegisterAPIHandler(m.echo, m.db, &m.config.Scim, masterURL)
 	} else {
