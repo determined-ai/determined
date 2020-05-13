@@ -1,10 +1,10 @@
+import abc
+import contextlib
 import logging
 import os
 import shutil
 import uuid
-from abc import ABCMeta, abstractmethod
-from contextlib import contextmanager
-from typing import Any, Dict, Generator, Optional, Tuple
+from typing import Any, Dict, Iterator, Optional, Tuple
 
 from determined_common.check import check_gt, check_not_none, check_true, check_type
 from determined_common.util import sizeof_fmt
@@ -39,14 +39,14 @@ class StorageMetadata:
         return StorageMetadata(record["uuid"], record["resources"], record.get("labels"))
 
 
-class Storable(metaclass=ABCMeta):
+class Storable(metaclass=abc.ABCMeta):
     """
     An interface for objects (like trials) that support being stored.
     This interface can be passed to a `StorageManager` to be saved to or
     loaded from persistent storage.
     """
 
-    @abstractmethod
+    @abc.abstractmethod
     def save(self, storage_dir: str) -> None:
         """
         Persist the object to the storage directory. The storage
@@ -54,7 +54,7 @@ class Storable(metaclass=ABCMeta):
         """
         raise NotImplementedError()
 
-    @abstractmethod
+    @abc.abstractmethod
     def load(self, storage_dir: str) -> None:
         """
         Load the object from the storage directory.
@@ -126,8 +126,15 @@ class StorageManager:
 
         storage_data.load(storage_dir)
 
-    @contextmanager
-    def store_path(self, storage_id: str = "") -> Generator[Tuple[str, str], None, None]:
+    def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
+        """
+        post_store_path is a hook that will be called after store_path(). Subclasess of
+        StorageManager should override this in order to customize the behavior of store_path().
+        """
+        pass
+
+    @contextlib.contextmanager
+    def store_path(self, storage_id: str = "") -> Iterator[Tuple[str, str]]:
         """
         Prepare a local directory that will become a checkpoint.
 
@@ -146,30 +153,17 @@ class StorageManager:
         yield (storage_id, storage_dir)
         check_true(os.path.exists(storage_dir), "Checkpoint did not create a storage directory")
 
-    @contextmanager
-    def restore_path(self, metadata: StorageMetadata) -> Generator[str, None, None]:
-        """
-        Prepare a local directory exposing the checkpoint.
+        metadata = StorageMetadata(storage_id, StorageManager._list_directory(storage_dir))
+        self.post_store_path(storage_id, storage_dir, metadata)
 
-        This base implementation does some simple checks to make sure the
-        checkpoint has been prepared properly, but subclasses whose storage
-        backends are in remote places are responsible for downloading the
-        checkpoint before calling this method and deleting the temporary
-        checkpoint directory after it is no longer useful.
+    @abc.abstractmethod
+    @contextlib.contextmanager
+    def restore_path(self, metadata: StorageMetadata) -> Iterator[str]:
         """
-
-        storage_dir = os.path.join(self._base_path, metadata.storage_id)
-        check_true(
-            os.path.exists(storage_dir),
-            "Storage directory does not exist: {}. Please verify "
-            "that you are using the correct configuration value for "
-            "checkpoint_storage.host_path and "
-            "tensorboard_storage.host_path.".format(storage_dir),
-        )
-        check_true(
-            os.path.isdir(storage_dir), "Checkpoint path is not a directory: {}".format(storage_dir)
-        )
-        yield storage_dir
+        restore_path should prepare a checkpoint, yield the path to the checkpoint, and do any
+        necessary cleanup afterwards. Subclasess of StorageManager must implement this.
+        """
+        pass
 
     def delete(self, metadata: StorageMetadata) -> None:
         """

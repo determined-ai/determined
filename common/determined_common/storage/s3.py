@@ -1,8 +1,8 @@
+import contextlib
 import logging
 import os
 import tempfile
-from contextlib import contextmanager
-from typing import Generator, Optional, Tuple
+from typing import Iterator, Optional
 
 import boto3
 
@@ -53,21 +53,16 @@ class S3StorageManager(StorageManager):
 
         self._remove_checkpoint_directory(metadata.storage_id)
 
-    @contextmanager
-    def store_path(self, storage_id: str = "") -> Generator[Tuple[str, str], None, None]:
-        with super().store_path(storage_id) as (storage_id, path):
-            yield (storage_id, path)
-
-        metadata = StorageMetadata(storage_id, StorageManager._list_directory(path))
-
+    def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
+        """post_store_path uploads the checkpoint to s3 and deletes the original files."""
         try:
             logging.info("Uploading checkpoint {} to s3".format(storage_id))
-            self.upload(metadata, path)
+            self.upload(metadata, storage_dir)
         finally:
             self._remove_checkpoint_directory(metadata.storage_id)
 
-    @contextmanager
-    def restore_path(self, metadata: StorageMetadata) -> Generator[str, None, None]:
+    @contextlib.contextmanager
+    def restore_path(self, metadata: StorageMetadata) -> Iterator[str]:
         storage_dir = os.path.join(self._base_path, metadata.storage_id)
         os.makedirs(storage_dir, exist_ok=True)
 
@@ -75,8 +70,7 @@ class S3StorageManager(StorageManager):
         self.download(metadata, storage_dir)
 
         try:
-            with super().restore_path(metadata) as path:
-                yield path
+            yield os.path.join(self._base_path, metadata.storage_id)
         finally:
             self._remove_checkpoint_directory(metadata.storage_id)
 
