@@ -42,7 +42,7 @@ The agent configuration file might contain
 
 .. code:: yaml
 
-  master_address: 127.0.0.1
+  master_host: 127.0.0.1
   master_port: 8080
 
 to configure the address of the Determined master.
@@ -499,7 +499,7 @@ The master supports the following configuration settings:
 Agent Configuration
 ===================
 
-- ``master_address`` (required): The hostname or IP address of the Determined master.
+- ``master_host`` (required): The hostname or IP address of the Determined master.
 - ``master_port`` (required): The port of the Determined master.
 - ``agent_id``: The ID of this agent; defaults to the hostname of the current
   machine. Agent IDs must be unique within a cluster.

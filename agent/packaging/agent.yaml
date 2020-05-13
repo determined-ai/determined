@@ -1,5 +1,5 @@
 ## The hostname or IP address of the Determined master.
-# master_address: 0.0.0.0
+# master_host: 0.0.0.0
 
 ## The port of the Determined master.
 # master_port: 80
