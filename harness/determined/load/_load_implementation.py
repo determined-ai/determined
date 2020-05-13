@@ -43,6 +43,17 @@ def load_trial_implementation(entrypoint_spec: str) -> Type[det.Trial]:
 
     logging.info(f"Loading Trial implementation with entrypoint {entrypoint_spec}.")
     module, qualname_separator, qualname = entrypoint_spec.partition(":")
+
+    # Exporting checkpoints reliably requires instantiating models from user
+    # trials and loading their weights. The user may load multiple trials into
+    # the same process. If the trials have the same module name, ie. model_def,
+    # python will only load the module once. Thus, it would be impossible to
+    # load trials from different experiments into the same process. To avoid
+    # this, we remove the module name from sys.modules if it already exists to
+    # force python to load the module regardless of its name.
+    if module in sys.modules:
+        sys.modules.pop(module)
+
     obj = importlib.import_module(module)
     if qualname_separator:
         for attr in qualname.split("."):

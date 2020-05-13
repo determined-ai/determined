@@ -2,7 +2,7 @@ import enum
 import json
 import pathlib
 import shutil
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from determined_common import api, storage
 
@@ -142,10 +142,10 @@ class Checkpoint(object):
                 <https://pytorch.org/docs/stable/torch.html?highlight=torch%20load#torch.load>`_.
         """
         ckpt_path = self.download(path)
-        return Checkpoint.load_from_path(ckpt_path, tags, **kwargs)
+        return Checkpoint.load_from_path(ckpt_path, tags=tags)
 
     @staticmethod
-    def load_from_path(path: str, tags: Optional[List[str]] = None, **kwargs: Any) -> Any:
+    def load_from_path(path: str, tags: Optional[List[str]] = None) -> Any:
         """
         Loads a Determined checkpoint from a local file system path into
         memory. If the checkpoint is a pytorch model a ``torch.nn.Module`` is returned.
@@ -161,42 +161,42 @@ class Checkpoint(object):
                 <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/saved_model/load_v2>`_.
         """
         checkpoint_dir = pathlib.Path(path)
+        metadata = Checkpoint.parse_metadata(checkpoint_dir)
+        checkpoint_type = Checkpoint.get_type(metadata)
 
-        checkpoint_type = Checkpoint.get_type(checkpoint_dir)
         if checkpoint_type == ModelFramework.PYTORCH:
             import determined_common.experimental.checkpoint._torch
 
             return determined_common.experimental.checkpoint._torch.load_model(
-                checkpoint_dir, **kwargs
+                checkpoint_dir, metadata,
             )
 
         elif checkpoint_type == ModelFramework.TENSORFLOW:
             import determined_common.experimental.checkpoint._tf
 
             return determined_common.experimental.checkpoint._tf.load_model(
-                checkpoint_dir, tags=tags
+                checkpoint_dir, metadata, tags=tags
             )
 
         raise AssertionError("Unknown checkpoint format at {}".format(checkpoint_dir))
 
     @staticmethod
-    def get_type(directory: pathlib.Path) -> ModelFramework:
-        # We used MLflow's MLmodel checkpoint format in the past for
-        # serializing pytorch models.
-        if directory.joinpath("MLmodel").exists():
-            return ModelFramework.PYTORCH
-
+    def parse_metadata(directory: pathlib.Path) -> Dict[str, Any]:
         metadata_path = directory.joinpath("metadata.json")
         with metadata_path.open() as f:
             metadata = json.load(f)
 
+        return cast(Dict[str, Any], metadata)
+
+    @staticmethod
+    def get_type(metadata: Dict[str, Any]) -> ModelFramework:
         if "torch_version" in metadata:
             return ModelFramework.PYTORCH
 
         elif "tensorflow_version" in metadata:
             return ModelFramework.TENSORFLOW
 
-        raise AssertionError("Unknown checkpoint format at {}".format(directory))
+        raise AssertionError("Unknown checkpoint format")
 
     def __repr__(self) -> str:
         return "Checkpoint(uuid={})".format(self.uuid)
