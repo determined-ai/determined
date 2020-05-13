@@ -38,7 +38,6 @@ check-%:
 	$(MAKE) -C $(subst -,/,$(@:check-%=%)) check
 .PHONY: check
 check: check-common check-harness check-cli check-deploy check-e2e_tests check-master check-agent check-webui
-	conform enforce
 
 .PHONY: fmt-%
 fmt-%:
