@@ -49,7 +49,7 @@ module.exports = override(
   // Webapp version is hardcoded but handled by `bumpversion`
   addWebpackPlugin(
     new webpack.DefinePlugin({
-      'process.env.VERSION': '"0.12.4.dev0"',
+      'process.env.VERSION': '"0.12.4rc0"',
       'process.env.IS_DEV': JSON.stringify(process.env.NODE_ENV === 'development'),
     })
   )
