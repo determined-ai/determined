@@ -2,7 +2,6 @@
 version: 2.1
 
 orbs:
-  aws-cli: circleci/aws-cli@1.0.0
   win: circleci/windows@2.3.0
   slack: circleci/slack@3.4.2
 
@@ -477,7 +476,8 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - aws-cli/setup
+      - run: apk add make curl python3
+      - run: pip3 install awscli
       - run: make -C docs/deploy publish
 
   package-and-push-system-local:
