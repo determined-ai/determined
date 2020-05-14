@@ -567,10 +567,12 @@ jobs:
 
   publish-try-now-template:
     docker:
-      - image: python:3.6-slim-buster
+      - image: determinedai/cimg-base:stable
     steps:
       - checkout
-      - aws-cli/setup
+      - setup-python-venv:
+          extras-requires: "awscli"
+          executor: determinedai/cimg-base:stable
       - run: make -C deploy publish-try-now-template
 
   test-debian-packaging:
