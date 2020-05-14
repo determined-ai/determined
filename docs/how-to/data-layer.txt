@@ -37,7 +37,7 @@ The data layer in Determined enables a random-access layer by caching datasets. 
 by iterating over it before the start of training and storing the output to an
 `LMDB <http://www.lmdb.tech/doc/>`_ file. Using this random-access
 layer Determined efficiently accesses training and validation data, adapting to different experiment types.
-For example, during distributed training each GPU in Determined needs only access to a portion of the training data.
+For example, during distributed training each GPU in Determined only needs access to a portion of the training data.
 
 The data layer in Determined uses ``name`` and ``version`` keys as unique identifiers for dataset
 caches. When a dataset cache with matching keys is found it's reused, allowing users to skip
@@ -118,7 +118,7 @@ users can experiment with a wide range of batch sizes. If ``dataset.batch(32)`` 
 users would always have a batch size of 32 when reusing the cached dataset.
 
 .. warning::
-    If ``dataset.repeat()`` is called within ``make_dataset()``, data layer will write records from the dataset until it
+    If ``dataset.repeat()`` is called within ``make_dataset()``, the data layer will write records from the dataset until it
     fills up the entire disk. In fact, users never need to call ``dataset.repeat()`` in Determined.
 
 

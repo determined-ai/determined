@@ -102,7 +102,7 @@ Do:
 
 Do not:
 
-* Use instance attributes on trial class to save any state over time (e.g.
+* Use instance attributes on a trial class to save any state over time (e.g.
   storing metric history in a ``self`` attribute). The ``Trial`` instance will
   only save and restore model weights and optimizer state over time; ``self``
   attributes may be reset to their initial state at any time if the Determined

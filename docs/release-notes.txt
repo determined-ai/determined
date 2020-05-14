@@ -13,7 +13,9 @@ Version 0.12.4
 
 - **Breaking Change:** Users are no longer automatically logged in as the "determined" user. Refer to :ref:`users` for more details.
 
-- Support multi-slot notebooks. The number of slots per notebook cannot exceed the size of the largest available agent. 
+- Support multi-slot notebooks. The number of slots per notebook cannot exceed the size of the largest available agent. The number of slots to use for a notebook task can be configured when the notebook is launched: ``det notebook start --config resources.slots=2``
+
+- Support fetching the configuration of a running master via the CLI (``det master config``).
 
 - Authentication sessions now expire after 7 days.
 
@@ -68,7 +70,7 @@ Version 0.12.3
 
 - Fix bug after master restart where some errored experiments would show progress indicators.
 
-- Fix ordering of steps from ``det t describe --json``.
+- Fix ordering of steps from ``det trial describe --json``.
 
 - Docs: Added topic guide for effective distributed training.
 

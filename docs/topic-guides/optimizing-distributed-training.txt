@@ -114,7 +114,7 @@ with a synthetic dataset to verify performance of multi-GPU training.
 
   If a multi-GPU experiment does not become active after a minute or so,
   please confirm that ``slots_per_trial`` is a multiple of the number of GPUs
-  available on a machine. Also, you can also use the CLI command ``det task
+  available on a machine. You can also use the CLI command ``det task
   list`` to check if any other tasks are using GPUs and preventing your
   experiment from using all the GPUs on a machine.
 

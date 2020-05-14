@@ -90,11 +90,11 @@ allowed per trial:
 For details on the supported searchers and their respective configuration
 options, refer to :ref:`topic-guides_hp-tuning-det`.
 
-That's it!  After submitting a hyperparameter tuning experiment, users
-can easily see the best validation metric observed across all trials
-over time in the WebUI.  After the experiment has completed, they can
-view the hyperparameter values for the best-performing trials, and also
-export the associated model checkpoint for downstream serving.
+That's it!  After submitting an experiment, users can easily see the
+best validation metric observed across all trials over time in the
+WebUI.  After the experiment has completed, they can view the
+hyperparameter values for the best-performing trials and then export the
+associated model checkpoints for downstream serving.
 
 .. image:: /assets/images/adaptive-experiment-detail.png
 
