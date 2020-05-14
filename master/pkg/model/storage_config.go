@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -11,8 +12,9 @@ import (
 )
 
 const (
-	sharedFSContainerPath = "/determined_shared_fs"
-	sharedFSPropagation   = "rprivate"
+	// DefaultSharedFSContainerPath is the base storage path inside containers for ShareFS storage.
+	DefaultSharedFSContainerPath = "/determined_shared_fs"
+	sharedFSPropagation          = "rprivate"
 )
 
 // CheckpointStorageConfig has the common checkpoint config params.
@@ -74,7 +76,7 @@ type SharedFSContainerPath struct{}
 
 // MarshalJSON implements the json.Marshaler interface.
 func (p SharedFSContainerPath) MarshalJSON() ([]byte, error) {
-	return json.Marshal(sharedFSContainerPath)
+	return json.Marshal(DefaultSharedFSContainerPath)
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -87,14 +89,14 @@ func (p *SharedFSContainerPath) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}
-	if s != sharedFSContainerPath {
+	if s != DefaultSharedFSContainerPath {
 		return errors.New("cannot set value")
 	}
 	return nil
 }
 
 func (p SharedFSContainerPath) String() string {
-	return sharedFSContainerPath
+	return DefaultSharedFSContainerPath
 }
 
 // A SharedFSPropagation is a constant value for the Propagation of a
@@ -138,9 +140,26 @@ type SharedFSConfig struct {
 
 // Validate implements the check.Validatable interface.
 func (s SharedFSConfig) Validate() []error {
-	return []error{
-		check.True(filepath.IsAbs(s.HostPath), "host_path must be an absolute path"),
+	hErr := check.TrueSilent(filepath.IsAbs(s.HostPath), "host_path must be an absolute path")
+	if hErr != nil {
+		return []error{hErr}
 	}
+	var sErr error
+	if s.StoragePath != nil {
+		if filepath.IsAbs(*s.StoragePath) {
+			sErr = check.TrueSilent(
+				strings.HasPrefix(filepath.Clean(*s.StoragePath), s.HostPath),
+				"storage_path must either be a relative directory or a subdirectory of host_path",
+			)
+		} else {
+			fullStoragePath := filepath.Join(s.HostPath, filepath.Clean(*s.StoragePath))
+			sErr = check.TrueSilent(
+				strings.HasPrefix(fullStoragePath, s.HostPath),
+				"storage_path must either be a relative directory or a subdirectory of host_path",
+			)
+		}
+	}
+	return []error{sErr}
 }
 
 // HDFSConfig configures storing checkpoints in HDFS.

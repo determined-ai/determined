@@ -37,7 +37,7 @@ import simplejson
 
 import determined as det
 from determined import gpu, horovod, layers, load, workload
-from determined_common import storage
+from determined_common import constants, storage
 
 ENVIRONMENT_VARIABLE_KEYS = {
     "DET_MASTER_ADDR",
@@ -90,9 +90,14 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
         # Create the storage manager. This is used to download the initial checkpoint here in
         # build_training_pipeline and also used by the workload manager to create and store
         # checkpoints during training.
-        storage_mgr = storage.build(env.experiment_config["checkpoint_storage"])
+        storage_mgr = storage.build(
+            env.experiment_config["checkpoint_storage"],
+            container_path=constants.SHARED_FS_CONTAINER_PATH,
+        )
 
-        [tensorboard_mgr, tensorboard_writer] = load.prepare_tensorboard(env)
+        [tensorboard_mgr, tensorboard_writer] = load.prepare_tensorboard(
+            env, constants.SHARED_FS_CONTAINER_PATH
+        )
 
         # Create the workload manager. The workload manager will receive workloads from the
         # socket_mgr, and augment them with some additional arguments. Additionally, the
@@ -194,7 +199,7 @@ def main() -> None:
     )
 
     try:
-        storage.validate(env.experiment_config["checkpoint_storage"])
+        storage.validate_config(env.experiment_config["checkpoint_storage"])
     except Exception as e:
         logging.error("Checkpoint storage validation failed: {}".format(e))
         sys.exit(1)

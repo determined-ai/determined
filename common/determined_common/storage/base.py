@@ -53,6 +53,11 @@ class StorageManager:
         check_gt(len(base_path), 0)
         self._base_path = base_path
 
+    @classmethod
+    def from_config(cls, config: Dict[str, Any], container_path: Optional[str]) -> "StorageManager":
+        """from_config() just calls __init__() unless it is overridden in a subclass."""
+        return cls(**config)
+
     def post_store_path(self, storage_id: str, storage_dir: str, metadata: StorageMetadata) -> None:
         """
         post_store_path is a hook that will be called after store_path(). Subclasess of

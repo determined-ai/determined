@@ -24,6 +24,14 @@ def test_illegal_type() -> None:
         storage.build(config)
 
 
+def test_build_with_container_path() -> None:
+    config = {"type": "shared_fs", "host_path": "/host_path", "storage_path": "storage_path"}
+    manager = storage.build(config)
+    assert manager._base_path == "/host_path/storage_path"
+    manager = storage.build(config, container_path="/container_path")
+    assert manager._base_path == "/container_path/storage_path"
+
+
 def test_list_directory() -> None:
     root = os.path.join(os.path.dirname(__file__), "fixtures")
 

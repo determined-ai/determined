@@ -2,25 +2,28 @@ import contextlib
 import os
 from typing import Any, Dict, Iterator, Optional
 
-from determined_common.check import check_gt, check_true, check_type
+from determined_common import check
 from determined_common.storage.base import StorageManager, StorageMetadata
 
 
-def _full_storage_dir(host_path: str, container_path: str, storage_path: Optional[str]) -> str:
+def _full_storage_path(
+    host_path: str, storage_path: Optional[str] = None, container_path: Optional[str] = None,
+) -> str:
     """
-    Return the full path to the storage base directory.
+    Return the full path to the storage_path, either as a subdirectory of the host_path in the
+    host environment, where container_path must be None, or as a subdirectory of the container_path
+    when in the container enviornment, where container_path must not be None.
     """
-    if storage_path is not None:
-        abs_path = os.path.normpath(os.path.join(host_path, storage_path))
-        check_true(
-            abs_path.startswith(host_path), "storage path must be a subdirectory of host path."
-        )
-        storage_path = os.path.relpath(abs_path, host_path)
+    check.true(os.path.isabs(host_path), "`host_path` must be an absolute path.")
 
-    if storage_path is not None:
-        return os.path.join(container_path, storage_path)
+    if storage_path is None:
+        return host_path if container_path is None else container_path
 
-    return container_path
+    abs_path = os.path.normpath(os.path.join(host_path, storage_path))
+    check.true(abs_path.startswith(host_path), "storage path must be a subdirectory of host path.")
+    storage_path = os.path.relpath(abs_path, host_path)
+
+    return os.path.join(host_path if container_path is None else container_path, storage_path)
 
 
 class SharedFSStorageManager(StorageManager):
@@ -30,33 +33,17 @@ class SharedFSStorageManager(StorageManager):
     `host_path`.
     """
 
-    def __init__(
-        self,
-        host_path: str,
-        container_path: str = "/determined_shared_fs",
-        storage_path: Optional[str] = None,
-        propagation: str = "rprivate",
-    ) -> None:
-        super().__init__(_full_storage_dir(host_path, container_path, storage_path))
-        check_type(host_path, str, "`host_path` must be a str.")
-        check_true(os.path.isabs(host_path), "`host_path` must be an absolute path.")
-        check_type(container_path, str, "`container_path` must be a str.")
-        check_true(os.path.isabs(container_path), "`container_path` must be an absolute path.")
-        check_type(propagation, str, "`propagation` must be a str.")
-        check_gt(len(host_path), 0, "`host_path` must be non-empty.")
-        check_gt(len(container_path), 0, "`container_path` must be non-empty.")
-        self.host_path = host_path
-        self.container_path = container_path
-        self.propagation = propagation
-
-    def get_mount_config(self) -> Dict[str, Any]:
-        return {
-            "Type": "bind",
-            "Source": self.host_path,
-            "Target": self.container_path,
-            "ReadOnly": False,
-            "BindOptions": {"Propagation": self.propagation},
-        }
+    @classmethod
+    def from_config(cls, config: Dict[str, Any], container_path: Optional[str]) -> "StorageManager":
+        allowed_keys = {"host_path", "storage_path", "container_path", "propagation"}
+        for key in config.keys():
+            check.is_in(key, allowed_keys, "extra key in shared_fs config")
+        check.is_in("host_path", config, "shared_fs config is missing host_path")
+        # Ignore legacy configuration values propagation and container_path.
+        base_path = _full_storage_path(
+            config["host_path"], config.get("storage_path"), container_path
+        )
+        return cls(base_path)
 
     @contextlib.contextmanager
     def restore_path(self, metadata: StorageMetadata) -> Iterator[str]:
@@ -65,14 +52,13 @@ class SharedFSStorageManager(StorageManager):
         configuration seems reasonable.
         """
         storage_dir = os.path.join(self._base_path, metadata.storage_id)
-        check_true(
+        check.true(
             os.path.exists(storage_dir),
             "Storage directory does not exist: {}. Please verify "
             "that you are using the correct configuration value for "
-            "checkpoint_storage.host_path and "
-            "tensorboard_storage.host_path.".format(storage_dir),
+            "checkpoint_storage.host_path".format(storage_dir),
         )
-        check_true(
+        check.true(
             os.path.isdir(storage_dir), "Checkpoint path is not a directory: {}".format(storage_dir)
         )
         yield storage_dir

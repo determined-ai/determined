@@ -1,7 +1,7 @@
 import copy
 import os
 import uuid
-from typing import Any, Dict, Type
+from typing import Any, Dict, Optional, Type
 
 from determined_common.check import check_eq, check_in, check_type
 
@@ -28,7 +28,7 @@ _STORAGE_MANAGERS = {
 }  # type: Dict[str, Type[StorageManager]]
 
 
-def build(config: Dict[str, Any]) -> StorageManager:
+def build(config: Dict[str, Any], container_path: Optional[str] = None) -> StorageManager:
     """
     Return a checkpoint manager defined by the value of the `type` key in
     the configuration dictionary. Throws a `TypeError` if no storage manager
@@ -66,16 +66,16 @@ def build(config: Dict[str, Any]) -> StorageManager:
     config.pop("checkpoint_path", None)
 
     try:
-        return subclass(**config)
+        return subclass.from_config(config, container_path)
     except TypeError as e:
         raise TypeError(
             "Failed to instantiate {} checkpoint storage: {}".format(identifier, str(e))
         )
 
 
-def validate(config: Dict[str, Any]) -> None:
+def validate_manager(manager: StorageManager) -> None:
     """
-    Validate that the checkpoint storage can be written to, restored from, and
+    Validate that the StorageManager can be written to, restored from, and
     deleted from. Throws an exception if any of the operations fail.
     """
 
@@ -97,7 +97,6 @@ def validate(config: Dict[str, Any]) -> None:
             with open(os.path.join(storage_dir, "VALIDATE.txt"), "r") as fp:
                 check_eq(fp.read(), self.uuid, "Unable to properly load from storage")
 
-    manager = build(config)
     validater = Validater()
     with manager.store_path() as (storage_id, path):
         validater.save(path)
@@ -105,3 +104,7 @@ def validate(config: Dict[str, Any]) -> None:
     with manager.restore_path(metadata) as path:
         validater.load(path)
     manager.delete(metadata)
+
+
+def validate_config(config: Dict[str, Any]) -> None:
+    validate_manager(build(config))

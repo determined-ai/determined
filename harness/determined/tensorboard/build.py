@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional
 
 import determined as det
 from determined.tensorboard import base, gcs, hdfs, s3, shared
+from determined_common.storage.shared import _full_storage_path
 
 
 def get_sync_path(env: det.EnvContext) -> pathlib.Path:
@@ -35,11 +36,16 @@ def get_base_path(checkpoint_config: Dict[str, Any], manager: bool = False) -> p
     return pathlib.Path("/", "tmp", f"tensorboard-{rank}")
 
 
-def build(env: det.EnvContext, checkpoint_config: Dict[str, Any]) -> base.TensorboardManager:
+def build(
+    env: det.EnvContext, checkpoint_config: Dict[str, Any], container_path: Optional[str] = None
+) -> base.TensorboardManager:
     """
     Return a tensorboard manager defined by the value of the `type` key in
     the configuration dictionary. Throws a `TypeError` if no tensorboard manager
     with `type` is defined.
+
+    container_path, if set, will replace the host_path when determining the storage_path for the
+    SharedFSTensorboardManager.
     """
     type_name = checkpoint_config.get("type")
 
@@ -53,12 +59,10 @@ def build(env: det.EnvContext, checkpoint_config: Dict[str, Any]) -> base.Tensor
     sync_path = get_sync_path(env)
 
     if type_name == "shared_fs":
+        host_path = checkpoint_config["host_path"]
+        storage_path = checkpoint_config.get("storage_path")
         return shared.SharedFSTensorboardManager(
-            checkpoint_config["host_path"],
-            checkpoint_config["container_path"],
-            checkpoint_config.get("storage_path", None),
-            base_path,
-            sync_path,
+            _full_storage_path(host_path, storage_path, container_path), base_path, sync_path,
         )
 
     elif type_name == "gcs":

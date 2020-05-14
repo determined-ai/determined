@@ -117,7 +117,7 @@ func startContainer(t TaskSpec) container.Spec {
 		mounts = append(mounts, mount.Mount{
 			Type:   mount.TypeBind,
 			Source: sharedFS.HostPath,
-			Target: sharedFS.ContainerPath.String(),
+			Target: model.DefaultSharedFSContainerPath,
 			BindOptions: &mount.BindOptions{
 				Propagation: mount.Propagation(sharedFS.Propagation.String()),
 			},
@@ -253,7 +253,7 @@ func gcCheckpoint(t TaskSpec) container.Spec {
 		mounts = append(mounts, mount.Mount{
 			Type:   mount.TypeBind,
 			Source: sharedFS.HostPath,
-			Target: sharedFS.ContainerPath.String(),
+			Target: model.DefaultSharedFSContainerPath,
 			BindOptions: &mount.BindOptions{
 				Propagation: mount.Propagation(sharedFS.Propagation.String()),
 			},
