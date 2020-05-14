@@ -33,12 +33,12 @@ test:
 	go test ./...
 
 .PHONY: package
-package: export GORELEASER_CURRENT_TAG := $(VERSION)
+package: export GORELEASER_CURRENT_TAG := v$(VERSION)
 package:
 	goreleaser --snapshot --rm-dist
 
 .PHONY: release
-release: export GORELEASER_CURRENT_TAG := $(VERSION)
+release: export GORELEASER_CURRENT_TAG := v$(VERSION)
 release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -v "rc" | grep "v$(VERSION)" -A1 | sed -n '2 p')
 release:
 	goreleaser --rm-dist
