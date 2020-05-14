@@ -3,6 +3,7 @@ import { RouteProps } from 'react-router';
 import Authentication from 'pages/Authentication';
 import Dashboard from 'pages/Dashboard';
 import Determined from 'pages/Determined';
+import { isFullPath, parseUrl } from 'utils/routes';
 
 /*
  * Router Configuration
@@ -19,14 +20,6 @@ export interface RouteConfigItem extends RouteProps {
   title: string;
   needAuth?: boolean;
 }
-
-export const isFullPath = (path: string): boolean => {
-  return path.startsWith('http');
-};
-
-export const isCrossoverRoute = (path: string): boolean => {
-  return path.startsWith('/ui') || path.includes(':8080/ui');
-};
 
 export const crossoverRoute = (path: string): void => {
   if (!isFullPath(path)) {
@@ -115,3 +108,21 @@ export const detRoutes: RouteConfigItem[] = [
   },
 ];
 export const defaultDetRouteId = detRoutes[0].id;
+
+// Is the path going to be served from the same host?
+export const isDetRoute = (url: string): boolean => {
+  if (!isFullPath(url)) {
+    return true;
+  }
+  if (process.env.IS_DEV) {
+    // dev live is served on a different port
+    return parseUrl(url).hostname === window.location.hostname;
+  }
+  return parseUrl(url).host === window.location.host;
+};
+
+export const isReactRoute = (url: string): boolean => {
+  if (!isDetRoute(url)) return false;
+  const pathname = parseUrl(url).pathname;
+  return !!appRoutes.find(route => pathname.startsWith(route.path));
+};

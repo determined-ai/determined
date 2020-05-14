@@ -8,7 +8,7 @@ import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoTypes } from 'components/Logo';
 import Spinner from 'components/Spinner';
 import Auth, { updateAuth } from 'contexts/Auth';
-import { crossoverRoute, isCrossoverRoute } from 'routes';
+import { crossoverRoute, isReactRoute } from 'routes';
 import history from 'routes/history';
 import { logout } from 'services/api';
 
@@ -49,7 +49,7 @@ const Authentication: React.FC = () => {
     if (queries.cli) {
       return <AuthToken />;
     }
-    if (isCrossoverRoute(redirectUrl)) {
+    if (!isReactRoute(redirectUrl)) {
       crossoverRoute(redirectUrl);
     } else {
       history.push(redirectUrl);
