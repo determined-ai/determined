@@ -316,7 +316,7 @@ Example:
 IAM Roles
 ~~~~~~~~~
 
-IAM roles comprise IAM polices, which provide access to AWS APIs such as the EC2 or S3 API. The IAM
+IAM roles comprise IAM policies, which provide access to AWS APIs such as the EC2 or S3 API. The IAM
 policies needed for the Determined cluster are:
 
 Master

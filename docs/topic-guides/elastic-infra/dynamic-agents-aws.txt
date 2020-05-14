@@ -4,9 +4,9 @@ Dynamic Agents on AWS
 =====================
 
 This document describes how to install, configure, and upgrade a
-deployment of Determined with Dynamic Agents on AWS. See
-:ref:`elastic-infra-index` for an overview of the elastic
-infrastructure in Determined.
+deployment of Determined with dynamic agents on AWS. See
+:ref:`elastic-infra-index` for an overview of using elastic infrastructure
+in Determined.
 
 System Requirements
 -------------------
@@ -14,7 +14,7 @@ System Requirements
 EC2 Instance Tags
 ~~~~~~~~~~~~~~~~~
 
-An important assumption of Determined with Dynamic Agents is that any EC2
+An important assumption of Determined with dynamic agents is that any EC2
 instances with the configured ``tag_key:tag_value`` pair are managed by
 the Determined master (See :ref:`aws-cluster-configuration`). This pair should
 be unique to your Determined installation. If it is not, Determined may
@@ -201,7 +201,7 @@ dynamically launch Determined agent instances based on the
 Upgrades
 --------
 
-Upgrading an existing Determined installation with Dynamic Agents on AWS
+Upgrading an existing Determined installation with dynamic agents on AWS
 requires the same steps as an installation without dynamic agents. See
 :ref:`upgrades`.
 

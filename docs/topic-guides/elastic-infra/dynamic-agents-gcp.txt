@@ -4,7 +4,7 @@ Dynamic Agents on GCP
 =====================
 
 This document describes how to install, configure, and upgrade a
-deployment of Determined with Dynamic Agents on GCP. See
+deployment of Determined with dynamic agents on GCP. See
 :ref:`elastic-infra-index` for an overview of the elastic
 infrastructure in Determined.
 
@@ -20,7 +20,7 @@ project.
 Instance Labels
 ~~~~~~~~~~~~~~~
 
-When using Dynamic Agents on GCP, Determined identifies the Compute Engine
+When using dynamic agents on GCP, Determined identifies the Compute Engine
 instances that it is managing using a configurable instance label (see
 :ref:`gcp-cluster-configuration` for details). Administrators
 should be careful to ensure that this label is not used by other Compute
@@ -272,6 +272,6 @@ launch Determined agent instances based on the :ref:`cluster-configuration`.
 Upgrades
 --------
 
-Upgrading an existing Determined installation with Dynamic Agents on GCP
+Upgrading an existing Determined installation with dynamic agents on GCP
 requires the same steps as an installation without dynamic agents. See
 :ref:`upgrades`.

@@ -3,17 +3,16 @@
 Notebook Configuration
 ======================
 
-Determined makes it easy to modify the dependencies that are installed into
-the notebook's environment:
+Notebooks may be supplied an optional **notebook configuration** to
+control aspects of the notebook's environment. For example, to launch a
+notebook that uses two GPUs:
 
 .. code::
 
-   $ det notebook start --config environment.tensorflow=1.13.1
+   $ det notebook start --config resources.slots=2
 
-More generally, notebooks may be supplied an optional **notebook
-configuration** to configure the notebook's environment. In addition to
-the ``--config`` flag, configuration may also be supplied via a YAML
-file (``--config-file``):
+In addition to the ``--config`` flag, configuration may also be supplied
+via a YAML file (``--config-file``):
 
 .. code::
 
@@ -21,10 +20,6 @@ file (``--config-file``):
    description: test-notebook
    resources:
      slots: 2
-   environment:
-     python: "3.6.9"
-     tensorflow: "1.13.1"
-     keras: "2.2.4"
    bind_mounts:
      - host_path: /data/notebook_scratch
        container_path: /scratch
