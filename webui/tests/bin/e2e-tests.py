@@ -14,7 +14,9 @@ DOCKER_CYPRESS_IMAGE = "cypress/included:4.3.0"
 RESULTS_DIR_NAME = "results"
 logger = logging.getLogger("e2e-tests")
 
-root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"], encoding="utf-8")[:-1]
+root = subprocess.check_output(
+    ["git", "rev-parse", "--show-toplevel"], encoding="utf-8"
+)[:-1]
 root_path = pathlib.Path(root)
 webui_dir = root_path.joinpath("webui")
 tests_dir = webui_dir.joinpath("tests")
@@ -28,7 +30,12 @@ def run(cmd: List[str], config) -> None:
 
 
 def run_cluster_cmd(subcommand: List[str], config):
-    run(["det-deploy", "local"] + subcommand + ["--cluster-name", config["CLUSTER_NAME"]], config)
+    run(
+        ["det-deploy", "local"]
+        + subcommand
+        + ["--cluster-name", config["CLUSTER_NAME"]],
+        config,
+    )
 
 
 def run_ignore_failure(cmd: List[str], config):
@@ -67,9 +74,26 @@ def post_e2e_tests(config):
     run_cluster_cmd(["cluster-down", "--delete-db"], config)
 
 
+# _environment_variables passes docker specific environment variables
+def _environment_variables(config):
+    cluster_name = config["CLUSTER_NAME"]
+    master_name = cluster_name + "_determined-master_1"
+    env_vars = [
+        "--env",
+        f"DET_MASTER={master_name}:8080",
+    ]
+
+    if config["DISCREET_LOGS"]:
+        env_vars.extend(["--env", "DISCREET_LOGS=1"])
+
+    return env_vars
+
+
 # _cypress_arguments generates an array of cypress arguments.
 def _cypress_arguments(cypress_configs, config, use_docker):
-    timeout_config = f"defaultCommandTimeout={config['CYPRESS_DEFAULT_COMMAND_TIMEOUT']}"
+    timeout_config = (
+        f"defaultCommandTimeout={config['CYPRESS_DEFAULT_COMMAND_TIMEOUT']}"
+    )
     config_file_name = "cypress-docker.json" if use_docker else "cypress.json"
     args = [
         "--config-file",
@@ -88,7 +112,11 @@ def _cypress_arguments(cypress_configs, config, use_docker):
 
 
 def container_exists(name):
-    return any(filter(lambda container: container.name == name, client.containers.list(all=True)))
+    return any(
+        filter(
+            lambda container: container.name == name, client.containers.list(all=True)
+        )
+    )
 
 
 def clean_up_cypress(config):
@@ -102,7 +130,15 @@ def run_e2e_tests(config):
     base_url_config = f"baseUrl=http://localhost:{config['INTEGRATIONS_HOST_PORT']}"
     cypress_arguments = _cypress_arguments([base_url_config], config, False)
 
-    command = ["yarn", "--cwd", str(tests_dir), "run", "cypress", "run", *cypress_arguments]
+    command = [
+        "yarn",
+        "--cwd",
+        str(tests_dir),
+        "run",
+        "cypress",
+        "run",
+        *cypress_arguments,
+    ]
 
     run(
         command, config,
@@ -114,6 +150,8 @@ def docker_run_e2e_tests(config):
     master_name = cluster_name + "_determined-master_1"
     network_name = cluster_name + "_default"
     cypress_name = _cypress_container_name(config)
+
+    env_vars = _environment_variables(config)
 
     base_url_config = f"baseUrl=http://{master_name}:8080"
     cypress_config = [base_url_config]
@@ -129,8 +167,7 @@ def docker_run_e2e_tests(config):
         f"type=bind,source={webui_dir},target=/webui",
         "-w",
         "/webui/tests",
-        "--env",
-        f"DET_MASTER={master_name}:8080",
+        *env_vars,
         DOCKER_CYPRESS_IMAGE,
         *cypress_arguments,
     ]
@@ -170,10 +207,17 @@ def setup_onetime_sig_handler(sig, fn):
 
 def get_config(args):
     config = {}
+    config["DISCREET_LOGS"] = args.discreet_logs
     config["INTEGRATIONS_HOST_PORT"] = args.integrations_host_port
-    config["CLUSTER_NAME"] = f"determined_integrations_{config['INTEGRATIONS_HOST_PORT']}"
-    config["INTEGRATIONS_RESOURCE_SUFFIX"] = "_webui_tests_" + config["INTEGRATIONS_HOST_PORT"]
-    config["INTEGRATIONS_NETWORK"] = "determined" + config["INTEGRATIONS_RESOURCE_SUFFIX"]
+    config[
+        "CLUSTER_NAME"
+    ] = f"determined_integrations_{config['INTEGRATIONS_HOST_PORT']}"
+    config["INTEGRATIONS_RESOURCE_SUFFIX"] = (
+        "_webui_tests_" + config["INTEGRATIONS_HOST_PORT"]
+    )
+    config["INTEGRATIONS_NETWORK"] = (
+        "determined" + config["INTEGRATIONS_RESOURCE_SUFFIX"]
+    )
     config["DET_DOCKER_MASTER_NODE"] = "localhost"
     config["CYPRESS_DEFAULT_COMMAND_TIMEOUT"] = args.cypress_default_command_timeout
     config["CYPRESS_ARGS"] = args.cypress_args
@@ -186,7 +230,9 @@ def get_config(args):
     env["INTEGRATIONS_HOST_PORT"] = config["INTEGRATIONS_HOST_PORT"]
     env["INTEGRATIONS_RESOURCE_SUFFIX"] = config["INTEGRATIONS_RESOURCE_SUFFIX"]
     env["DET_MASTER"] = "localhost:" + config["INTEGRATIONS_HOST_PORT"]
-    logging.basicConfig(level=(args.log_level or "INFO"), format=(args.log_format or "%(message)s"))
+    logging.basicConfig(
+        level=(args.log_level or "INFO"), format=(args.log_format or "%(message)s")
+    )
     config["env"] = env
     return config
 
@@ -209,6 +255,7 @@ def main():
     parser.add_argument("--cypress-args", help="other cypress arguments")
     parser.add_argument("--log-level")
     parser.add_argument("--log-format")
+    parser.add_argument("--discreet-logs")
     args = parser.parse_args()
 
     fn = operation_to_fn.get(args.operation)

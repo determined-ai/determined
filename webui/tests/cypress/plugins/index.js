@@ -25,8 +25,7 @@ module.exports = on => {
      * https://chromedevtools.github.io/devtools-protocol/tot/Runtime#event-consoleAPICalled
      */
 
-    if (event.level === 'error' || event.type === 'error' ||
-        event.level === 'warning' || event.type === 'warning') {
+    if (process.env.DISCREET_LOGS && (event.level === 'error' || event.type === 'error')) {
       return true;
     }
 
