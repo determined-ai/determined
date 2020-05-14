@@ -9,7 +9,7 @@ Version 0.12
 Version 0.12.4
 ^^^^^^^^^^^^^^
 
-**Release Date:** May 13, 2020
+**Release Date:** May 14, 2020
 
 - **Breaking Change:** Users are no longer automatically logged in as the "determined" user. Refer to the :ref:`users` documentation for more details.
 
