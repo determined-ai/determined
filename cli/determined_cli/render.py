@@ -4,7 +4,7 @@ import inspect
 import pathlib
 import sys
 from datetime import timezone
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 import dateutil.parser
 import tabulate
@@ -105,7 +105,7 @@ def format_resources(resources: Optional[Dict[str, int]]) -> str:
 
 def tabulate_or_csv(
     headers: List[str],
-    values: List[List[str]],
+    values: Sequence[Iterable[Any]],
     as_csv: bool,
     outfile: Optional[pathlib.Path] = None,
 ) -> None:
