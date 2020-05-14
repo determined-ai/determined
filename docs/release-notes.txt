@@ -6,6 +6,35 @@ Release Notes
 Version 0.12
 ------------
 
+Version 0.12.4
+^^^^^^^^^^^^^^
+
+**Release Date:** May 14, 2020
+
+- **Breaking Change:** Users are no longer automatically logged in as the "determined" user. Refer to :ref:`users` for more details.
+
+- Support multi-slot notebooks. The number of slots per notebook cannot exceed the size of the largest available agent. 
+
+- Authentication sessions now expire after 7 days.
+
+- Improve log messages for ``tf.keras`` trial callbacks.
+
+- Add ``nvidia-container-toolkit`` support.
+
+- Fix an error in the experimental ``bert_glue_pytorch`` example.
+
+- The ``tf.keras`` examples for the Native and Trial APIs now refer to the same model.
+
+- Add a topic guide explaining Determined's approach to :ref:`elastic-infra-index`.
+
+- Add a topic guide explaining the :ref:`native-api`.
+
+- UI: The Determined favicon acquires a small dot when any slots are in use.
+
+- UI: Fix an issue with command sorting in the WebUI.
+
+- UI: Fix an issue with badges appearing as the wrong color.
+
 Version 0.12.3
 ^^^^^^^^^^^^^^
 
