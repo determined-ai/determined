@@ -18,7 +18,7 @@ Use ``det user change-password`` via the CLI to set a password for the ``admin``
 
    det -u admin user change-password
 
-The ``determined`` user is designed for ease of setup for a single-user install. However, teams will benefit from creating a Determined user account for each individual using the installation. Namely, having individual user accounts will provide clearer authorship and improved filtering of entities. To create users in a Determined installation, the ``admin`` user should be used to create user accounts for each individual requiring access to the installation:
+The ``determined`` user is designed for ease of use on a single-user installation. However, teams will benefit from creating a Determined user account for each individual. Namely, having individual user accounts will provide clearer authorship and improved filtering of entities. To create users in a Determined installation, the ``admin`` user should be used to create user accounts for each individual requiring access to the installation:
 
 .. code::
 
