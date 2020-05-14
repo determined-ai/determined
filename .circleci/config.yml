@@ -75,6 +75,7 @@ commands:
             fi
 
             AUTHOR_EMAIL="$(git show -s --format='%ae' $CIRCLE_SHA1)"
+            echo "export AUTHOR_EMAIL=\"${AUTHOR_EMAIL}\"" >> $BASH_ENV
             LOOKUP_RESPONSE=$(curl -s "https://slack.com/api/users.lookupByEmail?token=${SLACK_API_TOKEN}&email=${AUTHOR_EMAIL}")
             SUCCESS=$(echo "$LOOKUP_RESPONSE" | jq ".ok")
             if [[ "$SUCCESS" == "true" ]]; then
@@ -853,7 +854,7 @@ jobs:
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
       - slack/status:
           fail_only: true
-          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed!'
+          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: "${SLACK_USER_ID}"
 
 
@@ -915,7 +916,7 @@ jobs:
           path: /tmp/test-results/
       - slack/status:
           fail_only: True
-          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed!'
+          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: "${SLACK_USER_ID}"
 
 
@@ -949,7 +950,7 @@ jobs:
           path: /tmp/test-results/
       - slack/status:
           fail_only: True
-          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed!'
+          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: "${SLACK_USER_ID}"
 
 
