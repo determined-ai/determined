@@ -9,35 +9,21 @@ import sys
 from typing import Any, Dict, List
 
 import determined as det
-import determined_common.storage
-from determined_common.storage import StorageMetadata
+from determined_common import constants, storage
 
 
 def delete_checkpoints(
-    config: Dict[str, Any], to_delete: List[Dict[str, Any]], validate: bool, dry_run: bool
+    manager: storage.StorageManager, to_delete: List[Dict[str, Any]], dry_run: bool
 ) -> None:
     """
     Delete some of the checkpoints associated with a single
-    experiment. `config` is the experiment config of the target
-    experiment; `to_delete` is a list of two-element dicts,
+    experiment. `to_delete` is a list of two-element dicts,
     {"uuid": str, "resources": List[str]}.
     """
-    storage = config["checkpoint_storage"]
-    logging.info("Using checkpoint storage: {}".format(storage))
-
-    if validate:
-        logging.info("Validating checkpoint storage...")
-        determined_common.storage.validate(storage)
-        logging.info("Checkpoint storage validation successful")
-    else:
-        logging.info("Skipping checkpoint validation")
-
-    manager = determined_common.storage.build(storage)
-
     logging.info("Deleting {} checkpoints".format(len(to_delete)))
 
     for record in to_delete:
-        metadata = StorageMetadata.from_json(record)
+        metadata = storage.StorageMetadata.from_json(record)
         if not dry_run:
             logging.info("Deleting checkpoint {}".format(metadata))
             manager.delete(metadata)
@@ -74,13 +60,6 @@ def main(argv: List[str]) -> None:
         help="Checkpoints to delete (JSON-formatted string)",
     )
     parser.add_argument(
-        "--validate",
-        action="store_true",
-        default=("DET_VALIDATE" in os.environ),
-        help="Validate the checkpoint storage can be deleted "
-        "from before starting deletion process",
-    )
-    parser.add_argument(
         "--dry-run",
         action="store_true",
         default=("DET_DRY_RUN" in os.environ),
@@ -95,12 +74,12 @@ def main(argv: List[str]) -> None:
 
     logging.info("Determined checkpoint GC, version {}".format(det.__version__))
 
-    delete_checkpoints(
-        args.experiment_config,
-        args.delete["checkpoints"],
-        validate=args.validate,
-        dry_run=args.dry_run,
-    )
+    storage_config = args.experiment_config["checkpoint_storage"]
+    logging.info("Using checkpoint storage: {}".format(storage_config))
+
+    manager = storage.build(storage_config, container_path=constants.SHARED_FS_CONTAINER_PATH)
+
+    delete_checkpoints(manager, args.delete["checkpoints"], dry_run=args.dry_run)
 
 
 if __name__ == "__main__":

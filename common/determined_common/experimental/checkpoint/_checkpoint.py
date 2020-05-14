@@ -4,7 +4,8 @@ import pathlib
 import shutil
 from typing import Any, Dict, List, Optional, cast
 
-from determined_common import api, storage
+from determined_common import api, constants, storage
+from determined_common.storage import shared
 
 
 class ModelFramework(enum.Enum):
@@ -55,15 +56,14 @@ class Checkpoint(object):
         self.validation = validation
 
     def _find_shared_fs_path(self) -> pathlib.Path:
+        host_path = self.storage_config["host_path"]
+        storage_path = self.storage_config.get("storage_path")
         potential_paths = [
+            [shared._full_storage_path(host_path, storage_path), self.uuid],
             [
-                self.storage_config["container_path"],
-                self.storage_config.get("storage_path", ""),
-                self.uuid,
-            ],
-            [
-                self.storage_config["host_path"],
-                self.storage_config.get("storage_path", ""),
+                shared._full_storage_path(
+                    host_path, storage_path, constants.SHARED_FS_CONTAINER_PATH
+                ),
                 self.uuid,
             ],
         ]
