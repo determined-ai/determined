@@ -3,57 +3,34 @@
 Users
 =====
 
-Determined is designed for teams of machine learning developers. Objects, such as experiments
-and notebooks, created by a developer will be visible to all users of the system.
-
+Determined is designed for teams of machine learning developers. Any entity (such as an experiment or a notebook) is visible to all users on the same installation of Determined, regardless of who created it.
 
 Getting Started
 ---------------
 
-Each Determined installation comes with the two user accounts ``determined`` and ``admin``.
+Each Determined installation comes with two user accounts: ``admin`` and ``determined``. Both of these accounts have blank passwords by default.
 
-The ``determined`` user is the default account that is used for CLI operations.
-If individual user accounts are not required, users can log in as the user
-``determined`` and no additional configuration is needed. In this case, all assets
-created within Determined (experiments, commands, etc.) will be attributed to
-``determined``.
+The ``admin`` user has the sole privilege to create users, change other users' passwords, and activate/deactivate users.
 
-The ``admin`` user can be used to create users, change other users'
-passwords, and activate/deactivate users.
-
-.. warning::
-
-   The ``admin`` and ``determined`` users initially have blank passwords.
-
-
-Use the ``det user change-password`` to set a password for the ``admin`` user.
+Use ``det user change-password`` via the CLI to set a password for the ``admin`` user. This is highly encouraged for new installs.
 
 .. code::
 
    det -u admin user change-password
 
-We also suggest deactivating the user the user ``determined``:
+The ``determined`` user is designed for ease of setup for a single-user install. However, teams will benefit from creating a Determined user account for each individual using the installation. Namely, having individual user accounts will provide clearer authorship and improved filtering of entities. To create users in a Determined installation, the ``admin`` user should be used to create user accounts for each individual requiring access to the installation:
+
+.. code::
+
+   det -u admin user create <username>
+
+Then, the ``determined`` user can be deactivated:
 
 .. code::
 
    det -u admin user deactivate determined
 
-This ensures that no one can access the Determined cluster as the default user
-(any objects that were created by this user will remain).
-
-While using the existing ``determined`` account is convenient for small teams, we encourage
-everyone, especially larger teams, to create a Determined user account for each developer.
-After authenticating as a given user, the Determined objects created in that session will be
-associated with that user account. By default, the WebUI and CLI will
-only display objects created by the current user.
-
-To start using users in a Determined cluster, the system administrator should
-first set a password for the ``admin`` user as described above and proceed to create user accounts
-for each individual who would like to access Determined:
-
-::
-
-   det -u admin user create <username>
+Any entities that were created by this user prior to deactivation will remain.
 
 Authentication
 --------------
