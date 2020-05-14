@@ -1,14 +1,14 @@
 import argparse
+import json
 import os
 import sys
+from collections import OrderedDict
 from typing import Any, Callable, List
 
-import tabulate
-
+from determined_cli import render
 from determined_common import api
 from determined_common.check import check_false
 
-from . import render
 from .declarative_argparse import Arg, Cmd, Group
 from .user import authentication_required
 
@@ -22,19 +22,27 @@ def list_agents(args: argparse.Namespace) -> None:
     r = api.get(args.master, "agents")
 
     agents = r.json()
-    headers = ["Agent Name", "Registered Time", "Slots", "Containers", "Label"]
-    values = [
-        [
-            local_id(agent_id),
-            render.format_time(agent["registered_time"]),
-            len(agent["slots"]),
-            agent["num_containers"],
-            agent["label"],
-        ]
+    agents = [
+        OrderedDict(
+            [
+                ("id", local_id(agent_id)),
+                ("registered_time", render.format_time(agent["registered_time"])),
+                ("num_slots", len(agent["slots"])),
+                ("num_containers", agent["num_containers"]),
+                ("label", agent["label"]),
+            ]
+        )
         for agent_id, agent in sorted(agents.items())
     ]
 
-    print(tabulate.tabulate(values, headers, tablefmt="presto"), flush=False)
+    if args.json:
+        print(json.dumps(agents, indent=4))
+        return
+
+    headers = ["Agent Name", "Registered Time", "Slots", "Containers", "Label"]
+    values = [a.values() for a in agents]
+
+    render.tabulate_or_csv(headers, values, args.csv)
 
 
 @authentication_required
@@ -45,27 +53,41 @@ def list_slots(args: argparse.Namespace) -> None:
     agents = agent_res.json()
     tasks = task_res.json()
 
-    cont_names = {}
+    c_names = {}
     for task in tasks.values():
         for cont in task["containers"]:
-            cont_names[cont["id"]] = {"name": task["name"], "id": task["id"]}
+            c_names[cont["id"]] = {"name": task["name"], "id": task["id"]}
 
-    headers = ["Agent Name", "Slot ID", "Enabled", "Task ID", "Task Name", "Type", "Device"]
-    values = [
-        [
-            local_id(agent_id),
-            local_id(slot_id),
-            slot["enabled"],
-            cont_names[slot["container"]["id"]]["id"] if slot["container"] else "FREE",
-            cont_names[slot["container"]["id"]]["name"] if slot["container"] else "None",
-            slot["device"]["type"],
-            slot["device"]["brand"],
-        ]
+    slots = [
+        OrderedDict(
+            [
+                ("agent_id", local_id(agent_id)),
+                ("slot_id", local_id(slot_id)),
+                ("enabled", slot["enabled"]),
+                (
+                    "task_id",
+                    c_names[slot["container"]["id"]]["id"] if slot["container"] else "FREE",
+                ),
+                (
+                    "task_name",
+                    c_names[slot["container"]["id"]]["name"] if slot["container"] else "None",
+                ),
+                ("type", slot["device"]["type"]),
+                ("device", slot["device"]["brand"]),
+            ]
+        )
         for agent_id, agent in sorted(agents.items())
         for slot_id, slot in sorted(agent["slots"].items())
     ]
 
-    print(tabulate.tabulate(values, headers, tablefmt="presto"), flush=False)
+    if args.json:
+        print(json.dumps(slots, indent=4))
+        return
+
+    headers = ["Agent Name", "Slot ID", "Enabled", "Task ID", "Task Name", "Type", "Device"]
+    values = [s.values() for s in slots]
+
+    render.tabulate_or_csv(headers, values, args.csv)
 
 
 def patch_agent(enabled: bool) -> Callable[[argparse.Namespace], None]:
@@ -118,7 +140,12 @@ def agent_id_completer(_1: str, parsed_args: argparse.Namespace, _2: Any) -> Lis
 
 args_description = [
     Cmd("a|gent", None, "manage agents", [
-        Cmd("list", list_agents, "list agents", [], is_default=True),
+        Cmd("list", list_agents, "list agents", [
+            Group(
+                Arg("--csv", action="store_true", help="print as CSV"),
+                Arg("--json", action="store_true", help="print as JSON"),
+            ),
+        ], is_default=True),
         Cmd("enable", patch_agent(True), "enable agent", [
             Group(
                 Arg("agent_id", help="agent ID", nargs="?", completer=agent_id_completer),
@@ -133,7 +160,12 @@ args_description = [
         ]),
     ]),
     Cmd("s|lot", None, "manage slots", [
-        Cmd("list", list_slots, "list slots in cluster", [], is_default=True),
+        Cmd("list", list_slots, "list slots in cluster", [
+            Group(
+                Arg("--csv", action="store_true", help="print as CSV"),
+                Arg("--json", action="store_true", help="print as JSON"),
+            ),
+        ], is_default=True),
         Cmd("enable", patch_slot(True), "enable slot on agent", [
             Arg("agent_id", help="agent ID", completer=agent_id_completer),
             Arg("slot_id", type=int, help="slot ID"),
