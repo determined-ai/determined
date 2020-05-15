@@ -1,4 +1,4 @@
-project_name: determined-master
+project_name: determined-ee-master
 
 before:
   hooks:
@@ -140,7 +140,7 @@ nfpms:
 release:
   github:
     owner: determined-ai
-    name: determined
+    name: determined-ee
 
   # be sure to keep this in sync between agent/master/helm
   # the "include" functionality is only in the pro version

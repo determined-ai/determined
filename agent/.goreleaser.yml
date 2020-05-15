@@ -1,4 +1,4 @@
-project_name: determined-agent
+project_name: determined-ee-agent
 
 snapshot:
   name_template: "{{ .Env.VERSION }}"
@@ -90,7 +90,7 @@ nfpms:
 release:
   github:
     owner: determined-ai
-    name: determined
+    name: determined-ee
 
   # be sure to keep this in sync between agent/master/helm
   # the "include" functionality is only in the pro version

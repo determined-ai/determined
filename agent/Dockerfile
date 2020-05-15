@@ -23,7 +23,7 @@ COPY packaging/LICENSE /usr/share/doc/determined-agent/copyright
 COPY packaging/entrypoint.sh /run/determined/workdir/entrypoint.sh
 RUN chmod +x /run/determined/workdir/entrypoint.sh
 
-COPY determined-agent /usr/bin/determined-agent
+COPY determined-ee-agent /usr/bin/determined-agent
 
 WORKDIR /run/determined/workdir
 ENTRYPOINT [ "/run/determined/workdir/entrypoint.sh" ]
