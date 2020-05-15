@@ -187,6 +187,14 @@ class PyTorchTrialController(det.LoopTrialController):
 
     def _configure_amp(self) -> None:
         if self.use_amp():
+            if self.hvd_config.use:
+                check.eq(
+                    self.hvd_config.aggregation_frequency,
+                    1,
+                    "Mixed precision training (AMP) is not supported with "
+                    "aggregation frequency > 1.",
+                )
+
             check.true(
                 torch.cuda.is_available(),
                 "Mixed precision training (AMP) is supported only on GPU slots.",
