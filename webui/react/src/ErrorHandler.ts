@@ -93,9 +93,13 @@ const handleError = (e: DaError): Error => {
   }
 
   // TODO SEP handle transient failures? eg only take action IF.. (requires keeping state)
-  // TODO report to segment (with rate limiting? batching?). save the error stack and more for this.
 
-  // TODO SEP capture screen shot or more context?
+  // Report to segment.
+  if (window.analytics) { // analytics can be turned off
+    window.analytics.track(`EH:${e.level}`, e);
+  }
+
+  // TODO SEP capture a screenshot or more context (generate a call stack)?
   // https://stackblitz.com/edit/react-screen-capture?file=index.js
 
   return error;
