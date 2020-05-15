@@ -97,6 +97,9 @@ def test_pytorch_const_native_parallel() -> None:
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])  # type: ignore
 @pytest.mark.parametrize("use_amp", [True, False])  # type: ignore
 def test_pytorch_const_parallel(aggregation_frequency: int, use_amp: bool) -> None:
+    if use_amp and aggregation_frequency > 1:
+        pytest.skip("Mixed precision is not support with aggregation frequency > 1.")
+
     config = conf.load_config(conf.official_examples_path("mnist_pytorch/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_native_parallel(config, False)
