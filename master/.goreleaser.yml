@@ -56,7 +56,6 @@ dockers:
       - "determinedai/{{.ProjectName}}:{{.FullCommit}}"
       - "determinedai/determined-dev:{{.ProjectName}}-{{.ShortCommit}}"
       - "determinedai/determined-dev:{{.ProjectName}}-{{.FullCommit}}"
-    skip_push: true
     extra_files:
       - "packaging/master.yaml"
       - "build"
