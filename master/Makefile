@@ -11,7 +11,7 @@ export DOCKER_REPO ?= determinedai
 
 FULL_COMMIT = $(shell git rev-parse HEAD)
 SHORT_COMMIT = $(shell git rev-parse HEAD | head -c9)
-PROJECT_NAME = determined-master
+PROJECT_NAME = determined-ee-master
 ARCHS = amd64 arm64 ppc64
 MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
 
@@ -23,8 +23,7 @@ PUB_MANIFESTS = \
 	$(DOCKER_REPO)/$(PROJECT_NAME):$(VERSION)
 
 DEV_MANIFESTS = \
-	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
-	$(DOCKER_REPO)/determined-dev:$(PROJECT_NAME)-$(FULL_COMMIT)
+	$(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)
 
 NVCR_TAGS = \
 	$(NVCR_REPO)/$(PROJECT_NAME):$(FULL_COMMIT) \
