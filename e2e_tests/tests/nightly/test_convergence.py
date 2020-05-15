@@ -15,9 +15,9 @@ def test_cifar10_pytorch_accuracy() -> None:
     trial_metrics = exp.trial_metrics(trials[0]["id"])
 
     validation_errors = [
-        step.validation.metrics["validation_metrics"]["validation_accuracy"]
+        step["validation"]["metrics"]["validation_metrics"]["validation_accuracy"]
         for step in trial_metrics["steps"]
-        if step.validation
+        if step.get("validation")
     ]
 
     target_accuracy = 0.74
