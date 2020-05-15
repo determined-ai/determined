@@ -65,9 +65,8 @@ release: packaging/LICENSE
 
 .PHONY: publish
 publish:
-	docker push determinedai/determined-master:$(VERSION)
+	docker push determinedai/determined-ee-master:$(VERSION)
 
 .PHONY: publish-dev
 publish-dev:
-	docker push determinedai/determined-master:$(shell git rev-parse HEAD)
-	docker push determinedai/determined-dev:determined-master-$(shell git rev-parse HEAD)
+	docker push determinedai/determined-ee-master:$(shell git rev-parse HEAD)

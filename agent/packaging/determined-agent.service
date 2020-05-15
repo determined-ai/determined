@@ -6,7 +6,7 @@ Requires=docker.service
 [Service]
 TimeoutStartSec=0
 Restart=always
-ExecStart=/usr/local/bin/determined-agent run
+ExecStart=/usr/local/bin/determined-ee-agent run
 
 [Install]
 WantedBy=multi-user.target

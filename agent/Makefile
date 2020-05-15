@@ -48,9 +48,8 @@ release: packaging/LICENSE
 
 .PHONY: publish
 publish:
-	docker push determinedai/determined-agent:$(VERSION)
+	docker push determinedai/determined-ee-agent:$(VERSION)
 
 .PHONY: publish-dev
 publish-dev:
-	docker push determinedai/determined-agent:$(shell git rev-parse HEAD)
-	docker push determinedai/determined-dev:determined-agent-$(shell git rev-parse HEAD)
+	docker push determinedai/determined-ee-agent:$(shell git rev-parse HEAD)

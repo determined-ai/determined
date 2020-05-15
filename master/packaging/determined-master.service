@@ -13,7 +13,7 @@ StartLimitInterval=20
 RestartSec=1
 Restart=always
 TimeoutStartSec=0
-ExecStart=/usr/local/bin/determined-master
+ExecStart=/usr/local/bin/determined-ee-master
 
 [Install]
 WantedBy=multi-user.target

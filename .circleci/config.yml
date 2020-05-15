@@ -628,8 +628,8 @@ jobs:
       - run: make -C proto build
       - run: make package
       - run: mkdir -p build/
-      - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
-      - run: docker save -o build/agent.image determinedai/determined-agent:${CIRCLE_SHA1}
+      - run: docker save -o build/master.image determinedai/determined-ee-master:${CIRCLE_SHA1}
+      - run: docker save -o build/agent.image determinedai/determined-ee-agent:${CIRCLE_SHA1}
       - persist_to_workspace:
           root: .
           paths:
@@ -737,8 +737,8 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run: sudo apt-get install -y $(pwd)/master/dist/determined-master*.deb
-      - run: sudo apt-get install -y $(pwd)/agent/dist/determined-agent*.deb
+      - run: sudo apt-get install -y $(pwd)/master/dist/determined-ee-master*.deb
+      - run: sudo apt-get install -y $(pwd)/agent/dist/determined-ee-agent*.deb
       - run: sudo cp .circleci/packaging/master.yaml /etc/determined/master.yaml
       - run: sudo cp .circleci/packaging/agent.yaml /etc/determined/agent.yaml
       - run: make -C tools start-db
@@ -1286,15 +1286,6 @@ workflows:
             - build-react
             - build-docs
 
-      - package-and-push-system-dev:
-          requires:
-            - build-react
-            - build-docs
-          filters:
-            branches:
-              ignore:
-                - /pull\/.*/
-
       - test-debian-packaging:
           requires:
             - package-and-push-system-local
@@ -1334,214 +1325,6 @@ workflows:
             - build-and-package-ts-sdk
             - package-and-push-system-local
 
-      - deploy:
-          enable-cors: true
-          context: aws
-          filters:
-            branches:
-              only:
-                - master
-          requires:
-            - package-and-push-system-dev
-
-      - deploy:
-          name: deploy-release-party
-          context: aws
-          filters:
-            branches:
-              only:
-                - /release-.*/
-          requires:
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              agent-instance-type: ["p2.8xlarge"]
-              max-dynamic-agents: [8]
-
-      - test-e2e-aws:
-          name: test-e2e-gpu-parallel
-          context: aws
-          filters:
-            branches:
-              only: master
-          requires:
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              parallelism: [2]
-              agent-instance-type: ["p2.8xlarge"]
-              cluster-id-prefix: ["parallel"]
-              mark: ["parallel"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-
-      - test-e2e-aws:
-          name: test-e2e-gpu-single
-          context: aws
-          filters:
-            branches:
-              only: master
-          requires:
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              parallelism: [2]
-              cluster-id-prefix: ["e2e-gpu"]
-              mark: ["e2e_gpu"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-
-      - request-dev-deploy:
-          type: approval
-          filters: *upstream-feature-branch
-
-      - deploy:
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-dev-deploy
-            - package-and-push-system-dev
-
-      - request-gpu-tests:
-          type: approval
-          filters: *upstream-feature-branch
-
-      - test-e2e-aws:
-          name: test-e2e-gpu-parallel
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-gpu-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              parallelism: [2]
-              agent-instance-type: ["p2.8xlarge"]
-              cluster-id-prefix: ["parallel"]
-              mark: ["parallel"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-
-      - test-e2e-aws:
-          name: test-e2e-gpu-single
-          context: aws
-          filters: *upstream-feature-branch
-          requires:
-            - request-gpu-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              parallelism: [2]
-              cluster-id-prefix: ["e2e-gpu"]
-              mark: ["e2e_gpu"]
-              slack-mentions: ["${SLACK_USER_ID}"]
-
-      - test-e2e-gke:
-          name: test-e2e-gke-single-gpu
-          context: gcp
-          filters:
-            branches:
-              only: master
-          requires:
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              cluster-id-prefix: ["e2e-gpu"]
-              mark: ["e2e_gpu"]
-              parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-
-      - test-e2e-gke:
-          name: test-e2e-gke-parallel
-          context: gcp
-          filters:
-            branches:
-              only: master
-          requires:
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              cluster-id-prefix: ["parallel"]
-              mark: ["parallel"]
-              parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              machine-type: ["n1-standard-32"]
-              gpus-per-machine: [4]
-              num-machines: [2]
-
-      - request-k8-tests:
-          type: approval
-          filters: *upstream-feature-branch
-
-      - test-e2e-gke:
-          name: test-e2e-gke-single-gpu
-          context: gcp
-          filters: *upstream-feature-branch
-          requires:
-            - request-k8-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              cluster-id-prefix: ["e2e-gpu"]
-              mark: ["e2e_gpu"]
-              parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-
-      - test-e2e-gke:
-          name: test-e2e-gke-parallel
-          context: gcp
-          filters: *upstream-feature-branch
-          requires:
-            - request-k8-tests
-            - package-and-push-system-dev
-          matrix:
-            parameters:
-              cluster-id-prefix: ["parallel"]
-              mark: ["parallel"]
-              parallelism: [1]
-              slack-mentions: ["${SLACK_USER_ID}"]
-              machine-type: ["n1-standard-32"]
-              gpus-per-machine: [4]
-              num-machines: [2]
-
-      - test-det-deploy:
-          name: test-det-deploy-local
-          requires:
-            - package-and-push-system-local
-          matrix:
-            parameters:
-              parallelism: [2]
-              mark: ["det_deploy_local"]
-              det-version: [$CIRCLE_SHA1]
-
-  nightly:
-    triggers:
-      - schedule:
-          cron: "0 5 * * *"
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - test-e2e-aws:
-          name: test-e2e-gpu-nightly
-          context: aws
-          matrix:
-            parameters:
-              parallelism: [2]
-              cluster-id-prefix: ["nightly"]
-              mark: ["nightly"]
-              slack-mentions: ["channel"]
-              slack-channel: ["ml-ag"]
-      - test-e2e-aws:
-          name: test-e2e-gpu-distributed
-          context: aws
-          matrix:
-            parameters:
-              cluster-id-prefix: ["distributed"]
-              mark: ["distributed"]
-              agent-instance-type: ["p2.8xlarge"]
-              max-dynamic-agents: [2]
-              slack-mentions: ["channel"]
-              slack-channel: ["ml-ag"]
-
   release:
     jobs:
       - build-proto:
@@ -1565,29 +1348,19 @@ workflows:
           matrix:
             parameters:
               path: ["common", "harness", "cli", "deploy"]
-          context: determined-production
+          context: determined-ee
           filters: *release-and-rc-filters
 
       - package-and-push-system-rc:
           requires:
             - build-react
             - build-docs
-          context: determined-production
+          context: determined-ee
           filters: *rc-filters
 
       - package-and-push-system-release:
           requires:
             - build-react
             - build-docs
-          context: determined-production
-          filters: *release-filters
-
-      - publish-docs:
-          requires:
-            - build-docs
-          context: determined-production
-          filters: *release-filters
-
-      - upload-try-now-template:
-          context: determined-production
+          context: determined-ee
           filters: *release-filters
