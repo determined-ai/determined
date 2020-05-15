@@ -142,6 +142,8 @@ module "compute" {
   gcs_bucket = module.gcs.gcs_bucket
   database_hostname = module.database.database_hostname
   database_name = module.database.database_name
+  database_ssl_enabled = var.db_ssl_enabled
+  database_ssl_root_cert = module.database.database_ssl_root_cert
   tag_master_port = module.firewall.tag_master_port
   tag_allow_internal = module.firewall.tag_allow_internal
   tag_allow_ssh = module.firewall.tag_allow_ssh

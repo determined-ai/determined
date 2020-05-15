@@ -495,6 +495,8 @@ Resources:
               host: "${Database.Endpoint.Address}"
               port: 5432
               name: determined
+              ssl_mode: verify-ca
+              ssl_root_cert: /etc/determined/etc/db_ssl_root_cert.pem
 
             provisioner:
               iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
@@ -534,6 +536,9 @@ Resources:
             apt-get update
             apt-get install -y docker-ce docker-ce-cli containerd.io
 
+            curl -fsSL https://www.amazontrust.com/repository/AmazonRootCA1.pem > \
+              /usr/local/determined/etc/AmazonRootCA1.pem
+
             docker network create determined
 
             docker stop $(docker ps -a -q)
@@ -548,6 +553,7 @@ Resources:
                 --log-opt awslogs-stream=determined-master \
                 -p 8080:8080 \
                 -v /usr/local/determined/etc/master.yaml:/etc/determined/master.yaml \
+                -v /usr/local/determined/etc/AmazonRootCA1.pem:/etc/determined/etc/db_ssl_root_cert.pem \
                 determinedai/determined-master:${Version}
             --//
           - AgentAmi: !FindInMap [RegionMap, !Ref "AWS::Region", Agent]

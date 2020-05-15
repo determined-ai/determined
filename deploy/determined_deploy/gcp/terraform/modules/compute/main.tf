@@ -30,6 +30,8 @@ resource "google_compute_instance" "master_instance" {
       host: "${var.database_hostname}"
       port: 5432
       name: "${var.database_name}"
+      ssl_mode: ${var.database_ssl_enabled ? "verify-ca" : "disable"}
+      ssl_root_cert: ${var.database_ssl_enabled ? "/etc/determined/etc/db_ssl_root_cert.pem" : ""}
 
     checkpoint_storage:
       type: gcs
@@ -77,6 +79,10 @@ resource "google_compute_instance" "master_instance" {
     apt-get update
     apt-get install -y docker-ce docker-ce-cli containerd.io
 
+    cat << EOF > /usr/local/determined/etc/db_ssl_root_cert.pem
+    ${var.database_ssl_root_cert}
+    EOF
+
     docker network create ${var.master_docker_network}
 
     docker run \
@@ -85,6 +91,7 @@ resource "google_compute_instance" "master_instance" {
         --restart unless-stopped \
         -p ${var.port}:${var.port} \
         -v /usr/local/determined/etc/master.yaml:/etc/determined/master.yaml \
+        -v /usr/local/determined/etc/db_ssl_root_cert.pem:/etc/determined/etc/db_ssl_root_cert.pem \
         determinedai/determined-master:${var.det_version}
 
   EOT

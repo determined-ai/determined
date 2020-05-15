@@ -80,6 +80,10 @@ func registerConfig() {
 		defaults.DB.Port, "database port")
 	registerString(flags, name("db", "name"),
 		defaults.DB.Name, "database name")
+	registerString(flags, name("db", "ssl-mode"),
+		defaults.DB.SSLMode, "database ssl mode (disable, verify-ca, ...)")
+	registerString(flags, name("db", "ssl-root-cert"),
+		defaults.DB.SSLRootCert, "database ssl root cert path")
 
 	registerString(flags, name("scheduler", "fit"),
 		defaults.Scheduler.Fit, "scheduler fit method")
