@@ -223,7 +223,12 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 	// Get the user from the database.
 	user, err := s.db.UserByUsername(params.Username)
 	if err != nil {
-		return nil, badCredentialsError
+		switch err.(type) {
+		case db.ErrNoSuchUsername:
+			return nil, badCredentialsError
+		default:
+			return nil, err
+		}
 	}
 
 	// The user must be active.
