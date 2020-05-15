@@ -1,7 +1,7 @@
 .. _tf-cifar-tutorial:
 
-TensorFlow Keras CNN Tutorial
-=============================
+Trial API: TensorFlow Keras CNN Tutorial
+========================================
 
 
 In this tutorial, we show you how to use the Determined API to train an

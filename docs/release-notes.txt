@@ -29,7 +29,7 @@ Version 0.12.4
 
 - Add a topic guide explaining Determined's approach to :ref:`elastic-infra-index`.
 
-- Add a topic guide explaining the :ref:`native-api`.
+- Add a topic guide explaining the :ref:`model-definitions_native-api`.
 
 - UI: The Determined favicon acquires a small dot when any slots are in use.
 

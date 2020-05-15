@@ -26,8 +26,12 @@ Topic guides discuss different concepts and topics about Determined and deep lea
 - :ref:`dynamic-agents-aws`
 - :ref:`dynamic-agents-gcp`
 
-**Best Practices**
-  - :ref:`best-practices-model-definitions`
+**Model Definitions**
+
+- :ref:`model-definitions`
+- :ref:`model-definitions_native-api`
+- :ref:`model-definitions_trial-api`
+- :ref:`model-definitions_best-practices`
 
 
 The full list of our topic guides can be found below:
@@ -36,15 +40,16 @@ The full list of our topic guides can be found below:
   :maxdepth: 1
 
   benefits-of-determined
-  best-practices-model-definitions
   effective-distributed-training
   experiment-lifecycle
   checkpoints
   hp-tuning-defined
   hp-tuning-det/index
   jupyter-notebooks
-  model-definitions
-  native-api
+  model-definitions/index
+  model-definitions/native-api
+  model-definitions/trial-api
+  model-definitions/best-practices
   optimizing-distributed-training
   reproducibility
   scheduling

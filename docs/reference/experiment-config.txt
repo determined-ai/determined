@@ -246,7 +246,7 @@ created with the Determined CLI. It may contain the following fields:
       evaluate the quality of different hyperparameter
       configurations. The metric name should be a key in the
       dictionary returned by the ``validation_metrics()`` function in
-      a :ref:`standard-model-definition`.
+      a :ref:`model-definitions_trial-api`.
     - ``smaller_is_better``: Specifies whether to minimize or
       maximize the metric defined above. The default value is true
       (minimize).

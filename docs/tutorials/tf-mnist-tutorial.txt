@@ -1,7 +1,7 @@
 .. _tf-mnist-tutorial:
 
-TensorFlow Keras Fashion MNIST Tutorial
-=======================================
+Trial API: TensorFlow Keras Fashion MNIST Tutorial
+==================================================
 
 This tutorial describes how to port an existing ``tf.keras`` model to Determined. We will port a simple image classification model for the Fashion MNIST dataset. This tutorial is based on the official `TensorFlow Basic Image Classification Tutorial <https://www.tensorflow.org/tutorials/keras/classification>`__.
 
