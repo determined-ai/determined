@@ -1,11 +1,7 @@
 .. _tutorials_native-api:
 
-Native API Tutorial (Experimental)
-==================================
-
-.. warning::
-
-    This API is currently experimental and subject to change.
+Native API Tutorial
+===================
 
 The Native API allows developers to seamlessly move between training in a local
 development environment and training at cluster-scale on a Determined cluster.

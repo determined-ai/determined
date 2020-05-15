@@ -1,4 +1,4 @@
-.. _best-practices-model-definitions:
+.. _model-definitions_best-practices:
 
 Best Practices for Model Definitions
 ====================================
