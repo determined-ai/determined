@@ -3,12 +3,12 @@
 // https://on.cypress.io/custom-commands
 // ***********************************************
 
-const DEFAULT_TEST_USERNAME = 'userwithpw';
-const DEFAULT_TEST_PASSWORD = 'specialpw';
+const DEFAULT_TEST_USERNAME = 'user-w-pw';
+const DEFAULT_TEST_PASSWORD = 'special-pw';
 
 const sha512 = require('js-sha512').sha512;
 
-const saltAndHashPassword = (password) => {
+const saltAndHashPassword = password => {
   if (!password) return '';
   const passwordSalt = 'GubPEmmotfiK9TMD6Zdw';
   return sha512(passwordSalt + password);
