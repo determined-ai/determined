@@ -39,15 +39,13 @@ Start by cloning the Determined repo:
 git clone git@github.com:determined-ai/determined.git
 ```
 
-To install OS-level dependencies, run the appropriate one of the scripts below
-from within your clone of the repository.
+#### Prerequisites
 
-```sh
-scripts/setup-env-ubuntu.sh
-scripts/setup-env-centos.sh
-scripts/setup-env-arch.sh
-scripts/setup-env-macos.sh
-```
+- Go (>= 1.13)
+- Python (>= 3.6)
+- Node (>= 12)
+- Yarn (>= 1.22.0)
+- Docker (>= 19.03)
 
 ### Building Determined
 
