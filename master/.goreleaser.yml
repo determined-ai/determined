@@ -1,4 +1,4 @@
-project_name: determined-master
+project_name: determined-ee-master
 
 before:
   hooks:
@@ -50,9 +50,7 @@ nfpms:
           "packaging/LICENSE": "/usr/share/licenses/determined-master/LICENSE"
 
 release:
-  github:
-    owner: determined-ai
-    name: determined
+  disable: true
 
 dockers:
   - goos: linux
@@ -61,8 +59,6 @@ dockers:
       - "determinedai/{{.ProjectName}}:{{.Env.VERSION}}"
       - "determinedai/{{.ProjectName}}:{{.ShortCommit}}"
       - "determinedai/{{.ProjectName}}:{{.FullCommit}}"
-      - "determinedai/determined-dev:{{.ProjectName}}-{{.ShortCommit}}"
-      - "determinedai/determined-dev:{{.ProjectName}}-{{.FullCommit}}"
     extra_files:
       - "packaging/master.yaml"
       - "packaging/LICENSE"

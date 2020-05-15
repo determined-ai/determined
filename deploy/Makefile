@@ -11,7 +11,7 @@ upload-try-now-template:
 
 .PHONY: publish
 publish: build
-	twine upload --verbose --non-interactive dist/*
+	twine upload --verbose --non-interactive dist/* --repository-url https://push.fury.io/determined-ai
 
 .PHONY: clean
 clean:

@@ -1,4 +1,4 @@
-project_name: determined-agent
+project_name: determined-ee-agent
 
 snapshot:
   name_template: "{{ .Env.VERSION }}"
@@ -38,9 +38,7 @@ nfpms:
           "packaging/LICENSE": "/usr/share/licenses/determined-agent/LICENSE"
 
 release:
-  github:
-    owner: determined-ai
-    name: determined
+  disable: true
 
 dockers:
   - goos: linux
@@ -49,8 +47,6 @@ dockers:
       - "determinedai/{{.ProjectName}}:{{.Env.VERSION}}"
       - "determinedai/{{.ProjectName}}:{{.ShortCommit}}"
       - "determinedai/{{.ProjectName}}:{{.FullCommit}}"
-      - "determinedai/determined-dev:{{.ProjectName}}-{{.ShortCommit}}"
-      - "determinedai/determined-dev:{{.ProjectName}}-{{.FullCommit}}"
     extra_files:
       - packaging/entrypoint.sh
       - packaging/LICENSE

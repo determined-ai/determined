@@ -14,7 +14,7 @@ build:
 
 .PHONY: publish
 publish:
-	twine upload --verbose --non-interactive dist/*
+	twine upload --verbose --non-interactive dist/* --repository-url https://push.fury.io/determined-ai
 
 .PHONY: fmt
 fmt:
