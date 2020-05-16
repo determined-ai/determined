@@ -8,7 +8,7 @@ hyperparameters:
   layer1_dense_size: 16
   global_batch_size: 30
 resources:
-  # 2-machine distributed run assumes 8 GPUs per agent instance
+  # Use 16 GPUs to train the model.
   slots_per_trial: 16
 searcher:
   name: single

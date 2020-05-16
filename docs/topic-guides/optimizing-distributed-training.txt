@@ -1,24 +1,24 @@
 .. _optimizing-multi-gpu-training:
 
-Optimizing Distributed and Parallel Training
-============================================
+Optimizing Distributed Training
+===============================
 
-The :ref:`multi-gpu-training` how-to guide describes how to configure distributed and parallel training.
-In this topic guide, we will describe how to optimize distributed and parallel training,
+The :ref:`multi-gpu-training` how-to guide describes how to configure distributed training.
+In this topic guide, we will describe how to optimize distributed training,
 focusing on the following topics:
 
 - setting batch size,
-- single-machine parallel training,
-- multi-machine distributed training, and
+- single-machine training,
+- multi-machine training, and
 - configuring advanced optimizations.
 
-Determined uses synchronous data parallelism for distributed and parallel training.
+Determined uses synchronous data parallelism for distributed training.
 
 
 Setting Global Batch Size
 -------------------------
 
-When doing distributed and parallel training, the ``global_batch_size``
+When doing distributed training, the ``global_batch_size``
 specified in the :ref:`experiment-configuration` is partitioned across
 ``slots_per_trial`` GPUs. The per-GPU batch size is set to:
 ``global_batch_size`` / ``slots_per_trial``. If ``slots_per_trial`` does not divide the ``global_batch_size`` evenly,
@@ -36,12 +36,16 @@ testing accuracy. You may need to adjust model hyperparameters like the learning
 use a different optimizer when training with larger batch sizes.
 
 
-Single-Machine Parallelism
---------------------------
+Single-Machine Training
+-----------------------
 
-When using multi-GPU training in Determined, we recommend first trying
-single-machine parallel training, then multiple machine distributed training.
-For single-machine parallel training, in the experiment configuration, add:
+When getting started using multiple GPUs to train a model, we recommend starting by
+using multiple GPUs on a single machine first, before proceeding to multi-machine
+training. Communication between GPUs on a single machine is typically significantly
+faster than communication between GPUs on different machines.
+
+To use single-machine multi-GPU training, set the following field in the experiment
+configuration file:
 
 .. code:: yaml
 
@@ -52,11 +56,11 @@ where N is the total number of GPUs on an agent machine. In this
 configuration, trials will train using all the resources on a single machine.
 
 
-Distributed Multi-Machine Parallelism
--------------------------------------
+Multi-Machine Training
+----------------------
 
 Multi-machine parallelism offers the ability to further parallelize training across more GPUs.
-For distributed multi-machine training, in the experiment configuration, add:
+For multi-machine training, in the experiment configuration, add:
 
 .. code:: yaml
 
@@ -75,38 +79,41 @@ use all the resources of multiple machines to train a model.
     in :ref:`cluster-configuration` under ``task_container_defaults.dtrain_network_interface``.
 
 
-Configuring Advanced Optimizations
-----------------------------------
+Advanced Optimizations
+----------------------
 
-Determined offers several optimizations to further reduce
-training time. These optimizations are available in :ref:`experiment-configuration`
-under ``optimizations``.
+Determined supports several optimizations to further reduce training time. These
+optimizations are available in :ref:`experiment-configuration` under ``optimizations``.
 
-The ``optimizations.aggregation_frequency`` option
-evaluates more batches before exchanging gradients and is helpful
-in situations where it is not possible to increase the batch size
-directly. This optimization increases your effective batch size to
-``aggregation_frequency`` * ``global_batch_size``.
+* ``optimizations.aggregation_frequency`` controls how many batches are evaluated before
+  exchanging gradients. It is helpful in situations where it is not possible to
+  increase the batch size directly (e.g., due to GPU memory limitations). This
+  optimization increases your effective batch size to ``aggregation_frequency`` *
+  ``global_batch_size``.
 
-The ``optimizations.gradient_compression``  option reduces
-the time it takes to transfer gradients between GPUs.
-The ``optimization.auto_tune_tensor_fusion`` option automatically identifies
-the optimal message size during gradient transfers, reducing
-communication overhead.
-The ``average_training_metrics`` option will average the training metrics
-across GPUs at the end of every step, which requires communication. Typically
-this will not have an impact on training performance, but if you have a very
-small ``batches_per_step``, ensuring it is disabled may improve performance.
+* ``optimizations.gradient_compression`` reduces the time it takes to transfer
+  gradients between GPUs.
 
-If you do not see improved performance, there might be a
-performance bottleneck in the model that cannot be directly alleviated
-by using multiple GPUs, e.g., data loading. We suggest experimenting
-with a synthetic dataset to verify performance of multi-GPU training.
+* ``optimizations.auto_tune_tensor_fusion`` automatically identifies the
+  optimal message size during gradient transfers, reducing communication overhead.
+
+* ``optimizations.average_training_metrics`` averages the training metrics across
+  GPUs at the end of every step, which requires communication. This will typically
+  not have a major impact on training performance, but if you have a very small
+  ``batches_per_step``, ensuring it is disabled may improve performance. If this
+  option is disabled (which is the default behavior), only the training metrics from
+  the chief GPU are used. This impacts shown in the Determined UI and TensorBoard,
+  but does not influence model behavior or hyperparameter search.
+
+If you do not see improved performance using distributed training, there might be a
+performance bottleneck in the model that cannot be directly alleviated by using
+multiple GPUs, e.g., data loading. We suggest experimenting with a synthetic dataset
+to verify the performance of multi-GPU training.
 
 
 .. warning::
 
-  Distributed and parallel training is designed to maximize performance by training with
+  Distributed training is designed to maximize performance by training with
   all the resources of a machine. This can lead to situations where an experiment
   is created but never becomes active: if the number of GPUs requested does not
   divide into the machines available, for instance, or if another experiment

@@ -1,3 +1,5 @@
+.. _run-notebooks:
+
 Run Notebooks in Determined
 ===========================
 

@@ -28,6 +28,13 @@ context directory
    created. It must contain all code that is part of the model
    definition.
 
+distributed training
+   Using multiple GPUs to speed up the training of a single trial. In
+   Determined, these GPUs might all be on the same machine, or might be
+   spread across multiple machines --- note that we call both scenarios
+   "distributed training", which might differ from the terminology used
+   in other systems.
+
 .. _concept-experiment:
 
 experiment

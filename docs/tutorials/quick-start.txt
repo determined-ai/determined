@@ -144,17 +144,15 @@ Left of the graph displays time information, the hyperparameter configuration, t
 
 Again, ``model_def.py`` does not contain any code to manage the checkpoint and will automatically checkpoint after calculating metrics on the validation dataset. Once the training has completed, you can see the total time it took, and the average batch speed. On a typical laptop, it should take about 5 minutes to train the model to reach 98% accuracy and 0.05 validation loss.
 
-Running a Parallel Training Job
--------------------------------
-*For this section, we recommend using a Determined cluster with multiple GPUs.*
+Running a Distributed Training Job
+----------------------------------
+*This section requires a Determined cluster with multiple GPUs.*
 
-Determined can coordinate across multiple GPUs on a single machine (parallel training) or across multiple GPUs on multiple machines (distributed training) to improve the rate of training a single trial. Parallel training performs best with complex models; therefore, this example may not demonstrate the full benefits of using parallel training.
+Determined can coordinate multiple GPUs to train a single trial more quickly (*distributed training*). Distributed training performs best with complex models; therefore, the simple model used in this example may not demonstrate the full benefits of using distributed training.
 
-To implement :ref:`distributed and parallel training <multi-gpu-training>`, it can be as easy as setting a flag!
+With Determined, moving from single-GPU training to distributed training is as simple as changing a single setting in the experiment config file! Specifically, ``resources.slots_per_trial`` controls the number of GPUs used to train a single trial. It is ``1`` by default; setting it to a larger value enables distributed training. You should set ``resources.slots_per_trial`` to a multiple of the number of GPUs in each machine in the cluster. For example, if your cluster has 8-GPU machines, you should use a value such as 8, 16, 24, etc. If using a Determined cluster deployed in the cloud, by default each agent will have eight GPUs.
 
-In the experiment configuration file, we set the ``resources.slot_per_trial`` flag to a multiple of the number of GPUs on a machine to ensure the full network and interconnect bandwidth is available to the multi-GPU workloads. E.g., if you have a cluster of 8-GPU machines, you need to set slots_per_trial to 8, 16, 24, etc. If using a Determined cluster deployed in the cloud, by default the instances will be eight GPUs machines.
-
-Below is the ``distributed.yaml`` file, which should look very similar to the ``const.yaml`` file except we now set ``resources.slots_per_trial``.
+Below is the ``distributed.yaml`` file, which is very similar to the ``const.yaml`` file except we now set ``resources.slots_per_trial``.
 
 .. code:: yaml
 

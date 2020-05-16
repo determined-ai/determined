@@ -14,11 +14,10 @@ class PyTorchCallback:
         over checkpoints.
 
     .. warning::
-        If distributed or parallel training is enabled, every GPU will
-        execute a copy of this callback (except for on_validation_step_end and on_checkpoint_end).
-        To configure a callback implementation to execute on a subset of GPUs,
-        please condition your implementation on
-        ``trial.context.distributed.get_rank()``.
+        If distributed training is enabled, every GPU will execute a copy of
+        this callback (except for on_validation_step_end and on_checkpoint_end).  To configure a
+        callback implementation to execute on a subset of GPUs, please condition
+        your implementation on ``trial.context.distributed.get_rank()``.
     """
 
     def on_train_step_start(self, step_id: int) -> None:
@@ -32,11 +31,11 @@ class PyTorchCallback:
         Run after every training step ends.
 
         ..warning::
-            If distributed or parallel training is enabled, every GPU will
-            execute a copy of this callback on train step end. If
+            If distributed training is enabled, every GPU will execute a copy of
+            this callback at the end of every training step. If
             ``optimizations.average_training_metrics`` is enabled, then the
-            ``metrics`` will be averaged across all GPUs before the callback
-            is executed.  If ``optimizations.average_training_metrics`` is
+            ``metrics`` will be averaged across all GPUs before the callback is
+            executed.  If ``optimizations.average_training_metrics`` is
             disabled, then the ``metrics`` will be local to the GPU.
         """
         pass
@@ -52,8 +51,7 @@ class PyTorchCallback:
         Run after every validation step ends.
 
         .. warning::
-            This callback currently only executes on the chief GPU in the
-            distributed and parallel training settings.
+            This callback only executes on the chief GPU when doing distributed training.
         """
         pass
 
@@ -62,8 +60,7 @@ class PyTorchCallback:
         Run after every checkpoint.
 
         .. warning::
-            This callback executes only on the chief GPU which performs the
-            the checkpoint in the distributed and parallel training settings.
+            This callback only executes on the chief GPU when doing distributed training.
         """
         pass
 

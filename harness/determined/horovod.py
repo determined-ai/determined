@@ -187,8 +187,9 @@ class HorovodContext:
         Create the HorovodContext according to experiment config and rendezvous info for this trial.
         """
 
-        # Horovod is always used for distributed training. For parallel training, horovod is used
-        # when native_parallel is disabled.
+        # Horovod is always used for multi-machine distributed training. For
+        # single-machine multi-GPU training, Horovod is used when native_parallel is
+        # disabled.
         multi_machine_trial = rendezvous_info.get_size() > 1
         multi_slot_trial = experiment_config["resources"]["slots_per_trial"] > 1
         use_horovod = multi_machine_trial or (

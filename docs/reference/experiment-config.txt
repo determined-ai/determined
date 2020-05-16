@@ -560,8 +560,8 @@ created with the Determined CLI. It may contain the following fields:
     to ``1``.
 
   - ``average_aggregated_gradients``: Specifies whether gradients accumulated
-    across batches (when aggregation_frequency > 1) should be divided by
-    the aggregation_frequency. Defaults to ``true``.
+    across batches (when ``aggregation_frequency`` > 1) should be divided by
+    the ``aggregation_frequency``. Defaults to ``true``.
 
   - ``average_training_metrics``: For multi-GPU training, whether to
     average the training metrics across GPUs instead of only using metrics from the
