@@ -27,7 +27,7 @@ const NavBar: React.FC<Props> = (props: Props) => {
 
   return (
     <nav className={css.base}>
-      <Logo type={LogoTypes.Light} />
+      <Logo type={LogoTypes.OnDarkHorizontal} />
       <div className={css.group}>
         <NavItem
           icon="cluster"

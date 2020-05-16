@@ -59,7 +59,7 @@ const Authentication: React.FC = () => {
   return (
     <div className={css.base}>
       <div className={css.content} style={{ display: isLoading ? 'none' : 'inherit' }}>
-        <Logo className={css.logo} type={LogoTypes.Dark} />
+        <Logo className={css.logo} type={LogoTypes.OnLightVertical} />
         <DeterminedAuth setIsLoading={setIsLoading} />
       </div>
     </div>
