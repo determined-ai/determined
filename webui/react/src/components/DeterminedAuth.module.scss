@@ -16,11 +16,11 @@
     padding: 0 1rem;
     text-align: center;
   }
-  form .errorMessage {
+  .errorMessage {
     color: var(--theme-colors-states-failed);
   }
   .message {
-    font-size: var(--theme-sizes-font-medium);
+    font-size: var(--theme-sizes-font-small);
     text-align: center;
   }
 }

@@ -20,8 +20,8 @@ interface Props {
 
 const DeterminedAuth: React.FC<Props> = ({ setIsLoading }: Props) => {
   const setAuth = Auth.useActionContext();
-  const [ badCredentials, setBadCredentials ] = useState(false);
-  const [ canSubmit, setCanSubmit ] = useState(false);
+  const [badCredentials, setBadCredentials] = useState(false);
+  const [canSubmit, setCanSubmit] = useState(false);
 
   const onFinish = async (creds: FromValues): Promise<void> => {
     setIsLoading(true);
@@ -56,7 +56,6 @@ const DeterminedAuth: React.FC<Props> = ({ setIsLoading }: Props) => {
   const loginForm = (
     <Form
       name="login"
-      size="large"
       onFinish={onFinish}
       onValuesChange={onValuesChange}>
       <Form.Item
@@ -67,21 +66,19 @@ const DeterminedAuth: React.FC<Props> = ({ setIsLoading }: Props) => {
             required: true,
           },
         ]}>
-        <Input autoFocus placeholder="Username" prefix={<Icon name="user-small" />} />
+        <Input autoFocus placeholder="username" prefix={<Icon name="user-small" size="small" />} />
       </Form.Item>
 
       <Form.Item name="password">
-        <Input.Password placeholder="Password" prefix={<Icon name="lock" />} />
+        <Input.Password placeholder="password" prefix={<Icon name="lock" size="small" />} />
       </Form.Item>
 
-      {badCredentials && <p className={[ css.errorMessage, css.message ].join(' ')}>
-            Incorrect username or password.
+      {badCredentials && <p className={[css.errorMessage, css.message].join(' ')}>
+        Incorrect username or password.
       </p>}
 
       <Form.Item>
-        <Button disabled={!canSubmit} htmlType="submit" type="primary">
-          Sign In
-        </Button>
+        <Button disabled={!canSubmit} htmlType="submit" type="primary">Sign In</Button>
       </Form.Item>
     </Form>
   );
@@ -90,10 +87,9 @@ const DeterminedAuth: React.FC<Props> = ({ setIsLoading }: Props) => {
     <div className={css.base}>
       {loginForm}
       <p className={css.message}>
-          Forgot your password, or need to manage users? Check out our
-        <a href="/docs/topic-guides/users.html"
-          rel="noreferrer noopener" target="_blank">
-            &nbsp;docs
+        Forgot your password, or need to manage users? Check out our&nbsp;
+        <a href="/docs/topic-guides/users.html" rel="noreferrer noopener" target="_blank">
+          docs
         </a>
       </p>
     </div>
