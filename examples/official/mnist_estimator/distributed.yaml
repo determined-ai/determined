@@ -7,7 +7,7 @@ hyperparameters:
   hidden_layer_3: 500
   dropout: 0.5
 resources:
-  # 2-machine distributed run assumes 8 GPUs per agent instance
+  # Use 16 GPUs to train the model.
   slots_per_trial: 16
 searcher:
   name: single

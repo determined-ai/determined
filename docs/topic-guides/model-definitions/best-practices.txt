@@ -96,7 +96,7 @@ Do:
 * For code that needs to download artifacts (e.g. data, configurations,
   pretrained weights), download to a `tempfile.TemporaryDirectory
   <https://docs.python.org/3/library/tempfile.html>`__ unique to the Python
-  process. This will avoid race conditions when :ref:`parallel training
+  process. This will avoid race conditions when using :ref:`distributed training
   <multi-gpu-training>`, in which Determined executes multiple Python processes
   in the same task container.
 

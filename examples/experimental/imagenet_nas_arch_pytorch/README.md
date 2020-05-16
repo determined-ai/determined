@@ -18,7 +18,7 @@ The data for ImageNet is the ILSVRC2012 version of the dataset, which is availab
    *Prerequisites*:  
       A Determined Google Cloud Compute cluster must be installed in order to run this example.  Please follow the directions [here](https://docs.determined.ai/latest/how-to/install-main.html) in order to install. 
 
-   To run the example, please adjust the `distributed.yaml` configuration file to your liking.  In particular, you should at a minimum change the `bucket_name` field to reference your data bucket; you may also want to adjust the `slots_per_trial` parameter to increase the number of GPUs used for parallel training.  
+   To run the example, please adjust the `distributed.yaml` configuration file to your liking.  In particular, you should at a minimum change the `bucket_name` field to reference your data bucket; you may also want to adjust the `slots_per_trial` parameter to increase the number of GPUs used for distributed training.  
 
    After configuring `distributed.yaml` you can submit an experiment to your Determined cluster by running the following command:
      `det -m <master host:port> experiment create distributed.yaml . `

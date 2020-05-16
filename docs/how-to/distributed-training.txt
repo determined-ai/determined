@@ -1,22 +1,21 @@
 .. _multi-gpu-training:
 
-Distributed and Parallel Training
+Distributed Training
 =================================
 
 Determined provides three main methods to take advantage of multiple GPUs:
 
-1. **Parallelism across experiments.** Schedule multiple experiments at once:
-   more than one experiment can
-   proceed in parallel if there are enough GPUs available.
-2. **Parallelism within an experiment.** Schedule multiple trials of an experiment at once: a
-   :ref:`hyperparameter search <topic-guides_hp-tuning-det>` may train more than
-   one trial at once, each of which will use its own GPUs.
-3. **Parallelism within a trial.** Use multiple GPUs to speed up the
-   training of a single trial. Determined can coordinate across multiple GPUs on a single machine (parallel training)
-   or across multiple GPUs on multiple machines (distributed training) to improve the
-   performance of training a single trial.
+1. **Parallelism across experiments.** Schedule multiple experiments at once: more
+   than one experiment can proceed in parallel if there are enough GPUs available.
+2. **Parallelism within an experiment.** Schedule multiple trials of an experiment
+   at once: a :ref:`hyperparameter search <topic-guides_hp-tuning-det>` may train
+   more than one trial at once, each of which will use its own GPUs.
+3. **Parallelism within a trial.** Use multiple GPUs to speed up the training of a
+   single trial (*distributed training*). Determined can coordinate across multiple
+   GPUs on a single machine or across multiple GPUs on multiple machines to improve
+   the performance of training a single trial.
 
-This guide will focus on the third approach, demonstrating how to perform distributed or parallel
+This guide will focus on the third approach, demonstrating how to perform distributed
 training with Determined to speed up the training of a single trial.
 
 Configuration
@@ -24,7 +23,7 @@ Configuration
 
 In the :ref:`experiment-configuration`, the ``resources.slots_per_trial`` field
 controls the number of GPUs that will be used to train a single trial. The
-default value is 1, which disables parallel and distributed training. Setting
+default value is 1, which disables distributed training. Setting
 ``slots_per_trial`` to a larger value enables multi-GPU training
 automatically. Note that these GPUs might be on a single machine or across
 multiple machines; the experiment configuration simply defines how many GPUs
@@ -41,7 +40,7 @@ machines in the cluster and the other active workloads.
       <determined.TrialContext.get_global_batch_size>`, respectively.  If ``global_batch_size`` is
       not evenly divisible by ``slots_per_trial``, the remainder is dropped.
 
-Example configuration with distributed or parallel training:
+Example configuration with distributed training:
 
 .. code:: yaml
 
@@ -51,7 +50,7 @@ Example configuration with distributed or parallel training:
 Scheduling Behavior
 -------------------
 
-To use distributed or parallel training, ``slots_per_trial`` must be set to a multiple
+To use distributed training, ``slots_per_trial`` must be set to a multiple
 of the number of GPUs per machine. For example, if you have a cluster of machines with
 8 GPUs each, you should set ``slots_per_trial`` to a multiple of 8, such as 8, 16, or 24.
 This ensures that the full network and interconnect bandwidth are available to
@@ -59,13 +58,12 @@ multi-GPU workloads and results in better performance.
 
 .. warning::
 
-  Distributed and parallel training are designed to maximize performance by
-  training with all the resources of a machine. This can lead to situations
-  where an experiment is created but never starts running on the cluster, for
-  example if the number of GPUs requested is not a multiple of the number of GPUs
-  per machine. Similarly, if a task is running on a multi-GPU machine and using
-  one or more of its GPUs, that will prevent a distributed training job from
-  starting on that machine.
+  Distributed training is designed to maximize performance by training with all the
+  resources of a machine. This can lead to situations where an experiment is created
+  but never starts running on the cluster, for example if the number of GPUs
+  requested is not a multiple of the number of GPUs per machine. Similarly, if a
+  task is running on a multi-GPU machine and using one or more of its GPUs, that
+  will prevent a distributed training job from starting on that machine.
 
   If a multi-GPU experiment does not become active after a minute or so,
   please confirm that ``slots_per_trial`` is a multiple of the number of GPUs

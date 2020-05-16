@@ -3,10 +3,10 @@
 Effective Distributed  Training
 ===============================
 
-In this topic guide, we focus on effective techniques for distributed training. It is recommended
-that prior to reading this topic guide, users first read the :ref:`multi-gpu-training` how-to guide which
-describes how to configure distributed and parallel training, and the :ref:`optimizing-multi-gpu-training`
-topic guide which describes the optimizations available in Determined for distributed and parallel
+In this topic guide, we focus on effective techniques for distributed
+training. Before reading this guide, we recommend that users first read the :ref:`multi-gpu-training` how-to guide, which
+describes how to configure distributed training, and the :ref:`optimizing-multi-gpu-training`
+topic guide, which describes the optimizations available in Determined for distributed
 training.
 
 In this topic guide, we will cover:
@@ -14,7 +14,7 @@ In this topic guide, we will cover:
 * How distributed training in Determined works.
 * Reducing computation and communication overheads.
 * How to train effectively with large batch sizes.
-* Model characteristics that affect performance of distributed training.
+* Model characteristics that affect the performance of distributed training.
 * Debugging performance bottlenecks in distributed training.
 
 
@@ -23,7 +23,7 @@ How Distributed Training in Determined Works
 
 Distributed training in Determined utilizes data-parallelism. Data-parallelism for deep-learning
 consists of a set of workers, where each worker is assigned to a unique compute accelerator such as a GPU or a TPU.
-Each workers maintains a copy of the model parameters (weights that are being trained),
+Each worker maintains a copy of the model parameters (weights that are being trained),
 which is synchronized across all the workers at the start of training.
 
 After initialization is completed, distributed training in Determined follows a loop where:
@@ -56,7 +56,7 @@ the total communication overhead.
 Determined optimizes the communication in step 3 by using an efficient form of ring all-reduce, which minimizes
 the amount of communication necessary for all the workers to communicate their updates. Determined also reduces the
 communication overhead by overlapping computation (step 1 & step 2) and communication (step 3) by
-communicating updates for deeper layer concurrently with computing updates for the shallower layers.
+communicating updates for deeper layers concurrently with computing updates for the shallower layers.
 The :ref:`optimizing-multi-gpu-training` topic guide covers additional optimizations available in Determined for
 reducing the communication overhead.
 
@@ -64,13 +64,13 @@ reducing the communication overhead.
 How to Train Effectively with Large Batch Sizes
 -----------------------------------------------
 
-In order to perform efficient distributed training it's recommended to use the largest possible ``global_batch_size``,
+To improve the performance of distributed training, we recommend using the largest possible ``global_batch_size``,
 setting it to be ``largest batch size that fits into a single GPU`` *  ``number of slots``.
-Training with a large ``global_batch_size`` can have adverse effects on the convergence (accuracy) of the model.
+However, training with a large ``global_batch_size`` can have adverse effects on the convergence (accuracy) of the model.
 At Determined AI we have found several effective techniques for training with large batch sizes:
 
-* Starting with the ``original learning rate`` used for a single GPU and gradually increasing it to ``number of slots`` * ``original learning rate`` throughout the first several epochs. For more details see: `Large batch training with SGD <https://arxiv.org/pdf/1706.02677.pdf>`_.
-* Using custom optimizers designed for large batch training including: `RAdam <https://github.com/LiyuanLucasLiu/RAdam>`_, `LARS <https://arxiv.org/pdf/1708.03888.pdf>`_, and `LAMB <https://arxiv.org/pdf/1904.00962.pdf>`_. We have found RAdam especially effective.
+* Starting with the ``original learning rate`` used for a single GPU and gradually increasing it to ``number of slots`` * ``original learning rate`` throughout the first several epochs. For more details, see `Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour <https://arxiv.org/pdf/1706.02677.pdf>`_.
+* Using custom optimizers designed for large batch training, such as `RAdam <https://github.com/LiyuanLucasLiu/RAdam>`_, `LARS <https://arxiv.org/pdf/1708.03888.pdf>`_, or `LAMB <https://arxiv.org/pdf/1904.00962.pdf>`_. We have found RAdam especially effective.
 
 These techniques often require hyperparameter modifications. To automate this process,
 we encourage users to utilize the :ref:`hyperparameter-tuning` capabilities in Determined.
@@ -89,12 +89,12 @@ If planning to utilize distributed training, we encourage users to be mindful of
 when designing models.
 
 
-Debugging Performance Bottlenecks in Distributed Training
----------------------------------------------------------
+Debugging Performance Bottlenecks
+---------------------------------
 
 When scaling up distributed training, it's fairly common to see non-linear speed up when scaling from one machine
 to two machines as intra-machine communication (e.g., NVLink) is often significantly faster than inter-machine
-communication. Scaling up from two machines to larger counts often provides close to linear speed-up, but it does
+communication. Scaling up beyond two machines often provides close to linear speed-up, but it does
 vary depending on the model characteristics.
 If observing unexpected scaling performance, assuming you have scaled your ``global_batch_size`` proportionally
 with ``slots_per_trial``, it's possible that training performance is
@@ -102,15 +102,18 @@ being bottlenecked by network communication
 or disk I/O.
 
 
-To check if your training is bottlenecked by communication we suggest setting
+To check if your training is bottlenecked by communication, we suggest setting
 ``optimizations.aggregation_frequency`` in the :ref:`experiment-configuration` to a very large number (e.g., 1000).
-This setting would configure your training to communicate updates once every 1000 batches.
+This setting results in communicating updates once every 1000 batches.
 Comparing throughput with ``aggregation_frequency`` of 1 vs. ``aggregation_frequency`` of 1000 will demonstrate
-the communication overhead. If you do observe significant communication overhead, please refer
-to :ref:`optimizing-multi-gpu-training` topic guide for how to optimize the communication.
-To check if your training is I/O bottlenecked, we encourage users to experiment with using synthetic datasets.
-If you observe significant I/O bottlenecked, we encourage users to optimize their data input
-pipelines (e.g., using local SSDs).
+the communication overhead. If you do observe significant communication overhead, refer
+to :ref:`optimizing-multi-gpu-training` for guidance on how to optimize
+communication.
+
+To check if your training is I/O bottlenecked, we encourage users to
+experiment with using synthetic datasets.  If you observe that I/O is a
+significant bottleneck, we suggest optimizing the data input pipeline to
+the model (e.g., copy training data to local SSDs).
 
 
 Next Steps
