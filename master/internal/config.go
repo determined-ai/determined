@@ -46,6 +46,7 @@ func DefaultConfig() *Config {
 			},
 			HTTP: true,
 		},
+		Port:              8080,
 		HTTPPort:          8080,
 		HTTPSPort:         8443,
 		CheckpointStorage: c,
@@ -72,8 +73,9 @@ type Config struct {
 	Security              SecurityConfig                    `json:"security"`
 	CheckpointStorage     CheckpointStorageConfig           `json:"checkpoint_storage"`
 	TaskContainerDefaults model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
-	HTTPPort              int                               `json:"http_port"`
-	HTTPSPort             int                               `json:"https_port"`
+	Port                  int                               `json:"port"`
+	HTTPPort              int                               `json:"http_port"`  // deprecated
+	HTTPSPort             int                               `json:"https_port"` // deprecated
 	HarnessPath           string                            `json:"harness_path"`
 	Root                  string                            `json:"root"`
 	Telemetry             TelemetryConfig                   `json:"telemetry"`

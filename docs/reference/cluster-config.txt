@@ -59,7 +59,7 @@ Master Port
 ~~~~~~~~~~~
 
 By default, the master listens on TCP port 8080. This can be configured
-via the ``http_port`` option.
+via the ``port`` option.
 
 .. _security:
 
@@ -69,9 +69,7 @@ Security
 The master is capable of serving over HTTPS in addition to HTTP. Doing
 so requires a TLS private key and certificate; to configure them, set
 the options ``security.tls.cert`` and ``security.tls.key`` to paths to a
-PEM-encoded TLS certificate and private key, respectively. The
-``https_port`` option determines the HTTPS listening port (default
-8443).
+PEM-encoded TLS certificate and private key, respectively.
 
 .. _agent-network-proxy:
 

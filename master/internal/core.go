@@ -3,6 +3,7 @@ package internal
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/pprof"
 	"path/filepath"
@@ -17,6 +18,7 @@ import (
 	"github.com/labstack/echo/middleware"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/soheilhy/cmux"
 
 	"github.com/determined-ai/determined/master/internal/agent"
 	"github.com/determined-ai/determined/master/internal/api"
@@ -123,15 +125,15 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 	return entries, nil
 }
 
-func (m *Master) startServers() error {
-	// Create the desired server configurations. The values of the servers map are descriptions to be
-	// used in making error messages more informative.
-	servers := make(map[*http.Server]string)
-
-	if m.config.Security.HTTP {
-		servers[&http.Server{
-			Addr: fmt.Sprintf(":%d", m.config.HTTPPort),
-		}] = "http server"
+func (m *Master) startServer() error {
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", m.config.Port))
+	if err != nil {
+		return err
+	}
+	mux := cmux.New(lis)
+	errs := make(chan error)
+	runServer := func(server *http.Server, listener net.Listener) {
+		errs <- errors.Wrapf(server.Serve(listener), "error serving %s", listener.Addr())
 	}
 
 	certFile := m.config.Security.TLS.Cert
@@ -146,46 +148,23 @@ func (m *Master) startServers() error {
 		if err != nil {
 			return err
 		}
-
-		servers[&http.Server{
-			Addr: fmt.Sprintf(":%d", m.config.HTTPSPort),
+		go runServer(&http.Server{
+			Handler: m.echo,
 			TLSConfig: &tls.Config{
 				Certificates:             []tls.Certificate{cert},
 				MinVersion:               tls.VersionTLS12,
 				PreferServerCipherSuites: true,
 			},
-		}] = "https server"
+		}, mux.Match(cmux.TLS()))
 	}
 
-	if len(servers) == 0 {
-		return errors.New("master was not configured to listen on any port")
+	if m.config.Security.HTTP {
+		go runServer(&http.Server{Handler: m.echo}, mux.Match(cmux.Any()))
 	}
-
-	// Start all servers.
-	errs := make(chan error)
-	defer close(errs)
-
-	runServer := func(server *http.Server) {
-		errs <- errors.Wrap(m.echo.StartServer(server), servers[server]+" failed")
-	}
-	for server := range servers {
-		go runServer(server)
-	}
-
-	// Wait for all servers to terminate; return only the first error received, if any (since we close
-	// all servers on error, other servers are likely to return unhelpful "server closed" errors).
-	var firstErr error
-	for range servers {
-		if err := <-errs; err != nil && firstErr == nil {
-			firstErr = err
-			for server, desc := range servers {
-				if cErr := server.Close(); cErr != nil {
-					log.Errorf("failed to close %s: %s", desc, cErr)
-				}
-			}
-		}
-	}
-	return firstErr
+	go func() {
+		errs <- mux.Serve()
+	}()
+	return <-errs
 }
 
 func (m *Master) restoreExperiment(e *model.Experiment) {
@@ -521,5 +500,5 @@ func (m *Master) Run() error {
 		log.Info("telemetry reporting is disabled")
 	}
 
-	return m.startServers()
+	return m.startServer()
 }

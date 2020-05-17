@@ -106,6 +106,8 @@ func registerConfig() {
 	registerString(flags, name("security", "tls", "key"),
 		defaults.Security.TLS.Key, "TLS key file")
 
+	registerInt(flags, name("port"),
+		defaults.Port, "HTTP server port")
 	registerInt(flags, name("http-port"),
 		defaults.HTTPPort, "HTTP server port")
 	registerInt(flags, name("https-port"),
