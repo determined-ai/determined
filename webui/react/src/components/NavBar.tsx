@@ -30,7 +30,6 @@ const NavBar: React.FC<Props> = (props: Props) => {
       <Logo type={LogoTypes.Light} />
       <div className={css.group}>
         <NavItem
-          crossover={true}
           icon="cluster"
           path="/ui/cluster"
           type={NavItemType.Main}>

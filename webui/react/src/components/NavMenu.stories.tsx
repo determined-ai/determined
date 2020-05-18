@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { appRoutes, defaultAppRouteId, defaultDetRouteId, detRoutes } from 'routes';
+import { appRoutes, defaultAppRoute, defaultDetRouteId, detRoutes } from 'routes';
 import RouterDecorator from 'storybook/RouterDecorator';
 import { StoryMetadata } from 'storybook/types';
 
@@ -13,7 +13,7 @@ export default {
 } as StoryMetadata;
 
 export const NavBarMenu = (): React.ReactNode => (
-  <NavMenu defaultRouteId={defaultAppRouteId} routes={appRoutes} />
+  <NavMenu defaultRouteId={defaultAppRoute.id} routes={appRoutes} />
 );
 
 NavBarMenu.story = {

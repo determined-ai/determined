@@ -46,7 +46,6 @@ const NavMenu: React.FC<Props> = (props: Props) => {
       {props.routes.map(route => (
         <NavItem
           active={selectedId === route.id}
-          crossover={route.component == null}
           icon={route.icon}
           key={route.id}
           path={route.path}

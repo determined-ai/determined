@@ -1,31 +1,25 @@
 import React, { PropsWithChildren, useCallback } from 'react';
-import { useHistory } from 'react-router-dom';
+
+import { routeAll, setupUrlForDev } from 'routes';
 
 import css from './Link.module.scss';
 
 interface Props {
-  crossover?: boolean;
   disabled?: boolean;
   path: string;
   popout?: boolean;
   onClick?: (event: React.MouseEvent) => void;
 }
 
-const defaultProps = {
-  crossover: false,
-};
-
 const Link: React.FC<Props> = ({
-  crossover, disabled, path, popout, onClick, children,
+  disabled, path, popout, onClick, children,
 }: PropsWithChildren<Props>) => {
-  const history = useHistory();
   const classes = [ css.base ];
 
   if (!disabled) classes.push(css.link);
 
   const handleClick = useCallback((event: React.MouseEvent): void => {
-    const pathPrefix = process.env.IS_DEV ? 'http://localhost:8080' : '';
-    const url = crossover ? `${pathPrefix}${path}` : path;
+    const url = setupUrlForDev(path);
 
     event.persist();
     event.preventDefault();
@@ -34,16 +28,12 @@ const Link: React.FC<Props> = ({
       onClick(event);
     } else if (event.metaKey || event.ctrlKey || popout) {
       window.open(url, '_blank');
-    } else if (crossover) {
-      window.location.assign(url);
     } else {
-      history.push(url);
+      routeAll(url);
     }
-  }, [ history, crossover, onClick, path, popout ]);
+  }, [ onClick, path, popout ]);
 
   return <a className={classes.join(' ')} href={path} onClick={handleClick}>{children}</a>;
 };
-
-Link.defaultProps = defaultProps;
 
 export default Link;
