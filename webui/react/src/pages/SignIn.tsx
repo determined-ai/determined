@@ -1,17 +1,13 @@
 import { notification } from 'antd';
-<<<<<<< HEAD
-import ShowSpinner from 'contexts/ShowSpinner';
-=======
 import axios from 'axios';
->>>>>>> 647f52f... WIP
 import queryString from 'query-string';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoTypes } from 'components/Logo';
-import Spinner from 'components/Spinner';
 import Auth from 'contexts/Auth';
+import ShowSpinner from 'contexts/ShowSpinner';
 import { routeAll } from 'routes';
 import { getCurrentUser } from 'services/api';
 
@@ -26,11 +22,8 @@ const DEFAULT_REDIRECT = '/det/dashboard';
 
 const SignIn: React.FC = () => {
   const auth = Auth.useStateContext();
-<<<<<<< HEAD
-=======
   const setAuth = Auth.useActionContext();
   const setShowSpinner = ShowSpinner.useActionContext();
->>>>>>> 647f52f... WIP
   const [ isLoading, setIsLoading ] = useState(false);
   const [ hasCheckedAuth, setHasCheckedAuth ] = useState(false);
   const queries: Queries = queryString.parse(location.search);
@@ -87,14 +80,12 @@ const SignIn: React.FC = () => {
   }, [ auth.isAuthenticated, queries, setShowSpinner ]);
 
   return (
-    isLoading ?
-      <Spinner fullPage /> :
-      <div className={css.base}>
-        <div className={css.content}>
-          <Logo type={LogoTypes.OnLightVertical} />
-          <DeterminedAuth onLoadingChange={onLoadingChange} />
-        </div>
+    <div className={css.base}>
+      <div className={css.content}>
+        <Logo type={LogoTypes.OnLightVertical} />
+        <DeterminedAuth onLoadingChange={onLoadingChange} />
       </div>
+    </div>
   );
 };
 

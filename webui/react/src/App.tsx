@@ -4,6 +4,7 @@ import { Redirect, Route, Switch } from 'react-router-dom';
 import NavBar from 'components/NavBar';
 import Router from 'components/Router';
 import SideBar from 'components/SideBar';
+import Spinner from 'components/Spinner';
 import Compose from 'Compose';
 import ActiveExperiments from 'contexts/ActiveExperiments';
 import Agents from 'contexts/Agents';
@@ -12,6 +13,7 @@ import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Info from 'contexts/Info';
+import ShowSpinner from 'contexts/ShowSpinner';
 import Users from 'contexts/Users';
 import useRestApi from 'hooks/useRestApi';
 import useRouteTracker from 'hooks/useRouteTracker';
@@ -29,6 +31,7 @@ const AppView: React.FC = () => {
   const cluster = ClusterOverview.useStateContext();
   const info = Info.useStateContext();
   const setInfo = Info.useActionContext();
+  const showSpinner = ShowSpinner.useStateContext();
   const username = user ? user.username : undefined;
   const [ infoResponse, requestInfo ] =
     useRestApi<DeterminedInfo>(ioDeterminedInfo, { mappers: jsonToDeterminedInfo });
@@ -65,6 +68,7 @@ const AppView: React.FC = () => {
           <Router routes={appRoutes} />
         </Switch>
       </div>
+      {showSpinner && <Spinner fullPage />}
     </div>
   );
 };
@@ -82,6 +86,7 @@ const App: React.FC = () => {
       Notebooks.Provider,
       Shells.Provider,
       Tensorboards.Provider,
+      ShowSpinner.Provider,
     ]}>
       <AppView />
     </Compose>
