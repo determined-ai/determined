@@ -472,6 +472,7 @@ class TestPyTorchTrial:
             "train_steps_ended": 1,
             "validation_steps_started": 0,
             "validation_steps_ended": 0,
+            "checkpoints_ended": 0,
         }
 
         controller._compute_validation_metrics()
@@ -480,9 +481,18 @@ class TestPyTorchTrial:
             "train_steps_ended": 1,
             "validation_steps_started": 1,
             "validation_steps_ended": 1,
+            "checkpoints_ended": 0,
         }
 
         controller._save(checkpoint_dir)
+        assert controller.trial.counter.__dict__ == {
+            "train_steps_started": 1,
+            "train_steps_ended": 1,
+            "validation_steps_started": 1,
+            "validation_steps_ended": 1,
+            "checkpoints_ended": 1,
+        }
+
         del controller
 
         controller = utils.make_trial_controller_from_trial_implementation(
@@ -497,6 +507,7 @@ class TestPyTorchTrial:
             "train_steps_ended": 1,
             "validation_steps_started": 1,
             "validation_steps_ended": 1,
+            "checkpoints_ended": 0,
         }
 
     def test_context(self) -> None:
