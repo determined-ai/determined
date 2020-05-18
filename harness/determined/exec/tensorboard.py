@@ -10,7 +10,9 @@ import requests
 
 
 def set_s3_region(bucket: str) -> None:
-    client = boto3.client("s3")
+    endpoint_url = os.environ.get("DET_S3_ENDPOINT", None)
+
+    client = boto3.client("s3", endpoint_url=endpoint_url)
     bucketLocation = client.get_bucket_location(Bucket=bucket)
 
     region = bucketLocation["LocationConstraint"]
