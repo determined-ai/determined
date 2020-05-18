@@ -6,7 +6,7 @@ from urllib import parse
 import pytest
 import requests
 
-from tests.integrations import config as conf
+from tests import config as conf
 
 
 def make_scim_url(path: str) -> str:
