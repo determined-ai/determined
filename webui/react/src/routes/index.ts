@@ -1,7 +1,7 @@
 import { RouteProps } from 'react-router';
 
-import Authentication from 'pages/Authentication';
 import Dashboard from 'pages/Dashboard';
+import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
 import history from 'routes/history';
 import { ensureAbsolutePath, isFullPath, parseUrl } from 'utils/routes';
@@ -35,7 +35,7 @@ const dashboardRoute =
 export const appRoutes: RouteConfigItem[] = [
   dashboardRoute,
   {
-    component: Authentication,
+    component: SignIn,
     id: 'login',
     needAuth: false,
     path: '/det/login',

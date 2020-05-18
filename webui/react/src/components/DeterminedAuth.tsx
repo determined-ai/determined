@@ -1,10 +1,10 @@
 import { Button, Form, Input } from 'antd';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import Icon from 'components/Icon';
-import Auth, { updateAuth } from 'contexts/Auth';
+import Auth from 'contexts/Auth';
 import handleError, { ErrorType } from 'ErrorHandler';
-import { isLoginFailure, login } from 'services/api';
+import { getCurrentUser, isLoginFailure, login } from 'services/api';
 import { Credentials } from 'types';
 
 import css from './DeterminedAuth.module.scss';
@@ -15,24 +15,25 @@ interface FromValues {
 }
 
 interface Props {
-  setIsLoading: (isLoading: boolean) => void;
+  onLoadingChange: (isLoading: boolean) => void;
 }
 
-const DeterminedAuth: React.FC<Props> = ({ setIsLoading }: Props) => {
+const DeterminedAuth: React.FC<Props> = ({ onLoadingChange }: Props) => {
   const setAuth = Auth.useActionContext();
-  const [badCredentials, setBadCredentials] = useState(false);
+  const [isBadCredentials, setIsBadCredentials] = useState(false);
   const [canSubmit, setCanSubmit] = useState(false);
 
-  const onFinish = async (creds: FromValues): Promise<void> => {
-    setIsLoading(true);
+  const onFinish = useCallback(async (creds: FromValues): Promise<void> => {
+    onLoadingChange(true);
     setCanSubmit(false);
     try {
       await login(creds as Credentials);
-      updateAuth(setAuth);
+      const user = await getCurrentUser({});
+      setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, user } });
     } catch (e) {
-      setIsLoading(false);
-      setBadCredentials(isLoginFailure(e));
-      const actionMsg = badCredentials ? 'check your username and password.' : 'retry.';
+      const actionMsg = isBadCredentials ? 'check your username and password.' : 'retry.';
+      onLoadingChange(false);
+      setIsBadCredentials(isLoginFailure(e));
       handleError({
         error: e,
         isUserTriggered: true,
@@ -40,18 +41,18 @@ const DeterminedAuth: React.FC<Props> = ({ setIsLoading }: Props) => {
         publicMessage: `Failed to login. Please ${actionMsg}`,
         publicSubject: 'Login failed',
         silent: true,
-        type: badCredentials ? ErrorType.Input : ErrorType.Server,
+        type: isBadCredentials ? ErrorType.Input : ErrorType.Server,
       });
     } finally {
       setCanSubmit(true);
     }
-  };
+  }, [isBadCredentials, onLoadingChange, setAuth]);
 
-  const onValuesChange = (changes: FromValues, values: FromValues): void => {
+  const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {
     const hasUsername = !!values.username;
-    setBadCredentials(false);
+    setIsBadCredentials(false);
     setCanSubmit(hasUsername);
-  };
+  }, []);
 
   const loginForm = (
     <Form
@@ -73,7 +74,7 @@ const DeterminedAuth: React.FC<Props> = ({ setIsLoading }: Props) => {
         <Input.Password placeholder="password" prefix={<Icon name="lock" size="small" />} />
       </Form.Item>
 
-      {badCredentials && <p className={[css.errorMessage, css.message].join(' ')}>
+      {isBadCredentials && <p className={[css.errorMessage, css.message].join(' ')}>
         Incorrect username or password.
       </p>}
 

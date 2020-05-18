@@ -18,9 +18,6 @@ const AuthToken: React.FC = () => {
     <Result
       className={css.base}
       extra={[
-        <Button href="/det/dashboard" key="dashboard" type="primary">
-          Go to dashboard
-        </Button>,
         <Button icon={<CopyOutlined />}
           key="copy" type="primary"
           onClick={handleCopyToClipboard}>
