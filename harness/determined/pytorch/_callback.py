@@ -1,3 +1,4 @@
+import pathlib
 from typing import Any, Dict
 
 import torch
@@ -16,7 +17,7 @@ class PyTorchCallback:
 
     .. warning::
         If distributed or parallel training is enabled, every GPU will
-        execute a copy of this callback (except for on_validation_step_end).
+        execute a copy of this callback (except for on_validation_step_end and on_checkpoint_end).
         To configure a callback implementation to execute on a subset of GPUs,
         please condition your implementation on
         ``trial.context.distributed.get_rank()``.
@@ -54,7 +55,17 @@ class PyTorchCallback:
 
         .. warning::
             This callback currently only executes on the chief GPU in the
-            distributed and/or parallel training setting.
+            distributed and parallel training settings.
+        """
+        pass
+
+    def on_checkpoint_end(self, checkpoint_dir: pathlib.Path) -> None:
+        """
+        Run after every checkpoint.
+
+        .. warning::
+            This callback executes only on the chief GPU which performs the
+            the checkpoint in the distributed and parallel training settings.
         """
         pass
 
