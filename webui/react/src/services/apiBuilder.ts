@@ -38,7 +38,7 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
       return api.postProcess ? api.postProcess(response) : response.data as Output;
     } catch (e) {
       const isAuthError = isAuthFailure(e);
-      const error = handleError({
+      handleError({
         error: e,
         level: isAuthError ? ErrorLevel.Fatal : ErrorLevel.Error,
         message: isAuthError ?
@@ -46,7 +46,7 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
         silent: true,
         type: isAuthError ? ErrorType.Auth : ErrorType.Server,
       });
-      throw error;
+      throw e;
     }
   };
 }
