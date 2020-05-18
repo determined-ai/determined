@@ -22,7 +22,7 @@ that conforms to the Native API:
 
 .. code::
 
-    context = det.experimental.keras.init(config, mode=experimental.Mode.CLUSTER, context_dir=".")
+    context = det.experimental.keras.init(config, context_dir=".")
     model = ...
     model = context.wrap_model(model)
     model.compile(...)
@@ -30,12 +30,19 @@ that conforms to the Native API:
 
 The ``init()`` APIs require a *context directory* (``context_dir``) argument.
 The context directory specifies the root directory of the code containing the
-trial implementation -- for a majority of users this is the current working
-directory (``.``). ``init()`` also requires a
-:py:class:`determined.expeirmental.Mode` argument set to
-``determined.experimental.Mode.CLUSTER`` to submit an experiment.
-Alternatively, we can use ``determined.experimental.Mode.LOCAL`` to test an
-experiment on our local environment without submitting it to the cluster.
+native implementation -- for a majority of users this is the current working
+directory (``.``). ``init()`` also accepts two boolean keyword arguments:
+
+``local`` (``bool``):
+      ``local=False`` will sumbit the experiment to a Determined cluster.
+      ``local=True`` will execute the the training loop in your local Python
+      environment (although currently, local training is not implemented, so
+      you must also set ``test=True``). Defaults to False.
+
+``test`` (``bool``):
+      ``test=True`` will execute a minimal trianing loop rather than a full
+      experiment. This can be useful for porting or debugging a model because
+      many common errors will surface quickly. Defaults to False.
 
 Determined requires that the Native Python script contains a high-level
 training loop that it can intercept.  Currently, the following training loop
@@ -57,8 +64,7 @@ Life of a Native API Experiment
 .. TODO: Add a link to show what an experiment in local development mode looks like
 
 The diagram above demonstrates the flow of execution when an experiment is
-created in :py:class:`determined.experimental.Mode.CLUSTER
-<determined.experimental.Mode>` mode.
+created cluster mode.
 
 The Python script will first be executed by us in the *User environment*, such
 as a Python virtualenv or a Jupyter notebook where the ``determined`` Python

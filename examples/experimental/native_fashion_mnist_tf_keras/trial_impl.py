@@ -20,9 +20,8 @@ if __name__ == "__main__":
         help="Specifies Determined Experiment configuration.",
         default="{}",
     )
-    parser.add_argument(
-        "--mode", dest="mode", help="Specifies local mode or cluster mode.", default="cluster"
-    )
+    parser.add_argument("--local", action="store_true", help="Specifies local mode")
+    parser.add_argument("--test", action="store_true", help="Specifies test mode")
     args = parser.parse_args()
 
     config = {
@@ -37,6 +36,7 @@ if __name__ == "__main__":
     experimental.create(
         trial_def=model_def.FashionMNISTTrial,
         config=config,
-        mode=experimental.Mode(args.mode),
+        local=args.local,
+        test=args.test,
         context_dir=str(pathlib.Path.cwd()),
     )

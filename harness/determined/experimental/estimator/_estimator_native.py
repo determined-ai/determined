@@ -5,7 +5,8 @@ from determined import estimator, experimental
 
 def init(
     config: Optional[Dict[str, Any]] = None,
-    mode: experimental.Mode = experimental.Mode.CLUSTER,
+    local: bool = False,
+    test: bool = False,
     context_dir: str = "",
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
@@ -18,48 +19,60 @@ def init(
         config:
             A dictionary representing the experiment configuration to be
             associated with the experiment.
-        mode:
-            The :py:class:`determined.experimental.Mode` used when creating an
-            experiment
 
-            1. ``Mode.CLUSTER`` (default): Submit the experiment to a remote
-            Determined cluster.
+        local:
+            A boolean indicating if training will happen locally. When
+            ``False``, the experiment will be submitted to the Determined
+            cluster. Defaults to ``False``.
 
-            2. ``Mode.LOCAL``: Test the experiment in the calling
-            Python process for development / debugging purposes. Run through a
-            minimal loop of training, validation, and checkpointing steps.
+        test:
+            A boolean indicating if the experiment should be shortened to a
+            minimal loop of training, validation, and checkpointing.
+            ``test=True`` is useful quick iterating during model porting or
+            debugging because common errors will surface more quickly.
+            Defaults to ``False``.
 
         context_dir:
             A string filepath that defines the context directory. All model
             code will be executed with this as the current working directory.
 
-            In CLUSTER mode, this argument is required. All files in this
+            When ``local=False``, this argument is required. All files in this
             directory will be uploaded to the Determined cluster. The total
             size of this directory must be under 96 MB.
 
-            In LOCAL mode, this argument is optional and assumed to be the
-            current working directory by default.
+            When ``local=True``, this argument is optional and assumed to be
+            the current working directory by default.
+
         command:
             A list of strings that is used as the entrypoint of the training
             script in the Determined task environment. When executing this
             function via a python script, this argument is inferred to be
             ``sys.argv`` by default. When executing this function via IPython
             or Jupyter notebook, this argument is required.
+
         master_url:
-            An optional string to use as the Determined master URL in submit
-            mode. Will default to the value of environment variable
-            ``DET_MASTER`` if not provided.
+            An optional string to use as the Determined master URL when
+            ``local=False``. If not specified, will be inferred from the
+            environment variable ``DET_MASTER``.
 
     Returns:
         :py:class:`determined.estimator.EstimatorNativeContext`
     """
+
+    if local and not test:
+        raise NotImplementedError(
+            "estimator.init(local=True, test=False) is not yet implemented. Please set local=False "
+            "or test=True."
+        )
+
     return cast(
         estimator.EstimatorNativeContext,
         experimental.init_native(
             controller_cls=estimator.EstimatorTrialController,
             native_context_cls=estimator.EstimatorNativeContext,
             config=config,
-            mode=mode,
+            local=local,
+            test=test,
             context_dir=context_dir,
             command=command,
             master_url=master_url,

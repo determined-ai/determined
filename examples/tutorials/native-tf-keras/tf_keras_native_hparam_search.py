@@ -12,7 +12,6 @@ this.
 """
 import tensorflow as tf
 import determined as det
-from determined import experimental
 from determined.experimental.keras import init
 
 config = {
@@ -44,7 +43,7 @@ x_train, x_test = x_train / 255.0, x_test / 255.0
 
 # When running from this code from a notebook, add a `command` argument to
 # init() specifying the notebook file name.
-context = init(config, mode=experimental.Mode.CLUSTER, context_dir=".")
+context = init(config, context_dir=".")
 model = tf.keras.models.Sequential(
     [
         tf.keras.layers.Flatten(input_shape=(28, 28)),

@@ -199,7 +199,7 @@ class TestXORTrial:
 
 
 def test_local_mode() -> None:
-    utils.run_local_mode(utils.fixtures_path("estimator_xor_model_native.py"))
+    utils.run_local_test_mode(utils.fixtures_path("estimator_xor_model_native.py"))
 
 
 def test_create_trial_instance() -> None:

@@ -41,7 +41,7 @@ config = {
 
 # When running from this code from a notebook, add a `command` argument to
 # init() specifying the notebook file name.
-context = init(config, mode=experimental.Mode.CLUSTER, context_dir=".")
+context = init(config, context_dir=".")
 model = tf.keras.models.Sequential(
     [
         tf.keras.layers.Flatten(input_shape=(28, 28)),
@@ -104,24 +104,29 @@ config = {
 #
 # .. code:: python
 #
-#     context = init(config, mode=experimental.Mode.CLUSTER, context_dir=".")
+#     context = init(config, local=False, test=False, context_dir=".")
 #
 # :ref:`keras-init` is the function that initializes the Determined training
 # context. We can think of it as the moment in the training script where
 # Determined will "assume control" of the execution of your code. It has two
-# required arguments in addition to the configuration:
+# three in addition to the configuration:
 #
-# ``mode`` (:py:class:`determined.experimenal.Mode`):
-#       :py:class:`determined.experimenal.Mode.CLUSTER` will submit the
-#       experiment to a Determined cluster.
-#       :py:class:`determined.experimenal.Mode.LOCAL` will execute a minimal
-#       training loop in your local Python environment.
+# ``local`` (``bool``):
+#       ``local=False`` will sumbit the experiment to a Determined cluster.
+#       ``local=True`` will execute the the training loop in your local Python
+#       environment (although currently, local training is not implemented, so
+#       you must also set ``test=True``). Defaults to False.
+#
+# ``test`` (``bool``):
+#       ``test=True`` will execute a minimal trianing loop rather than a full
+#       experiment. This can be useful for porting or debugging a model because
+#       many common errors will surface quickly. Defaults to False.
 #
 # ``context_dir`` (``str``):
 #       Specifies the location of the code you want submitted to the cluster.
 #       This is required by Determined to execute your training script in a
-#       remote environment. In the common case, "." submits your entire working
-#       directory to the Determined cluster.
+#       remote environment (``local=false``). In the common case, "." submits
+#       your entire working directory to the Determined cluster.
 #
 # Wrap Model (``tf.keras`` only)
 # ------------------------------

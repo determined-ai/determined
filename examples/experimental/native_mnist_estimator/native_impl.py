@@ -137,9 +137,8 @@ if __name__ == "__main__":
         help="Specifies Determined Experiment configuration.",
         default="{}",
     )
-    parser.add_argument(
-        "--mode", dest="mode", help="Specifies local mode or cluster mode.", default="cluster"
-    )
+    parser.add_argument("--local", action="store_true", help="Specifies local mode")
+    parser.add_argument("--test", action="store_true", help="Specifies test mode")
     args = parser.parse_args()
 
     config = {
@@ -161,7 +160,7 @@ if __name__ == "__main__":
     config.update(json.loads(args.config))
 
     context = estimator.init(
-        config, mode=experimental.Mode(args.mode), context_dir=str(pathlib.Path.cwd())
+        config, local=args.local, test=args.test, context_dir=str(pathlib.Path.cwd())
     )
 
     # Create a unique download directory for each rank so they don't overwrite each other.

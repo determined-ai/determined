@@ -4,7 +4,6 @@ from typing import Callable, Dict, Tuple
 
 import tensorflow as tf
 
-from determined import experimental
 from determined.estimator import EstimatorNativeContext, ServingInputReceiverFn
 from determined.experimental import estimator
 from tests.experiment import utils
@@ -70,7 +69,8 @@ def build_serving_input_receiver_fns() -> Dict[str, ServingInputReceiverFn]:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", dest="mode", default="cluster")
+    parser.add_argument("--local", action="store_true")
+    parser.add_argument("--test", action="store_true")
     args = parser.parse_args()
 
     config = {
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     }
 
     context = estimator.init(
-        config=config, mode=experimental.Mode(args.mode), context_dir=str(pathlib.Path.cwd())
+        config=config, local=args.local, test=args.test, context_dir=str(pathlib.Path.cwd())
     )
 
     batch_size = context.get_per_slot_batch_size()

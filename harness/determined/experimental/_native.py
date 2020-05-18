@@ -1,5 +1,4 @@
 import contextlib
-import enum
 import logging
 import math
 import os
@@ -13,17 +12,6 @@ import determined as det
 import determined_common.api.authentication as auth
 from determined import constants, errors, gpu, horovod, load, workload
 from determined_common import api, check, context, util
-
-
-class Mode(enum.Enum):
-    """
-    The mode used to create an experiment.
-
-    See :py:func:`determined.create()`.
-    """
-
-    CLUSTER = "cluster"
-    LOCAL = "local"
 
 
 def _in_ipython() -> bool:
@@ -67,25 +55,13 @@ def _set_command_default(
     return command
 
 
-def _create_experiment(
+def _submit_experiment(
     config: Optional[Dict[str, Any]],
     context_dir: str,
     command: Optional[List[str]],
-    test_mode: bool = False,
+    test: bool = False,
     master_url: Optional[str] = None,
 ) -> Optional[int]:
-    """Submit an experiment to the Determined master.
-
-    Alternatively, use det.create() with a mode argument of "submit".
-
-    Args:
-        name (Optional[str]): The URL of the Determined master node. If None
-        (default), then the master address will be inferred from the
-        environment.
-
-    Returns:
-        The ID of the created experiment.
-    """
     if context_dir == "":
         raise errors.InvalidExperimentException("Cannot specify the context directory to be empty.")
 
@@ -106,7 +82,7 @@ def _create_experiment(
     # default to constants.DEFAULT_DETERMINED_USER.
     auth.initialize_session(master_url, requested_user=None, try_reauth=True)
 
-    if test_mode:
+    if test:
         exp_id = api.create_test_experiment(master_url, config, exp_context)
     else:
         exp_id = api.create_experiment(master_url, config, exp_context)
@@ -172,7 +148,7 @@ def _make_test_workloads(
     logging.info("The test experiment passed.")
 
 
-def _make_local_experiment_config(input_config: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+def _make_local_test_experiment_config(input_config: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     """
     Create a local experiment configuration based on an input configuration and
     defaults. Use a shallow merging policy to overwrite our default
@@ -194,19 +170,19 @@ def _make_local_experiment_config(input_config: Optional[Dict[str, Any]]) -> Dic
     for key in config_keys_to_ignore:
         if key in input_config:
             logging.info(
-                f"'{key}' configuration key is not supported by LOCAL mode and will be ignored"
+                f"'{key}' configuration key is not supported by local test mode and will be ignored"
             )
             del input_config[key]
 
     return {**constants.DEFAULT_EXP_CFG, **input_config}
 
 
-def make_test_experiment_env(
+def _make_local_test_experiment_env(
     checkpoint_dir: pathlib.Path,
     config: Optional[Dict[str, Any]],
     hparams: Optional[Dict[str, Any]] = None,
 ) -> Tuple[det.EnvContext, workload.Stream, det.RendezvousInfo, horovod.HorovodContext]:
-    config = det.ExperimentConfig(_make_local_experiment_config(config))
+    config = det.ExperimentConfig(_make_local_test_experiment_config(config))
     hparams = hparams or _generate_test_hparam_values(config)
     use_gpu, container_gpus, slot_ids = _get_gpus()
     local_rendezvous_ports = (
@@ -254,6 +230,7 @@ def _init_cluster_mode(
     controller_cls: Optional[Type[det.TrialController]] = None,
     native_context_cls: Optional[Type[det.NativeContext]] = None,
     config: Optional[Dict[str, Any]] = None,
+    test: bool = False,
     context_dir: str = "",
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
@@ -274,7 +251,7 @@ def _init_cluster_mode(
             return context
 
         else:
-            _create_experiment(
+            _submit_experiment(
                 config=config, context_dir=context_dir, command=command, master_url=master_url
             )
             logging.info("Exiting the program after submitting the experiment.")
@@ -289,8 +266,12 @@ def _init_cluster_mode(
             _stop_loading_implementation()
 
         else:
-            _create_experiment(
-                config=config, context_dir=context_dir, command=command, master_url=master_url
+            _submit_experiment(
+                config=config,
+                test=test,
+                context_dir=context_dir,
+                command=command,
+                master_url=master_url,
             )
 
     else:
@@ -362,7 +343,7 @@ def test_one_batch(
 
     logging.info("Running a minimal test experiment locally")
     checkpoint_dir = tempfile.TemporaryDirectory()
-    env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
+    env, workloads, rendezvous_info, hvd_config = _make_local_test_experiment_env(
         checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
     )
     logging.info(f"Using hyperparameters: {env.hparams}.")
@@ -387,7 +368,7 @@ def test_one_batch(
 
         context._set_train_fn(train_fn)
         logging.info(
-            "Note: to submit an experiment to the cluster, change mode argument to Mode.CLUSTER"
+            "Note: to submit an experiment to the cluster, change local parameter to False"
         )
         return context
 
@@ -404,7 +385,7 @@ def test_one_batch(
         controller.run()
         checkpoint_dir.cleanup()
         logging.info(
-            "Note: to submit an experiment to the cluster, change mode argument to Mode.CLUSTER"
+            "Note: to submit an experiment to the cluster, change local parameter to False"
         )
 
     else:
@@ -419,25 +400,18 @@ def init_native(
     controller_cls: Optional[Type[det.TrialController]] = None,
     native_context_cls: Optional[Type[det.NativeContext]] = None,
     config: Optional[Dict[str, Any]] = None,
-    mode: Mode = Mode.CLUSTER,
+    local: bool = False,
+    test: bool = False,
     context_dir: str = "",
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
 ) -> Any:
     det._set_logger(util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled())
 
-    if Mode(mode) == Mode.CLUSTER:
-        return _init_cluster_mode(
-            trial_def=trial_def,
-            controller_cls=controller_cls,
-            native_context_cls=native_context_cls,
-            config=config,
-            context_dir=context_dir,
-            command=command,
-            master_url=master_url,
-        )
+    if local:
+        if not test:
+            logging.warn("local training is not supported, testing instead")
 
-    elif Mode(mode) == Mode.LOCAL:
         print(pathlib.Path(context_dir).resolve())
         with _local_execution_manager(pathlib.Path(context_dir).resolve()):
             return test_one_batch(
@@ -448,13 +422,23 @@ def init_native(
             )
 
     else:
-        raise errors.InvalidExperimentException("Must use either local mode or cluster mode.")
+        return _init_cluster_mode(
+            trial_def=trial_def,
+            controller_cls=controller_cls,
+            native_context_cls=native_context_cls,
+            config=config,
+            test=test,
+            context_dir=context_dir,
+            command=command,
+            master_url=master_url,
+        )
 
 
 def create(
     trial_def: Type[det.Trial],
     config: Optional[Dict[str, Any]] = None,
-    mode: Mode = Mode.CLUSTER,
+    local: bool = False,
+    test: bool = False,
     context_dir: str = "",
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
@@ -466,29 +450,34 @@ def create(
     Arguments:
         trial_def:
             A class definition implementing the ``det.Trial`` interface.
+
         config:
             A dictionary representing the experiment configuration to be
             associated with the experiment.
-        mode:
-            The :py:class:`determined.experimental.Mode` used when creating
-            an experiment
 
-            1. ``Mode.CLUSTER`` (default): Submit the experiment to a remote
-            Determined cluster.
+        local:
+            A boolean indicating if training will happen locally. When
+            ``False``, the experiment will be submitted to the Determined
+            cluster. Defaults to ``False``.
 
-            2. ``Mode.LOCAL``: Test the experiment in the calling
-            Python process for local development / debugging purposes.
-            Run through a minimal loop of training, validation, and checkpointing steps.
+        test:
+            A boolean indicating if the experiment should be shortened to a
+            minimal loop of training, validation, and checkpointing.
+            ``test=True`` is useful quick iterating during model porting or
+            debugging because common errors will surface more quickly.
+            Defaults to ``False``.
+
         context_dir:
             A string filepath that defines the context directory. All model
             code will be executed with this as the current working directory.
 
-            In CLUSTER mode, this argument is required. All files in this
+            When ``local=False``, this argument is required. All files in this
             directory will be uploaded to the Determined cluster. The total
             size of this directory must be under 96 MB.
 
-            In LOCAL mode, this argument is optional and assumed to be the
-            current working directory by default.
+            When ``local=True``, this argument is optional and assumed to be
+            the current working directory by default.
+
         command:
             A list of strings that is used as the entrypoint of the training
             script in the Determined task environment. When executing this
@@ -499,16 +488,24 @@ def create(
             Example: When creating an experiment by running "python train.py
             --flag value", the default command is inferred as ["train.py",
             "--flag", "value"].
+
         master_url:
-            An optional string to use as the Determined master URL in submit
-            mode. If not specified, will be inferred from the environment
-            variable ``DET_MASTER``.
+            An optional string to use as the Determined master URL when
+            ``local=False``. If not specified, will be inferred from the
+            environment variable ``DET_MASTER``.
     """
+
+    if local and not test:
+        raise NotImplementedError(
+            "det.create(local=True, test=False) is not yet implemented. Please set local=False "
+            "or test=True."
+        )
 
     return init_native(
         trial_def=trial_def,
         config=config,
-        mode=mode,
+        local=local,
+        test=test,
         context_dir=context_dir,
         command=command,
         master_url=master_url,
@@ -536,7 +533,7 @@ def create_trial_instance(
             is used.
     """
     det._set_logger(util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled())
-    env, workloads, rendezvous_info, hvd_config = make_test_experiment_env(
+    env, workloads, rendezvous_info, hvd_config = _make_local_test_experiment_env(
         checkpoint_dir=pathlib.Path(checkpoint_dir), config=config, hparams=hparams
     )
     trial_context = trial_def.trial_context_class(env, hvd_config)
