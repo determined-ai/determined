@@ -586,7 +586,7 @@ func (m *Master) Run() error {
 	}
 
 	var oauthService *oauth.Service
-	if m.config.Scim.Enabled {
+	if m.config.Scim.Auth.OAuthConfig != nil {
 		log.Infof("OAuth is enabled at %s%s", masterURL, oauth.Root)
 		oauthService, err = oauth.New(userService, m.db)
 		if err != nil {
@@ -597,9 +597,9 @@ func (m *Master) Run() error {
 		log.Info("OAuth is disabled")
 	}
 
-	if m.config.Scim.Enabled && m.config.Scim.Username != "" && m.config.Scim.Password != "" {
+	if m.config.Scim.Enabled {
 		log.Infof("SCIM is enabled at %v/scim/v2", masterURL)
-		scim.RegisterAPIHandler(m.echo, m.db, &m.config.Scim, masterURL)
+		scim.RegisterAPIHandler(m.echo, m.db, &m.config.Scim, masterURL, oauthService)
 	} else {
 		log.Info("SCIM is disabled")
 	}

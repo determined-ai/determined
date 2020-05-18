@@ -22,5 +22,7 @@ cluster_name: dev
 
 scim:
   enabled: true
-  username: determined
-  password: U4lCz36wDDfPfc0q
+  auth:
+    type: basic
+    username: determined
+    password: U4lCz36wDDfPfc0q

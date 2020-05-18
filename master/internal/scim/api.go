@@ -6,10 +6,10 @@ import (
 	"net/url"
 
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/oauth"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -80,16 +80,18 @@ func newConflictError(err error) error {
 }
 
 // RegisterAPIHandler registers API handlers for SCIM endpoints.
-func RegisterAPIHandler(e *echo.Echo, db *db.PgDB, c *Config, locationRoot *url.URL) {
-	s := &service{c, db, locationRoot}
+func RegisterAPIHandler(
+	e *echo.Echo, db *db.PgDB, c *Config, locationRoot *url.URL, oauthService *oauth.Service,
+) {
+	s := &service{c, db, locationRoot, oauthService}
 
-	users := e.Group(scimPathRoot+"/Users", middleware.BasicAuth(s.validateSCIMCredentials))
+	users := e.Group(scimPathRoot+"/Users", s.authMiddleware)
 	users.POST("", route(s.PostUser))
 	users.GET("", route(s.GetUsers))
 	users.GET("/:user_id", route(s.GetUser))
 	users.PUT("/:user_id", route(s.PutUser))
 	users.PATCH("/:user_id", route(s.PatchUser))
 
-	groups := e.Group(scimPathRoot+"/Groups", middleware.BasicAuth(s.validateSCIMCredentials))
+	groups := e.Group(scimPathRoot+"/Groups", s.authMiddleware)
 	groups.GET("", route(s.GetGroups))
 }

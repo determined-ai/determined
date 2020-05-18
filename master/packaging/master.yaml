@@ -122,8 +122,12 @@ db:
 ## Configure the credentials for using the SCIM server to provision users.
 # scim:
 #   enabled: false
-#   username: scim_username
-#   password: scim_password
+#   auth:
+#     # "oauth" can be used instead of "basic"; then there should be no
+#     # username or password fields.
+#     type: basic
+#     username: scim_username
+#     password: scim_password
 
 ## Configure the settings for using the SAML server to sign in.
 # saml:

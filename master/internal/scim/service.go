@@ -21,10 +21,12 @@ import (
 	"strings"
 
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/oauth"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -38,13 +40,33 @@ type service struct {
 	*Config
 	db           *db.PgDB
 	locationRoot *url.URL
+	oauthService *oauth.Service
 }
 
-func (s *service) validateSCIMCredentials(username, password string, c echo.Context) (bool, error) {
-	if username == s.Config.Username && password == s.Config.Password {
-		return true, nil
+func (s *service) validateBasicAuth(username, password string, c echo.Context) (bool, error) {
+	if username == "" || password == "" || s.Config.Auth.BasicAuthConfig == nil {
+		return false, nil
 	}
-	return false, nil
+	config := s.Config.Auth.BasicAuthConfig
+	return username == config.Username && password == config.Password, nil
+}
+
+func (s *service) authMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		switch {
+		case s.Config.Auth.BasicAuthConfig != nil:
+			return middleware.BasicAuth(s.validateBasicAuth)(next)(c)
+
+		case s.Config.Auth.OAuthConfig != nil:
+			if oauthValid, _ := s.oauthService.ValidateRequest(c); oauthValid {
+				return next(c)
+			}
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid OAuth credentials")
+		}
+		return echo.NewHTTPError(
+			http.StatusInternalServerError, "no authentication method configured for SCIM",
+		)
+	}
 }
 
 // GetUsers returns a list of SCIM users, which may be optionally filtered.
