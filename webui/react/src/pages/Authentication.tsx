@@ -8,7 +8,7 @@ import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoTypes } from 'components/Logo';
 import Spinner from 'components/Spinner';
 import Auth, { updateAuth } from 'contexts/Auth';
-import { crossoverRoute, isCrossoverRoute } from 'routes';
+import { routeAll } from 'routes';
 import history from 'routes/history';
 import { logout } from 'services/api';
 
@@ -45,15 +45,11 @@ const Authentication: React.FC = () => {
   }, [ setAuth ]);
 
   if (auth.isAuthenticated) {
-    const redirectUrl = queries.redirect || DEFAULT_REDIRECT;
+    const redirect = queries.redirect || DEFAULT_REDIRECT;
     if (queries.cli) {
       return <AuthToken />;
     }
-    if (isCrossoverRoute(redirectUrl)) {
-      crossoverRoute(redirectUrl);
-    } else {
-      history.push(redirectUrl);
-    }
+    routeAll(redirect);
     return <Spinner fullPage />;
   }
 

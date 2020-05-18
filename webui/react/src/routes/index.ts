@@ -3,6 +3,8 @@ import { RouteProps } from 'react-router';
 import Authentication from 'pages/Authentication';
 import Dashboard from 'pages/Dashboard';
 import Determined from 'pages/Determined';
+import history from 'routes/history';
+import { isFullPath, parseUrl } from 'utils/routes';
 
 /*
  * Router Configuration
@@ -19,22 +21,6 @@ export interface RouteConfigItem extends RouteProps {
   title: string;
   needAuth?: boolean;
 }
-
-export const isFullPath = (path: string): boolean => {
-  return path.startsWith('http');
-};
-
-export const isCrossoverRoute = (path: string): boolean => {
-  return path.startsWith('/ui') || path.includes(':8080/ui');
-};
-
-export const crossoverRoute = (path: string): void => {
-  if (!isFullPath(path)) {
-    const pathPrefix = process.env.IS_DEV ? 'http://localhost:8080' : '';
-    path = `${pathPrefix}${path}`;
-  }
-  window.location.assign(path);
-};
 
 export const appRoutes: RouteConfigItem[] = [
   {
@@ -115,3 +101,35 @@ export const detRoutes: RouteConfigItem[] = [
   },
 ];
 export const defaultDetRouteId = detRoutes[0].id;
+
+// Is the path going to be served from the same host?
+const isDetRoute = (url: string): boolean => {
+  if (!isFullPath(url)) return true;
+  if (process.env.IS_DEV) {
+    // dev live is served on a different port
+    return parseUrl(url).hostname === window.location.hostname;
+  }
+  return parseUrl(url).host === window.location.host;
+};
+
+const isReactRoute = (url: string): boolean => {
+  if (!isDetRoute(url)) return false;
+  const pathname = parseUrl(url).pathname;
+  return !!appRoutes.find(route => pathname.startsWith(route.path));
+};
+
+export const routeToExternalUrl = (path: string): void => {
+  if (!isFullPath(path)) {
+    const pathPrefix = process.env.IS_DEV ? 'http://localhost:8080' : '';
+    path = `${pathPrefix}${path}`;
+  }
+  window.location.assign(path);
+};
+
+export const routeAll = (path: string): void => {
+  if (!isReactRoute(path)) {
+    routeToExternalUrl(path);
+  } else {
+    history.push(path);
+  }
+};
