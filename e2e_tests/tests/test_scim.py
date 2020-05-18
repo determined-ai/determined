@@ -1,6 +1,5 @@
 import numbers
 import uuid
-from typing import cast
 from urllib import parse
 
 import pytest
