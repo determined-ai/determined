@@ -104,9 +104,7 @@ export const defaultDetRouteId = detRoutes[0].id;
 
 // Is the path going to be served from the same host?
 const isDetRoute = (url: string): boolean => {
-  if (!isFullPath(url)) {
-    return true;
-  }
+  if (!isFullPath(url)) return true;
   if (process.env.IS_DEV) {
     // dev live is served on a different port
     return parseUrl(url).hostname === window.location.hostname;

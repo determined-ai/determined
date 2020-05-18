@@ -1,11 +1,12 @@
-export const isFullPath = (url: string): boolean => {
-  return url.startsWith('http');
-};
+export const isFullPath = (url: string): boolean => url.startsWith('http');
+
+export const isAbsolutePath = (url: string): boolean => url.startsWith('/');
 
 export const parseUrl = (url: string): URL => {
+  let cleanUrl = url;
   if (!isFullPath(url)) {
-    if (!url.startsWith('/')) url = '/' + url; // TODO assume url is absolute, or we could throw
-    url = window.location.origin + url;
+    if (!isAbsolutePath(url)) cleanUrl = '/' + url;
+    cleanUrl = window.location.origin + url;
   }
-  return new window.URL(url);
+  return new window.URL(cleanUrl);
 };
