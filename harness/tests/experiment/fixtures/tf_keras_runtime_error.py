@@ -46,6 +46,7 @@ if __name__ == "__main__":
             "searcher": {"metric": "accuracy"},
             "data_layer": {"type": "lfs", "container_storage_path": "/tmp"},
         },
-        mode=experimental.Mode.LOCAL,
+        local=True,
+        test=True,
         context_dir=str(pathlib.Path.cwd()),
     )

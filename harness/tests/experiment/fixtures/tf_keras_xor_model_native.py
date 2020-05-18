@@ -8,7 +8,6 @@ from tensorflow.keras.metrics import categorical_accuracy
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import SGD
 
-from determined import experimental
 from determined.experimental.keras import init
 from tests.experiment import utils
 
@@ -23,7 +22,8 @@ def predictions(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", dest="mode", default="cluster")
+    parser.add_argument("--local", action="store_true")
+    parser.add_argument("--test", action="store_true")
     parser.add_argument("--use-dataset", action="store_true")
     args = parser.parse_args()
 
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     }
 
     context = init(
-        config=config, mode=experimental.Mode(args.mode), context_dir=str(pathlib.Path.cwd())
+        config=config, local=args.local, test=args.test, context_dir=str(pathlib.Path.cwd())
     )
 
     model = Sequential()

@@ -273,13 +273,20 @@ def submit_experiment(args: Namespace) -> None:
 
 
 def local_experiment(args: Namespace) -> None:
-    experiment_config = _parse_config_file_or_exit(args.config_file)
-
     try:
         from determined import experimental, load
     except ImportError as e:
         print("--local requires that the `determined` package is installed.")
         raise e
+
+    if not args.test_mode:
+        raise NotImplementedError(
+            "Local training mode (--local mode without --test mode) is not yet supported. Please "
+            "try local test mode by adding the --test flag or cluster training mode by removing "
+            "the --local flag."
+        )
+
+    experiment_config = _parse_config_file_or_exit(args.config_file)
 
     # Python typically initializes sys.path[0] as the empty string when
     # invoked interactively, which directs Python to search modules in the
@@ -836,8 +843,7 @@ args_description = Cmd(
                     "--local",
                     action="store_true",
                     help="Create the experiment in local mode instead of submitting it to the "
-                    "cluster. For more information, see documentation on det.experimental.create() "
-                    "and det.experimental.Mode.LOCAL",
+                    "cluster. For more information, see documentation on det.experimental.create()",
                 ),
                 Arg(
                     "--template",

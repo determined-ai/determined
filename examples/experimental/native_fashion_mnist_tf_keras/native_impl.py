@@ -42,9 +42,8 @@ if __name__ == "__main__":
         help="Specifies Determined Experiment configuration.",
         default="{}",
     )
-    parser.add_argument(
-        "--mode", dest="mode", help="Specifies local mode or cluster mode.", default="cluster"
-    )
+    parser.add_argument("--local", action="store_true", help="Specifies local mode")
+    parser.add_argument("--test", action="store_true", help="Specifies test mode")
     parser.add_argument(
         "--use-fit",
         action="store_true",
@@ -61,7 +60,7 @@ if __name__ == "__main__":
     }
     config.update(json.loads(args.config))
 
-    context = init(config, mode=experimental.Mode(args.mode), context_dir=str(pathlib.Path.cwd()))
+    context = init(config, local=args.local, test=args.test, context_dir=str(pathlib.Path.cwd()))
 
     train_images, train_labels = data.load_training_data()
     train_images = train_images / 255.0

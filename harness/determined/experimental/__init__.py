@@ -6,7 +6,6 @@ from determined_common.experimental import (
 )
 
 from determined.experimental._native import (
-    Mode,
     create,
     create_trial_instance,
     test_one_batch,

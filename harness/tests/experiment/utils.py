@@ -383,9 +383,9 @@ def list_all_files(directory: str) -> List[str]:
     return [f for _, _, files in os.walk(directory) for f in files]
 
 
-def run_local_mode(implementation: str) -> None:
+def run_local_test_mode(implementation: str) -> None:
     subprocess.check_call(
-        args=["python", implementation, "--mode", "local"],
+        args=["python", implementation, "--local", "--test"],
         cwd=fixtures_path(""),
         env={
             "PYTHONUNBUFFERED": "1",
