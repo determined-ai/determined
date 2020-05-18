@@ -15,5 +15,7 @@ db:
 
 scim:
   enabled: true
-  username: determined
-  password: password
+  auth:
+    type: basic
+    username: determined
+    password: password
