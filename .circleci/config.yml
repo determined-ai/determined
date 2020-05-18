@@ -1364,3 +1364,9 @@ workflows:
             - build-docs
           context: determined-ee
           filters: *release-filters
+
+      - publish-docs:
+          requires:
+            - build-docs
+          context: determined-production
+          filters: *release-filters
