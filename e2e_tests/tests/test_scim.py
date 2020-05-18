@@ -10,7 +10,7 @@ from tests import config as conf
 
 
 def make_scim_url(path: str) -> str:
-    return cast(str, parse.urljoin(conf.make_master_url(), "/scim/v2" + path))
+    return parse.urljoin(conf.make_master_url(), "/scim/v2" + path)
 
 
 def get_random_string() -> str:
