@@ -1,3 +1,4 @@
+import pathlib
 from typing import Any, Dict, cast
 
 import numpy as np
@@ -299,6 +300,7 @@ class Counter(det.pytorch.PyTorchCallback):
         self.train_steps_ended = 0
         self.validation_steps_started = 0
         self.validation_steps_ended = 0
+        self.checkpoints_ended = 0
 
     def on_train_step_start(self, step_id: int) -> None:
         self.train_steps_started += 1
@@ -311,6 +313,9 @@ class Counter(det.pytorch.PyTorchCallback):
 
     def on_validation_step_end(self, metrics: Dict[str, Any]) -> None:
         self.validation_steps_ended += 1
+
+    def on_checkpoint_end(self, checkpoint_dir: pathlib.Path):
+        self.checkpoints_ended += 1
 
     def state_dict(self) -> Dict[str, Any]:
         return self.__dict__
