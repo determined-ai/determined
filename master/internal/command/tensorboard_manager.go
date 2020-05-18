@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -173,6 +174,24 @@ func (t *tensorboardManager) newTensorBoard(
 			if c.S3Config.SecretKey != nil {
 				uniqEnvVars["AWS_SECRET_ACCESS_KEY"] = *c.S3Config.SecretKey
 			}
+			if c.S3Config.EndpointURL != nil {
+				endpoint, urlErr := url.Parse(*c.S3Config.EndpointURL)
+				if urlErr != nil {
+					return nil, echo.NewHTTPError(http.StatusInternalServerError,
+						"unable to parse checkpoint_storage.s3.endpoint_url")
+				}
+
+				// The TensorBoard container needs access to the original URL
+				// and the URL in "host:port" form.
+				uniqEnvVars["DET_S3_ENDPOINT"] = *c.S3Config.EndpointURL
+				uniqEnvVars["S3_ENDPOINT"] = endpoint.Host
+
+				uniqEnvVars["S3_USE_HTTPS"] = "0"
+				if endpoint.Scheme == "https" {
+					uniqEnvVars["S3_USE_HTTPS"] = "1"
+				}
+			}
+
 			uniqEnvVars["AWS_BUCKET"] = c.S3Config.Bucket
 
 			logBasePath = "s3://" + c.S3Config.Bucket
