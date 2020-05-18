@@ -726,6 +726,9 @@ class PyTorchTrialController(det.LoopTrialController):
             checkpoint, str(path.joinpath("state_dict.pth")), pickle_module=cloudpickle
         )
 
+        for callback in self.callbacks.values():
+            callback.on_checkpoint_end(path)
+
         return {}
 
 
