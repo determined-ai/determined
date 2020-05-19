@@ -85,6 +85,7 @@ const useRestApi = <T>(ioType: io.Mixed, options: HookOptions<T> = {}): Output<T
   useEffect(() => {
     const source = axios.CancelToken.source();
     if (!httpOptions.url) return;
+    httpOptions.method = httpOptions.method || 'GET';
 
     const fetchData = async (): Promise<void> => {
       dispatch({ type: ActionType.SetLoading, value: true });
@@ -93,7 +94,7 @@ const useRestApi = <T>(ioType: io.Mixed, options: HookOptions<T> = {}): Output<T
         const response = await http.request({
           cancelToken: source.token,
           data: httpOptions.body,
-          method: httpOptions.method || 'GET',
+          method: httpOptions.method,
           url: httpOptions.url as string,
         });
         const result = decode<io.TypeOf<typeof ioType>>(ioType, response.data);
@@ -105,14 +106,13 @@ const useRestApi = <T>(ioType: io.Mixed, options: HookOptions<T> = {}): Output<T
       } catch (error) {
         // Only report errors not related cancel exits.
         if (!axios.isCancel(error)) {
-
           handleError({
             error: error,
             // this does not necessarily have to be true for all usages of this hook we should
             // allow the user of the hook to set this value or let the caller handle the error.
             isUserTriggered: false,
             level: ErrorLevel.Warn,
-            message: `${httpOptions.method + ' ' || ''}request to ${httpOptions.url} failed`,
+            message: `${httpOptions.method} request to ${httpOptions.url} failed`,
             type: isAuthFailure(error) ? ErrorType.Auth : ErrorType.Server,
           });
 
