@@ -5,10 +5,10 @@ Mappings:
   RegionMap:
     us-east-1:
       Master: ami-66506c1c
-      Agent: ami-06a89515c09c669ab
+      Agent: ami-026c30b9ebbe3a29f
     us-west-2:
       Master: ami-79873901
-      Agent: ami-02e0ff379a7391b99
+      Agent: ami-0cd2f5f23b824f278
 
 Parameters:
   Keypair:
