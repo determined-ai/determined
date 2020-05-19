@@ -310,7 +310,9 @@ class TFKerasTrialController(det.LoopTrialController):
             profile_filename=DeterminedProfiler.OUTPUT_FILENAME,
         )
 
-        if hvd_config.use and version.parse(tf.__version__) >= version.parse("2.0.0"):
+        if hvd_config.use and version.parse("2.0.0") <= version.parse(
+            tf.__version__
+        ) < version.parse("2.2.0"):
             logging.info(
                 "Calling `model.compile(...)` with `experimental_run_tf_function=False` to ensure "
                 "TensorFlow calls `optimizer.get_gradients()` to compute gradients."
