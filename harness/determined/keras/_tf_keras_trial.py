@@ -36,11 +36,23 @@ def load_optimizer_weights(model: Model, load_path: pathlib.Path) -> None:
     """
     f = h5py.File(str(load_path), mode="r")
     if "optimizer_weights" in f:
-        # Build train function (to get weight updates).  Models that aren't
-        # graph networks must wait until they are called with data to
-        # _make_train_function() and so can't load optimizer weights.
-        if model._is_graph_network:  # pylint: disable=protected-access
-            model._make_train_function()
+        tf2_2_or_newer = version.parse(tf.__version__) >= version.parse("2.2.0")
+        if model._is_graph_network or tf2_2_or_newer:  # pylint: disable=protected-access
+            if tf2_2_or_newer:
+                try:
+                    model.optimizer._create_all_weights(model.trainable_variables)
+                except (NotImplementedError, AttributeError):
+                    logging.warning(
+                        "Error when creating the weights of optimizer, making it "
+                        "impossible to restore the saved optimizer state. As a result, "
+                        "your model is starting with a freshly initialized optimizer."
+                    )
+            else:
+                # Build train function (to get weight updates).  Models that aren't
+                # graph networks must wait until they are called with data to
+                # _make_train_function() and so can't load optimizer weights.
+                model._make_train_function()
+
             optimizer_weight_values = load_optimizer_weights_from_hdf5_group(f)
             try:
                 model.optimizer.set_weights(optimizer_weight_values)
@@ -111,6 +123,10 @@ class WaitForInstructionsCallback(tf.keras.callbacks.Callback):  # type: ignore
         self.batches_processed = 0
 
         self.tf_keras_trial_controller.run()
+
+        if self.model.stop_training and version.parse(tf.__version__) >= version.parse("2.2.0"):
+            # Starting with TF 2.2, `model.stop_training` is only checked at the end of epochs.
+            raise det.errors.WorkerFinishedGracefully
 
 
 class DeterminedProfiler(tf.keras.callbacks.Callback):  # type: ignore
@@ -310,7 +326,9 @@ class TFKerasTrialController(det.LoopTrialController):
             profile_filename=DeterminedProfiler.OUTPUT_FILENAME,
         )
 
-        if hvd_config.use and version.parse(tf.__version__) >= version.parse("2.0.0"):
+        if hvd_config.use and version.parse("2.0.0") <= version.parse(
+            tf.__version__
+        ) < version.parse("2.2.0"):
             logging.info(
                 "Calling `model.compile(...)` with `experimental_run_tf_function=False` to ensure "
                 "TensorFlow calls `optimizer.get_gradients()` to compute gradients."
@@ -449,7 +467,11 @@ class TFKerasTrialController(det.LoopTrialController):
                 #    tf.keras fit() training loop is already active and paused.
                 #    break to re-enter the training loop.
                 if not self.fit_loop_started:
-                    self._launch_fit()
+                    try:
+                        self._launch_fit()
+                    except det.errors.WorkerFinishedGracefully:
+                        pass
+
                     if not self.expect_terminate:
                         raise AssertionError(
                             "Training loop exited unexpectedly but without throwing any errors. "
