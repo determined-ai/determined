@@ -52,7 +52,7 @@ export interface ExperimentsParams {
 
 const experimentsApi:  Api<ExperimentsParams, Experiment[]> = {
   httpOptions: (params) => ({
-    url: '/experiment-summaries' + (params.states ? '?'+params.states.join(',') : ''),
+    url: '/experiment-summaries' + (params.states ? '?states='+params.states.join(',') : ''),
   }),
   name: 'getExperiments',
   postProcess: (response) => jsonToExperiments(response.data),
