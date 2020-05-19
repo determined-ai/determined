@@ -44,13 +44,6 @@ export const appRoutes: RouteConfigItem[] = [
     path: '/det/logout',
     title: 'Logout',
   },
-  {
-    id: 'docs',
-    path: '/docs/',
-    popout: true,
-    suffixIcon: 'popout',
-    title: 'Docs',
-  },
 ];
 export const defaultAppRoute = appRoutes[0];
 
