@@ -56,6 +56,7 @@ const DeterminedAuth: React.FC<Props> = ({ onLoadingChange }: Props) => {
 
   const loginForm = (
     <Form
+      className={css.form}
       name="login"
       onFinish={onFinish}
       onValuesChange={onValuesChange}>
@@ -69,15 +70,12 @@ const DeterminedAuth: React.FC<Props> = ({ onLoadingChange }: Props) => {
         ]}>
         <Input autoFocus placeholder="username" prefix={<Icon name="user-small" size="small" />} />
       </Form.Item>
-
       <Form.Item name="password">
         <Input.Password placeholder="password" prefix={<Icon name="lock" size="small" />} />
       </Form.Item>
-
       {isBadCredentials && <p className={[css.errorMessage, css.message].join(' ')}>
         Incorrect username or password.
       </p>}
-
       <Form.Item>
         <Button disabled={!canSubmit} htmlType="submit" type="primary">Sign In</Button>
       </Form.Item>
