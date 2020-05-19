@@ -9,6 +9,6 @@ hyperparameters:
 searcher:
   name: single
   metric: accuracy
-  max_steps: 10
+  max_steps: 20
   smaller_is_better: false
 entrypoint: model_def:MNistTrial

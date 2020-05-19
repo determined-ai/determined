@@ -25,8 +25,8 @@ hyperparameters:
 searcher:
   name: adaptive
   metric: accuracy
-  target_trial_steps: 16
-  step_budget: 80
+  target_trial_steps: 32 
+  step_budget: 100
   mode: aggressive
   max_rungs: 3
   divisor: 4
