@@ -19,3 +19,8 @@ db:
 root: build
 enable_cors: true
 cluster_name: dev
+
+scim:
+  enabled: true
+  username: determined
+  password: U4lCz36wDDfPfc0q
