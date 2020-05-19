@@ -12,3 +12,8 @@ db:
   port: 5432
   name: determined
   password: postgres
+
+scim:
+  enabled: true
+  username: determined
+  password: password
