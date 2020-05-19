@@ -148,10 +148,7 @@ export const useRestApiSimple =
 
     apiReq({ ...params, cancelToken: source.token })
       .then((result) => {
-        dispatch({
-          type: ActionType.SetData,
-          value: result,
-        });
+        dispatch({ type: ActionType.SetData, value: result });
 
       })
       .catch((error) => {
@@ -164,7 +161,6 @@ export const useRestApiSimple =
   }, [ apiReq, params ]);
 
   return [ state, setParams ];
-
 };
 
 export default useRestApi;

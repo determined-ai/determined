@@ -55,7 +55,6 @@ const experimentsApi:  Api<ExperimentsParams, Experiment[]> = {
     url: '/experiment-summaries' + (params.states ? '?'+params.states.join(',') : ''),
   }),
   name: 'getExperiments',
-
   postProcess: (response) => jsonToExperiments(response.data),
 };
 
