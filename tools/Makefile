@@ -10,6 +10,12 @@ start-db: stop-db
 stop-db:
 	docker-compose down
 
+.PHONY: psql
+psql:
+	docker exec -it \
+		tools_determined-db_1 \
+		psql determined -U postgres
+
 .PHONY: prep-root
 prep-root:
 	@rm -rf build
