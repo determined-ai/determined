@@ -22,6 +22,7 @@ from determined_cli.experiment import args_description as experiment_args_descri
 from determined_cli.master import args_description as master_args_description
 from determined_cli.model import args_description as model_args_description
 from determined_cli.notebook import args_description as notebook_args_description
+from determined_cli.oauth import args_description as oauth_args_description
 from determined_cli.remote import args_description as remote_args_description
 from determined_cli.shell import args_description as shell_args_description
 from determined_cli.sso import args_description as auth_args_description
@@ -170,6 +171,7 @@ all_args_description = (
     + user_args_description
     + version_args_description
     + auth_args_description
+    + oauth_args_description
 )
 
 
