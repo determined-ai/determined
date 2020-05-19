@@ -15,6 +15,7 @@ import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Experiments from 'contexts/Experiments';
 import FullPageSpinner from 'contexts/FullPageSpinner';
 import Info from 'contexts/Info';
+import Navigation from 'contexts/Navigation';
 import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
@@ -30,6 +31,7 @@ import css from './App.module.scss';
 
 const AppView: React.FC = () => {
   const { isAuthenticated, user } = Auth.useStateContext();
+  const { showNavBar, showSideBar } = Navigation.useStateContext();
   const cluster = ClusterOverview.useStateContext();
   const info = Info.useStateContext();
   const setInfo = Info.useActionContext();
@@ -96,7 +98,7 @@ const AppView: React.FC = () => {
 
   return (
     <div className={css.base}>
-      {isAuthenticated && <NavBar username={username} />}
+      {isAuthenticated && showNavBar && <NavBar username={username} />}
       {isAuthenticated && <AppContexts />}
       <div className={css.body}>
         {isAuthenticated && <SideBar />}
@@ -111,6 +113,7 @@ const App: React.FC = () => {
   return (
     <Compose components={[
       Auth.Provider,
+      Navigation.Provider,
       Info.Provider,
       Users.Provider,
       Agents.Provider,

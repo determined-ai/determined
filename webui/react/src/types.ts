@@ -15,6 +15,11 @@ export interface Credentials {
   username: string;
 }
 
+export interface Navigation {
+  showNavBar: boolean;
+  showSideBar: boolean;
+}
+
 export interface DeterminedInfo {
   clusterId: string;
   masterId: string;
