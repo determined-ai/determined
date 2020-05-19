@@ -4,7 +4,7 @@ import Authentication from 'pages/Authentication';
 import Dashboard from 'pages/Dashboard';
 import Determined from 'pages/Determined';
 import history from 'routes/history';
-import { isFullPath, parseUrl } from 'utils/routes';
+import { ensureAbsolutePath, isFullPath, parseUrl } from 'utils/routes';
 
 /*
  * Router Configuration
@@ -52,7 +52,7 @@ export const appRoutes: RouteConfigItem[] = [
     title: 'Docs',
   },
 ];
-export const defaultAppRouteId = appRoutes[0].id;
+export const defaultAppRoute = appRoutes[0];
 
 export const detRoutes: RouteConfigItem[] = [
   {
@@ -118,12 +118,18 @@ const isReactRoute = (url: string): boolean => {
   return !!appRoutes.find(route => pathname.startsWith(route.path));
 };
 
-export const routeToExternalUrl = (path: string): void => {
-  if (!isFullPath(path)) {
+// to support running the SPA off of a separate port from the cluster and have the links to Elm
+// SPA work.
+export const setupUrlForDev = (path: string): string => {
+  if (process.env.IS_DEV && !isFullPath(path) && isDetRoute(path) && !isReactRoute(path)) {
     const pathPrefix = process.env.IS_DEV ? 'http://localhost:8080' : '';
-    path = `${pathPrefix}${path}`;
+    return pathPrefix + ensureAbsolutePath(path);
   }
-  window.location.assign(path);
+  return path;
+};
+
+export const routeToExternalUrl = (path: string): void => {
+  window.location.assign(setupUrlForDev(path));
 };
 
 export const routeAll = (path: string): void => {

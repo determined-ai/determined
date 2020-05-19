@@ -20,7 +20,7 @@ const TaskCard: React.FC<RecentTask> = (props: RecentTask) => {
 
   return (
     <div className={classes.join(' ')}>
-      <Link crossover disabled={!props.url} path={props.url || '#'}>
+      <Link disabled={!props.url} path={props.url || '#'}>
         {hasProgress && <div className={css.progressBar}>
           <ProgressBar percent={(props.progress || 0) * 100} state={props.state} />
         </div>}

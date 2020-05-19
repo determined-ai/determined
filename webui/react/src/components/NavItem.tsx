@@ -15,7 +15,6 @@ export enum NavItemType {
 
 interface Props {
   active?: boolean;
-  crossover?: boolean;
   icon?: string;
   path?: string;
   popout?: boolean;
@@ -52,7 +51,6 @@ const NavItem: React.FC<Props> = (props: PropsWithChildren<Props>) => {
 
   if (props.path) return (
     <Link
-      crossover={props.crossover}
       path={props.path}
       popout={props.popout}
       onClick={props.onClick}>{navItem}</Link>
@@ -63,7 +61,6 @@ const NavItem: React.FC<Props> = (props: PropsWithChildren<Props>) => {
 
 NavItem.defaultProps = {
   active: false,
-  crossover: false,
   type: NavItemType.Default,
 };
 
