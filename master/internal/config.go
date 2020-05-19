@@ -86,6 +86,12 @@ func (c Config) Printable() ([]byte, error) {
 	c.Telemetry.SegmentMasterKey = hiddenValue
 	c.Telemetry.SegmentWebUIKey = hiddenValue
 
+	cs, err := c.CheckpointStorage.printable()
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to convert checkpoint storage config to printable")
+	}
+	c.CheckpointStorage = cs
+
 	optJSON, err := json.Marshal(c)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to convert config to JSON")
@@ -124,6 +130,20 @@ func (c CheckpointStorageConfig) Validate() []error {
 	}
 
 	return nil
+}
+
+func (c *CheckpointStorageConfig) printable() ([]byte, error) {
+	var hiddenValue = "********"
+	switch csm, err := c.ToModel(); {
+	case err != nil:
+		return nil, err
+	case csm.S3Config != nil:
+		csm.S3Config.AccessKey = &hiddenValue
+		csm.S3Config.SecretKey = &hiddenValue
+		return csm.MarshalJSON()
+	default:
+		return csm.MarshalJSON()
+	}
 }
 
 // FromModel initializes a CheckpointStorageConfig from the corresponding model.
