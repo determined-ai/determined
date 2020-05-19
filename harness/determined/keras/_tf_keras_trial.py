@@ -546,7 +546,7 @@ class TFKerasTrial(det.Trial):
 
     By default, experiments run with TensorFlow 1.x. To configure your trial to
     use TensorFlow 2.x, set a TF 2.x image in the experiment configuration
-    (e.g. ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.1-gpu-0.4.0``).
+    (e.g. ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.4.0``).
 
     By default, trials using TF 2.x use execute eagerly, and trials using TF
     1.x do not execute eagerly. If you want to override the default, you must
