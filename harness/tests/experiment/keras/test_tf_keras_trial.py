@@ -289,7 +289,11 @@ def test_surface_native_error():
         err = p.stderr.read()
         assert p.wait() != 0
         if tf.executing_eagerly():
-            assert b"ValueError: Shapes (None, 10) and (None, 1) are incompatible" in err
+            assert (
+                b"ValueError: Shapes (None, 10) and (None, 1) are incompatible" in err
+                or b"ValueError: Input 0 of layer sequential is incompatible with the "
+                b"layer: : expected min_ndim=2, found ndim=1. Full shape received: [1]" in err
+            )
         else:
             assert b"ValueError: Input 0 of layer sequential is incompatible with the layer" in err
 
