@@ -90,13 +90,13 @@ hyperparameters for the current trial.
 TF2 Environment
 ~~~~~~~~~~~~~~~
 
-Determined also supports TensorFlow 2.1 and has a Docker image you can use for
+Determined also supports TensorFlow 2.2 and has a Docker image you can use for
 experiments and commands containing the following:
 
 -  Ubuntu 18.04
 -  CUDA 10.0
 -  Python 3.6.9
--  TensorFlow 2.1.0
+-  TensorFlow 2.2.0
 -  PyTorch 1.4.0
 
 This can be configured in your experiment configuration like below:
@@ -105,8 +105,8 @@ This can be configured in your experiment configuration like below:
 
    environment:
      image:
-       gpu: "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.1-gpu-0.4.0"
-       cpu: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.1-cpu-0.4.0"
+       gpu: "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.4.0"
+       cpu: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-0.4.0"
 
 
 Custom Docker Images in Determined

@@ -99,11 +99,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-e6662e6
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-3f3437e
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.1-cpu-e6662e6
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-3f3437e
 
   login-docker:
     steps:
@@ -762,7 +762,7 @@ jobs:
       - setup-python-venv:
           determined-common: true
           determined: true
-          extras-requires: "tensorflow==2.1.0"
+          extras-requires: "tensorflow==2.2.0"
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C harness test-tf2
