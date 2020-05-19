@@ -8,11 +8,12 @@ import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
-import useRestApi from 'hooks/useRestApi';
-import { ioAgents, ioExperiments, ioGenericCommands, ioUsers } from 'ioTypes';
+import useRestApi, { useRestApiSimple } from 'hooks/useRestApi';
+import { ioAgents, ioGenericCommands, ioUsers } from 'ioTypes';
 import { detRoutes } from 'routes';
+import { ExperimentsParams, getExperiments } from 'services/api';
 import {
-  jsonToAgents, jsonToCommands, jsonToExperiments, jsonToNotebooks,
+  jsonToAgents, jsonToCommands, jsonToNotebooks,
   jsonToShells, jsonToTensorboards, jsonToUsers,
 } from 'services/decoder';
 import { Agent, Command, Experiment, RunState, User } from 'types';
@@ -42,7 +43,7 @@ const Determined: React.FC = () => {
   const [ commandsResponse, requestCommands ] =
     useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToCommands });
   const [ experimentsResponse, requestExperiments ] =
-    useRestApi<Experiment[]>(ioExperiments, { mappers: jsonToExperiments });
+    useRestApiSimple<ExperimentsParams, Experiment[]>(getExperiments, {});
   const [ notebooksResponse, requestNotebooks ] =
     useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToNotebooks });
   const [ shellsResponse, requestShells ] =
@@ -56,7 +57,7 @@ const Determined: React.FC = () => {
     requestNotebooks({ url: '/notebooks' });
     requestShells({ url: '/shells' });
     requestTensorboards({ url: '/tensorboard' });
-    requestExperiments({ url: `/experiment-summaries?states=${activeStates.join(',')}` });
+    requestExperiments({ states: activeStates });
   }, [
     requestAgents,
     requestCommands,

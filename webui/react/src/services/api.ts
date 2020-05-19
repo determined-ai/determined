@@ -3,7 +3,8 @@ import { sha512 }  from 'js-sha512';
 
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { Api, generateApi } from 'services/apiBuilder';
-import { CommandType, Credentials, RecentTask, TaskType, User } from 'types';
+import { jsonToExperiments } from 'services/decoder';
+import { CommandType, Credentials, Experiment, RecentTask, TaskType, User } from 'types';
 
 const commandToEndpoint: Record<CommandType, string> = {
   [CommandType.Command]: '/commands',
@@ -44,6 +45,20 @@ const userApi:  Api<{}, User> = {
 };
 
 export const getCurrentUser = generateApi<{}, User>(userApi);
+
+export interface ExperimentsParams {
+  states?: string[];
+}
+
+const experimentsApi:  Api<ExperimentsParams, Experiment[]> = {
+  httpOptions: (params) => ({
+    url: '/experiment-summaries' + (params.states ? '?states='+params.states.join(',') : ''),
+  }),
+  name: 'getExperiments',
+  postProcess: (response) => jsonToExperiments(response.data),
+};
+
+export const getExperiments = generateApi<ExperimentsParams, Experiment[]>(experimentsApi);
 
 interface KillExpParams {
   experimentId: number;

@@ -129,4 +129,31 @@ const useRestApi = <T>(ioType: io.Mixed, options: HookOptions<T> = {}): Output<T
   return [ state, setHttpOptions ];
 };
 
+type SimpleOutput<In, Out> = [
+  State<Out>,
+  Dispatch<SetStateAction<In>>,
+];
+
+export const useRestApiSimple =
+<In, Out>(apiReq: (a: In) => Promise<Out>, initialParams: In): SimpleOutput<In, Out> => {
+  const [ params, setParams ] = useState<In>(initialParams);
+  const [ state, dispatch ] = useReducer<Reducer<State<Out>, Action<Out>>>(reducer, {
+    errorCount: 0,
+    hasLoaded: false,
+    isLoading: false,
+  });
+
+  useEffect(() => {
+    const source = axios.CancelToken.source();
+
+    apiReq({ ...params, cancelToken: source.token })
+      .then((result) => dispatch({ type: ActionType.SetData, value: result } ))
+      .catch((e) => (!axios.isCancel(e)) && dispatch({ type: ActionType.SetError, value: e }));
+
+    return (): void => source.cancel();
+  }, [ apiReq, params ]);
+
+  return [ state, setParams ];
+};
+
 export default useRestApi;
