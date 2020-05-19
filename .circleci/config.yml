@@ -737,8 +737,10 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run: sudo apt-get install -y $(pwd)/master/dist/determined-ee-master*.deb
-      - run: sudo apt-get install -y $(pwd)/agent/dist/determined-ee-agent*.deb
+      - run: export DEBIAN_FRONTEND=noninteractive
+      - run: sudo apt-get update
+      - run: sudo apt-get install -yf $(pwd)/master/dist/determined-ee-master*.deb
+      - run: sudo apt-get install -yf $(pwd)/agent/dist/determined-ee-agent*.deb
       - run: sudo cp .circleci/packaging/master.yaml /etc/determined/master.yaml
       - run: sudo cp .circleci/packaging/agent.yaml /etc/determined/agent.yaml
       - run: make -C tools start-db
