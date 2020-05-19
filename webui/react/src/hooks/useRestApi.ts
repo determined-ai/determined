@@ -147,15 +147,8 @@ export const useRestApiSimple =
     const source = axios.CancelToken.source();
 
     apiReq({ ...params, cancelToken: source.token })
-      .then((result) => {
-        dispatch({ type: ActionType.SetData, value: result });
-
-      })
-      .catch((error) => {
-        if (!axios.isCancel(error)) {
-          dispatch({ type: ActionType.SetError, value: error });
-        }
-      });
+      .then((result) => dispatch({ type: ActionType.SetData, value: result } ))
+      .catch((e) => (!axios.isCancel(e)) && dispatch({ type: ActionType.SetError, value: e }));
 
     return (): void => source.cancel();
   }, [ apiReq, params ]);
