@@ -9,12 +9,11 @@ import Logo, { LogoTypes } from 'components/Logo';
 import Spinner from 'components/Spinner';
 import Auth, { updateAuth } from 'contexts/Auth';
 import { routeAll } from 'routes';
+import { defaultAppRoute } from 'routes';
 import history from 'routes/history';
 import { logout } from 'services/api';
 
 import css from './Authentication.module.scss';
-
-const DEFAULT_REDIRECT = '/det/dashboard';
 
 interface Queries {
   redirect?: string;
@@ -45,7 +44,7 @@ const Authentication: React.FC = () => {
   }, [ setAuth ]);
 
   if (auth.isAuthenticated) {
-    const redirect = queries.redirect || DEFAULT_REDIRECT;
+    const redirect = queries.redirect || defaultAppRoute.path;
     if (queries.cli) {
       return <AuthToken />;
     }
