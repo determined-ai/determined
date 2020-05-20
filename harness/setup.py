@@ -26,7 +26,7 @@ setup(
         "requests>=2.20.0",
         "simplejson==3.16.0",
         "determined-common==0.12.5.dev0",
-        "yogadl==0.1.0",
+        "yogadl==0.1.1",
     ],
     extras_require={
         "tf-114-cuda100": ["tensorflow-gpu==1.14.0"],
