@@ -159,7 +159,7 @@ func (t *tensorboardManager) newTensorBoard(
 			uniqMounts[model.BindMount{
 				ContainerPath: model.DefaultSharedFSContainerPath,
 				HostPath:      c.SharedFSConfig.HostPath,
-				Propagation:   c.SharedFSConfig.Propagation.String(),
+				Propagation:   model.DefaultSharedFSPropagation,
 			}] = true
 
 			logBasePath = model.DefaultSharedFSContainerPath

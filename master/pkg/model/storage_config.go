@@ -12,9 +12,10 @@ import (
 )
 
 const (
-	// DefaultSharedFSContainerPath is the base storage path inside containers for ShareFS storage.
+	// DefaultSharedFSContainerPath is the base storage path inside containers for SharedFS storage.
 	DefaultSharedFSContainerPath = "/determined_shared_fs"
-	sharedFSPropagation          = "rprivate"
+	// DefaultSharedFSPropagation is the propagation setting for SharedFS storage.
+	DefaultSharedFSPropagation = "rprivate"
 )
 
 // CheckpointStorageConfig has the common checkpoint config params.
@@ -70,72 +71,14 @@ func (t *TensorboardStorageConfig) UnmarshalJSON(data []byte) error {
 	return union.Unmarshal(data, t)
 }
 
-// A SharedFSContainerPath is a constant value for the ContainerPath of a
-// SharedFSConfig.
-type SharedFSContainerPath struct{}
-
-// MarshalJSON implements the json.Marshaler interface.
-func (p SharedFSContainerPath) MarshalJSON() ([]byte, error) {
-	return json.Marshal(DefaultSharedFSContainerPath)
-}
-
-// UnmarshalJSON implements the json.Unmarshaler interface.
-func (p *SharedFSContainerPath) UnmarshalJSON(data []byte) error {
-	if len(data) == 0 {
-		return nil
-	}
-
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-	if s != DefaultSharedFSContainerPath {
-		return errors.New("cannot set value")
-	}
-	return nil
-}
-
-func (p SharedFSContainerPath) String() string {
-	return DefaultSharedFSContainerPath
-}
-
-// A SharedFSPropagation is a constant value for the Propagation of a
-// SharedFSConfig.
-type SharedFSPropagation struct{}
-
-// MarshalJSON implements the json.Marshaler interface.
-func (p SharedFSPropagation) MarshalJSON() ([]byte, error) {
-	return json.Marshal(sharedFSPropagation)
-}
-
-// UnmarshalJSON implements the json.Unmarshaler interface.
-func (p *SharedFSPropagation) UnmarshalJSON(data []byte) error {
-	if len(data) == 0 {
-		return nil
-	}
-
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-	if s != sharedFSPropagation {
-		return errors.New("cannot set value")
-	}
-	return nil
-}
-
-func (p SharedFSPropagation) String() string {
-	return sharedFSPropagation
-}
-
 // SharedFSConfig configures storing on a shared filesystem (e.g., NFS).
 type SharedFSConfig struct {
-	HostPath        string                `json:"host_path"`
-	ContainerPath   SharedFSContainerPath `json:"container_path"`
-	CheckpointPath  *string               `json:"checkpoint_path,omitempty"`
-	TensorboardPath *string               `json:"tensorboard_path,omitempty"`
-	StoragePath     *string               `json:"storage_path,omitempty"`
-	Propagation     SharedFSPropagation   `json:"propagation"`
+	HostPath        string  `json:"host_path"`
+	ContainerPath   *string `json:"container_path,omitempty"`
+	CheckpointPath  *string `json:"checkpoint_path,omitempty"`
+	TensorboardPath *string `json:"tensorboard_path,omitempty"`
+	StoragePath     *string `json:"storage_path,omitempty"`
+	Propagation     *string `json:"propagation,omitempty"`
 }
 
 // Validate implements the check.Validatable interface.
