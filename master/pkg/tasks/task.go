@@ -119,7 +119,7 @@ func startContainer(t TaskSpec) container.Spec {
 			Source: sharedFS.HostPath,
 			Target: model.DefaultSharedFSContainerPath,
 			BindOptions: &mount.BindOptions{
-				Propagation: mount.Propagation(sharedFS.Propagation.String()),
+				Propagation: model.DefaultSharedFSPropagation,
 			},
 		})
 	}
@@ -255,7 +255,7 @@ func gcCheckpoint(t TaskSpec) container.Spec {
 			Source: sharedFS.HostPath,
 			Target: model.DefaultSharedFSContainerPath,
 			BindOptions: &mount.BindOptions{
-				Propagation: mount.Propagation(sharedFS.Propagation.String()),
+				Propagation: model.DefaultSharedFSPropagation,
 			},
 		})
 	}
