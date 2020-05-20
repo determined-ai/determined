@@ -2,7 +2,7 @@ import { CancelToken } from 'axios';
 import { Dispatch } from 'react';
 
 import { generateContext } from 'contexts';
-import { getCurrentUser } from 'services/api';
+import { getCurrentUser, isAuthFailure } from 'services/api';
 import { Auth } from 'types';
 
 enum ActionType {
@@ -48,7 +48,9 @@ export const updateAuth =
       return true;
     } catch (e) {
       // could use a retry mechanism on non-credential related failures
-      setAuth({ type: ActionType.Reset });
+      if (isAuthFailure(e)) {
+        setAuth({ type: ActionType.Reset });
+      }
       return false;
     }
   };
