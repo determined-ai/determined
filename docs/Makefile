@@ -19,7 +19,7 @@ publish: clean
 	$(MAKE) -C deploy publish
 
 live:
-	npx nodemon --ext txt,js,html --exec "$(MAKE) build"
+	npx nodemon --ext txt,js,html --exec "$(MAKE) -j build" --ignore site
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
