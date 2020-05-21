@@ -4,7 +4,6 @@ import os
 import pathlib
 import subprocess
 import tempfile
-import zipfile
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type
 
@@ -54,18 +53,6 @@ class TrainAndValidate:
         assert self._training_metrics is not None
         assert self._validation_metrics is not None
         return self._training_metrics, self._validation_metrics
-
-
-# Prepare the model zip file by wrapping the model file into a zip file in the temporary directory.
-def prepare_model_zip_file(model_def_file, tmpdir_factory, unique_name):  # type: ignore
-    zip_path = tmpdir_factory.mktemp(unique_name).join("model_def.zip")
-
-    with zipfile.ZipFile(zip_path, "w") as zf:
-        # Use a unique module name here or we might alias an existing loaded
-        # trial.
-        zf.write(model_def_file, arcname="{}/__init__.py".format(unique_name))
-
-    return str(zip_path)
 
 
 def make_default_exp_config(hparams: Dict[str, Any], batches_per_step: int) -> Dict:
