@@ -57,6 +57,7 @@ The full list of our topic guides can be found below:
    model-definitions/index
    model-definitions/trial-api
    model-definitions/best-practices
+   oauth
    optimizing-distributed-training
    reproducibility
    saml
