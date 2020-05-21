@@ -81,3 +81,53 @@ def test_mnist_estimator_accuracy() -> None:
             target_accuracy, len(trial_metrics["steps"]), validation_errors
         )
     )
+
+
+@pytest.mark.nightly  # type: ignore
+def test_mnist_pytorch_accuracy() -> None:
+    config = conf.load_config(conf.official_examples_path("mnist_pytorch/const.yaml"))
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config, conf.official_examples_path("mnist_pytorch"), 1
+    )
+
+    trials = exp.experiment_trials(experiment_id)
+    trial_metrics = exp.trial_metrics(trials[0]["id"])
+
+    validation_errors = [
+        step["validation"]["metrics"]["validation_metrics"]["accuracy"]
+        for step in trial_metrics["steps"]
+        if step.get("validation")
+    ]
+
+    target_accuracy = 0.97
+    assert max(validation_errors) > target_accuracy, (
+        "mnist_pytorch did not reach minimum target accuracy {} in {} steps."
+        " full validation error history: {}".format(
+            target_accuracy, len(trial_metrics["steps"]), validation_errors
+        )
+    )
+
+
+@pytest.mark.nightly  # type: ignore
+def test_object_detection_accuracy() -> None:
+    config = conf.load_config(conf.official_examples_path("object_detection_pytorch/const.yaml"))
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config, conf.official_examples_path("object_detection_pytorch"), 1
+    )
+
+    trials = exp.experiment_trials(experiment_id)
+    trial_metrics = exp.trial_metrics(trials[0]["id"])
+
+    validation_errors = [
+        step["validation"]["metrics"]["validation_metrics"]["val_avg_iou"]
+        for step in trial_metrics["steps"]
+        if step.get("validation")
+    ]
+
+    target_iou = 0.42
+    assert max(validation_errors) > target_iou, (
+        "mnist_pytorch did not reach minimum target accuracy {} in {} steps."
+        " full validation error history: {}".format(
+            target_iou, len(trial_metrics["steps"]), validation_errors
+        )
+    )
