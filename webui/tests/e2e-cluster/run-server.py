@@ -14,6 +14,7 @@ BLUE = "\033[94m"
 DB_PROT = 5433
 MASTER_PORT = 8081
 
+
 def kill_process(name, process):
     if process is not None and process.is_alive():
         try:
@@ -101,6 +102,7 @@ def main():
         wait_for_server(MASTER_PORT)
         agent.start()
 
+        # TODO send/print a ready signal? depending process want to know when to start
         # Join the agent first so we can exit if the agent fails to connect to
         # the master.
         agent.join()
