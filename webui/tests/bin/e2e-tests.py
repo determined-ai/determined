@@ -24,12 +24,10 @@ client = docker.from_env()
 
 def run(cmd: List[str], config) -> None:
     logger.info("+ %s", " ".join(cmd))
-    subprocess.check_call(cmd, env=config["env"])
+    return subprocess.check_call(cmd, env=config["env"])
 
-
-def run_cluster_cmd(subcommand: List[str], config):
-    run(["det-deploy", "local"] + subcommand + ["--cluster-name", config["CLUSTER_NAME"]], config)
-
+def run_forget(cmd: List[str], config) -> None:
+    return subprocess.Popen(cmd)
 
 def run_ignore_failure(cmd: List[str], config):
     try:
@@ -38,24 +36,23 @@ def run_ignore_failure(cmd: List[str], config):
         pass
 
 
+def run_cluster_cmd(subcommand: List[str], detach: bool, config):
+    cmd = ["make", "-C", "e2e-cluster"] + subcommand
+    if detach:
+        return run_forget(cmd, config)
+    else:
+        return run(cmd, config)
+
+
 def pre_e2e_tests(config):
     run_ignore_failure(["rm", "-r", str(tests_dir.joinpath(RESULTS_DIR_NAME))], config)
     run(["docker", "pull", DOCKER_CYPRESS_IMAGE], config)
-    run_cluster_cmd(
-        [
-            "cluster-up",
-            "--agents",
-            "1",
-            "--no-gpu",
-            "--delete-db",
-            "--no-autorestart",
-            "--master-port",
-            config["INTEGRATIONS_HOST_PORT"],
-        ],
-        config,
-    )
+    run_cluster_cmd( [ "start-db" ], False, config,)
+    cluster_process = run_cluster_cmd( [ "run" ], True, config,)
     test_setup_path = tests_dir.joinpath("bin", "createUserAndExperiments.py")
     run(["python", str(test_setup_path)], config)
+    print("cluster pid", cluster_process.pid)
+    return cluster_process
 
 
 def _cypress_container_name(config):
@@ -64,18 +61,20 @@ def _cypress_container_name(config):
 
 def post_e2e_tests(config):
     clean_up_cypress(config)
-    run_cluster_cmd(["cluster-down", "--delete-db"], config)
+    print("TODO kill cluster")
+    run_cluster_cmd(["stop-db"], config)
 
 
 # _cypress_arguments generates an array of cypress arguments.
 def _cypress_arguments(cypress_configs, config, use_docker):
+    base_url_config = f"baseUrl=http://{config['DET_MASTER']}"
     timeout_config = f"defaultCommandTimeout={config['CYPRESS_DEFAULT_COMMAND_TIMEOUT']}"
     config_file_name = "cypress-docker.json" if use_docker else "cypress.json"
     args = [
         "--config-file",
         config_file_name,
         "--config",
-        ",".join([timeout_config, *cypress_configs]),
+        ",".join([timeout_config, base_url_config, *cypress_configs]),
         "--browser",
         "chrome",
         "--headless",
@@ -99,43 +98,39 @@ def clean_up_cypress(config):
 
 
 def run_e2e_tests(config):
-    base_url_config = f"baseUrl=http://localhost:{config['INTEGRATIONS_HOST_PORT']}"
-    cypress_arguments = _cypress_arguments([base_url_config], config, False)
-
-    command = ["yarn", "--cwd", str(tests_dir), "run", "cypress", "run", *cypress_arguments]
+    cypress_arguments = _cypress_arguments([], config, False)
+    command = ["yarn", "--cwd", str(tests_dir), "run", "cypress", "run",
+            *cypress_arguments]
 
     run(
         command, config,
     )
 
 
-def docker_run_e2e_tests(config):
-    cluster_name = config["CLUSTER_NAME"]
-    master_name = cluster_name + "_determined-master_1"
-    network_name = cluster_name + "_default"
-    cypress_name = _cypress_container_name(config)
+# def docker_run_e2e_tests(config):
+#     cluster_name = config["CLUSTER_NAME"]
+#     master_name = cluster_name + "_determined-master_1"
+#     network_name = cluster_name + "_default"
+#     cypress_name = _cypress_container_name(config)
 
-    base_url_config = f"baseUrl=http://{master_name}:8080"
-    cypress_config = [base_url_config]
-    cypress_arguments = _cypress_arguments(cypress_config, config, True)
+#     cypress_arguments = _cypress_arguments([], config, True)
 
-    command = [
-        "docker",
-        "run",
-        "--name",
-        cypress_name,
-        f"--network={network_name}",
-        "--mount",
-        f"type=bind,source={webui_dir},target=/webui",
-        "-w",
-        "/webui/tests",
-        "--env",
-        f"DET_MASTER={master_name}:8080",
-        DOCKER_CYPRESS_IMAGE,
-        *cypress_arguments,
-    ]
+#     command = [
+#         "docker",
+#         "run",
+#         "--name",
+#         cypress_name,
+#         "--mount",
+#         f"type=bind,source={webui_dir},target=/webui",
+#         "-w",
+#         "/webui/tests",
+#         "--env",
+#         f"DET_MASTER={master_name}:8080",
+#         DOCKER_CYPRESS_IMAGE,
+#         *cypress_arguments,
+#     ]
 
-    run(command, config)
+#     run(command, config)
 
 
 def e2e_tests(config):
@@ -146,12 +141,12 @@ def e2e_tests(config):
         post_e2e_tests(config)
 
 
-def docker_e2e_tests(config):
-    try:
-        pre_e2e_tests(config)
-        docker_run_e2e_tests(config)
-    finally:
-        post_e2e_tests(config)
+# def docker_e2e_tests(config):
+#     try:
+#         pre_e2e_tests(config)
+#         docker_run_e2e_tests(config)
+#     finally:
+#         post_e2e_tests(config)
 
 
 # Defines a one time signal handler that reverts to the original handler after one interception.
@@ -171,10 +166,11 @@ def setup_onetime_sig_handler(sig, fn):
 def get_config(args):
     config = {}
     config["INTEGRATIONS_HOST_PORT"] = args.integrations_host_port
-    config["CLUSTER_NAME"] = f"determined_integrations_{config['INTEGRATIONS_HOST_PORT']}"
-    config["INTEGRATIONS_RESOURCE_SUFFIX"] = "_webui_tests_" + config["INTEGRATIONS_HOST_PORT"]
-    config["INTEGRATIONS_NETWORK"] = "determined" + config["INTEGRATIONS_RESOURCE_SUFFIX"]
-    config["DET_DOCKER_MASTER_NODE"] = "localhost"
+    config["CLUSTER_NAME"] = f"cluster_{args.integrations_host_port}"
+    # config["INTEGRATIONS_RESOURCE_SUFFIX"] = "_webui_tests_" + config["INTEGRATIONS_HOST_PORT"]
+    # config["INTEGRATIONS_NETWORK"] = "determined" + config["INTEGRATIONS_RESOURCE_SUFFIX"]
+    # config["DET_DOCKER_MASTER_NODE"] = "localhost"
+    config["DET_MASTER"] = f"127.0.0.1:{args.integrations_host_port}"
     config["CYPRESS_DEFAULT_COMMAND_TIMEOUT"] = args.cypress_default_command_timeout
     config["CYPRESS_ARGS"] = args.cypress_args
 
@@ -183,9 +179,9 @@ def get_config(args):
         value = os.environ.get(var)
         if value is not None:
             env[var] = value
-    env["INTEGRATIONS_HOST_PORT"] = config["INTEGRATIONS_HOST_PORT"]
-    env["INTEGRATIONS_RESOURCE_SUFFIX"] = config["INTEGRATIONS_RESOURCE_SUFFIX"]
-    env["DET_MASTER"] = "localhost:" + config["INTEGRATIONS_HOST_PORT"]
+    # env["INTEGRATIONS_HOST_PORT"] = config["INTEGRATIONS_HOST_PORT"]
+    # env["INTEGRATIONS_RESOURCE_SUFFIX"] = config["INTEGRATIONS_RESOURCE_SUFFIX"]
+    # env["DET_MASTER"] = "localhost:" + config["INTEGRATIONS_HOST_PORT"]
     logging.basicConfig(level=(args.log_level or "INFO"), format=(args.log_format or "%(message)s"))
     config["env"] = env
     return config
@@ -204,7 +200,7 @@ def main():
     parser = argparse.ArgumentParser(description="Manage e2e tests.")
     help_msg = f"operation must be in {sorted(operation_to_fn.keys())}"
     parser.add_argument("operation", help=help_msg)
-    parser.add_argument("--integrations-host-port", default="5300")
+    parser.add_argument("--integrations-host-port", default="8081")
     parser.add_argument("--cypress-default-command-timeout", default="4000")
     parser.add_argument("--cypress-args", help="other cypress arguments")
     parser.add_argument("--log-level")
