@@ -1,4 +1,4 @@
-.PHONY: get-deps clean e2e-tests docker-e2e-tests
+.PHONY: get-deps clean e2e-tests
 
 get-deps:
 	for i in `seq 3`; do \
@@ -31,9 +31,3 @@ run-e2e-tests:
 
 e2e-tests:
 	python ./bin/e2e-tests.py e2e-tests
-
-# docker-run-e2e-tests:
-# 	python ./bin/e2e-tests.py docker-run-e2e-tests
-
-# docker-e2e-tests:
-# 	python ./bin/e2e-tests.py docker-e2e-tests

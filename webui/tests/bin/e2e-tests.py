@@ -9,9 +9,6 @@ import subprocess
 import sys
 from typing import List
 
-import docker
-
-DOCKER_CYPRESS_IMAGE = "cypress/included:4.3.0"
 RESULTS_DIR_NAME = "results"
 logger = logging.getLogger("e2e-tests")
 
@@ -21,8 +18,6 @@ root = subprocess.check_output(
 root_path = pathlib.Path(root)
 webui_dir = root_path.joinpath("webui")
 tests_dir = webui_dir.joinpath("tests")
-
-client = docker.from_env()
 
 
 def run(cmd: List[str], config) -> None:
@@ -51,7 +46,6 @@ def run_cluster_cmd(subcommand: List[str], detach: bool, config):
 
 def pre_e2e_tests(config):
     run_ignore_failure(["rm", "-r", str(tests_dir.joinpath(RESULTS_DIR_NAME))], config)
-    # run(["docker", "pull", DOCKER_CYPRESS_IMAGE], config)
     run_cluster_cmd(["start-db"], False, config)
     cluster_process = run_cluster_cmd(["run"], True, config)
     print("waiting for cluster ready...")
@@ -67,8 +61,6 @@ def _cypress_container_name(config):
 
 
 def post_e2e_tests(config):
-    clean_up_cypress(config)
-
     print("TODO kill cluster")
     run_ignore_failure(["pkill", "determined"], config)
     run_ignore_failure(["pkill", "run-server"], config)
@@ -77,15 +69,14 @@ def post_e2e_tests(config):
 
 
 # _cypress_arguments generates an array of cypress arguments.
-def _cypress_arguments(cypress_configs, config, use_docker):
+def _cypress_arguments(cypress_configs, config):
     base_url_config = f"baseUrl=http://{config['DET_MASTER']}"
     timeout_config = (
         f"defaultCommandTimeout={config['CYPRESS_DEFAULT_COMMAND_TIMEOUT']}"
     )
-    config_file_name = "cypress-docker.json" if use_docker else "cypress.json"
     args = [
         "--config-file",
-        config_file_name,
+        "cypress.json",
         "--config",
         ",".join([timeout_config, base_url_config, *cypress_configs]),
         "--browser",
@@ -107,13 +98,6 @@ def container_exists(name):
     )
 
 
-# def clean_up_cypress(config):
-#     cypress_name = _cypress_container_name(config)
-#     if container_exists(cypress_name):
-#         # ensure that the cypress container is stopped and removed
-#         run(["docker", "container", "rm", "-f", cypress_name], config)
-
-
 def run_e2e_tests(config):
     cypress_arguments = _cypress_arguments([], config, False)
     command = [
@@ -131,46 +115,12 @@ def run_e2e_tests(config):
     )
 
 
-# def docker_run_e2e_tests(config):
-#     cluster_name = config["CLUSTER_NAME"]
-#     master_name = cluster_name + "_determined-master_1"
-#     network_name = cluster_name + "_default"
-#     cypress_name = _cypress_container_name(config)
-
-#     cypress_arguments = _cypress_arguments([], config, True)
-
-#     command = [
-#         "docker",
-#         "run",
-#         "--name",
-#         cypress_name,
-#         "--mount",
-#         f"type=bind,source={webui_dir},target=/webui",
-#         "-w",
-#         "/webui/tests",
-#         "--env",
-#         f"DET_MASTER={master_name}:8080",
-#         DOCKER_CYPRESS_IMAGE,
-#         *cypress_arguments,
-#     ]
-
-#     run(command, config)
-
-
 def e2e_tests(config):
     try:
         pre_e2e_tests(config)
         run_e2e_tests(config)
     finally:
         post_e2e_tests(config)
-
-
-# def docker_e2e_tests(config):
-#     try:
-#         pre_e2e_tests(config)
-#         docker_run_e2e_tests(config)
-#     finally:
-#         post_e2e_tests(config)
 
 
 # Defines a one time signal handler that reverts to the original handler after one interception.
@@ -190,10 +140,7 @@ def setup_onetime_sig_handler(sig, fn):
 def get_config(args):
     config = {}
     config["INTEGRATIONS_HOST_PORT"] = args.integrations_host_port
-    config["CLUSTER_NAME"] = f"cluster_{args.integrations_host_port}"
-    # config["INTEGRATIONS_RESOURCE_SUFFIX"] = "_webui_tests_" + config["INTEGRATIONS_HOST_PORT"]
-    # config["INTEGRATIONS_NETWORK"] = "determined" + config["INTEGRATIONS_RESOURCE_SUFFIX"]
-    # config["DET_DOCKER_MASTER_NODE"] = "localhost"
+    config["CLUSTER_NAME"] = f"det_test_{args.integrations_host_port}"
     config["DET_MASTER"] = f"localhost:{args.integrations_host_port}"
     config["CYPRESS_DEFAULT_COMMAND_TIMEOUT"] = args.cypress_default_command_timeout
     config["CYPRESS_ARGS"] = args.cypress_args
@@ -204,7 +151,6 @@ def get_config(args):
         if value is not None:
             env[var] = value
     env["INTEGRATIONS_HOST_PORT"] = config["INTEGRATIONS_HOST_PORT"]
-    # env["INTEGRATIONS_RESOURCE_SUFFIX"] = config["INTEGRATIONS_RESOURCE_SUFFIX"]
     env["DET_MASTER"] = config["DET_MASTER"]
     logging.basicConfig(
         level=(args.log_level or "INFO"), format=(args.log_format or "%(message)s")
@@ -215,12 +161,10 @@ def get_config(args):
 
 def main():
     operation_to_fn = {
-        # "docker-run-e2e-tests": docker_run_e2e_tests,
         "pre-e2e-tests": pre_e2e_tests,
         "run-e2e-tests": run_e2e_tests,
         "post-e2e-tests": post_e2e_tests,
         "e2e-tests": e2e_tests,
-        # "docker-e2e-tests": docker_e2e_tests,
     }
 
     parser = argparse.ArgumentParser(description="Manage e2e tests.")
