@@ -1,8 +1,6 @@
 import pathlib
 from typing import Any, Dict
 
-import torch
-
 
 class PyTorchCallback:
     """
@@ -81,20 +79,3 @@ class PyTorchCallback:
         Load the state of this using the deserialized state_dict.
         """
         pass
-
-
-class ReduceLROnPlateauEveryValidationStep(PyTorchCallback):
-    def __init__(
-        self, reduce_lr_on_plateau: torch.optim.lr_scheduler.ReduceLROnPlateau, metric_name: str
-    ):
-        self.reduce_lr_on_plateau = reduce_lr_on_plateau
-        self.metric_name = metric_name
-
-    def on_validation_step_end(self, metrics: Dict[str, Any]) -> None:
-        self.reduce_lr_on_plateau.step(metrics[self.metric_name])
-
-    def state_dict(self) -> Dict[str, Any]:
-        return self.reduce_lr_on_plateau.state_dict()
-
-    def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
-        self.reduce_lr_on_plateau.load_state_dict(state_dict)
