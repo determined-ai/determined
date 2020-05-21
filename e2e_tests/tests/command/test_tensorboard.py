@@ -8,6 +8,7 @@ from tests import config as conf
 from tests import experiment as exp
 from tests.filetree import FileTree
 
+AWAITING_METRICS = "TensorBoard is awaiting metrics"
 SERVICE_READY = "TensorBoard is running at: http://"
 num_trials = 1
 
@@ -69,6 +70,8 @@ def test_start_tensorboard_for_shared_fs_experiment(tmp_path: Path) -> None:
         for line in tensorboard.stdout:
             if SERVICE_READY in line:
                 break
+            if AWAITING_METRICS in line:
+                raise AssertionError("Tensorboard did not find metrics")
         else:
             raise AssertionError(f"Did not find {SERVICE_READY} in output")
 
@@ -142,5 +145,7 @@ def test_start_tensorboard_for_multi_experiment(tmp_path: Path, secrets: Dict[st
         for line in tensorboard.stdout:
             if SERVICE_READY in line:
                 break
+            if AWAITING_METRICS in line:
+                raise AssertionError("Tensorboard did not find metrics")
         else:
             raise AssertionError(f"Did not find {SERVICE_READY} in output")

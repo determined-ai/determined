@@ -1,9 +1,9 @@
-import argparse
 import json
 import os
+import subprocess
 import sys
 import time
-from typing import List
+from typing import Callable, List
 
 import boto3
 import requests
@@ -16,50 +16,72 @@ def set_s3_region(bucket: str) -> None:
     bucketLocation = client.get_bucket_location(Bucket=bucket)
 
     region = bucketLocation["LocationConstraint"]
-    print(f"export AWS_REGION={region}")
+
+    os.environ["AWS_REGION"] = str(region)
 
 
-def poll_tensorboard() -> str:
-    task_id = os.environ["DET_TASK_ID"]
-    port = os.environ["TENSORBOARD_PORT"]
-    tensorboard_addr = f"http://localhost:{port}/proxy/{task_id}"
+def wait_for_tensorboard(max_seconds: float, url: str, still_alive_fn: Callable[[], bool]) -> bool:
+    """Return True if the process successfully comes up before a deadline."""
+
+    deadline = time.time() + max_seconds
 
     while True:
-        time.sleep(5)
+        if time.time() > deadline:
+            print(f"TensorBoard did not find metrics within {max_seconds} seconds", file=sys.stderr)
+            return False
+
+        if not still_alive_fn():
+            print("TensorBoard process died before reporting metrics", file=sys.stderr)
+            return False
+
+        time.sleep(1)
 
         try:
-            res = requests.get(f"{tensorboard_addr}/data/plugin/scalars/tags")
+            res = requests.get(url)
+            res.raise_for_status()
+        except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
+            continue
+
+        try:
             tags = res.json()
-        except Exception:
+        except ValueError:
             continue
 
         # TensorBoard will return { trial/<id> : { tag: value } } when data is present.
         if len(tags) == 0:
+            print("TensorBoard is awaiting metrics...")
             continue
 
         for val in tags.values():
             if len(val):
-                return "TensorBoard contains metrics"
+                print("TensorBoard contains metrics")
+                return True
 
 
-def main(args: List[str]) -> None:
-    parser = argparse.ArgumentParser(description="Determined AI Tensorboard Entrypoint")
-    parser.add_argument("command", type=str, choices=["hdfs", "s3", "service_ready"])
-
-    conf = parser.parse_args(args)
-
+def main(args: List[str]) -> int:
     with open("/run/determined/workdir/experiment_config.json") as f:
         exp_conf = json.load(f)
 
-    if conf.command == "s3":
-        if exp_conf["checkpoint_storage"]["type"] == "s3":
-            set_s3_region(exp_conf["checkpoint_storage"]["bucket"])
+    if exp_conf["checkpoint_storage"]["type"] == "s3":
+        set_s3_region(exp_conf["checkpoint_storage"]["bucket"])
 
-    elif conf.command == "service_ready":
-        print(poll_tensorboard())
-    else:
-        raise Exception("Unknown Command")
+    task_id = os.environ["DET_TASK_ID"]
+    port = os.environ["TENSORBOARD_PORT"]
+    tensorboard_addr = f"http://localhost:{port}/proxy/{task_id}"
+    url = f"{tensorboard_addr}/data/plugin/scalars/tags"
+
+    p = subprocess.Popen(
+        ["tensorboard", f"--port={port}", f"--path_prefix=/proxy/{task_id}", *args]
+    )
+
+    def still_alive() -> bool:
+        return p.poll() is None
+
+    if not wait_for_tensorboard(600, url, still_alive):
+        p.kill()
+
+    return p.wait()
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sys.exit(main(sys.argv[1:]))
