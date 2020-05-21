@@ -1,10 +1,10 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 set -e
 set -x
 
 WORKING_DIR="/run/determined/workdir"
-STARTUP_HOOK="./startup-hook.sh"
+STARTUP_HOOK="startup-hook.sh"
 export PATH="/run/determined/pythonuserbase/bin:$PATH"
 
 python3.6 -m pip install --user /opt/determined/wheels/determined*.whl
