@@ -11,6 +11,8 @@ CLEAR = "\033[39m"
 MAGENTA = "\033[95m"
 BLUE = "\033[94m"
 
+DB_PROT = 5433
+MASTER_PORT = 8081
 
 def kill_process(name, process):
     if process is not None and process.is_alive():
@@ -20,7 +22,7 @@ def kill_process(name, process):
             print(f"failed to kill process: {name}")
 
 
-def wait_for_server(port, host='localhost', timeout=5.0):
+def wait_for_server(port, host="localhost", timeout=5.0):
     for _ in range(100):
         try:
             with socket.create_connection((host, port), timeout=timeout):
@@ -37,9 +39,10 @@ def proc(name, cmd, logs_handler=lambda x: x):
         ) as p:
             try:
                 for line in p.stdout:
-                    print(logs_handler(line.decode('utf8')), end="", flush=True)
+                    print(logs_handler(line.decode("utf8")), end="", flush=True)
             except KeyboardInterrupt:
                 print(f"Killing Log stream for {name}")
+
     return mp.Process(target=func, daemon=True)
 
 
@@ -48,11 +51,12 @@ def tail_db_logs():
 
 
 def run_master():
-    # TODO make the port configurable with 8080 default
+    # TODO make the port configurable with a default
     return proc(
         "master",
-        ["../master/build/determined-master", "--config-file", "master.yaml"],
-        logs_handler=lambda line: f"{MAGENTA}determined-master  |{CLEAR} {line}"
+        # TODO use path lib
+        ["../../../master/build/determined-master", "--config-file", "master.yaml"],
+        logs_handler=lambda line: f"{MAGENTA}determined-master  |{CLEAR} {line}",
     )
 
 
@@ -62,20 +66,20 @@ def run_agent():
     return proc(
         "agent",
         [
-            "../agent/build/determined-agent",
+            "../../../agent/build/determined-agent",
             "run",
             "--config-file",
             "agent.yaml",
             "--container-master-host",
             container_master_host,
         ],
-        logs_handler=lambda line: f"{BLUE}determined-agent   |{CLEAR} {line}"
+        logs_handler=lambda line: f"{BLUE}determined-agent   |{CLEAR} {line}",
     )
 
 
 def is_db_running():
     try:
-        with socket.create_connection(("localhost", 5432), timeout=0.5):
+        with socket.create_connection(("localhost", DB_PROT), timeout=0.5):
             return True
     except OSError:
         return False
@@ -91,10 +95,10 @@ def main():
             db = True
             subprocess.check_call(["docker-compose", "up", "-d"])
 
-        wait_for_server(5432)
+        wait_for_server(DB_PROT)
         db_logs.start()
         master.start()
-        wait_for_server(8080)
+        wait_for_server(MASTER_PORT)
         agent.start()
 
         # Join the agent first so we can exit if the agent fails to connect to

@@ -12,8 +12,9 @@ checkpoint_storage:
 db:
   user: postgres
   host: localhost
-  port: 5432
+  port: 5433
   name: determined
   password: postgres
 
 root: build
+http_port: 8081

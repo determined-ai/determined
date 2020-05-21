@@ -4,7 +4,7 @@ services:
   determined-db:
     image: postgres:10.8
     ports:
-      - 5432:5432
+      - 5433:5432
     restart: always
     environment:
       POSTGRES_DB: determined

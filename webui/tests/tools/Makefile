@@ -24,13 +24,13 @@ prep-root:
 	@mkdir -p build/webui/elm
 	@mkdir -p build/webui/react
 	@mkdir -p build/wheels/
-	@ln -s $(abspath ../master/static) build/
-	@ln -s $(abspath ../docs/site/html/*) build/webui/docs
-	@ln -s $(abspath ../webui/react/build/*) build/webui/react
-	@ln -s $(abspath ../webui/elm/public) build/webui/elm
-	@ln -s $(abspath ../common/dist/*.whl) build/wheels/
-	@ln -s $(abspath ../cli/dist/*.whl) build/wheels/
-	@ln -s $(abspath ../harness/dist/*.whl) build/wheels/
+	@ln -s $(abspath $(PROJECT_ROOT)/master/static) build/
+	@ln -s $(abspath $(PROJECT_ROOT)/docs/site/html/*) build/webui/docs
+	@ln -s $(abspath $(PROJECT_ROOT)/webui/react/build/*) build/webui/react
+	@ln -s $(abspath $(PROJECT_ROOT)/webui/elm/public) build/webui/elm
+	@ln -s $(abspath $(PROJECT_ROOT)/common/dist/*.whl) build/wheels/
+	@ln -s $(abspath $(PROJECT_ROOT)/cli/dist/*.whl) build/wheels/
+	@ln -s $(abspath $(PROJECT_ROOT)/harness/dist/*.whl) build/wheels/
 
 .PHONY: run
 run: prep-root
