@@ -832,6 +832,8 @@ class PyTorchTrial(det.Trial):
         :meth:`evaluate_full_dataset()` cannot. Only one of
         :meth:`evaluate_full_dataset` and :meth:`evaluate_batch` should be
         overridden by a trial.
+
+        The metrics returned from this function must be JSON-serializable.
         """
         pass
 
@@ -856,6 +858,8 @@ class PyTorchTrial(det.Trial):
         device, even when multiple devices (slots) are used for training. Only
         one of :meth:`evaluate_full_dataset` and :meth:`evaluate_batch` should
         be overridden by a trial.
+
+        The metrics returned from this function must be JSON-serializable.
         """
         pass
 
