@@ -44,23 +44,24 @@ def run_cluster_cmd(subcommand: List[str], detach: bool, config):
         return run(cmd, config)
 
 
-def pre_e2e_tests(config):
-    run_ignore_failure(["rm", "-r", str(tests_dir.joinpath(RESULTS_DIR_NAME))], config)
+def setup_cluster(config):
     run_cluster_cmd(["start-db"], False, config)
     cluster_process = run_cluster_cmd(["run"], True, config)
     print("waiting for cluster ready...")
     time.sleep(6)  # FIXME add a ready check for master
-    test_setup_path = tests_dir.joinpath("bin", "createUserAndExperiments.py")
-    run(["python", str(test_setup_path)], config)
     print("cluster pid", cluster_process.pid)
     return cluster_process
 
 
-def _cypress_container_name(config):
-    return config["CLUSTER_NAME"] + "_cypress"
+def pre_e2e_tests(config):
+    run_ignore_failure(["rm", "-r", str(tests_dir.joinpath(RESULTS_DIR_NAME))], config)
+    run(
+        ["python", str(tests_dir.joinpath("bin", "createUserAndExperiments.py"))],
+        config,
+    )
 
 
-def post_e2e_tests(config):
+def teardown_cluster(config):
     print("TODO kill cluster")
     run_ignore_failure(["pkill", "determined"], config)
     run_ignore_failure(["pkill", "run-server"], config)
@@ -90,16 +91,8 @@ def _cypress_arguments(cypress_configs, config):
     return args
 
 
-def container_exists(name):
-    return any(
-        filter(
-            lambda container: container.name == name, client.containers.list(all=True)
-        )
-    )
-
-
 def run_e2e_tests(config):
-    cypress_arguments = _cypress_arguments([], config, False)
+    cypress_arguments = _cypress_arguments([], config)
     command = [
         "yarn",
         "--cwd",
@@ -119,19 +112,22 @@ def cypress_open(config):
 
 
 def e2e_tests(config):
+    # FIXME "with" pattern?
     try:
+        setup_cluster(config)
         pre_e2e_tests(config)
         run_e2e_tests(config)
     finally:
-        post_e2e_tests(config)
+        teardown_cluster(config)
 
 
 def dev_tests(config):
     try:
+        setup_cluster(config)
         pre_e2e_tests(config)
         cypress_open(config)
     finally:
-        post_e2e_tests(config)
+        teardown_cluster(config)
 
 
 # Defines a one time signal handler that reverts to the original handler after one interception.
@@ -174,7 +170,8 @@ def main():
     operation_to_fn = {
         "pre-e2e-tests": pre_e2e_tests,
         "run-e2e-tests": run_e2e_tests,
-        "post-e2e-tests": post_e2e_tests,
+        "setup-test-cluster": setup_cluster,
+        "teardown-test-cluster": teardown_cluster,
         "e2e-tests": e2e_tests,
         "dev-tests": dev_tests,
     }
@@ -197,7 +194,7 @@ def main():
 
     config = get_config(args)
 
-    setup_onetime_sig_handler(signal.SIGINT, lambda: post_e2e_tests(config))
+    setup_onetime_sig_handler(signal.SIGINT, lambda: teardown_cluster(config))
     fn(config)
 
 
