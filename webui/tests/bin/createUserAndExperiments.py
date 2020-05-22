@@ -43,6 +43,7 @@ def create_user(username, password=""):
         wait_for_process(p)
 
 
+print("setting up users..")
 # First login as admin to avoid having to authenticate downstream
 login_as("admin")
 
@@ -59,6 +60,7 @@ login_as(USER_WITH_PASSWORD_USERNAME, USER_WITH_PASSWORD_PASSWORD)
 determined_root_dir = pathlib.Path(__file__).absolute().parents[3]
 experiment_dir = determined_root_dir.joinpath("e2e_tests", "tests", "fixtures", "no_op")
 
+print("creating experiments..")
 for _ in range(4):
     subprocess.run(
         [
