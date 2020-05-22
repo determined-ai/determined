@@ -126,8 +126,58 @@ def test_object_detection_accuracy() -> None:
 
     target_iou = 0.42
     assert max(validation_errors) > target_iou, (
-        "mnist_pytorch did not reach minimum target accuracy {} in {} steps."
+        "object_detection_pytorch did not reach minimum target accuracy {} in {} steps."
         " full validation error history: {}".format(
             target_iou, len(trial_metrics["steps"]), validation_errors
+        )
+    )
+
+
+@pytest.mark.nightly  # type: ignore
+def test_iris_tf_keras() -> None:
+    config = conf.load_config(conf.official_examples_path("iris_tf_keras/const.yaml"))
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config, conf.official_examples_path("iris_tf_keras"), 1
+    )
+
+    trials = exp.experiment_trials(experiment_id)
+    trial_metrics = exp.trial_metrics(trials[0]["id"])
+
+    validation_errors = [
+        step["validation"]["metrics"]["validation_metrics"]["val_categorical_accuracy"]
+        for step in trial_metrics["steps"]
+        if step.get("validation")
+    ]
+
+    accuracy = 0.95
+    assert max(validation_errors) > accuracy, (
+        "iris_tf_keras did not reach minimum target accuracy {} in {} steps."
+        " full validation error history: {}".format(
+            accuracy, len(trial_metrics["steps"]), validation_errors
+        )
+    )
+
+
+@pytest.mark.nightly  # type: ignore
+def test_fashion_mnist_tf_keras() -> None:
+    config = conf.load_config(conf.official_examples_path("fashion_mnist_tf_keras/const.yaml"))
+    experiment_id = exp.run_basic_test_with_temp_config(
+        config, conf.official_examples_path("fashion_mnist_tf_keras"), 1
+    )
+
+    trials = exp.experiment_trials(experiment_id)
+    trial_metrics = exp.trial_metrics(trials[0]["id"])
+
+    validation_errors = [
+        step["validation"]["metrics"]["validation_metrics"]["val_accuracy"]
+        for step in trial_metrics["steps"]
+        if step.get("validation")
+    ]
+
+    accuracy = 0.85
+    assert max(validation_errors) > accuracy, (
+        "fashion_mnist_tf_keras did not reach minimum target accuracy {} in {} steps."
+        " full validation error history: {}".format(
+            accuracy, len(trial_metrics["steps"]), validation_errors
         )
     )
