@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import argparse
+from contextlib import contextmanager
 import logging
 import time
 import os
@@ -45,12 +46,29 @@ def run_cluster_cmd(subcommand: List[str], detach: bool, config):
 
 
 def setup_cluster(config):
+    print("setting up the cluster..")
     run_cluster_cmd(["start-db"], False, config)
     cluster_process = run_cluster_cmd(["run"], True, config)
-    print("waiting for cluster ready...")
     time.sleep(6)  # FIXME add a ready check for master
     print("cluster pid", cluster_process.pid)
     return cluster_process
+
+
+def teardown_cluster(config):
+    print("tearing down the cluster..")
+    # FIXME
+    run_ignore_failure(["pkill", "determined"], config)
+    run_ignore_failure(["pkill", "run-server"], config)
+
+    run_cluster_cmd(["stop-db"], False, config)
+
+
+@contextmanager
+def det_cluster(config):
+    try: 
+        yield setup_cluster(config)
+    finally: 
+        teardown_cluster(config)
 
 
 def pre_e2e_tests(config):
@@ -59,14 +77,6 @@ def pre_e2e_tests(config):
         ["python", str(tests_dir.joinpath("bin", "createUserAndExperiments.py"))],
         config,
     )
-
-
-def teardown_cluster(config):
-    print("TODO kill cluster")
-    run_ignore_failure(["pkill", "determined"], config)
-    run_ignore_failure(["pkill", "run-server"], config)
-
-    run_cluster_cmd(["stop-db"], False, config)
 
 
 # _cypress_arguments generates an array of cypress arguments.
@@ -102,6 +112,7 @@ def run_e2e_tests(config):
         "run",
         *cypress_arguments,
     ]
+    raise Exception
 
     run(command, config)
 
@@ -112,22 +123,15 @@ def cypress_open(config):
 
 
 def e2e_tests(config):
-    # FIXME "with" pattern?
-    try:
-        setup_cluster(config)
+    with det_cluster(config):
         pre_e2e_tests(config)
         run_e2e_tests(config)
-    finally:
-        teardown_cluster(config)
 
 
 def dev_tests(config):
-    try:
-        setup_cluster(config)
+    with det_cluster(config):
         pre_e2e_tests(config)
         cypress_open(config)
-    finally:
-        teardown_cluster(config)
 
 
 # Defines a one time signal handler that reverts to the original handler after one interception.
