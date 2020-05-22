@@ -1,4 +1,5 @@
 import datetime
+import logging
 import os
 import re
 import subprocess
@@ -111,7 +112,19 @@ def wait_for_experiment_state(
     log_every: int = 60,
 ) -> None:
     for seconds_waited in range(max_wait_secs):
-        state = experiment_state(experiment_id)
+        try:
+            state = experiment_state(experiment_id)
+        # Ignore network errors while polling for experiment state to avoid a
+        # single network flake to cause a test suite failure. If the master is
+        # unreachable multiple times, this test will fail after max_wait_secs.
+        except api.errors.MasterNotFoundException:
+            logging.warning(
+                "Network failure ignored when polling for state of "
+                "experiment {}".format(experiment_id)
+            )
+            time.sleep(1)
+            continue
+
         if state == target_state:
             return
 
