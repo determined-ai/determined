@@ -500,7 +500,9 @@ class EstimatorTrialController(det.LoopTrialController):
         repeating_train_fn = self._check_and_repeat_train_input_fn(self.user_train_spec.input_fn)
 
         self.train_spec = tf.estimator.TrainSpec(input_fn=repeating_train_fn, hooks=all_hooks)
-        self.eval_spec = tf.estimator.EvalSpec(input_fn=self.val_spec.input_fn, steps=None)
+        self.eval_spec = tf.estimator.EvalSpec(
+            input_fn=self.val_spec.input_fn, hooks=self.val_spec.hooks, steps=None
+        )
 
     def _init_run_config(self, config: tf.estimator.RunConfig) -> tf.estimator.RunConfig:
         logging.debug(f"Initializing RunConfig. Got RunConfig: {config} .")
