@@ -85,9 +85,7 @@ const DeterminedAuth: React.FC = () => {
       {loginForm}
       <p className={css.message}>
         Forgot your password, or need to manage users? Check out our&nbsp;
-        <a href="/docs/topic-guides/users.html" rel="noreferrer noopener" target="_blank">
-          docs
-        </a>
+        <a href="/docs/topic-guides/users.html" rel="noreferrer noopener" target="_blank">docs</a>
       </p>
     </div>
   );

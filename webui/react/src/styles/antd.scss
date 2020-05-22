@@ -1,7 +1,8 @@
 html {
   /* Button */
 
-  .ant-btn[disabled] {
+  .ant-btn[disabled],
+  .ant-btn[disabled]:hover {
     background-color: var(--theme-colors-monochrome-11);
     border-color: var(--theme-colors-monochrome-11);
     color: var(--theme-colors-monochrome-17);

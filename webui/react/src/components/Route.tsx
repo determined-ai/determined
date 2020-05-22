@@ -13,7 +13,7 @@ const Route: React.FC<RouteConfigItem> = (props: RouteConfigItem) => {
   const auth = Auth.useStateContext();
 
   if (props.needAuth && !auth.isAuthenticated) {
-    const queryString = window.location.search ? window.location.search : `?redirect=${props.path}`;
+    const queryString = window.location.search || `?redirect=${props.path}`;
     return <Redirect to={ `/det/login${queryString}` } />;
   }
 
