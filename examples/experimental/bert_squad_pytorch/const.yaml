@@ -1,0 +1,28 @@
+description: Bert_SQuAD_PyTorch
+hyperparameters:
+    global_batch_size: 24
+    learning_rate: 3e-5
+    lr_scheduler_epoch_freq: 1
+    model_type: 'bert'
+    adam_epsilon: 1e-8
+    weight_decay: 0
+    num_warmup_steps: 0
+    num_training_steps: 400
+    max_seq_length: 384
+    doc_stride: 128
+    max_query_length: 64
+    n_best_size: 20
+    max_answer_length: 30
+    null_score_diff_threshold: 0.0
+searcher:
+    name: single
+    metric: acc
+    max_steps: 2
+    smaller_is_better: false
+max_restarts: 0
+min_validation_period: 200
+data:
+    model_name_or_path: "bert-base-uncased"
+    download_data: False
+    task: "SQuAD1.0"
+entrypoint: model_def:BertSQuADPyTorch

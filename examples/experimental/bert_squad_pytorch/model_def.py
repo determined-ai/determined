@@ -1,0 +1,166 @@
+from typing import Dict, Sequence, Union
+import torch
+import os
+import torch.nn as nn
+
+import determined as det
+from determined.pytorch import DataLoader, PyTorchTrial, LRScheduler
+import data
+import constants
+
+from transformers import (
+    AdamW,
+    get_linear_schedule_with_warmup,
+)
+from transformers.data.processors.squad import SquadResult
+from transformers.data.metrics.squad_metrics import (
+    compute_predictions_logits,
+    squad_evaluate,
+)
+
+TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
+
+
+class BertSQuADPyTorch(PyTorchTrial):
+    def __init__(self, context: det.TrialContext) -> None:
+        self.context = context
+        self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
+        self.config_class, self.tokenizer_class, self.model_class = constants.MODEL_CLASSES[
+            self.context.get_hparam("model_type")
+        ]
+        self.validation_dataset, self.examples, self.features = data.load_and_cache_examples(
+            data_dir=self.download_directory,
+            config=self.context.get_data_config(),
+            model_type=self.context.get_hparam("model_type"),
+            max_seq_length=self.context.get_hparam("max_seq_length"),
+            doc_stride=self.context.get_hparam("doc_stride"),
+            max_query_length=self.context.get_hparam("max_query_length"),
+            model_name_or_path=self.context.get_data_config().get("model_name_or_path"),
+            evaluate=True,
+            output_examples=True,
+        )
+        self.tr_loss = 0.0
+
+    def build_training_data_loader(self) -> DataLoader:
+        train_dataset = data.load_and_cache_examples(
+            data_dir=self.download_directory,
+            config=self.context.get_data_config(),
+            model_type=self.context.get_hparam("model_type"),
+            max_seq_length=self.context.get_hparam("max_seq_length"),
+            doc_stride=self.context.get_hparam("doc_stride"),
+            max_query_length=self.context.get_hparam("max_query_length"),
+            model_name_or_path=self.context.get_data_config().get("model_name_or_path"),
+            evaluate=False,
+            output_examples=False,
+        )
+        return DataLoader(train_dataset, batch_size=self.context.get_per_slot_batch_size())
+
+    def build_validation_data_loader(self) -> DataLoader:
+        return DataLoader(
+            self.validation_dataset,
+            batch_size=self.context.get_per_slot_batch_size(),
+        )
+
+    def build_model(self) -> torch.nn.modules.module.Module:
+        cache_dir_per_rank = f"/tmp/{self.context.distributed.get_rank()}"
+
+        config = self.config_class.from_pretrained(
+            self.context.get_data_config().get("model_name_or_path"),
+            cache_dir=cache_dir_per_rank,
+        )
+        model = self.model_class.from_pretrained(
+            self.context.get_data_config().get("model_name_or_path"),
+            from_tf=bool(".ckpt" in self.context.get_data_config().get("model_name_or_path")),
+            config=config,
+            cache_dir=cache_dir_per_rank,
+        )
+        return model
+
+    def optimizer(self, model: nn.Module) -> torch.optim.optimizer.Optimizer:
+        no_decay = ["bias", "LayerNorm.weight"]
+        optimizer_grouped_parameters = [
+            {
+                "params": [
+                    p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)
+                ],
+                "weight_decay": self.context.get_hparam("weight_decay"),
+            },
+            {
+                "params": [
+                    p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)
+                ],
+                "weight_decay": self.context.get_hparam("weight_decay"),
+            },
+        ]
+        optimizer = AdamW(
+            optimizer_grouped_parameters,
+            lr=self.context.get_hparam("learning_rate"),
+            eps=self.context.get_hparam("adam_epsilon")
+        )
+        return optimizer
+
+    def create_lr_scheduler(self, optimizer: torch.optim.Optimizer) -> LRScheduler:
+        scheduler = get_linear_schedule_with_warmup(
+            optimizer,
+            num_warmup_steps=self.context.get_hparam("num_warmup_steps"),
+            num_training_steps=self.context.get_hparam("num_training_steps"),
+        )
+        return LRScheduler(scheduler, LRScheduler.StepMode.STEP_EVERY_BATCH)
+
+    def train_batch(self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int) -> Union[torch.Tensor, Dict[str, Any]] :
+        inputs = {
+            "input_ids": batch[0],
+            "attention_mask": batch[1],
+            "token_type_ids": batch[2],
+            "start_positions": batch[3],
+            "end_positions": batch[4],
+        }
+        outputs = model(**inputs)
+        loss = outputs[0]
+        self.tr_loss += loss.item()
+        return {"loss": self.tr_loss}
+
+    def evaluate_full_dataset(self, data_loader: DataLoader, model: nn.Module) -> Dict[str, Any]:
+        tokenizer = self.tokenizer_class.from_pretrained(
+            self.context.get_data_config().get("model_name_or_path"),
+            do_lower_case=True,
+            cache_dir=None
+        )
+
+        all_results = []
+        for batch in data_loader:
+            inputs = {
+                "input_ids": batch[0],
+                "attention_mask": batch[1],
+                "token_type_ids": batch[2],
+            }
+            feature_indices = batch[3]
+            outputs = model(**inputs)
+            for i, feature_index in enumerate(feature_indices):
+                eval_feature = self.features[feature_index.item()]
+                unique_id = int(eval_feature.unique_id)
+                output = [output[i].detach().cpu().tolist() for output in outputs]
+                start_logits, end_logits = output
+                result = SquadResult(unique_id, start_logits, end_logits)
+            all_results.append(result)
+
+        output_prediction_file = os.path.join(".", "predictions_{}.json".format(""))
+        output_nbest_file = os.path.join(".", "nbest_predictions_{}.json".format(""))
+        output_null_log_odds_file = None
+        predictions = compute_predictions_logits(
+            self.examples,
+            self.features,
+            all_results,
+            self.context.get_hparam("n_best_size"),
+            self.context.get_hparam("max_answer_length"),
+            True,
+            output_prediction_file,
+            output_nbest_file,
+            output_null_log_odds_file,
+            True,
+            False,
+            self.context.get_hparam("null_score_diff_threshold"),
+            tokenizer,
+        )
+        results = squad_evaluate(self.examples, predictions)
+        return results
