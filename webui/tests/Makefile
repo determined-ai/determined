@@ -31,3 +31,7 @@ run-e2e-tests:
 
 e2e-tests:
 	python ./bin/e2e-tests.py e2e-tests
+
+.PHONY: dev-tests
+dev-tests:
+	python ./bin/e2e-tests.py dev-tests

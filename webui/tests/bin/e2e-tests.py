@@ -110,15 +110,26 @@ def run_e2e_tests(config):
         *cypress_arguments,
     ]
 
-    run(
-        command, config,
-    )
+    run(command, config)
+
+
+def cypress_open(config):
+    base_url_config = f"baseUrl=http://{config['DET_MASTER']}"
+    run(["npx", "cypress", "open", "--config", base_url_config], config)
 
 
 def e2e_tests(config):
     try:
         pre_e2e_tests(config)
         run_e2e_tests(config)
+    finally:
+        post_e2e_tests(config)
+
+
+def dev_tests(config):
+    try:
+        pre_e2e_tests(config)
+        cypress_open(config)
     finally:
         post_e2e_tests(config)
 
@@ -165,6 +176,7 @@ def main():
         "run-e2e-tests": run_e2e_tests,
         "post-e2e-tests": post_e2e_tests,
         "e2e-tests": e2e_tests,
+        "dev-tests": dev_tests,
     }
 
     parser = argparse.ArgumentParser(description="Manage e2e tests.")
