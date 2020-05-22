@@ -11,6 +11,10 @@
 
     & > * { height: 100%; }
     & > *:first-child { flex-grow: 0; }
-    & > *:last-child { flex-grow: 1; }
+    & > *:last-child {
+      flex-grow: 1;
+      height: calc(100vh - var(--theme-sizes-navbar-height));
+      overflow: auto;
+    }
   }
 }
