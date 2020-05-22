@@ -20,6 +20,8 @@ root_path = pathlib.Path(root)
 webui_dir = root_path.joinpath("webui")
 tests_dir = webui_dir.joinpath("tests")
 
+CLUSTER_CMD_PREFIX = ["make", "-C", "e2e-cluster"]
+
 
 def run(cmd: List[str], config) -> None:
     logger.info("+ %s", " ".join(cmd))
@@ -37,37 +39,29 @@ def run_ignore_failure(cmd: List[str], config):
         pass
 
 
-def run_cluster_cmd(subcommand: List[str], detach: bool, config):
-    cmd = ["make", "-C", "e2e-cluster"] + subcommand
-    if detach:
-        return run_forget(cmd, config)
-    else:
-        return run(cmd, config)
-
-
 def setup_cluster(config):
-    print("setting up the cluster..")
-    run_cluster_cmd(["start-db"], False, config)
-    cluster_process = run_cluster_cmd(["run"], True, config)
+    logger.info("setting up the cluster..")
+    run(CLUSTER_CMD_PREFIX + ["start-db"], config)
+    cluster_process = run_forget(CLUSTER_CMD_PREFIX + ["run"], config)
     time.sleep(6)  # FIXME add a ready check for master
-    print("cluster pid", cluster_process.pid)
+    logger.info("cluster pid", cluster_process.pid)
     return cluster_process
 
 
 def teardown_cluster(config):
-    print("tearing down the cluster..")
+    logger.info("tearing down the cluster..")
     # FIXME
     run_ignore_failure(["pkill", "determined"], config)
     run_ignore_failure(["pkill", "run-server"], config)
 
-    run_cluster_cmd(["stop-db"], False, config)
+    run(CLUSTER_CMD_PREFIX + ["stop-db"], config)
 
 
 @contextmanager
 def det_cluster(config):
-    try: 
+    try:
         yield setup_cluster(config)
-    finally: 
+    finally:
         teardown_cluster(config)
 
 
@@ -102,6 +96,7 @@ def _cypress_arguments(cypress_configs, config):
 
 
 def run_e2e_tests(config):
+    """ expects a brand new, exclusive cluster at config['DET_MASTER'] """
     cypress_arguments = _cypress_arguments([], config)
     command = [
         "yarn",
@@ -112,8 +107,6 @@ def run_e2e_tests(config):
         "run",
         *cypress_arguments,
     ]
-    raise Exception
-
     run(command, config)
 
 
