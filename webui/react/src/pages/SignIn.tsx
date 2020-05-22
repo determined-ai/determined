@@ -7,7 +7,7 @@ import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoTypes } from 'components/Logo';
 import Auth from 'contexts/Auth';
-import ShowSpinner from 'contexts/ShowSpinner';
+import FullPageSpinner from 'contexts/FullPageSpinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { routeAll } from 'routes';
 import { getCurrentUser } from 'services/api';
@@ -24,7 +24,7 @@ const DEFAULT_REDIRECT = '/det/dashboard';
 const SignIn: React.FC = () => {
   const auth = Auth.useStateContext();
   const setAuth = Auth.useActionContext();
-  const setShowSpinner = ShowSpinner.useActionContext();
+  const setShowSpinner = FullPageSpinner.useActionContext();
   const [ hasCheckedAuth, setHasCheckedAuth ] = useState(false);
   const queries: Queries = queryString.parse(location.search);
 
@@ -34,6 +34,8 @@ const SignIn: React.FC = () => {
    */
   useEffect(() => {
     if (hasCheckedAuth) return;
+
+    setShowSpinner({ type: FullPageSpinner.ActionType.Show });
 
     const source = axios.CancelToken.source();
     const checkAuth = async (): Promise<void> => {
@@ -51,7 +53,7 @@ const SignIn: React.FC = () => {
           type: ErrorType.Auth,
         });
       } finally {
-        setShowSpinner({ type: ShowSpinner.ActionType.Hide });
+        setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
         setHasCheckedAuth(true);
       }
     };
@@ -69,7 +71,7 @@ const SignIn: React.FC = () => {
     if (!auth.isAuthenticated) return;
 
     // Stop the spinner, prepping for user redirect.
-    setShowSpinner({ type: ShowSpinner.ActionType.Hide });
+    setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
 
     // Show auth token via notification if requested via query parameters.
     if (queries.cli) notification.open({ description: <AuthToken />, duration: 0, message: '' });

@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react';
 
 import Icon from 'components/Icon';
 import Auth from 'contexts/Auth';
-import ShowSpinner from 'contexts/ShowSpinner';
+import FullPageSpinner from 'contexts/FullPageSpinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { getCurrentUser, isLoginFailure, login } from 'services/api';
 import { Credentials } from 'types';
@@ -17,12 +17,12 @@ interface FromValues {
 
 const DeterminedAuth: React.FC = () => {
   const setAuth = Auth.useActionContext();
-  const setShowSpinner = ShowSpinner.useActionContext();
+  const setShowSpinner = FullPageSpinner.useActionContext();
   const [isBadCredentials, setIsBadCredentials] = useState(false);
   const [canSubmit, setCanSubmit] = useState(false);
 
   const onFinish = useCallback(async (creds: FromValues): Promise<void> => {
-    setShowSpinner({ type: ShowSpinner.ActionType.Show });
+    setShowSpinner({ type: FullPageSpinner.ActionType.Show });
     setCanSubmit(false);
     try {
       await login(creds as Credentials);
@@ -30,7 +30,7 @@ const DeterminedAuth: React.FC = () => {
       setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, user } });
     } catch (e) {
       const actionMsg = isBadCredentials ? 'check your username and password.' : 'retry.';
-      setShowSpinner({ type: ShowSpinner.ActionType.Hide });
+      setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
       setIsBadCredentials(isLoginFailure(e));
       handleError({
         error: e,

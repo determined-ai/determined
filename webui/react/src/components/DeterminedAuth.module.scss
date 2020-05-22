@@ -1,7 +1,4 @@
 .base {
-  form > div {
-    // margin-bottom: var(--theme-sizes-layout-jumbo);
-  }
   button {
     background-color: var(--theme-colors-core-primary);
     border-color: var(--theme-colors-core-primary);
@@ -23,8 +20,6 @@
   }
   .errorMessage {
     color: var(--theme-colors-states-failed);
-    overflow: hidden;
-    transition: height 0.3s linear;
   }
   .message {
     font-size: var(--theme-sizes-font-small);
