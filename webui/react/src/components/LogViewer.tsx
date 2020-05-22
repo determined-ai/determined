@@ -1,9 +1,10 @@
 import useScroll from 'hooks/useScroll';
 import React, {
-  forwardRef, useCallback, useImperativeHandle, useLayoutEffect, useRef, useState,
+  forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState,
 } from 'react';
 
 import Spinner from 'components/Spinner';
+import useScroll from 'hooks/useScroll';
 import { Log } from 'types';
 import { ansiToHtml, toRem } from 'utils/dom';
 
@@ -50,6 +51,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   ref?: React.Ref<LogViewerHandles>,
 ) => {
   const container = useRef<HTMLDivElement>(null);
+  const scroll = useScroll(container);
   const [ logs, setLogs ] = useState<Log[]>([]);
   const [ charSize, setCharSize ] = useState({ height: 0, width: 0 });
   const [ lineNumberStyle, setLineNumberStyle ] = useState({ width: 'auto' });
@@ -72,6 +74,9 @@ const LogViewer: React.FC<Props> = forwardRef((
    * access to functions defined here to modify LogViewer state.
    */
   useImperativeHandle(ref, () => ({ addLogs }));
+
+  useEffect(() => {
+  }, [ scroll ]);
 
   useLayoutEffect(() => {
     if (!Array.isArray(logs) || logs.length === 0 || !container) return;
@@ -147,15 +152,17 @@ const LogViewer: React.FC<Props> = forwardRef((
         Control
       </div>
       <div className={css.container} ref={container}>
-        {logs.map((log, index) => (
-          <div className={css.line} key={log.id}>
-            <div className={css.number} style={lineNumberStyle}>{index + 1}</div>
-            <div className={css.time} style={dateTimeStyle}>{log.time}</div>
-            <div
-              className={css.message}
-              dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }} />
-          </div>
-        ))}
+        <div className={css.scrollSpacer}>
+          {logs.map((log, index) => (
+            <div className={css.line} key={log.id}>
+              <div className={css.number} style={lineNumberStyle}>{index + 1}</div>
+              <div className={css.time} style={dateTimeStyle}>{log.time}</div>
+              <div
+                className={css.message}
+                dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }} />
+            </div>
+          ))}
+        </div>
       </div>
       {isLoading && <Spinner fillContainer shade />}
     </div>

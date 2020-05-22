@@ -20,6 +20,8 @@
     overflow: auto;
     padding: var(--theme-sizes-layout-medium);
   }
+  .scrollSpacer {
+  }
   .line { display: flex; }
   .line > * { white-space: nowrap; }
   .line > .number {
