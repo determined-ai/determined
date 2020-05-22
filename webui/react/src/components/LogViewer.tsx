@@ -1,5 +1,7 @@
 import useScroll from 'hooks/useScroll';
-import React, { forwardRef, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
+import React, {
+  forwardRef, useCallback, useImperativeHandle, useLayoutEffect, useRef, useState,
+} from 'react';
 
 import Spinner from 'components/Spinner';
 import { Log } from 'types';
@@ -8,7 +10,6 @@ import { ansiToHtml, toRem } from 'utils/dom';
 import css from './LogViewer.module.scss';
 
 interface Props {
-  data: Log[];
   fullPage?: boolean;
   noWrap?: boolean;
   disableSearch?: boolean;
@@ -44,8 +45,12 @@ const MAX_DATETIME_LENGTH = 35;
  * The LogViewer is wrapped with `forwardRef` to provide the parent component
  * a reference to be able to call functions inside the LogViewer.
  */
-const LogViewer: React.FC<Props> = forwardRef(({ data, ...props }: Props, ref) => {
+const LogViewer: React.FC<Props> = forwardRef((
+  props: Props,
+  ref?: React.Ref<LogViewerHandles>,
+) => {
   const container = useRef<HTMLDivElement>(null);
+  const [ logs, setLogs ] = useState<Log[]>([]);
   const [ charSize, setCharSize ] = useState({ height: 0, width: 0 });
   const [ lineNumberStyle, setLineNumberStyle ] = useState({ width: 'auto' });
   const [ dateTimeStyle, setDateTimeStyle ] = useState({ width: 'auto' });
@@ -58,18 +63,18 @@ const LogViewer: React.FC<Props> = forwardRef(({ data, ...props }: Props, ref) =
   if (props.fullPage) classes.push(css.fullPage);
   if (props.noWrap) classes.push(css.noWrap);
 
+  const addLogs = useCallback((newLogs: Log[]): void => {
+    setLogs([ ...logs, ...newLogs ]);
+  }, [ logs, setLogs ]);
+
   /*
    * The useImperitiveHandle hook provides the parent component
    * access to functions defined here to modify LogViewer state.
    */
-  useImperativeHandle(ref, () => ({
-    addData (newData: Log[]): void {
-      console.log('newData', newData);
-    },
-  }));
+  useImperativeHandle(ref, () => ({ addLogs }));
 
   useLayoutEffect(() => {
-    if (!Array.isArray(data) || data.length === 0 || !container) return;
+    if (!Array.isArray(logs) || logs.length === 0 || !container) return;
 
     // Check to make sure the container exists.
     const containerRect = container.current?.getBoundingClientRect();
@@ -103,7 +108,7 @@ const LogViewer: React.FC<Props> = forwardRef(({ data, ...props }: Props, ref) =
      * Set the line number column width based on the character width.
      * Add one to account for the trailing space character.
      */
-    const lineDigits = Math.ceil(Math.log(data.length) / Math.log(10)) + 1;
+    const lineDigits = Math.ceil(Math.log(logs.length) / Math.log(10)) + 1;
     setLineNumberStyle({ width: toRem(charRect.width * lineDigits) });
 
     /*
@@ -120,7 +125,7 @@ const LogViewer: React.FC<Props> = forwardRef(({ data, ...props }: Props, ref) =
      */
     let contentHeight = 0;
     measureElement.style.width = toRem(messageRect?.width);
-    data.forEach(line => {
+    logs.forEach(line => {
       measureElement.textContent = line.message;
       const rect = measureElement.getBoundingClientRect();
       contentHeight += rect.height;
@@ -131,10 +136,10 @@ const LogViewer: React.FC<Props> = forwardRef(({ data, ...props }: Props, ref) =
     container.current?.removeChild(measureElement);
 
     // Scroll to the bottom of the log
-    window.scrollTo(0, container.current?.scrollHeight || 0);
+    container.current?.scrollTo(0, container.current?.scrollHeight || 0);
 
     setIsLoading(false);
-  }, [ data, setLineNumberStyle, setDateTimeStyle ]);
+  }, [ logs, setLineNumberStyle, setDateTimeStyle ]);
 
   return (
     <div className={css.base}>
@@ -142,7 +147,7 @@ const LogViewer: React.FC<Props> = forwardRef(({ data, ...props }: Props, ref) =
         Control
       </div>
       <div className={css.container} ref={container}>
-        {data.map((log, index) => (
+        {logs.map((log, index) => (
           <div className={css.line} key={log.id}>
             <div className={css.number} style={lineNumberStyle}>{index + 1}</div>
             <div className={css.time} style={dateTimeStyle}>{log.time}</div>
