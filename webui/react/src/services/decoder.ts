@@ -1,12 +1,13 @@
 import dayjs from 'dayjs';
 
 import {
-  decode,
-  ioDeterminedInfo, ioExperiments, ioTypeAgents, ioTypeCommandAddress,
-  ioTypeDeterminedInfo, ioTypeExperiments, ioTypeGenericCommand, ioTypeGenericCommands, ioTypeUsers,
+  decode, ioCommandLogs, ioDeterminedInfo, ioExperiments, ioLogs, ioTypeAgents,
+  ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo, ioTypeExperiments,
+  ioTypeGenericCommand, ioTypeGenericCommands, ioTypeLogs, ioTypeUsers,
 } from 'ioTypes';
 import {
-  Agent, Command, CommandType, DeterminedInfo, Experiment, ResourceState, ResourceType, User,
+  Agent, Command, CommandType, DeterminedInfo, Experiment,
+  Log, LogLevel, ResourceState, ResourceType, User,
 } from 'types';
 import { capitalize } from 'utils/string';
 
@@ -126,4 +127,37 @@ export const jsonToExperiments = (data: unknown): Experiment[] => {
       state: experiment.state,
     };
   });
+};
+
+export const jsonToLogs = (data: unknown): Log[] => {
+  const ioType = decode<ioTypeLogs>(ioLogs, data);
+  return ioType.map(log => ({
+    id: log.id,
+    level: log.level ? LogLevel[capitalize(log.level) as keyof typeof LogLevel] : undefined,
+    message: log.message,
+    time: log.time,
+  }));
+};
+
+export const jsonToTrialLogs = (data: unknown): Log[] => {
+  const ioType = decode<ioTypeLogs>(ioLogs, data);
+  return ioType.map(log => {
+    const [ header, message ] = log.message.split(' || ', 2);
+    const [ time, meta ] = header.split(' ', 2);
+    return {
+      id: log.id,
+      message,
+      meta,
+      time,
+    };
+  });
+};
+
+export const jsonToCommandLogs = (data: unknown): Log[] => {
+  const ioType = decode<ioTypeCommandLogs>(ioCommandLogs, data);
+  return ioType.map(log => ({
+    id: log.seq,
+    message: log.snapshot.config.description,
+    time: log.time,
+  }));
 };

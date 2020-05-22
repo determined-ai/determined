@@ -30,3 +30,17 @@ export interface LaunchTensorboardParams {
   ids: number[];
   type: TBSourceType;
 }
+
+export interface LogsParams {
+  tail?: number;
+  greaterThanId?: number;
+}
+
+export interface TrialLogsParams extends LogsParams {
+  trialId: number;
+}
+
+export interface CommandLogsParams extends LogsParams {
+  commandId: string;
+  commandType: CommandType;
+}

@@ -2,7 +2,7 @@
 import { isLeft } from 'fp-ts/lib/Either';
 import * as io from 'io-ts';
 
-import { CommandState, RunState } from 'types';
+import { CommandState, LogLevel, RunState } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const decode = <T>(type: io.Mixed, data: any): T => {
@@ -148,3 +148,37 @@ export const ioExperiments = io.array(ioExperiment);
 
 export type ioTypeExperiment = io.TypeOf<typeof ioExperiment>;
 export type ioTypeExperiments = io.TypeOf<typeof ioExperiments>;
+
+/* Logs */
+
+const ioLogLevels: Record<string, null> = Object.values(LogLevel)
+  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
+const ioLogLevelType = io.keyof(ioLogLevels);
+const ioLog = io.type({
+  id: io.number,
+  level: io.union([ ioLogLevelType, io.undefined ]),
+  message: io.string,
+  time: io.union([ io.string, io.undefined ]),
+});
+
+export const ioLogs = io.array(ioLog);
+
+export type ioTypeLogs = io.TypeOf<typeof ioLogs>;
+
+const ioCommandLogConfig = io.type({
+  description: io.string,
+});
+const ioCommandLogSnapshot = io.type({
+  config: ioCommandLogConfig,
+});
+const ioCommandLog = io.type({
+  id: io.string,
+  parent_id: io.string,
+  seq: io.number,
+  snapshot: ioCommandLogSnapshot,
+  time: io.string,
+});
+
+export const ioCommandLogs = io.array(ioCommandLog);
+
+export type ioTypeCommandLogs = io.TypeOf<typeof ioCommandLogs>;
