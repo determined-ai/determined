@@ -1,4 +1,5 @@
 import os
+import tempfile
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
@@ -196,6 +197,38 @@ class TestXORTrial:
             return xor_trial_controller(hparams, workloads, load_path=load_path)
 
         utils.optimizer_state_test(make_trial_controller_fn, tmp_path)
+
+    def test_callbacks(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_directory:
+            batches_per_step = 5
+            steps = 10
+            validation_freq = 5
+
+            def make_workloads() -> workload.Stream:
+                trainer = utils.TrainAndValidate()
+
+                yield from trainer.send(
+                    steps=steps, validation_freq=validation_freq, batches_per_step=batches_per_step
+                )
+                yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+            hparams = self.hparams.copy()
+            hparams["training_log_path"] = os.path.join(temp_directory, "training.log")
+            hparams["val_log_path"] = os.path.join(temp_directory, "val.log")
+
+            controller = utils.make_trial_controller_from_trial_implementation(
+                trial_class=estimator_xor_model.XORTrialWithCallbacks,
+                hparams=hparams,
+                workloads=make_workloads(),
+                batches_per_step=batches_per_step,
+            )
+            controller.run()
+
+            with open(hparams["training_log_path"], "r") as fp:
+                assert int(fp.readline()) == batches_per_step * steps
+
+            with open(hparams["val_log_path"], "r") as fp:
+                assert int(fp.readline()) == steps / validation_freq
 
 
 def test_local_mode() -> None:
