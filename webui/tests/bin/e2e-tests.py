@@ -22,9 +22,13 @@ tests_dir = webui_dir.joinpath("tests")
 
 CLUSTER_CMD_PREFIX = ["make", "-C", "e2e-cluster"]
 
+CLEAR = "\033[39m"
+BLUE = "\033[94m"
+LOG_COLOR = BLUE
+
 
 def run(cmd: List[str], config) -> None:
-    logger.info("+ %s", " ".join(cmd))
+    logger.info(f"+ {' '.join(cmd)}")
     return subprocess.check_call(cmd, env=config["env"])
 
 
@@ -96,7 +100,9 @@ def _cypress_arguments(cypress_configs, config):
 
 
 def run_e2e_tests(config):
-    """ expects a brand new, exclusive cluster at config['DET_MASTER'] """
+    """ depends on:
+    1. a brand new, exclusive cluster at config['DET_MASTER']
+    2. pre_e2e_tests() to have seeded that cluster recently* """
     cypress_arguments = _cypress_arguments([], config)
     command = [
         "yarn",
@@ -143,9 +149,9 @@ def setup_onetime_sig_handler(sig, fn):
 
 def get_config(args):
     config = {}
-    config["INTEGRATIONS_HOST_PORT"] = args.integrations_host_port
-    config["CLUSTER_NAME"] = f"det_test_{args.integrations_host_port}"
-    config["DET_MASTER"] = f"localhost:{args.integrations_host_port}"
+    config["DET_PORT"] = args.det_port
+    config["CLUSTER_NAME"] = f"det_test_{args.det_port}"
+    config["DET_MASTER"] = f"{args.det_host}:{args.det_port}"
     config["CYPRESS_DEFAULT_COMMAND_TIMEOUT"] = args.cypress_default_command_timeout
     config["CYPRESS_ARGS"] = args.cypress_args
 
@@ -154,10 +160,10 @@ def get_config(args):
         value = os.environ.get(var)
         if value is not None:
             env[var] = value
-    env["INTEGRATIONS_HOST_PORT"] = config["INTEGRATIONS_HOST_PORT"]
     env["DET_MASTER"] = config["DET_MASTER"]
     logging.basicConfig(
-        level=(args.log_level or "INFO"), format=(args.log_format or "%(message)s")
+        level=(args.log_level or "INFO"),
+        format=(args.log_format or f"{LOG_COLOR}%(message)s{CLEAR}"),
     )
     config["env"] = env
     return config
@@ -165,10 +171,11 @@ def get_config(args):
 
 def main():
     operation_to_fn = {
-        "pre-e2e-tests": pre_e2e_tests,
-        "run-e2e-tests": run_e2e_tests,
         "setup-test-cluster": setup_cluster,
         "teardown-test-cluster": teardown_cluster,
+        "pre-e2e-tests": pre_e2e_tests,
+        "run-e2e-tests": run_e2e_tests,
+        "cypress-open": cypress_open,
         "e2e-tests": e2e_tests,
         "dev-tests": dev_tests,
     }
@@ -176,7 +183,8 @@ def main():
     parser = argparse.ArgumentParser(description="Manage e2e tests.")
     help_msg = f"operation must be in {sorted(operation_to_fn.keys())}"
     parser.add_argument("operation", help=help_msg)
-    parser.add_argument("--integrations-host-port", default="8081")
+    parser.add_argument("--det-port", default="8081")
+    parser.add_argument("--det-host", default="localhost")
     parser.add_argument("--cypress-default-command-timeout", default="4000")
     parser.add_argument("--cypress-args", help="other cypress arguments")
     parser.add_argument("--log-level")
