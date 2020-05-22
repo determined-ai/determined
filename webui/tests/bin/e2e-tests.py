@@ -5,7 +5,6 @@ import logging
 import time
 import os
 import pathlib
-import signal
 import subprocess
 import sys
 from typing import List
@@ -133,20 +132,6 @@ def dev_tests(config):
         cypress_open(config)
 
 
-# Defines a one time signal handler that reverts to the original handler after one interception.
-def setup_onetime_sig_handler(sig, fn):
-    original_handler = signal.getsignal(sig)
-
-    def signal_handler(a, b):
-        logger.info("received interrupt request. cleaning up..")
-        signal.signal(sig, original_handler)
-        fn()
-        exit(0)
-
-    signal.signal(sig, signal_handler)
-    return signal_handler
-
-
 def get_config(args):
     config = {}
     config["DET_PORT"] = args.det_port
@@ -199,7 +184,6 @@ def main():
 
     config = get_config(args)
 
-    # setup_onetime_sig_handler(signal.SIGINT, lambda: teardown_cluster(config)) # FIXME not needed?
     fn(config)
 
 
