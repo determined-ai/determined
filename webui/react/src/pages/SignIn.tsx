@@ -1,13 +1,14 @@
 import { notification } from 'antd';
 import axios from 'axios';
 import queryString from 'query-string';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoTypes } from 'components/Logo';
 import Auth from 'contexts/Auth';
 import ShowSpinner from 'contexts/ShowSpinner';
+import handleError, { ErrorType } from 'ErrorHandler';
 import { routeAll } from 'routes';
 import { getCurrentUser } from 'services/api';
 
@@ -24,20 +25,8 @@ const SignIn: React.FC = () => {
   const auth = Auth.useStateContext();
   const setAuth = Auth.useActionContext();
   const setShowSpinner = ShowSpinner.useActionContext();
-  const [ isLoading, setIsLoading ] = useState(false);
   const [ hasCheckedAuth, setHasCheckedAuth ] = useState(false);
   const queries: Queries = queryString.parse(location.search);
-
-  const onLoadingChange = useCallback((loading: boolean): void => {
-    setIsLoading(loading);
-  }, [ setIsLoading ]);
-
-  /*
-   * Map the spinner show state to the local `isLoading` state.
-   */
-  useEffect(() => {
-    setShowSpinner({ type: isLoading ? ShowSpinner.ActionType.Show : ShowSpinner.ActionType.Hide });
-  }, [ isLoading, setShowSpinner ]);
 
   /*
    * Verify existing user authentication via cookies and update
@@ -50,9 +39,19 @@ const SignIn: React.FC = () => {
     const checkAuth = async (): Promise<void> => {
       try {
         const user = await getCurrentUser({ cancelToken: source.token });
-        setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, user } });
+        setAuth({  type: Auth.ActionType.Set, value: { isAuthenticated: true, user } });
+      } catch (e) {
+        handleError({
+          error: e,
+          isUserTriggered: false,
+          message: e.message,
+          publicMessage: 'User is not verified.',
+          publicSubject: 'Login failed',
+          silent: true,
+          type: ErrorType.Auth,
+        });
       } finally {
-        setIsLoading(false);
+        setShowSpinner({ type: ShowSpinner.ActionType.Hide });
         setHasCheckedAuth(true);
       }
     };
@@ -60,7 +59,7 @@ const SignIn: React.FC = () => {
     checkAuth();
 
     return (): void => source.cancel();
-  }, [ hasCheckedAuth, setAuth ]);
+  }, [ hasCheckedAuth, setAuth, setShowSpinner ]);
 
   /*
    * Check for when `isAuthenticated` becomes true and redirect
@@ -83,7 +82,7 @@ const SignIn: React.FC = () => {
     <div className={css.base}>
       <div className={css.content}>
         <Logo type={LogoTypes.OnLightVertical} />
-        <DeterminedAuth onLoadingChange={onLoadingChange} />
+        <DeterminedAuth />
       </div>
     </div>
   );
