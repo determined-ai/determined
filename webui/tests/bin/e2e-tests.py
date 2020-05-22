@@ -44,7 +44,7 @@ def setup_cluster(config):
     run(CLUSTER_CMD_PREFIX + ["start-db"], config)
     cluster_process = run_forget(CLUSTER_CMD_PREFIX + ["run"], config)
     time.sleep(6)  # FIXME add a ready check for master
-    logger.info("cluster pid", cluster_process.pid)
+    logger.info(f"cluster pid: {cluster_process.pid}")
     return cluster_process
 
 
@@ -191,7 +191,7 @@ def main():
 
     config = get_config(args)
 
-    setup_onetime_sig_handler(signal.SIGINT, lambda: teardown_cluster(config))
+    # setup_onetime_sig_handler(signal.SIGINT, lambda: teardown_cluster(config)) # FIXME not needed?
     fn(config)
 
 
