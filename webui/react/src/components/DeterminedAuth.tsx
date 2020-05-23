@@ -22,7 +22,7 @@ const DeterminedAuth: React.FC = () => {
   const [canSubmit, setCanSubmit] = useState(false);
 
   const onFinish = useCallback(async (creds: FromValues): Promise<void> => {
-    setShowSpinner({ type: FullPageSpinner.ActionType.Show });
+    setShowSpinner({ opaque: false, type: FullPageSpinner.ActionType.Show });
     setCanSubmit(false);
     try {
       await login(creds as Credentials);

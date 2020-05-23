@@ -22,7 +22,7 @@ const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case ActionType.Reset:
       clearAuthCookie();
-      return defaultAuth;
+      return { ...defaultAuth };
     case ActionType.Set:
       return action.value;
     default:

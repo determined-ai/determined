@@ -1,15 +1,15 @@
 import { notification } from 'antd';
 import queryString from 'query-string';
-import React, { useCallback, useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoTypes } from 'components/Logo';
 import Auth from 'contexts/Auth';
 import FullPageSpinner from 'contexts/FullPageSpinner';
+import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { routeAll } from 'routes';
-import { getCookie } from 'utils/browser';
 
 import css from './SignIn.module.scss';
 
@@ -22,21 +22,18 @@ const DEFAULT_REDIRECT = '/det/dashboard';
 
 const SignIn: React.FC = () => {
   const auth = Auth.useStateContext();
+  const showSpinner = FullPageSpinner.useStateContext();
   const setShowSpinner = FullPageSpinner.useActionContext();
   const queries: Queries = queryString.parse(location.search);
 
-  // Redirect the user to the app if auth cookie already exists.
-  const checkAuth = useCallback(() => {
-    if (getCookie('auth')) routeAll(queries.redirect || DEFAULT_REDIRECT);
-  }, [ queries.redirect ]);
-
   /*
-   * Check every so often to see if the user cookie exists.
+   * Check every so often to see if the user is authenticated.
    * For example, the user can authenticate in a different session,
    * and this will pick up that auth and automatically redirect them into
    * their previous app.
    */
   // const task = useAsyncTask(checkAuth);
+  const [ checkAuth, checkCount ] = useAuthCheck();
   const stopPolling = usePolling(checkAuth);
 
   /*
@@ -44,19 +41,29 @@ const SignIn: React.FC = () => {
    * the user to the most recent requested page.
    */
   useEffect(() => {
-    if (!auth.isAuthenticated) return;
+    if (auth.isAuthenticated) {
+      // Stop the spinner, prepping for user redirect.
+      setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
 
-    // Stop the spinner, prepping for user redirect.
-    setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
+      // Show auth token via notification if requested via query parameters.
+      if (queries.cli) notification.open({ description: <AuthToken />, duration: 0, message: '' });
 
-    // Show auth token via notification if requested via query parameters.
-    if (queries.cli) notification.open({ description: <AuthToken />, duration: 0, message: '' });
+      // Reroute the authenticated user to the app.
+      routeAll(queries.redirect || DEFAULT_REDIRECT);
+    } else if (checkCount !== 0 && showSpinner.isShowing) {
+      setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
+    }
 
-    // Reroute the authenticated user to the app.
-    routeAll(queries.redirect || DEFAULT_REDIRECT);
+    // return stopPolling;
+  }, [ auth.isAuthenticated, checkCount, queries, setShowSpinner, showSpinner, stopPolling ]);
 
-    return stopPolling;
-  }, [ auth.isAuthenticated, queries, setShowSpinner, stopPolling ]);
+  /*
+   * Stop the polling upon a dismount of this page.
+   * An empty dependency array is needed to ensure that `stopPolling`
+   * does not get called early.
+   */
+  /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  useEffect(() => stopPolling, []);
 
   return (
     <div className={css.base}>

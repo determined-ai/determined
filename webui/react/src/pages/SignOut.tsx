@@ -1,3 +1,4 @@
+import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
@@ -14,10 +15,11 @@ const SignOut: React.FC = () => {
   const [ isSigningOut, setIsSigningOut ] = useState(false);
 
   useEffect(() => {
+    const source = axios.CancelToken.source();
     const signOut = async (): Promise<void> => {
       setIsSigningOut(true);
       try {
-        await logout({});
+        await logout({ cancelToken: source.token });
       } catch (e) {
         handleError({
           error: e,
@@ -31,7 +33,10 @@ const SignOut: React.FC = () => {
       setAuth({ type: Auth.ActionType.Reset });
       history.push(`/det/login${location.search}`);
     };
+
     if (!isSigningOut) signOut();
+
+    return source.cancel;
   }, [ auth.isAuthenticated, history, isSigningOut, location, setAuth ]);
 
   return <Spinner fullPage />;
