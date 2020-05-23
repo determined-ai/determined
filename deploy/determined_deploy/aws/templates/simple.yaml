@@ -23,7 +23,7 @@ Parameters:
   AgentInstanceType:
     Type: String
     Description: Instance Type of Agent
-    Default: p2.8xlarge
+    Default: p2.xlarge
 
   InboundCIDRRange:
     Type: String

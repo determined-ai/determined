@@ -119,7 +119,7 @@ ___________________
 
    * - ``--gpu-num``
      - The number of GPUs on each agent instance. Between 1 and 8 (more GPUs require a more powerful ``agent-instance-type``). Refer to the `GPUs on Compute Engine <https://cloud.google.com/compute/docs/gpus>`__ page for specific GCP requirements.
-     - 8
+     - 1
 
    * - ``--max-dynamic-agents``
      - Maximum number of dynamic agent instances at one time.
@@ -151,7 +151,7 @@ ___________________
 
    * - ``--agent-instance-type``
      - Instance type to use for the agent instances.
-     - n1-standard-32
+     - n1-standard-8
 
    * - ``--min-cpu-platform-master``
      - Minimum CPU platform for the master instance.
@@ -189,6 +189,12 @@ If you need to make changes to your cluster, you can rerun ``det-deploy gcp up [
 
 .. note::
   If you'd like to change the ``region`` of a deployment after it has already been deployed, we recommend deleting the cluster first, then redeploying the cluster with the new ``region``.
+
+Example command to update the cluster to have 8 GPUs per agent for multi GPU training:
+
+.. code::
+
+  det-deploy gcp up --cluster-id CLUSTER_ID --project-id PROJECT_ID --agent-instance-type n1-standard-32 --gpu-num 8
 
 
 Destroying A Cluster

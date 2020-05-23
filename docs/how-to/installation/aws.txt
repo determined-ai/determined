@@ -121,7 +121,7 @@ Spinning up the Cluster
 
    * - ``--agent-instance-type``
      - Instance type for agent instances.
-     - p2.8xlarge
+     - p2.xlarge
 
    * - ``--deployment-type``
      - The :ref:`deployment template <determined-deploy-deployment-types>` to use.
@@ -150,6 +150,21 @@ Spinning up the Cluster
    * - ``--dry-run``
      - Print the template but do not execute it.
      - False
+
+
+
+Updating the Cluster
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you need to make changes to your cluster, you can rerun ``det-deploy aws up [args]`` in the same directory and your
+cluster will be updated. The ``det-deploy`` tool will only replace resources that need to be replaced based on the
+changes you've made in the updated execution.
+
+Example command to update the cluster to have 8 GPUs per agent for multi GPU training:
+
+.. code::
+
+   det-deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR --agent-instance-type p2.8xlarge
 
 
 Tearing Down the Cluster
