@@ -5,24 +5,32 @@ enum ActionType {
   Show,
 }
 
+type State = {
+  isOpaque: boolean;
+  isShowing: boolean;
+}
+
 type Action =
   | { type: ActionType.Hide }
-  | { type: ActionType.Show }
+  | { type: ActionType.Show; opaque?: boolean }
 
-const defaultState = false;
+const defaultState = {
+  isOpaque: false,
+  isShowing: false,
+};
 
-const reducer = (state: boolean, action: Action): boolean => {
+const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case ActionType.Hide:
-      return false;
+      return { isOpaque: state.isOpaque, isShowing: false };
     case ActionType.Show:
-      return true;
+      return { isOpaque: action.opaque != null ? action.opaque : state.isOpaque, isShowing: true };
     default:
       return state;
   }
 };
 
-const contextProvider = generateContext<boolean, Action>({
+const contextProvider = generateContext<State, Action>({
   initialState: defaultState,
   name: 'Spinner',
   reducer,

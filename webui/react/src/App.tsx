@@ -32,6 +32,7 @@ const AppView: React.FC = () => {
   const info = Info.useStateContext();
   const setInfo = Info.useActionContext();
   const showSpinner = FullPageSpinner.useStateContext();
+  const setShowSpinner = FullPageSpinner.useActionContext();
   const username = user ? user.username : undefined;
   const [ infoResponse, requestInfo ] =
     useRestApi<DeterminedInfo>(ioDeterminedInfo, { mappers: jsonToDeterminedInfo });
@@ -55,6 +56,10 @@ const AppView: React.FC = () => {
     setInfo({ type: Info.ActionType.Set, value: infoResponse.data });
   }, [ infoResponse, setInfo ]);
 
+  useEffect(() => {
+    setShowSpinner({ opaque: true, type: FullPageSpinner.ActionType.Show });
+  }, [ setShowSpinner ]);
+
   return (
     <div className={css.base}>
       {isAuthenticated && <NavBar username={username} />}
@@ -68,7 +73,7 @@ const AppView: React.FC = () => {
           <Router routes={appRoutes} />
         </Switch>
       </div>
-      {showSpinner && <Spinner fullPage />}
+      {showSpinner.isShowing && <Spinner fullPage opaque={showSpinner.isOpaque} />}
     </div>
   );
 };
