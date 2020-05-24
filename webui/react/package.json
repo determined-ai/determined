@@ -27,6 +27,7 @@
     "io-ts": "^2.2.11",
     "js-sha512": "^0.8.0",
     "js-yaml": "^3.14.0",
+    "omnibar": "^2.3.0",
     "plotly.js": "^1.56.0",
     "portable-fetch": "^3.0.0",
     "pretty-bytes": "^5.4.1",

@@ -1,0 +1,20 @@
+.base {
+  // position: relative;
+  background-color: rgba(0, 0, 0, 0.7);
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+
+  .bar {
+    min-width: 50rem;
+    left: 50%;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    input {
+      border-radius: 3px;
+    }
+  }
+}

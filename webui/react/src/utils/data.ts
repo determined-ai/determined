@@ -16,6 +16,11 @@ export const isAsyncFunction = (fn: unknown): boolean => {
   return (fn as Promise<unknown>)[Symbol.toStringTag] === 'AsyncFunction';
 };
 
+// export const isAsyncFunctionTyped = <In, Out>(fn: unknown): fn is ((arg0: In) => Promise<Out>)  => {
+//   if (!isFunction(fn)) return false;
+//   return (fn as Promise<unknown>)[Symbol.toStringTag] === 'AsyncFunction';
+// };
+
 export const isSyncFunction = (fn: unknown): boolean => {
   return isFunction(fn) && !isAsyncFunction(fn);
 };
