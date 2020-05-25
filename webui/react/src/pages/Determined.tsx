@@ -17,15 +17,9 @@ import {
   jsonToShells, jsonToTensorboards, jsonToUsers,
 } from 'services/decoder';
 import { Agent, Command, Experiment, RunState, User } from 'types';
+import { activeRunStates } from 'utils/types';
 
 import css from './Determined.module.scss';
-
-const activeStates = [
-  RunState.Active,
-  RunState.StoppingCanceled,
-  RunState.StoppingCompleted,
-  RunState.StoppingError,
-];
 
 const Determined: React.FC = () => {
   const setUsers = Users.useActionContext();
@@ -57,7 +51,7 @@ const Determined: React.FC = () => {
     requestNotebooks({ url: '/notebooks' });
     requestShells({ url: '/shells' });
     requestTensorboards({ url: '/tensorboard' });
-    requestExperiments({ states: activeStates });
+    requestExperiments({ states: activeRunStates });
   }, [
     requestAgents,
     requestCommands,

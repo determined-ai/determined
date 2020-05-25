@@ -146,7 +146,6 @@ export const getStateColor = (state: RunState | CommandState | undefined): strin
     [RunState.Active]: 'var(--theme-colors-states-active)',
     [RunState.Canceled]: 'var(--theme-colors-states-inactive)',
     [RunState.Completed]: 'var(--theme-colors-states-success)',
-    [RunState.Deleted]: 'var(--theme-colors-states-failed)',
     [RunState.Errored]: 'var(--theme-colors-states-failed)',
     [RunState.Paused]: 'var(--theme-colors-states-suspended)',
     [RunState.StoppingCanceled]: 'var(--theme-colors-states-inactive)',

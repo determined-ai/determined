@@ -136,7 +136,6 @@ export enum RunState {
   Active = 'ACTIVE',
   Canceled = 'CANCELED',
   Completed = 'COMPLETED',
-  Deleted = 'DELETED',
   Errored = 'ERROR',
   Paused = 'PAUSED',
   StoppingCanceled = 'STOPPING_CANCELED',

@@ -69,14 +69,12 @@ export const terminalRunStates = [
   RunState.Canceled,
   RunState.Completed,
   RunState.Errored,
-  RunState.Deleted,
 ];
 
 export const runStateToLabel: {[key in RunState]: string} = {
   [RunState.Active]: 'Active',
   [RunState.Canceled]: 'Canceled',
   [RunState.Completed]: 'Completed',
-  [RunState.Deleted]: 'Deleted',
   [RunState.Errored]: 'Errored',
   [RunState.Paused]: 'Paused',
   [RunState.StoppingCanceled]: 'StoppingCanceled',
@@ -93,6 +91,13 @@ export const commandStateToLabel: {[key in CommandState]: string} = {
   [CommandState.Terminating]: 'Terminating',
   [CommandState.Terminated]: 'Terminated',
 };
+
+export const activeRunStates = [
+  RunState.Active,
+  RunState.StoppingCanceled,
+  RunState.StoppingCompleted,
+  RunState.StoppingError,
+];
 
 export const isTaskKillable = (task: RecentTask): boolean => {
   return killableRunStates.includes(task.state as RunState)
