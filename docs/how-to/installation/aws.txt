@@ -8,7 +8,7 @@ Services (AWS). We provide the
 and deployment of these resources. If you would rather create the cluster manually, see the
 :ref:`Manual Deployment <manual-deployment>` section below.
 
-For more information on using Determined on AWS, see the :ref:`topic_guide_aws`
+For more information about using Determined on AWS, see the :ref:`topic_guide_aws`
 topic guide.
 
 
