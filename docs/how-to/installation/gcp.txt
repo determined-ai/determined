@@ -6,7 +6,7 @@ This document describes how to deploy a Determined cluster on Google
 Cloud Platform (GCP). We provide the ``determined-deploy`` package for easy creation
 and deployment of these resources in GCP. The ``determined-deploy`` package uses `Terraform <https://learn.hashicorp.com/terraform/getting-started/install.html>`__ to automatically deploy and configure a Determined cluster in GCP. Alternatively, if you already have a process for setting up infrastructure with Terraform, you can use our `Terraform modules <https://github.com/determined-ai/determined/tree/master/deploy/determined_deploy/gcp/terraform>`__ rather than ``determined-deploy``.
 
-For more information on using Determined on GCP, see the :ref:`topic_guide_gcp`
+For more information about using Determined on GCP, see the :ref:`topic_guide_gcp`
 topic guide.
 
 Requirements
@@ -217,7 +217,6 @@ To bring down the cluster, run the following in the same directory where you ran
 
 .. warning::
   ``determined-deploy`` will not delete active agent instances when you deprovision the cluster. Generally, the master instance will shut down any inactive agents after an idle period, but if you'd like to deprovision the cluster while these agent instances exist, you must delete all agent instances first. You can find these agent instances by filtering for instances named ``det-agent-<cluster-id>``; these agents will have full names of the form ``det-agent-<cluster-id>-<pet name>``.
-
 
 Appendix
 ~~~~~~~~
