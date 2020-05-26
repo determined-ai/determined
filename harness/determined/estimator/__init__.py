@@ -1,3 +1,4 @@
+from determined.estimator._callback import RunHook
 from determined.estimator._estimator_context import (
     EstimatorNativeContext,
     EstimatorContext,
