@@ -11,7 +11,7 @@ import usePolling from 'hooks/usePolling';
 import useRestApi, { useRestApiSimple } from 'hooks/useRestApi';
 import { ioAgents, ioGenericCommands, ioUsers } from 'ioTypes';
 import { detRoutes } from 'routes';
-import { ExperimentsParams, getExperiments } from 'services/api';
+import { ExperimentsParams, getExperimentSummaries } from 'services/api';
 import {
   jsonToAgents, jsonToCommands, jsonToNotebooks,
   jsonToShells, jsonToTensorboards, jsonToUsers,
@@ -43,7 +43,7 @@ const Determined: React.FC = () => {
   const [ commandsResponse, requestCommands ] =
     useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToCommands });
   const [ experimentsResponse, requestExperiments ] =
-    useRestApiSimple<ExperimentsParams, Experiment[]>(getExperiments, {});
+    useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
   const [ notebooksResponse, requestNotebooks ] =
     useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToNotebooks });
   const [ shellsResponse, requestShells ] =

@@ -54,11 +54,11 @@ const experimentsApi:  Api<ExperimentsParams, Experiment[]> = {
   httpOptions: (params) => ({
     url: '/experiment-summaries' + (params.states ? '?states='+params.states.join(',') : ''),
   }),
-  name: 'getExperiments',
+  name: 'getExperimentSummaries',
   postProcess: (response) => jsonToExperiments(response.data),
 };
 
-export const getExperiments = generateApi<ExperimentsParams, Experiment[]>(experimentsApi);
+export const getExperimentSummaries = generateApi<ExperimentsParams, Experiment[]>(experimentsApi);
 
 interface KillExpParams {
   experimentId: number;
