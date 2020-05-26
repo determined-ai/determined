@@ -17,6 +17,7 @@ import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
 import { ioDeterminedInfo } from 'ioTypes';
 import { appRoutes } from 'routes';
+import { appRoutes, defaultAppRoute } from 'routes';
 import { jsonToDeterminedInfo } from 'services/decoder';
 import { DeterminedInfo } from 'types';
 import { updateFaviconType } from 'utils/browser';
@@ -58,7 +59,7 @@ const AppView: React.FC = () => {
         {isAuthenticated && <SideBar />}
         <Switch>
           <Route exact path="/">
-            <Redirect to="/det/dashboard" />
+            <Redirect to={defaultAppRoute.path} />
           </Route>
           <Router routes={appRoutes} />
         </Switch>
