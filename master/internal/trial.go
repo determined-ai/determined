@@ -799,9 +799,9 @@ func (t *trial) resetTrial(
 		return
 	}
 
-	t.restarts++
-	ctx.Log().Errorf("unexpected failure of trial (%d/%d): %v",
+	ctx.Log().Errorf("unexpected failure of trial after restart %d/%d: %v",
 		t.restarts, t.experiment.Config.MaxRestarts, status)
+	t.restarts++
 	if t.restarts <= t.experiment.Config.MaxRestarts {
 		t.restore(ctx)
 		return
