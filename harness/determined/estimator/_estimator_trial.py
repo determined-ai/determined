@@ -218,6 +218,10 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
             {"tensorflow_version": tf.__version__, "format": "saved_model"},
         )
 
+        for callback in self.estimator_trial_controller.train_hooks:
+            if isinstance(callback, estimator.RunHook):
+                callback.on_checkpoint_end(checkpoint_path)
+
         return {}
 
     def _save_model(self) -> None:
@@ -446,6 +450,7 @@ class EstimatorTrialController(det.LoopTrialController):
         return wrapper
 
     def _init_model(self) -> None:
+        self._init_train_hooks()
         self._init_paths()
 
         self.estimator = tf.estimator.Estimator(
@@ -474,16 +479,6 @@ class EstimatorTrialController(det.LoopTrialController):
             "to return an instance of `tf.estimator.EvalSpec`.",
         )
 
-        all_hooks = [*self.user_train_spec.hooks]
-
-        if self.hvd_config.use:
-            all_hooks.append(hvd.BroadcastGlobalVariablesHook(0))
-
-        # It is important that this hook is the final in the list so that if
-        # any other hooks need to run _before_ the training step ends they have
-        # their chance.
-        all_hooks.append(DeterminedControlHook(self))
-
         # TODO(DET-834): Separate step ID from data loader state.
         #
         # During warm start, we initialize model weights, optimizer state
@@ -499,10 +494,23 @@ class EstimatorTrialController(det.LoopTrialController):
         # Repeat training dataset so we never run out of data.
         repeating_train_fn = self._check_and_repeat_train_input_fn(self.user_train_spec.input_fn)
 
-        self.train_spec = tf.estimator.TrainSpec(input_fn=repeating_train_fn, hooks=all_hooks)
+        self.train_spec = tf.estimator.TrainSpec(
+            input_fn=repeating_train_fn, hooks=self.train_hooks
+        )
         self.eval_spec = tf.estimator.EvalSpec(
             input_fn=self.val_spec.input_fn, hooks=self.val_spec.hooks, steps=None
         )
+
+    def _init_train_hooks(self) -> None:
+        self.train_hooks = [*self.user_train_spec.hooks]
+
+        if self.hvd_config.use:
+            self.train_hooks.append(hvd.BroadcastGlobalVariablesHook(0))
+
+        # It is important that this hook is the final in the list so that if
+        # any other hooks need to run _before_ the training step ends they have
+        # their chance.
+        self.train_hooks.append(DeterminedControlHook(self))
 
     def _init_run_config(self, config: tf.estimator.RunConfig) -> tf.estimator.RunConfig:
         logging.debug(f"Initializing RunConfig. Got RunConfig: {config} .")
@@ -565,6 +573,10 @@ class EstimatorTrialController(det.LoopTrialController):
             self.estimator_dir = pathlib.Path(tempfile.mkdtemp(suffix=suffix))
             logging.debug(f"Estimator directory set to {self.estimator_dir}.")
             return
+
+        for callback in self.train_hooks:
+            if isinstance(callback, estimator.RunHook):
+                callback.on_checkpoint_load(self.load_path)
 
         self.estimator_dir = pathlib.Path(tempfile.mkdtemp(suffix=suffix))
         if self.estimator_dir.exists():
