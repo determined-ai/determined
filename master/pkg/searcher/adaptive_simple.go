@@ -55,13 +55,20 @@ func newAsyncHalvingSimpleSearch(config model.AsyncHalvingConfig, trials int) Se
 			expectedSteps += stepsNeeded * startTrials
 			expectedWorkloads += (stepsNeeded + 1) * startTrials
 		}
-		rungs = append(rungs, &rung{stepsNeeded: stepsNeeded, startTrials: startTrials})
+		rungs = append(rungs,
+			&rung{
+				stepsNeeded: stepsNeeded,
+				startTrials: startTrials,
+				seenTrials:  make(map[RequestID]bool),
+			},
+		)
 	}
 	config.StepBudget = expectedSteps
 	return &asyncHalvingSearch{
 		AsyncHalvingConfig: config,
 		rungs:              rungs,
 		trialRungs:         make(map[RequestID]int),
+		earlyExitTrials:    make(map[RequestID]float64),
 		expectedWorkloads:  expectedWorkloads,
 	}
 }

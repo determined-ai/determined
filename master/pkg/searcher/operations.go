@@ -172,7 +172,9 @@ func (close Close) String() string {
 }
 
 // Shutdown marks the searcher as completed.
-type Shutdown struct{}
+type Shutdown struct {
+	Failure bool
+}
 
 // NewShutdown initializes a Shutdown operation for the searcher.
 func NewShutdown() Shutdown {

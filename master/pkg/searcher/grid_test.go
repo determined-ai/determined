@@ -131,7 +131,7 @@ func TestGridSearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
 				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
 				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
-				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
+				newEarlyExitPredefinedTrial(.1, 3, nil, nil),
 			},
 			config: model.SearcherConfig{
 				GridConfig: &model.GridConfig{MaxSteps: 3},

@@ -69,6 +69,14 @@ func (s *tournamentSearch) trialClosed(ctx context, requestID RequestID) ([]Oper
 	return s.markCreates(subSearch, ops), err
 }
 
+func (s *tournamentSearch) trialExitedEarly(
+	ctx context, requestID RequestID, message Workload,
+) ([]Operation, error) {
+	subSearch := s.trialTable[requestID]
+	ops, err := subSearch.trialExitedEarly(ctx, requestID, message)
+	return s.markCreates(subSearch, ops), err
+}
+
 // progress returns experiment progress as a float between 0.0 and 1.0.
 func (s *tournamentSearch) progress(int) float64 {
 	sum := 0.0

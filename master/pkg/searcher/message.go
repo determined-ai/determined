@@ -19,6 +19,7 @@ type CompletedMessage struct {
 	CheckpointMetrics *CheckpointMetrics
 	ValidationMetrics *ValidationMetrics
 	RunMetrics        map[string]interface{}
+	ExitedReason      *ExitedReason
 }
 
 // UnmarshalJSON unmarshals the provided bytes into a workload.CompletedMessage. An error is
@@ -74,3 +75,11 @@ func (metrics ValidationMetrics) Metric(name string) (float64, error) {
 	}
 	return metric, nil
 }
+
+// ExitedReason defines why a workload exited early.
+type ExitedReason string
+
+const (
+	// Errored signals the searcher that the workload errored out.
+	Errored ExitedReason = "ERRORED"
+)

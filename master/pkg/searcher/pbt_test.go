@@ -393,10 +393,64 @@ func TestPBTSearchMethod(t *testing.T) {
 			},
 		},
 		{
+			name: "early exit -- smaller is better",
+			expectedTrials: []predefinedTrial{
+				// First generation.
+				newEarlyExitPredefinedTrial(0.5, 4, []int{2}, []int{2}),
+				newConstantPredefinedTrial(0.6, 2, []int{2}, nil),
+				// Second generation beats first generation.
+				newConstantPredefinedTrial(0.1, 6, []int{2, 4, 6}, []int{2, 4}),
+				// Third generation loses to second generation.
+				newConstantPredefinedTrial(0.2, 2, []int{2}, nil),
+				// Fourth generation loses to second generation also.
+				newConstantPredefinedTrial(0.3, 2, []int{2}, nil),
+			},
+			config: model.SearcherConfig{
+				PBTConfig: &model.PBTConfig{
+					Metric:          "error",
+					SmallerIsBetter: true,
+					PopulationSize:  2,
+					NumRounds:       4,
+					StepsPerRound:   2,
+					PBTReplaceConfig: model.PBTReplaceConfig{
+						TruncateFraction: .5,
+					},
+					PBTExploreConfig: model.PBTExploreConfig{},
+				},
+			},
+		},
+		{
 			name: "smaller is not better",
 			expectedTrials: []predefinedTrial{
 				// First generation.
 				newConstantPredefinedTrial(0.5, 4, []int{2, 4}, []int{2}),
+				newConstantPredefinedTrial(0.4, 2, []int{2}, nil),
+				// Second generation beats first generation.
+				newConstantPredefinedTrial(0.9, 6, []int{2, 4, 6}, []int{2, 4}),
+				// Third generation loses to second generation.
+				newConstantPredefinedTrial(0.8, 2, []int{2}, nil),
+				// Fourth generation loses to second generation also.
+				newConstantPredefinedTrial(0.7, 2, []int{2}, nil),
+			},
+			config: model.SearcherConfig{
+				PBTConfig: &model.PBTConfig{
+					Metric:          "error",
+					SmallerIsBetter: false,
+					PopulationSize:  2,
+					NumRounds:       4,
+					StepsPerRound:   2,
+					PBTReplaceConfig: model.PBTReplaceConfig{
+						TruncateFraction: .5,
+					},
+					PBTExploreConfig: model.PBTExploreConfig{},
+				},
+			},
+		},
+		{
+			name: "early exit -- smaller is not better",
+			expectedTrials: []predefinedTrial{
+				// First generation.
+				newEarlyExitPredefinedTrial(0.5, 4, []int{2}, []int{2}),
 				newConstantPredefinedTrial(0.4, 2, []int{2}, nil),
 				// Second generation beats first generation.
 				newConstantPredefinedTrial(0.9, 6, []int{2, 4, 6}, []int{2, 4}),

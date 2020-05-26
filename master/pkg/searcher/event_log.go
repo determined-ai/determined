@@ -27,6 +27,8 @@ type EventLog struct {
 	// logged the first time it is seen, regardless.
 	completedWorkloads map[WorkloadOperation]bool
 
+	earlyExits map[WorkloadOperation]bool
+
 	// completedCheckpointMsgs are WorkloadCompleted messages for CheckpointModel operations which
 	// the searcher might request later.
 	completedCheckpointMsgs map[WorkloadOperation]CompletedMessage
@@ -51,6 +53,7 @@ func NewEventLog() *EventLog {
 	return &EventLog{
 		inFlightWorkloads:       map[WorkloadOperation]bool{},
 		completedWorkloads:      map[WorkloadOperation]bool{},
+		earlyExits:              map[WorkloadOperation]bool{},
 		completedCheckpointMsgs: map[WorkloadOperation]CompletedMessage{},
 		Shutdown:                false,
 		TrialsRequested:         0,
@@ -107,6 +110,15 @@ func (el *EventLog) WorkloadCompleted(message CompletedMessage) bool {
 	if _, ok := el.completedWorkloads[op]; !ok {
 		el.uncommitted = append(el.uncommitted, message)
 		el.completedWorkloads[op] = false
+	}
+
+	// If we are exiting early and we haven't seen this exiting early
+	// message before, return true to send the message down to the search
+	// method.
+	exitingEarly := message.ExitedReason != nil
+	if _, ok := el.earlyExits[op]; !ok && exitingEarly {
+		el.earlyExits[op] = true
+		return true
 	}
 
 	// Check if we did not initiate this workload.

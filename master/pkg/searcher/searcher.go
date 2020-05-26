@@ -111,19 +111,22 @@ func (s *Searcher) WorkloadCompleted(message CompletedMessage) ([]Operation, err
 	var operations []Operation
 	var err error
 
-	switch message.Workload.Kind {
-	case RunStep:
+	switch {
+	case message.ExitedReason != nil:
+		operations, err = s.method.trialExitedEarly(s.context(), requestID, message.Workload)
+	case message.Workload.Kind == RunStep:
 		operations, err = s.method.trainCompleted(
 			s.context(), requestID, message.Workload)
-	case CheckpointModel:
+	case message.Workload.Kind == CheckpointModel:
 		operations, err = s.method.checkpointCompleted(
 			s.context(), requestID, message.Workload, *message.CheckpointMetrics)
-	case ComputeValidationMetrics:
+	case message.Workload.Kind == ComputeValidationMetrics:
 		operations, err = s.method.validationCompleted(
 			s.context(), requestID, message.Workload, *message.ValidationMetrics)
 	default:
 		return nil, errors.Errorf("unexpected workload: %s", message.Workload.Kind)
 	}
+
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
 	}
@@ -145,7 +148,7 @@ func (s *Searcher) TrialClosed(requestID RequestID) ([]Operation, error) {
 	}
 	s.eventLog.OperationsCreated(operations...)
 	if s.eventLog.TrialsRequested == s.eventLog.TrialsClosed {
-		shutdown := NewShutdown()
+		shutdown := Shutdown{Failure: len(s.eventLog.earlyExits) >= s.eventLog.TrialsRequested}
 		s.eventLog.OperationsCreated(shutdown)
 		operations = append(operations, shutdown)
 	}

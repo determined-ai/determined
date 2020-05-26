@@ -34,3 +34,11 @@ func (s *randomSearch) initialOperations(ctx context) ([]Operation, error) {
 func (s *randomSearch) progress(workloadsCompleted int) float64 {
 	return float64(workloadsCompleted) / float64((s.MaxSteps+1)*s.MaxTrials)
 }
+
+// trialExitedEarly does nothing since random does not take actions based on
+// search status or progress.
+func (s *randomSearch) trialExitedEarly(
+	ctx context, requestID RequestID, message Workload,
+) ([]Operation, error) {
+	return nil, nil
+}

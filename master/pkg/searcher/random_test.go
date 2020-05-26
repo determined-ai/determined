@@ -31,7 +31,7 @@ func TestRandomSearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
 				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
 				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
-				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
+				newEarlyExitPredefinedTrial(.1, 5, nil, nil),
 			},
 			config: model.SearcherConfig{
 				RandomConfig: &model.RandomConfig{
