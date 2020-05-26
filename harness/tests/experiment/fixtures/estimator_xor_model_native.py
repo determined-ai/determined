@@ -4,13 +4,13 @@ from typing import Callable, Dict, Tuple
 
 import tensorflow as tf
 
-from determined.estimator import EstimatorNativeContext, ServingInputReceiverFn
-from determined.experimental import estimator
+from determined import estimator
+from determined.experimental import estimator as estimator_experimental
 from tests.experiment import utils
 
 
 def xor_input_fn(
-    context: EstimatorNativeContext, batch_size: int, shuffle: bool = False
+    context: estimator.EstimatorNativeContext, batch_size: int, shuffle: bool = False
 ) -> Callable[[], Tuple[tf.Tensor, tf.Tensor]]:
     def _input_fn() -> Tuple[tf.Tensor, tf.Tensor]:
         data, labels = utils.xor_data()
@@ -30,7 +30,7 @@ def xor_input_fn(
     return _input_fn
 
 
-def build_estimator(context: EstimatorNativeContext) -> tf.estimator.Estimator:
+def build_estimator(context: estimator.EstimatorNativeContext) -> tf.estimator.Estimator:
     optimizer = context.get_hparam("optimizer")
     learning_rate = context.get_hparam("learning_rate")
     hidden_size = context.get_hparam("hidden_size")
@@ -58,7 +58,7 @@ def build_estimator(context: EstimatorNativeContext) -> tf.estimator.Estimator:
     )
 
 
-def build_serving_input_receiver_fns() -> Dict[str, ServingInputReceiverFn]:
+def build_serving_input_receiver_fns() -> Dict[str, estimator.ServingInputReceiverFn]:
     _input = tf.feature_column.numeric_column("input", shape=(2,), dtype=tf.int64)
     return {
         "inference": tf.estimator.export.build_parsing_serving_input_receiver_fn(
@@ -83,7 +83,7 @@ if __name__ == "__main__":
         }
     }
 
-    context = estimator.init(
+    context = estimator_experimental.init(
         config=config, local=args.local, test=args.test, context_dir=str(pathlib.Path.cwd())
     )
 
