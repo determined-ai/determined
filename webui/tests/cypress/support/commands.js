@@ -30,7 +30,8 @@ Cypress.Commands.add('checkLoggedIn', username => {
 
 Cypress.Commands.add('checkLoggedOut', () => {
   cy.visit('/');
-  cy.get('#avatar').should('not.exist');
+  cy.location('pathname').should('eq', '/det/login');
+  cy.getCookie('auth').should('eq', null);
 });
 
 // TODO use Cypress.env to share (and bring in) some of the contants used.
@@ -47,7 +48,7 @@ Cypress.Commands.add('login', credentials => {
   cy.getCookie('auth')
     .should('exist')
     .should('have.property', 'value');
-  cy.checkLoggedIn(credentials.username);
+  // cy.checkLoggedIn(credentials.username);
 });
 
 Cypress.Commands.add('logout', () => {
@@ -59,5 +60,5 @@ Cypress.Commands.add('logout', () => {
     .then(() => {
       return cy.clearCookie('auth');
     });
-  cy.checkLoggedOut();
+  // cy.checkLoggedOut();
 });

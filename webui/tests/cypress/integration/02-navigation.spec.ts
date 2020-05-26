@@ -2,6 +2,7 @@ describe('Navigation', () => {
   before(() => {
     cy.login();
   });
+
   const titleSelector = '#det-main-container div.text-2xl';
 
   describe('paths', () => {

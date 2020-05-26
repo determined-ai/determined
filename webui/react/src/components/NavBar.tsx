@@ -20,7 +20,7 @@ const NavBar: React.FC<Props> = (props: Props) => {
   const menu = (
     <Menu>
       <Menu.Item>
-        <NavItem  path={'/det/logout'}>Sign Out</NavItem>
+        <NavItem path={'/det/logout'}>Sign Out</NavItem>
       </Menu.Item>
     </Menu>
   );
