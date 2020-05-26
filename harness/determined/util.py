@@ -142,6 +142,12 @@ def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False)
 def write_checkpoint_metadata(path: pathlib.Path, env: EnvContext, extras: Dict[str, Any]) -> None:
     code_path = path.joinpath("code")
 
+    # When restarting from checkpoint, it is possible that the code path is already present
+    # in the checkpoint directory. This happens for EstimatorTrial because we overwrite the
+    # estimator model directory with the checkpoint folder at the start of training.
+    if code_path.exists():
+        shutil.rmtree(str(code_path))
+
     # Pytorch and tf.1 keras models can only be restored from a checkpoint if
     # the original code is present. The model code is the current working
     # directory. Therefore we save the current directory with the checkpoint.
