@@ -1,18 +1,14 @@
+import pathlib
 from typing import Any, Callable, Dict, Tuple, Union
 
 import tensorflow as tf
 
-from determined.estimator import (
-    EstimatorNativeContext,
-    EstimatorTrial,
-    EstimatorTrialContext,
-    ServingInputReceiverFn,
-)
+from determined import estimator
 from tests.experiment.utils import xor_data
 
 
 def xor_input_fn(
-    context: Union[EstimatorNativeContext, EstimatorTrialContext],
+    context: Union[estimator.EstimatorNativeContext, estimator.EstimatorTrialContext],
     batch_size: int,
     shuffle: bool = False,
 ) -> Callable[[], Tuple[tf.Tensor, tf.Tensor]]:
@@ -35,7 +31,7 @@ def xor_input_fn(
 
 
 def xor_input_fn_data_layer(
-    context: Union[EstimatorNativeContext, EstimatorTrialContext],
+    context: Union[estimator.EstimatorNativeContext, estimator.EstimatorTrialContext],
     training: bool,
     batch_size: int,
     shuffle: bool = False,
@@ -66,14 +62,14 @@ def xor_input_fn_data_layer(
     return _input_fn
 
 
-class XORTrial(EstimatorTrial):
+class XORTrial(estimator.EstimatorTrial):
     """
     Models a lightweight neural network model with one hidden layer to
     learn a binary XOR function. See Deep Learning Book, chapter 6.1 for
     the solution with a hidden size of 2, and a MSE loss function.
     """
 
-    def __init__(self, context: EstimatorTrialContext) -> None:
+    def __init__(self, context: estimator.EstimatorTrialContext) -> None:
         self.context = context
 
     def build_estimator(self) -> tf.estimator.Estimator:
@@ -121,7 +117,7 @@ class XORTrial(EstimatorTrial):
             )
         )
 
-    def build_serving_input_receiver_fns(self) -> Dict[str, ServingInputReceiverFn]:
+    def build_serving_input_receiver_fns(self) -> Dict[str, estimator.ServingInputReceiverFn]:
         _input = tf.feature_column.numeric_column("input", shape=(2,), dtype=tf.int64)
         return {
             "inference": tf.estimator.export.build_parsing_serving_input_receiver_fn(
@@ -152,7 +148,7 @@ class XORTrialDataLayer(XORTrial):
         )
 
 
-class CustomCallback(tf.estimator.SessionRunHook):
+class UserDefinedHook(tf.estimator.SessionRunHook):
     def __init__(self, file_path: str) -> None:
         self._file_path = file_path
         self._idx = 0
@@ -163,12 +159,12 @@ class CustomCallback(tf.estimator.SessionRunHook):
             fp.write(f"{self._idx}")
 
 
-class XORTrialWithCallbacks(XORTrial):
-    def __init__(self, context: EstimatorTrialContext) -> None:
+class XORTrialWithHooks(XORTrial):
+    def __init__(self, context: estimator.EstimatorTrialContext) -> None:
         self.context = context
 
-        self._train_hook = CustomCallback(file_path=self.context.get_hparam("training_log_path"))
-        self._val_hook = CustomCallback(file_path=self.context.get_hparam("val_log_path"))
+        self._train_hook = UserDefinedHook(file_path=self.context.get_hparam("training_log_path"))
+        self._val_hook = UserDefinedHook(file_path=self.context.get_hparam("val_log_path"))
 
     def build_train_spec(self) -> tf.estimator.TrainSpec:
         return tf.estimator.TrainSpec(
@@ -188,4 +184,30 @@ class XORTrialWithCallbacks(XORTrial):
                 shuffle=False,
             ),
             hooks=[self._val_hook],
+        )
+
+
+class CustomHook(estimator.RunHook):
+    def __init__(self):
+        self._num_checkpoints = 0
+
+    def on_checkpoint_load(self, checkpoint_dir: pathlib.Path) -> None:
+        with open(str(checkpoint_dir.joinpath("custom.log")), "r") as fp:
+            self._num_checkpoints = int(fp.readline())
+
+    def on_checkpoint_end(self, checkpoint_dir: pathlib.Path) -> None:
+        self._num_checkpoints += 1
+        with open(str(checkpoint_dir.joinpath("custom.log")), "w") as fp:
+            fp.write(f"{self._num_checkpoints}")
+
+
+class XORTrialWithCustomHook(XORTrial):
+    def build_train_spec(self) -> tf.estimator.TrainSpec:
+        return tf.estimator.TrainSpec(
+            xor_input_fn(
+                context=self.context,
+                batch_size=self.context.get_per_slot_batch_size(),
+                shuffle=self.context.get_hparam("shuffle"),
+            ),
+            hooks=[CustomHook()],
         )

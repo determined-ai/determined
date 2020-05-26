@@ -1,4 +1,5 @@
 import os
+import pathlib
 import tempfile
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
@@ -198,7 +199,7 @@ class TestXORTrial:
 
         utils.optimizer_state_test(make_trial_controller_fn, tmp_path)
 
-    def test_callbacks(self) -> None:
+    def test_hooks(self) -> None:
         with tempfile.TemporaryDirectory() as temp_directory:
             batches_per_step = 5
             steps = 10
@@ -217,7 +218,7 @@ class TestXORTrial:
             hparams["val_log_path"] = os.path.join(temp_directory, "val.log")
 
             controller = utils.make_trial_controller_from_trial_implementation(
-                trial_class=estimator_xor_model.XORTrialWithCallbacks,
+                trial_class=estimator_xor_model.XORTrialWithHooks,
                 hparams=hparams,
                 workloads=make_workloads(),
                 batches_per_step=batches_per_step,
@@ -229,6 +230,41 @@ class TestXORTrial:
 
             with open(hparams["val_log_path"], "r") as fp:
                 assert int(fp.readline()) == steps / validation_freq
+
+    def test_custom_hook(self, tmp_path: Path) -> None:
+        def make_workloads(checkpoint_dir: pathlib.Path) -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+
+            yield from trainer.send(steps=10, validation_freq=5, batches_per_step=5)
+            yield workload.checkpoint_workload(), [
+                checkpoint_dir
+            ], workload.ignore_workload_response
+            yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+        def verify_callback(checkpoint_dir: pathlib.Path, checkpoint_num: int) -> None:
+            with open(str(checkpoint_dir.joinpath("custom.log")), "r") as fp:
+                assert int(fp.readline()) == checkpoint_num
+
+        checkpoint_dir1 = tmp_path.joinpath("checkpoint1")
+        controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=estimator_xor_model.XORTrialWithCustomHook,
+            hparams=self.hparams,
+            workloads=make_workloads(checkpoint_dir=checkpoint_dir1),
+            batches_per_step=5,
+        )
+        controller.run()
+        verify_callback(checkpoint_dir=checkpoint_dir1, checkpoint_num=1)
+
+        checkpoint_dir2 = tmp_path.joinpath("checkpoint2")
+        controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=estimator_xor_model.XORTrialWithCustomHook,
+            hparams=self.hparams,
+            workloads=make_workloads(checkpoint_dir=checkpoint_dir2),
+            batches_per_step=5,
+            load_path=checkpoint_dir1,
+        )
+        controller.run()
+        verify_callback(checkpoint_dir=checkpoint_dir2, checkpoint_num=2)
 
 
 def test_local_mode() -> None:
