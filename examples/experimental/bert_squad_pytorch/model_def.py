@@ -1,6 +1,5 @@
 from typing import Dict, Sequence, Union
 import torch
-import os
 import torch.nn as nn
 
 import determined as det
@@ -28,30 +27,32 @@ class BertSQuADPyTorch(PyTorchTrial):
         self.config_class, self.tokenizer_class, self.model_class = constants.MODEL_CLASSES[
             self.context.get_hparam("model_type")
         ]
-        self.validation_dataset, self.examples, self.features = data.load_and_cache_examples(
+        self.tokenizer = self.tokenizer_class.from_pretrained(
+            self.context.get_data_config().get("model_name_or_path"),
+            do_lower_case=True,
+            cache_dir=None
+        )
+        self.validation_dataset, self.validation_examples, self.validation_features = data.load_and_cache_examples(
             data_dir=self.download_directory,
-            config=self.context.get_data_config(),
+            tokenizer=self.tokenizer,
             model_type=self.context.get_hparam("model_type"),
             max_seq_length=self.context.get_hparam("max_seq_length"),
             doc_stride=self.context.get_hparam("doc_stride"),
             max_query_length=self.context.get_hparam("max_query_length"),
             model_name_or_path=self.context.get_data_config().get("model_name_or_path"),
             evaluate=True,
-            output_examples=True,
         )
-        self.tr_loss = 0.0
 
     def build_training_data_loader(self) -> DataLoader:
-        train_dataset = data.load_and_cache_examples(
+        train_dataset, _, _ = data.load_and_cache_examples(
             data_dir=self.download_directory,
-            config=self.context.get_data_config(),
+            tokenizer=self.tokenizer,
             model_type=self.context.get_hparam("model_type"),
             max_seq_length=self.context.get_hparam("max_seq_length"),
             doc_stride=self.context.get_hparam("doc_stride"),
             max_query_length=self.context.get_hparam("max_query_length"),
             model_name_or_path=self.context.get_data_config().get("model_name_or_path"),
             evaluate=False,
-            output_examples=False,
         )
         return DataLoader(train_dataset, batch_size=self.context.get_per_slot_batch_size())
 
@@ -89,7 +90,7 @@ class BertSQuADPyTorch(PyTorchTrial):
                 "params": [
                     p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)
                 ],
-                "weight_decay": self.context.get_hparam("weight_decay"),
+                "weight_decay": 0.0,
             },
         ]
         optimizer = AdamW(
@@ -117,16 +118,9 @@ class BertSQuADPyTorch(PyTorchTrial):
         }
         outputs = model(**inputs)
         loss = outputs[0]
-        self.tr_loss += loss.item()
-        return {"loss": self.tr_loss}
+        return {"loss": loss}
 
     def evaluate_full_dataset(self, data_loader: DataLoader, model: nn.Module) -> Dict[str, Any]:
-        tokenizer = self.tokenizer_class.from_pretrained(
-            self.context.get_data_config().get("model_name_or_path"),
-            do_lower_case=True,
-            cache_dir=None
-        )
-
         all_results = []
         for batch in data_loader:
             inputs = {
@@ -137,19 +131,19 @@ class BertSQuADPyTorch(PyTorchTrial):
             feature_indices = batch[3]
             outputs = model(**inputs)
             for i, feature_index in enumerate(feature_indices):
-                eval_feature = self.features[feature_index.item()]
+                eval_feature = self.validation_features[feature_index.item()]
                 unique_id = int(eval_feature.unique_id)
                 output = [output[i].detach().cpu().tolist() for output in outputs]
                 start_logits, end_logits = output
                 result = SquadResult(unique_id, start_logits, end_logits)
-            all_results.append(result)
+                all_results.append(result)
 
-        output_prediction_file = os.path.join(".", "predictions_{}.json".format(""))
-        output_nbest_file = os.path.join(".", "nbest_predictions_{}.json".format(""))
+        output_prediction_file = None
+        output_nbest_file = None
         output_null_log_odds_file = None
         predictions = compute_predictions_logits(
-            self.examples,
-            self.features,
+            self.validation_examples,
+            self.validation_features,
             all_results,
             self.context.get_hparam("n_best_size"),
             self.context.get_hparam("max_answer_length"),
@@ -160,7 +154,7 @@ class BertSQuADPyTorch(PyTorchTrial):
             True,
             False,
             self.context.get_hparam("null_score_diff_threshold"),
-            tokenizer,
+            self.tokenizer,
         )
-        results = squad_evaluate(self.examples, predictions)
+        results = squad_evaluate(self.validation_examples, predictions)
         return results
