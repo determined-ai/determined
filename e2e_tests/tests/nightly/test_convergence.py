@@ -111,6 +111,7 @@ def test_mnist_pytorch_accuracy() -> None:
 @pytest.mark.nightly  # type: ignore
 def test_object_detection_accuracy() -> None:
     config = conf.load_config(conf.official_examples_path("object_detection_pytorch/const.yaml"))
+    config = conf.set_random_seed(config, 1590497309)
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("object_detection_pytorch"), 1
     )

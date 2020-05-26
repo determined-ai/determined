@@ -113,3 +113,10 @@ def set_s3_data_layer(config: Dict[Any, Any]) -> Dict[Any, Any]:
     config["data_layer"]["bucket"] = "yogadl-test"
     config["data_layer"]["bucket_directory_path"] = "pedl_integration_tests"
     return config
+
+
+def set_random_seed(config: Dict[Any, Any], seed: int) -> Dict[Any, Any]:
+    config = config.copy()
+    config.setdefault("reproducibility", {})
+    config["reproducibility"]["experiment_seed"] = seed
+    return config
