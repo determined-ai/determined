@@ -57,6 +57,7 @@ export const experimentToTask = (experiment: Experiment): RecentTask => {
 };
 
 export const killableRunStates = [ RunState.Active, RunState.Paused, RunState.StoppingCanceled ];
+export const cancellableRunStates = [ RunState.Active, RunState.Paused ];
 export const killableCmdStates = [
   CommandState.Assigned,
   CommandState.Pending,

@@ -4,8 +4,8 @@ import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { Api } from 'services/apiBuilder';
 import { jsonToExperiments } from 'services/decoder';
 import { ExperimentsParams, KillCommandParams, KillExpParams,
-  PatchExperimentParams } from 'services/types';
-import { CommandType, Credentials, Experiment, User } from 'types';
+  LaunchTensorboardParams, PatchExperimentParams } from 'services/types';
+import { CommandType, Credentials, Experiment, TBSourceType, User } from 'types';
 
 /* Helpers */
 
@@ -69,6 +69,20 @@ export const killCommand: Api<KillCommandParams, void> = {
     };
   },
   name: 'killCommand',
+};
+
+export const launchTensorboard: Api<LaunchTensorboardParams, void> = {
+  httpOptions: (params) => {
+    const attrName = params.type === TBSourceType.Trial ? 'trial_ids' : 'experiment_ids';
+    return {
+      body: {
+        [attrName]: params.ids,
+      },
+      method: 'POST',
+      url: `${commandToEndpoint[CommandType.Tensorboard]}`,
+    };
+  },
+  name: 'launchTensorboard',
 };
 
 /* Experiment */
