@@ -1,7 +1,6 @@
 import logging
 import os
 import pathlib
-import shutil
 from collections import defaultdict
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -188,33 +187,7 @@ def move_tf_events(root_dir: str) -> None:
         event_file.rename(tensorboard_dir.joinpath(event_file.name))
 
 
-def collect_worker_checkpoints_from_subdirectories(model_dir: pathlib.Path) -> None:
-    """
-    To avoid a possible deadlock due to a collective operation during checkpoint,
-    the `tf.estimator` code executes checkpoint operations on the
-    chief and all workers, and to avoid workers clobbering checkpoints due to
-    a shared model directory, workers are configured to write their checkpoints
-    to a junk subdirectory of the model directory (e.g., `tmp_worker_1").
-
-    Since, (1) these checkpoints contain the global step number, which is required
-    to resume a trial, and (2) for distributed and optimized parallel training,
-    the model directory is not shared, we simply move the contents of the junk directory,
-    if present, back into the model directory.
-    """
-    subdirs = [f.path for f in os.scandir(str(model_dir)) if f.is_dir()]
-    for d in subdirs:
-        for f in os.scandir(d):
-            dst = os.path.join(str(model_dir), os.path.basename(f.name))
-            if os.path.exists(dst):
-                logging.debug(f"Replacing {f.path} in {model_dir}.")
-                os.remove(dst)
-            shutil.move(f.path, dst)
-        os.rmdir(d)
-
-
 def _cleanup_after_train_step(model_dir: pathlib.Path) -> None:
-    collect_worker_checkpoints_from_subdirectories(model_dir)
-
     # TF event files are written out during training by estimators. We move
     # them to the tensorboard directory so that they can be saved to persistent
     # storage.
