@@ -21,7 +21,7 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 
 class BertSQuADPyTorch(PyTorchTrial):
-    def __init__(self, context: det.TrialContext) -> None:
+    def __init__(self, context: det.TrialContext):
         self.context = context
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.config_class, self.tokenizer_class, self.model_class = constants.MODEL_CLASSES[
@@ -35,34 +35,32 @@ class BertSQuADPyTorch(PyTorchTrial):
         self.validation_dataset, self.validation_examples, self.validation_features = data.load_and_cache_examples(
             data_dir=self.download_directory,
             tokenizer=self.tokenizer,
-            model_type=self.context.get_hparam("model_type"),
+            task=self.context.get_data_config().get("task"),
             max_seq_length=self.context.get_hparam("max_seq_length"),
             doc_stride=self.context.get_hparam("doc_stride"),
             max_query_length=self.context.get_hparam("max_query_length"),
-            model_name_or_path=self.context.get_data_config().get("model_name_or_path"),
             evaluate=True,
         )
 
-    def build_training_data_loader(self) -> DataLoader:
+    def build_training_data_loader(self):
         train_dataset, _, _ = data.load_and_cache_examples(
             data_dir=self.download_directory,
             tokenizer=self.tokenizer,
-            model_type=self.context.get_hparam("model_type"),
+            task=self.context.get_data_config().get("task"),
             max_seq_length=self.context.get_hparam("max_seq_length"),
             doc_stride=self.context.get_hparam("doc_stride"),
             max_query_length=self.context.get_hparam("max_query_length"),
-            model_name_or_path=self.context.get_data_config().get("model_name_or_path"),
             evaluate=False,
         )
         return DataLoader(train_dataset, batch_size=self.context.get_per_slot_batch_size())
 
-    def build_validation_data_loader(self) -> DataLoader:
+    def build_validation_data_loader(self):
         return DataLoader(
             self.validation_dataset,
             batch_size=self.context.get_per_slot_batch_size(),
         )
 
-    def build_model(self) -> torch.nn.modules.module.Module:
+    def build_model(self):
         cache_dir_per_rank = f"/tmp/{self.context.distributed.get_rank()}"
 
         config = self.config_class.from_pretrained(
@@ -77,7 +75,7 @@ class BertSQuADPyTorch(PyTorchTrial):
         )
         return model
 
-    def optimizer(self, model: nn.Module) -> torch.optim.optimizer.Optimizer:
+    def optimizer(self, model: nn.Module):
         no_decay = ["bias", "LayerNorm.weight"]
         optimizer_grouped_parameters = [
             {
@@ -100,7 +98,7 @@ class BertSQuADPyTorch(PyTorchTrial):
         )
         return optimizer
 
-    def create_lr_scheduler(self, optimizer: torch.optim.Optimizer) -> LRScheduler:
+    def create_lr_scheduler(self, optimizer: torch.optim.Optimizer):
         scheduler = get_linear_schedule_with_warmup(
             optimizer,
             num_warmup_steps=self.context.get_hparam("num_warmup_steps"),
@@ -108,7 +106,7 @@ class BertSQuADPyTorch(PyTorchTrial):
         )
         return LRScheduler(scheduler, LRScheduler.StepMode.STEP_EVERY_BATCH)
 
-    def train_batch(self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int) -> Union[torch.Tensor, Dict[str, Any]] :
+    def train_batch(self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int):
         inputs = {
             "input_ids": batch[0],
             "attention_mask": batch[1],
@@ -120,13 +118,13 @@ class BertSQuADPyTorch(PyTorchTrial):
         loss = outputs[0]
         return {"loss": loss}
 
-    def evaluate_full_dataset(self, data_loader: DataLoader, model: nn.Module) -> Dict[str, Any]:
+    def evaluate_full_dataset(self, data_loader: DataLoader, model: nn.Module):
         all_results = []
         for batch in data_loader:
             inputs = {
-                "input_ids": batch[0],
-                "attention_mask": batch[1],
-                "token_type_ids": batch[2],
+                "input_ids": batch[0].cuda(),
+                "attention_mask": batch[1].cuda(),
+                "token_type_ids": batch[2].cuda(),
             }
             feature_indices = batch[3]
             outputs = model(**inputs)

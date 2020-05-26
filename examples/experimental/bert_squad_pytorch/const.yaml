@@ -16,10 +16,10 @@ hyperparameters:
     null_score_diff_threshold: 0.0
 searcher:
     name: single
-    metric: acc
+    metric: f1
     max_steps: 2
     smaller_is_better: false
-min_validation_period: 200
+min_validation_period: 200 
 data:
     model_name_or_path: "bert-base-uncased"
     download_data: False
