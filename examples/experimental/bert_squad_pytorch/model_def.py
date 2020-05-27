@@ -23,17 +23,15 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 class BertSQuADPyTorch(PyTorchTrial):
     def __init__(self, context: det.TrialContext):
         self.context = context
-        self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.config_class, self.tokenizer_class, self.model_class = constants.MODEL_CLASSES[
             self.context.get_hparam("model_type")
         ]
         self.tokenizer = self.tokenizer_class.from_pretrained(
-            self.context.get_data_config().get("model_name_or_path"),
+            self.context.get_data_config().get("pretrained_model_name"),
             do_lower_case=True,
             cache_dir=None
         )
         self.validation_dataset, self.validation_examples, self.validation_features = data.load_and_cache_examples(
-            data_dir=self.download_directory,
             tokenizer=self.tokenizer,
             task=self.context.get_data_config().get("task"),
             max_seq_length=self.context.get_hparam("max_seq_length"),
@@ -44,7 +42,6 @@ class BertSQuADPyTorch(PyTorchTrial):
 
     def build_training_data_loader(self):
         train_dataset, _, _ = data.load_and_cache_examples(
-            data_dir=self.download_directory,
             tokenizer=self.tokenizer,
             task=self.context.get_data_config().get("task"),
             max_seq_length=self.context.get_hparam("max_seq_length"),
@@ -64,12 +61,12 @@ class BertSQuADPyTorch(PyTorchTrial):
         cache_dir_per_rank = f"/tmp/{self.context.distributed.get_rank()}"
 
         config = self.config_class.from_pretrained(
-            self.context.get_data_config().get("model_name_or_path"),
+            self.context.get_data_config().get("pretrained_model_name"),
             cache_dir=cache_dir_per_rank,
         )
         model = self.model_class.from_pretrained(
-            self.context.get_data_config().get("model_name_or_path"),
-            from_tf=bool(".ckpt" in self.context.get_data_config().get("model_name_or_path")),
+            self.context.get_data_config().get("pretrained_model_name"),
+            from_tf=bool(".ckpt" in self.context.get_data_config().get("pretrained_model_name")),
             config=config,
             cache_dir=cache_dir_per_rank,
         )

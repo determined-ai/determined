@@ -15,6 +15,8 @@ hyperparameters:
     n_best_size: 20
     max_answer_length: 30
     null_score_diff_threshold: 0.0
+resources:
+    slots_per_trial: 8
 searcher:
     name: single
     metric: f1
