@@ -23,5 +23,5 @@ min_validation_period: 200
 data:
     model_name_or_path: "bert-base-uncased"
     download_data: False
-    task: "SQuAD1.0"
+    task: "SQuAD1.1"
 entrypoint: model_def:BertSQuADPyTorch
