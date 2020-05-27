@@ -62,6 +62,7 @@ The full list of our topic guides can be found below:
    reproducibility
    saml
    scheduling
+   scim
    system-architecture
    aws
    gcp

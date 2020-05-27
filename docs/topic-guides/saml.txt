@@ -14,8 +14,9 @@ When configuring your IdP to allow users to SSO to Determined, you will need to 
 of Determined's SSO URL and the audience URL. The audience URL should be set to the Determined master's
 base URL and the SSO endpoint is at that base URL with a path of ``/saml/sso``.
 
-Determined also requires an additional attribute named ``userName`` set to the username of the user
-attempting SSO (e.g. for Okta this is the attribute value ``user.login``).
+Determined also requires an additional attribute named ``userName`` with name format ``unspecified``
+set to the username of the user attempting SSO (e.g., for Okta, this is the attribute value
+``user.login``).
 
 Configuring Determined
 ----------------------
