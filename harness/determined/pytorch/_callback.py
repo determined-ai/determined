@@ -8,15 +8,15 @@ class PyTorchCallback:
     the lifetime of a PyTorchTrial.
 
     .. warning::
-        If you are defining a stateful callback (e.g. it mutates a self
-        attribute over it's lifetime), you must also override state_dict() and
-        load_state_dict() to ensure this state can be serialized and deserialized
+        If you are defining a stateful callback (e.g., it mutates a ``self``
+        attribute over its lifetime), you must also override :meth:`state_dict()` and
+        :meth:`load_state_dict()` to ensure this state can be serialized and deserialized
         over checkpoints.
 
     .. warning::
-        If distributed training is enabled, every GPU will execute a copy of
-        this callback (except for on_validation_step_end and on_checkpoint_end).  To configure a
-        callback implementation to execute on a subset of GPUs, please condition
+        If distributed training is enabled, every GPU will execute a copy of this callback
+        (except for :meth:`on_validation_step_end` and :meth:`on_checkpoint_end`).  To
+        configure a callback implementation to execute on a subset of GPUs, please condition
         your implementation on ``trial.context.distributed.get_rank()``.
     """
 
@@ -30,7 +30,7 @@ class PyTorchCallback:
         """
         Run after every training step ends.
 
-        ..warning::
+        .. warning::
             If distributed training is enabled, every GPU will execute a copy of
             this callback at the end of every training step. If
             ``optimizations.average_training_metrics`` is enabled, then the
@@ -73,6 +73,6 @@ class PyTorchCallback:
 
     def load_state_dict(self, state_dict: Dict[str, Any]) -> None:
         """
-        Load the state of this using the deserialized state_dict.
+        Load the state of this using the deserialized ``state_dict``.
         """
         pass

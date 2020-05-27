@@ -748,10 +748,8 @@ class PyTorchTrial(det.Trial):
     @abstractmethod
     def build_model(self) -> nn.Module:
         """
-        Defines the deep learning architecture associated with a trial, which
-        typically depends on the trial's specific hyperparameter settings
-        stored in the :py:attr:`hparams` dictionary. This method returns the model as an
-        an instance or subclass of :py:class:`nn.Module`.
+        Defines the deep learning architecture associated with a trial. This method
+        returns the model as an instance or subclass of :py:class:`nn.Module`.
         """
         pass
 
@@ -779,7 +777,7 @@ class PyTorchTrial(det.Trial):
         """
         Defines the data loader to use during training.
 
-        Must return an instance of ``determined.pytorch.DataLoader``.
+        Must return an instance of :py:class:`determined.pytorch.DataLoader`.
         """
         pass
 
@@ -788,7 +786,7 @@ class PyTorchTrial(det.Trial):
         """
         Defines the data loader to use during validation.
 
-        Must return an instance of ``determined.pytorch.DataLoader``.
+        Must return an instance of :py:class:`determined.pytorch.DataLoader`.
         """
         pass
 
@@ -815,7 +813,7 @@ class PyTorchTrial(det.Trial):
         during training and/or validation.
 
         The string name will be used as the key to save and restore callback
-        state for any callback that defines load_state_dict() and state_dict().
+        state for any callback that defines :meth:`load_state_dict` and :meth:`state_dict`.
         """
         return {}
 
@@ -826,10 +824,10 @@ class PyTorchTrial(det.Trial):
 
         There are two ways to specify evaluation metrics. Either override
         :meth:`evaluate_batch` or :meth:`evaluate_full_dataset`. While
-        :meth:`evaluate_full_dataset()` is more flexible,
-        :meth:`evaluate_batch()` should be preferred, since it can be
+        :meth:`evaluate_full_dataset` is more flexible,
+        :meth:`evaluate_batch` should be preferred, since it can be
         parallelized in distributed environments, whereas
-        :meth:`evaluate_full_dataset()` cannot. Only one of
+        :meth:`evaluate_full_dataset` cannot. Only one of
         :meth:`evaluate_full_dataset` and :meth:`evaluate_batch` should be
         overridden by a trial.
 
@@ -840,8 +838,7 @@ class PyTorchTrial(det.Trial):
     def evaluation_reducer(self) -> Union[Reducer, Dict[str, Reducer]]:
         """
         Return a reducer for all evaluation metrics, or a dict mapping metric
-        names to individual reducers. Defaults to
-        :obj:`det.pytorch.Reducer.AVG`.
+        names to individual reducers. Defaults to :obj:`det.pytorch.Reducer.AVG`.
         """
         return Reducer.AVG
 
@@ -866,7 +863,7 @@ class PyTorchTrial(det.Trial):
 
 def reset_parameters(model: torch.nn.Module) -> None:
     """
-    Recursively calls `reset_parameters()` for all modules.
+    Recursively calls ``reset_parameters()`` for all modules.
 
     Important: Call this prior to loading any backbone weights,
     otherwise those weights will be overwritten.
