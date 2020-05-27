@@ -67,7 +67,7 @@ const DeterminedAuth: React.FC<Props> = ({ setIsLoading }: Props) => {
             required: true,
           },
         ]}>
-        <Input placeholder="Username" prefix={<Icon name="user-small" />} />
+        <Input autoFocus placeholder="Username" prefix={<Icon name="user-small" />} />
       </Form.Item>
 
       <Form.Item name="password">
