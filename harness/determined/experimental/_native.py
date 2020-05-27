@@ -415,7 +415,6 @@ def init_native(
         if not test:
             logging.warn("local training is not supported, testing instead")
 
-        print(pathlib.Path(context_dir).resolve())
         with _local_execution_manager(pathlib.Path(context_dir).resolve()):
             return test_one_batch(
                 controller_cls=controller_cls,
