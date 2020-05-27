@@ -68,8 +68,8 @@ Example usage of ``determined.estimator.RunHook`` which adds custom metadata che
             self._context = context
             self._metadata = metadata
 
-        def on_checkpoint_end(self, checkpoint_path) -> None:
-            with open(str(checkpoint_dir.joinpath("metadata.txt")), "w") as fp:
+        def on_checkpoint_end(self, checkpoint_dir) -> None:
+            with open(os.path.join(checkpoint_dir, "metadata.txt"), "w") as fp:
                 fp.write(self._metadata)
 
     class MyEstimatorTrial(determined.estimator.EstimatorTrial) -> None:
