@@ -15,6 +15,7 @@ import tabulate
 from ruamel import yaml
 from termcolor import colored
 
+import determined_common
 from determined_cli import checkpoint, render
 from determined_cli.declarative_argparse import Arg, Cmd, Group
 from determined_cli.trial import logs
@@ -287,6 +288,8 @@ def local_experiment(args: Namespace) -> None:
         )
 
     experiment_config = _parse_config_file_or_exit(args.config_file)
+
+    determined_common.set_logger(bool(experiment_config.get("debug", False)))
 
     # Python typically initializes sys.path[0] as the empty string when
     # invoked interactively, which directs Python to search modules in the

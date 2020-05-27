@@ -9,6 +9,7 @@ import tempfile
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, cast
 
 import determined as det
+import determined_common
 import determined_common.api.authentication as auth
 from determined import constants, errors, gpu, horovod, load, workload
 from determined_common import api, check, context, util
@@ -406,7 +407,9 @@ def init_native(
     command: Optional[List[str]] = None,
     master_url: Optional[str] = None,
 ) -> Any:
-    det._set_logger(util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled())
+    determined_common.set_logger(
+        util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
+    )
 
     if local:
         if not test:
@@ -532,7 +535,9 @@ def create_trial_instance(
             :class:`determined.TrialContext`. If not specified, a minimal default
             is used.
     """
-    det._set_logger(util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled())
+    determined_common.set_logger(
+        util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
+    )
     env, workloads, rendezvous_info, hvd_config = _make_local_test_experiment_env(
         checkpoint_dir=pathlib.Path(checkpoint_dir), config=config, hparams=hparams
     )

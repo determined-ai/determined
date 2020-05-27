@@ -2,7 +2,7 @@ import logging
 import sys
 
 
-def _set_logger(debug_enabled: bool) -> None:
+def set_logger(debug_enabled: bool) -> None:
     root = logging.getLogger()
     root.setLevel(logging.DEBUG if debug_enabled else logging.INFO)
 
