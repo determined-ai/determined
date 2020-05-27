@@ -132,8 +132,8 @@ an example configuration. See :ref:`cluster-configuration` for details.
 
 .. _gcp-attach-disk:
 
-How to attach a disk to each dynamic agent
-------------------------------------------
+Attaching A Disk To Each Dynamic Agent
+--------------------------------------
 
 If your input data set is on a persistent disk, you can attach that disk
 to each dynamic agent by using the base instance configuration and
@@ -145,8 +145,8 @@ for the full list of configuration options supported by GCP. See
 disk <https://cloud.google.com/compute/docs/disks/add-persistent-disk#formatting>`__
 for more examples of formatting or mounting disks in GCP.
 
-Here is an example master configuration of attaching a second existing
-disk.
+Here is an example master configuration to attach and mount a second
+disk to each dynamic agent.
 
 .. code:: yaml
 
@@ -171,10 +171,10 @@ disk.
   linked with the POSIX UID/GID of the user (See :ref:`run-as-user` for
   details.) and grant access to the corresponding UID/GID.
 
-After installing the master, you can use the following command to
-validate if you could read and write on the attached disk.
+You can use the following command to validate if Determined tasks can
+read from the attached disk.
 
-.. code:: bash
+.. code::
 
    cat > command.yaml << EOF
    bind_mounts:
@@ -186,10 +186,10 @@ validate if you could read and write on the attached disk.
 
 .. _gcp-pull-gcr:
 
-How to securely pull task images from GCR
------------------------------------------
+Securely Pulling Images from GCR
+--------------------------------
 
-If you have time consuming tasks to perform at startup it can be useful to
+If you have expensive operations to perform at startup, it can be useful to
 :ref:`add custom layers<custom-env>` to the task images Determined provides. If
 you have store these images in a secure registry, such as GCR, you can pull
 these images securely by using existing tooling like `docker-credential-gcr
@@ -209,7 +209,7 @@ permissions of the service account associated with a GCE instance, for accessing
          docker-credential-gcr configure-docker
 
 .. note::
-  This is an example of a operation that requires use of ``container_startup_script``.
+  This is an example of an operation that requires use of ``container_startup_script``.
   Because docker credential helpers alter the docker client configuration to depend on the
   helper binary by name, it must be installed and configured in the container.
 

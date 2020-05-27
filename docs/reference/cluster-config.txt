@@ -184,7 +184,7 @@ The master supports the following configuration settings:
     - ``worst``: The worst-fit policy ensures that tasks will be
       placed on under-utilized agents.
 
-- ``task_container_defaults``: Specifies Docker defaults for all task containers. A task represents a single schedulable unit, like a trial, command or tensorboard.
+- ``task_container_defaults``: Specifies Docker defaults for all task containers. A task represents a single schedulable unit, such as a trial, command, or tensorboard.
 
   - ``shm_size_bytes``: The size (in bytes) of ``/dev/shm`` for Determined task containers. Defaults to ``4294967296``.
 
@@ -235,15 +235,28 @@ The master supports the following configuration settings:
     Defaults to ``http`` as scheme, local IP address as host, and
     ``8080`` as port.
 
-  - ``startup_script``: Startup script for the node the agent runs on.
-    This script will run right away when agent instances start up.
-    For example, it can be used for formatting and mounting a disk. Defaults
-    to an empty string.
+  - ``startup_script``: One or more shell commands that will be run
+    during agent instance start up. These commands are executed as root
+    as soon as the agent cloud instance has started and before the
+    Determined agent container on the instance is launched. For example,
+    this feature can be used to mount a distributed file system or make
+    changes to the agent instance's configuration. The default value is the empty
+    string. It may be helpful to use the YAML ``|`` syntax to specify a
+    multi-line string. For example,
 
-  - ``container_startup_script``: Startup script for the container
-    ``determined-agent`` runs in. This script will run right away when
-    the agent's container starts up. For example, this script can be used
-    to configure docker so the agent can pull task images from GCR securely.
+    .. code::
+
+      startup_script: |
+                      mkdir -p /mnt/disks/second
+                      mount /dev/sdb1 /mnt/disks/second
+
+  - ``container_startup_script``: One or more shell commands that will
+    be run when the Determined agent container is started. These
+    commands are executed inside the agent container but before the
+    Determined agent itself is launched. For example, this feature can
+    be used to configure Docker so that the agent can pull task images
+    from GCR securely (see :ref:`this example <gcp-pull-gcr>` for more
+    details). The default value is the empty string.
 
   - ``agent_docker_network``: The Docker network to use for the Determined
     agent and task containers. If this is set to "host", Docker
