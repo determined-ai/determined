@@ -22,8 +22,10 @@ const defaultState = {
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case ActionType.Hide:
+      if (!state.isShowing) return state;
       return { isOpaque: state.isOpaque, isShowing: false };
     case ActionType.Show:
+      if (state.isShowing) return state;
       return { isOpaque: action.opaque != null ? action.opaque : state.isOpaque, isShowing: true };
     default:
       return state;

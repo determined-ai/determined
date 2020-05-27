@@ -33,7 +33,7 @@ const SignIn: React.FC = () => {
    * their previous app.
    */
   // const task = useAsyncTask(checkAuth);
-  const [ checkAuth, checkCount ] = useAuthCheck();
+  const checkAuth = useAuthCheck();
   const stopPolling = usePolling(checkAuth);
 
   /*
@@ -50,12 +50,10 @@ const SignIn: React.FC = () => {
 
       // Reroute the authenticated user to the app.
       routeAll(queries.redirect || DEFAULT_REDIRECT);
-    } else if (checkCount !== 0 && showSpinner.isShowing) {
+    } else if (auth.checkCount > 0) {
       setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
     }
-
-    // return stopPolling;
-  }, [ auth.isAuthenticated, checkCount, queries, setShowSpinner, showSpinner, stopPolling ]);
+  }, [  auth.checkCount, auth.isAuthenticated, queries, setShowSpinner, showSpinner, stopPolling ]);
 
   /*
    * Stop the polling upon a dismount of this page.
@@ -65,14 +63,18 @@ const SignIn: React.FC = () => {
   /* eslint-disable-next-line react-hooks/exhaustive-deps */
   useEffect(() => stopPolling, []);
 
-  return (
+  /*
+   * Before showing the sign in form, make sure one auth check is done.
+   * This will prevent the form from showing for a split second when
+   * accessing a page from the browser when the user is already verified.
+   */
+  return auth.checkCount > 0 ?
     <div className={css.base}>
       <div className={css.content}>
         <Logo type={LogoTypes.OnLightVertical} />
         <DeterminedAuth />
       </div>
-    </div>
-  );
+    </div> : null;
 };
 
 export default SignIn;

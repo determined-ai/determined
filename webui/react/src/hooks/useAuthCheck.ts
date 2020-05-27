@@ -1,23 +1,22 @@
-import axios, { CancelToken } from 'axios';
+import axios, { CancelToken, CancelTokenSource } from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 
 import Auth from 'contexts/Auth';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { getCurrentUser } from 'services/api';
 
-const useAuthCheck = (): [ () => void, number ] => {
+const useAuthCheck = (): (() => void) => {
   const setAuth = Auth.useActionContext();
-  const [ triggerCount, setTriggerCount ] = useState(0);
-  const [ source, setSource ] = useState(axios.CancelToken.source());
+  const [ source, setSource ] = useState<CancelTokenSource | undefined>();
 
   const triggerCheckAuth = useCallback(() => {
     setSource(axios.CancelToken.source());
   }, []);
 
+  useEffect(() => setAuth({ type: Auth.ActionType.ResetCheckCount }), [ setAuth ]);
+
   useEffect(() => {
     const checkAuth = async (cancelToken: CancelToken): Promise<void> => {
-      setTriggerCount(prev => prev + 1);
-
       try {
         const user = await getCurrentUser({ cancelToken });
         setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, user } });
@@ -31,15 +30,16 @@ const useAuthCheck = (): [ () => void, number ] => {
           silent: true,
           type: ErrorType.Auth,
         });
+        setAuth({ type: Auth.ActionType.UpdateCheckCount });
       }
     };
 
-    checkAuth(source.token);
+    if (source) checkAuth(source.token);
 
-    return source.cancel;
+    return source?.cancel;
   }, [ setAuth, source ]);
 
-  return [ triggerCheckAuth, triggerCount ];
+  return triggerCheckAuth;
 };
 
 export default useAuthCheck;

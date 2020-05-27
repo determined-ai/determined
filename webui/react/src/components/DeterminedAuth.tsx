@@ -18,8 +18,8 @@ interface FromValues {
 const DeterminedAuth: React.FC = () => {
   const setAuth = Auth.useActionContext();
   const setShowSpinner = FullPageSpinner.useActionContext();
-  const [isBadCredentials, setIsBadCredentials] = useState(false);
-  const [canSubmit, setCanSubmit] = useState(false);
+  const [ isBadCredentials, setIsBadCredentials ] = useState(false);
+  const [ canSubmit, setCanSubmit ] = useState(false);
 
   const onFinish = useCallback(async (creds: FromValues): Promise<void> => {
     setShowSpinner({ opaque: false, type: FullPageSpinner.ActionType.Show });
@@ -44,7 +44,7 @@ const DeterminedAuth: React.FC = () => {
     } finally {
       setCanSubmit(true);
     }
-  }, [isBadCredentials, setAuth, setShowSpinner]);
+  }, [ isBadCredentials, setAuth, setShowSpinner ]);
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {
     const hasUsername = !!values.username;
@@ -71,7 +71,7 @@ const DeterminedAuth: React.FC = () => {
       <Form.Item name="password">
         <Input.Password placeholder="password" prefix={<Icon name="lock" size="small" />} />
       </Form.Item>
-      {isBadCredentials && <p className={[css.errorMessage, css.message].join(' ')}>
+      {isBadCredentials && <p className={[ css.errorMessage, css.message ].join(' ')}>
         Incorrect username or password.
       </p>}
       <Form.Item>

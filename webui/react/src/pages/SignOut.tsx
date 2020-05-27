@@ -2,7 +2,6 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
-import Spinner from 'components/Spinner';
 import Auth from 'contexts/Auth';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { logout } from 'services/api';
@@ -39,7 +38,7 @@ const SignOut: React.FC = () => {
     return source.cancel;
   }, [ auth.isAuthenticated, history, isSigningOut, location, setAuth ]);
 
-  return <Spinner fullPage />;
+  return null;
 };
 
 export default SignOut;
