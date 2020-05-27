@@ -18,3 +18,8 @@ export const toHtmlId = (str: string): string => {
     .replace(/[^a-z0-9-]/gi, '')
     .toLowerCase();
 };
+
+// prepare an optional string to be used when concatnating strings.
+export const optionalStr = (str?: string, suffix='', prefix=''): string => {
+  return str ? prefix + str + suffix : '';
+};
