@@ -36,6 +36,7 @@ from typing import Any, Dict, Iterator, Optional
 import simplejson
 
 import determined as det
+import determined_common
 from determined import gpu, horovod, layers, load, workload
 from determined_common import constants, storage
 
@@ -152,7 +153,7 @@ def main() -> None:
 
     experiment_config = simplejson.loads(os.environ["DET_EXPERIMENT_CONFIG"])
     debug = experiment_config.get("debug", False)
-    det._set_logger(debug)
+    determined_common.set_logger(debug)
 
     master_addr = os.environ["DET_MASTER_ADDR"]
     master_port = int(os.environ["DET_MASTER_PORT"])
