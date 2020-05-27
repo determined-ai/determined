@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"path"
 
 	hclient "github.com/docker/docker-credential-helpers/client"
 	"github.com/docker/docker/api/types"
@@ -11,7 +12,6 @@ import (
 )
 
 const (
-	dockerConfigFile        = "/root/.docker/config.json"
 	credentialsHelperPrefix = "docker-credential-"
 	tokenUsername           = "<token>"
 )
@@ -19,6 +19,14 @@ const (
 type credentialStore struct {
 	registry string
 	store    hclient.ProgramFunc
+}
+
+func getDockerConfigPath() (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return homeDir, errors.Wrap(err, "unable to find user's HOME directory")
+	}
+	return path.Join(homeDir, ".docker/config.json"), nil
 }
 
 // getAllCredentialStores returns the credential helpers configured in the default docker
@@ -29,6 +37,11 @@ func getAllCredentialStores() (map[string]*credentialStore, error) {
 	}
 
 	credentialsStores := map[string]*credentialStore{}
+	dockerConfigFile, err := getDockerConfigPath()
+	if err != nil {
+		return credentialsStores, err
+	}
+
 	configFile, err := os.Open(dockerConfigFile)
 	if err != nil {
 		return credentialsStores, errors.Wrap(err, "can't open docker config")
