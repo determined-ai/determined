@@ -1,4 +1,4 @@
-import pathlib
+import os
 from typing import Any, Callable, Dict, Tuple, Union
 
 import tensorflow as tf
@@ -191,13 +191,13 @@ class CustomHook(estimator.RunHook):
     def __init__(self):
         self._num_checkpoints = 0
 
-    def on_checkpoint_load(self, checkpoint_dir: pathlib.Path) -> None:
-        with open(str(checkpoint_dir.joinpath("custom.log")), "r") as fp:
+    def on_checkpoint_load(self, checkpoint_dir: str) -> None:
+        with open(os.path.join(checkpoint_dir, "custom.log"), "r") as fp:
             self._num_checkpoints = int(fp.readline())
 
-    def on_checkpoint_end(self, checkpoint_dir: pathlib.Path) -> None:
+    def on_checkpoint_end(self, checkpoint_dir: str) -> None:
         self._num_checkpoints += 1
-        with open(str(checkpoint_dir.joinpath("custom.log")), "w") as fp:
+        with open(os.path.join(checkpoint_dir, "custom.log"), "w") as fp:
             fp.write(f"{self._num_checkpoints}")
 
 

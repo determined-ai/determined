@@ -1,5 +1,3 @@
-import pathlib
-
 import tensorflow as tf
 
 
@@ -14,14 +12,14 @@ class RunHook(tf.estimator.SessionRunHook):  # type: ignore
 
     """
 
-    def on_checkpoint_load(self, checkpoint_dir: pathlib.Path) -> None:
+    def on_checkpoint_load(self, checkpoint_dir: str) -> None:
         """
         Run at startup when the task environment starts up. If not resuming
         from checkpoint this is never called.
         """
         pass
 
-    def on_checkpoint_end(self, checkpoint_dir: pathlib.Path) -> None:
+    def on_checkpoint_end(self, checkpoint_dir: str) -> None:
         """
         Run after every checkpoint.
 

@@ -1,4 +1,3 @@
-import pathlib
 from typing import Any, Dict
 
 
@@ -55,7 +54,7 @@ class PyTorchCallback:
         """
         pass
 
-    def on_checkpoint_end(self, checkpoint_dir: pathlib.Path) -> None:
+    def on_checkpoint_end(self, checkpoint_dir: str) -> None:
         """
         Run after every checkpoint.
 
