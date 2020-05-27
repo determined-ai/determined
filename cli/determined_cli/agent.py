@@ -39,7 +39,7 @@ def list_agents(args: argparse.Namespace) -> None:
         print(json.dumps(agents, indent=4))
         return
 
-    headers = ["Agent Name", "Registered Time", "Slots", "Containers", "Label"]
+    headers = ["Agent ID", "Registered Time", "Slots", "Containers", "Label"]
     values = [a.values() for a in agents]
 
     render.tabulate_or_csv(headers, values, args.csv)
@@ -84,7 +84,7 @@ def list_slots(args: argparse.Namespace) -> None:
         print(json.dumps(slots, indent=4))
         return
 
-    headers = ["Agent Name", "Slot ID", "Enabled", "Task ID", "Task Name", "Type", "Device"]
+    headers = ["Agent ID", "Slot ID", "Enabled", "Task ID", "Task Name", "Type", "Device"]
     values = [s.values() for s in slots]
 
     render.tabulate_or_csv(headers, values, args.csv)
