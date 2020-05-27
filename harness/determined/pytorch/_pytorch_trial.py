@@ -729,7 +729,7 @@ class PyTorchTrialController(det.LoopTrialController):
         )
 
         for callback in self.callbacks.values():
-            callback.on_checkpoint_end(path)
+            callback.on_checkpoint_end(str(path))
 
         return {}
 

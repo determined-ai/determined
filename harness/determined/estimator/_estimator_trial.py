@@ -220,7 +220,7 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
 
         for callback in self.estimator_trial_controller.train_hooks:
             if isinstance(callback, estimator.RunHook):
-                callback.on_checkpoint_end(checkpoint_path)
+                callback.on_checkpoint_end(str(checkpoint_path))
 
         return {}
 
@@ -576,7 +576,7 @@ class EstimatorTrialController(det.LoopTrialController):
 
         for callback in self.train_hooks:
             if isinstance(callback, estimator.RunHook):
-                callback.on_checkpoint_load(self.load_path)
+                callback.on_checkpoint_load(str(self.load_path))
 
         self.estimator_dir = pathlib.Path(tempfile.mkdtemp(suffix=suffix))
         if self.estimator_dir.exists():
