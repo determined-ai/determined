@@ -23,12 +23,12 @@ class LRScheduler:
     def __init__(self, scheduler: torch.optim.lr_scheduler._LRScheduler, step_mode: StepMode):
         """Wrapper for a PyTorch LRScheduler.
 
-        Usage of this wrapper is required to properly scheduler the optimizer's learning rate.
+        Usage of this wrapper is required to properly schedule the optimizer's learning rate.
 
         This wrapper fulfills two main functions:
-            1. Save and restore of the learning rate in case a trial is paused, preempted, etc.
-            2. Step the learning rate scheduler for predefined frequencies
-               (every batch or every epoch).
+            1. Save and restore the learning rate when a trial is paused, preempted, etc.
+            2. Step the learning rate scheduler at the configured frequency
+               (e.g., every batch or every epoch).
 
         Args:
             scheduler (:py:class:`torch.optim.lr_scheduler._LRScheduler`):
@@ -36,16 +36,15 @@ class LRScheduler:
             step_mode (:py:class:`det.pytorch.LRSchedulerStepMode`):
                 The strategy Determined will use to call (or not call) scheduler.step().
 
-                1. `STEP_EVERY_EPOCH`: Determined will call scheduler.step() after
+                1. ``STEP_EVERY_EPOCH``: Determined will call scheduler.step() after
                    every training epoch. No arguments will be passed to step().
 
-                2. `STEP_EVERY_BATCH`: Determined will call scheduler.step() after every
+                2. ``STEP_EVERY_BATCH``: Determined will call scheduler.step() after every
                    training batch. No arguments will be passed to step().
 
-                3. `MANUAL_STEP`: Determined will not call scheduler.step() at all.
+                3. ``MANUAL_STEP``: Determined will not call scheduler.step() at all.
                    It is up to the user to decide when to call scheduler.step(),
                    and whether to pass any arguments.
-
         """
 
         check.check_not_none(scheduler)
@@ -55,8 +54,7 @@ class LRScheduler:
         self.step_mode = step_mode
 
     def step(self, *args: typing.Any, **kwargs: typing.Any) -> None:
-        """Call step() on the wrapped LRScheduler instance.
-        """
+        """Call step() on the wrapped LRScheduler instance."""
         check.check_eq(
             self.step_mode,
             LRScheduler.StepMode.MANUAL_STEP,
