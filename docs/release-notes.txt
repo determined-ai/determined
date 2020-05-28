@@ -6,6 +6,33 @@ Release Notes
 Version 0.12
 ------------
 
+Version 0.12.5
+^^^^^^^^^^^^^^
+
+**Release Date:** May 27, 2020
+
+- **Breaking Change:** Alter command-line options for controlling test mode and local mode. Test experiments on the cluster were previously created with ``det e create --test-mode ...`` but now should be created with ``det e create --test ...``. Local testing is started with ``det e create --test --local ...``. Fully local training (meaning ``--local`` without ``--test``) is not yet supported.
+
+- Add support for TensorFlow 2.2.
+
+- Add support for post-checkpoint callbacks in PyTorchTrial.
+
+- Add support for checkpoint hooks in EstimatorTrial.
+
+- Add support for TensorBoard backed by S3-compliant APIs that are not AWS S3.
+
+- TensorBoards now shut down after 10 minutes if metrics are unavailable.
+
+- Update to NCCL 2.6.4 for distributed training. 
+
+- Update task environment minimum required version to 0.4.0.
+
+- Fix Native API training one step rather than one batch when using TensorFlow Keras and Estimator.
+
+- CLI: Add support for producing CSV and JSON output to ``det slot list`` and ``det agent list``.
+
+- CLI: Include the number of containers on each agent in the output of ``det agent list``.
+
 Version 0.12.4
 ^^^^^^^^^^^^^^
 
