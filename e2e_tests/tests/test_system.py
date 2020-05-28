@@ -6,11 +6,13 @@ import tempfile
 import time
 from typing import Dict, Set
 
+import botocore.exceptions
 import numpy as np
 import pytest
 import yaml
 
 from determined.experimental import Determined
+from determined_common import check, storage
 from tests import config as conf
 from tests import experiment as exp
 from tests.fixtures.metric_maker.metric_maker import structure_equal, structure_to_metrics
@@ -144,36 +146,35 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
     # deletions. We want to wait for the GC containers to exit, so check
     # repeatedly with a timeout.
     max_checks = 30
-    for check in range(max_checks):
+    for i in range(max_checks):
         time.sleep(1)
         try:
             for config, checkpoints in all_checkpoints:
                 checkpoint_config = config["checkpoint_storage"]
 
-                if checkpoint_config["type"] == "shared_fs" and (
-                    "storage_path" not in checkpoint_config
-                ):
-                    if "tensorboard_path" in checkpoint_config:
-                        checkpoint_config["storage_path"] = checkpoint_config.get(
-                            "tensorboard_path", None
-                        )
-                    else:
-                        checkpoint_config["storage_path"] = checkpoint_config.get(
-                            "checkpoint_path", None
-                        )
-
-                    root = os.path.join(
-                        checkpoint_config["host_path"], checkpoint_config["storage_path"]
+                if checkpoint_config["type"] == "shared_fs":
+                    deleted_exception = check.CheckFailedError
+                elif checkpoint_config["type"] == "s3":
+                    deleted_exception = botocore.exceptions.ClientError
+                else:
+                    raise NotImplementedError(
+                        f'unsupported storage type {checkpoint_config["type"]}'
                     )
 
-                    for checkpoint in checkpoints:
-                        dirname = os.path.join(root, checkpoint.uuid)
-                        if checkpoint.state == "COMPLETED":
-                            assert os.path.isdir(dirname)
-                        elif checkpoint.state == "DELETED":
-                            assert not os.path.exists(dirname)
+                storage_manager = storage.build(checkpoint_config, container_path=None)
+                for checkpoint in checkpoints:
+                    metadata = storage.StorageMetadata.from_json(checkpoint)
+                    if checkpoint["state"] == "COMPLETED":
+                        with storage_manager.restore_path(metadata):
+                            pass
+                    elif checkpoint["state"] == "DELETED":
+                        try:
+                            with storage_manager.restore_path(metadata):
+                                raise AssertionError("checkpoint not deleted")
+                        except deleted_exception:
+                            pass
         except AssertionError:
-            if check == max_checks - 1:
+            if i == max_checks - 1:
                 raise
         else:
             break

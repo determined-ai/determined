@@ -242,11 +242,6 @@ func gcCheckpoint(t TaskSpec) container.Spec {
 	}
 	envVars := defaultEnvVars()
 	envVars = append(envVars, gcc.ExperimentConfig.Environment.EnvironmentVariables.For(deviceType)...)
-	envVars = append(envVars,
-		fmt.Sprintf("DET_EXPERIMENT_ID=%d", gcc.ExperimentID),
-		fmt.Sprintf("DET_EXPERIMENT_CONFIG=%s", jsonify(gcc.ExperimentConfig)),
-		fmt.Sprintf("DET_DELETE=%s", jsonify(gcc.ToDelete)),
-	)
 	mounts := toDockerMounts(gcc.ExperimentConfig.BindMounts)
 	if gcc.ExperimentConfig.CheckpointStorage.SharedFSConfig != nil {
 		sharedFS := gcc.ExperimentConfig.CheckpointStorage.SharedFSConfig
@@ -266,7 +261,13 @@ func gcCheckpoint(t TaskSpec) container.Spec {
 		},
 		RunSpec: container.RunSpec{
 			ContainerConfig: docker.Config{
-				Cmd:        []string{filepath.Join(containerWorkDir, etc.GCCheckpointsEntrypointResource)},
+				Cmd: []string{
+					filepath.Join(containerWorkDir, etc.GCCheckpointsEntrypointResource),
+					"--experiment-config",
+					"experiment_config.json",
+					"--delete",
+					"checkpoints_to_delete.json",
+				},
 				User:       user,
 				Image:      gcc.ExperimentConfig.Environment.Image.For(deviceType),
 				Env:        envVars,
@@ -281,6 +282,18 @@ func gcCheckpoint(t TaskSpec) container.Spec {
 				workDirArchive(gcc.AgentUserGroup),
 				wrapArchive(
 					archive.Archive{
+						gcc.AgentUserGroup.OwnedArchiveItem(
+							"experiment_config.json",
+							[]byte(jsonify(gcc.ExperimentConfig)),
+							0600,
+							tar.TypeReg,
+						),
+						gcc.AgentUserGroup.OwnedArchiveItem(
+							"checkpoints_to_delete.json",
+							[]byte(jsonify(gcc.ToDelete)),
+							0600,
+							tar.TypeReg,
+						),
 						gcc.AgentUserGroup.OwnedArchiveItem(
 							etc.GCCheckpointsEntrypointResource,
 							etc.MustStaticFile(etc.GCCheckpointsEntrypointResource),
