@@ -14,7 +14,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/scheduler"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/etc"
@@ -209,7 +208,7 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 		},
 
 		readinessChecks: map[string]readinessCheck{
-			"notebook": func(log agent.ContainerLog) bool {
+			"notebook": func(log scheduler.ContainerLog) bool {
 				return strings.Contains(log.String(), "Jupyter Notebook is running")
 			},
 		},

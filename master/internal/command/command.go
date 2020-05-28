@@ -25,7 +25,7 @@ const containerLostDuration = 5 * time.Minute
 
 // TODO: readinessCheck should be defined at the agent level. Temporarily we will use log
 // messages as a proxy.
-type readinessCheck func(agent.ContainerLog) bool
+type readinessCheck func(scheduler.ContainerLog) bool
 
 // terminateForGC is an internal message indicating that the command actor
 // should stop and garbage collect its state.
@@ -158,7 +158,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case scheduler.TaskTerminated:
 		// This message is being deprecated; ignore it.
 
-	case agent.ContainerLog:
+	case scheduler.ContainerLog:
 		if !c.readinessMessageSent && c.readinessChecksPass(ctx, msg) {
 			c.readinessMessageSent = true
 			ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ServiceReadyEvent: &msg})
@@ -210,7 +210,7 @@ func (c *command) terminate(ctx *actor.Context) {
 	}
 }
 
-func (c *command) readinessChecksPass(ctx *actor.Context, log agent.ContainerLog) bool {
+func (c *command) readinessChecksPass(ctx *actor.Context, log scheduler.ContainerLog) bool {
 	for name, check := range c.readinessChecks {
 		if check(log) {
 			delete(c.readinessChecks, name)
