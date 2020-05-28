@@ -688,16 +688,6 @@ class PyTorchTrialController(det.LoopTrialController):
 
         path.mkdir(parents=True, exist_ok=True)
 
-        # The pickled_model_path is the entire nn.Module saved to a file via
-        # pickle. This model can be recovered using the det.pytorch.checkpoint.load
-        # method so long as the code is saved along with the pickled nn.Module.
-        # https://pytorch.org/docs/stable/notes/serialization.html#recommend-saving-models
-        pickled_model_path = path.joinpath("model.pth")
-
-        torch.save(  # type: ignore
-            self.context.model, pickled_model_path, pickle_module=cloudpickle
-        )
-
         # The model code is the current working directory.
         util.write_checkpoint_metadata(
             path,
