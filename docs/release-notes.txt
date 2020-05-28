@@ -23,7 +23,7 @@ Version 0.12.5
 
 - TensorBoards now shut down after 10 minutes if metrics are unavailable.
 
-- Update to NCCL 2.6.4 for distributed training. 
+- Update to NCCL 2.6.4 for distributed training.
 
 - Update minimum required task environment version to 0.4.0.
 
