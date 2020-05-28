@@ -19,7 +19,6 @@ export const toHtmlId = (str: string): string => {
     .toLowerCase();
 };
 
-// prepare an optional string to be used when concatnating strings.
-export const optionalStr = (str?: string, suffix='', prefix=''): string => {
-  return str ? prefix + str + suffix : '';
+export const listToStr = (list: (string|undefined)[], glue = ' '): string => {
+  return list.filter(item => !!item).join(glue);
 };
