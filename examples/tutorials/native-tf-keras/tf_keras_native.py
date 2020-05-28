@@ -4,7 +4,7 @@
 Native API: Basics
 ==================
 
-First, lets consider what it looks like to train a very simple model on MNIST
+First, let's consider what it looks like to train a very simple model on MNIST
 using ``tf.keras``, taken directly from `TensorFlow documentation
 <https://www.tensorflow.org/overview>`_.
 """
@@ -39,8 +39,8 @@ config = {
     "hyperparameters": {"global_batch_size": 32},
 }
 
-# When running from this code from a notebook, add a `command` argument to
-# init() specifying the notebook file name.
+# When running this code from a notebook, add a `command` argument to init()
+# specifying the notebook file name.
 context = init(config, context_dir=".")
 model = tf.keras.models.Sequential(
     [
@@ -56,8 +56,8 @@ model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=5)
 
 ###############################################################################
 #
-# Paste the code above into a Python file `tf_keras_native.py` and run it as a
-# Python script.
+# Paste the code above into a Python file named ``tf_keras_native.py`` and run
+# it as a Python script.
 #
 # .. note::
 #
@@ -84,14 +84,14 @@ config = {
 
 ###############################################################################
 #
-# Configuring any experiment for use with Determined cluster requires an
-# :ref:`experiment-configuration`. In the Native API, this represented as a
-# Python dictionary. There are two *required* fields are required for every
-# configuration submitted via the Native API:
+# Configuring any experiment for use with Determined requires an
+# :ref:`experiment-configuration`. In the Native API, this is represented as a
+# Python dictionary. There are two *required* fields for every configuration
+# submitted via the Native API:
 #
 # ``searcher``:
 #       This field describes how many different :ref:`Trials <concept-trial>`
-#       (models) are going to be trained.  In this case, we've specified to
+#       (models) should be trained.  In this case, we've specified to
 #       train a ``"single"`` model for five :ref:`training steps
 #       <concept-step>`.
 # ``hyperparameters``:
@@ -112,20 +112,20 @@ config = {
 # three in addition to the configuration:
 #
 # ``local`` (``bool``):
-#       ``local=False`` will sumbit the experiment to a Determined cluster.
-#       ``local=True`` will execute the the training loop in your local Python
+#       ``local=False`` will submit the experiment to a Determined cluster.
+#       ``local=True`` will execute the training loop in your local Python
 #       environment (although currently, local training is not implemented, so
 #       you must also set ``test=True``). Defaults to False.
 #
 # ``test`` (``bool``):
-#       ``test=True`` will execute a minimal trianing loop rather than a full
+#       ``test=True`` will execute a minimal training loop rather than a full
 #       experiment. This can be useful for porting or debugging a model because
 #       many common errors will surface quickly. Defaults to False.
 #
 # ``context_dir`` (``str``):
 #       Specifies the location of the code you want submitted to the cluster.
 #       This is required by Determined to execute your training script in a
-#       remote environment (``local=false``). In the common case, "." submits
+#       remote environment (``local=False``). In the common case, "." submits
 #       your entire working directory to the Determined cluster.
 #
 # Wrap Model (``tf.keras`` only)
@@ -140,7 +140,8 @@ config = {
 # calling ``wrap_model``, we proceed with the ``compile()`` and ``fit()``
 # interfaces defined by TensorFlow to begin training our model remotely.
 #
-# Next Steps:
+# Next Steps
+# ----------
 #
 # * :ref:`tutorials_native-api-hparam-search`
 # * :ref:`tutorials_native-api-dtrain`
