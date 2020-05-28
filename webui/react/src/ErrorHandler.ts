@@ -4,6 +4,7 @@ import axios from 'axios';
 import history from 'routes/history';
 import { isAsyncFunction } from 'utils/data';
 import Logger, { LoggerInterface } from 'utils/Logger';
+import { listToStr } from 'utils/string';
 
 const logger = new Logger('EH');
 
@@ -38,7 +39,7 @@ export interface DaError {
 const openNotification = (e: DaError): void => {
   const config = {
     description: e.publicMessage,
-    message: e.publicSubject || `${e.type} ${e.level}`,
+    message: e.publicSubject || listToStr([ e.type, e.level ]),
   };
   switch (e.level) {
     case ErrorLevel.Fatal:
@@ -83,7 +84,7 @@ const handleError = (e: DaError): Error => {
 
   // log the error if needed.
   if (!e.silent) {
-    const msg = `${e.type}: ${e.publicMessage + ' ' || ''}${e.message}`;
+    const msg = listToStr([ `${e.type}:`, e.publicMessage, e.message ]);
     const targetLogger = e.logger || logger;
     switch (e.level) {
       case ErrorLevel.Fatal:

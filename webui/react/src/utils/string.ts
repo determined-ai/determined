@@ -18,3 +18,7 @@ export const toHtmlId = (str: string): string => {
     .replace(/[^a-z0-9-]/gi, '')
     .toLowerCase();
 };
+
+export const listToStr = (list: (string|undefined)[], glue = ' '): string => {
+  return list.filter(item => !!item).join(glue);
+};
