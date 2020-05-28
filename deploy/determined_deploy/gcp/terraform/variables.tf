@@ -85,6 +85,11 @@ variable "preemptible" {
   default = false
 }
 
+variable "operation_timeout_period" {
+  type = string
+  default = "5m"
+}
+
 variable "agent_docker_network" {
   type = string
   default = "host"

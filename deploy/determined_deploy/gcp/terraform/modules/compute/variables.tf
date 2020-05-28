@@ -67,6 +67,9 @@ variable "static_agents" {
 variable "preemptible" {
 }
 
+variable "operation_timeout_period" {
+}
+
 variable "gcs_bucket" {
 }
 
