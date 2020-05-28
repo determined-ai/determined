@@ -57,7 +57,7 @@ package:
 release: export DET_SEGMENT_MASTER_KEY ?= ""
 release: export DET_SEGMENT_WEBUI_KEY ?= ""
 release: export GORELEASER_CURRENT_TAG := $(VERSION)
-release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -v "rc" | grep "v$(VERSION)" -A1 | sed -n '2 p')
+release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -v "rc\|v" | grep "$(VERSION)" -A1 | sed -n '2 p')
 release:
 	goreleaser --rm-dist
 
