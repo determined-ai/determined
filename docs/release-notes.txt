@@ -15,9 +15,9 @@ Version 0.12.5
 
 - Add support for TensorFlow 2.2.
 
-- Add support for post-checkpoint callbacks in PyTorchTrial.
+- Add support for post-checkpoint callbacks in :class:`~determined.pytorch.PyTorchTrial`.
 
-- Add support for checkpoint hooks in EstimatorTrial.
+- Add support for checkpoint hooks in :class:`~determined.estimator.EstimatorTrial`.
 
 - Add support for TensorBoard backed by S3-compliant APIs that are not AWS S3.
 
@@ -25,7 +25,7 @@ Version 0.12.5
 
 - Update to NCCL 2.6.4 for distributed training. 
 
-- Update task environment minimum required version to 0.4.0.
+- Update minimum required task environment version to 0.4.0.
 
 - Fix Native API training one step rather than one batch when using TensorFlow Keras and Estimator.
 
