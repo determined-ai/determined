@@ -16,44 +16,6 @@ DATASET_EXPERIMENT_EXPECTED_LOSSES = [14, 4536, 50648544, 3364532256768]
 
 
 @pytest.mark.e2e_gpu  # type: ignore
-@pytest.mark.parametrize("tf2", [True, False])  # type: ignore
-def test_mnist_estimator_const(tf2: bool) -> None:
-    config = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
-    config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("mnist_estimator"), 1
-    )
-
-    trials = exp.experiment_trials(experiment_id)
-    assert len(trials) == 1
-
-    # Check validation metrics.
-    steps = trials[0]["steps"]
-    assert len(steps) == 1
-
-    step = steps[0]
-    assert "validation" in step
-
-    v_metrics = step["validation"]["metrics"]["validation_metrics"]
-
-    # GPU training is non-deterministic, but on CPU we can validate that we
-    # reach a consistent result.
-    if not cluster.running_on_gpu():
-        assert v_metrics["accuracy"] == 0.9125999808311462
-
-    # Check training metrics.
-    full_trial_metrics = exp.trial_metrics(trials[0]["id"])
-    for step in full_trial_metrics["steps"]:
-        metrics = step["metrics"]
-
-        batch_metrics = metrics["batch_metrics"]
-        assert len(batch_metrics) == 100
-
-        for batch_metric in batch_metrics:
-            assert batch_metric["loss"] > 0
-
-
-@pytest.mark.e2e_gpu  # type: ignore
 def test_mnist_estimator_load() -> None:
     config = conf.load_config(conf.fixtures_path("mnist_estimator/single.yaml"))
     config = conf.set_tf1_image(config)
@@ -117,18 +79,6 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
     trials = exp.experiment_trials(experiment_id2)
     assert len(trials) == 1
     assert trials[0]["warm_start_checkpoint_id"] == first_checkpoint_id
-
-
-@pytest.mark.e2e_gpu  # type: ignore
-@pytest.mark.parametrize("tf2", [False])  # type: ignore
-def test_mnist_estimator_adaptive(tf2: bool) -> None:
-    # Only test tf1 here, because a tf2 test would add no extra coverage.
-    config = conf.load_config(conf.fixtures_path("mnist_estimator/adaptive.yaml"))
-    config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
-
-    exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("mnist_estimator"), None
-    )
 
 
 def run_dataset_experiment(
