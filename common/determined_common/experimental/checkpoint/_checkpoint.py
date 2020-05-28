@@ -131,7 +131,7 @@ class Checkpoint(object):
 
         Arguments:
             path (string, optional): Top level directory to load the
-                checkpoint from. (default: ``checkpoint/<UUID>``)
+                checkpoint from. (default: ``checkpoints/<UUID>``)
             tags (list string, optional): Only relevant for tensorflow
                 saved_model checkpoints. Specifies which tags are loaded from
                 the tensoflow saved_model. See documentation for
