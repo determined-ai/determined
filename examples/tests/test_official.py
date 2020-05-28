@@ -1,11 +1,7 @@
-import os
 import pathlib
-import pytest
 import subprocess
-from ruamel import yaml
 
-from determined import experimental, load
-
+import pytest
 
 official_examples = [
     ("official/cifar10_cnn_pytorch", "official/cifar10_cnn_pytorch/const.yaml"),
@@ -14,8 +10,10 @@ official_examples = [
     ("official/iris_tf_keras", "official/iris_tf_keras/const.yaml"),
     ("official/mnist_estimator", "official/mnist_estimator/const.yaml"),
     ("official/mnist_pytorch", "official/mnist_pytorch/const.yaml"),
-    ("official/multiple_lr_schedulers_pytorch", "official/multiple_lr_schedulers_pytorch/const.yaml"),
-
+    (
+        "official/multiple_lr_schedulers_pytorch",
+        "official/multiple_lr_schedulers_pytorch/const.yaml",
+    ),
     # TODO(DET-2931): A full validation step in this example is too expensive
     # to run this test in under a few minutes. Add it back in once we can test
     # a single batch of validation.
@@ -30,4 +28,13 @@ def test_official(model_def: str, config_file: str) -> None:
     config_file_absolute = examples_dir.joinpath(config_file)
 
     subprocess.check_output(
-        ("det", "experiment", "create", "--local", "--test", str(config_file_absolute), str(model_def_absolute)))
+        (
+            "det",
+            "experiment",
+            "create",
+            "--local",
+            "--test",
+            str(config_file_absolute),
+            str(model_def_absolute),
+        )
+    )

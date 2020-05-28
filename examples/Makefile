@@ -14,5 +14,11 @@ build/%.tgz: official/%/
 test:
 	pytest -vv -s --durations=0 tests
 
+fmt:
+	make -C tests fmt
+
+check:
+	make -C tests check
+
 .PHONY: build
 build: $(EXAMPLES_DIRS)

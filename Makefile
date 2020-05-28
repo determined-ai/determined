@@ -37,13 +37,13 @@ clean: clean-tools clean-common clean-harness clean-cli clean-deploy clean-examp
 check-%:
 	$(MAKE) -C $(subst -,/,$*) check
 .PHONY: check
-check: check-common check-harness check-cli check-deploy check-e2e_tests check-master check-agent check-webui
+check: check-common check-harness check-cli check-deploy check-e2e_tests check-master check-agent check-webui check-examples
 
 .PHONY: fmt-%
 fmt-%:
 	$(MAKE) -C $(subst -,/,$*) fmt
 .PHONY: fmt
-fmt: fmt-common fmt-harness fmt-cli fmt-deploy fmt-e2e_tests fmt-master fmt-agent fmt-webui
+fmt: fmt-common fmt-harness fmt-cli fmt-deploy fmt-e2e_tests fmt-master fmt-agent fmt-webui fmt-examples
 
 .PHONY: test-%
 test-%:
