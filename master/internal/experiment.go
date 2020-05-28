@@ -459,19 +459,14 @@ func (e *experiment) isBestValidation(msg searcher.CompletedMessage) bool {
 		// TODO: Better error handling here.
 		return false
 	}
-	if e.bestValidation == nil {
-		e.bestValidation = &validation
-		return true
-	}
 	smallerIsBetter := e.Config.Searcher.SmallerIsBetter
-	if smallerIsBetter && validation < *e.bestValidation {
+	isBest := (e.bestValidation == nil) ||
+		(smallerIsBetter && validation < *e.bestValidation) ||
+		(!smallerIsBetter && validation > *e.bestValidation)
+	if isBest {
 		e.bestValidation = &validation
-		return true
-	} else if validation > *e.bestValidation {
-		e.bestValidation = &validation
-		return true
 	}
-	return false
+	return isBest
 }
 
 func (e *experiment) updateState(ctx *actor.Context, state model.State) {
