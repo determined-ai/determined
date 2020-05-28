@@ -72,7 +72,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   const container = useRef<HTMLDivElement>(null);
   const spacer = useRef<HTMLDivElement>(null);
   const measure = useRef<HTMLDivElement>(null);
-  const [ scroll, resizeScrollElement ] = useScroll(container);
+  const scroll = useScroll(container);
   const [ logs, setLogs ] = useState<Log[]>([]);
   const [ config, setConfig ] = useState<LogConfig>({
     charHeight: 0,
@@ -160,9 +160,6 @@ const LogViewer: React.FC<Props> = forwardRef((
       totalContentHeight,
     }));
 
-    // Recalculate the scroll element sizing.
-    resizeScrollElement();
-
     // Hide the measure element
     measure.current.style.display = 'none';
 
@@ -170,7 +167,7 @@ const LogViewer: React.FC<Props> = forwardRef((
     if (logs.length === 0) {
       setTimeout(() => container.current?.scrollTo(0, container.current.scrollHeight || 0), 0);
     }
-  }, [ logs, resizeScrollElement, setLogs ]);
+  }, [ logs, setLogs ]);
 
   /*
    * Figure out which logs lines to actually render based on whether it

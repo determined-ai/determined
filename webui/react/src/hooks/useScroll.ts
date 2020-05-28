@@ -16,10 +16,11 @@ interface ScrollInfo {
   viewWidth: number;
 }
 
-const RESIZE_EVENT = 'resize';
+type ResizeHandler = (entries: Element[]) => void;
+
 const SCROLL_EVENT = 'scroll';
 
-export const useScroll = (ref: RefObject<HTMLElement>): [ ScrollInfo, () => void ] => {
+export const useScroll = (ref: RefObject<HTMLElement>): ScrollInfo => {
   const element = ref.current;
   const [ scrollInfo, setScrollInfo ] = useState<ScrollInfo>({
     dx: 0,
@@ -32,8 +33,11 @@ export const useScroll = (ref: RefObject<HTMLElement>): [ ScrollInfo, () => void
     viewWidth: element?.clientWidth || 0,
   });
 
-  const handleResize = useCallback(() => {
-    if (!element) return;
+  const handleResize = useCallback(entries => {
+    // Check to make sure the scroll element is being observed for resize.
+    const elements = entries.map((entry: ResizeObserverEntry) => entry.target);
+    if (!element || elements.indexOf(element) === -1) return;
+
     setScrollInfo(prevScrollInfo => ({
       ...prevScrollInfo,
       scrollHeight: element.scrollHeight,
@@ -44,7 +48,9 @@ export const useScroll = (ref: RefObject<HTMLElement>): [ ScrollInfo, () => void
   }, [ element ]);
 
   const handleScroll = useCallback(() => {
+    // Make sure the scroll element exists.
     if (!element) return;
+
     setScrollInfo(prevScrollInfo => ({
       ...prevScrollInfo,
       dx: element.scrollLeft - prevScrollInfo.scrollLeft,
@@ -56,15 +62,18 @@ export const useScroll = (ref: RefObject<HTMLElement>): [ ScrollInfo, () => void
 
   useEffect(() => {
     if (!element) return;
-    element.addEventListener(RESIZE_EVENT, handleResize);
+
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(element);
     element.addEventListener(SCROLL_EVENT, handleScroll);
+
     return (): void => {
-      element.removeEventListener(RESIZE_EVENT, handleResize);
+      resizeObserver.unobserve(element);
       element.removeEventListener(SCROLL_EVENT, handleScroll);
     };
   }, [ element, handleResize, handleScroll ]);
 
-  return [ scrollInfo, handleResize ];
+  return scrollInfo;
 };
 
 export default useScroll;
