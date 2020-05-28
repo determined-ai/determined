@@ -16,11 +16,12 @@ interface ScrollInfo {
   viewWidth: number;
 }
 
+const RESIZE_EVENT = 'resize';
 const SCROLL_EVENT = 'scroll';
 
-export const useScroll = (ref: RefObject<HTMLElement>): ScrollInfo => {
+export const useScroll = (ref: RefObject<HTMLElement>): [ ScrollInfo, () => void ] => {
   const element = ref.current;
-  const [ scroll, setScroll ] = useState<ScrollInfo>({
+  const [ scrollInfo, setScrollInfo ] = useState<ScrollInfo>({
     dx: 0,
     dy: 0,
     scrollHeight: element?.scrollHeight || 0,
@@ -31,27 +32,39 @@ export const useScroll = (ref: RefObject<HTMLElement>): ScrollInfo => {
     viewWidth: element?.clientWidth || 0,
   });
 
-  const listener = useCallback(() => {
+  const handleResize = useCallback(() => {
     if (!element) return;
-    setScroll(prev => ({
-      dx: element?.scrollLeft - prev.scrollLeft,
-      dy: element?.scrollTop - prev.scrollTop,
-      scrollHeight: element?.scrollHeight,
-      scrollLeft: element?.scrollLeft,
-      scrollTop: element?.scrollTop,
-      scrollWidth: element?.scrollWidth,
-      viewHeight: element?.clientHeight,
-      viewWidth: element?.clientWidth,
+    setScrollInfo(prevScrollInfo => ({
+      ...prevScrollInfo,
+      scrollHeight: element.scrollHeight,
+      scrollWidth: element.scrollWidth,
+      viewHeight: element.clientHeight,
+      viewWidth: element.clientWidth,
+    }));
+  }, [ element ]);
+
+  const handleScroll = useCallback(() => {
+    if (!element) return;
+    setScrollInfo(prevScrollInfo => ({
+      ...prevScrollInfo,
+      dx: element.scrollLeft - prevScrollInfo.scrollLeft,
+      dy: element.scrollTop - prevScrollInfo.scrollTop,
+      scrollLeft: element.scrollLeft,
+      scrollTop: element.scrollTop,
     }));
   }, [ element ]);
 
   useEffect(() => {
     if (!element) return;
-    element.addEventListener(SCROLL_EVENT, listener);
-    return (): void => element.removeEventListener(SCROLL_EVENT, listener);
-  }, [ element, listener ]);
+    element.addEventListener(RESIZE_EVENT, handleResize);
+    element.addEventListener(SCROLL_EVENT, handleScroll);
+    return (): void => {
+      element.removeEventListener(RESIZE_EVENT, handleResize);
+      element.removeEventListener(SCROLL_EVENT, handleScroll);
+    };
+  }, [ element, handleResize, handleScroll ]);
 
-  return scroll;
+  return [ scrollInfo, handleResize ];
 };
 
 export default useScroll;

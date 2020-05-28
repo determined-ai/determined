@@ -1,6 +1,7 @@
 import useScroll from 'hooks/useScroll';
 import React, {
-  forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState,
+  forwardRef, useCallback, useImperativeHandle,
+  useLayoutEffect, useMemo, useRef, useState,
 } from 'react';
 
 import Spinner from 'components/Spinner';
@@ -32,12 +33,30 @@ interface LogConfig {
   totalContentHeight: number;
 }
 
+interface MessageSize {
+  height: number;
+  top: number;
+}
+
+interface LogConfig {
+  charHeight: number;
+  charWidth: number;
+  dateTimeWidth: number;
+  lineNumberWidth: number;
+  messageSizes: Record<string, MessageSize>;
+  messageWidth: number;
+  totalContentHeight: number;
+}
+
 export interface LogViewerHandles {
   addLogs: (newLogs: Log[]) => void;
 }
 
+// Number of digits to support before logs are added.
+const DEFAULT_LINE_NUMBER_DIGITS = 2;
+
 // What factor to multiply against the displayable lines in the visible view.
-const BUFFER_FACTOR = 2;
+const BUFFER_FACTOR = 1;
 
 // Max datetime size: [YYYY-MM-DDTHH:mm:ss.ssssss-HH:mm]
 const MAX_DATETIME_LENGTH = 35;
@@ -51,70 +70,54 @@ const LogViewer: React.FC<Props> = forwardRef((
   ref?: React.Ref<LogViewerHandles>,
 ) => {
   const container = useRef<HTMLDivElement>(null);
-  const scroll = useScroll(container);
+  const spacer = useRef<HTMLDivElement>(null);
+  const measure = useRef<HTMLDivElement>(null);
+  const [ scroll, resizeScrollElement ] = useScroll(container);
   const [ logs, setLogs ] = useState<Log[]>([]);
-  const [ charSize, setCharSize ] = useState({ height: 0, width: 0 });
-  const [ lineNumberStyle, setLineNumberStyle ] = useState({ width: 'auto' });
-  const [ dateTimeStyle, setDateTimeStyle ] = useState({ width: 'auto' });
-  const [ contentHeight, setContentHeight ] = useState(0);
-  const [ visibleLines, setVisibleLines ] = useState(0);
-  const [ isLoading, setIsLoading ] = useState(true);
+  const [ config, setConfig ] = useState<LogConfig>({
+    charHeight: 0,
+    charWidth: 0,
+    dateTimeWidth: 0,
+    lineNumberWidth: 0,
+    messageSizes: {},
+    messageWidth: 0,
+    totalContentHeight: 0,
+  });
   const classes = [ css.base ];
+
+  const spacerStyle = { height: toRem(config.totalContentHeight) };
+  const dateTimeStyle = { width: toRem(config.dateTimeWidth) };
+  const lineNumberStyle = { width: toRem(config.lineNumberWidth) };
 
   if (props.disableSearch) classes.push(css.disableSearch);
   if (props.fullPage) classes.push(css.fullPage);
   if (props.noWrap) classes.push(css.noWrap);
 
   const addLogs = useCallback((newLogs: Log[]): void => {
-    setLogs([ ...logs, ...newLogs ]);
-  }, [ logs, setLogs ]);
+    if (newLogs.length === 0) return;
 
-  /*
-   * The useImperitiveHandle hook provides the parent component
-   * access to functions defined here to modify LogViewer state.
-   */
-  useImperativeHandle(ref, () => ({ addLogs }));
+    // Add new logs to existing logs.
+    setLogs(prevLogs => ([ ...prevLogs, ...newLogs ]));
 
-  useEffect(() => {
-  }, [ scroll ]);
+    // Check to make sure all the necessary elements are available.
+    if (!container.current || !measure.current || !spacer.current) return;
 
-  useLayoutEffect(() => {
-    if (!Array.isArray(logs) || logs.length === 0 || !container) return;
+    // Fetch container sizes for upcoming calculations.
+    const spacerRect = spacer.current.getBoundingClientRect();
 
-    // Check to make sure the container exists.
-    const containerRect = container.current?.getBoundingClientRect();
-    if (!containerRect?.height) return;
-
-    // Check to make sure at least one line has been rendered properly.
-    const messageContainer = container.current?.firstElementChild?.lastElementChild;
-    const messageRect = messageContainer?.getBoundingClientRect();
-    if (messageRect?.width === 0) return;
-
-    /*
-     * Add a single element to use a temporary container to guage the
-     * size any text.
-     */
-    const measureElement = document.createElement('div');
-    measureElement.style.position = 'absolute';
-    container.current?.append(measureElement);
+    // Show the measure element to support measuring text.
+    measure.current.style.display = 'inline';
 
     // Get the width for a single character of the monospace font.
-    measureElement.textContent = 'W';
-    const charRect = measureElement.getBoundingClientRect();
-    setCharSize({ height: charRect.height, width: charRect.width });
-
-    /*
-     * Figure out how many lines can fit in the visible window,
-     * assuming each log is a one-liner.
-     */
-    setVisibleLines(Math.round(containerRect?.height / charRect.height));
+    measure.current.textContent = 'W';
+    const charRect = measure.current.getBoundingClientRect();
 
     /*
      * Set the line number column width based on the character width.
      * Add one to account for the trailing space character.
      */
-    const lineDigits = Math.ceil(Math.log(logs.length) / Math.log(10)) + 1;
-    setLineNumberStyle({ width: toRem(charRect.width * lineDigits) });
+    const lineDigits = Math.ceil(Math.log(newLogs.length) / Math.log(10)) + 1;
+    const lineNumberWidth = charRect.width * lineDigits;
 
     /*
      * Set the datetime column width based on the character width.
@@ -122,29 +125,89 @@ const LogViewer: React.FC<Props> = forwardRef((
      * eg. [YYYY-MM-DDTHH:mm:ss.ssssss-HH:MM]
      * Add one to account for the trailing space character.
      */
-    setDateTimeStyle({ width: toRem(charRect.width * MAX_DATETIME_LENGTH) });
+    const dateTimeWidth = charRect.width * MAX_DATETIME_LENGTH;
 
     /*
-     * Measure the dimensions of every message in the available data.
-     * Add up all the height to figure out what the scroll height is.
+     * Calculate the width of message based on how much space is left
+     * after rendering line and timestamp.
      */
-    let contentHeight = 0;
-    measureElement.style.width = toRem(messageRect?.width);
-    logs.forEach(line => {
-      measureElement.textContent = line.message;
-      const rect = measureElement.getBoundingClientRect();
-      contentHeight += rect.height;
-    });
-    setContentHeight(contentHeight);
+    const messageWidth = spacerRect.width - lineNumberWidth - dateTimeWidth;
 
-    // Remove temporary element.
-    container.current?.removeChild(measureElement);
+    /*
+      * Measure the dimensions of every message in the available data.
+      * Add up all the height to figure out what the scroll height is.
+      */
+    let totalContentHeight = 0;
+    const messageSizes: Record<string, MessageSize> = {};
+    measure.current.style.width = toRem(messageWidth);
+    newLogs.forEach(line => {
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
+      measure.current!.textContent = line.message;
+      const rect = measure.current!.getBoundingClientRect();
+      messageSizes[line.id] = { height: rect.height, top: totalContentHeight };
+      totalContentHeight += rect.height;
+    });
+
+    // Save all the calculated sizes for log view configuartion.
+    setConfig(prevConfig => ({
+      ...prevConfig,
+      charHeight: charRect.height,
+      charWidth: charRect.width,
+      dateTimeWidth,
+      lineNumberWidth,
+      messageSizes,
+      messageWidth,
+      totalContentHeight,
+    }));
+
+    // Recalculate the scroll element sizing.
+    resizeScrollElement();
+
+    // Hide the measure element
+    measure.current.style.display = 'none';
+
+    // Scroll to the bottom of the log if adding the first set of logs.
+    if (logs.length === 0) {
+      setTimeout(() => container.current?.scrollTo(0, container.current.scrollHeight || 0), 0);
+    }
+  }, [ logs, resizeScrollElement, setLogs ]);
+
+  /*
+   * Figure out which logs lines to actually render based on whether it
+   * is visible in the scroll view window or not.
+   */
+  const visibleLogs = useMemo(() => {
+    if (config.totalContentHeight === 0) return logs;
+
+    const viewTop = scroll.scrollTop - scroll.viewHeight * BUFFER_FACTOR;
+    const viewBottom = scroll.scrollTop + scroll.viewHeight * (1 + BUFFER_FACTOR);
+
+    return logs.filter(log => {
+      const size = config.messageSizes[log.id];
+      const top = size.top;
+      const bottom = size.top + size.height;
+      return (top > viewTop && top < viewBottom) || (bottom > viewTop && bottom < viewBottom);
+    });
+  }, [ config, logs, scroll ]);
+
+  /*
+   * The useImperitiveHandle hook provides the parent component
+   * access to functions defined here to modify LogViewer state.
+   */
+  useImperativeHandle(ref, () => ({ addLogs }));
+
+  /*
+   * Calculate log viewer sizes after the component has rendered.
+   * This does not include calculations of individual log line heights,
+   * which is done when logs are being added via `addLogs`.
+   */
+  useLayoutEffect(() => {
+    // Check to make sure all the necessary elements are available.
+    if (!container.current) return;
 
     // Scroll to the bottom of the log
-    container.current?.scrollTo(0, container.current?.scrollHeight || 0);
-
-    setIsLoading(false);
-  }, [ logs, setLineNumberStyle, setDateTimeStyle ]);
+    container.current.scrollTo(0, container.current.scrollHeight || 0);
+  }, []);
 
   return (
     <div className={css.base}>
@@ -152,9 +215,12 @@ const LogViewer: React.FC<Props> = forwardRef((
         Control
       </div>
       <div className={css.container} ref={container}>
-        <div className={css.scrollSpacer}>
-          {logs.map((log, index) => (
-            <div className={css.line} key={log.id}>
+        <div className={css.scrollSpacer} ref={spacer} style={spacerStyle}>
+          {visibleLogs.map((log, index) => (
+            <div className={css.line} key={log.id} style={{
+              height: toRem(config.messageSizes[log.id]?.height),
+              top: toRem(config.messageSizes[log.id]?.top),
+            }}>
               <div className={css.number} style={lineNumberStyle}>{index + 1}</div>
               <div className={css.time} style={dateTimeStyle}>{log.time}</div>
               <div
@@ -163,8 +229,8 @@ const LogViewer: React.FC<Props> = forwardRef((
             </div>
           ))}
         </div>
+        <div className={css.measure} ref={measure} />
       </div>
-      {isLoading && <Spinner fillContainer shade />}
     </div>
   );
 });
