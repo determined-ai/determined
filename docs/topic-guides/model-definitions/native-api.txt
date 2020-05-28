@@ -11,8 +11,8 @@ port model code for use with Determined.
 
 In this guide, we'll cover what happens under the hood when a user submits an
 experiment to Determined using the Native API. This topic guide is meant as
-deep-dive for advanced users -- for a tutorial on getting started with the
-Native API, see :ref:`tutorials_native-api`.
+deep-dive for advanced users. For a tutorial on getting started with the
+Native API, see the :ref:`tutorials_native-api`.
 
 Create an Experiment via ``init()``
 -----------------------------------
@@ -20,7 +20,7 @@ Create an Experiment via ``init()``
 A user can submit an experiment from Python by executing a Python script
 that conforms to the Native API:
 
-.. code::
+.. code:: python
 
     context = det.experimental.keras.init(config, context_dir=".")
     model = ...
@@ -30,17 +30,17 @@ that conforms to the Native API:
 
 The ``init()`` APIs require a *context directory* (``context_dir``) argument.
 The context directory specifies the root directory of the code containing the
-native implementation -- for a majority of users this is the current working
+native implementation -- for most users, this is the current working
 directory (``.``). ``init()`` also accepts two boolean keyword arguments:
 
 ``local`` (``bool``):
-      ``local=False`` will sumbit the experiment to a Determined cluster.
-      ``local=True`` will execute the the training loop in your local Python
+      ``local=False`` will submit the experiment to a Determined cluster.
+      ``local=True`` will execute the training loop in your local Python
       environment (although currently, local training is not implemented, so
       you must also set ``test=True``). Defaults to False.
 
 ``test`` (``bool``):
-      ``test=True`` will execute a minimal trianing loop rather than a full
+      ``test=True`` will execute a minimal training loop rather than a full
       experiment. This can be useful for porting or debugging a model because
       many common errors will surface quickly. Defaults to False.
 
@@ -53,8 +53,8 @@ functions are supported:
 
 To learn more about the ``init()`` APIs, see:
 
--  :py:func:`determined.experimental.keras.init`
--  :py:func:`determined.experimental.estimator.init`
+* :py:func:`determined.experimental.keras.init`
+* :py:func:`determined.experimental.estimator.init`
 
 Life of a Native API Experiment
 -------------------------------
@@ -64,20 +64,22 @@ Life of a Native API Experiment
 .. TODO: Add a link to show what an experiment in local development mode looks like
 
 The diagram above demonstrates the flow of execution when an experiment is
-created cluster mode.
+created in cluster mode.
 
-The Python script will first be executed by us in the *User environment*, such
+The Python script will first be executed in the *User Environment*, such
 as a Python virtualenv or a Jupyter notebook where the ``determined`` Python
 package is installed. When the code is executed, ``init()`` will create an
 experiment by submitting the contents of the context directory and the
-:ref:`experiment configuration <terminology-concepts>` in a network request to
+:ref:`experiment configuration <terminology-concepts>` to
 the Determined master. Note that any code that comes after the ``init()`` call
 (typically involving defining the model and training loop) is *not* executed in
-the *User environment*. In the case of ``tf.keras``, building and compiling the
+the *User Environment*. In the case of ``tf.keras``, building and compiling the
 model is only done on the Determined cluster.
 
-Once the Determined master has initialized a *Trial Runner environment*, the
-user script is re-executed from the beginning using `runpy.run_path
+The Determined master will schedule the new workload on an agent
+machine. The agent will launch a task container and initialize a *Trial
+Runner Environment*; in this environment, the
+user script will be re-executed from the beginning using `runpy.run_path
 <https://docs.python.org/3/library/runpy.html#runpy.run_path>`_. In the trial
 runner environment, ``init`` will return a :py:class:`determined.NativeContext`
 object that holds information specific to that trial (e.g. hyperparameter
