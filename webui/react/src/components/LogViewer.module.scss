@@ -12,17 +12,26 @@
     height: var(--theme-sizes-layout-giant);
   }
   .container {
-    display: flex;
-    flex-direction: column;
     font-family: 'Source Code Pro', monospace;
     font-size: var(--theme-sizes-font-small);
     height: calc(100% - var(--theme-sizes-layout-giant));
     overflow: auto;
     padding: var(--theme-sizes-layout-medium);
+    position: relative;
   }
   .scrollSpacer {
+    position: relative;
   }
-  .line { display: flex; }
+  .measure {
+    display: inline;
+    position: absolute;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .line {
+    display: flex;
+    position: absolute;
+  }
   .line > * { white-space: nowrap; }
   .line > .number {
     color: var(--theme-colors-monochrome-10);

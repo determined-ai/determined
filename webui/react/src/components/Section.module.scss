@@ -20,6 +20,7 @@
     border-color: var(--theme-colors-monochrome-13);
     border-style: solid;
     border-width: 0;
+    flex-grow: 1;
     min-height: 0;
   }
   &:not(:last-child) {
