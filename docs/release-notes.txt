@@ -21,6 +21,8 @@ Version 0.12.5
 
 - Add support for TensorBoard backed by S3-compliant APIs that are not AWS S3.
 
+- Add generic callback support for PyTorch.
+
 - TensorBoards now shut down after 10 minutes if metrics are unavailable.
 
 - Update to NCCL 2.6.4 for distributed training.
