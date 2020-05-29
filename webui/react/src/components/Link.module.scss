@@ -2,7 +2,6 @@
   color: inherit;
   cursor: pointer;
 
-  &:hover {
-    color: inherit;
-  }
+  &:focus { box-shadow: var(--theme-outline); }
+  &:hover { color: inherit; }
 }
