@@ -36,7 +36,6 @@ func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
 			&rung{
 				stepsNeeded: stepsNeeded,
 				startTrials: startTrials,
-				seenTrials:  make(map[RequestID]bool),
 			},
 		)
 		if id == 0 {
@@ -80,7 +79,6 @@ type trialMetric struct {
 type rung struct {
 	stepsNeeded   int
 	metrics       []trialMetric
-	seenTrials    map[RequestID]bool
 	startTrials   int
 	promoteTrials int
 }
@@ -88,25 +86,8 @@ type rung struct {
 // promotions handles bookkeeping of validation metrics and returns a RequestID to promote if
 // appropriate.
 func (r *rung) promotions(requestID RequestID, metric float64) []RequestID {
-	// Remove duplicate trial if we have one. This occurs when max_restarts > 0
-	// and we error a trial at a step ID that is less than one we have hit
-	// before.
-	var insertIndex int
-	if ok := r.seenTrials[requestID]; ok {
-		var ind int
-		for i, trial := range r.metrics {
-			if trial.requestID == requestID {
-				ind = i
-				break
-			}
-		}
-		copy(r.metrics[ind:], r.metrics[ind+1:])
-		r.metrics = r.metrics[:len(r.metrics)-1]
-	} else {
-		r.seenTrials[requestID] = true
-	}
 	// Insert the new trial result in the appropriate place in the sorted list.
-	insertIndex = sort.Search(
+	insertIndex := sort.Search(
 		len(r.metrics),
 		func(i int) bool { return r.metrics[i].metric > metric },
 	)

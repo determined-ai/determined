@@ -59,7 +59,6 @@ func newAsyncHalvingSimpleSearch(config model.AsyncHalvingConfig, trials int) Se
 			&rung{
 				stepsNeeded: stepsNeeded,
 				startTrials: startTrials,
-				seenTrials:  make(map[RequestID]bool),
 			},
 		)
 	}
