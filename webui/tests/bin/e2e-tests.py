@@ -46,7 +46,7 @@ def setup_cluster(config):
     logger.info("setting up the cluster..")
     run(CLUSTER_CMD_PREFIX + ["start-db"], config)
     cluster_process = run_forget(CLUSTER_CMD_PREFIX + ["run"], config)
-    time.sleep(6)  # FIXME add a ready check for master
+    time.sleep(5)  # FIXME add a ready check for master
     logger.info(f"cluster pid: {cluster_process.pid}")
     return cluster_process
 

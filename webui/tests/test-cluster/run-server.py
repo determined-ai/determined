@@ -52,17 +52,14 @@ def tail_db_logs():
 
 
 def run_master():
-    # TODO make the port configurable with a default
     return proc(
         "master",
-        # TODO use path lib
         ["../../../master/build/determined-master", "--config-file", "master.yaml"],
         logs_handler=lambda line: f"{MAGENTA}determined-master  |{CLEAR} {line}",
     )
 
 
 def run_agent():
-    # TODO connect to the set master
     container_master_host = "host.docker.internal" if sys.platform == "darwin" else ""
     return proc(
         "agent",
@@ -102,7 +99,6 @@ def main():
         wait_for_server(MASTER_PORT)
         agent.start()
 
-        # TODO send/print a ready signal? depending process want to know when to start
         # Join the agent first so we can exit if the agent fails to connect to
         # the master.
         agent.join()

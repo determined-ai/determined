@@ -4,7 +4,6 @@ clean:
 
 .PHONY: start-db
 start-db: stop-db
-	# TODO make the db port configurable
 	docker-compose up -d
 
 .PHONY: stop-db
