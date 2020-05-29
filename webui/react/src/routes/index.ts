@@ -4,6 +4,7 @@ import Dashboard from 'pages/Dashboard';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
 import history from 'routes/history';
+import { clone } from 'utils/data';
 import { ensureAbsolutePath, isFullPath, parseUrl } from 'utils/routes';
 
 /*
@@ -126,6 +127,6 @@ export const routeAll = (path: string): void => {
   if (!isReactRoute(path)) {
     routeToExternalUrl(path);
   } else {
-    history.push(path);
+    history.push(path, { from: clone(window.location) });
   }
 };

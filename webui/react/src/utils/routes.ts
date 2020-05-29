@@ -12,3 +12,8 @@ export const parseUrl = (url: string): URL => {
   }
   return new window.URL(cleanUrl);
 };
+
+export const locationToPath = (location?: Location): string | null => {
+  if (!location || !location.pathname) return null;
+  return location.pathname + location.search + location.hash;
+};

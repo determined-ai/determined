@@ -1,6 +1,7 @@
 import { notification } from 'antd';
 import queryString from 'query-string';
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
@@ -10,6 +11,7 @@ import FullPageSpinner from 'contexts/FullPageSpinner';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { routeAll } from 'routes';
+import { locationToPath } from 'utils/routes';
 
 import css from './SignIn.module.scss';
 
@@ -21,6 +23,7 @@ interface Queries {
 const DEFAULT_REDIRECT = '/det/dashboard';
 
 const SignIn: React.FC = () => {
+  const location = useLocation<{ from: Location }>();
   const auth = Auth.useStateContext();
   const showSpinner = FullPageSpinner.useStateContext();
   const setShowSpinner = FullPageSpinner.useActionContext();
@@ -48,11 +51,19 @@ const SignIn: React.FC = () => {
       if (queries.cli) notification.open({ description: <AuthToken />, duration: 0, message: '' });
 
       // Reroute the authenticated user to the app.
-      routeAll(queries.redirect || DEFAULT_REDIRECT);
+      const redirect = locationToPath((location.state || {}).from);
+      routeAll(redirect || DEFAULT_REDIRECT);
     } else if (auth.checkCount > 0) {
       setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
     }
-  }, [  auth.checkCount, auth.isAuthenticated, queries, setShowSpinner, showSpinner, stopPolling ]);
+  }, [
+    auth.checkCount,
+    auth.isAuthenticated,
+    location.state,
+    queries,
+    setShowSpinner,
+    showSpinner,
+  ]);
 
   /*
    * Stop the polling upon a dismount of this page.

@@ -2,7 +2,7 @@ import { notification } from 'antd';
 import axios from 'axios';
 
 import history from 'routes/history';
-import { isAsyncFunction } from 'utils/data';
+import { clone, isAsyncFunction } from 'utils/data';
 import Logger, { LoggerInterface } from 'utils/Logger';
 import { listToStr } from 'utils/string';
 
@@ -69,8 +69,7 @@ const handleError = (e: DaError): Error => {
 
   if (e.type === ErrorType.Auth) {
     if (!window.location.pathname.endsWith('login')) {
-      const destination = `/det/logout?redirect=${window.location.pathname}`;
-      history.replace(destination);
+      history.replace('/det/logout', { from: clone(window.location ) });
     }
     return error;
   }
