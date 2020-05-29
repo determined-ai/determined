@@ -100,21 +100,16 @@ func (r *rung) promotions(requestID RequestID, metric float64) []RequestID {
 			}
 		}
 		copy(r.metrics[ind:], r.metrics[ind+1:])
-		// Insert the new trial result in the appropriate place in the sorted list.
-		insertIndex = sort.Search(
-			len(r.metrics)-1,
-			func(i int) bool { return r.metrics[i].metric > metric },
-		)
-		r.metrics[len(r.metrics)-1] = trialMetric{}
+		r.metrics = r.metrics[:len(r.metrics)-1]
 	} else {
 		r.seenTrials[requestID] = true
-		// Insert the new trial result in the appropriate place in the sorted list.
-		insertIndex = sort.Search(
-			len(r.metrics),
-			func(i int) bool { return r.metrics[i].metric > metric },
-		)
-		r.metrics = append(r.metrics, trialMetric{})
 	}
+	// Insert the new trial result in the appropriate place in the sorted list.
+	insertIndex = sort.Search(
+		len(r.metrics),
+		func(i int) bool { return r.metrics[i].metric > metric },
+	)
+	r.metrics = append(r.metrics, trialMetric{})
 	copy(r.metrics[insertIndex+1:], r.metrics[insertIndex:])
 	r.metrics[insertIndex] = trialMetric{
 		requestID: requestID,
@@ -196,7 +191,8 @@ func (s *asyncHalvingSearch) promoteTrials(
 					StepID:       step,
 				}
 
-				// We can do this because of the following invariants:
+				// We can make a recursive call (and discard the results)
+				// because of the following invariants:
 				//   1) There are other trials executing that will receive any
 				//   extra operations when they complete workloads. We know
 				//   this is true since otherwise we would have received
