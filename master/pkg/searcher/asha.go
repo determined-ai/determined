@@ -87,7 +87,9 @@ type rung struct {
 // promotions handles bookkeeping of validation metrics and returns a RequestID to promote if
 // appropriate.
 func (r *rung) promotions(requestID RequestID, metric float64) []RequestID {
-	// Remove duplicate trial if we have one.
+	// Remove duplicate trial if we have one. This occurs when max_restarts > 0
+	// and we error a trial at a step ID that is less than one we have hit
+	// before.
 	var insertIndex int
 	if ok := r.seenTrials[requestID]; ok {
 		var ind int
