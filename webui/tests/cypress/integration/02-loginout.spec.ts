@@ -31,7 +31,6 @@ describe('Sign in/out', () => {
     cy.login();
     cy.visit('/det/dashboard');
     cy.get('#avatar').click();
-    // TODO add better identifiers to react Link component. make it an anchor tag?
     cy.get(`[role="menu"] a[href="${LOGOUT_ROUTE}"]`).should('have.lengthOf', 1);
     cy.get(`[role="menu"] a[href="${LOGOUT_ROUTE}"]`).click();
     cy.checkLoggedOut();

@@ -32,7 +32,6 @@ const SignIn: React.FC = () => {
    * and this will pick up that auth and automatically redirect them into
    * their previous app.
    */
-  // const task = useAsyncTask(checkAuth);
   const checkAuth = useAuthCheck();
   const stopPolling = usePolling(checkAuth);
 
