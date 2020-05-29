@@ -39,7 +39,7 @@ export const appRoutes: RouteConfigItem[] = [
 ];
 export const defaultAppRoute = appRoutes[0];
 
-export const detRoutes: RouteConfigItem[] = [
+export const sidebarRoutes: RouteConfigItem[] = [
   {
     component: Dashboard,
     icon: 'user',
@@ -85,7 +85,7 @@ export const detRoutes: RouteConfigItem[] = [
     title: 'Commands',
   },
 ];
-export const defaultDetRouteId = detRoutes[0].id;
+export const defaultSideBarRoute = sidebarRoutes[0];
 
 // Is the path going to be served from the same host?
 const isDetRoute = (url: string): boolean => {

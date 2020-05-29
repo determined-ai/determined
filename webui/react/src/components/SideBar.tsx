@@ -8,7 +8,7 @@ import { useRouteMatch } from 'react-router-dom';
 
 // import NavItem, { NavItemType } from 'components/NavItem';
 import NavMenu, { NavMenuType } from 'components/NavMenu';
-import { defaultDetRouteId, detRoutes } from 'routes';
+import { defaultSideBarRoute, sidebarRoutes } from 'routes';
 
 import css from './SideBar.module.scss';
 
@@ -29,8 +29,8 @@ const SideBar: React.FC<Props> = (props: Props) => {
     <div className={classes.join(' ')} id="side-menu">
       <NavMenu
         basePath={path}
-        defaultRouteId={defaultDetRouteId}
-        routes={detRoutes}
+        defaultRouteId={defaultSideBarRoute.id}
+        routes={sidebarRoutes}
         showLabels={!collapsed}
         type={collapsed ? NavMenuType.SideBarIconOnly : NavMenuType.SideBar} />
       <div className={css.footer}>
