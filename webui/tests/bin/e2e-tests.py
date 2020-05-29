@@ -103,6 +103,7 @@ def run_e2e_tests(config):
     """ depends on:
     1. a brand new, exclusive cluster at config['DET_MASTER']
     2. pre_e2e_tests() to have seeded that cluster recently* """
+    logger.info(f"testing against http://{config['DET_MASTER']}")
     cypress_arguments = _cypress_arguments([], config)
     command = [
         "npx",
@@ -166,8 +167,8 @@ def main():
     parser = argparse.ArgumentParser(description="Manage e2e tests.")
     help_msg = f"operation must be in {sorted(operation_to_fn.keys())}"
     parser.add_argument("operation", help=help_msg)
-    parser.add_argument("--det-port", default="8081")
-    parser.add_argument("--det-host", default="localhost")
+    parser.add_argument("--det-port", default="8081", help="det master port")
+    parser.add_argument("--det-host", default="localhost", help="det master address eg localhost or 192.168.1.2")
     parser.add_argument("--cypress-default-command-timeout", default="4000")
     parser.add_argument("--cypress-args", help="other cypress arguments")
     parser.add_argument("--log-level")
