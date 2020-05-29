@@ -2,7 +2,6 @@ import { RouteProps } from 'react-router';
 
 import Authentication from 'pages/Authentication';
 import Dashboard from 'pages/Dashboard';
-import Determined from 'pages/Determined';
 import history from 'routes/history';
 import { ensureAbsolutePath, isFullPath, parseUrl } from 'utils/routes';
 
@@ -23,13 +22,6 @@ export interface RouteConfigItem extends RouteProps {
 }
 
 export const appRoutes: RouteConfigItem[] = [
-  {
-    component: Determined,
-    id: 'det',
-    needAuth: true,
-    path: '/det/dashboard',
-    title: 'Determined',
-  },
   {
     component: Authentication,
     id: 'login',
