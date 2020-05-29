@@ -19,7 +19,7 @@ root_path = pathlib.Path(root)
 webui_dir = root_path.joinpath("webui")
 tests_dir = webui_dir.joinpath("tests")
 
-CLUSTER_CMD_PREFIX = ["make", "-C", "e2e-cluster"]
+CLUSTER_CMD_PREFIX = ["make", "-C", "test-cluster"]
 
 CLEAR = "\033[39m"
 BLUE = "\033[94m"
