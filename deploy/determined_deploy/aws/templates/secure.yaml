@@ -4,12 +4,12 @@ Mappings:
   RegionMap:
     us-east-1:
       Master: ami-66506c1c
-      Agent: ami-0657cb09c0cb7dea0
+      Agent: ami-05bebad992b560956
       Bastion: ami-0a1262fb77d0911ef
     us-west-2:
       Master: ami-79873901
-      Agent: ami-06b06da8bc64b5080
-      Bastion: ami-0ff280954dd7aafd5
+      Agent: ami-0708912cb448d9d38
+      Bastion: ami-0ec8cdd8937453529
 
 Parameters:
   VpcCIDR:
