@@ -42,6 +42,8 @@ type SearchMethod interface {
 	trialClosed(ctx context, requestID RequestID) ([]Operation, error)
 	// progress returns experiment progress as a float between 0.0 and 1.0.
 	progress(workloadsCompleted int) float64
+	// trialExitedEarly informs the searcher that the trial has exited earlier than expected.
+	trialExitedEarly(ctx context, requestID RequestID, message Workload) ([]Operation, error)
 }
 
 // NewSearchMethod returns a new search method for the provided searcher configuration.
@@ -88,4 +90,9 @@ func (defaultSearchMethod) validationCompleted(
 }
 func (defaultSearchMethod) trialClosed(context, RequestID) ([]Operation, error) {
 	return nil, nil
+}
+
+func (defaultSearchMethod) trialExitedEarly( //nolint: unused
+	ctx context, requestID RequestID, message Workload) ([]Operation, error) {
+	return []Operation{Shutdown{Failure: true}}, nil
 }

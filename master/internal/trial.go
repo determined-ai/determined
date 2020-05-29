@@ -154,6 +154,7 @@ type trial struct {
 
 	restarts  int
 	replaying bool
+	earlyExit bool
 
 	task                       *scheduler.Task
 	pendingGracefulTermination bool
@@ -242,8 +243,10 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			return nil
 		}
 		if t.restarts > t.experiment.Config.MaxRestarts {
-			if err := t.db.UpdateTrial(t.id, model.ErrorState); err != nil {
-				ctx.Log().Error(err)
+			if !t.replaying {
+				if err := t.db.UpdateTrial(t.id, model.ErrorState); err != nil {
+					ctx.Log().Error(err)
+				}
 			}
 			return errors.Errorf("trial %d failed and reached maximum number of restarts", t.id)
 		}
@@ -467,7 +470,7 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.Assigned) erro
 }
 
 func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.CompletedMessage) error {
-	if !t.replaying {
+	if !t.replaying && msg.ExitedReason == nil {
 		if err := markWorkloadCompleted(t.db, msg); err != nil {
 			ctx.Log().Error(err)
 		}
@@ -478,8 +481,10 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 	// metrics, the Experiment will respond with whether or not we should take a checkpoint.
 	experimentFuture := ctx.Ask(ctx.Self().Parent(), msg)
 
-	if err := t.sequencer.WorkloadCompleted(msg, experimentFuture); err != nil {
-		return errors.Wrap(err, "Error passing CompletedMessage to sequencer")
+	if msg.ExitedReason == nil {
+		if err := t.sequencer.WorkloadCompleted(msg, experimentFuture); err != nil {
+			return errors.Wrap(err, "Error passing CompletedMessage to sequencer")
+		}
 	}
 
 	// Decide what to do next.
@@ -487,6 +492,9 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 	var w searcher.Workload
 	var err error
 	switch {
+	case msg.ExitedReason != nil:
+		ctx.Log().Info("exiting trial early")
+		t.earlyExit = true
 	// We have another workload to run.
 	case !t.pendingGracefulTermination && !t.sequencer.UpToDate():
 		w, err = t.sequencer.Workload()
@@ -512,7 +520,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 	}
 
 	// Command the trial runner to do the thing we decided on (if this is not a replay).
-	if !t.replaying {
+	if !t.replaying && !t.earlyExit {
 		var msg interface{}
 		if terminateNow {
 			w = *t.sequencer.TerminateWorkload()
@@ -808,9 +816,24 @@ func (t *trial) resetTrial(
 	}
 
 	if w, err := t.sequencer.Workload(); err != nil {
-		if err := markWorkloadErrored(t.db, w); err != nil {
-			ctx.Log().Error(err)
+		if !t.replaying {
+			if err := markWorkloadErrored(t.db, w); err != nil {
+				ctx.Log().Error(err)
+			}
 		}
+	}
+	e := searcher.Errored
+	w, err := t.sequencer.Workload()
+	if err != nil {
+		ctx.Log().Error(err)
+		panic(err)
+	}
+	erroredMessage := searcher.CompletedMessage{
+		Workload:     w,
+		ExitedReason: &e,
+	}
+	if err := t.processCompletedWorkload(ctx, erroredMessage); err != nil {
+		ctx.Log().Error(err)
 	}
 }
 
@@ -818,6 +841,14 @@ func (t *trial) restore(ctx *actor.Context) {
 	// If the trial has not been created in the database yet (which can happen during master restart),
 	// it can't have any state to restore.
 	if !t.idSet {
+		return
+	}
+
+	trial, err := t.db.TrialByID(t.id)
+	if err != nil {
+		ctx.Log().Error(err)
+	} else if _, ok := model.TerminalStates[trial.State]; ok {
+		ctx.Self().Stop()
 		return
 	}
 
@@ -833,7 +864,7 @@ func (t *trial) restore(ctx *actor.Context) {
 }
 
 func (t *trial) trialClosing() bool {
-	return t.restarts > t.experiment.Config.MaxRestarts ||
+	return t.earlyExit || t.restarts > t.experiment.Config.MaxRestarts ||
 		(t.close != nil && t.sequencer.UpToDate()) ||
 		model.StoppingStates[t.experimentState]
 }

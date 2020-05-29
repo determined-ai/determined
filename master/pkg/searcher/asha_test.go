@@ -55,6 +55,33 @@ func TestASHASearchMethod(t *testing.T) {
 			},
 		},
 		{
+			name: "early exit -- smaller is better",
+			expectedTrials: []predefinedTrial{
+				newConstantPredefinedTrial(0.01, 800, []int{12, 50, 200, 800}, nil),
+				newEarlyExitPredefinedTrial(0.02, 50, []int{12}, nil),
+				newConstantPredefinedTrial(0.03, 12, []int{12}, nil),
+				newConstantPredefinedTrial(0.04, 12, []int{12}, nil),
+				newConstantPredefinedTrial(0.05, 12, []int{12}, nil),
+				newConstantPredefinedTrial(0.06, 12, []int{12}, nil),
+				newConstantPredefinedTrial(0.07, 12, []int{12}, nil),
+				newConstantPredefinedTrial(0.08, 12, []int{12}, nil),
+				newConstantPredefinedTrial(0.09, 12, []int{12}, nil),
+				newConstantPredefinedTrial(0.10, 12, []int{12}, nil),
+				newEarlyExitPredefinedTrial(0.11, 11, nil, nil),
+			},
+			config: model.SearcherConfig{
+				AsyncHalvingConfig: &model.AsyncHalvingConfig{
+					Metric:           "error",
+					NumRungs:         4,
+					SmallerIsBetter:  true,
+					TargetTrialSteps: 800,
+					StepBudget:       480,
+					Divisor:          4,
+					TrainStragglers:  true,
+				},
+			},
+		},
+		{
 			name: "smaller is not better",
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.11, 800, []int{12, 50, 200, 800}, nil),
@@ -68,6 +95,33 @@ func TestASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(0.03, 12, []int{12}, nil),
 				newConstantPredefinedTrial(0.02, 12, []int{12}, nil),
 				newConstantPredefinedTrial(0.01, 12, []int{12}, nil),
+			},
+			config: model.SearcherConfig{
+				AsyncHalvingConfig: &model.AsyncHalvingConfig{
+					Metric:           "error",
+					NumRungs:         4,
+					SmallerIsBetter:  false,
+					TargetTrialSteps: 800,
+					StepBudget:       480,
+					Divisor:          4,
+					TrainStragglers:  true,
+				},
+			},
+		},
+		{
+			name: "early exit -- smaller is not better",
+			expectedTrials: []predefinedTrial{
+				newConstantPredefinedTrial(0.11, 800, []int{12, 50, 200, 800}, nil),
+				newEarlyExitPredefinedTrial(0.10, 50, []int{12}, nil),
+				newConstantPredefinedTrial(0.09, 12, []int{12}, nil),
+				newConstantPredefinedTrial(0.08, 12, []int{12}, nil),
+				newConstantPredefinedTrial(0.07, 12, []int{12}, nil),
+				newConstantPredefinedTrial(0.06, 12, []int{12}, nil),
+				newConstantPredefinedTrial(0.05, 12, []int{12}, nil),
+				newConstantPredefinedTrial(0.04, 12, []int{12}, nil),
+				newConstantPredefinedTrial(0.03, 12, []int{12}, nil),
+				newConstantPredefinedTrial(0.02, 12, []int{12}, nil),
+				newEarlyExitPredefinedTrial(0.01, 11, nil, nil),
 			},
 			config: model.SearcherConfig{
 				AsyncHalvingConfig: &model.AsyncHalvingConfig{

@@ -117,10 +117,11 @@ type predefinedTrial struct {
 	Trains      map[int]bool
 	Validations map[int]float64
 	Checkpoints map[int]bool
+	EarlyExit   int
 }
 
 func newPredefinedTrial(
-	nsteps int, validations map[int]float64, checkpoints []int,
+	nsteps int, validations map[int]float64, checkpoints []int, earlyExit int,
 ) predefinedTrial {
 	trainsMap := make(map[int]bool)
 	for i := 1; i <= nsteps; i++ {
@@ -136,7 +137,18 @@ func newPredefinedTrial(
 		Trains:      trainsMap,
 		Validations: validations,
 		Checkpoints: checkpointsMap,
+		EarlyExit:   earlyExit,
 	}
+}
+
+func newEarlyExitPredefinedTrial(
+	validation float64, nsteps int, validations []int, checkpoints []int,
+) predefinedTrial {
+	validationsMap := make(map[int]float64)
+	for _, i := range validations {
+		validationsMap[i] = validation
+	}
+	return newPredefinedTrial(nsteps, validationsMap, checkpoints, nsteps)
 }
 
 func newConstantPredefinedTrial(
@@ -146,7 +158,7 @@ func newConstantPredefinedTrial(
 	for _, i := range validations {
 		validationsMap[i] = validation
 	}
-	return newPredefinedTrial(nsteps, validationsMap, checkpoints)
+	return newPredefinedTrial(nsteps, validationsMap, checkpoints, 0)
 }
 
 func (t *predefinedTrial) TrainForStep(stepID int) error {
@@ -197,6 +209,7 @@ func checkValueSimulation(
 	// Create requests are assigned a predefinedTrial in order.
 	var nextTrialID int
 	var pending []Operation
+
 	trialIDs := map[RequestID]int{}
 
 	ctx := context{
@@ -212,6 +225,7 @@ func checkValueSimulation(
 	pending = append(pending, ops...)
 
 	for len(pending) > 0 {
+		var earlyExit bool
 		operation := pending[0]
 		pending = pending[1:]
 
@@ -234,6 +248,9 @@ func checkValueSimulation(
 			trialID := trialIDs[requestID]
 			trial := expectedTrials[trialID]
 			ops, err = simulateWorkloadComplete(ctx, method, trial, operation, requestID)
+			if trial.EarlyExit == operation.StepID {
+				earlyExit = true
+			}
 			if err != nil {
 				return errors.Wrapf(err, "simulateWorkloadComplete for trial %v", trialID+1)
 			}
@@ -256,6 +273,32 @@ func checkValueSimulation(
 		}
 
 		pending = append(pending, ops...)
+		if earlyExit {
+			var requestID RequestID
+			switch operation := operation.(type) {
+			case WorkloadOperation:
+				requestID = operation.RequestID
+			default:
+				return errors.Errorf("unexpected early exit for: %s", operation)
+			}
+
+			var newPending []Operation
+			for _, op := range pending {
+				switch op := op.(type) {
+				case WorkloadOperation:
+					if op.RequestID != requestID {
+						newPending = append(newPending, op)
+					}
+				case Close:
+					if op.RequestID != requestID {
+						newPending = append(newPending, op)
+					}
+				default:
+					newPending = append(newPending, op)
+				}
+			}
+			pending = newPending
+		}
 	}
 
 	for i, trial := range expectedTrials {
@@ -304,7 +347,11 @@ func simulateWorkloadComplete(
 			Kind:   RunStep,
 			StepID: operation.StepID,
 		}
-		ops, err = method.trainCompleted(ctx, requestID, w)
+		if trial.EarlyExit == operation.StepID {
+			ops, err = method.trialExitedEarly(ctx, requestID, w)
+		} else {
+			ops, err = method.trainCompleted(ctx, requestID, w)
+		}
 		if err != nil {
 			return nil, errors.Wrap(err, "trainCompleted")
 		}

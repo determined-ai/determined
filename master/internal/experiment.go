@@ -275,7 +275,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 	case actor.ChildFailed:
 		ctx.Log().WithError(msg.Error).Error("trial failed unexpectedly")
-		e.updateState(ctx, model.StoppingErrorState)
+		requestID := searcher.MustParse(msg.Child.Address().Local())
+		ops, err := e.searcher.TrialClosed(requestID)
+		e.processOperations(ctx, ops, err)
 		if e.canTerminate(ctx) {
 			ctx.Self().Stop()
 		}
@@ -410,7 +412,11 @@ func (e *experiment) processOperations(
 		case searcher.Close:
 			trialOperations[op.RequestID] = append(trialOperations[op.RequestID], op)
 		case searcher.Shutdown:
-			e.updateState(ctx, model.StoppingCompletedState)
+			if op.Failure {
+				e.updateState(ctx, model.StoppingErrorState)
+			} else {
+				e.updateState(ctx, model.StoppingCompletedState)
+			}
 		default:
 			panic(fmt.Sprintf("unexpected operation: %v", op))
 		}
@@ -453,6 +459,10 @@ func (e *experiment) processOperations(
 }
 
 func (e *experiment) isBestValidation(msg searcher.CompletedMessage) bool {
+	if msg.ExitedReason != nil {
+		return false
+	}
+
 	metricName := e.Config.Searcher.Metric
 	validation, err := msg.ValidationMetrics.Metric(metricName)
 	if err != nil {

@@ -36,6 +36,14 @@ func (s *gridSearch) progress(workloadsCompleted int) float64 {
 	return float64(workloadsCompleted) / float64((s.MaxSteps+1)*s.trials)
 }
 
+// trialExitedEarly does nothing since grid does not take actions based on
+// search status or progress.
+func (s *gridSearch) trialExitedEarly(
+	ctx context, requestID RequestID, message Workload,
+) ([]Operation, error) {
+	return nil, nil
+}
+
 func newHyperparameterGrid(params model.Hyperparameters) []hparamSample {
 	var names []string
 	var values [][]interface{}
