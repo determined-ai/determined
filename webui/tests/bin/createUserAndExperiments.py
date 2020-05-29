@@ -8,6 +8,10 @@ USER_WITH_PASSWORD_USERNAME = "user-w-pw"
 USER_WITH_PASSWORD_PASSWORD = "special-pw"
 USER_WITHOUT_PASSWORD_USERNAME = "user-wo-pw"
 
+determined_root_dir = pathlib.Path(__file__).absolute().parents[3]
+noop_dir = determined_root_dir.joinpath("e2e_tests", "tests", "fixtures", "no_op")
+noop_config = "single-very-many-long-steps.yaml"
+
 
 def wait_for_process(process):
     # Avoid hang on macOS
@@ -57,18 +61,21 @@ create_user(USER_WITH_PASSWORD_USERNAME, USER_WITH_PASSWORD_PASSWORD)
 login_as(USER_WITH_PASSWORD_USERNAME, USER_WITH_PASSWORD_PASSWORD)
 
 # Create experiments
-determined_root_dir = pathlib.Path(__file__).absolute().parents[3]
-experiment_dir = determined_root_dir.joinpath("e2e_tests", "tests", "fixtures", "no_op")
-
-print("creating experiments..")
-for _ in range(4):
-    subprocess.run(
+def createExperiment(directory, config_file, count):
+    cmd = " ".join(
         [
             "det",
             "experiment",
             "create",
-            str(experiment_dir.joinpath("single-very-many-long-steps.yaml")),
-            str(experiment_dir),
-        ],
-        check=True,
+            str(directory.joinpath(config_file)),
+            str(directory),
+        ]
     )
+
+    return subprocess.run(
+        f"seq {count} | xargs -n 1 -P 0 -I[] {cmd}", shell=True, check=True,
+    )
+
+
+print("creating experiments..")
+createExperiment(noop_dir, noop_config, 4)
