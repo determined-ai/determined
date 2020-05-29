@@ -398,12 +398,13 @@ class PyTorchTrialController(det.LoopTrialController):
             if self.use_amp():
                 with apex.amp.scale_loss(loss, self.context.optimizer) as scaled_loss:
                     scaled_loss.backward()
-                    if self.hvd_config.use and communicate_and_update:
-                        self.context.optimizer.synchronize()
             else:
                 loss.backward()
 
             if communicate_and_update:
+                if self.hvd_config.use:
+                    self.context.optimizer.synchronize()
+
                 parameters = (
                     self.context.model.parameters()
                     if not self.use_amp()
@@ -417,7 +418,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
                 self._clip_grads(parameters)
 
-                if self.hvd_config.use and self.use_amp():
+                if self.hvd_config.use:
                     with self.context.optimizer.skip_synchronize():
                         self.context.optimizer.step()
                 else:
