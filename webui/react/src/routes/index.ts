@@ -21,7 +21,7 @@ export interface RouteConfigItem extends RouteProps {
   needAuth?: boolean;
 }
 
-export const appRoutes: RouteConfigItem[] = [
+const dashboardRoute =
   {
     component: Dashboard,
     icon: 'user',
@@ -29,7 +29,10 @@ export const appRoutes: RouteConfigItem[] = [
     needAuth: true,
     path: '/det/dashboard',
     title: 'Dashboard',
-  },
+  };
+
+export const appRoutes: RouteConfigItem[] = [
+  dashboardRoute,
   {
     component: Authentication,
     id: 'login',
@@ -45,17 +48,10 @@ export const appRoutes: RouteConfigItem[] = [
     title: 'Logout',
   },
 ];
-export const defaultAppRoute = appRoutes[0];
+export const defaultAppRoute = dashboardRoute;
 
 export const sidebarRoutes: RouteConfigItem[] = [
-  {
-    component: Dashboard,
-    icon: 'user',
-    id: 'dashboard',
-    needAuth: true,
-    path: '/det/dashboard',
-    title: 'Dashboard',
-  },
+  dashboardRoute,
   {
     icon: 'experiment',
     id: 'experiments',
