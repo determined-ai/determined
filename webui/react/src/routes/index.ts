@@ -23,6 +23,14 @@ export interface RouteConfigItem extends RouteProps {
 
 export const appRoutes: RouteConfigItem[] = [
   {
+    component: Dashboard,
+    icon: 'user',
+    id: 'dashboard',
+    needAuth: true,
+    path: '/det/dashboard',
+    title: 'Dashboard',
+  },
+  {
     component: Authentication,
     id: 'login',
     needAuth: false,
