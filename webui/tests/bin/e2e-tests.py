@@ -105,10 +105,7 @@ def run_e2e_tests(config):
     2. pre_e2e_tests() to have seeded that cluster recently* """
     cypress_arguments = _cypress_arguments([], config)
     command = [
-        "yarn",
-        "--cwd",
-        str(tests_dir),
-        "run",
+        "npx",
         "cypress",
         "run",
         *cypress_arguments,
