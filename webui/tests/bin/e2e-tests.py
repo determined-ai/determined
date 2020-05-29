@@ -70,6 +70,7 @@ def det_cluster(config):
 
 def pre_e2e_tests(config):
     run_ignore_failure(["rm", "-r", str(tests_dir.joinpath(RESULTS_DIR_NAME))], config)
+    # TODO add a check for cluster condition
     run(
         ["python", str(tests_dir.joinpath("bin", "createUserAndExperiments.py"))],
         config,
