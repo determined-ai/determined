@@ -24,3 +24,12 @@ export const clone = (data: any, deep = true): any => {
   if (isSet(data)) return new Set(data);
   return deep ? JSON.parse(JSON.stringify(data)) : { ...data };
 };
+
+export const categorize = <T>(array: T[], keyFn: ((arg0: T) => string)): Record<string, T[]>  => {
+  const d: Record<string, T[]> = {};
+  array.forEach(item => {
+    const key = keyFn(item);
+    d[key] ? d[key].push(item) : d[key] = [ item ];
+  });
+  return d;
+};

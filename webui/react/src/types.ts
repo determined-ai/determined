@@ -26,18 +26,34 @@ export interface DeterminedInfo {
 }
 
 export enum ResourceType {
-  CPU,
-  GPU,
+  CPU = 'CPU',
+  GPU = 'GPU'
 }
 
-export enum ResourceState {
-  Assigned,
-  Pulling,
-  Running,
-  Starting,
-  Terminated,
-  Terminating,
+export const resourceTypes: ResourceType[] = [
+  ResourceType.CPU,
+  ResourceType.GPU,
+];
+
+export enum ResourceState { // This is almost CommandState
+  Free = 'FREE',
+  Assigned = 'ASSIGNED',
+  Pulling = 'PULLING',
+  Starting = 'STARTING',
+  Running = 'RUNNING',
+  Terminating = 'TERMINATING',
+  Terminated = 'TERMINATED',
 }
+
+export const resourceStates: ResourceState[] = [
+  ResourceState.Free,
+  ResourceState.Assigned,
+  ResourceState.Pulling,
+  ResourceState.Starting,
+  ResourceState.Running,
+  ResourceState.Terminating,
+  ResourceState.Terminated,
+];
 
 export interface ResourceContainer {
   id: string;
@@ -59,7 +75,7 @@ export interface Agent {
   resources: Resource[];
 }
 
-interface ClusterOverviewResource {
+export interface ClusterOverviewResource {
   available: number;
   total: number;
 }

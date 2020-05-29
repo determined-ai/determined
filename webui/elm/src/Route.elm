@@ -240,7 +240,7 @@ toString r =
     in
     case r of
         Cluster ->
-            absolute [ "ui", "cluster" ] []
+            absolute [ "det", "cluster" ] []
 
         Dashboard ->
             absolute [ "det", "dashboard" ] []

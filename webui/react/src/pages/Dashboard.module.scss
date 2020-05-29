@@ -1,13 +1,3 @@
 .base {
   .overview { padding-bottom: var(--theme-sizes-layout-big); }
-  .emptyMessage {
-    align-items: center;
-    background-color: var(--theme-colors-monochrome-13);
-    color: var(--theme-colors-monochrome-9);
-    display: flex;
-    font-size: var(--theme-sizes-font-medium);
-    font-style: italic;
-    justify-content: center;
-    padding: var(--theme-sizes-layout-giant);
-  }
 }

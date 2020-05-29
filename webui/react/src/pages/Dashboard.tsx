@@ -14,6 +14,7 @@ import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Experiments from 'contexts/Experiments';
 import Users from 'contexts/Users';
 import useStorage from 'hooks/useStorage';
+import emptyMessage from 'styles/emptyMessage.module.scss';
 import { ShirtSize } from 'themes';
 import {
   Command, CommandState, RecentTask, ResourceType, RunState, TaskType,
@@ -133,7 +134,7 @@ const Dashboard: React.FC = () => {
     });
 
   const emptyView = (
-    <div className={css.emptyMessage}>
+    <div className={emptyMessage.base}>
       No recent tasks matching the current filters.
     </div>
   );
