@@ -3,10 +3,9 @@ import typing
 
 import pytest
 import torch
-from ruamel import yaml
 
 import determined as det
-from determined import experimental, workload
+from determined import workload
 from determined_common import check
 from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import pytorch_xor_model
@@ -393,18 +392,6 @@ class TestPyTorchTrial:
             trial_seed=self.trial_seed,
         )
         controller.run()
-
-    def test_multi_lr_schedule_one_batch(self, tmp_path: pathlib.Path) -> None:
-        example_path = "../examples/official/multiple_lr_schedulers_pytorch"
-        yaml_file = "const.yaml"
-
-        with experimental._local_execution_manager(pathlib.Path(example_path)):
-            from multiple_lr_schedulers_pytorch import MNistTrial
-
-            with open(yaml_file) as f:
-                configs = yaml.safe_load(f.read())
-
-            experimental.test_one_batch(trial_class=MNistTrial, config=configs)
 
     def test_grad_clipping(self) -> None:
         training_metrics = {}

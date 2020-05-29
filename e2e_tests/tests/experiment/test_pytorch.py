@@ -115,26 +115,6 @@ def test_pytorch_const_with_amp() -> None:
     exp.run_basic_test_with_temp_config(config, conf.official_examples_path("mnist_pytorch"), 1)
 
 
-@pytest.mark.e2e_gpu  # type: ignore
-def test_pytorch_cifar10_const() -> None:
-    config = conf.load_config(conf.official_examples_path("cifar10_cnn_pytorch/const.yaml"))
-    config = conf.set_max_steps(config, 2)
-
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("cifar10_cnn_pytorch"), 1
-    )
-    trials = exp.experiment_trials(experiment_id)
-
-    nn = (
-        Determined(conf.make_master_url())
-        .get_trial(trials[0]["id"])
-        .select_checkpoint(latest=True)
-        .load()
-    )
-
-    assert isinstance(nn, torch.nn.Module)
-
-
 @pytest.mark.parallel  # type: ignore
 def test_pytorch_cifar10_parallel() -> None:
     config = conf.load_config(conf.official_examples_path("cifar10_cnn_pytorch/const.yaml"))

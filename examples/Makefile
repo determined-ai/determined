@@ -11,5 +11,14 @@ build/%.tgz: official/%/
 	mkdir -p $$(dirname "$@")
 	tar -czf "$@" -C $$(dirname "$<") $$(basename "$<")
 
+test:
+	pytest -vv -s --durations=0 tests
+
+fmt:
+	make -C tests fmt
+
+check:
+	make -C tests check
+
 .PHONY: build
 build: $(EXAMPLES_DIRS)

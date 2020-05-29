@@ -740,6 +740,7 @@ jobs:
       - run: make -C harness check
       - run: make -C deploy check
       - run: make -C e2e_tests check
+      - run: make -C examples check
 
   test-unit-harness:
     docker:
@@ -766,6 +767,19 @@ jobs:
           extra-requirements-file: "harness/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C harness test-tf2
+
+  test-examples:
+    docker:
+      - image: determinedai/cimg-base:stable
+    steps:
+      - checkout
+      - setup-python-venv:
+          determined-common: true
+          determined: true
+          determined-cli: true
+          extra-requirements-file: "examples/tests/requirements.txt"
+          executor: determinedai/cimg-base:stable
+      - run: make -C examples test
 
   test-cli:
     parameters:
@@ -981,6 +995,7 @@ workflows:
       - test-unit-react
       - test-unit-harness
       - test-unit-harness-tf2
+      - test-examples
 
   test-e2e:
     jobs:
