@@ -25,7 +25,8 @@ NavBarMenu.story = {
 };
 
 export const SideBarMenu = (): React.ReactNode => (
-  <NavMenu defaultRouteId={defaultSideBarRoute.id} routes={sidebarRoutes} type={NavMenuType.SideBar} />
+  <NavMenu defaultRouteId={defaultSideBarRoute.id} routes={sidebarRoutes}
+    type={NavMenuType.SideBar} />
 );
 
 export const SideBarMenuIconOnly = (): React.ReactNode => (
