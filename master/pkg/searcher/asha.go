@@ -161,7 +161,7 @@ func (s *asyncHalvingSearch) promoteTrials(
 	if toPromote := rung.promotions(requestID, metric); len(toPromote) > 0 {
 		for _, promotionID := range toPromote {
 			s.trialRungs[promotionID] = rungIndex + 1
-			if ok := s.earlyExitTrials[promotionID]; !ok {
+			if !s.earlyExitTrials[promotionID] {
 				ops = append(ops, trainAndValidate(
 					promotionID, rung.stepsNeeded, s.rungs[rungIndex+1].stepsNeeded)...)
 			} else {
@@ -195,7 +195,7 @@ func (s *asyncHalvingSearch) promoteTrials(
 		if len(rung.metrics) == rung.startTrials {
 			for _, trialMetric := range rung.metrics[rung.promoteTrials:] {
 				s.trialsCompleted++
-				if ok := s.earlyExitTrials[trialMetric.requestID]; !ok {
+				if !s.earlyExitTrials[trialMetric.requestID] {
 					ops = append(ops, NewClose(trialMetric.requestID))
 				}
 			}

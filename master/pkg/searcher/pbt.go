@@ -85,7 +85,7 @@ func (s *pbtSearch) runNewTrials(
 	s.roundsCompleted++
 	if s.roundsCompleted >= s.NumRounds {
 		for requestID := range s.metrics {
-			if ok := s.earlyExitTrials[requestID]; !ok {
+			if !s.earlyExitTrials[requestID] {
 				ops = append(ops, NewClose(requestID))
 			}
 		}
@@ -115,7 +115,7 @@ func (s *pbtSearch) runNewTrials(
 
 	// Close the worst trials.
 	for i := len(trialIDs) - numTruncate; i < len(trialIDs); i++ {
-		if ok := s.earlyExitTrials[trialIDs[i]]; !ok {
+		if !s.earlyExitTrials[trialIDs[i]] {
 			// TODO specify the right kind of ID for ops
 			ops = append(ops, NewClose(trialIDs[i]))
 		}
@@ -123,7 +123,7 @@ func (s *pbtSearch) runNewTrials(
 
 	// Checkpoint and copy the best trials.
 	for _, requestID := range trialIDs[:numTruncate] {
-		if ok := s.earlyExitTrials[requestID]; !ok {
+		if !s.earlyExitTrials[requestID] {
 			checkpoint := NewCheckpoint(
 				requestID,
 				s.StepsPerRound*s.trialRoundsCompleted[requestID],
@@ -146,7 +146,7 @@ func (s *pbtSearch) runNewTrials(
 
 	// Continue all non-closed trials.
 	for _, requestID := range trialIDs[:len(trialIDs)-numTruncate] {
-		if ok := s.earlyExitTrials[requestID]; !ok {
+		if !s.earlyExitTrials[requestID] {
 			lastStep := s.trialRoundsCompleted[requestID] * s.StepsPerRound
 			nextStep := lastStep + s.StepsPerRound
 			ops = append(ops, trainAndValidate(requestID, lastStep, nextStep)...)
