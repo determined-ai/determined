@@ -68,7 +68,7 @@ func newAsyncHalvingSimpleSearch(config model.AsyncHalvingConfig, trials int) Se
 		AsyncHalvingConfig: config,
 		rungs:              rungs,
 		trialRungs:         make(map[RequestID]int),
-		earlyExitTrials:    make(map[RequestID]float64),
+		earlyExitTrials:    make(map[RequestID]bool),
 		expectedWorkloads:  expectedWorkloads,
 	}
 }

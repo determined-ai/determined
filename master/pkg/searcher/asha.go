@@ -18,11 +18,12 @@ type asyncHalvingSearch struct {
 	rungs      []*rung
 	trialRungs map[RequestID]int
 	// earlyExitTrials contains trials that exited early that are still considered in the search.
-	// The value mapped by the RequestID is the value to be used in the search.
-	earlyExitTrials   map[RequestID]float64
+	earlyExitTrials   map[RequestID]bool
 	expectedWorkloads int
 	trialsCompleted   int
 }
+
+const ashaExitedMetricValue = math.MaxFloat64
 
 func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
@@ -65,7 +66,7 @@ func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
 		AsyncHalvingConfig: config,
 		rungs:              rungs,
 		trialRungs:         make(map[RequestID]int),
-		earlyExitTrials:    make(map[RequestID]float64),
+		earlyExitTrials:    make(map[RequestID]bool),
 		expectedWorkloads:  expectedWorkloads,
 	}
 }
@@ -179,7 +180,7 @@ func (s *asyncHalvingSearch) promoteTrials(
 	if toPromote := rung.promotions(requestID, metric); len(toPromote) > 0 {
 		for _, promotionID := range toPromote {
 			s.trialRungs[promotionID] = rungIndex + 1
-			if _, ok := s.earlyExitTrials[promotionID]; !ok {
+			if ok := s.earlyExitTrials[promotionID]; !ok {
 				ops = append(ops, trainAndValidate(
 					promotionID, rung.stepsNeeded, s.rungs[rungIndex+1].stepsNeeded)...)
 			} else {
@@ -201,7 +202,7 @@ func (s *asyncHalvingSearch) promoteTrials(
 				//
 				//   2) We are bounded on the depth of this recursive stack by
 				//   the number of rungs. We default this to max out at 5.
-				_, err := s.promoteTrials(ctx, promotionID, wkld, s.earlyExitTrials[requestID])
+				_, err := s.promoteTrials(ctx, promotionID, wkld, ashaExitedMetricValue)
 				return nil, err
 			}
 		}
@@ -213,7 +214,7 @@ func (s *asyncHalvingSearch) promoteTrials(
 		if len(rung.metrics) == rung.startTrials {
 			for _, trialMetric := range rung.metrics[rung.promoteTrials:] {
 				s.trialsCompleted++
-				if _, ok := s.earlyExitTrials[trialMetric.requestID]; !ok {
+				if ok := s.earlyExitTrials[trialMetric.requestID]; !ok {
 					ops = append(ops, NewClose(trialMetric.requestID))
 				}
 			}
@@ -229,9 +230,8 @@ func (s *asyncHalvingSearch) progress(workloadsCompleted int) float64 {
 func (s *asyncHalvingSearch) trialExitedEarly(
 	ctx context, requestID RequestID, message Workload,
 ) ([]Operation, error) {
-	metric := math.MaxFloat64
-	s.earlyExitTrials[requestID] = metric
-	return s.promoteTrials(ctx, requestID, message, metric)
+	s.earlyExitTrials[requestID] = true
+	return s.promoteTrials(ctx, requestID, message, ashaExitedMetricValue)
 }
 
 func max(initial int, values ...int) int {
