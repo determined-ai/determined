@@ -565,7 +565,7 @@ jobs:
       - run: make -C <<parameters.path>> build
       - run: make -C <<parameters.path>> publish
 
-  publish-try-now-template:
+  upload-try-now-template:
     docker:
       - image: determinedai/cimg-base:stable
     steps:
@@ -573,7 +573,7 @@ jobs:
       - setup-python-venv:
           extras-requires: "awscli"
           executor: determinedai/cimg-base:stable
-      - run: make -C deploy publish-try-now-template
+      - run: make -C deploy upload-try-now-template
 
   test-debian-packaging:
     machine:
@@ -1164,6 +1164,6 @@ workflows:
           context: determined-production
           filters: *release-filters
 
-      - publish-try-now-template:
+      - upload-try-now-template:
           context: determined-production
           filters: *release-filters
