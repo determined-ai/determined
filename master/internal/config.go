@@ -46,6 +46,7 @@ func DefaultConfig() *Config {
 			},
 			HTTP: true,
 		},
+		GRPCPort:          8090,
 		HTTPPort:          8080,
 		HTTPSPort:         8443,
 		CheckpointStorage: c,
@@ -72,6 +73,7 @@ type Config struct {
 	Security              SecurityConfig                    `json:"security"`
 	CheckpointStorage     CheckpointStorageConfig           `json:"checkpoint_storage"`
 	TaskContainerDefaults model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
+	GRPCPort              int                               `json:"grpc_port"`
 	HTTPPort              int                               `json:"http_port"`
 	HTTPSPort             int                               `json:"https_port"`
 	HarnessPath           string                            `json:"harness_path"`

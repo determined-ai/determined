@@ -46,6 +46,7 @@ git clone git@github.com:determined-ai/determined.git
 - Node (>= 12)
 - Yarn (>= 1.22.0)
 - Docker (>= 19.03)
+- Protoc (>= 3.0)
 
 ### Building Determined
 

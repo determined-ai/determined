@@ -2,6 +2,7 @@ package agent
 
 import (
 	"net/http"
+	"sort"
 
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
@@ -9,6 +10,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
+	proto "github.com/determined-ai/determined/master/pkg/proto/apiv1"
 )
 
 // Initialize creates a new global agent actor.
@@ -38,6 +40,30 @@ func (a *agents) Receive(ctx *actor.Context) error {
 			ctx.Respond(errors.Errorf("agent already connected: %s", id))
 			return nil
 		}
+	case *proto.GetAgentsRequest:
+		response := &proto.GetAgentsResponse{}
+		for _, a := range a.summarize(ctx) {
+			if msg.Label != "" && msg.Label != a.Label {
+				continue
+			}
+			response.Agents = append(response.Agents, toProtoAgent(a))
+		}
+		sort.Slice(response.Agents, func(i, j int) bool {
+			switch a1, a2 := response.Agents[i], response.Agents[j]; msg.SortBy {
+			case proto.GetAgentsRequest_SORT_BY_TIME:
+				return a1.RegisteredTime.Seconds < a2.RegisteredTime.Seconds
+			case proto.GetAgentsRequest_SORT_BY_UNSPECIFIED, proto.GetAgentsRequest_SORT_BY_ID:
+				fallthrough
+			default:
+				return a1.Id < a2.Id
+			}
+		})
+		if msg.OrderBy == proto.GetAgentsRequest_ORDER_BY_DESC {
+			for i, j := 0, len(response.Agents)-1; i < j; i, j = i+1, j-1 {
+				response.Agents[i], response.Agents[j] = response.Agents[j], response.Agents[i]
+			}
+		}
+		ctx.Respond(response)
 	case echo.Context:
 		a.handleAPIRequest(ctx, msg)
 	case actor.PreStart, actor.PostStop:
