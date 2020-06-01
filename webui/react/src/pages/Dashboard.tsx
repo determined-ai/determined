@@ -14,7 +14,8 @@ import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
-import { ExperimentsParams, getExperiments } from 'services/api';
+import { getExperimentSummaries } from 'services/api';
+import { ExperimentsParams } from 'services/types';
 import { ShirtSize } from 'themes';
 import {
   Command, CommandState, Experiment, RecentTask, ResourceType, RunState, TaskType,
@@ -59,7 +60,7 @@ const Dashboard: React.FC = () => {
   const shells = Shells.useStateContext();
   const tensorboards = Tensorboards.useStateContext();
   const [ experimentsResponse, requestExperiments ] =
-    useRestApiSimple<ExperimentsParams, Experiment[]>(getExperiments, {});
+    useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
   const storage = useStorage('dashboard/tasks');
   const initFilters = storage.getWithDefault('filters',
     { ...defaultFilters, username: (auth.user || {}).username });
