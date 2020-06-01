@@ -65,13 +65,8 @@ const SignIn: React.FC = () => {
     showSpinner,
   ]);
 
-  /*
-   * Stop the polling upon a dismount of this page.
-   * An empty dependency array is needed to ensure that `stopPolling`
-   * does not get called early.
-   */
-  /* eslint-disable-next-line react-hooks/exhaustive-deps */
-  useEffect(() => stopPolling, []);
+  // Stop the polling upon a dismount of this page.
+  useEffect(() => stopPolling, [ stopPolling ]);
 
   /*
    * Before showing the sign in form, make sure one auth check is done.
