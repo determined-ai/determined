@@ -20,7 +20,7 @@ import (
 
 const jsonPretty = "application/json+pretty"
 
-// StartGRPCServer starts the determined gRPC service and the given port.
+// StartGRPCServer starts the Determined gRPC service and the given port.
 func StartGRPCServer(srv proto.DeterminedServer, port int) error {
 	addr := fmt.Sprintf(":%d", port)
 	logger := logrus.NewEntry(logrus.StandardLogger())

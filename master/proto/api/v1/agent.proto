@@ -7,35 +7,35 @@ import "agent/v1/agent.proto";
 
 // GetAgentsRequest is the request used to fetch information for a set of agents from the cluster.
 message GetAgentsRequest {
-    // SortBy sorts agents by the given field
+    // Sorts agents by the given field
     enum SortBy {
-        // SORT_BY_UNSPECIFIED returns agents sorted by id.
+        // Returns agents sorted by id.
         SORT_BY_UNSPECIFIED = 0;
-        // SORT_BY_UNSPECIFIED returns agents sorted by id.
+        // Returns agents sorted by id.
         SORT_BY_ID = 1;
-        // SORT_BY_UNSPECIFIED returns agents sorted by time.
+        // Returns agents sorted by time.
         SORT_BY_TIME = 2;
     }
-    // OrderBy orders agents in either ascending or descending order.
+    // Order agents in either ascending or descending order.
     enum OrderBy {
-        // ORDER_BY_DESC returns agents in ascending order.
+        // Returns agents in ascending order.
         ORDER_BY_UNSPECIFIED = 0;
-        // ORDER_BY_DESC returns agents in ascending order.
+        // Returns agents in ascending order.
         ORDER_BY_ASC = 1;
-        // ORDER_BY_DESC returns agents in descending order.
+        // Returns agents in descending order.
         ORDER_BY_DESC = 2;
     }
 
-    // label filters agents by their label. If no label is specified or is empty, all agents are
+    // Filter agents by their label. If no label is specified or is empty, all agents are
     // returned.
     string label = 1;
-    // sort_by sorts agents by the given field
+    // Sort agents by the given field
     SortBy sort_by = 2;
-    // order_by orders agents in either ascending or descending order.
+    // Order agents in either ascending or descending order.
     OrderBy order_by = 3;
 }
 // GetAgentsResponse is the response to GetAgentsRequest.
 message GetAgentsResponse {
-    // agents is the list of returned agents of the request.
+    // The list of returned agents.
     repeated agent.v1.Agent agents = 1;
 }

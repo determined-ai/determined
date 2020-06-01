@@ -16,6 +16,6 @@ option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
 
 // Determined is the official v1 of the Determined API.
 service Determined {
-    // GetAgents returns the list of agents.
+    // Returns the list of agents.
     rpc GetAgents(GetAgentsRequest) returns (GetAgentsResponse) { option (google.api.http) = {get: "/api/v1/agents"}; }
 }

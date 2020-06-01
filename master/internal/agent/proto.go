@@ -46,9 +46,26 @@ func toProtoContainer(c container.Container) *proto.Container {
 	return &proto.Container{
 		Parent:      c.Parent.String(),
 		Id:          c.ID.String(),
-		State:       c.State.String(),
+		State:       toProtoContainerState(c.State),
 		Devices:     devices,
 		Recoverable: c.Recoverable,
+	}
+}
+
+func toProtoContainerState(s container.State) proto.Container_State {
+	switch s {
+	case container.Assigned:
+		return proto.Container_STATE_ASSIGNED
+	case container.Pulling:
+		return proto.Container_STATE_PULLING
+	case container.Starting:
+		return proto.Container_STATE_STARTING
+	case container.Running:
+		return proto.Container_STATE_RUNNING
+	case container.Terminated:
+		return proto.Container_STATE_TERMINATED
+	default:
+		return proto.Container_STATE_UNSPECIFIED
 	}
 }
 

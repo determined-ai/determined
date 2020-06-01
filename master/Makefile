@@ -24,8 +24,8 @@ get-deps:
 	@mkdir -p build/proto
 	protoc -I proto $< --go_out=plugins=grpc:build/proto
 
-.PHONY: gen
-gen: $(patsubst %.proto, %.pb.go, $(shell find proto -type f -name '*.proto'))
+.PHONY: proto
+proto: $(patsubst %.proto, %.pb.go, $(shell find proto -type f -name '*.proto'))
 	rm -rf pkg/proto
 	protoc -I proto proto/api/v1/api.proto --grpc-gateway_out=logtostderr=true:build/proto
 	cp -r build/proto/github.com/determined-ai/determined/master/pkg/proto/ ./pkg/proto
@@ -33,14 +33,14 @@ gen: $(patsubst %.proto, %.pb.go, $(shell find proto -type f -name '*.proto'))
 	protoc -I proto proto/api/v1/api.proto --swagger_out=logtostderr=true:static/swagger-spec/
 
 .PHONY: build
-build: gen
+build: proto
 	go build \
 		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION)" \
 		-o build/determined-master \
 		./cmd/determined-master
 
 .PHONY: check
-check: gen
+check: proto
 	buf check lint
 	golangci-lint run
 
@@ -49,7 +49,7 @@ fmt:
 	goimports -l -local github.com/determined-ai -w .
 
 .PHONY: test
-test: gen
+test: proto
 	go test -v -short -coverprofile=coverage.out -covermode count -cover ./...
 
 .PHONY: pre-package

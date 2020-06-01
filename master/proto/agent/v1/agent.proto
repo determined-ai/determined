@@ -7,64 +7,79 @@ import "google/protobuf/timestamp.proto";
 
 // Agent is a pool of resources where containers are run.
 message Agent {
-    // id is the unique id of the agent.
+    // The unique id of the agent.
     string id = 1;
-    // registered_time holds the time when the agent registered with the master.
+    // The time when the agent registered with the master.
     google.protobuf.Timestamp registered_time = 2;
-    // slots is a map of slot id to each slot of this agent.
+    // A map of slot id to each slot of this agent.
     map<string, Slot> slots = 3;
-    // containers is the a map of container id to all containers assigned to this agent.
+    // A map of container id to all containers assigned to this agent.
     map<string, Container> containers = 4;
-    // label is an optional label applied to the agent for scheduling restrictions.
+    // An optional label applied to the agent for scheduling restrictions.
     string label = 5;
 }
 
 // Slot wraps a single device on the agent.
 message Slot {
-    // id is the unqiue id of the slot for a given agent.
+    // The unqiue id of the slot for a given agent.
     string id = 1;
-    // Device is the individual resource this slot wraps.
+    // The individual resource this slot wraps.
     Device device = 2;
-    // enabled notifies if containers can be scheduled on this slot.
+    // Flag notifying if containers can be scheduled on this slot.
     bool enabled = 3;
-    // container is the container that is currently running on this agent. It is nil if there is
+    // Container that is currently running on this agent. It is unset if there is
     // no container currently running on this slot.
     Container container = 4;
 }
 
-// Container is a docker container that is either scheduled to run or is currently running on a
+// Container is a Docker container that is either scheduled to run or is currently running on a
 // set of slots.
 message Container {
-    // parent is the id of the task that is currently managing this container.
+    // The current state of the container.
+    enum State {
+        // The container state is unknown.
+        STATE_UNSPECIFIED = 0;
+        // The container has been assigned to an agent but has not started yet.
+        STATE_ASSIGNED = 1;
+        // The container's base image is being pulled from the Docker registry.
+        STATE_PULLING = 2;
+        // The image has been built and the container is being started, but the service in the container is not ready yet.
+        STATE_STARTING = 3;
+        // The service in the container is able to accept requests.
+        STATE_RUNNING = 4;
+        // The container has completely exited or the container has been aborted prior to getting assigned.
+        STATE_TERMINATED = 5;
+    }
+    // The id of the task that is currently managing this container.
     string parent = 1;
-    // id is the unique id of this instance of a container.
+    // The unique id of this instance of a container.
     string id = 2;
-    // state is the current state that the container is currently in.
-    string state = 3;
-    // devices is a list of devices that is being used by this container.
+    // The current state that the container is currently in.
+    State state = 3;
+    // A list of devices that is being used by this container.
     repeated Device devices = 4;
-    // recoverable denotes if this container can be recovered after an agent failure.
+    // Denotes if this container can be recovered after an agent failure.
     bool recoverable = 5;
 }
 
 // Device represents a single computational device on an agent.
 message Device {
-    // Type is a string holding the type of the Device.
+    // The type of the Device.
     enum Type {
-        // TYPE_UNSPECIFIED represents an unspecified device type.
+        // An unspecified device type.
         TYPE_UNSPECIFIED = 0;
-        // TYPE_CPU represents a CPU device.
+        // A CPU device.
         TYPE_CPU = 1;
-        // TYPE_GPU represents a GPU device.
+        // A GPU device.
         TYPE_GPU = 2;
     }
 
-    // id is the index of the device.
+    // The index of the device.
     int32 id = 1;
-    // brand is the brand name of the device.
+    // The brand name of the device.
     string brand = 2;
-    // uuid is the unique UUID of the device.
+    // The unique UUID of the device.
     string uuid = 3;
-    // type is a string holding the type of the Device.
+    // The type of the Device.
     Type type = 4;
 }
