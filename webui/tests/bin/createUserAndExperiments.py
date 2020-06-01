@@ -60,21 +60,20 @@ create_user(USER_WITH_PASSWORD_USERNAME, USER_WITH_PASSWORD_PASSWORD)
 # Login as non-default user with password
 login_as(USER_WITH_PASSWORD_USERNAME, USER_WITH_PASSWORD_PASSWORD)
 
+
 # Create experiments
 def createExperiment(directory, config_file, count):
-    cmd = " ".join(
-        [
-            "det",
-            "experiment",
-            "create",
-            str(directory.joinpath(config_file)),
-            str(directory),
-        ]
-    )
+    cmd = [
+        "det",
+        "experiment",
+        "create",
+        str(directory.joinpath(config_file)),
+        str(directory),
+    ]
 
-    return subprocess.run(
-        f"seq {count} | xargs -n 1 -P 0 -I[] {cmd}", shell=True, check=True,
-    )
+    procs = [subprocess.Popen(cmd) for _ in range(count)]
+    for p in procs:
+        p.wait()
 
 
 print("creating experiments..")
