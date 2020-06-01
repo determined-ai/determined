@@ -57,6 +57,10 @@ export interface Theme {
   };
 }
 
+/*
+ * When updating colors, update `variables.less` as well.
+ * Currently two sources of truth due to Ant Design.
+ */
 export const lightTheme: Theme = {
   colors: {
     core: {

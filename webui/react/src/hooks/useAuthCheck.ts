@@ -17,8 +17,13 @@ const useAuthCheck = (): (() => void) => {
   useEffect(() => setAuth({ type: Auth.ActionType.ResetCheck }), [ setAuth ]);
 
   useEffect(() => {
-    const authCookie = getCookie('auth');
     const checkAuth = async (cancelToken: CancelToken): Promise<void> => {
+      const authCookie = getCookie('auth');
+      if (!authCookie) {
+        setAuth({ type: Auth.ActionType.UpdateCheck });
+        return;
+      }
+
       try {
         const user = await getCurrentUser({ cancelToken });
         setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, user } });
@@ -32,12 +37,12 @@ const useAuthCheck = (): (() => void) => {
           silent: true,
           type: ErrorType.Auth,
         });
+        setAuth({ type: Auth.ActionType.Reset });
         setAuth({ type: Auth.ActionType.UpdateCheck });
       }
     };
 
-    if (authCookie && source) checkAuth(source.token);
-    else setAuth({ type: Auth.ActionType.UpdateCheck });
+    if (source) checkAuth(source.token);
 
     return source?.cancel;
   }, [ setAuth, source ]);

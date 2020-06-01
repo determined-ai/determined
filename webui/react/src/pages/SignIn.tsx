@@ -11,6 +11,7 @@ import FullPageSpinner from 'contexts/FullPageSpinner';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { routeAll } from 'routes';
+import { defaultAppRoute } from 'routes';
 import { locationToPath } from 'utils/routes';
 
 import css from './SignIn.module.scss';
@@ -19,8 +20,6 @@ interface Queries {
   cli?: boolean;
   redirect?: string;
 }
-
-const DEFAULT_REDIRECT = '/det/dashboard';
 
 const SignIn: React.FC = () => {
   const location = useLocation<{ loginRedirect: Location }>();
@@ -52,7 +51,7 @@ const SignIn: React.FC = () => {
 
       // Reroute the authenticated user to the app.
       const redirect = queries.redirect || locationToPath((location.state || {}).loginRedirect);
-      routeAll(redirect || DEFAULT_REDIRECT);
+      routeAll(redirect || defaultAppRoute.path);
     } else if (auth.checked) {
       setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
     }
