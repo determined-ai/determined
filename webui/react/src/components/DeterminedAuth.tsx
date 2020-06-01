@@ -2,6 +2,7 @@ import { Button, Form, Input } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import Icon from 'components/Icon';
+import Link from 'components/Link';
 import Auth from 'contexts/Auth';
 import FullPageSpinner from 'contexts/FullPageSpinner';
 import handleError, { ErrorType } from 'ErrorHandler';
@@ -85,7 +86,7 @@ const DeterminedAuth: React.FC = () => {
       {loginForm}
       <p className={css.message}>
         Forgot your password, or need to manage users? Check out our&nbsp;
-        <a href="/docs/topic-guides/users.html" rel="noreferrer noopener" target="_blank">docs</a>
+        <Link path={'/docs/topic-guides/users.html'} popout>docs</Link>
       </p>
     </div>
   );

@@ -51,6 +51,7 @@ const NavItem: React.FC<Props> = (props: PropsWithChildren<Props>) => {
 
   if (props.path) return (
     <Link
+      inherit
       path={props.path}
       popout={props.popout}
       onClick={props.onClick}>{navItem}</Link>
