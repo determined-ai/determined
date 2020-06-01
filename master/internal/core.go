@@ -23,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/context"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/scheduler"
@@ -168,6 +169,14 @@ func (m *Master) startServers() error {
 	runServer := func(server *http.Server) {
 		errs <- errors.Wrap(m.echo.StartServer(server), servers[server]+" failed")
 	}
+	go func() {
+		if err := grpc.RegisterHTTPProxy(m.echo, m.config.GRPCPort); err != nil {
+			errs <- err
+			return
+		}
+		errs <- grpc.StartGRPCServer(&apiServer{m: m}, m.config.GRPCPort)
+	}()
+
 	for server := range servers {
 		go runServer(server)
 	}
@@ -433,6 +442,10 @@ func (m *Master) Run() error {
 	for _, dirRoute := range reactDirs {
 		m.echo.Static(dirRoute.route, filepath.Join(reactRoot, dirRoute.path))
 	}
+
+	m.echo.Static("/swagger-ui", filepath.Join(m.config.Root, "static/swagger-ui"))
+	m.echo.Static("/api/v1/api.swagger.json",
+		filepath.Join(m.config.Root, "static/swagger-spec/api/v1/api.swagger.json"))
 
 	m.echo.GET("/config", api.Route(m.getConfig))
 	m.echo.GET("/info", api.Route(m.getInfo))

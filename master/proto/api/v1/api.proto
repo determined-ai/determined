@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package api.v1;
+option go_package = "github.com/determined-ai/determined/master/pkg/proto/apiv1";
+
+import "api/v1/agent.proto";
+import "google/api/annotations.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
+    info: {
+        title: "Determined API"
+        version: "1.0"
+    };
+};
+
+// Determined is the official v1 of the Determined API.
+service Determined {
+    // Returns the list of agents.
+    rpc GetAgents(GetAgentsRequest) returns (GetAgentsResponse) { option (google.api.http) = {get: "/api/v1/agents"}; }
+}

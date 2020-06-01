@@ -3,6 +3,7 @@ project_name: determined-master
 before:
   hooks:
     - make pre-package
+    - make proto
 
 snapshot:
   name_template: "{{ .Tag }}"

@@ -109,9 +109,14 @@ commands:
     steps:
       - run: echo "${DOCKER_PASS}" | docker login --username ${DOCKER_USER} --password-stdin
 
+  install-protoc:
+    steps:
+      - run: curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v3.12.1/protoc-3.12.1-linux-x86_64.zip
+      - run: unzip protoc-3.12.1-linux-x86_64.zip -d $HOME/.local
 
   go-get-deps:
     steps:
+      - install-protoc
       - restore_cache:
           keys:
             - det-go-deps-v1dev6-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}
