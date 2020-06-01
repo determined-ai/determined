@@ -20,14 +20,14 @@ const NavBar: React.FC<Props> = (props: Props) => {
   const menu = (
     <Menu>
       <Menu.Item>
-        <NavItem  path={'/det/logout'}>Sign Out</NavItem>
+        <NavItem path={'/det/logout'}>Sign Out</NavItem>
       </Menu.Item>
     </Menu>
   );
 
   return (
     <nav className={css.base}>
-      <Logo type={LogoTypes.Light} />
+      <Logo type={LogoTypes.OnDarkHorizontal} />
       <div className={css.group}>
         <NavItem
           icon="cluster"

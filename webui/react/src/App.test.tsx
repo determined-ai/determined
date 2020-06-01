@@ -14,6 +14,23 @@ import App from './App';
 sinon.stub(window.location, 'assign');
 sinon.stub(window.location, 'replace');
 
+/*
+ * Mocking window.matchMedia used by FormItem from Ant Design
+ */
+Object.defineProperty(window, 'matchMedia', {
+  value: jest.fn().mockImplementation(query => ({
+    addEventListener: jest.fn(),
+    addListener: jest.fn(), // deprecated
+    dispatchEvent: jest.fn(),
+    matches: false,
+    media: query,
+    onchange: null,
+    removeEventListener: jest.fn(),
+    removeListener: jest.fn(), // deprecated
+  })),
+  writable: true,
+});
+
 describe('App', () => {
   it('renders app', () => {
     const { container } = render(<MemoryRouter><App /></MemoryRouter>);

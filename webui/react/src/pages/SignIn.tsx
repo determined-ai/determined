@@ -1,0 +1,84 @@
+import { notification } from 'antd';
+import queryString from 'query-string';
+import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+
+import AuthToken from 'components/AuthToken';
+import DeterminedAuth from 'components/DeterminedAuth';
+import Logo, { LogoTypes } from 'components/Logo';
+import Auth from 'contexts/Auth';
+import FullPageSpinner from 'contexts/FullPageSpinner';
+import useAuthCheck from 'hooks/useAuthCheck';
+import usePolling from 'hooks/usePolling';
+import { routeAll } from 'routes';
+import { defaultAppRoute } from 'routes';
+import { locationToPath } from 'utils/routes';
+
+import css from './SignIn.module.scss';
+
+interface Queries {
+  cli?: boolean;
+  redirect?: string;
+}
+
+const SignIn: React.FC = () => {
+  const location = useLocation<{ loginRedirect: Location }>();
+  const auth = Auth.useStateContext();
+  const showSpinner = FullPageSpinner.useStateContext();
+  const setShowSpinner = FullPageSpinner.useActionContext();
+  const queries: Queries = queryString.parse(location.search);
+
+  /*
+   * Check every so often to see if the user is authenticated.
+   * For example, the user can authenticate in a different session,
+   * and this will pick up that auth and automatically redirect them into
+   * their previous app.
+   */
+  const checkAuth = useAuthCheck();
+  const stopPolling = usePolling(checkAuth);
+
+  /*
+   * Check for when `isAuthenticated` becomes true and redirect
+   * the user to the most recent requested page.
+   */
+  useEffect(() => {
+    if (auth.isAuthenticated) {
+      // Stop the spinner, prepping for user redirect.
+      setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
+
+      // Show auth token via notification if requested via query parameters.
+      if (queries.cli) notification.open({ description: <AuthToken />, duration: 0, message: '' });
+
+      // Reroute the authenticated user to the app.
+      const redirect = queries.redirect || locationToPath((location.state || {}).loginRedirect);
+      routeAll(redirect || defaultAppRoute.path);
+    } else if (auth.checked) {
+      setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
+    }
+  }, [
+    auth.checked,
+    auth.isAuthenticated,
+    location.state,
+    queries,
+    setShowSpinner,
+    showSpinner,
+  ]);
+
+  // Stop the polling upon a dismount of this page.
+  useEffect(() => stopPolling, [ stopPolling ]);
+
+  /*
+   * Before showing the sign in form, make sure one auth check is done.
+   * This will prevent the form from showing for a split second when
+   * accessing a page from the browser when the user is already verified.
+   */
+  return auth.checked ?
+    <div className={css.base}>
+      <div className={css.content}>
+        <Logo type={LogoTypes.OnLightVertical} />
+        <DeterminedAuth />
+      </div>
+    </div> : null;
+};
+
+export default SignIn;

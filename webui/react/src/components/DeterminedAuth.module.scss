@@ -1,26 +1,28 @@
 .base {
-  form {
-    width: 100%;
-  }
   button {
     background-color: var(--theme-colors-core-primary);
     border-color: var(--theme-colors-core-primary);
     width: 100%;
   }
+  button:focus,
   button:hover {
     background-color: lighten(#f77b21, 10%);
     border-color: lighten(#f77b21, 10%);
+  }
+  button:active {
+    background-color: darken(#f77b21, 10%);
+    border-color: darken(#f77b21, 10%);
   }
   .content > a {
     font-size: 1.2rem;
     padding: 0 1rem;
     text-align: center;
   }
-  form .errorMessage {
+  .errorMessage {
     color: var(--theme-colors-states-failed);
   }
   .message {
-    font-size: var(--theme-sizes-font-medium);
+    font-size: var(--theme-sizes-font-small);
     text-align: center;
   }
 }

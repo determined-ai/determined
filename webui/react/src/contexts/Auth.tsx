@@ -1,22 +1,33 @@
-import { CancelToken } from 'axios';
-import { Dispatch } from 'react';
-
 import { generateContext } from 'contexts';
-import { getCurrentUser, isAuthFailure } from 'services/api';
 import { Auth } from 'types';
 
 enum ActionType {
   Reset,
+  ResetCheck,
   Set,
+  UpdateCheck,
 }
 
-type State = Auth;
+/*
+ * `checkCount` allows the `useAuthCheck` hook to keep tabs of how many times
+ * is has been called in sign in. It is kept here to avoid a situation where
+ * `isAuthenticated` is off sync with `checkCount`, which causes the Sign In
+ * form to flicker briefly before being redirected to an authenticated page.
+ */
+type State = Auth & {
+  checked: boolean;
+};
 
 type Action =
-  | { type: ActionType.Reset}
+  | { type: ActionType.Reset }
+  | { type: ActionType.ResetCheck }
   | { type: ActionType.Set; value: Auth }
+  | { type: ActionType.UpdateCheck }
 
-const defaultAuth: Auth = { isAuthenticated: false };
+const defaultAuth: State = {
+  checked: false,
+  isAuthenticated: false,
+};
 
 const clearAuthCookie = (): void => {
   document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
@@ -26,33 +37,22 @@ const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case ActionType.Reset:
       clearAuthCookie();
-      return defaultAuth;
+      return { ...defaultAuth };
+    case ActionType.ResetCheck:
+      return { ...state, checked: false };
     case ActionType.Set:
-      return action.value;
+      return { ...action.value, checked: true };
+    case ActionType.UpdateCheck:
+      return { ...state, checked: true };
     default:
       return state;
   }
 };
 
-const contextProvider = generateContext<Auth, Action>({
+const contextProvider = generateContext<State, Action>({
   initialState: defaultAuth,
   name: 'Auth',
   reducer,
 });
-
-export const updateAuth =
-  async (setAuth: Dispatch<Action>, cancelToken?: CancelToken): Promise<boolean> => {
-    try{
-      const user = await getCurrentUser({ cancelToken });
-      setAuth({ type: ActionType.Set, value: { isAuthenticated: true, user } });
-      return true;
-    } catch (e) {
-      // could use a retry mechanism on non-credential related failures
-      if (isAuthFailure(e)) {
-        setAuth({ type: ActionType.Reset });
-      }
-      return false;
-    }
-  };
 
 export default { ...contextProvider, ActionType };

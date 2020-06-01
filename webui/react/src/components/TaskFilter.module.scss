@@ -17,10 +17,14 @@
     cursor: pointer;
     display: flex;
     height: var(--theme-sizes-layout-huge);
+    outline: 0;
     padding: 0 var(--theme-sizes-layout-small);
     transition: 0.2s;
 
     &:hover { border-color: var(--theme-colors-states-active); }
+  }
+  .typeButton:focus {
+    box-shadow: var(--theme-outline);
   }
   .typeButton.active {
     border-color: var(--theme-colors-states-active);

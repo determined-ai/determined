@@ -9,14 +9,9 @@
     align-items: center;
     display: flex;
     flex-direction: column;
-    max-width: 30rem;
-  }
-  .ssoButton {
-    width: 100%;
-  }
-  .logo {
-    height: 6rem;
-    margin-bottom: 3rem;
-    width: 25rem;
+    max-width: 22rem;
+
+    & > * { margin-bottom: var(--theme-sizes-layout-jumbo); }
+    & > *:last-child { margin-bottom: 0; }
   }
 }

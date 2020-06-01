@@ -1,8 +1,10 @@
 import { RouteProps } from 'react-router';
 
-import Authentication from 'pages/Authentication';
 import Dashboard from 'pages/Dashboard';
+import SignIn from 'pages/SignIn';
+import SignOut from 'pages/SignOut';
 import history from 'routes/history';
+import { clone } from 'utils/data';
 import { ensureAbsolutePath, isFullPath, parseUrl } from 'utils/routes';
 
 /*
@@ -34,14 +36,14 @@ const dashboardRoute =
 export const appRoutes: RouteConfigItem[] = [
   dashboardRoute,
   {
-    component: Authentication,
+    component: SignIn,
     id: 'login',
     needAuth: false,
     path: '/det/login',
     title: 'Login',
   },
   {
-    component: Authentication,
+    component: SignOut,
     id: 'logout',
     needAuth: false,
     path: '/det/logout',
@@ -125,6 +127,6 @@ export const routeAll = (path: string): void => {
   if (!isReactRoute(path)) {
     routeToExternalUrl(path);
   } else {
-    history.push(path);
+    history.push(path, { loginRedirect: clone(window.location) });
   }
 };

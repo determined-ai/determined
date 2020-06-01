@@ -1,10 +1,11 @@
 import { Button, Form, Input } from 'antd';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import Icon from 'components/Icon';
-import Auth, { updateAuth } from 'contexts/Auth';
+import Auth from 'contexts/Auth';
+import FullPageSpinner from 'contexts/FullPageSpinner';
 import handleError, { ErrorType } from 'ErrorHandler';
-import { isLoginFailure, login } from 'services/api';
+import { getCurrentUser, isLoginFailure, login } from 'services/api';
 import { Credentials } from 'types';
 
 import css from './DeterminedAuth.module.scss';
@@ -14,25 +15,23 @@ interface FromValues {
   username?: string;
 }
 
-interface Props {
-  setIsLoading: (isLoading: boolean) => void;
-}
-
-const DeterminedAuth: React.FC<Props> = ({ setIsLoading }: Props) => {
+const DeterminedAuth: React.FC = () => {
   const setAuth = Auth.useActionContext();
-  const [ badCredentials, setBadCredentials ] = useState(false);
+  const setShowSpinner = FullPageSpinner.useActionContext();
+  const [ isBadCredentials, setIsBadCredentials ] = useState(false);
   const [ canSubmit, setCanSubmit ] = useState(false);
 
-  const onFinish = async (creds: FromValues): Promise<void> => {
-    setIsLoading(true);
+  const onFinish = useCallback(async (creds: FromValues): Promise<void> => {
+    setShowSpinner({ opaque: false, type: FullPageSpinner.ActionType.Show });
     setCanSubmit(false);
     try {
       await login(creds as Credentials);
-      updateAuth(setAuth);
+      const user = await getCurrentUser({});
+      setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, user } });
     } catch (e) {
-      setIsLoading(false);
-      setBadCredentials(isLoginFailure(e));
-      const actionMsg = badCredentials ? 'check your username and password.' : 'retry.';
+      const actionMsg = isBadCredentials ? 'check your username and password.' : 'retry.';
+      setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
+      setIsBadCredentials(isLoginFailure(e));
       handleError({
         error: e,
         isUserTriggered: true,
@@ -40,23 +39,23 @@ const DeterminedAuth: React.FC<Props> = ({ setIsLoading }: Props) => {
         publicMessage: `Failed to login. Please ${actionMsg}`,
         publicSubject: 'Login failed',
         silent: true,
-        type: badCredentials ? ErrorType.Input : ErrorType.Server,
+        type: isBadCredentials ? ErrorType.Input : ErrorType.Server,
       });
     } finally {
       setCanSubmit(true);
     }
-  };
+  }, [ isBadCredentials, setAuth, setShowSpinner ]);
 
-  const onValuesChange = (changes: FromValues, values: FromValues): void => {
+  const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {
     const hasUsername = !!values.username;
-    setBadCredentials(false);
+    setIsBadCredentials(false);
     setCanSubmit(hasUsername);
-  };
+  }, []);
 
   const loginForm = (
     <Form
+      className={css.form}
       name="login"
-      size="large"
       onFinish={onFinish}
       onValuesChange={onValuesChange}>
       <Form.Item
@@ -67,21 +66,16 @@ const DeterminedAuth: React.FC<Props> = ({ setIsLoading }: Props) => {
             required: true,
           },
         ]}>
-        <Input autoFocus placeholder="Username" prefix={<Icon name="user-small" />} />
+        <Input autoFocus placeholder="username" prefix={<Icon name="user-small" size="small" />} />
       </Form.Item>
-
       <Form.Item name="password">
-        <Input.Password placeholder="Password" prefix={<Icon name="lock" />} />
+        <Input.Password placeholder="password" prefix={<Icon name="lock" size="small" />} />
       </Form.Item>
-
-      {badCredentials && <p className={[ css.errorMessage, css.message ].join(' ')}>
-            Incorrect username or password.
+      {isBadCredentials && <p className={[ css.errorMessage, css.message ].join(' ')}>
+        Incorrect username or password.
       </p>}
-
       <Form.Item>
-        <Button disabled={!canSubmit} htmlType="submit" type="primary">
-          Sign In
-        </Button>
+        <Button disabled={!canSubmit} htmlType="submit" type="primary">Sign In</Button>
       </Form.Item>
     </Form>
   );
@@ -90,11 +84,8 @@ const DeterminedAuth: React.FC<Props> = ({ setIsLoading }: Props) => {
     <div className={css.base}>
       {loginForm}
       <p className={css.message}>
-          Forgot your password, or need to manage users? Check out our
-        <a href="/docs/topic-guides/users.html"
-          rel="noreferrer noopener" target="_blank">
-            &nbsp;docs
-        </a>
+        Forgot your password, or need to manage users? Check out our&nbsp;
+        <a href="/docs/topic-guides/users.html" rel="noreferrer noopener" target="_blank">docs</a>
       </p>
     </div>
   );

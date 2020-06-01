@@ -32,6 +32,7 @@ export interface Theme {
   font: {
     family: string;
   };
+  outline: string;
   shadow: string;
   sizes: {
     border: {
@@ -56,6 +57,10 @@ export interface Theme {
   };
 }
 
+/*
+ * When updating colors, update `variables.less` as well.
+ * Currently two sources of truth due to Ant Design.
+ */
 export const lightTheme: Theme = {
   colors: {
     core: {
@@ -95,6 +100,7 @@ export const lightTheme: Theme = {
   font: {
     family: 'Objektiv Mk3',
   },
+  outline: '0 0 0.4rem 0 #009bde',
   shadow: '0.2rem 0.2rem 0.4rem 0 #cccccc',
   sizes: {
     border: {

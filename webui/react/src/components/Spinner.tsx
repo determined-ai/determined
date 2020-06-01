@@ -6,14 +6,14 @@ import css from './Spinner.module.scss';
 
 interface Props {
   fullPage?: boolean;
+  opaque?: boolean;
 }
 
-const defaultProps: Props = { fullPage: false };
-
-const Spinner: React.FC<Props> = ({ fullPage }: Props) => {
+const Spinner: React.FC<Props> = (props: Props) => {
   const classes = [ css.base ];
 
-  if (fullPage) classes.push(css.fullPage);
+  if (props.fullPage) classes.push(css.fullPage);
+  if (props.opaque) classes.push(css.opaque);
 
   return (
     <div className={classes.join(' ')}>
@@ -23,7 +23,5 @@ const Spinner: React.FC<Props> = ({ fullPage }: Props) => {
     </div>
   );
 };
-
-Spinner.defaultProps = defaultProps;
 
 export default Spinner;

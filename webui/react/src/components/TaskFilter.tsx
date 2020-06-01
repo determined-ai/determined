@@ -71,6 +71,7 @@ const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Pro
       <Tooltip key={info.label} placement="top" title={info.label}>
         <button aria-label={info.label}
           className={typeButtonClasses.join(' ')}
+          tabIndex={0}
           onClick={handleTypeClick(info.type)}>
           <Icon name={info.type.toLocaleLowerCase()} />
         </button>

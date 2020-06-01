@@ -24,19 +24,19 @@ const usePolling =
       }, delay || DEFAULT_DELAY);
     }, [ pollingFn, delay ]);
 
-    const stopPolling = (): void => {
+    const stopPolling = useCallback((): void => {
       if (timerId.current) {
         clearTimeout(timerId.current);
         timerId.current = undefined;
       }
-    };
+    }, []);
 
     useEffect(() => {
       stopPolling();
       pollingRoutine();
       return stopPolling;
     /* eslint-disable-next-line react-hooks/exhaustive-deps */
-    }, [ pollingRoutine, ...(triggers || []) ]);
+    }, [ pollingRoutine, stopPolling, ...(triggers || []) ]);
 
     return stopPolling;
   };

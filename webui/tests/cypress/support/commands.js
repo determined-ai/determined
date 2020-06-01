@@ -30,7 +30,8 @@ Cypress.Commands.add('checkLoggedIn', username => {
 
 Cypress.Commands.add('checkLoggedOut', () => {
   cy.visit('/');
-  cy.get('#avatar').should('not.exist');
+  cy.location('pathname').should('eq', '/det/login');
+  cy.getCookie('auth').should('eq', null);
 });
 
 // TODO use Cypress.env to share (and bring in) some of the contants used.

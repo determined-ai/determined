@@ -4,6 +4,7 @@ import { Redirect, Route, Switch } from 'react-router-dom';
 import NavBar from 'components/NavBar';
 import Router from 'components/Router';
 import SideBar from 'components/SideBar';
+import Spinner from 'components/Spinner';
 import Compose from 'Compose';
 import ActiveExperiments from 'contexts/ActiveExperiments';
 import Agents from 'contexts/Agents';
@@ -11,6 +12,7 @@ import AppContexts from 'contexts/AppContexts';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
+import FullPageSpinner from 'contexts/FullPageSpinner';
 import Info from 'contexts/Info';
 import Users from 'contexts/Users';
 import useRestApi from 'hooks/useRestApi';
@@ -29,6 +31,8 @@ const AppView: React.FC = () => {
   const cluster = ClusterOverview.useStateContext();
   const info = Info.useStateContext();
   const setInfo = Info.useActionContext();
+  const showSpinner = FullPageSpinner.useStateContext();
+  const setShowSpinner = FullPageSpinner.useActionContext();
   const username = user ? user.username : undefined;
   const [ infoResponse, requestInfo ] =
     useRestApi<DeterminedInfo>(ioDeterminedInfo, { mappers: jsonToDeterminedInfo });
@@ -52,6 +56,10 @@ const AppView: React.FC = () => {
     setInfo({ type: Info.ActionType.Set, value: infoResponse.data });
   }, [ infoResponse, setInfo ]);
 
+  useEffect(() => {
+    setShowSpinner({ opaque: true, type: FullPageSpinner.ActionType.Show });
+  }, [ setShowSpinner ]);
+
   return (
     <div className={css.base}>
       {isAuthenticated && <NavBar username={username} />}
@@ -65,6 +73,7 @@ const AppView: React.FC = () => {
           <Router routes={appRoutes} />
         </Switch>
       </div>
+      {showSpinner.isShowing && <Spinner fullPage opaque={showSpinner.isOpaque} />}
     </div>
   );
 };
@@ -82,6 +91,7 @@ const App: React.FC = () => {
       Notebooks.Provider,
       Shells.Provider,
       Tensorboards.Provider,
+      FullPageSpinner.Provider,
     ]}>
       <AppView />
     </Compose>

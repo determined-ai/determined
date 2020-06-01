@@ -12,4 +12,4 @@ export default {
   title: 'Logo',
 };
 
-export const Default = (): React.ReactNode => <Logo type={LogoTypes.Light} />;
+export const Default = (): React.ReactNode => <Logo type={LogoTypes.OnLightHorizontal} />;

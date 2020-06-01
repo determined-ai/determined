@@ -1,14 +1,18 @@
 import React from 'react';
 
-import logoLight from 'assets/logo-on-dark-horizontal.svg';
-import logoDark from 'assets/logo-on-light-horizontal.svg';
+import logoOnDarkHorizontal from 'assets/logo-on-dark-horizontal.svg';
+import logoOnDarkVertical from 'assets/logo-on-dark-vertical.svg';
+import logoOnLightHorizontal from 'assets/logo-on-light-horizontal.svg';
+import logoOnLightVertical from 'assets/logo-on-light-vertical.svg';
 import { PropsWithClassName } from 'types';
 
 import css from './Logo.module.scss';
 
 export enum LogoTypes {
-  Light,
-  Dark,
+  OnDarkHorizontal = 'on-dark-horizontal',
+  OnDarkVertical = 'on-dark-vertical',
+  OnLightHorizontal = 'on-light-horizontal',
+  OnLightVertical = 'on-light-vertical',
 }
 
 interface Props {
@@ -16,13 +20,19 @@ interface Props {
 }
 
 const logos: Record<LogoTypes, string> = {
-  [LogoTypes.Light]: logoLight,
-  [LogoTypes.Dark]: logoDark,
+  [LogoTypes.OnDarkHorizontal]: logoOnDarkHorizontal,
+  [LogoTypes.OnDarkVertical]: logoOnDarkVertical,
+  [LogoTypes.OnLightHorizontal]: logoOnLightHorizontal,
+  [LogoTypes.OnLightVertical]: logoOnLightVertical,
 };
 
 const Logo: React.FC<PropsWithClassName<Props>> = (props: PropsWithClassName<Props>) => {
-  return <img alt="Determined AI Logo" className={`${css.base} ${props.className}`}
-    src={logos[props.type]} />;
+  return (
+    <img
+      alt="Determined AI Logo"
+      className={`${css.base} ${css[props.type]}`}
+      src={logos[props.type]} />
+  );
 };
 
 export default Logo;
