@@ -9,7 +9,7 @@ import "agent/v1/agent.proto";
 message GetAgentsRequest {
     // Sorts agents by the given field
     enum SortBy {
-        // Returns agents sorted by id.
+        // Returns agents in an unsorted list.
         SORT_BY_UNSPECIFIED = 0;
         // Returns agents sorted by id.
         SORT_BY_ID = 1;
@@ -18,7 +18,7 @@ message GetAgentsRequest {
     }
     // Order agents in either ascending or descending order.
     enum OrderBy {
-        // Returns agents in ascending order.
+        // Returns agents in no specific order.
         ORDER_BY_UNSPECIFIED = 0;
         // Returns agents in ascending order.
         ORDER_BY_ASC = 1;
