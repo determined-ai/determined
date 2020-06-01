@@ -7,6 +7,7 @@ import SideBar from 'components/SideBar';
 import Compose from 'Compose';
 import ActiveExperiments from 'contexts/ActiveExperiments';
 import Agents from 'contexts/Agents';
+import AppContexts from 'contexts/AppContexts';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
@@ -54,6 +55,7 @@ const AppView: React.FC = () => {
   return (
     <div className={css.base}>
       {isAuthenticated && <NavBar username={username} />}
+      {isAuthenticated && <AppContexts />}
       <div className={css.body}>
         {isAuthenticated && <SideBar />}
         <Switch>

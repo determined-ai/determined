@@ -1,7 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import { Switch } from 'react-router-dom';
 
-import Router from 'components/Router';
 import ActiveExperiments from 'contexts/ActiveExperiments';
 import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
@@ -10,7 +8,6 @@ import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
 import useRestApi, { useRestApiSimple } from 'hooks/useRestApi';
 import { ioAgents, ioGenericCommands, ioUsers } from 'ioTypes';
-import { detRoutes } from 'routes';
 import { getExperimentSummaries } from 'services/api';
 import {
   jsonToAgents, jsonToCommands, jsonToNotebooks,
@@ -19,8 +16,6 @@ import {
 import { ExperimentsParams } from 'services/types';
 import { Agent, Command, Experiment, RunState, User } from 'types';
 
-import css from './Determined.module.scss';
-
 const activeStates = [
   RunState.Active,
   RunState.StoppingCanceled,
@@ -28,7 +23,7 @@ const activeStates = [
   RunState.StoppingError,
 ];
 
-const Determined: React.FC = () => {
+const AppContexts: React.FC = () => {
   const setUsers = Users.useActionContext();
   const setAgents = Agents.useActionContext();
   const setCommands = Commands.useActionContext();
@@ -97,13 +92,7 @@ const Determined: React.FC = () => {
     setTensorboards({ type: Commands.ActionType.Set, value: tensorboardsResponse });
   }, [ tensorboardsResponse, setTensorboards ]);
 
-  return (
-    <div className={css.base}>
-      <Switch>
-        <Router routes={detRoutes} />
-      </Switch>
-    </div>
-  );
+  return <React.Fragment />;
 };
 
-export default Determined;
+export default AppContexts;

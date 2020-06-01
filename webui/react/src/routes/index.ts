@@ -2,7 +2,6 @@ import { RouteProps } from 'react-router';
 
 import Authentication from 'pages/Authentication';
 import Dashboard from 'pages/Dashboard';
-import Determined from 'pages/Determined';
 import history from 'routes/history';
 import { ensureAbsolutePath, isFullPath, parseUrl } from 'utils/routes';
 
@@ -22,14 +21,18 @@ export interface RouteConfigItem extends RouteProps {
   needAuth?: boolean;
 }
 
-export const appRoutes: RouteConfigItem[] = [
+const dashboardRoute =
   {
-    component: Determined,
-    id: 'det',
+    component: Dashboard,
+    icon: 'user',
+    id: 'dashboard',
     needAuth: true,
     path: '/det/dashboard',
-    title: 'Determined',
-  },
+    title: 'Dashboard',
+  };
+
+export const appRoutes: RouteConfigItem[] = [
+  dashboardRoute,
   {
     component: Authentication,
     id: 'login',
@@ -47,15 +50,8 @@ export const appRoutes: RouteConfigItem[] = [
 ];
 export const defaultAppRoute = appRoutes[0];
 
-export const detRoutes: RouteConfigItem[] = [
-  {
-    component: Dashboard,
-    icon: 'user',
-    id: 'dashboard',
-    needAuth: true,
-    path: '/det/dashboard',
-    title: 'Dashboard',
-  },
+export const sidebarRoutes: RouteConfigItem[] = [
+  dashboardRoute,
   {
     icon: 'experiment',
     id: 'experiments',
@@ -93,7 +89,7 @@ export const detRoutes: RouteConfigItem[] = [
     title: 'Commands',
   },
 ];
-export const defaultDetRouteId = detRoutes[0].id;
+export const defaultSideBarRoute = sidebarRoutes[0];
 
 // Is the path going to be served from the same host?
 const isDetRoute = (url: string): boolean => {
