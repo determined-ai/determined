@@ -53,11 +53,11 @@ const SignIn: React.FC = () => {
       // Reroute the authenticated user to the app.
       const redirect = queries.redirect || locationToPath((location.state || {}).loginRedirect);
       routeAll(redirect || DEFAULT_REDIRECT);
-    } else if (auth.checkCount > 0) {
+    } else if (auth.checked) {
       setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
     }
   }, [
-    auth.checkCount,
+    auth.checked,
     auth.isAuthenticated,
     location.state,
     queries,
@@ -73,7 +73,7 @@ const SignIn: React.FC = () => {
    * This will prevent the form from showing for a split second when
    * accessing a page from the browser when the user is already verified.
    */
-  return auth.checkCount > 0 ?
+  return auth.checked ?
     <div className={css.base}>
       <div className={css.content}>
         <Logo type={LogoTypes.OnLightVertical} />

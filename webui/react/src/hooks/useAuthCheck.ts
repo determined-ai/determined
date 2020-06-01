@@ -14,7 +14,7 @@ const useAuthCheck = (): (() => void) => {
     setSource(axios.CancelToken.source());
   }, []);
 
-  useEffect(() => setAuth({ type: Auth.ActionType.ResetCheckCount }), [ setAuth ]);
+  useEffect(() => setAuth({ type: Auth.ActionType.ResetCheck }), [ setAuth ]);
 
   useEffect(() => {
     const authCookie = getCookie('auth');
@@ -32,12 +32,12 @@ const useAuthCheck = (): (() => void) => {
           silent: true,
           type: ErrorType.Auth,
         });
-        setAuth({ type: Auth.ActionType.UpdateCheckCount });
+        setAuth({ type: Auth.ActionType.UpdateCheck });
       }
     };
 
     if (authCookie && source) checkAuth(source.token);
-    else setAuth({ type: Auth.ActionType.UpdateCheckCount });
+    else setAuth({ type: Auth.ActionType.UpdateCheck });
 
     return source?.cancel;
   }, [ setAuth, source ]);

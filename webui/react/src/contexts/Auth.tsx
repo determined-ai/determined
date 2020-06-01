@@ -3,9 +3,9 @@ import { Auth } from 'types';
 
 enum ActionType {
   Reset,
-  ResetCheckCount,
+  ResetCheck,
   Set,
-  UpdateCheckCount,
+  UpdateCheck,
 }
 
 /*
@@ -15,17 +15,17 @@ enum ActionType {
  * form to flicker briefly before being redirected to an authenticated page.
  */
 type State = Auth & {
-  checkCount: number;
+  checked: boolean;
 };
 
 type Action =
   | { type: ActionType.Reset }
-  | { type: ActionType.ResetCheckCount }
+  | { type: ActionType.ResetCheck }
   | { type: ActionType.Set; value: Auth }
-  | { type: ActionType.UpdateCheckCount }
+  | { type: ActionType.UpdateCheck }
 
 const defaultAuth: State = {
-  checkCount: 0,
+  checked: false,
   isAuthenticated: false,
 };
 
@@ -38,12 +38,12 @@ const reducer = (state: State, action: Action): State => {
     case ActionType.Reset:
       clearAuthCookie();
       return { ...defaultAuth };
-    case ActionType.ResetCheckCount:
-      return { ...state, checkCount: 0 };
+    case ActionType.ResetCheck:
+      return { ...state, checked: false };
     case ActionType.Set:
-      return { ...action.value, checkCount: state.checkCount + 1 };
-    case ActionType.UpdateCheckCount:
-      return { ...state, checkCount: state.checkCount + 1 };
+      return { ...action.value, checked: true };
+    case ActionType.UpdateCheck:
+      return { ...state, checked: true };
     default:
       return state;
   }
