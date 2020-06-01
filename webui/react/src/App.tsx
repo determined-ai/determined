@@ -55,7 +55,7 @@ const AppView: React.FC = () => {
   return (
     <div className={css.base}>
       {isAuthenticated && <NavBar username={username} />}
-      <AppContexts />
+      {isAuthenticated && <AppContexts />}
       <div className={css.body}>
         {isAuthenticated && <SideBar />}
         <Switch>

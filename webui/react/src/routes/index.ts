@@ -48,7 +48,7 @@ export const appRoutes: RouteConfigItem[] = [
     title: 'Logout',
   },
 ];
-export const defaultAppRoute = dashboardRoute;
+export const defaultAppRoute = appRoutes[0];
 
 export const sidebarRoutes: RouteConfigItem[] = [
   dashboardRoute,

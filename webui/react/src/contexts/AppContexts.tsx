@@ -92,10 +92,7 @@ const AppContexts: React.FC = () => {
     setTensorboards({ type: Commands.ActionType.Set, value: tensorboardsResponse });
   }, [ tensorboardsResponse, setTensorboards ]);
 
-  return (
-    <>
-    </>
-  );
+  return <React.Fragment />;
 };
 
 export default AppContexts;
