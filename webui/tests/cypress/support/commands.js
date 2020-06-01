@@ -48,7 +48,7 @@ Cypress.Commands.add('login', credentials => {
   cy.getCookie('auth')
     .should('exist')
     .should('have.property', 'value');
-  // cy.checkLoggedIn(credentials.username);
+  cy.checkLoggedIn(credentials.username);
 });
 
 Cypress.Commands.add('logout', () => {
@@ -60,5 +60,5 @@ Cypress.Commands.add('logout', () => {
     .then(() => {
       return cy.clearCookie('auth');
     });
-  // cy.checkLoggedOut();
+  cy.checkLoggedOut();
 });
