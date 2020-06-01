@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Auth from 'contexts/Auth';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { getCurrentUser } from 'services/api';
+import { getCookie } from 'utils/browser';
 
 const useAuthCheck = (): (() => void) => {
   const setAuth = Auth.useActionContext();
@@ -16,6 +17,7 @@ const useAuthCheck = (): (() => void) => {
   useEffect(() => setAuth({ type: Auth.ActionType.ResetCheckCount }), [ setAuth ]);
 
   useEffect(() => {
+    const authCookie = getCookie('auth');
     const checkAuth = async (cancelToken: CancelToken): Promise<void> => {
       try {
         const user = await getCurrentUser({ cancelToken });
@@ -34,7 +36,8 @@ const useAuthCheck = (): (() => void) => {
       }
     };
 
-    if (source) checkAuth(source.token);
+    if (authCookie && source) checkAuth(source.token);
+    else setAuth({ type: Auth.ActionType.UpdateCheckCount });
 
     return source?.cancel;
   }, [ setAuth, source ]);
