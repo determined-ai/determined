@@ -18,7 +18,7 @@ const Route: React.FC<RouteConfigItem> = ({ component, ...props }: RouteConfigIt
       {...props}
       render={(location): ReactNode => <Redirect to={{
         pathname: '/det/login',
-        state: { from: clone(location.location) },
+        state: { loginRedirect: clone(location.location) },
       }} />}
     />;
   }

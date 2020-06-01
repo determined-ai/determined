@@ -127,6 +127,6 @@ export const routeAll = (path: string): void => {
   if (!isReactRoute(path)) {
     routeToExternalUrl(path);
   } else {
-    history.push(path, { from: clone(window.location) });
+    history.push(path, { loginRedirect: clone(window.location) });
   }
 };

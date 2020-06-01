@@ -23,7 +23,7 @@ interface Queries {
 const DEFAULT_REDIRECT = '/det/dashboard';
 
 const SignIn: React.FC = () => {
-  const location = useLocation<{ from: Location }>();
+  const location = useLocation<{ loginRedirect: Location }>();
   const auth = Auth.useStateContext();
   const showSpinner = FullPageSpinner.useStateContext();
   const setShowSpinner = FullPageSpinner.useActionContext();
@@ -51,7 +51,7 @@ const SignIn: React.FC = () => {
       if (queries.cli) notification.open({ description: <AuthToken />, duration: 0, message: '' });
 
       // Reroute the authenticated user to the app.
-      const redirect = locationToPath((location.state || {}).from);
+      const redirect = queries.redirect || locationToPath((location.state || {}).loginRedirect);
       routeAll(redirect || DEFAULT_REDIRECT);
     } else if (auth.checkCount > 0) {
       setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
