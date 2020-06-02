@@ -35,7 +35,7 @@ func TestAggressiveMode(t *testing.T) {
 func TestAdaptiveSearcherReproducibility(t *testing.T) {
 	conf := model.AdaptiveConfig{
 		Metric: defaultMetric, SmallerIsBetter: true,
-		TargetTrialSteps: 64, StepBudget: 1024, Divisor: 4, TrainStragglers: true,
+		TargetTrialSteps: 64, MaxTrials: 128, Divisor: 4,
 		Mode: model.AggressiveMode, MaxRungs: 3,
 	}
 	gen := func() SearchMethod { return newAdaptiveSearch(conf) }
@@ -49,14 +49,16 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.1, 32, []int{8, 32}, nil),
 				newConstantPredefinedTrial(0.2, 8, []int{8}, nil),
-				newConstantPredefinedTrial(0.3, 32, []int{32}, nil),
+				newConstantPredefinedTrial(0.3, 8, []int{8}, nil),
+				newConstantPredefinedTrial(0.4, 8, []int{8}, nil),
+				newConstantPredefinedTrial(0.5, 32, []int{32}, nil),
 			},
 			config: model.SearcherConfig{
 				AdaptiveConfig: &model.AdaptiveConfig{
 					Metric:           "error",
 					SmallerIsBetter:  true,
 					TargetTrialSteps: 32,
-					StepBudget:       64,
+					MaxTrials:        5,
 					Mode:             model.StandardMode,
 					MaxRungs:         2,
 					Divisor:          4,
@@ -68,14 +70,16 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.1, 32, []int{8, 32}, nil),
 				newEarlyExitPredefinedTrial(0.2, 8, nil, nil),
-				newConstantPredefinedTrial(0.3, 32, []int{32}, nil),
+				newConstantPredefinedTrial(0.3, 8, []int{8}, nil),
+				newConstantPredefinedTrial(0.4, 8, []int{8}, nil),
+				newConstantPredefinedTrial(0.5, 32, []int{32}, nil),
 			},
 			config: model.SearcherConfig{
 				AdaptiveConfig: &model.AdaptiveConfig{
 					Metric:           "error",
 					SmallerIsBetter:  true,
 					TargetTrialSteps: 32,
-					StepBudget:       64,
+					MaxTrials:        5,
 					Mode:             model.StandardMode,
 					MaxRungs:         2,
 					Divisor:          4,
@@ -85,7 +89,9 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 		{
 			name: "smaller is not better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(0.3, 32, []int{8, 32}, nil),
+				newConstantPredefinedTrial(0.5, 32, []int{8, 32}, nil),
+				newConstantPredefinedTrial(0.4, 8, []int{8}, nil),
+				newConstantPredefinedTrial(0.3, 8, []int{8}, nil),
 				newConstantPredefinedTrial(0.2, 8, []int{8}, nil),
 				newConstantPredefinedTrial(0.1, 32, []int{32}, nil),
 			},
@@ -94,7 +100,7 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 					Metric:           "error",
 					SmallerIsBetter:  false,
 					TargetTrialSteps: 32,
-					StepBudget:       64,
+					MaxTrials:        5,
 					Mode:             model.StandardMode,
 					MaxRungs:         2,
 					Divisor:          4,
@@ -104,8 +110,10 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 		{
 			name: "early exit -- smaller is not better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(0.3, 32, []int{8, 32}, nil),
-				newEarlyExitPredefinedTrial(0.2, 8, nil, nil),
+				newConstantPredefinedTrial(0.5, 32, []int{8, 32}, nil),
+				newEarlyExitPredefinedTrial(0.4, 8, nil, nil),
+				newConstantPredefinedTrial(0.3, 8, []int{8}, nil),
+				newConstantPredefinedTrial(0.2, 8, []int{8}, nil),
 				newConstantPredefinedTrial(0.1, 32, []int{32}, nil),
 			},
 			config: model.SearcherConfig{
@@ -113,7 +121,7 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 					Metric:           "error",
 					SmallerIsBetter:  false,
 					TargetTrialSteps: 32,
-					StepBudget:       64,
+					MaxTrials:        5,
 					Mode:             model.StandardMode,
 					MaxRungs:         2,
 					Divisor:          4,

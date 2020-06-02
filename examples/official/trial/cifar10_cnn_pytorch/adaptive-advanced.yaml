@@ -29,6 +29,6 @@ searcher:
   metric: validation_error
   mode: aggressive
   target_trial_steps: 800
-  step_budget: 4800
+  max_trials: 1000
 entrypoint: model_def:CIFARTrial
 min_validation_period: 10
