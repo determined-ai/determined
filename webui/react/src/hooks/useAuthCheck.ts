@@ -14,13 +14,13 @@ const useAuthCheck = (): (() => void) => {
     setSource(axios.CancelToken.source());
   }, []);
 
-  useEffect(() => setAuth({ type: Auth.ActionType.ResetCheck }), [ setAuth ]);
+  useEffect(() => setAuth({ type: Auth.ActionType.ResetChecked }), [ setAuth ]);
 
   useEffect(() => {
     const checkAuth = async (cancelToken: CancelToken): Promise<void> => {
       const authCookie = getCookie('auth');
       if (!authCookie) {
-        setAuth({ type: Auth.ActionType.UpdateCheck });
+        setAuth({ type: Auth.ActionType.MarkChecked });
         return;
       }
 
@@ -38,7 +38,7 @@ const useAuthCheck = (): (() => void) => {
           type: ErrorType.Auth,
         });
         setAuth({ type: Auth.ActionType.Reset });
-        setAuth({ type: Auth.ActionType.UpdateCheck });
+        setAuth({ type: Auth.ActionType.MarkChecked });
       }
     };
 
