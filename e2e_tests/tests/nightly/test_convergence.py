@@ -162,6 +162,7 @@ def test_iris_tf_keras() -> None:
 @pytest.mark.nightly  # type: ignore
 def test_fashion_mnist_tf_keras() -> None:
     config = conf.load_config(conf.official_examples_path("fashion_mnist_tf_keras/const.yaml"))
+    config = conf.set_random_seed(config, 1591110586)
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("fashion_mnist_tf_keras"), 1
     )
