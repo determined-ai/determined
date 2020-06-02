@@ -16,6 +16,21 @@ option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
 
 // Determined is the official v1 of the Determined API.
 service Determined {
-    // Returns the list of agents.
+    // Get a set of agents from the cluster
     rpc GetAgents(GetAgentsRequest) returns (GetAgentsResponse) { option (google.api.http) = {get: "/api/v1/agents"}; }
+    // Get the requested agent.
+    rpc GetAgent(GetAgentRequest) returns (GetAgentResponse) { option (google.api.http) = {get: "/api/v1/agents/{agent_id}"}; }
+    // Get the set of slots for the agent with the given id.
+    rpc GetSlots(GetSlotsRequest) returns (GetSlotsResponse) { option (google.api.http) = {get: "/api/v1/agents/{agent_id}/slots"}; }
+    // Get the requested slot for the agent with the given id.
+    rpc GetSlot(GetSlotRequest) returns (GetSlotResponse) { option (google.api.http) = {get: "/api/v1/agents/{agent_id}/slots/{slot_id}"}; }
+
+    // Enable the agent.
+    rpc EnableAgent(EnableAgentRequest) returns (EnableAgentResponse) { option (google.api.http) = {post: "/api/v1/agents/{agent_id}/enable"}; }
+    // Disable the agent.
+    rpc DisableAgent(DisableAgentRequest) returns (DisableAgentResponse) { option (google.api.http) = {post: "/api/v1/agents/{agent_id}/disable"}; }
+    // Enable the slot.
+    rpc EnableSlot(EnableSlotRequest) returns (EnableSlotResponse) { option (google.api.http) = {post: "/api/v1/agents/{agent_id}/slots/{slot_id}/enable"}; }
+    // Disable the slot.
+    rpc DisableSlot(DisableSlotRequest) returns (DisableSlotResponse) { option (google.api.http) = {post: "/api/v1/agents/{agent_id}/slots/{slot_id}/disable"}; }
 }

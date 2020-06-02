@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
+	proto "github.com/determined-ai/determined/master/pkg/proto/apiv1"
 )
 
 type slot struct {
@@ -68,6 +69,16 @@ func (s *slot) Receive(ctx *actor.Context) error {
 				ctx.Tell(s.cluster, scheduler.FreeDevice{DeviceID: s.deviceID(ctx)})
 			}
 		}
+	case *proto.GetSlotRequest:
+		ctx.Respond(&proto.GetSlotResponse{Slot: toProtoSlot(s.summarize(ctx))})
+	case *proto.EnableSlotRequest:
+		s.enabled.userEnabled = true
+		s.patch(ctx)
+		ctx.Respond(&proto.EnableSlotResponse{Slot: toProtoSlot(s.summarize(ctx))})
+	case *proto.DisableSlotRequest:
+		s.enabled.userEnabled = false
+		s.patch(ctx)
+		ctx.Respond(&proto.DisableSlotResponse{Slot: toProtoSlot(s.summarize(ctx))})
 	case echo.Context:
 		s.handleAPIRequest(ctx, msg)
 	case actor.PostStop:

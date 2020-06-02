@@ -5,7 +5,7 @@ option go_package = "github.com/determined-ai/determined/master/pkg/proto/apiv1"
 
 import "agent/v1/agent.proto";
 
-// GetAgentsRequest is the request used to fetch information for a set of agents from the cluster.
+// Get a set of agents from the cluster
 message GetAgentsRequest {
     // Sorts agents by the given field
     enum SortBy {
@@ -34,8 +34,91 @@ message GetAgentsRequest {
     // Order agents in either ascending or descending order.
     OrderBy order_by = 3;
 }
-// GetAgentsResponse is the response to GetAgentsRequest.
+// The response to GetAgentsRequest.
 message GetAgentsResponse {
     // The list of returned agents.
     repeated agent.v1.Agent agents = 1;
+}
+
+// Get the requested agent.
+message GetAgentRequest {
+    // The id of the agent.
+    string agent_id = 1;
+}
+// The response to GetAgentRequest.
+message GetAgentResponse {
+    // The requested agent.
+    agent.v1.Agent agent = 1;
+}
+
+// Get the set of slots for the agent with the given id.
+message GetSlotsRequest {
+    // The id of the agent.
+    string agent_id = 1;
+}
+// The response to GetSlotsRequest.
+message GetSlotsResponse {
+    // The requested slots.
+    repeated agent.v1.Slot slots = 1;
+}
+
+// Get the requested slot for the agent with the given id.
+message GetSlotRequest {
+    // The id of the agent.
+    string agent_id = 1;
+    // The id of the slot.
+    string slot_id = 2;
+}
+// The response to GetSlotRequest.
+message GetSlotResponse {
+    // The requested slot.
+    agent.v1.Slot slot = 1;
+}
+
+// Enable the agent.
+message EnableAgentRequest {
+    // The id of the agent.
+    string agent_id = 1;
+}
+// The response to EnableAgentRequest.
+message EnableAgentResponse {
+    // The requested agent.
+    agent.v1.Agent agent = 1;
+}
+
+// Disable the agent.
+message DisableAgentRequest {
+    // The id of the agent.
+    string agent_id = 1;
+}
+// The response to DisableAgentRequest.
+message DisableAgentResponse {
+    // The requested agent.
+    agent.v1.Agent agent = 1;
+}
+
+// Enable the slot.
+message EnableSlotRequest {
+    // The id of the agent.
+    string agent_id = 1;
+    // The id of the slot.
+    string slot_id = 2;
+}
+// The response to EnableSlotRequest.
+message EnableSlotResponse {
+    // The requested slot.
+    agent.v1.Slot slot = 1;
+}
+
+// Disable the slot.
+message DisableSlotRequest {
+    // The id of the agent.
+    string agent_id = 1;
+    // The id of the slot.
+    string slot_id = 2;
+}
+// The response to DisableSlotRequest.
+message DisableSlotResponse {
+    // The requested slot.
+    agent.v1.Slot slot = 1;
 }
