@@ -29,7 +29,7 @@ FROM
                       c.end_time,
                       c.uuid,
                       c.resources,
-                      c.labels
+                      c.metadata
                FROM checkpoints c
                WHERE c.trial_id = t.id
                  AND c.step_id = s.id ) r3) AS CHECKPOINT,

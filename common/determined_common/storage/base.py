@@ -10,31 +10,31 @@ from determined_common.check import check_gt, check_not_none, check_true, check_
 
 class StorageMetadata:
     def __init__(
-        self, storage_id: str, resources: Dict[str, int], labels: Optional[Dict[str, str]] = None
+        self, storage_id: str, resources: Dict[str, int], metadata: Optional[Dict[str, str]] = None
     ) -> None:
         check_gt(len(storage_id), 0, "Invalid storage ID")
-        if labels is None:
-            labels = {}
+        if metadata is None:
+            metadata = {}
         self.storage_id = storage_id
         self.resources = resources
-        self.labels = labels
+        self.metadata = metadata
 
     def __json__(self) -> Dict[str, Any]:
-        return {"uuid": self.storage_id, "resources": self.resources, "labels": self.labels}
+        return {"uuid": self.storage_id, "resources": self.resources, "metadata": self.metadata}
 
     def __str__(self) -> str:
-        return "<storage {}, labels {}>".format(self.storage_id, self.labels)
+        return "<storage {}, metadata {}>".format(self.storage_id, self.metadata)
 
     def __repr__(self) -> str:
-        return "<storage {}, labels {}, resources {}>".format(
-            self.storage_id, self.labels, self.resources
+        return "<storage {}, metadata {}, resources {}>".format(
+            self.storage_id, self.metadata, self.resources
         )
 
     @staticmethod
     def from_json(record: Dict[str, Any]) -> "StorageMetadata":
         check_not_none(record["uuid"], "Storage ID is undefined")
         check_not_none(record["resources"], "Resources are undefined")
-        return StorageMetadata(record["uuid"], record["resources"], record.get("labels"))
+        return StorageMetadata(record["uuid"], record["resources"], record.get("metadata"))
 
 
 class StorageManager:

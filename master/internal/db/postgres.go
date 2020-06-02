@@ -233,7 +233,7 @@ FROM (
                        (SELECT row_to_json(bc)
                         FROM (
                             SELECT c.id, c.uuid, c.trial_id, c.step_id, c.state,
-                                   c.start_time, c.end_time, c.resources, c.labels,
+                                   c.start_time, c.end_time, c.resources, c.metadata,
                                    (v.metrics->'validation_metrics'
                                              ->>const.metric_name)::float8 AS validation_metric
                             FROM checkpoints c LEFT JOIN validations v
@@ -354,7 +354,7 @@ FROM (
                       END) AS metrics,
                      (SELECT row_to_json(c)
                       FROM (
-                          SELECT c.end_time, c.id, c.labels, c.resources, c.start_time, c.state,
+                          SELECT c.end_time, c.id, c.metadata, c.resources, c.start_time, c.state,
                                  c.step_id, c.trial_id, c.uuid
                           FROM checkpoints c
                           WHERE c.trial_id = t.id AND c.step_id = s.id
@@ -404,7 +404,7 @@ FROM (
                 -- would like to do here with the "steps" column, so do this subquery.
                 SELECT * FROM (
                     SELECT c.id, c.trial_id, c.step_id, c.state, c.start_time, c.end_time, c.uuid,
-                           c.resources, c.labels,
+                           c.resources, c.metadata,
                            (SELECT row_to_json(s)
                             FROM (
                                 SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
@@ -503,7 +503,7 @@ FROM (
                      SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
                      (SELECT row_to_json(c)
                       FROM (
-                          SELECT c.end_time, c.id, c.labels, c.resources, c.start_time, c.state,
+                          SELECT c.end_time, c.id, c.metadata, c.resources, c.start_time, c.state,
                                  c.step_id, c.trial_id, c.uuid
                           FROM checkpoints c
                           WHERE c.trial_id = t.id AND c.step_id = s.id
@@ -991,7 +991,7 @@ WITH const AS (
                ) AS trial_order_rank
         FROM (
             SELECT c.id, c.trial_id, c.step_id, c.state, c.start_time, c.end_time, c.uuid,
-                   c.resources, c.labels,
+                   c.resources, c.metadata,
                    (SELECT row_to_json(s)
                     FROM (
                         SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
@@ -1201,7 +1201,7 @@ FROM (
                        (SELECT row_to_json(r5)
                         FROM (
                             SELECT c.id, c.trial_id, c.step_id, c.state, c.start_time,
-                                   c.end_time, c.uuid, c.resources, c.labels,
+                                   c.end_time, c.uuid, c.resources, c.metadata,
                                    (v.metrics->'validation_metrics'
                                              ->>const.metric_name)::float8 AS validation_metric
                             FROM checkpoints c LEFT JOIN validations v
@@ -1525,7 +1525,7 @@ RETURNING id`, checkpoint)
 func (db *PgDB) CheckpointByStep(trialID, stepID int) (*model.Checkpoint, error) {
 	var checkpoint model.Checkpoint
 	if err := db.query(`
-SELECT id, trial_id, step_id, state, start_time, end_time, uuid, resources, labels
+SELECT id, trial_id, step_id, state, start_time, end_time, uuid, resources, metadata
 FROM checkpoints
 WHERE trial_id = $1
 AND step_id = $2`, &checkpoint, trialID, stepID); errors.Cause(err) == ErrNotFound {
@@ -1541,7 +1541,7 @@ AND step_id = $2`, &checkpoint, trialID, stepID); errors.Cause(err) == ErrNotFou
 func (db *PgDB) CheckpointByUUID(id uuid.UUID) (*model.Checkpoint, error) {
 	var checkpoint model.Checkpoint
 	if err := db.query(`
-SELECT id, trial_id, step_id, state, start_time, end_time, uuid, resources, labels
+SELECT id, trial_id, step_id, state, start_time, end_time, uuid, resources, metadata
 FROM checkpoints
 WHERE uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound {
 		return nil, nil
@@ -1556,7 +1556,7 @@ WHERE uuid = $1`, &checkpoint, id.String()); errors.Cause(err) == ErrNotFound {
 func (db *PgDB) LatestCheckpointForTrial(trialID int) (*model.Checkpoint, error) {
 	var checkpoint model.Checkpoint
 	if err := db.query(`
-SELECT id, trial_id, step_id, state, start_time, end_time, uuid, resources, labels
+SELECT id, trial_id, step_id, state, start_time, end_time, uuid, resources, metadata
 FROM checkpoints
 WHERE trial_id = $1 AND state = 'COMPLETED'
 ORDER BY step_id DESC
@@ -1576,9 +1576,9 @@ func (db *PgDB) UpdateCheckpoint(
 	newState model.State,
 	uuid string,
 	resources model.JSONObj,
-	labels model.JSONObj,
+	metadata model.JSONObj,
 ) error {
-	if len(newState) == 0 && len(uuid) == 0 && len(resources) == 0 && len(labels) == 0 {
+	if len(newState) == 0 && len(uuid) == 0 && len(resources) == 0 && len(metadata) == 0 {
 		return nil
 	}
 
@@ -1622,13 +1622,16 @@ func (db *PgDB) UpdateCheckpoint(
 		checkpoint.Resources = resources
 		toUpdate = append(toUpdate, "resources")
 	}
-	if len(labels) != 0 {
-		if len(checkpoint.Labels) != 0 {
-			return errors.Errorf("checkpoint (%v, %v) already has labels",
-				trialID, stepID)
+	if len(metadata) != 0 {
+		if len(checkpoint.Metadata) == 0 {
+			checkpoint.Metadata = model.JSONObj{}
 		}
-		checkpoint.Labels = labels
-		toUpdate = append(toUpdate, "labels")
+
+		for k, v := range metadata {
+			checkpoint.Metadata[k] = v
+		}
+
+		toUpdate = append(toUpdate, "metadata")
 	}
 	err = db.namedExecOne(fmt.Sprintf(`
 UPDATE checkpoints
