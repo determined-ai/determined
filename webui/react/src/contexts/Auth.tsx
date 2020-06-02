@@ -19,10 +19,10 @@ type State = Auth & {
 };
 
 type Action =
-| { type: ActionType.MarkChecked }
-| { type: ActionType.Reset }
-| { type: ActionType.ResetChecked }
-| { type: ActionType.Set; value: Auth }
+  | { type: ActionType.MarkChecked }
+  | { type: ActionType.Reset }
+  | { type: ActionType.ResetChecked }
+  | { type: ActionType.Set; value: Auth }
 
 const defaultAuth: State = {
   checked: false,
