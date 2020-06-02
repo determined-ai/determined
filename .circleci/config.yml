@@ -684,6 +684,15 @@ jobs:
       - react-get-deps
       - run: make -C webui/react test
 
+  build-storybook:
+    docker:
+      - image: cimg/node:12.16
+    steps:
+      - checkout
+      - react-get-deps
+      - run: make -C webui/react build-storybook
+      - store_artifacts:
+          path: webui/react/build-storybook
 
 
   lint-go:
