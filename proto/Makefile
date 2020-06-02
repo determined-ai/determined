@@ -1,3 +1,5 @@
+export GO111MODULE := on
+
 .PHONY: clean
 clean:
 	rm -rf build
