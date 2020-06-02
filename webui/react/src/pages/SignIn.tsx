@@ -35,7 +35,7 @@ const SignIn: React.FC = () => {
    * their previous app.
    */
   const checkAuth = useAuthCheck();
-  const stopPolling = usePolling(checkAuth);
+  const stopPolling = usePolling(checkAuth, { delay: 1000 });
 
   /*
    * Check for when `isAuthenticated` becomes true and redirect
