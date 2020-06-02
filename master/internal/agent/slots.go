@@ -37,6 +37,10 @@ func (s *slots) Receive(ctx *actor.Context) error {
 		}
 	case aproto.StartContainer:
 		s.sendToSlots(ctx, msg.Container, msg)
+	case patchSlot:
+		for _, child := range ctx.Children() {
+			ctx.Tell(child, msg)
+		}
 	case aproto.ContainerStateChanged:
 		s.sendToSlots(ctx, msg.Container, msg)
 	case echo.Context:

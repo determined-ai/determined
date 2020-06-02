@@ -2,6 +2,7 @@ package agent
 
 import (
 	"net/http"
+	"sort"
 	"strings"
 	"syscall"
 	"time"
@@ -17,6 +18,8 @@ import (
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/proto/agentv1"
+	proto "github.com/determined-ai/determined/master/pkg/proto/apiv1"
 )
 
 type agent struct {
@@ -69,6 +72,21 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		a.containers[msg.Container.ID] = msg.Task
 	case aproto.MasterMessage:
 		a.handleIncomingWSMessage(ctx, msg)
+	case *proto.GetAgentRequest:
+		ctx.Respond(&proto.GetAgentResponse{Agent: toProtoAgent(a.summarize(ctx))})
+	case *proto.GetSlotsRequest:
+		var slots []*agentv1.Slot
+		for _, s := range a.summarize(ctx).Slots {
+			slots = append(slots, toProtoSlot(s))
+		}
+		sort.Slice(slots, func(i, j int) bool { return slots[i].Id < slots[j].Id })
+		ctx.Respond(&proto.GetSlotsResponse{Slots: slots})
+	case *proto.EnableAgentRequest:
+		ctx.Tell(a.slots, patchSlot{Enabled: true})
+		ctx.Respond(&proto.EnableAgentResponse{Agent: toProtoAgent(a.summarize(ctx))})
+	case *proto.DisableAgentRequest:
+		ctx.Tell(a.slots, patchSlot{Enabled: false})
+		ctx.Respond(&proto.DisableAgentResponse{Agent: toProtoAgent(a.summarize(ctx))})
 	case echo.Context:
 		a.handleAPIRequest(ctx, msg)
 	case actor.ChildFailed:
