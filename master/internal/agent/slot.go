@@ -14,7 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
-	proto "github.com/determined-ai/determined/master/pkg/proto/apiv1"
+	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 type slot struct {

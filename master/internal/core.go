@@ -445,7 +445,7 @@ func (m *Master) Run() error {
 
 	m.echo.Static("/swagger-ui", filepath.Join(m.config.Root, "static/swagger-ui"))
 	m.echo.Static("/api/v1/api.swagger.json",
-		filepath.Join(m.config.Root, "static/swagger-spec/api/v1/api.swagger.json"))
+		filepath.Join(m.config.Root, "swagger/api/v1/api.swagger.json"))
 
 	m.echo.GET("/config", api.Route(m.getConfig))
 	m.echo.GET("/info", api.Route(m.getInfo))

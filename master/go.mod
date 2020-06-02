@@ -6,8 +6,9 @@ require (
 	github.com/Microsoft/go-winio v0.4.9 // indirect
 	github.com/aws/aws-sdk-go v1.25.11
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
-	github.com/bufbuild/buf v0.12.1 // indirect
+	github.com/bufbuild/buf v0.16.0
 	github.com/containerd/containerd v1.3.2 // indirect
+	github.com/determined-ai/determined/proto v0.0.0-00010101000000-000000000000
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0
@@ -24,7 +25,7 @@ require (
 	github.com/gorilla/mux v1.7.4 // indirect
 	github.com/gorilla/websocket v1.4.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
-	github.com/grpc-ecosystem/grpc-gateway v1.9.2
+	github.com/grpc-ecosystem/grpc-gateway v1.14.6
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5
 	github.com/labstack/echo v3.3.5+incompatible
 	github.com/labstack/gommon v0.0.0-20180613044413-d6898124de91
@@ -43,15 +44,16 @@ require (
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
 	golang.org/x/net v0.0.0-20200506145744-7e3656a0809f
-	golang.org/x/tools v0.0.0-20200502202811-ed308ab3e770
+	golang.org/x/sys v0.0.0-20200509044756-6aff5f38e54f // indirect
+	golang.org/x/tools v0.0.0-20200522201501-cb1345f3a375
 	google.golang.org/api v0.9.0
-	google.golang.org/genproto v0.0.0-20200511104702-f5ebc3bea380
-	google.golang.org/grpc v1.28.1
-	google.golang.org/protobuf v1.23.0
+	google.golang.org/grpc v1.29.1
 	gopkg.in/guregu/null.v3 v3.4.0
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 	gotest.tools v2.1.0+incompatible
 )
+
+replace github.com/determined-ai/determined/proto => ../proto
 
 replace github.com/docker/docker v1.13.1 => github.com/docker/engine v1.4.2-0.20191113042239-ea84732a7725
 

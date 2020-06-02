@@ -5,8 +5,6 @@ export GO111MODULE := on
 clean:
 	rm -rf dist
 	rm -rf build
-	rm -rf pkg/proto
-	rm -rf static/swagger-spec/
 
 .PHONY: get-deps
 get-deps:
@@ -14,34 +12,16 @@ get-deps:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint
 	go install golang.org/x/tools/cmd/goimports
 	go install github.com/goreleaser/goreleaser
-	go install github.com/bufbuild/buf/cmd/buf
-	go install github.com/golang/protobuf/protoc-gen-go
-	go install google.golang.org/grpc
-	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
-	go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-swagger
-
-%.pb.go: %.proto
-	@mkdir -p build/proto
-	protoc -I proto $< --go_out=plugins=grpc:build/proto
-
-.PHONY: proto
-proto: $(patsubst %.proto, %.pb.go, $(shell find proto -type f -name '*.proto'))
-	rm -rf pkg/proto
-	protoc -I proto proto/api/v1/api.proto --grpc-gateway_out=logtostderr=true:build/proto
-	cp -r build/proto/github.com/determined-ai/determined/master/pkg/proto/ ./pkg/proto
-	@mkdir -p static/swagger-spec/
-	protoc -I proto proto/api/v1/api.proto --swagger_out=logtostderr=true:static/swagger-spec/
 
 .PHONY: build
-build: proto
+build:
 	go build \
 		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION)" \
 		-o build/determined-master \
 		./cmd/determined-master
 
 .PHONY: check
-check: proto
-	buf check lint
+check:
 	golangci-lint run
 
 .PHONY: fmt
@@ -49,7 +29,7 @@ fmt:
 	goimports -l -local github.com/determined-ai -w .
 
 .PHONY: test
-test: proto
+test:
 	go test -v -short -coverprofile=coverage.out -covermode count -cover ./...
 
 .PHONY: pre-package
@@ -59,6 +39,7 @@ pre-package:
 	mkdir -p build/webui/elm
 	mkdir -p build/webui/react
 	mkdir -p build/wheels/
+	cp -r ../proto/build/swagger build/swagger
 	cp -r ../docs/site/html/* build/webui/docs
 	cp -r ../webui/elm/public build/webui/elm
 	cp -r ../webui/react/build/* build/webui/react
