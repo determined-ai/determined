@@ -1,3 +1,4 @@
+import { pathToRegexp } from 'path-to-regexp';
 import { RouteProps } from 'react-router';
 
 import Dashboard from 'pages/Dashboard';
@@ -119,8 +120,14 @@ const isDetRoute = (url: string): boolean => {
 
 const isReactRoute = (url: string): boolean => {
   if (!isDetRoute(url)) return false;
+
+  // Check to see if the path matches any of the defined app routes.
   const pathname = parseUrl(url).pathname;
-  return !!appRoutes.find(route => pathname.startsWith(route.path));
+  return !!appRoutes
+    .filter(route => route.path !== '*')
+    .find(route => {
+      return route.exact ? pathname === route.path : !!pathToRegexp(route.path).exec(pathname);
+    });
 };
 
 // to support running the SPA off of a separate port from the cluster and have the links to Elm
