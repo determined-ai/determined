@@ -34,12 +34,24 @@ func TestRandomTournamentSearcherReproducibility(t *testing.T) {
 func TestTournamentSearchMethod(t *testing.T) {
 	// Run both of the tests from adaptive_test.go side by side.
 	expectedTrials := []predefinedTrial{
+		// Adaptive 1 trials
 		newConstantPredefinedTrial(0.1, 32, []int{8, 32}, nil),
 		newConstantPredefinedTrial(0.2, 8, []int{8}, nil),
-		newConstantPredefinedTrial(0.3, 32, []int{32}, nil),
+		newConstantPredefinedTrial(0.3, 8, []int{8}, nil),
+		newConstantPredefinedTrial(0.4, 8, []int{8}, nil),
+		newConstantPredefinedTrial(0.5, 32, []int{32}, nil),
 
-		newConstantPredefinedTrial(0.3, 32, []int{8, 32}, nil),
-		newConstantPredefinedTrial(0.2, 8, []int{8}, nil),
+		// Adaptive 2 trials
+		newConstantPredefinedTrial(0.6, 32, []int{8, 32}, nil),
+		newConstantPredefinedTrial(0.5, 8, []int{8}, nil),
+		newConstantPredefinedTrial(0.4, 8, []int{8}, nil),
+		newConstantPredefinedTrial(0.3, 8, []int{8}, nil),
+		newConstantPredefinedTrial(0.2, 32, []int{32}, nil),
+
+		// Top off adaptive 1 trials
+		newConstantPredefinedTrial(0.6, 32, []int{32}, nil),
+
+		// Top off adaptive 2 trials
 		newConstantPredefinedTrial(0.1, 32, []int{32}, nil),
 	}
 
@@ -48,7 +60,7 @@ func TestTournamentSearchMethod(t *testing.T) {
 			Metric:           "error",
 			SmallerIsBetter:  true,
 			TargetTrialSteps: 32,
-			StepBudget:       64,
+			MaxTrials:        6,
 			Mode:             model.StandardMode,
 			MaxRungs:         2,
 			Divisor:          4,
@@ -61,7 +73,7 @@ func TestTournamentSearchMethod(t *testing.T) {
 			Metric:           "error",
 			SmallerIsBetter:  false,
 			TargetTrialSteps: 32,
-			StepBudget:       64,
+			MaxTrials:        6,
 			Mode:             model.StandardMode,
 			MaxRungs:         2,
 			Divisor:          4,

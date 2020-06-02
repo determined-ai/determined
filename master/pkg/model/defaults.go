@@ -47,12 +47,10 @@ func DefaultExperimentConfig() ExperimentConfig {
 			AsyncHalvingConfig: &AsyncHalvingConfig{
 				SmallerIsBetter: true,
 				Divisor:         4,
-				TrainStragglers: true,
 			},
 			AdaptiveConfig: &AdaptiveConfig{
 				SmallerIsBetter: true,
 				Divisor:         4,
-				TrainStragglers: true,
 				Mode:            StandardMode,
 				MaxRungs:        5,
 			},

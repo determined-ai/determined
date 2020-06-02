@@ -42,5 +42,5 @@ searcher:
   mode: aggressive
   metric: val_categorical_error
   target_trial_steps: 800
-  step_budget: 4800
+  max_trials: 1000
 entrypoint: model_def:CIFARTrial

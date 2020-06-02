@@ -1,16 +1,16 @@
 package searcher
 
 import (
+	"fmt"
 	"math"
 	"sort"
-
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// asyncHalvingSearch implements a search using the asynchronous successive halving algorithm
-// (ASHA). Technically, this is closer to SHA than ASHA as the promotions are synchronous.
+// AsyncHalvingSearch implements a search using the asynchronous successive halving algorithm
+// (ASHA). The experiment will run until the target number of trials have been completed
+// in the bottom rung and no further promotions can be made to higher rungs.
 type asyncHalvingSearch struct {
 	defaultSearchMethod
 	model.AsyncHalvingConfig
@@ -18,47 +18,26 @@ type asyncHalvingSearch struct {
 	rungs      []*rung
 	trialRungs map[RequestID]int
 	// earlyExitTrials contains trials that exited early that are still considered in the search.
-	earlyExitTrials   map[RequestID]bool
-	expectedWorkloads int
-	trialsCompleted   int
+	earlyExitTrials     map[RequestID]bool
+	totalStepsCompleted int
+	maxTrials           int
+	trialsCompleted     int
 }
 
 const ashaExitedMetricValue = math.MaxFloat64
 
 func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
-	expectedSteps := 0
 	for id := 0; id < config.NumRungs; id++ {
 		compound := math.Pow(config.Divisor, float64(config.NumRungs-id-1))
 		stepsNeeded := max(int(float64(config.TargetTrialSteps)/compound), 1)
-		startTrials := max(int(compound), 1)
+		startTrials := max(min(int(compound), config.MaxTrials), 1)
 		rungs = append(rungs,
 			&rung{
-				stepsNeeded: stepsNeeded,
-				startTrials: startTrials,
-			},
-		)
-		if id == 0 {
-			expectedSteps += stepsNeeded * startTrials
-		} else {
-			expectedSteps += (stepsNeeded - rungs[id-1].stepsNeeded) * startTrials
-		}
-	}
-
-	expectedWorkloads := 0
-	multiplier := float64(config.StepBudget) / float64(expectedSteps)
-	for id := 0; id < config.NumRungs; id++ {
-		cur := rungs[id]
-		cur.startTrials = int(multiplier * float64(cur.startTrials))
-		if id != 0 {
-			prev := rungs[id-1]
-			cur.stepsNeeded = max(cur.stepsNeeded, prev.stepsNeeded+1)
-			cur.startTrials = max(min(cur.startTrials, prev.startTrials), 1)
-			prev.promoteTrials = cur.startTrials
-			expectedWorkloads += (cur.stepsNeeded - prev.stepsNeeded + 1) * cur.startTrials
-		} else {
-			expectedWorkloads += (cur.stepsNeeded + 1) * cur.startTrials
-		}
+				divisor:           config.Divisor,
+				stepsNeeded:       stepsNeeded,
+				startTrials:       startTrials,
+				outstandingTrials: 0})
 	}
 
 	return &asyncHalvingSearch{
@@ -66,65 +45,90 @@ func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
 		rungs:              rungs,
 		trialRungs:         make(map[RequestID]int),
 		earlyExitTrials:    make(map[RequestID]bool),
-		expectedWorkloads:  expectedWorkloads,
+		maxTrials:          config.MaxTrials,
 	}
 }
 
 type trialMetric struct {
 	requestID RequestID
 	metric    float64
+	promoted  bool
+	closed    bool
 }
 
 // rung describes a set of trials that are to be trained for the same number of steps.
 type rung struct {
-	stepsNeeded   int
-	metrics       []trialMetric
-	startTrials   int
-	promoteTrials int
+	divisor           float64
+	stepsNeeded       int
+	metrics           []trialMetric
+	startTrials       int
+	outstandingTrials int
+	promoteTrials     int
 }
 
 // promotions handles bookkeeping of validation metrics and returns a RequestID to promote if
 // appropriate.
-func (r *rung) promotions(requestID RequestID, metric float64) []RequestID {
+func (r *rung) promotionsAsync(requestID RequestID, metric float64) []RequestID {
+	// See if there is a trial to promote. We are increasing the total number of trials seen by 1; the
+	// number of best trials that definitely should have been promoted so far (numPromote) can only
+	// stay the same or increase by 1.
+	oldNumPromote := int(float64(len(r.metrics)) / r.divisor)
+	numPromote := int(float64(len(r.metrics)+1) / r.divisor)
+
 	// Insert the new trial result in the appropriate place in the sorted list.
 	insertIndex := sort.Search(
 		len(r.metrics),
 		func(i int) bool { return r.metrics[i].metric > metric },
 	)
+	promoteNow := insertIndex < numPromote
+
 	r.metrics = append(r.metrics, trialMetric{})
 	copy(r.metrics[insertIndex+1:], r.metrics[insertIndex:])
 	r.metrics[insertIndex] = trialMetric{
 		requestID: requestID,
 		metric:    metric,
+		promoted:  promoteNow,
+		closed:    false,
 	}
 
-	// If there are enough trials done to definitively promote one, do so. Otherwise, return nil.
-	currPromote := len(r.metrics) + r.promoteTrials - r.startTrials
-	switch {
-	case currPromote <= 0: // Not enough trials completed for any promotions.
-		return nil
-	case insertIndex < currPromote: // Incoming trial should be promoted.
+	// If the new trial is good enough, it should be promoted immediately (whether or not numPromote
+	// changes). Otherwise, if numPromote changes, there is some other trial that should be promoted,
+	// unless it has been promoted already.
+	if promoteNow {
 		return []RequestID{requestID}
-	default: // Promote next trial in sorted metrics array.
-		t := &r.metrics[currPromote-1]
-		return []RequestID{t.requestID}
 	}
+	if numPromote != oldNumPromote {
+		t := &r.metrics[oldNumPromote]
+		if !t.promoted {
+			t.promoted = true
+			return []RequestID{t.requestID}
+		}
+	}
+
+	return nil
 }
 
 func (s *asyncHalvingSearch) initialOperations(ctx context) ([]Operation, error) {
+	// We can initialize bottom rung with divisor^(numRung-1) configurations since
+	// it will take that many configurations on average to be able to promote one
+	// configuration to the top rung.
 	var ops []Operation
 	for trial := 0; trial < s.rungs[0].startTrials; trial++ {
 		create := NewCreate(
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
 		ops = append(ops, trainAndValidate(create.RequestID, 0, s.rungs[0].stepsNeeded)...)
+		s.rungs[0].outstandingTrials++
+		s.trialRungs[create.RequestID] = 0
 	}
+	fmt.Printf("initializing with %d trials in bottom rung.\n", s.rungs[0].outstandingTrials)
 	return ops, nil
 }
 
 func (s *asyncHalvingSearch) trainCompleted(
 	ctx context, requestID RequestID, message Workload,
 ) ([]Operation, error) {
+	s.totalStepsCompleted++
 	return nil, nil
 }
 
@@ -132,38 +136,46 @@ func (s *asyncHalvingSearch) validationCompleted(
 	ctx context, requestID RequestID, message Workload, metrics ValidationMetrics,
 ) ([]Operation, error) {
 	// Extract the relevant metric as a float.
-	metric, err := metrics.Metric(s.Metric)
+	metric, err := metrics.Metric(s.AsyncHalvingConfig.Metric)
+	// TODO: For graceful trial termination, if there is an error here, should we still
+	// continue the searcher and always return a new trial?
 	if err != nil {
 		return nil, err
 	}
-	if !s.SmallerIsBetter {
+	if !s.AsyncHalvingConfig.SmallerIsBetter {
 		metric *= -1
 	}
 
-	return s.promoteTrials(ctx, requestID, message, metric)
+	return s.promoteAsync(ctx, requestID, message, metric)
 }
 
-func (s *asyncHalvingSearch) promoteTrials(
+func (s *asyncHalvingSearch) promoteAsync(
 	ctx context, requestID RequestID, message Workload, metric float64,
 ) ([]Operation, error) {
+	// Upon a trial is finished, we should return at least one more trial to train unless
+	// the bracket of successive halving is finished.
 	rungIndex := s.trialRungs[requestID]
 	rung := s.rungs[rungIndex]
+	rung.outstandingTrials--
+	addedNewTrial := false
 
-	// If the trial has completed the top rung's validation, close the trial and do nothing else.
-	if rungIndex == s.NumRungs-1 {
+	ops := make([]Operation, 0)
+	// If the trial has completed the top rung's validation, close the trial.
+	if rungIndex == s.AsyncHalvingConfig.NumRungs-1 {
 		s.trialsCompleted++
-		return []Operation{NewClose(requestID)}, nil
-	}
-
-	var ops []Operation
-	// Since this is not the top rung, handle promotions if there are any, then close the rung if
-	// all trials have finished.
-	if toPromote := rung.promotions(requestID, metric); len(toPromote) > 0 {
-		for _, promotionID := range toPromote {
+		if !s.earlyExitTrials[requestID] {
+			ops = append(ops, NewClose(requestID))
+		}
+	} else {
+		// This is not the top rung, so do promotions to the next rung.
+		nextRung := s.rungs[rungIndex+1]
+		for _, promotionID := range rung.promotionsAsync(requestID, metric) {
 			s.trialRungs[promotionID] = rungIndex + 1
+			nextRung.outstandingTrials++
 			if !s.earlyExitTrials[promotionID] {
-				ops = append(ops, trainAndValidate(
-					promotionID, rung.stepsNeeded, s.rungs[rungIndex+1].stepsNeeded)...)
+				ops = append(
+					ops, trainAndValidate(promotionID, rung.stepsNeeded, nextRung.stepsNeeded)...)
+				addedNewTrial = true
 			} else {
 				step := s.rungs[rungIndex+1].stepsNeeded
 				wkld := Workload{
@@ -173,46 +185,71 @@ func (s *asyncHalvingSearch) promoteTrials(
 					StepID:       step,
 				}
 
-				// We can make a recursive call (and discard the results)
-				// because of the following invariants:
-				//   1) There are other trials executing that will receive any
-				//   extra operations when they complete workloads. We know
-				//   this is true since otherwise we would have received
-				//   TrialClosed responses already and the searcher would have
-				//   closed.
-				//
-				//   2) We are bounded on the depth of this recursive stack by
-				//   the number of rungs. We default this to max out at 5.
-				_, err := s.promoteTrials(ctx, promotionID, wkld, ashaExitedMetricValue)
-				return nil, err
+				// We make a recursive call that will behave the same
+				// as if we'd actually run the promoted job and received
+				// the worse possible result in return.
+				return s.promoteAsync(ctx, promotionID, wkld, ashaExitedMetricValue)
 			}
 		}
-		// Closes the unpromoted trials in the rung once all trials in the rung finish.
-		if rung.startTrials < len(rung.metrics) {
-			return nil, errors.Errorf("number of trials exceeded initial trials for rung: %d < %d",
-				rung.startTrials, len(rung.metrics))
-		}
-		if len(rung.metrics) == rung.startTrials {
-			for _, trialMetric := range rung.metrics[rung.promoteTrials:] {
-				s.trialsCompleted++
-				if !s.earlyExitTrials[trialMetric.requestID] {
-					ops = append(ops, NewClose(trialMetric.requestID))
-				}
-			}
-		}
+	}
+
+	allTrials := len(s.trialRungs)
+	if !addedNewTrial && allTrials < s.maxTrials {
+		create := NewCreate(
+			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
+		ops = append(ops, create)
+		ops = append(ops, trainAndValidate(create.RequestID, 0, s.rungs[0].stepsNeeded)...)
+		s.rungs[0].outstandingTrials++
+		s.trialRungs[create.RequestID] = 0
+	}
+
+	// Only close out trials once we have reached the maxTrials for the searcher.
+	if allTrials == s.maxTrials {
+		ops = append(ops, s.closeOutRungs()...)
 	}
 	return ops, nil
 }
 
+// closeOutRungs closes all remaining unpromoted trials in any rungs that have no more outstanding
+// trials.
+func (s *asyncHalvingSearch) closeOutRungs() []Operation {
+	ops := make([]Operation, 0)
+	for _, rung := range s.rungs {
+		if rung.outstandingTrials > 0 {
+			break
+		}
+		for tid, trialMetric := range rung.metrics {
+			if !trialMetric.promoted && !trialMetric.closed {
+				s.trialsCompleted++
+				if !s.earlyExitTrials[trialMetric.requestID] {
+					ops = append(ops, NewClose(trialMetric.requestID))
+				}
+				// TODO: is checkpoint storage associated with the close operation?
+				// Is there any harm to doing this at the very end of the experiment?
+				rung.metrics[tid].closed = true
+				ops = append(ops, NewClose(trialMetric.requestID))
+			}
+		}
+		//rung.metrics = nil
+	}
+	return ops
+}
+
 func (s *asyncHalvingSearch) progress(workloadsCompleted int) float64 {
-	return math.Min(1, float64(workloadsCompleted)/float64(s.expectedWorkloads))
+	allTrials := len(s.trialRungs)
+	// Give ourselves an overhead of 20% of maxTrials when calculating progress.
+	progress := float64(allTrials-s.rungs[0].outstandingTrials) / (1.2 * float64(s.maxTrials))
+	if allTrials == s.maxTrials {
+		return math.Max(float64(s.trialsCompleted)/float64(s.maxTrials), progress)
+	}
+	return progress
 }
 
 func (s *asyncHalvingSearch) trialExitedEarly(
 	ctx context, requestID RequestID, message Workload,
 ) ([]Operation, error) {
 	s.earlyExitTrials[requestID] = true
-	return s.promoteTrials(ctx, requestID, message, ashaExitedMetricValue)
+	return s.promoteAsync(ctx, requestID, message, ashaExitedMetricValue)
 }
 
 func max(initial int, values ...int) int {

@@ -81,7 +81,7 @@ func TestAdaptiveBracketRungsConfig(t *testing.T) {
   "name": "adaptive",
   "metric": "metric",
   "target_trial_steps": 128,
-  "step_budget": 100,
+  "max_trials": 100,
   "bracket_rungs": [5, 10, 15, 20]
 }
 `)
@@ -93,7 +93,7 @@ func TestAdaptiveBracketRungsConfig(t *testing.T) {
 		AdaptiveConfig: &AdaptiveConfig{
 			Metric:           "metric",
 			TargetTrialSteps: 128,
-			StepBudget:       100,
+			MaxTrials:        100,
 			BracketRungs:     []int{5, 10, 15, 20},
 		},
 	}

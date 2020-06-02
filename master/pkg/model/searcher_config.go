@@ -24,6 +24,7 @@ type SearcherConfig struct {
 	RandomConfig         *RandomConfig         `union:"name,random" json:"-"`
 	GridConfig           *GridConfig           `union:"name,grid" json:"-"`
 	AsyncHalvingConfig   *AsyncHalvingConfig   `union:"name,async_halving" json:"-"`
+	SyncHalvingConfig    *SyncHalvingConfig    `union:"name,sync_halving" json:"-"`
 	AdaptiveConfig       *AdaptiveConfig       `union:"name,adaptive" json:"-"`
 	AdaptiveSimpleConfig *AdaptiveSimpleConfig `union:"name,adaptive_simple" json:"-"`
 	PBTConfig            *PBTConfig            `union:"name,pbt" json:"-"`
@@ -87,6 +88,17 @@ type AsyncHalvingConfig struct {
 	SmallerIsBetter  bool    `json:"smaller_is_better"`
 	NumRungs         int     `json:"num_rungs"`
 	TargetTrialSteps int     `json:"target_trial_steps"`
+	MaxTrials        int     `json:"max_trials"`
+	Divisor          float64 `json:"divisor"`
+	TrainStragglers  bool    `json:"train_stragglers"`
+}
+
+// SyncHalvingConfig configures synchronous successive halving.
+type SyncHalvingConfig struct {
+	Metric           string  `json:"metric"`
+	SmallerIsBetter  bool    `json:"smaller_is_better"`
+	NumRungs         int     `json:"num_rungs"`
+	TargetTrialSteps int     `json:"target_trial_steps"`
 	StepBudget       int     `json:"step_budget"`
 	Divisor          float64 `json:"divisor"`
 	TrainStragglers  bool    `json:"train_stragglers"`
@@ -111,10 +123,9 @@ type AdaptiveConfig struct {
 	Metric           string       `json:"metric"`
 	SmallerIsBetter  bool         `json:"smaller_is_better"`
 	TargetTrialSteps int          `json:"target_trial_steps"`
-	StepBudget       int          `json:"step_budget"`
+	MaxTrials        int          `json:"max_trials"`
 	BracketRungs     []int        `json:"bracket_rungs"`
 	Divisor          float64      `json:"divisor"`
-	TrainStragglers  bool         `json:"train_stragglers"`
 	Mode             AdaptiveMode `json:"mode"`
 	MaxRungs         int          `json:"max_rungs"`
 }
@@ -122,11 +133,8 @@ type AdaptiveConfig struct {
 // Validate implements the check.Validatable interface.
 func (a AdaptiveConfig) Validate() []error {
 	return []error{
-		check.GreaterThan(a.StepBudget, a.TargetTrialSteps,
-			"step_budget must be > target_trial_steps"),
 		check.GreaterThan(a.TargetTrialSteps, 0, "target_trial_steps must be > 0"),
-		check.GreaterThan(a.StepBudget, 0, "step_budget must be > 0"),
-		check.LessThanOrEqualTo(a.StepBudget, 50000, "step_budget must be <= 50000"),
+		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
 		check.GreaterThan(a.Divisor, 1.0, "divisor must be > 1.0"),
 		check.In(string(a.Mode), []string{AggressiveMode, StandardMode, ConservativeMode},
 			"invalid adaptive mode"),

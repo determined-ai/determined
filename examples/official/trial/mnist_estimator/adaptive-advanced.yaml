@@ -26,7 +26,7 @@ searcher:
   name: adaptive
   metric: accuracy
   target_trial_steps: 32 
-  step_budget: 100
+  max_trials: 30
   mode: aggressive
   max_rungs: 3
   divisor: 4

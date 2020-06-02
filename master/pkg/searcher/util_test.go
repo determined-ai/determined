@@ -251,6 +251,8 @@ func checkValueSimulation(
 			if trial.EarlyExit == operation.StepID {
 				earlyExit = true
 			}
+			//fmt.Printf("training config %d\n", trialID)
+
 			if err != nil {
 				return errors.Wrapf(err, "simulateWorkloadComplete for trial %v", trialID+1)
 			}
@@ -352,6 +354,7 @@ func simulateWorkloadComplete(
 		} else {
 			ops, err = method.trainCompleted(ctx, requestID, w)
 		}
+		//fmt.Printf("train %d for %d steps\n", requestID, operation.StepID)
 		if err != nil {
 			return nil, errors.Wrap(err, "trainCompleted")
 		}
@@ -372,6 +375,7 @@ func simulateWorkloadComplete(
 			},
 		}
 		ops, err = method.validationCompleted(ctx, requestID, w, metrics)
+		//fmt.Printf("Updated searcher with completed trial %d\n", requestID)
 		if err != nil {
 			return nil, errors.Wrap(err, "validationCompleted")
 		}
