@@ -1,6 +1,5 @@
 import { Button, notification } from 'antd';
-import React, { useCallback, useEffect } from 'react';
-import { Redirect, Route, Switch } from 'react-router-dom';
+import React, { useEffect } from 'react';
 
 import NavBar from 'components/NavBar';
 import Router from 'components/Router';
@@ -73,12 +72,7 @@ const AppView: React.FC = () => {
       {isAuthenticated && <AppContexts />}
       <div className={css.body}>
         {isAuthenticated && <SideBar />}
-        <Switch>
-          <Route exact path="/">
-            <Redirect to="/det/dashboard" />
-          </Route>
-          <Router routes={appRoutes} />
-        </Switch>
+        <Router routes={appRoutes} />
       </div>
       {showSpinner.isShowing && <Spinner fullPage opaque={showSpinner.isOpaque} />}
     </div>

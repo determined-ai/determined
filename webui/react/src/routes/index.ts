@@ -13,13 +13,15 @@ import { ensureAbsolutePath, isFullPath, parseUrl } from 'utils/routes';
  * meaning React will attempt to load the path outside of the internal routing
  * mechanism.
  */
-export interface RouteConfigItem extends RouteProps {
+export interface RouteConfig extends RouteProps {
+  external?: boolean;
   id: string;
   icon?: string;
   path: string;
   popout?: boolean;
+  redirect?: string;
   suffixIcon?: string;
-  title: string;
+  title?: string;
   needAuth?: boolean;
 }
 
@@ -33,7 +35,7 @@ const dashboardRoute =
     title: 'Dashboard',
   };
 
-export const appRoutes: RouteConfigItem[] = [
+export const appRoutes: RouteConfig[] = [
   dashboardRoute,
   {
     component: SignIn,
@@ -49,10 +51,22 @@ export const appRoutes: RouteConfigItem[] = [
     path: '/det/logout',
     title: 'Logout',
   },
+  {
+    exact: true,
+    id: '',
+    path: '/',
+    redirect: '/det/dashboard',
+  },
+  {
+    id: 'catch-all',
+    path: '*',
+    redirect: '/det/login',
+  },
 ];
+
 export const defaultAppRoute = appRoutes[0];
 
-export const sidebarRoutes: RouteConfigItem[] = [
+export const sidebarRoutes: RouteConfig[] = [
   dashboardRoute,
   {
     icon: 'experiment',
