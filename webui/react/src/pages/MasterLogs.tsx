@@ -37,9 +37,7 @@ const MasterLogs: React.FC = () => {
 
   return (
     <div className={css.base}>
-      <Section maxHeight title="Master Logs">
-        <LogViewer fullPage ref={logsRef} />
-      </Section>
+      <LogViewer fullPage ref={logsRef} title="Master Logs" />
     </div>
   );
 };

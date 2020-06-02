@@ -16,8 +16,7 @@ export interface Credentials {
 }
 
 export interface Navigation {
-  showNavBar: boolean;
-  showSideBar: boolean;
+  showChrome: boolean;
 }
 
 export interface DeterminedInfo {

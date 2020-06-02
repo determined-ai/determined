@@ -7,6 +7,11 @@ html {
     border-color: var(--theme-colors-monochrome-11);
     color: var(--theme-colors-monochrome-17);
   }
+  .ant-btn-icon-only {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+  }
 
   /* Form */
 

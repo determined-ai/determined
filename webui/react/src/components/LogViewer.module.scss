@@ -1,17 +1,17 @@
 .base {
-  background-color: var(--theme-colors-monochrome-17);
-  border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
   height: 100%;
   position: relative;
   width: 100%;
 
   .controller {
     align-items: center;
-    background-color: var(--theme-colors-monochrome-15);
     display: flex;
     height: var(--theme-sizes-layout-giant);
+    justify-content: space-between;
+    margin-bottom: var(--theme-sizes-layout-medium);
   }
   .container {
+    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
     font-family: 'Source Code Pro', monospace;
     font-size: var(--theme-sizes-font-small);
     height: calc(100% - var(--theme-sizes-layout-giant));

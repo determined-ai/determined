@@ -1,8 +1,13 @@
+import { Button, notification, Space } from 'antd';
 import React, {
   forwardRef, useCallback, useImperativeHandle,
   useLayoutEffect, useMemo, useRef, useState,
 } from 'react';
+import screenfull from 'screenfull';
 
+import Icon from 'components/Icon';
+import Section from 'components/Section';
+import Navigation from 'contexts/Navigation';
 import useScroll from 'hooks/useScroll';
 import { Log } from 'types';
 import { ansiToHtml, toRem } from 'utils/dom';
@@ -14,6 +19,7 @@ interface Props {
   noWrap?: boolean;
   disableSearch?: boolean;
   ref?: React.Ref<LogViewerHandles>;
+  title: string;
 }
 
 interface MessageSize {
@@ -67,6 +73,9 @@ const LogViewer: React.FC<Props> = forwardRef((
   props: Props,
   ref?: React.Ref<LogViewerHandles>,
 ) => {
+  const navigation = Navigation.useStateContext();
+  const setNavigation = Navigation.useActionContext();
+  const baseRef = useRef<HTMLDivElement>(null);
   const container = useRef<HTMLDivElement>(null);
   const spacer = useRef<HTMLDivElement>(null);
   const measure = useRef<HTMLDivElement>(null);
@@ -204,28 +213,49 @@ const LogViewer: React.FC<Props> = forwardRef((
     container.current.scrollTo(0, container.current.scrollHeight || 0);
   }, []);
 
+  const handleCopyToClipboard = useCallback(() => {
+    const content = logs.map(log => [ log.time, log.message ].join(' ')).join('\n');
+
+    navigator.clipboard.writeText(content);
+
+    notification.open({
+      description: `Available ${props.title} copied to clipboard.`,
+      message: `${props.title} Copied`,
+    });
+  }, [ logs, props.title ]);
+
+  const handleFullScreen = useCallback(() => {
+    if (baseRef.current && screenfull.isEnabled) screenfull.toggle();
+  }, []);
+
+  const logOptions = (
+    <Space>
+      <Button icon={<Icon name="cluster" />} onClick={handleCopyToClipboard} />
+      <Button icon={<Icon name="cluster" />} onClick={handleFullScreen} />
+    </Space>
+  );
+
   return (
-    <div className={css.base}>
-      <div className={css.controller}>
-        Control
-      </div>
-      <div className={css.container} ref={container}>
-        <div className={css.scrollSpacer} ref={spacer} style={spacerStyle}>
-          {visibleLogs.map((log, index) => (
-            <div className={css.line} key={log.id} style={{
-              height: toRem(config.messageSizes[log.id]?.height),
-              top: toRem(config.messageSizes[log.id]?.top),
-            }}>
-              <div className={css.number} style={lineNumberStyle}>{index + 1}</div>
-              <div className={css.time} style={dateTimeStyle}>{log.time}</div>
-              <div
-                className={css.message}
-                dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }} />
-            </div>
-          ))}
+    <div className={css.base} ref={baseRef}>
+      <Section maxHeight options={logOptions} title={props.title}>
+        <div className={css.container} ref={container}>
+          <div className={css.scrollSpacer} ref={spacer} style={spacerStyle}>
+            {visibleLogs.map((log, index) => (
+              <div className={css.line} key={log.id} style={{
+                height: toRem(config.messageSizes[log.id]?.height),
+                top: toRem(config.messageSizes[log.id]?.top),
+              }}>
+                <div className={css.number} style={lineNumberStyle}>{index + 1}</div>
+                <div className={css.time} style={dateTimeStyle}>{log.time}</div>
+                <div
+                  className={css.message}
+                  dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }} />
+              </div>
+            ))}
+          </div>
+          <div className={css.measure} ref={measure} />
         </div>
-        <div className={css.measure} ref={measure} />
-      </div>
+      </Section>
     </div>
   );
 });

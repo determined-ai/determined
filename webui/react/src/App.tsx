@@ -31,7 +31,7 @@ import css from './App.module.scss';
 
 const AppView: React.FC = () => {
   const { isAuthenticated, user } = Auth.useStateContext();
-  const { showNavBar, showSideBar } = Navigation.useStateContext();
+  const { showChrome } = Navigation.useStateContext();
   const cluster = ClusterOverview.useStateContext();
   const info = Info.useStateContext();
   const setInfo = Info.useActionContext();
@@ -98,10 +98,10 @@ const AppView: React.FC = () => {
 
   return (
     <div className={css.base}>
-      {isAuthenticated && showNavBar && <NavBar username={username} />}
+      {isAuthenticated && showChrome && <NavBar username={username} />}
       {isAuthenticated && <AppContexts />}
       <div className={css.body}>
-        {isAuthenticated && <SideBar />}
+        {isAuthenticated && showChrome && <SideBar />}
         <Router routes={appRoutes} />
       </div>
       {showSpinner.isShowing && <Spinner fullPage opaque={showSpinner.isOpaque} />}

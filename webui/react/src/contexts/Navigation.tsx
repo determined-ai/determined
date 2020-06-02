@@ -2,10 +2,7 @@ import { generateContext } from 'contexts';
 import { Navigation } from 'types';
 
 const contextProvider = generateContext<Navigation>({
-  initialState:  {
-    showNavBar: true,
-    showSideBar: true,
-  },
+  initialState:  { showChrome: true },
   name: 'Navigation',
 });
 
