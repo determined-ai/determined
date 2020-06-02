@@ -5,10 +5,7 @@ get-deps:
 	done
 
 .PHONY: build
-build: build-react build-storybook
-
-.PHONY: build-react
-build-react:
+build:
 	npm run build
 
 .PHONY: build-storybook
