@@ -1644,6 +1644,24 @@ WHERE id = :id`, setClause(toUpdate)), checkpoint)
 	return nil
 }
 
+func (db *PgDB) UpdateCheckpointMetadata(checkpoint *model.Checkpoint) error {
+	if checkpoint == nil {
+		return errors.Errorf("checkpoint cannot be nil does not exist")
+	}
+
+	toUpdate := []string{"metadata"}
+
+	err := db.namedExecOne(fmt.Sprintf(`
+UPDATE checkpoints
+%v
+WHERE id = :id`, setClause(toUpdate)), checkpoint)
+	if err != nil {
+		return errors.Wrapf(err, "error updating (%v) in checkpoint (%v)",
+			strings.Join(toUpdate, ", "), checkpoint.UUID)
+	}
+	return nil
+}
+
 // AddSearcherEvents adds the searcher events to the database.
 func (db *PgDB) AddSearcherEvents(events []*model.SearcherEvent) error {
 	if len(events) == 0 {
