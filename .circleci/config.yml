@@ -416,7 +416,7 @@ commands:
             -w /webui/tests \
             --env DET_MASTER=determined-master:8080 \
             cypress/included:4.3.0 \
-            --config-file cypress-docker.json \
+            --config-file cypress-ci.json \
             --config "defaultCommandTimeout=30000,baseUrl=http://determined-master:8080" \
             --browser chrome \
             --headless

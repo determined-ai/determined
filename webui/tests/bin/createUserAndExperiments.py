@@ -8,6 +8,10 @@ USER_WITH_PASSWORD_USERNAME = "user-w-pw"
 USER_WITH_PASSWORD_PASSWORD = "special-pw"
 USER_WITHOUT_PASSWORD_USERNAME = "user-wo-pw"
 
+determined_root_dir = pathlib.Path(__file__).absolute().parents[3]
+noop_dir = determined_root_dir.joinpath("e2e_tests", "tests", "fixtures", "no_op")
+noop_config = "single-very-many-long-steps.yaml"
+
 
 def wait_for_process(process):
     # Avoid hang on macOS
@@ -43,6 +47,7 @@ def create_user(username, password=""):
         wait_for_process(p)
 
 
+print("setting up users..")
 # First login as admin to avoid having to authenticate downstream
 login_as("admin")
 
@@ -55,18 +60,21 @@ create_user(USER_WITH_PASSWORD_USERNAME, USER_WITH_PASSWORD_PASSWORD)
 # Login as non-default user with password
 login_as(USER_WITH_PASSWORD_USERNAME, USER_WITH_PASSWORD_PASSWORD)
 
-# Create experiments
-determined_root_dir = pathlib.Path(__file__).absolute().parents[3]
-experiment_dir = determined_root_dir.joinpath("e2e_tests", "tests", "fixtures", "no_op")
 
-for _ in range(4):
-    subprocess.run(
-        [
-            "det",
-            "experiment",
-            "create",
-            str(experiment_dir.joinpath("single-very-many-long-steps.yaml")),
-            str(experiment_dir),
-        ],
-        check=True,
-    )
+# Create experiments
+def createExperiment(directory, config_file, count):
+    cmd = [
+        "det",
+        "experiment",
+        "create",
+        str(directory.joinpath(config_file)),
+        str(directory),
+    ]
+
+    procs = [subprocess.Popen(cmd) for _ in range(count)]
+    for p in procs:
+        p.wait()
+
+
+print("creating experiments..")
+createExperiment(noop_dir, noop_config, 4)

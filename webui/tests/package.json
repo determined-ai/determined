@@ -22,9 +22,7 @@
     "webpack": "^4.42.1"
   },
   "scripts": {
-    "test": "make e2e-tests",
-    "cypress-dev": "make pre-e2e-tests && npx cypress open; make post-e2e-tests",
-    "postcypress-dev": "make post-e2e-tests",
+    "test": "make test",
     "lint": "eslint \"cypress/integration/**/*.{js,jsx,ts,tsx}\""
   }
 }
