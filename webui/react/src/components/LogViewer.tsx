@@ -17,7 +17,6 @@ import css from './LogViewer.module.scss';
 interface Props {
   fullPage?: boolean;
   noWrap?: boolean;
-  disableSearch?: boolean;
   ref?: React.Ref<LogViewerHandles>;
   title: string;
 }
@@ -96,7 +95,6 @@ const LogViewer: React.FC<Props> = forwardRef((
   const dateTimeStyle = { width: toRem(config.dateTimeWidth) };
   const lineNumberStyle = { width: toRem(config.lineNumberWidth) };
 
-  if (props.disableSearch) classes.push(css.disableSearch);
   if (props.fullPage) classes.push(css.fullPage);
   if (props.noWrap) classes.push(css.noWrap);
 

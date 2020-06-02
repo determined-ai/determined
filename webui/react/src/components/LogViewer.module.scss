@@ -14,7 +14,7 @@
     border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
     font-family: 'Source Code Pro', monospace;
     font-size: var(--theme-sizes-font-small);
-    height: calc(100% - var(--theme-sizes-layout-giant));
+    height: 100%;
     overflow: auto;
     padding: var(--theme-sizes-layout-medium);
     position: relative;
@@ -47,10 +47,6 @@
     white-space: pre-wrap;
     word-break: break-word;
   }
-}
-.disableSearch {
-  .controller { display: hidden; }
-  .container { height: 100%; }
 }
 .fullPage { border: 0; }
 .noWrap {

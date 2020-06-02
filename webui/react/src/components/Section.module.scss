@@ -21,6 +21,7 @@
     border-style: solid;
     border-width: 0;
     flex-grow: 1;
+    height: max-content;
     min-height: 0;
   }
   &:not(:last-child) {
