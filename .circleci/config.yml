@@ -523,6 +523,7 @@ jobs:
       - setup_remote_docker
       - run: make package
       - login-docker
+      - run: make -C proto build
       - run: make -C master publish-dev
       - run: make -C agent publish-dev
 
@@ -539,6 +540,7 @@ jobs:
       - setup_remote_docker
       - run: make package
       - login-docker
+      - run: make -C proto build
       - run: make -C master publish
       - run: make -C agent publish
 
@@ -554,6 +556,7 @@ jobs:
       - go-get-deps
       - setup_remote_docker
       - login-docker
+      - run: make -C proto build
       - run: make -C master release
       - run: make -C agent release
 
