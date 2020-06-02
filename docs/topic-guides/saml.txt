@@ -1,7 +1,7 @@
 .. _saml:
 
-SAML Integration
-===========================
+SAML Integration (Enterprise Edition)
+=====================================
 
 Determined EE provides a SAML integration to allow users to to use single sign-on (SSO) with their
 organization's identity provider (IdP) and to provide system administrators better control over

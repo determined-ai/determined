@@ -712,8 +712,8 @@ The master supports the following configuration settings:
 
    -  ``enabled``: Whether telemetry is enabled. Defaults to ``true``.
 
-- ``scim``: Specifies whether the SCIM service is enabled and the credentials for clients
-  to use it.
+- ``scim``: (EE-only) Specifies whether the SCIM service is enabled and the credentials
+  for clients to use it.
 
   - ``enabled``: Whether to enable SCIM. Defaults to ``false``.
   - ``auth``: The configuration for authenticating SCIM requests.
@@ -726,7 +726,7 @@ The master supports the following configuration settings:
     - ``password``: The password for HTTP basic authentication (only
       allowed with ``type: basic``).
 
-- ``saml``: Specifies whether SAML SSO is enabled and the configuration to use it.
+- ``saml``: (EE-only) Specifies whether SAML SSO is enabled and the configuration to use it.
 
   - ``enabled``: Whether to enable SAML SSO. Defaults to ``false``.
   - ``provider``: The name of the IdP. Currently (officially) supported: "okta".
