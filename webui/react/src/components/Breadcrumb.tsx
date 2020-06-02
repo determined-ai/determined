@@ -51,7 +51,6 @@ const pathToABCItems = (path: string): React.ReactNode => {
     return (
       <ABC.Item key={idx}>
         <Link path={'/' + parts.slice(0,idx+1).join('/')}>
-          {section.icon && !section.text && section.icon}
           {section.text && !section.icon && <span>{text}</span>}
           {section.text && section.icon && <span className={css.full}>{section.icon} {text}</span>}
         </Link>
