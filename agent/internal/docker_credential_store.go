@@ -42,6 +42,7 @@ func getAllCredentialStores() (map[string]*credentialStore, error) {
 		return credentialsStores, err
 	}
 
+    // #nosec: G304
 	configFile, err := os.Open(dockerConfigFile)
 	if err != nil {
 		return credentialsStores, errors.Wrap(err, "can't open docker config")
