@@ -266,6 +266,29 @@ class TestXORTrial:
         controller.run()
         verify_callback(checkpoint_dir=checkpoint_dir2, checkpoint_num=2)
 
+    def test_end_of_training_hook(self):
+        with tempfile.TemporaryDirectory() as temp_directory:
+
+            def make_workloads() -> workload.Stream:
+                trainer = utils.TrainAndValidate()
+
+                yield from trainer.send(steps=2, validation_freq=2, batches_per_step=5)
+                yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+            hparams = self.hparams.copy()
+            hparams["training_end"] = os.path.join(temp_directory, "training_end.log")
+
+            controller = utils.make_trial_controller_from_trial_implementation(
+                trial_class=estimator_xor_model.XORTrialEndOfTrainingHook,
+                hparams=hparams,
+                workloads=make_workloads(),
+                batches_per_step=5,
+            )
+            controller.run()
+
+            with open(hparams["training_end"], "r") as fp:
+                assert fp.readline() == "success"
+
 
 def test_local_mode() -> None:
     utils.run_local_test_mode(utils.fixtures_path("estimator_xor_model_native.py"))

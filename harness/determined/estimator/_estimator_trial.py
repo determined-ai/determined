@@ -559,6 +559,10 @@ class EstimatorTrialController(det.LoopTrialController):
                 "time."
             )
 
+        for callback in self.train_hooks:
+            if isinstance(callback, estimator.RunHook):
+                callback.on_trial_close()
+
     def _init_paths(self) -> None:
         """
         Create a unique model directory for each training process. If
