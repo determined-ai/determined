@@ -88,6 +88,12 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="whether to use preemptible instances for agents",
     )
     optional_named.add_argument(
+        "--operation-timeout-period",
+        type=str,
+        default=constants.defaults.OPERATION_TIMEOUT_PERIOD,
+        help="operation timeout before retrying, e.g. 5m for 5 minutes",
+    )
+    optional_named.add_argument(
         "--master-instance-type",
         type=str,
         default=constants.defaults.MASTER_INSTANCE_TYPE,

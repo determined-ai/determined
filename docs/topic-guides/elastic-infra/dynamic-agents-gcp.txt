@@ -129,6 +129,7 @@ an example configuration. See :ref:`cluster-configuration` for details.
        gpu_num: 4
        preemptible: false
      max_instances: 5
+     operation_timeout_period: 5m
 
 .. _gcp-attach-disk:
 

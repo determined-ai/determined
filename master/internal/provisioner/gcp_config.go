@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"cloud.google.com/go/compute/metadata"
 	"github.com/pkg/errors"
@@ -40,6 +41,8 @@ type GCPClusterConfig struct {
 
 	InstanceType gceInstanceType `json:"instance_type"`
 	MaxInstances int             `json:"max_instances"`
+
+	OperationTimeoutPeriod Duration `json:"operation_timeout_period"`
 }
 
 // DefaultGCPClusterConfig returns the default configuration of the gcp cluster.
@@ -52,7 +55,8 @@ func DefaultGCPClusterConfig() *GCPClusterConfig {
 			GPUType:     "nvidia-tesla-v100",
 			GPUNum:      4,
 		},
-		MaxInstances: 5,
+		MaxInstances:           5,
+		OperationTimeoutPeriod: Duration(5 * time.Minute),
 	}
 }
 
