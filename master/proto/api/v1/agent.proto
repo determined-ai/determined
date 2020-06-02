@@ -34,7 +34,7 @@ message GetAgentsRequest {
     // Order agents in either ascending or descending order.
     OrderBy order_by = 3;
 }
-// The response to GetAgentsRequest.
+// Response to GetAgentsRequest.
 message GetAgentsResponse {
     // The list of returned agents.
     repeated agent.v1.Agent agents = 1;
@@ -45,7 +45,7 @@ message GetAgentRequest {
     // The id of the agent.
     string agent_id = 1;
 }
-// The response to GetAgentRequest.
+// Response to GetAgentRequest.
 message GetAgentResponse {
     // The requested agent.
     agent.v1.Agent agent = 1;
@@ -56,7 +56,7 @@ message GetSlotsRequest {
     // The id of the agent.
     string agent_id = 1;
 }
-// The response to GetSlotsRequest.
+// Response to GetSlotsRequest.
 message GetSlotsResponse {
     // The requested slots.
     repeated agent.v1.Slot slots = 1;
@@ -69,7 +69,7 @@ message GetSlotRequest {
     // The id of the slot.
     string slot_id = 2;
 }
-// The response to GetSlotRequest.
+// Response to GetSlotRequest.
 message GetSlotResponse {
     // The requested slot.
     agent.v1.Slot slot = 1;
@@ -80,9 +80,9 @@ message EnableAgentRequest {
     // The id of the agent.
     string agent_id = 1;
 }
-// The response to EnableAgentRequest.
+// Response to EnableAgentRequest.
 message EnableAgentResponse {
-    // The requested agent.
+    // The enabled agent.
     agent.v1.Agent agent = 1;
 }
 
@@ -91,9 +91,9 @@ message DisableAgentRequest {
     // The id of the agent.
     string agent_id = 1;
 }
-// The response to DisableAgentRequest.
+// Response to DisableAgentRequest.
 message DisableAgentResponse {
-    // The requested agent.
+    // The disabled agent.
     agent.v1.Agent agent = 1;
 }
 
@@ -104,9 +104,9 @@ message EnableSlotRequest {
     // The id of the slot.
     string slot_id = 2;
 }
-// The response to EnableSlotRequest.
+// Response to EnableSlotRequest.
 message EnableSlotResponse {
-    // The requested slot.
+    // The enabled slot.
     agent.v1.Slot slot = 1;
 }
 
@@ -117,8 +117,8 @@ message DisableSlotRequest {
     // The id of the slot.
     string slot_id = 2;
 }
-// The response to DisableSlotRequest.
+// Response to DisableSlotRequest.
 message DisableSlotResponse {
-    // The requested slot.
+    // The disabled slot.
     agent.v1.Slot slot = 1;
 }
