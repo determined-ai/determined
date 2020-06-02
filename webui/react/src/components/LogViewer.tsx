@@ -1,10 +1,8 @@
-import useScroll from 'hooks/useScroll';
 import React, {
   forwardRef, useCallback, useImperativeHandle,
   useLayoutEffect, useMemo, useRef, useState,
 } from 'react';
 
-import Spinner from 'components/Spinner';
 import useScroll from 'hooks/useScroll';
 import { Log } from 'types';
 import { ansiToHtml, toRem } from 'utils/dom';

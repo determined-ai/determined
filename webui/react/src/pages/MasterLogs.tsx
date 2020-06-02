@@ -4,7 +4,8 @@ import LogViewer, { LogViewerHandles } from 'components/LogViewer';
 import Section from 'components/Section';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
-import { getMasterLogs, LogsApiParams } from 'services/api';
+import { getMasterLogs } from 'services/api';
+import { LogsParams } from 'services/types';
 import { Log } from 'types';
 
 import css from './MasterLogs.module.scss';
@@ -15,7 +16,7 @@ const MasterLogs: React.FC = () => {
   const logsRef = useRef<LogViewerHandles>(null);
   const [ lastLogId, setLastLogId ] = useState(0);
   const [ logsResponse, setApiParams ] =
-    useRestApiSimple<LogsApiParams, Log[]>(getMasterLogs, DEFAULT_PARAMS);
+    useRestApiSimple<LogsParams, Log[]>(getMasterLogs, DEFAULT_PARAMS);
 
   const fetchLogs = useCallback(async (): Promise<void> => {
     if (!lastLogId) return;
