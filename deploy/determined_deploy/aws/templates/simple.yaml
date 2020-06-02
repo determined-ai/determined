@@ -45,6 +45,11 @@ Parameters:
     Description: How long before idle agents are shutdown
     Default: 10m
 
+  MaxAgentStartingPeriod:
+    Type: String
+    Decription: How long for agent starting before retrying
+    Default: 10m
+
   MaxDynamicAgents:
     Type: Number
     Description: Maximum number of agents to launch simultaneously
@@ -382,6 +387,7 @@ Resources:
               log_stream: determined-agent
               master_url: http://local-ipv4:8080
               max_idle_agent_period: ${MaxIdleAgentPeriod}
+              max_agent_starting_period: ${MaxAgentStartingPeriod}
               max_instances: ${MaxDynamicAgents}
               network_interface:
                 public_ip: true
