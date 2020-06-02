@@ -26,7 +26,7 @@ func getDockerConfigPath() (string, error) {
 	if err != nil {
 		return homeDir, errors.Wrap(err, "unable to find user's HOME directory")
 	}
-	return path.Join(homeDir, ".docker/config.json"), nil
+	return path.Join(homeDir, ".docker", "config.json"), nil
 }
 
 // getAllCredentialStores returns the credential helpers configured in the default docker
