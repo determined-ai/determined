@@ -33,6 +33,11 @@ def delete_checkpoints(
     logging.info("Finished deleting {} checkpoints".format(len(to_delete)))
 
 
+def json_file_arg(val: str) -> Any:
+    with open(val) as f:
+        return json.load(f)
+
+
 def main(argv: List[str]) -> None:
     parser = argparse.ArgumentParser(description="Determined checkpoint GC")
 
@@ -49,15 +54,15 @@ def main(argv: List[str]) -> None:
     )
     parser.add_argument(
         "--experiment-config",
-        type=json.loads,
+        type=json_file_arg,
         default=os.getenv("DET_EXPERIMENT_CONFIG", {}),
-        help="Experiment config (JSON-formatted string)",
+        help="Experiment config (JSON-formatted file)",
     )
     parser.add_argument(
         "--delete",
-        type=json.loads,
+        type=json_file_arg,
         default=os.getenv("DET_DELETE", []),
-        help="Checkpoints to delete (JSON-formatted string)",
+        help="Checkpoints to delete (JSON-formatted file)",
     )
     parser.add_argument(
         "--dry-run",
