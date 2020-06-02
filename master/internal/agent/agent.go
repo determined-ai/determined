@@ -133,7 +133,14 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 			// be dead so we ignore the logs.
 			break
 		}
-		ctx.Tell(ref, *msg.ContainerLog)
+
+		ctx.Tell(ref, scheduler.ContainerLog{
+			Container:   msg.ContainerLog.Container,
+			Timestamp:   msg.ContainerLog.Timestamp,
+			PullMessage: msg.ContainerLog.PullMessage,
+			RunMessage:  msg.ContainerLog.RunMessage,
+			AuxMessage:  msg.ContainerLog.AuxMessage,
+		})
 	default:
 		check.Panic(errors.Errorf("error parsing incoming message"))
 	}

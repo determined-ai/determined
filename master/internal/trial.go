@@ -235,7 +235,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		t.replaying = false
 
 	// Log-related messages.
-	case agent.ContainerLog:
+	case scheduler.ContainerLog:
 		t.processLog(ctx, msg)
 
 	case actor.PostStop:
@@ -714,7 +714,7 @@ func (t *trial) processContainerTerminated(ctx *actor.Context, msg agent.Contain
 	t.killAndRemoveSocket(ctx, scheduler.ContainerID(msg.Container.ID))
 
 	exitMsg := msg.ContainerStopped.String()
-	t.processLog(ctx, agent.ContainerLog{
+	t.processLog(ctx, scheduler.ContainerLog{
 		Container:  msg.Container,
 		Timestamp:  time.Now(),
 		AuxMessage: &exitMsg,
@@ -738,7 +738,7 @@ func (t *trial) processContainerTerminated(ctx *actor.Context, msg agent.Contain
 	}
 }
 
-func (t *trial) processLog(ctx *actor.Context, msg agent.ContainerLog) {
+func (t *trial) processLog(ctx *actor.Context, msg scheduler.ContainerLog) {
 	// Log messages should never come in before the trial ID is set, since no trial runners are
 	// launched until after the trial ID is set. But for futureproofing, we will log an error while
 	// we protect the database.

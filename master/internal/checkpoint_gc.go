@@ -20,7 +20,7 @@ type checkpointGCTask struct {
 	agentUserGroup *model.AgentUserGroup
 
 	// TODO (DET-789): Set up proper log handling for checkpoint GC.
-	logs []agent.ContainerLog
+	logs []scheduler.ContainerLog
 }
 
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
@@ -69,7 +69,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		}
 		ctx.Self().Stop()
 
-	case agent.ContainerLog:
+	case scheduler.ContainerLog:
 		t.logs = append(t.logs, msg)
 
 	case scheduler.TerminateRequest:
