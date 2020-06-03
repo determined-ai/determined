@@ -124,11 +124,18 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 	case searcher.RunStep:
 		s.curStep++
 		s.curStepDone = stepInfo{}
-		if s.minValidationNeeded() {
-			s.steps[msg.Workload.StepID].hasValidation = true
-		}
-		if s.minCheckpointNeeded() {
-			s.steps[msg.Workload.StepID].hasCheckpoint = true
+		if msg.ExitedReason != nil {
+			s.steps = s.steps[:msg.Workload.StepID+1]
+			if *msg.ExitedReason == searcher.UserCancelled {
+				s.steps[msg.Workload.StepID].hasCheckpoint = true
+			}
+		} else {
+			if s.minValidationNeeded() {
+				s.steps[msg.Workload.StepID].hasValidation = true
+			}
+			if s.minCheckpointNeeded() {
+				s.steps[msg.Workload.StepID].hasCheckpoint = true
+			}
 		}
 	case searcher.CheckpointModel:
 		// During replay, a checkpoint can show up for earlier than the current step ID if the
