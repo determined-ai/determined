@@ -179,3 +179,8 @@ export interface RecentTask {
 }
 
 export type PropsWithClassName<T> = T & {className?: string};
+
+export enum TBSourceType {
+  Trial,
+  Experiment
+}

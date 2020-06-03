@@ -5,10 +5,10 @@ import React from 'react';
 import Icon from 'components/Icon';
 import Experiments from 'contexts/ActiveExperiments';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { archiveExperiment, killTask } from 'services/api';
+import { archiveExperiment, killTask, setExperimentState } from 'services/api';
 import { Experiment, RecentTask, RunState, TaskType } from 'types';
 import { capitalize } from 'utils/string';
-import { isTaskKillable, terminalRunStates } from 'utils/types';
+import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';
 
 import css from './TaskActionDropdown.module.scss';
 
@@ -18,27 +18,31 @@ interface Props {
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
-const TaskActionDropdown: React.FC<Props> = (props: Props) => {
-  const isExperiment = props.task.type === TaskType.Experiment;
-  const isArchivable = isExperiment && terminalRunStates.includes(props.task.state as RunState);
-  const isKillable = isTaskKillable(props.task);
+const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
+  const isExperiment = task.type === TaskType.Experiment;
+  const isArchivable = isExperiment && terminalRunStates.includes(task.state as RunState);
+  const isKillable = isTaskKillable(task);
+  const isPausable = task.type === TaskType.Experiment
+    && task.state === RunState.Active;
+  const isResumable = task.type === TaskType.Experiment
+    && task.state === RunState.Paused;
+  const isCancelable = task.type === TaskType.Experiment
+    && cancellableRunStates.includes(task.state as RunState);
 
   if (!isArchivable && !isKillable) return (<div />);
 
   const experimentsResponse = Experiments.useStateContext();
   const setExperiments = Experiments.useActionContext();
 
-  const archiveExp = async (): Promise<void> => {
-    await archiveExperiment(parseInt(props.task.id), !props.task.archived);
-    const localUpdate = (exp: Experiment): Experiment => {
-      return { ...exp, archived: !props.task.archived };
-    };
+  // update the local state of a single experiment.
+  // TODO refactor to contexts.
+  const updateExperimentLocally = (updater: (arg0: Experiment) => Experiment): void => {
     if (experimentsResponse.data) {
-      const updatedExperiments = experimentsResponse.data
-        .map(exp => exp.id.toString() === props.task.id ? localUpdate(exp) : exp);
+      const experiments = experimentsResponse.data
+        .map(exp => exp.id.toString() === task.id ? updater(exp) : exp);
       setExperiments({
         type: Experiments.ActionType.Set,
-        value: { ...experimentsResponse, data: updatedExperiments },
+        value: { ...experimentsResponse, data: experiments },
       });
     }
   };
@@ -48,10 +52,32 @@ const TaskActionDropdown: React.FC<Props> = (props: Props) => {
     try {
       switch (params.key) { // Cases should match menu items.
         case 'kill':
-          await killTask(props.task);
+          await killTask(task);
           break;
         case 'archive':
-          await archiveExp();
+          await archiveExperiment(parseInt(task.id), !task.archived);
+          await updateExperimentLocally(exp => ({ ...exp, archived: true }));
+          break;
+        case 'cancel':
+          await setExperimentState({
+            experimentId: parseInt(task.id),
+            state: RunState.StoppingCanceled,
+          });
+          await updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
+          break;
+        case 'pause':
+          await setExperimentState({
+            experimentId: parseInt(task.id),
+            state: RunState.Paused,
+          });
+          await updateExperimentLocally(exp => ({ ...exp, state: RunState.Paused }));
+          break;
+        case 'activate':
+          await setExperimentState({
+            experimentId: parseInt(task.id),
+            state: RunState.Active,
+          });
+          await updateExperimentLocally(exp => ({ ...exp, state: RunState.Active }));
           break;
       }
     } catch (e) {
@@ -59,7 +85,7 @@ const TaskActionDropdown: React.FC<Props> = (props: Props) => {
         error: e,
         level: ErrorLevel.Error,
         message: e.message,
-        publicMessage: `Failed to ${params.key} task ${props.task.id}.`,
+        publicMessage: `Unable to ${params.key} task ${task.id}.`,
         publicSubject: `${capitalize(params.key)} failed.`,
         silent: false,
         type: ErrorType.Server,
@@ -72,6 +98,9 @@ const TaskActionDropdown: React.FC<Props> = (props: Props) => {
     <Menu onClick={handleMenuClick}>
       {isKillable && <Menu.Item key="kill">Kill</Menu.Item>}
       {isArchivable && <Menu.Item key="archive">Archive</Menu.Item>}
+      {isPausable && <Menu.Item key="pause">Pause</Menu.Item>}
+      {isResumable && <Menu.Item key="activate">Activate</Menu.Item>}
+      {isCancelable && <Menu.Item key="cancel">Cancel</Menu.Item>}
     </Menu>
   );
 

@@ -2,8 +2,8 @@ import { CancelToken } from 'axios';
 
 import { generateApi } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
-import { ExperimentsParams, KillCommandParams, KillExpParams,
-  PatchExperimentParams } from 'services/types';
+import { ExperimentsParams, KillCommandParams, KillExpParams, LaunchTensorboardParams,
+  PatchExperimentParams, PatchExperimentState } from 'services/types';
 import { CommandType, Credentials, Experiment, RecentTask, TaskType, User } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -28,6 +28,9 @@ export const killCommand = generateApi<KillCommandParams, void>(Config.killComma
 
 export const patchExperiment = generateApi<PatchExperimentParams, void>(Config.patchExperiment);
 
+export const launchTensorboard =
+  generateApi<LaunchTensorboardParams, void>(Config.launchTensorboard);
+
 export const killTask =
   async (task: RecentTask, cancelToken?: CancelToken): Promise<void> => {
     if (task.type === TaskType.Experiment) {
@@ -48,3 +51,11 @@ export const archiveExperiment =
 export const login = generateApi<Credentials, void>(Config.login);
 
 export const logout = generateApi<{}, void>(Config.logout);
+
+export const setExperimentState =
+  async ({ state, ...rest }: PatchExperimentState): Promise<void> => {
+    return patchExperiment({
+      body: { state },
+      ...rest,
+    });
+  };
