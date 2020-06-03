@@ -1015,6 +1015,7 @@ workflows:
     jobs:
       - build-elm
       - build-react
+      - build-storybook
       - build-docs
       - build-go
       - package-and-push-system-local:
