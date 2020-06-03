@@ -113,7 +113,8 @@ const LogViewer: React.FC<Props> = forwardRef((
      * Set the line number column width based on the character width.
      * Add one to account for the trailing space character.
      */
-    const lineDigits = Math.ceil(Math.log(newLogs.length) / Math.log(10)) + 1;
+    const maxLineNumber = newLogs[newLogs.length - 1].id + 1;
+    const lineDigits = Math.ceil(Math.log(maxLineNumber) / Math.log(10)) + 1;
     const lineNumberWidth = charRect.width * lineDigits;
 
     /*
@@ -240,12 +241,12 @@ const LogViewer: React.FC<Props> = forwardRef((
       <Section maxHeight options={logOptions} title={props.title}>
         <div className={css.container} ref={container}>
           <div className={css.scrollSpacer} ref={spacer} style={spacerStyle}>
-            {visibleLogs.map((log, index) => (
+            {visibleLogs.map(log => (
               <div className={css.line} key={log.id} style={{
                 height: toRem(config.messageSizes[log.id]?.height),
                 top: toRem(config.messageSizes[log.id]?.top),
               }}>
-                <div className={css.number} style={lineNumberStyle}>{index + 1}</div>
+                <div className={css.number} style={lineNumberStyle}>{log.id + 1}</div>
                 <div className={css.time} style={dateTimeStyle}>{log.time}</div>
                 <div
                   className={css.message}

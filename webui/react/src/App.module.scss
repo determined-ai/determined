@@ -18,5 +18,5 @@
   }
 }
 .noChrome {
-  .body > *:last-child { height: 100%; }
+  .body > *:last-child { height: 100vh; }
 }
