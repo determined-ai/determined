@@ -15,7 +15,6 @@ import { ensureAbsolutePath, isFullPath, parseUrl } from 'utils/routes';
  * mechanism.
  */
 export interface RouteConfig extends RouteProps {
-  external?: boolean;
   id: string;
   icon?: string;
   path: string;
@@ -26,13 +25,14 @@ export interface RouteConfig extends RouteProps {
   needAuth?: boolean;
 }
 
+const defaultPath = '/det/dashboard';
 const dashboardRoute =
   {
     component: Dashboard,
     icon: 'user',
     id: 'dashboard',
     needAuth: true,
-    path: '/det/dashboard',
+    path: defaultPath,
     title: 'Dashboard',
   };
 
@@ -53,19 +53,13 @@ export const appRoutes: RouteConfig[] = [
     title: 'Logout',
   },
   {
-    exact: true,
-    id: '',
-    path: '/',
-    redirect: '/det/dashboard',
-  },
-  {
     id: 'catch-all',
     path: '*',
-    redirect: '/det/login',
+    redirect: defaultPath,
   },
 ];
 
-export const defaultAppRoute = appRoutes[0];
+export const defaultAppRoute = dashboardRoute;
 
 export const sidebarRoutes: RouteConfig[] = [
   dashboardRoute,

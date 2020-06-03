@@ -30,6 +30,7 @@ const defaultAuth: State = {
 };
 
 const clearAuthCookie = (): void => {
+  console.log('clearAuthCookie');
   document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 };
 
