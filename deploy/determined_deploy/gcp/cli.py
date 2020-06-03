@@ -118,12 +118,6 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="max agent idle time before it is shut down, e.g. 30m for 30 minutes",
     )
     optional_named.add_argument(
-        "--max-agent-starting-period",
-        type=str,
-        default=constants.defaults.MAX_AGENT_STARTING_PERIOD,
-        help="max agent starting time before retrying, e.g. 30m for 30 minutes",
-    )
-    optional_named.add_argument(
         "--port",
         type=int,
         default=constants.defaults.PORT,

@@ -62,11 +62,8 @@ func New(config *Config) (*Provisioner, error) {
 	}
 
 	return &Provisioner{
-		provider: cluster,
-		scaleDecider: newScaleDecider(
-			time.Duration(config.MaxIdleAgentPeriod),
-			time.Duration(config.MaxAgentStartingPeriod),
-		),
+		provider:     cluster,
+		scaleDecider: newScaleDecider(time.Duration(config.MaxIdleAgentPeriod)),
 	}, nil
 }
 
