@@ -49,4 +49,18 @@ html {
   .ant-select.ant-select-open > .ant-select-arrow {
     transform: rotate(180deg);
   }
+
+  /* Breadcrumb */
+
+  .ant-breadcrumb {
+    align-items: center;
+    display: flex;
+  }
+
+  /* Space */
+
+  .ant-space.ant-space-horizontal.ant-space-align-center > .ant-space-item {
+    align-items: center;
+    display: inline-flex;
+  }
 }
