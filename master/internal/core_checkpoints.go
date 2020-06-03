@@ -2,11 +2,12 @@ package internal
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // ExportableCheckpoint is a checkpoint that can be downloaded via checkpoint export.
@@ -67,6 +68,10 @@ func (m *Master) addCheckpointMetadata(c echo.Context) (interface{}, error) {
 		return nil, errors.Errorf("checkpoint (%v) does not exist", uuid)
 	}
 
+	if checkpoint.Metadata == nil {
+		checkpoint.Metadata = model.JSONObj{}
+	}
+
 	for k, v := range args.Metadata {
 		checkpoint.Metadata[k] = v
 	}
@@ -88,13 +93,16 @@ func (m *Master) deleteCheckpointMetadata(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	fmt.Printf("args = %+v\n", args)
 	checkpoint, err := m.db.CheckpointByUUID(uuid)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error querying for checkpoint (%v)", uuid)
 	}
 	if checkpoint == nil {
 		return nil, errors.Errorf("checkpoint (%v) does not exist", uuid)
+	}
+
+	if checkpoint.Metadata == nil {
+		checkpoint.Metadata = model.JSONObj{}
 	}
 
 	for _, key := range args.Keys {

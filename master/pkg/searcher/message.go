@@ -53,7 +53,7 @@ func (message *CompletedMessage) UnmarshalJSON(bytes []byte) error {
 type CheckpointMetrics struct {
 	UUID      uuid.UUID         `json:"uuid"`
 	Resources map[string]int    `json:"resources"`
-	Labels    map[string]string `json:"labels,omitempty"`
+	Metadata  map[string]string `json:"metadat,omitempty"`
 }
 
 // ValidationMetrics contains the user-defined metrics calculated after a validation
