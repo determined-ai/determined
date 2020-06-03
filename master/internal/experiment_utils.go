@@ -104,7 +104,7 @@ func convertSearcherEvent(id int, event searcher.Event) (
 }
 
 // checkpointFromCheckpointMetrics converts a workload.CheckpointMetrics into a model.Checkpoint
-// with the UUID, Resources, and Metadata fields filled out.
+// with the UUID, and Resources fields filled out.
 func checkpointFromCheckpointMetrics(metrics searcher.CheckpointMetrics) model.Checkpoint {
 	resources := model.JSONObj{}
 	for key, value := range metrics.Resources {

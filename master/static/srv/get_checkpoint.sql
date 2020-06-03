@@ -6,7 +6,7 @@ SELECT
     s.id * (e.config->>'batches_per_step')::int AS batch_number,
     s.start_time AS start_time,
     s.end_time AS end_time,
-		c.metadata AS metadata,
+    c.metadata AS metadata,
     c.resources AS resources,
     v.metrics AS metrics,
     v.state AS validation_state
