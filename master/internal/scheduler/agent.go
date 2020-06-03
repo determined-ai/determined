@@ -42,8 +42,8 @@ type (
 
 // Incoming agent actor messages; agent actors must accept these messages.
 type (
-	// StartTask notifies the agent to start the task with the provided task spec.
-	StartTask struct {
+	// StartTaskOnAgent notifies the agent to start the task with the provided task spec.
+	StartTaskOnAgent struct {
 		Task *actor.Ref
 		agent.StartContainer
 	}

@@ -8,10 +8,9 @@ import (
 	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
 
-// Assigned is a message that tells the task actor that it has been assigned to the provided
-// agent.
+// assignment contains information for tasks have been assigned but not yet started.
 // TODO: Expose assignment information (e.g. device type, num slots) to task actors.
-type Assigned struct {
+type assignment struct {
 	task                  *Task
 	container             *container
 	agent                 *agentState
@@ -23,14 +22,14 @@ type Assigned struct {
 }
 
 // StartTask notifies the agent that the task is ready to start with the provided task spec.
-func (a *Assigned) StartTask(spec image.TaskSpec) TaskSummary {
+func (a *assignment) StartTask(spec image.TaskSpec) TaskSummary {
 	handler := a.agent.handler
 	spec.ClusterID = a.clusterID
 	spec.TaskID = string(a.task.ID)
 	spec.HarnessPath = a.harnessPath
 	spec.TaskContainerDefaults = a.taskContainerDefaults
 	spec.Devices = a.devices
-	handler.System().Tell(handler, StartTask{
+	handler.System().Tell(handler, StartTaskOnAgent{
 		Task: a.task.handler,
 		StartContainer: agent.StartContainer{
 			Container: cproto.Container{
@@ -43,14 +42,4 @@ func (a *Assigned) StartTask(spec image.TaskSpec) TaskSummary {
 		},
 	})
 	return newTaskSummary(a.task)
-}
-
-// IsLeader returns true if this assignment corresponds to the leader container of the task.
-func (a *Assigned) IsLeader() bool {
-	return a.container.IsLeader()
-}
-
-// NumContainers returns the number of containers to which the task has been assigned.
-func (a *Assigned) NumContainers() int {
-	return a.numContainers
 }

@@ -32,7 +32,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			},
 		})
 
-	case scheduler.Assigned:
+	case scheduler.TaskAssigned:
 		config := t.experiment.Config.CheckpointStorage
 
 		checkpoints, err := t.db.ExperimentCheckpointsToGCRaw(t.experiment.ID,
@@ -43,12 +43,14 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 
 		ctx.Log().Info("starting checkpoint garbage collection")
 
-		msg.StartTask(tasks.TaskSpec{
-			GCCheckpoints: &tasks.GCCheckpoints{
-				AgentUserGroup:   t.agentUserGroup,
-				ExperimentID:     t.experiment.ID,
-				ExperimentConfig: t.experiment.Config,
-				ToDelete:         checkpoints,
+		ctx.Tell(t.cluster, scheduler.StartTask{
+			Spec: tasks.TaskSpec{
+				GCCheckpoints: &tasks.GCCheckpoints{
+					AgentUserGroup:   t.agentUserGroup,
+					ExperimentID:     t.experiment.ID,
+					ExperimentConfig: t.experiment.Config,
+					ToDelete:         checkpoints,
+				},
 			},
 		})
 

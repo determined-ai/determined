@@ -56,3 +56,14 @@ type ContainerStateChanged struct {
 	ContainerStarted *agent.ContainerStarted
 	ContainerStopped *agent.ContainerStopped
 }
+
+// TaskAssigned is a message that tells the task actor that it has been assigned to run
+// with a specified number of containers.
+type TaskAssigned struct {
+	numContainers int
+}
+
+// NumContainers returns the number of containers to which the task has been assigned.
+func (t *TaskAssigned) NumContainers() int {
+	return t.numContainers
+}
