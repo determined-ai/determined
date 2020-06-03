@@ -111,16 +111,13 @@ func checkpointFromCheckpointMetrics(metrics searcher.CheckpointMetrics) model.C
 		resources[key] = value
 	}
 
-	metadata := model.JSONObj{}
-	for key, value := range metrics.Metadata {
-		metadata[key] = value
-	}
+	// metadata := model.JSONObj{}
 
 	id := metrics.UUID.String()
 	return model.Checkpoint{
 		UUID:      &id,
 		Resources: resources,
-		Metadata:  metadata,
+		// Metadata:  metadata,
 	}
 }
 

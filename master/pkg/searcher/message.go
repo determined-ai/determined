@@ -51,9 +51,8 @@ func (message *CompletedMessage) UnmarshalJSON(bytes []byte) error {
 // CheckpointMetrics contains the checkpoint metadata returned by the StorageManager after
 // completing a checkpoint.
 type CheckpointMetrics struct {
-	UUID      uuid.UUID         `json:"uuid"`
-	Resources map[string]int    `json:"resources"`
-	Metadata  map[string]string `json:"metadat,omitempty"`
+	UUID      uuid.UUID      `json:"uuid"`
+	Resources map[string]int `json:"resources"`
 }
 
 // ValidationMetrics contains the user-defined metrics calculated after a validation
