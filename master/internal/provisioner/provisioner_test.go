@@ -23,6 +23,85 @@ func (t TestInstanceType) slots() int {
 	return t.Slots
 }
 
+var (
+	testAgents = []*scheduler.AgentSummary{
+		{
+			Name: "agent1",
+		},
+		{
+			Name: "agent2",
+		},
+		{
+			Name: "agent3",
+		},
+		{
+			Name: "agent4",
+		},
+		{
+			Name: "agent1",
+		},
+	}
+	testOneHourAgo   = time.Now().Add(-time.Hour)
+	testOneMinuteAgo = time.Now().Add(-time.Minute)
+	testNow          = time.Now()
+	testTenMin       = 10 * time.Minute
+	testInstances    = []*Instance{
+		{
+			ID:         "instance1",
+			LaunchTime: testOneHourAgo,
+			AgentName:  "agent1",
+			State:      Running,
+		},
+		{
+			ID:         "instance2",
+			LaunchTime: testOneMinuteAgo,
+			AgentName:  "agent2",
+			State:      Running,
+		},
+		{
+			ID:        "instance3",
+			AgentName: "agent2",
+			State:     Running,
+		},
+		{
+			ID:    "instance4",
+			State: Running,
+		},
+		{
+			ID:        "instance5",
+			AgentName: "agent5",
+			State:     Running,
+		},
+		{
+			ID:        "instance6",
+			AgentName: "agent6",
+			State:     Stopped,
+		},
+	}
+	testInstanceTypes = []TestInstanceType{
+		{
+			Name:  "test.instanceType",
+			Slots: 0,
+		},
+		{
+			Name:  "test.instanceType",
+			Slots: 1,
+		},
+		{
+			Name:  "test.instanceType",
+			Slots: 2,
+		},
+		{
+			Name:  "test.instanceType",
+			Slots: 3,
+		},
+		{
+			Name:  "test.instanceType",
+			Slots: 4,
+		},
+	}
+)
+
 func newTasks(slotsNeeded []int) []*scheduler.TaskSummary {
 	tasks := make([]*scheduler.TaskSummary, 0, len(slotsNeeded))
 	for i := range slotsNeeded {
@@ -63,8 +142,8 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) *mockEnvironment {
 	p := &Provisioner{
 		provider: cluster,
 		scaleDecider: &scaleDecider{
-			maxStartingPeriod: setup.maxAgentStartingPeriod,
-			maxIdlePeriod:     setup.maxIdleAgentPeriod,
+			maxAgentStartingPeriod: setup.maxAgentStartingPeriod,
+			maxIdleAgentPeriod:     setup.maxIdleAgentPeriod,
 		},
 	}
 	provisioner, created := system.ActorOf(actor.Addr("provisioner"), p)
@@ -153,11 +232,8 @@ func (c *mockProvider) terminate(ctx *actor.Context, instanceIDs []string) {
 
 func TestProvisionerScaleUp(t *testing.T) {
 	setup := &mockConfig{
-		initTime: time.Now(),
-		instanceType: TestInstanceType{
-			Name:  "test.instanceType",
-			Slots: 4,
-		},
+		initTime:      time.Now(),
+		instanceType:  testInstanceTypes[4],
 		maxInstances:  100,
 		initInstances: []*Instance{},
 	}
@@ -169,20 +245,14 @@ func TestProvisionerScaleUp(t *testing.T) {
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
-		newMockFuncCall("launch", TestInstanceType{
-			Name:  "test.instanceType",
-			Slots: 4,
-		}, 4),
+		newMockFuncCall("launch", testInstanceTypes[4], 4),
 	})
 }
 
 func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 	setup := &mockConfig{
-		initTime: time.Now(),
-		instanceType: TestInstanceType{
-			Name:  "test.instanceType",
-			Slots: 4,
-		},
+		initTime:      time.Now(),
+		instanceType:  testInstanceTypes[4],
 		maxInstances:  1,
 		initInstances: []*Instance{},
 	}
@@ -194,10 +264,7 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
-		newMockFuncCall("launch", TestInstanceType{
-			Name:  "test.instanceType",
-			Slots: 4,
-		}, 1),
+		newMockFuncCall("launch", testInstanceTypes[4], 1),
 	})
 }
 
@@ -205,39 +272,20 @@ func TestProvisionerScaleDown(t *testing.T) {
 	setup := &mockConfig{
 		initTime:           time.Now(),
 		maxIdleAgentPeriod: 50 * time.Millisecond,
-		instanceType: TestInstanceType{
-			Name:  "test.instanceType",
-			Slots: 4,
-		},
-		maxInstances: 100,
+		instanceType:       testInstanceTypes[4],
+		maxInstances:       100,
 		initInstances: []*Instance{
-			{
-				ID:         "instance1",
-				LaunchTime: time.Now().Add(-time.Hour),
-				AgentName:  "agent1",
-				State:      Running,
-			},
-			{
-				ID:         "instance2",
-				LaunchTime: time.Now().Add(-time.Minute),
-				AgentName:  "agent2",
-				State:      Running,
-			},
+			testInstances[0],
+			testInstances[1],
 		},
 	}
 	mock := newMockEnvironment(t, setup)
 
 	mock.system.Ask(mock.provisioner, scheduler.ViewSnapshot{
 		Agents: []*scheduler.AgentSummary{
-			{
-				Name: "agent1",
-			},
-			{
-				Name: "agent2",
-			},
-			{
-				Name: "agent3",
-			},
+			testAgents[0],
+			testAgents[1],
+			testAgents[2],
 		},
 	}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
@@ -249,8 +297,8 @@ func TestProvisionerScaleDown(t *testing.T) {
 		newMockFuncCall("list"),
 		newMockFuncCall("list"),
 		newMockFuncCall("terminate", newInstanceIDSet([]string{
-			"instance1",
-			"instance2",
+			testInstances[0].ID,
+			testInstances[1].ID,
 		})),
 	})
 }
@@ -260,24 +308,11 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 		initTime:               time.Now(),
 		maxAgentStartingPeriod: 100 * time.Millisecond,
 		maxIdleAgentPeriod:     100 * time.Millisecond,
-		instanceType: TestInstanceType{
-			Name:  "test.instanceType",
-			Slots: 4,
-		},
-		maxInstances: 100,
+		instanceType:           testInstanceTypes[4],
+		maxInstances:           100,
 		initInstances: []*Instance{
-			{
-				ID:         "instance1",
-				LaunchTime: time.Now().Add(-time.Hour),
-				AgentName:  "agent1",
-				State:      Running,
-			},
-			{
-				ID:         "instance2",
-				LaunchTime: time.Now().Add(-time.Minute),
-				AgentName:  "agent2",
-				State:      Running,
-			},
+			testInstances[0],
+			testInstances[1],
 		},
 	}
 	mock := newMockEnvironment(t, setup)
@@ -285,15 +320,9 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 	// Start the master.
 	mock.system.Ask(mock.provisioner, scheduler.ViewSnapshot{
 		Agents: []*scheduler.AgentSummary{
-			{
-				Name: "agent1",
-			},
-			{
-				Name: "agent2",
-			},
-			{
-				Name: "agent3",
-			},
+			testAgents[0],
+			testAgents[1],
+			testAgents[2],
 		},
 	}).Get()
 	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()

@@ -18,10 +18,9 @@ func TestProvisionerConfigMissingFields(t *testing.T) {
 	err = check.Validate(&config)
 	assert.ErrorContains(t, err, "must configure aws or gcp cluster")
 	expected := Config{
-		MaxIdleAgentPeriod:     Duration(5 * time.Minute),
-		MaxAgentStartingPeriod: Duration(5 * time.Minute),
-		AgentDockerRuntime:     "runc",
-		AgentDockerNetwork:     "default",
+		MaxIdleAgentPeriod: Duration(5 * time.Minute),
+		AgentDockerRuntime: "runc",
+		AgentDockerNetwork: "default",
 	}
 	assert.DeepEqual(t, config, expected)
 }
@@ -34,8 +33,7 @@ func TestUnmarshalProvisionerConfigMasterURL(t *testing.T) {
 "region": "test.region3",
 "image_id": "test.image3",
 "ssh_key_name": "test-key3",
-"max_idle_agent_period": "30s",
-"max_agent_starting_period": "30s"
+"max_idle_agent_period": "30s"
 }`
 	config := Config{}
 	err := json.Unmarshal([]byte(configRaw), &config)
@@ -49,13 +47,12 @@ func TestUnmarshalProvisionerConfigMasterURL(t *testing.T) {
 	awsConfig.ImageID = "test.image3"
 	awsConfig.SSHKeyName = "test-key3"
 	unmarshaled := Config{
-		MasterURL:              "http://test.master:8080",
-		AgentDockerImage:       "test_image",
-		AgentDockerRuntime:     "runc",
-		AgentDockerNetwork:     "default",
-		AWS:                    &awsConfig,
-		MaxIdleAgentPeriod:     Duration(30 * time.Second),
-		MaxAgentStartingPeriod: Duration(30 * time.Second),
+		MasterURL:          "http://test.master:8080",
+		AgentDockerImage:   "test_image",
+		AgentDockerRuntime: "runc",
+		AgentDockerNetwork: "default",
+		AWS:                &awsConfig,
+		MaxIdleAgentPeriod: Duration(30 * time.Second),
 	}
 	assert.DeepEqual(t, config, unmarshaled)
 }
@@ -83,8 +80,7 @@ func TestUnmarshalProvisionerConfigWithAWS(t *testing.T) {
 "region": "test.region2",
 "image_id": "test.image2",
 "ssh_key_name": "test-key2",
-"max_idle_agent_period": "30s",
-"max_agent_starting_period": "30s"
+"max_idle_agent_period": "30s"
 }`
 	config := Config{}
 	err := json.Unmarshal([]byte(configRaw), &config)
@@ -98,13 +94,12 @@ func TestUnmarshalProvisionerConfigWithAWS(t *testing.T) {
 	awsConfig.ImageID = "test.image2"
 	awsConfig.SSHKeyName = "test-key2"
 	unmarshaled := Config{
-		MasterURL:              "http://test.master:8080",
-		AWS:                    &awsConfig,
-		AgentDockerImage:       "test_image",
-		AgentDockerRuntime:     "runc",
-		AgentDockerNetwork:     "default",
-		MaxIdleAgentPeriod:     Duration(30 * time.Second),
-		MaxAgentStartingPeriod: Duration(30 * time.Second),
+		MasterURL:          "http://test.master:8080",
+		AWS:                &awsConfig,
+		AgentDockerImage:   "test_image",
+		AgentDockerRuntime: "runc",
+		AgentDockerNetwork: "default",
+		MaxIdleAgentPeriod: Duration(30 * time.Second),
 	}
 	assert.DeepEqual(t, config, unmarshaled)
 }
@@ -130,13 +125,12 @@ func TestUnmarshalProvisionerConfigWithGCP(t *testing.T) {
 	expected.Zone = "test-zone2"
 	expected.BootDiskSourceImage = "test-source_image2"
 	unmarshaled := Config{
-		MasterURL:              "http://test.master:8080",
-		GCP:                    &expected,
-		AgentDockerImage:       "test_image",
-		AgentDockerRuntime:     "runc",
-		AgentDockerNetwork:     "default",
-		MaxIdleAgentPeriod:     Duration(5 * time.Minute),
-		MaxAgentStartingPeriod: Duration(5 * time.Minute),
+		MasterURL:          "http://test.master:8080",
+		GCP:                &expected,
+		AgentDockerImage:   "test_image",
+		AgentDockerRuntime: "runc",
+		AgentDockerNetwork: "default",
+		MaxIdleAgentPeriod: Duration(5 * time.Minute),
 	}
 	assert.DeepEqual(t, config, unmarshaled)
 }

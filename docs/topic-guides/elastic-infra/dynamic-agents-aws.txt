@@ -126,10 +126,8 @@ an example configuration. See :ref:`cluster-configuration` for details.
     master_url: <scheme://host:port>
     startup_script: <startup script>
     container_startup_script: <container startup script>
-    agent_docker_network: host
-    agent_docker_image: <agent docker image>
+    agent_docker_network: determined
     max_idle_agent_period: 5m
-    max_agent_starting_period: 5m
 
     provider: aws
     region: <region>

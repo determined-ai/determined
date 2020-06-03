@@ -40,12 +40,8 @@
 #  agent_docker_image: determinedai/determined-agent:<version>
 
 ## The maximum idle period of agents. The master waits for this period of time
-## before shutting down idle agents. Defaults to 5 min.
+## before shutting down the idle agents. Defaults to 5 min.
 #  max_idle_agent_period: 5m
-
-## The maximum starting period of agents. The master waits for this period of time
-## for starting agents before retrying. Defaults to 5 min.
-#  max_agent_starting_period: 5m
 
 ## Configure AWS dynamic agents. The `provider`, `image_id`, `security_group`, and
 ## `ssh_key_name` are required to be set to use AWS dynamic agents.

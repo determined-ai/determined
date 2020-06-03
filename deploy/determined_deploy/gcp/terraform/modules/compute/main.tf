@@ -43,7 +43,6 @@ resource "google_compute_instance" "master_instance" {
       master_url: ${var.scheme}://internal-ip:${var.port}
       agent_docker_network: ${var.agent_docker_network}
       max_idle_agent_period: ${var.max_idle_agent_period}
-      max_agent_starting_period: ${var.max_agent_starting_period}
       provider: gcp
       name_prefix: det-dynamic-agent-${var.unique_id}-
       network_interface:

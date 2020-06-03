@@ -31,7 +31,6 @@ scheduler:
 
 provisioner:
   max_idle_agent_period: 30s
-  max_agent_starting_period: 30s
 `
 	expected := Config{
 		Log: logger.Config{
@@ -46,10 +45,9 @@ provisioner:
 		},
 		Scheduler: scheduler.Config{Fit: "best"},
 		Provisioner: &provisioner.Config{
-			AgentDockerRuntime:     "runc",
-			AgentDockerNetwork:     "default",
-			MaxIdleAgentPeriod:     provisioner.Duration(30 * time.Second),
-			MaxAgentStartingPeriod: provisioner.Duration(30 * time.Second),
+			AgentDockerRuntime: "runc",
+			AgentDockerNetwork: "default",
+			MaxIdleAgentPeriod: provisioner.Duration(30 * time.Second),
 		},
 	}
 
