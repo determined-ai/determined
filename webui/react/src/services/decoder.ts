@@ -2,26 +2,13 @@ import dayjs from 'dayjs';
 
 import {
   decode,
-  ioExperiments, ioTypeAgents, ioTypeCommandAddress,
-  ioTypeDeterminedInfo, ioTypeExperiments, ioTypeGenericCommand, ioTypeGenericCommands,
-  ioTypeUsers,
+  ioDeterminedInfo, ioExperiments, ioTypeAgents, ioTypeCommandAddress,
+  ioTypeDeterminedInfo, ioTypeExperiments, ioTypeGenericCommand, ioTypeGenericCommands, ioTypeUsers,
 } from 'ioTypes';
 import {
   Agent, Command, CommandType, DeterminedInfo, Experiment, ResourceState, ResourceType, User,
 } from 'types';
 import { capitalize } from 'utils/string';
-
-export const jsonToDeterminedInfo = (data: ioTypeDeterminedInfo): DeterminedInfo => {
-  return {
-    clusterId: data.cluster_id,
-    masterId: data.master_id,
-    telemetry: {
-      enabled: data.telemetry.enabled,
-      segmentKey: data.telemetry.segment_key,
-    },
-    version: data.version,
-  };
-};
 
 export const jsonToUsers = (data: ioTypeUsers): User[] => {
   return data.map(user => ({
@@ -30,6 +17,19 @@ export const jsonToUsers = (data: ioTypeUsers): User[] => {
     isAdmin: user.admin,
     username: user.username,
   }));
+};
+
+export const jsonToDeterminedInfo = (data: unknown): DeterminedInfo => {
+  const info = decode<ioTypeDeterminedInfo>(ioDeterminedInfo, data);
+  return {
+    clusterId: info.cluster_id,
+    masterId: info.master_id,
+    telemetry: {
+      enabled: info.telemetry.enabled,
+      segmentKey: info.telemetry.segment_key,
+    },
+    version: info.version,
+  };
 };
 
 export const jsonToAgents = (data: ioTypeAgents): Agent[] => {
