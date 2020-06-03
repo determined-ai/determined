@@ -228,8 +228,8 @@ const LogViewer: React.FC<Props> = forwardRef((
 
   const logOptions = (
     <Space>
-      <Button icon={<Icon name="cluster" />} onClick={handleCopyToClipboard} />
-      <Button icon={<Icon name="cluster" />} onClick={handleFullScreen} />
+      <Button icon={<Icon name="clipboard" />} onClick={handleCopyToClipboard} />
+      <Button icon={<Icon name="fullscreen" />} onClick={handleFullScreen} />
     </Space>
   );
 
