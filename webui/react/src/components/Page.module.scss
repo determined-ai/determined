@@ -1,0 +1,18 @@
+.base {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: auto;
+  padding: var(--theme-sizes-layout-big);
+  width: 100%;
+
+  .overview { padding-bottom: var(--theme-sizes-layout-big); }
+  .title {
+    color: var(--theme-colors-core-secondary);
+    width: 100%
+  }
+  .body {
+    width: 100%;
+  }
+}

@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
 import OverviewStats from 'components/OverviewStats';
+import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TaskCard from 'components/TaskCard';
@@ -147,7 +148,7 @@ const Dashboard: React.FC = () => {
   );
 
   return (
-    <div className={css.base}>
+    <Page className={css.base} hideTitle title="Dashboard">
       <Section title="Overview">
         <div className={css.overview}>
           <Grid gap={ShirtSize.medium} minItemWidth={12} mode={GridMode.AutoFill}>
@@ -188,7 +189,7 @@ const Dashboard: React.FC = () => {
             : emptyView
         }
       </Section>
-    </div>
+    </Page>
   );
 };
 

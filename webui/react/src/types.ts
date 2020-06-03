@@ -184,3 +184,8 @@ export enum TBSourceType {
   Trial,
   Experiment
 }
+
+export type CommonProps = {
+  className?: string;
+  children?: React.ReactNode;
+}
