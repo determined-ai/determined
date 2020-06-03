@@ -1,4 +1,4 @@
-import { Breadcrumb } from 'antd';
+import { Breadcrumb, Space } from 'antd';
 import React from 'react';
 
 import Icon from 'components/Icon';
@@ -12,8 +12,10 @@ export default {
 export const Default = (): React.ReactNode => (
   <Breadcrumb>
     <Breadcrumb.Item>
-      <Icon name="experiment" />
-      <Link path="/ui/experiments">Experiments</Link>
+      <Space align="center" size="small">
+        <Icon name="experiment" size="small" />
+        <Link path="/ui/experiments">Experiments</Link>
+      </Space>
     </Breadcrumb.Item>
     <Breadcrumb.Item>
       <Link path="/ui/experiments/3">Experiment 3</Link>
@@ -23,8 +25,10 @@ export const Default = (): React.ReactNode => (
 export const TrialDetail = (): React.ReactNode => (
   <Breadcrumb>
     <Breadcrumb.Item>
-      <Icon name="experiment" />
-      <Link path="/ui/experiments"> Experiments</Link>
+      <Space align="center" size="small">
+        <Icon name="experiment" size="small" />
+        <Link path="/ui/experiments">Experiments</Link>
+      </Space>
     </Breadcrumb.Item>
     <Breadcrumb.Item>
       <Link path="/ui/experiments/3"> Experiment 3</Link>
