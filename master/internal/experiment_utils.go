@@ -111,13 +111,10 @@ func checkpointFromCheckpointMetrics(metrics searcher.CheckpointMetrics) model.C
 		resources[key] = value
 	}
 
-	// metadata := model.JSONObj{}
-
 	id := metrics.UUID.String()
 	return model.Checkpoint{
 		UUID:      &id,
 		Resources: resources,
-		// Metadata:  metadata,
 	}
 }
 
