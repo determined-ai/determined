@@ -418,17 +418,51 @@ sideTabs model =
     in
     List.concatMap tab tabs |> div [ class "flex flex-col" ]
 
+footerTabs : Html Msg
+footerTabs =
+    let
+        iconAttribute =
+            attribute "style" "font-size: 20px; width: 20px;"
+    in
+    div
+        [ class "flex flex-col" ]
+        [ a
+            [ class
+                ("flex flex-row items-center py-1 pl-3 pr-4 border-l-4 no-underline "
+                    ++ "hover:text-blue-400 text-sm outline-none "
+                    ++ "text-gray-700 border-transparent"
+                )
+            , style "margin-bottom" "16px"
+            , HA.target "_blank"
+            , href "/det/logs"
+            ]
+            [ i [ class "icon-logs flex-grow-0", iconAttribute ] []
+            , div
+                [ style "font-size" "12px"
+                , style "font-family" "'Objektiv Mk3', Arial, Helvetica, sans-serif"
+                , style "margin-left" "16px"
+                , style "letter-spacing" "0"
+                , class "font-light"
+                ]
+                [ text "Master Logs" ]
+            ]
+        ]
+
 
 sideBarFooter : Model -> Html Msg
 sideBarFooter model =
     div
-        [ class "flex justify-center"
-        , style "background-color" "#ececec"
-        , style "color" "#666"
-        , style "font-size" "10px"
-        , style "padding" "6px 0"
+        [ class "flex flex-col" ]
+        [ footerTabs
+        , div
+            [ class "flex justify-center"
+            , style "background-color" "#ececec"
+            , style "color" "#666"
+            , style "font-size" "10px"
+            , style "padding" "6px 0"
+            ]
+            [ text ("Version " ++ model.version) ]
         ]
-        [ text ("Version " ++ model.version) ]
 
 
 renderToast : Toast.Toast -> Html Msg
