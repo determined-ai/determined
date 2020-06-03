@@ -64,6 +64,9 @@ def make_up_subparser(subparsers: argparse._SubParsersAction):
         "--max-idle-agent-period", type=str, help="max agent idle time",
     )
     subparser.add_argument(
+        "--max-agent-starting-period", type=str, help="max agent starting time",
+    )
+    subparser.add_argument(
         "--max-dynamic-agents",
         type=int,
         help="maximum number of dynamic agent instances at one time",
