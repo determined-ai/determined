@@ -4,6 +4,7 @@ import { RouteProps } from 'react-router';
 import Dashboard from 'pages/Dashboard';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
+import TaskList from 'pages/TaskList';
 import history from 'routes/history';
 import { clone } from 'utils/data';
 import { ensureAbsolutePath, isFullPath, parseUrl } from 'utils/routes';
@@ -36,8 +37,19 @@ const dashboardRoute =
     title: 'Dashboard',
   };
 
+const TaskListRoute =
+  {
+    component: TaskList,
+    icon: 'task',
+    id: 'taskList',
+    needAuth: true,
+    path: '/det/tasks',
+    title: 'Tasks',
+  };
+
 export const appRoutes: RouteConfig[] = [
   dashboardRoute,
+  TaskListRoute,
   {
     component: SignIn,
     id: 'login',
@@ -69,6 +81,7 @@ export const sidebarRoutes: RouteConfig[] = [
     path: '/ui/experiments',
     title: 'Experiments',
   },
+  // TaskListRoute,
   {
     icon: 'notebook',
     id: 'notebooks',
