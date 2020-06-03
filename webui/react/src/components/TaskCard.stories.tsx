@@ -23,6 +23,7 @@ const baseProps: RecentTask = {
   },
   ownerId: 5,
   progress: 0.34,
+  startTime: (new Date()).toString(),
   state: RunState.Active,
   title: 'I\'m a task',
   type: TaskType.Experiment,

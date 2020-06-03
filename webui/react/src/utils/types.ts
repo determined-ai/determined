@@ -1,6 +1,6 @@
 import {
   Command, CommandState, CommandType, Experiment,
-  RecentTask, RunState, TaskType,
+  RecentTask, RunState, Task, TaskType,
 } from 'types';
 
 /* Conversions to Tasks */
@@ -29,7 +29,9 @@ export const commandToTask = (command: Command): RecentTask => {
       date: command.registeredTime,
       name: 'requested',
     },
+    misc: command.misc,
     ownerId: command.owner.id,
+    startTime: command.registeredTime,
     state: command.state as CommandState,
     title,
     type: command.kind as unknown as TaskType,
@@ -48,6 +50,7 @@ export const experimentToTask = (experiment: Experiment): RecentTask => {
     lastEvent,
     ownerId: experiment.ownerId,
     progress: typeof experiment.progress === 'number' ? experiment.progress : undefined,
+    startTime: experiment.startTime,
     state: experiment.state as RunState,
     title: experiment.config.description,
     type: TaskType.Experiment,
@@ -95,7 +98,7 @@ export const commandStateToLabel: {[key in CommandState]: string} = {
   [CommandState.Terminated]: 'Terminated',
 };
 
-export const isTaskKillable = (task: RecentTask): boolean => {
+export const isTaskKillable = (task: Task): boolean => {
   return killableRunStates.includes(task.state as RunState)
     || killableCmdStates.includes(task.state as CommandState);
 };

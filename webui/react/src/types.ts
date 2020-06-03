@@ -98,6 +98,8 @@ export enum CommandState {
   Terminated = 'TERMINATED',
 }
 
+export type State = CommandState | RunState
+
 export interface CommandAddress {
   containerIp: string;
   containerPort: number;
@@ -179,19 +181,36 @@ export enum TaskType {
   Tensorboard = 'TENSORBOARD',
 }
 
-export interface RecentTask {
+export interface Task {
   archived?: boolean;
+  // source?: Record<TBSourceType, number[]>;
+  misc?: CommandMisc;
   title: string;
   type: TaskType;
-  lastEvent: {
-    name: string;
-    date: string;
-  };
   id: string;
   ownerId: number;
   progress?: number;
   url?: string;
+  startTime: string;
   state: RunState | CommandState;
+}
+
+// food for thought for future work
+// remove exlusive fields from Task and:
+// export interface ExperimentTask extends Task {
+//   progress?: number;
+//   archived?: boolean;
+// }
+
+// export interface CommandTask extends Task {
+//   misc?: CommandMisc;
+// }
+
+export interface RecentTask extends Task {
+  lastEvent: {
+    name: string;
+    date: string;
+  };
 }
 
 export type PropsWithClassName<T> = T & {className?: string};

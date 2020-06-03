@@ -8,6 +8,7 @@ import ProgressBar from 'components/ProgressBar';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import { RecentTask } from 'types';
 import { percent } from 'utils/number';
+import { canBeOpened } from 'utils/task';
 
 import css from './TaskCard.module.scss';
 
@@ -20,7 +21,7 @@ const TaskCard: React.FC<RecentTask> = (props: RecentTask) => {
 
   return (
     <div className={classes.join(' ')}>
-      <Link disabled={!props.url} inherit path={props.url || '#'}>
+      <Link disabled={canBeOpened(props)} inherit path={props.url || '#'}>
         {hasProgress && <div className={css.progressBar}>
           <ProgressBar percent={(props.progress || 0) * 100} state={props.state} />
         </div>}
