@@ -40,6 +40,9 @@ variable "agent_docker_network" {
 variable "max_idle_agent_period" {
 }
 
+variable "max_agent_starting_period" {
+}
+
 variable "tag_master_port" {
 }
 
