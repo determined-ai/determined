@@ -53,14 +53,16 @@ type Config struct {
 	AWS                    *AWSClusterConfig `union:"provider,aws" json:"-"`
 	GCP                    *GCPClusterConfig `union:"provider,gcp" json:"-"`
 	MaxIdleAgentPeriod     Duration          `json:"max_idle_agent_period"`
+	MaxAgentStartingPeriod Duration          `json:"max_agent_starting_period"`
 }
 
 // DefaultConfig returns the default configuration of the provisioner.
 func DefaultConfig() *Config {
 	return &Config{
-		AgentDockerRuntime: "runc",
-		AgentDockerNetwork: "default",
-		MaxIdleAgentPeriod: Duration(300 * time.Second),
+		AgentDockerRuntime:     "runc",
+		AgentDockerNetwork:     "default",
+		MaxIdleAgentPeriod:     Duration(300 * time.Second),
+		MaxAgentStartingPeriod: Duration(300 * time.Second),
 	}
 }
 
@@ -100,6 +102,8 @@ func (c Config) Validate() []error {
 		check.False(c.AWS == nil && c.GCP == nil, "must configure aws or gcp cluster"),
 		check.GreaterThan(
 			int64(c.MaxIdleAgentPeriod), int64(0), "max idle agent period must be greater than 0"),
+		check.GreaterThan(
+			int64(c.MaxAgentStartingPeriod), int64(0), "max agent starting period must be greater than 0"),
 	}...)
 	return errs
 }
