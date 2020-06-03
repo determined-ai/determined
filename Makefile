@@ -4,12 +4,18 @@ all:
 	$(MAKE) build
 
 .PHONY: get-deps
-get-deps:
-	pip install -r requirements.txt
+get-deps: get-deps-pip get-deps-proto get-deps-webui
 	$(MAKE) -C master $@
 	$(MAKE) -C agent $@
-	$(MAKE) -C proto $@
-	$(MAKE) -C webui $@
+.PHONY: get-deps-webui
+get-deps-webui:
+	$(MAKE) -C webui get-deps
+.PHONY: get-deps-proto
+get-deps-proto:
+	$(MAKE) -C proto get-deps
+.PHONY: get-deps-pip
+get-deps-pip:
+	pip install -r requirements.txt
 
 .PHONY: package
 package:
