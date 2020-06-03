@@ -470,7 +470,7 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.Assigned) erro
 }
 
 func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.CompletedMessage) error {
-	if !t.replaying && msg.ExitedReason == nil {
+	if !t.replaying && (msg.ExitedReason == nil || *msg.ExitedReason == searcher.UserCanceled) {
 		if err := markWorkloadCompleted(t.db, msg); err != nil {
 			ctx.Log().Error(err)
 		}
@@ -481,20 +481,22 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 	// metrics, the Experiment will respond with whether or not we should take a checkpoint.
 	experimentFuture := ctx.Ask(ctx.Self().Parent(), msg)
 
-	if msg.ExitedReason == nil {
-		if err := t.sequencer.WorkloadCompleted(msg, experimentFuture); err != nil {
-			return errors.Wrap(err, "Error passing CompletedMessage to sequencer")
-		}
+	if err := t.sequencer.WorkloadCompleted(msg, experimentFuture); err != nil {
+		return errors.Wrap(err, "Error passing CompletedMessage to sequencer")
 	}
 
 	// Decide what to do next.
 	terminateNow := false
+	if msg.ExitedReason != nil {
+		ctx.Log().Info("exiting trial early")
+		t.earlyExit = true
+		if *msg.ExitedReason == searcher.Errored {
+			return nil
+		}
+	}
 	var w searcher.Workload
 	var err error
 	switch {
-	case msg.ExitedReason != nil:
-		ctx.Log().Info("exiting trial early")
-		t.earlyExit = true
 	// We have another workload to run.
 	case !t.pendingGracefulTermination && !t.sequencer.UpToDate():
 		w, err = t.sequencer.Workload()
@@ -520,7 +522,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 	}
 
 	// Command the trial runner to do the thing we decided on (if this is not a replay).
-	if !t.replaying && !t.earlyExit {
+	if !t.replaying {
 		var msg interface{}
 		if terminateNow {
 			w = *t.sequencer.TerminateWorkload()

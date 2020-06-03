@@ -15,11 +15,11 @@ type CompletedMessage struct {
 	Workload          Workload        `json:"workload"`
 	StartTime         time.Time       `json:"start_time"`
 	EndTime           time.Time       `json:"end_time"`
+	ExitedReason      *ExitedReason   `json:"exited_reason"`
 	RawMetrics        json.RawMessage `json:"metrics,omitempty"`
 	CheckpointMetrics *CheckpointMetrics
 	ValidationMetrics *ValidationMetrics
 	RunMetrics        map[string]interface{}
-	ExitedReason      *ExitedReason
 }
 
 // UnmarshalJSON unmarshals the provided bytes into a workload.CompletedMessage. An error is
@@ -82,4 +82,6 @@ type ExitedReason string
 const (
 	// Errored signals the searcher that the workload errored out.
 	Errored ExitedReason = "ERRORED"
+	// UserCanceled signals the searcher that the user requested a cancelation.
+	UserCanceled ExitedReason = "USER_CANCELED"
 )
