@@ -185,4 +185,7 @@ export enum TBSourceType {
   Experiment
 }
 
-export type WithCommonProps<T> = T & {className?: string; children?: React.ReactNode};
+export type CommonProps = {
+  className?: string;
+  children?: React.ReactNode;
+}
