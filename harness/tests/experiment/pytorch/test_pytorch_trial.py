@@ -415,9 +415,9 @@ class TestPyTorchTrial:
         )
         controller.run()
 
-        updated_hparams = {"clip_grad_l2_norm": 0.0001, **self.hparams}
+        updated_hparams = {"gradient_clipping_l2_norm": 0.0001, **self.hparams}
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialMulti,
+            trial_class=pytorch_xor_model.XORTrialGradClipping,
             hparams=updated_hparams,
             workloads=make_workloads("clipped_by_norm"),
             trial_seed=self.trial_seed,
@@ -431,9 +431,9 @@ class TestPyTorchTrial:
                 continue
             assert original["loss"] != clipped["loss"]
 
-        updated_hparams = {"clip_grad_val": 0.0001, **self.hparams}
+        updated_hparams = {"gradient_clipping_value": 0.0001, **self.hparams}
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialMulti,
+            trial_class=pytorch_xor_model.XORTrialGradClipping,
             hparams=updated_hparams,
             workloads=make_workloads("clipped_by_val"),
             trial_seed=self.trial_seed,

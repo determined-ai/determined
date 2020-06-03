@@ -288,24 +288,6 @@ class PyTorchTrialController(det.LoopTrialController):
         for p in filter(lambda param: param.grad is not None, parameters):
             p.grad.data.div_(divisor_value)
 
-    def _clip_grads(self, parameters: Any) -> None:
-        # TODO: Support clip by norm other than L2.
-        clip_grad_l2_norm = self.env.hparams.get("clip_grad_l2_norm", None)
-        clip_by_val = self.env.hparams.get("clip_grad_val", None)
-        check.false(
-            clip_grad_l2_norm is not None and clip_by_val is not None,
-            "Please specify either `clip_grad_l2_norm` or `clip_by_val` "
-            "in your hparams, not both.",
-        )
-        if clip_grad_l2_norm is not None:
-            logging.debug(f"Clipping gradients by L2 norm of: {clip_grad_l2_norm}.")
-            torch.nn.utils.clip_grad_norm_(parameters, clip_grad_l2_norm)  # type: ignore
-        elif clip_by_val is not None:
-            logging.debug(f"Clipping gradients by value of: {clip_by_val}.")
-            torch.nn.utils.clip_grad_value_(parameters, clip_by_val)  # type: ignore
-        else:
-            logging.debug("No gradient clipping enabled.")
-
     def _average_training_metrics(
         self, per_batch_metrics: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
@@ -416,7 +398,15 @@ class PyTorchTrialController(det.LoopTrialController):
                         parameters=parameters, divisor=self.hvd_config.aggregation_frequency
                     )
 
-                self._clip_grads(parameters)
+                # TODO: Remove this check in v0.12.8.
+                check.false(
+                    self.env.hparams.get("clip_grad_l2_norm", None)
+                    or self.env.hparams.get("clip_grad_val", None),
+                    "Please specify gradient clipping via callbacks.",
+                )
+
+                for callback in self.callbacks.values():
+                    callback.on_before_optimizer_step(parameters)
 
                 if self.hvd_config.use:
                     with self.context.optimizer.skip_synchronize():

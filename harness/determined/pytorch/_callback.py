@@ -1,4 +1,6 @@
-from typing import Any, Dict
+from typing import Any, Dict, Iterator
+
+import torch
 
 
 class PyTorchCallback:
@@ -39,6 +41,14 @@ class PyTorchCallback:
         """
         pass
 
+    def on_before_optimizer_step(self, parameters: Iterator) -> None:
+        """
+        Run before every before `optimizer.step()`.  For multi-GPU training, executes
+        after gradient updates have been communicated. Typically used to perform gradient
+        clipping.
+        """
+        pass
+
     def on_validation_step_start(self) -> None:
         """
         Run before every validation step begins.
@@ -75,3 +85,29 @@ class PyTorchCallback:
         Load the state of this using the deserialized ``state_dict``.
         """
         pass
+
+
+class ClipGradsL2Norm(PyTorchCallback):
+    """
+    Callback that performs gradient clipping using
+    `L2 Norm <https://pytorch.org/docs/stable/nn.html#clip-grad-norm>`_.
+    """
+
+    def __init__(self, clip_value: float) -> None:
+        self._clip_value = clip_value
+
+    def on_before_optimizer_step(self, parameters: Iterator) -> None:
+        torch.nn.utils.clip_grad_norm_(parameters, self._clip_value)  # type: ignore
+
+
+class ClipGradsL2Value(PyTorchCallback):
+    """
+    Callback that performs gradient clipping using
+    `L2 Value <https://pytorch.org/docs/stable/nn.html#clip-grad-value>`_.
+    """
+
+    def __init__(self, clip_value: float) -> None:
+        self._clip_value = clip_value
+
+    def on_before_optimizer_step(self, parameters: Iterator) -> None:
+        torch.nn.utils.clip_grad_value_(parameters, self._clip_value)  # type: ignore

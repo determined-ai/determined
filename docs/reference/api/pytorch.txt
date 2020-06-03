@@ -132,6 +132,18 @@ Then, implement the ``build_callbacks`` function in ``PyTorchTrial``:
     def build_callbacks(self):
         return {"reduce_lr": ReduceLROnPlateauEveryValidationStep(self.context)}
 
+
+``Gradient Clipping``
+^^^^^^^^^^^^^^^^^^^^^
+
+To perform gradient clipping Determined provides two pre-made callback classes:
+
+.. autoclass:: determined.pytorch.ClipGradsL2Norm
+    :members:
+
+.. autoclass:: determined.pytorch.ClipGradsL2Value
+    :members:
+
 Examples
 --------
 
