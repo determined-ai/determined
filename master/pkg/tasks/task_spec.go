@@ -20,7 +20,6 @@ type TaskSpec struct {
 	Devices               []device.Device                   `json:"devices"`
 	HarnessPath           string                            `json:"harness_path"`
 	TaskContainerDefaults model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
-	Recoverable           bool                              `json:"recoverable"`
 
 	StartCommand   *StartCommand   `union:"type,START_TASK" json:"-"`
 	StartContainer *StartContainer `union:"type,START_CONTAINER" json:"-"`

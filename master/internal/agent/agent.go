@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"sort"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/google/uuid"
@@ -129,29 +128,12 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 		ctx.Tell(a.cluster, scheduler.AddAgent{Agent: ctx.Self(), Label: msg.AgentStarted.Label})
 		ctx.Tell(a.slots, *msg.AgentStarted)
 		a.label = msg.AgentStarted.Label
-		for _, c := range msg.AgentStarted.RecoveredContainers {
-			ctx.Log().Infof("attempting to recover container master state: %s", c.Container.ID)
-			if ref := ctx.Self().System().Get(c.Container.Parent); ref != nil {
-				a.containers[c.Container.ID] = ref
-				ctx.Tell(ref, c)
-			} else {
-				kill := aproto.AgentMessage{SignalContainer: &aproto.SignalContainer{
-					ContainerID: c.Container.ID,
-					Signal:      syscall.SIGKILL,
-				}}
-				ctx.Ask(a.socket, ws.WriteMessage{Message: kill})
-			}
-		}
 	case msg.ContainerStateChanged != nil:
 		a.containerStateChanged(ctx, *msg.ContainerStateChanged)
 	case msg.ContainerLog != nil:
 		ref, ok := a.containers[msg.ContainerLog.Container.ID]
-		if !ok {
-			// We may get logs back for containers that were recovered but the task might already
-			// be dead so we ignore the logs.
-			break
-		}
-
+		check.Panic(check.True(ok,
+			"container not assigned to agent: container %s", msg.ContainerLog.Container.ID))
 		ctx.Tell(ref, scheduler.ContainerLog{
 			Container:   msg.ContainerLog.Container,
 			Timestamp:   msg.ContainerLog.Timestamp,
@@ -166,12 +148,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 
 func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerStateChanged) {
 	task, ok := a.containers[sc.Container.ID]
-	if !ok {
-		ctx.Log().Warnf(
-			"container transitioning to %s not assigned to agent: container %s",
-			sc.Container.State, sc.Container.ID)
-		return
-	}
+	check.Panic(check.True(ok, "container not assigned to agent: container %s", sc.Container.ID))
 	switch sc.Container.State {
 	case container.Running:
 		if sc.ContainerStarted.ProxyAddress == "" {
@@ -182,14 +159,6 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 	}
 	ctx.Tell(task, sc)
 	ctx.Tell(a.slots, sc)
-	// If a container stopped due to a failed agent, do not tell the cluster as it may come back
-	// at a later time. This is to ensure the proxy does not remove the reference to the container.
-	// Moving the proxy actor out of the scheduler should fix this issue.
-	if sc.ContainerStopped != nil &&
-		sc.ContainerStopped.Failure != nil &&
-		sc.ContainerStopped.Failure.FailureType == aproto.AgentFailed {
-		return
-	}
 	ctx.Tell(a.cluster, sc)
 }
 

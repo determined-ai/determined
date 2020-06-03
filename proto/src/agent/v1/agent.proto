@@ -58,8 +58,6 @@ message Container {
     State state = 3;
     // A list of devices that is being used by this container.
     repeated Device devices = 4;
-    // Denotes if this container can be recovered after an agent failure.
-    bool recoverable = 5;
 }
 
 // Device represents a single computational device on an agent.

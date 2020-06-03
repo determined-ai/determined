@@ -31,9 +31,6 @@ type dockerActor struct {
 }
 
 type (
-	recoverContainer struct {
-		dockerID string
-	}
 	signalContainer struct {
 		dockerID string
 		signal   syscall.Signal
@@ -80,9 +77,6 @@ func (d *dockerActor) Receive(ctx *actor.Context) error {
 
 	case signalContainer:
 		go d.signalContainer(ctx, msg)
-
-	case recoverContainer:
-		go d.recoverContainer(ctx, msg)
 
 	case actor.PostStop:
 	}
@@ -264,46 +258,6 @@ func (d *dockerActor) signalContainer(ctx *actor.Context, msg signalContainer) {
 	if err != nil {
 		sendErr(ctx, errors.Wrap(err, "error while killing container"))
 		return
-	}
-}
-
-func (d *dockerActor) recoverContainer(ctx *actor.Context, msg recoverContainer) {
-	exit, eerr := d.ContainerWait(
-		context.Background(), msg.dockerID, dcontainer.WaitConditionNextExit)
-	logs, err := d.ContainerLogs(
-		context.Background(),
-		msg.dockerID,
-		types.ContainerLogsOptions{
-			ShowStdout: true,
-			ShowStderr: true,
-			Since:      "",
-			Timestamps: true,
-			Follow:     true,
-			Tail:       "all",
-			Details:    true,
-		},
-	)
-	if err != nil {
-		sendErr(ctx, errors.Wrap(err, "error grabbing container logs"))
-		return
-	}
-
-	stdout := demultiplexer{ctx: ctx, stdType: stdcopy.Stdout}
-	stderr := demultiplexer{ctx: ctx, stdType: stdcopy.Stderr}
-	if _, err = stdcopy.StdCopy(stdout, stderr, logs); err != nil {
-		sendErr(ctx, errors.Wrap(err, "error scanning logs"))
-		return
-	}
-	if err = logs.Close(); err != nil {
-		sendErr(ctx, errors.Wrap(err, "error closing log stream"))
-		return
-	}
-
-	select {
-	case err = <-eerr:
-		sendErr(ctx, errors.Wrap(err, "error while waiting for container to exit"))
-	case exit := <-exit:
-		ctx.Tell(ctx.Sender(), containerTerminated{ExitCode: exit.StatusCode})
 	}
 }
 

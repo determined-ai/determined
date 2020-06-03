@@ -44,11 +44,10 @@ func toProtoContainer(c container.Container) *proto.Container {
 		devices = append(devices, toProtoDevice(d))
 	}
 	return &proto.Container{
-		Parent:      c.Parent.String(),
-		Id:          c.ID.String(),
-		State:       toProtoContainerState(c.State),
-		Devices:     devices,
-		Recoverable: c.Recoverable,
+		Parent:  c.Parent.String(),
+		Id:      c.ID.String(),
+		State:   toProtoContainerState(c.State),
+		Devices: devices,
 	}
 }
 

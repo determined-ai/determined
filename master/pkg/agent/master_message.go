@@ -34,16 +34,9 @@ type MasterMessage struct {
 
 // AgentStarted notifies the master that the agent has started up.
 type AgentStarted struct {
-	Version             string
-	Label               string
-	Devices             []device.Device
-	RecoveredContainers []ContainerRecovered
-}
-
-// ContainerRecovered notifies the task that the agent recovered a container on startup.
-type ContainerRecovered struct {
-	Container        container.Container
-	ContainerStarted ContainerStarted
+	Version string
+	Label   string
+	Devices []device.Device
 }
 
 // ContainerStateChanged notifies the master that the agent transitioned the container state.

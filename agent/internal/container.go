@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"net/http"
 	"syscall"
 
@@ -32,26 +31,13 @@ func newContainerActor(msg aproto.StartContainer, client *client.Client) actor.A
 	return &containerActor{Container: msg.Container, spec: &msg.Spec, client: client}
 }
 
-func recoverContainerActor(
-	c cproto.Container, info types.ContainerJSON, client *client.Client,
-) actor.Actor {
-	return &containerActor{Container: c, containerInfo: &info, client: client}
-}
-
 func (c *containerActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		c.docker, _ = ctx.ActorOf("docker", &dockerActor{Client: c.client})
-		switch c.State {
-		case cproto.Assigned:
-			c.transition(ctx, cproto.Pulling)
-			pull := pullImage{PullSpec: c.spec.PullSpec, Name: c.spec.RunSpec.ContainerConfig.Image}
-			ctx.Tell(c.docker, pull)
-		case cproto.Running:
-			ctx.Tell(c.docker, recoverContainer{dockerID: c.containerInfo.ID})
-		default:
-			panic(fmt.Sprintf("container in an unexpected state: %s", c.State))
-		}
+		c.transition(ctx, cproto.Pulling)
+		pull := pullImage{PullSpec: c.spec.PullSpec, Name: c.spec.RunSpec.ContainerConfig.Image}
+		ctx.Tell(c.docker, pull)
 
 	case getContainerSummary:
 		ctx.Respond(c.Container)
