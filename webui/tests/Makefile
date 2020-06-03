@@ -19,11 +19,11 @@ test:
 
 .PHONY: check
 check:
-	yarn run lint
+	npm run lint
 
 .PHONY: fmt
 fmt:
-	yarn run lint --fix
+	npm run lint --fix
 
 .PHONY: dev-tests
 dev-tests:
