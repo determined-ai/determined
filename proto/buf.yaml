@@ -1,6 +1,6 @@
 build:
   roots:
-    - proto
+    - src
 
 lint:
   use:

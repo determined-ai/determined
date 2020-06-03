@@ -11,7 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
-	proto "github.com/determined-ai/determined/master/pkg/proto/apiv1"
+	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 // Initialize creates a new global agent actor.

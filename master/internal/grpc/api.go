@@ -15,7 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 
-	proto "github.com/determined-ai/determined/master/pkg/proto/apiv1"
+	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 const jsonPretty = "application/json+pretty"

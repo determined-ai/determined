@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/determined-ai/determined/master/pkg/proto/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 func (a *apiServer) GetAgents(

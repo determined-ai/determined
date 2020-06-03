@@ -5,7 +5,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
-	proto "github.com/determined-ai/determined/master/pkg/proto/agentv1"
+	proto "github.com/determined-ai/determined/proto/pkg/agentv1"
 )
 
 func toProtoAgent(a agentSummary) *proto.Agent {

@@ -18,8 +18,8 @@ import (
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/container"
-	"github.com/determined-ai/determined/master/pkg/proto/agentv1"
-	proto "github.com/determined-ai/determined/master/pkg/proto/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/agentv1"
+	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 type agent struct {

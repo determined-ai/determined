@@ -120,6 +120,7 @@ commands:
       - restore_cache:
           keys:
             - det-go-deps-v1dev6-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}
+      - run: make -C proto get-deps
       - run: make -C master get-deps
       - run: make -C agent get-deps
       - save_cache:
@@ -496,6 +497,7 @@ jobs:
           at: .
       - go-get-deps
       - setup_remote_docker
+      - run: make -C proto build
       - run: make package
       - run: mkdir -p build/
       - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
@@ -520,6 +522,7 @@ jobs:
           at: .
       - go-get-deps
       - setup_remote_docker
+      - run: make -C proto build
       - run: make package
       - login-docker
       - run: make -C master publish-dev
@@ -536,6 +539,7 @@ jobs:
           at: .
       - go-get-deps
       - setup_remote_docker
+      - run: make -C proto build
       - run: make package
       - login-docker
       - run: make -C master publish
@@ -553,6 +557,7 @@ jobs:
       - go-get-deps
       - setup_remote_docker
       - login-docker
+      - run: make -C proto build
       - run: make -C master release
       - run: make -C agent release
 
@@ -694,6 +699,8 @@ jobs:
     steps:
       - checkout
       - go-get-deps
+      - run: make -C proto build
+      - run: make -C proto check
       - run: make -C master check
       - run: make -C agent check
 
@@ -705,6 +712,7 @@ jobs:
     steps:
       - checkout
       - go-get-deps
+      - run: make -C proto build
       - run: make -C master build
       - run: make -C agent build
       - persist_to_workspace:
@@ -721,6 +729,7 @@ jobs:
     steps:
       - checkout
       - go-get-deps
+      - run: make -C proto build
       - run: make -C master test
       - run: make -C agent test
 
