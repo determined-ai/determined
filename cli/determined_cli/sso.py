@@ -45,36 +45,30 @@ def make_handler(master_url: str, close_cb: Callable[[int], None]) -> Any:
 
 
 def sso(parsed_args: Namespace) -> None:
-    if not parsed_args.provider:
-        print("Provider must be specified.")
-        sys.exit(1)
-
     master_info = api.get(parsed_args.master, "info", authenticated=False).json()
-
-    sso_providers = master_info["sso_providers"]
+    sso_providers = master_info.get("sso_providers", None)
     if not sso_providers:
         print("No SSO providers found.")
         return
+    elif not parsed_args.provider:
+        if len(sso_providers) > 1:
+            print("Provider must be specified when multiple are available.")
+            return
+        matched_provider = sso_providers[0]
+    else:
+        matching_providers = [
+            p for p in sso_providers if p["name"].lower() == parsed_args.provider.lower()
+        ]
+        if not matching_providers:
+            ps = ", ".join(p["name"].lower() for p in sso_providers)
+            print("Provider {} unsupported. (Providers found: {})".format(parsed_args.provider, ps))
+            return
+        elif len(matching_providers) > 1:
+            print("Multiple SSO providers found with name {}.".format(parsed_args.provider))
+            return
+        matched_provider = matching_providers[0]
 
-    requested_providers = [
-        p for p in sso_providers if p["name"].lower() == parsed_args.provider.lower()
-    ]
-
-    if not requested_providers:
-        print(
-            "Provider {} unsupported. (Providers found: {})".format(
-                parsed_args.provider, ", ".join(sso_providers)
-            )
-        )
-        return
-
-    if len(requested_providers) > 1:
-        print("Multiple SSO providers found with name {}.".format(parsed_args.provider))
-        return
-
-    requested_provider = requested_providers[0]
-    sso_url = requested_provider["sso_url"] + "?relayState=cli%3Dtrue"
-
+    sso_url = matched_provider["sso_url"] + "?relayState=cli%3Dtrue"
     webbrowser.open(sso_url)
     print(
         "Your browser should open and prompt you to sign on;"
@@ -104,7 +98,9 @@ def list_providers(parsed_args: Namespace) -> None:
 args_description = [
     Cmd("auth", None, "manage auth", [
         Cmd("login", sso, "sign on with an auth provider", [
-            Arg("provider", default=None, type=str, help="auth provider to use")
+            Arg("-p", "--provider", type=str,
+                help="auth provider to use (not needed if the Determined master only supports"
+                " one provider)")
         ]),
         Cmd("list-providers", list_providers, "lists the available auth providers", []),
     ])
