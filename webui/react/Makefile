@@ -13,8 +13,12 @@ build-storybook:
 	npm run build-storybook
 
 .PHONY: clean
-clean:
-	rm -rf build node_modules/
+clean: clean-deps
+	rm -rf build build-storybook
+
+.PHONY: clean-deps
+clean-deps:
+	rm -rf node_modules/
 
 .PHONY: live
 live:
