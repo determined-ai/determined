@@ -368,6 +368,12 @@ def test_log_null_bytes() -> None:
     assert len(logs) > 0
 
 
+@pytest.mark.e2e_cpu  # type: ignore
+def test_graceful_trial_termination() -> None:
+    config_obj = conf.load_config(conf.fixtures_path("no_op/grid-graceful-trial-termination.yaml"))
+    experiment_id = exp.run_basic_test_with_temp_config(config_obj, conf.fixtures_path("no_op"), 2)
+
+
 @pytest.mark.e2e_gpu  # type: ignore
 def test_s3_no_creds(secrets: Dict[str, str]) -> None:
     pytest.skip("Temporarily skipping this until we find a more secure way of testing this.")

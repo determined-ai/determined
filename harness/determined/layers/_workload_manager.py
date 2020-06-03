@@ -3,7 +3,7 @@ import math
 import pathlib
 import sys
 from datetime import datetime, timezone
-from typing import List, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 import determined as det
 from determined import tensorboard, workload
@@ -119,14 +119,17 @@ class _TrialWorkloadManager(WorkloadManager):
                 callback.on_trial_begin()
             callback.on_train_step_begin(wkld.step_id)
 
-        def _respond(metrics: workload.Response) -> None:
+        def _respond(in_response: workload.Response) -> None:
 
             # Only the chief container should actually respond to TRAIN_FOR_STEP.
             if self.rendezvous_info.get_rank() != 0:
                 respond(workload.Skipped())
                 return
 
-            check_not_isinstance(metrics, workload.Skipped, "Chief skipped a workload.")
+            check_not_isinstance(in_response, workload.Skipped, "Chief skipped a workload.")
+
+            in_response = cast(workload.Metrics, in_response)
+            metrics = in_response["metrics"]
             metrics = cast(workload.Metrics, metrics)
 
             batch_metrics = metrics["batch_metrics"]
@@ -140,16 +143,19 @@ class _TrialWorkloadManager(WorkloadManager):
 
             self.tensorboard_mgr.sync()
 
+            out_response = {
+                "type": "WORKLOAD_COMPLETED",
+                "workload": wkld,
+                "start_time": start_time,
+                "end_time": _current_timestamp(),
+                "metrics": metrics,
+            }
+
+            if in_response.get("stop_requested", False):
+                out_response["exited_reason"] = "USER_CANCELED"
+
             # Send the response up.
-            respond(
-                {
-                    "type": "WORKLOAD_COMPLETED",
-                    "workload": wkld,
-                    "start_time": start_time,
-                    "end_time": _current_timestamp(),
-                    "metrics": metrics,
-                }
-            )
+            respond(out_response)
 
         num_batches = self.env.experiment_config.get("batches_per_step", 100)
         yield wkld, [num_batches], _respond
@@ -159,14 +165,16 @@ class _TrialWorkloadManager(WorkloadManager):
     ) -> workload.Stream:
         start_time = _current_timestamp()
 
-        def _respond(metrics: workload.Response) -> None:
+        def _respond(in_response: workload.Response) -> None:
 
             # Only the chief container should actually respond to COMPUTE_VALIDATION_METRICS.
             if self.rendezvous_info.get_rank() != 0:
                 respond(workload.Skipped())
                 return
 
-            check_not_isinstance(metrics, workload.Skipped, "Chief skipped a workload.")
+            check_not_isinstance(in_response, workload.Skipped, "Chief skipped a workload.")
+            in_response = cast(Dict[str, Any], in_response)
+            metrics = in_response["metrics"]
             metrics = cast(workload.Metrics, metrics)
 
             v_metrics = metrics["validation_metrics"]
@@ -235,15 +243,18 @@ class _TrialWorkloadManager(WorkloadManager):
                 for metric_name in non_serializable_metrics:
                     del v_metrics[metric_name]
 
-            respond(
-                {
-                    "type": "WORKLOAD_COMPLETED",
-                    "workload": wkld,
-                    "start_time": start_time,
-                    "end_time": _current_timestamp(),
-                    "metrics": metrics,
-                }
-            )
+            out_response = {
+                "type": "WORKLOAD_COMPLETED",
+                "workload": wkld,
+                "start_time": start_time,
+                "end_time": _current_timestamp(),
+                "metrics": metrics,
+            }
+
+            if in_response.get("stop_requested", False):
+                out_response["exited_reason"] = "USER_CANCELED"
+
+            respond(out_response)
 
         for callback in self.callbacks:
             callback.on_validation_step_begin(wkld.step_id)

@@ -16,6 +16,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
         self.env = env  # type: det.EnvContext
         self.hvd_config = hvd_config  # type: horovod.HorovodContext
         self.distributed = DistributedContext(env, hvd_config)
+        self._stop_requested = False
 
     def get_experiment_config(self) -> Dict[str, Any]:
         """
@@ -81,6 +82,19 @@ class _TrainContext(metaclass=abc.ABCMeta):
                 "`global_batch_size` directly."
             )
         return self.env.hparams[name]
+
+    def get_stop_requested(self) -> bool:
+        """
+        Return whether a trial stoppage has been requested.
+        """
+        return self._stop_requested
+
+    def set_stop_requested(self, stop_requested: bool) -> None:
+        """
+        Set a flag to request a trial stoppage.
+        """
+        assert isinstance(stop_requested, bool)
+        self._stop_requested = stop_requested
 
 
 class TrialContext(_TrainContext):
