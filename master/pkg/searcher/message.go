@@ -82,5 +82,6 @@ type ExitedReason string
 const (
 	// Errored signals the searcher that the workload errored out.
 	Errored ExitedReason = "ERRORED"
-	UserCancelled ExitedReason = "USER_CANCELLED"
+	// UserCanceled signals the searcher that the user requested a cancelation.
+	UserCanceled ExitedReason = "USER_CANCELED"
 )

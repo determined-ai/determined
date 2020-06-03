@@ -126,7 +126,7 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 		s.curStepDone = stepInfo{}
 		if msg.ExitedReason != nil {
 			s.steps = s.steps[:msg.Workload.StepID+1]
-			if *msg.ExitedReason == searcher.UserCancelled {
+			if *msg.ExitedReason == searcher.UserCanceled {
 				s.steps[msg.Workload.StepID].hasCheckpoint = true
 			}
 		} else {

@@ -470,7 +470,7 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.Assigned) erro
 }
 
 func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.CompletedMessage) error {
-	if !t.replaying && (msg.ExitedReason == nil || *msg.ExitedReason != searcher.Errored) {
+	if !t.replaying && (msg.ExitedReason == nil || *msg.ExitedReason == searcher.UserCanceled) {
 		if err := markWorkloadCompleted(t.db, msg); err != nil {
 			ctx.Log().Error(err)
 		}
