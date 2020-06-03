@@ -51,7 +51,7 @@ WHERE name=$1`, name)
 		return errors.Wrapf(err2, "error deleting template '%v'", name)
 	}
 	if num != 1 {
-		return errors.WithStack(ErrNotFound)
+		return ErrNotFound
 	}
 	return nil
 }

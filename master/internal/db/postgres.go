@@ -1785,7 +1785,7 @@ func (db *PgDB) Query(queryName string, v interface{}, args ...interface{}) erro
 		if rows.Next() {
 			return rows.StructScan(v)
 		}
-		return errors.Errorf("record not found")
+		return ErrNotFound
 	default:
 		panic(fmt.Sprintf("unsupported query type: %s", kind))
 	}

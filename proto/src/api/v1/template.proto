@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "template/v1/template.proto";
+
+// Get a list of templates.
+message GetTemplatesRequest {
+    // Order templates in either ascending or descending order.
+    enum OrderBy {
+        // Returns templates in no specific order.
+        ORDER_BY_UNSPECIFIED = 0;
+        // Returns templates in ascending order.
+        ORDER_BY_ASC = 1;
+        // Returns templates in descending order.
+        ORDER_BY_DESC = 2;
+    }
+    // Order templates in either ascending or descending order.
+    OrderBy order_by = 1;
+}
+// Response to GetTemplatesRequest.
+message GetTemplatesResponse {
+    // the list of requested templates.
+    repeated template.v1.Template templates = 1;
+}
+
+// Get the requested template.
+message GetTemplateRequest {
+    // The id of the template.
+    string template_name = 1;
+}
+// Response to GetTemplateRequest.
+message GetTemplateResponse {
+    // The requested template.
+    template.v1.Template template = 1;
+}
+
+// Update the requested template. If one does not exist, a new template is created
+message PutTemplateRequest {
+    // The template to put.
+    template.v1.Template template = 2;
+}
+// Response to PutTemplateRequest.
+message PutTemplateResponse {
+    // The updated or created template.
+    template.v1.Template template = 1;
+}
+
+// Delete the template with the given id.
+message DeleteTemplateRequest {
+    // The id of the template.
+    string template_name = 1;
+}
+// Response to DeleteTemplateRequest.
+message DeleteTemplateResponse {}

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package template.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/templatev1";
+
+import "google/protobuf/struct.proto";
+
+// Templates move settings that are shared by many experiments into a single YAML file.
+message Template {
+    // The name of the template.
+    string name = 1;
+    // The template value.
+    google.protobuf.Struct config = 4;
+}
