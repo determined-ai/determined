@@ -211,3 +211,24 @@ class XORTrialWithCustomHook(XORTrial):
             ),
             hooks=[CustomHook()],
         )
+
+
+class CustomEndOfTrainingHook(estimator.RunHook):
+    def __init__(self, path: str) -> None:
+        self._path = path
+
+    def on_trial_close(self) -> None:
+        with open(self._path, "w") as fp:
+            fp.write("success")
+
+
+class XORTrialEndOfTrainingHook(XORTrial):
+    def build_train_spec(self) -> tf.estimator.TrainSpec:
+        return tf.estimator.TrainSpec(
+            xor_input_fn(
+                context=self.context,
+                batch_size=self.context.get_per_slot_batch_size(),
+                shuffle=self.context.get_hparam("shuffle"),
+            ),
+            hooks=[CustomEndOfTrainingHook(self.context.get_hparam("training_end"))],
+        )

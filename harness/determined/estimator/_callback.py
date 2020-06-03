@@ -28,3 +28,14 @@ class RunHook(tf.estimator.SessionRunHook):  # type: ignore
             only on the chief GPU (rank = 0) which performs the checkpoint.
         """
         pass
+
+    def on_trial_close(self) -> None:
+        """
+        Run when the trial close. This is the place users should execute
+        post-trial cleanup.
+
+        .. note:
+            This callback will execute every time trial stops and when
+            it finishes.
+        """
+        pass
