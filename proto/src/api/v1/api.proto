@@ -4,6 +4,7 @@ package api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "api/v1/agent.proto";
+import "api/v1/master.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
@@ -16,6 +17,9 @@ option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
 
 // Determined is the official v1 of the Determined API.
 service Determined {
+    // Get master information.
+    rpc GetMaster(GetMasterRequest) returns (GetMasterResponse) { option (google.api.http) = {get: "/api/v1/master"}; }
+
     // Get a set of agents from the cluster
     rpc GetAgents(GetAgentsRequest) returns (GetAgentsResponse) { option (google.api.http) = {get: "/api/v1/agents"}; }
     // Get the requested agent.
