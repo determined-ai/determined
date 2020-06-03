@@ -228,7 +228,6 @@ def get_checkpoint(uuid: str, master: str) -> Checkpoint:
 
 
 def from_json(data: Dict[str, Any], master: Optional[str] = None) -> Checkpoint:
-    # __import__("pprint").pprint(data)
     validation = {
         "metrics": data.get("metrics", {}),
         "state": data.get("validation_state", None),
