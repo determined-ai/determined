@@ -497,6 +497,7 @@ jobs:
           at: .
       - go-get-deps
       - setup_remote_docker
+      - run: make -C proto build
       - run: make package
       - run: mkdir -p build/
       - run: docker save -o build/master.image determinedai/determined-master:${CIRCLE_SHA1}
@@ -521,9 +522,9 @@ jobs:
           at: .
       - go-get-deps
       - setup_remote_docker
+      - run: make -C proto build
       - run: make package
       - login-docker
-      - run: make -C proto build
       - run: make -C master publish-dev
       - run: make -C agent publish-dev
 
@@ -538,9 +539,9 @@ jobs:
           at: .
       - go-get-deps
       - setup_remote_docker
+      - run: make -C proto build
       - run: make package
       - login-docker
-      - run: make -C proto build
       - run: make -C master publish
       - run: make -C agent publish
 
