@@ -1,4 +1,4 @@
-import { Button, notification, Space } from 'antd';
+import { Button, notification, Space, Tooltip } from 'antd';
 import React, {
   forwardRef, useCallback, useImperativeHandle,
   useLayoutEffect, useMemo, useRef, useState,
@@ -220,8 +220,18 @@ const LogViewer: React.FC<Props> = forwardRef((
 
   const logOptions = (
     <Space>
-      <Button icon={<Icon name="clipboard" />} onClick={handleCopyToClipboard} />
-      <Button icon={<Icon name="fullscreen" />} onClick={handleFullScreen} />
+      <Tooltip placement="bottomRight" title="Copy to Clipboard">
+        <Button
+          aria-label="Copy to Clipboard"
+          icon={<Icon name="clipboard" />}
+          onClick={handleCopyToClipboard} />
+      </Tooltip>
+      <Tooltip placement="bottomRight" title="Toggle Fullscreen Mode">
+        <Button
+          aria-label="Toggle Fullscreen Mode"
+          icon={<Icon name="fullscreen" />}
+          onClick={handleFullScreen} />
+      </Tooltip>
     </Space>
   );
 
