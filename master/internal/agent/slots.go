@@ -11,7 +11,6 @@ import (
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/container"
-	"github.com/determined-ai/determined/master/pkg/device"
 )
 
 type slots struct {
@@ -30,8 +29,7 @@ func (s *slots) Receive(ctx *actor.Context) error {
 				agentEnabled: true,
 				userEnabled:  true,
 			}
-			c := containerForDevice(d, msg.RecoveredContainers)
-			s := &slot{cluster: s.cluster, enabled: enabled, device: d, container: c}
+			s := &slot{cluster: s.cluster, enabled: enabled, device: d}
 			_, ok := ctx.ActorOf(d.ID, s)
 			check.Panic(check.True(ok, "error registering slot, slot %s already created", d.ID))
 		}
@@ -84,16 +82,4 @@ func (s *slots) sendToSlots(ctx *actor.Context, c container.Container, msg actor
 	for _, d := range c.Devices {
 		ctx.Tell(ctx.Child(d.ID), msg)
 	}
-}
-
-func containerForDevice(
-	target device.Device, rcs []aproto.ContainerRecovered) *container.Container {
-	for _, rc := range rcs {
-		for _, d := range rc.Container.Devices {
-			if d == target {
-				return &rc.Container
-			}
-		}
-	}
-	return nil
 }

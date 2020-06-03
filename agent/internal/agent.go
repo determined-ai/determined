@@ -251,10 +251,8 @@ func (a *agent) connectToMaster(ctx *actor.Context) error {
 
 	a.socket, _ = ctx.ActorOf("socket", api.WrapSocket(conn, proto.AgentMessage{}, true))
 
-	containers := ctx.Ask(a.cm, recoverContainers{}).Get().([]proto.ContainerRecovered)
-
 	started := proto.MasterMessage{AgentStarted: &proto.AgentStarted{
-		Version: a.Version, Devices: a.Devices, Label: a.Label, RecoveredContainers: containers}}
+		Version: a.Version, Devices: a.Devices, Label: a.Label}}
 	ctx.Ask(a.socket, api.WriteMessage{Message: started})
 	return nil
 }
