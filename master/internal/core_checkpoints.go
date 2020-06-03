@@ -55,7 +55,7 @@ func (m *Master) addCheckpointMetadata(c echo.Context) (interface{}, error) {
 		Metadata map[string]interface{} `json:"metadata"`
 	}{}
 
-	if err := c.Bind(&args); err != nil {
+	if err = c.Bind(&args); err != nil {
 		return nil, err
 	}
 
@@ -84,7 +84,7 @@ func (m *Master) deleteCheckpointMetadata(c echo.Context) (interface{}, error) {
 		Keys []string `query:"keys"`
 	}{}
 
-	if err := c.Bind(&args); err != nil {
+	if err = c.Bind(&args); err != nil {
 		return nil, err
 	}
 

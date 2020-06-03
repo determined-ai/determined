@@ -267,7 +267,7 @@ class _TrialWorkloadManager(WorkloadManager):
             logging.info("Saved trial to checkpoint {}".format(metadata.storage_id))
             self.tensorboard_mgr.sync()
 
-            metadata.labels = {
+            metadata.metadata = {
                 "experiment_id": str(wkld.experiment_id),
                 "trial_id": str(wkld.trial_id),
                 "step_id": str(wkld.step_id),

@@ -1644,6 +1644,8 @@ WHERE id = :id`, setClause(toUpdate)), checkpoint)
 	return nil
 }
 
+// UpdateCheckpointMetadata updates an existing checkpoint with the metadata
+// attached to the checkpoint passed into the method.
 func (db *PgDB) UpdateCheckpointMetadata(checkpoint *model.Checkpoint) error {
 	if checkpoint == nil {
 		return errors.Errorf("checkpoint cannot be nil does not exist")
