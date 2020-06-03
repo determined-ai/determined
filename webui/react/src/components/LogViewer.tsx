@@ -7,7 +7,6 @@ import screenfull from 'screenfull';
 
 import Icon from 'components/Icon';
 import Section from 'components/Section';
-import Navigation from 'contexts/Navigation';
 import useScroll from 'hooks/useScroll';
 import { Log } from 'types';
 import { ansiToHtml, toRem } from 'utils/dom';
@@ -15,7 +14,6 @@ import { ansiToHtml, toRem } from 'utils/dom';
 import css from './LogViewer.module.scss';
 
 interface Props {
-  fullPage?: boolean;
   noWrap?: boolean;
   ref?: React.Ref<LogViewerHandles>;
   title: string;
@@ -55,9 +53,6 @@ export interface LogViewerHandles {
   addLogs: (newLogs: Log[]) => void;
 }
 
-// Number of digits to support before logs are added.
-const DEFAULT_LINE_NUMBER_DIGITS = 2;
-
 // What factor to multiply against the displayable lines in the visible view.
 const BUFFER_FACTOR = 1;
 
@@ -72,8 +67,6 @@ const LogViewer: React.FC<Props> = forwardRef((
   props: Props,
   ref?: React.Ref<LogViewerHandles>,
 ) => {
-  const navigation = Navigation.useStateContext();
-  const setNavigation = Navigation.useActionContext();
   const baseRef = useRef<HTMLDivElement>(null);
   const container = useRef<HTMLDivElement>(null);
   const spacer = useRef<HTMLDivElement>(null);
@@ -95,7 +88,6 @@ const LogViewer: React.FC<Props> = forwardRef((
   const dateTimeStyle = { width: toRem(config.dateTimeWidth) };
   const lineNumberStyle = { width: toRem(config.lineNumberWidth) };
 
-  if (props.fullPage) classes.push(css.fullPage);
   if (props.noWrap) classes.push(css.noWrap);
 
   const addLogs = useCallback((newLogs: Log[]): void => {

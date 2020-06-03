@@ -39,8 +39,11 @@ const AppView: React.FC = () => {
   const setShowSpinner = FullPageSpinner.useActionContext();
   const username = user ? user.username : undefined;
   const [ infoResponse, requestInfo ] = useRestApiSimple<{}, DeterminedInfo>(getInfo, {});
+  const classes = [ css.base ];
 
   const fetchInfo = useCallback(() => requestInfo({}), [ requestInfo ]);
+
+  if (!showChrome) classes.push(css.noChrome);
 
   updateFaviconType(cluster.allocation !== 0);
 
@@ -97,7 +100,7 @@ const AppView: React.FC = () => {
   }, [ setShowSpinner ]);
 
   return (
-    <div className={css.base}>
+    <div className={classes.join(' ')}>
       {isAuthenticated && showChrome && <NavBar username={username} />}
       {isAuthenticated && <AppContexts />}
       <div className={css.body}>

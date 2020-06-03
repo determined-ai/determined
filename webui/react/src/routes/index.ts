@@ -69,7 +69,7 @@ export const appRoutes: RouteConfig[] = [
     id: 'logs',
     needAuth: true,
     path: '/det/logs',
-    title: 'Logs',
+    title: 'Master Logs',
   },
   {
     component: SignIn,

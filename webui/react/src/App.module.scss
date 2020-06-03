@@ -17,3 +17,6 @@
     }
   }
 }
+.noChrome {
+  .body > *:last-child { height: 100%; }
+}

@@ -418,6 +418,7 @@ sideTabs model =
     in
     List.concatMap tab tabs |> div [ class "flex flex-col" ]
 
+
 footerTabs : Html Msg
 footerTabs =
     let

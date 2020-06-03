@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import LogViewer, { LogViewerHandles } from 'components/LogViewer';
-import Section from 'components/Section';
+import Navigation from 'contexts/Navigation';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
 import { getMasterLogs } from 'services/api';
@@ -13,6 +13,7 @@ import css from './MasterLogs.module.scss';
 const DEFAULT_PARAMS = { tail: 10000 };
 
 const MasterLogs: React.FC = () => {
+  const setNavigation = Navigation.useActionContext();
   const logsRef = useRef<LogViewerHandles>(null);
   const [ lastLogId, setLastLogId ] = useState(0);
   const [ logsResponse, setApiParams ] =
@@ -26,6 +27,10 @@ const MasterLogs: React.FC = () => {
   usePolling(fetchLogs);
 
   useEffect(() => {
+    setNavigation({ type: Navigation.ActionType.Set, value: { showChrome: false } });
+  }, [ setNavigation ]);
+
+  useEffect(() => {
     if (!logsResponse.data || logsResponse.data.length === 0) return;
 
     // If there are new log entries, pass them onto the log viewer.
@@ -37,7 +42,7 @@ const MasterLogs: React.FC = () => {
 
   return (
     <div className={css.base}>
-      <LogViewer fullPage ref={logsRef} title="Master Logs" />
+      <LogViewer ref={logsRef} title="Master Logs" />
     </div>
   );
 };
