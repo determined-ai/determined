@@ -15,7 +15,6 @@ import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import FullPageSpinner from 'contexts/FullPageSpinner';
 import Info from 'contexts/Info';
 import Users from 'contexts/Users';
-import usePolling from 'hooks/usePolling';
 import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
 import { appRoutes } from 'routes';
