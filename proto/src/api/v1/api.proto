@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "api/v1/agent.proto";
 import "api/v1/master.proto";
+import "api/v1/template.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
@@ -37,4 +38,13 @@ service Determined {
     rpc EnableSlot(EnableSlotRequest) returns (EnableSlotResponse) { option (google.api.http) = {post: "/api/v1/agents/{agent_id}/slots/{slot_id}/enable"}; }
     // Disable the slot.
     rpc DisableSlot(DisableSlotRequest) returns (DisableSlotResponse) { option (google.api.http) = {post: "/api/v1/agents/{agent_id}/slots/{slot_id}/disable"}; }
+
+    // Get a list of templates.
+    rpc GetTemplates(GetTemplatesRequest) returns (GetTemplatesResponse) { option (google.api.http) = {get: "/api/v1/templates"}; }
+    // Get the requested template.
+    rpc GetTemplate(GetTemplateRequest) returns (GetTemplateResponse) { option (google.api.http) = {get: "/api/v1/templates/{template_name}"}; }
+    // Update the requested template. If one does not exist, a new template is created
+    rpc PutTemplate(PutTemplateRequest) returns (PutTemplateResponse) { option (google.api.http) = {put: "/api/v1/templates/{template.name}" body: "template"};  }
+    // Delete the template with the given id.
+    rpc DeleteTemplate(DeleteTemplateRequest) returns (DeleteTemplateResponse) { option (google.api.http) = {delete: "/api/v1/templates/{template_name}"}; }
 }
