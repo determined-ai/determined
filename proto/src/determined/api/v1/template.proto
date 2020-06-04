@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-package api.v1;
+package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
-import "template/v1/template.proto";
+import "determined/template/v1/template.proto";
 
 // Get a list of templates.
 message GetTemplatesRequest {
@@ -22,7 +22,7 @@ message GetTemplatesRequest {
 // Response to GetTemplatesRequest.
 message GetTemplatesResponse {
     // the list of requested templates.
-    repeated template.v1.Template templates = 1;
+    repeated determined.template.v1.Template templates = 1;
 }
 
 // Get the requested template.
@@ -33,18 +33,18 @@ message GetTemplateRequest {
 // Response to GetTemplateRequest.
 message GetTemplateResponse {
     // The requested template.
-    template.v1.Template template = 1;
+    determined.template.v1.Template template = 1;
 }
 
 // Update the requested template. If one does not exist, a new template is created
 message PutTemplateRequest {
     // The template to put.
-    template.v1.Template template = 2;
+    determined.template.v1.Template template = 2;
 }
 // Response to PutTemplateRequest.
 message PutTemplateResponse {
     // The updated or created template.
-    template.v1.Template template = 1;
+    determined.template.v1.Template template = 1;
 }
 
 // Delete the template with the given id.

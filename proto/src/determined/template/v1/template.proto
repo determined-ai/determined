@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package template.v1;
+package determined.template.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/templatev1";
 
 import "google/protobuf/struct.proto";

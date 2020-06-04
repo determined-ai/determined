@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package agent.v1;
+package determined.agent.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/agentv1";
 
 import "google/protobuf/timestamp.proto";

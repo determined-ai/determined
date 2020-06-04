@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-package api.v1;
+package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
-import "agent/v1/agent.proto";
+import "determined/agent/v1/agent.proto";
 
 // Get a set of agents from the cluster
 message GetAgentsRequest {
@@ -37,7 +37,7 @@ message GetAgentsRequest {
 // Response to GetAgentsRequest.
 message GetAgentsResponse {
     // The list of returned agents.
-    repeated agent.v1.Agent agents = 1;
+    repeated determined.agent.v1.Agent agents = 1;
 }
 
 // Get the requested agent.
@@ -48,7 +48,7 @@ message GetAgentRequest {
 // Response to GetAgentRequest.
 message GetAgentResponse {
     // The requested agent.
-    agent.v1.Agent agent = 1;
+    determined.agent.v1.Agent agent = 1;
 }
 
 // Get the set of slots for the agent with the given id.
@@ -59,7 +59,7 @@ message GetSlotsRequest {
 // Response to GetSlotsRequest.
 message GetSlotsResponse {
     // The requested slots.
-    repeated agent.v1.Slot slots = 1;
+    repeated determined.agent.v1.Slot slots = 1;
 }
 
 // Get the requested slot for the agent with the given id.
@@ -72,7 +72,7 @@ message GetSlotRequest {
 // Response to GetSlotRequest.
 message GetSlotResponse {
     // The requested slot.
-    agent.v1.Slot slot = 1;
+    determined.agent.v1.Slot slot = 1;
 }
 
 // Enable the agent.
@@ -83,7 +83,7 @@ message EnableAgentRequest {
 // Response to EnableAgentRequest.
 message EnableAgentResponse {
     // The enabled agent.
-    agent.v1.Agent agent = 1;
+    determined.agent.v1.Agent agent = 1;
 }
 
 // Disable the agent.
@@ -94,7 +94,7 @@ message DisableAgentRequest {
 // Response to DisableAgentRequest.
 message DisableAgentResponse {
     // The disabled agent.
-    agent.v1.Agent agent = 1;
+    determined.agent.v1.Agent agent = 1;
 }
 
 // Enable the slot.
@@ -107,7 +107,7 @@ message EnableSlotRequest {
 // Response to EnableSlotRequest.
 message EnableSlotResponse {
     // The enabled slot.
-    agent.v1.Slot slot = 1;
+    determined.agent.v1.Slot slot = 1;
 }
 
 // Disable the slot.
@@ -120,5 +120,5 @@ message DisableSlotRequest {
 // Response to DisableSlotRequest.
 message DisableSlotResponse {
     // The disabled slot.
-    agent.v1.Slot slot = 1;
+    determined.agent.v1.Slot slot = 1;
 }
