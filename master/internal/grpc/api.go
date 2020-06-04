@@ -15,13 +15,14 @@ import (
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 const jsonPretty = "application/json+pretty"
 
 // StartGRPCServer starts the Determined gRPC service and the given port.
-func StartGRPCServer(srv proto.DeterminedServer, port int) error {
+func StartGRPCServer(db *db.PgDB, srv proto.DeterminedServer, port int) error {
 	addr := fmt.Sprintf(":%d", port)
 	logger := logrus.NewEntry(logrus.StandardLogger())
 	l, err := net.Listen("tcp", addr)
@@ -40,6 +41,7 @@ func StartGRPCServer(srv proto.DeterminedServer, port int) error {
 		grpc.UnaryInterceptor(grpcmiddleware.ChainUnaryServer(
 			grpclogrus.UnaryServerInterceptor(logger, opts...),
 			grpcrecovery.UnaryServerInterceptor(),
+			authInterceptor(db),
 		)),
 	)
 	proto.RegisterDeterminedServer(grpcS, srv)
@@ -55,6 +57,8 @@ func RegisterHTTPProxy(e *echo.Echo, port int) error {
 		runtime.WithMarshalerOption(runtime.MIMEWildcard,
 			&runtime.JSONPb{EmitDefaults: true}),
 		runtime.WithProtoErrorHandler(errorHandler),
+		runtime.WithIncomingHeaderMatcher(userTokenMatcher),
+		runtime.WithForwardResponseOption(userTokenResponse),
 	}
 	mux := runtime.NewServeMux(serverOpts...)
 	opts := []grpc.DialOption{grpc.WithInsecure()}
