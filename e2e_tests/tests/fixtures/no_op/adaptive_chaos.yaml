@@ -16,7 +16,7 @@ searcher:
   name: adaptive
   metric: validation_error
   target_trial_steps: 640
-  step_budget: 6000
+  max_trials: 30
   mode: standard
   max_rungs: 3
   divisor: 4
