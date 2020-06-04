@@ -8,7 +8,7 @@ import { isAuthFailure } from 'services/api';
 import { http, HttpOptions } from 'services/apiBuilder';
 import { clone } from 'utils/data';
 
-enum ActionType {
+export enum ActionType {
   SetData,
   SetError,
   SetLoading,
@@ -24,7 +24,7 @@ type State<T> = {
 
 export type RestApiState<T> = State<T>;
 
-type Action<T> =
+export type Action<T> =
   | { type: ActionType.SetData; value: T }
   | { type: ActionType.SetError; value: Error }
   | { type: ActionType.SetLoading; value: boolean }
@@ -43,7 +43,7 @@ type Output<T> = [
   Dispatch<SetStateAction<HttpOptions>>,
 ];
 
-const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
+const defaultReducer = <T>(state: State<T>, action: Action<T>): State<T> => {
   switch (action.type) {
     case ActionType.SetData:
       return { ...state, data: action.value, hasLoaded: true, isLoading: false };
@@ -75,7 +75,7 @@ export const applyMappers = <T>(data: unknown, mappers: Mapper | Mapper[]): T =>
 
 const useRestApi = <T>(ioType: io.Mixed, options: HookOptions<T> = {}): Output<T> => {
   const [ httpOptions, setHttpOptions ] = useState<HttpOptions>(options.httpOptions || {});
-  const [ state, dispatch ] = useReducer<Reducer<State<T>, Action<T>>>(reducer, {
+  const [ state, dispatch ] = useReducer<Reducer<State<T>, Action<T>>>(defaultReducer, {
     data: options.data,
     errorCount: 0,
     hasLoaded: false,
@@ -137,7 +137,7 @@ type SimpleOutput<In, Out> = [
 export const useRestApiSimple =
 <In, Out>(apiReq: (a: In) => Promise<Out>, initialParams: In): SimpleOutput<In, Out> => {
   const [ params, setParams ] = useState<In>(initialParams);
-  const [ state, dispatch ] = useReducer<Reducer<State<Out>, Action<Out>>>(reducer, {
+  const [ state, dispatch ] = useReducer<Reducer<State<Out>, Action<Out>>>(defaultReducer, {
     errorCount: 0,
     hasLoaded: false,
     isLoading: false,
@@ -155,5 +155,6 @@ export const useRestApiSimple =
 
   return [ state, setParams ];
 };
+// use state to share.
 
 export default useRestApi;
