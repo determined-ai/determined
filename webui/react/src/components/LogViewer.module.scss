@@ -40,7 +40,10 @@
     text-align: right;
   }
   .line > .number::after { content: '\00a0'; }
-  .line > .time { color: var(--theme-colors-core-secondary); }
+  .line > .time {
+    color: var(--theme-colors-core-secondary);
+    flex-shrink: 0;
+  }
   .line > .time::before { content: '['; }
   .line > .time::after { content: ']\00a0'; }
   .line > .message {

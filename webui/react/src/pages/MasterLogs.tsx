@@ -10,21 +10,40 @@ import { Log } from 'types';
 
 import css from './MasterLogs.module.scss';
 
-const DEFAULT_PARAMS = { tail: 10000 };
+const TAIL_SIZE = 10000;
 
 const MasterLogs: React.FC = () => {
   const setNavigation = Navigation.useActionContext();
   const logsRef = useRef<LogViewerHandles>(null);
-  const [ lastLogId, setLastLogId ] = useState(0);
-  const [ logsResponse, setApiParams ] =
-    useRestApiSimple<LogsParams, Log[]>(getMasterLogs, DEFAULT_PARAMS);
+  const [ logIdRange, setLogIdRange ] =
+    useState({ max: Number.MIN_SAFE_INTEGER, min: Number.MAX_SAFE_INTEGER });
+  const [ logsResponse, setLogsParams ] =
+    useRestApiSimple<LogsParams, Log[]>(getMasterLogs, { tail: TAIL_SIZE });
+  const [ pollingLogsResponse, setPollingLogsParams ] =
+    useRestApiSimple<LogsParams, Log[]>(getMasterLogs, { tail: TAIL_SIZE });
 
-  const fetchLogs = useCallback(async (): Promise<void> => {
-    if (!lastLogId) return;
-    setApiParams({ greaterThanId: lastLogId });
-  }, [ lastLogId, setApiParams ]);
+  const fetchOlderLogs = useCallback((oldestLogId: number) => {
+    if (logsResponse.isLoading) return;
+    const startLogId = Math.max(0, oldestLogId - TAIL_SIZE);
+    setLogsParams({ greaterThanId: startLogId, tail: TAIL_SIZE });
+  }, [ logsResponse, setLogsParams ]);
 
-  usePolling(fetchLogs);
+  const fetchNewerLogs = useCallback(() => {
+    if (!logIdRange.max || pollingLogsResponse.isLoading) return;
+    setPollingLogsParams({ greaterThanId: logIdRange.max, tail: TAIL_SIZE });
+  }, [ logIdRange, pollingLogsResponse, setPollingLogsParams ]);
+
+  const handleLoadOlderLogs = useCallback((oldestLogId: number) => {
+    /*
+     * Check to see if already at the oldest log where log id is 0
+     * or if we already have the older logs we are trying to fetch.
+     */
+    if (oldestLogId === 0 || oldestLogId >= logIdRange.min) return;
+
+    fetchOlderLogs(oldestLogId);
+  }, [ fetchOlderLogs, logIdRange ]);
+
+  usePolling(fetchNewerLogs);
 
   useEffect(() => {
     setNavigation({ type: Navigation.ActionType.Set, value: { showChrome: false } });
@@ -33,16 +52,30 @@ const MasterLogs: React.FC = () => {
   useEffect(() => {
     if (!logsResponse.data || logsResponse.data.length === 0) return;
 
-    // If there are new log entries, pass them onto the log viewer.
-    if (logsRef.current) logsRef.current?.addLogs(logsResponse.data);
+    const minLogId = logsResponse.data[0].id;
+    if (minLogId >= logIdRange.min) return;
 
-    // Update the last fetched last log to fetch newer entries next time.
-    setLastLogId(logsResponse.data[logsResponse.data.length - 1].id);
-  }, [ logsResponse.data ]);
+    setLogIdRange({ max: logIdRange.max, min: Math.min(logIdRange.min, minLogId) });
+
+    // If there are new log entries, pass them onto the log viewer.
+    if (logsRef.current) logsRef.current?.addLogs(logsResponse.data, true);
+  }, [ logIdRange, logsResponse ]);
+
+  useEffect(() => {
+    if (!pollingLogsResponse.data || pollingLogsResponse.data.length === 0) return;
+
+    const maxLogId = pollingLogsResponse.data[pollingLogsResponse.data.length - 1].id;
+    if (maxLogId <= logIdRange.max) return;
+
+    setLogIdRange({ max: Math.max(logIdRange.max, maxLogId), min: logIdRange.min });
+
+    // If there are new log entries, pass them onto the log viewer.
+    if (logsRef.current) logsRef.current?.addLogs(pollingLogsResponse.data);
+  }, [ logIdRange, pollingLogsResponse.data ]);
 
   return (
     <div className={css.base}>
-      <LogViewer ref={logsRef} title="Master Logs" />
+      <LogViewer ref={logsRef} title="Master Logs" onLoadOlderLogs={handleLoadOlderLogs} />
     </div>
   );
 };
