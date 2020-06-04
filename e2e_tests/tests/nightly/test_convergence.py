@@ -137,6 +137,7 @@ def test_object_detection_accuracy() -> None:
 @pytest.mark.nightly  # type: ignore
 def test_iris_tf_keras() -> None:
     config = conf.load_config(conf.official_examples_path("iris_tf_keras/const.yaml"))
+    config = conf.set_random_seed(config, 1591280374)
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("iris_tf_keras"), 1
     )

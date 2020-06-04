@@ -25,7 +25,7 @@ from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 
 import determined as det
-from determined.pytorch import DataLoader, PyTorchTrial, LRScheduler
+from determined.pytorch import ClipGradsL2Norm, DataLoader, PyTorchCallback, PyTorchTrial, LRScheduler
 
 
 import data
@@ -343,3 +343,6 @@ class NASModel(PyTorchTrial):
             ),
             collate_fn=data.PadSequence(),
         )
+
+    def build_callbacks(self) -> Dict[str, PyTorchCallback]:
+        return {"clip_grads": ClipGradsL2Norm(self.context.get_hparam("clip_gradients_l2_norm"))}

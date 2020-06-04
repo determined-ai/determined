@@ -1,6 +1,6 @@
 description: NAS_ASHA
 hyperparameters:
-  clip_grad_l2_norm: .25
+  clip_gradients_l2_norm: .25
   global_batch_size: 64
   bptt: 35
   learning_rate: 20
