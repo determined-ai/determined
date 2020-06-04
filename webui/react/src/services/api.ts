@@ -4,7 +4,9 @@ import { generateApi } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
 import { ExperimentsParams, KillCommandParams, KillExpParams, LaunchTensorboardParams,
   PatchExperimentParams, PatchExperimentState } from 'services/types';
-import { CommandType, Credentials, DeterminedInfo, Experiment, RecentTask, TaskType, User } from 'types';
+import {
+  CommandType, Credentials, DeterminedInfo, Experiment, RecentTask, TaskType, User,
+} from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAuthFailure = (e: any): boolean => {

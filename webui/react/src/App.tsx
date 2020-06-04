@@ -17,12 +17,9 @@ import FullPageSpinner from 'contexts/FullPageSpinner';
 import Info from 'contexts/Info';
 import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
-import { useRestApiSimple } from 'hooks/useRestApi';
 import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
 import { appRoutes } from 'routes';
-import { getInfo } from 'services/api';
-import { DeterminedInfo } from 'types';
 import { updateFaviconType } from 'utils/browser';
 
 import css from './App.module.scss';
@@ -31,55 +28,44 @@ const AppView: React.FC = () => {
   const { isAuthenticated, user } = Auth.useStateContext();
   const cluster = ClusterOverview.useStateContext();
   const info = Info.useStateContext();
-  const setInfo = Info.useActionContext();
   const showSpinner = FullPageSpinner.useStateContext();
   const setShowSpinner = FullPageSpinner.useActionContext();
   const username = user ? user.username : undefined;
-  const [ infoResponse, requestInfo ] = useRestApiSimple<{}, DeterminedInfo>(getInfo, {});
-
-  const fetchInfo = useCallback(() => requestInfo({}), [ requestInfo ]);
 
   updateFaviconType(cluster.allocation !== 0);
 
   useRouteTracker();
   useTheme();
 
-  useEffect(() => requestInfo({}), [ requestInfo ]);
-
   useEffect(() => {
-    if (!info.telemetry.enabled || !info.telemetry.segmentKey) return;
-    window.analytics.load(info.telemetry.segmentKey);
-    window.analytics.identify(info.clusterId);
-    window.analytics.page();
-  }, [ info ]);
-
-  useEffect(() => {
-    if (!infoResponse.data) return;
-    setInfo({ type: Info.ActionType.Set, value: infoResponse.data });
+    if (info.telemetry.enabled && info.telemetry.segmentKey) {
+      window.analytics.load(info.telemetry.segmentKey);
+      window.analytics.identify(info.clusterId);
+      window.analytics.page();
+    }
 
     // Check to make sure the WebUI version matches the platform version.
-    if (infoResponse.data.version !== process.env.VERSION) {
+    if (info.version !== process.env.VERSION) {
       const handleRefresh = (): void => window.location.reload(true);
-      const btn = <Button type="primary" onClick={handleRefresh}>Refresh WebUI</Button>;
-      const message = <div>
-        A new WebUI version <b>{infoResponse.data.version}</b> is available.
-        Please refresh the new WebUI to see the updated changes.
+      const btn = <Button type="primary" onClick={handleRefresh}>Update Now</Button>;
+      const message = 'New WebUI Version';
+      const description = <div>
+        WebUI version <b>v{info.version}</b> is available.
       </div>;
       notification.warn({
         btn,
+        description,
         duration: 0,
         key: 'version-mismatch',
         message,
         placement: 'bottomRight',
       });
     }
-  }, [ infoResponse, setInfo ]);
+  }, [ info ]);
 
   useEffect(() => {
     setShowSpinner({ opaque: true, type: FullPageSpinner.ActionType.Show });
   }, [ setShowSpinner ]);
-
-  usePolling(fetchInfo, { delay: 1000 });
 
   return (
     <div className={css.base}>
