@@ -233,7 +233,7 @@ func (c *Cluster) Receive(ctx *actor.Context) error {
 		ctx.Log().Infof("removing agent: %s", msg.Agent.Address().Local())
 		delete(c.agents, msg.Agent)
 
-	case agent.ContainerStateChanged:
+	case ContainerStateChanged:
 		cid := ContainerID(msg.Container.ID)
 		switch msg.Container.State {
 		case cproto.Running:

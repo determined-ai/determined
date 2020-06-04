@@ -157,9 +157,16 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 	case container.Terminated:
 		delete(a.containers, sc.Container.ID)
 	}
-	ctx.Tell(task, sc)
-	ctx.Tell(a.slots, sc)
-	ctx.Tell(a.cluster, sc)
+
+	rsc := scheduler.ContainerStateChanged{
+		Container:        sc.Container,
+		ContainerStarted: sc.ContainerStarted,
+		ContainerStopped: sc.ContainerStopped,
+	}
+
+	ctx.Tell(task, rsc)
+	ctx.Tell(a.slots, rsc)
+	ctx.Tell(a.cluster, rsc)
 }
 
 func (a *agent) summarize(ctx *actor.Context) agentSummary {

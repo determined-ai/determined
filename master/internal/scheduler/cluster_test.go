@@ -53,7 +53,7 @@ func (h *mockActor) Receive(ctx *actor.Context) error {
 			return h.onAssigned(msg)
 		}
 
-		h.system.Tell(h.cluster, agent.ContainerStateChanged{
+		h.system.Tell(h.cluster, ContainerStateChanged{
 			Container: cproto.Container{
 				ID:    cproto.ID(msg.container.id),
 				State: cproto.Running,
@@ -73,7 +73,7 @@ func (h *mockActor) Receive(ctx *actor.Context) error {
 		if h.onContainerStarted != nil {
 			return h.onContainerStarted(msg)
 		}
-		h.system.Tell(h.cluster, agent.ContainerStateChanged{
+		h.system.Tell(h.cluster, ContainerStateChanged{
 			Container: cproto.Container{
 				ID:    cproto.ID(msg.Container.ID()),
 				State: cproto.Terminated,
