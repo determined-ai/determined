@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package api.v1;
+package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
-import "api/v1/agent.proto";
-import "api/v1/master.proto";
-import "api/v1/template.proto";
+import "determined/api/v1/agent.proto";
+import "determined/api/v1/master.proto";
+import "determined/api/v1/template.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
