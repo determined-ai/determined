@@ -53,6 +53,9 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
       switch (params.key) { // Cases should match menu items.
         case 'kill':
           await killTask(task);
+          if (task.type === TaskType.Experiment) {
+            await updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
+          } // we dont provide the immediate update for command types yet.
           break;
         case 'archive':
           await archiveExperiment(parseInt(task.id), !task.archived);
