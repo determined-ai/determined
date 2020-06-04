@@ -55,6 +55,7 @@ def describe_trial(args: Namespace) -> None:
         "End Time",
         "Checkpoint",
         "Checkpoint UUID",
+        "Checkpoint Metadata",
         "Validation",
         "Validation Metrics",
     ]

@@ -351,6 +351,7 @@ func NewCheckpoint(trialID, stepID int) *Checkpoint {
 		StepID:    stepID,
 		State:     ActiveState,
 		StartTime: time.Now().UTC(),
+		Metadata:  JSONObj{},
 	}
 }
 
