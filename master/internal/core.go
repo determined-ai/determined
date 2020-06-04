@@ -487,6 +487,8 @@ func (m *Master) Run() error {
 	checkpointsGroup := m.echo.Group("/checkpoints", authFuncs...)
 	checkpointsGroup.GET("", api.Route(m.getCheckpoints))
 	checkpointsGroup.GET("/:checkpoint_uuid", api.Route(m.getCheckpoint))
+	checkpointsGroup.POST("/:checkpoint_uuid/metadata", api.Route(m.addCheckpointMetadata))
+	checkpointsGroup.DELETE("/:checkpoint_uuid/metadata", api.Route(m.deleteCheckpointMetadata))
 
 	m.echo.GET("/ws/trial/:experiment_id/:trial_id/:container_id",
 		api.WebSocketRoute(m.trialWebSocket))

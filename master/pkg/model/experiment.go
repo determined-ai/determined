@@ -341,7 +341,7 @@ type Checkpoint struct {
 	EndTime   *time.Time `db:"end_time" json:"end_time"`
 	UUID      *string    `db:"uuid" json:"uuid"`
 	Resources JSONObj    `db:"resources" json:"resources"`
-	Labels    JSONObj    `db:"labels" json:"labels"`
+	Metadata  JSONObj    `db:"metadata" json:"metadata"`
 }
 
 // NewCheckpoint creates a new checkpoint in the active state.
@@ -357,7 +357,7 @@ func NewCheckpoint(trialID, stepID int) *Checkpoint {
 // IsNew checks whether this checkpoint describes a new, in-progress checkpoint operation.
 func (c *Checkpoint) IsNew() bool {
 	return c.State == ActiveState && c.ID == 0 && c.EndTime == nil &&
-		c.UUID == nil && len(c.Resources) == 0 && len(c.Labels) == 0
+		c.UUID == nil && len(c.Resources) == 0 && len(c.Metadata) == 0
 }
 
 // TrialLog represents a row from the `trial_logs` table.

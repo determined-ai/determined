@@ -353,6 +353,19 @@ def test_end_to_end_adaptive() -> None:
 
     assert top_k_uuids == top_k_reversed_uuids[::-1]
 
+    checkpoint = top_k[0]
+    checkpoint.add_metadata({"testing": "metadata"})
+    assert checkpoint.metadata == {"testing": "metadata"}
+
+    checkpoint.add_metadata({"some_key": "some_value"})
+    assert checkpoint.metadata == {"testing": "metadata", "some_key": "some_value"}
+
+    checkpoint.add_metadata({"testing": "override"})
+    assert checkpoint.metadata == {"testing": "override", "some_key": "some_value"}
+
+    checkpoint.remove_metadata(["some_key"])
+    assert checkpoint.metadata == {"testing": "override"}
+
 
 @pytest.mark.e2e_cpu  # type: ignore
 def test_log_null_bytes() -> None:

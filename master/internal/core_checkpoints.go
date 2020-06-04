@@ -3,7 +3,11 @@ package internal
 import (
 	"encoding/json"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo"
+	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // ExportableCheckpoint is a checkpoint that can be downloaded via checkpoint export.
@@ -15,6 +19,7 @@ type ExportableCheckpoint struct {
 	BatchNumber       int             `db:"batch_number" json:"batch_number"`
 	StartTime         string          `db:"start_time" json:"start_time"`
 	EndTime           string          `db:"end_time" json:"end_time"`
+	Metadata          json.RawMessage `db:"metadata" json:"metadata"`
 	Resources         json.RawMessage `db:"resources" json:"resources"`
 	ValidationMetrics json.RawMessage `db:"metrics" json:"metrics"`
 	ValidationState   string          `db:"validation_state" json:"validation_state"`
@@ -39,4 +44,70 @@ func (m *Master) getCheckpoints(c echo.Context) (interface{}, error) {
 		}
 	}
 	return checkpoints, nil
+}
+
+func (m *Master) addCheckpointMetadata(c echo.Context) (interface{}, error) {
+	uuid, err := uuid.Parse(c.Param("checkpoint_uuid"))
+	if err != nil {
+		return nil, err
+	}
+
+	args := struct {
+		Metadata map[string]interface{} `json:"metadata"`
+	}{}
+
+	if err = c.Bind(&args); err != nil {
+		return nil, err
+	}
+
+	checkpoint, err := m.db.CheckpointByUUID(uuid)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error querying for checkpoint (%v)", uuid)
+	}
+	if checkpoint == nil {
+		return nil, errors.Errorf("checkpoint (%v) does not exist", uuid)
+	}
+
+	if checkpoint.Metadata == nil {
+		checkpoint.Metadata = model.JSONObj{}
+	}
+
+	for k, v := range args.Metadata {
+		checkpoint.Metadata[k] = v
+	}
+
+	return checkpoint.Metadata, m.db.UpdateCheckpointMetadata(checkpoint)
+}
+
+func (m *Master) deleteCheckpointMetadata(c echo.Context) (interface{}, error) {
+	uuid, err := uuid.Parse(c.Param("checkpoint_uuid"))
+	if err != nil {
+		return nil, err
+	}
+
+	args := struct {
+		Keys []string `query:"keys"`
+	}{}
+
+	if err = c.Bind(&args); err != nil {
+		return nil, err
+	}
+
+	checkpoint, err := m.db.CheckpointByUUID(uuid)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error querying for checkpoint (%v)", uuid)
+	}
+	if checkpoint == nil {
+		return nil, errors.Errorf("checkpoint (%v) does not exist", uuid)
+	}
+
+	if checkpoint.Metadata == nil {
+		checkpoint.Metadata = model.JSONObj{}
+	}
+
+	for _, key := range args.Keys {
+		delete(checkpoint.Metadata, key)
+	}
+
+	return checkpoint.Metadata, m.db.UpdateCheckpointMetadata(checkpoint)
 }

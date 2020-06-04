@@ -104,23 +104,17 @@ func convertSearcherEvent(id int, event searcher.Event) (
 }
 
 // checkpointFromCheckpointMetrics converts a workload.CheckpointMetrics into a model.Checkpoint
-// with the UUID, Resources, and Labels fields filled out.
+// with the UUID, and Resources fields filled out.
 func checkpointFromCheckpointMetrics(metrics searcher.CheckpointMetrics) model.Checkpoint {
 	resources := model.JSONObj{}
 	for key, value := range metrics.Resources {
 		resources[key] = value
 	}
 
-	labels := model.JSONObj{}
-	for key, value := range labels {
-		labels[key] = value
-	}
-
 	id := metrics.UUID.String()
 	return model.Checkpoint{
 		UUID:      &id,
 		Resources: resources,
-		Labels:    labels,
 	}
 }
 
@@ -159,7 +153,7 @@ func markWorkloadCompleted(db *db.PgDB, msg searcher.CompletedMessage) error {
 		checkpoint := checkpointFromCheckpointMetrics(*msg.CheckpointMetrics)
 		return db.UpdateCheckpoint(
 			msg.Workload.TrialID, msg.Workload.StepID, model.CompletedState,
-			*checkpoint.UUID, checkpoint.Resources, checkpoint.Labels)
+			*checkpoint.UUID, checkpoint.Resources, checkpoint.Metadata)
 	case searcher.ComputeValidationMetrics:
 		metrics := make(model.JSONObj)
 		metrics["num_inputs"] = msg.ValidationMetrics.NumInputs

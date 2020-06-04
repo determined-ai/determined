@@ -31,6 +31,8 @@ class Checkpoint(object):
         end_time: str,
         resources: Dict[str, Any],
         validation: Dict[str, Any],
+        metadata: Optional[Dict[str, Any]] = None,
+        master: Optional[str] = None,
     ):
         """
         Arguments:
@@ -54,6 +56,8 @@ class Checkpoint(object):
         self.end_time = end_time
         self.resources = resources
         self.validation = validation
+        self.metadata = metadata
+        self._master = master
 
     def _find_shared_fs_path(self) -> pathlib.Path:
         host_path = self.storage_config["host_path"]
@@ -144,6 +148,22 @@ class Checkpoint(object):
         ckpt_path = self.download(path)
         return Checkpoint.load_from_path(ckpt_path, tags=tags)
 
+    def add_metadata(self, metadata: Dict[str, Any]) -> None:
+        if self._master:
+            r = api.post(
+                self._master,
+                "checkpoints/{}/metadata".format(self.uuid),
+                body={"metadata": metadata},
+            )
+            self.metadata = r.json()
+
+    def remove_metadata(self, keys: List[str]) -> None:
+        if self._master:
+            r = api.delete(
+                self._master, "checkpoints/{}/metadata".format(self.uuid), params={"keys": keys}
+            )
+            self.metadata = r.json()
+
     @staticmethod
     def load_from_path(path: str, tags: Optional[List[str]] = None) -> Any:
         """
@@ -204,10 +224,10 @@ class Checkpoint(object):
 
 def get_checkpoint(uuid: str, master: str) -> Checkpoint:
     r = api.get(master, "checkpoints/{}".format(uuid)).json()
-    return from_json(r)
+    return from_json(r, master)
 
 
-def from_json(data: Dict[str, Any]) -> Checkpoint:
+def from_json(data: Dict[str, Any], master: Optional[str] = None) -> Checkpoint:
     validation = {
         "metrics": data.get("metrics", {}),
         "state": data.get("validation_state", None),
@@ -220,4 +240,6 @@ def from_json(data: Dict[str, Any]) -> Checkpoint:
         data["end_time"],
         data["resources"],
         validation,
+        metadata=data.get("metadata"),
+        master=master,
     )

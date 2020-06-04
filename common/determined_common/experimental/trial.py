@@ -105,7 +105,7 @@ class TrialReference:
             raise AssertionError("No checkpoint found for trial {}".format(self.id))
 
         if latest:
-            return checkpoint.from_json(r[0])
+            return checkpoint.from_json(r[0], master=self._master)
 
         if not sort_by:
             sort_by = r[0]["metric"]
@@ -113,5 +113,6 @@ class TrialReference:
 
         best_checkpoint_func = min if smaller_is_better else max
         return checkpoint.from_json(
-            best_checkpoint_func(r, key=lambda x: x["metrics"]["validation_metrics"][sort_by])
+            best_checkpoint_func(r, key=lambda x: x["metrics"]["validation_metrics"][sort_by]),
+            master=self._master,
         )
