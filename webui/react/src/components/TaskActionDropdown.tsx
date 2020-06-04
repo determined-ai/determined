@@ -3,7 +3,7 @@ import { ClickParam } from 'antd/es/menu';
 import React from 'react';
 
 import Icon from 'components/Icon';
-import Experiments from 'contexts/ActiveExperiments';
+import Experiments from 'contexts/Experiments';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { archiveExperiment, killTask, setExperimentState } from 'services/api';
 import { Experiment, RecentTask, RunState, TaskType } from 'types';
