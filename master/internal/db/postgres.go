@@ -1512,8 +1512,8 @@ AND step_id = :step_id`, checkpoint)
 	}
 	err = db.namedGet(&checkpoint.ID, `
 INSERT INTO checkpoints
-(trial_id, step_id, state, start_time)
-VALUES (:trial_id, :step_id, :state, :start_time)
+(trial_id, step_id, state, start_time, metadata)
+VALUES (:trial_id, :step_id, :state, :start_time, :metadata)
 RETURNING id`, checkpoint)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting checkpoint %v", *checkpoint)

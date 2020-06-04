@@ -1,6 +1,6 @@
 import json
 from argparse import Namespace
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from determined_common import api, constants, experimental
 from determined_common.experimental import Determined
@@ -27,16 +27,21 @@ def format_checkpoint(checkpoint: Dict[str, Any]) -> List[Any]:
         return [None, None]
 
     if checkpoint["state"] in (constants.COMPLETED, constants.DELETED):
-        return [checkpoint["state"], checkpoint["uuid"]]
+        return [
+            checkpoint["state"],
+            checkpoint["uuid"],
+            json.dumps(checkpoint["metadata"], indent=4),
+        ]
     elif checkpoint["state"] in (constants.ACTIVE, constants.ERROR):
-        return [checkpoint["state"], None]
+        return [checkpoint["state"], None, json.dumps(checkpoint["metadata"], indent=4)]
     else:
         raise AssertionError("Invalid checkpoint state: {}".format(checkpoint["state"]))
 
 
-def render_checkpoint(checkpoint: experimental.Checkpoint, path: str) -> None:
-    print("Local checkpoint path:")
-    print(path, "\n")
+def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] = None) -> None:
+    if path:
+        print("Local checkpoint path:")
+        print(path, "\n")
 
     # Print information about the downloaded step/checkpoint.
     table = [
@@ -45,6 +50,7 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: str) -> None:
         ["End Time", render.format_time(checkpoint.end_time)],
         ["Checkpoint UUID", checkpoint.uuid],
         ["Validation Metrics", json.dumps(checkpoint.validation["metrics"], indent=4)],
+        ["Metadata", json.dumps(checkpoint.metadata or {}, indent=4)],
     ]
 
     headers, values = zip(*table)  # type: ignore
@@ -93,6 +99,11 @@ def download(args: Namespace) -> None:
         render_checkpoint(checkpoint, path)
 
 
+def describe(args: Namespace) -> None:
+    checkpoint = Determined(args.master, None).get_checkpoint(args.uuid)
+    render_checkpoint(checkpoint)
+
+
 args_description = Cmd(
     "c|heckpoint",
     None,
@@ -117,6 +128,12 @@ args_description = Cmd(
                     help="Only print the path to the checkpoint.",
                 ),
             ],
-        )
+        ),
+        Cmd(
+            "describe",
+            describe,
+            "describe checkpoint",
+            [Arg("uuid", type=str, help="checkpoint uuid to describe")],
+        ),
     ],
 )

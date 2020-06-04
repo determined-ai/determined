@@ -7,6 +7,7 @@ SELECT
     s.start_time AS start_time,
     s.end_time AS end_time,
     c.resources AS resources,
+    c.metadata AS metadata,
     v.metrics AS metrics,
     v.state AS validation_state
 FROM checkpoints c
