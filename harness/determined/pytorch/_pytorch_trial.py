@@ -49,7 +49,9 @@ class PyTorchTrialController(det.LoopTrialController):
         self.trial = cast(PyTorchTrial, trial_inst)
         self._check_evaluate_implementation()
 
-        self._init_model_and_optimizer()
+        self._init_device()
+
+        self._init_model_optimizers_and_lr_schedulers()
 
         # Validation loader will be undefined on process ranks > 0
         # when the user defines `validate_full_dataset()`.
@@ -59,9 +61,6 @@ class PyTorchTrialController(det.LoopTrialController):
         # Track whether a warning logging category has already been issued to the user.
         self.warning_logged = {_WarningLogs.FAILED_MOVING_TO_DEVICE: False}
 
-        self.context.lr_scheduler = self.trial.create_lr_scheduler(self.context.optimizer)
-        self.lr_helper = _LRHelper(self.context.lr_scheduler)
-
         self.callbacks = self.trial.build_callbacks()
 
         # If a load path is provided load weights and restore the data location.
@@ -70,7 +69,8 @@ class PyTorchTrialController(det.LoopTrialController):
 
         if self.hvd_config.use:
             hvd.broadcast_parameters(self.context.model.state_dict(), root_rank=0)
-            hvd.broadcast_optimizer_state(self.context.optimizer, root_rank=0)
+            for optimizer in self.context.optimizers:
+                hvd.broadcast_optimizer_state(optimizer, root_rank=0)
 
         self.training_iterator = iter(self.training_loader)
 
@@ -122,23 +122,53 @@ class PyTorchTrialController(det.LoopTrialController):
             self.device = torch.device("cpu")
         check.is_not_none(self.device)
 
-    def _init_model_and_optimizer(self) -> None:
+    def _init_model_optimizers_and_lr_schedulers(self) -> None:
+        # TODO(DET-3267): add a check for deprecating the old interface when releasing the
+        #       support for multiple optimizers and LR schedulers.
+
         self.context.model = self.trial.build_model()
+        self.context.model = self.context.model.to(self.device)
 
         # TODO: Check that optimizer is not an amp optimizer.
-        self.context.optimizer = self.trial.optimizer(self.context.model)
+        optimizers = self.trial._build_optimizers(self.context.model)
+        if isinstance(optimizers, torch.optim.Optimizer):  # type: ignore
+            self.context.optimizers = [optimizers]
+        elif isinstance(optimizers, list):
+            check.gt_eq(len(optimizers), 1)
+            self.context.optimizers = optimizers
+        else:
+            # TODO(DET-3267): make this a user-facing error when releasing the support
+            #     for multiple optimizers and LR schedulers.
+            raise det.errors.InternalException(
+                "invalid return type from build_optimizers. "
+                "Please return a list or the only instance of "
+                "torch.optim.Optimizer."
+            )
 
-        self._init_device()
-        self.context.model = self.context.model.to(self.device)
+        def filter_named_parameters(
+            model: nn.Module, optimizer: torch.optim.Optimizer,  # type: ignore
+        ) -> List:
+            """
+            filter_named_parameters filters the named parameters of a specified optimizer out
+            of all the named parameters from a specified model. We need this function because
+            a torch.optim.Optimizer doesn't store parameter names and when mapping parameters
+            to each horovod.DistributedOptimizer we need the names of the parameters for each
+            optimizer.
+            """
+            opt_params = {p for group in optimizer.param_groups for p in group.get("params", [])}
+            return [(name, p) for name, p in model.named_parameters() if p in opt_params]
 
         if self.hvd_config.use:
             use_compression = self.hvd_config.fp16_compression
-            self.context.optimizer = hvd.DistributedOptimizer(
-                self.context.optimizer,
-                named_parameters=self.context.model.named_parameters(),
-                backward_passes_per_step=self.hvd_config.aggregation_frequency,
-                compression=hvd.Compression.fp16 if use_compression else hvd.Compression.none,
-            )
+            self.context.optimizers = [
+                hvd.DistributedOptimizer(
+                    optimizer,
+                    named_parameters=filter_named_parameters(self.context.model, optimizer),
+                    backward_passes_per_step=self.hvd_config.aggregation_frequency,
+                    compression=hvd.Compression.fp16 if use_compression else hvd.Compression.none,
+                )
+                for optimizer in optimizers
+            ]
             logging.debug("Initialized optimizer for distributed and optimized parallel training.")
         elif self.n_gpus > 1:
             check.eq(
@@ -150,6 +180,23 @@ class PyTorchTrialController(det.LoopTrialController):
             )
             self.context.model = nn.DataParallel(self.context.model)
             logging.debug("Initialized mode for native parallel training.")
+
+        # Initialize LR schedulers. This block must happen after wrapping the optimizers using
+        # horovod.DistributedOptimizer because torch.optim._LRScheduler directly access the
+        # optimizer parameter groups, which are also Horovod.DistributedOptimizer relies on.
+        lr_schedulers = self.trial._build_lr_schedulers(self.context.optimizers)
+        if isinstance(lr_schedulers, LRScheduler):
+            self.context.lr_schedulers = [lr_schedulers]
+        elif isinstance(lr_schedulers, list):
+            self.context.lr_schedulers = lr_schedulers
+        else:
+            raise det.errors.InvalidExperimentException(
+                "invalid return type from build_lr_schedulers. "
+                "Please return a list or the only instance of "
+                "determined.pytorch.LRScheduler."
+            )
+        # TODO: clean up _LRHelper
+        self.lr_helpers = [_LRHelper(lr_scheduler) for lr_scheduler in self.context.lr_schedulers]
 
     def _check_evaluate_implementation(self) -> None:
         """
@@ -206,9 +253,9 @@ class PyTorchTrialController(det.LoopTrialController):
             logging.info(
                 f"Enabling mixed precision training with opt_level: {self._get_amp_setting()}."
             )
-            self.context.model, self.context.optimizer = apex.amp.initialize(
+            self.context.model, self.context.optimizers = apex.amp.initialize(
                 self.context.model,
-                self.context.optimizer,
+                self.context.optimizers,
                 opt_level=self._get_amp_setting(),
                 verbosity=1 if self.is_chief or self.env.experiment_config.debug_enabled() else 0,
             )
@@ -378,19 +425,19 @@ class PyTorchTrialController(det.LoopTrialController):
             loss = tr_metrics["loss"]
             communicate_and_update = (batch_idx + 1) % self.hvd_config.aggregation_frequency == 0
             if self.use_amp():
-                with apex.amp.scale_loss(loss, self.context.optimizer) as scaled_loss:
+                with apex.amp.scale_loss(loss, self.context.optimizers[0]) as scaled_loss:
                     scaled_loss.backward()
             else:
                 loss.backward()
 
             if communicate_and_update:
                 if self.hvd_config.use:
-                    self.context.optimizer.synchronize()
+                    self.context.optimizers[0].synchronize()
 
                 parameters = (
                     self.context.model.parameters()
                     if not self.use_amp()
-                    else apex.amp.master_params(self.context.optimizer)
+                    else apex.amp.master_params(self.context.optimizers[0])
                 )
 
                 if self.hvd_config.average_aggregated_gradients:
@@ -409,18 +456,19 @@ class PyTorchTrialController(det.LoopTrialController):
                     callback.on_before_optimizer_step(parameters)
 
                 if self.hvd_config.use:
-                    with self.context.optimizer.skip_synchronize():
-                        self.context.optimizer.step()
+                    with self.context.optimizers[0].skip_synchronize():
+                        self.context.optimizers[0].step()
                 else:
-                    self.context.optimizer.step()
-                self.context.optimizer.zero_grad()
+                    self.context.optimizers[0].step()
+                self.context.optimizers[0].zero_grad()
 
-                if self.lr_helper.should_step_lr(
-                    batches_completed=batch_idx + 1,
-                    epoch_length=len(self.training_loader),
-                    aggregation_frequency=self.hvd_config.aggregation_frequency,
-                ):
-                    self.lr_helper.step()
+                if self.lr_helpers:
+                    if self.lr_helpers[0].should_step_lr(
+                        batches_completed=batch_idx + 1,
+                        epoch_length=len(self.training_loader),
+                        aggregation_frequency=self.hvd_config.aggregation_frequency,
+                    ):
+                        self.lr_helpers[0].step()
 
             for name, metric in tr_metrics.items():
                 # Convert PyTorch metric values to NumPy, so that
@@ -657,8 +705,26 @@ class PyTorchTrialController(det.LoopTrialController):
                 break
 
         self.context.model.load_state_dict(checkpoint["model_state_dict"])
-        self.context.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        self.lr_helper.load_state_dict(checkpoint.get("lr_scheduler"))
+
+        # TODO(DET-3262): remove this backward compatibility of supporting the old schema
+        #     of checkpointing the only optimizer.
+        if "optimizer_state_dict" in checkpoint:
+            check.not_in("optimizers_state_dict", checkpoint)
+            check.eq(len(self.context.optimizers), 1)
+            self.context.optimizers[0].load_state_dict(checkpoint["optimizer_state_dict"])
+        else:
+            for idx, optimizer in enumerate(self.context.optimizers):
+                optimizer.load_state_dict(checkpoint["optimizers_state_dict"][idx])
+
+        # TODO(DET-3262): remove this backward compatibility of supporting the old schema
+        #     of checkpointing the only lr scheduler.
+        if "lr_scheduler" in checkpoint:
+            check.not_in("lr_schedulers_state_dict", checkpoint)
+            check.eq(len(self.lr_helpers), 1)
+            self.lr_helpers[0].load_state_dict(checkpoint["lr_scheduler"])
+        else:
+            for idx, lr_helper in enumerate(self.lr_helpers):
+                lr_helper.load_state_dict(checkpoint["lr_schedulers_state_dict"][idx])
 
         callback_state = checkpoint.get("callbacks", {})
         for name in self.callbacks:
@@ -695,11 +761,11 @@ class PyTorchTrialController(det.LoopTrialController):
         # optimizer.
         checkpoint = {
             "model_state_dict": self.context.model.state_dict(),
-            "optimizer_state_dict": self.context.optimizer.state_dict(),
+            "optimizers_state_dict": [
+                optimizer.state_dict() for optimizer in self.context.optimizers
+            ],
+            "lr_schedulers_state_dict": [lr_helper.state_dict() for lr_helper in self.lr_helpers],
         }
-
-        if self.lr_helper:
-            checkpoint["lr_scheduler"] = self.lr_helper.state_dict()
 
         for name, callback in self.callbacks.items():
             checkpoint.setdefault("callbacks", {})
@@ -742,6 +808,65 @@ class PyTorchTrial(det.Trial):
         """
         pass
 
+    def _build_optimizers(
+        self, model: nn.Module,
+    ) -> Union[torch.optim.Optimizer, List[torch.optim.Optimizer]]:  # type: ignore
+        """
+        Describes the optimizers to be used during training of the given models,
+        return a list or the only instance of :py:class:`torch.optim.Optimizer`.
+
+        Arguments:
+            model (nn.Module): the model, which is instantiated by Determined and
+                used for training. The type of this argument is the same as
+                the returned value in build_optimizers.
+
+        Returns:
+            a list or an instance of torch.optim.Optimizer
+        """
+        return self.optimizer(model)
+
+    def create_lr_scheduler(
+        self, optimizer: torch.optim.Optimizer  # type: ignore
+    ) -> Optional[LRScheduler]:
+        """
+        Create a learning rate scheduler for the trial given an instance of the
+        optimizer.
+
+        Arguments:
+            optimizer (torch.optim.Optimizer): instance of the optimizer to be
+                used for training
+
+        Returns:
+            :py:class:`det.pytorch.LRScheduler`:
+                Wrapper around a :obj:`torch.optim.lr_scheduler._LRScheduler`.
+        """
+        pass
+
+    def _build_lr_schedulers(
+        self, optimizers: Union[torch.optim.Optimizer, List[torch.optim.Optimizer]]  # type: ignore
+    ) -> Union[LRScheduler, List[LRScheduler]]:
+        """
+        Creates learning rate schedulers for the trial given a list or the
+        only instance of optimizers, returns a list or the only instance
+        of LR schedulers.
+
+        Arguments:
+            optimizers (Union[torch.optim.Optimizer, List[torch.optim.Optimizer]]):
+                a list or an instance of torch.optim.Optimizer, which is instantiated
+                by Determined and used for training. The type of this argument is
+                the same as the returned value in build_optimizers.
+
+        Returns:
+            Union[:py:class:`det.pytorch.LRScheduler`, List[:py:class:`det.pytorch.LRScheduler`]]:
+                a list or an instance of wrappers around a
+                :obj:`torch.optim.lr_scheduler._LRScheduler`.
+        """
+        if isinstance(optimizers, list):
+            lr_scheduler = self.create_lr_scheduler(optimizers[0])
+        else:
+            lr_scheduler = self.create_lr_scheduler(optimizers)
+        return [lr_scheduler] if lr_scheduler else []
+
     @abstractmethod
     def train_batch(
         self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int
@@ -768,23 +893,6 @@ class PyTorchTrial(det.Trial):
         Defines the data loader to use during validation.
 
         Must return an instance of :py:class:`determined.pytorch.DataLoader`.
-        """
-        pass
-
-    def create_lr_scheduler(
-        self, optimizer: torch.optim.Optimizer  # type: ignore
-    ) -> Optional[LRScheduler]:
-        """
-        Create a learning rate scheduler for the trial given an instance of the
-        optimizer.
-
-        Arguments:
-            optimizer (torch.optim.Optimizer): instance of the optimizer to be
-                used for training
-
-        Returns:
-            :py:class:`det.pytorch.LRScheduler`:
-                Wrapper around a :obj:`torch.optim.lr_scheduler._LRScheduler`.
         """
         pass
 
