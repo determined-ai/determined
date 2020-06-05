@@ -97,6 +97,10 @@ class _TrainContext(metaclass=abc.ABCMeta):
         if not isinstance(stop_requested, bool):
             raise AssertionError("stop_requested must be a boolean")
 
+        logging.info(
+            "A trial stoppage has requested. The trial will be stopped "
+            "at the end of the current step."
+        )
         self._stop_requested = stop_requested
 
 
