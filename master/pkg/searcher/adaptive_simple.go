@@ -10,7 +10,7 @@ import (
 func newAdaptiveSimpleSearch(config model.AdaptiveSimpleConfig) SearchMethod {
 	brackets := parseAdaptiveMode(config.Mode)(config.MaxRungs)
 	sort.Sort(sort.Reverse(sort.IntSlice(brackets)))
-	bracketMaxTrials := getBracketMaxTrials(config.MaxTrials, 4, brackets)
+	bracketMaxTrials := getBracketMaxTrials(config.MaxTrials, config.Divisor, brackets)
 	//fmt.Printf("bracketRungs: %v\n", brackets)
 	//fmt.Printf("bracketTrials: %v\n", bracketMaxTrials)
 
@@ -21,7 +21,7 @@ func newAdaptiveSimpleSearch(config model.AdaptiveSimpleConfig) SearchMethod {
 			SmallerIsBetter:  config.SmallerIsBetter,
 			TargetTrialSteps: config.MaxSteps,
 			MaxTrials:        bracketMaxTrials[i],
-			Divisor:          4,
+			Divisor:          config.Divisor,
 			NumRungs:         numRungs,
 		}
 		methods = append(methods, newAsyncHalvingSearch(c))
