@@ -23,6 +23,7 @@ const (
 	// nolint:gosec // These are not potential hardcoded credentials.
 	gatewayTokenHeader = "grpcgateway-authorization"
 	userTokenHeader    = "x-user-token"
+	cookieName         = "auth"
 )
 
 var (
@@ -84,13 +85,13 @@ func userTokenResponse(_ context.Context, w http.ResponseWriter, resp proto.Mess
 	switch r := resp.(type) {
 	case *apiv1.LoginResponse:
 		http.SetCookie(w, &http.Cookie{
-			Name:    "auth",
+			Name:    cookieName,
 			Value:   r.Token,
 			Expires: time.Now().Add(db.SessionDuration),
 		})
 	case *apiv1.LogoutResponse:
 		http.SetCookie(w, &http.Cookie{
-			Name:    "auth",
+			Name:    cookieName,
 			Value:   "",
 			Expires: time.Unix(0, 0),
 		})
