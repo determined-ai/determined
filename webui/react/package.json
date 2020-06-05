@@ -79,6 +79,7 @@
     "less-loader": "^5.0.0",
     "node-sass": "^4.14.1",
     "npm-force-resolutions": "^0.0.3",
+    "path-to-regexp": "^6.1.0",
     "react-app-rewired": "^2.1.6",
     "react-docgen-typescript-loader": "^3.7.1",
     "sinon": "^9.0.2",

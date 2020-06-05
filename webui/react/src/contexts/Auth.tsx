@@ -2,10 +2,10 @@ import { generateContext } from 'contexts';
 import { Auth } from 'types';
 
 enum ActionType {
+  MarkChecked,
   Reset,
-  ResetCheck,
+  ResetChecked,
   Set,
-  UpdateCheck,
 }
 
 /*
@@ -19,10 +19,10 @@ type State = Auth & {
 };
 
 type Action =
+  | { type: ActionType.MarkChecked }
   | { type: ActionType.Reset }
-  | { type: ActionType.ResetCheck }
+  | { type: ActionType.ResetChecked }
   | { type: ActionType.Set; value: Auth }
-  | { type: ActionType.UpdateCheck }
 
 const defaultAuth: State = {
   checked: false,
@@ -35,15 +35,15 @@ const clearAuthCookie = (): void => {
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
+    case ActionType.MarkChecked:
+      return { ...state, checked: true };
     case ActionType.Reset:
       clearAuthCookie();
       return { ...defaultAuth };
-    case ActionType.ResetCheck:
+    case ActionType.ResetChecked:
       return { ...state, checked: false };
     case ActionType.Set:
       return { ...action.value, checked: true };
-    case ActionType.UpdateCheck:
-      return { ...state, checked: true };
     default:
       return state;
   }

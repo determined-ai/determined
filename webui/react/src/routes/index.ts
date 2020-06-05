@@ -1,3 +1,4 @@
+import { pathToRegexp } from 'path-to-regexp';
 import { RouteProps } from 'react-router';
 
 import Dashboard from 'pages/Dashboard';
@@ -13,27 +14,29 @@ import { ensureAbsolutePath, isFullPath, parseUrl } from 'utils/routes';
  * meaning React will attempt to load the path outside of the internal routing
  * mechanism.
  */
-export interface RouteConfigItem extends RouteProps {
+export interface RouteConfig extends RouteProps {
   id: string;
   icon?: string;
   path: string;
   popout?: boolean;
+  redirect?: string;
   suffixIcon?: string;
-  title: string;
+  title?: string;
   needAuth?: boolean;
 }
 
+const defaultPath = '/det/dashboard';
 const dashboardRoute =
   {
     component: Dashboard,
     icon: 'user',
     id: 'dashboard',
     needAuth: true,
-    path: '/det/dashboard',
+    path: defaultPath,
     title: 'Dashboard',
   };
 
-export const appRoutes: RouteConfigItem[] = [
+export const appRoutes: RouteConfig[] = [
   dashboardRoute,
   {
     component: SignIn,
@@ -49,10 +52,16 @@ export const appRoutes: RouteConfigItem[] = [
     path: '/det/logout',
     title: 'Logout',
   },
+  {
+    id: 'catch-all',
+    path: '*',
+    redirect: defaultPath,
+  },
 ];
-export const defaultAppRoute = appRoutes[0];
 
-export const sidebarRoutes: RouteConfigItem[] = [
+export const defaultAppRoute = dashboardRoute;
+
+export const sidebarRoutes: RouteConfig[] = [
   dashboardRoute,
   {
     icon: 'experiment',
@@ -105,8 +114,14 @@ const isDetRoute = (url: string): boolean => {
 
 const isReactRoute = (url: string): boolean => {
   if (!isDetRoute(url)) return false;
+
+  // Check to see if the path matches any of the defined app routes.
   const pathname = parseUrl(url).pathname;
-  return !!appRoutes.find(route => pathname.startsWith(route.path));
+  return !!appRoutes
+    .filter(route => route.path !== '*')
+    .find(route => {
+      return route.exact ? pathname === route.path : !!pathToRegexp(route.path).exec(pathname);
+    });
 };
 
 // to support running the SPA off of a separate port from the cluster and have the links to Elm

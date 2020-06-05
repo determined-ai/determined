@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import NavItem, { NavItemType } from 'components/NavItem';
-import { RouteConfigItem } from 'routes';
+import { RouteConfig } from 'routes';
 
 import css from './NavMenu.module.scss';
 
@@ -15,7 +15,7 @@ export enum NavMenuType {
 interface Props {
   basePath?: string;
   defaultRouteId: string;
-  routes: RouteConfigItem[];
+  routes: RouteConfig[];
   showLabels?: boolean;
   type?: NavMenuType;
 }
