@@ -249,11 +249,11 @@ class ManagerCallback(tp.callbacks.Callback):  # type: ignore
                 self.train_response_func = response_func
                 break
             elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                response = {
-                    "metrics": self._compute_validation_metrics(),
-                    "stop_requested": self.context.get_stop_requested(),
-                }
-                response_func(response)
+                response_func(
+                    det.util.wrap_metrics(
+                        self._compute_validation_metrics(), self.context.get_stop_requested()
+                    )
+                )
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 check.len_eq(args, 1)
                 check.is_instance(args[0], pathlib.Path)
