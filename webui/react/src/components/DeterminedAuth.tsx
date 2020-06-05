@@ -41,7 +41,7 @@ const DeterminedAuth: React.FC = () => {
         publicMessage: `Failed to login. Please ${actionMsg}`,
         publicSubject: 'Login failed',
         silent: true,
-        type: isBadCredentials ? ErrorType.Input : ErrorType.Server,
+        type: isBadCredentialsSync ? ErrorType.Input : ErrorType.Server,
       });
     } finally {
       setCanSubmit(true);
