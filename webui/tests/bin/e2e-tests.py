@@ -9,7 +9,6 @@ import subprocess
 import sys
 from typing import List
 
-RESULTS_DIR_NAME = "results"
 logger = logging.getLogger("e2e-tests")
 
 root = subprocess.check_output(
@@ -18,6 +17,7 @@ root = subprocess.check_output(
 root_path = pathlib.Path(root)
 webui_dir = root_path.joinpath("webui")
 tests_dir = webui_dir.joinpath("tests")
+results_dir = tests_dir.joinpath("results")
 
 CLUSTER_CMD_PREFIX = ["make", "-C", "test-cluster"]
 
@@ -32,7 +32,10 @@ def run(cmd: List[str], config) -> None:
 
 
 def run_forget(cmd: List[str], config) -> None:
-    return subprocess.Popen(cmd, stdout=subprocess.DEVNULL)
+    return subprocess.Popen(
+        cmd,
+        stdout=str(results_dir.joinpath("cluster.stdout.logs")),
+    )
 
 
 def run_ignore_failure(cmd: List[str], config):
@@ -69,7 +72,7 @@ def det_cluster(config):
 
 
 def pre_e2e_tests(config):
-    run_ignore_failure(["rm", "-r", str(tests_dir.joinpath(RESULTS_DIR_NAME))], config)
+    run_ignore_failure(["rm", "-r", str(results_dir)], config)
     # TODO add a check for cluster condition
     run(
         ["python", str(tests_dir.joinpath("bin", "createUserAndExperiments.py"))],
@@ -168,7 +171,11 @@ def main():
     help_msg = f"operation must be in {sorted(operation_to_fn.keys())}"
     parser.add_argument("operation", help=help_msg)
     parser.add_argument("--det-port", default="8081", help="det master port")
-    parser.add_argument("--det-host", default="localhost", help="det master address eg localhost or 192.168.1.2")
+    parser.add_argument(
+        "--det-host",
+        default="localhost",
+        help="det master address eg localhost or 192.168.1.2",
+    )
     parser.add_argument("--cypress-default-command-timeout", default="4000")
     parser.add_argument("--cypress-args", help="other cypress arguments")
     parser.add_argument("--log-level")
