@@ -30,9 +30,10 @@ const DeterminedAuth: React.FC = () => {
       const user = await getCurrentUser({});
       setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, user } });
     } catch (e) {
-      const actionMsg = isBadCredentials ? 'check your username and password.' : 'retry.';
+      const isBadCredentialsSync = isLoginFailure(e);
+      setIsBadCredentials(isBadCredentialsSync); // this is not a sync operation
       setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
-      setIsBadCredentials(isLoginFailure(e));
+      const actionMsg = isBadCredentialsSync ? 'check your username and password.' : 'retry.';
       handleError({
         error: e,
         isUserTriggered: true,
@@ -40,7 +41,7 @@ const DeterminedAuth: React.FC = () => {
         publicMessage: `Failed to login. Please ${actionMsg}`,
         publicSubject: 'Login failed',
         silent: true,
-        type: isBadCredentials ? ErrorType.Input : ErrorType.Server,
+        type: isBadCredentialsSync ? ErrorType.Input : ErrorType.Server,
       });
     } finally {
       setCanSubmit(true);
