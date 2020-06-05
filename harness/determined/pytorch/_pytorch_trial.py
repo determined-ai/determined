@@ -256,9 +256,17 @@ class PyTorchTrialController(det.LoopTrialController):
             if w.kind == workload.Workload.Kind.RUN_STEP:
                 check.eq(len(args), 1)
                 num_batches = cast(int, args[0])
-                response_func(self._train_for_step(w.step_id, num_batches))
+                response = {
+                    "metrics": self._train_for_step(w.step_id, num_batches),
+                    "stop_requested": self.context.get_stop_requested(),
+                }
+                response_func(response)
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                response_func(self._compute_validation_metrics())
+                response = {
+                    "metrics": self._compute_validation_metrics(),
+                    "stop_requested": self.context.get_stop_requested(),
+                }
+                response_func(response)
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 check.eq(len(args), 1)
                 check.is_instance(args[0], pathlib.Path)
