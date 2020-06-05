@@ -100,7 +100,7 @@ class ManagerCallback(tp.callbacks.Callback):  # type: ignore
         workloads: workload.Stream,
         is_chief: bool,
         machine_rank: int,
-        tensorpack_trial_controller: "TensorpackTrialController",
+        context: Any,
     ) -> None:
         self.metric_names = metric_names
         self.batch_metrics = []  # type: List[Dict[str, Any]]
@@ -109,7 +109,7 @@ class ManagerCallback(tp.callbacks.Callback):  # type: ignore
         self.workloads = workloads
         self.is_chief = is_chief
         self.machine_rank = machine_rank
-        self.tensorpack_trial_controller = tensorpack_trial_controller
+        self.context = context
 
         # Store the response_func for train_for_step workloads while we do the training.
         self.train_response_func = None  # type: Optional[workload.ResponseFunc]
@@ -231,7 +231,7 @@ class ManagerCallback(tp.callbacks.Callback):  # type: ignore
         if self.is_chief:
             response = {
                 "metrics": det.util.make_metrics(None, self.batch_metrics),
-                "stop_requested": self.tensorpack_trial_controller.context.get_stop_requested(),
+                "stop_requested": self.context.get_stop_requested(),
             }
             self.train_response_func(response)
         else:
@@ -251,7 +251,7 @@ class ManagerCallback(tp.callbacks.Callback):  # type: ignore
             elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 response = {
                     "metrics": self._compute_validation_metrics(),
-                    "stop_requested": self.tensorpack_trial_controller.context.get_stop_requested(),
+                    "stop_requested": self.context.get_stop_requested(),
                 }
                 response_func(response)
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
@@ -463,7 +463,7 @@ class TensorpackTrialController(det.LoopTrialController):
             self.workloads,
             self.is_chief,
             self.rendezvous_info.get_rank(),
-            self,
+            self.context,
         )
 
         # TODO: check to make sure users don't pass in InferenceRunner

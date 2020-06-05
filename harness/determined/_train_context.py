@@ -91,9 +91,12 @@ class _TrainContext(metaclass=abc.ABCMeta):
 
     def set_stop_requested(self, stop_requested: bool) -> None:
         """
-        Set a flag to request a trial stoppage.
+        Set a flag to request a trial stoppage. When this flag is set to True,
+        we finish the step, checkpoint, then exit.
         """
-        assert isinstance(stop_requested, bool)
+        if not isinstance(stop_requested, bool):
+            raise AssertionError("stop_requested must be a boolean")
+
         self._stop_requested = stop_requested
 
 
