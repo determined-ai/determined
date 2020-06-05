@@ -291,11 +291,12 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
                 # re-enters the train_and_evaluate() loop.
                 break
             elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                response = {
-                    "metrics": self._compute_validation_metrics(),
-                    "stop_requested": self.estimator_trial_controller.context.get_stop_requested(),
-                }
-                response_func(response)
+                response_func(
+                    det.util.wrap_metrics(
+                        self._compute_validation_metrics(),
+                        self.estimator_trial_controller.context.get_stop_requested(),
+                    )
+                )
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 check.len_eq(args, 1)
                 check.is_instance(args[0], pathlib.Path)
