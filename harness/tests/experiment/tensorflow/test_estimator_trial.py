@@ -148,7 +148,7 @@ class TestXORTrial:
             yield from interceptor.send(workload.validation_workload(), [])
             metrics = interceptor.metrics_result()
 
-            new_loss = metrics["validation_metrics"]["loss"]
+            new_loss = metrics["metrics"]["validation_metrics"]["loss"]
             assert new_loss == pytest.approx(old_loss)
 
             yield workload.terminate_workload(), [], workload.ignore_workload_response

@@ -192,7 +192,7 @@ class TestPyTorchTrial:
             yield from interceptor.send(workload.validation_workload(), [])
             metrics = interceptor.metrics_result()
 
-            new_error = metrics["validation_metrics"]["binary_error"]
+            new_error = metrics["metrics"]["validation_metrics"]["binary_error"]
             assert new_error == pytest.approx(old_error)
 
             yield workload.terminate_workload(), [], workload.ignore_workload_response
