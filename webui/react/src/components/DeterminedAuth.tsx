@@ -8,6 +8,7 @@ import FullPageSpinner from 'contexts/FullPageSpinner';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { getCurrentUser, isLoginFailure, login } from 'services/api';
 import { Credentials } from 'types';
+import { Storage } from 'utils/storage';
 
 import css from './DeterminedAuth.module.scss';
 
@@ -15,6 +16,9 @@ interface FromValues {
   password?: string;
   username?: string;
 }
+
+const storage = new Storage({ basePath: '/DeterminedAuth', store: window.localStorage });
+const LAST_USERNAME = 'lastUsername'; // key for storing last det username
 
 const DeterminedAuth: React.FC = () => {
   const setAuth = Auth.useActionContext();
@@ -29,11 +33,13 @@ const DeterminedAuth: React.FC = () => {
       await login(creds as Credentials);
       const user = await getCurrentUser({});
       setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, user } });
+      storage.set(LAST_USERNAME, creds.username);
     } catch (e) {
       const isBadCredentialsSync = isLoginFailure(e);
       setIsBadCredentials(isBadCredentialsSync); // this is not a sync operation
       setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
       const actionMsg = isBadCredentialsSync ? 'check your username and password.' : 'retry.';
+      if (isBadCredentialsSync) storage.remove(LAST_USERNAME); // forget saved username on first bad auth
       handleError({
         error: e,
         isUserTriggered: true,
@@ -57,6 +63,9 @@ const DeterminedAuth: React.FC = () => {
   const loginForm = (
     <Form
       className={css.form}
+      initialValues={{
+        username: storage.getWithDefault(LAST_USERNAME, ''),
+      }}
       name="login"
       onFinish={onFinish}
       onValuesChange={onValuesChange}>
