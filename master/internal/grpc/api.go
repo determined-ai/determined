@@ -57,7 +57,6 @@ func RegisterHTTPProxy(e *echo.Echo, port int) error {
 		runtime.WithMarshalerOption(runtime.MIMEWildcard,
 			&runtime.JSONPb{EmitDefaults: true}),
 		runtime.WithProtoErrorHandler(errorHandler),
-		runtime.WithIncomingHeaderMatcher(userTokenMatcher),
 		runtime.WithForwardResponseOption(userTokenResponse),
 	}
 	mux := runtime.NewServeMux(serverOpts...)

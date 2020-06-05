@@ -3,9 +3,6 @@ package internal
 import (
 	"context"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -17,17 +14,17 @@ func (a *apiServer) Login(
 	switch err {
 	case nil:
 	case db.ErrNotFound:
-		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
+		return nil, grpc.ErrInvalidCredentials
 	default:
 		return nil, err
 	}
 
 	if !user.ValidatePassword(req.Password) {
-		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
+		return nil, grpc.ErrInvalidCredentials
 	}
 
 	if !user.Active {
-		return nil, status.Error(codes.PermissionDenied, "caller does not have permission")
+		return nil, grpc.ErrPermissionDenied
 	}
 
 	token, err := a.m.db.StartUserSession(user)

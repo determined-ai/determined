@@ -85,7 +85,7 @@ func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 		switch err {
 		case nil:
 			if !user.Active {
-				return echo.NewHTTPError(http.StatusUnauthorized)
+				return echo.NewHTTPError(http.StatusForbidden)
 			}
 			// Set data on the request context that might be useful to
 			// event handlers.
@@ -93,7 +93,7 @@ func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 			c.(*context.DetContext).SetUserSession(*userSession)
 			return next(c)
 		case db.ErrNotFound:
-			return echo.NewHTTPError(http.StatusForbidden)
+			return echo.NewHTTPError(http.StatusUnauthorized)
 		default:
 			return err
 		}

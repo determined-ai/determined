@@ -6,8 +6,9 @@ import (
 	"strings"
 	"time"
 
+	// nolint:staticcheck // This is needed until grpc-gateway fully transitions
+	// to the new protobuf API.
 	"github.com/golang/protobuf/proto"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -19,37 +20,48 @@ import (
 )
 
 const (
-	userTokenHeader = "grpcgateway-authorization"
+	// nolint:gosec // These are not potential hardcoded credentials.
+	gatewayTokenHeader = "grpcgateway-authorization"
+	userTokenHeader    = "x-user-token"
 )
 
-var errInvalidCredentials = status.Error(codes.Unauthenticated, "invalid credentials")
-var errTokenMissing = status.Error(codes.InvalidArgument, "token missing")
+var (
+	// ErrInvalidCredentials notifies that the provided credentials are invalid or missing.
+	ErrInvalidCredentials = status.Error(codes.Unauthenticated, "invalid credentials")
+	// ErrTokenMissing notifies that the bearer token could not be found.
+	ErrTokenMissing = status.Error(codes.InvalidArgument, "token missing")
+	// ErrPermissionDenied notifies that the user does not have permission to access the method.
+	ErrPermissionDenied = status.Error(codes.PermissionDenied, "user does not have permission")
+)
 
 // GetUser returns the currently logged in user.
 func GetUser(ctx context.Context, d *db.PgDB) (*model.User, *model.UserSession, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return nil, nil, errTokenMissing
+		return nil, nil, ErrTokenMissing
 	}
 	tokens := md[userTokenHeader]
 	if len(tokens) == 0 {
-		return nil, nil, errTokenMissing
+		tokens = md[gatewayTokenHeader]
+		if len(tokens) == 0 {
+			return nil, nil, ErrTokenMissing
+		}
 	}
 
 	token := tokens[0]
 	if !strings.HasPrefix(token, "Bearer ") {
-		return nil, nil, errInvalidCredentials
+		return nil, nil, ErrInvalidCredentials
 	}
 	token = strings.TrimPrefix(token, "Bearer ")
 
 	switch user, session, err := d.UserByToken(token); err {
 	case nil:
 		if !user.Active {
-			return nil, nil, errInvalidCredentials
+			return nil, nil, ErrPermissionDenied
 		}
 		return user, session, nil
 	case db.ErrNotFound:
-		return nil, nil, errInvalidCredentials
+		return nil, nil, ErrPermissionDenied
 	default:
 		return nil, nil, err
 	}
@@ -59,28 +71,12 @@ func authInterceptor(db *db.PgDB) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
-		if info.FullMethod == "/determined.api.v1.Determined/Login" {
-			resp, err := handler(ctx, req)
-			if err != nil {
+		if info.FullMethod != "/determined.api.v1.Determined/Login" {
+			if _, _, err := GetUser(ctx, db); err != nil {
 				return nil, err
 			}
-			login := resp.(*apiv1.LoginResponse)
-			err = grpc.SendHeader(ctx, metadata.Pairs(userTokenHeader, login.Token))
-			return resp, err
-		}
-		if _, _, err := GetUser(ctx, db); err != nil {
-			return nil, err
 		}
 		return handler(ctx, req)
-	}
-}
-
-func userTokenMatcher(key string) (string, bool) {
-	switch key {
-	case userTokenHeader:
-		return key, true
-	default:
-		return runtime.DefaultHeaderMatcher(key)
 	}
 }
 
