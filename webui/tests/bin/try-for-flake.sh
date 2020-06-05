@@ -1,23 +1,22 @@
-#!/bin/bash
+#!/bin/bash -e
 
 # if tests are re-runnable
 re_runnable=${1:-false}
-cmd_prefix=docker-
 
 c=0
 
 if $re_runnable; then
-  make pre-e2e-tests
+  ./bin/e2e-tests.py pre-e2e-tests
   while true; do
     c=$((c+1))
     echo "run #$c"
-    make ${cmd_prefix}run-e2e-tests || break
+    ./bin/e2e-tests.py run-e2e-tests
   done
 else # run the whole suite
   while true; do
     c=$((c+1))
     echo "run #$c"
-    make ${cmd_prefix}e2e-tests || break
+    make test
   done
 fi
 
