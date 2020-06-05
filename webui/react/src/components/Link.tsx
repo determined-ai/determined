@@ -1,5 +1,3 @@
-import { inherits } from 'util';
-
 import React, { PropsWithChildren, useCallback } from 'react';
 
 import { routeAll, setupUrlForDev } from 'routes';

@@ -2,10 +2,12 @@ import { sha512 }  from 'js-sha512';
 
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { Api } from 'services/apiBuilder';
-import { jsonToExperiments } from 'services/decoder';
-import { ExperimentsParams, KillCommandParams, KillExpParams,
-  LaunchTensorboardParams, PatchExperimentParams } from 'services/types';
-import { CommandType, Credentials, Experiment, TBSourceType, User } from 'types';
+import { jsonToDeterminedInfo, jsonToExperiments } from 'services/decoder';
+import {
+  ExperimentsParams, KillCommandParams, KillExpParams,
+  LaunchTensorboardParams, PatchExperimentParams,
+} from 'services/types';
+import { CommandType, Credentials, DeterminedInfo, Experiment, TBSourceType, User } from 'types';
 
 /* Helpers */
 
@@ -57,6 +59,14 @@ export const logout: Api<{}, void> = {
     };
   },
   name: 'logout',
+};
+
+/* Info */
+
+export const getInfo: Api<{}, DeterminedInfo> = {
+  httpOptions: () => ({ url: '/info' }),
+  name: 'getInfo',
+  postProcess: (response) => jsonToDeterminedInfo(response.data),
 };
 
 /* Commands */
