@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
-	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
@@ -19,9 +18,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
-
-// sessionDuration is how long a newly created session is valid.
-const sessionDuration = 7 * 24 * time.Hour
 
 type agentUserGroup struct {
 	UID   *int   `json:"uid,omitempty"`
@@ -52,27 +48,13 @@ func (h *agentUserGroup) Validate() (*model.AgentUserGroup, error) {
 
 // Service describes a user manager.
 type Service struct {
-	tokenKeys *model.AuthTokenKeypair
-	db        *db.PgDB
-	system    *actor.System
+	db     *db.PgDB
+	system *actor.System
 }
 
 // New creates a new user service.
 func New(db *db.PgDB, system *actor.System) (*Service, error) {
-	tokenKeys, err := getOrCreateKeys(db)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get auth token keypair")
-	}
-
-	return &Service{tokenKeys, db, system}, nil
-}
-
-func (s *Service) getUserFromSession(session model.UserSession) (*model.User, error) {
-	user, err := s.db.UserBySessionID(session.ID)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get user from session: %d", session.ID)
-	}
-	return user, nil
+	return &Service{db, system}, nil
 }
 
 // ProcessAuthentication is a middleware processing function that attempts
@@ -99,81 +81,23 @@ func (s *Service) ProcessAuthentication(next echo.HandlerFunc) echo.HandlerFunc 
 			return echo.NewHTTPError(http.StatusUnauthorized)
 		}
 
-		userSession, err := s.ValidateToken(token)
-		if err != nil {
-			switch e := err.(type) {
-			case db.ErrUserSessionNotFound:
+		user, userSession, err := s.db.UserByToken(token)
+		switch err {
+		case nil:
+			if !user.Active {
 				return echo.NewHTTPError(http.StatusForbidden)
-			case model.ErrUserSessionExpired:
-				return echo.NewHTTPError(http.StatusForbidden)
-			default:
-				return e
 			}
-		}
-
-		// We have a valid session, so we should be able to use it
-		// to pull a user from the database.
-		user, err := s.getUserFromSession(*userSession)
-		if err != nil {
+			// Set data on the request context that might be useful to
+			// event handlers.
+			c.(*context.DetContext).SetUser(*user)
+			c.(*context.DetContext).SetUserSession(*userSession)
+			return next(c)
+		case db.ErrNotFound:
+			return echo.NewHTTPError(http.StatusUnauthorized)
+		default:
 			return err
 		}
-
-		if !user.Active {
-			return echo.NewHTTPError(http.StatusUnauthorized)
-		}
-
-		// Set data on the request context that might be useful to
-		// event handlers.
-		c.(*context.DetContext).SetUser(*user)
-		c.(*context.DetContext).SetUserSession(*userSession)
-		return next(c)
 	}
-}
-
-func (s *Service) generateToken(user model.User) (string, error) {
-	userSession := model.UserSession{
-		UserID: user.ID,
-		Expiry: time.Now().Add(sessionDuration),
-	}
-
-	if err := s.db.AddUserSession(&userSession); err != nil {
-		return "", err
-	}
-
-	v2 := paseto.NewV2()
-	token, err := v2.Sign(s.tokenKeys.PrivateKey, userSession, nil)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to generate authentication token")
-	}
-
-	return token, nil
-}
-
-// ValidateToken returns a user session given an authentication token.
-func (s *Service) ValidateToken(token string) (*model.UserSession, error) {
-	v2 := paseto.NewV2()
-
-	var userSession model.UserSession
-
-	err := v2.Verify(token, s.tokenKeys.PublicKey, &userSession, nil)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// Ensure the token that we fetched is still valid.  This means:
-	// 1. It is still in the database
-	// 2. It is not expired
-	session, err := s.db.SessionBySessionID(userSession.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	if session.Expiry.Before(time.Now()) {
-		return nil, model.ErrUserSessionExpired{SessionID: userSession.ID}
-	}
-
-	return session, nil
 }
 
 func (s *Service) postLogout(c echo.Context) (interface{}, error) {
@@ -218,17 +142,14 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 		return nil, malformedRequestError
 	}
 
-	params.Username = strings.ToLower(params.Username)
-
 	// Get the user from the database.
 	user, err := s.db.UserByUsername(params.Username)
-	if err != nil {
-		switch err.(type) {
-		case db.ErrNoSuchUsername:
-			return nil, badCredentialsError
-		default:
-			return nil, err
-		}
+	switch err {
+	case nil:
+	case db.ErrNotFound:
+		return nil, badCredentialsError
+	default:
+		return nil, err
 	}
 
 	// The user must be active.
@@ -241,7 +162,7 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 		return nil, badCredentialsError
 	}
 
-	token, err = s.generateToken(*user)
+	token, err = s.db.StartUserSession(user)
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +173,7 @@ func (s *Service) postLogin(c echo.Context) (interface{}, error) {
 		cookie := new(http.Cookie)
 		cookie.Name = "auth"
 		cookie.Value = token
-		cookie.Expires = time.Now().Add(sessionDuration)
+		cookie.Expires = time.Now().Add(db.SessionDuration)
 		c.SetCookie(cookie)
 	}
 
@@ -298,8 +219,6 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 		return nil, err
 	}
 
-	args.Username = strings.ToLower(args.Username)
-
 	var params request
 	if err = json.Unmarshal(body, &params); err != nil {
 		malformedRequestError := echo.NewHTTPError(http.StatusBadRequest, "bad request")
@@ -309,19 +228,17 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 	forbiddenError := echo.NewHTTPError(http.StatusForbidden)
 	authenticatedUser := c.(*context.DetContext).MustGetUser()
 	user, err := s.db.UserByUsername(args.Username)
-
-	if err != nil {
-		switch err.(type) {
-		case db.ErrNoSuchUsername:
-			if authenticatedUser.Admin {
-				return nil, echo.NewHTTPError(
-					http.StatusBadRequest,
-					fmt.Sprintf("failed to get user '%s'", args.Username))
-			}
-			return nil, forbiddenError
-		default:
-			return nil, err
+	switch err {
+	case nil:
+	case db.ErrNotFound:
+		if authenticatedUser.Admin {
+			return nil, echo.NewHTTPError(
+				http.StatusBadRequest,
+				fmt.Sprintf("failed to get user '%s'", args.Username))
 		}
+		return nil, forbiddenError
+	default:
+		return nil, err
 	}
 
 	var toUpdate []string

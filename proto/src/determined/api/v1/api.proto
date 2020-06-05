@@ -6,6 +6,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 import "determined/api/v1/agent.proto";
 import "determined/api/v1/master.proto";
 import "determined/api/v1/template.proto";
+import "determined/api/v1/auth.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
@@ -18,6 +19,13 @@ option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
 
 // Determined is the official v1 of the Determined API.
 service Determined {
+    // Login the user.
+    rpc Login(LoginRequest) returns (LoginResponse) { option (google.api.http) = {post: "/api/v1/auth/login" body: "*"}; }
+    // Get the current user.
+    rpc CurrentUser(CurrentUserRequest) returns (CurrentUserResponse) { option (google.api.http) = {get: "/api/v1/auth/user"}; }
+    // Logout the user.
+    rpc Logout(LogoutRequest) returns (LogoutResponse) { option (google.api.http) = {post: "/api/v1/auth/logout"}; }
+
     // Get master information.
     rpc GetMaster(GetMasterRequest) returns (GetMasterResponse) { option (google.api.http) = {get: "/api/v1/master"}; }
 

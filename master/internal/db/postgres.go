@@ -24,8 +24,9 @@ import (
 
 // PgDB represents a Postgres database connection.  The type definition is needed to define methods.
 type PgDB struct {
-	sql     *sqlx.DB
-	queries map[string]string
+	tokenKeys *model.AuthTokenKeypair
+	sql       *sqlx.DB
+	queries   map[string]string
 }
 
 // ConnectPostgres connects to a Postgres database.
@@ -36,7 +37,6 @@ func ConnectPostgres(url string) (*PgDB, error) {
 		if err == nil {
 			return &PgDB{sql: sql, queries: make(map[string]string)}, err
 		}
-
 		numTries++
 		if numTries >= 15 {
 			return nil, errors.Wrapf(err, "could not connect to database after %v tries", numTries)

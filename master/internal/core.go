@@ -174,7 +174,7 @@ func (m *Master) startServers() error {
 			errs <- err
 			return
 		}
-		errs <- grpc.StartGRPCServer(&apiServer{m: m}, m.config.GRPCPort)
+		errs <- grpc.StartGRPCServer(m.db, &apiServer{m: m}, m.config.GRPCPort)
 	}()
 
 	for server := range servers {

@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -44,15 +43,6 @@ type FullUser struct {
 	AgentGID   null.Int    `db:"agent_gid" json:"agent_gid"`
 	AgentUser  null.String `db:"agent_user" json:"agent_user"`
 	AgentGroup null.String `db:"agent_group" json:"agent_group"`
-}
-
-// ErrUserSessionExpired is returned when an action was attempted under an expired session.
-type ErrUserSessionExpired struct {
-	SessionID SessionID
-}
-
-func (s ErrUserSessionExpired) Error() string {
-	return fmt.Sprintf("session with ID %d has expired", s.SessionID)
 }
 
 // ValidatePassword checks that the supplied password is correct.
@@ -124,9 +114,4 @@ func (user *User) UpdatePasswordHash(password string) error {
 		user.PasswordHash = null.StringFrom(string(passwordHash))
 	}
 	return nil
-}
-
-// IsExpired returns true if a user session is expired.
-func (s UserSession) IsExpired() bool {
-	return s.Expiry.Before(time.Now())
 }

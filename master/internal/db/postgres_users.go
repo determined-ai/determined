@@ -1,33 +1,75 @@
 package db
 
 import (
+	"crypto/ed25519"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
+	"github.com/o1egl/paseto"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// AddUserSession creates a row in the user_sessions table.
-func (db *PgDB) AddUserSession(session *model.UserSession) error {
-	query := "INSERT INTO user_sessions (user_id, expiry) VALUES (:user_id, :expiry) RETURNING id"
-	return db.namedGet(&session.ID, query, *session)
-}
+// SessionDuration is how long a newly created session is valid.
+const SessionDuration = 7 * 24 * time.Hour
 
-// SessionBySessionID gets a user session by session ID.
-func (db *PgDB) SessionBySessionID(sessionID model.SessionID) (*model.UserSession, error) {
-	var s model.UserSession
-	if err := db.query(`
-SELECT * FROM user_sessions WHERE id=$1`, &s, sessionID); errors.Cause(err) == ErrNotFound {
-		return nil, ErrUserSessionNotFound{sessionID}
-	} else if err != nil {
-		return nil, err
+// StartUserSession creates a row in the user_sessions table.
+func (db *PgDB) StartUserSession(user *model.User) (string, error) {
+	userSession := &model.UserSession{
+		UserID: user.ID,
+		Expiry: time.Now().Add(SessionDuration),
 	}
 
-	return &s, nil
+	query := "INSERT INTO user_sessions (user_id, expiry) VALUES (:user_id, :expiry) RETURNING id"
+	if err := db.namedGet(&userSession.ID, query, *userSession); err != nil {
+		return "", err
+	}
+
+	v2 := paseto.NewV2()
+	token, err := v2.Sign(db.tokenKeys.PrivateKey, userSession, nil)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to generate authentication token")
+	}
+	return token, nil
+}
+
+// UserByToken returns a user session given an authentication token.
+func (db *PgDB) UserByToken(token string) (*model.User, *model.UserSession, error) {
+	v2 := paseto.NewV2()
+
+	var session model.UserSession
+	err := v2.Verify(token, db.tokenKeys.PublicKey, &session, nil)
+	if err != nil {
+		return nil, nil, ErrNotFound
+	}
+
+	query := `SELECT * FROM user_sessions WHERE id=$1`
+	if err := db.query(query, &session, session.ID); errors.Cause(err) == ErrNotFound {
+		return nil, nil, ErrNotFound
+	} else if err != nil {
+		return nil, nil, err
+	}
+
+	if session.Expiry.Before(time.Now()) {
+		return nil, nil, ErrNotFound
+	}
+
+	var user model.User
+	if err := db.query(`
+SELECT users.* FROM users
+JOIN user_sessions ON user_sessions.user_id = users.id
+WHERE user_sessions.id=$1`, &user, session.ID); errors.Cause(err) == ErrNotFound {
+		return nil, nil, ErrNotFound
+	} else if err != nil {
+		return nil, nil, err
+	}
+
+	return &user, &session, nil
 }
 
 // DeleteSessionByID deletes the session with the given ID.
@@ -36,27 +78,12 @@ func (db *PgDB) DeleteSessionByID(sessionID model.SessionID) error {
 	return err
 }
 
-// UserBySessionID gets a user using a session ID.
-func (db *PgDB) UserBySessionID(sessionID model.SessionID) (*model.User, error) {
-	var user model.User
-	if err := db.query(`
-SELECT users.* FROM users
-JOIN user_sessions ON user_sessions.user_id = users.id
-WHERE user_sessions.id=$1`, &user, sessionID); errors.Cause(err) == ErrNotFound {
-		return nil, nil
-	} else if err != nil {
-		return nil, err
-	}
-
-	return &user, nil
-}
-
 // UserByUsername looks up a user by name in the database.
 func (db *PgDB) UserByUsername(username string) (*model.User, error) {
 	var user model.User
-	if err := db.query(`
-SELECT * FROM users WHERE username=$1`, &user, username); errors.Cause(err) == ErrNotFound {
-		return nil, ErrNoSuchUsername{Username: username}
+	query := `SELECT * FROM users WHERE username=$1`
+	if err := db.query(query, &user, strings.ToLower(username)); errors.Cause(err) == ErrNotFound {
+		return nil, ErrNotFound
 	} else if err != nil {
 		return nil, err
 	}
@@ -247,4 +274,25 @@ WHERE u.id = $1 AND u.id = h.user_id`, &ug, userID); errors.Cause(err) == ErrNot
 	}
 
 	return &ug, nil
+}
+
+func (db *PgDB) initAuthKeys() error {
+	switch storedKeys, err := db.AuthTokenKeypair(); {
+	case err != nil:
+		return errors.Wrap(err, "error retrieving auth token keypair")
+	case storedKeys == nil:
+		publicKey, privateKey, err := ed25519.GenerateKey(nil)
+		if err != nil {
+			return errors.Wrap(err, "error creating auth token keypair")
+		}
+		tokenKeypair := model.AuthTokenKeypair{PublicKey: publicKey, PrivateKey: privateKey}
+		err = db.AddAuthTokenKeypair(&tokenKeypair)
+		if err != nil {
+			return errors.Wrap(err, "error saving auth token keypair")
+		}
+		db.tokenKeys = &tokenKeypair
+	default:
+		db.tokenKeys = storedKeys
+	}
+	return nil
 }
