@@ -49,6 +49,23 @@ estimator.evaluate() method, or take a checkpoint.
 VERY_LARGE_NUMBER = 9999999999999999
 
 
+class DeterminedEarlyStoppingHook(tf.compat.v1.train.SessionRunHook):  # type: ignore
+    """
+    DeterminedEarlyStoppingHook converts a stop request, so that Determined can
+    handle the stop request by finishing the step and checkpointing.
+    """
+
+    def __init__(self, context: Any) -> None:
+        self.context = context
+
+    def after_run(
+        self, run_context: tf.estimator.SessionRunContext, run_values: tf.estimator.SessionRunValues
+    ) -> None:
+        if run_context.stop_requested:
+            run_context._stop_requested = False
+            self.context.set_stop_requested(True)
+
+
 class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
     """
     DeterminedControlHook takes control of the train_and_evaluate() loop between
@@ -458,6 +475,7 @@ class EstimatorTrialController(det.LoopTrialController):
 
     def _init_model(self) -> None:
         self._init_train_hooks()
+        self._init_val_hooks()
         self._init_paths()
 
         self.estimator = tf.estimator.Estimator(
@@ -504,12 +522,19 @@ class EstimatorTrialController(det.LoopTrialController):
         self.train_spec = tf.estimator.TrainSpec(
             input_fn=repeating_train_fn, hooks=self.train_hooks
         )
+        steps = (
+            self.val_spec.steps // self.context.distributed.get_size()
+            if self.val_spec.steps is not None
+            else None
+        )
         self.eval_spec = tf.estimator.EvalSpec(
-            input_fn=self.val_spec.input_fn, hooks=self.val_spec.hooks, steps=None
+            input_fn=self.val_spec.input_fn, hooks=self.val_hooks, steps=steps
         )
 
     def _init_train_hooks(self) -> None:
         self.train_hooks = [*self.user_train_spec.hooks]
+
+        self.train_hooks.append(DeterminedEarlyStoppingHook(self.context))
 
         if self.hvd_config.use:
             self.train_hooks.append(hvd.BroadcastGlobalVariablesHook(0))
@@ -518,6 +543,10 @@ class EstimatorTrialController(det.LoopTrialController):
         # any other hooks need to run _before_ the training step ends they have
         # their chance.
         self.train_hooks.append(DeterminedControlHook(self))
+
+    def _init_val_hooks(self) -> None:
+        self.val_hooks = [*self.val_spec.hooks]
+        self.val_hooks.append(DeterminedEarlyStoppingHook(self.context))
 
     def _init_run_config(self, config: tf.estimator.RunConfig) -> tf.estimator.RunConfig:
         logging.debug(f"Initializing RunConfig. Got RunConfig: {config} .")
@@ -601,7 +630,7 @@ class EstimatorTrialController(det.LoopTrialController):
 
     def compute_validation_metrics(self) -> workload.Response:
         metrics = self.estimator.evaluate(
-            input_fn=self.val_spec.input_fn, steps=self.val_spec.steps, hooks=self.val_spec.hooks
+            input_fn=self.eval_spec.input_fn, steps=self.eval_spec.steps, hooks=self.eval_spec.hooks
         )
 
         if self.hvd_config.use:
