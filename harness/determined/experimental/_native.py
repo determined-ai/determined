@@ -131,14 +131,14 @@ def _make_test_workloads(
     logging.info("Training one batch")
     yield from interceptor.send(workload.train_workload(1), [1])
     metrics = interceptor.metrics_result()
-    batch_metrics = metrics["metrics"]["batch_metrics"]
+    batch_metrics = metrics["batch_metrics"]
     check.eq(len(batch_metrics), config.batches_per_step())
     logging.debug(f"Finished training, metrics: {batch_metrics}")
 
     logging.info("Validating one step")
     yield from interceptor.send(workload.validation_workload(1), [])
     validation = interceptor.metrics_result()
-    v_metrics = validation["metrics"]["validation_metrics"]
+    v_metrics = validation["validation_metrics"]
     logging.debug(f"Finished validating, validation metrics: {v_metrics}")
 
     logging.info(f"Saving a checkpoint to {checkpoint_dir}.")
