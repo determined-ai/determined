@@ -67,6 +67,11 @@ func RegisterHTTPProxy(e *echo.Echo, port int) error {
 	}
 	e.Any("/api/v1/*", func(c echo.Context) error {
 		request := c.Request()
+		if c.Request().Header.Get("Authorization") == "" {
+			if cookie, err := c.Cookie(cookieName); err == nil {
+				request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cookie.Value))
+			}
+		}
 		if _, ok := request.URL.Query()["pretty"]; ok {
 			request.Header.Set("Accept", jsonPretty)
 		}
