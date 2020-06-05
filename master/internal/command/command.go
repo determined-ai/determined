@@ -9,7 +9,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/scheduler"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	"github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -102,7 +101,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ctx.Respond(newSummary(c))
 		}
 
-	case agent.ContainerStateChanged:
+	case scheduler.ContainerStateChanged:
 		c.container = &msg.Container
 		if msg.Container.State == container.Terminated {
 			exitStatus := "command exited successfully"

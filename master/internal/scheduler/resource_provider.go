@@ -48,3 +48,11 @@ func (c ContainerLog) String() string {
 	timestamp := c.Timestamp.UTC().Format(time.RFC3339)
 	return fmt.Sprintf("[%s] %s [%s] || %s", timestamp, shortID, c.Container.State, msg)
 }
+
+// ContainerStateChanged notifies the master that the agent transitioned the container state.
+type ContainerStateChanged struct {
+	Container containerInfo.Container
+
+	ContainerStarted *agent.ContainerStarted
+	ContainerStopped *agent.ContainerStopped
+}

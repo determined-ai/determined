@@ -6,7 +6,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/scheduler"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -53,7 +52,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			},
 		})
 
-	case agent.ContainerStateChanged:
+	case scheduler.ContainerStateChanged:
 		if msg.Container.State != container.Terminated {
 			return nil
 		}

@@ -330,7 +330,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		ctx.Log().Info("trial runner requested to terminate")
 		t.pendingGracefulTermination = true
 
-	case agent.ContainerStateChanged:
+	case scheduler.ContainerStateChanged:
 		switch msg.Container.State {
 		case container.Terminated:
 			t.processContainerTerminated(ctx, msg)
@@ -709,7 +709,10 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 	return nil
 }
 
-func (t *trial) processContainerTerminated(ctx *actor.Context, msg agent.ContainerStateChanged) {
+func (t *trial) processContainerTerminated(
+	ctx *actor.Context,
+	msg scheduler.ContainerStateChanged,
+) {
 	c := t.containers[scheduler.ContainerID(msg.Container.ID)]
 	delete(t.containers, scheduler.ContainerID(msg.Container.ID))
 
