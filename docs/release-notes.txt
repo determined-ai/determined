@@ -993,6 +993,14 @@ Version 0.12.5
 -  CLI: Include the number of containers on each agent in the output of
    ``det agent list``.
 
+Enterprise:
+
+- Add support for using SCIM (System for Cross-domain Identity Management) to provision users. For usage, see :ref:`scim`.
+
+- Add support for using OAuth2 to secure Determined's SCIM integration. For usage, see :ref:`oauth`.
+
+- Add support for users to sign-on through an external IdP with SAML. For usage, see :ref:`saml`.
+
 Version 0.12.4
 ==============
 
