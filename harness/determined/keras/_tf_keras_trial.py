@@ -450,11 +450,9 @@ class TFKerasTrialController(det.LoopTrialController):
         # Save model.
         self.model.save(path.joinpath("determined-keras-model.h5"), save_format="h5")
 
-        det.util.write_checkpoint_metadata(
-            path, self.env, {"tensorflow_version": tf.__version__, "format": "h5"}
-        )
+        det.util.write_user_code(path)
 
-        return {}
+        return {"framework": f"tensorflow-{tf.__version__}", "format": "h5"}
 
     def run(self) -> None:
         for wkld, args, response_func in self.workloads:

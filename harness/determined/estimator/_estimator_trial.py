@@ -214,17 +214,13 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
         self._copy_latest_checkpoint(checkpoint_path=checkpoint_path)
         self._save_serving_input_receiver_fns(checkpoint_path=str(checkpoint_path))
 
-        det.util.write_checkpoint_metadata(
-            checkpoint_path,
-            self.estimator_trial_controller.env,
-            {"tensorflow_version": tf.__version__, "format": "saved_model"},
-        )
+        det.util.write_user_code(checkpoint_path)
 
         for callback in self.estimator_trial_controller.train_hooks:
             if isinstance(callback, estimator.RunHook):
                 callback.on_checkpoint_end(str(checkpoint_path))
 
-        return {}
+        return {"framework": f"tensorflow-{tf.__version__}", "format": "saved_model"}
 
     def _save_model(self) -> None:
         # Only save when we have performed training since the last

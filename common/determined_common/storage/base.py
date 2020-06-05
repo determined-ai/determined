@@ -10,31 +10,43 @@ from determined_common.check import check_gt, check_not_none, check_true, check_
 
 class StorageMetadata:
     def __init__(
-        self, storage_id: str, resources: Dict[str, int], metadata: Optional[Dict[str, str]] = None
+        self,
+        storage_id: str,
+        resources: Dict[str, int],
+        framework: Optional[str] = None,
+        format: Optional[str] = None,
     ) -> None:
         check_gt(len(storage_id), 0, "Invalid storage ID")
-        if metadata is None:
-            metadata = {}
         self.storage_id = storage_id
         self.resources = resources
-        self.metadata = metadata
+        self.framework = framework
+        self.format = format
 
     def __json__(self) -> Dict[str, Any]:
-        return {"uuid": self.storage_id, "resources": self.resources, "metadata": self.metadata}
+        return {
+            "uuid": self.storage_id,
+            "resources": self.resources,
+            "framework": self.framework,
+            "format": self.format,
+        }
 
     def __str__(self) -> str:
-        return "<storage {}, metadata {}>".format(self.storage_id, self.metadata)
+        return "<storage {}, framework {}, format {}>".format(
+            self.storage_id, self.framework, self.format
+        )
 
     def __repr__(self) -> str:
-        return "<storage {}, metadata {}, resources {}>".format(
-            self.storage_id, self.metadata, self.resources
+        return "<storage {}, framework {}, format {}, resources {}>".format(
+            self.storage_id, self.framework, self.format, self.resources
         )
 
     @staticmethod
     def from_json(record: Dict[str, Any]) -> "StorageMetadata":
         check_not_none(record["uuid"], "Storage ID is undefined")
         check_not_none(record["resources"], "Resources are undefined")
-        return StorageMetadata(record["uuid"], record["resources"], record.get("metadata"))
+        return StorageMetadata(
+            record["uuid"], record["resources"], record.get("framework"), record.get("format")
+        )
 
 
 class StorageManager:

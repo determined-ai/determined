@@ -13,14 +13,18 @@ import (
 // ExportableCheckpoint is a checkpoint that can be downloaded via checkpoint export.
 type ExportableCheckpoint struct {
 	UUID              string          `db:"uuid" json:"uuid"`
-	SmallerIsBetter   bool            `db:"smaller_is_better" json:"smaller_is_better"`
-	Metric            string          `db:"metric" json:"metric"`
-	CheckpointStorage json.RawMessage `db:"checkpoint_storage" json:"checkpoint_storage"`
+	ExperimentConfig  json.RawMessage `db:"experiment_config" json:"experiment_config"`
+	ExperimentID      int             `db:"experiment_id" json:"experiment_id"`
+	Hprams            json.RawMessage `db:"hparams" json:"hparams"`
+	TrialID           int             `db:"trial_id" json:"trial_id"`
+	Format            string          `db:"format" json:"format"`
+	Framework         string          `db:"framework" json:"framework"`
 	BatchNumber       int             `db:"batch_number" json:"batch_number"`
 	StartTime         string          `db:"start_time" json:"start_time"`
 	EndTime           string          `db:"end_time" json:"end_time"`
 	Metadata          json.RawMessage `db:"metadata" json:"metadata"`
 	Resources         json.RawMessage `db:"resources" json:"resources"`
+	DeterminedVersion string          `db:"determined_version" json:"determined_version"`
 	ValidationMetrics json.RawMessage `db:"metrics" json:"metrics"`
 	ValidationState   string          `db:"validation_state" json:"validation_state"`
 }

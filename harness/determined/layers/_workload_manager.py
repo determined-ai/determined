@@ -265,28 +265,38 @@ class _TrialWorkloadManager(WorkloadManager):
         self, wkld: workload.Workload, respond: workload.ResponseFunc
     ) -> workload.Stream:
         start_time = _current_timestamp()
+        message: workload.Response = cast(workload.Response, {})
 
         # Only the chief container should checkpoint.
         if self.rendezvous_info.get_rank() == 0:
             with self.storage_mgr.store_path() as (storage_id, path):
-                yield wkld, [pathlib.Path(path)], lambda _: None
 
-                metadata = storage.StorageMetadata(
-                    storage_id, storage.StorageManager._list_directory(path)
-                )
+                def _respond(checkpoint_info: workload.Response) -> None:
+                    nonlocal message
+                    checkpoint_info = cast(Dict[str, Any], checkpoint_info)
+                    metadata = storage.StorageMetadata(
+                        storage_id,
+                        storage.StorageManager._list_directory(path),
+                        checkpoint_info["framework"],
+                        checkpoint_info["format"],
+                    )
 
-            logging.info("Saved trial to checkpoint {}".format(metadata.storage_id))
-            self.tensorboard_mgr.sync()
+                    logging.info("Saved trial to checkpoint {}".format(metadata.storage_id))
+                    self.tensorboard_mgr.sync()
 
-            message = {
-                "type": "WORKLOAD_COMPLETED",
-                "workload": wkld,
-                "start_time": start_time,
-                "end_time": _current_timestamp(),
-                "metrics": metadata,
-            }  # type: workload.Response
+                    message = {  # type: ignore
+                        "type": "WORKLOAD_COMPLETED",
+                        "workload": wkld,
+                        "start_time": start_time,
+                        "end_time": _current_timestamp(),
+                        "metrics": metadata,
+                    }  # type: workload.Response
+
+                yield wkld, [pathlib.Path(path)], _respond
+
         else:
             message = workload.Skipped()
+
         respond(message)
 
     def yield_terminate(

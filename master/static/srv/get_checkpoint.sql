@@ -1,13 +1,16 @@
 SELECT
     c.uuid AS uuid,
-    e.config->'searcher'->'smaller_is_better' AS smaller_is_better,
-    e.config->'searcher'->>'metric' AS metric,
-    e.config->'checkpoint_storage' AS checkpoint_storage,
+		e.config AS experiment_config,
+		e.id AS  experiment_id,
+		t.hparams as hparams,
     s.id * (e.config->>'batches_per_step')::int AS batch_number,
     s.start_time AS start_time,
     s.end_time AS end_time,
     c.metadata AS metadata,
     c.resources AS resources,
+		c.framework as framework,
+		c.format as format,
+		c.determined_version as determined_version,
     v.metrics AS metrics,
     v.state AS validation_state
 FROM checkpoints c

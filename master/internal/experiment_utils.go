@@ -115,6 +115,8 @@ func checkpointFromCheckpointMetrics(metrics searcher.CheckpointMetrics) model.C
 	return model.Checkpoint{
 		UUID:      &id,
 		Resources: resources,
+		Framework: metrics.Framework,
+		Format:    metrics.Format,
 	}
 }
 
@@ -136,7 +138,7 @@ func markWorkloadErrored(db *db.PgDB, w searcher.Workload) error {
 	case searcher.RunStep:
 		return db.UpdateStep(w.TrialID, w.StepID, model.ErrorState, nil)
 	case searcher.CheckpointModel:
-		return db.UpdateCheckpoint(w.TrialID, w.StepID, model.ErrorState, "", nil, nil)
+		return db.UpdateCheckpoint(w.TrialID, w.StepID, model.Checkpoint{State: model.ErrorState})
 	case searcher.ComputeValidationMetrics:
 		return db.UpdateValidation(w.TrialID, w.StepID, model.ErrorState, nil)
 	default:
@@ -151,9 +153,9 @@ func markWorkloadCompleted(db *db.PgDB, msg searcher.CompletedMessage) error {
 			msg.Workload.TrialID, msg.Workload.StepID, model.CompletedState, msg.RunMetrics)
 	case searcher.CheckpointModel:
 		checkpoint := checkpointFromCheckpointMetrics(*msg.CheckpointMetrics)
+		checkpoint.State = model.CompletedState
 		return db.UpdateCheckpoint(
-			msg.Workload.TrialID, msg.Workload.StepID, model.CompletedState,
-			*checkpoint.UUID, checkpoint.Resources, checkpoint.Metadata)
+			msg.Workload.TrialID, msg.Workload.StepID, checkpoint)
 	case searcher.ComputeValidationMetrics:
 		metrics := make(model.JSONObj)
 		metrics["num_inputs"] = msg.ValidationMetrics.NumInputs

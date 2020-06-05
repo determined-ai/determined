@@ -74,8 +74,8 @@ class ExperimentReference:
             raise AssertionError("No checkpoint found for trial {}".format(self.id))
 
         if not sort_by:
-            sort_by = r[0]["metric"]
-            smaller_is_better = r[0]["smaller_is_better"]
+            sort_by = r[0]["experiment_config"]["searcher"]["metric"]
+            smaller_is_better = r[0]["experiment_config"]["searcher"]["smaller_is_better"]
 
         r.sort(
             reverse=not smaller_is_better, key=lambda x: x["metrics"]["validation_metrics"][sort_by]
