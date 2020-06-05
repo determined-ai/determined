@@ -137,7 +137,7 @@ plotScalesWithLabels =
 padding : Padding
 padding =
     { top = 30
-    , right = 20
+    , right = 30
     , bottom = 40
     , left = 75
     }
@@ -358,7 +358,7 @@ plotView config model sz data =
                 ( List.length data, List.length data )
 
             else
-                ( round <| min (x1 - x0 + 1) ((cx1 - cx0) / 40), round <| (cy0 - cy1) / 30 )
+                ( round <| min (x1 - x0 + 1) ((cx1 - cx0) / 60), round <| (cy0 - cy1) / 30 )
 
         xScale =
             Scale.linear ( cx0, cx1 ) ( x0, x1 )
