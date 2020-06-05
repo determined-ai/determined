@@ -146,12 +146,12 @@ func (s *asyncHalvingSearch) validationCompleted(
 		metric *= -1
 	}
 
-	return s.promoteAsync(ctx, requestID, message, metric)
+	return s.promoteAsync(ctx, requestID, message, metric), nil
 }
 
 func (s *asyncHalvingSearch) promoteAsync(
 	ctx context, requestID RequestID, message Workload, metric float64,
-) ([]Operation, error) {
+) []Operation {
 	// Upon a trial is finished, we should return at least one more trial to train unless
 	// the bracket of successive halving is finished.
 	rungIndex := s.trialRungs[requestID]
@@ -207,7 +207,7 @@ func (s *asyncHalvingSearch) promoteAsync(
 	if allTrials == s.maxTrials {
 		ops = append(ops, s.closeOutRungs()...)
 	}
-	return ops, nil
+	return ops
 }
 
 // closeOutRungs closes all remaining unpromoted trials in any rungs that have no more outstanding
@@ -224,13 +224,10 @@ func (s *asyncHalvingSearch) closeOutRungs() []Operation {
 				if !s.earlyExitTrials[trialMetric.requestID] {
 					ops = append(ops, NewClose(trialMetric.requestID))
 				}
-				// TODO: is checkpoint storage associated with the close operation?
-				// Is there any harm to doing this at the very end of the experiment?
 				rung.metrics[tid].closed = true
 				ops = append(ops, NewClose(trialMetric.requestID))
 			}
 		}
-		//rung.metrics = nil
 	}
 	return ops
 }
@@ -249,7 +246,7 @@ func (s *asyncHalvingSearch) trialExitedEarly(
 	ctx context, requestID RequestID, message Workload,
 ) ([]Operation, error) {
 	s.earlyExitTrials[requestID] = true
-	return s.promoteAsync(ctx, requestID, message, ashaExitedMetricValue)
+	return s.promoteAsync(ctx, requestID, message, ashaExitedMetricValue), nil
 }
 
 func max(initial int, values ...int) int {
