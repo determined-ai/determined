@@ -8,7 +8,7 @@ import {
   LogsParams, PatchExperimentParams, PatchExperimentState, TrialLogsParams,
 } from 'services/types';
 import {
-  CommandType, Credentials, DeterminedInfo, Experiment, Task, TaskType, User,
+  CommandType, Credentials, DeterminedInfo, Experiment, Log, Task, TaskType, User,
 } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
