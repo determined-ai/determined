@@ -8,9 +8,9 @@ SELECT
     s.end_time AS end_time,
     c.metadata AS metadata,
     c.resources AS resources,
-		c.framework as framework,
-		c.format as format,
-		c.determined_version as determined_version,
+    c.framework as framework,
+    c.format as format,
+    c.determined_version as determined_version,
     v.metrics AS metrics,
     v.state AS validation_state
 FROM checkpoints c

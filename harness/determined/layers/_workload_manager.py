@@ -265,14 +265,12 @@ class _TrialWorkloadManager(WorkloadManager):
         self, wkld: workload.Workload, respond: workload.ResponseFunc
     ) -> workload.Stream:
         start_time = _current_timestamp()
-        message: workload.Response = cast(workload.Response, {})
 
         # Only the chief container should checkpoint.
         if self.rendezvous_info.get_rank() == 0:
             with self.storage_mgr.store_path() as (storage_id, path):
 
                 def _respond(checkpoint_info: workload.Response) -> None:
-                    nonlocal message
                     checkpoint_info = cast(Dict[str, Any], checkpoint_info)
                     metadata = storage.StorageMetadata(
                         storage_id,
@@ -284,20 +282,20 @@ class _TrialWorkloadManager(WorkloadManager):
                     logging.info("Saved trial to checkpoint {}".format(metadata.storage_id))
                     self.tensorboard_mgr.sync()
 
-                    message = {  # type: ignore
+                    message: workload.Response = {  # type: ignore
                         "type": "WORKLOAD_COMPLETED",
                         "workload": wkld,
                         "start_time": start_time,
                         "end_time": _current_timestamp(),
                         "metrics": metadata,
-                    }  # type: workload.Response
+                    }
+
+                    respond(message)
 
                 yield wkld, [pathlib.Path(path)], _respond
 
         else:
-            message = workload.Skipped()
-
-        respond(message)
+            respond(workload.Skipped())
 
     def yield_terminate(
         self, wkld: workload.Workload, respond: workload.ResponseFunc
