@@ -157,12 +157,19 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 			return errors.Errorf("invalid StepID in workload completed message: %s", msg.Workload)
 		}
 		s.curStepDone.hasValidation = true
-		switch s.checkpointPolicy {
-		case model.AllCheckpointPolicy:
-			s.steps[msg.Workload.StepID].hasCheckpoint = true
-		case model.BestCheckpointPolicy:
-			if isBestValidation := experimentFuture.Get().(bool); isBestValidation {
+		if msg.ExitedReason != nil {
+			s.steps = s.steps[:msg.Workload.StepID+1]
+			if *msg.ExitedReason == searcher.UserCanceled {
 				s.steps[msg.Workload.StepID].hasCheckpoint = true
+			}
+		} else {
+			switch s.checkpointPolicy {
+			case model.AllCheckpointPolicy:
+				s.steps[msg.Workload.StepID].hasCheckpoint = true
+			case model.BestCheckpointPolicy:
+				if isBestValidation := experimentFuture.Get().(bool); isBestValidation {
+					s.steps[msg.Workload.StepID].hasCheckpoint = true
+				}
 			}
 		}
 	default:
