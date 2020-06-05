@@ -107,6 +107,17 @@ def make_metrics(num_inputs: Optional[int], batch_metrics: List[Dict[str, Any]])
     return metrics
 
 
+def wrap_metrics(metrics: det.workload.Response, stop_requested: bool) -> det.workload.Response:
+    """Make workload response with metrics and stop_requested flag (or is Skipped if not chief)."""
+    if isinstance(metrics, det.workload.Skipped):
+        return metrics
+    else:
+        return {
+            "metrics": metrics,
+            "stop_requested": stop_requested,
+        }
+
+
 def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False) -> str:
     def json_serializer(obj: Any) -> Any:
         if isinstance(obj, datetime.datetime):

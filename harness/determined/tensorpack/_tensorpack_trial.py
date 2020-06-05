@@ -100,6 +100,7 @@ class ManagerCallback(tp.callbacks.Callback):  # type: ignore
         workloads: workload.Stream,
         is_chief: bool,
         machine_rank: int,
+        context: Any,
     ) -> None:
         self.metric_names = metric_names
         self.batch_metrics = []  # type: List[Dict[str, Any]]
@@ -108,6 +109,7 @@ class ManagerCallback(tp.callbacks.Callback):  # type: ignore
         self.workloads = workloads
         self.is_chief = is_chief
         self.machine_rank = machine_rank
+        self.context = context
 
         # Store the response_func for train_for_step workloads while we do the training.
         self.train_response_func = None  # type: Optional[workload.ResponseFunc]
@@ -227,7 +229,11 @@ class ManagerCallback(tp.callbacks.Callback):  # type: ignore
         self.train_response_func = cast(workload.ResponseFunc, self.train_response_func)
 
         if self.is_chief:
-            self.train_response_func(det.util.make_metrics(None, self.batch_metrics))
+            response = {
+                "metrics": det.util.make_metrics(None, self.batch_metrics),
+                "stop_requested": self.context.get_stop_requested(),
+            }
+            self.train_response_func(response)
         else:
             self.train_response_func(workload.Skipped())
 
@@ -243,7 +249,11 @@ class ManagerCallback(tp.callbacks.Callback):  # type: ignore
                 self.train_response_func = response_func
                 break
             elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                response_func(self._compute_validation_metrics())
+                response_func(
+                    det.util.wrap_metrics(
+                        self._compute_validation_metrics(), self.context.get_stop_requested()
+                    )
+                )
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 check.len_eq(args, 1)
                 check.is_instance(args[0], pathlib.Path)
@@ -453,6 +463,7 @@ class TensorpackTrialController(det.LoopTrialController):
             self.workloads,
             self.is_chief,
             self.rendezvous_info.get_rank(),
+            self.context,
         )
 
         # TODO: check to make sure users don't pass in InferenceRunner

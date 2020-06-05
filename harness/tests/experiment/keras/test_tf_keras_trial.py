@@ -153,7 +153,7 @@ class TestKerasTrial:
                 # Calculate what the loss should be.
                 loss = trial_class.calc_loss(w, batch)
 
-                assert metrics["avg_metrics"]["loss"] == pytest.approx(loss)
+                assert metrics["metrics"]["avg_metrics"]["loss"] == pytest.approx(loss)
 
                 # Update what the weight should be.
                 w = w - hparams["learning_rate"] * trial_class.calc_gradient(w, batch)
@@ -248,7 +248,7 @@ class TestKerasTrial:
             yield from interceptor.send(workload.validation_workload(), [])
             metrics = interceptor.metrics_result()
 
-            new_loss = metrics["validation_metrics"]["val_loss"]
+            new_loss = metrics["metrics"]["validation_metrics"]["val_loss"]
             assert new_loss == pytest.approx(old_loss)
 
             yield workload.terminate_workload(), [], workload.ignore_workload_response

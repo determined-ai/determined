@@ -114,7 +114,11 @@ class WaitForInstructionsCallback(tf.keras.callbacks.Callback):  # type: ignore
         )
 
         if self.tf_keras_trial_controller.is_chief:
-            response_func(det.util.make_metrics(num_inputs, self.metrics))
+            response = {
+                "metrics": det.util.make_metrics(num_inputs, self.metrics),
+                "stop_requested": self.tf_keras_trial_controller.context.get_stop_requested(),
+            }
+            response_func(response)
         else:
             response_func(workload.Skipped())
 
@@ -481,7 +485,11 @@ class TFKerasTrialController(det.LoopTrialController):
                 break
 
             elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                response_func(self.compute_validation_metrics())
+                response_func(
+                    det.util.wrap_metrics(
+                        self.compute_validation_metrics(), self.context.get_stop_requested()
+                    )
+                )
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 check.len_eq(args, 1)
                 check.is_instance(args[0], pathlib.Path)

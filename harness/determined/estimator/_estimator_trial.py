@@ -154,9 +154,11 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
         check.is_not_none(self.train_response_func, "no response_func at end of train_for_step")
         self.train_response_func = cast(workload.ResponseFunc, self.train_response_func)
         if self.estimator_trial_controller.is_chief:
-            self.train_response_func(
-                det.util.make_metrics(self.batches_processed_in_step, self.step_metrics)
-            )
+            response = {
+                "metrics": det.util.make_metrics(self.batches_processed_in_step, self.step_metrics),
+                "stop_requested": self.estimator_trial_controller.context.get_stop_requested(),
+            }
+            self.train_response_func(response)
         else:
             self.train_response_func(workload.Skipped())
 
@@ -289,7 +291,12 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
                 # re-enters the train_and_evaluate() loop.
                 break
             elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                response_func(self._compute_validation_metrics())
+                response_func(
+                    det.util.wrap_metrics(
+                        self._compute_validation_metrics(),
+                        self.estimator_trial_controller.context.get_stop_requested(),
+                    )
+                )
             elif wkld.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 check.len_eq(args, 1)
                 check.is_instance(args[0], pathlib.Path)
