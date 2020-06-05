@@ -55,8 +55,6 @@ class NoOpTrialController(det.CallbackTrialController):
         assert 0 <= self.metrics_sigma
         self.write_null = self.env.hparams.get("write_null", False)
 
-        self.request_stop = self.env.hparams.get("request_stop", False)
-
         if self.load_path is None:
             self.trained_steps = collections.Counter()
         else:
@@ -85,8 +83,6 @@ class NoOpTrialController(det.CallbackTrialController):
             raise ValueError("Invalid `metrics_progression` {}".format(self.metrics_progression))
 
     def train_for_step(self, step_id: int, batches_per_step: int) -> Dict[str, Any]:
-        if self.request_stop:
-            self.context.set_stop_requested(True)
         self.chaos_failure(self.chaos_probability_train)
         time.sleep(self.train_batch_secs * batches_per_step)
         if self.write_null:
@@ -94,13 +90,9 @@ class NoOpTrialController(det.CallbackTrialController):
                 f.write(b"\x00")
         self.trained_steps[step_id] += 1
         metrics = {name: self.current_metric() for name in ["loss", *self.training_metrics()]}
-        response = {
-            "metrics": det.util.make_metrics(
-                self._batch_size * batches_per_step, [metrics] * batches_per_step
-            ),
-            "stop_requested": self.context.get_stop_requested(),
-        }
-        return response
+        return det.util.make_metrics(
+            self._batch_size * batches_per_step, [metrics] * batches_per_step
+        )
 
     def compute_validation_metrics(self, step_id: int) -> Dict[str, Any]:
         self.chaos_failure(self.chaos_probability_validate)
@@ -108,11 +100,7 @@ class NoOpTrialController(det.CallbackTrialController):
         metrics = {
             name: self.current_metric() for name in ["validation_error", *self.validation_metrics()]
         }
-        response = {
-            "metrics": {"validation_metrics": metrics, "num_inputs": self.validation_set_size},
-            "stop_requested": self.context.get_stop_requested(),
-        }
-        return response
+        return {"validation_metrics": metrics, "num_inputs": self.validation_set_size}
 
     def training_metrics(self) -> Dict[str, Any]:
         return {"metric_{}".format(i): None for i in range(1, self.num_training_metrics)}

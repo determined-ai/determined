@@ -39,14 +39,14 @@ class TrainAndValidate:
         for step_id in range(initial_step_id, initial_step_id + steps):
             yield from interceptor.send(workload.train_workload(step_id), [batches_per_step])
             metrics = interceptor.metrics_result()
-            batch_metrics = metrics["metrics"]["batch_metrics"]
+            batch_metrics = metrics["batch_metrics"]
             assert len(batch_metrics) == batches_per_step
             self._training_metrics.extend(batch_metrics)
 
             if step_id % validation_freq == 0:
                 yield from interceptor.send(workload.validation_workload(step_id), [])
                 validation = interceptor.metrics_result()
-                v_metrics = validation["metrics"]["validation_metrics"]
+                v_metrics = validation["validation_metrics"]
                 self._validation_metrics.append(v_metrics)
 
     def result(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
