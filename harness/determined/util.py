@@ -107,7 +107,7 @@ def make_metrics(num_inputs: Optional[int], batch_metrics: List[Dict[str, Any]])
     return metrics
 
 
-def wrap_metrics(metrics: Dict[str, Any], stop_requested: bool) -> Dict[str, Any]:
+def wrap_metrics(metrics: det.workload.Response, stop_requested: bool) -> det.workload.Response:
     """Make workload response with metrics and stop_requested flag (or is Skipped if not chief)."""
     if isinstance(metrics, det.workload.Skipped):
         return metrics
