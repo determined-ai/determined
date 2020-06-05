@@ -35,11 +35,8 @@ func ConnectPostgres(url string) (*PgDB, error) {
 	for {
 		sql, err := sqlx.Connect("postgres", url)
 		if err == nil {
-			pg := &PgDB{sql: sql, queries: make(map[string]string)}
-			err = pg.initAuthKeys()
-			return pg, err
+			return &PgDB{sql: sql, queries: make(map[string]string)}, err
 		}
-
 		numTries++
 		if numTries >= 15 {
 			return nil, errors.Wrapf(err, "could not connect to database after %v tries", numTries)
