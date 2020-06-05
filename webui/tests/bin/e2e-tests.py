@@ -31,11 +31,8 @@ def run(cmd: List[str], config) -> None:
     return subprocess.check_call(cmd, env=config["env"])
 
 
-def run_forget(cmd: List[str], config) -> None:
-    return subprocess.Popen(
-        cmd,
-        stdout=str(results_dir.joinpath("cluster.stdout.logs")),
-    )
+def run_forget(cmd: List[str], logfile, config) -> None:
+    return subprocess.Popen(cmd, stdout=logfile)
 
 
 def run_ignore_failure(cmd: List[str], config):
@@ -45,10 +42,10 @@ def run_ignore_failure(cmd: List[str], config):
         pass
 
 
-def setup_cluster(config):
+def setup_cluster(logfile, config):
     logger.info("setting up the cluster..")
     run(CLUSTER_CMD_PREFIX + ["start-db"], config)
-    cluster_process = run_forget(CLUSTER_CMD_PREFIX + ["run"], config)
+    cluster_process = run_forget(CLUSTER_CMD_PREFIX + ["run"], logfile, config)
     time.sleep(5)  # FIXME add a ready check for master
     logger.info(f"cluster pid: {cluster_process.pid}")
     return cluster_process
@@ -66,7 +63,9 @@ def teardown_cluster(config):
 @contextmanager
 def det_cluster(config):
     try:
-        yield setup_cluster(config)
+        with open(str(results_dir.joinpath("cluster.stdout.logs")), "w") as f:
+            yield setup_cluster(f, config)
+
     finally:
         teardown_cluster(config)
 
