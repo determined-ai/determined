@@ -1,7 +1,6 @@
-from typing import Any, Optional, cast
+from typing import Any, List, Optional, cast
 
 import torch
-import torch.nn as nn
 
 import determined as det
 from determined import pytorch
@@ -19,9 +18,9 @@ class PyTorchTrialContext(det.TrialContext):
 
         # The following three attributes are initialized during the lifetime of
         # a PyTorchTrialContext.
-        self.model = None  # type: Optional[nn.Module]
-        self.optimizer = None
-        self.lr_scheduler = None  # type: Optional[pytorch.LRScheduler]
+        self.model = None  # type: Optional[torch.nn.Module]
+        self.optimizers = []  # type: List[torch.optim.Optimizer] # type: ignore
+        self.lr_schedulers = []  # type: List[pytorch.LRScheduler]
 
     def get_model(self) -> torch.nn.Module:
         """
@@ -44,8 +43,19 @@ class PyTorchTrialContext(det.TrialContext):
             * ``build_model()``
             * ``optimizer()``
         """
-        check.check_not_none(self.optimizer)
-        return self.optimizer
+        check.len_eq(self.optimizers, 1)
+        return self.optimizers[0]
+
+    def _get_optimizers(self) -> List[torch.optim.Optimizer]:  # type: ignore
+        """
+        Get the optimizer(s) associated with the trial. This function should not be
+        called from:
+
+            * ``__init__``
+            * ``build_model()``
+            * ``build_optimizers()``
+        """
+        return self.optimizers
 
     def get_lr_scheduler(self) -> Optional[pytorch.LRScheduler]:
         """
@@ -57,4 +67,17 @@ class PyTorchTrialContext(det.TrialContext):
             * ``optimizer()``
             * ``create_lr_scheduler()``
         """
-        return self.lr_scheduler
+        check.len_eq(self.lr_schedulers, 1)
+        return self.lr_schedulers[0]
+
+    def _get_lr_schedulers(self) -> List[pytorch.LRScheduler]:
+        """
+        Get the scheduler(s) associated with the trial, if one is defined. This
+        function should not be called from:
+
+            * ``__init__``
+            * ``build_model()``
+            * ``build_optimizers()``
+            * ``build_lr_schedulers()``
+        """
+        return self.lr_schedulers
