@@ -952,6 +952,13 @@ Version 0.12.7
    provides an out-of-the-box option for running non-privileged
    containers with a working home directory.
 
+Version 0.12.6
+^^^^^^^^^^^^^^
+
+**Release Date:** June 5, 2020
+
+- Add end of training callback to EstimatorTrial.
+
 Version 0.12.5
 ==============
 
