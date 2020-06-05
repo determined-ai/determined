@@ -61,7 +61,7 @@ func GetUser(ctx context.Context, d *db.PgDB) (*model.User, *model.UserSession, 
 		}
 		return user, session, nil
 	case db.ErrNotFound:
-		return nil, nil, ErrPermissionDenied
+		return nil, nil, ErrInvalidCredentials
 	default:
 		return nil, nil, err
 	}
