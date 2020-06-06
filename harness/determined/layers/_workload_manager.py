@@ -213,25 +213,12 @@ class _TrialWorkloadManager(WorkloadManager):
                     metric_value
                 ) and math.isnan(metric_value)
 
-                if metric_is_none:
+                if metric_is_none or metric_is_nan:
                     raise AssertionError(
                         "Validation metric '{}' returned "
                         "an invalid scalar value: {}".format(metric_name, metric_value)
                     )
                     sys.exit(1)
-
-                if metric_is_nan:
-                    if metric_name == searcher_metric:
-                        v_metrics[metric_name] = (
-                            sys.float_info.max
-                            if self.env.experiment_config["searcher"]["smaller_is_better"]
-                            else sys.float_info.min
-                        )
-                        logging.warning(
-                            f"Changed metrics {metric_name} from NaN to {v_metrics[metric_name]}."
-                        )
-                    else:
-                        non_serializable_metrics.add(metric_name)
 
                 if isinstance(metric_value, (bytes, bytearray)):
                     non_serializable_metrics.add(metric_name)
