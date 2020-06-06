@@ -88,6 +88,7 @@ func userTokenResponse(_ context.Context, w http.ResponseWriter, resp proto.Mess
 			Name:    cookieName,
 			Value:   r.Token,
 			Expires: time.Now().Add(db.SessionDuration),
+			Path:    "/",
 		})
 	case *apiv1.LogoutResponse:
 		http.SetCookie(w, &http.Cookie{
