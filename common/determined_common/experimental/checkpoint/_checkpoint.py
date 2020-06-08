@@ -57,6 +57,7 @@ class Checkpoint(object):
             validation: Dictionary of validation metric names to their values.
             framework: The framework of the trial ie. tensorflow, torch.
             format: The format of the checkpoint ie h5, saved_model, pickle.
+            determined_version: the version of Determined the checkpoint was taken with.
             metadata: User defined metadata associated with the checkpoint.
             master: The address of the determined master instance.
         """
