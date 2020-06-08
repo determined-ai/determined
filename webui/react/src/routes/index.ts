@@ -4,6 +4,7 @@ import { RouteProps } from 'react-router';
 import Dashboard from 'pages/Dashboard';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
+import TaskList from 'pages/TaskList';
 import history from 'routes/history';
 import { clone } from 'utils/data';
 import { ensureAbsolutePath, isFullPath, parseUrl } from 'utils/routes';
@@ -25,19 +26,31 @@ export interface RouteConfig extends RouteProps {
   needAuth?: boolean;
 }
 
-const defaultPath = '/det/dashboard';
 const dashboardRoute =
   {
     component: Dashboard,
     icon: 'user',
     id: 'dashboard',
     needAuth: true,
-    path: defaultPath,
+    path: '/det/dashboard',
     title: 'Dashboard',
+  };
+
+export const defaultAppRoute = dashboardRoute;
+
+const taskListRoute =
+  {
+    component: TaskList,
+    icon: 'task',
+    id: 'taskList',
+    needAuth: true,
+    path: '/det/tasks',
+    title: 'Tasks',
   };
 
 export const appRoutes: RouteConfig[] = [
   dashboardRoute,
+  taskListRoute,
   {
     component: SignIn,
     id: 'login',
@@ -55,11 +68,9 @@ export const appRoutes: RouteConfig[] = [
   {
     id: 'catch-all',
     path: '*',
-    redirect: defaultPath,
+    redirect: defaultAppRoute.path,
   },
 ];
-
-export const defaultAppRoute = dashboardRoute;
 
 export const sidebarRoutes: RouteConfig[] = [
   dashboardRoute,
