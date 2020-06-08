@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 // Task-related cluster level messages.
@@ -19,6 +20,10 @@ type (
 		CanTerminate        bool
 		Label               string
 		FittingRequirements FittingRequirements
+	}
+	// StartTask signals that a scheduled task should be launched.
+	StartTask struct {
+		Spec tasks.TaskSpec
 	}
 	// taskStopped notifies that the task actor is stopped.
 	taskStopped struct {

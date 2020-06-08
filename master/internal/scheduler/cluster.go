@@ -43,6 +43,8 @@ type Cluster struct {
 	tasksByID          map[TaskID]*Task
 	tasksByContainerID map[ContainerID]*Task
 
+	assigmentByHandler map[*actor.Ref][]assignment
+
 	provisioner     *actor.Ref
 	provisionerView *FilterableView
 
@@ -78,6 +80,8 @@ func NewCluster(
 		tasksByID:          make(map[TaskID]*Task),
 		tasksByContainerID: make(map[ContainerID]*Task),
 
+		assigmentByHandler: make(map[*actor.Ref][]assignment),
+
 		proxy:           proxy,
 		provisioner:     provisioner,
 		provisionerView: newProvisionerView(provisionerSlotsPerInstance),
@@ -95,7 +99,7 @@ func (c *Cluster) assignContainer(task *Task, agent *agentState, slots int, numC
 	agent.containers[container.id] = container
 	task.containers[container.id] = container
 	c.tasksByContainerID[container.id] = task
-	assigned := Assigned{
+	c.assigmentByHandler[task.handler] = append(c.assigmentByHandler[task.handler], assignment{
 		task:                  task,
 		agent:                 agent,
 		container:             container,
@@ -104,8 +108,7 @@ func (c *Cluster) assignContainer(task *Task, agent *agentState, slots int, numC
 		devices:               agent.assignFreeDevices(slots, container.id),
 		harnessPath:           c.harnessPath,
 		taskContainerDefaults: c.taskContainerDefaults,
-	}
-	task.handler.System().Tell(task.handler, assigned)
+	})
 }
 
 // assignTask allocates cluster data structures and sends the appropriate actor
@@ -114,10 +117,19 @@ func (c *Cluster) assignContainer(task *Task, agent *agentState, slots int, numC
 func (c *Cluster) assignTask(task *Task) bool {
 	fits := findFits(task, c.agents, c.fittingMethod)
 
+	if len(fits) == 0 {
+		return false
+	}
+
+	c.assigmentByHandler[task.handler] = make([]assignment, 0, len(fits))
+
 	for _, fit := range fits {
 		c.assignContainer(task, fit.Agent, fit.Slots, len(fits))
 	}
-	return len(fits) > 0
+
+	task.handler.System().Tell(task.handler, TaskAssigned{numContainers: len(fits)})
+
+	return true
 }
 
 // terminateTask sends the appropriate actor messages to terminate a task and
@@ -246,6 +258,9 @@ func (c *Cluster) Receive(ctx *actor.Context) error {
 			c.receiveContainerTerminated(ctx, cid, *msg.ContainerStopped, false)
 		}
 
+	case StartTask:
+		c.receiveStartTask(ctx, msg)
+
 	case taskStopped:
 		c.receiveTaskStopped(ctx, msg)
 
@@ -338,6 +353,24 @@ func (c *Cluster) receiveAddTask(ctx *actor.Context, msg AddTask) {
 
 	if ctx.ExpectingResponse() {
 		ctx.Respond(task)
+	}
+}
+
+func (c *Cluster) receiveStartTask(ctx *actor.Context, msg StartTask) {
+	task := c.tasksByHandler[ctx.Sender()]
+	if task == nil {
+		ctx.Log().WithField("address", ctx.Sender().Address()).Errorf("unknown task trying to start")
+		return
+	}
+
+	assignments := c.assigmentByHandler[ctx.Sender()]
+	if len(assignments) == 0 {
+		ctx.Log().WithField("name", task.name).Error("task is trying to start without any assignments")
+		return
+	}
+
+	for _, a := range assignments {
+		a.StartTask(msg.Spec)
 	}
 }
 

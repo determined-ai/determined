@@ -20,7 +20,7 @@ var errMock = errors.New("mock error")
 type mockActor struct {
 	system             *actor.System
 	cluster            *actor.Ref
-	onAssigned         func(Assigned) error
+	onAssigned         func(TaskAssigned) error
 	onContainerStarted func(ContainerStarted) error
 	onTaskTerminated   func(TaskTerminated) error
 }
@@ -48,14 +48,14 @@ func (h *mockActor) Receive(ctx *actor.Context) error {
 	case ThrowPanic:
 		panic(errMock)
 
-	case Assigned:
+	case TaskAssigned:
 		if h.onAssigned != nil {
 			return h.onAssigned(msg)
 		}
 
 		h.system.Tell(h.cluster, ContainerStateChanged{
 			Container: cproto.Container{
-				ID:    cproto.ID(msg.container.id),
+				ID:    cproto.ID("random-container-name"),
 				State: cproto.Running,
 			},
 			ContainerStarted: &agent.ContainerStarted{

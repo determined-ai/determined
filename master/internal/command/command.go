@@ -111,15 +111,17 @@ func (c *command) Receive(ctx *actor.Context) error {
 			c.exit(ctx, exitStatus)
 		}
 
-	case scheduler.Assigned:
-		msg.StartTask(tasks.TaskSpec{
-			StartCommand: &tasks.StartCommand{
-				AgentUserGroup:  c.agentUserGroup,
-				Config:          c.config,
-				UserFiles:       c.userFiles,
-				AdditionalFiles: c.additionalFiles,
+	case scheduler.TaskAssigned:
+		ctx.Tell(c.cluster, scheduler.StartTask{
+			Spec: tasks.TaskSpec{
+				StartCommand: &tasks.StartCommand{
+					AgentUserGroup:  c.agentUserGroup,
+					Config:          c.config,
+					UserFiles:       c.userFiles,
+					AdditionalFiles: c.additionalFiles,
+				},
+				HarnessPath: c.harnessPath,
 			},
-			HarnessPath: c.harnessPath,
 		})
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 

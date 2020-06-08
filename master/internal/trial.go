@@ -16,7 +16,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/archive"
-	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -321,7 +320,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 	case actor.ChildFailed:
 		ctx.Tell(t.cluster, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
 
-	case scheduler.Assigned:
+	case scheduler.TaskAssigned:
 		if err := t.processAssigned(ctx, msg); err != nil {
 			return err
 		}
@@ -371,7 +370,7 @@ func (t *trial) processID(ctx *actor.Context, id int) {
 	ctx.AddLabel("trial-id", id)
 }
 
-func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.Assigned) error {
+func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) error {
 	if len(t.privateKey) == 0 {
 		generatedKeys, err := ssh.GenerateKey(nil)
 		if err != nil {
@@ -403,17 +402,10 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.Assigned) erro
 		return errors.Wrap(err, "error getting workload from sequencer")
 	}
 
-	if t.numContainers == 0 {
-		t.numContainers = msg.NumContainers()
-	} else {
-		check.Panic(check.Equal(t.numContainers, msg.NumContainers(),
-			"got inconsistent numbers of containers"))
-	}
+	t.numContainers = msg.NumContainers()
 
-	if msg.IsLeader() {
-		if err = saveWorkload(t.db, w); err != nil {
-			ctx.Log().WithError(err).Error("failed to save workload to the database")
-		}
+	if err = saveWorkload(t.db, w); err != nil {
+		ctx.Log().WithError(err).Error("failed to save workload to the database")
 	}
 
 	ctx.Log().Infof("starting trial container: %v", w)
@@ -452,17 +444,19 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.Assigned) erro
 		),
 	}
 
-	msg.StartTask(tasks.TaskSpec{
-		StartContainer: &tasks.StartContainer{
-			ExperimentConfig:    t.experiment.Config,
-			ModelDefinition:     t.modelDefinition,
-			HParams:             t.create.Hparams,
-			TrialSeed:           t.create.TrialSeed,
-			LatestCheckpoint:    t.sequencer.LatestCheckpoint(),
-			InitialWorkload:     w,
-			WorkloadManagerType: t.sequencer.WorkloadManagerType(),
-			AdditionalFiles:     additionalFiles,
-			AgentUserGroup:      t.agentUserGroup,
+	ctx.Tell(t.cluster, scheduler.StartTask{
+		Spec: tasks.TaskSpec{
+			StartContainer: &tasks.StartContainer{
+				ExperimentConfig:    t.experiment.Config,
+				ModelDefinition:     t.modelDefinition,
+				HParams:             t.create.Hparams,
+				TrialSeed:           t.create.TrialSeed,
+				LatestCheckpoint:    t.sequencer.LatestCheckpoint(),
+				InitialWorkload:     w,
+				WorkloadManagerType: t.sequencer.WorkloadManagerType(),
+				AdditionalFiles:     additionalFiles,
+				AgentUserGroup:      t.agentUserGroup,
+			},
 		},
 	})
 

@@ -64,7 +64,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		}
 	case aproto.SignalContainer:
 		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &msg}})
-	case scheduler.StartTask:
+	case scheduler.StartTaskOnAgent:
 		start := ws.WriteMessage{Message: aproto.AgentMessage{StartContainer: &msg.StartContainer}}
 		ctx.Ask(a.socket, start)
 		ctx.Tell(a.slots, msg.StartContainer)

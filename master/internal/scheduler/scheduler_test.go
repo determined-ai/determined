@@ -79,9 +79,9 @@ func newMockTask(
 }
 
 func (t *mockTask) Receive(ctx *actor.Context) error {
-	switch msg := ctx.Message().(type) {
-	case Assigned:
-		msg.StartTask(tasks.TaskSpec{})
+	switch ctx.Message().(type) {
+	case TaskAssigned:
+		ctx.Respond(StartTask{Spec: tasks.TaskSpec{}})
 	case getSlots:
 		ctx.Respond(t.slotsNeeded)
 	case getGroup:
@@ -115,7 +115,7 @@ func newMockAgent(
 
 func (m mockAgent) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case StartTask:
+	case StartTaskOnAgent:
 		if ctx.ExpectingResponse() {
 			ctx.Respond(newTask(&Task{
 				handler: msg.Task,
