@@ -62,6 +62,13 @@ def xor_input_fn_data_layer(
     return _input_fn
 
 
+class StopVeryEarly(tf.compat.v1.train.SessionRunHook):  # type: ignore
+    def after_run(
+        self, run_context: tf.estimator.SessionRunContext, run_values: tf.estimator.SessionRunValues
+    ) -> None:
+        run_context.request_stop()
+
+
 class XORTrial(estimator.EstimatorTrial):
     """
     Models a lightweight neural network model with one hidden layer to
@@ -100,21 +107,27 @@ class XORTrial(estimator.EstimatorTrial):
         )
 
     def build_train_spec(self) -> tf.estimator.TrainSpec:
+        hooks = [StopVeryEarly()] if self.context.env.hparams.get("stop_early") == "train" else []
         return tf.estimator.TrainSpec(
             xor_input_fn(
                 context=self.context,
                 batch_size=self.context.get_per_slot_batch_size(),
                 shuffle=self.context.get_hparam("shuffle"),
-            )
+            ),
+            hooks=hooks,
         )
 
     def build_validation_spec(self) -> tf.estimator.EvalSpec:
+        hooks = (
+            [StopVeryEarly()] if self.context.env.hparams.get("stop_early") == "validation" else []
+        )
         return tf.estimator.EvalSpec(
             xor_input_fn(
                 context=self.context,
                 batch_size=self.context.get_per_slot_batch_size(),
                 shuffle=False,
-            )
+            ),
+            hooks=hooks,
         )
 
     def build_serving_input_receiver_fns(self) -> Dict[str, estimator.ServingInputReceiverFn]:

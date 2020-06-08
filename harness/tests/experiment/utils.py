@@ -25,9 +25,10 @@ class TrainAndValidate:
     metrics from each.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, request_stop_step_id: Optional[int] = None) -> None:
         self._training_metrics = None  # type: Optional[List[Dict[str, Any]]]
         self._validation_metrics = None  # type: Optional[List[Dict[str, Any]]]
+        self.request_stop_step_id = request_stop_step_id
 
     def send(
         self, steps: int, validation_freq: int, initial_step_id: int = 1, batches_per_step: int = 1
@@ -37,17 +38,31 @@ class TrainAndValidate:
         interceptor = workload.WorkloadResponseInterceptor()
 
         for step_id in range(initial_step_id, initial_step_id + steps):
+            print(f"STEP ID: {step_id}")
+            stop_requested = False
             yield from interceptor.send(workload.train_workload(step_id), [batches_per_step])
             metrics = interceptor.metrics_result()
             batch_metrics = metrics["metrics"]["batch_metrics"]
             assert len(batch_metrics) == batches_per_step
             self._training_metrics.extend(batch_metrics)
+            if metrics["stop_requested"]:
+                assert step_id == self.request_stop_step_id
+                stop_requested = True
 
             if step_id % validation_freq == 0:
                 yield from interceptor.send(workload.validation_workload(step_id), [])
                 validation = interceptor.metrics_result()
+                print(validation)
                 v_metrics = validation["metrics"]["validation_metrics"]
                 self._validation_metrics.append(v_metrics)
+                if validation["stop_requested"]:
+                    assert step_id == self.request_stop_step_id
+                    stop_requested = True
+
+            if stop_requested:
+                break
+            else:
+                assert step_id != self.request_stop_step_id
 
     def result(self) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         assert self._training_metrics is not None
