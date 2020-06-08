@@ -37,7 +37,7 @@ const dashboardRoute =
     title: 'Dashboard',
   };
 
-const TaskListRoute =
+const taskListRoute =
   {
     component: TaskList,
     icon: 'task',
@@ -49,7 +49,7 @@ const TaskListRoute =
 
 export const appRoutes: RouteConfig[] = [
   dashboardRoute,
-  TaskListRoute,
+  taskListRoute,
   {
     component: SignIn,
     id: 'login',
@@ -81,7 +81,6 @@ export const sidebarRoutes: RouteConfig[] = [
     path: '/ui/experiments',
     title: 'Experiments',
   },
-  // TaskListRoute,
   {
     icon: 'notebook',
     id: 'notebooks',
