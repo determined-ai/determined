@@ -11,15 +11,12 @@ import ActiveExperiments from 'contexts/ActiveExperiments';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
+import Experiments from 'contexts/Experiments';
 import Users from 'contexts/Users';
-import usePolling from 'hooks/usePolling';
-import { useRestApiSimple } from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
-import { getExperimentSummaries } from 'services/api';
-import { ExperimentsParams } from 'services/types';
 import { ShirtSize } from 'themes';
 import {
-  Command, CommandState, Experiment, RecentTask, ResourceType, RunState, TaskType,
+  Command, CommandState, RecentTask, ResourceType, RunState, TaskType,
 } from 'types';
 import { commandToTask, experimentToTask } from 'utils/types';
 
@@ -56,22 +53,16 @@ const Dashboard: React.FC = () => {
   const users = Users.useStateContext();
   const overview = ClusterOverview.useStateContext();
   const activeExperiments = ActiveExperiments.useStateContext();
+  const experiments = Experiments.useStateContext();
   const commands = Commands.useStateContext();
   const notebooks = Notebooks.useStateContext();
   const shells = Shells.useStateContext();
   const tensorboards = Tensorboards.useStateContext();
-  const [ experimentsResponse, requestExperiments ] =
-    useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
+
   const storage = useStorage('dashboard/tasks');
   const initFilters = storage.getWithDefault('filters',
     { ...defaultFilters, username: (auth.user || {}).username });
   const [ filters, setFilters ] = useState<TaskFilters>(initFilters);
-
-  const fetchExperiments = useCallback((): void => {
-    requestExperiments({});
-  }, [ requestExperiments ]);
-
-  usePolling(fetchExperiments);
 
   /* Overview */
 
@@ -90,7 +81,7 @@ const Dashboard: React.FC = () => {
   /* Recent Tasks */
 
   const showTasksSpinner = (
-    !experimentsResponse.hasLoaded ||
+    !experiments.hasLoaded ||
     !commands.hasLoaded ||
     !notebooks.hasLoaded ||
     !shells.hasLoaded ||
@@ -105,7 +96,7 @@ const Dashboard: React.FC = () => {
   ];
 
   const loadedTasks = [
-    ...(experimentsResponse.data || []).map(experimentToTask),
+    ...(experiments.data || []).map(experimentToTask),
     ...genericCommands.map(commandToTask),
   ];
 

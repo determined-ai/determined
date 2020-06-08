@@ -1,5 +1,5 @@
 import { generateContext } from 'contexts';
-import { RestApiState } from 'hooks/useRestApi';
+import { Action, ActionType, RestApiState } from 'hooks/useRestApi';
 import { Experiment } from 'types';
 
 const contextProvider = generateContext<RestApiState<Experiment[]>>({
@@ -8,7 +8,7 @@ const contextProvider = generateContext<RestApiState<Experiment[]>>({
     hasLoaded: false,
     isLoading: false,
   },
-  name: 'ActiveExperiments',
+  name: 'Experiments',
 });
 
 export default contextProvider;

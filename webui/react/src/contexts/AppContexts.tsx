@@ -4,6 +4,7 @@ import ActiveExperiments from 'contexts/ActiveExperiments';
 import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
+import Experiments from 'contexts/Experiments';
 import Info from 'contexts/Info';
 import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
@@ -29,7 +30,8 @@ const AppContexts: React.FC = () => {
   const setUsers = Users.useActionContext();
   const setAgents = Agents.useActionContext();
   const setCommands = Commands.useActionContext();
-  const setExperiments = ActiveExperiments.useActionContext();
+  const setActiveExperiments = ActiveExperiments.useActionContext();
+  const setExperiments = Experiments.useActionContext();
   const setNotebooks = Notebooks.useActionContext();
   const setShells = Shells.useActionContext();
   const setTensorboards = Tensorboards.useActionContext();
@@ -41,7 +43,7 @@ const AppContexts: React.FC = () => {
     useRestApi<Agent[]>(ioAgents, { mappers: jsonToAgents });
   const [ commandsResponse, requestCommands ] =
     useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToCommands });
-  const [ experimentsResponse, requestExperiments ] =
+  const [ activeExperimentsResponse, requestActiveExperiments ] =
     useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
   const [ notebooksResponse, requestNotebooks ] =
     useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToNotebooks });
@@ -49,6 +51,8 @@ const AppContexts: React.FC = () => {
     useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToShells });
   const [ tensorboardsResponse, requestTensorboards ] =
     useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToTensorboards });
+  const [ experimentsResponse, requestExperiments ] =
+    useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
 
   const fetchInfo = useCallback(() => requestInfo({}), [ requestInfo ]);
 
@@ -58,7 +62,8 @@ const AppContexts: React.FC = () => {
     requestNotebooks({ url: '/notebooks' });
     requestShells({ url: '/shells' });
     requestTensorboards({ url: '/tensorboard' });
-    requestExperiments({ states: activeStates });
+    requestActiveExperiments({ states: activeStates });
+    requestExperiments({});
   }, [
     requestAgents,
     requestCommands,
@@ -66,6 +71,7 @@ const AppContexts: React.FC = () => {
     requestShells,
     requestTensorboards,
     requestExperiments,
+    requestActiveExperiments,
   ]);
 
   const fetchUsers = useCallback((): void => requestUsers({ url: '/users' }), [ requestUsers ]);
@@ -90,7 +96,13 @@ const AppContexts: React.FC = () => {
     setCommands({ type: Commands.ActionType.Set, value: commandsResponse });
   }, [ commandsResponse, setCommands ]);
   useEffect(() => {
-    setExperiments({ type: ActiveExperiments.ActionType.Set, value: experimentsResponse });
+    setActiveExperiments({
+      type: ActiveExperiments.ActionType.Set,
+      value: activeExperimentsResponse,
+    });
+  }, [ activeExperimentsResponse, setActiveExperiments ]);
+  useEffect(() => {
+    setExperiments({ type: Experiments.ActionType.Set, value: experimentsResponse });
   }, [ experimentsResponse, setExperiments ]);
   useEffect(() => {
     setNotebooks({ type: Commands.ActionType.Set, value: notebooksResponse });
