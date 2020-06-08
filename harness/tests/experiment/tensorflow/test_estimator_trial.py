@@ -289,6 +289,24 @@ class TestXORTrial:
             with open(hparams["training_end"], "r") as fp:
                 assert fp.readline() == "success"
 
+    @pytest.mark.parametrize("stop_early,request_stop_step_id", [("train", 1), ("validation", 2)])
+    def test_early_stopping(self, stop_early: str, request_stop_step_id: int) -> None:
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate(request_stop_step_id=request_stop_step_id)
+            yield from trainer.send(steps=2, validation_freq=2, batches_per_step=5)
+            tm, vm = trainer.result()
+            yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+        hparams = dict(self.hparams)
+        hparams["stop_early"] = stop_early
+        controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=estimator_xor_model.XORTrial,
+            hparams=hparams,
+            workloads=make_workloads(),
+            batches_per_step=5,
+        )
+        controller.run()
+
 
 def test_local_mode() -> None:
     utils.run_local_test_mode(utils.fixtures_path("estimator_xor_model_native.py"))
