@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, cast
 import numpy as np
 import simplejson
 
+import determined as det
 from determined_common import check
 
 

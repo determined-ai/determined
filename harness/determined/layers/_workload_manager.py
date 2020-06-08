@@ -282,7 +282,7 @@ class _TrialWorkloadManager(WorkloadManager):
                     logging.info("Saved trial to checkpoint {}".format(metadata.storage_id))
                     self.tensorboard_mgr.sync()
 
-                    message: workload.Response = {  # type: ignore
+                    message: workload.Response = {
                         "type": "WORKLOAD_COMPLETED",
                         "workload": wkld,
                         "start_time": start_time,
