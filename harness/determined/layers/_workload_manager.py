@@ -272,11 +272,12 @@ class _TrialWorkloadManager(WorkloadManager):
 
                 def _respond(checkpoint_info: workload.Response) -> None:
                     checkpoint_info = cast(Dict[str, Any], checkpoint_info)
+                    print("CHECKPOINT_INFO", checkpoint_info)
                     metadata = storage.StorageMetadata(
                         storage_id,
                         storage.StorageManager._list_directory(path),
-                        checkpoint_info["framework"],
-                        checkpoint_info["format"],
+                        checkpoint_info.get("framework", "unknown"),
+                        checkpoint_info.get("format", "unknown"),
                     )
 
                     logging.info("Saved trial to checkpoint {}".format(metadata.storage_id))
