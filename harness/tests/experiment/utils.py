@@ -38,7 +38,6 @@ class TrainAndValidate:
         interceptor = workload.WorkloadResponseInterceptor()
 
         for step_id in range(initial_step_id, initial_step_id + steps):
-            print(f"STEP ID: {step_id}")
             stop_requested = False
             yield from interceptor.send(workload.train_workload(step_id), [batches_per_step])
             metrics = interceptor.metrics_result()
