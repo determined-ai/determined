@@ -118,7 +118,9 @@ class XORTrial(estimator.EstimatorTrial):
         )
 
     def build_validation_spec(self) -> tf.estimator.EvalSpec:
-        hooks = [StopVeryEarly()] if self.context.env.hparams.get("stop_early") == "validation" else []
+        hooks = (
+            [StopVeryEarly()] if self.context.env.hparams.get("stop_early") == "validation" else []
+        )
         return tf.estimator.EvalSpec(
             xor_input_fn(
                 context=self.context,
