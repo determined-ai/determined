@@ -18,7 +18,7 @@ interface FromValues {
 }
 
 const storage = new Storage({ basePath: '/DeterminedAuth', store: window.localStorage });
-const LAST_USERNAME = 'lastUsername'; // key for storing last det username
+const STORAGE_KEY_LAST_USERNAME = 'lastUsername'; // key for storing last det username
 
 const DeterminedAuth: React.FC = () => {
   const setAuth = Auth.useActionContext();
@@ -33,13 +33,13 @@ const DeterminedAuth: React.FC = () => {
       await login(creds as Credentials);
       const user = await getCurrentUser({});
       setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, user } });
-      storage.set(LAST_USERNAME, creds.username);
+      storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);
     } catch (e) {
       const isBadCredentialsSync = isLoginFailure(e);
       setIsBadCredentials(isBadCredentialsSync); // this is not a sync operation
       setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
       const actionMsg = isBadCredentialsSync ? 'check your username and password.' : 'retry.';
-      if (isBadCredentialsSync) storage.remove(LAST_USERNAME); // forget saved username on first bad auth
+      if (isBadCredentialsSync) storage.remove(STORAGE_KEY_LAST_USERNAME);
       handleError({
         error: e,
         isUserTriggered: true,
@@ -64,7 +64,7 @@ const DeterminedAuth: React.FC = () => {
     <Form
       className={css.form}
       initialValues={{
-        username: storage.getWithDefault(LAST_USERNAME, ''),
+        username: storage.getWithDefault(STORAGE_KEY_LAST_USERNAME, ''),
       }}
       name="login"
       onFinish={onFinish}
