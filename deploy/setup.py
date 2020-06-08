@@ -8,6 +8,7 @@ setup(
     url="https://determined.ai/",
     description="Determined Deep Learning Training Platform",
     long_description="See https://docs.determined.ai/ for more information.",
+    license="Apache License 2.0",
     classifiers=["License :: OSI Approved :: Apache Software License"],
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     include_package_data=True,
