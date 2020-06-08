@@ -272,7 +272,6 @@ class _TrialWorkloadManager(WorkloadManager):
 
                 def _respond(checkpoint_info: workload.Response) -> None:
                     checkpoint_info = cast(Dict[str, Any], checkpoint_info)
-                    print("CHECKPOINT_INFO", checkpoint_info)
                     metadata = storage.StorageMetadata(
                         storage_id,
                         storage.StorageManager._list_directory(path),
