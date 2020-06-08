@@ -24,7 +24,7 @@ type State<T> = {
 
 export type RestApiState<T> = State<T>;
 
-export type Action<T> =
+type Action<T> =
   | { type: ActionType.SetData; value: T }
   | { type: ActionType.SetError; value: Error }
   | { type: ActionType.SetLoading; value: boolean }

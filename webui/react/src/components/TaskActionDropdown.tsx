@@ -54,8 +54,9 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
         case 'kill':
           await killTask(task);
           if (task.type === TaskType.Experiment) {
+            // We don't provide immediate updates for command types yet.
             await updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
-          } // we dont provide the immediate update for command types yet.
+          }
           break;
         case 'archive':
           await archiveExperiment(parseInt(task.id), !task.archived);
