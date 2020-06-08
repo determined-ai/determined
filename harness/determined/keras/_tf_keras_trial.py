@@ -72,6 +72,29 @@ def load_optimizer_weights(model: Model, load_path: pathlib.Path) -> None:
             )
 
 
+class DeterminedEarlyStoppingCallback(tf.keras.callbacks.Callback):  # type: ignore
+    """
+    DeterminedEarlyStoppingCallback converts a stop request, so that Determined
+    can handle the stop request by finishing the step and checkpointing.
+    """
+
+    def __init__(self, tf_keras_trial_controller: "TFKerasTrialController") -> None:
+        self.tf_keras_trial_controller = tf_keras_trial_controller
+
+    def _convert_stop_training(self) -> None:
+        # We use stop_training to exit out of the training loop, but we set
+        # expect_terminate when we do so.
+        if self.model.stop_training and not self.tf_keras_trial_controller.expect_terminate:
+            self.model.stop_training = False
+            self.tf_keras_trial_controller.context.set_stop_requested(True)
+
+    def on_epoch_end(self, _: int, logs: Any = None) -> None:
+        self._convert_stop_training()
+
+    def on_train_end(self, _: int, logs: Any = None) -> None:
+        self._convert_stop_training()
+
+
 class WaitForInstructionsCallback(tf.keras.callbacks.Callback):  # type: ignore
     """
     WaitForInstructionsCallback allows a separate process to control this trial.
@@ -507,6 +530,7 @@ class TFKerasTrialController(det.LoopTrialController):
         check.false(self.fit_loop_started)
         self.fit_loop_started = True
 
+        self.tf_keras_callbacks.append(DeterminedEarlyStoppingCallback(self))
         self.tf_keras_callbacks.append(WaitForInstructionsCallback(self))
 
         profile_frequency = self.env.experiment_config.profile_frequency()
