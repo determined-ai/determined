@@ -18,7 +18,7 @@ interface FromValues {
 }
 
 const storage = new Storage({ basePath: '/DeterminedAuth', store: window.localStorage });
-const STORAGE_KEY_LAST_USERNAME = 'lastUsername'; // key for storing last det username
+const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 
 const DeterminedAuth: React.FC = () => {
   const setAuth = Auth.useActionContext();
