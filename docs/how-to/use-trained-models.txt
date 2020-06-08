@@ -10,6 +10,7 @@ This guide discusses:
 
 #. Querying trained model checkpoints from trials and experiments.
 #. Loading models into memory in a Python process.
+#. Storing metadata associated with checkpoints.
 #. Using the Determined CLI to download checkpoints to disk.
 
 Querying Checkpoints
@@ -140,8 +141,9 @@ memory in a Python process, as shown in the following snippet.
   checkpoint = Determined.get_experiment(id).top_checkpoint()
   model = checkpoint.load()
 
-TensorFlow checkpoints are saved in the ``saved_model`` format and are loaded
-as trackable objects (see documentation for `tf.compat.v1.saved_model.load_v2
+TensorFlow checkpoints are saved in either the ``saved_model`` or ``h5``
+formats and are loaded as trackable objects (see documentation for
+`tf.compat.v1.saved_model.load_v2
 <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/saved_model/load_v2>`__
 for details).
 
@@ -150,6 +152,49 @@ PyTorch checkpoints are saved using `pickle
 ``nn.Module`` objects (see `the PyTorch documentation
 <https://pytorch.org/docs/stable/notes/serialization.html>`__ for
 details).
+
+Storing Checkpoint Metadata
+---------------------------
+You may store metadata related to a checkpoint via the python API. This feature
+is useful for storing post training metrics, labels, information related to
+deployment, etc.
+
+.. code:: python
+
+  from determined.experimental import Determined
+
+  checkpoint = Determined().get_experiment(id).top_checkpoint()
+  checkpoint.add_metadata({"environment": "production"})
+
+  # metadata will be stored in determined and accessible on the checkpoint object.
+  print(checkpoint.metadata)
+
+You may store an arbitrarily nested dictionary using the :meth:`~determined.experimental.Checkpoint.add_metadata`
+method. If the top level key already exists the entire tree beneath it will
+be overwritten.
+
+.. code:: python
+
+  from determined.experimental import Determined
+
+  checkpoint = Determined().get_experiment(id).top_checkpoint()
+  checkpoint.add_metadata({"metrics": {"loss": 0.12}})
+  checkpoint.add_metadata({"metrics": {"acc": 0.92}})
+
+  print(checkpoint.metadata)  # will output: {"metrics": {"acc": 0.92}}
+
+You may remove metadata via the
+:meth:`~determined.experimental.Checkpoint.remove_metadata` method. The method
+accepts a list of top level keys. The entire tree beneath the keys passed will
+be deleted.
+
+.. code:: python
+
+  from determined.experimental import Determined
+
+  checkpoint = Determined().get_experiment(id).top_checkpoint()
+  checkpoint.remove_metadata(["metrics"])
+
 
 Download Checkpoints via the CLI
 --------------------------------

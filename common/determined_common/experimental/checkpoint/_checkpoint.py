@@ -43,23 +43,24 @@ class Checkpoint(object):
         """
         Arguments:
             uuid (string): UUID of the checkpoint.
-            experiment_config: The experiment configuration related to the checkpoint.
-            experiment_id: Trial ID for the trial related to the checkpoint.
-            trial_id: Trial ID for the trial related to the checkpoint.
-            hparams: Hyperparameter values fro the trial related to the checkpoint.
-            batch_number: Batch number of the checkpoint.
-            start_time: Timestamp of when the checkpoint began being saved to
+            experiment_config (dict): The experiment configuration related to the checkpoint.
+            experiment_id (int): Trial ID for the trial related to the checkpointS.
+            trial_id (int): Trial ID for the trial related to the checkpoint.
+            hparams (dict): Hyperparameter values fro the trial related to the checkpoint.
+            batch_number (int): Batch number of the checkpoint.
+            start_time (string): Timestamp of when the checkpoint began being saved to
                 persistent storage.
-            end_time: Timestamp of when the checkpoint completed being saved to
+            end_time (string): Timestamp of when the checkpoint completed being saved to
                 persistent storage.
-            resources:  Dictionary of file paths to file sizes in bytes of all
+            resources (dict): Dictionary of file paths to file sizes in bytes of all
                 files related to the checkpoint.
-            validation: Dictionary of validation metric names to their values.
-            framework: The framework of the trial ie. tensorflow, torch.
-            format: The format of the checkpoint ie h5, saved_model, pickle.
-            determined_version: the version of Determined the checkpoint was taken with.
-            metadata: User defined metadata associated with the checkpoint.
-            master: The address of the determined master instance.
+            validation (dict): Dictionary of validation metric names to their values.
+            framework (string, optional): The framework of the trial ie. tensorflow, torch.
+            format (string, optional): The format of the checkpoint ie h5, saved_model, pickle.
+            determined_version (str, optional): the version of Determined the
+                checkpoint was taken with.
+            metadata (dict, optional): User defined metadata associated with the checkpoint.
+            master (string, optional): The address of the determined master instance.
         """
 
         self.uuid = uuid
@@ -185,6 +186,15 @@ class Checkpoint(object):
         return Checkpoint.load_from_path(ckpt_path, tags=tags)
 
     def add_metadata(self, metadata: Dict[str, Any]) -> None:
+        """
+        Adds metadata to the checkpoint. Nested dictionaries are permitted as
+        an argument. If a top level key in the metadata argument already exists
+        in the checkpoint metadata the entire tree is replaced in favor of the
+        passed metadata value.
+
+        Arguments:
+            metadata (dict): Dictionary of metadata to add to the checkpoint.
+        """
         if self._master:
             r = api.post(
                 self._master,
@@ -194,6 +204,13 @@ class Checkpoint(object):
             self.metadata = r.json()
 
     def remove_metadata(self, keys: List[str]) -> None:
+        """
+        Remove checkpoint metadata top level keys corresponding to the keys
+        passed as arguments.
+
+        Arguments:
+            keys (List[string]): Top level keys of the checkpoint metadata to remove.
+        """
         if self._master:
             r = api.delete(
                 self._master, "checkpoints/{}/metadata".format(self.uuid), params={"keys": keys}
