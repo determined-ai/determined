@@ -85,10 +85,10 @@ class DeterminedEarlyStoppingCallback(tf.keras.callbacks.Callback):  # type: ign
         # We use stop_training to exit out of the training loop, but we set
         # expect_terminate when we do so.
         if (
-            self.tf_keras_trial_controller.model.stop_training
+            self.model.stop_training
             and not self.tf_keras_trial_controller.expect_terminate
         ):
-            self.tf_keras_trial_controller.model.stop_training = False
+            self.model.stop_training = False
             self.tf_keras_trial_controller.context.set_stop_requested(True)
 
     def on_epoch_end(self, _: int, logs: Any = None) -> None:
