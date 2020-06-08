@@ -43,7 +43,7 @@ const AppContexts: React.FC = () => {
     useRestApi<Agent[]>(ioAgents, { mappers: jsonToAgents });
   const [ commandsResponse, requestCommands ] =
     useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToCommands });
-  const [ activeExperimentsResponse, requestExperiments2 ] =
+  const [ activeExperimentsResponse, requestActiveExperiments ] =
     useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
   const [ notebooksResponse, requestNotebooks ] =
     useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToNotebooks });
@@ -62,7 +62,7 @@ const AppContexts: React.FC = () => {
     requestNotebooks({ url: '/notebooks' });
     requestShells({ url: '/shells' });
     requestTensorboards({ url: '/tensorboard' });
-    requestExperiments2({ states: activeStates });
+    requestActiveExperiments({ states: activeStates });
     requestExperiments({});
   }, [
     requestAgents,
@@ -71,7 +71,7 @@ const AppContexts: React.FC = () => {
     requestShells,
     requestTensorboards,
     requestExperiments,
-    requestExperiments2,
+    requestActiveExperiments,
   ]);
 
   const fetchUsers = useCallback((): void => requestUsers({ url: '/users' }), [ requestUsers ]);

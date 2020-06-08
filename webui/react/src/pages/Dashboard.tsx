@@ -58,7 +58,6 @@ const Dashboard: React.FC = () => {
   const notebooks = Notebooks.useStateContext();
   const shells = Shells.useStateContext();
   const tensorboards = Tensorboards.useStateContext();
-  Tensorboards.useActionContext();
 
   const storage = useStorage('dashboard/tasks');
   const initFilters = storage.getWithDefault('filters',
