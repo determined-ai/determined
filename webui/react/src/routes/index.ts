@@ -26,16 +26,17 @@ export interface RouteConfig extends RouteProps {
   needAuth?: boolean;
 }
 
-const defaultPath = '/det/dashboard';
 const dashboardRoute =
   {
     component: Dashboard,
     icon: 'user',
     id: 'dashboard',
     needAuth: true,
-    path: defaultPath,
+    path: '/det/dashboard',
     title: 'Dashboard',
   };
+
+export const defaultAppRoute = dashboardRoute;
 
 const taskListRoute =
   {
@@ -67,11 +68,9 @@ export const appRoutes: RouteConfig[] = [
   {
     id: 'catch-all',
     path: '*',
-    redirect: defaultPath,
+    redirect: defaultAppRoute.path,
   },
 ];
-
-export const defaultAppRoute = dashboardRoute;
 
 export const sidebarRoutes: RouteConfig[] = [
   dashboardRoute,
