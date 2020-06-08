@@ -55,12 +55,16 @@ Just executing the script will run `make test` over and over until it hits a err
 
 To speed up this process you can:
 
-1. try to avoid the whole cluster set up and tear down on each iteration
+1. try to avoid the whole cluster set up and tear down on each iteration. If the suspected tests are
+re-runable or you have a way of setting up and tearing down the cluster that is faster than the provided
+`test-cluster` refer to the "Re-runnable Tests" section.
 2. limit the test scope:
   - use `.skip` on each unwanted test suite or `.only` on the target suite.
   - temporarily delete the unwanted test suites
 
-If through this process you can get the tests to a state where they are re-runnable
-without the need for the cluster to be reset, pass in `true` to the test flake
-script to instruct it to skip the cluster set up and tear down.
+#### Re-runnable Tests
 
+By default the tests are not re-runnable without meeting the conditions in the "Running the Tests" section.
+However if you can get the tests to a state where they are re-runnable without the need for the cluster to be
+reset, pass in `true` to the test flake script to instruct it to skip the cluster set up and tear down and
+greatly speed up the process
