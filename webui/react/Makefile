@@ -14,7 +14,7 @@ build-storybook:
 
 .PHONY: clean
 clean:
-	rm -rf build node_modules/
+	rm -rf build build-storybook node_modules/
 
 .PHONY: live
 live:
