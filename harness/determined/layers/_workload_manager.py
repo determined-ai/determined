@@ -275,8 +275,8 @@ class _TrialWorkloadManager(WorkloadManager):
                     metadata = storage.StorageMetadata(
                         storage_id,
                         storage.StorageManager._list_directory(path),
-                        checkpoint_info.get("framework", "unknown"),
-                        checkpoint_info.get("format", "unknown"),
+                        checkpoint_info.get("framework", ""),
+                        checkpoint_info.get("format", ""),
                     )
 
                     logging.info("Saved trial to checkpoint {}".format(metadata.storage_id))
