@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Any, List, cast
 
 import tensorflow as tf
 from tensorflow.keras.layers import Dense
@@ -9,6 +9,11 @@ from tensorflow.keras.optimizers import SGD, Adam
 
 from determined import keras
 from tests.experiment.utils import make_xor_data_sequences, xor_data  # noqa: I202, I100
+
+
+class StopVeryEarlyCallback(tf.keras.callbacks.Callback):  # type: ignore
+    def on_epoch_end(self, _: int, logs: Any = None) -> None:
+        self.model.stop_training = True
 
 
 def categorical_error(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
@@ -58,6 +63,9 @@ class XORTrial(keras.TFKerasTrial):
     def build_validation_data_loader(self) -> keras.InputData:
         _, test = make_xor_data_sequences(batch_size=4)
         return keras.SequenceAdapter(test, workers=0)
+
+    def keras_callbacks(self) -> List[tf.keras.callbacks.Callback]:
+        return [StopVeryEarlyCallback()] if self.context.env.hparams.get("stop_early") else []
 
 
 class XORTrialWithTrainingMetrics(XORTrial):

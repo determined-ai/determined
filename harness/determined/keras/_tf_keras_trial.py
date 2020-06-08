@@ -84,10 +84,7 @@ class DeterminedEarlyStoppingCallback(tf.keras.callbacks.Callback):  # type: ign
     def _convert_stop_training(self) -> None:
         # We use stop_training to exit out of the training loop, but we set
         # expect_terminate when we do so.
-        if (
-            self.model.stop_training
-            and not self.tf_keras_trial_controller.expect_terminate
-        ):
+        if self.model.stop_training and not self.tf_keras_trial_controller.expect_terminate:
             self.model.stop_training = False
             self.tf_keras_trial_controller.context.set_stop_requested(True)
 

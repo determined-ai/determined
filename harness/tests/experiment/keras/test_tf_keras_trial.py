@@ -282,6 +282,21 @@ class TestKerasTrial:
             controller_fn=controller_fn, steps=3, validation_freq=1, batches_per_step=100
         )
 
+    def test_early_stopping(self) -> None:
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate(request_stop_step_id=1)
+            yield from trainer.send(steps=100, validation_freq=2, batches_per_step=5)
+            tm, vm = trainer.result()
+            yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+        hparams = dict(self.hparams)
+        hparams["stop_early"] = True
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            tf_keras_xor_model.XORTrial, hparams, make_workloads(), batches_per_step=5,
+        )
+        controller.run()
+
 
 def test_surface_native_error():
     cmd = ["python3", utils.fixtures_path("tf_keras_runtime_error.py")]
