@@ -19,8 +19,11 @@ NativeImplementation = collections.namedtuple(
 
 class NativeImplementations:
     PytorchMNISTCNNSingleGeneric = NativeImplementation(
-        cwd=conf.experimental_path("native_mnist_pytorch"),
-        command=["python", conf.experimental_path("native_mnist_pytorch/trial_impl.py")],
+        cwd=conf.official_examples_path("native/native_mnist_pytorch"),
+        command=[
+            "python",
+            conf.official_examples_path("native/native_mnist_pytorch/trial_impl.py"),
+        ],
         configuration={
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
             "searcher": {"name": "single", "max_steps": 1, "metric": "validation_error"},
@@ -30,8 +33,11 @@ class NativeImplementations:
         num_expected_trials=1,
     )
     TFEstimatorMNISTCNNSingle = NativeImplementation(
-        cwd=conf.experimental_path("native_mnist_estimator"),
-        command=["python", conf.experimental_path("native_mnist_estimator/native_impl.py")],
+        cwd=conf.official_examples_path("native/native_mnist_estimator"),
+        command=[
+            "python",
+            conf.official_examples_path("native/native_mnist_estimator/native_impl.py"),
+        ],
         configuration={
             "batches_per_step": 4,
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
@@ -43,8 +49,11 @@ class NativeImplementations:
     )
 
     TFEstimatorMNISTCNNSingleGeneric = NativeImplementation(
-        cwd=conf.experimental_path("native_mnist_estimator"),
-        command=["python", conf.experimental_path("native_mnist_estimator/trial_impl.py")],
+        cwd=conf.official_examples_path("native/native_mnist_estimator"),
+        command=[
+            "python",
+            conf.official_examples_path("native/native_mnist_estimator/trial_impl.py"),
+        ],
         configuration={
             "batches_per_step": 4,
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
@@ -57,10 +66,10 @@ class NativeImplementations:
 
     # Train a single tf.keras model using fit().
     TFKerasMNISTCNNSingleFit = NativeImplementation(
-        cwd=conf.experimental_path("native_fashion_mnist_tf_keras"),
+        cwd=conf.official_examples_path("native/native_fashion_mnist_tf_keras"),
         command=[
             "python",
-            conf.experimental_path("native_fashion_mnist_tf_keras/native_impl.py"),
+            conf.official_examples_path("native/native_fashion_mnist_tf_keras/native_impl.py"),
             "--use-fit",
         ],
         configuration={
@@ -75,8 +84,11 @@ class NativeImplementations:
 
     # Train a single tf.keras model using fit_generator().
     TFKerasMNISTCNNSingleFitGenerator = NativeImplementation(
-        cwd=conf.experimental_path("native_fashion_mnist_tf_keras"),
-        command=["python", conf.experimental_path("native_fashion_mnist_tf_keras/native_impl.py")],
+        cwd=conf.official_examples_path("native/native_fashion_mnist_tf_keras"),
+        command=[
+            "python",
+            conf.official_examples_path("native/native_fashion_mnist_tf_keras/native_impl.py"),
+        ],
         configuration={
             "batches_per_step": 4,
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
@@ -88,8 +100,11 @@ class NativeImplementations:
     )
 
     TFKerasMNISTCNNSingleGeneric = NativeImplementation(
-        cwd=conf.experimental_path("native_fashion_mnist_tf_keras"),
-        command=["python", conf.experimental_path("native_fashion_mnist_tf_keras/trial_impl.py")],
+        cwd=conf.official_examples_path("native/native_fashion_mnist_tf_keras"),
+        command=[
+            "python",
+            conf.official_examples_path("native/native_fashion_mnist_tf_keras/trial_impl.py"),
+        ],
         configuration={
             "batches_per_step": 4,
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),

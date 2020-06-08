@@ -125,5 +125,5 @@ users would always have a batch size of 32 when reusing the cached dataset.
 Next Steps
 ----------
 
--  `TensorFlow Keras MNIST with Data Layer <https://github.com/determined-ai/determined/tree/master/examples/experimental/data_layer_mnist_tf_keras>`_
--  `TensorFlow Estimator MNIST with Data Layer <https://github.com/determined-ai/determined/tree/master/examples/experimental/data_layer_mnist_estimator>`_
+-  `TensorFlow Keras MNIST with Data Layer <https://github.com/determined-ai/determined/tree/master/examples/experimental/trial/data_layer_mnist_tf_keras>`_
+-  `TensorFlow Estimator MNIST with Data Layer <https://github.com/determined-ai/determined/tree/master/examples/experimental/trial/data_layer_mnist_estimator>`_

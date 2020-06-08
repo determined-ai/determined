@@ -9,8 +9,8 @@ from tests import experiment as exp
 @pytest.mark.performance  # type: ignore
 def test_mask_rcnn_64_slots() -> None:
     experiment_id = exp.run_basic_test(
-        conf.experimental_path("FasterRCNN_tp/64-gpus.yaml"),
-        conf.experimental_path("FasterRCNN_tp/"),
+        conf.experimental_path("trial/FasterRCNN_tp/64-gpus.yaml"),
+        conf.experimental_path("trial/FasterRCNN_tp/"),
         1,
         max_wait_secs=5 * 60 * 60,
     )
