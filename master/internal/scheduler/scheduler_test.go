@@ -135,11 +135,11 @@ type schedulerState struct {
 
 func setupCluster(
 	scheduler Scheduler, fittingMethod SoftConstraint, agents []*agentState, tasks []*actor.Ref,
-) *Cluster {
-	c := NewCluster("cluster", scheduler, fittingMethod, nil,
+) *DefaultRP {
+	d := NewDefaultRP("cluster", scheduler, fittingMethod, nil,
 		"/opt/determined", model.TaskContainerDefaultsConfig{}, nil, 0)
 	for _, agent := range agents {
-		c.agents[agent.handler] = agent
+		d.agents[agent.handler] = agent
 	}
 	for _, handler := range tasks {
 		system := handler.System()
@@ -148,30 +148,30 @@ func setupCluster(
 		slots := system.Ask(handler, getSlots{}).Get().(int)
 		label := system.Ask(handler, getLabel{}).Get().(string)
 
-		c.addTask(&Task{
+		d.addTask(&Task{
 			ID:           TaskID(handler.Address().String()),
 			name:         handler.Address().Local(),
-			group:        c.getOrCreateGroup(g, nil),
+			group:        d.getOrCreateGroup(g, nil),
 			handler:      handler,
 			slotsNeeded:  slots,
 			canTerminate: true,
 			agentLabel:   label,
 		})
 		if resp := system.Ask(g, getMaxSlots{}); resp.Get() != nil {
-			c.getOrCreateGroup(g, nil).maxSlots = resp.Get().(*int)
+			d.getOrCreateGroup(g, nil).maxSlots = resp.Get().(*int)
 		}
 		if resp := system.Ask(g, getWeight{}); resp.Get() != nil {
-			c.getOrCreateGroup(g, nil).weight = resp.Get().(float64)
+			d.getOrCreateGroup(g, nil).weight = resp.Get().(float64)
 		}
 	}
-	return c
+	return d
 }
 
 func assertSchedulerState(
-	t *testing.T, cluster *Cluster, actual []*actor.Ref, expected []schedulerState,
+	t *testing.T, rp *DefaultRP, actual []*actor.Ref, expected []schedulerState,
 ) {
 	for index, handler := range actual {
-		task := cluster.tasksByHandler[handler]
+		task := rp.tasksByHandler[handler]
 		expectedState := expected[index]
 		assert.Equal(t, task.state, expectedState.state, "task %d has an incorrect state", index)
 		if task.state != taskPending {
@@ -189,7 +189,7 @@ func assertSchedulerState(
 		"actual tasks and expected task states must have the same length")
 }
 
-func forceSchedule(cluster *Cluster, handler *actor.Ref, agent *agentState) {
-	task := cluster.tasksByHandler[handler]
-	cluster.assignContainer(task, agent, task.SlotsNeeded(), 1)
+func forceSchedule(rp *DefaultRP, handler *actor.Ref, agent *agentState) {
+	task := rp.tasksByHandler[handler]
+	rp.assignContainer(task, agent, task.SlotsNeeded(), 1)
 }

@@ -326,7 +326,7 @@ func (m *Master) Run() error {
 
 	proxyRef, _ := m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{})
 
-	cluster := scheduler.NewCluster(
+	cluster := scheduler.NewDefaultRP(
 		m.ClusterID,
 		m.config.Scheduler.MakeScheduler(),
 		m.config.Scheduler.FitFunction(),

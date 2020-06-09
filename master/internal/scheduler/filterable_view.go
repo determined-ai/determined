@@ -47,19 +47,19 @@ func idleAgentFilter(agent *agentState) bool {
 }
 
 // Update updates the FilterableView with the current state of the cluster.
-func (v *FilterableView) Update(cluster *Cluster) (ViewSnapshot, bool) {
+func (v *FilterableView) Update(rp *DefaultRP) (ViewSnapshot, bool) {
 	// We must evaluate v.updateTasks(cluster) and v.updateAgents(cluster)
 	// before taking the logical or of the results to ensure that short circuit
 	// evaluation of booleans expressions don't prevent the updating of agents.
-	tasksUpdateMade := v.updateTasks(cluster)
-	agentsUpdateMade := v.updateAgents(cluster)
+	tasksUpdateMade := v.updateTasks(rp)
+	agentsUpdateMade := v.updateAgents(rp)
 	return v.newSnapshot(), tasksUpdateMade || agentsUpdateMade
 }
 
-func (v *FilterableView) updateTasks(cluster *Cluster) bool {
+func (v *FilterableView) updateTasks(rp *DefaultRP) bool {
 	newTasks := make(map[TaskID]*TaskSummary)
 
-	for iterator := cluster.taskList.iterator(); iterator.next(); {
+	for iterator := rp.taskList.iterator(); iterator.next(); {
 		task := iterator.value()
 
 		if v.taskFilter(task) {
@@ -84,10 +84,10 @@ func (v *FilterableView) updateTasks(cluster *Cluster) bool {
 	return updateMade
 }
 
-func (v *FilterableView) updateAgents(cluster *Cluster) bool {
+func (v *FilterableView) updateAgents(rp *DefaultRP) bool {
 	newAgents := make(map[*actor.Ref]*AgentSummary)
 
-	for actorRef, state := range cluster.agents {
+	for actorRef, state := range rp.agents {
 		if v.agentFilter(state) {
 			agentSummary := newAgentSummary(state)
 			newAgents[actorRef] = &agentSummary

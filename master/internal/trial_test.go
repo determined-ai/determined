@@ -87,7 +87,7 @@ func TestRendezvousInfo(t *testing.T) {
 
 	cluster, created := system.ActorOf(
 		actor.Addr("cluster"),
-		scheduler.NewCluster(
+		scheduler.NewDefaultRP(
 			uuid.New().String(),
 			scheduler.NewFairShareScheduler(),
 			scheduler.WorstFit,
