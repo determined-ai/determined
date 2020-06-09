@@ -13,7 +13,7 @@
     "eject": "react-scripts eject",
     "analyze": "source-map-explorer 'build/static/js/*.js'",
     "storybook": "NODE_PATH=src start-storybook -p 9009 -s public",
-    "build-storybook": "NODE_PATH=src build-storybook -s public -o build/storybook"
+    "build-storybook": "NODE_PATH=src build-storybook -s public -o build-storybook"
   },
   "proxy": "http://localhost:8080",
   "dependencies": {

@@ -22,9 +22,16 @@ get-deps:
 	$(MAKE) -C elm $@
 	$(MAKE) -C tests $@
 
-build:
-	$(MAKE) -C react $@
-	$(MAKE) -C elm $@
+.PHONY: build
+build: build-react build-elm
+
+.PHONY: build-react
+build-react:
+	$(MAKE) -C react build
+
+.PHONY: build-elm
+build-elm:
+	$(MAKE) -C elm build
 
 test:
 	$(MAKE) -C react $@

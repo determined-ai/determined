@@ -8,7 +8,8 @@
 /coverage
 
 # production
-/build
+build/
+build-storybook/
 
 # misc
 .DS_Store

@@ -8,9 +8,13 @@ get-deps:
 build:
 	npm run build
 
+.PHONY: build-storybook
+build-storybook:
+	npm run build-storybook
+
 .PHONY: clean
 clean:
-	rm -rf build node_modules/
+	rm -rf build build-storybook node_modules/
 
 .PHONY: live
 live:
