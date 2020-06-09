@@ -80,9 +80,9 @@ export const runStateToLabel: {[key in RunState]: string} = {
   [RunState.Deleted]: 'Deleted',
   [RunState.Errored]: 'Errored',
   [RunState.Paused]: 'Paused',
-  [RunState.StoppingCanceled]: 'StoppingCanceled',
-  [RunState.StoppingCompleted]: 'StoppingCompleted',
-  [RunState.StoppingError]: 'StoppingErrored',
+  [RunState.StoppingCanceled]: 'Canceling',
+  [RunState.StoppingCompleted]: 'Completing',
+  [RunState.StoppingError]: 'Erroring',
 };
 
 export const commandStateToLabel: {[key in CommandState]: string} = {
