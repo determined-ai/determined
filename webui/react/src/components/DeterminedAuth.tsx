@@ -52,7 +52,7 @@ const DeterminedAuth: React.FC = () => {
     } finally {
       setCanSubmit(true);
     }
-  }, [ isBadCredentials, setAuth, setShowSpinner ]);
+  }, [ setAuth, setShowSpinner ]);
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {
     const hasUsername = !!values.username;
