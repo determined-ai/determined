@@ -1512,8 +1512,8 @@ AND step_id = :step_id`, checkpoint)
 	}
 	err = db.namedGet(&checkpoint.ID, `
 INSERT INTO checkpoints
-(trial_id, step_id, state, start_time, metadata)
-VALUES (:trial_id, :step_id, :state, :start_time, :metadata)
+(trial_id, step_id, state, start_time, metadata, determined_version)
+VALUES (:trial_id, :step_id, :state, :start_time, :metadata, :determined_version)
 RETURNING id`, checkpoint)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting checkpoint %v", *checkpoint)
@@ -1573,12 +1573,10 @@ LIMIT 1`, &checkpoint, trialID); errors.Cause(err) == ErrNotFound {
 // state.
 func (db *PgDB) UpdateCheckpoint(
 	trialID, stepID int,
-	newState model.State,
-	uuid string,
-	resources model.JSONObj,
-	metadata model.JSONObj,
+	newCheckpoint model.Checkpoint,
 ) error {
-	if len(newState) == 0 && len(uuid) == 0 && len(resources) == 0 && len(metadata) == 0 {
+	if len(newCheckpoint.State) == 0 && len(*newCheckpoint.UUID) == 0 &&
+		len(newCheckpoint.Resources) == 0 && len(newCheckpoint.Metadata) == 0 {
 		return nil
 	}
 
@@ -1593,46 +1591,65 @@ func (db *PgDB) UpdateCheckpoint(
 	}
 
 	toUpdate := []string{}
-	if len(newState) != 0 {
-		if !model.CheckpointTransitions[checkpoint.State][newState] {
+	if len(newCheckpoint.State) != 0 {
+		if !model.CheckpointTransitions[checkpoint.State][newCheckpoint.State] {
 			return errors.Errorf("illegal transition %v -> %v for checkpoint %v",
-				checkpoint.State, newState, checkpoint.ID)
+				checkpoint.State, newCheckpoint.State, checkpoint.ID)
 		}
-		checkpoint.State = newState
+		checkpoint.State = newCheckpoint.State
 		toUpdate = append(toUpdate, "state")
-		if model.TerminalStates[newState] {
+		if model.TerminalStates[newCheckpoint.State] {
 			now := time.Now().UTC()
 			checkpoint.EndTime = &now
 			toUpdate = append(toUpdate, "end_time")
 		}
 	}
-	if len(uuid) != 0 {
+	if len(*newCheckpoint.UUID) != 0 {
 		if checkpoint.UUID != nil && len(*checkpoint.UUID) != 0 {
 			return errors.Errorf("checkpoint (%v, %v) already has UUID",
 				trialID, stepID)
 		}
-		checkpoint.UUID = &uuid
+		checkpoint.UUID = newCheckpoint.UUID
 		toUpdate = append(toUpdate, "uuid")
 	}
-	if len(resources) != 0 {
+	if len(newCheckpoint.Resources) != 0 {
 		if len(checkpoint.Resources) != 0 {
 			return errors.Errorf("checkpoint (%v, %v) already has resources",
 				trialID, stepID)
 		}
-		checkpoint.Resources = resources
+		checkpoint.Resources = newCheckpoint.Resources
 		toUpdate = append(toUpdate, "resources")
 	}
-	if len(metadata) != 0 {
+	if len(newCheckpoint.Metadata) != 0 {
 		if len(checkpoint.Metadata) == 0 {
 			checkpoint.Metadata = model.JSONObj{}
 		}
 
-		for k, v := range metadata {
+		for k, v := range newCheckpoint.Metadata {
 			checkpoint.Metadata[k] = v
 		}
 
 		toUpdate = append(toUpdate, "metadata")
 	}
+
+	if len(newCheckpoint.Framework) != 0 {
+		if len(checkpoint.Framework) != 0 {
+			return errors.Errorf("checkpoint (%v, %v) already has a framework", trialID, stepID)
+		}
+
+		checkpoint.Framework = newCheckpoint.Framework
+		toUpdate = append(toUpdate, "framework")
+	}
+
+	if len(newCheckpoint.Format) != 0 {
+		if len(checkpoint.Format) != 0 {
+			return errors.Errorf("checkpoint (%v, %v) already has a format", trialID, stepID)
+		}
+
+		checkpoint.Format = newCheckpoint.Format
+		toUpdate = append(toUpdate, "format")
+	}
+
 	err = db.namedExecOne(fmt.Sprintf(`
 UPDATE checkpoints
 %v

@@ -25,20 +25,28 @@ class Checkpoint(object):
     def __init__(
         self,
         uuid: str,
-        storage_config: Dict[str, Any],
+        experiment_config: Dict[str, Any],
+        experiment_id: int,
+        trial_id: int,
+        hparams: Dict[str, Any],
         batch_number: int,
         start_time: str,
         end_time: str,
         resources: Dict[str, Any],
         validation: Dict[str, Any],
+        determined_version: Optional[str] = None,
+        framework: Optional[str] = None,
+        format: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
         master: Optional[str] = None,
     ):
         """
         Arguments:
             uuid (string): UUID of the checkpoint.
-            storage_config: The checkpoint_storage key of the experiment
-                configuration related to checkpoint.
+            experiment_config: The experiment configuration related to the checkpoint.
+            experiment_id: Trial ID for the trial related to the checkpoint.
+            trial_id: Trial ID for the trial related to the checkpoint.
+            hparams: Hyperparameter values fro the trial related to the checkpoint.
             batch_number: Batch number of the checkpoint.
             start_time: Timestamp of when the checkpoint began being saved to
                 persistent storage.
@@ -47,21 +55,32 @@ class Checkpoint(object):
             resources:  Dictionary of file paths to file sizes in bytes of all
                 files related to the checkpoint.
             validation: Dictionary of validation metric names to their values.
+            framework: The framework of the trial ie. tensorflow, torch.
+            format: The format of the checkpoint ie h5, saved_model, pickle.
+            determined_version: the version of Determined the checkpoint was taken with.
+            metadata: User defined metadata associated with the checkpoint.
+            master: The address of the determined master instance.
         """
 
         self.uuid = uuid
+        self.experiment_config = experiment_config
+        self.experiment_id = experiment_id
+        self.trial_id = trial_id
+        self.hparams = hparams
         self.batch_number = batch_number
-        self.storage_config = storage_config
         self.start_time = start_time
         self.end_time = end_time
         self.resources = resources
         self.validation = validation
+        self.framework = framework
+        self.format = format
+        self.determined_version = determined_version
         self.metadata = metadata
         self._master = master
 
     def _find_shared_fs_path(self) -> pathlib.Path:
-        host_path = self.storage_config["host_path"]
-        storage_path = self.storage_config.get("storage_path")
+        host_path = self.experiment_config["checkpoint_storage"]["host_path"]
+        storage_path = self.experiment_config["checkpoint_storage"].get("storage_path")
         potential_paths = [
             [shared._full_storage_path(host_path, storage_path), self.uuid],
             [
@@ -105,17 +124,17 @@ class Checkpoint(object):
             local_ckpt_dir.joinpath(f) for f in ["metadata.json", "MLmodel"]
         ]
         if not any(p.exists() for p in potential_metadata_paths):
-            if self.storage_config["type"] == "shared_fs":
+            if self.experiment_config["checkpoint_storage"]["type"] == "shared_fs":
                 src_ckpt_dir = self._find_shared_fs_path()
                 shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))
             else:
                 local_ckpt_dir.mkdir(parents=True, exist_ok=True)
-                manager = storage.build(self.storage_config)
+                manager = storage.build(self.experiment_config["checkpoint_storage"])
                 if not isinstance(manager, (storage.S3StorageManager, storage.GCSStorageManager)):
                     raise AssertionError(
                         "Downloading from S3 or GCS requires the experiment to be configured with "
                         "S3 or GCS checkpointing, {} found instead".format(
-                            self.storage_config["type"]
+                            self.experiment_config["checkpoint_storage"]["type"]
                         )
                     )
 
@@ -123,6 +142,23 @@ class Checkpoint(object):
                     {"uuid": self.uuid, "resources": self.resources}
                 )
                 manager.download(metadata, str(local_ckpt_dir))
+
+        if not local_ckpt_dir.joinpath("metadata.json").exists():
+            with open(local_ckpt_dir.joinpath("metadata.json"), "w") as f:
+                json.dump(
+                    {
+                        "determined_version": self.determined_version,
+                        "framework": self.framework,
+                        "format": self.format,
+                        "experiment_id": self.experiment_id,
+                        "trial_id": self.trial_id,
+                        "hparams": self.hparams,
+                        "experiment_config": self.experiment_config,
+                        "metadata": self.metadata,
+                    },
+                    f,
+                    indent=2,
+                )
 
         return str(local_ckpt_dir)
 
@@ -210,6 +246,15 @@ class Checkpoint(object):
 
     @staticmethod
     def get_type(metadata: Dict[str, Any]) -> ModelFramework:
+        if "framework" in metadata:
+            if metadata["framework"].startswith("torch"):
+                return ModelFramework.PYTORCH
+
+            if metadata["framework"].startswith("tensorflow"):
+                return ModelFramework.TENSORFLOW
+
+        # Older metadata layout contained torch_version and tensorflow_version
+        # as keys. Eventually, we should drop support for the older format.
         if "torch_version" in metadata:
             return ModelFramework.PYTORCH
 
@@ -232,14 +277,21 @@ def from_json(data: Dict[str, Any], master: Optional[str] = None) -> Checkpoint:
         "metrics": data.get("metrics", {}),
         "state": data.get("validation_state", None),
     }
+
     return Checkpoint(
         data["uuid"],
-        data["checkpoint_storage"],
+        data["experiment_config"],
+        data["experiment_id"],
+        data["trial_id"],
+        data["hparams"],
         data["batch_number"],
         data["start_time"],
         data["end_time"],
         data["resources"],
         validation,
         metadata=data.get("metadata"),
+        framework=data.get("framework"),
+        format=data.get("format"),
+        determined_version=data.get("determined_version"),
         master=master,
     )

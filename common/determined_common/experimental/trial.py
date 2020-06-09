@@ -108,8 +108,8 @@ class TrialReference:
             return checkpoint.from_json(r[0], master=self._master)
 
         if not sort_by:
-            sort_by = r[0]["metric"]
-            smaller_is_better = r[0]["smaller_is_better"]
+            sort_by = r[0]["experiment_config"]["searcher"]["metric"]
+            smaller_is_better = r[0]["experiment_config"]["searcher"]["smaller_is_better"]
 
         best_checkpoint_func = min if smaller_is_better else max
         return checkpoint.from_json(

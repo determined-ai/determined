@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/version"
 )
 
 // State is the run state of an experiment / trial / step / etc.
@@ -333,25 +335,29 @@ func (v *Validation) IsNew() bool {
 
 // Checkpoint represents a row from the `checkpoints` table.
 type Checkpoint struct {
-	ID        int        `db:"id" json:"id"`
-	TrialID   int        `db:"trial_id" json:"trial_id"`
-	StepID    int        `db:"step_id" json:"step_id"`
-	State     State      `db:"state" json:"state"`
-	StartTime time.Time  `db:"start_time" json:"start_time"`
-	EndTime   *time.Time `db:"end_time" json:"end_time"`
-	UUID      *string    `db:"uuid" json:"uuid"`
-	Resources JSONObj    `db:"resources" json:"resources"`
-	Metadata  JSONObj    `db:"metadata" json:"metadata"`
+	ID                int        `db:"id" json:"id"`
+	TrialID           int        `db:"trial_id" json:"trial_id"`
+	StepID            int        `db:"step_id" json:"step_id"`
+	State             State      `db:"state" json:"state"`
+	StartTime         time.Time  `db:"start_time" json:"start_time"`
+	EndTime           *time.Time `db:"end_time" json:"end_time"`
+	UUID              *string    `db:"uuid" json:"uuid"`
+	Resources         JSONObj    `db:"resources" json:"resources"`
+	Metadata          JSONObj    `db:"metadata" json:"metadata"`
+	Framework         string     `db:"framework" json:"framework"`
+	Format            string     `db:"format" json:"format"`
+	DeterminedVersion string     `db:"determined_version" json:"determined_version"`
 }
 
 // NewCheckpoint creates a new checkpoint in the active state.
 func NewCheckpoint(trialID, stepID int) *Checkpoint {
 	return &Checkpoint{
-		TrialID:   trialID,
-		StepID:    stepID,
-		State:     ActiveState,
-		StartTime: time.Now().UTC(),
-		Metadata:  JSONObj{},
+		TrialID:           trialID,
+		StepID:            stepID,
+		State:             ActiveState,
+		StartTime:         time.Now().UTC(),
+		Metadata:          JSONObj{},
+		DeterminedVersion: version.Version,
 	}
 }
 

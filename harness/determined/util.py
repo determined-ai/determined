@@ -1,7 +1,6 @@
 import collections
 import datetime
 import enum
-import json
 import os
 import pathlib
 import random
@@ -14,7 +13,6 @@ import numpy as np
 import simplejson
 
 import determined as det
-from determined._env_context import EnvContext
 from determined_common import check
 
 
@@ -150,7 +148,7 @@ def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False)
     return s
 
 
-def write_checkpoint_metadata(path: pathlib.Path, env: EnvContext, extras: Dict[str, Any]) -> None:
+def write_user_code(path: pathlib.Path) -> None:
     code_path = path.joinpath("code")
 
     # When restarting from checkpoint, it is possible that the code path is already present
@@ -164,17 +162,3 @@ def write_checkpoint_metadata(path: pathlib.Path, env: EnvContext, extras: Dict[
     # directory. Therefore we save the current directory with the checkpoint.
     shutil.copytree(os.getcwd(), code_path, ignore=shutil.ignore_patterns("__pycache__"))
     os.chmod(code_path, 0o755)
-
-    metadata_path = path.joinpath("metadata.json")
-    det_metadata = {
-        "cluster_id": env.det_cluster_id,
-        "det_version": det.__version__,
-        "experiment_id": env.det_experiment_id,
-        "trial_id": env.det_trial_id,
-        "hparams": env.hparams,
-        "experiment_config": env.experiment_config,
-        **extras,
-    }
-
-    with metadata_path.open("w") as f:
-        json.dump(det_metadata, f, indent=2)

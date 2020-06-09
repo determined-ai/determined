@@ -256,25 +256,33 @@ class _TrialWorkloadManager(WorkloadManager):
         # Only the chief container should checkpoint.
         if self.rendezvous_info.get_rank() == 0:
             with self.storage_mgr.store_path() as (storage_id, path):
-                yield wkld, [pathlib.Path(path)], lambda _: None
 
-                metadata = storage.StorageMetadata(
-                    storage_id, storage.StorageManager._list_directory(path)
-                )
+                def _respond(checkpoint_info: workload.Response) -> None:
+                    checkpoint_info = cast(Dict[str, Any], checkpoint_info)
+                    metadata = storage.StorageMetadata(
+                        storage_id,
+                        storage.StorageManager._list_directory(path),
+                        checkpoint_info.get("framework", ""),
+                        checkpoint_info.get("format", ""),
+                    )
 
-            logging.info("Saved trial to checkpoint {}".format(metadata.storage_id))
-            self.tensorboard_mgr.sync()
+                    logging.info("Saved trial to checkpoint {}".format(metadata.storage_id))
+                    self.tensorboard_mgr.sync()
 
-            message = {
-                "type": "WORKLOAD_COMPLETED",
-                "workload": wkld,
-                "start_time": start_time,
-                "end_time": _current_timestamp(),
-                "metrics": metadata,
-            }  # type: workload.Response
+                    message: workload.Response = {
+                        "type": "WORKLOAD_COMPLETED",
+                        "workload": wkld,
+                        "start_time": start_time,
+                        "end_time": _current_timestamp(),
+                        "metrics": metadata,
+                    }
+
+                    respond(message)
+
+                yield wkld, [pathlib.Path(path)], _respond
+
         else:
-            message = workload.Skipped()
-        respond(message)
+            respond(workload.Skipped())
 
     def yield_terminate(
         self, wkld: workload.Workload, respond: workload.ResponseFunc

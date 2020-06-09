@@ -689,13 +689,7 @@ class PyTorchTrialController(det.LoopTrialController):
         path.mkdir(parents=True, exist_ok=True)
 
         # The model code is the current working directory.
-        util.write_checkpoint_metadata(
-            path,
-            self.env,
-            {
-                "torch_version": torch.__version__  # type: ignore
-            },
-        )
+        util.write_user_code(path)
 
         # PyTorch uses optimizer objects that take the model parameters to
         # optimize on construction, so we store and reload the `state_dict()`
@@ -721,7 +715,13 @@ class PyTorchTrialController(det.LoopTrialController):
         for callback in self.callbacks.values():
             callback.on_checkpoint_end(str(path))
 
-        return {}
+        return cast(
+            workload.Response,
+            {
+                "framework": f"torch-{torch.__version__}",  # type: ignore
+                "format": "cloudpickle",
+            },
+        )
 
 
 class PyTorchTrial(det.Trial):
