@@ -1,5 +1,5 @@
 import { generateContext } from 'contexts';
-import { ActionType, RestApiState } from 'hooks/useRestApi';
+import { RestApiState } from 'hooks/useRestApi';
 import { Experiment } from 'types';
 
 const contextProvider = generateContext<RestApiState<Experiment[]>>({
