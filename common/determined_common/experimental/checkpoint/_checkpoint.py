@@ -44,7 +44,7 @@ class Checkpoint(object):
         Arguments:
             uuid (string): UUID of the checkpoint.
             experiment_config: The experiment configuration related to the checkpoint.
-            experiment_id: Trial ID for the trial related to the checkpointS.
+            experiment_id: Trial ID for the trial related to the checkpoint.
             trial_id: Trial ID for the trial related to the checkpoint.
             hparams: Hyperparameter values fro the trial related to the checkpoint.
             batch_number: Batch number of the checkpoint.
