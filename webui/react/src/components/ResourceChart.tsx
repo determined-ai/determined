@@ -48,7 +48,7 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
   });
 
   const data: Data[] = [ {
-    hole: 0.4,
+    hole: 0.5,
     hoverinfo: 'skip',
     labels,
     marker: {
@@ -59,7 +59,17 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
     values,
   } ];
 
-  if (values.filter(v => v !== 0).length === 0) return null;
+  if (values.filter(v => v !== 0).length === 0) {
+    data[0] = {
+      ...data[0],
+      labels: [ `no ${title} available` ],
+      marker: {
+        colors: [ lightTheme.colors.monochrome[13] ],
+      },
+      textinfo: 'label',
+      values: [ 1 ],
+    };
+  }
 
   return { data,
     layout: {

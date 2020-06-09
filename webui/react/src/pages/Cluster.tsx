@@ -6,7 +6,7 @@ import ResourceChart from 'components/ResourceChart';
 import Spinner from 'components/Spinner';
 import AgentsCtx from 'contexts/Agents';
 import emptyMessage from 'styles/emptyMessage.module.scss';
-import { Resource } from 'types';
+import { Resource, ResourceType } from 'types';
 import { categorize } from 'utils/data';
 
 const Cluster: React.FC = () => {
@@ -26,13 +26,15 @@ const Cluster: React.FC = () => {
 
   const availableResourceTypes = Object.keys(availableResources);
 
-  let unhappyView: React.ReactNode = <Spinner />;
+  let unhappyView: React.ReactNode = null;
 
-  if (agents.data && agents.data.length === 0) {
+  if (!agents.data) {
+    unhappyView = <Spinner />;
+  } else if (agents.data.length === 0) {
     unhappyView = (<div className={emptyMessage.base}>
       No agents connected.
     </div>);
-  } else if (agents.data && availableResourceTypes.length === 0) {
+  } else if (availableResourceTypes.length === 0) {
     unhappyView = (<div className={emptyMessage.base}>
       No slots available.
     </div>);
@@ -40,13 +42,15 @@ const Cluster: React.FC = () => {
 
   return (
     <Page title="Cluster">
-      {availableResourceTypes.length > 0 ?
+      {unhappyView ? unhappyView :
         <Grid minItemWidth={50}>
-          {Object.entries(availableResources).map(([ type, value ], idx) => (
-            <ResourceChart key={idx} resources={value} title={type + 's'} />
+          {Object.values(ResourceType).map((resourceType, idx) => (
+            <ResourceChart key={idx}
+              resources={availableResources[resourceType] || []}
+              title={resourceType + 's'} />
           ))}
         </Grid>
-        : unhappyView}
+      }
     </Page>
   );
 };

@@ -22,7 +22,7 @@ export const Default = (): React.ReactNode => <ResourceChart resources={[
   { container: { state: ResourceState.Running } },
   { container: { state: ResourceState.Running } },
   { container: { state: ResourceState.Running } },
-] as Resource[]} title="TPU" />;
+] as Resource[]} title="TPUs" />;
 
 export const AllSame = (): React.ReactNode => <ResourceChart resources={[
   { container: undefined },
@@ -32,7 +32,7 @@ export const AllSame = (): React.ReactNode => <ResourceChart resources={[
   { container: undefined },
   { container: undefined },
   { container: undefined },
-] as Resource[]} title="TPU" />;
+] as Resource[]} title="TPUs" />;
 
 export const HalfHalf = (): React.ReactNode => <ResourceChart resources={[
   { container: undefined },
@@ -43,4 +43,6 @@ export const HalfHalf = (): React.ReactNode => <ResourceChart resources={[
   { container: { state: ResourceState.Running } },
   { container: { state: ResourceState.Running } },
   { container: { state: ResourceState.Running } },
-] as Resource[]} title="GPU" />;
+] as Resource[]} title="GPUs" />;
+
+export const Empty = (): React.ReactNode => <ResourceChart resources={[]} title="DPUs" />;
