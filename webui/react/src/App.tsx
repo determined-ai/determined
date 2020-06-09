@@ -1,5 +1,5 @@
 import { Button, notification } from 'antd';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import NavBar from 'components/NavBar';
 import Router from 'components/Router';
@@ -16,9 +16,13 @@ import Experiments from 'contexts/Experiments';
 import FullPageSpinner from 'contexts/FullPageSpinner';
 import Info from 'contexts/Info';
 import Users from 'contexts/Users';
+import usePolling from 'hooks/usePolling';
+import { useRestApiSimple } from 'hooks/useRestApi';
 import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
 import { appRoutes } from 'routes';
+import { getInfo } from 'services/api';
+import { DeterminedInfo } from 'types';
 import { updateFaviconType } from 'utils/browser';
 
 import css from './App.module.scss';
@@ -27,14 +31,26 @@ const AppView: React.FC = () => {
   const { isAuthenticated, user } = Auth.useStateContext();
   const cluster = ClusterOverview.useStateContext();
   const info = Info.useStateContext();
+  const setInfo = Info.useActionContext();
   const showSpinner = FullPageSpinner.useStateContext();
   const setShowSpinner = FullPageSpinner.useActionContext();
   const username = user ? user.username : undefined;
+  const [ infoResponse, requestInfo ] = useRestApiSimple<{}, DeterminedInfo>(getInfo, {});
+
+  const fetchInfo = useCallback(() => requestInfo({}), [ requestInfo ]);
 
   updateFaviconType(cluster.allocation !== 0);
 
   useRouteTracker();
   useTheme();
+
+  // Poll every 15 minutes
+  usePolling(fetchInfo, { delay: 900000 });
+
+  useEffect(() => {
+    if (!infoResponse.data) return;
+    setInfo({ type: Info.ActionType.Set, value: infoResponse.data });
+  }, [ infoResponse, setInfo ]);
 
   useEffect(() => {
     if (info.telemetry.enabled && info.telemetry.segmentKey) {

@@ -5,18 +5,17 @@ import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Experiments from 'contexts/Experiments';
-import Info from 'contexts/Info';
 import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
 import useRestApi, { useRestApiSimple } from 'hooks/useRestApi';
 import { ioAgents, ioGenericCommands, ioUsers } from 'ioTypes';
-import { getExperimentSummaries, getInfo } from 'services/api';
+import { getExperimentSummaries } from 'services/api';
 import {
   jsonToAgents, jsonToCommands, jsonToNotebooks,
   jsonToShells, jsonToTensorboards, jsonToUsers,
 } from 'services/decoder';
 import { ExperimentsParams } from 'services/types';
-import { Agent, Command, DeterminedInfo,Experiment, RunState, User } from 'types';
+import { Agent, Command, Experiment, RunState, User } from 'types';
 
 const activeStates = [
   RunState.Active,
@@ -26,7 +25,6 @@ const activeStates = [
 ];
 
 const AppContexts: React.FC = () => {
-  const setInfo = Info.useActionContext();
   const setUsers = Users.useActionContext();
   const setAgents = Agents.useActionContext();
   const setCommands = Commands.useActionContext();
@@ -36,7 +34,6 @@ const AppContexts: React.FC = () => {
   const setShells = Shells.useActionContext();
   const setTensorboards = Tensorboards.useActionContext();
   const setOverview = ClusterOverview.useActionContext();
-  const [ infoResponse, requestInfo ] = useRestApiSimple<{}, DeterminedInfo>(getInfo, {});
   const [ usersResponse, requestUsers ] =
     useRestApi<User[]>(ioUsers, { mappers: jsonToUsers });
   const [ agentsResponse, requestAgents ] =
@@ -53,8 +50,6 @@ const AppContexts: React.FC = () => {
     useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToTensorboards });
   const [ experimentsResponse, requestExperiments ] =
     useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
-
-  const fetchInfo = useCallback(() => requestInfo({}), [ requestInfo ]);
 
   const fetchAll = useCallback((): void => {
     requestAgents({ url: '/agents' });
@@ -76,14 +71,9 @@ const AppContexts: React.FC = () => {
 
   const fetchUsers = useCallback((): void => requestUsers({ url: '/users' }), [ requestUsers ]);
 
-  usePolling(fetchInfo, { delay: 1000 });
   usePolling(fetchAll);
   usePolling(fetchUsers, { delay: 60000 });
 
-  useEffect(() => {
-    if (!infoResponse.data) return;
-    setInfo({ type: Info.ActionType.Set, value: infoResponse.data });
-  }, [ infoResponse, setInfo ]);
   useEffect(() => {
     setUsers({ type: Users.ActionType.Set, value: usersResponse });
   }, [ usersResponse, setUsers ]);
