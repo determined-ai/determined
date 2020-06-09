@@ -24,7 +24,7 @@ const DeterminedAuth: React.FC = () => {
   const setAuth = Auth.useActionContext();
   const setShowSpinner = FullPageSpinner.useActionContext();
   const [ isBadCredentials, setIsBadCredentials ] = useState(false);
-  const [ canSubmit, setCanSubmit ] = useState(false);
+  const [ canSubmit, setCanSubmit ] = useState(!!storage.get(STORAGE_KEY_LAST_USERNAME));
 
   const onFinish = useCallback(async (creds: FromValues): Promise<void> => {
     setShowSpinner({ opaque: false, type: FullPageSpinner.ActionType.Show });
