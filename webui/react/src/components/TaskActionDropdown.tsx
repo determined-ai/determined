@@ -3,7 +3,7 @@ import { ClickParam } from 'antd/es/menu';
 import React from 'react';
 
 import Icon from 'components/Icon';
-import Experiments from 'contexts/ActiveExperiments';
+import Experiments from 'contexts/Experiments';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { archiveExperiment, killTask, setExperimentState } from 'services/api';
 import { Experiment, RecentTask, RunState, TaskType } from 'types';
@@ -53,6 +53,10 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
       switch (params.key) { // Cases should match menu items.
         case 'kill':
           await killTask(task);
+          if (task.type === TaskType.Experiment) {
+            // We don't provide immediate updates for command types yet.
+            await updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
+          }
           break;
         case 'archive':
           await archiveExperiment(parseInt(task.id), !task.archived);
