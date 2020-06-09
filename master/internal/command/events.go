@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
+	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 )
 
 const defaultEventBufferSize = 200
@@ -33,7 +34,7 @@ type event struct {
 	ContainerStartedEvent *scheduler.ContainerStarted `json:"container_started_event"`
 	// ServiceReadyEvent is triggered when the service running in the container is ready to serve.
 	// TODO: Move to ServiceReadyEvent type to a specialized event with readiness checks.
-	ServiceReadyEvent *scheduler.ContainerLog `json:"service_ready_event"`
+	ServiceReadyEvent *sproto.ContainerLog `json:"service_ready_event"`
 	// TerminateRequestEvent is triggered when the scheduler has requested the container to
 	// terminate.
 	TerminateRequestEvent *scheduler.TerminateRequest `json:"terminate_request_event"`

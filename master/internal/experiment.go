@@ -256,8 +256,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		telemetry.ReportExperimentCreated(ctx.Self().System(), *e.Experiment)
 
-		ctx.Tell(e.cluster, scheduler.SetMaxSlots{MaxSlots: e.Config.Resources.MaxSlots})
-		ctx.Tell(e.cluster, scheduler.SetWeight{Weight: e.Config.Resources.Weight})
+		ctx.Tell(e.cluster, scheduler.SetMaxSlots{
+			MaxSlots: e.Config.Resources.MaxSlots,
+			Handler:  ctx.Self(),
+		})
+		ctx.Tell(e.cluster, scheduler.SetWeight{Weight: e.Config.Resources.Weight, Handler: ctx.Self()})
 		ops, err := e.searcher.InitialOperations()
 		e.processOperations(ctx, ops, err)
 	case trialCreated:
@@ -313,9 +316,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.updateState(ctx, msg)
 	case scheduler.SetMaxSlots:
 		e.Config.Resources.MaxSlots = msg.MaxSlots
+		msg.Handler = ctx.Self()
 		ctx.Tell(e.cluster, msg)
 	case scheduler.SetWeight:
 		e.Config.Resources.Weight = msg.Weight
+		msg.Handler = ctx.Self()
 		ctx.Tell(e.cluster, msg)
 
 	case killExperiment:

@@ -5,6 +5,7 @@ import (
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
+	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -29,7 +30,7 @@ func (a *assignment) StartTask(spec image.TaskSpec) TaskSummary {
 	spec.HarnessPath = a.harnessPath
 	spec.TaskContainerDefaults = a.taskContainerDefaults
 	spec.Devices = a.devices
-	handler.System().Tell(handler, StartTaskOnAgent{
+	handler.System().Tell(handler, sproto.StartTaskOnAgent{
 		Task: a.task.handler,
 		StartContainer: agent.StartContainer{
 			Container: cproto.Container{

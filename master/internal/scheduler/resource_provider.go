@@ -1,69 +1,88 @@
 package scheduler
 
 import (
-	"bytes"
-	"fmt"
-	"strings"
-	"time"
+	"github.com/labstack/echo"
 
-	"github.com/docker/docker/pkg/jsonmessage"
-
-	"github.com/determined-ai/determined/master/pkg/agent"
-	containerInfo "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/internal/agent"
+	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/model"
+	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 )
 
-// ContainerLog notifies the task actor that a new log message is available for the container.
-type ContainerLog struct {
-	Container containerInfo.Container
-	Timestamp time.Time
+// ResourceProvider manages the configured resource providers.
+// Currently support only one resource provider at a time.
+type ResourceProvider struct {
+	clusterID                   string
+	scheduler                   Scheduler
+	fittingMethod               SoftConstraint
+	proxy                       *actor.Ref
+	harnessPath                 string
+	taskContainerDefaults       model.TaskContainerDefaultsConfig
+	provisioner                 *actor.Ref
+	provisionerSlotsPerInstance int
 
-	PullMessage *jsonmessage.JSONMessage
-	RunMessage  *agent.RunMessage
-	AuxMessage  *string
+	resourceProvider *actor.Ref
 }
 
-func (c ContainerLog) String() string {
-	msg := ""
-	switch {
-	case c.AuxMessage != nil:
-		msg = *c.AuxMessage
-	case c.RunMessage != nil:
-		msg = strings.TrimSuffix(c.RunMessage.Value, "\n")
-	case c.PullMessage != nil:
-		buf := new(bytes.Buffer)
-		if err := c.PullMessage.Display(buf, false); err != nil {
-			msg = err.Error()
-		} else {
-			msg = buf.String()
-			// Docker disables printing the progress bar in non-terminal mode.
-			if msg == "" && c.PullMessage.Progress != nil {
-				msg = c.PullMessage.Progress.String()
-			}
-			msg = strings.TrimSpace(msg)
-		}
-	default:
-		panic("unknown log message received")
+// NewResourceProvider creates and instance of ResourceProvider.
+func NewResourceProvider(
+	clusterID string,
+	scheduler Scheduler,
+	fittingMethod SoftConstraint,
+	proxy *actor.Ref,
+	harnessPath string,
+	taskContainerDefaults model.TaskContainerDefaultsConfig,
+	provisioner *actor.Ref,
+	provisionerSlotsPerInstance int,
+) *ResourceProvider {
+	return &ResourceProvider{
+		clusterID:                   clusterID,
+		scheduler:                   scheduler,
+		fittingMethod:               fittingMethod,
+		proxy:                       proxy,
+		harnessPath:                 harnessPath,
+		taskContainerDefaults:       taskContainerDefaults,
+		provisioner:                 provisioner,
+		provisionerSlotsPerInstance: provisionerSlotsPerInstance,
 	}
-	shortID := c.Container.ID[:8]
-	timestamp := c.Timestamp.UTC().Format(time.RFC3339)
-	return fmt.Sprintf("[%s] %s [%s] || %s", timestamp, shortID, c.Container.State, msg)
 }
 
-// ContainerStateChanged notifies the master that the agent transitioned the container state.
-type ContainerStateChanged struct {
-	Container containerInfo.Container
+// Receive implements the actor.Actor interface.
+func (rp *ResourceProvider) Receive(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case actor.PreStart:
+		rp.resourceProvider, _ = ctx.ActorOf("defaultRP", NewDefaultRP(
+			rp.clusterID,
+			rp.scheduler,
+			rp.fittingMethod,
+			rp.proxy,
+			rp.harnessPath,
+			rp.taskContainerDefaults,
+			rp.provisioner,
+			rp.provisionerSlotsPerInstance,
+		))
 
-	ContainerStarted *agent.ContainerStarted
-	ContainerStopped *agent.ContainerStopped
+	case AddTask, StartTask, sproto.ContainerStateChanged, SetMaxSlots, SetWeight,
+		SetTaskName, TerminateTask, GetTaskSummary, GetTaskSummaries:
+		rp.forward(ctx, msg)
+
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+
+	return nil
 }
 
-// TaskAssigned is a message that tells the task actor that it has been assigned to run
-// with a specified number of containers.
-type TaskAssigned struct {
-	numContainers int
+// ConfigureEndpoints initializes the agent endpoints.
+func (rp *ResourceProvider) ConfigureEndpoints(s *actor.System, e *echo.Echo) {
+	agent.Initialize(s, e, rp.resourceProvider)
 }
 
-// NumContainers returns the number of containers to which the task has been assigned.
-func (t *TaskAssigned) NumContainers() int {
-	return t.numContainers
+func (rp *ResourceProvider) forward(ctx *actor.Context, msg actor.Message) {
+	if ctx.ExpectingResponse() {
+		response := ctx.Ask(rp.resourceProvider, msg)
+		ctx.Respond(response.Get())
+	} else {
+		ctx.Tell(rp.resourceProvider, msg)
+	}
 }

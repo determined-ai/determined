@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 )
 
 const (
@@ -208,7 +209,7 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 		},
 
 		readinessChecks: map[string]readinessCheck{
-			"notebook": func(log scheduler.ContainerLog) bool {
+			"notebook": func(log sproto.ContainerLog) bool {
 				return strings.Contains(log.String(), "Jupyter Notebook is running")
 			},
 		},

@@ -3,11 +3,13 @@ package internal
 import (
 	"fmt"
 
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/scheduler"
+
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
+	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -19,7 +21,7 @@ type checkpointGCTask struct {
 	agentUserGroup *model.AgentUserGroup
 
 	// TODO (DET-789): Set up proper log handling for checkpoint GC.
-	logs []scheduler.ContainerLog
+	logs []sproto.ContainerLog
 }
 
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
@@ -30,6 +32,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			FittingRequirements: scheduler.FittingRequirements{
 				SingleAgent: true,
 			},
+			TaskHandler: ctx.Self(),
 		})
 
 	case scheduler.TaskAssigned:
@@ -52,9 +55,10 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 					ToDelete:         checkpoints,
 				},
 			},
+			TaskHandler: ctx.Self(),
 		})
 
-	case scheduler.ContainerStateChanged:
+	case sproto.ContainerStateChanged:
 		if msg.Container.State != container.Terminated {
 			return nil
 		}
@@ -70,7 +74,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		}
 		ctx.Self().Stop()
 
-	case scheduler.ContainerLog:
+	case sproto.ContainerLog:
 		t.logs = append(t.logs, msg)
 
 	case scheduler.TerminateRequest:

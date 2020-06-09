@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
+	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -21,7 +22,7 @@ const terminatedDuration = 24 * time.Hour
 
 // TODO: readinessCheck should be defined at the agent level. Temporarily we will use log
 // messages as a proxy.
-type readinessCheck func(scheduler.ContainerLog) bool
+type readinessCheck func(sproto.ContainerLog) bool
 
 // terminateForGC is an internal message indicating that the command actor
 // should stop and garbage collect its state.
@@ -83,7 +84,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		// Initialize an event stream manager.
 		c.eventStream, _ = ctx.ActorOf("events", newEventManager())
 		// Schedule the command with the cluster.
-		c.cluster = ctx.Self().System().Get(actor.Addr("cluster"))
+		c.cluster = ctx.Self().System().Get(actor.Addr("resourceProvider"))
 		ctx.Tell(c.cluster, scheduler.AddTask{
 			ID:           &c.taskID,
 			Name:         c.config.Description,
@@ -93,6 +94,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			FittingRequirements: scheduler.FittingRequirements{
 				SingleAgent: true,
 			},
+			TaskHandler: ctx.Self(),
 		})
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ScheduledEvent: &c.taskID})
 
@@ -101,7 +103,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			ctx.Respond(newSummary(c))
 		}
 
-	case scheduler.ContainerStateChanged:
+	case sproto.ContainerStateChanged:
 		c.container = &msg.Container
 		if msg.Container.State == container.Terminated {
 			exitStatus := "command exited successfully"
@@ -122,6 +124,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 				},
 				HarnessPath: c.harnessPath,
 			},
+			TaskHandler: ctx.Self(),
 		})
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 
@@ -144,7 +147,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case scheduler.TaskTerminated:
 		// This message is being deprecated; ignore it.
 
-	case scheduler.ContainerLog:
+	case sproto.ContainerLog:
 		if !c.readinessMessageSent && c.readinessChecksPass(ctx, msg) {
 			c.readinessMessageSent = true
 			ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ServiceReadyEvent: &msg})
@@ -181,7 +184,7 @@ func (c *command) terminate(ctx *actor.Context) {
 	}
 }
 
-func (c *command) readinessChecksPass(ctx *actor.Context, log scheduler.ContainerLog) bool {
+func (c *command) readinessChecksPass(ctx *actor.Context, log sproto.ContainerLog) bool {
 	for name, check := range c.readinessChecks {
 		if check(log) {
 			delete(c.readinessChecks, name)

@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/agent"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
+	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 )
 
 var errMock = errors.New("mock error")
@@ -36,6 +37,7 @@ type (
 func (h *mockActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case AskSchedulerToAddTask:
+		msg.task.TaskHandler = ctx.Self()
 		if ctx.ExpectingResponse() {
 			ctx.Respond(ctx.Ask(h.cluster, msg.task).Get())
 		} else {
@@ -53,7 +55,7 @@ func (h *mockActor) Receive(ctx *actor.Context) error {
 			return h.onAssigned(msg)
 		}
 
-		h.system.Tell(h.cluster, ContainerStateChanged{
+		h.system.Tell(h.cluster, sproto.ContainerStateChanged{
 			Container: cproto.Container{
 				ID:    cproto.ID("random-container-name"),
 				State: cproto.Running,
@@ -73,7 +75,7 @@ func (h *mockActor) Receive(ctx *actor.Context) error {
 		if h.onContainerStarted != nil {
 			return h.onContainerStarted(msg)
 		}
-		h.system.Tell(h.cluster, ContainerStateChanged{
+		h.system.Tell(h.cluster, sproto.ContainerStateChanged{
 			Container: cproto.Container{
 				ID:    cproto.ID(msg.Container.ID()),
 				State: cproto.Terminated,
@@ -258,7 +260,7 @@ func testWhenActorsStopOrTaskIsKilled(t *testing.T, r *rand.Rand) {
 			})
 		},
 		func() {
-			system.Tell(cluster, RemoveAgent{
+			system.Tell(cluster, sproto.RemoveAgent{
 				Agent: agents[0].handler,
 			})
 		},

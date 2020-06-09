@@ -18,7 +18,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/determined-ai/determined/master/internal/agent"
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/context"
@@ -292,7 +291,8 @@ func (m *Master) Run() error {
 	// Actor structure:
 	// master system
 	// +- Provisioner (provisioner.Provisioner: provisioner)
-	// +- Cluster (scheduler.Cluster: cluster)
+	// +- ResourceProvider (scheduler.ResourceProvider: resourceProvider)
+	//     +- DefaultResourceProvider (scheduler.DefaultResourceProvider: defaultRP)
 	// +- Service Proxy (proxy.Proxy: proxy)
 	// +- RWCoordinator (internal.rw_coordinator: rwCoordinator)
 	// +- Telemetry (telemetry.telemetryActor: telemetry)
@@ -326,7 +326,7 @@ func (m *Master) Run() error {
 
 	proxyRef, _ := m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{})
 
-	cluster := scheduler.NewDefaultRP(
+	resourceProvider := scheduler.NewResourceProvider(
 		m.ClusterID,
 		m.config.Scheduler.MakeScheduler(),
 		m.config.Scheduler.FitFunction(),
@@ -337,7 +337,7 @@ func (m *Master) Run() error {
 		provisionerSlotsPerInstance,
 	)
 
-	m.cluster, _ = m.system.ActorOf(actor.Addr("cluster"), cluster)
+	m.cluster, _ = m.system.ActorOf(actor.Addr("resourceProvider"), resourceProvider)
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 
 	rwCoordinator := newRWCoordinator()
@@ -516,7 +516,7 @@ func (m *Master) Run() error {
 	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
 
-	agent.Initialize(m.system, m.echo, m.cluster)
+	resourceProvider.ConfigureEndpoints(m.system, m.echo)
 
 	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "" {
 		if telemetry, err := telemetry.NewActor(

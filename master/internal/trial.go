@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -236,7 +237,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		t.replaying = false
 
 	// Log-related messages.
-	case scheduler.ContainerLog:
+	case sproto.ContainerLog:
 		t.processLog(ctx, msg)
 
 	case actor.PostStop:
@@ -292,6 +293,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 					SingleAgent:    false,
 					DedicatedAgent: slotsNeeded > 1,
 				},
+				TaskHandler: ctx.Self(),
 			}).Get().(*scheduler.Task)
 		}
 	} else if t.experimentState != model.ActiveState {
@@ -331,7 +333,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		ctx.Log().Info("trial runner requested to terminate")
 		t.pendingGracefulTermination = true
 
-	case scheduler.ContainerStateChanged:
+	case sproto.ContainerStateChanged:
 		switch msg.Container.State {
 		case container.Terminated:
 			t.processContainerTerminated(ctx, msg)
@@ -398,7 +400,9 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 		}
 		t.processID(ctx, modelTrial.ID)
 		ctx.Tell(t.cluster, scheduler.SetTaskName{
-			Name: fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID)})
+			Name:        fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID),
+			TaskHandler: ctx.Self(),
+		})
 		ctx.Tell(ctx.Self().Parent(), trialCreated{create: t.create, trialID: t.id})
 	}
 
@@ -407,7 +411,7 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 		return errors.Wrap(err, "error getting workload from sequencer")
 	}
 
-	t.numContainers = msg.NumContainers()
+	t.numContainers = msg.NumContainers
 
 	if err = saveWorkload(t.db, w); err != nil {
 		ctx.Log().WithError(err).Error("failed to save workload to the database")
@@ -463,6 +467,7 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 				AgentUserGroup:      t.agentUserGroup,
 			},
 		},
+		TaskHandler: ctx.Self(),
 	})
 
 	return nil
@@ -713,7 +718,7 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 
 func (t *trial) processContainerTerminated(
 	ctx *actor.Context,
-	msg scheduler.ContainerStateChanged,
+	msg sproto.ContainerStateChanged,
 ) {
 	c := t.containers[scheduler.ContainerID(msg.Container.ID)]
 	delete(t.containers, scheduler.ContainerID(msg.Container.ID))
@@ -721,7 +726,7 @@ func (t *trial) processContainerTerminated(
 	t.killAndRemoveSocket(ctx, scheduler.ContainerID(msg.Container.ID))
 
 	exitMsg := msg.ContainerStopped.String()
-	t.processLog(ctx, scheduler.ContainerLog{
+	t.processLog(ctx, sproto.ContainerLog{
 		Container:  msg.Container,
 		Timestamp:  time.Now(),
 		AuxMessage: &exitMsg,
@@ -745,7 +750,7 @@ func (t *trial) processContainerTerminated(
 	}
 }
 
-func (t *trial) processLog(ctx *actor.Context, msg scheduler.ContainerLog) {
+func (t *trial) processLog(ctx *actor.Context, msg sproto.ContainerLog) {
 	// Log messages should never come in before the trial ID is set, since no trial runners are
 	// launched until after the trial ID is set. But for futureproofing, we will log an error while
 	// we protect the database.

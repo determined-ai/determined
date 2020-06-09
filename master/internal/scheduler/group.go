@@ -10,9 +10,15 @@ type (
 		Ref *actor.Ref
 	}
 	// SetMaxSlots sets the maximum number of slots that a group can consume in the cluster.
-	SetMaxSlots struct{ MaxSlots *int }
+	SetMaxSlots struct {
+		MaxSlots *int
+		Handler  *actor.Ref
+	}
 	// SetWeight sets the weight of a group in the fair share scheduler.
-	SetWeight struct{ Weight float64 }
+	SetWeight struct {
+		Weight  float64
+		Handler *actor.Ref
+	}
 )
 
 // group manages the common state for a set of tasks that all share the same scheduling restrictions

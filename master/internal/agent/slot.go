@@ -8,12 +8,12 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/scheduler"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/scheduler"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 

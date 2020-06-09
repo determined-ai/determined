@@ -2,65 +2,18 @@ package scheduler
 
 import (
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/check"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
-)
-
-// DeviceID is the unique identifier for a device in the cluster.
-type DeviceID struct {
-	Agent  *actor.Ref
-	Device device.Device
-}
-
-// Agent-related cluster level messages.
-type (
-	// AddAgent adds the agent to the cluster.
-	AddAgent struct {
-		Agent *actor.Ref
-		Label string
-	}
-	// AddDevice makes the device immediately available for scheduling.
-	AddDevice struct {
-		DeviceID
-		ContainerID *cproto.ID
-	}
-	// FreeDevice notifies the cluster that the device's container is no longer running.
-	FreeDevice struct {
-		DeviceID
-	}
-	// RemoveDevice removes the device from scheduling.
-	RemoveDevice struct {
-		DeviceID
-	}
-	// RemoveAgent removes the agent from the cluster.
-	RemoveAgent struct {
-		Agent *actor.Ref
-	}
-)
-
-// Incoming agent actor messages; agent actors must accept these messages.
-type (
-	// StartTaskOnAgent notifies the agent to start the task with the provided task spec.
-	StartTaskOnAgent struct {
-		Task *actor.Ref
-		agent.StartContainer
-	}
+	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 )
 
 // Outgoing agent actor messages; agent actors must send these events back to the cluster.
 type (
-	// ContainerStartedOnAgent notifies the cluster that the task container has started running.
-	ContainerStartedOnAgent struct {
+	// containerStartedOnAgent notifies the cluster that the task container has started running.
+	containerStartedOnAgent struct {
 		ContainerID ContainerID
 		Addresses   []Address
-	}
-	// ContainerTerminatedOnAgent notifies the cluster that the task container has been terminated
-	// with the provided reason.
-	ContainerTerminatedOnAgent struct {
-		ContainerID ContainerID
-		Reason      agent.ContainerStopped
 	}
 )
 
@@ -74,7 +27,7 @@ type agentState struct {
 }
 
 // newAgentState returns a new agent empty agent state backed by the handler.
-func newAgentState(msg AddAgent) *agentState {
+func newAgentState(msg sproto.AddAgent) *agentState {
 	return &agentState{
 		handler:    msg.Agent,
 		label:      msg.Label,

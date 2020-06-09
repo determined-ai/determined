@@ -17,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
+	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 )
 
 const (
@@ -64,7 +65,7 @@ func NewDefaultRP(
 	taskContainerDefaults model.TaskContainerDefaultsConfig,
 	provisioner *actor.Ref,
 	provisionerSlotsPerInstance int,
-) *DefaultRP {
+) actor.Actor {
 	d := &DefaultRP{
 		clusterID:             clusterID,
 		scheduler:             scheduler,
@@ -127,7 +128,7 @@ func (d *DefaultRP) assignTask(task *Task) bool {
 		d.assignContainer(task, fit.Agent, fit.Slots, len(fits))
 	}
 
-	task.handler.System().Tell(task.handler, TaskAssigned{numContainers: len(fits)})
+	task.handler.System().Tell(task.handler, TaskAssigned{NumContainers: len(fits)})
 
 	return true
 }
@@ -216,17 +217,17 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		actors.NotifyAfter(ctx, actionCooldown, schedulerTick{})
 
-	case AddAgent:
+	case sproto.AddAgent:
 		ctx.Log().Infof("adding agent: %s", msg.Agent.Address().Local())
 		d.agents[msg.Agent] = newAgentState(msg)
 
-	case AddDevice:
+	case sproto.AddDevice:
 		ctx.Log().Infof("adding device: %s (%s)", msg.Device.String(), msg.Agent.Address().Local())
 		state, ok := d.agents[msg.Agent]
 		check.Panic(check.True(ok, "error adding device, agent not found: %s", msg.Agent.Address()))
 		state.devices[msg.Device] = msg.ContainerID
 
-	case FreeDevice:
+	case sproto.FreeDevice:
 		ctx.Log().Infof("freeing device: %s (%s)", msg.Device.String(), msg.Agent.Address().Local())
 		state, ok := d.agents[msg.Agent]
 		check.Panic(check.True(ok, "error freeing device, agent not found: %s", msg.Agent.Address()))
@@ -235,21 +236,21 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 		check.Panic(check.True(id != nil, "error freeing device, device not assigned: %s", msg.Device))
 		state.devices[msg.Device] = nil
 
-	case RemoveDevice:
+	case sproto.RemoveDevice:
 		ctx.Log().Infof("removing device: %s (%s)", msg.Device.String(), msg.Agent.Address().Local())
 		state, ok := d.agents[msg.Agent]
 		check.Panic(check.True(ok, "error removing device, agent not found: %s", msg.Agent.Address()))
 		delete(state.devices, msg.Device)
 
-	case RemoveAgent:
+	case sproto.RemoveAgent:
 		ctx.Log().Infof("removing agent: %s", msg.Agent.Address().Local())
 		delete(d.agents, msg.Agent)
 
-	case ContainerStateChanged:
+	case sproto.ContainerStateChanged:
 		cid := ContainerID(msg.Container.ID)
 		switch msg.Container.State {
 		case cproto.Running:
-			d.receiveContainerStartedOnAgent(ctx, ContainerStartedOnAgent{
+			d.receiveContainerStartedOnAgent(ctx, containerStartedOnAgent{
 				ContainerID: cid,
 				Addresses: toAddresses(
 					msg.ContainerStarted.ProxyAddress, msg.ContainerStarted.ContainerInfo),
@@ -268,10 +269,10 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 		delete(d.groups, msg.Ref)
 
 	case SetMaxSlots:
-		d.getOrCreateGroup(ctx.Sender(), ctx).maxSlots = msg.MaxSlots
+		d.getOrCreateGroup(msg.Handler, ctx).maxSlots = msg.MaxSlots
 
 	case SetWeight:
-		d.getOrCreateGroup(ctx.Sender(), ctx).weight = msg.Weight
+		d.getOrCreateGroup(msg.Handler, ctx).weight = msg.Weight
 
 	case AddTask:
 		d.receiveAddTask(ctx, msg)
@@ -310,7 +311,7 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 }
 
 func (d *DefaultRP) receiveAddTask(ctx *actor.Context, msg AddTask) {
-	d.notifyOnStop(ctx, ctx.Sender(), taskStopped{Ref: ctx.Sender()})
+	d.notifyOnStop(ctx, msg.TaskHandler, taskStopped{Ref: msg.TaskHandler})
 
 	if task, ok := d.tasksByHandler[ctx.Sender()]; ok {
 		if ctx.ExpectingResponse() {
@@ -320,7 +321,7 @@ func (d *DefaultRP) receiveAddTask(ctx *actor.Context, msg AddTask) {
 	}
 
 	if msg.Group == nil {
-		msg.Group = ctx.Sender()
+		msg.Group = msg.TaskHandler
 	}
 	group := d.getOrCreateGroup(msg.Group, ctx)
 
@@ -339,7 +340,7 @@ func (d *DefaultRP) receiveAddTask(ctx *actor.Context, msg AddTask) {
 	task := newTask(&Task{
 		ID:                  taskID,
 		group:               group,
-		handler:             ctx.Sender(),
+		handler:             msg.TaskHandler,
 		name:                name,
 		slotsNeeded:         msg.SlotsNeeded,
 		canTerminate:        msg.CanTerminate,
@@ -357,13 +358,13 @@ func (d *DefaultRP) receiveAddTask(ctx *actor.Context, msg AddTask) {
 }
 
 func (d *DefaultRP) receiveStartTask(ctx *actor.Context, msg StartTask) {
-	task := d.tasksByHandler[ctx.Sender()]
+	task := d.tasksByHandler[msg.TaskHandler]
 	if task == nil {
-		ctx.Log().WithField("address", ctx.Sender().Address()).Errorf("unknown task trying to start")
+		ctx.Log().WithField("address", msg.TaskHandler.Address()).Errorf("unknown task trying to start")
 		return
 	}
 
-	assignments := d.assigmentByHandler[ctx.Sender()]
+	assignments := d.assigmentByHandler[msg.TaskHandler]
 	if len(assignments) == 0 {
 		ctx.Log().WithField("name", task.name).Error("task is trying to start without any assignments")
 		return
@@ -376,7 +377,7 @@ func (d *DefaultRP) receiveStartTask(ctx *actor.Context, msg StartTask) {
 
 func (d *DefaultRP) receiveContainerStartedOnAgent(
 	ctx *actor.Context,
-	msg ContainerStartedOnAgent,
+	msg containerStartedOnAgent,
 ) {
 	task := d.tasksByContainerID[msg.ContainerID]
 	if task == nil {
@@ -482,7 +483,7 @@ func (d *DefaultRP) receiveTaskStopped(ctx *actor.Context, msg taskStopped) {
 }
 
 func (d *DefaultRP) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) {
-	if task, ok := d.tasksByHandler[ctx.Sender()]; ok {
+	if task, ok := d.tasksByHandler[msg.TaskHandler]; ok {
 		task.name = msg.Name
 	}
 }

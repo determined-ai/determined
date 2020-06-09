@@ -8,6 +8,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
+	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -81,7 +82,7 @@ func newMockTask(
 func (t *mockTask) Receive(ctx *actor.Context) error {
 	switch ctx.Message().(type) {
 	case TaskAssigned:
-		ctx.Respond(StartTask{Spec: tasks.TaskSpec{}})
+		ctx.Respond(StartTask{Spec: tasks.TaskSpec{}, TaskHandler: ctx.Self()})
 	case getSlots:
 		ctx.Respond(t.slotsNeeded)
 	case getGroup:
@@ -106,7 +107,7 @@ func newMockAgent(
 ) *agentState {
 	ref, created := system.ActorOf(actor.Addr(id), &mockAgent{})
 	assert.Assert(t, created)
-	state := newAgentState(AddAgent{Agent: ref, Label: label})
+	state := newAgentState(sproto.AddAgent{Agent: ref, Label: label})
 	for i := 0; i < slots; i++ {
 		state.devices[device.Device{ID: i}] = nil
 	}
@@ -115,7 +116,7 @@ func newMockAgent(
 
 func (m mockAgent) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case StartTaskOnAgent:
+	case sproto.StartTaskOnAgent:
 		if ctx.ExpectingResponse() {
 			ctx.Respond(newTask(&Task{
 				handler: msg.Task,
@@ -136,11 +137,32 @@ type schedulerState struct {
 func setupCluster(
 	scheduler Scheduler, fittingMethod SoftConstraint, agents []*agentState, tasks []*actor.Ref,
 ) *DefaultRP {
-	d := NewDefaultRP("cluster", scheduler, fittingMethod, nil,
-		"/opt/determined", model.TaskContainerDefaultsConfig{}, nil, 0)
+	d := DefaultRP{
+		clusterID:             "cluster",
+		scheduler:             scheduler,
+		fittingMethod:         fittingMethod,
+		agents:                make(map[*actor.Ref]*agentState),
+		groups:                make(map[*actor.Ref]*group),
+		registeredNames:       make(map[*container][]string),
+		harnessPath:           "/opt/determined",
+		taskContainerDefaults: model.TaskContainerDefaultsConfig{},
+
+		taskList:           newTaskList(),
+		tasksByHandler:     make(map[*actor.Ref]*Task),
+		tasksByID:          make(map[TaskID]*Task),
+		tasksByContainerID: make(map[ContainerID]*Task),
+
+		assigmentByHandler: make(map[*actor.Ref][]assignment),
+
+		provisionerView: newProvisionerView(0),
+
+		reschedule: false,
+	}
+
 	for _, agent := range agents {
 		d.agents[agent.handler] = agent
 	}
+
 	for _, handler := range tasks {
 		system := handler.System()
 
@@ -164,7 +186,7 @@ func setupCluster(
 			d.getOrCreateGroup(g, nil).weight = resp.Get().(float64)
 		}
 	}
-	return d
+	return &d
 }
 
 func assertSchedulerState(
