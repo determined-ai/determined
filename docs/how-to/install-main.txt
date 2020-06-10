@@ -53,7 +53,7 @@ Then install Determined by your preferred method:
 
    installation/deploy
    installation/docker
-   installation/packages
+   installation/linux-packages
 
 
 Cloud Deployments
