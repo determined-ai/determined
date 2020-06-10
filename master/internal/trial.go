@@ -139,7 +139,7 @@ type trial struct {
 	id    int
 	idSet bool
 
-	cluster         *actor.Ref
+	rp              *actor.Ref
 	logger          *actor.Ref
 	db              *db.PgDB
 	experimentState model.State
@@ -189,7 +189,7 @@ func newTrial(
 		warmStartCheckpointID = &checkpointID
 	}
 	return &trial{
-		cluster:               exp.cluster,
+		rp:                    exp.rp,
 		logger:                exp.trialLogger,
 		db:                    exp.db,
 		experimentState:       exp.State,
@@ -283,7 +283,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				name = fmt.Sprintf("Trial %d", t.id)
 			}
 
-			t.task = ctx.Ask(t.cluster, scheduler.AddTask{
+			t.task = ctx.Ask(t.rp, scheduler.AddTask{
 				Name:         fmt.Sprintf("%s (Experiment %d)", name, t.experiment.ID),
 				Group:        ctx.Self().Parent(),
 				SlotsNeeded:  slotsNeeded,
@@ -297,7 +297,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			}).Get().(*scheduler.Task)
 		}
 	} else if t.experimentState != model.ActiveState {
-		ctx.Tell(t.cluster, scheduler.TerminateTask{TaskID: t.task.ID})
+		ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID})
 	}
 
 	return nil
@@ -322,7 +322,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		}
 
 	case actor.ChildFailed:
-		ctx.Tell(t.cluster, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+		ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
 
 	case scheduler.TaskAssigned:
 		if err := t.processAssigned(ctx, msg); err != nil {
@@ -351,7 +351,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 			if msg.timedOut {
 				ctx.Log().Info("killing unresponsive trial after timeout")
 			}
-			ctx.Tell(t.cluster, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+			ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
 		}
 
 	case scheduler.ContainerStarted:
@@ -395,11 +395,11 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 			int64(t.create.TrialSeed))
 		if err := t.db.AddTrial(modelTrial); err != nil {
 			ctx.Log().WithError(err).Error("failed to save trial to database")
-			ctx.Tell(t.cluster, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+			ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
 			return nil
 		}
 		t.processID(ctx, modelTrial.ID)
-		ctx.Tell(t.cluster, scheduler.SetTaskName{
+		ctx.Tell(t.rp, scheduler.SetTaskName{
 			Name:        fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID),
 			TaskHandler: ctx.Self(),
 		})
@@ -453,7 +453,7 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 		),
 	}
 
-	ctx.Tell(t.cluster, scheduler.StartTask{
+	ctx.Tell(t.rp, scheduler.StartTask{
 		Spec: tasks.TaskSpec{
 			StartContainer: &tasks.StartContainer{
 				ExperimentConfig:    t.experiment.Config,
@@ -746,7 +746,7 @@ func (t *trial) processContainerTerminated(
 		status = *s
 	}
 	if c == nil || c.IsLeader() || status.Failure != nil {
-		ctx.Tell(t.cluster, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+		ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
 	}
 }
 

@@ -50,7 +50,7 @@ type Master struct {
 	logs          *logger.LogBuffer
 	system        *actor.System
 	echo          *echo.Echo
-	cluster       *actor.Ref
+	rp            *actor.Ref
 	rwCoordinator *actor.Ref
 	provisioner   *actor.Ref
 	db            *db.PgDB
@@ -337,7 +337,7 @@ func (m *Master) Run() error {
 		provisionerSlotsPerInstance,
 	)
 
-	m.cluster, _ = m.system.ActorOf(actor.Addr("resourceProvider"), resourceProvider)
+	m.rp, _ = m.system.ActorOf(actor.Addr("resourceProvider"), resourceProvider)
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 
 	rwCoordinator := newRWCoordinator()

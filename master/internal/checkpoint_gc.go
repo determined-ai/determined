@@ -14,7 +14,7 @@ import (
 )
 
 type checkpointGCTask struct {
-	cluster    *actor.Ref
+	rp         *actor.Ref
 	db         *db.PgDB
 	experiment *model.Experiment
 
@@ -27,7 +27,7 @@ type checkpointGCTask struct {
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		ctx.Tell(t.cluster, scheduler.AddTask{
+		ctx.Tell(t.rp, scheduler.AddTask{
 			Name: fmt.Sprintf("Checkpoint GC (Experiment %d)", t.experiment.ID),
 			FittingRequirements: scheduler.FittingRequirements{
 				SingleAgent: true,
@@ -46,7 +46,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 
 		ctx.Log().Info("starting checkpoint garbage collection")
 
-		ctx.Tell(t.cluster, scheduler.StartTask{
+		ctx.Tell(t.rp, scheduler.StartTask{
 			Spec: tasks.TaskSpec{
 				GCCheckpoints: &tasks.GCCheckpoints{
 					AgentUserGroup:   t.agentUserGroup,

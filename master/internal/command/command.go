@@ -72,7 +72,7 @@ type command struct {
 	exitStatus     *string
 	addresses      []scheduler.Address
 
-	cluster     *actor.Ref
+	rp          *actor.Ref
 	eventStream *actor.Ref
 }
 
@@ -84,8 +84,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 		// Initialize an event stream manager.
 		c.eventStream, _ = ctx.ActorOf("events", newEventManager())
 		// Schedule the command with the cluster.
-		c.cluster = ctx.Self().System().Get(actor.Addr("resourceProvider"))
-		ctx.Tell(c.cluster, scheduler.AddTask{
+		c.rp = ctx.Self().System().Get(actor.Addr("resourceProvider"))
+		ctx.Tell(c.rp, scheduler.AddTask{
 			ID:           &c.taskID,
 			Name:         c.config.Description,
 			SlotsNeeded:  c.config.Resources.Slots,
@@ -114,7 +114,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 
 	case scheduler.TaskAssigned:
-		ctx.Tell(c.cluster, scheduler.StartTask{
+		ctx.Tell(c.rp, scheduler.StartTask{
 			Spec: tasks.TaskSpec{
 				StartCommand: &tasks.StartCommand{
 					AgentUserGroup:  c.agentUserGroup,
@@ -178,7 +178,7 @@ func (c *command) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 }
 
 func (c *command) terminate(ctx *actor.Context) {
-	ctx.Ask(c.cluster, scheduler.TerminateTask{TaskID: c.taskID, Forcible: true}).Get()
+	ctx.Ask(c.rp, scheduler.TerminateTask{TaskID: c.taskID, Forcible: true}).Get()
 	if msg, ok := ctx.Message().(scheduler.TerminateRequest); ok {
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), TerminateRequestEvent: &msg})
 	}
