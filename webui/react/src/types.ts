@@ -191,6 +191,7 @@ export interface Task {
   ownerId: number;
   progress?: number;
   url?: string;
+  username?: string;
   startTime: string;
   state: RunState | CommandState;
 }

@@ -34,7 +34,8 @@ const stateRenderer: Renderer<Task> = (_, record) => (
   <Badge state={record.state} type={BadgeType.State} />
 );
 const actionsRenderer: Renderer<Task> = (_, record) => (<TaskActionDropdown task={record} />);
-const userRenderer: Renderer<Task> = (_, record) => (<Avatar name={record.id} />);
+const userRenderer: Renderer<Task> = (_, record) =>
+  (<Avatar name={record.username || record.id} />);
 
 const columns: ColumnsType<Task> = [
   {
@@ -67,9 +68,9 @@ const columns: ColumnsType<Task> = [
     title: 'State',
   },
   {
-    dataIndex: 'ownerId',
     render: userRenderer,
-    title: 'User ID',
+    sorter: (a, b): number => alphanumericSorter(a.username || a.id, a.username ||  b.id),
+    title: 'User',
   },
   {
     render: actionsRenderer,

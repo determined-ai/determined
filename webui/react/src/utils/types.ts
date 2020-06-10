@@ -36,6 +36,7 @@ export const commandToTask = (command: Command): RecentTask => {
     title,
     type: command.kind as unknown as TaskType,
     url: waitPageUrl(command),
+    username: command.owner.username,
   };
   return task;
 };
