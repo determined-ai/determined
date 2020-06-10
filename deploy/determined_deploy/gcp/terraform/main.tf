@@ -125,7 +125,7 @@ module "compute" {
   agent_docker_network = var.agent_docker_network
   agent_instance_type = var.agent_instance_type
   max_idle_agent_period = var.max_idle_agent_period
-  max_agent_starting_period: var.max_agent_starting_period
+  max_agent_starting_period = var.max_agent_starting_period
   gpu_type = var.gpu_type
   gpu_num = var.gpu_num
   max_dynamic_agents = var.max_dynamic_agents
@@ -150,4 +150,3 @@ module "compute" {
   tag_allow_internal = module.firewall.tag_allow_internal
   tag_allow_ssh = module.firewall.tag_allow_ssh
 }
-
