@@ -65,8 +65,8 @@ release-and-rc-filters: &release-and-rc-filters
       - /.*/
   tags:
     only:
-      - /(\d)+(\.(\d)+)+/
-      - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
+      - /(\d)+(\.(\d)+)+-ee/
+      - /((\d)+(\.(\d)+)+)(-rc)(\d)+-ee/
 
 rc-filters: &rc-filters
   branches:
@@ -74,7 +74,7 @@ rc-filters: &rc-filters
       - /.*/
   tags:
     only:
-      - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
+      - /((\d)+(\.(\d)+)+)(-rc)(\d)+-ee/
 
 release-filters: &release-filters
   branches:
@@ -82,7 +82,7 @@ release-filters: &release-filters
       - /.*/
   tags:
     only:
-      - /(\d)+(\.(\d)+)+/
+      - /(\d)+(\.(\d)+)+-ee/
 
 upstream-feature-branch: &upstream-feature-branch
   branches:

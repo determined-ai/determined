@@ -92,13 +92,13 @@ packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
 	../tools/scripts/gen-attributions.py agent $@
 
 .PHONY: package
-package: export GORELEASER_CURRENT_TAG := $(VERSION)
+package: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
 package: packaging/LICENSE buildx
 	goreleaser --snapshot --rm-dist
 
 .PHONY: release
-release: export GORELEASER_CURRENT_TAG := $(VERSION)
-release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+$$' | grep "$(VERSION)" -A1 | sed -n '2 p')
+release: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
+release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -E '^[0-9.]+-ee$$' | grep "$(VERSION)-ee" -A1 | sed -n '2 p')
 release: packaging/LICENSE buildx
 	goreleaser --rm-dist
 	make publish-nvcr
