@@ -42,7 +42,7 @@ rc-filters: &rc-filters
       - /.*/
   tags:
     only:
-      - /((\d)+(\.(\d)+)+)(rc)(\d)+/
+      - /((\d)+(\.(\d)+)+)(rc)(\d)+-ee/
 
 release-filters: &release-filters
   branches:
@@ -50,7 +50,7 @@ release-filters: &release-filters
       - /.*/
   tags:
     only:
-      - /(\d)+(\.(\d)+)+/
+      - /(\d)+(\.(\d)+)+-ee/
 
 upstream-feature-branch: &upstream-feature-branch
   branches:
