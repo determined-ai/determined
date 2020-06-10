@@ -56,7 +56,7 @@ To execute arbitrary Python functionality during the lifecycle of a
 `tf.estimator.SessionRunHook <https://www.tensorflow.org/api_docs/python/tf/estimator/SessionRunHook/>`_.
 
 .. autoclass:: determined.estimator.RunHook
-    :members: on_checkpoint_load, on_checkpoint_end
+    :members: on_checkpoint_load, on_checkpoint_end, on_trial_close
 
 
 Example usage of ``determined.estimator.RunHook`` which adds custom metadata checkpoints:
