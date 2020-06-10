@@ -156,7 +156,7 @@ def test_mnist_estimator_data_layer_s3(tf2: bool, storage_type: str) -> None:
 
 
 def run_mnist_estimator_data_layer_test(tf2: bool, storage_type: str) -> None:
-    config = conf.load_config(conf.experimental_path("data_layer_mnist_estimator/const.yaml"))
+    config = conf.load_config(conf.experimental_path("trial/data_layer_mnist_estimator/const.yaml"))
     config = conf.set_max_steps(config, 2)
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
     if storage_type == "lfs":
@@ -165,7 +165,7 @@ def run_mnist_estimator_data_layer_test(tf2: bool, storage_type: str) -> None:
         config = conf.set_s3_data_layer(config)
 
     exp.run_basic_test_with_temp_config(
-        config, conf.experimental_path("data_layer_mnist_estimator"), 1
+        config, conf.experimental_path("trial/data_layer_mnist_estimator"), 1
     )
 
 
