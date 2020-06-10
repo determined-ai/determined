@@ -14,4 +14,10 @@
     & > * { margin-bottom: var(--theme-sizes-layout-enormous); }
     & > *:last-child { margin-bottom: 0; }
   }
+  .ssoButton {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
 }

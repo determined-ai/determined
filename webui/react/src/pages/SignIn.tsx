@@ -1,4 +1,4 @@
-import { notification } from 'antd';
+import { Button, notification } from 'antd';
 import queryString from 'query-string';
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
@@ -8,7 +8,9 @@ import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoTypes } from 'components/Logo';
 import Auth from 'contexts/Auth';
+import Info from 'contexts/Info';
 import UI from 'contexts/UI';
+import { handleRelayState, samlUrl } from 'ee/SamlAuth';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { defaultRoute } from 'routes';
@@ -25,9 +27,12 @@ interface Queries {
 const SignIn: React.FC = () => {
   const location = useLocation<{ loginRedirect: Location }>();
   const auth = Auth.useStateContext();
+  const info = Info.useStateContext();
   const ui = UI.useStateContext();
   const setUI = UI.useActionContext();
-  const queries: Queries = queryString.parse(location.search);
+
+  let queries: Queries = queryString.parse(location.search);
+  queries = handleRelayState<Queries>(queries);
 
   /*
    * Check every so often to see if the user is authenticated.
@@ -69,6 +74,8 @@ const SignIn: React.FC = () => {
   // Stop the polling upon a dismount of this page.
   useEffect(() => stopPolling, [ stopPolling ]);
 
+  const samlSso = info.ssoProviders.find(ssoProvider => /^okta$/i.test(ssoProvider.name));
+
   /*
    * Before showing the sign in form, make sure one auth check is done.
    * This will prevent the form from showing for a split second when
@@ -82,6 +89,13 @@ const SignIn: React.FC = () => {
       <div className={css.content}>
         <Logo type={LogoTypes.OnLightVertical} />
         <DeterminedAuth />
+        {samlSso &&
+          <Button className={css.ssoButton}
+            href={samlUrl(samlSso.ssoUrl, queryString.stringify(queries))}
+            type="primary">
+            Sign in with Okta
+          </Button>
+        }
       </div>
     </div> : null;
 };
