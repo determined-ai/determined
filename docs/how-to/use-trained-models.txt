@@ -155,7 +155,7 @@ details).
 
 Storing Checkpoint Metadata
 ---------------------------
-You may store metadata related to a checkpoint via the python API. This feature
+You may store metadata related to a checkpoint via the Python API. This feature
 is useful for storing post training metrics, labels, information related to
 deployment, etc.
 
@@ -166,7 +166,7 @@ deployment, etc.
   checkpoint = Determined().get_experiment(id).top_checkpoint()
   checkpoint.add_metadata({"environment": "production"})
 
-  # metadata will be stored in determined and accessible on the checkpoint object.
+  # Metadata will be stored in Determined and accessible on the checkpoint object.
   print(checkpoint.metadata)
 
 You may store an arbitrarily nested dictionary using the :meth:`~determined.experimental.Checkpoint.add_metadata`
