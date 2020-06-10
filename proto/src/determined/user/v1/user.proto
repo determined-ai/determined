@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package determined.user.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/userv1";
+
+// User is an account in the determined cluster.
+message User {
+    // The id of the user.
+    int32 id = 1;
+    // The user login name of the user.
+    string username = 2;
+    // Bool denoting whether the account is an admin account.
+    bool admin = 3;
+    // Bool denoting whether the account is active.
+    bool active = 4;
+    // The user and group on the agent host machine.
+    AgentUserGroup agent_user_group = 5;
+}
+
+// AgentUserGroup represents a username and primary group for a user on an
+// agent host machine.
+message AgentUserGroup {
+    // The user id on the agent.
+    int32 agent_uid = 5;
+    // The group id on the agent.
+    int32 agent_gid = 6;
+    // The user name on the agent.
+    string agent_user = 7;
+    // The user group on the agent.
+    string agent_group = 8;
+}

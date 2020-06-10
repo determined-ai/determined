@@ -3,12 +3,14 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
-import "determined/api/v1/agent.proto";
-import "determined/api/v1/master.proto";
-import "determined/api/v1/template.proto";
-import "determined/api/v1/auth.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-swagger/options/annotations.proto";
+
+import "determined/api/v1/agent.proto";
+import "determined/api/v1/auth.proto";
+import "determined/api/v1/master.proto";
+import "determined/api/v1/template.proto";
+import "determined/api/v1/user.proto";
 
 option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
     info: {
@@ -25,6 +27,15 @@ service Determined {
     rpc CurrentUser(CurrentUserRequest) returns (CurrentUserResponse) { option (google.api.http) = {get: "/api/v1/auth/user"}; }
     // Logout the user.
     rpc Logout(LogoutRequest) returns (LogoutResponse) { option (google.api.http) = {post: "/api/v1/auth/logout"}; }
+
+    // Get a list of users
+    rpc GetUsers(GetUsersRequest) returns (GetUsersResponse) { option (google.api.http) = {get: "/api/v1/users"}; }
+    // Get the requested user.
+    rpc GetUser(GetUserRequest) returns (GetUserResponse) { option (google.api.http) = {get: "/api/v1/users/{username}"}; }
+    // Create a new user.
+    rpc PostUser(PostUserRequest) returns (PostUserResponse) { option (google.api.http) = {post: "/api/v1/users" body: "*"}; }
+    // Set the requested user's passwords.
+    rpc SetUserPassword(SetUserPasswordRequest) returns (SetUserPasswordResponse) { option (google.api.http) = {post: "/api/v1/users/{username}/password" body: "password"}; }
 
     // Get master information.
     rpc GetMaster(GetMasterRequest) returns (GetMasterResponse) { option (google.api.http) = {get: "/api/v1/master"}; }

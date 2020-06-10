@@ -3,6 +3,8 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "determined/user/v1/user.proto";
+
 // Login the user.
 message LoginRequest {
     // The username of the user.
@@ -14,13 +16,16 @@ message LoginRequest {
 message LoginResponse {
     // The token to be used when sending results
     string token = 1;
+    // The logged in user.
+    determined.user.v1.User user = 2;
 }
 
 // Get the current user.
 message CurrentUserRequest {}
 // Response to CurrentUserRequest.
 message CurrentUserResponse {
-    // TODO: FINISH
+    // The currently logged in user.
+    determined.user.v1.User user = 1;
 }
 
 // Logout the user.

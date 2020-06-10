@@ -106,7 +106,7 @@ RETURNING id`)
 	if err := stmt.QueryRowx(user).Scan(&userID); err != nil {
 		if pgerr, ok := errors.Cause(err).(*pq.Error); ok {
 			if pgerr.Code == uniqueViolation {
-				return 0, ErrDuplicateUser{user.Username}
+				return 0, ErrDuplicateRecord
 			}
 		}
 		return 0, errors.Wrapf(err, "error creating user %v", err)
