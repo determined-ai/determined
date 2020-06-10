@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/scheduler"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -61,7 +62,7 @@ const (
 
 // Trial-specific actor messages.
 type (
-	killTrial    struct{}
+	killTrial    struct{ timedOut bool }
 	restoreTrial struct{}
 
 	containerConnected struct {
@@ -157,6 +158,7 @@ type trial struct {
 
 	task                       *scheduler.Task
 	pendingGracefulTermination bool
+	terminationSent            bool
 
 	privateKey []byte
 	publicKey  []byte
@@ -344,6 +346,9 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 
 	case killTrial:
 		if t.task != nil {
+			if msg.timedOut {
+				ctx.Log().Info("killing unresponsive trial after timeout")
+			}
 			ctx.Tell(t.cluster, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
 		}
 
@@ -525,6 +530,9 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 					Workload: w,
 				},
 			}
+
+			t.terminationSent = true
+			actors.NotifyAfter(ctx, time.Minute, killTrial{timedOut: true})
 		} else {
 			if err := saveWorkload(t.db, w); err != nil {
 				ctx.Log().WithError(err).Error("failed to save workload to the database")
@@ -793,14 +801,22 @@ func (t *trial) resetTrial(
 	msg scheduler.TaskTerminated,
 	status agent.ContainerStopped,
 ) {
+	terminationSent := t.terminationSent
+
 	t.task = nil
 	t.pendingGracefulTermination = false
+	t.terminationSent = false
 	t.terminatedContainers = nil
 	t.startedContainers = 0
 
 	switch {
 	case status.Failure == nil:
 		ctx.Log().Info("trial runner stopped successfully")
+		return
+	case terminationSent:
+		ctx.Log().WithField("failure", status.Failure).Info(
+			"ignoring trial runner failure since termination was requested",
+		)
 		return
 	case status.Failure.FailureType == agent.TaskAborted:
 		return
