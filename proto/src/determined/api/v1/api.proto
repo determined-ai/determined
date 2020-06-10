@@ -11,10 +11,8 @@ import "google/api/annotations.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
-    info: {
-        title: "Determined API"
-        version: "1.0"
-    };
+  info : {title : "Determined API" version : "1.0"}
+  base_path : "/swagger_ui"
 };
 
 // Determined is the official v1 of the Determined API.
