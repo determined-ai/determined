@@ -108,6 +108,7 @@ This can be configured in your experiment configuration like below:
        gpu: "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.4.0"
        cpu: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-0.4.0"
 
+.. _custom-docker-images:
 
 Custom Docker Images in Determined
 ----------------------------------
