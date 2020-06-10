@@ -207,3 +207,35 @@ master instance:
       uid: 0
       group: root
       gid: 0
+
+Running unprivileged tasks by default
+-------------------------------------
+
+Some administrators of Determined may wish to run tasks as unprivileged users
+by default. In Linux, unprivileged processes are sometimes run under the
+`nobody <https://en.wikipedia.org/wiki/Nobody_(username)>`_ user, which has
+very few privileges. However, the ``nobody`` user does not have a writable
+``HOME`` directory, which causes problems for some common tools like
+``gsutil``.
+
+For convenience, the default Determined environments contain an unprivileged
+user named ``det-nobody``, which does have a writable ``HOME`` directory. The
+``det-nobody`` user is a suitable default user when using the default
+Determined environment images and when running containers as root is not
+desired. To use ``det-nobody`` by default, add the following configuration to
+``master.yaml``:
+
+.. code:: yaml
+
+  security:
+    default_task:
+      user: det-nobody
+      uid: 65533
+      group: det-nobody
+      gid: 65533
+
+When combining the ``det-nobody`` user with custom docker images,
+administrators should either build the custom image as layers on top of the
+default Determined Environments as illustrated in :ref:`custom-docker-images`,
+or they should create the ``det-nobody`` user themselves in their custom images
+using ``groupadd`` and ``useradd``.
