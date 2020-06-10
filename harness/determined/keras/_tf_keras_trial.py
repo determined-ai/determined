@@ -352,30 +352,9 @@ class TFKerasTrialController(det.LoopTrialController):
         check.is_not_none(context.compile_args, "Please call model.compile(...).")
         compile_args = cast(inspect.BoundArguments, context.compile_args)
 
-        (
-            context.model,
-            compile_args.arguments["optimizer"],
-        ) = keras._get_multi_gpu_model_and_optimizer(
-            pre_compiled_model=context.model,
-            optimizer=compile_args.arguments["optimizer"],
-            env=env,
-            hvd_config=hvd_config,
-            profile_frequency=env.experiment_config.profile_frequency(),
-            profile_filename=DeterminedProfiler.OUTPUT_FILENAME,
+        TFKerasTrialController.compile_model(
+            context=context, compile_args=compile_args, env=env, hvd_config=hvd_config
         )
-
-        if hvd_config.use and version.parse("2.0.0") <= version.parse(
-            tf.__version__
-        ) < version.parse("2.2.0"):
-            logging.info(
-                "Calling `model.compile(...)` with `experimental_run_tf_function=False` to ensure "
-                "TensorFlow calls `optimizer.get_gradients()` to compute gradients."
-            )
-            context.model.compile(
-                *compile_args.args, **compile_args.kwargs, experimental_run_tf_function=False
-            )
-        else:
-            context.model.compile(*compile_args.args, **compile_args.kwargs)
 
         tf_keras_callbacks = trial.keras_callbacks()
 
@@ -423,19 +402,9 @@ class TFKerasTrialController(det.LoopTrialController):
         compile_args = cast(inspect.BoundArguments, context.compile_args)
         train_config = cast(keras.TFKerasTrainConfig, context.train_config)
 
-        (
-            context.model,
-            compile_args.arguments["optimizer"],
-        ) = keras._get_multi_gpu_model_and_optimizer(
-            pre_compiled_model=context.model,
-            optimizer=compile_args.arguments["optimizer"],
-            env=env,
-            hvd_config=hvd_config,
-            profile_frequency=env.experiment_config.profile_frequency(),
-            profile_filename=DeterminedProfiler.OUTPUT_FILENAME,
+        TFKerasTrialController.compile_model(
+            context=context, compile_args=compile_args, env=env, hvd_config=hvd_config
         )
-
-        context.model.compile(*compile_args.args, **compile_args.kwargs)
 
         return TFKerasTrialController(
             context.model,
@@ -448,6 +417,39 @@ class TFKerasTrialController(det.LoopTrialController):
             rendezvous_info,
             hvd_config,
         )
+
+    @staticmethod
+    def compile_model(
+        context: keras.TFKerasContext,
+        compile_args: inspect.BoundArguments,
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+    ) -> None:
+        (
+            context.model,
+            compile_args.arguments["optimizer"],
+        ) = keras._get_multi_gpu_model_and_optimizer(
+            pre_compiled_model=context.model,
+            optimizer=compile_args.arguments["optimizer"],
+            env=env,
+            hvd_config=hvd_config,
+            profile_frequency=env.experiment_config.profile_frequency(),
+            profile_filename=DeterminedProfiler.OUTPUT_FILENAME,
+        )
+
+        if hvd_config.use and version.parse("2.0.0") <= version.parse(
+            tf.__version__
+        ) < version.parse("2.2.0"):
+            logging.info(
+                "Calling `model.compile(...)` with `experimental_run_tf_function=False` to ensure "
+                "TensorFlow calls `optimizer.get_gradients()` to compute gradients."
+            )
+
+            context.model.compile(
+                *compile_args.args, **compile_args.kwargs, experimental_run_tf_function=False
+            )
+        else:
+            context.model.compile(*compile_args.args, **compile_args.kwargs)
 
     @staticmethod
     def support_determined_native() -> bool:
