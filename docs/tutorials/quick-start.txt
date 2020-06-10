@@ -16,10 +16,10 @@ Prerequisites
 .. code::
 
     # For CPU computations
-    docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-4e98289
+    docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-0.4.0
 
     # For GPU computations
-    docker pull determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-4e98289
+    docker pull determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-f8dce5d
 
 
 Preparing Your First Job

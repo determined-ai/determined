@@ -4,10 +4,10 @@ Mappings:
   RegionMap:
     us-east-1:
       Master: ami-66506c1c
-      Agent: ami-0657cb09c0cb7dea0
+      Agent: ami-05bebad992b560956
     us-west-2:
       Master: ami-79873901
-      Agent: ami-06b06da8bc64b5080
+      Agent: ami-0708912cb448d9d38
 
 Parameters:
   VpcCIDR:
