@@ -258,7 +258,7 @@ def test_create_test_mode() -> None:
         "create",
         "--test-mode",
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
-        conf.official_examples_path("mnist_pytorch"),
+        conf.official_examples_path("trial/mnist_pytorch"),
     ]
     output = subprocess.check_output(command, universal_newlines=True)
     assert "Model definition test succeeded" in output
@@ -310,7 +310,7 @@ def test_labels() -> None:
 def test_end_to_end_adaptive() -> None:
     exp_id = exp.run_basic_test(
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
-        conf.official_examples_path("mnist_pytorch"),
+        conf.official_examples_path("trial/mnist_pytorch"),
         None,
     )
 
@@ -390,7 +390,7 @@ def test_graceful_trial_termination() -> None:
 @pytest.mark.e2e_gpu  # type: ignore
 def test_s3_no_creds(secrets: Dict[str, str]) -> None:
     pytest.skip("Temporarily skipping this until we find a more secure way of testing this.")
-    config = conf.load_config(conf.official_examples_path("mnist_pytorch/const.yaml"))
+    config = conf.load_config(conf.official_examples_path("trial/mnist_pytorch/const.yaml"))
     config["checkpoint_storage"] = exp.s3_checkpoint_config_no_creds()
     config.setdefault("environment", {})
     config["environment"].setdefault("environment_variables", [])
@@ -398,15 +398,19 @@ def test_s3_no_creds(secrets: Dict[str, str]) -> None:
         f"AWS_ACCESS_KEY_ID={secrets['INTEGRATIONS_S3_ACCESS_KEY']}",
         f"AWS_SECRET_ACCESS_KEY={secrets['INTEGRATIONS_S3_SECRET_KEY']}",
     ]
-    exp.run_basic_test_with_temp_config(config, conf.official_examples_path("mnist_pytorch"), 1)
+    exp.run_basic_test_with_temp_config(
+        config, conf.official_examples_path("trial/mnist_pytorch"), 1
+    )
 
 
 @pytest.mark.parallel  # type: ignore
 def test_pytorch_parallel() -> None:
-    config = conf.load_config(conf.official_examples_path("mnist_pytorch/const.yaml"))
+    config = conf.load_config(conf.official_examples_path("trial/mnist_pytorch/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_native_parallel(config, False)
     config = conf.set_max_steps(config, 2)
     config = conf.set_tensor_auto_tuning(config, True)
 
-    exp.run_basic_test_with_temp_config(config, conf.official_examples_path("mnist_pytorch"), 1)
+    exp.run_basic_test_with_temp_config(
+        config, conf.official_examples_path("trial/mnist_pytorch"), 1
+    )

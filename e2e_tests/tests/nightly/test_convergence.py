@@ -6,7 +6,7 @@ from tests import experiment as exp
 
 @pytest.mark.nightly  # type: ignore
 def test_cifar10_pytorch_accuracy() -> None:
-    config = conf.load_config(conf.official_examples_path("cifar10_cnn_pytorch/const.yaml"))
+    config = conf.load_config(conf.official_examples_path("trial/cifar10_cnn_pytorch/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("cifar10_cnn_pytorch"), 1
     )
@@ -31,7 +31,7 @@ def test_cifar10_pytorch_accuracy() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_mnist_tp_accuracy() -> None:
-    config = conf.load_config(conf.official_examples_path("mnist_tp/const.yaml"))
+    config = conf.load_config(conf.official_examples_path("trial/mnist_tp/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("mnist_tp"), 1
     )
@@ -60,7 +60,7 @@ def test_mnist_tp_accuracy() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_mnist_estimator_accuracy() -> None:
-    config = conf.load_config(conf.official_examples_path("mnist_estimator/const.yaml"))
+    config = conf.load_config(conf.official_examples_path("trial/mnist_estimator/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("mnist_estimator"), 1
     )
@@ -85,7 +85,7 @@ def test_mnist_estimator_accuracy() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_mnist_pytorch_accuracy() -> None:
-    config = conf.load_config(conf.official_examples_path("mnist_pytorch/const.yaml"))
+    config = conf.load_config(conf.official_examples_path("trial/mnist_pytorch/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("mnist_pytorch"), 1
     )
@@ -110,7 +110,9 @@ def test_mnist_pytorch_accuracy() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_object_detection_accuracy() -> None:
-    config = conf.load_config(conf.official_examples_path("object_detection_pytorch/const.yaml"))
+    config = conf.load_config(
+        conf.official_examples_path("trial/object_detection_pytorch/const.yaml")
+    )
     config = conf.set_random_seed(config, 1590497309)
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("object_detection_pytorch"), 1
@@ -136,7 +138,7 @@ def test_object_detection_accuracy() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_iris_tf_keras() -> None:
-    config = conf.load_config(conf.official_examples_path("iris_tf_keras/const.yaml"))
+    config = conf.load_config(conf.official_examples_path("trial/iris_tf_keras/const.yaml"))
     config = conf.set_random_seed(config, 1591280374)
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("iris_tf_keras"), 1
@@ -162,7 +164,9 @@ def test_iris_tf_keras() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_fashion_mnist_tf_keras() -> None:
-    config = conf.load_config(conf.official_examples_path("fashion_mnist_tf_keras/const.yaml"))
+    config = conf.load_config(
+        conf.official_examples_path("trial/fashion_mnist_tf_keras/const.yaml")
+    )
     config = conf.set_random_seed(config, 1591110586)
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("fashion_mnist_tf_keras"), 1

@@ -4,15 +4,24 @@ import subprocess
 import pytest
 
 official_examples = [
-    ("official/cifar10_cnn_pytorch", "official/cifar10_cnn_pytorch/const.yaml"),
-    ("official/cifar10_cnn_tf_keras", "official/cifar10_cnn_tf_keras/const.yaml"),
-    ("official/fashion_mnist_tf_keras", "official/fashion_mnist_tf_keras/const.yaml"),
-    ("official/iris_tf_keras", "official/iris_tf_keras/const.yaml"),
-    ("official/mnist_estimator", "official/mnist_estimator/const.yaml"),
-    ("official/mnist_pytorch", "official/mnist_pytorch/const.yaml"),
     (
-        "official/multiple_lr_schedulers_pytorch",
-        "official/multiple_lr_schedulers_pytorch/const.yaml",
+        "official/trial/cifar10_cnn_pytorch",
+        "official/trial/cifar10_cnn_pytorch/const.yaml",
+    ),
+    (
+        "official/trial/cifar10_cnn_tf_keras",
+        "official/trial/cifar10_cnn_tf_keras/const.yaml",
+    ),
+    (
+        "official/trial/fashion_mnist_tf_keras",
+        "official/trial/fashion_mnist_tf_keras/const.yaml",
+    ),
+    ("official/trial/iris_tf_keras", "official/trial/iris_tf_keras/const.yaml"),
+    ("official/trial/mnist_estimator", "official/trial/mnist_estimator/const.yaml"),
+    ("official/trial/mnist_pytorch", "official/trial/mnist_pytorch/const.yaml"),
+    (
+        "official/trial/multiple_lr_schedulers_pytorch",
+        "official/trial/multiple_lr_schedulers_pytorch/const.yaml",
     ),
     # TODO(DET-2931): A full validation step in this example is too expensive
     # to run this test in under a few minutes. Add it back in once we can test

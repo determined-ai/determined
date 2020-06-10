@@ -12,7 +12,9 @@ def test_pytorch_11_const(aggregation_frequency: int) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
 
-    exp.run_basic_test_with_temp_config(config, conf.official_examples_path("mnist_pytorch"), 1)
+    exp.run_basic_test_with_temp_config(
+        config, conf.official_examples_path("trial/mnist_pytorch"), 1
+    )
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -20,7 +22,7 @@ def test_pytorch_load() -> None:
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
 
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("mnist_pytorch"), 1
+        config, conf.official_examples_path("trial/mnist_pytorch"), 1
     )
 
     nn = Determined(conf.make_master_url()).get_experiment(experiment_id).top_checkpoint().load()
@@ -29,11 +31,11 @@ def test_pytorch_load() -> None:
 
 @pytest.mark.e2e_gpu  # type: ignore
 def test_pytorch_const_multi_output() -> None:
-    config = conf.load_config(conf.experimental_path("mnist_pytorch_multi_output/const.yaml"))
+    config = conf.load_config(conf.experimental_path("trial/mnist_pytorch_multi_output/const.yaml"))
     config = conf.set_max_steps(config, 2)
 
     exp.run_basic_test_with_temp_config(
-        config, conf.experimental_path("mnist_pytorch_multi_output"), 1
+        config, conf.experimental_path("trial/mnist_pytorch_multi_output"), 1
     )
 
 
@@ -43,11 +45,11 @@ def test_pytorch_const_warm_start() -> None:
     Test that specifying an earlier trial checkpoint to warm-start from
     correctly populates the later trials' `warm_start_checkpoint_id` fields.
     """
-    config = conf.load_config(conf.official_examples_path("mnist_pytorch/const.yaml"))
+    config = conf.load_config(conf.official_examples_path("trial/mnist_pytorch/const.yaml"))
     config = conf.set_max_steps(config, 2)
 
     experiment_id1 = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("mnist_pytorch"), 1
+        config, conf.official_examples_path("trial/mnist_pytorch"), 1
     )
 
     trials = exp.experiment_trials(experiment_id1)
@@ -59,7 +61,7 @@ def test_pytorch_const_warm_start() -> None:
     assert len(first_trial["steps"]) == 2
     first_checkpoint_id = first_trial["steps"][-1]["checkpoint"]["id"]
 
-    config_obj = conf.load_config(conf.official_examples_path("mnist_pytorch/const.yaml"))
+    config_obj = conf.load_config(conf.official_examples_path("trial/mnist_pytorch/const.yaml"))
 
     # Change the search method to random, and add a source trial ID to warm
     # start from.
@@ -69,7 +71,7 @@ def test_pytorch_const_warm_start() -> None:
     config_obj["searcher"]["max_trials"] = 3
 
     experiment_id2 = exp.run_basic_test_with_temp_config(
-        config_obj, conf.official_examples_path("mnist_pytorch"), 3
+        config_obj, conf.official_examples_path("trial/mnist_pytorch"), 3
     )
 
     trials = exp.experiment_trials(experiment_id2)
@@ -80,12 +82,14 @@ def test_pytorch_const_warm_start() -> None:
 
 @pytest.mark.parallel  # type: ignore
 def test_pytorch_const_native_parallel() -> None:
-    config = conf.load_config(conf.official_examples_path("mnist_pytorch/const.yaml"))
+    config = conf.load_config(conf.official_examples_path("trial/mnist_pytorch/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_native_parallel(config, True)
     config = conf.set_max_steps(config, 2)
 
-    exp.run_basic_test_with_temp_config(config, conf.official_examples_path("mnist_pytorch"), 1)
+    exp.run_basic_test_with_temp_config(
+        config, conf.official_examples_path("trial/mnist_pytorch"), 1
+    )
 
 
 @pytest.mark.parallel  # type: ignore
@@ -98,7 +102,7 @@ def test_pytorch_const_parallel(aggregation_frequency: int, use_amp: bool) -> No
     if use_amp:
         pytest.skip("AMP support NaNs right now, disabling until this is fixed.")
 
-    config = conf.load_config(conf.official_examples_path("mnist_pytorch/const.yaml"))
+    config = conf.load_config(conf.official_examples_path("trial/mnist_pytorch/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_native_parallel(config, False)
     config = conf.set_max_steps(config, 2)
@@ -106,26 +110,30 @@ def test_pytorch_const_parallel(aggregation_frequency: int, use_amp: bool) -> No
     if use_amp:
         config = conf.set_amp_level(config, "O1")
 
-    exp.run_basic_test_with_temp_config(config, conf.official_examples_path("mnist_pytorch"), 1)
+    exp.run_basic_test_with_temp_config(
+        config, conf.official_examples_path("trial/mnist_pytorch"), 1
+    )
 
 
 @pytest.mark.e2e_gpu  # type: ignore
 def test_pytorch_const_with_amp() -> None:
-    config = conf.load_config(conf.official_examples_path("mnist_pytorch/const.yaml"))
+    config = conf.load_config(conf.official_examples_path("trial/mnist_pytorch/const.yaml"))
     config = conf.set_max_steps(config, 2)
     config = conf.set_amp_level(config, "O1")
 
-    exp.run_basic_test_with_temp_config(config, conf.official_examples_path("mnist_pytorch"), 1)
+    exp.run_basic_test_with_temp_config(
+        config, conf.official_examples_path("trial/mnist_pytorch"), 1
+    )
 
 
 @pytest.mark.parallel  # type: ignore
 def test_pytorch_cifar10_parallel() -> None:
-    config = conf.load_config(conf.official_examples_path("cifar10_cnn_pytorch/const.yaml"))
+    config = conf.load_config(conf.official_examples_path("trial/cifar10_cnn_pytorch/const.yaml"))
     config = conf.set_max_steps(config, 2)
     config = conf.set_slots_per_trial(config, 8)
 
     experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("cifar10_cnn_pytorch"), 1
+        config, conf.official_examples_path("trial/cifar10_cnn_pytorch"), 1
     )
     trials = exp.experiment_trials(experiment_id)
     nn = (
