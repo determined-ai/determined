@@ -66,12 +66,8 @@ def update_user(
     return api.patch(master_address, "users/{}".format(username), body=request)
 
 
-def update_username(
-    current_username: str,
-    master_address: str,
-    new_username: str,
-) -> Response:
-    request = { "username": new_username }
+def update_username(current_username: str, master_address: str, new_username: str) -> Response:
+    request = {"username": new_username}
     return api.patch(master_address, "users/{}/username".format(current_username), body=request)
 
 
@@ -131,7 +127,6 @@ def log_out_user(parsed_args: Namespace) -> None:
 
 @authentication_required
 def change_username(parsed_args: Namespace) -> None:
-    auth_inst = api.Authentication.instance()
     update_username(parsed_args.target_user, parsed_args.master, parsed_args.new_username)
 
 

@@ -340,13 +340,12 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 		return nil, malformedRequestError
 	}
 
-	switch u, err := s.db.UserByUsername(*params.NewUsername); {
-	case err == db.ErrNotFound:
-	case err != nil:
-		return nil, err
+	switch u, uErr := s.db.UserByUsername(*params.NewUsername); {
+	case uErr == db.ErrNotFound:
+	case uErr != nil:
+		return nil, uErr
 	case u != nil:
-		malformedRequestError := echo.NewHTTPError(http.StatusBadRequest, "username is taken")
-		return nil, malformedRequestError
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "username is taken")
 	}
 
 	if !authenticatedUser.Admin {
