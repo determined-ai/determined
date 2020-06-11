@@ -23,6 +23,7 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 class BertSQuADPyTorch(PyTorchTrial):
     def __init__(self, context: det.TrialContext):
         self.context = context
+        self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.config_class, self.tokenizer_class, self.model_class = constants.MODEL_CLASSES[
             self.context.get_hparam("model_type")
         ]
@@ -31,17 +32,10 @@ class BertSQuADPyTorch(PyTorchTrial):
             do_lower_case=True,
             cache_dir=None
         )
-        self.validation_dataset, self.validation_examples, self.validation_features = data.load_and_cache_examples(
-            tokenizer=self.tokenizer,
-            task=self.context.get_data_config().get("task"),
-            max_seq_length=self.context.get_hparam("max_seq_length"),
-            doc_stride=self.context.get_hparam("doc_stride"),
-            max_query_length=self.context.get_hparam("max_query_length"),
-            evaluate=True,
-        )
 
     def build_training_data_loader(self):
         train_dataset, _, _ = data.load_and_cache_examples(
+            data_dir=self.download_directory,
             tokenizer=self.tokenizer,
             task=self.context.get_data_config().get("task"),
             max_seq_length=self.context.get_hparam("max_seq_length"),
@@ -52,6 +46,15 @@ class BertSQuADPyTorch(PyTorchTrial):
         return DataLoader(train_dataset, batch_size=self.context.get_per_slot_batch_size())
 
     def build_validation_data_loader(self):
+        self.validation_dataset, self.validation_examples, self.validation_features = data.load_and_cache_examples(
+            data_dir=self.download_directory,
+            tokenizer=self.tokenizer,
+            task=self.context.get_data_config().get("task"),
+            max_seq_length=self.context.get_hparam("max_seq_length"),
+            doc_stride=self.context.get_hparam("doc_stride"),
+            max_query_length=self.context.get_hparam("max_query_length"),
+            evaluate=True,
+        )
         return DataLoader(
             self.validation_dataset,
             batch_size=self.context.get_per_slot_batch_size(),

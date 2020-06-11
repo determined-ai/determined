@@ -20,7 +20,7 @@ searcher:
     metric: f1
     max_steps: 800
     smaller_is_better: false
-min_validation_period: 50 
+min_validation_period: 100 
 data:
     pretrained_model_name: "bert-base-uncased"
     download_data: False
