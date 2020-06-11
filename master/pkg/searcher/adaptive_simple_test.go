@@ -13,8 +13,6 @@ func TestAdaptiveSimpleConservativeCornerCase(t *testing.T) {
 	}
 	expected := [][]Kind{
 		toKinds("1S 1V"),
-		toKinds("1S 1V"),
-		toKinds("1S 1V"),
 	}
 	checkSimulation(t, newAdaptiveSimpleSearch(actual), nil, ConstantValidation, expected)
 }
@@ -31,15 +29,17 @@ func TestAdaptiveSimpleAggressiveCornerCase(t *testing.T) {
 }
 
 func TestAdaptiveSimpleSearcherReproducibility(t *testing.T) {
+	maxConcurrentTrials := 50
 	conf := model.AdaptiveSimpleConfig{
 		Metric: defaultMetric, SmallerIsBetter: true, MaxSteps: 64, MaxTrials: 50,
-		Divisor: 4, Mode: model.ConservativeMode, MaxRungs: 3,
+		Divisor: 4, Mode: model.ConservativeMode, MaxRungs: 3, MaxConcurrentTrials: &maxConcurrentTrials,
 	}
 	gen := func() SearchMethod { return newAdaptiveSimpleSearch(conf) }
 	checkReproducibility(t, gen, nil, defaultMetric)
 }
 
 func TestAdaptiveSimpleSearchMethod(t *testing.T) {
+	maxConcurrentTrials := 22
 	testCases := []valueSimulationTestCase{
 		//nolint:dupl
 		{
@@ -71,13 +71,14 @@ func TestAdaptiveSimpleSearchMethod(t *testing.T) {
 			},
 			config: model.SearcherConfig{
 				AdaptiveSimpleConfig: &model.AdaptiveSimpleConfig{
-					Metric:          "error",
-					SmallerIsBetter: true,
-					Mode:            model.StandardMode,
-					Divisor:         4,
-					MaxTrials:       22,
-					MaxSteps:        32,
-					MaxRungs:        3,
+					Metric:              "error",
+					SmallerIsBetter:     true,
+					Mode:                model.StandardMode,
+					Divisor:             4,
+					MaxTrials:           22,
+					MaxSteps:            32,
+					MaxRungs:            3,
+					MaxConcurrentTrials: &maxConcurrentTrials,
 				},
 			},
 		},
@@ -110,13 +111,14 @@ func TestAdaptiveSimpleSearchMethod(t *testing.T) {
 			},
 			config: model.SearcherConfig{
 				AdaptiveSimpleConfig: &model.AdaptiveSimpleConfig{
-					Metric:          "error",
-					SmallerIsBetter: true,
-					Mode:            model.StandardMode,
-					Divisor:         4,
-					MaxTrials:       22,
-					MaxSteps:        32,
-					MaxRungs:        3,
+					Metric:              "error",
+					SmallerIsBetter:     true,
+					Mode:                model.StandardMode,
+					Divisor:             4,
+					MaxTrials:           22,
+					MaxSteps:            32,
+					MaxRungs:            3,
+					MaxConcurrentTrials: &maxConcurrentTrials,
 				},
 			},
 		},
@@ -150,13 +152,14 @@ func TestAdaptiveSimpleSearchMethod(t *testing.T) {
 			},
 			config: model.SearcherConfig{
 				AdaptiveSimpleConfig: &model.AdaptiveSimpleConfig{
-					Metric:          "error",
-					SmallerIsBetter: false,
-					Mode:            model.StandardMode,
-					Divisor:         4,
-					MaxTrials:       22,
-					MaxSteps:        32,
-					MaxRungs:        3,
+					Metric:              "error",
+					SmallerIsBetter:     false,
+					Mode:                model.StandardMode,
+					Divisor:             4,
+					MaxTrials:           22,
+					MaxSteps:            32,
+					MaxRungs:            3,
+					MaxConcurrentTrials: &maxConcurrentTrials,
 				},
 			},
 		},
@@ -189,13 +192,14 @@ func TestAdaptiveSimpleSearchMethod(t *testing.T) {
 			},
 			config: model.SearcherConfig{
 				AdaptiveSimpleConfig: &model.AdaptiveSimpleConfig{
-					Metric:          "error",
-					SmallerIsBetter: false,
-					Mode:            model.StandardMode,
-					Divisor:         4,
-					MaxTrials:       22,
-					MaxSteps:        32,
-					MaxRungs:        3,
+					Metric:              "error",
+					SmallerIsBetter:     false,
+					Mode:                model.StandardMode,
+					Divisor:             4,
+					MaxTrials:           22,
+					MaxSteps:            32,
+					MaxRungs:            3,
+					MaxConcurrentTrials: &maxConcurrentTrials,
 				},
 			},
 		},

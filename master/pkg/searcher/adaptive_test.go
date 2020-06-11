@@ -43,6 +43,7 @@ func TestAdaptiveSearcherReproducibility(t *testing.T) {
 }
 
 func TestAdaptiveSearchMethod(t *testing.T) {
+	maxConcurrentTrials := 5
 	testCases := []valueSimulationTestCase{
 		{
 			name: "smaller is better",
@@ -55,13 +56,14 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 			},
 			config: model.SearcherConfig{
 				AdaptiveConfig: &model.AdaptiveConfig{
-					Metric:           "error",
-					SmallerIsBetter:  true,
-					TargetTrialSteps: 32,
-					MaxTrials:        5,
-					Mode:             model.StandardMode,
-					MaxRungs:         2,
-					Divisor:          4,
+					Metric:              "error",
+					SmallerIsBetter:     true,
+					TargetTrialSteps:    32,
+					MaxTrials:           5,
+					Mode:                model.StandardMode,
+					MaxRungs:            2,
+					Divisor:             4,
+					MaxConcurrentTrials: &maxConcurrentTrials,
 				},
 			},
 		},
@@ -76,13 +78,14 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 			},
 			config: model.SearcherConfig{
 				AdaptiveConfig: &model.AdaptiveConfig{
-					Metric:           "error",
-					SmallerIsBetter:  true,
-					TargetTrialSteps: 32,
-					MaxTrials:        5,
-					Mode:             model.StandardMode,
-					MaxRungs:         2,
-					Divisor:          4,
+					Metric:              "error",
+					SmallerIsBetter:     true,
+					TargetTrialSteps:    32,
+					MaxTrials:           5,
+					Mode:                model.StandardMode,
+					MaxRungs:            2,
+					Divisor:             4,
+					MaxConcurrentTrials: &maxConcurrentTrials,
 				},
 			},
 		},
@@ -97,13 +100,14 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 			},
 			config: model.SearcherConfig{
 				AdaptiveConfig: &model.AdaptiveConfig{
-					Metric:           "error",
-					SmallerIsBetter:  false,
-					TargetTrialSteps: 32,
-					MaxTrials:        5,
-					Mode:             model.StandardMode,
-					MaxRungs:         2,
-					Divisor:          4,
+					Metric:              "error",
+					SmallerIsBetter:     false,
+					TargetTrialSteps:    32,
+					MaxTrials:           5,
+					Mode:                model.StandardMode,
+					MaxRungs:            2,
+					Divisor:             4,
+					MaxConcurrentTrials: &maxConcurrentTrials,
 				},
 			},
 		},
@@ -118,13 +122,14 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 			},
 			config: model.SearcherConfig{
 				AdaptiveConfig: &model.AdaptiveConfig{
-					Metric:           "error",
-					SmallerIsBetter:  false,
-					TargetTrialSteps: 32,
-					MaxTrials:        5,
-					Mode:             model.StandardMode,
-					MaxRungs:         2,
-					Divisor:          4,
+					Metric:              "error",
+					SmallerIsBetter:     false,
+					TargetTrialSteps:    32,
+					MaxTrials:           5,
+					Mode:                model.StandardMode,
+					MaxRungs:            2,
+					Divisor:             4,
+					MaxConcurrentTrials: &maxConcurrentTrials,
 				},
 			},
 		},

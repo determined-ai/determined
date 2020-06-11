@@ -17,6 +17,7 @@ const MaxAllowedTrials = 2000
 type SearcherConfig struct {
 	Metric               string  `json:"metric"`
 	SmallerIsBetter      bool    `json:"smaller_is_better"`
+	MaxConcurrentTrials  *int    `json:"max_concurrent_trials"`
 	SourceTrialID        *int    `json:"source_trial_id"`
 	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
 
@@ -84,13 +85,14 @@ func (g GridConfig) Validate() []error {
 
 // AsyncHalvingConfig configures asynchronous successive halving.
 type AsyncHalvingConfig struct {
-	Metric           string  `json:"metric"`
-	SmallerIsBetter  bool    `json:"smaller_is_better"`
-	NumRungs         int     `json:"num_rungs"`
-	TargetTrialSteps int     `json:"target_trial_steps"`
-	MaxTrials        int     `json:"max_trials"`
-	Divisor          float64 `json:"divisor"`
-	TrainStragglers  bool    `json:"train_stragglers"`
+	Metric              string  `json:"metric"`
+	SmallerIsBetter     bool    `json:"smaller_is_better"`
+	NumRungs            int     `json:"num_rungs"`
+	TargetTrialSteps    int     `json:"target_trial_steps"`
+	MaxTrials           int     `json:"max_trials"`
+	Divisor             float64 `json:"divisor"`
+	MaxConcurrentTrials *int    `json:"max_concurrent_trials"`
+	TrainStragglers     bool    `json:"train_stragglers"`
 }
 
 // SyncHalvingConfig configures synchronous successive halving.
@@ -120,14 +122,15 @@ const (
 
 // AdaptiveConfig configures an adaptive search.
 type AdaptiveConfig struct {
-	Metric           string       `json:"metric"`
-	SmallerIsBetter  bool         `json:"smaller_is_better"`
-	TargetTrialSteps int          `json:"target_trial_steps"`
-	MaxTrials        int          `json:"max_trials"`
-	BracketRungs     []int        `json:"bracket_rungs"`
-	Divisor          float64      `json:"divisor"`
-	Mode             AdaptiveMode `json:"mode"`
-	MaxRungs         int          `json:"max_rungs"`
+	Metric              string       `json:"metric"`
+	SmallerIsBetter     bool         `json:"smaller_is_better"`
+	TargetTrialSteps    int          `json:"target_trial_steps"`
+	MaxTrials           int          `json:"max_trials"`
+	BracketRungs        []int        `json:"bracket_rungs"`
+	Divisor             float64      `json:"divisor"`
+	Mode                AdaptiveMode `json:"mode"`
+	MaxRungs            int          `json:"max_rungs"`
+	MaxConcurrentTrials *int         `json:"max_concurrent_trials"`
 }
 
 // Validate implements the check.Validatable interface.
@@ -144,13 +147,14 @@ func (a AdaptiveConfig) Validate() []error {
 
 // AdaptiveSimpleConfig configures an simplified adaptive search.
 type AdaptiveSimpleConfig struct {
-	Metric          string       `json:"metric"`
-	SmallerIsBetter bool         `json:"smaller_is_better"`
-	MaxSteps        int          `json:"max_steps"`
-	MaxTrials       int          `json:"max_trials"`
-	Divisor         float64      `json:"divisor"`
-	Mode            AdaptiveMode `json:"mode"`
-	MaxRungs        int          `json:"max_rungs"`
+	Metric              string       `json:"metric"`
+	SmallerIsBetter     bool         `json:"smaller_is_better"`
+	MaxSteps            int          `json:"max_steps"`
+	MaxTrials           int          `json:"max_trials"`
+	Divisor             float64      `json:"divisor"`
+	Mode                AdaptiveMode `json:"mode"`
+	MaxRungs            int          `json:"max_rungs"`
+	MaxConcurrentTrials *int         `json:"max_concurrent_trials"`
 }
 
 // Validate implements the check.Validatable interface.
