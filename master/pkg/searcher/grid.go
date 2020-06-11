@@ -12,11 +12,12 @@ import (
 type gridSearch struct {
 	defaultSearchMethod
 	model.GridConfig
-	trials int
+	trials         int
+	batchesPerStep int
 }
 
-func newGridSearch(config model.GridConfig) SearchMethod {
-	return &gridSearch{GridConfig: config}
+func newGridSearch(config model.GridConfig, batchesPerStep int) SearchMethod {
+	return &gridSearch{GridConfig: config, batchesPerStep: batchesPerStep}
 }
 
 func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
@@ -26,7 +27,8 @@ func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
 	for _, params := range grid {
 		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
 		operations = append(operations, create)
-		operations = append(operations, trainAndValidate(create.RequestID, 0, s.MaxSteps)...)
+		trainVal := trainAndValidate(create.RequestID, 0, s.MaxSteps, s.batchesPerStep)
+		operations = append(operations, trainVal...)
 		operations = append(operations, NewClose(create.RequestID))
 	}
 	return operations, nil

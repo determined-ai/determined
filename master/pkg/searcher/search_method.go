@@ -47,22 +47,22 @@ type SearchMethod interface {
 }
 
 // NewSearchMethod returns a new search method for the provided searcher configuration.
-func NewSearchMethod(c model.SearcherConfig) SearchMethod {
+func NewSearchMethod(c model.SearcherConfig, batchesPerStep int) SearchMethod {
 	switch {
 	case c.SingleConfig != nil:
-		return newSingleSearch(*c.SingleConfig)
+		return newSingleSearch(*c.SingleConfig, batchesPerStep)
 	case c.RandomConfig != nil:
-		return newRandomSearch(*c.RandomConfig)
+		return newRandomSearch(*c.RandomConfig, batchesPerStep)
 	case c.GridConfig != nil:
-		return newGridSearch(*c.GridConfig)
+		return newGridSearch(*c.GridConfig, batchesPerStep)
 	case c.SyncHalvingConfig != nil:
-		return newSyncHalvingSearch(*c.SyncHalvingConfig)
+		return newSyncHalvingSearch(*c.SyncHalvingConfig, batchesPerStep)
 	case c.AdaptiveConfig != nil:
-		return newAdaptiveSearch(*c.AdaptiveConfig)
+		return newAdaptiveSearch(*c.AdaptiveConfig, batchesPerStep)
 	case c.AdaptiveSimpleConfig != nil:
-		return newAdaptiveSimpleSearch(*c.AdaptiveSimpleConfig)
+		return newAdaptiveSimpleSearch(*c.AdaptiveSimpleConfig, batchesPerStep)
 	case c.PBTConfig != nil:
-		return newPBTSearch(*c.PBTConfig)
+		return newPBTSearch(*c.PBTConfig, batchesPerStep)
 	default:
 		panic("no searcher type specified")
 	}

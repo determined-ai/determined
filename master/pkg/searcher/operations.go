@@ -122,14 +122,19 @@ type WorkloadOperation struct {
 	RequestID RequestID `json:"request_id"`
 	Kind      Kind      `json:"kind"`
 	StepID    int       `json:"step_id"`
+
+	Metadata WorkloadMetadata `json:"metadata"`
 }
 
 // NewTrain signals to a trial runner that it should run a training step.
-func NewTrain(requestID RequestID, stepID int) WorkloadOperation {
+func NewTrain(requestID RequestID, stepID, batchesPerStep int) WorkloadOperation {
 	return WorkloadOperation{
 		RequestID: requestID,
 		Kind:      RunStep,
 		StepID:    stepID,
+		Metadata: WorkloadMetadata{
+			BatchesPerStep: batchesPerStep,
+		},
 	}
 }
 

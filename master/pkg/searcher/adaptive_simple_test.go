@@ -16,7 +16,7 @@ func TestAdaptiveSimpleConservativeCornerCase(t *testing.T) {
 		toKinds("1S 1V 1S 1V"),
 		toKinds("1S 1V 1S 1V 1S 1V"),
 	}
-	checkSimulation(t, newAdaptiveSimpleSearch(actual), nil, ConstantValidation, expected)
+	checkSimulation(t, newAdaptiveSimpleSearch(actual, defaultBatchesPerStep), nil, ConstantValidation, expected)
 }
 
 func TestAdaptiveSimpleAggressiveCornerCase(t *testing.T) {
@@ -27,7 +27,7 @@ func TestAdaptiveSimpleAggressiveCornerCase(t *testing.T) {
 	expected := [][]Kind{
 		toKinds("1S 1V 1S 1V 1S 1V"),
 	}
-	checkSimulation(t, newAdaptiveSimpleSearch(actual), nil, ConstantValidation, expected)
+	checkSimulation(t, newAdaptiveSimpleSearch(actual, defaultBatchesPerStep), nil, ConstantValidation, expected)
 }
 
 func TestAdaptiveSimpleSearcherReproducibility(t *testing.T) {
@@ -35,7 +35,7 @@ func TestAdaptiveSimpleSearcherReproducibility(t *testing.T) {
 		Metric: defaultMetric, SmallerIsBetter: true, MaxSteps: 64, MaxTrials: 50,
 		Divisor: 4, Mode: model.ConservativeMode, MaxRungs: 3,
 	}
-	gen := func() SearchMethod { return newAdaptiveSimpleSearch(conf) }
+	gen := func() SearchMethod { return newAdaptiveSimpleSearch(conf, defaultBatchesPerStep) }
 	checkReproducibility(t, gen, nil, defaultMetric)
 }
 

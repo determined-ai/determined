@@ -9,8 +9,10 @@ import (
 )
 
 type stepInfo struct {
-	hasValidation bool
-	hasCheckpoint bool
+	hasValidation    bool
+	hasCheckpoint    bool
+	batchesPerStep   int
+	batchesCompleted int
 }
 
 type trialWorkloadSequencer struct {
@@ -40,14 +42,16 @@ type trialWorkloadSequencer struct {
 
 	trialID      int
 	trialIDValid bool
+
+	batchesPlanned int
 }
 
 func newTrialWorkloadSequencer(
 	exp *model.Experiment, create searcher.Create, firstCheckpoint *model.Checkpoint,
 ) *trialWorkloadSequencer {
 	return &trialWorkloadSequencer{
-		steps:               []stepInfo{{true, true}},
-		curStepDone:         stepInfo{true, true},
+		steps:               []stepInfo{{true, true, 0, 0}},
+		curStepDone:         stepInfo{true, true, 0, 0},
 		checkpointPolicy:    exp.Config.CheckpointPolicy,
 		minValidationPeriod: exp.Config.MinValidationPeriod,
 		minCheckpointPeriod: exp.Config.MinCheckpointPeriod,
@@ -76,7 +80,11 @@ func (s *trialWorkloadSequencer) OperationRequested(op searcher.WorkloadOperatio
 		if op.StepID != len(s.steps) {
 			return errors.New("illegal step requested")
 		}
-		s.steps = append(s.steps, stepInfo{})
+		s.steps = append(s.steps, stepInfo{
+			batchesPerStep:   op.Metadata.BatchesPerStep,
+			batchesCompleted: s.batchesPlanned,
+		})
+		s.batchesPlanned += op.Metadata.BatchesPerStep
 
 	case searcher.CheckpointModel:
 		if op.StepID < s.curStep || op.StepID >= len(s.steps) {
@@ -123,7 +131,10 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 	switch msg.Workload.Kind {
 	case searcher.RunStep:
 		s.curStep++
-		s.curStepDone = stepInfo{}
+		s.curStepDone = stepInfo{
+			batchesPerStep:   msg.Workload.Metadata.BatchesPerStep,
+			batchesCompleted: msg.Workload.Metadata.BatchesCompleted,
+		}
 		if msg.ExitedReason != nil {
 			s.steps = s.steps[:msg.Workload.StepID+1]
 			if *msg.ExitedReason == searcher.UserCanceled {
@@ -196,20 +207,34 @@ func (s *trialWorkloadSequencer) Workload() (searcher.Workload, error) {
 	step := s.steps[s.curStep]
 	stepID := s.curStep
 	var kind searcher.Kind
+	var metadata searcher.WorkloadMetadata
 	switch {
 	case step.hasValidation && !s.curStepDone.hasValidation:
 		kind = searcher.ComputeValidationMetrics
+		metadata = searcher.WorkloadMetadata{
+			BatchesPerStep:   0,
+			BatchesCompleted: s.steps[stepID].batchesCompleted,
+		}
 	case step.hasCheckpoint && !s.curStepDone.hasCheckpoint:
 		kind = searcher.CheckpointModel
+		metadata = searcher.WorkloadMetadata{
+			BatchesPerStep:   0,
+			BatchesCompleted: s.steps[stepID].batchesCompleted,
+		}
 	default:
-		kind = searcher.RunStep
 		stepID++
+		kind = searcher.RunStep
+		metadata = searcher.WorkloadMetadata{
+			BatchesPerStep:   s.steps[stepID].batchesPerStep,
+			BatchesCompleted: s.steps[stepID].batchesCompleted,
+		}
 	}
 	s.curWorkload = searcher.Workload{
 		Kind:         kind,
 		ExperimentID: s.experiment.ID,
 		TrialID:      s.trialID,
 		StepID:       stepID,
+		Metadata:     metadata,
 	}
 	s.curWorkloadValid = true
 	return s.curWorkload, nil
@@ -229,6 +254,10 @@ func (s *trialWorkloadSequencer) PrecloseCheckpointWorkload() *searcher.Workload
 		ExperimentID: s.experiment.ID,
 		TrialID:      s.trialID,
 		StepID:       s.curStep,
+		Metadata: searcher.WorkloadMetadata{
+			BatchesPerStep:   0,
+			BatchesCompleted: s.steps[s.curStep].batchesCompleted,
+		},
 	}
 }
 

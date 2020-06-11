@@ -102,6 +102,7 @@ func (el *EventLog) WorkloadCompleted(message CompletedMessage) bool {
 		Kind:      message.Workload.Kind,
 		RequestID: el.RequestIDs[message.Workload.TrialID],
 		StepID:    message.Workload.StepID,
+		Metadata:  message.Workload.Metadata,
 	}
 
 	// We log events the first time we see them, even if we are going to ignore them, because

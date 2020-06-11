@@ -7,7 +7,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-func newAdaptiveSearch(config model.AdaptiveConfig) SearchMethod {
+func newAdaptiveSearch(config model.AdaptiveConfig, batchesPerStep int) SearchMethod {
 	modeFunc := parseAdaptiveMode(config.Mode)
 
 	brackets := config.BracketRungs
@@ -27,7 +27,7 @@ func newAdaptiveSearch(config model.AdaptiveConfig) SearchMethod {
 			Divisor:          config.Divisor,
 			TrainStragglers:  config.TrainStragglers,
 		}
-		methods = append(methods, newSyncHalvingSearch(c))
+		methods = append(methods, newSyncHalvingSearch(c, batchesPerStep))
 	}
 
 	return newTournamentSearch(methods...)

@@ -30,7 +30,7 @@ func TestEventLog(t *testing.T) {
 
 	for i, trialID := range trialIDs {
 		assert.Equal(t, log.TotalStepsStarted, i)
-		log.OperationsCreated(NewTrain(log.RequestIDs[trialID], 1))
+		log.OperationsCreated(NewTrain(log.RequestIDs[trialID], 1, defaultBatchesPerStep))
 		assert.Equal(t, log.TotalStepsStarted, i+1)
 
 		assert.Equal(t, log.TotalStepsCompleted, i)
@@ -41,6 +41,9 @@ func TestEventLog(t *testing.T) {
 				ExperimentID: 1,
 				TrialID:      trialID,
 				StepID:       1,
+				Metadata: WorkloadMetadata{
+					BatchesPerStep: defaultBatchesPerStep,
+				},
 			},
 			RunMetrics: make(map[string]interface{}),
 		})

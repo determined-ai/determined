@@ -15,7 +15,7 @@ func maxTrials(maxTrials, brackets, index int) int {
 	return count
 }
 
-func newAdaptiveSimpleSearch(config model.AdaptiveSimpleConfig) SearchMethod {
+func newAdaptiveSimpleSearch(config model.AdaptiveSimpleConfig, batchesPerStep int) SearchMethod {
 	brackets := parseAdaptiveMode(config.Mode)(config.MaxRungs)
 	sort.Sort(sort.Reverse(sort.IntSlice(brackets)))
 
@@ -30,13 +30,15 @@ func newAdaptiveSimpleSearch(config model.AdaptiveSimpleConfig) SearchMethod {
 			TrainStragglers:  true,
 		}
 		numTrials := max(maxTrials(config.MaxTrials, len(brackets), i), 1)
-		methods = append(methods, newSyncHalvingSimpleSearch(c, numTrials))
+		methods = append(methods, newSyncHalvingSimpleSearch(c, numTrials, batchesPerStep))
 	}
 
 	return newTournamentSearch(methods...)
 }
 
-func newSyncHalvingSimpleSearch(config model.SyncHalvingConfig, trials int) SearchMethod {
+func newSyncHalvingSimpleSearch(
+	config model.SyncHalvingConfig, trials, batchesPerStep int,
+) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
 	expectedSteps := 0
 	expectedWorkloads := 0
@@ -69,5 +71,6 @@ func newSyncHalvingSimpleSearch(config model.SyncHalvingConfig, trials int) Sear
 		trialRungs:        make(map[RequestID]int),
 		earlyExitTrials:   make(map[RequestID]bool),
 		expectedWorkloads: expectedWorkloads,
+		batchesPerStep:    batchesPerStep,
 	}
 }

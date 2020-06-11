@@ -14,12 +14,13 @@ func TestRandomSearcher(t *testing.T) {
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 	}
-	checkSimulation(t, newRandomSearch(actual), nil, ConstantValidation, expected)
+	search := newRandomSearch(actual, defaultBatchesPerStep)
+	checkSimulation(t, search, nil, ConstantValidation, expected)
 }
 
 func TestRandomSearcherReproducibility(t *testing.T) {
 	conf := model.RandomConfig{MaxTrials: 4, MaxSteps: 3}
-	gen := func() SearchMethod { return newRandomSearch(conf) }
+	gen := func() SearchMethod { return newRandomSearch(conf, defaultBatchesPerStep) }
 	checkReproducibility(t, gen, nil, defaultMetric)
 }
 
