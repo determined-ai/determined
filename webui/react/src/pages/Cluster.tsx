@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
 
 import Grid from 'components/Grid';
+import Message from 'components/Message';
 import Page from 'components/Page';
 import ResourceChart from 'components/ResourceChart';
 import Spinner from 'components/Spinner';
 import AgentsCtx from 'contexts/Agents';
-import emptyMessage from 'styles/emptyMessage.module.scss';
 import { Resource, ResourceType } from 'types';
 import { categorize } from 'utils/data';
 
@@ -31,13 +31,13 @@ const Cluster: React.FC = () => {
   if (!agents.data) {
     unhappyView = <Spinner />;
   } else if (agents.data.length === 0) {
-    unhappyView = (<div className={emptyMessage.base}>
+    unhappyView = (<Message>
       No agents connected.
-    </div>);
+    </Message>);
   } else if (availableResourceTypes.length === 0) {
-    unhappyView = (<div className={emptyMessage.base}>
+    unhappyView = (<Message>
       No slots available.
-    </div>);
+    </Message>);
   }
 
   return (

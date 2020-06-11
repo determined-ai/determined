@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
+import Message from 'components/Message';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
 import Section from 'components/Section';
@@ -14,7 +15,6 @@ import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Experiments from 'contexts/Experiments';
 import Users from 'contexts/Users';
 import useStorage from 'hooks/useStorage';
-import emptyMessage from 'styles/emptyMessage.module.scss';
 import { ShirtSize } from 'themes';
 import {
   Command, CommandState, RecentTask, ResourceType, RunState, TaskType,
@@ -134,9 +134,9 @@ const Dashboard: React.FC = () => {
     });
 
   const emptyView = (
-    <div className={emptyMessage.base}>
+    <Message>
       No recent tasks matching the current filters.
-    </div>
+    </Message>
   );
 
   return (
