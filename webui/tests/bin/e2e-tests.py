@@ -9,7 +9,6 @@ import subprocess
 import sys
 from typing import List
 
-RESULTS_DIR_NAME = "results"
 logger = logging.getLogger("e2e-tests")
 
 root = subprocess.check_output(
@@ -18,8 +17,10 @@ root = subprocess.check_output(
 root_path = pathlib.Path(root)
 webui_dir = root_path.joinpath("webui")
 tests_dir = webui_dir.joinpath("tests")
+results_dir = tests_dir.joinpath("results")
+test_cluster_dir = tests_dir.joinpath("test-cluster")
 
-CLUSTER_CMD_PREFIX = ["make", "-C", "test-cluster"]
+CLUSTER_CMD_PREFIX = ["make", "-C", str(test_cluster_dir)]
 
 CLEAR = "\033[39m"
 BLUE = "\033[94m"
@@ -31,8 +32,8 @@ def run(cmd: List[str], config) -> None:
     return subprocess.check_call(cmd, env=config["env"])
 
 
-def run_forget(cmd: List[str], config) -> None:
-    return subprocess.Popen(cmd, stdout=subprocess.DEVNULL)
+def run_forget(cmd: List[str], logfile, config) -> None:
+    return subprocess.Popen(cmd, stdout=logfile)
 
 
 def run_ignore_failure(cmd: List[str], config):
@@ -42,10 +43,15 @@ def run_ignore_failure(cmd: List[str], config):
         pass
 
 
-def setup_cluster(config):
+def setup_results_dir(config):
+    run_ignore_failure(["rm", "-r", str(results_dir)], config)
+    run(["mkdir", "-p", str(results_dir)], config)
+
+
+def setup_cluster(logfile, config):
     logger.info("setting up the cluster..")
     run(CLUSTER_CMD_PREFIX + ["start-db"], config)
-    cluster_process = run_forget(CLUSTER_CMD_PREFIX + ["run"], config)
+    cluster_process = run_forget(CLUSTER_CMD_PREFIX + ["run"], logfile, config)
     time.sleep(5)  # FIXME add a ready check for master
     logger.info(f"cluster pid: {cluster_process.pid}")
     return cluster_process
@@ -63,14 +69,17 @@ def teardown_cluster(config):
 @contextmanager
 def det_cluster(config):
     try:
-        yield setup_cluster(config)
+        log_path = str(test_cluster_dir.joinpath("cluster.stdout.log"))
+        with open(log_path, "w") as f:
+            yield setup_cluster(f, config)
+
     finally:
         teardown_cluster(config)
 
 
 def pre_e2e_tests(config):
-    run_ignore_failure(["rm", "-r", str(tests_dir.joinpath(RESULTS_DIR_NAME))], config)
     # TODO add a check for cluster condition
+    setup_results_dir(config)
     run(
         ["python", str(tests_dir.joinpath("bin", "createUserAndExperiments.py"))],
         config,
@@ -120,6 +129,7 @@ def cypress_open(config):
 
 
 def e2e_tests(config):
+    setup_results_dir(config)
     with det_cluster(config):
         pre_e2e_tests(config)
         run_e2e_tests(config)
@@ -168,7 +178,11 @@ def main():
     help_msg = f"operation must be in {sorted(operation_to_fn.keys())}"
     parser.add_argument("operation", help=help_msg)
     parser.add_argument("--det-port", default="8081", help="det master port")
-    parser.add_argument("--det-host", default="localhost", help="det master address eg localhost or 192.168.1.2")
+    parser.add_argument(
+        "--det-host",
+        default="localhost",
+        help="det master address eg localhost or 192.168.1.2",
+    )
     parser.add_argument("--cypress-default-command-timeout", default="4000")
     parser.add_argument("--cypress-args", help="other cypress arguments")
     parser.add_argument("--log-level")
