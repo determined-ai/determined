@@ -239,6 +239,15 @@ func (db *PgDB) UpdateUser(updated *model.User, toUpdate []string, ug *model.Age
 	return nil
 }
 
+// UpdateUsername updates an existing user's username.
+func (db *PgDB) UpdateUsername(userID *model.UserID, newUsername string) error {
+	if _, err := db.sql.Exec(
+		"UPDATE users SET username = $1 WHERE id = $2", newUsername, userID); err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
+}
+
 // UserList returns all of the users in the database.
 func (db *PgDB) UserList() (values []model.FullUser, err error) {
 	err = db.Query("list_users", &values)
