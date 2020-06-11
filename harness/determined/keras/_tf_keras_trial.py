@@ -270,17 +270,6 @@ class TFKerasTrialController(det.LoopTrialController):
 
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
-        if (
-            hvd_config.use
-            and version.parse(tf.__version__) >= version.parse("2.2.0")
-            and hvd_config.aggregation_frequency > 1
-        ):
-            # For TF 2.2+ we do not apply `@tf.function` to function performing gradient
-            # aggregation inside Horovod by default. However `@tf.function` is required when
-            # aggregation_frequency > 1 is used with TF 2.
-            logging.debug("Setting `ENABLE_TF_FUNCTION_FOR_ALLREDUCE` to True.")
-            os.environ["ENABLE_TF_FUNCTION_FOR_ALLREDUCE"] = "True"
-
         # Initialize the correct horovod.
         if hvd_config.use:
             hvd.require_horovod_type("tensorflow.keras", "TFKerasTrial is in use.")
