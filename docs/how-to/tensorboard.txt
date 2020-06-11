@@ -28,7 +28,7 @@ To launch TensorBoard to analyze a single Determined experiment, use
    disconnecting websocket
 
 The Determined master will schedule a TensorBoard instance in the cluster. The
-Determined CLI will wait until the TensorBoard instance is running. Then it
+Determined CLI will wait until the TensorBoard instance is running, and then it
 will open the TensorBoard web interface in a local browser window.
 
 You view information about scheduled and running TensorBoard instances by
@@ -105,16 +105,17 @@ framework.
 TensorFlow Keras
 ~~~~~~~~~~~~~~~~
 
-To add TensorBoard support for :class:`~determined.keras.TFKerasTrial`,
-add a ``det.tensorflow.TFKerasTensorBoard`` callback to your trial:
+To add TensorBoard support for models that use :class:`~determined.keras.TFKerasTrial`,
+add a :class:`~determined.keras.TFKerasTensorBoard` callback to your
+trial class:
 
 .. code:: python
 
-   from determined.keras import TFKerasTensorBoard
+   from determined.keras import TFKerasTensorBoard, TFKerasTrial
 
    class MyModel(TFKerasTrial):
        ...
-       def keras_callbacks(self, hparams):
+       def keras_callbacks(self):
            return [TFKerasTensorBoard()]
 
 Estimator
@@ -126,8 +127,8 @@ There is no configuration necessary for trials using
 Tensorpack
 ~~~~~~~~~~
 
-To add TensorBoard support for :ref:`Tensorpack <tensorpack>`,
-add a ``det.tensorflow.TFEventWriter`` callback to your trial:
+To add TensorBoard support for models that use :ref:`Tensorpack <tensorpack>`,
+add a :class:`~determined.tensorpack.TFEventWriter` callback to your trial:
 
 .. code:: python
 
@@ -135,7 +136,7 @@ add a ``det.tensorflow.TFEventWriter`` callback to your trial:
 
    class MyModel(TensorpackTrial):
        ...
-       def tensorpack_monitors(self, hparams):
+       def tensorpack_monitors(self):
            return [TFEventWriter()]
 
 Lifecycle Management

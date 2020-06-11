@@ -82,7 +82,7 @@ While running training steps or validations, the trial may need to load
 data from an external source; the model code has to specify how to do
 that by defining data loaders.
 
-Pausing and activating
+Pausing and Activating
 ----------------------
 
 An important feature of Determined is the ability to have trials stop

@@ -119,6 +119,12 @@ Disregard if using the trial API (subclassing ``determined.keras.TFKerasTrial``)
 
 .. _keras-init:
 
+``determined.keras.TFKerasTensorBoard``
+---------------------------------------
+
+.. autoclass:: determined.keras.TFKerasTensorBoard
+  :members:
+
 ``determined.experimental.keras.init()``
 ----------------------------------------
 

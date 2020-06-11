@@ -123,7 +123,7 @@ class WaitForInstructionsCallback(tf.keras.callbacks.Callback):  # type: ignore
 
         check.is_not_none(
             self.tf_keras_trial_controller.train_response_func,
-            "Callback should avoid calling model.predict() or change model.stop_training "
+            "Callback should avoid calling model.predict() or changing model.stop_training, "
             "as this will affect Determined training behavior",
         )
         response_func = cast(
@@ -158,7 +158,7 @@ class WaitForInstructionsCallback(tf.keras.callbacks.Callback):  # type: ignore
 
 class DeterminedProfiler(tf.keras.callbacks.Callback):  # type: ignore
     """
-    DeterminedProfiler profiles the training time per batch, outputing the results to a log file.
+    DeterminedProfiler profiles the training time per batch, outputting the results to a log file.
     """
 
     OUTPUT_FILENAME = "/profile/det_profiling.log"
@@ -708,7 +708,7 @@ class TFKerasTrial(det.Trial):
         <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/Callback>`__
         objects to be used during the trial’s lifetime.
 
-        Callback should avoid calling model.predict() or change model.stop_training
+        Callbacks should avoid calling model.predict() or changing model.stop_training,
         as this will affect Determined training behavior.
         """
         return []
