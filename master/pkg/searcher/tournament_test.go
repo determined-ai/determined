@@ -33,6 +33,7 @@ func TestRandomTournamentSearcherReproducibility(t *testing.T) {
 
 func TestTournamentSearchMethod(t *testing.T) {
 	// Run both of the tests from adaptive_test.go side by side.
+	maxConcurrentTrials := 6
 	expectedTrials := []predefinedTrial{
 		// Adaptive 1 trials
 		newConstantPredefinedTrial(0.1, 32, []int{8, 32}, nil),
@@ -40,6 +41,7 @@ func TestTournamentSearchMethod(t *testing.T) {
 		newConstantPredefinedTrial(0.3, 8, []int{8}, nil),
 		newConstantPredefinedTrial(0.4, 8, []int{8}, nil),
 		newConstantPredefinedTrial(0.5, 32, []int{32}, nil),
+		newConstantPredefinedTrial(0.6, 32, []int{32}, nil),
 
 		// Adaptive 2 trials
 		newConstantPredefinedTrial(0.6, 32, []int{8, 32}, nil),
@@ -47,36 +49,33 @@ func TestTournamentSearchMethod(t *testing.T) {
 		newConstantPredefinedTrial(0.4, 8, []int{8}, nil),
 		newConstantPredefinedTrial(0.3, 8, []int{8}, nil),
 		newConstantPredefinedTrial(0.2, 32, []int{32}, nil),
-
-		// Top off adaptive 1 trials
-		newConstantPredefinedTrial(0.6, 32, []int{32}, nil),
-
-		// Top off adaptive 2 trials
 		newConstantPredefinedTrial(0.1, 32, []int{32}, nil),
 	}
 
 	adaptiveConfig1 := model.SearcherConfig{
 		AdaptiveConfig: &model.AdaptiveConfig{
-			Metric:           "error",
-			SmallerIsBetter:  true,
-			TargetTrialSteps: 32,
-			MaxTrials:        6,
-			Mode:             model.StandardMode,
-			MaxRungs:         2,
-			Divisor:          4,
+			Metric:              "error",
+			SmallerIsBetter:     true,
+			TargetTrialSteps:    32,
+			MaxTrials:           6,
+			Mode:                model.StandardMode,
+			MaxRungs:            2,
+			Divisor:             4,
+			MaxConcurrentTrials: &maxConcurrentTrials,
 		},
 	}
 	adaptiveMethod1 := NewSearchMethod(adaptiveConfig1)
 
 	adaptiveConfig2 := model.SearcherConfig{
 		AdaptiveConfig: &model.AdaptiveConfig{
-			Metric:           "error",
-			SmallerIsBetter:  false,
-			TargetTrialSteps: 32,
-			MaxTrials:        6,
-			Mode:             model.StandardMode,
-			MaxRungs:         2,
-			Divisor:          4,
+			Metric:              "error",
+			SmallerIsBetter:     false,
+			TargetTrialSteps:    32,
+			MaxTrials:           6,
+			Mode:                model.StandardMode,
+			MaxRungs:            2,
+			Divisor:             4,
+			MaxConcurrentTrials: &maxConcurrentTrials,
 		},
 	}
 	adaptiveMethod2 := NewSearchMethod(adaptiveConfig2)

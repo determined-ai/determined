@@ -1,31 +1,36 @@
 package searcher
 
 import (
-	"fmt"
+	"math"
 	"sort"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func newAdaptiveSimpleSearch(config model.AdaptiveSimpleConfig) SearchMethod {
+	config.MaxRungs = min(
+		config.MaxRungs,
+		int(math.Log(float64(config.MaxSteps))/math.Log(config.Divisor))+1)
 	brackets := parseAdaptiveMode(config.Mode)(config.MaxRungs)
 	sort.Sort(sort.Reverse(sort.IntSlice(brackets)))
-	bracketMaxTrials := getBracketMaxTrials(config.MaxTrials, config.Divisor, brackets)
-	//fmt.Printf("bracketRungs: %v\n", brackets)
-	//fmt.Printf("bracketTrials: %v\n", bracketMaxTrials)
+	bracketMaxTrials, bracketWeights, totalWeight := getBracketMaxTrials(
+		config.MaxTrials, config.Divisor, brackets)
+	maxConcurrentTrials := getBracketMaxConcurrentTrials(
+		config.MaxConcurrentTrials, bracketWeights, totalWeight)
 
 	methods := make([]SearchMethod, 0, len(brackets))
 	for i, numRungs := range brackets {
+		bracketConcurrentTrials := int(bracketWeights[i]/totalWeight*float64(maxConcurrentTrials)) + 1
 		c := model.AsyncHalvingConfig{
-			Metric:           config.Metric,
-			SmallerIsBetter:  config.SmallerIsBetter,
-			TargetTrialSteps: config.MaxSteps,
-			MaxTrials:        bracketMaxTrials[i],
-			Divisor:          config.Divisor,
-			NumRungs:         numRungs,
+			Metric:              config.Metric,
+			SmallerIsBetter:     config.SmallerIsBetter,
+			TargetTrialSteps:    config.MaxSteps,
+			MaxTrials:           bracketMaxTrials[i],
+			Divisor:             config.Divisor,
+			NumRungs:            numRungs,
+			MaxConcurrentTrials: &bracketConcurrentTrials,
 		}
 		methods = append(methods, newAsyncHalvingSearch(c))
-		fmt.Printf("Bracket created with %d rungs and %d max trials\n", numRungs, bracketMaxTrials[i])
 	}
 
 	return newTournamentSearch(methods...)

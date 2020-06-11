@@ -56,12 +56,21 @@ func NewSearchMethod(c model.SearcherConfig) SearchMethod {
 	case c.GridConfig != nil:
 		return newGridSearch(*c.GridConfig)
 	case c.AsyncHalvingConfig != nil:
+		if c.MaxConcurrentTrials != nil {
+			c.AsyncHalvingConfig.MaxConcurrentTrials = c.MaxConcurrentTrials
+		}
 		return newAsyncHalvingSearch(*c.AsyncHalvingConfig)
 	case c.SyncHalvingConfig != nil:
 		return newSyncHalvingSearch(*c.SyncHalvingConfig)
 	case c.AdaptiveConfig != nil:
+		if c.MaxConcurrentTrials != nil {
+			c.AdaptiveConfig.MaxConcurrentTrials = c.MaxConcurrentTrials
+		}
 		return newAdaptiveSearch(*c.AdaptiveConfig)
 	case c.AdaptiveSimpleConfig != nil:
+		if c.MaxConcurrentTrials != nil {
+			c.AdaptiveSimpleConfig.MaxConcurrentTrials = c.MaxConcurrentTrials
+		}
 		return newAdaptiveSimpleSearch(*c.AdaptiveSimpleConfig)
 	case c.PBTConfig != nil:
 		return newPBTSearch(*c.PBTConfig)

@@ -1,7 +1,6 @@
 package searcher
 
 import (
-	"fmt"
 	"math"
 	"sort"
 
@@ -31,12 +30,10 @@ func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
 	for id := 0; id < config.NumRungs; id++ {
 		compound := math.Pow(config.Divisor, float64(config.NumRungs-id-1))
 		stepsNeeded := max(int(float64(config.TargetTrialSteps)/compound), 1)
-		startTrials := max(min(int(compound), config.MaxTrials), 1)
 		rungs = append(rungs,
 			&rung{
 				divisor:           config.Divisor,
 				stepsNeeded:       stepsNeeded,
-				startTrials:       startTrials,
 				outstandingTrials: 0})
 	}
 
@@ -61,9 +58,9 @@ type rung struct {
 	divisor           float64
 	stepsNeeded       int
 	metrics           []trialMetric
-	startTrials       int
 	outstandingTrials int
 	promoteTrials     int
+	startTrials       int
 }
 
 // promotions handles bookkeeping of validation metrics and returns a RequestID to promote if
@@ -109,11 +106,25 @@ func (r *rung) promotionsAsync(requestID RequestID, metric float64) []RequestID 
 }
 
 func (s *asyncHalvingSearch) initialOperations(ctx context) ([]Operation, error) {
-	// We can initialize bottom rung with divisor^(numRung-1) configurations since
-	// it will take that many configurations on average to be able to promote one
-	// configuration to the top rung.
+	// The number of initialOperations will control the degree of parallelism
+	// of the search experiment since we guarantee that each validationComplete
+	// call will return a new train workload until we reach MaxTrials.
+
+	// We will use searcher config field if available.
+	// Otherwise we will default to a number of trials that will
+	// guarantee at least one trial at the top rung.
 	var ops []Operation
-	for trial := 0; trial < s.rungs[0].startTrials; trial++ {
+	var maxConcurrentTrials int
+
+	if s.MaxConcurrentTrials != nil {
+		maxConcurrentTrials = min(*s.MaxConcurrentTrials, s.MaxTrials)
+	} else {
+		maxConcurrentTrials = max(
+			min(int(math.Pow(s.Divisor, float64(s.NumRungs-1))), s.MaxTrials),
+			1)
+	}
+
+	for trial := 0; trial < maxConcurrentTrials; trial++ {
 		create := NewCreate(
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
@@ -121,7 +132,6 @@ func (s *asyncHalvingSearch) initialOperations(ctx context) ([]Operation, error)
 		s.rungs[0].outstandingTrials++
 		s.trialRungs[create.RequestID] = 0
 	}
-	fmt.Printf("initializing with %d trials in bottom rung.\n", s.rungs[0].outstandingTrials)
 	return ops, nil
 }
 
@@ -137,8 +147,6 @@ func (s *asyncHalvingSearch) validationCompleted(
 ) ([]Operation, error) {
 	// Extract the relevant metric as a float.
 	metric, err := metrics.Metric(s.AsyncHalvingConfig.Metric)
-	// TODO: For graceful trial termination, if there is an error here, should we still
-	// continue the searcher and always return a new trial?
 	if err != nil {
 		return nil, err
 	}

@@ -26,6 +26,7 @@ func TestASHASearcher(t *testing.T) {
 }
 
 func TestASHASearchMethod(t *testing.T) {
+	maxConcurrentTrials := 1
 	testCases := []valueSimulationTestCase{
 		{
 			name: "smaller is better",
@@ -45,12 +46,13 @@ func TestASHASearchMethod(t *testing.T) {
 			},
 			config: model.SearcherConfig{
 				AsyncHalvingConfig: &model.AsyncHalvingConfig{
-					Metric:           "error",
-					NumRungs:         3,
-					SmallerIsBetter:  true,
-					TargetTrialSteps: 90,
-					MaxTrials:        12,
-					Divisor:          3,
+					Metric:              "error",
+					NumRungs:            3,
+					SmallerIsBetter:     true,
+					TargetTrialSteps:    90,
+					MaxTrials:           12,
+					Divisor:             3,
+					MaxConcurrentTrials: &maxConcurrentTrials,
 				},
 			},
 		},
