@@ -11,33 +11,32 @@ Version 0.12.7
 
 **Release Date:** June 11, 2020
 
-- **Breaking Change:** Gradient clipping for PyTorchTrial should now be specified via `determined.PyTorch.PyTorchCallback` via the `on_before_optimizer_step()` instead of being specified via the experiment configuration. Determined provides two pre-made callbacks for gradient clipping:  `determined.PyTorch.ClipGradsL2Norm` and `determined.PyTorch.ClipGradsL2Value`.
+- **Breaking Change:** Gradient clipping for PyTorchTrial should now be specified via ``determined.PyTorch.PyTorchCallback`` via the ``on_before_optimizer_step()`` instead of being specified via the experiment configuration. Determined provides two pre-made callbacks for gradient clipping: ``determined.PyTorch.ClipGradsL2Norm`` and ``determined.PyTorch.ClipGradsL2Value``.
 
-- Add support for Keras callbacks that stop training by setting the model.stop_training flag to True, including the official EarlyStopping callback: https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/EarlyStopping. When a stop is requested, we will finish the training (or validation) step we are in, checkpoint, and terminate the trial.
+- Add a ``metadata`` field to checkpoints. Checkpoints can now have arbitrary key-value pairs associated with them. These can be edited and retrieved via CLI commands. See <https://docs.determined.ai/latest/how-to/use-trained-models.html#storing-checkpoint-metadata> for more information.
+    - Checkpoint class now contains methods for managing checkpoint metadata.
 
-- Add support for Estimator hooks that stop training by calling run_context.request_stop(), including the official stop_if_no_decrease_hook: https://www.tensorflow.org/api_docs/python/tf/estimator/experimental/stop_if_no_decrease_hook. When a stop is requested, we will finish the training (or validation) step we are in, checkpoint, and terminate the trial.
+- Support for Keras callbacks that stop training by setting the ``model.stop_training`` flag to True, including the official EarlyStopping callback: <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/EarlyStopping>. When a stop is requested, we will finish the training (or validation) step we are in, checkpoint, and terminate the trial.
 
-- Add support for requesting training to stop programmatically from trial code. We recommend using the official Keras callbacks or Estimator hooks if you are using those frameworks. For PyTorch, you can request a stoppage using the context by calling context.set_stop_requested(True) from a PyTorch callback. When a stop is requested, we will finish the training step we are in, checkpoint, and terminate the trial.
+- Support Estimator hooks that stop training by calling ``run_context.request_stop()``, including the official ``stop_if_no_decrease_hook``: https://www.tensorflow.org/api_docs/python/tf/estimator/experimental/stop_if_no_decrease_hook. When a stop is requested, we will finish the training (or validation) step we are in, checkpoint, and terminate the trial.
 
-- Support errored trials in hyperparameter searches. Before if an error was hit, the whole experiment and search would exit. This also works with trials that use an early stopping callback.
+- Support requests to stop training programmatically from trial code. We recommend using the official Keras callbacks or Estimator hooks if you are using those frameworks. For PyTorch, you can request a stoppage using the context by calling ``context.set_stop_requested(True)`` from a PyTorch callback. When a stop is requested, we will finish the training step we are in, checkpoint, and terminate the trial.
 
-- Support multi-GPU training for TF2 models that use IndexedSlices for model parameters.
+- Support errored trials in hyperparameter searches. Previously, the whole experiment and search would exit if an error was hit. This also works with trials that use an early stopping callback.
 
-- Treat NaN as an error now.  The previous behavior was to convert NaNs to the maximum float. This will restart the trial if we have not restarted max_restarts times.
+- Support multi-GPU training for TensorFlow 2 models that use ``IndexedSlices`` for model parameters.
 
-- The sign-in page remembers the last used username.
+- Treat ``NaN`` as an error now. Previously, instances of ``NaN`` were converted to the maximum float. This will restart the trial if we have not restarted max_restarts times.
 
-- Checkpoint metadata is now visible via CLI commands.
+- Preserve the last used user name on the log-in page.
 
-- Added `on_trial_close` to `determined.Estimator.RunHook`. Use this for post-trial cleanup.
-
-- Checkpoint class now contains methods for managing checkpoint metadata.
+- Added ``on_trial_close`` to ``determined.Estimator.RunHook``. Use this for post-trial cleanup.
 
 - Finalize gradient communication prior to applying gradient clipping in PyTorchTrial when perfoming multi-GPU training. 
 
-- Add pause, activate, and cancel actions to the dashboard's task actions
+- WebUI: Add pause, activate, and cancel actions to dashboard tasks.
 
-- Add a det-nobody user (UID=65533) to default images so that there is an out-of-the-box option for running non-privileged containers but with a working HOME directory.
+- Add a ``det-nobody`` user (with UID 65533) to default images. This provides an out-of-the-box option for running non-privileged containers with a working home directory.
 
 Version 0.12.5
 ^^^^^^^^^^^^^^
