@@ -20,7 +20,7 @@
     "tailwindcss": "^1.2.0"
   },
   "scripts": {
-    "preinstall": "npx npm-force-resolutions",
+    "postshrinkwrap": "npx npm-force-resolutions && npm install --ignore-scripts",
     "build-elm": "elm make src/Main.elm",
     "build-css": "postcss styles-in.css",
     "live-workaround": "elm-live --pushstate --proxyPrefix /api --proxyHost http://localhost:8080 src/Main.elm --",
