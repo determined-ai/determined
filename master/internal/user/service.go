@@ -291,6 +291,77 @@ func (s *Service) patchUser(c echo.Context) (interface{}, error) {
 	}, nil
 }
 
+func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
+	type (
+		request struct {
+			NewUsername *string `json:"username,omitempty"`
+		}
+		response struct {
+			message string
+		}
+	)
+
+	body, err := ioutil.ReadAll(c.Request().Body)
+	if err != nil {
+		return nil, err
+	}
+
+	args := struct {
+		Username string `path:"username"`
+	}{}
+	if err = api.BindArgs(&args, c); err != nil {
+		return nil, err
+	}
+
+	var params request
+	if err = json.Unmarshal(body, &params); err != nil {
+		malformedRequestError := echo.NewHTTPError(http.StatusBadRequest, "bad request")
+		return nil, malformedRequestError
+	}
+
+	forbiddenError := echo.NewHTTPError(http.StatusForbidden)
+	authenticatedUser := c.(*context.DetContext).MustGetUser()
+	user, err := s.db.UserByUsername(args.Username)
+	switch err {
+	case nil:
+	case db.ErrNotFound:
+		if authenticatedUser.Admin {
+			return nil, echo.NewHTTPError(
+				http.StatusBadRequest,
+				fmt.Sprintf("failed to get user '%s'", args.Username))
+		}
+		return nil, forbiddenError
+	default:
+		return nil, err
+	}
+
+	if params.NewUsername == nil {
+		malformedRequestError := echo.NewHTTPError(http.StatusBadRequest, "username is required")
+		return nil, malformedRequestError
+	}
+
+	switch u, err := s.db.UserByUsername(*params.NewUsername); {
+	case err == db.ErrNotFound:
+	case err != nil:
+		return nil, err
+	case u != nil:
+		malformedRequestError := echo.NewHTTPError(http.StatusBadRequest, "username is taken")
+		return nil, malformedRequestError
+	}
+
+	if !authenticatedUser.Admin {
+		return nil, forbiddenError
+	}
+
+	if err = s.db.UpdateUsernane(&user.ID, *params.NewUsername); err != nil {
+		return nil, err
+	}
+
+	return response{
+		message: fmt.Sprintf("successfully updated %v", args.Username),
+	}, nil
+}
+
 func (s *Service) postUser(c echo.Context) (interface{}, error) {
 	type (
 		request struct {

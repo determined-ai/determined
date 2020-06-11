@@ -66,6 +66,15 @@ def update_user(
     return api.patch(master_address, "users/{}".format(username), body=request)
 
 
+def update_username(
+    current_username: str,
+    master_address: str,
+    new_username: str,
+) -> Response:
+    request = { "username": new_username }
+    return api.patch(master_address, "users/{}/username".format(current_username), body=request)
+
+
 @authentication_required
 def list_users(args: Namespace) -> None:
     render.render_objects(
@@ -118,6 +127,12 @@ def log_out_user(parsed_args: Namespace) -> None:
             raise e
 
     auth_inst.token_store.drop_user(auth_inst.get_session_user())
+
+
+@authentication_required
+def change_username(parsed_args: Namespace) -> None:
+    auth_inst = api.Authentication.instance()
+    update_username(parsed_args.target_user, parsed_args.master, parsed_args.new_username)
 
 
 @authentication_required
@@ -205,6 +220,10 @@ args_description = [
         Cmd("list", list_users, "list users", [], is_default=True),
         Cmd("login", log_in_user, "log in user", [
             Arg("username", nargs="?", default=None, help="name of user to log in as")
+        ]),
+        Cmd("change-username", change_username, "change username for user", [
+            Arg("target_user", default=None, help="name of user whose username should be changed"),
+            Arg("new_username", default=None, help="new username for target_user"),
         ]),
         Cmd("change-password", change_password, "change password for user", [
             Arg("target_user", nargs="?", default=None, help="name of user to change password of")
