@@ -126,7 +126,7 @@ def log_out_user(parsed_args: Namespace) -> None:
 
 
 @authentication_required
-def change_username(parsed_args: Namespace) -> None:
+def rename(parsed_args: Namespace) -> None:
     update_username(parsed_args.target_user, parsed_args.master, parsed_args.new_username)
 
 
@@ -216,7 +216,7 @@ args_description = [
         Cmd("login", log_in_user, "log in user", [
             Arg("username", nargs="?", default=None, help="name of user to log in as")
         ]),
-        Cmd("change-username", change_username, "change username for user", [
+        Cmd("rename", rename, "change username for user", [
             Arg("target_user", default=None, help="name of user whose username should be changed"),
             Arg("new_username", default=None, help="new username for target_user"),
         ]),

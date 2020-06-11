@@ -321,6 +321,10 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 
 	forbiddenError := echo.NewHTTPError(http.StatusForbidden)
 	authenticatedUser := c.(*context.DetContext).MustGetUser()
+	if !authenticatedUser.Admin {
+		return nil, forbiddenError
+	}
+
 	user, err := s.db.UserByUsername(args.Username)
 	switch err {
 	case nil:
@@ -348,11 +352,7 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "username is taken")
 	}
 
-	if !authenticatedUser.Admin {
-		return nil, forbiddenError
-	}
-
-	if err = s.db.UpdateUsernane(&user.ID, *params.NewUsername); err != nil {
+	if err = s.db.UpdateUsername(&user.ID, *params.NewUsername); err != nil {
 		return nil, err
 	}
 
