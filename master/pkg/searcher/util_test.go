@@ -1,7 +1,6 @@
 package searcher
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -389,7 +388,6 @@ func simulateWorkloadComplete(
 		}
 		metrics := CheckpointMetrics{}
 		ops, err = method.checkpointCompleted(ctx, requestID, w, metrics)
-		fmt.Println("BBBBBsimulationWorkloadComplete returning ops: ", ops)
 		if err != nil {
 			return nil, errors.Wrap(err, "checkpointCompleted")
 		}
@@ -398,6 +396,5 @@ func simulateWorkloadComplete(
 		return nil, errors.Errorf("invalid workload operation of kind %q", operation.Kind)
 	}
 
-	fmt.Println("BBBBBsimulationWorkloadComplete returning ops: ", ops)
 	return ops, nil
 }
