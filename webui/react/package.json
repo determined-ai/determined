@@ -26,6 +26,7 @@
     "axios": "^0.19.2",
     "fp-ts": "^2.6.2",
     "history": "^4.10.1",
+    "humanize-duration": "^3.23.1",
     "io-ts": "^2.2.4",
     "js-sha512": "^0.8.0",
     "plotly.js-basic-dist": "^1.54.1",
