@@ -123,3 +123,17 @@ export const commandTypeToLabel: {[key in CommandType]: string} = {
 export function hasKey<O>(obj: O, key: keyof any): key is keyof O {
   return key in obj;
 }
+
+// differentiate Experiment from Task
+export const isExperiment = (obj: AnyTask | Experiment): obj is Experiment => {
+  return 'config' in obj; // FIXME
+};
+
+// used when properties are named differently between objects.
+// DISCUSS is there a better TS way?
+export const oneOfProperties = <T>(obj: any, props: string[]): T => {
+  for (const prop of props) {
+    if (prop in obj) return obj[prop] as T;
+  }
+  throw new Error('no matching property');
+};
