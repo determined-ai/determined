@@ -26,7 +26,10 @@ func TestRandomTournamentSearcher(t *testing.T) {
 func TestRandomTournamentSearcherReproducibility(t *testing.T) {
 	conf := model.RandomConfig{MaxTrials: 5, MaxSteps: 8}
 	gen := func() SearchMethod {
-		return newTournamentSearch(newRandomSearch(conf, defaultBatchesPerStep), newRandomSearch(conf, defaultBatchesPerStep))
+		return newTournamentSearch(
+			newRandomSearch(conf, defaultBatchesPerStep),
+			newRandomSearch(conf, defaultBatchesPerStep),
+		)
 	}
 	checkReproducibility(t, gen, nil, defaultMetric)
 }

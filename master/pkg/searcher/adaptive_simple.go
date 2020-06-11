@@ -37,7 +37,9 @@ func newAdaptiveSimpleSearch(config model.AdaptiveSimpleConfig, batchesPerStep i
 }
 
 func newSyncHalvingSimpleSearch(
-	config model.SyncHalvingConfig, trials, batchesPerStep int,
+	config model.SyncHalvingConfig,
+	trials,
+	batchesPerStep int,
 ) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
 	expectedSteps := 0

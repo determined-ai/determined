@@ -22,7 +22,6 @@ type syncHalvingSearch struct {
 	expectedWorkloads int
 	trialsCompleted   int
 	batchesPerStep    int
-	totalBatches      int
 }
 
 const shaExitedMetricValue = math.MaxFloat64

@@ -118,7 +118,8 @@ func TestGridSearcher(t *testing.T) {
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 	}
-	checkSimulation(t, newGridSearch(actual, defaultBatchesPerStep), params, ConstantValidation, expected)
+	searchMethod := newGridSearch(actual, defaultBatchesPerStep)
+	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
 }
 
 func TestGridSearchMethod(t *testing.T) {

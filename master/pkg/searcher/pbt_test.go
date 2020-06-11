@@ -190,7 +190,8 @@ func TestPBTSearcherReproducibility(t *testing.T) {
 		PBTReplaceConfig: model.PBTReplaceConfig{TruncateFraction: 0.5},
 		PBTExploreConfig: model.PBTExploreConfig{ResampleProbability: 0.5, PerturbFactor: 0.5},
 	}
-	checkReproducibility(t, func() SearchMethod { return newPBTSearch(conf, defaultBatchesPerStep) }, nil, defaultMetric)
+	searchMethod := func() SearchMethod { return newPBTSearch(conf, defaultBatchesPerStep) }
+	checkReproducibility(t, searchMethod, nil, defaultMetric)
 }
 
 func testPBTExploreWithSeed(t *testing.T, seed uint32) {

@@ -22,7 +22,8 @@ func TestSHASearcher(t *testing.T) {
 		toKinds("12S 1V 38S 1V"),
 		toKinds("12S 1V 38S 1V 150S 1V 600S 1V"),
 	}
-	checkSimulation(t, newSyncHalvingSearch(actual, defaultBatchesPerStep), nil, ConstantValidation, expected)
+	searchMethod := newSyncHalvingSearch(actual, defaultBatchesPerStep)
+	checkSimulation(t, searchMethod, nil, ConstantValidation, expected)
 }
 
 func TestSHASearchMethod(t *testing.T) {
