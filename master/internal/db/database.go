@@ -8,4 +8,4 @@ import (
 var ErrNotFound = errors.New("not found")
 
 // ErrDuplicateRecord is returned when trying to create a row that already exists.
-var ErrDuplicateRecord = errors.New("duplicate")
+var ErrDuplicateRecord = errors.New("row already exists")

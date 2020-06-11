@@ -5,8 +5,8 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/userv1";
 
 // User is an account in the determined cluster.
 message User {
-    // The id of the user.
-    int32 id = 1;
+    reserved 1;
+    reserved "id";
     // The user login name of the user.
     string username = 2;
     // Bool denoting whether the account is an admin account.
@@ -21,11 +21,7 @@ message User {
 // agent host machine.
 message AgentUserGroup {
     // The user id on the agent.
-    int32 agent_uid = 5;
+    int32 agent_uid = 1;
     // The group id on the agent.
-    int32 agent_gid = 6;
-    // The user name on the agent.
-    string agent_user = 7;
-    // The user group on the agent.
-    string agent_group = 8;
+    int32 agent_gid = 2;
 }

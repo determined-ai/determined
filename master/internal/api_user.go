@@ -18,16 +18,13 @@ var errUserNotFound = status.Error(codes.NotFound, "user not found")
 
 func toProtoUserFromFullUser(user model.FullUser) *userv1.User {
 	var agentUserGroup *userv1.AgentUserGroup
-	if user.AgentUID.Valid || user.AgentGID.Valid || user.AgentUser.Valid || user.AgentGroup.Valid {
+	if user.AgentUID.Valid || user.AgentGID.Valid {
 		agentUserGroup = &userv1.AgentUserGroup{
-			AgentUid:   int32(user.AgentUID.ValueOrZero()),
-			AgentGid:   int32(user.AgentGID.ValueOrZero()),
-			AgentUser:  user.AgentUser.ValueOrZero(),
-			AgentGroup: user.AgentGroup.ValueOrZero(),
+			AgentUid: int32(user.AgentUID.ValueOrZero()),
+			AgentGid: int32(user.AgentGID.ValueOrZero()),
 		}
 	}
 	return &userv1.User{
-		Id:             int32(user.ID),
 		Username:       user.Username,
 		Admin:          user.Admin,
 		Active:         user.Active,
@@ -47,14 +44,11 @@ func getUser(d *db.PgDB, username string) (*userv1.User, error) {
 	agentUserGroup, err := d.AgentUserGroup(user.ID)
 	if agentUserGroup != nil {
 		protoAug = &userv1.AgentUserGroup{
-			AgentUid:   int32(agentUserGroup.UID),
-			AgentGid:   int32(agentUserGroup.GID),
-			AgentUser:  agentUserGroup.User,
-			AgentGroup: agentUserGroup.Group,
+			AgentUid: int32(agentUserGroup.UID),
+			AgentGid: int32(agentUserGroup.GID),
 		}
 	}
 	return &userv1.User{
-		Id:             int32(user.ID),
 		Username:       user.Username,
 		Admin:          user.Admin,
 		Active:         user.Active,
@@ -86,18 +80,18 @@ func (a *apiServer) GetUser(
 
 func (a *apiServer) PostUser(
 	ctx context.Context, req *apiv1.PostUserRequest) (*apiv1.PostUserResponse, error) {
-	if err := grpc.ValidateRequest(
-		func() (bool, string) { return req.User != nil, "no user specified" },
-		func() (bool, string) { return req.User.Username != "", "no username specified" },
-	); err != nil {
-		return nil, err
-	}
 	curUser, _, err := grpc.GetUser(ctx, a.m.db)
 	if err != nil {
 		return nil, err
 	}
 	if !curUser.Admin {
 		return nil, grpc.ErrPermissionDenied
+	}
+	if err = grpc.ValidateRequest(
+		func() (bool, string) { return req.User != nil, "no user specified" },
+		func() (bool, string) { return req.User.Username != "", "no username specified" },
+	); err != nil {
+		return nil, err
 	}
 	user := &model.User{
 		Username: req.User.Username,
@@ -110,10 +104,8 @@ func (a *apiServer) PostUser(
 	var agentUserGroup *model.AgentUserGroup
 	if req.User.AgentUserGroup != nil {
 		agentUserGroup = &model.AgentUserGroup{
-			User:  req.User.AgentUserGroup.AgentUser,
-			UID:   int(req.User.AgentUserGroup.AgentUid),
-			Group: req.User.AgentUserGroup.AgentGroup,
-			GID:   int(req.User.AgentUserGroup.AgentGid),
+			UID: int(req.User.AgentUserGroup.AgentUid),
+			GID: int(req.User.AgentUserGroup.AgentGid),
 		}
 	}
 
