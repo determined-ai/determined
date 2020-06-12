@@ -389,13 +389,20 @@ class PyTorchTrialController(det.LoopTrialController):
             if self.use_amp():
                 with apex.amp.scale_loss(loss, self.context.optimizer) as scaled_loss:
                     scaled_loss.backward()
+                    if self.hvd_config.use and communicate_and_update:
+                        # When using horovod, we need to finish communicating gradient
+                        # updates before they are unscaled which happens when we exit
+                        # of this context manager.
+                        self.context.optimizer.synchronize()
             else:
                 loss.backward()
 
-            if communicate_and_update:
-                if self.hvd_config.use:
+                # Communication needs to be synchronized so that is completed
+                # before we apply gradient clipping and `step()`.
+                if communicate_and_update and self.hvd_config.use:
                     self.context.optimizer.synchronize()
 
+            if communicate_and_update:
                 parameters = (
                     self.context.model.parameters()
                     if not self.use_amp()
