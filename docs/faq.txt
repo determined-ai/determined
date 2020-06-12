@@ -80,6 +80,6 @@ Can I train Tensorflow core model in Determined?
 
 Determined has support for TensorFlow models that use the :ref:`tf.keras <tf-keras-trial>`
 or :ref:`Estimator <estimator-trial>` APIs. For models that use the low-level TensorFlow
-Core APIs, we recommend to port your model to use :ref:`Estimator Trial <estimator-trial>`.
+Core APIs, we recommend porting your model to use :ref:`Estimator Trial <estimator-trial>`.
 `Example of converting a Tensorflow graph into an Estimator
 <https://github.com/determined-ai/determined/blob/master/examples/experimental/mnist_tp_to_estimator/model_def.py>`_.
