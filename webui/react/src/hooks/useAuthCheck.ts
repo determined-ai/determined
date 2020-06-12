@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import Auth from 'contexts/Auth';
 import handleError, { ErrorType } from 'ErrorHandler';
-import { getCurrentUser } from 'services/api';
+import { getCurrentUser, isAuthFailure } from 'services/api';
 import { getCookie } from 'utils/browser';
 
 const useAuthCheck = (): (() => void) => {
@@ -28,6 +28,8 @@ const useAuthCheck = (): (() => void) => {
         const user = await getCurrentUser({ cancelToken });
         setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, user } });
       } catch (e) {
+        if (axios.isCancel(e)) return;
+        const isAuthError = isAuthFailure(e);
         handleError({
           error: e,
           isUserTriggered: false,
@@ -35,10 +37,12 @@ const useAuthCheck = (): (() => void) => {
           publicMessage: 'Unable to verify current user.',
           publicSubject: 'GET user failed',
           silent: true,
-          type: ErrorType.Auth,
+          type: isAuthError ? ErrorType.Auth : ErrorType.Server,
         });
-        setAuth({ type: Auth.ActionType.Reset });
-        setAuth({ type: Auth.ActionType.MarkChecked });
+        if (isAuthError) {
+          setAuth({ type: Auth.ActionType.Reset });
+          setAuth({ type: Auth.ActionType.MarkChecked });
+        }
       }
     };
 
