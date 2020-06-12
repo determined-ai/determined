@@ -51,6 +51,21 @@
     white-space: pre-wrap;
     word-break: break-word;
   }
+  .scrollToLatest {
+    bottom: var(--theme-sizes-layout-big);
+    box-shadow: var(--theme-shadow);
+    opacity: 0;
+    position: absolute;
+    right: var(--theme-sizes-layout-big);
+    transition: opacity 0.2s linear;
+    user-select: none;
+    visibility: hidden;
+  }
+  .scrollToLatest.show {
+    opacity: 1;
+    user-select: auto;
+    visibility: visible;
+  }
   .debugger {
     display: flex;
     padding: 0 var(--theme-sizes-layout-medium);

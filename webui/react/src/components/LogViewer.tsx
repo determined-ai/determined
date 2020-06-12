@@ -93,12 +93,16 @@ const LogViewer: React.FC<Props> = forwardRef((
   const previousScroll = usePrevious(scroll, defaultScrollInfo);
   const previousLogs = usePrevious<Log[]>(logs, []);
   const classes = [ css.base ];
+  const scrollToLatestClasses = [ css.scrollToLatest ];
 
   const spacerStyle = { height: toRem(config.totalContentHeight) };
   const dateTimeStyle = { width: toRem(config.dateTimeWidth) };
   const lineNumberStyle = { width: toRem(config.lineNumberWidth) };
 
   if (noWrap) classes.push(css.noWrap);
+  if (scroll.scrollTop < scroll.scrollHeight - scroll.viewHeight) {
+    scrollToLatestClasses.push(css.show);
+  }
 
   /*
    * Calculate all the sizes of the log pieces such as the individual character size,
@@ -298,6 +302,11 @@ const LogViewer: React.FC<Props> = forwardRef((
     if (baseRef.current && screenfull.isEnabled) screenfull.toggle();
   }, []);
 
+  const handleScrollToLatest = useCallback(() => {
+    if (!container.current) return;
+    container.current.scrollTo({ behavior: 'smooth', top: Number.MAX_SAFE_INTEGER });
+  }, []);
+
   const logOptions = (
     <Space>
       {debugMode && <div className={css.debugger}>
@@ -342,6 +351,13 @@ const LogViewer: React.FC<Props> = forwardRef((
           </div>
           <div className={css.measure} ref={measure} />
         </div>
+        <Tooltip placement="topRight" title="Scroll to Latest Entry">
+          <Button
+            aria-label="Scroll to Latest Entry"
+            className={scrollToLatestClasses.join(' ')}
+            icon={<Icon name="arrow-down" />}
+            onClick={handleScrollToLatest} />
+        </Tooltip>
       </Section>
     </div>
   );
