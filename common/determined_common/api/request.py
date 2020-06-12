@@ -172,7 +172,7 @@ class WebSocket:
                 or isinstance(event, lomond.events.ProtocolError)
             ):
                 # Any unexpected failures raise the standard API exception.
-                raise errors.BadRequestException(message="WebSocket failure: {}".format(event.name))
+                raise errors.BadRequestException(message="WebSocket failure: {}".format(event))
             elif isinstance(event, lomond.events.Text):
                 # All web socket connections are expected to be in a JSON
                 # format.
