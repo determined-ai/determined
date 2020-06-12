@@ -29,6 +29,16 @@ def make_url(master_address: str, suffix: str) -> str:
     return parse.urljoin(parsed.geturl(), suffix)
 
 
+def maybe_upgrade_ws_scheme(master_address: str) -> str:
+    parsed = parse.urlparse(master_address)
+    if parsed.scheme == "https":
+        return parsed._replace(scheme="wss").geturl()
+    elif parsed.scheme == "http":
+        return parsed._replace(scheme="ws").geturl()
+    else:
+        return master_address
+
+
 def add_token_to_headers(headers: Dict[str, str]) -> Dict[str, str]:
     token = authentication.Authentication.instance().get_session_token()
 
@@ -192,7 +202,7 @@ def ws(host: str, path: str) -> WebSocket:
     """
     Connect to a web socket at the remote API.
     """
-    websocket = lomond.WebSocket(make_url(host, path))
+    websocket = lomond.WebSocket(maybe_upgrade_ws_scheme(make_url(host, path)))
     token = authentication.Authentication.instance().get_session_token()
     websocket.add_header("Authorization".encode(), "Bearer {}".format(token).encode())
     return WebSocket(websocket)
