@@ -10,10 +10,11 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/agent"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	"github.com/determined-ai/determined/master/pkg/agent"
+	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/check"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -92,21 +93,21 @@ func NewDefaultRP(
 	return d
 }
 
-func (d *DefaultRP) assignContainer(task *Task, agent *agentState, slots int, numContainers int) {
+func (d *DefaultRP) assignContainer(task *Task, a *agentState, slots int, numContainers int) {
 	if task.state != taskRunning {
 		task.mustTransition(taskRunning)
 	}
-	container := newContainer(task, agent, slots, len(task.containers))
-	agent.containers[container.id] = container
+	container := newContainer(task, a, slots, len(task.containers))
+	a.containers[container.id] = container
 	task.containers[container.id] = container
 	d.tasksByContainerID[container.id] = task
 	d.assigmentByHandler[task.handler] = append(d.assigmentByHandler[task.handler], assignment{
 		task:                  task,
-		agent:                 agent,
+		agent:                 a,
 		container:             container,
 		numContainers:         numContainers,
 		clusterID:             d.clusterID,
-		devices:               agent.assignFreeDevices(slots, container.id),
+		devices:               a.assignFreeDevices(slots, container.id),
 		harnessPath:           d.harnessPath,
 		taskContainerDefaults: d.taskContainerDefaults,
 	})
@@ -153,7 +154,7 @@ func (d *DefaultRP) terminateTask(task *Task, forcible bool) {
 			if c.state != containerTerminated {
 				c.mustTransition(containerTerminating)
 			}
-			c.agent.handler.System().Tell(c.agent.handler, agent.SignalContainer{
+			c.agent.handler.System().Tell(c.agent.handler, aproto.SignalContainer{
 				ContainerID: cproto.ID(c.id), Signal: syscall.SIGKILL})
 		}
 
@@ -216,6 +217,10 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		actors.NotifyAfter(ctx, actionCooldown, schedulerTick{})
+
+	case sproto.ConfigureEndpoints:
+		ctx.Log().Infof("initializing endpoints for agents")
+		agent.Initialize(msg.System, msg.E, ctx.Self())
 
 	case sproto.AddAgent:
 		ctx.Log().Infof("adding agent: %s", msg.Agent.Address().Local())
@@ -424,7 +429,7 @@ func (d *DefaultRP) receiveContainerStartedOnAgent(
 func (d *DefaultRP) receiveContainerTerminated(
 	ctx *actor.Context,
 	id ContainerID,
-	reason agent.ContainerStopped,
+	reason aproto.ContainerStopped,
 	aborted bool,
 ) {
 	task := d.tasksByContainerID[id]
@@ -472,7 +477,7 @@ func (d *DefaultRP) receiveTaskStopped(ctx *actor.Context, msg taskStopped) {
 	}
 
 	for _, container := range task.containers {
-		d.receiveContainerTerminated(ctx, container.ID(), agent.ContainerError(agent.TaskError,
+		d.receiveContainerTerminated(ctx, container.ID(), aproto.ContainerError(aproto.TaskError,
 			errors.New("task has been stopped")), true)
 	}
 

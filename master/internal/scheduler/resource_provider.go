@@ -1,9 +1,6 @@
 package scheduler
 
 import (
-	"github.com/labstack/echo"
-
-	"github.com/determined-ai/determined/master/internal/agent"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
@@ -63,7 +60,7 @@ func (rp *ResourceProvider) Receive(ctx *actor.Context) error {
 		))
 
 	case AddTask, StartTask, sproto.ContainerStateChanged, SetMaxSlots, SetWeight,
-		SetTaskName, TerminateTask, GetTaskSummary, GetTaskSummaries:
+		SetTaskName, TerminateTask, GetTaskSummary, GetTaskSummaries, sproto.ConfigureEndpoints:
 		rp.forward(ctx, msg)
 
 	default:
@@ -71,11 +68,6 @@ func (rp *ResourceProvider) Receive(ctx *actor.Context) error {
 	}
 
 	return nil
-}
-
-// ConfigureEndpoints initializes the agent endpoints.
-func (rp *ResourceProvider) ConfigureEndpoints(s *actor.System, e *echo.Echo) {
-	agent.Initialize(s, e, rp.resourceProvider)
 }
 
 func (rp *ResourceProvider) forward(ctx *actor.Context, msg actor.Message) {

@@ -6,6 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/labstack/echo"
+
+	"github.com/determined-ai/determined/master/pkg/actor"
+
 	"github.com/docker/docker/pkg/jsonmessage"
 
 	"github.com/determined-ai/determined/master/pkg/agent"
@@ -57,4 +61,11 @@ type ContainerStateChanged struct {
 
 	ContainerStarted *agent.ContainerStarted
 	ContainerStopped *agent.ContainerStopped
+}
+
+// ConfigureEndpoints informs the resource provider to configure
+// the endpoints resources.
+type ConfigureEndpoints struct {
+	System *actor.System
+	E      *echo.Echo
 }

@@ -35,6 +35,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 )
 
 const defaultAskTimeout = 2 * time.Second
@@ -516,7 +517,7 @@ func (m *Master) Run() error {
 	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
 
-	resourceProvider.ConfigureEndpoints(m.system, m.echo)
+	m.system.Tell(m.rp, sproto.ConfigureEndpoints{System: m.system, E: m.echo})
 
 	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "" {
 		if telemetry, err := telemetry.NewActor(
