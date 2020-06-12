@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "preinstall": "npx npm-force-resolutions",
+    "postshrinkwrap": "npx npm-force-resolutions && npm install --ignore-scripts",
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
     "lint": "npm run lint:js && npm run lint:css",
