@@ -9,7 +9,7 @@ import { getMasterLogs } from 'services/api';
 import { LogsParams } from 'services/types';
 import { Log } from 'types';
 
-const TAIL_SIZE = 100;
+const TAIL_SIZE = 10000;
 
 const MasterLogs: React.FC = () => {
   const setUI = UI.useActionContext();
