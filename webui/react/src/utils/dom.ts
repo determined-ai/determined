@@ -1,3 +1,8 @@
+/*
+ * Calculates REM based on base font size of 62.5%.
+ * This causes the ratio between REM to px to be 1 to 10.
+ * So 1rem becomes 10px.
+ */
 export const toRem = (px?: number | string): string => {
   if (px == null) return 'auto';
   if (typeof px === 'number') return `${px / 10}rem`;

@@ -1,6 +1,7 @@
 import { Button, notification, Space, Tooltip } from 'antd';
 import React, {
-  forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState,
+  forwardRef, useCallback, useEffect, useImperativeHandle,
+  useLayoutEffect, useMemo, useRef, useState,
 } from 'react';
 import screenfull from 'screenfull';
 
@@ -76,7 +77,7 @@ const defaultLogConfig = {
  * a reference to be able to call functions inside the LogViewer.
  */
 const LogViewer: React.FC<Props> = forwardRef((
-  { debugMode, noWrap, title, onScrollToTop, ...props }: Props,
+  { debugMode, noWrap, title, onScrollToTop }: Props,
   ref?: React.Ref<LogViewerHandles>,
 ) => {
   const baseRef = useRef<HTMLDivElement>(null);
@@ -252,7 +253,7 @@ const LogViewer: React.FC<Props> = forwardRef((
     if (previousLogs.length === 0 && logs.length > 0) {
       setTimeout(() => {
         if (!container.current) return;
-        container.current.scrollTo({ top: Number.MAX_SAFE_INTEGER });
+        container.current.scrollTo({ top: container.current.scrollHeight });
       });
     }
   }, [ logs, previousLogs ]);
@@ -271,7 +272,7 @@ const LogViewer: React.FC<Props> = forwardRef((
        */
       setTimeout(() => {
         if (!container.current) return;
-        container.current.scrollTo({ top: Number.MAX_SAFE_INTEGER });
+        container.current.scrollTo({ top: container.current.scrollHeight });
       });
     } else if (scrollToInfo.isPrepend) {
       /*
@@ -304,7 +305,7 @@ const LogViewer: React.FC<Props> = forwardRef((
 
   const handleScrollToLatest = useCallback(() => {
     if (!container.current) return;
-    container.current.scrollTo({ behavior: 'smooth', top: Number.MAX_SAFE_INTEGER });
+    container.current.scrollTo({ behavior: 'smooth', top: container.current.scrollHeight });
   }, []);
 
   const logOptions = (

@@ -1,14 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import LogViewer, { LogViewerHandles } from 'components/LogViewer';
+import Page from 'components/Page';
 import Navigation from 'contexts/Navigation';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
 import { getMasterLogs } from 'services/api';
 import { LogsParams } from 'services/types';
 import { Log } from 'types';
-
-import css from './MasterLogs.module.scss';
 
 const TAIL_SIZE = 100;
 
@@ -78,13 +77,13 @@ const MasterLogs: React.FC = () => {
   }, [ logIdRange, pollingLogsResponse.data ]);
 
   return (
-    <div className={css.base}>
+    <Page hideTitle title="Master Logs">
       <LogViewer
         noWrap
         ref={logsRef}
         title="Master Logs"
         onScrollToTop={handleScrollToTop} />
-    </div>
+    </Page>
   );
 };
 
