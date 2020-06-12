@@ -7,7 +7,7 @@ import AuthToken from 'components/AuthToken';
 import DeterminedAuth from 'components/DeterminedAuth';
 import Logo, { LogoTypes } from 'components/Logo';
 import Auth from 'contexts/Auth';
-import FullPageSpinner from 'contexts/FullPageSpinner';
+import UI from 'contexts/UI';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { routeAll } from 'routes';
@@ -24,8 +24,8 @@ interface Queries {
 const SignIn: React.FC = () => {
   const location = useLocation<{ loginRedirect: Location }>();
   const auth = Auth.useStateContext();
-  const showSpinner = FullPageSpinner.useStateContext();
-  const setShowSpinner = FullPageSpinner.useActionContext();
+  const ui = UI.useStateContext();
+  const setUI = UI.useActionContext();
   const queries: Queries = queryString.parse(location.search);
 
   /*
@@ -44,7 +44,7 @@ const SignIn: React.FC = () => {
   useEffect(() => {
     if (auth.isAuthenticated) {
       // Stop the spinner, prepping for user redirect.
-      setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
+      setUI({ type: UI.ActionType.HideSpinner });
 
       // Show auth token via notification if requested via query parameters.
       if (queries.cli) notification.open({ description: <AuthToken />, duration: 0, message: '' });
@@ -53,15 +53,15 @@ const SignIn: React.FC = () => {
       const redirect = queries.redirect || locationToPath((location.state || {}).loginRedirect);
       routeAll(redirect || defaultAppRoute.path);
     } else if (auth.checked) {
-      setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
+      setUI({ type: UI.ActionType.HideSpinner });
     }
   }, [
     auth.checked,
     auth.isAuthenticated,
     location.state,
     queries,
-    setShowSpinner,
-    showSpinner,
+    setUI,
+    ui,
   ]);
 
   // Stop the polling upon a dismount of this page.

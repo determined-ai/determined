@@ -4,7 +4,7 @@ import React, { useCallback, useState } from 'react';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import Auth from 'contexts/Auth';
-import FullPageSpinner from 'contexts/FullPageSpinner';
+import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { getCurrentUser, isLoginFailure, login } from 'services/api';
 import { Credentials } from 'types';
@@ -22,12 +22,12 @@ const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
 
 const DeterminedAuth: React.FC = () => {
   const setAuth = Auth.useActionContext();
-  const setShowSpinner = FullPageSpinner.useActionContext();
+  const setUI = UI.useActionContext();
   const [ isBadCredentials, setIsBadCredentials ] = useState(false);
   const [ canSubmit, setCanSubmit ] = useState(!!storage.get(STORAGE_KEY_LAST_USERNAME));
 
   const onFinish = useCallback(async (creds: FromValues): Promise<void> => {
-    setShowSpinner({ opaque: false, type: FullPageSpinner.ActionType.Show });
+    setUI({ opaque: false, type: UI.ActionType.ShowSpinner });
     setCanSubmit(false);
     try {
       await login(creds as Credentials);
@@ -37,7 +37,7 @@ const DeterminedAuth: React.FC = () => {
     } catch (e) {
       const isBadCredentialsSync = isLoginFailure(e);
       setIsBadCredentials(isBadCredentialsSync); // this is not a sync operation
-      setShowSpinner({ type: FullPageSpinner.ActionType.Hide });
+      setUI({ type: UI.ActionType.HideSpinner });
       const actionMsg = isBadCredentialsSync ? 'check your username and password.' : 'retry.';
       if (isBadCredentialsSync) storage.remove(STORAGE_KEY_LAST_USERNAME);
       handleError({
@@ -52,7 +52,7 @@ const DeterminedAuth: React.FC = () => {
     } finally {
       setCanSubmit(true);
     }
-  }, [ setAuth, setShowSpinner ]);
+  }, [ setAuth, setUI ]);
 
   const onValuesChange = useCallback((changes: FromValues, values: FromValues): void => {
     const hasUsername = !!values.username;

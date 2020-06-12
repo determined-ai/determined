@@ -13,9 +13,8 @@ import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Experiments from 'contexts/Experiments';
-import FullPageSpinner from 'contexts/FullPageSpinner';
 import Info from 'contexts/Info';
-import Navigation from 'contexts/Navigation';
+import UI from 'contexts/UI';
 import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
@@ -31,19 +30,18 @@ import css from './App.module.scss';
 
 const AppView: React.FC = () => {
   const { isAuthenticated, user } = Auth.useStateContext();
-  const { showChrome } = Navigation.useStateContext();
+  const ui = UI.useStateContext();
   const cluster = ClusterOverview.useStateContext();
   const info = Info.useStateContext();
   const setInfo = Info.useActionContext();
-  const showSpinner = FullPageSpinner.useStateContext();
-  const setShowSpinner = FullPageSpinner.useActionContext();
+  const setUI = UI.useActionContext();
   const username = user ? user.username : undefined;
   const [ infoResponse, requestInfo ] = useRestApiSimple<{}, DeterminedInfo>(getInfo, {});
   const classes = [ css.base ];
 
   const fetchInfo = useCallback(() => requestInfo({}), [ requestInfo ]);
 
-  if (!showChrome) classes.push(css.noChrome);
+  if (!ui.showChrome) classes.push(css.noChrome);
 
   updateFaviconType(cluster.allocation !== 0);
 
@@ -96,18 +94,18 @@ const AppView: React.FC = () => {
   }, [ info ]);
 
   useEffect(() => {
-    setShowSpinner({ opaque: true, type: FullPageSpinner.ActionType.Show });
-  }, [ setShowSpinner ]);
+    setUI({ opaque: true, type: UI.ActionType.ShowSpinner });
+  }, [ setUI ]);
 
   return (
     <div className={classes.join(' ')}>
-      {isAuthenticated && showChrome && <NavBar username={username} />}
+      {isAuthenticated && ui.showChrome && <NavBar username={username} />}
       {isAuthenticated && <AppContexts />}
       <div className={css.body}>
-        {isAuthenticated && showChrome && <SideBar />}
+        {isAuthenticated && ui.showChrome && <SideBar />}
         <Router routes={appRoutes} />
       </div>
-      {showSpinner.isShowing && <Spinner fullPage opaque={showSpinner.isOpaque} />}
+      {ui.showSpinner && <Spinner fullPage opaque={ui.opaqueSpinner} />}
     </div>
   );
 };
@@ -116,7 +114,6 @@ const App: React.FC = () => {
   return (
     <Compose components={[
       Auth.Provider,
-      Navigation.Provider,
       Info.Provider,
       Users.Provider,
       Agents.Provider,
@@ -127,7 +124,7 @@ const App: React.FC = () => {
       Notebooks.Provider,
       Shells.Provider,
       Tensorboards.Provider,
-      FullPageSpinner.Provider,
+      UI.Provider,
     ]}>
       <AppView />
     </Compose>

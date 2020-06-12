@@ -15,10 +15,6 @@ export interface Credentials {
   username: string;
 }
 
-export interface Navigation {
-  showChrome: boolean;
-}
-
 export interface DeterminedInfo {
   clusterId: string;
   masterId: string;
