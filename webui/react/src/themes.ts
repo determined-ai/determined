@@ -147,26 +147,26 @@ export const lightTheme: Theme = {
   },
 };
 
-export const getStateColor = (state: RunState | CommandState | undefined): string => {
-  const stateColorMapping = {
-    [RunState.Active]: 'var(--theme-colors-states-active)',
-    [RunState.Canceled]: 'var(--theme-colors-states-inactive)',
-    [RunState.Completed]: 'var(--theme-colors-states-success)',
-    [RunState.Deleted]: 'var(--theme-colors-states-failed)',
-    [RunState.Errored]: 'var(--theme-colors-states-failed)',
-    [RunState.Paused]: 'var(--theme-colors-states-suspended)',
-    [RunState.StoppingCanceled]: 'var(--theme-colors-states-inactive)',
-    [RunState.StoppingCompleted]: 'var(--theme-colors-states-success)',
-    [RunState.StoppingError]: 'var(--theme-colors-states-failed)',
-    [CommandState.Pending]: 'var(--theme-colors-states-suspended)',
-    [CommandState.Assigned]: 'var(--theme-colors-states-suspended)',
-    [CommandState.Pulling]: 'var(--theme-colors-states-active)',
-    [CommandState.Starting]: 'var(--theme-colors-states-active)',
-    [CommandState.Running]: 'var(--theme-colors-states-active)',
-    [CommandState.Terminating]: 'var(--theme-colors-states-inactive)',
-    [CommandState.Terminated]: 'var(--theme-colors-states-inactive)',
-  };
+const stateColorMapping = {
+  [RunState.Active]: 'var(--theme-colors-states-active)',
+  [RunState.Canceled]: 'var(--theme-colors-states-inactive)',
+  [RunState.Completed]: 'var(--theme-colors-states-success)',
+  [RunState.Deleted]: 'var(--theme-colors-states-failed)',
+  [RunState.Errored]: 'var(--theme-colors-states-failed)',
+  [RunState.Paused]: 'var(--theme-colors-states-suspended)',
+  [RunState.StoppingCanceled]: 'var(--theme-colors-states-inactive)',
+  [RunState.StoppingCompleted]: 'var(--theme-colors-states-success)',
+  [RunState.StoppingError]: 'var(--theme-colors-states-failed)',
+  [CommandState.Pending]: 'var(--theme-colors-states-suspended)',
+  [CommandState.Assigned]: 'var(--theme-colors-states-suspended)',
+  [CommandState.Pulling]: 'var(--theme-colors-states-active)',
+  [CommandState.Starting]: 'var(--theme-colors-states-active)',
+  [CommandState.Running]: 'var(--theme-colors-states-active)',
+  [CommandState.Terminating]: 'var(--theme-colors-states-inactive)',
+  [CommandState.Terminated]: 'var(--theme-colors-states-inactive)',
+};
 
+export const getStateColor = (state: RunState | CommandState | undefined): string => {
   return stateColorMapping[state || RunState.Active];
 };
 

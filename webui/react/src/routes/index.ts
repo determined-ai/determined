@@ -1,6 +1,7 @@
 import { pathToRegexp } from 'path-to-regexp';
 import { RouteProps } from 'react-router';
 
+import Cluster from 'pages/Cluster';
 import Dashboard from 'pages/Dashboard';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
@@ -36,7 +37,15 @@ const dashboardRoute =
     title: 'Dashboard',
   };
 
-export const defaultAppRoute = dashboardRoute;
+const clusterRoute =
+  {
+    component: Cluster,
+    icon: 'cluster',
+    id: 'cluster',
+    needAuth: true,
+    path: '/det/cluster',
+    title: 'Cluster',
+  };
 
 const taskListRoute =
   {
@@ -48,9 +57,12 @@ const taskListRoute =
     title: 'Tasks',
   };
 
+export const defaultAppRoute = dashboardRoute;
+
 export const appRoutes: RouteConfig[] = [
   dashboardRoute,
   taskListRoute,
+  clusterRoute,
   {
     component: SignIn,
     id: 'login',
