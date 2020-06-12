@@ -1,22 +1,24 @@
 import { Button, notification, Space, Tooltip } from 'antd';
 import React, {
-  forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState,
+  forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState,
 } from 'react';
 import screenfull from 'screenfull';
 
 import Icon from 'components/Icon';
 import Section from 'components/Section';
-import useScroll from 'hooks/useScroll';
+import usePrevious from 'hooks/usePrevious';
+import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
 import { Log } from 'types';
 import { ansiToHtml, toRem } from 'utils/dom';
 
 import css from './LogViewer.module.scss';
 
 interface Props {
+  debugMode?: boolean;
   noWrap?: boolean;
   ref?: React.Ref<LogViewerHandles>;
   title: string;
-  onLoadOlderLogs?: (oldestLogId: number) => void;
+  onScrollToTop?: (oldestLogId: number) => void;
 }
 
 interface MessageSize {
@@ -59,117 +61,52 @@ const BUFFER_FACTOR = 1;
 // Max datetime size: [YYYY-MM-DDTHH:mm:ss.ssssss-HH:mm]
 const MAX_DATETIME_LENGTH = 35;
 
+const defaultLogConfig = {
+  charHeight: 0,
+  charWidth: 0,
+  dateTimeWidth: 0,
+  lineNumberWidth: 0,
+  messageSizes: {},
+  messageWidth: 0,
+  totalContentHeight: 0,
+};
+
 /*
  * The LogViewer is wrapped with `forwardRef` to provide the parent component
  * a reference to be able to call functions inside the LogViewer.
  */
 const LogViewer: React.FC<Props> = forwardRef((
-  props: Props,
+  { debugMode, noWrap, title, onScrollToTop, ...props }: Props,
   ref?: React.Ref<LogViewerHandles>,
 ) => {
   const baseRef = useRef<HTMLDivElement>(null);
   const container = useRef<HTMLDivElement>(null);
   const spacer = useRef<HTMLDivElement>(null);
   const measure = useRef<HTMLDivElement>(null);
-  const { scroll, scrollTo } = useScroll(container);
-  const [ logIds, setLogIds ] = useState<Record<number, boolean>>({});
+  const scroll = useScroll(container);
   const [ logs, setLogs ] = useState<Log[]>([]);
-  const [ hasAutoScrolled, setHasAutoScrolled ] = useState(false);
-  const [ isLoadingOlderLogs, setIsLoadingOlderLogs ] = useState(false);
-  const [ prevScrollHeight, setPrevScrollHeight ] = useState(0);
-  const [ config, setConfig ] = useState<LogConfig>({
-    charHeight: 0,
-    charWidth: 0,
-    dateTimeWidth: 0,
-    lineNumberWidth: 0,
-    messageSizes: {},
-    messageWidth: 0,
-    totalContentHeight: 0,
-  });
+  const [ logIdRange, setLogIdRange ] =
+    useState({ max: Number.MIN_SAFE_INTEGER, min: Number.MAX_SAFE_INTEGER });
+  const [ scrollToInfo, setScrollToInfo ] =
+    useState({ isBottom: false, isPrepend: false, logId: 0 });
+  const [ config, setConfig ] = useState<LogConfig>(defaultLogConfig);
+  const previousScroll = usePrevious(scroll, defaultScrollInfo);
+  const previousLogs = usePrevious<Log[]>(logs, []);
   const classes = [ css.base ];
 
   const spacerStyle = { height: toRem(config.totalContentHeight) };
   const dateTimeStyle = { width: toRem(config.dateTimeWidth) };
   const lineNumberStyle = { width: toRem(config.lineNumberWidth) };
 
-  if (props.noWrap) classes.push(css.noWrap);
-
-  const addLogs = useCallback((addedLogs: Log[], prepend = false): void => {
-    // Mark that the loading of older logs is complete.
-    if (prepend) setIsLoadingOlderLogs(false);
-
-    // Only process new logs that don't exist in the log viewer
-    const newLogIds: Record<number, boolean> = {};
-    const newLogs = addedLogs.filter(log => {
-      newLogIds[log.id] = true;
-      return config.messageSizes[log.id] == null && !logIds[log.id];
-    });
-
-    // Add new logs to existing logs either in the beginning or the end.
-    setLogIds(prevLogIds => ({ ...prevLogIds, ...newLogIds }));
-    setLogs(prevLogs => prepend ? [ ...newLogs, ...prevLogs ] : [ ...prevLogs, ...newLogs ]);
-
-    /*
-     * Preserve the current scroll height to restore scroll position when loading
-     * prepending logs.
-     */
-    if (container.current) setPrevScrollHeight(container.current.scrollHeight);
-
-    // Automatically scroll to the bottom of the log if adding the first set of logs.
-    if (logs.length === 0) {
-      setTimeout(() => {
-        if (!container.current) return;
-        const top = container.current?.scrollHeight - container.current?.clientHeight;
-        scrollTo({ behavior: 'auto', top }).then(() => setHasAutoScrolled(true));
-      }, 0);
-    }
-  }, [ config, container, logIds, logs, scrollTo ]);
+  if (noWrap) classes.push(css.noWrap);
 
   /*
-   * Figure out which logs lines to actually render based on whether it
-   * is visible in the scroll view window or not.
+   * Calculate all the sizes of the log pieces such as the individual character size,
+   * line numbers, datetime and message whenever new logs are added.
    */
-  const visibleLogs = useMemo(() => {
-    if (config.totalContentHeight === 0) return logs;
-
-    const viewTop = scroll.scrollTop - scroll.viewHeight * BUFFER_FACTOR;
-    const viewBottom = scroll.scrollTop + scroll.viewHeight * (1 + BUFFER_FACTOR);
-    return logs.filter(log => {
-      const size = config.messageSizes[log.id];
-      if (!size) return false;
-      const top = size.top;
-      const bottom = size.top + size.height;
-      return (top > viewTop && top < viewBottom) || (bottom > viewTop && bottom < viewBottom);
-    });
-  }, [ config, logs, scroll ]);
-
-  /*
-   * The useImperitiveHandle hook provides the parent component
-   * access to functions defined here to modify LogViewer state.
-   */
-  useImperativeHandle(ref, () => ({ addLogs }));
-
-  /*
-   * Pass scrollToTop event to parent when user has manually scrolled to the top.
-   * Detecting just the scrollTop position of 0 is not enough since 0 is
-   * the default position until the first set of logs are added.
-   */
-  useEffect(() => {
-    if (!props.onLoadOlderLogs) return;
-    if (isLoadingOlderLogs) return;
-    if (logs.length === 0) return;
-    if (scroll.scrollTop > 0 || !hasAutoScrolled) return;
-    setIsLoadingOlderLogs(true);
-    props.onLoadOlderLogs(logs[0].id - 1);
-  }, [ hasAutoScrolled, isLoadingOlderLogs, logs, props, props.onLoadOlderLogs, scroll ]);
-
-  /*
-   * This side effect calculates all the sizes of the log parts such as
-   * the line numbers, datetime and message whenever new logs are added.
-   */
-  useEffect(() => {
+  const measureLogs = useCallback((logs): LogConfig => {
     // Check to make sure all the necessary elements are available.
-    if (!container.current || !measure.current || !spacer.current) return;
+    if (!measure.current || !spacer.current) throw new Error('Missing log measuring elements.');
 
     // Fetch container sizes for upcoming calculations.
     const spacerRect = spacer.current.getBoundingClientRect();
@@ -211,7 +148,7 @@ const LogViewer: React.FC<Props> = forwardRef((
     let totalContentHeight = 0;
     const messageSizes: Record<string, MessageSize> = {};
     measure.current.style.width = toRem(messageWidth);
-    logs.forEach(line => {
+    logs.forEach((line: Log) => {
       /* eslint-disable @typescript-eslint/no-non-null-assertion */
       measure.current!.textContent = line.message;
       const rect = measure.current!.getBoundingClientRect();
@@ -219,9 +156,11 @@ const LogViewer: React.FC<Props> = forwardRef((
       totalContentHeight += rect.height;
     });
 
-    // Save all the calculated sizes for log view configuartion.
-    setConfig(prevConfig => ({
-      ...prevConfig,
+    // Hide the measure element
+    measure.current.style.display = 'none';
+
+    // Return all the calculated sizes for log view configuartion.
+    return {
       charHeight: charRect.height,
       charWidth: charRect.width,
       dateTimeWidth,
@@ -229,27 +168,131 @@ const LogViewer: React.FC<Props> = forwardRef((
       messageSizes,
       messageWidth,
       totalContentHeight,
+    };
+  }, []);
+
+  const addLogs = useCallback((addedLogs: Log[], prepend = false): void => {
+    // Only process new logs that don't exist in the log viewer
+    const newLogs = addedLogs.filter(log => log.id < logIdRange.min || log.id > logIdRange.max);
+    if (newLogs.length === 0) return;
+
+    // Add new logs to existing logs either at the beginning or the end.
+    const updatedLogs = prepend ? [ ...newLogs, ...logs ] : [ ...logs, ...newLogs ];
+    const logConfig = measureLogs(updatedLogs);
+
+    setConfig(logConfig);
+    setScrollToInfo({
+      isBottom: scroll.scrollTop >= scroll.scrollHeight - scroll.viewHeight,
+      isPrepend: prepend,
+      logId: logs[0]?.id,
+    });
+    setLogs(updatedLogs);
+    setLogIdRange(prevLogIdRange => ({
+      max: Math.max(prevLogIdRange.max, newLogs[newLogs.length - 1].id),
+      min: Math.min(prevLogIdRange.min, newLogs[0].id),
     }));
+  }, [ logs, logIdRange, measureLogs, scroll ]);
 
-    // Hide the measure element
-    measure.current.style.display = 'none';
+  /*
+   * Figure out which logs lines to actually render based on whether it
+   * is visible in the scroll view window or not.
+   */
+  const visibleLogs = useMemo(() => {
+    if (config.totalContentHeight === 0) return logs;
 
-    // Scroll to previous position
-    if (logs.length !== 0) {
-      scrollTo({ behavior: 'auto', top: totalContentHeight - prevScrollHeight });
+    const viewTop = scroll.scrollTop - scroll.viewHeight * BUFFER_FACTOR;
+    const viewBottom = scroll.scrollTop + scroll.viewHeight * (1 + BUFFER_FACTOR);
+
+    return logs.filter(log => {
+      const size = config.messageSizes[log.id];
+      if (!size) return false;
+      const top = size.top;
+      const bottom = size.top + size.height;
+      return (top > viewTop && top < viewBottom) || (bottom > viewTop && bottom < viewBottom);
+    });
+  }, [ config, logs, scroll ]);
+
+  /*
+   * The useImperitiveHandle hook provides the parent component
+   * access to functions defined here to modify LogViewer state.
+   */
+  useImperativeHandle(ref, () => ({ addLogs }));
+
+  /*
+   * Pass event of user manually scrolling to the top to parent
+   * in order to notify the parent to attempt to load older log entries.
+   */
+  useEffect(() => {
+    // If there no logs to begin with, no need to load older logs.
+    if (logs.length === 0) return;
+
+    // Check to make sure the scroll position is at the top.
+    if (scroll.scrollTop > 0) return;
+
+    // Skip if the previous state was already at the top.
+    if (previousScroll.scrollTop === 0) return;
+
+    // Skip if there isn't a callback.
+    if (!onScrollToTop) return;
+
+    // Send the callback the id of the earliest log entry.
+    onScrollToTop(logs[0].id - 1);
+  }, [ logs, previousScroll, onScrollToTop, scroll ]);
+
+  /*
+   * Scroll to the latest log entry when showing the very first
+   * set of log entries. `setTimeout` is needed to ensure that
+   * `scrollTo` occurs after the layout has settled.
+   */
+  useLayoutEffect(() => {
+    if (previousLogs.length === 0 && logs.length > 0) {
+      setTimeout(() => {
+        if (!container.current) return;
+        container.current.scrollTo({ top: Number.MAX_SAFE_INTEGER });
+      });
     }
-  }, [ logs, prevScrollHeight, scrollTo ]);
+  }, [ logs, previousLogs ]);
+
+  /*
+   * This effect handles two special scrolling cases.
+   * One for loading new log entries and another for when older
+   * log entries have loaded. This is to allow the most seamless
+   * user experience when scrolling through log entries.
+   */
+  useLayoutEffect(() => {
+    if (scrollToInfo.isBottom) {
+      /*
+       * Automatically scroll to the latest log entry if previously
+       * viewing the lastest log entry.
+       */
+      setTimeout(() => {
+        if (!container.current) return;
+        container.current.scrollTo({ top: Number.MAX_SAFE_INTEGER });
+      });
+    } else if (scrollToInfo.isPrepend) {
+      /*
+       * Restore the previous scroll position when loading older
+       * log entries.
+       */
+      setTimeout(() => {
+        if (!container.current) return;
+        const top = config.messageSizes[scrollToInfo.logId].top;
+        container.current.scrollTo({ top });
+      });
+    }
+  }, [ config, scrollToInfo ]);
 
   const handleCopyToClipboard = useCallback(() => {
     const content = logs.map(log => [ log.time, log.message ].join(' ')).join('\n');
 
     navigator.clipboard.writeText(content);
 
+    const linesLabel = logs.length === 1 ? 'line' : 'lines';
     notification.open({
-      description: `Available ${props.title} copied to clipboard.`,
-      message: `${props.title} Copied`,
+      description: `${logs.length} ${linesLabel} copied to the clipboard.`,
+      message: `Available ${title} Copied`,
     });
-  }, [ logs, props.title ]);
+  }, [ logs, title ]);
 
   const handleFullScreen = useCallback(() => {
     if (baseRef.current && screenfull.isEnabled) screenfull.toggle();
@@ -257,9 +300,16 @@ const LogViewer: React.FC<Props> = forwardRef((
 
   const logOptions = (
     <Space>
+      {debugMode && <div className={css.debugger}>
+        <span data-label="ScrollLeft:">{scroll.scrollLeft}</span>
+        <span data-label="ScrollTop:">{scroll.scrollTop}</span>
+        <span data-label="ScrollWidth:">{scroll.scrollWidth}</span>
+        <span data-label="ScrollHeight:">{scroll.scrollHeight}</span>
+      </div>}
       <Tooltip placement="bottomRight" title="Copy to Clipboard">
         <Button
           aria-label="Copy to Clipboard"
+          disabled={logs.length === 0}
           icon={<Icon name="clipboard" />}
           onClick={handleCopyToClipboard} />
       </Tooltip>
@@ -274,11 +324,11 @@ const LogViewer: React.FC<Props> = forwardRef((
 
   return (
     <div className={css.base} ref={baseRef}>
-      <Section maxHeight options={logOptions} title={props.title}>
+      <Section maxHeight options={logOptions} title={title}>
         <div className={css.container} ref={container}>
           <div className={css.scrollSpacer} ref={spacer} style={spacerStyle}>
             {visibleLogs.map(log => (
-              <div className={css.line} key={log.id} style={{
+              <div className={css.line} id={`log-${log.id}`} key={log.id} style={{
                 height: toRem(config.messageSizes[log.id]?.height),
                 top: toRem(config.messageSizes[log.id]?.top),
               }}>

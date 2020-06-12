@@ -51,6 +51,21 @@
     white-space: pre-wrap;
     word-break: break-word;
   }
+  .debugger {
+    display: flex;
+    padding: 0 var(--theme-sizes-layout-medium);
+
+    & > span {
+      color: var(--theme-colors-monochrome-6);
+      font-size: var(--theme-sizes-font-small);
+      margin-right: var(--theme-sizes-layout-medium);
+    }
+    & > span::before {
+      color: var(--theme-colors-monochrome-8);
+      content: attr(data-label);
+      margin-right: var(--theme-sizes-layout-small);
+    }
+  }
 }
 .noWrap {
   .right { overflow: auto; }
