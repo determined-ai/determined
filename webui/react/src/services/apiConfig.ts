@@ -137,7 +137,7 @@ export const getExperimentSummaries:  Api<ExperimentsParams, Experiment[]> = {
 const buildQuery = (params: LogsParams): string => {
   const queryParams: Record<string, number> = {};
   if (params.tail) queryParams['tail'] = params.tail;
-  if (params.greaterThanId) queryParams['greater_than_id'] = params.greaterThanId;
+  if (params.greaterThanId != null) queryParams['greater_than_id'] = params.greaterThanId;
   return queryString.stringify(queryParams);
 };
 
