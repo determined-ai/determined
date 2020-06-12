@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Grid from 'components/Grid';
+import { ExperimentsDecorator } from 'storybook/ConetextDecorators';
 import RouterDecorator from 'storybook/RouterDecorator';
 import { ShirtSize } from 'themes';
 import { RecentTask, RunState, TaskType } from 'types';
@@ -10,7 +11,7 @@ import TaskCard from './TaskCard';
 
 export default {
   component: TaskCard,
-  decorators: [ RouterDecorator ],
+  decorators: [ RouterDecorator, ExperimentsDecorator ],
   title: 'TaskCard',
 };
 
