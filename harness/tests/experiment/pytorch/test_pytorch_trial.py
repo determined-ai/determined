@@ -6,7 +6,6 @@ import torch
 
 import determined as det
 from determined import workload
-from determined_common import check
 from tests.experiment import utils  # noqa: I100
 from tests.experiment.fixtures import pytorch_xor_model
 
@@ -349,21 +348,6 @@ class TestPyTorchTrial:
         lrs = [metric["lr"] for metric in training_metrics]
         for i in range(1, len(lrs)):
             assert lrs[i] == lrs[i - 1] + 1
-
-    def test_lr_schedule_user_modify_fail(self, tmp_path: pathlib.Path) -> None:
-        def make_workloads() -> workload.Stream:
-            trainer = utils.TrainAndValidate()
-            yield from trainer.send(steps=10, validation_freq=10, batches_per_step=1)
-            yield workload.terminate_workload(), [], workload.ignore_workload_response
-
-        controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialUserStepLRFail,
-            hparams=self.hparams,
-            workloads=make_workloads(),
-            trial_seed=self.trial_seed,
-        )
-        with pytest.raises(check.CheckFailedError):
-            controller.run()
 
     def test_lr_schedule_user_modify(self, tmp_path: pathlib.Path) -> None:
         def make_workloads() -> workload.Stream:
