@@ -17,19 +17,18 @@ import TaskActionDropdown from './TaskActionDropdown';
 import css from './TaskTable.module.scss';
 
 interface Props extends CommonProps {
-  tasks: Task[];
+  tasks?: Task[];
 }
 
   type Renderer<T> = (text: string, record: T, index: number) => React.ReactNode
 
 const typeRenderer: Renderer<Task> = (_, record) =>
   (<Icon name={record.type.toLowerCase()} />);
-const startTimeRenderer: Renderer<Task> = (_, record) =>
-  (
-    <span title={record.startTime}>
-      <TimeAgo datetime={record.startTime} />
-    </span>
-  );
+const startTimeRenderer: Renderer<Task> = (_, record) => (
+  <span title={record.startTime}>
+    <TimeAgo datetime={record.startTime} />
+  </span>
+);
 const stateRenderer: Renderer<Task> = (_, record) => (
   <Badge state={record.state} type={BadgeType.State} />
 );
@@ -84,6 +83,7 @@ const TaskTable: React.FC<Props> = ({ tasks }: Props) => {
       className={css.base}
       columns={columns}
       dataSource={tasks}
+      loading={tasks === undefined}
       rowClassName={(record) => canBeOpened(record) ? linkCss.base : ''}
       rowKey="id"
       onRow={(record) => {

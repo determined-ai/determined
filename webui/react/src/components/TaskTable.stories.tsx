@@ -18,3 +18,7 @@ const tasks: Task[] = generateTasks();
 export const Default = (): React.ReactNode => {
   return <TaskTable tasks={tasks} />;
 };
+
+export const Loading = (): React.ReactNode => {
+  return <TaskTable />;
+};
