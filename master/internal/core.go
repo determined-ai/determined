@@ -327,7 +327,7 @@ func (m *Master) Run() error {
 
 	proxyRef, _ := m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{})
 
-	resourceProvider := scheduler.NewResourceProvider(
+	defaultRP, _ := m.system.ActorOf(actor.Addr("defaultRP"), scheduler.NewDefaultRP(
 		m.ClusterID,
 		m.config.Scheduler.MakeScheduler(),
 		m.config.Scheduler.FitFunction(),
@@ -335,10 +335,11 @@ func (m *Master) Run() error {
 		filepath.Join(m.config.Root, "wheels"),
 		m.config.TaskContainerDefaults,
 		m.provisioner,
-		provisionerSlotsPerInstance,
-	)
+		provisionerSlotsPerInstance))
 
-	m.rp, _ = m.system.ActorOf(actor.Addr("resourceProvider"), resourceProvider)
+	m.rp, _ = m.system.ActorOf(
+		actor.Addr("resourceProvider"),
+		scheduler.NewResourceProvider(defaultRP))
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 
 	rwCoordinator := newRWCoordinator()

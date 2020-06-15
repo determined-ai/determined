@@ -11,7 +11,7 @@ import (
 
 func TestResourceProviderForwardMessage(t *testing.T) {
 	system := actor.NewSystem(t.Name())
-	rp := NewResourceProvider(
+	defaultRP, created := system.ActorOf(actor.Addr("defaultRP"), NewDefaultRP(
 		"cluster",
 		NewFairShareScheduler(),
 		BestFit,
@@ -20,9 +20,10 @@ func TestResourceProviderForwardMessage(t *testing.T) {
 		model.TaskContainerDefaultsConfig{},
 		nil,
 		0,
-	)
+	))
+	assert.Assert(t, created)
 
-	rpActor, created := system.ActorOf(actor.Addr("resourceProvider"), rp)
+	rpActor, created := system.ActorOf(actor.Addr("resourceProvider"), NewResourceProvider(defaultRP))
 	assert.Assert(t, created)
 
 	taskSummary := system.Ask(rpActor, GetTaskSummaries{}).Get()
