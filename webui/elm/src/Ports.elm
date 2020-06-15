@@ -10,6 +10,7 @@ port module Ports exposing
     , kickResizePort
     , loadAnalytics
     , openNewWindowPort
+    , reloadPage
     , requestFullscreenPort
     , resizeAceEditor
     , setAnalyticsEventPort
@@ -93,6 +94,9 @@ port setFavicon : String -> Cmd a
 
 
 port assignLocation : String -> Cmd a
+
+
+port reloadPage : () -> Cmd a
 
 
 

@@ -27,6 +27,7 @@ type Msg
     | SlotsTick
     | GotSlots (List Types.Slot)
     | ToggleUserDropdownMenu Bool
+    | OutdatedVersion
       -- Authentication stuff.
     | ValidatedAuthentication Url (Result Http.Error Types.SessionUser)
     | GotAuthenticationResponse Url (Result Http.Error ())

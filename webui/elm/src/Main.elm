@@ -269,6 +269,9 @@ update msg model =
         ToggleUserDropdownMenu value ->
             ( { model | userDropdownOpen = value }, Cmd.none )
 
+        OutdatedVersion ->
+            ( model, Ports.reloadPage () )
+
         -- Authentication stuff.
         ValidatedAuthentication url result ->
             case result of

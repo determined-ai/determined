@@ -39,6 +39,7 @@ let DetShims = function() {
     addClipboardPorts(app);
     addSetPageTitlePort(app);
     addAssignLocationPort(app);
+    addReloadPage(app);
     addSegmentAnalyticsPorts(app);
     addSetFavicon(app);
   }
@@ -194,6 +195,15 @@ let DetShims = function() {
   function addAssignLocationPort(app) {
     app.ports.assignLocation.subscribe((uri) => {
       window.location.assign(uri);
+    });
+  }
+
+  function addReloadPage(app) {
+    app.ports.reloadPage.subscribe(() => {
+      const now = Date.now();
+      const url = new window.URL(window.location.href);
+      url.search = url.search ? `${url.search}&ts=${now}` : `ts=${now}`;
+      window.location.href = url.toString();
     });
   }
 

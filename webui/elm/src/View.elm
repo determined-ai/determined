@@ -10,6 +10,7 @@ import Model exposing (Model, Page(..))
 import Msg exposing (Msg)
 import Page.Cluster
 import Page.CommandList
+import Page.Common
 import Page.ExperimentDetail
 import Page.ExperimentList
 import Page.LogViewer
@@ -54,6 +55,7 @@ viewBody model =
         , div [ class "flex-shrink" ]
             [ renderToasts model.toasts ]
         , maybeCriticalErrorPopup model
+        , maybeUpdateVersionPopup model
         ]
     ]
 
@@ -461,6 +463,43 @@ maybeCriticalErrorPopup model =
                         ]
                     ]
                 ]
+
+        Nothing ->
+            text ""
+
+
+maybeUpdateVersionPopup : Model -> Html Msg
+maybeUpdateVersionPopup model =
+    case model.info of
+        Just info ->
+            let
+                buttonUpdateNow =
+                    Page.Common.buttonCreator
+                        { action = Page.Common.SendMsg Msg.OutdatedVersion
+                        , bgColor = "blue"
+                        , fgColor = "white"
+                        , isActive = True
+                        , isPending = False
+                        , style = Page.Common.TextOnly
+                        , text = "Update Now"
+                        }
+            in
+            if info.version /= model.version then
+                div
+                    [ class "absolute flex flex-col bg-white bottom-0 right-0 m-6 p-6"
+                    , style "box-shadow" "0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05)"
+                    ]
+                    [ div [ class "mb-2" ] [ text "New WebUI Version" ]
+                    , span [ class "mb-2" ]
+                        [ text "WebUI version "
+                        , i [ class "font-bold" ] [ text info.version ]
+                        , text " is available."
+                        ]
+                    , buttonUpdateNow
+                    ]
+
+            else
+                text ""
 
         Nothing ->
             text ""
