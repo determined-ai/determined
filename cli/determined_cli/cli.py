@@ -238,7 +238,7 @@ def main(args: List[str] = sys.argv[1:]) -> None:
 
         cert_fn = str(auth.get_config_path().joinpath("master.crt"))
         if os.path.exists(cert_fn):
-            os.environ["REQUESTS_CA_BUNDLE"] = cert_fn
+            api.request.set_master_cert_bundle(cert_fn)
 
         try:
             try:
@@ -274,7 +274,7 @@ def main(args: List[str] = sys.argv[1:]) -> None:
 
                 with open(cert_fn, "w") as out:
                     out.write(cert_pem_data)
-                os.environ["REQUESTS_CA_BUNDLE"] = cert_fn
+                api.request.set_master_cert_bundle(cert_fn)
 
                 check_version(parsed_args)
 

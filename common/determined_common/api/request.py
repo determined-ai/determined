@@ -9,6 +9,14 @@ import simplejson
 
 from determined_common.api import authentication, errors
 
+# The path to a file containing an SSL certificate to trust specifically for the master, if any.
+_master_cert_bundle = None
+
+
+def set_master_cert_bundle(path: str) -> None:
+    global _master_cert_bundle
+    _master_cert_bundle = path
+
 
 def parse_master_address(master_address: str) -> parse.ParseResult:
     if master_address.startswith("https://"):
@@ -66,7 +74,14 @@ def do_request(
         h = add_token_to_headers(h)
 
     try:
-        r = requests.request(method, make_url(host, path), params=params, json=body, headers=h)
+        r = requests.request(
+            method,
+            make_url(host, path),
+            params=params,
+            json=body,
+            headers=h,
+            verify=_master_cert_bundle,
+        )
     except requests.exceptions.SSLError:
         raise
     except requests.exceptions.ConnectionError as e:
