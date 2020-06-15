@@ -68,6 +68,7 @@ const columns: ColumnsType<Task> = [
   },
   {
     render: userRenderer,
+    // TODO get user from users context
     sorter: (a, b): number => alphanumericSorter(a.username || a.id, a.username ||  b.id),
     title: 'User',
   },
