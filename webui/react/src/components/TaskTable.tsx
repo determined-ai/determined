@@ -3,16 +3,16 @@ import { ColumnsType } from 'antd/lib/table';
 import React from 'react';
 import TimeAgo from 'timeago-react';
 
-import Avatar from 'components/Avatar';
-import Badge from 'components/Badge';
-import linkCss from 'components/Link.module.scss';
 import { CommandState, CommonProps, Task } from 'types';
 import { alphanumericSorter, commandStateSorter, stringTimeSorter } from 'utils/data';
 import { canBeOpened } from 'utils/task';
 
+import Avatar from './Avatar';
+import Badge from './Badge';
 import { BadgeType } from './Badge';
 import Icon from './Icon';
 import { handleClick } from './Link';
+import linkCss from './Link.module.scss';
 import TaskActionDropdown from './TaskActionDropdown';
 import css from './TaskTable.module.scss';
 
