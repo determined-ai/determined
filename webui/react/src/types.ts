@@ -224,4 +224,5 @@ export enum TBSourceType {
 export type CommonProps = {
   className?: string;
   children?: React.ReactNode;
+  title?: string;
 }
