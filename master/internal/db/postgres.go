@@ -385,6 +385,19 @@ FROM (
 	return db.rawQuery(fmt.Sprintf(queryTemplate, strings.Join(averageMetrics, ",")), id)
 }
 
+// CheckExperimentExists checks if the experiment exists.
+func (db *PgDB) CheckExperimentExists(id int) (bool, error) {
+	var exists bool
+	err := db.sql.QueryRow(`
+SELECT
+EXISTS(
+  select id
+  FROM experiments
+  WHERE id = $1
+)`, id).Scan(&exists)
+	return exists, err
+}
+
 // ExperimentCheckpointsRaw returns a JSON string describing checkpoints for a given experiment,
 // either all of them or the best subset.
 func (db *PgDB) ExperimentCheckpointsRaw(id int, numBest *int) ([]byte, error) {
@@ -1811,6 +1824,9 @@ func (db *PgDB) queryRows(
 		return err
 	}
 	defer rows.Close()
+	if v == nil {
+		return nil
+	}
 	vType := reflect.TypeOf(v).Elem()
 	switch kind := vType.Kind(); kind {
 	case reflect.Slice:

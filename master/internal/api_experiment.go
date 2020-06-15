@@ -15,6 +15,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+
+	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 func (a *apiServer) GetExperiments(
@@ -104,4 +106,97 @@ func (a *apiServer) PreviewHPSearch(
 		}
 	}
 	return &apiv1.PreviewHPSearchResponse{Simulation: protoSim}, nil
+}
+
+func (a *apiServer) ActivateExperiment(
+	ctx context.Context, req *apiv1.ActivateExperimentRequest) (
+	resp *apiv1.ActivateExperimentResponse, err error) {
+	existsInDB, err := a.m.db.CheckExperimentExists(int(req.Id))
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if !existsInDB {
+		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	}
+
+	addr := actor.Addr("experiments", req.Id).String()
+	err = a.actorRequest(addr, req, &resp)
+	if status.Code(err) == codes.NotFound {
+		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
+	}
+	return resp, err
+}
+
+func (a *apiServer) PauseExperiment(
+	ctx context.Context, req *apiv1.PauseExperimentRequest) (
+	resp *apiv1.PauseExperimentResponse, err error) {
+	existsInDB, err := a.m.db.CheckExperimentExists(int(req.Id))
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if !existsInDB {
+		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	}
+	if _, err = a.m.db.ExperimentRaw(int(req.Id)); err != nil {
+		return nil, status.Errorf(codes.NotFound, "%s; experiment %d not found.", err.Error(), req.Id)
+	}
+
+	addr := actor.Addr("experiments", req.Id).String()
+	err = a.actorRequest(addr, req, &resp)
+	if status.Code(err) == codes.NotFound {
+		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
+	}
+	return resp, err
+}
+
+func (a *apiServer) CancelExperiment(
+	ctx context.Context, req *apiv1.CancelExperimentRequest) (
+	resp *apiv1.CancelExperimentResponse, err error) {
+	existsInDB, err := a.m.db.CheckExperimentExists(int(req.Id))
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if !existsInDB {
+		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	}
+
+	addr := actor.Addr("experiments", req.Id).String()
+	err = a.actorRequest(addr, req, &resp)
+	if status.Code(err) == codes.NotFound {
+		return &apiv1.CancelExperimentResponse{}, nil
+	}
+	return resp, err
+}
+
+func (a *apiServer) KillExperiment(
+	ctx context.Context, req *apiv1.KillExperimentRequest) (
+	resp *apiv1.KillExperimentResponse, err error) {
+	existsInDB, err := a.m.db.CheckExperimentExists(int(req.Id))
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if !existsInDB {
+		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	}
+
+	addr := actor.Addr("experiments", req.Id).String()
+	err = a.actorRequest(addr, req, &resp)
+	if status.Code(err) == codes.NotFound {
+		return &apiv1.KillExperimentResponse{}, nil
+	}
+	return resp, err
+}
+
+func (a *apiServer) ArchiveExperiment(
+	ctx context.Context, req *apiv1.ArchiveExperimentRequest) (
+	*apiv1.ArchiveExperimentResponse, error) {
+	err := a.m.db.QueryProto("set_experiment_archive", nil, req.Id, true)
+	return &apiv1.ArchiveExperimentResponse{}, err
+}
+
+func (a *apiServer) UnarchiveExperiment(
+	ctx context.Context, req *apiv1.UnarchiveExperimentRequest) (
+	*apiv1.UnarchiveExperimentResponse, error) {
+	err := a.m.db.QueryProto("set_experiment_archive", nil, req.Id, false)
+	return &apiv1.UnarchiveExperimentResponse{}, err
 }

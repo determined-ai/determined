@@ -162,11 +162,15 @@ func (a *apiServer) filter(values interface{}, check func(int) bool) {
 func (a *apiServer) actorRequest(addr string, req actor.Message, v interface{}) error {
 	actorAddr := actor.Address{}
 	if err := actorAddr.UnmarshalText([]byte(addr)); err != nil {
-		return status.Errorf(codes.InvalidArgument, "/api/v1%s is not a valid path", addr)
+		code := codes.InvalidArgument
+		message := fmt.Sprintf("/api/v1%s is not a valid path", addr)
+		return status.Error(code, message)
 	}
 	resp := a.m.system.AskAt(actorAddr, req)
 	if resp.Empty() {
-		return status.Errorf(codes.NotFound, "/api/v1%s not found", addr)
+		code := codes.NotFound
+		message := fmt.Sprintf("/api/v1%s not found", addr)
+		return status.Error(code, message)
 	}
 	if err := resp.Error(); err != nil {
 		return err
