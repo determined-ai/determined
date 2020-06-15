@@ -123,7 +123,7 @@ class WaitForInstructionsCallback(tf.keras.callbacks.Callback):  # type: ignore
 
         check.is_not_none(
             self.tf_keras_trial_controller.train_response_func,
-            "Callback should avoid calling model.predict() or changing model.stop_training, "
+            "Callback should avoid calling model.predict(), "
             "as this will affect Determined training behavior",
         )
         response_func = cast(
@@ -708,7 +708,7 @@ class TFKerasTrial(det.Trial):
         <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/Callback>`__
         objects to be used during the trial’s lifetime.
 
-        Callbacks should avoid calling model.predict() or changing model.stop_training,
-        as this will affect Determined training behavior.
+        Callbacks should avoid calling model.predict(), as this will affect
+        Determined training behavior.
         """
         return []
