@@ -34,13 +34,13 @@ const SideBar: React.FC<Props> = (props: Props) => {
         showLabels={!collapsed}
         type={collapsed ? NavMenuType.SideBarIconOnly : NavMenuType.SideBar} />
       <div className={css.footer}>
-        <NavItem
+        {/* <NavItem
           icon="logs"
           path="/det/logs"
           popout={true}
           type={collapsed ? NavItemType.SideBarIconOnly : NavItemType.SideBar}>
           Master Logs
-        </NavItem>
+        </NavItem> */}
         {/* <NavItem icon={collapsed ? 'expand' : 'collapse'}
           type={collapsed ? NavItemType.SideBarIconOnly : NavItemType.SideBar}
           onClick={handleClick}>

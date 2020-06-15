@@ -29,6 +29,9 @@
     white-space: pre-wrap;
     word-break: break-word;
   }
+  .datetimeTooltip {
+    white-space: nowrap;
+  }
   .line {
     display: flex;
     position: absolute;
@@ -52,11 +55,11 @@
     word-break: break-word;
   }
   .scrollToLatest {
-    bottom: var(--theme-sizes-layout-big);
+    bottom: var(--theme-sizes-layout-huge);
     box-shadow: var(--theme-shadow);
     opacity: 0;
     position: absolute;
-    right: var(--theme-sizes-layout-big);
+    right: var(--theme-sizes-layout-huge);
     transition: opacity 0.2s linear;
     user-select: none;
     visibility: hidden;

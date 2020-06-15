@@ -10,6 +10,7 @@ import Section from 'components/Section';
 import usePrevious from 'hooks/usePrevious';
 import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
 import { Log } from 'types';
+import { formatDatetime } from 'utils/date';
 import { ansiToHtml, toRem } from 'utils/dom';
 
 import css from './LogViewer.module.scss';
@@ -20,6 +21,10 @@ interface Props {
   ref?: React.Ref<LogViewerHandles>;
   title: string;
   onScrollToTop?: (oldestLogId: number) => void;
+}
+
+interface ViewerLog extends Log {
+  formattedTime: string;
 }
 
 interface MessageSize {
@@ -59,8 +64,11 @@ export interface LogViewerHandles {
 // What factor to multiply against the displayable lines in the visible view.
 const BUFFER_FACTOR = 1;
 
-// Max datetime size: [YYYY-MM-DDTHH:mm:ss.ssssss-HH:mm]
-const MAX_DATETIME_LENGTH = 35;
+// Format the datetime to...
+const DATETIME_FORMAT = 'MM-DD HH:mm:ss';
+
+// Max datetime size: [MM-DD HH:mm:ss] (plus 1 for a space suffix)
+const MAX_DATETIME_LENGTH = 17;
 
 const defaultLogConfig = {
   charHeight: 0,
@@ -85,7 +93,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   const spacer = useRef<HTMLDivElement>(null);
   const measure = useRef<HTMLDivElement>(null);
   const scroll = useScroll(container);
-  const [ logs, setLogs ] = useState<Log[]>([]);
+  const [ logs, setLogs ] = useState<ViewerLog[]>([]);
   const [ logIdRange, setLogIdRange ] =
     useState({ max: Number.MIN_SAFE_INTEGER, min: Number.MAX_SAFE_INTEGER });
   const [ scrollToInfo, setScrollToInfo ] =
@@ -153,7 +161,7 @@ const LogViewer: React.FC<Props> = forwardRef((
     let totalContentHeight = 0;
     const messageSizes: Record<string, MessageSize> = {};
     measure.current.style.width = toRem(messageWidth);
-    logs.forEach((line: Log) => {
+    logs.forEach((line: ViewerLog) => {
       /* eslint-disable @typescript-eslint/no-non-null-assertion */
       measure.current!.textContent = line.message;
       const rect = measure.current!.getBoundingClientRect();
@@ -178,7 +186,9 @@ const LogViewer: React.FC<Props> = forwardRef((
 
   const addLogs = useCallback((addedLogs: Log[], prepend = false): void => {
     // Only process new logs that don't exist in the log viewer
-    const newLogs = addedLogs.filter(log => log.id < logIdRange.min || log.id > logIdRange.max);
+    const newLogs = addedLogs
+      .filter(log => log.id < logIdRange.min || log.id > logIdRange.max)
+      .map(log => ({ ...log, formattedTime: formatDatetime(log.time!, DATETIME_FORMAT) }));
     if (newLogs.length === 0) return;
 
     // Add new logs to existing logs either at the beginning or the end.
@@ -288,11 +298,11 @@ const LogViewer: React.FC<Props> = forwardRef((
   }, [ config, scrollToInfo ]);
 
   const handleCopyToClipboard = useCallback(() => {
-    const content = logs.map(log => [ log.time, log.message ].join(' ')).join('\n');
+    const content = logs.map(log => [ log.id, `[${log.time}]`, log.message ].join(' ')).join('\n');
 
     navigator.clipboard.writeText(content);
 
-    const linesLabel = logs.length === 1 ? 'line' : 'lines';
+    const linesLabel = logs.length === 1 ? 'entry' : 'entries';
     notification.open({
       description: `${logs.length} ${linesLabel} copied to the clipboard.`,
       message: `Available ${title} Copied`,
@@ -343,7 +353,11 @@ const LogViewer: React.FC<Props> = forwardRef((
                 top: toRem(config.messageSizes[log.id]?.top),
               }}>
                 <div className={css.number} style={lineNumberStyle}>{log.id + 1}</div>
-                <div className={css.time} style={dateTimeStyle}>{log.time}</div>
+                <Tooltip placement="left" title={log.time || ''}>
+                  <div className={css.time} style={dateTimeStyle}>
+                    {log.formattedTime}
+                  </div>
+                </Tooltip>
                 <div
                   className={css.message}
                   dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }} />
