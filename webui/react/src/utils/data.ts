@@ -68,6 +68,10 @@ const commandStateSortValues: Record<CommandState, number> = {
   [CommandState.Terminated]: 6,
 };
 
+export const commandStateSorter = (a: CommandState, b: CommandState): number => {
+  return commandStateSortValues[a] - commandStateSortValues[b];
+};
+
 export const stateSorter = (a: State, b: State): number => {
   // FIXME this is O(n) we can do it in constant time.
   // What is the right typescript way of doing it?

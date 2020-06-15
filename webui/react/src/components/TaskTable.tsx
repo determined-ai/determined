@@ -6,8 +6,8 @@ import TimeAgo from 'timeago-react';
 import Avatar from 'components/Avatar';
 import Badge from 'components/Badge';
 import linkCss from 'components/Link.module.scss';
-import { CommonProps, Task } from 'types';
-import { alphanumericSorter, stateSorter, stringTimeSorter } from 'utils/data';
+import { CommandState, CommonProps, Task } from 'types';
+import { alphanumericSorter, commandStateSorter, stringTimeSorter } from 'utils/data';
 import { canBeOpened } from 'utils/task';
 
 import { BadgeType } from './Badge';
@@ -64,7 +64,7 @@ const columns: ColumnsType<Task> = [
   },
   {
     render: stateRenderer,
-    sorter: (a, b): number => stateSorter(a.state, b.state),
+    sorter: (a, b): number => commandStateSorter(a.state as CommandState, b.state as CommandState),
     title: 'State',
   },
   {
