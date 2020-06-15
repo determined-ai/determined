@@ -23,7 +23,8 @@ func TestResourceProviderForwardMessage(t *testing.T) {
 	))
 	assert.Assert(t, created)
 
-	rpActor, created := system.ActorOf(actor.Addr("resourceProvider"), NewResourceProvider(defaultRP))
+	rpActor, created := system.ActorOf(actor.Addr("resourceProviders"),
+		NewResourceProviders(defaultRP))
 	assert.Assert(t, created)
 
 	taskSummary := system.Ask(rpActor, GetTaskSummaries{}).Get()

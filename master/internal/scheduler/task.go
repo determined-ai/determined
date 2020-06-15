@@ -62,7 +62,7 @@ type (
 	}
 	// TaskAborted notifies the task actor that it was terminated before being scheduled.
 	TaskAborted struct{}
-	// TaskAssigned notified the task actor that it has been assigned to run
+	// TaskAssigned notifies the task actor that it has been assigned to run
 	// with a specified number of containers.
 	TaskAssigned struct {
 		NumContainers int

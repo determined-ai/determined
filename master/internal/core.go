@@ -292,8 +292,8 @@ func (m *Master) Run() error {
 	// Actor structure:
 	// master system
 	// +- Provisioner (provisioner.Provisioner: provisioner)
-	// +- ResourceProvider (scheduler.ResourceProvider: resourceProvider)
-	//     +- DefaultResourceProvider (scheduler.DefaultResourceProvider: defaultRP)
+	// +- ResourceProviders (scheduler.ResourceProviders: resourceProviders)
+	// +- DefaultResourceProvider (scheduler.DefaultResourceProvider: defaultRP)
 	// +- Service Proxy (proxy.Proxy: proxy)
 	// +- RWCoordinator (internal.rw_coordinator: rwCoordinator)
 	// +- Telemetry (telemetry.telemetryActor: telemetry)
@@ -338,8 +338,8 @@ func (m *Master) Run() error {
 		provisionerSlotsPerInstance))
 
 	m.rp, _ = m.system.ActorOf(
-		actor.Addr("resourceProvider"),
-		scheduler.NewResourceProvider(defaultRP))
+		actor.Addr("resourceProviders"),
+		scheduler.NewResourceProviders(defaultRP))
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 
 	rwCoordinator := newRWCoordinator()

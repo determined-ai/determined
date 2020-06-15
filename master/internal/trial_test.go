@@ -86,7 +86,7 @@ func TestRendezvousInfo(t *testing.T) {
 	system := actor.NewSystem("")
 
 	rp, created := system.ActorOf(
-		actor.Addr("resourceProvider"),
+		actor.Addr("resourceProviders"),
 		scheduler.NewDefaultRP(
 			uuid.New().String(),
 			scheduler.NewFairShareScheduler(),

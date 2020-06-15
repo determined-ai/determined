@@ -84,7 +84,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		// Initialize an event stream manager.
 		c.eventStream, _ = ctx.ActorOf("events", newEventManager())
 		// Schedule the command with the cluster.
-		c.rp = ctx.Self().System().Get(actor.Addr("resourceProvider"))
+		c.rp = ctx.Self().System().Get(actor.Addr("resourceProviders"))
 		ctx.Tell(c.rp, scheduler.AddTask{
 			ID:           &c.taskID,
 			Name:         c.config.Description,
