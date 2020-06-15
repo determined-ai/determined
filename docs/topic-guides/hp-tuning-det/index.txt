@@ -53,7 +53,7 @@ Determined also supports other common hyperparameter search algorithms:
 
 Handling Trial Errors and Early Stopping Requests
 -------------------------------------------------
-When a trial errors, we go try to restart from the latest checkpoint unless we
+When a trial errors, we try to restart from the latest checkpoint unless we
 have done so ``max_restarts`` times, which is configured in the experiment
 configuration. Once we have reached ``max_restarts``, we set the trial as
 errored. For search methods that adapt to validation metric values (Adaptive
