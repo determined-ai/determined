@@ -28,16 +28,21 @@ func (a *apiServer) Login(
 	}
 
 	token, err := a.m.db.StartUserSession(user)
-	return &apiv1.LoginResponse{Token: token}, err
+	if err != nil {
+		return nil, err
+	}
+	fullUser, err := getUser(a.m.db, user.Username)
+	return &apiv1.LoginResponse{Token: token, User: fullUser}, err
 }
 
 func (a *apiServer) CurrentUser(
 	ctx context.Context, _ *apiv1.CurrentUserRequest) (*apiv1.CurrentUserResponse, error) {
-	_, _, err := grpc.GetUser(ctx, a.m.db)
+	user, _, err := grpc.GetUser(ctx, a.m.db)
 	if err != nil {
 		return nil, err
 	}
-	return &apiv1.CurrentUserResponse{}, nil
+	fullUser, err := getUser(a.m.db, user.Username)
+	return &apiv1.CurrentUserResponse{User: fullUser}, err
 }
 
 func (a *apiServer) Logout(

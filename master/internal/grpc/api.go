@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"runtime/debug"
 
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpclogrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
@@ -14,6 +15,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -40,7 +43,12 @@ func StartGRPCServer(db *db.PgDB, srv proto.DeterminedServer, port int) error {
 		)),
 		grpc.UnaryInterceptor(grpcmiddleware.ChainUnaryServer(
 			grpclogrus.UnaryServerInterceptor(logger, opts...),
-			grpcrecovery.UnaryServerInterceptor(),
+			grpcrecovery.UnaryServerInterceptor(grpcrecovery.WithRecoveryHandler(
+				func(p interface{}) (err error) {
+					logger.Error(string(debug.Stack()))
+					return status.Errorf(codes.Internal, "%s", p)
+				},
+			)),
 			authInterceptor(db),
 		)),
 	)

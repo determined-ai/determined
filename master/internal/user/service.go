@@ -410,13 +410,11 @@ func (s *Service) postUser(c echo.Context) (interface{}, error) {
 		Active:   params.Active,
 	}, ug)
 
-	if err != nil {
-		switch err.(type) {
-		case db.ErrDuplicateUser:
-			return nil, echo.NewHTTPError(http.StatusBadRequest, "user already exists")
-		default:
-			return nil, err
-		}
+	switch {
+	case err == db.ErrDuplicateRecord:
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "user already exists")
+	case err != nil:
+		return nil, err
 	}
 
 	telemetry.ReportUserCreated(s.system, params.Admin, params.Active)
