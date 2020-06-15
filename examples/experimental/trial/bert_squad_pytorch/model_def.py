@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 import determined as det
-from determined.pytorch import DataLoader, PyTorchTrial, LRScheduler
+from determined.pytorch import ClipGradsL2Norm, DataLoader, PyTorchCallback, PyTorchTrial, LRScheduler
 import data
 import constants
 
@@ -156,3 +156,6 @@ class BertSQuADPyTorch(PyTorchTrial):
         )
         results = squad_evaluate(self.validation_examples, predictions)
         return results
+
+    def build_callbacks(self) -> Dict[str, PyTorchCallback]:
+        return {"clip_grads": ClipGradsL2Norm(self.context.get_hparam("max_grad_norm"))}
