@@ -24,6 +24,7 @@ import { appRoutes } from 'routes';
 import { getInfo } from 'services/api';
 import { DeterminedInfo } from 'types';
 import { updateFaviconType } from 'utils/browser';
+import { parseUrl } from 'utils/routes';
 
 import css from './App.module.scss';
 
@@ -44,8 +45,8 @@ const AppView: React.FC = () => {
   useRouteTracker();
   useTheme();
 
-  // Poll every 15 minutes
-  usePolling(fetchInfo, { delay: 900000 });
+  // Poll every 10 minutes
+  usePolling(fetchInfo, { delay: 600000 });
 
   useEffect(() => {
     if (!infoResponse.data) return;
@@ -61,7 +62,18 @@ const AppView: React.FC = () => {
 
     // Check to make sure the WebUI version matches the platform version.
     if (info.version !== process.env.VERSION) {
-      const handleRefresh = (): void => window.location.reload(true);
+      /*
+       * The method of cache busting here is to send a query string as most
+       * modern browsers treat different URLs as different files, causing a
+       * request of a fresh copy. The previous method of using `location.reload`
+       * with a `forceReload` boolean has been deprecated and not reliable.
+       */
+      const handleRefresh = (): void => {
+        const now = Date.now();
+        const url = parseUrl(window.location.href);
+        url.search = url.search ? `${url.search}&ts=${now}` : `ts=${now}`;
+        window.location.href = url.toString();
+      };
       const btn = <Button type="primary" onClick={handleRefresh}>Update Now</Button>;
       const message = 'New WebUI Version';
       const description = <div>
