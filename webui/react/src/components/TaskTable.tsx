@@ -14,7 +14,7 @@ import { BadgeType } from './Badge';
 import Icon from './Icon';
 import { handleClick } from './Link';
 import TaskActionDropdown from './TaskActionDropdown';
-import css from './TasksTable.module.scss';
+import css from './TaskTable.module.scss';
 
 interface Props extends CommonProps {
   tasks: Task[];
@@ -78,7 +78,7 @@ const columns: ColumnsType<Task> = [
   },
 ];
 
-const TasksTable: React.FC<Props> = ({ tasks }: Props) => {
+const TaskTable: React.FC<Props> = ({ tasks }: Props) => {
   return (
     <Table
       className={css.base}
@@ -97,4 +97,4 @@ const TasksTable: React.FC<Props> = ({ tasks }: Props) => {
   );
 };
 
-export default TasksTable;
+export default TaskTable;

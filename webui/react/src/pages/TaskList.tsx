@@ -1,7 +1,7 @@
 import React from 'react';
 
 import Page from 'components/Page';
-import TaskTable from 'components/TasksTable';
+import TaskTable from 'components/TaskTable';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import { commandToTask } from 'utils/types';
 

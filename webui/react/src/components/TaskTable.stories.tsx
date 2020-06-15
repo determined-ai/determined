@@ -5,16 +5,16 @@ import RouterDecorator from 'storybook/RouterDecorator';
 import { Task } from 'types';
 import { generateTasks } from 'utils/task';
 
-import TasksTable from './TasksTable';
+import TaskTable from './TaskTable';
 
 export default {
-  component: TasksTable,
+  component: TaskTable,
   decorators: [ RouterDecorator, ExperimentsDecorator ],
-  title: 'TasksTable',
+  title: 'TaskTable',
 };
 
 const tasks: Task[] = generateTasks();
 
 export const Default = (): React.ReactNode => {
-  return <TasksTable tasks={tasks} />;
+  return <TaskTable tasks={tasks} />;
 };
