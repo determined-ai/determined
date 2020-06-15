@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { ExperimentsDecorator } from 'storybook/ConetextDecorators';
 import RouterDecorator from 'storybook/RouterDecorator';
 import { Task } from 'types';
 import { generateTasks } from 'utils/task';
@@ -8,7 +9,7 @@ import TasksTable from './TasksTable';
 
 export default {
   component: TasksTable,
-  decorators: [ RouterDecorator ],
+  decorators: [ RouterDecorator, ExperimentsDecorator ],
   title: 'TasksTable',
 };
 
