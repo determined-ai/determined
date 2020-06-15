@@ -267,7 +267,7 @@ class LoopTrialController(TrialController):
             self.is_chief = hvd.rank() == 0
             training_process_rank = hvd.local_rank()
         else:
-            self.is_chief = self.rendezvous_info.get_rank() == 0
+            self.is_chief = True
             training_process_rank = 0
 
         if self.hvd_config.use and not self.is_chief:
