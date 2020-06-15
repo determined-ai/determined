@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package determined.experiment.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/experimentv1";
+
+import "google/protobuf/timestamp.proto";
+
+enum State {
+    STATE_UNSPECIFIED = 0;
+    STATE_ACTIVE = 1;
+    STATE_PAUSED = 2;
+    STATE_STOPPING_COMPLETED = 3;
+    STATE_STOPPING_CANCELED = 4;
+    STATE_STOPPING_ERROR = 5;
+    STATE_COMPLETED = 6;
+    STATE_CANCELED = 7;
+    STATE_ERROR = 8;
+    STATE_DELETED = 9;
+}
+
+message Experiment {
+    // The id of the experiment.
+    int32 id = 1;
+    // The description of the experiment.
+    string description = 2;
+    // Labels attached to the experiment.
+    repeated string labels = 3;
+    // The time the experiment was started.
+    google.protobuf.Timestamp start_time = 4;
+    // The time the experiment ended if the experiment is stopped.
+    google.protobuf.Timestamp end_time = 5;
+    // The current state of the experiment.
+    State state = 6;
+    // Boolean denoting whether the experiment was archived.
+    bool archived = 7;
+    // The number of trials linked to the experiment.
+    int32 num_trials = 8;
+    // The current progress of the experiment.
+    double progress = 9;
+    // The username of the user that created the experiment.
+    string username = 10;
+}

@@ -3,6 +3,8 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "determined/api/v1/pagination.proto";
+
 import "determined/agent/v1/agent.proto";
 
 // Get a set of agents from the cluster
@@ -15,15 +17,6 @@ message GetAgentsRequest {
         SORT_BY_ID = 1;
         // Returns agents sorted by time.
         SORT_BY_TIME = 2;
-    }
-    // Order agents in either ascending or descending order.
-    enum OrderBy {
-        // Returns agents in no specific order.
-        ORDER_BY_UNSPECIFIED = 0;
-        // Returns agents in ascending order.
-        ORDER_BY_ASC = 1;
-        // Returns agents in descending order.
-        ORDER_BY_DESC = 2;
     }
 
     // Filter agents by their label. If no label is specified or is empty, all agents are

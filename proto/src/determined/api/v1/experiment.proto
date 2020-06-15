@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "google/protobuf/wrappers.proto";
+
+import "determined/api/v1/pagination.proto";
+import "determined/experiment/v1/experiment.proto";
+
+// Get a list of experiments.
+message GetExperimentsRequest {
+    // Sorts experiments by the given field.
+    enum SortBy {
+        // Returns experiments in an unsorted list.
+        SORT_BY_UNSPECIFIED = 0;
+        // Returns experiments sorted by id.
+        SORT_BY_ID = 1;
+        // Returns experiments sorted by description.
+        SORT_BY_DESCRIPTION = 2;
+        // Return experiments sorted by start time.
+        SORT_BY_START_TIME = 3;
+        // Return experiments sorted by end time. Experiments without end times are
+        // returned after experiments that are.
+        SORT_BY_END_TIME = 4;
+        // Return experiments sorted by number of trials.
+        SORT_BY_NUM_TRIALS = 5;
+        // Return experiments sorted by state.
+        SORT_BY_STATE = 6;
+        // Return experiments sorted by progress.
+        SORT_BY_PROGRESS = 7;
+        // Return experiments sorted by user.
+        SORT_BY_USER = 8;
+    }
+    // Sort experiments by the given field
+    SortBy sort_by = 1;
+    // Order experiments in either ascending or descending order.
+    OrderBy order_by = 2;
+    // Skip the number of experiments before returning results. Negative values
+    // denote number of experiments to skip from the end before returning results.
+    int32 offset = 3;
+    // Limit the number of experiments. A value of 0 denotes no limit.
+    int32 limit = 4;
+    // Limit experiments to those that match the description.
+    string description = 5;
+    // Limit experiments to those that are archived.
+    google.protobuf.BoolValue archived = 6;
+    // Limit experiments to those that match the provided state.
+    repeated determined.experiment.v1.State states = 7;
+    // Limit experiments to those that are owned by the specified users.
+    repeated string users = 8;
+}
+// Response to GetExperimentsRequest.
+message GetExperimentsResponse {
+    // The list of returned experiments.
+    repeated determined.experiment.v1.Experiment experiments = 1;
+    // Pagination information of the full dataset.
+    Pagination pagination = 2;
+}

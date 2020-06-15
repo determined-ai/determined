@@ -3,19 +3,12 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "determined/api/v1/pagination.proto";
+
 import "determined/template/v1/template.proto";
 
 // Get a list of templates.
 message GetTemplatesRequest {
-    // Order templates in either ascending or descending order.
-    enum OrderBy {
-        // Returns templates in no specific order.
-        ORDER_BY_UNSPECIFIED = 0;
-        // Returns templates in ascending order.
-        ORDER_BY_ASC = 1;
-        // Returns templates in descending order.
-        ORDER_BY_DESC = 2;
-    }
     // Order templates in either ascending or descending order.
     OrderBy order_by = 1;
 }
