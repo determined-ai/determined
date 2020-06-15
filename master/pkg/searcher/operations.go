@@ -119,22 +119,19 @@ func (create Create) String() string {
 
 // WorkloadOperation encompasses the intent for a searcher to run a workload on a trial.
 type WorkloadOperation struct {
-	RequestID RequestID `json:"request_id"`
-	Kind      Kind      `json:"kind"`
-	StepID    int       `json:"step_id"`
-
-	Metadata WorkloadMetadata `json:"metadata"`
+	RequestID      RequestID `json:"request_id"`
+	Kind           Kind      `json:"kind"`
+	StepID         int       `json:"step_id"`
+	BatchesPerStep int       `json:"batches_per_step"`
 }
 
 // NewTrain signals to a trial runner that it should run a training step.
 func NewTrain(requestID RequestID, stepID, batchesPerStep int) WorkloadOperation {
 	return WorkloadOperation{
-		RequestID: requestID,
-		Kind:      RunStep,
-		StepID:    stepID,
-		Metadata: WorkloadMetadata{
-			BatchesPerStep: batchesPerStep,
-		},
+		RequestID:      requestID,
+		Kind:           RunStep,
+		StepID:         stepID,
+		BatchesPerStep: batchesPerStep,
 	}
 }
 

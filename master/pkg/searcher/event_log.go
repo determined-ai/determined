@@ -99,10 +99,10 @@ func (el *EventLog) TrialCreated(create Create, trialID int) {
 // unrequested workloads and useless duplicate messages will result in a return value of false.
 func (el *EventLog) WorkloadCompleted(message CompletedMessage) bool {
 	op := WorkloadOperation{
-		Kind:      message.Workload.Kind,
-		RequestID: el.RequestIDs[message.Workload.TrialID],
-		StepID:    message.Workload.StepID,
-		Metadata:  message.Workload.Metadata,
+		Kind:           message.Workload.Kind,
+		RequestID:      el.RequestIDs[message.Workload.TrialID],
+		StepID:         message.Workload.StepID,
+		BatchesPerStep: message.Workload.BatchesPerStep,
 	}
 
 	// We log events the first time we see them, even if we are going to ignore them, because

@@ -48,81 +48,65 @@ checkpoint_policy: none
 	validateOperation2 := searcher.NewValidate(create.RequestID, 2)
 
 	trainWorkload1 := searcher.Workload{
-		Kind:         searcher.RunStep,
-		ExperimentID: 1,
-		TrialID:      1,
-		StepID:       1,
-		Metadata: searcher.WorkloadMetadata{
-			BatchesPerStep:   batches,
-			BatchesCompleted: 0,
-		},
+		Kind:             searcher.RunStep,
+		ExperimentID:     1,
+		TrialID:          1,
+		StepID:           1,
+		BatchesPerStep:   batches,
+		BatchesCompleted: 0,
 	}
 	trainWorkload2 := searcher.Workload{
-		Kind:         searcher.RunStep,
-		ExperimentID: 1,
-		TrialID:      1,
-		StepID:       2,
-		Metadata: searcher.WorkloadMetadata{
-			BatchesPerStep:   batches,
-			BatchesCompleted: batches,
-		},
+		Kind:             searcher.RunStep,
+		ExperimentID:     1,
+		TrialID:          1,
+		StepID:           2,
+		BatchesPerStep:   batches,
+		BatchesCompleted: batches,
 	}
 	trainWorkload3 := searcher.Workload{
-		Kind:         searcher.RunStep,
-		ExperimentID: 1,
-		TrialID:      1,
-		StepID:       3,
-		Metadata: searcher.WorkloadMetadata{
-			BatchesPerStep:   batches,
-			BatchesCompleted: 2 * batches,
-		},
+		Kind:             searcher.RunStep,
+		ExperimentID:     1,
+		TrialID:          1,
+		StepID:           3,
+		BatchesPerStep:   batches,
+		BatchesCompleted: 2 * batches,
 	}
 	trainWorkload4 := searcher.Workload{
-		Kind:         searcher.RunStep,
-		ExperimentID: 1,
-		TrialID:      1,
-		StepID:       4,
-		Metadata: searcher.WorkloadMetadata{
-			BatchesPerStep:   batches,
-			BatchesCompleted: 3 * batches,
-		},
+		Kind:             searcher.RunStep,
+		ExperimentID:     1,
+		TrialID:          1,
+		StepID:           4,
+		BatchesPerStep:   batches,
+		BatchesCompleted: 3 * batches,
 	}
 	trainWorkload5 := searcher.Workload{
-		Kind:         searcher.RunStep,
-		ExperimentID: 1,
-		TrialID:      1,
-		StepID:       5,
-		Metadata: searcher.WorkloadMetadata{
-			BatchesPerStep:   batches,
-			BatchesCompleted: 4 * batches,
-		},
+		Kind:             searcher.RunStep,
+		ExperimentID:     1,
+		TrialID:          1,
+		StepID:           5,
+		BatchesPerStep:   batches,
+		BatchesCompleted: 4 * batches,
 	}
 	checkpointWorkload1 := searcher.Workload{
-		Kind:         searcher.CheckpointModel,
-		ExperimentID: 1,
-		TrialID:      1,
-		StepID:       1,
-		Metadata: searcher.WorkloadMetadata{
-			BatchesCompleted: 0,
-		},
+		Kind:             searcher.CheckpointModel,
+		ExperimentID:     1,
+		TrialID:          1,
+		StepID:           1,
+		BatchesCompleted: 0,
 	}
 	checkpointWorkload2 := searcher.Workload{
-		Kind:         searcher.CheckpointModel,
-		ExperimentID: 1,
-		TrialID:      1,
-		StepID:       2,
-		Metadata: searcher.WorkloadMetadata{
-			BatchesCompleted: batches,
-		},
+		Kind:             searcher.CheckpointModel,
+		ExperimentID:     1,
+		TrialID:          1,
+		StepID:           2,
+		BatchesCompleted: batches,
 	}
 	validationWorkload2 := searcher.Workload{
-		Kind:         searcher.ComputeValidationMetrics,
-		ExperimentID: 1,
-		TrialID:      1,
-		StepID:       2,
-		Metadata: searcher.WorkloadMetadata{
-			BatchesCompleted: batches,
-		},
+		Kind:             searcher.ComputeValidationMetrics,
+		ExperimentID:     1,
+		TrialID:          1,
+		StepID:           2,
+		BatchesCompleted: batches,
 	}
 
 	// Sequencer output messages.
