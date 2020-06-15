@@ -57,3 +57,57 @@ message GetExperimentsResponse {
     // Pagination information of the full dataset.
     Pagination pagination = 2;
 }
+
+// Request to pause an experiment
+message PauseExperimentRequest {
+    // The experiment id
+    int32 id = 1;
+}
+// Response to PauseExperimentRequest.
+message PauseExperimentResponse {
+}
+
+// Request to kill an experiment
+message KillExperimentRequest {
+    // The experiment id
+    int32 id = 1;
+}
+// Response to KillExperimentRequest.
+message KillExperimentResponse {
+}
+
+// Request to activate an experiment
+message ActivateExperimentRequest {
+    // The experiment id
+    int32 id = 1;
+}
+// Response to ActivateExperimentRequest.
+message ActivateExperimentResponse {
+}
+
+// Request to cancel an experiment
+message CancelExperimentRequest {
+    // The experiment id
+    int32 id = 1;
+}
+// Response to CancelExperimentRequest.
+message CancelExperimentResponse {
+}
+
+// Request to archive an experiment
+message ArchiveExperimentRequest {
+    // The experiment id
+    int32 id = 1;
+}
+// Response to ArchiveExperimentRequest.
+message ArchiveExperimentResponse {
+}
+
+// Request to unarchive an experiment
+message UnarchiveExperimentRequest {
+    // The experiment id
+    int32 id = 1;
+}
+// Response to UnarchiveExperimentRequest.
+message UnarchiveExperimentResponse {
+}
