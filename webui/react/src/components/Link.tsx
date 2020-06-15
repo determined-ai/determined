@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useCallback } from 'react';
+import React, { PropsWithChildren, useMemo } from 'react';
 
 import { routeAll, setupUrlForDev } from 'routes';
 
@@ -16,7 +16,7 @@ interface Props {
 
 const windowFeatures = [ 'noopener', 'noreferrer' ];
 
-export const handleClick = (path: string, onClick?: OnClick,  popout?: boolean): OnClick => {
+export const handleClick = (path: string, onClick?: OnClick, popout?: boolean): OnClick => {
   return (event: React.MouseEvent): void => {
     const url = setupUrlForDev(path);
 
@@ -38,13 +38,15 @@ const Link: React.FC<Props> = ({
 }: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
   const rel = windowFeatures.join(' ');
+  const handleLinkClick = useMemo(() =>
+    handleClick(path, onClick, popout), [ path, onClick, popout ]);
 
   if (!disabled) classes.push(css.link);
   if (inherit) classes.push(css.inherit);
 
   return (
     <a className={classes.join(' ')} href={path} rel={rel}
-      onClick={handleClick(path, onClick, popout)}>
+      onClick={handleLinkClick}>
       {children}
     </a>
   );

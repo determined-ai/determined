@@ -18,12 +18,12 @@ export default {
 const baseProps: RecentTask = {
   id: '1a2f',
   lastEvent: {
-    date: (new Date()).toString(),
+    date: (Date.now()).toString(),
     name: 'opened',
   },
   ownerId: 5,
   progress: 0.34,
-  startTime: (new Date()).toString(),
+  startTime: (Date.now()).toString(),
   state: RunState.Active,
   title: 'I\'m a task',
   type: TaskType.Experiment,

@@ -11,7 +11,7 @@ export function generateTasks(): RecentTask[] {
   const runStates = new Array(10).fill(0).map(() => getRandomElementOfEnum(RunState));
   const cmdStates = new Array(10).fill(0).map(() => getRandomElementOfEnum(CommandState));
   const states = [ ...runStates, ...cmdStates ];
-  const startTime = (new Date()).toString();
+  const startTime = (Date.now()).toString();
   return states.map((state, idx) => {
     const progress = Math.random();
     const props = {
