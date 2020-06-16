@@ -20,8 +20,8 @@ func (a *apiServer) GetModel(
 		return &apiv1.GetModelResponse{Model: protoTemp}, pErr
 	case db.ErrNotFound:
 		return nil, status.Errorf(
-			codes.NotFound, "error fetching template from database: %s", req.ModelName)
+			codes.NotFound, "model %s not found", req.ModelName)
 	default:
-		return nil, errors.Wrapf(err, "error fetching template from database: %s", req.ModelName)
+		return nil, errors.Wrapf(err, "error fetching model %s from database", req.ModelName)
 	}
 }
