@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, PropsWithChildren, useMemo as useCallback } from 'react';
+import React, { MouseEventHandler, PropsWithChildren, useCallback } from 'react';
 
 import { routeAll, setupUrlForDev } from 'routes';
 
@@ -39,7 +39,7 @@ const Link: React.FC<Props> = ({
   const classes = [ css.base ];
   const rel = windowFeatures.join(' ');
   const handleClick =
-    useCallback(() => makeClickHandler(path, onClick, popout), [ path, onClick, popout ]);
+    useCallback(makeClickHandler(path, onClick, popout), [ path, onClick, popout ]);
 
   if (!disabled) classes.push(css.link);
   if (inherit) classes.push(css.inherit);
