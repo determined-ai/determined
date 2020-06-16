@@ -1,11 +1,11 @@
 package scheduler
 
 import (
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/agent"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
-	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
 

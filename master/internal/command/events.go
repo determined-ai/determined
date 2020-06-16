@@ -11,10 +11,10 @@ import (
 
 	webAPI "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
-	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 )
 
 const defaultEventBufferSize = 200

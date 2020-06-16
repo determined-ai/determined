@@ -1,8 +1,8 @@
 package scheduler
 
 import (
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 )
 
 // ResourceProviders manages the configured resource providers.

@@ -1,11 +1,11 @@
 package scheduler
 
 import (
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
-	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 )
 
 // Outgoing agent actor messages; agent actors must send these events back to the cluster.

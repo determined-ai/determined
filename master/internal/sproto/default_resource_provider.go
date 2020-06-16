@@ -1,4 +1,4 @@
-package scheduler
+package sproto
 
 import (
 	"github.com/determined-ai/determined/master/pkg/actor"

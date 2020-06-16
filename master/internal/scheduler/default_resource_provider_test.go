@@ -10,10 +10,10 @@ import (
 	"github.com/pkg/errors"
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/agent"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
-	sproto "github.com/determined-ai/determined/master/pkg/scheduler"
 )
 
 var errMock = errors.New("mock error")
