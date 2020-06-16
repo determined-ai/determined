@@ -65,10 +65,10 @@ export interface LogViewerHandles {
 const BUFFER_FACTOR = 1;
 
 // Format the datetime to...
-const DATETIME_FORMAT = 'MM-DD HH:mm:ss';
+const DATETIME_FORMAT = 'MMM DD, HH:mm:ss';
 
-// Max datetime size: [MM-DD HH:mm:ss] (plus 1 for a space suffix)
-const MAX_DATETIME_LENGTH = 17;
+// Max datetime size: [MMM DD, HH:mm:ss] (plus 1 for a space suffix)
+const MAX_DATETIME_LENGTH = 19;
 
 const defaultLogConfig = {
   charHeight: 0,
