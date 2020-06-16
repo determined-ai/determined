@@ -1,4 +1,6 @@
 describe('experiment List', () => {
+  const recordSelector = '#experimentsList tr.record';
+
   before(() => {
     cy.login();
     cy.visit('/ui/experiments');
@@ -28,17 +30,17 @@ describe('experiment List', () => {
   describe('table filter', () => {
     describe('archive toggle', () => {
       it('should show archived experiments when clicked', () => {
-        cy.get('#experimentsList tr').should('have.length', 3);
+        cy.get(recordSelector).should('have.length', 3);
         cy.get('#experimentsList .filters input[type=checkbox]').click();
-        cy.get('#experimentsList tr').should('have.length', 4);
+        cy.get(recordSelector).should('have.length', 4);
         cy.get('#experimentsList .filters input[type=checkbox]').click();
-        cy.get('#experimentsList tr').should('have.length', 3);
+        cy.get(recordSelector).should('have.length', 3);
       });
 
       it('should default to hiding archived experiments', () => {
         cy.get('#experimentsList .filters input[type=checkbox]').should('not.have.attr', 'checked');
-        cy.get('#experimentsList tr').should('have.length', 3);
-        cy.get('#experimentsList tr').should('not.contain', 'Yes');
+        cy.get(recordSelector).should('have.length', 3);
+        cy.get(recordSelector).should('not.contain', 'Yes');
       });
     });
   });

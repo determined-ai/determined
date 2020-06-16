@@ -216,6 +216,11 @@ batchArchive =
     }
 
 
+entriesShowIncrement : Int
+entriesShowIncrement =
+    25
+
+
 type alias TableExperiment =
     { experimentResult : Types.ExperimentResult
     , labelWidgetState : LW.State
@@ -274,6 +279,7 @@ type alias LoadedModel =
     , killBtn : Button.Model Msg
     , pendingBatchRequest : Maybe ( BatchOperation, Set.Set Types.ID )
     , pendingTensorBoard : Maybe (Set.Set Types.ID)
+    , numEntriesToShow : Int
     }
 
 
@@ -462,6 +468,7 @@ initLoaded session filterState tableState experiments =
             , pendingBatchRequest = Nothing
             , pendingTensorBoard = Nothing
             , filterState = filterState
+            , numEntriesToShow = entriesShowIncrement
             }
 
         cmd =
@@ -538,6 +545,10 @@ type Msg
       -- that is routed through GotTensorBoardLaunchCycleMsg.
     | GotTensorBoardLaunchCycleMsg (Set.Set Types.ID) TensorBoard.TensorBoardLaunchCycleMsg
     | OpenTBOverSelectedExperiments
+      -- Table control.
+    | ShowLess Int
+    | ShowMore Int
+    | ShowAll
       -- Errors.
     | GotCriticalError Comm.SystemError
     | GotAPIErrorAction ExperimentUpdate Types.ID API.APIError
@@ -911,6 +922,21 @@ updateLoaded msg model session =
 
             else
                 ( model, Cmd.none, Nothing )
+
+        ShowLess n ->
+            ( { model | numEntriesToShow = model.numEntriesToShow - n }, Cmd.none, Nothing )
+
+        ShowMore n ->
+            ( { model | numEntriesToShow = model.numEntriesToShow + n }, Cmd.none, Nothing )
+
+        ShowAll ->
+            let
+                nEntries =
+                    model.experiments
+                        |> Maybe.withDefault []
+                        |> List.length
+            in
+            ( { model | numEntriesToShow = nEntries }, Cmd.none, Nothing )
 
         GotCriticalError crit ->
             ( model, Cmd.none, Comm.Error crit |> Just )
@@ -1440,7 +1466,12 @@ viewTableBody model sess =
                 |> Maybe.Extra.unwrap [] (List.filter (filterExperimentResults model))
     in
     H.div [ HA.class "p-2" ]
-        [ Table.view (tableConfig sess) model.tableSortState Nothing filteredExperiments ]
+        [ Table.view
+            (tableConfig sess model)
+            model.tableSortState
+            (Just model.numEntriesToShow)
+            filteredExperiments
+        ]
 
 
 labelDropdownConfig : DropdownConfig String Msg
@@ -1607,8 +1638,84 @@ checkboxColumn =
         }
 
 
-tableConfig : Session -> Table.Config TableExperiment Msg
-tableConfig sess =
+tableConfig : Session -> LoadedModel -> Table.Config TableExperiment Msg
+tableConfig sess m =
+    let
+        actionClasses =
+            HA.class "font-semibold text-blue-500 hover:text-blue-300 cursor-pointer"
+
+        nEntries =
+            m.experiments
+                |> Maybe.withDefault []
+                |> List.length
+
+        showMore =
+            if nEntries > m.numEntriesToShow then
+                let
+                    remainder =
+                        min entriesShowIncrement (nEntries - m.numEntriesToShow)
+                in
+                Just
+                    (H.span
+                        [ actionClasses, HE.onClick (ShowMore remainder) ]
+                        [ "Show " ++ String.fromInt remainder ++ " more" |> H.text ]
+                    )
+
+            else
+                Nothing
+
+        showLess =
+            if m.numEntriesToShow > entriesShowIncrement then
+                let
+                    reduceCount =
+                        let
+                            remainder =
+                                modBy entriesShowIncrement m.numEntriesToShow
+                        in
+                        if remainder /= 0 then
+                            remainder
+
+                        else
+                            entriesShowIncrement
+                in
+                Just
+                    (H.span
+                        [ actionClasses, HE.onClick (ShowLess reduceCount) ]
+                        [ "Show " ++ String.fromInt reduceCount ++ " fewer" |> H.text ]
+                    )
+
+            else
+                Nothing
+
+        showAll =
+            if nEntries > m.numEntriesToShow then
+                Just
+                    (H.span
+                        [ actionClasses, HE.onClick ShowAll ]
+                        [ "Show all (" ++ String.fromInt nEntries ++ ")" |> H.text ]
+                    )
+
+            else
+                Nothing
+
+        divider =
+            H.div [ HA.class "inline-block border-l border-black mx-4" ] []
+
+        showList =
+            [ showMore, showLess, showAll ]
+                |> Maybe.Extra.values
+                |> List.intersperse divider
+
+        footer =
+            { attributes = []
+            , children =
+                [ H.tr []
+                    [ H.td [ HA.colspan 100 ]
+                        [ H.div [ HA.class "flex flex-row justify-center" ] showList ]
+                    ]
+                ]
+            }
+    in
     Table.customConfig
         { toId = .experimentResult >> unpack .id .id >> String.fromInt
         , toMsg = NewTableState
@@ -1640,14 +1747,14 @@ tableConfig sess =
         , customizations =
             let
                 rowAttrs exp =
-                    [ HA.class "cursor-pointer hover:bg-orange-100"
+                    [ HA.class "record cursor-pointer hover:bg-orange-100"
                     , HE.on "click"
                         (D.map (SendOut << Comm.RouteRequested (Route.ExperimentDetail <| unpack .id .id exp.experimentResult))
                             (D.map2 (||) (D.field "ctrlKey" D.bool) (D.field "metaKey" D.bool))
                         )
                     ]
             in
-            { tableCustomizations | rowAttrs = rowAttrs }
+            { tableCustomizations | rowAttrs = rowAttrs, tfoot = Just footer }
         }
 
 
