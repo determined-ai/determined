@@ -1747,7 +1747,7 @@ tableConfig sess m =
         , customizations =
             let
                 rowAttrs exp =
-                    [ HA.class "cursor-pointer hover:bg-orange-100"
+                    [ HA.class "record cursor-pointer hover:bg-orange-100"
                     , HE.on "click"
                         (D.map (SendOut << Comm.RouteRequested (Route.ExperimentDetail <| unpack .id .id exp.experimentResult))
                             (D.map2 (||) (D.field "ctrlKey" D.bool) (D.field "metaKey" D.bool))
