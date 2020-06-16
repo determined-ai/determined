@@ -7,12 +7,12 @@ from determined_common.experimental import checkpoint
 class ExperimentReference:
     """
     Experiment reference class used for querying relevant
-    :py:class:`det.experimental.Checkpoint` instances.
+    :class:`~determined.experimental.Checkpoint` instances.
 
     Arguments:
         experiment_id (int): The experiment ID.
         master (string, optional): The URL of the Determined master. If this
-            class is obtained via :py:class:`det.experimental.Determined` the
+            class is obtained via :class:`determined.experimental.Determined`, the
             master URL is automatically passed into this constructor.
     """
 
@@ -24,8 +24,8 @@ class ExperimentReference:
         self, sort_by: Optional[str] = None, smaller_is_better: Optional[bool] = None,
     ) -> checkpoint.Checkpoint:
         """
-        Return the :py:class:`det.experimental.Checkpoint` instance with the best
-        validation metric as defined by the `sort_by` and `smaller_is_better`
+        Return the :class:`~determined.experimental.Checkpoint` instance with the best
+        validation metric as defined by the ``sort_by`` and ``smaller_is_better``
         arguments.
 
         Arguments:
@@ -52,21 +52,21 @@ class ExperimentReference:
         self, limit: int, sort_by: Optional[str] = None, smaller_is_better: Optional[bool] = None
     ) -> List[checkpoint.Checkpoint]:
         """
-        Return the N :py:class:`det.experimental.Checkpoint` instances with the best
-        validation metric values as defined by the `sort_by` and `smaller_is_better`
-        arguments. This command will return the best checkpoint from the
+        Return the N :class:`~determined.experimental.Checkpoint` instances with the best
+        validation metric values as defined by the ``sort_by`` and ``smaller_is_better``
+        arguments. This method will return the best checkpoint from the
         top N performing distinct trials of the experiment.
 
         Arguments:
-            sort_by (string, optional): The name of the validation metric to
-                order checkpoints by. If this parameter is unset the metric defined
+            sort_by (string, optional): The name of the validation metric to use for
+                sorting checkpoints. If this parameter is unset, the metric defined
                 in the experiment configuration searcher field will be
                 used.
 
             smaller_is_better (bool, optional): Specifies whether to sort the
-                metric above in ascending or descending order. If sort_by is unset,
-                this parameter is ignored. By default the smaller_is_better value
-                in the experiment configuration is used.
+                metric above in ascending or descending order. If ``sort_by`` is unset,
+                this parameter is ignored. By default, the value of ``smaller_is_better``
+                from the experiment's configuration is used.
         """
         r = api.get(self._master, "checkpoints", params={"experiment_id": self.id}).json()
 

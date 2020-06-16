@@ -1,43 +1,43 @@
-Exporting Trained Models and Checkpoints
+.. _exporting-checkpoints:
+
+Exporting Models and Checkpoints
 ----------------------------------------
 
 After training a model that achieves satisfactory performance, it is
-often important to export the trained model for use outside Determined (e.g.,
+often important to export the model for use outside Determined (e.g.,
 to deploy the model as part of a web service or on an embedded device).
 In the current version of Determined, exporting models is supported by copying
 the **checkpoints** that are automatically created during the training
 process.
 
-A checkpoint consists of the model architecture and the values of the
-model's parameters (i.e., weights) and hyperparameters. When using a
-stateful optimizer during training, checkpoints will also consist of
-optimizer state (i.e., learning rate). The exact checkpoint format
-depends on the application framework being used:
+A checkpoint includes the model architecture and the values of the model's
+parameters (i.e., weights) and hyperparameters. When using a stateful optimizer
+during training, checkpoints will also include the state of the optimizer (i.e.,
+learning rate). Users can also embed arbitrary metadata in checkpoints via a
+:ref:`Python API <store-checkpoint-metadata>`.
 
--  TensorFlow trials are checkpointed using the
+The exact checkpoint format depends on the application framework being used:
+
+-  TensorFlow Estimator trials are checkpointed using the
    `SavedModel <https://www.tensorflow.org/programmers_guide/saved_model#structure_of_a_savedmodel_directory>`__
    format. Please consult the TensorFlow documentation to restore models
    from the SavedModel format.
--  Keras trials are checkpointed as an HDF5 file with the weights of a
-   model and a JSON file describing the model's architecture. When using
-   a stateful optimization method, the optimizer state is also saved in
-   a separate HDF5 file. To restore the architecture and/or weights of a
-   Keras trial checkpoint, use the
-   `keras.models.model_from_json() <https://keras.io/models/about-keras-models/>`__
-   and
-   `model.load_weights() <https://keras.io/getting-started/faq/#how-can-i-save-a-keras-model>`__
-   Keras APIs, respectively. Optimizer state is currently saved in a
-   custom experimental format---to restore it outside of Determined, please
-   contact the Determined AI team for a consultation.
+-  TensorFlow Keras trials are checkpointed as an HDF5 file with the model weights
+   and a JSON file describing the model's architecture. When using a stateful
+   optimization method, the optimizer state is also saved as a separate HDF5
+   file. To restore the architecture and/or weights of a Keras trial checkpoint,
+   use the `keras.models.model_from_json()
+   <https://keras.io/models/about-keras-models/>`__ and `model.load_weights()
+   <https://keras.io/getting-started/faq/#how-can-i-save-a-keras-model>`__ Keras
+   APIs, respectively. Optimizer state is currently saved in a custom
+   experimental format---to restore it outside of Determined, please contact the
+   Determined AI team for a consultation.
 -  TF Keras trials are checkpointed to a file named ``determined-keras-model.h5``
    using ``tf.keras.models.save_model``. You can learn more from the `TF
    Keras
    docs <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/models/save_model>`__.
-
-.. _pytorch-checkpoints:
-
--  PyTorch trials are checkpointed as a checkpoint.pt file. This file is
-   created very similar to what is described in the `PyTorch
+-  PyTorch trials are checkpointed as a ``state-dict.pth`` file. This file is
+   created in a similar manner to the procedure described in the `PyTorch
    documentation <https://pytorch.org/tutorials/beginner/saving_loading_models.html#saving-loading-a-general-checkpoint-for-inference-and-or-resuming-training>`__.
    Instead of the fields in the documentation linked above, there are
    three fields for the dictionary that is saved by Determined:
@@ -195,3 +195,8 @@ desired type and location of checkpoint storage. See
 :ref:`cluster-configuration` for details. However, every experiment can still
 be configured with a specific checkpoint storage. See
 :ref:`experiment-configuration` for details.
+
+See Also
+~~~~~~~~
+
+* :ref:`use-trained-models`

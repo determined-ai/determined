@@ -1,16 +1,16 @@
 .. _use-trained-models:
 
-Using Trained Checkpoints
-=========================
+Using Checkpoints
+=================
 
-Determined provides APIs for downloading trained checkpoints and loading them
+Determined provides APIs for downloading checkpoints and loading them
 into memory in a Python process.
 
 This guide discusses:
 
-#. Querying trained model checkpoints from trials and experiments.
-#. Loading models into memory in a Python process.
-#. Storing metadata associated with checkpoints.
+#. Querying model checkpoints from trials and experiments.
+#. Loading model checkpoints in Python.
+#. Storing additional user-defined metadata in a checkpoint.
 #. Using the Determined CLI to download checkpoints to disk.
 
 Querying Checkpoints
@@ -35,10 +35,10 @@ order.
      metric: "loss"
      smaller_is_better: true
 
-The following snippet can be run with a Python interpreter after the
+The following snippet of Python code can be run after the
 specified experiment has generated a checkpoint. It returns an
 instance of :class:`~determined.experimental.Checkpoint`
-representing the checkpoint from an experiment with the best validation metric.
+representing the checkpoint that has the best validation metric.
 
 .. code:: python
 
@@ -109,17 +109,18 @@ checkpoints.
 
   specific_checkpoint = trial.select_checkpoint(uuid="uuid-for-checkpoint")
 
-Using the Checkpoint class
+Using the Checkpoint Class
 --------------------------
+
 The :class:`~determined.experimental.Checkpoint` class can both
 download the checkpoint from persistent storage and load it into memory in a
 Python process.
 
-The :meth:`~determined.experimental.Checkpoint.download` method
-downloads a checkpoint from persistent storage to the local file system.
-By default, the method downloads the checkpoint to
-``checkpoints/<checkpoint-uuid>/``. The method accepts ``path`` as a
-parameter, which changes the checkpoint download location.
+The :meth:`~determined.experimental.Checkpoint.download` method downloads a
+checkpoint from persistent storage to the local file system. By default, the
+method downloads the checkpoint to ``checkpoints/<checkpoint-uuid>/``. The
+method accepts ``path`` as an optional parameter, which changes the checkpoint
+download location.
 
 .. code:: python
 
@@ -130,9 +131,9 @@ parameter, which changes the checkpoint download location.
 
   specific_path = checkpoint.download(path="specific-checkpoint-path")
 
-The :meth:`~determined.experimental.Checkpoint.load` method downloads
-the checkpoint, if it does not exist locally, and then loads it into
-memory in a Python process, as shown in the following snippet.
+The :meth:`~determined.experimental.Checkpoint.load` method downloads the
+checkpoint, if it does not already exist locally, and then loads it into memory
+in a Python process, as shown in the following snippet.
 
 .. code:: python
 
@@ -153,11 +154,14 @@ PyTorch checkpoints are saved using `pickle
 <https://pytorch.org/docs/stable/notes/serialization.html>`__ for
 details).
 
-Storing Checkpoint Metadata
----------------------------
-You may store metadata related to a checkpoint via the Python API. This feature
-is useful for storing post training metrics, labels, information related to
-deployment, etc.
+.. _store-checkpoint-metadata:
+
+User-Defined Checkpoint Metadata
+--------------------------------
+
+You can add arbitrary user-defined metadata to a checkpoint via the Python API.
+This feature is useful for storing post training metrics, labels, information
+related to deployment, etc.
 
 .. code:: python
 
@@ -198,6 +202,7 @@ be deleted.
 
 Download Checkpoints via the CLI
 --------------------------------
+
 Determined offers the following CLI commands for downloading checkpoints locally:
 
 #. ``det checkpoint download``
@@ -232,7 +237,7 @@ downloading the checkpoint.
              |                                      | }
 
 The ``det trial download`` command downloads checkpoints for a specified trial.
-Similar to the :class:`~determined.experimental.TrialReference` above, the
+Similar to the :class:`~determined.experimental.TrialReference` API, the
 ``det trial download`` command accepts ``--best``, ``--latest``, and ``--uuid``
 options.
 
@@ -275,7 +280,7 @@ The ``--latest`` and ``--uuid`` options are used as follows:
   det trial download <trial_id> --uuid <uuid-for-checkpoint>
 
 Finally, the ``det experiment download`` command provides a similar experience
-to using the above :class:`~determined.experimental.ExperimentReference`.
+to using the :class:`~determined.experimental.ExperimentReference` Python API.
 
 .. code:: bash
 
@@ -286,7 +291,7 @@ to using the above :class:`~determined.experimental.ExperimentReference`.
   det experiment download <experiment_id> --top-n 3
 
 The command should display output resembling the following upon successfully
-downloading the checkpoint(s).
+downloading the checkpoints.
 
 .. code::
 
@@ -331,6 +336,7 @@ downloading the checkpoint(s).
 
 Loading From a Local Path
 -------------------------
+
 :class:`~determined.experimental.Checkpoint` contains a static method,
 :meth:`~determined.experimental.Checkpoint.load_from_path`, for loading
 a checkpoint from a local path.
@@ -353,3 +359,4 @@ Next Steps
 ----------
 
 - :ref:`experimental`: The reference documentation for this API.
+- :ref:`exporting-checkpoints`

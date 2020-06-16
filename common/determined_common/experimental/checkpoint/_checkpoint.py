@@ -16,10 +16,10 @@ class ModelFramework(enum.Enum):
 class Checkpoint(object):
     """
     Class representing a checkpoint. Contains methods for downloading
-    checkpoints to a local path and loading checkpoints into memory.
+    checkpoints to local storage and loading checkpoints into memory.
 
-    The ``det.experimental.Trial`` class contains methods that return instances
-    of this class.
+    The :class:`~determined.experimental.TrialReference` class contains methods
+    that return instances of this class.
     """
 
     def __init__(
@@ -50,12 +50,12 @@ class Checkpoint(object):
             hparams (dict): Hyperparameter values for the trial that created
                 this checkpoint.
             batch_number (int): Batch number of the checkpoint.
-            start_time (string): Timestamp of when the checkpoint began being saved to
+            start_time (string): Timestamp when the checkpoint began being saved to
                 persistent storage.
-            end_time (string): Timestamp of when the checkpoint completed being saved to
+            end_time (string): Timestamp when the checkpoint completed being saved to
                 persistent storage.
             resources (dict): Dictionary of file paths to file sizes in bytes of all
-                files related to the checkpoint.
+                files in the checkpoint.
             validation (dict): Dictionary of validation metric names to their values.
             framework (string, optional): The framework of the trial i.e., tensorflow, torch.
             format (string, optional): The format of the checkpoint i.e., h5, saved_model, pickle.
@@ -103,12 +103,12 @@ class Checkpoint(object):
 
     def download(self, path: Optional[str] = None) -> str:
         """
-        Download checkpoint from the checkpoint storage location locally.
+        Download checkpoint to local storage.
 
         Arguments:
             path (string, optional): Top level directory to place the
-                checkpoint under. If this parameter is not set the checkpoint will
-                be downloaded to `checkpoints/<checkpoint_uuid>` relative to the
+                checkpoint under. If this parameter is not set, the checkpoint will
+                be downloaded to ``checkpoints/<checkpoint_uuid>`` relative to the
                 current working directory.
         """
         if path is not None:
@@ -175,13 +175,13 @@ class Checkpoint(object):
         Arguments:
             path (string, optional): Top level directory to load the
                 checkpoint from. (default: ``checkpoints/<UUID>``)
-            tags (list string, optional): Only relevant for tensorflow
-                saved_model checkpoints. Specifies which tags are loaded from
-                the tensoflow saved_model. See documentation for
+            tags (list string, optional): Only relevant for TensorFlow
+                SavedModel checkpoints. Specifies which tags are loaded from
+                the TensorFlow SavedModel. See documentation for
                 `tf.compat.v1.saved_model.load_v2
                 <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/saved_model/load_v2>`_.
             kwargs: Only relevant for PyTorch checkpoints. The keyword arguments
-                will be applied to torch.load. See documentation for `torch.load
+                will be applied to ``torch.load``. See documentation for `torch.load
                 <https://pytorch.org/docs/stable/torch.html?highlight=torch%20load#torch.load>`_.
         """
         ckpt_path = self.download(path)
@@ -189,10 +189,10 @@ class Checkpoint(object):
 
     def add_metadata(self, metadata: Dict[str, Any]) -> None:
         """
-        Adds metadata to the checkpoint. JSON serializable dictionaries are
-        permitted as an argument. If a top level key in the metadata argument
-        already exists in the checkpoint metadata the entire tree is replaced
-        in favor of the passed metadata value.
+        Adds user-defined metadata to the checkpoint. The ``metadata`` argument must be a
+        JSON-serializable dictionary. If any keys from this dictionary already appear in
+        the checkpoint metadata, the corresponding dictionary entries in the checkpoint are
+        replaced by the passed-in dictionary values.
 
         Arguments:
             metadata (dict): Dictionary of metadata to add to the checkpoint.
@@ -207,12 +207,11 @@ class Checkpoint(object):
 
     def remove_metadata(self, keys: List[str]) -> None:
         """
-        Remove checkpoint metadata top level keys corresponding to the keys
-        passed as arguments. If a provided key does not exist in the checkpoint
-        metadata this method is a no-op.
+        Removes user-defined metadata from the checkpoint. Any top-level keys that
+        appear in the ``keys`` list are removed from the checkpoint.
 
         Arguments:
-            keys (List[string]): Top level keys of the checkpoint metadata to remove.
+            keys (List[string]): Top-level keys to remove from the checkpoint metadata.
         """
         if self._master:
             r = api.delete(
@@ -224,15 +223,15 @@ class Checkpoint(object):
     def load_from_path(path: str, tags: Optional[List[str]] = None) -> Any:
         """
         Loads a Determined checkpoint from a local file system path into
-        memory. If the checkpoint is a pytorch model a ``torch.nn.Module`` is returned.
-        If the checkpoint contains a tensorflow saved_model a tensorflow
+        memory. If the checkpoint is a PyTorch model, a ``torch.nn.Module`` is returned.
+        If the checkpoint contains a TensorFlow SavedModel, a TensorFlow
         autotrackable object is returned.
 
         Arguments:
-            path (string): Local path to the top level directory of a checkpoint.
-            tags (list string, optional): Only relevant for tensorflow
-                saved_model checkpoints. Specifies which tags are loaded from
-                the tensoflow saved_model. See documentation for
+            path (string): Local path to the checkpoint directory.
+            tags (list string, optional): Only relevant for TensorFlow
+                SavedModel checkpoints. Specifies which tags are loaded from
+                the TensorFlow SavedModel. See documentation for
                 `tf.compat.v1.saved_model.load_v2
                 <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/saved_model/load_v2>`_.
         """

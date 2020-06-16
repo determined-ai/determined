@@ -12,8 +12,8 @@ class Determined:
 
     Arguments:
         master (string, optional): The URL of the Determined master. If
-            this argument is not specified environment variables DET_MASTER and
-            DET_MASTER_ADDR will be checked for the master URL in that order.
+            this argument is not specified, the environment variables ``DET_MASTER`` and
+            ``DET_MASTER_ADDR`` will be checked for the master URL in that order.
         user (string, optional): The Determined username used for
             authentication. (default: ``determined``)
     """
@@ -25,21 +25,21 @@ class Determined:
 
     def get_experiment(self, experiment_id: int) -> ExperimentReference:
         """
-        Get the :py:class:`det.experimental.ExperimentReference` representing the
+        Get the :class:`~determined.experimental.ExperimentReference` representing the
         experiment with the provided experiment ID.
         """
         return ExperimentReference(experiment_id, self._session._master)
 
     def get_trial(self, trial_id: int) -> TrialReference:
         """
-        Get the :py:class:`det.experimental.TrialReference` representing the
+        Get the :class:`~determined.experimental.TrialReference` representing the
         trial with the provided trial ID.
         """
         return TrialReference(trial_id, self._session._master)
 
     def get_checkpoint(self, uuid: str) -> Checkpoint:
         """
-        Get the :py:class:`det.experimental.Checkpoint` representing the
+        Get the :class:`~determined.experimental.Checkpoint` representing the
         checkpoint with the provided UUID.
         """
         return get_checkpoint(uuid, self._session._master)
