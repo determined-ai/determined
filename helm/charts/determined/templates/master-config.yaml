@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+   name: determined-master-config-{{ .Release.Name }}
+   namespace: {{ .Release.Namespace }}
+   labels:
+     app: deteremined-master-{{ .Release.Name }}
+     release: {{ .Release.Name }}
+data:
+  master.yaml: |
+    checkpoint_storage:
+      type: {{ required "A valid Values.checkpointStorage.type entry is required!" .Values.checkpointStorage.type | quote}}
+      {{- if eq .Values.checkpointStorage.type "shared_fs" }}
+      host_path: {{ required "A valid Values.checkpointStorage.hostPath entry is required!" .Values.checkpointStorage.hostPath | quote }}
+      {{- else if eq .Values.checkpointStorage.type "gcs" }}
+      bucket: {{ required "A valid Values.checkpointStorage.bucket entry is required!" .Values.checkpointStorage.bucket }} 
+      {{- else if eq .Values.checkpointStorage.type "s3" }}
+      bucket: {{ required "A valid Values.checkpointStorage.bucket entry is required!" .Values.checkpointStorage.bucket }} 
+      access_key: {{ .Values.checkpointStorage.accessKey | quote }}
+      secret_key: {{ .Values.checkpointStorage.secretKey | quote }}
+      endpoint_url: {{ .Values.checkpointStorage.endpointUrl | quote }}
+      {{- end }}
+      save_experiment_best: 0
+      save_trial_best: 1
+      save_trial_latest: 1
+
+    db:
+      user: {{ required "A valid Values.db.user entry required!" .Values.db.user | quote }}
+      password: {{ required "A valid Values.db.password entry required!" .Values.db.password | quote }}
+      host: determined-db-service-{{ .Release.Name }}
+      port: {{ .Values.db.port }}
+      name: {{ .Values.db.name | quote }}
+
+    http_port: {{ .Values.httpPort }}
+
+    scheduler:
+      type: fair_share

@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deteremined-master-deployment-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: determined-master-{{ .Release.Name }}
+    release: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: determined-master-{{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: determined-master-{{ .Release.Name }}
+    spec:
+      serviceAccount: determined-master-{{ .Release.Name }}
+      containers:
+      - name: determined-master-{{ .Release.Name }}
+        image: determinedai/determined-master:{{ required "A valid Chart.AppVersion entry required!" .Chart.AppVersion }}
+        volumeMounts:
+          - name: master-config
+            mountPath: /etc/determined/
+            readOnly: true
+      volumes:
+        - name: master-config
+          configMap:
+            name: determined-master-config-{{ .Release.Name }}
