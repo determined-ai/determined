@@ -226,3 +226,12 @@ export type CommonProps = {
   children?: React.ReactNode;
   title?: string;
 }
+
+export const terminalCommandStates: Set<CommandState> = new Set([
+  CommandState.Terminated,
+]);
+
+export const terminalRunStates: Set<RunState> = new Set([
+  RunState.Errored,
+  RunState.Canceled,
+]);

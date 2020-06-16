@@ -1,4 +1,4 @@
-import { CommandState, RecentTask, RunState, Task, TaskType } from 'types';
+import { CommandState, RecentTask, RunState, Task, TaskType, terminalCommandStates } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export function getRandomElementOfEnum(e: any): any {
@@ -49,5 +49,9 @@ export function generateTasks(): RecentTask[] {
   });
 }
 
-// FIXME should check for type specific conditions eg tensorboard is terminated
-export const canBeOpened = (task: Task): boolean => !!task.url;
+export const canBeOpened = (task: Task): boolean => {
+  if (task.type !== TaskType.Experiment && task.state in terminalCommandStates) {
+    return false;
+  }
+  return !!task.url;
+};
