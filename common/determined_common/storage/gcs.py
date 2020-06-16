@@ -4,9 +4,15 @@ import os
 import tempfile
 from typing import Iterator, Optional
 
+import urllib3.exceptions
+from google.api_core import retry
 from google.cloud import storage
 
 from determined_common.storage.base import StorageManager, StorageMetadata
+
+retry_network_errors = retry.Retry(
+    retry.if_exception_type(ConnectionError, urllib3.exceptions.ProtocolError)
+)
 
 
 class GCSStorageManager(StorageManager):
@@ -65,10 +71,10 @@ class GCSStorageManager(StorageManager):
             if rel_path.endswith("/"):
                 # Create empty blobs for subdirectories. This ensures
                 # that empty directories are checkpointed correctly.
-                blob.upload_from_string(b"")
+                retry_network_errors(blob.upload_from_string)(b"")
             else:
                 abs_path = os.path.join(storage_dir, rel_path)
-                blob.upload_from_filename(abs_path)
+                retry_network_errors(blob.upload_from_filename)(abs_path)
 
     def download(self, metadata: StorageMetadata, storage_dir: str) -> None:
         for rel_path in metadata.resources.keys():
