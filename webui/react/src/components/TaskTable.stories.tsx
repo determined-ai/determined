@@ -2,7 +2,7 @@ import React from 'react';
 
 import { ExperimentsDecorator } from 'storybook/ConetextDecorators';
 import RouterDecorator from 'storybook/RouterDecorator';
-import { Task } from 'types';
+import { Task, TaskType } from 'types';
 import { generateTasks } from 'utils/task';
 
 import TaskTable from './TaskTable';
@@ -13,7 +13,7 @@ export default {
   title: 'TaskTable',
 };
 
-const tasks: Task[] = generateTasks();
+const tasks: Task[] = generateTasks(20).filter(task => task.type !== TaskType.Experiment);
 
 export const Default = (): React.ReactNode => {
   return <TaskTable tasks={tasks} />;

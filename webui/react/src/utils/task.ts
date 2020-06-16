@@ -22,9 +22,11 @@ const sampleUsers = [
   },
 ];
 
-export function generateTasks(): RecentTask[] {
-  const runStates = new Array(10).fill(0).map(() => getRandomElementOfEnum(RunState));
-  const cmdStates = new Array(10).fill(0).map(() => getRandomElementOfEnum(CommandState));
+export function generateTasks(count = 10): RecentTask[] {
+  const runStates = new Array(Math.floor(count)).fill(0)
+    .map(() => getRandomElementOfEnum(RunState));
+  const cmdStates = new Array(Math.ceil(count)).fill(0)
+    .map(() => getRandomElementOfEnum(CommandState));
   const states = [ ...runStates, ...cmdStates ];
   const startTime = (Date.now()).toString();
   return states.map((state, idx) => {
