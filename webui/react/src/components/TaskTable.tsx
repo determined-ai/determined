@@ -68,8 +68,8 @@ const columns: ColumnsType<Task> = [
   },
   {
     render: userRenderer,
-    // TODO get user from users context
-    sorter: (a, b): number => alphanumericSorter(a.username || a.id, a.username ||  b.id),
+    sorter: (a, b): number =>
+      alphanumericSorter(a.username || a.ownerId.toString(), b.username || b.ownerId.toString()),
     title: 'User',
   },
   {

@@ -7,6 +7,21 @@ export function getRandomElementOfEnum(e: any): any {
   return e[keys[index]];
 }
 
+const sampleUsers = [
+  {
+    id: 0,
+    username: 'admin',
+  },
+  {
+    id: 1,
+    username: 'determined',
+  },
+  {
+    id: 2,
+    username: 'hamid',
+  },
+];
+
 export function generateTasks(): RecentTask[] {
   const runStates = new Array(10).fill(0).map(() => getRandomElementOfEnum(RunState));
   const cmdStates = new Array(10).fill(0).map(() => getRandomElementOfEnum(CommandState));
@@ -14,19 +29,21 @@ export function generateTasks(): RecentTask[] {
   const startTime = (Date.now()).toString();
   return states.map((state, idx) => {
     const progress = Math.random();
+    const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
     const props = {
       id: `${idx}`,
       lastEvent: {
         date: startTime,
         name: 'opened',
       },
-      ownerId: Math.floor(Math.random() * 100),
+      ownerId: user.id,
       progress,
       startTime,
       state: state as RunState | CommandState,
       title: `${idx}`,
       type: getRandomElementOfEnum(TaskType) as TaskType,
       url: '#',
+      username: user.username,
     };
     return props;
   });
