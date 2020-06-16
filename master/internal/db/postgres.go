@@ -1483,6 +1483,35 @@ WHERE id = :id`, setClause(toUpdate)), validation)
 	return nil
 }
 
+// AddModel adds the model to the database and sets its ID.
+func (db *PgDB) AddModel(m *model.Model) error {
+	var count int
+	err := db.namedGet(&count, `
+SELECT COUNT(*)
+FROM models
+WHERE name = :name`, m)
+	if err != nil {
+		return errors.Wrap(err, "error querying model table")
+	}
+	if count > 0 {
+		return errors.Errorf("duplicate model for name %s", m.Name)
+	}
+	err = db.namedGet(&m.ID, `
+INSERT INTO models
+(name, description, metadata, creation_time, last_updated_time)
+VALUES (:name, :description, :metadata, :creation_time, :last_updated_time)
+RETURNING id`, m)
+	if err != nil {
+		return errors.Wrapf(err, "error inserting model %v", *m)
+	}
+	return nil
+}
+
+// ModelByName looks up a model by name.
+func (db *PgDB) ModelByName(name string) (value model.Model, err error) {
+	return value, db.Query("get_model", &value, name)
+}
+
 // AddCheckpoint adds the checkpoint to the database and sets its ID.
 func (db *PgDB) AddCheckpoint(checkpoint *model.Checkpoint) error {
 	if !checkpoint.IsNew() {

@@ -9,8 +9,11 @@ import "protoc-gen-swagger/options/annotations.proto";
 import "determined/api/v1/agent.proto";
 import "determined/api/v1/auth.proto";
 import "determined/api/v1/master.proto";
+import "determined/api/v1/model.proto";
 import "determined/api/v1/template.proto";
 import "determined/api/v1/user.proto";
+import "google/api/annotations.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
     info: {
@@ -66,4 +69,6 @@ service Determined {
     rpc PutTemplate(PutTemplateRequest) returns (PutTemplateResponse) { option (google.api.http) = {put: "/api/v1/templates/{template.name}" body: "template"};  }
     // Delete the template with the given id.
     rpc DeleteTemplate(DeleteTemplateRequest) returns (DeleteTemplateResponse) { option (google.api.http) = {delete: "/api/v1/templates/{template_name}"}; }
+
+    rpc GetModel(GetModelRequest) returns (GetModelResponse)  { option (google.api.http) = {get: "/api/v1/models/{model_name}"}; }
 }

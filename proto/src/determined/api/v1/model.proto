@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "determined/model/v1/model.proto";
+
+message GetModelRequest {
+  string model_name = 1;
+}
+
+message GetModelResponse {
+  determined.model.v1.Model model = 1;
+}
