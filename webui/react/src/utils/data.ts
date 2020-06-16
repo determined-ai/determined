@@ -1,3 +1,5 @@
+import { CommandState, RunState, State } from 'types';
+
 export const isMap = <T>(data: T): boolean => data instanceof Map;
 export const isNumber = <T>(data: T): boolean => typeof data === 'number';
 export const isObject = <T>(data: T): boolean => typeof data === 'object' && data !== null;
@@ -32,4 +34,50 @@ export const categorize = <T>(array: T[], keyFn: ((arg0: T) => string)): Record<
     d[key] ? d[key].push(item) : d[key] = [ item ];
   });
   return d;
+};
+
+export const stringTimeSorter = (a: string, b: string): number => {
+  const aTime = new Date(a).getTime();
+  const bTime = new Date(b).getTime();
+  return aTime - bTime;
+};
+
+export const alphanumericSorter = (a: string, b: string): number => {
+  return a.localeCompare(b, 'en', { numeric: true });
+};
+
+const runStateSortValues: Record<RunState, number> = {
+  [RunState.Active]: 0,
+  [RunState.Paused]: 1,
+  [RunState.StoppingError]: 2,
+  [RunState.Errored]: 3,
+  [RunState.StoppingCompleted]: 4,
+  [RunState.Completed]: 5,
+  [RunState.StoppingCanceled]: 6,
+  [RunState.Canceled]: 7,
+  [RunState.Deleted]: 7,
+};
+
+const commandStateSortValues: Record<CommandState, number> = {
+  [CommandState.Pending]: 0,
+  [CommandState.Assigned]: 1,
+  [CommandState.Pulling]: 2,
+  [CommandState.Starting]: 3,
+  [CommandState.Running]: 4,
+  [CommandState.Terminating]: 5,
+  [CommandState.Terminated]: 6,
+};
+
+export const commandStateSorter = (a: CommandState, b: CommandState): number => {
+  return commandStateSortValues[a] - commandStateSortValues[b];
+};
+
+export const stateSorter = (a: State, b: State): number => {
+  // FIXME this is O(n) we can do it in constant time.
+  // What is the right typescript way of doing it?
+  const aValue = Object.values(RunState).includes(a as RunState) ?
+    runStateSortValues[a as RunState] : commandStateSortValues[a as CommandState];
+  const bValue = Object.values(RunState).includes(b as RunState) ?
+    runStateSortValues[b as RunState] : commandStateSortValues[b as CommandState];
+  return aValue - bValue;
 };

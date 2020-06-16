@@ -2,11 +2,9 @@ import { CancelToken } from 'axios';
 
 import { generateApi } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
-import { ExperimentsParams, KillCommandParams, KillExpParams, LaunchTensorboardParams,
-  PatchExperimentParams, PatchExperimentState } from 'services/types';
-import {
-  CommandType, Credentials, DeterminedInfo, Experiment, RecentTask, TaskType, User,
-} from 'types';
+import { ExperimentsParams, KillCommandParams, KillExpParams,
+  LaunchTensorboardParams, PatchExperimentParams, PatchExperimentState } from 'services/types';
+import { CommandType, Credentials, DeterminedInfo, Experiment, Task, TaskType, User } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAuthFailure = (e: any): boolean => {
@@ -36,7 +34,7 @@ export const launchTensorboard =
   generateApi<LaunchTensorboardParams, void>(Config.launchTensorboard);
 
 export const killTask =
-  async (task: RecentTask, cancelToken?: CancelToken): Promise<void> => {
+  async (task: Task, cancelToken?: CancelToken): Promise<void> => {
     if (task.type === TaskType.Experiment) {
       return killExperiment({ cancelToken, experimentId: parseInt(task.id) });
     }

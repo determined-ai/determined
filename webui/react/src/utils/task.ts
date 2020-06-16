@@ -1,4 +1,4 @@
-import { CommandState, RecentTask, RunState, TaskType } from 'types';
+import { CommandState, RecentTask, RunState, Task, TaskType, terminalCommandStates } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export function getRandomElementOfEnum(e: any): any {
@@ -7,26 +7,53 @@ export function getRandomElementOfEnum(e: any): any {
   return e[keys[index]];
 }
 
-export function generateTasks(): RecentTask[] {
-  const runStates = new Array(10).fill(0).map(() => getRandomElementOfEnum(RunState));
-  const cmdStates = new Array(10).fill(0).map(() => getRandomElementOfEnum(CommandState));
-  const states = [ ...runStates, ...cmdStates ];
+const sampleUsers = [
+  {
+    id: 0,
+    username: 'admin',
+  },
+  {
+    id: 1,
+    username: 'determined',
+  },
+  {
+    id: 2,
+    username: 'hamid',
+  },
+];
 
+export function generateTasks(count = 10): RecentTask[] {
+  const runStates = new Array(Math.floor(count)).fill(0)
+    .map(() => getRandomElementOfEnum(RunState));
+  const cmdStates = new Array(Math.ceil(count)).fill(0)
+    .map(() => getRandomElementOfEnum(CommandState));
+  const states = [ ...runStates, ...cmdStates ];
+  const startTime = (Date.now()).toString();
   return states.map((state, idx) => {
     const progress = Math.random();
+    const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
     const props = {
       id: `${idx}`,
       lastEvent: {
-        date: (new Date()).toString(),
+        date: startTime,
         name: 'opened',
       },
-      ownerId: Math.floor(Math.random() * 100),
+      ownerId: user.id,
       progress,
+      startTime,
       state: state as RunState | CommandState,
       title: `${idx}`,
       type: getRandomElementOfEnum(TaskType) as TaskType,
       url: '#',
+      username: user.username,
     };
     return props;
   });
 }
+
+export const canBeOpened = (task: Task): boolean => {
+  if (task.type !== TaskType.Experiment && task.state in terminalCommandStates) {
+    return false;
+  }
+  return !!task.url;
+};

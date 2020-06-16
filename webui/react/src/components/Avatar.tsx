@@ -28,7 +28,9 @@ const getColor = (name: string): string => {
 
 const Avatar: React.FC<Props> = ({ name }: Props) => {
   const style = { backgroundColor: getColor(name) };
-  return <div className={css.base} id="avatar" style={style}>{getInitials(name)}</div>;
+  return <div className={css.base} id="avatar" style={style} title={name}>
+    {getInitials(name)}
+  </div>;
 };
 
 export default Avatar;

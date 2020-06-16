@@ -6,14 +6,14 @@ import Icon from 'components/Icon';
 import Experiments from 'contexts/Experiments';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { archiveExperiment, killTask, setExperimentState } from 'services/api';
-import { Experiment, RecentTask, RunState, TaskType } from 'types';
+import { Experiment, RunState, Task, TaskType } from 'types';
 import { capitalize } from 'utils/string';
 import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';
 
 import css from './TaskActionDropdown.module.scss';
 
 interface Props {
-  task: RecentTask;
+  task: Task;
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
