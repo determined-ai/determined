@@ -157,7 +157,7 @@ class _TrialWorkloadManager(WorkloadManager):
             # Send the response up.
             respond(out_response)
 
-        num_batches = self.env.experiment_config.get("batches_per_step", 100)
+        num_batches = wkld.batches_per_step
         yield wkld, [num_batches], _respond
 
     def yield_compute_validation_metrics(

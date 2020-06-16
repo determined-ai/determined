@@ -157,6 +157,7 @@ def prepare_tensorboard(
 
         writer = tensorflow.TFWriter()
 
+    # TODO(brad): maybe this one
     return (
         tensorboard_mgr,
         tensorboard.BatchMetricWriter(writer, env.experiment_config.batches_per_step()),

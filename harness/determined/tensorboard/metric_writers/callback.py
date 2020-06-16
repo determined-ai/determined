@@ -17,6 +17,7 @@ class MetricWriter(abc.ABC):
         pass
 
 
+# TODO(brad): definitely here
 class BatchMetricWriter(callback.Callback):
     def __init__(self, writer: MetricWriter, batches_per_step: int) -> None:
         self.writer = writer

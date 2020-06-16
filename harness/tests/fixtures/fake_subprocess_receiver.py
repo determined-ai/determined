@@ -3,7 +3,7 @@ import sys
 import traceback
 from typing import Generator
 
-from determined import ipc, layers, workload
+from determined import constants, ipc, layers, workload
 
 NUM_FAKE_WORKLOADS = 10
 
@@ -11,7 +11,7 @@ NUM_FAKE_WORKLOADS = 10
 def fake_workload_gen() -> Generator[workload.Workload, None, None]:
     # Generate some fake workloads.
     for i in range(NUM_FAKE_WORKLOADS - 1):
-        yield workload.train_workload(i + 1)
+        yield workload.train_workload(i + 1, constants.DEFAULT_BATCHES_PER_STEP)
     yield workload.validation_workload(i)
 
 

@@ -3,7 +3,7 @@ import logging
 from typing import Any, Callable, Dict, Optional, cast
 
 import determined as det
-from determined import horovod
+from determined import horovod, workload
 
 
 class _TrainContext(metaclass=abc.ABCMeta):
@@ -16,6 +16,7 @@ class _TrainContext(metaclass=abc.ABCMeta):
         self.env = env  # type: det.EnvContext
         self.hvd_config = hvd_config  # type: horovod.HorovodContext
         self.distributed = DistributedContext(env, hvd_config)
+        self.scheduling = SchedulingContext(env)
         self._stop_requested = False
 
     def get_experiment_config(self) -> Dict[str, Any]:
@@ -173,3 +174,38 @@ class DistributedContext:
             return 1
 
         return cast(int, self.get_size() // horovod.hvd.local_size())
+
+
+# TODO(brad): probably not needed anymore
+class SchedulingContext:
+    """
+    SchedulingContext extends all TrialContexts and NativeContexts under
+    the ``context.scheduling`` namespace. It provides useful methods for
+    introspecting scheduling details.
+    """
+
+    def __init__(self, env: det.EnvContext):
+        wkld = env.initial_workload
+
+        if wkld.kind == workload.Workload.Kind.RUN_STEP:
+            self._batches_per_step = wkld.batches_per_step
+            self._batches_completed = wkld.batches_completed
+        else:
+            self._batches_per_step = 0
+            self._batches_completed = 0
+
+    def get_batches_per_step(self) -> int:
+        """
+        Return the batches_per_step for the current step.
+        """
+        return self._batches_per_step
+
+    def get_batches_completed(self) -> int:
+        """
+        Return the total_batches processed, including the current step.
+        """
+        return self._batches_completed
+
+    def _set_context(self, batches_completed: int, batches_per_step: int) -> None:
+        self._batches_completed = batches_completed
+        self._batches_per_step = batches_per_step

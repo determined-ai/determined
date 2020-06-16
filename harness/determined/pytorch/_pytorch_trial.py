@@ -230,7 +230,7 @@ class PyTorchTrialController(det.LoopTrialController):
         return True
 
     def _set_data_loaders(self) -> None:
-        skip_batches = (self.env.first_step() - 1) * self.batches_per_step
+        skip_batches = self.env.initial_workload.batches_completed
 
         nreplicas = hvd.size() if self.hvd_config.use else 1
         rank = hvd.rank() if self.hvd_config.use else 0
@@ -252,11 +252,9 @@ class PyTorchTrialController(det.LoopTrialController):
     def run(self) -> None:
         for w, args, response_func in self.workloads:
             if w.kind == workload.Workload.Kind.RUN_STEP:
-                check.eq(len(args), 1)
-                num_batches = cast(int, args[0])
                 response_func(
                     util.wrap_metrics(
-                        self._train_for_step(w.step_id, num_batches),
+                        self._train_for_step(w.step_id, w.batches_per_step, w.batches_completed),
                         self.context.get_stop_requested(),
                     )
                 )
@@ -351,7 +349,9 @@ class PyTorchTrialController(det.LoopTrialController):
             if mod == 0 or mod < self.hvd_config.aggregation_frequency:
                 lr_scheduler.step()
 
-    def _train_for_step(self, step_id: int, batches_per_step: int) -> workload.Response:
+    def _train_for_step(
+        self, step_id: int, batches_per_step: int, total_batches_completed: int
+    ) -> workload.Response:
         check.gt(step_id, 0)
 
         # Set the behavior of certain layers (e.g., dropout) that are different
@@ -361,8 +361,7 @@ class PyTorchTrialController(det.LoopTrialController):
         for callback in self.callbacks.values():
             callback.on_train_step_start(step_id)
 
-        step_idx = step_id - 1
-        start = step_idx * batches_per_step
+        start = total_batches_completed
         end = start + batches_per_step
 
         per_batch_metrics = []  # type: List[Dict]

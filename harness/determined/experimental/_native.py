@@ -129,7 +129,9 @@ def _make_test_workloads(
     interceptor = workload.WorkloadResponseInterceptor()
 
     logging.info("Training one batch")
-    yield from interceptor.send(workload.train_workload(1), [1])
+    yield from interceptor.send(
+        workload.train_workload(1, batches_per_step=config.batches_per_step()), [1]
+    )
     metrics = interceptor.metrics_result()
     batch_metrics = metrics["metrics"]["batch_metrics"]
     check.eq(len(batch_metrics), config.batches_per_step())
@@ -196,7 +198,7 @@ def _make_local_test_experiment_env(
         container_id="test_mode",
         experiment_config=config,
         hparams=hparams,
-        initial_workload=workload.train_workload(1, 1, 1),
+        initial_workload=workload.train_workload(1, 1, 1, config.batches_per_step()),
         latest_checkpoint=None,
         use_gpu=use_gpu,
         container_gpus=container_gpus,

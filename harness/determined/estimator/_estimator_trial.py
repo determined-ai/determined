@@ -295,10 +295,8 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
             logging.debug(f"Received wkld {wkld.kind} with args {args}.")
 
             if wkld.kind == workload.Workload.Kind.RUN_STEP:
-                check.len_eq(args, 1)
-                check.is_instance(args[0], int)
                 # Store values for the training loop.
-                self.batches_per_step = cast(int, args[0])
+                self.batches_per_step = wkld.batches_per_step
                 self.train_response_func = response_func
                 # Break out of the control loop so that the train process
                 # re-enters the train_and_evaluate() loop.

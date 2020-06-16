@@ -491,6 +491,7 @@ class TensorpackTrialController(det.LoopTrialController):
     def run(self) -> None:
         logging.info(f"Rank {self.rendezvous_info.get_rank()} calling train_with_defaults")
         try:
+            # TODO(brad): also almost definitely here
             self.trainer.train_with_defaults(
                 callbacks=self.cbs,
                 monitors=self.trial.tensorpack_monitors(),

@@ -486,6 +486,7 @@ class TFKerasTrialController(det.LoopTrialController):
             if wkld.kind == workload.Workload.Kind.RUN_STEP:
                 # Store the train_response_func for later.
                 self.train_response_func = response_func
+                self.batches_per_step = wkld.batches_per_step
 
                 # There are two possibilities when a RUN_STEP workload is recieved.
                 # 1) This is the first training step seen by the trial
