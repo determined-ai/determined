@@ -101,7 +101,7 @@ export const lightTheme: Theme = {
     family: 'Objektiv Mk3',
   },
   outline: '0 0 0.4rem 0 #009bde',
-  shadow: '0.2rem 0.2rem 0.4rem 0 #cccccc',
+  shadow: '0.2rem 0.2rem 0.4rem 0 rgba(0, 0, 0, 0.25)',
   sizes: {
     border: {
       radius: '0.4rem',

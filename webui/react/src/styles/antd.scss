@@ -1,4 +1,11 @@
 html {
+  /* Breadcrumb */
+
+  .ant-breadcrumb {
+    align-items: center;
+    display: flex;
+  }
+
   /* Button */
 
   .ant-btn[disabled],
@@ -6,6 +13,14 @@ html {
     background-color: var(--theme-colors-monochrome-11);
     border-color: var(--theme-colors-monochrome-11);
     color: var(--theme-colors-monochrome-17);
+  }
+
+  /* Dropdown */
+
+  .ant-dropdown-menu {
+    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
+    border-radius: var(--theme-sizes-border-radius);
+    box-shadow: var(--theme-shadow);
   }
 
   /* Form */
@@ -49,12 +64,10 @@ html {
   .ant-select.ant-select-open > .ant-select-arrow {
     transform: rotate(180deg);
   }
-
-  /* Breadcrumb */
-
-  .ant-breadcrumb {
-    align-items: center;
-    display: flex;
+  .ant-select-dropdown {
+    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
+    border-radius: var(--theme-sizes-border-radius);
+    box-shadow: var(--theme-shadow);
   }
 
   /* Space */
