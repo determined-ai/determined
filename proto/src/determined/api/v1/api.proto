@@ -68,5 +68,6 @@ service Determined {
     // Delete the template with the given id.
     rpc DeleteTemplate(DeleteTemplateRequest) returns (DeleteTemplateResponse) { option (google.api.http) = {delete: "/api/v1/templates/{template_name}"}; }
 
+    // Get the requested model.
     rpc GetModel(GetModelRequest) returns (GetModelResponse)  { option (google.api.http) = {get: "/api/v1/models/{model_name}"}; }
 }
