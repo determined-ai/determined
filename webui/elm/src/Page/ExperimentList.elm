@@ -218,7 +218,7 @@ batchArchive =
 
 entriesShowIncrement : Int
 entriesShowIncrement =
-    50
+    25
 
 
 type alias TableExperiment =
