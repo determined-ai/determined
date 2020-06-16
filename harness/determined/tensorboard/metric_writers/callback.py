@@ -18,9 +18,8 @@ class MetricWriter(abc.ABC):
 
 
 class BatchMetricWriter(callback.Callback):
-    def __init__(self, writer: MetricWriter, batches_per_step: int) -> None:
+    def __init__(self, writer: MetricWriter) -> None:
         self.writer = writer
-        self.batches_per_step = batches_per_step
 
     def _maybe_write_metric(self, metric_key: str, metric_val: Any, step: int) -> None:
         # For now, we only log scalar metrics.
