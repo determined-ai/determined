@@ -20,6 +20,7 @@ interface Props {
   popout?: boolean;
   suffixIcon?: string;
   type?: NavItemType;
+  title?: string;
   onClick?: (event: React.MouseEvent) => void;
 }
 
@@ -42,7 +43,7 @@ const NavItem: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   }, [ props ]);
 
   const navItem = (
-    <div className={classes.join(' ')} onClick={handleClick}>
+    <div className={classes.join(' ')} title={props.title} onClick={handleClick}>
       {props.icon && <Icon name={props.icon} />}
       {props.children && <Label type={labelType}>{props.children}</Label>}
       {props.suffixIcon && <Icon name={props.suffixIcon} size="small" />}
