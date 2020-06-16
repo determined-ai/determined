@@ -11,18 +11,26 @@ const TaskList: React.FC = () => {
   const shells = Shells.useStateContext();
   const tensorboards = Tensorboards.useStateContext();
 
-  const genericCommands = [];
-  if (commands.data) genericCommands.push(...commands.data);
-  if (notebooks.data) genericCommands.push(...notebooks.data);
-  if (shells.data) genericCommands.push(...shells.data);
-  if (tensorboards.data) genericCommands.push(...tensorboards.data);
-  const loadedTasks = genericCommands.map(commandToTask);
+  const sources = [
+    commands,
+    notebooks,
+    shells,
+    tensorboards,
+  ];
+
+  const loadedTasks = sources
+    .filter(src => src.data !== undefined)
+    .map(src => src.data || [])
+    .reduce((acc, cur) => [ ...acc, ...cur ], [])
+    .map(commandToTask);
+
+  const hasLoaded = sources.find(src => src.hasLoaded);
 
   // TODO select and batch operation:
   // https://ant.design/components/table/#components-table-demo-row-selection-and-operation
   return (
     <Page title="Tasks">
-      <TaskTable tasks={loadedTasks.length === 0 ? undefined : loadedTasks} />
+      <TaskTable tasks={hasLoaded ? loadedTasks : undefined} />
     </Page>
   );
 };

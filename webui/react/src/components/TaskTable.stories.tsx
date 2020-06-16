@@ -22,3 +22,7 @@ export const Default = (): React.ReactNode => {
 export const Loading = (): React.ReactNode => {
   return <TaskTable />;
 };
+
+export const LoadedNoRows = (): React.ReactNode => {
+  return <TaskTable tasks={[]} />;
+};
