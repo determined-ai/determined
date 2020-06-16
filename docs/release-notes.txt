@@ -869,6 +869,17 @@ Version 0.12.10
 -  Add a timeout to trial containers to ensure they are terminated
    promptly.
 
+Version 0.12.9
+^^^^^^^^^^^^^^
+
+**Release Date:** June 16, 2020
+
+- Retry ``ConnectionError`` and ``ProtocolError`` types for uploads to Google Cloud Storage.
+
+- Fix a bug where the CLI was unable to make secure websocket connections to the master.
+
+- Add the ``det user rename`` CLI command for admins to change the username of existing users.
+
 Version 0.12.7
 ==============
 
