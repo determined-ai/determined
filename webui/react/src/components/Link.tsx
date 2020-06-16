@@ -1,23 +1,22 @@
-import React, { PropsWithChildren, useMemo } from 'react';
+import React, { MouseEventHandler, PropsWithChildren, useMemo as useCallback } from 'react';
 
 import { routeAll, setupUrlForDev } from 'routes';
 
 import css from './Link.module.scss';
-
-type OnClick = (event: React.MouseEvent) => void
 
 interface Props {
   disabled?: boolean;
   inherit?: boolean;
   path: string;
   popout?: boolean;
-  onClick?: OnClick;
+  onClick?: MouseEventHandler;
 }
 
 const windowFeatures = [ 'noopener', 'noreferrer' ];
 
-export const handleClick = (path: string, onClick?: OnClick, popout?: boolean): OnClick => {
-  return (event: React.MouseEvent): void => {
+export const makeClickHandler = (path: string, onClick?: MouseEventHandler,
+  popout?: boolean): MouseEventHandler => {
+  const handler: MouseEventHandler = (event) => {
     const url = setupUrlForDev(path);
 
     event.persist();
@@ -31,6 +30,7 @@ export const handleClick = (path: string, onClick?: OnClick, popout?: boolean): 
       routeAll(url);
     }
   };
+  return handler;
 };
 
 const Link: React.FC<Props> = ({
@@ -38,15 +38,15 @@ const Link: React.FC<Props> = ({
 }: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
   const rel = windowFeatures.join(' ');
-  const handleLinkClick = useMemo(() =>
-    handleClick(path, onClick, popout), [ path, onClick, popout ]);
+  const handleClick =
+    useCallback(() => makeClickHandler(path, onClick, popout), [ path, onClick, popout ]);
 
   if (!disabled) classes.push(css.link);
   if (inherit) classes.push(css.inherit);
 
   return (
     <a className={classes.join(' ')} href={path} rel={rel}
-      onClick={handleLinkClick}>
+      onClick={handleClick}>
       {children}
     </a>
   );

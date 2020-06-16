@@ -12,7 +12,7 @@ import Avatar from './Avatar';
 import Badge from './Badge';
 import { BadgeType } from './Badge';
 import Icon from './Icon';
-import { handleClick } from './Link';
+import { makeClickHandler } from './Link';
 import linkCss from './Link.module.scss';
 import TaskActionDropdown from './TaskActionDropdown';
 import css from './TaskTable.module.scss';
@@ -90,7 +90,7 @@ const TaskTable: React.FC<Props> = ({ tasks }: Props) => {
         return {
           // can't use an actual link element on the whole row since anchor tag is not a valid
           // direct tr child https://developer.mozilla.org/en-US/docs/Web/HTML/Element/tr
-          onClick: canBeOpened(record) ? handleClick(record.url as string) : undefined,
+          onClick: canBeOpened(record) ? makeClickHandler(record.url as string) : undefined,
         };
       }} />
 
