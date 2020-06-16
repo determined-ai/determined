@@ -108,6 +108,13 @@ export function stateToLabel(state: RunState | CommandState): string {
   return runStateToLabel[state as RunState] || commandStateToLabel[state as CommandState];
 }
 
+export const commandTypeToLabel: {[key in CommandType]: string} = {
+  [CommandType.Command]: 'Command',
+  [CommandType.Notebook]: 'Notebook',
+  [CommandType.Shell]: 'Shell',
+  [CommandType.Tensorboard]: 'Tensorboard',
+};
+
 /*
  * `keyof any` is short for "string | number | symbol"
  * since an object key can be any of those types, our key can too

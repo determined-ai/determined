@@ -3,9 +3,10 @@ import { ColumnsType } from 'antd/lib/table';
 import React from 'react';
 import TimeAgo from 'timeago-react';
 
-import { CommandState, CommonProps, Task } from 'types';
+import { CommandState, CommandType, CommonProps, Task } from 'types';
 import { alphanumericSorter, commandStateSorter, stringTimeSorter } from 'utils/data';
 import { canBeOpened } from 'utils/task';
+import { commandTypeToLabel } from 'utils/types';
 
 import Avatar from './Avatar';
 import Badge from './Badge';
@@ -23,7 +24,8 @@ interface Props extends CommonProps {
   type Renderer<T> = (text: string, record: T, index: number) => React.ReactNode
 
 const typeRenderer: Renderer<Task> = (_, record) =>
-  (<Icon name={record.type.toLowerCase()} title={record.type} />);
+  (<Icon name={record.type.toLowerCase()}
+    title={commandTypeToLabel[record.type as unknown as CommandType]} />);
 const startTimeRenderer: Renderer<Task> = (_, record) => (
   <span title={new Date(parseInt(record.startTime) * 1000).toTimeString()}>
     <TimeAgo datetime={record.startTime} />
@@ -57,9 +59,6 @@ const columns: ColumnsType<Task> = [
     render: startTimeRenderer,
     sorter: (a, b): number => stringTimeSorter(a.startTime, b.startTime),
     title: 'Start Time',
-  },
-  {
-    title: 'Duration',
   },
   {
     render: stateRenderer,
