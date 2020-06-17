@@ -42,6 +42,20 @@ func checkpointFromTrialIDOrUUID(
 	return checkpoint, nil
 }
 
+func maxConcurrentTrialsFromConfigOrResources(expModel *model.Experiment) *int {
+	// We will attempt to set maxConcurrentTrials for the searcher config.
+	maxConcurrentTrials := expModel.Config.Searcher.MaxConcurrentTrials
+	if maxConcurrentTrials == nil {
+		maxSlots := expModel.Config.Resources.MaxSlots
+		slotsPerTrial := expModel.Config.Resources.SlotsPerTrial
+		if maxSlots != nil {
+			value := *maxSlots / slotsPerTrial
+			maxConcurrentTrials = &value
+		}
+	}
+	return maxConcurrentTrials
+}
+
 func convertSearcherEvent(id int, event searcher.Event) (
 	*model.SearcherEvent, bool, error,
 ) {

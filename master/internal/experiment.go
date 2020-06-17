@@ -78,6 +78,7 @@ type experiment struct {
 // the returned object's ID appropriately.
 func newExperiment(master *Master, expModel *model.Experiment) (*experiment, error) {
 	conf := expModel.Config
+	conf.Searcher.MaxConcurrentTrials = maxConcurrentTrialsFromConfigOrResources(expModel)
 	method := searcher.NewSearchMethod(conf.Searcher)
 	search := searcher.NewSearcher(
 		conf.Reproducibility.ExperimentSeed, method, conf.Hyperparameters)

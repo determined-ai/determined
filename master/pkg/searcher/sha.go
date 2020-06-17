@@ -73,6 +73,9 @@ func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
 type trialMetric struct {
 	requestID RequestID
 	metric    float64
+	// fields below used by asha.go.
+	promoted bool
+	closed   bool
 }
 
 // rung describes a set of trials that are to be trained for the same number of steps.
@@ -81,6 +84,8 @@ type rung struct {
 	metrics       []trialMetric
 	startTrials   int
 	promoteTrials int
+	// field below used by asha.go.
+	outstandingTrials int
 }
 
 // promotions handles bookkeeping of validation metrics and returns a RequestID to promote if

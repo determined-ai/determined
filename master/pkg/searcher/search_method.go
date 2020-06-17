@@ -61,6 +61,16 @@ func NewSearchMethod(c model.SearcherConfig) SearchMethod {
 		return newAdaptiveSearch(*c.AdaptiveConfig)
 	case c.AdaptiveSimpleConfig != nil:
 		return newAdaptiveSimpleSearch(*c.AdaptiveSimpleConfig)
+	case c.AsyncHalvingConfig != nil:
+		if c.MaxConcurrentTrials != nil {
+			c.AsyncHalvingConfig.MaxConcurrentTrials = c.MaxConcurrentTrials
+		}
+		return newAsyncHalvingSearch(*c.AsyncHalvingConfig)
+	case c.AdaptiveASHAConfig != nil:
+		if c.MaxConcurrentTrials != nil {
+			c.AdaptiveASHAConfig.MaxConcurrentTrials = c.MaxConcurrentTrials
+		}
+		return newAdaptiveASHASearch(*c.AdaptiveASHAConfig)
 	case c.PBTConfig != nil:
 		return newPBTSearch(*c.PBTConfig)
 	default:

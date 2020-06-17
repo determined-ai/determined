@@ -19,13 +19,16 @@ type SearcherConfig struct {
 	SmallerIsBetter      bool    `json:"smaller_is_better"`
 	SourceTrialID        *int    `json:"source_trial_id"`
 	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
+	MaxConcurrentTrials  *int    `json:"max_concurrent_trials"`
 
 	SingleConfig         *SingleConfig         `union:"name,single" json:"-"`
 	RandomConfig         *RandomConfig         `union:"name,random" json:"-"`
 	GridConfig           *GridConfig           `union:"name,grid" json:"-"`
 	SyncHalvingConfig    *SyncHalvingConfig    `union:"name,sync_halving" json:"-"`
+	AsyncHalvingConfig   *AsyncHalvingConfig   `union:"name,async_halving" json:"-"`
 	AdaptiveConfig       *AdaptiveConfig       `union:"name,adaptive" json:"-"`
 	AdaptiveSimpleConfig *AdaptiveSimpleConfig `union:"name,adaptive_simple" json:"-"`
+	AdaptiveASHAConfig   *AdaptiveASHAConfig   `union:"name,adaptive_asha" json:"-"`
 	PBTConfig            *PBTConfig            `union:"name,pbt" json:"-"`
 }
 
@@ -92,6 +95,17 @@ type SyncHalvingConfig struct {
 	TrainStragglers  bool    `json:"train_stragglers"`
 }
 
+// AsyncHalvingConfig configures asynchronous successive halving.
+type AsyncHalvingConfig struct {
+	Metric              string  `json:"metric"`
+	SmallerIsBetter     bool    `json:"smaller_is_better"`
+	NumRungs            int     `json:"num_rungs"`
+	TargetTrialSteps    int     `json:"target_trial_steps"`
+	MaxTrials           int     `json:"max_trials"`
+	Divisor             float64 `json:"divisor"`
+	MaxConcurrentTrials *int    `json:"max_concurrent_trials"`
+}
+
 // AdaptiveMode specifies how aggressively to perform early stopping.
 type AdaptiveMode string
 
@@ -152,6 +166,31 @@ func (a AdaptiveSimpleConfig) Validate() []error {
 		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
 		check.LessThanOrEqualTo(a.MaxTrials, MaxAllowedTrials,
 			"max_trials must be <= %d", MaxAllowedTrials),
+		check.GreaterThan(a.Divisor, 1.0, "divisor must be > 1.0"),
+		check.In(string(a.Mode), []string{AggressiveMode, StandardMode, ConservativeMode},
+			"invalid adaptive mode"),
+		check.GreaterThan(a.MaxRungs, 0, "max_rungs must be > 0"),
+	}
+}
+
+// AdaptiveASHAConfig configures an adaptive searcher for use with ASHA.
+type AdaptiveASHAConfig struct {
+	Metric              string       `json:"metric"`
+	SmallerIsBetter     bool         `json:"smaller_is_better"`
+	TargetTrialSteps    int          `json:"target_trial_steps"`
+	MaxTrials           int          `json:"max_trials"`
+	BracketRungs        []int        `json:"bracket_rungs"`
+	Divisor             float64      `json:"divisor"`
+	Mode                AdaptiveMode `json:"mode"`
+	MaxRungs            int          `json:"max_rungs"`
+	MaxConcurrentTrials *int         `json:"max_concurrent_trials"`
+}
+
+// Validate implements the check.Validatable interface.
+func (a AdaptiveASHAConfig) Validate() []error {
+	return []error{
+		check.GreaterThan(a.TargetTrialSteps, 0, "target_trial_steps must be > 0"),
+		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
 		check.GreaterThan(a.Divisor, 1.0, "divisor must be > 1.0"),
 		check.In(string(a.Mode), []string{AggressiveMode, StandardMode, ConservativeMode},
 			"invalid adaptive mode"),

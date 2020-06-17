@@ -100,6 +100,32 @@ func TestAdaptiveBracketRungsConfig(t *testing.T) {
 	assert.DeepEqual(t, actual, expected)
 }
 
+// TestAdaptiveASHABracketRungsConfig checks that adaptive_asha config bracket rungs are correct.
+func TestAdaptiveASHABracketRungsConfig(t *testing.T) {
+	json1 := []byte(`
+{
+  "name": "adaptive_asha",
+  "metric": "metric",
+  "target_trial_steps": 128,
+  "max_trials": 100,
+  "bracket_rungs": [5, 10, 15, 20]
+}
+`)
+	var actual SearcherConfig
+	assert.NilError(t, json.Unmarshal(json1, &actual))
+
+	expected := SearcherConfig{
+		Metric: "metric",
+		AdaptiveASHAConfig: &AdaptiveASHAConfig{
+			Metric:           "metric",
+			TargetTrialSteps: 128,
+			MaxTrials:        100,
+			BracketRungs:     []int{5, 10, 15, 20},
+		},
+	}
+	assert.DeepEqual(t, actual, expected)
+}
+
 // TestPBTConfig tests basic serialization and deserialization of PBT config.
 func TestPBTConfig(t *testing.T) {
 	json1 := []byte(`
