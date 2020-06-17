@@ -11,7 +11,6 @@ import requests
 
 import determined_deploy
 from determined_common import api
-from determined_deploy import config
 
 # This object, when included in the host config in a container creation request, tells Docker to
 # expose all host GPUs inside a container.
@@ -40,6 +39,10 @@ def get_shell_id() -> str:
     args = ["id", "-u", "-n"]
     byte_str: str = subprocess.check_output(args, encoding="utf-8")
     return byte_str.rstrip("\n").strip("'").strip()
+
+
+def _make_master_url(master_host: str, master_port: int, suffix: str = "") -> str:
+    return "http://{}:{}/{}".format(master_host, master_port, suffix)
 
 
 def get_proxy_addr() -> str:
@@ -87,10 +90,10 @@ def docker_compose(
     subprocess.run(args, env=process_env)
 
 
-def _wait_for_master() -> None:
+def _wait_for_master(master_host: str, master_port: int) -> None:
     for _ in range(50):
         try:
-            r = api.get(config.make_master_url(), "info", authenticated=False)
+            r = api.get(_make_master_url(master_host, master_port), "info", authenticated=False)
             if r.status_code == requests.codes.ok:
                 return
         except api.errors.MasterNotFoundException:
@@ -109,7 +112,6 @@ def master_up(
     delete_db: bool,
     autorestart: bool,
 ):
-    config.MASTER_PORT = port
     command = ["up", "-d"]
     extra_files = []
     if master_config_path is not None:
@@ -131,7 +133,7 @@ def master_up(
     }
     master_down(master_name, delete_db)
     docker_compose(command, master_name, env, extra_files=extra_files)
-    _wait_for_master()
+    _wait_for_master("localhost", port)
 
 
 def master_down(master_name: str, delete_db: bool) -> None:
@@ -166,7 +168,7 @@ def cluster_up(
         agent_name = cluster_name + f"-agent-{agent_number}"
         labels = {"determined.cluster": cluster_name}
         agent_up(
-            master_host=get_proxy_addr(),
+            master_host="localhost",
             master_port=port,
             agent_name=agent_name,
             version=version,
@@ -196,6 +198,9 @@ def agent_up(
 ) -> None:
     if version is None:
         version = determined_deploy.__version__
+
+    _wait_for_master(master_host, master_port)
+
     if master_host == "localhost":
         master_host = get_proxy_addr()
     image = "determinedai/determined-agent:{}".format(version)
@@ -214,14 +219,11 @@ def agent_up(
         restart_policy = {"Name": "unless-stopped"}
     else:
         restart_policy = None
-    config.MASTER_HOST = master_host
-    config.MASTER_PORT = master_port
     if no_gpu:
         device_requests = None
     else:
         device_requests = [GPU_DEVICE_REQUEST]
 
-    _wait_for_master()
     docker_client = docker.from_env()
 
     print(f"Starting {agent_name}")
