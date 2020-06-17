@@ -129,9 +129,7 @@ def _make_test_workloads(
     interceptor = workload.WorkloadResponseInterceptor()
 
     logging.info("Training one batch")
-    yield from interceptor.send(
-        workload.train_workload(1, batches_per_step=config.batches_per_step()), [1]
-    )
+    yield from interceptor.send(workload.train_workload(1), [])
     metrics = interceptor.metrics_result()
     batch_metrics = metrics["metrics"]["batch_metrics"]
     check.eq(len(batch_metrics), config.batches_per_step())

@@ -147,7 +147,7 @@ class TestKerasTrial:
             interceptor = workload.WorkloadResponseInterceptor()
 
             for idx, batch in batches:
-                yield from interceptor.send(workload.train_workload(1, 1), [1])
+                yield from interceptor.send(workload.train_workload(1), [])
                 metrics = interceptor.metrics_result()
 
                 # Calculate what the loss should be.
