@@ -220,7 +220,7 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 
 	case sproto.ConfigureEndpoints:
 		ctx.Log().Infof("initializing endpoints for agents")
-		agent.Initialize(msg.System, msg.E, ctx.Self())
+		agent.Initialize(msg.System, msg.Echo, ctx.Self())
 
 	case sproto.AddAgent:
 		ctx.Log().Infof("adding agent: %s", msg.Agent.Address().Local())

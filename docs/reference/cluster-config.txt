@@ -186,10 +186,10 @@ The master supports the following configuration settings:
 
 
   - ``type``: The scheduling policy to use when allocating resources
-    between different tasks (e.g., experiments, notebooks, etc...).
+    between different tasks (experiments, notebooks, etc...).
 
     - ``fair_share``: Tasks receive a proportional amount of the available
-      resources depending on their priority.
+      resources depending on the resource they require and their priority.
 
     - ``priority``: Tasks are scheduled in the order of their priority.
 

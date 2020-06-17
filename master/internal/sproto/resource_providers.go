@@ -67,5 +67,5 @@ type ContainerStateChanged struct {
 // the endpoints resources.
 type ConfigureEndpoints struct {
 	System *actor.System
-	E      *echo.Echo
+	Echo   *echo.Echo
 }

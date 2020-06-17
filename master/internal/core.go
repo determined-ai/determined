@@ -335,7 +335,8 @@ func (m *Master) Run() error {
 		filepath.Join(m.config.Root, "wheels"),
 		m.config.TaskContainerDefaults,
 		m.provisioner,
-		provisionerSlotsPerInstance))
+		provisionerSlotsPerInstance,
+	))
 
 	m.rp, _ = m.system.ActorOf(
 		actor.Addr("resourceProviders"),
@@ -518,7 +519,7 @@ func (m *Master) Run() error {
 	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
 
-	m.system.Tell(m.rp, sproto.ConfigureEndpoints{System: m.system, E: m.echo})
+	m.system.Tell(m.rp, sproto.ConfigureEndpoints{System: m.system, Echo: m.echo})
 
 	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "" {
 		if telemetry, err := telemetry.NewActor(
