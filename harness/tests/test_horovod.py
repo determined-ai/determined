@@ -64,6 +64,8 @@ def test_create_run_command(
         "localhost:8,128.140.2.4:8",
         "--start-timeout",
         str(constants.HOROVOD_STARTUP_TIMEOUT_SECONDS),
+        "--gloo-timeout-seconds",
+        str(constants.HOROVOD_GLOO_TIMEOUT_SECONDS),
     ]
     if auto_tune:
         expected_horovod_run_cmd.extend(
