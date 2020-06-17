@@ -51,12 +51,12 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
     params.domEvent.stopPropagation();
     try {
       switch (params.key) { // Cases should match menu items.
-        case 'kill':
-          await killTask(task);
-          if (task.type === TaskType.Experiment) {
-            // We don't provide immediate updates for command types yet.
-            await updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
-          }
+        case 'activate':
+          await setExperimentState({
+            experimentId: parseInt(task.id),
+            state: RunState.Active,
+          });
+          await updateExperimentLocally(exp => ({ ...exp, state: RunState.Active }));
           break;
         case 'archive':
           await archiveExperiment(parseInt(task.id), !task.archived);
@@ -69,19 +69,19 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
           });
           await updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
           break;
+        case 'kill':
+          await killTask(task);
+          if (task.type === TaskType.Experiment) {
+            // We don't provide immediate updates for command types yet.
+            await updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
+          }
+          break;
         case 'pause':
           await setExperimentState({
             experimentId: parseInt(task.id),
             state: RunState.Paused,
           });
           await updateExperimentLocally(exp => ({ ...exp, state: RunState.Paused }));
-          break;
-        case 'activate':
-          await setExperimentState({
-            experimentId: parseInt(task.id),
-            state: RunState.Active,
-          });
-          await updateExperimentLocally(exp => ({ ...exp, state: RunState.Active }));
           break;
       }
     } catch (e) {
@@ -100,11 +100,11 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
 
   const menu = (
     <Menu onClick={handleMenuClick}>
-      {isKillable && <Menu.Item key="kill">Kill</Menu.Item>}
-      {isArchivable && <Menu.Item key="archive">Archive</Menu.Item>}
-      {isPausable && <Menu.Item key="pause">Pause</Menu.Item>}
       {isResumable && <Menu.Item key="activate">Activate</Menu.Item>}
+      {isPausable && <Menu.Item key="pause">Pause</Menu.Item>}
+      {isArchivable && <Menu.Item key="archive">Archive</Menu.Item>}
       {isCancelable && <Menu.Item key="cancel">Cancel</Menu.Item>}
+      {isKillable && <Menu.Item key="kill">Kill</Menu.Item>}
     </Menu>
   );
 
