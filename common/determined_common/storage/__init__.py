@@ -106,5 +106,5 @@ def validate_manager(manager: StorageManager) -> None:
     manager.delete(metadata)
 
 
-def validate_config(config: Dict[str, Any]) -> None:
-    validate_manager(build(config))
+def validate_config(config: Dict[str, Any], container_path: Optional[str] = None) -> None:
+    validate_manager(build(config, container_path=container_path))
