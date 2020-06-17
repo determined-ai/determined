@@ -6,8 +6,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-func TestASHASearcher(t *testing.T) {
-	actual := model.AsyncHalvingConfig{
+func TestSHASearcher(t *testing.T) {
+	actual := model.SyncHalvingConfig{
 		Metric:           defaultMetric,
 		NumRungs:         4,
 		TargetTrialSteps: 800,
@@ -22,10 +22,10 @@ func TestASHASearcher(t *testing.T) {
 		toKinds("12S 1V 38S 1V"),
 		toKinds("12S 1V 38S 1V 150S 1V 600S 1V"),
 	}
-	checkSimulation(t, newAsyncHalvingSearch(actual), nil, ConstantValidation, expected)
+	checkSimulation(t, newSyncHalvingSearch(actual), nil, ConstantValidation, expected)
 }
 
-func TestASHASearchMethod(t *testing.T) {
+func TestSHASearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "smaller is better",
@@ -43,7 +43,7 @@ func TestASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(0.11, 12, []int{12}, nil),
 			},
 			config: model.SearcherConfig{
-				AsyncHalvingConfig: &model.AsyncHalvingConfig{
+				SyncHalvingConfig: &model.SyncHalvingConfig{
 					Metric:           "error",
 					NumRungs:         4,
 					SmallerIsBetter:  true,
@@ -70,7 +70,7 @@ func TestASHASearchMethod(t *testing.T) {
 				newEarlyExitPredefinedTrial(0.11, 11, nil, nil),
 			},
 			config: model.SearcherConfig{
-				AsyncHalvingConfig: &model.AsyncHalvingConfig{
+				SyncHalvingConfig: &model.SyncHalvingConfig{
 					Metric:           "error",
 					NumRungs:         4,
 					SmallerIsBetter:  true,
@@ -97,7 +97,7 @@ func TestASHASearchMethod(t *testing.T) {
 				newConstantPredefinedTrial(0.01, 12, []int{12}, nil),
 			},
 			config: model.SearcherConfig{
-				AsyncHalvingConfig: &model.AsyncHalvingConfig{
+				SyncHalvingConfig: &model.SyncHalvingConfig{
 					Metric:           "error",
 					NumRungs:         4,
 					SmallerIsBetter:  false,
@@ -124,7 +124,7 @@ func TestASHASearchMethod(t *testing.T) {
 				newEarlyExitPredefinedTrial(0.01, 11, nil, nil),
 			},
 			config: model.SearcherConfig{
-				AsyncHalvingConfig: &model.AsyncHalvingConfig{
+				SyncHalvingConfig: &model.SyncHalvingConfig{
 					Metric:           "error",
 					NumRungs:         4,
 					SmallerIsBetter:  false,

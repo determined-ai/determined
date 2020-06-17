@@ -18,7 +18,7 @@ func newAdaptiveSearch(config model.AdaptiveConfig) SearchMethod {
 
 	methods := make([]SearchMethod, 0, len(brackets))
 	for _, numRungs := range brackets {
-		c := model.AsyncHalvingConfig{
+		c := model.SyncHalvingConfig{
 			Metric:           config.Metric,
 			SmallerIsBetter:  config.SmallerIsBetter,
 			NumRungs:         numRungs,
@@ -27,7 +27,7 @@ func newAdaptiveSearch(config model.AdaptiveConfig) SearchMethod {
 			Divisor:          config.Divisor,
 			TrainStragglers:  config.TrainStragglers,
 		}
-		methods = append(methods, newAsyncHalvingSearch(c))
+		methods = append(methods, newSyncHalvingSearch(c))
 	}
 
 	return newTournamentSearch(methods...)

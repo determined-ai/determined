@@ -23,7 +23,7 @@ type SearcherConfig struct {
 	SingleConfig         *SingleConfig         `union:"name,single" json:"-"`
 	RandomConfig         *RandomConfig         `union:"name,random" json:"-"`
 	GridConfig           *GridConfig           `union:"name,grid" json:"-"`
-	AsyncHalvingConfig   *AsyncHalvingConfig   `union:"name,async_halving" json:"-"`
+	SyncHalvingConfig    *SyncHalvingConfig    `union:"name,sync_halving" json:"-"`
 	AdaptiveConfig       *AdaptiveConfig       `union:"name,adaptive" json:"-"`
 	AdaptiveSimpleConfig *AdaptiveSimpleConfig `union:"name,adaptive_simple" json:"-"`
 	PBTConfig            *PBTConfig            `union:"name,pbt" json:"-"`
@@ -81,8 +81,8 @@ func (g GridConfig) Validate() []error {
 	}
 }
 
-// AsyncHalvingConfig configures asynchronous successive halving.
-type AsyncHalvingConfig struct {
+// SyncHalvingConfig configures synchronous successive halving.
+type SyncHalvingConfig struct {
 	Metric           string  `json:"metric"`
 	SmallerIsBetter  bool    `json:"smaller_is_better"`
 	NumRungs         int     `json:"num_rungs"`

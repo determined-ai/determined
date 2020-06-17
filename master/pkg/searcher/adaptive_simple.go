@@ -21,7 +21,7 @@ func newAdaptiveSimpleSearch(config model.AdaptiveSimpleConfig) SearchMethod {
 
 	methods := make([]SearchMethod, 0, len(brackets))
 	for i, numRungs := range brackets {
-		c := model.AsyncHalvingConfig{
+		c := model.SyncHalvingConfig{
 			Metric:           config.Metric,
 			SmallerIsBetter:  config.SmallerIsBetter,
 			TargetTrialSteps: config.MaxSteps,
@@ -30,13 +30,13 @@ func newAdaptiveSimpleSearch(config model.AdaptiveSimpleConfig) SearchMethod {
 			TrainStragglers:  true,
 		}
 		numTrials := max(maxTrials(config.MaxTrials, len(brackets), i), 1)
-		methods = append(methods, newAsyncHalvingSimpleSearch(c, numTrials))
+		methods = append(methods, newSyncHalvingSimpleSearch(c, numTrials))
 	}
 
 	return newTournamentSearch(methods...)
 }
 
-func newAsyncHalvingSimpleSearch(config model.AsyncHalvingConfig, trials int) SearchMethod {
+func newSyncHalvingSimpleSearch(config model.SyncHalvingConfig, trials int) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
 	expectedSteps := 0
 	expectedWorkloads := 0
@@ -63,11 +63,11 @@ func newAsyncHalvingSimpleSearch(config model.AsyncHalvingConfig, trials int) Se
 		)
 	}
 	config.StepBudget = expectedSteps
-	return &asyncHalvingSearch{
-		AsyncHalvingConfig: config,
-		rungs:              rungs,
-		trialRungs:         make(map[RequestID]int),
-		earlyExitTrials:    make(map[RequestID]bool),
-		expectedWorkloads:  expectedWorkloads,
+	return &syncHalvingSearch{
+		SyncHalvingConfig: config,
+		rungs:             rungs,
+		trialRungs:        make(map[RequestID]int),
+		earlyExitTrials:   make(map[RequestID]bool),
+		expectedWorkloads: expectedWorkloads,
 	}
 }
