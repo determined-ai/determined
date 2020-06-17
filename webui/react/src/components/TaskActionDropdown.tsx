@@ -56,24 +56,24 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
             experimentId: parseInt(task.id),
             state: RunState.Active,
           });
-          await updateExperimentLocally(exp => ({ ...exp, state: RunState.Active }));
+          updateExperimentLocally(exp => ({ ...exp, state: RunState.Active }));
           break;
         case 'archive':
           await archiveExperiment(parseInt(task.id), !task.archived);
-          await updateExperimentLocally(exp => ({ ...exp, archived: true }));
+          updateExperimentLocally(exp => ({ ...exp, archived: true }));
           break;
         case 'cancel':
           await setExperimentState({
             experimentId: parseInt(task.id),
             state: RunState.StoppingCanceled,
           });
-          await updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
+          updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
           break;
         case 'kill':
           await killTask(task);
           if (task.type === TaskType.Experiment) {
             // We don't provide immediate updates for command types yet.
-            await updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
+            updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
           }
           break;
         case 'pause':
@@ -81,7 +81,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
             experimentId: parseInt(task.id),
             state: RunState.Paused,
           });
-          await updateExperimentLocally(exp => ({ ...exp, state: RunState.Paused }));
+          updateExperimentLocally(exp => ({ ...exp, state: RunState.Paused }));
           break;
       }
     } catch (e) {
