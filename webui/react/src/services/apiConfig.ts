@@ -1,13 +1,18 @@
 import { sha512 }  from 'js-sha512';
+import queryString from 'query-string';
 
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { Api } from 'services/apiBuilder';
-import { jsonToDeterminedInfo, jsonToExperiments } from 'services/decoder';
 import {
-  ExperimentsParams, KillCommandParams, KillExpParams,
-  LaunchTensorboardParams, PatchExperimentParams,
+  jsonToCommandLogs, jsonToDeterminedInfo, jsonToExperiments, jsonToLogs, jsonToTrialLogs,
+} from 'services/decoder';
+import {
+  CommandLogsParams, ExperimentsParams, KillCommandParams, KillExpParams,
+  LaunchTensorboardParams, LogsParams, PatchExperimentParams, TrialLogsParams,
 } from 'services/types';
-import { CommandType, Credentials, DeterminedInfo, Experiment, TBSourceType, User } from 'types';
+import {
+  CommandType, Credentials, DeterminedInfo, Experiment, Log, TBSourceType, User,
+} from 'types';
 
 /* Helpers */
 
@@ -125,4 +130,40 @@ export const getExperimentSummaries:  Api<ExperimentsParams, Experiment[]> = {
   }),
   name: 'getExperimentSummaries',
   postProcess: (response) => jsonToExperiments(response.data),
+};
+
+/* Logs */
+
+const buildQuery = (params: LogsParams): string => {
+  const queryParams: Record<string, number> = {};
+  if (params.tail) queryParams['tail'] = params.tail;
+  if (params.greaterThanId != null) queryParams['greater_than_id'] = params.greaterThanId;
+  return queryString.stringify(queryParams);
+};
+
+export const getMasterLogs: Api<LogsParams, Log[]> = {
+  httpOptions: (params: LogsParams) => ({
+    url: [ '/logs', buildQuery(params) ].join('?'),
+  }),
+  name: 'getMasterLogs',
+  postProcess: response => jsonToLogs(response.data),
+};
+
+export const getTrialLogs: Api<TrialLogsParams, Log[]> = {
+  httpOptions: (params: TrialLogsParams) => ({
+    url: [ `/trials/${params.trialId}/logs`, buildQuery(params) ].join('?'),
+  }),
+  name: 'getTrialLogs',
+  postProcess: response => jsonToTrialLogs(response.data),
+};
+
+export const getCommandLogs: Api<CommandLogsParams, Log[]> = {
+  httpOptions: (params: CommandLogsParams) => ({
+    url: [
+      `/${params.commandType}/${params.commandId}/events`,
+      buildQuery(params),
+    ].join('?'),
+  }),
+  name: 'getCommandLogs',
+  postProcess: response => jsonToCommandLogs(response.data),
 };

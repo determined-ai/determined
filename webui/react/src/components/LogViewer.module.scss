@@ -1,0 +1,91 @@
+.base {
+  background-color: var(--theme-colors-monochrome-17);
+  height: 100%;
+  position: relative;
+  width: 100%;
+
+  .controller {
+    align-items: center;
+    display: flex;
+    height: var(--theme-sizes-layout-giant);
+    justify-content: space-between;
+    margin-bottom: var(--theme-sizes-layout-medium);
+  }
+  .container {
+    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
+    font-family: 'Source Code Pro', monospace;
+    font-size: var(--theme-sizes-font-small);
+    height: 100%;
+    overflow: auto;
+    padding: var(--theme-sizes-layout-medium);
+    position: relative;
+  }
+  .scrollSpacer {
+    position: relative;
+  }
+  .measure {
+    display: inline;
+    position: absolute;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .datetimeTooltip {
+    white-space: nowrap;
+  }
+  .line {
+    display: flex;
+    position: absolute;
+  }
+  .line > * { white-space: nowrap; }
+  .line > .number {
+    color: var(--theme-colors-monochrome-10);
+    flex-shrink: 0;
+    text-align: right;
+  }
+  .line > .number::after { content: '\00a0'; }
+  .line > .time {
+    color: var(--theme-colors-core-secondary);
+    flex-shrink: 0;
+  }
+  .line > .time::before { content: '['; }
+  .line > .time::after { content: ']\00a0'; }
+  .line > .message {
+    flex-grow: 1;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .scrollToLatest {
+    bottom: var(--theme-sizes-layout-huge);
+    box-shadow: var(--theme-shadow);
+    opacity: 0;
+    position: absolute;
+    right: var(--theme-sizes-layout-huge);
+    transition: opacity 0.2s linear;
+    user-select: none;
+    visibility: hidden;
+  }
+  .scrollToLatest.show {
+    opacity: 1;
+    user-select: auto;
+    visibility: visible;
+  }
+  .debugger {
+    display: flex;
+    padding: 0 var(--theme-sizes-layout-medium);
+
+    & > span {
+      color: var(--theme-colors-monochrome-6);
+      font-size: var(--theme-sizes-font-small);
+      margin-right: var(--theme-sizes-layout-medium);
+    }
+    & > span::before {
+      color: var(--theme-colors-monochrome-8);
+      content: attr(data-label);
+      margin-right: var(--theme-sizes-layout-small);
+    }
+  }
+}
+.noWrap {
+  .right { overflow: auto; }
+  .line > .message { word-break: normal; }
+}

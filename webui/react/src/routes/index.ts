@@ -3,6 +3,7 @@ import { RouteProps } from 'react-router';
 
 import Cluster from 'pages/Cluster';
 import Dashboard from 'pages/Dashboard';
+import MasterLogs from 'pages/MasterLogs';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
 import TaskList from 'pages/TaskList';
@@ -63,6 +64,13 @@ export const appRoutes: RouteConfig[] = [
   dashboardRoute,
   taskListRoute,
   clusterRoute,
+  {
+    component: MasterLogs,
+    id: 'logs',
+    needAuth: true,
+    path: '/det/logs',
+    title: 'Master Logs',
+  },
   {
     component: SignIn,
     id: 'login',

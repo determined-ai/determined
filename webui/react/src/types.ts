@@ -227,6 +227,21 @@ export type CommonProps = {
   title?: string;
 }
 
+export enum LogLevel {
+  Debug = 'debug',
+  Error = 'error',
+  Info = 'info',
+  Warning = 'warning',
+}
+
+export interface Log {
+  id: number;
+  level?: LogLevel;
+  message: string;
+  meta?: string;
+  time?: string;
+}
+
 export const terminalCommandStates: Set<CommandState> = new Set([
   CommandState.Terminated,
 ]);

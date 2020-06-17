@@ -146,6 +146,7 @@ export const useRestApiSimple =
   useEffect(() => {
     const source = axios.CancelToken.source();
 
+    dispatch({ type: ActionType.SetLoading, value: true });
     apiReq({ ...params, cancelToken: source.token })
       .then((result) => dispatch({ type: ActionType.SetData, value: result } ))
       .catch((e) => (!axios.isCancel(e)) && dispatch({ type: ActionType.SetError, value: e }));

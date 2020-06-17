@@ -14,6 +14,13 @@
     transform: translate(-50%, -50%);
   }
 }
+.fillContainer {
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
 .fullPage {
   background-color: rgba(var(--theme-colors-monochrome-17), 0.8);
   height: 100%;
@@ -24,4 +31,7 @@
 }
 .opaque {
   background-color: var(--theme-colors-monochrome-17);
+}
+.shade {
+  background-color: rgba(var(--theme-colors-monochrome-17), 0.8);
 }

@@ -11,6 +11,9 @@
     display: flex;
     flex-direction: column;
   }
+  .footer > a {
+    margin-bottom: var(--theme-sizes-layout-medium);
+  }
   .version {
     background-color: var(--theme-colors-monochrome-13);
     display: flex;

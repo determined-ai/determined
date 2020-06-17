@@ -6,7 +6,7 @@ import { useRouteMatch } from 'react-router-dom';
  * all the commented pieces below to enable it again.
  */
 
-// import NavItem, { NavItemType } from 'components/NavItem';
+import NavItem, { NavItemType } from 'components/NavItem';
 import NavMenu, { NavMenuType } from 'components/NavMenu';
 import { defaultSideBarRoute, sidebarRoutes } from 'routes';
 
@@ -34,6 +34,13 @@ const SideBar: React.FC<Props> = (props: Props) => {
         showLabels={!collapsed}
         type={collapsed ? NavMenuType.SideBarIconOnly : NavMenuType.SideBar} />
       <div className={css.footer}>
+        {/* <NavItem
+          icon="logs"
+          path="/det/logs"
+          popout={true}
+          type={collapsed ? NavItemType.SideBarIconOnly : NavItemType.SideBar}>
+          Master Logs
+        </NavItem> */}
         {/* <NavItem icon={collapsed ? 'expand' : 'collapse'}
           type={collapsed ? NavItemType.SideBarIconOnly : NavItemType.SideBar}
           onClick={handleClick}>

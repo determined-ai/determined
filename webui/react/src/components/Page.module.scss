@@ -13,6 +13,8 @@
     width: 100%
   }
   .body {
+    height: max-content;
+    min-height: 0;
     width: 100%;
   }
 }

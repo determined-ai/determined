@@ -1,10 +1,15 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import { CancelToken } from 'axios';
 
 import { generateApi } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
-import { ExperimentsParams, KillCommandParams, KillExpParams,
-  LaunchTensorboardParams, PatchExperimentParams, PatchExperimentState } from 'services/types';
-import { CommandType, Credentials, DeterminedInfo, Experiment, Task, TaskType, User } from 'types';
+import {
+  CommandLogsParams, ExperimentsParams, KillCommandParams, KillExpParams, LaunchTensorboardParams,
+  LogsParams, PatchExperimentParams, PatchExperimentState, TrialLogsParams,
+} from 'services/types';
+import {
+  CommandType, Credentials, DeterminedInfo, Experiment, Log, Task, TaskType, User,
+} from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAuthFailure = (e: any): boolean => {
@@ -61,3 +66,9 @@ export const setExperimentState =
       ...rest,
     });
   };
+
+export const getMasterLogs = generateApi<LogsParams, Log[]>(Config.getMasterLogs);
+
+export const getTrialLogs = generateApi<TrialLogsParams, Log[]>(Config.getTrialLogs);
+
+export const getCommandLogs = generateApi<CommandLogsParams, Log[]>(Config.getCommandLogs);
