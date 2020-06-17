@@ -143,6 +143,8 @@ def create_run_command(
         create_hostlist_arg(num_gpus_per_machine, ip_addresses),
         "--start-timeout",
         str(constants.HOROVOD_STARTUP_TIMEOUT_SECONDS),
+        "--gloo-timeout-seconds",
+        str(constants.HOROVOD_GLOO_TIMEOUT_SECONDS),
     ]
     horovod_process_cmd.extend(create_network_interface_arg_if_specified(env, num_machines))
     horovod_process_cmd.extend(create_performance_args(env))
