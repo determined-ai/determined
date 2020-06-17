@@ -284,21 +284,23 @@ func NewTrial(
 
 // Step represents a row from the `steps` table.
 type Step struct {
-	TrialID   int        `db:"trial_id"`
-	ID        int        `db:"id"`
-	State     State      `db:"state"`
-	StartTime time.Time  `db:"start_time"`
-	EndTime   *time.Time `db:"end_time"`
-	Metrics   JSONObj    `db:"metrics"`
+	TrialID        int        `db:"trial_id"`
+	ID             int        `db:"id"`
+	State          State      `db:"state"`
+	StartTime      time.Time  `db:"start_time"`
+	EndTime        *time.Time `db:"end_time"`
+	BatchesPerStep int        `db:"batches_per_step"`
+	Metrics        JSONObj    `db:"metrics"`
 }
 
 // NewStep creates a new step in the active state.
-func NewStep(trialID int, stepID int) *Step {
+func NewStep(trialID, stepID, batchesPerStep int) *Step {
 	return &Step{
-		TrialID:   trialID,
-		ID:        stepID,
-		State:     ActiveState,
-		StartTime: time.Now().UTC(),
+		TrialID:        trialID,
+		ID:             stepID,
+		State:          ActiveState,
+		StartTime:      time.Now().UTC(),
+		BatchesPerStep: batchesPerStep,
 	}
 }
 

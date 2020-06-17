@@ -211,7 +211,11 @@ FROM (
                        (SELECT count(*)
                         FROM steps s
                         WHERE s.trial_id = t.id
-                       ) AS num_steps,
+					   ) AS num_steps,
+					   (SELECT sum(s.batches_per_step)
+						FROM steps
+						WHERE s.trial_id = t.id
+					   ) AS num_batches,
                        (SELECT v.metrics
                         FROM validations v
                         WHERE v.trial_id = t.id AND v.state = 'COMPLETED'
@@ -1180,7 +1184,7 @@ FROM (
            t.warm_start_checkpoint_id,
            (SELECT coalesce(jsonb_agg(row_to_json(r2) ORDER BY r2.id ASC), '[]'::jsonb)
             FROM (
-                SELECT s.end_time, s.id, s.state, s.start_time,
+                SELECT s.end_time, s.id, s.state, s.start_time, s.batches_per_step
                        (SELECT CASE
                            WHEN s.metrics->'avg_metrics' IS NOT NULL THEN
                                (s.metrics->'avg_metrics')::json
@@ -1308,8 +1312,8 @@ func (db *PgDB) AddStep(step *model.Step) error {
 	}
 	err = db.namedExecOne(`
 INSERT INTO steps
-(trial_id, id, state, start_time, end_time)
-VALUES (:trial_id, :id, :state, :start_time, :end_time)`, step)
+(trial_id, id, state, start_time, end_time, batches_per_step)
+VALUES (:trial_id, :id, :state, :start_time, :end_time, :batches_per_step)`, step)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting step %v", *step)
 	}
@@ -1320,7 +1324,7 @@ VALUES (:trial_id, :id, :state, :start_time, :end_time)`, step)
 func (db *PgDB) StepByID(trialID, stepID int) (*model.Step, error) {
 	var step model.Step
 	if err := db.query(`
-SELECT trial_id, id, state, start_time, end_time, metrics
+SELECT trial_id, id, state, start_time, end_time, metrics, batches_per_step
 FROM steps
 WHERE trial_id = $1 AND id = $2`, &step, trialID, stepID); err != nil {
 		return nil, errors.Wrapf(err, "error querying for step %v, %v", trialID, stepID)
