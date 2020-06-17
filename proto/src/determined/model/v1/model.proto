@@ -4,7 +4,6 @@ package determined.model.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/modelv1";
 
 import "google/protobuf/struct.proto";
-
 import "google/protobuf/timestamp.proto";
 
 // Model is a named collection of model versions.

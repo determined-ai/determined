@@ -1501,10 +1501,7 @@ INSERT INTO models
 (name, description, metadata, creation_time, last_updated_time)
 VALUES (:name, :description, :metadata, :creation_time, :last_updated_time)
 RETURNING id`, m)
-	if err != nil {
-		return errors.Wrapf(err, "error inserting model %v", *m)
-	}
-	return nil
+	return errors.Wrapf(err, "error inserting model %v", *m)
 }
 
 // ModelByName looks up a model by name.
