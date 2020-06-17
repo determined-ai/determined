@@ -518,13 +518,9 @@ class EstimatorTrialController(det.LoopTrialController):
         self.train_spec = tf.estimator.TrainSpec(
             input_fn=repeating_train_fn, hooks=self.train_hooks
         )
-        steps = (
-            self.val_spec.steps // self.context.distributed.get_size()
-            if self.val_spec.steps is not None
-            else None
-        )
+
         self.eval_spec = tf.estimator.EvalSpec(
-            input_fn=self.val_spec.input_fn, hooks=self.val_hooks, steps=steps
+            input_fn=self.val_spec.input_fn, hooks=self._init_val_hooks(), steps=self.val_spec.steps
         )
 
     def _init_train_hooks(self) -> None:
@@ -540,9 +536,8 @@ class EstimatorTrialController(det.LoopTrialController):
         # their chance.
         self.train_hooks.append(DeterminedControlHook(self))
 
-    def _init_val_hooks(self) -> None:
-        self.val_hooks = [*self.val_spec.hooks]
-        self.val_hooks.append(DeterminedEarlyStoppingHook(self.context))
+    def _init_val_hooks(self) -> List[tf.estimator.SessionRunHook]:
+        return [*self.val_spec.hooks, DeterminedEarlyStoppingHook(self.context)]
 
     def _init_run_config(self, config: tf.estimator.RunConfig) -> tf.estimator.RunConfig:
         logging.debug(f"Initializing RunConfig. Got RunConfig: {config} .")
