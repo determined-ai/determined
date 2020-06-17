@@ -3,7 +3,7 @@ import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
 import Icon from 'components/Icon';
-import { CommandState, RecentTask, RunState, TaskType, User } from 'types';
+import { CommandState, CommandType, RecentTask, RunState, TaskType, User } from 'types';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
 import { commandStateToLabel, runStateToLabel } from 'utils/types';
@@ -32,11 +32,11 @@ interface Props {
 const limitOptions: number[] = [ 10, 25, 50 ];
 
 const taskTypeConfig = [
-  { id: TaskType.Experiment },
-  { id: TaskType.Notebook },
-  { id: TaskType.Tensorboard },
-  { id: TaskType.Shell },
-  { id: TaskType.Command },
+  { id: 'Experiment' },
+  { id: CommandType.Notebook },
+  { id: CommandType.Tensorboard },
+  { id: CommandType.Shell },
+  { id: CommandType.Command },
 ];
 
 const selectIcon = <Icon name="arrow-down" size="tiny" />;
@@ -68,7 +68,7 @@ const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Pro
 
   const filterTypeConfig = useMemo(() => {
     return taskTypeConfig.map(config => ({
-      active: filters.types[config.id],
+      active: filters.types[config.id as TaskType],
       icon: config.id.toLocaleLowerCase(),
       id: config.id,
       label: capitalize(config.id),
@@ -144,7 +144,7 @@ const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Pro
 
 export default TaskFilter;
 
-const matchesState = (task: RecentTask, states: string[]): boolean =>  {
+const matchesState = (task: RecentTask, states: string[]): boolean => {
   if (states[0] === ALL_VALUE) return true;
 
   const targetStateRun = states[0] as RunState;
@@ -153,7 +153,7 @@ const matchesState = (task: RecentTask, states: string[]): boolean =>  {
   return [ targetStateRun, targetStateCmd ].includes(task.state);
 };
 
-const matchesUser = (task: RecentTask, users: User[], username?: string): boolean =>  {
+const matchesUser = (task: RecentTask, users: User[], username?: string): boolean => {
   if (!username) return true;
   const selectedUser = users.find(u => u.username === username);
   return !!selectedUser && (task.ownerId === selectedUser.id);
