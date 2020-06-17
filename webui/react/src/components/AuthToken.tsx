@@ -1,18 +1,29 @@
 import { CopyOutlined } from '@ant-design/icons';
-import { Button, Result } from 'antd';
+import { Button, notification, Result } from 'antd';
 import React, { useCallback } from 'react';
 
 import { getCookie } from 'utils/browser';
+import { copyToClipboard } from 'utils/dom';
 
 import css from './AuthToken.module.scss';
 
 const AuthToken: React.FC = () => {
   const token = getCookie('auth') || 'Auth token not found.';
 
-  const handleCopyToClipboard = useCallback(
-    (): Promise<void> => navigator.clipboard.writeText(token),
-    [ token ],
-  );
+  const handleCopyToClipboard = useCallback(async () => {
+    try {
+      await copyToClipboard(token);
+      notification.open({
+        description: 'Auth token copied to the clipboard.',
+        message: 'Auth Token Copied',
+      });
+    } catch (e) {
+      notification.warn({
+        description: e.message,
+        message: 'Unable to Copy to Clipboard',
+      });
+    }
+  }, [ token ]);
 
   return (
     <Result
