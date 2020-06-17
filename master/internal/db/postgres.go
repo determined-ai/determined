@@ -213,7 +213,7 @@ FROM (
                         WHERE s.trial_id = t.id
 					   ) AS num_steps,
 					   (SELECT sum(s.batches_per_step)
-						FROM steps
+						FROM steps s
 						WHERE s.trial_id = t.id
 					   ) AS num_batches,
                        (SELECT v.metrics
@@ -1184,12 +1184,11 @@ FROM (
            t.warm_start_checkpoint_id,
            (SELECT coalesce(jsonb_agg(row_to_json(r2) ORDER BY r2.id ASC), '[]'::jsonb)
             FROM (
-                SELECT s.end_time, s.id, s.state, s.start_time, s.batches_per_step
+                SELECT s.end_time, s.id, s.state, s.start_time, s.batches_per_step,
                        (SELECT CASE
                            WHEN s.metrics->'avg_metrics' IS NOT NULL THEN
                                (s.metrics->'avg_metrics')::json
                            ELSE (SELECT row_to_json(r3)
-
                                  FROM
                                     (SELECT %s
                                      FROM jsonb_array_elements(s.metrics->'batch_metrics')
