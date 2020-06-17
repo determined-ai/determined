@@ -58,13 +58,6 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
           });
           await updateExperimentLocally(exp => ({ ...exp, state: RunState.Active }));
           break;
-        case 'pause':
-          await setExperimentState({
-            experimentId: parseInt(task.id),
-            state: RunState.Paused,
-          });
-          await updateExperimentLocally(exp => ({ ...exp, state: RunState.Paused }));
-          break;
         case 'archive':
           await archiveExperiment(parseInt(task.id), !task.archived);
           await updateExperimentLocally(exp => ({ ...exp, archived: true }));
@@ -82,6 +75,13 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
             // We don't provide immediate updates for command types yet.
             await updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
           }
+          break;
+        case 'pause':
+          await setExperimentState({
+            experimentId: parseInt(task.id),
+            state: RunState.Paused,
+          });
+          await updateExperimentLocally(exp => ({ ...exp, state: RunState.Paused }));
           break;
       }
     } catch (e) {
