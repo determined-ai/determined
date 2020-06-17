@@ -23,7 +23,7 @@ module.exports = {
     ecmaVersion: 2018,
     sourceType: 'module',
   },
-  plugins: [ 'import', 'react', 'react-hooks' ],
+  plugins: [ 'import', 'react', 'react-hooks', 'sort-keys-fix' ],
   rules: {
     '@typescript-eslint/indent': [ 'error', 2 ],
     'array-bracket-spacing': [ 'error', 'always' ],
@@ -68,7 +68,7 @@ module.exports = {
       ignoreDeclarationSort: true,
       ignoreMemberSort: false,
     } ],
-    'sort-keys': [ 'error', 'asc', {
+    'sort-keys-fix/sort-keys-fix': [ 'warn', 'asc', {
       caseSensitive: false,
       natural: true,
     } ],
