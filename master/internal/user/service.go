@@ -326,16 +326,7 @@ func (s *Service) patchUsername(c echo.Context) (interface{}, error) {
 	}
 
 	user, err := s.db.UserByUsername(args.Username)
-	switch err {
-	case nil:
-	case db.ErrNotFound:
-		if authenticatedUser.Admin {
-			return nil, echo.NewHTTPError(
-				http.StatusBadRequest,
-				fmt.Sprintf("failed to get user '%s'", args.Username))
-		}
-		return nil, forbiddenError
-	default:
+	if err != nil {
 		return nil, err
 	}
 
