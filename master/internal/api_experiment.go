@@ -2,111 +2,28 @@ package internal
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
-	"time"
 
-	"github.com/pkg/errors"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
 
-type dbExperiment struct {
-	ID          int32
-	Description string
-	Labels      labels
-	StartTime   time.Time
-	EndTime     *time.Time
-	State       model.State
-	NumTrials   int
-	Archived    bool
-	Progress    float64
-	Username    string
-}
-
-func toProtoExperiment(exp dbExperiment) *experimentv1.Experiment {
-	return &experimentv1.Experiment{
-		Id:          exp.ID,
-		Description: exp.Description,
-		Labels:      exp.Labels,
-		StartTime: &timestamppb.Timestamp{
-			Seconds: exp.StartTime.Unix(),
-			Nanos:   int32(exp.StartTime.Nanosecond()),
-		},
-		EndTime: &timestamppb.Timestamp{
-			Seconds: exp.StartTime.Unix(),
-			Nanos:   int32(exp.StartTime.Nanosecond()),
-		},
-		State:     toProtoState(exp.State),
-		NumTrials: int32(exp.NumTrials),
-		Archived:  exp.Archived,
-		Progress:  exp.Progress,
-		Username:  exp.Username,
-	}
-}
-
-func toProtoState(state model.State) experimentv1.State {
-	switch state {
-	case model.ActiveState:
-		return experimentv1.State_STATE_ACTIVE
-	case model.CanceledState:
-		return experimentv1.State_STATE_CANCELED
-	case model.CompletedState:
-		return experimentv1.State_STATE_COMPLETED
-	case model.DeletedState:
-		return experimentv1.State_STATE_DELETED
-	case model.ErrorState:
-		return experimentv1.State_STATE_ERROR
-	case model.PausedState:
-		return experimentv1.State_STATE_PAUSED
-	case model.StoppingCanceledState:
-		return experimentv1.State_STATE_STOPPING_CANCELED
-	case model.StoppingCompletedState:
-		return experimentv1.State_STATE_STOPPING_COMPLETED
-	case model.StoppingErrorState:
-		return experimentv1.State_STATE_STOPPING_ERROR
-	default:
-		return experimentv1.State_STATE_UNSPECIFIED
-	}
-}
-
-type labels []string
-
-func (l *labels) Scan(src interface{}) error {
-	if src == nil {
-		return nil
-	}
-	data, ok := src.([]byte)
-	if !ok {
-		return errors.Errorf("unable to convert to []byte: %v", src)
-	}
-	var labels []string
-	if err := json.Unmarshal(data, &labels); err != nil {
-		return err
-	}
-	*l = labels
-	return nil
-}
-
 func (a *apiServer) GetExperiments(
 	_ context.Context, req *apiv1.GetExperimentsRequest) (*apiv1.GetExperimentsResponse, error) {
 	resp := &apiv1.GetExperimentsResponse{}
-	var values []dbExperiment
-	err := a.m.db.Query("get_experiments", &values)
+	err := a.m.db.QueryProto("get_experiments", &resp.Experiments)
 	if err != nil {
 		return nil, err
 	}
-	for _, exp := range values {
-		exp := toProtoExperiment(exp)
+	var filtered []*experimentv1.Experiment
+	for _, exp := range resp.Experiments {
 		if filterExperiments(req, exp) {
-			resp.Experiments = append(resp.Experiments, exp)
+			filtered = append(filtered, exp)
 		}
 	}
+	resp.Experiments = filtered
 	resp.Pagination, err = a.pagination(resp.Experiments, req.Offset, req.Limit)
 	if err != nil {
 		return nil, err
