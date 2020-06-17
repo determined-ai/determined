@@ -59,3 +59,8 @@ HOROVOD_STARTUP_TIMEOUT_SECONDS = 1200
 # Path for file that stores output of horovod auto-tuning. Only created when
 # horovod auto-tuning is enabled.
 HOROVOD_AUTOTUNE_LOG_FILEPATH = "/tmp/autotune_log.csv"
+
+# How many seconds GLOO waits for all tasks to connect before failing.
+# Increasing this from a default of 30 is necessary when there is a
+# large number of machines.
+HOROVOD_GLOO_TIMEOUT_SECONDS = 240
