@@ -1813,11 +1813,22 @@ func (db *PgDB) queryRows(
 		vValue := reflect.ValueOf(v).Elem()
 		vValue.Set(reflect.MakeSlice(vValue.Type(), 0, 0))
 		for rows.Next() {
-			sValue := reflect.New(vType.Elem())
-			if err = p(rows, sValue.Interface()); err != nil {
-				return err
+			switch k := vValue.Type().Elem().Kind(); k {
+			case reflect.Ptr:
+				sValue := reflect.New(vValue.Type().Elem().Elem())
+				if err = p(rows, sValue.Interface()); err != nil {
+					return err
+				}
+				vValue = reflect.Append(vValue, sValue)
+			case reflect.Struct:
+				sValue := reflect.New(vValue.Type().Elem())
+				if err = p(rows, sValue.Interface()); err != nil {
+					return err
+				}
+				vValue = reflect.Append(vValue, sValue.Elem())
+			default:
+				return errors.Errorf("unexpected type: %s", k)
 			}
-			vValue = reflect.Append(vValue, sValue.Elem())
 		}
 		reflect.ValueOf(v).Elem().Set(vValue)
 		return nil
