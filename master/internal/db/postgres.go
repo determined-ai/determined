@@ -1504,6 +1504,11 @@ RETURNING id`, m)
 	return errors.Wrapf(err, "error inserting model %v", *m)
 }
 
+func (db *PgDB) ModelList() (values []model.Model, err error) {
+	err = db.Query("list_models", &values)
+	return values, err
+}
+
 // ModelByName looks up a model by name.
 func (db *PgDB) ModelByName(name string) (value model.Model, err error) {
 	return value, db.Query("get_model", &value, name)

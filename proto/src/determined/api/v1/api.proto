@@ -74,4 +74,9 @@ service Determined {
 
     // Get the requested model.
     rpc GetModel(GetModelRequest) returns (GetModelResponse)  { option (google.api.http) = {get: "/api/v1/models/{model_name}"}; }
+
+    // Get a paginated list of models
+    rpc GetModels(GetModelsRequest) returns (GetModelsResponse)  { option (google.api.http) = {get: "/api/v1/models"}; }
+
+    rpc PutModel(PutModelRequest) returns (PutModelResponse) { option (google.api.http) = {put: "/api/v1/models/{model.name}" body: "model"}; }
 }

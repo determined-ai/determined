@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/pkg/errors"
@@ -81,5 +82,40 @@ func (a *apiServer) GetModel(
 			codes.NotFound, "model %s not found", req.ModelName)
 	default:
 		return nil, errors.Wrapf(err, "error fetching model %s from database", req.ModelName)
+	}
+}
+
+func (a *apiServer) PutModel(_ context.Context, req *apiv1.PutModelRequest) (*apiv1.PutModelResponse, error) {
+	m, err := model.ModelFromProto(req.GetModel())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "model could not be parsed")
+	}
+
+	err = a.m.db.AddModel(m)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable to add model %s", req.GetModel().GetName())
+	}
+
+	protoModel, err := model.ModelToProto(*m)
+	return &apiv1.PutModelResponse{Model: protoModel}, err
+}
+
+func (a *apiServer) GetModels(_ context.Context, req *apiv1.GetModelsRequest) (*apiv1.GetModelsResponse, error) {
+	fmt.Printf("req = %+v\n", req)
+	switch m, err := a.m.db.ModelList(); err {
+	case nil:
+		models := []*modelv1.Model{}
+		for _, v := range m {
+			protoTemp, pErr := model.ModelToProto(v)
+			if err != nil {
+				return nil, pErr
+			}
+
+			models = append(models, protoTemp)
+		}
+
+		return &apiv1.GetModelsResponse{Models: models}, nil
+	default:
+		return nil, errors.Wrap(err, "error fetching models from database")
 	}
 }

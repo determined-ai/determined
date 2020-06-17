@@ -16,3 +16,23 @@ message GetModelResponse {
   // The model requested.
   determined.model.v1.Model model = 1;
 }
+
+message PutModelRequest {
+  determined.model.v1.Model model = 1;
+}
+
+message PutModelResponse {
+  determined.model.v1.Model model = 1;
+}
+
+message GetModelsRequest {
+    // Skip the number of experiments before returning results. Negative values
+    // denote number of experiments to skip from the end before returning results.
+    int32 offset = 1;
+    // Limit the number of experiments. A value of 0 denotes no limit.
+    int32 limit = 2;
+}
+
+message GetModelsResponse {
+  repeated determined.model.v1.Model models = 1;
+}
