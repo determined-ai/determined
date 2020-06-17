@@ -1,6 +1,6 @@
 import {
-  Command, CommandState, CommandType, Experiment,
-  RecentTask, RunState, Task, TaskType,
+  AnyTask, Command, CommandState, CommandType, Experiment, RecentCommandTask,
+  RecentExperimentTask, RecentTask, RunState,
 } from 'types';
 
 /* Conversions to Tasks */
@@ -20,7 +20,7 @@ const waitPageUrl = (command: Command): string | undefined => {
   return `/wait?event=${event}&jump=${jump}`;
 };
 
-export const commandToTask = (command: Command): RecentTask => {
+export const commandToTask = (command: Command): RecentCommandTask => {
   // We expect the title to be in the form of 'Type (pet-name-generated)'.
   const title = command.config.description.replace(/.*\((.*)\).*/, '$1');
   const task: RecentTask = {
@@ -34,14 +34,14 @@ export const commandToTask = (command: Command): RecentTask => {
     startTime: command.registeredTime,
     state: command.state as CommandState,
     title,
-    type: command.kind as unknown as TaskType,
+    type: command.kind,
     url: waitPageUrl(command),
     username: command.owner.username,
   };
   return task;
 };
 
-export const experimentToTask = (experiment: Experiment): RecentTask => {
+export const experimentToTask = (experiment: Experiment): RecentExperimentTask => {
   const lastEvent = experiment.endTime ?
     { date: experiment.endTime, name: 'finished' } :
     { date: experiment.startTime, name: 'requested' };
@@ -50,11 +50,10 @@ export const experimentToTask = (experiment: Experiment): RecentTask => {
     id: `${experiment.id}`,
     lastEvent,
     ownerId: experiment.ownerId,
-    progress: typeof experiment.progress === 'number' ? experiment.progress : undefined,
+    progress: experiment.progress,
     startTime: experiment.startTime,
-    state: experiment.state as RunState,
+    state: experiment.state,
     title: experiment.config.description,
-    type: TaskType.Experiment,
     url: `/ui/experiments/${experiment.id}`,
   };
   return task;
@@ -99,7 +98,7 @@ export const commandStateToLabel: {[key in CommandState]: string} = {
   [CommandState.Terminated]: 'Terminated',
 };
 
-export const isTaskKillable = (task: Task): boolean => {
+export const isTaskKillable = (task: AnyTask): boolean => {
   return killableRunStates.includes(task.state as RunState)
     || killableCmdStates.includes(task.state as CommandState);
 };

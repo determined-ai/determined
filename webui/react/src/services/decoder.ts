@@ -6,8 +6,8 @@ import {
   ioTypeGenericCommand, ioTypeGenericCommands, ioTypeLogs, ioTypeUsers,
 } from 'ioTypes';
 import {
-  Agent, Command, CommandType, DeterminedInfo, Experiment,
-  Log, LogLevel, ResourceState, ResourceType, User,
+  Agent, Command, CommandState, CommandType, DeterminedInfo, Experiment,
+  Log, LogLevel, ResourceState, ResourceType, RunState, User,
 } from 'types';
 import { capitalize } from 'utils/string';
 
@@ -92,7 +92,7 @@ const jsonToGenericCommands = (data: ioTypeGenericCommands, type: CommandType): 
       },
       registeredTime: command.registered_time,
       serviceAddress: command.service_address || undefined,
-      state: command.state,
+      state: command.state as CommandState,
     };
   });
 };
@@ -124,7 +124,7 @@ export const jsonToExperiments = (data: unknown): Experiment[] => {
       ownerId: experiment.owner_id,
       progress: experiment.progress || undefined,
       startTime: experiment.start_time,
-      state: experiment.state,
+      state: experiment.state as RunState,
     };
   });
 };

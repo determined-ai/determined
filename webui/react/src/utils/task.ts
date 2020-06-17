@@ -1,4 +1,6 @@
-import { CommandState, RecentTask, RunState, Task, TaskType, terminalCommandStates } from 'types';
+import { AnyTask, CommandState, CommandType, ExperimentTask, RecentCommandTask,
+  RecentEvent, RecentExperimentTask, RecentTask, RunState,
+  Task, terminalCommandStates } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export function getRandomElementOfEnum(e: any): any {
@@ -22,37 +24,63 @@ const sampleUsers = [
   },
 ];
 
-export function generateTasks(count = 10): RecentTask[] {
-  const runStates = new Array(Math.floor(count)).fill(0)
-    .map(() => getRandomElementOfEnum(RunState));
-  const cmdStates = new Array(Math.ceil(count)).fill(0)
-    .map(() => getRandomElementOfEnum(CommandState));
-  const states = [ ...runStates, ...cmdStates ];
+function generateTask(idx: number): Task & RecentEvent {
   const startTime = (Date.now()).toString();
-  return states.map((state, idx) => {
-    const progress = Math.random();
-    const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
-    const props = {
-      id: `${idx}`,
-      lastEvent: {
-        date: startTime,
-        name: 'opened',
-      },
-      ownerId: user.id,
-      progress,
-      startTime,
-      state: state as RunState | CommandState,
-      title: `${idx}`,
-      type: getRandomElementOfEnum(TaskType) as TaskType,
-      url: '#',
-      username: user.username,
-    };
-    return props;
-  });
+  const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
+  return {
+    id: `${idx}`,
+    lastEvent: {
+      date: startTime,
+      name: 'opened',
+    },
+    ownerId: user.id,
+    startTime,
+    title: `${idx}`,
+    url: '#',
+  };
 }
 
-export const canBeOpened = (task: Task): boolean => {
-  if (task.type !== TaskType.Experiment && task.state in terminalCommandStates) {
+export function generateExperimentTasks(idx: number): RecentExperimentTask {
+  const state = getRandomElementOfEnum(RunState);
+  const task = generateTask(idx);
+  const progress = Math.random();
+  return {
+    archived: false,
+    ... task,
+    progress,
+    state: state as RunState,
+  };
+}
+
+export function generateCommandTask(idx: number): RecentCommandTask {
+  const state = getRandomElementOfEnum(CommandState);
+  const task = generateTask(idx);
+  const username = sampleUsers.find(user => user.id === task.ownerId)?.username;
+  return {
+    ...task,
+    state: state as CommandState,
+    type: getRandomElementOfEnum(CommandType),
+    username,
+  };
+}
+
+export const generateTasks = (count = 10): RecentTask[] => {
+  return new Array(Math.floor(count)).fill(0)
+    .map((_, idx) => {
+      if (Math.random() > 0.5) {
+        return generateCommandTask(idx);
+      } else {
+        return generateExperimentTasks(idx);
+      }
+    });
+};
+
+export const isExperimentTask = (task: AnyTask): task is ExperimentTask => {
+  return  ('archived' in task) && !('type' in task);
+};
+
+export const canBeOpened = (task: AnyTask): boolean => {
+  if (!isExperimentTask(task) && task.state in terminalCommandStates) {
     return false;
   }
   return !!task.url;
