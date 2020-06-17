@@ -10,7 +10,7 @@ import (
 )
 
 // syncHalvingSearch implements a search using the synchronous successive halving algorithm
-// (ASHA). Technically, this is closer to SHA than ASHA as the promotions are synchronous.
+// (SHA).
 type syncHalvingSearch struct {
 	defaultSearchMethod
 	model.SyncHalvingConfig
@@ -23,7 +23,7 @@ type syncHalvingSearch struct {
 	trialsCompleted   int
 }
 
-const ashaExitedMetricValue = math.MaxFloat64
+const shaExitedMetricValue = math.MaxFloat64
 
 func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
@@ -183,7 +183,7 @@ func (s *syncHalvingSearch) promoteTrials(
 				//
 				//   2) We are bounded on the depth of this recursive stack by
 				//   the number of rungs. We default this to max out at 5.
-				_, err := s.promoteTrials(ctx, promotionID, wkld, ashaExitedMetricValue)
+				_, err := s.promoteTrials(ctx, promotionID, wkld, shaExitedMetricValue)
 				return nil, err
 			}
 		}
@@ -212,7 +212,7 @@ func (s *syncHalvingSearch) trialExitedEarly(
 	ctx context, requestID RequestID, message Workload,
 ) ([]Operation, error) {
 	s.earlyExitTrials[requestID] = true
-	return s.promoteTrials(ctx, requestID, message, ashaExitedMetricValue)
+	return s.promoteTrials(ctx, requestID, message, shaExitedMetricValue)
 }
 
 func max(initial int, values ...int) int {

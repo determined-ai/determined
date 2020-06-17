@@ -6,7 +6,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-func TestASHASearcher(t *testing.T) {
+func TestSHASearcher(t *testing.T) {
 	actual := model.SyncHalvingConfig{
 		Metric:           defaultMetric,
 		NumRungs:         4,
@@ -25,7 +25,7 @@ func TestASHASearcher(t *testing.T) {
 	checkSimulation(t, newSyncHalvingSearch(actual), nil, ConstantValidation, expected)
 }
 
-func TestASHASearchMethod(t *testing.T) {
+func TestSHASearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "smaller is better",
