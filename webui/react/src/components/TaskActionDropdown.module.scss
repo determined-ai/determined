@@ -11,4 +11,8 @@
 
     &:hover { color: var(--theme-colors-core-action); }
   }
+
+  button:disabled, button[disabled] {
+    &:hover { color: var(--theme-colors-monochrome-8); }
+  }
 }

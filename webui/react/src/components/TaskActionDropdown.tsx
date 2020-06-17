@@ -107,8 +107,10 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
 
   if (menuItems.length === 0) {
     return (
-      <div className={css.base} title="No applicable action items">
-        <Icon name="overflow-vertical" />
+      <div className={css.base} title="No applicable action items" onClick={stopPropagation}>
+        <button disabled>
+          <Icon name="overflow-vertical" />
+        </button>
       </div>
     );
   }
