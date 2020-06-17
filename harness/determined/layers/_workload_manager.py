@@ -138,7 +138,7 @@ class _TrialWorkloadManager(WorkloadManager):
 
             # Sanity-check training metrics.
             det.util.validate_batch_metrics(batch_metrics)
-            check_len(batch_metrics, num_batches)
+            check_len(batch_metrics, wkld.batches_per_step)
 
             for callback in self.callbacks:
                 callback.on_train_step_end(
@@ -161,8 +161,7 @@ class _TrialWorkloadManager(WorkloadManager):
             # Send the response up.
             respond(out_response)
 
-        num_batches = wkld.batches_per_step
-        yield wkld, [num_batches], _respond
+        yield wkld, [], _respond
 
     def yield_compute_validation_metrics(
         self, wkld: workload.Workload, respond: workload.ResponseFunc

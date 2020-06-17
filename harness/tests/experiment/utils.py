@@ -44,7 +44,7 @@ class TrainAndValidate:
                 workload.train_workload(
                     step_id, batches_per_step=batches_per_step, batches_completed=batches_completed
                 ),
-                [batches_per_step],
+                [],
             )
             metrics = interceptor.metrics_result()
             batch_metrics = metrics["metrics"]["batch_metrics"]
