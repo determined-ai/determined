@@ -20,8 +20,8 @@ const TaskCard: React.FC<RecentTask> = (props: RecentTask) => {
   }
   const classes = [ css.base ];
 
-  if (props.url) classes.push(css.link);
   const iconName = isExperimentTask(props) ? 'experiment' : props.type.toLowerCase();
+  if (canBeOpened(props) && props.url) classes.push(css.link);
 
   return (
     <div className={classes.join(' ')}>
