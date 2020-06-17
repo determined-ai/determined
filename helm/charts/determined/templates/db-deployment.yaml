@@ -1,3 +1,5 @@
+{{- if .Values.db.hostAddress }}
+{{ else }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,6 +21,7 @@ spec:
       containers:
       - name: determined-db-{{ .Release.Name }}
         image: postgres:10.8
+        imagePullPolicy: "Always"
         env:
           - name: POSTGRES_DB
             value: {{ .Values.db.name | quote }}
@@ -36,3 +39,4 @@ spec:
         - name: determined-db-storage
           persistentVolumeClaim:
             claimName: determined-db-pvc-{{ .Release.Name }}
+{{ end}}

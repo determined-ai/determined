@@ -1,3 +1,5 @@
+{{- if .Values.db.hostAddress }}
+{{ else}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -12,3 +14,4 @@ spec:
     protocol: TCP
   selector:
     app: determined-db-{{ .Release.Name }}
+{{ end }}

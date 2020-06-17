@@ -20,14 +20,18 @@ data:
       secret_key: {{ .Values.checkpointStorage.secretKey | quote }}
       endpoint_url: {{ .Values.checkpointStorage.endpointUrl | quote }}
       {{- end }}
-      save_experiment_best: 0
-      save_trial_best: 1
-      save_trial_latest: 1
+      save_experiment_best: {{ .Values.checkpointStorage.saveExperimentBest | default 0 }}
+      save_trial_best: {{ .Values.checkpointStorage.saveTrialBest | default 1 }}
+      save_trial_latest: {{ .Values.checkpointStorage.saveTrialLatest | default 1 }}
 
     db:
       user: {{ required "A valid Values.db.user entry required!" .Values.db.user | quote }}
       password: {{ required "A valid Values.db.password entry required!" .Values.db.password | quote }}
+      {{- if .Values.db.hostAddress }}
+      host: {{ .Values.db.hostAddress }}
+      {{- else }}
       host: determined-db-service-{{ .Release.Name }}
+      {{- end  }}
       port: {{ .Values.db.port }}
       name: {{ .Values.db.name | quote }}
 

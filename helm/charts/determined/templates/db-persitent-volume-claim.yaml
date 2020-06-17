@@ -1,3 +1,5 @@
+{{- if .Values.db.hostAddress }}
+{{ else }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -11,4 +13,5 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 30Gi
+      storage: {{ required  "A valid Values.db.storageSize entry is required!" .Values.db.storageSize }}
+{{ end }}

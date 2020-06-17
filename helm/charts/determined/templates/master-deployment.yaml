@@ -15,11 +15,16 @@ spec:
     metadata:
       labels:
         app: determined-master-{{ .Release.Name }}
+      annotations:
+        # This is added so that master deployment restarts when an upgrade occurs that changes
+        # the master-config.yaml.
+        checksum/config: {{ include (print $.Template.BasePath "/master-config.yaml") . | sha256sum }}
     spec:
       serviceAccount: determined-master-{{ .Release.Name }}
       containers:
       - name: determined-master-{{ .Release.Name }}
         image: determinedai/determined-master:{{ required "A valid Chart.AppVersion entry required!" .Chart.AppVersion }}
+        imagePullPolicy: "Always"
         volumeMounts:
           - name: master-config
             mountPath: /etc/determined/
