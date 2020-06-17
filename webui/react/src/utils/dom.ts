@@ -23,5 +23,6 @@ const ansiConverter = require('ansi-to-html');
 const converter = new ansiConverter({ newline: true });
 
 export const ansiToHtml = (ansi: string): string => {
-  return converter.toHtml(ansi);
+  const ansiWithHtml = ansi.replace('<', '&lt;').replace('>', '&gt;');
+  return converter.toHtml(ansiWithHtml);
 };

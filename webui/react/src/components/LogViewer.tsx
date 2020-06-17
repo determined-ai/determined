@@ -354,9 +354,7 @@ const LogViewer: React.FC<Props> = forwardRef((
               }}>
                 <div className={css.number} style={lineNumberStyle}>{log.id + 1}</div>
                 <Tooltip placement="left" title={log.time || ''}>
-                  <div className={css.time} style={dateTimeStyle}>
-                    {log.formattedTime}
-                  </div>
+                  <div className={css.time} style={dateTimeStyle}>{log.formattedTime}</div>
                 </Tooltip>
                 <div
                   className={css.message}

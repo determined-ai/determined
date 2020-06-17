@@ -10,6 +10,11 @@ export default {
 export const Default = (): React.ReactNode => {
   const logsRef = useRef<LogViewerHandles>(null);
 
+  const messageWithTags = `continuing trial: <COMPUTE_VALIDATION_METRICS: (10,10,30)>
+    experiment-id="10" id="c075adcd-5c31-4726-a5b3-0b87e141f1fe"
+    system="master" trial-id="10" type="trial"
+`;
+
   useEffect(() => {
     /* eslint-disable max-len */
     if (logsRef.current) logsRef.current?.addLogs([
@@ -17,6 +22,7 @@ export const Default = (): React.ReactNode => {
       { id: 1, message: 'Another line', time: '2020-06-02T21:48:08.456381-06:00' },
       { id: 2, message: 'Example of a really long line. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.', time: '2020-06-02T21:48:09.456381-06:00' },
       { id: 3, message: 'Example of multi-line log with newlines\nanother line\nanother line\nanother line', time: '2020-06-02T21:48:10.456381-06:00' },
+      { id: 4, message: messageWithTags, time: '2020-06-02T21:48:12.456389-06:00' },
     ]);
   });
 
