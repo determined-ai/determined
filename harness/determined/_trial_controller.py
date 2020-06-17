@@ -161,11 +161,8 @@ class CallbackTrialController(TrialController):
         for w, args, response_func in self.workloads:
             try:
                 if w.kind == workload.Workload.Kind.RUN_STEP:
-                    check.len_eq(args, 1)
-                    check.is_instance(args[0], int)
-                    num_batches = cast(int, args[0])
                     response = self.train_for_step(
-                        w.step_id, num_batches
+                        w.step_id, w.batches_per_step
                     )  # type: workload.Response
                 elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     response = self.compute_validation_metrics(w.step_id)
