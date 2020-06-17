@@ -151,11 +151,36 @@ docsLink =
         , HA.style "border-top" "4px solid rgba(0, 0, 0, 0)"
         ]
         [ a
-            [ class "no-underline hover:text-white font-bold flex items-center"
+            [ class "no-underline hover:text-white flex items-center"
             , HA.target "_blank"
-            , href "/docs"
+            , href "/docs/"
             ]
             [ text <| "Docs "
+            , i
+                [ class "icon-popout"
+                , attribute "style" "font-size: 16px; padding-left: 4px;"
+                ]
+                []
+            ]
+        ]
+
+
+apiDocsLink : Html Msg
+apiDocsLink =
+    div
+        [ HA.style "font-size" "12px"
+        , HA.style "color" "rgb(221, 221, 221)"
+        , HA.style "padding" "11px 0"
+        , HA.style "margin-left" "36px"
+        , HA.style "border-bottom" "4px solid rgba(0, 0, 0, 0)"
+        , HA.style "border-top" "4px solid rgba(0, 0, 0, 0)"
+        ]
+        [ a
+            [ class "no-underline hover:text-white flex items-center"
+            , HA.target "_blank"
+            , href "/swagger-ui/"
+            ]
+            [ text <| "API "
             , i
                 [ class "icon-popout"
                 , attribute "style" "font-size: 16px; padding-left: 4px;"
@@ -272,7 +297,6 @@ topAppBar model =
                         |> span
                             [ HA.style "margin-left" "8px"
                             , HA.style "font-size" "12px"
-                            , class "font-bold"
                             ]
                         |> Just
                 )
@@ -314,6 +338,7 @@ topAppBar model =
 
         -- Right side.
         , maybeClusterView
+        , apiDocsLink
         , docsLink
         , currentUserDisplay model
         ]

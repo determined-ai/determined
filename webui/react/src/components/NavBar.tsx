@@ -38,7 +38,16 @@ const NavBar: React.FC<Props> = (props: Props) => {
         </NavItem>
         <NavItem
           icon=""
-          path="/docs"
+          path="/swagger-ui/"
+          popout={true}
+          suffixIcon="popout"
+          title="Swagger UI"
+          type={NavItemType.Main}>
+          API
+        </NavItem>
+        <NavItem
+          icon=""
+          path="/docs/"
           popout={true}
           suffixIcon="popout"
           type={NavItemType.Main}>
