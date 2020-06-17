@@ -44,7 +44,7 @@ func DefaultExperimentConfig() ExperimentConfig {
 		Hyperparameters: make(map[string]Hyperparameter),
 		Searcher: SearcherConfig{
 			SmallerIsBetter: true,
-			AsyncHalvingConfig: &AsyncHalvingConfig{
+			SyncHalvingConfig: &SyncHalvingConfig{
 				SmallerIsBetter: true,
 				Divisor:         4,
 				TrainStragglers: true,

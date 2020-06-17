@@ -9,11 +9,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// asyncHalvingSearch implements a search using the asynchronous successive halving algorithm
+// syncHalvingSearch implements a search using the synchronous successive halving algorithm
 // (ASHA). Technically, this is closer to SHA than ASHA as the promotions are synchronous.
-type asyncHalvingSearch struct {
+type syncHalvingSearch struct {
 	defaultSearchMethod
-	model.AsyncHalvingConfig
+	model.SyncHalvingConfig
 
 	rungs      []*rung
 	trialRungs map[RequestID]int
@@ -25,7 +25,7 @@ type asyncHalvingSearch struct {
 
 const ashaExitedMetricValue = math.MaxFloat64
 
-func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
+func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
 	expectedSteps := 0
 	for id := 0; id < config.NumRungs; id++ {
@@ -61,12 +61,12 @@ func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
 		}
 	}
 
-	return &asyncHalvingSearch{
-		AsyncHalvingConfig: config,
-		rungs:              rungs,
-		trialRungs:         make(map[RequestID]int),
-		earlyExitTrials:    make(map[RequestID]bool),
-		expectedWorkloads:  expectedWorkloads,
+	return &syncHalvingSearch{
+		SyncHalvingConfig: config,
+		rungs:             rungs,
+		trialRungs:        make(map[RequestID]int),
+		earlyExitTrials:   make(map[RequestID]bool),
+		expectedWorkloads: expectedWorkloads,
 	}
 }
 
@@ -111,7 +111,7 @@ func (r *rung) promotions(requestID RequestID, metric float64) []RequestID {
 	}
 }
 
-func (s *asyncHalvingSearch) initialOperations(ctx context) ([]Operation, error) {
+func (s *syncHalvingSearch) initialOperations(ctx context) ([]Operation, error) {
 	var ops []Operation
 	for trial := 0; trial < s.rungs[0].startTrials; trial++ {
 		create := NewCreate(
@@ -122,13 +122,13 @@ func (s *asyncHalvingSearch) initialOperations(ctx context) ([]Operation, error)
 	return ops, nil
 }
 
-func (s *asyncHalvingSearch) trainCompleted(
+func (s *syncHalvingSearch) trainCompleted(
 	ctx context, requestID RequestID, message Workload,
 ) ([]Operation, error) {
 	return nil, nil
 }
 
-func (s *asyncHalvingSearch) validationCompleted(
+func (s *syncHalvingSearch) validationCompleted(
 	ctx context, requestID RequestID, message Workload, metrics ValidationMetrics,
 ) ([]Operation, error) {
 	// Extract the relevant metric as a float.
@@ -143,7 +143,7 @@ func (s *asyncHalvingSearch) validationCompleted(
 	return s.promoteTrials(ctx, requestID, message, metric)
 }
 
-func (s *asyncHalvingSearch) promoteTrials(
+func (s *syncHalvingSearch) promoteTrials(
 	ctx context, requestID RequestID, message Workload, metric float64,
 ) ([]Operation, error) {
 	rungIndex := s.trialRungs[requestID]
@@ -204,11 +204,11 @@ func (s *asyncHalvingSearch) promoteTrials(
 	return ops, nil
 }
 
-func (s *asyncHalvingSearch) progress(workloadsCompleted int) float64 {
+func (s *syncHalvingSearch) progress(workloadsCompleted int) float64 {
 	return math.Min(1, float64(workloadsCompleted)/float64(s.expectedWorkloads))
 }
 
-func (s *asyncHalvingSearch) trialExitedEarly(
+func (s *syncHalvingSearch) trialExitedEarly(
 	ctx context, requestID RequestID, message Workload,
 ) ([]Operation, error) {
 	s.earlyExitTrials[requestID] = true
