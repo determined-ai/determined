@@ -144,4 +144,4 @@ class MNistTrial(EstimatorTrial):
             self.data_downloaded = True
 
         val_files = self._get_filenames(os.path.join(self.download_directory, "validation"))
-        return tf.estimator.EvalSpec(self._input_fn(val_files, shuffle=False))
+        return tf.estimator.EvalSpec(self._input_fn(val_files, shuffle=False), steps=None)
