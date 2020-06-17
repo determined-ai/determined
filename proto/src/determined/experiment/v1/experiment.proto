@@ -5,19 +5,32 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/experimentv1"
 
 import "google/protobuf/timestamp.proto";
 
+// The current state of the experiment.
 enum State {
+    // The state of the experiment is unknown.
     STATE_UNSPECIFIED = 0;
+    // The experiment is in an active state.
     STATE_ACTIVE = 1;
+    // The experiment is in a paused state
     STATE_PAUSED = 2;
+    // The experiment is completed and is shutting down.
     STATE_STOPPING_COMPLETED = 3;
+    // The experiment is canceled and is shutting down.
     STATE_STOPPING_CANCELED = 4;
+    // The experiment is errored and is shutting down.
     STATE_STOPPING_ERROR = 5;
+    // The experiment is completed and is shut down.
     STATE_COMPLETED = 6;
+    // The experiment is canceled and is shut down.
     STATE_CANCELED = 7;
+    // The experiment is errored and is shut down.
     STATE_ERROR = 8;
+    // The experiment has been deleted.
     STATE_DELETED = 9;
 }
 
+// Experiment is a collection of one or more trials that are exploring a user-defined
+// hyperparameter space.
 message Experiment {
     // The id of the experiment.
     int32 id = 1;

@@ -10,6 +10,8 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// QueryProto returns the result of the query. Any placeholder parameters are replaced
+// with supplied args.
 func (db *PgDB) QueryProto(queryName string, v interface{}, args ...interface{}) error {
 	parser := func(rows *sqlx.Rows, val interface{}) error {
 		input := make(map[string]interface{})
@@ -65,7 +67,6 @@ func convertStruct(m pref.Message, in interface{}) (pref.Value, error) {
 				}
 				m.Set(fd, v)
 			}
-
 		}
 		return pref.ValueOf(m), nil
 	}
