@@ -3,12 +3,13 @@ httpPort: 8080
 
 # db sets the configurations for the database.
 db:
-  # To deploy your own postgres DB please provider a hostAddress.
+  # To deploy your own postgres DB please provide a hostAddress.
   # Note: if db hostAddress is provided Determined will skip deploying
   # a postgres DB.
   # hostAddress:
 
-  # Required db field.
+  # Required db field. These parameters are required for both your
+  # own DB and a Determined DB.
   name: determined
   user: postgres
   password: postgres
