@@ -44,14 +44,12 @@ func ModelToProto(m model.Model) (*modelv1.Model, error) {
 func ModelFromProto(m *modelv1.Model) (*model.Model, error) {
 	b, err := protojson.Marshal(m.Metadata)
 	if err != nil {
-		fmt.Println("first error")
 		return nil, errors.Wrap(err, "error marshaling model.Metadata")
 	}
 
 	metadata := model.JSONObj{}
 	err = json.Unmarshal(b, &metadata)
 	if err != nil {
-		fmt.Println("second error")
 		return nil, errors.Wrap(err, "cannot unmarshal metadata to model.Metadata")
 	}
 
@@ -63,15 +61,15 @@ func ModelFromProto(m *modelv1.Model) (*model.Model, error) {
 
 func (a *apiServer) GetModel(
 	_ context.Context, req *apiv1.GetModelRequest) (*apiv1.GetModelResponse, error) {
-	switch m, err := a.m.db.ModelByName(req.ModelName); err {
-	case nil:
-		protoTemp, pErr := ModelToProto(m)
-		return &apiv1.GetModelResponse{Model: protoTemp}, pErr
+	fmt.Printf("req = %+v\n", req)
+	resp := &apiv1.GetModelResponse{}
+	switch err := a.m.db.QueryProto("get_model", resp, req.ModelName); err {
 	case db.ErrNotFound:
 		return nil, status.Errorf(
 			codes.NotFound, "model %s not found", req.ModelName)
 	default:
-		return nil, errors.Wrapf(err, "error fetching model %s from database", req.ModelName)
+		fmt.Printf("resp = %+v\n", resp)
+		return resp, errors.Wrapf(err, "error fetching model %s from database", req.ModelName)
 	}
 }
 
@@ -84,6 +82,7 @@ func (a *apiServer) PutModel(_ context.Context, req *apiv1.PutModelRequest) (*ap
 
 	err = a.m.db.AddModel(m)
 	if err != nil {
+		fmt.Printf("err 2= %+v\n", err)
 		return nil, errors.Wrapf(err, "unable to add model %s", req.GetModel().GetName())
 	}
 

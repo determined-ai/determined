@@ -282,6 +282,12 @@ func (m *Master) Run() error {
 		return err
 	}
 
+	m.db.AddModel(&model.Model{
+		Name:        "object-detection",
+		Description: "please work",
+		Metadata:    model.JSONObj{"help": "me"},
+	})
+
 	m.ClusterID, err = m.db.GetClusterID()
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")

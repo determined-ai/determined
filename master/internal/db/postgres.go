@@ -1485,22 +1485,22 @@ WHERE id = :id`, setClause(toUpdate)), validation)
 
 // AddModel adds the model to the database and sets its ID.
 func (db *PgDB) AddModel(m *model.Model) error {
-	existingModel := &model.Model{}
-	err := db.namedGet(existingModel, `
-SELECT *
-FROM models
-WHERE name = :name`, m)
-	if err != nil {
-		return errors.Wrap(err, "error querying model table")
-	}
-	fmt.Printf("existingModel = %+v\n", existingModel)
-	if existingModel != nil {
-		return errors.Errorf("duplicate model for name %s", m.Name)
-	}
+	// existingModel := &model.Model{}
+	// err := db.namedGet(existingModel, `
+	// SELECT *
+	// FROM models
+	// WHERE name = :name`, m)
+	// if err != nil {
+	// 	return errors.Wrap(err, "error querying model table")
+	// }
+	// fmt.Printf("existingModel = %+v\n", existingModel)
+	// if existingModel != nil {
+	// 	return errors.Errorf("duplicate model for name %s", m.Name)
+	// }
 
 	m.CreationTime = time.Now()
 	m.LastUpdatedTime = time.Now()
-	err = db.namedGet(&m.ID, `
+	err := db.namedGet(&m.ID, `
 INSERT INTO models
 (name, description, metadata, creation_time, last_updated_time)
 VALUES (:name, :description, :metadata, :creation_time, :last_updated_time)
