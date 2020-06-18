@@ -11,7 +11,7 @@ import usePrevious from 'hooks/usePrevious';
 import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
 import { Log } from 'types';
 import { formatDatetime } from 'utils/date';
-import { ansiToHtml, copyToClipboard, toRem } from 'utils/dom';
+import { ansiToHtml, copyToClipboard, readFromClipboard, toRem } from 'utils/dom';
 
 import css from './LogViewer.module.scss';
 
@@ -298,7 +298,9 @@ const LogViewer: React.FC<Props> = forwardRef((
   }, [ config, scrollToInfo ]);
 
   const handleCopyToClipboard = useCallback(async () => {
-    const content = logs.map(log => [ log.id, `[${log.time}]`, log.message ].join(' ')).join('\n');
+    const content = logs.map(log => {
+      return [ log.id + 1, `[${log.time}]`, log.message ].join(' ');
+    }).join('\n');
 
     try {
       await copyToClipboard(content);

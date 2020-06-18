@@ -1,5 +1,3 @@
-import { notification } from 'antd';
-
 /*
  * Calculates REM based on base font size of 62.5%.
  * This causes the ratio between REM to px to be 1 to 10.
@@ -30,23 +28,48 @@ export const ansiToHtml = (ansi: string): string => {
 };
 
 export const copyToClipboard = async (content: string): Promise<void> => {
-  if (navigator.clipboard) {
-    try {
-      return await navigator.clipboard.writeText(content);
-    } catch (e) {
-      return Promise.reject(Error('Unable to write to clipboard.'));
+  try {
+    if (navigator.clipboard) {
+      // This method is only available on https and localhost
+      await navigator.clipboard.writeText(content);
+    } else if (document.body && document.execCommand) {
+      // This is a fallback but deprecated method
+      const textarea = document.createElement('textarea');
+      textarea.id = 'clipboard';
+      document.body.appendChild(textarea);
+      textarea.value = content;
+      textarea.select();
+      document.execCommand('copy');
+      textarea.parentNode?.removeChild(textarea);
+    } else {
+      throw new Error();
     }
+    return;
+  } catch (e) {
+    return Promise.reject(new Error('Unable to write to clipboard.'));
   }
-  return Promise.reject(Error('Writing to clipboard is only available on https and localhost.'));
 };
 
 export const readFromClipboard = async (): Promise<string> => {
-  if (navigator.clipboard) {
-    try {
-      return await navigator.clipboard.readText();
-    } catch (e) {
-      return Promise.reject(Error('Unable to read from clipboard.'));
+  try {
+    let content = '';
+    if (navigator.clipboard) {
+      // This method is only available on https and localhost
+      content = await navigator.clipboard.readText();
+    } else if (document.body && document.execCommand) {
+      // This is a fallback but deprecated method
+      const textarea = document.createElement('textarea');
+      textarea.id = 'clipboard';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('paste');
+      content = textarea.value;
+      textarea.parentNode?.removeChild(textarea);
+    } else {
+      throw new Error();
     }
+    return content;
+  } catch (e) {
+    return Promise.reject(new Error('Unable to read from clipboard.'));
   }
-  return Promise.reject(Error('Reading from clipboard is only available on https and localhost.'));
 };
