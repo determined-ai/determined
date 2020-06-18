@@ -62,6 +62,7 @@ module.exports = {
       component: true,
       html: true,
     } ],
+    'require-await': 'error',
     'semi': [ 'error', 'always' ],
     'sort-imports': [ 'error', {
       ignoreCase: true,
