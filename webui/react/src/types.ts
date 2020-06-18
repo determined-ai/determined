@@ -98,7 +98,7 @@ export enum CommandState {
   Terminated = 'TERMINATED',
 }
 
-export type State = CommandState | RunState
+export type State = CommandState | RunState;
 
 export interface CommandAddress {
   containerIp: string;
@@ -199,16 +199,16 @@ export type RecentEvent = {
     name: string;
     date: string;
   };
-}
+};
 
-export type AnyTask = CommandTask | ExperimentTask
+export type AnyTask = CommandTask | ExperimentTask;
 export type RecentTask = AnyTask & RecentEvent;
-export type RecentCommandTask = CommandTask & RecentEvent
-export type RecentExperimentTask = ExperimentTask & RecentEvent
+export type RecentCommandTask = CommandTask & RecentEvent;
+export type RecentExperimentTask = ExperimentTask & RecentEvent;
 
 export type PropsWithClassName<T> = T & {className?: string};
 
-export type TaskType = CommandType | 'Experiment'
+export type TaskType = CommandType | 'Experiment';
 
 export enum TBSourceType {
   Trial,
@@ -219,7 +219,7 @@ export type CommonProps = {
   className?: string;
   children?: React.ReactNode;
   title?: string;
-}
+};
 
 export enum LogLevel {
   Debug = 'debug',

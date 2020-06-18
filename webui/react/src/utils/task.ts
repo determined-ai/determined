@@ -76,7 +76,7 @@ export const generateTasks = (count = 10): RecentTask[] => {
 };
 
 export const isExperimentTask = (task: AnyTask): task is ExperimentTask => {
-  return  ('archived' in task) && !('type' in task);
+  return ('archived' in task) && !('type' in task);
 };
 
 export const canBeOpened = (task: AnyTask): boolean => {

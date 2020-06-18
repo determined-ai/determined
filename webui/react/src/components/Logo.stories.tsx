@@ -6,7 +6,7 @@ export default {
   component: Logo,
   parameters: {
     backgrounds: [
-      { default: true,  name: 'dark background', value: '#111' },
+      { default: true, name: 'dark background', value: '#111' },
     ],
   },
   title: 'Logo',
