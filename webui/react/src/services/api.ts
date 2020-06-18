@@ -36,34 +36,37 @@ export const patchExperiment = generateApi<PatchExperimentParams, void>(Config.p
 export const launchTensorboard =
   generateApi<LaunchTensorboardParams, void>(Config.launchTensorboard);
 
-export const killTask =
-  async (task: AnyTask, cancelToken?: CancelToken): Promise<void> => {
-    if (isExperimentTask(task)) {
-      return killExperiment({ cancelToken, experimentId: parseInt(task.id) });
-    }
-    return killCommand({
-      cancelToken,
-      commandId: task.id,
-      commandType: task.type as unknown as CommandType,
-    });
-  };
+export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promise<void> => {
+  if (isExperimentTask(task)) {
+    return await killExperiment({ cancelToken, experimentId: parseInt(task.id) });
+  }
+  return await killCommand({
+    cancelToken,
+    commandId: task.id,
+    commandType: task.type as unknown as CommandType,
+  });
+};
 
-export const archiveExperiment =
-  async (experimentId: number, isArchived: boolean, cancelToken?: CancelToken): Promise<void> => {
-    return patchExperiment({ body: { archived: isArchived }, cancelToken, experimentId });
-  };
+export const archiveExperiment = async (
+  experimentId: number,
+  isArchived: boolean,
+  cancelToken?: CancelToken,
+): Promise<void> => {
+  return await patchExperiment({ body: { archived: isArchived }, cancelToken, experimentId });
+};
 
 export const login = generateApi<Credentials, void>(Config.login);
 
 export const logout = generateApi<{}, void>(Config.logout);
 
-export const setExperimentState =
-  async ({ state, ...rest }: PatchExperimentState): Promise<void> => {
-    return patchExperiment({
-      body: { state },
-      ...rest,
-    });
-  };
+export const setExperimentState = async (
+  { state, ...rest }: PatchExperimentState,
+): Promise<void> => {
+  return await patchExperiment({
+    body: { state },
+    ...rest,
+  });
+};
 
 export const getMasterLogs = generateApi<LogsParams, Log[]>(Config.getMasterLogs);
 
