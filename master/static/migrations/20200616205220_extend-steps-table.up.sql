@@ -1,1 +1,1 @@
-ALTER TABLE public.steps ADD COLUMN batches_per_step integer NULL;
+ALTER TABLE public.steps ADD COLUMN num_batches integer NULL;

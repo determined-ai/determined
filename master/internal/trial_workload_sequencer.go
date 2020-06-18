@@ -11,7 +11,7 @@ import (
 type stepInfo struct {
 	hasValidation    bool
 	hasCheckpoint    bool
-	batchesPerStep   int
+	numBatches       int
 	batchesCompleted int
 }
 
@@ -81,7 +81,7 @@ func (s *trialWorkloadSequencer) OperationRequested(op searcher.WorkloadOperatio
 			return errors.New("illegal step requested")
 		}
 		s.steps = append(s.steps, stepInfo{
-			batchesPerStep:   op.BatchesPerStep,
+			numBatches:       op.BatchesPerStep,
 			batchesCompleted: s.batchesPlanned,
 		})
 		s.batchesPlanned += op.BatchesPerStep
@@ -132,7 +132,7 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 	case searcher.RunStep:
 		s.curStep++
 		s.curStepDone = stepInfo{
-			batchesPerStep:   msg.Workload.BatchesPerStep,
+			numBatches:       msg.Workload.BatchesPerStep,
 			batchesCompleted: msg.Workload.BatchesCompleted,
 		}
 		if msg.ExitedReason != nil {
@@ -220,7 +220,7 @@ func (s *trialWorkloadSequencer) Workload() (searcher.Workload, error) {
 	default:
 		stepID++
 		kind = searcher.RunStep
-		batchesPerStep = s.steps[stepID].batchesPerStep
+		batchesPerStep = s.steps[stepID].numBatches
 		batchesCompleted = s.steps[stepID].batchesCompleted
 	}
 	s.curWorkload = searcher.Workload{

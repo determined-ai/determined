@@ -1,1 +1,1 @@
-ALTER TABLE public.steps DROP COLUMN batches_per_step;
+ALTER TABLE public.steps DROP COLUMN num_batches;
