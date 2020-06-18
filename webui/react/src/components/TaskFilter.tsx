@@ -10,6 +10,7 @@ import { commandStateToLabel, runStateToLabel } from 'utils/types';
 
 import IconFilterButtons from './IconFilterButtons';
 import css from './TaskFilter.module.scss';
+import UserSelectFilter from './UserSelectFilter';
 
 const { Option, OptGroup } = Select;
 
@@ -25,8 +26,6 @@ export interface TaskFilters {
 interface Props {
   filters: TaskFilters;
   onChange: (filters: TaskFilters) => void;
-  authUser?: User;
-  users: User[];
 }
 
 const limitOptions: number[] = [ 10, 25, 50 ];
@@ -41,7 +40,7 @@ const taskTypeConfig = [
 
 const selectIcon = <Icon name="arrow-down" size="tiny" />;
 
-const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Props) => {
+const TaskFilter: React.FC<Props> = ({ filters, onChange }: Props) => {
   const handleTypeClick = useCallback((id: string) => {
     const idAsType = id as TaskType;
     const types = { ...filters.types, [idAsType]: !filters.types[idAsType] };
@@ -53,11 +52,7 @@ const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Pro
     onChange({ ...filters, states: [ value ] });
   }, [ filters, onChange ]);
 
-  const handleUserFilter = useCallback((search: string, option) => {
-    return option.props.children.indexOf(search) !== -1;
-  }, []);
-
-  const handleUserSelect = useCallback((value: SelectValue) => {
+  const handleUserChange = useCallback((value: SelectValue) => {
     const username = value === ALL_VALUE ? undefined : value as string;
     onChange({ ...filters, username });
   }, [ filters, onChange ]);
@@ -74,23 +69,6 @@ const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Pro
       label: capitalize(config.id),
     }));
   }, [ filters.types ]);
-
-  const userToSelectOption = (user: User): React.ReactNode =>
-    <Option key={user.id} value={user.username}>{user.username}</Option>;
-
-  const userOptions = (): React.ReactNode[] => {
-    const options: React.ReactNode[] = [ <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option> ];
-    if (authUser) {
-      options.push(userToSelectOption(authUser));
-    }
-    const restOfOptions = users
-      .filter(u => (!authUser || u.id !== authUser.id))
-      .sort((a, b) => a.username.localeCompare(b.username, 'en'))
-      .map(userToSelectOption);
-    options.push(...restOfOptions);
-
-    return options;
-  };
 
   return (
     <div className={css.base}>
@@ -115,20 +93,7 @@ const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Pro
           </OptGroup>
         </Select>
       </div>
-      <div className={css.filter}>
-        <div className={css.label}>Users</div>
-        <Select
-          defaultValue={filters.username || ALL_VALUE}
-          dropdownMatchSelectWidth={false}
-          filterOption={handleUserFilter}
-          optionFilterProp="children"
-          showSearch={true}
-          style={{ width: '10rem' }}
-          suffixIcon={selectIcon}
-          onSelect={handleUserSelect}>
-          {userOptions()}
-        </Select>
-      </div>
+      <UserSelectFilter value={filters.username} onChange={handleUserChange} />
       <div className={css.filter}>
         <div className={css.label}>Limit</div>
         <Select
