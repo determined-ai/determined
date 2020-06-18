@@ -21,7 +21,6 @@ from determined.pytorch import (
     TorchData,
     _callback,
     _Data,
-    _LRHelper,
     _reduce_metrics,
     data_length,
     to_device,
@@ -60,7 +59,6 @@ class PyTorchTrialController(det.LoopTrialController):
         self.warning_logged = {_WarningLogs.FAILED_MOVING_TO_DEVICE: False}
 
         self.context.lr_scheduler = self.trial.create_lr_scheduler(self.context.optimizer)
-        self.lr_helper = _LRHelper(self.context.lr_scheduler)
 
         self.callbacks = self.trial.build_callbacks()
 
@@ -342,6 +340,17 @@ class PyTorchTrialController(det.LoopTrialController):
             per_batch_metrics = util._dict_to_list(averaged_metrics_timeseries)
         return per_batch_metrics
 
+    def _auto_step_lr_scheduler_per_batch(self, batch_idx: int, lr_scheduler: LRScheduler) -> None:
+        """
+        This function aims at automatically step a LR scheduler. It should be called per batch.
+        """
+        if lr_scheduler._step_mode == LRScheduler.StepMode.STEP_EVERY_BATCH:
+            lr_scheduler.step()
+        elif lr_scheduler._step_mode == LRScheduler.StepMode.STEP_EVERY_EPOCH:
+            mod = (batch_idx + 1) % len(self.training_loader)
+            if mod == 0 or mod < self.hvd_config.aggregation_frequency:
+                lr_scheduler.step()
+
     def _train_for_step(self, step_id: int, batches_per_step: int) -> workload.Response:
         check.gt(step_id, 0)
 
@@ -431,12 +440,9 @@ class PyTorchTrialController(det.LoopTrialController):
                     self.context.optimizer.step()
                 self.context.optimizer.zero_grad()
 
-                if self.lr_helper.should_step_lr(
-                    batches_completed=batch_idx + 1,
-                    epoch_length=len(self.training_loader),
-                    aggregation_frequency=self.hvd_config.aggregation_frequency,
-                ):
-                    self.lr_helper.step()
+                # Step learning rate of a LRScheduler.
+                if self.context.lr_scheduler is not None:
+                    self._auto_step_lr_scheduler_per_batch(batch_idx, self.context.lr_scheduler)
 
             for name, metric in tr_metrics.items():
                 # Convert PyTorch metric values to NumPy, so that
@@ -674,7 +680,8 @@ class PyTorchTrialController(det.LoopTrialController):
 
         self.context.model.load_state_dict(checkpoint["model_state_dict"])
         self.context.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        self.lr_helper.load_state_dict(checkpoint.get("lr_scheduler"))
+        if self.context.lr_scheduler is not None:
+            self.context.lr_scheduler.load_state_dict(checkpoint.get("lr_scheduler"))
 
         callback_state = checkpoint.get("callbacks", {})
         for name in self.callbacks:
@@ -708,8 +715,8 @@ class PyTorchTrialController(det.LoopTrialController):
             "optimizer_state_dict": self.context.optimizer.state_dict(),
         }
 
-        if self.lr_helper:
-            checkpoint["lr_scheduler"] = self.lr_helper.state_dict()
+        if self.context.lr_scheduler is not None:
+            checkpoint["lr_scheduler"] = self.context.lr_scheduler.state_dict()
 
         for name, callback in self.callbacks.items():
             checkpoint.setdefault("callbacks", {})

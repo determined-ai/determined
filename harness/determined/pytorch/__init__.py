@@ -10,7 +10,7 @@ from determined.pytorch._data import (
     to_device,
 )
 from determined.pytorch._callback import PyTorchCallback, ClipGradsL2Norm, ClipGradsL2Value
-from determined.pytorch._lr_scheduler import LRScheduler, _LRHelper
+from determined.pytorch._lr_scheduler import LRScheduler
 from determined.pytorch._reducer import Reducer, _reduce_metrics
 from determined.pytorch._pytorch_context import PyTorchTrialContext
 from determined.pytorch._pytorch_trial import PyTorchTrial, PyTorchTrialController, reset_parameters
