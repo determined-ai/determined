@@ -3,7 +3,7 @@ import { ColumnsType } from 'antd/lib/table';
 import React from 'react';
 import TimeAgo from 'timeago-react';
 
-import { CommandState, CommandType, CommonProps, Task } from 'types';
+import { CommandState, CommandTask, CommandType, CommonProps } from 'types';
 import { alphanumericSorter, commandStateSorter, stringTimeSorter } from 'utils/data';
 import { canBeOpened } from 'utils/task';
 import { commandTypeToLabel } from 'utils/types';
@@ -18,27 +18,28 @@ import TaskActionDropdown from './TaskActionDropdown';
 import css from './TaskTable.module.scss';
 
 interface Props extends CommonProps {
-  tasks?: Task[];
+  tasks?: CommandTask[];
 }
 
   type Renderer<T> = (text: string, record: T, index: number) => React.ReactNode
 
-const typeRenderer: Renderer<Task> = (_, record) =>
+const typeRenderer: Renderer<CommandTask> = (_, record) =>
   (<Icon name={record.type.toLowerCase()}
     title={commandTypeToLabel[record.type as unknown as CommandType]} />);
-const startTimeRenderer: Renderer<Task> = (_, record) => (
+const startTimeRenderer: Renderer<CommandTask> = (_, record) => (
   <span title={new Date(parseInt(record.startTime) * 1000).toTimeString()}>
     <TimeAgo datetime={record.startTime} />
   </span>
 );
-const stateRenderer: Renderer<Task> = (_, record) => (
+const stateRenderer: Renderer<CommandTask> = (_, record) => (
   <Badge state={record.state} type={BadgeType.State} />
 );
-const actionsRenderer: Renderer<Task> = (_, record) => (<TaskActionDropdown task={record} />);
-const userRenderer: Renderer<Task> = (_, record) =>
+const actionsRenderer: Renderer<CommandTask> = (_, record) =>
+  (<TaskActionDropdown task={record} />);
+const userRenderer: Renderer<CommandTask> = (_, record) =>
   (<Avatar name={record.username || record.id} />);
 
-const columns: ColumnsType<Task> = [
+const columns: ColumnsType<CommandTask> = [
   {
     dataIndex: 'id',
     sorter: (a, b): number => alphanumericSorter(a.id, b.id),

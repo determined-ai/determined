@@ -141,7 +141,7 @@ export interface Command {
   owner: Owner;
   registeredTime: string;
   serviceAddress?: string;
-  state: string;
+  state: CommandState;
 }
 
 // TODO compelete the config object as we start using different attributes.
@@ -170,51 +170,45 @@ export interface Experiment {
   ownerId: number;
   progress?: number;
   startTime: string;
-  state: string;
-}
-
-export enum TaskType {
-  Command = 'COMMAND',
-  Experiment = 'EXPERIMENT',
-  Notebook = 'NOTEBOOK',
-  Shell = 'SHELL',
-  Tensorboard = 'TENSORBOARD',
+  state: RunState;
 }
 
 export interface Task {
-  archived?: boolean;
-  // source?: Record<TBSourceType, number[]>;
-  misc?: CommandMisc;
   title: string;
-  type: TaskType;
   id: string;
   ownerId: number;
-  progress?: number;
   url?: string;
-  username?: string;
   startTime: string;
-  state: RunState | CommandState;
 }
 
-// food for thought for future work
-// remove exlusive fields from Task and:
-// export interface ExperimentTask extends Task {
-//   progress?: number;
-//   archived?: boolean;
-// }
+export interface ExperimentTask extends Task {
+  progress?: number;
+  archived: boolean;
+  state: RunState;
+}
 
-// export interface CommandTask extends Task {
-//   misc?: CommandMisc;
-// }
+export interface CommandTask extends Task {
+  misc?: CommandMisc;
+  type: CommandType;
+  state: CommandState;
+  username?: string;
+}
 
-export interface RecentTask extends Task {
+export type RecentEvent = {
   lastEvent: {
     name: string;
     date: string;
   };
 }
 
+export type AnyTask = CommandTask | ExperimentTask
+export type RecentTask = AnyTask & RecentEvent;
+export type RecentCommandTask = CommandTask & RecentEvent
+export type RecentExperimentTask = ExperimentTask & RecentEvent
+
 export type PropsWithClassName<T> = T & {className?: string};
+
+export type TaskType = CommandType | 'Experiment'
 
 export enum TBSourceType {
   Trial,

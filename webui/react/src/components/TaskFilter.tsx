@@ -3,7 +3,8 @@ import { SelectValue } from 'antd/es/select';
 import React, { useCallback } from 'react';
 
 import Icon from 'components/Icon';
-import { CommandState, RecentTask, RunState, TaskType, User } from 'types';
+import { CommandState, CommandType, RecentTask, RunState, TaskType, User } from 'types';
+import { isExperimentTask } from 'utils/task';
 import { commandStateToLabel, runStateToLabel } from 'utils/types';
 
 import css from './TaskFilter.module.scss';
@@ -28,12 +29,12 @@ interface Props {
 
 const limitOptions: number[] = [ 10, 25, 50 ];
 
-const taskTypeOrder = [
-  { label: 'Experiments', type: TaskType.Experiment },
-  { label: 'Notebooks', type: TaskType.Notebook },
-  { label: 'TensorBoards', type: TaskType.Tensorboard },
-  { label: 'Shells', type: TaskType.Shell },
-  { label: 'Commands', type: TaskType.Command },
+const taskTypeOrder: {label: string; type: TaskType}[] = [
+  { label: 'Experiments', type: 'Experiment' },
+  { label: 'Notebooks', type: CommandType.Notebook },
+  { label: 'TensorBoards', type: CommandType.Tensorboard },
+  { label: 'Shells', type: CommandType.Shell },
+  { label: 'Commands', type: CommandType.Command },
 ];
 
 const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Props) => {
@@ -66,7 +67,7 @@ const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Pro
 
   const filterTypeButtons = taskTypeOrder.map(info => {
     const typeButtonClasses = [ css.typeButton ];
-    if (filters.types[info.type]) typeButtonClasses.push(css.active);
+    if (filters.types[info.type ]) typeButtonClasses.push(css.active);
     return (
       <Tooltip key={info.label} placement="top" title={info.label}>
         <button aria-label={info.label}
@@ -168,8 +169,14 @@ export const filterTasks =
     const isAllTypes = !Object.values(filters.types).includes(true);
     return tasks
       .filter(task => matchesUser(task, users, filters.username))
-      .filter(task => !task.archived)
+      .filter(task => {
+        if (!isExperimentTask(task)) return true;
+        return !task.archived;
+      })
       .filter(task => matchesState(task, filters.states))
-      .filter(task => isAllTypes || filters.types[task.type])
+      .filter(task => {
+        const type = isExperimentTask(task) ? 'Experiment' : task.type;
+        return isAllTypes || filters.types[type];
+      })
       .slice(0, filters.limit);
   };

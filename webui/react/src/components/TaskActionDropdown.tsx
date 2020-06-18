@@ -6,27 +6,28 @@ import Icon from 'components/Icon';
 import Experiments from 'contexts/Experiments';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { archiveExperiment, killTask, setExperimentState } from 'services/api';
-import { Experiment, RunState, Task, TaskType } from 'types';
+import { AnyTask, Experiment, RunState } from 'types';
 import { capitalize } from 'utils/string';
+import { isExperimentTask } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';
 
 import css from './TaskActionDropdown.module.scss';
 
 interface Props {
-  task: Task;
+  task: AnyTask;
 }
 
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
-  const isExperiment = task.type === TaskType.Experiment;
+  const isExperiment = isExperimentTask(task);
   const isArchivable = isExperiment && terminalRunStates.includes(task.state as RunState);
   const isKillable = isTaskKillable(task);
-  const isPausable = task.type === TaskType.Experiment
+  const isPausable = isExperiment
     && task.state === RunState.Active;
-  const isResumable = task.type === TaskType.Experiment
+  const isResumable = isExperiment
     && task.state === RunState.Paused;
-  const isCancelable = task.type === TaskType.Experiment
+  const isCancelable = isExperiment
     && cancellableRunStates.includes(task.state as RunState);
 
   if (!isArchivable && !isKillable) return (<div />);
@@ -56,24 +57,25 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
             experimentId: parseInt(task.id),
             state: RunState.Active,
           });
-          await updateExperimentLocally(exp => ({ ...exp, state: RunState.Active }));
+          updateExperimentLocally(exp => ({ ...exp, state: RunState.Active }));
           break;
         case 'archive':
+          if (!isExperimentTask(task)) break;
           await archiveExperiment(parseInt(task.id), !task.archived);
-          await updateExperimentLocally(exp => ({ ...exp, archived: true }));
+          updateExperimentLocally(exp => ({ ...exp, archived: true }));
           break;
         case 'cancel':
           await setExperimentState({
             experimentId: parseInt(task.id),
             state: RunState.StoppingCanceled,
           });
-          await updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
+          updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
           break;
         case 'kill':
           await killTask(task);
-          if (task.type === TaskType.Experiment) {
+          if (isExperiment) {
             // We don't provide immediate updates for command types yet.
-            await updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
+            updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
           }
           break;
         case 'pause':
@@ -81,7 +83,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
             experimentId: parseInt(task.id),
             state: RunState.Paused,
           });
-          await updateExperimentLocally(exp => ({ ...exp, state: RunState.Paused }));
+          updateExperimentLocally(exp => ({ ...exp, state: RunState.Paused }));
           break;
       }
     } catch (e) {

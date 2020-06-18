@@ -17,8 +17,9 @@ import Users from 'contexts/Users';
 import useStorage from 'hooks/useStorage';
 import { ShirtSize } from 'themes';
 import {
-  Command, CommandState, RecentTask, ResourceType, RunState, TaskType,
+  Command, CommandState, CommandType, RecentTask, ResourceType, RunState, TaskType,
 } from 'types';
+import { isExperimentTask } from 'utils/task';
 import { commandToTask, experimentToTask } from 'utils/types';
 
 import css from './Dashboard.module.scss';
@@ -27,11 +28,11 @@ const defaultFilters: TaskFilters = {
   limit: 25,
   states: [ ALL_VALUE ],
   types: {
-    [TaskType.Command]: false,
-    [TaskType.Experiment]: false,
-    [TaskType.Notebook]: false,
-    [TaskType.Shell]: false,
-    [TaskType.Tensorboard]: false,
+    [CommandType.Command]: false,
+    Experiment: false,
+    [CommandType.Notebook]: false,
+    [CommandType.Shell]: false,
+    [CommandType.Tensorboard]: false,
   },
   username: undefined,
 };
@@ -72,11 +73,11 @@ const Dashboard: React.FC = () => {
   };
 
   const activeTaskTally = {
-    [TaskType.Command]: countActiveCommand(commands.data || []),
-    [TaskType.Experiment]: (activeExperiments.data || []).length,
-    [TaskType.Notebook]: countActiveCommand(notebooks.data || []),
-    [TaskType.Shell]: countActiveCommand(shells.data || []),
-    [TaskType.Tensorboard]: countActiveCommand(tensorboards.data || []),
+    [CommandType.Command]: countActiveCommand(commands.data || []),
+    Experiment: (activeExperiments.data || []).length,
+    [CommandType.Notebook]: countActiveCommand(notebooks.data || []),
+    [CommandType.Shell]: countActiveCommand(shells.data || []),
+    [CommandType.Tensorboard]: countActiveCommand(tensorboards.data || []),
   };
 
   /* Recent Tasks */
@@ -125,12 +126,15 @@ const Dashboard: React.FC = () => {
 
   const activeTally = loadedTasks
     .filter(task => activeStates.includes(task.state))
-    .reduce((acc, task) => ({ ...acc, [task.type]: acc[task.type] + 1 }), {
-      [TaskType.Command]: 0,
-      [TaskType.Experiment]: 0,
-      [TaskType.Notebook]: 0,
-      [TaskType.Shell]: 0,
-      [TaskType.Tensorboard]: 0,
+    .reduce((acc, task) => {
+      const attr: TaskType = isExperimentTask(task) ? 'Experiment' : task.type;
+      return { ...acc, attr: acc[attr] + 1 };
+    }, {
+      [CommandType.Command]: 0,
+      Experiment: 0,
+      [CommandType.Notebook]: 0,
+      [CommandType.Shell]: 0,
+      [CommandType.Tensorboard]: 0,
     });
 
   const emptyView = (
@@ -155,20 +159,20 @@ const Dashboard: React.FC = () => {
               {overview[ResourceType.CPU].available}
               <small>/{overview[ResourceType.CPU].total}</small>
             </OverviewStats> : null}
-            {activeTally[TaskType.Experiment] ? <OverviewStats title="Active Experiments">
-              {activeTaskTally[TaskType.Experiment]}
+            {activeTally.Experiment ? <OverviewStats title="Active Experiments">
+              {activeTaskTally.Experiment}
             </OverviewStats> : null}
-            {activeTally[TaskType.Notebook] ? <OverviewStats title="Active Notebooks">
-              {activeTally[TaskType.Notebook]}
+            {activeTally[CommandType.Notebook] ? <OverviewStats title="Active Notebooks">
+              {activeTally[CommandType.Notebook]}
             </OverviewStats> : null}
-            {activeTally[TaskType.Tensorboard] ? <OverviewStats title="Active Tensorboards">
-              {activeTally[TaskType.Tensorboard]}
+            {activeTally[CommandType.Tensorboard] ? <OverviewStats title="Active Tensorboards">
+              {activeTally[CommandType.Tensorboard]}
             </OverviewStats> : null}
-            {activeTally[TaskType.Shell] ? <OverviewStats title="Active Shells">
-              {activeTally[TaskType.Shell]}
+            {activeTally[CommandType.Shell] ? <OverviewStats title="Active Shells">
+              {activeTally[CommandType.Shell]}
             </OverviewStats> : null}
-            {activeTally[TaskType.Command] ? <OverviewStats title="Active Commands">
-              {activeTally[TaskType.Command]}
+            {activeTally[CommandType.Command] ? <OverviewStats title="Active Commands">
+              {activeTally[CommandType.Command]}
             </OverviewStats> : null}
           </Grid>
         </div>
