@@ -1,0 +1,43 @@
+# httpPort controls the port at which the listens for connections on.
+httpPort: 8080 
+
+# db sets the configurations for the database.
+db:
+  # To deploy your own postgres DB please provide a hostAddress.
+  # Note: if db hostAddress is provided Determined will skip deploying
+  # a postgres DB.
+  # hostAddress:
+
+  # Required db field. These parameters are required for both your
+  # own DB and a Determined DB.
+  name: determined
+  user: postgres
+  password: postgres
+  port: 5432
+
+  # Only used for Determined db deployment.
+  storageSize: 30Gi
+
+# checkpointStorage controls where checkpoints are stored.
+# supported types include `shared_fs`, `gcs`, and `s3.
+checkpointStorage:
+  # Applicable to all checkpointStorage types.
+  saveExperimentBest: 0
+  saveTrialBest: 1
+  saveTrialLatest: 1
+
+
+  # Comment out if not using `shared_fs`
+  type: shared_fs
+  hostPath: /checkpoints
+
+  # For storing in gcs.
+  # type: gcs
+  # bucket: <bucket_name>
+
+  # For storing in s3.
+  # type: s3
+  # bucket: <bucket_name>
+  # accessKey: <access_key>
+  # secretKey: <secret_key>
+  # endpointUrl: <endpoint_url>

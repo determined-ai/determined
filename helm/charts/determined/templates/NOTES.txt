@@ -1,0 +1,9 @@
+Thank you for installing {{ .Chart.Name }}. Your release is named: {{ .Release.Name }}.
+
+It may take several minutes for your deployment to start up. 
+Once it is up you can get the IP address of your deployment by running:
+
+kubectl get service determined-master-service-{{ .Release.Name }} -n {{ .Release.Namespace}} --output jsonpath='{.status.loadBalancer.ingress[0].ip}'
+
+Once you have the IP address set the master address with `export DET_MASTER=<ip address>`.
+To access the WebUI go to: http://<ip address>:{{ .Values.httpPort }}.

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deteremined-master-deployment-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: determined-master-{{ .Release.Name }}
+    release: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: determined-master-{{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: determined-master-{{ .Release.Name }}
+      annotations:
+        # This is added so that the master deployment restarts when an upgrade occurs that
+        # changes the master-config.yaml.
+        checksum/config: {{ include (print $.Template.BasePath "/master-config.yaml") . | sha256sum }}
+    spec:
+      serviceAccount: determined-master-{{ .Release.Name }}
+      containers:
+      - name: determined-master-{{ .Release.Name }}
+        image: determinedai/determined-master:{{ required "A valid Chart.AppVersion entry required!" .Chart.AppVersion }}
+        imagePullPolicy: "Always"
+        volumeMounts:
+          - name: master-config
+            mountPath: /etc/determined/
+            readOnly: true
+      volumes:
+        - name: master-config
+          configMap:
+            name: determined-master-config-{{ .Release.Name }}
