@@ -17,7 +17,7 @@ import Users from 'contexts/Users';
 import useStorage from 'hooks/useStorage';
 import { ShirtSize } from 'themes';
 import {
-  Command, CommandState, CommandType, RecentTask, ResourceType,  RunState, TaskType,
+  Command, CommandState, CommandType, RecentTask, ResourceType, RunState, TaskType,
 } from 'types';
 import { isExperimentTask } from 'utils/task';
 import { commandToTask, experimentToTask } from 'utils/types';
