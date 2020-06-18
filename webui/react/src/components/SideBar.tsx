@@ -6,7 +6,6 @@ import { useRouteMatch } from 'react-router-dom';
  * all the commented pieces below to enable it again.
  */
 
-import NavItem, { NavItemType } from 'components/NavItem';
 import NavMenu, { NavMenuType } from 'components/NavMenu';
 import { defaultSideBarRoute, sidebarRoutes } from 'routes';
 
