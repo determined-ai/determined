@@ -294,13 +294,13 @@ type Step struct {
 }
 
 // NewStep creates a new step in the active state.
-func NewStep(trialID, stepID, NumBatches int) *Step {
+func NewStep(trialID, stepID, numBatches int) *Step {
 	return &Step{
 		TrialID:    trialID,
 		ID:         stepID,
 		State:      ActiveState,
 		StartTime:  time.Now().UTC(),
-		NumBatches: NumBatches,
+		NumBatches: numBatches,
 	}
 }
 
