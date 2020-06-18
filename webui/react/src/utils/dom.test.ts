@@ -1,3 +1,5 @@
+import { read } from 'fs';
+
 import { ansiToHtml, toRem } from './dom';
 
 describe('ansiToHtml', () => {
