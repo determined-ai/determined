@@ -513,7 +513,7 @@ class TestPyTorchTrial:
             training_metrics = []
             interceptor = workload.WorkloadResponseInterceptor()
 
-            total_steps, batches_completed = 10, 4, 0
+            total_steps, batches_completed = 10, 0
             for step_id in range(1, total_steps):
                 batches_per_step = step_id
                 yield from interceptor.send(
