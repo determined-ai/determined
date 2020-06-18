@@ -211,11 +211,11 @@ FROM (
                        (SELECT count(*)
                         FROM steps s
                         WHERE s.trial_id = t.id
-					   ) AS num_steps,
-					   (SELECT sum(s.batches_per_step)
-						FROM steps s
-						WHERE s.trial_id = t.id
-					   ) AS num_batches,
+                       ) AS num_steps,
+                       (SELECT sum(s.batches_per_step)
+                        FROM steps s
+                        WHERE s.trial_id = t.id
+                       ) AS num_batches,
                        (SELECT v.metrics
                         FROM validations v
                         WHERE v.trial_id = t.id AND v.state = 'COMPLETED'

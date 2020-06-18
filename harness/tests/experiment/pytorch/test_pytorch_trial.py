@@ -512,12 +512,11 @@ class TestPyTorchTrial:
     def test_variable_workload_size(self) -> None:
         def make_workloads() -> workload.Stream:
             training_metrics = []
-            validation_metrics = []
             interceptor = workload.WorkloadResponseInterceptor()
 
-            total_steps, validation_freq, batches_completed = 10, 4, 0
+            total_steps, batches_completed = 10, 4, 0
             for step_id in range(1, total_steps):
-                batches_per_step = random.randint(40, 60)
+                batches_per_step = step_id
                 yield from interceptor.send(
                     workload.train_workload(
                         step_id,
@@ -528,23 +527,9 @@ class TestPyTorchTrial:
                 )
                 metrics = interceptor.metrics_result()
                 batch_metrics = metrics["metrics"]["batch_metrics"]
-                assert len(batch_metrics) == batches_per_step
+                assert len(batch_metrics) == batches_per_step, "train_workload did not run for"
                 training_metrics.extend(batch_metrics)
                 batches_completed += batches_per_step
-
-                if step_id % validation_freq == 0:
-                    yield from interceptor.send(
-                        workload.validation_workload(step_id, batches_completed=batches_completed),
-                        [],
-                    )
-                    validation = interceptor.metrics_result()
-                    v_metrics = validation["metrics"]["validation_metrics"]
-                    validation_metrics.append(v_metrics)
-
-            # We expect the validation error and training loss to be
-            # monotonically decreasing.
-            for older, newer in zip(training_metrics, training_metrics[1:]):
-                assert newer["loss"] <= older["loss"]
 
             yield workload.terminate_workload(), [], workload.ignore_workload_response
 

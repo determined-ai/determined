@@ -111,7 +111,7 @@ def make_default_env_context(
             ExperimentID(1),
             TrialID(1),
             StepID(1),
-            constants.DEFAULT_BATCHES_PER_STEP,
+            det.ExperimentConfig(experiment_config).batches_per_step(),
             0,
         ),
         master_addr="",
