@@ -1,0 +1,10 @@
+.base {
+  align-items: center;
+  display: flex;
+
+  .label {
+    font-size: var(--theme-sizes-font-medium);
+    font-weight: bold;
+    margin-right: var(--theme-sizes-layout-medium);
+  }
+}
