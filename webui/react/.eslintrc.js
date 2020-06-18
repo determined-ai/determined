@@ -41,7 +41,7 @@ module.exports = {
     'indent': 'off',
     'max-len': [ 'error', 100, { tabWidth: 2 } ],
     'no-console': [ 'error', { allow: [ 'warn' ] } ],
-    'no-multi-spaces': [ 'warn', { ignoreEOLComments: true } ],
+    'no-multi-spaces': [ 'error', { ignoreEOLComments: true } ],
     'no-multiple-empty-lines': [ 'error', { max: 1, maxBOF: 0, maxEOF: 0 } ],
     'no-trailing-spaces': [ 'error', {} ],
     'object-curly-spacing': [ 'error', 'always' ],
