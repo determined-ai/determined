@@ -74,6 +74,9 @@ html {
     border-radius: var(--theme-sizes-border-radius);
     box-shadow: var(--theme-shadow);
   }
+  .ant-select.ant-select-open.ant-select-show-search {
+    min-width: 10rem;
+  }
 
   /* Space */
 
