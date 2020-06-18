@@ -282,18 +282,6 @@ func (m *Master) Run() error {
 		return err
 	}
 
-	m.db.AddModel(&model.Model{
-		Name:        "object-detection",
-		Description: "An object detector",
-		Metadata:    model.JSONObj{"help": "me"},
-	})
-
-	m.db.AddModel(&model.Model{
-		Name:        "image segmentation",
-		Description: "An image segmentor",
-		Metadata:    model.JSONObj{"wubba lubba": "dub dub"},
-	})
-
 	m.ClusterID, err = m.db.GetClusterID()
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")

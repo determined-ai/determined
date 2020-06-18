@@ -44,30 +44,20 @@ func ModelToProto(m model.Model) (*modelv1.Model, error) {
 func ModelFromProto(m *modelv1.Model) (*model.Model, error) {
 	b, err := protojson.Marshal(m.Metadata)
 	if err != nil {
+		fmt.Println("first error")
 		return nil, errors.Wrap(err, "error marshaling model.Metadata")
 	}
 
 	metadata := model.JSONObj{}
 	err = json.Unmarshal(b, &metadata)
 	if err != nil {
+		fmt.Println("second error")
 		return nil, errors.Wrap(err, "cannot unmarshal metadata to model.Metadata")
 	}
 
-	creationTime, err := ptypes.Timestamp(m.CreationTime)
-	if err != nil {
-		return nil, errors.Wrap(err, "modelv1.CreationTime is not parsable to time.Time")
-	}
-
-	lastUpdatedTime, err := ptypes.Timestamp(m.LastUpdatedTime)
-	if err != nil {
-		return nil, errors.Wrap(err, "modelv1.LastUpdatedTime is not parsable to time.Time")
-	}
-
 	return &model.Model{Name: m.Name,
-		Description:     m.Description,
-		Metadata:        metadata,
-		CreationTime:    creationTime,
-		LastUpdatedTime: lastUpdatedTime,
+		Description: m.Description,
+		Metadata:    metadata,
 	}, nil
 }
 
@@ -86,8 +76,9 @@ func (a *apiServer) GetModel(
 }
 
 func (a *apiServer) PutModel(_ context.Context, req *apiv1.PutModelRequest) (*apiv1.PutModelResponse, error) {
-	m, err := model.ModelFromProto(req.GetModel())
+	m, err := ModelFromProto(req.GetModel())
 	if err != nil {
+		fmt.Printf("err = %+v\n", err)
 		return nil, status.Errorf(codes.InvalidArgument, "model could not be parsed")
 	}
 
@@ -96,7 +87,7 @@ func (a *apiServer) PutModel(_ context.Context, req *apiv1.PutModelRequest) (*ap
 		return nil, errors.Wrapf(err, "unable to add model %s", req.GetModel().GetName())
 	}
 
-	protoModel, err := model.ModelToProto(*m)
+	protoModel, err := ModelToProto(*m)
 	return &apiv1.PutModelResponse{Model: protoModel}, err
 }
 
@@ -106,7 +97,7 @@ func (a *apiServer) GetModels(_ context.Context, req *apiv1.GetModelsRequest) (*
 	case nil:
 		models := []*modelv1.Model{}
 		for _, v := range m {
-			protoTemp, pErr := model.ModelToProto(v)
+			protoTemp, pErr := ModelToProto(v)
 			if err != nil {
 				return nil, pErr
 			}
