@@ -1,12 +1,14 @@
-import { Select, Tooltip } from 'antd';
+import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import Icon from 'components/Icon';
 import { CommandState, CommandType, RecentTask, RunState, TaskType, User } from 'types';
+import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
 import { commandStateToLabel, runStateToLabel } from 'utils/types';
 
+import IconFilterButtons from './IconFilterButtons';
 import css from './TaskFilter.module.scss';
 
 const { Option, OptGroup } = Select;
@@ -29,20 +31,21 @@ interface Props {
 
 const limitOptions: number[] = [ 10, 25, 50 ];
 
-const taskTypeOrder: {label: string; type: TaskType}[] = [
-  { label: 'Experiments', type: 'Experiment' },
-  { label: 'Notebooks', type: CommandType.Notebook },
-  { label: 'TensorBoards', type: CommandType.Tensorboard },
-  { label: 'Shells', type: CommandType.Shell },
-  { label: 'Commands', type: CommandType.Command },
+const taskTypeConfig = [
+  { id: 'Experiment' },
+  { id: CommandType.Notebook },
+  { id: CommandType.Tensorboard },
+  { id: CommandType.Shell },
+  { id: CommandType.Command },
 ];
 
+const selectIcon = <Icon name="arrow-down" size="tiny" />;
+
 const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Props) => {
-  const handleTypeClick = useCallback((taskType: TaskType): (() => void) => {
-    return (): void => {
-      const types = { ...filters.types, [taskType]: !filters.types[taskType] };
-      onChange({ ...filters, types });
-    };
+  const handleTypeClick = useCallback((id: string) => {
+    const idAsType = id as TaskType;
+    const types = { ...filters.types, [idAsType]: !filters.types[idAsType] };
+    onChange({ ...filters, types });
   }, [ filters, onChange ]);
 
   const handleStateSelect = useCallback((value: SelectValue): void => {
@@ -63,30 +66,14 @@ const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Pro
     onChange({ ...filters, limit });
   }, [ filters, onChange ]);
 
-  const selectIcon = <Icon name="arrow-down" size="tiny" />;
-
-  const filterTypeButtons = taskTypeOrder.map(info => {
-    const typeButtonClasses = [ css.typeButton ];
-    if (filters.types[info.type ]) typeButtonClasses.push(css.active);
-    return (
-      <Tooltip key={info.label} placement="top" title={info.label}>
-        <button aria-label={info.label}
-          className={typeButtonClasses.join(' ')}
-          tabIndex={0}
-          onClick={handleTypeClick(info.type)}>
-          <Icon name={info.type.toLocaleLowerCase()} />
-        </button>
-      </Tooltip>
-    );
-  });
-
-  const runStateOptions = Object.values(RunState).map((value) => {
-    return <Option key={value} value={value}>{runStateToLabel[value]}</Option>;
-  });
-
-  const commandStateOptions = Object.values(CommandState).map((value) => {
-    return <Option key={value} value={value}>{commandStateToLabel[value]}</Option>;
-  });
+  const filterTypeConfig = useMemo(() => {
+    return taskTypeConfig.map(config => ({
+      active: filters.types[config.id as TaskType],
+      icon: config.id.toLocaleLowerCase(),
+      id: config.id,
+      label: capitalize(config.id),
+    }));
+  }, [ filters.types ]);
 
   const userToSelectOption = (user: User): React.ReactNode =>
     <Option key={user.id} value={user.username}>{user.username}</Option>;
@@ -107,7 +94,7 @@ const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Pro
 
   return (
     <div className={css.base}>
-      <div className={css.typeButtons}>{filterTypeButtons}</div>
+      <IconFilterButtons buttons={filterTypeConfig} onClick={handleTypeClick} />
       <div className={css.filter}>
         <div className={css.label}>State</div>
         <Select
@@ -116,8 +103,16 @@ const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Pro
           suffixIcon={selectIcon}
           onSelect={handleStateSelect}>
           <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
-          <OptGroup key="expGroup" label="Experiment States">{runStateOptions}</OptGroup>
-          <OptGroup key="cmdGroup" label="Command States">{commandStateOptions}</OptGroup>
+          <OptGroup key="expGroup" label="Experiment States">
+            {Object.values(RunState).map((value) => (
+              <Option key={value} value={value}>{runStateToLabel[value]}</Option>
+            ))}
+          </OptGroup>
+          <OptGroup key="cmdGroup" label="Command States">
+            {Object.values(CommandState).map((value) => (
+              <Option key={value} value={value}>{commandStateToLabel[value]}</Option>
+            ))}
+          </OptGroup>
         </Select>
       </div>
       <div className={css.filter}>
@@ -149,7 +144,7 @@ const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Pro
 
 export default TaskFilter;
 
-const matchesState = (task: RecentTask, states: string[]): boolean =>  {
+const matchesState = (task: RecentTask, states: string[]): boolean => {
   if (states[0] === ALL_VALUE) return true;
 
   const targetStateRun = states[0] as RunState;
@@ -158,7 +153,7 @@ const matchesState = (task: RecentTask, states: string[]): boolean =>  {
   return [ targetStateRun, targetStateCmd ].includes(task.state);
 };
 
-const matchesUser = (task: RecentTask, users: User[], username?: string): boolean =>  {
+const matchesUser = (task: RecentTask, users: User[], username?: string): boolean => {
   if (!username) return true;
   const selectedUser = users.find(u => u.username === username);
   return !!selectedUser && (task.ownerId === selectedUser.id);

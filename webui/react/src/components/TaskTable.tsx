@@ -1,6 +1,6 @@
 import { Table } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
-import React from 'react';
+import React, { MouseEventHandler } from 'react';
 import TimeAgo from 'timeago-react';
 
 import { CommandState, CommandTask, CommandType, CommonProps } from 'types';
@@ -85,12 +85,15 @@ const TaskTable: React.FC<Props> = ({ tasks }: Props) => {
       columns={columns}
       dataSource={tasks}
       loading={tasks === undefined}
-      rowClassName={(record) => canBeOpened(record) ? linkCss.base : ''}
+      rowClassName={(record): string => canBeOpened(record) ? linkCss.base : ''}
       rowKey="id"
-      onRow={(record) => {
+      onRow={(record): { onClick: MouseEventHandler | undefined } => {
         return {
-          // can't use an actual link element on the whole row since anchor tag is not a valid
-          // direct tr child https://developer.mozilla.org/en-US/docs/Web/HTML/Element/tr
+          /*
+           * Can't use an actual link element on the whole row since anchor tag
+           * is not a valid direct tr child.
+           * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/tr
+           */
           onClick: canBeOpened(record) ? makeClickHandler(record.url as string) : undefined,
         };
       }} />
