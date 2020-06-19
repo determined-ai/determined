@@ -60,5 +60,5 @@ def test_verify_s3_upload_error(tmp_path: Path, monkeypatch: MonkeyPatch) -> Non
     }
     assert len(os.listdir(tmpdir_s)) == 0
     with pytest.raises(S3UploadFailedError):
-        storage.validate_config(config)
+        storage.validate_config(config, container_path=None)
     assert len(os.listdir(tmpdir_s)) == 0
