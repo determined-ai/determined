@@ -19,18 +19,18 @@ message GetExperimentsRequest {
         // Returns experiments sorted by description.
         SORT_BY_DESCRIPTION = 2;
         // Return experiments sorted by start time.
-        SORT_BY_START_TIME = 3;
+        SORT_BY_START_TIME = 4;
         // Return experiments sorted by end time. Experiments without end times are
         // returned after experiments that are.
-        SORT_BY_END_TIME = 4;
-        // Return experiments sorted by number of trials.
-        SORT_BY_NUM_TRIALS = 5;
+        SORT_BY_END_TIME = 5;
         // Return experiments sorted by state.
         SORT_BY_STATE = 6;
+        // Return experiments sorted by number of trials.
+        SORT_BY_NUM_TRIALS = 8;
         // Return experiments sorted by progress.
-        SORT_BY_PROGRESS = 7;
+        SORT_BY_PROGRESS = 9;
         // Return experiments sorted by user.
-        SORT_BY_USER = 8;
+        SORT_BY_USER = 10;
     }
     // Sort experiments by the given field
     SortBy sort_by = 1;
