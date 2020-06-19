@@ -7,7 +7,7 @@ SELECT
     s.start_time AS start_time,
     s.end_time AS end_time,
     c.resources AS resources,
-    c.metadata AS metadata,
+    COALESCE(c.metadata, '{}') AS metadata,
     COALESCE(c.framework, '') as framework,
     COALESCE(c.format, '') as format,
     COALESCE(c.determined_version, '') as determined_version,
