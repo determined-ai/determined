@@ -24,10 +24,6 @@ func (a *apiServer) GetExperiments(
 		}
 	}
 	resp.Experiments = filtered
-	resp.Pagination, err = a.pagination(resp.Experiments, req.Offset, req.Limit)
-	if err != nil {
-		return nil, err
-	}
 	sort.Slice(resp.Experiments, func(i, j int) bool {
 		a1, a2 := resp.Experiments[i], resp.Experiments[j]
 		if req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
@@ -63,6 +59,10 @@ func (a *apiServer) GetExperiments(
 			panic(fmt.Sprintf("unknown sort type specified: %s", req.SortBy))
 		}
 	})
+	resp.Pagination, err = a.pagination(resp.Experiments, req.Offset, req.Limit)
+	if err != nil {
+		return nil, err
+	}
 	resp.Experiments = resp.Experiments[resp.Pagination.StartIndex:resp.Pagination.EndIndex]
 	return resp, nil
 }

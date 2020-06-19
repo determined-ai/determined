@@ -6,6 +6,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -16,7 +18,11 @@ type apiServer struct {
 }
 
 func (a *apiServer) pagination(values interface{}, offset, limit int32) (*apiv1.Pagination, error) {
-	total := int32(reflect.ValueOf(values).Len())
+	rv := reflect.ValueOf(values)
+	if rv.Kind() != reflect.Slice {
+		return nil, errors.Errorf("error paginating non-slice type: %T", rv.Kind())
+	}
+	total := int32(rv.Len())
 	startIndex := offset
 	if offset < 0 {
 		startIndex = total + offset
