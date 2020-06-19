@@ -6,13 +6,13 @@ import Icon from 'components/Icon';
 import { CommandState, CommandType, RecentTask, RunState, TaskType, User } from 'types';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
-import { commandStateToLabel, runStateToLabel } from 'utils/types';
 
 import IconFilterButtons from './IconFilterButtons';
+import StateSelectFilter from './StateSelectFilter';
 import css from './TaskFilter.module.scss';
 import UserSelectFilter from './UserSelectFilter';
 
-const { Option, OptGroup } = Select;
+const { Option } = Select;
 
 export const ALL_VALUE = 'all';
 
@@ -73,26 +73,7 @@ const TaskFilter: React.FC<Props> = ({ filters, onChange }: Props) => {
   return (
     <div className={css.base}>
       <IconFilterButtons buttons={filterTypeConfig} onClick={handleTypeClick} />
-      <div className={css.filter}>
-        <div className={css.label}>State</div>
-        <Select
-          defaultValue={filters.states[0]}
-          dropdownMatchSelectWidth={false}
-          suffixIcon={selectIcon}
-          onSelect={handleStateSelect}>
-          <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
-          <OptGroup key="expGroup" label="Experiment States">
-            {Object.values(RunState).map((value) => (
-              <Option key={value} value={value}>{runStateToLabel[value]}</Option>
-            ))}
-          </OptGroup>
-          <OptGroup key="cmdGroup" label="Command States">
-            {Object.values(CommandState).map((value) => (
-              <Option key={value} value={value}>{commandStateToLabel[value]}</Option>
-            ))}
-          </OptGroup>
-        </Select>
-      </div>
+      <StateSelectFilter value={filters.states} onChange={handleStateSelect} />
       <UserSelectFilter value={filters.username} onChange={handleUserChange} />
       <div className={css.filter}>
         <div className={css.label}>Limit</div>
