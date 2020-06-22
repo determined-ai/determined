@@ -29,10 +29,10 @@ const defaultFilters: TaskFilters = {
   states: [ ALL_VALUE ],
   types: {
     [CommandType.Command]: false,
-    Experiment: false,
     [CommandType.Notebook]: false,
     [CommandType.Shell]: false,
     [CommandType.Tensorboard]: false,
+    Experiment: false,
   },
   username: undefined,
 };
@@ -74,10 +74,10 @@ const Dashboard: React.FC = () => {
 
   const activeTaskTally = {
     [CommandType.Command]: countActiveCommand(commands.data || []),
-    Experiment: (activeExperiments.data || []).length,
     [CommandType.Notebook]: countActiveCommand(notebooks.data || []),
     [CommandType.Shell]: countActiveCommand(shells.data || []),
     [CommandType.Tensorboard]: countActiveCommand(tensorboards.data || []),
+    Experiment: (activeExperiments.data || []).length,
   };
 
   /* Recent Tasks */
@@ -105,7 +105,7 @@ const Dashboard: React.FC = () => {
   const sortedTasks = loadedTasks.sort(
     (a, b) => Date.parse(a.lastEvent.date) < Date.parse(b.lastEvent.date) ? 1 : -1);
 
-  const filteredTasks = filterTasks(sortedTasks, filters, users.data || []);
+  const filteredTasks = filterTasks<TaskType, RecentTask>(sortedTasks, filters, users.data || []);
 
   const tasks = filteredTasks.map((props: RecentTask) => {
     return <TaskCard key={props.id} {...props} />;

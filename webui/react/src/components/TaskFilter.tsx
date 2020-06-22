@@ -2,7 +2,7 @@ import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import { CommandState, CommandType, RecentTask, RunState, TaskType, User } from 'types';
+import { AnyTask, CommandState, CommandTask, CommandType, RunState, TaskType, User } from 'types';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
 
@@ -23,17 +23,14 @@ export interface TaskFilters<T extends TaskType = TaskType> {
   types: Record<T, boolean>;
 }
 
-interface Props {
-  filters: TaskFilters;
-  onChange: (filters: TaskFilters) => void;
+interface Props<T extends TaskType> {
+  filters: TaskFilters<T>;
+  onChange: (filters: TaskFilters<T>) => void;
   showExperiments?: boolean;
   showLimit?: boolean;
 }
 
-const defaultProps = {
-  showExperiments: true,
-  showLimit: true,
-};
+type TaskFilterFC = <T extends TaskType = TaskType>(props: Props<T>) => React.ReactElement;
 
 const limitOptions: number[] = [ 10, 25, 50 ];
 
@@ -45,18 +42,17 @@ const commandConfig = [
 ];
 const experimentConfig = [ { id: 'Experiment' } ];
 
-const TaskFilter: React.FC<Props> = ({
-  filters, onChange, showExperiments, showLimit,
-}: Props) => {
+const TaskFilter: TaskFilterFC = <T extends TaskType = TaskType>({
+  filters, onChange, showExperiments = true, showLimit = true,
+}: Props<T>) => {
   const allTypesOff = !Object.values(filters.types).reduce((acc, type) => (acc || type), false);
   const showCommandStates = allTypesOff ||
-    filters.types.COMMAND || filters.types.NOTEBOOK ||
-    filters.types.SHELL || filters.types.TENSORBOARD;
-  const showExperimentStates = showExperiments && (allTypesOff || filters.types.Experiment);
+    filters.types[CommandType.Command as T] || filters.types[CommandType.Notebook as T] ||
+    filters.types[CommandType.Shell as T] || filters.types[CommandType.Tensorboard as T];
+  const showExperimentStates = showExperiments && (allTypesOff || filters.types['Experiment' as T]);
 
   const handleTypeClick = useCallback((id: string) => {
-    const idAsType = id as TaskType;
-    const types = { ...filters.types, [idAsType]: !filters.types[idAsType] };
+    const types = { ...filters.types, [id as T]: !filters.types[id as T] };
     onChange({ ...filters, types });
   }, [ filters, onChange ]);
 
@@ -80,7 +76,7 @@ const TaskFilter: React.FC<Props> = ({
       ...commandConfig,
     ];
     return taskTypeConfig.map(config => ({
-      active: filters.types[config.id as TaskType],
+      active: filters.types[config.id as T],
       icon: config.id.toLocaleLowerCase(),
       id: config.id,
       label: capitalize(config.id),
@@ -107,11 +103,9 @@ const TaskFilter: React.FC<Props> = ({
   );
 };
 
-TaskFilter.defaultProps = defaultProps;
-
 export default TaskFilter;
 
-const matchesState = (task: RecentTask, states: string[]): boolean => {
+const matchesState = <T extends AnyTask>(task: T, states: string[]): boolean => {
   if (states[0] === ALL_VALUE) return true;
 
   const targetStateRun = states[0] as RunState;
@@ -120,25 +114,26 @@ const matchesState = (task: RecentTask, states: string[]): boolean => {
   return [ targetStateRun, targetStateCmd ].includes(task.state);
 };
 
-const matchesUser = (task: RecentTask, users: User[], username?: string): boolean => {
+const matchesUser = <T extends AnyTask>(task: T, users: User[], username?: string): boolean => {
   if (!username) return true;
   const selectedUser = users.find(u => u.username === username);
   return !!selectedUser && (task.ownerId === selectedUser.id);
 };
 
-export const filterTasks =
-  (tasks: RecentTask[], filters: TaskFilters, users: User[]): RecentTask[] => {
-    const isAllTypes = !Object.values(filters.types).includes(true);
-    return tasks
-      .filter(task => matchesUser(task, users, filters.username))
-      .filter(task => {
-        if (!isExperimentTask(task)) return true;
-        return !task.archived;
-      })
-      .filter(task => matchesState(task, filters.states))
-      .filter(task => {
-        const type = isExperimentTask(task) ? 'Experiment' : task.type;
-        return isAllTypes || filters.types[type];
-      })
-      .slice(0, filters.limit);
-  };
+export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = AnyTask>(
+  tasks: A[], filters: TaskFilters<T>, users: User[],
+): A[] => {
+  const isAllTypes = !Object.values(filters.types).includes(true);
+  return tasks
+    .filter(task => matchesUser<A>(task as A, users, filters.username))
+    .filter(task => {
+      if (!isExperimentTask(task)) return true;
+      return !task.archived;
+    })
+    .filter(task => matchesState<A>(task as A, filters.states))
+    .filter(task => {
+      const type = isExperimentTask(task) ? 'Experiment' : (task as CommandTask).type;
+      return isAllTypes || filters.types[type as T];
+    })
+    .slice(0, filters.limit);
+};
