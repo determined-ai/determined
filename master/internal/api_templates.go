@@ -45,7 +45,7 @@ func (a *apiServer) GetTemplates(
 	}
 	sort.Slice(resp.Templates, func(i, j int) bool {
 		t1, t2 := resp.Templates[i], resp.Templates[j]
-		if req.OrderBy == apiv1.GetTemplatesRequest_ORDER_BY_DESC {
+		if req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
 			t1, t2 = t2, t1
 		}
 		return t1.Name < t2.Name

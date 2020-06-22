@@ -1821,9 +1821,9 @@ func (db *PgDB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
 	}
 }
 
-// Query returns the result of the query. Any placeholder parameters are replaced
-// with supplied args.
-func (db *PgDB) Query(queryName string, v interface{}, args ...interface{}) error {
+func (db *PgDB) queryRows(
+	queryName string, p func(*sqlx.Rows, interface{}) error, v interface{}, args ...interface{},
+) error {
 	query, ok := db.queries[queryName]
 	if !ok {
 		query = string(etc.MustStaticFile(fmt.Sprintf("%s.sql", queryName)))
@@ -1839,22 +1839,40 @@ func (db *PgDB) Query(queryName string, v interface{}, args ...interface{}) erro
 		vValue := reflect.ValueOf(v).Elem()
 		vValue.Set(reflect.MakeSlice(vValue.Type(), 0, 0))
 		for rows.Next() {
-			sValue := reflect.New(vType.Elem())
-			if serr := rows.StructScan(sValue.Interface()); serr != nil {
-				return serr
+			switch k := vValue.Type().Elem().Kind(); k {
+			case reflect.Ptr:
+				sValue := reflect.New(vValue.Type().Elem().Elem())
+				if err = p(rows, sValue.Interface()); err != nil {
+					return err
+				}
+				vValue = reflect.Append(vValue, sValue)
+			case reflect.Struct:
+				sValue := reflect.New(vValue.Type().Elem())
+				if err = p(rows, sValue.Interface()); err != nil {
+					return err
+				}
+				vValue = reflect.Append(vValue, sValue.Elem())
+			default:
+				return errors.Errorf("unexpected type: %s", k)
 			}
-			vValue = reflect.Append(vValue, sValue.Elem())
 		}
 		reflect.ValueOf(v).Elem().Set(vValue)
 		return nil
 	case reflect.Struct:
 		if rows.Next() {
-			return rows.StructScan(v)
+			return p(rows, v)
 		}
 		return ErrNotFound
 	default:
 		panic(fmt.Sprintf("unsupported query type: %s", kind))
 	}
+}
+
+// Query returns the result of the query. Any placeholder parameters are replaced
+// with supplied args.
+func (db *PgDB) Query(queryName string, v interface{}, args ...interface{}) error {
+	parser := func(rows *sqlx.Rows, val interface{}) error { return rows.StructScan(val) }
+	return db.queryRows(queryName, parser, v, args...)
 }
 
 // RawQuery returns the result of the query as a raw byte string. Any placeholder parameters are

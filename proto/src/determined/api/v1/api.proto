@@ -8,6 +8,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/api/v1/agent.proto";
 import "determined/api/v1/auth.proto";
+import "determined/api/v1/experiment.proto";
 import "determined/api/v1/master.proto";
 import "determined/api/v1/model.proto";
 import "determined/api/v1/template.proto";
@@ -58,6 +59,9 @@ service Determined {
     rpc EnableSlot(EnableSlotRequest) returns (EnableSlotResponse) { option (google.api.http) = {post: "/api/v1/agents/{agent_id}/slots/{slot_id}/enable"}; }
     // Disable the slot.
     rpc DisableSlot(DisableSlotRequest) returns (DisableSlotResponse) { option (google.api.http) = {post: "/api/v1/agents/{agent_id}/slots/{slot_id}/disable"}; }
+
+    // Get a list of experiments.
+    rpc GetExperiments(GetExperimentsRequest) returns (GetExperimentsResponse) { option (google.api.http) = {get: "/api/v1/experiments"}; }
 
     // Get a list of templates.
     rpc GetTemplates(GetTemplatesRequest) returns (GetTemplatesResponse) { option (google.api.http) = {get: "/api/v1/templates"}; }

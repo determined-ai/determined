@@ -11,7 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
-	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 // Initialize creates a new global agent actor.
@@ -41,8 +41,8 @@ func (a *agents) Receive(ctx *actor.Context) error {
 			ctx.Respond(errors.Errorf("agent already connected: %s", id))
 			return nil
 		}
-	case *proto.GetAgentsRequest:
-		response := &proto.GetAgentsResponse{}
+	case *apiv1.GetAgentsRequest:
+		response := &apiv1.GetAgentsResponse{}
 		for _, a := range a.summarize(ctx) {
 			if msg.Label == "" || msg.Label == a.Label {
 				response.Agents = append(response.Agents, toProtoAgent(a))
@@ -50,13 +50,13 @@ func (a *agents) Receive(ctx *actor.Context) error {
 		}
 		sort.Slice(response.Agents, func(i, j int) bool {
 			a1, a2 := response.Agents[i], response.Agents[j]
-			if msg.OrderBy == proto.GetAgentsRequest_ORDER_BY_DESC {
+			if msg.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
 				a1, a2 = a2, a1
 			}
 			switch msg.SortBy {
-			case proto.GetAgentsRequest_SORT_BY_TIME:
+			case apiv1.GetAgentsRequest_SORT_BY_TIME:
 				return a1.RegisteredTime.Seconds < a2.RegisteredTime.Seconds
-			case proto.GetAgentsRequest_SORT_BY_UNSPECIFIED, proto.GetAgentsRequest_SORT_BY_ID:
+			case apiv1.GetAgentsRequest_SORT_BY_UNSPECIFIED, apiv1.GetAgentsRequest_SORT_BY_ID:
 				return a1.Id < a2.Id
 			default:
 				panic(fmt.Sprintf("unknown sort type specified: %s", msg.SortBy.String()))
