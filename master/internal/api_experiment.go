@@ -15,15 +15,30 @@ func (a *apiServer) GetExperiments(
 	}
 	a.filter(&resp.Experiments, func(i int) bool {
 		v := resp.Experiments[i]
-		return filterAll(
-			func() bool { return req.Archived == nil || req.Archived.Value == v.Archived },
-			func() bool {
-				return strings.Contains(
-					strings.ToLower(v.Description), strings.ToLower(req.Description))
-			},
-			checkIn(v.State, req.States),
-			checkIn(v.Username, req.Users),
-		)
+		if req.Archived != nil && req.Archived.Value != v.Archived {
+			return false
+		}
+		found := false
+		for _, state := range req.States {
+			if state == v.State {
+				found = true
+				break
+			}
+		}
+		if len(req.States) != 0 && !found {
+			return false
+		}
+		found = false
+		for _, user := range req.Users {
+			if user == v.Username {
+				found = true
+				break
+			}
+		}
+		if len(req.Users) != 0 && !found {
+			return false
+		}
+		return strings.Contains(strings.ToLower(v.Description), strings.ToLower(req.Description))
 	})
 	a.sort(resp.Experiments, req.OrderBy, req.SortBy, apiv1.GetExperimentsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Experiments, req.Offset, req.Limit)

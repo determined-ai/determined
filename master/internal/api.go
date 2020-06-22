@@ -22,6 +22,8 @@ type apiServer struct {
 	m *Master
 }
 
+// paginate returns a subset of the values given the offset and limit. Negative offsets denotes that
+// offsets should be calculated from the end.
 func (a *apiServer) paginate(p **apiv1.Pagination, values interface{}, offset, limit int32) error {
 	rv := reflect.ValueOf(values)
 	if rv.Elem().Kind() != reflect.Slice {
@@ -49,6 +51,9 @@ func (a *apiServer) paginate(p **apiv1.Pagination, values interface{}, offset, l
 	)
 }
 
+// sort sorts the provided slice in place. The second parameter denotes whether sorting should be
+// in ascending or descending order. All following parameters are the sort keys. Sort keys must be
+// the same value as the field number that must be sorted.
 func (a *apiServer) sort(
 	slice interface{}, order apiv1.OrderBy, keys ...interface{}) {
 	rv := reflect.ValueOf(slice)
@@ -111,6 +116,14 @@ func (a *apiServer) sort(
 				return v1 < v2
 			case pref.MessageKind:
 				v1, v2 := f1.Message().Interface(), f2.Message().Interface()
+				switch {
+				case v1 == nil && v2 == nil:
+					continue
+				case v1 == nil:
+					return true
+				case v2 == nil:
+					return false
+				}
 				switch t1 := v1.(type) {
 				case *timestamppb.Timestamp:
 					t2 := v2.(*timestamppb.Timestamp)
@@ -132,27 +145,9 @@ func (a *apiServer) sort(
 	})
 }
 
-func checkIn(v interface{}, values interface{}) func() bool {
-	rv := reflect.ValueOf(values)
-	return func() bool {
-		for i := 0; i < rv.Len(); i++ {
-			if v == rv.Index(i).Interface() {
-				return true
-			}
-		}
-		return rv.Len() == 0
-	}
-}
-
-func filterAll(filters ...func() bool) bool {
-	for _, filter := range filters {
-		if !filter() {
-			return false
-		}
-	}
-	return true
-}
-
+// filter filters in place the provide reference to the slice. The check function is given an
+// index of the current element it will check to filter. Returning false will filter remove the
+// element from the slice.
 func (a *apiServer) filter(values interface{}, check func(int) bool) {
 	rv := reflect.ValueOf(values)
 	results := reflect.MakeSlice(rv.Type().Elem(), 0, 0)

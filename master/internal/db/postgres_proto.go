@@ -10,7 +10,7 @@ import (
 )
 
 // QueryProto returns the result of the query. Any placeholder parameters are replaced
-// with supplied args.
+// with supplied args. Enum values must be the full name of the enum.
 func (db *PgDB) QueryProto(queryName string, v interface{}, args ...interface{}) error {
 	parser := func(rows *sqlx.Rows, val interface{}) error {
 		message, ok := val.(proto.Message)
