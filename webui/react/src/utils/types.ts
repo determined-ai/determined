@@ -130,7 +130,7 @@ export const isExperiment = (obj: AnyTask | Experiment): obj is Experiment => {
 };
 
 // used when properties are named differently between objects.
-// DISCUSS is there a better TS way?
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const oneOfProperties = <T>(obj: any, props: string[]): T => {
   for (const prop of props) {
     if (prop in obj) return obj[prop] as T;
