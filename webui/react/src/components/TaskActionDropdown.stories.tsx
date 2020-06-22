@@ -2,7 +2,7 @@ import React from 'react';
 
 import { ExperimentsDecorator } from 'storybook/ConetextDecorators';
 import { CommandState, CommandType, RunState } from 'types';
-import { generateCommandTask, generateExperimentTasks } from 'utils/task';
+import { generateCommandTask, generateExperimentTask } from 'utils/task';
 
 import TaskActionDropdown from './TaskActionDropdown';
 
@@ -15,7 +15,7 @@ export default {
 export const ExperimentActive = (): React.ReactNode => {
   return <TaskActionDropdown
     task={{
-      ...generateExperimentTasks(0),
+      ...generateExperimentTask(0),
       state: RunState.Active,
     }} />;
 };
