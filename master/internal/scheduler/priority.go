@@ -12,10 +12,10 @@ func NewPriorityScheduler() Scheduler {
 	return &priorityScheduler{}
 }
 
-func (p *priorityScheduler) Schedule(c *Cluster) {
+func (p *priorityScheduler) Schedule(rp *DefaultRP) {
 	var states []*groupState
 	groupMapping := make(map[*group]*groupState)
-	for it := c.taskList.iterator(); it.next(); {
+	for it := rp.taskList.iterator(); it.next(); {
 		task := it.value()
 		state, ok := groupMapping[task.group]
 		if !ok {
@@ -43,7 +43,7 @@ func (p *priorityScheduler) Schedule(c *Cluster) {
 		filtered := states[:0]
 		for _, state := range states {
 			if len(state.pendingTasks) > 0 {
-				if ok := c.assignTask(state.pendingTasks[0]); ok {
+				if ok := rp.assignTask(state.pendingTasks[0]); ok {
 					state.pendingTasks = state.pendingTasks[1:]
 					filtered = append(filtered, state)
 				}

@@ -1,9 +1,13 @@
 package scheduler
 
 import (
+	"encoding/json"
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/union"
 )
 
 // DefaultConfig is the default configuration of the scheduler.
@@ -11,13 +15,17 @@ func DefaultConfig() *Config {
 	return &Config{
 		Type: "fair_share",
 		Fit:  "best",
+		ResourceProvider: &ResourceProviderConfig{
+			DefaultRPConfig: &DefaultResourceProviderConfig{},
+		},
 	}
 }
 
 // Config hosts configuration fields of the scheduler.
 type Config struct {
-	Type string `json:"type"`
-	Fit  string `json:"fit"`
+	Type             string                  `json:"type"`
+	Fit              string                  `json:"fit"`
+	ResourceProvider *ResourceProviderConfig `json:"resource_provider"`
 }
 
 // Validate implements the check.Validatable interface.
@@ -25,6 +33,8 @@ func (c Config) Validate() []error {
 	return []error{
 		check.Contains(c.Type, []interface{}{"priority", "fair_share"}, "invalid scheduler type"),
 		check.Contains(c.Fit, []interface{}{"best", "worst"}, "invalid scheduler fitting method"),
+		check.True(c.ResourceProvider != nil, "resource provider not set"),
+		check.True(c.ResourceProvider.DefaultRPConfig != nil, "invalid resource provider"),
 	}
 }
 
@@ -51,3 +61,25 @@ func (c Config) MakeScheduler() Scheduler {
 		panic(fmt.Sprintf("invalid scheduler: %s", c.Type))
 	}
 }
+
+// ResourceProviderConfig hosts configuration fields for the resource provider.
+type ResourceProviderConfig struct {
+	DefaultRPConfig *DefaultResourceProviderConfig `union:"type,default" json:"-"`
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (r ResourceProviderConfig) MarshalJSON() ([]byte, error) {
+	return union.Marshal(r)
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (r *ResourceProviderConfig) UnmarshalJSON(data []byte) error {
+	if err := union.Unmarshal(data, r); err != nil {
+		return err
+	}
+	type DefaultParser *ResourceProviderConfig
+	return errors.Wrap(json.Unmarshal(data, DefaultParser(r)), "failed to parse resource provider")
+}
+
+// DefaultResourceProviderConfig hosts configuration fields for the default resource provider.
+type DefaultResourceProviderConfig struct{}

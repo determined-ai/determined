@@ -20,17 +20,22 @@ type (
 		CanTerminate        bool
 		Label               string
 		FittingRequirements FittingRequirements
+		TaskHandler         *actor.Ref
 	}
 	// StartTask signals that a scheduled task should be launched.
 	StartTask struct {
-		Spec tasks.TaskSpec
+		Spec        tasks.TaskSpec
+		TaskHandler *actor.Ref
 	}
 	// taskStopped notifies that the task actor is stopped.
 	taskStopped struct {
 		Ref *actor.Ref
 	}
 	// SetTaskName sets the name of the task handled by the sender of the message.
-	SetTaskName struct{ Name string }
+	SetTaskName struct {
+		Name        string
+		TaskHandler *actor.Ref
+	}
 	// GetTaskSummary returns the summary of the specified task.
 	GetTaskSummary struct{ ID *TaskID }
 	// GetTaskSummaries returns the summaries of all the tasks in the cluster.
@@ -57,6 +62,11 @@ type (
 	}
 	// TaskAborted notifies the task actor that it was terminated before being scheduled.
 	TaskAborted struct{}
+	// TaskAssigned notifies the task actor that it has been assigned to run
+	// with a specified number of containers.
+	TaskAssigned struct {
+		NumContainers int
+	}
 )
 
 // TaskID is a unique ID assigned to tasks when added to the cluster.

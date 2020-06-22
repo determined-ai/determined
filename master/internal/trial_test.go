@@ -85,9 +85,9 @@ func TestRendezvousInfo(t *testing.T) {
 
 	system := actor.NewSystem("")
 
-	cluster, created := system.ActorOf(
-		actor.Addr("cluster"),
-		scheduler.NewCluster(
+	rp, created := system.ActorOf(
+		actor.Addr("resourceProviders"),
+		scheduler.NewDefaultRP(
 			uuid.New().String(),
 			scheduler.NewFairShareScheduler(),
 			scheduler.WorstFit,
@@ -103,7 +103,7 @@ func TestRendezvousInfo(t *testing.T) {
 
 	// This is the minimal trial to receive scheduler.ContainerStarted messages.
 	trial := &trial{
-		cluster:       cluster,
+		rp:            rp,
 		experiment:    &model.Experiment{},
 		containers:    make(map[scheduler.ContainerID]scheduler.Container),
 		sockets:       make(map[scheduler.ContainerID]*actor.Ref),

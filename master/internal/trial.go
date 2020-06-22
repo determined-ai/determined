@@ -12,6 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
@@ -138,7 +139,7 @@ type trial struct {
 	id    int
 	idSet bool
 
-	cluster         *actor.Ref
+	rp              *actor.Ref
 	logger          *actor.Ref
 	db              *db.PgDB
 	experimentState model.State
@@ -188,7 +189,7 @@ func newTrial(
 		warmStartCheckpointID = &checkpointID
 	}
 	return &trial{
-		cluster:               exp.cluster,
+		rp:                    exp.rp,
 		logger:                exp.trialLogger,
 		db:                    exp.db,
 		experimentState:       exp.State,
@@ -236,7 +237,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		t.replaying = false
 
 	// Log-related messages.
-	case scheduler.ContainerLog:
+	case sproto.ContainerLog:
 		t.processLog(ctx, msg)
 
 	case actor.PostStop:
@@ -282,7 +283,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				name = fmt.Sprintf("Trial %d", t.id)
 			}
 
-			t.task = ctx.Ask(t.cluster, scheduler.AddTask{
+			t.task = ctx.Ask(t.rp, scheduler.AddTask{
 				Name:         fmt.Sprintf("%s (Experiment %d)", name, t.experiment.ID),
 				Group:        ctx.Self().Parent(),
 				SlotsNeeded:  slotsNeeded,
@@ -292,10 +293,11 @@ func (t *trial) Receive(ctx *actor.Context) error {
 					SingleAgent:    false,
 					DedicatedAgent: slotsNeeded > 1,
 				},
+				TaskHandler: ctx.Self(),
 			}).Get().(*scheduler.Task)
 		}
 	} else if t.experimentState != model.ActiveState {
-		ctx.Tell(t.cluster, scheduler.TerminateTask{TaskID: t.task.ID})
+		ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID})
 	}
 
 	return nil
@@ -320,7 +322,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		}
 
 	case actor.ChildFailed:
-		ctx.Tell(t.cluster, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+		ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
 
 	case scheduler.TaskAssigned:
 		if err := t.processAssigned(ctx, msg); err != nil {
@@ -331,7 +333,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		ctx.Log().Info("trial runner requested to terminate")
 		t.pendingGracefulTermination = true
 
-	case scheduler.ContainerStateChanged:
+	case sproto.ContainerStateChanged:
 		switch msg.Container.State {
 		case container.Terminated:
 			t.processContainerTerminated(ctx, msg)
@@ -349,7 +351,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 			if msg.timedOut {
 				ctx.Log().Info("killing unresponsive trial after timeout")
 			}
-			ctx.Tell(t.cluster, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+			ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
 		}
 
 	case scheduler.ContainerStarted:
@@ -393,12 +395,14 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 			int64(t.create.TrialSeed))
 		if err := t.db.AddTrial(modelTrial); err != nil {
 			ctx.Log().WithError(err).Error("failed to save trial to database")
-			ctx.Tell(t.cluster, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+			ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
 			return nil
 		}
 		t.processID(ctx, modelTrial.ID)
-		ctx.Tell(t.cluster, scheduler.SetTaskName{
-			Name: fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID)})
+		ctx.Tell(t.rp, scheduler.SetTaskName{
+			Name:        fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID),
+			TaskHandler: ctx.Self(),
+		})
 		ctx.Tell(ctx.Self().Parent(), trialCreated{create: t.create, trialID: t.id})
 	}
 
@@ -407,7 +411,7 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 		return errors.Wrap(err, "error getting workload from sequencer")
 	}
 
-	t.numContainers = msg.NumContainers()
+	t.numContainers = msg.NumContainers
 
 	if err = saveWorkload(t.db, w); err != nil {
 		ctx.Log().WithError(err).Error("failed to save workload to the database")
@@ -449,7 +453,7 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 		),
 	}
 
-	ctx.Tell(t.cluster, scheduler.StartTask{
+	ctx.Tell(t.rp, scheduler.StartTask{
 		Spec: tasks.TaskSpec{
 			StartContainer: &tasks.StartContainer{
 				ExperimentConfig:    t.experiment.Config,
@@ -463,6 +467,7 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 				AgentUserGroup:      t.agentUserGroup,
 			},
 		},
+		TaskHandler: ctx.Self(),
 	})
 
 	return nil
@@ -713,7 +718,7 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 
 func (t *trial) processContainerTerminated(
 	ctx *actor.Context,
-	msg scheduler.ContainerStateChanged,
+	msg sproto.ContainerStateChanged,
 ) {
 	c := t.containers[scheduler.ContainerID(msg.Container.ID)]
 	delete(t.containers, scheduler.ContainerID(msg.Container.ID))
@@ -721,7 +726,7 @@ func (t *trial) processContainerTerminated(
 	t.killAndRemoveSocket(ctx, scheduler.ContainerID(msg.Container.ID))
 
 	exitMsg := msg.ContainerStopped.String()
-	t.processLog(ctx, scheduler.ContainerLog{
+	t.processLog(ctx, sproto.ContainerLog{
 		Container:  msg.Container,
 		Timestamp:  time.Now(),
 		AuxMessage: &exitMsg,
@@ -741,11 +746,11 @@ func (t *trial) processContainerTerminated(
 		status = *s
 	}
 	if c == nil || c.IsLeader() || status.Failure != nil {
-		ctx.Tell(t.cluster, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+		ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
 	}
 }
 
-func (t *trial) processLog(ctx *actor.Context, msg scheduler.ContainerLog) {
+func (t *trial) processLog(ctx *actor.Context, msg sproto.ContainerLog) {
 	// Log messages should never come in before the trial ID is set, since no trial runners are
 	// launched until after the trial ID is set. But for futureproofing, we will log an error while
 	// we protect the database.

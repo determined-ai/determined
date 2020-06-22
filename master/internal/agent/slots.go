@@ -3,12 +3,11 @@ package agent
 import (
 	"net/http"
 
-	"github.com/determined-ai/determined/master/internal/scheduler"
-
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -41,7 +40,7 @@ func (s *slots) Receive(ctx *actor.Context) error {
 		for _, child := range ctx.Children() {
 			ctx.Tell(child, msg)
 		}
-	case scheduler.ContainerStateChanged:
+	case sproto.ContainerStateChanged:
 		s.sendToSlots(ctx, msg.Container, msg)
 	case echo.Context:
 		s.handleAPIRequest(ctx, msg)

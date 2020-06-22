@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	ws "github.com/determined-ai/determined/master/pkg/actor/api"
@@ -64,7 +64,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		}
 	case aproto.SignalContainer:
 		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &msg}})
-	case scheduler.StartTaskOnAgent:
+	case sproto.StartTaskOnAgent:
 		start := ws.WriteMessage{Message: aproto.AgentMessage{StartContainer: &msg.StartContainer}}
 		ctx.Ask(a.socket, start)
 		ctx.Tell(a.slots, msg.StartContainer)
@@ -104,7 +104,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 				ContainerStopped: &stopped,
 			})
 		}
-		ctx.Tell(a.cluster, scheduler.RemoveAgent{Agent: ctx.Self()})
+		ctx.Tell(a.cluster, sproto.RemoveAgent{Agent: ctx.Self()})
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -125,7 +125,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 	case msg.AgentStarted != nil:
 		telemetry.ReportAgentConnected(ctx.Self().System(), a.uuid, msg.AgentStarted.Devices)
 
-		ctx.Tell(a.cluster, scheduler.AddAgent{Agent: ctx.Self(), Label: msg.AgentStarted.Label})
+		ctx.Tell(a.cluster, sproto.AddAgent{Agent: ctx.Self(), Label: msg.AgentStarted.Label})
 		ctx.Tell(a.slots, *msg.AgentStarted)
 		a.label = msg.AgentStarted.Label
 	case msg.ContainerStateChanged != nil:
@@ -134,7 +134,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 		ref, ok := a.containers[msg.ContainerLog.Container.ID]
 		check.Panic(check.True(ok,
 			"container not assigned to agent: container %s", msg.ContainerLog.Container.ID))
-		ctx.Tell(ref, scheduler.ContainerLog{
+		ctx.Tell(ref, sproto.ContainerLog{
 			Container:   msg.ContainerLog.Container,
 			Timestamp:   msg.ContainerLog.Timestamp,
 			PullMessage: msg.ContainerLog.PullMessage,
@@ -158,7 +158,7 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 		delete(a.containers, sc.Container.ID)
 	}
 
-	rsc := scheduler.ContainerStateChanged{
+	rsc := sproto.ContainerStateChanged{
 		Container:        sc.Container,
 		ContainerStarted: sc.ContainerStarted,
 		ContainerStopped: sc.ContainerStopped,

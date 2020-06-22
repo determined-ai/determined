@@ -3,8 +3,10 @@ package internal
 import (
 	"fmt"
 
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/scheduler"
+
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -12,24 +14,25 @@ import (
 )
 
 type checkpointGCTask struct {
-	cluster    *actor.Ref
+	rp         *actor.Ref
 	db         *db.PgDB
 	experiment *model.Experiment
 
 	agentUserGroup *model.AgentUserGroup
 
 	// TODO (DET-789): Set up proper log handling for checkpoint GC.
-	logs []scheduler.ContainerLog
+	logs []sproto.ContainerLog
 }
 
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		ctx.Tell(t.cluster, scheduler.AddTask{
+		ctx.Tell(t.rp, scheduler.AddTask{
 			Name: fmt.Sprintf("Checkpoint GC (Experiment %d)", t.experiment.ID),
 			FittingRequirements: scheduler.FittingRequirements{
 				SingleAgent: true,
 			},
+			TaskHandler: ctx.Self(),
 		})
 
 	case scheduler.TaskAssigned:
@@ -43,7 +46,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 
 		ctx.Log().Info("starting checkpoint garbage collection")
 
-		ctx.Tell(t.cluster, scheduler.StartTask{
+		ctx.Tell(t.rp, scheduler.StartTask{
 			Spec: tasks.TaskSpec{
 				GCCheckpoints: &tasks.GCCheckpoints{
 					AgentUserGroup:   t.agentUserGroup,
@@ -52,9 +55,10 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 					ToDelete:         checkpoints,
 				},
 			},
+			TaskHandler: ctx.Self(),
 		})
 
-	case scheduler.ContainerStateChanged:
+	case sproto.ContainerStateChanged:
 		if msg.Container.State != container.Terminated {
 			return nil
 		}
@@ -70,7 +74,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		}
 		ctx.Self().Stop()
 
-	case scheduler.ContainerLog:
+	case sproto.ContainerLog:
 		t.logs = append(t.logs, msg)
 
 	case scheduler.TerminateRequest:

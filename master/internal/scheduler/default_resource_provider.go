@@ -10,10 +10,12 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/agent"
 	"github.com/determined-ai/determined/master/internal/proxy"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	"github.com/determined-ai/determined/master/pkg/agent"
+	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/check"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -26,8 +28,8 @@ const (
 // schedulerTick periodically triggers the scheduler to act.
 type schedulerTick struct{}
 
-// Cluster manages the agent and task lifecycles.
-type Cluster struct {
+// DefaultRP manages the agent and task lifecycles.
+type DefaultRP struct {
 	clusterID             string
 	scheduler             Scheduler
 	fittingMethod         SoftConstraint
@@ -54,8 +56,8 @@ type Cluster struct {
 	reschedule bool
 }
 
-// NewCluster initializes a new empty cluster.
-func NewCluster(
+// NewDefaultRP initializes a new empty default resource provider.
+func NewDefaultRP(
 	clusterID string,
 	scheduler Scheduler,
 	fittingMethod SoftConstraint,
@@ -64,8 +66,8 @@ func NewCluster(
 	taskContainerDefaults model.TaskContainerDefaultsConfig,
 	provisioner *actor.Ref,
 	provisionerSlotsPerInstance int,
-) *Cluster {
-	c := &Cluster{
+) actor.Actor {
+	d := &DefaultRP{
 		clusterID:             clusterID,
 		scheduler:             scheduler,
 		fittingMethod:         fittingMethod,
@@ -88,46 +90,46 @@ func NewCluster(
 
 		reschedule: false,
 	}
-	return c
+	return d
 }
 
-func (c *Cluster) assignContainer(task *Task, agent *agentState, slots int, numContainers int) {
+func (d *DefaultRP) assignContainer(task *Task, a *agentState, slots int, numContainers int) {
 	if task.state != taskRunning {
 		task.mustTransition(taskRunning)
 	}
-	container := newContainer(task, agent, slots, len(task.containers))
-	agent.containers[container.id] = container
+	container := newContainer(task, a, slots, len(task.containers))
+	a.containers[container.id] = container
 	task.containers[container.id] = container
-	c.tasksByContainerID[container.id] = task
-	c.assigmentByHandler[task.handler] = append(c.assigmentByHandler[task.handler], assignment{
+	d.tasksByContainerID[container.id] = task
+	d.assigmentByHandler[task.handler] = append(d.assigmentByHandler[task.handler], assignment{
 		task:                  task,
-		agent:                 agent,
+		agent:                 a,
 		container:             container,
 		numContainers:         numContainers,
-		clusterID:             c.clusterID,
-		devices:               agent.assignFreeDevices(slots, container.id),
-		harnessPath:           c.harnessPath,
-		taskContainerDefaults: c.taskContainerDefaults,
+		clusterID:             d.clusterID,
+		devices:               a.assignFreeDevices(slots, container.id),
+		harnessPath:           d.harnessPath,
+		taskContainerDefaults: d.taskContainerDefaults,
 	})
 }
 
 // assignTask allocates cluster data structures and sends the appropriate actor
 // messages to start a task if there are enough resources in the cluster to run
 // the task. If there are not, assignTask returns false.
-func (c *Cluster) assignTask(task *Task) bool {
-	fits := findFits(task, c.agents, c.fittingMethod)
+func (d *DefaultRP) assignTask(task *Task) bool {
+	fits := findFits(task, d.agents, d.fittingMethod)
 
 	if len(fits) == 0 {
 		return false
 	}
 
-	c.assigmentByHandler[task.handler] = make([]assignment, 0, len(fits))
+	d.assigmentByHandler[task.handler] = make([]assignment, 0, len(fits))
 
 	for _, fit := range fits {
-		c.assignContainer(task, fit.Agent, fit.Slots, len(fits))
+		d.assignContainer(task, fit.Agent, fit.Slots, len(fits))
 	}
 
-	task.handler.System().Tell(task.handler, TaskAssigned{numContainers: len(fits)})
+	task.handler.System().Tell(task.handler, TaskAssigned{NumContainers: len(fits)})
 
 	return true
 }
@@ -135,7 +137,7 @@ func (c *Cluster) assignTask(task *Task) bool {
 // terminateTask sends the appropriate actor messages to terminate a task and
 // deallocate its cluster data structures. The task may not be terminated if it
 // is in the right state unless forcible is true.
-func (c *Cluster) terminateTask(task *Task, forcible bool) {
+func (d *DefaultRP) terminateTask(task *Task, forcible bool) {
 	switch {
 	case task.state == taskTerminated:
 		// The task has already been terminated so this is a noop.
@@ -143,7 +145,7 @@ func (c *Cluster) terminateTask(task *Task, forcible bool) {
 	case len(task.containers) == 0 || task.state == taskPending:
 		// The task is not running so there is no need to request the task to terminate. The task is
 		// marked as aborted.
-		c.taskTerminated(task, true)
+		d.taskTerminated(task, true)
 
 	case forcible:
 		// Notify the agent to kill the task.
@@ -152,7 +154,7 @@ func (c *Cluster) terminateTask(task *Task, forcible bool) {
 			if c.state != containerTerminated {
 				c.mustTransition(containerTerminating)
 			}
-			c.agent.handler.System().Tell(c.agent.handler, agent.SignalContainer{
+			c.agent.handler.System().Tell(c.agent.handler, aproto.SignalContainer{
 				ContainerID: cproto.ID(c.id), Signal: syscall.SIGKILL})
 		}
 
@@ -168,137 +170,141 @@ func (c *Cluster) terminateTask(task *Task, forcible bool) {
 	}
 }
 
-func (c *Cluster) getOrCreateGroup(handler *actor.Ref, ctx *actor.Context) *group {
-	if g, ok := c.groups[handler]; ok {
+func (d *DefaultRP) getOrCreateGroup(handler *actor.Ref, ctx *actor.Context) *group {
+	if g, ok := d.groups[handler]; ok {
 		return g
 	}
 	g := &group{handler: handler, weight: 1}
-	c.groups[handler] = g
+	d.groups[handler] = g
 	if ctx != nil && handler != nil { // ctx is nil only for testing purposes.
 		actors.NotifyOnStop(ctx, handler, groupStopped{})
 	}
 	return g
 }
 
-func (c *Cluster) getTaskSummary(id TaskID) *TaskSummary {
-	if task := c.tasksByID[id]; task != nil {
+func (d *DefaultRP) getTaskSummary(id TaskID) *TaskSummary {
+	if task := d.tasksByID[id]; task != nil {
 		summary := newTaskSummary(task)
 		return &summary
 	}
 	return nil
 }
 
-func (c *Cluster) notifyOnStop(ctx *actor.Context, ref *actor.Ref, msg actor.Message) {
+func (d *DefaultRP) notifyOnStop(ctx *actor.Context, ref *actor.Ref, msg actor.Message) {
 	done := actors.NotifyOnStop(ctx, ref, msg)
-	if c.saveNotifications {
-		c.notifications = append(c.notifications, done)
+	if d.saveNotifications {
+		d.notifications = append(d.notifications, done)
 	}
 }
 
-func (c *Cluster) sendProvisionerView(ctx *actor.Context) {
-	if c.provisioner != nil {
-		if snapshot, updateMade := c.provisionerView.Update(c); updateMade {
-			ctx.Tell(c.provisioner, snapshot)
+func (d *DefaultRP) sendProvisionerView(ctx *actor.Context) {
+	if d.provisioner != nil {
+		if snapshot, updateMade := d.provisionerView.Update(d); updateMade {
+			ctx.Tell(d.provisioner, snapshot)
 		}
 	}
 }
 
 // Receive implements the actor.Actor interface.
-func (c *Cluster) Receive(ctx *actor.Context) error {
+func (d *DefaultRP) Receive(ctx *actor.Context) error {
 	reschedule := true
 	defer func() {
 		// Default to scheduling every 500ms if a message was received, but allow messages
 		// that don't affect the cluster to be skipped.
-		c.reschedule = c.reschedule || reschedule
+		d.reschedule = d.reschedule || reschedule
 	}()
 
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		actors.NotifyAfter(ctx, actionCooldown, schedulerTick{})
 
-	case AddAgent:
-		ctx.Log().Infof("adding agent: %s", msg.Agent.Address().Local())
-		c.agents[msg.Agent] = newAgentState(msg)
+	case sproto.ConfigureEndpoints:
+		ctx.Log().Infof("initializing endpoints for agents")
+		agent.Initialize(msg.System, msg.Echo, ctx.Self())
 
-	case AddDevice:
+	case sproto.AddAgent:
+		ctx.Log().Infof("adding agent: %s", msg.Agent.Address().Local())
+		d.agents[msg.Agent] = newAgentState(msg)
+
+	case sproto.AddDevice:
 		ctx.Log().Infof("adding device: %s (%s)", msg.Device.String(), msg.Agent.Address().Local())
-		state, ok := c.agents[msg.Agent]
+		state, ok := d.agents[msg.Agent]
 		check.Panic(check.True(ok, "error adding device, agent not found: %s", msg.Agent.Address()))
 		state.devices[msg.Device] = msg.ContainerID
 
-	case FreeDevice:
+	case sproto.FreeDevice:
 		ctx.Log().Infof("freeing device: %s (%s)", msg.Device.String(), msg.Agent.Address().Local())
-		state, ok := c.agents[msg.Agent]
+		state, ok := d.agents[msg.Agent]
 		check.Panic(check.True(ok, "error freeing device, agent not found: %s", msg.Agent.Address()))
-		id, ok := c.agents[msg.Agent].devices[msg.Device]
+		id, ok := d.agents[msg.Agent].devices[msg.Device]
 		check.Panic(check.True(ok, "error freeing device, device not found: %s", msg.Device))
 		check.Panic(check.True(id != nil, "error freeing device, device not assigned: %s", msg.Device))
 		state.devices[msg.Device] = nil
 
-	case RemoveDevice:
+	case sproto.RemoveDevice:
 		ctx.Log().Infof("removing device: %s (%s)", msg.Device.String(), msg.Agent.Address().Local())
-		state, ok := c.agents[msg.Agent]
+		state, ok := d.agents[msg.Agent]
 		check.Panic(check.True(ok, "error removing device, agent not found: %s", msg.Agent.Address()))
 		delete(state.devices, msg.Device)
 
-	case RemoveAgent:
+	case sproto.RemoveAgent:
 		ctx.Log().Infof("removing agent: %s", msg.Agent.Address().Local())
-		delete(c.agents, msg.Agent)
+		delete(d.agents, msg.Agent)
 
-	case ContainerStateChanged:
+	case sproto.ContainerStateChanged:
 		cid := ContainerID(msg.Container.ID)
 		switch msg.Container.State {
 		case cproto.Running:
-			c.receiveContainerStartedOnAgent(ctx, ContainerStartedOnAgent{
+			d.receiveContainerStartedOnAgent(ctx, containerStartedOnAgent{
 				ContainerID: cid,
 				Addresses: toAddresses(
 					msg.ContainerStarted.ProxyAddress, msg.ContainerStarted.ContainerInfo),
 			})
 		case cproto.Terminated:
-			c.receiveContainerTerminated(ctx, cid, *msg.ContainerStopped, false)
+			d.receiveContainerTerminated(ctx, cid, *msg.ContainerStopped, false)
 		}
 
 	case StartTask:
-		c.receiveStartTask(ctx, msg)
+		d.receiveStartTask(ctx, msg)
 
 	case taskStopped:
-		c.receiveTaskStopped(ctx, msg)
+		d.receiveTaskStopped(ctx, msg)
 
 	case groupStopped:
-		delete(c.groups, msg.Ref)
+		delete(d.groups, msg.Ref)
 
 	case SetMaxSlots:
-		c.getOrCreateGroup(ctx.Sender(), ctx).maxSlots = msg.MaxSlots
+		d.getOrCreateGroup(msg.Handler, ctx).maxSlots = msg.MaxSlots
 
 	case SetWeight:
-		c.getOrCreateGroup(ctx.Sender(), ctx).weight = msg.Weight
+		d.getOrCreateGroup(msg.Handler, ctx).weight = msg.Weight
 
 	case AddTask:
-		c.receiveAddTask(ctx, msg)
+		d.receiveAddTask(ctx, msg)
 
 	case SetTaskName:
 		reschedule = false
-		c.receiveSetTaskName(ctx, msg)
+		d.receiveSetTaskName(ctx, msg)
 
 	case TerminateTask:
-		c.receiveTerminateTask(ctx, msg)
+		d.receiveTerminateTask(ctx, msg)
 
 	case GetTaskSummary:
 		reschedule = false
-		if resp := c.getTaskSummary(*msg.ID); resp != nil {
+		if resp := d.getTaskSummary(*msg.ID); resp != nil {
 			ctx.Respond(*resp)
 		}
 
 	case GetTaskSummaries:
 		reschedule = false
-		ctx.Respond(c.taskList.TaskSummaries())
+		ctx.Respond(d.taskList.TaskSummaries())
 
 	case schedulerTick:
-		if c.reschedule {
-			c.scheduler.Schedule(c)
-			c.sendProvisionerView(ctx)
+		if d.reschedule {
+			d.scheduler.Schedule(d)
+			d.sendProvisionerView(ctx)
 		}
-		c.reschedule = false
+		d.reschedule = false
 		reschedule = false
 		actors.NotifyAfter(ctx, actionCooldown, schedulerTick{})
 
@@ -309,10 +315,10 @@ func (c *Cluster) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (c *Cluster) receiveAddTask(ctx *actor.Context, msg AddTask) {
-	c.notifyOnStop(ctx, ctx.Sender(), taskStopped{Ref: ctx.Sender()})
+func (d *DefaultRP) receiveAddTask(ctx *actor.Context, msg AddTask) {
+	d.notifyOnStop(ctx, msg.TaskHandler, taskStopped{Ref: msg.TaskHandler})
 
-	if task, ok := c.tasksByHandler[ctx.Sender()]; ok {
+	if task, ok := d.tasksByHandler[ctx.Sender()]; ok {
 		if ctx.ExpectingResponse() {
 			ctx.Respond(task)
 		}
@@ -320,9 +326,9 @@ func (c *Cluster) receiveAddTask(ctx *actor.Context, msg AddTask) {
 	}
 
 	if msg.Group == nil {
-		msg.Group = ctx.Sender()
+		msg.Group = msg.TaskHandler
 	}
-	group := c.getOrCreateGroup(msg.Group, ctx)
+	group := d.getOrCreateGroup(msg.Group, ctx)
 
 	var taskID TaskID
 	if msg.ID != nil {
@@ -339,7 +345,7 @@ func (c *Cluster) receiveAddTask(ctx *actor.Context, msg AddTask) {
 	task := newTask(&Task{
 		ID:                  taskID,
 		group:               group,
-		handler:             ctx.Sender(),
+		handler:             msg.TaskHandler,
 		name:                name,
 		slotsNeeded:         msg.SlotsNeeded,
 		canTerminate:        msg.CanTerminate,
@@ -347,23 +353,23 @@ func (c *Cluster) receiveAddTask(ctx *actor.Context, msg AddTask) {
 		fittingRequirements: msg.FittingRequirements,
 	})
 
-	c.tasksByID[task.ID] = task
-	c.tasksByHandler[task.handler] = task
-	c.taskList.Add(task)
+	d.tasksByID[task.ID] = task
+	d.tasksByHandler[task.handler] = task
+	d.taskList.Add(task)
 
 	if ctx.ExpectingResponse() {
 		ctx.Respond(task)
 	}
 }
 
-func (c *Cluster) receiveStartTask(ctx *actor.Context, msg StartTask) {
-	task := c.tasksByHandler[ctx.Sender()]
+func (d *DefaultRP) receiveStartTask(ctx *actor.Context, msg StartTask) {
+	task := d.tasksByHandler[msg.TaskHandler]
 	if task == nil {
-		ctx.Log().WithField("address", ctx.Sender().Address()).Errorf("unknown task trying to start")
+		ctx.Log().WithField("address", msg.TaskHandler.Address()).Errorf("unknown task trying to start")
 		return
 	}
 
-	assignments := c.assigmentByHandler[ctx.Sender()]
+	assignments := d.assigmentByHandler[msg.TaskHandler]
 	if len(assignments) == 0 {
 		ctx.Log().WithField("name", task.name).Error("task is trying to start without any assignments")
 		return
@@ -374,8 +380,11 @@ func (c *Cluster) receiveStartTask(ctx *actor.Context, msg StartTask) {
 	}
 }
 
-func (c *Cluster) receiveContainerStartedOnAgent(ctx *actor.Context, msg ContainerStartedOnAgent) {
-	task := c.tasksByContainerID[msg.ContainerID]
+func (d *DefaultRP) receiveContainerStartedOnAgent(
+	ctx *actor.Context,
+	msg containerStartedOnAgent,
+) {
+	task := d.tasksByContainerID[msg.ContainerID]
 	if task == nil {
 		ctx.Log().Warnf(
 			"ignoring stale start message for container %s",
@@ -399,7 +408,7 @@ func (c *Cluster) receiveContainerStartedOnAgent(ctx *actor.Context, msg Contain
 		// We are keying on task ID instead of container ID. Revisit this when we need to
 		// proxy multi-container tasks or when containers are created prior to being
 		// assigned to an agent.
-		ctx.Ask(c.proxy, proxy.Register{
+		ctx.Ask(d.proxy, proxy.Register{
 			Service: string(task.ID),
 			Target: &url.URL{
 				Scheme: "http",
@@ -409,7 +418,7 @@ func (c *Cluster) receiveContainerStartedOnAgent(ctx *actor.Context, msg Contain
 		names = append(names, string(task.ID))
 	}
 
-	c.registeredNames[container] = names
+	d.registeredNames[container] = names
 }
 
 // receiveContainerTerminated performs the necessary updates to the cluster
@@ -417,13 +426,13 @@ func (c *Cluster) receiveContainerStartedOnAgent(ctx *actor.Context, msg Contain
 // as part of responding to a ContainerTerminatedOnAgent message or abruptly
 // (e.g., an agent agent actor, task, or task actor has stopped). Because all
 // these scenarios can happen concurrently, this function is idempotent.
-func (c *Cluster) receiveContainerTerminated(
+func (d *DefaultRP) receiveContainerTerminated(
 	ctx *actor.Context,
 	id ContainerID,
-	reason agent.ContainerStopped,
+	reason aproto.ContainerStopped,
 	aborted bool,
 ) {
-	task := c.tasksByContainerID[id]
+	task := d.tasksByContainerID[id]
 	if task == nil {
 		ctx.Log().Infof(
 			"ignoring stale terminated message for container %s",
@@ -433,11 +442,11 @@ func (c *Cluster) receiveContainerTerminated(
 	}
 
 	container := task.containers[id]
-	if names, ok := c.registeredNames[container]; ok {
+	if names, ok := d.registeredNames[container]; ok {
 		for _, name := range names {
-			ctx.Tell(c.proxy, proxy.Unregister{Service: name})
+			ctx.Tell(d.proxy, proxy.Unregister{Service: name})
 		}
-		delete(c.registeredNames, container)
+		delete(d.registeredNames, container)
 	}
 
 	container.mustTransition(containerTerminated)
@@ -445,7 +454,7 @@ func (c *Cluster) receiveContainerTerminated(
 
 	delete(container.agent.containers, container.id)
 	delete(container.task.containers, container.id)
-	delete(c.tasksByContainerID, container.id)
+	delete(d.tasksByContainerID, container.id)
 
 	// A task is terminated if and only if all of its containers are terminated.
 	for _, container := range task.containers {
@@ -455,37 +464,37 @@ func (c *Cluster) receiveContainerTerminated(
 	}
 
 	if task.state != taskTerminated {
-		c.taskTerminated(task, aborted)
+		d.taskTerminated(task, aborted)
 	}
 }
 
-func (c *Cluster) receiveTaskStopped(ctx *actor.Context, msg taskStopped) {
+func (d *DefaultRP) receiveTaskStopped(ctx *actor.Context, msg taskStopped) {
 	// TODO(shiyuan): refactor to update agent.py to complain less if we try to kill an
 	//  container that does not exist.
-	task := c.tasksByHandler[msg.Ref]
+	task := d.tasksByHandler[msg.Ref]
 	if task == nil {
 		return
 	}
 
 	for _, container := range task.containers {
-		c.receiveContainerTerminated(ctx, container.ID(), agent.ContainerError(agent.TaskError,
+		d.receiveContainerTerminated(ctx, container.ID(), aproto.ContainerError(aproto.TaskError,
 			errors.New("task has been stopped")), true)
 	}
 
 	// Clean up a task even if it does not have any containers yet.
 	if task.state != taskTerminated {
-		c.taskTerminated(task, true)
+		d.taskTerminated(task, true)
 	}
 }
 
-func (c *Cluster) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) {
-	if task, ok := c.tasksByHandler[ctx.Sender()]; ok {
+func (d *DefaultRP) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) {
+	if task, ok := d.tasksByHandler[msg.TaskHandler]; ok {
 		task.name = msg.Name
 	}
 }
 
-func (c *Cluster) receiveTerminateTask(ctx *actor.Context, msg TerminateTask) {
-	task := c.tasksByID[msg.TaskID]
+func (d *DefaultRP) receiveTerminateTask(ctx *actor.Context, msg TerminateTask) {
+	task := d.tasksByID[msg.TaskID]
 	if task == nil {
 		if ctx.ExpectingResponse() {
 			ctx.Respond(task)
@@ -493,22 +502,22 @@ func (c *Cluster) receiveTerminateTask(ctx *actor.Context, msg TerminateTask) {
 		return
 	}
 
-	c.terminateTask(task, msg.Forcible)
+	d.terminateTask(task, msg.Forcible)
 
 	if ctx.ExpectingResponse() {
 		ctx.Respond(task)
 	}
 }
 
-func (c *Cluster) taskTerminated(task *Task, aborted bool) {
+func (d *DefaultRP) taskTerminated(task *Task, aborted bool) {
 	task.mustTransition(taskTerminated)
 
-	c.taskList.Remove(task)
-	delete(c.tasksByID, task.ID)
-	delete(c.tasksByHandler, task.handler)
+	d.taskList.Remove(task)
+	delete(d.tasksByID, task.ID)
+	delete(d.tasksByHandler, task.handler)
 
 	for id := range task.containers {
-		delete(c.tasksByContainerID, id)
+		delete(d.tasksByContainerID, id)
 	}
 
 	task.handler.System().Tell(task.handler, TaskTerminated{
