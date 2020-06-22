@@ -30,8 +30,6 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
   const isCancelable = isExperiment
     && cancellableRunStates.includes(task.state as RunState);
 
-  if (!isArchivable && !isKillable) return (<div />);
-
   const experimentsResponse = Experiments.useStateContext();
   const setExperiments = Experiments.useActionContext();
 
@@ -100,15 +98,24 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
     // TODO show loading indicator when we have a button component that supports it.
   };
 
-  const menu = (
-    <Menu onClick={handleMenuClick}>
-      {isResumable && <Menu.Item key="activate">Activate</Menu.Item>}
-      {isPausable && <Menu.Item key="pause">Pause</Menu.Item>}
-      {isArchivable && <Menu.Item key="archive">Archive</Menu.Item>}
-      {isCancelable && <Menu.Item key="cancel">Cancel</Menu.Item>}
-      {isKillable && <Menu.Item key="kill">Kill</Menu.Item>}
-    </Menu>
-  );
+  const menuItems: React.ReactNode[] = [];
+  if (isResumable) menuItems.push(<Menu.Item key="activate">Activate</Menu.Item>);
+  if (isPausable) menuItems.push(<Menu.Item key="pause">Pause</Menu.Item>);
+  if (isArchivable) menuItems.push(<Menu.Item key="archive">Archive</Menu.Item>);
+  if (isCancelable) menuItems.push(<Menu.Item key="cancel">Cancel</Menu.Item>);
+  if (isKillable) menuItems.push(<Menu.Item key="kill">Kill</Menu.Item>);
+
+  if (menuItems.length === 0) {
+    return (
+      <div className={css.base} title="No actions available" onClick={stopPropagation}>
+        <button disabled>
+          <Icon name="overflow-vertical" />
+        </button>
+      </div>
+    );
+  }
+
+  const menu = <Menu onClick={handleMenuClick}> {menuItems} </Menu>;
 
   return (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>

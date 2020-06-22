@@ -44,6 +44,12 @@ const Link: React.FC<Props> = ({
   if (!disabled) classes.push(css.link);
   if (inherit) classes.push(css.inherit);
 
+  if (disabled) {
+    return <span className={classes.join(' ')}>
+      {children}
+    </span>;
+  }
+
   return (
     <a className={classes.join(' ')} href={path} rel={rel}
       onClick={handleClick}>
