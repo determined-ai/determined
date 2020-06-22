@@ -2,13 +2,16 @@ import contextlib
 import os
 import pathlib
 import re
+import shutil
 import time
 import uuid
 from typing import Dict, Generator, List, Optional, Tuple, cast
 
+import appdirs
 import pexpect
 import pytest
 from pexpect import spawn
+from ruamel import yaml
 
 from determined_common import constants
 from determined_common.api.authentication import Authentication, Credentials, TokenStore
@@ -530,27 +533,61 @@ def test_link_with_existing_agent_user(auth: Authentication) -> None:
             raise AssertionError(f"Did not find {expected_output} in output")
 
 
+@contextlib.contextmanager
+def non_tmp_shared_fs_path() -> Generator:
+    """
+    Proper checkpoint storage handling for shared_fs involves properly choosing to use the
+    container_path instead of the host_path. Issues don't really arise if the container is running
+    as root (because root can write to anywhere) or if host_path is in /tmp (because /tmp is world
+    writable) so this context manager yields a checkpoint storage config where host_path is a
+    user-owned directory.
+
+    Making it a user-owned directory ensures that the test runs without root privileges on
+    normal developer machines, and it also ensures that the test would fail if the code was broken.
+
+    Tests should not pollute user directories though, so make sure to clean up the checkpoint
+    directory that we use.
+    """
+
+    cache_dir = appdirs.user_cache_dir("determined", "determined")
+    checkpoint_dir = os.path.join(cache_dir, "e2e_tests")
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    os.chmod(checkpoint_dir, 0o777)
+
+    try:
+        yield checkpoint_dir
+    finally:
+        shutil.rmtree(checkpoint_dir)
+
+
 @pytest.mark.e2e_cpu  # type: ignore
 def test_non_root_experiment(auth: Authentication, tmp_path: pathlib.Path) -> None:
     user = create_linked_user(65534, "nobody", 65534, "nogroup")
 
     with logged_in_user(user):
-        with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
-            config_content = f.read()
-
         with open(conf.fixtures_path("no_op/model_def.py")) as f:
             model_def_content = f.read()
 
-        # Call `det --version` in a startup hook to ensure that det is on the PATH.
-        with FileTree(
-            tmp_path,
-            {
-                "startup-hook.sh": "det --version || exit 77",
-                "const.yaml": config_content,
-                "model_def.py": model_def_content,
-            },
-        ) as tree:
-            exp.run_basic_test(str(tree.joinpath("const.yaml")), str(tree), None)
+        with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
+            config = yaml.safe_load(f)
+
+        # Use a user-owned path to ensure shared_fs uses the container_path and not host_path.
+        with non_tmp_shared_fs_path() as host_path:
+            config["checkpoint_storage"] = {
+                "type": "shared_fs",
+                "host_path": host_path,
+            }
+
+            # Call `det --version` in a startup hook to ensure that det is on the PATH.
+            with FileTree(
+                tmp_path,
+                {
+                    "startup-hook.sh": "det --version || exit 77",
+                    "const.yaml": yaml.dump(config),  # type: ignore
+                    "model_def.py": model_def_content,
+                },
+            ) as tree:
+                exp.run_basic_test(str(tree.joinpath("const.yaml")), str(tree), None)
 
 
 @pytest.mark.e2e_cpu  # type: ignore

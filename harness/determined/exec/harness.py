@@ -200,7 +200,10 @@ def main() -> None:
     )
 
     try:
-        storage.validate_config(env.experiment_config["checkpoint_storage"])
+        storage.validate_config(
+            env.experiment_config["checkpoint_storage"],
+            container_path=constants.SHARED_FS_CONTAINER_PATH,
+        )
     except Exception as e:
         logging.error("Checkpoint storage validation failed: {}".format(e))
         sys.exit(1)

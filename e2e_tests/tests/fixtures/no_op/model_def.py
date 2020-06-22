@@ -134,6 +134,8 @@ class NoOpTrialController(det.CallbackTrialController):
         logging.info("Saving checkpoint {}, steps_trained {}".format(fpath, self.steps_trained()))
         with fpath.open("w") as f:
             json.dump(self.trained_steps, f, sort_keys=True, indent=4)
+        path.chmod(0o777)
+        fpath.chmod(0o777)
 
     def load(self, path: pathlib.Path) -> None:
         self.chaos_failure(self.chaos_probability_checkpoint)
