@@ -19,7 +19,7 @@ const Cluster: React.FC = () => {
       .reduce((acc: Resource[], resources: Resource[]) => {
         acc.push(...resources);
         return resources;
-      });
+      }, []);
     return categorize(resourceList, (res: Resource) => res.type);
 
   }, [ agents ]);
