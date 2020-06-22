@@ -26,24 +26,29 @@ export interface TaskFilters {
 interface Props {
   filters: TaskFilters;
   onChange: (filters: TaskFilters) => void;
+  showExperiments?: boolean;
 }
+
+const defaultProps = { showExperiments: true };
 
 const limitOptions: number[] = [ 10, 25, 50 ];
 
-const taskTypeConfig = [
-  { id: 'Experiment' },
+const commandConfig = [
   { id: CommandType.Notebook },
   { id: CommandType.Tensorboard },
   { id: CommandType.Shell },
   { id: CommandType.Command },
 ];
+const experimentConfig = [ { id: 'Experiment' } ];
 
-const TaskFilter: React.FC<Props> = ({ filters, onChange }: Props) => {
+const TaskFilter: React.FC<Props> = ({
+  filters, onChange, showExperiments,
+}: Props) => {
   const allTypesOff = !Object.values(filters.types).reduce((acc, type) => (acc || type), false);
   const showCommandStates = allTypesOff ||
     filters.types.COMMAND || filters.types.NOTEBOOK ||
     filters.types.SHELL || filters.types.TENSORBOARD;
-  const showExperimentStates = allTypesOff || filters.types.Experiment;
+  const showExperimentStates = showExperiments && (allTypesOff || filters.types.Experiment);
 
   const handleTypeClick = useCallback((id: string) => {
     const idAsType = id as TaskType;
@@ -66,13 +71,17 @@ const TaskFilter: React.FC<Props> = ({ filters, onChange }: Props) => {
   }, [ filters, onChange ]);
 
   const filterTypeConfig = useMemo(() => {
+    const taskTypeConfig = [
+      ...(showExperiments ? experimentConfig : []),
+      ...commandConfig,
+    ];
     return taskTypeConfig.map(config => ({
       active: filters.types[config.id as TaskType],
       icon: config.id.toLocaleLowerCase(),
       id: config.id,
       label: capitalize(config.id),
     }));
-  }, [ filters.types ]);
+  }, [ filters.types, showExperiments ]);
 
   return (
     <div className={css.base}>
@@ -93,6 +102,8 @@ const TaskFilter: React.FC<Props> = ({ filters, onChange }: Props) => {
     </div>
   );
 };
+
+TaskFilter.defaultProps = defaultProps;
 
 export default TaskFilter;
 
