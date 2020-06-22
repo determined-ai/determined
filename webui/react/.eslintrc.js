@@ -69,7 +69,7 @@ module.exports = {
       ignoreDeclarationSort: true,
       ignoreMemberSort: false,
     } ],
-    'sort-keys-fix/sort-keys-fix': [ 'warn', 'asc', {
+    'sort-keys-fix/sort-keys-fix': [ 'error', 'asc', {
       caseSensitive: false,
       natural: true,
     } ],
