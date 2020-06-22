@@ -39,6 +39,12 @@ const taskTypeConfig = [
 ];
 
 const TaskFilter: React.FC<Props> = ({ filters, onChange }: Props) => {
+  const allTypesOff = !Object.values(filters.types).reduce((acc, type) => (acc || type), false);
+  const showCommandStates = allTypesOff ||
+    filters.types.COMMAND || filters.types.NOTEBOOK ||
+    filters.types.SHELL || filters.types.TENSORBOARD;
+  const showExperimentStates = allTypesOff || filters.types.Experiment;
+
   const handleTypeClick = useCallback((id: string) => {
     const idAsType = id as TaskType;
     const types = { ...filters.types, [idAsType]: !filters.types[idAsType] };
@@ -71,7 +77,11 @@ const TaskFilter: React.FC<Props> = ({ filters, onChange }: Props) => {
   return (
     <div className={css.base}>
       <IconFilterButtons buttons={filterTypeConfig} onClick={handleTypeClick} />
-      <StateSelectFilter value={filters.states} onChange={handleStateChange} />
+      <StateSelectFilter
+        showCommandStates={showCommandStates}
+        showExperimentStates={showExperimentStates}
+        value={filters.states}
+        onChange={handleStateChange} />
       <UserSelectFilter value={filters.username} onChange={handleUserChange} />
       <SelectFilter
         label="Limit"

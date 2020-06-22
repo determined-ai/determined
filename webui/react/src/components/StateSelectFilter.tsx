@@ -11,10 +11,27 @@ const { OptGroup, Option } = Select;
 
 interface Props {
   onChange: (value: SelectValue) => void;
+  showCommandStates?: boolean;
+  showExperimentStates?: boolean;
   value?: SelectValue;
 }
 
-const StateSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
+const defaultProps = {
+  showCommandStates: true,
+  showExperimentStates: true,
+};
+
+const commandOptions = Object.values(CommandState).map((value) => (
+  <Option key={value} value={value}>{commandStateToLabel[value]}</Option>
+));
+
+const experimentOptions = Object.values(RunState).map((value) => (
+  <Option key={value} value={value}>{runStateToLabel[value]}</Option>
+));
+
+const StateSelectFilter: React.FC<Props> = ({
+  onChange, showCommandStates, showExperimentStates, value,
+}: Props) => {
   const handleSelect = useCallback((newValue: SelectValue) => {
     const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
     onChange(singleValue);
@@ -23,18 +40,14 @@ const StateSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   return (
     <SelectFilter label="State" value={value} onSelect={handleSelect}>
       <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
-      <OptGroup key="expGroup" label="Experiment States">
-        {Object.values(RunState).map((value) => (
-          <Option key={value} value={value}>{runStateToLabel[value]}</Option>
-        ))}
-      </OptGroup>
-      <OptGroup key="cmdGroup" label="Command States">
-        {Object.values(CommandState).map((value) => (
-          <Option key={value} value={value}>{commandStateToLabel[value]}</Option>
-        ))}
-      </OptGroup>
+      {showExperimentStates &&
+        <OptGroup key="experimentGroup" label="Experiment States">{experimentOptions}</OptGroup>}
+      {showCommandStates &&
+        <OptGroup key="commandGroup" label="Command States">{commandOptions}</OptGroup>}
     </SelectFilter>
   );
 };
+
+StateSelectFilter.defaultProps = defaultProps;
 
 export default StateSelectFilter;
