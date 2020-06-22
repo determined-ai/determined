@@ -17,7 +17,7 @@ export type Renderer<T> = (text: string, record: T, index: number) => React.Reac
 
 const userRenderer: Renderer<TableRecord> = (_, record) => {
   if (isExperiment(record)) {
-    // TODO present username once avilable on experiments endpoint
+    // TODO present username once available on experiments endpoint.
     return <Avatar name={record.ownerId.toString()} />;
   } else {
     return <Avatar name={record.username} />;
