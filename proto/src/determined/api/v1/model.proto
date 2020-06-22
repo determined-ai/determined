@@ -17,11 +17,13 @@ message GetModelResponse {
   determined.model.v1.Model model = 1;
 }
 
-message PutModelRequest {
+message PostModelRequest {
+  // The model to create.
   determined.model.v1.Model model = 1;
 }
 
-message PutModelResponse {
+message PostModelResponse {
+  // The model created.
   determined.model.v1.Model model = 1;
 }
 
