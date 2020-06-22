@@ -2,12 +2,12 @@ import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import Icon from 'components/Icon';
 import { CommandState, CommandType, RecentTask, RunState, TaskType, User } from 'types';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
 
 import IconFilterButtons from './IconFilterButtons';
+import SelectFilter from './SelectFilter';
 import StateSelectFilter from './StateSelectFilter';
 import css from './TaskFilter.module.scss';
 import UserSelectFilter from './UserSelectFilter';
@@ -38,8 +38,6 @@ const taskTypeConfig = [
   { id: CommandType.Command },
 ];
 
-const selectIcon = <Icon name="arrow-down" size="tiny" />;
-
 const TaskFilter: React.FC<Props> = ({ filters, onChange }: Props) => {
   const handleTypeClick = useCallback((id: string) => {
     const idAsType = id as TaskType;
@@ -47,7 +45,7 @@ const TaskFilter: React.FC<Props> = ({ filters, onChange }: Props) => {
     onChange({ ...filters, types });
   }, [ filters, onChange ]);
 
-  const handleStateSelect = useCallback((value: SelectValue): void => {
+  const handleStateChange = useCallback((value: SelectValue): void => {
     if (typeof value !== 'string') return;
     onChange({ ...filters, states: [ value ] });
   }, [ filters, onChange ]);
@@ -57,8 +55,8 @@ const TaskFilter: React.FC<Props> = ({ filters, onChange }: Props) => {
     onChange({ ...filters, username });
   }, [ filters, onChange ]);
 
-  const handleLimitSelect = useCallback((limit: number): void => {
-    onChange({ ...filters, limit });
+  const handleLimitSelect = useCallback((limit: SelectValue): void => {
+    onChange({ ...filters, limit: limit as number });
   }, [ filters, onChange ]);
 
   const filterTypeConfig = useMemo(() => {
@@ -73,17 +71,15 @@ const TaskFilter: React.FC<Props> = ({ filters, onChange }: Props) => {
   return (
     <div className={css.base}>
       <IconFilterButtons buttons={filterTypeConfig} onClick={handleTypeClick} />
-      <StateSelectFilter value={filters.states} onChange={handleStateSelect} />
+      <StateSelectFilter value={filters.states} onChange={handleStateChange} />
       <UserSelectFilter value={filters.username} onChange={handleUserChange} />
-      <div className={css.filter}>
-        <div className={css.label}>Limit</div>
-        <Select
-          defaultValue={filters.limit}
-          suffixIcon={selectIcon}
-          onSelect={handleLimitSelect}>
-          {limitOptions.map(limit => <Option key={limit} value={limit}>{limit}</Option>)}
-        </Select>
-      </div>
+      <SelectFilter
+        label="Limit"
+        showSearch={false}
+        value={filters.limit}
+        onSelect={handleLimitSelect}>
+        {limitOptions.map(limit => <Option key={limit} value={limit}>{limit}</Option>)}
+      </SelectFilter>
     </div>
   );
 };
