@@ -27,8 +27,8 @@ func (a *apiServer) GetModel(
 	}
 }
 
-func (a *apiServer) PostModel(_ context.Context, req *apiv1.PostModelRequest) (
-	*apiv1.PostModelResponse, error) {
+func (a *apiServer) PostModel(
+	_ context.Context, req *apiv1.PostModelRequest) (*apiv1.PostModelResponse, error) {
 	b, err := protojson.Marshal(req.Model.Metadata)
 	if err != nil {
 		return nil, errors.Wrap(err, "error marshaling model.Metadata")

@@ -17,11 +17,13 @@ message GetModelResponse {
   determined.model.v1.Model model = 1;
 }
 
+// Request for creating a model in the registry.
 message PostModelRequest {
   // The model to create.
   determined.model.v1.Model model = 1;
 }
 
+// Response to PostModelRequest.
 message PostModelResponse {
   // The model created.
   determined.model.v1.Model model = 1;
