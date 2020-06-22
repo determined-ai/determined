@@ -27,7 +27,7 @@ export const clone = (data: any, deep = true): any => {
   return deep ? JSON.parse(JSON.stringify(data)) : { ...data };
 };
 
-export const categorize = <T>(array: T[], keyFn: ((arg0: T) => string)): Record<string, T[]>  => {
+export const categorize = <T>(array: T[], keyFn: ((arg0: T) => string)): Record<string, T[]> => {
   const d: Record<string, T[]> = {};
   array.forEach(item => {
     const key = keyFn(item);

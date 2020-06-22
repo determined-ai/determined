@@ -95,7 +95,7 @@ const SlotChart: React.FC<Props> = ({ title, resources, ...rest }: Props) => {
   return (
     <Plot
       {...rest}
-      config={{  displaylogo: false, responsive: true }}
+      config={{ displaylogo: false, responsive: true }}
       data={plotInfo.data}
       layout={plotInfo.layout}
     />

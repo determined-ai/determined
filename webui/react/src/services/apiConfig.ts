@@ -1,4 +1,4 @@
-import { sha512 }  from 'js-sha512';
+import { sha512 } from 'js-sha512';
 import queryString from 'query-string';
 
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
@@ -31,7 +31,7 @@ const commandToEndpoint: Record<CommandType, string> = {
 
 /* Authentication */
 
-export const getCurrentUser:  Api<{}, User> = {
+export const getCurrentUser: Api<{}, User> = {
   httpOptions: () => ({ url: '/users/me' }),
   name: 'getCurrentUser',
   postProcess: (response) => {
@@ -124,7 +124,7 @@ export const killExperiment: Api<KillExpParams, void> = {
   name: 'killExperiment',
 };
 
-export const getExperimentSummaries:  Api<ExperimentsParams, Experiment[]> = {
+export const getExperimentSummaries: Api<ExperimentsParams, Experiment[]> = {
   httpOptions: (params) => ({
     url: '/experiment-summaries' + (params.states ? '?states='+params.states.join(',') : ''),
   }),
