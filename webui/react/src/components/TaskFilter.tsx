@@ -7,14 +7,14 @@ import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
 
 import IconFilterButtons from './IconFilterButtons';
-import SelectFilter from './SelectFilter';
+import SelectFilter, { ALL_VALUE } from './SelectFilter';
 import StateSelectFilter from './StateSelectFilter';
 import css from './TaskFilter.module.scss';
 import UserSelectFilter from './UserSelectFilter';
 
 const { Option } = Select;
 
-export const ALL_VALUE = 'all';
+export { ALL_VALUE };
 
 export interface TaskFilters {
   limit: number;
