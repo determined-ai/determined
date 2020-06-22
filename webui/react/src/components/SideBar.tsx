@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useRouteMatch } from 'react-router-dom';
 
 /*
@@ -6,9 +6,10 @@ import { useRouteMatch } from 'react-router-dom';
  * all the commented pieces below to enable it again.
  */
 
-import NavMenu, { NavMenuType } from 'components/NavMenu';
 import { defaultSideBarRoute, sidebarRoutes } from 'routes';
 
+import NavItem, { NavItemType } from './NavItem';
+import NavMenu, { NavMenuType } from './NavMenu';
 import css from './SideBar.module.scss';
 
 interface Props {
@@ -17,12 +18,14 @@ interface Props {
 
 const SideBar: React.FC<Props> = (props: Props) => {
   const { path } = useRouteMatch();
-  const [ collapsed ] = useState(props.collapsed);
+  const [ collapsed, setCollapsed ] = useState(props.collapsed);
   const classes = [ css.base ];
 
   if (collapsed) classes.push(css.collapsed);
 
-  // const handleClick = useCallback((): void => setCollapsed(!collapsed), [ setCollapsed ]);
+  const handleClick = useCallback((): void => {
+    setCollapsed(prevCollapsed => !prevCollapsed);
+  }, [ setCollapsed ]);
 
   return (
     <div className={classes.join(' ')} id="side-menu">
@@ -33,18 +36,18 @@ const SideBar: React.FC<Props> = (props: Props) => {
         showLabels={!collapsed}
         type={collapsed ? NavMenuType.SideBarIconOnly : NavMenuType.SideBar} />
       <div className={css.footer}>
-        {/* <NavItem
+        {process.env.IS_DEV && <NavItem
           icon="logs"
           path="/det/logs"
           popout={true}
           type={collapsed ? NavItemType.SideBarIconOnly : NavItemType.SideBar}>
           Master Logs
-        </NavItem> */}
-        {/* <NavItem icon={collapsed ? 'expand' : 'collapse'}
+        </NavItem>}
+        {process.env.IS_DEV && <NavItem icon={collapsed ? 'expand' : 'collapse'}
           type={collapsed ? NavItemType.SideBarIconOnly : NavItemType.SideBar}
           onClick={handleClick}>
           {!collapsed && 'Collapse'}
-        </NavItem> */}
+        </NavItem>}
         <div className={css.version}>
           <span>Version</span>
           <span>{process.env.VERSION}</span>
