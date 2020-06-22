@@ -27,9 +27,13 @@ interface Props {
   filters: TaskFilters;
   onChange: (filters: TaskFilters) => void;
   showExperiments?: boolean;
+  showLimit?: boolean;
 }
 
-const defaultProps = { showExperiments: true };
+const defaultProps = {
+  showExperiments: true,
+  showLimit: true,
+};
 
 const limitOptions: number[] = [ 10, 25, 50 ];
 
@@ -42,7 +46,7 @@ const commandConfig = [
 const experimentConfig = [ { id: 'Experiment' } ];
 
 const TaskFilter: React.FC<Props> = ({
-  filters, onChange, showExperiments,
+  filters, onChange, showExperiments, showLimit,
 }: Props) => {
   const allTypesOff = !Object.values(filters.types).reduce((acc, type) => (acc || type), false);
   const showCommandStates = allTypesOff ||
@@ -92,13 +96,13 @@ const TaskFilter: React.FC<Props> = ({
         value={filters.states}
         onChange={handleStateChange} />
       <UserSelectFilter value={filters.username} onChange={handleUserChange} />
-      <SelectFilter
+      {showLimit && <SelectFilter
         label="Limit"
         showSearch={false}
         value={filters.limit}
         onSelect={handleLimitSelect}>
         {limitOptions.map(limit => <Option key={limit} value={limit}>{limit}</Option>)}
-      </SelectFilter>
+      </SelectFilter>}
     </div>
   );
 };
