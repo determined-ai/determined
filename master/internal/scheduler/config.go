@@ -6,9 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/pkg/union"
-
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/union"
 )
 
 // DefaultConfig is the default configuration of the scheduler.

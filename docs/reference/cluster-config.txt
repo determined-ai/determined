@@ -186,12 +186,13 @@ The master supports the following configuration settings:
 
 
   - ``type``: The scheduling policy to use when allocating resources
-    between different tasks (experiments, notebooks, etc...).
+    between different tasks (experiments, notebooks, etc.).
 
     - ``fair_share``: Tasks receive a proportional amount of the available
-      resources depending on the resource they require and their priority.
+      resources depending on the resource they require and their weight.
 
-    - ``priority``: Tasks are scheduled in the order of their priority.
+    - ``priority``: Tasks are scheduled in the order of the order in which
+      they arrive at the cluster.
 
 
   - ``resource_provider``: The resource provider to use to acquire agents.
