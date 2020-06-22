@@ -9,13 +9,31 @@ import "determined/template/v1/template.proto";
 
 // Get a list of templates.
 message GetTemplatesRequest {
+    // Sorts templates by the given field.
+    enum SortBy {
+        // Returns templates in an unsorted list.
+        SORT_BY_UNSPECIFIED = 0;
+        // Returns templates sorted by name.
+        SORT_BY_NAME = 1;
+    }
+    // Sort templates by the given field
+    SortBy sort_by = 1;
     // Order templates in either ascending or descending order.
-    OrderBy order_by = 1;
+    OrderBy order_by = 2;
+    // Skip the number of templates before returning results. Negative values
+    // denote number of templates to skip from the end before returning results.
+    int32 offset = 3;
+    // Limit the number of templates. A value of 0 denotes no limit.
+    int32 limit = 4;
+    // Limit templates to those that match the name.
+    string name = 5;
 }
 // Response to GetTemplatesRequest.
 message GetTemplatesResponse {
     // the list of requested templates.
     repeated determined.template.v1.Template templates = 1;
+    // Pagination information of the full dataset.
+    Pagination pagination = 2;
 }
 
 // Get the requested template.
