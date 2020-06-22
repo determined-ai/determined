@@ -26,6 +26,7 @@ module.exports = {
   plugins: [ 'import', 'react', 'react-hooks', 'sort-keys-fix' ],
   rules: {
     '@typescript-eslint/indent': [ 'error', 2 ],
+    '@typescript-eslint/no-unused-vars': 'error',
     'array-bracket-spacing': [ 'error', 'always' ],
     'array-element-newline': [ 'error', 'consistent' ],
     'block-spacing': [ 'error', 'always' ],
@@ -69,7 +70,7 @@ module.exports = {
       ignoreDeclarationSort: true,
       ignoreMemberSort: false,
     } ],
-    'sort-keys-fix/sort-keys-fix': [ 'warn', 'asc', {
+    'sort-keys-fix/sort-keys-fix': [ 'error', 'asc', {
       caseSensitive: false,
       natural: true,
     } ],
