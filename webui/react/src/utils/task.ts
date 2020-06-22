@@ -40,7 +40,7 @@ function generateTask(idx: number): Task & RecentEvent {
   };
 }
 
-export function generateExperimentTasks(idx: number): RecentExperimentTask {
+export function generateExperimentTask(idx: number): RecentExperimentTask {
   const state = getRandomElementOfEnum(RunState);
   const task = generateTask(idx);
   const progress = Math.random();
@@ -70,7 +70,7 @@ export const generateTasks = (count = 10): RecentTask[] => {
       if (Math.random() > 0.5) {
         return generateCommandTask(idx);
       } else {
-        return generateExperimentTasks(idx);
+        return generateExperimentTask(idx);
       }
     });
 };

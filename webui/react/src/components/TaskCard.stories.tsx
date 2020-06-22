@@ -4,7 +4,7 @@ import Grid from 'components/Grid';
 import { ExperimentsDecorator } from 'storybook/ConetextDecorators';
 import RouterDecorator from 'storybook/RouterDecorator';
 import { ShirtSize } from 'themes';
-import { generateCommandTask, generateExperimentTasks, generateTasks } from 'utils/task';
+import { generateCommandTask, generateExperimentTask, generateTasks } from 'utils/task';
 
 import TaskCard from './TaskCard';
 
@@ -15,7 +15,7 @@ export default {
 };
 
 export const DefaultExperiment = (): React.ReactNode => {
-  return <TaskCard {...generateExperimentTasks(0)} />;
+  return <TaskCard {...generateExperimentTask(0)} />;
 };
 
 export const DefaultCommand = (): React.ReactNode => {
