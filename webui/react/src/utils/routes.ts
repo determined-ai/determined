@@ -17,3 +17,7 @@ export const locationToPath = (location?: Location): string | null => {
   if (!location || !location.pathname) return null;
   return location.pathname + location.search + location.hash;
 };
+
+export const serverAddress = (): string => {
+  return `${window.location.protocol}//${window.location.host}`;
+};

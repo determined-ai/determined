@@ -1,4 +1,3 @@
-import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 
@@ -14,11 +13,10 @@ const SignOut: React.FC = () => {
   const [ isSigningOut, setIsSigningOut ] = useState(false);
 
   useEffect(() => {
-    const source = axios.CancelToken.source();
     const signOut = async (): Promise<void> => {
       setIsSigningOut(true);
       try {
-        await logout({ cancelToken: source.token });
+        await logout();
       } catch (e) {
         handleError({
           error: e,
@@ -35,7 +33,6 @@ const SignOut: React.FC = () => {
 
     if (!isSigningOut) signOut();
 
-    return source.cancel;
   }, [ auth.isAuthenticated, history, location.state, isSigningOut, setAuth ]);
 
   return null;

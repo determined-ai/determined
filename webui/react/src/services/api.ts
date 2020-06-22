@@ -1,13 +1,20 @@
 /* eslint-disable @typescript-eslint/camelcase */
+import * as DetSwagger from '@determined-ai/api-ts-sdk';
 import { CancelToken } from 'axios';
 
 import { generateApi } from 'services/apiBuilder';
+import { processApiError } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
-import { CommandLogsParams, ExperimentsParams, KillCommandParams,
-  KillExpParams, LaunchTensorboardParams, LogsParams,
-  PatchExperimentParams, PatchExperimentState, TrialLogsParams } from 'services/types';
-import { AnyTask, CommandType, Credentials, DeterminedInfo, Experiment, Log, User } from 'types';
+import { CommandLogsParams, ExperimentsParams, KillCommandParams, KillExpParams,
+  LaunchTensorboardParams, LogsParams, PatchExperimentParams, PatchExperimentState,
+  TrialLogsParams } from 'services/types';
+import {
+  AnyTask, CommandType, Credentials, DeterminedInfo, Experiment, Log, User,
+} from 'types';
+import { serverAddress } from 'utils/routes';
 import { isExperimentTask } from 'utils/task';
+
+export const sApi = new DetSwagger.DeterminedApi(undefined, serverAddress());
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAuthFailure = (e: any): boolean => {
@@ -57,7 +64,14 @@ export const archiveExperiment = async (
 
 export const login = generateApi<Credentials, void>(Config.login);
 
-export const logout = generateApi<{}, void>(Config.logout);
+// TODO set up a generic error handler for swagger sdk
+// It would be nice to have the input and output types be set automatically
+// One this can be achieved is by directly exposing sApi and expecting the user to
+// use processApiError.
+export function logout(): DetSwagger.V1LogoutResponse {
+  const apiName = arguments.callee.name;
+  return sApi.determinedLogout().catch(e => processApiError(apiName, e));
+}
 
 export const setExperimentState = async (
   { state, ...rest }: PatchExperimentState,

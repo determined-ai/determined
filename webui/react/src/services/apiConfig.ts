@@ -56,16 +56,6 @@ export const login: Api<Credentials, void> = {
   name: 'login',
 };
 
-export const logout: Api<{}, void> = {
-  httpOptions: () => {
-    return {
-      method: 'POST',
-      url: '/logout',
-    };
-  },
-  name: 'logout',
-};
-
 /* Info */
 
 export const getInfo: Api<{}, DeterminedInfo> = {
