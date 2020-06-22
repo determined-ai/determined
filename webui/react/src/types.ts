@@ -191,7 +191,7 @@ export interface CommandTask extends Task {
   misc?: CommandMisc;
   type: CommandType;
   state: CommandState;
-  username?: string;
+  username: string;
 }
 
 export type RecentEvent = {
