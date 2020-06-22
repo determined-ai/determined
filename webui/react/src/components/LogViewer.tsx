@@ -11,7 +11,7 @@ import usePrevious from 'hooks/usePrevious';
 import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
 import { Log } from 'types';
 import { formatDatetime } from 'utils/date';
-import { ansiToHtml, copyToClipboard, readFromClipboard, toRem } from 'utils/dom';
+import { ansiToHtml, copyToClipboard, toRem } from 'utils/dom';
 
 import css from './LogViewer.module.scss';
 
