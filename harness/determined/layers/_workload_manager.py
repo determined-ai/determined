@@ -8,7 +8,13 @@ from typing import Any, Dict, List, Optional, cast
 import determined as det
 from determined import tensorboard, workload
 from determined_common import storage
-from determined_common.check import check_eq, check_len, check_not_eq, check_not_isinstance
+from determined_common.check import (
+    check_eq,
+    check_len,
+    check_not_eq,
+    check_not_isinstance,
+    check_not_none,
+)
 
 
 def _current_timestamp() -> datetime:
@@ -254,35 +260,42 @@ class _TrialWorkloadManager(WorkloadManager):
         start_time = _current_timestamp()
 
         # Only the chief container should checkpoint.
-        if self.rendezvous_info.get_rank() == 0:
-            with self.storage_mgr.store_path() as (storage_id, path):
-
-                def _respond(checkpoint_info: workload.Response) -> None:
-                    checkpoint_info = cast(Dict[str, Any], checkpoint_info)
-                    metadata = storage.StorageMetadata(
-                        storage_id,
-                        storage.StorageManager._list_directory(path),
-                        checkpoint_info.get("framework", ""),
-                        checkpoint_info.get("format", ""),
-                    )
-
-                    logging.info("Saved trial to checkpoint {}".format(metadata.storage_id))
-                    self.tensorboard_mgr.sync()
-
-                    message: workload.Response = {
-                        "type": "WORKLOAD_COMPLETED",
-                        "workload": wkld,
-                        "start_time": start_time,
-                        "end_time": _current_timestamp(),
-                        "metrics": metadata,
-                    }
-
-                    respond(message)
-
-                yield wkld, [pathlib.Path(path)], _respond
-
-        else:
+        if self.rendezvous_info.get_rank() != 0:
             respond(workload.Skipped())
+            return
+
+        # Save the workload completed message for after checkpoint upload completes.
+        message = None  # type: Optional[workload.Response]
+
+        def _respond(checkpoint_info: workload.Response) -> None:
+            checkpoint_info = cast(Dict[str, Any], checkpoint_info)
+            metadata = storage.StorageMetadata(
+                storage_id,
+                storage.StorageManager._list_directory(path),
+                checkpoint_info.get("framework", ""),
+                checkpoint_info.get("format", ""),
+            )
+
+            logging.info("Saved trial to checkpoint {}".format(metadata.storage_id))
+            self.tensorboard_mgr.sync()
+
+            nonlocal message
+            message = {
+                "type": "WORKLOAD_COMPLETED",
+                "workload": wkld,
+                "start_time": start_time,
+                "end_time": _current_timestamp(),
+                "metrics": metadata,
+            }
+
+        with self.storage_mgr.store_path() as (storage_id, path):
+            yield wkld, [pathlib.Path(path)], _respond
+
+        # Because the messaging is synchronous, the layer below us must have called _respond.
+        check_not_none(message, "response function did not get called")
+        message = cast(workload.Response, message)
+
+        respond(message)
 
     def yield_terminate(
         self, wkld: workload.Workload, respond: workload.ResponseFunc
