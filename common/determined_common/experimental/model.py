@@ -1,3 +1,4 @@
+import datetime
 import enum
 from typing import Any, Dict, List, Optional
 
@@ -26,12 +27,16 @@ class Model:
         self,
         name: str,
         description: str = "",
+        creation_time: Optional[datetime.datetime] = None,
+        last_updated_time: Optional[datetime.datetime] = None,
         metadata: Optional[Dict[str, Any]] = None,
         master: str = "",
     ):
         self._master = master
         self.name = name
         self.description = description
+        self.creation_time = creation_time
+        self.last_updated_time = last_updated_time
         self.metadata = metadata or {}
 
     def add_metadata(self, metadata: Dict[str, Any]) -> None:
@@ -79,4 +84,11 @@ class Model:
 
     @staticmethod
     def from_json(data: Dict[str, Any], master: str) -> "Model":
-        return Model(data["name"], data.get("description", ""), data.get("metadata", {}), master)
+        return Model(
+            data["name"],
+            data.get("description", ""),
+            data.get("creationTime"),
+            data.get("lastUpdatedTime"),
+            data.get("metadata", {}),
+            master,
+        )

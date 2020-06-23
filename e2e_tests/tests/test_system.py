@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 import yaml
 
-from determined.experimental import Determined
+from determined.experimental import Determined, ModelSortBy
 from determined_common import check, storage
 from tests import config as conf
 from tests import experiment as exp
@@ -365,6 +365,31 @@ def test_end_to_end_adaptive() -> None:
 
     checkpoint.remove_metadata(["some_key"])
     assert checkpoint.metadata == {"testing": "override"}
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+def test_model_registry():
+    d = Determined(conf.make_master_url())
+    mnist = d.register_model("mnist", "simple computer vision model")
+    assert mnist.metadata == {}
+
+    mnist.add_metadata({"testing": "metadata"})
+    assert mnist.metadata == {"testing": "metadata"}
+
+    mnist.add_metadata({"some_key": "some_value"})
+    assert mnist.metadata == {"testing": "metadata", "some_key": "some_value"}
+
+    mnist.add_metadata({"testing": "override"})
+    assert mnist.metadata == {"testing": "override", "some_key": "some_value"}
+
+    mnist.remove_metadata(["some_key"])
+    assert mnist.metadata == {"testing": "override"}
+
+    d.register_model("transformer", "all you need is attention")
+    d.register_model("object-detection", "a bounding box model")
+
+    models = d.get_models(sort_by=ModelSortBy.NAME)
+    assert list([m.name for m in models]) == ["mnist", "object-detection", "transformer"]
 
 
 @pytest.mark.e2e_cpu  # type: ignore

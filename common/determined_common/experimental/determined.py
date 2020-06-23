@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from determined_common import api
 from determined_common.experimental.checkpoint import Checkpoint, get_checkpoint
@@ -45,6 +45,25 @@ class Determined:
         checkpoint with the provided UUID.
         """
         return get_checkpoint(uuid, self._session._master)
+
+    def register_model(
+        self, name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
+    ) -> Model:
+        """
+        Add a model to the registry.
+
+        Arguments:
+            name (string): The name of the model. This name must be unique.
+            description (string): A description of the model.
+            metadata (dict): Dictionary of metadata to add to the model.
+        """
+        r = api.post(
+            self._session._master,
+            "/api/v1/models/{}".format(name),
+            body={"description": description, "metadata": metadata},
+        )
+
+        return Model.from_json(r.json().get("model"), self._session._master)
 
     def get_model(self, name: str) -> Model:
         """
