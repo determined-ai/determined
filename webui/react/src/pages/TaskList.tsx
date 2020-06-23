@@ -63,6 +63,11 @@ const TaskList: React.FC = () => {
     setSearch(e.target.value || '');
   }, []);
 
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    console.log('handleSearchChange', value);
+  }, []);
+
   const handleFilterChange = useCallback((filters: TaskFilters<CommandType>): void => {
     storage.set('filters', filters);
     setFilters(filters);
