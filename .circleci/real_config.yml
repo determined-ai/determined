@@ -1339,12 +1339,9 @@ jobs:
           username: ${NGC_API_USERNAME}
           password: ${NGC_API_KEY}
       - pre-package-and-push-system
-      - run:
-          no_output_timeout: 30m
-          command: make -C master release
-      - run:
-          no_output_timeout: 30m
-          command: make -C agent release
+      - make-package
+      - run: make -C master publish
+      - run: make -C agent publish
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
