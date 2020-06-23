@@ -18,19 +18,25 @@ message GetAgentsRequest {
         // Returns agents sorted by time.
         SORT_BY_TIME = 2;
     }
-
+    // Sort agents by the given field
+    SortBy sort_by = 1;
+    // Order agents in either ascending or descending order.
+    OrderBy order_by = 2;
+    // Skip the number of agents before returning results. Negative values
+    // denote number of agents to skip from the end before returning results.
+    int32 offset = 3;
+    // Limit the number of agents. A value of 0 denotes no limit.
+    int32 limit = 4;
     // Filter agents by their label. If no label is specified or is empty, all agents are
     // returned.
-    string label = 1;
-    // Sort agents by the given field
-    SortBy sort_by = 2;
-    // Order agents in either ascending or descending order.
-    OrderBy order_by = 3;
+    string label = 5;
 }
 // Response to GetAgentsRequest.
 message GetAgentsResponse {
     // The list of returned agents.
     repeated determined.agent.v1.Agent agents = 1;
+    // Pagination information of the full dataset.
+    Pagination pagination = 2;
 }
 
 // Get the requested agent.

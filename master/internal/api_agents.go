@@ -10,7 +10,15 @@ import (
 func (a *apiServer) GetAgents(
 	_ context.Context, req *apiv1.GetAgentsRequest) (resp *apiv1.GetAgentsResponse, err error) {
 	err = a.actorRequest("/agents", req, &resp)
-	return resp, err
+	if err != nil {
+		return nil, err
+	}
+	a.filter(&resp.Agents, func(i int) bool {
+		v := resp.Agents[i]
+		return req.Label == "" || v.Label == req.Label
+	})
+	a.sort(resp.Agents, req.OrderBy, req.SortBy, apiv1.GetAgentsRequest_SORT_BY_ID)
+	return resp, a.paginate(&resp.Pagination, &resp.Agents, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetAgent(
