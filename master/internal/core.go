@@ -267,6 +267,38 @@ func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) 
 	return actorRef.AwaitTermination()
 }
 
+func (m *Master) initializeResourceProviders(proxyRef *actor.Ref, provisionerSlotsPerInstance int) {
+	var resourceProvider *actor.Ref
+	if m.config.Scheduler.ResourceProvider.DefaultRPConfig != nil {
+		resourceProvider, _ = m.system.ActorOf(actor.Addr("defaultRP"), scheduler.NewDefaultRP(
+			m.ClusterID,
+			m.config.Scheduler.MakeScheduler(),
+			m.config.Scheduler.FitFunction(),
+			proxyRef,
+			filepath.Join(m.config.Root, "wheels"),
+			m.config.TaskContainerDefaults,
+			m.provisioner,
+			provisionerSlotsPerInstance,
+		))
+	} else {
+		resourceProvider, _ = m.system.ActorOf(
+			actor.Addr("kubernetesRP"),
+			scheduler.NewKubernetesResourceProvider(
+				m.ClusterID,
+				m.config.Scheduler.ResourceProvider.KubernetesRPConfig.Namespace,
+				m.config.Scheduler.ResourceProvider.KubernetesRPConfig.SlotsPerNode,
+				proxyRef,
+				filepath.Join(m.config.Root, "wheels"),
+				m.config.TaskContainerDefaults,
+			),
+		)
+	}
+
+	m.rp, _ = m.system.ActorOf(
+		actor.Addr("resourceProviders"),
+		scheduler.NewResourceProviders(resourceProvider))
+}
+
 // Run causes the Determined master to connect the database and begin listening for HTTP requests.
 func (m *Master) Run() error {
 	log.Infof("Determined master %s (built with %s)", m.Version, runtime.Version())
@@ -293,7 +325,9 @@ func (m *Master) Run() error {
 	// master system
 	// +- Provisioner (provisioner.Provisioner: provisioner)
 	// +- ResourceProviders (scheduler.ResourceProviders: resourceProviders)
+	// Exactly one of the resource providers is enabled at a time.
 	// +- DefaultResourceProvider (scheduler.DefaultResourceProvider: defaultRP)
+	// +- KubernetesResourceProvider (scheduler.KubernetesResourceProvider: kubernetesRP)
 	// +- Service Proxy (proxy.Proxy: proxy)
 	// +- RWCoordinator (internal.rw_coordinator: rwCoordinator)
 	// +- Telemetry (telemetry.telemetryActor: telemetry)
@@ -327,20 +361,8 @@ func (m *Master) Run() error {
 
 	proxyRef, _ := m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{})
 
-	defaultRP, _ := m.system.ActorOf(actor.Addr("defaultRP"), scheduler.NewDefaultRP(
-		m.ClusterID,
-		m.config.Scheduler.MakeScheduler(),
-		m.config.Scheduler.FitFunction(),
-		proxyRef,
-		filepath.Join(m.config.Root, "wheels"),
-		m.config.TaskContainerDefaults,
-		m.provisioner,
-		provisionerSlotsPerInstance,
-	))
+	m.initializeResourceProviders(proxyRef, provisionerSlotsPerInstance)
 
-	m.rp, _ = m.system.ActorOf(
-		actor.Addr("resourceProviders"),
-		scheduler.NewResourceProviders(defaultRP))
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 
 	rwCoordinator := newRWCoordinator()
