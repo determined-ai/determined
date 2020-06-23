@@ -1,5 +1,5 @@
 import Plotly, { Data, Layout } from 'plotly.js-basic-dist';
-import React from 'react';
+import React, { useMemo } from 'react';
 import createPlotlyComponent from 'react-plotly.js/factory';
 
 import { getStateColor, lightTheme } from 'themes';
@@ -9,7 +9,7 @@ import { clone } from 'utils/data';
 const Plot = createPlotlyComponent(Plotly);
 interface Props extends CommonProps {
   title: string;
-  resources: Resource[];
+  resources?: Resource[];
 }
 
 export interface PlotInfo {
@@ -90,7 +90,7 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
 };
 
 const SlotChart: React.FC<Props> = ({ title, resources, ...rest }: Props) => {
-  const plotInfo = genPlotInfo(title, resources);
+  const plotInfo = useMemo(() => genPlotInfo(title, resources || []), [ title, resources ]);
   if (plotInfo === null) return <React.Fragment />;
   return (
     <Plot
