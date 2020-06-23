@@ -31,9 +31,11 @@ message PostModelResponse {
   determined.model.v1.Model model = 1;
 }
 
-// Request for creating a model in the registry.
+// Request for updating a model in the registry.
 message PatchModelRequest {
+  // The model desired model fields and values.
   determined.model.v1.Model model = 1;
+  // An update mask for the above model.
   google.protobuf.FieldMask update_mask = 2;
 }
 

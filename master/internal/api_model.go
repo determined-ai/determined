@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -47,39 +46,39 @@ func (a *apiServer) PostModel(
 func (a *apiServer) PatchModel(
 	_ context.Context, req *apiv1.PatchModelRequest) (*apiv1.PatchModelResponse, error) {
 
-	existingModel := &modelv1.Model{}
-	switch err := a.m.db.QueryProto("get_model", existingModel, req.Model.Name); err {
-	case db.ErrNotFound:
+	m := &modelv1.Model{}
+
+	err := a.m.db.QueryProto("get_model", m, req.Model.Name)
+	if err == db.ErrNotFound {
 		return nil, status.Errorf(
 			codes.NotFound, "model %s not found", req.Model.Name)
-	default:
-		fmt.Printf("req = %+v\n", req)
-
-		desiredModel := &modelv1.Model{}
-		paths := req.UpdateMask.GetPaths()
-		for _, v := range paths {
-			fmt.Printf("v = %+v\n", v)
-			if v == "model.description" {
-				desiredModel.Description = req.Model.Description
-			} else {
-				desiredModel.Description = existingModel.Description
-			}
-			if v == "model.metadata" {
-				fmt.Println("UPDATE Meta")
-				desiredModel.Metadata = req.Model.Metadata
-			} else {
-				desiredModel.Metadata = existingModel.Metadata
-			}
-		}
-
-		respModel := &modelv1.Model{}
-		b, err := protojson.Marshal(desiredModel.Metadata)
-		if err != nil {
-			return nil, errors.Wrap(err, "error marshaling model.Metadata")
-		}
-
-		err = a.m.db.QueryProto("update_model", respModel, req.Model.Name, desiredModel.Description, b, time.Now())
-		return &apiv1.PatchModelResponse{Model: respModel},
-			errors.Wrapf(err, "error fetching model %s from database", req.Model.Name)
 	}
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal, "could not query model %s", req.Model.Name)
+	}
+
+	paths := req.UpdateMask.GetPaths()
+	for _, v := range paths {
+		switch v {
+		case "model.description":
+			m.Description = req.Model.Description
+		case "model.metadata":
+			m.Metadata = req.Model.Metadata
+		default:
+			// all other fields of a model are immutable
+		}
+	}
+
+	b, err := protojson.Marshal(m.Metadata)
+	if err != nil {
+		return nil, errors.Wrap(err, "error marshaling model.Metadata")
+	}
+
+	respModel := &modelv1.Model{}
+	err = a.m.db.QueryProto(
+		"update_model", respModel, req.Model.Name, m.Description, b, time.Now())
+
+	return &apiv1.PatchModelResponse{Model: respModel},
+		errors.Wrapf(err, "error updating model %s in database", req.Model.Name)
 }
