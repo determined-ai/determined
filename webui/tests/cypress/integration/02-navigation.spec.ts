@@ -3,7 +3,8 @@ describe('Navigation', () => {
     cy.login();
   });
 
-  const titleSelector = '#det-main-container div.text-2xl';
+  const elmTitleSelector = '#det-main-container div.text-2xl';
+  const titleSelector = '';
 
   describe('paths', () => {
 
@@ -21,32 +22,37 @@ describe('Navigation', () => {
 
     it('path /ui/experiments should display experiments', () => {
       cy.visit('/ui/experiments');
-      cy.get(titleSelector).contains('Experiments');
+      cy.get(elmTitleSelector).contains('Experiments');
     });
 
     it('path /ui/notebooks should display Notebooks', () => {
       cy.visit('/ui/notebooks');
-      cy.get(titleSelector).contains('Notebooks');
+      cy.get(elmTitleSelector).contains('Notebooks');
     });
 
     it('path /ui/tensorboards should display TensorBorads', () => {
       cy.visit('/ui/tensorboards');
-      cy.get(titleSelector).contains('TensorBoards');
+      cy.get(elmTitleSelector).contains('TensorBoards');
     });
 
-    it('path /ui/cluster should display cluster', () => {
-      cy.visit('/ui/cluster');
-      cy.get(titleSelector).contains('Cluster');
+    it('path /det/cluster should display Cluster', () => {
+      cy.visit('/det/cluster');
+      cy.get(elmTitleSelector).contains('Cluster');
     });
 
     it('path /ui/shells should display Shells', () => {
       cy.visit('/ui/shells');
-      cy.get(titleSelector).contains('Shells');
+      cy.get(elmTitleSelector).contains('Shells');
     });
 
     it('path /ui/commands should display Commands', () => {
       cy.visit('/ui/commands');
-      cy.get(titleSelector).contains('Commands');
+      cy.get(elmTitleSelector).contains('Commands');
+    });
+
+    it('path /det/logs should display Master Logs', () => {
+      cy.visit('/det/logs');
+      cy.get(elmTitleSelector).contains('Master Logs');
     });
   });
 
