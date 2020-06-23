@@ -447,6 +447,9 @@ func (m *Master) Run() error {
 	}
 
 	m.echo.Static("/swagger-ui", filepath.Join(m.config.Root, "static/swagger-ui"))
+	m.echo.GET("/swagger-ui", func(c echo.Context) error {
+		return c.Redirect(http.StatusMovedPermanently, "/swagger-ui/")
+	})
 	m.echo.Static("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 
