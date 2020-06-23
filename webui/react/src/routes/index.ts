@@ -42,7 +42,7 @@ const clusterRoute =
   {
     component: Cluster,
     icon: 'cluster',
-    id: 'cluster-dev',
+    id: 'cluster-det',
     needAuth: true,
     path: '/det/cluster',
     title: 'Cluster (dev)',
