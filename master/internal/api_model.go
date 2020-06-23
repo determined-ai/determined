@@ -45,7 +45,6 @@ func (a *apiServer) PostModel(
 
 func (a *apiServer) PatchModel(
 	_ context.Context, req *apiv1.PatchModelRequest) (*apiv1.PatchModelResponse, error) {
-
 	m := &modelv1.Model{}
 
 	err := a.m.db.QueryProto("get_model", m, req.Model.Name)
