@@ -689,8 +689,9 @@ jobs:
           version: 19.03.12
       - login-docker
       - run: make -C proto build
-      - run: make -C master release
-      - run: make -C agent release
+      - run: make package
+      - run: make -C master publish
+      - run: make -C agent publish
 
   publish-python-package:
     parameters:
