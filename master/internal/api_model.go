@@ -47,12 +47,11 @@ func (a *apiServer) PatchModel(
 	_ context.Context, req *apiv1.PatchModelRequest) (*apiv1.PatchModelResponse, error) {
 	m := &modelv1.Model{}
 
-	err := a.m.db.QueryProto("get_model", m, req.Model.Name)
-	if err == db.ErrNotFound {
+	switch err := a.m.db.QueryProto("get_model", m, req.Model.Name); {
+	case err == db.ErrNotFound:
 		return nil, status.Errorf(
 			codes.NotFound, "model %s not found", req.Model.Name)
-	}
-	if err != nil {
+	case err != nil:
 		return nil, status.Errorf(
 			codes.Internal, "could not query model %s", req.Model.Name)
 	}
@@ -65,7 +64,6 @@ func (a *apiServer) PatchModel(
 		case "model.metadata":
 			m.Metadata = req.Model.Metadata
 		default:
-			// all other fields of a model are immutable
 			return nil, status.Errorf(
 				codes.InvalidArgument,
 				"only description and metadata fields are mutable. cannot update %s", path)
