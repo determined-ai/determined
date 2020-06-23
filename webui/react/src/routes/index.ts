@@ -45,7 +45,7 @@ const clusterRoute =
     id: 'cluster-det',
     needAuth: true,
     path: '/det/cluster',
-    title: 'Cluster (dev)',
+    title: 'Cluster',
   };
 
 const taskListRoute =
@@ -119,7 +119,7 @@ export const sidebarRoutes: RouteConfig[] = [
   {
     icon: 'cluster',
     id: 'cluster',
-    path: '/ui/cluster',
+    path: '/det/cluster',
     title: 'Cluster',
   },
   {
@@ -139,7 +139,6 @@ export const defaultSideBarRoute = sidebarRoutes[0];
 
 if (process.env.IS_DEV) {
   sidebarRoutes.push(
-    clusterRoute,
     taskListRoute,
   );
 }
