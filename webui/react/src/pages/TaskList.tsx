@@ -3,13 +3,14 @@ import React, { useCallback, useState } from 'react';
 
 import Icon from 'components/Icon';
 import Page from 'components/Page';
-import TaskFilter, { ALL_VALUE, filterTasks, TaskFilters } from 'components/TaskFilter';
+import TaskFilter from 'components/TaskFilter';
 import TaskTable from 'components/TaskTable';
 import Auth from 'contexts/Auth';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Users from 'contexts/Users';
 import useStorage from 'hooks/useStorage';
-import { CommandType } from 'types';
+import { ALL_VALUE, CommandType, TaskFilters } from 'types';
+import { filterTasks } from 'utils/task';
 import { commandToTask } from 'utils/types';
 
 import css from './TaskList.module.scss';

@@ -2,10 +2,10 @@ import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback } from 'react';
 
-import { CommandState, RunState } from 'types';
+import { ALL_VALUE, CommandState, RunState } from 'types';
 import { commandStateToLabel, runStateToLabel } from 'utils/types';
 
-import SelectFilter, { ALL_VALUE } from './SelectFilter';
+import SelectFilter from './SelectFilter';
 
 const { OptGroup, Option } = Select;
 

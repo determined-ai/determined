@@ -1,6 +1,8 @@
-import { AnyTask, CommandState, CommandType, ExperimentTask, RecentCommandTask,
-  RecentEvent, RecentExperimentTask, RecentTask, RunState,
-  Task, terminalCommandStates } from 'types';
+import {
+  ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType, ExperimentTask, RecentCommandTask,
+  RecentEvent, RecentExperimentTask, RecentTask, RunState, Task, TaskFilters, TaskType,
+  terminalCommandStates, User,
+} from 'types';
 
 import { isExperiment } from './types';
 
@@ -87,4 +89,37 @@ export const canBeOpened = (task: AnyTask): boolean => {
   if (!isExperimentTask(task) && task.state in terminalCommandStates) return false;
   if (isExperiment(task)) return true;
   return !!task.url;
+};
+
+const matchesState = <T extends AnyTask>(task: T, states: string[]): boolean => {
+  if (states[0] === ALL_VALUE) return true;
+
+  const targetStateRun = states[0] as RunState;
+  const targetStateCmd = states[0] as CommandState;
+
+  return [ targetStateRun, targetStateCmd ].includes(task.state);
+};
+
+const matchesUser = <T extends AnyTask>(task: T, users: User[], username?: string): boolean => {
+  if (!username) return true;
+  const selectedUser = users.find(u => u.username === username);
+  return !!selectedUser && (task.ownerId === selectedUser.id);
+};
+
+export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = AnyTask>(
+  tasks: A[], filters: TaskFilters<T>, users: User[],
+): A[] => {
+  const isAllTypes = !Object.values(filters.types).includes(true);
+  return tasks
+    .filter(task => matchesUser<A>(task as A, users, filters.username))
+    .filter(task => {
+      if (!isExperimentTask(task)) return true;
+      return !task.archived;
+    })
+    .filter(task => matchesState<A>(task as A, filters.states))
+    .filter(task => {
+      const type = isExperimentTask(task) ? 'Experiment' : (task as CommandTask).type;
+      return isAllTypes || filters.types[type as T];
+    })
+    .slice(0, filters.limit);
 };
