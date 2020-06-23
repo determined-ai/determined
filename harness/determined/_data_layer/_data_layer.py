@@ -9,7 +9,7 @@ import yogadl
 from yogadl import storage, tensorflow
 
 import determined as det
-from determined import horovod, workload
+from determined import horovod
 from determined.horovod import hvd
 from determined_common import check
 
@@ -59,11 +59,7 @@ class _CacheableDecorator:
             return
 
         batch_size = self._per_slot_batch_size
-        batches_completed = self._env.first_step() - 1
-        if self._env.initial_workload.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-            batches_completed += 1
-
-        self._offset = batches_completed * batch_size
+        self._offset = self._env.initial_workload.total_batches_processed * batch_size
 
     def _init_shard(self) -> None:
         if not self._hvd_config.use:
