@@ -1,5 +1,5 @@
 import Plotly, { Data, Layout } from 'plotly.js-basic-dist';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import createPlotlyComponent from 'react-plotly.js/factory';
 
 import { getStateColor, lightTheme } from 'themes';
@@ -25,7 +25,7 @@ const initialTally = Object.values(ResourceState).reduce((acc, key) => {
 }, {} as Tally);
 
 const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
-
+  console.log('genPlotInfo', title);
   const tally = clone(initialTally) as Tally;
 
   resources.forEach(resource => {
@@ -90,8 +90,20 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
 };
 
 const SlotChart: React.FC<Props> = ({ title, resources, ...rest }: Props) => {
-  const plotInfo = useMemo(() => genPlotInfo(title, resources || []), [ title, resources ]);
+  const [ oldResources, setOldResources ] = useState<Resource[] | undefined>();
+  const [ oldPlotInfo, setOldPlotInfo ] = useState<PlotInfo | null>(null);
+
+  const plotInfo = useMemo(() => {
+    if (JSON.stringify(oldResources) === JSON.stringify(resources)) return oldPlotInfo;
+
+    const newPlotInfo = genPlotInfo(title, resources || []);
+    setOldResources(resources);
+    setOldPlotInfo(newPlotInfo);
+    return newPlotInfo;
+  }, [ oldPlotInfo, oldResources, resources, title ]);
+
   if (plotInfo === null) return <React.Fragment />;
+
   return (
     <Plot
       {...rest}
