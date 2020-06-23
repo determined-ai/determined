@@ -12,7 +12,6 @@
     "@typescript-eslint/eslint-plugin": "^3.2.0",
     "@typescript-eslint/parser": "^3.2.0",
     "cypress": "~4.8.0",
-    "cypress-log-to-output": "^1.0.8",
     "eslint": "^7.2.0",
     "eslint-plugin-cypress": "^2.11.1",
     "eslint-plugin-import": "^2.21.2",

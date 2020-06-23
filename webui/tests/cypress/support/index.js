@@ -18,32 +18,3 @@ import './commands';
 Cypress.Cookies.defaults({
   whitelist: /auth/,
 });
-
-Cypress.on('window:before:load', (window) => {
-  Cypress.log({
-    message: 'wrap on console.log',
-    name: 'console.log',
-  });
-
-  // pass through cypress log so we can see log inside command execution order
-  window.console.log = (...args) => {
-    Cypress.log({
-      message: args,
-      name: 'console.log',
-    });
-  };
-
-  // disable actions that would result in opening new tabs/windows
-  // https://docs.cypress.io/guides/references/trade-offs.html#Permanent-trade-offs-1
-  window.open = () => {};
-
-}); // end of before:load
-
-Cypress.on('log:added', (options) => {
-  if (options.instrument === 'command') {
-    // eslint-disable-next-line no-console
-    console.log(
-      `${(options.displayName || options.name || '').toUpperCase()} ${options.message}`,
-    );
-  }
-});
