@@ -132,8 +132,7 @@ class WaitForInstructionsCallback(tf.keras.callbacks.Callback):  # type: ignore
 
         # TODO(DET-1278): Average training metrics across GPUs when using Horovod.
         num_inputs = (
-            self.tf_keras_trial_controller.num_batches
-            * self.tf_keras_trial_controller.batch_size
+            self.tf_keras_trial_controller.num_batches * self.tf_keras_trial_controller.batch_size
         )
 
         if self.tf_keras_trial_controller.is_chief:

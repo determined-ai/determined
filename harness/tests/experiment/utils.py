@@ -42,8 +42,9 @@ class TrainAndValidate:
             stop_requested = False
             yield from interceptor.send(
                 workload.train_workload(
-                    step_id, num_batches=batches_per_step,
-                    total_batches_processed=total_batches_processed
+                    step_id,
+                    num_batches=batches_per_step,
+                    total_batches_processed=total_batches_processed,
                 ),
                 [],
             )
@@ -60,7 +61,8 @@ class TrainAndValidate:
                 yield from interceptor.send(
                     workload.validation_workload(
                         step_id, total_batches_processed=total_batches_processed
-                    ), []
+                    ),
+                    [],
                 )
                 validation = interceptor.metrics_result()
                 print(validation)
