@@ -42,3 +42,43 @@ func (a *apiServer) PostModel(
 	return &apiv1.PostModelResponse{Model: m},
 		errors.Wrapf(err, "error fetching model %s from database", req.Model.Name)
 }
+
+func (a *apiServer) PatchModel(
+	_ context.Context, req *apiv1.PatchModelRequest) (*apiv1.PatchModelResponse, error) {
+	m := &modelv1.Model{}
+
+	switch err := a.m.db.QueryProto("get_model", m, req.Model.Name); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(
+			codes.NotFound, "model %s not found", req.Model.Name)
+	case err != nil:
+		return nil, status.Errorf(
+			codes.Internal, "could not query model %s", req.Model.Name)
+	}
+
+	paths := req.UpdateMask.GetPaths()
+	for _, path := range paths {
+		switch path {
+		case "model.description":
+			m.Description = req.Model.Description
+		case "model.metadata":
+			m.Metadata = req.Model.Metadata
+		default:
+			return nil, status.Errorf(
+				codes.InvalidArgument,
+				"only description and metadata fields are mutable. cannot update %s", path)
+		}
+	}
+
+	b, err := protojson.Marshal(m.Metadata)
+	if err != nil {
+		return nil, errors.Wrap(err, "error marshaling model.Metadata")
+	}
+
+	respModel := &modelv1.Model{}
+	err = a.m.db.QueryProto(
+		"update_model", respModel, req.Model.Name, m.Description, b, time.Now())
+
+	return &apiv1.PatchModelResponse{Model: respModel},
+		errors.Wrapf(err, "error updating model %s in database", req.Model.Name)
+}
