@@ -1,3 +1,4 @@
+import { Tooltip } from 'antd';
 import React, { useCallback, useState } from 'react';
 import { useRouteMatch } from 'react-router-dom';
 
@@ -20,6 +21,7 @@ const SideBar: React.FC<Props> = (props: Props) => {
   const { path } = useRouteMatch();
   const [ collapsed, setCollapsed ] = useState(props.collapsed);
   const classes = [ css.base ];
+  const shortVersion = (process.env.VERSION || '').split('.').slice(0, 3).join('.');
 
   if (collapsed) classes.push(css.collapsed);
 
@@ -50,7 +52,11 @@ const SideBar: React.FC<Props> = (props: Props) => {
         </NavItem>}
         <div className={css.version}>
           <span>Version</span>
-          <span>{process.env.VERSION}</span>
+          {!collapsed
+            ? <span>{process.env.VERSION}</span>
+            : <Tooltip placement="bottomLeft" title={`Version ${process.env.VERSION}`}>
+              <span>{shortVersion}</span>
+            </Tooltip>}
         </div>
       </div>
     </div>
