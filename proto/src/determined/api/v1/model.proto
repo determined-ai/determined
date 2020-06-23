@@ -3,6 +3,8 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "google/protobuf/struct.proto";
+import "google/protobuf/field_mask.proto";
 import "determined/model/v1/model.proto";
 
 // Get the requested model.
@@ -25,6 +27,18 @@ message PostModelRequest {
 
 // Response to PostModelRequest.
 message PostModelResponse {
+  // The model created.
+  determined.model.v1.Model model = 1;
+}
+
+// Request for creating a model in the registry.
+message PatchModelRequest {
+  determined.model.v1.Model model = 1;
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+// Response to PatchModelRequest.
+message PatchModelResponse {
   // The model created.
   determined.model.v1.Model model = 1;
 }

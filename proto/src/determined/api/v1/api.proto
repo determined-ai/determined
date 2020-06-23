@@ -76,4 +76,6 @@ service Determined {
     rpc GetModel(GetModelRequest) returns (GetModelResponse)  { option (google.api.http) = {get: "/api/v1/models/{model_name}"}; }
     // Create a model in the registry.
     rpc PostModel(PostModelRequest) returns (PostModelResponse) { option (google.api.http) = {post: "/api/v1/models/{model.name}" body: "model"}; }
+    // Update model fields
+    rpc PatchModel(PatchModelRequest) returns (PatchModelResponse) { option (google.api.http) = {patch: "/api/v1/models/{model.name}" body: "*"}; }
 }
