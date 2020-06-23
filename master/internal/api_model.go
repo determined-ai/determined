@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -25,6 +26,27 @@ func (a *apiServer) GetModel(
 		return &apiv1.GetModelResponse{Model: m},
 			errors.Wrapf(err, "error fetching model %s from database", req.ModelName)
 	}
+}
+
+func (a *apiServer) GetModels(
+	_ context.Context, req *apiv1.GetModelsRequest) (*apiv1.GetModelsResponse, error) {
+	resp := &apiv1.GetModelsResponse{}
+	if err := a.m.db.QueryProto("get_models", &resp.Models); err != nil {
+		return nil, err
+	}
+
+	a.filter(&resp.Models, func(i int) bool {
+		v := resp.Models[i]
+
+		if !strings.Contains(strings.ToLower(v.Name), strings.ToLower(req.Name)) {
+			return false
+		}
+
+		return strings.Contains(strings.ToLower(v.Description), strings.ToLower(req.Description))
+	})
+
+	a.sort(resp.Models, req.OrderBy, req.SortBy, apiv1.GetModelsRequest_SORT_BY_LAST_UPDATED_TIME)
+	return resp, a.paginate(&resp.Pagination, &resp.Models, req.Offset, req.Limit)
 }
 
 func (a *apiServer) PostModel(
