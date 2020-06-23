@@ -3,8 +3,10 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
-import "google/protobuf/struct.proto";
 import "google/protobuf/field_mask.proto";
+import "google/protobuf/struct.proto";
+
+import "determined/api/v1/pagination.proto";
 import "determined/model/v1/model.proto";
 
 // Get the requested model.
@@ -17,6 +19,33 @@ message GetModelRequest {
 message GetModelResponse {
   // The model requested.
   determined.model.v1.Model model = 1;
+}
+
+message GetModelsRequest {
+  enum SortBy {
+    SORT_BY_UNSPECIFIED = 0;
+    SORT_BY_NAME = 1;
+    SORT_BY_DESCRIPTION = 2;
+
+    SORT_BY_CREATION_TIME = 4;
+    SORT_BY_LAST_UPDATED_TIME = 5;
+  }
+
+  SortBy sort_by = 1;
+  OrderBy order_by = 2;
+
+  int32 offset = 3;
+
+  // Limit the number of experiments. A value of 0 denotes no limit.
+  int32 limit = 4;
+
+  string name = 5;
+  string description = 6;
+}
+
+message GetModelsResponse {
+  repeated determined.model.v1.Model models = 1;
+  Pagination pagination = 2;
 }
 
 // Request for creating a model in the registry.
