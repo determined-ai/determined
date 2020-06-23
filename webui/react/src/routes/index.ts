@@ -42,7 +42,7 @@ const clusterRoute =
   {
     component: Cluster,
     icon: 'cluster',
-    id: 'cluster',
+    id: 'cluster-det',
     needAuth: true,
     path: '/det/cluster',
     title: 'Cluster (dev)',
@@ -141,7 +141,6 @@ if (process.env.IS_DEV) {
   sidebarRoutes.push(
     clusterRoute,
     taskListRoute,
-    masterLogsRoute,
   );
 }
 
