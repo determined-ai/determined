@@ -1,7 +1,9 @@
-from typing import Optional
+from typing import List, Optional
 
+from determined_common import api
 from determined_common.experimental.checkpoint import Checkpoint, get_checkpoint
 from determined_common.experimental.experiment import ExperimentReference
+from determined_common.experimental.model import Model, ModelOrderBy, ModelSortBy
 from determined_common.experimental.session import Session
 from determined_common.experimental.trial import TrialReference
 
@@ -43,3 +45,43 @@ class Determined:
         checkpoint with the provided UUID.
         """
         return get_checkpoint(uuid, self._session._master)
+
+    def get_model(self, name: str) -> Model:
+        """
+        Get the :class:`~determined.experimental.Model` representing the
+        model with the provided name.
+        """
+        r = api.get(self._session._master, "/api/v1/models/{}".format(name))
+        return Model.from_json(r.json().get("model"), self._session._master)
+
+    def get_models(
+        self,
+        sort_by: ModelSortBy = ModelSortBy.NAME,
+        order_by: ModelOrderBy = ModelOrderBy.ASCENDING,
+        name: str = "",
+        description: str = "",
+    ) -> List[Model]:
+        """
+        Get a list of all models in the model registry.
+
+        Arguments:
+            sort_by: Which field to sort by. See :class:`~determined.experimental.ModelSortBy`.
+            order_by: Whether to sort in ascending or descending order. See
+                :class:`~determined.experimental.ModelOrderBy`.
+            name: If this parameter is set, models will be filtered to only
+                include models with names matching this parameter.
+            description: If this parameter is set, models will be filtered to
+                only include models with descriptions matching this parameter.
+        """
+        r = api.get(
+            self._session._master,
+            "/api/v1/models/",
+            params={
+                "sort_by": sort_by.value,
+                "order_by": order_by.value,
+                "name": name,
+                "description": description,
+            },
+        )
+        models = r.json().get("models")
+        return [Model.from_json(m, self._session._master) for m in models]
