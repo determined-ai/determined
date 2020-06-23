@@ -23,7 +23,7 @@ func (a *apiServer) GetTemplates(
 	a.filter(&resp.Templates, func(i int) bool {
 		return strings.Contains(strings.ToLower(resp.Templates[i].Name), strings.ToLower(req.Name))
 	})
-	a.sort(resp.Templates, req.OrderBy, 1)
+	a.sort(resp.Templates, req.OrderBy, req.SortBy, apiv1.GetTemplatesRequest_SORT_BY_NAME)
 	return resp, a.paginate(&resp.Pagination, &resp.Templates, req.Offset, req.Limit)
 }
 
