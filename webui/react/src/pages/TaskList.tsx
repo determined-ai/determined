@@ -1,5 +1,7 @@
+import { Input } from 'antd';
 import React, { useCallback, useState } from 'react';
 
+import Icon from 'components/Icon';
 import Page from 'components/Page';
 import TaskFilter, { ALL_VALUE, filterTasks, TaskFilters } from 'components/TaskFilter';
 import TaskTable from 'components/TaskTable';
@@ -53,6 +55,11 @@ const TaskList: React.FC = () => {
 
   const filteredTasks = filterTasks(loadedTasks, filters, users.data || []);
 
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    console.log('handleSearchChange', value);
+  }, []);
+
   const handleFilterChange = useCallback((filters: TaskFilters<CommandType>): void => {
     storage.set('filters', filters);
     setFilters(filters);
@@ -64,7 +71,12 @@ const TaskList: React.FC = () => {
     <Page title="Tasks">
       <div className={css.base}>
         <div className={css.header}>
-          <div />
+          <Input
+            allowClear
+            className={css.search}
+            placeholder="search id and name"
+            prefix={<Icon name="search" size="small" />}
+            onChange={handleSearchChange} />
           <TaskFilter<CommandType>
             filters={filters}
             showExperiments={false}
