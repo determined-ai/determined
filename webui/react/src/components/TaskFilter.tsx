@@ -16,11 +16,11 @@ const { Option } = Select;
 
 export { ALL_VALUE };
 
-export interface TaskFilters {
+export interface TaskFilters<T extends TaskType = TaskType> {
   limit: number;
   states: string[];
   username?: string;
-  types: Record<TaskType, boolean>;
+  types: Record<T, boolean>;
 }
 
 interface Props {
