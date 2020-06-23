@@ -78,4 +78,6 @@ service Determined {
     rpc PostModel(PostModelRequest) returns (PostModelResponse) { option (google.api.http) = {post: "/api/v1/models/{model.name}" body: "model"}; }
     // Update model fields
     rpc PatchModel(PatchModelRequest) returns (PatchModelResponse) { option (google.api.http) = {patch: "/api/v1/models/{model.name}" body: "*"}; }
+    // Get the requested model.
+    rpc GetModels(GetModelsRequest) returns (GetModelsResponse)  { option (google.api.http) = {get: "/api/v1/models"}; }
 }
