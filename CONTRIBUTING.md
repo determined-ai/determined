@@ -91,7 +91,7 @@ documentation](https://docs.determined.ai/latest/reference/cli.html).
 
 ## Training a Sample Model
 
-The `examples/official/trail/mnist_pytorch` directory contains code to train a convnet
+The `examples/official/trial/mnist_pytorch` directory contains code to train a convnet
 on [MNIST](http://yann.lecun.com/exdb/mnist/) using PyTorch. To train a model,
 run
 
@@ -101,7 +101,7 @@ det experiment create <config> examples/official/trial/mnist_pytorch/
 
 where `<config>` can be
 
-- `examples/official/trail/mnist_pytorch/const.yaml` to train a single model with fixed hyperparameters
+- `examples/official/trial/mnist_pytorch/const.yaml` to train a single model with fixed hyperparameters
 - `examples/official/trial/mnist_pytorch/adaptive.yaml` to train multiple models using
   an [adaptive hyperparameter search
   algorithm](https://docs.determined.ai/latest/topic-guides/hp-tuning-det/index.html#adaptive-search)
