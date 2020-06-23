@@ -1,9 +1,7 @@
 package agent
 
 import (
-	"fmt"
 	"net/http"
-	"sort"
 
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
@@ -44,24 +42,8 @@ func (a *agents) Receive(ctx *actor.Context) error {
 	case *apiv1.GetAgentsRequest:
 		response := &apiv1.GetAgentsResponse{}
 		for _, a := range a.summarize(ctx) {
-			if msg.Label == "" || msg.Label == a.Label {
-				response.Agents = append(response.Agents, toProtoAgent(a))
-			}
+			response.Agents = append(response.Agents, toProtoAgent(a))
 		}
-		sort.Slice(response.Agents, func(i, j int) bool {
-			a1, a2 := response.Agents[i], response.Agents[j]
-			if msg.OrderBy == apiv1.OrderBy_ORDER_BY_DESC {
-				a1, a2 = a2, a1
-			}
-			switch msg.SortBy {
-			case apiv1.GetAgentsRequest_SORT_BY_TIME:
-				return a1.RegisteredTime.Seconds < a2.RegisteredTime.Seconds
-			case apiv1.GetAgentsRequest_SORT_BY_UNSPECIFIED, apiv1.GetAgentsRequest_SORT_BY_ID:
-				return a1.Id < a2.Id
-			default:
-				panic(fmt.Sprintf("unknown sort type specified: %s", msg.SortBy.String()))
-			}
-		})
 		ctx.Respond(response)
 	case echo.Context:
 		a.handleAPIRequest(ctx, msg)
