@@ -15,6 +15,4 @@ module.exports = on => {
     createExperiment: experiments.create,
   });
   on('file:preprocessor', wp(options));
-
-  require('cypress-log-to-output').install(on);
 };
