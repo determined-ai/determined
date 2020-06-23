@@ -1,6 +1,5 @@
 import { Tooltip } from 'antd';
 import React, { useCallback, useState } from 'react';
-import { useRouteMatch } from 'react-router-dom';
 
 /*
  * Once collapse is supported on Elm, we can uncomment
@@ -18,7 +17,6 @@ interface Props {
 }
 
 const SideBar: React.FC<Props> = (props: Props) => {
-  const { path } = useRouteMatch();
   const [ collapsed, setCollapsed ] = useState(props.collapsed);
   const classes = [ css.base ];
   const shortVersion = (process.env.VERSION || '').split('.').slice(0, 3).join('.');
@@ -32,7 +30,6 @@ const SideBar: React.FC<Props> = (props: Props) => {
   return (
     <div className={classes.join(' ')} id="side-menu">
       <NavMenu
-        basePath={path}
         defaultRouteId={defaultSideBarRoute.id}
         routes={sidebarRoutes}
         showLabels={!collapsed}
