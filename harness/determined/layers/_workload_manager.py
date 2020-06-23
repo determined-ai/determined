@@ -118,7 +118,7 @@ class _TrialWorkloadManager(WorkloadManager):
             if wkld.step_id == 1:
                 callback.on_trial_begin()
             callback.on_train_step_begin(
-                wkld.step_id, wkld.batches_per_step, wkld.batches_completed
+                wkld.step_id, wkld.num_batches, wkld.total_batches_processed
             )
 
         def _respond(in_response: workload.Response) -> None:
@@ -138,11 +138,11 @@ class _TrialWorkloadManager(WorkloadManager):
 
             # Sanity-check training metrics.
             det.util.validate_batch_metrics(batch_metrics)
-            check_len(batch_metrics, wkld.batches_per_step)
+            check_len(batch_metrics, wkld.num_batches)
 
             for callback in self.callbacks:
                 callback.on_train_step_end(
-                    wkld.step_id, wkld.batches_per_step, wkld.batches_completed, batch_metrics
+                    wkld.step_id, wkld.num_batches, wkld.total_batches_processed, batch_metrics
                 )
 
             self.tensorboard_mgr.sync()
@@ -182,7 +182,9 @@ class _TrialWorkloadManager(WorkloadManager):
 
             v_metrics = metrics["validation_metrics"]
             for callback in self.callbacks:
-                callback.on_validation_step_end(wkld.step_id, wkld.batches_completed, v_metrics)
+                callback.on_validation_step_end(
+                    wkld.step_id, wkld.total_batches_processed, v_metrics
+                )
 
             self.tensorboard_mgr.sync()
 
@@ -247,7 +249,7 @@ class _TrialWorkloadManager(WorkloadManager):
             respond(out_response)
 
         for callback in self.callbacks:
-            callback.on_validation_step_begin(wkld.step_id, wkld.batches_completed)
+            callback.on_validation_step_begin(wkld.step_id, wkld.total_batches_processed)
 
         yield wkld, [], _respond
 

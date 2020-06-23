@@ -513,22 +513,22 @@ class TestPyTorchTrial:
             training_metrics = []
             interceptor = workload.WorkloadResponseInterceptor()
 
-            total_steps, batches_completed = 10, 0
+            total_steps, total_batches_processed = 10, 0
             for step_id in range(1, total_steps):
-                batches_per_step = step_id
+                num_batches = step_id
                 yield from interceptor.send(
                     workload.train_workload(
                         step_id,
-                        batches_per_step=batches_per_step,
-                        batches_completed=batches_completed,
+                        num_batches=num_batches,
+                        total_batches_processed=total_batches_processed,
                     ),
                     [],
                 )
                 metrics = interceptor.metrics_result()
                 batch_metrics = metrics["metrics"]["batch_metrics"]
-                assert len(batch_metrics) == batches_per_step, "train_workload did not run for"
+                assert len(batch_metrics) == num_batches, "did not run for expected num_batches"
                 training_metrics.extend(batch_metrics)
-                batches_completed += batches_per_step
+                total_batches_processed += num_batches
 
             yield workload.terminate_workload(), [], workload.ignore_workload_response
 

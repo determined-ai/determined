@@ -20,15 +20,15 @@ class Workload:
         e_id: ExperimentID,
         t_id: TrialID,
         s_id: StepID,
-        batches_per_step: int,
-        batches_completed: int,
+        num_batches: int,
+        total_batches_processed: int,
     ) -> None:
         self.kind = kind
         self.experiment_id = e_id
         self.trial_id = t_id
         self.step_id = s_id
-        self.batches_per_step = batches_per_step
-        self.batches_completed = batches_completed
+        self.num_batches = num_batches
+        self.total_batches_processed = total_batches_processed
 
     def __eq__(self, other: object) -> bool:
         if type(self) is not type(other):
@@ -40,7 +40,7 @@ class Workload:
         return hash((self.kind, self.experiment_id, self.trial_id, self.step_id))
 
     def __repr__(self) -> str:
-        extra = f" ({self.batches_per_step})" if self.kind == self.Kind.RUN_STEP else ""
+        extra = f" ({self.num_batches})" if self.kind == self.Kind.RUN_STEP else ""
         return f"<{self.kind.name}{extra}: ({self.experiment_id},{self.trial_id},{self.step_id})>"
 
     def __json__(self) -> Dict[str, Any]:
@@ -54,8 +54,8 @@ class Workload:
             dict["experiment_id"],
             dict["trial_id"],
             dict["step_id"],
-            dict["batches_per_step"],
-            dict["batches_completed"],
+            dict["num_batches"],
+            dict["total_batches_processed"],
         )
 
 
@@ -183,21 +183,21 @@ def train_workload(
     step_id: int,
     exp_id: int = 1,
     trial_id: int = 1,
-    batches_per_step: int = 1,
-    batches_completed: int = 0,
+    num_batches: int = 1,
+    total_batches_processed: int = 0,
 ) -> Workload:
     return Workload(
         Workload.Kind.RUN_STEP,
         ExperimentID(exp_id),
         TrialID(trial_id),
         StepID(step_id),
-        batches_per_step,
-        batches_completed,
+        num_batches,
+        total_batches_processed,
     )
 
 
 def validation_workload(
-    step_id: int = 1, exp_id: int = 1, trial_id: int = 1, batches_completed: int = 0,
+    step_id: int = 1, exp_id: int = 1, trial_id: int = 1, total_batches_processed: int = 0,
 ) -> Workload:
     return Workload(
         Workload.Kind.COMPUTE_VALIDATION_METRICS,
@@ -205,12 +205,12 @@ def validation_workload(
         TrialID(trial_id),
         StepID(step_id),
         0,
-        batches_completed,
+        total_batches_processed,
     )
 
 
 def checkpoint_workload(
-    step_id: int = 1, exp_id: int = 1, trial_id: int = 1, batches_completed: int = 0
+    step_id: int = 1, exp_id: int = 1, trial_id: int = 1, total_batches_processed: int = 0
 ) -> Workload:
     return Workload(
         Workload.Kind.CHECKPOINT_MODEL,
@@ -218,7 +218,7 @@ def checkpoint_workload(
         TrialID(trial_id),
         StepID(step_id),
         0,
-        batches_completed,
+        total_batches_processed,
     )
 
 

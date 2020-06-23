@@ -225,11 +225,11 @@ func generateMessage(
 	msg := CompletedMessage{
 		Type: "WORKLOAD_COMPLETED",
 		Workload: Workload{
-			Kind:           operation.Kind,
-			ExperimentID:   0,
-			TrialID:        trialID,
-			StepID:         operation.StepID,
-			BatchesPerStep: operation.BatchesPerStep,
+			Kind:         operation.Kind,
+			ExperimentID: 0,
+			TrialID:      trialID,
+			StepID:       operation.StepID,
+			NumBatches:   operation.NumBatches,
 		},
 		StartTime: time.Now(),
 		EndTime:   time.Now(),

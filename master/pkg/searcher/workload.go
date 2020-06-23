@@ -22,18 +22,18 @@ const (
 
 // Workload encompasses a single unit of work that a trial needs do before waiting for more work.
 type Workload struct {
-	Kind             Kind `json:"kind"`
-	ExperimentID     int  `json:"experiment_id"`
-	TrialID          int  `json:"trial_id"`
-	StepID           int  `json:"step_id"`
-	BatchesPerStep   int  `json:"batches_per_step"`
-	BatchesCompleted int  `json:"batches_completed"`
+	Kind                  Kind `json:"kind"`
+	ExperimentID          int  `json:"experiment_id"`
+	TrialID               int  `json:"trial_id"`
+	StepID                int  `json:"step_id"`
+	NumBatches            int  `json:"num_batches"`
+	TotalBatchesProcessed int  `json:"total_batches_processed"`
 }
 
 func (w Workload) String() string {
 	extra := ""
 	if w.Kind == RunStep {
-		extra = fmt.Sprintf(" (%d Batches)", w.BatchesPerStep)
+		extra = fmt.Sprintf(" (%d Batches)", w.NumBatches)
 	}
 	return fmt.Sprintf("<%s%s: (%d,%d,%d)>", w.Kind, extra, w.ExperimentID, w.TrialID, w.StepID)
 }

@@ -162,7 +162,7 @@ class CallbackTrialController(TrialController):
             try:
                 if w.kind == workload.Workload.Kind.RUN_STEP:
                     response = self.train_for_step(
-                        w.step_id, w.batches_per_step
+                        w.step_id, w.num_batches
                     )  # type: workload.Response
                 elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                     response = self.compute_validation_metrics(w.step_id)
@@ -185,7 +185,7 @@ class CallbackTrialController(TrialController):
 
     # Methods implemented by AF-specific subclasses.
     @abc.abstractmethod
-    def train_for_step(self, step_id: StepID, batches_per_step: int) -> Dict[str, Any]:
+    def train_for_step(self, step_id: StepID, num_batches: int) -> Dict[str, Any]:
         """
         Runs a trial for one step, which should consist of the training
         the model on the given number of batches.  Implemented by frameworks.
@@ -193,7 +193,7 @@ class CallbackTrialController(TrialController):
         Args:
             step_id: The index of the step to run.  This controls which batches
                 to run.
-            batches_per_step: How many batches per step to run.
+            num_batches: How many batches to run this step.
             batch_loader: The training batch loader instance. Depending on the
                 framework implementation, a batch loader may or may not be
                 needed.

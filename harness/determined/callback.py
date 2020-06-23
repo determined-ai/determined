@@ -11,7 +11,7 @@ class Callback(object):
         pass
 
     def on_train_step_begin(
-        self, step_id: int, batches_per_step: int, batches_completed: int
+        self, step_id: int, num_batches: int, total_batches_processed: int
     ) -> None:
         """Executed at the beginning of a training step."""
         pass
@@ -19,8 +19,8 @@ class Callback(object):
     def on_train_step_end(
         self,
         step_id: int,
-        batches_per_step: int,
-        batches_completed: int,
+        num_batches: int,
+        total_batches_processed: int,
         metrics: List[Dict[str, Any]],
     ) -> None:
         """
@@ -33,12 +33,12 @@ class Callback(object):
         """
         pass
 
-    def on_validation_step_begin(self, step_id: int, batches_completed: int) -> None:
+    def on_validation_step_begin(self, step_id: int, total_batches_processed: int) -> None:
         """Executed at the beginning of a validation step."""
         pass
 
     def on_validation_step_end(
-        self, step_id: int, batches_completed: int, metrics: Dict[str, Any]
+        self, step_id: int, total_batches_processed: int, metrics: Dict[str, Any]
     ) -> None:
         """
         Executed at the end of a validation step.

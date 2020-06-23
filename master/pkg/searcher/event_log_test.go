@@ -37,11 +37,11 @@ func TestEventLog(t *testing.T) {
 		log.WorkloadCompleted(CompletedMessage{
 			Type: "WORKLOAD_COMPLETED",
 			Workload: Workload{
-				Kind:           RunStep,
-				ExperimentID:   1,
-				TrialID:        trialID,
-				StepID:         1,
-				BatchesPerStep: defaultBatchesPerStep,
+				Kind:         RunStep,
+				ExperimentID: 1,
+				TrialID:      trialID,
+				StepID:       1,
+				NumBatches:   defaultBatchesPerStep,
 			},
 			RunMetrics: make(map[string]interface{}),
 		})

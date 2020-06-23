@@ -230,7 +230,7 @@ class PyTorchTrialController(det.LoopTrialController):
         return True
 
     def _set_data_loaders(self) -> None:
-        skip_batches = self.env.initial_workload.batches_completed
+        skip_batches = self.env.initial_workload.total_batches_processed
 
         nreplicas = hvd.size() if self.hvd_config.use else 1
         rank = hvd.rank() if self.hvd_config.use else 0
@@ -254,7 +254,7 @@ class PyTorchTrialController(det.LoopTrialController):
             if w.kind == workload.Workload.Kind.RUN_STEP:
                 response_func(
                     util.wrap_metrics(
-                        self._train_for_step(w.step_id, w.batches_per_step, w.batches_completed),
+                        self._train_for_step(w.step_id, w.num_batches, w.total_batches_processed),
                         self.context.get_stop_requested(),
                     )
                 )
@@ -350,7 +350,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 lr_scheduler.step()
 
     def _train_for_step(
-        self, step_id: int, batches_per_step: int, total_batches_completed: int
+        self, step_id: int, num_batches: int, total_batches_processed: int
     ) -> workload.Response:
         check.gt(step_id, 0)
 
@@ -361,8 +361,8 @@ class PyTorchTrialController(det.LoopTrialController):
         for callback in self.callbacks.values():
             callback.on_train_step_start(step_id)
 
-        start = total_batches_completed
-        end = start + batches_per_step
+        start = total_batches_processed
+        end = start + num_batches
 
         per_batch_metrics = []  # type: List[Dict]
         num_inputs = 0
@@ -468,7 +468,7 @@ class PyTorchTrialController(det.LoopTrialController):
         if not self.is_chief:
             return workload.Skipped()
 
-        logging.debug(f"Done training step: {num_inputs} records in {batches_per_step} batches.")
+        logging.debug(f"Done training step: {num_inputs} records in {num_batches} batches.")
 
         return metrics
 

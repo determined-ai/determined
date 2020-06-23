@@ -34,25 +34,25 @@ class BatchMetricWriter(callback.Callback):
     def on_train_step_end(
         self,
         step_id: int,
-        batches_per_step: int,
-        batches_completed: int,
+        num_batches: int,
+        total_batches_processed: int,
         metrics: List[Dict[str, Any]],
     ) -> None:
         if step_id <= 0:
             raise AssertionError(f"Expected step_id to be a positive int, but it is {step_id}")
         for batch_idx, batch_metrics in enumerate(metrics):
-            batches_seen = batches_completed + batch_idx
+            batches_seen = total_batches_processed + batch_idx
             for name, value in batch_metrics.items():
                 self._maybe_write_metric(name, value, batches_seen)
 
         self.writer.reset()
 
     def on_validation_step_end(
-        self, step_id: int, batches_completed: int, metrics: Dict[str, Any]
+        self, step_id: int, total_batches_processed: int, metrics: Dict[str, Any]
     ) -> None:
         for name, value in metrics.items():
             if not name.startswith("val"):
                 name = "val_" + name
-            self._maybe_write_metric(name, value, batches_completed)
+            self._maybe_write_metric(name, value, total_batches_processed)
 
         self.writer.reset()
