@@ -1,12 +1,9 @@
-import { Typography } from 'antd';
 import React from 'react';
 
 import { CommonProps } from 'types';
 import { toHtmlId } from 'utils/string';
 
 import css from './Page.module.scss';
-
-const { Title } = Typography;
 
 interface Props extends CommonProps {
   title: string;
@@ -22,7 +19,7 @@ const Page: React.FC<Props> = (props: Props) => {
 
   return (
     <main className={classes.join(' ')} id={toHtmlId(props.title)}>
-      {props.hideTitle || <Title className={css.title}>{props.title}</Title>}
+      {props.hideTitle || <h5 className={css.title}>{props.title}</h5>}
       <div className={css.body}>
         {props.children}
       </div>

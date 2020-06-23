@@ -39,7 +39,7 @@ html {
   /* Input */
 
   .ant-input-affix-wrapper {
-    border-radius: 0.3rem;
+    border-radius: var(--theme-border-radius);
     padding: 0.6rem;
   }
   .ant-input-affix-wrapper.ant-input-affix-wrapper-lg { padding: 0.65rem 0.75rem; }
@@ -80,5 +80,11 @@ html {
   .ant-space.ant-space-horizontal.ant-space-align-center > .ant-space-item {
     align-items: center;
     display: inline-flex;
+  }
+
+  /* Table */
+
+  .ant-table {
+    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-13);
   }
 }
