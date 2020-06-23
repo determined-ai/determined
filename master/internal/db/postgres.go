@@ -1807,6 +1807,7 @@ func (db *PgDB) queryRows(
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 	vType := reflect.TypeOf(v).Elem()
 	switch kind := vType.Kind(); kind {
 	case reflect.Slice:
