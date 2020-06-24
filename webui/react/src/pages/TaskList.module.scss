@@ -1,0 +1,11 @@
+.base {
+  display: flex;
+  flex-direction: column;
+
+  .header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--theme-sizes-layout-medium);
+  }
+}
