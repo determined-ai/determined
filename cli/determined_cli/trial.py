@@ -88,7 +88,7 @@ def logs(args: Namespace) -> None:
         nonlocal offset, state
         path = "trials/{}/logsv2?offset={}".format(args.trial_id, offset)
         if limit:
-            path = "{}&limit=?".format(limit)
+            path += "&limit={}".format(limit)
         for log in api.get(args.master, path).json():
             print(log["message"], end="")
             offset, state = log["id"], log["state"]
