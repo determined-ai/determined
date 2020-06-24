@@ -41,11 +41,11 @@ func (a *apiServer) TrialLogs(
 	count := 0
 	for {
 		queryLimit := int(req.Limit) - count
-		if queryLimit == 0 {
-			return nil
-		}
 		if req.Limit == 0 || queryLimit > batchSize {
 			queryLimit = batchSize
+		}
+		if queryLimit <= 0 {
+			return nil
 		}
 		var logs []*apiv1.TrialLogsResponse
 		if err := a.m.db.QueryProto("stream_logs", &logs, req.TrialId, offset, queryLimit); err != nil {
