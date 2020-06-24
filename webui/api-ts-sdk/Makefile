@@ -1,5 +1,9 @@
 PROJECT_ROOT := "../.."
 
+.PHONY: all
+all: get-deps build
+
+
 .PHONY: get-deps-swagger
 get-deps-swagger:
 	mkdir -p deps
