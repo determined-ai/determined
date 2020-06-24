@@ -741,11 +741,10 @@ func (t *trial) processContainerTerminated(
 		})
 	}
 
-	status := agent.ContainerError(agent.AgentError, errors.New("no error status provided"))
-	if s := msg.ContainerStopped; s.Failure != nil {
-		status = *s
-	}
-	if c == nil || c.IsLeader() || status.Failure != nil {
+	// Terminate the task if the container never started (since this prevents the gang
+	// from ever being able to start), if the leader of the gang has exited out, or if
+	// one of the containers exited with a failure.
+	if c == nil || c.IsLeader() || msg.ContainerStopped.Failure != nil {
 		ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
 	}
 }
