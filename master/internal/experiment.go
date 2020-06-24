@@ -78,6 +78,8 @@ type experiment struct {
 // the returned object's ID appropriately.
 func newExperiment(master *Master, expModel *model.Experiment) (*experiment, error) {
 	conf := expModel.Config
+	// TODO: should we still set maxConcurrentTrials using max_slots if it is not provided
+	// as part of the searcher config?
 	conf.Searcher.MaxConcurrentTrials = maxConcurrentTrialsFromConfigOrResources(expModel)
 	method := searcher.NewSearchMethod(conf.Searcher)
 	search := searcher.NewSearcher(
