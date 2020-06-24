@@ -1,5 +1,5 @@
 import Plotly, { Data, Layout } from 'plotly.js-basic-dist';
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import createPlotlyComponent from 'react-plotly.js/factory';
 
 import { getStateColor, lightTheme } from 'themes';
@@ -9,7 +9,7 @@ import { clone } from 'utils/data';
 const Plot = createPlotlyComponent(Plotly);
 interface Props extends CommonProps {
   title: string;
-  resources: Resource[];
+  resources?: Resource[];
 }
 
 export interface PlotInfo {
@@ -25,7 +25,6 @@ const initialTally = Object.values(ResourceState).reduce((acc, key) => {
 }, {} as Tally);
 
 const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
-
   const tally = clone(initialTally) as Tally;
 
   resources.forEach(resource => {
@@ -90,12 +89,21 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
 };
 
 const SlotChart: React.FC<Props> = ({ title, resources, ...rest }: Props) => {
-  const plotInfo = genPlotInfo(title, resources);
+  const [ oldPlotInfo, setOldPlotInfo ] = useState<PlotInfo | null>(null);
+
+  const plotInfo = useMemo(() => {
+    const newPlotInfo = genPlotInfo(title, resources || []);
+    if (JSON.stringify(newPlotInfo) === JSON.stringify(oldPlotInfo)) return oldPlotInfo;
+    setOldPlotInfo(newPlotInfo);
+    return newPlotInfo;
+  }, [ oldPlotInfo, resources, title ]);
+
   if (plotInfo === null) return <React.Fragment />;
+
   return (
     <Plot
       {...rest}
-      config={{ displaylogo: false, responsive: true }}
+      config={{ displaylogo: false, responsive: false }}
       data={plotInfo.data}
       layout={plotInfo.layout}
     />

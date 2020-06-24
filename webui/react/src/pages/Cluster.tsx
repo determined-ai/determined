@@ -46,7 +46,7 @@ const Cluster: React.FC = () => {
         <Grid minItemWidth={50}>
           {Object.values(ResourceType).map((resourceType, idx) => (
             <ResourceChart key={idx}
-              resources={availableResources[resourceType] || []}
+              resources={availableResources[resourceType]}
               title={resourceType + 's'} />
           ))}
         </Grid>
