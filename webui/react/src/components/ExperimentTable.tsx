@@ -37,7 +37,7 @@ const descriptionRenderer: Renderer<Experiment> = (_, record) => {
   const labels = [ 'object detection', 'pytorch' ]; // TODO get from config
   const labelEls = labels.map((text, idx) => <Badge key={idx}>{text}</Badge>);
   return (
-    <div>
+    <div className={css.nameColumn}>
       <div>{record.config.description}</div>
       <div>{labelEls}</div>
     </div>
@@ -53,7 +53,7 @@ const columns: ColumnsType<Experiment> = [
   {
     render: descriptionRenderer,
     sorter: (a, b): number => alphanumericSorter(a.config.description, b.config.description),
-    title: 'Description',
+    title: 'Name',
   },
   startTimeColumn as ColumnType<Experiment>,
   {

@@ -48,6 +48,7 @@ const clusterRoute =
     path: '/det/cluster',
     title: 'Cluster (dev)',
   };
+
 const experimentListRoute =
   {
     component: ExperimentList,
@@ -152,6 +153,7 @@ if (process.env.IS_DEV) {
   sidebarRoutes.push(
     clusterRoute,
     taskListRoute,
+    experimentListRoute,
   );
 }
 

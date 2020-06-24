@@ -1,7 +1,7 @@
-// @ts-ignore
-import humanizeDuration from 'humanize-duration';
-
 import { Experiment } from 'types';
+
+/* eslint-disable @typescript-eslint/no-var-requires */
+const humanizeDuration = require('humanize-duration');
 
 // Experiment duration (naive) in miliseconds
 export const experimentDuration = (experiment: Experiment): number => {
@@ -10,20 +10,21 @@ export const experimentDuration = (experiment: Experiment): number => {
   return endTime.getTime() - startTime.getTime();
 };
 
-export const shortEnglishHumannizer = humanizeDuration.humanizer({ language: 'shortEn',
+export const shortEnglishHumannizer = humanizeDuration.humanizer({
+  conjunction: ' ',
+  language: 'shortEn',
   languages: {
     shortEn: {
-      y: () => 'y',
-      mo: () => 'mo',
-      w: () => 'w',
-      d: () => 'd',
-      h: () => 'h',
-      m: () => 'm',
-      s: () => 's',
-      ms: () => 'ms',
+      d: (): string => 'd',
+      h: (): string => 'h',
+      m: (): string => 'm',
+      mo: (): string => 'mo',
+      ms: (): string => 'ms',
+      s: (): string => 's',
+      w: (): string => 'w',
+      y: (): string => 'y',
     },
   },
   round: true,
-  conjunction: ' ',
   spacer: '',
 });
