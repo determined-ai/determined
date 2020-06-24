@@ -389,7 +389,7 @@ def test_model_registry():
     d.register_model("object-detection", "a bounding box model")
 
     models = d.get_models(sort_by=ModelSortBy.NAME)
-    assert list([m.name for m in models]) == ["mnist", "object-detection", "transformer"]
+    assert [m.name for m in models] == ["mnist", "object-detection", "transformer"]
 
 
 @pytest.mark.e2e_cpu  # type: ignore
