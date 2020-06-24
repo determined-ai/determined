@@ -367,8 +367,8 @@ def test_end_to_end_adaptive() -> None:
     assert checkpoint.metadata == {"testing": "override"}
 
 
-@pytest.mark.e2e_cpu  # type: ignore
-def test_model_registry():
+@pytest.mark.e2e_cpu
+def test_model_registry() -> None:
     d = Determined(conf.make_master_url())
     mnist = d.create_model("mnist", "simple computer vision model")
     assert mnist.metadata == {}
