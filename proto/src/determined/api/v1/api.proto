@@ -12,6 +12,7 @@ import "determined/api/v1/experiment.proto";
 import "determined/api/v1/master.proto";
 import "determined/api/v1/model.proto";
 import "determined/api/v1/template.proto";
+import "determined/api/v1/trial.proto";
 import "determined/api/v1/user.proto";
 
 option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
@@ -62,6 +63,9 @@ service Determined {
 
     // Get a list of experiments.
     rpc GetExperiments(GetExperimentsRequest) returns (GetExperimentsResponse) { option (google.api.http) = {get: "/api/v1/experiments"}; }
+
+    // Stream Trial logs.
+    rpc TrialLogs(TrialLogsRequest) returns (stream TrialLogsResponse) { option (google.api.http) = {get: "/api/v1/trials/{trial_id}/logs"}; }
 
     // Get a list of templates.
     rpc GetTemplates(GetTemplatesRequest) returns (GetTemplatesResponse) { option (google.api.http) = {get: "/api/v1/templates"}; }
