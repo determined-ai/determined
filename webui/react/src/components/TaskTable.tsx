@@ -62,6 +62,7 @@ const TaskTable: React.FC<Props> = ({ tasks }: Props) => {
       loading={tasks === undefined}
       rowClassName={(record): string => canBeOpened(record) ? linkCss.base : ''}
       rowKey="id"
+      size="small"
       onRow={tableRowClickHandler} />
   );
 };
