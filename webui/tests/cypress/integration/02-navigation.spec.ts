@@ -4,7 +4,8 @@ describe('Navigation', () => {
   });
 
   const elmTitleSelector = '#det-main-container div.text-2xl';
-  const titleSelector = '';
+  const pageTitleSelector = '[class^="Page_title_"]';
+  const sectionTitleSelector = '[class^="Section_title_"]';
 
   describe('paths', () => {
 
@@ -37,7 +38,7 @@ describe('Navigation', () => {
 
     it('path /det/cluster should display Cluster', () => {
       cy.visit('/det/cluster');
-      cy.get(elmTitleSelector).contains('Cluster');
+      cy.get(pageTitleSelector).contains('Cluster');
     });
 
     it('path /ui/shells should display Shells', () => {
@@ -52,7 +53,7 @@ describe('Navigation', () => {
 
     it('path /det/logs should display Master Logs', () => {
       cy.visit('/det/logs');
-      cy.get(elmTitleSelector).contains('Master Logs');
+      cy.get(sectionTitleSelector).contains('Master Logs');
     });
   });
 
@@ -63,7 +64,7 @@ describe('Navigation', () => {
       SPAs.forEach(page => {
         cy.visit(page);
         cy.get('#side-menu').contains(/experiments/i).click();
-        return cy.get(titleSelector).contains('Experiments');
+        return cy.get(elmTitleSelector).contains('Experiments');
       });
     });
 
@@ -71,7 +72,7 @@ describe('Navigation', () => {
       SPAs.forEach(page => {
         cy.visit(page);
         cy.get('#side-menu').contains(/notebooks/i).click();
-        cy.get(titleSelector).contains('Notebooks');
+        cy.get(elmTitleSelector).contains('Notebooks');
       });
     });
 
@@ -79,7 +80,7 @@ describe('Navigation', () => {
       SPAs.forEach(page => {
         cy.visit(page);
         cy.get('#side-menu').contains(/tensorboards/i).click();
-        cy.get(titleSelector).contains('TensorBoards');
+        cy.get(elmTitleSelector).contains('TensorBoards');
       });
     });
 
@@ -87,7 +88,7 @@ describe('Navigation', () => {
       SPAs.forEach(page => {
         cy.visit(page);
         cy.get('#side-menu').contains(/cluster/i).click();
-        cy.get(titleSelector).contains('Cluster');
+        cy.get(pageTitleSelector).contains('Cluster');
       });
     });
 
@@ -95,7 +96,7 @@ describe('Navigation', () => {
       SPAs.forEach(page => {
         cy.visit(page);
         cy.get('#side-menu').contains(/shells/i).click();
-        cy.get(titleSelector).contains('Shells');
+        cy.get(elmTitleSelector).contains('Shells');
       });
     });
 
@@ -103,7 +104,7 @@ describe('Navigation', () => {
       SPAs.forEach(page => {
         cy.visit(page);
         cy.get('#side-menu').contains(/commands/i).click();
-        cy.get(titleSelector).contains('Commands');
+        cy.get(elmTitleSelector).contains('Commands');
       });
     });
 
