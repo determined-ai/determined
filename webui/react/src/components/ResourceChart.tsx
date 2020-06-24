@@ -25,7 +25,6 @@ const initialTally = Object.values(ResourceState).reduce((acc, key) => {
 }, {} as Tally);
 
 const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
-  console.log('genPlotInfo', title);
   const tally = clone(initialTally) as Tally;
 
   resources.forEach(resource => {
