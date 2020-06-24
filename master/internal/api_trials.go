@@ -40,12 +40,15 @@ func (a *apiServer) TrialLogs(
 	}
 	count := 0
 	for {
-		limit := int(req.Limit) - count
-		if req.Limit == 0 || limit > batchSize {
-			limit = batchSize
+		queryLimit := int(req.Limit) - count
+		if queryLimit == 0 {
+			return nil
+		}
+		if req.Limit == 0 || queryLimit > batchSize {
+			queryLimit = batchSize
 		}
 		var logs []*apiv1.TrialLogsResponse
-		if err := a.m.db.QueryProto("stream_logs", &logs, req.TrialId, offset, limit); err != nil {
+		if err := a.m.db.QueryProto("stream_logs", &logs, req.TrialId, offset, queryLimit); err != nil {
 			return err
 		}
 		for _, log := range logs {
@@ -54,11 +57,9 @@ func (a *apiServer) TrialLogs(
 			}
 		}
 		newRecords := len(logs)
-		if newRecords > 0 {
-			count += newRecords
-			offset += newRecords
-		}
-		if newRecords < limit || newRecords == 0 {
+		count += newRecords
+		offset += newRecords
+		if newRecords < queryLimit {
 			state, _, err := trialStatus(a.m.db, req.TrialId)
 			if err != nil || model.TerminalStates[state] {
 				return err
