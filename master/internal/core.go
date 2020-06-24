@@ -367,8 +367,7 @@ func (m *Master) Run() error {
 	m.echo.Use(middleware.Recover())
 	m.echo.Use(middleware.AddTrailingSlashWithConfig(middleware.TrailingSlashConfig{
 		Skipper: func(c echo.Context) bool {
-			_, ok := staticWebDirectoryPaths[c.Path()]
-			return !ok
+			return !staticWebDirectoryPaths[c.Path()]
 		},
 		RedirectCode: http.StatusMovedPermanently,
 	}))
