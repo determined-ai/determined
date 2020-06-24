@@ -63,8 +63,14 @@ const (
 
 // Trial-specific actor messages.
 type (
-	killTrial    struct{ timedOut bool }
+	killTrial    struct{}
 	restoreTrial struct{}
+
+	// When we issue a TERMINATE workload, we send a delayed terminateTimeout message with a record
+	// of the number of runID that the trial had at the time we issued the TERMINATE. If we
+	// receive the terminateTimeout message and t.runID has not changed, we forcibly kill the
+	// running containers.
+	terminateTimeout struct{ runID int }
 
 	containerConnected struct {
 		ContainerID scheduler.ContainerID
@@ -153,7 +159,16 @@ type trial struct {
 
 	sequencer *trialWorkloadSequencer
 
-	restarts  int
+	// restarts is essentially a failure count, it increments when the trial fails and we retry it.
+	restarts int
+
+	// runID is a count of how many times the task container(s) have stopped and restarted, which
+	// could be due to a failure or due to normal pausing and continuing. When runID increments,
+	// it effectively invalidates any outstanding terminateTimeout messages so that we don't
+	// accidentally kill a fresh container due to the terminateTimeout message from an older
+	// container.
+	runID int
+
 	replaying bool
 	earlyExit bool
 
@@ -348,9 +363,12 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 
 	case killTrial:
 		if t.task != nil {
-			if msg.timedOut {
-				ctx.Log().Info("killing unresponsive trial after timeout")
-			}
+			ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+		}
+
+	case terminateTimeout:
+		if t.task != nil && msg.runID == t.runID {
+			ctx.Log().Info("killing unresponsive trial after timeout")
 			ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
 		}
 
@@ -537,7 +555,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 			}
 
 			t.terminationSent = true
-			actors.NotifyAfter(ctx, time.Minute, killTrial{timedOut: true})
+			actors.NotifyAfter(ctx, time.Minute, terminateTimeout{runID: t.runID})
 		} else {
 			if err := saveWorkload(t.db, w); err != nil {
 				ctx.Log().WithError(err).Error("failed to save workload to the database")
@@ -808,6 +826,7 @@ func (t *trial) resetTrial(
 ) {
 	terminationSent := t.terminationSent
 
+	t.runID++
 	t.task = nil
 	t.pendingGracefulTermination = false
 	t.terminationSent = false
