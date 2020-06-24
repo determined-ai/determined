@@ -370,7 +370,7 @@ def test_end_to_end_adaptive() -> None:
 @pytest.mark.e2e_cpu  # type: ignore
 def test_model_registry():
     d = Determined(conf.make_master_url())
-    mnist = d.register_model("mnist", "simple computer vision model")
+    mnist = d.create_model("mnist", "simple computer vision model")
     assert mnist.metadata == {}
 
     mnist.add_metadata({"testing": "metadata"})
@@ -385,8 +385,8 @@ def test_model_registry():
     mnist.remove_metadata(["some_key"])
     assert mnist.metadata == {"testing": "override"}
 
-    d.register_model("transformer", "all you need is attention")
-    d.register_model("object-detection", "a bounding box model")
+    d.create_model("transformer", "all you need is attention")
+    d.create_model("object-detection", "a bounding box model")
 
     models = d.get_models(sort_by=ModelSortBy.NAME)
     assert [m.name for m in models] == ["mnist", "object-detection", "transformer"]

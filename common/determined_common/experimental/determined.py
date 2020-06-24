@@ -46,7 +46,7 @@ class Determined:
         """
         return get_checkpoint(uuid, self._session._master)
 
-    def register_model(
+    def create_model(
         self, name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
     ) -> Model:
         """
@@ -102,5 +102,6 @@ class Determined:
                 "description": description,
             },
         )
+
         models = r.json().get("models")
         return [Model.from_json(m, self._session._master) for m in models]
