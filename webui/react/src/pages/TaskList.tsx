@@ -1,5 +1,5 @@
 import { Input } from 'antd';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
 import Page from 'components/Page';
@@ -38,6 +38,7 @@ const TaskList: React.FC = () => {
   const initFilters = storage.getWithDefault('filters',
     { ...defaultFilters, username: (auth.user || {}).username });
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
+  const [ search, setSearch ] = useState('');
 
   const sources = [
     commands,
@@ -54,11 +55,12 @@ const TaskList: React.FC = () => {
 
   const hasLoaded = sources.find(src => src.hasLoaded);
 
-  const filteredTasks = filterTasks(loadedTasks, filters, users.data || []);
+  const filteredTasks = useMemo(() => {
+    return filterTasks(loadedTasks, filters, users.data || [], search);
+  }, [ filters, loadedTasks, search, users.data ]);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    console.log('handleSearchChange', value);
+    setSearch(e.target.value || '');
   }, []);
 
   const handleFilterChange = useCallback((filters: TaskFilters<CommandType>): void => {

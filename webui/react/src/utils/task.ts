@@ -91,6 +91,11 @@ export const canBeOpened = (task: AnyTask): boolean => {
   return !!task.url;
 };
 
+const matchSearch = <T extends AnyTask>(task: T, search = ''): boolean => {
+  if (!search) return true;
+  return task.id.indexOf(search) !== -1 || task.title.indexOf(search) !== -1;
+};
+
 const matchesState = <T extends AnyTask>(task: T, states: string[]): boolean => {
   if (states[0] === ALL_VALUE) return true;
 
@@ -107,7 +112,7 @@ const matchesUser = <T extends AnyTask>(task: T, users: User[], username?: strin
 };
 
 export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = AnyTask>(
-  tasks: A[], filters: TaskFilters<T>, users: User[],
+  tasks: A[], filters: TaskFilters<T>, users: User[], search = '',
 ): A[] => {
   const isAllTypes = !Object.values(filters.types).includes(true);
   return tasks
@@ -121,5 +126,6 @@ export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = A
       const type = isExperimentTask(task) ? 'Experiment' : (task as CommandTask).type;
       return isAllTypes || filters.types[type as T];
     })
+    .filter(task => matchSearch<A>(task, search))
     .slice(0, filters.limit);
 };
