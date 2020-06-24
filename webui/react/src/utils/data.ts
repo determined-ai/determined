@@ -42,8 +42,8 @@ export const stringTimeSorter = (a: string, b: string): number => {
   return aTime - bTime;
 };
 
-export const alphanumericSorter = (a: string, b: string): number => {
-  return a.localeCompare(b, 'en', { numeric: true });
+export const alphanumericSorter = (a: string|number, b: string|number): number => {
+  return a.toString().localeCompare(b.toString(), 'en', { numeric: true });
 };
 
 const runStateSortValues: Record<RunState, number> = {
@@ -72,7 +72,11 @@ export const commandStateSorter = (a: CommandState, b: CommandState): number => 
   return commandStateSortValues[a] - commandStateSortValues[b];
 };
 
-export const stateSorter = (a: State, b: State): number => {
+export const runStateSorter = (a: RunState, b: RunState): number => {
+  return runStateSortValues[a] - runStateSortValues[b];
+};
+
+export const taskStateSorter = (a: State, b: State): number => {
   // FIXME this is O(n) we can do it in constant time.
   // What is the right typescript way of doing it?
   const aValue = Object.values(RunState).includes(a as RunState) ?

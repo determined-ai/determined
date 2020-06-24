@@ -44,16 +44,14 @@ const columns: ColumnsType<CommandTask> = [
   actionsColumn as ColumnType<CommandTask>,
 ];
 
-export const tableRowClickHandler = (record: AnyTask): {onClick?: MouseEventHandler} => (
-  {
-    /*
-           * Can't use an actual link element on the whole row since anchor tag
-           * is not a valid direct tr child.
-           * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/tr
-           */
-    onClick: canBeOpened(record) ? makeClickHandler(record.url as string) : undefined,
-  }
-);
+export const tableRowClickHandler = (record: AnyTask): {onClick?: MouseEventHandler} => ({
+  /*
+     * Can't use an actual link element on the whole row since anchor tag
+     * is not a valid direct tr child.
+     * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/tr
+     */
+  onClick: canBeOpened(record) ? makeClickHandler(record.url as string) : undefined,
+});
 
 const TaskTable: React.FC<Props> = ({ tasks }: Props) => {
   return (

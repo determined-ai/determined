@@ -3,6 +3,7 @@ import { RouteProps } from 'react-router';
 
 import Cluster from 'pages/Cluster';
 import Dashboard from 'pages/Dashboard';
+import ExperimentList from 'pages/ExperimentList';
 import MasterLogs from 'pages/MasterLogs';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
@@ -48,6 +49,16 @@ const clusterRoute =
     title: 'Cluster (dev)',
   };
 
+const experimentListRoute =
+  {
+    component: ExperimentList,
+    icon: 'experiment',
+    id: 'experimentList',
+    needAuth: true,
+    path: '/det/experiments',
+    title: 'Experiments',
+  };
+
 const taskListRoute =
   {
     component: TaskList,
@@ -72,6 +83,7 @@ export const defaultAppRoute = dashboardRoute;
 
 export const appRoutes: RouteConfig[] = [
   dashboardRoute,
+  experimentListRoute,
   taskListRoute,
   clusterRoute,
   masterLogsRoute,
@@ -141,6 +153,7 @@ if (process.env.IS_DEV) {
   sidebarRoutes.push(
     clusterRoute,
     taskListRoute,
+    experimentListRoute,
   );
 }
 
