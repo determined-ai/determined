@@ -90,17 +90,14 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
 };
 
 const SlotChart: React.FC<Props> = ({ title, resources, ...rest }: Props) => {
-  const [ oldResources, setOldResources ] = useState<Resource[] | undefined>();
   const [ oldPlotInfo, setOldPlotInfo ] = useState<PlotInfo | null>(null);
 
   const plotInfo = useMemo(() => {
-    if (JSON.stringify(oldResources) === JSON.stringify(resources)) return oldPlotInfo;
-
     const newPlotInfo = genPlotInfo(title, resources || []);
-    setOldResources(resources);
+    if (JSON.stringify(newPlotInfo) === JSON.stringify(oldPlotInfo)) return oldPlotInfo;
     setOldPlotInfo(newPlotInfo);
     return newPlotInfo;
-  }, [ oldPlotInfo, oldResources, resources, title ]);
+  }, [ oldPlotInfo, resources, title ]);
 
   if (plotInfo === null) return <React.Fragment />;
 
