@@ -2,8 +2,6 @@ import { Table, Tooltip } from 'antd';
 import { ColumnsType, ColumnType } from 'antd/lib/table';
 import React, { MouseEventHandler } from 'react';
 
-import { actionsColumn, Renderer, startTimeColumn, stateColumn,
-  userColumn } from 'table/columns';
 import { AnyTask, CommandTask, CommandType, CommonProps } from 'types';
 import { alphanumericSorter } from 'utils/data';
 import { canBeOpened } from 'utils/task';
@@ -13,7 +11,8 @@ import Badge from './Badge';
 import Icon from './Icon';
 import { makeClickHandler } from './Link';
 import linkCss from './Link.module.scss';
-import css from './TaskTable.module.scss';
+import { actionsColumn, Renderer, startTimeColumn, stateColumn, userColumn } from './Table';
+import css from './Table.module.scss';
 
 interface Props extends CommonProps {
   tasks?: CommandTask[];
@@ -27,7 +26,7 @@ const idRenderer: Renderer<CommandTask> = id => {
   const shortId = id.split('-')[0];
   return (
     <Tooltip title={id}>
-      <div className={css.center}>
+      <div className={css.centerVertically}>
         <Badge>{shortId}</Badge>
       </div>
     </Tooltip>
@@ -37,7 +36,9 @@ const idRenderer: Renderer<CommandTask> = id => {
 const typeRenderer: Renderer<CommandTask> = (_, record) => {
   return (
     <Tooltip placement="topLeft" title={commandTypeToLabel[record.type as unknown as CommandType]}>
-      <div><Icon name={record.type.toLowerCase()} /></div>
+      <div className={css.centerVertically}>
+        <Icon name={record.type.toLowerCase()} />
+      </div>
     </Tooltip>
   );
 };

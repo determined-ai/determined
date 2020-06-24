@@ -11,6 +11,8 @@ import { alphanumericSorter, commandStateSorter,
   stringTimeSorter } from 'utils/data';
 import { experimentToTask, isExperiment, oneOfProperties } from 'utils/types';
 
+import css from './Table.module.scss';
+
 type TableRecord = CommandTask | Experiment;
 
 export type Renderer<T> = (text: string, record: T, index: number) => React.ReactNode
@@ -36,7 +38,9 @@ export const userColumn: ColumnType<TableRecord> = {
 };
 
 export const stateRenderer: Renderer<TableRecord> = (_, record) => (
-  <Badge state={record.state} type={BadgeType.State} />
+  <div className={css.centerVertically}>
+    <Badge state={record.state} type={BadgeType.State} />
+  </div>
 );
 
 export const stateColumn: ColumnType<TableRecord> = {
