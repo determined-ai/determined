@@ -48,6 +48,9 @@ const TaskList: React.FC = () => {
     .map(src => src.data || [])
     .reduce((acc, cur) => [ ...acc, ...cur ], [])
     .map(commandToTask);
+  if (loadedTasks.length > 0) {
+    loadedTasks[0].startTime = '1979-01-01T00:00:12.123123-06:00';
+  }
 
   const hasLoaded = sources.find(src => src.hasLoaded);
 

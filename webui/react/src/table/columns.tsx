@@ -32,6 +32,7 @@ export const userColumn: ColumnType<TableRecord> = {
     return alphanumericSorter(aValue, bValue);
   },
   title: 'User',
+  width: 70,
 };
 
 export const stateRenderer: Renderer<TableRecord> = (_, record) => (
@@ -42,6 +43,7 @@ export const stateColumn: ColumnType<TableRecord> = {
   render: stateRenderer,
   sorter: (a, b): number => commandStateSorter(a.state as CommandState, b.state as CommandState),
   title: 'State',
+  width: 120,
 };
 
 const startTimeRenderer: Renderer<TableRecord> = (_, record) => (
@@ -55,6 +57,7 @@ export const startTimeColumn: ColumnType<TableRecord> = {
   render: startTimeRenderer,
   sorter: (a, b): number => stringTimeSorter(a.startTime, b.startTime),
   title: 'Start Time',
+  width: 120,
 };
 
 const actionsRenderer: Renderer<TableRecord> =
@@ -69,4 +72,5 @@ const actionsRenderer: Renderer<TableRecord> =
 export const actionsColumn: ColumnType<TableRecord> = {
   render: actionsRenderer,
   title: '',
+  width: 36,
 };
