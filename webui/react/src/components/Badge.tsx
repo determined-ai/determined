@@ -8,6 +8,7 @@ import css from './Badge.module.scss';
 
 export enum BadgeType {
   Default,
+  Id,
   State,
 }
 
@@ -28,6 +29,8 @@ const Badge: React.FC<Props> = ({ state, type, children }: PropsWithChildren<Pro
   if (type === BadgeType.State) {
     classes.push(css.state);
     style.backgroundColor = getStateColor(state);
+  } else if (type === BadgeType.Id) {
+    classes.push(css.id);
   }
 
   return (

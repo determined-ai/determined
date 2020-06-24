@@ -1,3 +1,4 @@
+import { Tooltip } from 'antd';
 import { ColumnType } from 'antd/lib/table';
 import React from 'react';
 import TimeAgo from 'timeago-react';
@@ -16,6 +17,10 @@ import css from './Table.module.scss';
 type TableRecord = CommandTask | Experiment;
 
 export type Renderer<T> = (text: string, record: T, index: number) => React.ReactNode
+
+export const ellipsisRenderer: Renderer<CommandTask> = text => {
+  return <Tooltip title={text}><span>{text}</span></Tooltip>;
+};
 
 const userRenderer: Renderer<TableRecord> = (_, record) => {
   if (isExperiment(record)) {

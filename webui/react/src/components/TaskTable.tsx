@@ -7,27 +7,25 @@ import { alphanumericSorter } from 'utils/data';
 import { canBeOpened } from 'utils/task';
 import { commandTypeToLabel } from 'utils/types';
 
-import Badge from './Badge';
+import Badge, { BadgeType } from './Badge';
 import Icon from './Icon';
 import { makeClickHandler } from './Link';
 import linkCss from './Link.module.scss';
-import { actionsColumn, Renderer, startTimeColumn, stateColumn, userColumn } from './Table';
+import {
+  actionsColumn, ellipsisRenderer, Renderer, startTimeColumn, stateColumn, userColumn,
+} from './Table';
 import css from './Table.module.scss';
 
 interface Props extends CommonProps {
   tasks?: CommandTask[];
 }
 
-const ellipsisRenderer: Renderer<CommandTask> = text => {
-  return <Tooltip title={text}><span>{text}</span></Tooltip>;
-};
-
 const idRenderer: Renderer<CommandTask> = id => {
   const shortId = id.split('-')[0];
   return (
     <Tooltip title={id}>
       <div className={css.centerVertically}>
-        <Badge>{shortId}</Badge>
+        <Badge type={BadgeType.Id}>{shortId}</Badge>
       </div>
     </Tooltip>
   );
@@ -49,8 +47,8 @@ const columns: ColumnsType<CommandTask> = [
     ellipsis: { showTitle: false },
     render: idRenderer,
     sorter: (a, b): number => alphanumericSorter(a.id, b.id),
-    title: 'ID',
-    width: 80,
+    title: 'Short ID',
+    width: 100,
   },
   {
     render: typeRenderer,
