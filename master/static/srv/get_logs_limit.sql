@@ -5,8 +5,8 @@ WITH logs AS (
         encode(message, 'escape') as message
     FROM trial_logs JOIN trials
     ON trial_logs.trial_id = trials.id
-    WHERE trials.id = $1 AND trial_logs.id > $2
+    WHERE trials.id = $1
     ORDER BY trial_logs.id DESC
-    LIMIT $3
+    LIMIT $2
 )
 SELECT * FROM logs ORDER BY id ASC;

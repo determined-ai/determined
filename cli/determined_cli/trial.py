@@ -82,25 +82,36 @@ def describe_trial(args: Namespace) -> None:
 
 @authentication_required
 def logs(args: Namespace) -> None:
-    offset, state = 0, None
+    last_offset, last_state = 0, None
 
-    def print_logs(limit: Optional[int] = None) -> None:
-        nonlocal offset, state
-        path = "trials/{}/logsv2?offset={}".format(args.trial_id, offset)
-        if limit:
-            path = "{}&limit=?".format(limit)
-        for log in api.get(args.master, path).json():
+    def print_logs(offset: Optional[int], limit: Optional[int] = 5000) -> Any:
+        nonlocal last_offset, last_state
+        path = "trials/{}/logsv2?".format(args.trial_id)
+        if offset is not None:
+            path += "&offset={}".format(offset)
+        if limit is not None:
+            path += "&limit={}".format(limit)
+        logs = api.get(args.master, path).json()
+        for log in logs:
             print(log["message"], end="")
-            offset, state = log["id"], log["state"]
-
-    print_logs(args.tail)
-    if not args.follow:
-        return
+            last_state = log["state"]
+        return logs[-1]["id"] if len(logs) > 0 else last_offset
 
     try:
+        if args.tail is not None:
+            last_offset = print_logs(None, args.tail)
+        else:
+            while True:
+                new_offset = print_logs(last_offset)
+                if last_offset == new_offset:
+                    break
+                last_offset = new_offset
+
+        if not args.follow:
+            return
         while True:
-            print_logs()
-            if state in constants.TERMINAL_STATES:
+            last_offset = print_logs(last_offset)
+            if last_state in constants.TERMINAL_STATES:
                 break
             time.sleep(0.2)
     except KeyboardInterrupt:
@@ -109,7 +120,7 @@ def logs(args: Namespace) -> None:
         print(
             colored(
                 "Trial is in the {} state. To reopen log stream, run: "
-                "det trial logs -f {}".format(state, args.trial_id),
+                "det trial logs -f {}".format(last_state, args.trial_id),
                 "green",
             )
         )
