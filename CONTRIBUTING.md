@@ -44,9 +44,9 @@ git clone git@github.com:determined-ai/determined.git
 - Go (>= 1.13)
 - Python (>= 3.6)
 - Node (>= 12)
-- Yarn (>= 1.22.0)
 - Docker (>= 19.03)
 - Protoc (>= 3.0)
+- Java (>= 7)
 
 ### Building Determined
 

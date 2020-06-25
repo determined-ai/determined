@@ -3,6 +3,7 @@
 # dependencies
 /.pnp
 .pnp.js
+src/services/swagger/
 
 # testing
 /coverage

@@ -56,13 +56,11 @@ upstream-feature-branch: &upstream-feature-branch
       - /release-.*/
       - master
 
-
 commands:
   fix-circle-working-directory:
     description: "Fix CIRCLE_WORKING_DIRECTORY"
     steps:
       - run: echo 'CIRCLE_WORKING_DIRECTORY="${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}"' >> $BASH_ENV
-
 
   set-slack-user-id:
     steps:
@@ -85,7 +83,6 @@ commands:
             else
               echo "Unable to find Slack user ID for  \"${AUTHOR_EMAIL}\"."
             fi
-
 
   pull-task-images:
     parameters:
@@ -157,6 +154,10 @@ commands:
           key: det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
           paths:
             - "webui/react/node_modules"
+      - attach_workspace:
+          at: .
+      - run: make -C webui/api-ts-sdk get-deps-package
+      - run: make -C webui/api-ts-sdk build-package
 
   install-wheel:
     parameters:
@@ -342,7 +343,6 @@ commands:
             det-deploy aws down \
               --cluster-id <<parameters.cluster-id>>
 
-
   setup-aws-cluster:
     parameters:
       cluster-id:
@@ -391,7 +391,6 @@ commands:
           nvm alias default v12
           make -C webui/tests get-deps
       - run: docker pull cypress/included:4.8.0
-
 
   setup-local-cluster:
     parameters:
@@ -447,7 +446,6 @@ commands:
         default: "8080"
     steps:
       - run: python .circleci/scripts/wait_for_master.py http://<<parameters.host>>:<<parameters.port>>
-
 
 jobs:
   build-docs:
@@ -575,6 +573,20 @@ jobs:
       - run: make -C <<parameters.path>> build
       - run: make -C <<parameters.path>> publish
 
+  build-and-package-ts-sdk:
+    docker:
+      - image: cimg/openjdk:14.0.1
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: make -C webui/api-ts-sdk get-deps-swagger
+      - run: make -C webui/api-ts-sdk build-swagger
+      - persist_to_workspace:
+          root: .
+          paths:
+            - webui/api-ts-sdk/src
+
   upload-try-now-template:
     docker:
       - image: determinedai/cimg-base:stable
@@ -629,8 +641,6 @@ jobs:
       - store_artifacts:
           path: webui/tests/results/recordings
 
-
-
   lint-elm:
     docker:
       - image: cimg/node:12.16
@@ -658,8 +668,6 @@ jobs:
       - checkout
       - elm-get-deps
       - run: make -C webui/elm test
-
-
 
   lint-react:
     docker:
@@ -699,7 +707,6 @@ jobs:
       - store_artifacts:
           path: webui/react/build-storybook
 
-
   lint-go:
     docker:
       - image: cimg/go:1.13
@@ -730,6 +737,20 @@ jobs:
             - "master/build"
             - "agent/build"
 
+  build-proto:
+    docker:
+      - image: cimg/go:1.13
+        environment:
+          GO111MODULE: "on"
+    steps:
+      - checkout
+      - go-get-deps
+      - run: make -C proto build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - "proto/build/**/*"
+
   test-unit-go:
     docker:
       - image: cimg/go:1.13
@@ -741,9 +762,6 @@ jobs:
       - run: make -C proto build
       - run: make -C master test
       - run: make -C agent test
-
-
-
 
   lint-python:
     docker:
@@ -869,7 +887,6 @@ jobs:
       - store_test_results:
           path: /tmp/test-results/
 
-
   deploy:
     parameters:
       agent-instance-type:
@@ -896,7 +913,6 @@ jobs:
           fail_only: true
           failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: "${SLACK_USER_ID}"
-
 
   nightly-tests:
     docker:
@@ -959,8 +975,6 @@ jobs:
           failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: "${SLACK_USER_ID}"
 
-
-
   parallel-tests:
     docker:
       - image: determinedai/cimg-base:stable
@@ -993,29 +1007,45 @@ jobs:
           failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: "${SLACK_USER_ID}"
 
-
-
-
 workflows:
   lint:
     jobs:
+      - build-proto
+      - build-and-package-ts-sdk:
+          requires:
+            - build-proto
       - lint-python
       - lint-go
       - lint-elm
-      - lint-react
+      - lint-react:
+          requires:
+            - build-and-package-ts-sdk
 
   test-cli:
     jobs:
       - test-cli:
           matrix:
             parameters:
-              executor-name: ["python-35", "python-36", "python-37", "python-38", "win/default"]
+              executor-name:
+                [
+                  "python-35",
+                  "python-36",
+                  "python-37",
+                  "python-38",
+                  "win/default",
+                ]
 
   test-unit:
     jobs:
       - test-unit-go
+      - build-proto
+      - build-and-package-ts-sdk:
+          requires:
+            - build-proto
       - test-unit-elm
-      - test-unit-react
+      - test-unit-react:
+          requires:
+            - build-and-package-ts-sdk
       - test-unit-harness
       - test-unit-harness-tf2
       - test-examples
@@ -1023,8 +1053,16 @@ workflows:
   test-e2e:
     jobs:
       - build-elm
-      - build-react
-      - build-storybook
+      - build-proto
+      - build-and-package-ts-sdk:
+          requires:
+            - build-proto
+      - build-react:
+          requires:
+            - build-and-package-ts-sdk
+      - build-storybook:
+          requires:
+            - build-and-package-ts-sdk
       - build-docs
       - build-go
       - package-and-push-system-local:
@@ -1079,6 +1117,7 @@ workflows:
 
       - test-e2e-webui:
           requires:
+            - build-and-package-ts-sdk
             - package-and-push-system-local
 
       - deploy:
@@ -1149,7 +1188,6 @@ workflows:
             - request-gpu-tests
             - package-and-push-system-dev
 
-
   nightly:
     triggers:
       - schedule:
@@ -1164,10 +1202,16 @@ workflows:
 
   release:
     jobs:
+      - build-proto
+      - build-and-package-ts-sdk:
+          requires:
+            - build-proto
       - build-elm:
           context: determined-production
           filters: *release-and-rc-filters
       - build-react:
+          requires:
+            - build-and-package-ts-sdk
           context: determined-production
           filters: *release-and-rc-filters
       - build-docs:

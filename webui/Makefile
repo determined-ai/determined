@@ -18,6 +18,7 @@ check:
 	$(MAKE) -C tests $@
 
 get-deps:
+	$(MAKE) -C api-ts-sdk $@ build
 	$(MAKE) -C react $@
 	$(MAKE) -C elm $@
 	$(MAKE) -C tests $@
