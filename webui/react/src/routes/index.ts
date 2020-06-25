@@ -116,12 +116,7 @@ export const sidebarRoutes: RouteConfig[] = [
     path: '/ui/tensorboards',
     title: 'TensorBoards',
   },
-  {
-    icon: 'cluster',
-    id: 'cluster',
-    path: '/det/cluster',
-    title: 'Cluster',
-  },
+  clusterRoute,
   {
     icon: 'shell',
     id: 'shells',
