@@ -19,7 +19,6 @@ type SearcherConfig struct {
 	SmallerIsBetter      bool    `json:"smaller_is_better"`
 	SourceTrialID        *int    `json:"source_trial_id"`
 	SourceCheckpointUUID *string `json:"source_checkpoint_uuid"`
-	MaxConcurrentTrials  *int    `json:"max_concurrent_trials"`
 
 	SingleConfig         *SingleConfig         `union:"name,single" json:"-"`
 	RandomConfig         *RandomConfig         `union:"name,random" json:"-"`
@@ -103,7 +102,7 @@ type AsyncHalvingConfig struct {
 	TargetTrialSteps    int     `json:"target_trial_steps"`
 	MaxTrials           int     `json:"max_trials"`
 	Divisor             float64 `json:"divisor"`
-	MaxConcurrentTrials *int    `json:"max_concurrent_trials"`
+	MaxConcurrentTrials int     `json:"max_concurrent_trials"`
 }
 
 // AdaptiveMode specifies how aggressively to perform early stopping.
@@ -183,7 +182,7 @@ type AdaptiveASHAConfig struct {
 	Divisor             float64      `json:"divisor"`
 	Mode                AdaptiveMode `json:"mode"`
 	MaxRungs            int          `json:"max_rungs"`
-	MaxConcurrentTrials *int         `json:"max_concurrent_trials"`
+	MaxConcurrentTrials int          `json:"max_concurrent_trials"`
 }
 
 // Validate implements the check.Validatable interface.

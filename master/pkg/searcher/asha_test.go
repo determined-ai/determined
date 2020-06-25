@@ -52,7 +52,7 @@ func TestASHASearchMethod(t *testing.T) {
 					TargetTrialSteps:    90,
 					MaxTrials:           12,
 					Divisor:             3,
-					MaxConcurrentTrials: &maxConcurrentTrials,
+					MaxConcurrentTrials: maxConcurrentTrials,
 				},
 			},
 		},

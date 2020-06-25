@@ -15,13 +15,13 @@ func getBracketMaxTrials(
 	// divisor ^ (numRungs - 1) configurations.  Hence, we can compute the average
 	// budget per configuration for each bracket and back into the number of
 	// trials per bracket if we want roughly equal total step budget.
-	var bracketWeight []float64
-	totalWeight := 0.
+	bracketWeight := make([]float64, 0., len(brackets))
+	var totalWeight float64
 	for i, numRungs := range brackets {
 		bracketWeight = append(bracketWeight, math.Pow(divisor, float64(numRungs-1))/float64(numRungs))
 		totalWeight += bracketWeight[i]
 	}
-	var bracketTrials []int
+	bracketTrials := make([]int, 0, len(brackets))
 	allocated := 0
 	for i := 0; i < len(brackets); i++ {
 		bracketTrials = append(
@@ -35,7 +35,7 @@ func getBracketMaxTrials(
 }
 
 func getBracketMaxConcurrentTrials(
-	maxConcurrentTrials *int, divisor float64, maxTrials []int) []int {
+	maxConcurrentTrials int, divisor float64, maxTrials []int) []int {
 	// If maxConcurrentTrials is provided, we will split that evenly across brackets
 	// and fill remainder from most aggressive early stopping bracket to least.
 	// Otherwise, we will default to minimum of the maxTrials across brackets
@@ -43,12 +43,12 @@ func getBracketMaxConcurrentTrials(
 	var minTrials int
 	remainder := 0
 	numBrackets := len(maxTrials)
-	var bracketMaxConcurrentTrials []int
-	if maxConcurrentTrials == nil {
+	bracketMaxConcurrentTrials := make([]int, 0, numBrackets)
+	if maxConcurrentTrials == 0 {
 		minTrials = max(maxTrials[numBrackets-1], int(divisor))
 	} else {
-		minTrials = *maxConcurrentTrials / numBrackets
-		remainder = *maxConcurrentTrials % numBrackets
+		minTrials = maxConcurrentTrials / numBrackets
+		remainder = maxConcurrentTrials % numBrackets
 	}
 	for i := 0; i < numBrackets; i++ {
 		bracketMaxConcurrentTrials = append(bracketMaxConcurrentTrials, minTrials)
@@ -62,12 +62,15 @@ func getBracketMaxConcurrentTrials(
 
 func newAdaptiveASHASearch(config model.AdaptiveASHAConfig) SearchMethod {
 	modeFunc := parseAdaptiveMode(config.Mode)
-	config.MaxRungs = min(
-		config.MaxRungs,
-		int(math.Log(float64(config.TargetTrialSteps))/math.Log(config.Divisor))+1)
 
 	brackets := config.BracketRungs
 	if len(brackets) == 0 {
+		config.MaxRungs = min(
+			config.MaxRungs,
+			int(math.Log(float64(config.TargetTrialSteps))/math.Log(config.Divisor))+1)
+		config.MaxRungs = min(
+			config.MaxRungs,
+			int(math.Log(float64(config.MaxTrials))/math.Log(config.Divisor))+1)
 		brackets = modeFunc(config.MaxRungs)
 	}
 	sort.Sort(sort.Reverse(sort.IntSlice(brackets)))
@@ -85,7 +88,7 @@ func newAdaptiveASHASearch(config model.AdaptiveASHAConfig) SearchMethod {
 			TargetTrialSteps:    config.TargetTrialSteps,
 			MaxTrials:           bracketMaxTrials[i],
 			Divisor:             config.Divisor,
-			MaxConcurrentTrials: &bracketMaxConcurrentTrials[i],
+			MaxConcurrentTrials: bracketMaxConcurrentTrials[i],
 		}
 		methods = append(methods, newAsyncHalvingSearch(c))
 	}

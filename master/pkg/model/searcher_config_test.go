@@ -7,26 +7,25 @@ import (
 	"gotest.tools/assert"
 )
 
-func TestMaxConcurrentTrials(t *testing.T) {
+func TestASHAMaxConcurrentTrials(t *testing.T) {
 	var actual = DefaultExperimentConfig().Searcher
 	assert.NilError(t, json.Unmarshal([]byte(`
 {
-  "name": "adaptive_simple",
+  "name": "adaptive_asha",
   "metric": "metric",
   "max_concurrent_trials": 8
 }
 `), &actual))
-	maxConcurrentTrials := 8
 	expected := SearcherConfig{
-		Metric:              "metric",
-		SmallerIsBetter:     true,
-		MaxConcurrentTrials: &maxConcurrentTrials,
-		AdaptiveSimpleConfig: &AdaptiveSimpleConfig{
-			Metric:          "metric",
-			SmallerIsBetter: true,
-			Divisor:         4,
-			MaxRungs:        5,
-			Mode:            StandardMode,
+		Metric:          "metric",
+		SmallerIsBetter: true,
+		AdaptiveASHAConfig: &AdaptiveASHAConfig{
+			Metric:              "metric",
+			SmallerIsBetter:     true,
+			Divisor:             4,
+			MaxRungs:            5,
+			Mode:                StandardMode,
+			MaxConcurrentTrials: 8,
 		},
 	}
 	assert.DeepEqual(t, actual, expected)
