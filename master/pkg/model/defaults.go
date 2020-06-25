@@ -62,6 +62,18 @@ func DefaultExperimentConfig() ExperimentConfig {
 				Mode:            StandardMode,
 				MaxRungs:        5,
 			},
+			AsyncHalvingConfig: &AsyncHalvingConfig{
+				SmallerIsBetter:     true,
+				Divisor:             4,
+				MaxConcurrentTrials: 0,
+			},
+			AdaptiveASHAConfig: &AdaptiveASHAConfig{
+				SmallerIsBetter:     true,
+				Divisor:             4,
+				Mode:                StandardMode,
+				MaxRungs:            5,
+				MaxConcurrentTrials: 0,
+			},
 			PBTConfig: &PBTConfig{
 				SmallerIsBetter: true,
 			},

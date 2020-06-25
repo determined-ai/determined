@@ -7,6 +7,30 @@ import (
 	"gotest.tools/assert"
 )
 
+func TestASHAMaxConcurrentTrials(t *testing.T) {
+	var actual = DefaultExperimentConfig().Searcher
+	assert.NilError(t, json.Unmarshal([]byte(`
+{
+  "name": "adaptive_asha",
+  "metric": "metric",
+  "max_concurrent_trials": 8
+}
+`), &actual))
+	expected := SearcherConfig{
+		Metric:          "metric",
+		SmallerIsBetter: true,
+		AdaptiveASHAConfig: &AdaptiveASHAConfig{
+			Metric:              "metric",
+			SmallerIsBetter:     true,
+			Divisor:             4,
+			MaxRungs:            5,
+			Mode:                StandardMode,
+			MaxConcurrentTrials: 8,
+		},
+	}
+	assert.DeepEqual(t, actual, expected)
+}
+
 func TestDefaultSmallerIsBetter(t *testing.T) {
 	var actual1 = DefaultExperimentConfig().Searcher
 	assert.NilError(t, json.Unmarshal([]byte(`
@@ -94,6 +118,32 @@ func TestAdaptiveBracketRungsConfig(t *testing.T) {
 			Metric:           "metric",
 			TargetTrialSteps: 128,
 			StepBudget:       100,
+			BracketRungs:     []int{5, 10, 15, 20},
+		},
+	}
+	assert.DeepEqual(t, actual, expected)
+}
+
+// TestAdaptiveASHABracketRungsConfig checks that adaptive_asha config bracket rungs are correct.
+func TestAdaptiveASHABracketRungsConfig(t *testing.T) {
+	json1 := []byte(`
+{
+  "name": "adaptive_asha",
+  "metric": "metric",
+  "target_trial_steps": 128,
+  "max_trials": 100,
+  "bracket_rungs": [5, 10, 15, 20]
+}
+`)
+	var actual SearcherConfig
+	assert.NilError(t, json.Unmarshal(json1, &actual))
+
+	expected := SearcherConfig{
+		Metric: "metric",
+		AdaptiveASHAConfig: &AdaptiveASHAConfig{
+			Metric:           "metric",
+			TargetTrialSteps: 128,
+			MaxTrials:        100,
 			BracketRungs:     []int{5, 10, 15, 20},
 		},
 	}
