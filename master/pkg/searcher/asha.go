@@ -134,10 +134,10 @@ func (s *asyncHalvingSearch) validationCompleted(
 		metric *= -1
 	}
 
-	return s.promote(ctx, requestID, message, metric), nil
+	return s.promoteAsync(ctx, requestID, message, metric), nil
 }
 
-func (s *asyncHalvingSearch) promote(
+func (s *asyncHalvingSearch) promoteAsync(
 	ctx context, requestID RequestID, message Workload, metric float64,
 ) []Operation {
 	// Upon a trial is finished, we should return at least one more trial to train unless
@@ -180,7 +180,7 @@ func (s *asyncHalvingSearch) promote(
 				// We make a recursive call that will behave the same
 				// as if we'd actually run the promoted job and received
 				// the worse possible result in return.
-				return s.promote(ctx, promotionID, wkld, ashaExitedMetricValue)
+				return s.promoteAsync(ctx, promotionID, wkld, ashaExitedMetricValue)
 			}
 		}
 	}
@@ -217,7 +217,6 @@ func (s *asyncHalvingSearch) closeOutRungs() []Operation {
 					ops = append(ops, NewClose(trialMetric.requestID))
 				}
 				rung.metrics[tid].closed = true
-				ops = append(ops, NewClose(trialMetric.requestID))
 			}
 		}
 	}
@@ -238,5 +237,5 @@ func (s *asyncHalvingSearch) trialExitedEarly(
 	ctx context, requestID RequestID, message Workload,
 ) ([]Operation, error) {
 	s.earlyExitTrials[requestID] = true
-	return s.promote(ctx, requestID, message, ashaExitedMetricValue), nil
+	return s.promoteAsync(ctx, requestID, message, ashaExitedMetricValue), nil
 }

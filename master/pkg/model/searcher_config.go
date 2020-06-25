@@ -105,6 +105,17 @@ type AsyncHalvingConfig struct {
 	MaxConcurrentTrials int     `json:"max_concurrent_trials"`
 }
 
+// Validate implements the check.Validatable interface.
+func (a AsyncHalvingConfig) Validate() []error {
+	return []error{
+		check.GreaterThan(a.TargetTrialSteps, 0, "target_trial_steps must be > 0"),
+		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
+		check.GreaterThan(a.Divisor, 1.0, "divisor must be > 1.0"),
+		check.GreaterThan(a.NumRungs, 0, "num_rungs must be > 0"),
+		check.GreaterThanOrEqualTo(a.MaxConcurrentTrials, 0, "max_concurrent_trials must be >= 0"),
+	}
+}
+
 // AdaptiveMode specifies how aggressively to perform early stopping.
 type AdaptiveMode string
 
@@ -194,6 +205,7 @@ func (a AdaptiveASHAConfig) Validate() []error {
 		check.In(string(a.Mode), []string{AggressiveMode, StandardMode, ConservativeMode},
 			"invalid adaptive mode"),
 		check.GreaterThan(a.MaxRungs, 0, "max_rungs must be > 0"),
+		check.GreaterThanOrEqualTo(a.MaxConcurrentTrials, 0, "max_concurrent_trials must be >= 0"),
 	}
 }
 

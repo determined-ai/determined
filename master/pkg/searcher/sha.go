@@ -90,7 +90,7 @@ type rung struct {
 
 // promotions handles bookkeeping of validation metrics and returns a RequestID to promote if
 // appropriate.
-func (r *rung) promotions(requestID RequestID, metric float64) []RequestID {
+func (r *rung) promotionsSync(requestID RequestID, metric float64) []RequestID {
 	// Insert the new trial result in the appropriate place in the sorted list.
 	insertIndex := sort.Search(
 		len(r.metrics),
@@ -145,10 +145,10 @@ func (s *syncHalvingSearch) validationCompleted(
 		metric *= -1
 	}
 
-	return s.promoteTrials(ctx, requestID, message, metric)
+	return s.promoteSync(ctx, requestID, message, metric)
 }
 
-func (s *syncHalvingSearch) promoteTrials(
+func (s *syncHalvingSearch) promoteSync(
 	ctx context, requestID RequestID, message Workload, metric float64,
 ) ([]Operation, error) {
 	rungIndex := s.trialRungs[requestID]
@@ -157,13 +157,16 @@ func (s *syncHalvingSearch) promoteTrials(
 	// If the trial has completed the top rung's validation, close the trial and do nothing else.
 	if rungIndex == s.NumRungs-1 {
 		s.trialsCompleted++
-		return []Operation{NewClose(requestID)}, nil
+		if !s.earlyExitTrials[requestID] {
+			return []Operation{NewClose(requestID)}, nil
+		}
+		return nil, nil
 	}
 
 	var ops []Operation
 	// Since this is not the top rung, handle promotions if there are any, then close the rung if
 	// all trials have finished.
-	if toPromote := rung.promotions(requestID, metric); len(toPromote) > 0 {
+	if toPromote := rung.promotionsSync(requestID, metric); len(toPromote) > 0 {
 		for _, promotionID := range toPromote {
 			s.trialRungs[promotionID] = rungIndex + 1
 			if !s.earlyExitTrials[promotionID] {
@@ -188,7 +191,7 @@ func (s *syncHalvingSearch) promoteTrials(
 				//
 				//   2) We are bounded on the depth of this recursive stack by
 				//   the number of rungs. We default this to max out at 5.
-				_, err := s.promoteTrials(ctx, promotionID, wkld, shaExitedMetricValue)
+				_, err := s.promoteSync(ctx, promotionID, wkld, shaExitedMetricValue)
 				return nil, err
 			}
 		}
@@ -217,7 +220,7 @@ func (s *syncHalvingSearch) trialExitedEarly(
 	ctx context, requestID RequestID, message Workload,
 ) ([]Operation, error) {
 	s.earlyExitTrials[requestID] = true
-	return s.promoteTrials(ctx, requestID, message, shaExitedMetricValue)
+	return s.promoteSync(ctx, requestID, message, shaExitedMetricValue)
 }
 
 func max(initial int, values ...int) int {

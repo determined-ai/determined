@@ -73,6 +73,7 @@ func newAdaptiveASHASearch(config model.AdaptiveASHAConfig) SearchMethod {
 			int(math.Log(float64(config.MaxTrials))/math.Log(config.Divisor))+1)
 		brackets = modeFunc(config.MaxRungs)
 	}
+	// We prioritize brackets that perform more early stopping to try to max speedups early on.
 	sort.Sort(sort.Reverse(sort.IntSlice(brackets)))
 	bracketMaxTrials := getBracketMaxTrials(
 		config.MaxTrials, config.Divisor, brackets)
