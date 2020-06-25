@@ -21,7 +21,7 @@ const TableBatch: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   return (
     <div className={classes.join(' ')}>
       <div className={css.container}>
-        <div>{props.children}</div>
+        <div className={css.actions}>{props.children}</div>
         <div className={css.message}>{props.message}</div>
       </div>
     </div>

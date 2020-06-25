@@ -2,7 +2,7 @@
   height: 0;
   opacity: 0;
   position: relative;
-  transition: all 0.2s linear;
+  transition: height 0.2s ease-in-out, opacity 0.2s ease-in-out;
 
   .container {
     align-items: center;
@@ -44,6 +44,13 @@
     transform: translateX(-50%);
     width: 3rem;
     z-index: 1;
+  }
+  .actions {
+    align-items: center;
+    display: flex;
+  }
+  .actions > *:not(:last-child) {
+    margin-right: var(--theme-sizes-layout-medium);
   }
   .message {
     font-size: var(--theme-sizes-font-medium);
