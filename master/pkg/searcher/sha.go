@@ -75,7 +75,6 @@ type trialMetric struct {
 	metric    float64
 	// fields below used by asha.go.
 	promoted bool
-	closed   bool
 }
 
 // rung describes a set of trials that are to be trained for the same number of steps.
