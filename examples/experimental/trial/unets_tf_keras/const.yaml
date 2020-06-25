@@ -17,7 +17,7 @@ searcher:
   smaller_is_better: false
   max_steps: 230 # There are ~7400 examples (200 examples/class * 37 classes) in the training set
                    # We run for 20 epochs as per the Tensorflow UNet tutorial. We get 230 by:
-                   # 7400 / global_batch_size / (1 batch per step) * 2 epochs
+                   # 7400 / global_batch_size / (1 batch per step) * 20 epochs
 
 min_validation_period: 10
 entrypoint: model_def:UNetsTrial
