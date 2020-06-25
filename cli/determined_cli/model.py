@@ -9,7 +9,6 @@ from .declarative_argparse import Arg, Cmd
 
 
 def render_model(model: Model) -> None:
-    # Print information about the downloaded step/checkpoint.
     table = [
         ["Name", model.name],
         ["Creation Time", model.creation_time],
