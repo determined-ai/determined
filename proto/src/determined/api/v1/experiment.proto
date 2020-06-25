@@ -4,9 +4,11 @@ package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/wrappers.proto";
+import "google/protobuf/struct.proto";
 
 import "determined/api/v1/pagination.proto";
 import "determined/experiment/v1/experiment.proto";
+import "determined/experiment/v1/searcher.proto";
 
 // Get a list of experiments.
 message GetExperimentsRequest {
@@ -56,4 +58,17 @@ message GetExperimentsResponse {
     repeated determined.experiment.v1.Experiment experiments = 1;
     // Pagination information of the full dataset.
     Pagination pagination = 2;
+}
+
+// Preview hyperparameter search.
+message PreviewSearchRequest {
+    // The experiment config to simulate.
+    google.protobuf.Struct config = 1;
+    // The searcher simulation seed.
+    uint32 seed = 2;
+}
+// Response to PreviewSearchRequest.
+message PreviewSearchResponse {
+    // The resulting simulation.
+    determined.experiment.v1.ExperimentSimulation simulation = 1;
 }
