@@ -16,6 +16,8 @@ message TrialLogsRequest {
     int32 offset = 3;
     // Limit the number of trial logs. A value of 0 denotes no limit.
     int32 limit = 4;
+    // Continue following logs until the trial stops or the limit is reached.
+    bool follow = 5;
 }
 // Response to TrialLogsRequest.
 message TrialLogsResponse {
