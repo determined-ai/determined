@@ -1,6 +1,8 @@
 package kubernetes
 
 import (
+	"reflect"
+
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -31,17 +33,19 @@ func Initialize(
 	namespace string,
 	outOfCluster bool,
 	kubeConfigPath string,
-) {
-	_, ok := s.ActorOf(actor.Addr("pods"), &pods{
+) *actor.Ref {
+	podsActor, ok := s.ActorOf(actor.Addr("pods"), &pods{
 		cluster:        c,
 		namespace:      namespace,
 		outOfCluster:   outOfCluster,
 		kubeConfigPath: kubeConfigPath,
 	})
-	check.Panic(check.True(ok, "agents address already taken"))
+	check.Panic(check.True(ok, "pods address already taken"))
 
 	// TODO (DET-3424) Configure endpoints.
 	//e.Any("/agents*", api.Route(s))
+
+	return podsActor
 }
 
 func (p *pods) Receive(ctx *actor.Context) error {
@@ -50,7 +54,7 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		p.startClientSet(ctx)
 
 	default:
-		ctx.Log().Error("Unexpected message: ", msg)
+		ctx.Log().Error("Unexpected message: ", reflect.TypeOf(msg))
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
@@ -60,6 +64,7 @@ func (p *pods) startClientSet(ctx *actor.Context) {
 	var config *rest.Config
 	var err error
 
+	// TODO: Remove out of cluster config
 	if p.outOfCluster {
 		config, err = clientcmd.BuildConfigFromFlags("", p.kubeConfigPath)
 		if err != nil {

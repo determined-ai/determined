@@ -45,7 +45,7 @@ type DefaultRP struct {
 	tasksByID          map[TaskID]*Task
 	tasksByContainerID map[ContainerID]*Task
 
-	assigmentByHandler map[*actor.Ref][]assignment
+	assigmentByHandler map[*actor.Ref][]containerAssignment
 
 	provisioner     *actor.Ref
 	provisionerView *FilterableView
@@ -82,7 +82,7 @@ func NewDefaultRP(
 		tasksByID:          make(map[TaskID]*Task),
 		tasksByContainerID: make(map[ContainerID]*Task),
 
-		assigmentByHandler: make(map[*actor.Ref][]assignment),
+		assigmentByHandler: make(map[*actor.Ref][]containerAssignment),
 
 		proxy:           proxy,
 		provisioner:     provisioner,
@@ -101,16 +101,17 @@ func (d *DefaultRP) assignContainer(task *Task, a *agentState, slots int, numCon
 	a.containers[container.id] = container
 	task.containers[container.id] = container
 	d.tasksByContainerID[container.id] = task
-	d.assigmentByHandler[task.handler] = append(d.assigmentByHandler[task.handler], assignment{
-		task:                  task,
-		agent:                 a,
-		container:             container,
-		numContainers:         numContainers,
-		clusterID:             d.clusterID,
-		devices:               a.assignFreeDevices(slots, container.id),
-		harnessPath:           d.harnessPath,
-		taskContainerDefaults: d.taskContainerDefaults,
-	})
+	d.assigmentByHandler[task.handler] = append(
+		d.assigmentByHandler[task.handler],
+		containerAssignment{
+			task:                  task,
+			agent:                 a,
+			container:             container,
+			clusterID:             d.clusterID,
+			devices:               a.assignFreeDevices(slots, container.id),
+			harnessPath:           d.harnessPath,
+			taskContainerDefaults: d.taskContainerDefaults,
+		})
 }
 
 // assignTask allocates cluster data structures and sends the appropriate actor
@@ -123,7 +124,7 @@ func (d *DefaultRP) assignTask(task *Task) bool {
 		return false
 	}
 
-	d.assigmentByHandler[task.handler] = make([]assignment, 0, len(fits))
+	d.assigmentByHandler[task.handler] = make([]containerAssignment, 0, len(fits))
 
 	for _, fit := range fits {
 		d.assignContainer(task, fit.Agent, fit.Slots, len(fits))

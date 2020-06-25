@@ -1,9 +1,12 @@
 package scheduler
 
 import (
+	"reflect"
+
 	"github.com/determined-ai/determined/master/internal/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -17,6 +20,16 @@ type kubernetesResourceProvider struct {
 	proxy                 *actor.Ref
 	harnessPath           string
 	taskContainerDefaults model.TaskContainerDefaultsConfig
+
+	tasksByHandler     map[*actor.Ref]*Task
+	tasksByID          map[TaskID]*Task
+	tasksByContainerID map[ContainerID]*Task
+	groups             map[*actor.Ref]*group
+
+	assigmentByTaskHandler map[*actor.Ref][]podAssignment
+
+	// Represent all pods as a single agent.
+	agent *agentState
 }
 
 // NewKubernetesResourceProvider initializes a new kubernetesResourceProvider.
@@ -39,6 +52,13 @@ func NewKubernetesResourceProvider(
 		proxy:                 proxy,
 		harnessPath:           harnessPath,
 		taskContainerDefaults: taskContainerDefaults,
+
+		tasksByHandler:     make(map[*actor.Ref]*Task),
+		tasksByID:          make(map[TaskID]*Task),
+		tasksByContainerID: make(map[ContainerID]*Task),
+		groups:             make(map[*actor.Ref]*group),
+
+		assigmentByTaskHandler: make(map[*actor.Ref][]podAssignment),
 	}
 }
 
@@ -48,7 +68,7 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 
 	case sproto.ConfigureEndpoints:
 		ctx.Log().Infof("initializing endpoints for pods")
-		kubernetes.Initialize(
+		podsActor := kubernetes.Initialize(
 			msg.System,
 			msg.Echo,
 			ctx.Self(),
@@ -57,10 +77,128 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 			k.kubeConfigPath,
 		)
 
+		k.agent = newAgentState(sproto.AddAgent{Agent: podsActor})
+
+	case AddTask:
+		k.receiveAddTask(ctx, msg)
+
+	case SetMaxSlots, SetWeight:
+
+	case SetTaskName:
+		k.receiveSetTaskName(ctx, msg)
+
 	default:
-		ctx.Log().Error("Unexpected message", msg)
+		ctx.Log().Error("Unexpected message", reflect.TypeOf(msg))
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 
 	return nil
+}
+
+func (k *kubernetesResourceProvider) receiveAddTask(ctx *actor.Context, msg AddTask) {
+	actors.NotifyOnStop(ctx, msg.TaskHandler, taskStopped{Ref: msg.TaskHandler})
+
+	if task, ok := k.tasksByHandler[ctx.Sender()]; ok {
+		if ctx.ExpectingResponse() {
+			ctx.Respond(task)
+		}
+		return
+	}
+
+	if msg.Group == nil {
+		msg.Group = msg.TaskHandler
+	}
+	group := k.getOrCreateGroup(msg.Group, ctx)
+
+	var taskID TaskID
+	if msg.ID != nil {
+		taskID = *msg.ID
+	}
+
+	name := msg.Name
+	if len(name) == 0 {
+		name = "Unnamed k8 Task"
+	}
+
+	task := newTask(&Task{
+		ID:                  taskID,
+		group:               group,
+		handler:             msg.TaskHandler,
+		name:                name,
+		slotsNeeded:         msg.SlotsNeeded,
+		canTerminate:        msg.CanTerminate,
+		agentLabel:          msg.Label,
+		fittingRequirements: msg.FittingRequirements,
+	})
+
+	k.tasksByID[task.ID] = task
+	k.tasksByHandler[task.handler] = task
+
+	if ctx.ExpectingResponse() {
+		ctx.Respond(task)
+	}
+
+	k.scheduleTask(ctx, task)
+}
+
+func (k *kubernetesResourceProvider) scheduleTask(ctx *actor.Context, task *Task) {
+	numPods := 1
+	slotsPerNode := task.SlotsNeeded()
+	if task.SlotsNeeded() > 1 {
+		if task.SlotsNeeded()%k.slotsPerNode != 0 {
+			ctx.Log().WithField("task ID", task.ID).Error(
+				"task number of slots is not schedulable on on configured slotsPerNode")
+			return
+		}
+		numPods = task.SlotsNeeded() / k.slotsPerNode
+		slotsPerNode = k.slotsPerNode
+	}
+
+	for pod := 0; pod < numPods; pod++ {
+		k.assignPod(ctx, task, slotsPerNode)
+	}
+
+	ctx.Log().WithField("task ID", task.ID).Infof("task assigned by scheduler")
+	task.handler.System().Tell(task.handler, TaskAssigned{NumContainers: numPods})
+}
+
+func (k *kubernetesResourceProvider) assignPod(ctx *actor.Context, task *Task, slots int) {
+	if task.state != taskRunning {
+		task.mustTransition(taskRunning)
+	}
+	container := newContainer(task, k.agent, slots, len(task.containers))
+	k.agent.containers[container.id] = container
+	task.containers[container.id] = container
+	k.tasksByContainerID[container.id] = task
+	k.assigmentByTaskHandler[task.handler] = append(
+		k.assigmentByTaskHandler[task.handler],
+		podAssignment{
+			task:                  task,
+			agent:                 k.agent,
+			container:             container,
+			clusterID:             k.clusterID,
+			harnessPath:           k.harnessPath,
+			taskContainerDefaults: k.taskContainerDefaults,
+		})
+}
+
+func (k *kubernetesResourceProvider) getOrCreateGroup(
+	handler *actor.Ref,
+	ctx *actor.Context,
+) *group {
+	if g, ok := k.groups[handler]; ok {
+		return g
+	}
+	g := &group{handler: handler, weight: 1}
+	k.groups[handler] = g
+	if ctx != nil && handler != nil { // ctx is nil only for testing purposes.
+		actors.NotifyOnStop(ctx, handler, groupStopped{})
+	}
+	return g
+}
+
+func (k *kubernetesResourceProvider) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) {
+	if task, ok := k.tasksByHandler[msg.TaskHandler]; ok {
+		task.name = msg.Name
+	}
 }
