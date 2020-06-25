@@ -1,0 +1,111 @@
+from typing import List
+
+import tensorflow as tf
+from tensorflow_examples.models.pix2pix import pix2pix
+import tensorflow_datasets as tfds
+import numpy as np
+
+from determined import keras
+
+
+class UNetsTrial(keras.TFKerasTrial):
+    def __init__(self, context: keras.TFKerasTrialContext):
+        self.context = context
+        self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
+
+        self.dataset, info = tfds.load('oxford_iiit_pet:3.*.*', with_info=True,data_dir=self.download_directory)
+
+    def normalize(self, input_image, input_mask):
+        input_image = tf.cast(input_image, tf.float32) / 255.0
+        input_mask -= 1
+        return input_image, input_mask
+
+    def unet_model(self, output_channels):
+        inputs = tf.keras.layers.Input(shape=[128, 128, 3])
+        x = inputs
+
+        # Downsampling through the model
+        skips = self.down_stack(x)
+        x = skips[-1]
+        skips = reversed(skips[:-1])
+
+        # Upsampling and establishing the skip connections
+        for up, skip in zip(self.up_stack, skips):
+            x = up(x)
+            concat = tf.keras.layers.Concatenate()
+            x = concat([x, skip])
+
+        # This is the last layer of the model
+        last = tf.keras.layers.Conv2DTranspose(
+            output_channels, 3, strides=2,
+            padding='same')  #64x64 -> 128x128
+
+        x = last(x)
+
+        model = tf.keras.Model(inputs=inputs, outputs=x)
+        return model
+
+    def build_model(self):
+        base_model = tf.keras.applications.MobileNetV2(input_shape=[128, 128, 3], include_top=False)
+
+        # Use the activations of these layers
+        layer_names = [
+            'block_1_expand_relu',   # 64x64
+            'block_3_expand_relu',   # 32x32
+            'block_6_expand_relu',   # 16x16
+            'block_13_expand_relu',  # 8x8
+            'block_16_project',      # 4x4
+        ]
+        layers = [base_model.get_layer(name).output for name in layer_names]
+
+        # Create the feature extraction model
+        self.down_stack = tf.keras.Model(inputs=base_model.input, outputs=layers)
+
+        self.down_stack.trainable = False
+
+        self.up_stack = [
+        pix2pix.upsample(512, 3),  # 4x4 -> 8x8
+        pix2pix.upsample(256, 3),  # 8x8 -> 16x16
+        pix2pix.upsample(128, 3),  # 16x16 -> 32x32
+        pix2pix.upsample(64, 3),   # 32x32 -> 64x64
+        ]
+
+        model = self.unet_model(self.context.get_hparam("OUTPUT_CHANNELS"))
+        model = self.context.wrap_model(model)
+
+        model.compile(optimizer='adam',
+              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+              metrics=['accuracy'])
+        return model
+
+    def build_training_data_loader(self):
+        def load_image_train(datapoint):
+            input_image = tf.image.resize(datapoint['image'], (128, 128))
+            input_mask = tf.image.resize(datapoint['segmentation_mask'], (128, 128))
+
+            if np.random.uniform(()) > 0.5:
+                input_image = tf.image.flip_left_right(input_image)
+                input_mask = tf.image.flip_left_right(input_mask)
+
+            input_image, input_mask = self.normalize(input_image, input_mask)
+            return input_image, input_mask
+
+        train = self.dataset['train'].map(load_image_train, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        train_dataset = train.cache().shuffle(self.context.get_data_config().get("BUFFER_SIZE")).batch(self.context.get_per_slot_batch_size()).repeat()
+        train_dataset = train_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+
+        return self.context.wrap_dataset(train_dataset)
+
+    def build_validation_data_loader(self):
+
+        def load_image_test(datapoint):
+            input_image = tf.image.resize(datapoint['image'], (128, 128))
+            input_mask = tf.image.resize(datapoint['segmentation_mask'], (128, 128))
+
+            input_image, input_mask = self.normalize(input_image, input_mask)
+
+            return input_image, input_mask
+
+        test = self.dataset['test'].map(load_image_test)
+        test_dataset = test.batch(self.context.get_per_slot_batch_size())
+        return self.context.wrap_dataset(test_dataset)
