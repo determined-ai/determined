@@ -6,6 +6,7 @@ import pathlib
 import random
 import sys
 import tempfile
+from termcolor import colored
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, cast
 
 import determined as det
@@ -84,10 +85,16 @@ def _submit_experiment(
     auth.initialize_session(master_url, requested_user=None, try_reauth=True)
 
     if test:
+        print(colored("Validating experiment configuration...", "yellow"), end="\r")
+        api.create_experiment(master_url, config, exp_context, None, True)
+        print(colored("Experiment configuration validation succeeded! 🎉", "green"))
         exp_id = api.create_test_experiment(master_url, config, exp_context)
+        print(colored("Test experiment ID: {}".format(exp_id), "green"))
+        api.follow_test_experiment_logs(master_url, exp_id)
     else:
         exp_id = api.create_experiment(master_url, config, exp_context)
     logging.info(f"Created experiment {exp_id}")
+    api.follow_experiment_logs(master_url, exp_id)
 
     return exp_id
 

@@ -1,9 +1,13 @@
 import uuid
 from typing import Any, Dict, Optional
+import time
+import sys
+from argparse import Namespace
+from termcolor import colored
 
 from ruamel import yaml
 
-from determined_common import context
+from determined_common import api, constants, context
 from determined_common.api import request as req
 
 
@@ -15,6 +19,137 @@ def patch_experiment(master_url: str, exp_id: int, patch_doc: Dict[str, Any]) ->
 
 def activate_experiment(master_url: str, exp_id: int) -> None:
     patch_experiment(master_url, exp_id, {"state": "ACTIVE"})
+
+
+def logs(args: Namespace) -> None:
+    offset, state = 0, None
+
+    def print_logs(limit: Optional[int] = None) -> None:
+        nonlocal offset, state
+        path = "trials/{}/logsv2?offset={}".format(args.trial_id, offset)
+        if limit:
+            path = "{}&limit=?".format(limit)
+        for log in api.get(args.master, path).json():
+            print(log["message"], end="")
+            offset, state = log["id"], log["state"]
+
+    print_logs(args.tail)
+    if not args.follow:
+        return
+
+    try:
+        while True:
+            print_logs()
+            if state in constants.TERMINAL_STATES:
+                break
+            time.sleep(0.2)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        print(
+            colored(
+                "Trial is in the {} state. To reopen log stream, run: "
+                "det trial logs -f {}".format(state, args.trial_id),
+                "green",
+            )
+        )
+
+
+def follow_experiment_logs(master_url: str, exp_id: int) -> None:
+    # Get the ID of this experiment's first trial (i.e., the one with the lowest ID).
+    print("Waiting for first trial to begin...")
+    while True:
+        r = api.get(master_url, "experiments/{}".format(exp_id))
+        if len(r.json()["trials"]) > 0:
+            break
+        else:
+            time.sleep(0.1)
+
+    first_trial_id = sorted(t_id["id"] for t_id in r.json()["trials"])[0]
+    print("Following first trial with ID {}".format(first_trial_id))
+
+    # Call `logs --follow` on the new trial.
+    logs_args = Namespace(trial_id=first_trial_id, follow=True, master=master_url, tail=None)
+    logs(logs_args)
+
+
+def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
+    def print_progress(active_stage: int, ended: bool) -> None:
+        # There are four sequential stages of verification. Track the
+        # current stage with an index into this list.
+        stages = [
+            "Scheduling task",
+            "Testing training",
+            "Testing validation",
+            "Testing checkpointing",
+        ]
+
+        for idx, stage in enumerate(stages):
+            if active_stage > idx:
+                color = "green"
+                checkbox = "✔"
+            elif active_stage == idx:
+                color = "red" if ended else "yellow"
+                checkbox = "✗" if ended else " "
+            else:
+                color = "white"
+                checkbox = " "
+            print(colored(stage + (25 - len(stage)) * ".", color), end="")
+            print(colored(" [" + checkbox + "]", color), end="")
+
+            if idx == len(stages) - 1:
+                print("\n" if ended else "\r", end="")
+            else:
+                print(", ", end="")
+
+    while True:
+        r = api.get(master_url, "experiments/{}".format(exp_id)).json()
+
+        # Wait for experiment to start and initialize a trial and step.
+        if len(r["trials"]) < 1 or len(r["trials"][0]["steps"]) < 1:
+            step = {}  # type: Dict
+        else:
+            step = r["trials"][0]["steps"][0]
+
+        # Update the active_stage by examining the result from master
+        # /experiments/<experiment-id> endpoint.
+        if r["state"] == constants.COMPLETED:
+            active_stage = 4
+        elif step.get("checkpoint"):
+            active_stage = 3
+        elif step.get("validation"):
+            active_stage = 2
+        elif step:
+            active_stage = 1
+        else:
+            active_stage = 0
+
+        # If the experiment is in a terminal state, output the appropriate
+        # message and exit. Otherwise, sleep and repeat.
+        if r["state"] == constants.COMPLETED:
+            print_progress(active_stage, ended=True)
+            print(colored("Model definition test succeeded! 🎉", "green"))
+            return
+        elif r["state"] == constants.CANCELED:
+            print_progress(active_stage, ended=True)
+            print(
+                colored(
+                    "Model definition test (ID: {}) canceled before "
+                    "model test could complete. Please re-run the "
+                    "command.".format(exp_id),
+                    "yellow",
+                )
+            )
+            sys.exit(1)
+        elif r["state"] == constants.ERROR:
+            print_progress(active_stage, ended=True)
+            trial_id = r["trials"][0]["id"]
+            logs_args = Namespace(trial_id=trial_id, master=master_url, tail=None, follow=False)
+            logs(logs_args)
+            sys.exit(1)
+        else:
+            print_progress(active_stage, ended=False)
+            time.sleep(0.2)
 
 
 def create_experiment(
