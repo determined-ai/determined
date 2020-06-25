@@ -20,6 +20,13 @@ html {
     justify-content: center;
   }
 
+  /* Checkbox */
+
+  .ant-checkbox-checked .ant-checkbox-inner::after {
+    border-left: 0;
+    border-top: 0;
+  }
+
   /* Dropdown */
 
   .ant-dropdown-menu {

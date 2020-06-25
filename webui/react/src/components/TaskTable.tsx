@@ -1,6 +1,6 @@
 import { Table, Tooltip } from 'antd';
 import { ColumnsType, ColumnType } from 'antd/lib/table';
-import React, { MouseEventHandler } from 'react';
+import React, { MouseEventHandler, useCallback, useState } from 'react';
 
 import { AnyTask, CommandTask, CommandType, CommonProps } from 'types';
 import { alphanumericSorter } from 'utils/data';
@@ -79,6 +79,10 @@ export const tableRowClickHandler = (record: AnyTask): {onClick?: MouseEventHand
 });
 
 const TaskTable: React.FC<Props> = ({ tasks }: Props) => {
+  const [ selectedRowKeys, setSelectedRowKeys ] = useState([]);
+
+  const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
+
   return (
     <Table
       className={css.base}
@@ -87,6 +91,10 @@ const TaskTable: React.FC<Props> = ({ tasks }: Props) => {
       loading={tasks === undefined}
       rowClassName={(record): string => canBeOpened(record) ? linkCss.base : ''}
       rowKey="id"
+      rowSelection={{
+        onChange: handleTableRowSelect,
+        selectedRowKeys,
+      }}
       size="small"
       onRow={tableRowClickHandler} />
   );
