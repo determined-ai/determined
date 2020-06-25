@@ -95,7 +95,7 @@ def logs(args: Namespace) -> None:
         for log in logs:
             print(log["message"], end="")
             last_state = log["state"]
-        return logs[-1]["id"] if len(logs) > 0 else last_offset
+        return logs[-1]["id"] if logs else last_offset
 
     try:
         if args.tail is not None:
