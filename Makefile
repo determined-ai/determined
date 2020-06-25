@@ -23,8 +23,11 @@ build-%:
 build-docs: build-common build-harness build-cli build-deploy build-examples
 	$(MAKE) -C docs build
 .PHONY: build-master
-build-master: build-docs build-webui-elm build-webui-react build-proto
+build-master: build-webui build-docs
 	$(MAKE) -C master build
+.PHONY: build-webui
+build-webui: build-proto
+	$(MAKE) -C webui build
 .PHONY: build
 build: build-master build-agent
 
