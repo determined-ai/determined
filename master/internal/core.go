@@ -355,9 +355,22 @@ func (m *Master) Run() error {
 		go m.restoreExperiment(exp)
 	}
 
+	// Used to decide whether we add trailing slash to the paths or not affecting
+	// relative links in web pages hosted under these routes.
+	staticWebDirectoryPaths := map[string]bool{
+		"/swagger-ui": true,
+		"/docs":       true,
+	}
+
 	// Initialize the HTTP server and listen for incoming requests.
 	m.echo = echo.New()
 	m.echo.Use(middleware.Recover())
+	m.echo.Use(middleware.AddTrailingSlashWithConfig(middleware.TrailingSlashConfig{
+		Skipper: func(c echo.Context) bool {
+			return !staticWebDirectoryPaths[c.Path()]
+		},
+		RedirectCode: http.StatusMovedPermanently,
+	}))
 
 	// Add resistance to common HTTP attacks.
 	//
@@ -390,9 +403,6 @@ func (m *Master) Run() error {
 
 	// Docs.
 	m.echo.Static("/docs", filepath.Join(webuiRoot, "docs"))
-	m.echo.GET("/docs", func(c echo.Context) error {
-		return c.Redirect(http.StatusMovedPermanently, "/docs/")
-	})
 
 	type fileRoute struct {
 		route string
