@@ -29,6 +29,9 @@ export interface Theme {
       suspended: string;
     };
   };
+  focus: {
+    shadow: string;
+  };
   font: {
     family: string;
   };
@@ -96,6 +99,9 @@ export const lightTheme: Theme = {
       success: '#009900',
       suspended: '#cc9900',
     },
+  },
+  focus: {
+    shadow: '0 0 0 0.2rem rgba(0, 155, 222, 0.25)',
   },
   font: {
     family: 'Objektiv Mk3',

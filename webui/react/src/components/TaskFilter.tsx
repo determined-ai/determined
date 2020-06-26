@@ -2,26 +2,16 @@ import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import React, { useCallback, useMemo } from 'react';
 
-import { AnyTask, CommandState, CommandTask, CommandType, RunState, TaskType, User } from 'types';
+import { ALL_VALUE, CommandType, TaskFilters, TaskType } from 'types';
 import { capitalize } from 'utils/string';
-import { isExperimentTask } from 'utils/task';
 
 import IconFilterButtons from './IconFilterButtons';
-import SelectFilter, { ALL_VALUE } from './SelectFilter';
+import SelectFilter from './SelectFilter';
 import StateSelectFilter from './StateSelectFilter';
 import css from './TaskFilter.module.scss';
 import UserSelectFilter from './UserSelectFilter';
 
 const { Option } = Select;
-
-export { ALL_VALUE };
-
-export interface TaskFilters<T extends TaskType = TaskType> {
-  limit: number;
-  states: string[];
-  username?: string;
-  types: Record<T, boolean>;
-}
 
 interface Props<T extends TaskType> {
   filters: TaskFilters<T>;
@@ -104,36 +94,3 @@ const TaskFilter: TaskFilterFC = <T extends TaskType = TaskType>({
 };
 
 export default TaskFilter;
-
-const matchesState = <T extends AnyTask>(task: T, states: string[]): boolean => {
-  if (states[0] === ALL_VALUE) return true;
-
-  const targetStateRun = states[0] as RunState;
-  const targetStateCmd = states[0] as CommandState;
-
-  return [ targetStateRun, targetStateCmd ].includes(task.state);
-};
-
-const matchesUser = <T extends AnyTask>(task: T, users: User[], username?: string): boolean => {
-  if (!username) return true;
-  const selectedUser = users.find(u => u.username === username);
-  return !!selectedUser && (task.ownerId === selectedUser.id);
-};
-
-export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = AnyTask>(
-  tasks: A[], filters: TaskFilters<T>, users: User[],
-): A[] => {
-  const isAllTypes = !Object.values(filters.types).includes(true);
-  return tasks
-    .filter(task => matchesUser<A>(task as A, users, filters.username))
-    .filter(task => {
-      if (!isExperimentTask(task)) return true;
-      return !task.archived;
-    })
-    .filter(task => matchesState<A>(task as A, filters.states))
-    .filter(task => {
-      const type = isExperimentTask(task) ? 'Experiment' : (task as CommandTask).type;
-      return isAllTypes || filters.types[type as T];
-    })
-    .slice(0, filters.limit);
-};

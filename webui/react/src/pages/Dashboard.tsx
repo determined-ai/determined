@@ -7,7 +7,7 @@ import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TaskCard from 'components/TaskCard';
-import TaskFilter, { ALL_VALUE, filterTasks, TaskFilters } from 'components/TaskFilter';
+import TaskFilter from 'components/TaskFilter';
 import ActiveExperiments from 'contexts/ActiveExperiments';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
@@ -17,9 +17,10 @@ import Users from 'contexts/Users';
 import useStorage from 'hooks/useStorage';
 import { ShirtSize } from 'themes';
 import {
-  Command, CommandState, CommandType, RecentTask, ResourceType, RunState, TaskType,
+  ALL_VALUE, Command, CommandState, CommandType, RecentTask, ResourceType, RunState,
+  TaskFilters, TaskType,
 } from 'types';
-import { isExperimentTask } from 'utils/task';
+import { filterTasks, isExperimentTask } from 'utils/task';
 import { commandToTask, experimentToTask } from 'utils/types';
 
 import css from './Dashboard.module.scss';

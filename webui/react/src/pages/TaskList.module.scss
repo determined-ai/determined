@@ -8,4 +8,8 @@
     justify-content: space-between;
     margin-bottom: var(--theme-sizes-layout-medium);
   }
+  .search {
+    margin-right: var(--theme-sizes-layout-medium);
+    max-width: 30rem;
+  }
 }

@@ -61,7 +61,7 @@ const columns: ColumnsType<CommandTask> = [
     ellipsis: { showTitle: false },
     render: ellipsisRenderer,
     sorter: (a, b): number => alphanumericSorter(a.title, b.title),
-    title: 'Description',
+    title: 'Name',
   },
   startTimeColumn as ColumnType<CommandTask>,
   stateColumn as ColumnType<CommandTask>,
