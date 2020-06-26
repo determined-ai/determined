@@ -17,9 +17,9 @@ class UNetsTrial(keras.TFKerasTrial):
     def __init__(self, context: keras.TFKerasTrialContext):
         self.context = context
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
-
         self.dataset, info = tfds.load(
             'oxford_iiit_pet:3.*.*',
+            split="train",
             with_info=True,
             data_dir=self.download_directory,
         )
@@ -88,7 +88,14 @@ class UNetsTrial(keras.TFKerasTrial):
         return model
 
     def build_training_data_loader(self):
+        self.dataset, info = tfds.load(
+            'oxford_iiit_pet:3.*.*',
+            split="train",
+            with_info=True,
+            data_dir=self.download_directory,
+        )
         def load_image_train(datapoint):
+            print(self.context.distributed.get_rank())
             input_image = tf.image.resize(datapoint['image'], (128, 128))
             input_mask = tf.image.resize(datapoint['segmentation_mask'], (128, 128))
 
@@ -99,15 +106,21 @@ class UNetsTrial(keras.TFKerasTrial):
             input_image, input_mask = self.normalize(input_image, input_mask)
             return input_image, input_mask
 
-        train = self.dataset['train'].map(load_image_train, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        train = self.dataset.map(load_image_train, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         train_dataset = train.cache().shuffle(self.context.get_data_config().get("BUFFER_SIZE")).batch(self.context.get_per_slot_batch_size()).repeat()
         train_dataset = train_dataset.prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 
         return self.context.wrap_dataset(train_dataset)
 
     def build_validation_data_loader(self):
-
+        self.dataset, info = tfds.load(
+            'oxford_iiit_pet:3.*.*',
+            split="test",
+            with_info=True,
+            data_dir=self.download_directory,
+        )
         def load_image_test(datapoint):
+            print(self.context.distributed.get_rank())
             input_image = tf.image.resize(datapoint['image'], (128, 128))
             input_mask = tf.image.resize(datapoint['segmentation_mask'], (128, 128))
 
@@ -115,6 +128,6 @@ class UNetsTrial(keras.TFKerasTrial):
 
             return input_image, input_mask
 
-        test = self.dataset['test'].map(load_image_test)
+        test = self.dataset.map(load_image_test)
         test_dataset = test.batch(self.context.get_per_slot_batch_size())
         return self.context.wrap_dataset(test_dataset)

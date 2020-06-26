@@ -1,7 +1,5 @@
 description: unets_tf_keras_const
 data:
-  train_url: http://download.tensorflow.org/data/iris_training.csv 
-  test_url: http://download.tensorflow.org/data/iris_test.csv
   BUFFER_SIZE: 1000
 
 hyperparameters:
@@ -13,11 +11,12 @@ hyperparameters:
 
 searcher:
   name: single
-  metric: val_accuracy
+  metric: val_acc
   smaller_is_better: false
   max_steps: 230 # There are ~7400 examples (200 examples/class * 37 classes) in the training set
                    # We run for 20 epochs as per the Tensorflow UNet tutorial. We get 230 by:
                    # 7400 / global_batch_size / (1 batch per step) * 20 epochs
 
 min_validation_period: 10
+max_restarts: 0
 entrypoint: model_def:UNetsTrial
