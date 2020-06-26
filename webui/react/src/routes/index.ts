@@ -3,6 +3,7 @@ import { RouteProps } from 'react-router';
 
 import Cluster from 'pages/Cluster';
 import Dashboard from 'pages/Dashboard';
+import ExperimentDetails from 'pages/ExperimentDetails';
 import ExperimentList from 'pages/ExperimentList';
 import MasterLogs from 'pages/MasterLogs';
 import SignIn from 'pages/SignIn';
@@ -59,6 +60,15 @@ const experimentListRoute =
     title: 'Experiments',
   };
 
+const experimentDetailsRoute =
+  {
+    component: ExperimentDetails,
+    id: 'experimentDetails',
+    needAuth: true,
+    path: '/det/experiments/:experimentId',
+    title: 'Experiment',
+  };
+
 const taskListRoute =
   {
     component: TaskList,
@@ -83,6 +93,7 @@ export const defaultAppRoute = dashboardRoute;
 
 export const appRoutes: RouteConfig[] = [
   dashboardRoute,
+  experimentDetailsRoute,
   experimentListRoute,
   taskListRoute,
   clusterRoute,
