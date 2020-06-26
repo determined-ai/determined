@@ -28,6 +28,8 @@ const (
 	TrialEntrypointScriptResource = "entrypoint.sh"
 	// AgentSetupScriptTemplateResource is the template for the script to run a dynamic agent.
 	AgentSetupScriptTemplateResource = "agent_setup_script.sh.template"
+	// InitContainerEntryScriptResource is the script to run the init container on k8s.
+	InitContainerEntryScriptResource = "init_container_entrypoint.sh"
 )
 
 var staticRoot string

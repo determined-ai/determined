@@ -24,6 +24,7 @@ type containerAssignment struct {
 func (c *containerAssignment) StartTask(spec image.TaskSpec) {
 	handler := c.agent.handler
 	spec.ClusterID = c.clusterID
+	spec.ContainerID = string(c.container.ID())
 	spec.TaskID = string(c.task.ID)
 	spec.HarnessPath = c.harnessPath
 	spec.TaskContainerDefaults = c.taskContainerDefaults
@@ -51,6 +52,18 @@ type podAssignment struct {
 	taskContainerDefaults model.TaskContainerDefaultsConfig
 }
 
+// StartTask notifies the pods actor that it should launch a pod for the provided task spec.
 func (p *podAssignment) StartTask(spec image.TaskSpec) {
-	//TODO: fill this in.
+	handler := p.agent.handler
+	spec.ClusterID = p.clusterID
+	spec.ContainerID = string(p.container.ID())
+	spec.TaskID = string(p.task.ID)
+	spec.HarnessPath = p.harnessPath
+	spec.TaskContainerDefaults = p.taskContainerDefaults
+	handler.System().Tell(handler, sproto.StartPod{
+		Task:  p.task.handler,
+		Spec:  spec,
+		Slots: p.container.Slots(),
+		Rank:  p.container.ordinal,
+	})
 }

@@ -289,6 +289,7 @@ func (m *Master) initializeResourceProviders(proxyRef *actor.Ref, provisionerSlo
 				m.config.Scheduler.ResourceProvider.KubernetesRPConfig.SlotsPerNode,
 				m.config.Scheduler.ResourceProvider.KubernetesRPConfig.OutOfCluster,
 				m.config.Scheduler.ResourceProvider.KubernetesRPConfig.KubeConfigPath,
+				m.config.Scheduler.ResourceProvider.KubernetesRPConfig.MasterServiceName,
 				proxyRef,
 				filepath.Join(m.config.Root, "wheels"),
 				m.config.TaskContainerDefaults,

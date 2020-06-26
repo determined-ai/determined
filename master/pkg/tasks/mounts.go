@@ -8,12 +8,13 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-func toDockerMounts(bindMounts []model.BindMount) []mount.Mount {
+// ToDockerMounts converts model bind mounts to container mounts.
+func ToDockerMounts(bindMounts []model.BindMount) []mount.Mount {
 	dockerMounts := make([]mount.Mount, 0, len(bindMounts))
 	for _, m := range bindMounts {
 		target := m.ContainerPath
 		if !filepath.IsAbs(target) {
-			target = filepath.Join(containerWorkDir, target)
+			target = filepath.Join(ContainerWorkDir, target)
 		}
 		dockerMounts = append(dockerMounts, mount.Mount{
 			Type:     mount.TypeBind,

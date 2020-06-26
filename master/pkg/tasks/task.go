@@ -18,16 +18,17 @@ import (
 )
 
 const (
-	containerWorkDir  = "/run/determined/workdir"
+	// ContainerWorkDir is working directory for containers.
+	ContainerWorkDir  = "/run/determined/workdir"
 	userPythonBaseDir = "/run/determined/pythonuserbase"
 	runDir            = "/run/determined"
 	rootDir           = "/"
 )
 
-func defaultEnvVars() []string {
+func defaultEnvVars() map[string]string {
 	// PYTHONUSERBASE allows us to `pip install --user` into a location guaranteed to be owned by
 	// the user inside the container.
-	envVars := []string{"PYTHONUSERBASE=" + userPythonBaseDir}
+	envVars := map[string]string{"PYTHONUSERBASE": userPythonBaseDir}
 	return envVars
 }
 
@@ -36,7 +37,7 @@ func workDirArchive(aug *model.AgentUserGroup) container.RunArchive {
 	return wrapArchive(
 		archive.Archive{
 			aug.OwnedArchiveItem(runDir, nil, 0700, tar.TypeDir),
-			aug.OwnedArchiveItem(containerWorkDir, nil, 0700, tar.TypeDir),
+			aug.OwnedArchiveItem(ContainerWorkDir, nil, 0700, tar.TypeDir),
 			aug.OwnedArchiveItem(userPythonBaseDir, nil, 0700, tar.TypeDir),
 		},
 		rootDir,
@@ -58,19 +59,46 @@ func ToContainerSpec(t TaskSpec) container.Spec {
 	}
 }
 
+func getUser(agentUserGroup *model.AgentUserGroup) string {
+	user := ""
+	if agentUserGroup != nil {
+		user = fmt.Sprintf("%d:%d", agentUserGroup.UID, agentUserGroup.GID)
+	}
+	return user
+}
+
+// ConfigureCommandEnvVars configures environment variables for cmd tasks.
+func ConfigureCommandEnvVars(t TaskSpec) map[string]string {
+	envVarsMap := defaultEnvVars()
+	envVarsMap["DET_TASK_ID"] = t.TaskID
+	return envVarsMap
+}
+
+// ConfigureCommandArchives returns the additional files for a c as an archive.
+func ConfigureCommandArchives(t TaskSpec) []container.RunArchive {
+	cmd := *t.StartCommand
+
+	return []container.RunArchive{
+		workDirArchive(cmd.AgentUserGroup),
+		wrapArchive(cmd.AgentUserGroup.OwnArchive(cmd.UserFiles), ContainerWorkDir),
+		wrapArchive(cmd.AdditionalFiles, rootDir),
+		harnessArchive(t.HarnessPath, cmd.AgentUserGroup),
+	}
+}
+
 func startCommand(t TaskSpec) container.Spec {
 	cmd := *t.StartCommand
-	user := ""
-	if cmd.AgentUserGroup != nil {
-		user = fmt.Sprintf("%d:%d", cmd.AgentUserGroup.UID, cmd.AgentUserGroup.GID)
-	}
+	user := getUser(cmd.AgentUserGroup)
 	deviceType := device.CPU
 	if len(t.Devices) > 0 {
 		deviceType = t.Devices[0].Type
 	}
-	envVars := defaultEnvVars()
+	envVarsMap := ConfigureCommandEnvVars(t)
+	envVars := make([]string, 0, len(envVarsMap))
+	for envVarKey, envVarValue := range envVarsMap {
+		envVars = append(envVars, fmt.Sprintf("%s=%s", envVarKey, envVarValue))
+	}
 	envVars = append(envVars, cmd.Config.Environment.EnvironmentVariables.For(deviceType)...)
-	envVars = append(envVars, fmt.Sprintf("DET_TASK_ID=%s", t.TaskID))
 	return container.Spec{
 		PullSpec: container.PullSpec{
 			Registry:  cmd.Config.Environment.RegistryAuth,
@@ -83,35 +111,22 @@ func startCommand(t TaskSpec) container.Spec {
 				Env:          envVars,
 				Cmd:          cmd.Config.Entrypoint,
 				Image:        cmd.Config.Environment.Image.For(deviceType),
-				WorkingDir:   containerWorkDir,
+				WorkingDir:   ContainerWorkDir,
 			},
 			HostConfig: docker.HostConfig{
 				NetworkMode:     t.TaskContainerDefaults.NetworkMode,
-				Mounts:          toDockerMounts(cmd.Config.BindMounts),
+				Mounts:          ToDockerMounts(cmd.Config.BindMounts),
 				PublishAllPorts: true,
 				ShmSize:         t.TaskContainerDefaults.ShmSizeBytes,
 			},
-			Archives: []container.RunArchive{
-				workDirArchive(cmd.AgentUserGroup),
-				wrapArchive(cmd.AgentUserGroup.OwnArchive(cmd.UserFiles), containerWorkDir),
-				wrapArchive(cmd.AdditionalFiles, rootDir),
-				harnessArchive(t.HarnessPath, cmd.AgentUserGroup),
-			},
+			Archives: ConfigureCommandArchives(t),
 		},
 	}
 }
 
-func startContainer(t TaskSpec) container.Spec {
-	exp := *t.StartContainer
-	user := ""
-	if exp.AgentUserGroup != nil {
-		user = fmt.Sprintf("%d:%d", exp.AgentUserGroup.UID, exp.AgentUserGroup.GID)
-	}
-	deviceType := device.CPU
-	if len(t.Devices) > 0 {
-		deviceType = t.Devices[0].Type
-	}
-	mounts := toDockerMounts(exp.ExperimentConfig.BindMounts)
+// ConfigureTrialDockerMounts returns the host mounts for a trial container.
+func ConfigureTrialDockerMounts(exp StartContainer) []mount.Mount {
+	mounts := ToDockerMounts(exp.ExperimentConfig.BindMounts)
 	if exp.ExperimentConfig.CheckpointStorage.SharedFSConfig != nil {
 		sharedFS := exp.ExperimentConfig.CheckpointStorage.SharedFSConfig
 		mounts = append(mounts, mount.Mount{
@@ -155,6 +170,60 @@ func startContainer(t TaskSpec) container.Spec {
 		}
 	}
 
+	return mounts
+}
+
+// ConfigureTrialEnvVars returns environment variables for a trial.
+func ConfigureTrialEnvVars(t TaskSpec, rendezvousPorts []string) map[string]string {
+	exp := *t.StartContainer
+
+	networkInterface := t.TaskContainerDefaults.DtrainNetworkInterface
+	if networkInterface == "" {
+		networkInterface = "DET_AUTO_DETECT_NETWORK_INTERFACE"
+	}
+
+	envVars := defaultEnvVars()
+	envVars["DET_EXPERIMENT_ID"] = fmt.Sprintf("%d", exp.InitialWorkload.ExperimentID)
+	envVars["DET_TRIAL_ID"] = fmt.Sprintf("%d", exp.InitialWorkload.TrialID)
+	envVars["DET_TRIAL_SEED"] = fmt.Sprintf("%d", exp.TrialSeed)
+	envVars["DET_EXPERIMENT_CONFIG"] = jsonify(exp.ExperimentConfig)
+	envVars["DET_HPARAMS"] = jsonify(exp.HParams)
+	envVars["DET_INITIAL_WORKLOAD"] = jsonify(exp.InitialWorkload)
+	envVars["DET_LATEST_CHECKPOINT"] = jsonify(exp.LatestCheckpoint)
+	envVars["DET_WORKLOAD_MANAGER_TYPE"] = string(exp.WorkloadManagerType)
+	envVars["DET_RENDEZVOUS_PORTS"] = strings.Join(rendezvousPorts, ",")
+	envVars["DET_TRIAL_RUNNER_NETWORK_INTERFACE"] = networkInterface
+
+	if t.TaskContainerDefaults.NCCLPortRange != "" {
+		envVars["NCCL_PORT_RANGE"] = t.TaskContainerDefaults.NCCLPortRange
+	}
+	if t.TaskContainerDefaults.NCCLPortRange != "" {
+		envVars["GLOO_PORT_RANGE"] = t.TaskContainerDefaults.NCCLPortRange
+	}
+
+	return envVars
+}
+
+// ConfigureTrialArchives returns the additional files for a trial as an archive.
+func ConfigureTrialArchives(t TaskSpec) []container.RunArchive {
+	exp := *t.StartContainer
+
+	return []container.RunArchive{
+		workDirArchive(exp.AgentUserGroup),
+		wrapArchive(exp.AdditionalFiles, rootDir),
+		wrapArchive(exp.AgentUserGroup.OwnArchive(exp.ModelDefinition), ContainerWorkDir),
+		harnessArchive(t.HarnessPath, exp.AgentUserGroup),
+	}
+}
+
+func startContainer(t TaskSpec) container.Spec {
+	exp := *t.StartContainer
+	user := getUser(exp.AgentUserGroup)
+	deviceType := device.CPU
+	if len(t.Devices) > 0 {
+		deviceType = t.Devices[0].Type
+	}
+	mounts := ConfigureTrialDockerMounts(exp)
 	networkMode := t.TaskContainerDefaults.NetworkMode
 	if exp.ExperimentConfig.Resources.SlotsPerTrial > 1 {
 		networkMode = hostMode
@@ -167,34 +236,12 @@ func startContainer(t TaskSpec) container.Spec {
 		ports[port] = struct{}{}
 	}
 
-	networkInterface := t.TaskContainerDefaults.DtrainNetworkInterface
-	if networkInterface == "" {
-		networkInterface = "DET_AUTO_DETECT_NETWORK_INTERFACE"
+	envVarsMap := ConfigureTrialEnvVars(t, rPortsEnvVars)
+	envVars := make([]string, 0, len(envVarsMap))
+	for envVarKey, envVarValue := range envVarsMap {
+		envVars = append(envVars, fmt.Sprintf("%s=%s", envVarKey, envVarValue))
 	}
-
-	envVars := defaultEnvVars()
 	envVars = append(envVars, exp.ExperimentConfig.Environment.EnvironmentVariables.For(deviceType)...)
-	envVars = append(envVars,
-		fmt.Sprintf("DET_EXPERIMENT_ID=%d", exp.InitialWorkload.ExperimentID),
-		fmt.Sprintf("DET_TRIAL_ID=%d", exp.InitialWorkload.TrialID),
-		fmt.Sprintf("DET_TRIAL_SEED=%d", exp.TrialSeed),
-		fmt.Sprintf("DET_EXPERIMENT_CONFIG=%s", jsonify(exp.ExperimentConfig)),
-		fmt.Sprintf("DET_HPARAMS=%s", jsonify(exp.HParams)),
-		fmt.Sprintf("DET_INITIAL_WORKLOAD=%s", jsonify(exp.InitialWorkload)),
-		fmt.Sprintf("DET_LATEST_CHECKPOINT=%s", jsonify(exp.LatestCheckpoint)),
-		fmt.Sprintf("DET_WORKLOAD_MANAGER_TYPE=%s", exp.WorkloadManagerType),
-		fmt.Sprintf("DET_RENDEZVOUS_PORTS=%s", strings.Join(rPortsEnvVars, ",")),
-		fmt.Sprintf("DET_TRIAL_RUNNER_NETWORK_INTERFACE=%s", networkInterface),
-	)
-
-	if t.TaskContainerDefaults.NCCLPortRange != "" {
-		envVars = append(envVars,
-			fmt.Sprintf("NCCL_PORT_RANGE=%s", t.TaskContainerDefaults.NCCLPortRange))
-	}
-	if t.TaskContainerDefaults.NCCLPortRange != "" {
-		envVars = append(envVars,
-			fmt.Sprintf("GLOO_PORT_RANGE=%s", t.TaskContainerDefaults.NCCLPortRange))
-	}
 
 	spec := container.Spec{
 		PullSpec: container.PullSpec{
@@ -208,19 +255,14 @@ func startContainer(t TaskSpec) container.Spec {
 				Image:        exp.ExperimentConfig.Environment.Image.For(deviceType),
 				ExposedPorts: ports,
 				Env:          envVars,
-				WorkingDir:   containerWorkDir,
+				WorkingDir:   ContainerWorkDir,
 			},
 			HostConfig: docker.HostConfig{
 				NetworkMode:     networkMode,
 				Mounts:          mounts,
 				PublishAllPorts: true,
 			},
-			Archives: []container.RunArchive{
-				workDirArchive(exp.AgentUserGroup),
-				wrapArchive(exp.AdditionalFiles, rootDir),
-				wrapArchive(exp.AgentUserGroup.OwnArchive(exp.ModelDefinition), containerWorkDir),
-				harnessArchive(t.HarnessPath, exp.AgentUserGroup),
-			},
+			Archives: ConfigureTrialArchives(t),
 		},
 	}
 	spec.RunSpec.HostConfig.ShmSize = t.TaskContainerDefaults.ShmSizeBytes
@@ -230,19 +272,14 @@ func startContainer(t TaskSpec) container.Spec {
 	return spec
 }
 
-func gcCheckpoint(t TaskSpec) container.Spec {
-	gcc := *t.GCCheckpoints
-	user := ""
-	if gcc.AgentUserGroup != nil {
-		user = fmt.Sprintf("%d:%d", gcc.AgentUserGroup.UID, gcc.AgentUserGroup.GID)
-	}
-	deviceType := device.CPU
-	if len(t.Devices) > 0 {
-		deviceType = t.Devices[0].Type
-	}
-	envVars := defaultEnvVars()
-	envVars = append(envVars, gcc.ExperimentConfig.Environment.EnvironmentVariables.For(deviceType)...)
-	mounts := toDockerMounts(gcc.ExperimentConfig.BindMounts)
+// ConfigureGCEnvVars returns environment variables for gc.
+func ConfigureGCEnvVars() map[string]string {
+	return defaultEnvVars()
+}
+
+// ConfigureGCDockerMounts returns the host mounts for a gc container.
+func ConfigureGCDockerMounts(gcc GCCheckpoints) []mount.Mount {
+	mounts := ToDockerMounts(gcc.ExperimentConfig.BindMounts)
 	if gcc.ExperimentConfig.CheckpointStorage.SharedFSConfig != nil {
 		sharedFS := gcc.ExperimentConfig.CheckpointStorage.SharedFSConfig
 		mounts = append(mounts, mount.Mount{
@@ -254,6 +291,68 @@ func gcCheckpoint(t TaskSpec) container.Spec {
 			},
 		})
 	}
+
+	return mounts
+}
+
+// ConfigureGCArchives returns the additional files for gc as an archive.
+func ConfigureGCArchives(t TaskSpec) []container.RunArchive {
+	gcc := *t.GCCheckpoints
+
+	return []container.RunArchive{
+		workDirArchive(gcc.AgentUserGroup),
+		wrapArchive(
+			archive.Archive{
+				gcc.AgentUserGroup.OwnedArchiveItem(
+					"experiment_config.json",
+					[]byte(jsonify(gcc.ExperimentConfig)),
+					0600,
+					tar.TypeReg,
+				),
+				gcc.AgentUserGroup.OwnedArchiveItem(
+					"checkpoints_to_delete.json",
+					[]byte(jsonify(gcc.ToDelete)),
+					0600,
+					tar.TypeReg,
+				),
+				gcc.AgentUserGroup.OwnedArchiveItem(
+					etc.GCCheckpointsEntrypointResource,
+					etc.MustStaticFile(etc.GCCheckpointsEntrypointResource),
+					0700,
+					tar.TypeReg,
+				),
+			},
+			ContainerWorkDir,
+		),
+		harnessArchive(t.HarnessPath, gcc.AgentUserGroup),
+	}
+}
+
+// ConfigureGCCmd configures the entrypoint for GC tasks.
+func ConfigureGCCmd() []string {
+	return []string{
+		filepath.Join(ContainerWorkDir, etc.GCCheckpointsEntrypointResource),
+		"--experiment-config",
+		"experiment_config.json",
+		"--delete",
+		"checkpoints_to_delete.json",
+	}
+}
+
+func gcCheckpoint(t TaskSpec) container.Spec {
+	gcc := *t.GCCheckpoints
+	user := getUser(gcc.AgentUserGroup)
+	deviceType := device.CPU
+	if len(t.Devices) > 0 {
+		deviceType = t.Devices[0].Type
+	}
+	envVarsMap := ConfigureGCEnvVars()
+	envVars := make([]string, 0, len(envVarsMap))
+	for envVarKey, envVarValue := range envVarsMap {
+		envVars = append(envVars, fmt.Sprintf("%s=%s", envVarKey, envVarValue))
+	}
+	envVars = append(envVars, gcc.ExperimentConfig.Environment.EnvironmentVariables.For(deviceType)...)
+
 	return container.Spec{
 		PullSpec: container.PullSpec{
 			ForcePull: gcc.ExperimentConfig.Environment.ForcePullImage,
@@ -262,7 +361,7 @@ func gcCheckpoint(t TaskSpec) container.Spec {
 		RunSpec: container.RunSpec{
 			ContainerConfig: docker.Config{
 				Cmd: []string{
-					filepath.Join(containerWorkDir, etc.GCCheckpointsEntrypointResource),
+					filepath.Join(ContainerWorkDir, etc.GCCheckpointsEntrypointResource),
 					"--experiment-config",
 					"experiment_config.json",
 					"--delete",
@@ -271,40 +370,14 @@ func gcCheckpoint(t TaskSpec) container.Spec {
 				User:       user,
 				Image:      gcc.ExperimentConfig.Environment.Image.For(deviceType),
 				Env:        envVars,
-				WorkingDir: containerWorkDir,
+				WorkingDir: ContainerWorkDir,
 			},
 			HostConfig: docker.HostConfig{
 				NetworkMode:     t.TaskContainerDefaults.NetworkMode,
-				Mounts:          mounts,
+				Mounts:          ConfigureGCDockerMounts(gcc),
 				PublishAllPorts: true,
 			},
-			Archives: []container.RunArchive{
-				workDirArchive(gcc.AgentUserGroup),
-				wrapArchive(
-					archive.Archive{
-						gcc.AgentUserGroup.OwnedArchiveItem(
-							"experiment_config.json",
-							[]byte(jsonify(gcc.ExperimentConfig)),
-							0600,
-							tar.TypeReg,
-						),
-						gcc.AgentUserGroup.OwnedArchiveItem(
-							"checkpoints_to_delete.json",
-							[]byte(jsonify(gcc.ToDelete)),
-							0600,
-							tar.TypeReg,
-						),
-						gcc.AgentUserGroup.OwnedArchiveItem(
-							etc.GCCheckpointsEntrypointResource,
-							etc.MustStaticFile(etc.GCCheckpointsEntrypointResource),
-							0700,
-							tar.TypeReg,
-						),
-					},
-					containerWorkDir,
-				),
-				harnessArchive(t.HarnessPath, gcc.AgentUserGroup),
-			},
+			Archives: ConfigureGCArchives(t),
 		},
 	}
 }

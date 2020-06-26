@@ -86,10 +86,11 @@ type DefaultResourceProviderConfig struct{}
 
 // KubernetesResourceProviderConfig hosts configuration fields for the kubernetes resource provider.
 type KubernetesResourceProviderConfig struct {
-	Namespace      string `json:"namespace"`
-	SlotsPerNode   int    `json:"slots_per_node"`
-	OutOfCluster   bool   `json:"out_of_cluster"`
-	KubeConfigPath string `json:"kube_config_path"`
+	Namespace         string `json:"namespace"`
+	SlotsPerNode      int    `json:"slots_per_node"`
+	OutOfCluster      bool   `json:"out_of_cluster"`
+	KubeConfigPath    string `json:"kube_config_path"`
+	MasterServiceName string `json:"master_service_name"`
 }
 
 // Validate implements the check.Validatable interface.

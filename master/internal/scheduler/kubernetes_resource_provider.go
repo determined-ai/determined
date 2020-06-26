@@ -17,6 +17,7 @@ type kubernetesResourceProvider struct {
 	slotsPerNode          int
 	outOfCluster          bool
 	kubeConfigPath        string
+	masterServiceName     string
 	proxy                 *actor.Ref
 	harnessPath           string
 	taskContainerDefaults model.TaskContainerDefaultsConfig
@@ -39,6 +40,7 @@ func NewKubernetesResourceProvider(
 	slotsPerNode int,
 	outOfCluster bool,
 	kubeConfigPath string,
+	masterServiceName string,
 	proxy *actor.Ref,
 	harnessPath string,
 	taskContainerDefaults model.TaskContainerDefaultsConfig,
@@ -49,6 +51,7 @@ func NewKubernetesResourceProvider(
 		slotsPerNode:          slotsPerNode,
 		outOfCluster:          outOfCluster,
 		kubeConfigPath:        kubeConfigPath,
+		masterServiceName:     masterServiceName,
 		proxy:                 proxy,
 		harnessPath:           harnessPath,
 		taskContainerDefaults: taskContainerDefaults,
@@ -75,6 +78,7 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 			k.namespace,
 			k.outOfCluster,
 			k.kubeConfigPath,
+			k.masterServiceName,
 		)
 
 		k.agent = newAgentState(sproto.AddAgent{Agent: podsActor})
@@ -86,6 +90,9 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 
 	case SetTaskName:
 		k.receiveSetTaskName(ctx, msg)
+
+	case StartTask:
+		k.receiveStartTask(ctx, msg)
 
 	default:
 		ctx.Log().Error("Unexpected message", reflect.TypeOf(msg))
@@ -117,7 +124,7 @@ func (k *kubernetesResourceProvider) receiveAddTask(ctx *actor.Context, msg AddT
 
 	name := msg.Name
 	if len(name) == 0 {
-		name = "Unnamed k8 Task"
+		name = "Unnamed-k8-Task"
 	}
 
 	task := newTask(&Task{
@@ -145,9 +152,15 @@ func (k *kubernetesResourceProvider) scheduleTask(ctx *actor.Context, task *Task
 	numPods := 1
 	slotsPerNode := task.SlotsNeeded()
 	if task.SlotsNeeded() > 1 {
+		if k.slotsPerNode == 0 {
+			ctx.Log().WithField("task ID", task.ID).Error(
+				"set slots_per_node > 0 to schedule tasks with slots")
+			return
+		}
+
 		if task.SlotsNeeded()%k.slotsPerNode != 0 {
 			ctx.Log().WithField("task ID", task.ID).Error(
-				"task number of slots is not schedulable on on configured slotsPerNode")
+				"task number of slots is not schedulable on the configured slots_per_node")
 			return
 		}
 		numPods = task.SlotsNeeded() / k.slotsPerNode
@@ -173,11 +186,12 @@ func (k *kubernetesResourceProvider) assignPod(ctx *actor.Context, task *Task, s
 	k.assigmentByTaskHandler[task.handler] = append(
 		k.assigmentByTaskHandler[task.handler],
 		podAssignment{
-			task:                  task,
-			agent:                 k.agent,
-			container:             container,
-			clusterID:             k.clusterID,
-			harnessPath:           k.harnessPath,
+			task:        task,
+			agent:       k.agent,
+			container:   container,
+			clusterID:   k.clusterID,
+			harnessPath: k.harnessPath,
+
 			taskContainerDefaults: k.taskContainerDefaults,
 		})
 }
@@ -200,5 +214,23 @@ func (k *kubernetesResourceProvider) getOrCreateGroup(
 func (k *kubernetesResourceProvider) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) {
 	if task, ok := k.tasksByHandler[msg.TaskHandler]; ok {
 		task.name = msg.Name
+	}
+}
+
+func (k *kubernetesResourceProvider) receiveStartTask(ctx *actor.Context, msg StartTask) {
+	task := k.tasksByHandler[msg.TaskHandler]
+	if task == nil {
+		ctx.Log().WithField("address", msg.TaskHandler.Address()).Errorf("unknown task trying to start")
+		return
+	}
+
+	assignments := k.assigmentByTaskHandler[msg.TaskHandler]
+	if len(assignments) == 0 {
+		ctx.Log().WithField("name", task.name).Error("task is trying to start without any assignments")
+		return
+	}
+
+	for _, a := range assignments {
+		a.StartTask(msg.Spec)
 	}
 }
