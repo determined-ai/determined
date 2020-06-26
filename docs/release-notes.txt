@@ -13,41 +13,37 @@ Version 0.12.10
 
 **Improvements**
 
-- Paginate trial logs displayed from the CLI.
+- WebUI: Add a dedicated page for master logs at ``/det/logs``.
 
-- Add a dedicated WebUI page for master logs at ``/det/logs``.
+- WebUI: Provide a Swagger UI for exploring the Determined REST API. This can be accessed via the API link on the WebUI.
 
-- Link to Swagger UI for experimenting with the redesigned Determined endpoint.
+- WebUI: Default the Experiments view list length to 25 entries. More entries can be shown as needed.
 
-- Show the dropdown action menu as disabled where there are no actions.
+- WebUI: Improve detection of situations where the WebUI version doesn't match the master version as a result of browser caching.
 
-- Only show the first 25 experiments by default in the Experiment list page, and show more as requested.
+- CLI: Improve performance when retrieving trial logs.
 
-- Present user with a notification when on an Elm page (``/ui/experiments``, ``/ui/notebooks``, etc) and the WebUI and the platform version does not match.
+- CLI: Add the ``det user rename`` command for administrators to change the username of existing users.
 
-- Add the ``det user rename`` CLI command for administrators to change the username of existing users.
+- Expand :ref:`use-trained-models` by including checkpoint metadata management.
 
-- Expand the "Using Trained Checkpoints" guide to include checkpoint metadata management.
+- Reorganize examples by splitting :ref:`model-definitions_native-api` and :ref:`model-definitions_trial-api` examples into separate folders.
 
-- Move examples from under the ``official`` subdirectory, into ``native`` and ``trial`` subdirectories.
-
-**Bug fixes**
-
-- Ensure network failures during checkpoint upload do not unrecoverably break the associated trial.
-
-- Ensure old checkpoints are loadable.
-
-- Ensure ``shared_fs`` is usable for non-root containers for some ``host_path`` values.
+**Bug Fixes**
 
 - Allow ``det-deploy local agent-up`` to work with remote masters.
 
+- Ensure network failures during checkpoint upload do not unrecoverably break the associated trial.
+
+- Ensure ``shared_fs`` is usable for non-root containers for some ``host_path`` values.
+
 - Fix a timeout issue that affected large (40+ machines) distributed experiments.
 
-- Enable the CLI to make secure websocket connections to the master.
+- Ensure the CLI can make secure connections to the master.
 
 - Fix an issue that affected multi-GPU in ``PyTorchTrial`` with mixed precision enabled.
 
-- Ensure that trial containers do not remain alive for too long after they should be terminated.
+- Add a timeout to trial containers to ensure they are terminated promptly.
 
 Version 0.12.7
 ^^^^^^^^^^^^^^
