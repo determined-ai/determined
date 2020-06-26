@@ -3,6 +3,7 @@ import { RouteProps } from 'react-router';
 
 import Cluster from 'pages/Cluster';
 import Dashboard from 'pages/Dashboard';
+import ExperimentList from 'pages/ExperimentList';
 import MasterLogs from 'pages/MasterLogs';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
@@ -42,35 +43,50 @@ const clusterRoute =
   {
     component: Cluster,
     icon: 'cluster',
-    id: 'cluster',
+    id: 'cluster-det',
     needAuth: true,
     path: '/det/cluster',
-    title: 'Cluster',
+    title: 'Cluster (dev)',
+  };
+
+const experimentListRoute =
+  {
+    component: ExperimentList,
+    icon: 'experiment',
+    id: 'experimentList',
+    needAuth: true,
+    path: '/det/experiments',
+    title: 'Experiments',
   };
 
 const taskListRoute =
   {
     component: TaskList,
-    icon: 'task',
+    icon: 'list',
     id: 'taskList',
     needAuth: true,
     path: '/det/tasks',
     title: 'Tasks',
   };
 
-export const defaultAppRoute = dashboardRoute;
-
-export const appRoutes: RouteConfig[] = [
-  dashboardRoute,
-  taskListRoute,
-  clusterRoute,
+const masterLogsRoute =
   {
     component: MasterLogs,
+    icon: 'logs',
     id: 'logs',
     needAuth: true,
     path: '/det/logs',
     title: 'Master Logs',
-  },
+  };
+
+export const defaultAppRoute = dashboardRoute;
+
+export const appRoutes: RouteConfig[] = [
+  dashboardRoute,
+  experimentListRoute,
+  taskListRoute,
+  clusterRoute,
+  masterLogsRoute,
   {
     component: SignIn,
     id: 'login',
@@ -132,6 +148,14 @@ export const sidebarRoutes: RouteConfig[] = [
   },
 ];
 export const defaultSideBarRoute = sidebarRoutes[0];
+
+if (process.env.IS_DEV) {
+  sidebarRoutes.push(
+    clusterRoute,
+    taskListRoute,
+    experimentListRoute,
+  );
+}
 
 // Is the path going to be served from the same host?
 const isDetRoute = (url: string): boolean => {

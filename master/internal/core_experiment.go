@@ -328,7 +328,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
 			&checkpointGCTask{
 				agentUserGroup: agentUserGroup,
-				cluster:        m.cluster,
+				rp:             m.rp,
 				db:             m.db,
 				experiment:     dbExp,
 			})
@@ -478,7 +478,7 @@ func (m *Master) deleteExperiment(c echo.Context) (interface{}, error) {
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
 	m.system.ActorOf(addr, &checkpointGCTask{
 		agentUserGroup: agentUserGroup,
-		cluster:        m.cluster,
+		rp:             m.rp,
 		db:             m.db,
 		experiment:     dbExp,
 	})

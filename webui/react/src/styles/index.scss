@@ -25,3 +25,7 @@ h3 { font-size: 2.4rem; }
 h4 { font-size: 2.2rem; }
 h5 { font-size: 2rem; }
 h6 { font-size: 1.8rem; }
+#clipboard {
+  opacity: 0;
+  user-select: none;
+}

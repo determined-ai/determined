@@ -9,17 +9,17 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-func (c *Cluster) addTask(inTask *Task) *Task {
+func (d *DefaultRP) addTask(inTask *Task) *Task {
 	task := newTask(inTask)
 
-	c.tasksByID[task.ID] = task
-	c.tasksByHandler[task.handler] = task
-	c.taskList.Add(task)
+	d.tasksByID[task.ID] = task
+	d.tasksByHandler[task.handler] = task
+	d.taskList.Add(task)
 
 	return task
 }
 
-func (c *Cluster) addAgent(
+func (d *DefaultRP) addAgent(
 	t *testing.T,
 	system *actor.System,
 	agentID string,
@@ -28,7 +28,7 @@ func (c *Cluster) addAgent(
 	numZeroSlotContainers int,
 ) {
 	agent := createAgent(t, system, agentID, numSlots, numUsedSlots, numZeroSlotContainers)
-	c.agents[agent.handler] = agent
+	d.agents[agent.handler] = agent
 }
 
 func createAgents(
@@ -166,14 +166,14 @@ func agentsDifference(agents1 []*AgentSummary, agents2 []*AgentSummary) []*Agent
 func addTask(
 	t *testing.T,
 	system *actor.System,
-	c *Cluster,
+	d *DefaultRP,
 	taskID string,
 	state taskState,
 	slotsNeeded int,
 ) *Task {
-	task := c.addTask(&Task{
+	task := d.addTask(&Task{
 		ID:           TaskID(taskID),
-		group:        c.getOrCreateGroup(newGroup(t, system, taskID+"-group"), nil),
+		group:        d.getOrCreateGroup(newGroup(t, system, taskID+"-group"), nil),
 		handler:      newGroup(t, system, taskID+"-handler"),
 		slotsNeeded:  slotsNeeded,
 		canTerminate: true,
@@ -188,13 +188,13 @@ func TestBasic(t *testing.T) {
 	agents := createAgents(t, system, "agent", 1, 5)
 	agents = append(agents, createAgent(t, system, "agentx", 1, 0, 1))
 	var tasks []*actor.Ref
-	c := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
-	c.provisionerView = newProvisionerView(4)
-	addTask(t, system, c, "task1", taskRunning, 1)
-	addTask(t, system, c, "task2", taskPending, 1)
-	addTask(t, system, c, "task3", taskPending, 5)
+	d := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
+	d.provisionerView = newProvisionerView(4)
+	addTask(t, system, d, "task1", taskRunning, 1)
+	addTask(t, system, d, "task2", taskPending, 1)
+	addTask(t, system, d, "task3", taskPending, 5)
 
-	snapshot1, updated := c.provisionerView.Update(c)
+	snapshot1, updated := d.provisionerView.Update(d)
 
 	assert.Equal(t, 1, len(snapshot1.Agents))
 	assert.Equal(t, 1, len(snapshot1.Tasks))

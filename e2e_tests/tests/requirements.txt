@@ -1,3 +1,4 @@
+appdirs
 pytest
 pexpect
 torch==1.4

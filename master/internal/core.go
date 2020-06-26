@@ -18,7 +18,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/determined-ai/determined/master/internal/agent"
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/context"
@@ -27,6 +26,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/provisioner"
 	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/internal/template"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -51,7 +51,7 @@ type Master struct {
 	logs          *logger.LogBuffer
 	system        *actor.System
 	echo          *echo.Echo
-	cluster       *actor.Ref
+	rp            *actor.Ref
 	rwCoordinator *actor.Ref
 	provisioner   *actor.Ref
 	db            *db.PgDB
@@ -292,7 +292,8 @@ func (m *Master) Run() error {
 	// Actor structure:
 	// master system
 	// +- Provisioner (provisioner.Provisioner: provisioner)
-	// +- Cluster (scheduler.Cluster: cluster)
+	// +- ResourceProviders (scheduler.ResourceProviders: resourceProviders)
+	// +- DefaultResourceProvider (scheduler.DefaultResourceProvider: defaultRP)
 	// +- Service Proxy (proxy.Proxy: proxy)
 	// +- RWCoordinator (internal.rw_coordinator: rwCoordinator)
 	// +- Telemetry (telemetry.telemetryActor: telemetry)
@@ -326,7 +327,7 @@ func (m *Master) Run() error {
 
 	proxyRef, _ := m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{})
 
-	cluster := scheduler.NewCluster(
+	defaultRP, _ := m.system.ActorOf(actor.Addr("defaultRP"), scheduler.NewDefaultRP(
 		m.ClusterID,
 		m.config.Scheduler.MakeScheduler(),
 		m.config.Scheduler.FitFunction(),
@@ -335,9 +336,11 @@ func (m *Master) Run() error {
 		m.config.TaskContainerDefaults,
 		m.provisioner,
 		provisionerSlotsPerInstance,
-	)
+	))
 
-	m.cluster, _ = m.system.ActorOf(actor.Addr("cluster"), cluster)
+	m.rp, _ = m.system.ActorOf(
+		actor.Addr("resourceProviders"),
+		scheduler.NewResourceProviders(defaultRP))
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 
 	rwCoordinator := newRWCoordinator()
@@ -352,9 +355,22 @@ func (m *Master) Run() error {
 		go m.restoreExperiment(exp)
 	}
 
+	// Used to decide whether we add trailing slash to the paths or not affecting
+	// relative links in web pages hosted under these routes.
+	staticWebDirectoryPaths := map[string]bool{
+		"/swagger-ui": true,
+		"/docs":       true,
+	}
+
 	// Initialize the HTTP server and listen for incoming requests.
 	m.echo = echo.New()
 	m.echo.Use(middleware.Recover())
+	m.echo.Use(middleware.AddTrailingSlashWithConfig(middleware.TrailingSlashConfig{
+		Skipper: func(c echo.Context) bool {
+			return !staticWebDirectoryPaths[c.Path()]
+		},
+		RedirectCode: http.StatusMovedPermanently,
+	}))
 
 	// Add resistance to common HTTP attacks.
 	//
@@ -387,9 +403,6 @@ func (m *Master) Run() error {
 
 	// Docs.
 	m.echo.Static("/docs", filepath.Join(webuiRoot, "docs"))
-	m.echo.GET("/docs", func(c echo.Context) error {
-		return c.Redirect(http.StatusMovedPermanently, "/docs/")
-	})
 
 	type fileRoute struct {
 		route string
@@ -516,7 +529,7 @@ func (m *Master) Run() error {
 	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
 
-	agent.Initialize(m.system, m.echo, m.cluster)
+	m.system.Tell(m.rp, sproto.ConfigureEndpoints{System: m.system, Echo: m.echo})
 
 	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "" {
 		if telemetry, err := telemetry.NewActor(

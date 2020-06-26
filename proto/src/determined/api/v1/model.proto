@@ -3,6 +3,10 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/struct.proto";
+
+import "determined/api/v1/pagination.proto";
 import "determined/model/v1/model.proto";
 
 // Get the requested model.
@@ -14,5 +18,72 @@ message GetModelRequest {
 // Response to GetModelRequest.
 message GetModelResponse {
   // The model requested.
+  determined.model.v1.Model model = 1;
+}
+
+// Get a list of models.
+message GetModelsRequest {
+  // Sort models by the given field.
+  enum SortBy {
+    // Returns models in an unsorted list.
+    SORT_BY_UNSPECIFIED = 0;
+    // Returns models sorted by name.
+    SORT_BY_NAME = 1;
+    // Returns models sorted by description.
+    SORT_BY_DESCRIPTION = 2;
+    // Returns models sorted by creation time.
+    SORT_BY_CREATION_TIME = 4;
+    // Returns models sorted by last updated time.
+    SORT_BY_LAST_UPDATED_TIME = 5;
+  }
+
+  // Sort the models by the given field.
+  SortBy sort_by = 1;
+  // Order models in either ascending or descending order.
+  OrderBy order_by = 2;
+
+  // Skip the number of models before returning results. Negative values
+  // denote number of models to skip from the end before returning results.
+  int32 offset = 3;
+  // Limit the number of models. A value of 0 denotes no limit.
+  int32 limit = 4;
+
+  // Limit the models to those matching the name.
+  string name = 5;
+  // Limit the models to those matching the description.
+  string description = 6;
+}
+
+// Response to GetModelsRequest
+message GetModelsResponse {
+  // The list of returned models.
+  repeated determined.model.v1.Model models = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
+}
+
+// Request for creating a model in the registry.
+message PostModelRequest {
+  // The model to create.
+  determined.model.v1.Model model = 1;
+}
+
+// Response to PostModelRequest.
+message PostModelResponse {
+  // The model created.
+  determined.model.v1.Model model = 1;
+}
+
+// Request for updating a model in the registry.
+message PatchModelRequest {
+  // The model desired model fields and values.
+  determined.model.v1.Model model = 1;
+  // An update mask for the above model.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+// Response to PatchModelRequest.
+message PatchModelResponse {
+  // The model created.
   determined.model.v1.Model model = 1;
 }

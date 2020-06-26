@@ -20,13 +20,13 @@ const TaskCard: React.FC<RecentTask> = (props: RecentTask) => {
   }
   const classes = [ css.base ];
 
-  if (props.url) classes.push(css.link);
   const iconName = isExperimentTask(props) ? 'experiment' : props.type.toLowerCase();
+  if (canBeOpened(props) && props.url) classes.push(css.link);
 
   return (
     <div className={classes.join(' ')}>
-      <Link disabled={canBeOpened(props)} inherit path={props.url || '#'}>
-        {isExperimentTask(props) && hasProgress && <div className={css.progressBar}>
+      <Link disabled={!canBeOpened(props)} inherit path={props.url || '#'}>
+        {isExperimentTask(props) && <div className={css.progressBar}>
           <ProgressBar percent={(props.progress || 0) * 100} state={props.state} />
         </div>}
         <div className={css.upper}>

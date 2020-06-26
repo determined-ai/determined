@@ -1,13 +1,18 @@
 .base {
+  color: var(--theme-colors-monochrome-8);
+
   button {
     background: none;
     border: none;
-    color: var(--theme-colors-monochrome-8);
     cursor: pointer;
     font: inherit;
     outline: inherit;
     padding: 0;
 
     &:hover { color: var(--theme-colors-core-action); }
+  }
+  button:disabled,
+  button[disabled] {
+    &:hover { color: var(--theme-colors-monochrome-8); }
   }
 }

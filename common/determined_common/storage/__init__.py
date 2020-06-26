@@ -28,7 +28,7 @@ _STORAGE_MANAGERS = {
 }  # type: Dict[str, Type[StorageManager]]
 
 
-def build(config: Dict[str, Any], container_path: Optional[str] = None) -> StorageManager:
+def build(config: Dict[str, Any], container_path: Optional[str]) -> StorageManager:
     """
     Return a checkpoint manager defined by the value of the `type` key in
     the configuration dictionary. Throws a `TypeError` if no storage manager
@@ -106,5 +106,5 @@ def validate_manager(manager: StorageManager) -> None:
     manager.delete(metadata)
 
 
-def validate_config(config: Dict[str, Any]) -> None:
-    validate_manager(build(config))
+def validate_config(config: Dict[str, Any], container_path: Optional[str]) -> None:
+    validate_manager(build(config, container_path))

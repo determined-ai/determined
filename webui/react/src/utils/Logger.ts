@@ -1,5 +1,5 @@
 enum Level {
-  Warn  = 'warn',
+  Warn = 'warn',
   Error = 'error',
 }
 

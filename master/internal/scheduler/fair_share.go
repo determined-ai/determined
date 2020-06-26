@@ -32,11 +32,11 @@ type groupState struct {
 	runningTasks []*Task
 }
 
-func (f *fairShare) Schedule(cluster *Cluster) {
-	for it := cluster.taskList.iterator(); it.next(); {
+func (f *fairShare) Schedule(rp *DefaultRP) {
+	for it := rp.taskList.iterator(); it.next(); {
 		task := it.value()
 		if task.SlotsNeeded() == 0 && task.state == taskPending {
-			cluster.assignTask(task)
+			rp.assignTask(task)
 		}
 	}
 
@@ -51,31 +51,31 @@ func (f *fairShare) Schedule(cluster *Cluster) {
 	// fit on any agent due to hard contraints. This may cause the scheduler to
 	// not schedule any tasks and therefore not make progress. Slot offers and
 	// reclaiming slots should be rethought in scheduler v2.
-	capacity := capacityByAgentLabel(cluster)
-	states := calculateGroupStates(cluster, capacity)
+	capacity := capacityByAgentLabel(rp)
+	states := calculateGroupStates(rp, capacity)
 
 	for label, groupStates := range states {
 		allocateSlotOffers(groupStates, capacity[label])
-		assignTasks(cluster, groupStates)
+		assignTasks(rp, groupStates)
 	}
 }
 
-func capacityByAgentLabel(cluster *Cluster) map[string]int {
+func capacityByAgentLabel(rp *DefaultRP) map[string]int {
 	agentCap := map[string]int{}
 
-	for _, agent := range cluster.agents {
+	for _, agent := range rp.agents {
 		agentCap[agent.label] += agent.numSlots()
 	}
 
 	return agentCap
 }
 
-func calculateGroupStates(cluster *Cluster, capacities map[string]int) map[string][]*groupState {
+func calculateGroupStates(rp *DefaultRP, capacities map[string]int) map[string][]*groupState {
 	// Group all tasks by their respective task group and calculate the slot demand of each group.
 	// Demand is calculated by summing the slots needed for each schedulable task.
 	states := make(map[string][]*groupState)
 	groupMapping := make(map[*group]*groupState)
-	for it := cluster.taskList.iterator(); it.next(); {
+	for it := rp.taskList.iterator(); it.next(); {
 		task := it.value()
 		if task.state == taskTerminated ||
 			task.SlotsNeeded() == 0 ||
@@ -216,14 +216,14 @@ func calculateSmallestAllocatableTask(state *groupState) (smallest *Task) {
 	return smallest
 }
 
-func assignTasks(cluster *Cluster, states []*groupState) {
+func assignTasks(rp *DefaultRP, states []*groupState) {
 	for _, state := range states {
 		if state.activeSlots > state.offered {
 			// Terminate tasks while the count of slots consumed by active tasks is greater than
 			// the count of offered slots.
 			// TODO: We should terminate running tasks more intelligently.
 			for _, task := range state.runningTasks {
-				cluster.terminateTask(task, false)
+				rp.terminateTask(task, false)
 				if task.state == taskTerminating {
 					state.activeSlots -= task.SlotsNeeded()
 				}
@@ -237,7 +237,7 @@ func assignTasks(cluster *Cluster, states []*groupState) {
 			state.offered -= state.activeSlots
 			for _, task := range state.pendingTasks {
 				if task.SlotsNeeded() <= state.offered {
-					if ok := cluster.assignTask(task); ok {
+					if ok := rp.assignTask(task); ok {
 						state.offered -= task.SlotsNeeded()
 					}
 				}

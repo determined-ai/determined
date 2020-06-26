@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -60,13 +60,13 @@ func (s *slot) Receive(ctx *actor.Context) error {
 		check.Panic(check.True(s.enabled.Enabled(), "container assigned but slot is not enabled"))
 		check.Panic(check.True(s.container == nil, "container already assigned to slot"))
 		s.container = &msg.Container
-	case scheduler.ContainerStateChanged:
+	case sproto.ContainerStateChanged:
 		check.Panic(check.Equal(s.container.ID, msg.Container.ID, "Invalid container id sent to slot"))
 		s.container = &msg.Container
 		if msg.Container.State == container.Terminated {
 			s.container = nil
 			if s.enabled.Enabled() {
-				ctx.Tell(s.cluster, scheduler.FreeDevice{DeviceID: s.deviceID(ctx)})
+				ctx.Tell(s.cluster, sproto.FreeDevice{DeviceID: s.deviceID(ctx)})
 			}
 		}
 	case *proto.GetSlotRequest:
@@ -111,14 +111,14 @@ func (s *slot) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 func (s *slot) patch(ctx *actor.Context) {
 	if s.enabled.Enabled() && !s.enabled.deviceAdded {
 		s.enabled.deviceAdded = true
-		add := scheduler.AddDevice{DeviceID: s.deviceID(ctx)}
+		add := sproto.AddDevice{DeviceID: s.deviceID(ctx)}
 		if s.container != nil {
 			add.ContainerID = &s.container.ID
 		}
 		ctx.Tell(s.cluster, add)
 	} else if !s.enabled.Enabled() && s.enabled.deviceAdded {
 		s.enabled.deviceAdded = false
-		remove := scheduler.RemoveDevice{DeviceID: s.deviceID(ctx)}
+		remove := sproto.RemoveDevice{DeviceID: s.deviceID(ctx)}
 		ctx.Tell(s.cluster, remove)
 		if s.container != nil {
 			kill := aproto.SignalContainer{ContainerID: s.container.ID, Signal: syscall.SIGKILL}
@@ -127,8 +127,8 @@ func (s *slot) patch(ctx *actor.Context) {
 	}
 }
 
-func (s *slot) deviceID(ctx *actor.Context) scheduler.DeviceID {
-	return scheduler.DeviceID{Agent: ctx.Self().Parent().Parent(), Device: s.device}
+func (s *slot) deviceID(ctx *actor.Context) sproto.DeviceID {
+	return sproto.DeviceID{Agent: ctx.Self().Parent().Parent(), Device: s.device}
 }
 
 func (s *slot) summarize(ctx *actor.Context) slotSummary {

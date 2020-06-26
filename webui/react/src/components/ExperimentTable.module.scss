@@ -1,0 +1,12 @@
+.base {
+  tr:hover {
+    text-decoration: none;
+  }
+  [class*="Badge"]:not(:last-child) {
+    margin-right: var(--theme-sizes-layout-small);
+  }
+  .nameColumn {
+    word-break: break-word;
+    word-wrap: break-word;
+  }
+}

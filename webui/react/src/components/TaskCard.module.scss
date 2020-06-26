@@ -79,8 +79,6 @@
   }
 }
 .link {
-  cursor: pointer;
-
   &:hover {
     border-color: var(--theme-colors-core-action);
     box-shadow: var(--theme-shadow);
@@ -88,5 +86,6 @@
     margin-left: 0;
     margin-right: 0;
     margin-top: calc(-1 * var(--theme-sizes-layout-micro));
+    text-decoration: none;
   }
 }

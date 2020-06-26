@@ -1,0 +1,27 @@
+.base {
+  align-items: center;
+  display: flex;
+
+  .button {
+    align-items: center;
+    background-color: var(--theme-colors-monochrome-17);
+    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
+    border-radius: var(--theme-sizes-border-radius);
+    cursor: pointer;
+    display: flex;
+    height: var(--theme-sizes-layout-huge);
+    outline: 0;
+    padding: 0 var(--theme-sizes-layout-small);
+    transition: 0.2s;
+
+    &:hover { border-color: var(--theme-colors-states-active); }
+  }
+  .button:not(:first-child) { margin-left: var(--theme-sizes-layout-medium); }
+  .button:focus {
+    box-shadow: var(--theme-outline);
+  }
+  .button.active {
+    border-color: var(--theme-colors-states-active);
+    color: var(--theme-colors-states-active);
+  }
+}

@@ -1,5 +1,11 @@
+swagger_client = "src/services/swagger"
+PROJECT_ROOT := "../../"
+
 .PHONY: get-deps
 get-deps:
+	# WARN this module also depends on the swagger generated api client
+	# which is not built or updated here. To set up this dependency checkout
+	# the swagger generated api client module at ../api-ts-sdk
 	for i in `seq 3`; do \
 		npm ci --no-audit && break ; \
 	done

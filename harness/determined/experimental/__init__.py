@@ -2,6 +2,9 @@ from determined_common.experimental import (
     Checkpoint,
     Determined,
     ExperimentReference,
+    Model,
+    ModelOrderBy,
+    ModelSortBy,
     TrialReference,
 )
 

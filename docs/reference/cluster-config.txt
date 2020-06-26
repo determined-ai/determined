@@ -184,6 +184,22 @@ The master supports the following configuration settings:
     - ``worst``: The worst-fit policy ensures that tasks will be
       placed on under-utilized agents.
 
+
+  - ``type``: The scheduling policy to use when allocating resources
+    between different tasks (experiments, notebooks, etc.).
+
+    - ``fair_share``: Tasks receive a proportional amount of the available
+      resources depending on the resource they require and their weight.
+
+    - ``priority``: Tasks are scheduled in the order of the order in which
+      they arrive at the cluster.
+
+
+  - ``resource_provider``: The resource provider to use to acquire agents.
+
+    - ``type: default``: The default resource provider includes static and
+      dynamic agents.
+
 - ``task_container_defaults``: Specifies Docker defaults for all task containers. A task represents a single schedulable unit, such as a trial, command, or tensorboard.
 
   - ``shm_size_bytes``: The size (in bytes) of ``/dev/shm`` for Determined task containers. Defaults to ``4294967296``.

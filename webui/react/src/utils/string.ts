@@ -22,3 +22,7 @@ export const toHtmlId = (str: string): string => {
 export const listToStr = (list: (string|undefined)[], glue = ' '): string => {
   return list.filter(item => !!item).join(glue);
 };
+
+export const floatToPercent = (num: number, precision = 2): string => {
+  return (num * 100).toFixed(precision) + '%';
+};

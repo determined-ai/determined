@@ -128,7 +128,7 @@ def make_default_env_context(
         container_gpus=gpu_uuids,
         slot_ids=[],
         debug=False,
-        workload_manager_type="",
+        workload_manager_type="TRIAL_WORKLOAD_MANAGER",
         det_rendezvous_ports="",
         det_trial_runner_network_interface=constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE,
         det_trial_id="1",

@@ -60,7 +60,7 @@ const (
 type experiment struct {
 	*model.Experiment
 	modelDefinition     archive.Archive
-	cluster             *actor.Ref
+	rp                  *actor.Ref
 	trialLogger         *actor.Ref
 	db                  *db.PgDB
 	searcher            *searcher.Searcher
@@ -113,7 +113,7 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 	return &experiment{
 		Experiment:          expModel,
 		modelDefinition:     modelDefinition,
-		cluster:             master.cluster,
+		rp:                  master.rp,
 		trialLogger:         master.trialLogger,
 		db:                  master.db,
 		searcher:            search,
@@ -256,8 +256,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		telemetry.ReportExperimentCreated(ctx.Self().System(), *e.Experiment)
 
-		ctx.Tell(e.cluster, scheduler.SetMaxSlots{MaxSlots: e.Config.Resources.MaxSlots})
-		ctx.Tell(e.cluster, scheduler.SetWeight{Weight: e.Config.Resources.Weight})
+		ctx.Tell(e.rp, scheduler.SetMaxSlots{
+			MaxSlots: e.Config.Resources.MaxSlots,
+			Handler:  ctx.Self(),
+		})
+		ctx.Tell(e.rp, scheduler.SetWeight{Weight: e.Config.Resources.Weight, Handler: ctx.Self()})
 		ops, err := e.searcher.InitialOperations()
 		e.processOperations(ctx, ops, err)
 	case trialCreated:
@@ -313,10 +316,12 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.updateState(ctx, msg)
 	case scheduler.SetMaxSlots:
 		e.Config.Resources.MaxSlots = msg.MaxSlots
-		ctx.Tell(e.cluster, msg)
+		msg.Handler = ctx.Self()
+		ctx.Tell(e.rp, msg)
 	case scheduler.SetWeight:
 		e.Config.Resources.Weight = msg.Weight
-		ctx.Tell(e.cluster, msg)
+		msg.Handler = ctx.Self()
+		ctx.Tell(e.rp, msg)
 
 	case killExperiment:
 		if _, running := model.RunningStates[e.State]; running {
@@ -354,7 +359,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		addr := actor.Addr(fmt.Sprintf("experiment-%d-checkpoint-gc", e.ID))
 		ctx.Self().System().ActorOf(addr, &checkpointGCTask{
 			agentUserGroup: e.agentUserGroup,
-			cluster:        e.cluster,
+			rp:             e.rp,
 			db:             e.db,
 			experiment:     e.Experiment,
 		})

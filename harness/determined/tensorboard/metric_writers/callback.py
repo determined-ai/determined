@@ -26,9 +26,6 @@ class BatchMetricWriter(callback.Callback):
         if not util.is_numerical_scalar(metric_val):
             return
 
-        if "/" in metric_key:
-            return
-
         self.writer.add_scalar("Determined/" + metric_key, metric_val, step)
 
     def on_train_step_end(

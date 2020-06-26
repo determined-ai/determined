@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "google/protobuf/wrappers.proto";
+
+import "determined/api/v1/pagination.proto";
+
+// Stream Trial logs.
+message TrialLogsRequest {
+    // The id of the trial.
+    int32 trial_id = 1;
+    // Skip the number of trial logs before returning results. Negative values
+    // denote number of trial logs to skip from the end before returning results.
+    int32 offset = 3;
+    // Limit the number of trial logs. A value of 0 denotes no limit.
+    int32 limit = 4;
+}
+// Response to TrialLogsRequest.
+message TrialLogsResponse {
+    // The id of the trial log.
+    int32 id = 1;
+    // The log message.
+    string message = 2;
+}

@@ -2,6 +2,8 @@ import { AnyTask, CommandState, CommandType, ExperimentTask, RecentCommandTask,
   RecentEvent, RecentExperimentTask, RecentTask, RunState,
   Task, terminalCommandStates } from 'types';
 
+import { isExperiment } from './types';
+
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export function getRandomElementOfEnum(e: any): any {
   const keys = Object.keys(e);
@@ -40,7 +42,7 @@ function generateTask(idx: number): Task & RecentEvent {
   };
 }
 
-export function generateExperimentTasks(idx: number): RecentExperimentTask {
+export function generateExperimentTask(idx: number): RecentExperimentTask {
   const state = getRandomElementOfEnum(RunState);
   const task = generateTask(idx);
   const progress = Math.random();
@@ -55,7 +57,9 @@ export function generateExperimentTasks(idx: number): RecentExperimentTask {
 export function generateCommandTask(idx: number): RecentCommandTask {
   const state = getRandomElementOfEnum(CommandState);
   const task = generateTask(idx);
-  const username = sampleUsers.find(user => user.id === task.ownerId)?.username;
+  let username = sampleUsers.find(user => user.id === task.ownerId)?.username;
+  if (!username)
+    username = sampleUsers[Math.floor(Math.random() * sampleUsers.length)].username;
   return {
     ...task,
     state: state as CommandState,
@@ -70,18 +74,17 @@ export const generateTasks = (count = 10): RecentTask[] => {
       if (Math.random() > 0.5) {
         return generateCommandTask(idx);
       } else {
-        return generateExperimentTasks(idx);
+        return generateExperimentTask(idx);
       }
     });
 };
 
 export const isExperimentTask = (task: AnyTask): task is ExperimentTask => {
-  return  ('archived' in task) && !('type' in task);
+  return ('archived' in task) && !('type' in task);
 };
 
 export const canBeOpened = (task: AnyTask): boolean => {
-  if (!isExperimentTask(task) && task.state in terminalCommandStates) {
-    return false;
-  }
+  if (!isExperimentTask(task) && task.state in terminalCommandStates) return false;
+  if (isExperiment(task)) return true;
   return !!task.url;
 };

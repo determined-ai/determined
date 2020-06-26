@@ -1,155 +1,111 @@
-import { Select, Tooltip } from 'antd';
+import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
-import Icon from 'components/Icon';
-import { CommandState, CommandType, RecentTask, RunState, TaskType, User } from 'types';
+import { AnyTask, CommandState, CommandTask, CommandType, RunState, TaskType, User } from 'types';
+import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
-import { commandStateToLabel, runStateToLabel } from 'utils/types';
 
+import IconFilterButtons from './IconFilterButtons';
+import SelectFilter, { ALL_VALUE } from './SelectFilter';
+import StateSelectFilter from './StateSelectFilter';
 import css from './TaskFilter.module.scss';
+import UserSelectFilter from './UserSelectFilter';
 
-const { Option, OptGroup } = Select;
+const { Option } = Select;
 
-export const ALL_VALUE = 'all';
+export { ALL_VALUE };
 
-export interface TaskFilters {
+export interface TaskFilters<T extends TaskType = TaskType> {
   limit: number;
   states: string[];
   username?: string;
-  types: Record<TaskType, boolean>;
+  types: Record<T, boolean>;
 }
 
-interface Props {
-  filters: TaskFilters;
-  onChange: (filters: TaskFilters) => void;
-  authUser?: User;
-  users: User[];
+interface Props<T extends TaskType> {
+  filters: TaskFilters<T>;
+  onChange: (filters: TaskFilters<T>) => void;
+  showExperiments?: boolean;
+  showLimit?: boolean;
 }
+
+type TaskFilterFC = <T extends TaskType = TaskType>(props: Props<T>) => React.ReactElement;
 
 const limitOptions: number[] = [ 10, 25, 50 ];
 
-const taskTypeOrder: {label: string; type: TaskType}[] = [
-  { label: 'Experiments', type: 'Experiment' },
-  { label: 'Notebooks', type: CommandType.Notebook },
-  { label: 'TensorBoards', type: CommandType.Tensorboard },
-  { label: 'Shells', type: CommandType.Shell },
-  { label: 'Commands', type: CommandType.Command },
+const commandConfig = [
+  { id: CommandType.Notebook },
+  { id: CommandType.Tensorboard },
+  { id: CommandType.Shell },
+  { id: CommandType.Command },
 ];
+const experimentConfig = [ { id: 'Experiment' } ];
 
-const TaskFilter: React.FC<Props> = ({ authUser, filters, onChange, users }: Props) => {
-  const handleTypeClick = useCallback((taskType: TaskType): (() => void) => {
-    return (): void => {
-      const types = { ...filters.types, [taskType]: !filters.types[taskType] };
-      onChange({ ...filters, types });
-    };
+const TaskFilter: TaskFilterFC = <T extends TaskType = TaskType>({
+  filters, onChange, showExperiments = true, showLimit = true,
+}: Props<T>) => {
+  const allTypesOff = !Object.values(filters.types).reduce((acc, type) => (acc || type), false);
+  const showCommandStates = allTypesOff ||
+    filters.types[CommandType.Command as T] || filters.types[CommandType.Notebook as T] ||
+    filters.types[CommandType.Shell as T] || filters.types[CommandType.Tensorboard as T];
+  const showExperimentStates = showExperiments && (allTypesOff || filters.types['Experiment' as T]);
+
+  const handleTypeClick = useCallback((id: string) => {
+    const types = { ...filters.types, [id as T]: !filters.types[id as T] };
+    onChange({ ...filters, types });
   }, [ filters, onChange ]);
 
-  const handleStateSelect = useCallback((value: SelectValue): void => {
+  const handleStateChange = useCallback((value: SelectValue): void => {
     if (typeof value !== 'string') return;
     onChange({ ...filters, states: [ value ] });
   }, [ filters, onChange ]);
 
-  const handleUserFilter = useCallback((search: string, option) => {
-    return option.props.children.indexOf(search) !== -1;
-  }, []);
-
-  const handleUserSelect = useCallback((value: SelectValue) => {
+  const handleUserChange = useCallback((value: SelectValue) => {
     const username = value === ALL_VALUE ? undefined : value as string;
     onChange({ ...filters, username });
   }, [ filters, onChange ]);
 
-  const handleLimitSelect = useCallback((limit: number): void => {
-    onChange({ ...filters, limit });
+  const handleLimitSelect = useCallback((limit: SelectValue): void => {
+    onChange({ ...filters, limit: limit as number });
   }, [ filters, onChange ]);
 
-  const selectIcon = <Icon name="arrow-down" size="tiny" />;
-
-  const filterTypeButtons = taskTypeOrder.map(info => {
-    const typeButtonClasses = [ css.typeButton ];
-    if (filters.types[info.type ]) typeButtonClasses.push(css.active);
-    return (
-      <Tooltip key={info.label} placement="top" title={info.label}>
-        <button aria-label={info.label}
-          className={typeButtonClasses.join(' ')}
-          tabIndex={0}
-          onClick={handleTypeClick(info.type)}>
-          <Icon name={info.type.toLocaleLowerCase()} />
-        </button>
-      </Tooltip>
-    );
-  });
-
-  const runStateOptions = Object.values(RunState).map((value) => {
-    return <Option key={value} value={value}>{runStateToLabel[value]}</Option>;
-  });
-
-  const commandStateOptions = Object.values(CommandState).map((value) => {
-    return <Option key={value} value={value}>{commandStateToLabel[value]}</Option>;
-  });
-
-  const userToSelectOption = (user: User): React.ReactNode =>
-    <Option key={user.id} value={user.username}>{user.username}</Option>;
-
-  const userOptions = (): React.ReactNode[] => {
-    const options: React.ReactNode[] = [ <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option> ];
-    if (authUser) {
-      options.push(userToSelectOption(authUser));
-    }
-    const restOfOptions = users
-      .filter(u => (!authUser || u.id !== authUser.id))
-      .sort((a, b) => a.username.localeCompare(b.username, 'en'))
-      .map(userToSelectOption);
-    options.push(...restOfOptions);
-
-    return options;
-  };
+  const filterTypeConfig = useMemo(() => {
+    const taskTypeConfig = [
+      ...(showExperiments ? experimentConfig : []),
+      ...commandConfig,
+    ];
+    return taskTypeConfig.map(config => ({
+      active: filters.types[config.id as T],
+      icon: config.id.toLocaleLowerCase(),
+      id: config.id,
+      label: capitalize(config.id),
+    }));
+  }, [ filters.types, showExperiments ]);
 
   return (
     <div className={css.base}>
-      <div className={css.typeButtons}>{filterTypeButtons}</div>
-      <div className={css.filter}>
-        <div className={css.label}>State</div>
-        <Select
-          defaultValue={filters.states[0]}
-          dropdownMatchSelectWidth={false}
-          suffixIcon={selectIcon}
-          onSelect={handleStateSelect}>
-          <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
-          <OptGroup key="expGroup" label="Experiment States">{runStateOptions}</OptGroup>
-          <OptGroup key="cmdGroup" label="Command States">{commandStateOptions}</OptGroup>
-        </Select>
-      </div>
-      <div className={css.filter}>
-        <div className={css.label}>Users</div>
-        <Select
-          defaultValue={filters.username || ALL_VALUE}
-          dropdownMatchSelectWidth={false}
-          filterOption={handleUserFilter}
-          optionFilterProp="children"
-          showSearch={true}
-          style={{ width: '10rem' }}
-          suffixIcon={selectIcon}
-          onSelect={handleUserSelect}>
-          {userOptions()}
-        </Select>
-      </div>
-      <div className={css.filter}>
-        <div className={css.label}>Limit</div>
-        <Select
-          defaultValue={filters.limit}
-          suffixIcon={selectIcon}
-          onSelect={handleLimitSelect}>
-          {limitOptions.map(limit => <Option key={limit} value={limit}>{limit}</Option>)}
-        </Select>
-      </div>
+      <IconFilterButtons buttons={filterTypeConfig} onClick={handleTypeClick} />
+      <StateSelectFilter
+        showCommandStates={showCommandStates}
+        showExperimentStates={showExperimentStates}
+        value={filters.states}
+        onChange={handleStateChange} />
+      <UserSelectFilter value={filters.username} onChange={handleUserChange} />
+      {showLimit && <SelectFilter
+        label="Limit"
+        showSearch={false}
+        value={filters.limit}
+        onSelect={handleLimitSelect}>
+        {limitOptions.map(limit => <Option key={limit} value={limit}>{limit}</Option>)}
+      </SelectFilter>}
     </div>
   );
 };
 
 export default TaskFilter;
 
-const matchesState = (task: RecentTask, states: string[]): boolean =>  {
+const matchesState = <T extends AnyTask>(task: T, states: string[]): boolean => {
   if (states[0] === ALL_VALUE) return true;
 
   const targetStateRun = states[0] as RunState;
@@ -158,25 +114,26 @@ const matchesState = (task: RecentTask, states: string[]): boolean =>  {
   return [ targetStateRun, targetStateCmd ].includes(task.state);
 };
 
-const matchesUser = (task: RecentTask, users: User[], username?: string): boolean =>  {
+const matchesUser = <T extends AnyTask>(task: T, users: User[], username?: string): boolean => {
   if (!username) return true;
   const selectedUser = users.find(u => u.username === username);
   return !!selectedUser && (task.ownerId === selectedUser.id);
 };
 
-export const filterTasks =
-  (tasks: RecentTask[], filters: TaskFilters, users: User[]): RecentTask[] => {
-    const isAllTypes = !Object.values(filters.types).includes(true);
-    return tasks
-      .filter(task => matchesUser(task, users, filters.username))
-      .filter(task => {
-        if (!isExperimentTask(task)) return true;
-        return !task.archived;
-      })
-      .filter(task => matchesState(task, filters.states))
-      .filter(task => {
-        const type = isExperimentTask(task) ? 'Experiment' : task.type;
-        return isAllTypes || filters.types[type];
-      })
-      .slice(0, filters.limit);
-  };
+export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = AnyTask>(
+  tasks: A[], filters: TaskFilters<T>, users: User[],
+): A[] => {
+  const isAllTypes = !Object.values(filters.types).includes(true);
+  return tasks
+    .filter(task => matchesUser<A>(task as A, users, filters.username))
+    .filter(task => {
+      if (!isExperimentTask(task)) return true;
+      return !task.archived;
+    })
+    .filter(task => matchesState<A>(task as A, filters.states))
+    .filter(task => {
+      const type = isExperimentTask(task) ? 'Experiment' : (task as CommandTask).type;
+      return isAllTypes || filters.types[type as T];
+    })
+    .slice(0, filters.limit);
+};

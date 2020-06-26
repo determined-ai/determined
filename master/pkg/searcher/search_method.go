@@ -61,6 +61,10 @@ func NewSearchMethod(c model.SearcherConfig, batchesPerStep int) SearchMethod {
 		return newAdaptiveSearch(*c.AdaptiveConfig, batchesPerStep)
 	case c.AdaptiveSimpleConfig != nil:
 		return newAdaptiveSimpleSearch(*c.AdaptiveSimpleConfig, batchesPerStep)
+	case c.AsyncHalvingConfig != nil:
+		return newAsyncHalvingSearch(*c.AsyncHalvingConfig, batchesPerStep)
+	case c.AdaptiveASHAConfig != nil:
+		return newAdaptiveASHASearch(*c.AdaptiveASHAConfig, batchesPerStep)
 	case c.PBTConfig != nil:
 		return newPBTSearch(*c.PBTConfig, batchesPerStep)
 	default:

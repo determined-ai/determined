@@ -44,9 +44,10 @@ git clone git@github.com:determined-ai/determined.git
 - Go (>= 1.13)
 - Python (>= 3.6)
 - Node (>= 12)
-- Yarn (>= 1.22.0)
 - Docker (>= 19.03)
 - Protoc (>= 3.0)
+- Java (>= 7)
+- cURL (>= 7)
 
 ### Building Determined
 
@@ -91,18 +92,18 @@ documentation](https://docs.determined.ai/latest/reference/cli.html).
 
 ## Training a Sample Model
 
-The `examples/official/mnist_pytorch` directory contains code to train a convnet
+The `examples/official/trial/mnist_pytorch` directory contains code to train a convnet
 on [MNIST](http://yann.lecun.com/exdb/mnist/) using PyTorch. To train a model,
 run
 
 ```sh
-det experiment create <config> examples/official/mnist_pytorch/
+det experiment create <config> examples/official/trial/mnist_pytorch/
 ```
 
 where `<config>` can be
 
-- `examples/official/mnist_pytorch/const.yaml` to train a single model with fixed hyperparameters
-- `examples/official/mnist_pytorch/adaptive.yaml` to train multiple models using
+- `examples/official/trial/mnist_pytorch/const.yaml` to train a single model with fixed hyperparameters
+- `examples/official/trial/mnist_pytorch/adaptive.yaml` to train multiple models using
   an [adaptive hyperparameter search
   algorithm](https://docs.determined.ai/latest/topic-guides/hp-tuning-det/index.html#adaptive-search)
 

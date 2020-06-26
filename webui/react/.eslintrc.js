@@ -23,9 +23,10 @@ module.exports = {
     ecmaVersion: 2018,
     sourceType: 'module',
   },
-  plugins: [ 'import', 'react', 'react-hooks' ],
+  plugins: [ 'import', 'react', 'react-hooks', 'sort-keys-fix' ],
   rules: {
     '@typescript-eslint/indent': [ 'error', 2 ],
+    '@typescript-eslint/no-unused-vars': 'error',
     'array-bracket-spacing': [ 'error', 'always' ],
     'array-element-newline': [ 'error', 'consistent' ],
     'block-spacing': [ 'error', 'always' ],
@@ -41,7 +42,7 @@ module.exports = {
     'indent': 'off',
     'max-len': [ 'error', 100, { tabWidth: 2 } ],
     'no-console': [ 'error', { allow: [ 'warn' ] } ],
-    'no-multi-spaces': [ 'warn', { ignoreEOLComments: true } ],
+    'no-multi-spaces': [ 'error', { ignoreEOLComments: true } ],
     'no-multiple-empty-lines': [ 'error', { max: 1, maxBOF: 0, maxEOF: 0 } ],
     'no-trailing-spaces': [ 'error', {} ],
     'object-curly-spacing': [ 'error', 'always' ],
@@ -62,13 +63,14 @@ module.exports = {
       component: true,
       html: true,
     } ],
+    'require-await': 'error',
     'semi': [ 'error', 'always' ],
     'sort-imports': [ 'error', {
       ignoreCase: true,
       ignoreDeclarationSort: true,
       ignoreMemberSort: false,
     } ],
-    'sort-keys': [ 'error', 'asc', {
+    'sort-keys-fix/sort-keys-fix': [ 'error', 'asc', {
       caseSensitive: false,
       natural: true,
     } ],

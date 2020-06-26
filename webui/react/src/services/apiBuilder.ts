@@ -22,6 +22,19 @@ export interface Api<Input, Output>{
   // middlewares?: Middleware[]; // success/failure middlewares
 }
 
+export const processApiError = (name: string, e: Error): void => {
+  const isAuthError = isAuthFailure(e);
+  handleError({
+    error: e,
+    level: isAuthError ? ErrorLevel.Fatal : ErrorLevel.Error,
+    message: isAuthError ?
+      `unauthenticated request ${name}` : `request ${name} failed.`,
+    silent: true,
+    type: isAuthError ? ErrorType.Auth : ErrorType.Server,
+  });
+  throw e;
+};
+
 export function generateApi<Input, Output>(api: Api<Input, Output>) {
   return async function(params: Input & { cancelToken?: CancelToken }): Promise<Output> {
     const httpOpts = api.httpOptions(params);
@@ -37,16 +50,7 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
 
       return api.postProcess ? api.postProcess(response) : response.data as Output;
     } catch (e) {
-      const isAuthError = isAuthFailure(e);
-      handleError({
-        error: e,
-        level: isAuthError ? ErrorLevel.Fatal : ErrorLevel.Error,
-        message: isAuthError ?
-          `unauthenticated request ${api.name}` : `request ${api.name} failed.`,
-        silent: true,
-        type: isAuthError ? ErrorType.Auth : ErrorType.Server,
-      });
-      throw e;
+      return processApiError(api.name, e) as unknown as Output;
     }
   };
 }

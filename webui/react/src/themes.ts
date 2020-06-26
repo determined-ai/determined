@@ -107,7 +107,7 @@ export const lightTheme: Theme = {
       radius: '0.4rem',
       width: '0.1rem',
     },
-    /* eslint-disable sort-keys */
+    /* eslint-disable sort-keys-fix/sort-keys-fix */
     font: {
       micro: '1.0rem',
       tiny: '1.1rem',
@@ -136,7 +136,7 @@ export const lightTheme: Theme = {
       huge: '3.2rem',
       giant: '3.6rem',
     },
-    /* eslint-enable sort-keys */
+    /* eslint-enable sort-keys-fix/sort-keys-fix */
     navbar: {
       height: '4.8rem',
     },

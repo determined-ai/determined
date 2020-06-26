@@ -314,9 +314,7 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
                 path = cast(pathlib.Path, args[0])
                 response_func(self._checkpoint_model(path))
             elif wkld.kind == workload.Workload.Kind.TERMINATE:
-                response_func(
-                    {} if self.estimator_trial_controller.is_chief else workload.Skipped()
-                )
+                self.estimator_trial_controller.exit_response_func = response_func
                 raise det.errors.WorkerFinishedGracefully("Exiting normally.")
             else:
                 raise AssertionError(f"Unknown wkld kind {wkld.kind}.")
@@ -339,6 +337,9 @@ class EstimatorTrialController(det.LoopTrialController):
         self.user_train_spec = user_train_spec
         self.val_spec = val_spec
         self.serving_input_receiver_fns = serving_input_receiver_fns
+
+        # Used to send Terminate response following post-trial close callback.
+        self.exit_response_func = None  # type: Optional[workload.ResponseFunc]
 
         self._init_model()
 
@@ -583,10 +584,13 @@ class EstimatorTrialController(det.LoopTrialController):
                 "a user callback causing the training loop to exit, which is not supported at this "
                 "time."
             )
+        finally:
+            for callback in self.train_hooks:
+                if isinstance(callback, estimator.RunHook):
+                    callback.on_trial_close()
 
-        for callback in self.train_hooks:
-            if isinstance(callback, estimator.RunHook):
-                callback.on_trial_close()
+        if self.exit_response_func:
+            self.exit_response_func({} if self.is_chief else workload.Skipped())
 
     def _init_paths(self) -> None:
         """

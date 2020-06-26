@@ -119,11 +119,11 @@ func (m *Master) getTrialLogsV2(c echo.Context) (interface{}, error) {
 	}
 	var logs []Log
 	offset := c.QueryParam("offset")
-	if offset == "" {
-		offset = "0"
-	}
-	if limit := c.QueryParam("limit"); limit != "" {
-		err := m.db.Query("get_logs_limit", &logs, c.Param("trial_id"), offset, limit)
+	if limit := c.QueryParam("limit"); limit != "" && offset != "" {
+		err := m.db.Query("get_logs_offset_limit", &logs, c.Param("trial_id"), offset, limit)
+		return logs, err
+	} else if limit != "" {
+		err := m.db.Query("get_logs_limit", &logs, c.Param("trial_id"), limit)
 		return logs, err
 	}
 	err := m.db.Query("get_logs", &logs, c.Param("trial_id"), offset)

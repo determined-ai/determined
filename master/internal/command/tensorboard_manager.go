@@ -17,6 +17,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -270,7 +271,7 @@ func (t *tensorboardManager) newTensorBoard(
 			"trial_ids":      req.TrialIDs,
 		},
 		readinessChecks: map[string]readinessCheck{
-			"tensorboard": func(log scheduler.ContainerLog) bool {
+			"tensorboard": func(log sproto.ContainerLog) bool {
 				return strings.Contains(log.String(), "TensorBoard contains metrics")
 			},
 		},
