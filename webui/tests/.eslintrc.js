@@ -17,7 +17,8 @@ module.exports = {
   ],
   plugins: [
     'cypress', 
-    'import'
+    'import',
+    'sort-keys-fix',
   ],
   env: {
     ...reactEslint.env,
