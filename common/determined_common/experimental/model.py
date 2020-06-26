@@ -15,7 +15,9 @@ class ModelSortBy(enum.Enum):
 
 class ModelOrderBy(enum.Enum):
     ASCENDING = 1
+    ASC = 1
     DESCENDING = 2
+    DESC = 2
 
 
 class Model:
