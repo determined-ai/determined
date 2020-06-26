@@ -47,7 +47,7 @@ git clone git@github.com:determined-ai/determined.git
 - Docker (>= 19.03)
 - Protoc (>= 3.0)
 - Java (>= 7)
-- Wget (>= 1.19)
+- cURL (>= 7)
 
 ### Building Determined
 
