@@ -77,7 +77,7 @@ const TaskList: React.FC = () => {
           <Input
             allowClear
             className={css.search}
-            placeholder="search id and name"
+            placeholder="ID or name"
             prefix={<Icon name="search" size="small" />}
             onChange={handleSearchChange} />
           <TaskFilter<CommandType>

@@ -91,7 +91,7 @@ export const canBeOpened = (task: AnyTask): boolean => {
   return !!task.url;
 };
 
-const matchSearch = <T extends AnyTask>(task: T, search = ''): boolean => {
+const matchesSearch = <T extends AnyTask>(task: T, search = ''): boolean => {
   if (!search) return true;
   return task.id.indexOf(search) !== -1 || task.title.indexOf(search) !== -1;
 };
@@ -116,16 +116,14 @@ export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = A
 ): A[] => {
   const isAllTypes = !Object.values(filters.types).includes(true);
   return tasks
-    .filter(task => matchesUser<A>(task as A, users, filters.username))
     .filter(task => {
-      if (!isExperimentTask(task)) return true;
-      return !task.archived;
+      const isExperiment = isExperimentTask(task);
+      const type = isExperiment ? 'Experiment' : (task as CommandTask).type;
+      return (isAllTypes || filters.types[type as T]) &&
+        matchesUser<A>(task, users, filters.username) &&
+        matchesState<A>(task, filters.states) &&
+        matchesSearch<A>(task, search) &&
+        (!isExperiment || !(task as ExperimentTask).archived);
     })
-    .filter(task => matchesState<A>(task as A, filters.states))
-    .filter(task => {
-      const type = isExperimentTask(task) ? 'Experiment' : (task as CommandTask).type;
-      return isAllTypes || filters.types[type as T];
-    })
-    .filter(task => matchSearch<A>(task, search))
     .slice(0, filters.limit);
 };
