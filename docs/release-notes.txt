@@ -6,6 +6,49 @@ Release Notes
 Version 0.12
 ------------
 
+Version 0.12.10
+^^^^^^^^^^^^^^^
+
+**Release Date:** June 26, 2020
+
+**Improvements**
+
+- Paginate trial logs displayed from the CLI.
+
+- Add a dedicated WebUI page for master logs at ``/det/logs``.
+
+- Link to Swagger UI for experimenting with the redesigned Determined endpoint.
+
+- Show the dropdown action menu as disabled where there are no actions.
+
+- Only show the first 25 experiments by default in the Experiment list page, and show more as requested.
+
+- Present user with a notification when on an Elm page (``/ui/experiments``, ``/ui/notebooks``, etc) and the WebUI and the platform version does not match.
+
+- Add the ``det user rename`` CLI command for administrators to change the username of existing users.
+
+- Expand the "Using Trained Checkpoints" guide to include checkpoint metadata management.
+
+- Move examples from under the ``official`` subdirectory, into ``native`` and ``trial`` subdirectories.
+
+**Bug fixes**
+
+- Ensure network failures during checkpoint upload do not unrecoverably break the associated trial.
+
+- Ensure old checkpoints are loadable.
+
+- Ensure ``shared_fs`` is usable for non-root containers for some ``host_path`` values.
+
+- Allow ``det-deploy local agent-up`` to work with remote masters.
+
+- Fix a timeout issue that affected large (40+ machines) distributed experiments.
+
+- Enable the CLI to make secure websocket connections to the master.
+
+- Fix an issue that affected multi-GPU in ``PyTorchTrial`` with mixed precision enabled.
+
+- Ensure that trial containers do not remain alive for too long after they should be terminated.
+
 Version 0.12.7
 ^^^^^^^^^^^^^^
 
