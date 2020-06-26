@@ -1,5 +1,3 @@
-from typing import List
-
 import tensorflow as tf
 from tensorflow_examples.models.pix2pix import pix2pix
 import tensorflow_datasets as tfds
@@ -13,7 +11,11 @@ class UNetsTrial(keras.TFKerasTrial):
         self.context = context
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
 
-        self.dataset, info = tfds.load('oxford_iiit_pet:3.*.*', with_info=True,data_dir=self.download_directory)
+        self.dataset, info = tfds.load(
+            'oxford_iiit_pet:3.*.*',
+            with_info=True,
+            data_dir=self.download_directory,
+        )
 
     def normalize(self, input_image, input_mask):
         input_image = tf.cast(input_image, tf.float32) / 255.0

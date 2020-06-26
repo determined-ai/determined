@@ -1,3 +1,10 @@
+"""
+This example is to show how to use an existing Tensorflow Image Segmentation model with Determined.
+The flags and configurations can be found under const.yaml. For more information
+regarding the optional flags view the original script linked below.
+This implementation is based on:
+https://github.com/tensorflow/docs/blob/master/site/en/tutorials/images/segmentation.ipynb
+"""
 description: unets_tf_keras_const
 data:
   train_url: http://download.tensorflow.org/data/iris_training.csv 
@@ -21,4 +28,3 @@ searcher:
 
 min_validation_period: 10
 entrypoint: model_def:UNetsTrial
-max_restarts: 0
