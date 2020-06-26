@@ -20,6 +20,7 @@ func TestResourceProviderForwardMessage(t *testing.T) {
 		model.TaskContainerDefaultsConfig{},
 		nil,
 		0,
+		nil,
 	))
 	assert.Assert(t, created)
 

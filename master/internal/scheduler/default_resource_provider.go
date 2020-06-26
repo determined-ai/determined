@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -42,6 +43,7 @@ type DefaultRP struct {
 	registeredNames       map[*container][]string
 	harnessPath           string
 	taskContainerDefaults model.TaskContainerDefaultsConfig
+	masterCert            *tls.Certificate
 
 	taskList           *taskList
 	tasksByHandler     map[*actor.Ref]*Task
@@ -69,6 +71,7 @@ func NewDefaultRP(
 	taskContainerDefaults model.TaskContainerDefaultsConfig,
 	provisioner *actor.Ref,
 	provisionerSlotsPerInstance int,
+	masterCert *tls.Certificate,
 ) actor.Actor {
 	d := &DefaultRP{
 		clusterID:             clusterID,
@@ -79,6 +82,7 @@ func NewDefaultRP(
 		registeredNames:       make(map[*container][]string),
 		harnessPath:           harnessPath,
 		taskContainerDefaults: taskContainerDefaults,
+		masterCert:            masterCert,
 
 		taskList:           newTaskList(),
 		tasksByHandler:     make(map[*actor.Ref]*Task),
@@ -114,6 +118,7 @@ func (d *DefaultRP) assignContainer(task *Task, a *agentState, slots int, numCon
 			devices:               a.assignFreeDevices(slots, container.id),
 			harnessPath:           d.harnessPath,
 			taskContainerDefaults: d.taskContainerDefaults,
+			masterCert:            d.masterCert,
 		})
 }
 
@@ -588,6 +593,7 @@ type containerAssignment struct {
 	devices               []device.Device
 	harnessPath           string
 	taskContainerDefaults model.TaskContainerDefaultsConfig
+	masterCert            *tls.Certificate
 }
 
 // StartTask notifies the agent that the task is ready to start with the provided task spec.
@@ -598,6 +604,7 @@ func (c *containerAssignment) StartTask(spec image.TaskSpec) {
 	spec.TaskID = string(c.task.ID)
 	spec.HarnessPath = c.harnessPath
 	spec.TaskContainerDefaults = c.taskContainerDefaults
+	spec.MasterCert = c.masterCert
 	spec.Devices = c.devices
 	handler.System().Tell(handler, sproto.StartTaskOnAgent{
 		Task: c.task.handler,

@@ -26,6 +26,7 @@ const (
 	passwdPath        = "/run/determined/etc/passwd"
 	shadowPath        = "/run/determined/etc/shadow"
 	groupPath         = "/run/determined/etc/group"
+	certPath          = "/run/determined/etc/ssl/master.crt"
 )
 
 func defaultEnvVars() map[string]string {
@@ -219,6 +220,11 @@ func TrialEnvVars(t TaskSpec, rendezvousPorts []string) map[string]string {
 	envVars["DET_RENDEZVOUS_PORTS"] = strings.Join(rendezvousPorts, ",")
 	envVars["DET_TRIAL_RUNNER_NETWORK_INTERFACE"] = networkInterface
 
+	if t.MasterCert != nil {
+		envVars["DET_USE_TLS"] = "true"
+		envVars["DET_MASTER_CERT_FILE"] = certPath
+	}
+
 	if t.TaskContainerDefaults.NCCLPortRange != "" {
 		envVars["NCCL_PORT_RANGE"] = t.TaskContainerDefaults.NCCLPortRange
 	}
@@ -239,6 +245,7 @@ func TrialArchives(t TaskSpec) []container.RunArchive {
 		wrapArchive(exp.AdditionalFiles, rootDir),
 		wrapArchive(exp.AgentUserGroup.OwnArchive(exp.ModelDefinition), ContainerWorkDir),
 		harnessArchive(t.HarnessPath, exp.AgentUserGroup),
+		masterCertArchive(t.MasterCert),
 	}
 }
 

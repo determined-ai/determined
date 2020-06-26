@@ -96,6 +96,7 @@ func TestRendezvousInfo(t *testing.T) {
 			model.TaskContainerDefaultsConfig{},
 			nil,
 			0,
+			nil,
 		))
 	if !created {
 		t.Fatal("unable to create cluster")
