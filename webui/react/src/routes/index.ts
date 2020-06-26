@@ -46,7 +46,7 @@ const clusterRoute =
     id: 'cluster-det',
     needAuth: true,
     path: '/det/cluster',
-    title: 'Cluster (dev)',
+    title: 'Cluster',
   };
 
 const experimentListRoute =
@@ -128,12 +128,7 @@ export const sidebarRoutes: RouteConfig[] = [
     path: '/ui/tensorboards',
     title: 'TensorBoards',
   },
-  {
-    icon: 'cluster',
-    id: 'cluster',
-    path: '/ui/cluster',
-    title: 'Cluster',
-  },
+  clusterRoute,
   {
     icon: 'shell',
     id: 'shells',
@@ -151,7 +146,6 @@ export const defaultSideBarRoute = sidebarRoutes[0];
 
 if (process.env.IS_DEV) {
   sidebarRoutes.push(
-    clusterRoute,
     taskListRoute,
     experimentListRoute,
   );
