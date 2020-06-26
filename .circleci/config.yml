@@ -419,8 +419,7 @@ commands:
             cypress/included:4.8.0 \
             --config-file cypress-ci.json \
             --config "defaultCommandTimeout=30000,baseUrl=http://determined-master:8080" \
-            --browser chrome \
-            --headless
+            --browser electron
 
   set-master-address:
     parameters:
