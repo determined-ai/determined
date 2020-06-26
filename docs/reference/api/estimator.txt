@@ -84,4 +84,4 @@ Example usage of ``determined.estimator.RunHook`` which adds custom metadata che
 Examples
 --------
 
--  `MNIST <https://github.com/determined-ai/determined/tree/master/examples/official/mnist_estimator/>`_
+-  `MNIST <https://github.com/determined-ai/determined/tree/master/examples/official/trial/mnist_estimator/>`_
