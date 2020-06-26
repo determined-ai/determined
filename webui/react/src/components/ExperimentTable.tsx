@@ -4,8 +4,6 @@ import React, { MouseEventHandler } from 'react';
 
 import Badge from 'components/Badge';
 import linkCss from 'components/Link.module.scss';
-import { actionsColumn, Renderer, startTimeColumn, stateColumn,
-  userColumn } from 'table/columns';
 import { CommonProps, Experiment } from 'types';
 import { alphanumericSorter } from 'utils/data';
 import { floatToPercent } from 'utils/string';
@@ -14,6 +12,8 @@ import { experimentToTask } from 'utils/types';
 
 import css from './ExperimentTable.module.scss';
 import ProgressBar from './ProgressBar';
+import { actionsColumn, Renderer, startTimeColumn, stateColumn,
+  userColumn } from './Table';
 import { tableRowClickHandler } from './TaskTable';
 
 interface Props extends CommonProps {

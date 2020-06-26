@@ -1,3 +1,4 @@
+import { Tooltip } from 'antd';
 import { ColumnType } from 'antd/lib/table';
 import React from 'react';
 import TimeAgo from 'timeago-react';
@@ -11,9 +12,15 @@ import { alphanumericSorter, commandStateSorter,
   stringTimeSorter } from 'utils/data';
 import { experimentToTask, isExperiment, oneOfProperties } from 'utils/types';
 
+import css from './Table.module.scss';
+
 type TableRecord = CommandTask | Experiment;
 
 export type Renderer<T> = (text: string, record: T, index: number) => React.ReactNode
+
+export const ellipsisRenderer: Renderer<CommandTask> = text => {
+  return <Tooltip title={text}><span>{text}</span></Tooltip>;
+};
 
 const userRenderer: Renderer<TableRecord> = (_, record) => {
   if (isExperiment(record)) {
@@ -32,16 +39,20 @@ export const userColumn: ColumnType<TableRecord> = {
     return alphanumericSorter(aValue, bValue);
   },
   title: 'User',
+  width: 70,
 };
 
 export const stateRenderer: Renderer<TableRecord> = (_, record) => (
-  <Badge state={record.state} type={BadgeType.State} />
+  <div className={css.centerVertically}>
+    <Badge state={record.state} type={BadgeType.State} />
+  </div>
 );
 
 export const stateColumn: ColumnType<TableRecord> = {
   render: stateRenderer,
   sorter: (a, b): number => commandStateSorter(a.state as CommandState, b.state as CommandState),
   title: 'State',
+  width: 120,
 };
 
 const startTimeRenderer: Renderer<TableRecord> = (_, record) => (
@@ -55,6 +66,7 @@ export const startTimeColumn: ColumnType<TableRecord> = {
   render: startTimeRenderer,
   sorter: (a, b): number => stringTimeSorter(a.startTime, b.startTime),
   title: 'Start Time',
+  width: 120,
 };
 
 const actionsRenderer: Renderer<TableRecord> =
@@ -69,4 +81,5 @@ const actionsRenderer: Renderer<TableRecord> =
 export const actionsColumn: ColumnType<TableRecord> = {
   render: actionsRenderer,
   title: '',
+  width: 36,
 };

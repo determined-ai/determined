@@ -9,4 +9,8 @@
   padding: 0 var(--theme-sizes-layout-small);
   text-align: center;
 }
+.id {
+  font-family: 'Source Code Pro', monospace;
+  font-size: var(--theme-sizes-font-small);
+}
 .state { text-transform: uppercase; }

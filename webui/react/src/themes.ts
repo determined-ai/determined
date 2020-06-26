@@ -84,7 +84,7 @@ export const lightTheme: Theme = {
       '#cccccc',  // 11 - Stainless Steel
       '#dddddd',  // 12 - Ash
       '#ececec',  // 13 - Silver
-      '#f2f2f2',  // 14 -  Platinum
+      '#f2f2f2',  // 14 - Platinum
       '#f7f7f7',  // 15 - Dusty
       '#fafafa',  // 16 - Fog
       '#ffffff',  // 17 - White
