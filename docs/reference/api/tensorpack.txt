@@ -158,4 +158,4 @@ the following abstract methods:
 Examples
 --------
 
--  `mnist_tp <https://github.com/determined-ai/determined/tree/master/examples/official/mnist_tp>`_
+-  `mnist_tp <https://github.com/determined-ai/determined/tree/master/examples/official/trial/mnist_tp>`_
