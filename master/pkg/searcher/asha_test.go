@@ -22,7 +22,8 @@ func TestASHASearcher(t *testing.T) {
 		toKinds("10S 1V 20S 1V"),
 		toKinds("10S 1V 20S 1V 60S 1V"),
 	}
-	checkSimulation(t, newAsyncHalvingSearch(actual), nil, ConstantValidation, expected)
+	searchMethod := newAsyncHalvingSearch(actual, defaultBatchesPerStep)
+	checkSimulation(t, searchMethod, nil, ConstantValidation, expected)
 }
 
 func TestASHASearchMethod(t *testing.T) {

@@ -10,11 +10,19 @@ class Callback(object):
         """Executed before the start of the first training step of a trial."""
         pass
 
-    def on_train_step_begin(self, step_id: int) -> None:
+    def on_train_step_begin(
+        self, step_id: int, num_batches: int, total_batches_processed: int
+    ) -> None:
         """Executed at the beginning of a training step."""
         pass
 
-    def on_train_step_end(self, step_id: int, metrics: List[Dict[str, Any]]) -> None:
+    def on_train_step_end(
+        self,
+        step_id: int,
+        num_batches: int,
+        total_batches_processed: int,
+        metrics: List[Dict[str, Any]],
+    ) -> None:
         """
         Executed at the end of a training step.
 
@@ -25,11 +33,13 @@ class Callback(object):
         """
         pass
 
-    def on_validation_step_begin(self, step_id: int) -> None:
+    def on_validation_step_begin(self, step_id: int, total_batches_processed: int) -> None:
         """Executed at the beginning of a validation step."""
         pass
 
-    def on_validation_step_end(self, step_id: int, metrics: Dict[str, Any]) -> None:
+    def on_validation_step_end(
+        self, step_id: int, total_batches_processed: int, metrics: Dict[str, Any]
+    ) -> None:
         """
         Executed at the end of a validation step.
 

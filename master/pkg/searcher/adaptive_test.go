@@ -38,7 +38,7 @@ func TestAdaptiveSearcherReproducibility(t *testing.T) {
 		TargetTrialSteps: 64, StepBudget: 1024, Divisor: 4, TrainStragglers: true,
 		Mode: model.AggressiveMode, MaxRungs: 3,
 	}
-	gen := func() SearchMethod { return newAdaptiveSearch(conf) }
+	gen := func() SearchMethod { return newAdaptiveSearch(conf, defaultBatchesPerStep) }
 	checkReproducibility(t, gen, nil, defaultMetric)
 }
 

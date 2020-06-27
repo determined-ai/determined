@@ -9,10 +9,12 @@ import (
 
 func TestWorkloadMarshaling(t *testing.T) {
 	marshaled := Workload{
-		Kind:         RunStep,
-		ExperimentID: 1,
-		TrialID:      2,
-		StepID:       3,
+		Kind:                  RunStep,
+		ExperimentID:          1,
+		TrialID:               2,
+		StepID:                3,
+		NumBatches:            10,
+		TotalBatchesProcessed: 0,
 	}
 	blob, marshalErr := json.Marshal(marshaled)
 	assert.NilError(t, marshalErr)
@@ -20,5 +22,5 @@ func TestWorkloadMarshaling(t *testing.T) {
 	unmarshaled := Workload{}
 	unmarshalErr := json.Unmarshal(blob, &unmarshaled)
 	assert.NilError(t, unmarshalErr)
-	assert.Equal(t, marshaled, unmarshaled)
+	assert.DeepEqual(t, marshaled, unmarshaled)
 }

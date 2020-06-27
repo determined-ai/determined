@@ -38,61 +38,75 @@ checkpoint_policy: none
 	create := searcher.NewCreate(rand, nil, model.TrialWorkloadSequencerType)
 
 	// Sequencer input messages.
-	trainOperation1 := searcher.NewTrain(create.RequestID, 1)
-	trainOperation2 := searcher.NewTrain(create.RequestID, 2)
-	trainOperation3 := searcher.NewTrain(create.RequestID, 3)
-	trainOperation4 := searcher.NewTrain(create.RequestID, 4)
-	trainOperation5 := searcher.NewTrain(create.RequestID, 5)
+	batches := model.DefaultExperimentConfig().BatchesPerStep
+	trainOperation1 := searcher.NewTrain(create.RequestID, 1, batches)
+	trainOperation2 := searcher.NewTrain(create.RequestID, 2, batches)
+	trainOperation3 := searcher.NewTrain(create.RequestID, 3, batches)
+	trainOperation4 := searcher.NewTrain(create.RequestID, 4, batches)
+	trainOperation5 := searcher.NewTrain(create.RequestID, 5, batches)
 	checkpointOperation2 := searcher.NewCheckpoint(create.RequestID, 2)
 	validateOperation2 := searcher.NewValidate(create.RequestID, 2)
 
 	trainWorkload1 := searcher.Workload{
-		Kind:         searcher.RunStep,
-		ExperimentID: 1,
-		TrialID:      1,
-		StepID:       1,
+		Kind:                  searcher.RunStep,
+		ExperimentID:          1,
+		TrialID:               1,
+		StepID:                1,
+		NumBatches:            batches,
+		TotalBatchesProcessed: 0,
 	}
 	trainWorkload2 := searcher.Workload{
-		Kind:         searcher.RunStep,
-		ExperimentID: 1,
-		TrialID:      1,
-		StepID:       2,
+		Kind:                  searcher.RunStep,
+		ExperimentID:          1,
+		TrialID:               1,
+		StepID:                2,
+		NumBatches:            batches,
+		TotalBatchesProcessed: batches,
 	}
 	trainWorkload3 := searcher.Workload{
-		Kind:         searcher.RunStep,
-		ExperimentID: 1,
-		TrialID:      1,
-		StepID:       3,
+		Kind:                  searcher.RunStep,
+		ExperimentID:          1,
+		TrialID:               1,
+		StepID:                3,
+		NumBatches:            batches,
+		TotalBatchesProcessed: 2 * batches,
 	}
 	trainWorkload4 := searcher.Workload{
-		Kind:         searcher.RunStep,
-		ExperimentID: 1,
-		TrialID:      1,
-		StepID:       4,
+		Kind:                  searcher.RunStep,
+		ExperimentID:          1,
+		TrialID:               1,
+		StepID:                4,
+		NumBatches:            batches,
+		TotalBatchesProcessed: 3 * batches,
 	}
 	trainWorkload5 := searcher.Workload{
-		Kind:         searcher.RunStep,
-		ExperimentID: 1,
-		TrialID:      1,
-		StepID:       5,
+		Kind:                  searcher.RunStep,
+		ExperimentID:          1,
+		TrialID:               1,
+		StepID:                5,
+		NumBatches:            batches,
+		TotalBatchesProcessed: 4 * batches,
 	}
 	checkpointWorkload1 := searcher.Workload{
-		Kind:         searcher.CheckpointModel,
-		ExperimentID: 1,
-		TrialID:      1,
-		StepID:       1,
+		Kind:                  searcher.CheckpointModel,
+		ExperimentID:          1,
+		TrialID:               1,
+		StepID:                1,
+		TotalBatchesProcessed: 0,
 	}
 	checkpointWorkload2 := searcher.Workload{
-		Kind:         searcher.CheckpointModel,
-		ExperimentID: 1,
-		TrialID:      1,
-		StepID:       2,
+		Kind:                  searcher.CheckpointModel,
+		ExperimentID:          1,
+		TrialID:               1,
+		StepID:                2,
+		TotalBatchesProcessed: batches,
 	}
 	validationWorkload2 := searcher.Workload{
-		Kind:         searcher.ComputeValidationMetrics,
-		ExperimentID: 1,
-		TrialID:      1,
-		StepID:       2,
+		Kind:                  searcher.ComputeValidationMetrics,
+		ExperimentID:          1,
+		TrialID:               1,
+		StepID:                2,
+		TotalBatchesProcessed: batches,
 	}
 
 	// Sequencer output messages.

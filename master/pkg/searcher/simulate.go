@@ -229,6 +229,7 @@ func generateMessage(
 			ExperimentID: 0,
 			TrialID:      trialID,
 			StepID:       operation.StepID,
+			NumBatches:   operation.NumBatches,
 		},
 		StartTime: time.Now(),
 		EndTime:   time.Now(),

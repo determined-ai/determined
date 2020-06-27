@@ -118,7 +118,7 @@ class WaitForInstructionsCallback(tf.keras.callbacks.Callback):  # type: ignore
         # "size".
         self.metrics.append({k: v for k, v in logs.items() if k not in {"batch", "size"}})
         self.batches_processed += 1
-        if self.batches_processed != self.tf_keras_trial_controller.batches_per_step:
+        if self.batches_processed != self.tf_keras_trial_controller.num_batches:
             return
 
         check.is_not_none(
@@ -132,8 +132,7 @@ class WaitForInstructionsCallback(tf.keras.callbacks.Callback):  # type: ignore
 
         # TODO(DET-1278): Average training metrics across GPUs when using Horovod.
         num_inputs = (
-            self.tf_keras_trial_controller.batches_per_step
-            * self.tf_keras_trial_controller.batch_size
+            self.tf_keras_trial_controller.num_batches * self.tf_keras_trial_controller.batch_size
         )
 
         if self.tf_keras_trial_controller.is_chief:
@@ -486,6 +485,7 @@ class TFKerasTrialController(det.LoopTrialController):
             if wkld.kind == workload.Workload.Kind.RUN_STEP:
                 # Store the train_response_func for later.
                 self.train_response_func = response_func
+                self.num_batches = wkld.num_batches
 
                 # There are two possibilities when a RUN_STEP workload is recieved.
                 # 1) This is the first training step seen by the trial

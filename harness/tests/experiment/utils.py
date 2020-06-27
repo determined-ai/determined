@@ -35,21 +35,35 @@ class TrainAndValidate:
     ) -> workload.Stream:
         self._training_metrics = []
         self._validation_metrics = []
+        total_batches_processed = 0
         interceptor = workload.WorkloadResponseInterceptor()
 
         for step_id in range(initial_step_id, initial_step_id + steps):
             stop_requested = False
-            yield from interceptor.send(workload.train_workload(step_id), [batches_per_step])
+            yield from interceptor.send(
+                workload.train_workload(
+                    step_id,
+                    num_batches=batches_per_step,
+                    total_batches_processed=total_batches_processed,
+                ),
+                [],
+            )
             metrics = interceptor.metrics_result()
             batch_metrics = metrics["metrics"]["batch_metrics"]
             assert len(batch_metrics) == batches_per_step
             self._training_metrics.extend(batch_metrics)
+            total_batches_processed += batches_per_step
             if metrics["stop_requested"]:
                 assert step_id == self.request_stop_step_id
                 stop_requested = True
 
             if step_id % validation_freq == 0:
-                yield from interceptor.send(workload.validation_workload(step_id), [])
+                yield from interceptor.send(
+                    workload.validation_workload(
+                        step_id, total_batches_processed=total_batches_processed
+                    ),
+                    [],
+                )
                 validation = interceptor.metrics_result()
                 print(validation)
                 v_metrics = validation["metrics"]["validation_metrics"]
@@ -98,7 +112,12 @@ def make_default_env_context(
     return det.EnvContext(
         experiment_config=experiment_config,
         initial_workload=workload.Workload(
-            workload.Workload.Kind.RUN_STEP, ExperimentID(1), TrialID(1), StepID(1)
+            workload.Workload.Kind.RUN_STEP,
+            ExperimentID(1),
+            TrialID(1),
+            StepID(1),
+            det.ExperimentConfig(experiment_config).batches_per_step(),
+            0,
         ),
         master_addr="",
         master_port=0,

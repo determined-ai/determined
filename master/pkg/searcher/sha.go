@@ -21,11 +21,12 @@ type syncHalvingSearch struct {
 	earlyExitTrials   map[RequestID]bool
 	expectedWorkloads int
 	trialsCompleted   int
+	batchesPerStep    int
 }
 
 const shaExitedMetricValue = math.MaxFloat64
 
-func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
+func newSyncHalvingSearch(config model.SyncHalvingConfig, batchesPerStep int) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
 	expectedSteps := 0
 	for id := 0; id < config.NumRungs; id++ {
@@ -67,6 +68,7 @@ func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
 		trialRungs:        make(map[RequestID]int),
 		earlyExitTrials:   make(map[RequestID]bool),
 		expectedWorkloads: expectedWorkloads,
+		batchesPerStep:    batchesPerStep,
 	}
 }
 
@@ -121,7 +123,9 @@ func (s *syncHalvingSearch) initialOperations(ctx context) ([]Operation, error) 
 		create := NewCreate(
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		ops = append(ops, trainAndValidate(create.RequestID, 0, s.rungs[0].stepsNeeded)...)
+		trainVal := trainAndValidate(
+			create.RequestID, 0, s.rungs[0].stepsNeeded, s.batchesPerStep)
+		ops = append(ops, trainVal...)
 	}
 	return ops, nil
 }
@@ -169,8 +173,8 @@ func (s *syncHalvingSearch) promoteSync(
 		for _, promotionID := range toPromote {
 			s.trialRungs[promotionID] = rungIndex + 1
 			if !s.earlyExitTrials[promotionID] {
-				ops = append(ops, trainAndValidate(
-					promotionID, rung.stepsNeeded, s.rungs[rungIndex+1].stepsNeeded)...)
+				ops = append(ops, trainAndValidate(promotionID, rung.stepsNeeded,
+					s.rungs[rungIndex+1].stepsNeeded, s.batchesPerStep)...)
 			} else {
 				step := s.rungs[rungIndex+1].stepsNeeded
 				wkld := Workload{

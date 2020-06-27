@@ -10,8 +10,8 @@ import (
 
 func TestRandomTournamentSearcher(t *testing.T) {
 	actual := newTournamentSearch(
-		newRandomSearch(model.RandomConfig{MaxTrials: 2, MaxSteps: 3}),
-		newRandomSearch(model.RandomConfig{MaxTrials: 3, MaxSteps: 2}),
+		newRandomSearch(model.RandomConfig{MaxTrials: 2, MaxSteps: 3}, defaultBatchesPerStep),
+		newRandomSearch(model.RandomConfig{MaxTrials: 3, MaxSteps: 2}, defaultBatchesPerStep),
 	)
 	expected := [][]Kind{
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
@@ -26,7 +26,10 @@ func TestRandomTournamentSearcher(t *testing.T) {
 func TestRandomTournamentSearcherReproducibility(t *testing.T) {
 	conf := model.RandomConfig{MaxTrials: 5, MaxSteps: 8}
 	gen := func() SearchMethod {
-		return newTournamentSearch(newRandomSearch(conf), newRandomSearch(conf))
+		return newTournamentSearch(
+			newRandomSearch(conf, defaultBatchesPerStep),
+			newRandomSearch(conf, defaultBatchesPerStep),
+		)
 	}
 	checkReproducibility(t, gen, nil, defaultMetric)
 }
@@ -54,7 +57,7 @@ func TestTournamentSearchMethod(t *testing.T) {
 			Divisor:          4,
 		},
 	}
-	adaptiveMethod1 := NewSearchMethod(adaptiveConfig1)
+	adaptiveMethod1 := NewSearchMethod(adaptiveConfig1, defaultBatchesPerStep)
 
 	adaptiveConfig2 := model.SearcherConfig{
 		AdaptiveConfig: &model.AdaptiveConfig{
@@ -67,7 +70,7 @@ func TestTournamentSearchMethod(t *testing.T) {
 			Divisor:          4,
 		},
 	}
-	adaptiveMethod2 := NewSearchMethod(adaptiveConfig2)
+	adaptiveMethod2 := NewSearchMethod(adaptiveConfig2, defaultBatchesPerStep)
 
 	params := model.Hyperparameters{}
 

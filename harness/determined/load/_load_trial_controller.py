@@ -159,5 +159,5 @@ def prepare_tensorboard(
 
     return (
         tensorboard_mgr,
-        tensorboard.BatchMetricWriter(writer, env.experiment_config.batches_per_step()),
+        tensorboard.BatchMetricWriter(writer),
     )

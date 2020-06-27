@@ -15,6 +15,8 @@ import (
 
 const defaultMetric = "metric"
 
+var defaultBatchesPerStep = model.DefaultExperimentConfig().BatchesPerStep
+
 func isExpected(actual, expected []Kind) bool {
 	if len(actual) != len(expected) {
 		return false
@@ -314,7 +316,7 @@ func runValueSimulationTestCases(t *testing.T, testCases []valueSimulationTestCa
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			method := NewSearchMethod(tc.config)
+			method := NewSearchMethod(tc.config, defaultBatchesPerStep)
 			err := checkValueSimulation(t, method, tc.hparams, tc.expectedTrials)
 			assert.NilError(t, err)
 		})

@@ -11,7 +11,7 @@ NUM_FAKE_WORKLOADS = 10
 def fake_workload_gen() -> Generator[workload.Workload, None, None]:
     # Generate some fake workloads.
     for i in range(NUM_FAKE_WORKLOADS - 1):
-        yield workload.train_workload(i + 1)
+        yield workload.train_workload(i + 1, num_batches=1, total_batches_processed=i)
     yield workload.validation_workload(i)
 
 

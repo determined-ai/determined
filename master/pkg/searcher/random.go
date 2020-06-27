@@ -9,14 +9,18 @@ import (
 type randomSearch struct {
 	defaultSearchMethod
 	model.RandomConfig
+	batchesPerStep int
 }
 
-func newRandomSearch(config model.RandomConfig) SearchMethod {
-	return &randomSearch{RandomConfig: config}
+func newRandomSearch(config model.RandomConfig, batchesPerStep int) SearchMethod {
+	return &randomSearch{RandomConfig: config, batchesPerStep: batchesPerStep}
 }
 
-func newSingleSearch(config model.SingleConfig) SearchMethod {
-	return &randomSearch{RandomConfig: model.RandomConfig{MaxTrials: 1, MaxSteps: config.MaxSteps}}
+func newSingleSearch(config model.SingleConfig, batchesPerStep int) SearchMethod {
+	return &randomSearch{
+		RandomConfig:   model.RandomConfig{MaxTrials: 1, MaxSteps: config.MaxSteps},
+		batchesPerStep: batchesPerStep,
+	}
 }
 
 func (s *randomSearch) initialOperations(ctx context) ([]Operation, error) {
@@ -25,7 +29,8 @@ func (s *randomSearch) initialOperations(ctx context) ([]Operation, error) {
 		create := NewCreate(
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		operations = append(operations, create)
-		operations = append(operations, trainAndValidate(create.RequestID, 0, s.MaxSteps)...)
+		trainVal := trainAndValidate(create.RequestID, 0, s.MaxSteps, s.batchesPerStep)
+		operations = append(operations, trainVal...)
 		operations = append(operations, NewClose(create.RequestID))
 	}
 	return operations, nil

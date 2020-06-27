@@ -21,11 +21,12 @@ type asyncHalvingSearch struct {
 	closedTrials    map[RequestID]bool
 	maxTrials       int
 	trialsCompleted int
+	batchesPerStep  int
 }
 
 const ashaExitedMetricValue = math.MaxFloat64
 
-func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
+func newAsyncHalvingSearch(config model.AsyncHalvingConfig, batchesPerStep int) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
 	for id := 0; id < config.NumRungs; id++ {
 		// We divide the TargetTrialSteps by downsampling rate to get the target steps
@@ -45,6 +46,7 @@ func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
 		earlyExitTrials:    make(map[RequestID]bool),
 		closedTrials:       make(map[RequestID]bool),
 		maxTrials:          config.MaxTrials,
+		batchesPerStep:     batchesPerStep,
 	}
 }
 
@@ -111,7 +113,8 @@ func (s *asyncHalvingSearch) initialOperations(ctx context) ([]Operation, error)
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		s.trialRungs[create.RequestID] = 0
 		ops = append(ops, create)
-		ops = append(ops, trainAndValidate(create.RequestID, 0, s.rungs[0].stepsNeeded)...)
+		trainVal := trainAndValidate(create.RequestID, 0, s.rungs[0].stepsNeeded, s.batchesPerStep)
+		ops = append(ops, trainVal...)
 	}
 	return ops, nil
 }
@@ -177,8 +180,9 @@ func (s *asyncHalvingSearch) promoteAsync(
 			s.trialRungs[promotionID] = rungIndex + 1
 			nextRung.outstandingTrials++
 			if !s.earlyExitTrials[promotionID] {
-				ops = append(
-					ops, trainAndValidate(promotionID, rung.stepsNeeded, nextRung.stepsNeeded)...)
+				trainVal := trainAndValidate(
+					promotionID, rung.stepsNeeded, nextRung.stepsNeeded, s.batchesPerStep)
+				ops = append(ops, trainVal...)
 				addedTrainWorkload = true
 			} else {
 				step := s.rungs[rungIndex+1].stepsNeeded
@@ -203,7 +207,8 @@ func (s *asyncHalvingSearch) promoteAsync(
 			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		s.trialRungs[create.RequestID] = 0
 		ops = append(ops, create)
-		ops = append(ops, trainAndValidate(create.RequestID, 0, s.rungs[0].stepsNeeded)...)
+		trainVal := trainAndValidate(create.RequestID, 0, s.rungs[0].stepsNeeded, s.batchesPerStep)
+		ops = append(ops, trainVal...)
 	}
 
 	// Only close out trials once we have reached the maxTrials for the searcher.

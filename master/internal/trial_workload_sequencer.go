@@ -9,8 +9,10 @@ import (
 )
 
 type stepInfo struct {
-	hasValidation bool
-	hasCheckpoint bool
+	hasValidation         bool
+	hasCheckpoint         bool
+	numBatches            int
+	totalBatchesProcessed int
 }
 
 type trialWorkloadSequencer struct {
@@ -40,14 +42,16 @@ type trialWorkloadSequencer struct {
 
 	trialID      int
 	trialIDValid bool
+
+	batchesPlanned int
 }
 
 func newTrialWorkloadSequencer(
 	exp *model.Experiment, create searcher.Create, firstCheckpoint *model.Checkpoint,
 ) *trialWorkloadSequencer {
 	return &trialWorkloadSequencer{
-		steps:               []stepInfo{{true, true}},
-		curStepDone:         stepInfo{true, true},
+		steps:               []stepInfo{{true, true, 0, 0}},
+		curStepDone:         stepInfo{true, true, 0, 0},
 		checkpointPolicy:    exp.Config.CheckpointPolicy,
 		minValidationPeriod: exp.Config.MinValidationPeriod,
 		minCheckpointPeriod: exp.Config.MinCheckpointPeriod,
@@ -76,7 +80,11 @@ func (s *trialWorkloadSequencer) OperationRequested(op searcher.WorkloadOperatio
 		if op.StepID != len(s.steps) {
 			return errors.New("illegal step requested")
 		}
-		s.steps = append(s.steps, stepInfo{})
+		s.steps = append(s.steps, stepInfo{
+			numBatches:            op.NumBatches,
+			totalBatchesProcessed: s.batchesPlanned,
+		})
+		s.batchesPlanned += op.NumBatches
 
 	case searcher.CheckpointModel:
 		if op.StepID < s.curStep || op.StepID >= len(s.steps) {
@@ -123,7 +131,10 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 	switch msg.Workload.Kind {
 	case searcher.RunStep:
 		s.curStep++
-		s.curStepDone = stepInfo{}
+		s.curStepDone = stepInfo{
+			numBatches:            msg.Workload.NumBatches,
+			totalBatchesProcessed: msg.Workload.TotalBatchesProcessed,
+		}
 		if msg.ExitedReason != nil {
 			s.steps = s.steps[:msg.Workload.StepID+1]
 			if *msg.ExitedReason == searcher.UserCanceled {
@@ -196,20 +207,29 @@ func (s *trialWorkloadSequencer) Workload() (searcher.Workload, error) {
 	step := s.steps[s.curStep]
 	stepID := s.curStep
 	var kind searcher.Kind
+	var numBatches, totalBatchesProcessed int
 	switch {
 	case step.hasValidation && !s.curStepDone.hasValidation:
 		kind = searcher.ComputeValidationMetrics
+		numBatches = 0
+		totalBatchesProcessed = s.steps[stepID].totalBatchesProcessed
 	case step.hasCheckpoint && !s.curStepDone.hasCheckpoint:
 		kind = searcher.CheckpointModel
+		numBatches = 0
+		totalBatchesProcessed = s.steps[stepID].totalBatchesProcessed
 	default:
-		kind = searcher.RunStep
 		stepID++
+		kind = searcher.RunStep
+		numBatches = s.steps[stepID].numBatches
+		totalBatchesProcessed = s.steps[stepID].totalBatchesProcessed
 	}
 	s.curWorkload = searcher.Workload{
-		Kind:         kind,
-		ExperimentID: s.experiment.ID,
-		TrialID:      s.trialID,
-		StepID:       stepID,
+		Kind:                  kind,
+		ExperimentID:          s.experiment.ID,
+		TrialID:               s.trialID,
+		StepID:                stepID,
+		NumBatches:            numBatches,
+		TotalBatchesProcessed: totalBatchesProcessed,
 	}
 	s.curWorkloadValid = true
 	return s.curWorkload, nil
@@ -225,10 +245,12 @@ func (s *trialWorkloadSequencer) PrecloseCheckpointWorkload() *searcher.Workload
 		return nil
 	}
 	return &searcher.Workload{
-		Kind:         searcher.CheckpointModel,
-		ExperimentID: s.experiment.ID,
-		TrialID:      s.trialID,
-		StepID:       s.curStep,
+		Kind:                  searcher.CheckpointModel,
+		ExperimentID:          s.experiment.ID,
+		TrialID:               s.trialID,
+		StepID:                s.curStep,
+		NumBatches:            0,
+		TotalBatchesProcessed: s.steps[s.curStep].totalBatchesProcessed,
 	}
 }
 

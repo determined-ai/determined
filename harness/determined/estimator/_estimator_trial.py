@@ -86,7 +86,7 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
         # step_metrics keeps track of the metrics associated with a step (see
         # DeterminedControlCallback). It is cleared in between training steps.
         self.step_metrics = []  # type: List[Dict[str, Any]]
-        self.batches_per_step = None  # type: Optional[int]
+        self.num_batches = None  # type: Optional[int]
 
         self._global_step_of_last_checkpoint = None  # type: Optional[int]
         self._session = None  # type: Optional[tf.Session]
@@ -153,10 +153,10 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
         self._session = run_context.session
         self._current_global_step = run_values.results["global_step"]
 
-        self.batches_per_step = cast(int, self.batches_per_step)
+        self.num_batches = cast(int, self.num_batches)
         self._collect_batch_metrics(run_values)
         self.batches_processed_in_step += 1
-        if self.batches_processed_in_step < self.batches_per_step:
+        if self.batches_processed_in_step < self.num_batches:
             return
 
         # TODO: Average training results across GPUs. This might
@@ -295,10 +295,8 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
             logging.debug(f"Received wkld {wkld.kind} with args {args}.")
 
             if wkld.kind == workload.Workload.Kind.RUN_STEP:
-                check.len_eq(args, 1)
-                check.is_instance(args[0], int)
                 # Store values for the training loop.
-                self.batches_per_step = cast(int, args[0])
+                self.num_batches = wkld.num_batches
                 self.train_response_func = response_func
                 # Break out of the control loop so that the train process
                 # re-enters the train_and_evaluate() loop.

@@ -450,7 +450,7 @@ class TestPyTorchTrial:
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialCallbacks, hparams=self.hparams, workloads=[]
         )
-        controller._train_for_step(1, 1)
+        controller._train_for_step(1, 1, 0)
         assert controller.trial.counter.__dict__ == {
             "train_steps_started": 1,
             "train_steps_ended": 1,
@@ -502,6 +502,38 @@ class TestPyTorchTrial:
 
         controller = utils.make_trial_controller_from_trial_implementation(
             trial_class=pytorch_xor_model.XORTrialAccessContext,
+            hparams=self.hparams,
+            workloads=make_workloads(),
+            trial_seed=self.trial_seed,
+        )
+        controller.run()
+
+    def test_variable_workload_size(self) -> None:
+        def make_workloads() -> workload.Stream:
+            training_metrics = []
+            interceptor = workload.WorkloadResponseInterceptor()
+
+            total_steps, total_batches_processed = 10, 0
+            for step_id in range(1, total_steps):
+                num_batches = step_id
+                yield from interceptor.send(
+                    workload.train_workload(
+                        step_id,
+                        num_batches=num_batches,
+                        total_batches_processed=total_batches_processed,
+                    ),
+                    [],
+                )
+                metrics = interceptor.metrics_result()
+                batch_metrics = metrics["metrics"]["batch_metrics"]
+                assert len(batch_metrics) == num_batches, "did not run for expected num_batches"
+                training_metrics.extend(batch_metrics)
+                total_batches_processed += num_batches
+
+            yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=pytorch_xor_model.XORTrial,
             hparams=self.hparams,
             workloads=make_workloads(),
             trial_seed=self.trial_seed,

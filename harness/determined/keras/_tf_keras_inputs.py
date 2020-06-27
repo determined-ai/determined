@@ -79,8 +79,7 @@ class _TrainingDataLayerTFDatasetManager(_TrainingInputManager):
         )
 
     def get_initial_epoch(self) -> int:
-        initial_step = self._context.env.first_step() - 1
-        batches_seen = initial_step * self._context.env.experiment_config.batches_per_step()
+        batches_seen = self._context.env.initial_workload.total_batches_processed
         inputs_seen = batches_seen * self._context.get_per_slot_batch_size()
         initial_epoch = inputs_seen // self._training_cacheable.get_dataset_length()
 
@@ -201,16 +200,13 @@ class _TrainingSequenceAdapterManager(_TrainingInputManager):
         self._training_iterator = None  # type: Optional[Iterator]
 
     def get_initial_epoch(self) -> int:
-        initial_step = self._context.env.first_step() - 1
-        batches_seen = initial_step * self._context.env.experiment_config.batches_per_step()
+        batches_seen = self._context.env.initial_workload.total_batches_processed
         initial_epoch = batches_seen // len(self._training_sequence_adapter)
 
         return initial_epoch
 
     def get_training_input_and_batches_per_epoch(self) -> Tuple[Iterator, int]:
-        training_iterator_offset = (
-            self._context.env.first_step() - 1
-        ) * self._context.env.experiment_config.batches_per_step()
+        training_iterator_offset = self._context.env.initial_workload.total_batches_processed
 
         sequence_adapter = self._training_sequence_adapter
         if self._context.hvd_config.use:

@@ -13,7 +13,12 @@ def create_default_env_context(experiment_config: Dict[str, Any]) -> det.EnvCont
     return det.EnvContext(
         experiment_config=experiment_config,
         initial_workload=workload.Workload(
-            workload.Workload.Kind.RUN_STEP, ExperimentID(1), TrialID(1), StepID(1)
+            workload.Workload.Kind.RUN_STEP,
+            ExperimentID(1),
+            TrialID(1),
+            StepID(1),
+            det.ExperimentConfig(experiment_config).batches_per_step(),
+            0,
         ),
         master_addr="",
         master_port=0,

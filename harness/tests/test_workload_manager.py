@@ -59,11 +59,8 @@ class NoopTrialController(det.TrialController):
     def run(self) -> None:
         for w, args, response_func in self.workloads:
             if w.kind == workload.Workload.Kind.RUN_STEP:
-                check.len_eq(args, 1)
-                check.is_instance(args[0], int)
-                num_batches = cast(int, args[0])
                 metrics = det.util.make_metrics(
-                    num_inputs=None, batch_metrics=[{"loss": 1} for _ in range(num_batches)],
+                    num_inputs=None, batch_metrics=[{"loss": 1} for _ in range(w.num_batches)],
                 )
                 response_func({"metrics": metrics})
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
@@ -93,7 +90,7 @@ def test_checkpoint_upload_failure(tmp_path: pathlib.Path) -> None:
         raise ValueError("response_func should not be called if the upload fails")
 
     def make_workloads() -> workload.Stream:
-        yield workload.train_workload(1), [100], workload.ignore_workload_response
+        yield workload.train_workload(1, num_batches=100), [], workload.ignore_workload_response
         yield workload.checkpoint_workload(), [], checkpoint_response_func
 
     workload_manager = layers.build_workload_manager(

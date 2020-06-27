@@ -20,6 +20,7 @@ type pbtSearch struct {
 	trialRoundsCompleted map[RequestID]int
 	trialParams          map[RequestID]hparamSample
 	waitingOps           map[WorkloadOperation][]Operation
+	batchesPerStep       int
 
 	// earlyExitTrials contains trials that exited early that are still considered in the search.
 	earlyExitTrials map[RequestID]bool
@@ -27,13 +28,14 @@ type pbtSearch struct {
 
 const pbtExitedMetricValue = math.MaxFloat64
 
-func newPBTSearch(config model.PBTConfig) SearchMethod {
+func newPBTSearch(config model.PBTConfig, batchesPerStep int) SearchMethod {
 	return &pbtSearch{
 		PBTConfig:            config,
 		metrics:              make(map[RequestID]float64),
 		trialRoundsCompleted: make(map[RequestID]int),
 		trialParams:          make(map[RequestID]hparamSample),
 		waitingOps:           make(map[WorkloadOperation][]Operation),
+		batchesPerStep:       batchesPerStep,
 		earlyExitTrials:      make(map[RequestID]bool),
 	}
 }
@@ -44,7 +46,8 @@ func (s *pbtSearch) initialOperations(ctx context) ([]Operation, error) {
 		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		s.trialParams[create.RequestID] = create.Hparams
 		ops = append(ops, create)
-		ops = append(ops, trainAndValidate(create.RequestID, 0, s.StepsPerRound)...)
+		trainVal := trainAndValidate(create.RequestID, 0, s.StepsPerRound, s.batchesPerStep)
+		ops = append(ops, trainVal...)
 	}
 	return ops, nil
 }
@@ -139,8 +142,8 @@ func (s *pbtSearch) runNewTrials(
 
 			// The new trial cannot begin until the checkpoint has been completed.
 			s.waitingOps[checkpoint] = []Operation{create}
-			s.waitingOps[checkpoint] = append(s.waitingOps[checkpoint],
-				trainAndValidate(create.RequestID, 0, s.StepsPerRound)...)
+			trainVal := trainAndValidate(create.RequestID, 0, s.StepsPerRound, s.batchesPerStep)
+			s.waitingOps[checkpoint] = append(s.waitingOps[checkpoint], trainVal...)
 		}
 	}
 
@@ -149,7 +152,7 @@ func (s *pbtSearch) runNewTrials(
 		if !s.earlyExitTrials[requestID] {
 			lastStep := s.trialRoundsCompleted[requestID] * s.StepsPerRound
 			nextStep := lastStep + s.StepsPerRound
-			ops = append(ops, trainAndValidate(requestID, lastStep, nextStep)...)
+			ops = append(ops, trainAndValidate(requestID, lastStep, nextStep, s.batchesPerStep)...)
 		} else {
 			s.metrics[requestID] = pbtExitedMetricValue
 		}
