@@ -15,7 +15,9 @@ class ModelSortBy(enum.Enum):
 
 class ModelOrderBy(enum.Enum):
     ASCENDING = 1
+    ASC = 1
     DESCENDING = 2
+    DESC = 2
 
 
 class Model:
@@ -81,6 +83,15 @@ class Model:
                 "update_mask": {"paths": ["model.metadata"]},
             },
         )
+
+    def to_json(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "description": self.description,
+            "creation_time": self.creation_time,
+            "last_updated_time": self.last_updated_time,
+            "metadata": self.metadata,
+        }
 
     @staticmethod
     def from_json(data: Dict[str, Any], master: str) -> "Model":

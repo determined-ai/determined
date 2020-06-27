@@ -29,6 +29,9 @@ export interface Theme {
       suspended: string;
     };
   };
+  focus: {
+    shadow: string;
+  };
   font: {
     family: string;
   };
@@ -84,7 +87,7 @@ export const lightTheme: Theme = {
       '#cccccc',  // 11 - Stainless Steel
       '#dddddd',  // 12 - Ash
       '#ececec',  // 13 - Silver
-      '#f2f2f2',  // 14 -  Platinum
+      '#f2f2f2',  // 14 - Platinum
       '#f7f7f7',  // 15 - Dusty
       '#fafafa',  // 16 - Fog
       '#ffffff',  // 17 - White
@@ -96,6 +99,9 @@ export const lightTheme: Theme = {
       success: '#009900',
       suspended: '#cc9900',
     },
+  },
+  focus: {
+    shadow: '0 0 0 0.2rem rgba(0, 155, 222, 0.25)',
   },
   font: {
     family: 'Objektiv Mk3',

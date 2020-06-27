@@ -19,6 +19,7 @@ from determined_cli.agent import args_description as agent_args_description
 from determined_cli.declarative_argparse import Arg, Cmd, add_args
 from determined_cli.experiment import args_description as experiment_args_description
 from determined_cli.master import args_description as master_args_description
+from determined_cli.model import args_description as model_args_description
 from determined_cli.notebook import args_description as notebook_args_description
 from determined_cli.remote import args_description as remote_args_description
 from determined_cli.shell import args_description as shell_args_description
@@ -177,6 +178,7 @@ args_description = [
 all_args_description = (
     args_description
     + master_args_description
+    + model_args_description
     + agent_args_description
     + notebook_args_description
     + shell_args_description

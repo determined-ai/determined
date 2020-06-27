@@ -1,13 +1,16 @@
-import React, { useCallback, useState } from 'react';
+import { Input } from 'antd';
+import React, { useCallback, useMemo, useState } from 'react';
 
+import Icon from 'components/Icon';
 import Page from 'components/Page';
-import TaskFilter, { ALL_VALUE, filterTasks, TaskFilters } from 'components/TaskFilter';
+import TaskFilter from 'components/TaskFilter';
 import TaskTable from 'components/TaskTable';
 import Auth from 'contexts/Auth';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Users from 'contexts/Users';
 import useStorage from 'hooks/useStorage';
-import { CommandType } from 'types';
+import { ALL_VALUE, CommandType, TaskFilters } from 'types';
+import { filterTasks } from 'utils/task';
 import { commandToTask } from 'utils/types';
 
 import css from './TaskList.module.scss';
@@ -35,6 +38,7 @@ const TaskList: React.FC = () => {
   const initFilters = storage.getWithDefault('filters',
     { ...defaultFilters, username: (auth.user || {}).username });
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
+  const [ search, setSearch ] = useState('');
 
   const sources = [
     commands,
@@ -51,7 +55,13 @@ const TaskList: React.FC = () => {
 
   const hasLoaded = sources.find(src => src.hasLoaded);
 
-  const filteredTasks = filterTasks(loadedTasks, filters, users.data || []);
+  const filteredTasks = useMemo(() => {
+    return filterTasks(loadedTasks, filters, users.data || [], search);
+  }, [ filters, loadedTasks, search, users.data ]);
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value || '');
+  }, []);
 
   const handleFilterChange = useCallback((filters: TaskFilters<CommandType>): void => {
     storage.set('filters', filters);
@@ -64,7 +74,12 @@ const TaskList: React.FC = () => {
     <Page title="Tasks">
       <div className={css.base}>
         <div className={css.header}>
-          <div />
+          <Input
+            allowClear
+            className={css.search}
+            placeholder="ID or name"
+            prefix={<Icon name="search" size="small" />}
+            onChange={handleSearchChange} />
           <TaskFilter<CommandType>
             filters={filters}
             showExperiments={false}

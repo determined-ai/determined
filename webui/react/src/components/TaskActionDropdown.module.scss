@@ -2,9 +2,11 @@
   color: var(--theme-colors-monochrome-8);
 
   button {
+    align-items: center;
     background: none;
     border: none;
     cursor: pointer;
+    display: flex;
     font: inherit;
     outline: inherit;
     padding: 0;
@@ -13,6 +15,9 @@
   }
   button:disabled,
   button[disabled] {
-    &:hover { color: var(--theme-colors-monochrome-8); }
+    color: var(--theme-colors-monochrome-11);
+    cursor: not-allowed;
+
+    &:hover { color: var(--theme-colors-monochrome-11); }
   }
 }

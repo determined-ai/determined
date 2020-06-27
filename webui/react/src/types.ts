@@ -201,6 +201,8 @@ export type RecentEvent = {
   };
 };
 
+export const ALL_VALUE = 'all';
+
 export type AnyTask = CommandTask | ExperimentTask;
 export type RecentTask = AnyTask & RecentEvent;
 export type RecentCommandTask = CommandTask & RecentEvent;
@@ -209,6 +211,13 @@ export type RecentExperimentTask = ExperimentTask & RecentEvent;
 export type PropsWithClassName<T> = T & {className?: string};
 
 export type TaskType = CommandType | 'Experiment';
+
+export interface TaskFilters<T extends TaskType = TaskType> {
+  limit: number;
+  states: string[];
+  username?: string;
+  types: Record<T, boolean>;
+}
 
 export enum TBSourceType {
   Trial,

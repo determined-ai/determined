@@ -98,8 +98,7 @@ def _cypress_arguments(cypress_configs, config):
         "--config",
         ",".join([timeout_config, base_url_config, *cypress_configs]),
         "--browser",
-        "chrome",
-        "--headless",
+        "electron",
     ]
 
     if config["CYPRESS_ARGS"]:

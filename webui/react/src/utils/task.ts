@@ -1,6 +1,8 @@
-import { AnyTask, CommandState, CommandType, ExperimentTask, RecentCommandTask,
-  RecentEvent, RecentExperimentTask, RecentTask, RunState,
-  Task, terminalCommandStates } from 'types';
+import {
+  ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType, ExperimentTask, RecentCommandTask,
+  RecentEvent, RecentExperimentTask, RecentTask, RunState, Task, TaskFilters, TaskType,
+  terminalCommandStates, User,
+} from 'types';
 
 import { isExperiment } from './types';
 
@@ -87,4 +89,41 @@ export const canBeOpened = (task: AnyTask): boolean => {
   if (!isExperimentTask(task) && task.state in terminalCommandStates) return false;
   if (isExperiment(task)) return true;
   return !!task.url;
+};
+
+const matchesSearch = <T extends AnyTask>(task: T, search = ''): boolean => {
+  if (!search) return true;
+  return task.id.indexOf(search) !== -1 || task.title.indexOf(search) !== -1;
+};
+
+const matchesState = <T extends AnyTask>(task: T, states: string[]): boolean => {
+  if (states[0] === ALL_VALUE) return true;
+
+  const targetStateRun = states[0] as RunState;
+  const targetStateCmd = states[0] as CommandState;
+
+  return [ targetStateRun, targetStateCmd ].includes(task.state);
+};
+
+const matchesUser = <T extends AnyTask>(task: T, users: User[], username?: string): boolean => {
+  if (!username) return true;
+  const selectedUser = users.find(u => u.username === username);
+  return !!selectedUser && (task.ownerId === selectedUser.id);
+};
+
+export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = AnyTask>(
+  tasks: A[], filters: TaskFilters<T>, users: User[], search = '',
+): A[] => {
+  const isAllTypes = !Object.values(filters.types).includes(true);
+  return tasks
+    .filter(task => {
+      const isExperiment = isExperimentTask(task);
+      const type = isExperiment ? 'Experiment' : (task as CommandTask).type;
+      return (isAllTypes || filters.types[type as T]) &&
+        matchesUser<A>(task, users, filters.username) &&
+        matchesState<A>(task, filters.states) &&
+        matchesSearch<A>(task, search) &&
+        (!isExperiment || !(task as ExperimentTask).archived);
+    })
+    .slice(0, filters.limit);
 };

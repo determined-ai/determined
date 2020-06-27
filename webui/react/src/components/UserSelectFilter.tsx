@@ -4,9 +4,9 @@ import React, { useCallback, useMemo } from 'react';
 
 import Auth from 'contexts/Auth';
 import Users from 'contexts/Users';
-import { User } from 'types';
+import { ALL_VALUE, User } from 'types';
 
-import SelectFilter, { ALL_VALUE } from './SelectFilter';
+import SelectFilter from './SelectFilter';
 
 const { Option } = Select;
 

@@ -393,7 +393,7 @@ updateWithRoute url model =
         ( newModel, cmd ) =
             case Route.parse url of
                 Just Route.Cluster ->
-                    Page.Cluster.init |> mapInit model clusterInfo
+                    ( model, Navigation.load (Route.toString Route.Cluster) )
 
                 Just (Route.CommandList options) ->
                     case model.page of
