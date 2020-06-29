@@ -1,19 +1,21 @@
-import { Input } from 'antd';
+import { Input, Table } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
+import { makeClickHandler } from 'components/Link';
+import linkCss from 'components/Link.module.scss';
 import Page from 'components/Page';
 import TaskFilter from 'components/TaskFilter';
-import TaskTable from 'components/TaskTable';
 import Auth from 'contexts/Auth';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Users from 'contexts/Users';
 import useStorage from 'hooks/useStorage';
-import { ALL_VALUE, CommandType, TaskFilters } from 'types';
-import { filterTasks } from 'utils/task';
+import { ALL_VALUE, CommandTask, CommandType, TaskFilters } from 'types';
+import { canBeOpened, filterTasks } from 'utils/task';
 import { commandToTask } from 'utils/types';
 
 import css from './TaskList.module.scss';
+import { columns } from './TaskList.table';
 
 const defaultFilters: TaskFilters<CommandType> = {
   limit: 25,
@@ -68,6 +70,10 @@ const TaskList: React.FC = () => {
     setFilters(filters);
   }, [ setFilters, storage ]);
 
+  const handleTableRow = useCallback((record: CommandTask) => ({
+    onClick: canBeOpened(record) ? makeClickHandler(record.url as string) : undefined,
+  }), []);
+
   // TODO select and batch operation:
   // https://ant.design/components/table/#components-table-demo-row-selection-and-operation
   return (
@@ -86,7 +92,14 @@ const TaskList: React.FC = () => {
             showLimit={false}
             onChange={handleFilterChange} />
         </div>
-        <TaskTable tasks={hasLoaded ? filteredTasks : undefined} />
+        <Table
+          columns={columns}
+          dataSource={filteredTasks}
+          loading={!hasLoaded}
+          rowClassName={(record): string => canBeOpened(record) ? linkCss.base : ''}
+          rowKey="id"
+          size="small"
+          onRow={handleTableRow} />
       </div>
     </Page>
   );
