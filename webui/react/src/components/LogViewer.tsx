@@ -258,6 +258,27 @@ const LogViewer: React.FC<Props> = forwardRef((
   }, [ logs, previousScroll, onScrollToTop, scroll ]);
 
   /*
+   * Detect log viewer resize events to trigger
+   * recalculation of measured log entries.
+   */
+  useLayoutEffect(() => {
+    if (!container.current) return;
+
+    const element = container.current;
+    const handleResize: ResizeObserverCallback = entries => {
+      // Check to make sure the log viewer container is being observed for resize.
+      const elements = entries.map((entry: ResizeObserverEntry) => entry.target);
+      if (!element || elements.indexOf(element) === -1) return;
+
+      setConfig(measureLogs(logs));
+    };
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(element);
+
+    return (): void => resizeObserver.unobserve(element);
+  }, [ logs, measureLogs ]);
+
+  /*
    * Scroll to the latest log entry when showing the very first
    * set of log entries. `setTimeout` is needed to ensure that
    * `scrollTo` occurs after the layout has settled.
