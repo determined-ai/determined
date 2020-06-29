@@ -4,12 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 
+	timestamp "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	ptypes "github.com/golang/protobuf/ptypes"
+
 	"github.com/determined-ai/determined/master/internal/db"
+
 	"github.com/determined-ai/determined/master/internal/scheduler"
 	"github.com/determined-ai/determined/master/internal/telemetry"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -17,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
 
 // Experiment-specific actor messages.
@@ -74,6 +79,40 @@ type experiment struct {
 	pendingEvents []*model.SearcherEvent
 
 	agentUserGroup *model.AgentUserGroup
+}
+
+func (e *experiment) toProto() (*experimentv1.Experiment, error) {
+	startTime, err := ptypes.TimestampProto(e.StartTime)
+	stateValue, stateOk := experimentv1.State_value["STATE_"+string(e.State)]
+	if !stateOk {
+		err = errors.Errorf("bad experiment proto state %s", e.State)
+	}
+	labels := make([]string, 0, len(e.Config.Labels))
+	for k := range e.Config.Labels {
+		labels = append(labels, k)
+	}
+	user, err := e.db.UserByID(*e.OwnerID)
+	experiment := experimentv1.Experiment{
+		Id:          int32(e.ID),
+		Description: e.Config.Description,
+		Labels:      labels,
+		StartTime:   startTime,
+		State:       experimentv1.State(stateValue),
+		Archived:    e.Archived,
+		Progress:    e.searcher.Progress(),
+		Username:    user.Username,
+	}
+
+	if e.EndTime != nil {
+		var endTime *timestamp.Timestamp
+		endTime, err = ptypes.TimestampProto(*e.EndTime)
+		experiment.EndTime = endTime
+	}
+
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to convert experiment to proto experiment")
+	}
+	return &experiment, nil
 }
 
 // Create a new experiment object from the given model experiment object, along with its searcher
@@ -379,18 +418,21 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 	case *apiv1.PauseExperimentRequest:
 		var err error
+		var protoExp *experimentv1.Experiment
 		switch {
 		case e.State == model.PausedState:
-			ctx.Respond(&apiv1.PauseExperimentResponse{})
+			protoExp, err = e.toProto()
 		case model.RunningStates[e.State]:
 			if err = e.updateState(ctx, model.PausedState); err == nil {
-				ctx.Respond(&apiv1.PauseExperimentResponse{})
+				protoExp, err = e.toProto()
 			}
 		default:
 			err = status.Errorf(codes.InvalidArgument, "experiment in incompatible state: %s", e.State)
 		}
 		if err != nil {
 			ctx.Respond(err)
+		} else {
+			ctx.Respond(&apiv1.PauseExperimentResponse{Experiment: protoExp})
 		}
 
 	case *apiv1.ActivateExperimentRequest:

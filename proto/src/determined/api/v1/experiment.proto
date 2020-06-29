@@ -65,6 +65,7 @@ message PauseExperimentRequest {
 }
 // Response to PauseExperimentRequest.
 message PauseExperimentResponse {
+    determined.experiment.v1.Experiment experiment = 1;
 }
 
 // Request to kill an experiment
@@ -101,6 +102,7 @@ message ArchiveExperimentRequest {
 }
 // Response to ArchiveExperimentRequest.
 message ArchiveExperimentResponse {
+    determined.experiment.v1.Experiment experiment = 1;
 }
 
 // Request to unarchive an experiment
@@ -110,4 +112,5 @@ message UnarchiveExperimentRequest {
 }
 // Response to UnarchiveExperimentRequest.
 message UnarchiveExperimentResponse {
+    determined.experiment.v1.Experiment experiment = 1;
 }

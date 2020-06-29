@@ -148,13 +148,13 @@ func (a *apiServer) setArchiveStatus(reqID int32, doArchive bool) (
 func (a *apiServer) ArchiveExperiment(
 	ctx context.Context, req *apiv1.ArchiveExperimentRequest) (
 	*apiv1.ArchiveExperimentResponse, error) {
-	_, err := a.setArchiveStatus(req.Id, true)
-	return &apiv1.ArchiveExperimentResponse{}, err
+	exp, err := a.setArchiveStatus(req.Id, true)
+	return &apiv1.ArchiveExperimentResponse{Experiment: exp}, err
 }
 
 func (a *apiServer) UnarchiveExperiment(
 	ctx context.Context, req *apiv1.UnarchiveExperimentRequest) (
 	*apiv1.UnarchiveExperimentResponse, error) {
-	_, err := a.setArchiveStatus(req.Id, false)
-	return &apiv1.UnarchiveExperimentResponse{}, err
+	exp, err := a.setArchiveStatus(req.Id, false)
+	return &apiv1.UnarchiveExperimentResponse{Experiment: exp}, err
 }
