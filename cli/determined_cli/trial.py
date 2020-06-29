@@ -1,13 +1,10 @@
 import distutils.util
 import json
-import time
 from argparse import Namespace
-from typing import Any, List, Optional
-
-from termcolor import colored
+from typing import Any, List
 
 from determined_cli import render
-from determined_common import api, constants
+from determined_common import api
 from determined_common.experimental import Determined
 
 from .checkpoint import format_checkpoint, format_validation, render_checkpoint
