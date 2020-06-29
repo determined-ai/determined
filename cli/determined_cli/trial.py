@@ -80,52 +80,6 @@ def describe_trial(args: Namespace) -> None:
     render.tabulate_or_csv(headers, values, args.csv)
 
 
-@authentication_required
-def logs(args: Namespace) -> None:
-    last_offset, last_state = 0, None
-
-    def print_logs(offset: Optional[int], limit: Optional[int] = 5000) -> Any:
-        nonlocal last_offset, last_state
-        path = "trials/{}/logsv2?".format(args.trial_id)
-        if offset is not None:
-            path += "&offset={}".format(offset)
-        if limit is not None:
-            path += "&limit={}".format(limit)
-        logs = api.get(args.master, path).json()
-        for log in logs:
-            print(log["message"], end="")
-            last_state = log["state"]
-        return logs[-1]["id"] if logs else last_offset
-
-    try:
-        if args.tail is not None:
-            last_offset = print_logs(None, args.tail)
-        else:
-            while True:
-                new_offset = print_logs(last_offset)
-                if last_offset == new_offset:
-                    break
-                last_offset = new_offset
-
-        if not args.follow:
-            return
-        while True:
-            last_offset = print_logs(last_offset)
-            if last_state in constants.TERMINAL_STATES:
-                break
-            time.sleep(0.2)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        print(
-            colored(
-                "Trial is in the {} state. To reopen log stream, run: "
-                "det trial logs -f {}".format(last_state, args.trial_id),
-                "green",
-            )
-        )
-
-
 def download(args: Namespace) -> None:
     checkpoint = (
         Determined(args.master, None)
