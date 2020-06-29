@@ -82,7 +82,7 @@ export const tableRowClickHandler = (record: AnyTask): {onClick?: MouseEventHand
 });
 
 const TaskTable: React.FC<Props> = ({ tasks }: Props) => {
-  const [ selectedRowKeys, setSelectedRowKeys ] = useState([]);
+  const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
 
   const showBatch = selectedRowKeys.length !== 0;
 
