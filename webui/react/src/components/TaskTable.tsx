@@ -1,11 +1,13 @@
-import { Table, Tooltip } from 'antd';
+import { Button, notification, Table, Tooltip } from 'antd';
 import { ColumnsType, ColumnType } from 'antd/lib/table';
-import React, { MouseEventHandler } from 'react';
+import axios from 'axios';
+import React, { MouseEventHandler, useCallback, useMemo, useState } from 'react';
 
+import { killCommand } from 'services/api';
 import { AnyTask, CommandTask, CommandType, CommonProps } from 'types';
 import { alphanumericSorter } from 'utils/data';
 import { canBeOpened } from 'utils/task';
-import { commandTypeToLabel } from 'utils/types';
+import { commandTypeToLabel, isTaskKillable } from 'utils/types';
 
 import Badge, { BadgeType } from './Badge';
 import Icon from './Icon';
@@ -15,6 +17,7 @@ import {
   actionsColumn, ellipsisRenderer, Renderer, startTimeColumn, stateColumn, userColumn,
 } from './Table';
 import css from './Table.module.scss';
+import TableBatch from './TableBatch';
 
 interface Props extends CommonProps {
   tasks?: CommandTask[];
@@ -79,16 +82,69 @@ export const tableRowClickHandler = (record: AnyTask): {onClick?: MouseEventHand
 });
 
 const TaskTable: React.FC<Props> = ({ tasks }: Props) => {
+  const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
+
+  const showBatch = selectedRowKeys.length !== 0;
+
+  const taskMap = useMemo(() => {
+    return (tasks || []).reduce((acc, task) => {
+      acc[task.id] = task;
+      return acc;
+    }, {} as Record<string, CommandTask>);
+  }, [ tasks ]);
+
+  const selectedTasks = useMemo(() => {
+    return selectedRowKeys.map(key => taskMap[key]);
+  }, [ selectedRowKeys, taskMap ]);
+
+  const hasKillable = useMemo(() => {
+    for (let i = 0; i < selectedTasks.length; i++) {
+      if (isTaskKillable(selectedTasks[i])) return true;
+    }
+    return false;
+  }, [ selectedTasks ]);
+
+  const handleBatchKill = useCallback(async () => {
+    try {
+      const source = axios.CancelToken.source();
+      const promises = selectedTasks.map(task => killCommand({
+        cancelToken: source.token,
+        commandId: task.id,
+        commandType: task.type,
+      }));
+      await Promise.all(promises);
+    } catch (e) {
+      notification.warn({
+        description: 'Please try again later.',
+        message: 'Unable to Kill Selected Tasks',
+      });
+    }
+  }, [ selectedTasks ]);
+  const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
+
   return (
-    <Table
-      className={css.base}
-      columns={columns}
-      dataSource={tasks}
-      loading={tasks === undefined}
-      rowClassName={(record): string => canBeOpened(record) ? linkCss.base : ''}
-      rowKey="id"
-      size="small"
-      onRow={tableRowClickHandler} />
+    <div>
+      <TableBatch message="Apply batch operations to multiple tasks." show={showBatch}>
+        <Button
+          danger
+          disabled={!hasKillable}
+          type="primary"
+          onClick={handleBatchKill}>Kill</Button>
+      </TableBatch>
+      <Table
+        className={css.base}
+        columns={columns}
+        dataSource={tasks}
+        loading={tasks === undefined}
+        rowClassName={(record): string => canBeOpened(record) ? linkCss.base : ''}
+        rowKey="id"
+        rowSelection={{
+          onChange: handleTableRowSelect,
+          selectedRowKeys,
+        }}
+        size="small"
+        onRow={tableRowClickHandler} />
+    </div>
   );
 };
 

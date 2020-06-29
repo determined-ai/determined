@@ -125,5 +125,6 @@ export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = A
         matchesSearch<A>(task, search) &&
         (!isExperiment || !(task as ExperimentTask).archived);
     })
+    .filter(task => matchesSearch<A>(task, search))
     .slice(0, filters.limit);
 };
