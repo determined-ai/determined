@@ -360,9 +360,18 @@ def report_failed_experiment(experiment_id: int, state: str) -> None:
     )
 
     for trial in error_trials:
-        print("******** Start of logs for trial {} ********".format(trial["id"]), file=sys.stderr)
-        print("".join(trial_logs(trial["id"])), file=sys.stderr)
-        print("******** End of logs for trial {} ********".format(trial["id"]), file=sys.stderr)
+        print_trial_logs(trial["id"])
+
+
+def report_failed_trial(trial_id: int, state: str) -> None:
+    print(f"Trial {trial_id} was not COMPLETED but {state}", file=sys.stderr)
+    print_trial_logs(trial_id)
+
+
+def print_trial_logs(trial_id: int) -> None:
+    print("******** Start of logs for trial {} ********".format(trial_id), file=sys.stderr)
+    print("".join(trial_logs(trial_id)), file=sys.stderr)
+    print("******** End of logs for trial {} ********".format(trial_id), file=sys.stderr)
 
 
 def run_basic_test(
@@ -395,7 +404,10 @@ def verify_completed_experiment_metadata(
     assert len(trials) > 0
 
     for trial in trials:
-        assert trial["state"] == "COMPLETED"
+        if trial["state"] != "COMPLETED":
+            report_failed_trial(trial["id"], trial["state"])
+            pytest.fail(f"Trial {trial['id']} was not COMPLETED but {trial['state']}")
+
         assert len(trial["steps"]) > 0
 
         # Check that steps appear in increasing order of step ID.
