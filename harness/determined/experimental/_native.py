@@ -93,9 +93,9 @@ def _submit_experiment(
         api.follow_test_experiment_logs(master_url, exp_id)
     else:
         exp_id = api.create_experiment(master_url, config, exp_context)
+
     logging.info(f"Created experiment {exp_id}")
     api.follow_experiment_logs(master_url, exp_id)
-
     return exp_id
 
 
