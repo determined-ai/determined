@@ -2,8 +2,6 @@ import { Button, notification, Table, Tooltip } from 'antd';
 import { ColumnsType, ColumnType } from 'antd/lib/table';
 import axios from 'axios';
 import React, { MouseEventHandler, useCallback, useMemo, useState } from 'react';
-import { actionsColumn, Renderer, startTimeColumn, stateColumn,
-  userColumn } from 'table/columns';
 
 import { killCommand } from 'services/api';
 import { AnyTask, CommandTask, CommandType, CommonProps } from 'types';
