@@ -36,11 +36,7 @@
     display: flex;
     position: absolute;
   }
-  .line > * {
-    display: inline-block;
-    user-select: text;
-    white-space: nowrap;
-  }
+  .line > * { white-space: nowrap; }
   .line > .number {
     color: var(--theme-colors-monochrome-10);
     flex-shrink: 0;
@@ -48,12 +44,11 @@
     user-select: none;
   }
   .line > .number::after { content: '\00a0'; }
+  .line > .level::after { content: '\00a0'; }
   .line > .time {
     color: var(--theme-colors-core-secondary);
     flex-shrink: 0;
   }
-  .line > .time::before,
-  .line > .time::after { user-select: text; }
   .line > .time::before { content: '['; }
   .line > .time::after { content: ']\00a0'; }
   .line > .message {
