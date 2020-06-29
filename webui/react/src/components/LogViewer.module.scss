@@ -50,10 +50,12 @@
   .line > .level {
     flex-shrink: 0;
     padding: 0.1rem;
+    user-select: none;
   }
   .line > .time {
     color: var(--theme-colors-core-secondary);
     flex-shrink: 0;
+    user-select: none;
   }
   .line > .time::before { content: '['; }
   .line > .time::after { content: ']\00a0'; }
@@ -62,6 +64,7 @@
     white-space: pre-wrap;
     word-break: break-word;
   }
+  .line > .message > .clipboard { font-size: 0; }
   .scrollToLatest {
     bottom: var(--theme-sizes-layout-huge);
     box-shadow: var(--theme-shadow);

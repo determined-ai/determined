@@ -70,6 +70,8 @@ const DATETIME_FORMAT = 'MMM DD, HH:mm:ss';
 // Max datetime size: [MMM DD, HH:mm:ss] (plus 1 for a space suffix)
 const MAX_DATETIME_LENGTH = 19;
 
+const ICON_WIDTH = 26;
+
 const defaultLogConfig = {
   charHeight: 0,
   charWidth: 0,
@@ -107,6 +109,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   const spacerStyle = { height: toRem(config.totalContentHeight) };
   const dateTimeStyle = { width: toRem(config.dateTimeWidth) };
   const lineNumberStyle = { width: toRem(config.lineNumberWidth) };
+  const levelStyle = { width: toRem(ICON_WIDTH) };
 
   if (noWrap) classes.push(css.noWrap);
   if (scroll.scrollTop < scroll.scrollHeight - scroll.viewHeight) {
@@ -152,7 +155,7 @@ const LogViewer: React.FC<Props> = forwardRef((
      * Calculate the width of message based on how much space is left
      * after rendering line and timestamp.
      */
-    const messageWidth = spacerRect.width - lineNumberWidth - dateTimeWidth;
+    const messageWidth = spacerRect.width - lineNumberWidth - ICON_WIDTH - dateTimeWidth;
 
     /*
       * Measure the dimensions of every message in the available data.
@@ -326,12 +329,6 @@ const LogViewer: React.FC<Props> = forwardRef((
     container.current.scrollTo({ behavior: 'smooth', top: container.current.scrollHeight });
   }, []);
 
-  const levelCss = (defaultCss: string, level?: string): string => {
-    const classes = [ defaultCss ];
-    if (level) classes.push(css[level]);
-    return classes.join(' ');
-  };
-
   const logOptions = (
     <Space>
       {debugMode && <div className={css.debugger}>
@@ -356,6 +353,18 @@ const LogViewer: React.FC<Props> = forwardRef((
     </Space>
   );
 
+  const levelCss = (defaultCss: string, level?: string): string => {
+    const classes = [ defaultCss ];
+    if (level) classes.push(css[level]);
+    return classes.join(' ');
+  };
+
+  const addClipboardPrefix = (log: Log): string => {
+    const content = `${log.time} [${log.level?.toLocaleUpperCase()}] `;
+    const prefix = `<span class=${css.clipboard}>${content}</span>`;
+    return prefix + ansiToHtml(log.message);
+  };
+
   return (
     <div className={css.base} ref={baseRef}>
       <Section maxHeight options={logOptions} title={title}>
@@ -366,13 +375,21 @@ const LogViewer: React.FC<Props> = forwardRef((
                 height: toRem(config.messageSizes[log.id]?.height),
                 top: toRem(config.messageSizes[log.id]?.top),
               }}>
+                {log.level !== LogLevel.Info ? (
+                  <Tooltip placement="top" title={log.level}>
+                    <div className={levelCss(css.level, log.level)} style={levelStyle}>
+                      <Icon name={log.level} size="small" />
+                    </div>
+                  </Tooltip>
+                ) : <div className={levelCss(css.level, log.level)} style={levelStyle} />
+                }
                 <div className={css.number} style={lineNumberStyle}>{log.id + 1}</div>
                 <Tooltip placement="left" title={log.time || ''}>
                   <div className={css.time} style={dateTimeStyle}>{log.formattedTime}</div>
                 </Tooltip>
                 <div
                   className={levelCss(css.message, log.level)}
-                  dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }} />
+                  dangerouslySetInnerHTML={{ __html: addClipboardPrefix(log) }} />
               </div>
             ))}
           </div>
