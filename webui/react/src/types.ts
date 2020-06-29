@@ -162,6 +162,18 @@ export enum RunState {
   StoppingError = 'STOPPING_ERROR',
 }
 
+interface ValidationHistory {
+  endTime: string;
+  id: number;
+  validationError?: number;
+}
+
+interface Trial {
+  hparams: Record<string, string>;
+  id: number;
+  state: RunState;
+}
+
 export interface Experiment {
   archived: boolean;
   config: ExperimentConfig;
@@ -171,6 +183,12 @@ export interface Experiment {
   progress?: number;
   startTime: string;
   state: RunState;
+}
+
+export interface ExperimentDetails extends Experiment {
+  validationHistory: ValidationHistory[];
+  trials: Trial[];
+  username: string;
 }
 
 export interface Task {

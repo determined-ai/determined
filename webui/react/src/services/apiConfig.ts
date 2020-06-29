@@ -4,14 +4,15 @@ import queryString from 'query-string';
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { Api } from 'services/apiBuilder';
 import {
-  jsonToCommandLogs, jsonToDeterminedInfo, jsonToExperiments, jsonToLogs, jsonToTrialLogs,
+  jsonToCommandLogs, jsonToDeterminedInfo, jsonToExperimentDetails, jsonToExperiments, jsonToLogs,
+  jsonToTrialLogs,
 } from 'services/decoder';
 import {
-  CommandLogsParams, ExperimentsParams, KillCommandParams, KillExpParams,
-  LaunchTensorboardParams, LogsParams, PatchExperimentParams, TrialLogsParams,
+  CommandLogsParams, ExperimentDetailsParams, ExperimentsParams, KillCommandParams,
+  KillExpParams, LaunchTensorboardParams, LogsParams, PatchExperimentParams, TrialLogsParams,
 } from 'services/types';
 import {
-  CommandType, Credentials, DeterminedInfo, Experiment, Log, TBSourceType, User,
+  CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log, TBSourceType, User,
 } from 'types';
 
 /* Helpers */
@@ -120,6 +121,14 @@ export const getExperimentSummaries: Api<ExperimentsParams, Experiment[]> = {
   }),
   name: 'getExperimentSummaries',
   postProcess: (response) => jsonToExperiments(response.data),
+};
+
+export const getExperimentDetails: Api<ExperimentDetailsParams, ExperimentDetails> = {
+  httpOptions: (params) => ({
+    url: `/experiments/${params.id}/summary`,
+  }),
+  name: 'getExperiment',
+  postProcess: (response) => jsonToExperimentDetails(response.data),
 };
 
 /* Logs */

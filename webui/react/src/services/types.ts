@@ -4,6 +4,10 @@ export interface ExperimentsParams {
   states?: string[];
 }
 
+export interface ExperimentDetailsParams {
+  id: number;
+}
+
 // TODO in the following types the default id should probably be just "id"
 
 export interface KillExpParams {
