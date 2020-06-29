@@ -6,8 +6,9 @@ import pathlib
 import random
 import sys
 import tempfile
-from termcolor import colored
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, cast
+
+from termcolor import colored
 
 import determined as det
 import determined_common

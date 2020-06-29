@@ -1,11 +1,11 @@
-import uuid
-from typing import Any, Dict, Optional
-import time
 import sys
+import time
+import uuid
 from argparse import Namespace
-from termcolor import colored
+from typing import Any, Dict, Optional
 
 from ruamel import yaml
+from termcolor import colored
 
 from determined_common import api, constants, context
 from determined_common.api import request as req
