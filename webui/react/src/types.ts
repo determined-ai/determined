@@ -185,10 +185,15 @@ export interface Experiment {
   state: RunState;
 }
 
+export interface ExperimentItem extends Experiment {
+  name: string;
+  url: string;
+  username: string;
+}
+
 export interface ExperimentDetails extends Experiment {
   validationHistory: ValidationHistory[];
   trials: Trial[];
-  username: string;
 }
 
 export interface Task {
