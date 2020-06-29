@@ -9,7 +9,7 @@ import Icon from 'components/Icon';
 import Section from 'components/Section';
 import usePrevious from 'hooks/usePrevious';
 import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
-import { Log } from 'types';
+import { Log, LogLevel } from 'types';
 import { formatDatetime } from 'utils/date';
 import { ansiToHtml, copyToClipboard, toRem } from 'utils/dom';
 
@@ -70,8 +70,6 @@ const DATETIME_FORMAT = 'MMM DD, HH:mm:ss';
 // Max datetime size: [MMM DD, HH:mm:ss] (plus 1 for a space suffix)
 const MAX_DATETIME_LENGTH = 19;
 
-const ICON_WIDTH = 20;
-
 const defaultLogConfig = {
   charHeight: 0,
   charWidth: 0,
@@ -109,7 +107,6 @@ const LogViewer: React.FC<Props> = forwardRef((
   const spacerStyle = { height: toRem(config.totalContentHeight) };
   const dateTimeStyle = { width: toRem(config.dateTimeWidth) };
   const lineNumberStyle = { width: toRem(config.lineNumberWidth) };
-  const levelStyle = { width: toRem(ICON_WIDTH) };
 
   if (noWrap) classes.push(css.noWrap);
   if (scroll.scrollTop < scroll.scrollHeight - scroll.viewHeight) {
@@ -155,7 +152,7 @@ const LogViewer: React.FC<Props> = forwardRef((
      * Calculate the width of message based on how much space is left
      * after rendering line and timestamp.
      */
-    const messageWidth = spacerRect.width - lineNumberWidth - dateTimeWidth - ICON_WIDTH;
+    const messageWidth = spacerRect.width - lineNumberWidth - dateTimeWidth;
 
     /*
       * Measure the dimensions of every message in the available data.
@@ -329,6 +326,12 @@ const LogViewer: React.FC<Props> = forwardRef((
     container.current.scrollTo({ behavior: 'smooth', top: container.current.scrollHeight });
   }, []);
 
+  const levelCss = (defaultCss: string, level?: string): string => {
+    const classes = [ defaultCss ];
+    if (level) classes.push(css[level]);
+    return classes.join(' ');
+  };
+
   const logOptions = (
     <Space>
       {debugMode && <div className={css.debugger}>
@@ -364,16 +367,11 @@ const LogViewer: React.FC<Props> = forwardRef((
                 top: toRem(config.messageSizes[log.id]?.top),
               }}>
                 <div className={css.number} style={lineNumberStyle}>{log.id + 1}</div>
-                <Tooltip placement="left" title="error">
-                  <div className={css.level} style={levelStyle}>
-                    <Icon name="lock" size="small">Error</Icon>
-                  </div>
-                </Tooltip>
                 <Tooltip placement="left" title={log.time || ''}>
                   <div className={css.time} style={dateTimeStyle}>{log.formattedTime}</div>
                 </Tooltip>
                 <div
-                  className={css.message}
+                  className={levelCss(css.message, log.level)}
                   dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }} />
               </div>
             ))}
