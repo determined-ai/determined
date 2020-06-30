@@ -48,15 +48,15 @@ pre-package:
 	cp ../harness/dist/*.whl build/wheels/
 
 .PHONY: package
-package: export DET_SEGMENT_MASTER_KEY ?= ""
-package: export DET_SEGMENT_WEBUI_KEY ?= ""
+package: export DET_SEGMENT_MASTER_KEY ?=
+package: export DET_SEGMENT_WEBUI_KEY ?=
 package: export GORELEASER_CURRENT_TAG := $(VERSION)
 package:
 	goreleaser --snapshot --rm-dist
 
 .PHONY: release
-release: export DET_SEGMENT_MASTER_KEY ?= ""
-release: export DET_SEGMENT_WEBUI_KEY ?= ""
+release: export DET_SEGMENT_MASTER_KEY ?=
+release: export DET_SEGMENT_WEBUI_KEY ?=
 release: export GORELEASER_CURRENT_TAG := $(VERSION)
 release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -v "rc\|v" | grep "$(VERSION)" -A1 | sed -n '2 p')
 release:
