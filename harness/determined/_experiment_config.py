@@ -23,7 +23,6 @@ class ExperimentConfig(dict):
     def native_parallel_enabled(self) -> bool:
         return bool(self["resources"]["native_parallel"])
 
-    # TODO(DET-3262): remove this backward compatibility.
     def mixed_precision_enabled(self) -> bool:
         return bool(self["optimizations"]["mixed_precision"] != "O0")
 
