@@ -127,7 +127,8 @@ export const filterExperiments = (
 ): ExperimentItem[] => {
   return experiments
     .filter(experiment => {
-      return matchesUser<ExperimentItem>(experiment, users, filters.username) &&
+      return (filters.showArchived || !experiment.archived) &&
+        matchesUser<ExperimentItem>(experiment, users, filters.username) &&
         matchesState<ExperimentItem>(experiment, filters.states) &&
         matchesSearch<ExperimentItem>(experiment, search);
     })

@@ -1,0 +1,8 @@
+.base {
+  align-items: center;
+  display: flex;
+
+  & > *:not(:first-child) {
+    margin-left: var(--theme-sizes-layout-medium);
+  }
+}

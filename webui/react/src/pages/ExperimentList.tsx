@@ -7,6 +7,7 @@ import { makeClickHandler } from 'components/Link';
 import linkCss from 'components/Link.module.scss';
 import Page from 'components/Page';
 import StateSelectFilter from 'components/StateSelectFilter';
+import Toggle from 'components/Toggle';
 import UserSelectFilter from 'components/UserSelectFilter';
 import Auth from 'contexts/Auth';
 import Users from 'contexts/Users';
@@ -23,7 +24,7 @@ import { columns } from './ExperimentList.table';
 
 const defaultFilters: ExperimentFilters = {
   limit: 25,
-  showArchived: true,
+  showArchived: false,
   states: [ ALL_VALUE ],
   username: undefined,
 };
@@ -64,6 +65,10 @@ const ExperimentList: React.FC = () => {
     setFilters(filters);
   }, [ setFilters, storage ]);
 
+  const handleArchiveChange = useCallback((value: boolean): void => {
+    handleFilterChange({ ...filters, showArchived: value });
+  }, [ filters, handleFilterChange ]);
+
   const handleStateChange = useCallback((value: SelectValue): void => {
     if (typeof value !== 'string') return;
     handleFilterChange({ ...filters, states: [ value ] });
@@ -89,6 +94,7 @@ const ExperimentList: React.FC = () => {
             prefix={<Icon name="search" size="small" />}
             onChange={handleSearchChange} />
           <div className={css.filters}>
+            <Toggle prefixLabel="Show Archived" onChange={handleArchiveChange} />
             <StateSelectFilter
               showCommandStates={false}
               value={filters.states}
