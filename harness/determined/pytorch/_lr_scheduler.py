@@ -10,10 +10,9 @@ class LRScheduler:
     """Wrapper for a PyTorch LRScheduler.
 
     This wrapper fulfills two main functions:
-
-    1. Save and restore the learning rate when a trial is paused, preempted, etc.
-    2. Step the learning rate scheduler at the configured frequency
-       (e.g., every batch or every epoch).
+        1. Save and restore the learning rate when a trial is paused, preempted, etc.
+        2. Step the learning rate scheduler at the configured frequency
+           (e.g., every batch or every epoch).
     """
 
     class StepMode(enum.Enum):

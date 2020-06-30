@@ -432,13 +432,7 @@ def create_trial_instance(trial_def: Type[det.Trial]) -> None:
     with tempfile.TemporaryDirectory() as td:
         trial_instance = experimental.create_trial_instance(
             trial_def=trial_def,
-            config={
-                "hyperparameters": {
-                    "global_batch_size": det.Constant(16),
-                    "hidden_size": 4,
-                    "learning_rate": 0.01,
-                }
-            },
+            config={"hyperparameters": {"global_batch_size": det.Constant(16)}},
             checkpoint_dir=td,
         )
     check.check_isinstance(trial_instance, det.Trial)

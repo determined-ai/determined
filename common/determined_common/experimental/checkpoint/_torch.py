@@ -17,9 +17,6 @@ def load_model(ckpt_dir: pathlib.Path, metadata: Dict[str, Any], **kwargs: Any) 
     trial = cast(PyTorchTrial, trial)
     model = trial.build_model()
     checkpoint = torch.load(ckpt_dir.joinpath("state_dict.pth"), map_location="cpu")  # type: ignore
-
-    # TODO(DET-3456): The checkpoint schema is changed for mutliple models so this function should
-    #       be updated accordingly.
-    model.load_state_dict(checkpoint["models_state_dict"][0])
+    model.load_state_dict(checkpoint["model_state_dict"])
 
     return model
