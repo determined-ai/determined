@@ -179,7 +179,7 @@ args_description = [
             ),
             Cmd(
                 "logs",
-                api.logs,
+                api.experiment.logs,
                 "fetch trial logs",
                 [
                     Arg("trial_id", type=int, help="trial ID"),
