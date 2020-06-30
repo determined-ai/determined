@@ -25,6 +25,7 @@ export const shortEnglishHumannizer = humanizeDuration.humanizer({
       y: (): string => 'y',
     },
   },
+  largest: 2,
   round: true,
   spacer: '',
 });
