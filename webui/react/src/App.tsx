@@ -57,7 +57,7 @@ const AppView: React.FC = () => {
   }, [ infoResponse, setInfo ]);
 
   useEffect(() => {
-    if (info.telemetry.enabled && info.telemetry.segmentKey) {
+    if (info.telemetry.enabled && info.telemetry.segmentKey && window.analytics) {
       window.analytics.load(info.telemetry.segmentKey);
       window.analytics.identify(info.clusterId);
       window.analytics.page();
