@@ -1201,12 +1201,14 @@ workflows:
 
   release:
     jobs:
-      - build-proto
+      - build-elm:
+          context: determined-production
+          filters: *release-and-rc-filters
+      - build-proto:
+          filters: *release-and-rc-filters
       - build-and-package-ts-sdk:
           requires:
             - build-proto
-      - build-elm:
-          context: determined-production
           filters: *release-and-rc-filters
       - build-react:
           requires:
