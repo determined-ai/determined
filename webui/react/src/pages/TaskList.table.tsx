@@ -51,6 +51,6 @@ export const columns: ColumnsType<CommandTask> = [
   {
     render: actionsRenderer,
     title: '',
-    width: 36,
+    width: 40,
   },
 ];

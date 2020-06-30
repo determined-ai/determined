@@ -60,6 +60,6 @@ export const columns: ColumnsType<ExperimentItem> = [
   {
     render: actionsRenderer,
     title: '',
-    width: 36,
+    width: 40,
   },
 ];
