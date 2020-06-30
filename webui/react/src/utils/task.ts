@@ -20,7 +20,9 @@ export const sampleUsers = [
 ];
 
 function generateTask(idx: number): Task & RecentEvent {
-  const startTime = (Date.now()).toString();
+  const now = Date.now();
+  const range = Math.random() * 2 * 356 * 24 * 60 * 60 * 1000;
+  const startTime = new Date(now - range).toString();
   const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
   return {
     id: `${idx}`,
