@@ -88,8 +88,6 @@ type DefaultResourceProviderConfig struct{}
 type KubernetesResourceProviderConfig struct {
 	Namespace         string `json:"namespace"`
 	SlotsPerNode      int    `json:"slots_per_node"`
-	OutOfCluster      bool   `json:"out_of_cluster"`
-	KubeConfigPath    string `json:"kube_config_path"`
 	MasterServiceName string `json:"master_service_name"`
 }
 

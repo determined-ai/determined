@@ -15,7 +15,6 @@ import (
 	k8sclient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 
 	// Used to load all auth plugins.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -24,8 +23,6 @@ import (
 type pods struct {
 	cluster           *actor.Ref
 	namespace         string
-	outOfCluster      bool
-	kubeConfigPath    string
 	masterServiceName string
 
 	clientSet  *k8sclient.Clientset
@@ -42,15 +39,11 @@ func Initialize(
 	_ *echo.Echo,
 	c *actor.Ref,
 	namespace string,
-	outOfCluster bool,
-	kubeConfigPath string,
 	masterServiceName string,
 ) *actor.Ref {
 	podsActor, ok := s.ActorOf(actor.Addr("pods"), &pods{
 		cluster:           c,
 		namespace:         namespace,
-		outOfCluster:      outOfCluster,
-		kubeConfigPath:    kubeConfigPath,
 		masterServiceName: masterServiceName,
 	})
 	check.Panic(check.True(ok, "pods address already taken"))
@@ -84,20 +77,9 @@ func (p *pods) Receive(ctx *actor.Context) error {
 }
 
 func (p *pods) startClientSet(ctx *actor.Context) error {
-	var config *rest.Config
-	var err error
-
-	// TODO: Remove out of cluster config
-	if p.outOfCluster {
-		config, err = clientcmd.BuildConfigFromFlags("", p.kubeConfigPath)
-		if err != nil {
-			return errors.Wrap(err, "error building kubernetes config")
-		}
-	} else {
-		config, err = rest.InClusterConfig()
-		if err != nil {
-			return errors.Wrap(err, "error building kubernetes config")
-		}
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return errors.Wrap(err, "error building kubernetes config")
 	}
 
 	p.clientSet, err = k8sclient.NewForConfig(config)

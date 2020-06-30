@@ -15,8 +15,6 @@ type kubernetesResourceProvider struct {
 	clusterID             string
 	namespace             string
 	slotsPerNode          int
-	outOfCluster          bool
-	kubeConfigPath        string
 	masterServiceName     string
 	proxy                 *actor.Ref
 	harnessPath           string
@@ -38,8 +36,6 @@ func NewKubernetesResourceProvider(
 	clusterID string,
 	namespace string,
 	slotsPerNode int,
-	outOfCluster bool,
-	kubeConfigPath string,
 	masterServiceName string,
 	proxy *actor.Ref,
 	harnessPath string,
@@ -49,8 +45,6 @@ func NewKubernetesResourceProvider(
 		clusterID:             clusterID,
 		namespace:             namespace,
 		slotsPerNode:          slotsPerNode,
-		outOfCluster:          outOfCluster,
-		kubeConfigPath:        kubeConfigPath,
 		masterServiceName:     masterServiceName,
 		proxy:                 proxy,
 		harnessPath:           harnessPath,
@@ -76,8 +70,6 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 			msg.Echo,
 			ctx.Self(),
 			k.namespace,
-			k.outOfCluster,
-			k.kubeConfigPath,
 			k.masterServiceName,
 		)
 
