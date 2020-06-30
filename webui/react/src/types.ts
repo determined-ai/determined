@@ -198,7 +198,7 @@ export interface ExperimentDetails extends Experiment {
 }
 
 export interface Task {
-  title: string;
+  name: string;
   id: string;
   ownerId: number;
   url?: string;
@@ -235,6 +235,13 @@ export type RecentExperimentTask = ExperimentTask & RecentEvent;
 export type PropsWithClassName<T> = T & {className?: string};
 
 export type TaskType = CommandType | 'Experiment';
+
+export interface ExperimentFilters {
+  showArchived: boolean;
+  limit: number;
+  states: string[];
+  username?: string;
+}
 
 export interface TaskFilters<T extends TaskType = TaskType> {
   limit: number;
