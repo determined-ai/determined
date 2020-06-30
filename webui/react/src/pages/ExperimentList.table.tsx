@@ -1,4 +1,3 @@
-import { number } from '@storybook/addon-knobs';
 import { ColumnsType } from 'antd/lib/table';
 
 import {

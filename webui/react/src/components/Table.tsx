@@ -1,5 +1,4 @@
 import { Tooltip } from 'antd';
-import { ColumnType } from 'antd/lib/table';
 import React from 'react';
 import TimeAgo from 'timeago-react';
 
@@ -8,12 +7,10 @@ import Badge, { BadgeType } from 'components/Badge';
 import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
 import TaskActionDropdown from 'components/TaskActionDropdown';
-import { CommandState, CommandTask, CommandType, ExperimentItem } from 'types';
-import { alphanumericSorter, commandStateSorter,
-  stringTimeSorter } from 'utils/data';
+import { CommandTask, CommandType, ExperimentItem } from 'types';
 import { floatToPercent } from 'utils/string';
 import { experimentDuration, shortEnglishHumannizer } from 'utils/time';
-import { commandTypeToLabel, experimentToTask, isExperiment, oneOfProperties } from 'utils/types';
+import { commandTypeToLabel, experimentToTask, isExperiment } from 'utils/types';
 
 import css from './Table.module.scss';
 
