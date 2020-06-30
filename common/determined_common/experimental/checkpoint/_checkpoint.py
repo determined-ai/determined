@@ -82,24 +82,30 @@ class Checkpoint(object):
         self._master = master
 
     def _find_shared_fs_path(self) -> pathlib.Path:
+        """Attempt to find the path of the checkpoint if being configured to shared fs.
+        This function assumes the host path of the shared fs exists.
+        """
         host_path = self.experiment_config["checkpoint_storage"]["host_path"]
         storage_path = self.experiment_config["checkpoint_storage"].get("storage_path")
         potential_paths = [
-            [shared._full_storage_path(host_path, storage_path), self.uuid],
-            [
+            pathlib.Path(shared._full_storage_path(host_path, storage_path), self.uuid),
+            pathlib.Path(
                 shared._full_storage_path(
                     host_path, storage_path, constants.SHARED_FS_CONTAINER_PATH
                 ),
                 self.uuid,
-            ],
+            ),
         ]
 
         for path in potential_paths:
-            maybe_ckpt = pathlib.Path(*path)
-            if maybe_ckpt.exists():
-                return maybe_ckpt
+            if path.exists():
+                return path
 
-        raise FileNotFoundError("Checkpoint {} not found".format(self.uuid))
+        raise FileNotFoundError(
+            "Checkpoint {} not found in {}. This error could be caused by not having "
+            "the same shared file system mounted on the local machine as the experiment "
+            "checkpoint storage configuration.".format(self.uuid, potential_paths)
+        )
 
     def download(self, path: Optional[str] = None) -> str:
         """
@@ -116,10 +122,7 @@ class Checkpoint(object):
         else:
             local_ckpt_dir = pathlib.Path("checkpoints", self.uuid)
 
-        # If the target directory doesn't already appear to contain a
-        # checkpoint, attempt to fetch one.
-
-        # We used MLflow's MLmodel checkpoint format in the past for
+        # Backward compatibility: we used MLflow's MLmodel checkpoint format for
         # serializing pytorch models. We now use our own format that contains a
         # metadata.json file. We are checking for checkpoint existence by
         # looking for both checkpoint formats in the output directory.
@@ -127,6 +130,8 @@ class Checkpoint(object):
             local_ckpt_dir.joinpath(f) for f in ["metadata.json", "MLmodel"]
         ]
         if not any(p.exists() for p in potential_metadata_paths):
+            # If the target directory doesn't already appear to contain a
+            # checkpoint, attempt to fetch one.
             if self.experiment_config["checkpoint_storage"]["type"] == "shared_fs":
                 src_ckpt_dir = self._find_shared_fs_path()
                 shutil.copytree(str(src_ckpt_dir), str(local_ckpt_dir))

@@ -79,11 +79,16 @@ A checkpoint with UUID ``b3ed462c-a6c9-41e9-9202-5cb8ff00e109`` can be
 found in the directory
 ``/mnt/nfs-volume-1/b3ed462c-a6c9-41e9-9202-5cb8ff00e109``.
 
-The Determined CLI can be used to download a checkpoint saved on S3 or GCS:
+The Determined CLI can be used to download a checkpoint saved on a shared file system, S3 or GCS:
 
 .. code:: bash
 
    $ det checkpoint download <trial-id> <step-id>
+
+.. warning::
+
+    When downloading checkpoints in a shared file system, we assume the same
+    shared file system is mounted locally.
 
 .. _checkpoint-garbage-collection:
 
