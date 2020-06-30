@@ -47,6 +47,7 @@ class PyTorchCallback:
         after gradient updates have been communicated. Typically used to perform gradient
         clipping.
         """
+        # TODO(DET-3267): deprecate this when releasing pytorch flexible primitives.
         pass
 
     def on_validation_step_start(self) -> None:
@@ -87,6 +88,7 @@ class PyTorchCallback:
         pass
 
 
+# TODO(DET-3267): deprecate this when releasing pytorch flexible primitives.
 class ClipGradsL2Norm(PyTorchCallback):
     """
     Callback that performs gradient clipping using
@@ -100,6 +102,7 @@ class ClipGradsL2Norm(PyTorchCallback):
         torch.nn.utils.clip_grad_norm_(parameters, self._clip_value)  # type: ignore
 
 
+# TODO(DET-3267): deprecate this when releasing pytorch flexible primitives.
 class ClipGradsL2Value(PyTorchCallback):
     """
     Callback that performs gradient clipping using
