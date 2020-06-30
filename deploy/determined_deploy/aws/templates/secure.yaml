@@ -4,11 +4,11 @@ Mappings:
   RegionMap:
     us-east-1:
       Master: ami-66506c1c
-      Agent: ami-007d24256bc2cc5ca
+      Agent: ami-05e22bfd09b7b25f3
       Bastion: ami-0a1262fb77d0911ef
     us-west-2:
       Master: ami-79873901
-      Agent: ami-0f00cd8ac6e73a52d
+      Agent: ami-038842e6cb3f1bbb8
       Bastion: ami-0ec8cdd8937453529
 
 Parameters:
