@@ -480,7 +480,7 @@ frequently.
 Grid
 ----
 
-The ``random`` search method performs a grid search. The coordinates of the
+The ``grid`` search method performs a grid search. The coordinates of the
 hyperparameter grid are specified via the ``hyperparameters`` field. For
 more details see the :ref:`topic-guides_hp-tuning-det_grid`.
 
@@ -640,6 +640,72 @@ applications of hyperparameter search.
   initialize weights. At most one of ``source_trial_id`` or
   ``source_checkpoint_uuid`` should be set.
 
+Adaptive (ASHA)
+----------------
+
+The ``adaptive_ashe`` search method is an asynchronous version of the 
+``adaptive <experiment-configuration-searcher-adaptive>`` method above that is 
+more suitable for large experiments with many trials.  
+
+**Required Fields**
+
+``metric``
+  The name of the validation metric used to evaluate the performance of a
+  hyperparameter configuration.
+
+``target_trial_steps``
+  The maximum number of training steps to allocate to any one trial. The vast
+  majority of trials will be stopped early, and thus only a small fraction of
+  trials will actually be trained for this number of steps. This quantity is
+  domain-specific and should roughly reflect the number of training steps needed
+  for the model to converge on the data set.
+
+``max_trials``
+  The number of trials, i.e., hyperparameter configurations, to evaluate.
+  
+``max_concurrent_trials``
+  The maximum number of trials that can be worked on simultaneously.  This is 
+  akin to controlling the degree of parallelism of the experiment.
+
+**Optional Fields**
+
+``smaller_is_better``
+  Whether to minimize or maximize the metric defined above. The default value is
+  ``true`` (minimize).
+
+``mode``
+  How aggressively to perform early stopping. There are three modes:
+  ``aggressive``, ``standard``, and ``conservative``; the default is
+  ``standard``.
+
+  These modes differ in the degree to which early-stopping is used. In
+  ``aggressive`` mode, the searcher quickly stops underperforming trials, which
+  enables the searcher to explore more hyperparameter configurations, but at the
+  risk of discarding a configuration too soon. On the other end of the spectrum,
+  ``conservative`` mode performs significantly less downsampling, but as a
+  consequence does not explore as many configurations given the same budget. We
+  recommend using either ``aggressive`` or ``standard`` mode.
+
+``divisor``
+  The fraction of trials to keep at each rung, and also determines how many
+  steps are allocated at each rung. The default setting is ``4``; only advanced
+  users should consider changing this value.
+
+``max_rungs``
+  The maximum number of times we evaluate intermediate results for a trial and
+  terminate poorly performing trials. The default value is ``5``; only advanced
+  users should consider changing this value.
+
+``source_trial_id``
+  If specified, the weights of *every* trial in the search will be initialized
+  to the most recent checkpoint of the given trial ID. This will fail if the
+  source trial's model architecture is inconsistent with the model architecture
+  of any of the trials in this experiment.
+
+``source_checkpoint_uuid``
+  Like ``source_trial_id``, but specifies an arbitrary checkpoint from which to
+  initialize weights. At most one of ``source_trial_id`` or
+  ``source_checkpoint_uuid`` should be set.
 
 PBT
 ---

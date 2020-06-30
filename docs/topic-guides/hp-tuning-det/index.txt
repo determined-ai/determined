@@ -36,6 +36,14 @@ algorithm but differ in their level of configurability.
    allows users to control the adaptive search behavior in a more fine-grained
    way.
 
+Experimental
+~~~~~~~~~~~~
+
+:ref:`Adaptive (Asynchronous) <topic-guides_hp-tuning-det_adaptive-asha>`
+is an asynchronous version of the above adaptive searchers
+(`ASHA <https://arxiv.org/pdf/1810.05934.pdf>`_) that is more
+suitable for large-scale HP search experiments in the distributed setting.
+
 Other Supported Methods
 -----------------------
 Determined also supports other common hyperparameter search algorithms:
