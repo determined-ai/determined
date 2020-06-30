@@ -95,6 +95,11 @@ created with the Determined CLI. It may contain the following fields:
       behavior <https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__
       for replicas of the bind-mount. Defaults to ``rprivate``.
 
+    .. warning::
+
+        When downloading checkpoints in a shared file system, we assume the same
+        shared file system is mounted locally.
+
   - When an experiment finishes, the system will optionally delete
     some checkpoints to reclaim space. The ``save_experiment_best``,
     ``save_trial_best`` and ``save_trial_latest`` parameters specify which
