@@ -547,15 +547,18 @@ created with the Determined CLI. It may contain the following fields:
     If an ``experiment_seed`` is not explicitly specified, the master
     will automatically generate an experiment seed.
 
-- ``max_restarts``: Specifies the maximum number of times that a trial
-  will be restarted due to an error. When this limit is reached, the
-  experiment is marked as a failure and all remaining trials are
-  checkpointed and closed. If an error occurs while a trial is running
-  (e.g., a container crashes abruptly), the Determined master will
-  automatically restart the trial and continue running it. This
-  parameter specifies a limit on the number of times to try restarting
-  a trial; this ensures that Determined does not go into an infinite loop if
-  a trial encounters the same error repeatedly.
+- ``max_restarts``: Specifies the maximum number of times that trials in
+  this experiment will be restarted due to an error. If an error occurs
+  while a trial is running (e.g., a container crashes abruptly), the
+  Determined master will automatically restart the trial and continue
+  running it. This parameter specifies a limit on the number of times to
+  try restarting a trial; this ensures that Determined does not go into
+  an infinite loop if a trial encounters the same error repeatedly. Once
+  ``max_restarts`` trial failures have occurred for a given experiment,
+  subsequent failed trials will not be restarted -- instead, they will
+  be marked as errored. The experiment itself will continue running; an
+  experiment is considered to complete successfully if at least one of
+  its trials completes successfully.
 
 - ``optimizations``: Specifies configuration options related to improving
   performance.
