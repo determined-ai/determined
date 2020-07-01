@@ -9,6 +9,7 @@ import tensorflow as tf
 from tensorflow_examples.models.pix2pix import pix2pix
 import tensorflow_datasets as tfds
 import numpy as np
+import sys
 
 from determined import keras
 
@@ -17,12 +18,6 @@ class UNetsTrial(keras.TFKerasTrial):
     def __init__(self, context: keras.TFKerasTrialContext):
         self.context = context
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
-        self.dataset, info = tfds.load(
-            'oxford_iiit_pet:3.*.*',
-            split="train",
-            with_info=True,
-            data_dir=self.download_directory,
-        )
 
     def normalize(self, input_image, input_mask):
         input_image = tf.cast(input_image, tf.float32) / 255.0
@@ -88,12 +83,19 @@ class UNetsTrial(keras.TFKerasTrial):
         return model
 
     def build_training_data_loader(self):
-        self.dataset, info = tfds.load(
-            'oxford_iiit_pet:3.*.*',
-            split="train",
-            with_info=True,
-            data_dir=self.download_directory,
-        )
+        while True:
+            try:
+                self.dataset, info = tfds.load(
+                    'oxford_iiit_pet:3.*.*',
+                    split="train",
+                    with_info=True,
+                    data_dir=self.download_directory,
+                )
+            except:
+                print("SCREWED AGAIN")
+                continue
+            break
+
         def load_image_train(datapoint):
             print(self.context.distributed.get_rank())
             input_image = tf.image.resize(datapoint['image'], (128, 128))
