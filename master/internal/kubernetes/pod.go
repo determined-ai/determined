@@ -6,10 +6,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/docker/api/types/mount"
-
 	"github.com/pkg/errors"
 
+	"github.com/docker/docker/api/types/mount"
+
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/container"
@@ -29,10 +30,12 @@ const (
 	initContainerTarSrcPath = "/run/determined/temp/tar/src"
 	initContainerTarDstPath = "/run/determined/temp/tar/dst"
 	initContainerWorkDir    = "/run/determined/temp/"
+	determinedLabel         = "determined"
 )
 
 type pod struct {
 	cluster            *actor.Ref
+	taskHandler        *actor.Ref
 	clientSet          *k8sclient.Clientset
 	namespace          string
 	masterIP           string
@@ -44,10 +47,14 @@ type pod struct {
 	configMapInterface typedV1.ConfigMapInterface
 	pod                *v1.Pod
 	configMaps         []*v1.ConfigMap
+	podName            string
+	logStreamer        *actor.Ref
+	container          container.Container
 }
 
 func newPod(
 	cluster *actor.Ref,
+	taskHandler *actor.Ref,
 	clientSet *k8sclient.Clientset,
 	namespace string,
 	masterIP string,
@@ -60,6 +67,7 @@ func newPod(
 ) *pod {
 	return &pod{
 		cluster:            cluster,
+		taskHandler:        taskHandler,
 		clientSet:          clientSet,
 		namespace:          namespace,
 		masterIP:           masterIP,
@@ -70,6 +78,7 @@ func newPod(
 		podInterface:       podInterface,
 		configMapInterface: configMapInterface,
 		configMaps:         make([]*v1.ConfigMap, 0),
+		podName:            configurePodName(taskSpec, rank),
 	}
 }
 
@@ -78,6 +87,19 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		if err := p.startPod(ctx); err != nil {
 			return err
+		}
+
+	case podStatusUpdate:
+		if err := p.receivePodStatusUpdate(ctx, msg); err != nil {
+			return err
+		}
+
+	case sproto.ContainerLog:
+		p.receiveContainerLogs(ctx, msg)
+
+	case actor.PostStop:
+		if p.logStreamer != nil {
+			p.logStreamer.Stop()
 		}
 
 	default:
@@ -99,6 +121,55 @@ func (p *pod) startPod(ctx *actor.Context) error {
 	default:
 		return errors.Errorf("unexpected task spec received")
 	}
+}
+
+func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) error {
+	switch msg.updatedPod.Status.Phase {
+	case v1.PodPending:
+		containerState := getContainerState(msg.updatedPod.Status.Conditions)
+		if containerState != p.container.State {
+			ctx.Log().Infof(
+				"transitioning pod state from %s to %s for pod %s",
+				p.container.State, containerState, p.podName)
+			p.container = p.container.Transition(containerState)
+		}
+
+	case v1.PodRunning:
+		if p.container.State != container.Running {
+			p.container = p.container.Transition(container.Running)
+		}
+
+		if p.logStreamer == nil {
+			var ok bool
+			p.logStreamer, ok = ctx.ActorOf(
+				fmt.Sprintf("%s-logs", p.podName),
+				newPodLogStreamer(p.podInterface, p.podName, ctx.Self()))
+
+			if !ok {
+				return errors.Errorf("log streamer already exists")
+			}
+
+			ctx.Tell(p.logStreamer, streamLogs{})
+		}
+
+	case v1.PodFailed:
+	case v1.PodSucceeded:
+	default:
+		return errors.Errorf(
+			"unexpected pod status %s for pod %s", msg.updatedPod.Status.Phase, p.podName)
+	}
+
+	return nil
+}
+
+func (p *pod) receiveContainerLogs(ctx *actor.Context, msg sproto.ContainerLog) {
+	ctx.Tell(p.taskHandler, sproto.ContainerLog{
+		Container:   p.container,
+		Timestamp:   msg.Timestamp,
+		PullMessage: msg.PullMessage,
+		RunMessage:  msg.RunMessage,
+		AuxMessage:  msg.AuxMessage,
+	})
 }
 
 func (p *pod) configureResourcesRequirements() v1.ResourceRequirements {
@@ -146,7 +217,6 @@ func (p *pod) configureEnvVars(
 
 func (p *pod) configureRunArchives(
 	ctx *actor.Context,
-	podName string,
 	runArchives []container.RunArchive,
 ) ([]v1.VolumeMount, []v1.VolumeMount, []v1.Volume, error) {
 	tarredArchives := make(map[string][]byte)
@@ -161,7 +231,7 @@ func (p *pod) configureRunArchives(
 	// Create configMap of AdditionalFiles as .tar.gz archive.
 	archiveConfigMap, err := startConfigMap(
 		ctx,
-		createConfigMapSpec(podName, tarredArchives, p.namespace),
+		createConfigMapSpec(p.podName, tarredArchives, p.namespace),
 		p.configMapInterface,
 	)
 	if err != nil {
@@ -176,7 +246,7 @@ func (p *pod) configureRunArchives(
 	}
 	initContainerEntrypointConfigMap, err := startConfigMap(
 		ctx,
-		createConfigMapSpec(podName, initContainerEntrypointArchive, p.namespace),
+		createConfigMapSpec(p.podName, initContainerEntrypointArchive, p.namespace),
 		p.configMapInterface,
 	)
 	if err != nil {
@@ -193,7 +263,6 @@ func (p *pod) configureRunArchives(
 
 func (p *pod) configureVolumes(
 	ctx *actor.Context,
-	podName string,
 	dockerMounts []mount.Mount,
 	runArchives []container.RunArchive,
 ) ([]v1.VolumeMount, []v1.VolumeMount, []v1.Volume, error) {
@@ -209,7 +278,7 @@ func (p *pod) configureVolumes(
 	volumes = append(volumes, shmVolume)
 
 	initContainerVolumeMounts, mainContainerRunArchiveVolumeMounts, runArchiveVolumes, err :=
-		p.configureRunArchives(ctx, podName, runArchives)
+		p.configureRunArchives(ctx, runArchives)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -220,16 +289,15 @@ func (p *pod) configureVolumes(
 }
 
 func (p *pod) configurePodSpec(
-	podName string,
 	volumes []v1.Volume,
 	initContainers []v1.Container,
 	containers []v1.Container,
 ) *v1.Pod {
 	return &v1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      podName,
+			Name:      p.podName,
 			Namespace: p.namespace,
-			Labels:    map[string]string{"determined": p.taskSpec.TaskID},
+			Labels:    map[string]string{determinedLabel: p.taskSpec.TaskID},
 		},
 		Spec: v1.PodSpec{
 			Volumes:        volumes,
@@ -249,16 +317,17 @@ func (p *pod) launchPod(ctx *actor.Context, podSpec *v1.Pod) error {
 	}
 	ctx.Log().Infof("Created pod %s", p.pod.Name)
 
+	p.container = container.Container{
+		Parent:  p.taskHandler.Address(),
+		ID:      container.ID(p.taskSpec.ContainerID),
+		State:   container.Assigned,
+		Devices: make([]device.Device, 0),
+	}
 	return nil
 }
 
 func (p *pod) startPodForTrial(ctx *actor.Context) error {
 	exp := *p.taskSpec.StartContainer
-	podName := fmt.Sprintf(
-		"exp-%d-trial-%d-%d",
-		exp.InitialWorkload.ExperimentID,
-		exp.InitialWorkload.TrialID, p.rank,
-	)
 
 	deviceType := device.CPU
 	if p.gpus > 0 {
@@ -267,7 +336,7 @@ func (p *pod) startPodForTrial(ctx *actor.Context) error {
 
 	runArchives := tasks.TrialArchives(p.taskSpec)
 	initContainerVolumeMounts, volumeMounts, volumes, err := p.configureVolumes(
-		ctx, podName, tasks.TrialDockerMounts(exp), runArchives)
+		ctx, tasks.TrialDockerMounts(exp), runArchives)
 	if err != nil {
 		return err
 	}
@@ -308,13 +377,12 @@ func (p *pod) startPodForTrial(ctx *actor.Context) error {
 		},
 	}
 
-	podSpec := p.configurePodSpec(podName, volumes, initContainers, containers)
+	podSpec := p.configurePodSpec(volumes, initContainers, containers)
 	return p.launchPod(ctx, podSpec)
 }
 
 func (p *pod) startPodForCommand(ctx *actor.Context) error {
 	cmd := *p.taskSpec.StartCommand
-	podName := fmt.Sprintf("cmd-%s", p.taskSpec.TaskID)
 
 	deviceType := device.CPU
 	if p.gpus > 0 {
@@ -323,7 +391,7 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 
 	runArchives := tasks.CommandArchives(p.taskSpec)
 	initContainerVolumeMounts, volumeMounts, volumes, err := p.configureVolumes(
-		ctx, podName, tasks.ToDockerMounts(cmd.Config.BindMounts), runArchives)
+		ctx, tasks.ToDockerMounts(cmd.Config.BindMounts), runArchives)
 	if err != nil {
 		return err
 	}
@@ -360,13 +428,12 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 		},
 	}
 
-	podSpec := p.configurePodSpec(podName, volumes, initContainers, containers)
+	podSpec := p.configurePodSpec(volumes, initContainers, containers)
 	return p.launchPod(ctx, podSpec)
 }
 
 func (p *pod) startPodForGC(ctx *actor.Context) error {
 	gcc := *p.taskSpec.GCCheckpoints
-	podName := fmt.Sprintf("gc-%s", p.taskSpec.TaskID)
 
 	deviceType := device.CPU
 	if p.gpus > 0 {
@@ -375,7 +442,7 @@ func (p *pod) startPodForGC(ctx *actor.Context) error {
 
 	runArchives := tasks.GCArchives(p.taskSpec)
 	initContainerVolumeMounts, volumeMounts, volumes, err := p.configureVolumes(
-		ctx, podName, tasks.GCDockerMounts(gcc), runArchives)
+		ctx, tasks.GCDockerMounts(gcc), runArchives)
 	if err != nil {
 		return err
 	}
@@ -412,8 +479,25 @@ func (p *pod) startPodForGC(ctx *actor.Context) error {
 		},
 	}
 
-	podSpec := p.configurePodSpec(podName, volumes, initContainers, containers)
+	podSpec := p.configurePodSpec(volumes, initContainers, containers)
 	return p.launchPod(ctx, podSpec)
+}
+
+func configurePodName(t tasks.TaskSpec, rank int) string {
+	switch {
+	case t.StartCommand != nil:
+		return fmt.Sprintf("cmd-%s", t.TaskID)
+	case t.StartContainer != nil:
+		return fmt.Sprintf(
+			"exp-%d-trial-%d-%d",
+			t.StartContainer.InitialWorkload.ExperimentID,
+			t.StartContainer.InitialWorkload.TrialID, rank,
+		)
+	case t.GCCheckpoints != nil:
+		return fmt.Sprintf("gc-%s", t.TaskID)
+	default:
+		return ""
+	}
 }
 
 func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *v1.SecurityContext {
@@ -453,4 +537,21 @@ func configureInitContainer(
 		VolumeMounts:    volumeMounts,
 		WorkingDir:      initContainerWorkDir,
 	}
+}
+
+func getContainerState(conditions []v1.PodCondition) container.State {
+	conditionsMap := make(map[v1.PodConditionType]bool)
+	for _, condition := range conditions {
+		conditionsMap[condition.Type] = condition.Status == v1.ConditionTrue
+	}
+
+	if conditionsMap[v1.PodReady] {
+		return container.Running
+	}
+
+	if conditionsMap[v1.PodScheduled] {
+		return container.Starting
+	}
+
+	return container.Assigned
 }

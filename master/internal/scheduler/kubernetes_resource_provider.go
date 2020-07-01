@@ -246,9 +246,9 @@ func (p *podAssignment) StartTask(spec image.TaskSpec) {
 	spec.HarnessPath = p.harnessPath
 	spec.TaskContainerDefaults = p.taskContainerDefaults
 	handler.System().Tell(handler, sproto.StartPod{
-		Task:  p.task.handler,
-		Spec:  spec,
-		Slots: p.container.Slots(),
-		Rank:  p.container.ordinal,
+		TaskHandler: p.task.handler,
+		Spec:        spec,
+		Slots:       p.container.Slots(),
+		Rank:        p.container.ordinal,
 	})
 }
