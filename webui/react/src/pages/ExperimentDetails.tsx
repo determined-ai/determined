@@ -25,7 +25,8 @@ const ExperimentDetailsComp: React.FC = () => {
   usePolling(() => requestExperimentDetails);
 
   if (experiment.error !== undefined) {
-    const message = isNotFound(experiment.error) ? `Experiment ${experimentId} not found.` : `Failed to fetch experiment ${experimentId}.`;
+    const message = isNotFound(experiment.error) ? `Experiment ${experimentId} not found.`
+      : `Failed to fetch experiment ${experimentId}.`;
     return (
       <Page hideTitle title="Not Found">
         <Message>{message}</Message>
