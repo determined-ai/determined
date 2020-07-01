@@ -2,9 +2,19 @@ package internal
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"strings"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+
+	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
 
 func (a *apiServer) GetExperiments(
@@ -42,4 +52,56 @@ func (a *apiServer) GetExperiments(
 	})
 	a.sort(resp.Experiments, req.OrderBy, req.SortBy, apiv1.GetExperimentsRequest_SORT_BY_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Experiments, req.Offset, req.Limit)
+}
+
+func (a *apiServer) PreviewHPSearch(
+	_ context.Context, req *apiv1.PreviewHPSearchRequest) (*apiv1.PreviewHPSearchResponse, error) {
+	bytes, err := protojson.Marshal(req.Config)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error parsing experiment config: %s", err)
+	}
+	config := model.DefaultExperimentConfig()
+	if err = json.Unmarshal(bytes, &config); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "error parsing experiment config: %s", err)
+	}
+	if err = check.Validate(config.Searcher); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment config: %s", err)
+	}
+
+	sm := searcher.NewSearchMethod(config.Searcher, config.BatchesPerStep)
+	s := searcher.NewSearcher(req.Seed, sm, config.Hyperparameters)
+	sim, err := searcher.Simulate(s, nil, searcher.RandomValidation, true, config.Searcher.Metric)
+	if err != nil {
+		return nil, err
+	}
+	protoSim := &experimentv1.ExperimentSimulation{Seed: req.Seed}
+	indexes := make(map[string]int)
+	toProto := func(k searcher.Kind) experimentv1.WorkloadKind {
+		switch k {
+		case searcher.RunStep:
+			return experimentv1.WorkloadKind_WORKLOAD_KIND_RUN_STEP
+		case searcher.ComputeValidationMetrics:
+			return experimentv1.WorkloadKind_WORKLOAD_KIND_COMPUTE_VALIDATION_METRICS
+		case searcher.CheckpointModel:
+			return experimentv1.WorkloadKind_WORKLOAD_KIND_CHECKPOINT_MODEL
+		default:
+			return experimentv1.WorkloadKind_WORKLOAD_KIND_UNSPECIFIED
+		}
+	}
+	for _, result := range sim.Results {
+		var workloads []experimentv1.WorkloadKind
+		for _, msg := range result {
+			w := toProto(msg.Workload.Kind)
+			workloads = append(workloads, w)
+		}
+		hash := fmt.Sprint(workloads)
+		if i, ok := indexes[hash]; ok {
+			protoSim.Trials[i].Occurrences++
+		} else {
+			protoSim.Trials = append(protoSim.Trials,
+				&experimentv1.TrialSimulation{Workloads: workloads, Occurrences: 1})
+			indexes[hash] = len(protoSim.Trials) - 1
+		}
+	}
+	return &apiv1.PreviewHPSearchResponse{Simulation: protoSim}, nil
 }
