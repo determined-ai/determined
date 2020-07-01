@@ -9,7 +9,7 @@ import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
-import { getExperimentDetails } from 'services/api';
+import { getExperimentDetails, isNotFound } from 'services/api';
 import { ExperimentDetailsParams } from 'services/types';
 import { ExperimentDetails } from 'types';
 
@@ -25,9 +25,10 @@ const ExperimentDetailsComp: React.FC = () => {
   usePolling(() => requestExperimentDetails);
 
   if (experiment.error !== undefined) {
+    const message = isNotFound(experiment.error) ? `Experiment ${experimentId} not found.` : `Failed to fetch experiment ${experimentId}.`;
     return (
       <Page hideTitle title="Not Found">
-        <Message>Experiment {experimentId} not found.</Message>
+        <Message>{message}</Message>
       </Page>
     );
   }
