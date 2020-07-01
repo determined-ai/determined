@@ -3,11 +3,23 @@ syntax = "proto3";
 package determined.model.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/modelv1";
 
+import "protoc-gen-swagger/options/annotations.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 // Model is a named collection of model versions.
 message Model {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: {
+        required: [
+                  'name',
+                  'description',
+                  'metadata',
+                  'creation_time',
+                  'last_updated_time'
+        ]
+     }
+    };
     // The name of the model.
     string name = 1;
     // The description of the model.
