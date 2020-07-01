@@ -1,5 +1,6 @@
 import {
   clone,
+  getOrElse,
   isAsyncFunction,
   isFunction,
   isMap,
@@ -70,10 +71,9 @@ const tests = [
   { type: [ Type.Set, Type.Object ], value: new Set([ 'abc', 'def', 'ghi' ]) },
   { type: [ Type.Set, Type.Object ], value: new Set([ -1.5, Number.MAX_VALUE, null, undefined ]) },
 ];
+const object = { a: true, b: null, c: { x: { y: -1.2e10 }, z: undefined } };
 
 describe('data utility', () => {
-  const object = { a: true, b: null, c: { x: { y: -1.2e10 }, z: undefined } };
-
   describe('clone', () => {
     it('should preserve primitives', () => {
       expect(clone(-1.23e-8)).toBe(-1.23e-8);
@@ -109,6 +109,21 @@ describe('data utility', () => {
       expect(deepClone).not.toBe(object);
       expect(deepClone.c).not.toBe(object.c);
       expect(deepClone.c.x).not.toBe(object.c.x);
+    });
+  });
+
+  describe('get', () => {
+    it('should get-or-else objects', () => {
+      expect(getOrElse(object, 'a', false)).toBe(true);
+      expect(getOrElse(object, 'b', 'junk')).toBeNull();
+      expect(getOrElse(object, 'c.x.y', 0)).toBe(-1.2e10);
+    });
+
+    it('should get-or-else fallbacks', () => {
+      const fallback = 'fallback';
+      expect(getOrElse(object, 'a.b.c', fallback)).toBe(fallback);
+      expect(getOrElse(object, 'c.x.w', fallback)).toBe(fallback);
+      expect(getOrElse(object, 'c.x.z', undefined)).toBeUndefined();
     });
   });
 
