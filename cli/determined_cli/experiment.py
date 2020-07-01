@@ -18,8 +18,8 @@ from termcolor import colored
 import determined_common
 from determined_cli import checkpoint, render
 from determined_cli.declarative_argparse import Arg, Cmd, Group
-from determined_cli.user import authentication_required
 from determined_common import api, constants, context
+from determined_common.api.experiment import authentication_required
 from determined_common.experimental import Determined
 
 from .checkpoint import render_checkpoint
