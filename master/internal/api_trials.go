@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -30,6 +31,11 @@ func trialStatus(d *db.PgDB, trialID int32) (model.State, int, error) {
 
 func (a *apiServer) TrialLogs(
 	req *apiv1.TrialLogsRequest, resp apiv1.Determined_TrialLogsServer) error {
+	if err := grpc.ValidateRequest(
+		func() (bool, string) { return req.Limit >= 0, "Limit must be >= 0" },
+	); err != nil {
+		return err
+	}
 	_, total, err := trialStatus(a.m.db, req.TrialId)
 	if err != nil {
 		return err
@@ -37,6 +43,12 @@ func (a *apiServer) TrialLogs(
 	offset := int(req.Offset)
 	if req.Offset < 0 {
 		offset = total + offset
+		if offset < 0 {
+			offset = 0
+		}
+	}
+	if limit := int32(total - offset); !req.Follow && (limit < req.Limit || req.Limit == 0) {
+		req.Limit = limit
 	}
 	count := 0
 	for {
