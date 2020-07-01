@@ -1,13 +1,15 @@
 import dayjs from 'dayjs';
 
 import {
-  decode, ioCommandLogs, ioDeterminedInfo, ioExperiments, ioLogs, ioTypeAgents,
-  ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo, ioTypeExperiments,
-  ioTypeGenericCommand, ioTypeGenericCommands, ioTypeLogs, ioTypeUsers,
+  decode, ioCommandLogs, ioDeterminedInfo, ioExperimentDetails, ioExperiments, ioLogs,
+  ioTypeAgents, ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo,
+  ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand, ioTypeGenericCommands,
+  ioTypeLogs,
+  ioTypeUsers,
 } from 'ioTypes';
 import {
   Agent, Command, CommandState, CommandType, DeterminedInfo, Experiment,
-  Log, LogLevel, ResourceState, ResourceType, RunState, User,
+  ExperimentDetails, Log, LogLevel, ResourceState, ResourceType, RunState, User,
 } from 'types';
 import { capitalize } from 'utils/string';
 
@@ -127,6 +129,27 @@ export const jsonToExperiments = (data: unknown): Experiment[] => {
       state: experiment.state as RunState,
     };
   });
+};
+
+export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
+  const ioType = decode<ioTypeExperimentDetails>(ioExperimentDetails, data);
+  return {
+    archived: ioType.archived,
+    config: ioType.config,
+    endTime: ioType.end_time || undefined,
+    id: ioType.id,
+    ownerId: ioType.owner.id,
+    progress: ioType.progress || undefined,
+    startTime: ioType.start_time,
+    state: ioType.state as RunState,
+    trials: ioType.trials.map(t => ({ ...t, state: t.state as RunState })),
+    username: ioType.owner.username,
+    validationHistory: ioType.validation_history.map(vh => ({
+      endTime: vh.end_time,
+      id: vh.trial_id,
+      validationError: vh.validation_error || undefined,
+    })),
+  };
 };
 
 export const jsonToLogs = (data: unknown): Log[] => {

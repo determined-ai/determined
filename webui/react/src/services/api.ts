@@ -5,11 +5,12 @@ import { CancelToken } from 'axios';
 import { generateApi } from 'services/apiBuilder';
 import { processApiError } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
-import { CommandLogsParams, ExperimentsParams, KillCommandParams, KillExpParams,
-  LaunchTensorboardParams, LogsParams, PatchExperimentParams, PatchExperimentState,
+import { CommandLogsParams, ExperimentDetailsParams, ExperimentsParams, KillCommandParams,
+  KillExpParams, LaunchTensorboardParams, LogsParams, PatchExperimentParams,
+  PatchExperimentState,
   TrialLogsParams } from 'services/types';
 import {
-  AnyTask, CommandType, Credentials, DeterminedInfo, Experiment, Log, User,
+  AnyTask, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log, User,
 } from 'types';
 import { serverAddress } from 'utils/routes';
 import { isExperimentTask } from 'utils/task';
@@ -27,12 +28,20 @@ export const isLoginFailure = (e: any): boolean => {
   return e.response && e.response.status && e.response.status === 403;
 };
 
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const isNotFound = (e: any): boolean => {
+  return e.response && e.response.status && e.response.status === 404;
+};
+
 export const getCurrentUser = generateApi<{}, User>(Config.getCurrentUser);
 
 export const getInfo = generateApi<{}, DeterminedInfo>(Config.getInfo);
 
 export const getExperimentSummaries =
   generateApi<ExperimentsParams, Experiment[]>(Config.getExperimentSummaries);
+
+export const getExperimentDetails =
+  generateApi<ExperimentDetailsParams, ExperimentDetails>(Config.getExperimentDetails);
 
 export const killExperiment = generateApi<KillExpParams, void>(Config.killExperiment);
 

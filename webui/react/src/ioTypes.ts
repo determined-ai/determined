@@ -123,15 +123,27 @@ export type ioTypeCommandAddress = io.TypeOf<typeof ioCommandAddress>;
 export type ioTypeGenericCommand = io.TypeOf<typeof ioGenericCommand>;
 export type ioTypeGenericCommands = io.TypeOf<typeof ioGenericCommands>;
 
+const runStates: Record<string, null> = Object.values(RunState)
+  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
+const runStatesIoType = io.keyof(runStates);
+
+const validationHistoryIoType = io.type({
+  end_time: io.string,
+  trial_id: io.number,
+  validation_error: io.union([ io.number, io.null ]),
+});
+
+const trialSummaryIoType = io.type({
+  hparams: io.any,
+  id: io.number,
+  state: runStatesIoType,
+});
+
 /* Experiments */
 
 const ioExperimentConfig = io.type({
   description: io.string,
 });
-
-const runStates: Record<string, null> = Object.values(RunState)
-  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
-const runStatesIoType = io.keyof(runStates);
 
 export const ioExperiment = io.type({
   archived: io.boolean,
@@ -148,6 +160,21 @@ export const ioExperiments = io.array(ioExperiment);
 
 export type ioTypeExperiment = io.TypeOf<typeof ioExperiment>;
 export type ioTypeExperiments = io.TypeOf<typeof ioExperiments>;
+
+export const ioExperimentDetails = io.type({
+  archived: io.boolean,
+  config: ioExperimentConfig,
+  end_time: io.union([ io.string, io.null ]),
+  id: io.number,
+  owner: ioOwner,
+  progress: io.union([ io.number, io.null ]),
+  start_time: io.string,
+  state: runStatesIoType,
+  trials: io.array(trialSummaryIoType),
+  validation_history: io.array(validationHistoryIoType),
+});
+
+export type ioTypeExperimentDetails = io.TypeOf<typeof ioExperimentDetails>;
 
 /* Logs */
 
