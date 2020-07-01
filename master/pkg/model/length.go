@@ -40,7 +40,9 @@ func (l Length) MarshalJSON() ([]byte, error) {
 			"epochs": l.Units,
 		})
 	default:
-		panic(fmt.Sprintf("invalid unit passed to NewLength %s", l.Kind))
+		return json.Marshal(map[string]int{
+			"batches": 0,
+		})
 	}
 }
 

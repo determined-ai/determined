@@ -46,6 +46,33 @@ func (s *SearcherConfig) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, DefaultParser(s))
 }
 
+// Shim converts a config to the new version.
+func (s SearcherConfig) Shim(batchesPerStep int) SearcherConfig {
+	switch {
+	case s.SingleConfig != nil:
+		s.SingleConfig = s.SingleConfig.shim(batchesPerStep)
+	case s.RandomConfig != nil:
+		s.RandomConfig = s.RandomConfig.shim(batchesPerStep)
+	case s.GridConfig != nil:
+		s.GridConfig = s.GridConfig.shim(batchesPerStep)
+	case s.SyncHalvingConfig != nil:
+		s.SyncHalvingConfig = s.SyncHalvingConfig.shim(batchesPerStep)
+	case s.AdaptiveConfig != nil:
+		s.AdaptiveConfig = s.AdaptiveConfig.shim(batchesPerStep)
+	case s.AdaptiveSimpleConfig != nil:
+		s.AdaptiveSimpleConfig = s.AdaptiveSimpleConfig.shim(batchesPerStep)
+	case s.AsyncHalvingConfig != nil:
+		s.AsyncHalvingConfig = s.AsyncHalvingConfig.shim(batchesPerStep)
+	case s.AdaptiveASHAConfig != nil:
+		s.AdaptiveASHAConfig = s.AdaptiveASHAConfig.shim(batchesPerStep)
+	case s.PBTConfig != nil:
+		s.PBTConfig = s.PBTConfig.shim(batchesPerStep)
+	default:
+		panic("no searcher type specified")
+	}
+	return s
+}
+
 // SingleConfig configures a single trial.
 type SingleConfig struct {
 	MaxLength Length `json:"max_length"`
@@ -69,6 +96,13 @@ func (s SingleConfig) validateNew() []error {
 	return []error{
 		check.GreaterThan(s.MaxLength.Units, 0, "max_length must be > 0"),
 	}
+}
+
+func (s SingleConfig) shim(batchesPerStep int) *SingleConfig {
+	if s.MaxSteps > 0 {
+		s.MaxLength = NewLengthInBatches(s.MaxSteps * batchesPerStep)
+	}
+	return &s
 }
 
 // RandomConfig configures a random search.
@@ -99,6 +133,13 @@ func (r RandomConfig) validateNew() []error {
 	}
 }
 
+func (r RandomConfig) shim(batchesPerStep int) *RandomConfig {
+	if r.MaxSteps > 0 {
+		r.MaxLength = NewLengthInBatches(r.MaxSteps * batchesPerStep)
+	}
+	return &r
+}
+
 // GridConfig configures a grid search.
 type GridConfig struct {
 	MaxLength Length `json:"max_length"`
@@ -124,6 +165,13 @@ func (g GridConfig) validateNew() []error {
 	}
 }
 
+func (g GridConfig) shim(batchesPerStep int) *GridConfig {
+	if g.MaxSteps > 0 {
+		g.MaxLength = NewLengthInBatches(g.MaxSteps * batchesPerStep)
+	}
+	return &g
+}
+
 // SyncHalvingConfig configures asynchronous successive halving.
 type SyncHalvingConfig struct {
 	Metric          string  `json:"metric"`
@@ -137,6 +185,14 @@ type SyncHalvingConfig struct {
 	// Deprecated
 	TargetTrialSteps int `json:"target_trial_steps"`
 	StepBudget       int `json:"step_budget"`
+}
+
+func (s SyncHalvingConfig) shim(batchesPerStep int) *SyncHalvingConfig {
+	if s.TargetTrialSteps > 0 {
+		s.MaxLength = NewLengthInBatches(s.TargetTrialSteps * batchesPerStep)
+		s.Budget = NewLengthInBatches(s.StepBudget * batchesPerStep)
+	}
+	return &s
 }
 
 // AsyncHalvingConfig configures asynchronous successive halving.
@@ -155,18 +211,7 @@ type AsyncHalvingConfig struct {
 
 // Validate implements the check.Validatable interface.
 func (a AsyncHalvingConfig) Validate() (errs []error) {
-	dErrs := a.validateDeprecated()
-	nErrs := a.validateNew()
-
-	if allNil(dErrs...) && allNil(nErrs...) {
-		errs = append(errs, errors.New("multiple configurations specified"))
-	}
-
-	if !allNil(dErrs...) && !allNil(nErrs...) {
-		errs = append(errs, nErrs...)
-	}
-
-	return errs
+	return validate(a)
 }
 
 func (a AsyncHalvingConfig) validateDeprecated() []error {
@@ -187,6 +232,13 @@ func (a AsyncHalvingConfig) validateNew() []error {
 		check.GreaterThan(a.NumRungs, 0, "num_rungs must be > 0"),
 		check.GreaterThanOrEqualTo(a.MaxConcurrentTrials, 0, "max_concurrent_trials must be >= 0"),
 	}
+}
+
+func (a AsyncHalvingConfig) shim(batchesPerStep int) *AsyncHalvingConfig {
+	if a.TargetTrialSteps > 0 {
+		a.MaxLength = NewLengthInBatches(a.TargetTrialSteps * batchesPerStep)
+	}
+	return &a
 }
 
 // AdaptiveMode specifies how aggressively to perform early stopping.
@@ -254,6 +306,14 @@ func (a AdaptiveConfig) validateNew() []error {
 	}
 }
 
+func (a AdaptiveConfig) shim(batchesPerStep int) *AdaptiveConfig {
+	if a.TargetTrialSteps > 0 {
+		a.MaxLength = NewLengthInBatches(a.TargetTrialSteps * batchesPerStep)
+		a.Budget = NewLengthInBatches(a.StepBudget * batchesPerStep)
+	}
+	return &a
+}
+
 // AdaptiveSimpleConfig configures an simplified adaptive search.
 type AdaptiveSimpleConfig struct {
 	Metric          string       `json:"metric"`
@@ -299,6 +359,13 @@ func (a AdaptiveSimpleConfig) validateNew() []error {
 	}
 }
 
+func (a AdaptiveSimpleConfig) shim(batchesPerStep int) *AdaptiveSimpleConfig {
+	if a.MaxSteps > 0 {
+		a.MaxLength = NewLengthInBatches(a.MaxSteps * batchesPerStep)
+	}
+	return &a
+}
+
 // AdaptiveASHAConfig configures an adaptive searcher for use with ASHA.
 type AdaptiveASHAConfig struct {
 	Metric              string       `json:"metric"`
@@ -342,6 +409,13 @@ func (a AdaptiveASHAConfig) validateNew() []error {
 		check.GreaterThan(a.MaxRungs, 0, "max_rungs must be > 0"),
 		check.GreaterThanOrEqualTo(a.MaxConcurrentTrials, 0, "max_concurrent_trials must be >= 0"),
 	}
+}
+
+func (a AdaptiveASHAConfig) shim(batchesPerStep int) *AdaptiveASHAConfig {
+	if a.TargetTrialSteps > 0 {
+		a.MaxLength = NewLengthInBatches(a.TargetTrialSteps * batchesPerStep)
+	}
+	return &a
 }
 
 // PBTReplaceConfig configures replacement for a PBT search.
@@ -409,6 +483,13 @@ func (p PBTConfig) validateNew() []error {
 		check.GreaterThan(p.NumRounds, 0, "num_rounds must be > 0"),
 		check.GreaterThan(p.LengthPerRound.Units, 0, "length_per_round must be > 0"),
 	}
+}
+
+func (p PBTConfig) shim(batchesPerStep int) *PBTConfig {
+	if p.StepsPerRound > 0 {
+		p.LengthPerRound = NewLengthInBatches(p.StepsPerRound * batchesPerStep)
+	}
+	return &p
 }
 
 type validatableTwoVersionConfig interface {

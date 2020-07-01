@@ -51,6 +51,7 @@ type SearchMethod interface {
 func NewSearchMethod(
 	c model.SearcherConfig, batchesPerStep, recordsPerEpoch int,
 ) SearchMethod {
+	c = c.Shim(batchesPerStep)
 	switch {
 	case c.SingleConfig != nil:
 		return newSingleSearch(*c.SingleConfig, batchesPerStep, recordsPerEpoch)
