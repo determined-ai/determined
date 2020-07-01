@@ -2,15 +2,15 @@ import sys
 import time
 import uuid
 from argparse import Namespace
-from typing import Any, Callable, Dict, Optional
 from functools import wraps
+from typing import Any, Callable, Dict, Optional
 
 from ruamel import yaml
 from termcolor import colored
 
 from determined_common import api, constants, context
-from determined_common.api import request as req
 from determined_common.api import authentication as auth
+from determined_common.api import request as req
 
 
 def patch_experiment(master_url: str, exp_id: int, patch_doc: Dict[str, Any]) -> None:
