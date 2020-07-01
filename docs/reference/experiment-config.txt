@@ -447,8 +447,8 @@ created with the Determined CLI. It may contain the following fields:
     .. warning::
 
         The ``max_slots`` configuration is only used for scheduling jobs, it is
-        not currently used for provisioning agents. This means that we may
-        provision more instances than the experiment can schedule.
+				not currently used for provisioning dynamic agents. This means that we
+				may provision more instances than the experiment can schedule.
 
   - ``weight``: Specifies the weight of this experiment in the
     scheduler. When multiple experiments are running at the same time,
