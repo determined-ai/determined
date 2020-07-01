@@ -54,6 +54,8 @@ Callbacks
 To execute arbitrary Python functionality during the lifecycle of a
 ``EstimatorTrial``, ``determined.estimator.RunHook`` extends
 `tf.estimator.SessionRunHook <https://www.tensorflow.org/api_docs/python/tf/estimator/SessionRunHook/>`_.
+When utilizing ``determined.estimator.RunHook``, users can use native estimator hooks
+such as ``before_run()`` and Determined hooks such as ``on_checkpoint_end()``.
 
 .. autoclass:: determined.estimator.RunHook
     :members: on_checkpoint_load, on_checkpoint_end, on_trial_close
