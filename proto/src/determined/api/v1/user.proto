@@ -7,7 +7,7 @@ import "determined/user/v1/user.proto";
 
 // Get a list of users.
 message GetUsersRequest {}
-// Response to GetTemplatesRequest.
+// Response to GetUsersRequest.
 message GetUsersResponse {
     // The list of requested users.
     repeated determined.user.v1.User users = 1;
