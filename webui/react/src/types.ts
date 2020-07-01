@@ -194,6 +194,7 @@ export interface ExperimentItem extends Experiment {
 export interface ExperimentDetails extends Experiment {
   validationHistory: ValidationHistory[];
   trials: Trial[];
+  username: string;
 }
 
 export interface Task {
