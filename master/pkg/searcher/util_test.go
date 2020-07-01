@@ -195,7 +195,6 @@ func newEarlyExitPredefinedTrial(
 	return newPredefinedTrial(nsteps, validationsMap, checkpoints, nsteps)
 }
 
-// TODO(brad): maybe add batches
 func newConstantPredefinedTrial(
 	validation float64, nsteps int, validations []int, checkpoints []int,
 ) predefinedTrial {
