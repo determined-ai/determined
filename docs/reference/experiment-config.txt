@@ -443,6 +443,13 @@ created with the Determined CLI. It may contain the following fields:
     that this experiment is allowed to use at any one time. The slot
     limit of an active experiment can be changed using
     ``det experiment set max-slots <id> <slots>``.
+
+    .. warning::
+
+        The ``max_slots`` configuration is only used for scheduling jobs, it is
+        not currently used for provisioning agents. This means that we may
+        provision more instances than the experiment can schedule.
+
   - ``weight``: Specifies the weight of this experiment in the
     scheduler. When multiple experiments are running at the same time,
     the number of slots assigned to each one will be approximately
