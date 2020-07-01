@@ -59,6 +59,22 @@ export const experimentToTask = (experiment: Experiment): RecentExperimentTask =
   return task;
 };
 
+export const activeCommandStates = [
+  CommandState.Assigned,
+  CommandState.Pending,
+  CommandState.Pulling,
+  CommandState.Running,
+  CommandState.Starting,
+  CommandState.Terminating,
+];
+
+export const activeRunStates = [
+  RunState.Active,
+  RunState.StoppingCanceled,
+  RunState.StoppingCompleted,
+  RunState.StoppingError,
+];
+
 export const killableRunStates = [ RunState.Active, RunState.Paused, RunState.StoppingCanceled ];
 export const cancellableRunStates = [ RunState.Active, RunState.Paused ];
 export const killableCmdStates = [

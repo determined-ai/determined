@@ -15,14 +15,8 @@ import {
   jsonToShells, jsonToTensorboards, jsonToUsers,
 } from 'services/decoder';
 import { ExperimentsParams } from 'services/types';
-import { Agent, Command, Experiment, RunState, User } from 'types';
-
-const activeStates = [
-  RunState.Active,
-  RunState.StoppingCanceled,
-  RunState.StoppingCompleted,
-  RunState.StoppingError,
-];
+import { Agent, Command, Experiment, User } from 'types';
+import { activeRunStates } from 'utils/types';
 
 const AppContexts: React.FC = () => {
   const setUsers = Users.useActionContext();
@@ -57,7 +51,7 @@ const AppContexts: React.FC = () => {
     requestNotebooks({ url: '/notebooks' });
     requestShells({ url: '/shells' });
     requestTensorboards({ url: '/tensorboard' });
-    requestActiveExperiments({ states: activeStates });
+    requestActiveExperiments({ states: activeRunStates });
     requestExperiments({});
   }, [
     requestAgents,

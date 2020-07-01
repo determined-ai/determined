@@ -17,11 +17,11 @@ import Users from 'contexts/Users';
 import useStorage from 'hooks/useStorage';
 import { ShirtSize } from 'themes';
 import {
-  ALL_VALUE, Command, CommandState, CommandType, RecentTask, ResourceType,
+  ALL_VALUE, Command, CommandType, RecentTask, ResourceType,
   TaskFilters, TaskType,
 } from 'types';
 import { filterTasks } from 'utils/task';
-import { commandToTask, experimentToTask } from 'utils/types';
+import { activeCommandStates, commandToTask, experimentToTask } from 'utils/types';
 
 import css from './Dashboard.module.scss';
 
@@ -37,15 +37,6 @@ const defaultFilters: TaskFilters = {
   },
   username: undefined,
 };
-
-const activeCommandStates = [
-  CommandState.Assigned,
-  CommandState.Pending,
-  CommandState.Pulling,
-  CommandState.Running,
-  CommandState.Starting,
-  CommandState.Terminating,
-];
 
 const Dashboard: React.FC = () => {
   const auth = Auth.useStateContext();
