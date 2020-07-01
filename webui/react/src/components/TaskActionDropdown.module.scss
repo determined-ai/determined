@@ -1,5 +1,7 @@
 .base {
   color: var(--theme-colors-monochrome-8);
+  display: flex;
+  justify-content: flex-end;
 
   button {
     align-items: center;

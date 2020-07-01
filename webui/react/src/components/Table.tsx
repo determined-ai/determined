@@ -33,10 +33,6 @@ export const actionsRenderer: Renderer = (_, record) => {
   }
 };
 
-export const ellipsisRenderer: Renderer = text => (
-  <Tooltip title={text}><span>{text}</span></Tooltip>
-);
-
 export const startTimeRenderer: Renderer = (_, record) => (
   <span title={new Date(parseInt(record.startTime) * 1000).toTimeString()}>
     <TimeAgo datetime={record.startTime} />
@@ -49,12 +45,16 @@ export const stateRenderer: Renderer = (_, record) => (
   </div>
 );
 
+export const tooltipRenderer: Renderer = text => (
+  <Tooltip placement="topLeft" title={text}><span>{text}</span></Tooltip>
+);
+
 export const userRenderer: Renderer = (_, record) => <Avatar name={record.username} />;
 
 /* Command Task Table Column Renderers */
 
 export const taskIdRenderer: TaskRenderer = id => (
-  <Tooltip title={id}>
+  <Tooltip placement="topLeft" title={id}>
     <div className={css.centerVertically}>
       <Badge type={BadgeType.Id}>{id.split('-')[0]}</Badge>
     </div>

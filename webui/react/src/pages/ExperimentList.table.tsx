@@ -13,7 +13,6 @@ export const columns: ColumnsType<ExperimentItem> = [
     dataIndex: 'id',
     sorter: (a, b): number => alphanumericSorter(a.id, b.id),
     title: 'ID',
-    width: 100,
   },
   {
     dataIndex: 'name',
@@ -26,25 +25,21 @@ export const columns: ColumnsType<ExperimentItem> = [
     render: startTimeRenderer,
     sorter: (a, b): number => stringTimeSorter(a.startTime, b.startTime),
     title: 'Start Time',
-    width: 120,
   },
   {
     render: expermentDurationRenderer,
     sorter: (a, b): number => experimentDuration(a) - experimentDuration(b),
     title: 'Duration',
-    width: 100,
   },
   {
     // TODO bring in actual trial counts once available.
     render: (): number => Math.floor(Math.random() * 100),
     title: 'Trials',
-    width: 100,
   },
   {
     render: stateRenderer,
     sorter: (a, b): number => runStateSorter(a.state, b.state),
     title: 'State',
-    width: 120,
   },
   {
     render: experimentProgressRenderer,
@@ -55,11 +50,10 @@ export const columns: ColumnsType<ExperimentItem> = [
     render: userRenderer,
     sorter: (a, b): number => alphanumericSorter(a.username, b.username),
     title: 'User',
-    width: 70,
   },
   {
+    align: 'right',
     render: actionsRenderer,
     title: '',
-    width: 40,
   },
 ];
