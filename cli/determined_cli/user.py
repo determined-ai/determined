@@ -9,7 +9,7 @@ from termcolor import colored
 
 import determined_common.api.authentication as auth
 from determined_common import api
-from determined_common.api.experiment import authentication_required
+from determined_common.api.authentication import authentication_required
 
 from . import render
 from .declarative_argparse import Arg, Cmd

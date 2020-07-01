@@ -7,7 +7,7 @@ from typing import Any, Callable, List
 
 from determined_cli import render
 from determined_common import api
-from determined_common.api.experiment import authentication_required
+from determined_common.api.authentication import authentication_required
 from determined_common.check import check_false
 
 from .declarative_argparse import Arg, Cmd, Group

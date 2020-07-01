@@ -8,7 +8,7 @@ from typing import Any, Dict, List
 from termcolor import colored
 
 from determined_common import api
-from determined_common.api.experiment import authentication_required
+from determined_common.api.authentication import authentication_required
 from determined_common.check import check_eq, check_len
 
 from . import render

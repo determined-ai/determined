@@ -2,15 +2,14 @@ import sys
 import time
 import uuid
 from argparse import Namespace
-from functools import wraps
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict, Optional
 
 from ruamel import yaml
 from termcolor import colored
 
 from determined_common import api, constants, context
-from determined_common.api import authentication as auth
 from determined_common.api import request as req
+from determined_common.api.authentication import authentication_required
 
 
 def patch_experiment(master_url: str, exp_id: int, patch_doc: Dict[str, Any]) -> None:
@@ -21,16 +20,6 @@ def patch_experiment(master_url: str, exp_id: int, patch_doc: Dict[str, Any]) ->
 
 def activate_experiment(master_url: str, exp_id: int) -> None:
     patch_experiment(master_url, exp_id, {"state": "ACTIVE"})
-
-
-def authentication_required(func: Callable[[Namespace], Any]) -> Callable[..., Any]:
-    @wraps(func)
-    def f(namespace: Namespace) -> Any:
-        v = vars(namespace)
-        auth.initialize_session(namespace.master, v.get("user"), try_reauth=True)
-        return func(namespace)
-
-    return f
 
 
 @authentication_required

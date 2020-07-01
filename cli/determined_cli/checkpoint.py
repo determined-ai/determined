@@ -3,7 +3,7 @@ from argparse import Namespace
 from typing import Any, Dict, List, Optional
 
 from determined_common import api, constants, experimental
-from determined_common.api.experiment import authentication_required
+from determined_common.api.authentication import authentication_required
 from determined_common.experimental import Determined
 
 from . import render

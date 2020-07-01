@@ -30,7 +30,7 @@ from determined_cli.user import args_description as user_args_description
 from determined_cli.version import args_description as version_args_description
 from determined_cli.version import check_version
 from determined_common import api
-from determined_common.api.experiment import authentication_required
+from determined_common.api.authentication import authentication_required
 from determined_common.check import check_not_none
 from determined_common.util import chunks, debug_mode, get_default_master_address
 
