@@ -30,7 +30,7 @@ const (
 )
 
 var validTransitions = map[State]map[State]bool{
-	Assigned:   {Pulling: true, Terminated: true},
+	Assigned:   {Pulling: true, Terminated: true, Starting: true},
 	Pulling:    {Starting: true, Terminated: true},
 	Starting:   {Running: true, Terminated: true},
 	Running:    {Terminated: true},

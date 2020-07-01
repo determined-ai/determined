@@ -9,9 +9,9 @@ import (
 type (
 	// StartPod notifies the pods actor to start a pod with the task spec.
 	StartPod struct {
-		Task  *actor.Ref
-		Spec  tasks.TaskSpec
-		Slots int
-		Rank  int
+		TaskHandler *actor.Ref
+		Spec        tasks.TaskSpec
+		Slots       int
+		Rank        int
 	}
 )

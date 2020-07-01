@@ -30,6 +30,9 @@ type pods struct {
 	masterIP   string
 	masterPort int32
 
+	informer            *actor.Ref
+	podNameToPodHandler map[string]*actor.Ref
+
 	podInterface       typedV1.PodInterface
 	configMapInterface typedV1.ConfigMapInterface
 }
@@ -43,9 +46,10 @@ func Initialize(
 	masterServiceName string,
 ) *actor.Ref {
 	podsActor, ok := s.ActorOf(actor.Addr("pods"), &pods{
-		cluster:           c,
-		namespace:         namespace,
-		masterServiceName: masterServiceName,
+		cluster:             c,
+		namespace:           namespace,
+		masterServiceName:   masterServiceName,
+		podNameToPodHandler: make(map[string]*actor.Ref),
 	})
 	check.Panic(check.True(ok, "pods address already taken"))
 
@@ -64,11 +68,15 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		if err := p.getMasterIPAndPort(ctx); err != nil {
 			return err
 		}
+		p.startPodInformer(ctx)
 
 	case sproto.StartPod:
 		if err := p.receiveStartPod(ctx, msg); err != nil {
 			return err
 		}
+
+	case podStatusUpdate:
+		p.receivePodStatusUpdate(ctx, msg)
 
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
@@ -108,19 +116,32 @@ func (p *pods) getMasterIPAndPort(ctx *actor.Context) error {
 	return nil
 }
 
-func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
-	ref, ok := ctx.ActorOf(
-		fmt.Sprintf("pod-%s", msg.Spec.TaskID),
-		newPod(
-			p.cluster, p.clientSet, p.namespace, p.masterIP,
-			p.masterPort, msg.Spec, msg.Slots, msg.Rank,
-			p.podInterface, p.configMapInterface,
-		),
-	)
+func (p *pods) startPodInformer(ctx *actor.Context) {
+	p.informer, _ = ctx.ActorOf("pod-informer", newInformer(p.podInterface, p.namespace, ctx.Self()))
+	ctx.Tell(p.informer, startInformer{})
+}
 
+func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
+	newPodHandler := newPod(
+		p.cluster, msg.TaskHandler, p.clientSet, p.namespace, p.masterIP,
+		p.masterPort, msg.Spec, msg.Slots, msg.Rank,
+		p.podInterface, p.configMapInterface,
+	)
+	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", msg.Spec.TaskID), newPodHandler)
 	if !ok {
 		return errors.Errorf("pod actor %s already exists", ref.Address().String())
 	}
 
+	p.podNameToPodHandler[newPodHandler.podName] = ref
 	return nil
+}
+
+func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
+	ref, ok := p.podNameToPodHandler[msg.podName]
+	if !ok {
+		ctx.Log().Errorf("received pod status update for un-registered pod: %s", msg.podName)
+		return
+	}
+
+	ctx.Tell(ref, msg)
 }
