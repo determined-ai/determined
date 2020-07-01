@@ -4,10 +4,10 @@
   font-style: normal;
   font-weight: normal;
   src:
-    url('/fonts/determined-ai.woff2?s0ucbm') format('woff2'),
-    url('/fonts/determined-ai.woff?s0ucbm') format('woff'),
-    url('/fonts/determined-ai.ttf?s0ucbm') format('truetype'),
-    url('/fonts/determined-ai.svg?s0ucbm#determined-ai') format('svg');
+    url('/fonts/determined-ai.woff2?xhaw2j') format('woff2'),
+    url('/fonts/determined-ai.woff?xhaw2j') format('woff'),
+    url('/fonts/determined-ai.ttf?xhaw2j') format('truetype'),
+    url('/fonts/determined-ai.svg?xhaw2j#determined-ai') format('svg');
 }
 
 [class^='icon-'],
@@ -33,6 +33,8 @@
 .icon-cluster::before { content: '\e913'; }
 .icon-collapse::before { content: '\e90d'; }
 .icon-command::before { content: '\e914'; }
+.icon-debug::before { content: '\e901'; }
+.icon-error::before { content: '\e902'; }
 .icon-expand::before { content: '\e90e'; }
 .icon-experiment::before { content: '\e903'; }
 .icon-eye-close::before { content: '\e917'; }
@@ -55,3 +57,4 @@
 .icon-tensorflow::before { content: '\e90b'; }
 .icon-user::before { content: '\e916'; }
 .icon-user-small::before { content: '\e912'; }
+.icon-warning::before { content: '\e91c'; }

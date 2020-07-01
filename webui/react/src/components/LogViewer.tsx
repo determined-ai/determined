@@ -4,12 +4,13 @@ import React, {
   useLayoutEffect, useMemo, useRef, useState,
 } from 'react';
 import screenfull from 'screenfull';
+import { sprintf } from 'sprintf-js';
 
 import Icon from 'components/Icon';
 import Section from 'components/Section';
 import usePrevious from 'hooks/usePrevious';
 import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
-import { Log } from 'types';
+import { Log, LogLevel } from 'types';
 import { formatDatetime } from 'utils/date';
 import { ansiToHtml, copyToClipboard, toRem } from 'utils/dom';
 
@@ -66,9 +67,12 @@ const BUFFER_FACTOR = 1;
 
 // Format the datetime to...
 const DATETIME_FORMAT = 'MMM DD, HH:mm:ss';
+const CLIPBOARD_FORMAT = 'YYYY-MM-DD, HH:mm:ss';
 
 // Max datetime size: [MMM DD, HH:mm:ss] (plus 1 for a space suffix)
 const MAX_DATETIME_LENGTH = 19;
+
+const ICON_WIDTH = 26;
 
 const defaultLogConfig = {
   charHeight: 0,
@@ -107,6 +111,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   const spacerStyle = { height: toRem(config.totalContentHeight) };
   const dateTimeStyle = { width: toRem(config.dateTimeWidth) };
   const lineNumberStyle = { width: toRem(config.lineNumberWidth) };
+  const levelStyle = { width: toRem(ICON_WIDTH) };
 
   if (noWrap) classes.push(css.noWrap);
   if (scroll.scrollTop < scroll.scrollHeight - scroll.viewHeight) {
@@ -152,7 +157,7 @@ const LogViewer: React.FC<Props> = forwardRef((
      * Calculate the width of message based on how much space is left
      * after rendering line and timestamp.
      */
-    const messageWidth = spacerRect.width - lineNumberWidth - dateTimeWidth;
+    const messageWidth = spacerRect.width - lineNumberWidth - ICON_WIDTH - dateTimeWidth;
 
     /*
       * Measure the dimensions of every message in the available data.
@@ -255,6 +260,27 @@ const LogViewer: React.FC<Props> = forwardRef((
   }, [ logs, previousScroll, onScrollToTop, scroll ]);
 
   /*
+   * Detect log viewer resize events to trigger
+   * recalculation of measured log entries.
+   */
+  useLayoutEffect(() => {
+    if (!container.current) return;
+
+    const element = container.current;
+    const handleResize: ResizeObserverCallback = entries => {
+      // Check to make sure the log viewer container is being observed for resize.
+      const elements = entries.map((entry: ResizeObserverEntry) => entry.target);
+      if (!element || elements.indexOf(element) === -1) return;
+
+      setConfig(measureLogs(logs));
+    };
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(element);
+
+    return (): void => resizeObserver.unobserve(element);
+  }, [ logs, measureLogs ]);
+
+  /*
    * Scroll to the latest log entry when showing the very first
    * set of log entries. `setTimeout` is needed to ensure that
    * `scrollTo` occurs after the layout has settled.
@@ -299,7 +325,12 @@ const LogViewer: React.FC<Props> = forwardRef((
 
   const handleCopyToClipboard = useCallback(async () => {
     const content = logs.map(log => {
-      return [ log.id + 1, `[${log.time}]`, log.message ].join(' ');
+      return sprintf(
+        `%${CLIPBOARD_FORMAT.length}s %-7s %s`,
+        formatDatetime(log.time!, CLIPBOARD_FORMAT),
+        log.level,
+        log.message,
+      );
     }).join('\n');
 
     try {
@@ -350,6 +381,22 @@ const LogViewer: React.FC<Props> = forwardRef((
     </Space>
   );
 
+  const levelCss = (defaultCss: string, level?: string): string => {
+    const classes = [ defaultCss ];
+    if (level) classes.push(css[level]);
+    return classes.join(' ');
+  };
+
+  const addClipboardPrefix = (log: Log): string => {
+    const content = sprintf(
+      `%${CLIPBOARD_FORMAT.length}s %-7s `,
+      formatDatetime(log.time!, CLIPBOARD_FORMAT),
+      log.level,
+    );
+    const prefix = `<span class=${css.clipboard}>${content}</span>`;
+    return prefix + ansiToHtml(log.message);
+  };
+
   return (
     <div className={css.base} ref={baseRef}>
       <Section maxHeight options={logOptions} title={title}>
@@ -360,13 +407,21 @@ const LogViewer: React.FC<Props> = forwardRef((
                 height: toRem(config.messageSizes[log.id]?.height),
                 top: toRem(config.messageSizes[log.id]?.top),
               }}>
+                {log.level !== LogLevel.Info ? (
+                  <Tooltip placement="top" title={log.level}>
+                    <div className={levelCss(css.level, log.level)} style={levelStyle}>
+                      <Icon name={log.level} size="small" />
+                    </div>
+                  </Tooltip>
+                ) : <div className={levelCss(css.level, log.level)} style={levelStyle} />
+                }
                 <div className={css.number} style={lineNumberStyle}>{log.id + 1}</div>
                 <Tooltip placement="left" title={log.time || ''}>
                   <div className={css.time} style={dateTimeStyle}>{log.formattedTime}</div>
                 </Tooltip>
                 <div
-                  className={css.message}
-                  dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }} />
+                  className={levelCss(css.message, log.level)}
+                  dangerouslySetInnerHTML={{ __html: addClipboardPrefix(log) }} />
               </div>
             ))}
           </div>
