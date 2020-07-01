@@ -64,7 +64,7 @@ service Determined {
     // Get a list of experiments.
     rpc GetExperiments(GetExperimentsRequest) returns (GetExperimentsResponse) { option (google.api.http) = {get: "/api/v1/experiments"}; }
     // Preview hyperparameter search.
-    rpc PreviewSearch(PreviewSearchRequest) returns (PreviewSearchResponse) { option (google.api.http) = {post: "/api/v1/searchers/preview" body: "*"}; }
+    rpc PreviewHPSearch(PreviewHPSearchRequest) returns (PreviewHPSearchResponse) { option (google.api.http) = {post: "/api/v1/searchers/preview" body: "*"}; }
 
     // Stream Trial logs.
     rpc TrialLogs(TrialLogsRequest) returns (stream TrialLogsResponse) { option (google.api.http) = {get: "/api/v1/trials/{trial_id}/logs"}; }
