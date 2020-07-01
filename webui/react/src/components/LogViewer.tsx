@@ -4,6 +4,7 @@ import React, {
   useLayoutEffect, useMemo, useRef, useState,
 } from 'react';
 import screenfull from 'screenfull';
+import { sprintf } from 'sprintf-js';
 
 import Icon from 'components/Icon';
 import Section from 'components/Section';
@@ -66,6 +67,7 @@ const BUFFER_FACTOR = 1;
 
 // Format the datetime to...
 const DATETIME_FORMAT = 'MMM DD, HH:mm:ss';
+const CLIPBOARD_FORMAT = 'YYYY-MM-DD, HH:mm:ss';
 
 // Max datetime size: [MMM DD, HH:mm:ss] (plus 1 for a space suffix)
 const MAX_DATETIME_LENGTH = 19;
@@ -323,7 +325,12 @@ const LogViewer: React.FC<Props> = forwardRef((
 
   const handleCopyToClipboard = useCallback(async () => {
     const content = logs.map(log => {
-      return [ log.id + 1, `[${log.time}]`, log.message ].join(' ');
+      return sprintf(
+        `%${CLIPBOARD_FORMAT.length}s %-7s %s`,
+        formatDatetime(log.time!, CLIPBOARD_FORMAT),
+        log.level,
+        log.message,
+      );
     }).join('\n');
 
     try {
@@ -381,7 +388,11 @@ const LogViewer: React.FC<Props> = forwardRef((
   };
 
   const addClipboardPrefix = (log: Log): string => {
-    const content = `${log.time} [${log.level}] `;
+    const content = sprintf(
+      `%${CLIPBOARD_FORMAT.length}s %-7s `,
+      formatDatetime(log.time!, CLIPBOARD_FORMAT),
+      log.level,
+    );
     const prefix = `<span class=${css.clipboard}>${content}</span>`;
     return prefix + ansiToHtml(log.message);
   };
