@@ -381,7 +381,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   };
 
   const addClipboardPrefix = (log: Log): string => {
-    const content = `${log.time} [${log.level?.toLocaleUpperCase()}] `;
+    const content = `${log.time} [${log.level}] `;
     const prefix = `<span class=${css.clipboard}>${content}</span>`;
     return prefix + ansiToHtml(log.message);
   };
