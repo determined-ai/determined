@@ -54,8 +54,8 @@ func (a *apiServer) GetExperiments(
 	return resp, a.paginate(&resp.Pagination, &resp.Experiments, req.Offset, req.Limit)
 }
 
-func (a *apiServer) PreviewSearch(
-	_ context.Context, req *apiv1.PreviewSearchRequest) (*apiv1.PreviewSearchResponse, error) {
+func (a *apiServer) PreviewHPSearch(
+	_ context.Context, req *apiv1.PreviewHPSearchRequest) (*apiv1.PreviewHPSearchResponse, error) {
 	bytes, err := protojson.Marshal(req.Config)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error parsing experiment config: %s", err)
@@ -103,5 +103,5 @@ func (a *apiServer) PreviewSearch(
 			indexes[hash] = len(protoSim.Trials) - 1
 		}
 	}
-	return &apiv1.PreviewSearchResponse{Simulation: protoSim}, nil
+	return &apiv1.PreviewHPSearchResponse{Simulation: protoSim}, nil
 }

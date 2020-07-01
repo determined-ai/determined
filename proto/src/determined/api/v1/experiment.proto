@@ -61,14 +61,14 @@ message GetExperimentsResponse {
 }
 
 // Preview hyperparameter search.
-message PreviewSearchRequest {
+message PreviewHPSearchRequest {
     // The experiment config to simulate.
     google.protobuf.Struct config = 1;
     // The searcher simulation seed.
     uint32 seed = 2;
 }
 // Response to PreviewSearchRequest.
-message PreviewSearchResponse {
+message PreviewHPSearchResponse {
     // The resulting simulation.
     determined.experiment.v1.ExperimentSimulation simulation = 1;
 }
