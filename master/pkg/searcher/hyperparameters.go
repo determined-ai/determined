@@ -8,7 +8,15 @@ import (
 	"github.com/determined-ai/determined/master/pkg/nprand"
 )
 
+// GlobalBatchSize is the name of the hyperparameter for global_batch_size.
+const GlobalBatchSize = "global_batch_size"
+
 type hparamSample map[string]interface{}
+
+func (h hparamSample) GlobalBatchSize() int {
+	// TODO(brad): this feels less than reliable
+	return int(h[GlobalBatchSize].(float64))
+}
 
 func sampleAll(h model.Hyperparameters, rand *nprand.State) hparamSample {
 	results := make(hparamSample)

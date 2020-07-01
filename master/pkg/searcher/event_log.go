@@ -41,11 +41,6 @@ type EventLog struct {
 	TrialsClosed    int
 	TrialIDs        map[RequestID]int
 	RequestIDs      map[int]RequestID
-
-	// Step state and metrics.
-	TotalWorkloadsCompleted int
-	TotalStepsStarted       int
-	TotalStepsCompleted     int
 }
 
 // NewEventLog initializes an empty event log.
@@ -60,8 +55,6 @@ func NewEventLog() *EventLog {
 		TrialsClosed:            0,
 		TrialIDs:                map[RequestID]int{},
 		RequestIDs:              map[int]RequestID{},
-		TotalStepsStarted:       0,
-		TotalStepsCompleted:     0,
 	}
 }
 
@@ -73,10 +66,6 @@ func (el *EventLog) OperationsCreated(operations ...Operation) {
 			el.TrialsRequested++
 		case WorkloadOperation:
 			el.inFlightWorkloads[operation] = true
-			switch operation.Kind {
-			case RunStep:
-				el.TotalStepsStarted++
-			}
 		case Shutdown:
 			el.Shutdown = true
 		}
@@ -138,11 +127,6 @@ func (el *EventLog) WorkloadCompleted(message CompletedMessage) bool {
 		return false
 	}
 	el.completedWorkloads[op] = true
-
-	el.TotalWorkloadsCompleted++
-	if message.Workload.Kind == RunStep {
-		el.TotalStepsCompleted++
-	}
 	return true
 }
 

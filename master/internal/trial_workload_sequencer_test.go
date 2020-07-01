@@ -23,7 +23,8 @@ hyperparameters:
 searcher:
   name: single
   metric: loss
-  max_steps: 1
+  max_length:
+    batches: 100
 reproducibility:
   experiment_seed: 42
 checkpoint_policy: none

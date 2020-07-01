@@ -40,33 +40,36 @@ type SearchMethod interface {
 	// trialClosed informs the searcher that the trial has been closed as a result of a Close
 	// operation.
 	trialClosed(ctx context, requestID RequestID) ([]Operation, error)
-	// progress returns experiment progress as a float between 0.0 and 1.0.
-	progress(workloadsCompleted int) float64
+	// progress returns experiment progress as a float between 0.0 and 1.0. As search methods
+	// receive completed workloads, they should internally track progress.
+	progress() float64
 	// trialExitedEarly informs the searcher that the trial has exited earlier than expected.
 	trialExitedEarly(ctx context, requestID RequestID, message Workload) ([]Operation, error)
 }
 
 // NewSearchMethod returns a new search method for the provided searcher configuration.
-func NewSearchMethod(c model.SearcherConfig, batchesPerStep int) SearchMethod {
+func NewSearchMethod(
+	c model.SearcherConfig, batchesPerStep, recordsPerEpoch int,
+) SearchMethod {
 	switch {
 	case c.SingleConfig != nil:
-		return newSingleSearch(*c.SingleConfig, batchesPerStep)
+		return newSingleSearch(*c.SingleConfig, batchesPerStep, recordsPerEpoch)
 	case c.RandomConfig != nil:
-		return newRandomSearch(*c.RandomConfig, batchesPerStep)
+		return newRandomSearch(*c.RandomConfig, batchesPerStep, recordsPerEpoch)
 	case c.GridConfig != nil:
-		return newGridSearch(*c.GridConfig, batchesPerStep)
+		return newGridSearch(*c.GridConfig, batchesPerStep, recordsPerEpoch)
 	case c.SyncHalvingConfig != nil:
-		return newSyncHalvingSearch(*c.SyncHalvingConfig, batchesPerStep)
+		return newSyncHalvingSearch(*c.SyncHalvingConfig, batchesPerStep, recordsPerEpoch)
 	case c.AdaptiveConfig != nil:
-		return newAdaptiveSearch(*c.AdaptiveConfig, batchesPerStep)
+		return newAdaptiveSearch(*c.AdaptiveConfig, batchesPerStep, recordsPerEpoch)
 	case c.AdaptiveSimpleConfig != nil:
-		return newAdaptiveSimpleSearch(*c.AdaptiveSimpleConfig, batchesPerStep)
+		return newAdaptiveSimpleSearch(*c.AdaptiveSimpleConfig, batchesPerStep, recordsPerEpoch)
 	case c.AsyncHalvingConfig != nil:
-		return newAsyncHalvingSearch(*c.AsyncHalvingConfig, batchesPerStep)
+		return newAsyncHalvingSearch(*c.AsyncHalvingConfig, batchesPerStep, recordsPerEpoch)
 	case c.AdaptiveASHAConfig != nil:
-		return newAdaptiveASHASearch(*c.AdaptiveASHAConfig, batchesPerStep)
+		return newAdaptiveASHASearch(*c.AdaptiveASHAConfig, batchesPerStep, recordsPerEpoch)
 	case c.PBTConfig != nil:
-		return newPBTSearch(*c.PBTConfig, batchesPerStep)
+		return newPBTSearch(*c.PBTConfig, batchesPerStep, recordsPerEpoch)
 	default:
 		panic("no searcher type specified")
 	}
@@ -74,29 +77,28 @@ func NewSearchMethod(c model.SearcherConfig, batchesPerStep int) SearchMethod {
 
 type defaultSearchMethod struct{}
 
-func (defaultSearchMethod) trialCreated(context, RequestID) ([]Operation, error) {
+func (d *defaultSearchMethod) trialCreated(context, RequestID) ([]Operation, error) {
 	return nil, nil
 }
-func (defaultSearchMethod) trainCompleted(
-	context, RequestID, Workload,
-) ([]Operation, error) {
+func (d *defaultSearchMethod) trainCompleted(context, RequestID, Workload) ([]Operation, error) {
 	return nil, nil
 }
-func (defaultSearchMethod) checkpointCompleted(
+
+func (d *defaultSearchMethod) checkpointCompleted(
 	context, RequestID, Workload, CheckpointMetrics,
 ) ([]Operation, error) {
 	return nil, nil
 }
-func (defaultSearchMethod) validationCompleted(
+func (d *defaultSearchMethod) validationCompleted(
 	context, RequestID, Workload, ValidationMetrics,
 ) ([]Operation, error) {
 	return nil, nil
 }
-func (defaultSearchMethod) trialClosed(context, RequestID) ([]Operation, error) {
+func (d *defaultSearchMethod) trialClosed(context, RequestID) ([]Operation, error) {
 	return nil, nil
 }
 
-func (defaultSearchMethod) trialExitedEarly( //nolint: unused
+func (d defaultSearchMethod) trialExitedEarly( //nolint: unused
 	ctx context, requestID RequestID, message Workload) ([]Operation, error) {
 	return []Operation{Shutdown{Failure: true}}, nil
 }

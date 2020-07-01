@@ -25,6 +25,7 @@ type ExperimentConfig struct {
 	Searcher            SearcherConfig            `json:"searcher"`
 	Resources           ResourcesConfig           `json:"resources"`
 	Optimizations       OptimizationsConfig       `json:"optimizations"`
+	RecordsPerEpoch     int                       `json:"records_per_epoch"`
 	BatchesPerStep      int                       `json:"batches_per_step"`
 	BindMounts          []BindMount               `json:"bind_mounts,omitempty"`
 	Environment         Environment               `json:"environment"`

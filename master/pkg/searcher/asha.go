@@ -12,6 +12,7 @@ import (
 // in the bottom rung and no further promotions can be made to higher rungs.
 type asyncHalvingSearch struct {
 	defaultSearchMethod
+	trialStepPlanner
 	model.AsyncHalvingConfig
 
 	rungs      []*rung
@@ -21,32 +22,34 @@ type asyncHalvingSearch struct {
 	closedTrials    map[RequestID]bool
 	maxTrials       int
 	trialsCompleted int
-	batchesPerStep  int
 }
 
 const ashaExitedMetricValue = math.MaxFloat64
 
-func newAsyncHalvingSearch(config model.AsyncHalvingConfig, batchesPerStep int) SearchMethod {
+func newAsyncHalvingSearch(
+	config model.AsyncHalvingConfig, targetBatchesPerStep, recordsPerEpoch int,
+) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
 	for id := 0; id < config.NumRungs; id++ {
-		// We divide the TargetTrialSteps by downsampling rate to get the target steps
+		// We divide the MaxLength by downsampling rate to get the target units
 		// for a rung.
 		downsamplingRate := math.Pow(config.Divisor, float64(config.NumRungs-id-1))
-		stepsNeeded := max(int(float64(config.TargetTrialSteps)/downsamplingRate), 1)
+		unitsNeeded := max(int(float64(config.MaxLength.Units)/downsamplingRate), 1)
 		rungs = append(rungs,
 			&rung{
-				stepsNeeded:       stepsNeeded,
-				outstandingTrials: 0})
+				unitsNeeded:       model.NewLength(config.MaxLength.Kind, unitsNeeded),
+				outstandingTrials: 0,
+			})
 	}
 
 	return &asyncHalvingSearch{
+		trialStepPlanner:   newTrialStepPlanner(targetBatchesPerStep, recordsPerEpoch),
 		AsyncHalvingConfig: config,
 		rungs:              rungs,
 		trialRungs:         make(map[RequestID]int),
 		earlyExitTrials:    make(map[RequestID]bool),
 		closedTrials:       make(map[RequestID]bool),
 		maxTrials:          config.MaxTrials,
-		batchesPerStep:     batchesPerStep,
 	}
 }
 
@@ -109,11 +112,10 @@ func (s *asyncHalvingSearch) initialOperations(ctx context) ([]Operation, error)
 	}
 
 	for trial := 0; trial < maxConcurrentTrials; trial++ {
-		create := NewCreate(
-			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
+		create := s.create(ctx, sampleAll(ctx.hparams, ctx.rand))
 		s.trialRungs[create.RequestID] = 0
 		ops = append(ops, create)
-		trainVal := trainAndValidate(create.RequestID, 0, s.rungs[0].stepsNeeded, s.batchesPerStep)
+		trainVal, _ := s.trainAndValidate(create.RequestID, s.rungs[0].unitsNeeded)
 		ops = append(ops, trainVal...)
 	}
 	return ops, nil
@@ -128,12 +130,6 @@ func (s *asyncHalvingSearch) trialCreated(ctx context, requestID RequestID) ([]O
 func (s *asyncHalvingSearch) trialClosed(ctx context, requestID RequestID) ([]Operation, error) {
 	s.trialsCompleted++
 	s.closedTrials[requestID] = true
-	return nil, nil
-}
-
-func (s *asyncHalvingSearch) trainCompleted(
-	ctx context, requestID RequestID, message Workload,
-) ([]Operation, error) {
 	return nil, nil
 }
 
@@ -166,7 +162,7 @@ func (s *asyncHalvingSearch) promoteAsync(
 	// If the trial has completed the top rung's validation, close the trial.
 	if rungIndex == s.NumRungs-1 {
 		if !s.earlyExitTrials[requestID] {
-			ops = append(ops, NewClose(requestID))
+			ops = append(ops, s.close(requestID))
 			s.closedTrials[requestID] = true
 		}
 	} else {
@@ -180,17 +176,16 @@ func (s *asyncHalvingSearch) promoteAsync(
 			s.trialRungs[promotionID] = rungIndex + 1
 			nextRung.outstandingTrials++
 			if !s.earlyExitTrials[promotionID] {
-				trainVal := trainAndValidate(
-					promotionID, rung.stepsNeeded, nextRung.stepsNeeded, s.batchesPerStep)
+				trainVal, _ := s.trainAndValidate(
+					promotionID, nextRung.unitsNeeded.Sub(rung.unitsNeeded))
 				ops = append(ops, trainVal...)
 				addedTrainWorkload = true
 			} else {
-				step := s.rungs[rungIndex+1].stepsNeeded
 				wkld := Workload{
 					Kind:         ComputeValidationMetrics,
 					ExperimentID: message.ExperimentID,
 					TrialID:      message.TrialID,
-					StepID:       step,
+					StepID:       message.StepID,
 				}
 
 				// We make a recursive call that will behave the same
@@ -203,11 +198,10 @@ func (s *asyncHalvingSearch) promoteAsync(
 
 	allTrials := len(s.trialRungs)
 	if !addedTrainWorkload && allTrials < s.maxTrials {
-		create := NewCreate(
-			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
+		create := s.create(ctx, sampleAll(ctx.hparams, ctx.rand))
 		s.trialRungs[create.RequestID] = 0
 		ops = append(ops, create)
-		trainVal := trainAndValidate(create.RequestID, 0, s.rungs[0].stepsNeeded, s.batchesPerStep)
+		trainVal, _ := s.trainAndValidate(create.RequestID, s.rungs[0].unitsNeeded)
 		ops = append(ops, trainVal...)
 	}
 
@@ -229,7 +223,7 @@ func (s *asyncHalvingSearch) closeOutRungs() []Operation {
 		for _, trialMetric := range rung.metrics {
 			if !trialMetric.promoted && !s.closedTrials[trialMetric.requestID] {
 				if !s.earlyExitTrials[trialMetric.requestID] {
-					ops = append(ops, NewClose(trialMetric.requestID))
+					ops = append(ops, s.close(trialMetric.requestID))
 					s.closedTrials[trialMetric.requestID] = true
 				}
 			}
@@ -238,7 +232,7 @@ func (s *asyncHalvingSearch) closeOutRungs() []Operation {
 	return ops
 }
 
-func (s *asyncHalvingSearch) progress(workloadsCompleted int) float64 {
+func (s *asyncHalvingSearch) progress() float64 {
 	allTrials := len(s.rungs[0].metrics)
 	// Give ourselves an overhead of 20% of maxTrials when calculating progress.
 	progress := float64(allTrials) / (1.2 * float64(s.maxTrials))

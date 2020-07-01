@@ -3,16 +3,14 @@ package searcher
 // tournamentSearch runs multiple search methods in tandem. Callbacks for completed operations
 // are sent to the originating search method that created the corresponding operation.
 type tournamentSearch struct {
-	subSearches        []SearchMethod
-	trialTable         map[RequestID]SearchMethod
-	workloadsCompleted map[SearchMethod]int
+	subSearches []SearchMethod
+	trialTable  map[RequestID]SearchMethod
 }
 
 func newTournamentSearch(subSearches ...SearchMethod) *tournamentSearch {
 	return &tournamentSearch{
-		subSearches:        subSearches,
-		trialTable:         make(map[RequestID]SearchMethod),
-		workloadsCompleted: make(map[SearchMethod]int),
+		subSearches: subSearches,
+		trialTable:  make(map[RequestID]SearchMethod),
 	}
 }
 
@@ -39,7 +37,6 @@ func (s *tournamentSearch) trainCompleted(
 	ctx context, requestID RequestID, message Workload,
 ) ([]Operation, error) {
 	subSearch := s.trialTable[requestID]
-	s.workloadsCompleted[subSearch]++
 	ops, err := subSearch.trainCompleted(ctx, requestID, message)
 	return s.markCreates(subSearch, ops), err
 }
@@ -48,7 +45,6 @@ func (s *tournamentSearch) checkpointCompleted(
 	ctx context, requestID RequestID, message Workload, metrics CheckpointMetrics,
 ) ([]Operation, error) {
 	subSearch := s.trialTable[requestID]
-	s.workloadsCompleted[subSearch]++
 	ops, err := subSearch.checkpointCompleted(ctx, requestID, message, metrics)
 	return s.markCreates(subSearch, ops), err
 }
@@ -57,7 +53,6 @@ func (s *tournamentSearch) validationCompleted(
 	ctx context, requestID RequestID, message Workload, metrics ValidationMetrics,
 ) ([]Operation, error) {
 	subSearch := s.trialTable[requestID]
-	s.workloadsCompleted[subSearch]++
 	ops, err := subSearch.validationCompleted(ctx, requestID, message, metrics)
 	return s.markCreates(subSearch, ops), err
 }
@@ -78,10 +73,10 @@ func (s *tournamentSearch) trialExitedEarly(
 }
 
 // progress returns experiment progress as a float between 0.0 and 1.0.
-func (s *tournamentSearch) progress(int) float64 {
+func (s *tournamentSearch) progress() float64 {
 	sum := 0.0
 	for _, subSearch := range s.subSearches {
-		sum += subSearch.progress(s.workloadsCompleted[subSearch])
+		sum += subSearch.progress()
 	}
 	return sum / float64(len(s.subSearches))
 }

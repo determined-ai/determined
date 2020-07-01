@@ -21,6 +21,9 @@ func generateHyperparameters(counts []int) model.Hyperparameters {
 			DoubleHyperparameter: &model.DoubleHyperparameter{Minval: -1.0, Maxval: 1.0, Count: &c},
 		}
 	}
+	params[GlobalBatchSize] = model.Hyperparameter{
+		ConstHyperparameter: &model.ConstHyperparameter{Val: defaultGlobalBatchSize},
+	}
 	return params
 }
 
@@ -107,8 +110,8 @@ func TestGridIntCountNegative(t *testing.T) {
 	assert.DeepEqual(t, actual, expected)
 }
 
-func TestGridSearcher(t *testing.T) {
-	actual := model.GridConfig{MaxSteps: 3}
+func TestGridSearcherRecords(t *testing.T) {
+	actual := model.GridConfig{MaxLength: model.NewLengthInRecords(19200)}
 	params := generateHyperparameters([]int{2, 1, 3})
 	expected := [][]Kind{
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
@@ -118,7 +121,37 @@ func TestGridSearcher(t *testing.T) {
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 	}
-	searchMethod := newGridSearch(actual, defaultBatchesPerStep)
+	searchMethod := newGridSearch(actual, defaultBatchesPerStep, 0)
+	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
+}
+
+func TestGridSearcherBatches(t *testing.T) {
+	actual := model.GridConfig{MaxLength: model.NewLengthInBatches(300)}
+	params := generateHyperparameters([]int{2, 1, 3})
+	expected := [][]Kind{
+		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
+		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
+		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
+		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
+		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
+		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
+	}
+	searchMethod := newGridSearch(actual, defaultBatchesPerStep, 0)
+	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
+}
+
+func TestGridSearcherEpochs(t *testing.T) {
+	actual := model.GridConfig{MaxLength: model.NewLengthInEpochs(3)}
+	params := generateHyperparameters([]int{2, 1, 3})
+	expected := [][]Kind{
+		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
+		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
+		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
+		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
+		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
+		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
+	}
+	searchMethod := newGridSearch(actual, defaultBatchesPerStep, 6400)
 	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
 }
 
@@ -135,9 +168,11 @@ func TestGridSearchMethod(t *testing.T) {
 				newEarlyExitPredefinedTrial(.1, 3, nil, nil),
 			},
 			config: model.SearcherConfig{
-				GridConfig: &model.GridConfig{MaxSteps: 3},
+				GridConfig: &model.GridConfig{MaxLength: model.NewLengthInBatches(300)},
 			},
-			hparams: generateHyperparameters([]int{2, 1, 3}),
+			hparams:         generateHyperparameters([]int{2, 1, 3}),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 	}
 

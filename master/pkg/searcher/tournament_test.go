@@ -10,8 +10,14 @@ import (
 
 func TestRandomTournamentSearcher(t *testing.T) {
 	actual := newTournamentSearch(
-		newRandomSearch(model.RandomConfig{MaxTrials: 2, MaxSteps: 3}, defaultBatchesPerStep),
-		newRandomSearch(model.RandomConfig{MaxTrials: 3, MaxSteps: 2}, defaultBatchesPerStep),
+		newRandomSearch(model.RandomConfig{
+			MaxTrials: 2,
+			MaxLength: model.NewLengthInBatches(300),
+		}, defaultBatchesPerStep, 0),
+		newRandomSearch(model.RandomConfig{
+			MaxTrials: 3,
+			MaxLength: model.NewLengthInBatches(200),
+		}, defaultBatchesPerStep, 0),
 	)
 	expected := [][]Kind{
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
@@ -20,18 +26,18 @@ func TestRandomTournamentSearcher(t *testing.T) {
 		{RunStep, RunStep, ComputeValidationMetrics},
 		{RunStep, RunStep, ComputeValidationMetrics},
 	}
-	checkSimulation(t, actual, nil, ConstantValidation, expected)
+	checkSimulation(t, actual, defaultHyperparameters(), ConstantValidation, expected)
 }
 
 func TestRandomTournamentSearcherReproducibility(t *testing.T) {
-	conf := model.RandomConfig{MaxTrials: 5, MaxSteps: 8}
+	conf := model.RandomConfig{MaxTrials: 5, MaxLength: model.NewLengthInBatches(8)}
 	gen := func() SearchMethod {
 		return newTournamentSearch(
-			newRandomSearch(conf, defaultBatchesPerStep),
-			newRandomSearch(conf, defaultBatchesPerStep),
+			newRandomSearch(conf, defaultBatchesPerStep, 0),
+			newRandomSearch(conf, defaultBatchesPerStep, 0),
 		)
 	}
-	checkReproducibility(t, gen, nil, defaultMetric)
+	checkReproducibility(t, gen, defaultHyperparameters(), defaultMetric)
 }
 
 func TestTournamentSearchMethod(t *testing.T) {
@@ -48,34 +54,32 @@ func TestTournamentSearchMethod(t *testing.T) {
 
 	adaptiveConfig1 := model.SearcherConfig{
 		AdaptiveConfig: &model.AdaptiveConfig{
-			Metric:           "error",
-			SmallerIsBetter:  true,
-			TargetTrialSteps: 32,
-			StepBudget:       64,
-			Mode:             model.StandardMode,
-			MaxRungs:         2,
-			Divisor:          4,
+			Metric:          "error",
+			SmallerIsBetter: true,
+			MaxLength:       model.NewLengthInBatches(3200),
+			Budget:          model.NewLengthInBatches(6400),
+			Mode:            model.StandardMode,
+			MaxRungs:        2,
+			Divisor:         4,
 		},
 	}
-	adaptiveMethod1 := NewSearchMethod(adaptiveConfig1, defaultBatchesPerStep)
+	adaptiveMethod1 := NewSearchMethod(adaptiveConfig1, defaultBatchesPerStep, 0)
 
 	adaptiveConfig2 := model.SearcherConfig{
 		AdaptiveConfig: &model.AdaptiveConfig{
-			Metric:           "error",
-			SmallerIsBetter:  false,
-			TargetTrialSteps: 32,
-			StepBudget:       64,
-			Mode:             model.StandardMode,
-			MaxRungs:         2,
-			Divisor:          4,
+			Metric:          "error",
+			SmallerIsBetter: false,
+			MaxLength:       model.NewLengthInBatches(3200),
+			Budget:          model.NewLengthInBatches(6400),
+			Mode:            model.StandardMode,
+			MaxRungs:        2,
+			Divisor:         4,
 		},
 	}
-	adaptiveMethod2 := NewSearchMethod(adaptiveConfig2, defaultBatchesPerStep)
-
-	params := model.Hyperparameters{}
+	adaptiveMethod2 := NewSearchMethod(adaptiveConfig2, defaultBatchesPerStep, 0)
 
 	method := newTournamentSearch(adaptiveMethod1, adaptiveMethod2)
 
-	err := checkValueSimulation(t, method, params, expectedTrials)
+	err := checkValueSimulation(t, method, defaultHyperparameters(), expectedTrials)
 	assert.NilError(t, err)
 }

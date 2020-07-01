@@ -1,6 +1,7 @@
 package searcher
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -13,7 +14,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/nprand"
 )
 
-const defaultMetric = "metric"
+const (
+	defaultMetric          = "metric"
+	defaultGlobalBatchSize = 64.0
+)
 
 var defaultBatchesPerStep = model.DefaultExperimentConfig().BatchesPerStep
 
@@ -55,7 +59,7 @@ func checkSimulation(
 			}
 		}
 		if !found {
-			t.Errorf("unexpected trial %+v not in %+v", actualKinds, expected)
+			t.Errorf("unexpected trial %+v", kindsToShort(actualKinds))
 		}
 	}
 }
@@ -115,6 +119,44 @@ func toKinds(types string) (kinds []Kind) {
 	return kinds
 }
 
+func kindsToShort(kinds []Kind) string {
+	grouped := []struct {
+		kind  Kind
+		count int
+	}{
+		{kind: kinds[0], count: 1},
+	}
+	curIndex := 0
+	for _, kind := range kinds[1:] {
+		if kind == grouped[curIndex].kind {
+			grouped[curIndex].count++
+		} else {
+			grouped = append(grouped, struct {
+				kind  Kind
+				count int
+			}{
+				kind:  kind,
+				count: 1,
+			})
+			curIndex++
+		}
+	}
+
+	repr := ""
+	for _, grouped := range grouped {
+		switch grouped.kind {
+		case RunStep:
+			repr += fmt.Sprintf("%d%s ", grouped.count, "S")
+		case CheckpointModel:
+			repr += fmt.Sprintf("%d%s ", grouped.count, "C")
+		case ComputeValidationMetrics:
+			repr += fmt.Sprintf("%d%s ", grouped.count, "V")
+		}
+	}
+
+	return repr
+}
+
 type predefinedTrial struct {
 	Trains      map[int]bool
 	Validations map[int]float64
@@ -153,6 +195,7 @@ func newEarlyExitPredefinedTrial(
 	return newPredefinedTrial(nsteps, validationsMap, checkpoints, nsteps)
 }
 
+// TODO(brad): maybe add batches
 func newConstantPredefinedTrial(
 	validation float64, nsteps int, validations []int, checkpoints []int,
 ) predefinedTrial {
@@ -262,7 +305,7 @@ func checkValueSimulation(
 			trialID := trialIDs[requestID]
 			trial := expectedTrials[trialID]
 			if err = trial.CheckComplete(); err != nil {
-				return errors.Wrapf(err, "trial %v closed before completion", trialID+1)
+				return errors.Wrapf(err, "trial %v/%v closed before completion", trialID+1, requestID)
 			}
 
 			ops, err = method.trialClosed(ctx, requestID)
@@ -316,7 +359,7 @@ func runValueSimulationTestCases(t *testing.T, testCases []valueSimulationTestCa
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			method := NewSearchMethod(tc.config, defaultBatchesPerStep)
+			method := NewSearchMethod(tc.config, tc.batchesPerStep, tc.recordsPerEpoch)
 			err := checkValueSimulation(t, method, tc.hparams, tc.expectedTrials)
 			assert.NilError(t, err)
 		})
@@ -324,10 +367,12 @@ func runValueSimulationTestCases(t *testing.T, testCases []valueSimulationTestCa
 }
 
 type valueSimulationTestCase struct {
-	name           string
-	expectedTrials []predefinedTrial
-	hparams        model.Hyperparameters
-	config         model.SearcherConfig
+	name            string
+	expectedTrials  []predefinedTrial
+	hparams         model.Hyperparameters
+	config          model.SearcherConfig
+	batchesPerStep  int
+	recordsPerEpoch int
 }
 
 func simulateWorkloadComplete(
@@ -397,4 +442,12 @@ func simulateWorkloadComplete(
 	}
 
 	return ops, nil
+}
+
+func defaultHyperparameters() model.Hyperparameters {
+	return model.Hyperparameters{
+		GlobalBatchSize: model.Hyperparameter{
+			ConstHyperparameter: &model.ConstHyperparameter{Val: defaultGlobalBatchSize},
+		},
+	}
 }

@@ -13,6 +13,7 @@ import (
 // details.
 type pbtSearch struct {
 	defaultSearchMethod
+	trialStepPlanner
 	model.PBTConfig
 
 	roundsCompleted      int
@@ -20,7 +21,9 @@ type pbtSearch struct {
 	trialRoundsCompleted map[RequestID]int
 	trialParams          map[RequestID]hparamSample
 	waitingOps           map[WorkloadOperation][]Operation
-	batchesPerStep       int
+
+	unitsCompleted model.Length
+	expectedUnits  model.Length
 
 	// earlyExitTrials contains trials that exited early that are still considered in the search.
 	earlyExitTrials map[RequestID]bool
@@ -28,28 +31,40 @@ type pbtSearch struct {
 
 const pbtExitedMetricValue = math.MaxFloat64
 
-func newPBTSearch(config model.PBTConfig, batchesPerStep int) SearchMethod {
+func newPBTSearch(config model.PBTConfig, targetBatchesPerStep, recordsPerEpoch int) SearchMethod {
 	return &pbtSearch{
+		trialStepPlanner:     newTrialStepPlanner(targetBatchesPerStep, recordsPerEpoch),
 		PBTConfig:            config,
 		metrics:              make(map[RequestID]float64),
 		trialRoundsCompleted: make(map[RequestID]int),
 		trialParams:          make(map[RequestID]hparamSample),
 		waitingOps:           make(map[WorkloadOperation][]Operation),
-		batchesPerStep:       batchesPerStep,
 		earlyExitTrials:      make(map[RequestID]bool),
+		unitsCompleted:       model.NewLength(config.LengthPerRound.Kind, 0),
+		expectedUnits: model.NewLength(config.LengthPerRound.Kind,
+			config.NumRounds*config.PopulationSize*config.LengthPerRound.Units),
 	}
 }
 
 func (s *pbtSearch) initialOperations(ctx context) ([]Operation, error) {
 	var ops []Operation
 	for trial := 0; trial < s.PopulationSize; trial++ {
-		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
+		create := s.create(ctx, sampleAll(ctx.hparams, ctx.rand))
 		s.trialParams[create.RequestID] = create.Hparams
 		ops = append(ops, create)
-		trainVal := trainAndValidate(create.RequestID, 0, s.StepsPerRound, s.batchesPerStep)
+		trainVal, trunc := s.trainAndValidate(create.RequestID, s.LengthPerRound)
+		s.expectedUnits = s.expectedUnits.Sub(trunc)
 		ops = append(ops, trainVal...)
 	}
 	return ops, nil
+}
+
+func (s *pbtSearch) trainCompleted(
+	ctx context, requestID RequestID, workload Workload,
+) ([]Operation, error) {
+	unitsCompletedThisStep := s.unitsFromWorkload(s.unitsCompleted.Kind, workload, requestID)
+	s.unitsCompleted = s.unitsCompleted.Add(unitsCompletedThisStep)
+	return nil, nil
 }
 
 func (s *pbtSearch) validationCompleted(
@@ -89,7 +104,7 @@ func (s *pbtSearch) runNewTrials(
 	if s.roundsCompleted >= s.NumRounds {
 		for requestID := range s.metrics {
 			if !s.earlyExitTrials[requestID] {
-				ops = append(ops, NewClose(requestID))
+				ops = append(ops, s.close(requestID))
 			}
 		}
 		return ops, nil
@@ -120,29 +135,30 @@ func (s *pbtSearch) runNewTrials(
 	for i := len(trialIDs) - numTruncate; i < len(trialIDs); i++ {
 		if !s.earlyExitTrials[trialIDs[i]] {
 			// TODO specify the right kind of ID for ops
-			ops = append(ops, NewClose(trialIDs[i]))
+			ops = append(ops, s.close(trialIDs[i]))
 		}
 	}
 
 	// Checkpoint and copy the best trials.
 	for _, requestID := range trialIDs[:numTruncate] {
 		if !s.earlyExitTrials[requestID] {
-			checkpoint := NewCheckpoint(
-				requestID,
-				s.StepsPerRound*s.trialRoundsCompleted[requestID],
-			)
+			// TODO(pickup): context:
+			// checkpoints get inserted with a step id,
+			// maybe this goes through the step planner, gets curStep - 1, maybe that doesn't
+			// always work. hard to know without reading a lot of code.
+			checkpoint := s.checkpoint(requestID)
 			ops = append(ops, checkpoint)
 
 			origParams := s.trialParams[requestID]
 			newParams := s.exploreParams(ctx, origParams)
 
-			create := NewCreateFromCheckpoint(ctx.rand, newParams, checkpoint.RequestID,
-				checkpoint.StepID, model.TrialWorkloadSequencerType)
+			create := s.createFromCheckpoint(ctx, newParams, checkpoint)
 			s.trialParams[create.RequestID] = newParams
 
 			// The new trial cannot begin until the checkpoint has been completed.
 			s.waitingOps[checkpoint] = []Operation{create}
-			trainVal := trainAndValidate(create.RequestID, 0, s.StepsPerRound, s.batchesPerStep)
+			trainVal, trunc := s.trainAndValidate(create.RequestID, s.LengthPerRound)
+			s.expectedUnits = s.expectedUnits.Sub(trunc)
 			s.waitingOps[checkpoint] = append(s.waitingOps[checkpoint], trainVal...)
 		}
 	}
@@ -150,9 +166,9 @@ func (s *pbtSearch) runNewTrials(
 	// Continue all non-closed trials.
 	for _, requestID := range trialIDs[:len(trialIDs)-numTruncate] {
 		if !s.earlyExitTrials[requestID] {
-			lastStep := s.trialRoundsCompleted[requestID] * s.StepsPerRound
-			nextStep := lastStep + s.StepsPerRound
-			ops = append(ops, trainAndValidate(requestID, lastStep, nextStep, s.batchesPerStep)...)
+			trainVal, trunc := s.trainAndValidate(requestID, s.LengthPerRound)
+			s.expectedUnits = s.expectedUnits.Sub(trunc)
+			ops = append(ops, trainVal...)
 		} else {
 			s.metrics[requestID] = pbtExitedMetricValue
 		}
@@ -210,11 +226,8 @@ func (s *pbtSearch) checkpointCompleted(
 	return ops, nil
 }
 
-func (s *pbtSearch) progress(workloadsCompleted int) float64 {
-	stepWorkloads := s.NumRounds * s.PopulationSize * s.StepsPerRound
-	validationWorkloads := s.NumRounds * s.PopulationSize
-	checkpointWorkloads := (s.NumRounds - 1) * int(s.TruncateFraction*float64(s.PopulationSize))
-	return float64(workloadsCompleted) / float64(stepWorkloads+checkpointWorkloads+validationWorkloads)
+func (s *pbtSearch) progress() float64 {
+	return float64(s.unitsCompleted.Units) / float64(s.expectedUnits.Units)
 }
 
 func (s *pbtSearch) trialExitedEarly(

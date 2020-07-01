@@ -154,7 +154,8 @@ func NewValidate(requestID RequestID, stepID int) WorkloadOperation {
 }
 
 func (wo WorkloadOperation) String() string {
-	return fmt.Sprintf("{Workload %s %s, step %d}", wo.Kind, wo.RequestID, wo.StepID)
+	return fmt.Sprintf("{Workload %s %s, step %d, num_batches %d}",
+		wo.Kind, wo.RequestID, wo.StepID, wo.NumBatches)
 }
 
 // Close the trial with the given trial id.

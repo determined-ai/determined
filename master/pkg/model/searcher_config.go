@@ -2,6 +2,9 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
+
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/union"
@@ -45,53 +48,185 @@ func (s *SearcherConfig) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, DefaultParser(s))
 }
 
+// Kind defines a kind of unit for specifying lengths.
+type Kind string
+
+// All the kinds available for Lengths.
+const (
+	Records Kind = "records"
+	Batches Kind = "batches"
+	Epochs  Kind = "epoches"
+)
+
+// Length a training duration in terms of records, batches or epochs.
+type Length struct {
+	Kind  Kind
+	Units int
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (l Length) MarshalJSON() ([]byte, error) {
+	switch l.Kind {
+	case Records:
+		return json.Marshal(map[string]int{
+			"records": l.Units,
+		})
+	case Batches:
+		return json.Marshal(map[string]int{
+			"batches": l.Units,
+		})
+	case Epochs:
+		return json.Marshal(map[string]int{
+			"epochs": l.Units,
+		})
+	default:
+		panic(fmt.Sprintf("invalid unit passed to NewLength %s", l.Kind))
+	}
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (l *Length) UnmarshalJSON(b []byte) error {
+	var v map[string]int
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+
+	records, rOk := v["records"]
+	batches, bOk := v["batches"]
+	epochs, eOk := v["epochs"]
+
+	switch {
+	case rOk && !bOk && !eOk:
+		*l = NewLengthInRecords(records)
+	case !rOk && bOk && !eOk:
+		*l = NewLengthInBatches(batches)
+	case !rOk && !bOk && eOk:
+		*l = NewLengthInEpochs(epochs)
+	default:
+		return errors.New(fmt.Sprintf("invalid length: %s", b))
+	}
+
+	return nil
+}
+
+// NewLength returns a new length with the specified unit and length.
+func NewLength(kind Kind, units int) Length {
+	return Length{Kind: kind, Units: units}
+}
+
+// NewLengthInRecords returns a new length in terms of records.
+func NewLengthInRecords(records int) Length {
+	return Length{Kind: Records, Units: records}
+}
+
+// NewLengthInBatches returns a new length in terms of batches.
+func NewLengthInBatches(batches int) Length {
+	return Length{Kind: Batches, Units: batches}
+}
+
+// NewLengthInEpochs returns a new Length in terms of epochs.
+func NewLengthInEpochs(epochs int) Length {
+	return Length{Kind: Epochs, Units: epochs}
+}
+
+func (l Length) String() string {
+	return fmt.Sprintf("%d %s", l.Units, l.Kind)
+}
+
+// Validate implements the check.Validatable interface.
+func (l Length) Validate() []error {
+	return []error{}
+}
+
+// Add adds a length to another length.
+func (l Length) Add(other Length) Length {
+	check.Panic(check.Equal(l.Kind, other.Kind))
+	return NewLength(l.Kind, l.Units+other.Units)
+}
+
+// Sub subtracts a length from another length.
+func (l Length) Sub(other Length) Length {
+	check.Panic(check.Equal(l.Kind, other.Kind))
+	return NewLength(l.Kind, l.Units-other.Units)
+}
+
+// Mult multiplies a length by another length.
+func (l Length) Mult(other Length) Length {
+	check.Panic(check.Equal(l.Kind, other.Kind))
+	return NewLength(l.Kind, l.Units*other.Units)
+}
+
+// MultInt multiplies a length by an int.
+func (l Length) MultInt(other int) Length {
+	return NewLength(l.Kind, l.Units*other)
+}
+
+// Div divides a length by another length.
+func (l Length) Div(other Length) Length {
+	check.Panic(check.Equal(l.Kind, other.Kind))
+	return NewLength(l.Kind, l.Units/other.Units)
+}
+
+// DivInt divides a length by an int.
+func (l Length) DivInt(other int) Length {
+	return NewLength(l.Kind, l.Units/other)
+}
+
 // SingleConfig configures a single trial.
 type SingleConfig struct {
-	MaxSteps int `json:"max_steps"`
+	MaxLength Length `json:"max_length"`
 }
 
 // Validate implements the check.Validatable interface.
 func (s SingleConfig) Validate() []error {
 	return []error{
-		check.GreaterThan(s.MaxSteps, 0, "max_steps must be > 0"),
+		check.GreaterThan(s.MaxLength.Units, 0, "max_length must be > 0"),
 	}
 }
 
 // RandomConfig configures a random search.
 type RandomConfig struct {
-	MaxSteps  int `json:"max_steps"`
-	MaxTrials int `json:"max_trials"`
+	MaxLength Length `json:"max_length"`
+	MaxTrials int    `json:"max_trials"`
 }
 
 // Validate implements the check.Validatable interface.
 func (r RandomConfig) Validate() []error {
 	return []error{
-		check.GreaterThan(r.MaxSteps, 0, "max_steps must be > 0"),
+		check.GreaterThan(r.MaxLength.Units, 0, "max_length must be > 0"),
 		check.GreaterThan(r.MaxTrials, 0, "max_trials must be > 0"),
 	}
 }
 
 // GridConfig configures a grid search.
 type GridConfig struct {
-	MaxSteps int `json:"max_steps"`
+	MaxLength Length `json:"max_length"`
 }
 
 // Validate implements the check.Validatable interface.
 func (g GridConfig) Validate() []error {
 	return []error{
-		check.GreaterThan(g.MaxSteps, 0, "max_steps must be > 0"),
+		check.GreaterThan(g.MaxLength.Units, 0, "max_length must be > 0"),
 	}
 }
 
-// SyncHalvingConfig configures synchronous successive halving.
+// SyncHalvingConfig configures asynchronous successive halving.
 type SyncHalvingConfig struct {
-	Metric           string  `json:"metric"`
-	SmallerIsBetter  bool    `json:"smaller_is_better"`
-	NumRungs         int     `json:"num_rungs"`
-	TargetTrialSteps int     `json:"target_trial_steps"`
-	StepBudget       int     `json:"step_budget"`
-	Divisor          float64 `json:"divisor"`
-	TrainStragglers  bool    `json:"train_stragglers"`
+	Metric          string  `json:"metric"`
+	SmallerIsBetter bool    `json:"smaller_is_better"`
+	NumRungs        int     `json:"num_rungs"`
+	MaxLength       Length  `json:"max_length"`
+	Budget          Length  `json:"budget"`
+	Divisor         float64 `json:"divisor"`
+	TrainStragglers bool    `json:"train_stragglers"`
+}
+
+// Validate implements the check.Validatable interface.
+func (c SyncHalvingConfig) Validate() []error {
+	return []error{
+		check.Equal(c.MaxLength.Kind, c.Budget.Kind,
+			"max_length and budget must be specified in terms of the same unit"),
+	}
 }
 
 // AsyncHalvingConfig configures asynchronous successive halving.
@@ -99,7 +234,7 @@ type AsyncHalvingConfig struct {
 	Metric              string  `json:"metric"`
 	SmallerIsBetter     bool    `json:"smaller_is_better"`
 	NumRungs            int     `json:"num_rungs"`
-	TargetTrialSteps    int     `json:"target_trial_steps"`
+	MaxLength           Length  `json:"max_length"`
 	MaxTrials           int     `json:"max_trials"`
 	Divisor             float64 `json:"divisor"`
 	MaxConcurrentTrials int     `json:"max_concurrent_trials"`
@@ -108,7 +243,7 @@ type AsyncHalvingConfig struct {
 // Validate implements the check.Validatable interface.
 func (a AsyncHalvingConfig) Validate() []error {
 	return []error{
-		check.GreaterThan(a.TargetTrialSteps, 0, "target_trial_steps must be > 0"),
+		check.GreaterThan(a.MaxLength.Units, 0, "max_length must be > 0"),
 		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
 		check.GreaterThan(a.Divisor, 1.0, "divisor must be > 1.0"),
 		check.GreaterThan(a.NumRungs, 0, "num_rungs must be > 0"),
@@ -132,29 +267,31 @@ const (
 
 // AdaptiveConfig configures an adaptive search.
 type AdaptiveConfig struct {
-	Metric           string       `json:"metric"`
-	SmallerIsBetter  bool         `json:"smaller_is_better"`
-	TargetTrialSteps int          `json:"target_trial_steps"`
-	StepBudget       int          `json:"step_budget"`
-	BracketRungs     []int        `json:"bracket_rungs"`
-	Divisor          float64      `json:"divisor"`
-	TrainStragglers  bool         `json:"train_stragglers"`
-	Mode             AdaptiveMode `json:"mode"`
-	MaxRungs         int          `json:"max_rungs"`
+	Metric          string       `json:"metric"`
+	SmallerIsBetter bool         `json:"smaller_is_better"`
+	MaxLength       Length       `json:"max_length"`
+	Budget          Length       `json:"budget"`
+	BracketRungs    []int        `json:"bracket_rungs"`
+	Divisor         float64      `json:"divisor"`
+	TrainStragglers bool         `json:"train_stragglers"`
+	Mode            AdaptiveMode `json:"mode"`
+	MaxRungs        int          `json:"max_rungs"`
 }
 
 // Validate implements the check.Validatable interface.
 func (a AdaptiveConfig) Validate() []error {
 	return []error{
-		check.GreaterThan(a.StepBudget, a.TargetTrialSteps,
+		check.GreaterThan(a.Budget.Units, a.MaxLength.Units,
 			"step_budget must be > target_trial_steps"),
-		check.GreaterThan(a.TargetTrialSteps, 0, "target_trial_steps must be > 0"),
-		check.GreaterThan(a.StepBudget, 0, "step_budget must be > 0"),
-		check.LessThanOrEqualTo(a.StepBudget, 50000, "step_budget must be <= 50000"),
+		check.GreaterThan(a.MaxLength.Units, 0, "target_trial_steps must be > 0"),
+		check.GreaterThan(a.Budget.Units, 0, "step_budget must be > 0"),
+		check.LessThanOrEqualTo(a.Budget.Units, 50000, "step_budget must be <= 50000"),
 		check.GreaterThan(a.Divisor, 1.0, "divisor must be > 1.0"),
 		check.In(string(a.Mode), []string{AggressiveMode, StandardMode, ConservativeMode},
 			"invalid adaptive mode"),
 		check.GreaterThan(a.MaxRungs, 0, "max_rungs must be > 0"),
+		check.Equal(a.MaxLength.Units, a.Budget.Units,
+			"max_length and budget must be specified in terms of the same unit"),
 	}
 }
 
@@ -162,7 +299,7 @@ func (a AdaptiveConfig) Validate() []error {
 type AdaptiveSimpleConfig struct {
 	Metric          string       `json:"metric"`
 	SmallerIsBetter bool         `json:"smaller_is_better"`
-	MaxSteps        int          `json:"max_steps"`
+	MaxLength       Length       `json:"max_length"`
 	MaxTrials       int          `json:"max_trials"`
 	Divisor         float64      `json:"divisor"`
 	Mode            AdaptiveMode `json:"mode"`
@@ -172,7 +309,7 @@ type AdaptiveSimpleConfig struct {
 // Validate implements the check.Validatable interface.
 func (a AdaptiveSimpleConfig) Validate() []error {
 	return []error{
-		check.GreaterThan(a.MaxSteps, 0, "max_steps must be > 0"),
+		check.GreaterThan(a.MaxLength.Units, 0, "max_length must be > 0"),
 		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
 		check.LessThanOrEqualTo(a.MaxTrials, MaxAllowedTrials,
 			"max_trials must be <= %d", MaxAllowedTrials),
@@ -187,7 +324,7 @@ func (a AdaptiveSimpleConfig) Validate() []error {
 type AdaptiveASHAConfig struct {
 	Metric              string       `json:"metric"`
 	SmallerIsBetter     bool         `json:"smaller_is_better"`
-	TargetTrialSteps    int          `json:"target_trial_steps"`
+	MaxLength           Length       `json:"max_length"`
 	MaxTrials           int          `json:"max_trials"`
 	BracketRungs        []int        `json:"bracket_rungs"`
 	Divisor             float64      `json:"divisor"`
@@ -199,7 +336,7 @@ type AdaptiveASHAConfig struct {
 // Validate implements the check.Validatable interface.
 func (a AdaptiveASHAConfig) Validate() []error {
 	return []error{
-		check.GreaterThan(a.TargetTrialSteps, 0, "target_trial_steps must be > 0"),
+		check.GreaterThan(a.MaxLength.Units, 0, "max_length must be > 0"),
 		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
 		check.GreaterThan(a.Divisor, 1.0, "divisor must be > 1.0"),
 		check.In(string(a.Mode), []string{AggressiveMode, StandardMode, ConservativeMode},
@@ -244,7 +381,7 @@ type PBTConfig struct {
 	SmallerIsBetter bool   `json:"smaller_is_better"`
 	PopulationSize  int    `json:"population_size"`
 	NumRounds       int    `json:"num_rounds"`
-	StepsPerRound   int    `json:"steps_per_round"`
+	LengthPerRound  Length `json:"length_per_round"`
 
 	PBTReplaceConfig `json:"replace_function"`
 	PBTExploreConfig `json:"explore_function"`
@@ -255,6 +392,6 @@ func (p PBTConfig) Validate() []error {
 	return []error{
 		check.GreaterThan(p.PopulationSize, 0, "population_size must be > 0"),
 		check.GreaterThan(p.NumRounds, 0, "num_rounds must be > 0"),
-		check.GreaterThan(p.StepsPerRound, 0, "steps_per_round must be > 0"),
+		check.GreaterThan(p.LengthPerRound.Units, 0, "length_per_round must be > 0"),
 	}
 }

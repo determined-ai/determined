@@ -161,7 +161,7 @@ func (s *Searcher) TrialClosed(requestID RequestID) ([]Operation, error) {
 
 // Progress returns experiment progress as a float between 0.0 and 1.0.
 func (s *Searcher) Progress() float64 {
-	progress := s.method.progress(s.eventLog.TotalWorkloadsCompleted)
+	progress := s.method.progress()
 	if math.IsNaN(progress) || math.IsInf(progress, 0) {
 		return 0.0
 	}

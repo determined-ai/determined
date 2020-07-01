@@ -78,9 +78,9 @@ type experiment struct {
 // the returned object's ID appropriately.
 func newExperiment(master *Master, expModel *model.Experiment) (*experiment, error) {
 	conf := expModel.Config
-	method := searcher.NewSearchMethod(conf.Searcher, conf.BatchesPerStep)
-	search := searcher.NewSearcher(
-		conf.Reproducibility.ExperimentSeed, method, conf.Hyperparameters)
+	method := searcher.NewSearchMethod(conf.Searcher, conf.BatchesPerStep, conf.RecordsPerEpoch)
+	search := searcher.NewSearcher(conf.Reproducibility.ExperimentSeed, method,
+		conf.Hyperparameters)
 
 	// Retrieve the warm start checkpoint, if provided.
 	checkpoint, err := checkpointFromTrialIDOrUUID(

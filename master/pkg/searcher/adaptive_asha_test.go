@@ -9,11 +9,11 @@ import (
 func TestAdaptiveASHASearcherReproducibility(t *testing.T) {
 	conf := model.AdaptiveASHAConfig{
 		Metric: defaultMetric, SmallerIsBetter: true,
-		TargetTrialSteps: 64, MaxTrials: 128, Divisor: 4,
+		MaxLength: model.NewLengthInBatches(6400), MaxTrials: 128, Divisor: 4,
 		Mode: model.AggressiveMode, MaxRungs: 3,
 	}
-	gen := func() SearchMethod { return newAdaptiveASHASearch(conf, defaultBatchesPerStep) }
-	checkReproducibility(t, gen, nil, defaultMetric)
+	gen := func() SearchMethod { return newAdaptiveASHASearch(conf, defaultBatchesPerStep, 0) }
+	checkReproducibility(t, gen, defaultHyperparameters(), defaultMetric)
 }
 
 func TestAdaptiveASHASearchMethod(t *testing.T) {
@@ -32,7 +32,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
 					Metric:              "error",
 					SmallerIsBetter:     true,
-					TargetTrialSteps:    9,
+					MaxLength:           model.NewLengthInBatches(900),
 					MaxTrials:           5,
 					Mode:                model.StandardMode,
 					MaxRungs:            2,
@@ -40,6 +40,9 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 					MaxConcurrentTrials: maxConcurrentTrials,
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 		{
 			name: "early exit -- smaller is better",
@@ -54,7 +57,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
 					Metric:              "error",
 					SmallerIsBetter:     true,
-					TargetTrialSteps:    9,
+					MaxLength:           model.NewLengthInBatches(900),
 					MaxTrials:           5,
 					Mode:                model.StandardMode,
 					MaxRungs:            2,
@@ -62,6 +65,9 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 					MaxConcurrentTrials: maxConcurrentTrials,
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 		{
 			name: "smaller is not better",
@@ -76,7 +82,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
 					Metric:              "error",
 					SmallerIsBetter:     false,
-					TargetTrialSteps:    9,
+					MaxLength:           model.NewLengthInBatches(900),
 					MaxTrials:           5,
 					Mode:                model.StandardMode,
 					MaxRungs:            2,
@@ -84,6 +90,9 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 					MaxConcurrentTrials: maxConcurrentTrials,
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 		{
 			name: "early exit -- smaller is not better",
@@ -98,7 +107,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
 					Metric:              "error",
 					SmallerIsBetter:     false,
-					TargetTrialSteps:    9,
+					MaxLength:           model.NewLengthInBatches(900),
 					MaxTrials:           5,
 					Mode:                model.StandardMode,
 					MaxRungs:            2,
@@ -106,6 +115,9 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 					MaxConcurrentTrials: maxConcurrentTrials,
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 	}
 

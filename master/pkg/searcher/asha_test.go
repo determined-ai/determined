@@ -6,12 +6,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-func TestASHASearcher(t *testing.T) {
+func TestASHASearcherRecords(t *testing.T) {
 	actual := model.AsyncHalvingConfig{
 		Metric: defaultMetric, NumRungs: 3,
-		TargetTrialSteps: 90,
-		Divisor:          3,
-		MaxTrials:        12,
+		MaxLength: model.NewLengthInRecords(576000),
+		Divisor:   3,
+		MaxTrials: 12,
 	}
 	expected := [][]Kind{
 		toKinds("10S 1V"), toKinds("10S 1V"), toKinds("10S 1V"),
@@ -22,8 +22,48 @@ func TestASHASearcher(t *testing.T) {
 		toKinds("10S 1V 20S 1V"),
 		toKinds("10S 1V 20S 1V 60S 1V"),
 	}
-	searchMethod := newAsyncHalvingSearch(actual, defaultBatchesPerStep)
-	checkSimulation(t, searchMethod, nil, ConstantValidation, expected)
+	searchMethod := newAsyncHalvingSearch(actual, defaultBatchesPerStep, 0)
+	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected)
+}
+
+func TestASHASearcherBatches(t *testing.T) {
+	actual := model.AsyncHalvingConfig{
+		Metric: defaultMetric, NumRungs: 3,
+		MaxLength: model.NewLengthInBatches(9000),
+		Divisor:   3,
+		MaxTrials: 12,
+	}
+	expected := [][]Kind{
+		toKinds("10S 1V"), toKinds("10S 1V"), toKinds("10S 1V"),
+		toKinds("10S 1V"), toKinds("10S 1V"), toKinds("10S 1V"),
+		toKinds("10S 1V"), toKinds("10S 1V"),
+		toKinds("10S 1V 20S 1V"),
+		toKinds("10S 1V 20S 1V"),
+		toKinds("10S 1V 20S 1V"),
+		toKinds("10S 1V 20S 1V 60S 1V"),
+	}
+	searchMethod := newAsyncHalvingSearch(actual, defaultBatchesPerStep, 0)
+	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected)
+}
+
+func TestASHASearcherEpochs(t *testing.T) {
+	actual := model.AsyncHalvingConfig{
+		Metric: defaultMetric, NumRungs: 3,
+		MaxLength: model.NewLengthInEpochs(12),
+		Divisor:   3,
+		MaxTrials: 12,
+	}
+	expected := [][]Kind{
+		toKinds("8S 1V"), toKinds("8S 1V"), toKinds("8S 1V"),
+		toKinds("8S 1V"), toKinds("8S 1V"), toKinds("8S 1V"),
+		toKinds("8S 1V"), toKinds("8S 1V"),
+		toKinds("8S 1V 23S 1V"),
+		toKinds("8S 1V 23S 1V"),
+		toKinds("8S 1V 23S 1V"),
+		toKinds("8S 1V 23S 1V 60S 1V"),
+	}
+	searchMethod := newAsyncHalvingSearch(actual, defaultBatchesPerStep, 48000)
+	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected)
 }
 
 func TestASHASearchMethod(t *testing.T) {
@@ -50,12 +90,15 @@ func TestASHASearchMethod(t *testing.T) {
 					Metric:              "error",
 					NumRungs:            3,
 					SmallerIsBetter:     true,
-					TargetTrialSteps:    90,
+					MaxLength:           model.NewLengthInBatches(9000),
 					MaxTrials:           12,
 					Divisor:             3,
 					MaxConcurrentTrials: maxConcurrentTrials,
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 		{
 			name: "early exit -- smaller is better",
@@ -78,12 +121,15 @@ func TestASHASearchMethod(t *testing.T) {
 					Metric:              "error",
 					NumRungs:            3,
 					SmallerIsBetter:     true,
-					TargetTrialSteps:    90,
+					MaxLength:           model.NewLengthInBatches(9000),
 					MaxTrials:           12,
 					Divisor:             3,
 					MaxConcurrentTrials: maxConcurrentTrials,
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 		{
 			name: "smaller is not better",
@@ -106,12 +152,15 @@ func TestASHASearchMethod(t *testing.T) {
 					Metric:              "error",
 					NumRungs:            3,
 					SmallerIsBetter:     false,
-					TargetTrialSteps:    90,
+					MaxLength:           model.NewLengthInBatches(9000),
 					MaxTrials:           12,
 					Divisor:             3,
 					MaxConcurrentTrials: maxConcurrentTrials,
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 		{
 			name: "early exit -- smaller is not better",
@@ -134,12 +183,15 @@ func TestASHASearchMethod(t *testing.T) {
 					Metric:              "error",
 					NumRungs:            3,
 					SmallerIsBetter:     false,
-					TargetTrialSteps:    90,
+					MaxLength:           model.NewLengthInBatches(9000),
 					MaxTrials:           12,
 					Divisor:             3,
 					MaxConcurrentTrials: maxConcurrentTrials,
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 	}
 
