@@ -136,7 +136,7 @@ func (p *pod) configureEnvVars(
 	envVarsMap["DET_MASTER_PORT"] = fmt.Sprintf("%d", p.masterPort)
 	envVarsMap["DET_AGENT_ID"] = "k8agent"
 	envVarsMap["DET_CONTAINER_ID"] = p.taskSpec.ContainerID
-	envVarsMap["DET_SLOT_IDS"] = strings.Join(slotIds, ",")
+	envVarsMap["DET_SLOT_IDS"] = fmt.Sprintf("[%s]", strings.Join(slotIds, ","))
 	envVarsMap["DET_USE_GPU"] = fmt.Sprintf("%t", p.gpus > 0)
 
 	envVars := make([]v1.EnvVar, 0, len(envVarsMap))
