@@ -71,7 +71,7 @@ func TestASHASearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "smaller is better",
-			kind: model.Batches,
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.01, 90, []int{10, 30, 90}, nil),
 				newConstantPredefinedTrial(0.02, 30, []int{10, 30}, nil),
@@ -103,7 +103,7 @@ func TestASHASearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is better",
-			kind: model.Batches,
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.01, 90, []int{10, 30, 90}, nil),
 				newConstantPredefinedTrial(0.02, 30, []int{10, 30}, nil),
@@ -135,7 +135,7 @@ func TestASHASearchMethod(t *testing.T) {
 		},
 		{
 			name: "smaller is not better",
-			kind: model.Batches,
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.12, 90, []int{10, 30, 90}, nil),
 				newConstantPredefinedTrial(0.11, 30, []int{10, 30}, nil),
@@ -167,7 +167,7 @@ func TestASHASearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is not better",
-			kind: model.Batches,
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.12, 90, []int{10, 30, 90}, nil),
 				newConstantPredefinedTrial(0.11, 30, []int{10, 30}, nil),

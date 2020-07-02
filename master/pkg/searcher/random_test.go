@@ -40,7 +40,7 @@ func TestRandomSearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "test random search method",
-			kind: model.Batches,
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
 				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
@@ -59,7 +59,7 @@ func TestRandomSearchMethod(t *testing.T) {
 		},
 		{
 			name: "test random search method with records",
-			kind: model.Records,
+			unit: model.Records,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
 				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
@@ -85,7 +85,7 @@ func TestSingleSearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "test single search method",
-			kind: model.Batches,
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
 			},

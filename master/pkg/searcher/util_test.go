@@ -364,7 +364,7 @@ func runValueSimulationTestCases(t *testing.T, testCases []valueSimulationTestCa
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			method := NewSearchMethod(tc.config)
-			workloadPlanner := NewTrialWorkloadPlanner(tc.kind, tc.batchesPerStep, tc.recordsPerEpoch)
+			workloadPlanner := NewTrialWorkloadPlanner(tc.unit, tc.batchesPerStep, tc.recordsPerEpoch)
 			err := checkValueSimulation(t, method, workloadPlanner, tc.hparams, tc.expectedTrials)
 			assert.NilError(t, err)
 		})
@@ -378,7 +378,7 @@ type valueSimulationTestCase struct {
 	config          model.SearcherConfig
 	batchesPerStep  int
 	recordsPerEpoch int
-	kind            model.Kind
+	unit            model.Unit
 }
 
 func simulateWorkloadComplete(

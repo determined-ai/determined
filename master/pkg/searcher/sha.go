@@ -32,7 +32,7 @@ func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
 	for id := 0; id < config.NumRungs; id++ {
 		compound := math.Pow(config.Divisor, float64(config.NumRungs-id-1))
 		unitsNeeded := model.NewLength(
-			config.MaxLength.Kind,
+			config.MaxLength.Unit,
 			max(int(float64(config.MaxLength.Units)/compound), 1),
 		)
 		startTrials := max(int(compound), 1)
@@ -59,7 +59,7 @@ func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
 		} else {
 			prev := rungs[id-1]
 			cur.unitsNeeded = model.NewLength(
-				cur.unitsNeeded.Kind,
+				cur.unitsNeeded.Unit,
 				max(cur.unitsNeeded.Units, prev.unitsNeeded.Units),
 			)
 			cur.startTrials = max(min(cur.startTrials, prev.startTrials), 1)
@@ -73,7 +73,7 @@ func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
 		rungs:             rungs,
 		trialRungs:        make(map[RequestID]int),
 		earlyExitTrials:   make(map[RequestID]bool),
-		expectedUnits:     model.NewLength(config.MaxLength.Kind, expectedUnits),
+		expectedUnits:     model.NewLength(config.MaxLength.Unit, expectedUnits),
 	}
 }
 
@@ -210,8 +210,8 @@ func (s *syncHalvingSearch) progress(unitsCompleted model.Length) float64 {
 	return math.Min(1, float64(unitsCompleted.Units)/float64(s.expectedUnits.Units))
 }
 
-func (s *syncHalvingSearch) kind() model.Kind {
-	return s.MaxLength.Kind
+func (s *syncHalvingSearch) unit() model.Unit {
+	return s.MaxLength.Unit
 }
 
 func (s *syncHalvingSearch) trialExitedEarly(

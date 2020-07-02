@@ -54,18 +54,18 @@ func newSyncHalvingSimpleSearch(config model.SyncHalvingConfig, trials int) Sear
 		}
 		rungs = append(rungs,
 			&rung{
-				unitsNeeded: model.NewLength(config.MaxLength.Kind, unitsNeeded),
+				unitsNeeded: model.NewLength(config.MaxLength.Unit, unitsNeeded),
 				startTrials: startTrials,
 			},
 		)
 	}
 
-	config.Budget = model.NewLength(config.MaxLength.Kind, expectedUnits)
+	config.Budget = model.NewLength(config.MaxLength.Unit, expectedUnits)
 	return &syncHalvingSearch{
 		SyncHalvingConfig: config,
 		rungs:             rungs,
 		trialRungs:        make(map[RequestID]int),
 		earlyExitTrials:   make(map[RequestID]bool),
-		expectedUnits:     model.NewLength(config.MaxLength.Kind, expectedUnits),
+		expectedUnits:     model.NewLength(config.MaxLength.Unit, expectedUnits),
 	}
 }

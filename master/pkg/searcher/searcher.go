@@ -29,7 +29,7 @@ func NewSearcher(
 		hparams:              hparams,
 		eventLog:             NewEventLog(),
 		method:               method,
-		trialWorkloadPlanner: NewTrialWorkloadPlanner(method.kind(), batchesPerStep, recordsPerEpoch),
+		trialWorkloadPlanner: NewTrialWorkloadPlanner(method.unit(), batchesPerStep, recordsPerEpoch),
 	}
 }
 

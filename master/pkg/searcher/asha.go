@@ -34,7 +34,7 @@ func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
 		unitsNeeded := max(int(float64(config.MaxLength.Units)/downsamplingRate), 1)
 		rungs = append(rungs,
 			&rung{
-				unitsNeeded:       model.NewLength(config.MaxLength.Kind, unitsNeeded),
+				unitsNeeded:       model.NewLength(config.MaxLength.Unit, unitsNeeded),
 				outstandingTrials: 0,
 			})
 	}
@@ -241,6 +241,6 @@ func (s *asyncHalvingSearch) trialExitedEarly(
 	return s.promoteAsync(ctx, requestID, ashaExitedMetricValue), nil
 }
 
-func (s *asyncHalvingSearch) kind() model.Kind {
-	return s.MaxLength.Kind
+func (s *asyncHalvingSearch) unit() model.Unit {
+	return s.MaxLength.Unit
 }

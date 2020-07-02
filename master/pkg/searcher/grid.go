@@ -19,7 +19,7 @@ type gridSearch struct {
 func newGridSearch(config model.GridConfig) SearchMethod {
 	return &gridSearch{
 		GridConfig:    config,
-		expectedUnits: model.NewLength(config.MaxLength.Kind, 0),
+		expectedUnits: model.NewLength(config.MaxLength.Unit, 0),
 	}
 }
 
@@ -48,8 +48,8 @@ func (s *gridSearch) trialExitedEarly(context, RequestID) ([]Operation, error) {
 	return nil, nil
 }
 
-func (s *gridSearch) kind() model.Kind {
-	return s.MaxLength.Kind
+func (s *gridSearch) unit() model.Unit {
+	return s.MaxLength.Unit
 }
 
 func newHyperparameterGrid(params model.Hyperparameters) []hparamSample {

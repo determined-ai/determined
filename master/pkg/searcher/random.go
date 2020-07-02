@@ -49,6 +49,6 @@ func (s *randomSearch) trialExitedEarly(context, RequestID) ([]Operation, error)
 	return nil, nil
 }
 
-func (s *randomSearch) kind() model.Kind {
-	return s.MaxLength.Kind
+func (s *randomSearch) unit() model.Unit {
+	return s.MaxLength.Unit
 }

@@ -11,7 +11,7 @@ import (
 // workloads that the trial runs. probably can be merged with trial_workload_sequencer.go once
 // that code is pulled up to the experiment level.
 type TrialWorkloadPlanner struct {
-	kind                  model.Kind
+	unit                  model.Unit
 	targetBatchesPerStep  int
 	recordsPerEpoch       int
 	trialGlobalBatchSizes map[RequestID]int
@@ -27,16 +27,16 @@ type opToPlannedOps struct {
 
 // NewTrialWorkloadPlanner creates a workload planner to plan searcher ops into workload ops.
 func NewTrialWorkloadPlanner(
-	kind model.Kind, targetBatchesPerStep, recordsPerEpoch int,
+	unit model.Unit, targetBatchesPerStep, recordsPerEpoch int,
 ) TrialWorkloadPlanner {
 	return TrialWorkloadPlanner{
-		kind:                  kind,
+		unit:                  unit,
 		targetBatchesPerStep:  targetBatchesPerStep,
 		recordsPerEpoch:       recordsPerEpoch,
 		trialGlobalBatchSizes: make(map[RequestID]int),
 		stepCounts:            make(map[RequestID]int),
 		trialOpsToPlannedOps:  make(map[RequestID][]opToPlannedOps),
-		totalUnitsCompleted:   model.NewLength(kind, 0),
+		totalUnitsCompleted:   model.NewLength(unit, 0),
 	}
 }
 
@@ -92,7 +92,7 @@ func (p *TrialWorkloadPlanner) WorkloadCompleted(
 		return nil, fmt.Errorf("received %s but expected operation %s", workload, expectedWorkload)
 	}
 
-	unitsThisWorkload := p.unitsFromWorkload(p.kind, workload, requestID)
+	unitsThisWorkload := p.unitsFromWorkload(p.unit, workload, requestID)
 	p.totalUnitsCompleted = p.totalUnitsCompleted.Add(unitsThisWorkload)
 
 	opsToPlannedOps[0].plannedOps = opsToPlannedOps[0].plannedOps[1:]
@@ -130,9 +130,9 @@ func (p *TrialWorkloadPlanner) checkpoint(requestID RequestID) Operation {
 
 // unitsFromWorkload determines the number of units completed during a given workload.
 func (p TrialWorkloadPlanner) unitsFromWorkload(
-	kind model.Kind, workload Workload, requestID RequestID,
+	unit model.Unit, workload Workload, requestID RequestID,
 ) model.Length {
-	switch kind {
+	switch unit {
 	case model.Records:
 		return model.NewLengthInRecords(workload.NumBatches * p.trialGlobalBatchSizes[requestID])
 	case model.Batches:
@@ -144,7 +144,7 @@ func (p TrialWorkloadPlanner) unitsFromWorkload(
 		numEpochs := math.Ceil(float64(numRecords) / float64(p.recordsPerEpoch))
 		return model.NewLengthInEpochs(int(numEpochs))
 	default:
-		panic(fmt.Sprintf("invalid Kind passed to unitsFromStep %s", kind))
+		panic(fmt.Sprintf("invalid Unit passed to unitsFromStep %s", unit))
 	}
 }
 
@@ -156,7 +156,7 @@ func (p TrialWorkloadPlanner) unitsToBatches(
 	l model.Length, requestID RequestID,
 ) (batches int, truncated model.Length) {
 	globalBatchSize := p.trialGlobalBatchSizes[requestID]
-	switch l.Kind {
+	switch l.Unit {
 	case model.Records:
 		return l.Units / globalBatchSize, model.NewLengthInRecords(l.Units % globalBatchSize)
 	case model.Batches:
@@ -164,6 +164,6 @@ func (p TrialWorkloadPlanner) unitsToBatches(
 	case model.Epochs:
 		return (l.Units * p.recordsPerEpoch) / globalBatchSize, model.NewLengthInEpochs(0)
 	default:
-		panic(fmt.Sprintf("invalid Kind passed to unitsToBatches %s", l.Kind))
+		panic(fmt.Sprintf("invalid Unit passed to unitsToBatches %s", l.Unit))
 	}
 }

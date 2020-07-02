@@ -50,7 +50,7 @@ func TestSHASearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "smaller is better",
-			kind: model.Batches,
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.01, 801, []int{13, 51, 201, 801}, nil),
 				newConstantPredefinedTrial(0.02, 51, []int{13, 51}, nil),
@@ -81,7 +81,7 @@ func TestSHASearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is better",
-			kind: model.Batches,
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.01, 801, []int{13, 51, 201, 801}, nil),
 				newEarlyExitPredefinedTrial(0.02, 50, []int{13}, nil),
@@ -112,7 +112,7 @@ func TestSHASearchMethod(t *testing.T) {
 		},
 		{
 			name: "smaller is not better",
-			kind: model.Batches,
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.11, 801, []int{13, 51, 201, 801}, nil),
 				newConstantPredefinedTrial(0.10, 51, []int{13, 51}, nil),
@@ -143,7 +143,7 @@ func TestSHASearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is not better",
-			kind: model.Batches,
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.11, 801, []int{13, 51, 201, 801}, nil),
 				newEarlyExitPredefinedTrial(0.10, 50, []int{13}, nil),

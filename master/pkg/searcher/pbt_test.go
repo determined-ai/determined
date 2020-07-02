@@ -373,7 +373,7 @@ func TestPBTSearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "smaller is better",
-			kind: model.Batches,
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				// First generation.
 				newConstantPredefinedTrial(0.5, 4, []int{2, 4}, []int{2}),
@@ -404,7 +404,7 @@ func TestPBTSearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is better",
-			kind: model.Batches,
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				// First generation.
 				newEarlyExitPredefinedTrial(0.5, 4, []int{2}, []int{2}),
@@ -435,7 +435,7 @@ func TestPBTSearchMethod(t *testing.T) {
 		},
 		{
 			name: "smaller is not better",
-			kind: model.Batches,
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				// First generation.
 				newConstantPredefinedTrial(0.5, 4, []int{2, 4}, []int{2}),
@@ -466,7 +466,7 @@ func TestPBTSearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is not better",
-			kind: model.Batches,
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				// First generation.
 				newEarlyExitPredefinedTrial(0.5, 4, []int{2}, []int{2}),

@@ -37,7 +37,7 @@ func newPBTSearch(config model.PBTConfig) SearchMethod {
 		trialParams:          make(map[RequestID]hparamSample),
 		waitingOps:           make(map[Operation][]Operation),
 		earlyExitTrials:      make(map[RequestID]bool),
-		expectedUnits: model.NewLength(config.LengthPerRound.Kind,
+		expectedUnits: model.NewLength(config.LengthPerRound.Unit,
 			config.NumRounds*config.PopulationSize*config.LengthPerRound.Units),
 	}
 }
@@ -222,6 +222,6 @@ func (s *pbtSearch) trialExitedEarly(ctx context, requestID RequestID) ([]Operat
 	return s.runNewTrials(ctx, requestID)
 }
 
-func (s *pbtSearch) kind() model.Kind {
-	return s.LengthPerRound.Kind
+func (s *pbtSearch) unit() model.Unit {
+	return s.LengthPerRound.Unit
 }

@@ -159,7 +159,7 @@ func TestGridSearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "test grid search method",
-			kind: model.Batches,
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
 				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
