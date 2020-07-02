@@ -2,7 +2,7 @@
 import { isLeft } from 'fp-ts/lib/Either';
 import * as io from 'io-ts';
 
-import { CommandState, LogLevel, RunState } from 'types';
+import { CheckpointState, CommandState, LogLevel, RunState } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const decode = <T>(type: io.Mixed, data: any): T => {
@@ -127,23 +127,51 @@ const runStates: Record<string, null> = Object.values(RunState)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 const runStatesIoType = io.keyof(runStates);
 
+const checkpointStates: Record<string, null> = Object.values(CheckpointState)
+  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
+const checkpointStatesIoType = io.keyof(checkpointStates);
+
 const validationHistoryIoType = io.type({
   end_time: io.string,
   trial_id: io.number,
   validation_error: io.union([ io.number, io.null ]),
 });
 
-const trialSummaryIoType = io.type({
+export const ioCheckpoint = io.type({
+  end_time: io.union([ io.string, io.undefined ]),
+  id: io.number,
+  start_time: io.string,
+  state: checkpointStatesIoType,
+  step_id: io.number,
+  trial_id: io.number,
+  uuid: io.union([ io.string, io.undefined ]),
+  valiation_metric: io.union([ io.number, io.undefined ]),
+});
+export type ioTypeCheckpoint = io.TypeOf<typeof ioCheckpoint>;
+
+export const ioTrialSummary = io.type({
+  best_available_checkpoint: io.union([ ioCheckpoint, io.undefined ]),
   hparams: io.any,
   id: io.number,
   state: runStatesIoType,
 });
+export type ioTypeTrialSummary = io.TypeOf<typeof ioTrialSummary>;
 
 /* Experiments */
 
-const ioExperimentConfig = io.type({
-  description: io.string,
+const ioExpResources = io.type({
+  max_slots: io.union([ io.number, io.undefined ]),
 });
+
+export const ioExperimentConfig = io.type({
+  description: io.string,
+  resources: ioExpResources,
+  searcher: io.type({
+    metric: io.string,
+    smaller_is_better: io.boolean,
+  }),
+});
+export type ioTypeExperimentConfig = io.TypeOf<typeof ioExperimentConfig>;
 
 export const ioExperiment = io.type({
   archived: io.boolean,
@@ -170,7 +198,7 @@ export const ioExperimentDetails = io.type({
   progress: io.union([ io.number, io.null ]),
   start_time: io.string,
   state: runStatesIoType,
-  trials: io.array(trialSummaryIoType),
+  trials: io.array(ioTrialSummary),
   validation_history: io.array(validationHistoryIoType),
 });
 

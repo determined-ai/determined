@@ -2,10 +2,12 @@ import { Breadcrumb, Space } from 'antd';
 import React from 'react';
 import { useParams } from 'react-router';
 
+import ExperimentInfoBox from 'components/ExperimentInfoBox';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import Message from 'components/Message';
 import Page from 'components/Page';
+import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
@@ -35,7 +37,7 @@ const ExperimentDetailsComp: React.FC = () => {
   }
 
   if (!experiment.data || experiment.isLoading) {
-    <Spinner fillContainer />;
+    return <Spinner fillContainer />;
   }
 
   return (
@@ -51,6 +53,9 @@ const ExperimentDetailsComp: React.FC = () => {
           <span>{experimentId}</span>
         </Breadcrumb.Item>
       </Breadcrumb>
+      { <ExperimentInfoBox experiment={experiment.data} /> }
+      <Section title="Chart" />
+      <Section title="Trials" />
     </Page>
   );
 };
