@@ -14,7 +14,6 @@ const GlobalBatchSize = "global_batch_size"
 type hparamSample map[string]interface{}
 
 func (h hparamSample) GlobalBatchSize() int {
-	// TODO(brad): this feels less than reliable
 	return int(h[GlobalBatchSize].(float64))
 }
 

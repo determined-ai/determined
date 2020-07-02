@@ -10,7 +10,6 @@ import (
 // TrialWorkloadPlanner manages all the context around how requested "units" actually turn into
 // workloads that the trial runs. probably can be merged with trial_workload_sequencer.go once
 // that code is pulled up to the experiment level.
-// TODO(brad): describe that it is essentially a pipe.
 type TrialWorkloadPlanner struct {
 	kind                  model.Kind
 	targetBatchesPerStep  int
@@ -110,7 +109,6 @@ func (p *TrialWorkloadPlanner) train(
 	requestID RequestID,
 	unitsNeeded model.Length,
 ) (ops []Operation) {
-	// TODO(brad): figure out how to account for truncated records
 	batchesNeeded, trunc := p.unitsToBatches(unitsNeeded, requestID)
 	p.totalUnitsCompleted = p.totalUnitsCompleted.Add(trunc)
 	for curBatches := 0; curBatches < batchesNeeded; curBatches += p.targetBatchesPerStep {
