@@ -12,7 +12,7 @@ func TestAdaptiveASHASearcherReproducibility(t *testing.T) {
 		MaxLength: model.NewLengthInBatches(6400), MaxTrials: 128, Divisor: 4,
 		Mode: model.AggressiveMode, MaxRungs: 3,
 	}
-	gen := func() SearchMethod { return newAdaptiveASHASearch(conf, defaultBatchesPerStep, 0) }
+	gen := func() SearchMethod { return newAdaptiveASHASearch(conf, defaultBatchesPerStep) }
 	checkReproducibility(t, gen, defaultHyperparameters(), defaultMetric)
 }
 
@@ -21,6 +21,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "smaller is better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.1, 9, []int{3, 9}, nil),
 				newConstantPredefinedTrial(0.2, 3, []int{3}, nil),
@@ -46,6 +47,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.1, 9, []int{3, 9}, nil),
 				newEarlyExitPredefinedTrial(0.2, 3, nil, nil),
@@ -71,6 +73,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 		},
 		{
 			name: "smaller is not better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.5, 9, []int{3, 9}, nil),
 				newConstantPredefinedTrial(0.4, 3, []int{3}, nil),
@@ -96,6 +99,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is not better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.5, 9, []int{3, 9}, nil),
 				newEarlyExitPredefinedTrial(0.4, 3, nil, nil),

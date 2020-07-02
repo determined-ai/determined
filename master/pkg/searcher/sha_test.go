@@ -22,8 +22,8 @@ func TestSHASearcherWithRecords(t *testing.T) {
 		toKinds("13S 1V 38S 1V"),
 		toKinds("13S 1V 38S 1V 150S 1V 600S 1V"),
 	}
-	searchMethod := newSyncHalvingSearch(actual, defaultBatchesPerStep, 0)
-	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected)
+	searchMethod := newSyncHalvingSearch(actual, defaultBatchesPerStep)
+	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected, 0)
 }
 
 func TestSHASearcherWithBatches(t *testing.T) {
@@ -42,14 +42,15 @@ func TestSHASearcherWithBatches(t *testing.T) {
 		toKinds("13S 1V 38S 1V"),
 		toKinds("13S 1V 38S 1V 150S 1V 600S 1V"),
 	}
-	searchMethod := newSyncHalvingSearch(actual, defaultBatchesPerStep, 0)
-	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected)
+	searchMethod := newSyncHalvingSearch(actual, defaultBatchesPerStep)
+	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected, 0)
 }
 
 func TestSHASearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "smaller is better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.01, 801, []int{13, 51, 201, 801}, nil),
 				newConstantPredefinedTrial(0.02, 51, []int{13, 51}, nil),
@@ -80,6 +81,7 @@ func TestSHASearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.01, 801, []int{13, 51, 201, 801}, nil),
 				newEarlyExitPredefinedTrial(0.02, 50, []int{13}, nil),
@@ -110,6 +112,7 @@ func TestSHASearchMethod(t *testing.T) {
 		},
 		{
 			name: "smaller is not better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.11, 801, []int{13, 51, 201, 801}, nil),
 				newConstantPredefinedTrial(0.10, 51, []int{13, 51}, nil),
@@ -140,6 +143,7 @@ func TestSHASearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is not better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.11, 801, []int{13, 51, 201, 801}, nil),
 				newEarlyExitPredefinedTrial(0.10, 50, []int{13}, nil),

@@ -11,19 +11,17 @@ import (
 // one trial is generated per point on the grid and trained for the specified number of steps.
 type gridSearch struct {
 	defaultSearchMethod
-	trialStepPlanner
 	model.GridConfig
 	trials         int
 	unitsCompleted model.Length
 	expectedUnits  model.Length
 }
 
-func newGridSearch(config model.GridConfig, targetBatchesPerStep, recordsPerEpoch int) SearchMethod {
+func newGridSearch(config model.GridConfig, targetBatchesPerStep int) SearchMethod {
 	return &gridSearch{
-		trialStepPlanner: newTrialStepPlanner(targetBatchesPerStep, recordsPerEpoch),
-		GridConfig:       config,
-		unitsCompleted:   model.NewLength(config.MaxLength.Kind, 0),
-		expectedUnits:    model.NewLength(config.MaxLength.Kind, 1),
+		GridConfig:     config,
+		unitsCompleted: model.NewLength(config.MaxLength.Kind, 0),
+		expectedUnits:  model.NewLength(config.MaxLength.Kind, 1),
 	}
 }
 
@@ -33,34 +31,27 @@ func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
 	s.trials = len(grid)
 	s.expectedUnits = s.GridConfig.MaxLength.MultInt(s.trials)
 	for _, params := range grid {
-		create := s.create(ctx, params)
+		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
 		operations = append(operations, create)
-		trainVal, trunc := s.trainAndValidate(create.RequestID, s.MaxLength)
-		s.expectedUnits = s.expectedUnits.Sub(trunc)
-		operations = append(operations, trainVal...)
-		operations = append(operations, s.close(create.RequestID))
+		operations = append(operations, NewTrain(create.RequestID, s.MaxLength))
+		operations = append(operations, NewValidate(create.RequestID))
+		operations = append(operations, NewClose(create.RequestID))
 	}
 	return operations, nil
 }
 
-func (s *gridSearch) trainCompleted(
-	ctx context, requestID RequestID, workload Workload,
-) ([]Operation, error) {
-	unitsCompletedThisStep := s.unitsFromWorkload(s.unitsCompleted.Kind, workload, requestID)
-	s.unitsCompleted = s.unitsCompleted.Add(unitsCompletedThisStep)
-	return nil, nil
-}
-
-func (s *gridSearch) progress() float64 {
-	return float64(s.unitsCompleted.Units) / float64(s.expectedUnits.Units)
+func (s *gridSearch) progress(unitsCompleted model.Length) float64 {
+	return float64(unitsCompleted.Units) / float64(s.expectedUnits.Units)
 }
 
 // trialExitedEarly does nothing since grid does not take actions based on
 // search status or progress.
-func (s *gridSearch) trialExitedEarly(
-	ctx context, requestID RequestID, message Workload,
-) ([]Operation, error) {
+func (s *gridSearch) trialExitedEarly(context, RequestID) ([]Operation, error) {
 	return nil, nil
+}
+
+func (s *gridSearch) kind() model.Kind {
+	return s.MaxLength.Kind
 }
 
 func newHyperparameterGrid(params model.Hyperparameters) []hparamSample {

@@ -121,8 +121,8 @@ func TestGridSearcherRecords(t *testing.T) {
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 	}
-	searchMethod := newGridSearch(actual, defaultBatchesPerStep, 0)
-	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
+	searchMethod := newGridSearch(actual, defaultBatchesPerStep)
+	checkSimulation(t, searchMethod, params, ConstantValidation, expected, 0)
 }
 
 func TestGridSearcherBatches(t *testing.T) {
@@ -136,8 +136,8 @@ func TestGridSearcherBatches(t *testing.T) {
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 	}
-	searchMethod := newGridSearch(actual, defaultBatchesPerStep, 0)
-	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
+	searchMethod := newGridSearch(actual, defaultBatchesPerStep)
+	checkSimulation(t, searchMethod, params, ConstantValidation, expected, 0)
 }
 
 func TestGridSearcherEpochs(t *testing.T) {
@@ -151,14 +151,15 @@ func TestGridSearcherEpochs(t *testing.T) {
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 	}
-	searchMethod := newGridSearch(actual, defaultBatchesPerStep, 6400)
-	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
+	searchMethod := newGridSearch(actual, defaultBatchesPerStep)
+	checkSimulation(t, searchMethod, params, ConstantValidation, expected, 6400)
 }
 
 func TestGridSearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "test grid search method",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
 				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),

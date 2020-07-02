@@ -38,7 +38,7 @@ func TestAdaptiveSearcherReproducibility(t *testing.T) {
 		MaxLength: model.NewLengthInBatches(6400), Budget: model.NewLengthInBatches(102400),
 		Divisor: 4, TrainStragglers: true, Mode: model.AggressiveMode, MaxRungs: 3,
 	}
-	gen := func() SearchMethod { return newAdaptiveSearch(conf, defaultBatchesPerStep, 0) }
+	gen := func() SearchMethod { return newAdaptiveSearch(conf, defaultBatchesPerStep) }
 	checkReproducibility(t, gen, defaultHyperparameters(), defaultMetric)
 }
 
@@ -46,6 +46,7 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "smaller is better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.1, 32, []int{8, 32}, nil),
 				newConstantPredefinedTrial(0.2, 8, []int{8}, nil),
@@ -68,6 +69,7 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.1, 32, []int{8, 32}, nil),
 				newEarlyExitPredefinedTrial(0.2, 8, nil, nil),
@@ -90,6 +92,7 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 		},
 		{
 			name: "smaller is not better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.3, 32, []int{8, 32}, nil),
 				newConstantPredefinedTrial(0.2, 8, []int{8}, nil),
@@ -112,6 +115,7 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is not better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.3, 32, []int{8, 32}, nil),
 				newEarlyExitPredefinedTrial(0.2, 8, nil, nil),

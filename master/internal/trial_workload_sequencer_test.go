@@ -40,13 +40,13 @@ checkpoint_policy: none
 
 	// Sequencer input messages.
 	batches := model.DefaultExperimentConfig().BatchesPerStep
-	trainOperation1 := searcher.NewTrain(create.RequestID, 1, batches)
-	trainOperation2 := searcher.NewTrain(create.RequestID, 2, batches)
-	trainOperation3 := searcher.NewTrain(create.RequestID, 3, batches)
-	trainOperation4 := searcher.NewTrain(create.RequestID, 4, batches)
-	trainOperation5 := searcher.NewTrain(create.RequestID, 5, batches)
-	checkpointOperation2 := searcher.NewCheckpoint(create.RequestID, 2)
-	validateOperation2 := searcher.NewValidate(create.RequestID, 2)
+	trainOperation1 := searcher.NewTrainWorkload(create.RequestID, 1, batches)
+	trainOperation2 := searcher.NewTrainWorkload(create.RequestID, 2, batches)
+	trainOperation3 := searcher.NewTrainWorkload(create.RequestID, 3, batches)
+	trainOperation4 := searcher.NewTrainWorkload(create.RequestID, 4, batches)
+	trainOperation5 := searcher.NewTrainWorkload(create.RequestID, 5, batches)
+	checkpointOperation2 := searcher.NewCheckpointWorkload(create.RequestID, 2)
+	validateOperation2 := searcher.NewValidateWorkload(create.RequestID, 2)
 
 	trainWorkload1 := searcher.Workload{
 		Kind:                  searcher.RunStep,

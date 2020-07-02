@@ -13,11 +13,11 @@ func TestRandomTournamentSearcher(t *testing.T) {
 		newRandomSearch(model.RandomConfig{
 			MaxTrials: 2,
 			MaxLength: model.NewLengthInBatches(300),
-		}, defaultBatchesPerStep, 0),
+		}, defaultBatchesPerStep),
 		newRandomSearch(model.RandomConfig{
 			MaxTrials: 3,
 			MaxLength: model.NewLengthInBatches(200),
-		}, defaultBatchesPerStep, 0),
+		}, defaultBatchesPerStep),
 	)
 	expected := [][]Kind{
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
@@ -26,15 +26,15 @@ func TestRandomTournamentSearcher(t *testing.T) {
 		{RunStep, RunStep, ComputeValidationMetrics},
 		{RunStep, RunStep, ComputeValidationMetrics},
 	}
-	checkSimulation(t, actual, defaultHyperparameters(), ConstantValidation, expected)
+	checkSimulation(t, actual, defaultHyperparameters(), ConstantValidation, expected, 0)
 }
 
 func TestRandomTournamentSearcherReproducibility(t *testing.T) {
 	conf := model.RandomConfig{MaxTrials: 5, MaxLength: model.NewLengthInBatches(8)}
 	gen := func() SearchMethod {
 		return newTournamentSearch(
-			newRandomSearch(conf, defaultBatchesPerStep, 0),
-			newRandomSearch(conf, defaultBatchesPerStep, 0),
+			newRandomSearch(conf, defaultBatchesPerStep),
+			newRandomSearch(conf, defaultBatchesPerStep),
 		)
 	}
 	checkReproducibility(t, gen, defaultHyperparameters(), defaultMetric)
@@ -80,6 +80,7 @@ func TestTournamentSearchMethod(t *testing.T) {
 
 	method := newTournamentSearch(adaptiveMethod1, adaptiveMethod2)
 
-	err := checkValueSimulation(t, method, defaultHyperparameters(), expectedTrials)
+	err := checkValueSimulation(t, method, NewTrialWorkloadPlanner(model.Batches, defaultBatchesPerStep, 0),
+		defaultHyperparameters(), expectedTrials)
 	assert.NilError(t, err)
 }

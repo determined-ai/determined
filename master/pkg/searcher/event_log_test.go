@@ -30,7 +30,7 @@ func TestEventLog(t *testing.T) {
 
 	for i, trialID := range trialIDs {
 		assert.Equal(t, len(log.inFlightWorkloads), 0)
-		log.OperationsCreated(NewTrain(log.RequestIDs[trialID], 1, defaultBatchesPerStep))
+		log.OperationsCreated(NewTrainWorkload(log.RequestIDs[trialID], 1, defaultBatchesPerStep))
 		assert.Equal(t, len(log.inFlightWorkloads), 1)
 
 		assert.Equal(t, len(log.completedWorkloads), i)

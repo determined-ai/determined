@@ -13,7 +13,7 @@ import (
 // (SHA).
 type syncHalvingSearch struct {
 	defaultSearchMethod
-	trialStepPlanner
+	TrialWorkloadPlanner
 	model.SyncHalvingConfig
 
 	rungs      []*rung
@@ -22,14 +22,12 @@ type syncHalvingSearch struct {
 	earlyExitTrials map[RequestID]bool
 	trialsCompleted int
 
-	// for tracking searcher progress
-	unitsCompleted model.Length
-	expectedUnits  model.Length
+	expectedUnits model.Length
 }
 
 const shaExitedMetricValue = math.MaxFloat64
 
-func newSyncHalvingSearch(config model.SyncHalvingConfig, targetBatchesPerStep, recordsPerEpoch int) SearchMethod {
+func newSyncHalvingSearch(config model.SyncHalvingConfig, targetBatchesPerStep int) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
 	expectedUnits := 0
 	for id := 0; id < config.NumRungs; id++ {
@@ -72,12 +70,10 @@ func newSyncHalvingSearch(config model.SyncHalvingConfig, targetBatchesPerStep, 
 	}
 
 	return &syncHalvingSearch{
-		trialStepPlanner:  newTrialStepPlanner(targetBatchesPerStep, recordsPerEpoch),
 		SyncHalvingConfig: config,
 		rungs:             rungs,
 		trialRungs:        make(map[RequestID]int),
 		earlyExitTrials:   make(map[RequestID]bool),
-		unitsCompleted:    model.NewLength(config.MaxLength.Kind, 0),
 		expectedUnits:     model.NewLength(config.MaxLength.Kind, expectedUnits),
 	}
 }
@@ -130,25 +126,17 @@ func (r *rung) promotionsSync(requestID RequestID, metric float64) []RequestID {
 func (s *syncHalvingSearch) initialOperations(ctx context) ([]Operation, error) {
 	var ops []Operation
 	for trial := 0; trial < s.rungs[0].startTrials; trial++ {
-		create := s.create(ctx, sampleAll(ctx.hparams, ctx.rand))
+		create := NewCreate(
+			ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
 		ops = append(ops, create)
-		trainVal, trunc := s.trainAndValidate(create.RequestID, s.rungs[0].unitsNeeded)
-		s.expectedUnits = s.expectedUnits.Sub(trunc)
-		ops = append(ops, trainVal...)
+		ops = append(ops, NewTrain(create.RequestID, s.rungs[0].unitsNeeded))
+		ops = append(ops, NewValidate(create.RequestID))
 	}
 	return ops, nil
 }
 
-func (s *syncHalvingSearch) trainCompleted(
-	ctx context, requestID RequestID, workload Workload,
-) ([]Operation, error) {
-	unitsCompletedThisStep := s.unitsFromWorkload(s.unitsCompleted.Kind, workload, requestID)
-	s.unitsCompleted = s.unitsCompleted.Add(unitsCompletedThisStep)
-	return nil, nil
-}
-
 func (s *syncHalvingSearch) validationCompleted(
-	ctx context, requestID RequestID, message Workload, metrics ValidationMetrics,
+	ctx context, requestID RequestID, validate Validate, metrics ValidationMetrics,
 ) ([]Operation, error) {
 	// Extract the relevant metric as a float.
 	metric, err := metrics.Metric(s.Metric)
@@ -159,11 +147,11 @@ func (s *syncHalvingSearch) validationCompleted(
 		metric *= -1
 	}
 
-	return s.promoteSync(ctx, requestID, message, metric)
+	return s.promoteSync(ctx, requestID, metric)
 }
 
 func (s *syncHalvingSearch) promoteSync(
-	ctx context, requestID RequestID, message Workload, metric float64,
+	ctx context, requestID RequestID, metric float64,
 ) ([]Operation, error) {
 	rungIndex := s.trialRungs[requestID]
 	rung := s.rungs[rungIndex]
@@ -184,18 +172,10 @@ func (s *syncHalvingSearch) promoteSync(
 		for _, promotionID := range toPromote {
 			s.trialRungs[promotionID] = rungIndex + 1
 			if !s.earlyExitTrials[promotionID] {
-				additionalUnits := s.rungs[rungIndex+1].unitsNeeded.Sub(rung.unitsNeeded)
-				trainVal, trunc := s.trainAndValidate(promotionID, additionalUnits)
-				s.expectedUnits = s.expectedUnits.Sub(trunc)
-				ops = append(ops, trainVal...)
+				ops = append(ops, NewTrain(
+					promotionID, s.rungs[rungIndex+1].unitsNeeded.Sub(rung.unitsNeeded)))
+				ops = append(ops, NewValidate(promotionID))
 			} else {
-				wkld := Workload{
-					Kind:         ComputeValidationMetrics,
-					ExperimentID: message.ExperimentID,
-					TrialID:      message.TrialID,
-					StepID:       message.StepID,
-				}
-
 				// We can make a recursive call (and discard the results)
 				// because of the following invariants:
 				//   1) There are other trials executing that will receive any
@@ -206,7 +186,7 @@ func (s *syncHalvingSearch) promoteSync(
 				//
 				//   2) We are bounded on the depth of this recursive stack by
 				//   the number of rungs. We default this to max out at 5.
-				_, err := s.promoteSync(ctx, promotionID, wkld, shaExitedMetricValue)
+				_, err := s.promoteSync(ctx, promotionID, shaExitedMetricValue)
 				return nil, err
 			}
 		}
@@ -227,15 +207,19 @@ func (s *syncHalvingSearch) promoteSync(
 	return ops, nil
 }
 
-func (s *syncHalvingSearch) progress() float64 {
-	return math.Min(1, float64(s.unitsCompleted.Units)/float64(s.expectedUnits.Units))
+func (s *syncHalvingSearch) progress(unitsCompleted model.Length) float64 {
+	return math.Min(1, float64(unitsCompleted.Units)/float64(s.expectedUnits.Units))
+}
+
+func (s *syncHalvingSearch) kind() model.Kind {
+	return s.MaxLength.Kind
 }
 
 func (s *syncHalvingSearch) trialExitedEarly(
-	ctx context, requestID RequestID, message Workload,
+	ctx context, requestID RequestID,
 ) ([]Operation, error) {
 	s.earlyExitTrials[requestID] = true
-	return s.promoteSync(ctx, requestID, message, shaExitedMetricValue)
+	return s.promoteSync(ctx, requestID, shaExitedMetricValue)
 }
 
 func max(initial int, values ...int) int {

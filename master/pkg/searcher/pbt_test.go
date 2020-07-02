@@ -36,8 +36,8 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			toKinds("2S 1V"),
 			toKinds("2S 1V"),
 		}
-		searchMethod := newPBTSearch(config, defaultBatchesPerStep, 0)
-		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected)
+		searchMethod := newPBTSearch(config, defaultBatchesPerStep)
+		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected, 0)
 	})
 
 	t.Run("no_truncation", func(t *testing.T) {
@@ -63,8 +63,8 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			toKinds("4S 1V 4S 1V 4S 1V 4S 1V"),
 			toKinds("4S 1V 4S 1V 4S 1V 4S 1V"),
 		}
-		searchMethod := newPBTSearch(config, defaultBatchesPerStep, 0)
-		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected)
+		searchMethod := newPBTSearch(config, defaultBatchesPerStep)
+		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected, 0)
 	})
 
 	t.Run("even_odd", func(t *testing.T) {
@@ -96,8 +96,8 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			toKinds("17S 1V"),
 			toKinds("17S 1V"),
 		}
-		searchMethod := newPBTSearch(config, defaultBatchesPerStep, 0)
-		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected)
+		searchMethod := newPBTSearch(config, defaultBatchesPerStep)
+		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected, 0)
 	})
 
 	t.Run("new_is_better", func(t *testing.T) {
@@ -140,8 +140,8 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			toKinds("5S 1V"),
 			toKinds("5S 1V"),
 		}
-		searchMethod := newPBTSearch(config, defaultBatchesPerStep, 0)
-		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected)
+		searchMethod := newPBTSearch(config, defaultBatchesPerStep)
+		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected, 0)
 	})
 
 	t.Run("old_is_better", func(t *testing.T) {
@@ -183,8 +183,8 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			toKinds("5S 1V"),
 			toKinds("5S 1V"),
 		}
-		searchMethod := newPBTSearch(config, defaultBatchesPerStep, 0)
-		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected)
+		searchMethod := newPBTSearch(config, defaultBatchesPerStep)
+		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected, 0)
 	})
 }
 
@@ -195,7 +195,7 @@ func TestPBTSearcherReproducibility(t *testing.T) {
 		PBTReplaceConfig: model.PBTReplaceConfig{TruncateFraction: 0.5},
 		PBTExploreConfig: model.PBTExploreConfig{ResampleProbability: 0.5, PerturbFactor: 0.5},
 	}
-	searchMethod := func() SearchMethod { return newPBTSearch(conf, defaultBatchesPerStep, 0) }
+	searchMethod := func() SearchMethod { return newPBTSearch(conf, defaultBatchesPerStep) }
 	checkReproducibility(t, searchMethod, defaultHyperparameters(), defaultMetric)
 }
 
@@ -249,7 +249,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 
 	// Test that exploring with no resampling and no perturbing does not change the hyperparameters.
 	{
-		pbt := newPBTSearch(nullConfig, defaultBatchesPerStep, 0).(*pbtSearch)
+		pbt := newPBTSearch(nullConfig, defaultBatchesPerStep).(*pbtSearch)
 		newSample := pbt.exploreParams(ctx, sample)
 		assert.DeepEqual(t, sample, newSample)
 	}
@@ -264,7 +264,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 		spec.Each(func(name string, _ model.Hyperparameter) {
 			invalidSample[name] = nil
 		})
-		pbt := newPBTSearch(nullConfig, defaultBatchesPerStep, 0).(*pbtSearch)
+		pbt := newPBTSearch(nullConfig, defaultBatchesPerStep).(*pbtSearch)
 		newSample := pbt.exploreParams(ctx, sample)
 
 		assert.Equal(t, len(invalidSample), len(newSample))
@@ -279,7 +279,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 	{
 		perturbingConfig := nullConfig
 		perturbingConfig.PerturbFactor = .5
-		pbt := newPBTSearch(perturbingConfig, defaultBatchesPerStep, 0).(*pbtSearch)
+		pbt := newPBTSearch(perturbingConfig, defaultBatchesPerStep).(*pbtSearch)
 
 		newSample := pbt.exploreParams(ctx, sample)
 
@@ -373,6 +373,7 @@ func TestPBTSearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "smaller is better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				// First generation.
 				newConstantPredefinedTrial(0.5, 4, []int{2, 4}, []int{2}),
@@ -403,6 +404,7 @@ func TestPBTSearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				// First generation.
 				newEarlyExitPredefinedTrial(0.5, 4, []int{2}, []int{2}),
@@ -433,6 +435,7 @@ func TestPBTSearchMethod(t *testing.T) {
 		},
 		{
 			name: "smaller is not better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				// First generation.
 				newConstantPredefinedTrial(0.5, 4, []int{2, 4}, []int{2}),
@@ -463,6 +466,7 @@ func TestPBTSearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is not better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				// First generation.
 				newEarlyExitPredefinedTrial(0.5, 4, []int{2}, []int{2}),

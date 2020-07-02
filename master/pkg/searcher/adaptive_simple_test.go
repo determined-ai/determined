@@ -17,8 +17,8 @@ func TestAdaptiveSimpleConservativeCornerCase(t *testing.T) {
 		toKinds("1S 1V 1S 1V"),
 		toKinds("1S 1V 1S 1V 1S 1V"),
 	}
-	searchMethod := newAdaptiveSimpleSearch(actual, defaultBatchesPerStep, 0)
-	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected)
+	searchMethod := newAdaptiveSimpleSearch(actual, defaultBatchesPerStep)
+	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected, 0)
 }
 
 func TestAdaptiveSimpleAggressiveCornerCase(t *testing.T) {
@@ -30,8 +30,8 @@ func TestAdaptiveSimpleAggressiveCornerCase(t *testing.T) {
 	expected := [][]Kind{
 		toKinds("1S 1V 1S 1V 1S 1V"),
 	}
-	searchMethod := newAdaptiveSimpleSearch(actual, defaultBatchesPerStep, 0)
-	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected)
+	searchMethod := newAdaptiveSimpleSearch(actual, defaultBatchesPerStep)
+	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected, 0)
 }
 
 func TestAdaptiveSimpleSearcherReproducibility(t *testing.T) {
@@ -41,7 +41,7 @@ func TestAdaptiveSimpleSearcherReproducibility(t *testing.T) {
 		Divisor: 4, Mode: model.ConservativeMode, MaxRungs: 3,
 	}
 	gen := func() SearchMethod {
-		return newAdaptiveSimpleSearch(conf, defaultBatchesPerStep, 0)
+		return newAdaptiveSimpleSearch(conf, defaultBatchesPerStep)
 	}
 	checkReproducibility(t, gen, defaultHyperparameters(), defaultMetric)
 }
@@ -50,6 +50,7 @@ func TestAdaptiveSimpleSearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "smaller is better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.1, 34, []int{1, 2, 4, 10, 34}, nil),
 				newConstantPredefinedTrial(0.2, 1, []int{1}, nil),
@@ -79,6 +80,7 @@ func TestAdaptiveSimpleSearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.1, 34, []int{1, 2, 4, 10, 34}, nil),
 				newConstantPredefinedTrial(0.2, 1, []int{1}, nil),
@@ -108,6 +110,7 @@ func TestAdaptiveSimpleSearchMethod(t *testing.T) {
 		},
 		{
 			name: "smaller is not better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.8, 34, []int{1, 2, 4, 10, 34}, nil),
 				newConstantPredefinedTrial(0.7, 1, []int{1}, nil),
@@ -137,6 +140,7 @@ func TestAdaptiveSimpleSearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is not better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.8, 34, []int{1, 2, 4, 10, 34}, nil),
 				newConstantPredefinedTrial(0.7, 1, []int{1}, nil),

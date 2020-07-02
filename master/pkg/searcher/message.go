@@ -44,7 +44,7 @@ func (message *CompletedMessage) UnmarshalJSON(bytes []byte) error {
 	case ComputeValidationMetrics:
 		return json.Unmarshal(message.RawMetrics, &message.ValidationMetrics)
 	default:
-		return errors.Errorf("unexpected workload: %s", message.Workload.Kind)
+		return errors.Errorf("unexpected workload unmarshaling: %s", message.Workload.Kind)
 	}
 }
 

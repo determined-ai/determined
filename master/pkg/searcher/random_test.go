@@ -14,8 +14,8 @@ func TestRandomSearcherRecords(t *testing.T) {
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 	}
-	search := newRandomSearch(actual, defaultBatchesPerStep, 0)
-	checkSimulation(t, search, defaultHyperparameters(), ConstantValidation, expected)
+	search := newRandomSearch(actual, defaultBatchesPerStep)
+	checkSimulation(t, search, defaultHyperparameters(), ConstantValidation, expected, 0)
 }
 
 func TestRandomSearcherBatches(t *testing.T) {
@@ -26,13 +26,13 @@ func TestRandomSearcherBatches(t *testing.T) {
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 	}
-	search := newRandomSearch(actual, defaultBatchesPerStep, 0)
-	checkSimulation(t, search, defaultHyperparameters(), ConstantValidation, expected)
+	search := newRandomSearch(actual, defaultBatchesPerStep)
+	checkSimulation(t, search, defaultHyperparameters(), ConstantValidation, expected, 0)
 }
 
 func TestRandomSearcherReproducibility(t *testing.T) {
 	conf := model.RandomConfig{MaxTrials: 4, MaxLength: model.NewLengthInBatches(300)}
-	gen := func() SearchMethod { return newRandomSearch(conf, defaultBatchesPerStep, 0) }
+	gen := func() SearchMethod { return newRandomSearch(conf, defaultBatchesPerStep) }
 	checkReproducibility(t, gen, defaultHyperparameters(), defaultMetric)
 }
 
@@ -40,6 +40,7 @@ func TestRandomSearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "test random search method",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
 				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
@@ -58,6 +59,7 @@ func TestRandomSearchMethod(t *testing.T) {
 		},
 		{
 			name: "test random search method with records",
+			kind: model.Records,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
 				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
@@ -83,6 +85,7 @@ func TestSingleSearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "test single search method",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
 			},

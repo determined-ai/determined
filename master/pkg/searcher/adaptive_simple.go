@@ -16,7 +16,7 @@ func maxTrials(maxTrials, brackets, index int) int {
 }
 
 func newAdaptiveSimpleSearch(
-	config model.AdaptiveSimpleConfig, targetBatchesPerStep, recordsPerEpoch int,
+	config model.AdaptiveSimpleConfig, targetBatchesPerStep int,
 ) SearchMethod {
 	brackets := parseAdaptiveMode(config.Mode)(config.MaxRungs)
 	sort.Sort(sort.Reverse(sort.IntSlice(brackets)))
@@ -32,15 +32,14 @@ func newAdaptiveSimpleSearch(
 			TrainStragglers: true,
 		}
 		numTrials := max(maxTrials(config.MaxTrials, len(brackets), i), 1)
-		methods = append(methods, newSyncHalvingSimpleSearch(
-			c, numTrials, targetBatchesPerStep, recordsPerEpoch))
+		methods = append(methods, newSyncHalvingSimpleSearch(c, numTrials, targetBatchesPerStep))
 	}
 
 	return newTournamentSearch(methods...)
 }
 
 func newSyncHalvingSimpleSearch(
-	config model.SyncHalvingConfig, trials, targetBatchesPerStep, recordsPerEpoch int,
+	config model.SyncHalvingConfig, trials, targetBatchesPerStep int,
 ) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
 	expectedUnits := 0
@@ -67,12 +66,10 @@ func newSyncHalvingSimpleSearch(
 
 	config.Budget = model.NewLength(config.MaxLength.Kind, expectedUnits)
 	return &syncHalvingSearch{
-		trialStepPlanner:  newTrialStepPlanner(targetBatchesPerStep, recordsPerEpoch),
 		SyncHalvingConfig: config,
 		rungs:             rungs,
 		trialRungs:        make(map[RequestID]int),
 		earlyExitTrials:   make(map[RequestID]bool),
-		unitsCompleted:    model.NewLength(config.MaxLength.Kind, 0),
 		expectedUnits:     model.NewLength(config.MaxLength.Kind, expectedUnits),
 	}
 }

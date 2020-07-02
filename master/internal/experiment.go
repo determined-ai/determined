@@ -80,7 +80,7 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 	conf := expModel.Config
 	method := searcher.NewSearchMethod(conf.Searcher, conf.BatchesPerStep, conf.RecordsPerEpoch)
 	search := searcher.NewSearcher(conf.Reproducibility.ExperimentSeed, method,
-		conf.Hyperparameters)
+		conf.Hyperparameters, conf.BatchesPerStep, conf.RecordsPerEpoch)
 
 	// Retrieve the warm start checkpoint, if provided.
 	checkpoint, err := checkpointFromTrialIDOrUUID(

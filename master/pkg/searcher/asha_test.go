@@ -22,8 +22,8 @@ func TestASHASearcherRecords(t *testing.T) {
 		toKinds("10S 1V 20S 1V"),
 		toKinds("10S 1V 20S 1V 60S 1V"),
 	}
-	searchMethod := newAsyncHalvingSearch(actual, defaultBatchesPerStep, 0)
-	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected)
+	searchMethod := newAsyncHalvingSearch(actual, defaultBatchesPerStep)
+	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected, 0)
 }
 
 func TestASHASearcherBatches(t *testing.T) {
@@ -42,8 +42,8 @@ func TestASHASearcherBatches(t *testing.T) {
 		toKinds("10S 1V 20S 1V"),
 		toKinds("10S 1V 20S 1V 60S 1V"),
 	}
-	searchMethod := newAsyncHalvingSearch(actual, defaultBatchesPerStep, 0)
-	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected)
+	searchMethod := newAsyncHalvingSearch(actual, defaultBatchesPerStep)
+	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected, 0)
 }
 
 func TestASHASearcherEpochs(t *testing.T) {
@@ -62,8 +62,8 @@ func TestASHASearcherEpochs(t *testing.T) {
 		toKinds("8S 1V 23S 1V"),
 		toKinds("8S 1V 23S 1V 60S 1V"),
 	}
-	searchMethod := newAsyncHalvingSearch(actual, defaultBatchesPerStep, 48000)
-	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected)
+	searchMethod := newAsyncHalvingSearch(actual, defaultBatchesPerStep)
+	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected, 48000)
 }
 
 func TestASHASearchMethod(t *testing.T) {
@@ -71,6 +71,7 @@ func TestASHASearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "smaller is better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.01, 90, []int{10, 30, 90}, nil),
 				newConstantPredefinedTrial(0.02, 30, []int{10, 30}, nil),
@@ -102,6 +103,7 @@ func TestASHASearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.01, 90, []int{10, 30, 90}, nil),
 				newConstantPredefinedTrial(0.02, 30, []int{10, 30}, nil),
@@ -133,6 +135,7 @@ func TestASHASearchMethod(t *testing.T) {
 		},
 		{
 			name: "smaller is not better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.12, 90, []int{10, 30, 90}, nil),
 				newConstantPredefinedTrial(0.11, 30, []int{10, 30}, nil),
@@ -164,6 +167,7 @@ func TestASHASearchMethod(t *testing.T) {
 		},
 		{
 			name: "early exit -- smaller is not better",
+			kind: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.12, 90, []int{10, 30, 90}, nil),
 				newConstantPredefinedTrial(0.11, 30, []int{10, 30}, nil),

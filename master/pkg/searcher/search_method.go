@@ -22,29 +22,29 @@ type SearchMethod interface {
 	trialCreated(ctx context, requestID RequestID) ([]Operation, error)
 	// trainCompleted informs the searcher that the training workload initiated by the same searcher
 	// has completed. It returns any new operations as a result of this workload completing.
-	trainCompleted(ctx context, requestID RequestID, message Workload) ([]Operation, error)
+	trainCompleted(ctx context, requestID RequestID, train Train) ([]Operation, error)
 	// checkpointCompleted informs the searcher that the checkpoint workload initiated by the same
 	// searcher has completed. It returns any new operations as a result of this workload
 	// completing.
 	checkpointCompleted(
-		ctx context, requestID RequestID, message Workload,
-		metrics CheckpointMetrics,
+		ctx context, requestID RequestID, checkpoint Checkpoint, metrics CheckpointMetrics,
 	) ([]Operation, error)
 	// validationCompleted informs the searcher that the validation workload initiated by the same
 	// searcher has completed. It returns any new operations as a result of this workload
 	// completing.
 	validationCompleted(
-		ctx context, requestID RequestID, message Workload,
-		metrics ValidationMetrics,
+		ctx context, requestID RequestID, validate Validate, metrics ValidationMetrics,
 	) ([]Operation, error)
 	// trialClosed informs the searcher that the trial has been closed as a result of a Close
 	// operation.
 	trialClosed(ctx context, requestID RequestID) ([]Operation, error)
 	// progress returns experiment progress as a float between 0.0 and 1.0. As search methods
 	// receive completed workloads, they should internally track progress.
-	progress() float64
+	progress(totalUnitsCompleted model.Length) float64
 	// trialExitedEarly informs the searcher that the trial has exited earlier than expected.
-	trialExitedEarly(ctx context, requestID RequestID, message Workload) ([]Operation, error)
+	trialExitedEarly(ctx context, requestID RequestID) ([]Operation, error)
+	// kind returns the kind of units the searcher is in terms of
+	kind() model.Kind
 }
 
 // NewSearchMethod returns a new search method for the provided searcher configuration.
@@ -54,23 +54,23 @@ func NewSearchMethod(
 	c = c.Shim(batchesPerStep)
 	switch {
 	case c.SingleConfig != nil:
-		return newSingleSearch(*c.SingleConfig, batchesPerStep, recordsPerEpoch)
+		return newSingleSearch(*c.SingleConfig, batchesPerStep)
 	case c.RandomConfig != nil:
-		return newRandomSearch(*c.RandomConfig, batchesPerStep, recordsPerEpoch)
+		return newRandomSearch(*c.RandomConfig, batchesPerStep)
 	case c.GridConfig != nil:
-		return newGridSearch(*c.GridConfig, batchesPerStep, recordsPerEpoch)
+		return newGridSearch(*c.GridConfig, batchesPerStep)
 	case c.SyncHalvingConfig != nil:
-		return newSyncHalvingSearch(*c.SyncHalvingConfig, batchesPerStep, recordsPerEpoch)
+		return newSyncHalvingSearch(*c.SyncHalvingConfig, batchesPerStep)
 	case c.AdaptiveConfig != nil:
-		return newAdaptiveSearch(*c.AdaptiveConfig, batchesPerStep, recordsPerEpoch)
+		return newAdaptiveSearch(*c.AdaptiveConfig, batchesPerStep)
 	case c.AdaptiveSimpleConfig != nil:
-		return newAdaptiveSimpleSearch(*c.AdaptiveSimpleConfig, batchesPerStep, recordsPerEpoch)
+		return newAdaptiveSimpleSearch(*c.AdaptiveSimpleConfig, batchesPerStep)
 	case c.AsyncHalvingConfig != nil:
-		return newAsyncHalvingSearch(*c.AsyncHalvingConfig, batchesPerStep, recordsPerEpoch)
+		return newAsyncHalvingSearch(*c.AsyncHalvingConfig, batchesPerStep)
 	case c.AdaptiveASHAConfig != nil:
-		return newAdaptiveASHASearch(*c.AdaptiveASHAConfig, batchesPerStep, recordsPerEpoch)
+		return newAdaptiveASHASearch(*c.AdaptiveASHAConfig, batchesPerStep)
 	case c.PBTConfig != nil:
-		return newPBTSearch(*c.PBTConfig, batchesPerStep, recordsPerEpoch)
+		return newPBTSearch(*c.PBTConfig, batchesPerStep)
 	default:
 		panic("no searcher type specified")
 	}
@@ -81,17 +81,17 @@ type defaultSearchMethod struct{}
 func (d *defaultSearchMethod) trialCreated(context, RequestID) ([]Operation, error) {
 	return nil, nil
 }
-func (d *defaultSearchMethod) trainCompleted(context, RequestID, Workload) ([]Operation, error) {
+func (d *defaultSearchMethod) trainCompleted(context, RequestID, Train) ([]Operation, error) {
 	return nil, nil
 }
 
 func (d *defaultSearchMethod) checkpointCompleted(
-	context, RequestID, Workload, CheckpointMetrics,
+	context, RequestID, Checkpoint, CheckpointMetrics,
 ) ([]Operation, error) {
 	return nil, nil
 }
 func (d *defaultSearchMethod) validationCompleted(
-	context, RequestID, Workload, ValidationMetrics,
+	context, RequestID, Validate, ValidationMetrics,
 ) ([]Operation, error) {
 	return nil, nil
 }
@@ -99,7 +99,6 @@ func (d *defaultSearchMethod) trialClosed(context, RequestID) ([]Operation, erro
 	return nil, nil
 }
 
-func (d defaultSearchMethod) trialExitedEarly( //nolint: unused
-	ctx context, requestID RequestID, message Workload) ([]Operation, error) {
+func (d defaultSearchMethod) trialExitedEarly(context, RequestID) ([]Operation, error) {
 	return []Operation{Shutdown{Failure: true}}, nil
 }
