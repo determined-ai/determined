@@ -12,16 +12,14 @@ import (
 type gridSearch struct {
 	defaultSearchMethod
 	model.GridConfig
-	trials         int
-	unitsCompleted model.Length
-	expectedUnits  model.Length
+	trials        int
+	expectedUnits model.Length
 }
 
 func newGridSearch(config model.GridConfig) SearchMethod {
 	return &gridSearch{
-		GridConfig:     config,
-		unitsCompleted: model.NewLength(config.MaxLength.Kind, 0),
-		expectedUnits:  model.NewLength(config.MaxLength.Kind, 1),
+		GridConfig:    config,
+		expectedUnits: model.NewLength(config.MaxLength.Kind, 0),
 	}
 }
 

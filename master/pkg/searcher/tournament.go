@@ -82,7 +82,7 @@ func (s *tournamentSearch) trialExitedEarly(ctx context, requestID RequestID) ([
 }
 
 // progress returns experiment progress as a float between 0.0 and 1.0.
-func (s *tournamentSearch) progress(unitsCompleted model.Length) float64 {
+func (s *tournamentSearch) progress(model.Length) float64 {
 	sum := 0.0
 	for _, subSearch := range s.subSearches {
 		sum += subSearch.progress(s.subSearchUnitsCompleted[subSearch])
