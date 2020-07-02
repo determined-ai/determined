@@ -641,13 +641,14 @@ class EstimatorTrialController(det.LoopTrialController):
         return {"validation_metrics": metrics}
 
     def average_metrics(self, metrics: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        # The chief receives the metric from every worker and computes
-        # the average.
         check.true(self.hvd_config.use)
         if self.is_chief:
-            self.train_process_comm_chief = cast(ipc.ZMQServer, self.train_process_comm_chief)
+            self.train_process_comm_chief = cast(
+                ipc.ZMQBroadcastServer, self.train_process_comm_chief
+            )
             logging.debug(f"Chief {hvd.rank()} beginning receiving validation metrics.")
-            worker_metrics = self.train_process_comm_chief.barrier(num_connections=hvd.size() - 1)
+            worker_metrics, _ = self.train_process_comm_chief.gather_with_polling(lambda: None)
+            self.train_process_comm_chief.broadcast(None)
             logging.debug(f"Chief {hvd.rank()} done receiving validation metrics.")
             for metric_name in metrics:
                 if isinstance(metrics[metric_name], numbers.Number):
@@ -660,9 +661,14 @@ class EstimatorTrialController(det.LoopTrialController):
                         metrics[metric_name] += worker_metric[metric_name] / hvd.size()
             return metrics
         else:
-            self.train_process_comm_worker = cast(ipc.ZMQClient, self.train_process_comm_worker)
+            self.train_process_comm_worker = cast(
+                ipc.ZMQBroadcastClient, self.train_process_comm_worker
+            )
             logging.debug(f"Worker {hvd.rank()} sending metrics.")
-            self.train_process_comm_worker.barrier(message=metrics)
+            self.train_process_comm_worker.send(metrics)
+            # Synchronize with the chief so that there is no risk of accidentally calling send()
+            # for a future gather before all workers have called send() on this gather.
+            _ = self.train_process_comm_worker.recv()
             return None
 
 

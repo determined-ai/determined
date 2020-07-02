@@ -98,7 +98,9 @@ class ZMQBroadcastServer:
     http://zguide.zeromq.org/page:all#Node-Coordination
     """
 
-    def __init__(self, num_connections: int, port_range: Optional[Tuple[int, int]] = None) -> None:
+    def __init__(
+        self, num_connections: int, pub_port: Optional[int] = None, pull_port: Optional[int] = None
+    ) -> None:
         self._num_connections = num_connections
 
         context = zmq.Context()
@@ -106,13 +108,15 @@ class ZMQBroadcastServer:
         self._pub_socket = context.socket(zmq.PUB)
         self._pull_socket = context.socket(zmq.PULL)
 
-        if port_range is None:
+        if pub_port is None:
             self._pub_port = self._pub_socket.bind_to_random_port("tcp://*")  # type: int
+        else:
+            self._pub_port = self._pub_socket.bind(f"tcp://*:{pub_port}")
+
+        if pull_port is None:
             self._pull_port = self._pull_socket.bind_to_random_port("tcp://*")  # type: int
         else:
-            port_min, port_max = port_range
-            self._pub_port = self._pub_socket.bind_to_random_port("tcp://*", port_min, port_max)
-            self._pull_port = self._pull_socket.bind_to_random_port("tcp://*", port_min, port_max)
+            self._pull_port = self._pull_socket.bind(f"tcp://*:{pull_port}")
 
         self._send_serial = 0
         self._recv_serial = 0

@@ -44,7 +44,8 @@ HOROVOD_GLOO_RENDEZVOUS_PORT = 12355
 
 # Port for communicating between training processes. Used for reducing
 # validation metrics.
-INTER_TRAIN_PROCESS_COMM_PORT = 12360
+INTER_TRAIN_PROCESS_COMM_PORT_1 = 12360
+INTER_TRAIN_PROCESS_COMM_PORT_2 = 12361
 
 # Default trial runner interface. For distributed training this
 # specifies that the network interface must be auto-detected.

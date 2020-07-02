@@ -524,8 +524,11 @@ class PyTorchTrialController(det.LoopTrialController):
         metrics_lists = {}  # type: Dict[str, Any]
         batches_per_process = []  # type: List[int]
         if self.is_chief:
-            self.train_process_comm_chief = cast(ipc.ZMQServer, self.train_process_comm_chief)
-            worker_metrics = self.train_process_comm_chief.barrier(num_connections=hvd.size() - 1)
+            self.train_process_comm_chief = cast(
+                ipc.ZMQBroadcastServer, self.train_process_comm_chief
+            )
+            worker_metrics, _ = self.train_process_comm_chief.gather_with_polling(lambda: None)
+            self.train_process_comm_chief.broadcast(None)
             worker_metrics = cast(List[ipc.MetricsInfo], worker_metrics)
 
             for metric_name in metrics.keys():
@@ -539,10 +542,15 @@ class PyTorchTrialController(det.LoopTrialController):
 
             return metrics_lists, batches_per_process
         else:
-            self.train_process_comm_worker = cast(ipc.ZMQClient, self.train_process_comm_worker)
-            self.train_process_comm_worker.barrier(
-                message=ipc.MetricsInfo(metrics=metrics, num_batches=num_batches)
+            self.train_process_comm_worker = cast(
+                ipc.ZMQBroadcastClient, self.train_process_comm_worker
             )
+            self.train_process_comm_worker.send(
+                ipc.MetricsInfo(metrics=metrics, num_batches=num_batches)
+            )
+            # Synchronize with the chief so that there is no risk of accidentally calling send()
+            # for a future gather before all workers have called send() on this gather.
+            _ = self.train_process_comm_worker.recv()
             return None, None
 
     def _load(self) -> None:
