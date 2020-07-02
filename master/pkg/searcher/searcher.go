@@ -57,7 +57,6 @@ func (s *Searcher) filterCompletedCheckpoints(ops []Operation) ([]Operation, err
 				return nil, errors.Errorf("event log ignored a cached WorkloadCompleted message")
 			}
 			requestID := s.eventLog.RequestIDs[msg.Workload.TrialID]
-			// TODO(brad): this is probably wrong
 			moreOps, err := s.method.checkpointCompleted(
 				s.context(), requestID, NewCheckpoint(requestID), *msg.CheckpointMetrics)
 			if err != nil {
