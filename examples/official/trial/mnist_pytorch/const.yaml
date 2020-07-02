@@ -11,8 +11,6 @@ hyperparameters:
 searcher:
   name: single
   metric: validation_loss
-#  max_steps: 9 # 9 steps is ~ one epoch
-  max_length:
-    batches: 900
+  max_steps: 9 # 9 steps is ~ one epoch
   smaller_is_better: true
 entrypoint: model_def:MNistTrial
