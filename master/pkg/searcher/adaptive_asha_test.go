@@ -12,7 +12,7 @@ func TestAdaptiveASHASearcherReproducibility(t *testing.T) {
 		MaxLength: model.NewLengthInBatches(6400), MaxTrials: 128, Divisor: 4,
 		Mode: model.AggressiveMode, MaxRungs: 3,
 	}
-	gen := func() SearchMethod { return newAdaptiveASHASearch(conf, defaultBatchesPerStep) }
+	gen := func() SearchMethod { return newAdaptiveASHASearch(conf) }
 	checkReproducibility(t, gen, defaultHyperparameters(), defaultMetric)
 }
 

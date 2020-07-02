@@ -363,7 +363,7 @@ func runValueSimulationTestCases(t *testing.T, testCases []valueSimulationTestCa
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			method := NewSearchMethod(tc.config, tc.batchesPerStep, tc.recordsPerEpoch)
+			method := NewSearchMethod(tc.config)
 			workloadPlanner := NewTrialWorkloadPlanner(tc.kind, tc.batchesPerStep, tc.recordsPerEpoch)
 			err := checkValueSimulation(t, method, workloadPlanner, tc.hparams, tc.expectedTrials)
 			assert.NilError(t, err)

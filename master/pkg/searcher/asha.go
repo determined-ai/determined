@@ -25,9 +25,7 @@ type asyncHalvingSearch struct {
 
 const ashaExitedMetricValue = math.MaxFloat64
 
-func newAsyncHalvingSearch(
-	config model.AsyncHalvingConfig, targetBatchesPerStep int,
-) SearchMethod {
+func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
 	for id := 0; id < config.NumRungs; id++ {
 		// We divide the MaxLength by downsampling rate to get the target units

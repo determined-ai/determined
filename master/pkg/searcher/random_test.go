@@ -14,7 +14,7 @@ func TestRandomSearcherRecords(t *testing.T) {
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 	}
-	search := newRandomSearch(actual, defaultBatchesPerStep)
+	search := newRandomSearch(actual)
 	checkSimulation(t, search, defaultHyperparameters(), ConstantValidation, expected, 0)
 }
 
@@ -26,13 +26,13 @@ func TestRandomSearcherBatches(t *testing.T) {
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 	}
-	search := newRandomSearch(actual, defaultBatchesPerStep)
+	search := newRandomSearch(actual)
 	checkSimulation(t, search, defaultHyperparameters(), ConstantValidation, expected, 0)
 }
 
 func TestRandomSearcherReproducibility(t *testing.T) {
 	conf := model.RandomConfig{MaxTrials: 4, MaxLength: model.NewLengthInBatches(300)}
-	gen := func() SearchMethod { return newRandomSearch(conf, defaultBatchesPerStep) }
+	gen := func() SearchMethod { return newRandomSearch(conf) }
 	checkReproducibility(t, gen, defaultHyperparameters(), defaultMetric)
 }
 

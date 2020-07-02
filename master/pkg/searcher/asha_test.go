@@ -22,7 +22,7 @@ func TestASHASearcherRecords(t *testing.T) {
 		toKinds("10S 1V 20S 1V"),
 		toKinds("10S 1V 20S 1V 60S 1V"),
 	}
-	searchMethod := newAsyncHalvingSearch(actual, defaultBatchesPerStep)
+	searchMethod := newAsyncHalvingSearch(actual)
 	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected, 0)
 }
 
@@ -42,7 +42,7 @@ func TestASHASearcherBatches(t *testing.T) {
 		toKinds("10S 1V 20S 1V"),
 		toKinds("10S 1V 20S 1V 60S 1V"),
 	}
-	searchMethod := newAsyncHalvingSearch(actual, defaultBatchesPerStep)
+	searchMethod := newAsyncHalvingSearch(actual)
 	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected, 0)
 }
 
@@ -62,7 +62,7 @@ func TestASHASearcherEpochs(t *testing.T) {
 		toKinds("8S 1V 23S 1V"),
 		toKinds("8S 1V 23S 1V 60S 1V"),
 	}
-	searchMethod := newAsyncHalvingSearch(actual, defaultBatchesPerStep)
+	searchMethod := newAsyncHalvingSearch(actual)
 	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected, 48000)
 }
 

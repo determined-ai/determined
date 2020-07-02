@@ -27,7 +27,7 @@ type syncHalvingSearch struct {
 
 const shaExitedMetricValue = math.MaxFloat64
 
-func newSyncHalvingSearch(config model.SyncHalvingConfig, targetBatchesPerStep int) SearchMethod {
+func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
 	expectedUnits := 0
 	for id := 0; id < config.NumRungs; id++ {

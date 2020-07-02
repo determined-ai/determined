@@ -121,7 +121,7 @@ func TestGridSearcherRecords(t *testing.T) {
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 	}
-	searchMethod := newGridSearch(actual, defaultBatchesPerStep)
+	searchMethod := newGridSearch(actual)
 	checkSimulation(t, searchMethod, params, ConstantValidation, expected, 0)
 }
 
@@ -136,7 +136,7 @@ func TestGridSearcherBatches(t *testing.T) {
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 	}
-	searchMethod := newGridSearch(actual, defaultBatchesPerStep)
+	searchMethod := newGridSearch(actual)
 	checkSimulation(t, searchMethod, params, ConstantValidation, expected, 0)
 }
 
@@ -151,7 +151,7 @@ func TestGridSearcherEpochs(t *testing.T) {
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
 	}
-	searchMethod := newGridSearch(actual, defaultBatchesPerStep)
+	searchMethod := newGridSearch(actual)
 	checkSimulation(t, searchMethod, params, ConstantValidation, expected, 6400)
 }
 

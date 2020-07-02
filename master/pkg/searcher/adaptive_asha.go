@@ -60,7 +60,7 @@ func getBracketMaxConcurrentTrials(
 	return bracketMaxConcurrentTrials
 }
 
-func newAdaptiveASHASearch(config model.AdaptiveASHAConfig, batchesPerStep int) SearchMethod {
+func newAdaptiveASHASearch(config model.AdaptiveASHAConfig) SearchMethod {
 	modeFunc := parseAdaptiveMode(config.Mode)
 
 	brackets := config.BracketRungs
@@ -91,7 +91,7 @@ func newAdaptiveASHASearch(config model.AdaptiveASHAConfig, batchesPerStep int) 
 			Divisor:             config.Divisor,
 			MaxConcurrentTrials: bracketMaxConcurrentTrials[i],
 		}
-		methods = append(methods, newAsyncHalvingSearch(c, batchesPerStep))
+		methods = append(methods, newAsyncHalvingSearch(c))
 	}
 
 	return newTournamentSearch(methods...)

@@ -17,7 +17,7 @@ type gridSearch struct {
 	expectedUnits  model.Length
 }
 
-func newGridSearch(config model.GridConfig, targetBatchesPerStep int) SearchMethod {
+func newGridSearch(config model.GridConfig) SearchMethod {
 	return &gridSearch{
 		GridConfig:     config,
 		unitsCompleted: model.NewLength(config.MaxLength.Kind, 0),

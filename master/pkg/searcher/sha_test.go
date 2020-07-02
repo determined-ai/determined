@@ -22,7 +22,7 @@ func TestSHASearcherWithRecords(t *testing.T) {
 		toKinds("13S 1V 38S 1V"),
 		toKinds("13S 1V 38S 1V 150S 1V 600S 1V"),
 	}
-	searchMethod := newSyncHalvingSearch(actual, defaultBatchesPerStep)
+	searchMethod := newSyncHalvingSearch(actual)
 	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected, 0)
 }
 
@@ -42,7 +42,7 @@ func TestSHASearcherWithBatches(t *testing.T) {
 		toKinds("13S 1V 38S 1V"),
 		toKinds("13S 1V 38S 1V 150S 1V 600S 1V"),
 	}
-	searchMethod := newSyncHalvingSearch(actual, defaultBatchesPerStep)
+	searchMethod := newSyncHalvingSearch(actual)
 	checkSimulation(t, searchMethod, defaultHyperparameters(), ConstantValidation, expected, 0)
 }
 

@@ -13,14 +13,14 @@ type randomSearch struct {
 	expectedUnits model.Length
 }
 
-func newRandomSearch(config model.RandomConfig, targetBatchesPerStep int) SearchMethod {
+func newRandomSearch(config model.RandomConfig) SearchMethod {
 	return &randomSearch{
 		RandomConfig:  config,
 		expectedUnits: config.MaxLength.MultInt(config.MaxTrials),
 	}
 }
 
-func newSingleSearch(config model.SingleConfig, targetBatchesPerStep int) SearchMethod {
+func newSingleSearch(config model.SingleConfig) SearchMethod {
 	return &randomSearch{
 		RandomConfig:  model.RandomConfig{MaxTrials: 1, MaxLength: config.MaxLength},
 		expectedUnits: config.MaxLength,

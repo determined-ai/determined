@@ -36,7 +36,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			toKinds("2S 1V"),
 			toKinds("2S 1V"),
 		}
-		searchMethod := newPBTSearch(config, defaultBatchesPerStep)
+		searchMethod := newPBTSearch(config)
 		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected, 0)
 	})
 
@@ -63,7 +63,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			toKinds("4S 1V 4S 1V 4S 1V 4S 1V"),
 			toKinds("4S 1V 4S 1V 4S 1V 4S 1V"),
 		}
-		searchMethod := newPBTSearch(config, defaultBatchesPerStep)
+		searchMethod := newPBTSearch(config)
 		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected, 0)
 	})
 
@@ -96,7 +96,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			toKinds("17S 1V"),
 			toKinds("17S 1V"),
 		}
-		searchMethod := newPBTSearch(config, defaultBatchesPerStep)
+		searchMethod := newPBTSearch(config)
 		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected, 0)
 	})
 
@@ -140,7 +140,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			toKinds("5S 1V"),
 			toKinds("5S 1V"),
 		}
-		searchMethod := newPBTSearch(config, defaultBatchesPerStep)
+		searchMethod := newPBTSearch(config)
 		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected, 0)
 	})
 
@@ -183,7 +183,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			toKinds("5S 1V"),
 			toKinds("5S 1V"),
 		}
-		searchMethod := newPBTSearch(config, defaultBatchesPerStep)
+		searchMethod := newPBTSearch(config)
 		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected, 0)
 	})
 }
@@ -195,7 +195,7 @@ func TestPBTSearcherReproducibility(t *testing.T) {
 		PBTReplaceConfig: model.PBTReplaceConfig{TruncateFraction: 0.5},
 		PBTExploreConfig: model.PBTExploreConfig{ResampleProbability: 0.5, PerturbFactor: 0.5},
 	}
-	searchMethod := func() SearchMethod { return newPBTSearch(conf, defaultBatchesPerStep) }
+	searchMethod := func() SearchMethod { return newPBTSearch(conf) }
 	checkReproducibility(t, searchMethod, defaultHyperparameters(), defaultMetric)
 }
 
@@ -249,7 +249,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 
 	// Test that exploring with no resampling and no perturbing does not change the hyperparameters.
 	{
-		pbt := newPBTSearch(nullConfig, defaultBatchesPerStep).(*pbtSearch)
+		pbt := newPBTSearch(nullConfig).(*pbtSearch)
 		newSample := pbt.exploreParams(ctx, sample)
 		assert.DeepEqual(t, sample, newSample)
 	}
@@ -264,7 +264,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 		spec.Each(func(name string, _ model.Hyperparameter) {
 			invalidSample[name] = nil
 		})
-		pbt := newPBTSearch(nullConfig, defaultBatchesPerStep).(*pbtSearch)
+		pbt := newPBTSearch(nullConfig).(*pbtSearch)
 		newSample := pbt.exploreParams(ctx, sample)
 
 		assert.Equal(t, len(invalidSample), len(newSample))
@@ -279,7 +279,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 	{
 		perturbingConfig := nullConfig
 		perturbingConfig.PerturbFactor = .5
-		pbt := newPBTSearch(perturbingConfig, defaultBatchesPerStep).(*pbtSearch)
+		pbt := newPBTSearch(perturbingConfig).(*pbtSearch)
 
 		newSample := pbt.exploreParams(ctx, sample)
 

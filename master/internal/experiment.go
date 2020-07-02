@@ -78,7 +78,7 @@ type experiment struct {
 // the returned object's ID appropriately.
 func newExperiment(master *Master, expModel *model.Experiment) (*experiment, error) {
 	conf := expModel.Config
-	method := searcher.NewSearchMethod(conf.Searcher, conf.BatchesPerStep, conf.RecordsPerEpoch)
+	method := searcher.NewSearchMethod(conf.Searcher.Shim(conf.BatchesPerStep))
 	search := searcher.NewSearcher(conf.Reproducibility.ExperimentSeed, method,
 		conf.Hyperparameters, conf.BatchesPerStep, conf.RecordsPerEpoch)
 

@@ -30,7 +30,7 @@ type pbtSearch struct {
 
 const pbtExitedMetricValue = math.MaxFloat64
 
-func newPBTSearch(config model.PBTConfig, targetBatchesPerStep int) SearchMethod {
+func newPBTSearch(config model.PBTConfig) SearchMethod {
 	return &pbtSearch{
 		PBTConfig:            config,
 		metrics:              make(map[RequestID]float64),

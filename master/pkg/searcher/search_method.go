@@ -48,29 +48,26 @@ type SearchMethod interface {
 }
 
 // NewSearchMethod returns a new search method for the provided searcher configuration.
-func NewSearchMethod(
-	c model.SearcherConfig, batchesPerStep, recordsPerEpoch int,
-) SearchMethod {
-	c = c.Shim(batchesPerStep)
+func NewSearchMethod(c model.SearcherConfig) SearchMethod {
 	switch {
 	case c.SingleConfig != nil:
-		return newSingleSearch(*c.SingleConfig, batchesPerStep)
+		return newSingleSearch(*c.SingleConfig)
 	case c.RandomConfig != nil:
-		return newRandomSearch(*c.RandomConfig, batchesPerStep)
+		return newRandomSearch(*c.RandomConfig)
 	case c.GridConfig != nil:
-		return newGridSearch(*c.GridConfig, batchesPerStep)
+		return newGridSearch(*c.GridConfig)
 	case c.SyncHalvingConfig != nil:
-		return newSyncHalvingSearch(*c.SyncHalvingConfig, batchesPerStep)
+		return newSyncHalvingSearch(*c.SyncHalvingConfig)
 	case c.AdaptiveConfig != nil:
-		return newAdaptiveSearch(*c.AdaptiveConfig, batchesPerStep)
+		return newAdaptiveSearch(*c.AdaptiveConfig)
 	case c.AdaptiveSimpleConfig != nil:
-		return newAdaptiveSimpleSearch(*c.AdaptiveSimpleConfig, batchesPerStep)
+		return newAdaptiveSimpleSearch(*c.AdaptiveSimpleConfig)
 	case c.AsyncHalvingConfig != nil:
-		return newAsyncHalvingSearch(*c.AsyncHalvingConfig, batchesPerStep)
+		return newAsyncHalvingSearch(*c.AsyncHalvingConfig)
 	case c.AdaptiveASHAConfig != nil:
-		return newAdaptiveASHASearch(*c.AdaptiveASHAConfig, batchesPerStep)
+		return newAdaptiveASHASearch(*c.AdaptiveASHAConfig)
 	case c.PBTConfig != nil:
-		return newPBTSearch(*c.PBTConfig, batchesPerStep)
+		return newPBTSearch(*c.PBTConfig)
 	default:
 		panic("no searcher type specified")
 	}
