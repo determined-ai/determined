@@ -128,10 +128,6 @@ func (p *TrialWorkloadPlanner) checkpoint(requestID RequestID) Operation {
 	return NewCheckpointWorkload(requestID, p.stepCounts[requestID])
 }
 
-func (p *TrialWorkloadPlanner) close(requestID RequestID) Close {
-	return NewClose(requestID)
-}
-
 // unitsFromWorkload determines the number of units completed during a given workload.
 func (p TrialWorkloadPlanner) unitsFromWorkload(
 	kind model.Kind, workload Workload, requestID RequestID,
