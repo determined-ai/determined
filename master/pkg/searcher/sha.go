@@ -13,7 +13,6 @@ import (
 // (SHA).
 type syncHalvingSearch struct {
 	defaultSearchMethod
-	TrialWorkloadPlanner
 	model.SyncHalvingConfig
 
 	rungs      []*rung
@@ -160,7 +159,7 @@ func (s *syncHalvingSearch) promoteSync(
 	if rungIndex == s.NumRungs-1 {
 		s.trialsCompleted++
 		if !s.earlyExitTrials[requestID] {
-			return []Operation{s.close(requestID)}, nil
+			return []Operation{NewClose(requestID)}, nil
 		}
 		return nil, nil
 	}
@@ -199,7 +198,7 @@ func (s *syncHalvingSearch) promoteSync(
 			for _, trialMetric := range rung.metrics[rung.promoteTrials:] {
 				s.trialsCompleted++
 				if !s.earlyExitTrials[trialMetric.requestID] {
-					ops = append(ops, s.close(trialMetric.requestID))
+					ops = append(ops, NewClose(trialMetric.requestID))
 				}
 			}
 		}
