@@ -177,7 +177,8 @@ func NewTrainWorkload(requestID RequestID, stepID, numBatches int) WorkloadOpera
 	}
 }
 
-// NewCheckpointWorkload signals to the trial runner that the current model state should be checkpointed.
+// NewCheckpointWorkload signals to the trial runner that the current model state should be
+// checkpointed.
 func NewCheckpointWorkload(requestID RequestID, stepID int) WorkloadOperation {
 	return WorkloadOperation{
 		RequestID: requestID,

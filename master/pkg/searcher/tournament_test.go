@@ -77,7 +77,8 @@ func TestTournamentSearchMethod(t *testing.T) {
 
 	method := newTournamentSearch(adaptiveMethod1, adaptiveMethod2)
 
-	err := checkValueSimulation(t, method, NewTrialWorkloadPlanner(model.Batches, defaultBatchesPerStep, 0),
-		defaultHyperparameters(), expectedTrials)
+	err := checkValueSimulation(t, method,
+		NewTrialWorkloadPlanner(model.Batches, defaultBatchesPerStep, 0), defaultHyperparameters(),
+		expectedTrials)
 	assert.NilError(t, err)
 }

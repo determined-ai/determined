@@ -26,7 +26,8 @@ func (m *Master) getSearcherPreview(c echo.Context) (interface{}, error) {
 	}
 
 	sm := searcher.NewSearchMethod(config.Searcher.Shim(config.BatchesPerStep))
-	s := searcher.NewSearcher(0, sm, config.Hyperparameters, config.BatchesPerStep, config.RecordsPerEpoch)
+	s := searcher.NewSearcher(
+		0, sm, config.Hyperparameters, config.BatchesPerStep, config.RecordsPerEpoch)
 	return searcher.Simulate(s, nil, searcher.RandomValidation, true, config.Searcher.Metric)
 }
 

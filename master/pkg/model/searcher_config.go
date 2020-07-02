@@ -3,9 +3,10 @@ package model
 import (
 	"encoding/json"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/union"
-	"github.com/pkg/errors"
 )
 
 // MaxAllowedTrials is the maximum number of trials that we allow to be created for a single

@@ -27,7 +27,9 @@ type opToPlannedOps struct {
 }
 
 // NewTrialWorkloadPlanner creates a workload planner to plan searcher ops into workload ops.
-func NewTrialWorkloadPlanner(kind model.Kind, targetBatchesPerStep, recordsPerEpoch int) TrialWorkloadPlanner {
+func NewTrialWorkloadPlanner(
+	kind model.Kind, targetBatchesPerStep, recordsPerEpoch int,
+) TrialWorkloadPlanner {
 	return TrialWorkloadPlanner{
 		kind:                  kind,
 		targetBatchesPerStep:  targetBatchesPerStep,

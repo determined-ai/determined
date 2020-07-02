@@ -96,6 +96,7 @@ func (d *defaultSearchMethod) trialClosed(context, RequestID) ([]Operation, erro
 	return nil, nil
 }
 
-func (d defaultSearchMethod) trialExitedEarly(context, RequestID) ([]Operation, error) {
+func (d defaultSearchMethod) trialExitedEarly( //nolint: unused
+	context, RequestID) ([]Operation, error) {
 	return []Operation{Shutdown{Failure: true}}, nil
 }

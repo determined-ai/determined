@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/pkg/check"
 )
 
 // Kind defines a kind of unit for specifying lengths.

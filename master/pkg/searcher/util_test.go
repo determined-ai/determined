@@ -402,9 +402,9 @@ func simulateWorkloadComplete(
 			StepID:     operation.StepID,
 			NumBatches: operation.NumBatches,
 		}
-		op, err := workloadPlanner.WorkloadCompleted(requestID, w)
-		if err != nil {
-			return nil, errors.Wrap(err, "workloadPlanner Collate")
+		op, pErr := workloadPlanner.WorkloadCompleted(requestID, w)
+		if pErr != nil {
+			return nil, errors.Wrap(pErr, "workloadPlanner Collate")
 		}
 		if trial.EarlyExit == operation.StepID {
 			ops, err = method.trialExitedEarly(ctx, requestID)
@@ -433,9 +433,9 @@ func simulateWorkloadComplete(
 				"error": val,
 			},
 		}
-		op, err := workloadPlanner.WorkloadCompleted(requestID, w)
-		if err != nil {
-			return nil, errors.Wrap(err, "workloadPlanner Collate")
+		op, pErr := workloadPlanner.WorkloadCompleted(requestID, w)
+		if pErr != nil {
+			return nil, errors.Wrap(pErr, "workloadPlanner Collate")
 		} else if tOp, ok := op.(Validate); !ok {
 			return nil, errors.New("op wasn't Validate")
 		} else {
