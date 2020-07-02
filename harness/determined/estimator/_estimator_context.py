@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Callable, Dict, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import tensorflow as tf
 
@@ -133,3 +133,12 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
 
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         super().__init__(env=env, hvd_config=hvd_config)
+        self._allgather_fn = None  # type: Optional[Callable[[Any], List]]
+
+    def _set_allgather_fn(self, fn: Callable[[Any], List]) -> None:
+        self._allgather_fn = fn
+
+    def allgather_metrics(self, metrics: Any) -> List:
+        if self._allgather_fn is None:
+            raise AssertionError("allgather_metrics must not be called before training begins")
+        return self._allgather_fn(metrics)
