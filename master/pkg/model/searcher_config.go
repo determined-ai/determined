@@ -129,7 +129,7 @@ func (r RandomConfig) validateDeprecated() []error {
 
 func (r RandomConfig) validateNew() []error {
 	return []error{
-		check.GreaterThan(r.MaxSteps, 0, "max_steps must be > 0"),
+		check.GreaterThan(r.MaxLength.Units, 0, "max_length must be > 0"),
 		check.GreaterThan(r.MaxTrials, 0, "max_trials must be > 0"),
 	}
 }
