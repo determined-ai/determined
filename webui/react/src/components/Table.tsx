@@ -1,85 +1,96 @@
 import { Tooltip } from 'antd';
-import { ColumnType } from 'antd/lib/table';
 import React from 'react';
 import TimeAgo from 'timeago-react';
 
 import Avatar from 'components/Avatar';
-import { BadgeType } from 'components/Badge';
-import Badge from 'components/Badge';
+import Badge, { BadgeType } from 'components/Badge';
+import Icon from 'components/Icon';
+import ProgressBar from 'components/ProgressBar';
 import TaskActionDropdown from 'components/TaskActionDropdown';
-import { CommandState, CommandTask, Experiment } from 'types';
-import { alphanumericSorter, commandStateSorter,
-  stringTimeSorter } from 'utils/data';
-import { experimentToTask, isExperiment, oneOfProperties } from 'utils/types';
+import { CommandTask, CommandType, ExperimentItem } from 'types';
+import { floatToPercent } from 'utils/string';
+import { experimentDuration, shortEnglishHumannizer } from 'utils/time';
+import { commandTypeToLabel, experimentToTask, isExperiment } from 'utils/types';
 
 import css from './Table.module.scss';
 
-type TableRecord = CommandTask | Experiment;
+type TableRecord = CommandTask | ExperimentItem;
 
-export type Renderer<T> = (text: string, record: T, index: number) => React.ReactNode
+export type Renderer = <T extends TableRecord>(
+  text: string, record: T, index: number,
+) => React.ReactNode;
 
-export const ellipsisRenderer: Renderer<CommandTask> = text => {
-  return <Tooltip title={text}><span>{text}</span></Tooltip>;
-};
+type ExperimentRenderer = (text: string, record: ExperimentItem, index: number) => React.ReactNode;
+type TaskRenderer = (text: string, record: CommandTask, index: number) => React.ReactNode;
 
-const userRenderer: Renderer<TableRecord> = (_, record) => {
+/* Table Column Renderers */
+
+export const actionsRenderer: Renderer = (_, record) => {
   if (isExperiment(record)) {
-    // TODO present username once available on experiments endpoint.
-    return <Avatar name={record.ownerId.toString()} />;
+    return <TaskActionDropdown task={experimentToTask(record)} />;
   } else {
-    return <Avatar name={record.username} />;
+    return <TaskActionDropdown task={record as CommandTask} />;
   }
 };
 
-export const userColumn: ColumnType<TableRecord> = {
-  render: userRenderer,
-  sorter: (a: TableRecord, b: TableRecord): number => {
-    const aValue = oneOfProperties<string|number>(a, [ 'username', 'ownerId' ]).toString();
-    const bValue = oneOfProperties<string|number>(b, [ 'username', 'ownerId' ]).toString();
-    return alphanumericSorter(aValue, bValue);
-  },
-  title: 'User',
-  width: 70,
-};
-
-export const stateRenderer: Renderer<TableRecord> = (_, record) => (
-  <div className={css.centerVertically}>
-    <Badge state={record.state} type={BadgeType.State} />
-  </div>
-);
-
-export const stateColumn: ColumnType<TableRecord> = {
-  render: stateRenderer,
-  sorter: (a, b): number => commandStateSorter(a.state as CommandState, b.state as CommandState),
-  title: 'State',
-  width: 120,
-};
-
-const startTimeRenderer: Renderer<TableRecord> = (_, record) => (
+export const startTimeRenderer: Renderer = (_, record) => (
   <span title={new Date(parseInt(record.startTime) * 1000).toTimeString()}>
     <TimeAgo datetime={record.startTime} />
   </span>
 );
 
-export const startTimeColumn: ColumnType<TableRecord> = {
-  defaultSortOrder: 'descend',
-  render: startTimeRenderer,
-  sorter: (a, b): number => stringTimeSorter(a.startTime, b.startTime),
-  title: 'Start Time',
-  width: 120,
+export const stateRenderer: Renderer = (_, record) => (
+  <div className={css.centerVertically}>
+    <Badge state={record.state} type={BadgeType.State} />
+  </div>
+);
+
+export const tooltipRenderer: Renderer = text => (
+  <Tooltip placement="topLeft" title={text}><span>{text}</span></Tooltip>
+);
+
+export const userRenderer: Renderer = (_, record) => <Avatar name={record.username} />;
+
+/* Command Task Table Column Renderers */
+
+export const taskIdRenderer: TaskRenderer = id => (
+  <Tooltip placement="topLeft" title={id}>
+    <div className={css.centerVertically}>
+      <Badge type={BadgeType.Id}>{id.split('-')[0]}</Badge>
+    </div>
+  </Tooltip>
+);
+
+export const taskTypeRenderer: TaskRenderer = (_, record) => (
+  <Tooltip placement="topLeft" title={commandTypeToLabel[record.type as unknown as CommandType]}>
+    <div className={css.centerVertically}>
+      <Icon name={record.type.toLowerCase()} />
+    </div>
+  </Tooltip>
+);
+
+/* Experiemnt Table Column Renderers */
+
+export const experimentDescriptionRenderer: ExperimentRenderer = (_, record) => {
+  // TODO handle displaying labels not fitting the column width
+  const labels = [ 'object detection', 'pytorch' ]; // TODO get from config
+  const labelEls = labels.map((text, idx) => <Badge key={idx}>{text}</Badge>);
+  return (
+    <div className={css.nameColumn}>
+      <div>{record.name || ''}</div>
+      <div>{labelEls}</div>
+    </div>
+  );
 };
 
-const actionsRenderer: Renderer<TableRecord> =
-  (_, record) => {
-    if (isExperiment(record)) {
-      return <TaskActionDropdown task={experimentToTask(record)} />;
-    } else {
-      return <TaskActionDropdown task={record} />;
-    }
-  };
+export const expermentDurationRenderer: ExperimentRenderer = (_, record) => {
+  return shortEnglishHumannizer(experimentDuration(record));
+};
 
-export const actionsColumn: ColumnType<TableRecord> = {
-  render: actionsRenderer,
-  title: '',
-  width: 36,
+export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
+  if (!record.progress) return;
+  return <ProgressBar
+    percent={record.progress * 100}
+    state={record.state}
+    title={floatToPercent(record.progress, 0)} />;
 };

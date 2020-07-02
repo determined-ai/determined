@@ -36,16 +36,6 @@ export const categorize = <T>(array: T[], keyFn: ((arg0: T) => string)): Record<
   return d;
 };
 
-export const stringTimeSorter = (a: string, b: string): number => {
-  const aTime = new Date(a).getTime();
-  const bTime = new Date(b).getTime();
-  return aTime - bTime;
-};
-
-export const alphanumericSorter = (a: string|number, b: string|number): number => {
-  return a.toString().localeCompare(b.toString(), 'en', { numeric: true });
-};
-
 const runStateSortValues: Record<RunState, number> = {
   [RunState.Active]: 0,
   [RunState.Paused]: 1,
@@ -68,12 +58,24 @@ const commandStateSortValues: Record<CommandState, number> = {
   [CommandState.Terminated]: 6,
 };
 
+/* Sorters */
+
+export const alphanumericSorter = (a: string|number, b: string|number): number => {
+  return a.toString().localeCompare(b.toString(), 'en', { numeric: true });
+};
+
 export const commandStateSorter = (a: CommandState, b: CommandState): number => {
   return commandStateSortValues[a] - commandStateSortValues[b];
 };
 
 export const runStateSorter = (a: RunState, b: RunState): number => {
   return runStateSortValues[a] - runStateSortValues[b];
+};
+
+export const stringTimeSorter = (a: string, b: string): number => {
+  const aTime = new Date(a).getTime();
+  const bTime = new Date(b).getTime();
+  return aTime - bTime;
 };
 
 export const taskStateSorter = (a: State, b: State): number => {

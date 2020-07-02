@@ -1,19 +1,24 @@
-import { Input } from 'antd';
+import { Button, Input, notification, Table } from 'antd';
+import axios from 'axios';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
+import { makeClickHandler } from 'components/Link';
+import linkCss from 'components/Link.module.scss';
 import Page from 'components/Page';
+import TableBatch from 'components/TableBatch';
 import TaskFilter from 'components/TaskFilter';
-import TaskTable from 'components/TaskTable';
 import Auth from 'contexts/Auth';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Users from 'contexts/Users';
 import useStorage from 'hooks/useStorage';
-import { ALL_VALUE, CommandType, TaskFilters } from 'types';
-import { filterTasks } from 'utils/task';
-import { commandToTask } from 'utils/types';
+import { killCommand } from 'services/api';
+import { ALL_VALUE, CommandTask, CommandType, TaskFilters } from 'types';
+import { canBeOpened, filterTasks } from 'utils/task';
+import { commandToTask, isTaskKillable } from 'utils/types';
 
 import css from './TaskList.module.scss';
+import { columns } from './TaskList.table';
 
 const defaultFilters: TaskFilters<CommandType> = {
   limit: 25,
@@ -39,6 +44,7 @@ const TaskList: React.FC = () => {
     { ...defaultFilters, username: (auth.user || {}).username });
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
   const [ search, setSearch ] = useState('');
+  const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
 
   const sources = [
     commands,
@@ -59,6 +65,26 @@ const TaskList: React.FC = () => {
     return filterTasks(loadedTasks, filters, users.data || [], search);
   }, [ filters, loadedTasks, search, users.data ]);
 
+  const showBatch = selectedRowKeys.length !== 0;
+
+  const taskMap = useMemo(() => {
+    return (loadedTasks || []).reduce((acc, task) => {
+      acc[task.id] = task;
+      return acc;
+    }, {} as Record<string, CommandTask>);
+  }, [ loadedTasks ]);
+
+  const selectedTasks = useMemo(() => {
+    return selectedRowKeys.map(key => taskMap[key]);
+  }, [ selectedRowKeys, taskMap ]);
+
+  const hasKillable = useMemo(() => {
+    for (let i = 0; i < selectedTasks.length; i++) {
+      if (isTaskKillable(selectedTasks[i])) return true;
+    }
+    return false;
+  }, [ selectedTasks ]);
+
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value || '');
   }, []);
@@ -67,6 +93,29 @@ const TaskList: React.FC = () => {
     storage.set('filters', filters);
     setFilters(filters);
   }, [ setFilters, storage ]);
+
+  const handleBatchKill = useCallback(async () => {
+    try {
+      const source = axios.CancelToken.source();
+      const promises = selectedTasks.map(task => killCommand({
+        cancelToken: source.token,
+        commandId: task.id,
+        commandType: task.type,
+      }));
+      await Promise.all(promises);
+    } catch (e) {
+      notification.warn({
+        description: 'Please try again later.',
+        message: 'Unable to Kill Selected Tasks',
+      });
+    }
+  }, [ selectedTasks ]);
+
+  const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
+
+  const handleTableRow = useCallback((record: CommandTask) => ({
+    onClick: canBeOpened(record) ? makeClickHandler(record.url as string) : undefined,
+  }), []);
 
   // TODO select and batch operation:
   // https://ant.design/components/table/#components-table-demo-row-selection-and-operation
@@ -86,7 +135,22 @@ const TaskList: React.FC = () => {
             showLimit={false}
             onChange={handleFilterChange} />
         </div>
-        <TaskTable tasks={hasLoaded ? filteredTasks : undefined} />
+        <TableBatch message="Apply batch operations to multiple tasks." show={showBatch}>
+          <Button
+            danger
+            disabled={!hasKillable}
+            type="primary"
+            onClick={handleBatchKill}>Kill</Button>
+        </TableBatch>
+        <Table
+          columns={columns}
+          dataSource={filteredTasks}
+          loading={!hasLoaded}
+          rowClassName={(record): string => canBeOpened(record) ? linkCss.base : ''}
+          rowKey="id"
+          rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
+          size="small"
+          onRow={handleTableRow} />
       </div>
     </Page>
   );
