@@ -21,8 +21,6 @@ type pbtSearch struct {
 	trialParams          map[RequestID]hparamSample
 	waitingOps           map[Operation][]Operation
 
-	expectedUnits model.Length
-
 	// earlyExitTrials contains trials that exited early that are still considered in the search.
 	earlyExitTrials map[RequestID]bool
 }
@@ -37,8 +35,6 @@ func newPBTSearch(config model.PBTConfig) SearchMethod {
 		trialParams:          make(map[RequestID]hparamSample),
 		waitingOps:           make(map[Operation][]Operation),
 		earlyExitTrials:      make(map[RequestID]bool),
-		expectedUnits: model.NewLength(config.LengthPerRound.Unit,
-			config.NumRounds*config.PopulationSize*config.LengthPerRound.Units),
 	}
 }
 
@@ -213,7 +209,8 @@ func (s *pbtSearch) checkpointCompleted(
 }
 
 func (s *pbtSearch) progress(unitsCompleted model.Length) float64 {
-	return float64(unitsCompleted.Units) / float64(s.expectedUnits.Units)
+	return float64(unitsCompleted.Units) / float64(
+		s.LengthPerRound.MultInt(s.PopulationSize).MultInt(s.NumRounds).Units)
 }
 
 func (s *pbtSearch) trialExitedEarly(ctx context, requestID RequestID) ([]Operation, error) {

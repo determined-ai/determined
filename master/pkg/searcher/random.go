@@ -9,21 +9,15 @@ import (
 type randomSearch struct {
 	defaultSearchMethod
 	model.RandomConfig
-
-	expectedUnits model.Length
 }
 
 func newRandomSearch(config model.RandomConfig) SearchMethod {
-	return &randomSearch{
-		RandomConfig:  config,
-		expectedUnits: config.MaxLength.MultInt(config.MaxTrials),
-	}
+	return &randomSearch{RandomConfig: config}
 }
 
 func newSingleSearch(config model.SingleConfig) SearchMethod {
 	return &randomSearch{
-		RandomConfig:  model.RandomConfig{MaxTrials: 1, MaxLength: config.MaxLength},
-		expectedUnits: config.MaxLength,
+		RandomConfig: model.RandomConfig{MaxTrials: 1, MaxLength: config.MaxLength},
 	}
 }
 
@@ -40,7 +34,7 @@ func (s *randomSearch) initialOperations(ctx context) ([]Operation, error) {
 }
 
 func (s *randomSearch) progress(unitsCompleted model.Length) float64 {
-	return float64(unitsCompleted.Units) / float64(s.expectedUnits.Units)
+	return float64(unitsCompleted.Units) / float64(s.MaxLength.MultInt(s.MaxTrials).Units)
 }
 
 // trialExitedEarly does nothing since random does not take actions based on

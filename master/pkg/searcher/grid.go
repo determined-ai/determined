@@ -12,22 +12,17 @@ import (
 type gridSearch struct {
 	defaultSearchMethod
 	model.GridConfig
-	trials        int
-	expectedUnits model.Length
+	trials int
 }
 
 func newGridSearch(config model.GridConfig) SearchMethod {
-	return &gridSearch{
-		GridConfig:    config,
-		expectedUnits: model.NewLength(config.MaxLength.Unit, 0),
-	}
+	return &gridSearch{GridConfig: config}
 }
 
 func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
 	var operations []Operation
 	grid := newHyperparameterGrid(ctx.hparams)
 	s.trials = len(grid)
-	s.expectedUnits = s.GridConfig.MaxLength.MultInt(s.trials)
 	for _, params := range grid {
 		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
 		operations = append(operations, create)
@@ -39,7 +34,7 @@ func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
 }
 
 func (s *gridSearch) progress(unitsCompleted model.Length) float64 {
-	return float64(unitsCompleted.Units) / float64(s.expectedUnits.Units)
+	return float64(unitsCompleted.Units) / float64(s.GridConfig.MaxLength.MultInt(s.trials).Units)
 }
 
 // trialExitedEarly does nothing since grid does not take actions based on
