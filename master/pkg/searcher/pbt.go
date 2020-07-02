@@ -124,10 +124,6 @@ func (s *pbtSearch) runNewTrials(ctx context, requestID RequestID) ([]Operation,
 	// Checkpoint and copy the best trials.
 	for _, requestID := range trialIDs[:numTruncate] {
 		if !s.earlyExitTrials[requestID] {
-			// TODO(pickup): context:
-			// checkpoints get inserted with a step id,
-			// maybe this goes through the step planner, gets curStep - 1, maybe that doesn't
-			// always work. hard to know without reading a lot of code.
 			checkpoint := NewCheckpoint(requestID)
 			ops = append(ops, checkpoint)
 
@@ -139,11 +135,11 @@ func (s *pbtSearch) runNewTrials(ctx context, requestID RequestID) ([]Operation,
 			s.trialParams[create.RequestID] = newParams
 
 			// The new trial cannot begin until the checkpoint has been completed.
-			s.waitingOps[checkpoint] = []Operation{create}
-			s.waitingOps[checkpoint] = append(s.waitingOps[checkpoint],
-				NewTrain(create.RequestID, s.LengthPerRound))
-			s.waitingOps[checkpoint] = append(s.waitingOps[checkpoint],
-				NewValidate(create.RequestID))
+			s.waitingOps[checkpoint] = []Operation{
+				create,
+				NewTrain(create.RequestID, s.LengthPerRound),
+				NewValidate(create.RequestID),
+			}
 		}
 	}
 

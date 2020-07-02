@@ -75,28 +75,28 @@ func NewSearchMethod(c model.SearcherConfig) SearchMethod {
 
 type defaultSearchMethod struct{}
 
-func (d *defaultSearchMethod) trialCreated(context, RequestID) ([]Operation, error) {
+func (defaultSearchMethod) trialCreated(context, RequestID) ([]Operation, error) {
 	return nil, nil
 }
-func (d *defaultSearchMethod) trainCompleted(context, RequestID, Train) ([]Operation, error) {
+func (defaultSearchMethod) trainCompleted(context, RequestID, Train) ([]Operation, error) {
 	return nil, nil
 }
 
-func (d *defaultSearchMethod) checkpointCompleted(
+func (defaultSearchMethod) checkpointCompleted(
 	context, RequestID, Checkpoint, CheckpointMetrics,
 ) ([]Operation, error) {
 	return nil, nil
 }
-func (d *defaultSearchMethod) validationCompleted(
+func (defaultSearchMethod) validationCompleted(
 	context, RequestID, Validate, ValidationMetrics,
 ) ([]Operation, error) {
 	return nil, nil
 }
-func (d *defaultSearchMethod) trialClosed(context, RequestID) ([]Operation, error) {
+func (defaultSearchMethod) trialClosed(context, RequestID) ([]Operation, error) {
 	return nil, nil
 }
 
-func (d defaultSearchMethod) trialExitedEarly( //nolint: unused
+func (defaultSearchMethod) trialExitedEarly( //nolint: unused
 	context, RequestID) ([]Operation, error) {
 	return []Operation{Shutdown{Failure: true}}, nil
 }
