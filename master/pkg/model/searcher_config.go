@@ -102,6 +102,7 @@ func (s SingleConfig) validateNew() []error {
 func (s SingleConfig) shim(batchesPerStep int) *SingleConfig {
 	if s.MaxSteps > 0 {
 		s.MaxLength = NewLengthInBatches(s.MaxSteps * batchesPerStep)
+		s.MaxSteps = 0
 	}
 	return &s
 }
@@ -137,6 +138,7 @@ func (r RandomConfig) validateNew() []error {
 func (r RandomConfig) shim(batchesPerStep int) *RandomConfig {
 	if r.MaxSteps > 0 {
 		r.MaxLength = NewLengthInBatches(r.MaxSteps * batchesPerStep)
+		r.MaxSteps = 0
 	}
 	return &r
 }
@@ -169,6 +171,7 @@ func (g GridConfig) validateNew() []error {
 func (g GridConfig) shim(batchesPerStep int) *GridConfig {
 	if g.MaxSteps > 0 {
 		g.MaxLength = NewLengthInBatches(g.MaxSteps * batchesPerStep)
+		g.MaxSteps = 0
 	}
 	return &g
 }
@@ -192,6 +195,8 @@ func (s SyncHalvingConfig) shim(batchesPerStep int) *SyncHalvingConfig {
 	if s.TargetTrialSteps > 0 {
 		s.MaxLength = NewLengthInBatches(s.TargetTrialSteps * batchesPerStep)
 		s.Budget = NewLengthInBatches(s.StepBudget * batchesPerStep)
+		s.TargetTrialSteps = 0
+		s.StepBudget = 0
 	}
 	return &s
 }
@@ -238,6 +243,7 @@ func (a AsyncHalvingConfig) validateNew() []error {
 func (a AsyncHalvingConfig) shim(batchesPerStep int) *AsyncHalvingConfig {
 	if a.TargetTrialSteps > 0 {
 		a.MaxLength = NewLengthInBatches(a.TargetTrialSteps * batchesPerStep)
+		a.TargetTrialSteps = 0
 	}
 	return &a
 }
@@ -311,6 +317,8 @@ func (a AdaptiveConfig) shim(batchesPerStep int) *AdaptiveConfig {
 	if a.TargetTrialSteps > 0 {
 		a.MaxLength = NewLengthInBatches(a.TargetTrialSteps * batchesPerStep)
 		a.Budget = NewLengthInBatches(a.StepBudget * batchesPerStep)
+		a.TargetTrialSteps = 0
+		a.StepBudget = 0
 	}
 	return &a
 }
@@ -363,6 +371,7 @@ func (a AdaptiveSimpleConfig) validateNew() []error {
 func (a AdaptiveSimpleConfig) shim(batchesPerStep int) *AdaptiveSimpleConfig {
 	if a.MaxSteps > 0 {
 		a.MaxLength = NewLengthInBatches(a.MaxSteps * batchesPerStep)
+		a.MaxSteps = 0
 	}
 	return &a
 }
@@ -415,6 +424,7 @@ func (a AdaptiveASHAConfig) validateNew() []error {
 func (a AdaptiveASHAConfig) shim(batchesPerStep int) *AdaptiveASHAConfig {
 	if a.TargetTrialSteps > 0 {
 		a.MaxLength = NewLengthInBatches(a.TargetTrialSteps * batchesPerStep)
+		a.TargetTrialSteps = 0
 	}
 	return &a
 }
@@ -489,6 +499,7 @@ func (p PBTConfig) validateNew() []error {
 func (p PBTConfig) shim(batchesPerStep int) *PBTConfig {
 	if p.StepsPerRound > 0 {
 		p.LengthPerRound = NewLengthInBatches(p.StepsPerRound * batchesPerStep)
+		p.StepsPerRound = 0
 	}
 	return &p
 }
