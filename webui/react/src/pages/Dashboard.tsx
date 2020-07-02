@@ -17,11 +17,11 @@ import Users from 'contexts/Users';
 import useStorage from 'hooks/useStorage';
 import { ShirtSize } from 'themes';
 import {
-  ALL_VALUE, Command, CommandState, CommandType, RecentTask, ResourceType, RunState,
+  ALL_VALUE, Command, CommandType, RecentTask, ResourceType,
   TaskFilters, TaskType,
 } from 'types';
-import { filterTasks, isExperimentTask } from 'utils/task';
-import { commandToTask, experimentToTask } from 'utils/types';
+import { filterTasks } from 'utils/task';
+import { activeCommandStates, commandToTask, experimentToTask } from 'utils/types';
 
 import css from './Dashboard.module.scss';
 
@@ -37,19 +37,6 @@ const defaultFilters: TaskFilters = {
   },
   username: undefined,
 };
-
-const activeStates = [
-  RunState.Active,
-  RunState.StoppingCanceled,
-  RunState.StoppingCompleted,
-  RunState.StoppingError,
-  CommandState.Assigned,
-  CommandState.Pending,
-  CommandState.Pulling,
-  CommandState.Running,
-  CommandState.Starting,
-  CommandState.Terminating,
-];
 
 const Dashboard: React.FC = () => {
   const auth = Auth.useStateContext();
@@ -70,7 +57,7 @@ const Dashboard: React.FC = () => {
   /* Overview */
 
   const countActiveCommand = (commands: Command[]): number => {
-    return commands.filter(command => command.state !== CommandState.Terminated).length;
+    return commands.filter(command => activeCommandStates.includes(command.state)).length;
   };
 
   const activeTaskTally = {
@@ -119,27 +106,6 @@ const Dashboard: React.FC = () => {
 
   const taskFilter = <TaskFilter filters={filters} onChange={handleFilterChange} />;
 
-  /* Overview */
-
-  const activeTally = loadedTasks
-    .filter(task => activeStates.includes(task.state))
-    .reduce((acc, task) => {
-      const attr: TaskType = isExperimentTask(task) ? 'Experiment' : task.type;
-      return { ...acc, attr: acc[attr] + 1 };
-    }, {
-      [CommandType.Command]: 0,
-      Experiment: 0,
-      [CommandType.Notebook]: 0,
-      [CommandType.Shell]: 0,
-      [CommandType.Tensorboard]: 0,
-    });
-
-  const emptyView = (
-    <Message>
-      No recent tasks matching the current filters.
-    </Message>
-  );
-
   return (
     <Page className={css.base} hideTitle title="Dashboard">
       <Section title="Overview">
@@ -156,20 +122,20 @@ const Dashboard: React.FC = () => {
               {overview[ResourceType.CPU].available}
               <small>/{overview[ResourceType.CPU].total}</small>
             </OverviewStats> : null}
-            {activeTally.Experiment ? <OverviewStats title="Active Experiments">
+            {activeTaskTally.Experiment ? <OverviewStats title="Active Experiments">
               {activeTaskTally.Experiment}
             </OverviewStats> : null}
-            {activeTally[CommandType.Notebook] ? <OverviewStats title="Active Notebooks">
-              {activeTally[CommandType.Notebook]}
+            {activeTaskTally[CommandType.Notebook] ? <OverviewStats title="Active Notebooks">
+              {activeTaskTally[CommandType.Notebook]}
             </OverviewStats> : null}
-            {activeTally[CommandType.Tensorboard] ? <OverviewStats title="Active Tensorboards">
-              {activeTally[CommandType.Tensorboard]}
+            {activeTaskTally[CommandType.Tensorboard] ? <OverviewStats title="Active Tensorboards">
+              {activeTaskTally[CommandType.Tensorboard]}
             </OverviewStats> : null}
-            {activeTally[CommandType.Shell] ? <OverviewStats title="Active Shells">
-              {activeTally[CommandType.Shell]}
+            {activeTaskTally[CommandType.Shell] ? <OverviewStats title="Active Shells">
+              {activeTaskTally[CommandType.Shell]}
             </OverviewStats> : null}
-            {activeTally[CommandType.Command] ? <OverviewStats title="Active Commands">
-              {activeTally[CommandType.Command]}
+            {activeTaskTally[CommandType.Command] ? <OverviewStats title="Active Commands">
+              {activeTaskTally[CommandType.Command]}
             </OverviewStats> : null}
           </Grid>
         </div>
@@ -179,7 +145,7 @@ const Dashboard: React.FC = () => {
           ? <Spinner />
           : tasks.length !== 0
             ? <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>{tasks}</Grid>
-            : emptyView
+            : <Message>No recent tasks matching the current filters.</Message>
         }
       </Section>
     </Page>
