@@ -18,6 +18,9 @@ import { isExperimentTask } from 'utils/task';
 
 export const sApi = new DetSwagger.AuthenticationApi(undefined, serverAddress());
 
+export const sApi2 = new DetSwagger2.DeterminedApi(undefined, serverAddress());
+type MyType = DetSwagger2.V1Model;
+
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAuthFailure = (e: any): boolean => {
   return e.response && e.response.status && e.response.status === 401;
