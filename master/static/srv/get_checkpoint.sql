@@ -13,8 +13,8 @@ SELECT
     COALESCE(c.format, '') as format,
     COALESCE(c.determined_version, '') as determined_version,
     v.metrics AS metrics,
-    '' || v.state AS validation_state,
-    '' || c.state AS state
+    'STATE_' || v.state AS validation_state,
+    'STATE_' || c.state AS state
 FROM checkpoints c
 JOIN steps s ON c.step_id = s.id AND c.trial_id = s.trial_id
 LEFT JOIN validations v ON v.step_id = s.id AND v.trial_id = s.trial_id
