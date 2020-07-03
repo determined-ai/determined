@@ -18,9 +18,8 @@ from termcolor import colored
 import determined_common
 from determined_cli import checkpoint, render
 from determined_cli.declarative_argparse import Arg, Cmd, Group
-from determined_cli.trial import logs
-from determined_cli.user import authentication_required
 from determined_common import api, constants, context
+from determined_common.api.authentication import authentication_required
 from determined_common.experimental import Determined
 
 from .checkpoint import render_checkpoint
@@ -50,103 +49,6 @@ def archive(args: Namespace) -> None:
 def cancel(args: Namespace) -> None:
     patch_experiment(args, "cancel", {"state": "STOPPING_CANCELED"})
     print("Canceled experiment {}".format(args.experiment_id))
-
-
-def follow_experiment_logs(master_url: str, exp_id: int) -> None:
-    # Get the ID of this experiment's first trial (i.e., the one with the lowest ID).
-    print("Waiting for first trial to begin...")
-    while True:
-        r = api.get(master_url, "experiments/{}".format(exp_id))
-        if len(r.json()["trials"]) > 0:
-            break
-        else:
-            time.sleep(0.1)
-
-    first_trial_id = sorted(t_id["id"] for t_id in r.json()["trials"])[0]
-    print("Following first trial with ID {}".format(first_trial_id))
-
-    # Call `logs --follow` on the new trial.
-    logs_args = Namespace(trial_id=first_trial_id, follow=True, master=master_url, tail=None)
-    logs(logs_args)
-
-
-def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
-    def print_progress(active_stage: int, ended: bool) -> None:
-        # There are four sequential stages of verification. Track the
-        # current stage with an index into this list.
-        stages = [
-            "Scheduling task",
-            "Testing training",
-            "Testing validation",
-            "Testing checkpointing",
-        ]
-
-        for idx, stage in enumerate(stages):
-            if active_stage > idx:
-                color = "green"
-                checkbox = "✔"
-            elif active_stage == idx:
-                color = "red" if ended else "yellow"
-                checkbox = "✗" if ended else " "
-            else:
-                color = "white"
-                checkbox = " "
-            print(colored(stage + (25 - len(stage)) * ".", color), end="")
-            print(colored(" [" + checkbox + "]", color), end="")
-
-            if idx == len(stages) - 1:
-                print("\n" if ended else "\r", end="")
-            else:
-                print(", ", end="")
-
-    while True:
-        r = api.get(master_url, "experiments/{}".format(exp_id)).json()
-
-        # Wait for experiment to start and initialize a trial and step.
-        if len(r["trials"]) < 1 or len(r["trials"][0]["steps"]) < 1:
-            step = {}  # type: Dict
-        else:
-            step = r["trials"][0]["steps"][0]
-
-        # Update the active_stage by examining the result from master
-        # /experiments/<experiment-id> endpoint.
-        if r["state"] == constants.COMPLETED:
-            active_stage = 4
-        elif step.get("checkpoint"):
-            active_stage = 3
-        elif step.get("validation"):
-            active_stage = 2
-        elif step:
-            active_stage = 1
-        else:
-            active_stage = 0
-
-        # If the experiment is in a terminal state, output the appropriate
-        # message and exit. Otherwise, sleep and repeat.
-        if r["state"] == constants.COMPLETED:
-            print_progress(active_stage, ended=True)
-            print(colored("Model definition test succeeded! 🎉", "green"))
-            return
-        elif r["state"] == constants.CANCELED:
-            print_progress(active_stage, ended=True)
-            print(
-                colored(
-                    "Model definition test (ID: {}) canceled before "
-                    "model test could complete. Please re-run the "
-                    "command.".format(exp_id),
-                    "yellow",
-                )
-            )
-            sys.exit(1)
-        elif r["state"] == constants.ERROR:
-            print_progress(active_stage, ended=True)
-            trial_id = r["trials"][0]["id"]
-            logs_args = Namespace(trial_id=trial_id, master=master_url, tail=None, follow=False)
-            logs(logs_args)
-            sys.exit(1)
-        else:
-            print_progress(active_stage, ended=False)
-            time.sleep(0.2)
 
 
 def read_git_metadata(model_def_path: pathlib.Path) -> Tuple[str, str, str, str]:
@@ -257,7 +159,7 @@ def submit_experiment(args: Namespace) -> None:
             additional_body_fields=additional_body_fields,
         )
         print(colored("Test experiment ID: {}".format(exp_id), "green"))
-        follow_test_experiment_logs(args.master, exp_id)
+        api.experiment.follow_test_experiment_logs(args.master, exp_id)
     else:
         exp_id = api.experiment.create_experiment(
             master_url=args.master,
@@ -270,7 +172,7 @@ def submit_experiment(args: Namespace) -> None:
         )
         print("Created experiment {}".format(exp_id))
         if not args.paused and args.follow_first_trial:
-            follow_experiment_logs(args.master, exp_id)
+            api.experiment.follow_experiment_logs(args.master, exp_id)
 
 
 def local_experiment(args: Namespace) -> None:
