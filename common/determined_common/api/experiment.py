@@ -93,7 +93,6 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
     config.setdefault(
         "data_layer", {"type": "shared_fs", "container_storage_path": "/tmp/determined"}
     )
-
     return config_test
 
 
