@@ -88,24 +88,38 @@ message PatchModelResponse {
   determined.model.v1.Model model = 1;
 }
 
+// Request for a version of a model in the regsitry.
 message GetModelVersionRequest {
+  // The name of the model.
   string model_name = 1;
+  // The version number.
   int32 model_version = 2;
 }
 
+// Response for GetModelVersionRequest.
 message GetModelVersionResponse {
+  // The model for the version requested.
   determined.model.v1.Model model = 1;
+  // The checkpoint of the model version.
   determined.checkpoint.v1.Checkpoint checkpoint = 2;
+  // The version number.
   int32 version = 3;
 }
 
+// Request for creating a model version
 message PostModelVersionRequest {
+  // The name of the model to add a version to.
   string model_name = 1;
+  // The checkpoint representing the new version.
   string checkpoint_uuid = 2;
 }
 
+// Response for PostModelVersionRequest.
 message PostModelVersionResponse {
+  // The model for the version created.
   determined.model.v1.Model model = 1;
+  // The checkpoint for the version created.
   determined.checkpoint.v1.Checkpoint checkpoint = 2;
+  // The version number.
   int32 version = 3;
 }

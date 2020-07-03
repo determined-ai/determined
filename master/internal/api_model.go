@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -127,31 +126,39 @@ func (a *apiServer) GetModelVersion(
 func (a *apiServer) PostModelVersion(
 	_ context.Context, req *apiv1.PostModelVersionRequest) (*apiv1.PostModelVersionResponse, error) {
 	// make sure that the model exists before adding a version
-	m, err := a.modelByName(req.ModelName)
-	if err != nil {
-		return nil, err
+	m, getModelErr := a.modelByName(req.ModelName)
+	if getModelErr != nil {
+		return nil, getModelErr
 	}
 
 	// make sure the checkpoint exists
 	c := &checkpointv1.Checkpoint{}
 
-	parsedUUID, err := uuid.Parse(req.CheckpointUuid)
-	if err != nil {
-		return nil, err
-	}
-
-	switch err := a.m.db.QueryProto("get_checkpoint", c, parsedUUID); {
-	case err == db.ErrNotFound:
+	switch getCheckpointErr := a.m.db.QueryProto("get_checkpoint", c, req.CheckpointUuid); {
+	case getCheckpointErr == db.ErrNotFound:
 		return nil, status.Errorf(
 			codes.NotFound, "checkpoint %s not found", req.CheckpointUuid)
-	case err != nil:
-		return nil, err
+	case getCheckpointErr != nil:
+		return nil, getCheckpointErr
+	}
+
+	if c.State != checkpointv1.Checkpoint_STATE_COMPLETED {
+		return nil, errors.Errorf(
+			"checkpoint %s is in %s state. checkpoints for model versions must be in a COMPLETED state",
+			c.Uuid, c.State,
+		)
 	}
 
 	respModelVersion := &apiv1.PostModelVersionResponse{}
 
-	err = a.m.db.QueryProto(
-		"insert_model_version", respModelVersion, req.ModelName, req.CheckpointUuid, time.Now(), time.Now())
+	err := a.m.db.QueryProto(
+		"insert_model_version",
+		respModelVersion,
+		req.ModelName,
+		req.CheckpointUuid,
+		time.Now(),
+		time.Now(),
+	)
 
 	respModelVersion.Model = m
 	respModelVersion.Checkpoint = c
