@@ -11,11 +11,11 @@ import (
 
 // Searcher encompasses the state as the searcher progresses using the provided search method.
 type Searcher struct {
-	rand                 *nprand.State
-	hparams              model.Hyperparameters
-	eventLog             *EventLog
-	method               SearchMethod
-	trialWorkloadPlanner TrialWorkloadPlanner
+	rand             *nprand.State
+	hparams          model.Hyperparameters
+	eventLog         *EventLog
+	method           SearchMethod
+	operationPlanner OperationPlanner
 }
 
 // NewSearcher creates a new Searcher configured with the provided searcher config.
@@ -25,11 +25,11 @@ func NewSearcher(
 ) *Searcher {
 	rand := nprand.New(seed)
 	return &Searcher{
-		rand:                 rand,
-		hparams:              hparams,
-		eventLog:             NewEventLog(),
-		method:               method,
-		trialWorkloadPlanner: NewTrialWorkloadPlanner(method.unit(), batchesPerStep, recordsPerEpoch),
+		rand:             rand,
+		hparams:          hparams,
+		eventLog:         NewEventLog(),
+		method:           method,
+		operationPlanner: NewOperationPlanner(method.unit(), batchesPerStep, recordsPerEpoch),
 	}
 }
 
@@ -78,7 +78,7 @@ func (s *Searcher) InitialOperations() ([]Operation, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "error while fetching initial operations of search method")
 	}
-	operations = s.trialWorkloadPlanner.Plan(operations)
+	operations = s.operationPlanner.Plan(operations)
 	s.eventLog.OperationsCreated(operations...)
 	operations, err = s.filterCompletedCheckpoints(operations)
 	if err != nil {
@@ -96,7 +96,7 @@ func (s *Searcher) TrialCreated(create Create, trialID int) ([]Operation, error)
 		return nil, errors.Wrapf(err,
 			"error while handling a trial created event: %s", create.RequestID)
 	}
-	operations = s.trialWorkloadPlanner.Plan(operations)
+	operations = s.operationPlanner.Plan(operations)
 	s.eventLog.OperationsCreated(operations...)
 	operations, err = s.filterCompletedCheckpoints(operations)
 	if err != nil {
@@ -120,7 +120,7 @@ func (s *Searcher) WorkloadCompleted(message CompletedMessage) ([]Operation, err
 		return nil, nil
 	}
 
-	operation, err := s.trialWorkloadPlanner.WorkloadCompleted(requestID, message.Workload)
+	operation, err := s.operationPlanner.WorkloadCompleted(requestID, message.Workload)
 	switch {
 	case err != nil:
 		return nil, errors.Wrapf(err, "error collating workload %s", message.Workload)
@@ -153,7 +153,7 @@ func (s *Searcher) WorkloadCompleted(message CompletedMessage) ([]Operation, err
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
 	}
-	operations = s.trialWorkloadPlanner.Plan(operations)
+	operations = s.operationPlanner.Plan(operations)
 	s.eventLog.OperationsCreated(operations...)
 	operations, err = s.filterCompletedCheckpoints(operations)
 	if err != nil {
@@ -170,7 +170,7 @@ func (s *Searcher) TrialClosed(requestID RequestID) ([]Operation, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a trial closed event: %s", requestID)
 	}
-	operations = s.trialWorkloadPlanner.Plan(operations)
+	operations = s.operationPlanner.Plan(operations)
 	s.eventLog.OperationsCreated(operations...)
 	if s.eventLog.TrialsRequested == s.eventLog.TrialsClosed {
 		shutdown := Shutdown{Failure: len(s.eventLog.earlyExits) >= s.eventLog.TrialsRequested}
@@ -186,7 +186,7 @@ func (s *Searcher) TrialClosed(requestID RequestID) ([]Operation, error) {
 
 // Progress returns experiment progress as a float between 0.0 and 1.0.
 func (s *Searcher) Progress() float64 {
-	progress := s.method.progress(s.trialWorkloadPlanner.totalUnitsCompleted)
+	progress := s.method.progress(s.operationPlanner.totalUnitsCompleted)
 	if math.IsNaN(progress) || math.IsInf(progress, 0) {
 		return 0.0
 	}

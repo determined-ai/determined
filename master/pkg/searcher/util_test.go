@@ -248,7 +248,7 @@ func (t *predefinedTrial) CheckComplete() error {
 func checkValueSimulation(
 	t *testing.T,
 	method SearchMethod,
-	workloadPlanner TrialWorkloadPlanner,
+	operationPlanner OperationPlanner,
 	params model.Hyperparameters,
 	expectedTrials []predefinedTrial,
 ) error {
@@ -267,7 +267,7 @@ func checkValueSimulation(
 	if err != nil {
 		return errors.Wrap(err, "initialOperations")
 	}
-	ops = workloadPlanner.Plan(ops)
+	ops = operationPlanner.Plan(ops)
 
 	pending = append(pending, ops...)
 
@@ -295,8 +295,8 @@ func checkValueSimulation(
 			trialID := trialIDs[requestID]
 			trial := expectedTrials[trialID]
 			ops, err = simulateWorkloadComplete(
-				ctx, method, workloadPlanner, trial, operation, requestID)
-			ops = workloadPlanner.Plan(ops)
+				ctx, method, operationPlanner, trial, operation, requestID)
+			ops = operationPlanner.Plan(ops)
 			if trial.EarlyExit == operation.StepID {
 				earlyExit = true
 			}
@@ -364,8 +364,8 @@ func runValueSimulationTestCases(t *testing.T, testCases []valueSimulationTestCa
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			method := NewSearchMethod(tc.config)
-			workloadPlanner := NewTrialWorkloadPlanner(tc.unit, tc.batchesPerStep, tc.recordsPerEpoch)
-			err := checkValueSimulation(t, method, workloadPlanner, tc.hparams, tc.expectedTrials)
+			operationPlanner := NewOperationPlanner(tc.unit, tc.batchesPerStep, tc.recordsPerEpoch)
+			err := checkValueSimulation(t, method, operationPlanner, tc.hparams, tc.expectedTrials)
 			assert.NilError(t, err)
 		})
 	}
@@ -384,7 +384,7 @@ type valueSimulationTestCase struct {
 func simulateWorkloadComplete(
 	ctx context,
 	method SearchMethod,
-	workloadPlanner TrialWorkloadPlanner,
+	operationPlanner OperationPlanner,
 	trial predefinedTrial,
 	operation WorkloadOperation,
 	requestID RequestID,
@@ -402,9 +402,9 @@ func simulateWorkloadComplete(
 			StepID:     operation.StepID,
 			NumBatches: operation.NumBatches,
 		}
-		op, pErr := workloadPlanner.WorkloadCompleted(requestID, w)
+		op, pErr := operationPlanner.WorkloadCompleted(requestID, w)
 		if pErr != nil {
-			return nil, errors.Wrap(pErr, "workloadPlanner Collate")
+			return nil, errors.Wrap(pErr, "trainCompleted")
 		}
 		if trial.EarlyExit == operation.StepID {
 			ops, err = method.trialExitedEarly(ctx, requestID)
@@ -433,9 +433,9 @@ func simulateWorkloadComplete(
 				"error": val,
 			},
 		}
-		op, pErr := workloadPlanner.WorkloadCompleted(requestID, w)
+		op, pErr := operationPlanner.WorkloadCompleted(requestID, w)
 		if pErr != nil {
-			return nil, errors.Wrap(pErr, "workloadPlanner Collate")
+			return nil, errors.Wrap(pErr, "validationCompleted")
 		} else if tOp, ok := op.(Validate); !ok {
 			return nil, errors.New("op wasn't Validate")
 		} else {
@@ -455,9 +455,9 @@ func simulateWorkloadComplete(
 		}
 		metrics := CheckpointMetrics{}
 
-		op, err := workloadPlanner.WorkloadCompleted(requestID, w)
+		op, err := operationPlanner.WorkloadCompleted(requestID, w)
 		if err != nil {
-			return nil, errors.Wrap(err, "workloadPlanner Collate")
+			return nil, errors.Wrap(err, "checkpointCompleted")
 		} else if tOp, ok := op.(Checkpoint); !ok {
 			return nil, errors.New("op wasn't Validate")
 		} else {

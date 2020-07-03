@@ -7,10 +7,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// TrialWorkloadPlanner manages all the context around how requested "units" actually turn into
+// OperationPlanner manages all the context around how requested "units" actually turn into
 // workloads that the trial runs. probably can be merged with trial_workload_sequencer.go once
 // that code is pulled up to the experiment level.
-type TrialWorkloadPlanner struct {
+type OperationPlanner struct {
 	unit                  model.Unit
 	targetBatchesPerStep  int
 	recordsPerEpoch       int
@@ -25,11 +25,11 @@ type opToPlannedOps struct {
 	plannedOps []Operation
 }
 
-// NewTrialWorkloadPlanner creates a workload planner to plan searcher ops into workload ops.
-func NewTrialWorkloadPlanner(
+// NewOperationPlanner creates a workload planner to plan searcher ops into workload ops.
+func NewOperationPlanner(
 	unit model.Unit, targetBatchesPerStep, recordsPerEpoch int,
-) TrialWorkloadPlanner {
-	return TrialWorkloadPlanner{
+) OperationPlanner {
+	return OperationPlanner{
 		unit:                  unit,
 		targetBatchesPerStep:  targetBatchesPerStep,
 		recordsPerEpoch:       recordsPerEpoch,
@@ -41,7 +41,7 @@ func NewTrialWorkloadPlanner(
 }
 
 // Plan plans the given operations.
-func (p *TrialWorkloadPlanner) Plan(ops []Operation) (plannedOps []Operation) {
+func (p *OperationPlanner) Plan(ops []Operation) (plannedOps []Operation) {
 	for _, op := range ops {
 		switch tOp := op.(type) {
 		case Create:
@@ -71,7 +71,7 @@ func (p *TrialWorkloadPlanner) Plan(ops []Operation) (plannedOps []Operation) {
 }
 
 // WorkloadCompleted collates the given workload back into searcher ops.
-func (p *TrialWorkloadPlanner) WorkloadCompleted(
+func (p *OperationPlanner) WorkloadCompleted(
 	requestID RequestID, workload Workload,
 ) (op Operation, err error) {
 	opsToPlannedOps := p.trialOpsToPlannedOps[requestID]
@@ -109,7 +109,7 @@ func (p *TrialWorkloadPlanner) WorkloadCompleted(
 	return nil, nil
 }
 
-func (p *TrialWorkloadPlanner) train(
+func (p *OperationPlanner) train(
 	requestID RequestID,
 	unitsNeeded model.Length,
 ) (ops []Operation) {
@@ -124,16 +124,16 @@ func (p *TrialWorkloadPlanner) train(
 	return ops
 }
 
-func (p *TrialWorkloadPlanner) validate(requestID RequestID) Operation {
+func (p *OperationPlanner) validate(requestID RequestID) Operation {
 	return NewValidateWorkload(requestID, p.stepCounts[requestID])
 }
 
-func (p *TrialWorkloadPlanner) checkpoint(requestID RequestID) Operation {
+func (p *OperationPlanner) checkpoint(requestID RequestID) Operation {
 	return NewCheckpointWorkload(requestID, p.stepCounts[requestID])
 }
 
 // unitsFromWorkload determines the number of units completed during a given workload.
-func (p TrialWorkloadPlanner) unitsFromWorkload(
+func (p OperationPlanner) unitsFromWorkload(
 	unit model.Unit, workload Workload, requestID RequestID,
 ) model.Length {
 	switch unit {
@@ -156,7 +156,7 @@ func (p TrialWorkloadPlanner) unitsFromWorkload(
 // because the harness expects RUN_STEP's to contain the number of batches to train for, so searcher
 // training length must be rounded to the nearest batch before they are sent and partial batches are
 // hard.
-func (p TrialWorkloadPlanner) unitsToBatches(
+func (p OperationPlanner) unitsToBatches(
 	l model.Length, requestID RequestID,
 ) (batches int, truncated model.Length) {
 	globalBatchSize := p.trialGlobalBatchSizes[requestID]
