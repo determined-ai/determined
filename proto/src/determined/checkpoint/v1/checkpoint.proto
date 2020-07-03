@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package determined.checkpoint.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/checkpointv1";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+
+message Checkpoint {
+  enum STATE {
+    UNSPECIFIED = 0;
+    ACTIVE = 1;
+    COMPLETED = 2;
+    ERROR = 3;
+    DELETED = 4;
+  }
+  string uuid = 1;
+  google.protobuf.Struct experiment_config = 2;
+  int32 experiment_id = 3;
+  int32 trial_id  = 4;
+  google.protobuf.Struct hparams = 5;
+  int32 batch_number = 6;
+  google.protobuf.Timestamp start_time  = 7;
+  google.protobuf.Timestamp end_time  = 8;
+  google.protobuf.Struct resources = 9;
+  google.protobuf.Struct metadata = 10;
+  string framework = 11;
+  string format = 12;
+  string determined_version = 13;
+  google.protobuf.Struct metrics = 14;
+  STATE validation_state = 15;
+  STATE state = 16;
+  int32 id = 17;
+  int32 step_id = 18;
+}

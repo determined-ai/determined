@@ -2,9 +2,11 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -12,20 +14,27 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 )
 
-func (a *apiServer) GetModel(
-	_ context.Context, req *apiv1.GetModelRequest) (*apiv1.GetModelResponse, error) {
+func (a *apiServer) modelByName(name string) (*modelv1.Model, error) {
 	m := &modelv1.Model{}
-	switch err := a.m.db.QueryProto("get_model", m, req.ModelName); err {
+	switch err := a.m.db.QueryProto("get_model", m, name); err {
 	case db.ErrNotFound:
 		return nil, status.Errorf(
-			codes.NotFound, "model %s not found", req.ModelName)
+			codes.NotFound, "model %s not found", name)
 	default:
-		return &apiv1.GetModelResponse{Model: m},
-			errors.Wrapf(err, "error fetching model %s from database", req.ModelName)
+		return m,
+			errors.Wrapf(err, "error fetching model %s from database", name)
 	}
+}
+
+func (a *apiServer) GetModel(
+	_ context.Context, req *apiv1.GetModelRequest) (*apiv1.GetModelResponse, error) {
+	m, err := a.modelByName(req.ModelName)
+	return &apiv1.GetModelResponse{Model: m},
+		errors.Wrapf(err, "error fetching model %s from database", req.ModelName)
 }
 
 func (a *apiServer) GetModels(
@@ -62,20 +71,14 @@ func (a *apiServer) PostModel(
 	)
 
 	return &apiv1.PostModelResponse{Model: m},
-		errors.Wrapf(err, "error fetching model %s from database", req.Model.Name)
+		errors.Wrapf(err, "error creating model %s in database", req.Model.Name)
 }
 
 func (a *apiServer) PatchModel(
 	_ context.Context, req *apiv1.PatchModelRequest) (*apiv1.PatchModelResponse, error) {
-	m := &modelv1.Model{}
-
-	switch err := a.m.db.QueryProto("get_model", m, req.Model.Name); {
-	case err == db.ErrNotFound:
-		return nil, status.Errorf(
-			codes.NotFound, "model %s not found", req.Model.Name)
-	case err != nil:
-		return nil, status.Errorf(
-			codes.Internal, "could not query model %s", req.Model.Name)
+	m, err := a.modelByName(req.Model.Name)
+	if err != nil {
+		return nil, err
 	}
 
 	paths := req.UpdateMask.GetPaths()
@@ -103,4 +106,55 @@ func (a *apiServer) PatchModel(
 
 	return &apiv1.PatchModelResponse{Model: respModel},
 		errors.Wrapf(err, "error updating model %s in database", req.Model.Name)
+}
+
+func (a *apiServer) GetModelVersion(
+	_ context.Context, req *apiv1.GetModelVersionRequest) (*apiv1.GetModelVersionResponse, error) {
+	resp := &apiv1.GetModelVersionResponse{}
+
+	switch err := a.m.db.QueryProto("get_model_version", resp, req.ModelName, req.ModelVersion); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(
+			codes.NotFound, "model %s version %d not found", req.ModelName, req.ModelVersion)
+	case err != nil:
+		fmt.Printf("err = %+v\n", err)
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (a *apiServer) PostModelVersion(
+	_ context.Context, req *apiv1.PostModelVersionRequest) (*apiv1.PostModelVersionResponse, error) {
+	// make sure that the model exists before adding a version
+	m, err := a.modelByName(req.ModelName)
+	if err != nil {
+		return nil, err
+	}
+
+	// make sure the checkpoint exists
+	c := &checkpointv1.Checkpoint{}
+
+	parsedUUID, err := uuid.Parse(req.CheckpointUuid)
+	if err != nil {
+		return nil, err
+	}
+
+	switch err := a.m.db.QueryProto("get_checkpoint", c, parsedUUID); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(
+			codes.NotFound, "checkpoint %s not found", req.CheckpointUuid)
+	case err != nil:
+		return nil, err
+	}
+
+	respModelVersion := &apiv1.PostModelVersionResponse{}
+
+	err = a.m.db.QueryProto(
+		"insert_model_version", respModelVersion, req.ModelName, req.CheckpointUuid, time.Now(), time.Now())
+
+	respModelVersion.Model = m
+	respModelVersion.Checkpoint = c
+
+	return respModelVersion, errors.Wrapf(err, "error adding model version to model %s", req.ModelName)
 }

@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/field_mask.proto";
 
+import "determined/checkpoint/v1/checkpoint.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/model/v1/model.proto";
 
@@ -85,4 +86,26 @@ message PatchModelRequest {
 message PatchModelResponse {
   // The model created.
   determined.model.v1.Model model = 1;
+}
+
+message GetModelVersionRequest {
+  string model_name = 1;
+  int32 model_version = 2;
+}
+
+message GetModelVersionResponse {
+  determined.model.v1.Model model = 1;
+  determined.checkpoint.v1.Checkpoint checkpoint = 2;
+  int32 version = 3;
+}
+
+message PostModelVersionRequest {
+  string model_name = 1;
+  string checkpoint_uuid = 2;
+}
+
+message PostModelVersionResponse {
+  determined.model.v1.Model model = 1;
+  determined.checkpoint.v1.Checkpoint checkpoint = 2;
+  int32 version = 3;
 }
