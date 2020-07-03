@@ -7,7 +7,7 @@ get-deps:
 	# which is not built or updated here. To set up this dependency checkout
 	# the swagger generated api client module at ../api-ts-sdk
 	for i in `seq 3`; do \
-		npm ci --unsafe-perm --no-audit && break ; \
+		npm ci --no-audit && break ; \
 	done
 
 .PHONY: build
