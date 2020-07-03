@@ -7,9 +7,9 @@ import "determined/api/v1/pagination.proto";
 
 import "determined/agent/v1/agent.proto";
 
-// Get a set of agents from the cluster
+// Get a set of agents from the cluster.
 message GetAgentsRequest {
-    // Sorts agents by the given field
+    // Sorts agents by the given field.
     enum SortBy {
         // Returns agents in an unsorted list.
         SORT_BY_UNSPECIFIED = 0;

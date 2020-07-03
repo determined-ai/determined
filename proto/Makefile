@@ -28,6 +28,7 @@ build: $(patsubst %.proto, %.pb.go, $(shell find src/determined -type f -name '*
 	rm -rf build/proto
 	mkdir -p build/swagger
 	protoc -I src src/determined/api/v1/api.proto --swagger_out=logtostderr=true:build/swagger
+	python3 scripts/swagger.py build/swagger
 
 .PHONY: check
 check:

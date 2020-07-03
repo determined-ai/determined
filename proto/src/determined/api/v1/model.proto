@@ -4,7 +4,6 @@ package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/field_mask.proto";
-import "google/protobuf/struct.proto";
 
 import "determined/api/v1/pagination.proto";
 import "determined/model/v1/model.proto";
@@ -54,7 +53,7 @@ message GetModelsRequest {
   string description = 6;
 }
 
-// Response to GetModelsRequest
+// Response to GetModelsRequest.
 message GetModelsResponse {
   // The list of returned models.
   repeated determined.model.v1.Model models = 1;
