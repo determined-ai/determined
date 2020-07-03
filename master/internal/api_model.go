@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -116,7 +115,6 @@ func (a *apiServer) GetModelVersion(
 		return nil, status.Errorf(
 			codes.NotFound, "model %s version %d not found", req.ModelName, req.ModelVersion)
 	case err != nil:
-		fmt.Printf("err = %+v\n", err)
 		return nil, err
 	}
 
