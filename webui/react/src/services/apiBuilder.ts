@@ -2,6 +2,11 @@ import axios, { AxiosResponse, CancelToken, Method } from 'axios';
 
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { isAuthFailure } from 'services/api';
+import * as DetSwagger from 'services/api-ts-sdk';
+import { serverAddress } from 'utils/routes';
+
+/* eslint-disable @typescript-eslint/no-var-requires */
+const ndjsonStream = require('can-ndjson-stream');
 
 export const http = axios.create({
   responseType: 'json',
@@ -54,3 +59,22 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
     }
   };
 }
+
+export const consumeStream = async <T = unknown>(
+  fetchArgs: DetSwagger.FetchArgs,
+  onEvent: (event: T) => void,
+  onFinish: () => void): Promise<void> => {
+  let response;
+  try {
+    response = await fetch(serverAddress() + fetchArgs.url, fetchArgs.options);
+  } catch (e) {
+    return processApiError(fetchArgs.url, e);
+  }
+  const exampleReader = ndjsonStream(response.body).getReader();
+  let result;
+  while (!result || !result.done) {
+    result = await exampleReader.read();
+    if (result.done) return onFinish();
+    onEvent(result.value.result);
+  }
+};
