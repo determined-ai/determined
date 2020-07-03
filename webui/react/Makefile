@@ -6,6 +6,7 @@ get-deps:
 	# WARN this module also depends on the swagger generated api client
 	# which is not built or updated here. To set up this dependency checkout
 	# the swagger generated api client module at ../api-ts-sdk
+	cp -r ../api-ts-sdk/src src/services/api-ts-sdk
 	for i in `seq 3`; do \
 		npm ci --no-audit && break ; \
 	done
@@ -20,7 +21,7 @@ build-storybook:
 
 .PHONY: clean
 clean:
-	rm -rf build build-storybook node_modules/
+	rm -rf build build-storybook node_modules/ src/services/api-ts-sdk
 
 .PHONY: live
 live:

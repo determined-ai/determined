@@ -3,8 +3,8 @@ import * as DetSwagger from '@determined-ai/api-ts-sdk';
 import { CancelToken } from 'axios';
 
 import * as DetSwagger2 from 'services/api-ts-sdk';
-import { generateApi } from 'services/apiBuilder';
 import { processApiError } from 'services/apiBuilder';
+import { generateApi } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
 import { CommandLogsParams, ExperimentDetailsParams, ExperimentsParams, KillCommandParams,
   KillExpParams, LaunchTensorboardParams, LogsParams, PatchExperimentParams,

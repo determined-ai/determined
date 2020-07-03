@@ -3,7 +3,7 @@
 # dependencies
 /.pnp
 .pnp.js
-src/services/swagger/
+src/services/api-ts-sdk/
 
 # testing
 /coverage
@@ -20,3 +20,4 @@ build-storybook/
 .env.production.local
 
 report.*.json
+
