@@ -29,6 +29,7 @@
     "io-ts": "^2.2.4",
     "js-sha512": "^0.8.0",
     "plotly.js-basic-dist": "^1.54.1",
+    "portable-fetch": "^3.0.0",
     "query-string": "^6.12.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
