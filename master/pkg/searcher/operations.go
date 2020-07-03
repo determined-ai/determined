@@ -14,6 +14,13 @@ import (
 // Operation represents the base interface for possible operations that a search method can return.
 type Operation interface{}
 
+// OperationID uniquely indentifies every operation created by the search method.
+type OperationID uuid.UUID
+
+func newOperationID() OperationID {
+	return OperationID(uuid.New())
+}
+
 // RequestID links all operations with the same ID to a single trial create request.
 type RequestID uuid.UUID
 
@@ -118,13 +125,14 @@ func (create Create) String() string {
 
 // Train is an operation emitted by search methods to signal the trial train for a specified length.
 type Train struct {
-	RequestID RequestID
-	Length    model.Length
+	OperationID OperationID
+	RequestID   RequestID
+	Length      model.Length
 }
 
 // NewTrain returns a new train operation.
 func NewTrain(requestID RequestID, length model.Length) Train {
-	return Train{requestID, length}
+	return Train{newOperationID(), requestID, length}
 }
 
 func (train Train) String() string {
@@ -133,12 +141,13 @@ func (train Train) String() string {
 
 // Validate is an operation emitted by search methods to signal the trial to validate.
 type Validate struct {
-	RequestID RequestID
+	OperationID OperationID
+	RequestID   RequestID
 }
 
 // NewValidate returns a new validate operation.
 func NewValidate(requestID RequestID) Validate {
-	return Validate{requestID}
+	return Validate{newOperationID(), requestID}
 }
 
 func (validate Validate) String() string {
@@ -147,12 +156,13 @@ func (validate Validate) String() string {
 
 // Checkpoint is an operation emitted by search methods to signal the trial to checkpoint.
 type Checkpoint struct {
-	RequestID RequestID
+	OperationID OperationID
+	RequestID   RequestID
 }
 
 // NewCheckpoint returns a new checkpoint operation.
 func NewCheckpoint(requestID RequestID) Checkpoint {
-	return Checkpoint{requestID}
+	return Checkpoint{newOperationID(), requestID}
 }
 
 func (checkpoint Checkpoint) String() string {

@@ -84,6 +84,10 @@ func (p *TrialWorkloadPlanner) WorkloadCompleted(
 		return nil, fmt.Errorf("planned ops should only be workloads %s", expectedWorkload)
 	}
 
+	if expectedWorkload.StepID != workload.StepID {
+		return nil, fmt.Errorf("received %s but expected operation %s", workload, expectedWorkload)
+	}
+
 	if expectedWorkload.Kind != workload.Kind {
 		return nil, fmt.Errorf("received %s but expected operation %s", workload, expectedWorkload)
 	}
