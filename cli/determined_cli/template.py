@@ -7,10 +7,10 @@ from ruamel import yaml
 from termcolor import colored
 
 from determined_common import api
-from determined_common.api.authentication import authentication_required
 
 from . import render
 from .declarative_argparse import Arg, Cmd
+from .user import authentication_required
 
 TemplateClean = namedtuple("TemplateClean", ["name"])
 TemplateAll = namedtuple("TemplateAll", ["name", "config"])

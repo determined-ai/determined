@@ -4,27 +4,14 @@ import json
 import os
 import platform
 import typing
-from argparse import Namespace
-from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Dict, NamedTuple, Optional, cast
+from typing import Any, Dict, NamedTuple, Optional, cast
 
 from determined_common import api, constants
-from determined_common.api import authentication as auth
 
 Credentials = NamedTuple("Credentials", [("username", str), ("password", str)])
 
 PASSWORD_SALT = "GubPEmmotfiK9TMD6Zdw"
-
-
-def authentication_required(func: Callable[[Namespace], Any]) -> Callable[..., Any]:
-    @wraps(func)
-    def f(namespace: Namespace) -> Any:
-        v = vars(namespace)
-        auth.initialize_session(namespace.master, v.get("user"), try_reauth=True)
-        return func(namespace)
-
-    return f
 
 
 def salt_and_hash(password: str) -> str:

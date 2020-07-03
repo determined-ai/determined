@@ -6,8 +6,6 @@ from determined_common.api.experiment import (
     create_test_experiment,
     make_test_experiment_config,
     patch_experiment,
-    follow_experiment_logs,
-    follow_test_experiment_logs,
 )
 from determined_common.api.request import (
     WebSocket,

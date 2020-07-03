@@ -5,7 +5,6 @@ from typing import Any, Dict, List
 from termcolor import colored
 
 from determined_common import api
-from determined_common.api.authentication import authentication_required
 from determined_common.check import check_eq
 
 from . import render
@@ -21,6 +20,7 @@ from .command import (
     render_event_stream,
 )
 from .declarative_argparse import Arg, Cmd
+from .user import authentication_required
 
 
 @authentication_required
