@@ -7,9 +7,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// OperationPlanner manages all the context around how requested "units" actually turn into
-// workloads that the trial runs. probably can be merged with trial_workload_sequencer.go once
-// that code is pulled up to the experiment level.
+// OperationPlanner performs a one-to-many mapping of search method operations to workload
+// operations and the reverse mapping to turn completed workloads back into their corresponding
+// search method operation to inform the search method about. Thie purpose is so the tbe search
+// method agonostic of scheduling and fault-tolerance concerns.
 type OperationPlanner struct {
 	unit                  model.Unit
 	targetBatchesPerStep  int
@@ -25,7 +26,7 @@ type opToPlannedOps struct {
 	plannedOps []Operation
 }
 
-// NewOperationPlanner creates a workload planner to plan searcher ops into workload ops.
+// NewOperationPlanner creates an new operation planner with the  given configurations.
 func NewOperationPlanner(
 	unit model.Unit, targetBatchesPerStep, recordsPerEpoch int,
 ) OperationPlanner {
@@ -70,7 +71,7 @@ func (p *OperationPlanner) Plan(ops []Operation) (plannedOps []Operation) {
 	return plannedOps
 }
 
-// WorkloadCompleted collates the given workload back into searcher ops.
+// WorkloadCompleted collates workloads back into search method operations, through multiple calls.
 func (p *OperationPlanner) WorkloadCompleted(
 	requestID RequestID, workload Workload,
 ) (op Operation, err error) {
@@ -148,14 +149,12 @@ func (p OperationPlanner) unitsFromWorkload(
 		numEpochs := math.Ceil(float64(numRecords) / float64(p.recordsPerEpoch))
 		return model.NewLengthInEpochs(int(numEpochs))
 	default:
-		panic(fmt.Sprintf("invalid Unit passed to unitsFromStep %s", unit))
+		panic(fmt.Sprintf("invalid Unit passed to unitsFromWorkload %s", unit))
 	}
 }
 
-// unitsToBatches converts a training length to the nearest batch. This function is necessary
-// because the harness expects RUN_STEP's to contain the number of batches to train for, so searcher
-// training length must be rounded to the nearest batch before they are sent and partial batches are
-// hard.
+// unitsToBatches converts a training length to the nearest batch, potentially truncating some units
+// if they are provided as records or epochs.
 func (p OperationPlanner) unitsToBatches(
 	l model.Length, requestID RequestID,
 ) (batches int, truncated model.Length) {
