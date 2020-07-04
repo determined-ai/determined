@@ -59,7 +59,6 @@ class Model:
             "/api/v1/models/{}".format(self.name),
             body={
                 "model": {"metadata": self.metadata},
-                "update_mask": {"paths": ["model.metadata"]},
             },
         )
 
@@ -80,7 +79,6 @@ class Model:
             "/api/v1/models/{}".format(self.name),
             body={
                 "model": {"metadata": self.metadata},
-                "update_mask": {"paths": ["model.metadata"]},
             },
         )
 
