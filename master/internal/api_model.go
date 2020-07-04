@@ -80,12 +80,12 @@ func (a *apiServer) PatchModel(
 
 	paths := req.UpdateMask.GetPaths()
 	for _, path := range paths {
-		switch path {
-		case "model.description":
+		switch {
+		case path == "model.description":
 			m.Description = req.Model.Description
-		case "model.metadata":
+		case strings.HasPrefix(path, "model.metadata"):
 			m.Metadata = req.Model.Metadata
-		default:
+		case !strings.HasPrefix(path, "update_mask"):
 			return nil, status.Errorf(
 				codes.InvalidArgument,
 				"only description and metadata fields are mutable. cannot update %s", path)

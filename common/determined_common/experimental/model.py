@@ -57,9 +57,7 @@ class Model:
         api.patch(
             self._master,
             "/api/v1/models/{}".format(self.name),
-            body={
-                "model": {"metadata": self.metadata},
-            },
+            body={"model": {"metadata": self.metadata},},
         )
 
     def remove_metadata(self, keys: List[str]) -> None:
@@ -77,9 +75,7 @@ class Model:
         api.patch(
             self._master,
             "/api/v1/models/{}".format(self.name),
-            body={
-                "model": {"metadata": self.metadata},
-            },
+            body={"model": {"metadata": self.metadata},},
         )
 
     def to_json(self) -> Dict[str, Any]:
