@@ -1,0 +1,37 @@
+description: gaea_nas
+
+data:
+  download_dir: /data
+
+bind_mounts:
+  - host_path: /tmp
+    container_path: /data
+    read_only: false
+
+min_validation_period: 10
+
+hyperparameters:
+    global_batch_size: 256
+    learning_rate: 0.1
+    momentum: 0.9
+    min_learning_rate: 0
+    scheduler_epochs: 50
+    weight_decay: 3e-4
+    arch_learning_rate: 0.1
+    init_channels: 16
+    layers: 8
+    nodes: 4
+
+resources:
+  slots_per_trial: 2
+
+searcher:
+  name: single
+  metric: top1_accuracy 
+  max_steps: 300
+  smaller_is_better: false 
+
+optimizations:
+  aggregation_frequency:  1
+
+entrypoint: model_def:GAEATrial
