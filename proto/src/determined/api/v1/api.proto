@@ -17,73 +17,166 @@ import "determined/api/v1/user.proto";
 
 option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
     info: {
-        title: "Determined API"
-        version: "1.0"
-    };
+        title: "Determined API",
+        description: "Determined helps deep learning teams train models more quickly, easily share GPU resources, and effectively collaborate. Determined allows deep learning engineers to focus on building and training models at scale, without needing to worry about DevOps or writing custom code for common tasks like fault tolerance or experiment tracking.\n\nYou can think of Determined as a platform that bridges the gap between tools like TensorFlow and PyTorch --- which work great for a single researcher with a single GPU --- to the challenges that arise when doing deep learning at scale, as teams, clusters, and data sets all increase in size.",
+        version: "1.0",
+        contact: {
+            name: "Determined AI",
+            url: "https://determined.ai/",
+            email: "community@determined.ai",
+        }
+        license: {
+            name: "Apache 2.0",
+            url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+        }
+    }
+    schemes: [HTTP, HTTPS],
+    external_docs: {
+        description: "Determined AI Documentation",
+        url: "https://docs.determined.ai/",
+    }
 };
 
 // Determined is the official v1 of the Determined API.
 service Determined {
     // Login the user.
-    rpc Login(LoginRequest) returns (LoginResponse) { option (google.api.http) = {post: "/api/v1/auth/login" body: "*"}; }
+    rpc Login(LoginRequest) returns (LoginResponse) {
+        option (google.api.http) = {post: "/api/v1/auth/login" body: "*"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Authentication"};
+    }
     // Get the current user.
-    rpc CurrentUser(CurrentUserRequest) returns (CurrentUserResponse) { option (google.api.http) = {get: "/api/v1/auth/user"}; }
+    rpc CurrentUser(CurrentUserRequest) returns (CurrentUserResponse) {
+        option (google.api.http) = {get: "/api/v1/auth/user"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Authentication"};
+    }
     // Logout the user.
-    rpc Logout(LogoutRequest) returns (LogoutResponse) { option (google.api.http) = {post: "/api/v1/auth/logout"}; }
+    rpc Logout(LogoutRequest) returns (LogoutResponse) {
+        option (google.api.http) = {post: "/api/v1/auth/logout"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Authentication"};
+    }
 
     // Get a list of users
-    rpc GetUsers(GetUsersRequest) returns (GetUsersResponse) { option (google.api.http) = {get: "/api/v1/users"}; }
+    rpc GetUsers(GetUsersRequest) returns (GetUsersResponse) {
+        option (google.api.http) = {get: "/api/v1/users"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Users"};
+    }
     // Get the requested user.
-    rpc GetUser(GetUserRequest) returns (GetUserResponse) { option (google.api.http) = {get: "/api/v1/users/{username}"}; }
+    rpc GetUser(GetUserRequest) returns (GetUserResponse) {
+        option (google.api.http) = {get: "/api/v1/users/{username}"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Users"};
+    }
     // Create a new user.
-    rpc PostUser(PostUserRequest) returns (PostUserResponse) { option (google.api.http) = {post: "/api/v1/users" body: "*"}; }
+    rpc PostUser(PostUserRequest) returns (PostUserResponse) {
+        option (google.api.http) = {post: "/api/v1/users" body: "*"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Users"};
+    }
     // Set the requested user's passwords.
-    rpc SetUserPassword(SetUserPasswordRequest) returns (SetUserPasswordResponse) { option (google.api.http) = {post: "/api/v1/users/{username}/password" body: "password"}; }
+    rpc SetUserPassword(SetUserPasswordRequest) returns (SetUserPasswordResponse) {
+        option (google.api.http) = {post: "/api/v1/users/{username}/password" body: "password"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Users"};
+    }
 
     // Get master information.
-    rpc GetMaster(GetMasterRequest) returns (GetMasterResponse) { option (google.api.http) = {get: "/api/v1/master"}; }
-
+    rpc GetMaster(GetMasterRequest) returns (GetMasterResponse) {
+        option (google.api.http) = {get: "/api/v1/master"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Cluster"};
+    }
     // Get a set of agents from the cluster
-    rpc GetAgents(GetAgentsRequest) returns (GetAgentsResponse) { option (google.api.http) = {get: "/api/v1/agents"}; }
+    rpc GetAgents(GetAgentsRequest) returns (GetAgentsResponse) {
+        option (google.api.http) = {get: "/api/v1/agents"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Cluster"};
+    }
     // Get the requested agent.
-    rpc GetAgent(GetAgentRequest) returns (GetAgentResponse) { option (google.api.http) = {get: "/api/v1/agents/{agent_id}"}; }
+    rpc GetAgent(GetAgentRequest) returns (GetAgentResponse) {
+        option (google.api.http) = {get: "/api/v1/agents/{agent_id}"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Cluster"};
+    }
     // Get the set of slots for the agent with the given id.
-    rpc GetSlots(GetSlotsRequest) returns (GetSlotsResponse) { option (google.api.http) = {get: "/api/v1/agents/{agent_id}/slots"}; }
+    rpc GetSlots(GetSlotsRequest) returns (GetSlotsResponse) {
+        option (google.api.http) = {get: "/api/v1/agents/{agent_id}/slots"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Cluster"};
+    }
     // Get the requested slot for the agent with the given id.
-    rpc GetSlot(GetSlotRequest) returns (GetSlotResponse) { option (google.api.http) = {get: "/api/v1/agents/{agent_id}/slots/{slot_id}"}; }
-
+    rpc GetSlot(GetSlotRequest) returns (GetSlotResponse) {
+        option (google.api.http) = {get: "/api/v1/agents/{agent_id}/slots/{slot_id}"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Cluster"};
+    }
     // Enable the agent.
-    rpc EnableAgent(EnableAgentRequest) returns (EnableAgentResponse) { option (google.api.http) = {post: "/api/v1/agents/{agent_id}/enable"}; }
+    rpc EnableAgent(EnableAgentRequest) returns (EnableAgentResponse) {
+        option (google.api.http) = {post: "/api/v1/agents/{agent_id}/enable"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Cluster"};
+    }
     // Disable the agent.
-    rpc DisableAgent(DisableAgentRequest) returns (DisableAgentResponse) { option (google.api.http) = {post: "/api/v1/agents/{agent_id}/disable"}; }
+    rpc DisableAgent(DisableAgentRequest) returns (DisableAgentResponse) {
+        option (google.api.http) = {post: "/api/v1/agents/{agent_id}/disable"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Cluster"};
+    }
     // Enable the slot.
-    rpc EnableSlot(EnableSlotRequest) returns (EnableSlotResponse) { option (google.api.http) = {post: "/api/v1/agents/{agent_id}/slots/{slot_id}/enable"}; }
+    rpc EnableSlot(EnableSlotRequest) returns (EnableSlotResponse) {
+        option (google.api.http) = {post: "/api/v1/agents/{agent_id}/slots/{slot_id}/enable"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Cluster"};
+    }
     // Disable the slot.
-    rpc DisableSlot(DisableSlotRequest) returns (DisableSlotResponse) { option (google.api.http) = {post: "/api/v1/agents/{agent_id}/slots/{slot_id}/disable"}; }
+    rpc DisableSlot(DisableSlotRequest) returns (DisableSlotResponse) {
+        option (google.api.http) = {post: "/api/v1/agents/{agent_id}/slots/{slot_id}/disable"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Cluster"};
+    }
 
     // Get a list of experiments.
-    rpc GetExperiments(GetExperimentsRequest) returns (GetExperimentsResponse) { option (google.api.http) = {get: "/api/v1/experiments"}; }
+    rpc GetExperiments(GetExperimentsRequest) returns (GetExperimentsResponse) {
+        option (google.api.http) = {get: "/api/v1/experiments"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
     // Preview hyperparameter search.
-    rpc PreviewHPSearch(PreviewHPSearchRequest) returns (PreviewHPSearchResponse) { option (google.api.http) = {post: "/api/v1/preview-hp-search" body: "*"}; }
-
+    rpc PreviewHPSearch(PreviewHPSearchRequest) returns (PreviewHPSearchResponse) {
+        option (google.api.http) = {post: "/api/v1/preview-hp-search" body: "*"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
     // Stream Trial logs.
-    rpc TrialLogs(TrialLogsRequest) returns (stream TrialLogsResponse) { option (google.api.http) = {get: "/api/v1/trials/{trial_id}/logs"}; }
+    rpc TrialLogs(TrialLogsRequest) returns (stream TrialLogsResponse) {
+        option (google.api.http) = {get: "/api/v1/trials/{trial_id}/logs"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
 
     // Get a list of templates.
-    rpc GetTemplates(GetTemplatesRequest) returns (GetTemplatesResponse) { option (google.api.http) = {get: "/api/v1/templates"}; }
+    rpc GetTemplates(GetTemplatesRequest) returns (GetTemplatesResponse) {
+        option (google.api.http) = {get: "/api/v1/templates"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Templates"};
+    }
     // Get the requested template.
-    rpc GetTemplate(GetTemplateRequest) returns (GetTemplateResponse) { option (google.api.http) = {get: "/api/v1/templates/{template_name}"}; }
+    rpc GetTemplate(GetTemplateRequest) returns (GetTemplateResponse) {
+        option (google.api.http) = {get: "/api/v1/templates/{template_name}"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Templates"};
+    }
     // Update the requested template. If one does not exist, a new template is created
-    rpc PutTemplate(PutTemplateRequest) returns (PutTemplateResponse) { option (google.api.http) = {put: "/api/v1/templates/{template.name}" body: "template"};  }
+    rpc PutTemplate(PutTemplateRequest) returns (PutTemplateResponse) {
+        option (google.api.http) = {put: "/api/v1/templates/{template.name}" body: "template"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Templates"};
+    }
     // Delete the template with the given id.
-    rpc DeleteTemplate(DeleteTemplateRequest) returns (DeleteTemplateResponse) { option (google.api.http) = {delete: "/api/v1/templates/{template_name}"}; }
+    rpc DeleteTemplate(DeleteTemplateRequest) returns (DeleteTemplateResponse) {
+        option (google.api.http) = {delete: "/api/v1/templates/{template_name}"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Templates"};
+    }
 
     // Get the requested model.
-    rpc GetModel(GetModelRequest) returns (GetModelResponse)  { option (google.api.http) = {get: "/api/v1/models/{model_name}"}; }
+    rpc GetModel(GetModelRequest) returns (GetModelResponse)  {
+        option (google.api.http) = {get: "/api/v1/models/{model_name}"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Models"};
+    }
     // Create a model in the registry.
-    rpc PostModel(PostModelRequest) returns (PostModelResponse) { option (google.api.http) = {post: "/api/v1/models/{model.name}" body: "model"}; }
+    rpc PostModel(PostModelRequest) returns (PostModelResponse) {
+        option (google.api.http) = {post: "/api/v1/models/{model.name}" body: "model"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Models"};
+    }
     // Update model fields
-    rpc PatchModel(PatchModelRequest) returns (PatchModelResponse) { option (google.api.http) = {patch: "/api/v1/models/{model.name}" body: "*"}; }
+    rpc PatchModel(PatchModelRequest) returns (PatchModelResponse) {
+        option (google.api.http) = {patch: "/api/v1/models/{model.name}" body: "model"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Models"};
+    }
     // Get the requested model.
-    rpc GetModels(GetModelsRequest) returns (GetModelsResponse)  { option (google.api.http) = {get: "/api/v1/models"}; }
+    rpc GetModels(GetModelsRequest) returns (GetModelsResponse)  {
+        option (google.api.http) = {get: "/api/v1/models"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Models"};
+    }
 }

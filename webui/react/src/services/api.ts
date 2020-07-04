@@ -15,7 +15,7 @@ import {
 import { serverAddress } from 'utils/routes';
 import { isExperimentTask } from 'utils/task';
 
-export const sApi = new DetSwagger.DeterminedApi(undefined, serverAddress());
+export const sApi = new DetSwagger.AuthenticationApi(undefined, serverAddress());
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAuthFailure = (e: any): boolean => {
