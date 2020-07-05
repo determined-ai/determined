@@ -12,5 +12,6 @@ searcher:
   metric: loss
   max_steps: 200
   smaller_is_better: True
+entrypoint: model_def:GANTrial
 resources:
   slots_per_trial: 8
