@@ -17,7 +17,6 @@
   },
   "proxy": "http://localhost:8080",
   "dependencies": {
-    "@determined-ai/api-ts-sdk": "file:../api-ts-sdk",
     "ansi-to-html": "^0.6.14",
     "antd": "^4.3.5",
     "antd-dayjs-webpack-plugin": "^0.0.9",

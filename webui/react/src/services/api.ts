@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/camelcase */
-import * as DetSwagger from '@determined-ai/api-ts-sdk';
 import { CancelToken } from 'axios';
 
-import * as DetSwagger2 from 'services/api-ts-sdk';
+import * as DetSwagger from 'services/api-ts-sdk';
 import { processApiError } from 'services/apiBuilder';
 import { generateApi } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
@@ -17,9 +16,6 @@ import { serverAddress } from 'utils/routes';
 import { isExperimentTask } from 'utils/task';
 
 export const sApi = new DetSwagger.AuthenticationApi(undefined, serverAddress());
-
-export const sApi2 = new DetSwagger2.DeterminedApi(undefined, serverAddress());
-type MyType = DetSwagger2.V1Model;
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAuthFailure = (e: any): boolean => {

@@ -20,4 +20,3 @@ build-storybook/
 .env.production.local
 
 report.*.json
-
