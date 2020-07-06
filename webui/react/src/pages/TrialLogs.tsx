@@ -86,6 +86,7 @@ const TrialLogs: React.FC = () => {
   return (
     <Page hideTitle title="Trial Logs">
       <LogViewer
+        disableLevel
         noWrap
         ref={logsRef}
         title="Trial Logs"
