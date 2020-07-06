@@ -57,8 +57,18 @@ func (s *Searcher) filterCompletedCheckpoints(ops []Operation) ([]Operation, err
 				return nil, errors.Errorf("event log ignored a cached WorkloadCompleted message")
 			}
 			requestID := s.eventLog.RequestIDs[msg.Workload.TrialID]
+			op, err := s.operationPlanner.WorkloadCompleted(requestID, msg.Workload)
+			if err != nil {
+				return filteredOps, errors.Wrapf(err,
+					"error replaying WorkloadCompleted to operation planner %s", msg.Workload)
+			}
+			ckpt, ok := op.(Checkpoint)
+			if !ok {
+				return filteredOps, errors.Wrapf(err,
+					"recieved op other than checkpoint from operation planner %s replaying workload %s", msg.Workload)
+			}
 			moreOps, err := s.method.checkpointCompleted(
-				s.context(), requestID, NewCheckpoint(requestID), *msg.CheckpointMetrics)
+				s.context(), requestID, ckpt, *msg.CheckpointMetrics)
 			if err != nil {
 				return filteredOps, errors.Wrapf(err,
 					"error while replaying WorkloadCompleted message for workload: %v",
