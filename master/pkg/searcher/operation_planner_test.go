@@ -3,9 +3,10 @@ package searcher
 import (
 	"testing"
 
+	"gotest.tools/assert"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
-	"gotest.tools/assert"
 )
 
 func TestOperationPlanner(t *testing.T) {

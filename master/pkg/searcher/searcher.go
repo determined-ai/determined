@@ -65,7 +65,7 @@ func (s *Searcher) filterCompletedCheckpoints(ops []Operation) ([]Operation, err
 			ckpt, ok := op.(Checkpoint)
 			if !ok {
 				return filteredOps, errors.Wrapf(err,
-					"did not recieve checkpoint from operation planner replaying workload %s",
+					"did not receive checkpoint from operation planner replaying workload %s",
 					msg.Workload)
 			}
 			moreOps, err := s.method.checkpointCompleted(
