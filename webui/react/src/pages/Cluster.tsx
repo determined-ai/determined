@@ -16,10 +16,7 @@ const Cluster: React.FC = () => {
     if (!agents.data) return {};
     const resourceList = agents.data
       .map(agent => agent.resources)
-      .reduce((acc: Resource[], resources: Resource[]) => {
-        acc.push(...resources);
-        return resources;
-      }, []);
+      .flat();
     return categorize(resourceList, (res: Resource) => res.type);
 
   }, [ agents ]);
