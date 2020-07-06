@@ -121,6 +121,17 @@ func (a *apiServer) GetModelVersion(
 	return resp, nil
 }
 
+func (a *apiServer) GetModelVersions(
+	_ context.Context, req *apiv1.GetModelVersionsRequest) (*apiv1.GetModelVersionsResponse, error) {
+	resp := &apiv1.GetModelVersionsResponse{}
+	if err := a.m.db.QueryProto("get_model_versions", &resp.Versions, req.ModelName); err != nil {
+		return nil, err
+	}
+
+	a.sort(resp.Versions, req.OrderBy, req.SortBy, apiv1.GetModelVersionsRequest_SORT_BY_VERSION)
+	return resp, a.paginate(&resp.Pagination, &resp.Versions, req.Offset, req.Limit)
+}
+
 func (a *apiServer) PostModelVersion(
 	_ context.Context, req *apiv1.PostModelVersionRequest) (*apiv1.PostModelVersionResponse, error) {
 	// make sure that the model exists before adding a version
