@@ -30,9 +30,9 @@ function generateTask(idx: number): Task & RecentEvent {
       date: startTime,
       name: 'opened',
     },
-    name: `${idx}`,
     ownerId: user.id,
     startTime,
+    title: `${idx}`,
     url: '#',
   };
 }
@@ -71,9 +71,9 @@ export const generateExperiments = (count = 10): ExperimentItem[] => {
       const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
       return {
         ...experimentTask,
-        config: { description: experimentTask.name },
+        config: { description: experimentTask.title },
         id: idx,
-        name: experimentTask.name,
+        title: experimentTask.title,
         username: user.username,
       } as ExperimentItem;
     });
@@ -102,7 +102,7 @@ export const canBeOpened = (task: AnyTask): boolean => {
 
 const matchesSearch = <T extends AnyTask | ExperimentItem>(task: T, search = ''): boolean => {
   if (!search) return true;
-  return task.id.toString().indexOf(search) !== -1 || task.name.indexOf(search) !== -1;
+  return task.id.toString().indexOf(search) !== -1 || task.title.indexOf(search) !== -1;
 };
 
 const matchesState = <T extends AnyTask | ExperimentItem>(task: T, states: string[]): boolean => {
@@ -167,7 +167,7 @@ export const processExperiments = (experiments: Experiment[], users: User[]): Ex
   return experiments.map(experiment => {
     return {
       ...experiment,
-      name: experiment.config.description,
+      title: experiment.config.description,
       url: `/ui/experiments/${experiment.id}`,
       username: userMap[experiment.ownerId],
     };
