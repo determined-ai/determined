@@ -31,14 +31,6 @@ class PyTorchCallback:
     def on_batch_end(self, batch_idx: int, metrics: Dict[str, Any]) -> None:
         """
         Run after every batch is trained.
-
-        .. warning::
-            If distributed training is enabled, every GPU will execute a copy of
-            this callback at the end of every training step. If
-            ``optimizations.average_training_metrics`` is enabled, then the
-            ``metrics`` will be averaged across all GPUs before the callback is
-            executed.  If ``optimizations.average_training_metrics`` is
-            disabled, then the ``metrics`` will be local to the GPU.
         """
         pass
 
@@ -51,14 +43,6 @@ class PyTorchCallback:
     def on_epoch_end(self, epoch_idx: int, metrics: Dict[str, Any]) -> None:
         """
         Run after every epoch ends.
-
-        .. warning::
-            If distributed training is enabled, every GPU will execute a copy of
-            this callback at the end of every training step. If
-            ``optimizations.average_training_metrics`` is enabled, then the
-            ``metrics`` will be averaged across all GPUs before the callback is
-            executed.  If ``optimizations.average_training_metrics`` is
-            disabled, then the ``metrics`` will be local to the GPU.
         """
         pass
 
