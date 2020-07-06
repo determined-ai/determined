@@ -38,9 +38,9 @@ import Route
 import Session exposing (Session)
 import Time
 import Types
+import Url.Builder as UB
 import Utils
 import Yaml.Encode
-
 
 
 ---- Type definitions.
@@ -900,6 +900,35 @@ infoView model session =
                 , text = "Continue Trial"
                 }
 
+        logsUrl =
+            API.buildUrl [ "det", "trials", String.fromInt model.trial.id, "logs" ] []
+
+        viewLogs =
+            Page.Common.buttonCreator
+                { action = Page.Common.OpenUrl True logsUrl
+                , bgColor = "blue"
+                , fgColor = "white"
+                , isActive = True
+                , isPending = False
+                , style = Page.Common.TextOnly
+                , text = "View Logs"
+                }
+
+        downloadUrl =
+            API.buildUrl [ "trials", String.fromInt model.trial.id, "logs" ] [ UB.string "format" "raw" ]
+
+        downloadLogs =
+            Page.Common.buttonCreator
+                { action = Page.Common.OpenUrl True downloadUrl
+                , bgColor = "blue"
+                , fgColor = "white"
+                , isActive = True
+                , isPending = False
+                , style = Page.Common.TextOnly
+                , text = "Download Logs"
+                }
+
+
         openTensorBoardButton =
             Page.Common.buttonCreator
                 { action =
@@ -1107,7 +1136,7 @@ infoView model session =
     in
     div [ class "pb-2 lg:pb-0 border-b lg:border-none lg:pr-4", HA.style "min-width" "15rem" ]
         [ Page.Common.horizontalList
-            (continueTrialButton
+            (continueTrialButton :: viewLogs :: downloadLogs
                 :: (if TensorBoard.trialHasMetrics model.trial then
                         [ openTensorBoardButton ]
 
@@ -1374,8 +1403,8 @@ view model session =
                         [ class "w-full text-sm p-4" ]
                         [ topBoxView m session
                         , paramsView m
-                        , Logs.view (logsConfig m.trial.id m.showLogs) m.logs []
-                            |> collapsibleLogsView m ToggleLogs
+                        -- , Logs.view (logsConfig m.trial.id m.showLogs) m.logs []
+                        --     |> collapsibleLogsView m ToggleLogs
                         , stepsTableView m
                         , MCE.view m.createExpModalState
                             |> H.map CreateExpModalMsg
