@@ -34,5 +34,6 @@ c AS (
 SELECT
     to_json(c) AS checkpoint,
     to_json(m) AS model,
-    to_json(version) AS version
+    version AS version,
+    creation_time
     FROM c, m, mv

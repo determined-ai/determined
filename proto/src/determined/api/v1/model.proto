@@ -4,6 +4,7 @@ package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
 
 import "determined/checkpoint/v1/checkpoint.proto";
 import "determined/api/v1/pagination.proto";
@@ -104,6 +105,8 @@ message GetModelVersionResponse {
   determined.checkpoint.v1.Checkpoint checkpoint = 2;
   // The version number.
   int32 version = 3;
+  // The time the model version was created.
+  google.protobuf.Timestamp creation_time = 4;
 }
 
 // Request for creating a model version
@@ -122,4 +125,6 @@ message PostModelVersionResponse {
   determined.checkpoint.v1.Checkpoint checkpoint = 2;
   // The version number.
   int32 version = 3;
+  // The time the model version was created.
+  google.protobuf.Timestamp creation_time = 4;
 }

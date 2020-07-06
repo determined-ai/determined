@@ -3,4 +3,4 @@ VALUES (
 	(SELECT CAST($1 AS character varying)),
 	(SELECT COALESCE(max(version), 0) + 1 FROM model_versions WHERE model_name = $1),
 	$2, $3, $4)
-RETURNING version;
+RETURNING version, creation_time;
