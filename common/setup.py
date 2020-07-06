@@ -22,6 +22,7 @@ setup(
         "requests>=2.20.0",
         "ruamel.yaml>=0.15.78",
         "simplejson==3.16.0",
+        "termcolor>=1.1.0",
     ],
     zip_safe=False,
 )
