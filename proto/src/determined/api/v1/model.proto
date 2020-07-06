@@ -109,6 +109,22 @@ message GetModelVersionResponse {
   google.protobuf.Timestamp creation_time = 4;
 }
 
+message GetModelVersionsRequest {
+  enum SortBy {
+    SORT_BY_UNSPECIFIED = 0;
+  }
+  // The name of the model.
+  string model_name = 1;
+}
+
+// Response for GetModelVersionRequest.
+message GetModelVersionsResponse {
+  // The list of returned model versions
+  repeated determined.model.v1.ModelVersion versions = 1
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
+}
+
 // Request for creating a model version
 message PostModelVersionRequest {
   // The name of the model to add a version to.

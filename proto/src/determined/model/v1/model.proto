@@ -3,6 +3,8 @@ syntax = "proto3";
 package determined.model.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/modelv1";
 
+import "determined/checkpoint/v1/checkpoint.proto";
+
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
@@ -24,4 +26,12 @@ message Model {
     google.protobuf.Timestamp creation_time = 4;
     // The time the model was last updated.
     google.protobuf.Timestamp last_updated_time = 5;
+}
+
+message ModelVersion {
+  Model model = 1;
+  // The checkpoint of the model version.
+  determined.checkpoint.v1.Checkpoint checkpoint = 2;
+  // The version number.
+  int32 version = 3;
 }
