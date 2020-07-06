@@ -1,0 +1,76 @@
+package searcher
+
+import (
+	"testing"
+
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/nprand"
+	"gotest.tools/assert"
+)
+
+func TestOperationPlanner(t *testing.T) {
+	rand := nprand.New(0)
+	opPlanner := NewOperationPlanner(model.Batches, 100, 0)
+
+	create := NewCreate(
+		rand, sampleAll(defaultHyperparameters(), rand), model.TrialWorkloadSequencerType)
+	searcherOps := []Operation{
+		create,
+		NewTrain(create.RequestID, model.NewLengthInBatches(150)),
+		NewValidate(create.RequestID),
+		NewTrain(create.RequestID, model.NewLengthInBatches(127)),
+		NewValidate(create.RequestID),
+		NewCheckpoint(create.RequestID),
+	}
+
+	plannedOps := opPlanner.Plan(searcherOps)
+	expectedOps := []Operation{
+		create,
+		WorkloadOperation{
+			RequestID:  create.RequestID,
+			Kind:       RunStep,
+			StepID:     1,
+			NumBatches: 100,
+		},
+		WorkloadOperation{
+			RequestID:  create.RequestID,
+			Kind:       RunStep,
+			StepID:     2,
+			NumBatches: 50,
+		},
+		WorkloadOperation{
+			RequestID: create.RequestID,
+			Kind:      ComputeValidationMetrics,
+			StepID:    2,
+		},
+		WorkloadOperation{
+			RequestID:  create.RequestID,
+			Kind:       RunStep,
+			StepID:     3,
+			NumBatches: 100,
+		},
+		WorkloadOperation{
+			RequestID:  create.RequestID,
+			Kind:       RunStep,
+			StepID:     4,
+			NumBatches: 27,
+		},
+		WorkloadOperation{
+			RequestID: create.RequestID,
+			Kind:      ComputeValidationMetrics,
+			StepID:    4,
+		},
+		WorkloadOperation{
+			RequestID: create.RequestID,
+			Kind:      CheckpointModel,
+			StepID:    4,
+		},
+	}
+
+	assert.Equal(t, len(plannedOps), len(expectedOps))
+
+	for i := range plannedOps {
+		plannedOp, expectedOp := plannedOps[i], expectedOps[i]
+		assert.DeepEqual(t, plannedOp, expectedOp)
+	}
+}
