@@ -24,7 +24,6 @@ class PyTorchCallback:
     def on_batch_start(self, batch_idx: int) -> None:
         """
         Run before every batch is trained.
-
         """
         pass
 
