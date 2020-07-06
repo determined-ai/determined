@@ -144,6 +144,10 @@ commands:
       - restore_cache:
           keys:
             - det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
+      - attach_workspace:
+          at: .
+      - run: make -C webui/api-ts-sdk get-deps-package
+      - run: make -C webui/api-ts-sdk build-package
       - run:
           name: Get React dependencies
           command: |
@@ -154,10 +158,6 @@ commands:
           key: det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
           paths:
             - "webui/react/node_modules"
-      - attach_workspace:
-          at: .
-      - run: make -C webui/api-ts-sdk get-deps-package
-      - run: make -C webui/api-ts-sdk build-package
 
   install-wheel:
     parameters:
