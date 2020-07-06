@@ -15,9 +15,9 @@ export const columns: ColumnsType<ExperimentItem> = [
     title: 'ID',
   },
   {
-    dataIndex: 'name',
+    dataIndex: 'title',
     render: experimentDescriptionRenderer,
-    sorter: (a, b): number => alphanumericSorter(a.name, b.name),
+    sorter: (a, b): number => alphanumericSorter(a.title, b.title),
     title: 'Name',
   },
   {
