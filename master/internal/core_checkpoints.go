@@ -20,6 +20,7 @@ type ExportableCheckpoint struct {
 	Format            string          `db:"format" json:"format"`
 	Framework         string          `db:"framework" json:"framework"`
 	BatchNumber       int             `db:"batch_number" json:"batch_number"`
+	State             string          `db:"state" json:"state"`
 	StartTime         string          `db:"start_time" json:"start_time"`
 	EndTime           string          `db:"end_time" json:"end_time"`
 	Metadata          json.RawMessage `db:"metadata" json:"metadata"`

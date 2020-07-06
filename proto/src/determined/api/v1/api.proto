@@ -174,13 +174,11 @@ service Determined {
         option (google.api.http) = {patch: "/api/v1/models/{model.name}" body: "model"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Models"};
     }
-
     // Get the requested model.
     rpc GetModels(GetModelsRequest) returns (GetModelsResponse)  {
         option (google.api.http) = {get: "/api/v1/models"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Models"};
     }
-
     // Get the requested model version.
     rpc GetModelVersion(GetModelVersionRequest) returns (GetModelVersionResponse) {
       option (google.api.http) = {get: "/api/v1/models/{model_name}/versions/{model_version}"};
@@ -192,7 +190,6 @@ service Determined {
       option (google.api.http) = {get: "/api/v1/models/{model_name}/versions"};
       option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Models"};
     }
-
     // Create a model version.
     rpc PostModelVersion(PostModelVersionRequest) returns (PostModelVersionResponse) {
       option (google.api.http) = {post: "/api/v1/models/{model_name}/versions" body: "*"};

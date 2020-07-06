@@ -1,11 +1,18 @@
 syntax = "proto3";
 
-package determined.checkpoint.v1;
-option go_package = "github.com/determined-ai/determined/proto/pkg/checkpointv1";
+package determined.experiment.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/experimentv1";
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
+// Metrics calculated during validation.
+message Metrics {
+  // Number of inputs to the model.
+  int32 num_inputs = 1;
+  // Metrics calculated on the validation set.
+  map<string, float> validation_metrics = 2;
+}
 
 // Checkpoint is an artifact created by a trial during training.
 message Checkpoint {
@@ -39,7 +46,7 @@ message Checkpoint {
   // Timestamp when the checkpoint completed being saved to persistent storage.
   google.protobuf.Timestamp end_time  = 8;
   // Dictionary of file paths to file sizes in bytes of all files in the checkpoint.
-  google.protobuf.Struct resources = 9;
+  map<string, int64> resources = 9;
   // User defined metadata associated with the checkpoint.
   google.protobuf.Struct metadata = 10;
   // The framework of the trial i.e., tensorflow, torch.
@@ -49,7 +56,7 @@ message Checkpoint {
   // The version of Determined the checkpoint was taken with.
   string determined_version = 13;
   // Dictionary of validation metric names to their values.
-  google.protobuf.Struct metrics = 14;
+  Metrics metrics = 14;
   // The state of the validation associated with this checkpoint.
   STATE validation_state = 15;
   // The state of the checkpoint.
