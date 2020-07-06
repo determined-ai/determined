@@ -19,6 +19,7 @@ const TAIL_SIZE = 10000;
 const TrialLogs: React.FC = () => {
   const { trialId } = useParams<Params>();
   const id = parseInt(trialId);
+  const title = `Logs for Trial ${id}`;
   const setUI = UI.useActionContext();
   const logsRef = useRef<LogViewerHandles>(null);
   const [ oldestFetchedId, setOldestFetchedId ] = useState(Number.MAX_SAFE_INTEGER);
@@ -84,12 +85,12 @@ const TrialLogs: React.FC = () => {
   }, [ logIdRange, pollingLogsResponse.data ]);
 
   return (
-    <Page hideTitle title="Trial Logs">
+    <Page hideTitle title={title}>
       <LogViewer
         disableLevel
         noWrap
         ref={logsRef}
-        title="Trial Logs"
+        title={title}
         onScrollToTop={handleScrollToTop} />
     </Page>
   );
