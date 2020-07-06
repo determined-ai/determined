@@ -74,4 +74,22 @@ func TestOperationPlanner(t *testing.T) {
 		plannedOp, expectedOp := plannedOps[i], expectedOps[i]
 		assert.DeepEqual(t, plannedOp, expectedOp)
 	}
+
+	searcherOpsReturned := 1 // 1 because we skip the create
+	for _, plannedOp := range plannedOps {
+		if workloadOp, ok := plannedOp.(WorkloadOperation); ok {
+			searcherOp, err := opPlanner.WorkloadCompleted(create.RequestID, Workload{
+				Kind:       workloadOp.Kind,
+				StepID:     workloadOp.StepID,
+				NumBatches: workloadOp.NumBatches,
+			})
+
+			assert.NilError(t, err, "error passing completed workload to operation planner")
+			if searcherOp != nil {
+				assert.DeepEqual(t, searcherOp, searcherOps[searcherOpsReturned])
+				searcherOpsReturned++
+			}
+		}
+	}
+	assert.Equal(t, searcherOpsReturned, len(searcherOps))
 }
