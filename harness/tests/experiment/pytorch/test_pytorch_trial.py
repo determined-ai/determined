@@ -452,8 +452,10 @@ class TestPyTorchTrial:
         )
         controller._train_for_step(1, 1, 0)
         assert controller.trial.counter.__dict__ == {
-            "train_steps_started": 1,
-            "train_steps_ended": 1,
+            "batches_started": 1,
+            "batches_ended": 1,
+            "epochs_started": 1,
+            "epochs_ended": 1,
             "validation_steps_started": 0,
             "validation_steps_ended": 0,
             "checkpoints_ended": 0,
@@ -461,8 +463,10 @@ class TestPyTorchTrial:
 
         controller._compute_validation_metrics()
         assert controller.trial.counter.__dict__ == {
-            "train_steps_started": 1,
-            "train_steps_ended": 1,
+            "batches_started": 1,
+            "batches_ended": 1,
+            "epochs_started": 1,
+            "epochs_ended": 1,
             "validation_steps_started": 1,
             "validation_steps_ended": 1,
             "checkpoints_ended": 0,
@@ -470,8 +474,10 @@ class TestPyTorchTrial:
 
         controller._save(checkpoint_dir)
         assert controller.trial.counter.__dict__ == {
-            "train_steps_started": 1,
-            "train_steps_ended": 1,
+            "batches_started": 1,
+            "batches_ended": 1,
+            "epochs_started": 1,
+            "epochs_ended": 1,
             "validation_steps_started": 1,
             "validation_steps_ended": 1,
             "checkpoints_ended": 1,
@@ -487,8 +493,10 @@ class TestPyTorchTrial:
         )
         controller._load()
         assert controller.trial.counter.__dict__ == {
-            "train_steps_started": 1,
-            "train_steps_ended": 1,
+            "batches_started": 1,
+            "batches_ended": 1,
+            "epochs_started": 1,
+            "epochs_ended": 1,
             "validation_steps_started": 1,
             "validation_steps_ended": 1,
             "checkpoints_ended": 0,

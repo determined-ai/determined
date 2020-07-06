@@ -229,6 +229,12 @@ class PyTorchTrialController(det.LoopTrialController):
     def get_epoch_idx(self, batch_id: int) -> int:
         return batch_id // len(self.training_loader)
 
+    def is_epoch_start(self, batch_id: int) -> bool:
+        return batch_id % len(self.training_loader) == 0
+
+    def is_epoch_end(self, batch_id: int) -> bool:
+        return batch_id % len(self.training_loader) == len(self.training_loader) - 1
+
     def _average_training_metrics(
         self, per_batch_metrics: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
@@ -295,9 +301,6 @@ class PyTorchTrialController(det.LoopTrialController):
         for model in self.context.models:
             model.train()
 
-        for callback in self.callbacks.values():
-            callback.on_train_step_start(step_id)
-
         start = total_batches_processed
         end = start + num_batches
 
@@ -305,6 +308,13 @@ class PyTorchTrialController(det.LoopTrialController):
         num_inputs = 0
 
         for batch_idx in range(start, end):
+            for callback in self.callbacks.values():
+                callback.on_batch_start(batch_idx)
+
+            if self.is_epoch_start(batch_idx):
+                for callback in self.callbacks.values():
+                    callback.on_epoch_start(self.get_epoch_idx(batch_idx))
+
             batch = next(self.training_iterator)
             num_inputs += data_length(batch)
             batch = self.context._to_device(batch)
@@ -342,15 +352,19 @@ class PyTorchTrialController(det.LoopTrialController):
             check.is_in("loss", tr_metrics, 'Please include "loss" in your training metrics.')
             per_batch_metrics.append(tr_metrics)
 
+            for callback in self.callbacks.values():
+                callback.on_batch_end(batch_idx, tr_metrics)
+
+            if self.is_epoch_end(batch_idx):
+                for callback in self.callbacks.values():
+                    callback.on_epoch_end(self.get_epoch_idx(batch_idx), tr_metrics)
+
         # Aggregate and reduce training metrics from all the training processes.
         if self.hvd_config.use and self.hvd_config.average_training_metrics:
             per_batch_metrics = self._average_training_metrics(per_batch_metrics)
         if self.hvd_config.use:
             num_inputs *= hvd.size()
         metrics = det.util.make_metrics(num_inputs, per_batch_metrics)
-
-        for callback in self.callbacks.values():
-            callback.on_train_step_end(step_id, metrics)
 
         if not self.is_chief:
             # The training metrics are reported only in the chief process.
@@ -375,7 +389,7 @@ class PyTorchTrialController(det.LoopTrialController):
             model.eval()
 
         for callback in self.callbacks.values():
-            callback.on_validation_step_start()
+            callback.on_validation_start()
 
         num_inputs = 0
         metrics = {}  # type: Optional[Dict[str, Any]]
@@ -436,7 +450,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
         if self.hvd_config.use and any(
             map(
-                lambda c: util.is_overridden(c.on_validation_step_end, _callback.PyTorchCallback),
+                lambda c: util.is_overridden(c.on_validation_end, _callback.PyTorchCallback),
                 self.callbacks.values(),
             )
         ):
@@ -447,7 +461,7 @@ class PyTorchTrialController(det.LoopTrialController):
             metrics = hvd.broadcast_object(metrics, root_rank=0)
 
         for callback in self.callbacks.values():
-            callback.on_validation_step_end(cast(Dict[str, Any], metrics))
+            callback.on_validation_end(cast(Dict[str, Any], metrics))
 
         if not self.is_chief:
             return workload.Skipped()
