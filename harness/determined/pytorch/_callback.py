@@ -34,7 +34,7 @@ class PyTorchCallback:
 
         .. warning::
             If distributed training is enabled, every GPU will execute a copy of this callback at
-            the end of every training step and the ``metrics``will be local to the GPU.
+            the end of every training step and the ``metrics`` will be local to the GPU.
         """
         pass
 
@@ -51,7 +51,7 @@ class PyTorchCallback:
 
         .. warning::
             If distributed training is enabled, every GPU will execute a copy of this callback at
-            the end of every training step and the ``metrics``will be local to the GPU.
+            the end of every training step and the ``metrics`` will be local to the GPU.
         """
         pass
 
