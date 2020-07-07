@@ -99,9 +99,7 @@ const TaskList: React.FC = () => {
 
   const handleBatchKill = useCallback(async () => {
     try {
-      const source = axios.CancelToken.source();
       const promises = selectedTasks.map(task => killCommand({
-        cancelToken: source.token,
         commandId: task.id,
         commandType: task.type,
       }));
