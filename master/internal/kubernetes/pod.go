@@ -36,23 +36,25 @@ const (
 )
 
 type pod struct {
-	cluster            *actor.Ref
-	taskHandler        *actor.Ref
-	clientSet          *k8sclient.Clientset
-	namespace          string
-	masterIP           string
-	masterPort         int32
-	taskSpec           tasks.TaskSpec
-	gpus               int
-	rank               int
-	podInterface       typedV1.PodInterface
-	configMapInterface typedV1.ConfigMapInterface
-	pod                *v1.Pod
-	configMaps         []*v1.ConfigMap
-	podName            string
-	logStreamer        *actor.Ref
-	container          container.Container
-	ports              []int
+	cluster                  *actor.Ref
+	taskHandler              *actor.Ref
+	clientSet                *k8sclient.Clientset
+	namespace                string
+	masterIP                 string
+	masterPort               int32
+	taskSpec                 tasks.TaskSpec
+	gpus                     int
+	rank                     int
+	podInterface             typedV1.PodInterface
+	configMapInterface       typedV1.ConfigMapInterface
+	leaveKubernetesResources bool
+
+	pod         *v1.Pod
+	configMaps  []*v1.ConfigMap
+	podName     string
+	logStreamer *actor.Ref
+	container   container.Container
+	ports       []int
 }
 
 func newPod(
@@ -67,22 +69,22 @@ func newPod(
 	rank int,
 	podInterface typedV1.PodInterface,
 	configMapInterface typedV1.ConfigMapInterface,
+	leaveKubernetesResources bool,
 ) *pod {
 	return &pod{
-		cluster:            cluster,
-		taskHandler:        taskHandler,
-		clientSet:          clientSet,
-		namespace:          namespace,
-		masterIP:           masterIP,
-		masterPort:         masterPort,
-		taskSpec:           taskSpec,
-		gpus:               gpus,
-		rank:               rank,
-		podInterface:       podInterface,
-		configMapInterface: configMapInterface,
-		configMaps:         make([]*v1.ConfigMap, 0),
-		podName:            configurePodName(taskSpec, rank),
-		ports:              make([]int, 0),
+		cluster:                  cluster,
+		taskHandler:              taskHandler,
+		clientSet:                clientSet,
+		namespace:                namespace,
+		masterIP:                 masterIP,
+		masterPort:               masterPort,
+		taskSpec:                 taskSpec,
+		gpus:                     gpus,
+		rank:                     rank,
+		podInterface:             podInterface,
+		configMapInterface:       configMapInterface,
+		leaveKubernetesResources: leaveKubernetesResources,
+		podName:                  configurePodName(taskSpec, rank),
 	}
 }
 
@@ -106,7 +108,11 @@ func (p *pod) Receive(ctx *actor.Context) error {
 			p.logStreamer.Stop()
 		}
 
-		//TODO: Cleanup pod and configMaps.
+		if !p.leaveKubernetesResources {
+			if err := p.cleanupKubernetesResources(ctx); err != nil {
+				return err
+			}
+		}
 
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
@@ -239,6 +245,24 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 	default:
 		return errors.Errorf(
 			"unexpected pod status %s for pod %s", msg.updatedPod.Status.Phase, p.podName)
+	}
+
+	return nil
+}
+
+func (p *pod) cleanupKubernetesResources(ctx *actor.Context) error {
+	var gracePeriod int64 = 1
+	err := p.podInterface.Delete(p.podName, &metav1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
+	if err != nil {
+		return errors.Wrapf(err, "pod deletion failed %s", p.podName)
+	}
+
+	for _, cf := range p.configMaps {
+		err = p.configMapInterface.Delete(cf.Name, &metav1.DeleteOptions{
+			GracePeriodSeconds: &gracePeriod})
+		if err != nil {
+			return errors.Wrapf(err, "config map deletion failed %s", cf.Name)
+		}
 	}
 
 	return nil

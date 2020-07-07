@@ -11,13 +11,14 @@ import (
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceProvider struct {
-	clusterID             string
-	namespace             string
-	slotsPerNode          int
-	masterServiceName     string
-	proxy                 *actor.Ref
-	harnessPath           string
-	taskContainerDefaults model.TaskContainerDefaultsConfig
+	clusterID                string
+	namespace                string
+	slotsPerNode             int
+	masterServiceName        string
+	leaveKubernetesResources bool
+	proxy                    *actor.Ref
+	harnessPath              string
+	taskContainerDefaults    model.TaskContainerDefaultsConfig
 
 	tasksByHandler     map[*actor.Ref]*Task
 	tasksByID          map[TaskID]*Task
@@ -36,18 +37,20 @@ func NewKubernetesResourceProvider(
 	namespace string,
 	slotsPerNode int,
 	masterServiceName string,
+	leaveKubernetesResources bool,
 	proxy *actor.Ref,
 	harnessPath string,
 	taskContainerDefaults model.TaskContainerDefaultsConfig,
 ) actor.Actor {
 	return &kubernetesResourceProvider{
-		clusterID:             clusterID,
-		namespace:             namespace,
-		slotsPerNode:          slotsPerNode,
-		masterServiceName:     masterServiceName,
-		proxy:                 proxy,
-		harnessPath:           harnessPath,
-		taskContainerDefaults: taskContainerDefaults,
+		clusterID:                clusterID,
+		namespace:                namespace,
+		slotsPerNode:             slotsPerNode,
+		masterServiceName:        masterServiceName,
+		leaveKubernetesResources: leaveKubernetesResources,
+		proxy:                    proxy,
+		harnessPath:              harnessPath,
+		taskContainerDefaults:    taskContainerDefaults,
 
 		tasksByHandler:     make(map[*actor.Ref]*Task),
 		tasksByID:          make(map[TaskID]*Task),
@@ -70,6 +73,7 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 			ctx.Self(),
 			k.namespace,
 			k.masterServiceName,
+			k.leaveKubernetesResources,
 		)
 
 		k.agent = newAgentState(sproto.AddAgent{Agent: podsActor})

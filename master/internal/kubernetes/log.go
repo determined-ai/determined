@@ -90,7 +90,7 @@ func (p *podLogStreamer) receiveStreamLogs(ctx *actor.Context) error {
 	for {
 		_, err := io.Copy(p, logReader)
 		if err != nil {
-			ctx.Log().Debugf("error reading logs: ", err)
+			ctx.Log().Debug("error reading logs: ", err)
 			break
 		}
 	}

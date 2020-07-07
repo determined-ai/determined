@@ -22,9 +22,10 @@ import (
 )
 
 type pods struct {
-	cluster           *actor.Ref
-	namespace         string
-	masterServiceName string
+	cluster                  *actor.Ref
+	namespace                string
+	masterServiceName        string
+	leaveKubernetesResources bool
 
 	clientSet  *k8sclient.Clientset
 	masterIP   string
@@ -44,12 +45,14 @@ func Initialize(
 	c *actor.Ref,
 	namespace string,
 	masterServiceName string,
+	leaveKubernetesResources bool,
 ) *actor.Ref {
 	podsActor, ok := s.ActorOf(actor.Addr("pods"), &pods{
-		cluster:             c,
-		namespace:           namespace,
-		masterServiceName:   masterServiceName,
-		podNameToPodHandler: make(map[string]*actor.Ref),
+		cluster:                  c,
+		namespace:                namespace,
+		masterServiceName:        masterServiceName,
+		podNameToPodHandler:      make(map[string]*actor.Ref),
+		leaveKubernetesResources: leaveKubernetesResources,
 	})
 	check.Panic(check.True(ok, "pods address already taken"))
 
@@ -124,8 +127,8 @@ func (p *pods) startPodInformer(ctx *actor.Context) {
 func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
 	newPodHandler := newPod(
 		p.cluster, msg.TaskHandler, p.clientSet, p.namespace, p.masterIP,
-		p.masterPort, msg.Spec, msg.Slots, msg.Rank,
-		p.podInterface, p.configMapInterface,
+		p.masterPort, msg.Spec, msg.Slots, msg.Rank, p.podInterface,
+		p.configMapInterface, p.leaveKubernetesResources,
 	)
 	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s-%d", msg.Spec.TaskID, msg.Rank), newPodHandler)
 	if !ok {
