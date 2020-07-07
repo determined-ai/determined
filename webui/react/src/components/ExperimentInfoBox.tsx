@@ -1,5 +1,4 @@
 import { Button } from 'antd';
-import { filter } from 'fp-ts/lib/ReadonlyRecord';
 import React from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -14,18 +13,6 @@ import css from './ExperimentInfoBox.module.scss';
 interface Props {
   experiment: ExperimentDetails;
 }
-
-// const pair = (label: string, value: React.ReactNode | string): React.ReactNode => {
-//   return (
-//     <div className={css.pair}>
-//       <span className={css.label}>{label}</span>
-//       {typeof value === 'string' ?
-//         <span>{value}</span> :
-//         { value }
-//       }
-//     </div>
-//   );
-// };
 
 const pairRow = (label: string, value: React.ReactNode | undefined): React.ReactNode => {
   return (
@@ -62,23 +49,8 @@ const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
   // best available checkpoint.
   const bestCheckpoint = sortedCheckpoints[0];
 
-  // const infoBox: Record<string, React.ReactNode> = {
-  //   'Best Checkpoint': <Button type="primary">Trial 1 batch 700</Button>,
-  //   'Start Time': props.startTime,
-  //   'State': props.state,
-  // };
-
-  // const infoBox2: [string, Element] = [
-  //   [ 'Best Checkpoint', <Button type="primary">Trial 1 batch 700</Button> ],
-  // 'Start Time': props.startTime,
-  // 'State': props.state,
-  // ];
-
   return (
     <div className={css.base}>
-      {/* <table>
-        {Object.entries(infoBox).map(([ label, value ]) => pairRow(label, value))}
-      </table> */}
       <table>
         <tbody>
           {pairRow('State', <Badge state={exp.state} type={BadgeType.State} />)}
