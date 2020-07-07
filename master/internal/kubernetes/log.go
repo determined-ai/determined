@@ -51,6 +51,8 @@ func (p *podLogStreamer) Receive(ctx *actor.Context) error {
 			return err
 		}
 
+	case actor.PostStop:
+
 	default:
 		ctx.Log().Error("unexpected message: ", reflect.TypeOf(msg))
 		return actor.ErrUnexpectedMessage(ctx)

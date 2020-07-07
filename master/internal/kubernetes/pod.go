@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/determined-ai/determined/master/pkg/agent"
+
 	"github.com/pkg/errors"
 
 	"github.com/docker/docker/api/types/mount"
@@ -104,6 +106,8 @@ func (p *pod) Receive(ctx *actor.Context) error {
 			p.logStreamer.Stop()
 		}
 
+		//TODO: Cleanup pod and configMaps.
+
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
@@ -131,23 +135,28 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 	switch msg.updatedPod.Status.Phase {
 	case v1.PodPending:
 		containerState := getContainerState(msg.updatedPod.Status.Conditions)
+		if containerState == container.Running {
+			ctx.Log().WithField("pod", p.podName).Errorf(
+				"unexpected containers status while pod is pending")
+		}
+
 		if containerState != p.container.State {
 			if containerState == container.Starting {
 				// Kubernetes does not have an explicit state for pulling container
 				// images. We insert it here because our  current implementation of
 				// the trial actor requires it.
-				ctx.Log().Infof(
-					"transitioning pod state from %s to %s for pod %s",
-					p.container.State, container.Pulling, p.podName)
+				ctx.Log().WithField("pod", p.podName).Infof(
+					"transitioning pod state from %s to %s",
+					p.container.State, container.Pulling)
 				p.container = p.container.Transition(container.Pulling)
 
 				rsc := sproto.ContainerStateChanged{Container: p.container}
 				ctx.Tell(p.taskHandler, rsc)
 			}
 
-			ctx.Log().Infof(
-				"transitioning pod state from %s to %s for pod %s",
-				p.container.State, containerState, p.podName)
+			ctx.Log().WithField("pod", p.podName).Infof(
+				"transitioning pod state from %s to %s",
+				p.container.State, containerState)
 			p.container = p.container.Transition(containerState)
 
 			rsc := sproto.ContainerStateChanged{Container: p.container}
@@ -177,7 +186,56 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		}
 
 	case v1.PodFailed:
+		if p.container.State != container.Terminated {
+			p.container = p.container.Transition(container.Terminated)
+
+			exitCode, exitMessage, err := getExitCodeAndMessage(p.pod)
+			if err != nil {
+				return err
+			}
+			ctx.Log().WithField("pod", p.podName).Infof("pod failed: %d %s", exitCode, exitMessage)
+
+			exitCodeConverted := agent.ExitCode(exitCode)
+			containerStopped := agent.ContainerStopped{
+				Failure: &agent.ContainerFailure{
+					FailureType: agent.ContainerFailed,
+					ErrMsg:      exitMessage,
+					ExitCode:    &exitCodeConverted,
+				},
+			}
+
+			ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
+				Container:        p.container,
+				ContainerStopped: &containerStopped,
+			})
+
+			ctx.Tell(p.cluster, sproto.PodTerminated{
+				ContainerID:      p.container.ID,
+				ContainerStopped: &containerStopped,
+			})
+
+			ctx.Self().Stop()
+		}
+
 	case v1.PodSucceeded:
+		if p.container.State != container.Terminated {
+			p.container = p.container.Transition(container.Terminated)
+
+			ctx.Log().WithField("pod", p.podName).Infof("pod exited successfully")
+			containerStopped := agent.ContainerStopped{}
+
+			ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
+				Container:        p.container,
+				ContainerStopped: &containerStopped,
+			})
+
+			ctx.Tell(p.cluster, sproto.PodTerminated{
+				ContainerID:      p.container.ID,
+				ContainerStopped: &containerStopped,
+			})
+
+			ctx.Self().Stop()
+		}
 	default:
 		return errors.Errorf(
 			"unexpected pod status %s for pod %s", msg.updatedPod.Status.Phase, p.podName)
@@ -580,4 +638,24 @@ func getContainerState(conditions []v1.PodCondition) container.State {
 	}
 
 	return container.Assigned
+}
+
+func getExitCodeAndMessage(pod *v1.Pod) (int, string, error) {
+	if len(pod.Status.InitContainerStatuses) != 1 {
+		return 0, "", errors.Errorf(
+			"unexpected number of init containers when processing failure for pod %s", pod.Name)
+	}
+
+	initContainerStatus := pod.Status.InitContainerStatuses[0].State.Terminated
+	if initContainerStatus.ExitCode != agent.SuccessExitCode {
+		return int(initContainerStatus.ExitCode), initContainerStatus.Message, nil
+	}
+
+	if len(pod.Status.ContainerStatuses) != 1 {
+		return 0, "", errors.Errorf(
+			"unexpected number of containers when processing failure for pod %s", pod.Name)
+	}
+
+	containerStatus := pod.Status.ContainerStatuses[0].State.Terminated
+	return int(containerStatus.ExitCode), containerStatus.Message, nil
 }

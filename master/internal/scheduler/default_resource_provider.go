@@ -379,7 +379,7 @@ func (d *DefaultRP) receiveStartTask(ctx *actor.Context, msg StartTask) {
 	for _, a := range assignments {
 		a.StartTask(msg.Spec)
 	}
-	d.assigmentByHandler[msg.TaskHandler] = make([]containerAssignment, 0)
+	delete(d.assigmentByHandler, msg.TaskHandler)
 }
 
 func (d *DefaultRP) receiveContainerStartedOnAgent(
