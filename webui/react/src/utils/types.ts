@@ -21,8 +21,8 @@ const waitPageUrl = (command: Command): string | undefined => {
 };
 
 export const commandToTask = (command: Command): RecentCommandTask => {
-  // We expect the title to be in the form of 'Type (pet-name-generated)'.
-  const title = command.config.description.replace(/.*\((.*)\).*/, '$1');
+  // We expect the name to be in the form of 'Type (pet-name-generated)'.
+  const name = command.config.description.replace(/.*\((.*)\).*/, '$1');
   const task: RecentTask = {
     id: command.id,
     lastEvent: {
@@ -30,10 +30,10 @@ export const commandToTask = (command: Command): RecentCommandTask => {
       name: 'requested',
     },
     misc: command.misc,
+    name,
     ownerId: command.owner.id,
     startTime: command.registeredTime,
     state: command.state as CommandState,
-    title,
     type: command.kind,
     url: waitPageUrl(command),
     username: command.owner.username,
@@ -49,11 +49,11 @@ export const experimentToTask = (experiment: Experiment): RecentExperimentTask =
     archived: experiment.archived,
     id: `${experiment.id}`,
     lastEvent,
+    name: experiment.config.description,
     ownerId: experiment.ownerId,
     progress: experiment.progress,
     startTime: experiment.startTime,
     state: experiment.state,
-    title: experiment.config.description,
     url: `/ui/experiments/${experiment.id}`,
   };
   return task;

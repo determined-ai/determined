@@ -20,8 +20,8 @@ export const columns: ColumnsType<CommandTask> = [
     title: 'Type',
   },
   {
-    dataIndex: 'title',
-    sorter: (a, b): number => alphanumericSorter(a.title, b.title),
+    dataIndex: 'name',
+    sorter: (a, b): number => alphanumericSorter(a.name, b.name),
     title: 'Name',
   },
   {

@@ -186,7 +186,7 @@ export interface Experiment {
 }
 
 export interface ExperimentItem extends Experiment {
-  title: string;
+  name: string;
   url: string;
   username: string;
 }
@@ -198,7 +198,7 @@ export interface ExperimentDetails extends Experiment {
 }
 
 export interface Task {
-  title: string;
+  name: string;
   id: string;
   ownerId: number;
   url?: string;
