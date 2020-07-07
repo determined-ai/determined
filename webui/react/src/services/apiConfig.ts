@@ -4,15 +4,16 @@ import queryString from 'query-string';
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { Api } from 'services/apiBuilder';
 import {
-  jsonToCommandLogs, jsonToDeterminedInfo, jsonToExperimentDetails, jsonToExperiments, jsonToLogs,
-  jsonToTrialLogs,
+  jsonToCommandLogs, jsonToDeterminedInfo, jsonToExperimentDetails, jsonToExperiments,
+  jsonToLogs, jsonToTensorboard, jsonToTrialLogs,
 } from 'services/decoder';
 import {
   CommandLogsParams, ExperimentDetailsParams, ExperimentsParams, KillCommandParams,
   KillExpParams, LaunchTensorboardParams, LogsParams, PatchExperimentParams, TrialLogsParams,
 } from 'services/types';
 import {
-  CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log, TBSourceType, User,
+  Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log,
+  TBSourceType, User,
 } from 'types';
 
 /* Helpers */
@@ -77,7 +78,7 @@ export const killCommand: Api<KillCommandParams, void> = {
   name: 'killCommand',
 };
 
-export const launchTensorboard: Api<LaunchTensorboardParams, void> = {
+export const launchTensorboard: Api<LaunchTensorboardParams, Command> = {
   httpOptions: (params) => {
     const attrName = params.type === TBSourceType.Trial ? 'trial_ids' : 'experiment_ids';
     return {
@@ -89,6 +90,7 @@ export const launchTensorboard: Api<LaunchTensorboardParams, void> = {
     };
   },
   name: 'launchTensorboard',
+  postProcess: (response) => jsonToTensorboard(response.data),
 };
 
 /* Experiment */
