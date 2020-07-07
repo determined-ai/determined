@@ -50,6 +50,7 @@ type pod struct {
 	podName            string
 	logStreamer        *actor.Ref
 	container          container.Container
+	ports              []int
 }
 
 func newPod(
@@ -79,6 +80,7 @@ func newPod(
 		configMapInterface: configMapInterface,
 		configMaps:         make([]*v1.ConfigMap, 0),
 		podName:            configurePodName(taskSpec, rank),
+		ports:              make([]int, 0),
 	}
 }
 
@@ -124,22 +126,40 @@ func (p *pod) startPod(ctx *actor.Context) error {
 }
 
 func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) error {
+	p.pod = msg.updatedPod
+
 	switch msg.updatedPod.Status.Phase {
 	case v1.PodPending:
 		containerState := getContainerState(msg.updatedPod.Status.Conditions)
 		if containerState != p.container.State {
+			if containerState == container.Starting {
+				// Kubernetes does not have an explicit state for pulling container
+				// images. We insert it here because our  current implementation of
+				// the trial actor requires it.
+				ctx.Log().Infof(
+					"transitioning pod state from %s to %s for pod %s",
+					p.container.State, container.Pulling, p.podName)
+				p.container = p.container.Transition(container.Pulling)
+
+				rsc := sproto.ContainerStateChanged{Container: p.container}
+				ctx.Tell(p.taskHandler, rsc)
+			}
+
 			ctx.Log().Infof(
 				"transitioning pod state from %s to %s for pod %s",
 				p.container.State, containerState, p.podName)
 			p.container = p.container.Transition(containerState)
+
+			// TODO: Refactor the containerStarted part of this message
+			// to be less specific to agents.
+			rsc := sproto.ContainerStateChanged{Container: p.container}
+			ctx.Tell(p.taskHandler, rsc)
 		}
 
 	case v1.PodRunning:
 		if p.container.State != container.Running {
 			p.container = p.container.Transition(container.Running)
-		}
 
-		if p.logStreamer == nil {
 			var ok bool
 			p.logStreamer, ok = ctx.ActorOf(
 				fmt.Sprintf("%s-logs", p.podName),
@@ -150,6 +170,13 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 			}
 
 			ctx.Tell(p.logStreamer, streamLogs{})
+
+			ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{Container: p.container})
+			ctx.Tell(p.cluster, sproto.PodStarted{
+				ContainerID: p.container.ID,
+				IP:          p.pod.Status.PodIP,
+				Ports:       p.ports,
+			})
 		}
 
 	case v1.PodFailed:
@@ -341,10 +368,12 @@ func (p *pod) startPodForTrial(ctx *actor.Context) error {
 		return err
 	}
 
+	p.ports = []int{
+		tasks.LocalRendezvousPort, tasks.LocalRendezvousPort + tasks.LocalRendezvousPortOffset}
 	rendezvousPorts := []string{
-		fmt.Sprintf("%d", tasks.LocalRendezvousPort),
-		fmt.Sprintf("%d", tasks.LocalRendezvousPort+tasks.LocalRendezvousPortOffset),
+		fmt.Sprintf("%d", p.ports[0]), fmt.Sprintf("%d", p.ports[1]),
 	}
+
 	envVars, err := p.configureEnvVars(
 		tasks.TrialEnvVars(p.taskSpec, rendezvousPorts),
 		p.taskSpec.StartContainer.ExperimentConfig.Environment,
