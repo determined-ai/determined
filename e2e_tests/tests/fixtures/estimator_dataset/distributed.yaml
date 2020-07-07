@@ -1,10 +1,10 @@
-description: dataset-experiment
+description: dataset-experiment-distributed
 hyperparameters:
-  global_batch_size: 4
+  global_batch_size: 8
   dataset_size: 100
   print: true
-  validation_size: 4
-  lr: 1
+  validation_size: 16
+  lr: 0.001
 searcher:
   name: single
   metric: loss
@@ -14,3 +14,5 @@ max_restarts: 0
 batches_per_step: 1
 entrypoint: model:EstimatorDatasetTrial
 min_validation_period: 1
+resources:
+  slots_per_trial: 8

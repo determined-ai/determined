@@ -44,7 +44,23 @@ API or Native API.
     accessible via ``context.experimental`` for information related to experimental features.
 
 .. autoclass:: determined.estimator.EstimatorExperimentalContext
-    :members: cache_train_dataset, cache_validation_dataset
+    :members: cache_train_dataset, cache_validation_dataset, make_metric
+    :member-order: bysource
+
+
+Reducing Metrics
+~~~~~~~~~~~~~~~~
+
+Determined supports proper reduction of arbitrary validation metrics during
+distributed training by allowing users to define custom reducers for their
+metrics. Custom reducers can be either a function or an implementation of the
+:class:`determined.estimator.MetricReducer` interface.
+
+See :func:`determined.estimator.EstimatorExperimentalContext.make_metric()` for
+more details.
+
+.. autoclass:: determined.estimator.MetricReducer
+    :members: accumulate, cross_slot_reduce
     :member-order: bysource
 
 
@@ -82,6 +98,7 @@ Example usage of ``determined.estimator.RunHook`` which adds custom metadata che
                 make_input_fn(),
                 hooks=[MyHook(self.context, "my_metadata")],
             )
+
 
 Examples
 --------
