@@ -20,7 +20,7 @@ import {
   ALL_VALUE, Command, CommandType, RecentTask, ResourceType,
   TaskFilters, TaskType,
 } from 'types';
-import { getOrElse } from 'utils/data';
+import { getPath } from 'utils/data';
 import { filterTasks } from 'utils/task';
 import { activeCommandStates, commandToTask, experimentToTask } from 'utils/types';
 
@@ -52,7 +52,7 @@ const Dashboard: React.FC = () => {
 
   const storage = useStorage('dashboard/tasks');
   const initFilters = storage.getWithDefault('filters', {
-    ...defaultFilters, username: getOrElse(auth, 'user.username'),
+    ...defaultFilters, username: getPath<string>(auth, 'user.username'),
   });
   const [ filters, setFilters ] = useState<TaskFilters>(initFilters);
 

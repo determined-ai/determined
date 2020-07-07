@@ -1,6 +1,7 @@
 import {
   clone,
-  getOrElse,
+  getPath,
+  getPathOrElse,
   isAsyncFunction,
   isFunction,
   isMap,
@@ -112,18 +113,26 @@ describe('data utility', () => {
     });
   });
 
-  describe('get', () => {
+  describe('getPath', () => {
+    it('should get object value based on paths', () => {
+      expect(getPath<boolean>(object, 'a')).toBe(true);
+      expect(getPath<string>(object, 'x.x')).toBeUndefined();
+      expect(getPath<number>(object, 'c.x.y')).toBe(-1.2e10);
+    });
+  });
+
+  describe('getPathOrElse', () => {
     it('should get-or-else objects', () => {
-      expect(getOrElse(object, 'a', false)).toBe(true);
-      expect(getOrElse(object, 'b', 'junk')).toBeNull();
-      expect(getOrElse(object, 'c.x.y', 0)).toBe(-1.2e10);
+      expect(getPathOrElse<boolean>(object, 'a', false)).toBe(true);
+      expect(getPathOrElse<string>(object, 'b', 'junk')).toBeNull();
+      expect(getPathOrElse<number>(object, 'c.x.y', 0)).toBe(-1.2e10);
     });
 
     it('should get-or-else fallbacks', () => {
       const fallback = 'fallback';
-      expect(getOrElse(object, 'a.b.c', fallback)).toBe(fallback);
-      expect(getOrElse(object, 'c.x.w', fallback)).toBe(fallback);
-      expect(getOrElse(object, 'c.x.z', undefined)).toBeUndefined();
+      expect(getPathOrElse<string>(object, 'a.b.c', fallback)).toBe(fallback);
+      expect(getPathOrElse<string>(object, 'c.x.w', fallback)).toBe(fallback);
+      expect(getPathOrElse<string | undefined>(object, 'c.x.z', undefined)).toBeUndefined();
     });
   });
 

@@ -12,7 +12,7 @@ import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { routeAll } from 'routes';
 import { defaultAppRoute } from 'routes';
-import { getOrElse } from 'utils/data';
+import { getPath } from 'utils/data';
 import { locationToPath } from 'utils/routes';
 
 import css from './SignIn.module.scss';
@@ -51,7 +51,7 @@ const SignIn: React.FC = () => {
       if (queries.cli) notification.open({ description: <AuthToken />, duration: 0, message: '' });
 
       // Reroute the authenticated user to the app.
-      const loginRedirect = getOrElse(location, 'state.loginRedirect');
+      const loginRedirect = getPath<Location>(location, 'state.loginRedirect');
       const redirect = queries.redirect || locationToPath(loginRedirect);
       routeAll(redirect || defaultAppRoute.path);
     } else if (auth.checked) {

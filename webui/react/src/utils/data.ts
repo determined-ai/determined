@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { CommandState, RunState, State } from 'types';
 
 export const isMap = <T>(data: T): boolean => data instanceof Map;
@@ -20,6 +19,7 @@ export const isSyncFunction = (fn: unknown): boolean => {
   return isFunction(fn) && !isAsyncFunction(fn);
 };
 
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const clone = (data: any, deep = true): any => {
   if (isPrimitive(data)) return data;
   if (isMap(data)) return new Map(data);
@@ -27,16 +27,21 @@ export const clone = (data: any, deep = true): any => {
   return deep ? JSON.parse(JSON.stringify(data)) : { ...data };
 };
 
-export const getOrElse = <T = any>(
-  obj: Record<string, any>,
-  path: string,
-  fallback?: T,
-): T | undefined => {
-  if (!obj) return fallback;
-
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const getPath = <T>(obj: Record<string, any>, path: string): T | undefined => {
   // Reassigns to obj[key] on each array.every iteration
-  let value = obj;
-  return path.split('.').every(key => ((value = value[key]) !== undefined)) ? value as T : fallback;
+  let value = obj || {};
+  return path.split('.').every(key => ((value = value[key]) !== undefined)) ?
+    value as T : undefined;
+};
+
+export const getPathOrElse = <T>(
+  obj: Record<string, unknown>,
+  path: string,
+  fallback: T,
+): T => {
+  const value = getPath<T>(obj, path);
+  return value !== undefined ? value : fallback;
 };
 
 export const categorize = <T>(array: T[], keyFn: ((arg0: T) => string)): Record<string, T[]> => {
