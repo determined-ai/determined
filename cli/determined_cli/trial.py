@@ -189,11 +189,19 @@ args_description = [
                         action="store_true",
                         help="follow the logs of a running trial, similar to tail -f",
                     ),
-                    Arg(
-                        "--tail",
-                        type=int,
-                        help="number of lines to show, counting from the end "
-                        "of the log (default is all)",
+                    Group(
+                        Arg(
+                            "--head",
+                            type=int,
+                            help="number of lines to show, counting from the beginning "
+                            "of the log (default is all)",
+                        ),
+                        Arg(
+                            "--tail",
+                            type=int,
+                            help="number of lines to show, counting from the end "
+                            "of the log (default is all)",
+                        ),
                     ),
                 ],
             ),
