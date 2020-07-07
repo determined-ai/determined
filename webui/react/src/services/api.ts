@@ -9,7 +9,8 @@ import { CommandLogsParams, ExperimentDetailsParams, ExperimentsParams, KillComm
   PatchExperimentState,
   TrialLogsParams } from 'services/types';
 import {
-  AnyTask, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log, User,
+  AnyTask, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log,
+  User,
 } from 'types';
 import { serverAddress } from 'utils/routes';
 import { isExperimentTask } from 'utils/task';
