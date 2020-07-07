@@ -40,10 +40,10 @@ describe('setup', () => {
     cy.get(recordSelector).should('contain', 'Active');
   });
 
-  it('should cancel experiment 2', () => {
+  it('should kill experiment 2', () => {
     cy.get(recordSelector + ' td:nth-child(2)').contains('2').click();
-    cy.contains('Cancel').click();
-    cy.get('.modal button').contains(/cancel/i).click();
+    cy.contains('Kill').click();
+    cy.get('.modal button').contains(/kill/i).click();
     cy.contains('Canceled', { timeout: Cypress.config('responseTimeout') });
   });
 
