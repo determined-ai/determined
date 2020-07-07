@@ -86,6 +86,9 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 	case StartTask:
 		k.receiveStartTask(ctx, msg)
 
+	case sproto.PodStarted:
+		k.receivePodStarted(ctx, msg)
+
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
@@ -226,6 +229,35 @@ func (k *kubernetesResourceProvider) receiveStartTask(ctx *actor.Context, msg St
 	for _, a := range assignments {
 		a.StartTask(msg.Spec)
 	}
+}
+
+func (k *kubernetesResourceProvider) receivePodStarted(ctx *actor.Context, msg sproto.PodStarted) {
+	task, ok := k.tasksByContainerID[ContainerID(msg.ContainerID)]
+	if !ok {
+		ctx.Log().Warnf("received pod start from unknown container %s", msg.ContainerID)
+	}
+
+	container := task.containers[ContainerID(msg.ContainerID)]
+	container.addresses = constructAddresses(msg.IP, msg.Ports)
+	container.mustTransition(containerRunning)
+	handler := container.task.handler
+	handler.System().Tell(handler, ContainerStarted{Container: container})
+
+	// TODO (DET-3422): add in proxying initialization.
+}
+
+func constructAddresses(ip string, ports []int) []Address {
+	addresses := make([]Address, 0, len(ports))
+	for _, port := range ports {
+		addresses = append(addresses, Address{
+			ContainerIP:   ip,
+			ContainerPort: port,
+			HostIP:        ip,
+			HostPort:      port,
+		})
+	}
+
+	return addresses
 }
 
 type podAssignment struct {

@@ -544,7 +544,6 @@ func toAddresses(proxy string, info types.ContainerJSON) []Address {
 				ContainerPort: port.Int(),
 				HostIP:        proxy,
 				HostPort:      port.Int(),
-				Protocol:      port.Proto(),
 			})
 		}
 	default:
@@ -572,7 +571,6 @@ func toAddresses(proxy string, info types.ContainerJSON) []Address {
 						ContainerPort: port.Int(),
 						HostIP:        hostIP,
 						HostPort:      hostPort,
-						Protocol:      port.Proto(),
 					})
 				}
 			}

@@ -118,7 +118,6 @@ type rendezvousAddress struct {
 	ContainerIP   string `json:"container_ip"`
 	HostPort      int    `json:"host_port"`
 	HostIP        string `json:"host_ip"`
-	Protocol      string `json:"protocol"`
 }
 
 // terminatedContainerWithState records the terminatedContainer message with some state about the
@@ -697,7 +696,6 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 				ContainerIP:   addr.ContainerIP,
 				HostPort:      addr.HostPort,
 				HostIP:        addr.HostIP,
-				Protocol:      addr.Protocol,
 			})
 		}
 
