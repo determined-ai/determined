@@ -55,11 +55,8 @@ func (h *mockActor) Receive(ctx *actor.Context) error {
 			return h.onAssigned(msg)
 		}
 
-		h.system.Tell(h.cluster, sproto.ContainerStateChanged{
-			Container: cproto.Container{
-				ID:    cproto.ID("random-container-name"),
-				State: cproto.Running,
-			},
+		h.system.Tell(h.cluster, sproto.TaskStartedOnAgent{
+			ContainerID: cproto.ID("random-container-name"),
 			ContainerStarted: &agent.ContainerStarted{
 				ContainerInfo: types.ContainerJSON{
 					ContainerJSONBase: &types.ContainerJSONBase{
@@ -75,11 +72,9 @@ func (h *mockActor) Receive(ctx *actor.Context) error {
 		if h.onContainerStarted != nil {
 			return h.onContainerStarted(msg)
 		}
-		h.system.Tell(h.cluster, sproto.ContainerStateChanged{
-			Container: cproto.Container{
-				ID:    cproto.ID(msg.Container.ID()),
-				State: cproto.Terminated,
-			},
+
+		h.system.Tell(h.cluster, sproto.TaskTerminatedOnAgent{
+			ContainerID:      cproto.ID(msg.Container.ID()),
 			ContainerStopped: &agent.ContainerStopped{},
 		})
 

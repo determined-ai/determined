@@ -150,8 +150,6 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 				p.container.State, containerState, p.podName)
 			p.container = p.container.Transition(containerState)
 
-			// TODO: Refactor the containerStarted part of this message
-			// to be less specific to agents.
 			rsc := sproto.ContainerStateChanged{Container: p.container}
 			ctx.Tell(p.taskHandler, rsc)
 		}
@@ -170,7 +168,6 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 			}
 
 			ctx.Tell(p.logStreamer, streamLogs{})
-
 			ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{Container: p.container})
 			ctx.Tell(p.cluster, sproto.PodStarted{
 				ContainerID: p.container.ID,

@@ -255,18 +255,15 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 		ctx.Log().Infof("removing agent: %s", msg.Agent.Address().Local())
 		delete(d.agents, msg.Agent)
 
-	case sproto.ContainerStateChanged:
-		cid := ContainerID(msg.Container.ID)
-		switch msg.Container.State {
-		case cproto.Running:
-			d.receiveContainerStartedOnAgent(ctx, containerStartedOnAgent{
-				ContainerID: cid,
-				Addresses: toAddresses(
-					msg.ContainerStarted.ProxyAddress, msg.ContainerStarted.ContainerInfo),
-			})
-		case cproto.Terminated:
-			d.receiveContainerTerminated(ctx, cid, *msg.ContainerStopped, false)
-		}
+	case sproto.TaskStartedOnAgent:
+		cid := ContainerID(msg.ContainerID)
+		addresses := toAddresses(
+			msg.ContainerStarted.ProxyAddress, msg.ContainerStarted.ContainerInfo)
+		d.receiveContainerStartedOnAgent(ctx, cid, addresses)
+
+	case sproto.TaskTerminatedOnAgent:
+		cid := ContainerID(msg.ContainerID)
+		d.receiveContainerTerminated(ctx, cid, *msg.ContainerStopped, false)
 
 	case StartTask:
 		d.receiveStartTask(ctx, msg)
@@ -386,29 +383,30 @@ func (d *DefaultRP) receiveStartTask(ctx *actor.Context, msg StartTask) {
 
 func (d *DefaultRP) receiveContainerStartedOnAgent(
 	ctx *actor.Context,
-	msg containerStartedOnAgent,
+	containerID ContainerID,
+	addresses []Address,
 ) {
-	task := d.tasksByContainerID[msg.ContainerID]
+	task := d.tasksByContainerID[containerID]
 	if task == nil {
 		ctx.Log().Warnf(
 			"ignoring stale start message for container %s",
-			msg.ContainerID,
+			containerID,
 		)
 		return
 	}
 
-	container := task.containers[msg.ContainerID]
-	container.addresses = msg.Addresses
+	container := task.containers[containerID]
+	container.addresses = addresses
 	container.mustTransition(containerRunning)
 	handler := container.task.handler
 	handler.System().Tell(handler, ContainerStarted{Container: container})
 
-	if len(msg.Addresses) == 0 {
+	if len(addresses) == 0 {
 		return
 	}
 
-	names := make([]string, 0, len(msg.Addresses))
-	for _, address := range msg.Addresses {
+	names := make([]string, 0, len(addresses))
+	for _, address := range addresses {
 		// We are keying on task ID instead of container ID. Revisit this when we need to
 		// proxy multi-container tasks or when containers are created prior to being
 		// assigned to an agent.

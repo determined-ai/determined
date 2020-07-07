@@ -74,7 +74,7 @@ func (p *podLogStreamer) Write(log []byte) (n int, err error) {
 func (p *podLogStreamer) receiveStreamLogs(ctx *actor.Context) error {
 	logs := p.podInterface.GetLogs(p.podName, &v1.PodLogOptions{
 		Follow: true,
-		// TODO: switch over to using k8 timestamps.
+		// TODO(DET-3541): switch over to using k8 timestamps.
 		Timestamps: false,
 	})
 
