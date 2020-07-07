@@ -279,27 +279,32 @@ class LoopTrialController(TrialController):
         )
 
         # Initialize communication directly between training processes.
-        self.train_process_comm_chief = None  # type: Optional[ipc.ZMQServer]
-        self.train_process_comm_worker = None  # type: Optional[ipc.ZMQClient]
+        self.train_process_comm_chief = None  # type: Optional[ipc.ZMQBroadcastServer]
+        self.train_process_comm_worker = None  # type: Optional[ipc.ZMQBroadcastClient]
         if self.hvd_config.use:
             self._initialize_train_process_comm()
 
     def _initialize_train_process_comm(self) -> None:
         check.true(self.hvd_config.use)
+
+        srv_pub_port = constants.INTER_TRAIN_PROCESS_COMM_PORT_1
+        srv_pull_port = constants.INTER_TRAIN_PROCESS_COMM_PORT_2
+
         if self.is_chief:
-            logging.debug(
-                f"Chief {hvd.rank()} setting up server with "
-                f"port {constants.INTER_TRAIN_PROCESS_COMM_PORT}."
-            )
-            self.train_process_comm_chief = ipc.ZMQServer(
-                ports=[constants.INTER_TRAIN_PROCESS_COMM_PORT], num_connections=1
+            logging.debug(f"Chief setting up server with ports {srv_pub_port}/{srv_pull_port}.")
+            self.train_process_comm_chief = ipc.ZMQBroadcastServer(
+                num_connections=self.env.experiment_config.slots_per_trial() - 1,
+                pub_port=srv_pub_port,
+                pull_port=srv_pull_port,
             )
         else:
             chief_ip_address = self.rendezvous_info.get_ip_addresses()[0]
             logging.debug(
                 f"Non-Chief {hvd.rank()} setting up comm to "
-                f"{chief_ip_address} w/ port {constants.INTER_TRAIN_PROCESS_COMM_PORT}."
+                f"{chief_ip_address} w/ ports "
+                f"{srv_pub_port}/{srv_pull_port}."
             )
-            self.train_process_comm_worker = ipc.ZMQClient(
-                ip_address=chief_ip_address, port=constants.INTER_TRAIN_PROCESS_COMM_PORT
+            self.train_process_comm_worker = ipc.ZMQBroadcastClient(
+                srv_pub_url=f"tcp://{chief_ip_address}:{srv_pub_port}",
+                srv_pull_url=f"tcp://{chief_ip_address}:{srv_pull_port}",
             )

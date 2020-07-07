@@ -1,5 +1,4 @@
 import logging
-import os
 from typing import Any, Optional
 
 import lomond
@@ -127,11 +126,6 @@ class SocketManager(workload.Source):
                 rendezvous_ports = self.env.rendezvous_ports()
                 addrs[rank] = f"0.0.0.0:{rendezvous_ports[0]}"
                 addrs2[rank] = f"0.0.0.0:{rendezvous_ports[1]}"
-
-                # TODO(ryan): remove rendezvous info as a environment variable.
-                os.environ["DET_RENDEZVOUS_INFO"] = simplejson.dumps(
-                    {"addrs": addrs, "addrs2": addrs2, "rank": rank}
-                )
 
                 return det.RendezvousInfo(addrs, addrs2, rank)
 
