@@ -320,7 +320,7 @@ class Counter(det.pytorch.PyTorchCallback):
     def on_epoch_start(self, step_id: int) -> None:
         self.epochs_started += 1
 
-    def on_epoch_end(self, step_id: int, metrics: Dict[str, Any]) -> None:
+    def on_train_epoch_end(self, step_id: int, metrics: Dict[str, Any]) -> None:
         self.epochs_ended += 1
 
     def on_validation_start(self) -> None:

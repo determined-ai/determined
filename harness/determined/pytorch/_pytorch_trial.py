@@ -308,12 +308,12 @@ class PyTorchTrialController(det.LoopTrialController):
         num_inputs = 0
 
         for batch_idx in range(start, end):
-            for callback in self.callbacks.values():
-                callback.on_batch_start(batch_idx)
-
             if self.is_epoch_start(batch_idx):
                 for callback in self.callbacks.values():
                     callback.on_epoch_start(self.get_epoch_idx(batch_idx))
+
+            for callback in self.callbacks.values():
+                callback.on_batch_start(batch_idx)
 
             batch = next(self.training_iterator)
             num_inputs += data_length(batch)
@@ -357,7 +357,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
             if self.is_epoch_end(batch_idx):
                 for callback in self.callbacks.values():
-                    callback.on_epoch_end(self.get_epoch_idx(batch_idx), tr_metrics)
+                    callback.on_train_epoch_end(self.get_epoch_idx(batch_idx), tr_metrics)
 
         # Aggregate and reduce training metrics from all the training processes.
         if self.hvd_config.use and self.hvd_config.average_training_metrics:

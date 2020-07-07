@@ -23,13 +23,13 @@ class PyTorchCallback:
 
     def on_batch_start(self, batch_idx: int) -> None:
         """
-        Run before every batch is trained.
+        Run before every batch begins training.
         """
         pass
 
     def on_batch_end(self, batch_idx: int, metrics: Dict[str, Any]) -> None:
         """
-        Run after every batch is trained.
+        Run after every batch finishes training.
         """
         pass
 
@@ -39,9 +39,9 @@ class PyTorchCallback:
         """
         pass
 
-    def on_epoch_end(self, epoch_idx: int, metrics: Dict[str, Any]) -> None:
+    def on_train_epoch_end(self, epoch_idx: int, metrics: Dict[str, Any]) -> None:
         """
-        Run after every epoch ends.
+        Run after every epoch finishes training.
         """
         pass
 
