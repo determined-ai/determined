@@ -184,7 +184,6 @@ service Determined {
       option (google.api.http) = {get: "/api/v1/models/{model_name}/versions/{model_version}"};
       option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Models"};
     }
-
     // Get the versions for the requested model.
     rpc GetModelVersions(GetModelVersionsRequest) returns (GetModelVersionsResponse) {
       option (google.api.http) = {get: "/api/v1/models/{model_name}/versions"};

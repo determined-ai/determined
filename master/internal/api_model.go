@@ -67,8 +67,8 @@ func (a *apiServer) PostModel(
 }
 
 func (a *apiServer) PatchModel(
-	_ context.Context, req *apiv1.PatchModelRequest) (*apiv1.PatchModelResponse, error) {
-	getResp, err := a.GetModel(context.TODO(), &apiv1.GetModelRequest{ModelName: req.Model.Name})
+	ctx context.Context, req *apiv1.PatchModelRequest) (*apiv1.PatchModelResponse, error) {
+	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.Model.Name})
 	if err != nil {
 		return nil, err
 	}
@@ -127,9 +127,9 @@ func (a *apiServer) GetModelVersions(
 }
 
 func (a *apiServer) PostModelVersion(
-	_ context.Context, req *apiv1.PostModelVersionRequest) (*apiv1.PostModelVersionResponse, error) {
+	ctx context.Context, req *apiv1.PostModelVersionRequest) (*apiv1.PostModelVersionResponse, error) {
 	// make sure that the model exists before adding a version
-	getResp, err := a.GetModel(context.TODO(), &apiv1.GetModelRequest{ModelName: req.ModelName})
+	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.ModelName})
 	if err != nil {
 		return nil, err
 	}

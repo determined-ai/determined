@@ -17,7 +17,7 @@ message Metrics {
 // Checkpoint is an artifact created by a trial during training.
 message Checkpoint {
   // The current state of the checkpoint.
-  enum STATE {
+  enum State {
     // The state of the checkpoint is unknown.
     STATE_UNSPECIFIED = 0;
     // The checkpoint is in an active state.
@@ -58,7 +58,7 @@ message Checkpoint {
   // Dictionary of validation metric names to their values.
   Metrics metrics = 14;
   // The state of the validation associated with this checkpoint.
-  STATE validation_state = 15;
+  State validation_state = 15;
   // The state of the checkpoint.
-  STATE state = 16;
+  State state = 16;
 }
