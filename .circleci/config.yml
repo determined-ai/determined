@@ -141,13 +141,13 @@ commands:
             - "webui/elm/node_modules"
   react-get-deps:
     steps:
-      - restore_cache:
-          keys:
-            - det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
       - attach_workspace:
           at: .
       - run: make -C webui/api-ts-sdk get-deps-package
       - run: make -C webui/api-ts-sdk build-package
+      - restore_cache:
+          keys:
+            - det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
       - run:
           name: Get React dependencies
           command: |
