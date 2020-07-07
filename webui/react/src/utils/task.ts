@@ -1,7 +1,7 @@
 import {
-  ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType, Experiment, ExperimentItem,
-  ExperimentTask, RecentCommandTask, RecentEvent, RecentExperimentTask, RecentTask, RunState, Task,
-  TaskFilters, TaskType, terminalCommandStates, User,
+  ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType, Experiment, ExperimentFilters,
+  ExperimentItem, ExperimentTask, RecentCommandTask, RecentEvent, RecentExperimentTask,
+  RecentTask, RunState, Task, TaskFilters, TaskType, terminalCommandStates, User,
 } from 'types';
 
 import { isExperiment } from './types';
@@ -30,9 +30,9 @@ function generateTask(idx: number): Task & RecentEvent {
       date: startTime,
       name: 'opened',
     },
+    name: `${idx}`,
     ownerId: user.id,
     startTime,
-    title: `${idx}`,
     url: '#',
   };
 }
@@ -71,9 +71,9 @@ export const generateExperiments = (count = 10): ExperimentItem[] => {
       const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
       return {
         ...experimentTask,
-        config: { description: experimentTask.title },
+        config: { description: experimentTask.name },
         id: idx,
-        name: experimentTask.title,
+        name: experimentTask.name,
         username: user.username,
       } as ExperimentItem;
     });
@@ -100,12 +100,12 @@ export const canBeOpened = (task: AnyTask): boolean => {
   return !!task.url;
 };
 
-const matchesSearch = <T extends AnyTask>(task: T, search = ''): boolean => {
+const matchesSearch = <T extends AnyTask | ExperimentItem>(task: T, search = ''): boolean => {
   if (!search) return true;
-  return task.id.indexOf(search) !== -1 || task.title.indexOf(search) !== -1;
+  return task.id.toString().indexOf(search) !== -1 || task.name.indexOf(search) !== -1;
 };
 
-const matchesState = <T extends AnyTask>(task: T, states: string[]): boolean => {
+const matchesState = <T extends AnyTask | ExperimentItem>(task: T, states: string[]): boolean => {
   if (states[0] === ALL_VALUE) return true;
 
   const targetStateRun = states[0] as RunState;
@@ -114,10 +114,25 @@ const matchesState = <T extends AnyTask>(task: T, states: string[]): boolean => 
   return [ targetStateRun, targetStateCmd ].includes(task.state);
 };
 
-const matchesUser = <T extends AnyTask>(task: T, users: User[], username?: string): boolean => {
+const matchesUser = <T extends AnyTask | ExperimentItem>(
+  task: T, users: User[], username?: string,
+): boolean => {
   if (!username) return true;
   const selectedUser = users.find(u => u.username === username);
   return !!selectedUser && (task.ownerId === selectedUser.id);
+};
+
+export const filterExperiments = (
+  experiments: ExperimentItem[], filters: ExperimentFilters, users: User[] = [], search = '',
+): ExperimentItem[] => {
+  return experiments
+    .filter(experiment => {
+      return (filters.showArchived || !experiment.archived) &&
+        matchesUser<ExperimentItem>(experiment, users, filters.username) &&
+        matchesState<ExperimentItem>(experiment, filters.states) &&
+        matchesSearch<ExperimentItem>(experiment, search);
+    })
+    .slice(0, filters.limit);
 };
 
 export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = AnyTask>(

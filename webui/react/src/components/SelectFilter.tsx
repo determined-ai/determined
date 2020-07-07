@@ -3,6 +3,7 @@ import { SelectValue } from 'antd/es/select';
 import React, { PropsWithChildren, useCallback } from 'react';
 
 import Icon from './Icon';
+import Label from './Label';
 import css from './SelectFilter.module.scss';
 
 interface Props {
@@ -40,7 +41,7 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = (props: PropsWithChildr
 
   return (
     <div className={css.base}>
-      <div className={css.label}>{props.label}</div>
+      <Label>{props.label}</Label>
       <Select
         defaultValue={props.value}
         dropdownMatchSelectWidth={false}

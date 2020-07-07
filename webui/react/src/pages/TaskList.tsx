@@ -39,7 +39,7 @@ const TaskList: React.FC = () => {
   const notebooks = Notebooks.useStateContext();
   const shells = Shells.useStateContext();
   const tensorboards = Tensorboards.useStateContext();
-  const storage = useStorage('tasklist');
+  const storage = useStorage('task-list');
   const initFilters = storage.getWithDefault('filters',
     { ...defaultFilters, username: (auth.user || {}).username });
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
