@@ -149,24 +149,33 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerStateChanged) {
 	task, ok := a.containers[sc.Container.ID]
 	check.Panic(check.True(ok, "container not assigned to agent: container %s", sc.Container.ID))
-	switch sc.Container.State {
-	case container.Running:
-		if sc.ContainerStarted.ProxyAddress == "" {
-			sc.ContainerStarted.ProxyAddress = a.address
-		}
-	case container.Terminated:
-		delete(a.containers, sc.Container.ID)
-	}
 
 	rsc := sproto.ContainerStateChanged{
 		Container:        sc.Container,
-		ContainerStarted: sc.ContainerStarted,
 		ContainerStopped: sc.ContainerStopped,
 	}
 
 	ctx.Tell(task, rsc)
 	ctx.Tell(a.slots, rsc)
-	ctx.Tell(a.cluster, rsc)
+
+	switch sc.Container.State {
+	case container.Running:
+		if sc.ContainerStarted.ProxyAddress == "" {
+			sc.ContainerStarted.ProxyAddress = a.address
+		}
+
+		ctx.Tell(a.cluster, sproto.TaskStartedOnAgent{
+			ContainerID:      sc.Container.ID,
+			ContainerStarted: sc.ContainerStarted,
+		})
+	case container.Terminated:
+		delete(a.containers, sc.Container.ID)
+
+		ctx.Tell(a.cluster, sproto.TaskTerminatedOnAgent{
+			ContainerID:      sc.Container.ID,
+			ContainerStopped: sc.ContainerStopped,
+		})
+	}
 }
 
 func (a *agent) summarize(ctx *actor.Context) agentSummary {
