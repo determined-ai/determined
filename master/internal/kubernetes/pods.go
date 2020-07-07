@@ -127,7 +127,7 @@ func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
 		p.masterPort, msg.Spec, msg.Slots, msg.Rank,
 		p.podInterface, p.configMapInterface,
 	)
-	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", msg.Spec.TaskID), newPodHandler)
+	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s-%d", msg.Spec.TaskID, msg.Rank), newPodHandler)
 	if !ok {
 		return errors.Errorf("pod actor %s already exists", ref.Address().String())
 	}
@@ -139,7 +139,8 @@ func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
 func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
 	ref, ok := p.podNameToPodHandler[msg.podName]
 	if !ok {
-		ctx.Log().Errorf("received pod status update for un-registered pod: %s", msg.podName)
+		ctx.Log().WithField("pod name", msg.podName).Warn(
+			"received pod status update for un-registered pod")
 		return
 	}
 

@@ -89,6 +89,14 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 	case sproto.PodStarted:
 		k.receivePodStarted(ctx, msg)
 
+	case sproto.PodTerminated:
+		k.receivePodTerminated(ctx, msg, false)
+
+	case taskStopped:
+		k.receiveTaskStopped(ctx, msg)
+
+	case groupStopped:
+
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
@@ -167,7 +175,8 @@ func (k *kubernetesResourceProvider) scheduleTask(ctx *actor.Context, task *Task
 		k.assignPod(ctx, task, slotsPerNode)
 	}
 
-	ctx.Log().WithField("task-id", task.ID).Infof("task assigned by scheduler")
+	ctx.Log().WithField("task-id", task.ID).Infof(
+		"task assigned by scheduler with %d pods", numPods)
 	task.handler.System().Tell(task.handler, TaskAssigned{NumContainers: numPods})
 }
 
@@ -229,6 +238,7 @@ func (k *kubernetesResourceProvider) receiveStartTask(ctx *actor.Context, msg St
 	for _, a := range assignments {
 		a.StartTask(msg.Spec)
 	}
+	delete(k.assignmentsByTaskHandler, msg.TaskHandler)
 }
 
 func (k *kubernetesResourceProvider) receivePodStarted(ctx *actor.Context, msg sproto.PodStarted) {
@@ -244,6 +254,72 @@ func (k *kubernetesResourceProvider) receivePodStarted(ctx *actor.Context, msg s
 	handler.System().Tell(handler, ContainerStarted{Container: container})
 
 	// TODO (DET-3422): add in proxying initialization.
+}
+
+func (k *kubernetesResourceProvider) receivePodTerminated(
+	ctx *actor.Context,
+	msg sproto.PodTerminated,
+	aborted bool,
+) {
+	cid := ContainerID(msg.ContainerID)
+	task := k.tasksByContainerID[cid]
+	if task == nil {
+		ctx.Log().WithField("container id", cid).Info(
+			"ignoring stale terminated message for container",
+		)
+		return
+	}
+
+	container := task.containers[cid]
+	container.mustTransition(containerTerminated)
+	container.exitStatus = msg.ContainerStopped
+
+	// TODO(DET-3422): de-register proxying info.
+
+	delete(container.agent.containers, container.id)
+	delete(container.task.containers, container.id)
+	delete(k.tasksByContainerID, container.id)
+
+	// A task is terminated if and only if all of its containers are terminated.
+	for _, container := range task.containers {
+		if container.state != containerTerminated {
+			return
+		}
+	}
+
+	if task.state != taskTerminated {
+		k.taskTerminated(task, aborted)
+	}
+}
+
+func (k *kubernetesResourceProvider) taskTerminated(task *Task, aborted bool) {
+	task.mustTransition(taskTerminated)
+
+	delete(k.tasksByID, task.ID)
+	delete(k.tasksByHandler, task.handler)
+
+	for id := range task.containers {
+		delete(k.tasksByContainerID, id)
+	}
+
+	task.handler.System().Tell(task.handler, TaskTerminated{})
+	// This is somewhat redundant with the message above, but we're transitioning between them.
+	if aborted {
+		task.handler.System().Tell(task.handler, TaskAborted{})
+	}
+}
+
+func (k *kubernetesResourceProvider) receiveTaskStopped(ctx *actor.Context, msg taskStopped) {
+	task := k.tasksByHandler[msg.Ref]
+	if task == nil {
+		return
+	}
+
+	// Clean up a task even if it does not have any containers yet.
+	if task.state != taskTerminated {
+		ctx.Log().WithField("task", task.ID).Warnf("task stopped without terminating")
+		k.taskTerminated(task, true)
+	}
 }
 
 func constructAddresses(ip string, ports []int) []Address {

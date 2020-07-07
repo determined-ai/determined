@@ -2,6 +2,7 @@ package sproto
 
 import (
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/container"
 
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -26,5 +27,11 @@ type (
 		IP              string
 		Ports           []int
 		NetworkProtocol string
+	}
+
+	// PodTerminated notifies the RP that the pod is not stopped.
+	PodTerminated struct {
+		ContainerID      container.ID
+		ContainerStopped *agent.ContainerStopped
 	}
 )
