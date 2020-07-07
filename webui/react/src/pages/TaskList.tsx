@@ -1,4 +1,4 @@
-import { Button, Input, notification, Table } from 'antd';
+import { Button, Input, Table } from 'antd';
 import axios from 'axios';
 import React, { useCallback, useMemo, useState } from 'react';
 
@@ -11,6 +11,7 @@ import TaskFilter from 'components/TaskFilter';
 import Auth from 'contexts/Auth';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Users from 'contexts/Users';
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useStorage from 'hooks/useStorage';
 import { killCommand } from 'services/api';
 import { ALL_VALUE, CommandTask, CommandType, TaskFilters } from 'types';
@@ -106,9 +107,14 @@ const TaskList: React.FC = () => {
       }));
       await Promise.all(promises);
     } catch (e) {
-      notification.warn({
-        description: 'Please try again later.',
-        message: 'Unable to Kill Selected Tasks',
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to Kill Selected Tasks',
+        silent: false,
+        type: ErrorType.Server,
       });
     }
   }, [ selectedTasks ]);
