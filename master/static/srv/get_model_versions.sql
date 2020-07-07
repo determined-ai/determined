@@ -1,4 +1,13 @@
-SELECT
+WITH mv AS (
+  SELECT version, checkpoint_uuid
+    FROM model_versions
+    WHERE model_name = $1
+),
+m AS (
+  Select * FROM models WHERE name = $1
+),
+c AS (
+  SELECT
     c.uuid::text AS uuid,
     e.config AS experiment_config,
     e.id AS  experiment_id,
@@ -15,9 +24,16 @@ SELECT
     v.metrics AS metrics,
     'STATE_' || v.state AS validation_state,
     'STATE_' || c.state AS state
-FROM checkpoints c
-JOIN steps s ON c.step_id = s.id AND c.trial_id = s.trial_id
-LEFT JOIN validations v ON v.step_id = s.id AND v.trial_id = s.trial_id
-JOIN trials t ON s.trial_id = t.id
-JOIN experiments e ON t.experiment_id = e.id
-WHERE c.uuid = $1
+  FROM checkpoints c
+  JOIN steps s ON c.step_id = s.id AND c.trial_id = s.trial_id
+  LEFT JOIN validations v ON v.step_id = s.id AND v.trial_id = s.trial_id
+  JOIN trials t ON s.trial_id = t.id
+  JOIN experiments e ON t.experiment_id = e.id
+  WHERE c.uuid IN (SELECT checkpoint_uuid FROM mv)
+)
+SELECT
+    to_json(c) AS checkpoint,
+    to_json(m) AS model,
+    version AS version,
+    creation_time
+    FROM c, m, mv
