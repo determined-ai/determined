@@ -29,7 +29,12 @@ class PyTorchCallback:
 
     def on_batch_end(self, batch_idx: int, metrics: Dict[str, Any]) -> None:
         """
-        Run after every batch finishes training.
+        Run after every batch finishes training. ``metrics`` are the metrics returned from calling
+        ``PyTorchTrail.train_batch`` on batch ``batch_idx``.
+
+        .. warning::
+            If distributed training is enabled, every GPU will execute a copy of this callback at
+            the end of every training step and the ``metrics``will be local to the GPU.
         """
         pass
 
@@ -41,7 +46,12 @@ class PyTorchCallback:
 
     def on_train_epoch_end(self, epoch_idx: int, metrics: Dict[str, Any]) -> None:
         """
-        Run after every epoch finishes training.
+        Run after every epoch finishes training. ``metrics`` are the metrics returned from calling
+        ``PyTorchTrail.train_batch`` on the last batch of epoch ``epoch_idx``.
+
+        .. warning::
+            If distributed training is enabled, every GPU will execute a copy of this callback at
+            the end of every training step and the ``metrics``will be local to the GPU.
         """
         pass
 
