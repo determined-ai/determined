@@ -310,10 +310,10 @@ class PyTorchTrialController(det.LoopTrialController):
         for batch_idx in range(start, end):
             if self.is_epoch_start(batch_idx):
                 for callback in self.callbacks.values():
-                    callback.on_epoch_start(self.get_epoch_idx(batch_idx))
+                    callback.on_train_epoch_start(self.get_epoch_idx(batch_idx))
 
             for callback in self.callbacks.values():
-                callback.on_batch_start(batch_idx)
+                callback.on_train_batch_start(batch_idx)
 
             batch = next(self.training_iterator)
             num_inputs += data_length(batch)
@@ -353,7 +353,7 @@ class PyTorchTrialController(det.LoopTrialController):
             per_batch_metrics.append(tr_metrics)
 
             for callback in self.callbacks.values():
-                callback.on_batch_end(batch_idx, tr_metrics)
+                callback.on_train_batch_end(batch_idx, tr_metrics)
 
             if self.is_epoch_end(batch_idx):
                 for callback in self.callbacks.values():

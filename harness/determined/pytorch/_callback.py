@@ -21,13 +21,13 @@ class PyTorchCallback:
         your implementation on ``trial.context.distributed.get_rank()``.
     """
 
-    def on_batch_start(self, batch_idx: int) -> None:
+    def on_train_batch_start(self, batch_idx: int) -> None:
         """
         Run before every batch begins training.
         """
         pass
 
-    def on_batch_end(self, batch_idx: int, metrics: Dict[str, Any]) -> None:
+    def on_train_batch_end(self, batch_idx: int, metrics: Dict[str, Any]) -> None:
         """
         Run after every batch finishes training. ``metrics`` are the metrics returned from calling
         ``PyTorchTrail.train_batch`` on batch ``batch_idx``.
@@ -38,7 +38,7 @@ class PyTorchCallback:
         """
         pass
 
-    def on_epoch_start(self, epoch_idx: int) -> None:
+    def on_train_epoch_start(self, epoch_idx: int) -> None:
         """
         Run before every epoch begins.
         """

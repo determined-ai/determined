@@ -311,13 +311,13 @@ class Counter(det.pytorch.PyTorchCallback):
         self.validation_steps_ended = 0
         self.checkpoints_ended = 0
 
-    def on_batch_start(self, step_id: int) -> None:
+    def on_train_batch_start(self, step_id: int) -> None:
         self.batches_started += 1
 
-    def on_batch_end(self, step_id: int, metrics: Dict[str, Any]) -> None:
+    def on_train_batch_end(self, step_id: int, metrics: Dict[str, Any]) -> None:
         self.batches_ended += 1
 
-    def on_epoch_start(self, step_id: int) -> None:
+    def on_train_epoch_start(self, step_id: int) -> None:
         self.epochs_started += 1
 
     def on_train_epoch_end(self, step_id: int, metrics: Dict[str, Any]) -> None:
