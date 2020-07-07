@@ -522,10 +522,7 @@ func (d *DefaultRP) taskTerminated(task *Task, aborted bool) {
 		delete(d.tasksByContainerID, id)
 	}
 
-	task.handler.System().Tell(task.handler, TaskTerminated{
-		Task:    newTaskSummary(task),
-		Aborted: aborted,
-	})
+	task.handler.System().Tell(task.handler, TaskTerminated{})
 	// This is somewhat redundant with the message above, but we're transitioning between them.
 	if aborted {
 		task.handler.System().Tell(task.handler, TaskAborted{})

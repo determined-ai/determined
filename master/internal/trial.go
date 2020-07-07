@@ -801,7 +801,7 @@ func (t *trial) processTaskTerminated(ctx *actor.Context, msg scheduler.TaskTerm
 		status = classifyStatus(leaderState)
 	}
 
-	t.resetTrial(ctx, msg, status)
+	t.resetTrial(ctx, status)
 }
 
 func classifyStatus(state terminatedContainerWithState) agent.ContainerStopped {
@@ -818,7 +818,6 @@ func classifyStatus(state terminatedContainerWithState) agent.ContainerStopped {
 
 func (t *trial) resetTrial(
 	ctx *actor.Context,
-	msg scheduler.TaskTerminated,
 	status agent.ContainerStopped,
 ) {
 	terminationSent := t.terminationSent
