@@ -32,7 +32,7 @@ const TaskCard: React.FC<RecentTask> = (props: RecentTask) => {
         <div className={css.upper}>
           <div className={css.icon}><Icon name={iconName} /></div>
           <div className={css.info}>
-            <div className={css.name}>{props.title}</div>
+            <div className={css.name}>{props.name}</div>
             <div className={css.age}>
               <div className={css.event}>{props.lastEvent.name}</div>
               <TimeAgo datetime={props.lastEvent.date} />

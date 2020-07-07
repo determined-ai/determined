@@ -77,7 +77,7 @@ export const experimentDescriptionRenderer: ExperimentRenderer = (_, record) => 
   const labelEls = labels.map((text, idx) => <Badge key={idx}>{text}</Badge>);
   return (
     <div className={css.nameColumn}>
-      <div>{record.title || ''}</div>
+      <div>{record.name || ''}</div>
       <div>{labelEls}</div>
     </div>
   );
