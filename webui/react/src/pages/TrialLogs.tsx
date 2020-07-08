@@ -9,6 +9,7 @@ import { useRestApiSimple } from 'hooks/useRestApi';
 import { getTrialLogs } from 'services/api';
 import { TrialLogsParams } from 'services/types';
 import { Log } from 'types';
+import { serverAddress } from 'utils/routes';
 
 interface Params {
   trialId: string;
@@ -20,6 +21,8 @@ const TrialLogs: React.FC = () => {
   const { trialId } = useParams<Params>();
   const id = parseInt(trialId);
   const title = `Logs for Trial ${id}`;
+  const downloadServer = process.env.IS_DEV ? 'http://localhost:8080' : serverAddress();
+  const downloadUrl = `${downloadServer}/trials/${id}/logs?format=raw`;
   const setUI = UI.useActionContext();
   const logsRef = useRef<LogViewerHandles>(null);
   const [ oldestFetchedId, setOldestFetchedId ] = useState(Number.MAX_SAFE_INTEGER);
@@ -88,6 +91,7 @@ const TrialLogs: React.FC = () => {
     <Page hideTitle title={title}>
       <LogViewer
         disableLevel
+        downloadUrl={downloadUrl}
         noWrap
         ref={logsRef}
         title={title}
