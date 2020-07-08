@@ -81,6 +81,8 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case podStatusUpdate:
 		p.receivePodStatusUpdate(ctx, msg)
 
+	case actor.ChildStopped:
+
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
