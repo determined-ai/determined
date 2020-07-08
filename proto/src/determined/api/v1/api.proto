@@ -130,26 +130,32 @@ service Determined {
     // Activate an experiment.
     rpc ActivateExperiment(ActivateExperimentRequest) returns (ActivateExperimentResponse) {
         option (google.api.http) = {post: "/api/v1/experiments/{id}/activate" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
     // Pause an experiment.
     rpc PauseExperiment(PauseExperimentRequest) returns (PauseExperimentResponse) {
         option (google.api.http) = {post: "/api/v1/experiments/{id}/pause" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
     // Cancel an experiment.
     rpc CancelExperiment(CancelExperimentRequest) returns (CancelExperimentResponse) {
         option (google.api.http) = {post: "/api/v1/experiments/{id}/cancel" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
     // Kill an experiment.
     rpc KillExperiment(KillExperimentRequest) returns (KillExperimentResponse) {
         option (google.api.http) = {post: "/api/v1/experiments/{id}/kill" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
     // Archive an experiment.
     rpc ArchiveExperiment(ArchiveExperimentRequest) returns (ArchiveExperimentResponse) {
         option (google.api.http) = {post: "/api/v1/experiments/{id}/archive" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
     // Unarchive an experiment.
     rpc UnarchiveExperiment(UnarchiveExperimentRequest) returns (UnarchiveExperimentResponse) {
         option (google.api.http) = {post: "/api/v1/experiments/{id}/unarchive" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
 
     // Preview hyperparameter search.
