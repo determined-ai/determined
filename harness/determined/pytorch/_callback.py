@@ -16,44 +16,10 @@ class PyTorchCallback:
 
     .. warning::
         If distributed training is enabled, every GPU will execute a copy of this callback
-        (except for :meth:`on_validation_end` and :meth:`on_checkpoint_end`).  To
-        configure a callback implementation to execute on a subset of GPUs, please condition
-        your implementation on ``trial.context.distributed.get_rank()``.
+        (except for :meth:`on_validation_end`, :meth:`on_validation_step_end` and
+        :meth:`on_checkpoint_end`). To configure a callback implementation to execute on a subset of
+        GPUs, please condition your implementation on ``trial.context.distributed.get_rank()``.
     """
-
-    def on_train_batch_start(self, batch_idx: int) -> None:
-        """
-        Run before every batch begins training.
-        """
-        pass
-
-    def on_train_batch_end(self, batch_idx: int, metrics: Dict[str, Any]) -> None:
-        """
-        Run after every batch finishes training. ``metrics`` are the metrics returned from calling
-        ``PyTorchTrail.train_batch`` on batch ``batch_idx``.
-
-        .. warning::
-            If distributed training is enabled, every GPU will execute a copy of this callback at
-            the end of every training step and the ``metrics`` will be local to the GPU.
-        """
-        pass
-
-    def on_train_epoch_start(self, epoch_idx: int) -> None:
-        """
-        Run before every epoch begins.
-        """
-        pass
-
-    def on_train_epoch_end(self, epoch_idx: int, metrics: Dict[str, Any]) -> None:
-        """
-        Run after every epoch finishes training. ``metrics`` are the metrics returned from calling
-        ``PyTorchTrail.train_batch`` on the last batch of epoch ``epoch_idx``.
-
-        .. warning::
-            If distributed training is enabled, every GPU will execute a copy of this callback at
-            the end of every training step and the ``metrics`` will be local to the GPU.
-        """
-        pass
 
     def on_before_optimizer_step(self, parameters: Iterator) -> None:
         """
@@ -73,6 +39,21 @@ class PyTorchCallback:
     def on_validation_end(self, metrics: Dict[str, Any]) -> None:
         """
         Run after every validation ends.
+
+        .. warning::
+            This callback only executes on the chief GPU when doing distributed training.
+        """
+        pass
+
+    def on_validation_step_start(self) -> None:
+        """
+        Run before every validation step begins.
+        """
+        pass
+
+    def on_validation_step_end(self, metrics: Dict[str, Any]) -> None:
+        """
+        Run after every validation step ends.
 
         .. warning::
             This callback only executes on the chief GPU when doing distributed training.
