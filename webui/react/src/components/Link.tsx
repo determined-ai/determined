@@ -1,6 +1,7 @@
 import React, { MouseEventHandler, PropsWithChildren, useCallback } from 'react';
 
 import { routeAll, setupUrlForDev } from 'routes';
+import { openBlank, windowOpenFeatures } from 'utils/routes';
 
 import css from './Link.module.scss';
 
@@ -11,8 +12,6 @@ interface Props {
   popout?: boolean;
   onClick?: MouseEventHandler;
 }
-
-const windowFeatures = [ 'noopener', 'noreferrer' ];
 
 export const makeClickHandler = (path: string, onClick?: MouseEventHandler,
   popout?: boolean): MouseEventHandler => {
@@ -25,7 +24,7 @@ export const makeClickHandler = (path: string, onClick?: MouseEventHandler,
     if (onClick) {
       onClick(event);
     } else if (event.metaKey || event.ctrlKey || popout) {
-      window.open(url, '_blank', windowFeatures.join(','));
+      openBlank(url);
     } else {
       routeAll(url);
     }
@@ -37,7 +36,7 @@ const Link: React.FC<Props> = ({
   disabled, inherit, path, popout, onClick, children,
 }: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
-  const rel = windowFeatures.join(' ');
+  const rel = windowOpenFeatures.join(' ');
   const handleClick =
     useCallback(makeClickHandler(path, onClick, popout), [ path, onClick, popout ]);
 
