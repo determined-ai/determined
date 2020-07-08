@@ -85,12 +85,16 @@ export const killableCmdStates = [
   CommandState.Starting,
 ];
 
-export const terminalRunStates = [
+export const terminalCommandStates: Set<CommandState> = new Set([
+  CommandState.Terminated,
+]);
+
+export const terminalRunStates: Set<RunState> = new Set([
   RunState.Canceled,
   RunState.Completed,
   RunState.Errored,
   RunState.Deleted,
-];
+]);
 
 export const runStateToLabel: {[key in RunState]: string} = {
   [RunState.Active]: 'Active',

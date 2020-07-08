@@ -23,7 +23,7 @@ const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
   const isExperiment = isExperimentTask(task);
-  const isArchivable = isExperiment && terminalRunStates.includes(task.state as RunState);
+  const isArchivable = isExperiment && terminalRunStates.has(task.state as RunState);
   const isKillable = isTaskKillable(task);
   const isPausable = isExperiment
     && task.state === RunState.Active;

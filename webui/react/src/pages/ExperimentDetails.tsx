@@ -11,11 +11,11 @@ import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
-import { killExperiment, launchTensorboard, setExperimentState } from 'services/api';
+import { archiveExperiment, killExperiment, launchTensorboard, setExperimentState } from 'services/api';
 import { getExperimentDetails, isNotFound } from 'services/api';
 import { ExperimentDetailsParams } from 'services/types';
 import { ExperimentDetails, RunState, TBSourceType } from 'types';
-import { cancellableRunStates, killableRunStates } from 'utils/types';
+import { cancellableRunStates, killableRunStates, terminalRunStates } from 'utils/types';
 
 import css from './ExperimentDetails.module.scss';
 interface Params {
@@ -28,10 +28,10 @@ const ExperimentDetailsComp: React.FC = () => {
 
   interface ButtonLoadingStates {
     kill: boolean;
-    cancel: boolean;
+    [RunState.StoppingCanceled]: boolean;
     archive: boolean;
-    pause: boolean;
-    activate: boolean;
+    [RunState.Paused]: boolean;
+    [RunState.Active]: boolean;
     tsb: boolean; // tensorboard
   }
 
@@ -41,17 +41,27 @@ const ExperimentDetailsComp: React.FC = () => {
   usePolling(() => requestExperimentDetails);
 
   const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
-    activate: false,
+    [RunState.StoppingCanceled]: false,
     archive: false,
-    cancel: false,
+    [RunState.Active]: false,
     kill: false,
-    pause: false,
+    [RunState.Paused]: false,
     tsb: false,
   });
 
   const killExperimentCB = useCallback(() => {
-    killExperiment({ experimentId });
+    setButtonStates(state => ({ ...state, kill: true }));
+    killExperiment({ experimentId })
+      .finally(() => setButtonStates(state => ({ ...state, kill: false })));
   }, [ experimentId ]);
+
+  const archiveCB = useCallback((archive: boolean) =>
+    (): Promise<void> => {
+      setButtonStates(state => ({ ...state, archive: true }));
+      return archiveExperiment(experimentId, archive)
+        .finally(() => setButtonStates(state => ({ ...state, archive: false })));
+    },
+  [ experimentId ]);
 
   const launchTensorboardCB = useCallback(() => {
     // TODO import from the tb PR.
@@ -60,9 +70,13 @@ const ExperimentDetailsComp: React.FC = () => {
       .finally(() => setButtonStates(state => ({ ...state, tsb: false })));
   }, [ experimentId ]);
 
-  const requestExpStateCB = useCallback((state: RunState) => {
-    return (): Promise<void> => setExperimentState({ experimentId, state });
-  }, [ experimentId ]);
+  const requestExpStateCB = useCallback((targetState: RunState) =>
+    (): Promise<void> => {
+      setButtonStates(state => ({ ...state, [targetState]: true }));
+      return setExperimentState({ experimentId, state: targetState })
+        .finally(() => setButtonStates(state => ({ ...state, [targetState]: false })));
+    }
+  , [ experimentId ]);
 
   if (isNaN(experimentId)) {
     return (
@@ -86,32 +100,41 @@ const ExperimentDetailsComp: React.FC = () => {
     return <Spinner fillContainer />;
   }
 
+  const archiveButton = <Button key="archive" loading={buttonStates.archive}
+    type="primary" onClick={archiveCB(true)}>
+    Archive</Button>;
+  const unarchiveButton = <Button key="unarchive" loading={buttonStates.archive}
+    type="primary" onClick={archiveCB(false)}>
+    Unarchive</Button>;
+
   const forkButton = <Button disabled key="fork" type="primary">Fork</Button>;
-  const pauseButton = <Button key="pause" type="primary"
-    onClick={requestExpStateCB(RunState.Paused)}>
+  const pauseButton = <Button key="pause" loading={buttonStates[RunState.Paused]}
+    type="primary" onClick={requestExpStateCB(RunState.Paused)}>
     Pause</Button>;
-  const activateButton = <Button key="activate" type="primary"
-    onClick={requestExpStateCB(RunState.Active)}>
+  const activateButton = <Button key="activate" loading={buttonStates[RunState.Active]}
+    type="primary" onClick={requestExpStateCB(RunState.Active)}>
     Activate</Button>;
 
   const cancelButton = <Popconfirm
     cancelText="No"
+    key="cancel"
     okText="Yes"
     title="Are you sure you want to kill the experiment?"
-    onConfirm={killExperimentCB}
+    onConfirm={requestExpStateCB(RunState.StoppingCanceled)}
   >
-    <Button danger key="cancel" type="primary"
-      onClick={requestExpStateCB(RunState.StoppingCanceled)}>
+    <Button danger loading={buttonStates[RunState.StoppingCanceled]}
+      type="primary">
     Cancel</Button>
   </Popconfirm>;
 
   const killButton = <Popconfirm
     cancelText="No"
+    key="kill"
     okText="Yes"
     title="Are you sure you want to kill the experiment?"
     onConfirm={killExperimentCB}
   >
-    <Button danger key="kill" type="primary">Kill</Button>
+    <Button danger loading={buttonStates.kill} type="primary">Kill</Button>
   </Popconfirm>;
 
   const tsbButton = <Button key="tensorboard"
@@ -126,6 +149,17 @@ const ExperimentDetailsComp: React.FC = () => {
   const actionButtons: ConditionalButton[] = [
     { btn: forkButton },
     {
+      btn: archiveButton,
+      showIf: (exp): boolean => terminalRunStates.has(exp.state) && !exp.archived,
+    },
+    {
+      btn: tsbButton,
+    },
+    {
+      btn: unarchiveButton,
+      showIf: (exp): boolean => terminalRunStates.has(exp.state) && exp.archived,
+    },
+    {
       btn: pauseButton,
       showIf: (exp): boolean => exp.state === RunState.Active,
     },
@@ -135,14 +169,11 @@ const ExperimentDetailsComp: React.FC = () => {
     },
     {
       btn: cancelButton,
-      showIf: (exp): boolean => cancellableRunStates.includes(exp.state),
+      showIf: (exp): boolean => !cancellableRunStates.includes(exp.state),
     },
     {
       btn: killButton,
       showIf: (exp): boolean => killableRunStates.includes(exp.state),
-    },
-    {
-      btn: tsbButton,
     },
   ];
 

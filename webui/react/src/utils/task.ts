@@ -1,8 +1,9 @@
 import {
   ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType, Experiment, ExperimentFilters,
   ExperimentItem, ExperimentTask, RecentCommandTask, RecentEvent, RecentExperimentTask,
-  RecentTask, RunState, Task, TaskFilters, TaskType, terminalCommandStates, User,
+  RecentTask, RunState, Task, TaskFilters, TaskType, User,
 } from 'types';
+import { terminalCommandStates } from 'utils/types';
 
 import { isExperiment } from './types';
 
