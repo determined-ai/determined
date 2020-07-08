@@ -1,5 +1,5 @@
 import { Breadcrumb, Button, Popconfirm, Space } from 'antd';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useParams } from 'react-router';
 
 import ExperimentInfoBox from 'components/ExperimentInfoBox';
@@ -26,10 +26,28 @@ const ExperimentDetailsComp: React.FC = () => {
   const { experimentId: experimentIdParam } = useParams<Params>();
   const experimentId = parseInt(experimentIdParam);
 
+  interface ButtonLoadingStates {
+    kill: boolean;
+    cancel: boolean;
+    archive: boolean;
+    pause: boolean;
+    activate: boolean;
+    tsb: boolean; // tensorboard
+  }
+
   const [ experiment, requestExperimentDetails ] =
   useRestApiSimple<ExperimentDetailsParams, ExperimentDetails>(
     getExperimentDetails, { id: experimentId });
   usePolling(() => requestExperimentDetails);
+
+  const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
+    activate: false,
+    archive: false,
+    cancel: false,
+    kill: false,
+    pause: false,
+    tsb: false,
+  });
 
   const killExperimentCB = useCallback(() => {
     killExperiment({ experimentId });
@@ -37,7 +55,9 @@ const ExperimentDetailsComp: React.FC = () => {
 
   const launchTensorboardCB = useCallback(() => {
     // TODO import from the tb PR.
-    launchTensorboard({ ids: [ experimentId ], type: TBSourceType.Experiment });
+    setButtonStates(state => ({ ...state, tsb: true }));
+    launchTensorboard({ ids: [ experimentId ], type: TBSourceType.Experiment })
+      .finally(() => setButtonStates(state => ({ ...state, tsb: false })));
   }, [ experimentId ]);
 
   const requestExpStateCB = useCallback((state: RunState) => {
@@ -95,7 +115,8 @@ const ExperimentDetailsComp: React.FC = () => {
   </Popconfirm>;
 
   const tsbButton = <Button key="tensorboard"
-    type="primary" onClick={launchTensorboardCB}> Launch Tensorboard</Button>;
+    loading={buttonStates.tsb} type="primary" onClick={launchTensorboardCB}>
+      Launch Tensorboard</Button>;
 
   interface ConditionalButton {
     btn: React.ReactNode;
