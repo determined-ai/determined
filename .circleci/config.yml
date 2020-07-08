@@ -365,25 +365,6 @@ commands:
       - wait-for-master:
           host: ${MASTER_HOST}
 
-  download-aws-logs:
-    parameters:
-      cluster-id:
-        type: string
-      download-dir:
-        type: string
-        default: "/tmp/logs"
-    steps:
-      - run:
-          name: "Download AWS Logs"
-          when: on_fail
-          command: |
-            mkdir -p <<parameters.download-dir>>
-            LOG_GROUP=$(python .circleci/scripts/get_output_from_stack.py <<parameters.cluster-id>> LogGroup)
-            python .circleci/scripts/download_logs.py ${LOG_GROUP} <<parameters.download-dir>>
-            python .circleci/scripts/download_logs.py "/aws/rds/cluster/<<parameters.cluster-id>>" <<parameters.download-dir>>
-      - store_artifacts:
-          path: <<parameters.download-dir>>
-
   install-webui-test-deps:
     steps:
       - run: |
@@ -949,8 +930,6 @@ jobs:
           master-host: ${MASTER_HOST}
       - upload-cloud-watch-to-s3:
           cluster-id: ${CLUSTER_ID}
-      - download-aws-logs:
-          cluster-id: ${CLUSTER_ID}
       - terminate-aws-cluster:
           cluster-id: ${CLUSTER_ID}
       - store_test_results:
@@ -983,8 +962,6 @@ jobs:
           master-host: ${MASTER_HOST}
       - upload-cloud-watch-to-s3:
           cluster-id: ${CLUSTER_ID}
-      - download-aws-logs:
-          cluster-id: ${CLUSTER_ID}
       - terminate-aws-cluster:
           cluster-id: ${CLUSTER_ID}
       - store_test_results:
@@ -1016,8 +993,6 @@ jobs:
           mark: "parallel"
           master-host: ${MASTER_HOST}
       - upload-cloud-watch-to-s3:
-          cluster-id: ${CLUSTER_ID}
-      - download-aws-logs:
           cluster-id: ${CLUSTER_ID}
       - terminate-aws-cluster:
           cluster-id: ${CLUSTER_ID}
