@@ -480,7 +480,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run: apk add make curl python3
+      - run: apk add make curl python3 py3-pip
       - run: pip3 install awscli
       - run: make -C docs/deploy publish
 
