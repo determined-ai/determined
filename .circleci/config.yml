@@ -353,6 +353,9 @@ commands:
       agent-instance-type:
         type: string
         default: "p2.xlarge"
+      max-dynamic-agents:
+        type: integer
+        default: 1
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
@@ -360,6 +363,7 @@ commands:
           cluster-id: ${CLUSTER_ID}
           det-version: <<parameters.det-version>>
           agent-instance-type: <<parameters.agent-instance-type>>
+          max-dynamic-agents: <<parameters.max-dynamic-agents>>
       - set-master-address:
           cluster-id: ${CLUSTER_ID}
       - wait-for-master:
