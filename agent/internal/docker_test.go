@@ -26,7 +26,7 @@ func TestNoAddProxy(t *testing.T) {
 
 	testActor.addProxy(&inputEnv)
 
-	// InputEnv should not change because we didn't set any environment variables
+	// InputEnv should not change because we didn't set any environment variables.
 	if v, ok := compareLists(inputEnv.Env, ans); !ok {
 		if len(v.extraA) != 0 {
 			t.Errorf("Extra variables found in Environment: %v", v.extraA)
@@ -74,7 +74,7 @@ func TestAddProxy(t *testing.T) {
 
 	testActor.addProxy(&inputEnv)
 
-	// InputEnv should change since we set some environment variables
+	// InputEnv should change since we set some environment variables.
 	if v, ok := compareLists(inputEnv.Env, ans); !ok {
 		if len(v.extraA) != 0 {
 			t.Errorf("Extra variables found in Environment: %v", v.extraA)
@@ -83,7 +83,6 @@ func TestAddProxy(t *testing.T) {
 		}
 	}
 
-	// Reset or delete environment variables
 	for k := range newVarsMap {
 		err := os.Unsetenv(k)
 		if err != nil {
@@ -121,7 +120,7 @@ func TestAlreadyAddedProxy(t *testing.T) {
 		v2, ok := newVarsMap[k]
 		if v1 != "" && ok {
 			delete(newVarsMap, k)
-			delete(alternateVarsMap, k) //if it exists in newVars, it exists in alternate
+			delete(alternateVarsMap, k)
 		} else if ok {
 			ans = append(ans, k+"="+v2)
 			inputEnv.Env = append(inputEnv.Env, k+"="+v2)
@@ -138,7 +137,7 @@ func TestAlreadyAddedProxy(t *testing.T) {
 	testActor.addProxy(&inputEnv)
 	fmt.Println(ans)
 
-	// InputEnv should not change because environment already set (with config)
+	// InputEnv should not change because environment already set (with config).
 	if v, ok := compareLists(inputEnv.Env, ans); !ok {
 		if len(v.extraA) != 0 {
 			t.Errorf("Extra variables found in Environment: %v", v.extraA)
@@ -147,7 +146,6 @@ func TestAlreadyAddedProxy(t *testing.T) {
 		}
 	}
 
-	// Reset or delete environment variables
 	for k := range alternateVarsMap {
 		err := os.Unsetenv(k)
 		if err != nil {
@@ -157,12 +155,12 @@ func TestAlreadyAddedProxy(t *testing.T) {
 }
 
 type ListComp struct {
-	extraA []string // Extra objects found in slice A
-	extraB []string // Extra objects found in slice B
+	extraA []string
+	extraB []string
 }
 
-// currEnv looks for existing proxy variables in the environment
-// If such variable exists, it returns it so the test case is aware
+// currEnv looks for existing proxy variables in the environment.
+// If such variables exist, they get returned so the test case is aware.
 func currEnv() ([]string, map[string]string, bool) {
 	envMap := map[string]string{
 		"HTTP_PROXY": "", "HTTPS_PROXY": "",
@@ -183,8 +181,8 @@ func currEnv() ([]string, map[string]string, bool) {
 	return output, envMap, found
 }
 
-// compareLists compares two slices without considering order
-// Returns a ListStatus structure containing extraneous objects
+// compareLists compares two slices without considering order.
+// It returns a ListStatus structure containing extraneous objects.
 func compareLists(a []string, b []string) (ListComp, bool) {
 	checklistMap := make(map[string]bool)
 	output := ListComp{[]string{}, []string{}}

@@ -296,7 +296,8 @@ func (d *dockerActor) addProxy(config *dcontainer.Config) {
 		"FTP_PROXY": "", "NO_PROXY": "",
 	}
 
-	// if already exists, we don't modify
+	// If the variable already exists in the configuration, we don't try to add it.
+	// Manually configured variables should take precedence over transparent pass-through ones.
 	for _, v := range config.Env {
 		key := strings.SplitN(v, "=", 2)[0]
 		_, ok := validVars[key]
