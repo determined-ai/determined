@@ -72,9 +72,8 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
 */
 export const consumeStream = async <T = unknown>(
   fetchArgs: DetSwagger.FetchArgs, onEvent: (event: T) => void): Promise<void> => {
-  let response;
   try {
-    response = await fetch(serverAddress() + fetchArgs.url, fetchArgs.options);
+    const response = await fetch(serverAddress() + fetchArgs.url, fetchArgs.options);
     const exampleReader = ndjsonStream(response.body).getReader();
     let result;
     while (!result || !result.done) {
@@ -83,6 +82,6 @@ export const consumeStream = async <T = unknown>(
       onEvent(result.value.result);
     }
   } catch (e) {
-    return processApiError(fetchArgs.url, e);
+    processApiError(fetchArgs.url, e);
   }
 };
