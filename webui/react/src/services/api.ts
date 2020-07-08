@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/camelcase */
-import * as DetSwagger from '@determined-ai/api-ts-sdk';
 import { CancelToken } from 'axios';
 
-import { generateApi } from 'services/apiBuilder';
-import { processApiError } from 'services/apiBuilder';
+import * as DetSwagger from 'services/api-ts-sdk';
+import { generateApi, processApiError } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
 import { CommandLogsParams, ExperimentDetailsParams, ExperimentsParams, KillCommandParams,
   KillExpParams, LaunchTensorboardParams, LogsParams, PatchExperimentParams,
