@@ -165,14 +165,10 @@ export const jsonToLogs = (data: unknown): Log[] => {
 export const jsonToTrialLogs = (data: unknown): Log[] => {
   const ioType = decode<ioTypeLogs>(ioLogs, data);
   return ioType.map(log => {
-    const [ header, message ] = log.message.split(' || ', 2);
-    const [ time, meta ] = header.split(' ', 2);
-    return {
-      id: log.id,
-      message,
-      meta,
-      time,
-    };
+    const matches = log.message.match(/\[([^\]]+)\] (.*)/);
+    const time = matches && matches[1] ? matches[1] : undefined;
+    const message = matches && matches[2] ? matches[2] : '';
+    return { id: log.id, message, time };
   });
 };
 
