@@ -421,16 +421,19 @@ func (m *Master) Run() error {
 	}
 
 	// React WebUI.
-	reactFiles := [...]fileRoute{
+	reactIndexFiles := [...]fileRoute{
 		{"/", "index.html"},
 		{"/det", "index.html"},
+		{"/det/*", "index.html"},
+	}
+
+	reactFiles := [...]fileRoute{
 		{"/security.txt", "security.txt"},
 		{"/.well-known/security.txt", "security.txt"},
 		{"/color.less", "color.less"},
 		{"/manifest.json", "manifest.json"},
 		{"/favicon.ico", "favicon.ico"},
 		{"/favicon.ico", "favicon.ico"},
-		{"/det/*", "index.html"},
 	}
 
 	reactDirs := [...]fileRoute{
@@ -441,11 +444,27 @@ func (m *Master) Run() error {
 
 	// Apply WebUI routes in order.
 	for _, fileRoute := range elmFiles {
-		m.echo.File(fileRoute.route, filepath.Join(elmRoot, fileRoute.path))
+		elmIndexPath := filepath.Join(elmRoot, fileRoute.path)
+		m.echo.GET(fileRoute.route, func(c echo.Context) error {
+			c.Response().Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			c.Response().Header().Set("Pragma", "no-cache")
+			c.Response().Header().Set("Expires", "0")
+			return c.File(elmIndexPath)
+		})
 	}
 
 	for _, dirRoute := range elmDirs {
 		m.echo.Static(dirRoute.route, filepath.Join(elmRoot, dirRoute.path))
+	}
+
+	for _, indexRoute := range reactIndexFiles {
+		reactIndexPath := filepath.Join(reactRoot, indexRoute.path)
+		m.echo.GET(indexRoute.route, func(c echo.Context) error {
+			c.Response().Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			c.Response().Header().Set("Pragma", "no-cache")
+			c.Response().Header().Set("Expires", "0")
+			return c.File(reactIndexPath)
+		})
 	}
 
 	for _, fileRoute := range reactFiles {
