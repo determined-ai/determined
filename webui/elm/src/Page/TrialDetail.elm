@@ -901,7 +901,7 @@ infoView model session =
                 , isActive = True
                 , isPending = False
                 , style = Page.Common.TextOnly
-                , text = "View Logs"
+                , text = "Logs"
                 }
 
         downloadUrl =
