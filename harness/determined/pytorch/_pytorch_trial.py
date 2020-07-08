@@ -189,6 +189,7 @@ class PyTorchTrialController(det.LoopTrialController):
         self.training_loader = self.trial.build_training_data_loader().get_data_loader(
             repeat=True, skip=skip_batches, num_replicas=nreplicas, rank=rank
         )
+        self.context._epoch_len = len(self.training_loader)
 
         validation_dataset = self.trial.build_validation_data_loader()
         if self._evaluate_batch_defined():

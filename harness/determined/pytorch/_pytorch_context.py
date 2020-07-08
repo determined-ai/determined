@@ -48,11 +48,12 @@ class PyTorchTrialContext(det.TrialContext):
         # Track whether a warning logging category has already been issued to the user.
         self.warning_logged = {_WarningLogs.FAILED_MOVING_TO_DEVICE: False}
 
-        # The following three attributes are initialized during the lifetime of
+        # The following attributes are initialized during the lifetime of
         # a PyTorchTrialContext.
         self.models = []  # type: List[nn.Module]
         self.optimizers = []  # type: List[torch.optim.Optimizer] #  type: ignore
         self.lr_schedulers = []  # type: List[pytorch.LRScheduler]
+        self._epoch_len = None  # type: Optional[int]
 
         # Use a main model to contain all of the models because when using horovod
         # to broadcast the states of models we want to avoid name conflicts for these
@@ -457,3 +458,17 @@ class PyTorchTrialContext(det.TrialContext):
             else:
                 optimizer.step()
             optimizer.zero_grad()
+
+    def is_epoch_start(self) -> bool:
+        if self._current_batch_idx is None:
+            raise det.errors.InternalException("Training hasn't started.")
+        if self._current_epoch_len is None:
+            raise det.errors.InternalException("Training DataLoader uninitialized.")
+        return self._current_batch_idx % self._epoch_len == 0
+
+    def is_epoch_end(self) -> bool:
+        if self._current_batch_idx is None:
+            raise det.errors.InternalException("Training hasn't started.")
+        if self._current_epoch_len is None:
+            raise det.errors.InternalException("Training DataLoader uninitialized.")
+        return self._current_batch_idx % self._epoch_len == self._epoch_len - 1
