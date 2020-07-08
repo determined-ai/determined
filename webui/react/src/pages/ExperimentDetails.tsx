@@ -1,5 +1,5 @@
-import { Breadcrumb, Space } from 'antd';
-import React from 'react';
+import { Breadcrumb, Button, Space } from 'antd';
+import React, { useCallback } from 'react';
 import { useParams } from 'react-router';
 
 import ExperimentInfoBox from 'components/ExperimentInfoBox';
@@ -11,20 +11,44 @@ import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
+import { killExperiment, launchTensorboard, setExperimentState } from 'services/api';
 import { getExperimentDetails, isNotFound } from 'services/api';
 import { ExperimentDetailsParams } from 'services/types';
-import { ExperimentDetails } from 'types';
+import { ExperimentDetails, RunState, TBSourceType } from 'types';
 
 interface Params {
   experimentId: string;
 }
 
 const ExperimentDetailsComp: React.FC = () => {
-  const { experimentId } = useParams<Params>();
+  const { experimentId: experimentIdParam } = useParams<Params>();
+  const experimentId = parseInt(experimentIdParam);
+
   const [ experiment, requestExperimentDetails ] =
   useRestApiSimple<ExperimentDetailsParams, ExperimentDetails>(
-    getExperimentDetails, { id: parseInt(experimentId) });
+    getExperimentDetails, { id: experimentId });
   usePolling(() => requestExperimentDetails);
+
+  const killExperimentCB = useCallback(() => {
+    killExperiment({ experimentId });
+  }, [ experimentId ]);
+
+  const launchTensorboardCB = useCallback(() => {
+    // TODO import from the tb PR.
+    launchTensorboard({ ids: [ experimentId ], type: TBSourceType.Experiment });
+  }, [ experimentId ]);
+
+  const requestExpStateCB = useCallback((state: RunState) => {
+    return (): Promise<void> => setExperimentState({ experimentId, state });
+  }, [ experimentId ]);
+
+  if (isNaN(experimentId)) {
+    return (
+      <Page hideTitle title="Not Found">
+        <Message>Bad experiment ID {experimentIdParam}</Message>
+      </Page>
+    );
+  }
 
   if (experiment.error !== undefined) {
     const message = isNotFound(experiment.error) ? `Experiment ${experimentId} not found.`
@@ -40,6 +64,26 @@ const ExperimentDetailsComp: React.FC = () => {
     return <Spinner fillContainer />;
   }
 
+  const forkButton = <Button disabled key="fork">Fork</Button>;
+  const pauseButton = <Button key="pause" onClick={requestExpStateCB(RunState.Paused)}>
+    Pause</Button>;
+  const activateButton = <Button key="activate" onClick={requestExpStateCB(RunState.Active)}>
+    Activate</Button>;
+  const cancelButton = <Button key="cancel" onClick={requestExpStateCB(RunState.StoppingCanceled)}>
+    Cancel</Button>;
+  const killButton = <Button key="kill" onClick={killExperimentCB}>Kill</Button>;
+  const tsbButton = <Button key="tensorboard" onClick={launchTensorboardCB}>
+    Launch Tensorboard</Button>;
+
+  const buttons = [
+    forkButton,
+    pauseButton,
+    activateButton,
+    cancelButton,
+    killButton,
+    tsbButton,
+  ];
+
   return (
     <Page title={`Experiment ${experimentId}: ${experiment.data?.config.description}`}>
       <Breadcrumb>
@@ -53,9 +97,13 @@ const ExperimentDetailsComp: React.FC = () => {
           <span>{experimentId}</span>
         </Breadcrumb.Item>
       </Breadcrumb>
+      <ul>
+        {buttons}
+      </ul>
       <ExperimentInfoBox experiment={experiment.data} />
       <Section title="Chart" />
       <Section title="Trials" />
+
     </Page>
   );
 };
