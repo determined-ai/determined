@@ -38,7 +38,6 @@ import Route
 import Session exposing (Session)
 import Time
 import Types
-import Url.Builder as UB
 import Utils
 import Yaml.Encode
 
@@ -904,20 +903,6 @@ infoView model session =
                 , text = "Logs"
                 }
 
-        downloadUrl =
-            API.buildUrl [ "trials", String.fromInt model.trial.id, "logs" ] [ UB.string "format" "raw" ]
-
-        downloadLogs =
-            Page.Common.buttonCreator
-                { action = Page.Common.OpenUrl True downloadUrl
-                , bgColor = "blue"
-                , fgColor = "white"
-                , isActive = True
-                , isPending = False
-                , style = Page.Common.TextOnly
-                , text = "Download Logs"
-                }
-
         openTensorBoardButton =
             Page.Common.buttonCreator
                 { action =
@@ -1127,7 +1112,6 @@ infoView model session =
         [ Page.Common.horizontalList
             (continueTrialButton
                 :: viewLogs
-                :: downloadLogs
                 :: (if TensorBoard.trialHasMetrics model.trial then
                         [ openTensorBoardButton ]
 
