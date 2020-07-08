@@ -303,22 +303,14 @@ class XORTrialPerMetricReducers(XORTrialWithMultiValidation):
 
 class Counter(det.pytorch.PyTorchCallback):
     def __init__(self) -> None:
-        self.train_steps_started = 0
-        self.train_steps_ended = 0
         self.validation_steps_started = 0
         self.validation_steps_ended = 0
         self.checkpoints_ended = 0
 
-    def on_train_step_start(self, step_id: int) -> None:
-        self.train_steps_started += 1
-
-    def on_train_step_end(self, step_id: int, metrics: Dict[str, Any]) -> None:
-        self.train_steps_ended += 1
-
-    def on_validation_step_start(self) -> None:
+    def on_validation_start(self) -> None:
         self.validation_steps_started += 1
 
-    def on_validation_step_end(self, metrics: Dict[str, Any]) -> None:
+    def on_validation_end(self, metrics: Dict[str, Any]) -> None:
         self.validation_steps_ended += 1
 
     def on_checkpoint_end(self, checkpoint_dir: str):
