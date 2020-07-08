@@ -370,7 +370,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
         for callback in self.callbacks.values():
             logging.warning(
-                "on_validation_step_start is now deprecated, please use on_validation_start instead."
+                "on_validation_step_start is now deprecated, please use on_validation_start instead"
             )
             callback.on_validation_step_start()
 
@@ -449,7 +449,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
         for callback in self.callbacks.values():
             logging.warning(
-                "on_validation_step_end is now deprecated, please use on_validation_end instead."
+                "on_validation_step_end is now deprecated, please use on_validation_end instead"
             )
             callback.on_validation_step_end(cast(Dict[str, Any], metrics))
 
