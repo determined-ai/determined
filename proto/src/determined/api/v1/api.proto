@@ -174,7 +174,7 @@ service Determined {
         option (google.api.http) = {patch: "/api/v1/models/{model.name}" body: "model"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Models"};
     }
-    // Get the requested model.
+    // Get a list of models.
     rpc GetModels(GetModelsRequest) returns (GetModelsResponse)  {
         option (google.api.http) = {get: "/api/v1/models"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Models"};
