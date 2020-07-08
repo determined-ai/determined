@@ -20,9 +20,9 @@ model definition and one or more experiment configurations.
   * - PyTorch
     - `CIFAR-10 <https://github.com/determined-ai/determined/tree/master/examples/official/trial/cifar10_cnn_pytorch>`_
   * - TensorFlow (Estimator API)
-    - `Fashion MNIST <https://github.com/determined-ai/determined/tree/master/examples/official/trial/mnist_estimator>`_
+    - `Estimator MNIST <https://github.com/determined-ai/determined/tree/master/examples/official/trial/mnist_estimator>`_
   * - TensorFlow (tf.keras)
-    - `CIFAR-10 CNN <https://github.com/determined-ai/determined/tree/master/examples/official/trial/cifar10_cnn_tf_keras>`_
+    - `Fashion MNIST <https://github.com/determined-ai/determined/tree/master/examples/official/trial/fashion_mnist_tf_keras>`_
 
 TensorBoard Integration
 -----------------------
