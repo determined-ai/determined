@@ -67,14 +67,11 @@ func (i *informer) receiveStartInformer(ctx *actor.Context) error {
 	}
 
 	ctx.Log().Info("pod informer is starting")
-
 	for event := range watch.ResultChan() {
 		pod := event.Object.(*v1.Pod)
-		// TODO: change this to debug level
-		ctx.Log().Infof("informer got new pod event for pod: %s %s", pod.Name, pod.Status.Phase)
+		ctx.Log().Debugf("informer got new pod event for pod: %s %s", pod.Name, pod.Status.Phase)
 		ctx.Tell(i.podsHandler, podStatusUpdate{podName: pod.Name, updatedPod: pod})
 	}
 
-	ctx.Log().Info("pod informer has started")
-	return nil
+	return errors.Errorf("pod informer stopped unexpectedly")
 }
