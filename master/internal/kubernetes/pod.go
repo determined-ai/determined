@@ -114,6 +114,8 @@ func (p *pod) Receive(ctx *actor.Context) error {
 			}
 		}
 
+	case actor.ChildStopped:
+
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
@@ -173,11 +175,12 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		if p.container.State != container.Running {
 			p.container = p.container.Transition(container.Running)
 
+			logStreamer, err := newPodLogStreamer(p.podInterface, p.podName, ctx.Self())
+			if err != nil {
+				return err
+			}
 			var ok bool
-			p.logStreamer, ok = ctx.ActorOf(
-				fmt.Sprintf("%s-logs", p.podName),
-				newPodLogStreamer(p.podInterface, p.podName, ctx.Self()))
-
+			p.logStreamer, ok = ctx.ActorOf(fmt.Sprintf("%s-logs", p.podName), logStreamer)
 			if !ok {
 				return errors.Errorf("log streamer already exists")
 			}
@@ -251,6 +254,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 }
 
 func (p *pod) cleanupKubernetesResources(ctx *actor.Context) error {
+	ctx.Log().WithField("pod", p.podName).Infof("deleting pod")
 	var gracePeriod int64 = 1
 	err := p.podInterface.Delete(p.podName, &metav1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 	if err != nil {

@@ -23,9 +23,8 @@ type (
 )
 
 type podLogStreamer struct {
-	podInterface typedV1.PodInterface
-	podName      string
-	podHandler   *actor.Ref
+	podHandler *actor.Ref
+	logReader  io.ReadCloser
 
 	ctx *actor.Context
 }
@@ -34,22 +33,28 @@ func newPodLogStreamer(
 	podInterface typedV1.PodInterface,
 	podName string,
 	podHandler *actor.Ref,
-) *podLogStreamer {
-	return &podLogStreamer{
-		podInterface: podInterface,
-		podName:      podName,
-		podHandler:   podHandler,
+) (*podLogStreamer, error) {
+	logs := podInterface.GetLogs(podName, &v1.PodLogOptions{
+		Follow: true,
+		// TODO(DET-3541): switch over to using k8 timestamps.
+		Timestamps: false,
+	})
+
+	logReader, err := logs.Stream()
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to initialize log stream for pod: %s", podName)
 	}
+
+	return &podLogStreamer{logReader: logReader, podHandler: podHandler}, nil
 }
 
 func (p *podLogStreamer) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		ctx.Tell(ctx.Self(), streamLogs{})
 
 	case streamLogs:
-		if err := p.receiveStreamLogs(ctx); err != nil {
-			return err
-		}
+		p.receiveStreamLogs(ctx)
 
 	case actor.PostStop:
 
@@ -73,28 +78,13 @@ func (p *podLogStreamer) Write(log []byte) (n int, err error) {
 	return len(log), nil
 }
 
-func (p *podLogStreamer) receiveStreamLogs(ctx *actor.Context) error {
-	logs := p.podInterface.GetLogs(p.podName, &v1.PodLogOptions{
-		Follow: true,
-		// TODO(DET-3541): switch over to using k8 timestamps.
-		Timestamps: false,
-	})
-
-	logReader, err := logs.Stream()
-	if err != nil {
-		return errors.Wrapf(err, "failed to initialize log stream for pod: %s", p.podName)
-	}
-
+func (p *podLogStreamer) receiveStreamLogs(ctx *actor.Context) {
 	p.ctx = ctx
-	ctx.Log().Debugf("starting log streaming for pod %s", p.podName)
-	for {
-		_, err := io.Copy(p, logReader)
-		if err != nil {
-			ctx.Log().Debug("error reading logs: ", err)
-			break
-		}
+	_, err := io.Copy(p, p.logReader)
+	if err != nil {
+		ctx.Log().Debug("error reading logs: ", err)
+		ctx.Self().Stop()
+		return
 	}
-
-	ctx.Self().Stop()
-	return nil
+	ctx.Tell(ctx.Self(), streamLogs{})
 }
