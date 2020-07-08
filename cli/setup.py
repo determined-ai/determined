@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined-cli",
-    version="0.12.11rc1",
+    version="0.12.11rc2",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -21,7 +21,7 @@ setup(
         "ruamel.yaml>=0.15.78",
         "tabulate>=0.8.3",
         "termcolor==1.1.0",
-        "determined-common==0.12.11rc1",
+        "determined-common==0.12.11rc2",
     ],
     entry_points={"console_scripts": ["det = determined_cli.__main__:main"]},
 )
