@@ -24,12 +24,13 @@ export interface Api<Input, Output>{
 
 export const processApiError = (name: string, e: Error): void => {
   const isAuthError = isAuthFailure(e);
+  const silent = !process.env.IS_DEV || isAuthError || axios.isCancel(e);
   handleError({
     error: e,
     level: isAuthError ? ErrorLevel.Fatal : ErrorLevel.Error,
     message: isAuthError ?
       `unauthenticated request ${name}` : `request ${name} failed.`,
-    silent: true,
+    silent,
     type: isAuthError ? ErrorType.Auth : ErrorType.Server,
   });
   throw e;
