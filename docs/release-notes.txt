@@ -11,7 +11,7 @@ Version 0.12.11
 
 **Release Date:** July 8, 2020
 
-- Add logging to console in test mode for the Native API when using ``determined.experimental.create``.
+- Add logging to console in test mode for the Native API when using :class:`determined.experimental.create`.
 
 - WebUI: Improve trial log rendering performance.
 
