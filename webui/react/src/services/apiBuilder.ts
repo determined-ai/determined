@@ -60,21 +60,29 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
   };
 }
 
+/*
+  consumeStream is used to consume streams from the generated TS client.
+  We use the provided fetchParamCreator to create fetch arguments and use that
+  to make a request and handle events one by one.
+  Example:
+  consumeStream<DetSwagger.V1TrialLogsResponse>(
+    DetSwagger.ExperimentsApiFetchParamCreator().determinedTrialLogs(1),
+    console.log,
+  ).then(() => console.log('finished'));
+*/
 export const consumeStream = async <T = unknown>(
-  fetchArgs: DetSwagger.FetchArgs,
-  onEvent: (event: T) => void,
-  onFinish: () => void): Promise<void> => {
+  fetchArgs: DetSwagger.FetchArgs, onEvent: (event: T) => void): Promise<void> => {
   let response;
   try {
     response = await fetch(serverAddress() + fetchArgs.url, fetchArgs.options);
+    const exampleReader = ndjsonStream(response.body).getReader();
+    let result;
+    while (!result || !result.done) {
+      result = await exampleReader.read();
+      if (result.done) return;
+      onEvent(result.value.result);
+    }
   } catch (e) {
     return processApiError(fetchArgs.url, e);
-  }
-  const exampleReader = ndjsonStream(response.body).getReader();
-  let result;
-  while (!result || !result.done) {
-    result = await exampleReader.read();
-    if (result.done) return onFinish();
-    onEvent(result.value.result);
   }
 };
