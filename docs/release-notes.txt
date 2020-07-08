@@ -13,6 +13,8 @@ Version 0.12.11
 
 - Add logging to console in test mode for the Native API when using :class:`determined.experimental.create`.
 
+- Fix an issue where GCS uploads could fail on large distributed training jobs.
+
 - WebUI: Improve trial log rendering performance.
 
 - WebUI: Fix a display-only issue with cluster utilization.
