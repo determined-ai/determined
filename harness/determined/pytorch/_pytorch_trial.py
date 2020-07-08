@@ -369,6 +369,12 @@ class PyTorchTrialController(det.LoopTrialController):
             model.eval()
 
         for callback in self.callbacks.values():
+            logging.warning(
+                "on_validation_step_start is now deprecated, please use on_validation_start instead."
+            )
+            callback.on_validation_step_start()
+
+        for callback in self.callbacks.values():
             callback.on_validation_start()
 
         num_inputs = 0
