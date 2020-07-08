@@ -3,8 +3,6 @@ package model
 import (
 	"encoding/json"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/union"
 )
@@ -47,33 +45,6 @@ func (s *SearcherConfig) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, DefaultParser(s))
 }
 
-// Shim converts a config to the new version.
-func (s SearcherConfig) Shim(batchesPerStep int) SearcherConfig {
-	switch {
-	case s.SingleConfig != nil:
-		s.SingleConfig = s.SingleConfig.shim(batchesPerStep)
-	case s.RandomConfig != nil:
-		s.RandomConfig = s.RandomConfig.shim(batchesPerStep)
-	case s.GridConfig != nil:
-		s.GridConfig = s.GridConfig.shim(batchesPerStep)
-	case s.SyncHalvingConfig != nil:
-		s.SyncHalvingConfig = s.SyncHalvingConfig.shim(batchesPerStep)
-	case s.AdaptiveConfig != nil:
-		s.AdaptiveConfig = s.AdaptiveConfig.shim(batchesPerStep)
-	case s.AdaptiveSimpleConfig != nil:
-		s.AdaptiveSimpleConfig = s.AdaptiveSimpleConfig.shim(batchesPerStep)
-	case s.AsyncHalvingConfig != nil:
-		s.AsyncHalvingConfig = s.AsyncHalvingConfig.shim(batchesPerStep)
-	case s.AdaptiveASHAConfig != nil:
-		s.AdaptiveASHAConfig = s.AdaptiveASHAConfig.shim(batchesPerStep)
-	case s.PBTConfig != nil:
-		s.PBTConfig = s.PBTConfig.shim(batchesPerStep)
-	default:
-		panic("no searcher type specified")
-	}
-	return s
-}
-
 // SingleConfig configures a single trial.
 type SingleConfig struct {
 	MaxLength Length `json:"max_length"`
@@ -84,27 +55,9 @@ type SingleConfig struct {
 
 // Validate implements the check.Validatable interface.
 func (s SingleConfig) Validate() (errs []error) {
-	return validate(s)
-}
-
-func (s SingleConfig) validateDeprecated() []error {
-	return []error{
-		check.GreaterThan(s.MaxSteps, 0, "max_steps must be > 0"),
-	}
-}
-
-func (s SingleConfig) validateNew() []error {
 	return []error{
 		check.GreaterThan(s.MaxLength.Units, 0, "max_length must be > 0"),
 	}
-}
-
-func (s SingleConfig) shim(batchesPerStep int) *SingleConfig {
-	if s.MaxSteps > 0 {
-		s.MaxLength = NewLengthInBatches(s.MaxSteps * batchesPerStep)
-		s.MaxSteps = 0
-	}
-	return &s
 }
 
 // RandomConfig configures a random search.
@@ -118,29 +71,10 @@ type RandomConfig struct {
 
 // Validate implements the check.Validatable interface.
 func (r RandomConfig) Validate() (errs []error) {
-	return validate(r)
-}
-
-func (r RandomConfig) validateDeprecated() []error {
-	return []error{
-		check.GreaterThan(r.MaxSteps, 0, "max_steps must be > 0"),
-		check.GreaterThan(r.MaxTrials, 0, "max_trials must be > 0"),
-	}
-}
-
-func (r RandomConfig) validateNew() []error {
 	return []error{
 		check.GreaterThan(r.MaxLength.Units, 0, "max_length must be > 0"),
 		check.GreaterThan(r.MaxTrials, 0, "max_trials must be > 0"),
 	}
-}
-
-func (r RandomConfig) shim(batchesPerStep int) *RandomConfig {
-	if r.MaxSteps > 0 {
-		r.MaxLength = NewLengthInBatches(r.MaxSteps * batchesPerStep)
-		r.MaxSteps = 0
-	}
-	return &r
 }
 
 // GridConfig configures a grid search.
@@ -153,27 +87,9 @@ type GridConfig struct {
 
 // Validate implements the check.Validatable interface.
 func (g GridConfig) Validate() (errs []error) {
-	return validate(g)
-}
-
-func (g GridConfig) validateDeprecated() []error {
-	return []error{
-		check.GreaterThan(g.MaxSteps, 0, "max_steps must be > 0"),
-	}
-}
-
-func (g GridConfig) validateNew() []error {
 	return []error{
 		check.GreaterThan(g.MaxLength.Units, 0, "max_length must be > 0"),
 	}
-}
-
-func (g GridConfig) shim(batchesPerStep int) *GridConfig {
-	if g.MaxSteps > 0 {
-		g.MaxLength = NewLengthInBatches(g.MaxSteps * batchesPerStep)
-		g.MaxSteps = 0
-	}
-	return &g
 }
 
 // SyncHalvingConfig configures asynchronous successive halving.
@@ -189,16 +105,6 @@ type SyncHalvingConfig struct {
 	// Deprecated
 	TargetTrialSteps int `json:"target_trial_steps"`
 	StepBudget       int `json:"step_budget"`
-}
-
-func (s SyncHalvingConfig) shim(batchesPerStep int) *SyncHalvingConfig {
-	if s.TargetTrialSteps > 0 {
-		s.MaxLength = NewLengthInBatches(s.TargetTrialSteps * batchesPerStep)
-		s.Budget = NewLengthInBatches(s.StepBudget * batchesPerStep)
-		s.TargetTrialSteps = 0
-		s.StepBudget = 0
-	}
-	return &s
 }
 
 // AsyncHalvingConfig configures asynchronous successive halving.
@@ -217,20 +123,6 @@ type AsyncHalvingConfig struct {
 
 // Validate implements the check.Validatable interface.
 func (a AsyncHalvingConfig) Validate() (errs []error) {
-	return validate(a)
-}
-
-func (a AsyncHalvingConfig) validateDeprecated() []error {
-	return []error{
-		check.GreaterThan(a.TargetTrialSteps, 0, "target_trial_steps must be > 0"),
-		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
-		check.GreaterThan(a.Divisor, 1.0, "divisor must be > 1.0"),
-		check.GreaterThan(a.NumRungs, 0, "num_rungs must be > 0"),
-		check.GreaterThanOrEqualTo(a.MaxConcurrentTrials, 0, "max_concurrent_trials must be >= 0"),
-	}
-}
-
-func (a AsyncHalvingConfig) validateNew() []error {
 	return []error{
 		check.GreaterThan(a.MaxLength.Units, 0, "max_length must be > 0"),
 		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
@@ -238,14 +130,6 @@ func (a AsyncHalvingConfig) validateNew() []error {
 		check.GreaterThan(a.NumRungs, 0, "num_rungs must be > 0"),
 		check.GreaterThanOrEqualTo(a.MaxConcurrentTrials, 0, "max_concurrent_trials must be >= 0"),
 	}
-}
-
-func (a AsyncHalvingConfig) shim(batchesPerStep int) *AsyncHalvingConfig {
-	if a.TargetTrialSteps > 0 {
-		a.MaxLength = NewLengthInBatches(a.TargetTrialSteps * batchesPerStep)
-		a.TargetTrialSteps = 0
-	}
-	return &a
 }
 
 // AdaptiveMode specifies how aggressively to perform early stopping.
@@ -280,25 +164,7 @@ type AdaptiveConfig struct {
 }
 
 // Validate implements the check.Validatable interface.
-func (a AdaptiveConfig) Validate() (errs []error) {
-	return validate(a)
-}
-
-func (a AdaptiveConfig) validateDeprecated() []error {
-	return []error{
-		check.GreaterThan(a.StepBudget, a.TargetTrialSteps,
-			"step_budget must be > target_trial_steps"),
-		check.GreaterThan(a.TargetTrialSteps, 0, "target_trial_steps must be > 0"),
-		check.GreaterThan(a.StepBudget, 0, "step_budget must be > 0"),
-		check.LessThanOrEqualTo(a.StepBudget, 50000, "step_budget must be <= 50000"),
-		check.GreaterThan(a.Divisor, 1.0, "divisor must be > 1.0"),
-		check.In(string(a.Mode), []string{AggressiveMode, StandardMode, ConservativeMode},
-			"invalid adaptive mode"),
-		check.GreaterThan(a.MaxRungs, 0, "max_rungs must be > 0"),
-	}
-}
-
-func (a AdaptiveConfig) validateNew() []error {
+func (a AdaptiveConfig) Validate() []error {
 	return []error{
 		check.GreaterThan(a.Budget.Units, a.MaxLength.Units,
 			"budget must be > max_length"),
@@ -311,16 +177,6 @@ func (a AdaptiveConfig) validateNew() []error {
 		check.Equal(a.MaxLength.Units, a.Budget.Units,
 			"max_length and budget must be specified in terms of the same unit"),
 	}
-}
-
-func (a AdaptiveConfig) shim(batchesPerStep int) *AdaptiveConfig {
-	if a.TargetTrialSteps > 0 {
-		a.MaxLength = NewLengthInBatches(a.TargetTrialSteps * batchesPerStep)
-		a.Budget = NewLengthInBatches(a.StepBudget * batchesPerStep)
-		a.TargetTrialSteps = 0
-		a.StepBudget = 0
-	}
-	return &a
 }
 
 // AdaptiveSimpleConfig configures an simplified adaptive search.
@@ -338,24 +194,7 @@ type AdaptiveSimpleConfig struct {
 }
 
 // Validate implements the check.Validatable interface.
-func (a AdaptiveSimpleConfig) Validate() (errs []error) {
-	return validate(a)
-}
-
-func (a AdaptiveSimpleConfig) validateDeprecated() []error {
-	return []error{
-		check.GreaterThan(a.MaxSteps, 0, "max_steps must be > 0"),
-		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
-		check.LessThanOrEqualTo(a.MaxTrials, MaxAllowedTrials,
-			"max_trials must be <= %d", MaxAllowedTrials),
-		check.GreaterThan(a.Divisor, 1.0, "divisor must be > 1.0"),
-		check.In(string(a.Mode), []string{AggressiveMode, StandardMode, ConservativeMode},
-			"invalid adaptive mode"),
-		check.GreaterThan(a.MaxRungs, 0, "max_rungs must be > 0"),
-	}
-}
-
-func (a AdaptiveSimpleConfig) validateNew() []error {
+func (a AdaptiveSimpleConfig) Validate() []error {
 	return []error{
 		check.GreaterThan(a.MaxLength.Units, 0, "max_length must be > 0"),
 		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
@@ -366,14 +205,6 @@ func (a AdaptiveSimpleConfig) validateNew() []error {
 			"invalid adaptive mode"),
 		check.GreaterThan(a.MaxRungs, 0, "max_rungs must be > 0"),
 	}
-}
-
-func (a AdaptiveSimpleConfig) shim(batchesPerStep int) *AdaptiveSimpleConfig {
-	if a.MaxSteps > 0 {
-		a.MaxLength = NewLengthInBatches(a.MaxSteps * batchesPerStep)
-		a.MaxSteps = 0
-	}
-	return &a
 }
 
 // AdaptiveASHAConfig configures an adaptive searcher for use with ASHA.
@@ -393,23 +224,7 @@ type AdaptiveASHAConfig struct {
 }
 
 // Validate implements the check.Validatable interface.
-func (a AdaptiveASHAConfig) Validate() (errs []error) {
-	return validate(a)
-}
-
-func (a AdaptiveASHAConfig) validateDeprecated() []error {
-	return []error{
-		check.GreaterThan(a.TargetTrialSteps, 0, "target_trial_steps must be > 0"),
-		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
-		check.GreaterThan(a.Divisor, 1.0, "divisor must be > 1.0"),
-		check.In(string(a.Mode), []string{AggressiveMode, StandardMode, ConservativeMode},
-			"invalid adaptive mode"),
-		check.GreaterThan(a.MaxRungs, 0, "max_rungs must be > 0"),
-		check.GreaterThanOrEqualTo(a.MaxConcurrentTrials, 0, "max_concurrent_trials must be >= 0"),
-	}
-}
-
-func (a AdaptiveASHAConfig) validateNew() []error {
+func (a AdaptiveASHAConfig) Validate() []error {
 	return []error{
 		check.GreaterThan(a.MaxLength.Units, 0, "max_length must be > 0"),
 		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
@@ -419,14 +234,6 @@ func (a AdaptiveASHAConfig) validateNew() []error {
 		check.GreaterThan(a.MaxRungs, 0, "max_rungs must be > 0"),
 		check.GreaterThanOrEqualTo(a.MaxConcurrentTrials, 0, "max_concurrent_trials must be >= 0"),
 	}
-}
-
-func (a AdaptiveASHAConfig) shim(batchesPerStep int) *AdaptiveASHAConfig {
-	if a.TargetTrialSteps > 0 {
-		a.MaxLength = NewLengthInBatches(a.TargetTrialSteps * batchesPerStep)
-		a.TargetTrialSteps = 0
-	}
-	return &a
 }
 
 // PBTReplaceConfig configures replacement for a PBT search.
@@ -474,61 +281,10 @@ type PBTConfig struct {
 }
 
 // Validate implements the check.Validatable interface.
-func (p PBTConfig) Validate() (errs []error) {
-	return validate(p)
-}
-
-// Validate implements the check.Validatable interface.
-func (p PBTConfig) validateDeprecated() []error {
-	return []error{
-		check.GreaterThan(p.PopulationSize, 0, "population_size must be > 0"),
-		check.GreaterThan(p.NumRounds, 0, "num_rounds must be > 0"),
-		check.GreaterThan(p.StepsPerRound, 0, "steps_per_round must be > 0"),
-	}
-}
-
-// Validate implements the check.Validatable interface.
-func (p PBTConfig) validateNew() []error {
+func (p PBTConfig) Validate() []error {
 	return []error{
 		check.GreaterThan(p.PopulationSize, 0, "population_size must be > 0"),
 		check.GreaterThan(p.NumRounds, 0, "num_rounds must be > 0"),
 		check.GreaterThan(p.LengthPerRound.Units, 0, "length_per_round must be > 0"),
 	}
-}
-
-func (p PBTConfig) shim(batchesPerStep int) *PBTConfig {
-	if p.StepsPerRound > 0 {
-		p.LengthPerRound = NewLengthInBatches(p.StepsPerRound * batchesPerStep)
-		p.StepsPerRound = 0
-	}
-	return &p
-}
-
-type validatableTwoVersionConfig interface {
-	validateDeprecated() []error
-	validateNew() []error
-}
-
-func validate(config validatableTwoVersionConfig) (errs []error) {
-	dErrs := config.validateDeprecated()
-	nErrs := config.validateNew()
-
-	if allNil(dErrs...) && allNil(nErrs...) {
-		errs = append(errs, errors.New("multiple configurations specified"))
-	}
-
-	if !allNil(dErrs...) && !allNil(nErrs...) {
-		errs = append(errs, nErrs...)
-	}
-
-	return errs
-}
-
-func allNil(errs ...error) bool {
-	for _, err := range errs {
-		if err != nil {
-			return false
-		}
-	}
-	return true
 }
