@@ -49,6 +49,7 @@ class PyTorchCallback:
         """
         Run before every validation step begins.
         """
+        # TODO(DET-3555): remove this once it has been deprecated long enough.
         pass
 
     def on_validation_step_end(self, metrics: Dict[str, Any]) -> None:
@@ -58,6 +59,7 @@ class PyTorchCallback:
         .. warning::
             This callback only executes on the chief GPU when doing distributed training.
         """
+        # TODO(DET-3555): remove this once it has been deprecated long enough.
         pass
 
     def on_checkpoint_end(self, checkpoint_dir: str) -> None:

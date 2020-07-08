@@ -460,15 +460,27 @@ class PyTorchTrialContext(det.TrialContext):
             optimizer.zero_grad()
 
     def is_epoch_start(self) -> bool:
+        """
+        Returns true if the current batch is the first batch of the epoch.
+
+        .. warning::
+            Not accurate for variable size epochs.
+        """
         if self._current_batch_idx is None:
             raise det.errors.InternalException("Training hasn't started.")
-        if self._current_epoch_len is None:
+        if self._epoch_len is None:
             raise det.errors.InternalException("Training DataLoader uninitialized.")
         return self._current_batch_idx % self._epoch_len == 0
 
     def is_epoch_end(self) -> bool:
+        """
+        Returns true if the current batch is the last batch of the epoch.
+
+        .. warning::
+            Not accurate for variable size epochs.
+        """
         if self._current_batch_idx is None:
             raise det.errors.InternalException("Training hasn't started.")
-        if self._current_epoch_len is None:
+        if self._epoch_len is None:
             raise det.errors.InternalException("Training DataLoader uninitialized.")
         return self._current_batch_idx % self._epoch_len == self._epoch_len - 1
