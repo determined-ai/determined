@@ -74,7 +74,7 @@ func TestAddProxy(t *testing.T) {
 
 	testActor.addProxy(&inputEnv)
 
-	// InputEnv should not change because we didn't set any environment variables
+	// InputEnv should change since we set some environment variables
 	if v, ok := compareLists(inputEnv.Env, ans); !ok {
 		if len(v.extraA) != 0 {
 			t.Errorf("Extra variables found in Environment: %v", v.extraA)
@@ -138,7 +138,7 @@ func TestAlreadyAddedProxy(t *testing.T) {
 	testActor.addProxy(&inputEnv)
 	fmt.Println(ans)
 
-	// InputEnv should not change because we didn't set any environment variables
+	// InputEnv should not change because environment already set (with config)
 	if v, ok := compareLists(inputEnv.Env, ans); !ok {
 		if len(v.extraA) != 0 {
 			t.Errorf("Extra variables found in Environment: %v", v.extraA)
