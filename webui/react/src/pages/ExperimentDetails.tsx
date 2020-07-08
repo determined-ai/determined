@@ -15,6 +15,7 @@ import { killExperiment, launchTensorboard, setExperimentState } from 'services/
 import { getExperimentDetails, isNotFound } from 'services/api';
 import { ExperimentDetailsParams } from 'services/types';
 import { ExperimentDetails, RunState, TBSourceType } from 'types';
+import { cancellableRunStates, killableRunStates } from 'utils/types';
 
 interface Params {
   experimentId: string;
@@ -75,13 +76,32 @@ const ExperimentDetailsComp: React.FC = () => {
   const tsbButton = <Button key="tensorboard" onClick={launchTensorboardCB}>
     Launch Tensorboard</Button>;
 
-  const buttons = [
-    forkButton,
-    pauseButton,
-    activateButton,
-    cancelButton,
-    killButton,
-    tsbButton,
+  interface ConditionalButton {
+    btn: React.ReactNode;
+    showIf?: (exp: ExperimentDetails) => boolean;
+  }
+
+  const actionButtons: ConditionalButton[] = [
+    { btn: forkButton },
+    {
+      btn: pauseButton,
+      showIf: (exp): boolean => exp.state === RunState.Active,
+    },
+    {
+      btn: activateButton,
+      showIf: (exp): boolean => exp.state === RunState.Paused,
+    },
+    {
+      btn: cancelButton,
+      showIf: (exp): boolean => cancellableRunStates.includes(exp.state),
+    },
+    {
+      btn: killButton,
+      showIf: (exp): boolean => killableRunStates.includes(exp.state),
+    },
+    {
+      btn: tsbButton,
+    },
   ];
 
   return (
@@ -98,7 +118,10 @@ const ExperimentDetailsComp: React.FC = () => {
         </Breadcrumb.Item>
       </Breadcrumb>
       <ul>
-        {buttons}
+        {actionButtons
+          .filter(ab => !ab.showIf || ab.showIf(experiment.data as ExperimentDetails))
+          .map(ab => ab.btn)
+        }
       </ul>
       <ExperimentInfoBox experiment={experiment.data} />
       <Section title="Chart" />
