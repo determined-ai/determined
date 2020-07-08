@@ -65,7 +65,6 @@ type Msg
     | PlotMsg (Plot.Msg MetricsPoint)
     | SelectMetric (Maybe MetricSpec)
     | LogsMsg (Logs.Msg Types.LogEntry)
-      -- | ToggleLogs
       -- Continue trial messages.
     | ContinueTrial
     | CreateExpModalMsg MCE.Msg
@@ -609,15 +608,6 @@ update msg model session =
                             , Maybe.map Comm.Error logsOutMsg
                             )
 
-                        -- ToggleLogs ->
-                        --     let
-                        --         ( logsModel, logsCmd, logsOutMsg ) =
-                        --             Logs.update
-                        --                 (logsConfig m.trial.id m.showLogs)
-                        --                 Logs.DoJumpToBottom
-                        --                 m.logs
-                        --     in
-                        --     ( { m | showLogs = not m.showLogs, logs = logsModel }, Cmd.map LogsMsg logsCmd, Maybe.map Comm.Error logsOutMsg )
                         GotExperiment (Ok exp) ->
                             ( { m | experiment = Just exp }, Cmd.none, Nothing )
 
@@ -1347,46 +1337,6 @@ stepsTableView model =
     Html.Lazy.lazy2 stepsTableViewHelper model model.stepsTableState
 
 
-
--- collapsibleLogsView : TrialModel -> msg -> H.Html msg -> H.Html msg
--- collapsibleLogsView tm msg logsView =
---     H.div [ HA.class "border-t pt-2" ]
---         [ H.div [ Page.Common.headerClasses ++ "text-xl" |> HA.class ]
---             [ H.text "Logs"
---             , H.span [ HA.class "text-base" ]
---                 [ Page.Common.verticalCollapseButton tm.showLogs msg
---                 ]
---             , H.div [ HA.class "inline text-base float-right" ]
---                 [ Page.Common.buttonCreator
---                     { action = Page.Common.OpenUrl True (API.downloadTrialLogs tm.trial.id)
---                     , bgColor = "transparent"
---                     , fgColor = "grey"
---                     , isActive = True
---                     , isPending = False
---                     , style = Page.Common.IconOnly "fas fa-cloud-download-alt"
---                     , text = "Download logs"
---                     }
---                 ]
---             , H.div [ HA.class "inline text-base float-right" ]
---                 [ Page.Common.buttonCreator
---                     { action = Page.Common.OpenUrl True <| API.trialLogsPage tm.trial.id
---                     , bgColor = "transparent"
---                     , fgColor = "grey"
---                     , isActive = True
---                     , isPending = False
---                     , style = Page.Common.IconOnly "fas fa-external-link-alt"
---                     , text = "Open logs in a new tab"
---                     }
---                 ]
---             ]
---         , if tm.showLogs then
---             H.div [ HA.style "height" "20rem", HA.class "mt-1" ]
---                 [ logsView ]
---           else
---             H.text ""
---         ]
-
-
 view : Model -> Session -> H.Html Msg
 view model session =
     let
@@ -1404,9 +1354,6 @@ view model session =
                         [ class "w-full text-sm p-4" ]
                         [ topBoxView m session
                         , paramsView m
-
-                        -- , Logs.view (logsConfig m.trial.id m.showLogs) m.logs []
-                        --     |> collapsibleLogsView m ToggleLogs
                         , stepsTableView m
                         , MCE.view m.createExpModalState
                             |> H.map CreateExpModalMsg
