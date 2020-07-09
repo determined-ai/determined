@@ -45,7 +45,7 @@ class NativeImplementations:
         configuration={
             "batches_per_step": 4,
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
-            "searcher": {"name": "single", "max_length": {"batches": 100}, "metric": "accuracy"},
+            "searcher": {"name": "single", "max_length": {"batches": 4}, "metric": "accuracy"},
             "max_restarts": 0,
         },
         num_expected_steps_per_trial=1,
@@ -61,7 +61,7 @@ class NativeImplementations:
         configuration={
             "batches_per_step": 4,
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
-            "searcher": {"name": "single", "max_length": {"batches": 100}, "metric": "accuracy"},
+            "searcher": {"name": "single", "max_length": {"batches": 4}, "metric": "accuracy"},
             "max_restarts": 0,
         },
         num_expected_steps_per_trial=1,
@@ -81,7 +81,7 @@ class NativeImplementations:
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
             "searcher": {
                 "name": "single",
-                "max_length": {"batches": 100},
+                "max_length": {"batches": 4},
                 "metric": "val_accuracy",
             },
             "max_restarts": 2,
@@ -102,7 +102,7 @@ class NativeImplementations:
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
             "searcher": {
                 "name": "single",
-                "max_length": {"batches": 100},
+                "max_length": {"batches": 4},
                 "metric": "val_accuracy",
             },
             "max_restarts": 2,
@@ -122,7 +122,7 @@ class NativeImplementations:
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
             "searcher": {
                 "name": "single",
-                "max_length": {"batches": 100},
+                "max_length": {"batches": 4},
                 "metric": "val_accuracy",
             },
             "max_restarts": 2,
