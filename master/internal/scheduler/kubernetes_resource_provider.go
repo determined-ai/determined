@@ -1,13 +1,12 @@
 package scheduler
 
 import (
-	"reflect"
-
 	"github.com/determined-ai/determined/master/internal/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/model"
+	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 // kubernetesResourceProvider manages the lifecycle of k8 resources.
@@ -87,7 +86,7 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 		k.receiveStartTask(ctx, msg)
 
 	default:
-		ctx.Log().Error("Unexpected message", reflect.TypeOf(msg))
+		ctx.Log().Errorf("Unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 
@@ -225,4 +224,29 @@ func (k *kubernetesResourceProvider) receiveStartTask(ctx *actor.Context, msg St
 	for _, a := range assignments {
 		a.StartTask(msg.Spec)
 	}
+}
+
+type podAssignment struct {
+	task                  *Task
+	container             *container
+	agent                 *agentState
+	clusterID             string
+	harnessPath           string
+	taskContainerDefaults model.TaskContainerDefaultsConfig
+}
+
+// StartTask notifies the pods actor that it should launch a pod for the provided task spec.
+func (p *podAssignment) StartTask(spec image.TaskSpec) {
+	handler := p.agent.handler
+	spec.ClusterID = p.clusterID
+	spec.ContainerID = string(p.container.ID())
+	spec.TaskID = string(p.task.ID)
+	spec.HarnessPath = p.harnessPath
+	spec.TaskContainerDefaults = p.taskContainerDefaults
+	handler.System().Tell(handler, sproto.StartPod{
+		Task:  p.task.handler,
+		Spec:  spec,
+		Slots: p.container.Slots(),
+		Rank:  p.container.ordinal,
+	})
 }

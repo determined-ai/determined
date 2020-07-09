@@ -3,9 +3,10 @@ package kubernetes
 import (
 	"fmt"
 	"path"
-	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/docker/docker/api/types/mount"
 
 	"github.com/determined-ai/determined/master/pkg/container"
 
@@ -84,7 +85,7 @@ func (p *pod) Receive(ctx *actor.Context) error {
 		}
 
 	default:
-		ctx.Log().Error("unexpected message: ", reflect.TypeOf(msg))
+		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 
@@ -174,7 +175,8 @@ func (p *pod) configureRunArchives(
 
 	// Create a configMap for the executable for un-taring.
 	initContainerEntrypointArchive := map[string][]byte{
-		etc.InitContainerEntryScriptResource: etc.MustStaticFile(etc.InitContainerEntryScriptResource),
+		etc.K8InitContainerEntryScriptResource: etc.MustStaticFile(
+			etc.K8InitContainerEntryScriptResource),
 	}
 	initContainerEntrypointConfigMap, err := startConfigMap(
 		ctx,
@@ -186,11 +188,61 @@ func (p *pod) configureRunArchives(
 	}
 	p.configMaps = append(p.configMaps, initContainerEntrypointConfigMap)
 
-	initContainerVolumeMounts, mainContainerVolumeMounts, initContainerVolumes :=
+	initContainerVolumeMounts, mainContainerVolumeMounts, volumes :=
 		configureAdditionalFilesVolumes(
 			archiveConfigMap, initContainerEntrypointConfigMap, runArchives)
 
-	return initContainerVolumeMounts, mainContainerVolumeMounts, initContainerVolumes, nil
+	return initContainerVolumeMounts, mainContainerVolumeMounts, volumes, nil
+}
+
+func (p *pod) configureVolumes(
+	ctx *actor.Context,
+	podName string,
+	dockerMounts []mount.Mount,
+	runArchives []container.RunArchive,
+) ([]v1.VolumeMount, []v1.VolumeMount, []v1.Volume, error) {
+	volumeMounts := make([]v1.VolumeMount, 0)
+	volumes := make([]v1.Volume, 0)
+
+	hostVolumeMounts, hostVolumes := dockerMountsToHostVolumes(dockerMounts)
+	volumeMounts = append(volumeMounts, hostVolumeMounts...)
+	volumes = append(volumes, hostVolumes...)
+
+	shmVolumeMount, shmVolume := configureShmVolume(p.taskSpec.TaskContainerDefaults.ShmSizeBytes)
+	volumeMounts = append(volumeMounts, shmVolumeMount)
+	volumes = append(volumes, shmVolume)
+
+	initContainerVolumeMounts, mainContainerRunArchiveVolumeMounts, runArchiveVolumes, err :=
+		p.configureRunArchives(ctx, podName, runArchives)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	volumeMounts = append(volumeMounts, mainContainerRunArchiveVolumeMounts...)
+	volumes = append(volumes, runArchiveVolumes...)
+
+	return initContainerVolumeMounts, volumeMounts, volumes, nil
+}
+
+func (p *pod) configurePodSpec(
+	podName string,
+	volumes []v1.Volume,
+	initContainers []v1.Container,
+	containers []v1.Container,
+) *v1.Pod {
+	return &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      podName,
+			Namespace: p.namespace,
+			Labels:    map[string]string{"determined": p.taskSpec.TaskID},
+		},
+		Spec: v1.PodSpec{
+			Volumes:        volumes,
+			HostNetwork:    p.taskSpec.TaskContainerDefaults.NetworkMode == hostNetwork,
+			InitContainers: initContainers,
+			Containers:     containers,
+			RestartPolicy:  v1.RestartPolicyNever,
+		},
+	}
 }
 
 func (p *pod) launchPod(ctx *actor.Context, podSpec *v1.Pod) error {
@@ -217,17 +269,12 @@ func (p *pod) startPodForTrial(ctx *actor.Context) error {
 		deviceType = device.GPU
 	}
 
-	volumeMounts := make([]v1.VolumeMount, 0)
-	volumes := make([]v1.Volume, 0)
-
-	hostVolumeMounts, hostVolumes := dockerMountsToHostVolumes(
-		tasks.ConfigureTrialDockerMounts(exp))
-	volumeMounts = append(volumeMounts, hostVolumeMounts...)
-	volumes = append(volumes, hostVolumes...)
-
-	shmVolumeMount, shmVolume := configureShmVolume(p.taskSpec.TaskContainerDefaults.ShmSizeBytes)
-	volumeMounts = append(volumeMounts, shmVolumeMount)
-	volumes = append(volumes, shmVolume)
+	runArchives := tasks.ConfigureTrialArchives(p.taskSpec)
+	initContainerVolumeMounts, volumeMounts, volumes, err := p.configureVolumes(
+		ctx, podName, tasks.ConfigureTrialDockerMounts(exp), runArchives)
+	if err != nil {
+		return err
+	}
 
 	rendezvousPorts := []string{
 		fmt.Sprintf("%d", tasks.LocalRendezvousPort),
@@ -241,15 +288,6 @@ func (p *pod) startPodForTrial(ctx *actor.Context) error {
 	if err != nil {
 		return err
 	}
-
-	runArchives := tasks.ConfigureTrialArchives(p.taskSpec)
-	initContainerVolumeMounts, mainContainerVolumeMounts, initContainerVolumes, err :=
-		p.configureRunArchives(ctx, podName, runArchives)
-	if err != nil {
-		return err
-	}
-	volumeMounts = append(volumeMounts, mainContainerVolumeMounts...)
-	volumes = append(volumes, initContainerVolumes...)
 
 	initContainers := []v1.Container{
 		configureInitContainer(
@@ -274,21 +312,7 @@ func (p *pod) startPodForTrial(ctx *actor.Context) error {
 		},
 	}
 
-	podSpec := &v1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      podName,
-			Namespace: p.namespace,
-			Labels:    map[string]string{"determined": p.taskSpec.TaskID},
-		},
-		Spec: v1.PodSpec{
-			Volumes:        volumes,
-			HostNetwork:    p.taskSpec.TaskContainerDefaults.NetworkMode == hostNetwork,
-			InitContainers: initContainers,
-			Containers:     containers,
-			RestartPolicy:  v1.RestartPolicyNever,
-		},
-	}
-
+	podSpec := p.configurePodSpec(podName, volumes, initContainers, containers)
 	return p.launchPod(ctx, podSpec)
 }
 
@@ -301,17 +325,12 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 		deviceType = device.GPU
 	}
 
-	volumeMounts := make([]v1.VolumeMount, 0)
-	volumes := make([]v1.Volume, 0)
-
-	hostVolumeMounts, hostVolumes := dockerMountsToHostVolumes(
-		tasks.ToDockerMounts(cmd.Config.BindMounts))
-	volumeMounts = append(volumeMounts, hostVolumeMounts...)
-	volumes = append(volumes, hostVolumes...)
-
-	shmVolumeMount, shmVolume := configureShmVolume(p.taskSpec.TaskContainerDefaults.ShmSizeBytes)
-	volumeMounts = append(volumeMounts, shmVolumeMount)
-	volumes = append(volumes, shmVolume)
+	runArchives := tasks.ConfigureCommandArchives(p.taskSpec)
+	initContainerVolumeMounts, volumeMounts, volumes, err := p.configureVolumes(
+		ctx, podName, tasks.ToDockerMounts(cmd.Config.BindMounts), runArchives)
+	if err != nil {
+		return err
+	}
 
 	envVars, err := p.configureEnvVars(
 		tasks.ConfigureCommandEnvVars(p.taskSpec),
@@ -321,15 +340,6 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 	if err != nil {
 		return err
 	}
-
-	runArchives := tasks.ConfigureCommandArchives(p.taskSpec)
-	initContainerVolumeMounts, mainContainerVolumeMounts, initContainerVolumes, err :=
-		p.configureRunArchives(ctx, podName, runArchives)
-	if err != nil {
-		return err
-	}
-	volumeMounts = append(volumeMounts, mainContainerVolumeMounts...)
-	volumes = append(volumes, initContainerVolumes...)
 
 	initContainers := []v1.Container{
 		configureInitContainer(
@@ -354,21 +364,7 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 		},
 	}
 
-	podSpec := &v1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      podName,
-			Namespace: p.namespace,
-			Labels:    map[string]string{"determined": p.taskSpec.TaskID},
-		},
-		Spec: v1.PodSpec{
-			Volumes:        volumes,
-			HostNetwork:    p.taskSpec.TaskContainerDefaults.NetworkMode == hostNetwork,
-			InitContainers: initContainers,
-			Containers:     containers,
-			RestartPolicy:  v1.RestartPolicyNever,
-		},
-	}
-
+	podSpec := p.configurePodSpec(podName, volumes, initContainers, containers)
 	return p.launchPod(ctx, podSpec)
 }
 
@@ -381,31 +377,21 @@ func (p *pod) startPodForGC(ctx *actor.Context) error {
 		deviceType = device.GPU
 	}
 
-	volumeMounts := make([]v1.VolumeMount, 0)
-	volumes := make([]v1.Volume, 0)
-
-	hostVolumeMounts, hostVolumes := dockerMountsToHostVolumes(
-		tasks.ConfigureGCDockerMounts(gcc))
-	volumeMounts = append(volumeMounts, hostVolumeMounts...)
-	volumes = append(volumes, hostVolumes...)
+	runArchives := tasks.ConfigureGCArchives(p.taskSpec)
+	initContainerVolumeMounts, volumeMounts, volumes, err := p.configureVolumes(
+		ctx, podName, tasks.ConfigureGCDockerMounts(gcc), runArchives)
+	if err != nil {
+		return err
+	}
 
 	envVars, err := p.configureEnvVars(
 		tasks.ConfigureGCEnvVars(),
-		p.taskSpec.StartContainer.ExperimentConfig.Environment,
+		p.taskSpec.GCCheckpoints.ExperimentConfig.Environment,
 		deviceType,
 	)
 	if err != nil {
 		return err
 	}
-
-	runArchives := tasks.ConfigureGCArchives(p.taskSpec)
-	initContainerVolumeMounts, mainContainerVolumeMounts, initContainerVolumes, err :=
-		p.configureRunArchives(ctx, podName, runArchives)
-	if err != nil {
-		return err
-	}
-	volumeMounts = append(volumeMounts, mainContainerVolumeMounts...)
-	volumes = append(volumes, initContainerVolumes...)
 
 	initContainers := []v1.Container{
 		configureInitContainer(
@@ -430,21 +416,7 @@ func (p *pod) startPodForGC(ctx *actor.Context) error {
 		},
 	}
 
-	podSpec := &v1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      podName,
-			Namespace: p.namespace,
-			Labels:    map[string]string{"determined": p.taskSpec.TaskID},
-		},
-		Spec: v1.PodSpec{
-			Volumes:        volumes,
-			HostNetwork:    p.taskSpec.TaskContainerDefaults.NetworkMode == hostNetwork,
-			InitContainers: initContainers,
-			Containers:     containers,
-			RestartPolicy:  v1.RestartPolicyNever,
-		},
-	}
-
+	podSpec := p.configurePodSpec(podName, volumes, initContainers, containers)
 	return p.launchPod(ctx, podSpec)
 }
 
@@ -477,7 +449,7 @@ func configureInitContainer(
 ) v1.Container {
 	return v1.Container{
 		Name:    "determined-init-container",
-		Command: []string{path.Join(initContainerWorkDir, etc.InitContainerEntryScriptResource)},
+		Command: []string{path.Join(initContainerWorkDir, etc.K8InitContainerEntryScriptResource)},
 		Args: []string{
 			fmt.Sprintf("%d", numArchives), initContainerTarSrcPath, initContainerTarDstPath},
 		Image:           image,

@@ -2,7 +2,6 @@ package kubernetes
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
@@ -70,7 +69,7 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		}
 
 	default:
-		ctx.Log().Error("Unexpected message: ", reflect.TypeOf(msg))
+		ctx.Log().Errorf("Unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
@@ -118,7 +117,7 @@ func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
 	)
 
 	if !ok {
-		return errors.Errorf(fmt.Sprintf("pod actor %s already exits", ref.Address().String()))
+		return errors.Errorf("pod actor %s already exits", ref.Address().String())
 	}
 
 	return nil

@@ -269,7 +269,8 @@ func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) 
 
 func (m *Master) initializeResourceProviders(proxyRef *actor.Ref, provisionerSlotsPerInstance int) {
 	var resourceProvider *actor.Ref
-	if m.config.Scheduler.ResourceProvider.DefaultRPConfig != nil {
+	switch {
+	case m.config.Scheduler.ResourceProvider.DefaultRPConfig != nil:
 		resourceProvider, _ = m.system.ActorOf(actor.Addr("defaultRP"), scheduler.NewDefaultRP(
 			m.ClusterID,
 			m.config.Scheduler.MakeScheduler(),
@@ -280,7 +281,8 @@ func (m *Master) initializeResourceProviders(proxyRef *actor.Ref, provisionerSlo
 			m.provisioner,
 			provisionerSlotsPerInstance,
 		))
-	} else {
+
+	case m.config.Scheduler.ResourceProvider.KubernetesRPConfig != nil:
 		resourceProvider, _ = m.system.ActorOf(
 			actor.Addr("kubernetesRP"),
 			scheduler.NewKubernetesResourceProvider(
@@ -293,6 +295,9 @@ func (m *Master) initializeResourceProviders(proxyRef *actor.Ref, provisionerSlo
 				m.config.TaskContainerDefaults,
 			),
 		)
+
+	default:
+		panic("no expected resource provider config is defined")
 	}
 
 	m.rp, _ = m.system.ActorOf(
