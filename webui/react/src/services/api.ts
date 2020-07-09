@@ -14,7 +14,7 @@ import {
 import { serverAddress } from 'utils/routes';
 import { isExperimentTask } from 'utils/task';
 
-export const sApi = new DetSwagger.AuthenticationApi(undefined, serverAddress());
+export const detAuthApi = new DetSwagger.AuthenticationApi(undefined, serverAddress());
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAuthFailure = (e: any): boolean => {
@@ -78,7 +78,7 @@ export const login = generateApi<Credentials, void>(Config.login);
 // use processApiError.
 export function logout(): DetSwagger.V1LogoutResponse {
   const apiName = arguments.callee.name;
-  return sApi.determinedLogout().catch(e => processApiError(apiName, e));
+  return detAuthApi.determinedLogout().catch(e => processApiError(apiName, e));
 }
 
 export const setExperimentState = async (

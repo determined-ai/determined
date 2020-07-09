@@ -2,6 +2,11 @@ import axios, { AxiosResponse, CancelToken, Method } from 'axios';
 
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { isAuthFailure } from 'services/api';
+import * as DetSwagger from 'services/api-ts-sdk';
+import { serverAddress } from 'utils/routes';
+
+/* eslint-disable @typescript-eslint/no-var-requires */
+const ndjsonStream = require('can-ndjson-stream');
 
 export const http = axios.create({
   responseType: 'json',
@@ -55,3 +60,29 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
     }
   };
 }
+
+/*
+  consumeStream is used to consume streams from the generated TS client.
+  We use the provided fetchParamCreator to create fetch arguments and use that
+  to make a request and handle events one by one.
+  Example:
+  consumeStream<DetSwagger.V1TrialLogsResponse>(
+    DetSwagger.ExperimentsApiFetchParamCreator().determinedTrialLogs(1),
+    console.log,
+  ).then(() => console.log('finished'));
+*/
+export const consumeStream = async <T = unknown>(
+  fetchArgs: DetSwagger.FetchArgs, onEvent: (event: T) => void): Promise<void> => {
+  try {
+    const response = await fetch(serverAddress() + fetchArgs.url, fetchArgs.options);
+    const exampleReader = ndjsonStream(response.body).getReader();
+    let result;
+    while (!result || !result.done) {
+      result = await exampleReader.read();
+      if (result.done) return;
+      onEvent(result.value.result);
+    }
+  } catch (e) {
+    processApiError(fetchArgs.url, e);
+  }
+};
