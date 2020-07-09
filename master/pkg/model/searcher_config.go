@@ -174,7 +174,7 @@ func (a AdaptiveConfig) Validate() []error {
 		check.In(string(a.Mode), []string{AggressiveMode, StandardMode, ConservativeMode},
 			"invalid adaptive mode"),
 		check.GreaterThan(a.MaxRungs, 0, "max_rungs must be > 0"),
-		check.Equal(a.MaxLength.Units, a.Budget.Units,
+		check.Equal(a.MaxLength.Unit, a.Budget.Unit,
 			"max_length and budget must be specified in terms of the same unit"),
 	}
 }
