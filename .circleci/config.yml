@@ -151,9 +151,8 @@ commands:
       - run:
           name: Get React dependencies
           command: |
-            make -C webui/react get-deps-api
             if [ ! -d "webui/react/node_modules" ]; then
-              make -C webui/react get-deps-npm
+              make -C webui/react get-deps
             fi
       - save_cache:
           key: det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
