@@ -94,8 +94,18 @@ class PyTorchTrialController(det.LoopTrialController):
 
             self.trial.__setattr__("train_batch", new_train_batch)
 
-        check.gt_eq(len(self.context.models), 1, "Must have at least one model")
-        check.gt_eq(len(self.context.optimizers), 1, "Must have at least one optimizer")
+        check.gt_eq(
+            len(self.context.models),
+            1,
+            "Must have at least one model. "
+            "This might be caused by not wrapping your model with Model()",
+        )
+        check.gt_eq(
+            len(self.context.optimizers),
+            1,
+            "Must have at least one optimizer. "
+            "This might be caused by not wrapping your model with Optimizer()",
+        )
         self._check_evaluate_implementation()
 
         # Validation loader will be undefined on process ranks > 0

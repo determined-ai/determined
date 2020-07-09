@@ -197,7 +197,7 @@ class TestXORTrial:
             hparams = {**self.hparams, "optimizer": "adam"}
             return xor_trial_controller(hparams, workloads, load_path=load_path)
 
-        utils.optimizer_state_test(make_trial_controller_fn, tmp_path)
+        utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
 
     def test_hooks(self) -> None:
         with tempfile.TemporaryDirectory() as temp_directory:
