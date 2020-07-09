@@ -31,9 +31,9 @@ searcher:
   metric: validation_loss
   smaller_is_better: true
   max_length:
-    records: 60000
+    batches: 400
   budget:
-    records: 240000
+    batches: 1600
   mode: aggressive
   max_rungs: 2
   divisor: 2
