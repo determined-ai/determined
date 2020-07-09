@@ -636,7 +636,7 @@ class EstimatorTrialController(det.LoopTrialController):
                 logging.debug(f"Averaged validation metrics: {metrics}.")
 
         estimator._cleanup_after_validation_step(
-            self.estimator._model_dir, self.hvd_config.use, self.is_chief
+            pathlib.Path(self.estimator._model_dir), self.is_chief
         )
 
         if not self.is_chief:
