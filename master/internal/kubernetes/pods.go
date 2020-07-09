@@ -1,3 +1,5 @@
+// Package kubernetes handles all interaction with the Kubernetes API including starting
+// and stopping tasks, monitoring their status, and fetching logs.
 package kubernetes
 
 import (
