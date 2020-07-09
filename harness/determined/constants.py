@@ -18,7 +18,7 @@ TRAIN_PROCESS_ENVIRONMENT_VARIABLE_PATH = Path("/tmp/det_train_process_env.json"
 # The default configs to use in the Determined Native API.
 #
 # TODO: Unify the defaults used here with the defaults used in master.
-DEFAULT_SEARCHER_CFG = {"name": "single", "max_steps": 1}
+DEFAULT_SEARCHER_CFG = {"name": "single", "max_length": {"batches": 100}}
 DEFAULT_RESOURCES_CFG = {"slots_per_trial": 1, "native_parallel": False}
 DEFAULT_BATCHES_PER_STEP = 100
 DEFAULT_OPTIMIZATIONS = {

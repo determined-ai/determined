@@ -84,7 +84,7 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
             "searcher": {
                 "name": "single",
                 "metric": config_test["searcher"]["metric"],
-                "max_steps": 1,
+                "max_length": {"batches": 100},
             },
             "resources": {**config_test.get("resources", {"slots_per_trial": 1})},
             "max_restarts": 0,
