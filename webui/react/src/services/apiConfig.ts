@@ -9,8 +9,8 @@ import {
 } from 'services/decoder';
 import {
   CommandLogsParams, EmptyParams, ExperimentDetailsParams, ExperimentsParams,
-  KillCommandParams, KillExpParams, LaunchTensorboardParams, LogsParams, PatchExperimentParams,
-  TrialDetailsParams, TrialLogsParams,
+  ForkExperimentParams, KillCommandParams, KillExpParams,
+  LaunchTensorboardParams, LogsParams, PatchExperimentParams, TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import {
   Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log,
@@ -95,6 +95,23 @@ export const launchTensorboard: Api<LaunchTensorboardParams, Command> = {
 };
 
 /* Experiment */
+
+export const forkExperiment: Api<ForkExperimentParams, number> = {
+  httpOptions: (params) => {
+    return {
+      body: {
+        experiment_config: params.experimentConfig,
+        parent_id: params.parentId,
+      },
+      headers: { 'content-type': 'application/json', 'withCredentials': true },
+      method: 'POST',
+      url: '/experiments',
+    };
+  },
+  name: 'forkExperiment',
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  postProcess: (response: any) => response.data.id,
+};
 
 export const patchExperiment: Api<PatchExperimentParams, void> = {
   httpOptions: (params) => {

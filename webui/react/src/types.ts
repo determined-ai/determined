@@ -224,6 +224,7 @@ export interface TrialSummary {
 export interface Experiment {
   archived: boolean;
   config: ExperimentConfig;
+  configRaw: Record<string, unknown>; // Readonly unparsed config object.
   endTime?: string;
   id: number;
   ownerId: number;

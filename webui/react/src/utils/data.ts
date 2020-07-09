@@ -5,7 +5,6 @@ export const isNumber = <T>(data: T): boolean => typeof data === 'number';
 export const isObject = <T>(data: T): boolean => typeof data === 'object' && data !== null;
 export const isPrimitive = <T>(data: T): boolean => data !== Object(data);
 export const isSet = <T>(data: T): boolean => data instanceof Set;
-
 export const isFunction = (fn: unknown): boolean => {
   return typeof fn === 'function';
 };
@@ -103,6 +102,21 @@ export const taskStateSorter = (a: State, b: State): number => {
   const bValue = Object.values(RunState).includes(b as RunState) ?
     runStateSortValues[b as RunState] : commandStateSortValues[b as CommandState];
   return aValue - bValue;
+};
+
+// We avoid exporting this type to discourage/disallow usage of any.
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+type Mapper = (x: any) => any;
+export const applyMappers = <T>(data: unknown, mappers: Mapper | Mapper[]): T => {
+  let currentData = clone(data);
+
+  if (Array.isArray(mappers)) {
+    currentData = mappers.reduce((acc, mapper) => mapper(acc), currentData);
+  } else {
+    currentData = mappers(currentData);
+  }
+
+  return currentData;
 };
 
 export const isEqual = (a: unknown, b: unknown): boolean => {

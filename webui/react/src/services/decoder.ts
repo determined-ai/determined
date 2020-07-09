@@ -1,14 +1,11 @@
 import dayjs from 'dayjs';
 
 import {
-  decode, ioCommandLogs, ioDeterminedInfo, ioExperimentConfig, ioExperimentDetails, ioExperiments,
-  ioGenericCommand, ioLog, ioLogs, ioTrialDetails, ioTypeAgents,
-  ioTypeCheckpoint, ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo,
-  ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments,
-  ioTypeGenericCommand, ioTypeGenericCommands,
-  ioTypeLog, ioTypeLogs,
-  ioTypeTrialDetails, ioTypeTrialSummary,
-  ioTypeUsers,
+  decode, ioCommandLogs, ioDeterminedInfo, ioExperiment, ioExperimentConfig, ioExperimentDetails,
+  ioExperiments, ioGenericCommand, ioLog, ioLogs, ioTrialDetails, ioTypeAgents, ioTypeCheckpoint,
+  ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo, ioTypeExperiment,
+  ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand,
+  ioTypeGenericCommands, ioTypeLog, ioTypeLogs, ioTypeTrialDetails, ioTypeTrialSummary, ioTypeUsers,
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, Command, CommandState, CommandType,
@@ -129,33 +126,38 @@ export const jsonToTensorboards = (data: ioTypeGenericCommands): Command[] => {
 
 const jsonToExperimentConfig = (data: unknown): ExperimentConfig => {
   const io = decode<ioTypeExperimentConfig>(ioExperimentConfig, data);
-  return {
+  const config: ExperimentConfig = {
     description: io.description,
-    resources: {
-      maxSlots: io.resources.max_slots,
-    },
+    resources: {},
     searcher: {
       ...io.searcher,
       smallerIsBetter: io.searcher.smaller_is_better,
     },
   };
+  if (io.resources.max_slots !== undefined)
+    config.resources.maxSlots = io.resources.max_slots;
+  return config;
+};
 
+export const jsonToExperiment = (data: unknown): Experiment => {
+  const io = decode<ioTypeExperiment>(ioExperiment, data);
+  return {
+    archived: io.archived,
+    config: jsonToExperimentConfig(io.config),
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    configRaw: (data as any).config,
+    endTime: io.end_time || undefined,
+    id: io.id,
+    ownerId: io.owner_id,
+    progress: io.progress !== null ? io.progress : undefined,
+    startTime: io.start_time,
+    state: io.state as RunState,
+  };
 };
 
 export const jsonToExperiments = (data: unknown): Experiment[] => {
   const ioType = decode<ioTypeExperiments>(ioExperiments, data);
-  return ioType.map(experiment => {
-    return {
-      archived: experiment.archived,
-      config: jsonToExperimentConfig(experiment.config),
-      endTime: experiment.end_time || undefined,
-      id: experiment.id,
-      ownerId: experiment.owner_id,
-      progress: experiment.progress !== null ? experiment.progress : undefined,
-      startTime: experiment.start_time,
-      state: experiment.state as RunState,
-    };
-  });
+  return ioType.map(jsonToExperiment);
 };
 
 const ioCheckpoinToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
@@ -206,6 +208,8 @@ export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
   return {
     archived: ioType.archived,
     config: jsonToExperimentConfig(ioType.config),
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    configRaw: (data as any).config,
     endTime: ioType.end_time || undefined,
     id: ioType.id,
     ownerId: ioType.owner.id,

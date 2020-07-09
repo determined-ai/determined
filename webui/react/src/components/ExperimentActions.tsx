@@ -9,28 +9,35 @@ import { cancellableRunStates, killableRunStates, terminalRunStates } from 'util
 
 import css from './ExperimentActions.module.scss';
 
-interface Props {
-  experiment: ExperimentDetails;
-  onSettled: () => void; // A callback to trigger after an action is done.
-}
-
-enum Action {
+export enum Action {
   Activate = 'Activate',
   Archive = 'Archive',
   Cancel = 'Cancel',
   Kill = 'Kill',
+  Fork = 'Fork',
   Pause = 'Pause',
   Tensorboard = 'Tensorboard',
 }
 
+interface Props {
+  experiment: ExperimentDetails;
+  onSettled: () => void; // A callback to trigger after an action is done.
+  onClick: {
+    [key in Action]?: () => void;
+  }
+}
+
 type ButtonLoadingStates = Record<Action, boolean>;
 
-const ExperimentActions: React.FC<Props> = ({ experiment, onSettled: updateFn }: Props) => {
+const ExperimentActions: React.FC<Props> = ({
+  experiment, onSettled: updateFn, onClick,
+}: Props) => {
 
   const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
     Activate: false,
     Archive: false,
     Cancel: false,
+    Fork: false,
     Kill: false,
     Pause: false,
     Tensorboard: false,
@@ -85,7 +92,7 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onSettled: updateFn }:
   };
 
   const actionButtons: ConditionalButton[] = [
-    { btn: <Button disabled key="fork" type="primary">Fork</Button> },
+    { btn: <Button key="fork" type="primary" onClick={onClick[Action.Fork]}>Fork</Button> },
     {
       btn: <Button key="archive" loading={buttonStates.Archive}
         type="primary" onClick={handleArchive(true)}>

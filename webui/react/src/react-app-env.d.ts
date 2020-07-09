@@ -15,4 +15,3 @@ export declare global {
     dev: any;
   }
 }
-
