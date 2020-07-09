@@ -1,5 +1,5 @@
 .base {
-  ul Button:not(:first-child) {
+  ul button:not(:first-child) {
     margin-left: var(--theme-sizes-layout-small);
   }
 }

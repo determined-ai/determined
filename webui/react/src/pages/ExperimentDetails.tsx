@@ -11,7 +11,8 @@ import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
-import { archiveExperiment, killExperiment, launchTensorboard, setExperimentState } from 'services/api';
+import { archiveExperiment, killExperiment, launchTensorboard, setExperimentState,
+} from 'services/api';
 import { getExperimentDetails, isNotFound } from 'services/api';
 import { ExperimentDetailsParams } from 'services/types';
 import { ExperimentDetails, RunState, TBSourceType } from 'types';
@@ -38,7 +39,9 @@ const ExperimentDetailsComp: React.FC = () => {
   const [ experiment, requestExperimentDetails ] =
   useRestApiSimple<ExperimentDetailsParams, ExperimentDetails>(
     getExperimentDetails, { id: experimentId });
-  usePolling(() => requestExperimentDetails);
+  const pollExperimentDetails = useCallback(() => requestExperimentDetails({ id: experimentId }),
+    [ requestExperimentDetails, experimentId ]);
+  usePolling(pollExperimentDetails);
 
   const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
     [RunState.StoppingCanceled]: false,
@@ -52,31 +55,35 @@ const ExperimentDetailsComp: React.FC = () => {
   const killExperimentCB = useCallback(() => {
     setButtonStates(state => ({ ...state, kill: true }));
     killExperiment({ experimentId })
+      .then(pollExperimentDetails)
       .finally(() => setButtonStates(state => ({ ...state, kill: false })));
-  }, [ experimentId ]);
+  }, [ experimentId, pollExperimentDetails ]);
 
   const archiveCB = useCallback((archive: boolean) =>
-    (): Promise<void> => {
+    (): Promise<unknown> => {
       setButtonStates(state => ({ ...state, archive: true }));
       return archiveExperiment(experimentId, archive)
+        .then(pollExperimentDetails)
         .finally(() => setButtonStates(state => ({ ...state, archive: false })));
     },
-  [ experimentId ]);
+  [ experimentId, pollExperimentDetails ]);
 
   const launchTensorboardCB = useCallback(() => {
     // TODO import from the tb PR.
     setButtonStates(state => ({ ...state, tsb: true }));
     launchTensorboard({ ids: [ experimentId ], type: TBSourceType.Experiment })
+      .then(pollExperimentDetails)
       .finally(() => setButtonStates(state => ({ ...state, tsb: false })));
-  }, [ experimentId ]);
+  }, [ experimentId, pollExperimentDetails ]);
 
   const requestExpStateCB = useCallback((targetState: RunState) =>
-    (): Promise<void> => {
+    (): Promise<unknown> => {
       setButtonStates(state => ({ ...state, [targetState]: true }));
       return setExperimentState({ experimentId, state: targetState })
+        .then(pollExperimentDetails)
         .finally(() => setButtonStates(state => ({ ...state, [targetState]: false })));
     }
-  , [ experimentId ]);
+  , [ experimentId, pollExperimentDetails ]);
 
   if (isNaN(experimentId)) {
     return (
