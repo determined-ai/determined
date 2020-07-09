@@ -104,3 +104,8 @@ export const taskStateSorter = (a: State, b: State): number => {
     runStateSortValues[b as RunState] : commandStateSortValues[b as CommandState];
   return aValue - bValue;
 };
+
+export const isEqual = (a: unknown, b: unknown): boolean => {
+  if (a === b) return true;
+  return JSON.stringify(a) === JSON.stringify(b);
+};
