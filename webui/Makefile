@@ -34,14 +34,14 @@ build-api-ts-sdk: build-proto
 	$(MAKE) -C api-ts-sdk build
 
 .PHONY: build-react
-build-react: build-api-ts-sdk
+build-react:
 	$(MAKE) -C react build
 
 .PHONY: build-elm
 build-elm:
 	$(MAKE) -C elm build
 
-test: build-api-ts-sdk
+test:
 	$(MAKE) -C react $@
 	$(MAKE) -C elm $@
 	$(MAKE) -C tests $@

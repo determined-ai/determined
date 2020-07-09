@@ -1,8 +1,8 @@
 import axios, { AxiosResponse, CancelToken, Method } from 'axios';
-import * as DetSwagger from 'services/api-ts-sdk';
 
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { isAuthFailure } from 'services/api';
+import * as DetSwagger from 'services/api-ts-sdk';
 import { serverAddress } from 'utils/routes';
 
 /* eslint-disable @typescript-eslint/no-var-requires */

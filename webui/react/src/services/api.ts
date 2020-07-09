@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/camelcase */
 import { CancelToken } from 'axios';
-import * as DetSwagger from 'services/api-ts-sdk';
 
+import * as DetSwagger from 'services/api-ts-sdk';
 import { generateApi, processApiError } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
 import { CommandLogsParams, ExperimentDetailsParams, ExperimentsParams, KillCommandParams,
