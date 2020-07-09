@@ -56,10 +56,10 @@ def set_native_parallel(config: Dict[Any, Any], native_parallel: bool) -> Dict[A
     return config
 
 
-def set_max_steps(config: Dict[Any, Any], max_steps: int) -> Dict[Any, Any]:
+def set_max_length(config: Dict[Any, Any], max_length: Dict[str, int]) -> Dict[Any, Any]:
     config = config.copy()
     config.setdefault("resources", {})
-    config["searcher"]["max_steps"] = max_steps
+    config["searcher"]["max_length"] = max_length
     return config
 
 

@@ -14,7 +14,7 @@ searcher:
   smaller_is_better: true
   name: single
   max_length:
-    batches: 3000
+    records: 96000
 reproducibility:
   experiment_seed: 999
 min_validation_period: 1

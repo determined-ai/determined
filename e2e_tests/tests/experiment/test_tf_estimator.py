@@ -38,7 +38,7 @@ def test_mnist_estimmator_const_parallel(native_parallel: bool, tf2: bool) -> No
     config = conf.load_config(conf.fixtures_path("mnist_estimator/single-multi-slot.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_native_parallel(config, native_parallel)
-    config = conf.set_max_steps(config, 2)
+    config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
 
     exp.run_basic_test_with_temp_config(
@@ -84,7 +84,7 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
 
 
 def run_dataset_experiment(
-    searcher_max_steps: int,
+    searcher_max_length: Dict[str, int],
     batches_per_step: int,
     secrets: Dict[str, str],
     tf2: bool,
@@ -93,7 +93,7 @@ def run_dataset_experiment(
 ) -> List[Dict[str, Any]]:
     config = conf.load_config(conf.fixtures_path("estimator_dataset/const.yaml"))
     config.setdefault("searcher", {})
-    config["searcher"]["max_steps"] = searcher_max_steps
+    config["searcher"]["max_length"] = searcher_max_length
     config["batches_per_step"] = batches_per_step
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
 
@@ -115,13 +115,17 @@ def run_dataset_experiment(
 @pytest.mark.e2e_gpu  # type: ignore
 @pytest.mark.parametrize("tf2", [False])  # type: ignore
 def test_dataset_restore(secrets: Dict[str, str], tf2: bool) -> None:
-    for searcher_max_steps, batches_per_step in [(4, 1), (2, 2), (1, 4)]:
-        trials = run_dataset_experiment(searcher_max_steps, batches_per_step, secrets, tf2)
+    for searcher_max_batches, batches_per_step in [(4, 1), (2, 2), (1, 4)]:
+        trials = run_dataset_experiment(
+            {"batches": searcher_max_batches}, batches_per_step, secrets, tf2
+        )
         losses = exp.get_flat_metrics(trials[0]["id"], "loss")
         assert losses == DATASET_EXPERIMENT_EXPECTED_LOSSES
 
-    trials = run_dataset_experiment(1, 1, secrets, tf2)
-    next_trials = run_dataset_experiment(3, 1, secrets, tf2, source_trial_id=trials[0]["id"])
+    trials = run_dataset_experiment({"batches": 1}, 1, secrets, tf2)
+    next_trials = run_dataset_experiment(
+        {"batches": 3}, 1, secrets, tf2, source_trial_id=trials[0]["id"]
+    )
     losses = exp.get_flat_metrics(trials[0]["id"], "loss") + exp.get_flat_metrics(
         next_trials[0]["id"], "loss"
     )
@@ -159,7 +163,7 @@ def test_mnist_estimator_data_layer_s3(tf2: bool, storage_type: str) -> None:
 
 def run_mnist_estimator_data_layer_test(tf2: bool, storage_type: str) -> None:
     config = conf.load_config(conf.experimental_path("trial/data_layer_mnist_estimator/const.yaml"))
-    config = conf.set_max_steps(config, 2)
+    config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
     if storage_type == "lfs":
         config = conf.set_shared_fs_data_layer(config)
@@ -175,7 +179,7 @@ def run_mnist_estimator_data_layer_test(tf2: bool, storage_type: str) -> None:
 @pytest.mark.parametrize("storage_type", ["lfs", "s3"])  # type: ignore
 def test_mnist_estimator_data_layer_parallel(storage_type: str) -> None:
     config = conf.load_config(conf.experimental_path("trial/data_layer_mnist_estimator/const.yaml"))
-    config = conf.set_max_steps(config, 2)
+    config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_tf1_image(config)
     if storage_type == "lfs":

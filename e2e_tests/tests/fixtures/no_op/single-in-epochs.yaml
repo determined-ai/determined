@@ -14,9 +14,10 @@ searcher:
   smaller_is_better: true
   name: single
   max_length:
-    batches: 3000
+    epochs: 2
 reproducibility:
   experiment_seed: 999
+records_per_epoch: 48000
 min_validation_period: 1
 min_checkpoint_period: 1
 max_restarts: 0

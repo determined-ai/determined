@@ -15,7 +15,8 @@ searcher:
   metric: validation_error
   smaller_is_better: true
   name: single
-  max_steps: 1
+  max_length:
+    batches: 100
 reproducibility:
   experiment_seed: 999
 min_validation_period: 1
