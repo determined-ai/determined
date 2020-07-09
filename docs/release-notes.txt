@@ -15,7 +15,7 @@ Version 0.12.11
 
 - Improve reliability of saving checkpoints to GCS in the presence of transient network errors.
 
-- Add `an example <https://github.com/determined-ai/determined/tree/master/examples/experimental/trial/unets_tf_keras>`__ using TensorFlow's Image Segmentation via UNet tutorial.
+- Add `an example <https://github.com/determined-ai/determined/tree/master/examples/experimental/trial/unets_tf_keras>`__ using TensorFlow's *Image Segmentation via UNet* tutorial.
 
 - WebUI: Improve trial log rendering performance.
 
