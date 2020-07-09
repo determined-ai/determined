@@ -147,15 +147,15 @@ def prepare_tensorboard(
         env, env.experiment_config["checkpoint_storage"], container_path
     )
     try:
-        from determined.tensorboard.metric_writers import pytorch
-
-        writer: tensorboard.MetricWriter = pytorch.TorchWriter()
-
-    except ImportError:
-        print("PYTORCH WRITER NOT FOUND")
         from determined.tensorboard.metric_writers import tensorflow
 
-        writer = tensorflow.TFWriter()
+        writer: tensorboard.MetricWriter = tensorflow.TFWriter()
+
+    except ModuleNotFoundError:
+        logging.warning("Tensorflow writer not found")
+        from determined.tensorboard.metric_writers import pytorch
+
+        writer = pytorch.TorchWriter()
 
     return (
         tensorboard_mgr,
