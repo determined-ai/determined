@@ -238,7 +238,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 raise AssertionError("Unexpected workload: {}".format(w.kind))
 
     def get_epoch_idx(self, batch_id: int) -> int:
-        return batch_id // len(self.training_loader)
+        return batch_id * self.context.get_per_slot_batch_size() // len(self.training_loader)
 
     def _average_training_metrics(
         self, per_batch_metrics: List[Dict[str, Any]]
