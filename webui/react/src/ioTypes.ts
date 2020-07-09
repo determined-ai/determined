@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 import { isLeft } from 'fp-ts/lib/Either';
 import * as io from 'io-ts';
 

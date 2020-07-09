@@ -59,6 +59,7 @@ module.exports = {
       beforeSelfClosing: 'always',
       closingSlash: 'never',
     } ],
+    'react/prop-types': 'off',
     'react/self-closing-comp': [ 'error', {
       component: true,
       html: true,

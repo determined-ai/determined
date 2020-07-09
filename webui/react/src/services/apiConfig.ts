@@ -8,8 +8,9 @@ import {
   jsonToLogs, jsonToTensorboard, jsonToTrialLogs,
 } from 'services/decoder';
 import {
-  CommandLogsParams, ExperimentDetailsParams, ExperimentsParams, KillCommandParams,
-  KillExpParams, LaunchTensorboardParams, LogsParams, PatchExperimentParams, TrialLogsParams,
+  CommandLogsParams, EmptyParams, ExperimentDetailsParams, ExperimentsParams,
+  KillCommandParams, KillExpParams, LaunchTensorboardParams, LogsParams, PatchExperimentParams,
+  TrialLogsParams,
 } from 'services/types';
 import {
   Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log,
@@ -33,7 +34,7 @@ const commandToEndpoint: Record<CommandType, string> = {
 
 /* Authentication */
 
-export const getCurrentUser: Api<{}, User> = {
+export const getCurrentUser: Api<EmptyParams, User> = {
   httpOptions: () => ({ url: '/users/me' }),
   name: 'getCurrentUser',
   postProcess: (response) => {
@@ -60,7 +61,7 @@ export const login: Api<Credentials, void> = {
 
 /* Info */
 
-export const getInfo: Api<{}, DeterminedInfo> = {
+export const getInfo: Api<EmptyParams, DeterminedInfo> = {
   httpOptions: () => ({ url: '/info' }),
   name: 'getInfo',
   postProcess: (response) => jsonToDeterminedInfo(response.data),

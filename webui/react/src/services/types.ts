@@ -48,3 +48,6 @@ export interface CommandLogsParams extends LogsParams {
   commandId: string;
   commandType: CommandType;
 }
+
+/* eslint-disable-next-line @typescript-eslint/ban-types */
+export type EmptyParams = {}
