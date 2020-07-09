@@ -103,7 +103,7 @@ const ExperimentDetailsComp: React.FC = () => {
     );
   }
 
-  if (!experiment.data || experiment.isLoading) {
+  if (!experiment.data) {
     return <Spinner fillContainer />;
   }
 
