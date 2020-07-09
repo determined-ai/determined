@@ -146,7 +146,7 @@ const ExperimentDetailsComp: React.FC = () => {
 
   const tsbButton = <Button key="tensorboard"
     loading={buttonStates.tsb} type="primary" onClick={launchTensorboardCB}>
-      Launch Tensorboard</Button>;
+      Tensorboard</Button>;
 
   interface ConditionalButton {
     btn: React.ReactNode;
