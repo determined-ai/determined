@@ -12,7 +12,6 @@ import TableBatch from 'components/TableBatch';
 import Toggle from 'components/Toggle';
 import UserSelectFilter from 'components/UserSelectFilter';
 import Auth from 'contexts/Auth';
-import UI from 'contexts/UI';
 import Users from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
@@ -52,7 +51,6 @@ const defaultFilters: ExperimentFilters = {
 const ExperimentList: React.FC = () => {
   const auth = Auth.useStateContext();
   const users = Users.useStateContext();
-  const setUI = UI.useActionContext();
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>([]);
   const [ experimentsResponse, requestExperiments ] =
     useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
@@ -165,7 +163,7 @@ const ExperimentList: React.FC = () => {
         const url = waitPageUrl(result as Command);
         if (url) openBlank(setupUrlForDev(url));
       }
-      // setUI({ type: UI.ActionType.ShowSpinner });
+      await fetchExperiments();
     } catch (e) {
       const publicSubject = action === Action.OpenTensorBoard ?
         'Unable to Open TensorBoard for Selected Experiments' :
@@ -180,7 +178,7 @@ const ExperimentList: React.FC = () => {
         type: ErrorType.Server,
       });
     }
-  }, [ getBatchActions ]);
+  }, [ getBatchActions, fetchExperiments ]);
 
   const handleConfirmation = useCallback((action: Action) => {
     Modal.confirm({
@@ -228,7 +226,7 @@ const ExperimentList: React.FC = () => {
               Open TensorBoard
           </Button>
           <Button
-            disabled={!hasActivatable}
+            disabled={!hasActivatable && false}
             onClick={(): void => handleConfirmation(Action.Activate)}>Activate</Button>
           <Button
             disabled={!hasPausible}
