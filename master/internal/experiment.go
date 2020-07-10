@@ -377,40 +377,22 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 		ctx.Log().Info("experiment shut down successfully")
 
-	case *apiv1.PauseExperimentRequest:
-		var err error
-		switch {
-		case e.State == model.PausedState:
-			ctx.Respond(&apiv1.PauseExperimentResponse{})
-		case model.RunningStates[e.State]:
-			if err = e.updateState(ctx, model.PausedState); err == nil {
-				ctx.Respond(&apiv1.PauseExperimentResponse{})
-			}
-		default:
-			err = status.Errorf(codes.FailedPrecondition,
-				"experiment in incompatible state %s", e.State)
-		}
-		if err != nil {
-			ctx.Respond(err)
-		}
-
 	case *apiv1.ActivateExperimentRequest:
-		var err error
-		switch e.State {
-		case model.ActiveState:
+		switch err := e.updateState(ctx, model.ActiveState); err {
+		case nil:
 			ctx.Respond(&apiv1.ActivateExperimentResponse{})
-		case model.PausedState:
-			if err = e.updateState(ctx, model.ActiveState); err == nil {
-				ctx.Respond(&apiv1.ActivateExperimentResponse{})
-			}
 		default:
-			err = status.Errorf(codes.FailedPrecondition,
-				"experiment in incompatible state %s", e.State)
+			ctx.Respond(status.Errorf(codes.FailedPrecondition,
+				"experiment in incompatible state %s", e.State))
 		}
-		if err != nil {
-			ctx.Respond(err)
+	case *apiv1.PauseExperimentRequest:
+		switch err := e.updateState(ctx, model.PausedState); err {
+		case nil:
+			ctx.Respond(&apiv1.PauseExperimentResponse{})
+		default:
+			ctx.Respond(status.Errorf(codes.FailedPrecondition,
+				"experiment in incompatible state %s", e.State))
 		}
-
 	}
 	return nil
 }
