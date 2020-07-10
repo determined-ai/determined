@@ -67,39 +67,18 @@ func (m *Master) getTrialMetrics(c echo.Context) (interface{}, error) {
 
 func (m *Master) getTrialLogs(c echo.Context) error {
 	args := struct {
-		TrialID       int     `path:"trial_id"`
-		GreaterThanID *int    `query:"greater_than_id"`
-		LessThanID    *int    `query:"less_than_id"`
-		Limit         *int    `query:"tail"`
-		Format        *string `query:"format"`
+		TrialID       int  `path:"trial_id"`
+		GreaterThanID *int `query:"greater_than_id"`
+		LessThanID    *int `query:"less_than_id"`
+		Limit         *int `query:"tail"`
 	}{}
 	if err := api.BindArgs(&args, c); err != nil {
 		return err
 	}
-	trial, err := m.db.TrialByID(args.TrialID)
-	if err != nil {
-		return err
-	}
+
 	logs, err := m.db.TrialLogsRaw(args.TrialID, args.GreaterThanID, args.LessThanID, args.Limit)
 	if err != nil {
 		return err
-	}
-
-	if args.Format != nil && *args.Format == "raw" {
-		downloadable := ""
-		for _, log := range logs {
-			downloadable += string(log.Message)
-			logs = logs[1:]
-		}
-
-		c.Response().Header().Set(
-			"Content-Disposition",
-			fmt.Sprintf(
-				`attachment; filename="experiment_%d_trial_%d_logs.txt"`,
-				trial.ExperimentID,
-				args.TrialID))
-
-		return c.String(http.StatusOK, downloadable)
 	}
 
 	if len(logs) == 0 {
