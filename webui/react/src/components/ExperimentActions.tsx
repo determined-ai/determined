@@ -51,7 +51,6 @@ const ExperimentActions: React.FC<Props> = ({ experiment, updateFn }: Props) => 
   [ experiment.id, updateFn ]);
 
   const launchTensorboardCB = useCallback(() => {
-    // TODO import from the tb PR.
     setButtonStates(state => ({ ...state, tsb: true }));
     launchTensorboard({ ids: [ experiment.id ], type: TBSourceType.Experiment })
       .then((tensorboard) => {
@@ -116,14 +115,18 @@ const ExperimentActions: React.FC<Props> = ({ experiment, updateFn }: Props) => 
     showIf?: (exp: ExperimentDetails) => boolean;
   }
 
+  const experimentWillNeverHaveData = (experiment: ExperimentDetails): boolean => {
+    const isTerminal = terminalRunStates.has(experiment.state);
+    // with lack of step state we can use numSteps as a proxy to trials that definietly have some metric.
+    const trialsWithSomeMetric = experiment.trials.filter(trial => trial.numSteps > 1);
+    return isTerminal && trialsWithSomeMetric.length === 0;
+  };
+
   const actionButtons: ConditionalButton[] = [
     { btn: forkButton },
     {
       btn: archiveButton,
       showIf: (exp): boolean => terminalRunStates.has(exp.state) && !exp.archived,
-    },
-    {
-      btn: tsbButton,
     },
     {
       btn: unarchiveButton,
@@ -139,11 +142,15 @@ const ExperimentActions: React.FC<Props> = ({ experiment, updateFn }: Props) => 
     },
     {
       btn: cancelButton,
-      showIf: (exp): boolean => !cancellableRunStates.includes(exp.state),
+      showIf: (exp): boolean => cancellableRunStates.includes(exp.state),
     },
     {
       btn: killButton,
       showIf: (exp): boolean => killableRunStates.includes(exp.state),
+    },
+    {
+      btn: tsbButton,
+      showIf: (exp): boolean => !experimentWillNeverHaveData(exp),
     },
   ];
 
