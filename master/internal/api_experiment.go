@@ -109,8 +109,8 @@ func (a *apiServer) PreviewHPSearch(
 }
 
 func (a *apiServer) ActivateExperiment(
-	ctx context.Context, req *apiv1.ActivateExperimentRequest) (
-	resp *apiv1.ActivateExperimentResponse, err error) {
+	ctx context.Context, req *apiv1.ActivateExperimentRequest,
+) (resp *apiv1.ActivateExperimentResponse, err error) {
 	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -128,8 +128,8 @@ func (a *apiServer) ActivateExperiment(
 }
 
 func (a *apiServer) PauseExperiment(
-	ctx context.Context, req *apiv1.PauseExperimentRequest) (
-	resp *apiv1.PauseExperimentResponse, err error) {
+	ctx context.Context, req *apiv1.PauseExperimentRequest,
+) (resp *apiv1.PauseExperimentResponse, err error) {
 	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
