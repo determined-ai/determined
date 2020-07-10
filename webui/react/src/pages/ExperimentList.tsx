@@ -1,4 +1,5 @@
-import { Button, Input, Table } from 'antd';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { Button, Input, Modal, Table } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -181,6 +182,19 @@ const ExperimentList: React.FC = () => {
     }
   }, [ getBatchActions ]);
 
+  const handleConfirmation = useCallback((action: Action) => {
+    Modal.confirm({
+      content: `
+        Are you sure you want to ${action.toLocaleLowerCase()}
+        all the eligible selected experiments?
+      `,
+      icon: <ExclamationCircleOutlined />,
+      okText: action,
+      onOk: () => handleBatchAction(action),
+      title: 'Confirm Batch Action',
+    });
+  }, [ handleBatchAction ]);
+
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
   const handleTableRow = useCallback((record: ExperimentItem) => ({
@@ -215,21 +229,21 @@ const ExperimentList: React.FC = () => {
           </Button>
           <Button
             disabled={!hasActivatable}
-            onClick={(): Promise<void> => handleBatchAction(Action.Activate)}>Activate</Button>
+            onClick={(): void => handleConfirmation(Action.Activate)}>Activate</Button>
           <Button
             disabled={!hasPausible}
-            onClick={(): Promise<void> => handleBatchAction(Action.Pause)}>Pause</Button>
+            onClick={(): void => handleConfirmation(Action.Pause)}>Pause</Button>
           <Button
             disabled={!hasArchivable}
-            onClick={(): Promise<void> => handleBatchAction(Action.Archive)}>Archive</Button>
+            onClick={(): void => handleConfirmation(Action.Archive)}>Archive</Button>
           <Button
             disabled={!hasCancelable}
-            onClick={(): Promise<void> => handleBatchAction(Action.Cancel)}>Cancel</Button>
+            onClick={(): void => handleConfirmation(Action.Cancel)}>Cancel</Button>
           <Button
             danger
             disabled={!hasKillable}
             type="primary"
-            onClick={(): Promise<void> => handleBatchAction(Action.Kill)}>Kill</Button>
+            onClick={(): void => handleConfirmation(Action.Kill)}>Kill</Button>
         </TableBatch>
         <Table
           columns={columns}

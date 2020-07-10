@@ -1,5 +1,5 @@
-import { Button, Input, Table } from 'antd';
-import axios from 'axios';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { Button, Input, Modal, Table } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
@@ -117,14 +117,25 @@ const TaskList: React.FC = () => {
     }
   }, [ selectedTasks ]);
 
+  const handleConfirmation = useCallback(() => {
+    Modal.confirm({
+      content: `
+        Are you sure you want to kill
+        all the eligible selected experiments?
+      `,
+      icon: <ExclamationCircleOutlined />,
+      okText: 'Kill',
+      onOk: handleBatchKill,
+      title: 'Confirm Batch Kill',
+    });
+  }, [ handleBatchKill ]);
+
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
   const handleTableRow = useCallback((record: CommandTask) => ({
     onClick: canBeOpened(record) ? makeClickHandler(record.url as string) : undefined,
   }), []);
 
-  // TODO select and batch operation:
-  // https://ant.design/components/table/#components-table-demo-row-selection-and-operation
   return (
     <Page title="Tasks">
       <div className={css.base}>
@@ -146,7 +157,7 @@ const TaskList: React.FC = () => {
             danger
             disabled={!hasKillable}
             type="primary"
-            onClick={handleBatchKill}>Kill</Button>
+            onClick={handleConfirmation}>Kill</Button>
         </TableBatch>
         <Table
           columns={columns}
