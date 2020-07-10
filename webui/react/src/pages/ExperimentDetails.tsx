@@ -23,11 +23,11 @@ interface Params {
 const ExperimentDetailsComp: React.FC = () => {
   const { experimentId: experimentIdParam } = useParams<Params>();
   const experimentId = parseInt(experimentIdParam);
-  const [ experiment, requestExperimentDetails ] =
+  const [ experiment, setExpRequestParams ] =
   useRestApiSimple<ExperimentDetailsParams, ExperimentDetails>(
     getExperimentDetails, { id: experimentId });
-  const pollExperimentDetails = useCallback(() => requestExperimentDetails({ id: experimentId }),
-    [ requestExperimentDetails, experimentId ]);
+  const pollExperimentDetails = useCallback(() => setExpRequestParams({ id: experimentId }),
+    [ setExpRequestParams, experimentId ]);
   usePolling(pollExperimentDetails);
 
   if (isNaN(experimentId)) {
