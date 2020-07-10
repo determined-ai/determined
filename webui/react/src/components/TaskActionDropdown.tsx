@@ -5,13 +5,12 @@ import React from 'react';
 import Icon from 'components/Icon';
 import Experiments from 'contexts/Experiments';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { setupUrlForDev } from 'routes';
 import { archiveExperiment, killTask, launchTensorboard, setExperimentState } from 'services/api';
 import { AnyTask, Experiment, RunState, TBSourceType } from 'types';
-import { openBlank } from 'utils/routes';
+import { openCommand } from 'utils/routes';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
-import { cancellableRunStates, isTaskKillable, terminalRunStates, waitPageUrl } from 'utils/types';
+import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';
 
 import css from './TaskActionDropdown.module.scss';
 
@@ -91,8 +90,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
             ids: [ parseInt(task.id) ],
             type: TBSourceType.Experiment,
           });
-          const url = waitPageUrl(tensorboard);
-          if (url) openBlank(setupUrlForDev(url));
+          openCommand(tensorboard);
           break;
         }
 
