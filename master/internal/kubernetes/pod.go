@@ -49,14 +49,13 @@ type pod struct {
 	configMapInterface       typedV1.ConfigMapInterface
 	leaveKubernetesResources bool
 
-	pod         *k8sV1.Pod
-	configMaps  []*k8sV1.ConfigMap
-	podName     string
-	logStreamer *actor.Ref
-	container   container.Container
-	ports       []int
+	pod              *k8sV1.Pod
+	configMaps       []*k8sV1.ConfigMap
+	podName          string
+	logStreamer      *actor.Ref
+	container        container.Container
+	ports            []int
 	resourcesDeleted bool
-
 }
 
 func newPod(
@@ -74,9 +73,9 @@ func newPod(
 	leaveKubernetesResources bool,
 ) *pod {
 	podContainer := container.Container{
-		Parent:  taskHandler.Address(),
-		ID:      container.ID(taskSpec.ContainerID),
-		State:   container.Assigned,
+		Parent: taskHandler.Address(),
+		ID:     container.ID(taskSpec.ContainerID),
+		State:  container.Assigned,
 	}
 
 	return &pod{
