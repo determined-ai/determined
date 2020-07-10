@@ -91,8 +91,8 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
             ids: [ parseInt(task.id) ],
             type: TBSourceType.Experiment,
           });
-          const tsbUrl = waitPageUrl(tensorboard);
-          if (tsbUrl) openBlank(setupUrlForDev(tsbUrl));
+          const url = waitPageUrl(tensorboard);
+          if (url) openBlank(setupUrlForDev(url));
           break;
         }
 
