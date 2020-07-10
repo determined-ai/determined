@@ -55,6 +55,8 @@ type pod struct {
 	logStreamer *actor.Ref
 	container   container.Container
 	ports       []int
+	resourcesDeleted bool
+
 }
 
 func newPod(
@@ -103,13 +105,19 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	case sproto.ContainerLog:
 		p.receiveContainerLogs(ctx, msg)
 
+	case sproto.StopPod:
+		ctx.Log().WithField("pod", p.podName).Info("received request to stop pod")
+		if err := p.deleteKubernetesResources(ctx); err != nil {
+			return err
+		}
+
 	case actor.PostStop:
 		if p.logStreamer != nil {
 			p.logStreamer.Stop()
 		}
 
 		if !p.leaveKubernetesResources {
-			if err := p.cleanupKubernetesResources(ctx); err != nil {
+			if err := p.deleteKubernetesResources(ctx); err != nil {
 				return err
 			}
 		}
@@ -142,6 +150,15 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 
 	switch msg.updatedPod.Status.Phase {
 	case k8sV1.PodPending:
+		// When pods are deleted, Kubernetes sometimes transitions pod statuses
+		// to pending prior to deleting them. We ignore this state if we have
+		// triggered the deletion.
+		if p.resourcesDeleted {
+			ctx.Log().WithField("pod", p.podName).Info(
+				"ignoring pod status because resources are being deleted")
+			return nil
+		}
+
 		containerState := getContainerState(msg.updatedPod.Status.Conditions)
 		if containerState == container.Running {
 			ctx.Log().WithField("pod", p.podName).Errorf(
@@ -253,7 +270,11 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 	return nil
 }
 
-func (p *pod) cleanupKubernetesResources(ctx *actor.Context) error {
+func (p *pod) deleteKubernetesResources(ctx *actor.Context) error {
+	if p.resourcesDeleted {
+		return nil
+	}
+
 	ctx.Log().WithField("pod", p.podName).Infof("deleting pod")
 	var gracePeriod int64 = 1
 	err := p.podInterface.Delete(p.podName, &metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
@@ -269,6 +290,7 @@ func (p *pod) cleanupKubernetesResources(ctx *actor.Context) error {
 		}
 	}
 
+	p.resourcesDeleted = true
 	return nil
 }
 

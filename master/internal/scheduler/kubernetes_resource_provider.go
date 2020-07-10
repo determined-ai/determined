@@ -101,6 +101,9 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 
 	case groupStopped:
 
+	case TerminateTask:
+		k.receiveTerminateTask(ctx, msg)
+
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
@@ -323,6 +326,58 @@ func (k *kubernetesResourceProvider) receiveTaskStopped(ctx *actor.Context, msg 
 	if task.state != taskTerminated {
 		ctx.Log().WithField("task", task.ID).Warnf("task stopped without terminating")
 		k.taskTerminated(task, true)
+	}
+}
+
+func (k *kubernetesResourceProvider) receiveTerminateTask(ctx *actor.Context, msg TerminateTask) {
+	task := k.tasksByID[msg.TaskID]
+	if task == nil {
+		if ctx.ExpectingResponse() {
+			ctx.Respond(task)
+		}
+		return
+	}
+
+	k.terminateTask(task, msg.Forcible)
+
+	if ctx.ExpectingResponse() {
+		ctx.Respond(task)
+	}
+}
+
+// terminateTask sends the appropriate actor messages to terminate a task and
+// deallocate its cluster data structures. The task may not be terminated if it
+// is in the right state unless forcible is true.
+func (k *kubernetesResourceProvider) terminateTask(task *Task, forcible bool) {
+	switch {
+	case task.state == taskTerminated:
+		// The task has already been terminated so this is a noop.
+
+	case len(task.containers) == 0 || task.state == taskPending:
+		// The task is not running so there is no need to request the task to terminate. The task is
+		// marked as aborted.
+		k.taskTerminated(task, true)
+
+	case forcible:
+		// Notify the agent to kill the task.
+		task.mustTransition(taskTerminating)
+		for _, c := range task.containers {
+			if c.state != containerTerminated {
+				c.mustTransition(containerTerminating)
+			}
+			c.agent.handler.System().Tell(
+				c.agent.handler, sproto.StopPod{ContainerID: string(c.id)})
+		}
+
+	case task.state != taskTerminating && task.canTerminate:
+		// Notify the running task that it should shut down gracefully.
+		task.mustTransition(taskTerminating)
+		for _, c := range task.containers {
+			if c.state != containerTerminated {
+				c.mustTransition(containerTerminating)
+			}
+		}
+		task.handler.System().Tell(task.handler, TerminateRequest{})
 	}
 }
 

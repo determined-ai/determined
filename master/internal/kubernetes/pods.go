@@ -21,6 +21,11 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
+type podMetadata struct {
+	podName     string
+	containerID string
+}
+
 type pods struct {
 	cluster                  *actor.Ref
 	namespace                string
@@ -31,8 +36,10 @@ type pods struct {
 	masterIP   string
 	masterPort int32
 
-	informer            *actor.Ref
-	podNameToPodHandler map[string]*actor.Ref
+	informer                *actor.Ref
+	podNameToPodHandler     map[string]*actor.Ref
+	containerIDToPodHandler map[string]*actor.Ref
+	podHandlerToMetadata    map[*actor.Ref]podMetadata
 
 	podInterface       typedV1.PodInterface
 	configMapInterface typedV1.ConfigMapInterface
@@ -52,6 +59,8 @@ func Initialize(
 		namespace:                namespace,
 		masterServiceName:        masterServiceName,
 		podNameToPodHandler:      make(map[string]*actor.Ref),
+		containerIDToPodHandler:  make(map[string]*actor.Ref),
+		podHandlerToMetadata:     make(map[*actor.Ref]podMetadata),
 		leaveKubernetesResources: leaveKubernetesResources,
 	})
 	check.Panic(check.True(ok, "pods address already taken"))
@@ -81,7 +90,18 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case podStatusUpdate:
 		p.receivePodStatusUpdate(ctx, msg)
 
+	case sproto.StopPod:
+		p.receiveStopPod(ctx, msg)
+
 	case actor.ChildStopped:
+		if err := p.cleanupPodHandler(ctx, msg.Child); err != nil {
+			return err
+		}
+
+	case actor.ChildFailed:
+		if err := p.cleanupPodHandler(ctx, msg.Child); err != nil {
+			return err
+		}
 
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
@@ -137,7 +157,14 @@ func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
 		return errors.Errorf("pod actor %s already exists", ref.Address().String())
 	}
 
+	ctx.Log().WithField("pod", newPodHandler.podName).WithField(
+		"handler", ref.Address()).Infof("registering pod handler")
 	p.podNameToPodHandler[newPodHandler.podName] = ref
+	p.containerIDToPodHandler[msg.Spec.ContainerID] = ref
+	p.podHandlerToMetadata[ref] = podMetadata{
+		podName:     newPodHandler.podName,
+		containerID: msg.Spec.ContainerID,
+	}
 	return nil
 }
 
@@ -150,4 +177,33 @@ func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
 	}
 
 	ctx.Tell(ref, msg)
+}
+
+func (p *pods) receiveStopPod(ctx *actor.Context, msg sproto.StopPod) {
+	ref, ok := p.containerIDToPodHandler[msg.ContainerID]
+	if !ok {
+		// For multi-pod tasks, when the the chief pod exits,
+		// the scheduler will request to terminate pods all other pods
+		// that have notified the scheduler that they have exited.
+		ctx.Log().WithField("container id", msg.ContainerID).Info(
+			"received stop pod command for unregistered container id")
+		return
+	}
+
+	ctx.Tell(ref, msg)
+}
+
+func (p *pods) cleanupPodHandler(ctx *actor.Context, podHandler *actor.Ref) error {
+	podInfo, ok := p.podHandlerToMetadata[podHandler]
+	if !ok {
+		return errors.Errorf("unknown pod handler being deleted %s", podHandler)
+	}
+
+	ctx.Log().WithField("pod", podInfo.podName).WithField(
+		"handler", podHandler.Address()).Infof("de-registering pod handler")
+	delete(p.podNameToPodHandler, podInfo.podName)
+	delete(p.containerIDToPodHandler, podInfo.containerID)
+	delete(p.podHandlerToMetadata, podHandler)
+
+	return nil
 }
