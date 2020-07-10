@@ -4,6 +4,7 @@ import React, { useCallback, useState } from 'react';
 import { archiveExperiment, killExperiment, launchTensorboard, setExperimentState,
 } from 'services/api';
 import { ExperimentDetails, RunState, TBSourceType } from 'types';
+import { openCommand } from 'utils/routes';
 import { cancellableRunStates, killableRunStates, terminalRunStates } from 'utils/types';
 
 import css from './ExperimentActions.module.scss';
@@ -53,7 +54,10 @@ const ExperimentActions: React.FC<Props> = ({ experiment, updateFn }: Props) => 
     // TODO import from the tb PR.
     setButtonStates(state => ({ ...state, tsb: true }));
     launchTensorboard({ ids: [ experiment.id ], type: TBSourceType.Experiment })
-      .then(updateFn)
+      .then((tensorboard) => {
+        openCommand(tensorboard);
+        return updateFn();
+      })
       .finally(() => setButtonStates(state => ({ ...state, tsb: false })));
   }, [ experiment.id, updateFn ]);
 
