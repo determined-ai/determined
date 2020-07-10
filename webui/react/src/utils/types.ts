@@ -11,7 +11,7 @@ const commandToEventUrl = (command: Command): string | undefined => {
   return undefined;
 };
 
-const waitPageUrl = (command: Command): string | undefined => {
+export const waitPageUrl = (command: Command): string | undefined => {
   const eventUrl = commandToEventUrl(command);
   const proxyUrl = command.serviceAddress;
   if (!eventUrl || !proxyUrl) return;

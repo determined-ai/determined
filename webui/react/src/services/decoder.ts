@@ -1,9 +1,10 @@
 import dayjs from 'dayjs';
 
 import {
-  decode, ioCommandLogs, ioDeterminedInfo, ioExperimentDetails, ioExperiments, ioLogs,
-  ioTypeAgents, ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo,
-  ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand, ioTypeGenericCommands,
+  decode, ioCommandLogs, ioDeterminedInfo, ioExperimentDetails, ioExperiments, ioGenericCommand,
+  ioLogs, ioTypeAgents, ioTypeCommandAddress, ioTypeCommandLogs,
+  ioTypeDeterminedInfo, ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand,
+  ioTypeGenericCommands,
   ioTypeLogs,
   ioTypeUsers,
 } from 'ioTypes';
@@ -64,38 +65,42 @@ export const jsonToAgents = (data: ioTypeAgents): Agent[] => {
   });
 };
 
+export const jsonToGenericCommand = (data: unknown, type: CommandType): Command => {
+  const ioType = decode<ioTypeGenericCommand>(ioGenericCommand, data);
+  const addresses = ioType.addresses ?
+    ioType.addresses.map((address: ioTypeCommandAddress) => ({
+      containerIp: address.container_ip,
+      containerPort: address.container_port,
+      hostIp: address.host_ip,
+      hostPort: address.host_port,
+      protocol: address.protocol,
+    })) : undefined;
+  const misc = ioType.misc ? {
+    experimentIds: ioType.misc.experiment_ids || undefined,
+    privateKey: ioType.misc.privateKey || undefined,
+    trialIds: ioType.misc.trial_ids || undefined,
+  } : undefined;
+
+  return {
+    addresses,
+    config: { ...ioType.config },
+    exitStatus: ioType.exit_status || undefined,
+    id: ioType.id,
+    kind: type,
+    misc,
+    owner: {
+      id: ioType.owner.id,
+      username: ioType.owner.username,
+    },
+    registeredTime: ioType.registered_time,
+    serviceAddress: ioType.service_address || undefined,
+    state: ioType.state as CommandState,
+  };
+};
+
 const jsonToGenericCommands = (data: ioTypeGenericCommands, type: CommandType): Command[] => {
   return Object.keys(data).map(genericCommandId => {
-    const command: ioTypeGenericCommand = data[genericCommandId];
-    const addresses = command.addresses ?
-      command.addresses.map((address: ioTypeCommandAddress) => ({
-        containerIp: address.container_ip,
-        containerPort: address.container_port,
-        hostIp: address.host_ip,
-        hostPort: address.host_port,
-        protocol: address.protocol,
-      })) : undefined;
-    const misc = command.misc ? {
-      experimentIds: command.misc.experiment_ids || undefined,
-      privateKey: command.misc.privateKey || undefined,
-      trialIds: command.misc.trial_ids || undefined,
-    } : undefined;
-
-    return {
-      addresses,
-      config: { ...command.config },
-      exitStatus: command.exit_status || undefined,
-      id: command.id,
-      kind: type,
-      misc,
-      owner: {
-        id: command.owner.id,
-        username: command.owner.username,
-      },
-      registeredTime: command.registered_time,
-      serviceAddress: command.service_address || undefined,
-      state: command.state as CommandState,
-    };
+    return jsonToGenericCommand(data[genericCommandId], type);
   });
 };
 
@@ -109,6 +114,10 @@ export const jsonToNotebooks = (data: ioTypeGenericCommands): Command[] => {
 
 export const jsonToShells = (data: ioTypeGenericCommands): Command[] => {
   return jsonToGenericCommands(data, CommandType.Shell);
+};
+
+export const jsonToTensorboard = (data: unknown): Command => {
+  return jsonToGenericCommand(data, CommandType.Tensorboard);
 };
 
 export const jsonToTensorboards = (data: ioTypeGenericCommands): Command[] => {

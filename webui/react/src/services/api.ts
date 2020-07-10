@@ -9,7 +9,8 @@ import { CommandLogsParams, ExperimentDetailsParams, ExperimentsParams, KillComm
   PatchExperimentState,
   TrialLogsParams } from 'services/types';
 import {
-  AnyTask, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log, User,
+  AnyTask, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log,
+  User,
 } from 'types';
 import { serverAddress } from 'utils/routes';
 import { isExperimentTask } from 'utils/task';
@@ -49,7 +50,7 @@ export const killCommand = generateApi<KillCommandParams, void>(Config.killComma
 export const patchExperiment = generateApi<PatchExperimentParams, void>(Config.patchExperiment);
 
 export const launchTensorboard =
-  generateApi<LaunchTensorboardParams, void>(Config.launchTensorboard);
+  generateApi<LaunchTensorboardParams, Command>(Config.launchTensorboard);
 
 export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promise<void> => {
   if (isExperimentTask(task)) {
