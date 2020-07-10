@@ -379,16 +379,17 @@ def test_end_to_end_adaptive() -> None:
     checkpoint.remove_metadata(["some_key"])
     assert checkpoint.metadata == {"testing": "override"}
 
-    m = d.create_model("mnist_pytorch_", "a simple character recognition model")
-    m.register_version(checkpoint)
-
-    assert m.get_version().uuid == checkpoint.uuid
-    assert m.get_versions()[0].uuid == checkpoint.uuid
-
 
 @pytest.mark.e2e_cpu  # type: ignore
 def test_model_registry() -> None:
+    exp_id = exp.run_basic_test(
+        conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"),
+        conf.official_examples_path("trial/mnist_pytorch"),
+        None,
+    )
+
     d = Determined(conf.make_master_url())
+
     mnist = d.create_model("mnist", "simple computer vision model")
     assert mnist.metadata == {}
 
@@ -403,6 +404,12 @@ def test_model_registry() -> None:
 
     mnist.remove_metadata(["some_key"])
     assert mnist.metadata == {"testing": "override"}
+
+    exp = d.get_experiment(exp_id)
+    checkpoint = exp.top_checkpoint()
+    model_version = mnist.register_version(checkpoint)
+    assert model_version == 1
+    assert mnist.get_version().uuid == checkpoint.uuid
 
     d.create_model("transformer", "all you need is attention")
     d.create_model("object-detection", "a bounding box model")
