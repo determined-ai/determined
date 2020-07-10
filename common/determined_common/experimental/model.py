@@ -1,6 +1,6 @@
 import datetime
 import enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from determined_common import api
 from determined_common.experimental.checkpoint import Checkpoint
@@ -92,7 +92,7 @@ class Model:
             body={"checkpoint_uuid": checkpoint.uuid},
         )
 
-        return resp.json()["version"]["version"]
+        return cast(int, resp.json()["version"]["version"])
 
     def add_metadata(self, metadata: Dict[str, Any]) -> None:
         """
