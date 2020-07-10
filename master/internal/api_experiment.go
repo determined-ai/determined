@@ -111,11 +111,11 @@ func (a *apiServer) PreviewHPSearch(
 func (a *apiServer) ActivateExperiment(
 	ctx context.Context, req *apiv1.ActivateExperimentRequest) (
 	resp *apiv1.ActivateExperimentResponse, err error) {
-	existsInDB, err := a.m.db.CheckExperimentExists(int(req.Id))
+	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	if !existsInDB {
+	if !ok {
 		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
 	}
 
@@ -130,15 +130,12 @@ func (a *apiServer) ActivateExperiment(
 func (a *apiServer) PauseExperiment(
 	ctx context.Context, req *apiv1.PauseExperimentRequest) (
 	resp *apiv1.PauseExperimentResponse, err error) {
-	existsInDB, err := a.m.db.CheckExperimentExists(int(req.Id))
+	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	if !existsInDB {
+	if !ok {
 		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
-	}
-	if _, err = a.m.db.ExperimentRaw(int(req.Id)); err != nil {
-		return nil, status.Errorf(codes.NotFound, "%s; experiment %d not found.", err.Error(), req.Id)
 	}
 
 	addr := actor.Addr("experiments", req.Id).String()
@@ -148,4 +145,3 @@ func (a *apiServer) PauseExperiment(
 	}
 	return resp, err
 }
-
