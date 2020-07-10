@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 from determined_common import api
-from determined_common.experimental.checkpoint import Checkpoint, get_checkpoint
+from determined_common.experimental.checkpoint import Checkpoint
 from determined_common.experimental.experiment import ExperimentReference
 from determined_common.experimental.model import Model, ModelOrderBy, ModelSortBy
 from determined_common.experimental.session import Session
@@ -44,7 +44,8 @@ class Determined:
         Get the :class:`~determined.experimental.Checkpoint` representing the
         checkpoint with the provided UUID.
         """
-        return get_checkpoint(uuid, self._session._master)
+        r = api.get(self._session._master, "checkpoints/{}".format(uuid)).json()
+        return Checkpoint.from_json(r, master=self._session._master)
 
     def create_model(
         self, name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None

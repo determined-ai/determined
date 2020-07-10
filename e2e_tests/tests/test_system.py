@@ -342,7 +342,8 @@ def test_end_to_end_adaptive() -> None:
     # Check that ExperimentReference returns a sorted order of top checkpoints
     # without gaps. The top 2 checkpoints should be the first 2 of the top k
     # checkpoints if sorting is stable.
-    exp_ref = Determined(conf.make_master_url()).get_experiment(exp_id)
+    d = Determined(conf.make_master_url())
+    exp_ref = d.get_experiment(exp_id)
 
     top_2 = exp_ref.top_n_checkpoints(2)
     top_k = exp_ref.top_n_checkpoints(len(trials))
@@ -381,7 +382,14 @@ def test_end_to_end_adaptive() -> None:
 
 @pytest.mark.e2e_cpu  # type: ignore
 def test_model_registry() -> None:
+    exp_id = exp.run_basic_test(
+        conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"),
+        conf.official_examples_path("trial/mnist_pytorch"),
+        None,
+    )
+
     d = Determined(conf.make_master_url())
+
     mnist = d.create_model("mnist", "simple computer vision model")
     assert mnist.metadata == {}
 
@@ -396,6 +404,11 @@ def test_model_registry() -> None:
 
     mnist.remove_metadata(["some_key"])
     assert mnist.metadata == {"testing": "override"}
+
+    checkpoint = d.get_experiment(exp_id).top_checkpoint()
+    model_version = mnist.register_version(checkpoint)
+    assert model_version == 1
+    assert mnist.get_version().uuid == checkpoint.uuid
 
     d.create_model("transformer", "all you need is attention")
     d.create_model("object-detection", "a bounding box model")
