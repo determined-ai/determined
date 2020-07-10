@@ -1,4 +1,4 @@
-import { Input, Table } from 'antd';
+import { Button, Input, Table } from 'antd';
 import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -7,20 +7,39 @@ import { makeClickHandler } from 'components/Link';
 import linkCss from 'components/Link.module.scss';
 import Page from 'components/Page';
 import StateSelectFilter from 'components/StateSelectFilter';
+import TableBatch from 'components/TableBatch';
 import Toggle from 'components/Toggle';
 import UserSelectFilter from 'components/UserSelectFilter';
 import Auth from 'contexts/Auth';
+import UI from 'contexts/UI';
 import Users from 'contexts/Users';
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
-import { getExperimentSummaries } from 'services/api';
+import { setupUrlForDev } from 'routes';
+import {
+  archiveExperiment, getExperimentSummaries, killExperiment, launchTensorboard, setExperimentState,
+} from 'services/api';
 import { ExperimentsParams } from 'services/types';
-import { ALL_VALUE, Experiment, ExperimentFilters, ExperimentItem } from 'types';
+import {
+  ALL_VALUE, Command, Experiment, ExperimentFilters, ExperimentItem, RunState, TBSourceType,
+} from 'types';
+import { openBlank } from 'utils/routes';
 import { filterExperiments, processExperiments } from 'utils/task';
+import { cancellableRunStates, isTaskKillable, terminalRunStates, waitPageUrl } from 'utils/types';
 
 import css from './ExperimentList.module.scss';
 import { columns } from './ExperimentList.table';
+
+enum Action {
+  Activate = 'Activate',
+  Archive = 'Archive',
+  Cancel = 'Cancel',
+  Kill = 'Kill',
+  Pause = 'Pause',
+  OpenTensorBoard = 'Open Tensorboard',
+}
 
 const defaultFilters: ExperimentFilters = {
   limit: 25,
@@ -32,6 +51,7 @@ const defaultFilters: ExperimentFilters = {
 const ExperimentList: React.FC = () => {
   const auth = Auth.useStateContext();
   const users = Users.useStateContext();
+  const setUI = UI.useActionContext();
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>([]);
   const [ experimentsResponse, requestExperiments ] =
     useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
@@ -40,10 +60,44 @@ const ExperimentList: React.FC = () => {
     { ...defaultFilters, username: (auth.user || {}).username });
   const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
   const [ search, setSearch ] = useState('');
+  const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
 
   const filteredExperiments = useMemo(() => {
     return filterExperiments(experiments, filters, users.data || [], search);
   }, [ experiments, filters, search, users.data ]);
+
+  const showBatch = selectedRowKeys.length !== 0;
+
+  const experimentMap = useMemo(() => {
+    return experiments.reduce((acc, task) => {
+      acc[task.id] = task;
+      return acc;
+    }, {} as Record<string, ExperimentItem>);
+  }, [ experiments ]);
+
+  const selectedExperiments = useMemo(() => {
+    return selectedRowKeys.map(key => experimentMap[key]);
+  }, [ experimentMap, selectedRowKeys ]);
+
+  const { hasActivatable, hasArchivable, hasCancelable, hasKillable, hasPausible } = useMemo(() => {
+    const tracker = {
+      hasActivatable: false,
+      hasArchivable: false,
+      hasCancelable: false,
+      hasKillable: false,
+      hasPausible: false,
+    };
+    for (let i = 0; i < selectedExperiments.length; i++) {
+      const experiment = selectedExperiments[i];
+      const isTerminal = terminalRunStates.includes(experiment.state);
+      if (!experiment.archived && isTerminal) tracker.hasArchivable = true;
+      if (cancellableRunStates.includes(experiment.state)) tracker.hasCancelable = true;
+      if (isTaskKillable(experiment)) tracker.hasKillable = true;
+      if (experiment.state === RunState.Paused) tracker.hasActivatable = true;
+      if (experiment.state === RunState.Active) tracker.hasPausible = true;
+    }
+    return tracker;
+  }, [ selectedExperiments ]);
 
   const fetchExperiments = useCallback((): void => {
     requestExperiments({});
@@ -79,6 +133,56 @@ const ExperimentList: React.FC = () => {
     handleFilterChange({ ...filters, username });
   }, [ filters, handleFilterChange ]);
 
+  const getBatchActions = useCallback((action: Action): Promise<void[] | Command> => {
+    if (action === Action.OpenTensorBoard) {
+      return launchTensorboard({
+        ids: selectedExperiments.map(experiment => experiment.id),
+        type: TBSourceType.Experiment,
+      });
+    }
+    return Promise.all(selectedExperiments
+      .map(experiment => {
+        if (action === Action.Activate) {
+          return setExperimentState({ experimentId: experiment.id, state: RunState.Active });
+        } else if (action === Action.Archive) {
+          return archiveExperiment(experiment.id, true);
+        } else if (action === Action.Cancel) {
+          return setExperimentState({ experimentId: experiment.id, state: RunState.Canceled });
+        } else if (action === Action.Kill) {
+          return killExperiment({ experimentId: experiment.id });
+        } else if (action === Action.Pause) {
+          return setExperimentState({ experimentId: experiment.id, state: RunState.Paused });
+        }
+        return Promise.resolve();
+      }));
+  }, [ selectedExperiments ]);
+
+  const handleBatchAction = useCallback(async (action: Action) => {
+    try {
+      const result = await getBatchActions(action);
+      if (action === Action.OpenTensorBoard) {
+        const url = waitPageUrl(result as Command);
+        if (url) openBlank(setupUrlForDev(url));
+      }
+      // setUI({ type: UI.ActionType.ShowSpinner });
+    } catch (e) {
+      const publicSubject = action === Action.OpenTensorBoard ?
+        'Unable to Open TensorBoard for Selected Experiments' :
+        `Unable to ${action} Selected Experiments`;
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject,
+        silent: false,
+        type: ErrorType.Server,
+      });
+    }
+  }, [ getBatchActions ]);
+
+  const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
+
   const handleTableRow = useCallback((record: ExperimentItem) => ({
     onClick: makeClickHandler(record.url as string),
   }), []);
@@ -94,7 +198,10 @@ const ExperimentList: React.FC = () => {
             prefix={<Icon name="search" size="small" />}
             onChange={handleSearchChange} />
           <div className={css.filters}>
-            <Toggle prefixLabel="Show Archived" onChange={handleArchiveChange} />
+            <Toggle
+              checked={filters.showArchived}
+              prefixLabel="Show Archived"
+              onChange={handleArchiveChange} />
             <StateSelectFilter
               showCommandStates={false}
               value={filters.states}
@@ -102,12 +209,35 @@ const ExperimentList: React.FC = () => {
             <UserSelectFilter value={filters.username} onChange={handleUserChange} />
           </div>
         </div>
+        <TableBatch message="Apply batch operations to multiple experiments." show={showBatch}>
+          <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
+              Open TensorBoard
+          </Button>
+          <Button
+            disabled={!hasActivatable}
+            onClick={(): Promise<void> => handleBatchAction(Action.Activate)}>Activate</Button>
+          <Button
+            disabled={!hasPausible}
+            onClick={(): Promise<void> => handleBatchAction(Action.Pause)}>Pause</Button>
+          <Button
+            disabled={!hasArchivable}
+            onClick={(): Promise<void> => handleBatchAction(Action.Archive)}>Archive</Button>
+          <Button
+            disabled={!hasCancelable}
+            onClick={(): Promise<void> => handleBatchAction(Action.Cancel)}>Cancel</Button>
+          <Button
+            danger
+            disabled={!hasKillable}
+            type="primary"
+            onClick={(): Promise<void> => handleBatchAction(Action.Kill)}>Kill</Button>
+        </TableBatch>
         <Table
           columns={columns}
           dataSource={filteredExperiments}
           loading={!experimentsResponse.hasLoaded}
           rowClassName={(): string => linkCss.base}
           rowKey="id"
+          rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
           size="small"
           onRow={handleTableRow} />
       </div>
