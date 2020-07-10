@@ -65,7 +65,7 @@ const ExperimentDetailsComp: React.FC = () => {
           <span>{experimentId}</span>
         </Breadcrumb.Item>
       </Breadcrumb>
-      <ExperimentActions experiment={experiment.data} updateFn={pollExperimentDetails} />
+      <ExperimentActions experiment={experiment.data} finally={pollExperimentDetails} />
       <ExperimentInfoBox experiment={experiment.data} />
       <Section title="Chart" />
       <Section title="Trials" />

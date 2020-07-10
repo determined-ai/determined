@@ -11,10 +11,10 @@ import css from './ExperimentActions.module.scss';
 
 interface Props {
   experiment: ExperimentDetails;
-  updateFn: () => void;
+  finally: () => void; // A callback to trigger after an action is done.
 }
 
-const ExperimentActions: React.FC<Props> = ({ experiment, updateFn }: Props) => {
+const ExperimentActions: React.FC<Props> = ({ experiment, finally: updateFn }: Props) => {
 
   interface ButtonLoadingStates {
     kill: boolean;
@@ -117,7 +117,8 @@ const ExperimentActions: React.FC<Props> = ({ experiment, updateFn }: Props) => 
 
   const experimentWillNeverHaveData = (experiment: ExperimentDetails): boolean => {
     const isTerminal = terminalRunStates.has(experiment.state);
-    // with lack of step state we can use numSteps as a proxy to trials that definietly have some metric.
+    // with lack of step state we can use numSteps as a proxy to trials that definietly have some
+    // metric.
     const trialsWithSomeMetric = experiment.trials.filter(trial => trial.numSteps > 1);
     return isTerminal && trialsWithSomeMetric.length === 0;
   };
