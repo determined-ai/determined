@@ -159,6 +159,12 @@ func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
 
 	ctx.Log().WithField("pod", newPodHandler.podName).WithField(
 		"handler", ref.Address()).Infof("registering pod handler")
+
+	if _, alreadyExists := p.podNameToPodHandler[newPodHandler.podName]; alreadyExists {
+		return errors.Errorf(
+			"attempting to register same pod name: %s multiple times", newPodHandler.podName)
+	}
+
 	p.podNameToPodHandler[newPodHandler.podName] = ref
 	p.containerIDToPodHandler[msg.Spec.ContainerID] = ref
 	p.podHandlerToMetadata[ref] = podMetadata{

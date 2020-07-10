@@ -6,14 +6,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/determined-ai/determined/master/pkg/agent"
-
 	"github.com/pkg/errors"
 
 	"github.com/docker/docker/api/types/mount"
+	petname "github.com/dustinkirkland/golang-petname"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -618,17 +618,19 @@ func (p *pod) startPodForGC(ctx *actor.Context) error {
 }
 
 func configurePodName(t tasks.TaskSpec, rank int) string {
+	uniqueName := petname.Generate(2, "-")
 	switch {
 	case t.StartCommand != nil:
-		return fmt.Sprintf("cmd-%s", t.TaskID)
+		return fmt.Sprintf("cmd-%s-%s", t.TaskID, uniqueName)
 	case t.StartContainer != nil:
 		return fmt.Sprintf(
-			"exp-%d-trial-%d-%d",
+			"exp-%d-trial-%d-%d-%s",
 			t.StartContainer.InitialWorkload.ExperimentID,
 			t.StartContainer.InitialWorkload.TrialID, rank,
+			uniqueName,
 		)
 	case t.GCCheckpoints != nil:
-		return fmt.Sprintf("gc-%s", t.TaskID)
+		return fmt.Sprintf("gc-%s-%s", t.TaskID, uniqueName)
 	default:
 		return ""
 	}
