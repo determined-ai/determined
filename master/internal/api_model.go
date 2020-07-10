@@ -116,8 +116,13 @@ func (a *apiServer) GetModelVersion(
 }
 
 func (a *apiServer) GetModelVersions(
-	_ context.Context, req *apiv1.GetModelVersionsRequest) (*apiv1.GetModelVersionsResponse, error) {
-	resp := &apiv1.GetModelVersionsResponse{}
+	ctx context.Context, req *apiv1.GetModelVersionsRequest) (*apiv1.GetModelVersionsResponse, error) {
+	getResp, err := a.GetModel(ctx, &apiv1.GetModelRequest{ModelName: req.ModelName})
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &apiv1.GetModelVersionsResponse{Model: getResp.Model}
 	if err := a.m.db.QueryProto("get_model_versions", &resp.Versions, req.ModelName); err != nil {
 		return nil, err
 	}

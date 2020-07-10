@@ -342,7 +342,8 @@ def test_end_to_end_adaptive() -> None:
     # Check that ExperimentReference returns a sorted order of top checkpoints
     # without gaps. The top 2 checkpoints should be the first 2 of the top k
     # checkpoints if sorting is stable.
-    exp_ref = Determined(conf.make_master_url()).get_experiment(exp_id)
+    d = Determined(conf.make_master_url())
+    exp_ref = d.get_experiment(exp_id)
 
     top_2 = exp_ref.top_n_checkpoints(2)
     top_k = exp_ref.top_n_checkpoints(len(trials))
@@ -377,6 +378,12 @@ def test_end_to_end_adaptive() -> None:
 
     checkpoint.remove_metadata(["some_key"])
     assert checkpoint.metadata == {"testing": "override"}
+
+    m = d.create_model("mnist_pytorch_", "a simple character recognition model")
+    m.register_version(checkpoint)
+
+    assert m.get_version().uuid == checkpoint.uuid
+    assert m.get_versions()[0].uuid == checkpoint.uuid
 
 
 @pytest.mark.e2e_cpu  # type: ignore

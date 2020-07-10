@@ -2,6 +2,8 @@ import json
 from argparse import Namespace
 from typing import Any, List
 
+from determined_common import api
+from determined_common.api.authentication import authentication_required
 from determined_common.experimental import Determined, Model, ModelOrderBy, ModelSortBy
 
 from . import render
@@ -39,6 +41,42 @@ def list_models(args: Namespace) -> None:
         render.tabulate_or_csv(headers, values, False)
 
 
+@authentication_required
+def list_versions(args: Namespace) -> None:
+    if args.json:
+        r = api.get(args.master, "models/{}/versions".format(args.name))
+        data = r.json()
+        print(json.dumps(data, indent=2))
+
+    else:
+        model = Determined(args.master).get_model(args.name)
+        render_model(model)
+        print("\n")
+
+        headers = [
+            "Version #",
+            "Trial ID",
+            "Batch #",
+            "Checkpoint UUID",
+            "Validation Metrics",
+            "Metadata",
+        ]
+
+        values = [
+            [
+                ckpt.version,
+                ckpt.trial_id,
+                ckpt.batch_number,
+                ckpt.uuid,
+                json.dumps(ckpt.validation, indent=2),
+                json.dumps(ckpt.metadata, indent=2),
+            ]
+            for ckpt in model.get_versions()
+        ]
+
+        render.tabulate_or_csv(headers, values, False)
+
+
 def create(args: Namespace) -> None:
     model = Determined(args.master, None).create_model(args.name, args.description)
 
@@ -50,11 +88,35 @@ def create(args: Namespace) -> None:
 
 def describe(args: Namespace) -> None:
     model = Determined(args.master, None).get_model(args.name)
+    ckpt = model.get_version()
 
     if args.json:
         print(json.dumps(model.to_json(), indent=2))
     else:
         render_model(model)
+
+        headers = [
+            "Version #",
+            "Trial ID",
+            "Batch #",
+            "Checkpoint UUID",
+            "Validation Metrics",
+            "Metadata",
+        ]
+
+        print("\n")
+        values = [
+            [
+                ckpt.version,
+                ckpt.trial_id,
+                ckpt.batch_number,
+                ckpt.uuid,
+                json.dumps(ckpt.validation, indent=2),
+                json.dumps(ckpt.metadata, indent=2),
+            ]
+        ]
+
+        render.tabulate_or_csv(headers, values, False)
 
 
 args_description = [
@@ -92,6 +154,21 @@ args_description = [
                 "describe model",
                 [
                     Arg("name", type=str, help="model to describe"),
+                    Arg("--json", action="store_true", help="print as JSON"),
+                    Arg(
+                        "--version",
+                        type=int,
+                        default=0,
+                        help="model version information to include in output",
+                    ),
+                ],
+            ),
+            Cmd(
+                "list_versions",
+                list_versions,
+                "list the versions of a model",
+                [
+                    Arg("name", type=str, help="unique name of the model"),
                     Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
