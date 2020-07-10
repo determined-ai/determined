@@ -4,12 +4,13 @@ import { useParams } from 'react-router';
 import LogViewer, { LogViewerHandles } from 'components/LogViewer';
 import Page from 'components/Page';
 import UI from 'contexts/UI';
+import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
 import { getTrialLogs } from 'services/api';
 import { TrialLogsParams } from 'services/types';
 import { Log } from 'types';
-import { serverAddress } from 'utils/routes';
+import { downloadTrialLogs } from 'utils/browser';
 
 interface Params {
   trialId: string;
@@ -21,7 +22,6 @@ const TrialLogs: React.FC = () => {
   const { trialId } = useParams<Params>();
   const id = parseInt(trialId);
   const title = `Trial ${id} Logs`;
-  const downloadUrl = `${serverAddress(true)}/trials/${id}/logs?format=raw`;
   const setUI = UI.useActionContext();
   const logsRef = useRef<LogViewerHandles>(null);
   const [ oldestFetchedId, setOldestFetchedId ] = useState(Number.MAX_SAFE_INTEGER);
@@ -86,16 +86,31 @@ const TrialLogs: React.FC = () => {
     if (logsRef.current) logsRef.current?.addLogs(pollingLogsResponse.data);
   }, [ logIdRange, pollingLogsResponse.data ]);
 
+  const downloadLogs = useCallback(() => {
+    return downloadTrialLogs(id).catch(e => {
+      handleError({
+        error: e,
+        message: 'trial log download failed.',
+        publicMessage: `
+        Failed to download trial ${id} logs.
+        If the problem persists please try our CLI "det trial logs ${id}"
+      `,
+        publicSubject: 'Download Failed',
+        type: ErrorType.Ui,
+      });
+    });
+  }, [ id ]);
+
   return (
     <Page hideTitle maxHeight title={title}>
       <LogViewer
         disableLevel
         disableLineNumber
-        downloadUrl={downloadUrl}
         isLoading={pollingLogsResponse.isLoading}
         noWrap
         ref={logsRef}
         title={title}
+        onDownload={downloadLogs}
         onScrollToTop={handleScrollToTop} />
     </Page>
   );

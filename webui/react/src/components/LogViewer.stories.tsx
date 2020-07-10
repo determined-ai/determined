@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 
+import { downloadText, simulateLogsDownload } from 'utils/browser';
+
 import LogViewer, { LogViewerHandles } from './LogViewer';
 
 export default {
@@ -7,13 +9,13 @@ export default {
   title: 'LogViewer',
 };
 
-export const Default = (): React.ReactNode => {
-  const logsRef = useRef<LogViewerHandles>(null);
-
-  const messageWithTags = `continuing trial: <COMPUTE_VALIDATION_METRICS: (10,10,30)>
+const messageWithTags = `continuing trial: <COMPUTE_VALIDATION_METRICS: (10,10,30)>
     experiment-id="10" id="c075adcd-5c31-4726-a5b3-0b87e141f1fe"
     system="master" trial-id="10" type="trial"
 `;
+
+export const Default = (): React.ReactNode => {
+  const logsRef = useRef<LogViewerHandles>(null);
 
   useEffect(() => {
     /* eslint-disable max-len */
@@ -90,4 +92,29 @@ export const Ansi = (): React.ReactNode => {
   });
 
   return <LogViewer ref={logsRef} title="ANSI Characters" />;
+};
+
+export const DefaultDownload = (): React.ReactNode => {
+  return <button onClick={() => downloadText('default-logs.txt', [ messageWithTags ])}>
+    Download Default Logs
+  </button>;
+};
+
+export const AnsiDownload = (): React.ReactNode => {
+  return <button onClick={() => downloadText('ansi-logs.txt', [ ansiText ])}>
+    Download Ansi Logs
+  </button>;
+};
+
+export const SimulatedDownload = (): React.ReactNode => {
+  const sizeRef = useRef<HTMLInputElement>(null);
+  return <div>
+    <div>
+      <label>Number of log characters to generate and download (rounded up): </label>
+      <input placeholder="Log size in characters" ref={sizeRef} type="number" />
+    </div>
+    <button onClick={() => simulateLogsDownload(parseInt(sizeRef.current?.value || '100000'))}>
+      Download
+    </button>
+  </div>;
 };

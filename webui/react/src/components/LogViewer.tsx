@@ -14,7 +14,6 @@ import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
 import { Log, LogLevel } from 'types';
 import { formatDatetime } from 'utils/date';
 import { ansiToHtml, copyToClipboard, toRem } from 'utils/dom';
-import { openBlank } from 'utils/routes';
 import { capitalize } from 'utils/string';
 
 import css from './LogViewer.module.scss';
@@ -23,12 +22,12 @@ interface Props {
   debugMode?: boolean;
   disableLevel?: boolean;
   disableLineNumber?: boolean;
-  downloadUrl?: string;
+  onDownload?: () => Promise<void>;
   isLoading?: boolean;
   noWrap?: boolean;
+  onScrollToTop?: (oldestLogId: number) => void;
   ref?: React.Ref<LogViewerHandles>;
   title: string;
-  onScrollToTop?: (oldestLogId: number) => void;
 }
 
 interface ViewerLog extends Log {
@@ -410,10 +409,6 @@ const LogViewer: React.FC<Props> = forwardRef((
     if (baseRef.current && screenfull.isEnabled) screenfull.toggle();
   }, []);
 
-  const handleDownload = useCallback(() => {
-    if (props.downloadUrl) openBlank(props.downloadUrl);
-  }, [ props.downloadUrl ]);
-
   const handleScrollToLatest = useCallback(() => {
     if (!container.current) return;
     container.current.scrollTo({ behavior: 'smooth', top: container.current.scrollHeight });
@@ -440,11 +435,11 @@ const LogViewer: React.FC<Props> = forwardRef((
           icon={<Icon name="fullscreen" />}
           onClick={handleFullScreen} />
       </Tooltip>
-      {props.downloadUrl && <Tooltip placement="bottomRight" title="Download Logs">
+      {props.onDownload && <Tooltip placement="bottomRight" title="Download Logs">
         <Button
           aria-label="Download Logs"
           icon={<Icon name="download" />}
-          onClick={handleDownload} />
+          onClick={props.onDownload} />
       </Tooltip>}
     </Space>
   );
