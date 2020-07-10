@@ -405,8 +405,7 @@ def test_model_registry() -> None:
     mnist.remove_metadata(["some_key"])
     assert mnist.metadata == {"testing": "override"}
 
-    exp = d.get_experiment(exp_id)
-    checkpoint = exp.top_checkpoint()
+    checkpoint = d.get_experiment(exp_id).top_checkpoint()
     model_version = mnist.register_version(checkpoint)
     assert model_version == 1
     assert mnist.get_version().uuid == checkpoint.uuid
