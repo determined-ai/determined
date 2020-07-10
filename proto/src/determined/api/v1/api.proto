@@ -131,6 +131,17 @@ service Determined {
         option (google.api.http) = {get: "/api/v1/experiments"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
+    // Activate an experiment.
+    rpc ActivateExperiment(ActivateExperimentRequest) returns (ActivateExperimentResponse) {
+        option (google.api.http) = {post: "/api/v1/experiments/{id}/activate" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
+    // Pause an experiment.
+    rpc PauseExperiment(PauseExperimentRequest) returns (PauseExperimentResponse) {
+        option (google.api.http) = {post: "/api/v1/experiments/{id}/pause" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
+
     // Preview hyperparameter search.
     rpc PreviewHPSearch(PreviewHPSearchRequest) returns (PreviewHPSearchResponse) {
         option (google.api.http) = {post: "/api/v1/preview-hp-search" body: "*"};
