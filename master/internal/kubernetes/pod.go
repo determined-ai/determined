@@ -73,6 +73,12 @@ func newPod(
 	configMapInterface typedV1.ConfigMapInterface,
 	leaveKubernetesResources bool,
 ) *pod {
+	podContainer := container.Container{
+		Parent:  taskHandler.Address(),
+		ID:      container.ID(taskSpec.ContainerID),
+		State:   container.Assigned,
+	}
+
 	return &pod{
 		cluster:                  cluster,
 		taskHandler:              taskHandler,
@@ -87,6 +93,7 @@ func newPod(
 		configMapInterface:       configMapInterface,
 		leaveKubernetesResources: leaveKubernetesResources,
 		podName:                  configurePodName(taskSpec, rank),
+		container:                podContainer,
 	}
 }
 
@@ -121,6 +128,8 @@ func (p *pod) Receive(ctx *actor.Context) error {
 				return err
 			}
 		}
+
+		p.finalizeTaskState(ctx)
 
 	case actor.ChildStopped:
 
@@ -294,6 +303,29 @@ func (p *pod) deleteKubernetesResources(ctx *actor.Context) error {
 	return nil
 }
 
+func (p *pod) finalizeTaskState(ctx *actor.Context) {
+	// If an error occurred during the lifecycle of the pods, we need to update the scheduler
+	// and the task handler with new state.
+	if p.container.State != container.Terminated {
+		ctx.Log().WithField("pod", p.podName).Warnf(
+			"updating container state after pod actor exited unexpectedly")
+		p.container = p.container.Transition(container.Terminated)
+
+		containerStopped := agent.ContainerError(
+			agent.TaskError, errors.New("agent failed while container was running"))
+
+		ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
+			Container:        p.container,
+			ContainerStopped: &containerStopped,
+		})
+
+		ctx.Tell(p.cluster, sproto.PodTerminated{
+			ContainerID:      p.container.ID,
+			ContainerStopped: &containerStopped,
+		})
+	}
+}
+
 func (p *pod) receiveContainerLogs(ctx *actor.Context, msg sproto.ContainerLog) {
 	ctx.Tell(p.taskHandler, sproto.ContainerLog{
 		Container:   p.container,
@@ -448,13 +480,6 @@ func (p *pod) launchPod(ctx *actor.Context, podSpec *k8sV1.Pod) error {
 		return errors.Wrap(err, "error creating pod")
 	}
 	ctx.Log().Infof("Created pod %s", p.pod.Name)
-
-	p.container = container.Container{
-		Parent:  p.taskHandler.Address(),
-		ID:      container.ID(p.taskSpec.ContainerID),
-		State:   container.Assigned,
-		Devices: make([]device.Device, 0),
-	}
 	return nil
 }
 
