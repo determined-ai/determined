@@ -322,7 +322,7 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 func (d *DefaultRP) receiveAddTask(ctx *actor.Context, msg AddTask) {
 	d.notifyOnStop(ctx, msg.TaskHandler, taskStopped{Ref: msg.TaskHandler})
 
-	if task, ok := d.tasksByHandler[ctx.Sender()]; ok {
+	if task, ok := d.tasksByHandler[msg.TaskHandler]; ok {
 		if ctx.ExpectingResponse() {
 			ctx.Respond(task)
 		}

@@ -12,7 +12,7 @@ import (
 // LocalRendezvousPort is the start of the range of ports used for rendezvous by tasks.
 const LocalRendezvousPort = 1734
 
-// LocalRendezvousPortOffset is the offset for rendezvous ports.
+// LocalRendezvousPortOffset is the difference between the two rendezvous ports.
 const LocalRendezvousPortOffset = 16
 
 const (

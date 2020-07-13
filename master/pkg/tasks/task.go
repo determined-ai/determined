@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	// ContainerWorkDir is working directory for containers.
+	// ContainerWorkDir is the working directory for tasks.
 	ContainerWorkDir  = "/run/determined/workdir"
 	userPythonBaseDir = "/run/determined/pythonuserbase"
 	runDir            = "/run/determined"
@@ -67,15 +67,15 @@ func getUser(agentUserGroup *model.AgentUserGroup) string {
 	return user
 }
 
-// ConfigureCommandEnvVars configures environment variables for cmd tasks.
-func ConfigureCommandEnvVars(t TaskSpec) map[string]string {
+// CommandEnvVars configures environment variables for cmd tasks.
+func CommandEnvVars(t TaskSpec) map[string]string {
 	envVarsMap := defaultEnvVars()
 	envVarsMap["DET_TASK_ID"] = t.TaskID
 	return envVarsMap
 }
 
-// ConfigureCommandArchives returns the additional files for a c as an archive.
-func ConfigureCommandArchives(t TaskSpec) []container.RunArchive {
+// CommandArchives returns the additional files for a command as an archive.
+func CommandArchives(t TaskSpec) []container.RunArchive {
 	cmd := *t.StartCommand
 
 	return []container.RunArchive{
@@ -93,7 +93,7 @@ func startCommand(t TaskSpec) container.Spec {
 	if len(t.Devices) > 0 {
 		deviceType = t.Devices[0].Type
 	}
-	envVarsMap := ConfigureCommandEnvVars(t)
+	envVarsMap := CommandEnvVars(t)
 	envVars := make([]string, 0, len(envVarsMap))
 	for envVarKey, envVarValue := range envVarsMap {
 		envVars = append(envVars, fmt.Sprintf("%s=%s", envVarKey, envVarValue))
@@ -119,13 +119,13 @@ func startCommand(t TaskSpec) container.Spec {
 				PublishAllPorts: true,
 				ShmSize:         t.TaskContainerDefaults.ShmSizeBytes,
 			},
-			Archives: ConfigureCommandArchives(t),
+			Archives: CommandArchives(t),
 		},
 	}
 }
 
-// ConfigureTrialDockerMounts returns the host mounts for a trial container.
-func ConfigureTrialDockerMounts(exp StartContainer) []mount.Mount {
+// TrialDockerMounts returns the host mounts for a trial container.
+func TrialDockerMounts(exp StartContainer) []mount.Mount {
 	mounts := ToDockerMounts(exp.ExperimentConfig.BindMounts)
 	if exp.ExperimentConfig.CheckpointStorage.SharedFSConfig != nil {
 		sharedFS := exp.ExperimentConfig.CheckpointStorage.SharedFSConfig
@@ -173,8 +173,8 @@ func ConfigureTrialDockerMounts(exp StartContainer) []mount.Mount {
 	return mounts
 }
 
-// ConfigureTrialEnvVars returns environment variables for a trial.
-func ConfigureTrialEnvVars(t TaskSpec, rendezvousPorts []string) map[string]string {
+// TrialEnvVars returns environment variables for a trial.
+func TrialEnvVars(t TaskSpec, rendezvousPorts []string) map[string]string {
 	exp := *t.StartContainer
 
 	networkInterface := t.TaskContainerDefaults.DtrainNetworkInterface
@@ -204,8 +204,8 @@ func ConfigureTrialEnvVars(t TaskSpec, rendezvousPorts []string) map[string]stri
 	return envVars
 }
 
-// ConfigureTrialArchives returns the additional files for a trial as an archive.
-func ConfigureTrialArchives(t TaskSpec) []container.RunArchive {
+// TrialArchives returns the additional files for a trial as an archive.
+func TrialArchives(t TaskSpec) []container.RunArchive {
 	exp := *t.StartContainer
 
 	return []container.RunArchive{
@@ -223,7 +223,7 @@ func startContainer(t TaskSpec) container.Spec {
 	if len(t.Devices) > 0 {
 		deviceType = t.Devices[0].Type
 	}
-	mounts := ConfigureTrialDockerMounts(exp)
+	mounts := TrialDockerMounts(exp)
 	networkMode := t.TaskContainerDefaults.NetworkMode
 	if exp.ExperimentConfig.Resources.SlotsPerTrial > 1 {
 		networkMode = hostMode
@@ -236,7 +236,7 @@ func startContainer(t TaskSpec) container.Spec {
 		ports[port] = struct{}{}
 	}
 
-	envVarsMap := ConfigureTrialEnvVars(t, rPortsEnvVars)
+	envVarsMap := TrialEnvVars(t, rPortsEnvVars)
 	envVars := make([]string, 0, len(envVarsMap))
 	for envVarKey, envVarValue := range envVarsMap {
 		envVars = append(envVars, fmt.Sprintf("%s=%s", envVarKey, envVarValue))
@@ -262,7 +262,7 @@ func startContainer(t TaskSpec) container.Spec {
 				Mounts:          mounts,
 				PublishAllPorts: true,
 			},
-			Archives: ConfigureTrialArchives(t),
+			Archives: TrialArchives(t),
 		},
 	}
 	spec.RunSpec.HostConfig.ShmSize = t.TaskContainerDefaults.ShmSizeBytes
@@ -272,13 +272,13 @@ func startContainer(t TaskSpec) container.Spec {
 	return spec
 }
 
-// ConfigureGCEnvVars returns environment variables for gc.
-func ConfigureGCEnvVars() map[string]string {
+// GCEnvVars returns environment variables for checkpoint gc.
+func GCEnvVars() map[string]string {
 	return defaultEnvVars()
 }
 
-// ConfigureGCDockerMounts returns the host mounts for a gc container.
-func ConfigureGCDockerMounts(gcc GCCheckpoints) []mount.Mount {
+// GCDockerMounts returns the host mounts for a gc container.
+func GCDockerMounts(gcc GCCheckpoints) []mount.Mount {
 	mounts := ToDockerMounts(gcc.ExperimentConfig.BindMounts)
 	if gcc.ExperimentConfig.CheckpointStorage.SharedFSConfig != nil {
 		sharedFS := gcc.ExperimentConfig.CheckpointStorage.SharedFSConfig
@@ -295,8 +295,8 @@ func ConfigureGCDockerMounts(gcc GCCheckpoints) []mount.Mount {
 	return mounts
 }
 
-// ConfigureGCArchives returns the additional files for gc as an archive.
-func ConfigureGCArchives(t TaskSpec) []container.RunArchive {
+// GCArchives returns the additional files for gc as an archive.
+func GCArchives(t TaskSpec) []container.RunArchive {
 	gcc := *t.GCCheckpoints
 
 	return []container.RunArchive{
@@ -328,8 +328,8 @@ func ConfigureGCArchives(t TaskSpec) []container.RunArchive {
 	}
 }
 
-// ConfigureGCCmd configures the entrypoint for GC tasks.
-func ConfigureGCCmd() []string {
+// GCCmd configures the entrypoint for GC tasks.
+func GCCmd() []string {
 	return []string{
 		filepath.Join(ContainerWorkDir, etc.GCCheckpointsEntrypointResource),
 		"--experiment-config",
@@ -346,7 +346,7 @@ func gcCheckpoint(t TaskSpec) container.Spec {
 	if len(t.Devices) > 0 {
 		deviceType = t.Devices[0].Type
 	}
-	envVarsMap := ConfigureGCEnvVars()
+	envVarsMap := GCEnvVars()
 	envVars := make([]string, 0, len(envVarsMap))
 	for envVarKey, envVarValue := range envVarsMap {
 		envVars = append(envVars, fmt.Sprintf("%s=%s", envVarKey, envVarValue))
@@ -374,10 +374,10 @@ func gcCheckpoint(t TaskSpec) container.Spec {
 			},
 			HostConfig: docker.HostConfig{
 				NetworkMode:     t.TaskContainerDefaults.NetworkMode,
-				Mounts:          ConfigureGCDockerMounts(gcc),
+				Mounts:          GCDockerMounts(gcc),
 				PublishAllPorts: true,
 			},
-			Archives: ConfigureGCArchives(t),
+			Archives: GCArchives(t),
 		},
 	}
 }

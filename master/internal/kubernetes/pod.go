@@ -8,16 +8,13 @@ import (
 
 	"github.com/docker/docker/api/types/mount"
 
-	"github.com/determined-ai/determined/master/pkg/container"
-
-	"github.com/determined-ai/determined/master/pkg/etc"
-
-	"github.com/determined-ai/determined/master/pkg/archive"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
@@ -29,10 +26,9 @@ import (
 )
 
 const (
-	initContainerTarSrcPath = "/run/temp/determined/tar/src"
-	initContainerTarDstPath = "/run/temp/determined/tar/dst"
-	initContainerWorkDir    = "/run/temp/determined/"
-	hostNetwork             = "host"
+	initContainerTarSrcPath = "/run/determined/temp/tar/src"
+	initContainerTarDstPath = "/run/determined/temp/tar/dst"
+	initContainerWorkDir    = "/run/determined/temp/"
 )
 
 type pod struct {
@@ -122,7 +118,7 @@ func (p *pod) configureEnvVars(
 	if len(environment.EnvironmentVariables.For(deviceType)) > 0 {
 		return nil, errors.Errorf(
 			"kubernetes resource provider does not currently support environment " +
-				"variables set in the experiment config, use startup-hook.sh instead.")
+				"variables set in the experiment config; use startup-hook.sh instead")
 	}
 
 	var slotIds []string
@@ -153,19 +149,19 @@ func (p *pod) configureRunArchives(
 	podName string,
 	runArchives []container.RunArchive,
 ) ([]v1.VolumeMount, []v1.VolumeMount, []v1.Volume, error) {
-	zippedArchives := make(map[string][]byte)
+	tarredArchives := make(map[string][]byte)
 	for idx, runArchive := range runArchives {
 		zippedArchive, errZip := archive.ToTarGz(runArchive.Archive)
 		if errZip != nil {
 			return nil, nil, nil, errors.Wrap(errZip, "failed to zip archive")
 		}
-		zippedArchives[fmt.Sprintf("%d.tar.gz", idx)] = zippedArchive
+		tarredArchives[fmt.Sprintf("%d.tar.gz", idx)] = zippedArchive
 	}
 
 	// Create configMap of AdditionalFiles as .tar.gz archive.
 	archiveConfigMap, err := startConfigMap(
 		ctx,
-		createConfigMapSpec(podName, zippedArchives, p.namespace),
+		createConfigMapSpec(podName, tarredArchives, p.namespace),
 		p.configMapInterface,
 	)
 	if err != nil {
@@ -237,7 +233,7 @@ func (p *pod) configurePodSpec(
 		},
 		Spec: v1.PodSpec{
 			Volumes:        volumes,
-			HostNetwork:    p.taskSpec.TaskContainerDefaults.NetworkMode == hostNetwork,
+			HostNetwork:    p.taskSpec.TaskContainerDefaults.NetworkMode.IsHost(),
 			InitContainers: initContainers,
 			Containers:     containers,
 			RestartPolicy:  v1.RestartPolicyNever,
@@ -251,7 +247,7 @@ func (p *pod) launchPod(ctx *actor.Context, podSpec *v1.Pod) error {
 	if err != nil {
 		return errors.Wrap(err, "error creating pod")
 	}
-	ctx.Log().Infof("Created pod %s.", p.pod.Name)
+	ctx.Log().Infof("Created pod %s", p.pod.Name)
 
 	return nil
 }
@@ -269,9 +265,9 @@ func (p *pod) startPodForTrial(ctx *actor.Context) error {
 		deviceType = device.GPU
 	}
 
-	runArchives := tasks.ConfigureTrialArchives(p.taskSpec)
+	runArchives := tasks.TrialArchives(p.taskSpec)
 	initContainerVolumeMounts, volumeMounts, volumes, err := p.configureVolumes(
-		ctx, podName, tasks.ConfigureTrialDockerMounts(exp), runArchives)
+		ctx, podName, tasks.TrialDockerMounts(exp), runArchives)
 	if err != nil {
 		return err
 	}
@@ -281,7 +277,7 @@ func (p *pod) startPodForTrial(ctx *actor.Context) error {
 		fmt.Sprintf("%d", tasks.LocalRendezvousPort+tasks.LocalRendezvousPortOffset),
 	}
 	envVars, err := p.configureEnvVars(
-		tasks.ConfigureTrialEnvVars(p.taskSpec, rendezvousPorts),
+		tasks.TrialEnvVars(p.taskSpec, rendezvousPorts),
 		p.taskSpec.StartContainer.ExperimentConfig.Environment,
 		deviceType,
 	)
@@ -325,7 +321,7 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 		deviceType = device.GPU
 	}
 
-	runArchives := tasks.ConfigureCommandArchives(p.taskSpec)
+	runArchives := tasks.CommandArchives(p.taskSpec)
 	initContainerVolumeMounts, volumeMounts, volumes, err := p.configureVolumes(
 		ctx, podName, tasks.ToDockerMounts(cmd.Config.BindMounts), runArchives)
 	if err != nil {
@@ -333,7 +329,7 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 	}
 
 	envVars, err := p.configureEnvVars(
-		tasks.ConfigureCommandEnvVars(p.taskSpec),
+		tasks.CommandEnvVars(p.taskSpec),
 		p.taskSpec.StartCommand.Config.Environment,
 		deviceType,
 	)
@@ -377,15 +373,15 @@ func (p *pod) startPodForGC(ctx *actor.Context) error {
 		deviceType = device.GPU
 	}
 
-	runArchives := tasks.ConfigureGCArchives(p.taskSpec)
+	runArchives := tasks.GCArchives(p.taskSpec)
 	initContainerVolumeMounts, volumeMounts, volumes, err := p.configureVolumes(
-		ctx, podName, tasks.ConfigureGCDockerMounts(gcc), runArchives)
+		ctx, podName, tasks.GCDockerMounts(gcc), runArchives)
 	if err != nil {
 		return err
 	}
 
 	envVars, err := p.configureEnvVars(
-		tasks.ConfigureGCEnvVars(),
+		tasks.GCEnvVars(),
 		p.taskSpec.GCCheckpoints.ExperimentConfig.Environment,
 		deviceType,
 	)
@@ -405,7 +401,7 @@ func (p *pod) startPodForGC(ctx *actor.Context) error {
 	containers := []v1.Container{
 		{
 			Name:            "determined-gc",
-			Command:         tasks.ConfigureGCCmd(),
+			Command:         tasks.GCCmd(),
 			Env:             envVars,
 			Image:           gcc.ExperimentConfig.Environment.Image.For(deviceType),
 			ImagePullPolicy: configureImagePullPolicy(gcc.ExperimentConfig.Environment),

@@ -17,23 +17,23 @@ import (
 )
 
 func configureMountPropagation(b *mount.BindOptions) *v1.MountPropagationMode {
-	if b != nil {
-		switch b.Propagation {
-		case mount.PropagationPrivate:
-			p := v1.MountPropagationNone
-			return &p
-		case mount.PropagationRSlave:
-			p := v1.MountPropagationHostToContainer
-			return &p
-		case mount.PropagationRShared:
-			p := v1.MountPropagationBidirectional
-			return &p
-		default:
-			return nil
-		}
+	if b == nil {
+		return nil
 	}
 
-	return nil
+	switch b.Propagation {
+	case mount.PropagationPrivate:
+		p := v1.MountPropagationNone
+		return &p
+	case mount.PropagationRSlave:
+		p := v1.MountPropagationHostToContainer
+		return &p
+	case mount.PropagationRShared:
+		p := v1.MountPropagationBidirectional
+		return &p
+	default:
+		return nil
+	}
 }
 
 func dockerMountsToHostVolumes(dockerMounts []mount.Mount) ([]v1.VolumeMount, []v1.Volume) {
@@ -69,7 +69,7 @@ func configureShmVolume(_ int64) (v1.VolumeMount, v1.Volume) {
 	volumeMount := v1.VolumeMount{
 		Name:      volumeName,
 		ReadOnly:  false,
-		MountPath: "/det/shm",
+		MountPath: "/dev/shm",
 	}
 	volume := v1.Volume{
 		Name: volumeName,
@@ -103,7 +103,7 @@ func startConfigMap(
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create configMap")
 	}
-	ctx.Log().Infof("create configMap %s", configMap.Name)
+	ctx.Log().Infof("created configMap %s", configMap.Name)
 
 	return configMap, nil
 }
@@ -113,9 +113,9 @@ func configureAdditionalFilesVolumes(
 	entryPointConfigMap *v1.ConfigMap,
 	runArchives []container.RunArchive,
 ) ([]v1.VolumeMount, []v1.VolumeMount, []v1.Volume) {
-	initContainerVolumeMounts := make([]v1.VolumeMount, 0, 3)
+	initContainerVolumeMounts := make([]v1.VolumeMount, 0)
 	mainContainerVolumeMounts := make([]v1.VolumeMount, 0)
-	volumes := make([]v1.Volume, 0, 3)
+	volumes := make([]v1.Volume, 0)
 
 	// In order to inject additional files into k8 pods, we un-tar the archives
 	// in an initContainer from a configMap to an emptyDir, and then mount the

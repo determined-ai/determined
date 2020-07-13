@@ -71,7 +71,7 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		}
 
 	default:
-		ctx.Log().Errorf("Unexpected message %T", msg)
+		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
@@ -104,7 +104,7 @@ func (p *pods) getMasterIPAndPort(ctx *actor.Context) error {
 
 	p.masterIP = masterService.Spec.ClusterIP
 	p.masterPort = masterService.Spec.Ports[0].Port
-	ctx.Log().Infof("master url set to %s:%d", p.masterIP, p.masterPort)
+	ctx.Log().Infof("master URL set to %s:%d", p.masterIP, p.masterPort)
 	return nil
 }
 
@@ -119,7 +119,7 @@ func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
 	)
 
 	if !ok {
-		return errors.Errorf("pod actor %s already exits", ref.Address().String())
+		return errors.Errorf("pod actor %s already exists", ref.Address().String())
 	}
 
 	return nil

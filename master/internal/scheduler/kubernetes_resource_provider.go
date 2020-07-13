@@ -9,7 +9,7 @@ import (
 	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
 
-// kubernetesResourceProvider manages the lifecycle of k8 resources.
+// kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceProvider struct {
 	clusterID             string
 	namespace             string
@@ -24,7 +24,7 @@ type kubernetesResourceProvider struct {
 	tasksByContainerID map[ContainerID]*Task
 	groups             map[*actor.Ref]*group
 
-	assigmentByTaskHandler map[*actor.Ref][]podAssignment
+	assignmentsByTaskHandler map[*actor.Ref][]podAssignment
 
 	// Represent all pods as a single agent.
 	agent *agentState
@@ -54,7 +54,7 @@ func NewKubernetesResourceProvider(
 		tasksByContainerID: make(map[ContainerID]*Task),
 		groups:             make(map[*actor.Ref]*group),
 
-		assigmentByTaskHandler: make(map[*actor.Ref][]podAssignment),
+		assignmentsByTaskHandler: make(map[*actor.Ref][]podAssignment),
 	}
 }
 
@@ -78,6 +78,7 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 		k.receiveAddTask(ctx, msg)
 
 	case SetMaxSlots, SetWeight:
+		// These parameters are not supported by the Kubernetes RP.
 
 	case SetTaskName:
 		k.receiveSetTaskName(ctx, msg)
@@ -86,7 +87,7 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 		k.receiveStartTask(ctx, msg)
 
 	default:
-		ctx.Log().Errorf("Unexpected message %T", msg)
+		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 
@@ -96,7 +97,7 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 func (k *kubernetesResourceProvider) receiveAddTask(ctx *actor.Context, msg AddTask) {
 	actors.NotifyOnStop(ctx, msg.TaskHandler, taskStopped{Ref: msg.TaskHandler})
 
-	if task, ok := k.tasksByHandler[ctx.Sender()]; ok {
+	if task, ok := k.tasksByHandler[msg.TaskHandler]; ok {
 		if ctx.ExpectingResponse() {
 			ctx.Respond(task)
 		}
@@ -106,7 +107,7 @@ func (k *kubernetesResourceProvider) receiveAddTask(ctx *actor.Context, msg AddT
 	if msg.Group == nil {
 		msg.Group = msg.TaskHandler
 	}
-	group := k.getOrCreateGroup(msg.Group, ctx)
+	group := k.getOrCreateGroup(ctx, msg.Group)
 
 	var taskID TaskID
 	if msg.ID != nil {
@@ -144,14 +145,15 @@ func (k *kubernetesResourceProvider) scheduleTask(ctx *actor.Context, task *Task
 	slotsPerNode := task.SlotsNeeded()
 	if task.SlotsNeeded() > 1 {
 		if k.slotsPerNode == 0 {
-			ctx.Log().WithField("task ID", task.ID).Error(
+			ctx.Log().WithField("task-id", task.ID).Error(
 				"set slots_per_node > 0 to schedule tasks with slots")
 			return
 		}
 
 		if task.SlotsNeeded()%k.slotsPerNode != 0 {
-			ctx.Log().WithField("task ID", task.ID).Error(
-				"task number of slots is not schedulable on the configured slots_per_node")
+			ctx.Log().WithField("task-id", task.ID).Error(
+				"task number of slots (%d) is not schedulable on the configured "+
+					"slots_per_node (%d)", task.SlotsNeeded(), k.slotsPerNode)
 			return
 		}
 		numPods = task.SlotsNeeded() / k.slotsPerNode
@@ -162,7 +164,7 @@ func (k *kubernetesResourceProvider) scheduleTask(ctx *actor.Context, task *Task
 		k.assignPod(ctx, task, slotsPerNode)
 	}
 
-	ctx.Log().WithField("task ID", task.ID).Infof("task assigned by scheduler")
+	ctx.Log().WithField("task-id", task.ID).Infof("task assigned by scheduler")
 	task.handler.System().Tell(task.handler, TaskAssigned{NumContainers: numPods})
 }
 
@@ -174,8 +176,8 @@ func (k *kubernetesResourceProvider) assignPod(ctx *actor.Context, task *Task, s
 	k.agent.containers[container.id] = container
 	task.containers[container.id] = container
 	k.tasksByContainerID[container.id] = task
-	k.assigmentByTaskHandler[task.handler] = append(
-		k.assigmentByTaskHandler[task.handler],
+	k.assignmentsByTaskHandler[task.handler] = append(
+		k.assignmentsByTaskHandler[task.handler],
 		podAssignment{
 			task:        task,
 			agent:       k.agent,
@@ -188,8 +190,8 @@ func (k *kubernetesResourceProvider) assignPod(ctx *actor.Context, task *Task, s
 }
 
 func (k *kubernetesResourceProvider) getOrCreateGroup(
-	handler *actor.Ref,
 	ctx *actor.Context,
+	handler *actor.Ref,
 ) *group {
 	if g, ok := k.groups[handler]; ok {
 		return g
@@ -215,7 +217,7 @@ func (k *kubernetesResourceProvider) receiveStartTask(ctx *actor.Context, msg St
 		return
 	}
 
-	assignments := k.assigmentByTaskHandler[msg.TaskHandler]
+	assignments := k.assignmentsByTaskHandler[msg.TaskHandler]
 	if len(assignments) == 0 {
 		ctx.Log().WithField("name", task.name).Error("task is trying to start without any assignments")
 		return
