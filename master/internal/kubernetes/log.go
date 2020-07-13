@@ -7,15 +7,14 @@ import (
 
 	"github.com/docker/docker/pkg/stdcopy"
 
-	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/pkg/agent"
-
 	"github.com/pkg/errors"
-	v1 "k8s.io/api/core/v1"
 
+	k8sV1 "k8s.io/api/core/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/agent"
 )
 
 type (
@@ -34,7 +33,7 @@ func newPodLogStreamer(
 	podName string,
 	podHandler *actor.Ref,
 ) (*podLogStreamer, error) {
-	logs := podInterface.GetLogs(podName, &v1.PodLogOptions{
+	logs := podInterface.GetLogs(podName, &k8sV1.PodLogOptions{
 		Follow: true,
 		// TODO(DET-3541): switch over to using k8 timestamps.
 		Timestamps: false,

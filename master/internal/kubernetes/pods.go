@@ -12,8 +12,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8sclient "k8s.io/client-go/kubernetes"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 
@@ -27,7 +27,7 @@ type pods struct {
 	masterServiceName        string
 	leaveKubernetesResources bool
 
-	clientSet  *k8sclient.Clientset
+	clientSet  *k8sClient.Clientset
 	masterIP   string
 	masterPort int32
 
@@ -96,7 +96,7 @@ func (p *pods) startClientSet(ctx *actor.Context) error {
 		return errors.Wrap(err, "error building kubernetes config")
 	}
 
-	p.clientSet, err = k8sclient.NewForConfig(config)
+	p.clientSet, err = k8sClient.NewForConfig(config)
 	if err != nil {
 		return errors.Wrap(err, "failed to initialize kubernetes clientSet")
 	}
@@ -110,7 +110,7 @@ func (p *pods) startClientSet(ctx *actor.Context) error {
 
 func (p *pods) getMasterIPAndPort(ctx *actor.Context) error {
 	masterService, err := p.clientSet.CoreV1().Services(p.namespace).Get(
-		p.masterServiceName, metav1.GetOptions{})
+		p.masterServiceName, metaV1.GetOptions{})
 	if err != nil {
 		return errors.Wrap(err, "failed to get master service")
 	}
