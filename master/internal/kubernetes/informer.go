@@ -46,7 +46,7 @@ func (i *informer) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 
 	case startInformer:
-		if err := i.receiveStartInformer(ctx); err != nil {
+		if err := i.startInformer(ctx); err != nil {
 			return err
 		}
 
@@ -60,7 +60,7 @@ func (i *informer) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (i *informer) receiveStartInformer(ctx *actor.Context) error {
+func (i *informer) startInformer(ctx *actor.Context) error {
 	watch, err := i.podInterface.Watch(metaV1.ListOptions{LabelSelector: determinedLabel})
 	if err != nil {
 		return errors.Wrap(err, "error initializing pod watch")
@@ -73,5 +73,8 @@ func (i *informer) receiveStartInformer(ctx *actor.Context) error {
 		ctx.Tell(i.podsHandler, podStatusUpdate{podName: pod.Name, updatedPod: pod})
 	}
 
-	return errors.Errorf("pod informer stopped unexpectedly")
+	ctx.Log().Warn("pod informer stopped unexpectedly")
+	ctx.Tell(ctx.Self(), startInformer{})
+
+	return nil
 }
