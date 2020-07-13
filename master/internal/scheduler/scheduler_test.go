@@ -152,7 +152,7 @@ func setupCluster(
 		tasksByID:          make(map[TaskID]*Task),
 		tasksByContainerID: make(map[ContainerID]*Task),
 
-		assigmentByHandler: make(map[*actor.Ref][]assignment),
+		assigmentByHandler: make(map[*actor.Ref][]containerAssignment),
 
 		provisionerView: newProvisionerView(0),
 

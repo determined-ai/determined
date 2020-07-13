@@ -9,8 +9,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
-const localRendezvousPort = 1734
-const localRendezvousPortOffset = 16
+// LocalRendezvousPort is the start of the range of ports used for rendezvous by tasks.
+const LocalRendezvousPort = 1734
+
+// LocalRendezvousPortOffset is the difference between the two rendezvous ports.
+const LocalRendezvousPortOffset = 16
 
 const (
 	hostMode container.NetworkMode = "host"
@@ -27,9 +30,9 @@ func rendezvousPorts(devices []device.Device, networkMode container.NetworkMode)
 			}
 		}
 	}
-	ports = append(ports, nat.Port(fmt.Sprintf("%d/tcp", localRendezvousPort+min)))
+	ports = append(ports, nat.Port(fmt.Sprintf("%d/tcp", LocalRendezvousPort+min)))
 	ports = append(
-		ports, nat.Port(fmt.Sprintf("%d/tcp", localRendezvousPort+min+localRendezvousPortOffset)))
+		ports, nat.Port(fmt.Sprintf("%d/tcp", LocalRendezvousPort+min+LocalRendezvousPortOffset)))
 	return ports
 }
 
