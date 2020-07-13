@@ -21,10 +21,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
-	v1 "k8s.io/api/core/v1"
+	k8sV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8sclient "k8s.io/client-go/kubernetes"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
@@ -38,7 +38,7 @@ const (
 type pod struct {
 	cluster                  *actor.Ref
 	taskHandler              *actor.Ref
-	clientSet                *k8sclient.Clientset
+	clientSet                *k8sClient.Clientset
 	namespace                string
 	masterIP                 string
 	masterPort               int32
@@ -49,8 +49,8 @@ type pod struct {
 	configMapInterface       typedV1.ConfigMapInterface
 	leaveKubernetesResources bool
 
-	pod         *v1.Pod
-	configMaps  []*v1.ConfigMap
+	pod         *k8sV1.Pod
+	configMaps  []*k8sV1.ConfigMap
 	podName     string
 	logStreamer *actor.Ref
 	container   container.Container
@@ -60,7 +60,7 @@ type pod struct {
 func newPod(
 	cluster *actor.Ref,
 	taskHandler *actor.Ref,
-	clientSet *k8sclient.Clientset,
+	clientSet *k8sClient.Clientset,
 	namespace string,
 	masterIP string,
 	masterPort int32,
@@ -141,7 +141,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 	p.pod = msg.updatedPod
 
 	switch msg.updatedPod.Status.Phase {
-	case v1.PodPending:
+	case k8sV1.PodPending:
 		containerState := getContainerState(msg.updatedPod.Status.Conditions)
 		if containerState == container.Running {
 			ctx.Log().WithField("pod", p.podName).Errorf(
@@ -171,7 +171,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 			ctx.Tell(p.taskHandler, rsc)
 		}
 
-	case v1.PodRunning:
+	case k8sV1.PodRunning:
 		if p.container.State != container.Running {
 			p.container = p.container.Transition(container.Running)
 
@@ -194,7 +194,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 			})
 		}
 
-	case v1.PodFailed:
+	case k8sV1.PodFailed:
 		if p.container.State != container.Terminated {
 			p.container = p.container.Transition(container.Terminated)
 
@@ -226,7 +226,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 			ctx.Self().Stop()
 		}
 
-	case v1.PodSucceeded:
+	case k8sV1.PodSucceeded:
 		if p.container.State != container.Terminated {
 			p.container = p.container.Transition(container.Terminated)
 
@@ -256,13 +256,13 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 func (p *pod) cleanupKubernetesResources(ctx *actor.Context) error {
 	ctx.Log().WithField("pod", p.podName).Infof("deleting pod")
 	var gracePeriod int64 = 1
-	err := p.podInterface.Delete(p.podName, &metav1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
+	err := p.podInterface.Delete(p.podName, &metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 	if err != nil {
 		return errors.Wrapf(err, "pod deletion failed %s", p.podName)
 	}
 
 	for _, cf := range p.configMaps {
-		err = p.configMapInterface.Delete(cf.Name, &metav1.DeleteOptions{
+		err = p.configMapInterface.Delete(cf.Name, &metaV1.DeleteOptions{
 			GracePeriodSeconds: &gracePeriod})
 		if err != nil {
 			return errors.Wrapf(err, "config map deletion failed %s", cf.Name)
@@ -282,9 +282,9 @@ func (p *pod) receiveContainerLogs(ctx *actor.Context, msg sproto.ContainerLog) 
 	})
 }
 
-func (p *pod) configureResourcesRequirements() v1.ResourceRequirements {
-	return v1.ResourceRequirements{
-		Limits: map[v1.ResourceName]resource.Quantity{
+func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
+	return k8sV1.ResourceRequirements{
+		Limits: map[k8sV1.ResourceName]resource.Quantity{
 			"nvidia.com/gpu": *resource.NewQuantity(int64(p.gpus), resource.DecimalSI),
 		},
 	}
@@ -294,7 +294,7 @@ func (p *pod) configureEnvVars(
 	envVarsMap map[string]string,
 	environment model.Environment,
 	deviceType device.Type,
-) ([]v1.EnvVar, error) {
+) ([]k8sV1.EnvVar, error) {
 	// TODO (DET-3457): Include env variables set in experiment config.
 	if len(environment.EnvironmentVariables.For(deviceType)) > 0 {
 		return nil, errors.Errorf(
@@ -317,9 +317,9 @@ func (p *pod) configureEnvVars(
 	envVarsMap["DET_SLOT_IDS"] = fmt.Sprintf("[%s]", strings.Join(slotIds, ","))
 	envVarsMap["DET_USE_GPU"] = fmt.Sprintf("%t", p.gpus > 0)
 
-	envVars := make([]v1.EnvVar, 0, len(envVarsMap))
+	envVars := make([]k8sV1.EnvVar, 0, len(envVarsMap))
 	for envVarKey, envVarValue := range envVarsMap {
-		envVars = append(envVars, v1.EnvVar{Name: envVarKey, Value: envVarValue})
+		envVars = append(envVars, k8sV1.EnvVar{Name: envVarKey, Value: envVarValue})
 	}
 
 	return envVars, nil
@@ -328,7 +328,7 @@ func (p *pod) configureEnvVars(
 func (p *pod) configureRunArchives(
 	ctx *actor.Context,
 	runArchives []container.RunArchive,
-) ([]v1.VolumeMount, []v1.VolumeMount, []v1.Volume, error) {
+) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume, error) {
 	tarredArchives := make(map[string][]byte)
 	for idx, runArchive := range runArchives {
 		zippedArchive, errZip := archive.ToTarGz(runArchive.Archive)
@@ -375,9 +375,9 @@ func (p *pod) configureVolumes(
 	ctx *actor.Context,
 	dockerMounts []mount.Mount,
 	runArchives []container.RunArchive,
-) ([]v1.VolumeMount, []v1.VolumeMount, []v1.Volume, error) {
-	volumeMounts := make([]v1.VolumeMount, 0)
-	volumes := make([]v1.Volume, 0)
+) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume, error) {
+	volumeMounts := make([]k8sV1.VolumeMount, 0)
+	volumes := make([]k8sV1.Volume, 0)
 
 	hostVolumeMounts, hostVolumes := dockerMountsToHostVolumes(dockerMounts)
 	volumeMounts = append(volumeMounts, hostVolumeMounts...)
@@ -399,27 +399,27 @@ func (p *pod) configureVolumes(
 }
 
 func (p *pod) configurePodSpec(
-	volumes []v1.Volume,
-	initContainers []v1.Container,
-	containers []v1.Container,
-) *v1.Pod {
-	return &v1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
+	volumes []k8sV1.Volume,
+	initContainers []k8sV1.Container,
+	containers []k8sV1.Container,
+) *k8sV1.Pod {
+	return &k8sV1.Pod{
+		ObjectMeta: metaV1.ObjectMeta{
 			Name:      p.podName,
 			Namespace: p.namespace,
 			Labels:    map[string]string{determinedLabel: p.taskSpec.TaskID},
 		},
-		Spec: v1.PodSpec{
+		Spec: k8sV1.PodSpec{
 			Volumes:        volumes,
 			HostNetwork:    p.taskSpec.TaskContainerDefaults.NetworkMode.IsHost(),
 			InitContainers: initContainers,
 			Containers:     containers,
-			RestartPolicy:  v1.RestartPolicyNever,
+			RestartPolicy:  k8sV1.RestartPolicyNever,
 		},
 	}
 }
 
-func (p *pod) launchPod(ctx *actor.Context, podSpec *v1.Pod) error {
+func (p *pod) launchPod(ctx *actor.Context, podSpec *k8sV1.Pod) error {
 	var err error
 	p.pod, err = p.podInterface.Create(podSpec)
 	if err != nil {
@@ -466,7 +466,7 @@ func (p *pod) startPodForTrial(ctx *actor.Context) error {
 		return err
 	}
 
-	initContainers := []v1.Container{
+	initContainers := []k8sV1.Container{
 		configureInitContainer(
 			len(runArchives),
 			initContainerVolumeMounts,
@@ -475,7 +475,7 @@ func (p *pod) startPodForTrial(ctx *actor.Context) error {
 		),
 	}
 
-	containers := []v1.Container{
+	containers := []k8sV1.Container{
 		{
 			Name:            "determined-trial",
 			Command:         []string{"/run/determined/workdir/entrypoint.sh"},
@@ -517,7 +517,7 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 		return err
 	}
 
-	initContainers := []v1.Container{
+	initContainers := []k8sV1.Container{
 		configureInitContainer(
 			len(runArchives),
 			initContainerVolumeMounts,
@@ -526,7 +526,7 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 		),
 	}
 
-	containers := []v1.Container{
+	containers := []k8sV1.Container{
 		{
 			Name:            "determined-task",
 			Command:         cmd.Config.Entrypoint,
@@ -568,7 +568,7 @@ func (p *pod) startPodForGC(ctx *actor.Context) error {
 		return err
 	}
 
-	initContainers := []v1.Container{
+	initContainers := []k8sV1.Container{
 		configureInitContainer(
 			len(runArchives),
 			initContainerVolumeMounts,
@@ -577,7 +577,7 @@ func (p *pod) startPodForGC(ctx *actor.Context) error {
 		),
 	}
 
-	containers := []v1.Container{
+	containers := []k8sV1.Container{
 		{
 			Name:            "determined-gc",
 			Command:         tasks.GCCmd(),
@@ -612,11 +612,11 @@ func configurePodName(t tasks.TaskSpec, rank int) string {
 	}
 }
 
-func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *v1.SecurityContext {
+func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *k8sV1.SecurityContext {
 	if agentUserGroup != nil {
 		userID := int64(agentUserGroup.ID)
 		groupID := int64(agentUserGroup.GID)
-		return &v1.SecurityContext{
+		return &k8sV1.SecurityContext{
 			RunAsUser:  &userID,
 			RunAsGroup: &groupID,
 		}
@@ -625,21 +625,21 @@ func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *v1.Security
 	return nil
 }
 
-func configureImagePullPolicy(environment model.Environment) v1.PullPolicy {
-	pullPolicy := v1.PullAlways
+func configureImagePullPolicy(environment model.Environment) k8sV1.PullPolicy {
+	pullPolicy := k8sV1.PullAlways
 	if !environment.ForcePullImage {
-		pullPolicy = v1.PullIfNotPresent
+		pullPolicy = k8sV1.PullIfNotPresent
 	}
 	return pullPolicy
 }
 
 func configureInitContainer(
 	numArchives int,
-	volumeMounts []v1.VolumeMount,
+	volumeMounts []k8sV1.VolumeMount,
 	image string,
-	imagePullPolicy v1.PullPolicy,
-) v1.Container {
-	return v1.Container{
+	imagePullPolicy k8sV1.PullPolicy,
+) k8sV1.Container {
+	return k8sV1.Container{
 		Name:    "determined-init-container",
 		Command: []string{path.Join(initContainerWorkDir, etc.K8InitContainerEntryScriptResource)},
 		Args: []string{
@@ -651,24 +651,24 @@ func configureInitContainer(
 	}
 }
 
-func getContainerState(conditions []v1.PodCondition) container.State {
-	conditionsMap := make(map[v1.PodConditionType]bool)
+func getContainerState(conditions []k8sV1.PodCondition) container.State {
+	conditionsMap := make(map[k8sV1.PodConditionType]bool)
 	for _, condition := range conditions {
-		conditionsMap[condition.Type] = condition.Status == v1.ConditionTrue
+		conditionsMap[condition.Type] = condition.Status == k8sV1.ConditionTrue
 	}
 
-	if conditionsMap[v1.PodReady] {
+	if conditionsMap[k8sV1.PodReady] {
 		return container.Running
 	}
 
-	if conditionsMap[v1.PodScheduled] {
+	if conditionsMap[k8sV1.PodScheduled] {
 		return container.Starting
 	}
 
 	return container.Assigned
 }
 
-func getExitCodeAndMessage(pod *v1.Pod) (int, string, error) {
+func getExitCodeAndMessage(pod *k8sV1.Pod) (int, string, error) {
 	if len(pod.Status.InitContainerStatuses) != 1 {
 		return 0, "", errors.Errorf(
 			"unexpected number of init containers when processing failure for pod %s", pod.Name)

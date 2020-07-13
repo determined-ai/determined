@@ -229,7 +229,7 @@ func (k *kubernetesResourceProvider) receiveSetTaskName(ctx *actor.Context, msg 
 func (k *kubernetesResourceProvider) receiveStartTask(ctx *actor.Context, msg StartTask) {
 	task := k.tasksByHandler[msg.TaskHandler]
 	if task == nil {
-		ctx.Log().WithField("address", msg.TaskHandler.Address()).Errorf("unknown task trying to start")
+		ctx.Log().WithField("address", msg.TaskHandler.Address()).Error("unknown task trying to start")
 		return
 	}
 
