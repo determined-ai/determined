@@ -1,5 +1,6 @@
 import hashlib
 import os
+import socket
 import ssl
 import sys
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, FileType, Namespace
@@ -7,6 +8,7 @@ from typing import Any, Dict, List, Union, cast
 
 import argcomplete
 import argcomplete.completers
+import OpenSSL
 import requests
 import tabulate
 from ruamel import yaml
@@ -254,10 +256,16 @@ def main(args: List[str] = sys.argv[1:]) -> None:
                 check_not_none(addr.hostname)
                 check_not_none(addr.port)
                 try:
-                    cert_pem_data = ssl.get_server_certificate(
-                        (cast(str, addr.hostname), cast(int, addr.port))
+                    ctx = OpenSSL.SSL.Context(OpenSSL.SSL.TLSv1_2_METHOD)
+                    conn = OpenSSL.SSL.Connection(ctx, socket.socket())
+                    conn.set_tlsext_host_name(cast(str, addr.hostname).encode())
+                    conn.connect((addr.hostname, addr.port))
+                    conn.do_handshake()
+                    cert_pem_data = "".join(
+                        OpenSSL.crypto.dump_certificate(OpenSSL.crypto.FILETYPE_PEM, cert).decode()
+                        for cert in conn.get_peer_cert_chain()
                     )
-                except ssl.SSLError:
+                except OpenSSL.SSL.Error:
                     die(
                         "Tried to connect over HTTPS but couldn't get a certificate from the "
                         "master; consider using HTTP"
@@ -267,7 +275,7 @@ def main(args: List[str] = sys.argv[1:]) -> None:
                 cert_fingerprint = ":".join(chunks(cert_hash, 2))
 
                 if not render.yes_or_no(
-                    "The master sent an untrusted certificate with this SHA256 fingerprint:\n"
+                    "The master sent an untrusted certificate chain with this SHA256 fingerprint:\n"
                     "{}\nDo you want to trust this certificate from now on?".format(
                         cert_fingerprint
                     )
