@@ -543,6 +543,10 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 		return err
 	}
 
+	for _, port := range cmd.Config.Environment.Ports {
+		p.ports = append(p.ports, port)
+	}
+
 	envVars, err := p.configureEnvVars(
 		tasks.CommandEnvVars(p.taskSpec),
 		p.taskSpec.StartCommand.Config.Environment,
