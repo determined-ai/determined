@@ -14,6 +14,7 @@ import Users from 'contexts/Users';
 import useStorage from 'hooks/useStorage';
 import { killCommand } from 'services/api';
 import { ALL_VALUE, CommandTask, CommandType, TaskFilters } from 'types';
+import { getPath } from 'utils/data';
 import { canBeOpened, filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
 
@@ -40,8 +41,9 @@ const TaskList: React.FC = () => {
   const shells = Shells.useStateContext();
   const tensorboards = Tensorboards.useStateContext();
   const storage = useStorage('task-list');
-  const initFilters = storage.getWithDefault('filters',
-    { ...defaultFilters, username: (auth.user || {}).username });
+  const initFilters = storage.getWithDefault('filters', {
+    ...defaultFilters, username: getPath<string>(auth, 'user.username'),
+  });
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
   const [ search, setSearch ] = useState('');
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
