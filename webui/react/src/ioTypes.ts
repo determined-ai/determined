@@ -2,13 +2,24 @@
 import { isLeft } from 'fp-ts/lib/Either';
 import * as io from 'io-ts';
 
+import { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { CheckpointState, CommandState, LogLevel, RunState } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const decode = <T>(type: io.Mixed, data: any): T => {
-  const result = type.decode(data);
-  if (isLeft(result)) throw result.left;
-  return result.right;
+  try {
+    const result = type.decode(data);
+    if (isLeft(result)) throw result.left;
+    return result.right;
+  } catch (e) {
+    const daError = {
+      error: e,
+      level: ErrorLevel.Fatal,
+      silent: false,
+      type: ErrorType.ApiBadResponse,
+    };
+    throw daError;
+  }
 };
 
 /* User */
