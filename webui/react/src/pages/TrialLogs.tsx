@@ -8,6 +8,8 @@ import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
 import { getTrialLogs } from 'services/api';
+import * as DetSwagger from 'services/api-ts-sdk';
+import { consumeStream } from 'services/apiBuilder';
 import { TrialLogsParams } from 'services/types';
 import { Log } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
@@ -49,6 +51,15 @@ const TrialLogs: React.FC = () => {
   }, [ fetchOlderLogs ]);
 
   usePolling(fetchNewerLogs);
+
+  useEffect(() => {
+    consumeStream<DetSwagger.V1TrialLogsResponse>(
+      DetSwagger.ExperimentsApiFetchParamCreator().determinedTrialLogs(id),
+      e => {
+        console.log('event', e);
+      },
+    ).then(() => console.log('finished'));
+  }, [ id ]);
 
   useEffect(() => {
     setUI({ type: UI.ActionType.HideChrome });
