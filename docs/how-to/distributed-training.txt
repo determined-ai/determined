@@ -47,6 +47,37 @@ Example configuration with distributed training:
    resources:
      slots_per_trial: N
 
+
+Data Downloading
+-------------------
+
+In distributed training, we create one training process per GPU. Each process is given a unique ``rank`` which
+is just a unique number used to let the process know which GPU it was created on. In distributed training there
+can be multiple processes downloading data concurrently. To ensure that they don't accidentally overwrite
+each other, you should make sure to always download data to a directory whose name includes the ``rank`` of
+the process that is downloading the data.
+
+You can do this by leveraging the  :func:`self.context.distributed.get_rank() <determined._train_context.DistributedContext.get_rank>` function.
+Below is an example of how to do this when downloading data from S3.
+
+.. code:: python
+
+  import boto3
+  import os
+
+  def download_data_from_s3(self):
+      s3_bucket = self.context.get_data_config()["bucket"]
+      download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
+      data_file = "data.csv"
+
+      s3 = boto3.client("s3")
+      os.makedirs(download_directory, exist_ok=True)
+      filepath = os.path.join(download_directory, data_file)
+      if not os.path.exists(filepath):
+          s3.download_file(s3_bucket, data_file, filepath)
+      return download_directory
+
+
 Scheduling Behavior
 -------------------
 
