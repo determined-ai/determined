@@ -382,7 +382,7 @@ func (p *pod) configureRunArchives(
 	// Create configMap of AdditionalFiles as .tar.gz archive.
 	archiveConfigMap, err := startConfigMap(
 		ctx,
-		createConfigMapSpec(p.podName, tarredArchives, p.namespace),
+		createConfigMapSpec(p.podName, tarredArchives, p.namespace, p.taskSpec.TaskID),
 		p.configMapInterface,
 	)
 	if err != nil {
@@ -397,7 +397,8 @@ func (p *pod) configureRunArchives(
 	}
 	initContainerEntrypointConfigMap, err := startConfigMap(
 		ctx,
-		createConfigMapSpec(p.podName, initContainerEntrypointArchive, p.namespace),
+		createConfigMapSpec(
+			p.podName, initContainerEntrypointArchive, p.namespace, p.taskSpec.TaskID),
 		p.configMapInterface,
 	)
 	if err != nil {

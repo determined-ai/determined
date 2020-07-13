@@ -80,6 +80,9 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		if err := p.getMasterIPAndPort(ctx); err != nil {
 			return err
 		}
+		if err := p.deleteExistingKubernetesResources(ctx); err != nil {
+			return err
+		}
 		p.startPodInformer(ctx)
 
 	case sproto.StartPod:
@@ -142,6 +145,44 @@ func (p *pods) getMasterIPAndPort(ctx *actor.Context) error {
 	p.masterIP = masterService.Spec.ClusterIP
 	p.masterPort = masterService.Spec.Ports[0].Port
 	ctx.Log().Infof("master URL set to %s:%d", p.masterIP, p.masterPort)
+	return nil
+}
+
+func (p *pods) deleteExistingKubernetesResources(ctx *actor.Context) error {
+	listOptions := metaV1.ListOptions{LabelSelector: determinedLabel}
+	var gracePeriod int64 = 15
+	deleteOptions := &metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod}
+
+	configMaps, err := p.configMapInterface.List(listOptions)
+	if err != nil {
+		return errors.Wrap(err, "error listing existing config maps")
+	}
+	for _, configMap := range configMaps.Items {
+		if configMap.Namespace != p.namespace {
+			continue
+		}
+
+		ctx.Log().WithField("name", configMap.Name).Info("deleting configMap")
+		if err = p.configMapInterface.Delete(configMap.Name, deleteOptions); err != nil {
+			return errors.Wrapf(err, "error deleting configMap: %s", configMap.Name)
+		}
+	}
+
+	pods, err := p.podInterface.List(listOptions)
+	if err != nil {
+		return errors.Wrap(err, "error listing existing pod")
+	}
+	for _, pod := range pods.Items {
+		if pod.Namespace != p.namespace {
+			continue
+		}
+
+		ctx.Log().WithField("name", pod.Name).Info("deleting pod")
+		if err = p.podInterface.Delete(pod.Name, deleteOptions); err != nil {
+			return errors.Wrapf(err, "error deleting pod: %s", pod.Name)
+		}
+	}
+
 	return nil
 }
 
