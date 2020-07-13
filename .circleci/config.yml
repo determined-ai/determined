@@ -365,25 +365,6 @@ commands:
       - wait-for-master:
           host: ${MASTER_HOST}
 
-  download-aws-logs:
-    parameters:
-      cluster-id:
-        type: string
-      download-dir:
-        type: string
-        default: "/tmp/logs"
-    steps:
-      - run:
-          name: "Download AWS Logs"
-          when: on_fail
-          command: |
-            mkdir -p <<parameters.download-dir>>
-            LOG_GROUP=$(python .circleci/scripts/get_output_from_stack.py <<parameters.cluster-id>> LogGroup)
-            python .circleci/scripts/download_logs.py ${LOG_GROUP} <<parameters.download-dir>>
-            python .circleci/scripts/download_logs.py "/aws/rds/cluster/<<parameters.cluster-id>>" <<parameters.download-dir>>
-      - store_artifacts:
-          path: <<parameters.download-dir>>
-
   install-webui-test-deps:
     steps:
       - run: |
@@ -446,6 +427,21 @@ commands:
         default: "8080"
     steps:
       - run: python .circleci/scripts/wait_for_master.py http://<<parameters.host>>:<<parameters.port>>
+
+  upload-cloud-watch-to-s3:
+    parameters:
+      cluster-id:
+        type: string
+      bucket:
+        type: string
+        default: det-ci-cloud-watch-logs
+    steps:
+      - run:
+          name: Upload cloud watch logs S3
+          when: always
+          command: |
+            LOG_GROUP=$(python .circleci/scripts/get_output_from_stack.py <<parameters.cluster-id>> LogGroup)
+            python .circleci/scripts/upload_cloud_watch_to_s3.py ${LOG_GROUP} <<parameters.bucket>> <<parameters.cluster-id>>
 
 jobs:
   build-docs:
@@ -932,7 +928,7 @@ jobs:
       - run-e2e-tests:
           mark: "nightly"
           master-host: ${MASTER_HOST}
-      - download-aws-logs:
+      - upload-cloud-watch-to-s3:
           cluster-id: ${CLUSTER_ID}
       - terminate-aws-cluster:
           cluster-id: ${CLUSTER_ID}
@@ -964,7 +960,7 @@ jobs:
       - run-e2e-tests:
           mark: "e2e_gpu"
           master-host: ${MASTER_HOST}
-      - download-aws-logs:
+      - upload-cloud-watch-to-s3:
           cluster-id: ${CLUSTER_ID}
       - terminate-aws-cluster:
           cluster-id: ${CLUSTER_ID}
@@ -996,7 +992,7 @@ jobs:
       - run-e2e-tests:
           mark: "parallel"
           master-host: ${MASTER_HOST}
-      - download-aws-logs:
+      - upload-cloud-watch-to-s3:
           cluster-id: ${CLUSTER_ID}
       - terminate-aws-cluster:
           cluster-id: ${CLUSTER_ID}
