@@ -162,13 +162,14 @@ export const jsonToExperiments = (data: unknown): Experiment[] => {
 
 const ioCheckpoinToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
   return { ...io,
-    endTime: io.end_time,
+    endTime: io.end_time || undefined,
     id: io.id,
     startTime: io.start_time,
     state: io.state as CheckpointState,
     stepId: io.step_id,
     trialId: io.trial_id,
-    validationMetric: io.valiation_metric,
+    uuid: io.uuid || undefined,
+    validationMetric: io.valiation_metric || undefined,
   };
 };
 

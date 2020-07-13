@@ -149,19 +149,19 @@ const validationHistoryIoType = io.type({
 });
 
 export const ioCheckpoint = io.type({
-  end_time: io.union([ io.string, io.undefined ]),
+  end_time: io.union([ io.string, io.null ]),
   id: io.number,
   start_time: io.string,
   state: checkpointStatesIoType,
   step_id: io.number,
   trial_id: io.number,
-  uuid: io.union([ io.string, io.undefined ]),
+  uuid: io.union([ io.string, io.null ]),
   valiation_metric: io.union([ io.number, io.undefined ]),
 });
 export type ioTypeCheckpoint = io.TypeOf<typeof ioCheckpoint>;
 
 export const ioTrialSummary = io.type({
-  best_available_checkpoint: io.union([ ioCheckpoint, io.undefined ]),
+  best_available_checkpoint: io.union([ ioCheckpoint, io.null ]),
   hparams: io.any,
   id: io.number,
   state: runStatesIoType,
