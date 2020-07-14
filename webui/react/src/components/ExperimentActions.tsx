@@ -71,21 +71,6 @@ const ExperimentActions: React.FC<Props> = ({ experiment, finally: updateFn }: P
     }
   , [ experiment.id, updateFn ]);
 
-  const archiveButton = <Button key="archive" loading={buttonStates.Archive}
-    type="primary" onClick={handleArchive(true)}>
-    Archive</Button>;
-  const unarchiveButton = <Button key="unarchive" loading={buttonStates.Archive}
-    type="primary" onClick={handleArchive(false)}>
-    Unarchive</Button>;
-
-  const forkButton = <Button disabled key="fork" type="primary">Fork</Button>;
-  const pauseButton = <Button key="pause" loading={buttonStates.Pause}
-    type="primary" onClick={handleStateChange(RunState.Paused)}>
-    Pause</Button>;
-  const activateButton = <Button key="activate" loading={buttonStates.Activate}
-    type="primary" onClick={handleStateChange(RunState.Active)}>
-    Activate</Button>;
-
   const cancelButton = <Popconfirm
     cancelText="No"
     key="cancel"
@@ -108,10 +93,6 @@ const ExperimentActions: React.FC<Props> = ({ experiment, finally: updateFn }: P
     <Button danger loading={buttonStates.Kill} type="primary">Kill</Button>
   </Popconfirm>;
 
-  const tensorboardButton = <Button key="tensorboard"
-    loading={buttonStates.Tensorboard} type="primary" onClick={handleLaunchTensorboard}>
-      Tensorboard</Button>;
-
   interface ConditionalButton {
     btn: React.ReactNode;
     showIf?: (exp: ExperimentDetails) => boolean;
@@ -126,21 +107,29 @@ const ExperimentActions: React.FC<Props> = ({ experiment, finally: updateFn }: P
   };
 
   const actionButtons: ConditionalButton[] = [
-    { btn: forkButton },
+    { btn: <Button disabled key="fork" type="primary">Fork</Button> },
     {
-      btn: archiveButton,
+      btn: <Button key="archive" loading={buttonStates.Archive}
+        type="primary" onClick={handleArchive(true)}>
+    Archive</Button>,
       showIf: (exp): boolean => terminalRunStates.has(exp.state) && !exp.archived,
     },
     {
-      btn: unarchiveButton,
+      btn: <Button key="unarchive" loading={buttonStates.Archive}
+        type="primary" onClick={handleArchive(false)}>
+    Unarchive</Button>,
       showIf: (exp): boolean => terminalRunStates.has(exp.state) && exp.archived,
     },
     {
-      btn: pauseButton,
+      btn: <Button key="pause" loading={buttonStates.Pause}
+        type="primary" onClick={handleStateChange(RunState.Paused)}>
+    Pause</Button>,
       showIf: (exp): boolean => exp.state === RunState.Active,
     },
     {
-      btn: activateButton,
+      btn: <Button key="activate" loading={buttonStates.Activate}
+        type="primary" onClick={handleStateChange(RunState.Active)}>
+    Activate</Button>,
       showIf: (exp): boolean => exp.state === RunState.Paused,
     },
     {
@@ -152,7 +141,9 @@ const ExperimentActions: React.FC<Props> = ({ experiment, finally: updateFn }: P
       showIf: (exp): boolean => killableRunStates.includes(exp.state),
     },
     {
-      btn: tensorboardButton,
+      btn: <Button key="tensorboard"
+        loading={buttonStates.Tensorboard} type="primary" onClick={handleLaunchTensorboard}>
+      Tensorboard</Button>,
       showIf: (exp): boolean => !experimentWillNeverHaveData(exp),
     },
   ];
