@@ -15,51 +15,45 @@ interface Props {
 }
 
 enum Action {
-  Activate = 'Activate',
   Archive = 'Archive',
-  Cancel = 'Cancel',
   Kill = 'Kill',
-  Pause = 'Pause',
   Tensorboard = 'Tensorboard',
 }
 
-type ButtonLoadingStates = Record<Action, boolean>;
+type ButtonLoadingStates = Record<Action | RunState, boolean>;
+
+const keys = [ ...Object.keys(RunState), ...Object.keys(Action) ];
+const initialState = keys.reduce((acc, cur) => ({ ...acc, [cur]: false }), {});
 
 const ExperimentActions: React.FC<Props> = ({ experiment, finally: updateFn }: Props) => {
 
-  const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
-    Activate: false,
-    Archive: false,
-    Cancel: false,
-    Kill: false,
-    Pause: false,
-    Tensorboard: false,
-  });
+  const [ buttonStates, setButtonStates ] =
+  useState<ButtonLoadingStates>(initialState as ButtonLoadingStates);
 
   const handleArchive = useCallback((archive: boolean) =>
     (): Promise<unknown> => {
-      setButtonStates(state => ({ ...state, archive: true }));
+      setButtonStates(state => ({ ...state, Archive: true }));
       return archiveExperiment(experiment.id, archive)
         .then(updateFn)
-        .finally(() => setButtonStates(state => ({ ...state, archive: false })));
+        .finally(() => setButtonStates(state => ({ ...state, Archive: false })));
     },
   [ experiment.id, updateFn ]);
 
   const handleKill = useCallback(() => {
-    setButtonStates(state => ({ ...state, kill: true }));
+    setButtonStates(state => ({ ...state, Kill: true }));
     killExperiment({ experimentId: experiment.id })
       .then(updateFn)
-      .finally(() => setButtonStates(state => ({ ...state, kill: false })));
+      .finally(() => setButtonStates(state => ({ ...state, Kill: false })));
   }, [ experiment.id, updateFn ]);
 
   const handleLaunchTensorboard = useCallback(() => {
-    setButtonStates(state => ({ ...state, tensorboard: true }));
+    setButtonStates(state => ({ ...state, Tensorboard: true }));
     launchTensorboard({ ids: [ experiment.id ], type: TBSourceType.Experiment })
       .then((tensorboard) => {
         openCommand(tensorboard);
         return updateFn();
       })
-      .finally(() => setButtonStates(state => ({ ...state, tensorboard: false })));
+      .finally(() => setButtonStates(state => ({ ...state, Tensorboard: false })));
   }, [ experiment.id, updateFn ]);
 
   const handleStateChange = useCallback((targetState: RunState) =>
@@ -79,10 +73,10 @@ const ExperimentActions: React.FC<Props> = ({ experiment, finally: updateFn }: P
     Unarchive</Button>;
 
   const forkButton = <Button disabled key="fork" type="primary">Fork</Button>;
-  const pauseButton = <Button key="pause" loading={buttonStates.Pause}
+  const pauseButton = <Button key="pause" loading={buttonStates[RunState.Paused]}
     type="primary" onClick={handleStateChange(RunState.Paused)}>
     Pause</Button>;
-  const activateButton = <Button key="activate" loading={buttonStates.Activate}
+  const activateButton = <Button key="activate" loading={buttonStates[RunState.Active]}
     type="primary" onClick={handleStateChange(RunState.Active)}>
     Activate</Button>;
 
@@ -93,7 +87,7 @@ const ExperimentActions: React.FC<Props> = ({ experiment, finally: updateFn }: P
     title="Are you sure you want to kill the experiment?"
     onConfirm={handleStateChange(RunState.StoppingCanceled)}
   >
-    <Button danger loading={buttonStates.Cancel}
+    <Button danger loading={buttonStates[RunState.StoppingCanceled]}
       type="primary">
     Cancel</Button>
   </Popconfirm>;
