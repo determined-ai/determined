@@ -41,7 +41,7 @@ const ExperimentDetailsComp: React.FC = () => {
   }
 
   return (
-    <Page title={`Experiment ${experiment.data?.config.description}`}>
+    <Page title={`Experiment ${experimentId}: ${experiment.data?.config.description}`}>
       <Breadcrumb>
         <Breadcrumb.Item>
           <Space align="center" size="small">
@@ -53,7 +53,7 @@ const ExperimentDetailsComp: React.FC = () => {
           <span>{experimentId}</span>
         </Breadcrumb.Item>
       </Breadcrumb>
-      { <ExperimentInfoBox experiment={experiment.data} /> }
+      <ExperimentInfoBox experiment={experiment.data} />
       <Section title="Chart" />
       <Section title="Trials" />
     </Page>

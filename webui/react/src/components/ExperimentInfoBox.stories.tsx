@@ -38,7 +38,5 @@ const experimentDetails: ExperimentDetails = {
 };
 
 export const state = (): React.ReactNode => (
-  <ExperimentInfoBox
-    experiment={experimentDetails}
-  />
+  <ExperimentInfoBox experiment={experimentDetails} />
 );
