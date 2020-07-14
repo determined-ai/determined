@@ -41,3 +41,25 @@ checkpointStorage:
   # accessKey: <access_key>
   # secretKey: <secret_key>
   # endpointUrl: <endpoint_url>
+
+# This is the number of GPUs there are per machine. Determined uses this information when
+# scheduling multi-GPU tasks. Multi-gpu (distributed training) tasks will be scheduled as
+# slotsPerTask / slotsPerNode separate pods (tasks sizes that are not divisible by slotsPerNode
+# are never scheduled.
+slotsPerNode:
+
+## Configure the task container defaults. Tasks include trials, commands, tensorboards and more.
+## For all task containers, shm_size_bytes and network_mode are configurable. For trials, the
+## network interface used by distributed (multi-machine) training and ports used by the NCCL and
+## GLOO libraries during distributed training are configurable. These default to auto-discovery and
+## random non-privileged ports, respectively.
+taskContainerDefaults:
+  shmSizeBytes: 4294967296
+  # networkMode: bridge
+  # dtrainNetworkInterface: <network interface name>
+  # ncclPortRange: <MIN:MAX>
+  # glooPortRange: <MIN:MAX>
+
+## Configure whether we collect anonymous information about the usage of Determined.
+telemetry:
+  enabled: true
