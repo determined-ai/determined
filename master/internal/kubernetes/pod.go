@@ -37,6 +37,7 @@ const (
 
 type pod struct {
 	cluster                  *actor.Ref
+	clusterID                string
 	taskHandler              *actor.Ref
 	clientSet                *k8sClient.Clientset
 	namespace                string
@@ -59,6 +60,7 @@ type pod struct {
 
 func newPod(
 	cluster *actor.Ref,
+	clusterID string,
 	taskHandler *actor.Ref,
 	clientSet *k8sClient.Clientset,
 	namespace string,
@@ -79,6 +81,7 @@ func newPod(
 
 	return &pod{
 		cluster:                  cluster,
+		clusterID:                clusterID,
 		taskHandler:              taskHandler,
 		clientSet:                clientSet,
 		namespace:                namespace,
@@ -348,7 +351,7 @@ func (p *pod) configureEnvVars(
 		slotIds = append(slotIds, strconv.Itoa(i))
 	}
 
-	envVarsMap["DET_CLUSTER_ID"] = "k8cluster"
+	envVarsMap["DET_CLUSTER_ID"] = p.clusterID
 	envVarsMap["DET_MASTER"] = fmt.Sprintf("%s:%d", p.masterIP, p.masterPort)
 	envVarsMap["DET_MASTER_HOST"] = p.masterIP
 	envVarsMap["DET_MASTER_ADDR"] = p.masterIP

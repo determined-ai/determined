@@ -68,6 +68,7 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 			msg.System,
 			msg.Echo,
 			ctx.Self(),
+			k.clusterID,
 			k.config.Namespace,
 			k.config.MasterServiceName,
 			k.config.LeaveKubernetesResources,

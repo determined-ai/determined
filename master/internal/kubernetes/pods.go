@@ -28,6 +28,7 @@ type podMetadata struct {
 
 type pods struct {
 	cluster                  *actor.Ref
+	clusterID                string
 	namespace                string
 	masterServiceName        string
 	leaveKubernetesResources bool
@@ -50,12 +51,14 @@ func Initialize(
 	s *actor.System,
 	_ *echo.Echo,
 	c *actor.Ref,
+	clusterID string,
 	namespace string,
 	masterServiceName string,
 	leaveKubernetesResources bool,
 ) *actor.Ref {
 	podsActor, ok := s.ActorOf(actor.Addr("pods"), &pods{
 		cluster:                  c,
+		clusterID:                clusterID,
 		namespace:                namespace,
 		masterServiceName:        masterServiceName,
 		podNameToPodHandler:      make(map[string]*actor.Ref),
@@ -193,7 +196,7 @@ func (p *pods) startPodInformer(ctx *actor.Context) {
 
 func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
 	newPodHandler := newPod(
-		p.cluster, msg.TaskHandler, p.clientSet, p.namespace, p.masterIP,
+		p.cluster, p.clusterID, msg.TaskHandler, p.clientSet, p.namespace, p.masterIP,
 		p.masterPort, msg.Spec, msg.Slots, msg.Rank, p.podInterface,
 		p.configMapInterface, p.leaveKubernetesResources,
 	)
