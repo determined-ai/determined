@@ -153,7 +153,7 @@ export const jsonToExperiments = (data: unknown): Experiment[] => {
       endTime: experiment.end_time || undefined,
       id: experiment.id,
       ownerId: experiment.owner_id,
-      progress: experiment.progress || undefined,
+      progress: experiment.progress !== null ? experiment.progress : undefined,
       startTime: experiment.start_time,
       state: experiment.state as RunState,
     };
@@ -169,7 +169,7 @@ const ioCheckpoinToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
     stepId: io.step_id,
     trialId: io.trial_id,
     uuid: io.uuid || undefined,
-    validationMetric: io.valiation_metric || undefined,
+    validationMetric: io.valiation_metric !== null ? io.valiation_metric : undefined,
   };
 };
 
@@ -189,7 +189,7 @@ export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
     endTime: ioType.end_time || undefined,
     id: ioType.id,
     ownerId: ioType.owner.id,
-    progress: ioType.progress || undefined,
+    progress: ioType.progress !== null ? ioType.progress : undefined,
     startTime: ioType.start_time,
     state: ioType.state as RunState,
     trials: ioType.trials.map(ioTrialToTrial),
