@@ -71,28 +71,6 @@ const ExperimentActions: React.FC<Props> = ({ experiment, finally: updateFn }: P
     }
   , [ experiment.id, updateFn ]);
 
-  const cancelButton = <Popconfirm
-    cancelText="No"
-    key="cancel"
-    okText="Yes"
-    title="Are you sure you want to kill the experiment?"
-    onConfirm={handleStateChange(RunState.StoppingCanceled)}
-  >
-    <Button danger loading={buttonStates.Cancel}
-      type="primary">
-    Cancel</Button>
-  </Popconfirm>;
-
-  const killButton = <Popconfirm
-    cancelText="No"
-    key="kill"
-    okText="Yes"
-    title="Are you sure you want to kill the experiment?"
-    onConfirm={handleKill}
-  >
-    <Button danger loading={buttonStates.Kill} type="primary">Kill</Button>
-  </Popconfirm>;
-
   interface ConditionalButton {
     btn: React.ReactNode;
     showIf?: (exp: ExperimentDetails) => boolean;
@@ -133,11 +111,27 @@ const ExperimentActions: React.FC<Props> = ({ experiment, finally: updateFn }: P
       showIf: (exp): boolean => exp.state === RunState.Paused,
     },
     {
-      btn: cancelButton,
+      btn: <Popconfirm
+        cancelText="No"
+        key="cancel"
+        okText="Yes"
+        title="Are you sure you want to kill the experiment?"
+        onConfirm={handleStateChange(RunState.StoppingCanceled)}
+      >
+        <Button danger loading={buttonStates.Cancel} type="primary">Cancel</Button>
+      </Popconfirm>,
       showIf: (exp): boolean => cancellableRunStates.includes(exp.state),
     },
     {
-      btn: killButton,
+      btn: <Popconfirm
+        cancelText="No"
+        key="kill"
+        okText="Yes"
+        title="Are you sure you want to kill the experiment?"
+        onConfirm={handleKill}
+      >
+        <Button danger loading={buttonStates.Kill} type="primary">Kill</Button>
+      </Popconfirm>,
       showIf: (exp): boolean => killableRunStates.includes(exp.state),
     },
     {
