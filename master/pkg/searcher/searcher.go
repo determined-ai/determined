@@ -170,7 +170,7 @@ func (s *Searcher) WorkloadCompleted(
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
 	}
-	operations = append(newCheckpoints, s.operationPlanner.Plan(operations)...)
+	operations = append(s.operationPlanner.Plan(operations), newCheckpoints...)
 	s.eventLog.OperationsCreated(operations...)
 	operations, err = s.filterCompletedCheckpoints(operations)
 	if err != nil {
