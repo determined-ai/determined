@@ -205,6 +205,7 @@ export interface TrialSummary {
   state: RunState;
   bestAvailableCheckpoint?: Checkpoint;
   numSteps: number;
+  numBatches: number;
 }
 
 export interface Experiment {

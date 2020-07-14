@@ -179,6 +179,8 @@ const ioTrialToTrial = (io: ioTypeTrialSummary): TrialSummary => {
   return { ...io,
     bestAvailableCheckpoint: io.best_available_checkpoint
       ? ioCheckpoinToCheckpoint(io.best_available_checkpoint) : undefined,
+    numBatches: io.num_batches,
+    numSteps: io.num_steps,
     state: io.state as RunState,// TODO add checkpoint decoder
   };
 };
