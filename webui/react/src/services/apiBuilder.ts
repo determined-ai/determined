@@ -70,6 +70,7 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
   };
 }
 
+export const experimentsApi = DetSwagger.ExperimentsApiFetchParamCreator();
 /*
   consumeStream is used to consume streams from the generated TS client.
   We use the provided fetchParamCreator to create fetch arguments and use that

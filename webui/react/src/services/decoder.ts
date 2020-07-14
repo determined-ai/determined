@@ -2,10 +2,13 @@ import dayjs from 'dayjs';
 
 import {
   decode, ioCommandLogs, ioDeterminedInfo, ioExperimentConfig, ioExperimentDetails, ioExperiments,
-  ioGenericCommand, ioLogs, ioTrialDetails, ioTypeAgents,
+  ioGenericCommand, ioLog, ioLogs, ioTrialDetails, ioTypeAgents,
   ioTypeCheckpoint, ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo,
-  ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand,
-  ioTypeGenericCommands, ioTypeLogs, ioTypeTrialDetails, ioTypeTrialSummary, ioTypeUsers,
+  ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments,
+  ioTypeGenericCommand, ioTypeGenericCommands,
+  ioTypeLog, ioTypeLogs,
+  ioTypeTrialDetails, ioTypeTrialSummary,
+  ioTypeUsers,
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, Command, CommandState, CommandType,
@@ -227,6 +230,14 @@ export const jsonToLogs = (data: unknown): Log[] => {
     message: log.message,
     time: log.time,
   }));
+};
+
+export const jsonToTrialLog = (data: unknown): Log => {
+  const ioType = decode<ioTypeLog>(ioLog, data);
+  const matches = ioType.message.match(/\[([^\]]+)\] (.*)/);
+  const time = matches && matches[1] ? matches[1] : undefined;
+  const message = matches && matches[2] ? matches[2] : '';
+  return { id: ioType.id, message, time };
 };
 
 export const jsonToTrialLogs = (data: unknown): Log[] => {
