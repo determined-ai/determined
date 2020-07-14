@@ -46,7 +46,6 @@ type Output<T> = [
 const defaultReducer = <T>(state: State<T>, action: Action<T>): State<T> => {
   switch (action.type) {
     case ActionType.SetData: {
-      // TODO unnecessary?
       const data = isEqual(action.value, state.data) ? state.data : action.value;
       return { ...state, data, hasLoaded: true, isLoading: false };
     }
