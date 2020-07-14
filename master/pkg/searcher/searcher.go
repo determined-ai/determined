@@ -20,16 +20,18 @@ type Searcher struct {
 
 // NewSearcher creates a new Searcher configured with the provided searcher config.
 func NewSearcher(
-	seed uint32, method SearchMethod, hparams model.Hyperparameters, batchesPerStep,
-	recordsPerEpoch int,
+	seed uint32, method SearchMethod, hparams model.Hyperparameters,
+	batchesPerStep, recordsPerEpoch int, minValidationPeriod, minCheckpointPeriod model.Length,
+	checkpointPolicy string,
 ) *Searcher {
 	rand := nprand.New(seed)
 	return &Searcher{
-		rand:             rand,
-		hparams:          hparams,
-		eventLog:         NewEventLog(),
-		method:           method,
-		operationPlanner: NewOperationPlanner(method.unit(), batchesPerStep, recordsPerEpoch),
+		rand:     rand,
+		hparams:  hparams,
+		eventLog: NewEventLog(),
+		method:   method,
+		operationPlanner: NewOperationPlanner(batchesPerStep, recordsPerEpoch,
+			minValidationPeriod, minCheckpointPeriod, checkpointPolicy),
 	}
 }
 
@@ -57,7 +59,7 @@ func (s *Searcher) filterCompletedCheckpoints(ops []Operation) ([]Operation, err
 				return nil, errors.Errorf("event log ignored a cached WorkloadCompleted message")
 			}
 			requestID := s.eventLog.RequestIDs[msg.Workload.TrialID]
-			op, err := s.operationPlanner.WorkloadCompleted(requestID, msg.Workload)
+			op, _, err := s.operationPlanner.WorkloadCompleted(requestID, msg.Workload, false)
 			if err != nil {
 				return filteredOps, errors.Wrapf(err,
 					"error replaying WorkloadCompleted to operation planner %s", msg.Workload)
@@ -118,7 +120,9 @@ func (s *Searcher) TrialCreated(create Create, trialID int) ([]Operation, error)
 
 // WorkloadCompleted informs the searcher that the given workload initiated by the same searcher
 // has completed. Returns any new operations as a result of this workload completing.
-func (s *Searcher) WorkloadCompleted(message CompletedMessage) ([]Operation, error) {
+func (s *Searcher) WorkloadCompleted(
+	message CompletedMessage, isBestValidation bool,
+) ([]Operation, error) {
 	requestID, ok := s.eventLog.RequestIDs[message.Workload.TrialID]
 	if !ok {
 		return nil, errors.Errorf("unexpected trial ID sent to searcher: %d",
@@ -131,12 +135,14 @@ func (s *Searcher) WorkloadCompleted(message CompletedMessage) ([]Operation, err
 		return nil, nil
 	}
 
-	operation, err := s.operationPlanner.WorkloadCompleted(requestID, message.Workload)
+	searcherOp, newCheckpoints, err := s.operationPlanner.WorkloadCompleted(
+		requestID, message.Workload, isBestValidation)
 	switch {
 	case err != nil:
 		return nil, errors.Wrapf(err, "error collating workload %s", message.Workload)
-	case operation == nil && message.ExitedReason == nil:
-		return nil, nil
+	case searcherOp == nil && message.ExitedReason == nil:
+		s.eventLog.OperationsCreated(newCheckpoints...)
+		return newCheckpoints, nil
 	}
 
 	var operations []Operation
@@ -144,7 +150,7 @@ func (s *Searcher) WorkloadCompleted(message CompletedMessage) ([]Operation, err
 	if message.ExitedReason != nil {
 		operations, err = s.method.trialExitedEarly(s.context(), requestID)
 	} else {
-		switch tOp := operation.(type) {
+		switch tOp := searcherOp.(type) {
 		case Train:
 			operations, err = s.method.trainCompleted(s.context(), requestID, tOp)
 		case Checkpoint:
@@ -164,7 +170,7 @@ func (s *Searcher) WorkloadCompleted(message CompletedMessage) ([]Operation, err
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
 	}
-	operations = s.operationPlanner.Plan(operations)
+	operations = append(newCheckpoints, s.operationPlanner.Plan(operations)...)
 	s.eventLog.OperationsCreated(operations...)
 	operations, err = s.filterCompletedCheckpoints(operations)
 	if err != nil {

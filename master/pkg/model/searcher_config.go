@@ -45,6 +45,32 @@ func (s *SearcherConfig) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, DefaultParser(s))
 }
 
+// Unit implements the model.InUnits interface.
+func (s SearcherConfig) Unit() Unit {
+	switch {
+	case s.SingleConfig != nil:
+		return s.SingleConfig.Unit()
+	case s.RandomConfig != nil:
+		return s.RandomConfig.Unit()
+	case s.GridConfig != nil:
+		return s.GridConfig.Unit()
+	case s.SyncHalvingConfig != nil:
+		return s.SyncHalvingConfig.Unit()
+	case s.AdaptiveConfig != nil:
+		return s.AdaptiveConfig.Unit()
+	case s.AdaptiveSimpleConfig != nil:
+		return s.AdaptiveSimpleConfig.Unit()
+	case s.AsyncHalvingConfig != nil:
+		return s.AsyncHalvingConfig.Unit()
+	case s.AdaptiveASHAConfig != nil:
+		return s.AdaptiveASHAConfig.Unit()
+	case s.PBTConfig != nil:
+		return s.PBTConfig.Unit()
+	default:
+		panic("no searcher type specified")
+	}
+}
+
 // SingleConfig configures a single trial.
 type SingleConfig struct {
 	MaxLength Length `json:"max_length"`
@@ -60,6 +86,11 @@ func (s SingleConfig) Validate() (errs []error) {
 	}
 }
 
+// Unit implements the model.InUnits interface.
+func (s SingleConfig) Unit() Unit {
+	return s.MaxLength.Unit
+}
+
 // RandomConfig configures a random search.
 type RandomConfig struct {
 	MaxLength Length `json:"max_length"`
@@ -67,6 +98,11 @@ type RandomConfig struct {
 
 	// Deprecated
 	MaxSteps int `json:"max_steps"`
+}
+
+// Unit implements the model.InUnits interface.
+func (r RandomConfig) Unit() Unit {
+	return r.MaxLength.Unit
 }
 
 // Validate implements the check.Validatable interface.
@@ -83,6 +119,11 @@ type GridConfig struct {
 
 	// Deprecated
 	MaxSteps int `json:"max_steps"`
+}
+
+// Unit implements the model.InUnits interface.
+func (g GridConfig) Unit() Unit {
+	return g.MaxLength.Unit
 }
 
 // Validate implements the check.Validatable interface.
@@ -105,6 +146,11 @@ type SyncHalvingConfig struct {
 	// Deprecated
 	TargetTrialSteps int `json:"target_trial_steps"`
 	StepBudget       int `json:"step_budget"`
+}
+
+// Unit implements the model.InUnits interface.
+func (s SyncHalvingConfig) Unit() Unit {
+	return s.MaxLength.Unit
 }
 
 // AsyncHalvingConfig configures asynchronous successive halving.
@@ -130,6 +176,11 @@ func (a AsyncHalvingConfig) Validate() (errs []error) {
 		check.GreaterThan(a.NumRungs, 0, "num_rungs must be > 0"),
 		check.GreaterThanOrEqualTo(a.MaxConcurrentTrials, 0, "max_concurrent_trials must be >= 0"),
 	}
+}
+
+// Unit implements the model.InUnits interface.
+func (a AsyncHalvingConfig) Unit() Unit {
+	return a.MaxLength.Unit
 }
 
 // AdaptiveMode specifies how aggressively to perform early stopping.
@@ -179,6 +230,11 @@ func (a AdaptiveConfig) Validate() []error {
 	}
 }
 
+// Unit implements the model.InUnits interface.
+func (a AdaptiveConfig) Unit() Unit {
+	return a.MaxLength.Unit
+}
+
 // AdaptiveSimpleConfig configures an simplified adaptive search.
 type AdaptiveSimpleConfig struct {
 	Metric          string       `json:"metric"`
@@ -205,6 +261,11 @@ func (a AdaptiveSimpleConfig) Validate() []error {
 			"invalid adaptive mode"),
 		check.GreaterThan(a.MaxRungs, 0, "max_rungs must be > 0"),
 	}
+}
+
+// Unit implements the model.InUnits interface.
+func (a AdaptiveSimpleConfig) Unit() Unit {
+	return a.MaxLength.Unit
 }
 
 // AdaptiveASHAConfig configures an adaptive searcher for use with ASHA.
@@ -234,6 +295,11 @@ func (a AdaptiveASHAConfig) Validate() []error {
 		check.GreaterThan(a.MaxRungs, 0, "max_rungs must be > 0"),
 		check.GreaterThanOrEqualTo(a.MaxConcurrentTrials, 0, "max_concurrent_trials must be >= 0"),
 	}
+}
+
+// Unit implements the model.InUnits interface.
+func (a AdaptiveASHAConfig) Unit() Unit {
+	return a.MaxLength.Unit
 }
 
 // PBTReplaceConfig configures replacement for a PBT search.
@@ -287,4 +353,9 @@ func (p PBTConfig) Validate() []error {
 		check.GreaterThan(p.NumRounds, 0, "num_rounds must be > 0"),
 		check.GreaterThan(p.LengthPerRound.Units, 0, "length_per_round must be > 0"),
 	}
+}
+
+// Unit implements the model.InUnits interface.
+func (p PBTConfig) Unit() Unit {
+	return p.LengthPerRound.Unit
 }

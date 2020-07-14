@@ -42,7 +42,3 @@ func (s *randomSearch) progress(unitsCompleted model.Length) float64 {
 func (s *randomSearch) trialExitedEarly(context, RequestID) ([]Operation, error) {
 	return nil, nil
 }
-
-func (s *randomSearch) unit() model.Unit {
-	return s.MaxLength.Unit
-}

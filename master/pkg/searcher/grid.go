@@ -43,10 +43,6 @@ func (s *gridSearch) trialExitedEarly(context, RequestID) ([]Operation, error) {
 	return nil, nil
 }
 
-func (s *gridSearch) unit() model.Unit {
-	return s.MaxLength.Unit
-}
-
 func newHyperparameterGrid(params model.Hyperparameters) []hparamSample {
 	var names []string
 	var values [][]interface{}

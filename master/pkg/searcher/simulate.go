@@ -114,7 +114,7 @@ func Simulate(
 				return simulation, err
 			}
 			simulation.Results[requestID] = append(simulation.Results[requestID], workloadMessage)
-			ops, err := s.WorkloadCompleted(workloadMessage)
+			ops, err := s.WorkloadCompleted(workloadMessage, false) // TODO(brad): do something more correct
 			if err != nil {
 				return simulation, err
 			}

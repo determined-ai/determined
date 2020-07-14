@@ -19,7 +19,7 @@ func newTournamentSearch(subSearches ...SearchMethod) *tournamentSearch {
 		trialTable:              make(map[RequestID]SearchMethod),
 	}
 	for _, subSearch := range s.subSearches {
-		s.subSearchUnitsCompleted[subSearch] = model.NewLength(s.unit(), 0)
+		s.subSearchUnitsCompleted[subSearch] = model.NewLength(s.Unit(), 0)
 	}
 	return s
 }
@@ -90,8 +90,8 @@ func (s *tournamentSearch) progress(model.Length) float64 {
 	return sum / float64(len(s.subSearches))
 }
 
-func (s *tournamentSearch) unit() model.Unit {
-	return s.subSearches[0].unit()
+func (s *tournamentSearch) Unit() model.Unit {
+	return s.subSearches[0].Unit()
 }
 
 func (s *tournamentSearch) markCreates(subSearch SearchMethod, operations []Operation) []Operation {

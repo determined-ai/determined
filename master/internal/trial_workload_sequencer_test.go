@@ -131,7 +131,7 @@ checkpoint_policy: none
 		Workload: validationWorkload2,
 	}
 
-	s := newTrialWorkloadSequencer(experiment, create, nil)
+	s := newTrialWorkloadSequencer(experiment.ID, create, nil)
 
 	// Check that upToDate() returns true as soon as sequencer is created.
 	assert.Assert(t, s.UpToDate())
@@ -156,24 +156,24 @@ checkpoint_policy: none
 	// Check that before training has completed, there is nothing to checkpoint.
 	assert.Assert(t, s.PrecloseCheckpointWorkload() == nil)
 
-	assert.NilError(t, s.WorkloadCompleted(trainCompleted1, nil))
+	assert.NilError(t, s.WorkloadCompleted(trainCompleted1))
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, trainWorkload2)
 	assert.Equal(t, *s.PrecloseCheckpointWorkload(), checkpointWorkload1)
 
-	assert.NilError(t, s.WorkloadCompleted(trainCompleted2, nil))
+	assert.NilError(t, s.WorkloadCompleted(trainCompleted2))
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, validationWorkload2)
 	assert.Equal(t, *s.PrecloseCheckpointWorkload(), checkpointWorkload2)
 
-	assert.NilError(t, s.WorkloadCompleted(validationCompleted2, nil))
+	assert.NilError(t, s.WorkloadCompleted(validationCompleted2))
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, checkpointWorkload2)
 
-	assert.NilError(t, s.WorkloadCompleted(checkpointCompleted2, nil))
+	assert.NilError(t, s.WorkloadCompleted(checkpointCompleted2))
 	assert.Assert(t, s.PrecloseCheckpointWorkload() == nil)
 
 	assert.Assert(t, s.UpToDate())
@@ -193,11 +193,11 @@ checkpoint_policy: none
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, trainWorkload3)
-	assert.NilError(t, s.WorkloadCompleted(trainCompleted3, nil))
+	assert.NilError(t, s.WorkloadCompleted(trainCompleted3))
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, trainWorkload4)
-	assert.NilError(t, s.WorkloadCompleted(trainCompleted4, nil))
+	assert.NilError(t, s.WorkloadCompleted(trainCompleted4))
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, trainWorkload5)

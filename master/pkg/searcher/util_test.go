@@ -41,7 +41,9 @@ func checkSimulation(
 	expected [][]Kind,
 	recordsPerEpoch int,
 ) {
-	search := NewSearcher(0, method, params, defaultBatchesPerStep, recordsPerEpoch)
+	search := NewSearcher(0, method, params, defaultBatchesPerStep, recordsPerEpoch,
+		model.NewLength(method.Unit(), 0), model.NewLength(method.Unit(), 0),
+		model.DefaultExperimentConfig().CheckpointPolicy)
 	actual, err := Simulate(search, new(int64), validation, true, defaultMetric)
 	assert.NilError(t, err)
 
@@ -72,8 +74,14 @@ func checkReproducibility(
 	t assert.TestingT, methodGen func() SearchMethod, hparams model.Hyperparameters, metric string,
 ) {
 	seed := int64(17)
-	searcher1 := NewSearcher(uint32(seed), methodGen(), hparams, defaultBatchesPerStep, 0)
-	searcher2 := NewSearcher(uint32(seed), methodGen(), hparams, defaultBatchesPerStep, 0)
+	method1 := methodGen()
+	searcher1 := NewSearcher(uint32(seed), method1, hparams, defaultBatchesPerStep, 0,
+		model.NewLength(method1.Unit(), 0), model.NewLength(method1.Unit(), 0),
+		model.NoneCheckpointPolicy)
+	method2 := methodGen()
+	searcher2 := NewSearcher(uint32(seed), methodGen(), hparams, defaultBatchesPerStep, 0,
+		model.NewLength(method2.Unit(), 0), model.NewLength(method2.Unit(), 0),
+		model.NoneCheckpointPolicy)
 
 	results1, err1 := Simulate(searcher1, &seed, ConstantValidation, true, metric)
 	assert.NilError(t, err1)
@@ -364,7 +372,8 @@ func runValueSimulationTestCases(t *testing.T, testCases []valueSimulationTestCa
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
 			method := NewSearchMethod(tc.config)
-			operationPlanner := NewOperationPlanner(tc.unit, tc.batchesPerStep, tc.recordsPerEpoch)
+			operationPlanner := NewOperationPlanner(tc.batchesPerStep, tc.recordsPerEpoch,
+				model.NewLength(tc.unit, 0), model.NewLength(tc.unit, 0), model.NoneCheckpointPolicy)
 			err := checkValueSimulation(t, method, operationPlanner, tc.hparams, tc.expectedTrials)
 			assert.NilError(t, err)
 		})
@@ -402,7 +411,7 @@ func simulateWorkloadComplete(
 			StepID:     operation.StepID,
 			NumBatches: operation.NumBatches,
 		}
-		op, pErr := operationPlanner.WorkloadCompleted(requestID, w)
+		op, _, pErr := operationPlanner.WorkloadCompleted(requestID, w, false)
 		if pErr != nil {
 			return nil, errors.Wrap(pErr, "trainCompleted")
 		}
@@ -433,7 +442,7 @@ func simulateWorkloadComplete(
 				"error": val,
 			},
 		}
-		op, pErr := operationPlanner.WorkloadCompleted(requestID, w)
+		op, _, pErr := operationPlanner.WorkloadCompleted(requestID, w, false)
 		if pErr != nil {
 			return nil, errors.Wrap(pErr, "validationCompleted")
 		} else if tOp, ok := op.(Validate); !ok {
@@ -455,7 +464,7 @@ func simulateWorkloadComplete(
 		}
 		metrics := CheckpointMetrics{}
 
-		op, err := operationPlanner.WorkloadCompleted(requestID, w)
+		op, _, err := operationPlanner.WorkloadCompleted(requestID, w, false)
 		if err != nil {
 			return nil, errors.Wrap(err, "checkpointCompleted")
 		} else if tOp, ok := op.(Checkpoint); !ok {

@@ -43,8 +43,8 @@ type SearchMethod interface {
 	progress(totalUnitsCompleted model.Length) float64
 	// trialExitedEarly informs the searcher that the trial has exited earlier than expected.
 	trialExitedEarly(ctx context, requestID RequestID) ([]Operation, error)
-	// unit returns the unit the searcher is configured in terms of.
-	unit() model.Unit
+	// SearchMethod embeds the InUnits interface because it is in terms of a specific unit.
+	model.InUnits
 }
 
 // NewSearchMethod returns a new search method for the provided searcher configuration.

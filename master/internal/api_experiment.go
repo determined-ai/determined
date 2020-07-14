@@ -70,7 +70,8 @@ func (a *apiServer) PreviewHPSearch(
 
 	sm := searcher.NewSearchMethod(config.Searcher)
 	s := searcher.NewSearcher(
-		req.Seed, sm, config.Hyperparameters, config.BatchesPerStep, config.RecordsPerEpoch)
+		req.Seed, sm, config.Hyperparameters, config.BatchesPerStep, config.RecordsPerEpoch,
+		model.NewLength(sm.Unit(), 0), model.NewLength(sm.Unit(), 0), config.CheckpointPolicy)
 	sim, err := searcher.Simulate(s, nil, searcher.RandomValidation, true, config.Searcher.Metric)
 	if err != nil {
 		return nil, err

@@ -63,8 +63,11 @@ const (
 
 // Trial-specific actor messages.
 type (
-	killTrial    struct{}
-	restoreTrial struct{}
+	killTrial                struct{}
+	restoreTrial             struct{}
+	processCompletedWorkload struct {
+		completedMessage searcher.CompletedMessage
+	}
 
 	// When we issue a TERMINATE workload, we send a delayed terminateTimeout message with a record
 	// of the number of runID that the trial had at the time we issued the TERMINATE. If we
@@ -212,7 +215,7 @@ func newTrial(
 		modelDefinition:       exp.modelDefinition,
 		warmStartCheckpointID: warmStartCheckpointID,
 
-		sequencer: newTrialWorkloadSequencer(exp.Experiment, create, firstCheckpoint),
+		sequencer: newTrialWorkloadSequencer(exp.ID, create, firstCheckpoint),
 
 		create:    create,
 		replaying: exp.replaying,
@@ -332,7 +335,10 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		}
 
 	case searcher.CompletedMessage:
-		if err := t.processCompletedWorkload(ctx, msg); err != nil {
+		t.receiveCompletedWorkload(ctx, msg)
+
+	case processCompletedWorkload:
+		if err := t.processCompletedWorkload(ctx, msg.completedMessage); err != nil {
 			return err
 		}
 
@@ -431,7 +437,7 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 
 	t.numContainers = msg.NumContainers
 
-	if err = saveWorkload(t.db, w); err != nil {
+	if err := saveWorkload(t.db, w); err != nil {
 		ctx.Log().WithError(err).Error("failed to save workload to the database")
 	}
 
@@ -491,19 +497,19 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 	return nil
 }
 
-func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.CompletedMessage) error {
+func (t *trial) receiveCompletedWorkload(ctx *actor.Context, msg searcher.CompletedMessage) {
 	if !t.replaying && (msg.ExitedReason == nil || *msg.ExitedReason == searcher.UserCanceled) {
 		if err := markWorkloadCompleted(t.db, msg); err != nil {
 			ctx.Log().Error(err)
 		}
 	}
 
-	// Now that we have marked the workload as completed in the database, we can relay the message
-	// to the Experiment. We use Ask and not Tell because in the case of completed validation
-	// metrics, the Experiment will respond with whether or not we should take a checkpoint.
-	experimentFuture := ctx.Ask(ctx.Self().Parent(), msg)
+	// Just save the CompletedMessage in the database and pass it through to the experiment.
+	ctx.Tell(ctx.Self().Parent(), trialCompletedWorkload{t.id, msg})
+}
 
-	if err := t.sequencer.WorkloadCompleted(msg, experimentFuture); err != nil {
+func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.CompletedMessage) error {
+	if err := t.sequencer.WorkloadCompleted(msg); err != nil {
 		return errors.Wrap(err, "Error passing CompletedMessage to sequencer")
 	}
 

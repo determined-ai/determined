@@ -22,6 +22,10 @@ type (
 		create  searcher.Create
 		trialID int
 	}
+	trialCompletedWorkload struct {
+		trialID          int
+		completedMessage searcher.CompletedMessage
+	}
 	getProgress    struct{}
 	getTrial       struct{ trialID int }
 	restoreTrials  struct{}
@@ -80,7 +84,8 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 	conf := expModel.Config
 	method := searcher.NewSearchMethod(conf.Searcher)
 	search := searcher.NewSearcher(conf.Reproducibility.ExperimentSeed, method,
-		conf.Hyperparameters, conf.BatchesPerStep, conf.RecordsPerEpoch)
+		conf.Hyperparameters, conf.BatchesPerStep, conf.RecordsPerEpoch, conf.ValidationPeriod,
+		conf.CheckpointPeriod, conf.CheckpointPolicy)
 
 	// Retrieve the warm start checkpoint, if provided.
 	checkpoint, err := checkpointFromTrialIDOrUUID(
@@ -266,16 +271,19 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case trialCreated:
 		ops, err := e.searcher.TrialCreated(msg.create, msg.trialID)
 		e.processOperations(ctx, ops, err)
-	case searcher.CompletedMessage:
-		ops, err := e.searcher.WorkloadCompleted(msg)
+	case trialCompletedWorkload:
+		isBestValidation := e.isBestValidation(msg.completedMessage)
+		ops, err := e.searcher.WorkloadCompleted(msg.completedMessage, isBestValidation)
 		e.processOperations(ctx, ops, err)
-		if msg.Workload.Kind == searcher.ComputeValidationMetrics {
-			ctx.Respond(e.isBestValidation(msg))
-		}
 		progress := e.searcher.Progress()
 		if err = e.db.SaveExperimentProgress(e.ID, &progress); err != nil {
 			ctx.Log().WithError(err).Error("failed to save experiment progress")
 		}
+		requestID, ok := e.searcher.RequestID(msg.trialID)
+		if !ok {
+			return fmt.Errorf("no trial with id %d", msg.trialID)
+		}
+		ctx.Tell(ctx.Child(requestID), processCompletedWorkload{msg.completedMessage})
 	case actor.ChildFailed:
 		ctx.Log().WithError(msg.Error).Error("trial failed unexpectedly")
 		requestID := searcher.MustParse(msg.Child.Address().Local())
@@ -465,6 +473,10 @@ func (e *experiment) processOperations(
 
 func (e *experiment) isBestValidation(msg searcher.CompletedMessage) bool {
 	if msg.ExitedReason != nil {
+		return false
+	}
+
+	if msg.ValidationMetrics == nil {
 		return false
 	}
 

@@ -240,7 +240,3 @@ func (s *asyncHalvingSearch) trialExitedEarly(
 	s.trialsCompleted++
 	return s.promoteAsync(ctx, requestID, ashaExitedMetricValue), nil
 }
-
-func (s *asyncHalvingSearch) unit() model.Unit {
-	return s.MaxLength.Unit
-}

@@ -214,7 +214,3 @@ func (s *pbtSearch) trialExitedEarly(ctx context, requestID RequestID) ([]Operat
 	s.metrics[requestID] = pbtExitedMetricValue
 	return s.runNewTrials(ctx, requestID)
 }
-
-func (s *pbtSearch) unit() model.Unit {
-	return s.LengthPerRound.Unit
-}

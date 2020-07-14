@@ -211,6 +211,12 @@ func (wo WorkloadOperation) String() string {
 		wo.Kind, wo.RequestID, wo.StepID, wo.NumBatches)
 }
 
+func (wo WorkloadOperation) equals(workload Workload) bool {
+	return wo.StepID == workload.StepID &&
+		wo.NumBatches == workload.NumBatches &&
+		wo.Kind == workload.Kind
+}
+
 // Close the trial with the given trial id.
 type Close struct {
 	RequestID RequestID `json:"request_id"`

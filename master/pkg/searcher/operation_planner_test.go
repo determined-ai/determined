@@ -11,7 +11,8 @@ import (
 
 func TestOperationPlanner(t *testing.T) {
 	rand := nprand.New(0)
-	opPlanner := NewOperationPlanner(model.Batches, 100, 0)
+	opPlanner := NewOperationPlanner(100, 0, model.NewLengthInBatches(0),
+		model.NewLengthInBatches(0), model.NoneCheckpointPolicy)
 
 	create := NewCreate(
 		rand, sampleAll(defaultHyperparameters(), rand), model.TrialWorkloadSequencerType)
@@ -78,11 +79,11 @@ func TestOperationPlanner(t *testing.T) {
 	searcherOpsReturned := 1 // 1 because we skip the create
 	for _, plannedOp := range plannedOps {
 		if workloadOp, ok := plannedOp.(WorkloadOperation); ok {
-			searcherOp, err := opPlanner.WorkloadCompleted(create.RequestID, Workload{
+			searcherOp, _, err := opPlanner.WorkloadCompleted(create.RequestID, Workload{
 				Kind:       workloadOp.Kind,
 				StepID:     workloadOp.StepID,
 				NumBatches: workloadOp.NumBatches,
-			})
+			}, false)
 
 			assert.NilError(t, err, "error passing completed workload to operation planner")
 			if searcherOp != nil {
