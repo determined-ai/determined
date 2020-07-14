@@ -34,6 +34,14 @@ spec:
           - name: master-config
             mountPath: /etc/determined/
             readOnly: true
+        resources:
+          requests:
+            {{- if .Values.masterCpuRequest }}
+            cpu: {{ .Values.masterCpuRequest  | quote }}
+            {{- end }}
+            {{- if .Values.masterMemRequest }}
+            memory: {{ .Values.masterMemRequest  | quote }}
+            {{- end}}
       volumes:
         - name: master-config
           configMap:
