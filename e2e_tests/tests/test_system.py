@@ -409,8 +409,8 @@ def test_model_registry() -> None:
     assert mnist.metadata == {"testing": "override"}
 
     checkpoint = d.get_experiment(exp_id).top_checkpoint()
-    model_version = mnist.register_version(checkpoint)
-    assert model_version == 1
+    model_version = mnist.register_version(checkpoint.uuid)
+    assert model_version.version == 1
     assert mnist.get_version().uuid == checkpoint.uuid
 
     d.create_model("transformer", "all you need is attention")

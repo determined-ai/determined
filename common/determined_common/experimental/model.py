@@ -1,6 +1,6 @@
 import datetime
 import enum
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 from determined_common import api
 from determined_common.experimental.checkpoint import Checkpoint
@@ -43,6 +43,13 @@ class Model:
         self.metadata = metadata or {}
 
     def get_version(self, version: int = 0) -> Checkpoint:
+        """
+        Retrieve the checkpoint corresponding to the specified version of the
+        model. If no version is specified the latest model version is returned.
+
+        Arguments:
+            version (int, optional): the model version number requested.
+        """
         if version == 0:
             resp = api.get(
                 self._master,
@@ -66,6 +73,14 @@ class Model:
         return Checkpoint.from_json(data["version"]["checkpoint"], self._master)
 
     def get_versions(self, order_by: ModelOrderBy = ModelOrderBy.DESC) -> List[Checkpoint]:
+        """
+        Get a list of checkpoints corresponding to versions of this model. The
+        models are sorted by version number and are returned in descending
+        order by default.
+
+        Arguments:
+            order_by (enum): a member of the ModelOrderBy enum.
+        """
         resp = api.get(
             self._master,
             "/api/v1/models/{}/versions/".format(self.name),
@@ -85,14 +100,31 @@ class Model:
             for version in data["versions"]
         ]
 
-    def register_version(self, checkpoint: Checkpoint) -> int:
+    def register_version(self, checkpoint_uuid: str) -> Checkpoint:
+        """
+        Creats a new model version and returns the
+        :class:`~determined.experimental.Checkpoint` corresponding to the
+        version.
+
+        Arguments:
+            checkpoint_uuid: the uuid to associate with the new model version.
+        """
         resp = api.post(
             self._master,
             "/api/v1/models/{}/versions".format(self.name),
-            body={"checkpoint_uuid": checkpoint.uuid},
+            body={"checkpoint_uuid": checkpoint_uuid},
         )
 
-        return cast(int, resp.json()["version"]["version"])
+        data = resp.json()
+
+        return Checkpoint.from_json(
+            {
+                **data["version"]["checkpoint"],
+                "version": data["version"]["version"],
+                "model_name": data["version"]["model"]["name"],
+            },
+            self._master,
+        )
 
     def add_metadata(self, metadata: Dict[str, Any]) -> None:
         """
