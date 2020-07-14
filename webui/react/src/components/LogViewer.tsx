@@ -75,6 +75,9 @@ const CLIPBOARD_FORMAT = 'YYYY-MM-DD, HH:mm:ss';
 // Max datetime size: [MMM DD, HH:mm:ss] (plus 1 for a space suffix)
 const MAX_DATETIME_LENGTH = 19;
 
+// Number of pixels from the top of the scroll to trigger the `onScrollToTop` callback.
+const SCROLL_TOP_THRESHOLD = 50;
+
 const ICON_WIDTH = 26;
 
 const defaultLogConfig = {
@@ -251,10 +254,10 @@ const LogViewer: React.FC<Props> = forwardRef((
     if (logs.length === 0) return;
 
     // Check to make sure the scroll position is at the top.
-    if (scroll.scrollTop > 0) return;
+    if (scroll.scrollTop > SCROLL_TOP_THRESHOLD) return;
 
     // Skip if the previous state was already at the top.
-    if (previousScroll.scrollTop === 0) return;
+    if (previousScroll.scrollTop <= SCROLL_TOP_THRESHOLD) return;
 
     // Skip if there isn't a callback.
     if (!onScrollToTop) return;
