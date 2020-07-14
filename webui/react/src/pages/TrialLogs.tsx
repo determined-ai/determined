@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
+import { debounce } from 'throttle-debounce';
 
 import LogViewer, { LogViewerHandles } from 'components/LogViewer';
 import Page from 'components/Page';
@@ -9,8 +10,8 @@ import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
 import { getTrialLogs } from 'services/api';
 import * as DetSwagger from 'services/api-ts-sdk';
-import { consumeStream } from 'services/apiBuilder';
-import { TrialLogsParams } from 'services/types';
+import { consumeStream, experimentsApi } from 'services/apiBuilder';
+import { jsonToTrialLog } from 'services/decoder';
 import { Log } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 
@@ -18,7 +19,8 @@ interface Params {
   trialId: string;
 }
 
-const TAIL_SIZE = 1000;
+const TAIL_SIZE = 50;
+const DEBOUNCE_TIME = 1000;
 
 const TrialLogs: React.FC = () => {
   const { trialId } = useParams<Params>();
@@ -26,76 +28,54 @@ const TrialLogs: React.FC = () => {
   const title = `Trial ${id} Logs`;
   const setUI = UI.useActionContext();
   const logsRef = useRef<LogViewerHandles>(null);
-  const [ oldestFetchedId, setOldestFetchedId ] = useState(Number.MAX_SAFE_INTEGER);
-  const [ logIdRange, setLogIdRange ] =
-    useState({ max: Number.MIN_SAFE_INTEGER, min: Number.MAX_SAFE_INTEGER });
-  const [ logsResponse, setLogsParams ] =
-    useRestApiSimple<TrialLogsParams, Log[]>(getTrialLogs, { tail: TAIL_SIZE, trialId: id });
-  const [ pollingLogsResponse, setPollingLogsParams ] =
-    useRestApiSimple<TrialLogsParams, Log[]>(getTrialLogs, { tail: TAIL_SIZE, trialId: id });
+  const [ offset, setOffset ] = useState(-TAIL_SIZE);
+  const [ oldestId, setOldestId ] = useState(Number.MAX_SAFE_INTEGER);
+  const [ oldestReached, setOldestReached ] = useState(false);
 
-  const fetchOlderLogs = useCallback((oldestLogId: number) => {
-    const startLogId = Math.max(0, oldestLogId - TAIL_SIZE);
-    if (startLogId >= oldestFetchedId) return;
-    setOldestFetchedId(startLogId);
-    setLogsParams({ greaterThanId: startLogId, tail: TAIL_SIZE, trialId: id });
-  }, [ id, oldestFetchedId, setLogsParams ]);
+  const handleScrollToTop = useCallback(() => {
+    console.log('HANLDE SCROLL TO TOP');
+    if (oldestReached) return;
 
-  const fetchNewerLogs = useCallback(() => {
-    if (logIdRange.max < 0) return;
-    setPollingLogsParams({ greaterThanId: logIdRange.max, tail: TAIL_SIZE, trialId: id });
-  }, [ id, logIdRange.max, setPollingLogsParams ]);
+    let buffer: Log[] = [];
 
-  const handleScrollToTop = useCallback((oldestLogId: number) => {
-    fetchOlderLogs(oldestLogId);
-  }, [ fetchOlderLogs ]);
-
-  usePolling(fetchNewerLogs);
-
-  useEffect(() => {
     consumeStream<DetSwagger.V1TrialLogsResponse>(
-      DetSwagger.ExperimentsApiFetchParamCreator().determinedTrialLogs(id),
-      e => {
-        console.log('event', e);
+      experimentsApi.determinedTrialLogs(id, offset - TAIL_SIZE, TAIL_SIZE),
+      event => buffer.push(jsonToTrialLog(event)),
+    ).then(() => {
+      if (!logsRef.current) return;
+      if (buffer.length === 0 || buffer[0].id === oldestId) {
+        setOldestReached(true);
+      } else {
+        logsRef.current?.addLogs(buffer, true);
+        setOldestId(buffer[0].id);
+        setOffset(prevOffset => prevOffset - TAIL_SIZE);
+      }
+      buffer = [];
+    });
+  }, [ id, offset, oldestId, oldestReached ]);
+
+  useEffect(() => setUI({ type: UI.ActionType.HideChrome }), [ setUI ]);
+
+  useEffect(() => {
+    let buffer: Log[] = [];
+    const debounceFunc = debounce(DEBOUNCE_TIME, () => {
+      if (!logsRef.current) return;
+      console.log('new logs', buffer);
+      logsRef.current?.addLogs(buffer);
+      buffer = [];
+    });
+
+    consumeStream<DetSwagger.V1TrialLogsResponse>(
+      experimentsApi.determinedTrialLogs(id, -TAIL_SIZE, 0, true),
+      event => {
+        console.log('single event', event);
+        buffer.push(jsonToTrialLog(event));
+        debounceFunc();
       },
-    ).then(() => console.log('finished'));
+    ).then(() => console.log('finished new log stream'));
+
+    return (): void => debounceFunc.cancel();
   }, [ id ]);
-
-  useEffect(() => {
-    setUI({ type: UI.ActionType.HideChrome });
-  }, [ setUI ]);
-
-  useEffect(() => {
-    if (!logsResponse.data || logsResponse.data.length === 0) return;
-
-    const minLogId = logsResponse.data[0].id;
-    const maxLogId = logsResponse.data[logsResponse.data.length - 1].id;
-    if (minLogId >= logIdRange.min) return;
-
-    setLogIdRange({
-      max: Math.max(logIdRange.max, maxLogId),
-      min: Math.min(logIdRange.min, minLogId),
-    });
-
-    // If there are new log entries, pass them onto the log viewer.
-    if (logsRef.current) logsRef.current?.addLogs(logsResponse.data, true);
-  }, [ logIdRange, logsResponse ]);
-
-  useEffect(() => {
-    if (!pollingLogsResponse.data || pollingLogsResponse.data.length === 0) return;
-
-    const minLogId = pollingLogsResponse.data[0].id;
-    const maxLogId = pollingLogsResponse.data[pollingLogsResponse.data.length - 1].id;
-    if (maxLogId <= logIdRange.max) return;
-
-    setLogIdRange({
-      max: Math.max(logIdRange.max, maxLogId),
-      min: Math.min(logIdRange.min, minLogId),
-    });
-
-    // If there are new log entries, pass them onto the log viewer.
-    if (logsRef.current) logsRef.current?.addLogs(pollingLogsResponse.data);
-  }, [ logIdRange, pollingLogsResponse.data ]);
 
   const downloadLogs = useCallback(() => {
     return downloadTrialLogs(id).catch(e => {
