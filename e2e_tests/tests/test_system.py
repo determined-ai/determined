@@ -287,6 +287,9 @@ def test_trial_logs() -> None:
     trial_id = exp.experiment_trials(experiment_id)[0]["id"]
     subprocess.check_call(["det", "-m", conf.make_master_url(), "trial", "logs", str(trial_id)])
     subprocess.check_call(
+        ["det", "-m", conf.make_master_url(), "trial", "logs", "--head", "10", str(trial_id)],
+    )
+    subprocess.check_call(
         ["det", "-m", conf.make_master_url(), "trial", "logs", "--tail", "10", str(trial_id)],
     )
 

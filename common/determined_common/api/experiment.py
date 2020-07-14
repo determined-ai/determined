@@ -40,6 +40,9 @@ def logs(args: Namespace) -> None:
         return logs[-1]["id"] if logs else last_offset
 
     try:
+        if args.head is not None:
+            print_logs(0, args.head)
+            return
         if args.tail is not None:
             last_offset = print_logs(None, args.tail)
         else:
@@ -82,7 +85,9 @@ def follow_experiment_logs(master_url: str, exp_id: int) -> None:
     print("Following first trial with ID {}".format(first_trial_id))
 
     # Call `logs --follow` on the new trial.
-    logs_args = Namespace(trial_id=first_trial_id, follow=True, master=master_url, tail=None)
+    logs_args = Namespace(
+        trial_id=first_trial_id, master=master_url, head=None, tail=None, follow=True
+    )
     logs(logs_args)
 
 
@@ -157,7 +162,9 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
         elif r["state"] == constants.ERROR:
             print_progress(active_stage, ended=True)
             trial_id = r["trials"][0]["id"]
-            logs_args = Namespace(trial_id=trial_id, master=master_url, tail=None, follow=False)
+            logs_args = Namespace(
+                trial_id=trial_id, master=master_url, head=None, tail=None, follow=False
+            )
             logs(logs_args)
             sys.exit(1)
         else:
