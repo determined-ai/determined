@@ -1,6 +1,6 @@
 import axios, { AxiosResponse, CancelToken, Method } from 'axios';
 
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import handleError, { ErrorLevel, ErrorType, isDaError } from 'ErrorHandler';
 import { isAuthFailure } from 'services/api';
 import * as DetSwagger from 'services/api-ts-sdk';
 import { serverAddress } from 'utils/routes';
@@ -29,6 +29,14 @@ export interface Api<Input, Output>{
 
 export const processApiError = (name: string, e: Error): void => {
   const isAuthError = isAuthFailure(e);
+  if (isDaError(e)) {
+    if (e.type === ErrorType.ApiBadResponse) {
+      e.message = `failed in decoding ${name} API response`;
+      e.publicMessage = 'Failed to interpret data sent from the server.';
+      e.publicSubject = 'Unexpected API response';
+    }
+    throw handleError(e);
+  }
   const silent = !process.env.IS_DEV || isAuthError || axios.isCancel(e);
   handleError({
     error: e,

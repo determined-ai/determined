@@ -8,6 +8,14 @@ import { listToStr } from 'utils/string';
 
 const logger = new Logger('EH');
 
+export const isDaError = (e: unknown): e is DaError => {
+  if (!e || typeof e !== 'object') return false;
+  if (e === null) return false; // TS: check cannot be included in the previous check.
+  const keys = Object.keys(e);
+  const requiredKeys = [ 'level', 'type', 'silent' ];
+  return !requiredKeys.find(reqKey => !keys.includes(reqKey));
+};
+
 export enum ErrorLevel {
   Fatal = 'fatal',
   Error = 'error',
@@ -19,6 +27,7 @@ export enum ErrorType {
   Auth = 'auth',
   Ui = 'ui',
   Input = 'input',
+  ApiBadResponse = 'apiBadResponse',
   Api = 'api', // third-party api
 }
 
@@ -53,25 +62,22 @@ const openNotification = (e: DaError): void => {
 };
 
 const defaultErrorParameters = {
-  isUserTriggered: true,
   level: ErrorLevel.Error,
   silent: false,
 };
 
-const handleError = (e: DaError): Error => {
+const handleError = (e: DaError): DaError => {
   // set the defaults.
   e = { ...defaultErrorParameters, ...e };
 
-  const error = e.error ? e.error : new Error(e.message);
-
   // ignore request cancellation errors
-  if (axios.isCancel(e)) return error;
+  if (axios.isCancel(e)) return e;
 
   if (e.type === ErrorType.Auth) {
     if (!window.location.pathname.endsWith('login')) {
       history.replace('/det/logout', { loginRedirect: clone(window.location ) });
     }
-    return error;
+    return e;
   }
 
   // TODO add support and checking for saving and dismissing class of errors as user preference
@@ -106,10 +112,10 @@ const handleError = (e: DaError): Error => {
   // TODO SEP capture a screenshot or more context (generate a call stack)?
   // https://stackblitz.com/edit/react-screen-capture?file=index.js
 
-  return error;
+  return e;
 };
 
-export const handleErrorForFn = async <T>(daError: DaError, func: () => T): Promise<T|Error> => {
+export const handleErrorForFn = async <T>(daError: DaError, func: () => T): Promise<T|DaError> => {
   try {
     return isAsyncFunction(func) ? await func() : func();
   } catch (e) {

@@ -9,6 +9,7 @@ interface Props {
   maxHeight?: boolean;
   options?: React.ReactNode;
   title: string;
+  hideTitle?: boolean;
 }
 
 const defaultProps = {
@@ -24,7 +25,7 @@ const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   return (
     <section className={classes.join(' ')} id={toHtmlId(props.title)}>
       <div className={css.header}>
-        <h5 className={css.title}>{props.title}</h5>
+        {!props.hideTitle && <h5 className={css.title}>{props.title}</h5>}
         {props.options && <div className={css.options}>{props.options}</div>}
       </div>
       <div className={css.body}>
