@@ -88,11 +88,12 @@ const TrialLogs: React.FC = () => {
   }, [ logIdRange, pollingLogsResponse.data ]);
 
   return (
-    <Page hideTitle title={title}>
+    <Page hideTitle maxHeight title={title}>
       <LogViewer
         disableLevel
         disableLineNumber
         downloadUrl={downloadUrl}
+        isLoading={pollingLogsResponse.isLoading}
         noWrap
         ref={logsRef}
         title={title}

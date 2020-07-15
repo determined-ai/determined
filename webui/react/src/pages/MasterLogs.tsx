@@ -77,7 +77,7 @@ const MasterLogs: React.FC = () => {
   }, [ logIdRange, pollingLogsResponse.data ]);
 
   return (
-    <Page hideTitle title="Master Logs">
+    <Page hideTitle maxHeight title="Master Logs">
       <LogViewer
         noWrap
         ref={logsRef}

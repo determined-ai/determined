@@ -8,6 +8,7 @@ import { sprintf } from 'sprintf-js';
 
 import Icon from 'components/Icon';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner';
 import usePrevious from 'hooks/usePrevious';
 import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
 import { Log, LogLevel } from 'types';
@@ -22,6 +23,7 @@ interface Props {
   disableLevel?: boolean;
   disableLineNumber?: boolean;
   downloadUrl?: string;
+  isLoading?: boolean;
   noWrap?: boolean;
   ref?: React.Ref<LogViewerHandles>;
   title: string;
@@ -323,7 +325,7 @@ const LogViewer: React.FC<Props> = forwardRef((
        * log entries.
        */
       setTimeout(() => {
-        if (!container.current) return;
+        if (!container.current || !scrollToInfo.logId) return;
         const top = config.messageSizes[scrollToInfo.logId].top;
         container.current.scrollTo({ top });
       });
@@ -475,6 +477,7 @@ const LogViewer: React.FC<Props> = forwardRef((
             ))}
           </div>
           <div className={css.measure} ref={measure} />
+          {props.isLoading && <Spinner fillContainer />}
         </div>
         <Tooltip placement="topRight" title="Scroll to Latest Entry">
           <Button

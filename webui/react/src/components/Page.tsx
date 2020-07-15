@@ -8,6 +8,7 @@ import css from './Page.module.scss';
 interface Props extends CommonProps {
   title: string;
   hideTitle?: boolean;
+  maxHeight?: boolean;
 }
 
 const defaultProps = {
@@ -16,6 +17,8 @@ const defaultProps = {
 
 const Page: React.FC<Props> = (props: Props) => {
   const classes = [ props.className, css.base ];
+
+  if (props.maxHeight) classes.push(css.maxHeight);
 
   return (
     <main className={classes.join(' ')} id={toHtmlId(props.title)}>
