@@ -608,8 +608,8 @@ created with the Determined CLI. It may contain the following fields:
   - ``horovod_timeline``: The path in the container where the Horovod timeline should be saved,
     e.g. ``/root/horovod_timeline.json``. The
     Horovod timeline is a trace file that can be analyzed to investigate distributed
-    training performance. When this field is ``null``, the timeline is not created.
-    The timeline can grow very large during long training runs so it is recommended
+    training performance. When this field is ``null`` or an empty string, the timeline is
+    not created. The timeline can grow very large during long training runs so it is recommended
     that timeline generation is disabled when not actively investigating performance.
     Defaults to ``null``.
 
