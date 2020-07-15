@@ -7,11 +7,10 @@ from determined_common.experimental import (
     ModelSortBy,
     TrialReference,
 )
-
 from determined.experimental._native import (
     create,
     create_trial_instance,
     test_one_batch,
     init_native,
-    _local_execution_manager,
+    _load_trial_on_local,
 )

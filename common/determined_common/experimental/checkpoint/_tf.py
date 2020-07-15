@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, cast
 import tensorflow as tf
 from tensorflow.python.training.tracking.tracking import AutoTrackable
 
-from determined.experimental._native import _local_trial_from_context
+from determined import experimental
 from determined.keras import TFKerasTrial
 
 
@@ -20,13 +20,13 @@ def load_model(
         return load_saved_model(ckpt_dir, tags=tags)
 
     elif save_format == "h5":
-        trial = _local_trial_from_context(
+        trial_cls, trial_context = experimental._load_trial_on_local(
             ckpt_dir.joinpath("code"),
             config=metadata["experiment_config"],
             hparams=metadata["hparams"],
         )
 
-        trial = cast(TFKerasTrial, trial)
+        trial = cast(TFKerasTrial, trial_cls(trial_context))
         model = trial.build_model()
         model.load_weights(str(ckpt_dir.joinpath("determined-keras-model.h5")))
         return model
