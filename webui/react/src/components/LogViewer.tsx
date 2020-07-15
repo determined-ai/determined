@@ -20,6 +20,7 @@ import css from './LogViewer.module.scss';
 interface Props {
   debugMode?: boolean;
   disableLevel?: boolean;
+  disableLineNumber?: boolean;
   downloadUrl?: string;
   noWrap?: boolean;
   ref?: React.Ref<LogViewerHandles>;
@@ -143,9 +144,12 @@ const LogViewer: React.FC<Props> = forwardRef((
      * Set the line number column width based on the character width.
      * Add one to account for the trailing space character.
      */
-    const maxLineNumber = logs.length === 0 ? 1000 : logs[logs.length - 1].id + 1;
-    const lineDigits = Math.ceil(Math.log(maxLineNumber) / Math.log(10)) + 1;
-    const lineNumberWidth = charRect.width * lineDigits;
+    let lineNumberWidth = 0;
+    if (!props.disableLineNumber) {
+      const maxLineNumber = logs.length === 0 ? 1000 : logs[logs.length - 1].id + 1;
+      const lineDigits = Math.ceil(Math.log(maxLineNumber) / Math.log(10)) + 1;
+      lineNumberWidth = charRect.width * lineDigits;
+    }
 
     /*
      * Set the datetime column width based on the character width.
@@ -190,7 +194,7 @@ const LogViewer: React.FC<Props> = forwardRef((
       messageWidth,
       totalContentHeight,
     };
-  }, [ props.disableLevel ]);
+  }, [ props.disableLevel, props.disableLineNumber ]);
 
   const addLogs = useCallback((addedLogs: Log[], prepend = false): void => {
     // Only process new logs that don't exist in the log viewer
@@ -461,7 +465,8 @@ const LogViewer: React.FC<Props> = forwardRef((
                     <div className={levelCss(css.level, log.level)} style={levelStyle} />
                   ) : null
                 }
-                <div className={css.number} data-label={log.id + 1} style={lineNumberStyle} />
+                {!props.disableLineNumber &&
+                  <div className={css.number} data-label={log.id + 1} style={lineNumberStyle} />}
                 <div className={css.time} style={dateTimeStyle}>{log.formattedTime}</div>
                 <div
                   className={levelCss(css.message, log.level)}

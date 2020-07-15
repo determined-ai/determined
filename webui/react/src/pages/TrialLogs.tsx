@@ -91,6 +91,7 @@ const TrialLogs: React.FC = () => {
     <Page hideTitle title={title}>
       <LogViewer
         disableLevel
+        disableLineNumber
         downloadUrl={downloadUrl}
         noWrap
         ref={logsRef}
