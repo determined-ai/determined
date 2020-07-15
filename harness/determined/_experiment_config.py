@@ -1,4 +1,4 @@
-from typing import List, cast
+from typing import Dict, List, cast
 
 
 class ExperimentConfig(dict):
@@ -14,8 +14,8 @@ class ExperimentConfig(dict):
     def batches_per_step(self) -> int:
         return int(self.get("batches_per_step", 100))
 
-    def validation_freq(self) -> int:
-        return int(self.get("min_validation_period", 100))
+    def validation_freq(self) -> Dict[str, int]:
+        return cast(Dict[str, int], self.get("validation_period"))
 
     def native_enabled(self) -> bool:
         return "internal" in self and self["internal"] is not None and "native" in self["internal"]

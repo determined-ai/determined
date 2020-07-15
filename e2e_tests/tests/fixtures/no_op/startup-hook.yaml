@@ -19,7 +19,9 @@ searcher:
     batches: 100
 reproducibility:
   experiment_seed: 999
-min_validation_period: 1
-min_checkpoint_period: 1
+validation_period:
+  batches: 100
+checkpoint_period:
+  batches: 100
 max_restarts: 0
 entrypoint: model_def:NoOpTrial

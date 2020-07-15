@@ -74,7 +74,7 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
                 config_test.get("description", str(uuid.uuid4()))
             ),
             "batches_per_step": 1,
-            "min_validation_period": 1,
+            "validation_period": {"batches": 100},
             "checkpoint_storage": {
                 **config_test.get("checkpoint_storage", {}),
                 "save_experiment_best": 0,

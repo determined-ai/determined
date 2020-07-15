@@ -207,7 +207,6 @@ func TestExperiment(t *testing.T) {
     "access_key": "my key",
     "secret_key": "my secret"
   },
-  "min_validation_period": null,
   "validation_period": {
 	"batches": 1000
   },
