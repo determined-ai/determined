@@ -36,6 +36,7 @@
   .line {
     display: flex;
     position: absolute;
+    width: 100%;
   }
   .line > * { white-space: nowrap; }
   .line > .debug { color: var(--theme-colors-states-active); }
