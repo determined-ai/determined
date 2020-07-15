@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"syscall"
 
+	"github.com/docker/docker/api/types/container"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
@@ -36,6 +37,21 @@ type agent struct {
 	cm     *actor.Ref
 }
 
+func (a *agent) addProxy(config *container.Config) {
+	if a.Options.HttpProxy != "" {
+		config.Env = append(config.Env, "HTTP_PROXY="+a.Options.HttpProxy)
+	}
+	if a.Options.HttpsProxy != "" {
+		config.Env = append(config.Env, "HTTPS_PROXY="+a.Options.HttpsProxy)
+	}
+	if a.Options.FtpProxy != "" {
+		config.Env = append(config.Env, "FTP_PROXY="+a.Options.FtpProxy)
+	}
+	if a.Options.NoProxy != "" {
+		config.Env = append(config.Env, "NO_PROXY="+a.Options.NoProxy)
+	}
+}
+
 func (a *agent) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
@@ -44,6 +60,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 	case proto.AgentMessage:
 		switch {
 		case msg.StartContainer != nil:
+			a.addProxy(&msg.StartContainer.Spec.RunSpec.ContainerConfig)
 			if !a.validateDevices(msg.StartContainer.Container.Devices) {
 				return errors.New("could not start container; devices specified in spec not found on agent")
 			}

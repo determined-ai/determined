@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
-	"strings"
 	"syscall"
 	"time"
 
@@ -166,7 +164,6 @@ func (d *dockerActor) pullImage(ctx *actor.Context, msg pullImage) {
 }
 
 func (d *dockerActor) runContainer(ctx *actor.Context, msg container.RunSpec) {
-	d.addProxy(&msg.ContainerConfig)
 	response, err := d.ContainerCreate(
 		context.Background(), &msg.ContainerConfig, &msg.HostConfig, &msg.NetworkingConfig, "")
 	if err != nil {
@@ -288,47 +285,6 @@ func (d *dockerActor) sendPullLogs(ctx *actor.Context, r io.Reader) error {
 		})
 	}
 	return scanner.Err()
-}
-
-func (d *dockerActor) addProxy(config *dcontainer.Config) {
-	validVars := map[string]string{
-		"HTTP_PROXY": "", "HTTPS_PROXY": "",
-		"FTP_PROXY": "", "NO_PROXY": "",
-	}
-
-	// If the variable already exists in the configuration, we don't try to add it.
-	// Manually configured variables should take precedence over transparent pass-through ones.
-	for _, v := range config.Env {
-		key := strings.SplitN(v, "=", 2)[0]
-		_, ok := validVars[key]
-		if ok {
-			delete(validVars, key)
-		}
-	}
-
-	if len(validVars) == 0 {
-		return
-	}
-
-	noChange := true
-	for _, v := range os.Environ() {
-		key := strings.SplitN(v, "=", 2)[0]
-		_, ok := validVars[key]
-		if ok {
-			validVars[key] = v
-			noChange = false
-		}
-	}
-
-	if noChange {
-		return
-	}
-
-	for _, v := range validVars {
-		if v != "" {
-			config.Env = append(config.Env, v)
-		}
-	}
 }
 
 type demultiplexer struct {
