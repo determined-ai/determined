@@ -106,8 +106,8 @@ class BaseXORTrial(pytorch.PyTorchTrial):
 
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         self.context = context
-        self.model = self.context._Model(XORNet(self.context))
-        self.optimizer = self.context._Optimizer(
+        self.model = self.context.Model(XORNet(self.context))
+        self.optimizer = self.context.Optimizer(
             torch.optim.SGD(self.model.parameters(), self.context.get_hparam("learning_rate"))
         )
 
@@ -118,8 +118,8 @@ class BaseXORTrial(pytorch.PyTorchTrial):
         output = self.model(data)
         loss = torch.nn.functional.binary_cross_entropy(output, labels.view(-1, 1))
 
-        self.context._backward(loss)
-        self.context._step_optimizer(self.optimizer)
+        self.context.backward(loss)
+        self.context.step_optimizer(self.optimizer)
         return {"loss": loss}
 
     def build_training_data_loader(self) -> pytorch.DataLoader:
@@ -142,8 +142,8 @@ class XORTrialMulti(XORTrial):
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         self.context = context
 
-        self.model = self.context._Model(XORNetMulti(self.context))
-        self.optimizer = self.context._Optimizer(
+        self.model = self.context.Model(XORNetMulti(self.context))
+        self.optimizer = self.context.Optimizer(
             torch.optim.SGD(self.model.parameters(), self.context.get_hparam("learning_rate"))
         )
 
@@ -154,8 +154,8 @@ class XORTrialMulti(XORTrial):
         output = self.model(data)
         loss = nn.functional.binary_cross_entropy(output["output"], labels.view(-1, 1))
 
-        self.context._backward(loss)
-        self.context._step_optimizer(self.optimizer)
+        self.context.backward(loss)
+        self.context.step_optimizer(self.optimizer)
         return {"loss": loss}
 
     def evaluate_batch(self, batch: pytorch.TorchData, model: nn.Module) -> Dict[str, Any]:
@@ -176,8 +176,8 @@ class XORTrialWithTrainingMetrics(XORTrialMulti):
         loss = nn.functional.binary_cross_entropy(output["output"], labels.view(-1, 1))
         accuracy = error_rate(output["output"], labels)
 
-        self.context._backward(loss)
-        self.context._step_optimizer(self.optimizer)
+        self.context.backward(loss)
+        self.context.step_optimizer(self.optimizer)
         return {"loss": loss, "accuracy": accuracy}
 
 
@@ -195,8 +195,8 @@ class XORTrialWithNonScalarValidation(pytorch.PyTorchTrial):
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         self.context = context
 
-        self.model = self.context._Model(XORNetMulti(self.context))
-        self.optimizer = self.context._Optimizer(
+        self.model = self.context.Model(XORNetMulti(self.context))
+        self.optimizer = self.context.Optimizer(
             torch.optim.SGD(self.model.parameters(), self.context.get_hparam("learning_rate"))
         )
 
@@ -213,8 +213,8 @@ class XORTrialWithNonScalarValidation(pytorch.PyTorchTrial):
         output = model(data)
         loss = nn.functional.binary_cross_entropy(output["output"], labels.view(-1, 1))
 
-        self.context._backward(loss)
-        self.context._step_optimizer(self.optimizer)
+        self.context.backward(loss)
+        self.context.step_optimizer(self.optimizer)
         return {"loss": loss}
 
     def evaluate_full_dataset(
@@ -253,12 +253,12 @@ class XORTrialWithLRScheduler(XORTrialMulti):
         self.context = context
 
         # Same as XORTrial but with multi-output net XORNetMulti.
-        self.model = self.context._Model(XORNetMulti(self.context))
-        self.optimizer = self.context._Optimizer(
+        self.model = self.context.Model(XORNetMulti(self.context))
+        self.optimizer = self.context.Optimizer(
             torch.optim.SGD(self.model.parameters(), self.context.get_hparam("learning_rate"))
         )
 
-        self.lr_scheduler = self.context._LRScheduler(
+        self.lr_scheduler = self.context.LRScheduler(
             StepableLRSchedule(self.optimizer),
             step_mode=pytorch.LRScheduler.StepMode(
                 self.context.get_hparam("lr_scheduler_step_mode")
@@ -322,21 +322,21 @@ class XORTrialAccessContext(BaseXORTrial):
     def __init__(self, context: pytorch.PyTorchTrialContext) -> None:
         self.context = context
 
-        self.model_a = self.context._Model(XORNet(self.context))
-        self.model_b = self.context._Model(XORNet(self.context))
-        self.opt_a = self.context._Optimizer(
+        self.model_a = self.context.Model(XORNet(self.context))
+        self.model_b = self.context.Model(XORNet(self.context))
+        self.opt_a = self.context.Optimizer(
             torch.optim.SGD(self.model_a.parameters(), self.context.get_hparam("learning_rate"))
         )
-        self.opt_b = self.context._Optimizer(
+        self.opt_b = self.context.Optimizer(
             torch.optim.SGD(self.model_b.parameters(), self.context.get_hparam("learning_rate"))
         )
-        self.lrs_a = self.context._LRScheduler(
+        self.lrs_a = self.context.LRScheduler(
             StepableLRSchedule(self.opt_a),
             step_mode=pytorch.LRScheduler.StepMode(
                 self.context.get_hparam("lr_scheduler_step_mode")
             ),
         )
-        self.lrs_b = self.context._LRScheduler(
+        self.lrs_b = self.context.LRScheduler(
             StepableLRSchedule(self.opt_b),
             step_mode=pytorch.LRScheduler.StepMode(
                 self.context.get_hparam("lr_scheduler_step_mode")
@@ -354,8 +354,8 @@ class XORTrialAccessContext(BaseXORTrial):
         output = self.model_a(data)
         loss = torch.nn.functional.binary_cross_entropy(output, labels.view(-1, 1))
 
-        self.context._backward(loss)
-        self.context._step_optimizer(self.opt_a)
+        self.context.backward(loss)
+        self.context.step_optimizer(self.opt_a)
 
         return {"loss": loss}
 
@@ -379,10 +379,10 @@ class XORTrialGradClipping(XORTrial):
         output = self.model(data)
         loss = torch.nn.functional.binary_cross_entropy(output, labels.view(-1, 1))
 
-        self.context._backward(loss)
+        self.context.backward(loss)
 
         if "gradient_clipping_l2_norm" in self.context.get_hparams():
-            self.context._step_optimizer(
+            self.context.step_optimizer(
                 self.optimizer,
                 clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
                     params, self.context.get_hparam("gradient_clipping_l2_norm")
@@ -390,7 +390,7 @@ class XORTrialGradClipping(XORTrial):
             )
 
         elif "gradient_clipping_value" in self.context.get_hparams():
-            self.context._step_optimizer(
+            self.context.step_optimizer(
                 self.optimizer,
                 clip_grads=lambda params: torch.nn.utils.clip_grad_value_(
                     params, self.context.get_hparam("gradient_clipping_value")
@@ -398,6 +398,6 @@ class XORTrialGradClipping(XORTrial):
             )
 
         else:
-            self.context._step_optimizer(self.optimizer)
+            self.context.step_optimizer(self.optimizer)
 
         return {"loss": loss}

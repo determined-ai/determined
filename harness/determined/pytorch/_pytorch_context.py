@@ -24,22 +24,21 @@ class _WarningLogs(enum.Enum):
 
 
 class PyTorchTrialContext(det.TrialContext):
-    """Contains runtime information for any Determined workflow that uses the ``pytorch`` API."""
+    """Contains runtime information for any Determined workflow that uses the ``PyTorch`` API.
 
-    # TODO(DET-3204): Add the following comments to the docstring.
-    #
-    #     With this class, users can do the following things:
-    #
-    #     1. Wrap Pytorch models, optimizers, and LR schedulers with their Determined-compatible
-    #        counterparts using :meth:`Model`, :meth:`Optimizer`, :meth:`LRScheduler`,
-    #        respectively. The Determined-compatible objects are capable of transparent
-    #        distributed training, checkpointing and exporting, mixed-precision training,
-    #        and gradient aggregation.
-    #     2. Configure apex amp by :meth:`_configure_apex_amp`.
-    #     3. Calculate the gradients with :meth:`backward` on a specified loss.
-    #     4. Run an optimization step with :meth:`step_optimizer`.
-    #     5. Functionalities inherited from TrialContext, including getting the runtime
-    #        information and properly handling training data in distributed training.
+    With this class, users can do the following things:
+
+    1. Wrap PyTorch models, optimizers, and LR schedulers with their Determined-compatible
+       counterparts using :meth:`Model`, :meth:`Optimizer`, :meth:`LRScheduler`,
+       respectively. The Determined-compatible objects are capable of transparent
+       distributed training, checkpointing and exporting, mixed-precision training,
+       and gradient aggregation.
+    2. Configure apex amp by :meth:`configure_apex_amp`.
+    3. Calculate the gradients with :meth:`backward` on a specified loss.
+    4. Run an optimization step with :meth:`step_optimizer`.
+    5. Functionalities inherited from ``TrialContext``, including getting the runtime
+       information and properly handling training data in distributed training.
+    """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -65,37 +64,44 @@ class PyTorchTrialContext(det.TrialContext):
         self._use_amp = False
         self._loss_ids = {}  # type: Dict[torch.Tensor, int]
         self._last_backward_batch_idx = None  # type: Optional[int]
-
         self._current_batch_idx = None  # type: Optional[int]
 
     def get_model(self) -> torch.nn.Module:
         """
-        Get the model associated with the trial. This function should not be
+        (Deprecated) Get the model associated with the trial. This function should not be
         called from:
 
             * ``__init__``
             * ``build_model()``
         """
-        # TODO(DET-3267): deprecate this when releasing pytorch flexible primitives.
+        # TODO(DET-3262): remove this backward compatibility of old interface.
+        logging.warning(
+            "PyTorchTrialContext.get_model is deprecated. "
+            "Please directly use the model wrapped by context.Model()."
+        )
         check.len_eq(self.models, 1)
         return self.models[0]
 
     def get_optimizer(self) -> torch.optim.Optimizer:  # type: ignore
         """
-        Get the optimizer associated with the trial. This function should not be
+        (Deprecated) Get the optimizer associated with the trial. This function should not be
         called from:
 
             * ``__init__``
             * ``build_model()``
             * ``optimizer()``
         """
-        # TODO(DET-3267): deprecate this when releasing pytorch flexible primitives.
+        # TODO(DET-3262): remove this backward compatibility of old interface.
+        logging.warning(
+            "PyTorchTrialContext.get_optimizer is deprecated. "
+            "Please directly use the model wrapped by context.Optimizer()."
+        )
         check.len_eq(self.optimizers, 1)
         return self.optimizers[0]
 
     def get_lr_scheduler(self) -> Optional[pytorch.LRScheduler]:
         """
-        Get the scheduler associated with the trial, if one is defined. This
+        (Deprecated) Get the scheduler associated with the trial, if one is defined. This
         function should not be called from:
 
             * ``__init__``
@@ -103,16 +109,20 @@ class PyTorchTrialContext(det.TrialContext):
             * ``optimizer()``
             * ``create_lr_scheduler()``
         """
-        # TODO(DET-3267): deprecate this when releasing pytorch flexible primitives.
+        # TODO(DET-3262): remove this backward compatibility of old interface.
+        logging.warning(
+            "PyTorchTrialContext.get_lr_scheduler is deprecated. "
+            "Please directly use the model wrapped by context.LRScheduler()."
+        )
         check.lt_eq(len(self.lr_schedulers), 1)
         if len(self.lr_schedulers) == 1:
             return self.lr_schedulers[0]
         return None
 
-    def _Model(self, model: torch.nn.Module) -> torch.nn.Module:
+    def Model(self, model: torch.nn.Module) -> torch.nn.Module:
         """Wraps a model. It returns a wrapped model."""
 
-        check.false(self._use_amp, "Must call Model() before _configure_apex_amp.")
+        check.false(self._use_amp, "Must call Model() before configure_apex_amp.")
 
         model = model.to(self.device)
         if not self.hvd_config.use and self.n_gpus > 1:
@@ -132,14 +142,14 @@ class PyTorchTrialContext(det.TrialContext):
         self.models.append(model)
         return model
 
-    def _Optimizer(self, optimizer: torch.optim.Optimizer) -> torch.optim.Optimizer:  # type: ignore
+    def Optimizer(self, optimizer: torch.optim.Optimizer) -> torch.optim.Optimizer:  # type: ignore
         """Wraps an optimizer. It returns a wrapped optimizer.
 
         The optimizer must use the models wrapped by :meth:`Model`. This function
         creates a ``horovod.DistributedOptimizer`` if using parallel/distributed training.
         """
 
-        check.false(self._use_amp, "Must call Optimizer() before _configure_apex_amp.")
+        check.false(self._use_amp, "Must call Optimizer() before configure_apex_amp.")
 
         if self.hvd_config.use:
             use_compression = self.hvd_config.fp16_compression
@@ -154,7 +164,7 @@ class PyTorchTrialContext(det.TrialContext):
         self.optimizers.append(optimizer)
         return optimizer
 
-    def _LRScheduler(
+    def LRScheduler(
         self,
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler,
         step_mode: pytorch.LRScheduler.StepMode,
@@ -197,12 +207,18 @@ class PyTorchTrialContext(det.TrialContext):
             self.device = torch.device("cpu")
         check.is_not_none(self.device)
 
-    def _to_device(self, data: pytorch._Data) -> pytorch.TorchData:
+    def to_device(self, data: pytorch._Data) -> pytorch.TorchData:
+        """Map generated data to the device allocated by the Determined cluster.
+
+        All the data in the data loader and the models are automatically moved to the
+        allocated device. This method aims at providing a function for the data generated
+        on the fly.
+        """
         return pytorch.to_device(
             data, self.device, self.warning_logged[_WarningLogs.FAILED_MOVING_TO_DEVICE]
         )
 
-    def _configure_apex_amp(
+    def configure_apex_amp(
         self,
         models: Union[torch.nn.Module, List[torch.nn.Module]],
         optimizers: Union[torch.optim.Optimizer, List[torch.optim.Optimizer]],  # type: ignore
@@ -233,7 +249,7 @@ class PyTorchTrialContext(det.TrialContext):
             When using distributed training and automatic mixed precision,
             we only support ``num_losses=1`` and calling backward on the loss once.
 
-        Args:
+        Arguments:
             models (``torch.nn.Module`` or list of ``torch.nn.Module`` s):  Model(s) to modify/cast.
             optimizers (``torch.optim.Optimizer`` or list of ``torch.optim.Optimizer`` s):
                 Optimizers to modify/cast. REQUIRED for training.
@@ -326,7 +342,7 @@ class PyTorchTrialContext(det.TrialContext):
             raise det.errors.InternalException("Training hasn't started.")
         return (self._current_batch_idx + 1) % self.hvd_config.aggregation_frequency == 0
 
-    def _backward(
+    def backward(
         self,
         loss: torch.Tensor,
         gradient: Optional[torch.Tensor] = None,
@@ -412,7 +428,7 @@ class PyTorchTrialContext(det.TrialContext):
         for p in filter(lambda param: param.grad is not None, parameters):
             p.grad.data.div_(divisor_value)
 
-    def _step_optimizer(
+    def step_optimizer(
         self,
         optimizer: torch.optim.Optimizer,  # type: ignore
         clip_grads: Optional[Callable[[Iterator], None]] = None,
@@ -425,6 +441,24 @@ class PyTorchTrialContext(det.TrialContext):
         this function in different orders. Also, gradient accumulation across iterations
         is performed by the Determined training loop by setting the experiment configuration
         optimization.aggregation_frequency.
+
+        Here is a code example of using lambda function:
+
+        .. code-block:: python
+
+            self.context.step_optimizer(
+                self.opt1,
+                clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(params, 0.0001),
+            )
+
+        Or you can use a function defined by ``def``:
+
+        .. code-block:: python
+
+            def clip_grads(params):
+                torch.nn.utils.clip_grad_norm_(params, 0.0001),
+
+            self.context.step_optimizer(self.opt1, clip_grads)
 
         Arguments:
             optimizer(``torch.optim.Optimizer``): Which optimizer should be stepped.

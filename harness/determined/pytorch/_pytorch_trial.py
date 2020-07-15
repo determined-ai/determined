@@ -40,6 +40,12 @@ class PyTorchTrialController(det.LoopTrialController):
             or util.is_overridden(self.trial.optimizer, PyTorchTrial)
             or util.is_overridden(self.trial.create_lr_scheduler, PyTorchTrial)
         ):
+            logging.warning(
+                "build_model(), optimizer(), and create_lr_scheduler(), which belong to"
+                "the old interface, are deprecated. Please see the following documentation"
+                "of PyTorchTrial for the new interface \n"
+                f"{PyTorchTrial.__doc__}"
+            )
             check.true(
                 util.is_overridden(self.trial.build_model, PyTorchTrial)
                 and util.is_overridden(self.trial.optimizer, PyTorchTrial),
@@ -50,15 +56,21 @@ class PyTorchTrialController(det.LoopTrialController):
                 "and context.step_optimizer(optimizer) in train_batch.",
             )
 
-            model = self.context._Model(self.trial.build_model())
-            optim = self.context._Optimizer(self.trial.optimizer(model))
+            model = self.context.Model(self.trial.build_model())
+            optim = self.context.Optimizer(self.trial.optimizer(model))
 
             lr_scheduler = self.trial.create_lr_scheduler(optim)
             if lr_scheduler is not None:
                 self.context.lr_schedulers.append(lr_scheduler)
 
             if det.ExperimentConfig(self.context.get_experiment_config()).mixed_precision_enabled():
-                self.context._configure_apex_amp(
+                logging.warning(
+                    "The experiment configuration field optimization.mixed_precision is deprecated."
+                    "Please use configure_apex_amp in __init__ to configrue apex amp. "
+                    "See the following documentation of PyTorchTrial for the new interface \n"
+                    f"{PyTorchTrial.__doc__}"
+                )
+                self.context.configure_apex_amp(
                     models=model,
                     optimizers=optim,
                     opt_level=self.context.get_experiment_config()
@@ -85,11 +97,15 @@ class PyTorchTrialController(det.LoopTrialController):
                 )
 
                 def clip_grads(parameters: Iterator) -> None:
+                    logging.warning(
+                        "The callback on_before_optimizer_step is deprecated."
+                        "Please use context.step_optimizer to clip gradients."
+                    )
                     for callback in self.callbacks.values():
                         callback.on_before_optimizer_step(parameters)
 
-                self.context._backward(tr_metrics["loss"])
-                self.context._step_optimizer(self.context.optimizers[0], clip_grads=clip_grads)
+                self.context.backward(tr_metrics["loss"])
+                self.context.step_optimizer(self.context.optimizers[0], clip_grads=clip_grads)
                 return tr_metrics
 
             self.trial.__setattr__("train_batch", new_train_batch)
@@ -315,7 +331,7 @@ class PyTorchTrialController(det.LoopTrialController):
         for batch_idx in range(start, end):
             batch = next(self.training_iterator)
             num_inputs += data_length(batch)
-            batch = self.context._to_device(batch)
+            batch = self.context.to_device(batch)
 
             self.context._current_batch_idx = batch_idx
             self.context._loss_ids = {}
@@ -398,7 +414,7 @@ class PyTorchTrialController(det.LoopTrialController):
             self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
             check.gt(len(self.validation_loader), 0)
             for batch in self.validation_loader:
-                batch = self.context._to_device(batch)
+                batch = self.context.to_device(batch)
                 num_inputs += data_length(batch)
 
                 vld_metrics = self.trial.evaluate_batch(batch=batch, model=self.context.models[0])
@@ -675,20 +691,75 @@ class PyTorchTrial(det.Trial):
     """
     PyTorch trials are created by subclassing the abstract class
     :class:`PyTorchTrial`.
-    """
 
-    # TODO(DET-3204): Add the following comments to the docstring.
-    # There are two different methods to define models, optimizers, and LR schedulers.
-    #
-    # 1. Define the abstract methods for the only model, optimizer, and LR scheduler and
-    #    Determine will initialize them for the users. Note this method doesn't support
-    #    multiple models, optimizers, and LR schedulers.
-    #
-    # 2. Initialize models, optimizers, and LR schedulers in the :meth:`__init__`.
-    #    If using this way, users should calculate the gradients with the losses and call an
-    #    optimization step for the optimizers on your own in :meth:`train_batch`.
-    #    Users are able to use arbitrary number of models, optimizers, and LR schedulers
-    #    and run the forward and backward passes and step optimizers in arbitrary orders.
+    We can do the following things in this trial class:
+
+    1. **Define models, optimizers, and LR schedulers**.
+
+       We should initialize models, optimizers, and LR schedulers and wrap them with
+       ``Model``, ``Optimizer``, ``LRScheduler`` provided by
+       `PyTorchTrialContext <pytorch-trial-context_>`_ in the :meth:`__init__`.
+
+    2. **Run forward and backward passes**.
+
+       We should call ``backward`` and ``step_optimizer`` provided by
+       `PyTorchTrialContext <pytorch-trial-context_>`_ in :meth:`train_batch`.
+       Note that we support arbitrary number of models, optimizers, and LR schedulers
+       and arbitrary orders of running forward and backward passes.
+
+    2. **Configure automatic mixed precision**.
+
+       We should call ``configure_apex_amp`` provided by
+       `PyTorchTrialContext <pytorch-trial-context_>`_ in the :meth:`__init__`.
+
+    3. **Clip gradients**.
+
+       We should pass a function into ``step_optimizer(optimizer, clip_grads=...)``
+       provided by `PyTorchTrialContext <pytorch-trial-context_>`_ in the :meth:`train_batch`.
+
+    Another deprecated method to do the above things is as follows:
+
+    1. Define the abstract methods :meth:`build_model`, :meth:`optimizer`,
+       :meth:`create_lr_scheduler` for the model, optimizer, and LR scheduler, which
+       initialized by Determined. Note this method doesn't support multiple models,
+       optimizers, and LR schedulers.
+
+    2. Configure the experiment configuration field ``optimization.mixed_precision`` for
+       automatic mixed precision.
+
+    2. Clip gradients by adding a callback with ``on_before_optimizer_step`` in
+       :meth:`build_callbacks`.
+
+
+    .. _pytorch-trial-migration-guide:
+
+    .. note::
+
+        The new method of defining a PyTorch trial is more powerful in allowing
+        multiple models, optimizers, and LR schedulers and more flexible in running
+        forward and backward passes on them in arbitrary orders.
+        You can only choose one of the two methods.
+
+        To migrate from the deprecated method to the new one, please
+        change the following places in your code:
+
+        1. Wrap models, optimizers, and LR schedulers in the :meth:`__init__` with the methods
+           ``Model``, ``Optimizer``, and ``LRScheduler`` that are provided by
+           `PyTorchTrialContext <pytorch-trial-context_>`_. At the same time,
+           remove the implementation of :meth:`build_model`, :meth:`optimizer`,
+           :meth:`create_lr_scheduler`.
+
+        2. If using automatic mixed precision (AMP), configure Apex AMP in the ``__init__``
+           with the method ``configure_apex_amp`` that is provided by
+           `PyTorchTrialContext <pytorch-trial-context_>`_.
+           At the same time, remove the experiment configuration ``optimizations.mixed_precision``.
+
+        3. Run backward passes on losses and step optimizers in :meth:`train_batch` with the methods
+           ``backward`` and ``step_optimizer`` provided by
+           `PyTorchTrialContext <pytorch-trial-context_>`_. Clip graidents by passing a function
+           to the ``clip_grads`` argument of ``step_optimizer``
+           while removing the ``PyTorchCallback`` counterpart in :meth:`build_callbacks`.
+    """
 
     trial_controller_class = PyTorchTrialController
     trial_context_class = PyTorchTrialContext
@@ -698,60 +769,62 @@ class PyTorchTrial(det.Trial):
         """
         Initializes a trial using the provided trial context.
 
-        Override this function to initialize any shared state between the
-        function implementations.
+        1. Initialize models, optimizers, and LR schedulers and wrap them with ``context.Model``,
+           ``context.Optimizer``, ``context.LRScheduler`` provided by
+           `PyTorchTrialContext <pytorch-trial-context_>`_.
 
-        Models, optimizers, and LR schedulers can be defined in the abstract methods.
+        2. Configure apex amp by calling ``context.configure_apex_amp``
+           provided by `PyTorchTrialContext <pytorch-trial-context_>`_.
+
+        Here is a code example.
+
+        .. code-block:: python
+
+            self.context = trial_context
+
+            self.a = self.context.Model(MyModelA())
+            self.b = self.context.Model(MyModelB())
+            self.opt1 = self.context.Optimizer(torch.optm.Adam(self.a))
+            self.opt2 = self.context.Optimizer(torch.optm.Adam(self.b))
+
+            (self.a, self.b), (self.opt1, self.opt2) = self.context.configure_apex_amp(
+                models=[self.a, self.b],
+                optimizers=[self.opt1, self.opt2],
+                num_losses=2,
+            )
+
+            self.lrs1 = context.LRScheduler(
+                lr_scheduler=LambdaLR(self.opt1, lr_lambda=lambda epoch: 0.95 ** epoch),
+                step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH,
+            ))
+
+        In the deprecated method, the model, optimizer, and LR scheduler can be defined
+        in the abstract methods :meth:`build_model`, :meth:`optimizer`,
+        :meth:`create_lr_scheduler`.
         """
-
-        # TODO(DET-3204): Add the following comments to the docstring.
-        # Alternatively, we could initialize them with the methods provided by
-        # :py:class:`det.pytorch.PytorchTrialContext`, including ``Model``,
-        # ``Optimizer``, ``LRScheduler``, ``_configure_apex_amp``.
-        # Here is a code example.
-        #
-        # .. code-block:: python
-        #
-        #     self.context = trial_context
-        #
-        #     self.a = self.context.Model(MyModelA())
-        #     self.b = self.context.Model(MyModelB())
-        #     self.opt1 = self.context.Optimizer(torch.optm.Adam(self.a))
-        #     self.opt2 = self.context.Optimizer(torch.optm.Adam(self.b))
-        #
-        #     (self.a, self.b), (self.opt1, self.opt2) = self.context._configure_apex_amp(
-        #         models=[self.a, self.b],
-        #         optimizers=[self.opt1, self.opt2],
-        #         num_losses=2,
-        #     )
-        #
-        #     self.lrs1 = context.LRScheduler(
-        #         lr_scheduler=LambdaLR(self.opt1, lr_lambda=lambda epoch: 0.95 ** epoch),
-        #         step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH,
-        #     ))
         pass
 
     def build_model(self) -> nn.Module:
         """
-        Defines the deep learning architecture associated with a trial. This method
+        (Deprecated) Defines the deep learning architecture associated with a trial. This method
         returns the model as an instance or subclass of :py:class:`nn.Module`.
         """
-        # TODO(DET-3267): deprecate this when releasing pytorch flexible primitives.
+        # TODO(DET-3262): remove this backward compatibility of old interface.
         pass
 
     def optimizer(self, model: nn.Module) -> torch.optim.Optimizer:  # type: ignore
         """
-        Describes the optimizer to be used during training of the given model,
+        (Deprecated) Describes the optimizer to be used during training of the given model,
         an instance of :py:class:`torch.optim.Optimizer`.
         """
-        # TODO(DET-3267): deprecate this when releasing pytorch flexible primitives.
+        # TODO(DET-3262): remove this backward compatibility of old interface.
         pass
 
     def create_lr_scheduler(
         self, optimizer: torch.optim.Optimizer  # type: ignore
     ) -> Optional[LRScheduler]:
         """
-        Create a learning rate scheduler for the trial given an instance of the
+        (Deprecated) Create a learning rate scheduler for the trial given an instance of the
         optimizer.
 
         Arguments:
@@ -762,7 +835,7 @@ class PyTorchTrial(det.Trial):
             :py:class:`det.pytorch.LRScheduler`:
                 Wrapper around a :obj:`torch.optim.lr_scheduler._LRScheduler`.
         """
-        # TODO(DET-3267): deprecate this when releasing pytorch flexible primitives.
+        # TODO(DET-3262): remove this backward compatibility of old interface.
         pass
 
     @abstractmethod
@@ -770,39 +843,64 @@ class PyTorchTrial(det.Trial):
         self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int
     ) -> Union[torch.Tensor, Dict[str, Any]]:
         """
-        Calculate the loss for a batch and return it in a dictionary.
-        :py:obj:`batch_idx` represents the total number of batches processed per
-        device (slot) since the start of training.
+        Train on one batch.
+
+        Users should implement this function by doing the following things:
+        1. Run forward passes on the models.
+
+        2. Calculate the gradients with the losses with ``backward``.
+
+        3. Call an optimization step for the optimizers with ``step_optimizer``. You can clip
+           gradients by specifying the argument ``clip_grads``.
+
+        4. Step LR schedulers if using manual step mode.
+
+        5. Return training metrics in a dictionary.
+
+        Here is a code example.
+
+        .. code-block:: python
+
+            # Assume having initialized models, optimizers, and LR schedulers (when
+            # using manual mode): self.model1, self.model2, self.opt1, self.opt2, and self.lrs1.
+
+            # Calculate the losses using the models.
+            loss1 = self.model1(batch)
+            loss2 = self.model2(batch)
+
+            # Run backward passes on losses and step optimizers. These can happen
+            # in arbitrary orders.
+            self.context.backward(loss1)
+            self.context.backward(loss2)
+            self.context.step_optimizer(
+                self.opt1,
+                clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(params, 0.0001),
+            )
+            self.context.step_optimizer(self.opt2)
+
+            # Step the learning rate.
+            self.lrs1.step()
+            self.lrs2.step()
+
+            return {"loss1": loss1, "loss2": loss2}
+
+        In the deprecated method, there are no need to call ``context.backward`` and
+        `context.step_optimizer`.
+
+        Arguments:
+            batch (Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor):
+                batch of data for training.
+            model (torch.nn.Module): (deprecated) the only model used for training.
+                If there are multiple models, return the first one.
+            epoch_idx (integer): index of the current epoch among all the batches processed
+                per device (slot) since the start of training.
+            batch_idx (integer): index of the current batch among all the epoches processed
+                per device (slot) since the start of training.
+        Returns:
+            torch.Tensor or Dict[str, Any]: training metrics. If returning a dict, a ``loss``
+                must be included.
         """
-
-        # TODO(DET-3204): Add the following comments to the docstring.
-        # If the models, optimizers, and LR schedulers are initialized in :meth:`__init__`
-        # by users, users should calculate the gradients with the losses with :meth:`backward`
-        # and call an optimization step for the optimizers with :meth:`step_optimizer`
-        # on your own. Here is a code example.
-        #
-        # .. code-block:: python
-        #
-        #     # Assume having initialized models, optimizers, and LR schedulers (when
-        #     # using manual mode): self.model1, self.model2, self.opt1, self.opt2, and self.lrs1.
-        #
-        #     # Calculate the losses using the models.
-        #     loss1 = self.model1(batch)
-        #     loss2 = self.model2(batch)
-        #
-        #     # Run backward passes on losses and step optimizers. These can happen
-        #     # in arbitrary orders.
-        #     self.context.backward(loss1)
-        #     self.context.backward(loss2)
-        #     self.context.step_optimizer(self.opt1)
-        #     self.context.step_optimizer(self.opt2)
-        #
-        #     # Step the learning rate.
-        #     self.lrs1.step()
-        #
-        #     return {"loss1": loss1, "loss2": loss2}
-
-        # TODO(DET-3267): deprecate the model argument when releasing pytorch flexible primitives.
+        # TODO(DET-3262): remove the model argument.
         pass
 
     @abstractmethod
@@ -848,8 +946,14 @@ class PyTorchTrial(det.Trial):
         overridden by a trial.
 
         The metrics returned from this function must be JSON-serializable.
+
+        Arguments:
+            batch (Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor):
+                batch of data for evaluating.
+            model (torch.nn.Module): (deprecated) the only model used for evaluating.
+                If there are multiple models, return the first one.
         """
-        # TODO(DET-3267): deprecate the model argument when releasing pytorch flexible primitives.
+        # TODO(DET-3262): remove the model argument.
         pass
 
     def evaluation_reducer(self) -> Union[Reducer, Dict[str, Reducer]]:
@@ -874,8 +978,13 @@ class PyTorchTrial(det.Trial):
         be overridden by a trial.
 
         The metrics returned from this function must be JSON-serializable.
+
+        Arguments:
+            data_loader (torch.utils.data.DataLoader): data loader for evaluating.
+            model (torch.nn.Module): (deprecated) the only model used for evaluating.
+                If there are multiple models, return the first one.
         """
-        # TODO(DET-3267): deprecate the model argument when releasing pytorch flexible primitives.
+        # TODO(DET-3262): remove the model argument.
         pass
 
 
