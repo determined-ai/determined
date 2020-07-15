@@ -81,6 +81,8 @@ structures of the following types, which will be fed directly to the
           "label": (torch.Tensor([0, 0]), torch.Tensor([[0, 0], [0, 0]])),
       }
 
+.. _pytorch-trial-context:
+
 Trial Context
 ~~~~~~~~~~~~~
 
@@ -133,8 +135,8 @@ Then, implement the ``build_callbacks`` function in ``PyTorchTrial``:
         return {"reduce_lr": ReduceLROnPlateauEveryValidationStep(self.context)}
 
 
-``Gradient Clipping``
-^^^^^^^^^^^^^^^^^^^^^
+Gradient Clipping
+^^^^^^^^^^^^^^^^^
 
 To perform gradient clipping Determined provides two pre-made callback classes:
 
