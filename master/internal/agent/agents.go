@@ -42,7 +42,7 @@ func (a *agents) Receive(ctx *actor.Context) error {
 	case *apiv1.GetAgentsRequest:
 		response := &apiv1.GetAgentsResponse{}
 		for _, a := range a.summarize(ctx) {
-			response.Agents = append(response.Agents, toProtoAgent(a))
+			response.Agents = append(response.Agents, ToProtoAgent(a))
 		}
 		ctx.Respond(response)
 	case echo.Context:

@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sClient "k8s.io/client-go/kubernetes"
@@ -116,6 +117,9 @@ func (p *pods) Receive(ctx *actor.Context) error {
 
 	case echo.Context:
 		p.handleAPIRequest(ctx, msg)
+
+	case *apiv1.GetAgentsRequest:
+		p.handleGetAgentsRequest(ctx)
 
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
@@ -274,6 +278,16 @@ func (p *pods) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	default:
 		ctx.Respond(echo.ErrMethodNotAllowed)
 	}
+}
+
+func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
+	summaries := p.summarize(ctx)
+	response := &apiv1.GetAgentsResponse{}
+
+	for _, summary := range summaries {
+		response.Agents = append(response.Agents, agent.ToProtoAgent(summary))
+	}
+	ctx.Respond(response)
 }
 
 // summarize will return all nodes currently in the k8 cluster that have GPUs as agents.

@@ -73,7 +73,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 	case aproto.MasterMessage:
 		a.handleIncomingWSMessage(ctx, msg)
 	case *proto.GetAgentRequest:
-		ctx.Respond(&proto.GetAgentResponse{Agent: toProtoAgent(a.summarize(ctx))})
+		ctx.Respond(&proto.GetAgentResponse{Agent: ToProtoAgent(a.summarize(ctx))})
 	case *proto.GetSlotsRequest:
 		var slots []*agentv1.Slot
 		for _, s := range a.summarize(ctx).Slots {
@@ -83,10 +83,10 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		ctx.Respond(&proto.GetSlotsResponse{Slots: slots})
 	case *proto.EnableAgentRequest:
 		ctx.Tell(a.slots, patchSlot{Enabled: true})
-		ctx.Respond(&proto.EnableAgentResponse{Agent: toProtoAgent(a.summarize(ctx))})
+		ctx.Respond(&proto.EnableAgentResponse{Agent: ToProtoAgent(a.summarize(ctx))})
 	case *proto.DisableAgentRequest:
 		ctx.Tell(a.slots, patchSlot{Enabled: false})
-		ctx.Respond(&proto.DisableAgentResponse{Agent: toProtoAgent(a.summarize(ctx))})
+		ctx.Respond(&proto.DisableAgentResponse{Agent: ToProtoAgent(a.summarize(ctx))})
 	case echo.Context:
 		a.handleAPIRequest(ctx, msg)
 	case actor.ChildFailed:
