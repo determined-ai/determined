@@ -153,8 +153,6 @@ func (p *OperationPlanner) create(create Create) {
 func (p *OperationPlanner) train(requestID RequestID, unitsNeeded model.Length) (ops []Operation) {
 	batchesNeeded, trunc := p.unitsToBatches(requestID, unitsNeeded)
 	p.totalUnitsCompleted = p.totalUnitsCompleted.Add(trunc)
-	p.unitsSinceValidation[requestID] = p.unitsSinceValidation[requestID].Add(trunc)
-	p.unitsSinceCheckpoint[requestID] = p.unitsSinceCheckpoint[requestID].Add(trunc)
 	var batchesThisStep int
 	for curBatches := 0; curBatches < batchesNeeded; curBatches += batchesThisStep {
 		batchesLeft := batchesNeeded - curBatches
@@ -168,10 +166,10 @@ func (p *OperationPlanner) train(requestID RequestID, unitsNeeded model.Length) 
 		)
 		p.stepCounts[requestID]++
 		ops = append(ops, p.trainStep(requestID, batchesThisStep))
-		switch batchesThisStep {
-		case batchesTilVal:
+		if batchesThisStep == batchesTilVal {
 			ops = append(ops, p.validate(requestID)...)
-		case batchesTilCkpt:
+		}
+		if batchesThisStep == batchesTilCkpt {
 			ops = append(ops, p.checkpoint(requestID)...)
 		}
 	}
@@ -186,12 +184,18 @@ func (p *OperationPlanner) trainStep(requestID RequestID, numBatches int) Worklo
 }
 
 func (p *OperationPlanner) validate(requestID RequestID) (ops []Operation) {
+	if p.unitsSinceValidation[requestID].Units == 0 {
+		return nil
+	}
 	p.unitsSinceValidation[requestID] = model.NewLength(p.unit, 0)
 	ops = append(ops, NewValidateWorkload(requestID, p.stepCounts[requestID]))
 	return ops
 }
 
 func (p *OperationPlanner) checkpoint(requestID RequestID) (ops []Operation) {
+	if p.unitsSinceCheckpoint[requestID].Units == 0 {
+		return nil
+	}
 	p.unitsSinceCheckpoint[requestID] = model.NewLength(p.unit, 0)
 	ops = append(ops, NewCheckpointWorkload(requestID, p.stepCounts[requestID]))
 	return ops
@@ -200,18 +204,22 @@ func (p *OperationPlanner) checkpoint(requestID RequestID) (ops []Operation) {
 func (p *OperationPlanner) sequence(
 	requestID RequestID, searcherOp Operation, ops []Operation, completedByLast Kind,
 ) {
-	markedCompletingStep := false
-	var partial opSequence
-	for i := len(ops) - 1; i >= 0; i-- {
-		workloadOp := ops[i].(WorkloadOperation)
-		if !markedCompletingStep && workloadOp.Kind == completedByLast {
-			partial = append(partial, workloadToSearcherOp{workloadOp, searcherOp})
-			markedCompletingStep = true
-		} else {
-			partial = append(partial, workloadToSearcherOp{workloadOp, nil})
+	if ops != nil {
+		var pairs []workloadToSearcherOp
+		for _, op := range ops {
+			pairs = append(pairs, workloadToSearcherOp{op.(WorkloadOperation), nil})
+		}
+		p.trialOpSequences[requestID] = insertSorted(p.trialOpSequences[requestID], pairs...)
+	}
+
+	if searcherOp != nil {
+		for i := len(p.trialOpSequences[requestID]) - 1; i >= 0; i-- {
+			if p.trialOpSequences[requestID][i].workload.Kind == completedByLast {
+				p.trialOpSequences[requestID][i].searcherOp = searcherOp
+				return
+			}
 		}
 	}
-	p.trialOpSequences[requestID] = insertSorted(p.trialOpSequences[requestID], partial...)
 }
 
 // WorkloadCompleted collates workloads back into search method operations, through multiple calls.
