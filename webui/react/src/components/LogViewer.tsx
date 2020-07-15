@@ -69,11 +69,10 @@ export interface LogViewerHandles {
 const BUFFER_FACTOR = 1;
 
 // Format the datetime to...
-const DATETIME_FORMAT = 'MMM DD, HH:mm:ss';
-const CLIPBOARD_FORMAT = 'YYYY-MM-DD, HH:mm:ss';
+const DATETIME_FORMAT = '[[]YYYY-MM-DD, HH:mm:ss]';
 
 // Max datetime size: [MMM DD, HH:mm:ss] (plus 1 for a space suffix)
-const MAX_DATETIME_LENGTH = 19;
+const MAX_DATETIME_LENGTH = 23;
 
 const ICON_WIDTH = 26;
 
@@ -328,10 +327,26 @@ const LogViewer: React.FC<Props> = forwardRef((
   }, [ config, scrollToInfo ]);
 
   useLayoutEffect(() => {
-    console.log('add copy handler');
     const handleCopy = (e: ClipboardEvent): void => {
-      const selection = window.getSelection()?.toString();
-      console.log('copy!', selection, e.clipboardData?.getData('text/plain'));
+      const clipboardFormat = 'text/plain';
+      const selection = window.getSelection()?.toString() || '';
+      const lines = selection?.split('\n');
+      if (lines?.length <= 1) {
+        e.clipboardData?.setData(clipboardFormat, selection);
+      } else {
+        const oddOrEven = lines.map(line => /^\[/.test(line) || /\]$/.test(line))
+          .reduce((acc, isTimestamp, index) => {
+            if (isTimestamp) acc[index % 2 === 0 ? 'even' : 'odd']++;
+            return acc;
+          }, { even: 0, odd: 0 });
+        const isEven = oddOrEven.even > oddOrEven.odd;
+        const content = lines.reduce((acc, line, index) => {
+          const skipNewline = (isEven && index % 2 === 0) || (!isEven && index % 2 === 1);
+          return acc + line + (skipNewline ? ' ' : '\n');
+        }, '');
+        e.clipboardData?.setData(clipboardFormat, content);
+      }
+      e.preventDefault();
     };
 
     document.addEventListener('copy', handleCopy);
@@ -340,8 +355,8 @@ const LogViewer: React.FC<Props> = forwardRef((
   }, []);
 
   const formatClipboardHeader = useCallback((log: Log): string => {
-    const format = `%${CLIPBOARD_FORMAT.length}s `;
-    const datetime = formatDatetime(log.time!, CLIPBOARD_FORMAT);
+    const format = `%${DATETIME_FORMAT.length}s `;
+    const datetime = formatDatetime(log.time!, DATETIME_FORMAT);
     return props.disableLevel ?
       sprintf(format, datetime) :
       sprintf(`${format} %-7s `, datetime, log.level || '');
@@ -414,12 +429,6 @@ const LogViewer: React.FC<Props> = forwardRef((
     return classes.join(' ');
   };
 
-  const addClipboardPrefix = (log: Log): string => {
-    const content = formatClipboardHeader(log);
-    const prefix = `<span class=${css.clipboard}>${content}</span>`;
-    return prefix + ansiToHtml(log.message);
-  };
-
   return (
     <div className={css.base} ref={baseRef}>
       <Section maxHeight options={logOptions} title={props.title}>
@@ -441,13 +450,11 @@ const LogViewer: React.FC<Props> = forwardRef((
                     <div className={levelCss(css.level, log.level)} style={levelStyle} />
                   ) : null
                 }
-                <div className={css.number} style={lineNumberStyle}>{log.id + 1}</div>
-                <Tooltip placement="left" title={log.time || ''}>
-                  <div className={css.time} style={dateTimeStyle}>{log.formattedTime}</div>
-                </Tooltip>
+                <div className={css.number} data-label={log.id + 1} style={lineNumberStyle} />
+                <div className={css.time} style={dateTimeStyle}>{log.formattedTime}</div>
                 <div
                   className={levelCss(css.message, log.level)}
-                  dangerouslySetInnerHTML={{ __html: addClipboardPrefix(log) }} />
+                  dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }} />
               </div>
             ))}
           </div>

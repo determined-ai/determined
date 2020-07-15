@@ -36,6 +36,7 @@
   .line {
     display: flex;
     position: absolute;
+    width: 100%;
   }
   .line > * { white-space: nowrap; }
   .line > .debug { color: var(--theme-colors-states-active); }
@@ -47,7 +48,7 @@
     text-align: right;
     user-select: none;
   }
-  .line > .number::after { content: '\00a0'; }
+  .line > .number::after { content: attr(data-label) '\00a0'; }
   .line > .level {
     flex-shrink: 0;
     padding: 0.1rem;
@@ -56,10 +57,8 @@
   .line > .time {
     color: var(--theme-colors-core-secondary);
     flex-shrink: 0;
-    user-select: none;
   }
-  .line > .time::before { content: '['; }
-  .line > .time::after { content: ']\00a0'; }
+  .line > .time::after { content: '\00a0'; }
   .line > .message {
     flex-grow: 1;
     white-space: pre-wrap;
