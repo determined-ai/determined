@@ -327,6 +327,18 @@ const LogViewer: React.FC<Props> = forwardRef((
     }
   }, [ config, scrollToInfo ]);
 
+  useLayoutEffect(() => {
+    console.log('add copy handler');
+    const handleCopy = (e: ClipboardEvent): void => {
+      const selection = window.getSelection()?.toString();
+      console.log('copy!', selection, e.clipboardData?.getData('text/plain'));
+    };
+
+    document.addEventListener('copy', handleCopy);
+
+    return (): void => document.removeEventListener('copy', handleCopy);
+  }, []);
+
   const formatClipboardHeader = useCallback((log: Log): string => {
     const format = `%${CLIPBOARD_FORMAT.length}s `;
     const datetime = formatDatetime(log.time!, CLIPBOARD_FORMAT);
