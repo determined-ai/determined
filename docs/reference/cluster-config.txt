@@ -87,19 +87,19 @@ Master Port
 ===========
 
 By default, the master listens on TCP port 8080. This can be configured
-via the ``http_port`` option.
+via the ``port`` option.
 
 .. _security:
 
 Security
 ========
 
-The master is capable of serving over HTTPS in addition to HTTP. Doing
-so requires a TLS private key and certificate; to configure them, set
+The master can secure all incoming connections using `TLS
+<https://en.wikipedia.org/wiki/Transport_Layer_Security>`__. That
+ability requires a TLS private key and certificate to be provided; set
 the options ``security.tls.cert`` and ``security.tls.key`` to paths to a
-PEM-encoded TLS certificate and private key, respectively. The
-``https_port`` option determines the HTTPS listening port (default
-8443).
+PEM-encoded TLS certificate and private key, respectively, to do so. If
+TLS is enabled, the default port becomes 8443 rather than 8080.
 
 .. _agent-network-proxy:
 
@@ -263,6 +263,9 @@ The master supports the following configuration settings:
 
          -  ``master_service_name``: The service account Determined uses
             to interact with the Kubernetes API.
+
+-  ``port``: The TCP port on which the master accepts all incoming
+   connections. Defaults to ``8080``.
 
 -  ``task_container_defaults``: Specifies Docker defaults for all task
    containers. A task represents a single schedulable unit, such as a
@@ -657,6 +660,14 @@ The master supports the following configuration settings:
    -  ``host``: The database host to use. (*Required*)
    -  ``port``: The database port to use. (*Required*)
    -  ``name``: The database name to use. (*Required*)
+
+-  ``security``: Specifies security-related configuration settings.
+
+   -  ``tls``: Specifies TLS-related configuration settings. TLS is
+      enabled if certificate and key files are both specified.
+
+      -  ``cert``: Certificate file to use for serving TLS.
+      -  ``key``: Key file to use for serving TLS.
 
 -  ``telemetry``: Specifies whether we collect and report anonymous
    information about the usage of Determined. See :ref:`telemetry` for

@@ -43,6 +43,7 @@ provisioner:
 	}
 	err := resolveConfigPaths(expected)
 	assert.NilError(t, err)
+	setDefaultPort(expected)
 	err = mergeConfigBytesIntoViper([]byte(raw))
 	assert.NilError(t, err)
 	config, err := getConfig(viper.AllSettings())

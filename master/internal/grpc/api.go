@@ -2,8 +2,8 @@ package grpc
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
-	"net"
 	"runtime/debug"
 
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -12,10 +12,10 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -24,14 +24,9 @@ import (
 
 const jsonPretty = "application/json+pretty"
 
-// StartGRPCServer starts the Determined gRPC service and the given port.
-func StartGRPCServer(db *db.PgDB, srv proto.DeterminedServer, port int) error {
-	addr := fmt.Sprintf(":%d", port)
+// NewGRPCServer creates a Determined gRPC service.
+func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer) *grpc.Server {
 	logger := logrus.NewEntry(logrus.StandardLogger())
-	l, err := net.Listen("tcp", addr)
-	if err != nil {
-		return errors.Wrapf(err, "grpc server could not bind: %s", addr)
-	}
 	opts := []grpclogrus.Option{
 		grpclogrus.WithLevels(grpcCodeToLogrusLevel),
 	}
@@ -54,11 +49,11 @@ func StartGRPCServer(db *db.PgDB, srv proto.DeterminedServer, port int) error {
 		)),
 	)
 	proto.RegisterDeterminedServer(grpcS, srv)
-	return grpcS.Serve(l)
+	return grpcS
 }
 
 // RegisterHTTPProxy registers grpc-gateway with the master echo server.
-func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool) error {
+func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certificate) error {
 	addr := fmt.Sprintf(":%d", port)
 	serverOpts := []runtime.ServeMuxOption{
 		runtime.WithMarshalerOption(jsonPretty,
@@ -69,7 +64,15 @@ func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool) error {
 		runtime.WithForwardResponseOption(userTokenResponse),
 	}
 	mux := runtime.NewServeMux(serverOpts...)
-	opts := []grpc.DialOption{grpc.WithInsecure()}
+	var opts []grpc.DialOption
+	if cert == nil {
+		opts = append(opts, grpc.WithInsecure())
+	} else {
+		// Since this connection is coming directly back to this process, we can skip verification.
+		opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
+			InsecureSkipVerify: true, //nolint:gosec
+		})))
+	}
 	err := proto.RegisterDeterminedHandlerFromEndpoint(context.Background(), mux, addr, opts)
 	if err != nil {
 		return err

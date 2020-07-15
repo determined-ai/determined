@@ -99,19 +99,13 @@ func registerConfig() {
 	registerString(flags, name("security", "default-task", "group"),
 		defaults.Security.DefaultTask.Group, "security default task group name")
 
-	registerBool(flags, name("security", "http"),
-		defaults.Security.HTTP, "set whether to serve insecurely over HTTP")
 	registerString(flags, name("security", "tls", "cert"),
 		defaults.Security.TLS.Cert, "TLS cert file")
 	registerString(flags, name("security", "tls", "key"),
 		defaults.Security.TLS.Key, "TLS key file")
 
-	registerInt(flags, name("grpc-port"),
-		defaults.GRPCPort, "GRPC server port")
-	registerInt(flags, name("http-port"),
-		defaults.HTTPPort, "HTTP server port")
-	registerInt(flags, name("https-port"),
-		defaults.HTTPSPort, "HTTPS server port")
+	registerInt(flags, name("port"),
+		defaults.Port, "server port")
 
 	registerString(flags, name("root"),
 		defaults.Root, "static file root directory")

@@ -127,11 +127,25 @@ func getConfig(configMap map[string]interface{}) (*internal.Config, error) {
 		return nil, errors.Wrap(err, "cannot unmarshal configuration")
 	}
 
+	setDefaultPort(config)
+
 	if err = resolveConfigPaths(config); err != nil {
 		return nil, err
 	}
 
 	return config, nil
+}
+
+func setDefaultPort(config *internal.Config) {
+	if config.Port != 0 {
+		return
+	}
+
+	if config.Security.TLS.Enabled() {
+		config.Port = 8443
+	} else {
+		config.Port = 8080
+	}
 }
 
 func resolveConfigPaths(config *internal.Config) error {
