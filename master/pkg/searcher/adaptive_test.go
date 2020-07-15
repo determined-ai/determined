@@ -35,17 +35,18 @@ func TestAggressiveMode(t *testing.T) {
 func TestAdaptiveSearcherReproducibility(t *testing.T) {
 	conf := model.AdaptiveConfig{
 		Metric: defaultMetric, SmallerIsBetter: true,
-		TargetTrialSteps: 64, StepBudget: 1024, Divisor: 4, TrainStragglers: true,
-		Mode: model.AggressiveMode, MaxRungs: 3,
+		MaxLength: model.NewLengthInBatches(6400), Budget: model.NewLengthInBatches(102400),
+		Divisor: 4, TrainStragglers: true, Mode: model.AggressiveMode, MaxRungs: 3,
 	}
-	gen := func() SearchMethod { return newAdaptiveSearch(conf, defaultBatchesPerStep) }
-	checkReproducibility(t, gen, nil, defaultMetric)
+	gen := func() SearchMethod { return newAdaptiveSearch(conf) }
+	checkReproducibility(t, gen, defaultHyperparameters(), defaultMetric)
 }
 
 func TestAdaptiveSearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "smaller is better",
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.1, 32, []int{8, 32}, nil),
 				newConstantPredefinedTrial(0.2, 8, []int{8}, nil),
@@ -53,18 +54,22 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 			},
 			config: model.SearcherConfig{
 				AdaptiveConfig: &model.AdaptiveConfig{
-					Metric:           "error",
-					SmallerIsBetter:  true,
-					TargetTrialSteps: 32,
-					StepBudget:       64,
-					Mode:             model.StandardMode,
-					MaxRungs:         2,
-					Divisor:          4,
+					Metric:          "error",
+					SmallerIsBetter: true,
+					MaxLength:       model.NewLengthInBatches(3200),
+					Budget:          model.NewLengthInBatches(6400),
+					Mode:            model.StandardMode,
+					MaxRungs:        2,
+					Divisor:         4,
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 		{
 			name: "early exit -- smaller is better",
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.1, 32, []int{8, 32}, nil),
 				newEarlyExitPredefinedTrial(0.2, 8, nil, nil),
@@ -72,18 +77,22 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 			},
 			config: model.SearcherConfig{
 				AdaptiveConfig: &model.AdaptiveConfig{
-					Metric:           "error",
-					SmallerIsBetter:  true,
-					TargetTrialSteps: 32,
-					StepBudget:       64,
-					Mode:             model.StandardMode,
-					MaxRungs:         2,
-					Divisor:          4,
+					Metric:          "error",
+					SmallerIsBetter: true,
+					MaxLength:       model.NewLengthInBatches(3200),
+					Budget:          model.NewLengthInBatches(6400),
+					Mode:            model.StandardMode,
+					MaxRungs:        2,
+					Divisor:         4,
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 		{
 			name: "smaller is not better",
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.3, 32, []int{8, 32}, nil),
 				newConstantPredefinedTrial(0.2, 8, []int{8}, nil),
@@ -91,18 +100,22 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 			},
 			config: model.SearcherConfig{
 				AdaptiveConfig: &model.AdaptiveConfig{
-					Metric:           "error",
-					SmallerIsBetter:  false,
-					TargetTrialSteps: 32,
-					StepBudget:       64,
-					Mode:             model.StandardMode,
-					MaxRungs:         2,
-					Divisor:          4,
+					Metric:          "error",
+					SmallerIsBetter: false,
+					MaxLength:       model.NewLengthInBatches(3200),
+					Budget:          model.NewLengthInBatches(6400),
+					Mode:            model.StandardMode,
+					MaxRungs:        2,
+					Divisor:         4,
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 		{
 			name: "early exit -- smaller is not better",
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.3, 32, []int{8, 32}, nil),
 				newEarlyExitPredefinedTrial(0.2, 8, nil, nil),
@@ -110,15 +123,18 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 			},
 			config: model.SearcherConfig{
 				AdaptiveConfig: &model.AdaptiveConfig{
-					Metric:           "error",
-					SmallerIsBetter:  false,
-					TargetTrialSteps: 32,
-					StepBudget:       64,
-					Mode:             model.StandardMode,
-					MaxRungs:         2,
-					Divisor:          4,
+					Metric:          "error",
+					SmallerIsBetter: false,
+					MaxLength:       model.NewLengthInBatches(3200),
+					Budget:          model.NewLengthInBatches(6400),
+					Mode:            model.StandardMode,
+					MaxRungs:        2,
+					Divisor:         4,
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 	}
 

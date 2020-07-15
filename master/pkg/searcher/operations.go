@@ -14,6 +14,13 @@ import (
 // Operation represents the base interface for possible operations that a search method can return.
 type Operation interface{}
 
+// OperationID uniquely indentifies every operation created by the search method.
+type OperationID uuid.UUID
+
+func newOperationID() OperationID {
+	return OperationID(uuid.New())
+}
+
 // RequestID links all operations with the same ID to a single trial create request.
 type RequestID uuid.UUID
 
@@ -81,7 +88,7 @@ type Create struct {
 	// TrialSeed must be a value between 0 and 2**31 - 1.
 	TrialSeed             uint32                      `json:"trial_seed"`
 	Hparams               hparamSample                `json:"hparams"`
-	Checkpoint            *WorkloadOperation          `json:"checkpoint"`
+	Checkpoint            *Checkpoint                 `json:"checkpoint"`
 	WorkloadSequencerType model.WorkloadSequencerType `json:"workload_sequencer_type"`
 }
 
@@ -99,11 +106,10 @@ func NewCreate(
 // NewCreateFromCheckpoint initializes a new Create operation with a new request ID and the given
 // hyperparameters and checkpoint to initially load from.
 func NewCreateFromCheckpoint(
-	rand *nprand.State, s hparamSample, ckptRequestID RequestID, ckptStepID int,
+	rand *nprand.State, s hparamSample, checkpoint Checkpoint,
 	sequencerType model.WorkloadSequencerType,
 ) Create {
 	create := NewCreate(rand, s, sequencerType)
-	checkpoint := NewCheckpoint(ckptRequestID, ckptStepID)
 	create.Checkpoint = &checkpoint
 	return create
 }
@@ -117,6 +123,52 @@ func (create Create) String() string {
 	)
 }
 
+// Train is an operation emitted by search methods to signal the trial train for a specified length.
+type Train struct {
+	OperationID OperationID
+	RequestID   RequestID
+	Length      model.Length
+}
+
+// NewTrain returns a new train operation.
+func NewTrain(requestID RequestID, length model.Length) Train {
+	return Train{newOperationID(), requestID, length}
+}
+
+func (train Train) String() string {
+	return fmt.Sprintf("{Train %s, %s}", train.RequestID, train.Length)
+}
+
+// Validate is an operation emitted by search methods to signal the trial to validate.
+type Validate struct {
+	OperationID OperationID
+	RequestID   RequestID
+}
+
+// NewValidate returns a new validate operation.
+func NewValidate(requestID RequestID) Validate {
+	return Validate{newOperationID(), requestID}
+}
+
+func (validate Validate) String() string {
+	return fmt.Sprintf("{Validate %s}", validate.RequestID)
+}
+
+// Checkpoint is an operation emitted by search methods to signal the trial to checkpoint.
+type Checkpoint struct {
+	OperationID OperationID
+	RequestID   RequestID
+}
+
+// NewCheckpoint returns a new checkpoint operation.
+func NewCheckpoint(requestID RequestID) Checkpoint {
+	return Checkpoint{newOperationID(), requestID}
+}
+
+func (checkpoint Checkpoint) String() string {
+	return fmt.Sprintf("{Checkpoint %s}", checkpoint.RequestID)
+}
+
 // WorkloadOperation encompasses the intent for a searcher to run a workload on a trial.
 type WorkloadOperation struct {
 	RequestID  RequestID `json:"request_id"`
@@ -125,8 +177,8 @@ type WorkloadOperation struct {
 	NumBatches int       `json:"num_batches"`
 }
 
-// NewTrain signals to a trial runner that it should run a training step.
-func NewTrain(requestID RequestID, stepID, numBatches int) WorkloadOperation {
+// NewTrainWorkload signals to a trial runner that it should run a training step.
+func NewTrainWorkload(requestID RequestID, stepID, numBatches int) WorkloadOperation {
 	return WorkloadOperation{
 		RequestID:  requestID,
 		Kind:       RunStep,
@@ -135,8 +187,9 @@ func NewTrain(requestID RequestID, stepID, numBatches int) WorkloadOperation {
 	}
 }
 
-// NewCheckpoint signals to the trial runner that the current model state should be checkpointed.
-func NewCheckpoint(requestID RequestID, stepID int) WorkloadOperation {
+// NewCheckpointWorkload signals to the trial runner that the current model state should be
+// checkpointed.
+func NewCheckpointWorkload(requestID RequestID, stepID int) WorkloadOperation {
 	return WorkloadOperation{
 		RequestID: requestID,
 		Kind:      CheckpointModel,
@@ -144,8 +197,8 @@ func NewCheckpoint(requestID RequestID, stepID int) WorkloadOperation {
 	}
 }
 
-// NewValidate signals to a trial runner it should compute validation metrics.
-func NewValidate(requestID RequestID, stepID int) WorkloadOperation {
+// NewValidateWorkload signals to a trial runner it should compute validation metrics.
+func NewValidateWorkload(requestID RequestID, stepID int) WorkloadOperation {
 	return WorkloadOperation{
 		RequestID: requestID,
 		Kind:      ComputeValidationMetrics,
@@ -154,7 +207,14 @@ func NewValidate(requestID RequestID, stepID int) WorkloadOperation {
 }
 
 func (wo WorkloadOperation) String() string {
-	return fmt.Sprintf("{Workload %s %s, step %d}", wo.Kind, wo.RequestID, wo.StepID)
+	return fmt.Sprintf("{Workload %s %s, step %d, num_batches %d}",
+		wo.Kind, wo.RequestID, wo.StepID, wo.NumBatches)
+}
+
+func (wo WorkloadOperation) equals(workload Workload) bool {
+	return wo.StepID == workload.StepID &&
+		wo.NumBatches == workload.NumBatches &&
+		wo.Kind == workload.Kind
 }
 
 // Close the trial with the given trial id.

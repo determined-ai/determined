@@ -11,16 +11,28 @@ import (
 
 // Searcher encompasses the state as the searcher progresses using the provided search method.
 type Searcher struct {
-	rand     *nprand.State
-	hparams  model.Hyperparameters
-	eventLog *EventLog
-	method   SearchMethod
+	rand             *nprand.State
+	hparams          model.Hyperparameters
+	eventLog         *EventLog
+	method           SearchMethod
+	operationPlanner OperationPlanner
 }
 
 // NewSearcher creates a new Searcher configured with the provided searcher config.
-func NewSearcher(seed uint32, method SearchMethod, hparams model.Hyperparameters) *Searcher {
+func NewSearcher(
+	seed uint32, method SearchMethod, hparams model.Hyperparameters,
+	batchesPerStep, recordsPerEpoch int, minValidationPeriod, minCheckpointPeriod model.Length,
+	checkpointPolicy string,
+) *Searcher {
 	rand := nprand.New(seed)
-	return &Searcher{rand: rand, hparams: hparams, eventLog: NewEventLog(), method: method}
+	return &Searcher{
+		rand:     rand,
+		hparams:  hparams,
+		eventLog: NewEventLog(),
+		method:   method,
+		operationPlanner: NewOperationPlanner(batchesPerStep, recordsPerEpoch, method.Unit(),
+			minValidationPeriod, minCheckpointPeriod, checkpointPolicy),
+	}
 }
 
 func (s *Searcher) context() context {
@@ -47,8 +59,19 @@ func (s *Searcher) filterCompletedCheckpoints(ops []Operation) ([]Operation, err
 				return nil, errors.Errorf("event log ignored a cached WorkloadCompleted message")
 			}
 			requestID := s.eventLog.RequestIDs[msg.Workload.TrialID]
+			op, _, err := s.operationPlanner.WorkloadCompleted(requestID, msg.Workload, false)
+			if err != nil {
+				return filteredOps, errors.Wrapf(err,
+					"error replaying WorkloadCompleted to operation planner %s", msg.Workload)
+			}
+			ckpt, ok := op.(Checkpoint)
+			if !ok {
+				return filteredOps, errors.Wrapf(err,
+					"did not receive checkpoint from operation planner replaying workload %s",
+					msg.Workload)
+			}
 			moreOps, err := s.method.checkpointCompleted(
-				s.context(), requestID, msg.Workload, *msg.CheckpointMetrics)
+				s.context(), requestID, ckpt, *msg.CheckpointMetrics)
 			if err != nil {
 				return filteredOps, errors.Wrapf(err,
 					"error while replaying WorkloadCompleted message for workload: %v",
@@ -68,6 +91,7 @@ func (s *Searcher) InitialOperations() ([]Operation, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "error while fetching initial operations of search method")
 	}
+	operations = s.operationPlanner.Plan(operations)
 	s.eventLog.OperationsCreated(operations...)
 	operations, err = s.filterCompletedCheckpoints(operations)
 	if err != nil {
@@ -85,6 +109,7 @@ func (s *Searcher) TrialCreated(create Create, trialID int) ([]Operation, error)
 		return nil, errors.Wrapf(err,
 			"error while handling a trial created event: %s", create.RequestID)
 	}
+	operations = s.operationPlanner.Plan(operations)
 	s.eventLog.OperationsCreated(operations...)
 	operations, err = s.filterCompletedCheckpoints(operations)
 	if err != nil {
@@ -95,7 +120,9 @@ func (s *Searcher) TrialCreated(create Create, trialID int) ([]Operation, error)
 
 // WorkloadCompleted informs the searcher that the given workload initiated by the same searcher
 // has completed. Returns any new operations as a result of this workload completing.
-func (s *Searcher) WorkloadCompleted(message CompletedMessage) ([]Operation, error) {
+func (s *Searcher) WorkloadCompleted(
+	message CompletedMessage, isBestValidation bool,
+) ([]Operation, error) {
 	requestID, ok := s.eventLog.RequestIDs[message.Workload.TrialID]
 	if !ok {
 		return nil, errors.Errorf("unexpected trial ID sent to searcher: %d",
@@ -108,28 +135,42 @@ func (s *Searcher) WorkloadCompleted(message CompletedMessage) ([]Operation, err
 		return nil, nil
 	}
 
-	var operations []Operation
-	var err error
-
+	searcherOp, newCheckpoints, err := s.operationPlanner.WorkloadCompleted(
+		requestID, message.Workload, isBestValidation)
 	switch {
-	case message.ExitedReason != nil:
-		operations, err = s.method.trialExitedEarly(s.context(), requestID, message.Workload)
-	case message.Workload.Kind == RunStep:
-		operations, err = s.method.trainCompleted(
-			s.context(), requestID, message.Workload)
-	case message.Workload.Kind == CheckpointModel:
-		operations, err = s.method.checkpointCompleted(
-			s.context(), requestID, message.Workload, *message.CheckpointMetrics)
-	case message.Workload.Kind == ComputeValidationMetrics:
-		operations, err = s.method.validationCompleted(
-			s.context(), requestID, message.Workload, *message.ValidationMetrics)
-	default:
-		return nil, errors.Errorf("unexpected workload: %s", message.Workload.Kind)
+	case err != nil:
+		return nil, errors.Wrapf(err, "error collating workload %s", message.Workload)
+	case searcherOp == nil && message.ExitedReason == nil:
+		s.eventLog.OperationsCreated(newCheckpoints...)
+		return newCheckpoints, nil
+	}
+
+	var operations []Operation
+
+	if message.ExitedReason != nil {
+		operations, err = s.method.trialExitedEarly(s.context(), requestID)
+	} else {
+		switch tOp := searcherOp.(type) {
+		case Train:
+			operations, err = s.method.trainCompleted(s.context(), requestID, tOp)
+		case Checkpoint:
+			operations, err = s.method.checkpointCompleted(
+				s.context(), requestID, tOp, *message.CheckpointMetrics)
+		case Validate:
+			operations, err = s.method.validationCompleted(
+				s.context(), requestID, tOp, *message.ValidationMetrics)
+		default:
+			return nil, errors.Errorf(
+				"unexpected workload passing completed message to search method: %s",
+				message.Workload,
+			)
+		}
 	}
 
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
 	}
+	operations = append(s.operationPlanner.Plan(operations), newCheckpoints...)
 	s.eventLog.OperationsCreated(operations...)
 	operations, err = s.filterCompletedCheckpoints(operations)
 	if err != nil {
@@ -146,6 +187,7 @@ func (s *Searcher) TrialClosed(requestID RequestID) ([]Operation, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a trial closed event: %s", requestID)
 	}
+	operations = s.operationPlanner.Plan(operations)
 	s.eventLog.OperationsCreated(operations...)
 	if s.eventLog.TrialsRequested == s.eventLog.TrialsClosed {
 		shutdown := Shutdown{Failure: len(s.eventLog.earlyExits) >= s.eventLog.TrialsRequested}
@@ -161,7 +203,7 @@ func (s *Searcher) TrialClosed(requestID RequestID) ([]Operation, error) {
 
 // Progress returns experiment progress as a float between 0.0 and 1.0.
 func (s *Searcher) Progress() float64 {
-	progress := s.method.progress(s.eventLog.TotalWorkloadsCompleted)
+	progress := s.method.progress(s.operationPlanner.totalUnitsCompleted)
 	if math.IsNaN(progress) || math.IsInf(progress, 0) {
 		return 0.0
 	}

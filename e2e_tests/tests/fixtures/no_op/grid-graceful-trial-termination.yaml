@@ -14,7 +14,8 @@ hyperparameters:
 searcher:
   name: grid
   metric: validation_error
-  max_steps: 4
+  max_length:
+    batches: 400
 reproducibility:
   experiment_seed: 999
 max_restarts: 0

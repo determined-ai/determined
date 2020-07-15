@@ -97,11 +97,13 @@ func validGridSearchConfig() ExperimentConfig {
 	// This is unrelated to grid search but must be set to make the default config pass validation.
 	config.CheckpointStorage.SharedFSConfig.HostPath = "/"
 	config.Entrypoint = "model_def:TrialClass"
+	config.CheckpointPeriod = NewLengthInBatches(1000)
+	config.ValidationPeriod = NewLengthInBatches(2000)
 
 	// Construct a valid grid search config and hyperparameters.
 	config.Searcher = SearcherConfig{
 		GridConfig: &GridConfig{
-			MaxSteps: 10,
+			MaxLength: NewLengthInBatches(1000),
 		},
 	}
 	config.Hyperparameters = map[string]Hyperparameter{
@@ -205,7 +207,12 @@ func TestExperiment(t *testing.T) {
     "access_key": "my key",
     "secret_key": "my secret"
   },
-  "min_validation_period": null,
+  "validation_period": {
+	"batches": 1000
+  },
+  "checkpoint_period": {
+    "batches": 2000
+  },
   "hyperparameters": {
     "const1": {
       "type": "const",
@@ -228,13 +235,14 @@ func TestExperiment(t *testing.T) {
       "maxval": 8,
       "count": 5
     }
-
   },
   "searcher": {
     "name": "single",
     "metric": "loss",
     "smaller_is_better": false,
-    "max_steps": 10
+    "max_length": {
+		"batches": 1000
+	}
   },
   "batches_per_step": 32,
   "bind_mounts": [
@@ -286,6 +294,8 @@ func TestExperiment(t *testing.T) {
 		},
 		MinCheckpointPeriod: nil,
 		MinValidationPeriod: nil,
+		CheckpointPeriod:    NewLength(Batches, 2000),
+		ValidationPeriod:    NewLength(Batches, 1000),
 		CheckpointPolicy:    "best",
 		Hyperparameters: map[string]Hyperparameter{
 			"const1": {
@@ -323,7 +333,7 @@ func TestExperiment(t *testing.T) {
 		Searcher: SearcherConfig{
 			Metric:          "loss",
 			SmallerIsBetter: false,
-			SingleConfig:    &SingleConfig{MaxSteps: 10},
+			SingleConfig:    &SingleConfig{MaxLength: NewLengthInBatches(1000)},
 		},
 		Resources: ResourcesConfig{SlotsPerTrial: 1, Weight: 1},
 		Optimizations: OptimizationsConfig{

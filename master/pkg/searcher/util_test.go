@@ -1,6 +1,7 @@
 package searcher
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -13,7 +14,10 @@ import (
 	"github.com/determined-ai/determined/master/pkg/nprand"
 )
 
-const defaultMetric = "metric"
+const (
+	defaultMetric          = "metric"
+	defaultGlobalBatchSize = 64.0
+)
 
 var defaultBatchesPerStep = model.DefaultExperimentConfig().BatchesPerStep
 
@@ -35,8 +39,11 @@ func checkSimulation(
 	params model.Hyperparameters,
 	validation ValidationFunction,
 	expected [][]Kind,
+	recordsPerEpoch int,
 ) {
-	search := NewSearcher(0, method, params)
+	search := NewSearcher(0, method, params, defaultBatchesPerStep, recordsPerEpoch,
+		model.NewLength(method.Unit(), 0), model.NewLength(method.Unit(), 0),
+		model.DefaultExperimentConfig().CheckpointPolicy)
 	actual, err := Simulate(search, new(int64), validation, true, defaultMetric)
 	assert.NilError(t, err)
 
@@ -55,7 +62,7 @@ func checkSimulation(
 			}
 		}
 		if !found {
-			t.Errorf("unexpected trial %+v not in %+v", actualKinds, expected)
+			t.Errorf("unexpected trial %+v", kindsToShort(actualKinds))
 		}
 	}
 }
@@ -67,8 +74,14 @@ func checkReproducibility(
 	t assert.TestingT, methodGen func() SearchMethod, hparams model.Hyperparameters, metric string,
 ) {
 	seed := int64(17)
-	searcher1 := NewSearcher(uint32(seed), methodGen(), hparams)
-	searcher2 := NewSearcher(uint32(seed), methodGen(), hparams)
+	method1 := methodGen()
+	searcher1 := NewSearcher(uint32(seed), method1, hparams, defaultBatchesPerStep, 0,
+		model.NewLength(method1.Unit(), 0), model.NewLength(method1.Unit(), 0),
+		model.NoneCheckpointPolicy)
+	method2 := methodGen()
+	searcher2 := NewSearcher(uint32(seed), methodGen(), hparams, defaultBatchesPerStep, 0,
+		model.NewLength(method2.Unit(), 0), model.NewLength(method2.Unit(), 0),
+		model.NoneCheckpointPolicy)
 
 	results1, err1 := Simulate(searcher1, &seed, ConstantValidation, true, metric)
 	assert.NilError(t, err1)
@@ -113,6 +126,44 @@ func toKinds(types string) (kinds []Kind) {
 		}
 	}
 	return kinds
+}
+
+func kindsToShort(kinds []Kind) string {
+	grouped := []struct {
+		kind  Kind
+		count int
+	}{
+		{kind: kinds[0], count: 1},
+	}
+	curIndex := 0
+	for _, kind := range kinds[1:] {
+		if kind == grouped[curIndex].kind {
+			grouped[curIndex].count++
+		} else {
+			grouped = append(grouped, struct {
+				kind  Kind
+				count int
+			}{
+				kind:  kind,
+				count: 1,
+			})
+			curIndex++
+		}
+	}
+
+	repr := ""
+	for _, grouped := range grouped {
+		switch grouped.kind {
+		case RunStep:
+			repr += fmt.Sprintf("%d%s ", grouped.count, "S")
+		case CheckpointModel:
+			repr += fmt.Sprintf("%d%s ", grouped.count, "C")
+		case ComputeValidationMetrics:
+			repr += fmt.Sprintf("%d%s ", grouped.count, "V")
+		}
+	}
+
+	return repr
 }
 
 type predefinedTrial struct {
@@ -205,6 +256,7 @@ func (t *predefinedTrial) CheckComplete() error {
 func checkValueSimulation(
 	t *testing.T,
 	method SearchMethod,
+	operationPlanner OperationPlanner,
 	params model.Hyperparameters,
 	expectedTrials []predefinedTrial,
 ) error {
@@ -223,6 +275,7 @@ func checkValueSimulation(
 	if err != nil {
 		return errors.Wrap(err, "initialOperations")
 	}
+	ops = operationPlanner.Plan(ops)
 
 	pending = append(pending, ops...)
 
@@ -249,7 +302,9 @@ func checkValueSimulation(
 			requestID := operation.RequestID
 			trialID := trialIDs[requestID]
 			trial := expectedTrials[trialID]
-			ops, err = simulateWorkloadComplete(ctx, method, trial, operation, requestID)
+			ops, err = simulateWorkloadComplete(
+				ctx, method, operationPlanner, trial, operation, requestID)
+			ops = operationPlanner.Plan(ops)
 			if trial.EarlyExit == operation.StepID {
 				earlyExit = true
 			}
@@ -262,7 +317,7 @@ func checkValueSimulation(
 			trialID := trialIDs[requestID]
 			trial := expectedTrials[trialID]
 			if err = trial.CheckComplete(); err != nil {
-				return errors.Wrapf(err, "trial %v closed before completion", trialID+1)
+				return errors.Wrapf(err, "trial %v/%v closed before completion", trialID+1, requestID)
 			}
 
 			ops, err = method.trialClosed(ctx, requestID)
@@ -316,23 +371,29 @@ func runValueSimulationTestCases(t *testing.T, testCases []valueSimulationTestCa
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			method := NewSearchMethod(tc.config, defaultBatchesPerStep)
-			err := checkValueSimulation(t, method, tc.hparams, tc.expectedTrials)
+			method := NewSearchMethod(tc.config)
+			operationPlanner := NewOperationPlanner(tc.batchesPerStep, tc.recordsPerEpoch, tc.unit,
+				model.NewLength(tc.unit, 0), model.NewLength(tc.unit, 0), model.NoneCheckpointPolicy)
+			err := checkValueSimulation(t, method, operationPlanner, tc.hparams, tc.expectedTrials)
 			assert.NilError(t, err)
 		})
 	}
 }
 
 type valueSimulationTestCase struct {
-	name           string
-	expectedTrials []predefinedTrial
-	hparams        model.Hyperparameters
-	config         model.SearcherConfig
+	name            string
+	expectedTrials  []predefinedTrial
+	hparams         model.Hyperparameters
+	config          model.SearcherConfig
+	batchesPerStep  int
+	recordsPerEpoch int
+	unit            model.Unit
 }
 
 func simulateWorkloadComplete(
 	ctx context,
 	method SearchMethod,
+	operationPlanner OperationPlanner,
 	trial predefinedTrial,
 	operation WorkloadOperation,
 	requestID RequestID,
@@ -346,13 +407,21 @@ func simulateWorkloadComplete(
 			return nil, errors.Wrap(err, "TrainForStep")
 		}
 		w := Workload{
-			Kind:   RunStep,
-			StepID: operation.StepID,
+			Kind:       RunStep,
+			StepID:     operation.StepID,
+			NumBatches: operation.NumBatches,
+		}
+		op, _, pErr := operationPlanner.WorkloadCompleted(requestID, w, false)
+		if pErr != nil {
+			return nil, errors.Wrap(pErr, "trainCompleted")
 		}
 		if trial.EarlyExit == operation.StepID {
-			ops, err = method.trialExitedEarly(ctx, requestID, w)
+			ops, err = method.trialExitedEarly(ctx, requestID)
+		} else if op == nil {
+		} else if tOp, ok := op.(Train); !ok {
+			return nil, errors.New("op wasn't Train")
 		} else {
-			ops, err = method.trainCompleted(ctx, requestID, w)
+			ops, err = method.trainCompleted(ctx, requestID, tOp)
 		}
 		if err != nil {
 			return nil, errors.Wrap(err, "trainCompleted")
@@ -373,9 +442,16 @@ func simulateWorkloadComplete(
 				"error": val,
 			},
 		}
-		ops, err = method.validationCompleted(ctx, requestID, w, metrics)
-		if err != nil {
-			return nil, errors.Wrap(err, "validationCompleted")
+		op, _, pErr := operationPlanner.WorkloadCompleted(requestID, w, false)
+		if pErr != nil {
+			return nil, errors.Wrap(pErr, "validationCompleted")
+		} else if tOp, ok := op.(Validate); !ok {
+			return nil, errors.New("op wasn't Validate")
+		} else {
+			ops, err = method.validationCompleted(ctx, requestID, tOp, metrics)
+			if err != nil {
+				return nil, errors.Wrap(err, "validationCompleted")
+			}
 		}
 
 	case CheckpointModel:
@@ -387,9 +463,17 @@ func simulateWorkloadComplete(
 			StepID: operation.StepID,
 		}
 		metrics := CheckpointMetrics{}
-		ops, err = method.checkpointCompleted(ctx, requestID, w, metrics)
+
+		op, _, err := operationPlanner.WorkloadCompleted(requestID, w, false)
 		if err != nil {
 			return nil, errors.Wrap(err, "checkpointCompleted")
+		} else if tOp, ok := op.(Checkpoint); !ok {
+			return nil, errors.New("op wasn't Validate")
+		} else {
+			ops, err = method.checkpointCompleted(ctx, requestID, tOp, metrics)
+			if err != nil {
+				return nil, errors.Wrap(err, "checkpointCompleted")
+			}
 		}
 
 	default:
@@ -397,4 +481,12 @@ func simulateWorkloadComplete(
 	}
 
 	return ops, nil
+}
+
+func defaultHyperparameters() model.Hyperparameters {
+	return model.Hyperparameters{
+		GlobalBatchSize: model.Hyperparameter{
+			ConstHyperparameter: &model.ConstHyperparameter{Val: defaultGlobalBatchSize},
+		},
+	}
 }

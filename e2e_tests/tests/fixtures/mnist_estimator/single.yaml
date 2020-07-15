@@ -9,7 +9,8 @@ hyperparameters:
 searcher:
   name: single
   metric: accuracy
-  max_steps: 1
+  max_length:
+    batches: 100
   smaller_is_better: false
 max_restarts: 0
 reproducibility:

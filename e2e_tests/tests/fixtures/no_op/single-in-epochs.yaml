@@ -1,4 +1,4 @@
-description: noop-single-long-train-step
+description: noop_single
 checkpoint_storage:
   type: shared_fs
   host_path: /tmp
@@ -9,15 +9,15 @@ hyperparameters:
   metrics_progression: decreasing
   metrics_base: 0.9
   metrics_sigma: 0
-  training_batch_seconds: 1
 searcher:
   metric: validation_error
   smaller_is_better: true
   name: single
   max_length:
-    batches: 100
+    epochs: 2
 reproducibility:
   experiment_seed: 999
+records_per_epoch: 48000
 validation_period:
   batches: 100
 checkpoint_period:

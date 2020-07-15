@@ -20,7 +20,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			SmallerIsBetter: false,
 			PopulationSize:  2,
 			NumRounds:       2,
-			StepsPerRound:   2,
+			LengthPerRound:  model.NewLengthInBatches(200),
 			PBTReplaceConfig: model.PBTReplaceConfig{
 				TruncateFraction: .5,
 			},
@@ -36,7 +36,8 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			toKinds("2S 1V"),
 			toKinds("2S 1V"),
 		}
-		checkSimulation(t, newPBTSearch(config, defaultBatchesPerStep), nil, val, expected)
+		searchMethod := newPBTSearch(config)
+		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected, 0)
 	})
 
 	t.Run("no_truncation", func(t *testing.T) {
@@ -46,7 +47,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			SmallerIsBetter: false,
 			PopulationSize:  3,
 			NumRounds:       4,
-			StepsPerRound:   4,
+			LengthPerRound:  model.NewLengthInBatches(400),
 			PBTReplaceConfig: model.PBTReplaceConfig{
 				TruncateFraction: 0.,
 			},
@@ -62,7 +63,8 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			toKinds("4S 1V 4S 1V 4S 1V 4S 1V"),
 			toKinds("4S 1V 4S 1V 4S 1V 4S 1V"),
 		}
-		checkSimulation(t, newPBTSearch(config, defaultBatchesPerStep), nil, val, expected)
+		searchMethod := newPBTSearch(config)
+		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected, 0)
 	})
 
 	t.Run("even_odd", func(t *testing.T) {
@@ -74,7 +76,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			SmallerIsBetter: false,
 			PopulationSize:  2,
 			NumRounds:       3,
-			StepsPerRound:   17,
+			LengthPerRound:  model.NewLengthInBatches(1700),
 			PBTReplaceConfig: model.PBTReplaceConfig{
 				TruncateFraction: .5,
 			},
@@ -94,7 +96,8 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			toKinds("17S 1V"),
 			toKinds("17S 1V"),
 		}
-		checkSimulation(t, newPBTSearch(config, defaultBatchesPerStep), nil, val, expected)
+		searchMethod := newPBTSearch(config)
+		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected, 0)
 	})
 
 	t.Run("new_is_better", func(t *testing.T) {
@@ -106,7 +109,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			SmallerIsBetter: false,
 			PopulationSize:  4,
 			NumRounds:       8,
-			StepsPerRound:   5,
+			LengthPerRound:  model.NewLengthInBatches(500),
 			PBTReplaceConfig: model.PBTReplaceConfig{
 				TruncateFraction: .5,
 			},
@@ -137,7 +140,8 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			toKinds("5S 1V"),
 			toKinds("5S 1V"),
 		}
-		checkSimulation(t, newPBTSearch(config, defaultBatchesPerStep), nil, val, expected)
+		searchMethod := newPBTSearch(config)
+		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected, 0)
 	})
 
 	t.Run("old_is_better", func(t *testing.T) {
@@ -148,7 +152,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			SmallerIsBetter: true,
 			PopulationSize:  4,
 			NumRounds:       8,
-			StepsPerRound:   5,
+			LengthPerRound:  model.NewLengthInBatches(500),
 			PBTReplaceConfig: model.PBTReplaceConfig{
 				TruncateFraction: .5,
 			},
@@ -179,19 +183,20 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			toKinds("5S 1V"),
 			toKinds("5S 1V"),
 		}
-		checkSimulation(t, newPBTSearch(config, defaultBatchesPerStep), nil, val, expected)
+		searchMethod := newPBTSearch(config)
+		checkSimulation(t, searchMethod, defaultHyperparameters(), val, expected, 0)
 	})
 }
 
 func TestPBTSearcherReproducibility(t *testing.T) {
 	conf := model.PBTConfig{
 		Metric: defaultMetric, SmallerIsBetter: true,
-		PopulationSize: 10, NumRounds: 10, StepsPerRound: 10,
+		PopulationSize: 10, NumRounds: 10, LengthPerRound: model.NewLengthInBatches(1000),
 		PBTReplaceConfig: model.PBTReplaceConfig{TruncateFraction: 0.5},
 		PBTExploreConfig: model.PBTExploreConfig{ResampleProbability: 0.5, PerturbFactor: 0.5},
 	}
-	searchMethod := func() SearchMethod { return newPBTSearch(conf, defaultBatchesPerStep) }
-	checkReproducibility(t, searchMethod, nil, defaultMetric)
+	searchMethod := func() SearchMethod { return newPBTSearch(conf) }
+	checkReproducibility(t, searchMethod, defaultHyperparameters(), defaultMetric)
 }
 
 func testPBTExploreWithSeed(t *testing.T, seed uint32) {
@@ -200,7 +205,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 		SmallerIsBetter:  true,
 		PopulationSize:   10,
 		NumRounds:        10,
-		StepsPerRound:    10,
+		LengthPerRound:   model.NewLengthInBatches(1000),
 		PBTReplaceConfig: model.PBTReplaceConfig{},
 		PBTExploreConfig: model.PBTExploreConfig{},
 	}
@@ -244,7 +249,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 
 	// Test that exploring with no resampling and no perturbing does not change the hyperparameters.
 	{
-		pbt := newPBTSearch(nullConfig, defaultBatchesPerStep).(*pbtSearch)
+		pbt := newPBTSearch(nullConfig).(*pbtSearch)
 		newSample := pbt.exploreParams(ctx, sample)
 		assert.DeepEqual(t, sample, newSample)
 	}
@@ -259,7 +264,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 		spec.Each(func(name string, _ model.Hyperparameter) {
 			invalidSample[name] = nil
 		})
-		pbt := newPBTSearch(nullConfig, defaultBatchesPerStep).(*pbtSearch)
+		pbt := newPBTSearch(nullConfig).(*pbtSearch)
 		newSample := pbt.exploreParams(ctx, sample)
 
 		assert.Equal(t, len(invalidSample), len(newSample))
@@ -274,7 +279,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 	{
 		perturbingConfig := nullConfig
 		perturbingConfig.PerturbFactor = .5
-		pbt := newPBTSearch(perturbingConfig, defaultBatchesPerStep).(*pbtSearch)
+		pbt := newPBTSearch(perturbingConfig).(*pbtSearch)
 
 		newSample := pbt.exploreParams(ctx, sample)
 
@@ -309,7 +314,7 @@ func TestPBTValidation(t *testing.T) {
 		SmallerIsBetter:  true,
 		PopulationSize:   10,
 		NumRounds:        10,
-		StepsPerRound:    10,
+		LengthPerRound:   model.NewLengthInBatches(1000),
 		PBTReplaceConfig: model.PBTReplaceConfig{},
 		PBTExploreConfig: model.PBTExploreConfig{},
 	}
@@ -333,10 +338,10 @@ func TestPBTValidation(t *testing.T) {
 
 	{
 		badConfig := goodConfig
-		badConfig.StepsPerRound = 0
-		assert.ErrorContains(t, check.Validate(badConfig), "steps_per_round")
-		badConfig.StepsPerRound = -1
-		assert.ErrorContains(t, check.Validate(badConfig), "steps_per_round")
+		badConfig.LengthPerRound = model.NewLengthInBatches(0)
+		assert.ErrorContains(t, check.Validate(badConfig), "length_per_round")
+		badConfig.LengthPerRound = model.NewLengthInBatches(-1)
+		assert.ErrorContains(t, check.Validate(badConfig), "length_per_round")
 	}
 
 	{
@@ -368,6 +373,7 @@ func TestPBTSearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "smaller is better",
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				// First generation.
 				newConstantPredefinedTrial(0.5, 4, []int{2, 4}, []int{2}),
@@ -385,16 +391,20 @@ func TestPBTSearchMethod(t *testing.T) {
 					SmallerIsBetter: true,
 					PopulationSize:  2,
 					NumRounds:       4,
-					StepsPerRound:   2,
+					LengthPerRound:  model.NewLengthInBatches(200),
 					PBTReplaceConfig: model.PBTReplaceConfig{
 						TruncateFraction: .5,
 					},
 					PBTExploreConfig: model.PBTExploreConfig{},
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 		{
 			name: "early exit -- smaller is better",
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				// First generation.
 				newEarlyExitPredefinedTrial(0.5, 4, []int{2}, []int{2}),
@@ -412,16 +422,20 @@ func TestPBTSearchMethod(t *testing.T) {
 					SmallerIsBetter: true,
 					PopulationSize:  2,
 					NumRounds:       4,
-					StepsPerRound:   2,
+					LengthPerRound:  model.NewLengthInBatches(200),
 					PBTReplaceConfig: model.PBTReplaceConfig{
 						TruncateFraction: .5,
 					},
 					PBTExploreConfig: model.PBTExploreConfig{},
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 		{
 			name: "smaller is not better",
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				// First generation.
 				newConstantPredefinedTrial(0.5, 4, []int{2, 4}, []int{2}),
@@ -439,16 +453,20 @@ func TestPBTSearchMethod(t *testing.T) {
 					SmallerIsBetter: false,
 					PopulationSize:  2,
 					NumRounds:       4,
-					StepsPerRound:   2,
+					LengthPerRound:  model.NewLengthInBatches(200),
 					PBTReplaceConfig: model.PBTReplaceConfig{
 						TruncateFraction: .5,
 					},
 					PBTExploreConfig: model.PBTExploreConfig{},
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 		{
 			name: "early exit -- smaller is not better",
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				// First generation.
 				newEarlyExitPredefinedTrial(0.5, 4, []int{2}, []int{2}),
@@ -466,13 +484,16 @@ func TestPBTSearchMethod(t *testing.T) {
 					SmallerIsBetter: false,
 					PopulationSize:  2,
 					NumRounds:       4,
-					StepsPerRound:   2,
+					LengthPerRound:  model.NewLengthInBatches(200),
 					PBTReplaceConfig: model.PBTReplaceConfig{
 						TruncateFraction: .5,
 					},
 					PBTExploreConfig: model.PBTExploreConfig{},
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 	}
 

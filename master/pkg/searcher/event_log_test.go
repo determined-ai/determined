@@ -29,11 +29,11 @@ func TestEventLog(t *testing.T) {
 	}
 
 	for i, trialID := range trialIDs {
-		assert.Equal(t, log.TotalStepsStarted, i)
-		log.OperationsCreated(NewTrain(log.RequestIDs[trialID], 1, defaultBatchesPerStep))
-		assert.Equal(t, log.TotalStepsStarted, i+1)
+		assert.Equal(t, len(log.inFlightWorkloads), 0)
+		log.OperationsCreated(NewTrainWorkload(log.RequestIDs[trialID], 1, defaultBatchesPerStep))
+		assert.Equal(t, len(log.inFlightWorkloads), 1)
 
-		assert.Equal(t, log.TotalStepsCompleted, i)
+		assert.Equal(t, len(log.completedWorkloads), i)
 		log.WorkloadCompleted(CompletedMessage{
 			Type: "WORKLOAD_COMPLETED",
 			Workload: Workload{
@@ -45,7 +45,7 @@ func TestEventLog(t *testing.T) {
 			},
 			RunMetrics: make(map[string]interface{}),
 		})
-		assert.Equal(t, log.TotalStepsCompleted, i+1)
+		assert.Equal(t, len(log.completedWorkloads), i+1)
 
 		// Check that closing trials counts them correctly.
 		assert.Equal(t, log.TrialsClosed, i)

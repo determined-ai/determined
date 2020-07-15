@@ -9,11 +9,11 @@ import (
 func TestAdaptiveASHASearcherReproducibility(t *testing.T) {
 	conf := model.AdaptiveASHAConfig{
 		Metric: defaultMetric, SmallerIsBetter: true,
-		TargetTrialSteps: 64, MaxTrials: 128, Divisor: 4,
+		MaxLength: model.NewLengthInBatches(6400), MaxTrials: 128, Divisor: 4,
 		Mode: model.AggressiveMode, MaxRungs: 3,
 	}
-	gen := func() SearchMethod { return newAdaptiveASHASearch(conf, defaultBatchesPerStep) }
-	checkReproducibility(t, gen, nil, defaultMetric)
+	gen := func() SearchMethod { return newAdaptiveASHASearch(conf) }
+	checkReproducibility(t, gen, defaultHyperparameters(), defaultMetric)
 }
 
 func TestAdaptiveASHASearchMethod(t *testing.T) {
@@ -21,6 +21,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 	testCases := []valueSimulationTestCase{
 		{
 			name: "smaller is better",
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.1, 9, []int{3, 9}, nil),
 				newConstantPredefinedTrial(0.2, 3, []int{3}, nil),
@@ -32,7 +33,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
 					Metric:              "error",
 					SmallerIsBetter:     true,
-					TargetTrialSteps:    9,
+					MaxLength:           model.NewLengthInBatches(900),
 					MaxTrials:           5,
 					Mode:                model.StandardMode,
 					MaxRungs:            2,
@@ -40,9 +41,13 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 					MaxConcurrentTrials: maxConcurrentTrials,
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 		{
 			name: "early exit -- smaller is better",
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.1, 9, []int{3, 9}, nil),
 				newEarlyExitPredefinedTrial(0.2, 3, nil, nil),
@@ -54,7 +59,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
 					Metric:              "error",
 					SmallerIsBetter:     true,
-					TargetTrialSteps:    9,
+					MaxLength:           model.NewLengthInBatches(900),
 					MaxTrials:           5,
 					Mode:                model.StandardMode,
 					MaxRungs:            2,
@@ -62,9 +67,13 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 					MaxConcurrentTrials: maxConcurrentTrials,
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 		{
 			name: "smaller is not better",
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.5, 9, []int{3, 9}, nil),
 				newConstantPredefinedTrial(0.4, 3, []int{3}, nil),
@@ -76,7 +85,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
 					Metric:              "error",
 					SmallerIsBetter:     false,
-					TargetTrialSteps:    9,
+					MaxLength:           model.NewLengthInBatches(900),
 					MaxTrials:           5,
 					Mode:                model.StandardMode,
 					MaxRungs:            2,
@@ -84,9 +93,13 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 					MaxConcurrentTrials: maxConcurrentTrials,
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 		{
 			name: "early exit -- smaller is not better",
+			unit: model.Batches,
 			expectedTrials: []predefinedTrial{
 				newConstantPredefinedTrial(0.5, 9, []int{3, 9}, nil),
 				newEarlyExitPredefinedTrial(0.4, 3, nil, nil),
@@ -98,7 +111,7 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 				AdaptiveASHAConfig: &model.AdaptiveASHAConfig{
 					Metric:              "error",
 					SmallerIsBetter:     false,
-					TargetTrialSteps:    9,
+					MaxLength:           model.NewLengthInBatches(900),
 					MaxTrials:           5,
 					Mode:                model.StandardMode,
 					MaxRungs:            2,
@@ -106,6 +119,9 @@ func TestAdaptiveASHASearchMethod(t *testing.T) {
 					MaxConcurrentTrials: maxConcurrentTrials,
 				},
 			},
+			hparams:         defaultHyperparameters(),
+			batchesPerStep:  defaultBatchesPerStep,
+			recordsPerEpoch: 0,
 		},
 	}
 

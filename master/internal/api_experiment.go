@@ -68,8 +68,10 @@ func (a *apiServer) PreviewHPSearch(
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment config: %s", err)
 	}
 
-	sm := searcher.NewSearchMethod(config.Searcher, config.BatchesPerStep)
-	s := searcher.NewSearcher(req.Seed, sm, config.Hyperparameters)
+	sm := searcher.NewSearchMethod(config.Searcher)
+	s := searcher.NewSearcher(
+		req.Seed, sm, config.Hyperparameters, config.BatchesPerStep, config.RecordsPerEpoch,
+		model.NewLength(sm.Unit(), 0), model.NewLength(sm.Unit(), 0), config.CheckpointPolicy)
 	sim, err := searcher.Simulate(s, nil, searcher.RandomValidation, true, config.Searcher.Metric)
 	if err != nil {
 		return nil, err

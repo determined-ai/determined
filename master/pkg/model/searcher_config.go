@@ -45,53 +45,112 @@ func (s *SearcherConfig) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, DefaultParser(s))
 }
 
+// Unit implements the model.InUnits interface.
+func (s SearcherConfig) Unit() Unit {
+	switch {
+	case s.SingleConfig != nil:
+		return s.SingleConfig.Unit()
+	case s.RandomConfig != nil:
+		return s.RandomConfig.Unit()
+	case s.GridConfig != nil:
+		return s.GridConfig.Unit()
+	case s.SyncHalvingConfig != nil:
+		return s.SyncHalvingConfig.Unit()
+	case s.AdaptiveConfig != nil:
+		return s.AdaptiveConfig.Unit()
+	case s.AdaptiveSimpleConfig != nil:
+		return s.AdaptiveSimpleConfig.Unit()
+	case s.AsyncHalvingConfig != nil:
+		return s.AsyncHalvingConfig.Unit()
+	case s.AdaptiveASHAConfig != nil:
+		return s.AdaptiveASHAConfig.Unit()
+	case s.PBTConfig != nil:
+		return s.PBTConfig.Unit()
+	default:
+		panic("no searcher type specified")
+	}
+}
+
 // SingleConfig configures a single trial.
 type SingleConfig struct {
+	MaxLength Length `json:"max_length"`
+
+	// Deprecated
 	MaxSteps int `json:"max_steps"`
 }
 
 // Validate implements the check.Validatable interface.
-func (s SingleConfig) Validate() []error {
+func (s SingleConfig) Validate() (errs []error) {
 	return []error{
-		check.GreaterThan(s.MaxSteps, 0, "max_steps must be > 0"),
+		check.GreaterThan(s.MaxLength.Units, 0, "max_length must be > 0"),
 	}
+}
+
+// Unit implements the model.InUnits interface.
+func (s SingleConfig) Unit() Unit {
+	return s.MaxLength.Unit
 }
 
 // RandomConfig configures a random search.
 type RandomConfig struct {
-	MaxSteps  int `json:"max_steps"`
-	MaxTrials int `json:"max_trials"`
+	MaxLength Length `json:"max_length"`
+	MaxTrials int    `json:"max_trials"`
+
+	// Deprecated
+	MaxSteps int `json:"max_steps"`
+}
+
+// Unit implements the model.InUnits interface.
+func (r RandomConfig) Unit() Unit {
+	return r.MaxLength.Unit
 }
 
 // Validate implements the check.Validatable interface.
-func (r RandomConfig) Validate() []error {
+func (r RandomConfig) Validate() (errs []error) {
 	return []error{
-		check.GreaterThan(r.MaxSteps, 0, "max_steps must be > 0"),
+		check.GreaterThan(r.MaxLength.Units, 0, "max_length must be > 0"),
 		check.GreaterThan(r.MaxTrials, 0, "max_trials must be > 0"),
 	}
 }
 
 // GridConfig configures a grid search.
 type GridConfig struct {
+	MaxLength Length `json:"max_length"`
+
+	// Deprecated
 	MaxSteps int `json:"max_steps"`
 }
 
+// Unit implements the model.InUnits interface.
+func (g GridConfig) Unit() Unit {
+	return g.MaxLength.Unit
+}
+
 // Validate implements the check.Validatable interface.
-func (g GridConfig) Validate() []error {
+func (g GridConfig) Validate() (errs []error) {
 	return []error{
-		check.GreaterThan(g.MaxSteps, 0, "max_steps must be > 0"),
+		check.GreaterThan(g.MaxLength.Units, 0, "max_length must be > 0"),
 	}
 }
 
-// SyncHalvingConfig configures synchronous successive halving.
+// SyncHalvingConfig configures asynchronous successive halving.
 type SyncHalvingConfig struct {
-	Metric           string  `json:"metric"`
-	SmallerIsBetter  bool    `json:"smaller_is_better"`
-	NumRungs         int     `json:"num_rungs"`
-	TargetTrialSteps int     `json:"target_trial_steps"`
-	StepBudget       int     `json:"step_budget"`
-	Divisor          float64 `json:"divisor"`
-	TrainStragglers  bool    `json:"train_stragglers"`
+	Metric          string  `json:"metric"`
+	SmallerIsBetter bool    `json:"smaller_is_better"`
+	NumRungs        int     `json:"num_rungs"`
+	MaxLength       Length  `json:"max_length"`
+	Budget          Length  `json:"budget"`
+	Divisor         float64 `json:"divisor"`
+	TrainStragglers bool    `json:"train_stragglers"`
+
+	// Deprecated
+	TargetTrialSteps int `json:"target_trial_steps"`
+	StepBudget       int `json:"step_budget"`
+}
+
+// Unit implements the model.InUnits interface.
+func (s SyncHalvingConfig) Unit() Unit {
+	return s.MaxLength.Unit
 }
 
 // AsyncHalvingConfig configures asynchronous successive halving.
@@ -99,21 +158,29 @@ type AsyncHalvingConfig struct {
 	Metric              string  `json:"metric"`
 	SmallerIsBetter     bool    `json:"smaller_is_better"`
 	NumRungs            int     `json:"num_rungs"`
-	TargetTrialSteps    int     `json:"target_trial_steps"`
+	MaxLength           Length  `json:"max_length"`
 	MaxTrials           int     `json:"max_trials"`
 	Divisor             float64 `json:"divisor"`
 	MaxConcurrentTrials int     `json:"max_concurrent_trials"`
+
+	// Deprecated
+	TargetTrialSteps int `json:"target_trial_steps"`
 }
 
 // Validate implements the check.Validatable interface.
-func (a AsyncHalvingConfig) Validate() []error {
+func (a AsyncHalvingConfig) Validate() (errs []error) {
 	return []error{
-		check.GreaterThan(a.TargetTrialSteps, 0, "target_trial_steps must be > 0"),
+		check.GreaterThan(a.MaxLength.Units, 0, "max_length must be > 0"),
 		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
 		check.GreaterThan(a.Divisor, 1.0, "divisor must be > 1.0"),
 		check.GreaterThan(a.NumRungs, 0, "num_rungs must be > 0"),
 		check.GreaterThanOrEqualTo(a.MaxConcurrentTrials, 0, "max_concurrent_trials must be >= 0"),
 	}
+}
+
+// Unit implements the model.InUnits interface.
+func (a AsyncHalvingConfig) Unit() Unit {
+	return a.MaxLength.Unit
 }
 
 // AdaptiveMode specifies how aggressively to perform early stopping.
@@ -132,47 +199,60 @@ const (
 
 // AdaptiveConfig configures an adaptive search.
 type AdaptiveConfig struct {
-	Metric           string       `json:"metric"`
-	SmallerIsBetter  bool         `json:"smaller_is_better"`
-	TargetTrialSteps int          `json:"target_trial_steps"`
-	StepBudget       int          `json:"step_budget"`
-	BracketRungs     []int        `json:"bracket_rungs"`
-	Divisor          float64      `json:"divisor"`
-	TrainStragglers  bool         `json:"train_stragglers"`
-	Mode             AdaptiveMode `json:"mode"`
-	MaxRungs         int          `json:"max_rungs"`
+	Metric          string       `json:"metric"`
+	SmallerIsBetter bool         `json:"smaller_is_better"`
+	MaxLength       Length       `json:"max_length"`
+	Budget          Length       `json:"budget"`
+	BracketRungs    []int        `json:"bracket_rungs"`
+	Divisor         float64      `json:"divisor"`
+	TrainStragglers bool         `json:"train_stragglers"`
+	Mode            AdaptiveMode `json:"mode"`
+	MaxRungs        int          `json:"max_rungs"`
+
+	// Deprecated
+	TargetTrialSteps int `json:"target_trial_steps"`
+	StepBudget       int `json:"step_budget"`
 }
 
 // Validate implements the check.Validatable interface.
 func (a AdaptiveConfig) Validate() []error {
 	return []error{
-		check.GreaterThan(a.StepBudget, a.TargetTrialSteps,
-			"step_budget must be > target_trial_steps"),
-		check.GreaterThan(a.TargetTrialSteps, 0, "target_trial_steps must be > 0"),
-		check.GreaterThan(a.StepBudget, 0, "step_budget must be > 0"),
-		check.LessThanOrEqualTo(a.StepBudget, 50000, "step_budget must be <= 50000"),
+		check.GreaterThan(a.Budget.Units, a.MaxLength.Units,
+			"budget must be > max_length"),
+		check.GreaterThan(a.MaxLength.Units, 0, "max_length must be > 0"),
+		check.GreaterThan(a.Budget.Units, 0, "budget must be > 0"),
 		check.GreaterThan(a.Divisor, 1.0, "divisor must be > 1.0"),
 		check.In(string(a.Mode), []string{AggressiveMode, StandardMode, ConservativeMode},
 			"invalid adaptive mode"),
 		check.GreaterThan(a.MaxRungs, 0, "max_rungs must be > 0"),
+		check.Equal(a.MaxLength.Unit, a.Budget.Unit,
+			"max_length and budget must be specified in terms of the same unit"),
 	}
+}
+
+// Unit implements the model.InUnits interface.
+func (a AdaptiveConfig) Unit() Unit {
+	return a.MaxLength.Unit
 }
 
 // AdaptiveSimpleConfig configures an simplified adaptive search.
 type AdaptiveSimpleConfig struct {
 	Metric          string       `json:"metric"`
 	SmallerIsBetter bool         `json:"smaller_is_better"`
-	MaxSteps        int          `json:"max_steps"`
+	MaxLength       Length       `json:"max_length"`
 	MaxTrials       int          `json:"max_trials"`
 	Divisor         float64      `json:"divisor"`
 	Mode            AdaptiveMode `json:"mode"`
 	MaxRungs        int          `json:"max_rungs"`
+
+	// Deprecated
+	MaxSteps int `json:"max_steps"`
 }
 
 // Validate implements the check.Validatable interface.
 func (a AdaptiveSimpleConfig) Validate() []error {
 	return []error{
-		check.GreaterThan(a.MaxSteps, 0, "max_steps must be > 0"),
+		check.GreaterThan(a.MaxLength.Units, 0, "max_length must be > 0"),
 		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
 		check.LessThanOrEqualTo(a.MaxTrials, MaxAllowedTrials,
 			"max_trials must be <= %d", MaxAllowedTrials),
@@ -183,23 +263,31 @@ func (a AdaptiveSimpleConfig) Validate() []error {
 	}
 }
 
+// Unit implements the model.InUnits interface.
+func (a AdaptiveSimpleConfig) Unit() Unit {
+	return a.MaxLength.Unit
+}
+
 // AdaptiveASHAConfig configures an adaptive searcher for use with ASHA.
 type AdaptiveASHAConfig struct {
 	Metric              string       `json:"metric"`
 	SmallerIsBetter     bool         `json:"smaller_is_better"`
-	TargetTrialSteps    int          `json:"target_trial_steps"`
+	MaxLength           Length       `json:"max_length"`
 	MaxTrials           int          `json:"max_trials"`
 	BracketRungs        []int        `json:"bracket_rungs"`
 	Divisor             float64      `json:"divisor"`
 	Mode                AdaptiveMode `json:"mode"`
 	MaxRungs            int          `json:"max_rungs"`
 	MaxConcurrentTrials int          `json:"max_concurrent_trials"`
+
+	// Deprecated
+	TargetTrialSteps int `json:"target_trial_steps"`
 }
 
 // Validate implements the check.Validatable interface.
 func (a AdaptiveASHAConfig) Validate() []error {
 	return []error{
-		check.GreaterThan(a.TargetTrialSteps, 0, "target_trial_steps must be > 0"),
+		check.GreaterThan(a.MaxLength.Units, 0, "max_length must be > 0"),
 		check.GreaterThan(a.MaxTrials, 0, "max_trials must be > 0"),
 		check.GreaterThan(a.Divisor, 1.0, "divisor must be > 1.0"),
 		check.In(string(a.Mode), []string{AggressiveMode, StandardMode, ConservativeMode},
@@ -207,6 +295,11 @@ func (a AdaptiveASHAConfig) Validate() []error {
 		check.GreaterThan(a.MaxRungs, 0, "max_rungs must be > 0"),
 		check.GreaterThanOrEqualTo(a.MaxConcurrentTrials, 0, "max_concurrent_trials must be >= 0"),
 	}
+}
+
+// Unit implements the model.InUnits interface.
+func (a AdaptiveASHAConfig) Unit() Unit {
+	return a.MaxLength.Unit
 }
 
 // PBTReplaceConfig configures replacement for a PBT search.
@@ -244,10 +337,13 @@ type PBTConfig struct {
 	SmallerIsBetter bool   `json:"smaller_is_better"`
 	PopulationSize  int    `json:"population_size"`
 	NumRounds       int    `json:"num_rounds"`
-	StepsPerRound   int    `json:"steps_per_round"`
+	LengthPerRound  Length `json:"length_per_round"`
 
 	PBTReplaceConfig `json:"replace_function"`
 	PBTExploreConfig `json:"explore_function"`
+
+	// Deprecated
+	StepsPerRound int `json:"steps_per_round"`
 }
 
 // Validate implements the check.Validatable interface.
@@ -255,6 +351,11 @@ func (p PBTConfig) Validate() []error {
 	return []error{
 		check.GreaterThan(p.PopulationSize, 0, "population_size must be > 0"),
 		check.GreaterThan(p.NumRounds, 0, "num_rounds must be > 0"),
-		check.GreaterThan(p.StepsPerRound, 0, "steps_per_round must be > 0"),
+		check.GreaterThan(p.LengthPerRound.Units, 0, "length_per_round must be > 0"),
 	}
+}
+
+// Unit implements the model.InUnits interface.
+func (p PBTConfig) Unit() Unit {
+	return p.LengthPerRound.Unit
 }

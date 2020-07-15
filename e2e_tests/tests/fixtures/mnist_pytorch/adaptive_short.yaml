@@ -30,8 +30,10 @@ searcher:
   name: adaptive
   metric: validation_loss
   smaller_is_better: true
-  target_trial_steps: 4
-  step_budget: 16
+  max_length:
+    batches: 400
+  budget:
+    batches: 1600
   mode: aggressive
   max_rungs: 2
   divisor: 2

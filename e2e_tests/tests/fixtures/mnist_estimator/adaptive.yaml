@@ -26,8 +26,10 @@ searcher:
   name: adaptive
   metric: accuracy
   smaller_is_better: false
-  target_trial_steps: 2
-  step_budget: 4
+  max_length:
+    batches: 200
+  budget:
+    batches: 400
   mode: aggressive
   max_rungs: 2
 entrypoint: model_def:MNistTrial
