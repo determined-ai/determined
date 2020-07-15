@@ -16,6 +16,7 @@ setup(
         "argcomplete==1.9.4",
         "gitpython==2.1.11",
         "packaging==19.0",
+        "pyOpenSSL>= 19.1.0",
         "python-dateutil==2.8.0",
         "requests>=2.20.0",
         "ruamel.yaml>=0.15.78",
