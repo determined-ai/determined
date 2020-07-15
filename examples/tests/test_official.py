@@ -23,6 +23,7 @@ official_examples = [
         "official/trial/multiple_lr_schedulers_pytorch",
         "official/trial/multiple_lr_schedulers_pytorch/const.yaml",
     ),
+    ("official/trial/mnist_gan_pytorch", "official/trial/mnist_gan_pytorch/const.yaml"),
     # TODO(DET-2931): A full validation step in this example is too expensive
     # to run this test in under a few minutes. Add it back in once we can test
     # a single batch of validation.
