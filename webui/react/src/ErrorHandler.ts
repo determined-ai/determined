@@ -105,7 +105,7 @@ const handleError = (e: DaError): DaError => {
   // TODO SEP handle transient failures? eg only take action IF.. (requires keeping state)
 
   // Report to segment.
-  if (window.analytics) { // analytics can be turned off
+  if (window.analytics && window.analytics.track) { // analytics can be turned off
     window.analytics.track(`EH:${e.level}`, e);
   }
 

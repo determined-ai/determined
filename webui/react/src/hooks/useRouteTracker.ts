@@ -5,7 +5,7 @@ import Info from 'contexts/Info';
 
 const recordPageAccess = (pathname: string): void => {
   // Check to make sure Segment `analytics` is available
-  if (!window.analytics) return;
+  if (!window.analytics || !window.analytics.page) return;
 
   // Record page access
   window.analytics.page(pathname);
