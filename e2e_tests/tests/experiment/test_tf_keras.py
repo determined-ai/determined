@@ -30,6 +30,7 @@ def test_tf_keras_native_parallel(tf2: bool) -> None:
 def test_tf_keras_const_warm_start(tf2: bool) -> None:
     config = conf.load_config(conf.official_examples_path("trial/cifar10_cnn_tf_keras/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_min_validation_period(config, {"batches": 1000})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
 
     experiment_id1 = exp.run_basic_test_with_temp_config(
@@ -124,6 +125,7 @@ def test_tf_keras_mnist_data_layer_s3(tf2: bool, storage_type: str) -> None:
 def run_tf_keras_mnist_data_layer_test(tf2: bool, storage_type: str) -> None:
     config = conf.load_config(conf.experimental_path("trial/data_layer_mnist_tf_keras/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_min_validation_period(config, {"batches": 1000})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
     if storage_type == "lfs":
         config = conf.set_shared_fs_data_layer(config)
