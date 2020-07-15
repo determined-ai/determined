@@ -186,6 +186,7 @@ const ioTrialToTrial = (io: ioTypeTrialSummary): TrialSummary => {
 export const jsonToTrialDetails = (data: unknown): TrialDetails => {
   const io = decode<ioTypeTrialDetails>(ioTrialDetails, data);
   return { ...io,
+    experimentId: io.experiment_id,
     state: io.state as RunState,
   };
 };

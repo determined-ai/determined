@@ -161,6 +161,7 @@ export const ioCheckpoint = io.type({
 export type ioTypeCheckpoint = io.TypeOf<typeof ioCheckpoint>;
 
 export const ioTrialDetails = io.type({
+  experiment_id: io.number,
   id: io.number,
   state: runStatesIoType,
 });

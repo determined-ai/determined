@@ -196,6 +196,7 @@ export interface Checkpoint {
 export interface TrialDetails {
   id: number;
   state: RunState;
+  experimentId: number;
 }
 
 export interface TrialSummary {
