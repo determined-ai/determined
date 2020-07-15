@@ -33,9 +33,9 @@ export const actionsRenderer: Renderer = (_, record) => {
   }
 };
 
-export const startTimeRenderer: Renderer = (_, record) => (
-  <span title={new Date(parseInt(record.startTime) * 1000).toTimeString()}>
-    <TimeAgo datetime={record.startTime} />
+export const relativeTimeRenderer = (date: Date): React.ReactNode => (
+  <span title={date.toLocaleString()}>
+    <TimeAgo datetime={date} />
   </span>
 );
 
