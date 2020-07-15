@@ -611,7 +611,7 @@ created with the Determined CLI. It may contain the following fields:
     training performance. When this field is ``null``, the timeline is not created.
     The timeline can grow very large during long training runs so it is recommended
     that timeline generation is disabled when not actively investigating performance.
-    Defaults to ``null``
+    Defaults to ``null``.
 
 
 .. _data-layer_exp_config:
