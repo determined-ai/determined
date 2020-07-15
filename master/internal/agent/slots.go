@@ -18,11 +18,12 @@ type slots struct {
 	cluster *actor.Ref
 }
 
-type slotsSummary map[string]slotSummary
+// SlotsSummary contains a summary for a number of slots.
+type SlotsSummary map[string]SlotSummary
 
 func (s *slots) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case slotsSummary:
+	case SlotsSummary:
 		ctx.Respond(s.summarize(ctx))
 	case aproto.AgentStarted:
 		for _, d := range msg.Devices {
@@ -70,11 +71,11 @@ func (s *slots) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	}
 }
 
-func (s *slots) summarize(ctx *actor.Context) slotsSummary {
-	results := ctx.AskAll(slotSummary{}, ctx.Children()...).GetAll()
-	summary := make(map[string]slotSummary, len(results))
+func (s *slots) summarize(ctx *actor.Context) SlotsSummary {
+	results := ctx.AskAll(SlotSummary{}, ctx.Children()...).GetAll()
+	summary := make(map[string]SlotSummary, len(results))
 	for ref, result := range results {
-		summary[ref.Address().String()] = result.(slotSummary)
+		summary[ref.Address().String()] = result.(SlotSummary)
 	}
 	return summary
 }

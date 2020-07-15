@@ -16,14 +16,14 @@ import (
 func Initialize(s *actor.System, e *echo.Echo, c *actor.Ref) {
 	_, ok := s.ActorOf(actor.Addr("agents"), &agents{cluster: c})
 	check.Panic(check.True(ok, "agents address already taken"))
-	e.Any("/agents*", api.Route(s))
+	e.Any("/agents*", api.Route(s, nil))
 }
 
 type agents struct {
 	cluster *actor.Ref
 }
 
-type agentsSummary map[string]agentSummary
+type agentsSummary map[string]AgentSummary
 
 func (a *agents) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
@@ -64,10 +64,10 @@ func (a *agents) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 }
 
 func (a *agents) summarize(ctx *actor.Context) agentsSummary {
-	results := ctx.AskAll(agentSummary{}, ctx.Children()...).GetAll()
-	summary := make(map[string]agentSummary, len(results))
+	results := ctx.AskAll(AgentSummary{}, ctx.Children()...).GetAll()
+	summary := make(map[string]AgentSummary, len(results))
 	for ref, result := range results {
-		summary[ref.Address().String()] = result.(agentSummary)
+		summary[ref.Address().String()] = result.(AgentSummary)
 	}
 	return summary
 }

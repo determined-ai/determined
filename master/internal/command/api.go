@@ -23,26 +23,26 @@ func RegisterAPIHandler(
 		db:                    db,
 		clusterID:             cID,
 	})
-	echo.Any("/commands*", api.Route(system), middleware...)
+	echo.Any("/commands*", api.Route(system, nil), middleware...)
 
 	system.ActorOf(actor.Addr("notebooks"), &notebookManager{
 		defaultAgentUserGroup: defaultAgentUserGroup,
 		db:                    db,
 		clusterID:             cID,
 	})
-	echo.Any("/notebooks*", api.Route(system), middleware...)
+	echo.Any("/notebooks*", api.Route(system, nil), middleware...)
 
 	system.ActorOf(actor.Addr("shells"), &shellManager{
 		defaultAgentUserGroup: defaultAgentUserGroup,
 		db:                    db,
 		clusterID:             cID,
 	})
-	echo.Any("/shells*", api.Route(system), middleware...)
+	echo.Any("/shells*", api.Route(system, nil), middleware...)
 
 	system.ActorOf(actor.Addr("tensorboard"), &tensorboardManager{
 		defaultAgentUserGroup: defaultAgentUserGroup,
 		db:                    db,
 		clusterID:             cID,
 	})
-	echo.Any("/tensorboard*", api.Route(system), middleware...)
+	echo.Any("/tensorboard*", api.Route(system, nil), middleware...)
 }

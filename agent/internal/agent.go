@@ -302,7 +302,7 @@ func Run(version string, options Options) error {
 	server.Use(middleware.Recover())
 	server.Pre(middleware.RemoveTrailingSlash())
 
-	server.Any("/*", api.Route(system))
+	server.Any("/*", api.Route(system, nil))
 	server.Any("/debug/pprof/*", echo.WrapHandler(http.HandlerFunc(pprof.Index)))
 	server.Any("/debug/pprof/cmdline", echo.WrapHandler(http.HandlerFunc(pprof.Cmdline)))
 	server.Any("/debug/pprof/profile", echo.WrapHandler(http.HandlerFunc(pprof.Profile)))

@@ -8,7 +8,7 @@ import (
 	proto "github.com/determined-ai/determined/proto/pkg/agentv1"
 )
 
-func toProtoAgent(a agentSummary) *proto.Agent {
+func toProtoAgent(a AgentSummary) *proto.Agent {
 	slots := make(map[string]*proto.Slot)
 	for _, s := range a.Slots {
 		slots[s.ID] = toProtoSlot(s)
@@ -25,7 +25,7 @@ func toProtoAgent(a agentSummary) *proto.Agent {
 	}
 }
 
-func toProtoSlot(s slotSummary) *proto.Slot {
+func toProtoSlot(s SlotSummary) *proto.Slot {
 	var c *proto.Container
 	if s.Container != nil {
 		c = toProtoContainer(*s.Container)

@@ -34,7 +34,8 @@ func (s slotEnabled) Enabled() bool {
 	return s.agentEnabled && s.userEnabled
 }
 
-type slotSummary struct {
+// SlotSummary summarizes the state of a slot.
+type SlotSummary struct {
 	ID        string               `json:"id"`
 	Device    device.Device        `json:"device"`
 	Enabled   bool                 `json:"enabled"`
@@ -51,7 +52,7 @@ func (s *slot) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		s.patch(ctx)
-	case slotSummary:
+	case SlotSummary:
 		ctx.Respond(s.summarize(ctx))
 	case patchSlot:
 		s.enabled.userEnabled = msg.Enabled
@@ -131,8 +132,8 @@ func (s *slot) deviceID(ctx *actor.Context) sproto.DeviceID {
 	return sproto.DeviceID{Agent: ctx.Self().Parent().Parent(), Device: s.device}
 }
 
-func (s *slot) summarize(ctx *actor.Context) slotSummary {
-	return slotSummary{
+func (s *slot) summarize(ctx *actor.Context) SlotSummary {
+	return SlotSummary{
 		ID:        ctx.Self().Address().Local(),
 		Device:    s.device,
 		Enabled:   s.enabled.Enabled(),

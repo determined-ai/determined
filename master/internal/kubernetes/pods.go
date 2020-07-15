@@ -4,13 +4,18 @@ package kubernetes
 
 import (
 	"fmt"
+	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/device"
 
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sClient "k8s.io/client-go/kubernetes"
@@ -48,7 +53,7 @@ type pods struct {
 // Initialize creates a new global agent actor.
 func Initialize(
 	s *actor.System,
-	_ *echo.Echo,
+	e *echo.Echo,
 	c *actor.Ref,
 	namespace string,
 	masterServiceName string,
@@ -65,9 +70,8 @@ func Initialize(
 	})
 	check.Panic(check.True(ok, "pods address already taken"))
 
-	// TODO (DET-3424): Configure endpoints.
-	//e.Any("/agents*", api.Route(s))
-
+	// We re-use the agents endpoint for the default resource provider.
+	e.Any("/agents*", api.Route(s, podsActor))
 	return podsActor
 }
 
@@ -109,6 +113,9 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		if err := p.cleanUpPodHandler(ctx, msg.Child); err != nil {
 			return err
 		}
+
+	case echo.Context:
+		p.handleAPIRequest(ctx, msg)
 
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
@@ -216,6 +223,7 @@ func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
 		podName:     newPodHandler.podName,
 		containerID: msg.Spec.ContainerID,
 	}
+
 	return nil
 }
 
@@ -257,4 +265,82 @@ func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) erro
 	delete(p.podHandlerToMetadata, podHandler)
 
 	return nil
+}
+
+func (p *pods) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
+	switch apiCtx.Request().Method {
+	case echo.GET:
+		ctx.Respond(apiCtx.JSON(http.StatusOK, p.summarize(ctx)))
+	default:
+		ctx.Respond(echo.ErrMethodNotAllowed)
+	}
+}
+
+// summarize will return all nodes currently in the k8 cluster that have GPUs as agents.
+// It will map currently running Determined pods to the slots on these Nodes, marking all other
+// slots as Free, even if they are being used by other k8 pods.
+func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
+	podHandlers := make([]*actor.Ref, 0, len(p.podNameToPodHandler))
+	for _, podHandler := range p.podNameToPodHandler {
+		podHandlers = append(podHandlers, podHandler)
+	}
+	results := ctx.AskAll(getPodNodeInfo{}, podHandlers...).GetAll()
+
+	// Separate pods by nodes.
+	podByNode := make(map[string][]podNodeInfo)
+	for _, result := range results {
+		podByNode[result.(podNodeInfo).nodeName] = append(
+			podByNode[result.(podNodeInfo).nodeName], result.(podNodeInfo))
+	}
+
+	nodes, err := p.clientSet.CoreV1().Nodes().List(metaV1.ListOptions{})
+	if err != nil {
+		ctx.Log().WithError(err).Error("error listing nodes")
+		return nil
+	}
+
+	summary := make(map[string]agent.AgentSummary)
+	for _, node := range nodes.Items {
+		gpuResources := node.Status.Capacity["nvidia.com/gpu"]
+		numSlots := gpuResources.Value()
+		if numSlots < 1 {
+			continue
+		}
+
+		slotsSummary := make(agent.SlotsSummary)
+		curSlot := 0
+		for _, podInfo := range podByNode[node.Name] {
+			for i := 0; i < podInfo.numGPUs; i++ {
+				if curSlot >= int(numSlots) {
+					ctx.Log().Errorf("too many pods mapping to node %s", node.Name)
+					continue
+				}
+
+				slotsSummary[strconv.Itoa(curSlot)] = agent.SlotSummary{
+					ID:        strconv.Itoa(i),
+					Device:    device.Device{Type: device.GPU},
+					Enabled:   true,
+					Container: podInfo.container,
+				}
+				curSlot++
+			}
+		}
+
+		for i := curSlot; i < int(numSlots); i++ {
+			slotsSummary[strconv.Itoa(i)] = agent.SlotSummary{
+				ID:      strconv.Itoa(i),
+				Device:  device.Device{Type: device.GPU},
+				Enabled: true,
+			}
+		}
+
+		summary[node.Name] = agent.AgentSummary{
+			ID:             node.Name,
+			RegisteredTime: node.ObjectMeta.CreationTimestamp.Time,
+			Slots:          slotsSummary,
+			NumContainers:  len(podByNode[node.Name]),
+		}
+	}
+
+	return summary
 }
