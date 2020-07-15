@@ -189,7 +189,7 @@ class HorovodContext:
         grad_updates_size_file: str,
         average_aggregated_gradients: bool,
         average_training_metrics: bool,
-        horovod_timeline: str
+        horovod_timeline: Optional[str]
     ) -> None:
         self.use = use
         self.aggregation_frequency = aggregation_frequency
@@ -197,9 +197,6 @@ class HorovodContext:
         self.grad_updates_size_file = grad_updates_size_file
         self.average_aggregated_gradients = average_aggregated_gradients
         self.average_training_metrics = average_training_metrics
-
-        if horovod_timeline == "":
-            horovod_timeline = None
         self.horovod_timeline = horovod_timeline
 
     @staticmethod
@@ -264,7 +261,7 @@ class HorovodContext:
                 bool, optimizations_config.get("average_training_metrics")
             ),
             horovod_timeline=cast(
-                str, optimizations_config.get("horovod_timeline", "")
+                Optional[str], optimizations_config.get("horovod_timeline")
             ),
         )
 

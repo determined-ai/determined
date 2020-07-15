@@ -92,7 +92,7 @@ func DefaultExperimentConfig() ExperimentConfig {
 			TensorFusionThreshold:      64,
 			TensorFusionCycleTime:      5,
 			AutoTuneTensorFusion:       false,
-			HorovodTimeline:       		"",
+			HorovodTimeline:       		nil,
 		},
 		BatchesPerStep: 100,
 		Environment: Environment{

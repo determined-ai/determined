@@ -93,7 +93,7 @@ def make_default_exp_config(hparams: Dict[str, Any], batches_per_step: int) -> D
             "aggregation_frequency": 1,
             "gradient_compression": False,
             "average_training_metrics": False,
-            "horovod_timeline": "",
+            "horovod_timeline": None,
         },
         "data_layer": {"type": "shared_fs"},
     }
