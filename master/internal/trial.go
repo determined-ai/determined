@@ -876,9 +876,7 @@ func (t *trial) resetTrial(
 		Workload:     w,
 		ExitedReason: &e,
 	}
-	if err := t.processCompletedWorkload(ctx, erroredMessage); err != nil {
-		ctx.Log().Error(err)
-	}
+	t.receiveCompletedWorkload(ctx, erroredMessage)
 }
 
 func (t *trial) restore(ctx *actor.Context) {
