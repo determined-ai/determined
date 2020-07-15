@@ -134,7 +134,7 @@ class DistributedContext:
     """
     DistributedContext extends all TrialContexts and NativeContexts under
     the ``context.distributed`` namespace. It provides useful methods for
-    effective multi-slot (parallel and distributed) training.
+    effective distributed training.
     """
 
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext):
@@ -143,7 +143,9 @@ class DistributedContext:
 
     def get_rank(self) -> int:
         """
-        Return the rank of the process in the trial.
+        Return the rank of the process in the trial. The rank of a process is a
+        unique ID within the trial; that is, no two processes in the same trial
+        will be assigned the same rank.
         """
         if not self._hvd_config.use:
             return 0
@@ -152,7 +154,10 @@ class DistributedContext:
 
     def get_local_rank(self) -> int:
         """
-        Return the rank of the process on the agent.
+        Return the rank of the process on the agent. The local rank of a process
+        is a unique ID within a given agent and trial; that is, no two processes
+        in the same trial that are executing on the same agent will be assigned
+        the same rank.
         """
         if not self._hvd_config.use:
             return 0
