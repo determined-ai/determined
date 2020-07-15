@@ -96,6 +96,16 @@ func (e ExperimentConfig) Validate() []error {
 			e.Entrypoint, "Must specify an entrypoint that references the trial class."))
 	}
 
+	if e.ValidationPeriod.Units > 0 {
+		errs = append(errs, check.Equal(e.ValidationPeriod.Unit, e.Searcher.Unit(),
+			"checkpoint_period and validation_period must use the same unit"))
+	}
+
+	if e.CheckpointPeriod.Units > 0 {
+		errs = append(errs, check.Equal(e.CheckpointPeriod.Unit, e.Searcher.Unit(),
+			"checkpoint_period and validation_period must use the same unit"))
+	}
+
 	return append(errs, []error{
 		check.TrueSilent(len(noCountParams) == 0,
 			"these hyperparameters must specify counts for grid search: %s",
@@ -107,12 +117,6 @@ func (e ExperimentConfig) Validate() []error {
 			"min_checkpoint_period is deprecated, please use checkpoint_period"),
 		check.True(e.MinValidationPeriod == nil,
 			"min_validation_period is deprecated, please use validation_period"),
-		check.GreaterThan(e.CheckpointPeriod.Units, 0, "checkpoint_period must be > 0"),
-		check.GreaterThan(e.ValidationPeriod.Units, 0, "validation_period must be > 0"),
-		check.Equal(e.ValidationPeriod.Unit, e.CheckpointPeriod.Unit,
-			"checkpoint_period and validation_period must use the same unit"),
-		check.Equal(e.CheckpointPeriod.Unit, e.Searcher.Unit(),
-			"checkpoint_period and searcher must use the same unit"),
 	}...)
 }
 
