@@ -36,10 +36,10 @@ func TestAddProxy(t *testing.T) {
 		"FIRST_VAR=1",
 	}
 
-	 testAgent.Options.HttpProxy = "192.168.1.1"
-	 testAgent.Options.HttpsProxy = "192.168.1.2"
-	 testAgent.Options.FtpProxy = "192.168.1.3"
-	 testAgent.Options.NoProxy = "*.test.com"
+	testAgent.Options.HttpProxy = "192.168.1.1"
+	testAgent.Options.HttpsProxy = "192.168.1.2"
+	testAgent.Options.FtpProxy = "192.168.1.3"
+	testAgent.Options.NoProxy = "*.test.com"
 
 	ans := append(inputEnv.Env, []string{"HTTP_PROXY=192.168.1.1", "HTTPS_PROXY=192.168.1.2", "FTP_PROXY=192.168.1.3", "NO_PROXY=*.test.com"}...)
 
