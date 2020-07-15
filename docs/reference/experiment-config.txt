@@ -605,12 +605,13 @@ created with the Determined CLI. It may contain the following fields:
     ``tensor_fusion_threshold`` and ``tensor_fusion_cycle_time`` automatically.
     Defaults to ``false``.
 
-  - ``horovod_timeline``: The path where the Horovod should be timeline saved. The
+  - ``horovod_timeline``: The path in the container where the Horovod timeline should be saved,
+    e.g. ``/root/horovod_timeline.json``. The
     Horovod timeline is a trace file that can be analyzed to investigate distributed
-    training performance. When this field is ``None``, the timeline is not created.
+    training performance. When this field is ``null``, the timeline is not created.
     The timeline can grow very large during long training runs so it is recommended
     that timeline generation is disabled when not actively investigating performance.
-    Defaults to ``None``
+    Defaults to ``null``
 
 
 .. _data-layer_exp_config:
