@@ -93,6 +93,7 @@ def make_default_exp_config(hparams: Dict[str, Any], batches_per_step: int) -> D
             "aggregation_frequency": 1,
             "gradient_compression": False,
             "average_training_metrics": False,
+            "horovod_timeline": "",
         },
         "data_layer": {"type": "shared_fs"},
     }
@@ -152,6 +153,7 @@ def make_default_hvd_config() -> horovod.HorovodContext:
         grad_updates_size_file="",
         average_aggregated_gradients=True,
         average_training_metrics=False,
+        horovod_timeline=None,
     )
 
 

@@ -27,6 +27,7 @@ DEFAULT_OPTIMIZATIONS = {
     "average_training_metrics": False,
     "gradient_compression": False,
     "mixed_precision": "O0",
+    "horovod_timeline": None
 }
 DEFAULT_EXP_CFG = {
     "searcher": DEFAULT_SEARCHER_CFG,

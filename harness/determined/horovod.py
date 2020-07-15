@@ -121,6 +121,23 @@ def create_performance_args(env: det.EnvContext) -> List[str]:
     return performance_args
 
 
+def create_horovod_timeline_args(env: det.EnvContext) -> List[str]:
+    optimizations = env.experiment_config.get("optimizations", {})
+    check.check_in("horovod_timeline", optimizations)
+
+    htimeline_path = optimizations.get("horovod_timeline")
+    if htimeline_path is None:
+        return []
+
+    return [
+        "--timeline-filename",
+        htimeline_path,
+        "--timeline-mark-cycles" # This is useful information, but it is strange that it is not
+                                 # enabled by default in Horovod so it is possible that
+                                 # it has performance implications we are unaware of.
+    ]
+
+
 def create_run_command(
     num_gpus_per_machine: int,
     ip_addresses: List[str],
@@ -148,6 +165,7 @@ def create_run_command(
     ]
     horovod_process_cmd.extend(create_network_interface_arg_if_specified(env, num_machines))
     horovod_process_cmd.extend(create_performance_args(env))
+    horovod_process_cmd.extend(create_horovod_timeline_args(env))
     if debug:
         horovod_process_cmd.append("--verbose")
     horovod_process_cmd.extend(optional_args)
@@ -171,6 +189,7 @@ class HorovodContext:
         grad_updates_size_file: str,
         average_aggregated_gradients: bool,
         average_training_metrics: bool,
+        horovod_timeline: str
     ) -> None:
         self.use = use
         self.aggregation_frequency = aggregation_frequency
@@ -178,6 +197,10 @@ class HorovodContext:
         self.grad_updates_size_file = grad_updates_size_file
         self.average_aggregated_gradients = average_aggregated_gradients
         self.average_training_metrics = average_training_metrics
+
+        if horovod_timeline == "":
+            horovod_timeline = None
+        self.horovod_timeline = horovod_timeline
 
     @staticmethod
     def from_configs(
@@ -204,6 +227,7 @@ class HorovodContext:
         check.is_in("aggregation_frequency", optimizations_config)
         check.is_in("gradient_compression", optimizations_config)
         check.is_in("average_training_metrics", optimizations_config)
+        check.is_in("horovod_timeline", optimizations_config)
 
         # Help users migrate from the old locations for these settings, in hparams.
         def error_message_removed_from_hparams(removed_hparam: str) -> str:
@@ -238,6 +262,9 @@ class HorovodContext:
             ),
             average_training_metrics=cast(
                 bool, optimizations_config.get("average_training_metrics")
+            ),
+            horovod_timeline=cast(
+                str, optimizations_config.get("horovod_timeline", "")
             ),
         )
 
