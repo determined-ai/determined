@@ -18,3 +18,7 @@ export const NavMain = (): React.ReactNode => (
 export const NavSideBar = (): React.ReactNode => (
   <Label type={LabelTypes.NavSideBar}>NavSideBar Label</Label>
 );
+
+export const TextOnly = (): React.ReactNode => (
+  <Label type={LabelTypes.TextOnly}>TextOnly Label</Label>
+);

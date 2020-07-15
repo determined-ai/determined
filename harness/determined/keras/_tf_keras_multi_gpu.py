@@ -55,7 +55,7 @@ def _get_multi_gpu_model_and_optimizer(
     elif hvd_config.use:
         # Horovod doesn't know how to handle string-based optimizers.
         if isinstance(optimizer, str):
-            optimizer = tf.keras.optimizers.get(optimizer)
+            raise det.errors.InvalidExperimentException("string optimizers are not supported")
 
         new_optimizer = hvd.DistributedOptimizer(
             optimizer,

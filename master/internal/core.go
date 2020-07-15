@@ -267,6 +267,44 @@ func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) 
 	return actorRef.AwaitTermination()
 }
 
+func (m *Master) initializeResourceProviders(proxyRef *actor.Ref, provisionerSlotsPerInstance int) {
+	var resourceProvider *actor.Ref
+	switch {
+	case m.config.Scheduler.ResourceProvider.DefaultRPConfig != nil:
+		resourceProvider, _ = m.system.ActorOf(actor.Addr("defaultRP"), scheduler.NewDefaultRP(
+			m.ClusterID,
+			m.config.Scheduler.MakeScheduler(),
+			m.config.Scheduler.FitFunction(),
+			proxyRef,
+			filepath.Join(m.config.Root, "wheels"),
+			m.config.TaskContainerDefaults,
+			m.provisioner,
+			provisionerSlotsPerInstance,
+		))
+
+	case m.config.Scheduler.ResourceProvider.KubernetesRPConfig != nil:
+		resourceProvider, _ = m.system.ActorOf(
+			actor.Addr("kubernetesRP"),
+			scheduler.NewKubernetesResourceProvider(
+				m.ClusterID,
+				m.config.Scheduler.ResourceProvider.KubernetesRPConfig.Namespace,
+				m.config.Scheduler.ResourceProvider.KubernetesRPConfig.SlotsPerNode,
+				m.config.Scheduler.ResourceProvider.KubernetesRPConfig.MasterServiceName,
+				proxyRef,
+				filepath.Join(m.config.Root, "wheels"),
+				m.config.TaskContainerDefaults,
+			),
+		)
+
+	default:
+		panic("no expected resource provider config is defined")
+	}
+
+	m.rp, _ = m.system.ActorOf(
+		actor.Addr("resourceProviders"),
+		scheduler.NewResourceProviders(resourceProvider))
+}
+
 // Run causes the Determined master to connect the database and begin listening for HTTP requests.
 func (m *Master) Run() error {
 	log.Infof("Determined master %s (built with %s)", m.Version, runtime.Version())
@@ -293,7 +331,9 @@ func (m *Master) Run() error {
 	// master system
 	// +- Provisioner (provisioner.Provisioner: provisioner)
 	// +- ResourceProviders (scheduler.ResourceProviders: resourceProviders)
+	// Exactly one of the resource providers is enabled at a time.
 	// +- DefaultResourceProvider (scheduler.DefaultResourceProvider: defaultRP)
+	// +- KubernetesResourceProvider (scheduler.KubernetesResourceProvider: kubernetesRP)
 	// +- Service Proxy (proxy.Proxy: proxy)
 	// +- RWCoordinator (internal.rw_coordinator: rwCoordinator)
 	// +- Telemetry (telemetry.telemetryActor: telemetry)
@@ -327,20 +367,8 @@ func (m *Master) Run() error {
 
 	proxyRef, _ := m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{})
 
-	defaultRP, _ := m.system.ActorOf(actor.Addr("defaultRP"), scheduler.NewDefaultRP(
-		m.ClusterID,
-		m.config.Scheduler.MakeScheduler(),
-		m.config.Scheduler.FitFunction(),
-		proxyRef,
-		filepath.Join(m.config.Root, "wheels"),
-		m.config.TaskContainerDefaults,
-		m.provisioner,
-		provisionerSlotsPerInstance,
-	))
+	m.initializeResourceProviders(proxyRef, provisionerSlotsPerInstance)
 
-	m.rp, _ = m.system.ActorOf(
-		actor.Addr("resourceProviders"),
-		scheduler.NewResourceProviders(defaultRP))
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 
 	rwCoordinator := newRWCoordinator()
@@ -421,16 +449,19 @@ func (m *Master) Run() error {
 	}
 
 	// React WebUI.
-	reactFiles := [...]fileRoute{
+	reactIndexFiles := [...]fileRoute{
 		{"/", "index.html"},
 		{"/det", "index.html"},
+		{"/det/*", "index.html"},
+	}
+
+	reactFiles := [...]fileRoute{
 		{"/security.txt", "security.txt"},
 		{"/.well-known/security.txt", "security.txt"},
 		{"/color.less", "color.less"},
 		{"/manifest.json", "manifest.json"},
 		{"/favicon.ico", "favicon.ico"},
 		{"/favicon.ico", "favicon.ico"},
-		{"/det/*", "index.html"},
 	}
 
 	reactDirs := [...]fileRoute{
@@ -441,11 +472,27 @@ func (m *Master) Run() error {
 
 	// Apply WebUI routes in order.
 	for _, fileRoute := range elmFiles {
-		m.echo.File(fileRoute.route, filepath.Join(elmRoot, fileRoute.path))
+		elmIndexPath := filepath.Join(elmRoot, fileRoute.path)
+		m.echo.GET(fileRoute.route, func(c echo.Context) error {
+			c.Response().Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			c.Response().Header().Set("Pragma", "no-cache")
+			c.Response().Header().Set("Expires", "0")
+			return c.File(elmIndexPath)
+		})
 	}
 
 	for _, dirRoute := range elmDirs {
 		m.echo.Static(dirRoute.route, filepath.Join(elmRoot, dirRoute.path))
+	}
+
+	for _, indexRoute := range reactIndexFiles {
+		reactIndexPath := filepath.Join(reactRoot, indexRoute.path)
+		m.echo.GET(indexRoute.route, func(c echo.Context) error {
+			c.Response().Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			c.Response().Header().Set("Pragma", "no-cache")
+			c.Response().Header().Set("Expires", "0")
+			return c.File(reactIndexPath)
+		})
 	}
 
 	for _, fileRoute := range reactFiles {

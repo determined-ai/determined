@@ -328,10 +328,11 @@ class EstimatorTrialController(det.LoopTrialController):
         user_train_spec: tf.estimator.TrainSpec,
         val_spec: tf.estimator.EvalSpec,
         serving_input_receiver_fns: Dict[str, estimator.ServingInputReceiverFn],
+        context: estimator.EstimatorContext,
         *args: Any,
         **kwargs: Any,
     ) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(context, *args, **kwargs)  # type: ignore
 
         self.estimator = estimator
         self.user_train_spec = user_train_spec
@@ -340,6 +341,8 @@ class EstimatorTrialController(det.LoopTrialController):
 
         # Used to send Terminate response following post-trial close callback.
         self.exit_response_func = None  # type: Optional[workload.ResponseFunc]
+
+        context.experimental._set_allgather_fn(self.allgather_metrics)
 
         self._init_model()
 
@@ -385,6 +388,7 @@ class EstimatorTrialController(det.LoopTrialController):
             estimator.EstimatorTrialContext,
             "EstimatorTrialController needs an EstimatorTrialContext",
         )
+        context = cast(estimator.EstimatorTrialContext, context)
 
         check.is_instance(
             trial_inst, EstimatorTrial, "EstimatorTrialController needs an EstimatorTrial"
@@ -632,7 +636,7 @@ class EstimatorTrialController(det.LoopTrialController):
                 logging.debug(f"Averaged validation metrics: {metrics}.")
 
         estimator._cleanup_after_validation_step(
-            self.estimator._model_dir, self.hvd_config.use, self.is_chief
+            pathlib.Path(self.estimator._model_dir), self.is_chief
         )
 
         if not self.is_chief:
@@ -641,13 +645,14 @@ class EstimatorTrialController(det.LoopTrialController):
         return {"validation_metrics": metrics}
 
     def average_metrics(self, metrics: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        # The chief receives the metric from every worker and computes
-        # the average.
         check.true(self.hvd_config.use)
         if self.is_chief:
-            self.train_process_comm_chief = cast(ipc.ZMQServer, self.train_process_comm_chief)
+            self.train_process_comm_chief = cast(
+                ipc.ZMQBroadcastServer, self.train_process_comm_chief
+            )
             logging.debug(f"Chief {hvd.rank()} beginning receiving validation metrics.")
-            worker_metrics = self.train_process_comm_chief.barrier(num_connections=hvd.size() - 1)
+            worker_metrics, _ = self.train_process_comm_chief.gather_with_polling(lambda: None)
+            self.train_process_comm_chief.broadcast(None)
             logging.debug(f"Chief {hvd.rank()} done receiving validation metrics.")
             for metric_name in metrics:
                 if isinstance(metrics[metric_name], numbers.Number):
@@ -660,10 +665,37 @@ class EstimatorTrialController(det.LoopTrialController):
                         metrics[metric_name] += worker_metric[metric_name] / hvd.size()
             return metrics
         else:
-            self.train_process_comm_worker = cast(ipc.ZMQClient, self.train_process_comm_worker)
+            self.train_process_comm_worker = cast(
+                ipc.ZMQBroadcastClient, self.train_process_comm_worker
+            )
             logging.debug(f"Worker {hvd.rank()} sending metrics.")
-            self.train_process_comm_worker.barrier(message=metrics)
+            self.train_process_comm_worker.send(metrics)
+            # Synchronize with the chief so that there is no risk of accidentally calling send()
+            # for a future gather before all workers have called send() on this gather.
+            _ = self.train_process_comm_worker.recv()
             return None
+
+    def allgather_metrics(self, metrics: Any) -> List:
+        if not self.hvd_config.use:
+            return [metrics]
+
+        if self.is_chief:
+            self.train_process_comm_chief = cast(
+                ipc.ZMQBroadcastServer, self.train_process_comm_chief
+            )
+            logging.debug(f"Chief {hvd.rank()} beginning allgathering metrics.")
+            worker_stuff, _ = self.train_process_comm_chief.gather_with_polling(lambda: None)
+            logging.debug(f"Chief {hvd.rank()} done allgathering metrics.")
+            all_metrics = [metrics, *worker_stuff]
+            self.train_process_comm_chief.broadcast(all_metrics)
+            return all_metrics
+        else:
+            self.train_process_comm_worker = cast(
+                ipc.ZMQBroadcastClient, self.train_process_comm_worker
+            )
+            logging.debug(f"Worker {hvd.rank()} allgathering metrics.")
+            self.train_process_comm_worker.send(metrics)
+            return self.train_process_comm_worker.recv()  # type: ignore
 
 
 class EstimatorTrial(det.Trial):

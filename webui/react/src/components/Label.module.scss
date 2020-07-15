@@ -1,6 +1,5 @@
 .base {
-  font-size: 1.2rem;
-}
-.navSideBar {
   cursor: pointer;
+  font-size: var(--theme-sizes-font-small);
 }
+.textOnly { cursor: auto; }

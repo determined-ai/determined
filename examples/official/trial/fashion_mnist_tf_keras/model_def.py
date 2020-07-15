@@ -30,7 +30,7 @@ class FashionMNISTTrial(TFKerasTrial):
         )
         model = self.context.wrap_model(model)
         model.compile(
-            optimizer="adam",
+            optimizer=tf.keras.optimizers.Adam(name='Adam'),
             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             metrics=[tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy")],
         )

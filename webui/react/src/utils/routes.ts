@@ -21,3 +21,9 @@ export const locationToPath = (location?: Location): string | null => {
 export const serverAddress = (): string => {
   return `${window.location.protocol}//${window.location.host}`;
 };
+
+export const windowOpenFeatures = [ 'noopener', 'noreferrer' ];
+
+export const openBlank = (url: string): void => {
+  window.open(url, '_blank', windowOpenFeatures.join(','));
+};

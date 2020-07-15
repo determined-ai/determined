@@ -9,6 +9,7 @@ import MasterLogs from 'pages/MasterLogs';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
 import TaskList from 'pages/TaskList';
+import TrialLogs from 'pages/TrialLogs';
 import history from 'routes/history';
 import { clone } from 'utils/data';
 import { ensureAbsolutePath, isFullPath, parseUrl } from 'utils/routes';
@@ -89,6 +90,14 @@ const masterLogsRoute =
     title: 'Master Logs',
   };
 
+const trialLogsRoute = {
+  component: TrialLogs,
+  id: 'trial-logs',
+  needAuth: true,
+  path: '/det/trials/:trialId/logs',
+  title: 'Trial Logs',
+};
+
 export const defaultAppRoute = dashboardRoute;
 
 export const appRoutes: RouteConfig[] = [
@@ -98,6 +107,7 @@ export const appRoutes: RouteConfig[] = [
   taskListRoute,
   clusterRoute,
   masterLogsRoute,
+  trialLogsRoute,
   {
     component: SignIn,
     id: 'login',

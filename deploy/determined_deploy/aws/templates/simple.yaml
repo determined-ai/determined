@@ -5,10 +5,10 @@ Mappings:
   RegionMap:
     us-east-1:
       Master: ami-66506c1c
-      Agent: ami-007d24256bc2cc5ca
+      Agent: ami-05e22bfd09b7b25f3
     us-west-2:
       Master: ami-79873901
-      Agent: ami-0f00cd8ac6e73a52d
+      Agent: ami-038842e6cb3f1bbb8
 
 Parameters:
   Keypair:
@@ -33,7 +33,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master docker image
-    Default: 0.12.11.dev0
+    Default: 0.12.12.dev0
 
   DBPassword:
     Type: String

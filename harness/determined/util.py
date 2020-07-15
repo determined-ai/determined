@@ -26,7 +26,14 @@ def download_gcs_blob_with_backoff(blob: Any, n_retries: int = 32, max_backoff: 
 
 
 def is_overridden(full_method: Any, parent_class: Any) -> bool:
-    return cast(bool, full_method.__qualname__.partition(".")[0] != parent_class.__name__)
+    """Check if a function is overriden over the given parent class.
+
+    Note that full_method should always be the name of a method, but users may override
+    that name with a variable anyway. In that case we treat full_method as not overridden.
+    """
+    if callable(full_method):
+        return cast(bool, full_method.__qualname__.partition(".")[0] != parent_class.__name__)
+    return False
 
 
 def _list_to_dict(list_of_dicts: List[Dict[str, Any]]) -> Dict[str, List[Any]]:

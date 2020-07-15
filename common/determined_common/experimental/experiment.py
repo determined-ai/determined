@@ -81,4 +81,4 @@ class ExperimentReference:
             reverse=not smaller_is_better, key=lambda x: x["metrics"]["validation_metrics"][sort_by]
         )
 
-        return [checkpoint.from_json(ckpt, self._master) for ckpt in r[:limit]]
+        return [checkpoint.Checkpoint.from_json(ckpt, self._master) for ckpt in r[:limit]]

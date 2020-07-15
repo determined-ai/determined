@@ -1,7 +1,7 @@
 import React from 'react';
 
 import Grid from 'components/Grid';
-import { ExperimentsDecorator } from 'storybook/ConetextDecorators';
+import { ExperimentsDecorator } from 'storybook/ContextDecorators';
 import RouterDecorator from 'storybook/RouterDecorator';
 import { ShirtSize } from 'themes';
 import { generateCommandTask, generateExperimentTask, generateTasks } from 'utils/task';

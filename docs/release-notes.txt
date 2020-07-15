@@ -6,6 +6,25 @@ Release Notes
 Version 0.12
 ------------
 
+Version 0.12.11
+^^^^^^^^^^^^^^^
+
+**Release Date:** July 8, 2020
+
+- Add logging to console in test mode for the Native API when using :class:`determined.experimental.create`.
+
+- Improve reliability of saving checkpoints to GCS in the presence of transient network errors.
+
+- Add `an example <https://github.com/determined-ai/determined/tree/master/examples/experimental/trial/unets_tf_keras>`__ using TensorFlow's *Image Segmentation via UNet* tutorial.
+
+- WebUI: Improve trial log rendering performance.
+
+- WebUI: Fix an issue where cluster utilization was displayed incorrectly.
+
+- WebUI: Fix an issue where active experiments and commands would not appear on the dashboard.
+
+- WebUI: Fix an issue where having telemetry enabled with an invalid key would cause the WebUI to render incorrectly.
+
 Version 0.12.10
 ^^^^^^^^^^^^^^^
 

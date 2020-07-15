@@ -1,7 +1,8 @@
 SELECT
-    c.uuid AS uuid,
+    c.uuid::text AS uuid,
     e.config AS experiment_config,
     e.id AS  experiment_id,
+    t.id AS trial_id,
     t.hparams as hparams,
     s.id * (e.config->>'batches_per_step')::int AS batch_number,
     s.start_time AS start_time,
@@ -12,7 +13,8 @@ SELECT
     COALESCE(c.format, '') as format,
     COALESCE(c.determined_version, '') as determined_version,
     v.metrics AS metrics,
-    v.state AS validation_state
+    'STATE_' || v.state AS validation_state,
+    'STATE_' || c.state AS state
 FROM checkpoints c
 JOIN steps s ON c.step_id = s.id AND c.trial_id = s.trial_id
 LEFT JOIN validations v ON v.step_id = s.id AND v.trial_id = s.trial_id

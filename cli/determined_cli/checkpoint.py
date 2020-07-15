@@ -3,9 +3,10 @@ from argparse import Namespace
 from typing import Any, Dict, List, Optional
 
 from determined_common import api, constants, experimental
+from determined_common.api.authentication import authentication_required
 from determined_common.experimental import Determined
 
-from . import render, user
+from . import render
 from .declarative_argparse import Arg, Cmd
 
 
@@ -58,7 +59,7 @@ def render_checkpoint(checkpoint: experimental.Checkpoint, path: Optional[str] =
     render.tabulate_or_csv(headers, [values], False)
 
 
-@user.authentication_required
+@authentication_required
 def list(args: Namespace) -> None:
     params = {}
     if args.best is not None:

@@ -352,26 +352,26 @@ def reproducibility_test(
     )
 
 
-OptimizerStateMakeControllerFn = Callable[
+RestorableMakeControllerFn = Callable[
     [workload.Stream, DefaultNamedArg(Optional[pathlib.Path], "load_path")],  # noqa: F821
     det.TrialController,
 ]
 
 
-def optimizer_state_test(
-    make_trial_controller_fn: OptimizerStateMakeControllerFn, tmp_path: Path
+def checkpointing_and_restoring_test(
+    make_trial_controller_fn: RestorableMakeControllerFn, tmp_path: Path
 ) -> Tuple[Sequence[Dict[str, Any]], Sequence[Dict[str, Any]]]:
-    # To test checkpointing optimizer state, run a set of two trials.
-    #
-    # 1) Trial A is run for two steps of 100 batches each, between two
-    #    separate trial instances.
-    # 2) Trial B is run for two steps of 100 batches each with the same
-    #    trial instance.
-    #
-    # Thus the training procedure is equivalent, but in the case of Trial
-    # A, the full training state must be restored from checkpoint. At the
-    # end of training both trial instances are compared to have equivalent
-    # metric histories.
+    """
+    Tests if a trial controller of any framework can checkpoint and restore from that checkpoint
+    without state changes.
+
+    This test runs two trials.
+    1) Trial A runs for one steps of 100 batches, checkpoints itself, and restores from
+       that checkpoint.
+    2) Trial B runs for two steps of 100 batches.
+
+    This test compares the training and validation metrics history of the two trials.
+    """
 
     training_metrics = {"A": [], "B": []}  # type: Dict[str, List[workload.Metrics]]
     validation_metrics = {"A": [], "B": []}  # type: Dict[str, List[workload.Metrics]]

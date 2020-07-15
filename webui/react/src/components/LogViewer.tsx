@@ -13,11 +13,14 @@ import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
 import { Log, LogLevel } from 'types';
 import { formatDatetime } from 'utils/date';
 import { ansiToHtml, copyToClipboard, toRem } from 'utils/dom';
+import { openBlank } from 'utils/routes';
 
 import css from './LogViewer.module.scss';
 
 interface Props {
   debugMode?: boolean;
+  disableLevel?: boolean;
+  downloadUrl?: string;
   noWrap?: boolean;
   ref?: React.Ref<LogViewerHandles>;
   title: string;
@@ -89,7 +92,7 @@ const defaultLogConfig = {
  * a reference to be able to call functions inside the LogViewer.
  */
 const LogViewer: React.FC<Props> = forwardRef((
-  { debugMode, noWrap, title, onScrollToTop }: Props,
+  { onScrollToTop, ...props }: Props,
   ref?: React.Ref<LogViewerHandles>,
 ) => {
   const baseRef = useRef<HTMLDivElement>(null);
@@ -113,7 +116,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   const lineNumberStyle = { width: toRem(config.lineNumberWidth) };
   const levelStyle = { width: toRem(ICON_WIDTH) };
 
-  if (noWrap) classes.push(css.noWrap);
+  if (props.noWrap) classes.push(css.noWrap);
   if (scroll.scrollTop < scroll.scrollHeight - scroll.viewHeight) {
     scrollToLatestClasses.push(css.show);
   }
@@ -157,7 +160,8 @@ const LogViewer: React.FC<Props> = forwardRef((
      * Calculate the width of message based on how much space is left
      * after rendering line and timestamp.
      */
-    const messageWidth = spacerRect.width - lineNumberWidth - ICON_WIDTH - dateTimeWidth;
+    const iconWidth = props.disableLevel ? 0 : ICON_WIDTH;
+    const messageWidth = spacerRect.width - iconWidth - lineNumberWidth - dateTimeWidth;
 
     /*
       * Measure the dimensions of every message in the available data.
@@ -187,7 +191,7 @@ const LogViewer: React.FC<Props> = forwardRef((
       messageWidth,
       totalContentHeight,
     };
-  }, []);
+  }, [ props.disableLevel ]);
 
   const addLogs = useCallback((addedLogs: Log[], prepend = false): void => {
     // Only process new logs that don't exist in the log viewer
@@ -323,22 +327,23 @@ const LogViewer: React.FC<Props> = forwardRef((
     }
   }, [ config, scrollToInfo ]);
 
+  const formatClipboardHeader = useCallback((log: Log): string => {
+    const format = `%${CLIPBOARD_FORMAT.length}s `;
+    const datetime = formatDatetime(log.time!, CLIPBOARD_FORMAT);
+    return props.disableLevel ?
+      sprintf(format, datetime) :
+      sprintf(`${format} %-7s `, datetime, log.level || '');
+  }, [ props.disableLevel ]);
+
   const handleCopyToClipboard = useCallback(async () => {
-    const content = logs.map(log => {
-      return sprintf(
-        `%${CLIPBOARD_FORMAT.length}s %-7s %s`,
-        formatDatetime(log.time!, CLIPBOARD_FORMAT),
-        log.level,
-        log.message,
-      );
-    }).join('\n');
+    const content = logs.map(log => `${formatClipboardHeader(log)}${log.message || ''}`).join('\n');
 
     try {
       await copyToClipboard(content);
       const linesLabel = logs.length === 1 ? 'entry' : 'entries';
       notification.open({
         description: `${logs.length} ${linesLabel} copied to the clipboard.`,
-        message: `Available ${title} Copied`,
+        message: `Available ${props.title} Copied`,
       });
     } catch (e) {
       notification.warn({
@@ -346,11 +351,15 @@ const LogViewer: React.FC<Props> = forwardRef((
         message: 'Unable to Copy to Clipboard',
       });
     }
-  }, [ logs, title ]);
+  }, [ formatClipboardHeader, logs, props.title ]);
 
   const handleFullScreen = useCallback(() => {
     if (baseRef.current && screenfull.isEnabled) screenfull.toggle();
   }, []);
+
+  const handleDownload = useCallback(() => {
+    if (props.downloadUrl) openBlank(props.downloadUrl);
+  }, [ props.downloadUrl ]);
 
   const handleScrollToLatest = useCallback(() => {
     if (!container.current) return;
@@ -359,7 +368,7 @@ const LogViewer: React.FC<Props> = forwardRef((
 
   const logOptions = (
     <Space>
-      {debugMode && <div className={css.debugger}>
+      {props.debugMode && <div className={css.debugger}>
         <span data-label="ScrollLeft:">{scroll.scrollLeft}</span>
         <span data-label="ScrollTop:">{scroll.scrollTop}</span>
         <span data-label="ScrollWidth:">{scroll.scrollWidth}</span>
@@ -378,6 +387,12 @@ const LogViewer: React.FC<Props> = forwardRef((
           icon={<Icon name="fullscreen" />}
           onClick={handleFullScreen} />
       </Tooltip>
+      {props.downloadUrl && <Tooltip placement="bottomRight" title="Download Logs">
+        <Button
+          aria-label="Download Logs"
+          icon={<Icon name="download" />}
+          onClick={handleDownload} />
+      </Tooltip>}
     </Space>
   );
 
@@ -388,18 +403,14 @@ const LogViewer: React.FC<Props> = forwardRef((
   };
 
   const addClipboardPrefix = (log: Log): string => {
-    const content = sprintf(
-      `%${CLIPBOARD_FORMAT.length}s %-7s `,
-      formatDatetime(log.time!, CLIPBOARD_FORMAT),
-      log.level,
-    );
+    const content = formatClipboardHeader(log);
     const prefix = `<span class=${css.clipboard}>${content}</span>`;
     return prefix + ansiToHtml(log.message);
   };
 
   return (
     <div className={css.base} ref={baseRef}>
-      <Section maxHeight options={logOptions} title={title}>
+      <Section maxHeight options={logOptions} title={props.title}>
         <div className={css.container} ref={container}>
           <div className={css.scrollSpacer} ref={spacer} style={spacerStyle}>
             {visibleLogs.map(log => (
@@ -407,13 +418,16 @@ const LogViewer: React.FC<Props> = forwardRef((
                 height: toRem(config.messageSizes[log.id]?.height),
                 top: toRem(config.messageSizes[log.id]?.top),
               }}>
-                {log.level !== LogLevel.Info ? (
-                  <Tooltip placement="top" title={log.level}>
-                    <div className={levelCss(css.level, log.level)} style={levelStyle}>
-                      <Icon name={log.level} size="small" />
-                    </div>
-                  </Tooltip>
-                ) : <div className={levelCss(css.level, log.level)} style={levelStyle} />
+                {!props.disableLevel ?
+                  log.level !== LogLevel.Info ? (
+                    <Tooltip placement="top" title={log.level}>
+                      <div className={levelCss(css.level, log.level)} style={levelStyle}>
+                        <Icon name={log.level} size="small" />
+                      </div>
+                    </Tooltip>
+                  ) : (
+                    <div className={levelCss(css.level, log.level)} style={levelStyle} />
+                  ) : null
                 }
                 <div className={css.number} style={lineNumberStyle}>{log.id + 1}</div>
                 <Tooltip placement="left" title={log.time || ''}>

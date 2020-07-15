@@ -3,6 +3,10 @@ module github.com/determined-ai/determined/master
 require (
 	cloud.google.com/go v0.44.3
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
+	github.com/Azure/go-autorest v12.2.0+incompatible
+	github.com/Azure/go-autorest/autorest/azure/auth v0.4.2 // indirect
+	github.com/Azure/go-autorest/autorest/to v0.3.0 // indirect
+	github.com/Azure/go-autorest/autorest/validation v0.2.0 // indirect
 	github.com/Microsoft/go-winio v0.4.9 // indirect
 	github.com/aws/aws-sdk-go v1.25.11
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
@@ -47,11 +51,15 @@ require (
 	golang.org/x/net v0.0.0-20200506145744-7e3656a0809f
 	golang.org/x/tools v0.0.0-20200522201501-cb1345f3a375
 	google.golang.org/api v0.9.0
+	google.golang.org/genproto v0.0.0-20200602104108-2bb8d6132df6
 	google.golang.org/grpc v1.29.1
 	google.golang.org/protobuf v1.24.0
 	gopkg.in/guregu/null.v3 v3.4.0
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 	gotest.tools v2.1.0+incompatible
+	k8s.io/api v0.0.0-20191114100352-16d7abae0d2a
+	k8s.io/apimachinery v0.0.0-20191028221656-72ed19daf4bb
+	k8s.io/client-go v0.0.0-20191114101535-6c5935290e33
 )
 
 replace github.com/determined-ai/determined/proto => ../proto

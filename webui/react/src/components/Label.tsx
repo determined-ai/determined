@@ -5,6 +5,7 @@ import css from './Label.module.scss';
 export enum LabelTypes {
   NavMain = 'navMain',
   NavSideBar = 'navSideBar',
+  TextOnly = 'textOnly',
 }
 
 interface Props {

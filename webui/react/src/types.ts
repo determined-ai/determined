@@ -147,6 +147,13 @@ export interface Command {
 // TODO compelete the config object as we start using different attributes.
 export interface ExperimentConfig {
   description: string;
+  searcher: {
+    smallerIsBetter: boolean;
+    metric: string;
+  };
+  resources: {
+    maxSlots?: number;
+  };
 }
 
 /* Experiment */
@@ -168,10 +175,29 @@ interface ValidationHistory {
   validationError?: number;
 }
 
-interface Trial {
+export enum CheckpointState {
+  Active = 'ACTIVE',
+  Completed = 'COMPLETED',
+  Error = 'ERROR',
+  Deleted = 'DELETED',
+}
+
+export interface Checkpoint {
+  id: number;
+  stepId: number;
+  trialId: number;
+  state: CheckpointState;
+  startTime: string;
+  endTime? : string;
+  uuid? : string;
+  validationMetric? : number;
+}
+
+export interface TrialSummary {
   hparams: Record<string, string>;
   id: number;
   state: RunState;
+  bestAvailableCheckpoint?: Checkpoint;
 }
 
 export interface Experiment {
@@ -193,12 +219,12 @@ export interface ExperimentItem extends Experiment {
 
 export interface ExperimentDetails extends Experiment {
   validationHistory: ValidationHistory[];
-  trials: Trial[];
+  trials: TrialSummary[];
   username: string;
 }
 
 export interface Task {
-  title: string;
+  name: string;
   id: string;
   ownerId: number;
   url?: string;
@@ -235,6 +261,13 @@ export type RecentExperimentTask = ExperimentTask & RecentEvent;
 export type PropsWithClassName<T> = T & {className?: string};
 
 export type TaskType = CommandType | 'Experiment';
+
+export interface ExperimentFilters {
+  showArchived: boolean;
+  limit: number;
+  states: string[];
+  username?: string;
+}
 
 export interface TaskFilters<T extends TaskType = TaskType> {
   limit: number;

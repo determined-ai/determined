@@ -22,7 +22,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.12.11.dev0
+    default: 0.12.12.dev0
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -96,11 +96,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-0c9e956
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-9c8c0bd
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-0c9e956
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-9c8c0bd
 
   login-docker:
     steps:
@@ -141,23 +141,24 @@ commands:
             - "webui/elm/node_modules"
   react-get-deps:
     steps:
+      - attach_workspace:
+          at: .
+      - run: make -C webui/api-ts-sdk get-deps-package
+      - run: make -C webui/api-ts-sdk build-package
       - restore_cache:
           keys:
             - det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
       - run:
           name: Get React dependencies
           command: |
+            make -C webui/react get-deps-api
             if [ ! -d "webui/react/node_modules" ]; then
-              make -C webui/react get-deps
+              make -C webui/react get-deps-npm
             fi
       - save_cache:
           key: det-react-deps-v1dev3-{{ checksum  "webui/react/package-lock.json" }}
           paths:
             - "webui/react/node_modules"
-      - attach_workspace:
-          at: .
-      - run: make -C webui/api-ts-sdk get-deps-package
-      - run: make -C webui/api-ts-sdk build-package
 
   install-wheel:
     parameters:
@@ -352,6 +353,9 @@ commands:
       agent-instance-type:
         type: string
         default: "p2.xlarge"
+      max-dynamic-agents:
+        type: integer
+        default: 1
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
@@ -359,29 +363,11 @@ commands:
           cluster-id: ${CLUSTER_ID}
           det-version: <<parameters.det-version>>
           agent-instance-type: <<parameters.agent-instance-type>>
+          max-dynamic-agents: <<parameters.max-dynamic-agents>>
       - set-master-address:
           cluster-id: ${CLUSTER_ID}
       - wait-for-master:
           host: ${MASTER_HOST}
-
-  download-aws-logs:
-    parameters:
-      cluster-id:
-        type: string
-      download-dir:
-        type: string
-        default: "/tmp/logs"
-    steps:
-      - run:
-          name: "Download AWS Logs"
-          when: on_fail
-          command: |
-            mkdir -p <<parameters.download-dir>>
-            LOG_GROUP=$(python .circleci/scripts/get_output_from_stack.py <<parameters.cluster-id>> LogGroup)
-            python .circleci/scripts/download_logs.py ${LOG_GROUP} <<parameters.download-dir>>
-            python .circleci/scripts/download_logs.py "/aws/rds/cluster/<<parameters.cluster-id>>" <<parameters.download-dir>>
-      - store_artifacts:
-          path: <<parameters.download-dir>>
 
   install-webui-test-deps:
     steps:
@@ -446,6 +432,21 @@ commands:
     steps:
       - run: python .circleci/scripts/wait_for_master.py http://<<parameters.host>>:<<parameters.port>>
 
+  upload-cloud-watch-to-s3:
+    parameters:
+      cluster-id:
+        type: string
+      bucket:
+        type: string
+        default: det-ci-cloud-watch-logs
+    steps:
+      - run:
+          name: Upload cloud watch logs S3
+          when: always
+          command: |
+            LOG_GROUP=$(python .circleci/scripts/get_output_from_stack.py <<parameters.cluster-id>> LogGroup)
+            python .circleci/scripts/upload_cloud_watch_to_s3.py ${LOG_GROUP} <<parameters.bucket>> <<parameters.cluster-id>>
+
 jobs:
   build-docs:
     docker:
@@ -479,7 +480,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - run: apk add make curl python3
+      - run: apk add make curl python3 py3-pip
       - run: pip3 install awscli
       - run: make -C docs/deploy publish
 
@@ -913,40 +914,30 @@ jobs:
           failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: "${SLACK_USER_ID}"
 
-  nightly-tests:
+  test-e2e-aws:
+    parameters:
+      cluster-id-prefix:
+        type: string
+      mark:
+        type: string
+      agent-instance-type:
+        type: string
+        default: p2.xlarge
+      max-dynamic-agents:
+        type: integer
+        default: 1
+      parallelism:
+        type: integer
+        default: 1
+      slack-mentions:
+        type: string
+        default: ""
+      slack-channel:
+        type: string
+        default: ""
     docker:
       - image: determinedai/cimg-base:stable
-    steps:
-      - checkout
-      - setup-python-venv:
-          determined-common: true
-          determined-cli: true
-          determined: true
-          determined-deploy: true
-          extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: determinedai/cimg-base:stable
-      - setup-aws-cluster:
-          cluster-id: nightly-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
-          det-version: ${CIRCLE_SHA1}
-      - run-e2e-tests:
-          mark: "nightly"
-          master-host: ${MASTER_HOST}
-      - download-aws-logs:
-          cluster-id: ${CLUSTER_ID}
-      - terminate-aws-cluster:
-          cluster-id: ${CLUSTER_ID}
-      - store_test_results:
-          path: /tmp/test-results/
-      - slack/status:
-          fail_only: True
-          failure_message: ':thisisfine: \`${CIRCLE_JOB}\` have failed!'
-          mentions: "channel"
-          channel: "ml-ag"
-
-  e2e-gpu-tests:
-    docker:
-      - image: determinedai/cimg-base:stable
-    parallelism: 2
+    parallelism: <<parameters.parallelism>>
     steps:
       - checkout
       - set-slack-user-id
@@ -958,12 +949,14 @@ jobs:
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - setup-aws-cluster:
-          cluster-id: e2e-gpu-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
+          cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
+          agent-instance-type: <<parameters.agent-instance-type>>
+          max-dynamic-agents: <<parameters.max-dynamic-agents>>
       - run-e2e-tests:
-          mark: "e2e_gpu"
+          mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
-      - download-aws-logs:
+      - upload-cloud-watch-to-s3:
           cluster-id: ${CLUSTER_ID}
       - terminate-aws-cluster:
           cluster-id: ${CLUSTER_ID}
@@ -971,40 +964,10 @@ jobs:
           path: /tmp/test-results/
       - slack/status:
           fail_only: True
-          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
-          mentions: "${SLACK_USER_ID}"
+          failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
+          mentions: <<parameters.slack-mentions>>
+          channel: <<parameters.slack-channel>>
 
-  parallel-tests:
-    docker:
-      - image: determinedai/cimg-base:stable
-    parallelism: 2
-    steps:
-      - checkout
-      - set-slack-user-id
-      - setup-python-venv:
-          determined-common: true
-          determined-cli: true
-          determined: true
-          determined-deploy: true
-          extra-requirements-file: "e2e_tests/tests/requirements.txt"
-          executor: determinedai/cimg-base:stable
-      - setup-aws-cluster:
-          cluster-id: parallel-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
-          det-version: ${CIRCLE_SHA1}
-          agent-instance-type: "p2.8xlarge"
-      - run-e2e-tests:
-          mark: "parallel"
-          master-host: ${MASTER_HOST}
-      - download-aws-logs:
-          cluster-id: ${CLUSTER_ID}
-      - terminate-aws-cluster:
-          cluster-id: ${CLUSTER_ID}
-      - store_test_results:
-          path: /tmp/test-results/
-      - slack/status:
-          fail_only: True
-          failure_message: ':thisisfine: A \`${CIRCLE_JOB}\` job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
-          mentions: "${SLACK_USER_ID}"
 
 workflows:
   lint:
@@ -1142,21 +1105,36 @@ workflows:
               agent-instance-type: ["p2.8xlarge"]
               max-dynamic-agents: [8]
 
-      - parallel-tests:
+      - test-e2e-aws:
+          name: test-e2e-gpu-parallel
           context: aws
           filters:
             branches:
               only: master
           requires:
             - package-and-push-system-dev
+          matrix:
+            parameters:
+              parallelism: [2]
+              agent-instance-type: ["p2.8xlarge"]
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel"]
+              slack-mentions: ["${SLACK_USER_ID}"]
 
-      - e2e-gpu-tests:
+      - test-e2e-aws:
+          name: test-e2e-gpu-single
           context: aws
           filters:
             branches:
               only: master
           requires:
             - package-and-push-system-dev
+          matrix:
+            parameters:
+              parallelism: [2]
+              cluster-id-prefix: ["e2e-gpu"]
+              mark: ["e2e_gpu"]
+              slack-mentions: ["${SLACK_USER_ID}"]
 
       - request-dev-deploy:
           type: approval
@@ -1173,19 +1151,34 @@ workflows:
           type: approval
           filters: *upstream-feature-branch
 
-      - parallel-tests:
+      - test-e2e-aws:
+          name: test-e2e-gpu-parallel
           context: aws
           filters: *upstream-feature-branch
           requires:
             - request-gpu-tests
             - package-and-push-system-dev
+          matrix:
+            parameters:
+              parallelism: [2]
+              agent-instance-type: ["p2.8xlarge"]
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel"]
+              slack-mentions: ["${SLACK_USER_ID}"]
 
-      - e2e-gpu-tests:
+      - test-e2e-aws:
+          name: test-e2e-gpu-single
           context: aws
           filters: *upstream-feature-branch
           requires:
             - request-gpu-tests
             - package-and-push-system-dev
+          matrix:
+            parameters:
+              parallelism: [2]
+              cluster-id-prefix: ["e2e-gpu"]
+              mark: ["e2e_gpu"]
+              slack-mentions: ["${SLACK_USER_ID}"]
 
   nightly:
     triggers:
@@ -1196,8 +1189,26 @@ workflows:
               only:
                 - master
     jobs:
-      - nightly-tests:
+      - test-e2e-aws:
+          name: test-e2e-gpu-nightly
           context: aws
+          matrix:
+            parameters:
+              cluster-id-prefix: ["nightly"]
+              mark: ["nightly"]
+              slack-mentions: ["channel"]
+              slack-channel: ["ml-ag"]
+      - test-e2e-aws:
+          name: test-e2e-gpu-distributed
+          context: aws
+          matrix:
+            parameters:
+              cluster-id-prefix: ["distributed"]
+              mark: ["distributed"]
+              agent-instance-type: ["p2.8xlarge"]
+              max-dynamic-agents: [2]
+              slack-mentions: ["channel"]
+              slack-channel: ["ml-ag"]
 
   release:
     jobs:

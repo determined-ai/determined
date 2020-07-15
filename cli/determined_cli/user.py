@@ -9,6 +9,7 @@ from termcolor import colored
 
 import determined_common.api.authentication as auth
 from determined_common import api
+from determined_common.api.authentication import authentication_required
 
 from . import render
 from .declarative_argparse import Arg, Cmd
@@ -28,16 +29,6 @@ def authentication_optional(func: Callable[[Namespace], Any]) -> Callable[[Names
         except api.errors.UnauthenticatedException:
             pass
 
-        return func(namespace)
-
-    return f
-
-
-def authentication_required(func: Callable[[Namespace], Any]) -> Callable[..., Any]:
-    @wraps(func)
-    def f(namespace: Namespace) -> Any:
-        v = vars(namespace)
-        auth.initialize_session(namespace.master, v.get("user"), try_reauth=True)
         return func(namespace)
 
     return f

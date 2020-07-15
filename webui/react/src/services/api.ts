@@ -1,21 +1,21 @@
 /* eslint-disable @typescript-eslint/camelcase */
-import * as DetSwagger from '@determined-ai/api-ts-sdk';
 import { CancelToken } from 'axios';
 
-import { generateApi } from 'services/apiBuilder';
-import { processApiError } from 'services/apiBuilder';
+import * as DetSwagger from 'services/api-ts-sdk';
+import { generateApi, processApiError } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
 import { CommandLogsParams, ExperimentDetailsParams, ExperimentsParams, KillCommandParams,
   KillExpParams, LaunchTensorboardParams, LogsParams, PatchExperimentParams,
   PatchExperimentState,
   TrialLogsParams } from 'services/types';
 import {
-  AnyTask, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log, User,
+  AnyTask, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log,
+  User,
 } from 'types';
 import { serverAddress } from 'utils/routes';
 import { isExperimentTask } from 'utils/task';
 
-export const sApi = new DetSwagger.AuthenticationApi(undefined, serverAddress());
+export const detAuthApi = new DetSwagger.AuthenticationApi(undefined, serverAddress());
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAuthFailure = (e: any): boolean => {
@@ -50,7 +50,7 @@ export const killCommand = generateApi<KillCommandParams, void>(Config.killComma
 export const patchExperiment = generateApi<PatchExperimentParams, void>(Config.patchExperiment);
 
 export const launchTensorboard =
-  generateApi<LaunchTensorboardParams, void>(Config.launchTensorboard);
+  generateApi<LaunchTensorboardParams, Command>(Config.launchTensorboard);
 
 export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promise<void> => {
   if (isExperimentTask(task)) {
@@ -79,7 +79,7 @@ export const login = generateApi<Credentials, void>(Config.login);
 // use processApiError.
 export function logout(): DetSwagger.V1LogoutResponse {
   const apiName = arguments.callee.name;
-  return sApi.determinedLogout().catch(e => processApiError(apiName, e));
+  return detAuthApi.determinedLogout().catch(e => processApiError(apiName, e));
 }
 
 export const setExperimentState = async (

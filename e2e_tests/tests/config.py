@@ -10,10 +10,10 @@ MAX_TASK_SCHEDULED_SECS = 30
 MAX_TRIAL_BUILD_SECS = 90
 
 
-TF1_CPU_IMAGE = "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-0c9e956"
-TF2_CPU_IMAGE = "determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-0c9e956"
-TF1_GPU_IMAGE = "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-0c9e956"
-TF2_GPU_IMAGE = "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0c9e956"
+TF1_CPU_IMAGE = "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-9c8c0bd"
+TF2_CPU_IMAGE = "determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-9c8c0bd"
+TF1_GPU_IMAGE = "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-9c8c0bd"
+TF2_GPU_IMAGE = "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-9c8c0bd"
 
 
 def fixtures_path(path: str) -> str:

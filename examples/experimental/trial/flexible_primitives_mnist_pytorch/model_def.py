@@ -74,7 +74,7 @@ class Discriminator(nn.Module):
         return validity
 
 
-class MNistTrial(PyTorchTrial):
+class GANTrial(PyTorchTrial):
     def __init__(self, trial_context: PyTorchTrialContext) -> None:
         self.context = trial_context
         self.logger = TorchWriter()

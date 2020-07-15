@@ -116,7 +116,7 @@ class with ``PyTorchTrial``, implement the following callback:
                 context.get_optimizer(), "min", verbose=True
             )  # customize arguments as desired here
 
-        def on_validation_step_end(self, metrics):
+        def on_validation_end(self, metrics):
             self.reduce_lr.step(metrics["validation_error"])
 
         def state_dict(self):
