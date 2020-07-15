@@ -96,11 +96,11 @@ func (o opSequence) Less(i, j int) bool {
 
 // NewOperationPlanner creates an new operation planner with the given configurations.
 func NewOperationPlanner(
-	batchesPerStep, recordsPerEpoch int,
+	batchesPerStep, recordsPerEpoch int, unit model.Unit,
 	minValidationPeriod, minCheckpointPeriod model.Length, checkpointPolicy string,
 ) OperationPlanner {
 	return OperationPlanner{
-		unit:                 minCheckpointPeriod.Unit,
+		unit:                 unit,
 		targetBatchesPerStep: batchesPerStep,
 		recordsPerEpoch:      recordsPerEpoch,
 		minValidationPeriod:  minValidationPeriod,
@@ -113,7 +113,7 @@ func NewOperationPlanner(
 		unitsSinceValidation:  make(map[RequestID]model.Length),
 		unitsSinceCheckpoint:  make(map[RequestID]model.Length),
 
-		totalUnitsCompleted: model.NewLength(minCheckpointPeriod.Unit, 0),
+		totalUnitsCompleted: model.NewLength(unit, 0),
 	}
 }
 

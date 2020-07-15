@@ -79,7 +79,7 @@ func TestTournamentSearchMethod(t *testing.T) {
 
 	err := checkValueSimulation(t, method,
 		NewOperationPlanner(
-			defaultBatchesPerStep, 0, model.NewLength(method.Unit(), 0),
+			defaultBatchesPerStep, 0, method.Unit(), model.NewLength(method.Unit(), 0),
 			model.NewLength(method.Unit(), 0), model.NoneCheckpointPolicy),
 		defaultHyperparameters(), expectedTrials)
 	assert.NilError(t, err)

@@ -12,7 +12,7 @@ import (
 
 func TestOperationPlanner(t *testing.T) {
 	rand := nprand.New(0)
-	opPlanner := NewOperationPlanner(100, 0, model.NewLengthInBatches(0),
+	opPlanner := NewOperationPlanner(100, 0, model.Batches, model.NewLengthInBatches(0),
 		model.NewLengthInBatches(0), model.NoneCheckpointPolicy)
 
 	create := NewCreate(
@@ -73,7 +73,7 @@ func TestOperationPlanner(t *testing.T) {
 
 func TestOperationPlannerWithMinValsAndMinCkpts(t *testing.T) {
 	rand := nprand.New(0)
-	opPlanner := NewOperationPlanner(100, 0, model.NewLengthInBatches(150),
+	opPlanner := NewOperationPlanner(100, 0, model.Batches, model.NewLengthInBatches(150),
 		model.NewLengthInBatches(300), model.NoneCheckpointPolicy)
 	create := NewCreate(
 		rand, sampleAll(defaultHyperparameters(), rand), model.TrialWorkloadSequencerType)
@@ -166,7 +166,7 @@ func TestOperationPlannerWithMinValsAndMinCkpts(t *testing.T) {
 
 func TestOperationPlannerWithCheckpointPolicy(t *testing.T) {
 	rand := nprand.New(0)
-	opPlanner := NewOperationPlanner(100, 0, model.NewLengthInBatches(0),
+	opPlanner := NewOperationPlanner(100, 0, model.Batches, model.NewLengthInBatches(0),
 		model.NewLengthInBatches(0), model.AllCheckpointPolicy)
 	create := NewCreate(
 		rand, sampleAll(defaultHyperparameters(), rand), model.TrialWorkloadSequencerType)
@@ -231,7 +231,7 @@ func TestOperationPlannerWithCheckpointPolicy(t *testing.T) {
 
 func TestOperationPlannerWithAllConfigurations(t *testing.T) {
 	rand := nprand.New(0)
-	opPlanner := NewOperationPlanner(100, 0, model.NewLengthInRecords(10000),
+	opPlanner := NewOperationPlanner(100, 0, model.Records, model.NewLengthInRecords(10000),
 		model.NewLengthInRecords(20000), model.AllCheckpointPolicy)
 	create := NewCreate(
 		rand, sampleAll(defaultHyperparameters(), rand), model.TrialWorkloadSequencerType)

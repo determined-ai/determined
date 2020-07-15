@@ -30,7 +30,7 @@ func NewSearcher(
 		hparams:  hparams,
 		eventLog: NewEventLog(),
 		method:   method,
-		operationPlanner: NewOperationPlanner(batchesPerStep, recordsPerEpoch,
+		operationPlanner: NewOperationPlanner(batchesPerStep, recordsPerEpoch, method.Unit(),
 			minValidationPeriod, minCheckpointPeriod, checkpointPolicy),
 	}
 }
