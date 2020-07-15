@@ -4,9 +4,12 @@ export interface ExperimentsParams {
   states?: string[];
 }
 
-export interface ExperimentDetailsParams {
+export interface SingleEntityParams {
   id: number;
 }
+
+export type ExperimentDetailsParams = SingleEntityParams;
+export type TrialDetailsParams = SingleEntityParams;
 
 // TODO in the following types the default id should probably be just "id"
 

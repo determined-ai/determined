@@ -193,6 +193,11 @@ export interface Checkpoint {
   validationMetric? : number;
 }
 
+export interface TrialDetails {
+  id: number;
+  state: RunState;
+}
+
 export interface TrialSummary {
   hparams: Record<string, string>;
   id: number;
