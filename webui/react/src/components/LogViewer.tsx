@@ -326,11 +326,22 @@ const LogViewer: React.FC<Props> = forwardRef((
     }
   }, [ config, scrollToInfo ]);
 
+  /*
+   * This overwrites the copy to clipboard event handler for the purpose of modifying the user
+   * selected content. By default when copying content from a collection of HTML elements, each
+   * element content will have a newline appended in the clipboard content. This handler will
+   * detect which lines within the copied content to be the timestamp content and strip out the
+   * newline from that field.
+   */
   useLayoutEffect(() => {
+    if (!container.current) return;
+
+    const target = container.current;
     const handleCopy = (e: ClipboardEvent): void => {
       const clipboardFormat = 'text/plain';
       const selection = window.getSelection()?.toString() || '';
       const lines = selection?.split('\n');
+
       if (lines?.length <= 1) {
         e.clipboardData?.setData(clipboardFormat, selection);
       } else {
@@ -349,9 +360,9 @@ const LogViewer: React.FC<Props> = forwardRef((
       e.preventDefault();
     };
 
-    document.addEventListener('copy', handleCopy);
+    target.addEventListener('copy', handleCopy);
 
-    return (): void => document.removeEventListener('copy', handleCopy);
+    return (): void => target?.removeEventListener('copy', handleCopy);
   }, []);
 
   const formatClipboardHeader = useCallback((log: Log): string => {
