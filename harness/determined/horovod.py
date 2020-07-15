@@ -197,6 +197,10 @@ class HorovodContext:
         self.grad_updates_size_file = grad_updates_size_file
         self.average_aggregated_gradients = average_aggregated_gradients
         self.average_training_metrics = average_training_metrics
+
+        if horovod_timeline == "":
+            horovod_timeline = None
+
         self.horovod_timeline = horovod_timeline
 
     @staticmethod

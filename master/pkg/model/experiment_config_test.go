@@ -335,7 +335,7 @@ func TestExperiment(t *testing.T) {
 			TensorFusionThreshold:      64,
 			TensorFusionCycleTime:      5,
 			AutoTuneTensorFusion:       false,
-			HorovodTimeline:			nil,
+			HorovodTimeline:            "",
 		},
 		BatchesPerStep: 32,
 		BindMounts: []BindMount{

@@ -192,7 +192,7 @@ type OptimizationsConfig struct {
 	TensorFusionThreshold      int    `json:"tensor_fusion_threshold"`
 	TensorFusionCycleTime      int    `json:"tensor_fusion_cycle_time"`
 	AutoTuneTensorFusion       bool   `json:"auto_tune_tensor_fusion"`
-	HorovodTimeline       	   string `json:"horoovd_timeline"`
+	HorovodTimeline            string `json:"horovod_timeline"`
 }
 
 // Validate implements the check.Validatable interface.
