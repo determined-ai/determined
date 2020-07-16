@@ -13,8 +13,7 @@ import torchvision
 from torch import nn
 from torchvision import transforms
 
-import determined as det
-from determined.pytorch import DataLoader, PyTorchTrial, reset_parameters
+from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, reset_parameters
 
 # Constants about the data set.
 IMAGE_SIZE = 32
@@ -43,14 +42,13 @@ class Flatten(nn.Module):
 
 
 class CIFARTrial(PyTorchTrial):
-    def __init__(self, context: det.TrialContext) -> None:
+    def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
 
         # Create a unique download directory for each rank so they don't overwrite each other.
         self.download_directory = tempfile.mkdtemp()
 
-    def build_model(self) -> nn.Module:
-        model = nn.Sequential(
+        self.model = self.context.Model(nn.Sequential(
             nn.Conv2d(NUM_CHANNELS, IMAGE_SIZE, kernel_size=(3, 3)),
             nn.ReLU(),
             nn.Conv2d(32, 32, kernel_size=(3, 3)),
@@ -68,20 +66,18 @@ class CIFARTrial(PyTorchTrial):
             nn.ReLU(),
             nn.Dropout2d(self.context.get_hparam("layer3_dropout")),
             nn.Linear(512, NUM_CLASSES),
-        )
+        ))
 
         # If loading backbone weights, do not call reset_parameters() or
         # call before loading the backbone weights.
-        reset_parameters(model)
-        return model
+        reset_parameters(self.model)
 
-    def optimizer(self, model: nn.Module) -> torch.optim.Optimizer:  # type: ignore
-        return torch.optim.RMSprop(  # type: ignore
-            model.parameters(),
+        self.optimizer = self.context.Optimizer(torch.optim.RMSprop(  # type: ignore
+            self.model.parameters(),
             lr=self.context.get_hparam("learning_rate"),
             weight_decay=self.context.get_hparam("learning_rate_decay"),
             alpha=0.9,
-        )
+        ))
 
     def train_batch(
         self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int
@@ -89,9 +85,12 @@ class CIFARTrial(PyTorchTrial):
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
         data, labels = batch
 
-        output = model(data)
+        output = self.model(data)
         loss = torch.nn.functional.cross_entropy(output, labels)
         accuracy = accuracy_rate(output, labels)
+
+        self.context.backward(loss)
+        self.context.step_optimizer(self.optimizer)
         return {"loss": loss, "train_error": 1.0 - accuracy, "train_accuracy": accuracy}
 
     def evaluate_batch(self, batch: TorchData, model: nn.Module) -> Dict[str, Any]:
@@ -102,7 +101,7 @@ class CIFARTrial(PyTorchTrial):
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
         data, labels = batch
 
-        output = model(data)
+        output = self.model(data)
         accuracy = accuracy_rate(output, labels)
         return {"validation_accuracy": accuracy, "validation_error": 1.0 - accuracy}
 

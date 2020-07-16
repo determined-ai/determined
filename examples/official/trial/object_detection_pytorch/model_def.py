@@ -18,8 +18,7 @@ from torch import nn
 from torchvision.models.detection import fasterrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
-import determined as det
-from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 
 from data import download_data, get_transform, collate_fn, PennFudanDataset
 
@@ -27,7 +26,7 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 
 class ObjectDetectionTrial(PyTorchTrial):
-    def __init__(self, context: det.TrialContext) -> None:
+    def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
 
         # Create a unique download directory for each rank so they don't
@@ -46,6 +45,26 @@ class ObjectDetectionTrial(PyTorchTrial):
             dataset, [train_size, test_size]
         )
 
+        self.model = self.context.Model(fasterrcnn_resnet50_fpn(pretrained=True))
+
+        # Replace the classifier with a new two-class classifier.  There are
+        # only two "classes": pedestrian and background.
+        num_classes = 2
+        in_features = self.model.roi_heads.box_predictor.cls_score.in_features
+        self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+
+        self.optimizer = self.context.Optimizer(torch.optim.SGD(
+            self.model.parameters(),
+            lr=self.context.get_hparam("learning_rate"),
+            momentum=self.context.get_hparam("momentum"),
+            weight_decay=self.context.get_hparam("weight_decay"),
+        ))
+
+        self.lr_scheduler = self.context.LRScheduler(
+            torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=3, gamma=0.1),
+            step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH
+        )
+
     def build_training_data_loader(self) -> DataLoader:
         return DataLoader(
             self.dataset_train,
@@ -60,39 +79,20 @@ class ObjectDetectionTrial(PyTorchTrial):
             collate_fn=collate_fn,
         )
 
-    def build_model(self) -> nn.Module:
-        model = fasterrcnn_resnet50_fpn(pretrained=True)
-
-        # Replace the classifier with a new two-class classifier.  There are
-        # only two "classes": pedestrian and background.
-        num_classes = 2
-        in_features = model.roi_heads.box_predictor.cls_score.in_features
-        model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
-        return model
-
-    def optimizer(self, model: nn.Module) -> torch.optim.Optimizer:
-        optimizer = torch.optim.SGD(
-            model.parameters(),
-            lr=self.context.get_hparam("learning_rate"),
-            momentum=self.context.get_hparam("momentum"),
-            weight_decay=self.context.get_hparam("weight_decay"),
-        )
-        return optimizer
-
-    def create_lr_scheduler(self, optimizer):
-        lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
-        return LRScheduler(lr_scheduler, step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH)
-
     def train_batch(
         self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
         images, targets = batch
-        loss_dict = model(list(images), list(targets))
+        loss_dict = self.model(list(images), list(targets))
+
+        self.context.backward(loss_dict["loss_box_reg"])
+        self.context.step_optimizer(self.optimizer)
+
         return {"loss": loss_dict["loss_box_reg"]}
 
     def evaluate_batch(self, batch: TorchData, model: nn.Module) -> Dict[str, Any]:
         images, targets = batch
-        output = model(list(images), copy.deepcopy(list(targets)))
+        output = self.model(list(images), copy.deepcopy(list(targets)))
         sum_iou = 0
         num_boxes = 0
 

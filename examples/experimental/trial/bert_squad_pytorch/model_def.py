@@ -2,8 +2,7 @@ from typing import Dict, Sequence, Union
 import torch
 import torch.nn as nn
 
-import determined as det
-from determined.pytorch import ClipGradsL2Norm, DataLoader, PyTorchCallback, PyTorchTrial, LRScheduler
+from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, LRScheduler
 import data
 import constants
 
@@ -21,7 +20,7 @@ TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 
 class BertSQuADPyTorch(PyTorchTrial):
-    def __init__(self, context: det.TrialContext):
+    def __init__(self, context: PyTorchTrialContext):
         self.context = context
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.config_class, self.tokenizer_class, self.model_class = constants.MODEL_CLASSES[
@@ -32,6 +31,50 @@ class BertSQuADPyTorch(PyTorchTrial):
             do_lower_case=True,
             cache_dir=None
         )
+
+        cache_dir_per_rank = f"/tmp/{self.context.distributed.get_rank()}"
+
+        config = self.config_class.from_pretrained(
+            self.context.get_data_config().get("pretrained_model_name"),
+            cache_dir=cache_dir_per_rank,
+        )
+        self.model = self.context.Model(self.model_class.from_pretrained(
+            self.context.get_data_config().get("pretrained_model_name"),
+            from_tf=bool(".ckpt" in self.context.get_data_config().get("pretrained_model_name")),
+            config=config,
+            cache_dir=cache_dir_per_rank,
+        ))
+
+        no_decay = ["bias", "LayerNorm.weight"]
+        optimizer_grouped_parameters = [
+            {
+                "params": [
+                    p for n, p in self.model.named_parameters() if not any(nd in n for nd in no_decay)
+                ],
+                "weight_decay": self.context.get_hparam("weight_decay"),
+            },
+            {
+                "params": [
+                    p for n, p in self.model.named_parameters() if any(nd in n for nd in no_decay)
+                ],
+                "weight_decay": 0.0,
+            },
+        ]
+        self.optimizer = self.context.Optimizer(AdamW(
+            optimizer_grouped_parameters,
+            lr=self.context.get_hparam("learning_rate"),
+            eps=self.context.get_hparam("adam_epsilon")
+        ))
+
+        self.lr_scheduler = self.context.LRScheduler(
+            get_linear_schedule_with_warmup(
+                self.optimizer,
+                num_warmup_steps=self.context.get_hparam("num_warmup_steps"),
+                num_training_steps=self.context.get_hparam("num_training_steps"),
+            ),
+            LRScheduler.StepMode.STEP_EVERY_BATCH
+        )
+
 
     def build_training_data_loader(self):
         train_dataset, _, _ = data.load_and_cache_examples(
@@ -60,52 +103,6 @@ class BertSQuADPyTorch(PyTorchTrial):
             batch_size=self.context.get_per_slot_batch_size(),
         )
 
-    def build_model(self):
-        cache_dir_per_rank = f"/tmp/{self.context.distributed.get_rank()}"
-
-        config = self.config_class.from_pretrained(
-            self.context.get_data_config().get("pretrained_model_name"),
-            cache_dir=cache_dir_per_rank,
-        )
-        model = self.model_class.from_pretrained(
-            self.context.get_data_config().get("pretrained_model_name"),
-            from_tf=bool(".ckpt" in self.context.get_data_config().get("pretrained_model_name")),
-            config=config,
-            cache_dir=cache_dir_per_rank,
-        )
-        return model
-
-    def optimizer(self, model: nn.Module):
-        no_decay = ["bias", "LayerNorm.weight"]
-        optimizer_grouped_parameters = [
-            {
-                "params": [
-                    p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)
-                ],
-                "weight_decay": self.context.get_hparam("weight_decay"),
-            },
-            {
-                "params": [
-                    p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)
-                ],
-                "weight_decay": 0.0,
-            },
-        ]
-        optimizer = AdamW(
-            optimizer_grouped_parameters,
-            lr=self.context.get_hparam("learning_rate"),
-            eps=self.context.get_hparam("adam_epsilon")
-        )
-        return optimizer
-
-    def create_lr_scheduler(self, optimizer: torch.optim.Optimizer):
-        scheduler = get_linear_schedule_with_warmup(
-            optimizer,
-            num_warmup_steps=self.context.get_hparam("num_warmup_steps"),
-            num_training_steps=self.context.get_hparam("num_training_steps"),
-        )
-        return LRScheduler(scheduler, LRScheduler.StepMode.STEP_EVERY_BATCH)
-
     def train_batch(self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int):
         inputs = {
             "input_ids": batch[0],
@@ -114,8 +111,17 @@ class BertSQuADPyTorch(PyTorchTrial):
             "start_positions": batch[3],
             "end_positions": batch[4],
         }
-        outputs = model(**inputs)
+        outputs = self.model(**inputs)
         loss = outputs[0]
+
+        self.context.backward(loss)
+        self.context.step_optimizer(
+            self.optimizer,
+            clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
+                params, self.context.get_hparam("max_grad_norm")
+            )
+        )
+
         return {"loss": loss}
 
     def evaluate_full_dataset(self, data_loader: DataLoader, model: nn.Module):
@@ -127,7 +133,7 @@ class BertSQuADPyTorch(PyTorchTrial):
                 "token_type_ids": batch[2].cuda(),
             }
             feature_indices = batch[3]
-            outputs = model(**inputs)
+            outputs = self.model(**inputs)
             for i, feature_index in enumerate(feature_indices):
                 eval_feature = self.validation_features[feature_index.item()]
                 unique_id = int(eval_feature.unique_id)
@@ -156,6 +162,3 @@ class BertSQuADPyTorch(PyTorchTrial):
         )
         results = squad_evaluate(self.validation_examples, predictions)
         return results
-
-    def build_callbacks(self) -> Dict[str, PyTorchCallback]:
-        return {"clip_grads": ClipGradsL2Norm(self.context.get_hparam("max_grad_norm"))}

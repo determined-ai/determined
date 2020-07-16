@@ -7,8 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import numpy as np
-import determined as det
-from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, TorchData
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext, TorchData
 from data import OmniglotTasks
 
 
@@ -35,7 +34,7 @@ def SquaredDistance(x, y):
 
 
 class OmniglotProtoNetTrial(PyTorchTrial):
-    def __init__(self, context: det.TrialContext) -> None:
+    def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
         self.data_config = context.get_data_config()
         self.num_classes = {
@@ -51,6 +50,41 @@ class OmniglotProtoNetTrial(PyTorchTrial):
             "val": None,  # Use all available examples for val at meta-test time
         }
         self.get_train_valid_splits()
+
+        x_dim = 1  # Omniglot is black and white
+        hid_dim = self.context.get_hparam("hidden_dim")
+        z_dim = self.context.get_hparam("embedding_dim")
+
+        def conv_block(in_channels, out_channels):
+            return nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, 3, padding=1),
+                nn.BatchNorm2d(out_channels),
+                nn.ReLU(),
+                nn.MaxPool2d(2),
+            )
+
+        self.model = self.context.Model(nn.Sequential(
+            conv_block(x_dim, hid_dim),
+            conv_block(hid_dim, hid_dim),
+            conv_block(hid_dim, hid_dim),
+            conv_block(hid_dim, z_dim),
+            Flatten(),
+        ))
+
+        self.optimizer = self.context.Optimizer(torch.optim.Adam(
+            self.model.parameters(),
+            lr=self.context.get_hparam("learning_rate"),
+            weight_decay=self.context.get_hparam("weight_decay"),
+        ))
+
+        self.lr_scheduler = self.context.LRScheduler(
+            torch.optim.lr_scheduler.StepLR(
+                self.optimizer,
+                self.context.get_hparam("reduce_every"),
+                gamma=self.context.get_hparam("lr_gamma"),
+            ),
+            LRScheduler.StepMode.STEP_EVERY_EPOCH
+        )
 
     def get_train_valid_splits(self):
         n_classes = 0
@@ -97,43 +131,6 @@ class OmniglotProtoNetTrial(PyTorchTrial):
             num_workers=self.data_config["val_workers"],
             collate_fn=dataset.get_collate_fn(),
         )
-
-    def build_model(self) -> nn.Module:
-        x_dim = 1  # Omniglot is black and white
-        hid_dim = self.context.get_hparam("hidden_dim")
-        z_dim = self.context.get_hparam("embedding_dim")
-
-        def conv_block(in_channels, out_channels):
-            return nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, 3, padding=1),
-                nn.BatchNorm2d(out_channels),
-                nn.ReLU(),
-                nn.MaxPool2d(2),
-            )
-
-        return nn.Sequential(
-            conv_block(x_dim, hid_dim),
-            conv_block(hid_dim, hid_dim),
-            conv_block(hid_dim, hid_dim),
-            conv_block(hid_dim, z_dim),
-            Flatten(),
-        )
-
-    def optimizer(self, model: nn.Module):
-        optimizer = torch.optim.Adam(
-            model.parameters(),
-            lr=self.context.get_hparam("learning_rate"),
-            weight_decay=self.context.get_hparam("weight_decay"),
-        )
-        return optimizer
-
-    def create_lr_scheduler(self, optimizer: torch.optim.Optimizer):
-        scheduler = torch.optim.lr_scheduler.StepLR(
-            optimizer,
-            self.context.get_hparam("reduce_every"),
-            gamma=self.context.get_hparam("lr_gamma"),
-        )
-        return LRScheduler(scheduler, LRScheduler.StepMode.STEP_EVERY_EPOCH)
 
     def loss(self, x_support, y_support, x_query, y_query, model, split):
         # x dimension N x C x H x W
@@ -203,12 +200,16 @@ class OmniglotProtoNetTrial(PyTorchTrial):
                 batch[t]["support"][1],
                 batch[t]["query"][0],
                 batch[t]["query"][1],
-                model,
+                self.model,
                 "train",
             )
             total_loss += loss
             total_acc += acc
-        return {"loss": total_loss / n_tasks, "acc": total_acc / n_tasks}
+
+        outputs = {"loss": total_loss / n_tasks, "acc": total_acc / n_tasks}
+        self.context.backward(outputs["loss"])
+        self.context.step_optimizer(self.optimizer)
+        return outputs
 
     def evaluate_full_dataset(
         self,
@@ -228,7 +229,7 @@ class OmniglotProtoNetTrial(PyTorchTrial):
                     batch[t]["support"][1].cuda(),
                     batch[t]["query"][0].cuda(),
                     batch[t]["query"][1].cuda(),
-                    model,
+                    self.model,
                     "val",
                 )
                 total_loss += loss

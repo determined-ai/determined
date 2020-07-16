@@ -1,6 +1,14 @@
 """
 This example shows how to interact with the Determined PyTorch interface to
 build a basic MNIST network.
+
+The method `build_model` returns the model to be trained, in this case an
+instance of `nn.Sequential`. This model is single-input and single-output.
+
+The method `optimizer` returns the optimizer to be used for training.
+
+The methods `train_batch` and `evaluate_batch` define the forward pass
+for training and evaluation respectively.
 """
 
 from typing import Any, Dict, Sequence, Tuple, Union, cast
@@ -10,31 +18,45 @@ from torch import nn
 
 from layers import Flatten  # noqa: I100
 
-import determined as det
-from determined.pytorch import DataLoader, PyTorchTrial, reset_parameters
+from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, reset_parameters
 
 import data
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 
-def error_rate(predictions: torch.Tensor, labels: torch.Tensor) -> float:
-    """Return the error rate based on dense predictions and dense labels."""
-    assert len(predictions) == len(labels), "Predictions and labels must have the same length."
-    assert len(labels.shape) == 1, "Labels must be a column vector."
-
-    return (  # type: ignore
-        1.0 - float((predictions.argmax(1) == labels.to(torch.long)).sum()) / predictions.shape[0]
-    )
-
-
 class MNistTrial(PyTorchTrial):
-    def __init__(self, context: det.TrialContext) -> None:
+    def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
 
         # Create a unique download directory for each rank so they don't overwrite each other.
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.data_downloaded = False
+
+        self.model = self.context.Model(nn.Sequential(
+            nn.Conv2d(1, self.context.get_hparam("n_filters1"), 3, 1),
+            nn.ReLU(),
+            nn.Conv2d(
+                self.context.get_hparam("n_filters1"), self.context.get_hparam("n_filters2"), 3,
+            ),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Dropout2d(self.context.get_hparam("dropout1")),
+            Flatten(),
+            nn.Linear(144 * self.context.get_hparam("n_filters2"), 128),
+            nn.ReLU(),
+            nn.Dropout2d(self.context.get_hparam("dropout2")),
+            nn.Linear(128, 10),
+            nn.LogSoftmax(),
+        ))
+
+        # If loading backbone weights, do not call reset_parameters() or
+        # call before loading the backbone weights.
+        reset_parameters(self.model)
+
+        self.optimizer = self.context.Optimizer(torch.optim.Adadelta(
+            self.model.parameters(), lr=self.context.get_hparam("learning_rate"))
+        )
 
     def build_training_data_loader(self) -> DataLoader:
         if not self.data_downloaded:
@@ -58,53 +80,28 @@ class MNistTrial(PyTorchTrial):
         validation_data = data.get_dataset(self.download_directory, train=False)
         return DataLoader(validation_data, batch_size=self.context.get_per_slot_batch_size())
 
-    def build_model(self) -> nn.Module:
-        model = nn.Sequential(
-            nn.Conv2d(1, self.context.get_hparam("n_filters1"), kernel_size=5),
-            nn.MaxPool2d(2),
-            nn.ReLU(),
-            nn.Conv2d(
-                self.context.get_hparam("n_filters1"),
-                self.context.get_hparam("n_filters2"),
-                kernel_size=5,
-            ),
-            nn.MaxPool2d(2),
-            nn.ReLU(),
-            Flatten(),
-            nn.Linear(16 * self.context.get_hparam("n_filters2"), 50),
-            nn.ReLU(),
-            nn.Dropout2d(self.context.get_hparam("dropout")),
-            nn.Linear(50, 10),
-            nn.LogSoftmax(),
-        )
-
-        # If loading backbone weights, do not call reset_parameters() or
-        # call before loading the backbone weights.
-        reset_parameters(model)
-        return model
-
-    def optimizer(self, model: nn.Module) -> torch.optim.Optimizer:  # type: ignore
-        return torch.optim.SGD(
-            model.parameters(), lr=self.context.get_hparam("learning_rate"), momentum=0.9
-        )
-
     def train_batch(
-        self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int
+            self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
         data, labels = batch
 
-        output = model(data)
+        output = self.model(data)
         loss = torch.nn.functional.nll_loss(output, labels)
-        error = error_rate(output, labels)
 
-        return {"loss": loss, "train_error": error}
+        self.context.backward(loss)
+        self.context.step_optimizer(self.optimizer)
+
+        return {"loss": loss}
 
     def evaluate_batch(self, batch: TorchData, model: nn.Module) -> Dict[str, Any]:
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
         data, labels = batch
 
-        output = model(data)
-        error = error_rate(output, labels)
+        output = self.model(data)
+        validation_loss = torch.nn.functional.nll_loss(output, labels).item()
 
-        return {"validation_error": error}
+        pred = output.argmax(dim=1, keepdim=True)
+        accuracy = pred.eq(labels.view_as(pred)).sum().item() / len(data)
+
+        return {"validation_loss": validation_loss, "accuracy": accuracy}
