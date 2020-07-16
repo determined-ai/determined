@@ -227,6 +227,7 @@ export const jsonToTrialDetails = (data: unknown): TrialDetails => {
 
 export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
   const ioType = decode<ioTypeExperimentDetails>(ioExperimentDetails, data);
+  const batchTotal = 0;
   return {
     archived: ioType.archived,
     config: jsonToExperimentConfig(ioType.config),
