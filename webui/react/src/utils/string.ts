@@ -1,3 +1,5 @@
+import prettyBytes from 'pretty-bytes';
+
 export const capitalize = (str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
@@ -29,4 +31,8 @@ export const floatToPercent = (num: number, precision = 2): string => {
 
 export const humanReadableFloat = (num: number, precision = 2): string => {
   return num.toExponential(precision);
+};
+
+export const humanReadableBytes = (bytes: number): string => {
+  return prettyBytes(bytes);
 };

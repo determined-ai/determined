@@ -1,10 +1,10 @@
 import { Modal } from 'antd';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
-import { CheckpointDetail, CheckpointStorageType, ExperimentConfig } from 'types';
+import { CheckpointDetail, CheckpointStorageType, ExperimentConfig, RunState } from 'types';
 import { formatDatetime } from 'utils/date';
-import { humanReadableFloat } from 'utils/string';
+import { humanReadableBytes, humanReadableFloat } from 'utils/string';
 
 import css from './CheckpointModal.module.scss';
 
@@ -39,10 +39,42 @@ const getStorageLocation = (config: ExperimentConfig, checkpoint: CheckpointDeta
   return `${location}/${checkpoint.id}`;
 };
 
+const renderRow = (label: string, content: React.ReactNode): React.ReactNode => {
+  return (
+    <div className={css.row}>
+      <div className={css.label}>{label}</div>
+      <div className={css.content}>{content}</div>
+    </div>
+  );
+};
+
+const renderResource = (resource: string, size: string): React.ReactNode => {
+  return (
+    <div className={css.resource}>
+      <div className={css.resourceName}>{resource}</div>
+      <div className={css.resourceSpacer} />
+      <div className={css.resourceSize}>{size}</div>
+    </div>
+  );
+};
+
 const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show }: Props) => {
+  const state = checkpoint.state as unknown as RunState;
+
   const handleHide = useCallback(() => {
     if (onHide) onHide();
   }, [ onHide ]);
+
+  const totalSize = useMemo(() => {
+    const total = Object.values(checkpoint.resources).reduce((acc, size) => acc + size, 0);
+    return humanReadableBytes(total);
+  }, [ checkpoint.resources ]);
+
+  const resources = useMemo(() => {
+    return Object.keys(checkpoint.resources)
+      .sort((a, b) => checkpoint.resources[a] - checkpoint.resources[b])
+      .map(key => ({ name: key, size: humanReadableBytes(checkpoint.resources[key]) }));
+  }, [ checkpoint.resources ]);
 
   return (
     <Modal
@@ -51,27 +83,23 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show }: 
       visible={show}
       onCancel={handleHide}>
       <div className={css.base}>
-        {checkpoint.uuid && <div data-label="UUID">{checkpoint.uuid}</div>}
-        <div data-label="Experiment Id">
-          <Badge>{checkpoint.experimentId}</Badge>
-        </div>
-        <div data-label="Trial Id">
-          <Badge>{checkpoint.trialId}</Badge>
-        </div>
-        <div data-label="State">
-          <Badge type={BadgeType.State}>{checkpoint.state}</Badge>
-        </div>
-        <div data-label="Location">{getStorageLocation(config, checkpoint)}</div>
-        <div data-label="Validation Metric">{config.searcher.metric}</div>
-        {checkpoint.validationMetric && <div data-label="Validation Value">
-          {humanReadableFloat(checkpoint.validationMetric)}
-        </div>}
-        <div data-label="Start Time">{formatDatetime(checkpoint.startTime)}</div>
-        {checkpoint.endTime && <div data-label="End Time">
-          {formatDatetime(checkpoint.endTime)}
-        </div>}
-        <div data-label="Total Size">--</div>
-        <div data-label="Resources">--</div>
+        {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
+        {renderRow('Batch', checkpoint.batch)}
+        {renderRow('Experiment Id', <Badge>{checkpoint.experimentId}</Badge>)}
+        {renderRow('Trial Id', <Badge>{checkpoint.trialId}</Badge>)}
+        {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
+        {renderRow('Location', getStorageLocation(config, checkpoint))}
+        {renderRow('Validation Metric', config.searcher.metric)}
+        {checkpoint.validationMetric &&
+          renderRow('Validation Value', humanReadableFloat(checkpoint.validationMetric))}
+        {renderRow('Start Time', formatDatetime(checkpoint.startTime))}
+        {checkpoint.endTime && renderRow('End Time', formatDatetime(checkpoint.endTime))}
+        {renderRow('Total Size', totalSize)}
+        {resources.length !== 0 && renderRow('Resources', (
+          <div className={css.resources}>
+            {resources.map(resource => renderResource(resource.name, resource.size))}
+          </div>
+        ))}
       </div>
     </Modal>
   );
