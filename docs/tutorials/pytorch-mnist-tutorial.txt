@@ -16,12 +16,10 @@ Overview
 
 To use a PyTorch model in Determined, you need to port the model to Determined's API. For most models, this porting process is straightforward, and once the model has been ported, all of the features of Determined will then be available: for example, you can do :ref:`distributed training <multi-gpu-training>` or :ref:`hyperparameter search <hyperparameter-tuning>` without changing your model code, and Determined will store and visualize your model metrics automatically.
 
-When training a PyTorch model, Determined provides a built-in training loop that feeds batches of data into your forward pass, performs backpropagation, and computes training metrics. Determined also handles checkpointing, log management, and device initialization. To plug your model code into the Determined training loop, you define methods to perform the following tasks:
+When training a PyTorch model, Determined provides a built-in training loop that feeds batches of data into your batch training function, where you can perform forward pass, backpropagation, and training metrics computation. Determined also handles checkpointing, log management, and device initialization. To plug your model code into the Determined training loop, you define methods to perform the following tasks:
 
-- initialize the code
-- build the model
-- define the optimizer
-- define the forward pass
+- initialize the models, optimizers, and LR schedulers
+- define the training function for forward and backward passes
 - load the training data set
 - load the validation data set
 
@@ -37,24 +35,15 @@ Here is what the skeleton of our trial class looks like:
 .. code:: python
 
     import torch.nn as nn
-    from determined.pytorch import DataLoader, PyTorchTrial
+    from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
 
     class MNISTTrial(PyTorchTrial):
-        def __init__(self, context: det.TrialContext):
-            # Initialize the trial class.
-            pass
-
-        def build_model(self):
-            # Build the model.
-            pass
-
-        def optimizer(self, model: nn.Module):
-            # Define the optimizer.
+        def __init__(self, context: PyTorchTrialContext):
+            # Initialize the trial class and wrap the models, optimizers, and LR schedulers.
             pass
 
         def train_batch(self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int):
-            # Define the training forward pass and calculate loss and other metrics
-            # for a batch of training data.
+            # Run the training forward passes on the models and backward passes on the optimizers
             pass
 
         def evaluate_batch(self, batch: TorchData, model: nn.Module):
@@ -77,26 +66,24 @@ We now discuss how to implement each of these methods in more detail.
 Initialization
 """"""""""""""
 
-As with any Python class, the ``__init__`` method is invoked to construct our trial class. Determined passes this method a single parameter, an instance of :class:`~determined.TrialContext`. The trial context contains information about the trial, such as the values of the hyperparameters to use for training. For the time being, we don't need to access any properties from the trial context object, but we assign it to an instance variable so that we can use it later:
+As with any Python class, the ``__init__`` method is invoked to construct our trial class.
+Determined passes this method a single parameter, an instance of :class:`~determined.pytorch.PyTorchTrialContext`,
+which inherits from :class:`~determined.TrialContext`.
+The trial context contains information about the trial, such as the values of the hyperparameters to use for training.
+All the models and optimizers must be wrapped with ``Model`` and ``Optimizer`` respectively provided by :class:`~determined.pytorch.PyTorchTrialContext`.
+This MNIST model code uses the Torch Sequential API and ``torch.optim.Adadelta``.
+The current values of the model's hyperparameters can be accessed via the :func:`~determined.TrialContext.get_hparam` method of the trial context.
 
 .. code:: python
+
+    from determined.pytorch import reset_parameters
 
     def __init__(self, context: PyTorchTrialContext):
         # Store trial context for later use.
         self.context = context
 
-Building the Model
-""""""""""""""""""
-
-The ``build_model`` method returns a ``torch.Module`` or ``torch.Sequential`` object. The MNIST model code uses the Torch Sequential API and we can continue to use that API in our implementation of ``build_model``. The current values of the model's hyperparameters can be accessed via the :func:`~determined.TrialContext.get_hparam` method of the trial context.
-
-.. code:: python
-
-    from determined.pytorch import reset_parameters
-    ...
-
-    def build_model(self):
-        model = nn.Sequential(
+        # Initialize the models and wrap them with self.context.Model().
+        self.model = self.context.Model(nn.Sequential(
             nn.Conv2d(1, self.context.get_hparam("n_filters1"), 3, 1),
             nn.ReLU(),
             nn.Conv2d(
@@ -111,19 +98,13 @@ The ``build_model`` method returns a ``torch.Module`` or ``torch.Sequential`` ob
             nn.Dropout2d(self.context.get_hparam("dropout2")),
             nn.Linear(128, 10),
             nn.LogSoftmax(),
+        ))
+        reset_parameters(self.model)
+
+        # Initialize the optimizers and wrap them with self.context.Optimizer().
+        self.optimizer = self.context.Optimizer(
+            torch.optim.Adadelta(model.parameters(), lr=self.context.get_hparam("learning_rate"))
         )
-
-        reset_parameters(model)
-        return model
-
-Defining the Optimizer
-""""""""""""""""""""""
-The ``optimizer`` method returns a ``torch.optim`` object. The MNIST model code uses ``torch.optim.Adadelta`` and we can continue to use that in our implementation of ``optimizer``.
-
-.. code:: python
-
-    def optimizer(self, model: nn.Module):
-        return torch.optim.Adadelta(model.parameters(), lr=self.context.get_hparam("learning_rate"))
 
 Loading Data
 """"""""""""
@@ -156,10 +137,10 @@ The last two methods we need to define are ``build_training_data_loader`` and ``
 
 For more information on loading data in Determined, refer to the tutorial on :ref:`data-access`.
 
-Defining the Forward Pass
-"""""""""""""""""""""""""
+Defining the Training Function
+""""""""""""""""""""""""""""""
 
-The ``train_batch`` method computes the forward pass and calculates the loss for a single batch of data. Determined expects a dictionary with the calculated loss and other user-defined metrics and will automatically average all the metrics across batches. Since Determined handles the backpropagation call, we do not need to call ``loss.backwards()`` or ``optim.zero_grad()``.
+The ``train_batch`` method runs the forward passes on the losses and backward passes on the optimziers with a single batch of data. Determined expects a dictionary with the calculated loss and other user-defined metrics and will automatically average all the metrics across batches. Since ``step_optimizer`` handles the backpropagation call and zeroing out the gradients so there is no need to call ``optim.zero_grad()``.
 
 .. code:: python
 
@@ -167,8 +148,13 @@ The ``train_batch`` method computes the forward pass and calculates the loss for
         batch = cast(Tuple[torch.Tensor, torch.Tensor], batch)
         data, labels = batch
 
+        # Define the training forward pass and calculate loss.
         output = model(data)
         loss = torch.nn.functional.nll_loss(output, labels)
+
+        # Define the training backward pass and run optimization step.
+        self.context.backward(loss)
+        self.context.step_optimizer(self.optimizer)
 
         return {"loss": loss}
 
