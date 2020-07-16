@@ -73,6 +73,17 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, ti
       .map(key => ({ name: key, size: humanReadableBytes(checkpoint.resources[key]) }));
   }, [ checkpoint.resources ]);
 
+  const totalSize = useMemo(() => {
+    const total = Object.values(checkpoint.resources).reduce((acc, size) => acc + size, 0);
+    return humanReadableBytes(total);
+  }, [ checkpoint.resources ]);
+
+  const resources = useMemo(() => {
+    return Object.keys(checkpoint.resources)
+      .sort((a, b) => checkpoint.resources[a] - checkpoint.resources[b])
+      .map(key => ({ name: key, size: humanReadableBytes(checkpoint.resources[key]) }));
+  }, [ checkpoint.resources ]);
+
   return (
     <Modal
       footer={null}
