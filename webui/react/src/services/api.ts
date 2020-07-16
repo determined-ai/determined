@@ -7,9 +7,11 @@ import * as Config from 'services/apiConfig';
 import { CommandLogsParams, ExperimentDetailsParams, ExperimentsParams, KillCommandParams,
   KillExpParams, LaunchTensorboardParams, LogsParams, PatchExperimentParams,
   PatchExperimentState,
+  TrialDetailsParams,
   TrialLogsParams } from 'services/types';
 import {
   AnyTask, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log,
+  TrialDetails,
   User,
 } from 'types';
 import { serverAddress } from 'utils/routes';
@@ -42,6 +44,9 @@ export const getExperimentSummaries =
 
 export const getExperimentDetails =
   generateApi<ExperimentDetailsParams, ExperimentDetails>(Config.getExperimentDetails);
+
+export const getTrialDetails =
+  generateApi<TrialDetailsParams, TrialDetails>(Config.getTrialDetails);
 
 export const killExperiment = generateApi<KillExpParams, void>(Config.killExperiment);
 

@@ -4,16 +4,17 @@ import queryString from 'query-string';
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { Api } from 'services/apiBuilder';
 import {
-  jsonToCommandLogs, jsonToDeterminedInfo, jsonToExperimentDetails, jsonToExperiments,
-  jsonToLogs, jsonToTensorboard, jsonToTrialLogs,
+  jsonToCommandLogs, jsonToDeterminedInfo, jsonToExperimentDetails,
+  jsonToExperiments, jsonToLogs, jsonToTensorboard, jsonToTrialDetails, jsonToTrialLogs,
 } from 'services/decoder';
 import {
   CommandLogsParams, ExperimentDetailsParams, ExperimentsParams, KillCommandParams,
-  KillExpParams, LaunchTensorboardParams, LogsParams, PatchExperimentParams, TrialLogsParams,
+  KillExpParams, LaunchTensorboardParams, LogsParams, PatchExperimentParams, TrialDetailsParams,
+  TrialLogsParams,
 } from 'services/types';
 import {
   Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log,
-  TBSourceType, User,
+  TBSourceType, TrialDetails, User,
 } from 'types';
 
 /* Helpers */
@@ -131,6 +132,14 @@ export const getExperimentDetails: Api<ExperimentDetailsParams, ExperimentDetail
   }),
   name: 'getExperimentDetails',
   postProcess: (response) => jsonToExperimentDetails(response.data),
+};
+
+export const getTrialDetails: Api<TrialDetailsParams, TrialDetails> = {
+  httpOptions: (params: TrialDetailsParams) => ({
+    url: `/trials/${params.id}`,
+  }),
+  name: 'getTrialDetails',
+  postProcess: response => jsonToTrialDetails(response.data),
 };
 
 /* Logs */

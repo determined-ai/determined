@@ -160,6 +160,13 @@ export const ioCheckpoint = io.type({
 });
 export type ioTypeCheckpoint = io.TypeOf<typeof ioCheckpoint>;
 
+export const ioTrialDetails = io.type({
+  experiment_id: io.number,
+  id: io.number,
+  state: runStatesIoType,
+});
+export type ioTypeTrialDetails = io.TypeOf<typeof ioTrialDetails>;
+
 export const ioTrialSummary = io.type({
   best_available_checkpoint: io.union([ ioCheckpoint, io.null ]),
   hparams: io.any,

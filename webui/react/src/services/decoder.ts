@@ -2,20 +2,22 @@ import dayjs from 'dayjs';
 
 import {
   decode, ioCommandLogs, ioDeterminedInfo, ioExperimentConfig, ioExperimentDetails, ioExperiments,
-  ioGenericCommand, ioLogs, ioTypeAgents, ioTypeCheckpoint,
-  ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo, ioTypeExperimentConfig,
+  ioGenericCommand, ioLogs, ioTrialDetails, ioTypeAgents,
+  ioTypeCheckpoint, ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo,
+  ioTypeExperimentConfig,
   ioTypeExperimentDetails,
   ioTypeExperiments,
   ioTypeGenericCommand,
   ioTypeGenericCommands,
   ioTypeLogs,
+  ioTypeTrialDetails,
   ioTypeTrialSummary,
   ioTypeUsers,
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, Command, CommandState, CommandType,
   DeterminedInfo, Experiment, ExperimentConfig, ExperimentDetails, Log, LogLevel, ResourceState,
-  ResourceType, RunState, TrialSummary, User,
+  ResourceType, RunState, TrialDetails, TrialSummary, User,
 } from 'types';
 import { capitalize } from 'utils/string';
 
@@ -178,6 +180,15 @@ const ioTrialToTrial = (io: ioTypeTrialSummary): TrialSummary => {
     bestAvailableCheckpoint: io.best_available_checkpoint
       ? ioCheckpoinToCheckpoint(io.best_available_checkpoint) : undefined,
     state: io.state as RunState,// TODO add checkpoint decoder
+  };
+};
+
+export const jsonToTrialDetails = (data: unknown): TrialDetails => {
+  const io = decode<ioTypeTrialDetails>(ioTrialDetails, data);
+  return {
+    experimentId: io.experiment_id,
+    id: io.id,
+    state: io.state as RunState,
   };
 };
 
