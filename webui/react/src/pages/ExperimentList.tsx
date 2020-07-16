@@ -38,7 +38,8 @@ enum Action {
   Cancel = 'Cancel',
   Kill = 'Kill',
   Pause = 'Pause',
-  OpenTensorBoard = 'Open Tensorboard',
+  OpenTensorBoard = 'OpenTensorboard',
+  Unarchive = 'Unarchive',
 }
 
 const defaultFilters: ExperimentFilters = {
@@ -78,22 +79,35 @@ const ExperimentList: React.FC = () => {
     return selectedRowKeys.map(key => experimentMap[key]);
   }, [ experimentMap, selectedRowKeys ]);
 
-  const { hasActivatable, hasArchivable, hasCancelable, hasKillable, hasPausible } = useMemo(() => {
+  const {
+    hasActivatable,
+    hasArchivable,
+    hasCancelable,
+    hasKillable,
+    hasPausable,
+    hasUnarchivable,
+  } = useMemo(() => {
     const tracker = {
       hasActivatable: false,
       hasArchivable: false,
       hasCancelable: false,
       hasKillable: false,
-      hasPausible: false,
+      hasPausable: false,
+      hasUnarchivable: false,
     };
     for (let i = 0; i < selectedExperiments.length; i++) {
       const experiment = selectedExperiments[i];
-      const isTerminal = terminalRunStates.includes(experiment.state);
-      if (!experiment.archived && isTerminal) tracker.hasArchivable = true;
-      if (cancellableRunStates.includes(experiment.state)) tracker.hasCancelable = true;
-      if (isTaskKillable(experiment)) tracker.hasKillable = true;
-      if (experiment.state === RunState.Paused) tracker.hasActivatable = true;
-      if (experiment.state === RunState.Active) tracker.hasPausible = true;
+      const isArchivable = !experiment.archived && terminalRunStates.includes(experiment.state);
+      const isCancelable = cancellableRunStates.includes(experiment.state);
+      const isKillable = isTaskKillable(experiment);
+      const isActivatable = experiment.state === RunState.Paused;
+      const isPausable = experiment.state === RunState.Active;
+      if (!tracker.hasArchivable && isArchivable) tracker.hasArchivable = true;
+      if (!tracker.hasUnarchivable && experiment.archived) tracker.hasUnarchivable = true;
+      if (!tracker.hasCancelable && isCancelable) tracker.hasCancelable = true;
+      if (!tracker.hasKillable && isKillable) tracker.hasKillable = true;
+      if (!tracker.hasActivatable && isActivatable) tracker.hasActivatable = true;
+      if (!tracker.hasPausable && isPausable) tracker.hasPausable = true;
     }
     return tracker;
   }, [ selectedExperiments ]);
@@ -132,7 +146,7 @@ const ExperimentList: React.FC = () => {
     handleFilterChange({ ...filters, username });
   }, [ filters, handleFilterChange ]);
 
-  const getBatchActions = useCallback((action: Action): Promise<void[] | Command> => {
+  const sendBatchActions = useCallback((action: Action): Promise<void[] | Command> => {
     if (action === Action.OpenTensorBoard) {
       return launchTensorboard({
         ids: selectedExperiments.map(experiment => experiment.id),
@@ -141,28 +155,34 @@ const ExperimentList: React.FC = () => {
     }
     return Promise.all(selectedExperiments
       .map(experiment => {
-        if (action === Action.Activate) {
-          return setExperimentState({ experimentId: experiment.id, state: RunState.Active });
-        } else if (action === Action.Archive) {
-          return archiveExperiment(experiment.id, true);
-        } else if (action === Action.Cancel) {
-          return setExperimentState({ experimentId: experiment.id, state: RunState.Canceled });
-        } else if (action === Action.Kill) {
-          return killExperiment({ experimentId: experiment.id });
-        } else if (action === Action.Pause) {
-          return setExperimentState({ experimentId: experiment.id, state: RunState.Paused });
+        switch (action) {
+          case Action.Activate:
+            return setExperimentState({ experimentId: experiment.id, state: RunState.Active });
+          case Action.Archive:
+            return archiveExperiment(experiment.id, true);
+          case Action.Cancel:
+            return setExperimentState({ experimentId: experiment.id, state: RunState.Canceled });
+          case Action.Kill:
+            return killExperiment({ experimentId: experiment.id });
+          case Action.Pause:
+            return setExperimentState({ experimentId: experiment.id, state: RunState.Paused });
+          case Action.Unarchive:
+            return archiveExperiment(experiment.id, false);
+          default:
+            return Promise.resolve();
         }
-        return Promise.resolve();
       }));
   }, [ selectedExperiments ]);
 
   const handleBatchAction = useCallback(async (action: Action) => {
     try {
-      const result = await getBatchActions(action);
+      const result = await sendBatchActions(action);
       if (action === Action.OpenTensorBoard) {
         const url = waitPageUrl(result as Command);
         if (url) openBlank(setupUrlForDev(url));
       }
+
+      // Refetch experiment list to get updates based on batch action.
       await fetchExperiments();
     } catch (e) {
       const publicSubject = action === Action.OpenTensorBoard ?
@@ -178,7 +198,7 @@ const ExperimentList: React.FC = () => {
         type: ErrorType.Server,
       });
     }
-  }, [ getBatchActions, fetchExperiments ]);
+  }, [ fetchExperiments, sendBatchActions ]);
 
   const handleConfirmation = useCallback((action: Action) => {
     Modal.confirm({
@@ -222,18 +242,23 @@ const ExperimentList: React.FC = () => {
           </div>
         </div>
         <TableBatch message="Apply batch operations to multiple experiments." show={showBatch}>
-          <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
+          <Button
+            type="primary"
+            onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
               Open TensorBoard
           </Button>
           <Button
-            disabled={!hasActivatable && false}
+            disabled={!hasActivatable}
             onClick={(): void => handleConfirmation(Action.Activate)}>Activate</Button>
           <Button
-            disabled={!hasPausible}
+            disabled={!hasPausable}
             onClick={(): void => handleConfirmation(Action.Pause)}>Pause</Button>
           <Button
             disabled={!hasArchivable}
             onClick={(): void => handleConfirmation(Action.Archive)}>Archive</Button>
+          <Button
+            disabled={!hasUnarchivable}
+            onClick={(): void => handleConfirmation(Action.Unarchive)}>Unarchive</Button>
           <Button
             disabled={!hasCancelable}
             onClick={(): void => handleConfirmation(Action.Cancel)}>Cancel</Button>
