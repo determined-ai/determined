@@ -144,8 +144,33 @@ export interface Command {
   state: CommandState;
 }
 
+export enum CheckpointStorageType {
+  AWS = 'aws',
+  GCS = 'gcs',
+  HDFS = 'hdfs',
+  SharedFS = 'shared_fs',
+}
+
+interface CheckpointStorage {
+  bucket?: string;
+  hostPath?: string;
+  saveExperimentBest: number;
+  saveTrialBest: number;
+  saveTrialLatest: number;
+  storagePath?: string;
+  type?: CheckpointStorageType;
+}
+
+interface DataLayer {
+  containerStoragePath?: string;
+  type: string;
+}
+
 // TODO compelete the config object as we start using different attributes.
 export interface ExperimentConfig {
+  checkpointPolicy: string;
+  checkpointStorage?: CheckpointStorage;
+  dataLayer: DataLayer;
   description: string;
   searcher: {
     smallerIsBetter: boolean;
@@ -183,14 +208,36 @@ export enum CheckpointState {
 }
 
 export interface Checkpoint {
+  endTime? : string;
   id: number;
+  resources: Record<string, number>;
+  startTime: string;
+  state: CheckpointState;
   stepId: number;
   trialId: number;
-  state: CheckpointState;
-  startTime: string;
-  endTime? : string;
   uuid? : string;
   validationMetric? : number;
+}
+
+export interface CheckpointDetail extends Checkpoint {
+  batch: number;
+  experimentId: number;
+  trialId: number;
+}
+
+export interface TrialSummary {
+  bestAvailableCheckpoint?: Checkpoint;
+  endTime?: string;
+  experimentId: number;
+  hparams: Record<string, string>;
+  id: number;
+  numBatches: number;
+  numBatchTotal: number;
+  numCompletedCheckpoints: number;
+  numSteps: number;
+  seed: number;
+  startTime: string;
+  state: RunState;
 }
 
 export interface Step {
@@ -209,16 +256,6 @@ export interface TrialDetails {
   startTime: string;
   steps: Step[];
   warmStartCheckpointId?: number;
-
-}
-
-export interface TrialSummary {
-  hparams: Record<string, string>;
-  id: number;
-  state: RunState;
-  bestAvailableCheckpoint?: Checkpoint;
-  numSteps: number;
-  numBatches: number;
 }
 
 export interface Experiment {

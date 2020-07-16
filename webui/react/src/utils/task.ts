@@ -77,7 +77,21 @@ export const generateExperiments = (count = 10): ExperimentItem[] => {
       };
       return {
         ...experimentTask,
-        config,
+        config: {
+          checkpointPolicy: 'best',
+          checkpointStorage: {
+            hostPath: '/tmp',
+            saveExperimentBest: 0,
+            saveTrialBest: 1,
+            saveTrialLatest: 1,
+            storagePath: 'determined-integration-checkpoints',
+            type: 'shared_fs',
+          },
+          dataLayer: { type: 'shared_fs' },
+          description: experimentTask.name,
+          resources: {},
+          searcher: { metric: 'val_error', smallerIsBetter: true },
+        },
         configRaw: config,
         id: idx,
         name: experimentTask.name,

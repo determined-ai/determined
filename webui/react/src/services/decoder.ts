@@ -8,9 +8,9 @@ import {
   ioTypeGenericCommands, ioTypeLog, ioTypeLogs, ioTypeTrialDetails, ioTypeTrialSummary, ioTypeUsers,
 } from 'ioTypes';
 import {
-  Agent, Checkpoint, CheckpointState, Command, CommandState, CommandType,
-  DeterminedInfo, Experiment, ExperimentConfig, ExperimentDetails, Log, LogLevel, ResourceState,
-  ResourceType, RunState, TrialDetails, TrialSummary, User,
+  Agent, Checkpoint, CheckpointState, CheckpointStorageType, Command, CommandState,
+  CommandType, DeterminedInfo, Experiment, ExperimentConfig, ExperimentDetails, Log, LogLevel,
+  ResourceState, ResourceType, RunState, TrialDetails, TrialSummary, User,
 } from 'types';
 import { capitalize } from 'utils/string';
 
@@ -127,6 +127,20 @@ export const jsonToTensorboards = (data: ioTypeGenericCommands): Command[] => {
 const jsonToExperimentConfig = (data: unknown): ExperimentConfig => {
   const io = decode<ioTypeExperimentConfig>(ioExperimentConfig, data);
   const config: ExperimentConfig = {
+    checkpointPolicy: io.checkpoint_policy,
+    checkpointStorage: io.checkpoint_storage ? {
+      bucket: io.checkpoint_storage.bucket || undefined,
+      hostPath: io.checkpoint_storage.host_path || undefined,
+      saveExperimentBest: io.checkpoint_storage.save_experiment_best,
+      saveTrialBest: io.checkpoint_storage.save_trial_best,
+      saveTrialLatest: io.checkpoint_storage.save_trial_latest,
+      storagePath: io.checkpoint_storage.storage_path || undefined,
+      type: io.checkpoint_storage.type as CheckpointStorageType || undefined,
+    } : undefined,
+    dataLayer: {
+      containerStoragePath: io.data_layer.container_storage_path || undefined,
+      type: io.data_layer.type,
+    },
     description: io.description,
     resources: {},
     searcher: {
@@ -161,24 +175,33 @@ export const jsonToExperiments = (data: unknown): Experiment[] => {
 };
 
 const ioCheckpoinToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
-  return { ...io,
+  return {
     endTime: io.end_time || undefined,
     id: io.id,
+    resources: io.resources,
     startTime: io.start_time,
     state: io.state as CheckpointState,
     stepId: io.step_id,
     trialId: io.trial_id,
     uuid: io.uuid || undefined,
-    validationMetric: io.valiation_metric !== null ? io.valiation_metric : undefined,
+    validationMetric: io.validation_metric !== null ? io.validation_metric : undefined,
   };
 };
 
-const ioTrialToTrial = (io: ioTypeTrialSummary): TrialSummary => {
-  return { ...io,
+const ioTrialToTrial = (io: ioTypeTrialSummary, batchTotal: number): TrialSummary => {
+  return {
     bestAvailableCheckpoint: io.best_available_checkpoint
       ? ioCheckpoinToCheckpoint(io.best_available_checkpoint) : undefined,
+    endTime: io.end_time || undefined,
+    experimentId: io.experiment_id,
+    hparams: io.hparams || {},
+    id: io.id,
     numBatches: io.num_batches,
+    numBatchTotal: batchTotal,
+    numCompletedCheckpoints: io.num_completed_checkpoints,
     numSteps: io.num_steps,
+    seed: io.seed,
+    startTime: io.start_time,
     state: io.state as RunState,// TODO add checkpoint decoder
   };
 };
@@ -205,6 +228,7 @@ export const jsonToTrialDetails = (data: unknown): TrialDetails => {
 
 export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
   const ioType = decode<ioTypeExperimentDetails>(ioExperimentDetails, data);
+  let batchTotal = 0;
   return {
     archived: ioType.archived,
     config: jsonToExperimentConfig(ioType.config),
@@ -216,7 +240,11 @@ export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
     progress: ioType.progress !== null ? ioType.progress : undefined,
     startTime: ioType.start_time,
     state: ioType.state as RunState,
-    trials: ioType.trials.map(ioTrialToTrial),
+    trials: ioType.trials.map(ioTrial => {
+      const trial = ioTrialToTrial(ioTrial, batchTotal);
+      batchTotal += ioTrial.num_batches || 0;
+      return trial;
+    }),
     username: ioType.owner.username,
     validationHistory: ioType.validation_history.map(vh => ({
       endTime: vh.end_time,
