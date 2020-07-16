@@ -32,11 +32,7 @@ experiment config. The format is a list of strings in the format
 Variables are set sequentially, which affect variables that depend
 on expansion of other variables.
 
-Determined will automatically pass docker-respected proxy environment variables
-from the local environment to agent containers.  Environment variables named
-`HTTP_PROXY`, `HTTPS_PROXY`, `FTP_PROXY`, and `NO_PROXY` will be automatically set.
-If a proxy address is supplied using the experiment config, Determined will
-use what is specified in the ``environment.environment_variables`` field.
+To set proxy variables, see Agent Configuration options in the Cluster Configuration reference.
 
 ``startup-hook.sh``
 ~~~~~~~~~~~~~~~~~~~

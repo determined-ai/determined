@@ -30,9 +30,9 @@ type Options struct {
 	CertFile string `json:"cert_file"`
 	KeyFile  string `json:"key_file"`
 
-	HttpProxy  string `json:"http_proxy"`
-	HttpsProxy string `json:"https_proxy"`
-	FtpProxy   string `json:"ftp_proxy"`
+	HTTPProxy  string `json:"http_proxy"`
+	HTTPSProxy string `json:"https_proxy"`
+	FTPProxy   string `json:"ftp_proxy"`
 	NoProxy    string `json:"no_proxy"`
 }
 
