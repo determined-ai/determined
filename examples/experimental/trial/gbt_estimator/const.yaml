@@ -19,4 +19,4 @@ searcher:
 entrypoint: model_def:BoostedTreesTrial
 batches_per_step: 1
 environment:
-  image: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-0.4.0" 
+  image: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.5.0" 

@@ -67,7 +67,7 @@ in containers with the following:
 -  Ubuntu 18.04
 -  CUDA 10.0
 -  Python 3.6.9
--  TensorFlow 1.14.0
+-  TensorFlow 1.15.0
 -  PyTorch 1.4.0
 
 Determined will automatically select GPU-specific versions of each library
@@ -83,8 +83,8 @@ hyperparameters for the current trial.
 .. note::
 
    The default images are
-   ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-0.4.0`` and
-   ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu-0.4.0`` for GPU
+   ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.5.0`` and
+   ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.5.0`` for GPU
    and CPU respectively.
 
 TF2 Environment
@@ -105,8 +105,8 @@ This can be configured in your experiment configuration like below:
 
    environment:
      image:
-       gpu: "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.4.0"
-       cpu: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-0.4.0"
+       gpu: "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.5.0"
+       cpu: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-0.5.0"
 
 .. _custom-docker-images:
 
@@ -135,7 +135,7 @@ on their respective dependency file format.
 
 .. code:: docker
 
-  FROM determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.14-gpu-0.4.0
+  FROM determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.5.0
   RUN apt-get update && apt-get install -y unzip python-opencv graphviz
   COPY environment.yml /tmp/environment.yml
   COPY pip_requirements.txt /tmp/pip_requirements.txt
