@@ -27,7 +27,9 @@ hyperparameters:
 searcher:
   name: adaptive_simple
   metric: validation_error
-  max_steps: 800
+  max_length:
+    batches: 80000
   max_trials: 16
 entrypoint: model_def:CIFARTrial
-min_validation_period: 10
+validation_period:
+  batches: 1000

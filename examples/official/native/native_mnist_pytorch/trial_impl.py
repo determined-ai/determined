@@ -38,7 +38,9 @@ if __name__ == "__main__":
         "searcher": {
             "name": "single",
             "metric": "validation_error",
-            "max_steps": 20,
+            "max_length": {
+                "batches": 2000,
+            },
             "smaller_is_better": True,
         },
     }

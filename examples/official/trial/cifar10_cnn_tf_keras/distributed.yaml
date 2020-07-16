@@ -17,6 +17,8 @@ resources:
 searcher:
   name: single
   metric: val_categorical_error
-  max_steps: 50
-min_validation_period: 10
+  max_length:
+    batches: 5000
+validation_period:
+  batches: 1000
 entrypoint: model_def:CIFARTrial

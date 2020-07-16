@@ -14,7 +14,9 @@ resources:
 searcher:
   name: single
   metric: validation_error
-  max_steps: 50
+  max_length:
+    batches: 5000
   smaller_is_better: true
 entrypoint: model_def:CIFARTrial
-min_validation_period: 10
+validation_period:
+  batches: 1000

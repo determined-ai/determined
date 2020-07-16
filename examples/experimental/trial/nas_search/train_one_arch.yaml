@@ -28,15 +28,18 @@ hyperparameters:
   arch_to_use: 'ASHA'
   eval_same_arch: True
   num_archs_to_eval: 0 # only used when eval_same_arch is False
-min_validation_period: 4
+validation_period:
+  epochs: 1
 entrypoint: model_def:NASModel
 reproducibility: # used to reproduce the same results of the arch
   experiment_seed: 300
 max_restarts: 0
+records_per_epoch: 27776
 searcher:
   name: single
   metric: loss
-  max_steps: 434 # is about 100 epochs = ~ 400 batches is 1 epoch for batch size 64
+  max_length:
+    epochs: 100
   smaller_is_better: true
 data:
   out_file: 'data/architecture_'

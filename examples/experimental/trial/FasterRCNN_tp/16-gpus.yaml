@@ -14,7 +14,8 @@ searcher:
   smaller_is_better: false
   name: random
   max_trials: 1
-  max_steps: 2304
+  max_length:
+    batches: 147456
 
 bind_mounts:
   - host_path: /tmp
@@ -22,8 +23,10 @@ bind_mounts:
 
 entrypoint: model:RCNNTrial
 max_restarts: 3
-min_validation_period: 256
-min_checkpoint_period: 64
+validation_period:
+  batches: 16384
+checkpoint_period:
+  batches: 4096
 checkpoint_policy: none
 batches_per_step: 64
 reproducibility:

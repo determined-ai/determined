@@ -16,7 +16,7 @@ type Unit string
 const (
 	Records Unit = "records"
 	Batches Unit = "batches"
-	Epochs  Unit = "epoches"
+	Epochs  Unit = "epochs"
 )
 
 // Length a training duration in terms of records, batches or epochs.

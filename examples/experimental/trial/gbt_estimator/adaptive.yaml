@@ -35,7 +35,8 @@ hyperparameters:
 searcher:
   name: adaptive_simple
   metric: accuracy
-  max_steps: 500
+  max_length:
+    batches: 50000
   max_trials: 100
   smaller_is_better: false
 entrypoint: model_def:BoostedTreesTrial

@@ -41,6 +41,8 @@ searcher:
   name: adaptive
   mode: aggressive
   metric: val_categorical_error
-  target_trial_steps: 800
-  step_budget: 4800
+  max_length:
+    batches: 80_000
+  budget:
+    batches: 480_000
 entrypoint: model_def:CIFARTrial

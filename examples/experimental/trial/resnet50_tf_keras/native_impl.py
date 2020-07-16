@@ -24,10 +24,14 @@ if __name__ == "__main__":
         "searcher": {
             "name": "single",
             "metric": "val_loss",
-            "max_steps": 1,
+            "max_length": {
+                "batches": 100,
+            },
             "smaller_is_better": True,
         },
-        "min_validation_period": 1,
+        "validation_period": {
+            "batches": 100,
+        },
         "hyperparameters": {
             "global_batch_size": det.Constant(value=32),
             "learning_rate": det.Constant(value=0.1),

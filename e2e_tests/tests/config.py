@@ -66,7 +66,6 @@ def set_min_validation_period(
     config: Dict[Any, Any], min_validation_period: Dict[str, int]
 ) -> Dict[Any, Any]:
     config = config.copy()
-    del config["min_validation_period"]
     config["validation_period"] = min_validation_period
     return config
 
@@ -75,7 +74,6 @@ def set_min_checkpoint_period(
     config: Dict[Any, Any], min_checkpoint_period: Dict[str, int]
 ) -> Dict[Any, Any]:
     config = config.copy()
-    del config["min_checkpoint_period"]
     config["checkpoint_period"] = min_checkpoint_period
     return config
 

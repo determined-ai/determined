@@ -31,7 +31,8 @@ data:
 #    container_path: /mnt/data
 #    read_only: false
 
-min_validation_period: 10
+validation_period:
+  batches: 1000
 
 hyperparameters:
   num_classes: 1000
@@ -64,7 +65,8 @@ resources:
 searcher:
   name: single
   metric: top1_accuracy 
-  max_steps: 300 # 1.2 million images in training set of imagenet
+  max_length:
+    batches: 30000 # 1.2 million images in training set of imagenet
   smaller_is_better: false 
 
 optimizations:

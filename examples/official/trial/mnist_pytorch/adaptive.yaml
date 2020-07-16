@@ -29,6 +29,7 @@ searcher:
   name: adaptive_simple
   metric: validation_loss
   smaller_is_better: true
-  max_steps: 9
+  max_length:
+    batches: 900
   max_trials: 16
 entrypoint: model_def:MNistTrial
