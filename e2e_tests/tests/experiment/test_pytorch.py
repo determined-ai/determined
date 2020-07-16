@@ -1,5 +1,4 @@
 import pytest
-import torch
 
 from determined import pytorch
 from determined.experimental import Determined
@@ -140,4 +139,4 @@ def test_pytorch_cifar10_parallel() -> None:
         .select_checkpoint(latest=True)
         .load()
     )
-    assert isinstance(nn, torch.nn.Module)
+    assert isinstance(nn, pytorch.PyTorchTrial)
