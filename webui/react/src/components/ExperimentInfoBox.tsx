@@ -1,13 +1,13 @@
 import { Button } from 'antd';
-import React from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import Link from 'components/Link';
+import { CheckpointDetail, CheckpointState, ExperimentDetails } from 'types';
 import { formatDatetime } from 'utils/date';
 import { floatToPercent, humanReadableFloat } from 'utils/string';
 
-import { Checkpoint, CheckpointState, ExperimentDetails } from '../types';
-
+import CheckpointModal from './CheckpointModal';
 import css from './ExperimentInfoBox.module.scss';
 import ProgressBar from './ProgressBar';
 
@@ -30,22 +30,36 @@ const pairRow = (label: string, value: React.ReactNode): React.ReactNode => {
 };
 
 const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
+  const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
+
   const orderFactor = exp.config.searcher.smallerIsBetter ? 1 : -1;
-  const sortedValidations = exp.validationHistory
-    .filter(a => a.validationError !== undefined)
-    .sort((a, b) => (a.validationError as number - (b.validationError as number)) * orderFactor);
 
-  const bestVal = sortedValidations[0]?.validationError;
+  const bestValidation = useMemo(() => {
+    const sortedValidations = exp.validationHistory
+      .filter(a => a.validationError !== undefined)
+      .sort((a, b) => (a.validationError as number - (b.validationError as number)) * orderFactor);
+    return sortedValidations[0]?.validationError;
+  }, [ exp.validationHistory, orderFactor ]);
 
-  const sortedCheckpoints: Checkpoint[] = exp.trials
-    .filter(trial => trial.bestAvailableCheckpoint
-      && trial.bestAvailableCheckpoint.validationMetric
-      && trial.bestAvailableCheckpoint.state === CheckpointState.Completed)
-    .map(trial => trial.bestAvailableCheckpoint as Checkpoint)
-    .sort((a, b) => (a.validationMetric as number - (b.validationMetric as number)) * orderFactor);
+  const bestCheckpoint: CheckpointDetail = useMemo(() => {
+    const sortedCheckpoints: CheckpointDetail[] = exp.trials
+      .filter(trial => trial.bestAvailableCheckpoint
+        && trial.bestAvailableCheckpoint.validationMetric
+        && trial.bestAvailableCheckpoint.state === CheckpointState.Completed)
+      .map(trial => ({
+        ...trial.bestAvailableCheckpoint,
+        batch: trial.numBatchTotal,
+        experimentId: trial.experimentId,
+        trialId: trial.id,
+      }) as CheckpointDetail)
+      .sort((a, b) => {
+        return (a.validationMetric as number - (b.validationMetric as number)) * orderFactor;
+      });
+    return sortedCheckpoints[0];
+  }, [ exp.trials, orderFactor ]);
 
-  // best available checkpoint.
-  const bestCheckpoint = sortedCheckpoints[0];
+  const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
+  const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
 
   return (
     <div className={css.base}>
@@ -60,10 +74,15 @@ const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
           {pairRow('End Time', exp.endTime && formatDatetime(exp.endTime))}
           {pairRow('Max Slot', exp.config.resources.maxSlots || 'Unlimited')}
           {pairRow(`Best Validation (${exp.config.searcher.metric})`,
-            bestVal && humanReadableFloat(bestVal))}
-          {pairRow('Best Checkpoint', bestCheckpoint && <Button disabled type="primary">
-            Trial {bestCheckpoint.trialId}
-          </Button> )}
+            bestValidation && humanReadableFloat(bestValidation))}
+          {pairRow('Best Checkpoint', bestCheckpoint && (<>
+            <Button onClick={handleShowBestCheckpoint}>Trial {bestCheckpoint.trialId}</Button>
+            <CheckpointModal
+              checkpoint={bestCheckpoint}
+              config={exp.config}
+              show={showBestCheckpoint}
+              onHide={handleHideBestCheckpoint} />
+          </>))}
           {pairRow('Configuration',<Button disabled type="primary">Show</Button>)}
           {pairRow('Model Definition', <Button type="primary">
             <Link path={`/exps/${exp.id}/model_def`}>Download</Link>
