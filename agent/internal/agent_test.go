@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/golang-collections/collections/set"
 )
 
 func TestNoAddProxy(t *testing.T) {
@@ -14,17 +15,24 @@ func TestNoAddProxy(t *testing.T) {
 		"FIRST_VAR=1",
 	}
 
+	// InputEnv should not change because we didn't set any environment variables.
 	ans := append([]string{}, inputEnv.Env...)
 
 	testAgent.addProxy(&inputEnv)
 
-	// InputEnv should not change because we didn't set any environment variables.
-	if v, ok := compareLists(inputEnv.Env, ans); !ok {
-		if len(v.extraA) != 0 {
-			t.Errorf("Extra variables found in Environment: %v", v.extraA)
-		} else {
-			t.Errorf("Missing variables in Environment: %v", v.extraB)
-		}
+	output := set.New()
+	correct := set.New()
+
+	for _, v := range inputEnv.Env {
+		output.Insert(v)
+	}
+
+	for _, v := range ans {
+		correct.Insert(v)
+	}
+
+	if diff := output.Difference(correct); diff.Len() != 0 {
+		t.Errorf("Expected: %v But got: %v", ans, inputEnv.Env)
 	}
 }
 
@@ -50,12 +58,19 @@ func TestAddProxy(t *testing.T) {
 
 	testAgent.addProxy(&inputEnv)
 
-	if v, ok := compareLists(inputEnv.Env, ans); !ok {
-		if len(v.extraA) != 0 {
-			t.Errorf("Extra variables found in Environment: %v", v.extraA)
-		} else {
-			t.Errorf("Missing variables in Environment: %v", v.extraB)
-		}
+	output := set.New()
+	correct := set.New()
+
+	for _, v := range inputEnv.Env {
+		output.Insert(v)
+	}
+
+	for _, v := range ans {
+		correct.Insert(v)
+	}
+
+	if diff := output.Difference(correct); diff.Len() != 0 {
+		t.Errorf("Expected: %v But got: %v", ans, inputEnv.Env)
 	}
 }
 
@@ -70,47 +85,23 @@ func TestAlreadyAddedProxy(t *testing.T) {
 
 	testAgent.Options.HTTPProxy = "10.0.0.2"
 
-	// We should be overriding earlier proxy variables
-	ans := append(inputEnv.Env, "HTTP_PROXY="+testAgent.Options.HTTPProxy)
+	// InputEnv should not change because existing config should not be overridden
+	ans := append([]string{}, inputEnv.Env...)
 
 	testAgent.addProxy(&inputEnv)
 
-	for i, v := range inputEnv.Env {
-		if ans[i] != v {
-			t.Errorf("Expected: %v But got: %v", ans, inputEnv.Env)
-			return
-		}
-	}
-}
+	output := set.New()
+	correct := set.New()
 
-type ListComp struct {
-	extraA []string
-	extraB []string
-}
-
-func compareLists(a []string, b []string) (ListComp, bool) {
-	checklistMap := make(map[string]bool)
-	output := ListComp{[]string{}, []string{}}
-	isEqual := true
-	for _, v := range a {
-		checklistMap[v] = false
+	for _, v := range inputEnv.Env {
+		output.Insert(v)
 	}
 
-	for _, v := range b {
-		if _, ok := checklistMap[v]; ok {
-			checklistMap[v] = true
-		} else { //b has, but a does not
-			output.extraB = append(output.extraB, v)
-			isEqual = false
-		}
+	for _, v := range ans {
+		correct.Insert(v)
 	}
 
-	for k, v := range checklistMap {
-		if !v { //a has, but b does not
-			output.extraA = append(output.extraA, k)
-			isEqual = false
-		}
+	if diff := output.Difference(correct); diff.Len() != 0 {
+		t.Errorf("Expected: %v But got: %v", ans, inputEnv.Env)
 	}
-
-	return output, isEqual
 }

@@ -9,6 +9,7 @@ import (
 	"net/http/pprof"
 	"os"
 	"runtime"
+	"strings"
 	"syscall"
 
 	"github.com/docker/docker/api/types/container"
@@ -38,17 +39,29 @@ type agent struct {
 }
 
 func (a *agent) addProxy(config *container.Config) {
-	if a.Options.HTTPProxy != "" {
-		config.Env = append(config.Env, "HTTP_PROXY="+a.Options.HTTPProxy)
+	addVars := map[string]string{
+		"HTTP_PROXY": a.Options.HTTPProxy, "HTTPS_PROXY": a.Options.HTTPSProxy,
+		"FTP_PROXY": a.Options.FTPProxy, "NO_PROXY": a.Options.NoProxy,
 	}
-	if a.Options.HTTPSProxy != "" {
-		config.Env = append(config.Env, "HTTPS_PROXY="+a.Options.HTTPSProxy)
+
+	for _, v := range config.Env {
+		key := strings.SplitN(v, "=", 2)[0]
+		_, ok := addVars[key]
+		if ok {
+			delete(addVars, key)
+		}
+
+		key = strings.ToUpper(key)
+		_, ok = addVars[key]
+		if ok {
+			delete(addVars, key)
+		}
 	}
-	if a.Options.FTPProxy != "" {
-		config.Env = append(config.Env, "FTP_PROXY="+a.Options.FTPProxy)
-	}
-	if a.Options.NoProxy != "" {
-		config.Env = append(config.Env, "NO_PROXY="+a.Options.NoProxy)
+
+	for k, v := range addVars {
+		if v != "" {
+			config.Env = append(config.Env, k+"="+v)
+		}
 	}
 }
 
