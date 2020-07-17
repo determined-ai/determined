@@ -25,6 +25,9 @@ module.exports = {
   },
   plugins: [ 'import', 'react', 'react-hooks', 'sort-keys-fix' ],
   rules: {
+    '@typescript-eslint/explicit-module-boundary-types': [ 'warn', {
+      allowArgumentsExplicitlyTypedAsAny: true,
+    } ],
     '@typescript-eslint/indent': [ 'error', 2 ],
     '@typescript-eslint/no-unused-vars': 'error',
     'array-bracket-spacing': [ 'error', 'always' ],
@@ -59,6 +62,7 @@ module.exports = {
       beforeSelfClosing: 'always',
       closingSlash: 'never',
     } ],
+    'react/prop-types': 'off',
     'react/self-closing-comp': [ 'error', {
       component: true,
       html: true,

@@ -1,4 +1,4 @@
-import React, { Dispatch, PropsWithChildren, useContext, useReducer } from 'react';
+import React, { Dispatch, useContext, useReducer } from 'react';
 
 import { clone } from 'utils/data';
 
@@ -50,7 +50,11 @@ export const generateContext = <T, A = Action<T>>(options: Options<T, A>): Expor
   };
   const reducer = options.reducer || defaultReducer;
 
-  const Provider: React.FC = (props: PropsWithChildren<{}>) => {
+  interface Props {
+    children?: React.ReactNode
+  }
+
+  const Provider: React.FC<Props> = (props: Props) => {
     const [ state, dispatch ] = useReducer(reducer, initialState);
 
     return React.createElement(

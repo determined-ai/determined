@@ -22,6 +22,7 @@ import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
 import { appRoutes } from 'routes';
 import { getInfo } from 'services/api';
+import { EmptyParams } from 'services/types';
 import { DeterminedInfo } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import { parseUrl } from 'utils/routes';
@@ -36,7 +37,7 @@ const AppView: React.FC = () => {
   const setInfo = Info.useActionContext();
   const setUI = UI.useActionContext();
   const username = user ? user.username : undefined;
-  const [ infoResponse, requestInfo ] = useRestApiSimple<{}, DeterminedInfo>(getInfo, {});
+  const [ infoResponse, requestInfo ] = useRestApiSimple<EmptyParams, DeterminedInfo>(getInfo, {});
   const classes = [ css.base ];
 
   const fetchInfo = useCallback(() => requestInfo({}), [ requestInfo ]);

@@ -11,24 +11,26 @@ import { experimentDuration } from 'utils/time';
 export const columns: ColumnsType<ExperimentItem> = [
   {
     dataIndex: 'id',
-    sorter: (a, b): number => alphanumericSorter(a.id, b.id),
+    sorter: (a: ExperimentItem, b: ExperimentItem): number => alphanumericSorter(a.id, b.id),
     title: 'ID',
   },
   {
     dataIndex: 'name',
     render: experimentDescriptionRenderer,
-    sorter: (a, b): number => alphanumericSorter(a.name, b.name),
+    sorter: (a: ExperimentItem, b: ExperimentItem): number => alphanumericSorter(a.name, b.name),
     title: 'Name',
   },
   {
     defaultSortOrder: 'descend',
     render: startTimeRenderer,
-    sorter: (a, b): number => stringTimeSorter(a.startTime, b.startTime),
+    sorter: (a: ExperimentItem, b: ExperimentItem): number =>
+      stringTimeSorter(a.startTime, b.startTime),
     title: 'Start Time',
   },
   {
     render: expermentDurationRenderer,
-    sorter: (a, b): number => experimentDuration(a) - experimentDuration(b),
+    sorter: (a: ExperimentItem, b: ExperimentItem): number =>
+      experimentDuration(a) - experimentDuration(b),
     title: 'Duration',
   },
   {
@@ -38,17 +40,18 @@ export const columns: ColumnsType<ExperimentItem> = [
   },
   {
     render: stateRenderer,
-    sorter: (a, b): number => runStateSorter(a.state, b.state),
+    sorter: (a: ExperimentItem, b: ExperimentItem): number => runStateSorter(a.state, b.state),
     title: 'State',
   },
   {
     render: experimentProgressRenderer,
-    sorter: (a, b): number => (a.progress || 0) - (b.progress || 0),
+    sorter: (a: ExperimentItem, b: ExperimentItem): number => (a.progress || 0) - (b.progress || 0),
     title: 'Progress',
   },
   {
     render: userRenderer,
-    sorter: (a, b): number => alphanumericSorter(a.username, b.username),
+    sorter: (a: ExperimentItem, b: ExperimentItem): number =>
+      alphanumericSorter(a.username, b.username),
     title: 'User',
   },
   {

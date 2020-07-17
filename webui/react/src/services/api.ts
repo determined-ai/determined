@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/camelcase */
 import { CancelToken } from 'axios';
 
 import * as DetSwagger from 'services/api-ts-sdk';
 import { generateApi, processApiError } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
-import { CommandLogsParams, ExperimentDetailsParams, ExperimentsParams, KillCommandParams,
-  KillExpParams, LaunchTensorboardParams, LogsParams, PatchExperimentParams,
+import { CommandLogsParams, EmptyParams, ExperimentDetailsParams, ExperimentsParams,
+  KillCommandParams, KillExpParams, LaunchTensorboardParams, LogsParams,
+  PatchExperimentParams,
   PatchExperimentState,
   TrialDetailsParams,
   TrialLogsParams } from 'services/types';
@@ -35,9 +35,9 @@ export const isNotFound = (e: any): boolean => {
   return e.response && e.response.status && e.response.status === 404;
 };
 
-export const getCurrentUser = generateApi<{}, User>(Config.getCurrentUser);
+export const getCurrentUser = generateApi<EmptyParams, User>(Config.getCurrentUser);
 
-export const getInfo = generateApi<{}, DeterminedInfo>(Config.getInfo);
+export const getInfo = generateApi<EmptyParams, DeterminedInfo>(Config.getInfo);
 
 export const getExperimentSummaries =
   generateApi<ExperimentsParams, Experiment[]>(Config.getExperimentSummaries);
