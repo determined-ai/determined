@@ -34,9 +34,14 @@ In this guide, we will build an image classification model for the MNIST dataset
 
 |
 
-The code for this guide can be downloaded here: :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`.
+The code for this guide can be downloaded here: :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`. After downloading this file, open a terminal window, extract the file, and ``cd`` into the ``mnist_pytorch`` directory:
 
-After downloading and extracting the code, open a terminal window and ``cd`` into the ``mnist_pytorch`` directory. The directory should contain the following files:
+.. code::
+
+    tar xzvf mnist_pytorch.tgz
+    cd mnist_pytorch
+
+The directory should contain the following files:
 
 .. code::
 
@@ -96,7 +101,7 @@ Once the experiment has been submitted, you should see the following output:
     Preparing files (../mnist_pytorch) to send to master... 2.5KB and 4 files
     Created experiment 1
 
-We can view the experiment status and results in the WebUI. In a browser, go to ``http://DET_MASTER/``, where ``DET_MASTER`` is the URL or IP address of your Determined cluster. If you installed locally via ``det-deploy local``, this will likely be ``http://localhost:8080/`` . A Determined dashboard will be displayed similar to the one below:
+We can view the status of the experiment in the WebUI. In a browser, go to ``http://DET_MASTER/``, where ``DET_MASTER`` is the URL or IP address of your Determined cluster. If you installed locally via ``det-deploy local``, this will likely be ``http://localhost:8080/`` . A Determined dashboard will be displayed similar to the one below:
 
 |
 
