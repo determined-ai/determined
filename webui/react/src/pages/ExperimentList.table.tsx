@@ -1,5 +1,4 @@
 import { ColumnsType } from 'antd/lib/table';
-import { CompareFn } from 'antd/lib/table/interface';
 
 import {
   actionsRenderer, experimentDescriptionRenderer, experimentProgressRenderer,
@@ -8,46 +7,28 @@ import {
 import { ExperimentItem } from 'types';
 import { alphanumericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
 import { experimentDuration } from 'utils/time';
-// import { ColumnType } from 'antd/es/table/interface';
-
-type AlphaNumeric = number | string;
-
-function sortRecords<T extends Record<string, unknown>>(key: string): CompareFn<T> {
-  const compareFn: CompareFn<T> = (a: T, b: T) => {
-    const [ aValue, bValue ] = [ a[key], b[key] ];
-    if (typeof aValue === typeof bValue) {
-      if (
-        (typeof aValue === 'string' && typeof bValue === 'string')
-      || (typeof aValue === 'number' && typeof bValue === 'number')
-      )
-        return alphanumericSorter(aValue, bValue);
-    }
-    return 0;
-  };
-  return compareFn;
-}
 
 export const columns: ColumnsType<ExperimentItem> = [
   {
     dataIndex: 'id',
-    sorter: sortRecords<ExperimentItem>('id'),
+    sorter: (a, b): number => alphanumericSorter(a.id, b.id),
     title: 'ID',
   },
   {
     dataIndex: 'name',
     render: experimentDescriptionRenderer,
-    sorter: sortRecords<ExperimentItem>('name'),
+    sorter: (a, b): number => alphanumericSorter(a.name, b.name),
     title: 'Name',
   },
   {
     defaultSortOrder: 'descend',
     render: startTimeRenderer,
-    sorter: ((a, b) => stringTimeSorter(a.startTime, b.startTime)) as CompareFn<ExperimentItem>,
+    sorter: (a, b): number => stringTimeSorter(a.startTime, b.startTime),
     title: 'Start Time',
   },
   {
     render: expermentDurationRenderer,
-    sorter: (a, b) => experimentDuration(a) - experimentDuration(b),
+    sorter: (a, b): number => experimentDuration(a) - experimentDuration(b),
     title: 'Duration',
   },
   {
@@ -67,7 +48,7 @@ export const columns: ColumnsType<ExperimentItem> = [
   },
   {
     render: userRenderer,
-    sorter: sortRecords<ExperimentItem>('username'),
+    sorter: (a, b): number => alphanumericSorter(a.username, b.username),
     title: 'User',
   },
   {
