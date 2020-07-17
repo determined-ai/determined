@@ -524,7 +524,8 @@ func (e *experiment) updateState(ctx *actor.Context, state model.State) (err err
 	if e.canTerminate(ctx) {
 		ctx.Self().Stop()
 	}
-	return err
+	// "Long story short, we never put effort into db error handling".
+	return nil
 }
 
 func (e *experiment) canTerminate(ctx *actor.Context) bool {

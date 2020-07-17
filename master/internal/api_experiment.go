@@ -112,10 +112,10 @@ func (a *apiServer) ActivateExperiment(
 	ctx context.Context, req *apiv1.ActivateExperimentRequest,
 ) (resp *apiv1.ActivateExperimentResponse, err error) {
 	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
-	if err != nil {
+	switch {
+	case err != nil:
 		return nil, status.Error(codes.Internal, err.Error())
-	}
-	if !ok {
+	case !ok:
 		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
 	}
 
@@ -131,10 +131,10 @@ func (a *apiServer) PauseExperiment(
 	ctx context.Context, req *apiv1.PauseExperimentRequest,
 ) (resp *apiv1.PauseExperimentResponse, err error) {
 	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
-	if err != nil {
+	switch {
+	case err != nil:
 		return nil, status.Error(codes.Internal, err.Error())
-	}
-	if !ok {
+	case !ok:
 		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
 	}
 
