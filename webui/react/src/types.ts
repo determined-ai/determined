@@ -208,7 +208,7 @@ export interface TrialSummary {
   numBatches: number;
 }
 
-export interface Experiment {
+export interface Experiment extends Record<string, unknown> {
   archived: boolean;
   config: ExperimentConfig;
   endTime?: string;
