@@ -15,6 +15,7 @@ import { Log, LogLevel } from 'types';
 import { formatDatetime } from 'utils/date';
 import { ansiToHtml, copyToClipboard, toRem } from 'utils/dom';
 import { openBlank } from 'utils/routes';
+import { capitalize } from 'utils/string';
 
 import css from './LogViewer.module.scss';
 
@@ -72,9 +73,11 @@ export interface LogViewerHandles {
 const BUFFER_FACTOR = 1;
 
 // Format the datetime to...
-const DATETIME_FORMAT = '[[]YYYY-MM-DD, HH:mm:ss]';
+const DATETIME_PREFIX = '[';
+const DATETIME_SUFFIX = ']';
+const DATETIME_FORMAT = `[${DATETIME_PREFIX}]YYYY-MM-DD, HH:mm:ss${DATETIME_SUFFIX}`;
 
-// Max datetime size: [MMM DD, HH:mm:ss] (plus 1 for a space suffix)
+// Max datetime size: DATETIME_FORMAT (plus 1 for a space suffix)
 const MAX_DATETIME_LENGTH = 23;
 
 const ICON_WIDTH = 26;
@@ -345,7 +348,9 @@ const LogViewer: React.FC<Props> = forwardRef((
     const target = container.current;
     const handleCopy = (e: ClipboardEvent): void => {
       const clipboardFormat = 'text/plain';
-      const selection = window.getSelection()?.toString() || '';
+      const levelValues = Object.values(LogLevel).join('|');
+      const levelRegex = new RegExp(`<\\[(${levelValues})\\]>\n`, 'gim');
+      const selection = (window.getSelection()?.toString() || '').replace(levelRegex, '<$1> ');
       const lines = selection?.split('\n');
 
       if (lines?.length <= 1) {
@@ -372,11 +377,12 @@ const LogViewer: React.FC<Props> = forwardRef((
   }, []);
 
   const formatClipboardHeader = useCallback((log: Log): string => {
-    const format = `%${DATETIME_FORMAT.length}s `;
+    const format = `%${MAX_DATETIME_LENGTH - 1}s `;
+    const level = `<${log.level || ''}>`;
     const datetime = formatDatetime(log.time!, DATETIME_FORMAT);
     return props.disableLevel ?
       sprintf(format, datetime) :
-      sprintf(`${format} %-7s `, datetime, log.level || '');
+      sprintf(`%-9s ${format}`, level, datetime);
   }, [ props.disableLevel ]);
 
   const handleCopyToClipboard = useCallback(async () => {
@@ -456,19 +462,16 @@ const LogViewer: React.FC<Props> = forwardRef((
                 height: toRem(config.messageSizes[log.id]?.height),
                 top: toRem(config.messageSizes[log.id]?.top),
               }}>
-                {!props.disableLevel ?
-                  log.level !== LogLevel.Info ? (
-                    <Tooltip placement="top" title={log.level}>
-                      <div className={levelCss(css.level, log.level)} style={levelStyle}>
-                        <Icon name={log.level} size="small" />
-                      </div>
-                    </Tooltip>
-                  ) : (
-                    <div className={levelCss(css.level, log.level)} style={levelStyle} />
-                  ) : null
-                }
                 {!props.disableLineNumber &&
                   <div className={css.number} data-label={log.id + 1} style={lineNumberStyle} />}
+                {!props.disableLevel ? (
+                  <Tooltip placement="top" title={`Level: ${capitalize(log.level || '')}`}>
+                    <div className={levelCss(css.level, log.level)} style={levelStyle}>
+                      <div className={css.levelLabel}>&lt;[{log.level || ''}]&gt;</div>
+                      <Icon name={log.level} size="small" />
+                    </div>
+                  </Tooltip>
+                ) : null}
                 <div className={css.time} style={dateTimeStyle}>{log.formattedTime}</div>
                 <div
                   className={levelCss(css.message, log.level)}
