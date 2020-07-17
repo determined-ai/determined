@@ -11,7 +11,7 @@ import css from './ExperimentActions.module.scss';
 
 interface Props {
   experiment: ExperimentDetails;
-  finally: () => void; // A callback to trigger after an action is done.
+  onSettled: () => void; // A callback to trigger after an action is done.
 }
 
 enum Action {
@@ -25,7 +25,7 @@ enum Action {
 
 type ButtonLoadingStates = Record<Action, boolean>;
 
-const ExperimentActions: React.FC<Props> = ({ experiment, finally: updateFn }: Props) => {
+const ExperimentActions: React.FC<Props> = ({ experiment, onSettled: updateFn }: Props) => {
 
   const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
     Activate: false,
