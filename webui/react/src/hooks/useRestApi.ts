@@ -6,7 +6,7 @@ import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { decode } from 'ioTypes';
 import { isAuthFailure } from 'services/api';
 import { http, HttpOptions } from 'services/apiBuilder';
-import { clone } from 'utils/data';
+import { clone, isEqual } from 'utils/data';
 
 export enum ActionType {
   SetData,
@@ -45,8 +45,10 @@ type Output<T> = [
 
 const defaultReducer = <T>(state: State<T>, action: Action<T>): State<T> => {
   switch (action.type) {
-    case ActionType.SetData:
-      return { ...state, data: action.value, hasLoaded: true, isLoading: false };
+    case ActionType.SetData: {
+      const data = isEqual(action.value, state.data) ? state.data : action.value;
+      return { ...state, data, hasLoaded: true, isLoading: false };
+    }
     case ActionType.SetError:
       return {
         ...state,

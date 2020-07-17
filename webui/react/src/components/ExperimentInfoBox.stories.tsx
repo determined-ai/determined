@@ -26,6 +26,8 @@ const experimentDetails: ExperimentDetails = {
       },
       hparams: {},
       id: 1,
+      numBatches: 3400,
+      numSteps: 34,
       state: RunState.Completed,
     },
   ],

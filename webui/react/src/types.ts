@@ -204,6 +204,8 @@ export interface TrialSummary {
   id: number;
   state: RunState;
   bestAvailableCheckpoint?: Checkpoint;
+  numSteps: number;
+  numBatches: number;
 }
 
 export interface Experiment {
@@ -307,12 +309,3 @@ export interface Log {
   meta?: string;
   time?: string;
 }
-
-export const terminalCommandStates: Set<CommandState> = new Set([
-  CommandState.Terminated,
-]);
-
-export const terminalRunStates: Set<RunState> = new Set([
-  RunState.Errored,
-  RunState.Canceled,
-]);

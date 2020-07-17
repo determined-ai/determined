@@ -171,6 +171,8 @@ export const ioTrialSummary = io.type({
   best_available_checkpoint: io.union([ ioCheckpoint, io.null ]),
   hparams: io.any,
   id: io.number,
+  num_batches: io.number,
+  num_steps: io.number,
   state: runStatesIoType,
 });
 export type ioTypeTrialSummary = io.TypeOf<typeof ioTrialSummary>;
