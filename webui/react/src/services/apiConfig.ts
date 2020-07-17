@@ -10,7 +10,7 @@ import {
 import {
   CommandLogsParams, EmptyParams, ExperimentDetailsParams, ExperimentsParams,
   KillCommandParams, KillExpParams, LaunchTensorboardParams, LogsParams, PatchExperimentParams,
-  TrialLogsParams, TrialDetailsParams,
+  TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import {
   Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log,
