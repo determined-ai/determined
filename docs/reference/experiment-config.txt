@@ -524,9 +524,9 @@ created with the Determined CLI. It may contain the following fields:
     ``docker pull`` to every Determined agent host in the cluster. Users
     can customize environment variables for GPU vs. CPU agents differently by
     specifying a dict with two keys, ``cpu`` and ``gpu``. Defaults to
-    ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.14-cpu`` for CPU
+    ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu`` for CPU
     agents and
-    ``determinedai/environments:cuda-10-py-3.6.9-pytorch-1.4-tf-1.14-gpu`` for
+    ``determinedai/environments:cuda-10-py-3.6.9-pytorch-1.4-tf-1.15-gpu`` for
     GPU agents.
   - ``force_pull_image``: Forcibly pull the image from the Docker
     registry and bypass the Docker cache. Defaults to ``false``.

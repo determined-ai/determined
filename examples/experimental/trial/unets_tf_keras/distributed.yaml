@@ -25,4 +25,4 @@ min_validation_period: 10
 entrypoint: model_def:UNetsTrial
 environment:
   image:
-    gpu: "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.4.0"
+    gpu: "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.5.0"
