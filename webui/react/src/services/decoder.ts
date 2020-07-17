@@ -199,7 +199,6 @@ export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
   return {
     archived: ioType.archived,
     config: jsonToExperimentConfig(ioType.config),
-    configRaw: (data as any).config,
     endTime: ioType.end_time || undefined,
     id: ioType.id,
     ownerId: ioType.owner.id,

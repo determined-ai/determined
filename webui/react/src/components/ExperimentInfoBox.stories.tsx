@@ -24,6 +24,8 @@ const experimentDetails: ExperimentDetails = {
         trialId: 3,
         validationMetric: 0.023,
       },
+      numBatches: 3400,
+      numSteps: 34,
       hparams: {},
       id: 1,
       state: RunState.Completed,

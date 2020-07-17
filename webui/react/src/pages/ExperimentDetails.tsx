@@ -2,8 +2,8 @@ import { Breadcrumb, Space } from 'antd';
 import React, { useCallback } from 'react';
 import { useParams } from 'react-router';
 
-import ExperimentInfoBox from 'components/ExperimentInfoBox';
 import ExperimentActions from 'components/ExperimentActions';
+import ExperimentInfoBox from 'components/ExperimentInfoBox';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import Message from 'components/Message';
