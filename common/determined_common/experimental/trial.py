@@ -7,7 +7,7 @@ from determined_common.experimental import checkpoint
 class TrialReference:
     """
     Trial reference class used for querying relevant
-    :class:`determined.experimental.Checkpoint` instances.
+    :class:`~determined.experimental.Checkpoint` instances.
 
     Arguments:
         trial_id (int): the trial ID.

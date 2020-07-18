@@ -301,23 +301,25 @@ def create(
 
     Arguments:
         trial_def:
-            A class definition implementing the ``det.Trial`` interface.
+            A class definition implementing the :class:`determined.Trial`
+            interface.
 
         config:
             A dictionary representing the experiment configuration to be
             associated with the experiment.
 
         local:
-            A boolean indicating if training will happen locally. When
+            A boolean indicating if training should be done locally. When
             ``False``, the experiment will be submitted to the Determined
             cluster. Defaults to ``False``.
 
         test:
-            A boolean indicating if the experiment should be shortened to a
-            minimal loop of training, validation, and checkpointing.
-            ``test=True`` is useful quick iterating during model porting or
-            debugging because common errors will surface more quickly.
-            Defaults to ``False``.
+            A boolean indicating if the experiment should be shortened
+            to a minimal loop of training on a small amount of data,
+            performing validation, and checkpointing.  ``test=True`` is
+            useful for quick iteration during model porting or debugging
+            because common errors will surface more quickly.  Defaults
+            to ``False``.
 
         context_dir:
             A string filepath that defines the context directory. All model
@@ -327,19 +329,19 @@ def create(
             directory will be uploaded to the Determined cluster. The total
             size of this directory must be under 96 MB.
 
-            When ``local=True``, this argument is optional and assumed to be
-            the current working directory by default.
+            When ``local=True``, this argument is optional and defaults to
+            the current working directory.
 
         command:
             A list of strings that is used as the entrypoint of the training
             script in the Determined task environment. When executing this
-            function via a python script, this argument is inferred to be
+            function via a Python script, this argument is inferred to be
             ``sys.argv`` by default. When executing this function via IPython
             or Jupyter notebook, this argument is required.
 
-            Example: When creating an experiment by running "python train.py
-            --flag value", the default command is inferred as ["train.py",
-            "--flag", "value"].
+            Example: When creating an experiment by running ``python train.py
+            --flag value``, the default command is inferred as ``["train.py",
+            "--flag", "value"]``.
 
         master_url:
             An optional string to use as the Determined master URL when

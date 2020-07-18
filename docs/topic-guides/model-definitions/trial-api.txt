@@ -12,8 +12,7 @@ learning task the user wants to perform, like the model architecture to use or
 the validation metrics that should be computed.
 
 Determined provides versions of the Trial interface for each of the application
-frameworks it supports. Specifically, Determined currently supports three types
-of Trial interfaces encompassing three application frameworks:
+frameworks it supports:
 
 -  :ref:`pytorch-trial`
 -  :ref:`tf-keras-trial`

@@ -25,7 +25,14 @@ When training a ``tf.keras`` model, Determined provides a built-in training loop
 
 The Determined training loop will then invoke these functions automatically. These methods should be organized into a **trial class**, which is a user-defined Python class that inherits from :class:`determined.keras.TFKerasTrial`. The following sections walk through how to write your first trial class and then how to run a training job with Determined.
 
-The complete code for this tutorial can be found `here <https://github.com/determined-ai/determined/tree/master/examples/official/trial/fashion_mnist_tf_keras>`__. We suggest you follow along with the code as you read through this tutorial.
+The complete code for this tutorial can be downloaded here: :download:`fashion_mnist_tf_keras.tgz </examples/fashion_mnist_tf_keras.tgz>`. After downloading this file, open a terminal window, extract the file, and ``cd`` into the ``fashion_mnist_tf_keras`` directory:
+
+.. code::
+
+    tar xzvf fashion_mnist_tf_keras.tgz
+    cd fashion_mnist_tf_keras
+
+We suggest you follow along with the code as you read through this tutorial.
 
 Building a Trial Class
 ----------------------

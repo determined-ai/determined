@@ -74,7 +74,6 @@ Use the links below to start learning more about Determined's capabilities.
 
 - :ref:`pytorch-mnist-tutorial`
 - :ref:`tf-mnist-tutorial`
-- :ref:`tf-cifar-tutorial`
 - :ref:`tutorials_native-api`
 - :ref:`data-access`
 

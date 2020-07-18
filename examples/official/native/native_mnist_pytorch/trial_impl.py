@@ -1,6 +1,6 @@
 """
-This example demonstrates training a simple DNN with pytorch using the Determined
-Native API.
+This example demonstrates how to train a simple DNN with PyTorch using the
+Determined Native API.
 """
 import argparse
 import json

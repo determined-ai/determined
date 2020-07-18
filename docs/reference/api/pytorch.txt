@@ -147,8 +147,5 @@ To perform gradient clipping Determined provides two pre-made callback classes:
 Examples
 --------
 
--  `cifar10_cnn_pytorch <https://github.com/determined-ai/determined/tree/master/examples/official/trial/cifar10_cnn_pytorch>`_
-   (PyTorch ``Sequential`` model)
--  `mnist_pytorch <https://github.com/determined-ai/determined/tree/master/examples/official/trial/mnist_pytorch>`_
-   (two examples: PyTorch ``Sequential`` model and true multi-input
-   multi-output model)
+-  :download:`cifar10_cnn_pytorch.tgz </examples/cifar10_cnn_pytorch.tgz>`
+-  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`

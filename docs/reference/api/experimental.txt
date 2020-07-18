@@ -41,3 +41,12 @@ determined.experimental
     :members:
     :inherited-members:
     :member-order: bysource
+
+
+``Model``
+------------------
+
+.. autoclass:: determined.experimental.Model
+    :members:
+    :inherited-members:
+    :member-order: bysource
