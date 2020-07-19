@@ -8,13 +8,13 @@ on AWS.
 Overview
 ~~~~~~~~
 
-A master node (a single, non-GPU instance) manages the cluster, provisioning
-and terminating agent nodes dynamically as new workloads are started by users.
-The master stores metadata in an external database; using AWS Aurora or RDS is
-recommended. Users interact with the cluster by using a CLI or a visiting a WebUI
-hosted on the master. Nodes in the cluster communicate with one another over a
-Virtual Private Cloud (VPC); users interact with the master via a designed external port
-configured during installation.
+A master node (a single, non-GPU instance) manages the cluster, provisioning and
+terminating agent nodes dynamically as new workloads are started by users.  The
+master stores metadata in an external database; using AWS Aurora or RDS is
+recommended. Users interact with the cluster by using a CLI or a visiting the
+WebUI hosted on the master. Nodes in the cluster communicate with one another
+over a Virtual Private Cloud (VPC); users interact with the master via a
+designated external port configured during installation.
 
 .. image:: /assets/images/Determined-Cloud-Deployment-(Simple).png
 
@@ -29,13 +29,14 @@ Following the diagram, a standard execution would be:
 
 Architecture Details
 ~~~~~~~~~~~~~~~~~~~~
+
 This section provides details on the core resources, which are
 required to run Determined, and peripheral resources, which are optionally
 configurable based on user requirements.
 
-
 Core Resources
-~~~~~~~~~~~~~~
+--------------
+
 - **Master Node**: A single EC2 instance that:
 
   - hosts the Determined WebUI where users monitor their experiments
@@ -62,7 +63,8 @@ Core Resources
 
 
 Periphery Resources
-~~~~~~~~~~~~~~~~~~~
+-------------------
+
 - **Network/Subnetwork**: The Determined cluster runs in  an existing or newly created VPC.
 
 - **Elastic IP**: For production clusters, the master should have an associated elastic IP;
@@ -75,5 +77,5 @@ Periphery Resources
 Next Steps
 ~~~~~~~~~~
 
-See the :ref:`AWS installation<install-aws>` guide to see how to deploy a Determined
-cluster on AWS.
+The :ref:`AWS installation guide<install-aws>` describes how to deploy
+Determined on AWS.
