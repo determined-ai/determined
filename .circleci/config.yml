@@ -4,6 +4,7 @@ version: 2.1
 orbs:
   win: circleci/windows@2.3.0
   slack: circleci/slack@3.4.2
+  gke: circleci/gcp-gke@1.0.4
 
 executors:
   python-35:
@@ -368,6 +369,40 @@ commands:
           cluster-id: ${CLUSTER_ID}
       - wait-for-master:
           host: ${MASTER_HOST}
+
+  setup-gke-cluster:
+    parameters:
+      cluster-id:
+        type: string
+      det-version:
+        type: string
+      cluster-version:
+        type: string
+      machine-type:
+        type: string
+      num-machines:
+        type: integer
+        default: 1
+      gpu-type:
+        type: string
+      gpus-per-machine:
+        type: integer
+        default: 1
+    steps:
+      - set-cluster-id:
+          cluster-id: <<parameters.cluster-id>>
+      - gke/create-cluster:
+          cluster: ${CLUSTER_ID}
+          perform-login: true
+          additional-args: |
+            --cluster-version=<<parameters.cluster-version>> \
+            --machine-type=<<parameters.machine-type>> \
+            --num-nodes=<<parameters.num-machines>> \
+            --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> \
+            --region=us-west1 \
+            --node-locations=us-west1-b \
+            --scopes=storage-rw \
+            --image-type=UBUNTU
 
   install-webui-test-deps:
     steps:
@@ -969,6 +1004,38 @@ jobs:
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
 
+  test-e2e-gke:
+    parameters:
+      cluster-id-prefix:
+        type: string
+      cluster-version:
+        type: string
+        default: "1.16.12-gke.3"
+      machine-type:
+        type: string
+        default: "n1-standard-8"
+      num-machines:
+        type: integer
+        default: 1
+      gpu-type:
+        type: string
+        default: "nvidia-tesla-k80"
+      gpus-per-machine:
+        type: integer
+        default: 1
+    docker:
+      - image: determinedai/cimg-base:stable
+    steps:
+      - checkout
+      - setup-gke-cluster:
+          cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
+          det-version: ${CIRCLE_SHA1}
+          cluster-version: <<parameters.cluster-version>>
+          machine-type: <<parameters.machine-type>>
+          num-machines: <<parameters.num-machines>>
+          gpu-type: <<parameters.gpu-type>>
+          gpus-per-machine: <<parameters.gpus-per-machine>>
+
 
 workflows:
   lint:
@@ -1180,6 +1247,21 @@ workflows:
               cluster-id-prefix: ["e2e-gpu"]
               mark: ["e2e_gpu"]
               slack-mentions: ["${SLACK_USER_ID}"]
+
+      - request-k8-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-gke:
+          name: test-e2e-gke-single
+          context: gcp
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-gpu"]
+
 
   nightly:
     triggers:
