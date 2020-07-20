@@ -516,8 +516,7 @@ created with the Determined CLI. It may contain the following fields:
 .. _exp-environment:
 
 - ``environment``: Specifies the environment of the container that is
-  used by the experiment for training the model. Default values are in
-  bold.
+  used by the experiment for training the model.
 
   - ``image``: Specifies a Docker image to use when
     executing the command. The image must be available via
