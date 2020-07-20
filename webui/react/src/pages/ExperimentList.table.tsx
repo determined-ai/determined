@@ -1,8 +1,9 @@
 import { ColumnsType } from 'antd/lib/table';
+import React from 'react';
 
 import {
   actionsRenderer, experimentDescriptionRenderer, experimentProgressRenderer,
-  expermentDurationRenderer, startTimeRenderer, stateRenderer, userRenderer,
+  expermentDurationRenderer, relativeTimeRenderer, stateRenderer, userRenderer,
 } from 'components/Table';
 import { ExperimentItem } from 'types';
 import { alphanumericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
@@ -22,7 +23,8 @@ export const columns: ColumnsType<ExperimentItem> = [
   },
   {
     defaultSortOrder: 'descend',
-    render: startTimeRenderer,
+    render: (_: number, record: ExperimentItem): React.ReactNode =>
+      relativeTimeRenderer(new Date(record.startTime)),
     sorter: (a: ExperimentItem, b: ExperimentItem): number =>
       stringTimeSorter(a.startTime, b.startTime),
     title: 'Start Time',

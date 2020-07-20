@@ -1,7 +1,7 @@
 import { ColumnsType } from 'antd/lib/table';
 
 import {
-  actionsRenderer, startTimeRenderer, stateRenderer, taskIdRenderer,
+  actionsRenderer, relativeTimeRenderer, stateRenderer, taskIdRenderer,
   taskTypeRenderer, userRenderer,
 } from 'components/Table';
 import { CommandTask } from 'types';
@@ -26,9 +26,9 @@ export const columns: ColumnsType<CommandTask> = [
   },
   {
     defaultSortOrder: 'descend',
-    render: startTimeRenderer,
-    sorter: (a: CommandTask, b: CommandTask): number =>
-      stringTimeSorter(a.startTime, b.startTime),
+    render: (_: number, record: CommandTask): React.ReactNode =>
+      relativeTimeRenderer(new Date(record.startTime)),
+    sorter: (a: CommandTask, b: CommandTask): number => stringTimeSorter(a.startTime, b.startTime),
     title: 'Start Time',
   },
   {
