@@ -57,7 +57,7 @@ func StartGRPCServer(db *db.PgDB, srv proto.DeterminedServer, port int) error {
 }
 
 // RegisterHTTPProxy registers grpc-gateway with the master echo server.
-func RegisterHTTPProxy(e *echo.Echo, port int) error {
+func RegisterHTTPProxy(e *echo.Echo, port int, isDevelopment bool) error {
 	addr := fmt.Sprintf(":%d", port)
 	serverOpts := []runtime.ServeMuxOption{
 		runtime.WithMarshalerOption(jsonPretty,
@@ -72,6 +72,11 @@ func RegisterHTTPProxy(e *echo.Echo, port int) error {
 	err := proto.RegisterDeterminedHandlerFromEndpoint(context.Background(), mux, addr, opts)
 	if err != nil {
 		return err
+	}
+	if isDevelopment {
+		e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+			AllowOrigins: []string{"*"},
+		}))
 	}
 	e.Any("/api/v1/*", func(c echo.Context) error {
 		request := c.Request()
