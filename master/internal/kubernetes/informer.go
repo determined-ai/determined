@@ -18,7 +18,6 @@ type (
 // messages that are sent by the informer.
 type (
 	podStatusUpdate struct {
-		podName    string
 		updatedPod *k8sV1.Pod
 	}
 )
@@ -70,7 +69,7 @@ func (i *informer) startInformer(ctx *actor.Context) error {
 	for event := range watch.ResultChan() {
 		pod := event.Object.(*k8sV1.Pod)
 		ctx.Log().Debugf("informer got new pod event for pod: %s %s", pod.Name, pod.Status.Phase)
-		ctx.Tell(i.podsHandler, podStatusUpdate{podName: pod.Name, updatedPod: pod})
+		ctx.Tell(i.podsHandler, podStatusUpdate{updatedPod: pod})
 	}
 
 	ctx.Log().Warn("pod informer stopped unexpectedly")

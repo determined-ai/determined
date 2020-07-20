@@ -99,6 +99,10 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		}
 
 	case actor.ChildFailed:
+		if msg.Child == p.informer {
+			return errors.Errorf("pod informer failed")
+		}
+
 		if err := p.cleanupPodHandler(ctx, msg.Child); err != nil {
 			return err
 		}
@@ -175,9 +179,9 @@ func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
 }
 
 func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
-	ref, ok := p.podNameToPodHandler[msg.podName]
+	ref, ok := p.podNameToPodHandler[msg.updatedPod.Name]
 	if !ok {
-		ctx.Log().WithField("pod name", msg.podName).Warn(
+		ctx.Log().WithField("pod name", msg.updatedPod.Name).Warn(
 			"received pod status update for un-registered pod")
 		return
 	}

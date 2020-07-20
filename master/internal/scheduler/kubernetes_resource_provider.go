@@ -11,14 +11,11 @@ import (
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceProvider struct {
-	clusterID                string
-	namespace                string
-	slotsPerNode             int
-	masterServiceName        string
-	leaveKubernetesResources bool
-	proxy                    *actor.Ref
-	harnessPath              string
-	taskContainerDefaults    model.TaskContainerDefaultsConfig
+	clusterID             string
+	config                *KubernetesResourceProviderConfig
+	proxy                 *actor.Ref
+	harnessPath           string
+	taskContainerDefaults model.TaskContainerDefaultsConfig
 
 	tasksByHandler     map[*actor.Ref]*Task
 	tasksByID          map[TaskID]*Task
@@ -34,23 +31,17 @@ type kubernetesResourceProvider struct {
 // NewKubernetesResourceProvider initializes a new kubernetesResourceProvider.
 func NewKubernetesResourceProvider(
 	clusterID string,
-	namespace string,
-	slotsPerNode int,
-	masterServiceName string,
-	leaveKubernetesResources bool,
+	config *KubernetesResourceProviderConfig,
 	proxy *actor.Ref,
 	harnessPath string,
 	taskContainerDefaults model.TaskContainerDefaultsConfig,
 ) actor.Actor {
 	return &kubernetesResourceProvider{
-		clusterID:                clusterID,
-		namespace:                namespace,
-		slotsPerNode:             slotsPerNode,
-		masterServiceName:        masterServiceName,
-		leaveKubernetesResources: leaveKubernetesResources,
-		proxy:                    proxy,
-		harnessPath:              harnessPath,
-		taskContainerDefaults:    taskContainerDefaults,
+		clusterID:             clusterID,
+		config:                config,
+		proxy:                 proxy,
+		harnessPath:           harnessPath,
+		taskContainerDefaults: taskContainerDefaults,
 
 		tasksByHandler:     make(map[*actor.Ref]*Task),
 		tasksByID:          make(map[TaskID]*Task),
@@ -71,9 +62,9 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 			msg.System,
 			msg.Echo,
 			ctx.Self(),
-			k.namespace,
-			k.masterServiceName,
-			k.leaveKubernetesResources,
+			k.config.Namespace,
+			k.config.MasterServiceName,
+			k.config.LeaveKubernetesResources,
 		)
 
 		k.agent = newAgentState(sproto.AddAgent{Agent: podsActor})
@@ -162,20 +153,20 @@ func (k *kubernetesResourceProvider) scheduleTask(ctx *actor.Context, task *Task
 	numPods := 1
 	slotsPerNode := task.SlotsNeeded()
 	if task.SlotsNeeded() > 1 {
-		if k.slotsPerNode == 0 {
+		if k.config.SlotsPerNode == 0 {
 			ctx.Log().WithField("task-id", task.ID).Error(
 				"set slots_per_node > 0 to schedule tasks with slots")
 			return
 		}
 
-		if task.SlotsNeeded()%k.slotsPerNode != 0 {
+		if task.SlotsNeeded()%k.config.SlotsPerNode != 0 {
 			ctx.Log().WithField("task-id", task.ID).Error(
 				"task number of slots (%d) is not schedulable on the configured "+
-					"slots_per_node (%d)", task.SlotsNeeded(), k.slotsPerNode)
+					"slots_per_node (%d)", task.SlotsNeeded(), k.config.SlotsPerNode)
 			return
 		}
-		numPods = task.SlotsNeeded() / k.slotsPerNode
-		slotsPerNode = k.slotsPerNode
+		numPods = task.SlotsNeeded() / k.config.SlotsPerNode
+		slotsPerNode = k.config.SlotsPerNode
 	}
 
 	for pod := 0; pod < numPods; pod++ {
