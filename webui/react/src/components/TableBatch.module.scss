@@ -17,7 +17,7 @@
     padding-right: var(--theme-sizes-layout-big);
     position: absolute;
     width: 100%;
-    z-index: 2;
+    z-index: 1;
   }
   .container::before {
     background-color: var(--theme-colors-monochrome-17);
@@ -38,12 +38,11 @@
     background-color: var(--theme-colors-monochrome-17);
     bottom: 0;
     content: '';
-    height: calc(var(--theme-sizes-layout-medium) - 1);
+    height: calc(var(--theme-sizes-layout-medium) - 0.1rem);
     left: 3rem;
     position: absolute;
     transform: translateX(-50%);
     width: 3rem;
-    z-index: 1;
   }
   .actions {
     align-items: center;
@@ -56,7 +55,7 @@
     font-size: var(--theme-sizes-font-medium);
   }
   &.show {
-    height: 4rem;
+    height: 4.8rem;
     opacity: 1;
   }
 }

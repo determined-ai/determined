@@ -1,6 +1,6 @@
 import {
-  AnyTask, Command, CommandState, CommandType, Experiment, RecentCommandTask,
-  RecentExperimentTask, RecentTask, RunState,
+  AnyTask, Command, CommandState, CommandType, Experiment, ExperimentItem,
+  RecentCommandTask, RecentExperimentTask, RecentTask, RunState,
 } from 'types';
 
 /* Conversions to Tasks */
@@ -118,7 +118,7 @@ export const commandStateToLabel: {[key in CommandState]: string} = {
   [CommandState.Terminated]: 'Terminated',
 };
 
-export const isTaskKillable = (task: AnyTask): boolean => {
+export const isTaskKillable = (task: AnyTask | ExperimentItem): boolean => {
   return killableRunStates.includes(task.state as RunState)
     || killableCmdStates.includes(task.state as CommandState);
 };

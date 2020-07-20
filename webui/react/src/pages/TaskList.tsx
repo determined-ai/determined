@@ -1,5 +1,5 @@
-import { Button, Input, notification, Table } from 'antd';
-import axios from 'axios';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { Button, Input, Modal, Table } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
@@ -11,6 +11,7 @@ import TaskFilter from 'components/TaskFilter';
 import Auth from 'contexts/Auth';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Users from 'contexts/Users';
+import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useStorage from 'hooks/useStorage';
 import { killCommand } from 'services/api';
 import { ALL_VALUE, CommandTask, CommandType, TaskFilters } from 'types';
@@ -98,20 +99,36 @@ const TaskList: React.FC = () => {
 
   const handleBatchKill = useCallback(async () => {
     try {
-      const source = axios.CancelToken.source();
       const promises = selectedTasks.map(task => killCommand({
-        cancelToken: source.token,
         commandId: task.id,
         commandType: task.type,
       }));
       await Promise.all(promises);
     } catch (e) {
-      notification.warn({
-        description: 'Please try again later.',
-        message: 'Unable to Kill Selected Tasks',
+      handleError({
+        error: e,
+        level: ErrorLevel.Error,
+        message: e.message,
+        publicMessage: 'Please try again later.',
+        publicSubject: 'Unable to Kill Selected Tasks',
+        silent: false,
+        type: ErrorType.Server,
       });
     }
   }, [ selectedTasks ]);
+
+  const handleConfirmation = useCallback(() => {
+    Modal.confirm({
+      content: `
+        Are you sure you want to kill
+        all the eligible selected experiments?
+      `,
+      icon: <ExclamationCircleOutlined />,
+      okText: 'Kill',
+      onOk: handleBatchKill,
+      title: 'Confirm Batch Kill',
+    });
+  }, [ handleBatchKill ]);
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
@@ -119,8 +136,6 @@ const TaskList: React.FC = () => {
     onClick: canBeOpened(record) ? makeClickHandler(record.url as string) : undefined,
   }), []);
 
-  // TODO select and batch operation:
-  // https://ant.design/components/table/#components-table-demo-row-selection-and-operation
   return (
     <Page title="Tasks">
       <div className={css.base}>
@@ -142,7 +157,7 @@ const TaskList: React.FC = () => {
             danger
             disabled={!hasKillable}
             type="primary"
-            onClick={handleBatchKill}>Kill</Button>
+            onClick={handleConfirmation}>Kill</Button>
         </TableBatch>
         <Table
           columns={columns}
