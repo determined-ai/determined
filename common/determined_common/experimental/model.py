@@ -30,8 +30,7 @@ class Model:
         name (string): The name of the model.
         description (string, optional): The description of the model.
         creation_time (datetime): The time the model was created.
-        last_updated_time (datetime): The time the model was most recently
-            updated.
+        last_updated_time (datetime): The time the model was most recently updated.
         metadata (dict, optional): User defined metadata associated with the checkpoint.
         master (string, optional): The address of the Determined master instance.
     """
