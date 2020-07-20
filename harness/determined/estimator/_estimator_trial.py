@@ -639,6 +639,9 @@ class EstimatorTrialController(det.LoopTrialController):
             pathlib.Path(self.estimator._model_dir), self.is_chief
         )
 
+        # Reset the per-evaluation set of allgather ops in the context.
+        self.context.experimental._reset_allgather_ops()
+
         if not self.is_chief:
             return workload.Skipped()
 
