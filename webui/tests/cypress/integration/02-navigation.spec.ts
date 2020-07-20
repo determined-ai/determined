@@ -55,6 +55,11 @@ describe('Navigation', () => {
       cy.visit('/det/logs');
       cy.get(sectionTitleSelector).contains('Master Logs');
     });
+
+    it('path /det/trials/:id/logs should display Trial Logs', () => {
+      cy.visit('/det/trials/1/logs');
+      cy.get(sectionTitleSelector).contains('Logs for Trials');
+    });
   });
 
   describe('side menu buttons', () => {
