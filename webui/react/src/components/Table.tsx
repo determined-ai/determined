@@ -34,9 +34,9 @@ export const actionsRenderer: Renderer = (_, record) => {
 };
 
 export const relativeTimeRenderer = (date: Date): React.ReactNode => (
-  <span title={date.toLocaleString()}>
+  <Tooltip title={date.toLocaleString()}>
     <TimeAgo datetime={date} />
-  </span>
+  </Tooltip>
 );
 
 export const stateRenderer: Renderer = (_, record) => (
