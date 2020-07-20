@@ -117,7 +117,7 @@ class Model:
         version.
 
         Arguments:
-            checkpoint_uuid: The uuid to associate with the new model version.
+            checkpoint_uuid: The uuid to associated with the new model version.
         """
         resp = api.post(
             self._master,
