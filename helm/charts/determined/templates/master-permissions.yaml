@@ -24,8 +24,11 @@ rules:
     resources: ["services"]
     verbs: ["get"]
   - apiGroups: [""]
-    resources: ["pods"]
+    resources: ["pods", "events"]
     verbs: ["watch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["list"]
 
 
 ---

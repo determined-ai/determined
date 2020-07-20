@@ -43,16 +43,18 @@ checkpointStorage:
   # endpointUrl: <endpoint_url>
 
 # This is the number of GPUs there are per machine. Determined uses this information when
-# scheduling multi-GPU tasks. Multi-gpu (distributed training) tasks will be scheduled as
-# slotsPerTask / slotsPerNode separate pods (tasks sizes that are not divisible by slotsPerNode
-# are never scheduled.
+# scheduling multi-GPU tasks. Each multi-GPU (distributed training) task will be scheduled as
+# a set of `slotsPerTask / slotsPerNode` separate pods, with each pod assigned to `slotsPerNode` GPUs.
+# Tasks sizes that are not divisible by `slotsPerNode` are never scheduled. If you have a cluster of
+# different size nodes (e.g., 4 and 8 GPUs per node), set the `slotsPerNode` to the smallest
+# common denominator.
 slotsPerNode:
 
 # Memory and CPU requirements for the master instance should be adjusted for scale.
 masterCpuRequest: "4"
 masterMemRequest: "8Gi"
 
-## Configure the task container defaults. Tasks include trials, commands, tensorboards and more.
+## Configure the task container defaults. Tasks include trials, commands, tensorboards notebooks and shells.
 ## For all task containers, shm_size_bytes and network_mode are configurable. For trials, the
 ## network interface used by distributed (multi-machine) training and ports used by the NCCL and
 ## GLOO libraries during distributed training are configurable. These default to auto-discovery and
