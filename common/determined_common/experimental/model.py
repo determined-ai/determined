@@ -23,7 +23,16 @@ class ModelOrderBy(enum.Enum):
 
 class Model:
     """
-    Class representing a model. Contains methods for managing metadata.
+    Class representing a model. Contains methods for managing metadata and
+    model versions.
+
+    Arguments:
+        name (string): The name of the model.
+        description (string, optional): The description of the model.
+        creation_time (datetime): The time the model was created.
+        last_updated_time (datetime): The time the model was most recently updated.
+        metadata (dict, optional): User defined metadata associated with the checkpoint.
+        master (string, optional): The address of the Determined master instance.
     """
 
     def __init__(
@@ -48,7 +57,7 @@ class Model:
         model. If no version is specified the latest model version is returned.
 
         Arguments:
-            version (int, optional): the model version number requested.
+            version (int, optional): The model version number requested.
         """
         if version == 0:
             resp = api.get(
@@ -79,7 +88,7 @@ class Model:
         order by default.
 
         Arguments:
-            order_by (enum): a member of the ModelOrderBy enum.
+            order_by (enum): A member of the ModelOrderBy enum.
         """
         resp = api.get(
             self._master,
@@ -107,7 +116,7 @@ class Model:
         version.
 
         Arguments:
-            checkpoint_uuid: the uuid to associate with the new model version.
+            checkpoint_uuid: The uuid to associated with the new model version.
         """
         resp = api.post(
             self._master,
