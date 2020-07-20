@@ -8,19 +8,23 @@ import { sprintf } from 'sprintf-js';
 
 import Icon from 'components/Icon';
 import Section from 'components/Section';
+import Spinner from 'components/Spinner';
 import usePrevious from 'hooks/usePrevious';
 import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
 import { Log, LogLevel } from 'types';
 import { formatDatetime } from 'utils/date';
 import { ansiToHtml, copyToClipboard, toRem } from 'utils/dom';
 import { openBlank } from 'utils/routes';
+import { capitalize } from 'utils/string';
 
 import css from './LogViewer.module.scss';
 
 interface Props {
   debugMode?: boolean;
   disableLevel?: boolean;
+  disableLineNumber?: boolean;
   downloadUrl?: string;
+  isLoading?: boolean;
   noWrap?: boolean;
   ref?: React.Ref<LogViewerHandles>;
   title: string;
@@ -69,11 +73,12 @@ export interface LogViewerHandles {
 const BUFFER_FACTOR = 1;
 
 // Format the datetime to...
-const DATETIME_FORMAT = 'MMM DD, HH:mm:ss';
-const CLIPBOARD_FORMAT = 'YYYY-MM-DD, HH:mm:ss';
+const DATETIME_PREFIX = '[';
+const DATETIME_SUFFIX = ']';
+const DATETIME_FORMAT = `[${DATETIME_PREFIX}]YYYY-MM-DD, HH:mm:ss${DATETIME_SUFFIX}`;
 
-// Max datetime size: [MMM DD, HH:mm:ss] (plus 1 for a space suffix)
-const MAX_DATETIME_LENGTH = 19;
+// Max datetime size: DATETIME_FORMAT (plus 1 for a space suffix)
+const MAX_DATETIME_LENGTH = 23;
 
 const ICON_WIDTH = 26;
 
@@ -144,9 +149,12 @@ const LogViewer: React.FC<Props> = forwardRef((
      * Set the line number column width based on the character width.
      * Add one to account for the trailing space character.
      */
-    const maxLineNumber = logs.length === 0 ? 1000 : logs[logs.length - 1].id + 1;
-    const lineDigits = Math.ceil(Math.log(maxLineNumber) / Math.log(10)) + 1;
-    const lineNumberWidth = charRect.width * lineDigits;
+    let lineNumberWidth = 0;
+    if (!props.disableLineNumber) {
+      const maxLineNumber = logs.length === 0 ? 1000 : logs[logs.length - 1].id + 1;
+      const lineDigits = Math.ceil(Math.log(maxLineNumber) / Math.log(10)) + 1;
+      lineNumberWidth = charRect.width * lineDigits;
+    }
 
     /*
      * Set the datetime column width based on the character width.
@@ -191,7 +199,7 @@ const LogViewer: React.FC<Props> = forwardRef((
       messageWidth,
       totalContentHeight,
     };
-  }, [ props.disableLevel ]);
+  }, [ props.disableLevel, props.disableLineNumber ]);
 
   const addLogs = useCallback((addedLogs: Log[], prepend = false): void => {
     // Only process new logs that don't exist in the log viewer
@@ -320,19 +328,61 @@ const LogViewer: React.FC<Props> = forwardRef((
        * log entries.
        */
       setTimeout(() => {
-        if (!container.current) return;
+        if (!container.current || !scrollToInfo.logId) return;
         const top = config.messageSizes[scrollToInfo.logId].top;
         container.current.scrollTo({ top });
       });
     }
   }, [ config, scrollToInfo ]);
 
+  /*
+   * This overwrites the copy to clipboard event handler for the purpose of modifying the user
+   * selected content. By default when copying content from a collection of HTML elements, each
+   * element content will have a newline appended in the clipboard content. This handler will
+   * detect which lines within the copied content to be the timestamp content and strip out the
+   * newline from that field.
+   */
+  useLayoutEffect(() => {
+    if (!container.current) return;
+
+    const target = container.current;
+    const handleCopy = (e: ClipboardEvent): void => {
+      const clipboardFormat = 'text/plain';
+      const levelValues = Object.values(LogLevel).join('|');
+      const levelRegex = new RegExp(`<\\[(${levelValues})\\]>\n`, 'gim');
+      const selection = (window.getSelection()?.toString() || '').replace(levelRegex, '<$1> ');
+      const lines = selection?.split('\n');
+
+      if (lines?.length <= 1) {
+        e.clipboardData?.setData(clipboardFormat, selection);
+      } else {
+        const oddOrEven = lines.map(line => /^\[/.test(line) || /\]$/.test(line))
+          .reduce((acc, isTimestamp, index) => {
+            if (isTimestamp) acc[index % 2 === 0 ? 'even' : 'odd']++;
+            return acc;
+          }, { even: 0, odd: 0 });
+        const isEven = oddOrEven.even > oddOrEven.odd;
+        const content = lines.reduce((acc, line, index) => {
+          const skipNewline = (isEven && index % 2 === 0) || (!isEven && index % 2 === 1);
+          return acc + line + (skipNewline ? ' ' : '\n');
+        }, '');
+        e.clipboardData?.setData(clipboardFormat, content);
+      }
+      e.preventDefault();
+    };
+
+    target.addEventListener('copy', handleCopy);
+
+    return (): void => target?.removeEventListener('copy', handleCopy);
+  }, []);
+
   const formatClipboardHeader = useCallback((log: Log): string => {
-    const format = `%${CLIPBOARD_FORMAT.length}s `;
-    const datetime = formatDatetime(log.time!, CLIPBOARD_FORMAT);
+    const format = `%${MAX_DATETIME_LENGTH - 1}s `;
+    const level = `<${log.level || ''}>`;
+    const datetime = formatDatetime(log.time!, DATETIME_FORMAT);
     return props.disableLevel ?
       sprintf(format, datetime) :
-      sprintf(`${format} %-7s `, datetime, log.level || '');
+      sprintf(`%-9s ${format}`, level, datetime);
   }, [ props.disableLevel ]);
 
   const handleCopyToClipboard = useCallback(async () => {
@@ -402,12 +452,6 @@ const LogViewer: React.FC<Props> = forwardRef((
     return classes.join(' ');
   };
 
-  const addClipboardPrefix = (log: Log): string => {
-    const content = formatClipboardHeader(log);
-    const prefix = `<span class=${css.clipboard}>${content}</span>`;
-    return prefix + ansiToHtml(log.message);
-  };
-
   return (
     <div className={css.base} ref={baseRef}>
       <Section maxHeight options={logOptions} title={props.title}>
@@ -418,28 +462,25 @@ const LogViewer: React.FC<Props> = forwardRef((
                 height: toRem(config.messageSizes[log.id]?.height),
                 top: toRem(config.messageSizes[log.id]?.top),
               }}>
-                {!props.disableLevel ?
-                  log.level !== LogLevel.Info ? (
-                    <Tooltip placement="top" title={log.level}>
-                      <div className={levelCss(css.level, log.level)} style={levelStyle}>
-                        <Icon name={log.level} size="small" />
-                      </div>
-                    </Tooltip>
-                  ) : (
-                    <div className={levelCss(css.level, log.level)} style={levelStyle} />
-                  ) : null
-                }
-                <div className={css.number} style={lineNumberStyle}>{log.id + 1}</div>
-                <Tooltip placement="left" title={log.time || ''}>
-                  <div className={css.time} style={dateTimeStyle}>{log.formattedTime}</div>
-                </Tooltip>
+                {!props.disableLineNumber &&
+                  <div className={css.number} data-label={log.id + 1} style={lineNumberStyle} />}
+                {!props.disableLevel ? (
+                  <Tooltip placement="top" title={`Level: ${capitalize(log.level || '')}`}>
+                    <div className={levelCss(css.level, log.level)} style={levelStyle}>
+                      <div className={css.levelLabel}>&lt;[{log.level || ''}]&gt;</div>
+                      <Icon name={log.level} size="small" />
+                    </div>
+                  </Tooltip>
+                ) : null}
+                <div className={css.time} style={dateTimeStyle}>{log.formattedTime}</div>
                 <div
                   className={levelCss(css.message, log.level)}
-                  dangerouslySetInnerHTML={{ __html: addClipboardPrefix(log) }} />
+                  dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }} />
               </div>
             ))}
           </div>
           <div className={css.measure} ref={measure} />
+          {props.isLoading && <Spinner fillContainer />}
         </div>
         <Tooltip placement="topRight" title="Scroll to Latest Entry">
           <Button

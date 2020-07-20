@@ -15,12 +15,12 @@ interface Params {
   trialId: string;
 }
 
-const TAIL_SIZE = 10000;
+const TAIL_SIZE = 1000;
 
 const TrialLogs: React.FC = () => {
   const { trialId } = useParams<Params>();
   const id = parseInt(trialId);
-  const title = `Logs for Trial ${id}`;
+  const title = `Trial ${id} Logs`;
   const downloadServer = process.env.IS_DEV ? 'http://localhost:8080' : serverAddress();
   const downloadUrl = `${downloadServer}/trials/${id}/logs?format=raw`;
   const setUI = UI.useActionContext();
@@ -88,10 +88,12 @@ const TrialLogs: React.FC = () => {
   }, [ logIdRange, pollingLogsResponse.data ]);
 
   return (
-    <Page hideTitle title={title}>
+    <Page hideTitle maxHeight title={title}>
       <LogViewer
         disableLevel
+        disableLineNumber
         downloadUrl={downloadUrl}
+        isLoading={pollingLogsResponse.isLoading}
         noWrap
         ref={logsRef}
         title={title}
