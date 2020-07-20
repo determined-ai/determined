@@ -116,6 +116,9 @@ func registerConfig() {
 	registerString(flags, name("root"),
 		defaults.Root, "static file root directory")
 
+	registerBool(flags, name("development"),
+		defaults.Development, "enable the development mode")
+
 	registerBool(flags, name("telemetry", "enabled"),
 		defaults.Telemetry.Enabled, "enable telemetry")
 	registerString(flags, name("telemetry", "segment-master-key"),

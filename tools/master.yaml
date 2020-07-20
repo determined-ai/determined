@@ -17,3 +17,5 @@ db:
   password: postgres
 
 root: build
+
+development: true

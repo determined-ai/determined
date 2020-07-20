@@ -57,6 +57,7 @@ func DefaultConfig() *Config {
 			SegmentMasterKey: DefaultSegmentMasterKey,
 			SegmentWebUIKey:  DefaultSegmentWebUIKey,
 		},
+		Development: false,
 	}
 }
 
@@ -79,6 +80,7 @@ type Config struct {
 	HarnessPath           string                            `json:"harness_path"`
 	Root                  string                            `json:"root"`
 	Telemetry             TelemetryConfig                   `json:"telemetry"`
+	Development           bool                              `json:"development"`
 }
 
 // Printable returns a printable string.
