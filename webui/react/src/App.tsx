@@ -30,6 +30,7 @@ import { parseUrl } from 'utils/routes';
 import css from './App.module.scss';
 
 const AppView: React.FC = () => {
+  const analytics: SegmentAnalytics.AnalyticsJS | undefined = window.analytics;
   const { isAuthenticated, user } = Auth.useStateContext();
   const ui = UI.useStateContext();
   const cluster = ClusterOverview.useStateContext();
@@ -62,12 +63,12 @@ const AppView: React.FC = () => {
      * Check for analytics library and the validity of the segment key:
      * 32 characters composed of upper case letters, lower case letters and numbers 0-9.
      */
-    const lib = window.analytics || {};
-    if (lib.load && lib.identify && lib.page && info.telemetry.enabled &&
-        info.telemetry.segmentKey && /^[a-z0-9]{32}$/i.test(info.telemetry.segmentKey)) {
-      lib.load(info.telemetry.segmentKey);
-      lib.identify(info.clusterId);
-      lib.page();
+    if (analytics && analytics.load && analytics.identify && analytics.page &&
+        info.telemetry.enabled && info.telemetry.segmentKey &&
+        /^[a-z0-9]{32}$/i.test(info.telemetry.segmentKey)) {
+      analytics.load(info.telemetry.segmentKey);
+      analytics.identify(info.clusterId);
+      analytics.page();
     }
 
     // Check to make sure the WebUI version matches the platform version.
@@ -98,7 +99,7 @@ const AppView: React.FC = () => {
         placement: 'bottomRight',
       });
     }
-  }, [ info ]);
+  }, [ analytics, info ]);
 
   useEffect(() => {
     setUI({ opaque: true, type: UI.ActionType.ShowSpinner });
