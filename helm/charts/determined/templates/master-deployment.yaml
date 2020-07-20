@@ -23,12 +23,25 @@ spec:
       serviceAccount: determined-master-{{ .Release.Name }}
       containers:
       - name: determined-master-{{ .Release.Name }}
+        {{- if .Values.detVersion }}
+        # detVersion is used for CI to override the appVersion.
+        image: determinedai/determined-master:{{ .Values.detVersion }}
+        {{- else }}
         image: determinedai/determined-master:{{ required "A valid Chart.AppVersion entry required!" .Chart.AppVersion }}
+        {{- end }}
         imagePullPolicy: "Always"
         volumeMounts:
           - name: master-config
             mountPath: /etc/determined/
             readOnly: true
+        resources:
+          requests:
+            {{- if .Values.masterCpuRequest }}
+            cpu: {{ .Values.masterCpuRequest  | quote }}
+            {{- end }}
+            {{- if .Values.masterMemRequest }}
+            memory: {{ .Values.masterMemRequest  | quote }}
+            {{- end}}
       volumes:
         - name: master-config
           configMap:
