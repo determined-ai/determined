@@ -97,7 +97,7 @@ const ExperimentList: React.FC = () => {
     };
     for (let i = 0; i < selectedExperiments.length; i++) {
       const experiment = selectedExperiments[i];
-      const isArchivable = !experiment.archived && terminalRunStates.includes(experiment.state);
+      const isArchivable = !experiment.archived && terminalRunStates.has(experiment.state);
       const isCancelable = cancellableRunStates.includes(experiment.state);
       const isKillable = isTaskKillable(experiment);
       const isActivatable = experiment.state === RunState.Paused;
