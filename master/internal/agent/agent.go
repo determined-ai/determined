@@ -136,7 +136,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 			"container not assigned to agent: container %s", msg.ContainerLog.Container.ID))
 		ctx.Tell(ref, sproto.ContainerLog{
 			Container:   msg.ContainerLog.Container,
-			Timestamp:   msg.ContainerLog.Timestamp,
+			Timestamp:   &msg.ContainerLog.Timestamp,
 			PullMessage: msg.ContainerLog.PullMessage,
 			RunMessage:  msg.ContainerLog.RunMessage,
 			AuxMessage:  msg.ContainerLog.AuxMessage,

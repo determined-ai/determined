@@ -8,10 +8,9 @@ import (
 
 	"github.com/labstack/echo"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
-
 	"github.com/docker/docker/pkg/jsonmessage"
 
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/container"
 )
@@ -20,7 +19,7 @@ import (
 // It is used by the resource providers to communicate internally and with the task handlers.
 type ContainerLog struct {
 	Container container.Container
-	Timestamp time.Time
+	Timestamp *time.Time
 
 	PullMessage *jsonmessage.JSONMessage
 	RunMessage  *agent.RunMessage
@@ -50,8 +49,11 @@ func (c ContainerLog) String() string {
 		panic("unknown log message received")
 	}
 	shortID := c.Container.ID[:8]
-	timestamp := c.Timestamp.UTC().Format(time.RFC3339)
-	return fmt.Sprintf("[%s] %s [%s] || %s", timestamp, shortID, c.Container.State, msg)
+	timestamp := ""
+	if c.Timestamp != nil {
+		timestamp = fmt.Sprintf("[%s]", c.Timestamp.UTC().Format(time.RFC3339))
+	}
+	return fmt.Sprintf("%s %s [%s] || %s", timestamp, shortID, c.Container.State, msg)
 }
 
 // ContainerStateChanged notifies that the recipient container state has been transitioned.

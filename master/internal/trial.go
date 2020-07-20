@@ -741,10 +741,11 @@ func (t *trial) processContainerTerminated(
 
 	t.killAndRemoveSocket(ctx, scheduler.ContainerID(msg.Container.ID))
 
+	timeNow := time.Now()
 	exitMsg := msg.ContainerStopped.String()
 	t.processLog(ctx, sproto.ContainerLog{
 		Container:  msg.Container,
-		Timestamp:  time.Now(),
+		Timestamp:  &timeNow,
 		AuxMessage: &exitMsg,
 	})
 
