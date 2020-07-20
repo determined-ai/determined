@@ -75,7 +75,7 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
   to make a request and handle events one by one.
   Example:
   consumeStream<DetSwagger.V1TrialLogsResponse>(
-    DetSwagger.ExperimentsApiFetchParamCreator().determinedTrialLogs(1),
+    DetSwagger.ExperimentsApiFetchParamCreator().determinedTrialLogs(1, undefined, undefined, true),
     console.log,
   ).then(() => console.log('finished'));
 */
