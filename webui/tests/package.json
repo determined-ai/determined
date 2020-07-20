@@ -22,7 +22,11 @@
     "webpack": "^4.43.0"
   },
   "scripts": {
+    "postshrinkwrap": "npx npm-force-resolutions && npm install --ignore-scripts",
     "test": "make test",
     "lint": "eslint \"cypress/integration/**/*.{js,jsx,ts,tsx}\""
+  },
+  "resolutions": {
+    "lodash": "^4.17.19"
   }
 }
