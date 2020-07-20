@@ -5,6 +5,7 @@ orbs:
   win: circleci/windows@2.3.0
   slack: circleci/slack@3.4.2
   gke: circleci/gcp-gke@1.0.4
+  kubernetes: circleci/kubernetes@0.11.0
 
 executors:
   python-35:
@@ -394,6 +395,7 @@ commands:
       - gke/create-cluster:
           cluster: ${CLUSTER_ID}
           perform-login: true
+          install-kubectl: true
           additional-args: |
             --cluster-version=<<parameters.cluster-version>> \
             --machine-type=<<parameters.machine-type>> \
@@ -403,6 +405,8 @@ commands:
             --node-locations=us-west1-b \
             --scopes=storage-rw \
             --image-type=UBUNTU
+      - kubernetes/create-or-update-resource:
+          resource-file-path: .circleci/scripts/gpu-daemonset.yaml
 
   install-webui-test-deps:
     steps:
@@ -1253,7 +1257,7 @@ workflows:
           filters: *upstream-feature-branch
 
       - test-e2e-gke:
-          name: test-e2e-gke-single
+          name: test-e2e-gke-single-gpu
           context: gcp
           filters: *upstream-feature-branch
           requires:
