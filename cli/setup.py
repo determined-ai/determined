@@ -14,7 +14,7 @@ setup(
     python_requires=">=3.5",
     install_requires=[
         "argcomplete==1.9.4",
-        "gitpython==2.1.11",
+        "gitpython==3.1.3",
         "packaging==19.0",
         "pyOpenSSL>= 19.1.0",
         "python-dateutil==2.8.0",
