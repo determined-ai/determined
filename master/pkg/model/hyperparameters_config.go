@@ -8,6 +8,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
+// GlobalBatchSize is the name of the hyperparameter for global_batch_size.
+const GlobalBatchSize = "global_batch_size"
+
 // Hyperparameters holds a mapping from hyperparameter name to its configuration.
 type Hyperparameters map[string]Hyperparameter
 
@@ -20,6 +23,19 @@ func (h Hyperparameters) Each(f func(name string, param Hyperparameter)) {
 	sort.Strings(keys)
 	for _, k := range keys {
 		f(k, h[k])
+	}
+}
+
+// MaxGlobalBatchSize returns global_batch_size if it is a const or the max it can be if it is
+// variable.
+func (h Hyperparameters) MaxGlobalBatchSize() int {
+	switch hp := h[GlobalBatchSize]; {
+	case hp.ConstHyperparameter != nil:
+		return int(hp.ConstHyperparameter.Val.(float64))
+	case hp.IntHyperparameter != nil:
+		return hp.IntHyperparameter.Maxval
+	default:
+		panic("didn't find global_batch_size")
 	}
 }
 

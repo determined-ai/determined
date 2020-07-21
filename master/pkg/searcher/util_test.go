@@ -7,23 +7,37 @@ import (
 
 	"github.com/pkg/errors"
 	"gotest.tools/assert"
-	"gotest.tools/assert/cmp"
 
+	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
 )
 
 const defaultMetric = "metric"
 
-var defaultBatchesPerStep = model.DefaultExperimentConfig().BatchesPerStep
-
-func isExpected(actual, expected []Kind) bool {
+func isExpected(actual, expected []Runnable) bool {
 	if len(actual) != len(expected) {
 		return false
 	}
-	for i, v := range actual {
-		if v != expected[i] {
-			return false
+	for i, act := range actual {
+		switch act := act.(type) {
+		case Train:
+			op, ok := expected[i].(Train)
+			if !ok || op.Length != act.Length {
+				return false
+			}
+		case Validate:
+			_, ok := expected[i].(Validate)
+			if !ok {
+				return false
+			}
+		case Checkpoint:
+			_, ok := expected[i].(Checkpoint)
+			if !ok {
+				return false
+			}
+		default:
+			panic("trial had unexpected operation type")
 		}
 	}
 	return true
@@ -34,7 +48,7 @@ func checkSimulation(
 	method SearchMethod,
 	params model.Hyperparameters,
 	validation ValidationFunction,
-	expected [][]Kind,
+	expected [][]Runnable,
 ) {
 	search := NewSearcher(0, method, params)
 	actual, err := Simulate(search, new(int64), validation, true, defaultMetric)
@@ -42,20 +56,16 @@ func checkSimulation(
 
 	assert.Equal(t, len(actual.Results), len(expected))
 	for _, actualTrial := range actual.Results {
-		actualKinds := make([]Kind, 0, len(actualTrial))
-		for _, msg := range actualTrial {
-			actualKinds = append(actualKinds, msg.Workload.Kind)
-		}
 		found := false
 		for i, expectedTrial := range expected {
-			if isExpected(actualKinds, expectedTrial) {
+			if isExpected(actualTrial, expectedTrial) {
 				expected = append(expected[:i], expected[i+1:]...)
 				found = true
 				break
 			}
 		}
 		if !found {
-			t.Errorf("unexpected trial %+v not in %+v", actualKinds, expected)
+			t.Errorf("unexpected trial %+v not in %+v", actualTrial, expected)
 		}
 	}
 }
@@ -84,121 +94,122 @@ func checkReproducibility(
 		assert.Equal(t, len(w1), len(w2), "trial had different numbers of workloads between searchers")
 		for i := range w1 {
 			// We want to ignore the start and end time fields, so check the rest individually.
-			assert.Equal(t, w1[i].Type, w2[i].Type, "message type differed between searchers")
-			assert.Assert(t, cmp.DeepEqual(w1[i].RawMetrics, w2[i].RawMetrics),
-				"message metrics differed between searchers")
-			assert.Equal(t, w1[i].Workload, w2[i].Workload,
-				"message workload differed between searchers")
+			assert.Equal(t, w1[i], w2[i], "workload differed between searchers")
 		}
 	}
 }
 
-func toKinds(types string) (kinds []Kind) {
+func toOps(types string) (ops []Runnable) {
 	for _, unparsed := range strings.Fields(types) {
-		var kind Kind
-		switch char := string(unparsed[len(unparsed)-1]); char {
+		switch char := string(unparsed[0]); char {
 		case "C":
-			kind = CheckpointModel
-		case "S":
-			kind = RunStep
+			if len(unparsed) > 1 {
+				panic("invalid short-form op")
+			}
+			ops = append(ops, Checkpoint{})
 		case "V":
-			kind = ComputeValidationMetrics
-		}
-		count, err := strconv.Atoi(unparsed[:len(unparsed)-1])
-		if err != nil {
-			panic(err)
-		}
-		for i := 0; i < count; i++ {
-			kinds = append(kinds, kind)
+			if len(unparsed) > 1 {
+				panic("invalid short-form op")
+			}
+			ops = append(ops, Validate{})
+		default:
+			count, err := strconv.Atoi(unparsed[:len(unparsed)-1])
+			if err != nil {
+				panic(err)
+			}
+			switch unit := string(unparsed[len(unparsed)-1]); unit {
+			case "R":
+				ops = append(ops, Train{Length: model.NewLengthInRecords(count)})
+			case "B":
+				ops = append(ops, Train{Length: model.NewLengthInBatches(count)})
+			case "E":
+				ops = append(ops, Train{Length: model.NewLengthInEpochs(count)})
+			}
 		}
 	}
-	return kinds
+	return ops
 }
 
 type predefinedTrial struct {
-	Trains      map[int]bool
-	Validations map[int]float64
-	Checkpoints map[int]bool
-	EarlyExit   int
+	Ops        []Runnable
+	ValMetrics []float64
+	EarlyExit  *int
 }
 
-func newPredefinedTrial(
-	nsteps int, validations map[int]float64, checkpoints []int, earlyExit int,
-) predefinedTrial {
-	trainsMap := make(map[int]bool)
-	for i := 1; i <= nsteps; i++ {
-		trainsMap[i] = true
-	}
-
-	checkpointsMap := make(map[int]bool)
-	for _, i := range checkpoints {
-		checkpointsMap[i] = true
-	}
-
+func newPredefinedTrial(ops []Runnable, earlyExit *int, valMetrics []float64) predefinedTrial {
 	return predefinedTrial{
-		Trains:      trainsMap,
-		Validations: validations,
-		Checkpoints: checkpointsMap,
-		EarlyExit:   earlyExit,
+		Ops:        ops,
+		EarlyExit:  earlyExit,
+		ValMetrics: valMetrics,
 	}
 }
 
-func newEarlyExitPredefinedTrial(
-	validation float64, nsteps int, validations []int, checkpoints []int,
-) predefinedTrial {
-	validationsMap := make(map[int]float64)
-	for _, i := range validations {
-		validationsMap[i] = validation
+func newEarlyExitPredefinedTrial(ops []Runnable, valMetric float64) predefinedTrial {
+	var valMetrics []float64
+	for _, op := range ops {
+		if _, ok := op.(Validate); ok {
+			valMetrics = append(valMetrics, valMetric)
+		}
 	}
-	return newPredefinedTrial(nsteps, validationsMap, checkpoints, nsteps)
+	exitEarly := len(ops) - 1
+	return newPredefinedTrial(ops, &exitEarly, valMetrics)
 }
 
-func newConstantPredefinedTrial(
-	validation float64, nsteps int, validations []int, checkpoints []int,
-) predefinedTrial {
-	validationsMap := make(map[int]float64)
-	for _, i := range validations {
-		validationsMap[i] = validation
+func newConstantPredefinedTrial(ops []Runnable, valMetric float64) predefinedTrial {
+	var valMetrics []float64
+	for _, op := range ops {
+		if _, ok := op.(Validate); ok {
+			valMetrics = append(valMetrics, valMetric)
+		}
 	}
-	return newPredefinedTrial(nsteps, validationsMap, checkpoints, 0)
+	return newPredefinedTrial(ops, nil, valMetrics)
 }
 
-func (t *predefinedTrial) TrainForStep(stepID int) error {
-	if ok := t.Trains[stepID]; !ok {
-		return errors.Errorf("unexpected TrainForStep at step %v", stepID)
+func (t *predefinedTrial) Train(length model.Length, opIndex int) error {
+	if opIndex >= len(t.Ops) {
+		return errors.Errorf("ran out of expected ops trying to train")
 	}
-	delete(t.Trains, stepID)
-	return nil
-}
-
-func (t *predefinedTrial) ComputeValidationMetrics(stepID int) (float64, error) {
-	validation, ok := t.Validations[stepID]
+	tOp, ok := t.Ops[opIndex].(Train)
 	if !ok {
-		return 0, errors.Errorf("unexpected ComputeValidationMetrics at step %v", stepID)
+		return errors.Errorf("wanted %v", t.Ops[0])
 	}
-	delete(t.Validations, stepID)
-	return validation, nil
-}
-
-func (t *predefinedTrial) CheckpointModel(stepID int) error {
-	if ok := t.Checkpoints[stepID]; !ok {
-		return errors.Errorf("unexpected CheckpointModel at step %v", stepID)
+	if tOp.Length != length {
+		return errors.Errorf("wanted %s got %s", tOp.Length, length)
 	}
-	delete(t.Checkpoints, stepID)
 	return nil
 }
 
-func (t *predefinedTrial) CheckComplete() error {
-	for stepID := range t.Trains {
-		return errors.Errorf("did not receive TrainForStep expected at step %v", stepID)
+func (t *predefinedTrial) Validate(opIndex int) (float64, error) {
+	if opIndex >= len(t.Ops) {
+		return 0, errors.Errorf("ran out of expected ops trying to validate")
 	}
-	for stepID := range t.Validations {
-		return errors.Errorf("did not receive ComputeValidationMetrics expected at step %v", stepID)
+	if _, ok := t.Ops[opIndex].(Validate); !ok {
+		return 0, errors.Errorf("wanted %v", t.Ops[0])
 	}
-	for stepID := range t.Checkpoints {
-		return errors.Errorf("did not receive CheckpointModel expected at step %v", stepID)
+	valsSeen := 0
+	for idx := range t.Ops {
+		if idx == opIndex {
+			return t.ValMetrics[valsSeen], nil
+		}
+		if _, ok := t.Ops[idx].(Validate); ok {
+			valsSeen++
+		}
+	}
+	return 0, errors.New("ran out of metrics to return for validations")
+}
+
+func (t *predefinedTrial) Checkpoint(opIndex int) error {
+	if opIndex >= len(t.Ops) {
+		return errors.Errorf("ran out of expected ops trying to checkpoint")
+	}
+	if _, ok := t.Ops[opIndex].(Checkpoint); !ok {
+		return errors.Errorf("wanted %v", t.Ops[0])
 	}
 	return nil
+}
+
+func (t *predefinedTrial) CheckComplete(opIndex int) error {
+	return check.Equal(len(t.Ops), opIndex, "had ops %s left", t.Ops[opIndex:])
 }
 
 // checkValueSimulation will run a SearchMethod until completion, using predefinedTrials.
@@ -213,6 +224,7 @@ func checkValueSimulation(
 	var pending []Operation
 
 	trialIDs := map[RequestID]int{}
+	trialOpIdx := map[RequestID]int{}
 
 	ctx := context{
 		rand:    nprand.New(0),
@@ -227,17 +239,19 @@ func checkValueSimulation(
 	pending = append(pending, ops...)
 
 	for len(pending) > 0 {
-		var earlyExit bool
+		var exitEarly bool
+		var requestID RequestID
 		operation := pending[0]
 		pending = pending[1:]
 
 		switch operation := operation.(type) {
 		case Create:
-			requestID := operation.RequestID
+			requestID = operation.RequestID
 			if nextTrialID >= len(expectedTrials) {
 				return errors.Errorf("search method created too many trials")
 			}
 			trialIDs[requestID] = nextTrialID
+			trialOpIdx[requestID] = 0
 
 			ops, err = method.trialCreated(ctx, requestID)
 			if err != nil {
@@ -245,23 +259,25 @@ func checkValueSimulation(
 			}
 			nextTrialID++
 
-		case WorkloadOperation:
-			requestID := operation.RequestID
+		case Runnable:
+			requestID = operation.GetRequestID()
 			trialID := trialIDs[requestID]
 			trial := expectedTrials[trialID]
-			ops, err = simulateWorkloadComplete(ctx, method, trial, operation, requestID)
-			if trial.EarlyExit == operation.StepID {
-				earlyExit = true
+			if trial.EarlyExit != nil && trialOpIdx[requestID] == *trial.EarlyExit {
+				exitEarly = true
 			}
+			ops, err = simulateOperationComplete(ctx, method, trial, operation, trialOpIdx[requestID])
 			if err != nil {
-				return errors.Wrapf(err, "simulateWorkloadComplete for trial %v", trialID+1)
+				return errors.Wrapf(err, "simulateOperationComplete for trial %v", trialID+1)
 			}
+			trialOpIdx[requestID]++
 
 		case Close:
-			requestID := operation.RequestID
+			requestID = operation.RequestID
 			trialID := trialIDs[requestID]
 			trial := expectedTrials[trialID]
-			if err = trial.CheckComplete(); err != nil {
+			err = trial.CheckComplete(trialOpIdx[requestID])
+			if err != nil {
 				return errors.Wrapf(err, "trial %v closed before completion", trialID+1)
 			}
 
@@ -275,24 +291,12 @@ func checkValueSimulation(
 		}
 
 		pending = append(pending, ops...)
-		if earlyExit {
-			var requestID RequestID
-			switch operation := operation.(type) {
-			case WorkloadOperation:
-				requestID = operation.RequestID
-			default:
-				return errors.Errorf("unexpected early exit for: %s", operation)
-			}
-
+		if exitEarly {
 			var newPending []Operation
 			for _, op := range pending {
 				switch op := op.(type) {
-				case WorkloadOperation:
-					if op.RequestID != requestID {
-						newPending = append(newPending, op)
-					}
-				case Close:
-					if op.RequestID != requestID {
+				case Requested:
+					if op.GetRequestID() != requestID {
 						newPending = append(newPending, op)
 					}
 				default:
@@ -303,9 +307,9 @@ func checkValueSimulation(
 		}
 	}
 
-	for i, trial := range expectedTrials {
-		if err = trial.CheckComplete(); err != nil {
-			return errors.Wrapf(err, "incomplete trial %v", i+1)
+	for requestID, trialID := range trialIDs {
+		if err = expectedTrials[trialID].CheckComplete(trialOpIdx[requestID]); err != nil {
+			return errors.Wrapf(err, "incomplete trial %v", trialID+1)
 		}
 	}
 
@@ -316,7 +320,7 @@ func runValueSimulationTestCases(t *testing.T, testCases []valueSimulationTestCa
 	for _, testCase := range testCases {
 		tc := testCase
 		t.Run(tc.name, func(t *testing.T) {
-			method := NewSearchMethod(tc.config, defaultBatchesPerStep)
+			method := NewSearchMethod(tc.config)
 			err := checkValueSimulation(t, method, tc.hparams, tc.expectedTrials)
 			assert.NilError(t, err)
 		})
@@ -330,70 +334,58 @@ type valueSimulationTestCase struct {
 	config         model.SearcherConfig
 }
 
-func simulateWorkloadComplete(
+func simulateOperationComplete(
 	ctx context,
 	method SearchMethod,
 	trial predefinedTrial,
-	operation WorkloadOperation,
-	requestID RequestID,
+	operation Runnable,
+	opIndex int,
 ) ([]Operation, error) {
 	var ops []Operation
 	var err error
 
-	switch operation.Kind {
-	case RunStep:
-		if err = trial.TrainForStep(operation.StepID); err != nil {
-			return nil, errors.Wrap(err, "TrainForStep")
+	switch operation := operation.(type) {
+	case Train:
+		if err = trial.Train(operation.Length, opIndex); err != nil {
+			return nil, errors.Wrap(err, "error checking Train with predefinedTrial")
 		}
-		w := Workload{
-			Kind:   RunStep,
-			StepID: operation.StepID,
-		}
-		if trial.EarlyExit == operation.StepID {
-			ops, err = method.trialExitedEarly(ctx, requestID, w)
+
+		if trial.EarlyExit != nil && opIndex == *trial.EarlyExit {
+			ops, err = method.trialExitedEarly(ctx, operation.RequestID)
 		} else {
-			ops, err = method.trainCompleted(ctx, requestID, w)
+			ops, err = method.trainCompleted(ctx, operation.RequestID, operation)
 		}
 		if err != nil {
 			return nil, errors.Wrap(err, "trainCompleted")
 		}
 
-	case ComputeValidationMetrics:
-		var val float64
-		val, err = trial.ComputeValidationMetrics(operation.StepID)
-		if err != nil {
-			return nil, errors.Wrap(err, "ComputeValidationMetrics")
-		}
-		w := Workload{
-			Kind:   ComputeValidationMetrics,
-			StepID: operation.StepID,
+	case Validate:
+		val, vErr := trial.Validate(opIndex)
+		if vErr != nil {
+			return nil, errors.Wrap(err, "error checking Validate with predefinedTrial")
 		}
 		metrics := ValidationMetrics{
 			Metrics: map[string]interface{}{
 				"error": val,
 			},
 		}
-		ops, err = method.validationCompleted(ctx, requestID, w, metrics)
+		ops, err = method.validationCompleted(ctx, operation.RequestID, operation, metrics)
 		if err != nil {
 			return nil, errors.Wrap(err, "validationCompleted")
 		}
 
-	case CheckpointModel:
-		if err = trial.CheckpointModel(operation.StepID); err != nil {
-			return nil, errors.Wrap(err, "CheckpointModel")
-		}
-		w := Workload{
-			Kind:   CheckpointModel,
-			StepID: operation.StepID,
+	case Checkpoint:
+		if err = trial.Checkpoint(opIndex); err != nil {
+			return nil, errors.Wrap(err, "error checking Checkpoint with predefinedTrial")
 		}
 		metrics := CheckpointMetrics{}
-		ops, err = method.checkpointCompleted(ctx, requestID, w, metrics)
+		ops, err = method.checkpointCompleted(ctx, operation.RequestID, operation, metrics)
 		if err != nil {
 			return nil, errors.Wrap(err, "checkpointCompleted")
 		}
 
 	default:
-		return nil, errors.Errorf("invalid workload operation of kind %q", operation.Kind)
+		return nil, errors.Errorf("invalid runnable %q", operation)
 	}
 
 	return ops, nil

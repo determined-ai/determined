@@ -55,7 +55,6 @@ func convertSearcherEvent(id int, event searcher.Event) (
 	//  - We have a trial created
 	//  - We have computed validation metrics
 	var flush bool
-
 	switch event := event.(type) {
 	case searcher.TrialCreatedEvent:
 		createBytes, err := json.Marshal(event)
@@ -129,7 +128,7 @@ func saveWorkload(db *db.PgDB, w searcher.Workload) error {
 	case searcher.ComputeValidationMetrics:
 		return db.AddValidation(model.NewValidation(w.TrialID, w.StepID))
 	default:
-		return errors.Errorf("unexpected workload: %v", w)
+		return errors.Errorf("unexpected workload in saveWorkload: %v", w)
 	}
 }
 
@@ -142,7 +141,7 @@ func markWorkloadErrored(db *db.PgDB, w searcher.Workload) error {
 	case searcher.ComputeValidationMetrics:
 		return db.UpdateValidation(w.TrialID, w.StepID, model.ErrorState, nil)
 	default:
-		return errors.Errorf("unexpected workload: %v", w)
+		return errors.Errorf("unexpected workload in markWorkloadErrored: %v", w)
 	}
 }
 
@@ -163,6 +162,6 @@ func markWorkloadCompleted(db *db.PgDB, msg searcher.CompletedMessage) error {
 		return db.UpdateValidation(
 			msg.Workload.TrialID, msg.Workload.StepID, model.CompletedState, metrics)
 	default:
-		return errors.Errorf("unexpected workload: %v", msg.Workload)
+		return errors.Errorf("unexpected workload in markWorkloadCompleted: %v", msg.Workload)
 	}
 }

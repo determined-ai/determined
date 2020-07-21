@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// CompletedMessage is the wrapping message returned by the trial runner when a workload
+// CompletedMessage is the wrapping message returned by the trial runner when a workload`
 // is completed.
 type CompletedMessage struct {
 	Type              string          `json:"type"`
@@ -44,7 +44,7 @@ func (message *CompletedMessage) UnmarshalJSON(bytes []byte) error {
 	case ComputeValidationMetrics:
 		return json.Unmarshal(message.RawMetrics, &message.ValidationMetrics)
 	default:
-		return errors.Errorf("unexpected workload: %s", message.Workload.Kind)
+		return errors.Errorf("unexpected workload kind unmarshaling: %s", message.Workload)
 	}
 }
 

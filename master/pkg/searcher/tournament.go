@@ -1,19 +1,27 @@
 package searcher
 
+import (
+	"github.com/determined-ai/determined/master/pkg/model"
+)
+
 // tournamentSearch runs multiple search methods in tandem. Callbacks for completed operations
 // are sent to the originating search method that created the corresponding operation.
 type tournamentSearch struct {
-	subSearches        []SearchMethod
-	trialTable         map[RequestID]SearchMethod
-	workloadsCompleted map[SearchMethod]int
+	subSearches             []SearchMethod
+	subSearchUnitsCompleted map[SearchMethod]model.Length
+	trialTable              map[RequestID]SearchMethod
 }
 
 func newTournamentSearch(subSearches ...SearchMethod) *tournamentSearch {
-	return &tournamentSearch{
-		subSearches:        subSearches,
-		trialTable:         make(map[RequestID]SearchMethod),
-		workloadsCompleted: make(map[SearchMethod]int),
+	s := &tournamentSearch{
+		subSearches:             subSearches,
+		subSearchUnitsCompleted: make(map[SearchMethod]model.Length),
+		trialTable:              make(map[RequestID]SearchMethod),
 	}
+	for _, subSearch := range s.subSearches {
+		s.subSearchUnitsCompleted[subSearch] = model.NewLength(s.Unit(), 0)
+	}
+	return s
 }
 
 func (s *tournamentSearch) initialOperations(ctx context) ([]Operation, error) {
@@ -36,29 +44,27 @@ func (s *tournamentSearch) trialCreated(ctx context, requestID RequestID) ([]Ope
 }
 
 func (s *tournamentSearch) trainCompleted(
-	ctx context, requestID RequestID, message Workload,
+	ctx context, requestID RequestID, train Train,
 ) ([]Operation, error) {
 	subSearch := s.trialTable[requestID]
-	s.workloadsCompleted[subSearch]++
-	ops, err := subSearch.trainCompleted(ctx, requestID, message)
+	s.subSearchUnitsCompleted[subSearch] = s.subSearchUnitsCompleted[subSearch].Add(train.Length)
+	ops, err := subSearch.trainCompleted(ctx, requestID, train)
 	return s.markCreates(subSearch, ops), err
 }
 
 func (s *tournamentSearch) checkpointCompleted(
-	ctx context, requestID RequestID, message Workload, metrics CheckpointMetrics,
+	ctx context, requestID RequestID, checkpoint Checkpoint, metrics CheckpointMetrics,
 ) ([]Operation, error) {
 	subSearch := s.trialTable[requestID]
-	s.workloadsCompleted[subSearch]++
-	ops, err := subSearch.checkpointCompleted(ctx, requestID, message, metrics)
+	ops, err := subSearch.checkpointCompleted(ctx, requestID, checkpoint, metrics)
 	return s.markCreates(subSearch, ops), err
 }
 
 func (s *tournamentSearch) validationCompleted(
-	ctx context, requestID RequestID, message Workload, metrics ValidationMetrics,
+	ctx context, requestID RequestID, validate Validate, metrics ValidationMetrics,
 ) ([]Operation, error) {
 	subSearch := s.trialTable[requestID]
-	s.workloadsCompleted[subSearch]++
-	ops, err := subSearch.validationCompleted(ctx, requestID, message, metrics)
+	ops, err := subSearch.validationCompleted(ctx, requestID, validate, metrics)
 	return s.markCreates(subSearch, ops), err
 }
 
@@ -69,21 +75,23 @@ func (s *tournamentSearch) trialClosed(ctx context, requestID RequestID) ([]Oper
 	return s.markCreates(subSearch, ops), err
 }
 
-func (s *tournamentSearch) trialExitedEarly(
-	ctx context, requestID RequestID, message Workload,
-) ([]Operation, error) {
+func (s *tournamentSearch) trialExitedEarly(ctx context, requestID RequestID) ([]Operation, error) {
 	subSearch := s.trialTable[requestID]
-	ops, err := subSearch.trialExitedEarly(ctx, requestID, message)
+	ops, err := subSearch.trialExitedEarly(ctx, requestID)
 	return s.markCreates(subSearch, ops), err
 }
 
 // progress returns experiment progress as a float between 0.0 and 1.0.
-func (s *tournamentSearch) progress(int) float64 {
+func (s *tournamentSearch) progress(model.Length) float64 {
 	sum := 0.0
 	for _, subSearch := range s.subSearches {
-		sum += subSearch.progress(s.workloadsCompleted[subSearch])
+		sum += subSearch.progress(s.subSearchUnitsCompleted[subSearch])
 	}
 	return sum / float64(len(s.subSearches))
+}
+
+func (s *tournamentSearch) Unit() model.Unit {
+	return s.subSearches[0].Unit()
 }
 
 func (s *tournamentSearch) markCreates(subSearch SearchMethod, operations []Operation) []Operation {

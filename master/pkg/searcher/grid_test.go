@@ -107,18 +107,36 @@ func TestGridIntCountNegative(t *testing.T) {
 	assert.DeepEqual(t, actual, expected)
 }
 
-func TestGridSearcher(t *testing.T) {
-	actual := model.GridConfig{MaxSteps: 3}
+func TestGridSearcherRecords(t *testing.T) {
+	actual := model.GridConfig{MaxLength: model.NewLengthInRecords(19200)}
 	params := generateHyperparameters([]int{2, 1, 3})
-	expected := [][]Kind{
-		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
-		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
-		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
-		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
-		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
-		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
+	expected := [][]Runnable{
+		toOps("19200R V"), toOps("19200R V"), toOps("19200R V"),
+		toOps("19200R V"), toOps("19200R V"), toOps("19200R V"),
 	}
-	searchMethod := newGridSearch(actual, defaultBatchesPerStep)
+	searchMethod := newGridSearch(actual)
+	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
+}
+
+func TestGridSearcherBatches(t *testing.T) {
+	actual := model.GridConfig{MaxLength: model.NewLengthInBatches(300)}
+	params := generateHyperparameters([]int{2, 1, 3})
+	expected := [][]Runnable{
+		toOps("300B V"), toOps("300B V"), toOps("300B V"),
+		toOps("300B V"), toOps("300B V"), toOps("300B V"),
+	}
+	searchMethod := newGridSearch(actual)
+	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
+}
+
+func TestGridSearcherEpochs(t *testing.T) {
+	actual := model.GridConfig{MaxLength: model.NewLengthInEpochs(3)}
+	params := generateHyperparameters([]int{2, 1, 3})
+	expected := [][]Runnable{
+		toOps("3E V"), toOps("3E V"), toOps("3E V"),
+		toOps("3E V"), toOps("3E V"), toOps("3E V"),
+	}
+	searchMethod := newGridSearch(actual)
 	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
 }
 
@@ -127,15 +145,15 @@ func TestGridSearchMethod(t *testing.T) {
 		{
 			name: "test grid search method",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
-				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
-				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
-				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
-				newConstantPredefinedTrial(0.1, 3, []int{3}, nil),
-				newEarlyExitPredefinedTrial(.1, 3, nil, nil),
+				newConstantPredefinedTrial(toOps("300B V"), 0.1),
+				newConstantPredefinedTrial(toOps("300B V"), 0.1),
+				newConstantPredefinedTrial(toOps("300B V"), 0.1),
+				newConstantPredefinedTrial(toOps("300B V"), 0.1),
+				newConstantPredefinedTrial(toOps("300B V"), 0.1),
+				newEarlyExitPredefinedTrial(toOps("300B"), .1),
 			},
 			config: model.SearcherConfig{
-				GridConfig: &model.GridConfig{MaxSteps: 3},
+				GridConfig: &model.GridConfig{MaxLength: model.NewLengthInBatches(300)},
 			},
 			hparams: generateHyperparameters([]int{2, 1, 3}),
 		},

@@ -26,7 +26,8 @@ searcher:
   smaller_is_better: true
   name: random
   max_trials: {num_trials}
-  max_steps: 1
+  max_length:
+    batches: 100
 entrypoint: model_def:NoOpTrial
 """
 
@@ -46,7 +47,8 @@ searcher:
   smaller_is_better: true
   name: random
   max_trials: {num_trials}
-  max_steps: 1
+  max_length:
+    batches: 100
 entrypoint: model_def:NoOpTrial
 """
 
