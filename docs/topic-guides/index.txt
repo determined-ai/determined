@@ -43,6 +43,7 @@ The full list of our topic guides can be found below:
   effective-distributed-training
   experiment-lifecycle
   checkpoints
+  model-registry
   hp-tuning-defined
   hp-tuning-det/index
   model-definitions/index
