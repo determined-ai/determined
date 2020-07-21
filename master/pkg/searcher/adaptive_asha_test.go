@@ -3,8 +3,24 @@ package searcher
 import (
 	"testing"
 
+	"gotest.tools/assert"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 )
+
+func TestBracketMaxTrials(t *testing.T) {
+	assert.DeepEqual(t, getBracketMaxTrials(20, 3., []int{3, 2, 1}), []int{12, 5, 3})
+	assert.DeepEqual(t, getBracketMaxTrials(50, 3., []int{4, 3}), []int{35, 15})
+	assert.DeepEqual(t, getBracketMaxTrials(50, 4., []int{3, 2}), []int{37, 13})
+	assert.DeepEqual(t, getBracketMaxTrials(100, 4., []int{4, 3, 2}), []int{70, 22, 8})
+}
+
+func TestBracketMaxConcurrentTrials(t *testing.T) {
+	assert.DeepEqual(t, getBracketMaxConcurrentTrials(0, 3., []int{9, 3, 1}), []int{3, 3, 3})
+	assert.DeepEqual(t, getBracketMaxConcurrentTrials(11, 3., []int{9, 3, 1}), []int{4, 4, 3})
+	// We try to take advantage of the max degree of parallelism for the narrowest bracket.
+	assert.DeepEqual(t, getBracketMaxConcurrentTrials(0, 4., []int{40, 10}), []int{10, 10})
+}
 
 func TestAdaptiveASHASearcherReproducibility(t *testing.T) {
 	conf := model.AdaptiveASHAConfig{
