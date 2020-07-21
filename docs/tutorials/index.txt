@@ -24,3 +24,4 @@ The full list of our tutorials can be found below:
   data-access
   notebook-tutorial
   native-tf-keras/index
+  model-registry
