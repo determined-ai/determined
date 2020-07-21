@@ -2,8 +2,6 @@ import { Breadcrumb, Space } from 'antd';
 import React, { useCallback } from 'react';
 import { useParams } from 'react-router';
 
-import TrialActions from 'components/TrialActions';
-import TrialInfoBox from 'components/TrialInfoBox';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import Message from 'components/Message';
@@ -53,7 +51,7 @@ const TrialDetailsComp: React.FC = () => {
   }
 
   return (
-    <Page title={`Trial ${trial.data?.config.description}`}>
+    <Page title={`Trial ${trialId}`}>
       <Breadcrumb>
         <Breadcrumb.Item>
           <Space align="center" size="small">
@@ -65,11 +63,8 @@ const TrialDetailsComp: React.FC = () => {
           <span>{trialId}</span>
         </Breadcrumb.Item>
       </Breadcrumb>
-      <TrialActions trial={trial.data} onSettled={pollTrialDetails} />
-      <TrialInfoBox trial={trial.data} />
       <Section title="Chart" />
-      <Section title="Trials" />
-
+      <Section title="Steps" />
     </Page>
   );
 };
