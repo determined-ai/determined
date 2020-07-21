@@ -1119,6 +1119,29 @@ WHERE id = :id`, setClause(toUpdate)), trial)
 	return nil
 }
 
+// RollbackSearcherEvents rolls back the events for an experiment to the last step with a
+// checkpoint.
+func (db *PgDB) RollbackSearcherEvents(experimentID int) error {
+	_, err := db.sql.Exec(`
+DELETE FROM searcher_events se
+USING (
+    SELECT
+        (se.content->'msg'->'workload'->>'trial_id')::int trial_id,
+        max(CASE WHEN content->'msg'->'workload'->>'kind' = 'CHECKPOINT_MODEL'
+        THEN (se.content->'msg'->'workload'->>'step_id')::int ELSE 0 END) latest_checkpoint_id
+    FROM searcher_events se
+    GROUP BY trial_id
+	) lc
+WHERE experiment_id = $1
+    AND (se.content->'msg'->'workload'->>'trial_id')::int = lc.trial_id
+    AND (se.content->'msg'->'workload'->>'step_id')::int > lc.latest_checkpoint_id;
+	`, experimentID)
+	if err != nil {
+		return errors.Wrapf(err, "error rolling back events for experiment %d", experimentID)
+	}
+	return nil
+}
+
 // RollBackTrial deletes from the database all steps, checkpoints, and validations for the trial
 // that correspond to steps past lastStep.
 func (db *PgDB) RollBackTrial(id int, lastStep int) error {
@@ -1126,6 +1149,7 @@ func (db *PgDB) RollBackTrial(id int, lastStep int) error {
 	_, err := db.sql.Exec(`
 DELETE FROM steps
 WHERE trial_id = $1 AND id > $2
+   OR trial_id = $1 AND id = $2 AND state != 'COMPLETED'
 `, id, lastStep)
 	if err != nil {
 		return errors.Wrapf(err, "error rolling back trial %v to step %v", id, lastStep)

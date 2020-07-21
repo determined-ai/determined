@@ -75,13 +75,26 @@ func MustParse(s string) RequestID {
 	return parsed
 }
 
+// Requested is a convenience interface for operations that were requested by a searcher method
+// and thus have a RequestID.
+type Requested interface {
+	GetRequestID() RequestID
+}
+
+// Runnable represents any runnable operation. It acts as a sum type for Train, Validate,
+// Checkpoints and any future operations that the harness may run.
+type Runnable interface {
+	Requested
+	Runnable()
+}
+
 // Create a new trial for the search method.
 type Create struct {
 	RequestID RequestID `json:"request_id"`
 	// TrialSeed must be a value between 0 and 2**31 - 1.
 	TrialSeed             uint32                      `json:"trial_seed"`
 	Hparams               hparamSample                `json:"hparams"`
-	Checkpoint            *WorkloadOperation          `json:"checkpoint"`
+	Checkpoint            *Checkpoint                 `json:"checkpoint"`
 	WorkloadSequencerType model.WorkloadSequencerType `json:"workload_sequencer_type"`
 }
 
@@ -99,11 +112,10 @@ func NewCreate(
 // NewCreateFromCheckpoint initializes a new Create operation with a new request ID and the given
 // hyperparameters and checkpoint to initially load from.
 func NewCreateFromCheckpoint(
-	rand *nprand.State, s hparamSample, ckptRequestID RequestID, ckptStepID int,
+	rand *nprand.State, s hparamSample, checkpoint Checkpoint,
 	sequencerType model.WorkloadSequencerType,
 ) Create {
 	create := NewCreate(rand, s, sequencerType)
-	checkpoint := NewCheckpoint(ckptRequestID, ckptStepID)
 	create.Checkpoint = &checkpoint
 	return create
 }
@@ -117,45 +129,69 @@ func (create Create) String() string {
 	)
 }
 
-// WorkloadOperation encompasses the intent for a searcher to run a workload on a trial.
-type WorkloadOperation struct {
-	RequestID  RequestID `json:"request_id"`
-	Kind       Kind      `json:"kind"`
-	StepID     int       `json:"step_id"`
-	NumBatches int       `json:"num_batches"`
+// GetRequestID implemented Requested.
+func (create Create) GetRequestID() RequestID { return create.RequestID }
+
+// Train is an operation emitted by search methods to signal the trial train for a specified length.
+type Train struct {
+	RequestID RequestID
+	Length    model.Length
 }
 
-// NewTrain signals to a trial runner that it should run a training step.
-func NewTrain(requestID RequestID, stepID, numBatches int) WorkloadOperation {
-	return WorkloadOperation{
-		RequestID:  requestID,
-		Kind:       RunStep,
-		StepID:     stepID,
-		NumBatches: numBatches,
-	}
+// NewTrain returns a new train operation.
+func NewTrain(requestID RequestID, length model.Length) Train {
+	return Train{requestID, length}
 }
 
-// NewCheckpoint signals to the trial runner that the current model state should be checkpointed.
-func NewCheckpoint(requestID RequestID, stepID int) WorkloadOperation {
-	return WorkloadOperation{
-		RequestID: requestID,
-		Kind:      CheckpointModel,
-		StepID:    stepID,
-	}
+func (t Train) String() string {
+	return fmt.Sprintf("{Train %s, %s}", t.RequestID, t.Length)
 }
 
-// NewValidate signals to a trial runner it should compute validation metrics.
-func NewValidate(requestID RequestID, stepID int) WorkloadOperation {
-	return WorkloadOperation{
-		RequestID: requestID,
-		Kind:      ComputeValidationMetrics,
-		StepID:    stepID,
-	}
+// Runnable implements Runnable.
+func (t Train) Runnable() {}
+
+// GetRequestID implemented Requested.
+func (t Train) GetRequestID() RequestID { return t.RequestID }
+
+// Validate is an operation emitted by search methods to signal the trial to validate.
+type Validate struct {
+	RequestID RequestID
 }
 
-func (wo WorkloadOperation) String() string {
-	return fmt.Sprintf("{Workload %s %s, step %d}", wo.Kind, wo.RequestID, wo.StepID)
+// NewValidate returns a new validate operation.
+func NewValidate(requestID RequestID) Validate {
+	return Validate{requestID}
 }
+
+func (v Validate) String() string {
+	return fmt.Sprintf("{Validate %s}", v.RequestID)
+}
+
+// Runnable implements Runnable.
+func (v Validate) Runnable() {}
+
+// GetRequestID implemented Requested.
+func (v Validate) GetRequestID() RequestID { return v.RequestID }
+
+// Checkpoint is an operation emitted by search methods to signal the trial to checkpoint.
+type Checkpoint struct {
+	RequestID RequestID
+}
+
+// NewCheckpoint returns a new checkpoint operation.
+func NewCheckpoint(requestID RequestID) Checkpoint {
+	return Checkpoint{requestID}
+}
+
+func (c Checkpoint) String() string {
+	return fmt.Sprintf("{Checkpoint %s}", c.RequestID)
+}
+
+// Runnable implements Runnable.
+func (c Checkpoint) Runnable() {}
+
+// GetRequestID implemented Requested.
+func (c Checkpoint) GetRequestID() RequestID { return c.RequestID }
 
 // Close the trial with the given trial id.
 type Close struct {
@@ -172,6 +208,9 @@ func NewClose(requestID RequestID) Close {
 func (close Close) String() string {
 	return fmt.Sprintf("{Close %s}", close.RequestID)
 }
+
+// GetRequestID implemented Requested.
+func (close Close) GetRequestID() RequestID { return close.RequestID }
 
 // Shutdown marks the searcher as completed.
 type Shutdown struct {

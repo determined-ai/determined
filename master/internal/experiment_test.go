@@ -32,7 +32,7 @@ func testBestValidationCase(t *testing.T, smallerIsBetter bool, metrics []metric
 				Metrics: map[string]interface{}{"metric": metric.value},
 			},
 		}
-		isBest := exp.isBestValidation(msg)
+		isBest := exp.isBestValidation(*msg.ValidationMetrics)
 		assert.Equal(t, metric.isBest, isBest, "failed on metric value %f", metric.value)
 	}
 }

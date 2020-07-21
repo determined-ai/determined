@@ -40,7 +40,7 @@ class Workload:
         return hash((self.kind, self.experiment_id, self.trial_id, self.step_id))
 
     def __repr__(self) -> str:
-        extra = f" ({self.num_batches})" if self.kind == self.Kind.RUN_STEP else ""
+        extra = f" ({self.num_batches} Batches)" if self.kind == self.Kind.RUN_STEP else ""
         return f"<{self.kind.name}{extra}: ({self.experiment_id},{self.trial_id},{self.step_id})>"
 
     def __json__(self) -> Dict[str, Any]:

@@ -6,21 +6,33 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-func TestRandomSearcher(t *testing.T) {
-	actual := model.RandomConfig{MaxTrials: 4, MaxSteps: 3}
-	expected := [][]Kind{
-		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
-		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
-		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
-		{RunStep, RunStep, RunStep, ComputeValidationMetrics},
+func TestRandomSearcherRecords(t *testing.T) {
+	actual := model.RandomConfig{MaxTrials: 4, MaxLength: model.NewLengthInRecords(19200)}
+	expected := [][]Runnable{
+		toOps("19200R V"),
+		toOps("19200R V"),
+		toOps("19200R V"),
+		toOps("19200R V"),
 	}
-	search := newRandomSearch(actual, defaultBatchesPerStep)
+	search := newRandomSearch(actual)
+	checkSimulation(t, search, nil, ConstantValidation, expected)
+}
+
+func TestRandomSearcherBatches(t *testing.T) {
+	actual := model.RandomConfig{MaxTrials: 4, MaxLength: model.NewLengthInBatches(300)}
+	expected := [][]Runnable{
+		toOps("300B V"),
+		toOps("300B V"),
+		toOps("300B V"),
+		toOps("300B V"),
+	}
+	search := newRandomSearch(actual)
 	checkSimulation(t, search, nil, ConstantValidation, expected)
 }
 
 func TestRandomSearcherReproducibility(t *testing.T) {
-	conf := model.RandomConfig{MaxTrials: 4, MaxSteps: 3}
-	gen := func() SearchMethod { return newRandomSearch(conf, defaultBatchesPerStep) }
+	conf := model.RandomConfig{MaxTrials: 4, MaxLength: model.NewLengthInBatches(300)}
+	gen := func() SearchMethod { return newRandomSearch(conf) }
 	checkReproducibility(t, gen, nil, defaultMetric)
 }
 
@@ -29,14 +41,29 @@ func TestRandomSearchMethod(t *testing.T) {
 		{
 			name: "test random search method",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
-				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
-				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
-				newEarlyExitPredefinedTrial(.1, 5, nil, nil),
+				newConstantPredefinedTrial(toOps("500B V"), .1),
+				newConstantPredefinedTrial(toOps("500B V"), .1),
+				newConstantPredefinedTrial(toOps("500B V"), .1),
+				newEarlyExitPredefinedTrial(toOps("500B"), .1),
 			},
 			config: model.SearcherConfig{
 				RandomConfig: &model.RandomConfig{
-					MaxSteps:  5,
+					MaxLength: model.NewLengthInBatches(500),
+					MaxTrials: 4,
+				},
+			},
+		},
+		{
+			name: "test random search method with records",
+			expectedTrials: []predefinedTrial{
+				newConstantPredefinedTrial(toOps("32017R V"), .1),
+				newConstantPredefinedTrial(toOps("32017R V"), .1),
+				newConstantPredefinedTrial(toOps("32017R V"), .1),
+				newConstantPredefinedTrial(toOps("32017R V"), .1),
+			},
+			config: model.SearcherConfig{
+				RandomConfig: &model.RandomConfig{
+					MaxLength: model.NewLengthInRecords(32017),
 					MaxTrials: 4,
 				},
 			},
@@ -51,11 +78,11 @@ func TestSingleSearchMethod(t *testing.T) {
 		{
 			name: "test single search method",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(.1, 5, []int{5}, nil),
+				newConstantPredefinedTrial(toOps("500B V"), .1),
 			},
 			config: model.SearcherConfig{
 				SingleConfig: &model.SingleConfig{
-					MaxSteps: 5,
+					MaxLength: model.NewLengthInBatches(500),
 				},
 			},
 		},
