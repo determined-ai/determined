@@ -34,6 +34,7 @@ const experimentDetails: ExperimentDetails = {
       seed: 142,
       startTime: Date.now.toString(),
       state: RunState.Completed,
+      url: '/ui/trials/1',
     },
   ],
   username: 'hamid',

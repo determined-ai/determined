@@ -202,6 +202,7 @@ const ioToTrial = (io: ioTypeTrial): TrialItem => {
     seed: io.seed,
     startTime: io.start_time,
     state: io.state as RunState,// TODO add checkpoint decoder
+    url: `/ui/trials/${io.id}`,
   };
 };
 
@@ -227,7 +228,6 @@ export const jsonToTrialDetails = (data: unknown): TrialDetails => {
 
 export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
   const ioType = decode<ioTypeExperimentDetails>(ioExperimentDetails, data);
-  const batchTotal = 0;
   return {
     archived: ioType.archived,
     config: jsonToExperimentConfig(ioType.config),

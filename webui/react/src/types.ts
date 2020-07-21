@@ -221,12 +221,13 @@ export interface Checkpoint {
 
 export interface CheckpointDetail extends Checkpoint {
   batch: number;
-  experimentId: number;
+  experimentId?: number;
   trialId: number;
 }
 
 export interface TrialItem {
   bestAvailableCheckpoint?: Checkpoint;
+  bestValidationMetric?: number;
   endTime?: string;
   experimentId: number;
   hparams: Record<string, string>;
@@ -237,6 +238,7 @@ export interface TrialItem {
   seed: number;
   startTime: string;
   state: RunState;
+  url: string;
 }
 
 export interface Step {
