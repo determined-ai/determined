@@ -1,7 +1,7 @@
 import { ColumnsType } from 'antd/lib/table';
 
 import {
-  actionsRenderer, relativeTimeRenderer, stateRenderer, taskIdRenderer,
+  relativeTimeRenderer, stateRenderer, taskActionRenderer, taskIdRenderer,
   taskTypeRenderer, userRenderer,
 } from 'components/Table';
 import { CommandTask } from 'types';
@@ -43,7 +43,7 @@ export const columns: ColumnsType<CommandTask> = [
     title: 'User',
   },
   {
-    render: actionsRenderer,
+    render: taskActionRenderer,
     title: '',
   },
 ];

@@ -2,7 +2,7 @@ import { ColumnsType } from 'antd/lib/table';
 import React from 'react';
 
 import {
-  actionsRenderer, experimentDescriptionRenderer, experimentProgressRenderer,
+  experimentActionRenderer, experimentDescriptionRenderer, experimentProgressRenderer,
   expermentDurationRenderer, relativeTimeRenderer, stateRenderer, userRenderer,
 } from 'components/Table';
 import { ExperimentItem } from 'types';
@@ -58,7 +58,7 @@ export const columns: ColumnsType<ExperimentItem> = [
   },
   {
     align: 'right',
-    render: actionsRenderer,
+    render: experimentActionRenderer,
     title: '',
   },
 ];
