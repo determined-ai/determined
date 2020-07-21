@@ -23,7 +23,7 @@ setup(
         "packaging==19.0",
         "numpy>=1.16.2",
         "psutil",
-        "pyzmq==18.1.0",
+        "pyzmq>=18.1.0",
         "requests>=2.20.0",
         "simplejson==3.16.0",
         "determined-common==0.12.12.dev0",
