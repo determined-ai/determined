@@ -193,10 +193,23 @@ export interface Checkpoint {
   validationMetric? : number;
 }
 
+export interface Step {
+  id: number;
+  state: RunState;
+  startTime: string;
+  endTime?: string;
+}
+
 export interface TrialDetails {
   id: number;
   state: RunState;
   experimentId: number;
+  endTime?: string;
+  seed: number;
+  startTime: string;
+  steps: Step[];
+  warmStartCheckpointId?: number;
+
 }
 
 export interface TrialSummary {
