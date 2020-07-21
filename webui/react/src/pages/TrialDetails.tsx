@@ -63,6 +63,7 @@ const TrialDetailsComp: React.FC = () => {
           <span>{trialId}</span>
         </Breadcrumb.Item>
       </Breadcrumb>
+      <Section title="Info Box" />
       <Section title="Chart" />
       <Section title="Steps" />
     </Page>
