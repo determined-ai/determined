@@ -2,6 +2,7 @@ import { notification } from 'antd';
 import axios from 'axios';
 
 import history from 'routes/history';
+import { getAnalytics } from 'utils/analytics';
 import { clone, isAsyncFunction } from 'utils/data';
 import Logger, { LoggerInterface } from 'utils/Logger';
 import { listToStr } from 'utils/string';
@@ -105,9 +106,8 @@ const handleError = (e: DaError): DaError => {
   // TODO SEP handle transient failures? eg only take action IF.. (requires keeping state)
 
   // Report to segment.
-  if (window.analytics && window.analytics.track) { // analytics can be turned off
-    window.analytics.track(`EH:${e.level}`, e);
-  }
+  const analytics = getAnalytics();
+  if (analytics) analytics.track(`EH:${e.level}`, e);
 
   // TODO SEP capture a screenshot or more context (generate a call stack)?
   // https://stackblitz.com/edit/react-screen-capture?file=index.js
