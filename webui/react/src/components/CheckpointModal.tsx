@@ -41,7 +41,7 @@ const getStorageLocation = (config: ExperimentConfig, checkpoint: CheckpointDeta
 
 const renderRow = (label: string, content: React.ReactNode): React.ReactNode => {
   return (
-    <div className={css.row}>
+    <div className={css.row} key={label}>
       <div className={css.label}>{label}</div>
       <div className={css.content}>{content}</div>
     </div>
@@ -50,7 +50,7 @@ const renderRow = (label: string, content: React.ReactNode): React.ReactNode => 
 
 const renderResource = (resource: string, size: string): React.ReactNode => {
   return (
-    <div className={css.resource}>
+    <div className={css.resource} key={resource}>
       <div className={css.resourceName}>{resource}</div>
       <div className={css.resourceSpacer} />
       <div className={css.resourceSize}>{size}</div>
