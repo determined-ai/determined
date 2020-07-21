@@ -95,9 +95,11 @@ const handleError = (e: DaError): DaError => {
       case ErrorLevel.Fatal:
       case ErrorLevel.Error:
         targetLogger.error(msg);
+        e.error && targetLogger.error(e.error);
         break;
       case ErrorLevel.Warn:
         targetLogger.warn(msg);
+        e.error && targetLogger.warn(e.error);
         break;
     }
   }
