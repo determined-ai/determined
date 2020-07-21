@@ -1,6 +1,7 @@
 import { Button, notification } from 'antd';
 import React, { useCallback, useEffect } from 'react';
 
+import { setupAnalytics } from 'Analytics';
 import NavBar from 'components/NavBar';
 import Router from 'components/Router';
 import SideBar from 'components/SideBar';
@@ -24,7 +25,6 @@ import { appRoutes } from 'routes';
 import { getInfo } from 'services/api';
 import { EmptyParams } from 'services/types';
 import { DeterminedInfo } from 'types';
-import { setupAnalytics } from 'utils/analytics';
 import { updateFaviconType } from 'utils/browser';
 import { parseUrl } from 'utils/routes';
 

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 
-import { recordPageAccess } from 'utils/analytics';
+import { recordPageAccess } from 'Analytics';
 
 const useRouteTracker = (): void => {
   const { listen, location } = useHistory();

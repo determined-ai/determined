@@ -1,8 +1,8 @@
 import { notification } from 'antd';
 import axios from 'axios';
 
+import { getAnalytics } from 'Analytics';
 import history from 'routes/history';
-import { getAnalytics } from 'utils/analytics';
 import { clone, isAsyncFunction } from 'utils/data';
 import Logger, { LoggerInterface } from 'utils/Logger';
 import { listToStr } from 'utils/string';

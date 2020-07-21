@@ -35,7 +35,7 @@ const getReadyAnalytics = (): SegmentAnalytics.AnalyticsJS | undefined => {
       return acc;
     }, {} as Record<string, boolean>);
 
-    const methods: string[] = analytics.methods || [];
+    const methods: string[] = [ ...(analytics.methods || []), 'identify', 'load', 'page' ];
     const missingMethods = methods.some(method => keys[method] === undefined);
     if (!missingMethods) {
       data.analytics = analytics;
@@ -53,10 +53,11 @@ export const setupAnalytics = (info: DeterminedInfo): void => {
    * Segment key should be 32 characters composed of upper case letters,
    * lower case letters and numbers 0-9.
    */
-  const isEnabled = info.telemetry.enabled;
-  const isValidKey = info.telemetry.segmentKey && /^[a-z0-9]{32}$/i.test(info.telemetry.segmentKey);
-  if (isEnabled && isValidKey) {
-    data.analytics.load(info.telemetry.segmentKey || '');
+  const telemetry = info.telemetry;
+  const isEnabled = telemetry.enabled;
+  const isProperKey = telemetry.segmentKey && /^[a-z0-9]{32}$/i.test(telemetry.segmentKey);
+  if (isEnabled && isProperKey) {
+    data.analytics.load(telemetry.segmentKey || '');
     data.analytics.identify(info.clusterId);
     data.isEnabled = true;
   }
