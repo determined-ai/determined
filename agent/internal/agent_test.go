@@ -20,18 +20,7 @@ func TestNoAddProxy(t *testing.T) {
 
 	testAgent.addProxy(&inputEnv)
 
-	output := set.New()
-	correct := set.New()
-
-	for _, v := range inputEnv.Env {
-		output.Insert(v)
-	}
-
-	for _, v := range ans {
-		correct.Insert(v)
-	}
-
-	if diff := output.Difference(correct); diff.Len() != 0 {
+	if !compareSlices(inputEnv.Env, ans) {
 		t.Errorf("Expected: %v But got: %v", ans, inputEnv.Env)
 	}
 }
@@ -58,18 +47,7 @@ func TestAddProxy(t *testing.T) {
 
 	testAgent.addProxy(&inputEnv)
 
-	output := set.New()
-	correct := set.New()
-
-	for _, v := range inputEnv.Env {
-		output.Insert(v)
-	}
-
-	for _, v := range ans {
-		correct.Insert(v)
-	}
-
-	if diff := output.Difference(correct); diff.Len() != 0 {
+	if !compareSlices(inputEnv.Env, ans) {
 		t.Errorf("Expected: %v But got: %v", ans, inputEnv.Env)
 	}
 }
@@ -90,10 +68,16 @@ func TestAlreadyAddedProxy(t *testing.T) {
 
 	testAgent.addProxy(&inputEnv)
 
+	if !compareSlices(inputEnv.Env, ans) {
+		t.Errorf("Expected: %v But got: %v", ans, inputEnv.Env)
+	}
+}
+
+func compareSlices(env []string, ans []string) bool {
 	output := set.New()
 	correct := set.New()
 
-	for _, v := range inputEnv.Env {
+	for _, v := range env {
 		output.Insert(v)
 	}
 
@@ -102,6 +86,7 @@ func TestAlreadyAddedProxy(t *testing.T) {
 	}
 
 	if diff := output.Difference(correct); diff.Len() != 0 {
-		t.Errorf("Expected: %v But got: %v", ans, inputEnv.Env)
+		return false
 	}
+	return true
 }

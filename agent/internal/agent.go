@@ -40,19 +40,16 @@ type agent struct {
 
 func (a *agent) addProxy(config *container.Config) {
 	addVars := map[string]string{
-		"HTTP_PROXY": a.Options.HTTPProxy, "HTTPS_PROXY": a.Options.HTTPSProxy,
-		"FTP_PROXY": a.Options.FTPProxy, "NO_PROXY": a.Options.NoProxy,
+		"HTTP_PROXY":  a.Options.HTTPProxy,
+		"HTTPS_PROXY": a.Options.HTTPSProxy,
+		"FTP_PROXY":   a.Options.FTPProxy,
+		"NO_PROXY":    a.Options.NoProxy,
 	}
 
 	for _, v := range config.Env {
 		key := strings.SplitN(v, "=", 2)[0]
-		_, ok := addVars[key]
-		if ok {
-			delete(addVars, key)
-		}
-
 		key = strings.ToUpper(key)
-		_, ok = addVars[key]
+		_, ok := addVars[key]
 		if ok {
 			delete(addVars, key)
 		}
