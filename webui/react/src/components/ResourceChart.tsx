@@ -78,7 +78,7 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
             size: 20,
           },
           showarrow: false,
-          text: title,
+          text: `${title} (${resources.length})`,
           x: 0.5,
           y: 0.5,
         },
