@@ -2,8 +2,8 @@ import { Breadcrumb, Space } from 'antd';
 import React, { useCallback } from 'react';
 import { useParams } from 'react-router';
 
-import ExperimentActions from 'components/ExperimentActions';
-import ExperimentInfoBox from 'components/ExperimentInfoBox';
+import TrialActions from 'components/TrialActions';
+import TrialInfoBox from 'components/TrialInfoBox';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import Message from 'components/Message';
@@ -12,35 +12,35 @@ import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
-import { getExperimentDetails, isNotFound } from 'services/api';
-import { ExperimentDetailsParams } from 'services/types';
-import { ExperimentDetails } from 'types';
+import { getTrialDetails, isNotFound } from 'services/api';
+import { TrialDetailsParams } from 'services/types';
+import { TrialDetails } from 'types';
 
 interface Params {
-  experimentId: string;
+  trialId: string;
 }
 
 const TrialDetailsComp: React.FC = () => {
-  const { experimentId: experimentIdParam } = useParams<Params>();
-  const experimentId = parseInt(experimentIdParam);
-  const [ experiment, setExpRequestParams ] =
-  useRestApiSimple<ExperimentDetailsParams, ExperimentDetails>(
-    getExperimentDetails, { id: experimentId });
-  const pollExperimentDetails = useCallback(() => setExpRequestParams({ id: experimentId }),
-    [ setExpRequestParams, experimentId ]);
-  usePolling(pollExperimentDetails);
+  const { trialId: trialIdParam } = useParams<Params>();
+  const trialId = parseInt(trialIdParam);
+  const [ trial, setExpRequestParams ] =
+  useRestApiSimple<TrialDetailsParams, TrialDetails>(
+    getTrialDetails, { id: trialId });
+  const pollTrialDetails = useCallback(() => setExpRequestParams({ id: trialId }),
+    [ setExpRequestParams, trialId ]);
+  usePolling(pollTrialDetails);
 
-  if (isNaN(experimentId)) {
+  if (isNaN(trialId)) {
     return (
       <Page hideTitle title="Not Found">
-        <Message>Bad experiment ID {experimentIdParam}</Message>
+        <Message>Bad trial ID {trialIdParam}</Message>
       </Page>
     );
   }
 
-  if (experiment.error !== undefined) {
-    const message = isNotFound(experiment.error) ? `Experiment ${experimentId} not found.`
-      : `Failed to fetch experiment ${experimentId}.`;
+  if (trial.error !== undefined) {
+    const message = isNotFound(trial.error) ? `Trial ${trialId} not found.`
+      : `Failed to fetch trial ${trialId}.`;
     return (
       <Page hideTitle title="Not Found">
         <Message>{message}</Message>
@@ -48,25 +48,25 @@ const TrialDetailsComp: React.FC = () => {
     );
   }
 
-  if (!experiment.data) {
+  if (!trial.data) {
     return <Spinner fillContainer />;
   }
 
   return (
-    <Page title={`Experiment ${experiment.data?.config.description}`}>
+    <Page title={`Trial ${trial.data?.config.description}`}>
       <Breadcrumb>
         <Breadcrumb.Item>
           <Space align="center" size="small">
-            <Icon name="experiment" size="small" />
-            <Link path="/det/experiments">Experiments</Link>
+            <Icon name="trial" size="small" />
+            <Link path="/det/trials">Trials</Link>
           </Space>
         </Breadcrumb.Item>
         <Breadcrumb.Item>
-          <span>{experimentId}</span>
+          <span>{trialId}</span>
         </Breadcrumb.Item>
       </Breadcrumb>
-      <ExperimentActions experiment={experiment.data} onSettled={pollExperimentDetails} />
-      <ExperimentInfoBox experiment={experiment.data} />
+      <TrialActions trial={trial.data} onSettled={pollTrialDetails} />
+      <TrialInfoBox trial={trial.data} />
       <Section title="Chart" />
       <Section title="Trials" />
 
