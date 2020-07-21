@@ -24,6 +24,7 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: [ 'import', 'react', 'react-hooks', 'sort-keys-fix' ],
+  root: true,
   rules: {
     '@typescript-eslint/explicit-module-boundary-types': [ 'warn', {
       allowArgumentsExplicitlyTypedAsAny: true,
