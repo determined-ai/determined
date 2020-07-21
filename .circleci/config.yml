@@ -470,6 +470,7 @@ commands:
           echo "export MASTER_HOST=\"${MASTER_HOST}\"" >> $BASH_ENV
 
   set-master-address-gke:
+    description: "Get Determined Master IP"
     parameters:
       release-name:
         type: string
@@ -481,6 +482,14 @@ commands:
           --output jsonpath='{.status.loadBalancer.ingress[0].ip}')
           echo "export MASTER_HOST=\"${MASTER_HOST}\"" >> $BASH_ENV
           echo "${MASTER_HOST}"
+
+  set-google-application-credentials:
+    steps:
+      - run:
+          name: Set Google Application Credentials
+          command: |
+            GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gcloud-service-key.json
+            echo "export GOOGLE_APPLICATION_CREDENTIALS=\"${GOOGLE_APPLICATION_CREDENTIALS}\"" >> $BASH_ENV
 
   set-cluster-id:
     parameters:
@@ -1040,6 +1049,11 @@ jobs:
     parameters:
       cluster-id-prefix:
         type: string
+      mark:
+        type: string
+      parallelism:
+        type: integer
+        default: 1
       cluster-version:
         type: string
         default: "1.16.12-gke.3"
@@ -1055,10 +1069,25 @@ jobs:
       gpus-per-machine:
         type: integer
         default: 1
+      slack-mentions:
+        type: string
+        default: ""
+      slack-channel:
+        type: string
+        default: ""
     docker:
       - image: determinedai/cimg-base:stable
+    parallelism: <<parameters.parallelism>>
     steps:
       - checkout
+      - set-slack-user-id
+      - setup-python-venv:
+          determined-common: true
+          determined-cli: true
+          determined: true
+          determined-deploy: true
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          executor: determinedai/cimg-base:stable
       - setup-gke-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
@@ -1067,7 +1096,15 @@ jobs:
           num-machines: <<parameters.num-machines>>
           gpu-type: <<parameters.gpu-type>>
           gpus-per-machine: <<parameters.gpus-per-machine>>
-
+      - set-google-application-credentials
+      - run-e2e-tests:
+          mark: <<parameters.mark>>
+          master-host: ${MASTER_HOST}
+      - slack/status:
+          fail_only: True
+          failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GKE GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
+          mentions: <<parameters.slack-mentions>>
+          channel: <<parameters.slack-channel>>
 
 workflows:
   lint:
@@ -1294,6 +1331,9 @@ workflows:
           matrix:
             parameters:
               cluster-id-prefix: ["e2e-gpu"]
+              mark: ["e2e_gpu"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
 
 
   nightly:
