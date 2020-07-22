@@ -29,6 +29,11 @@ type Options struct {
 	TLS      bool   `json:"tls"`
 	CertFile string `json:"cert_file"`
 	KeyFile  string `json:"key_file"`
+
+	HTTPProxy  string `json:"http_proxy"`
+	HTTPSProxy string `json:"https_proxy"`
+	FTPProxy   string `json:"ftp_proxy"`
+	NoProxy    string `json:"no_proxy"`
 }
 
 // Validate validates the state of the Options struct.

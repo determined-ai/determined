@@ -32,6 +32,9 @@ experiment config. The format is a list of strings in the format
 Variables are set sequentially, which affect variables that depend
 on expansion of other variables.
 
+Proxy variables set in this way will take precedent over those set using the
+:ref:`agent configuration <agent-configuration>`.
+
 ``startup-hook.sh``
 ~~~~~~~~~~~~~~~~~~~
 
