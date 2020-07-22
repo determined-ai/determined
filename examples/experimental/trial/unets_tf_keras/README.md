@@ -18,3 +18,8 @@ For this implementation, we removed the system configuration since Determined wi
 
    After configuring the settings in const.yaml. Run the following command:
      `det -m <master host:port> experiment create -f const.yaml . `
+
+### Expected Results
+
+![Single GPU vs. Distributed Training with Determined AI](Cumulative_Batches.png)
+![Single GPU vs. Distributed Training Validation Accuracy](Validation_Accuracy.png)
