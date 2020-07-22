@@ -23,9 +23,10 @@ export const locationToPath = (location?: Location): string | null => {
   return location.pathname + location.search + location.hash;
 };
 
-export const serverAddress = (): string => {
-  return process.env.IS_DEV ? 'http://localhost:8080'
-    : `${window.location.protocol}//${window.location.host}`;
+export const serverAddress = (avoidDevProxy = false): string => {
+  if (avoidDevProxy && process.env.IS_DEV)
+    return 'http://localhost:8080';
+  return `${window.location.protocol}//${window.location.host}`;
 };
 
 export const windowOpenFeatures = [ 'noopener', 'noreferrer' ];
