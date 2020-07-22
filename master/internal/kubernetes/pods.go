@@ -181,7 +181,7 @@ func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
 func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
 	ref, ok := p.podNameToPodHandler[msg.updatedPod.Name]
 	if !ok {
-		ctx.Log().WithField("pod name", msg.updatedPod.Name).Warn(
+		ctx.Log().WithField("pod-name", msg.updatedPod.Name).Warn(
 			"received pod status update for un-registered pod")
 		return
 	}
@@ -195,7 +195,7 @@ func (p *pods) receiveStopPod(ctx *actor.Context, msg sproto.StopPod) {
 		// For multi-pod tasks, when the the chief pod exits,
 		// the scheduler will request to terminate pods all other pods
 		// that have notified the scheduler that they have exited.
-		ctx.Log().WithField("container id", msg.ContainerID).Info(
+		ctx.Log().WithField("container-id", msg.ContainerID).Info(
 			"received stop pod command for unregistered container id")
 		return
 	}
@@ -206,7 +206,7 @@ func (p *pods) receiveStopPod(ctx *actor.Context, msg sproto.StopPod) {
 func (p *pods) cleanupPodHandler(ctx *actor.Context, podHandler *actor.Ref) error {
 	podInfo, ok := p.podHandlerToMetadata[podHandler]
 	if !ok {
-		return errors.Errorf("unknown pod handler being deleted %s", podHandler)
+		return errors.Errorf("unknown pod handler being deleted %s", podHandler.Address())
 	}
 
 	ctx.Log().WithField("pod", podInfo.podName).WithField(

@@ -17,7 +17,7 @@ import (
 )
 
 // ContainerLog notifies the task actor that a new log message is available for the container.
-// It used by the resource providers to communicate internally and with the task handlers.
+// It is used by the resource providers to communicate internally and with the task handlers.
 type ContainerLog struct {
 	Container container.Container
 	Timestamp time.Time

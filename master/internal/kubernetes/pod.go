@@ -52,7 +52,6 @@ type pod struct {
 	pod              *k8sV1.Pod
 	configMaps       []*k8sV1.ConfigMap
 	podName          string
-	logStreamer      *actor.Ref
 	container        container.Container
 	ports            []int
 	resourcesDeleted bool
@@ -99,6 +98,7 @@ func newPod(
 func (p *pod) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		ctx.AddLabel("pod", p.podName)
 		if err := p.startPod(ctx); err != nil {
 			return err
 		}
@@ -112,16 +112,12 @@ func (p *pod) Receive(ctx *actor.Context) error {
 		p.receiveContainerLogs(ctx, msg)
 
 	case sproto.StopPod:
-		ctx.Log().WithField("pod", p.podName).Info("received request to stop pod")
+		ctx.Log().Info("received request to stop pod")
 		if err := p.deleteKubernetesResources(ctx); err != nil {
 			return err
 		}
 
 	case actor.PostStop:
-		if p.logStreamer != nil {
-			p.logStreamer.Stop()
-		}
-
 		if !p.leaveKubernetesResources {
 			if err := p.deleteKubernetesResources(ctx); err != nil {
 				return err
@@ -162,114 +158,113 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		// to pending prior to deleting them. We ignore this state if we have
 		// triggered the deletion.
 		if p.resourcesDeleted {
-			ctx.Log().WithField("pod", p.podName).Info(
-				"ignoring pod status because resources are being deleted")
+			ctx.Log().Info("ignoring pod status because resources are being deleted")
 			return nil
 		}
 
 		containerState := getContainerState(msg.updatedPod.Status.Conditions)
 		if containerState == container.Running {
-			ctx.Log().WithField("pod", p.podName).Errorf(
-				"unexpected containers status while pod is pending")
+			ctx.Log().Errorf("unexpected containers status while pod is pending")
 		}
 
-		if containerState != p.container.State {
-			if containerState == container.Starting {
-				// Kubernetes does not have an explicit state for pulling container
-				// images. We insert it here because our  current implementation of
-				// the trial actor requires it.
-				ctx.Log().WithField("pod", p.podName).Infof(
-					"transitioning pod state from %s to %s",
-					p.container.State, container.Pulling)
-				p.container = p.container.Transition(container.Pulling)
+		if containerState == p.container.State {
+			return nil
+		}
 
-				rsc := sproto.ContainerStateChanged{Container: p.container}
-				ctx.Tell(p.taskHandler, rsc)
-			}
-
-			ctx.Log().WithField("pod", p.podName).Infof(
-				"transitioning pod state from %s to %s",
-				p.container.State, containerState)
-			p.container = p.container.Transition(containerState)
+		if containerState == container.Starting {
+			// Kubernetes does not have an explicit state for pulling container
+			// images. We insert it here because our  current implementation of
+			// the trial actor requires it.
+			ctx.Log().Infof("transitioning pod state from %s to %s",
+				p.container.State, container.Pulling)
+			p.container = p.container.Transition(container.Pulling)
 
 			rsc := sproto.ContainerStateChanged{Container: p.container}
 			ctx.Tell(p.taskHandler, rsc)
 		}
 
+		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
+		p.container = p.container.Transition(containerState)
+
+		rsc := sproto.ContainerStateChanged{Container: p.container}
+		ctx.Tell(p.taskHandler, rsc)
+
 	case k8sV1.PodRunning:
-		if p.container.State != container.Running {
-			p.container = p.container.Transition(container.Running)
-
-			logStreamer, err := newPodLogStreamer(p.podInterface, p.podName, ctx.Self())
-			if err != nil {
-				return err
-			}
-			var ok bool
-			p.logStreamer, ok = ctx.ActorOf(fmt.Sprintf("%s-logs", p.podName), logStreamer)
-			if !ok {
-				return errors.Errorf("log streamer already exists")
-			}
-
-			ctx.Tell(p.logStreamer, streamLogs{})
-			ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{Container: p.container})
-			ctx.Tell(p.cluster, sproto.PodStarted{
-				ContainerID: p.container.ID,
-				IP:          p.pod.Status.PodIP,
-				Ports:       p.ports,
-			})
+		if p.container.State == container.Running {
+			return nil
 		}
+		p.container = p.container.Transition(container.Running)
+
+		logStreamer, err := newPodLogStreamer(p.podInterface, p.podName, ctx.Self())
+		if err != nil {
+			return err
+		}
+		_, ok := ctx.ActorOf(fmt.Sprintf("%s-logs", p.podName), logStreamer)
+		if !ok {
+			return errors.Errorf("log streamer already exists")
+		}
+
+		ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{Container: p.container})
+		ctx.Tell(p.cluster, sproto.PodStarted{
+			ContainerID: p.container.ID,
+			IP:          p.pod.Status.PodIP,
+			Ports:       p.ports,
+		})
 
 	case k8sV1.PodFailed:
-		if p.container.State != container.Terminated {
-			p.container = p.container.Transition(container.Terminated)
-
-			exitCode, exitMessage, err := getExitCodeAndMessage(p.pod)
-			if err != nil {
-				return err
-			}
-			ctx.Log().WithField("pod", p.podName).Infof("pod failed: %d %s", exitCode, exitMessage)
-
-			exitCodeConverted := agent.ExitCode(exitCode)
-			containerStopped := agent.ContainerStopped{
-				Failure: &agent.ContainerFailure{
-					FailureType: agent.ContainerFailed,
-					ErrMsg:      exitMessage,
-					ExitCode:    &exitCodeConverted,
-				},
-			}
-
-			ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
-				Container:        p.container,
-				ContainerStopped: &containerStopped,
-			})
-
-			ctx.Tell(p.cluster, sproto.PodTerminated{
-				ContainerID:      p.container.ID,
-				ContainerStopped: &containerStopped,
-			})
-
-			ctx.Self().Stop()
+		if p.container.State == container.Terminated {
+			return nil
 		}
+		p.container = p.container.Transition(container.Terminated)
+
+		exitCode, exitMessage, err := getExitCodeAndMessage(p.pod)
+		if err != nil {
+			return err
+		}
+		ctx.Log().Infof("pod failed: %d %s", exitCode, exitMessage)
+
+		exitCodeConverted := agent.ExitCode(exitCode)
+		containerStopped := agent.ContainerStopped{
+			Failure: &agent.ContainerFailure{
+				FailureType: agent.ContainerFailed,
+				ErrMsg:      exitMessage,
+				ExitCode:    &exitCodeConverted,
+			},
+		}
+
+		ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
+			Container:        p.container,
+			ContainerStopped: &containerStopped,
+		})
+
+		ctx.Tell(p.cluster, sproto.PodTerminated{
+			ContainerID:      p.container.ID,
+			ContainerStopped: &containerStopped,
+		})
+
+		ctx.Self().Stop()
 
 	case k8sV1.PodSucceeded:
-		if p.container.State != container.Terminated {
-			p.container = p.container.Transition(container.Terminated)
-
-			ctx.Log().WithField("pod", p.podName).Infof("pod exited successfully")
-			containerStopped := agent.ContainerStopped{}
-
-			ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
-				Container:        p.container,
-				ContainerStopped: &containerStopped,
-			})
-
-			ctx.Tell(p.cluster, sproto.PodTerminated{
-				ContainerID:      p.container.ID,
-				ContainerStopped: &containerStopped,
-			})
-
-			ctx.Self().Stop()
+		if p.container.State == container.Terminated {
+			return nil
 		}
+		p.container = p.container.Transition(container.Terminated)
+
+		ctx.Log().Infof("pod exited successfully")
+		containerStopped := agent.ContainerStopped{}
+
+		ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
+			Container:        p.container,
+			ContainerStopped: &containerStopped,
+		})
+
+		ctx.Tell(p.cluster, sproto.PodTerminated{
+			ContainerID:      p.container.ID,
+			ContainerStopped: &containerStopped,
+		})
+
+		ctx.Self().Stop()
+
 	default:
 		return errors.Errorf(
 			"unexpected pod status %s for pod %s", msg.updatedPod.Status.Phase, p.podName)
@@ -283,7 +278,7 @@ func (p *pod) deleteKubernetesResources(ctx *actor.Context) error {
 		return nil
 	}
 
-	ctx.Log().WithField("pod", p.podName).Infof("deleting pod")
+	ctx.Log().Infof("deleting pod")
 	var gracePeriod int64 = 1
 	err := p.podInterface.Delete(p.podName, &metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 	if err != nil {
@@ -306,8 +301,7 @@ func (p *pod) finalizeTaskState(ctx *actor.Context) {
 	// If an error occurred during the lifecycle of the pods, we need to update the scheduler
 	// and the task handler with new state.
 	if p.container.State != container.Terminated {
-		ctx.Log().WithField("pod", p.podName).Warnf(
-			"updating container state after pod actor exited unexpectedly")
+		ctx.Log().Warnf("updating container state after pod actor exited unexpectedly")
 		p.container = p.container.Transition(container.Terminated)
 
 		containerStopped := agent.ContainerError(
