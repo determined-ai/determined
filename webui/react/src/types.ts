@@ -194,10 +194,10 @@ export interface Checkpoint {
 }
 
 export interface Step {
-  id: number;
-  state: RunState;
-  startTime: string;
   endTime?: string;
+  id: number;
+  startTime: string;
+  state: RunState;
 }
 
 export interface TrialDetails {

@@ -71,7 +71,7 @@ const experimentDetailsRoute =
     title: 'Experiment',
   };
 
-const TrialDetailsRoute =
+const trialDetailsRoute =
   {
     component: TrialDetails,
     id: 'trialDetails',
@@ -113,7 +113,7 @@ export const defaultAppRoute = dashboardRoute;
 export const appRoutes: RouteConfig[] = [
   dashboardRoute,
   experimentDetailsRoute,
-  TrialDetailsRoute,
+  trialDetailsRoute,
   experimentListRoute,
   taskListRoute,
   clusterRoute,
