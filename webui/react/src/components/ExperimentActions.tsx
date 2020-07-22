@@ -27,13 +27,18 @@ interface Props {
   }
 }
 
-type ButtonLoadingStates = Record<Action, boolean>;
+export interface ConditionalButton<T> {
+  button: React.ReactNode;
+  showIf?: (item: T) => boolean;
+}
+
+export type ButtonLoadingStates<T extends string> = Record<T, boolean>;
 
 const ExperimentActions: React.FC<Props> = ({
   experiment, onSettled: updateFn, onClick,
 }: Props) => {
 
-  const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
+  const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates<Action>>({
     Activate: false,
     Archive: false,
     Cancel: false,
@@ -78,11 +83,6 @@ const ExperimentActions: React.FC<Props> = ({
     }
   , [ experiment.id, updateFn ]);
 
-  interface ConditionalButton {
-    button: React.ReactNode;
-    showIf?: (exp: ExperimentDetails) => boolean;
-  }
-
   const experimentWillNeverHaveData = (experiment: ExperimentDetails): boolean => {
     const isTerminal = terminalRunStates.has(experiment.state);
     // with lack of step state we can use numSteps as a proxy to trials that definietly have some
@@ -91,7 +91,7 @@ const ExperimentActions: React.FC<Props> = ({
     return isTerminal && trialsWithSomeMetric.length === 0;
   };
 
-  const actionButtons: ConditionalButton[] = [
+  const actionButtons: ConditionalButton<ExperimentDetails>[] = [
     { button: <Button key="fork" type="primary" onClick={onClick[Action.Fork]}>Fork</Button> },
     {
       button: <Button key="archive" loading={buttonStates.Archive}
