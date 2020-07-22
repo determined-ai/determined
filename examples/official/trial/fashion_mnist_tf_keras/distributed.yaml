@@ -5,8 +5,10 @@ hyperparameters:
 resources:
   # Use 16 GPUs to train the model.
   slots_per_trial: 16
+records_per_epoch: 28800
 searcher:
   name: single
   metric: val_accuracy
-  max_steps: 9 # num steps = number of desired epochs (5) * (total batches per epoch (~900) / batches per step (100))
+  max_length:
+    epochs: 5
 entrypoint: model_def:FashionMNISTTrial

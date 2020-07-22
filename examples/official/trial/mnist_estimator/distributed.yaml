@@ -12,6 +12,7 @@ resources:
 searcher:
   name: single
   metric: accuracy
-  max_steps: 20
+  max_length:
+    batches: 2_000
   smaller_is_better: false
 entrypoint: model_def:MNistTrial

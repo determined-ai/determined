@@ -25,8 +25,10 @@ hyperparameters:
 searcher:
   name: adaptive
   metric: accuracy
-  target_trial_steps: 32 
-  step_budget: 100
+  max_length:
+    batches: 3_200
+  budget:
+    batches: 10_000
   mode: aggressive
   max_rungs: 3
   divisor: 4

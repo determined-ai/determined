@@ -28,12 +28,14 @@ hyperparameters:
   arch_to_use: None
   eval_same_arch: True
   num_archs_to_eval: 0 # only used when eval_same_arch is False
-min_validation_period: 4
+min_validation_period:
+  batches: 400
 entrypoint: model_def:NASModel
 searcher:
   name: random
   metric: loss
-  max_steps:  1242
+  max_length: 
+    batches: 124200
   smaller_is_better: true
   max_trials: 15 # number of architectures you would like to independently search
 data:

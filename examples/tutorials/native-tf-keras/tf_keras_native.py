@@ -35,7 +35,7 @@ from determined import experimental
 from determined.experimental.keras import init
 
 config = {
-    "searcher": {"name": "single", "metric": "val_acc", "max_steps": 5},
+    "searcher": {"name": "single", "metric": "val_acc", "max_length": {"batches": 500}},
     "hyperparameters": {"global_batch_size": 32},
 }
 
@@ -78,7 +78,7 @@ model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=5)
 # -------------
 
 config = {
-    "searcher": {"name": "single", "metric": "val_acc", "max_steps": 5},
+    "searcher": {"name": "single", "metric": "val_acc", "max_length": {"batches": 500}},
     "hyperparameters": {"global_batch_size": 16},
 }
 

@@ -28,7 +28,10 @@ searcher:
   name: adaptive
   metric: validation_error
   mode: aggressive
-  target_trial_steps: 800
-  step_budget: 4800
+  max_length:
+    batches: 80_000
+  budget:
+    batches: 480_000
 entrypoint: model_def:CIFARTrial
-min_validation_period: 10
+min_validation_period:
+  batches: 1000
