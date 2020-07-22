@@ -36,8 +36,9 @@ EC2 Instance Types
    >= 2 CPUs (Intel Broadwell or later), 4GB of RAM, and 100GB of disk
    storage. This corresponds to an EC2 ``t2.medium`` instance or better.
 
--  Each Determined agent node must be any of the P3 or P2 instances on AWS.
-   This can be configured in the :ref:`aws-cluster-configuration`.
+- All Determined agent nodes must be the same AWS instance type; any G4,
+  P2, or P3 instance type is supported. This can be configured in the
+  :ref:`aws-cluster-configuration`.
 
 .. _master-iam-role:
 
