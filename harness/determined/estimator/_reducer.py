@@ -1,5 +1,5 @@
 import abc
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Tuple
 
 import numpy as np
 import tensorflow as tf
@@ -117,52 +117,38 @@ class _SimpleMetricReducer(MetricReducer):
         return self.reduce_fn(flat_metrics)
 
 
-class _DistributedMetric(tf.keras.metrics.Metric):  # type: ignore
+def _distributed_metric(
+    context: estimator.EstimatorExperimentalContext,
+    metric: Any,
+    reducer: MetricReducer,
+    numpy_dtype: Any,
+) -> Tuple[tf.Operation, tf.Operation]:
     """
-    _DistributedMetric is a tf.keras Metric which should be compatible with tf.estimators and
-    which uses a MetricReducer to calculate the metric.
+    _distributed_metric returns a tf.metrics-style tuple of (value_op, update_op).  The value_op is
+    apparently read once after all evaluation is completed, which is where we do the allgather and
+    call the user's cross_slot_reduce to calculate the distributed metric.
     """
+    if isinstance(numpy_dtype, tf.dtypes.DType):
+        raise TypeError(f"numpy_dtype parameter must not be a TensorFlow dtype: {numpy_dtype}")
+    np_dtype = np.dtype(numpy_dtype)
+    tf_dtype = tf.compat.v1.as_dtype(numpy_dtype)
 
-    def __init__(
-        self,
-        context: estimator.EstimatorExperimentalContext,
-        metric: Any,
-        reducer: MetricReducer,
-        numpy_dtype: Any,
-        name: str,
-    ) -> None:
-        super().__init__(name=name)
-        # Don't conflict with tf.keras.metrics.Metric names.
-        self._det_context = context
-        self._det_reducer = reducer
-        self._det_last_accumulate = None
+    last_accumulate = None  # type: Any
 
-        if isinstance(numpy_dtype, tf.dtypes.DType):
-            raise TypeError(f"numpy_dtype parameter must not be a TensorFlow dtype: {numpy_dtype}")
-        self._det_np_dtype = np.dtype(numpy_dtype)
-        self._det_tf_dtype = tf.compat.v1.as_dtype(numpy_dtype)
+    def py_update(metric: Any) -> None:
+        nonlocal last_accumulate
+        last_accumulate = reducer.accumulate(metric)
 
-        self.update_state(metric)
+    update_op = tf.compat.v1.py_func(py_update, [metric], [])
 
-        def build_result_op() -> tf.Operation:
-            return tf.compat.v1.py_func(self._py_result, [], self._det_tf_dtype)
+    def py_value() -> Any:
+        allgathered = context.allgather_metrics(last_accumulate)
+        value = reducer.cross_slot_reduce(allgathered)
+        return np.array(value).astype(np_dtype)
 
-        # Build the result_op once, even if it is requested multiple times.
-        self._det_result_op = self._det_context._build_allgather_op(build_result_op)
+    def build_value_op() -> tf.Operation:
+        return tf.compat.v1.py_func(py_value, [], tf_dtype)
 
-    def _py_update_state(self, metric: Any) -> None:
-        self._det_last_accumulate = self._det_reducer.accumulate(metric)
+    value_op = context._build_allgather_op(build_value_op)
 
-    def update_state(self, metric: Any) -> tf.Tensor:
-        update_op = tf.compat.v1.py_func(self._py_update_state, [metric], [])
-        # Explicitly require including update_op in the graph, but don't return it.
-        with tf.compat.v1.control_dependencies([update_op]):
-            return tf.zeros([])
-
-    def _py_result(self) -> Any:
-        allgathered = self._det_context.allgather_metrics(self._det_last_accumulate)
-        result = self._det_reducer.cross_slot_reduce(allgathered)
-        return np.array(result).astype(self._det_np_dtype)
-
-    def result(self) -> tf.Operation:
-        return self._det_result_op
+    return value_op, update_op

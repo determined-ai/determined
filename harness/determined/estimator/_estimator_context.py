@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import tensorflow as tf
 
@@ -162,8 +162,7 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
         metric: Any,
         reducer: Union[Callable[[List[Any]], Any], "estimator.MetricReducer"],
         numpy_dtype: Any,
-        name: str = "custom_metric",
-    ) -> tf.keras.metrics.Metric:
+    ) -> Tuple[tf.Operation, tf.Operation]:
         """
         Return an estimator-compatible validation metric which will be calculated properly, even
         during distributed evaluation.
@@ -228,7 +227,7 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
                    )
         """
         if isinstance(reducer, estimator.MetricReducer):
-            return estimator._DistributedMetric(self, metric, reducer, numpy_dtype, name)
+            return estimator._distributed_metric(self, metric, reducer, numpy_dtype)
 
         simple_reducer = estimator._SimpleMetricReducer(reducer)
-        return estimator._DistributedMetric(self, metric, simple_reducer, numpy_dtype, name)
+        return estimator._distributed_metric(self, metric, simple_reducer, numpy_dtype)
