@@ -106,9 +106,6 @@ func registerConfig() {
 	registerString(flags, name("security", "tls", "key"),
 		defaults.Security.TLS.Key, "TLS key file")
 
-	registerBool(flags, name("enable-cors"),
-		defaults.EnableCors, "enable CORS")
-
 	registerInt(flags, name("grpc-port"),
 		defaults.GRPCPort, "GRPC server port")
 	registerInt(flags, name("http-port"),
