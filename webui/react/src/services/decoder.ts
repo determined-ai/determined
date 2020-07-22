@@ -4,15 +4,8 @@ import {
   decode, ioCommandLogs, ioDeterminedInfo, ioExperimentConfig, ioExperimentDetails, ioExperiments,
   ioGenericCommand, ioLogs, ioTrialDetails, ioTypeAgents,
   ioTypeCheckpoint, ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo,
-  ioTypeExperimentConfig,
-  ioTypeExperimentDetails,
-  ioTypeExperiments,
-  ioTypeGenericCommand,
-  ioTypeGenericCommands,
-  ioTypeLogs,
-  ioTypeTrialDetails,
-  ioTypeTrialSummary,
-  ioTypeUsers,
+  ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand,
+  ioTypeGenericCommands, ioTypeLogs, ioTypeTrialDetails, ioTypeTrialSummary, ioTypeUsers,
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, Command, CommandState, CommandType,
@@ -200,7 +193,8 @@ export const jsonToTrialDetails = (data: unknown): TrialDetails => {
       startTime: step.start_time,
       state: step.state as RunState,
     })),
-    warmStartCheckpointId: io.warm_start_checkpoint_id !== null ? io.warm_start_checkpoint_id : undefined,
+    warmStartCheckpointId: io.warm_start_checkpoint_id !== null ?
+      io.warm_start_checkpoint_id : undefined,
   };
 };
 
