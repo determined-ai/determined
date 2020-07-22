@@ -372,6 +372,17 @@ commands:
       - wait-for-master:
           host: ${MASTER_HOST}
 
+  terminate-gke-cluster:
+    parameters:
+      cluster-id:
+        type: string
+    steps:
+      - run:
+          name: Terminate GKE Cluster
+          when: always
+          command: |
+            gcloud container clusters delete <<parameters.cluster-id>> --quiet --region=us-west1
+
   setup-gke-cluster:
     parameters:
       cluster-id:
@@ -470,18 +481,19 @@ commands:
           echo "export MASTER_HOST=\"${MASTER_HOST}\"" >> $BASH_ENV
 
   set-master-address-gke:
-    description: "Get Determined Master IP"
     parameters:
       release-name:
         type: string
       namespace:
         type: string
     steps:
-      - run: |
-          MASTER_HOST=$(kubectl get -n <<parameters.namespace>>  service determined-master-service-<<parameters.release-name>> \
-          --output jsonpath='{.status.loadBalancer.ingress[0].ip}')
-          echo "export MASTER_HOST=\"${MASTER_HOST}\"" >> $BASH_ENV
-          echo "${MASTER_HOST}"
+      - run:
+          name: Set Master Address
+          command: |
+            MASTER_HOST=$(kubectl get -n <<parameters.namespace>>  service determined-master-service-<<parameters.release-name>> \
+            --output jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            echo "export MASTER_HOST=\"${MASTER_HOST}\"" >> $BASH_ENV
+            echo "${MASTER_HOST}"
 
   set-google-application-credentials:
     steps:
@@ -1085,7 +1097,6 @@ jobs:
           determined-common: true
           determined-cli: true
           determined: true
-          determined-deploy: true
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: determinedai/cimg-base:stable
       - setup-gke-cluster:
@@ -1100,6 +1111,8 @@ jobs:
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
+      - terminate-gke-cluster:
+          cluster-id: ${CLUSTER_ID}
       - slack/status:
           fail_only: True
           failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GKE GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
