@@ -31,14 +31,35 @@ TODO(DET-616): The TensorFlow-computed losses for batches thereafter diverge
 from the analytical calculations. Replace this model with a more robust one.
 
 """
+from typing import Any, List
+
 import numpy as np
 import tensorflow as tf
 
-from determined.estimator import EstimatorTrial, EstimatorTrialContext
+from determined import estimator
 
 
-class EstimatorDebugTrial(EstimatorTrial):
-    def __init__(self, context: EstimatorTrialContext):
+def sum_reducer(batch_metrics: List):
+    """A function that is able to operate as a custom reducer."""
+    return np.hstack(batch_metrics).sum()
+
+
+class SumReducer(estimator.MetricReducer):
+    """A class that is able to operate as a custom reducer."""
+
+    def __init__(self):
+        self.sum = 0
+
+    def accumulate(self, metric: Any):
+        self.sum += metric.sum()
+        return self.sum
+
+    def cross_slot_reduce(self, per_slot_metrics: List):
+        return sum(per_slot_metrics)
+
+
+class EstimatorDatasetTrial(estimator.EstimatorTrial):
+    def __init__(self, context: estimator.EstimatorTrialContext):
         self.context = context
         self.hparams = context.get_hparams()
 
@@ -65,15 +86,28 @@ class EstimatorDebugTrial(EstimatorTrial):
         with tf.control_dependencies([print_input, print_output, print_loss]):
             loss = tf.identity(loss)
 
-        opt = tf.compat.v1.train.GradientDescentOptimizer(learning_rate=1)
+        opt = self.context.wrap_optimizer(
+            tf.compat.v1.train.GradientDescentOptimizer(learning_rate=self.hparams["lr"])
+        )
         train_op = opt.minimize(loss=loss, global_step=tf.compat.v1.train.get_global_step())
 
+        eval_metrics_ops = None
+        if mode == tf.estimator.ModeKeys.EVAL:
+            # Use the custom metrics API.
+            fn_sum = self.context.experimental.make_metric(labels, sum_reducer, np.float32)
+            cls_sum = self.context.experimental.make_metric(labels, SumReducer(), np.float32)
+
+            eval_metrics_ops = {"label_sum_fn": fn_sum, "label_sum_cls": cls_sum}
+
         return tf.estimator.EstimatorSpec(
-            mode=mode, loss=loss, train_op=train_op, predictions={"output": output, "prod": prod}
+            mode=mode,
+            loss=loss,
+            train_op=train_op,
+            predictions={"output": output, "prod": prod},
+            eval_metric_ops=eval_metrics_ops,
         )
 
     def build_estimator(self):
-        _ = self.context.wrap_optimizer(None)
         return tf.estimator.Estimator(
             model_fn=self.model_fn,
             config=tf.estimator.RunConfig(
