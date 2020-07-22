@@ -29,15 +29,16 @@ export interface Api<Input, Output>{
 
 export const processApiError = (name: string, e: Error): void => {
   const isAuthError = isAuthFailure(e);
+  const silent = !process.env.IS_DEV || isAuthError || axios.isCancel(e);
   if (isDaError(e)) {
     if (e.type === ErrorType.ApiBadResponse) {
       e.message = `failed in decoding ${name} API response`;
       e.publicMessage = 'Failed to interpret data sent from the server.';
       e.publicSubject = 'Unexpected API response';
+      e.silent = silent;
     }
     throw handleError(e);
   }
-  const silent = !process.env.IS_DEV || isAuthError || axios.isCancel(e);
   handleError({
     error: e,
     level: isAuthError ? ErrorLevel.Fatal : ErrorLevel.Error,

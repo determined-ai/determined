@@ -4,15 +4,8 @@ import {
   decode, ioCommandLogs, ioDeterminedInfo, ioExperimentConfig, ioExperimentDetails, ioExperiments,
   ioGenericCommand, ioLogs, ioTrialDetails, ioTypeAgents,
   ioTypeCheckpoint, ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo,
-  ioTypeExperimentConfig,
-  ioTypeExperimentDetails,
-  ioTypeExperiments,
-  ioTypeGenericCommand,
-  ioTypeGenericCommands,
-  ioTypeLogs,
-  ioTypeTrialDetails,
-  ioTypeTrialSummary,
-  ioTypeUsers,
+  ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand,
+  ioTypeGenericCommands, ioTypeLogs, ioTypeTrialDetails, ioTypeTrialSummary, ioTypeUsers,
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, Command, CommandState, CommandType,
@@ -188,9 +181,20 @@ const ioTrialToTrial = (io: ioTypeTrialSummary): TrialSummary => {
 export const jsonToTrialDetails = (data: unknown): TrialDetails => {
   const io = decode<ioTypeTrialDetails>(ioTrialDetails, data);
   return {
+    endTime: io.end_time || undefined,
     experimentId: io.experiment_id,
     id: io.id,
+    seed: io.seed,
+    startTime: io.start_time,
     state: io.state as RunState,
+    steps: io.steps.map((step) => ({
+      endTime: step.end_time || undefined,
+      id: step.id,
+      startTime: step.start_time,
+      state: step.state as RunState,
+    })),
+    warmStartCheckpointId: io.warm_start_checkpoint_id !== null ?
+      io.warm_start_checkpoint_id : undefined,
   };
 };
 

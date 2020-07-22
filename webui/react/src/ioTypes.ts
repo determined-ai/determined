@@ -159,10 +159,25 @@ export const ioCheckpoint = io.type({
 });
 export type ioTypeCheckpoint = io.TypeOf<typeof ioCheckpoint>;
 
-export const ioTrialDetails = io.type({
-  experiment_id: io.number,
+export const ioStep = io.type({
+  end_time: io.union([ io.string, io.null ]),
   id: io.number,
+  start_time: io.string,
   state: runStatesIoType,
+});
+
+export const ioTrialDetails = io.type({
+  end_time: io.union([ io.string, io.null ]),
+  experiment_id: io.number,
+
+  id: io.number,
+
+  seed: io.number,
+  start_time: io.string,
+
+  state: runStatesIoType,
+  steps: io.array(ioStep),
+  warm_start_checkpoint_id: io.union([ io.number, io.null ]),
 });
 export type ioTypeTrialDetails = io.TypeOf<typeof ioTrialDetails>;
 
