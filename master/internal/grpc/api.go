@@ -73,13 +73,11 @@ func RegisterHTTPProxy(e *echo.Echo, port int, isDevelopment bool) error {
 	if err != nil {
 		return err
 	}
-	if isDevelopment {
-		e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-			AllowOrigins: []string{"*"},
-		}))
-	}
 	e.Any("/api/v1/*", func(c echo.Context) error {
 		request := c.Request()
+		if origin := request.Header.Get("Origin"); isDevelopment && origin != "" {
+			c.Response().Header().Set("Access-Control-Allow-Origin", origin)
+		}
 		if c.Request().Header.Get("Authorization") == "" {
 			if cookie, err := c.Cookie(cookieName); err == nil {
 				request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cookie.Value))
