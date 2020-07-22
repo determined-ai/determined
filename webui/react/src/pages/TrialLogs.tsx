@@ -31,6 +31,7 @@ const TrialLogs: React.FC = () => {
   const [ offset, setOffset ] = useState(-TAIL_SIZE);
   const [ oldestId, setOldestId ] = useState(Number.MAX_SAFE_INTEGER);
   const [ oldestReached, setOldestReached ] = useState(false);
+  const [ isLoading, setIsLoading ] = useState(true);
 
   const handleScrollToTop = useCallback(() => {
     console.log('HANLDE SCROLL TO TOP');
@@ -63,6 +64,7 @@ const TrialLogs: React.FC = () => {
       console.log('new logs', buffer);
       logsRef.current?.addLogs(buffer);
       buffer = [];
+      setIsLoading(false);
     });
 
     consumeStream<DetSwagger.V1TrialLogsResponse>(
@@ -97,7 +99,7 @@ const TrialLogs: React.FC = () => {
       <LogViewer
         disableLevel
         disableLineNumber
-        isLoading={pollingLogsResponse.isLoading}
+        isLoading={isLoading}
         noWrap
         ref={logsRef}
         title={title}
