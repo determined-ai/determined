@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -103,10 +104,10 @@ func (a *apiServer) PatchModel(
 func (a *apiServer) GetModelVersion(
 	_ context.Context, req *apiv1.GetModelVersionRequest) (*apiv1.GetModelVersionResponse, error) {
 	resp := &apiv1.GetModelVersionResponse{}
-	resp.Version = &modelv1.ModelVersion{}
+	resp.ModelVersion = &modelv1.ModelVersion{}
 
 	switch err := a.m.db.QueryProto(
-		"get_model_version", resp.Version, req.ModelName, req.ModelVersion); {
+		"get_model_version", resp.ModelVersion, req.ModelName, req.ModelVersion); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(
 			codes.NotFound, "model %s version %d not found", req.ModelName, req.ModelVersion)
@@ -123,12 +124,15 @@ func (a *apiServer) GetModelVersions(
 	}
 
 	resp := &apiv1.GetModelVersionsResponse{Model: getResp.Model}
-	if err := a.m.db.QueryProto("get_model_versions", &resp.Versions, req.ModelName); err != nil {
+	if err := a.m.db.QueryProto("get_model_versions", &resp.ModelVersions, req.ModelName); err != nil {
 		return nil, err
 	}
 
-	a.sort(resp.Versions, req.OrderBy, req.SortBy, apiv1.GetModelVersionsRequest_SORT_BY_VERSION)
-	return resp, a.paginate(&resp.Pagination, &resp.Versions, req.Offset, req.Limit)
+	a.sort(resp.ModelVersions, req.OrderBy, req.SortBy, apiv1.GetModelVersionsRequest_SORT_BY_VERSION)
+	for _, v := range resp.ModelVersions {
+		fmt.Printf("v: %v, uuid: %v\n", v.Version, v.Checkpoint.Uuid)
+	}
+	return resp, a.paginate(&resp.Pagination, &resp.ModelVersions, req.Offset, req.Limit)
 }
 
 func (a *apiServer) PostModelVersion(
@@ -158,17 +162,17 @@ func (a *apiServer) PostModelVersion(
 	}
 
 	respModelVersion := &apiv1.PostModelVersionResponse{}
-	respModelVersion.Version = &modelv1.ModelVersion{}
+	respModelVersion.ModelVersion = &modelv1.ModelVersion{}
 
 	err = a.m.db.QueryProto(
 		"insert_model_version",
-		respModelVersion.Version,
+		respModelVersion.ModelVersion,
 		req.ModelName,
 		req.CheckpointUuid,
 	)
 
-	respModelVersion.Version.Model = getResp.Model
-	respModelVersion.Version.Checkpoint = c
+	respModelVersion.ModelVersion.Model = getResp.Model
+	respModelVersion.ModelVersion.Checkpoint = c
 
 	return respModelVersion, errors.Wrapf(err, "error adding model version to model %s", req.ModelName)
 }
