@@ -11,7 +11,7 @@ import determined as det
 from determined import workload
 from determined.exec import harness
 from tests.experiment import utils  # noqa: I100
-from tests.experiment.fixtures import estimator_xor_model
+from tests.experiment.fixtures import estimator_linear_model, estimator_xor_model
 
 
 @pytest.fixture(
@@ -71,7 +71,6 @@ def xor_trial_controller(request):
 
 class TestXORTrial:
     def setup_method(self) -> None:
-        os.environ["DET_RENDEZVOUS_INFO"] = '{"rank": 0, "addrs": ["localhost"]}'
         self.hparams = {
             "hidden_size": 2,
             "learning_rate": 0.1,
@@ -304,6 +303,42 @@ class TestXORTrial:
             hparams=hparams,
             workloads=make_workloads(),
             batches_per_step=5,
+        )
+        controller.run()
+
+
+class TestLinearTrial:
+    def setup_method(self) -> None:
+        self.hparams = {
+            "learning_rate": 0.0001,
+            "global_batch_size": 4,
+        }
+
+    def teardown_method(self) -> None:
+        # Cleanup leftover environment variable state.
+        for key in harness.ENVIRONMENT_VARIABLE_KEYS:
+            if key in os.environ:
+                del os.environ[key]
+
+    def test_custom_reducer(self) -> None:
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+
+            # Test >1 validation to ensure that resetting the allgather_op list is working.
+            yield from trainer.send(steps=2, validation_freq=1, batches_per_step=1)
+            training_metrics, validation_metrics = trainer.result()
+
+            for metrics in validation_metrics:
+                assert metrics["label_sum_fn"] == estimator_linear_model.validation_label_sum()
+                assert metrics["label_sum_cls"] == estimator_linear_model.validation_label_sum()
+
+            yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=estimator_linear_model.LinearEstimator,
+            hparams=self.hparams,
+            workloads=make_workloads(),
+            trial_seed=0,
         )
         controller.run()
 
