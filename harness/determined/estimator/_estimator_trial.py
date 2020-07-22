@@ -636,8 +636,11 @@ class EstimatorTrialController(det.LoopTrialController):
                 logging.debug(f"Averaged validation metrics: {metrics}.")
 
         estimator._cleanup_after_validation_step(
-            self.estimator._model_dir, self.hvd_config.use, self.is_chief
+            pathlib.Path(self.estimator._model_dir), self.is_chief
         )
+
+        # Reset the per-evaluation set of allgather ops in the context.
+        self.context.experimental._reset_allgather_ops()
 
         if not self.is_chief:
             return workload.Skipped()
@@ -702,7 +705,7 @@ class EstimatorTrial(det.Trial):
     """
     By default, experiments run with TensorFlow 1.x. To configure your trial to
     use TensorFlow 2.x, set a TF 2.x image in the experiment configuration
-    (e.g. ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.4.0``).
+    (e.g. ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.5.0``).
 
     ``EstimatorTrial`` supports TF 2.x; however it uses TensorFlow V1
     behavior. We have disabled TensorFlow V2 behavior for ``EstimatorTrial``,

@@ -130,10 +130,12 @@ message GetModelVersionsRequest {
 
 // Response for GetModelVersionRequest.
 message GetModelVersionsResponse {
-  // The list of returned model versions
-  repeated determined.model.v1.ModelVersion versions = 1;
+  // The model requested.
+  determined.model.v1.Model model = 1;
+  // The list of returned model versions.
+  repeated determined.model.v1.ModelVersion versions = 2;
   // Pagination information of the full dataset.
-  Pagination pagination = 2;
+  Pagination pagination = 3;
 }
 
 // Request for creating a model version.

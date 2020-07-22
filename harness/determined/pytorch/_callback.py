@@ -16,30 +16,10 @@ class PyTorchCallback:
 
     .. warning::
         If distributed training is enabled, every GPU will execute a copy of this callback
-        (except for :meth:`on_validation_step_end` and :meth:`on_checkpoint_end`).  To
-        configure a callback implementation to execute on a subset of GPUs, please condition
-        your implementation on ``trial.context.distributed.get_rank()``.
+        (except for :meth:`on_validation_end`, :meth:`on_validation_step_end` and
+        :meth:`on_checkpoint_end`). To configure a callback implementation to execute on a subset of
+        GPUs, please condition your implementation on ``trial.context.distributed.get_rank()``.
     """
-
-    def on_train_step_start(self, step_id: int) -> None:
-        """
-        Run before every training step begins.
-        """
-        pass
-
-    def on_train_step_end(self, step_id: int, metrics: Dict[str, Any]) -> None:
-        """
-        Run after every training step ends.
-
-        .. warning::
-            If distributed training is enabled, every GPU will execute a copy of
-            this callback at the end of every training step. If
-            ``optimizations.average_training_metrics`` is enabled, then the
-            ``metrics`` will be averaged across all GPUs before the callback is
-            executed.  If ``optimizations.average_training_metrics`` is
-            disabled, then the ``metrics`` will be local to the GPU.
-        """
-        pass
 
     def on_before_optimizer_step(self, parameters: Iterator) -> None:
         """
@@ -50,10 +30,26 @@ class PyTorchCallback:
         # TODO(DET-3267): deprecate this when releasing pytorch flexible primitives.
         pass
 
+    def on_validation_start(self) -> None:
+        """
+        Run before every validation begins.
+        """
+        pass
+
+    def on_validation_end(self, metrics: Dict[str, Any]) -> None:
+        """
+        Run after every validation ends.
+
+        .. warning::
+            This callback only executes on the chief GPU when doing distributed training.
+        """
+        pass
+
     def on_validation_step_start(self) -> None:
         """
         Run before every validation step begins.
         """
+        # TODO(DET-3555): remove this once it has been deprecated long enough.
         pass
 
     def on_validation_step_end(self, metrics: Dict[str, Any]) -> None:
@@ -63,6 +59,7 @@ class PyTorchCallback:
         .. warning::
             This callback only executes on the chief GPU when doing distributed training.
         """
+        # TODO(DET-3555): remove this once it has been deprecated long enough.
         pass
 
     def on_checkpoint_end(self, checkpoint_dir: str) -> None:

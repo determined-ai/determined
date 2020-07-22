@@ -22,6 +22,7 @@ import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
 import { appRoutes } from 'routes';
 import { getInfo } from 'services/api';
+import { EmptyParams } from 'services/types';
 import { DeterminedInfo } from 'types';
 import { updateFaviconType } from 'utils/browser';
 import { parseUrl } from 'utils/routes';
@@ -36,7 +37,7 @@ const AppView: React.FC = () => {
   const setInfo = Info.useActionContext();
   const setUI = UI.useActionContext();
   const username = user ? user.username : undefined;
-  const [ infoResponse, requestInfo ] = useRestApiSimple<{}, DeterminedInfo>(getInfo, {});
+  const [ infoResponse, requestInfo ] = useRestApiSimple<EmptyParams, DeterminedInfo>(getInfo, {});
   const classes = [ css.base ];
 
   const fetchInfo = useCallback(() => requestInfo({}), [ requestInfo ]);
@@ -57,7 +58,12 @@ const AppView: React.FC = () => {
   }, [ infoResponse, setInfo ]);
 
   useEffect(() => {
-    if (info.telemetry.enabled && info.telemetry.segmentKey && window.analytics) {
+    /*
+     * Check for analytics library and the validity of the segment key:
+     * 32 characters composed of upper case letters, lower case letters and numbers 0-9.
+     */
+    if (window.analytics && info.telemetry.enabled &&
+        info.telemetry.segmentKey && /^[a-z0-9]{32}$/i.test(info.telemetry.segmentKey)) {
       window.analytics.load(info.telemetry.segmentKey);
       window.analytics.identify(info.clusterId);
       window.analytics.page();

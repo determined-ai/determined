@@ -270,7 +270,7 @@ class TestKerasTrial:
                 trial_seed=self.trial_seed,
             )
 
-        utils.optimizer_state_test(make_trial_controller_fn, tmp_path)
+        utils.checkpointing_and_restoring_test(make_trial_controller_fn, tmp_path)
 
     def test_reproducibility(self, xor_trial_controller: Callable) -> None:
         def controller_fn(workloads: workload.Stream) -> det.TrialController:

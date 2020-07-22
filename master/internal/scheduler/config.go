@@ -34,7 +34,6 @@ func (c Config) Validate() []error {
 		check.Contains(c.Type, []interface{}{"priority", "fair_share"}, "invalid scheduler type"),
 		check.Contains(c.Fit, []interface{}{"best", "worst"}, "invalid scheduler fitting method"),
 		check.True(c.ResourceProvider != nil, "resource provider not set"),
-		check.True(c.ResourceProvider.DefaultRPConfig != nil, "invalid resource provider"),
 	}
 }
 
@@ -64,7 +63,8 @@ func (c Config) MakeScheduler() Scheduler {
 
 // ResourceProviderConfig hosts configuration fields for the resource provider.
 type ResourceProviderConfig struct {
-	DefaultRPConfig *DefaultResourceProviderConfig `union:"type,default" json:"-"`
+	DefaultRPConfig    *DefaultResourceProviderConfig    `union:"type,default" json:"-"`
+	KubernetesRPConfig *KubernetesResourceProviderConfig `union:"type,kubernetes" json:"-"`
 }
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -83,3 +83,17 @@ func (r *ResourceProviderConfig) UnmarshalJSON(data []byte) error {
 
 // DefaultResourceProviderConfig hosts configuration fields for the default resource provider.
 type DefaultResourceProviderConfig struct{}
+
+// KubernetesResourceProviderConfig hosts configuration fields for the kubernetes resource provider.
+type KubernetesResourceProviderConfig struct {
+	Namespace         string `json:"namespace"`
+	SlotsPerNode      int    `json:"slots_per_node"`
+	MasterServiceName string `json:"master_service_name"`
+}
+
+// Validate implements the check.Validatable interface.
+func (k *KubernetesResourceProviderConfig) Validate() []error {
+	return []error{
+		check.GreaterThanOrEqualTo(k.SlotsPerNode, 0, "slots_per_node must be >= 0"),
+	}
+}

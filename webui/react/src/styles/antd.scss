@@ -10,6 +10,14 @@ html {
 
   .ant-btn[disabled],
   .ant-btn[disabled]:hover {
+    background-color: var(--theme-colors-monochrome-15);
+    border-color: var(--theme-colors-monochrome-12);
+    color: var(--theme-colors-monochrome-9);
+  }
+  .ant-btn-primary[disabled],
+  .ant-btn-primary[disabled]:hover,
+  .ant-btn-primary.ant-btn-dangerous[disabled],
+  .ant-btn-primary.ant-btn-dangerous[disabled]:hover {
     background-color: var(--theme-colors-monochrome-11);
     border-color: var(--theme-colors-monochrome-11);
     color: var(--theme-colors-monochrome-17);

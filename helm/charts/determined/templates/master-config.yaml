@@ -38,4 +38,34 @@ data:
     http_port: {{ .Values.httpPort }}
 
     scheduler:
-      type: fair_share
+      resource_provider:
+        type: "kubernetes"
+        namespace: {{ .Release.Namespace }}
+        slots_per_node: {{ required "A valid Values.slotsPerNode entry is required!" .Values.slotsPerNode }}
+        master_service_name: determined-master-service-{{ .Release.Name }}
+
+    {{ if .Values.taskContainerDefaults -}}
+    task_container_defaults:
+      {{- if .Values.taskContainerDefaults.shmSizeBytes }}
+      shm_size_bytes: {{ int $.Values.taskContainerDefaults.shmSizeBytes }}
+      {{- end }}
+      {{- if .Values.taskContainerDefaults.networkMode }}
+      network_mode: {{ .Values.taskContainerDefaults.networkMode }}
+      {{- end }}
+      {{- if .Values.taskContainerDefaults.dtrainNetworkInterface }}
+      dtrain_network_interface: {{ .Values.taskContainerDefaults.dtrainNetworkInterface }}
+      {{- end }}
+      {{- if .Values.taskContainerDefaults.ncclPortRange }}
+      nccl_port_range: {{ .Values.taskContainerDefaults.ncclPortRange }}
+      {{- end }}
+      {{- if .Values.taskContainerDefaults.glooPortRange }}
+      gloo_port_range: {{ .Values.taskContainerDefaults.glooPortRange }}
+      {{- end }}
+    {{ end }}
+
+    {{- if .Values.telemetry }}
+    {{- if .Values.telemetry.enabled }}
+    telemetry:
+      enabled: {{ .Values.telemetry.enabled }}
+    {{- end }}
+    {{- end }}

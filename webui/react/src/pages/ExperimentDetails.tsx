@@ -1,11 +1,14 @@
 import { Breadcrumb, Space } from 'antd';
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useParams } from 'react-router';
 
+import ExperimentActions from 'components/ExperimentActions';
+import ExperimentInfoBox from 'components/ExperimentInfoBox';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import Message from 'components/Message';
 import Page from 'components/Page';
+import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
@@ -18,11 +21,22 @@ interface Params {
 }
 
 const ExperimentDetailsComp: React.FC = () => {
-  const { experimentId } = useParams<Params>();
-  const [ experiment, requestExperimentDetails ] =
+  const { experimentId: experimentIdParam } = useParams<Params>();
+  const experimentId = parseInt(experimentIdParam);
+  const [ experiment, setExpRequestParams ] =
   useRestApiSimple<ExperimentDetailsParams, ExperimentDetails>(
-    getExperimentDetails, { id: parseInt(experimentId) });
-  usePolling(() => requestExperimentDetails);
+    getExperimentDetails, { id: experimentId });
+  const pollExperimentDetails = useCallback(() => setExpRequestParams({ id: experimentId }),
+    [ setExpRequestParams, experimentId ]);
+  usePolling(pollExperimentDetails);
+
+  if (isNaN(experimentId)) {
+    return (
+      <Page hideTitle title="Not Found">
+        <Message>Bad experiment ID {experimentIdParam}</Message>
+      </Page>
+    );
+  }
 
   if (experiment.error !== undefined) {
     const message = isNotFound(experiment.error) ? `Experiment ${experimentId} not found.`
@@ -34,8 +48,8 @@ const ExperimentDetailsComp: React.FC = () => {
     );
   }
 
-  if (!experiment.data || experiment.isLoading) {
-    <Spinner fillContainer />;
+  if (!experiment.data) {
+    return <Spinner fillContainer />;
   }
 
   return (
@@ -51,6 +65,11 @@ const ExperimentDetailsComp: React.FC = () => {
           <span>{experimentId}</span>
         </Breadcrumb.Item>
       </Breadcrumb>
+      <ExperimentActions experiment={experiment.data} onSettled={pollExperimentDetails} />
+      <ExperimentInfoBox experiment={experiment.data} />
+      <Section title="Chart" />
+      <Section title="Trials" />
+
     </Page>
   );
 };

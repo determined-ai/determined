@@ -10,6 +10,9 @@ from determined._trial_controller import (
     LoopTrialController,
     TrialController,
 )
-
+from determined._local_execution import (
+    _make_local_execution_env,
+    _local_execution_manager,
+)
 from determined import errors
 from determined import util

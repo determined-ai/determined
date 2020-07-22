@@ -3,7 +3,9 @@ from determined_common.api.authentication import Authentication, Session, salt_a
 from determined_common.api.experiment import (
     activate_experiment,
     create_experiment,
-    create_test_experiment,
+    create_experiment_and_follow_logs,
+    create_test_experiment_and_follow_logs,
+    generate_random_hparam_values,
     make_test_experiment_config,
     patch_experiment,
     follow_experiment_logs,

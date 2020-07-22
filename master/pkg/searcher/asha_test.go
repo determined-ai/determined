@@ -141,6 +141,37 @@ func TestASHASearchMethod(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "async promotions",
+			expectedTrials: []predefinedTrial{
+				// The first trial is promoted due to asynchronous
+				// promotions despite being below top 1/3 of trials in
+				// base rung.
+				newConstantPredefinedTrial(0.10, 30, []int{10, 30}, nil),
+				newConstantPredefinedTrial(0.11, 10, []int{10}, nil),
+				newConstantPredefinedTrial(0.12, 10, []int{10}, nil),
+				newConstantPredefinedTrial(0.01, 90, []int{10, 30, 90}, nil),
+				newConstantPredefinedTrial(0.02, 30, []int{10, 30}, nil),
+				newConstantPredefinedTrial(0.03, 30, []int{10, 30}, nil),
+				newConstantPredefinedTrial(0.04, 30, []int{10, 30}, nil),
+				newConstantPredefinedTrial(0.05, 10, []int{10}, nil),
+				newConstantPredefinedTrial(0.06, 10, []int{10}, nil),
+				newConstantPredefinedTrial(0.07, 10, []int{10}, nil),
+				newConstantPredefinedTrial(0.08, 10, []int{10}, nil),
+				newConstantPredefinedTrial(0.09, 10, []int{10}, nil),
+			},
+			config: model.SearcherConfig{
+				AsyncHalvingConfig: &model.AsyncHalvingConfig{
+					Metric:              "error",
+					NumRungs:            3,
+					SmallerIsBetter:     true,
+					TargetTrialSteps:    90,
+					MaxTrials:           12,
+					Divisor:             3,
+					MaxConcurrentTrials: maxConcurrentTrials,
+				},
+			},
+		},
 	}
 
 	runValueSimulationTestCases(t, testCases)

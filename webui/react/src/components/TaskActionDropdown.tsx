@@ -5,8 +5,9 @@ import React from 'react';
 import Icon from 'components/Icon';
 import Experiments from 'contexts/Experiments';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { archiveExperiment, killTask, setExperimentState } from 'services/api';
-import { AnyTask, Experiment, RunState } from 'types';
+import { archiveExperiment, killTask, launchTensorboard, setExperimentState } from 'services/api';
+import { AnyTask, Experiment, RunState, TBSourceType } from 'types';
+import { openCommand } from 'utils/routes';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';
@@ -21,7 +22,7 @@ const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
   const isExperiment = isExperimentTask(task);
-  const isArchivable = isExperiment && terminalRunStates.includes(task.state as RunState);
+  const isArchivable = isExperiment && terminalRunStates.has(task.state as RunState);
   const isKillable = isTaskKillable(task);
   const isPausable = isExperiment
     && task.state === RunState.Active;
@@ -29,6 +30,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
     && task.state === RunState.Paused;
   const isCancelable = isExperiment
     && cancellableRunStates.includes(task.state as RunState);
+  const canLaunchTensorboard = isExperiment;
 
   const experimentsResponse = Experiments.useStateContext();
   const setExperiments = Experiments.useActionContext();
@@ -83,6 +85,15 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
           });
           updateExperimentLocally(exp => ({ ...exp, state: RunState.Paused }));
           break;
+        case 'launchTensorboard': {
+          const tensorboard = await launchTensorboard({
+            ids: [ parseInt(task.id) ],
+            type: TBSourceType.Experiment,
+          });
+          openCommand(tensorboard);
+          break;
+        }
+
       }
     } catch (e) {
       handleError({
@@ -104,6 +115,9 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
   if (isArchivable) menuItems.push(<Menu.Item key="archive">Archive</Menu.Item>);
   if (isCancelable) menuItems.push(<Menu.Item key="cancel">Cancel</Menu.Item>);
   if (isKillable) menuItems.push(<Menu.Item key="kill">Kill</Menu.Item>);
+  if (canLaunchTensorboard) menuItems.push(
+    <Menu.Item key="launchTensorboard">Launch Tensorboard</Menu.Item>,
+  );
 
   if (menuItems.length === 0) {
     return (

@@ -51,7 +51,7 @@ describe('Navigation', () => {
       cy.get(elmTitleSelector).contains('Commands');
     });
 
-    it('path /det/logs should display Master Logs', () => {
+    it.skip('path /det/logs should display Master Logs', () => {
       cy.visit('/det/logs');
       cy.get(sectionTitleSelector).contains('Master Logs');
     });

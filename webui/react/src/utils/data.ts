@@ -27,6 +27,23 @@ export const clone = (data: any, deep = true): any => {
   return deep ? JSON.parse(JSON.stringify(data)) : { ...data };
 };
 
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const getPath = <T>(obj: Record<string, any>, path: string): T | undefined => {
+  // Reassigns to obj[key] on each array.every iteration
+  let value = obj || {};
+  return path.split('.').every(key => ((value = value[key]) !== undefined)) ?
+    value as T : undefined;
+};
+
+export const getPathOrElse = <T>(
+  obj: Record<string, unknown>,
+  path: string,
+  fallback: T,
+): T => {
+  const value = getPath<T>(obj, path);
+  return value !== undefined ? value : fallback;
+};
+
 export const categorize = <T>(array: T[], keyFn: ((arg0: T) => string)): Record<string, T[]> => {
   const d: Record<string, T[]> = {};
   array.forEach(item => {
@@ -86,4 +103,9 @@ export const taskStateSorter = (a: State, b: State): number => {
   const bValue = Object.values(RunState).includes(b as RunState) ?
     runStateSortValues[b as RunState] : commandStateSortValues[b as CommandState];
   return aValue - bValue;
+};
+
+export const isEqual = (a: unknown, b: unknown): boolean => {
+  if (a === b) return true;
+  return JSON.stringify(a) === JSON.stringify(b);
 };

@@ -1,19 +1,13 @@
-import contextlib
 import logging
-import math
-import os
 import pathlib
-import random
 import sys
 import tempfile
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, cast
-
-from termcolor import colored
+from typing import Any, Dict, List, Optional, Tuple, Type, cast
 
 import determined as det
 import determined_common
 import determined_common.api.authentication as auth
-from determined import constants, errors, gpu, horovod, load, workload
+from determined import constants, errors, load, workload
 from determined_common import api, check, context, util
 
 
@@ -64,7 +58,7 @@ def _submit_experiment(
     command: Optional[List[str]],
     test: bool = False,
     master_url: Optional[str] = None,
-) -> Optional[int]:
+) -> int:
     if context_dir == "":
         raise errors.InvalidExperimentException("Cannot specify the context directory to be empty.")
 
@@ -86,49 +80,9 @@ def _submit_experiment(
     auth.initialize_session(master_url, requested_user=None, try_reauth=True)
 
     if test:
-        print(colored("Validating experiment configuration...", "yellow"), end="\r")
-        api.create_experiment(master_url, config, exp_context, None, True)
-        print(colored("Experiment configuration validation succeeded! 🎉", "green"))
-        exp_id = api.create_test_experiment(master_url, config, exp_context)
-        print(colored("Test experiment ID: {}".format(exp_id), "green"))
-        api.follow_test_experiment_logs(master_url, exp_id)
+        return api.create_test_experiment_and_follow_logs(master_url, config, exp_context)
     else:
-        exp_id = api.create_experiment(master_url, config, exp_context)
-
-    logging.info(f"Created experiment {exp_id}")
-    api.follow_experiment_logs(master_url, exp_id)
-    return exp_id
-
-
-def _get_gpus() -> Tuple[bool, List[str], List[int]]:
-    gpu_ids, gpu_uuids = gpu.get_gpu_ids_and_uuids()
-    use_gpu = len(gpu_uuids) > 0
-    return use_gpu, gpu_uuids, gpu_ids
-
-
-def _generate_test_hparam_values(config: Dict[str, Any]) -> Dict[str, Any]:
-    def generate_random_value(hparam: Any) -> Any:
-        if isinstance(hparam, Dict):
-            if hparam["type"] == "const":
-                return hparam["val"]
-            elif hparam["type"] == "int":
-                return random.randint(hparam["minval"], hparam["maxval"])
-            elif hparam["type"] == "double":
-                return random.uniform(hparam["minval"], hparam["maxval"])
-            elif hparam["type"] == "categorical":
-                return hparam["vals"][random.randint(0, len(hparam["vals"]) - 1)]
-            elif hparam["type"] == "log":
-                return math.pow(hparam["base"], random.uniform(hparam["minval"], hparam["maxval"]))
-            else:
-                raise Exception(f"Wrong type of hyperparameter: {hparam['type']}")
-        elif isinstance(hparam, (int, float, str)):
-            return hparam
-        else:
-            raise Exception(f"Wrong type of hyperparameter: {type(hparam)}")
-
-    hparams_def = config.get("hyperparameters", {})
-    hparams = {name: generate_random_value(hparams_def[name]) for name in hparams_def}
-    return hparams
+        return api.create_experiment_and_follow_logs(master_url, config, exp_context)
 
 
 def _make_test_workloads(
@@ -155,79 +109,6 @@ def _make_test_workloads(
 
     yield workload.terminate_workload(), [], workload.ignore_workload_response
     logging.info("The test experiment passed.")
-
-
-def _make_local_test_experiment_config(input_config: Optional[Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Create a local experiment configuration based on an input configuration and
-    defaults. Use a shallow merging policy to overwrite our default
-    configuration with each entire subconfig specified by a user.
-
-    The defaults and merging logic is not guaranteed to match the logic used by
-    the Determined master. This function also does not do experiment
-    configuration validation, which the Determined master does.
-    """
-
-    input_config = input_config or {}
-    config_keys_to_ignore = {
-        "bind_mounts",
-        "checkpoint_storage",
-        "environment",
-        "resources",
-        "optimizations",
-    }
-    for key in config_keys_to_ignore:
-        if key in input_config:
-            logging.info(
-                f"'{key}' configuration key is not supported by local test mode and will be ignored"
-            )
-            del input_config[key]
-
-    return {**constants.DEFAULT_EXP_CFG, **input_config}
-
-
-def _make_local_test_experiment_env(
-    checkpoint_dir: pathlib.Path,
-    config: Optional[Dict[str, Any]],
-    hparams: Optional[Dict[str, Any]] = None,
-) -> Tuple[det.EnvContext, workload.Stream, det.RendezvousInfo, horovod.HorovodContext]:
-    config = det.ExperimentConfig(_make_local_test_experiment_config(config))
-    hparams = hparams or _generate_test_hparam_values(config)
-    use_gpu, container_gpus, slot_ids = _get_gpus()
-    local_rendezvous_ports = (
-        f"{constants.LOCAL_RENDEZVOUS_PORT},{constants.LOCAL_RENDEZVOUS_PORT+1}"
-    )
-
-    env = det.EnvContext(
-        master_addr="",
-        master_port=1,
-        container_id="test_mode",
-        experiment_config=config,
-        hparams=hparams,
-        initial_workload=workload.train_workload(1, 1, 1, config.batches_per_step()),
-        latest_checkpoint=None,
-        use_gpu=use_gpu,
-        container_gpus=container_gpus,
-        slot_ids=slot_ids,
-        debug=config.debug_enabled(),
-        workload_manager_type="",
-        det_rendezvous_ports=local_rendezvous_ports,
-        det_trial_runner_network_interface=constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE,
-        det_trial_id="1",
-        det_experiment_id="1",
-        det_cluster_id="test_mode",
-        trial_seed=config.experiment_seed(),
-    )
-    workloads = _make_test_workloads(checkpoint_dir.joinpath("checkpoint"), config)
-    rendezvous_ports = env.rendezvous_ports()
-    rendezvous_info = det.RendezvousInfo(
-        addrs=[f"0.0.0.0:{rendezvous_ports[0]}"], addrs2=[f"0.0.0.0:{rendezvous_ports[1]}"], rank=0
-    )
-    hvd_config = horovod.HorovodContext.from_configs(
-        env.experiment_config, rendezvous_info, env.hparams
-    )
-
-    return env, workloads, rendezvous_info, hvd_config
 
 
 def _stop_loading_implementation() -> None:
@@ -290,54 +171,14 @@ def _init_cluster_mode(
         )
 
 
-@contextlib.contextmanager
-def _local_execution_manager(new_directory: pathlib.Path) -> Iterator:
-    """
-    A context manager that temporarily moves the current working directory.
-
-    In trial container, the code always runs from the context directory so the working
-    directory is always set to be the context directory.
-    In local mode, the context directory might be different from the current working
-    directory, which is default to be where the code runs from. We want to unify
-    the experience of the user code running in local mode and in trial container. So
-    we use this context manager in local mode.
-    """
-
-    # TODO(DET-2719): Add context dir to TrainContext and remove this function.
-    current_directory = os.getcwd()
-    current_path = sys.path.copy()
-
-    try:
-        os.chdir(new_directory)
-
-        # Python typically initializes sys.path[0] as the empty string when
-        # invoked interactively, which directs Python to search modules in the
-        # current directory first. However, this is _not_ happening when this
-        # Python function is invoked via the cli. We add it manually here so
-        # that _local_trial_from_context and test_one_batch can import the
-        # entrypoint by changing the directory to model_def.
-        #
-        # Reference: https://docs.python.org/3/library/sys.html#sys.path
-        sys.path = [""] + sys.path
-        yield
-    finally:
-        os.chdir(current_directory)
-        sys.path = current_path
-
-
-def _local_trial_from_context(
-    context_path: pathlib.Path, config: Dict[str, Any], hparams: Dict[str, Any],
-) -> det.Trial:
-    with _local_execution_manager(context_path):
-        checkpoint_dir = tempfile.TemporaryDirectory()
-
+def _load_trial_on_local(
+    context_dir: pathlib.Path, config: Dict[str, Any], hparams: Dict[str, Any],
+) -> Tuple[Type[det.Trial], det.TrialContext]:
+    with det._local_execution_manager(context_dir):
         trial_class = load.load_trial_implementation(config["entrypoint"])
-        trial = create_trial_instance(
-            trial_class, str(checkpoint_dir), config=config, hparams=hparams
-        )
-
-        checkpoint_dir.cleanup()
-        return trial
+        env, rendezvous_info, hvd_config = det._make_local_execution_env(config, hparams)
+        trial_context = trial_class.trial_context_class(env, hvd_config)
+    return trial_class, trial_context
 
 
 def test_one_batch(
@@ -352,8 +193,9 @@ def test_one_batch(
 
     logging.info("Running a minimal test experiment locally")
     checkpoint_dir = tempfile.TemporaryDirectory()
-    env, workloads, rendezvous_info, hvd_config = _make_local_test_experiment_env(
-        checkpoint_dir=pathlib.Path(checkpoint_dir.name), config=config
+    env, rendezvous_info, hvd_config = det._make_local_execution_env(config)
+    workloads = _make_test_workloads(
+        pathlib.Path(checkpoint_dir.name).joinpath("checkpoint"), env.experiment_config
     )
     logging.info(f"Using hyperparameters: {env.hparams}.")
     logging.debug(f"Using a test experiment config: {env.experiment_config}.")
@@ -423,7 +265,7 @@ def init_native(
         if not test:
             logging.warn("local training is not supported, testing instead")
 
-        with _local_execution_manager(pathlib.Path(context_dir).resolve()):
+        with det._local_execution_manager(pathlib.Path(context_dir).resolve()):
             return test_one_batch(
                 controller_cls=controller_cls,
                 native_context_cls=native_context_cls,
@@ -459,23 +301,25 @@ def create(
 
     Arguments:
         trial_def:
-            A class definition implementing the ``det.Trial`` interface.
+            A class definition implementing the :class:`determined.Trial`
+            interface.
 
         config:
             A dictionary representing the experiment configuration to be
             associated with the experiment.
 
         local:
-            A boolean indicating if training will happen locally. When
+            A boolean indicating if training should be done locally. When
             ``False``, the experiment will be submitted to the Determined
             cluster. Defaults to ``False``.
 
         test:
-            A boolean indicating if the experiment should be shortened to a
-            minimal loop of training, validation, and checkpointing.
-            ``test=True`` is useful quick iterating during model porting or
-            debugging because common errors will surface more quickly.
-            Defaults to ``False``.
+            A boolean indicating if the experiment should be shortened
+            to a minimal loop of training on a small amount of data,
+            performing validation, and checkpointing.  ``test=True`` is
+            useful for quick iteration during model porting or debugging
+            because common errors will surface more quickly.  Defaults
+            to ``False``.
 
         context_dir:
             A string filepath that defines the context directory. All model
@@ -485,19 +329,19 @@ def create(
             directory will be uploaded to the Determined cluster. The total
             size of this directory must be under 96 MB.
 
-            When ``local=True``, this argument is optional and assumed to be
-            the current working directory by default.
+            When ``local=True``, this argument is optional and defaults to
+            the current working directory.
 
         command:
             A list of strings that is used as the entrypoint of the training
             script in the Determined task environment. When executing this
-            function via a python script, this argument is inferred to be
+            function via a Python script, this argument is inferred to be
             ``sys.argv`` by default. When executing this function via IPython
             or Jupyter notebook, this argument is required.
 
-            Example: When creating an experiment by running "python train.py
-            --flag value", the default command is inferred as ["train.py",
-            "--flag", "value"].
+            Example: When creating an experiment by running ``python train.py
+            --flag value``, the default command is inferred as ``["train.py",
+            "--flag", "value"]``.
 
         master_url:
             An optional string to use as the Determined master URL when
@@ -545,8 +389,6 @@ def create_trial_instance(
     determined_common.set_logger(
         util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
     )
-    env, workloads, rendezvous_info, hvd_config = _make_local_test_experiment_env(
-        checkpoint_dir=pathlib.Path(checkpoint_dir), config=config, hparams=hparams
-    )
+    env, rendezvous_info, hvd_config = det._make_local_execution_env(config, hparams)
     trial_context = trial_def.trial_context_class(env, hvd_config)
     return trial_def(trial_context)

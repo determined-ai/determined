@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined-cli",
-    version="0.12.11.dev0",
+    version="0.12.12.dev0",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -14,14 +14,15 @@ setup(
     python_requires=">=3.5",
     install_requires=[
         "argcomplete==1.9.4",
-        "gitpython==2.1.11",
+        "gitpython==3.1.3",
         "packaging==19.0",
+        "pyOpenSSL>= 19.1.0",
         "python-dateutil==2.8.0",
         "requests>=2.20.0",
         "ruamel.yaml>=0.15.78",
         "tabulate>=0.8.3",
         "termcolor==1.1.0",
-        "determined-common==0.12.11.dev0",
+        "determined-common==0.12.12.dev0",
     ],
     entry_points={"console_scripts": ["det = determined_cli.__main__:main"]},
 )

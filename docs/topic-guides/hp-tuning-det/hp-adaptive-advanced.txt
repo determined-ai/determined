@@ -4,12 +4,11 @@ Hyperparameter Search: Adaptive (Advanced)
 ==========================================
 
 The ``adaptive`` search method employs the same underlying algorithm as the
-:ref:`Adaptive (Simple) <topic-guides_hp-tuning-det_adaptive-simple>` method
-described above, but it allows users to control the behavior of the search in a
-more fine-grained way at the cost of being more difficult to configure. This
-section explains the configuration settings that influence the behavior of the
-``adaptive`` searcher and gives recommendations for how to configure those
-settings.
+:ref:`Adaptive (Simple) <topic-guides_hp-tuning-det_adaptive-simple>` method,
+but it allows users to control the behavior of the search in a more fine-grained
+way at the cost of being more difficult to configure. This section explains the
+configuration settings that influence the behavior of the ``adaptive`` searcher
+and gives recommendations for how to configure those settings.
 
 Quick start
 -----------
@@ -62,14 +61,14 @@ configuration settings.
 ASHA
 ~~~~
 
-At a high level, ASHA prunes ("halves") a set of trials in successive
-rounds we call *rungs*. ASHA starts with an initial set of trials. (A
-trial means one model for training, with a fixed set of hyperparameter
-values.) ASHA trains all the trials for some number of steps and the
-trials with the worst validation performance are discarded. In the next
-rung, the remaining trials are trained for a longer period of time, and
-then trials with the worst validation performance are pruned once again.
-This is repeated until the maximum number of training steps is reached.
+At a high level, ASHA prunes ("halves") a set of trials in successive rounds we
+call *rungs*. ASHA starts with an initial set of trials. (A trial means a single
+model with a fixed set of hyperparameter values.) ASHA trains all the trials for
+some number of steps and the trials with the worst validation performance are
+discarded. In the next rung, the remaining trials are trained for a longer
+period of time, and then trials with the worst validation performance are pruned
+once again.  This is repeated until the maximum number of training steps is
+reached.
 
 First, an example of ASHA.
 
@@ -85,15 +84,14 @@ First, an example of ASHA.
 At the end, the trial with best performance has the hyperparameter
 setting the ASHA searcher returns.
 
-In the example above, ``divisor`` is 4, which determines what fraction
-of trials are kept in successive rungs, as well as the number of steps
+In the example above, ``divisor`` is 4, which controls the fraction
+of trials that are kept in successive rungs, as well as the number of steps
 in successive rungs. ``target_trial_steps`` is 48, which is the maximum
 number of steps a trial is trained for.
 
 The remaining degree of freedom in this ASHA example is the number N of
-trials initialized. This is determined by the top-level adaptive
-algorithm, through ``step_budget`` and the number/types of ASHA
-subroutines called.
+initial trials. This is determined by the top-level adaptive algorithm,
+through ``step_budget`` and the number/types of ASHA subroutines called.
 
 In general, ASHA has a fixed ``divisor`` d. In the first rung, it
 generates an initial set of randomly chosen trials and runs until each
@@ -222,11 +220,10 @@ Two factors affect the number of batches a trial is guaranteed to be
 trained on. The field :ref:`batches_per_step <batches-per-step>` affects how many
 batches make up one step. The number of steps guaranteed is affected by
 ``target_trial_steps``, and is at least ``target_trial_steps / 256`` by
-default, or target_trial_steps /
-divisormax_rungs-1 in general.
+default, or ``target_trial_steps / divisor ^ (max_rungs-1)`` in general.
 
-**Q: How do I set the initial number of trials? How do I make sure ``x``
-trials are run the full ``target_trial_steps`` steps?**
+**Q: How do I set the initial number of trials? How do I make sure that a
+certain number of trials are trained to completion?**
 
 The number of initial trials is determined by a combination of ``mode``,
 ``step_budget``, ``divisor``, ``max_rungs``, and ``target_trial_steps``.
@@ -246,14 +243,13 @@ and error. The command
 
    det preview-search <file_name.yaml>
 
-will display information on the number of trials versus number of steps
-for the configuration specified in ``file_name.yaml``. Increasing
-``step_budget`` increases both the initial number of trials and the
-number of trials run the full number of steps. On the other hand,
-``target_trial_steps`` decreases both. The ``mode`` decides on
-allocation of steps between trials; ``mode: conservative`` runs more
-trials for longer, whereas ``mode: aggressive`` eliminates the most
-trials early in training.
+will display information on the number of trials versus number of steps for the
+configuration specified in ``file_name.yaml``. Increasing ``step_budget``
+increases both the initial number of trials and the number of trials that are
+trained for the full number of steps. On the other hand, increasing
+``target_trial_steps`` decreases both. The ``mode`` decides on allocation of
+steps between trials; ``mode: conservative`` runs more trials for longer,
+whereas ``mode: aggressive`` eliminates the most trials early in training.
 
 **Q: The adaptive algorithm sounds great so far. What are its
 weaknesses?**

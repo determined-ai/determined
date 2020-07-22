@@ -23,7 +23,7 @@ module.exports = override(
   }),
 
   // Add LESS loader support for antd.
-  addLessLoader({ javascriptEnabled: true }),
+  addLessLoader({ lessOptions: { javascriptEnabled: true } }),
 
   // Replace momentjs to Day.js to reduce antd package size.
   addWebpackPlugin(new AntdDayjsWebpackPlugin()),
@@ -49,7 +49,7 @@ module.exports = override(
   // Webapp version is hardcoded but handled by `bumpversion`
   addWebpackPlugin(
     new webpack.DefinePlugin({
-      'process.env.VERSION': '"0.12.11.dev0"',
+      'process.env.VERSION': '"0.12.12.dev0"',
       'process.env.IS_DEV': JSON.stringify(process.env.NODE_ENV === 'development'),
     })
   )

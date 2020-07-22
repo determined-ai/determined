@@ -4,6 +4,7 @@ hyperparameters:
   dataset_size: 100
   print: true
   validation_size: 4
+  lr: 1
 searcher:
   name: single
   metric: loss
@@ -11,4 +12,5 @@ searcher:
   max_steps: 1
 max_restarts: 0
 batches_per_step: 1
-entrypoint: model:EstimatorDebugTrial
+entrypoint: model:EstimatorDatasetTrial
+min_validation_period: 1

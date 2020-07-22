@@ -7,6 +7,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/device"
+
 	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
 
@@ -19,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
+	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 const (
@@ -45,7 +48,7 @@ type DefaultRP struct {
 	tasksByID          map[TaskID]*Task
 	tasksByContainerID map[ContainerID]*Task
 
-	assigmentByHandler map[*actor.Ref][]assignment
+	assigmentByHandler map[*actor.Ref][]containerAssignment
 
 	provisioner     *actor.Ref
 	provisionerView *FilterableView
@@ -82,7 +85,7 @@ func NewDefaultRP(
 		tasksByID:          make(map[TaskID]*Task),
 		tasksByContainerID: make(map[ContainerID]*Task),
 
-		assigmentByHandler: make(map[*actor.Ref][]assignment),
+		assigmentByHandler: make(map[*actor.Ref][]containerAssignment),
 
 		proxy:           proxy,
 		provisioner:     provisioner,
@@ -101,16 +104,17 @@ func (d *DefaultRP) assignContainer(task *Task, a *agentState, slots int, numCon
 	a.containers[container.id] = container
 	task.containers[container.id] = container
 	d.tasksByContainerID[container.id] = task
-	d.assigmentByHandler[task.handler] = append(d.assigmentByHandler[task.handler], assignment{
-		task:                  task,
-		agent:                 a,
-		container:             container,
-		numContainers:         numContainers,
-		clusterID:             d.clusterID,
-		devices:               a.assignFreeDevices(slots, container.id),
-		harnessPath:           d.harnessPath,
-		taskContainerDefaults: d.taskContainerDefaults,
-	})
+	d.assigmentByHandler[task.handler] = append(
+		d.assigmentByHandler[task.handler],
+		containerAssignment{
+			task:                  task,
+			agent:                 a,
+			container:             container,
+			clusterID:             d.clusterID,
+			devices:               a.assignFreeDevices(slots, container.id),
+			harnessPath:           d.harnessPath,
+			taskContainerDefaults: d.taskContainerDefaults,
+		})
 }
 
 // assignTask allocates cluster data structures and sends the appropriate actor
@@ -123,7 +127,7 @@ func (d *DefaultRP) assignTask(task *Task) bool {
 		return false
 	}
 
-	d.assigmentByHandler[task.handler] = make([]assignment, 0, len(fits))
+	d.assigmentByHandler[task.handler] = make([]containerAssignment, 0, len(fits))
 
 	for _, fit := range fits {
 		d.assignContainer(task, fit.Agent, fit.Slots, len(fits))
@@ -318,7 +322,7 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 func (d *DefaultRP) receiveAddTask(ctx *actor.Context, msg AddTask) {
 	d.notifyOnStop(ctx, msg.TaskHandler, taskStopped{Ref: msg.TaskHandler})
 
-	if task, ok := d.tasksByHandler[ctx.Sender()]; ok {
+	if task, ok := d.tasksByHandler[msg.TaskHandler]; ok {
 		if ctx.ExpectingResponse() {
 			ctx.Respond(task)
 		}
@@ -575,4 +579,38 @@ func toAddresses(proxy string, info types.ContainerJSON) []Address {
 		}
 	}
 	return addresses
+}
+
+// containerAssignment contains information for tasks have been assigned but not yet started.
+type containerAssignment struct {
+	task                  *Task
+	container             *container
+	agent                 *agentState
+	clusterID             string
+	devices               []device.Device
+	harnessPath           string
+	taskContainerDefaults model.TaskContainerDefaultsConfig
+}
+
+// StartTask notifies the agent that the task is ready to start with the provided task spec.
+func (c *containerAssignment) StartTask(spec image.TaskSpec) {
+	handler := c.agent.handler
+	spec.ClusterID = c.clusterID
+	spec.ContainerID = string(c.container.ID())
+	spec.TaskID = string(c.task.ID)
+	spec.HarnessPath = c.harnessPath
+	spec.TaskContainerDefaults = c.taskContainerDefaults
+	spec.Devices = c.devices
+	handler.System().Tell(handler, sproto.StartTaskOnAgent{
+		Task: c.task.handler,
+		StartContainer: aproto.StartContainer{
+			Container: cproto.Container{
+				Parent:  c.task.handler.Address(),
+				ID:      cproto.ID(c.container.id),
+				State:   cproto.Assigned,
+				Devices: c.devices,
+			},
+			Spec: image.ToContainerSpec(spec),
+		},
+	})
 }

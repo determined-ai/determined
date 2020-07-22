@@ -147,6 +147,13 @@ export interface Command {
 // TODO compelete the config object as we start using different attributes.
 export interface ExperimentConfig {
   description: string;
+  searcher: {
+    smallerIsBetter: boolean;
+    metric: string;
+  };
+  resources: {
+    maxSlots?: number;
+  };
 }
 
 /* Experiment */
@@ -168,10 +175,37 @@ interface ValidationHistory {
   validationError?: number;
 }
 
-interface Trial {
+export enum CheckpointState {
+  Active = 'ACTIVE',
+  Completed = 'COMPLETED',
+  Error = 'ERROR',
+  Deleted = 'DELETED',
+}
+
+export interface Checkpoint {
+  id: number;
+  stepId: number;
+  trialId: number;
+  state: CheckpointState;
+  startTime: string;
+  endTime? : string;
+  uuid? : string;
+  validationMetric? : number;
+}
+
+export interface TrialDetails {
+  id: number;
+  state: RunState;
+  experimentId: number;
+}
+
+export interface TrialSummary {
   hparams: Record<string, string>;
   id: number;
   state: RunState;
+  bestAvailableCheckpoint?: Checkpoint;
+  numSteps: number;
+  numBatches: number;
 }
 
 export interface Experiment {
@@ -193,7 +227,7 @@ export interface ExperimentItem extends Experiment {
 
 export interface ExperimentDetails extends Experiment {
   validationHistory: ValidationHistory[];
-  trials: Trial[];
+  trials: TrialSummary[];
   username: string;
 }
 
@@ -275,12 +309,3 @@ export interface Log {
   meta?: string;
   time?: string;
 }
-
-export const terminalCommandStates: Set<CommandState> = new Set([
-  CommandState.Terminated,
-]);
-
-export const terminalRunStates: Set<RunState> = new Set([
-  RunState.Errored,
-  RunState.Canceled,
-]);

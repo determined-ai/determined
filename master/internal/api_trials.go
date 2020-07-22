@@ -63,7 +63,8 @@ func (a *apiServer) TrialLogs(
 		if err := a.m.db.QueryProto("stream_logs", &logs, req.TrialId, offset, queryLimit); err != nil {
 			return err
 		}
-		for _, log := range logs {
+		for i, log := range logs {
+			log.Id = int32(offset + i)
 			if err := resp.Send(log); err != nil {
 				return err
 			}

@@ -547,3 +547,7 @@ Agent Configuration
   each specified by a 0-based index, UUID, PCI bus ID, or board serial number.
   The 0-based index of NVIDIA GPUs can be obtained via the ``nvidia-smi``
   command.
+- ``http_proxy``: The HTTP proxy address for the agent's containers.
+- ``https_proxy``: The HTTPS proxy address for the agent's containers.
+- ``ftp_proxy``: The FTP proxy address for the agent's containers.
+- ``no_proxy``: The addresses that the container should not proxy.

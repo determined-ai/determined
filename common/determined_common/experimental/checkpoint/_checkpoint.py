@@ -37,6 +37,8 @@ class Checkpoint(object):
         determined_version: Optional[str] = None,
         framework: Optional[str] = None,
         format: Optional[str] = None,
+        version: Optional[int] = None,
+        model_name: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
         master: Optional[str] = None,
     ):
@@ -78,6 +80,8 @@ class Checkpoint(object):
         self.framework = framework
         self.format = format
         self.determined_version = determined_version
+        self.version = version
+        self.model_name = model_name
         self.metadata = metadata
         self._master = master
 
@@ -292,32 +296,29 @@ class Checkpoint(object):
     def __repr__(self) -> str:
         return "Checkpoint(uuid={})".format(self.uuid)
 
+    @staticmethod
+    def from_json(data: Dict[str, Any], master: Optional[str] = None) -> "Checkpoint":
+        validation = {
+            "metrics": data.get("metrics", {}),
+            "state": data.get("validation_state", None),
+        }
 
-def get_checkpoint(uuid: str, master: str) -> Checkpoint:
-    r = api.get(master, "checkpoints/{}".format(uuid)).json()
-    return from_json(r, master)
-
-
-def from_json(data: Dict[str, Any], master: Optional[str] = None) -> Checkpoint:
-    validation = {
-        "metrics": data.get("metrics", {}),
-        "state": data.get("validation_state", None),
-    }
-
-    return Checkpoint(
-        data["uuid"],
-        data["experiment_config"],
-        data["experiment_id"],
-        data["trial_id"],
-        data["hparams"],
-        data["batch_number"],
-        data["start_time"],
-        data["end_time"],
-        data["resources"],
-        validation,
-        metadata=data.get("metadata"),
-        framework=data.get("framework"),
-        format=data.get("format"),
-        determined_version=data.get("determined_version"),
-        master=master,
-    )
+        return Checkpoint(
+            data["uuid"],
+            data.get("experiment_config", data.get("experimentConfig")),
+            data.get("experiment_id", data.get("experimentId")),
+            data.get("trial_id", data.get("trialId")),
+            data["hparams"],
+            data.get("batch_number", data.get("batchNumber")),
+            data.get("start_time", data.get("startTime")),
+            data.get("end_time", data.get("endTime")),
+            data["resources"],
+            validation,
+            metadata=data.get("metadata"),
+            framework=data.get("framework"),
+            format=data.get("format"),
+            determined_version=data.get("determined_version", data.get("determinedVersion")),
+            version=data.get("version"),
+            model_name=data.get("model_name"),
+            master=master,
+        )

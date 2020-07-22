@@ -94,8 +94,18 @@ class PyTorchTrialController(det.LoopTrialController):
 
             self.trial.__setattr__("train_batch", new_train_batch)
 
-        check.gt_eq(len(self.context.models), 1, "Must have at least one model")
-        check.gt_eq(len(self.context.optimizers), 1, "Must have at least one optimizer")
+        check.gt_eq(
+            len(self.context.models),
+            1,
+            "Must have at least one model. "
+            "This might be caused by not wrapping your model with Model()",
+        )
+        check.gt_eq(
+            len(self.context.optimizers),
+            1,
+            "Must have at least one optimizer. "
+            "This might be caused by not wrapping your model with Optimizer()",
+        )
         self._check_evaluate_implementation()
 
         # Validation loader will be undefined on process ranks > 0
@@ -189,6 +199,7 @@ class PyTorchTrialController(det.LoopTrialController):
         self.training_loader = self.trial.build_training_data_loader().get_data_loader(
             repeat=True, skip=skip_batches, num_replicas=nreplicas, rank=rank
         )
+        self.context._epoch_len = len(self.training_loader)
 
         validation_dataset = self.trial.build_validation_data_loader()
         if self._evaluate_batch_defined():
@@ -295,9 +306,6 @@ class PyTorchTrialController(det.LoopTrialController):
         for model in self.context.models:
             model.train()
 
-        for callback in self.callbacks.values():
-            callback.on_train_step_start(step_id)
-
         start = total_batches_processed
         end = start + num_batches
 
@@ -349,9 +357,6 @@ class PyTorchTrialController(det.LoopTrialController):
             num_inputs *= hvd.size()
         metrics = det.util.make_metrics(num_inputs, per_batch_metrics)
 
-        for callback in self.callbacks.values():
-            callback.on_train_step_end(step_id, metrics)
-
         if not self.is_chief:
             # The training metrics are reported only in the chief process.
             return workload.Skipped()
@@ -375,7 +380,13 @@ class PyTorchTrialController(det.LoopTrialController):
             model.eval()
 
         for callback in self.callbacks.values():
+            logging.warning(
+                "on_validation_step_start is now deprecated, please use on_validation_start instead"
+            )
             callback.on_validation_step_start()
+
+        for callback in self.callbacks.values():
+            callback.on_validation_start()
 
         num_inputs = 0
         metrics = {}  # type: Optional[Dict[str, Any]]
@@ -436,7 +447,8 @@ class PyTorchTrialController(det.LoopTrialController):
 
         if self.hvd_config.use and any(
             map(
-                lambda c: util.is_overridden(c.on_validation_step_end, _callback.PyTorchCallback),
+                lambda c: util.is_overridden(c.on_validation_end, _callback.PyTorchCallback)
+                or util.is_overridden(c.on_validation_step_end, _callback.PyTorchCallback),
                 self.callbacks.values(),
             )
         ):
@@ -447,7 +459,13 @@ class PyTorchTrialController(det.LoopTrialController):
             metrics = hvd.broadcast_object(metrics, root_rank=0)
 
         for callback in self.callbacks.values():
+            logging.warning(
+                "on_validation_step_end is now deprecated, please use on_validation_end instead"
+            )
             callback.on_validation_step_end(cast(Dict[str, Any], metrics))
+
+        for callback in self.callbacks.values():
+            callback.on_validation_end(cast(Dict[str, Any], metrics))
 
         if not self.is_chief:
             return workload.Skipped()

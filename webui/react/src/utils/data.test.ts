@@ -1,5 +1,7 @@
 import {
   clone,
+  getPath,
+  getPathOrElse,
   isAsyncFunction,
   isFunction,
   isMap,
@@ -70,10 +72,9 @@ const tests = [
   { type: [ Type.Set, Type.Object ], value: new Set([ 'abc', 'def', 'ghi' ]) },
   { type: [ Type.Set, Type.Object ], value: new Set([ -1.5, Number.MAX_VALUE, null, undefined ]) },
 ];
+const object = { a: true, b: null, c: { x: { y: -1.2e10 }, z: undefined } };
 
 describe('data utility', () => {
-  const object = { a: true, b: null, c: { x: { y: -1.2e10 }, z: undefined } };
-
   describe('clone', () => {
     it('should preserve primitives', () => {
       expect(clone(-1.23e-8)).toBe(-1.23e-8);
@@ -109,6 +110,29 @@ describe('data utility', () => {
       expect(deepClone).not.toBe(object);
       expect(deepClone.c).not.toBe(object.c);
       expect(deepClone.c.x).not.toBe(object.c.x);
+    });
+  });
+
+  describe('getPath', () => {
+    it('should get object value based on paths', () => {
+      expect(getPath<boolean>(object, 'a')).toBe(true);
+      expect(getPath<string>(object, 'x.x')).toBeUndefined();
+      expect(getPath<number>(object, 'c.x.y')).toBe(-1.2e10);
+    });
+  });
+
+  describe('getPathOrElse', () => {
+    it('should get-or-else objects', () => {
+      expect(getPathOrElse<boolean>(object, 'a', false)).toBe(true);
+      expect(getPathOrElse<string>(object, 'b', 'junk')).toBeNull();
+      expect(getPathOrElse<number>(object, 'c.x.y', 0)).toBe(-1.2e10);
+    });
+
+    it('should get-or-else fallbacks', () => {
+      const fallback = 'fallback';
+      expect(getPathOrElse<string>(object, 'a.b.c', fallback)).toBe(fallback);
+      expect(getPathOrElse<string>(object, 'c.x.w', fallback)).toBe(fallback);
+      expect(getPathOrElse<string | undefined>(object, 'c.x.z', undefined)).toBeUndefined();
     });
   });
 

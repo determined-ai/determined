@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ExperimentsDecorator } from 'storybook/ConetextDecorators';
+import { ExperimentsDecorator } from 'storybook/ContextDecorators';
 import { CommandState, CommandType, RunState } from 'types';
 import { generateCommandTask, generateExperimentTask } from 'utils/task';
 

@@ -21,7 +21,6 @@ The full list of our tutorials can be found below:
   quick-start
   pytorch-mnist-tutorial
   tf-mnist-tutorial
-  tf-cifar-tutorial
   data-access
   notebook-tutorial
   native-tf-keras/index

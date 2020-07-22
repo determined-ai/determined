@@ -9,7 +9,7 @@ interface Props {
   name: string;
 }
 
-const getInitials = (name: string): string => {
+const getInitials = (name = ''): string => {
   // Reduce the name to initials.
   const initials = name
     .split(/\s+/)
@@ -20,7 +20,7 @@ const getInitials = (name: string): string => {
   return initials.length > 2 ? `${initials.charAt(0)}${initials.substr(-1)}` : initials;
 };
 
-const getColor = (name: string): string => {
+const getColor = (name = ''): string => {
   const hexColor = md5(name).substr(0, 6);
   const hslColor = hex2hsl(hexColor);
   return hsl2str({ ...hslColor, l: 50 });

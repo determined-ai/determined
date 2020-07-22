@@ -1,8 +1,9 @@
 import {
   ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType, Experiment, ExperimentFilters,
   ExperimentItem, ExperimentTask, RecentCommandTask, RecentEvent, RecentExperimentTask,
-  RecentTask, RunState, Task, TaskFilters, TaskType, terminalCommandStates, User,
+  RecentTask, RunState, Task, TaskFilters, TaskType, User,
 } from 'types';
+import { terminalCommandStates } from 'utils/types';
 
 import { isExperiment } from './types';
 
@@ -71,7 +72,11 @@ export const generateExperiments = (count = 10): ExperimentItem[] => {
       const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
       return {
         ...experimentTask,
-        config: { description: experimentTask.name },
+        config: {
+          description: experimentTask.name,
+          resources: {},
+          searcher: { metric: 'val_error', smallerIsBetter: true },
+        },
         id: idx,
         name: experimentTask.name,
         username: user.username,

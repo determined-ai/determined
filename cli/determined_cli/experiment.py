@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 import tabulate
 from ruamel import yaml
-from termcolor import colored
 
 import determined_common
 from determined_cli import checkpoint, render
@@ -137,46 +136,28 @@ def submit_experiment(args: Namespace) -> None:
         ) = read_git_metadata(args.model_def)
 
     if args.test_mode:
-        # Check if the experiment configuration passes master validation by sending a
-        # create request with the "validate_only" flag enabled.
-        print(colored("Validating experiment configuration...", "yellow"), end="\r")
-        api.experiment.create_experiment(
-            master_url=args.master,
-            config=experiment_config,
-            model_context=model_context,
-            template=args.template if args.template else None,
-            validate_only=True,
-            additional_body_fields=additional_body_fields,
-        )
-        print(colored("Experiment configuration validation succeeded! 🎉", "green"))
-
-        # Create a test experiment.
-        exp_id = api.experiment.create_test_experiment(
-            master_url=args.master,
-            config=experiment_config,
-            model_context=model_context,
+        api.experiment.create_test_experiment_and_follow_logs(
+            args.master,
+            experiment_config,
+            model_context,
             template=args.template if args.template else None,
             additional_body_fields=additional_body_fields,
         )
-        print(colored("Test experiment ID: {}".format(exp_id), "green"))
-        api.experiment.follow_test_experiment_logs(args.master, exp_id)
     else:
-        exp_id = api.experiment.create_experiment(
+        api.experiment.create_experiment_and_follow_logs(
             master_url=args.master,
             config=experiment_config,
             model_context=model_context,
             template=args.template if args.template else None,
-            validate_only=True if args.test_mode else False,
-            activate=True if not args.paused else False,
             additional_body_fields=additional_body_fields,
+            activate=not args.paused,
+            follow_first_trial_logs=args.follow_first_trial,
         )
-        print("Created experiment {}".format(exp_id))
-        if not args.paused and args.follow_first_trial:
-            api.experiment.follow_experiment_logs(args.master, exp_id)
 
 
 def local_experiment(args: Namespace) -> None:
     try:
+        import determined as det
         from determined import experimental, load
     except ImportError as e:
         print("--local requires that the `determined` package is installed.")
@@ -193,18 +174,8 @@ def local_experiment(args: Namespace) -> None:
 
     determined_common.set_logger(bool(experiment_config.get("debug", False)))
 
-    # Python typically initializes sys.path[0] as the empty string when
-    # invoked interactively, which directs Python to search modules in the
-    # current directory first. However, this is _not_ happening when this
-    # Python function is invoked via the cli. We add it manually here so
-    # that test_one_batch can import the entrypoint by changing the
-    # directory to model_def.
-    #
-    # Reference: https://docs.python.org/3/library/sys.html#sys.path
-
-    with experimental._local_execution_manager(args.model_def.resolve()):
+    with det._local_execution_manager(args.model_def.resolve()):
         trial_class = load.load_trial_implementation(experiment_config["entrypoint"])
-        sys.path = [""] + sys.path
         experimental.test_one_batch(trial_class=trial_class, config=experiment_config)
 
 

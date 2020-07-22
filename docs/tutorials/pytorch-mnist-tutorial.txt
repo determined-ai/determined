@@ -27,7 +27,14 @@ When training a PyTorch model, Determined provides a built-in training loop that
 
 The Determined training loop will then invoke these functions automatically. These methods should be organized into a **trial class**, which is a user-defined Python class that inherits from :class:`determined.pytorch.PyTorchTrial`. The following sections walk through how to write your first trial class and then how to run a training job with Determined.
 
-The complete code for this tutorial can be found here: `mnist_pytorch <https://github.com/determined-ai/determined/tree/master/examples/official/trial/mnist_pytorch>`_. We suggest you follow along with the code as you read through this tutorial.
+The complete code for this tutorial can be downloaded here: :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`. After downloading this file, open a terminal window, extract the file, and ``cd`` into the ``mnist_pytorch`` directory:
+
+.. code::
+
+    tar xzvf mnist_pytorch.tgz
+    cd mnist_pytorch
+
+We suggest you follow along with the code as you read through this tutorial.
 
 Building a ``PyTorchTrial`` Class
 ---------------------------------
@@ -249,7 +256,6 @@ using the experiment's ID (``xxx`` in the example above) or description.
 Next Steps
 ----------
 
-- :ref:`tf-cifar-tutorial`
 - :ref:`experiment-configuration`
 - :ref:`command-configuration`
 - :ref:`topic-guides_yaml`

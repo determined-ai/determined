@@ -3,6 +3,7 @@ import enum
 from typing import Any, Dict, List, Optional
 
 from determined_common import api
+from determined_common.experimental.checkpoint import Checkpoint
 
 
 class ModelSortBy(enum.Enum):
@@ -22,7 +23,16 @@ class ModelOrderBy(enum.Enum):
 
 class Model:
     """
-    Class representing a model. Contains methods for managing metadata.
+    Class representing a model. Contains methods for managing metadata and
+    model versions.
+
+    Arguments:
+        name (string): The name of the model.
+        description (string, optional): The description of the model.
+        creation_time (datetime): The time the model was created.
+        last_updated_time (datetime): The time the model was most recently updated.
+        metadata (dict, optional): User defined metadata associated with the checkpoint.
+        master (string, optional): The address of the Determined master instance.
     """
 
     def __init__(
@@ -40,6 +50,90 @@ class Model:
         self.creation_time = creation_time
         self.last_updated_time = last_updated_time
         self.metadata = metadata or {}
+
+    def get_version(self, version: int = 0) -> Checkpoint:
+        """
+        Retrieve the checkpoint corresponding to the specified version of the
+        model. If no version is specified the latest model version is returned.
+
+        Arguments:
+            version (int, optional): The model version number requested.
+        """
+        if version == 0:
+            resp = api.get(
+                self._master,
+                "/api/v1/models/{}/versions/".format(self.name),
+                {"limit": 1, "order_by": 2},
+            )
+
+            data = resp.json()
+            latest_version = data["versions"][0]
+            return Checkpoint.from_json(
+                {
+                    **latest_version["checkpoint"],
+                    "version": latest_version["version"],
+                    "model_name": data["model"]["name"],
+                }
+            )
+        else:
+            resp = api.get(self._master, "/api/v1/models/{}/versions/{}".format(self.name, version))
+
+        data = resp.json()
+        return Checkpoint.from_json(data["version"]["checkpoint"], self._master)
+
+    def get_versions(self, order_by: ModelOrderBy = ModelOrderBy.DESC) -> List[Checkpoint]:
+        """
+        Get a list of checkpoints corresponding to versions of this model. The
+        models are sorted by version number and are returned in descending
+        order by default.
+
+        Arguments:
+            order_by (enum): A member of the ModelOrderBy enum.
+        """
+        resp = api.get(
+            self._master,
+            "/api/v1/models/{}/versions/".format(self.name),
+            params={"order_by": order_by.value},
+        )
+        data = resp.json()
+
+        return [
+            Checkpoint.from_json(
+                {
+                    **version["checkpoint"],
+                    "version": version["version"],
+                    "model_name": data["model"]["name"],
+                },
+                self._master,
+            )
+            for version in data["versions"]
+        ]
+
+    def register_version(self, checkpoint_uuid: str) -> Checkpoint:
+        """
+        Creats a new model version and returns the
+        :class:`~determined.experimental.Checkpoint` corresponding to the
+        version.
+
+        Arguments:
+            checkpoint_uuid: The uuid to associated with the new model version.
+        """
+        resp = api.post(
+            self._master,
+            "/api/v1/models/{}/versions".format(self.name),
+            body={"checkpoint_uuid": checkpoint_uuid},
+        )
+
+        data = resp.json()
+
+        return Checkpoint.from_json(
+            {
+                **data["version"]["checkpoint"],
+                "version": data["version"]["version"],
+                "model_name": data["version"]["model"]["name"],
+            },
+            self._master,
+        )
 
     def add_metadata(self, metadata: Dict[str, Any]) -> None:
         """

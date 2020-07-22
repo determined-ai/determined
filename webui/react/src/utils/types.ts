@@ -1,6 +1,6 @@
 import {
-  AnyTask, Command, CommandState, CommandType, Experiment, RecentCommandTask,
-  RecentExperimentTask, RecentTask, RunState,
+  AnyTask, Command, CommandState, CommandType, Experiment, ExperimentItem,
+  RecentCommandTask, RecentExperimentTask, RecentTask, RunState,
 } from 'types';
 
 /* Conversions to Tasks */
@@ -11,7 +11,7 @@ const commandToEventUrl = (command: Command): string | undefined => {
   return undefined;
 };
 
-const waitPageUrl = (command: Command): string | undefined => {
+export const waitPageUrl = (command: Command): string | undefined => {
   const eventUrl = commandToEventUrl(command);
   const proxyUrl = command.serviceAddress;
   if (!eventUrl || !proxyUrl) return;
@@ -85,12 +85,16 @@ export const killableCmdStates = [
   CommandState.Starting,
 ];
 
-export const terminalRunStates = [
+export const terminalCommandStates: Set<CommandState> = new Set([
+  CommandState.Terminated,
+]);
+
+export const terminalRunStates: Set<RunState> = new Set([
   RunState.Canceled,
   RunState.Completed,
   RunState.Errored,
   RunState.Deleted,
-];
+]);
 
 export const runStateToLabel: {[key in RunState]: string} = {
   [RunState.Active]: 'Active',
@@ -114,7 +118,7 @@ export const commandStateToLabel: {[key in CommandState]: string} = {
   [CommandState.Terminated]: 'Terminated',
 };
 
-export const isTaskKillable = (task: AnyTask): boolean => {
+export const isTaskKillable = (task: AnyTask | ExperimentItem): boolean => {
   return killableRunStates.includes(task.state as RunState)
     || killableCmdStates.includes(task.state as CommandState);
 };

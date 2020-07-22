@@ -1,6 +1,6 @@
 import pytest
-import torch
 
+from determined import pytorch
 from determined.experimental import Determined
 from tests import config as conf
 from tests import experiment as exp
@@ -26,7 +26,7 @@ def test_pytorch_load() -> None:
     )
 
     nn = Determined(conf.make_master_url()).get_experiment(experiment_id).top_checkpoint().load()
-    assert isinstance(nn, torch.nn.Module)
+    assert isinstance(nn, pytorch.PyTorchTrial)
 
 
 @pytest.mark.e2e_gpu  # type: ignore
@@ -139,4 +139,4 @@ def test_pytorch_cifar10_parallel() -> None:
         .select_checkpoint(latest=True)
         .load()
     )
-    assert isinstance(nn, torch.nn.Module)
+    assert isinstance(nn, pytorch.PyTorchTrial)

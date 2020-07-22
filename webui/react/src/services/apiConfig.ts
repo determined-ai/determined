@@ -4,15 +4,17 @@ import queryString from 'query-string';
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { Api } from 'services/apiBuilder';
 import {
-  jsonToCommandLogs, jsonToDeterminedInfo, jsonToExperimentDetails, jsonToExperiments, jsonToLogs,
-  jsonToTrialLogs,
+  jsonToCommandLogs, jsonToDeterminedInfo, jsonToExperimentDetails,
+  jsonToExperiments, jsonToLogs, jsonToTensorboard, jsonToTrialDetails, jsonToTrialLogs,
 } from 'services/decoder';
 import {
-  CommandLogsParams, ExperimentDetailsParams, ExperimentsParams, KillCommandParams,
-  KillExpParams, LaunchTensorboardParams, LogsParams, PatchExperimentParams, TrialLogsParams,
+  CommandLogsParams, EmptyParams, ExperimentDetailsParams, ExperimentsParams,
+  KillCommandParams, KillExpParams, LaunchTensorboardParams, LogsParams, PatchExperimentParams,
+  TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import {
-  CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log, TBSourceType, User,
+  Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log,
+  TBSourceType, TrialDetails, User,
 } from 'types';
 
 /* Helpers */
@@ -32,7 +34,7 @@ const commandToEndpoint: Record<CommandType, string> = {
 
 /* Authentication */
 
-export const getCurrentUser: Api<{}, User> = {
+export const getCurrentUser: Api<EmptyParams, User> = {
   httpOptions: () => ({ url: '/users/me' }),
   name: 'getCurrentUser',
   postProcess: (response) => {
@@ -59,7 +61,7 @@ export const login: Api<Credentials, void> = {
 
 /* Info */
 
-export const getInfo: Api<{}, DeterminedInfo> = {
+export const getInfo: Api<EmptyParams, DeterminedInfo> = {
   httpOptions: () => ({ url: '/info' }),
   name: 'getInfo',
   postProcess: (response) => jsonToDeterminedInfo(response.data),
@@ -77,7 +79,7 @@ export const killCommand: Api<KillCommandParams, void> = {
   name: 'killCommand',
 };
 
-export const launchTensorboard: Api<LaunchTensorboardParams, void> = {
+export const launchTensorboard: Api<LaunchTensorboardParams, Command> = {
   httpOptions: (params) => {
     const attrName = params.type === TBSourceType.Trial ? 'trial_ids' : 'experiment_ids';
     return {
@@ -89,6 +91,7 @@ export const launchTensorboard: Api<LaunchTensorboardParams, void> = {
     };
   },
   name: 'launchTensorboard',
+  postProcess: (response) => jsonToTensorboard(response.data),
 };
 
 /* Experiment */
@@ -127,8 +130,16 @@ export const getExperimentDetails: Api<ExperimentDetailsParams, ExperimentDetail
   httpOptions: (params) => ({
     url: `/experiments/${params.id}/summary`,
   }),
-  name: 'getExperiment',
+  name: 'getExperimentDetails',
   postProcess: (response) => jsonToExperimentDetails(response.data),
+};
+
+export const getTrialDetails: Api<TrialDetailsParams, TrialDetails> = {
+  httpOptions: (params: TrialDetailsParams) => ({
+    url: `/trials/${params.id}`,
+  }),
+  name: 'getTrialDetails',
+  postProcess: response => jsonToTrialDetails(response.data),
 };
 
 /* Logs */

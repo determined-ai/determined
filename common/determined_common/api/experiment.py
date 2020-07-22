@@ -1,3 +1,5 @@
+import math
+import random
 import sys
 import time
 import uuid
@@ -40,6 +42,9 @@ def logs(args: Namespace) -> None:
         return logs[-1]["id"] if logs else last_offset
 
     try:
+        if args.head is not None:
+            print_logs(0, args.head)
+            return
         if args.tail is not None:
             last_offset = print_logs(None, args.tail)
         else:
@@ -82,7 +87,9 @@ def follow_experiment_logs(master_url: str, exp_id: int) -> None:
     print("Following first trial with ID {}".format(first_trial_id))
 
     # Call `logs --follow` on the new trial.
-    logs_args = Namespace(trial_id=first_trial_id, follow=True, master=master_url, tail=None)
+    logs_args = Namespace(
+        trial_id=first_trial_id, master=master_url, head=None, tail=None, follow=True
+    )
     logs(logs_args)
 
 
@@ -157,7 +164,9 @@ def follow_test_experiment_logs(master_url: str, exp_id: int) -> None:
         elif r["state"] == constants.ERROR:
             print_progress(active_stage, ended=True)
             trial_id = r["trials"][0]["id"]
-            logs_args = Namespace(trial_id=trial_id, master=master_url, tail=None, follow=False)
+            logs_args = Namespace(
+                trial_id=trial_id, master=master_url, head=None, tail=None, follow=False
+            )
             logs(logs_args)
             sys.exit(1)
         else:
@@ -203,17 +212,42 @@ def create_experiment(
     return experiment_id
 
 
+def generate_random_hparam_values(hparam_def: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_random_value(hparam: Any) -> Any:
+        if isinstance(hparam, Dict):
+            if hparam["type"] == "const":
+                return hparam["val"]
+            elif hparam["type"] == "int":
+                return random.randint(hparam["minval"], hparam["maxval"])
+            elif hparam["type"] == "double":
+                return random.uniform(hparam["minval"], hparam["maxval"])
+            elif hparam["type"] == "categorical":
+                return hparam["vals"][random.randint(0, len(hparam["vals"]) - 1)]
+            elif hparam["type"] == "log":
+                return math.pow(hparam["base"], random.uniform(hparam["minval"], hparam["maxval"]))
+            else:
+                raise Exception("Wrong type of hyperparameter: {}".format(hparam["type"]))
+        elif isinstance(hparam, (int, float, str)):
+            return hparam
+        else:
+            raise Exception("Wrong type of hyperparameter: {}".format(type(hparam)))
+
+    hparams = {name: generate_random_value(hparam_def[name]) for name in hparam_def}
+    return hparams
+
+
 def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Create a short experiment that based on a modified version of the
+    Create a test experiment that based on a modified version of the
     experiment config of the request and monitors its progress for success.
-    The short experiment is created as archived to be not user-visible by
+    The test experiment is created as archived to be not user-visible by
     default.
 
     The experiment configuration is modified such that:
-    1. The training step takes a minimum amount of time.
-    2. All checkpoints are GC'd after experiment finishes.
+    1. Only train one batch.
+    2. Only use one slot.
     3. The experiment does not attempt restarts on failure.
+    4. All checkpoints are GC'd after experiment finishes.
     """
     config_test = config.copy()
     config_test.update(
@@ -234,6 +268,7 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
                 "metric": config_test["searcher"]["metric"],
                 "max_steps": 1,
             },
+            "hyperparameters": generate_random_hparam_values(config.get("hyperparameters", {})),
             "resources": {**config_test.get("resources", {"slots_per_trial": 1})},
             "max_restarts": 0,
         }
@@ -245,19 +280,57 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
     return config_test
 
 
-def create_test_experiment(
+def create_experiment_and_follow_logs(
+    master_url: str,
+    config: Dict[str, Any],
+    model_context: context.Context,
+    template: Optional[str] = None,
+    additional_body_fields: Optional[Dict[str, Any]] = None,
+    activate: bool = True,
+    follow_first_trial_logs: bool = True,
+) -> int:
+    exp_id = api.experiment.create_experiment(
+        master_url,
+        config,
+        model_context,
+        template=template,
+        additional_body_fields=additional_body_fields,
+        activate=activate,
+    )
+    print("Created experiment {}".format(exp_id))
+    if activate and follow_first_trial_logs:
+        api.follow_experiment_logs(master_url, exp_id)
+    return exp_id
+
+
+def create_test_experiment_and_follow_logs(
     master_url: str,
     config: Dict[str, Any],
     model_context: context.Context,
     template: Optional[str] = None,
     additional_body_fields: Optional[Dict[str, Any]] = None,
 ) -> int:
-    return create_experiment(
-        master_url=master_url,
-        config=make_test_experiment_config(config),
-        model_context=model_context,
+    print(colored("Validating experiment configuration...", "yellow"), end="\r")
+    api.experiment.create_experiment(
+        master_url,
+        config,
+        model_context,
         template=template,
-        archived=True,
-        activate=True,
+        validate_only=True,
         additional_body_fields=additional_body_fields,
     )
+    print(colored("Experiment configuration validation succeeded! 🎉", "green"))
+
+    print(colored("Creating test experiment...", "yellow"), end="\r")
+    exp_id = api.experiment.create_experiment(
+        master_url,
+        make_test_experiment_config(config),
+        model_context,
+        template=template,
+        additional_body_fields=additional_body_fields,
+        archived=True,
+        activate=True,
+    )
+    print(colored("Created test experiment {}".format(exp_id), "green"))
+    api.experiment.follow_test_experiment_logs(master_url, exp_id)
+    return exp_id
