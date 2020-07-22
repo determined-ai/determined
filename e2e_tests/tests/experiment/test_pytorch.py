@@ -1,6 +1,5 @@
 import pytest
 
-from determined import pytorch
 from determined.experimental import Determined
 from tests import config as conf
 from tests import experiment as exp
@@ -25,8 +24,12 @@ def test_pytorch_load() -> None:
         config, conf.official_examples_path("trial/mnist_pytorch"), 1
     )
 
-    nn = Determined(conf.make_master_url()).get_experiment(experiment_id).top_checkpoint().load()
-    assert isinstance(nn, pytorch.PyTorchTrial)
+    (
+        Determined(conf.make_master_url())
+        .get_experiment(experiment_id)
+        .top_checkpoint()
+        .load(map_location="cpu")
+    )
 
 
 @pytest.mark.e2e_gpu  # type: ignore
@@ -133,10 +136,9 @@ def test_pytorch_cifar10_parallel() -> None:
         config, conf.official_examples_path("trial/cifar10_cnn_pytorch"), 1
     )
     trials = exp.experiment_trials(experiment_id)
-    nn = (
+    (
         Determined(conf.make_master_url())
         .get_trial(trials[0]["id"])
         .select_checkpoint(latest=True)
-        .load()
+        .load(map_location="cpu")
     )
-    assert isinstance(nn, pytorch.PyTorchTrial)
