@@ -170,7 +170,7 @@ func (m *Master) startServers() error {
 		errs <- errors.Wrap(m.echo.StartServer(server), servers[server]+" failed")
 	}
 	go func() {
-		if err := grpc.RegisterHTTPProxy(m.echo, m.config.GRPCPort); err != nil {
+		if err := grpc.RegisterHTTPProxy(m.echo, m.config.GRPCPort, m.config.EnableCors); err != nil {
 			errs <- err
 			return
 		}
