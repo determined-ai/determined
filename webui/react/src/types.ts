@@ -182,6 +182,7 @@ export interface ExperimentConfig {
   resources: {
     maxSlots?: number;
   };
+  labels?: string[];
 }
 
 /* Experiment */
