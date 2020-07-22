@@ -174,7 +174,9 @@ def test_custom_reducer_distributed(secrets: Dict[str, str], tf2: bool) -> None:
 @pytest.mark.e2e_gpu  # type: ignore
 @pytest.mark.parametrize("tf2", [True, False])  # type: ignore
 @pytest.mark.parametrize("storage_type", ["s3"])  # type: ignore
-def test_mnist_estimator_data_layer_s3(tf2: bool, storage_type: str) -> None:
+def test_mnist_estimator_data_layer_s3(
+    tf2: bool, storage_type: str, secrets: Dict[str, str]
+) -> None:
     run_mnist_estimator_data_layer_test(tf2, storage_type)
 
 
@@ -194,7 +196,7 @@ def run_mnist_estimator_data_layer_test(tf2: bool, storage_type: str) -> None:
 
 @pytest.mark.parallel  # type: ignore
 @pytest.mark.parametrize("storage_type", ["lfs", "s3"])  # type: ignore
-def test_mnist_estimator_data_layer_parallel(storage_type: str) -> None:
+def test_mnist_estimator_data_layer_parallel(storage_type: str, secrets: Dict[str, str]) -> None:
     config = conf.load_config(conf.experimental_path("trial/data_layer_mnist_estimator/const.yaml"))
     config = conf.set_max_steps(config, 2)
     config = conf.set_slots_per_trial(config, 8)
