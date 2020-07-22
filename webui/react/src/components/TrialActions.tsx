@@ -1,16 +1,16 @@
 import { Button, Popconfirm } from 'antd';
 import React, { useCallback, useState } from 'react';
 
-import { archiveExperiment, killExperiment, launchTensorboard, setExperimentState,
+import { archiveTrial, killTrial, launchTensorboard, setTrialState,
 } from 'services/api';
-import { ExperimentDetails, RunState, TBSourceType } from 'types';
+import { TrialDetails, RunState, TBSourceType } from 'types';
 import { openCommand } from 'utils/routes';
 import { cancellableRunStates, killableRunStates, terminalRunStates } from 'utils/types';
 
-import css from './ExperimentActions.module.scss';
+import css from './TrialActions.module.scss';
 
 interface Props {
-  experiment: ExperimentDetails;
+  trial: TrialDetails;
   onSettled: () => void; // A callback to trigger after an action is done.
 }
 
@@ -25,7 +25,7 @@ enum Action {
 
 type ButtonLoadingStates = Record<Action, boolean>;
 
-const ExperimentActions: React.FC<Props> = ({ experiment, onSettled: updateFn }: Props) => {
+const TrialActions: React.FC<Props> = ({ trial, onSettled: updateFn }: Props) => {
 
   const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
     Activate: false,
@@ -39,48 +39,48 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onSettled: updateFn }:
   const handleArchive = useCallback((archive: boolean) =>
     (): Promise<unknown> => {
       setButtonStates(state => ({ ...state, archive: true }));
-      return archiveExperiment(experiment.id, archive)
+      return archiveTrial(trial.id, archive)
         .then(updateFn)
         .finally(() => setButtonStates(state => ({ ...state, archive: false })));
     },
-  [ experiment.id, updateFn ]);
+  [ trial.id, updateFn ]);
 
   const handleKill = useCallback(() => {
     setButtonStates(state => ({ ...state, kill: true }));
-    killExperiment({ experimentId: experiment.id })
+    killTrial({ trialId: trial.id })
       .then(updateFn)
       .finally(() => setButtonStates(state => ({ ...state, kill: false })));
-  }, [ experiment.id, updateFn ]);
+  }, [ trial.id, updateFn ]);
 
   const handleLaunchTensorboard = useCallback(() => {
     setButtonStates(state => ({ ...state, tensorboard: true }));
-    launchTensorboard({ ids: [ experiment.id ], type: TBSourceType.Experiment })
+    launchTensorboard({ ids: [ trial.id ], type: TBSourceType.Trial })
       .then((tensorboard) => {
         openCommand(tensorboard);
         return updateFn();
       })
       .finally(() => setButtonStates(state => ({ ...state, tensorboard: false })));
-  }, [ experiment.id, updateFn ]);
+  }, [ trial.id, updateFn ]);
 
   const handleStateChange = useCallback((targetState: RunState) =>
     (): Promise<unknown> => {
       setButtonStates(state => ({ ...state, [targetState]: true }));
-      return setExperimentState({ experimentId: experiment.id, state: targetState })
+      return setTrialState({ trialId: trial.id, state: targetState })
         .then(updateFn)
         .finally(() => setButtonStates(state => ({ ...state, [targetState]: false })));
     }
-  , [ experiment.id, updateFn ]);
+  , [ trial.id, updateFn ]);
 
   interface ConditionalButton {
     btn: React.ReactNode;
-    showIf?: (exp: ExperimentDetails) => boolean;
+    showIf?: (exp: TrialDetails) => boolean;
   }
 
-  const experimentWillNeverHaveData = (experiment: ExperimentDetails): boolean => {
-    const isTerminal = terminalRunStates.has(experiment.state);
+  const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
+    const isTerminal = terminalRunStates.has(trial.state);
     // with lack of step state we can use numSteps as a proxy to trials that definietly have some
     // metric.
-    const trialsWithSomeMetric = experiment.trials.filter(trial => trial.numSteps > 1);
+    const trialsWithSomeMetric = trial.trials.filter(trial => trial.numSteps > 1);
     return isTerminal && trialsWithSomeMetric.length === 0;
   };
 
@@ -115,7 +115,7 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onSettled: updateFn }:
         cancelText="No"
         key="cancel"
         okText="Yes"
-        title="Are you sure you want to kill the experiment?"
+        title="Are you sure you want to kill the trial?"
         onConfirm={handleStateChange(RunState.StoppingCanceled)}
       >
         <Button danger loading={buttonStates.Cancel} type="primary">Cancel</Button>
@@ -127,7 +127,7 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onSettled: updateFn }:
         cancelText="No"
         key="kill"
         okText="Yes"
-        title="Are you sure you want to kill the experiment?"
+        title="Are you sure you want to kill the trial?"
         onConfirm={handleKill}
       >
         <Button danger loading={buttonStates.Kill} type="primary">Kill</Button>
@@ -138,14 +138,14 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onSettled: updateFn }:
       btn: <Button key="tensorboard"
         loading={buttonStates.Tensorboard} type="primary" onClick={handleLaunchTensorboard}>
       Tensorboard</Button>,
-      showIf: (exp): boolean => !experimentWillNeverHaveData(exp),
+      showIf: (exp): boolean => !trialWillNeverHaveData(exp),
     },
   ];
 
   return (
     <ul className={css.base}>
       {actionButtons
-        .filter(ab => !ab.showIf || ab.showIf(experiment as ExperimentDetails))
+        .filter(ab => !ab.showIf || ab.showIf(trial as TrialDetails))
         .map(ab => ab.btn)
       }
     </ul>
@@ -153,4 +153,4 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onSettled: updateFn }:
 
 };
 
-export default ExperimentActions;
+export default TrialActions;
