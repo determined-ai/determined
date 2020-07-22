@@ -23,6 +23,9 @@ const (
 	userPythonBaseDir = "/run/determined/pythonuserbase"
 	runDir            = "/run/determined"
 	rootDir           = "/"
+	passwdPath        = "/run/determined/etc/passwd"
+	shadowPath        = "/run/determined/etc/shadow"
+	groupPath         = "/run/determined/etc/group"
 )
 
 func defaultEnvVars() map[string]string {
@@ -39,6 +42,27 @@ func workDirArchive(aug *model.AgentUserGroup) container.RunArchive {
 			aug.OwnedArchiveItem(runDir, nil, 0700, tar.TypeDir),
 			aug.OwnedArchiveItem(ContainerWorkDir, nil, 0700, tar.TypeDir),
 			aug.OwnedArchiveItem(userPythonBaseDir, nil, 0700, tar.TypeDir),
+		},
+		rootDir,
+	)
+}
+
+// injectUserArchive creates the user/UID/group/GID for a user by adding passwd/shadow/group files
+// to /run/determined/etc, which will be read by libnss_determined inside the container. If
+// libnss_determined is not present in the container, these files will be simply ignored and some
+// non-root container features will not work properly.
+func injectUserArchive(aug *model.AgentUserGroup) container.RunArchive {
+	passwdBytes := []byte(
+		fmt.Sprintf("%v:x:%v:%v::%v:/bin/sh\n", aug.User, aug.UID, aug.GID, ContainerWorkDir),
+	)
+	shadowBytes := []byte(fmt.Sprintf("%v:!!:::::::\n", aug.User))
+	groupBytes := []byte(fmt.Sprintf("%v:x:%v:\n", aug.Group, aug.GID))
+
+	return wrapArchive(
+		archive.Archive{
+			archive.RootItem(passwdPath, passwdBytes, 0644, tar.TypeReg),
+			archive.RootItem(shadowPath, shadowBytes, 0600, tar.TypeReg),
+			archive.RootItem(groupPath, groupBytes, 0644, tar.TypeReg),
 		},
 		rootDir,
 	)
@@ -80,6 +104,7 @@ func CommandArchives(t TaskSpec) []container.RunArchive {
 
 	return []container.RunArchive{
 		workDirArchive(cmd.AgentUserGroup),
+		injectUserArchive(cmd.AgentUserGroup),
 		wrapArchive(cmd.AgentUserGroup.OwnArchive(cmd.UserFiles), ContainerWorkDir),
 		wrapArchive(cmd.AdditionalFiles, rootDir),
 		harnessArchive(t.HarnessPath, cmd.AgentUserGroup),
@@ -210,6 +235,7 @@ func TrialArchives(t TaskSpec) []container.RunArchive {
 
 	return []container.RunArchive{
 		workDirArchive(exp.AgentUserGroup),
+		injectUserArchive(exp.AgentUserGroup),
 		wrapArchive(exp.AdditionalFiles, rootDir),
 		wrapArchive(exp.AgentUserGroup.OwnArchive(exp.ModelDefinition), ContainerWorkDir),
 		harnessArchive(t.HarnessPath, exp.AgentUserGroup),
@@ -301,6 +327,7 @@ func GCArchives(t TaskSpec) []container.RunArchive {
 
 	return []container.RunArchive{
 		workDirArchive(gcc.AgentUserGroup),
+		injectUserArchive(gcc.AgentUserGroup),
 		wrapArchive(
 			archive.Archive{
 				gcc.AgentUserGroup.OwnedArchiveItem(

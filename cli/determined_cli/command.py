@@ -36,7 +36,17 @@ _CONFIG_PATHS_COERCE_TO_LIST = {
 
 Command = namedtuple(
     "Command",
-    ["id", "owner", "registered_time", "config", "state", "addresses", "exit_status", "misc"],
+    [
+        "id",
+        "owner",
+        "registered_time",
+        "config",
+        "state",
+        "addresses",
+        "exit_status",
+        "misc",
+        "agent_user_group",
+    ],
 )
 
 CommandDescription = namedtuple(

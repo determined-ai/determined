@@ -28,6 +28,7 @@ type (
 		ExitStatus     *string                `json:"exit_status"`
 		Misc           map[string]interface{} `json:"misc"`
 		IsReady        bool                   `json:"is_ready"`
+		AgentUserGroup *model.AgentUserGroup  `json:"agent_user_group"`
 	}
 )
 
@@ -51,5 +52,6 @@ func newSummary(c *command) summary {
 		ExitStatus:     c.exitStatus,
 		Misc:           c.metadata,
 		IsReady:        c.readinessMessageSent,
+		AgentUserGroup: c.agentUserGroup,
 	}
 }

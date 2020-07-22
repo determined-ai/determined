@@ -26,14 +26,6 @@ from .command import (
 from .declarative_argparse import Arg, Cmd
 
 
-def get_agent_user(host: str) -> str:
-    response = api.get(host, "users/me")
-    agent_user = response.json()["agent_user"]  # type: str
-    if agent_user:
-        return agent_user
-    return "root"
-
-
 @authentication_required
 def start_shell(args: Namespace) -> None:
     data = {}
@@ -56,8 +48,7 @@ def start_shell(args: Namespace) -> None:
                 break
             render_event_stream(msg)
     if command:
-        agent_user = get_agent_user(args.master)
-        _open_shell(command, agent_user, args.ssh_opts)
+        _open_shell(command, args.ssh_opts)
 
 
 @authentication_required
@@ -66,11 +57,10 @@ def open_shell(args: Namespace) -> None:
         Command, api.get(args.master, "shells/{}".format(args.shell_id)).json()
     )
     check_eq(shell.state, "RUNNING", "Shell must be in a running state")
-    agent_user = get_agent_user(args.master)
-    _open_shell(shell, agent_user, args.ssh_opts)
+    _open_shell(shell, args.ssh_opts)
 
 
-def _open_shell(shell: Command, username: str, additional_opts: str) -> None:
+def _open_shell(shell: Command, additional_opts: str) -> None:
     LOOPBACK_ADDRESS = "[::1]"
     with tempfile.NamedTemporaryFile("w") as fp:
         fp.write(shell.misc["privateKey"])
@@ -79,6 +69,8 @@ def _open_shell(shell: Command, username: str, additional_opts: str) -> None:
         host, port = shell.addresses[0]["host_ip"], shell.addresses[0]["host_port"]
         if host == LOOPBACK_ADDRESS:
             host = "localhost"
+
+        username = shell.agent_user_group["user"] or "root"
 
         os.system(
             "ssh -o StrictHostKeyChecking=no -tt -o IdentitiesOnly=yes -i {} -p {} {} {}@{}".format(
