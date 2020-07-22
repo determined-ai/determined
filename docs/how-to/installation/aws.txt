@@ -25,13 +25,22 @@ for Determined into a single CloudFormation stack.
 Requirements
 ~~~~~~~~~~~~
 
--  Either AWS credentials or an IAM role with permissions to access AWS
-   CloudFormation APIs. See the `AWS Documentation
-   <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html>`__
-   for information on how to use AWS credentials.
+- Either AWS credentials or an IAM role with permissions to access AWS
+  CloudFormation APIs. See the `AWS Documentation
+  <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html>`__
+  for information on how to use AWS credentials.
 
--  An `AWS EC2 Keypair <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html>`__.
+- An `AWS EC2 Keypair <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html>`__.
 
+You may also want to increase the `EC2 instance limits
+<https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html>`__
+on your account --- the `default instance limits
+<https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-on-demand-instances.html#ec2-on-demand-instances-limits>`__
+are quite low, particularly for GPU instances. For example, by default an AWS
+account can only create 128 vCPUs worth of P-type instances in a given AWS
+region. The default configuration for ``det-deploy`` can result in launching up
+to 5 ``p2.8xlarge`` instances (which have 32 vCPUs each), which would exceed the
+default quota. AWS instance limits can be increased by submitting a request to the `AWS Support Center <https://console.aws.amazon.com/support/home?#/case/create?issueType=service-limit-increase&limitType=service-code-ec2-instances>`__.
 
 Installation
 ~~~~~~~~~~~~
@@ -49,18 +58,20 @@ The basic command to deploy a cluster is as follows:
 
 .. code::
 
-   det-deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR
+   det-deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR_NAME
 
 ``CLUSTER_ID`` is an arbitrary unique ID for the new cluster.
 We recommend choosing a cluster ID that is memorable and
 helps identify what the cluster is being used for. The cluster ID will be
 used as the AWS CloudFormation stack name.
 
-``KEYPAIR`` is the name of the AWS EC2 key pair to use when provisioning
+``KEYPAIR_NAME`` is the name of the AWS EC2 key pair to use when provisioning
 the cluster. If the AWS CLI is installed on your machine, you can get a
 list of the available keypair names by running ``aws ec2 describe-key-pairs``.
 
-The deployment process may take 5--10 minutes. When it completes, summary information about the newly deployed cluster will be printed, including the URL of the Determined master.
+The deployment process may take 5--10 minutes. When it completes, summary
+information about the newly deployed cluster will be printed, including the URL
+of the Determined master.
 
 .. _determined-deploy-deployment-types:
 
@@ -97,7 +108,7 @@ Spinning up the Cluster
 
 .. code::
 
-   det-deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR
+   det-deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR_NAME
 
 .. list-table::
    :widths: 25 50 25
@@ -116,11 +127,13 @@ Spinning up the Cluster
      - *required*
 
    * - ``--master-instance-type``
-     - Instance type for master instance.
+     - AWS instance type to use for the master.
      - m5.large
 
    * - ``--agent-instance-type``
-     - Instance type for agent instances.
+     - AWS instance type to use for the agents. Must be one of the following
+       instance types: ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``,
+       ``p3.8xlarge``, ``p3.16xlarge``, or ``p3dn.24xlarge``.
      - p2.8xlarge
 
    * - ``--deployment-type``
