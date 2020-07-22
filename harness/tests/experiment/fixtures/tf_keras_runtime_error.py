@@ -22,7 +22,7 @@ class RuntimeErrorTrial(TFKerasTrial):
         model = keras.Sequential([keras.layers.Dense(10)])
         model = self.context.wrap_model(model)
         model.compile(
-            optimizer="adam",
+            optimizer=tf.keras.optimizers.Adam(name="Adam"),
             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             metrics=[
                 tf.keras.metrics.Accuracy()

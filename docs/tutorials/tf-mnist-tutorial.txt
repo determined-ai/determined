@@ -93,7 +93,7 @@ The ``build_model`` method returns a compiled ``tf.keras.Model`` object. The Fas
         )
         model = self.context.wrap_model(model)
         model.compile(
-            optimizer="adam",
+            optimizer=tf.keras.optimizers.Adam(name='Adam'),
             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             metrics=[tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy")],
         )
