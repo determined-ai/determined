@@ -111,14 +111,14 @@ const trialLogsRoute = {
 export const defaultAppRoute = dashboardRoute;
 
 export const appRoutes: RouteConfig[] = [
-  dashboardRoute,
-  experimentDetailsRoute,
+  trialLogsRoute,
   trialDetailsRoute,
-  experimentListRoute,
+  experimentDetailsRoute,
   taskListRoute,
+  experimentListRoute,
   clusterRoute,
   masterLogsRoute,
-  trialLogsRoute,
+  dashboardRoute,
   {
     component: SignIn,
     id: 'login',
