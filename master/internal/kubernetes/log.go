@@ -2,7 +2,6 @@ package kubernetes
 
 import (
 	"io"
-	"reflect"
 	"time"
 
 	"github.com/docker/docker/pkg/stdcopy"
@@ -58,7 +57,7 @@ func (p *podLogStreamer) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 
 	default:
-		ctx.Log().Error("unexpected message: ", reflect.TypeOf(msg))
+		ctx.Log().Errorf("unexpected message: %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 
@@ -81,7 +80,7 @@ func (p *podLogStreamer) receiveStreamLogs(ctx *actor.Context) {
 	p.ctx = ctx
 	_, err := io.Copy(p, p.logReader)
 	if err != nil {
-		ctx.Log().Debug("error reading logs: ", err)
+		ctx.Log().WithError(err).Debug("error reading logs")
 		ctx.Self().Stop()
 		return
 	}

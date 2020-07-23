@@ -262,7 +262,7 @@ func (k *kubernetesResourceProvider) receivePodTerminated(
 	cid := ContainerID(msg.ContainerID)
 	task := k.tasksByContainerID[cid]
 	if task == nil {
-		ctx.Log().WithField("container id", cid).Info(
+		ctx.Log().WithField("container-id", cid).Info(
 			"ignoring stale terminated message for container",
 		)
 		return

@@ -199,8 +199,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		if err != nil {
 			return err
 		}
-		_, ok := ctx.ActorOf(fmt.Sprintf("%s-logs", p.podName), logStreamer)
-		if !ok {
+		if _, ok := ctx.ActorOf(fmt.Sprintf("%s-logs", p.podName), logStreamer); !ok {
 			return errors.Errorf("log streamer already exists")
 		}
 
@@ -279,7 +278,7 @@ func (p *pod) deleteKubernetesResources(ctx *actor.Context) error {
 	}
 
 	ctx.Log().Infof("deleting pod")
-	var gracePeriod int64 = 1
+	var gracePeriod int64 = 15
 	err := p.podInterface.Delete(p.podName, &metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 	if err != nil {
 		return errors.Wrapf(err, "pod deletion failed %s", p.podName)
@@ -320,13 +319,8 @@ func (p *pod) finalizeTaskState(ctx *actor.Context) {
 }
 
 func (p *pod) receiveContainerLogs(ctx *actor.Context, msg sproto.ContainerLog) {
-	ctx.Tell(p.taskHandler, sproto.ContainerLog{
-		Container:   p.container,
-		Timestamp:   msg.Timestamp,
-		PullMessage: msg.PullMessage,
-		RunMessage:  msg.RunMessage,
-		AuxMessage:  msg.AuxMessage,
-	})
+	msg.Container = p.container
+	ctx.Tell(p.taskHandler, msg)
 }
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
@@ -699,11 +693,10 @@ func getContainerState(conditions []k8sV1.PodCondition) container.State {
 		conditionsMap[condition.Type] = condition.Status == k8sV1.ConditionTrue
 	}
 
-	if conditionsMap[k8sV1.PodReady] {
+	switch {
+	case conditionsMap[k8sV1.PodReady]:
 		return container.Running
-	}
-
-	if conditionsMap[k8sV1.PodScheduled] {
+	case conditionsMap[k8sV1.PodScheduled]:
 		return container.Starting
 	}
 

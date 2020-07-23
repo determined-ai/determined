@@ -94,7 +94,7 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		p.receiveStopPod(ctx, msg)
 
 	case actor.ChildStopped:
-		if err := p.cleanupPodHandler(ctx, msg.Child); err != nil {
+		if err := p.cleanUpPodHandler(ctx, msg.Child); err != nil {
 			return err
 		}
 
@@ -103,7 +103,7 @@ func (p *pods) Receive(ctx *actor.Context) error {
 			return errors.Errorf("pod informer failed")
 		}
 
-		if err := p.cleanupPodHandler(ctx, msg.Child); err != nil {
+		if err := p.cleanUpPodHandler(ctx, msg.Child); err != nil {
 			return err
 		}
 
@@ -203,7 +203,7 @@ func (p *pods) receiveStopPod(ctx *actor.Context, msg sproto.StopPod) {
 	ctx.Tell(ref, msg)
 }
 
-func (p *pods) cleanupPodHandler(ctx *actor.Context, podHandler *actor.Ref) error {
+func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) error {
 	podInfo, ok := p.podHandlerToMetadata[podHandler]
 	if !ok {
 		return errors.Errorf("unknown pod handler being deleted %s", podHandler.Address())

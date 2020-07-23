@@ -55,7 +55,7 @@ func (c ContainerLog) String() string {
 }
 
 // ContainerStateChanged notifies that the recipient container state has been transitioned.
-// It used by the resource providers to communicate with the task handlers.
+// It is used by the resource providers to communicate with the task handlers.
 type ContainerStateChanged struct {
 	Container        container.Container
 	ContainerStopped *agent.ContainerStopped
