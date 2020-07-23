@@ -15,7 +15,7 @@ interface Props {
   experiment: ExperimentDetails;
 }
 
-const pairRow = (label: string, value: React.ReactNode): React.ReactNode => {
+const renderRow = (label: string, value: React.ReactNode): React.ReactNode => {
   if (value === undefined) return <></>;
   return (
     <tr key={label}>
@@ -48,7 +48,7 @@ const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
         && trial.bestAvailableCheckpoint.state === CheckpointState.Completed)
       .map(trial => ({
         ...trial.bestAvailableCheckpoint,
-        batch: trial.numBatchTotal,
+        batch: trial.numBatchTally,
         experimentId: trial.experimentId,
         trialId: trial.id,
       }) as CheckpointDetail)
@@ -65,26 +65,28 @@ const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
     <div className={css.base}>
       <table>
         <tbody>
-          {pairRow('State', <Badge state={exp.state} type={BadgeType.State} />)}
-          {pairRow('Progress', exp.progress && <ProgressBar
+          {renderRow('State', <Badge state={exp.state} type={BadgeType.State} />)}
+          {renderRow('Progress', exp.progress && <ProgressBar
             percent={exp.progress * 100}
             state={exp.state}
             title={floatToPercent(exp.progress, 0)} />)}
-          {pairRow('Start Time', formatDatetime(exp.startTime))}
-          {pairRow('End Time', exp.endTime && formatDatetime(exp.endTime))}
-          {pairRow('Max Slot', exp.config.resources.maxSlots || 'Unlimited')}
-          {pairRow(`Best Validation (${exp.config.searcher.metric})`,
+          {renderRow('Start Time', formatDatetime(exp.startTime))}
+          {renderRow('End Time', exp.endTime && formatDatetime(exp.endTime))}
+          {renderRow('Max Slot', exp.config.resources.maxSlots || 'Unlimited')}
+          {renderRow(`Best Validation (${exp.config.searcher.metric})`,
             bestValidation && humanReadableFloat(bestValidation))}
-          {pairRow('Best Checkpoint', bestCheckpoint && (<>
-            <Button onClick={handleShowBestCheckpoint}>Trial {bestCheckpoint.trialId}</Button>
+          {renderRow('Best Checkpoint', bestCheckpoint && (<>
+            <Button onClick={handleShowBestCheckpoint}>
+              Trial {bestCheckpoint.trialId} Batch {bestCheckpoint.batch}
+            </Button>
             <CheckpointModal
               checkpoint={bestCheckpoint}
               config={exp.config}
               show={showBestCheckpoint}
               onHide={handleHideBestCheckpoint} />
           </>))}
-          {pairRow('Configuration',<Button disabled type="primary">Show</Button>)}
-          {pairRow('Model Definition', <Button type="primary">
+          {renderRow('Configuration',<Button disabled type="primary">Show</Button>)}
+          {renderRow('Model Definition', <Button type="primary">
             <Link path={`/exps/${exp.id}/model_def`}>Download</Link>
           </Button>)}
         </tbody>

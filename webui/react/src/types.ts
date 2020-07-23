@@ -232,7 +232,7 @@ export interface TrialSummary {
   hparams: Record<string, string>;
   id: number;
   numBatches: number;
-  numBatchTotal: number;
+  numBatchTally: number;
   numCompletedCheckpoints: number;
   numSteps: number;
   seed: number;

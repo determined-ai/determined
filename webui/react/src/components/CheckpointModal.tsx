@@ -7,6 +7,7 @@ import { formatDatetime } from 'utils/date';
 import { humanReadableBytes, humanReadableFloat } from 'utils/string';
 
 import css from './CheckpointModal.module.scss';
+import Link from './Link';
 
 interface Props {
   checkpoint: CheckpointDetail;
@@ -78,15 +79,25 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show }: 
   return (
     <Modal
       footer={null}
-      title="Best Checkpoint"
+      title="Checkpoint"
       visible={show}
       onCancel={handleHide}>
       <div className={css.base}>
-        {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
-        {renderRow('Batch', checkpoint.batch)}
-        {renderRow('Experiment Id', <Badge>{checkpoint.experimentId}</Badge>)}
-        {renderRow('Trial Id', <Badge>{checkpoint.trialId}</Badge>)}
+        {renderRow('Source', (
+          <div className={css.source}>
+            <Link
+              path={`/ui/experiments/${checkpoint.experimentId}`}
+              popout>Experiment {checkpoint.experimentId}</Link>
+            <span className={css.sourceDivider} />
+            <Link
+              path={`/ui/trials/${checkpoint.trialId}`}
+              popout>Trial {checkpoint.trialId}</Link>
+            <span className={css.sourceDivider} />
+            <span>Batch {checkpoint.batch}</span>
+          </div>
+        ))}
         {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
+        {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
         {renderRow('Location', getStorageLocation(config, checkpoint))}
         {renderRow('Validation Metric', config.searcher.metric)}
         {checkpoint.validationMetric &&
