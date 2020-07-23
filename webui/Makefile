@@ -12,13 +12,13 @@ clean-%:
 fmt: fmt-react fmt-elm fmt-tests
 .PHONY: fmt-%
 fmt-%:
-	$(MAKE) -C $(subst -,/,$*) clean
+	$(MAKE) -C $(subst -,/,$*) fmt
 
 .PHONY: check
 check: check-react check-elm check-tests
 .PHONY: check-%
 check-%:
-	$(MAKE) -C $(subst -,/,$*) clean
+	$(MAKE) -C $(subst -,/,$*) check
 
 get-deps: build-api-ts-sdk
 	$(MAKE) -C react $@
@@ -48,4 +48,4 @@ build-elm:
 test: test-react test-elm test-tests
 .PHONY: test-%
 test-%:
-	$(MAKE) -C $(subst -,/,$*) clean
+	$(MAKE) -C $(subst -,/,$*) test
