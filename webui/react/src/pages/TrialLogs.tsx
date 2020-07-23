@@ -19,7 +19,7 @@ interface Params {
   trialId: string;
 }
 
-const TAIL_SIZE = 50;
+const TAIL_SIZE = 1000;
 const THROTTLE_TIME = 200;
 
 const TrialLogs: React.FC = () => {
@@ -95,7 +95,6 @@ const TrialLogs: React.FC = () => {
     <Page hideTitle maxHeight title={title}>
       <LogViewer
         disableLevel
-        disableLineNumber
         isLoading={isLoading}
         noWrap
         ref={logsRef}
