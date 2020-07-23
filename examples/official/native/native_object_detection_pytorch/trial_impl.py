@@ -34,7 +34,9 @@ if __name__ == "__main__":
         "searcher": {
             "name": "single",
             "metric": "val_avg_iou",
-            "max_steps": 16,
+            "max_length": {
+                "batches": 1600,
+            },
             "smaller_is_better": False,
         },
     }

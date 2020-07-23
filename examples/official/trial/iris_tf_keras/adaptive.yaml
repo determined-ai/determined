@@ -21,6 +21,7 @@ searcher:
   name: adaptive_simple
   metric: val_categorical_accuracy
   smaller_is_better: false
-  max_steps: 64
+  max_length:
+    batches: 6_400
   max_trials: 512
 entrypoint: model_def:IrisTrial

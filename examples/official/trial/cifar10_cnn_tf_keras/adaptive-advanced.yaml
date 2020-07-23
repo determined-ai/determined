@@ -37,10 +37,13 @@ hyperparameters:
     vals:
       - True
       - False
+records_per_epoch: 50_000
 searcher:
   name: adaptive
   mode: aggressive
   metric: val_categorical_error
-  target_trial_steps: 800
-  step_budget: 4800
+  max_length:
+    epochs: 50
+  budget:
+    epochs: 300
 entrypoint: model_def:CIFARTrial

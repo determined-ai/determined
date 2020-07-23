@@ -8,10 +8,12 @@ hyperparameters:
   n_filters2: 64
   dropout1: 0.25
   dropout2: 0.5
+records_per_epoch: 50_000
 searcher:
   name: single
   metric: validation_loss
-  max_steps: 9 # 9 steps is ~ one epoch
+  max_length:
+    epochs: 1
   smaller_is_better: true
 entrypoint: multiple_lr_schedulers_pytorch:MNistTrial
 max_restarts: 0
