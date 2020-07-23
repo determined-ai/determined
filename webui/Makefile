@@ -2,20 +2,23 @@
 
 default: get-deps build
 
-clean:
-	$(MAKE) -C react $@
-	$(MAKE) -C elm $@
-	$(MAKE) -C tests $@
+clean: clean-react clean-elm clean-tests
+	$(MAKE) -C api-ts-sdk $@
+.PHONY: clean-%
+clean-%:
+	$(MAKE) -C $(subst -,/,$*) clean
 
-fmt:
-	$(MAKE) -C react $@
-	$(MAKE) -C elm $@
-	$(MAKE) -C tests $@
+.PHONY: fmt
+fmt: fmt-react fmt-elm fmt-tests
+.PHONY: fmt-%
+fmt-%:
+	$(MAKE) -C $(subst -,/,$*) clean
 
-check:
-	$(MAKE) -C react $@
-	$(MAKE) -C elm $@
-	$(MAKE) -C tests $@
+.PHONY: check
+check: check-react check-elm check-tests
+.PHONY: check-%
+check-%:
+	$(MAKE) -C $(subst -,/,$*) clean
 
 get-deps: build-api-ts-sdk
 	$(MAKE) -C react $@
@@ -41,7 +44,8 @@ build-react:
 build-elm:
 	$(MAKE) -C elm build
 
-test:
-	$(MAKE) -C react $@
-	$(MAKE) -C elm $@
-	$(MAKE) -C tests $@
+.PHONY: test
+test: test-react test-elm test-tests
+.PHONY: test-%
+test-%:
+	$(MAKE) -C $(subst -,/,$*) clean
