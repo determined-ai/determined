@@ -232,32 +232,32 @@ export const jsonToLogs = (data: unknown): Log[] => {
   }));
 };
 
+const defaultRegex = /^\[([^\]]+)\]\s(.*)$/im;
+const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s(.*)$/im;
+
+const ioTrialLogToLog = (io: ioTypeLog): Log => {
+  if (defaultRegex.test(io.message)) {
+    const matches = io.message.match(defaultRegex) || [];
+    const time = matches[1];
+    const message = matches[2] || '';
+    return { id: io.id, message, time };
+  } else if (kubernetesRegex.test(io.message)) {
+    const matches = io.message.match(kubernetesRegex) || [];
+    const time = matches[3];
+    const message = [ matches[1], matches[2], matches[4] ].join(' ');
+    return { id: io.id, message, time };
+  }
+  return { id: io.id, message: io.message };
+};
+
 export const jsonToTrialLog = (data: unknown): Log => {
   const ioType = decode<ioTypeLog>(ioLog, data);
-  const matches = ioType.message.match(/\[([^\]]+)\] (.*)/);
-  const time = matches && matches[1] ? matches[1] : undefined;
-  const message = matches && matches[2] ? matches[2] : '';
-  return { id: ioType.id, message, time };
+  return ioTrialLogToLog(ioType);
 };
 
 export const jsonToTrialLogs = (data: unknown): Log[] => {
   const ioType = decode<ioTypeLogs>(ioLogs, data);
-  const defaultRegex = /^\[([^\]]+)\]\s(.*)$/im;
-  const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s(.*)$/im;
-  return ioType.map(log => {
-    if (defaultRegex.test(log.message)) {
-      const matches = log.message.match(defaultRegex) || [];
-      const time = matches[1];
-      const message = matches[2] || '';
-      return { id: log.id, message, time };
-    } else if (kubernetesRegex.test(log.message)) {
-      const matches = log.message.match(kubernetesRegex) || [];
-      const time = matches[3];
-      const message = [ matches[1], matches[2], matches[4] ].join(' ');
-      return { id: log.id, message, time };
-    }
-    return { id: log.id, message: log.message };
-  });
+  return ioType.map(log => ioTrialLogToLog(log));
 };
 
 export const jsonToCommandLogs = (data: unknown): Log[] => {
