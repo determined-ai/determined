@@ -82,6 +82,8 @@ const MAX_DATETIME_LENGTH = 23;
 // Number of pixels from the top of the scroll to trigger the `onScrollToTop` callback.
 const SCROLL_TOP_THRESHOLD = 50;
 
+const SCROLL_BOTTOM_THRESHOLD = 50;
+
 const ICON_WIDTH = 26;
 
 const defaultLogConfig = {
@@ -125,7 +127,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   const levelStyle = { width: toRem(ICON_WIDTH) };
 
   if (props.noWrap) classes.push(css.noWrap);
-  if (scroll.scrollTop < scroll.scrollHeight - scroll.viewHeight) {
+  if (scroll.scrollTop < scroll.scrollHeight - scroll.viewHeight - SCROLL_BOTTOM_THRESHOLD) {
     scrollToLatestClasses.push(css.show);
   }
 
@@ -220,10 +222,12 @@ const LogViewer: React.FC<Props> = forwardRef((
     // Add new logs to existing logs either at the beginning or the end.
     const updatedLogs = prepend ? [ ...newLogs, ...logs ] : [ ...logs, ...newLogs ];
     const logConfig = measureLogs(updatedLogs);
+    const isBottom = scroll.scrollTop >=
+      (scroll.scrollHeight - scroll.viewHeight - SCROLL_BOTTOM_THRESHOLD);
 
     setConfig(logConfig);
     setScrollToInfo({
-      isBottom: scroll.scrollTop >= scroll.scrollHeight - scroll.viewHeight,
+      isBottom,
       isPrepend: prepend,
       logId: logs[0]?.id,
     });
