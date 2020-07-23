@@ -65,6 +65,8 @@ linters-settings:
 linters:
   enable-all: true
   disable:
+    - exhaustive
+    - exportloopref
     - funlen
     - gochecknoglobals
     - gochecknoinits
@@ -73,9 +75,11 @@ linters:
     - godot
     - godox
     - goerr113
+    - gofumpt
     - gomnd
     - maligned
     - nestif
+    - noctx
     - testpackage
     - unparam
     - wsl
