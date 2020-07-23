@@ -3,16 +3,18 @@ import { useParams } from 'react-router';
 import { throttle } from 'throttle-debounce';
 
 import LogViewer, { LogViewerHandles } from 'components/LogViewer';
+import Message from 'components/Message';
 import Page from 'components/Page';
+import Spinner from 'components/Spinner';
 import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
-import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
-import { getTrialLogs } from 'services/api';
+import { getTrialDetails } from 'services/api';
 import * as DetSwagger from 'services/api-ts-sdk';
 import { consumeStream, experimentsApi } from 'services/apiBuilder';
 import { jsonToTrialLog } from 'services/decoder';
-import { Log } from 'types';
+import { TrialDetailsParams } from 'services/types';
+import { Log, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 
 interface Params {
@@ -32,6 +34,8 @@ const TrialLogs: React.FC = () => {
   const [ oldestId, setOldestId ] = useState(Number.MAX_SAFE_INTEGER);
   const [ oldestReached, setOldestReached ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(true);
+  const [ isIdInvalid, setIsIdInvalid ] = useState(false);
+  const [ trial ] = useRestApiSimple<TrialDetailsParams, TrialDetails>(getTrialDetails, { id });
 
   const handleScrollToTop = useCallback(() => {
     if (oldestReached) return;
@@ -57,6 +61,12 @@ const TrialLogs: React.FC = () => {
   useEffect(() => setUI({ type: UI.ActionType.HideChrome }), [ setUI ]);
 
   useEffect(() => {
+    if (trial.errorCount > 0 && !trial.isLoading) setIsIdInvalid(true);
+  }, [ trial ]);
+
+  useEffect(() => {
+    if (!trial.hasLoaded) return;
+
     let buffer: Log[] = [];
     const throttleFunc = throttle(THROTTLE_TIME, () => {
       if (!logsRef.current) return;
@@ -74,7 +84,15 @@ const TrialLogs: React.FC = () => {
     );
 
     return (): void => throttleFunc.cancel();
-  }, [ id ]);
+  }, [ id, trial.hasLoaded ]);
+
+  if (isIdInvalid) {
+    return (
+      <Page hideTitle title={title}>
+        <Message>Unable to find Trial {trialId}</Message>
+      </Page>
+    );
+  }
 
   const downloadLogs = useCallback(() => {
     return downloadTrialLogs(id).catch(e => {
@@ -101,6 +119,7 @@ const TrialLogs: React.FC = () => {
         title={title}
         onDownload={downloadLogs}
         onScrollToTop={handleScrollToTop} />
+      {isLoading && <Spinner fullPage opaque />}
     </Page>
   );
 };
