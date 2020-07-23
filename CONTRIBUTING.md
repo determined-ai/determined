@@ -39,6 +39,14 @@ Start by cloning the Determined repo:
 git clone git@github.com:determined-ai/determined.git
 ```
 
+Set up your shell to locate Go binaries. For example if you are using bash add
+the following to your `bashrc` file usually found in `$HOME/.bashrc`:
+
+```sh
+export GOBIN=$HOME/go/bin; # or wherever you installed Go
+export PATH="${GOBIN}:${PATH}"
+```
+
 #### Prerequisites
 
 - Go (>= 1.13)
