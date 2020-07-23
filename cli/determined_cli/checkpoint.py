@@ -72,7 +72,15 @@ def list(args: Namespace) -> None:
     ).json()
     searcher_metric = r["metric_name"]
 
-    headers = ["Trial ID", "Step ID", "State", "Validation Metric", "UUID", "Resources", "Size"]
+    headers = [
+        "Trial ID",
+        "Train Workload #",
+        "State",
+        "Validation Metric",
+        "UUID",
+        "Resources",
+        "Size",
+    ]
     values = [
         [
             c["trial_id"],

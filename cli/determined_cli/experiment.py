@@ -280,7 +280,7 @@ def describe(args: Namespace) -> None:
         v_metrics_headers = []
 
     headers = (
-        ["Trial ID", "Step ID", "State", "Start Time", "End Time"]
+        ["Trial ID", "Train Workload #", "State", "Start Time", "End Time"]
         + t_metrics_headers
         + [
             "Checkpoint State",
@@ -357,9 +357,9 @@ def describe(args: Namespace) -> None:
 
     if not args.outdir:
         outfile = None
-        print("\nSteps:")
+        print("\nWorkloads:")
     else:
-        outfile = args.outdir.joinpath("steps.csv")
+        outfile = args.outdir.joinpath("workloads.csv")
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
 
@@ -492,7 +492,7 @@ def list_trials(args: Namespace) -> None:
     r = api.get(args.master, "experiments/{}/summary".format(args.experiment_id))
     experiment = r.json()
 
-    headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Steps"]
+    headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Train Workloads"]
     values = [
         [
             t["id"],
@@ -562,7 +562,7 @@ def set_gc_policy(args: Namespace) -> None:
 
         headers = [
             "Trial ID",
-            "Step ID",
+            "Train Workload #",
             "State",
             "Validation Metric\n({})".format(metric_name),
             "UUID",
@@ -741,7 +741,7 @@ args_description = Cmd(
                         help="Test the experiment configuration and model "
                         "definition by creating and scheduling a very small "
                         "experiment. This command will verify that a training "
-                        "step and validation step run successfully and that "
+                        "workload and validation workload run successfully and that "
                         "checkpoints can be saved. The test experiment will "
                         "be archived on creation.",
                     ),
