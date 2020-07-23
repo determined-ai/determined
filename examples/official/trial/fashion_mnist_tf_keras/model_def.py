@@ -6,7 +6,7 @@ Based on: https://www.tensorflow.org/tutorials/keras/classification.
 
 After about 5 training epochs, accuracy should be around > 85%.
 This mimics theoriginal implementation. Continue training or increase
-the number of steps to increase accuracy.
+the number of epochs to increase accuracy.
 """
 import tensorflow as tf
 from tensorflow import keras

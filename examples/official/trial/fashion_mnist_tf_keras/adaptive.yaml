@@ -5,10 +5,12 @@ hyperparameters:
     type: int
     minval: 32
     maxval: 256
+records_per_epoch: 28800
 searcher:
   name: adaptive_simple
   metric: val_accuracy
   smaller_is_better: false
-  max_steps: 45 # num steps = number of desired epochs (5) * (total batches per epoch (~900) / batches per step (100))
+  max_length:
+    epochs: 5
   max_trials: 10
 entrypoint: model_def:FashionMNISTTrial
