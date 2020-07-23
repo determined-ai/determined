@@ -173,7 +173,8 @@ func (s *asyncHalvingSearch) promoteAsync(
 			s.trialRungs[promotionID] = rungIndex + 1
 			nextRung.outstandingTrials++
 			if !s.earlyExitTrials[promotionID] {
-				ops = append(ops, NewTrain(promotionID, nextRung.unitsNeeded.Sub(rung.unitsNeeded)))
+				unitsNeeded := max(nextRung.unitsNeeded.Units-rung.unitsNeeded.Units, 1)
+				ops = append(ops, NewTrain(promotionID, model.NewLength(s.Unit(), unitsNeeded)))
 				ops = append(ops, NewValidate(promotionID))
 				addedTrainWorkload = true
 			} else {

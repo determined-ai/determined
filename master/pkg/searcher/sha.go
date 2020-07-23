@@ -171,8 +171,8 @@ func (s *syncHalvingSearch) promoteSync(
 		for _, promotionID := range toPromote {
 			s.trialRungs[promotionID] = rungIndex + 1
 			if !s.earlyExitTrials[promotionID] {
-				ops = append(ops, NewTrain(promotionID,
-					s.rungs[rungIndex+1].unitsNeeded.Sub(rung.unitsNeeded)))
+				unitsNeeded := max(s.rungs[rungIndex+1].unitsNeeded.Units-rung.unitsNeeded.Units, 1)
+				ops = append(ops, NewTrain(promotionID, model.NewLength(s.Unit(), unitsNeeded)))
 				ops = append(ops, NewValidate(promotionID))
 			} else {
 				// We can make a recursive call (and discard the results)
