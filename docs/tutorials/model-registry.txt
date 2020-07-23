@@ -25,13 +25,13 @@ representation of a model for illustration.
     "description": "a character recognition model",
     "metadata": {
       "dataset_url": "http://yann.lecun.com/exdb/mnist/",
-      "git_url": "http://github.com/user/repo",
+      "git_url": "http://github.com/user/repo"
     }
   }
 
 Models are created via the Determined Python API, REST API, or CLI. This guide
 will cover the Python and CLI methods. For information on the REST API see
-the Swagger API documentation.
+the `Swagger API documentation </swagger-ui/#/Models>`__.
 
 The following snippet creates a model and returns a
 :class:`~determined.experimental.Model`. The
@@ -115,22 +115,22 @@ methods are as follows.
 
   # Metadata is merged with existing metadata.
   model.add_metadata({"metrics": {"test_set_loss": 0.091}})
-  # results in {"key": "value", "metrics": { "test_set_loss": 0.091 } }
+  # results in {"key": "value", "metrics": { "test_set_loss": 0.091 } }.
 
   # Only top-level keys are merged. The following line will override all values
   # underneath the "metrics" key.
   model.add_metadata({"metrics": {"test_set_acc": 0.97}})
-  # results in {"key": "value", "metrics": { "test_set_acc": 0.97 } }
+  # Results in {"key": "value", "metrics": { "test_set_acc": 0.97 } }.
 
-  # removes a top level key from the metadata
+  # Removes a top level key from the metadata.
   model.remove_metadata(["key"])
-  # results in {"metrics": { "test_set_acc": 0.97 } }
+  # Results in {"metrics": { "test_set_acc": 0.97 } }.
 
 
 Managing Model Versions
 -----------------------
 
-Once the model exists in determined, you can register checkpoints as a versions
+Once the model exists in Determined, you can register checkpoints as versions
 of the model. These registered checkpoints are known as model versions in
 Determined. A model version can be thought of as a pointer to a checkpoint. For
 each model in the system, the version number will start at 1 and increment each
@@ -169,7 +169,7 @@ representation of a model version for illustration.
         "format": "h5",
         "metrics": { "...": "..." }
       },
-      "version": 1,
+      "version": 1
     }
   }
 
@@ -217,7 +217,7 @@ number is specified the most recent version of the model is returned.
 
   latest_version = model.get_version()
 
-  specific_versions = model.get_version(3)
+  specific_version = model.get_version(3)
 
 To list all the versions of a model use the following snippet. By default model
 versions are returned in descending order such that the most recent models are
@@ -235,7 +235,7 @@ The CLI equivalent is as follows.
 
 .. code:: bash
 
-  det model list_versions <model_name>
+  det model list-versions <model_name>
 
 Next Steps
 ----------
