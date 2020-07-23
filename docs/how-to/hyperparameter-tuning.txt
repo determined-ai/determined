@@ -76,15 +76,16 @@ use in each trial.  Every searcher is configured with the name of the
 validation metric to optimize (via the ``metric`` field), in addition to
 other searcher-specific options. For example, the ``adaptive_simple``
 searcher implements adaptive downsampling, and is configured with the
-maximum number of trials to run and the maximum number of training steps
-allowed per trial:
+maximum number of trials to run and the maximum training length allowed
+per trial:
 
 .. code:: yaml
 
   searcher:
     name: adaptive_simple
     metric: validation_error
-    max_steps: 1024
+    max_length:
+      batches: 102400
     max_trials: 32
 
 For details on the supported searchers and their respective configuration

@@ -9,9 +9,9 @@ both a master and an agent.
 
 The master is responsible for
 
--  Storing experiment, trial, and step metadata.
+-  Storing experiment, trial, and workload metadata.
 -  Scheduling and dispatching work to agents.
--  Advancing the experiment, trial, step state machines over time.
+-  Advancing the experiment, trial, workload state machines over time.
 
 Each agent manages a number of **slots**, which represent computing
 devices, typically one slot per CPU or GPU. On startup the agent sends
@@ -24,7 +24,7 @@ A slot executes its workload in a containerized environment called the
 deep learning workloads; containers can be customized for specific
 needs. Trial runners are expected to have access to the training data.
 
-The trial runner runs **workloads**, which may be training steps of the
+The trial runner runs **workloads**, which may be training a
 trial, evaluating a trial on a validation dataset, or other operations
 like checkpointing model state. The master may then send more workloads
 or terminate the trial runner (freeing the slot). When sending a

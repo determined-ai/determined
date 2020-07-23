@@ -12,11 +12,9 @@ allowed per configuration:
    trained to convergence; rather, the search method will use
    early-stopping to prune hyperparameter configurations that are not
    performing well.
--  ``max_steps``: The maximum number of steps that any trial that
-   survives to the end of the experiment will be trained for (a *step* is a
-   :ref:`fixed number <batches-per-step>` of batches). This quantity is
-   domain-specific and should roughly reflect the number of training steps
-   needed for the model to converge on the data set. For users who would like to
-   determine this number experimentally, train a model with reasonable
-   hyperparameters using the :ref:`single<topic-guides_hp-tuning-det_single>`
-   search method.
+-  ``max_length``: The maximum training length of any trial that survives to the
+   end of the experiment. This quantity is domain-specific and should
+   roughly reflect the training length needed for the model to converge on the
+   data set. For users who would like to determine this number experimentally,
+   train a model with reasonable hyperparameters using the
+   :ref:`single<topic-guides_hp-tuning-det_single>` search method.
