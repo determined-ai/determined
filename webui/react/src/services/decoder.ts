@@ -231,11 +231,21 @@ export const jsonToLogs = (data: unknown): Log[] => {
 
 export const jsonToTrialLogs = (data: unknown): Log[] => {
   const ioType = decode<ioTypeLogs>(ioLogs, data);
+  const defaultRegex = /^\[([^\]]+)\]\s(.*)$/im;
+  const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s(.*)$/im;
   return ioType.map(log => {
-    const matches = log.message.match(/\[([^\]]+)\] (.*)/);
-    const time = matches && matches[1] ? matches[1] : undefined;
-    const message = matches && matches[2] ? matches[2] : '';
-    return { id: log.id, message, time };
+    if (defaultRegex.test(log.message)) {
+      const matches = log.message.match(defaultRegex) || [];
+      const time = matches[1];
+      const message = matches[2] || '';
+      return { id: log.id, message, time };
+    } else if (kubernetesRegex.test(log.message)) {
+      const matches = log.message.match(kubernetesRegex) || [];
+      const time = matches[3];
+      const message = [ matches[1], matches[2], matches[4] ].join(' ');
+      return { id: log.id, message, time };
+    }
+    return { id: log.id, message: log.message };
   });
 };
 
