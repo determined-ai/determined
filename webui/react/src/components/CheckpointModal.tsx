@@ -24,13 +24,12 @@ const getStorageLocation = (config: ExperimentConfig, checkpoint: CheckpointDeta
       location = `s3://${config.checkpointStorage.bucket || ''}`;
       break;
     case CheckpointStorageType.GCS:
-      location = `gs://${config.checkpointStorage.hostPath || ''}`;
+      location = `gs://${config.checkpointStorage.bucket || ''}`;
       break;
     case CheckpointStorageType.SharedFS:
       if (hostPath && storagePath) {
         location = storagePath.startsWith('/') ?
-          `file://${hostPath}/${storagePath}` :
-          `file://${storagePath}`;
+          `file://${storagePath}` : `file://${hostPath}/${storagePath}`;
       } else if (hostPath) {
         location = `file://${hostPath}`;
       }
