@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined",
-    version="0.12.12rc2",
+    version="0.12.12rc3",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -26,7 +26,7 @@ setup(
         "pyzmq>=18.1.0",
         "requests>=2.20.0",
         "simplejson==3.16.0",
-        "determined-common==0.12.12rc2",
+        "determined-common==0.12.12rc3",
         "yogadl==0.1.1",
     ],
     extras_require={
