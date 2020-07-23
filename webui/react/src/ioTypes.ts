@@ -178,6 +178,12 @@ export const ioTrialDetails = io.type({
 });
 export type ioTypeTrialDetails = io.TypeOf<typeof ioTrialDetails>;
 
+export const ioLatestValidatonMetrics = io.type({
+  num_inputs: io.number,
+  validation_metrics: io.record(io.string, io.number),
+});
+export type ioTypeLatestValidationMetrics = io.TypeOf<typeof ioLatestValidatonMetrics>;
+
 export const ioTrial = io.type({
   best_available_checkpoint: io.union([ ioCheckpoint, io.null ]),
   best_validation_metric: io.union([ io.number, io.null ]),
@@ -185,6 +191,7 @@ export const ioTrial = io.type({
   experiment_id: io.number,
   hparams: io.any,
   id: io.number,
+  latest_validation_metrics: io.union([ ioLatestValidatonMetrics, io.null ]),
   num_batches: io.number,
   num_completed_checkpoints: io.number,
   num_steps: io.number,

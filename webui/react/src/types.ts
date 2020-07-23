@@ -230,6 +230,11 @@ export interface CheckpointDetail extends Checkpoint {
   trialId: number;
 }
 
+export interface LatestValidationMetrics {
+  numInputs: number;
+  validationMetrics: Record<string, number>;
+}
+
 export interface TrialItem {
   bestAvailableCheckpoint?: Checkpoint;
   bestValidationMetric?: number;
@@ -237,6 +242,7 @@ export interface TrialItem {
   experimentId: number;
   hparams: Record<string, string>;
   id: number;
+  latestValidationMetrics?: LatestValidationMetrics;
   numBatches: number;
   numCompletedCheckpoints: number;
   numSteps: number;

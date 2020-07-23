@@ -40,6 +40,7 @@ const ExperimentDetailsComp: React.FC = () => {
   const [ experimentResponse, setExpRequestParams ] =
     useRestApiSimple<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
   const experiment = experimentResponse.data;
+  const validationKey = experiment?.config.searcher.metric;
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
 
@@ -146,6 +147,13 @@ const ExperimentDetailsComp: React.FC = () => {
       title: 'State',
     },
     {
+      dataIndex: 'numBatchTally',
+      sorter: (a: TrialSummary, b: TrialSummary): number => {
+        return numericSorter(a.numBatchTally, b.numBatchTally);
+      },
+      title: 'Batches',
+    },
+    {
       render: (_: string, record: TrialSummary): React.ReactNode => {
         if (experiment.config && record.bestAvailableCheckpoint) {
           const checkpoint: CheckpointDetail = {
@@ -166,14 +174,27 @@ const ExperimentDetailsComp: React.FC = () => {
       title: 'Checkpoint',
     },
     {
-      dataIndex: 'bestValidationMetric',
       render: (_: string, record: TrialSummary): React.ReactNode => {
         return record.bestValidationMetric ? humanReadableFloat(record.bestValidationMetric) : null;
       },
       sorter: (a: TrialSummary, b: TrialSummary): number => {
         return numericSorter(a.bestValidationMetric, b.bestValidationMetric);
       },
-      title: `Metric (${experiment.config.searcher.metric})`,
+      title: 'Best Validation Metric',
+    },
+    {
+      render: (_: string, record: TrialSummary): React.ReactNode => {
+        return record.latestValidationMetrics && validationKey ?
+          humanReadableFloat(record.latestValidationMetrics.validationMetrics[validationKey]) :
+          null;
+      },
+      sorter: (a: TrialSummary, b: TrialSummary): number => {
+        if (!validationKey) return 0;
+        const aMetric = a.latestValidationMetrics?.validationMetrics[validationKey];
+        const bMetric = b.latestValidationMetrics?.validationMetrics[validationKey];
+        return numericSorter(aMetric, bMetric);
+      },
+      title: 'Latest Validation Metric',
     },
     {
       render: (_: number, record: TrialSummary): React.ReactNode => {

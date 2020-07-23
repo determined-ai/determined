@@ -188,14 +188,25 @@ const ioToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
   };
 };
 
+const decodeLatestValidationMetrics = (
+  io: ioTypeLatestValidationMetrics | null,
+): LatestValidationMetrics | undefined => {
+  return io ? {
+    numInputs: io.num_inputs,
+    validationMetrics: io.validation_metrics,
+  } : undefined;
+};
+
 const ioToTrial = (io: ioTypeTrial): TrialItem => {
   return {
     bestAvailableCheckpoint: io.best_available_checkpoint
       ? ioToCheckpoint(io.best_available_checkpoint) : undefined,
+    bestValidationMetric: io.best_validation_metric ? io.best_validation_metric : undefined,
     endTime: io.end_time || undefined,
     experimentId: io.experiment_id,
     hparams: io.hparams || {},
     id: io.id,
+    latestValidationMetrics: decodeLatestValidationMetrics(io.latest_validation_metrics),
     numBatches: io.num_batches,
     numCompletedCheckpoints: io.num_completed_checkpoints,
     numSteps: io.num_steps,
