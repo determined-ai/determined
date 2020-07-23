@@ -73,8 +73,8 @@ const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
           {renderRow('Start Time', formatDatetime(exp.startTime))}
           {renderRow('End Time', exp.endTime && formatDatetime(exp.endTime))}
           {renderRow('Max Slot', exp.config.resources.maxSlots || 'Unlimited')}
-          {renderRow(`Best Validation (${exp.config.searcher.metric})`,
-            bestValidation && humanReadableFloat(bestValidation))}
+          {renderRow('Validation Metric', exp.config.searcher.metric)}
+          {renderRow('Best Validation', bestValidation && humanReadableFloat(bestValidation))}
           {renderRow('Best Checkpoint', bestCheckpoint && (<>
             <Button onClick={handleShowBestCheckpoint}>
               Trial {bestCheckpoint.trialId} Batch {bestCheckpoint.batch}
