@@ -25,7 +25,11 @@ const TaskCard: React.FC<RecentTask> = (props: RecentTask) => {
 
   return (
     <div className={classes.join(' ')}>
-      <Link disabled={!canBeOpened(props)} inherit path={props.url || '#'}>
+      <Link
+        disabled={!canBeOpened(props)}
+        inherit
+        path={props.url || '#'}
+        popout={!isExperimentTask(props)}>
         {isExperimentTask(props) && <div className={css.progressBar}>
           <ProgressBar percent={(props.progress || 0) * 100} state={props.state} />
         </div>}
