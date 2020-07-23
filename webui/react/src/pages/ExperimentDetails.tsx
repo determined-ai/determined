@@ -159,7 +159,7 @@ const ExperimentDetailsComp: React.FC = () => {
     },
     {
       render: (_: string, record: TrialSummary): React.ReactNode => {
-        return record.bestValidationMetric ? humanReadableFloat(record.bestValidationMetric) : null;
+        return record.bestValidationMetric ? humanReadableFloat(record.bestValidationMetric) : '-';
       },
       sorter: (a: TrialSummary, b: TrialSummary): number => {
         return numericSorter(a.bestValidationMetric, b.bestValidationMetric);
@@ -170,7 +170,7 @@ const ExperimentDetailsComp: React.FC = () => {
       render: (_: string, record: TrialSummary): React.ReactNode => {
         return record.latestValidationMetrics && validationKey ?
           humanReadableFloat(record.latestValidationMetrics.validationMetrics[validationKey]) :
-          null;
+          '-';
       },
       sorter: (a: TrialSummary, b: TrialSummary): number => {
         if (!validationKey) return 0;
@@ -210,7 +210,7 @@ const ExperimentDetailsComp: React.FC = () => {
               onClick={e => handleCheckpointShow(e, checkpoint)} />
           </Tooltip>;
         }
-        return undefined;
+        return '-';
       },
       title: 'Checkpoint',
     },
