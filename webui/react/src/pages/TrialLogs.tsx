@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
-import { debounce } from 'throttle-debounce';
+import { throttle } from 'throttle-debounce';
 
 import LogViewer, { LogViewerHandles } from 'components/LogViewer';
 import Page from 'components/Page';
@@ -20,7 +20,7 @@ interface Params {
 }
 
 const TAIL_SIZE = 50;
-const DEBOUNCE_TIME = 1000;
+const THROTTLE_TIME = 200;
 
 const TrialLogs: React.FC = () => {
   const { trialId } = useParams<Params>();
@@ -34,7 +34,6 @@ const TrialLogs: React.FC = () => {
   const [ isLoading, setIsLoading ] = useState(true);
 
   const handleScrollToTop = useCallback(() => {
-    console.log('HANLDE SCROLL TO TOP');
     if (oldestReached) return;
 
     let buffer: Log[] = [];
@@ -59,9 +58,8 @@ const TrialLogs: React.FC = () => {
 
   useEffect(() => {
     let buffer: Log[] = [];
-    const debounceFunc = debounce(DEBOUNCE_TIME, () => {
+    const throttleFunc = throttle(THROTTLE_TIME, () => {
       if (!logsRef.current) return;
-      console.log('new logs', buffer);
       logsRef.current?.addLogs(buffer);
       buffer = [];
       setIsLoading(false);
@@ -70,13 +68,12 @@ const TrialLogs: React.FC = () => {
     consumeStream<DetSwagger.V1TrialLogsResponse>(
       experimentsApi.determinedTrialLogs(id, -TAIL_SIZE, 0, true),
       event => {
-        console.log('single event', event);
         buffer.push(jsonToTrialLog(event));
-        debounceFunc();
+        throttleFunc();
       },
-    ).then(() => console.log('finished new log stream'));
+    );
 
-    return (): void => debounceFunc.cancel();
+    return (): void => throttleFunc.cancel();
   }, [ id ]);
 
   const downloadLogs = useCallback(() => {
