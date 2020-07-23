@@ -31,7 +31,7 @@ build-proto:
 
 .PHONY: build-api-ts-sdk
 build-api-ts-sdk: build-proto
-	$(MAKE) -C api-ts-sdk build
+	$(MAKE) -C api-ts-sdk get-deps build
 
 .PHONY: build-react
 build-react:
