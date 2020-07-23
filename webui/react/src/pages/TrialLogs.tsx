@@ -21,7 +21,7 @@ const TrialLogs: React.FC = () => {
   const { trialId } = useParams<Params>();
   const id = parseInt(trialId);
   const title = `Trial ${id} Logs`;
-  const downloadUrl = `${serverAddress()}/trials/${id}/logs?format=raw`;
+  const downloadUrl = `${serverAddress(true)}/trials/${id}/logs?format=raw`;
   const setUI = UI.useActionContext();
   const logsRef = useRef<LogViewerHandles>(null);
   const [ oldestFetchedId, setOldestFetchedId ] = useState(Number.MAX_SAFE_INTEGER);
