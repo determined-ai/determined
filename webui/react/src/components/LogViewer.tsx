@@ -333,7 +333,7 @@ const LogViewer: React.FC<Props> = forwardRef((
        */
       setTimeout(() => {
         if (!container.current) return;
-        container.current.scrollTo({ behavior: 'auto', top: container.current.scrollHeight });
+        container.current.scrollTo({ behavior: 'smooth', top: container.current.scrollHeight });
       });
     } else if (scrollToInfo.isPrepend) {
       /*
@@ -422,7 +422,7 @@ const LogViewer: React.FC<Props> = forwardRef((
 
   const handleScrollToLatest = useCallback(() => {
     if (!container.current) return;
-    container.current.scrollTo({ behavior: 'auto', top: container.current.scrollHeight });
+    container.current.scrollTo({ behavior: 'smooth', top: container.current.scrollHeight });
   }, []);
 
   const handleDownload = useCallback(() => {
