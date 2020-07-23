@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { Alert, Breadcrumb, Button, Modal, Space, Table } from 'antd';
+=======
+import { Breadcrumb, Button, Space, Table, Tooltip } from 'antd';
+>>>>>>> b400769a... chore: add checkpoint icon to project
 import { ColumnsType } from 'antd/lib/table';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -155,26 +159,6 @@ const ExperimentDetailsComp: React.FC = () => {
     },
     {
       render: (_: string, record: TrialSummary): React.ReactNode => {
-        if (experiment.config && record.bestAvailableCheckpoint) {
-          const checkpoint: CheckpointDetail = {
-            ...record.bestAvailableCheckpoint,
-            batch: record.numBatchTally,
-            experimentId: id,
-            trialId: record.id,
-          };
-          return <Button onClick={e => handleCheckpointShow(e, checkpoint)}>
-            Batch {record.numBatchTally}
-          </Button>;
-        }
-        return record.numBatchTally;
-      },
-      sorter: (a: TrialSummary, b: TrialSummary): number =>{
-        return alphanumericSorter(a.numBatchTally, b.numBatchTally);
-      },
-      title: 'Checkpoint',
-    },
-    {
-      render: (_: string, record: TrialSummary): React.ReactNode => {
         return record.bestValidationMetric ? humanReadableFloat(record.bestValidationMetric) : null;
       },
       sorter: (a: TrialSummary, b: TrialSummary): number => {
@@ -197,7 +181,7 @@ const ExperimentDetailsComp: React.FC = () => {
       title: 'Latest Validation Metric',
     },
     {
-      render: (_: number, record: TrialSummary): React.ReactNode => {
+      render: (_: string, record: TrialSummary): React.ReactNode => {
         return relativeTimeRenderer(new Date(record.startTime));
       },
       sorter: (a: TrialSummary, b: TrialSummary): number => {
@@ -206,9 +190,29 @@ const ExperimentDetailsComp: React.FC = () => {
       title: 'Start Time',
     },
     {
-      render: (_: number, record: TrialSummary): React.ReactNode => durationRenderer(record),
+      render: (_: string, record: TrialSummary): React.ReactNode => durationRenderer(record),
       sorter: (a: TrialSummary, b: TrialSummary): number => getDuration(a) - getDuration(b),
       title: 'Duration',
+    },
+    {
+      render: (_: string, record: TrialSummary): React.ReactNode => {
+        if (record.bestAvailableCheckpoint) {
+          const checkpoint: CheckpointDetail = {
+            ...record.bestAvailableCheckpoint,
+            batch: record.numBatchTally,
+            experimentId: id,
+            trialId: record.id,
+          };
+          return <Tooltip title="View Checkpoint">
+            <Button
+              aria-label="View Checkpoint"
+              icon={<Icon name="checkpoint" />}
+              onClick={e => handleCheckpointShow(e, checkpoint)} />
+          </Tooltip>;
+        }
+        return undefined;
+      },
+      title: 'Checkpoint',
     },
   ];
 
