@@ -84,11 +84,13 @@ func createConfigMapSpec(
 	namePrefix string,
 	data map[string][]byte,
 	namespace string,
+	taskID string,
 ) *k8sV1.ConfigMap {
 	return &k8sV1.ConfigMap{
 		ObjectMeta: metaV1.ObjectMeta{
 			GenerateName: namePrefix,
 			Namespace:    namespace,
+			Labels:       map[string]string{determinedLabel: taskID},
 		},
 		BinaryData: data,
 	}
