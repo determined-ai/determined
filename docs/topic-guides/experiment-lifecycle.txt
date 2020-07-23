@@ -78,7 +78,7 @@ the results of the workload and obtain the next workload to run.
 Depending on the searcher in use, the results of validation workloads
 may affect what workloads are run in the future.
 
-While running training steps or validations, the trial may need to load
+While running training workloads or validations, the trial may need to load
 data from an external source; the model code has to specify how to do
 that by defining data loaders.
 

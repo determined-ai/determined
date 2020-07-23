@@ -18,7 +18,7 @@ command-line interface (CLI)
 configuration file
    A :ref:`YAML <topic-guides_yaml>` file that contains options to pass
    to Determined. For example, an experiment configuration file contains
-   information on number of steps, data location, hyperparameters, and
+   information on training length, data location, hyperparameters, and
    other options for an experiment. More information can be found at
    :ref:`experiment-configuration`, :ref:`cluster-configuration`, and
    :ref:`command-configuration`.
@@ -70,14 +70,6 @@ slot
    A resource (GPU or CPU) that can be used for training. The maximum
    number of slots that an experiment can use can be set in the
    experiment configuration file or using the Determined CLI.
-
-.. _concept-step:
-
-step
-   A workload consisting of training a model on a certain number of
-   batches of data, where a batch is defined by the model definition's data
-   loader. The default is 100 batches per step, but the number can be
-   overridden in the configuration file or using the Determined CLI.
 
 .. _concept-trial:
 
