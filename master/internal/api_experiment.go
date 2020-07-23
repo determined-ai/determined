@@ -76,30 +76,66 @@ func (a *apiServer) PreviewHPSearch(
 	}
 	protoSim := &experimentv1.ExperimentSimulation{Seed: req.Seed}
 	indexes := make(map[string]int)
-	toProto := func(w searcher.Runnable) experimentv1.WorkloadKind {
-		switch w.(type) {
+	toProto := func(op searcher.Runnable) experimentv1.RunnableOperation {
+		switch op := op.(type) {
 		case searcher.Train:
-			return experimentv1.WorkloadKind_WORKLOAD_KIND_RUN_STEP
+			switch op.Length.Unit {
+			case model.Records:
+				return experimentv1.RunnableOperation{
+					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
+					Length: &experimentv1.TrainingLength{
+						Unit:  experimentv1.Unit_UNIT_RECORDS,
+						Units: int32(op.Length.Units),
+					},
+				}
+			case model.Batches:
+				return experimentv1.RunnableOperation{
+					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
+					Length: &experimentv1.TrainingLength{
+						Unit:  experimentv1.Unit_UNIT_BATCHES,
+						Units: int32(op.Length.Units),
+					},
+				}
+			case model.Epochs:
+				return experimentv1.RunnableOperation{
+					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
+					Length: &experimentv1.TrainingLength{
+						Unit:  experimentv1.Unit_UNIT_EPOCHS,
+						Units: int32(op.Length.Units),
+					},
+				}
+			default:
+				return experimentv1.RunnableOperation{
+					Type:   experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
+					Length: &experimentv1.TrainingLength{Unit: experimentv1.Unit_UNIT_UNSPECIFIED},
+				}
+			}
 		case searcher.Validate:
-			return experimentv1.WorkloadKind_WORKLOAD_KIND_COMPUTE_VALIDATION_METRICS
+			return experimentv1.RunnableOperation{
+				Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
+			}
 		case searcher.Checkpoint:
-			return experimentv1.WorkloadKind_WORKLOAD_KIND_CHECKPOINT_MODEL
+			return experimentv1.RunnableOperation{
+				Type: experimentv1.RunnableType_RUNNABLE_TYPE_CHECKPOINT,
+			}
 		default:
-			return experimentv1.WorkloadKind_WORKLOAD_KIND_UNSPECIFIED
+			return experimentv1.RunnableOperation{
+				Type: experimentv1.RunnableType_RUNNABLE_TYPE_UNSPECIFIED,
+			}
 		}
 	}
 	for _, result := range sim.Results {
-		var workloads []experimentv1.WorkloadKind
+		var operations []*experimentv1.RunnableOperation
 		for _, msg := range result {
-			w := toProto(msg)
-			workloads = append(workloads, w)
+			op := toProto(msg)
+			operations = append(operations, &op)
 		}
-		hash := fmt.Sprint(workloads)
+		hash := fmt.Sprint(operations)
 		if i, ok := indexes[hash]; ok {
 			protoSim.Trials[i].Occurrences++
 		} else {
 			protoSim.Trials = append(protoSim.Trials,
-				&experimentv1.TrialSimulation{Workloads: workloads, Occurrences: 1})
+				&experimentv1.TrialSimulation{Operations: operations, Occurrences: 1})
 			indexes[hash] = len(protoSim.Trials) - 1
 		}
 	}

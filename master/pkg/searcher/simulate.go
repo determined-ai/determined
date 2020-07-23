@@ -2,6 +2,7 @@ package searcher
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"math/rand"
 	"sort"
@@ -9,6 +10,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // ValidationFunction calculates the validation metric for the validation step.
@@ -27,19 +30,27 @@ type SimulationResults map[RequestID][]Runnable
 func (s SimulationResults) MarshalJSON() ([]byte, error) {
 	summary := make(map[string]int)
 
-	for _, workloads := range s {
+	for _, ops := range s {
 		key := ""
-		for _, workload := range workloads {
-			switch workload.(type) {
+		for _, op := range ops {
+			switch op := op.(type) {
 			case Train:
-				key += "S"
+				switch op.Length.Unit {
+				case model.Records:
+					key += fmt.Sprintf("%dR", op.Length.Units)
+				case model.Batches:
+					key += fmt.Sprintf("%dB", op.Length.Units)
+				case model.Epochs:
+					key += fmt.Sprintf("%dE", op.Length.Units)
+				}
 			case Validate:
 				key += "V"
 			case Checkpoint:
 				key += "C"
 			default:
-				return nil, errors.Errorf("unexpected workload: %v", workload)
+				return nil, errors.Errorf("unexpected operation: %v", op)
 			}
+			key += " "
 		}
 		summary[key]++
 	}
