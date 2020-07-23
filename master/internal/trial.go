@@ -118,7 +118,6 @@ type rendezvousAddress struct {
 	ContainerIP   string `json:"container_ip"`
 	HostPort      int    `json:"host_port"`
 	HostIP        string `json:"host_ip"`
-	Protocol      string `json:"protocol"`
 }
 
 // terminatedContainerWithState records the terminatedContainer message with some state about the
@@ -697,7 +696,6 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 				ContainerIP:   addr.ContainerIP,
 				HostPort:      addr.HostPort,
 				HostIP:        addr.HostIP,
-				Protocol:      addr.Protocol,
 			})
 		}
 
@@ -803,7 +801,7 @@ func (t *trial) processTaskTerminated(ctx *actor.Context, msg scheduler.TaskTerm
 		status = classifyStatus(leaderState)
 	}
 
-	t.resetTrial(ctx, msg, status)
+	t.resetTrial(ctx, status)
 }
 
 func classifyStatus(state terminatedContainerWithState) agent.ContainerStopped {
@@ -820,7 +818,6 @@ func classifyStatus(state terminatedContainerWithState) agent.ContainerStopped {
 
 func (t *trial) resetTrial(
 	ctx *actor.Context,
-	msg scheduler.TaskTerminated,
 	status agent.ContainerStopped,
 ) {
 	terminationSent := t.terminationSent

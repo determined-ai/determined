@@ -12,9 +12,7 @@ import (
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceProvider struct {
 	clusterID             string
-	namespace             string
-	slotsPerNode          int
-	masterServiceName     string
+	config                *KubernetesResourceProviderConfig
 	proxy                 *actor.Ref
 	harnessPath           string
 	taskContainerDefaults model.TaskContainerDefaultsConfig
@@ -33,18 +31,14 @@ type kubernetesResourceProvider struct {
 // NewKubernetesResourceProvider initializes a new kubernetesResourceProvider.
 func NewKubernetesResourceProvider(
 	clusterID string,
-	namespace string,
-	slotsPerNode int,
-	masterServiceName string,
+	config *KubernetesResourceProviderConfig,
 	proxy *actor.Ref,
 	harnessPath string,
 	taskContainerDefaults model.TaskContainerDefaultsConfig,
 ) actor.Actor {
 	return &kubernetesResourceProvider{
 		clusterID:             clusterID,
-		namespace:             namespace,
-		slotsPerNode:          slotsPerNode,
-		masterServiceName:     masterServiceName,
+		config:                config,
 		proxy:                 proxy,
 		harnessPath:           harnessPath,
 		taskContainerDefaults: taskContainerDefaults,
@@ -68,8 +62,9 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 			msg.System,
 			msg.Echo,
 			ctx.Self(),
-			k.namespace,
-			k.masterServiceName,
+			k.config.Namespace,
+			k.config.MasterServiceName,
+			k.config.LeaveKubernetesResources,
 		)
 
 		k.agent = newAgentState(sproto.AddAgent{Agent: podsActor})
@@ -85,6 +80,20 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 
 	case StartTask:
 		k.receiveStartTask(ctx, msg)
+
+	case sproto.PodStarted:
+		k.receivePodStarted(ctx, msg)
+
+	case sproto.PodTerminated:
+		k.receivePodTerminated(ctx, msg, false)
+
+	case taskStopped:
+		k.receiveTaskStopped(ctx, msg)
+
+	case groupStopped:
+
+	case TerminateTask:
+		k.receiveTerminateTask(ctx, msg)
 
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
@@ -144,27 +153,28 @@ func (k *kubernetesResourceProvider) scheduleTask(ctx *actor.Context, task *Task
 	numPods := 1
 	slotsPerNode := task.SlotsNeeded()
 	if task.SlotsNeeded() > 1 {
-		if k.slotsPerNode == 0 {
+		if k.config.SlotsPerNode == 0 {
 			ctx.Log().WithField("task-id", task.ID).Error(
 				"set slots_per_node > 0 to schedule tasks with slots")
 			return
 		}
 
-		if task.SlotsNeeded()%k.slotsPerNode != 0 {
+		if task.SlotsNeeded()%k.config.SlotsPerNode != 0 {
 			ctx.Log().WithField("task-id", task.ID).Error(
 				"task number of slots (%d) is not schedulable on the configured "+
-					"slots_per_node (%d)", task.SlotsNeeded(), k.slotsPerNode)
+					"slots_per_node (%d)", task.SlotsNeeded(), k.config.SlotsPerNode)
 			return
 		}
-		numPods = task.SlotsNeeded() / k.slotsPerNode
-		slotsPerNode = k.slotsPerNode
+		numPods = task.SlotsNeeded() / k.config.SlotsPerNode
+		slotsPerNode = k.config.SlotsPerNode
 	}
 
 	for pod := 0; pod < numPods; pod++ {
 		k.assignPod(ctx, task, slotsPerNode)
 	}
 
-	ctx.Log().WithField("task-id", task.ID).Infof("task assigned by scheduler")
+	ctx.Log().WithField("task-id", task.ID).Infof(
+		"task assigned by scheduler with %d pods", numPods)
 	task.handler.System().Tell(task.handler, TaskAssigned{NumContainers: numPods})
 }
 
@@ -213,7 +223,7 @@ func (k *kubernetesResourceProvider) receiveSetTaskName(ctx *actor.Context, msg 
 func (k *kubernetesResourceProvider) receiveStartTask(ctx *actor.Context, msg StartTask) {
 	task := k.tasksByHandler[msg.TaskHandler]
 	if task == nil {
-		ctx.Log().WithField("address", msg.TaskHandler.Address()).Errorf("unknown task trying to start")
+		ctx.Log().WithField("address", msg.TaskHandler.Address()).Error("unknown task trying to start")
 		return
 	}
 
@@ -226,6 +236,154 @@ func (k *kubernetesResourceProvider) receiveStartTask(ctx *actor.Context, msg St
 	for _, a := range assignments {
 		a.StartTask(msg.Spec)
 	}
+	delete(k.assignmentsByTaskHandler, msg.TaskHandler)
+}
+
+func (k *kubernetesResourceProvider) receivePodStarted(ctx *actor.Context, msg sproto.PodStarted) {
+	task, ok := k.tasksByContainerID[ContainerID(msg.ContainerID)]
+	if !ok {
+		ctx.Log().Warnf("received pod start from unknown container %s", msg.ContainerID)
+	}
+
+	container := task.containers[ContainerID(msg.ContainerID)]
+	container.addresses = constructAddresses(msg.IP, msg.Ports)
+	container.mustTransition(containerRunning)
+	handler := container.task.handler
+	handler.System().Tell(handler, ContainerStarted{Container: container})
+
+	// TODO (DET-3422): add in proxying initialization.
+}
+
+func (k *kubernetesResourceProvider) receivePodTerminated(
+	ctx *actor.Context,
+	msg sproto.PodTerminated,
+	aborted bool,
+) {
+	cid := ContainerID(msg.ContainerID)
+	task := k.tasksByContainerID[cid]
+	if task == nil {
+		ctx.Log().WithField("container-id", cid).Info(
+			"ignoring stale terminated message for container",
+		)
+		return
+	}
+
+	container := task.containers[cid]
+	container.mustTransition(containerTerminated)
+	container.exitStatus = msg.ContainerStopped
+
+	// TODO(DET-3422): de-register proxying info.
+
+	delete(container.agent.containers, container.id)
+	delete(container.task.containers, container.id)
+	delete(k.tasksByContainerID, container.id)
+
+	// A task is terminated if and only if all of its containers are terminated.
+	for _, container := range task.containers {
+		if container.state != containerTerminated {
+			return
+		}
+	}
+
+	if task.state != taskTerminated {
+		k.taskTerminated(task, aborted)
+	}
+}
+
+func (k *kubernetesResourceProvider) taskTerminated(task *Task, aborted bool) {
+	task.mustTransition(taskTerminated)
+
+	delete(k.tasksByID, task.ID)
+	delete(k.tasksByHandler, task.handler)
+
+	for id := range task.containers {
+		delete(k.tasksByContainerID, id)
+	}
+
+	task.handler.System().Tell(task.handler, TaskTerminated{})
+	// This is somewhat redundant with the message above, but we're transitioning between them.
+	if aborted {
+		task.handler.System().Tell(task.handler, TaskAborted{})
+	}
+}
+
+func (k *kubernetesResourceProvider) receiveTaskStopped(ctx *actor.Context, msg taskStopped) {
+	task := k.tasksByHandler[msg.Ref]
+	if task == nil {
+		return
+	}
+
+	// Clean up a task even if it does not have any containers yet.
+	if task.state != taskTerminated {
+		ctx.Log().WithField("task", task.ID).Warnf("task stopped without terminating")
+		k.taskTerminated(task, true)
+	}
+}
+
+func (k *kubernetesResourceProvider) receiveTerminateTask(ctx *actor.Context, msg TerminateTask) {
+	task := k.tasksByID[msg.TaskID]
+	if task == nil {
+		if ctx.ExpectingResponse() {
+			ctx.Respond(task)
+		}
+		return
+	}
+
+	k.terminateTask(task, msg.Forcible)
+
+	if ctx.ExpectingResponse() {
+		ctx.Respond(task)
+	}
+}
+
+// terminateTask sends the appropriate actor messages to terminate a task and
+// deallocate its cluster data structures. The task may not be terminated if it
+// is in the right state unless forcible is true.
+func (k *kubernetesResourceProvider) terminateTask(task *Task, forcible bool) {
+	switch {
+	case task.state == taskTerminated:
+		// The task has already been terminated so this is a noop.
+
+	case len(task.containers) == 0 || task.state == taskPending:
+		// The task is not running so there is no need to request the task to terminate. The task is
+		// marked as aborted.
+		k.taskTerminated(task, true)
+
+	case forcible:
+		// Notify the agent to kill the task.
+		task.mustTransition(taskTerminating)
+		for _, c := range task.containers {
+			if c.state != containerTerminated {
+				c.mustTransition(containerTerminating)
+			}
+			c.agent.handler.System().Tell(
+				c.agent.handler, sproto.StopPod{ContainerID: string(c.id)})
+		}
+
+	case task.state != taskTerminating && task.canTerminate:
+		// Notify the running task that it should shut down gracefully.
+		task.mustTransition(taskTerminating)
+		for _, c := range task.containers {
+			if c.state != containerTerminated {
+				c.mustTransition(containerTerminating)
+			}
+		}
+		task.handler.System().Tell(task.handler, TerminateRequest{})
+	}
+}
+
+func constructAddresses(ip string, ports []int) []Address {
+	addresses := make([]Address, 0, len(ports))
+	for _, port := range ports {
+		addresses = append(addresses, Address{
+			ContainerIP:   ip,
+			ContainerPort: port,
+			HostIP:        ip,
+			HostPort:      port,
+		})
+	}
+
+	return addresses
 }
 
 type podAssignment struct {
@@ -246,9 +404,9 @@ func (p *podAssignment) StartTask(spec image.TaskSpec) {
 	spec.HarnessPath = p.harnessPath
 	spec.TaskContainerDefaults = p.taskContainerDefaults
 	handler.System().Tell(handler, sproto.StartPod{
-		Task:  p.task.handler,
-		Spec:  spec,
-		Slots: p.container.Slots(),
-		Rank:  p.container.ordinal,
+		TaskHandler: p.task.handler,
+		Spec:        spec,
+		Slots:       p.container.Slots(),
+		Rank:        p.container.ordinal,
 	})
 }

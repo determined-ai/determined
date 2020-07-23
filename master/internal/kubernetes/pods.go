@@ -12,8 +12,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8sclient "k8s.io/client-go/kubernetes"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 
@@ -21,14 +21,25 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
-type pods struct {
-	cluster           *actor.Ref
-	namespace         string
-	masterServiceName string
+type podMetadata struct {
+	podName     string
+	containerID string
+}
 
-	clientSet  *k8sclient.Clientset
+type pods struct {
+	cluster                  *actor.Ref
+	namespace                string
+	masterServiceName        string
+	leaveKubernetesResources bool
+
+	clientSet  *k8sClient.Clientset
 	masterIP   string
 	masterPort int32
+
+	informer                *actor.Ref
+	podNameToPodHandler     map[string]*actor.Ref
+	containerIDToPodHandler map[string]*actor.Ref
+	podHandlerToMetadata    map[*actor.Ref]podMetadata
 
 	podInterface       typedV1.PodInterface
 	configMapInterface typedV1.ConfigMapInterface
@@ -41,11 +52,16 @@ func Initialize(
 	c *actor.Ref,
 	namespace string,
 	masterServiceName string,
+	leaveKubernetesResources bool,
 ) *actor.Ref {
 	podsActor, ok := s.ActorOf(actor.Addr("pods"), &pods{
-		cluster:           c,
-		namespace:         namespace,
-		masterServiceName: masterServiceName,
+		cluster:                  c,
+		namespace:                namespace,
+		masterServiceName:        masterServiceName,
+		podNameToPodHandler:      make(map[string]*actor.Ref),
+		containerIDToPodHandler:  make(map[string]*actor.Ref),
+		podHandlerToMetadata:     make(map[*actor.Ref]podMetadata),
+		leaveKubernetesResources: leaveKubernetesResources,
 	})
 	check.Panic(check.True(ok, "pods address already taken"))
 
@@ -64,9 +80,30 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		if err := p.getMasterIPAndPort(ctx); err != nil {
 			return err
 		}
+		p.startPodInformer(ctx)
 
 	case sproto.StartPod:
 		if err := p.receiveStartPod(ctx, msg); err != nil {
+			return err
+		}
+
+	case podStatusUpdate:
+		p.receivePodStatusUpdate(ctx, msg)
+
+	case sproto.StopPod:
+		p.receiveStopPod(ctx, msg)
+
+	case actor.ChildStopped:
+		if err := p.cleanUpPodHandler(ctx, msg.Child); err != nil {
+			return err
+		}
+
+	case actor.ChildFailed:
+		if msg.Child == p.informer {
+			return errors.Errorf("pod informer failed")
+		}
+
+		if err := p.cleanUpPodHandler(ctx, msg.Child); err != nil {
 			return err
 		}
 
@@ -83,7 +120,7 @@ func (p *pods) startClientSet(ctx *actor.Context) error {
 		return errors.Wrap(err, "error building kubernetes config")
 	}
 
-	p.clientSet, err = k8sclient.NewForConfig(config)
+	p.clientSet, err = k8sClient.NewForConfig(config)
 	if err != nil {
 		return errors.Wrap(err, "failed to initialize kubernetes clientSet")
 	}
@@ -97,7 +134,7 @@ func (p *pods) startClientSet(ctx *actor.Context) error {
 
 func (p *pods) getMasterIPAndPort(ctx *actor.Context) error {
 	masterService, err := p.clientSet.CoreV1().Services(p.namespace).Get(
-		p.masterServiceName, metav1.GetOptions{})
+		p.masterServiceName, metaV1.GetOptions{})
 	if err != nil {
 		return errors.Wrap(err, "failed to get master service")
 	}
@@ -108,19 +145,75 @@ func (p *pods) getMasterIPAndPort(ctx *actor.Context) error {
 	return nil
 }
 
-func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
-	ref, ok := ctx.ActorOf(
-		fmt.Sprintf("pod-%s", msg.Spec.TaskID),
-		newPod(
-			p.cluster, p.clientSet, p.namespace, p.masterIP,
-			p.masterPort, msg.Spec, msg.Slots, msg.Rank,
-			p.podInterface, p.configMapInterface,
-		),
-	)
+func (p *pods) startPodInformer(ctx *actor.Context) {
+	p.informer, _ = ctx.ActorOf("pod-informer", newInformer(p.podInterface, p.namespace, ctx.Self()))
+	ctx.Tell(p.informer, startInformer{})
+}
 
+func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
+	newPodHandler := newPod(
+		p.cluster, msg.TaskHandler, p.clientSet, p.namespace, p.masterIP,
+		p.masterPort, msg.Spec, msg.Slots, msg.Rank, p.podInterface,
+		p.configMapInterface, p.leaveKubernetesResources,
+	)
+	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s-%d", msg.Spec.TaskID, msg.Rank), newPodHandler)
 	if !ok {
 		return errors.Errorf("pod actor %s already exists", ref.Address().String())
 	}
+
+	ctx.Log().WithField("pod", newPodHandler.podName).WithField(
+		"handler", ref.Address()).Infof("registering pod handler")
+
+	if _, alreadyExists := p.podNameToPodHandler[newPodHandler.podName]; alreadyExists {
+		return errors.Errorf(
+			"attempting to register same pod name: %s multiple times", newPodHandler.podName)
+	}
+
+	p.podNameToPodHandler[newPodHandler.podName] = ref
+	p.containerIDToPodHandler[msg.Spec.ContainerID] = ref
+	p.podHandlerToMetadata[ref] = podMetadata{
+		podName:     newPodHandler.podName,
+		containerID: msg.Spec.ContainerID,
+	}
+	return nil
+}
+
+func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
+	ref, ok := p.podNameToPodHandler[msg.updatedPod.Name]
+	if !ok {
+		ctx.Log().WithField("pod-name", msg.updatedPod.Name).Warn(
+			"received pod status update for un-registered pod")
+		return
+	}
+
+	ctx.Tell(ref, msg)
+}
+
+func (p *pods) receiveStopPod(ctx *actor.Context, msg sproto.StopPod) {
+	ref, ok := p.containerIDToPodHandler[msg.ContainerID]
+	if !ok {
+		// For multi-pod tasks, when the the chief pod exits,
+		// the scheduler will request to terminate pods all other pods
+		// that have notified the scheduler that they have exited.
+		ctx.Log().WithField("container-id", msg.ContainerID).Info(
+			"received stop pod command for unregistered container id")
+		return
+	}
+
+	ctx.Tell(ref, msg)
+}
+
+func (p *pods) cleanUpPodHandler(ctx *actor.Context, podHandler *actor.Ref) error {
+	podInfo, ok := p.podHandlerToMetadata[podHandler]
+	if !ok {
+		return errors.Errorf("unknown pod handler being deleted %s", podHandler.Address())
+	}
+
+	ctx.Log().WithField("pod", podInfo.podName).WithField(
+		"handler", podHandler.Address()).Infof("de-registering pod handler")
+	delete(p.podNameToPodHandler, podInfo.podName)
+	delete(p.containerIDToPodHandler, podInfo.containerID)
+	delete(p.podHandlerToMetadata, podHandler)
 
 	return nil
 }

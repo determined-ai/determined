@@ -17,7 +17,7 @@ import (
 )
 
 // ContainerLog notifies the task actor that a new log message is available for the container.
-// It used by the resource providers to communicate internally and with the task handlers.
+// It is used by the resource providers to communicate internally and with the task handlers.
 type ContainerLog struct {
 	Container container.Container
 	Timestamp time.Time
@@ -55,11 +55,9 @@ func (c ContainerLog) String() string {
 }
 
 // ContainerStateChanged notifies that the recipient container state has been transitioned.
-// It used by the resource providers to communicate internally and with the task handlers.
+// It is used by the resource providers to communicate with the task handlers.
 type ContainerStateChanged struct {
-	Container container.Container
-
-	ContainerStarted *agent.ContainerStarted
+	Container        container.Container
 	ContainerStopped *agent.ContainerStopped
 }
 

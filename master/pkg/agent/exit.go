@@ -14,7 +14,7 @@ type ContainerFailure struct {
 }
 
 func (c ContainerFailure) Error() string {
-	return fmt.Sprintf("%s: %s", c.FailureType, c.ErrMsg)
+	return fmt.Sprintf("%s: %s (exit code %d)", c.FailureType, c.ErrMsg, *c.ExitCode)
 }
 
 // ExitCode is the process exit code of the container.

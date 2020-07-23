@@ -43,8 +43,6 @@ type Address struct {
 	// HostPort is the IP port from outside the container. This can be different
 	// than the ContainerPort because of network forwarding on the host machine.
 	HostPort int `json:"host_port"`
-
-	Protocol string `json:"protocol"`
 }
 
 // containerState represents the current status of the container.
