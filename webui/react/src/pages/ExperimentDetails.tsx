@@ -15,7 +15,7 @@ import Message from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
-import { stateRenderer } from 'components/Table';
+import { durationRenderer, relativeTimeRenderer, stateRenderer } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
@@ -24,8 +24,9 @@ import { forkExperiment, getExperimentDetails, isNotFound } from 'services/api';
 import { ExperimentDetailsParams } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, TrialSummary } from 'types';
 import { clone } from 'utils/data';
-import { alphanumericSorter, numericSorter, runStateSorter } from 'utils/data';
+import { alphanumericSorter, numericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
 import { humanReadableFloat } from 'utils/string';
+import { getDuration } from 'utils/time';
 
 import css from './ExperimentDetails.module.scss';
 
@@ -140,6 +141,11 @@ const ExperimentDetailsComp: React.FC = () => {
       title: 'ID',
     },
     {
+      render: stateRenderer,
+      sorter: (a: TrialSummary, b: TrialSummary): number => runStateSorter(a.state, b.state),
+      title: 'State',
+    },
+    {
       render: (_: string, record: TrialSummary): React.ReactNode => {
         if (experiment.config && record.bestAvailableCheckpoint) {
           const checkpoint: CheckpointDetail = {
@@ -149,7 +155,7 @@ const ExperimentDetailsComp: React.FC = () => {
             trialId: record.id,
           };
           return <Button onClick={e => handleCheckpointShow(e, checkpoint)}>
-            {record.numBatchTally}
+            Batch {record.numBatchTally}
           </Button>;
         }
         return record.numBatchTally;
@@ -157,7 +163,7 @@ const ExperimentDetailsComp: React.FC = () => {
       sorter: (a: TrialSummary, b: TrialSummary): number =>{
         return alphanumericSorter(a.numBatchTally, b.numBatchTally);
       },
-      title: 'Batches',
+      title: 'Checkpoint',
     },
     {
       dataIndex: 'bestValidationMetric',
@@ -170,9 +176,18 @@ const ExperimentDetailsComp: React.FC = () => {
       title: `Metric (${experiment.config.searcher.metric})`,
     },
     {
-      render: stateRenderer,
-      sorter: (a: TrialSummary, b: TrialSummary): number => runStateSorter(a.state, b.state),
-      title: 'State',
+      render: (_: number, record: TrialSummary): React.ReactNode => {
+        return relativeTimeRenderer(new Date(record.startTime));
+      },
+      sorter: (a: TrialSummary, b: TrialSummary): number => {
+        return stringTimeSorter(a.startTime, b.startTime);
+      },
+      title: 'Start Time',
+    },
+    {
+      render: (_: number, record: TrialSummary): React.ReactNode => durationRenderer(record),
+      sorter: (a: TrialSummary, b: TrialSummary): number => getDuration(a) - getDuration(b),
+      title: 'Duration',
     },
   ];
 

@@ -1,12 +1,12 @@
-import { Experiment } from 'types';
+import { StartEndTimes } from 'types';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const humanizeDuration = require('humanize-duration');
 
 // Experiment duration (naive) in miliseconds
-export const experimentDuration = (experiment: Experiment): number => {
-  const endTime = experiment.endTime ? new Date(experiment.endTime) : new Date();
-  const startTime = new Date(experiment.startTime);
+export const getDuration = (times: StartEndTimes): number => {
+  const endTime = times.endTime ? new Date(times.endTime) : new Date();
+  const startTime = new Date(times.startTime);
   return endTime.getTime() - startTime.getTime();
 };
 

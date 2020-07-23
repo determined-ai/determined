@@ -8,10 +8,10 @@ import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import {
-  CommandState, CommandTask, CommandType, ExperimentItem, RunState, TrialSummary,
+  CommandState, CommandTask, CommandType, ExperimentItem, RunState, StartEndTimes, TrialSummary,
 } from 'types';
 import { floatToPercent } from 'utils/string';
-import { experimentDuration, shortEnglishHumannizer } from 'utils/time';
+import { getDuration, shortEnglishHumannizer } from 'utils/time';
 import { commandTypeToLabel, experimentToTask } from 'utils/types';
 
 import css from './Table.module.scss';
@@ -29,11 +29,17 @@ type TaskRenderer = (text: string, record: CommandTask, index: number) => React.
 
 /* Table Column Renderers */
 
-export const relativeTimeRenderer = (date: Date): React.ReactNode => (
-  <Tooltip title={date.toLocaleString()}>
-    <TimeAgo datetime={date} />
-  </Tooltip>
-);
+export const durationRenderer = (times: StartEndTimes): React.ReactNode => {
+  return shortEnglishHumannizer(getDuration(times));
+};
+
+export const relativeTimeRenderer = (date: Date): React.ReactNode => {
+  return (
+    <Tooltip title={date.toLocaleString()}>
+      <TimeAgo datetime={date} />
+    </Tooltip>
+  );
+};
 
 export const stateRenderer: Renderer<{ state: CommandState | RunState }> = (_, record) => (
   <div className={css.centerVertically}>
@@ -88,7 +94,7 @@ export const experimentDescriptionRenderer: ExperimentRenderer = (_, record) => 
 };
 
 export const expermentDurationRenderer: ExperimentRenderer = (_, record) => {
-  return shortEnglishHumannizer(experimentDuration(record));
+  return shortEnglishHumannizer(getDuration(record));
 };
 
 export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {

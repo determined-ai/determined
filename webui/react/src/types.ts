@@ -87,6 +87,11 @@ export interface ClusterOverview {
   totalResources: ClusterOverviewResource;
 }
 
+export interface StartEndTimes {
+  endTime?: string;
+  startTime: string;
+}
+
 /* Command */
 export enum CommandState {
   Pending = 'PENDING',
