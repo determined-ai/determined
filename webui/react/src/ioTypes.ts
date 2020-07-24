@@ -137,15 +137,11 @@ const runStates: Record<string, null> = Object.values(RunState)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 const runStatesIoType = io.keyof(runStates);
 
+/* Trials */
+
 const checkpointStates: Record<string, null> = Object.values(CheckpointState)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 const checkpointStatesIoType = io.keyof(checkpointStates);
-
-const validationHistoryIoType = io.type({
-  end_time: io.string,
-  trial_id: io.number,
-  validation_error: io.union([ io.number, io.null ]),
-});
 
 export const ioCheckpoint = io.type({
   end_time: io.union([ io.string, io.null ]),
@@ -182,7 +178,7 @@ export const ioTrialDetails = io.type({
 });
 export type ioTypeTrialDetails = io.TypeOf<typeof ioTrialDetails>;
 
-export const ioTrialSummary = io.type({
+export const ioTrial = io.type({
   best_available_checkpoint: io.union([ ioCheckpoint, io.null ]),
   best_validation_metric: io.union([ io.number, io.null ]),
   end_time: io.string,
@@ -196,7 +192,7 @@ export const ioTrialSummary = io.type({
   start_time: io.string,
   state: runStatesIoType,
 });
-export type ioTypeTrialSummary = io.TypeOf<typeof ioTrialSummary>;
+export type ioTypeTrial = io.TypeOf<typeof ioTrial>;
 
 /* Experiments */
 
@@ -254,6 +250,12 @@ export const ioExperiments = io.array(ioExperiment);
 export type ioTypeExperiment = io.TypeOf<typeof ioExperiment>;
 export type ioTypeExperiments = io.TypeOf<typeof ioExperiments>;
 
+const validationHistoryIoType = io.type({
+  end_time: io.string,
+  trial_id: io.number,
+  validation_error: io.union([ io.number, io.null ]),
+});
+
 export const ioExperimentDetails = io.type({
   archived: io.boolean,
   config: ioExperimentConfig,
@@ -263,7 +265,7 @@ export const ioExperimentDetails = io.type({
   progress: io.union([ io.number, io.null ]),
   start_time: io.string,
   state: runStatesIoType,
-  trials: io.array(ioTrialSummary),
+  trials: io.array(ioTrial),
   validation_history: io.array(validationHistoryIoType),
 });
 

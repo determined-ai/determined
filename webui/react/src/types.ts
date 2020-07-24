@@ -166,7 +166,6 @@ interface DataLayer {
   type: string;
 }
 
-// TODO compelete the config object as we start using different attributes.
 export interface ExperimentConfig {
   checkpointPolicy: string;
   checkpointStorage?: CheckpointStorage;
@@ -225,7 +224,7 @@ export interface CheckpointDetail extends Checkpoint {
   trialId: number;
 }
 
-export interface TrialSummary {
+export interface TrialItem {
   bestAvailableCheckpoint?: Checkpoint;
   endTime?: string;
   experimentId: number;
@@ -278,7 +277,7 @@ export interface ExperimentItem extends Experiment {
 
 export interface ExperimentDetails extends Experiment {
   validationHistory: ValidationHistory[];
-  trials: TrialSummary[];
+  trials: TrialItem[];
   username: string;
 }
 

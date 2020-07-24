@@ -1,5 +1,5 @@
 import { Modal } from 'antd';
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
 import { CheckpointDetail, CheckpointStorageType, ExperimentConfig, RunState } from 'types';
@@ -36,7 +36,7 @@ const getStorageLocation = (config: ExperimentConfig, checkpoint: CheckpointDeta
       }
       break;
   }
-  return `${location}/${checkpoint.id}`;
+  return `${location}/${checkpoint.uuid}`;
 };
 
 const renderRow = (label: string, content: React.ReactNode): React.ReactNode => {
@@ -61,10 +61,6 @@ const renderResource = (resource: string, size: string): React.ReactNode => {
 const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show }: Props) => {
   const state = checkpoint.state as unknown as RunState;
 
-  const handleHide = useCallback(() => {
-    if (onHide) onHide();
-  }, [ onHide ]);
-
   const totalSize = useMemo(() => {
     const total = Object.values(checkpoint.resources).reduce((acc, size) => acc + size, 0);
     return humanReadableBytes(total);
@@ -81,7 +77,7 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show }: 
       footer={null}
       title="Checkpoint"
       visible={show}
-      onCancel={handleHide}>
+      onCancel={onHide}>
       <div className={css.base}>
         {renderRow('Source', (
           <div className={css.source}>

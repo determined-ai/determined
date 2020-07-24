@@ -1,16 +1,16 @@
 import dayjs from 'dayjs';
 
 import {
-  decode, ioCommandLogs, ioDeterminedInfo, ioExperiment, ioExperimentConfig, ioExperimentDetails,
-  ioExperiments, ioGenericCommand, ioLog, ioLogs, ioTrialDetails, ioTypeAgents, ioTypeCheckpoint,
-  ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo, ioTypeExperiment,
+  decode, ioCommandLogs, ioDeterminedInfo, ioExperimentConfig, ioExperimentDetails, ioExperiments,
+  ioGenericCommand, ioLog, ioLogs, ioTrialDetails, ioTypeAgents,
+  ioTypeCheckpoint, ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo,
   ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand,
-  ioTypeGenericCommands, ioTypeLog, ioTypeLogs, ioTypeTrialDetails, ioTypeTrialSummary, ioTypeUsers,
+  ioTypeGenericCommands, ioTypeLog, ioTypeLogs, ioTypeTrial, ioTypeTrialDetails, ioTypeUsers,
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, CheckpointStorageType, Command, CommandState,
   CommandType, DeterminedInfo, Experiment, ExperimentConfig, ExperimentDetails, Log, LogLevel,
-  ResourceState, ResourceType, RunState, TrialDetails, TrialSummary, User,
+  ResourceState, ResourceType, RunState, TrialDetails, TrialItem, User,
 } from 'types';
 import { capitalize } from 'utils/string';
 
@@ -174,7 +174,7 @@ export const jsonToExperiments = (data: unknown): Experiment[] => {
   return ioType.map(jsonToExperiment);
 };
 
-const ioCheckpoinToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
+const ioToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
   return {
     endTime: io.end_time || undefined,
     id: io.id,
@@ -188,10 +188,10 @@ const ioCheckpoinToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
   };
 };
 
-const ioTrialToTrial = (io: ioTypeTrialSummary, batchTally: number): TrialSummary => {
+const ioToTrial = (io: ioTypeTrial, batchTally: number): TrialItem => {
   return {
     bestAvailableCheckpoint: io.best_available_checkpoint
-      ? ioCheckpoinToCheckpoint(io.best_available_checkpoint) : undefined,
+      ? ioToCheckpoint(io.best_available_checkpoint) : undefined,
     endTime: io.end_time || undefined,
     experimentId: io.experiment_id,
     hparams: io.hparams || {},
@@ -247,7 +247,7 @@ export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
        * trial ran for, so we internally tally up the batches.
        */
       batchTally += ioTrial.num_batches || 0;
-      const trial = ioTrialToTrial(ioTrial, batchTally);
+      const trial = ioToTrial(ioTrial, batchTally);
       return trial;
     }),
     username: ioType.owner.username,
