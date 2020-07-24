@@ -29,7 +29,6 @@ const experimentDetails: ExperimentDetails = {
       hparams: {},
       id: 1,
       numBatches: 10000,
-      numBatchTally: 10000,
       numCompletedCheckpoints: 1,
       numSteps: 100,
       seed: 142,

@@ -231,7 +231,6 @@ export interface TrialItem {
   hparams: Record<string, string>;
   id: number;
   numBatches: number;
-  numBatchTally: number;
   numCompletedCheckpoints: number;
   numSteps: number;
   seed: number;

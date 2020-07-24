@@ -48,7 +48,6 @@ const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
         && trial.bestAvailableCheckpoint.state === CheckpointState.Completed)
       .map(trial => ({
         ...trial.bestAvailableCheckpoint,
-        batch: trial.numBatchTally,
         experimentId: trial.experimentId,
         trialId: trial.id,
       }) as CheckpointDetail)

@@ -188,7 +188,7 @@ const ioToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
   };
 };
 
-const ioToTrial = (io: ioTypeTrial, batchTally: number): TrialItem => {
+const ioToTrial = (io: ioTypeTrial): TrialItem => {
   return {
     bestAvailableCheckpoint: io.best_available_checkpoint
       ? ioToCheckpoint(io.best_available_checkpoint) : undefined,
@@ -197,7 +197,6 @@ const ioToTrial = (io: ioTypeTrial, batchTally: number): TrialItem => {
     hparams: io.hparams || {},
     id: io.id,
     numBatches: io.num_batches,
-    numBatchTally: batchTally,
     numCompletedCheckpoints: io.num_completed_checkpoints,
     numSteps: io.num_steps,
     seed: io.seed,
@@ -228,7 +227,6 @@ export const jsonToTrialDetails = (data: unknown): TrialDetails => {
 
 export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
   const ioType = decode<ioTypeExperimentDetails>(ioExperimentDetails, data);
-  let batchTally = 0;
   return {
     archived: ioType.archived,
     config: jsonToExperimentConfig(ioType.config),
@@ -240,16 +238,7 @@ export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
     progress: ioType.progress !== null ? ioType.progress : undefined,
     startTime: ioType.start_time,
     state: ioType.state as RunState,
-    trials: ioType.trials.map(ioTrial => {
-      /*
-       * `num_batches` is the number of batches for the trial ran for.
-       * We also need the running tally to show where in sequence the
-       * trial ran for, so we internally tally up the batches.
-       */
-      batchTally += ioTrial.num_batches || 0;
-      const trial = ioToTrial(ioTrial, batchTally);
-      return trial;
-    }),
+    trials: ioType.trials.map(ioToTrial),
     username: ioType.owner.username,
     validationHistory: ioType.validation_history.map(vh => ({
       endTime: vh.end_time,
