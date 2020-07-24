@@ -207,7 +207,12 @@ const ioToTrial = (io: ioTypeTrial): TrialItem => {
     hparams: io.hparams || {},
     id: io.id,
     latestValidationMetrics: decodeLatestValidationMetrics(io.latest_validation_metrics),
+<<<<<<< HEAD
     numBatches: io.num_batches,
+=======
+    numBatches: io.num_batches || 0,
+    numBatchTally: batchTally,
+>>>>>>> c35db0e6... chore: handle null num_batches field for experiment summary trials
     numCompletedCheckpoints: io.num_completed_checkpoints,
     numSteps: io.num_steps,
     seed: io.seed,

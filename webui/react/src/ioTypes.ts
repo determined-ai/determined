@@ -192,7 +192,7 @@ export const ioTrial = io.type({
   hparams: io.any,
   id: io.number,
   latest_validation_metrics: io.union([ ioLatestValidatonMetrics, io.null ]),
-  num_batches: io.number,
+  num_batches: io.union([ io.number, io.null ]),
   num_completed_checkpoints: io.number,
   num_steps: io.number,
   seed: io.number,
