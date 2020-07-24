@@ -126,6 +126,13 @@ func saveWorkload(db *db.PgDB, w searcher.Workload) error {
 	case searcher.CheckpointModel:
 		return db.AddCheckpoint(model.NewCheckpoint(w.TrialID, w.StepID))
 	case searcher.ComputeValidationMetrics:
+		if w.StepID == 0 {
+			err := db.AddNoOpStep(model.NewNoOpStep(w.TrialID, w.StepID))
+			if err != nil {
+				return errors.Wrapf(err, "error adding zeroth step for initial validation")
+			}
+			return db.AddValidation(model.NewValidation(w.TrialID, w.StepID))
+		}
 		return db.AddValidation(model.NewValidation(w.TrialID, w.StepID))
 	default:
 		return errors.Errorf("unexpected workload in saveWorkload: %v", w)

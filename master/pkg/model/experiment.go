@@ -304,6 +304,17 @@ func NewStep(trialID, stepID, numBatches int) *Step {
 	}
 }
 
+// NewNoOpStep creates a new step in the completed state.
+func NewNoOpStep(trialID, stepID int) *Step {
+	return &Step{
+		TrialID:    trialID,
+		ID:         stepID,
+		State:      CompletedState,
+		StartTime:  time.Now().UTC(),
+		NumBatches: 0,
+	}
+}
+
 // IsNew checks whether this step describes a new, in-progress step.
 func (s *Step) IsNew() bool {
 	return s.State == ActiveState && s.EndTime == nil && len(s.Metrics) == 0

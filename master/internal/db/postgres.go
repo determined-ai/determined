@@ -1343,6 +1343,29 @@ VALUES (:trial_id, :id, :state, :start_time, :end_time, :num_batches)`, step)
 	return nil
 }
 
+// AddNoOpStep adds a no-op completed step to the database. This is used for trials with initial
+// validations (used for testing models pre-fine-tuning).
+func (db *PgDB) AddNoOpStep(step *model.Step) error {
+	if step.State != model.CompletedState {
+		return errors.Errorf("unexpected state for new step: %v", step)
+	}
+	trial, err := db.TrialByID(step.TrialID)
+	if err != nil {
+		return errors.Wrapf(err, "error finding trial %v for new step", step.TrialID)
+	}
+	if trial.State != model.ActiveState {
+		return errors.Errorf("can't add step to trial %v with state %v", trial.ID, trial.State)
+	}
+	err = db.namedExecOne(`
+INSERT INTO steps
+(trial_id, id, state, start_time, end_time, num_batches)
+VALUES (:trial_id, :id, :state, :start_time, :end_time, :num_batches)`, step)
+	if err != nil {
+		return errors.Wrapf(err, "error inserting step %v", *step)
+	}
+	return nil
+}
+
 // StepByID looks up a step by (TrialID, StepID) pair, returning an error if none exists.
 func (db *PgDB) StepByID(trialID, stepID int) (*model.Step, error) {
 	var step model.Step
