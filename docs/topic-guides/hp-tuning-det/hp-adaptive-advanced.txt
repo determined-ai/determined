@@ -62,11 +62,11 @@ ASHA
 
 At a high level, ASHA prunes ("halves") a set of trials in successive
 rounds we call *rungs*. ASHA starts with an initial set of trials. (A
-trial means one model for training, with a fixed set of hyperparameter
-values.) ASHA trains all the trials for some length and the trials with
-the worst validation performance are discarded. In the next rung, the
-remaining trials are trained for a longer period of time, and then trials
-with the worst validation performance are pruned once again. This is
+trial means one model, with a fixed set of hyperparameter values.) ASHA
+trains all the trials for some length and the trials with the worst
+validation performance are discarded. In the next rung, the remaining
+trials are trained for a longer period of time, and then trials with
+the worst validation performance are pruned once again. This is
 repeated until the maximum training length is reached.
 
 First, an example of ASHA.
@@ -215,10 +215,10 @@ FAQ
 **Q: How do I control how long a trial is trained for before it
 is potentially discarded?**
 
-The training length is guaranteed to be ``max_length``, and is at
-least ``max_length / 256`` by default, or ``max_length / divisor ^ max_rungs-1``
-in general. It is recommended to configure this in records or epochs
-if the ``global_batch_size`` hyperparameter is not constant, to ensure
+The training length is guaranteed to be at least ``max_length / 256``
+by default, or ``max_length / divisor ^ max_rungs-1`` in general. It
+is recommended to configure this in records or epochs if the
+``global_batch_size`` hyperparameter is not constant, to ensure
 each trial trains on the same amount of data.
 
 **Q: How do I set the initial number of trials? How do I make sure ``x``
@@ -245,7 +245,7 @@ and error. The command
 will display information on the number of trials versus training length
 for the configuration specified in ``file_name.yaml``. Increasing
 ``budget`` increases both the initial number of trials and the
-number of trials run the full length. On the other hand, ``max_length``
+number of trials that train the full length. On the other hand, ``max_length``
 decreases both. The ``mode`` decides on allocation of training length
 between trials; ``mode: conservative`` runs more trials for longer,
 whereas ``mode: aggressive`` eliminates the most trials early in training.

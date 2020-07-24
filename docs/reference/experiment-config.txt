@@ -132,14 +132,15 @@ created with the Determined CLI. It may contain the following fields:
 
 - ``min_checkpoint_period``: Instructs Determined to take periodic
   checkpoints of each trial during training. If set, this variable
-  specifies the maximum length that a trial can be trained with a
+  specifies the maximum length that a trial can be trained without a
   checkpoint; if this limit is reached, a checkpoint of the trial is
-  taken. There are two other situations in which a trial might be
+  taken. There are three other situations in which a trial might be
   checkpointed: (a) during training, a model may be checkpointed to
   allow the trial's execution to be suspended and later resumed on
   a different Determined agent (b) when the trial's experiment is
   completed, to allow the resulting model to be exported from
-  Determined (e.g., for deployment).
+  Determined (e.g., for deployment) (c) before a searcher requested
+  validation, to maintain consistency in the event of a failure.
 
 .. _experiment-configuration_hyperparameters:
 
@@ -255,8 +256,7 @@ created with the Determined CLI. It may contain the following fields:
       (minimize).
     - ``max_trials``: Specifies how many trials, i.e., hyperparameter
       configurations, to evaluate.
-    - ``max_length``: Specifies the number of length of training for
-      each trial.
+    - ``max_length``: Specifies the training length for each trial.
     - (optional) ``source_trial_id``: If specified, the weights of
       *every* trial in the search will be initialized to the most
       recent checkpoint of the given trial ID. Note that this will
@@ -313,7 +313,7 @@ created with the Determined CLI. It may contain the following fields:
       one trial. The vast majority of trials will be stopped early,
       and thus only a small fraction of trials will actually be trained
       for this long. We suggest setting this to a multiple of
-      ``divisor^(max_rungs-1)``, which is 45-1 = 256 with the default
+      ``divisor^(max_rungs-1)``, which is 4^(5-1) = 256 with the default
       values.
     - ``budget``: Specifies the total training length across all
       trials. We suggest setting this to be a multiple of ``max_length``,
@@ -403,8 +403,7 @@ created with the Determined CLI. It may contain the following fields:
       (minimize).
     - ``population_size``: The number of trials (i.e., different
       hyperparameter configurations) to keep active at a time.
-    - ``length_per_round``: The length to train each trial
-      between validations.
+    - ``length_per_round``: The training length for each trial during a round.
     - ``num_rounds``: The total number of rounds to execute.
     - ``replace_function``: Describes how to choose which trials to
       close and which trials to copy at the end of each round.
@@ -469,8 +468,8 @@ created with the Determined CLI. It may contain the following fields:
 
 - ``batches_per_step``: Specifies the number of batches in a single
   training workload. As discussed above, Determined divides the training of a
-  single trial into a sequence of workloads; each workload corresponds to a
-  certain number of model updates. Therefore, this configuration
+  single trial into a sequence of training workloads; each workload corresponds
+  to a certain number of model updates. Therefore, this configuration
   parameter can be used to control how long a trial is trained at a
   single agent:
 
@@ -480,8 +479,8 @@ created with the Determined CLI. It may contain the following fields:
     be trained for a long time before Determined gets an opportunity to
     suspend training of that trial and replace it with a different
     workload.
-  - The default value is 100. As a rule of thumb, the workload size should
-    be set so that training a single workload takes 60--180 seconds.
+  - The default value is 100. As a rule of thumb, the training workload size
+    should be set so that a single workload takes 60--180 seconds.
   - *NOTE:* The workload size is defined as a fixed number of *batches*;
     the size (number of records) in a batch is controlled by the
     ``global_batch_size`` hyperparameter in the experiment's model
