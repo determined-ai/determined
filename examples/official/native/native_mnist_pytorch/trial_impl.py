@@ -30,14 +30,15 @@ if __name__ == "__main__":
         },
         "hyperparameters": {
             "learning_rate": det.Log(minval=-3.0, maxval=-1.0, base=10),
-            "dropout": det.Double(minval=0.2, maxval=0.8),
             "global_batch_size": det.Constant(value=64),
+            "dropout1": det.Double(minval=0.2, maxval=0.8),
+            "dropout2": det.Double(minval=0.2, maxval=0.8),
             "n_filters1": det.Constant(value=32),
             "n_filters2": det.Constant(value=32),
         },
         "searcher": {
             "name": "single",
-            "metric": "validation_error",
+            "metric": "validation_loss",
             "max_steps": 20,
             "smaller_is_better": True,
         },

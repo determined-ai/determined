@@ -24,8 +24,7 @@ from randomNAS_files.model import RNNModel
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 
-import determined as det
-from determined.pytorch import ClipGradsL2Norm, DataLoader, PyTorchCallback, PyTorchTrial, LRScheduler
+from determined.pytorch import ClipGradsL2Norm, DataLoader, PyTorchCallback, PyTorchTrial, PyTorchTrialContext, LRScheduler
 
 
 import data
@@ -56,63 +55,14 @@ class MyLR(_LRScheduler):
 
 
 class NASModel(PyTorchTrial):
-    def __init__(self, context: det.TrialContext) -> None:
+    def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
 
         # Create a unique download directory for each rank so they don't overwrite each other.
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.data_downloaded = False
 
-    def optimizer(self, model: nn.Module):
-        """
-        Required Method. Sets the optimizer to use
-        Returns: optimizer
-        """
-        optimizer = torch.optim.SGD(
-            model.parameters(),
-            lr=self.context.get_hparam("learning_rate"),
-            weight_decay=self.context.get_hparam("wdecay"),
-        )
-        return optimizer
-
-    def create_lr_scheduler(self, optimizer: torch.optim.Optimizer):
-        """
-        Required Method to use a learning rate scheduler
-        Returns: Determined scheduler object
-        Determined will handle the learning rate scheduler update based on the Determined
-        LRScheduler parameters. If step_every_batch or step_every_epoch is True, Determined will
-        handle the .step(). If both are false, the user will be in charge of calling .step().
-        """
-        self.myLR = MyLR(optimizer, self.context.get_hparams())
-        step_mode = LRScheduler.StepMode.MANUAL_STEP
-        if self.context.get_hparam("step_every_batch"):
-            step_mode = LRScheduler.StepMode.STEP_EVERY_BATCH
-        elif self.context.get_hparam("step_every_epoch"):
-            step_mode = LRScheduler.StepMode.STEP_EVERY_EPOCH
-
-        return LRScheduler(self.myLR, step_mode=step_mode)
-
-    def sample_arch(self):
-        """
-        Required: Method to build the Optimizer
-        Returns: PyTorch Optimizer
-        """
-        n_nodes = genotypes.STEPS
-        n_ops = len(genotypes.PRIMITIVES)
-        arch = []
-        for i in range(n_nodes):
-            op = np.random.choice(range(1, n_ops))
-            node_in = np.random.choice(range(i + 1))
-            arch.append((genotypes.PRIMITIVES[op], node_in))
-        concat = range(1, 9)
-        genotype = genotypes.Genotype(recurrent=arch, concat=concat)
-        return genotype
-
-    def build_model(self) -> nn.Module:
-        """
-        Required Method that builds the model
-        Returns: PyTorch Model
-        """
+        # Initialize the model
         arch_to_use = self.context.get_hparam("arch_to_use")
 
         if hasattr(genotypes, arch_to_use):
@@ -138,7 +88,7 @@ class NASModel(PyTorchTrial):
         # Made for stacking multiple cells, by default the depth is set to 1
         # which will not run this for loop
         for _ in range(
-            self.context.get_hparam("depth") - 1
+                self.context.get_hparam("depth") - 1
         ):  # minus 1 because 1 gets auto added by the main model
             new_cell = model.cell_cls(
                 self.context.get_hparam("emsize"),
@@ -151,8 +101,36 @@ class NASModel(PyTorchTrial):
             model.rnns.append(new_cell)
 
         model.batch_size = self.context.get_per_slot_batch_size()
+        self.model = self.context.wrap_model(model)
+        self.optimizer = self.context.wrap_optimizer(torch.optim.SGD(
+            self.model.parameters(),
+            lr=self.context.get_hparam("learning_rate"),
+            weight_decay=self.context.get_hparam("wdecay"),
+        ))
 
-        return model
+        myLR = MyLR(self.optimizer, self.context.get_hparams())
+        step_mode = LRScheduler.StepMode.MANUAL_STEP
+        if self.context.get_hparam("step_every_batch"):
+            step_mode = LRScheduler.StepMode.STEP_EVERY_BATCH
+        elif self.context.get_hparam("step_every_epoch"):
+            step_mode = LRScheduler.StepMode.STEP_EVERY_EPOCH
+        self.myLR = self.context.wrap_lrscheduler(myLR, step_mode=step_mode)
+
+    def sample_arch(self):
+        """
+        Required: Method to build the Optimizer
+        Returns: PyTorch Optimizer
+        """
+        n_nodes = genotypes.STEPS
+        n_ops = len(genotypes.PRIMITIVES)
+        arch = []
+        for i in range(n_nodes):
+            op = np.random.choice(range(1, n_ops))
+            node_in = np.random.choice(range(i + 1))
+            arch.append((genotypes.PRIMITIVES[op], node_in))
+        concat = range(1, 9)
+        genotype = genotypes.Genotype(recurrent=arch, concat=concat)
+        return genotype
 
     def update_and_step_lr(self, seq_len):
         """
@@ -161,7 +139,7 @@ class NASModel(PyTorchTrial):
         self.myLR.set_seq_len(seq_len)
         self.myLR.step()
 
-    def train_batch(self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int):
+    def train_batch(self, batch: TorchData, epoch_idx: int, batch_idx: int):
         """
         Trains the provided batch.
         Returns: Dictionary of the calculated Metrics
@@ -172,13 +150,13 @@ class NASModel(PyTorchTrial):
 
         # set hidden if it's the first run
         if batch_idx == 0:
-            self.hidden = model.init_hidden(self.context.get_per_slot_batch_size())
+            self.hidden = self.model.init_hidden(self.context.get_per_slot_batch_size())
 
         # detach to prevent backpropagating to far
         for i in range(len(self.hidden)):
             self.hidden[i] = self.hidden[i].detach()
 
-        log_prob, self.hidden, rnn_hs, dropped_rnn_hs = model(features, self.hidden, return_h=True)
+        log_prob, self.hidden, rnn_hs, dropped_rnn_hs = self.model(features, self.hidden, return_h=True)
 
         loss = nn.functional.nll_loss(
             log_prob.view(-1, log_prob.size(2)), labels.contiguous().view(-1)
@@ -206,9 +184,17 @@ class NASModel(PyTorchTrial):
         if math.isnan(perplexity):
             perplexity = 100000
 
+        self.context.backward(loss)
+        self.context.step_optimizer(
+            self.optimizer,
+            clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
+                params, self.context.get_hparam("clip_gradients_l2_norm")
+            )
+        )
+
         return {"loss": loss, "perplexity": perplexity}
 
-    def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader, model: nn.Module):
+    def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader):
         """
         Determines if multiple architectures should be evaluated and sends to approprate path
         Returns: the results of the evaluated dataset or the best result from multiple evaluations
@@ -216,13 +202,13 @@ class NASModel(PyTorchTrial):
         eval_same_arch = self.context.get_hparam("eval_same_arch")
 
         if eval_same_arch:  # evaluate the same architecture
-            res = self.evaluate_dataset(data_loader, model, self.arch)
+            res = self.evaluate_dataset(data_loader, self.arch)
         else:
-            res = self.evaluate_multiple_archs(data_loader, model)
+            res = self.evaluate_multiple_archs(data_loader)
 
         return res
 
-    def evaluate_multiple_archs(self, data_loader, model):
+    def evaluate_multiple_archs(self, data_loader):
         """
         Helper that randomly selects architectures and evaluates their performance
         This function is only called if eval_same_arch is False and should not be used for
@@ -234,7 +220,7 @@ class NASModel(PyTorchTrial):
         for _ in range(num_archs_to_eval):
             arch = self.sample_arch()
 
-            res = self.evaluate_dataset(data_loader, model, arch)
+            res = self.evaluate_dataset(data_loader, arch)
             perplexity = res["perplexity"]
             loss = res["loss"]
 
@@ -247,13 +233,13 @@ class NASModel(PyTorchTrial):
 
         return {"loss": sample_vals[0][2], "perplexity": sample_vals[0][1]}
 
-    def evaluate_dataset(self, data_loader, model, arch, split=None):
+    def evaluate_dataset(self, data_loader, arch, split=None):
         """
         Evaluates the full dataset against the given arch
         """
-        hidden = model.init_hidden(self.context.get_hparam("eval_batch_size"))
+        hidden = self.model.init_hidden(self.context.get_hparam("eval_batch_size"))
 
-        model = self.set_model_arch(arch, model)
+        model = self.set_model_arch(arch, self.model)
 
         total_loss = 0
         num_samples_seen = 0
@@ -344,5 +330,3 @@ class NASModel(PyTorchTrial):
             collate_fn=data.PadSequence(),
         )
 
-    def build_callbacks(self) -> Dict[str, PyTorchCallback]:
-        return {"clip_grads": ClipGradsL2Norm(self.context.get_hparam("clip_gradients_l2_norm"))}
