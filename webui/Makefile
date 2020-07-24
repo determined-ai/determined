@@ -1,5 +1,7 @@
-.PHONY: default
-default: get-deps build
+.PHONY: all
+all:
+	make get-deps
+	make build
 
 .PHONY: clean
 clean: clean-react clean-elm clean-tests clean-api-ts-sdk
