@@ -36,8 +36,6 @@ Hardware
   required (e.g., K80, P100, V100, GTX 1080, GTX 1080 Ti, TITAN, TITAN
   XP).
 
-- Mac hardware 2010 or higher can also run a master and agent.
-
 .. note::
 
    Most of the disk space required by the master is due to the

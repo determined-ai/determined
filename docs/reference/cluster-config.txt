@@ -343,9 +343,9 @@ The master supports the following configuration settings:
     - ``max_instances``: Max number of Determined agent instances. Defaults
       to ``5``.
 
-    - ``instance_type``: Type of instance for the Determined agents. We
-      only support P3 and P2 type instances. Defaults to
-      ``p3.8xlarge``.
+    - ``instance_type``: AWS instance type to use for dynamic agents. This
+      must be one of the following: ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``,
+      ``p3.8xlarge``, ``p3.16xlarge``, or ``p3dn.24xlarge``. Defaults to ``p3.8xlarge``.
 
   - ``provider: gcp``: Specifies running dynamic agents on GCP.
     (*Required*)
