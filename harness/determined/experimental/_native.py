@@ -172,11 +172,11 @@ def _init_cluster_mode(
 
 
 def _load_trial_on_local(
-    context_dir: pathlib.Path, config: Dict[str, Any], hparams: Dict[str, Any],
+    context_dir: pathlib.Path, training: bool, config: Dict[str, Any], hparams: Dict[str, Any]
 ) -> Tuple[Type[det.Trial], det.TrialContext]:
     with det._local_execution_manager(context_dir):
         trial_class = load.load_trial_implementation(config["entrypoint"])
-        env, rendezvous_info, hvd_config = det._make_local_execution_env(config, hparams)
+        env, rendezvous_info, hvd_config = det._make_local_execution_env(training, config, hparams)
         trial_context = trial_class.trial_context_class(env, hvd_config)
     return trial_class, trial_context
 
@@ -193,7 +193,7 @@ def test_one_batch(
 
     logging.info("Running a minimal test experiment locally")
     checkpoint_dir = tempfile.TemporaryDirectory()
-    env, rendezvous_info, hvd_config = det._make_local_execution_env(config)
+    env, rendezvous_info, hvd_config = det._make_local_execution_env(True, config)
     workloads = _make_test_workloads(
         pathlib.Path(checkpoint_dir.name).joinpath("checkpoint"), env.experiment_config
     )
@@ -389,6 +389,6 @@ def create_trial_instance(
     determined_common.set_logger(
         util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
     )
-    env, rendezvous_info, hvd_config = det._make_local_execution_env(config, hparams)
+    env, rendezvous_info, hvd_config = det._make_local_execution_env(False, config, hparams)
     trial_context = trial_def.trial_context_class(env, hvd_config)
     return trial_def(trial_context)

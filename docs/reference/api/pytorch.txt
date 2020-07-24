@@ -8,7 +8,7 @@ determined.pytorch
 
 .. autoclass:: determined.pytorch.PyTorchTrial
     :members:
-    :exclude-members: trial_controller_class
+    :exclude-members: trial_controller_class, trial_context_class, build_model, optimizer, create_lr_scheduler
     :inherited-members:
     :member-order: bysource
     :special-members: __init__
@@ -18,9 +18,6 @@ determined.pytorch
     :special-members: __init__
 
 .. autoclass:: determined.pytorch.Reducer
-    :members:
-
-.. autoclass:: determined.pytorch.PyTorchCallback
     :members:
 
 .. _pytorch-data-loading:
@@ -81,23 +78,30 @@ structures of the following types, which will be fed directly to the
           "label": (torch.Tensor([0, 0]), torch.Tensor([[0, 0], [0, 0]])),
       }
 
-.. _pytorch-trial-context:
-
 Trial Context
 ~~~~~~~~~~~~~
 
-``determined.pytorch.PyTorchTrialContext`` subclasses :ref:`trial-context`.
+:class:`determined.pytorch.PyTorchTrialContext` subclasses :class:`determined.TrialContext`.
 It provides useful methods for writing ``Trial`` subclasses.
 
 .. autoclass:: determined.pytorch.PyTorchTrialContext
     :members:
+    :exclude-members: get_model, get_optimizer, get_lr_scheduler
+
+
+Gradient Clipping
+^^^^^^^^^^^^^^^^^
+
+Users need to pass a gradient clipping function to
+:meth:`determined.pytorch.PyTorchTrialContext.step_optimizer`.
+
 
 .. _pytorch-callbacks:
 
 Callbacks
 ~~~~~~~~~
 
-To execute arbitrary Python functionality during the lifecycle of a
+To execute arbitrary Python code during the lifecycle of a
 ``PyTorchTrial``, implement the callback interface:
 
 .. autoclass:: determined.pytorch.PyTorchCallback
@@ -135,16 +139,33 @@ Then, implement the ``build_callbacks`` function in ``PyTorchTrial``:
         return {"reduce_lr": ReduceLROnPlateauEveryValidationStep(self.context)}
 
 
-Gradient Clipping
-^^^^^^^^^^^^^^^^^
+Migration from deprecated interface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Determined provides two pre-made callback classes to perform gradient clipping:
+The current approach to implementing PyTorchTrial is more powerful given its
+support for multiple models, optimizers, and LR schedulers. The ability to run
+forward and backward passes in an arbitrary order affords users much greater
+flexibility compared to the `deprecated approach <https://docs.determined.ai/0.12.12/reference/api/pytorch.html>`_.
 
-.. autoclass:: determined.pytorch.ClipGradsL2Norm
-    :members:
+To migrate from the `deprecated approach <https://docs.determined.ai/0.12.12/reference/api/pytorch.html>`_,
+please change the following places in your code:
 
-.. autoclass:: determined.pytorch.ClipGradsL2Value
-    :members:
+#. Wrap models, optimizers, and LR schedulers in the :meth:`__init__` method with the
+   ``wrap_model``, ``wrap_optimizer``, and ``wrap_lrscheduler`` methods that are provided by
+   :class:`PyTorchTrialContext <determined.pytorch.PyTorchTrialContext>`. At the same time,
+   remove the implementation of :meth:`build_model`, :meth:`optimizer`,
+   :meth:`create_lr_scheduler`.
+
+#. If using automatic mixed precision (AMP), configure Apex AMP in the ``__init__`` method
+   with the ``configure_apex_amp`` method that is provided by
+   :class:`PyTorchTrialContext <determined.pytorch.PyTorchTrialContext>`.
+   At the same time, remove the experiment configuration field ``optimizations.mixed_precision``.
+
+#. Run backward passes on losses and step optimizers in the :meth:`train_batch` method with
+   the ``backward`` and ``step_optimizer`` methods provided by
+   :class:`PyTorchTrialContext <determined.pytorch.PyTorchTrialContext>`. Clip gradients by passing a function
+   to the ``clip_grads`` argument of ``step_optimizer``
+   while removing the ``PyTorchCallback`` counterpart in the :meth:`build_callbacks` method.
 
 Examples
 --------

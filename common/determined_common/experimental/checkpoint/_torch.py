@@ -14,6 +14,7 @@ def load_model(
 
     trial_cls, trial_context = experimental._load_trial_on_local(
         ckpt_dir.joinpath("code"),
+        training=False,
         config=metadata["experiment_config"],
         hparams=metadata["hparams"],
     )
