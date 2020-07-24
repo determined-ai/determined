@@ -9,7 +9,7 @@ import Spinner from 'components/Spinner';
 import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { useRestApiSimple } from 'hooks/useRestApi';
-import { detExperimentsApi, getTrialDetails } from 'services/api';
+import { detExperimentsStreamingApi, getTrialDetails } from 'services/api';
 import * as DetSwagger from 'services/api-ts-sdk';
 import { consumeStream } from 'services/apiBuilder';
 import { jsonToTrialLog } from 'services/decoder';
@@ -43,7 +43,7 @@ const TrialLogs: React.FC = () => {
     let buffer: Log[] = [];
 
     consumeStream<DetSwagger.V1TrialLogsResponse>(
-      detExperimentsApi.determinedTrialLogs(id, offset - TAIL_SIZE, TAIL_SIZE),
+      detExperimentsStreamingApi.determinedTrialLogs(id, offset - TAIL_SIZE, TAIL_SIZE),
       event => buffer.push(jsonToTrialLog(event)),
     ).then(() => {
       if (!logsRef.current) return;
@@ -57,6 +57,21 @@ const TrialLogs: React.FC = () => {
       buffer = [];
     });
   }, [ id, offset, oldestId, oldestReached ]);
+
+  const handleDownloadLogs = useCallback(() => {
+    return downloadTrialLogs(id).catch(e => {
+      handleError({
+        error: e,
+        message: 'trial log download failed.',
+        publicMessage: `
+          Failed to download trial ${id} logs.
+          If the problem persists please try our CLI "det trial logs ${id}"
+        `,
+        publicSubject: 'Download Failed',
+        type: ErrorType.Ui,
+      });
+    });
+  }, [ id ]);
 
   useEffect(() => setUI({ type: UI.ActionType.HideChrome }), [ setUI ]);
 
@@ -76,7 +91,7 @@ const TrialLogs: React.FC = () => {
     });
 
     consumeStream<DetSwagger.V1TrialLogsResponse>(
-      detExperimentsApi.determinedTrialLogs(id, -TAIL_SIZE, 0, true),
+      detExperimentsStreamingApi.determinedTrialLogs(id, -TAIL_SIZE, 0, true),
       event => {
         buffer.push(jsonToTrialLog(event));
         throttleFunc();
@@ -94,21 +109,6 @@ const TrialLogs: React.FC = () => {
     );
   }
 
-  const downloadLogs = useCallback(() => {
-    return downloadTrialLogs(id).catch(e => {
-      handleError({
-        error: e,
-        message: 'trial log download failed.',
-        publicMessage: `
-        Failed to download trial ${id} logs.
-        If the problem persists please try our CLI "det trial logs ${id}"
-      `,
-        publicSubject: 'Download Failed',
-        type: ErrorType.Ui,
-      });
-    });
-  }, [ id ]);
-
   return (
     <Page hideTitle maxHeight title={title}>
       <LogViewer
@@ -117,7 +117,7 @@ const TrialLogs: React.FC = () => {
         noWrap
         ref={logsRef}
         title={title}
-        onDownload={downloadLogs}
+        onDownload={handleDownloadLogs}
         onScrollToTop={handleScrollToTop} />
       {isLoading && <Spinner fullPage opaque />}
     </Page>
