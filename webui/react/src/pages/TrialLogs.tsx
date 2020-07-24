@@ -9,9 +9,9 @@ import Spinner from 'components/Spinner';
 import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { useRestApiSimple } from 'hooks/useRestApi';
-import { getTrialDetails } from 'services/api';
+import { detExperimentsApi, getTrialDetails } from 'services/api';
 import * as DetSwagger from 'services/api-ts-sdk';
-import { consumeStream, experimentsApi } from 'services/apiBuilder';
+import { consumeStream } from 'services/apiBuilder';
 import { jsonToTrialLog } from 'services/decoder';
 import { TrialDetailsParams } from 'services/types';
 import { Log, TrialDetails } from 'types';
@@ -22,7 +22,7 @@ interface Params {
 }
 
 const TAIL_SIZE = 1000;
-const THROTTLE_TIME = 200;
+const THROTTLE_TIME = 500;
 
 const TrialLogs: React.FC = () => {
   const { trialId } = useParams<Params>();
@@ -43,14 +43,14 @@ const TrialLogs: React.FC = () => {
     let buffer: Log[] = [];
 
     consumeStream<DetSwagger.V1TrialLogsResponse>(
-      experimentsApi.determinedTrialLogs(id, offset - TAIL_SIZE, TAIL_SIZE),
+      detExperimentsApi.determinedTrialLogs(id, offset - TAIL_SIZE, TAIL_SIZE),
       event => buffer.push(jsonToTrialLog(event)),
     ).then(() => {
       if (!logsRef.current) return;
       if (buffer.length === 0 || buffer[0].id === oldestId) {
         setOldestReached(true);
       } else {
-        logsRef.current?.addLogs(buffer, true);
+        logsRef.current.addLogs(buffer, true);
         setOldestId(buffer[0].id);
         setOffset(prevOffset => prevOffset - TAIL_SIZE);
       }
@@ -70,13 +70,13 @@ const TrialLogs: React.FC = () => {
     let buffer: Log[] = [];
     const throttleFunc = throttle(THROTTLE_TIME, () => {
       if (!logsRef.current) return;
-      logsRef.current?.addLogs(buffer);
+      logsRef.current.addLogs(buffer);
       buffer = [];
       setIsLoading(false);
     });
 
     consumeStream<DetSwagger.V1TrialLogsResponse>(
-      experimentsApi.determinedTrialLogs(id, -TAIL_SIZE, 0, true),
+      detExperimentsApi.determinedTrialLogs(id, -TAIL_SIZE, 0, true),
       event => {
         buffer.push(jsonToTrialLog(event));
         throttleFunc();

@@ -257,7 +257,7 @@ export const jsonToTrialLog = (data: unknown): Log => {
 
 export const jsonToTrialLogs = (data: unknown): Log[] => {
   const ioType = decode<ioTypeLogs>(ioLogs, data);
-  return ioType.map(log => ioTrialLogToLog(log));
+  return ioType.map(ioTrialLogToLog);
 };
 
 export const jsonToCommandLogs = (data: unknown): Log[] => {
