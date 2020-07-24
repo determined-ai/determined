@@ -79,7 +79,7 @@ const ExperimentActions: React.FC<Props> = ({
   , [ experiment.id, updateFn ]);
 
   interface ConditionalButton {
-    btn: React.ReactNode;
+    button: React.ReactNode;
     showIf?: (exp: ExperimentDetails) => boolean;
   }
 
@@ -92,33 +92,33 @@ const ExperimentActions: React.FC<Props> = ({
   };
 
   const actionButtons: ConditionalButton[] = [
-    { btn: <Button key="fork" type="primary" onClick={onClick[Action.Fork]}>Fork</Button> },
+    { button: <Button key="fork" type="primary" onClick={onClick[Action.Fork]}>Fork</Button> },
     {
-      btn: <Button key="archive" loading={buttonStates.Archive}
+      button: <Button key="archive" loading={buttonStates.Archive}
         type="primary" onClick={handleArchive(true)}>
     Archive</Button>,
       showIf: (exp): boolean => terminalRunStates.has(exp.state) && !exp.archived,
     },
     {
-      btn: <Button key="unarchive" loading={buttonStates.Archive}
+      button: <Button key="unarchive" loading={buttonStates.Archive}
         type="primary" onClick={handleArchive(false)}>
     Unarchive</Button>,
       showIf: (exp): boolean => terminalRunStates.has(exp.state) && exp.archived,
     },
     {
-      btn: <Button key="pause" loading={buttonStates.Pause}
+      button: <Button key="pause" loading={buttonStates.Pause}
         type="primary" onClick={handleStateChange(RunState.Paused)}>
     Pause</Button>,
       showIf: (exp): boolean => exp.state === RunState.Active,
     },
     {
-      btn: <Button key="activate" loading={buttonStates.Activate}
+      button: <Button key="activate" loading={buttonStates.Activate}
         type="primary" onClick={handleStateChange(RunState.Active)}>
     Activate</Button>,
       showIf: (exp): boolean => exp.state === RunState.Paused,
     },
     {
-      btn: <Popconfirm
+      button: <Popconfirm
         cancelText="No"
         key="cancel"
         okText="Yes"
@@ -130,7 +130,7 @@ const ExperimentActions: React.FC<Props> = ({
       showIf: (exp): boolean => cancellableRunStates.includes(exp.state),
     },
     {
-      btn: <Popconfirm
+      button: <Popconfirm
         cancelText="No"
         key="kill"
         okText="Yes"
@@ -142,7 +142,7 @@ const ExperimentActions: React.FC<Props> = ({
       showIf: (exp): boolean => killableRunStates.includes(exp.state),
     },
     {
-      btn: <Button key="tensorboard"
+      button: <Button key="tensorboard"
         loading={buttonStates.Tensorboard} type="primary" onClick={handleLaunchTensorboard}>
       Tensorboard</Button>,
       showIf: (exp): boolean => !experimentWillNeverHaveData(exp),
@@ -153,7 +153,7 @@ const ExperimentActions: React.FC<Props> = ({
     <ul className={css.base}>
       {actionButtons
         .filter(ab => !ab.showIf || ab.showIf(experiment as ExperimentDetails))
-        .map(ab => ab.btn)
+        .map(ab => ab.button)
       }
     </ul>
   );
