@@ -172,20 +172,23 @@ const LogViewer: React.FC<Props> = forwardRef((
      */
     const iconWidth = props.disableLevel ? 0 : ICON_WIDTH;
     const messageWidth = spacerRect.width - iconWidth - lineNumberWidth - dateTimeWidth;
+    const messageCharCount = Math.floor(messageWidth / charRect.width);
 
     /*
-      * Measure the dimensions of every message in the available data.
+      * Calculate the dimensions of every message in the available data.
       * Add up all the height to figure out what the scroll height is.
       */
     let totalContentHeight = 0;
     const messageSizes: Record<string, MessageSize> = {};
     measure.current.style.width = toRem(messageWidth);
-    logs.forEach((line: ViewerLog) => {
-      /* eslint-disable @typescript-eslint/no-non-null-assertion */
-      measure.current!.textContent = line.message;
-      const rect = measure.current!.getBoundingClientRect();
-      messageSizes[line.id] = { height: rect.height, top: totalContentHeight };
-      totalContentHeight += rect.height;
+    logs.forEach((log: ViewerLog) => {
+      const lineCount = log.message
+        .split('\n')
+        .map(line => line.length > messageCharCount ? Math.ceil(line.length / messageCharCount) : 1)
+        .reduce((acc, count) => acc + count, 0);
+      const height = lineCount * charRect.height;
+      messageSizes[log.id] = { height, top: totalContentHeight };
+      totalContentHeight += height;
     });
 
     // Hide the measure element
@@ -207,7 +210,10 @@ const LogViewer: React.FC<Props> = forwardRef((
     // Only process new logs that don't exist in the log viewer
     const newLogs = addedLogs
       .filter(log => log.id < logIdRange.min || log.id > logIdRange.max)
-      .map(log => ({ ...log, formattedTime: formatDatetime(log.time!, DATETIME_FORMAT) }));
+      .map(log => {
+        const formattedTime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
+        return { ...log, formattedTime };
+      });
     if (newLogs.length === 0) return;
 
     // Add new logs to existing logs either at the beginning or the end.
@@ -381,7 +387,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   const formatClipboardHeader = useCallback((log: Log): string => {
     const format = `%${MAX_DATETIME_LENGTH - 1}s `;
     const level = `<${log.level || ''}>`;
-    const datetime = formatDatetime(log.time!, DATETIME_FORMAT);
+    const datetime = log.time ? formatDatetime(log.time, DATETIME_FORMAT) : '';
     return props.disableLevel ?
       sprintf(format, datetime) :
       sprintf(`%-9s ${format}`, level, datetime);

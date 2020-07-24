@@ -28,7 +28,7 @@
     display: inline;
     position: absolute;
     white-space: pre-wrap;
-    word-break: break-word;
+    word-break: break-all;
   }
   .datetimeTooltip {
     white-space: nowrap;
@@ -63,7 +63,7 @@
   .line > .message {
     flex-grow: 1;
     white-space: pre-wrap;
-    word-break: break-word;
+    word-break: break-all;
   }
   .scrollToLatest {
     bottom: var(--theme-sizes-layout-huge);
