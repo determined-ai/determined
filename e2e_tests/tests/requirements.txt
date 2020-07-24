@@ -6,3 +6,5 @@ torchvision==0.5.0
 tensorflow==1.14
 numpy
 pandas
+pyyaml
+docker
