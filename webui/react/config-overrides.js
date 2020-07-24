@@ -75,5 +75,5 @@ const webpackConfig = override(
 module.exports = {
   webpack: webpackConfig,
   jest: (config, env) => ({...config, ...jestConfig}),
-  devServer: undefined,
+  // devServer: (config, env) => config,
 }
