@@ -88,6 +88,9 @@ const ExperimentDetailsComp: React.FC = () => {
   }
 
   const monacoOpts = {
+    minimap: {
+      enabled: false,
+    },
     selectOnLineNumbers: true,
   };
 
@@ -133,14 +136,18 @@ const ExperimentDetailsComp: React.FC = () => {
       <Section title="Trials" />
 
       <Modal
+        bodyStyle={{
+          padding: 0,
+        }}
+        className={css.forkModal}
+        style={{
+          minWidth: '60rem',
+        }}
         title={`Fork Experiment ${experimentId}`}
         visible={forkModalState.visible}
         onCancel={handleCancel}
         onOk={handleOk}
       >
-        <p>Using model definition from <Link path={`/det/experiments/${experimentId}`}>
-          {`Experiment ${experimentId}`}</Link>
-        </p>
         <MonacoEditor
           height="40vh"
           language="yaml"
