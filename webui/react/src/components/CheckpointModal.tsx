@@ -14,6 +14,7 @@ interface Props {
   config: ExperimentConfig;
   onHide?: () => void;
   show?: boolean;
+  title: string;
 }
 
 const getStorageLocation = (config: ExperimentConfig, checkpoint: CheckpointDetail): string => {
@@ -58,7 +59,7 @@ const renderResource = (resource: string, size: string): React.ReactNode => {
   );
 };
 
-const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show }: Props) => {
+const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, title }: Props) => {
   const state = checkpoint.state as unknown as RunState;
 
   const totalSize = useMemo(() => {
@@ -75,19 +76,17 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show }: 
   return (
     <Modal
       footer={null}
-      title="Checkpoint"
+      title={title}
       visible={show}
       onCancel={onHide}>
       <div className={css.base}>
         {renderRow('Source', (
           <div className={css.source}>
-            <Link
-              path={`/ui/experiments/${checkpoint.experimentId}`}
-              popout>Experiment {checkpoint.experimentId}</Link>
+            <Link path={`/ui/experiments/${checkpoint.experimentId}`}>
+              Experiment {checkpoint.experimentId}
+            </Link>
             <span className={css.sourceDivider} />
-            <Link
-              path={`/ui/trials/${checkpoint.trialId}`}
-              popout>Trial {checkpoint.trialId}</Link>
+            <Link path={`/ui/trials/${checkpoint.trialId}`}>Trial {checkpoint.trialId}</Link>
             <span className={css.sourceDivider} />
             <span>Batch {checkpoint.batch}</span>
           </div>
@@ -95,9 +94,10 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show }: 
         {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
         {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
         {renderRow('Location', getStorageLocation(config, checkpoint))}
-        {renderRow('Validation Metric', config.searcher.metric)}
-        {checkpoint.validationMetric &&
-          renderRow('Validation Value', humanReadableFloat(checkpoint.validationMetric))}
+        {checkpoint.validationMetric && renderRow(
+          'Validation Metric',
+          `${humanReadableFloat(checkpoint.validationMetric)} (${config.searcher.metric})`,
+        )}
         {renderRow('Start Time', formatDatetime(checkpoint.startTime))}
         {checkpoint.endTime && renderRow('End Time', formatDatetime(checkpoint.endTime))}
         {renderRow('Total Size', totalSize)}
