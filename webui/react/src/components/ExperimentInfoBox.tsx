@@ -88,8 +88,8 @@ const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
               title={`Best Checkpoint for Experiment ${exp.id}`}
               onHide={handleHideBestCheckpoint} />
           </>))}
-          {renderRow('Configuration',<Button disabled type="primary">Show</Button>)}
-          {renderRow('Model Definition', <Button type="primary">
+          {renderRow('Configuration',<Button disabled>Show</Button>)}
+          {renderRow('Model Definition', <Button>
             <Link path={`/exps/${exp.id}/model_def`}>Download</Link>
           </Button>)}
         </tbody>
