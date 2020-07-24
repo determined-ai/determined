@@ -1,12 +1,11 @@
-.PHONY: default get-deps build clean test fmt check
-
+.PHONY: default
 default: get-deps build
 
-clean: clean-react clean-elm clean-tests
-	$(MAKE) -C api-ts-sdk $@
+.PHONY: clean
+clean: clean-react clean-elm clean-tests clean-api-ts-sdk
 .PHONY: clean-%
 clean-%:
-	$(MAKE) -C $(subst -,/,$*) clean
+	$(MAKE) -C $* clean
 
 .PHONY: fmt
 fmt: fmt-react fmt-elm fmt-tests
@@ -20,6 +19,7 @@ check: check-react check-elm check-tests
 check-%:
 	$(MAKE) -C $(subst -,/,$*) check
 
+.PHONY: get-deps
 get-deps: build-api-ts-sdk
 	$(MAKE) -C react $@
 	$(MAKE) -C elm $@
@@ -34,7 +34,8 @@ build-proto:
 
 .PHONY: build-api-ts-sdk
 build-api-ts-sdk: build-proto
-	$(MAKE) -C api-ts-sdk get-deps build
+	$(MAKE) -C api-ts-sdk get-deps
+	$(MAKE) -C api-ts-sdk build
 
 .PHONY: build-react
 build-react:
