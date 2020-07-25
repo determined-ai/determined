@@ -8,8 +8,9 @@ import determined_common.check as check
 
 class Reducer(Enum):
     """
-    The available methods for reducing metrics
-    available to users.
+    A ``Reducer`` defines a method for reducing (aggregating) evaluation
+    metrics. See :meth:`determined.pytorch.PyTorchTrial.evaluation_reducer` for
+    details.
 
     Attributes:
         AVG

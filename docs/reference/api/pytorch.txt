@@ -136,7 +136,7 @@ Then, implement the ``build_callbacks`` function in ``PyTorchTrial``:
 ``Gradient Clipping``
 ^^^^^^^^^^^^^^^^^^^^^
 
-To perform gradient clipping Determined provides two pre-made callback classes:
+Determined provides two pre-made callback classes to perform gradient clipping:
 
 .. autoclass:: determined.pytorch.ClipGradsL2Norm
     :members:

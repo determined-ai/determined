@@ -135,7 +135,7 @@ The ``optimizer`` method returns a ``torch.optim`` object. The MNIST model code 
 Loading Data
 """"""""""""
 
-The last two methods we need to define are ``build_training_data_loader`` and ``build_validation_data_loader``. Determined uses these methods to load the training and validation datasets, respectively. This method should return a :ref:`determined.pytorch.DataLoader <pytorch-data-loading>`, which is very similar to ``torch.utils.data.DataLoader``.
+The last two methods we need to define are ``build_training_data_loader`` and ``build_validation_data_loader``. Determined uses these methods to load the training and validation datasets, respectively. Both methods should return a :ref:`determined.pytorch.DataLoader <pytorch-data-loading>`, which is very similar to ``torch.utils.data.DataLoader``.
 
 .. code:: python
 
@@ -256,8 +256,7 @@ using the experiment's ID (``xxx`` in the example above) or description.
 Next Steps
 ----------
 
+- :ref:`model-definitions_best-practices`
 - :ref:`experiment-configuration`
-- :ref:`command-configuration`
-- :ref:`topic-guides_yaml`
 - :ref:`benefits-of-determined`
 - :ref:`terminology-concepts`

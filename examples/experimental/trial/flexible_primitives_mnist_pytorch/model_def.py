@@ -75,8 +75,8 @@ class Discriminator(nn.Module):
 
 
 class GANTrial(PyTorchTrial):
-    def __init__(self, trial_context: PyTorchTrialContext) -> None:
-        self.context = trial_context
+    def __init__(self, context: PyTorchTrialContext) -> None:
+        self.context = context
         self.logger = TorchWriter()
 
         # Create a unique download directory for each rank so they don't overwrite each other.
