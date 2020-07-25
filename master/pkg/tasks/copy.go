@@ -27,7 +27,8 @@ func harnessArchive(harnessPath string, aug *model.AgentUserGroup) container.Run
 	validWhlNames := fmt.Sprintf("*%s*.whl", version.Version)
 	wheelPaths, err := filepath.Glob(filepath.Join(harnessPath, validWhlNames))
 	if err != nil {
-		panic(errors.Wrapf(err, "error finding Python wheel files in path: %s", harnessPath))
+		panic(errors.Wrapf(err, "error finding Python wheel files for version %s in path: %s",
+			version.Version, harnessPath))
 	}
 	for _, path := range wheelPaths {
 		info, err := os.Stat(path)
