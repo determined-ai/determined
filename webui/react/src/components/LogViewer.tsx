@@ -80,9 +80,9 @@ const DATETIME_FORMAT = `[${DATETIME_PREFIX}]YYYY-MM-DD, HH:mm:ss${DATETIME_SUFF
 const MAX_DATETIME_LENGTH = 23;
 
 // Number of pixels from the top of the scroll to trigger the `onScrollToTop` callback.
-const SCROLL_TOP_THRESHOLD = 50;
+const SCROLL_TOP_THRESHOLD = 36;
 
-const SCROLL_BOTTOM_THRESHOLD = 50;
+const SCROLL_BOTTOM_THRESHOLD = 36;
 
 const ICON_WIDTH = 26;
 
@@ -119,6 +119,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   const previousScroll = usePrevious(scroll, defaultScrollInfo);
   const previousLogs = usePrevious<Log[]>(logs, []);
   const classes = [ css.base ];
+  const scrollToTopClasses = [ css.scrollToTop ];
   const scrollToLatestClasses = [ css.scrollToLatest ];
 
   const spacerStyle = { height: toRem(config.totalContentHeight) };
@@ -127,6 +128,9 @@ const LogViewer: React.FC<Props> = forwardRef((
   const levelStyle = { width: toRem(ICON_WIDTH) };
 
   if (props.noWrap) classes.push(css.noWrap);
+  if (scroll.scrollTop > SCROLL_TOP_THRESHOLD) {
+    scrollToTopClasses.push(css.show);
+  }
   if (scroll.scrollTop < scroll.scrollHeight - scroll.viewHeight - SCROLL_BOTTOM_THRESHOLD) {
     scrollToLatestClasses.push(css.show);
   }
@@ -333,7 +337,7 @@ const LogViewer: React.FC<Props> = forwardRef((
        */
       setTimeout(() => {
         if (!container.current) return;
-        container.current.scrollTo({ behavior: 'smooth', top: container.current.scrollHeight });
+        container.current.scrollTo({ behavior: 'auto', top: container.current.scrollHeight });
       });
     } else if (scrollToInfo.isPrepend) {
       /*
@@ -420,9 +424,14 @@ const LogViewer: React.FC<Props> = forwardRef((
     if (baseRef.current && screenfull.isEnabled) screenfull.toggle();
   }, []);
 
+  const handleScrollToTop = useCallback(() => {
+    if (!container.current) return;
+    container.current.scrollTo({ behavior: 'auto', top: 0 });
+  }, []);
+
   const handleScrollToLatest = useCallback(() => {
     if (!container.current) return;
-    container.current.scrollTo({ behavior: 'smooth', top: container.current.scrollHeight });
+    container.current.scrollTo({ behavior: 'auto', top: container.current.scrollHeight });
   }, []);
 
   const handleDownload = useCallback(() => {
@@ -499,13 +508,22 @@ const LogViewer: React.FC<Props> = forwardRef((
           <div className={css.measure} ref={measure} />
           {props.isLoading && <Spinner fillContainer />}
         </div>
-        <Tooltip placement="topRight" title="Scroll to Latest Entry">
-          <Button
-            aria-label="Scroll to Latest Entry"
-            className={scrollToLatestClasses.join(' ')}
-            icon={<Icon name="arrow-down" />}
-            onClick={handleScrollToLatest} />
-        </Tooltip>
+        <div className={css.scrollTo}>
+          <Tooltip placement="topRight" title="Scroll to Top">
+            <Button
+              aria-label="Scroll to Top"
+              className={scrollToTopClasses.join(' ')}
+              icon={<Icon name="arrow-up" />}
+              onClick={handleScrollToTop} />
+          </Tooltip>
+          <Tooltip placement="topRight" title="Scroll to Latest Entry">
+            <Button
+              aria-label="Scroll to Latest Entry"
+              className={scrollToLatestClasses.join(' ')}
+              icon={<Icon name="arrow-down" />}
+              onClick={handleScrollToLatest} />
+          </Tooltip>
+        </div>
       </Section>
     </div>
   );
