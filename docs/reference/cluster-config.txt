@@ -274,16 +274,16 @@ The master supports the following configuration settings:
     from GCR securely (see :ref:`this example <gcp-pull-gcr>` for more
     details). The default value is the empty string.
 
+  - ``agent_docker_image``: The Docker image to use for the Determined agents.
+    A valid form is ``determinedai/determined-agent:<version>``. (*Required*)
+
   - ``agent_docker_network``: The Docker network to use for the Determined
     agent and task containers. If this is set to "host", Docker
     host-mode networking will be used instead. The default value is
-    "determined".
+    ``determined``.
 
   - ``agent_docker_runtime``: The Docker runtime to use for the Determined
     agent and task containers. Defaults to ``runc``.
-
-  - ``agent_docker_image``: The Docker image to use for the Determined agents.
-    A valid form is ``determinedai/determined-agent:<version>``. (*Required*)
 
   - ``max_idle_agent_period``: How long to wait before terminating idle
     dynamic agents. This string is a sequence of decimal numbers, each
@@ -376,7 +376,7 @@ The master supports the following configuration settings:
       Defaults to ``managed-by``.
 
     - ``label_value``: Value for labeling the Determined agent instances.
-      Defaults to the master instance name if the master is on GCP
+      Defaults to the master instance name if the master is on GCP,
       otherwise ``determined-ai-determined``.
 
     - ``name_prefix``: Name prefix to set for the Determined agent
