@@ -158,6 +158,7 @@ const ExperimentDetailsComp: React.FC = () => {
       title: 'Batches',
     },
     {
+      defaultSortOrder: experiment.config.searcher.smallerIsBetter ? 'ascend' : 'descend',
       render: (_: string, record: TrialSummary): React.ReactNode => {
         return record.bestValidationMetric ? humanReadableFloat(record.bestValidationMetric) : '-';
       },
