@@ -83,7 +83,7 @@ The Determined CLI can be used to download a checkpoint saved on a shared file s
 
 .. code:: bash
 
-   $ det checkpoint download <trial-id> <step-id>
+   $ det checkpoint download <UUID>
 
 .. warning::
 
