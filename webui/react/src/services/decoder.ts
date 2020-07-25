@@ -2,10 +2,13 @@ import dayjs from 'dayjs';
 
 import {
   decode, ioCommandLogs, ioDeterminedInfo, ioExperimentConfig, ioExperimentDetails, ioExperiments,
-  ioGenericCommand, ioLogs, ioTrialDetails, ioTypeAgents,
+  ioGenericCommand, ioLog, ioLogs, ioTrialDetails, ioTypeAgents,
   ioTypeCheckpoint, ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo,
-  ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand,
-  ioTypeGenericCommands, ioTypeLogs, ioTypeTrialDetails, ioTypeTrialSummary, ioTypeUsers,
+  ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments,
+  ioTypeGenericCommand, ioTypeGenericCommands,
+  ioTypeLog, ioTypeLogs,
+  ioTypeTrialDetails, ioTypeTrialSummary,
+  ioTypeUsers,
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, Command, CommandState, CommandType,
@@ -229,24 +232,32 @@ export const jsonToLogs = (data: unknown): Log[] => {
   }));
 };
 
+const defaultRegex = /^\[([^\]]+)\]\s(.*)$/im;
+const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s(.*)$/im;
+
+const ioTrialLogToLog = (io: ioTypeLog): Log => {
+  if (defaultRegex.test(io.message)) {
+    const matches = io.message.match(defaultRegex) || [];
+    const time = matches[1];
+    const message = matches[2] || '';
+    return { id: io.id, message, time };
+  } else if (kubernetesRegex.test(io.message)) {
+    const matches = io.message.match(kubernetesRegex) || [];
+    const time = matches[3];
+    const message = [ matches[1], matches[2], matches[4] ].join(' ');
+    return { id: io.id, message, time };
+  }
+  return { id: io.id, message: io.message };
+};
+
+export const jsonToTrialLog = (data: unknown): Log => {
+  const ioType = decode<ioTypeLog>(ioLog, data);
+  return ioTrialLogToLog(ioType);
+};
+
 export const jsonToTrialLogs = (data: unknown): Log[] => {
   const ioType = decode<ioTypeLogs>(ioLogs, data);
-  const defaultRegex = /^\[([^\]]+)\]\s(.*)$/im;
-  const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s(.*)$/im;
-  return ioType.map(log => {
-    if (defaultRegex.test(log.message)) {
-      const matches = log.message.match(defaultRegex) || [];
-      const time = matches[1];
-      const message = matches[2] || '';
-      return { id: log.id, message, time };
-    } else if (kubernetesRegex.test(log.message)) {
-      const matches = log.message.match(kubernetesRegex) || [];
-      const time = matches[3];
-      const message = [ matches[1], matches[2], matches[4] ].join(' ');
-      return { id: log.id, message, time };
-    }
-    return { id: log.id, message: log.message };
-  });
+  return ioType.map(ioTrialLogToLog);
 };
 
 export const jsonToCommandLogs = (data: unknown): Log[] => {

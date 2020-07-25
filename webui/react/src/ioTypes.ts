@@ -243,7 +243,7 @@ export type ioTypeExperimentDetails = io.TypeOf<typeof ioExperimentDetails>;
 const ioLogLevels: Record<string, null> = Object.values(LogLevel)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 const ioLogLevelType = io.keyof(ioLogLevels);
-const ioLog = io.type({
+export const ioLog = io.type({
   id: io.number,
   level: io.union([ ioLogLevelType, io.undefined ]),
   message: io.string,
@@ -252,6 +252,7 @@ const ioLog = io.type({
 
 export const ioLogs = io.array(ioLog);
 
+export type ioTypeLog = io.TypeOf<typeof ioLog>;
 export type ioTypeLogs = io.TypeOf<typeof ioLogs>;
 
 const ioCommandLogConfig = io.type({
