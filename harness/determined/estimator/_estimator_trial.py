@@ -717,9 +717,12 @@ class EstimatorTrial(det.Trial):
 
     def __init__(self, context: estimator.EstimatorTrialContext):
         """
-        Initializes a trial using the provided trial_context.
+        Initializes a trial using the provided ``context``.
 
-        Override this function to initialize any shared state between the
+        This method should typically be overridden by trial definitions: at minimum,
+        it is important to store ``context`` as an instance variable so that
+        it can be accessed by other methods of the trial class. This can also be a
+        convenient place to initialize other state that is shared between the
         estimator, train spec, and/or validation spec.
         """
         self.context = context  # type: estimator.EstimatorTrialContext

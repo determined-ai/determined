@@ -490,7 +490,7 @@ class PyTorchTrialController(det.LoopTrialController):
         for key in keys:
             check.true(
                 isinstance(metrics_reducers[key], Reducer),
-                "Please select `det.pytorch.Reducer` for reducing validation metrics.",
+                "Please select `determined.pytorch.Reducer` for reducing validation metrics.",
             )
 
         return metrics_reducers
@@ -673,8 +673,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
 class PyTorchTrial(det.Trial):
     """
-    PyTorch trials are created by subclassing the abstract class
-    :class:`PyTorchTrial`.
+    PyTorch trials are created by subclassing this abstract class.
     """
 
     # TODO(DET-3204): Add the following comments to the docstring.
@@ -694,25 +693,27 @@ class PyTorchTrial(det.Trial):
     trial_context_class = PyTorchTrialContext
 
     @abstractmethod
-    def __init__(self, trial_context: PyTorchTrialContext) -> None:
+    def __init__(self, context: PyTorchTrialContext) -> None:
         """
-        Initializes a trial using the provided trial context.
+        Initializes a trial using the provided ``context``.
 
-        Override this function to initialize any shared state between the
-        function implementations.
+        Override this method to initialize any common state that is shared
+        by the other methods in the trial class. it is also typically useful
+        to store ``context`` as an instance variable so that it can be accessed
+        by other methods.
 
         Models, optimizers, and LR schedulers can be defined in the abstract methods.
         """
 
         # TODO(DET-3204): Add the following comments to the docstring.
         # Alternatively, we could initialize them with the methods provided by
-        # :py:class:`det.pytorch.PytorchTrialContext`, including ``Model``,
+        # :py:class:`determined.pytorch.PyTorchTrialContext`, including ``Model``,
         # ``Optimizer``, ``LRScheduler``, ``_configure_apex_amp``.
         # Here is a code example.
         #
         # .. code-block:: python
         #
-        #     self.context = trial_context
+        #     self.context = context
         #
         #     self.a = self.context.Model(MyModelA())
         #     self.b = self.context.Model(MyModelB())
@@ -759,7 +760,7 @@ class PyTorchTrial(det.Trial):
                 used for training
 
         Returns:
-            :py:class:`det.pytorch.LRScheduler`:
+            :py:class:`determined.pytorch.LRScheduler`:
                 Wrapper around a :obj:`torch.optim.lr_scheduler._LRScheduler`.
         """
         # TODO(DET-3267): deprecate this when releasing pytorch flexible primitives.
@@ -855,7 +856,7 @@ class PyTorchTrial(det.Trial):
     def evaluation_reducer(self) -> Union[Reducer, Dict[str, Reducer]]:
         """
         Return a reducer for all evaluation metrics, or a dict mapping metric
-        names to individual reducers. Defaults to :obj:`det.pytorch.Reducer.AVG`.
+        names to individual reducers. Defaults to :obj:`determined.pytorch.Reducer.AVG`.
         """
         return Reducer.AVG
 
