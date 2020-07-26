@@ -7,6 +7,7 @@ import { useParams } from 'react-router';
 
 import CheckpointModal from 'components/CheckpointModal';
 import ExperimentActions from 'components/ExperimentActions';
+import ExperimentChart from 'components/ExperimentChart';
 import ExperimentInfoBox from 'components/ExperimentInfoBox';
 import Icon from 'components/Icon';
 import { makeClickHandler } from 'components/Link';
@@ -45,6 +46,7 @@ const ExperimentDetailsComp: React.FC = () => {
   const [ experimentResponse, triggerExperimentRequest ] =
     useRestApi<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
   const experiment = experimentResponse.data;
+  const experimentConfig = experiment?.config;
   const validationKey = experiment?.config.searcher.metric;
 
   const pollExperimentDetails = useCallback(() => {
@@ -209,7 +211,7 @@ const ExperimentDetailsComp: React.FC = () => {
   ];
 
   return (
-    <Page title={`Experiment ${experiment?.config.description}`}>
+    <Page title={`Experiment ${experimentConfig?.description}`}>
       <Breadcrumb>
         <Breadcrumb.Item>
           <Space align="center" size="small">
@@ -248,7 +250,12 @@ const ExperimentDetailsComp: React.FC = () => {
           onChange={editorOnChange} />
         {forkError && <Alert className={css.error} message={forkError} type="error" />}
       </Modal>
-      <Section title="Chart" />
+      <Section title="Chart">
+        <ExperimentChart
+          startTime={experiment.startTime}
+          validationHistory={experiment.validationHistory}
+          validationMetric={experimentConfig?.searcher.metric} />
+      </Section>
       <Section title="Trials">
         <Table
           columns={columns}
