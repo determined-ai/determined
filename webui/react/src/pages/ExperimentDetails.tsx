@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import { Alert, Breadcrumb, Button, Modal, Space, Table } from 'antd';
-=======
-import { Breadcrumb, Button, Space, Table, Tooltip } from 'antd';
->>>>>>> b400769a... chore: add checkpoint icon to project
+import { Alert, Breadcrumb, Button, Modal, Space, Table, Tooltip } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -26,7 +22,7 @@ import { useRestApiSimple } from 'hooks/useRestApi';
 import { routeAll } from 'routes';
 import { forkExperiment, getExperimentDetails, isNotFound } from 'services/api';
 import { ExperimentDetailsParams } from 'services/types';
-import { CheckpointDetail, ExperimentDetails, TrialSummary } from 'types';
+import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
 import { clone } from 'utils/data';
 import { alphanumericSorter, numericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
 import { humanReadableFloat } from 'utils/string';
@@ -84,7 +80,7 @@ const ExperimentDetailsComp: React.FC = () => {
     setForkError(undefined);
   }, []);
 
-  const handleTableRow = useCallback((record: TrialSummary) => ({
+  const handleTableRow = useCallback((record: TrialItem) => ({
     onClick: makeClickHandler(record.url as string),
   }), []);
 
@@ -114,7 +110,7 @@ const ExperimentDetailsComp: React.FC = () => {
     try {
       // Validate the yaml syntax by attempting to load it.
       yaml.safeLoad(forkValue);
-      const forkId = await forkExperiment({ experimentConfig: forkValue, parentId: experimentId });
+      const forkId = await forkExperiment({ experimentConfig: forkValue, parentId: id });
       setForkModalState(state => ({ ...state, visible: false }));
       routeAll(`/det/experiments/${forkId}`);
     } catch (e) {
@@ -139,41 +135,41 @@ const ExperimentDetailsComp: React.FC = () => {
   };
   const handleCheckpointDismiss = () => setShowCheckpoint(false);
 
-  const columns: ColumnsType<TrialSummary> = [
+  const columns: ColumnsType<TrialItem> = [
     {
       dataIndex: 'id',
-      sorter: (a: TrialSummary, b: TrialSummary): number => alphanumericSorter(a.id, b.id),
+      sorter: (a: TrialItem, b: TrialItem): number => alphanumericSorter(a.id, b.id),
       title: 'ID',
     },
     {
       render: stateRenderer,
-      sorter: (a: TrialSummary, b: TrialSummary): number => runStateSorter(a.state, b.state),
+      sorter: (a: TrialItem, b: TrialItem): number => runStateSorter(a.state, b.state),
       title: 'State',
     },
     {
-      dataIndex: 'numBatchTally',
-      sorter: (a: TrialSummary, b: TrialSummary): number => {
-        return numericSorter(a.numBatchTally, b.numBatchTally);
+      dataIndex: 'numBatches',
+      sorter: (a: TrialItem, b: TrialItem): number => {
+        return numericSorter(a.numBatches, b.numBatches);
       },
       title: 'Batches',
     },
     {
       defaultSortOrder: experiment.config.searcher.smallerIsBetter ? 'ascend' : 'descend',
-      render: (_: string, record: TrialSummary): React.ReactNode => {
+      render: (_: string, record: TrialItem): React.ReactNode => {
         return record.bestValidationMetric ? humanReadableFloat(record.bestValidationMetric) : '-';
       },
-      sorter: (a: TrialSummary, b: TrialSummary): number => {
+      sorter: (a: TrialItem, b: TrialItem): number => {
         return numericSorter(a.bestValidationMetric, b.bestValidationMetric);
       },
       title: 'Best Validation Metric',
     },
     {
-      render: (_: string, record: TrialSummary): React.ReactNode => {
+      render: (_: string, record: TrialItem): React.ReactNode => {
         return record.latestValidationMetrics && validationKey ?
           humanReadableFloat(record.latestValidationMetrics.validationMetrics[validationKey]) :
           '-';
       },
-      sorter: (a: TrialSummary, b: TrialSummary): number => {
+      sorter: (a: TrialItem, b: TrialItem): number => {
         if (!validationKey) return 0;
         const aMetric = a.latestValidationMetrics?.validationMetrics[validationKey];
         const bMetric = b.latestValidationMetrics?.validationMetrics[validationKey];
@@ -182,25 +178,25 @@ const ExperimentDetailsComp: React.FC = () => {
       title: 'Latest Validation Metric',
     },
     {
-      render: (_: string, record: TrialSummary): React.ReactNode => {
+      render: (_: string, record: TrialItem): React.ReactNode => {
         return relativeTimeRenderer(new Date(record.startTime));
       },
-      sorter: (a: TrialSummary, b: TrialSummary): number => {
+      sorter: (a: TrialItem, b: TrialItem): number => {
         return stringTimeSorter(a.startTime, b.startTime);
       },
       title: 'Start Time',
     },
     {
-      render: (_: string, record: TrialSummary): React.ReactNode => durationRenderer(record),
-      sorter: (a: TrialSummary, b: TrialSummary): number => getDuration(a) - getDuration(b),
+      render: (_: string, record: TrialItem): React.ReactNode => durationRenderer(record),
+      sorter: (a: TrialItem, b: TrialItem): number => getDuration(a) - getDuration(b),
       title: 'Duration',
     },
     {
-      render: (_: string, record: TrialSummary): React.ReactNode => {
+      render: (_: string, record: TrialItem): React.ReactNode => {
         if (record.bestAvailableCheckpoint) {
           const checkpoint: CheckpointDetail = {
             ...record.bestAvailableCheckpoint,
-            batch: record.numBatchTally,
+            batch: record.numBatches,
             experimentId: id,
             trialId: record.id,
           };
@@ -275,6 +271,7 @@ const ExperimentDetailsComp: React.FC = () => {
         checkpoint={activeCheckpoint}
         config={experiment.config}
         show={showCheckpoint}
+        title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
         onHide={handleCheckpointDismiss} />}
     </Page>
   );

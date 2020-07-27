@@ -8,7 +8,7 @@ import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
 import TaskActionDropdown from 'components/TaskActionDropdown';
 import {
-  CommandState, CommandTask, CommandType, ExperimentItem, RunState, StartEndTimes, TrialSummary,
+  CommandState, CommandTask, CommandType, ExperimentItem, RunState, StartEndTimes, TrialItem,
 } from 'types';
 import { floatToPercent } from 'utils/string';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
@@ -16,7 +16,7 @@ import { commandTypeToLabel, experimentToTask } from 'utils/types';
 
 import css from './Table.module.scss';
 
-type TableRecord = CommandTask | ExperimentItem | TrialSummary;
+type TableRecord = CommandTask | ExperimentItem | TrialItem;
 
 export type Renderer<T = unknown> = (text: string, record: T, index: number) => React.ReactNode;
 

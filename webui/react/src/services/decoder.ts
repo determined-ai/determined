@@ -5,12 +5,14 @@ import {
   ioExperiments, ioGenericCommand, ioLog, ioLogs, ioTrialDetails, ioTypeAgents,
   ioTypeCheckpoint, ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo, ioTypeExperiment,
   ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand,
-  ioTypeGenericCommands, ioTypeLog, ioTypeLogs, ioTypeTrial, ioTypeTrialDetails, ioTypeUsers,
+  ioTypeGenericCommands, ioTypeLatestValidationMetrics, ioTypeLog, ioTypeLogs, ioTypeTrial,
+  ioTypeTrialDetails, ioTypeUsers,
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, CheckpointStorageType, Command, CommandState,
-  CommandType, DeterminedInfo, Experiment, ExperimentConfig, ExperimentDetails, Log, LogLevel,
-  ResourceState, ResourceType, RunState, TrialDetails, TrialItem, User,
+  CommandType, DeterminedInfo, Experiment, ExperimentConfig, ExperimentDetails,
+  LatestValidationMetrics, Log, LogLevel, ResourceState, ResourceType, RunState,
+  TrialDetails, TrialItem, User,
 } from 'types';
 import { capitalize } from 'utils/string';
 
@@ -188,13 +190,13 @@ const ioToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
   };
 };
 
-const decodeLatestValidationMetrics = (
-  io: ioTypeLatestValidationMetrics | null,
-): LatestValidationMetrics | undefined => {
-  return io ? {
+const ioToLatestValidationMetrics = (
+  io: ioTypeLatestValidationMetrics,
+): LatestValidationMetrics => {
+  return {
     numInputs: io.num_inputs,
     validationMetrics: io.validation_metrics,
-  } : undefined;
+  };
 };
 
 const ioToTrial = (io: ioTypeTrial): TrialItem => {
@@ -206,13 +208,9 @@ const ioToTrial = (io: ioTypeTrial): TrialItem => {
     experimentId: io.experiment_id,
     hparams: io.hparams || {},
     id: io.id,
-    latestValidationMetrics: decodeLatestValidationMetrics(io.latest_validation_metrics),
-<<<<<<< HEAD
-    numBatches: io.num_batches,
-=======
+    latestValidationMetrics: io.latest_validation_metrics
+      ? ioToLatestValidationMetrics(io.latest_validation_metrics) : undefined,
     numBatches: io.num_batches || 0,
-    numBatchTally: batchTally,
->>>>>>> c35db0e6... chore: handle null num_batches field for experiment summary trials
     numCompletedCheckpoints: io.num_completed_checkpoints,
     numSteps: io.num_steps,
     seed: io.seed,
