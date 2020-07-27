@@ -250,6 +250,7 @@ func (k *kubernetesResourceProvider) receivePodStarted(ctx *actor.Context, msg s
 	task, ok := k.tasksByContainerID[ContainerID(msg.ContainerID)]
 	if !ok {
 		ctx.Log().Warnf("received pod start from unknown container %s", msg.ContainerID)
+		return
 	}
 
 	container := task.containers[ContainerID(msg.ContainerID)]
@@ -257,10 +258,6 @@ func (k *kubernetesResourceProvider) receivePodStarted(ctx *actor.Context, msg s
 	container.mustTransition(containerRunning)
 	handler := container.task.handler
 	handler.System().Tell(handler, ContainerStarted{Container: container})
-
-	if len(msg.Ports) == 0 {
-		return
-	}
 
 	names := make([]string, 0, len(msg.Ports))
 	for _, port := range msg.Ports {
@@ -297,11 +294,8 @@ func (k *kubernetesResourceProvider) receivePodTerminated(
 	container.mustTransition(containerTerminated)
 	container.exitStatus = msg.ContainerStopped
 
-	if names, ok := k.registeredNames[container]; ok {
-		for _, name := range names {
-			ctx.Tell(k.proxy, proxy.Unregister{Service: name})
-		}
-		delete(k.registeredNames, container)
+	for _, name := range k.registeredNames[container] {
+		ctx.Tell(k.proxy, proxy.Unregister{Service: name})
 	}
 
 	delete(container.agent.containers, container.id)
