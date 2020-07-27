@@ -6,7 +6,7 @@ This document describes how to deploy a Determined cluster on Amazon Web
 Services (AWS). We provide the
 :ref:`determined-deploy <determined-deploy>` package for easy creation
 and deployment of these resources. If you would rather create the cluster manually, see the
-:ref:`Manual Deployment <manual-deployment>` section below.
+:ref:`aws-manual-deployment` section below.
 
 For more information about using Determined on AWS, see the :ref:`topic_guide_aws`
 topic guide.
@@ -18,8 +18,9 @@ topic guide.
 ``determined-deploy`` Python Package
 ------------------------------------
 
-The ``determined-deploy`` package uses AWS CloudFormation to automatically deploy
-and configure a Determined cluster. CloudFormation builds the necessary components
+The ``determined-deploy`` package uses `AWS CloudFormation
+<https://aws.amazon.com/cloudformation/>`__ to automatically deploy and
+configure a Determined cluster. CloudFormation builds the necessary components
 for Determined into a single CloudFormation stack.
 
 Requirements
@@ -184,7 +185,7 @@ Tearing Down the Cluster
      - Unique ID for the cluster; it will be used for the CloudFormation stack name.
      - *required*
 
-.. _manual-deployment:
+.. _aws-manual-deployment:
 
 Manual Deployment
 -----------------
@@ -447,8 +448,8 @@ Running Determined
 
    Notes:
 
-   - ``agent-ami`` should be the latest Determined agent AMI.
-   - ``instance-type`` should be any p2 or p3 EC2 instance type.
+   - ``image_id`` should be the latest Determined agent AMI.
+   - ``instance_type`` should be any p2 or p3 EC2 instance type.
 
    .. warning::
 
@@ -461,9 +462,6 @@ Running Determined
      checkpoint_storage:
        type: s3
        bucket: ${CheckpointBucket}
-       save_experiment_best: 0
-       save_trial_best: 1
-       save_trial_latest: 1
 
      db:
        user: postgres
@@ -485,7 +483,6 @@ Running Determined
          public_ip: true
          security_group_id: ${AgentSecurityGroup.GroupId}
        provider: aws
-       root_volume_size: 200
        ssh_key_name: ${Keypair}
        tag_key: determined-${UserName}
        tag_value: determined-${UserName}-agent
