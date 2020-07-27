@@ -70,13 +70,15 @@ export const generateExperiments = (count = 10): ExperimentItem[] => {
     .map((_, idx) => {
       const experimentTask = generateExperimentTask(idx);
       const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
+      const config = {
+        description: experimentTask.name,
+        resources: {},
+        searcher: { metric: 'val_error', smallerIsBetter: true },
+      };
       return {
         ...experimentTask,
-        config: {
-          description: experimentTask.name,
-          resources: {},
-          searcher: { metric: 'val_error', smallerIsBetter: true },
-        },
+        config,
+        configRaw: config,
         id: idx,
         name: experimentTask.name,
         username: user.username,

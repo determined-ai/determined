@@ -6,7 +6,7 @@ import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { decode } from 'ioTypes';
 import { isAuthFailure } from 'services/api';
 import { http, HttpOptions } from 'services/apiBuilder';
-import { clone, isEqual } from 'utils/data';
+import { applyMappers, isEqual } from 'utils/data';
 
 export enum ActionType {
   SetData,
@@ -31,7 +31,6 @@ type Action<T> =
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Mapper = (x: any) => any;
-
 interface HookOptions<T> {
   httpOptions?: HttpOptions;
   data?: T;
@@ -61,18 +60,6 @@ const defaultReducer = <T>(state: State<T>, action: Action<T>): State<T> => {
     default:
       return state;
   }
-};
-
-export const applyMappers = <T>(data: unknown, mappers: Mapper | Mapper[]): T => {
-  let currentData = clone(data);
-
-  if (Array.isArray(mappers)) {
-    currentData = mappers.reduce((acc, mapper) => mapper(acc), currentData);
-  } else {
-    currentData = mappers(currentData);
-  }
-
-  return currentData;
 };
 
 const useRestApi = <T>(ioType: io.Mixed, options: HookOptions<T> = {}): Output<T> => {

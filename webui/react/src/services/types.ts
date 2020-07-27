@@ -17,6 +17,11 @@ export interface KillExpParams {
   experimentId: number;
 }
 
+export interface ForkExperimentParams {
+  parentId: number;
+  experimentConfig: string;
+}
+
 export interface KillCommandParams {
   commandId: string;
   commandType: CommandType;
