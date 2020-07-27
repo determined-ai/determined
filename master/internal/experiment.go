@@ -316,7 +316,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 	// Patch experiment messages.
 	case model.State:
-		_ = e.updateState(ctx, msg)
+		e.updateState(ctx, msg)
 	case scheduler.SetMaxSlots:
 		e.Config.Resources.MaxSlots = msg.MaxSlots
 		msg.Handler = ctx.Self()
@@ -328,7 +328,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 
 	case killExperiment:
 		if _, running := model.RunningStates[e.State]; running {
-			_ = e.updateState(ctx, model.StoppingCanceledState)
+			e.updateState(ctx, model.StoppingCanceledState)
 		}
 
 		for _, child := range ctx.Children() {
@@ -344,7 +344,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		// Flush any remaining searcher logs
 		if err := e.db.AddSearcherEvents(e.pendingEvents); err != nil {
 			ctx.Log().Error(err)
-			_ = e.updateState(ctx, model.StoppingErrorState)
+			e.updateState(ctx, model.StoppingErrorState)
 		}
 
 		state := model.StoppingToTerminalStates[e.State]
@@ -378,16 +378,16 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Log().Info("experiment shut down successfully")
 
 	case *apiv1.ActivateExperimentRequest:
-		switch err := e.updateState(ctx, model.ActiveState); err {
-		case nil:
+		switch ok := e.updateState(ctx, model.ActiveState); ok {
+		case true:
 			ctx.Respond(&apiv1.ActivateExperimentResponse{})
 		default:
 			ctx.Respond(status.Errorf(codes.FailedPrecondition,
 				"experiment in incompatible state %s", e.State))
 		}
 	case *apiv1.PauseExperimentRequest:
-		switch err := e.updateState(ctx, model.PausedState); err {
-		case nil:
+		switch ok := e.updateState(ctx, model.PausedState); ok {
+		case true:
 			ctx.Respond(&apiv1.PauseExperimentResponse{})
 		default:
 			ctx.Respond(status.Errorf(codes.FailedPrecondition,
@@ -404,7 +404,7 @@ func (e *experiment) processOperations(
 	}
 	if err != nil {
 		ctx.Log().Error(err)
-		_ = e.updateState(ctx, model.StoppingErrorState)
+		e.updateState(ctx, model.StoppingErrorState)
 		return
 	}
 
@@ -420,13 +420,13 @@ func (e *experiment) processOperations(
 				if !ok {
 					ctx.Log().Error(errors.Errorf(
 						"invalid request ID in Create operation: %d", op.Checkpoint.RequestID))
-					_ = e.updateState(ctx, model.StoppingErrorState)
+					e.updateState(ctx, model.StoppingErrorState)
 					return
 				}
 				checkpointModel, err := checkpointFromTrialIDOrUUID(e.db, &trialID, nil)
 				if err != nil {
 					ctx.Log().Error(errors.Wrap(err, "checkpoint not found"))
-					_ = e.updateState(ctx, model.StoppingErrorState)
+					e.updateState(ctx, model.StoppingErrorState)
 					return
 				}
 				checkpoint = checkpointModel
@@ -438,9 +438,9 @@ func (e *experiment) processOperations(
 			trialOperations[op.RequestID] = append(trialOperations[op.RequestID], op)
 		case searcher.Shutdown:
 			if op.Failure {
-				_ = e.updateState(ctx, model.StoppingErrorState)
+				e.updateState(ctx, model.StoppingErrorState)
 			} else {
-				_ = e.updateState(ctx, model.StoppingCompletedState)
+				e.updateState(ctx, model.StoppingCompletedState)
 			}
 		default:
 			panic(fmt.Sprintf("unexpected operation: %v", op))
@@ -458,7 +458,7 @@ func (e *experiment) processOperations(
 			modelEvent, flush, err := convertSearcherEvent(e.ID, event)
 			if err != nil {
 				ctx.Log().Error(err)
-				_ = e.updateState(ctx, model.StoppingErrorState)
+				e.updateState(ctx, model.StoppingErrorState)
 				return
 			}
 			flushEvents = flushEvents || flush
@@ -475,7 +475,7 @@ func (e *experiment) processOperations(
 		if flushEvents || len(e.pendingEvents) > searcherEventBuffer {
 			if err := e.db.AddSearcherEvents(e.pendingEvents); err != nil {
 				ctx.Log().Error(err)
-				_ = e.updateState(ctx, model.StoppingErrorState)
+				e.updateState(ctx, model.StoppingErrorState)
 				return
 			}
 			e.pendingEvents = e.pendingEvents[:0]
@@ -504,13 +504,12 @@ func (e *experiment) isBestValidation(msg searcher.CompletedMessage) bool {
 	return isBest
 }
 
-func (e *experiment) updateState(ctx *actor.Context, state model.State) (err error) {
-	var wasPatched bool
-	if wasPatched, err = e.Transition(state); err != nil {
+func (e *experiment) updateState(ctx *actor.Context, state model.State) (ok bool) {
+	if wasPatched, err := e.Transition(state); err != nil {
 		ctx.Log().Error(err)
-		return err
+		return false
 	} else if !wasPatched {
-		return nil
+		return true
 	}
 	telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
 
@@ -518,14 +517,15 @@ func (e *experiment) updateState(ctx *actor.Context, state model.State) (err err
 	for _, child := range ctx.Children() {
 		ctx.Tell(child, state)
 	}
-	if err = e.db.SaveExperimentState(e.Experiment); err != nil {
+
+	if err := e.db.SaveExperimentState(e.Experiment); err != nil {
 		ctx.Log().Error(err)
 	}
 	if e.canTerminate(ctx) {
 		ctx.Self().Stop()
 	}
 	// "Long story short, we never put effort into db error handling".
-	return nil
+	return true
 }
 
 func (e *experiment) canTerminate(ctx *actor.Context) bool {
