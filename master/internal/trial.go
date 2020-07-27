@@ -277,12 +277,6 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				ctx.Log().Error(err)
 			}
 		}
-		switch op, metrics, err := t.sequencer.CompleteCachedCheckpoints(); {
-		case err != nil:
-			return errors.Wrap(err, "Error completing cached checkpoints")
-		case op != nil:
-			ctx.Tell(ctx.Self().Parent(), trialCompletedOperation{t.id, op, metrics})
-		}
 		return nil
 	default:
 		if t.task != nil || t.replaying {
@@ -430,13 +424,6 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 		ctx.Tell(ctx.Self().Parent(), trialCreated{create: t.create, trialID: t.id})
 	}
 
-	switch op, metrics, err := t.sequencer.CompleteCachedCheckpoints(); {
-	case err != nil:
-		return errors.Wrap(err, "Error completing cached checkpoints")
-	case op != nil:
-		ctx.Tell(ctx.Self().Parent(), trialCompletedOperation{t.id, op, metrics})
-	}
-
 	w, err := t.sequencer.Workload()
 	if err != nil {
 		return errors.Wrap(err, "error getting workload from sequencer")
@@ -513,17 +500,17 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 
 	ctx.Log().Infof("trial completed workload: %v", msg.Workload)
 
-	switch op, metrics, err := t.sequencer.CompleteCachedCheckpoints(); {
-	case err != nil:
-		return errors.Wrap(err, "Error completing cached checkpoints")
-	case op != nil:
-		ctx.Tell(ctx.Self().Parent(), trialCompletedOperation{t.id, op, metrics})
-	}
-
 	units := model.NewLengthFromBatches(msg.Workload.NumBatches, t.sequencer.unitContext)
 	isBestValidation := ctx.Ask(ctx.Self().Parent(), trialCompletedWorkload{t.id, msg, units})
 	op, metrics, err := t.sequencer.WorkloadCompleted(msg, isBestValidation)
 	switch {
+	case err != nil:
+		return errors.Wrap(err, "Error passing completed message to sequencer")
+	case op != nil:
+		ctx.Tell(ctx.Self().Parent(), trialCompletedOperation{t.id, op, metrics})
+	}
+
+	switch op, metrics, err := t.sequencer.CompleteCachedCheckpoints(); {
 	case err != nil:
 		return errors.Wrap(err, "Error completing cached checkpoints")
 	case op != nil:
