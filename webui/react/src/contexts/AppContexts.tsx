@@ -7,7 +7,7 @@ import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Experiments from 'contexts/Experiments';
 import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
-import { useRestApiSimple } from 'hooks/useRestApi';
+import useRestApi from 'hooks/useRestApi';
 import {
   getAgents, getCommands, getExperimentSummaries, getNotebooks, getShells,
   getTensorboards, getUsers,
@@ -27,21 +27,21 @@ const AppContexts: React.FC = () => {
   const setTensorboards = Tensorboards.useActionContext();
   const setOverview = ClusterOverview.useActionContext();
   const [ usersResponse, requestUsers ] =
-    useRestApiSimple<EmptyParams, User[]>(getUsers, {});
+    useRestApi<EmptyParams, User[]>(getUsers, {});
   const [ agentsResponse, requestAgents ] =
-    useRestApiSimple<EmptyParams, Agent[]>(getAgents, {});
-  const [ activeExperimentsResponse, requestActiveExperiments ] =
-    useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
+    useRestApi<EmptyParams, Agent[]>(getAgents, {});
   const [ commandsResponse, requestCommands ] =
-    useRestApiSimple<EmptyParams, Command[]>(getCommands, {});
+    useRestApi<EmptyParams, Command[]>(getCommands, {});
   const [ notebooksResponse, requestNotebooks ] =
-    useRestApiSimple<EmptyParams, Command[]>(getNotebooks, {});
+    useRestApi<EmptyParams, Command[]>(getNotebooks, {});
   const [ shellsResponse, requestShells ] =
-    useRestApiSimple<EmptyParams, Command[]>(getShells, {});
+    useRestApi<EmptyParams, Command[]>(getShells, {});
   const [ tensorboardsResponse, requestTensorboards ] =
-    useRestApiSimple<EmptyParams, Command[]>(getTensorboards, {});
+    useRestApi<EmptyParams, Command[]>(getTensorboards, {});
   const [ experimentsResponse, requestExperiments ] =
-    useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
+    useRestApi<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
+  const [ activeExperimentsResponse, requestActiveExperiments ] =
+    useRestApi<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
 
   const fetchAll = useCallback((): void => {
     requestAgents({});

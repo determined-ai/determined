@@ -8,7 +8,7 @@ import Page from 'components/Page';
 import Spinner from 'components/Spinner';
 import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
-import { useRestApiSimple } from 'hooks/useRestApi';
+import useRestApi from 'hooks/useRestApi';
 import { detExperimentsStreamingApi, getTrialDetails } from 'services/api';
 import * as DetSwagger from 'services/api-ts-sdk';
 import { consumeStream } from 'services/apiBuilder';
@@ -35,7 +35,7 @@ const TrialLogs: React.FC = () => {
   const [ oldestReached, setOldestReached ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ isIdInvalid, setIsIdInvalid ] = useState(false);
-  const [ trial ] = useRestApiSimple<TrialDetailsParams, TrialDetails>(getTrialDetails, { id });
+  const [ trial ] = useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id });
 
   const handleScrollToTop = useCallback(() => {
     if (oldestReached) return;
