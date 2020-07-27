@@ -22,9 +22,9 @@ interface Props {
   debugMode?: boolean;
   disableLevel?: boolean;
   disableLineNumber?: boolean;
-  onDownload?: () => Promise<void>;
   isLoading?: boolean;
   noWrap?: boolean;
+  onDownload?: () => Promise<void>;
   onScrollToTop?: (oldestLogId: number) => void;
   ref?: React.Ref<LogViewerHandles>;
   title: string;
@@ -99,10 +99,9 @@ const defaultLogConfig = {
  * a reference to be able to call functions inside the LogViewer.
  */
 const LogViewer: React.FC<Props> = forwardRef((
-  { onScrollToTop, ...props }: Props,
+  { onDownload, onScrollToTop, ...props }: Props,
   ref?: React.Ref<LogViewerHandles>,
 ) => {
-  const onDownload = props.onDownload;
   const baseRef = useRef<HTMLDivElement>(null);
   const container = useRef<HTMLDivElement>(null);
   const spacer = useRef<HTMLDivElement>(null);
