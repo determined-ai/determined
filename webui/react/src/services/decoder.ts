@@ -1,12 +1,12 @@
 import dayjs from 'dayjs';
 
 import {
-  decode, ioCommandLogs, ioDeterminedInfo, ioExperiment, ioExperimentConfig, ioExperimentDetails,
-  ioExperiments, ioGenericCommand, ioLog, ioLogs, ioTrialDetails, ioTypeAgents,
-  ioTypeCheckpoint, ioTypeCommandLogs, ioTypeDeterminedInfo, ioTypeExperiment,
-  ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand,
-  ioTypeGenericCommands, ioTypeLatestValidationMetrics, ioTypeLog, ioTypeLogs, ioTypeTrial,
-  ioTypeTrialDetails, ioTypeUsers,
+  decode, ioAgents, ioCommandLogs, ioDeterminedInfo, ioExperiment, ioExperimentConfig,
+  ioExperimentDetails, ioExperiments, ioGenericCommand, ioGenericCommands, ioLog, ioLogs,
+  ioTrialDetails, ioTypeAgents, ioTypeCheckpoint, ioTypeCommandLogs, ioTypeDeterminedInfo,
+  ioTypeExperiment, ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments,
+  ioTypeGenericCommand, ioTypeGenericCommands, ioTypeLatestValidationMetrics, ioTypeLog,
+  ioTypeLogs, ioTypeTrial, ioTypeTrialDetails, ioTypeUsers, ioUsers,
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, CheckpointStorageType, Command, CommandState,
