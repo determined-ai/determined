@@ -140,6 +140,7 @@ const ExperimentDetailsComp: React.FC = () => {
           padding: 0,
         }}
         className={css.forkModal}
+        okText="Fork"
         style={{
           minWidth: '60rem',
         }}
