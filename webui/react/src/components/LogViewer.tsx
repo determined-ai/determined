@@ -113,14 +113,15 @@ const LogViewer: React.FC<Props> = forwardRef((
   const [ logIdRange, setLogIdRange ] =
     useState({ max: Number.MIN_SAFE_INTEGER, min: Number.MAX_SAFE_INTEGER });
   const [ scrollToInfo, setScrollToInfo ] =
-    useState({ isBottom: false, isPrepend: false, logId: 0 });
+    useState({ isPrepend: false, logId: 0 });
   const [ config, setConfig ] = useState<LogConfig>(defaultLogConfig);
   const [ isDownloading, setIsDownloading ] = useState<boolean>(false);
+  const [ isTailing, setIsTailing ] = useState(true);
   const previousScroll = usePrevious(scroll, defaultScrollInfo);
   const previousLogs = usePrevious<Log[]>(logs, []);
   const classes = [ css.base ];
   const scrollToTopClasses = [ css.scrollToTop ];
-  const scrollToLatestClasses = [ css.scrollToLatest ];
+  const enableTailingClasses = [ css.enableTailing ];
 
   const spacerStyle = { height: toRem(config.totalContentHeight) };
   const dateTimeStyle = { width: toRem(config.dateTimeWidth) };
@@ -128,12 +129,9 @@ const LogViewer: React.FC<Props> = forwardRef((
   const levelStyle = { width: toRem(ICON_WIDTH) };
 
   if (props.noWrap) classes.push(css.noWrap);
-  if (scroll.scrollTop > SCROLL_TOP_THRESHOLD) {
-    scrollToTopClasses.push(css.show);
-  }
-  if (scroll.scrollTop < scroll.scrollHeight - scroll.viewHeight - SCROLL_BOTTOM_THRESHOLD) {
-    scrollToLatestClasses.push(css.show);
-  }
+  if (scroll.scrollTop > SCROLL_TOP_THRESHOLD) scrollToTopClasses.push(css.show);
+  // if (scroll.scrollTop > scroll.scrollHeight - scroll.viewHeight - SCROLL_BOTTOM_THRESHOLD) {
+  if (isTailing) enableTailingClasses.push(css.enabled);
 
   /*
    * Calculate all the sizes of the log pieces such as the individual character size,
@@ -226,21 +224,15 @@ const LogViewer: React.FC<Props> = forwardRef((
     // Add new logs to existing logs either at the beginning or the end.
     const updatedLogs = prepend ? [ ...newLogs, ...logs ] : [ ...logs, ...newLogs ];
     const logConfig = measureLogs(updatedLogs);
-    const isBottom = scroll.scrollTop >=
-      (scroll.scrollHeight - scroll.viewHeight - SCROLL_BOTTOM_THRESHOLD);
 
     setConfig(logConfig);
-    setScrollToInfo({
-      isBottom,
-      isPrepend: prepend,
-      logId: logs[0]?.id,
-    });
+    setScrollToInfo({ isPrepend: prepend, logId: logs[0]?.id });
     setLogs(updatedLogs);
     setLogIdRange(prevLogIdRange => ({
       max: Math.max(prevLogIdRange.max, newLogs[newLogs.length - 1].id),
       min: Math.min(prevLogIdRange.min, newLogs[0].id),
     }));
-  }, [ logs, logIdRange, measureLogs, scroll ]);
+  }, [ logs, logIdRange, measureLogs ]);
 
   /*
    * Figure out which logs lines to actually render based on whether it
@@ -289,6 +281,16 @@ const LogViewer: React.FC<Props> = forwardRef((
   }, [ logs, previousScroll, onScrollToTop, scroll ]);
 
   /*
+   * Detect the user navigating away from the bottom to disengage
+   * the tailing behavior.
+   */
+  useEffect(() => {
+    if (scroll.scrollTop < scroll.scrollHeight - scroll.viewHeight - SCROLL_BOTTOM_THRESHOLD) {
+      setIsTailing(false);
+    }
+  }, [ scroll ]);
+
+  /*
    * Detect log viewer resize events to trigger
    * recalculation of measured log entries.
    */
@@ -330,7 +332,7 @@ const LogViewer: React.FC<Props> = forwardRef((
    * user experience when scrolling through log entries.
    */
   useLayoutEffect(() => {
-    if (scrollToInfo.isBottom) {
+    if (isTailing) {
       /*
        * Automatically scroll to the latest log entry if previously
        * viewing the lastest log entry.
@@ -350,7 +352,7 @@ const LogViewer: React.FC<Props> = forwardRef((
         container.current.scrollTo({ top });
       });
     }
-  }, [ config, scrollToInfo ]);
+  }, [ config, isTailing, scrollToInfo ]);
 
   /*
    * This overwrites the copy to clipboard event handler for the purpose of modifying the user
@@ -429,8 +431,9 @@ const LogViewer: React.FC<Props> = forwardRef((
     container.current.scrollTo({ behavior: 'auto', top: 0 });
   }, []);
 
-  const handleScrollToLatest = useCallback(() => {
+  const handleEnableTailing = useCallback(() => {
     if (!container.current) return;
+    setIsTailing(true);
     container.current.scrollTo({ behavior: 'auto', top: container.current.scrollHeight });
   }, []);
 
@@ -516,12 +519,12 @@ const LogViewer: React.FC<Props> = forwardRef((
               icon={<Icon name="arrow-up" />}
               onClick={handleScrollToTop} />
           </Tooltip>
-          <Tooltip placement="topRight" title="Scroll to Latest Entry">
+          <Tooltip placement="topRight" title={isTailing ? 'Tailing Enabled' : 'Enable Tailing'}>
             <Button
-              aria-label="Scroll to Latest Entry"
-              className={scrollToLatestClasses.join(' ')}
+              aria-label="Enable Tailing"
+              className={enableTailingClasses.join(' ')}
               icon={<Icon name="arrow-down" />}
-              onClick={handleScrollToLatest} />
+              onClick={handleEnableTailing} />
           </Tooltip>
         </div>
       </Section>
