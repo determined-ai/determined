@@ -16,8 +16,8 @@ interface Props {
 }
 
 enum Action {
-  Logs = 'Logs',
   Continue = 'Continue',
+  Logs = 'Logs',
   Tensorboard = 'Tensorboard',
 }
 
@@ -48,13 +48,13 @@ const TrialActions: React.FC<Props> = ({ trial, onSettled: updateFn }: Props) =>
   const actionButtons: ConditionalButton<TrialDetails>[] = [
     { button: <Button disabled key={Action.Continue} type="primary">Continue Trial</Button> },
     { button: <Button key={Action.Logs} type="primary">
-      <Link path={`/det/trials/${trial.id}/logs`}>Logs</Link>
+      <Link path={`/det/trials/${trial.id}/logs`} popout>Logs</Link>
     </Button> },
     {
       button: <Button key={Action.Tensorboard}
         loading={buttonStates.Tensorboard} type="primary" onClick={handleLaunchTensorboard}>
       Tensorboard</Button>,
-      showIf: (t): boolean => !trialWillNeverHaveData(t),
+      showIf: (aTrial): boolean => !trialWillNeverHaveData(aTrial),
     },
   ];
 
