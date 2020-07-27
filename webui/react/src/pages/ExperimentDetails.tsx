@@ -134,7 +134,6 @@ const ExperimentDetailsComp: React.FC = () => {
       <ExperimentInfoBox experiment={experiment.data} />
       <Section title="Chart" />
       <Section title="Trials" />
-
       <Modal
         bodyStyle={{
           padding: 0,

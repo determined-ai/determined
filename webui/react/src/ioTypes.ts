@@ -137,25 +137,22 @@ const runStates: Record<string, null> = Object.values(RunState)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 const runStatesIoType = io.keyof(runStates);
 
+/* Trials */
+
 const checkpointStates: Record<string, null> = Object.values(CheckpointState)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 const checkpointStatesIoType = io.keyof(checkpointStates);
 
-const validationHistoryIoType = io.type({
-  end_time: io.string,
-  trial_id: io.number,
-  validation_error: io.union([ io.number, io.null ]),
-});
-
 export const ioCheckpoint = io.type({
   end_time: io.union([ io.string, io.null ]),
   id: io.number,
+  resources: io.record(io.string, io.number),
   start_time: io.string,
   state: checkpointStatesIoType,
   step_id: io.number,
   trial_id: io.number,
   uuid: io.union([ io.string, io.null ]),
-  valiation_metric: io.union([ io.number, io.undefined ]),
+  validation_metric: io.union([ io.number, io.undefined ]),
 });
 export type ioTypeCheckpoint = io.TypeOf<typeof ioCheckpoint>;
 
@@ -181,23 +178,53 @@ export const ioTrialDetails = io.type({
 });
 export type ioTypeTrialDetails = io.TypeOf<typeof ioTrialDetails>;
 
-export const ioTrialSummary = io.type({
+export const ioTrial = io.type({
   best_available_checkpoint: io.union([ ioCheckpoint, io.null ]),
+  best_validation_metric: io.union([ io.number, io.null ]),
+  end_time: io.string,
+  experiment_id: io.number,
   hparams: io.any,
   id: io.number,
   num_batches: io.number,
+  num_completed_checkpoints: io.number,
   num_steps: io.number,
+  seed: io.number,
+  start_time: io.string,
   state: runStatesIoType,
 });
-export type ioTypeTrialSummary = io.TypeOf<typeof ioTrialSummary>;
+export type ioTypeTrial = io.TypeOf<typeof ioTrial>;
 
 /* Experiments */
+
+export const ioCheckpointStorage = io.type({
+  bucket: io.union([ io.string, io.undefined ]),
+  host_path: io.union([ io.string, io.undefined ]),
+  save_experiment_best: io.number,
+  save_trial_best: io.number,
+  save_trial_latest: io.number,
+  storage_path: io.union([ io.string, io.undefined ]),
+  type: io.union([
+    io.literal('aws'),
+    io.literal('gcs'),
+    io.literal('hdfs'),
+    io.literal('shared_fs'),
+    io.undefined,
+  ]),
+});
+
+const ioDataLayer = io.type({
+  container_storage_path: io.union([ io.string, io.null ]),
+  type: io.string,
+});
 
 const ioExpResources = io.type({
   max_slots: io.union([ io.number, io.undefined ]),
 });
 
 export const ioExperimentConfig = io.type({
+  checkpoint_policy: io.string,
+  checkpoint_storage: io.union([ ioCheckpointStorage, io.null ]),
+  data_layer: ioDataLayer,
   description: io.string,
   resources: ioExpResources,
   searcher: io.type({
@@ -223,6 +250,12 @@ export const ioExperiments = io.array(ioExperiment);
 export type ioTypeExperiment = io.TypeOf<typeof ioExperiment>;
 export type ioTypeExperiments = io.TypeOf<typeof ioExperiments>;
 
+const validationHistoryIoType = io.type({
+  end_time: io.string,
+  trial_id: io.number,
+  validation_error: io.union([ io.number, io.null ]),
+});
+
 export const ioExperimentDetails = io.type({
   archived: io.boolean,
   config: ioExperimentConfig,
@@ -232,7 +265,7 @@ export const ioExperimentDetails = io.type({
   progress: io.union([ io.number, io.null ]),
   start_time: io.string,
   state: runStatesIoType,
-  trials: io.array(ioTrialSummary),
+  trials: io.array(ioTrial),
   validation_history: io.array(validationHistoryIoType),
 });
 
