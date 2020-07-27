@@ -1,8 +1,8 @@
 import { Button } from 'antd';
 import React, { useCallback, useState } from 'react';
 
-import { ButtonLoadingStates, ConditionalButton } from 'components/ExperimentActions';
 import Link from 'components/Link';
+import { ConditionalButton } from 'components/types';
 import { launchTensorboard } from 'services/api';
 import { RunState, TBSourceType, TrialDetails } from 'types';
 import { openCommand } from 'utils/routes';
@@ -21,9 +21,11 @@ enum Action {
   Tensorboard = 'Tensorboard',
 }
 
+type ButtonLoadingStates = Record<Action, boolean>;
+
 const TrialActions: React.FC<Props> = ({ trial, onSettled: updateFn }: Props) => {
 
-  const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates<Action>>({
+  const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
     Continue: false,
     Logs: false,
     Tensorboard: false,

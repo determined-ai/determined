@@ -1,6 +1,7 @@
 import { Button, Popconfirm } from 'antd';
 import React, { useCallback, useState } from 'react';
 
+import { ConditionalButton } from 'components/types';
 import { archiveExperiment, killExperiment, launchTensorboard, setExperimentState,
 } from 'services/api';
 import { ExperimentDetails, RunState, TBSourceType } from 'types';
@@ -27,18 +28,13 @@ interface Props {
   }
 }
 
-export interface ConditionalButton<T> {
-  button: React.ReactNode;
-  showIf?: (item: T) => boolean;
-}
-
-export type ButtonLoadingStates<T extends string> = Record<T, boolean>;
+type ButtonLoadingStates = Record<Action, boolean>;
 
 const ExperimentActions: React.FC<Props> = ({
   experiment, onSettled: updateFn, onClick,
 }: Props) => {
 
-  const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates<Action>>({
+  const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
     Activate: false,
     Archive: false,
     Cancel: false,
