@@ -1,9 +1,9 @@
 import dayjs from 'dayjs';
 
 import {
-  decode, ioCommandLogs, ioDeterminedInfo, ioExperimentConfig, ioExperimentDetails, ioExperiments,
-  ioGenericCommand, ioLog, ioLogs, ioTrialDetails, ioTypeAgents,
-  ioTypeCheckpoint, ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo,
+  decode, ioCommandLogs, ioDeterminedInfo, ioExperiment, ioExperimentConfig, ioExperimentDetails,
+  ioExperiments, ioGenericCommand, ioLog, ioLogs, ioTrialDetails, ioTypeAgents,
+  ioTypeCheckpoint, ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo, ioTypeExperiment,
   ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand,
   ioTypeGenericCommands, ioTypeLog, ioTypeLogs, ioTypeTrial, ioTypeTrialDetails, ioTypeUsers,
 } from 'ioTypes';
