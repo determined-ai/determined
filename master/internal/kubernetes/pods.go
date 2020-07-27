@@ -245,7 +245,7 @@ func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
 func (p *pods) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 	ref, ok := p.podNameToPodHandler[msg.event.InvolvedObject.Name]
 	if !ok {
-		// We set this to debug mode because we are unable to filter
+		// We log at the debug level because we are unable to filter
 		// pods based on their labels the way we do with pod status updates.
 		ctx.Log().WithField("pod-name", msg.event.InvolvedObject.Name).Debug(
 			"received pod event for an un-registered pod")

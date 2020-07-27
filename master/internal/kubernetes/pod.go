@@ -327,11 +327,9 @@ func (p *pod) receiveContainerLogs(ctx *actor.Context, msg sproto.ContainerLog) 
 }
 
 func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
-	// We only forward messages for while pods are starting up.
+	// We only forward messages while pods are starting up.
 	switch p.container.State {
-	case container.Running:
-		return
-	case container.Terminated:
+	case container.Running, container.Terminated:
 		return
 	}
 

@@ -10,12 +10,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-// messages that are sent to the event listener.
+// Messages that are sent to the event listener.
 type (
 	startEventListener struct{}
 )
 
-// messages that are sent by the event listener.
+// Messages that are sent by the event listener.
 type (
 	podEventUpdate struct {
 		event *k8sV1.Event
