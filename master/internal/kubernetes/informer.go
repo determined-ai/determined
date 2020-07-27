@@ -43,6 +43,7 @@ func newInformer(
 func (i *informer) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		ctx.Tell(ctx.Self(), startInformer{})
 
 	case startInformer:
 		if err := i.startInformer(ctx); err != nil {

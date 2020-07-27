@@ -108,6 +108,9 @@ func (p *pod) Receive(ctx *actor.Context) error {
 			return err
 		}
 
+	case podEventUpdate:
+		p.receivePodEventUpdate(ctx, msg)
+
 	case sproto.ContainerLog:
 		p.receiveContainerLogs(ctx, msg)
 
@@ -321,6 +324,23 @@ func (p *pod) finalizeTaskState(ctx *actor.Context) {
 func (p *pod) receiveContainerLogs(ctx *actor.Context, msg sproto.ContainerLog) {
 	msg.Container = p.container
 	ctx.Tell(p.taskHandler, msg)
+}
+
+func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
+	// We only forward messages while pods are starting up.
+	switch p.container.State {
+	case container.Running, container.Terminated:
+		return
+	}
+
+	message := fmt.Sprintf("Pod %s: %s", msg.event.InvolvedObject.Name, msg.event.Message)
+	ctx.Tell(p.taskHandler, sproto.ContainerLog{
+		Container:   p.container,
+		Timestamp:   msg.event.CreationTimestamp.Time,
+		PullMessage: nil,
+		RunMessage:  nil,
+		AuxMessage:  &message,
+	})
 }
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
