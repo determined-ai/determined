@@ -56,8 +56,10 @@ const ExperimentList: React.FC = () => {
   const [ experimentsResponse, requestExperiments ] =
     useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
   const storage = useStorage('experiment-list');
-  const initFilters = storage.getWithDefault('filters',
-    { ...defaultFilters, username: (auth.user || {}).username });
+  const initFilters = storage.getWithDefault(
+    'filters',
+    { ...defaultFilters, username: (auth.user || {}).username },
+  );
   const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
   const [ search, setSearch ] = useState('');
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);

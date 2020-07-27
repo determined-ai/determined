@@ -93,7 +93,8 @@ const Dashboard: React.FC = () => {
   ];
 
   const sortedTasks = loadedTasks.sort(
-    (a, b) => Date.parse(a.lastEvent.date) < Date.parse(b.lastEvent.date) ? 1 : -1);
+    (a, b) => Date.parse(a.lastEvent.date) < Date.parse(b.lastEvent.date) ? 1 : -1,
+  );
 
   const filteredTasks = filterTasks<TaskType, RecentTask>(sortedTasks, filters, users.data || []);
 

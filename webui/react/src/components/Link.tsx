@@ -13,8 +13,11 @@ interface Props {
   onClick?: MouseEventHandler;
 }
 
-export const makeClickHandler = (path: string, onClick?: MouseEventHandler,
-  popout?: boolean): MouseEventHandler => {
+export const makeClickHandler = (
+  path: string,
+  onClick?: MouseEventHandler,
+  popout?: boolean,
+): MouseEventHandler => {
   const handler: MouseEventHandler = (event) => {
     const url = setupUrlForDev(path);
 

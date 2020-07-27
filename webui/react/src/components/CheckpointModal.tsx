@@ -81,17 +81,19 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, ti
       width={640}
       onCancel={onHide}>
       <div className={css.base}>
-        {renderRow('Source', (
-          <div className={css.source}>
-            <Link path={`/ui/experiments/${checkpoint.experimentId}`}>
+        {renderRow(
+          'Source', (
+            <div className={css.source}>
+              <Link path={`/ui/experiments/${checkpoint.experimentId}`}>
               Experiment {checkpoint.experimentId}
-            </Link>
-            <span className={css.sourceDivider} />
-            <Link path={`/ui/trials/${checkpoint.trialId}`}>Trial {checkpoint.trialId}</Link>
-            <span className={css.sourceDivider} />
-            <span>Batch {checkpoint.batch}</span>
-          </div>
-        ))}
+              </Link>
+              <span className={css.sourceDivider} />
+              <Link path={`/ui/trials/${checkpoint.trialId}`}>Trial {checkpoint.trialId}</Link>
+              <span className={css.sourceDivider} />
+              <span>Batch {checkpoint.batch}</span>
+            </div>
+          ),
+        )}
         {renderRow('State', <Badge state={state} type={BadgeType.State} />)}
         {checkpoint.uuid && renderRow('UUID', checkpoint.uuid)}
         {renderRow('Location', getStorageLocation(config, checkpoint))}
@@ -102,11 +104,13 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, ti
         {renderRow('Start Time', formatDatetime(checkpoint.startTime))}
         {checkpoint.endTime && renderRow('End Time', formatDatetime(checkpoint.endTime))}
         {renderRow('Total Size', totalSize)}
-        {resources.length !== 0 && renderRow('Resources', (
-          <div className={css.resources}>
-            {resources.map(resource => renderResource(resource.name, resource.size))}
-          </div>
-        ))}
+        {resources.length !== 0 && renderRow(
+          'Resources', (
+            <div className={css.resources}>
+              {resources.map(resource => renderResource(resource.name, resource.size))}
+            </div>
+          ),
+        )}
       </div>
     </Modal>
   );

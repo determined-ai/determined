@@ -44,14 +44,16 @@ const ExperimentActions: React.FC<Props> = ({
     Tensorboard: false,
   });
 
-  const handleArchive = useCallback((archive: boolean) =>
-    (): Promise<unknown> => {
-      setButtonStates(state => ({ ...state, archive: true }));
-      return archiveExperiment(experiment.id, archive)
-        .then(updateFn)
-        .finally(() => setButtonStates(state => ({ ...state, archive: false })));
-    },
-  [ experiment.id, updateFn ]);
+  const handleArchive = useCallback(
+    (archive: boolean) =>
+      (): Promise<unknown> => {
+        setButtonStates(state => ({ ...state, archive: true }));
+        return archiveExperiment(experiment.id, archive)
+          .then(updateFn)
+          .finally(() => setButtonStates(state => ({ ...state, archive: false })));
+      },
+    [ experiment.id, updateFn ],
+  );
 
   const handleKill = useCallback(() => {
     setButtonStates(state => ({ ...state, kill: true }));
@@ -70,14 +72,16 @@ const ExperimentActions: React.FC<Props> = ({
       .finally(() => setButtonStates(state => ({ ...state, tensorboard: false })));
   }, [ experiment.id, updateFn ]);
 
-  const handleStateChange = useCallback((targetState: RunState) =>
-    (): Promise<unknown> => {
-      setButtonStates(state => ({ ...state, [targetState]: true }));
-      return setExperimentState({ experimentId: experiment.id, state: targetState })
-        .then(updateFn)
-        .finally(() => setButtonStates(state => ({ ...state, [targetState]: false })));
-    }
-  , [ experiment.id, updateFn ]);
+  const handleStateChange = useCallback(
+    (targetState: RunState) =>
+      (): Promise<unknown> => {
+        setButtonStates(state => ({ ...state, [targetState]: true }));
+        return setExperimentState({ experimentId: experiment.id, state: targetState })
+          .then(updateFn)
+          .finally(() => setButtonStates(state => ({ ...state, [targetState]: false })));
+      }
+    , [ experiment.id, updateFn ],
+  );
 
   const experimentWillNeverHaveData = (experiment: ExperimentDetails): boolean => {
     const isTerminal = terminalRunStates.has(experiment.state);
@@ -91,26 +95,22 @@ const ExperimentActions: React.FC<Props> = ({
     { button: <Button key="fork" type="primary" onClick={onClick[Action.Fork]}>Fork</Button> },
     {
       button: <Button key="archive" loading={buttonStates.Archive}
-        type="primary" onClick={handleArchive(true)}>
-    Archive</Button>,
+        type="primary" onClick={handleArchive(true)}>Archive</Button>,
       showIf: (exp): boolean => terminalRunStates.has(exp.state) && !exp.archived,
     },
     {
       button: <Button key="unarchive" loading={buttonStates.Archive}
-        type="primary" onClick={handleArchive(false)}>
-    Unarchive</Button>,
+        type="primary" onClick={handleArchive(false)}>Unarchive</Button>,
       showIf: (exp): boolean => terminalRunStates.has(exp.state) && exp.archived,
     },
     {
       button: <Button key="pause" loading={buttonStates.Pause}
-        type="primary" onClick={handleStateChange(RunState.Paused)}>
-    Pause</Button>,
+        type="primary" onClick={handleStateChange(RunState.Paused)}>Pause</Button>,
       showIf: (exp): boolean => exp.state === RunState.Active,
     },
     {
       button: <Button key="activate" loading={buttonStates.Activate}
-        type="primary" onClick={handleStateChange(RunState.Active)}>
-    Activate</Button>,
+        type="primary" onClick={handleStateChange(RunState.Active)}>Activate</Button>,
       showIf: (exp): boolean => exp.state === RunState.Paused,
     },
     {
@@ -139,8 +139,9 @@ const ExperimentActions: React.FC<Props> = ({
     },
     {
       button: <Button key="tensorboard"
-        loading={buttonStates.Tensorboard} type="primary" onClick={handleLaunchTensorboard}>
-      Tensorboard</Button>,
+        loading={buttonStates.Tensorboard}
+        type="primary"
+        onClick={handleLaunchTensorboard}>Tensorboard</Button>,
       showIf: (exp): boolean => !experimentWillNeverHaveData(exp),
     },
   ];

@@ -23,10 +23,11 @@ const TrialDetailsComp: React.FC = () => {
   const { trialId: trialIdParam } = useParams<Params>();
   const trialId = parseInt(trialIdParam);
   const [ trial, setExpRequestParams ] =
-  useRestApiSimple<TrialDetailsParams, TrialDetails>(
-    getTrialDetails, { id: trialId });
-  const pollTrialDetails = useCallback(() => setExpRequestParams({ id: trialId }),
-    [ setExpRequestParams, trialId ]);
+  useRestApiSimple<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
+  const pollTrialDetails = useCallback(
+    () => setExpRequestParams({ id: trialId }),
+    [ setExpRequestParams, trialId ],
+  );
   usePolling(pollTrialDetails);
 
   if (isNaN(trialId)) {

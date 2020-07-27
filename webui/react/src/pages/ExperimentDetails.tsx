@@ -31,10 +31,14 @@ const ExperimentDetailsComp: React.FC = () => {
   const { experimentId: experimentIdParam } = useParams<Params>();
   const experimentId = parseInt(experimentIdParam);
   const [ experiment, setExpRequestParams ] =
-  useRestApiSimple<ExperimentDetailsParams, ExperimentDetails>(
-    getExperimentDetails, { id: experimentId });
-  const pollExperimentDetails = useCallback(() => setExpRequestParams({ id: experimentId }),
-    [ setExpRequestParams, experimentId ]);
+    useRestApiSimple<ExperimentDetailsParams, ExperimentDetails>(
+      getExperimentDetails,
+      { id: experimentId },
+    );
+  const pollExperimentDetails = useCallback(
+    () => setExpRequestParams({ id: experimentId }),
+    [ setExpRequestParams, experimentId ],
+  );
   usePolling(pollExperimentDetails);
   const [ forkValue, setForkValue ] = useState<string>('Loading');
   const [ forkModalState, setForkModalState ] = useState({ visible: false });
