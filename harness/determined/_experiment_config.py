@@ -1,4 +1,4 @@
-from typing import Dict, List, cast
+from typing import List, cast
 
 
 class ExperimentConfig(dict):

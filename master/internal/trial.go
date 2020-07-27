@@ -510,7 +510,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 		ctx.Tell(ctx.Self().Parent(), trialCompletedOperation{t.id, op, metrics})
 	}
 
-	switch op, metrics, err := t.sequencer.CompleteCachedCheckpoints(); {
+	switch op, metrics, err = t.sequencer.CompleteCachedCheckpoints(); {
 	case err != nil:
 		return errors.Wrap(err, "Error completing cached checkpoints")
 	case op != nil:
