@@ -8,6 +8,7 @@ import Message from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
+import TrialActions from 'components/TrialActions';
 import usePolling from 'hooks/usePolling';
 import { useRestApiSimple } from 'hooks/useRestApi';
 import { getTrialDetails, isNotFound } from 'services/api';
@@ -63,6 +64,7 @@ const TrialDetailsComp: React.FC = () => {
           <span>{trialId}</span>
         </Breadcrumb.Item>
       </Breadcrumb>
+      <TrialActions trial={trial.data} onSettled={pollTrialDetails} />
       <Section title="Info Box" />
       <Section title="Chart" />
       <Section title="Steps" />

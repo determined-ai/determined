@@ -1,6 +1,7 @@
 import { Button, Popconfirm } from 'antd';
 import React, { useCallback, useState } from 'react';
 
+import { ConditionalButton } from 'components/types';
 import { archiveExperiment, killExperiment, launchTensorboard, setExperimentState,
 } from 'services/api';
 import { ExperimentDetails, RunState, TBSourceType } from 'types';
@@ -78,11 +79,6 @@ const ExperimentActions: React.FC<Props> = ({
     }
   , [ experiment.id, updateFn ]);
 
-  interface ConditionalButton {
-    button: React.ReactNode;
-    showIf?: (exp: ExperimentDetails) => boolean;
-  }
-
   const experimentWillNeverHaveData = (experiment: ExperimentDetails): boolean => {
     const isTerminal = terminalRunStates.has(experiment.state);
     // with lack of step state we can use numSteps as a proxy to trials that definietly have some
@@ -91,7 +87,7 @@ const ExperimentActions: React.FC<Props> = ({
     return isTerminal && trialsWithSomeMetric.length === 0;
   };
 
-  const actionButtons: ConditionalButton[] = [
+  const actionButtons: ConditionalButton<ExperimentDetails>[] = [
     { button: <Button key="fork" type="primary" onClick={onClick[Action.Fork]}>Fork</Button> },
     {
       button: <Button key="archive" loading={buttonStates.Archive}
