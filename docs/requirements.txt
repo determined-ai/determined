@@ -2,7 +2,7 @@
 docutils==0.15.2
 sphinx==2.4.4
 sphinx-argparse>=0.2.5
-git+https://github.com/determined-ai/determined_sphinx_theme.git@accf3fbb639c88deb2e60293bdd15b3cae3afc01
+git+https://github.com/determined-ai/determined_sphinx_theme.git@c2a37e6db59f40d024516017c27896cd9d60700a
 sphinx-gallery>=0.6.1
 pillow
 sphinx-copybutton
