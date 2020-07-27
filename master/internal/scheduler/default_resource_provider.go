@@ -302,7 +302,7 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 
 	case sproto.GetEndpointActorName:
 		reschedule = false
-		ctx.Respond(sproto.EndpointActorName{ActorName: "/agents"})
+		ctx.Respond("/agents")
 
 	case schedulerTick:
 		if d.reschedule {

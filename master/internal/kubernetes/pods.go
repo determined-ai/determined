@@ -72,7 +72,7 @@ func Initialize(
 	check.Panic(check.True(ok, "pods address already taken"))
 
 	// We re-use the agents endpoint for the default resource provider.
-	e.Any("/agents*", api.Route(s, podsActor))
+	e.Any("/agents", api.Route(s, podsActor))
 	return podsActor
 }
 
@@ -303,8 +303,8 @@ func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
 	// Separate pods by nodes.
 	podByNode := make(map[string][]podNodeInfo)
 	for _, result := range results {
-		podByNode[result.(podNodeInfo).nodeName] = append(
-			podByNode[result.(podNodeInfo).nodeName], result.(podNodeInfo))
+		info := result.(podNodeInfo)
+		podByNode[info.nodeName] = append(podByNode[info.nodeName], info)
 	}
 
 	nodes, err := p.clientSet.CoreV1().Nodes().List(metaV1.ListOptions{})

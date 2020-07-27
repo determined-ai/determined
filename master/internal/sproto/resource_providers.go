@@ -35,11 +35,6 @@ type (
 		Container        container.Container
 		ContainerStopped *agent.ContainerStopped
 	}
-
-	// EndpointActorName tells the recipient the name of the actor that is manging the resources.
-	EndpointActorName struct {
-		ActorName string
-	}
 )
 
 // Incoming messages.

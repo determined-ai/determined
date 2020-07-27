@@ -106,7 +106,7 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 		ctx.Respond(k.taskList.TaskSummaries())
 
 	case sproto.GetEndpointActorName:
-		ctx.Respond(sproto.EndpointActorName{ActorName: "/pods"})
+		ctx.Respond("/pods")
 
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
