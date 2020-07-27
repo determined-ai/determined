@@ -102,6 +102,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   { onScrollToTop, ...props }: Props,
   ref?: React.Ref<LogViewerHandles>,
 ) => {
+  const onDownload = props.onDownload;
   const baseRef = useRef<HTMLDivElement>(null);
   const container = useRef<HTMLDivElement>(null);
   const spacer = useRef<HTMLDivElement>(null);
@@ -113,6 +114,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   const [ scrollToInfo, setScrollToInfo ] =
     useState({ isBottom: false, isPrepend: false, logId: 0 });
   const [ config, setConfig ] = useState<LogConfig>(defaultLogConfig);
+  const [ isDownloading, setIsDownloading ] = useState<boolean>(false);
   const previousScroll = usePrevious(scroll, defaultScrollInfo);
   const previousLogs = usePrevious<Log[]>(logs, []);
   const classes = [ css.base ];
@@ -420,6 +422,13 @@ const LogViewer: React.FC<Props> = forwardRef((
     container.current.scrollTo({ behavior: 'smooth', top: container.current.scrollHeight });
   }, []);
 
+  const handleDownload = useCallback(() => {
+    if (!onDownload) return;
+    setIsDownloading(true);
+    onDownload()
+      .then(() => setIsDownloading(false));
+  }, [ onDownload ]);
+
   const logOptions = (
     <Space>
       {props.debugMode && <div className={css.debugger}>
@@ -441,11 +450,12 @@ const LogViewer: React.FC<Props> = forwardRef((
           icon={<Icon name="fullscreen" />}
           onClick={handleFullScreen} />
       </Tooltip>
-      {props.onDownload && <Tooltip placement="bottomRight" title="Download Logs">
+      {onDownload && <Tooltip placement="bottomRight" title="Download Logs">
         <Button
           aria-label="Download Logs"
           icon={<Icon name="download" />}
-          onClick={props.onDownload} />
+          loading={isDownloading}
+          onClick={handleDownload} />
       </Tooltip>}
     </Space>
   );
