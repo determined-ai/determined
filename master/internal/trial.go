@@ -7,7 +7,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 
@@ -237,7 +236,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			switch op := operation.(type) {
 			case searcher.Runnable:
 				if err := t.sequencer.OperationRequested(op); err != nil {
-					return errors.Wrap(err, "error passing op to sequencer")
+					return errors.Wrap(err, "error passing runnable to sequencer")
 				}
 			case searcher.Close:
 				t.close = &op
@@ -536,7 +535,6 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 	if msg.ExitedReason != nil {
 		ctx.Log().Info("exiting trial early")
 		ctx.Tell(ctx.Self().Parent(), trialExitedEarly{t.id, msg.ExitedReason})
-		spew.Config.Dump(msg.ExitedReason)
 		t.earlyExit = true
 		if *msg.ExitedReason == searcher.Errored {
 			return nil
@@ -917,6 +915,8 @@ func (t *trial) restore(ctx *actor.Context) {
 	}
 
 	step := t.sequencer.RollBackSequencer()
+
+	ctx.Log().Infof("restoring trial %d to end of step %d", t.id, step)
 
 	// Delete things in the database that are now invalid. (Even if the last completed
 	// step had its checkpoint done, the following step may have been started and thus

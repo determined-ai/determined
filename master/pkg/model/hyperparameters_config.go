@@ -26,19 +26,6 @@ func (h Hyperparameters) Each(f func(name string, param Hyperparameter)) {
 	}
 }
 
-// MaxGlobalBatchSize returns global_batch_size if it is a const or the max it can be if it is
-// variable.
-func (h Hyperparameters) MaxGlobalBatchSize() int {
-	switch hp := h[GlobalBatchSize]; {
-	case hp.ConstHyperparameter != nil:
-		return int(hp.ConstHyperparameter.Val.(float64))
-	case hp.IntHyperparameter != nil:
-		return hp.IntHyperparameter.Maxval
-	default:
-		panic("didn't find global_batch_size")
-	}
-}
-
 // Hyperparameter is a sum type for hyperparameters.
 type Hyperparameter struct {
 	ConstHyperparameter       *ConstHyperparameter       `union:"type,const" json:"-"`

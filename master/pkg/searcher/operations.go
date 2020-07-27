@@ -76,7 +76,7 @@ func MustParse(s string) RequestID {
 }
 
 // Requested is a convenience interface for operations that were requested by a searcher method
-// and thus have a RequestID.
+// for a specific trial.
 type Requested interface {
 	GetRequestID() RequestID
 }

@@ -1120,7 +1120,8 @@ WHERE id = :id`, setClause(toUpdate)), trial)
 }
 
 // RollbackSearcherEvents rolls back the events for an experiment to the last step with a
-// checkpoint.
+// checkpoint. This is (and should only be) called by master restart to roll searcher events back
+// to the last checkpoint for each trial in the given experiment.
 func (db *PgDB) RollbackSearcherEvents(experimentID int) error {
 	_, err := db.sql.Exec(`
 DELETE FROM searcher_events se
@@ -1128,13 +1129,13 @@ USING (
     SELECT
         (se.content->'msg'->'workload'->>'trial_id')::int trial_id,
         max(CASE WHEN content->'msg'->'workload'->>'kind' = 'CHECKPOINT_MODEL'
-        THEN (se.content->'msg'->'workload'->>'step_id')::int ELSE 0 END) latest_checkpoint_id
+        THEN (se.content->'msg'->'workload'->>'step_id')::int ELSE 0 END) step_id
     FROM searcher_events se
     GROUP BY trial_id
-	) lc
+	) latest_checkpoint
 WHERE experiment_id = $1
-    AND (se.content->'msg'->'workload'->>'trial_id')::int = lc.trial_id
-    AND (se.content->'msg'->'workload'->>'step_id')::int > lc.latest_checkpoint_id;
+    AND (se.content->'msg'->'workload'->>'trial_id')::int = latest_checkpoint.trial_id
+    AND (se.content->'msg'->'workload'->>'step_id')::int > latest_checkpoint.step_id;
 	`, experimentID)
 	if err != nil {
 		return errors.Wrapf(err, "error rolling back events for experiment %d", experimentID)

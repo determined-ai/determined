@@ -17,7 +17,7 @@ searcher:
     epochs: 2
 reproducibility:
   experiment_seed: 999
-records_per_epoch: 48000
+records_per_epoch: 8000
 min_validation_period:
   batches: 100
 min_checkpoint_period:

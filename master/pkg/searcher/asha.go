@@ -34,7 +34,7 @@ func newAsyncHalvingSearch(config model.AsyncHalvingConfig) SearchMethod {
 		unitsNeeded := max(int(float64(config.MaxLength.Units)/downsamplingRate), 1)
 		rungs = append(rungs,
 			&rung{
-				unitsNeeded:       model.NewLength(config.MaxLength.Unit, unitsNeeded),
+				unitsNeeded:       model.NewLength(config.Unit(), unitsNeeded),
 				outstandingTrials: 0,
 			})
 	}

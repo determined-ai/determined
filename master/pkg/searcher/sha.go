@@ -32,7 +32,7 @@ func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
 	for id := 0; id < config.NumRungs; id++ {
 		compound := math.Pow(config.Divisor, float64(config.NumRungs-id-1))
 		unitsNeeded := model.NewLength(
-			config.MaxLength.Unit,
+			config.Unit(),
 			max(int(float64(config.MaxLength.Units)/compound), 1),
 		)
 		startTrials := max(int(compound), 1)
@@ -59,7 +59,7 @@ func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
 		} else {
 			prev := rungs[id-1]
 			cur.unitsNeeded = model.NewLength(
-				cur.unitsNeeded.Unit,
+				config.Unit(),
 				max(cur.unitsNeeded.Units, prev.unitsNeeded.Units),
 			)
 			cur.startTrials = max(min(cur.startTrials, prev.startTrials), 1)
@@ -73,7 +73,7 @@ func newSyncHalvingSearch(config model.SyncHalvingConfig) SearchMethod {
 		rungs:             rungs,
 		trialRungs:        make(map[RequestID]int),
 		earlyExitTrials:   make(map[RequestID]bool),
-		expectedUnits:     model.NewLength(config.MaxLength.Unit, expectedUnits),
+		expectedUnits:     model.NewLength(config.Unit(), expectedUnits),
 	}
 }
 

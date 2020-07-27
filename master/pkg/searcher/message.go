@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// CompletedMessage is the wrapping message returned by the trial runner when a workload`
+// CompletedMessage is the wrapping message returned by the trial runner when a workload
 // is completed.
 type CompletedMessage struct {
 	Type              string          `json:"type"`

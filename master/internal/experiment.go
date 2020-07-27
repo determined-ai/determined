@@ -435,14 +435,8 @@ func (e *experiment) processOperations(
 				checkpoint = checkpointModel
 			}
 			ctx.ActorOf(op.RequestID, newTrial(e, op, checkpoint))
-		case searcher.Train:
-			trialOperations[op.RequestID] = append(trialOperations[op.RequestID], op)
-		case searcher.Validate:
-			trialOperations[op.RequestID] = append(trialOperations[op.RequestID], op)
-		case searcher.Checkpoint:
-			trialOperations[op.RequestID] = append(trialOperations[op.RequestID], op)
-		case searcher.Close:
-			trialOperations[op.RequestID] = append(trialOperations[op.RequestID], op)
+		case searcher.Requested:
+			trialOperations[op.GetRequestID()] = append(trialOperations[op.GetRequestID()], op)
 		case searcher.Shutdown:
 			if op.Failure {
 				e.updateState(ctx, model.StoppingErrorState)

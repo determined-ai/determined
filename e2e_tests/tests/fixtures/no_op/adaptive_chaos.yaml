@@ -18,7 +18,7 @@ searcher:
   max_length:
     batches: 64000
   budget:
-    batchse: 600000
+    batches: 600000
   mode: standard
   max_rungs: 3
   divisor: 4

@@ -124,11 +124,6 @@ func (l Length) String() string {
 	return fmt.Sprintf("%d %s", l.Units, l.Unit)
 }
 
-// Validate implements the check.Validatable interface.
-func (l Length) Validate() []error {
-	return []error{}
-}
-
 // Add adds a length to another length.
 func (l Length) Add(other Length) Length {
 	check.Panic(check.Equal(l.Unit, other.Unit))
@@ -190,21 +185,6 @@ func (l Length) EqualWithinBatch(batches int, ctx UnitContext) bool {
 	case Epochs:
 		diff := abs(l.Units*ctx.recordsPerEpoch - batches*ctx.globalBatchSize)
 		return diff < ctx.globalBatchSize
-	default:
-		panic(fmt.Sprintf("invalid Unit passed to unitsToBatches %s", l.Unit))
-	}
-}
-
-// ConvertEpochsToRecords converts from epochs to records when passed a length in terms of epochs;
-// otherwise, it does nothing. Used to convert to a more granular unit for scheduling purposes.
-func (l Length) ConvertEpochsToRecords(recordsPerEpoch int) Length {
-	switch l.Unit {
-	case Records:
-		return l
-	case Batches:
-		return l
-	case Epochs:
-		return NewLengthInRecords(l.Units * recordsPerEpoch)
 	default:
 		panic(fmt.Sprintf("invalid Unit passed to unitsToBatches %s", l.Unit))
 	}

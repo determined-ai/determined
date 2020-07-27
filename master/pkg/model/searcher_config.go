@@ -124,7 +124,7 @@ func (g GridConfig) Validate() (errs []error) {
 	}
 }
 
-// SyncHalvingConfig configures asynchronous successive halving.
+// SyncHalvingConfig configures synchronous successive halving.
 type SyncHalvingConfig struct {
 	Metric          string  `json:"metric"`
 	SmallerIsBetter bool    `json:"smaller_is_better"`

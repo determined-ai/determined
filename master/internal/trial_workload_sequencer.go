@@ -51,12 +51,10 @@ type trialWorkloadSequencerState struct {
 	curStepID int
 
 	latestCheckpoint *model.Checkpoint
-	// There are some strange corner cases where the sequencer will receive checkpoint completed
-	// messages before it requests them in the event a trial is descheduled or paused. For example,
-	// run a trial with a step that will validate and checkpoint, pause it on that step then unpause
-	// the trial and restart the master. The events will be replayed to the master and it received a
-	// checkpoint completed while waiting for a validation and throw the checkpoint away as
-	// unexpected without this.
+	// A trial may receive checkpoint completed messages before it requests them in the event that a
+	// trial is descheduled or paused. For example, a trial that plans to do:
+	//     RUN_STEP, COMPUTE_VALIDATION_METRICS, CHECKPOINT_MODEL.
+	// that is paused during the run step, receives its checkpoint completed message out of order.
 	cachedCheckpoints map[searcher.Workload]searcher.CompletedMessage
 }
 
@@ -116,11 +114,11 @@ func (s *trialWorkloadSequencer) WorkloadManagerType() model.WorkloadManagerType
 
 // OperationRequested records an operation requested by the searcher.
 func (s *trialWorkloadSequencer) OperationRequested(op searcher.Runnable) error {
-	switch tOp := op.(type) {
+	switch op := op.(type) {
 	case searcher.Runnable:
 		s.ops = append(s.ops, op)
 	default:
-		return errors.Errorf("illegal workload for trialWorkloadSequencer: %v", tOp)
+		return errors.Errorf("illegal workload for trialWorkloadSequencer: %v", op)
 	}
 	return nil
 }
