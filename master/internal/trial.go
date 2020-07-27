@@ -170,6 +170,7 @@ type trial struct {
 
 	replaying bool
 	earlyExit bool
+	killed    bool
 
 	task                       *scheduler.Task
 	pendingGracefulTermination bool
@@ -361,6 +362,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		t.processTaskTerminated(ctx, msg)
 
 	case killTrial:
+		t.killed = true
 		if t.task != nil {
 			ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
 		}
@@ -821,11 +823,13 @@ func (t *trial) resetTrial(
 	status agent.ContainerStopped,
 ) {
 	terminationSent := t.terminationSent
+	trialKilled := t.killed
 
 	t.runID++
 	t.task = nil
 	t.pendingGracefulTermination = false
 	t.terminationSent = false
+	t.killed = false
 	t.terminatedContainers = nil
 	t.startedContainers = 0
 
@@ -836,6 +840,11 @@ func (t *trial) resetTrial(
 	case terminationSent:
 		ctx.Log().WithField("failure", status.Failure).Info(
 			"ignoring trial runner failure since termination was requested",
+		)
+		return
+	case trialKilled:
+		ctx.Log().WithField("failure", status.Failure).Info(
+			"ignoring trial runner failure since it was killed",
 		)
 		return
 	case status.Failure.FailureType == agent.TaskAborted:
