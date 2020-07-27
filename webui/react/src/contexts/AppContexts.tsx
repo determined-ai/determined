@@ -7,14 +7,12 @@ import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Experiments from 'contexts/Experiments';
 import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
-import useRestApi, { useRestApiSimple } from 'hooks/useRestApi';
-import { ioAgents, ioGenericCommands, ioUsers } from 'ioTypes';
-import { getExperimentSummaries } from 'services/api';
+import { useRestApiSimple } from 'hooks/useRestApi';
 import {
-  jsonToAgents, jsonToCommands, jsonToNotebooks,
-  jsonToShells, jsonToTensorboards, jsonToUsers,
-} from 'services/decoder';
-import { ExperimentsParams } from 'services/types';
+  getAgents, getCommands, getExperimentSummaries, getNotebooks, getShells,
+  getTensorboards, getUsers,
+} from 'services/api';
+import { EmptyParams, ExperimentsParams } from 'services/types';
 import { Agent, Command, Experiment, User } from 'types';
 import { activeRunStates } from 'utils/types';
 
@@ -29,28 +27,28 @@ const AppContexts: React.FC = () => {
   const setTensorboards = Tensorboards.useActionContext();
   const setOverview = ClusterOverview.useActionContext();
   const [ usersResponse, requestUsers ] =
-    useRestApi<User[]>(ioUsers, { mappers: jsonToUsers });
+    useRestApiSimple<EmptyParams, User[]>(getUsers, {});
   const [ agentsResponse, requestAgents ] =
-    useRestApi<Agent[]>(ioAgents, { mappers: jsonToAgents });
-  const [ commandsResponse, requestCommands ] =
-    useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToCommands });
+    useRestApiSimple<EmptyParams, Agent[]>(getAgents, {});
   const [ activeExperimentsResponse, requestActiveExperiments ] =
     useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
+  const [ commandsResponse, requestCommands ] =
+    useRestApiSimple<EmptyParams, Command[]>(getCommands, {});
   const [ notebooksResponse, requestNotebooks ] =
-    useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToNotebooks });
+    useRestApiSimple<EmptyParams, Command[]>(getNotebooks, {});
   const [ shellsResponse, requestShells ] =
-    useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToShells });
+    useRestApiSimple<EmptyParams, Command[]>(getShells, {});
   const [ tensorboardsResponse, requestTensorboards ] =
-    useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToTensorboards });
+    useRestApiSimple<EmptyParams, Command[]>(getTensorboards, {});
   const [ experimentsResponse, requestExperiments ] =
     useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
 
   const fetchAll = useCallback((): void => {
-    requestAgents({ url: '/agents' });
-    requestCommands({ url: '/commands' });
-    requestNotebooks({ url: '/notebooks' });
-    requestShells({ url: '/shells' });
-    requestTensorboards({ url: '/tensorboard' });
+    requestAgents({});
+    requestCommands({});
+    requestNotebooks({});
+    requestShells({});
+    requestTensorboards({});
     requestActiveExperiments({ states: activeRunStates });
     requestExperiments({});
   }, [
