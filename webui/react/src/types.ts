@@ -110,7 +110,7 @@ export interface CommandAddress {
   containerPort: number;
   hostIp: string;
   hostPort: number;
-  protocol: string;
+  protocol?: string;
 }
 
 export interface Owner {
@@ -128,7 +128,6 @@ export enum CommandType {
 export interface CommandMisc {
   experimentIds?: number[];
   trialIds?: number[];
-  privateKey?: string;
 }
 
 export interface CommandConfig {
@@ -137,7 +136,6 @@ export interface CommandConfig {
 
 // The command type is shared between Commands, Notebooks, Tensorboards, and Shells.
 export interface Command {
-  addresses?: CommandAddress[];
   kind: CommandType;
   config: CommandConfig; // We do not use this field in the WebUI.
   exitStatus?: string;
