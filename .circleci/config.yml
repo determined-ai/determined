@@ -1045,7 +1045,7 @@ jobs:
       - setup-aws-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
-          agent-instance-type: <<parameters.agent-instance-type>>
+          agent-instance-type: <<parameters.agent-instance-type>>d
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
       - run-e2e-tests:
           mark: <<parameters.mark>>
@@ -1132,6 +1132,25 @@ jobs:
           failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GKE GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
+
+  cleanup-stacks:
+    docker:
+      - image: determinedai/cimg-base:stable
+    steps:
+      - checkout
+      - setup-python-venv:
+          determined-common: true
+          determined-deploy: true
+          extras-requires: "slackclient==2.7.3"
+          executor: determinedai/cimg-base:stable
+      - run: python .circleci/scripts/remove_stacks.py
+
+#  install-slack:
+#    docker:
+#      - image: determinedai/cimg-base:stable
+#    steps:
+#      - checkout
+#      - run: pip install slackclient
 
 workflows:
   lint:
@@ -1495,3 +1514,17 @@ workflows:
       - upload-try-now-template:
           context: determined-production
           filters: *release-filters
+
+  cleanup:
+#    triggers:
+#      - schedule:
+#          cron: "0 */6 * * *"
+#          filters:
+#            branches:
+#              only:
+#                - master
+    jobs:
+#      - install-slack:
+#          context: slack
+      - cleanup-stacks:
+          context: aws
