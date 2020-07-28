@@ -170,6 +170,13 @@ interface DataLayer {
   type: string;
 }
 
+interface ExperimentHyperParam {
+  type: string;
+  val: unknown;
+}
+
+export type ExperimentHyperParams = Record<string, ExperimentHyperParam>;
+
 export interface ExperimentConfig {
   checkpointPolicy: string;
   checkpointStorage?: CheckpointStorage;
@@ -258,13 +265,15 @@ export interface Step {
   state: RunState;
 }
 
+// FIXME this vs TrialItem
 export interface TrialDetails {
-  id: number;
-  state: RunState;
-  experimentId: number;
   endTime?: string;
+  experimentId: number;
+  hparams: Record<string, unknown>;
+  id: number;
   seed: number;
   startTime: string;
+  state: RunState;
   steps: Step[];
   warmStartCheckpointId?: number;
 }

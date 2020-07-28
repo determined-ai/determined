@@ -8,38 +8,35 @@ import { forkExperiment } from 'services/api';
 
 import css from './CreateExperimentModal.module.scss';
 
-interface RWState {
+export interface CreateExpModalState {
   visible: boolean;
   config: string;
 }
 
 interface Props {
   title: string;
+  okText: string;
   parentId: number;
-  state: RWState;
-  setState: (arg0: SetStateAction<RWState>) => void;
+  visible: boolean;
+  config: string;
+  setState: (arg0: SetStateAction<CreateExpModalState>) => void;
 }
 
 const CreateExperimentModal: React.FC<Props> = (
-  { state, setState, parentId }: Props,
+  { visible, config, setState, parentId, ...props }: Props,
 ) => {
   const [ configError, setConfigError ] = useState<string>();
 
   const editorOnChange = useCallback((newValue: string) => {
-    setState((existingState: RWState) => ({ ...existingState, config: newValue }));
+    setState((existingState: CreateExpModalState) => ({ ...existingState, config: newValue }));
     setConfigError(undefined);
   }, [ setState, setConfigError ]);
-
-  const monacoOpts = {
-    minimap: { enabled: false },
-    selectOnLineNumbers: true,
-  };
 
   const handleOk = async (): Promise<void> => {
     try {
       // Validate the yaml syntax by attempting to load it.
-      yaml.safeLoad(state.config);
-      const configId = await forkExperiment({ experimentConfig: state.config, parentId });
+      yaml.safeLoad(config);
+      const configId = await forkExperiment({ experimentConfig: config, parentId });
       setState(existingState => ({ ...existingState, visible: false }));
       routeAll(`/det/experiments/${configId}`);
     } catch (e) {
@@ -61,21 +58,25 @@ const CreateExperimentModal: React.FC<Props> = (
       padding: 0,
     }}
     className={css.configModal}
-    okText="Fork"
+    okText={props.okText}
     style={{
       minWidth: '60rem',
     }}
-    title={`Config Experiment ${parentId}`}
-    visible={state.visible}
+    title={props.title}
+    visible={visible}
     onCancel={handleCancel}
     onOk={handleOk}
   >
     <MonacoEditor
       height="40vh"
       language="yaml"
-      options={monacoOpts}
+      options={{
+        minimap: { enabled: false },
+        scrollBeyondLastLine: false,
+        selectOnLineNumbers: true,
+      }}
       theme="vs-light"
-      value={state.config}
+      value={config}
       onChange={editorOnChange}
     />
     {configError &&

@@ -1,6 +1,6 @@
 import {
-  AnyTask, Command, CommandState, CommandType, Experiment, ExperimentItem,
-  RecentCommandTask, RecentExperimentTask, RecentTask, RunState,
+  AnyTask, Command, CommandState, CommandType, Experiment, ExperimentHyperParams,
+  ExperimentItem, RecentCommandTask, RecentExperimentTask, RecentTask, RunState,
 } from 'types';
 
 /* Conversions to Tasks */
@@ -156,4 +156,16 @@ export const oneOfProperties = <T>(obj: any, props: string[]): T => {
     if (prop in obj) return obj[prop] as T;
   }
   throw new Error('no matching property');
+};
+
+export const trialHParamsToExperimentHParams = (hParams: Record<string, unknown>)
+: ExperimentHyperParams => {
+  const experimentHParams: ExperimentHyperParams = {};
+  Object.entries(hParams).forEach(([ param, value ]) => {
+    experimentHParams[param] = {
+      type: 'const',
+      val: value,
+    };
+  });
+  return experimentHParams;
 };

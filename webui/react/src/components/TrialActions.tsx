@@ -10,20 +10,21 @@ import { terminalRunStates } from 'utils/types';
 
 import css from './TrialActions.module.scss';
 
-interface Props {
-  trial: TrialDetails;
-  onSettled: () => void; // A callback to trigger after an action is done.
-}
-
-enum Action {
+export enum Action {
   Continue = 'Continue',
   Logs = 'Logs',
   Tensorboard = 'Tensorboard',
 }
 
+interface Props {
+  trial: TrialDetails;
+  onSettled: () => void; // A callback to trigger after an action is done.
+  onClick: (action: Action) => (() => void);
+}
+
 type ButtonLoadingStates = Record<Action, boolean>;
 
-const TrialActions: React.FC<Props> = ({ trial, onSettled: updateFn }: Props) => {
+const TrialActions: React.FC<Props> = ({ trial, onClick, onSettled: updateFn }: Props) => {
 
   const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
     Continue: false,
@@ -48,7 +49,8 @@ const TrialActions: React.FC<Props> = ({ trial, onSettled: updateFn }: Props) =>
   };
 
   const actionButtons: ConditionalButton<TrialDetails>[] = [
-    { button: <Button disabled key={Action.Continue} type="primary">Continue Trial</Button> },
+    { button: <Button key={Action.Continue} type="primary"
+      onClick={onClick(Action.Continue)}>Continue Trial</Button> },
     { button: <Button key={Action.Logs} type="primary">
       <Link path={`/det/trials/${trial.id}/logs`} popout>Logs</Link>
     </Button> },

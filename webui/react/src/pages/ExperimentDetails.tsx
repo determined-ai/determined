@@ -218,10 +218,12 @@ const ExperimentDetailsComp: React.FC = () => {
         title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
         onHide={handleCheckpointDismiss} />}
       <CreateExperimentModal
+        config={forkModalState.config}
+        okText="Fork"
         parentId={id}
         setState={setForkModalState}
-        state={forkModalState}
-        title="Fork"
+        title={`Fork Experiment ${id}`}
+        visible={forkModalState.visible}
       />
     </Page>
   );
