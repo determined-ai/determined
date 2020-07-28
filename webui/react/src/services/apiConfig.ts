@@ -26,7 +26,7 @@ const saltAndHashPassword = (password?: string): string => {
   return sha512(passwordSalt + password);
 };
 
-const commandToEndpoint: Record<CommandType, string> = {
+export const commandToEndpoint: Record<CommandType, string> = {
   [CommandType.Command]: '/commands',
   [CommandType.Notebook]: '/notebooks',
   [CommandType.Tensorboard]: '/tensorboard',
@@ -218,7 +218,7 @@ export const getMasterLogs: Api<LogsParams, Log[]> = {
 export const getTaskLogs: Api<TaskLogsParams, Log[]> = {
   httpOptions: (params: TaskLogsParams) => ({
     url: [
-      `/${params.taskType}s/${params.taskId}/events`,
+      `${commandToEndpoint[params.taskType]}/${params.taskId}/events`,
       buildQuery(params),
     ].join('?'),
   }),
