@@ -144,7 +144,10 @@ const matchesUser = <T extends AnyTask | ExperimentItem>(
 };
 
 export const filterExperiments = (
-  experiments: ExperimentItem[], filters: ExperimentFilters, users: User[] = [], search = '',
+  experiments: ExperimentItem[],
+  filters: ExperimentFilters,
+  users: User[] = [],
+  search = '',
 ): ExperimentItem[] => {
   return experiments
     .filter(experiment => {
