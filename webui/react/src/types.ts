@@ -148,6 +148,7 @@ export enum CheckpointStorageType {
   AWS = 'aws',
   GCS = 'gcs',
   HDFS = 'hdfs',
+  S3 = 's3',
   SharedFS = 'shared_fs',
 }
 
@@ -169,7 +170,7 @@ interface DataLayer {
 export interface ExperimentConfig {
   checkpointPolicy: string;
   checkpointStorage?: CheckpointStorage;
-  dataLayer: DataLayer;
+  dataLayer?: DataLayer;
   description: string;
   searcher: {
     smallerIsBetter: boolean;

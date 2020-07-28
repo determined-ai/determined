@@ -2,7 +2,7 @@ import { isLeft } from 'fp-ts/lib/Either';
 import * as io from 'io-ts';
 
 import { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { CheckpointState, CommandState, LogLevel, RunState } from 'types';
+import { CheckpointState, CheckpointStorageType, CommandState, LogLevel, RunState } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const decode = <T>(type: io.Mixed, data: any): T => {
@@ -181,7 +181,7 @@ export type ioTypeTrialDetails = io.TypeOf<typeof ioTrialDetails>;
 export const ioTrial = io.type({
   best_available_checkpoint: io.union([ ioCheckpoint, io.null ]),
   best_validation_metric: io.union([ io.number, io.null ]),
-  end_time: io.string,
+  end_time: io.union([ io.string, io.null ]),
   experiment_id: io.number,
   hparams: io.any,
   id: io.number,
@@ -196,6 +196,11 @@ export type ioTypeTrial = io.TypeOf<typeof ioTrial>;
 
 /* Experiments */
 
+const checkpointStorageTypes: Record<string, null> = Object
+  .values(CheckpointStorageType)
+  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
+const ioCheckpointStorageType = io.keyof(checkpointStorageTypes);
+
 export const ioCheckpointStorage = io.type({
   bucket: io.union([ io.string, io.undefined ]),
   host_path: io.union([ io.string, io.undefined ]),
@@ -203,13 +208,7 @@ export const ioCheckpointStorage = io.type({
   save_trial_best: io.number,
   save_trial_latest: io.number,
   storage_path: io.union([ io.string, io.undefined ]),
-  type: io.union([
-    io.literal('aws'),
-    io.literal('gcs'),
-    io.literal('hdfs'),
-    io.literal('shared_fs'),
-    io.undefined,
-  ]),
+  type: io.union([ ioCheckpointStorageType, io.undefined ]),
 });
 
 const ioDataLayer = io.type({
@@ -224,7 +223,7 @@ const ioExpResources = io.type({
 export const ioExperimentConfig = io.type({
   checkpoint_policy: io.string,
   checkpoint_storage: io.union([ ioCheckpointStorage, io.null ]),
-  data_layer: ioDataLayer,
+  data_layer: io.union([ ioDataLayer, io.undefined ]),
   description: io.string,
   resources: ioExpResources,
   searcher: io.type({
