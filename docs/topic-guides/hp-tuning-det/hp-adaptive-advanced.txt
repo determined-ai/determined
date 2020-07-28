@@ -24,8 +24,8 @@ Resource budget:
 
 -  ``max_length``: The maximum training length of any trial that survives to
    the end of the experiment. This quantity is domain-specific and should
-   roughly reflect the training length needed for the model to converge on
-   the data set. For users who would like to determine this number
+   roughly reflect the number of minibatches the model must be trained on for
+   it to converge on the data set. For users who would like to determine this number
    experimentally, train a model with reasonable hyperparameters using the
    ``single`` search method.
 -  ``budget``: Set ``budget`` to roughly 10 times
@@ -76,7 +76,7 @@ First, an example of ASHA.
    the experiment configuration file. Each trial is trained for 1 epoch,
    and then validation metrics are computed.
 -  Rung 2: ASHA picks the N/4 top-performing trials according to
-   validation metrics. These are trained for 4 epoch.
+   validation metrics. These are trained for 4 epochs.
 -  Rung 3: ASHA picks the N/16 top-performing trials according to
    validation metrics. These are trained for 16 epochs.
 

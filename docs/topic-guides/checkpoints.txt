@@ -55,9 +55,8 @@ experiment. Checkpoints are created in four situations:
    is completed since the last checkpoint.
 3. When a trial has been trained to completion (according to the
    configuration of the experiment's trial search method).
-4. If the searcher requests a validation, Determined will always checkpoint
-   before the validation is performed. This is required to garuantee searcher
-   consistency in the event of a failure.
+4. Before the search method makes a decision based on a validation of a trial,
+   Determined will checkpoint that trial to guarantee consistency in the event of a failure.
 
 The Determined CLI can be used to view all the checkpoints associated with an
 experiment:
