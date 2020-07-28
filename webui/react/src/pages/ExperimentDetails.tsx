@@ -48,8 +48,7 @@ const ExperimentDetailsComp: React.FC = () => {
   }, [ id, triggerExperimentRequest ]);
 
   usePolling(pollExperimentDetails);
-  const [ forkValue, setForkValue ] = useState<string>('Loading');
-  const [ forkModalState, setForkModalState ] = useState({ config: '', visible: false });
+  const [ forkModalState, setForkModalState ] = useState({ config: 'Loading', visible: false });
 
   useEffect(() => {
     if (experiment && experiment.config) {
@@ -57,14 +56,14 @@ const ExperimentDetailsComp: React.FC = () => {
         const prefix = 'Fork of ';
         const rawConfig = clone(experiment.configRaw);
         rawConfig.description = prefix + rawConfig.description;
-        setForkValue(yaml.safeDump(rawConfig));
+        setForkModalState(state => ({ ...state, config: yaml.safeDump(rawConfig) }));
       } catch (e) {
         handleError({
           error: e,
           message: 'failed to load experiment config',
           type: ErrorType.ApiBadResponse,
         });
-        setForkValue('failed to load experiment config');
+        setForkModalState(state => ({ ...state, config: 'failed to load experiment config' }));
       }
     }
   }, [ experiment ]);
@@ -72,10 +71,6 @@ const ExperimentDetailsComp: React.FC = () => {
   const showForkModal = useCallback((): void => {
     setForkModalState(state => ({ ...state, visible: true }));
   }, [ setForkModalState ]);
-
-  const setVisible = useCallback((isVisible: boolean) => {
-    setForkModalState(state => ({ ...state, visible: isVisible }));
-  }, []);
 
   const handleTableRow = useCallback((record: TrialItem) => ({
     onClick: makeClickHandler(record.url as string),
@@ -223,12 +218,10 @@ const ExperimentDetailsComp: React.FC = () => {
         title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
         onHide={handleCheckpointDismiss} />}
       <CreateExperimentModal
-        configValue={forkValue}
         parentId={id}
-        setConfigValue={setForkValue}
-        setVisible={setVisible}
+        setState={setForkModalState}
+        state={forkModalState}
         title="Fork"
-        visible={forkModalState.visible}
       />
     </Page>
   );

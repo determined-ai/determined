@@ -1,6 +1,6 @@
 import { Alert, Modal } from 'antd';
 import yaml from 'js-yaml';
-import React, { useCallback, useState } from 'react';
+import React, { SetStateAction, useCallback, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 
 import { routeAll } from 'routes';
@@ -8,24 +8,27 @@ import { forkExperiment } from 'services/api';
 
 import css from './CreateExperimentModal.module.scss';
 
-interface Props {
+interface RWState {
   visible: boolean;
-  setVisible: (arg0: boolean) => void; // or on finish
+  config: string;
+}
+
+interface Props {
   title: string;
-  configValue: string;
-  setConfigValue: (arg0: string) => void;
   parentId: number;
+  state: RWState;
+  setState: (arg0: SetStateAction<RWState>) => void;
 }
 
 const CreateExperimentModal: React.FC<Props> = (
-  { visible, configValue, setConfigValue, parentId, setVisible }: Props,
+  { state, setState, parentId }: Props,
 ) => {
   const [ configError, setConfigError ] = useState<string>();
 
-  const editorOnChange = useCallback((newValue) => {
-    setConfigValue(newValue);
+  const editorOnChange = useCallback((newValue: string) => {
+    setState((existingState: RWState) => ({ ...existingState, config: newValue }));
     setConfigError(undefined);
-  }, [ setConfigError, setConfigValue ]);
+  }, [ setState, setConfigError ]);
 
   const monacoOpts = {
     minimap: { enabled: false },
@@ -35,9 +38,9 @@ const CreateExperimentModal: React.FC<Props> = (
   const handleOk = async (): Promise<void> => {
     try {
       // Validate the yaml syntax by attempting to load it.
-      yaml.safeLoad(configValue);
-      const configId = await forkExperiment({ experimentConfig: configValue, parentId });
-      setVisible(false);
+      yaml.safeLoad(state.config);
+      const configId = await forkExperiment({ experimentConfig: state.config, parentId });
+      setState(existingState => ({ ...existingState, visible: false }));
       routeAll(`/det/experiments/${configId}`);
     } catch (e) {
       let errorMessage = 'Failed to config using the provided config.';
@@ -51,7 +54,7 @@ const CreateExperimentModal: React.FC<Props> = (
   };
 
   const handleCancel = (): void => {
-    setVisible(false);
+    setState(existingState => ({ ...existingState, visible: false }));
   };
   return <Modal
     bodyStyle={{
@@ -63,7 +66,7 @@ const CreateExperimentModal: React.FC<Props> = (
       minWidth: '60rem',
     }}
     title={`Config Experiment ${parentId}`}
-    visible={visible}
+    visible={state.visible}
     onCancel={handleCancel}
     onOk={handleOk}
   >
@@ -72,7 +75,7 @@ const CreateExperimentModal: React.FC<Props> = (
       language="yaml"
       options={monacoOpts}
       theme="vs-light"
-      value={configValue}
+      value={state.config}
       onChange={editorOnChange}
     />
     {configError &&
