@@ -126,6 +126,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   const spacerStyle = { height: toRem(config.totalContentHeight) };
   const dateTimeStyle = { width: toRem(config.dateTimeWidth) };
   const lineNumberStyle = { width: toRem(config.lineNumberWidth) };
+  const messageStyle = { width: toRem(config.messageWidth) };
   const levelStyle = { width: toRem(ICON_WIDTH) };
 
   if (props.noWrap) classes.push(css.noWrap);
@@ -176,7 +177,7 @@ const LogViewer: React.FC<Props> = forwardRef((
      * after rendering line and timestamp.
      */
     const iconWidth = props.disableLevel ? 0 : ICON_WIDTH;
-    const messageWidth = spacerRect.width - iconWidth - lineNumberWidth - dateTimeWidth;
+    const messageWidth = Math.floor(spacerRect.width - iconWidth - lineNumberWidth - dateTimeWidth);
     const messageCharCount = Math.floor(messageWidth / charRect.width);
 
     /*
@@ -504,7 +505,8 @@ const LogViewer: React.FC<Props> = forwardRef((
                 <div className={css.time} style={dateTimeStyle}>{log.formattedTime}</div>
                 <div
                   className={levelCss(css.message, log.level)}
-                  dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }} />
+                  dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }}
+                  style={messageStyle} />
               </div>
             ))}
           </div>
