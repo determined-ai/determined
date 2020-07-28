@@ -504,7 +504,7 @@ func (e *experiment) isBestValidation(msg searcher.CompletedMessage) bool {
 	return isBest
 }
 
-func (e *experiment) updateState(ctx *actor.Context, state model.State) (ok bool) {
+func (e *experiment) updateState(ctx *actor.Context, state model.State) bool {
 	if wasPatched, err := e.Transition(state); err != nil {
 		ctx.Log().Error(err)
 		return false
@@ -517,14 +517,13 @@ func (e *experiment) updateState(ctx *actor.Context, state model.State) (ok bool
 	for _, child := range ctx.Children() {
 		ctx.Tell(child, state)
 	}
-
 	if err := e.db.SaveExperimentState(e.Experiment); err != nil {
 		ctx.Log().Error(err)
 	}
 	if e.canTerminate(ctx) {
 		ctx.Self().Stop()
 	}
-	// "Long story short, we never put effort into db error handling".
+	// The database error is explicitly ignored.
 	return true
 }
 
