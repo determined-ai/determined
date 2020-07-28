@@ -3,9 +3,9 @@ import { CancelToken } from 'axios';
 import * as DetSwagger from 'services/api-ts-sdk';
 import { generateApi, processApiError } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
-import { CommandLogsParams, EmptyParams, ExperimentDetailsParams, ExperimentsParams,
-  ForkExperimentParams, KillCommandParams, KillExpParams, LaunchTensorboardParams,
-  LogsParams, PatchExperimentParams, PatchExperimentState, TrialDetailsParams, TrialLogsParams,
+import { EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
+  KillCommandParams, KillExpParams, LaunchTensorboardParams, LogsParams,
+  PatchExperimentParams, PatchExperimentState, TaskLogsParams, TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import {
   Agent, AnyTask, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails,
@@ -117,6 +117,6 @@ export function logout(): DetSwagger.V1LogoutResponse {
 
 export const getMasterLogs = generateApi<LogsParams, Log[]>(Config.getMasterLogs);
 
-export const getTrialLogs = generateApi<TrialLogsParams, Log[]>(Config.getTrialLogs);
+export const getTaskLogs = generateApi<TaskLogsParams, Log[]>(Config.getTaskLogs);
 
-export const getCommandLogs = generateApi<CommandLogsParams, Log[]>(Config.getCommandLogs);
+export const getTrialLogs = generateApi<TrialLogsParams, Log[]>(Config.getTrialLogs);
