@@ -1,5 +1,8 @@
 import { Button } from 'antd';
+import Modal from 'antd/lib/modal/Modal';
+import yaml from 'js-yaml';
 import React, { useCallback, useMemo, useState } from 'react';
+import MonacoEditor from 'react-monaco-editor';
 
 import Badge, { BadgeType } from 'components/Badge';
 import Link from 'components/Link';
@@ -30,6 +33,7 @@ const renderRow = (label: string, value: React.ReactNode): React.ReactNode => {
 };
 
 const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
+  const [ showConfig, setShowConfig ] = useState(false);
   const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
 
   const orderFactor = exp.config.searcher.smallerIsBetter ? 1 : -1;
@@ -60,6 +64,8 @@ const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
 
   const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
   const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
+  const handleShowConfig = useCallback(() => setShowConfig(true), []);
+  const handleHideConfig = useCallback(() => setShowConfig(false), []);
 
   return (
     <div className={css.base}>
@@ -88,12 +94,32 @@ const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
               title={`Best Checkpoint for Experiment ${exp.id}`}
               onHide={handleHideBestCheckpoint} />
           </>))}
-          {renderRow('Configuration',<Button disabled>Show</Button>)}
+          {renderRow('Configuration',<Button onClick={handleShowConfig}>Show</Button>)}
           {renderRow('Model Definition', <Button>
             <Link path={`/exps/${exp.id}/model_def`}>Download</Link>
           </Button>)}
         </tbody>
       </table>
+      <Modal
+        bodyStyle={{ padding: 0 }}
+        className={css.forkModal}
+        footer={null}
+        title={`Configuration for Experiment ${exp.id}`}
+        visible={showConfig}
+        width={768}
+        onCancel={handleHideConfig}>
+        <MonacoEditor
+          height="80vh"
+          language="yaml"
+          options={{
+            minimap: { enabled: false },
+            readOnly: true,
+            scrollBeyondLastLine: false,
+            selectOnLineNumbers: true,
+          }}
+          theme="vs-light"
+          value={yaml.safeDump(exp.configRaw)} />
+      </Modal>
     </div>
   );
 };
