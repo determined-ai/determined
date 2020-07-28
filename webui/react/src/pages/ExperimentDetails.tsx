@@ -101,11 +101,6 @@ const ExperimentDetailsComp: React.FC = () => {
     return <Spinner fillContainer />;
   }
 
-  const monacoOpts = {
-    minimap: { enabled: false },
-    selectOnLineNumbers: true,
-  };
-
   const handleOk = async (): Promise<void> => {
     try {
       // Validate the yaml syntax by attempting to load it.
@@ -232,30 +227,26 @@ const ExperimentDetailsComp: React.FC = () => {
         onSettled={pollExperimentDetails} />
       <ExperimentInfoBox experiment={experiment} />
       <Modal
-        bodyStyle={{
-          padding: 0,
-        }}
+        bodyStyle={{ padding: 0 }}
         className={css.forkModal}
         okText="Fork"
-        style={{
-          minWidth: '60rem',
-        }}
         title={`Fork Experiment ${experimentId}`}
         visible={forkModalState.visible}
+        width={768}
         onCancel={handleCancel}
-        onOk={handleOk}
-      >
+        onOk={handleOk}>
         <MonacoEditor
-          height="40vh"
+          height="80vh"
           language="yaml"
-          options={monacoOpts}
+          options={{
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            selectOnLineNumbers: true,
+          }}
           theme="vs-light"
           value={forkValue}
-          onChange={editorOnChange}
-        />
-        {forkError &&
-          <Alert className={css.error} message={forkError} type="error" />
-        }
+          onChange={editorOnChange} />
+        {forkError && <Alert className={css.error} message={forkError} type="error" />}
       </Modal>
       <Section title="Chart" />
       <Section title="Trials">

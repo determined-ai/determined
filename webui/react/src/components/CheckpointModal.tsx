@@ -78,7 +78,7 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, ti
       footer={null}
       title={title}
       visible={show}
-      width={640}
+      width={768}
       onCancel={onHide}>
       <div className={css.base}>
         {renderRow(
