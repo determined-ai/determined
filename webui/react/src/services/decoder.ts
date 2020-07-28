@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import {
   decode, ioCommandLogs, ioDeterminedInfo, ioExperiment, ioExperimentConfig, ioExperimentDetails,
   ioExperiments, ioGenericCommand, ioLog, ioLogs, ioTrialDetails, ioTypeAgents,
-  ioTypeCheckpoint, ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo, ioTypeExperiment,
+  ioTypeCheckpoint, ioTypeCommandLogs, ioTypeDeterminedInfo, ioTypeExperiment,
   ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand,
   ioTypeGenericCommands, ioTypeLatestValidationMetrics, ioTypeLog, ioTypeLogs, ioTypeTrial,
   ioTypeTrialDetails, ioTypeUsers,
@@ -70,21 +70,12 @@ export const jsonToAgents = (data: ioTypeAgents): Agent[] => {
 export const jsonToGenericCommand = (data: unknown, type: CommandType): Command => {
   const ioType = decode<ioTypeGenericCommand>(ioGenericCommand, data);
   return {
-    addresses: ioType.addresses ?
-      ioType.addresses.map((address: ioTypeCommandAddress) => ({
-        containerIp: address.container_ip,
-        containerPort: address.container_port,
-        hostIp: address.host_ip,
-        hostPort: address.host_port,
-        protocol: address.protocol,
-      })) : undefined,
     config: { ...ioType.config },
     exitStatus: ioType.exit_status || undefined,
     id: ioType.id,
     kind: type,
     misc: ioType.misc ? {
       experimentIds: ioType.misc.experiment_ids || undefined,
-      privateKey: ioType.misc.private_key,
       trialIds: ioType.misc.trial_ids || undefined,
     } : undefined,
     owner: {

@@ -127,7 +127,6 @@ export enum CommandType {
 
 export interface CommandMisc {
   experimentIds?: number[];
-  privateKey?: string;
   trialIds?: number[];
 }
 
@@ -137,7 +136,6 @@ export interface CommandConfig {
 
 // The command type is shared between Commands, Notebooks, Tensorboards, and Shells.
 export interface Command {
-  addresses?: CommandAddress[];
   kind: CommandType;
   config: CommandConfig; // We do not use this field in the WebUI.
   exitStatus?: string;
