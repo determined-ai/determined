@@ -148,6 +148,7 @@ export enum CheckpointStorageType {
   AWS = 'aws',
   GCS = 'gcs',
   HDFS = 'hdfs',
+  S3 = 's3',
   SharedFS = 'shared_fs',
 }
 

@@ -2,7 +2,7 @@ import { isLeft } from 'fp-ts/lib/Either';
 import * as io from 'io-ts';
 
 import { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { CheckpointState, CommandState, LogLevel, RunState } from 'types';
+import { CheckpointState, CheckpointStorageType, CommandState, LogLevel, RunState } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const decode = <T>(type: io.Mixed, data: any): T => {
@@ -196,6 +196,11 @@ export type ioTypeTrial = io.TypeOf<typeof ioTrial>;
 
 /* Experiments */
 
+const checkpointStorageTypes: Record<string, null> = Object
+  .values(CheckpointStorageType)
+  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
+const ioCheckpointStorageType = io.keyof(checkpointStorageTypes);
+
 export const ioCheckpointStorage = io.type({
   bucket: io.union([ io.string, io.undefined ]),
   host_path: io.union([ io.string, io.undefined ]),
@@ -203,14 +208,7 @@ export const ioCheckpointStorage = io.type({
   save_trial_best: io.number,
   save_trial_latest: io.number,
   storage_path: io.union([ io.string, io.undefined ]),
-  type: io.union([
-    io.literal('aws'),
-    io.literal('gcs'),
-    io.literal('hdfs'),
-    io.literal('s3'),
-    io.literal('shared_fs'),
-    io.undefined,
-  ]),
+  type: io.union([ ioCheckpointStorageType, io.undefined ]),
 });
 
 const ioDataLayer = io.type({
