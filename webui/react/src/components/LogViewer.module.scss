@@ -65,20 +65,61 @@
     white-space: pre-wrap;
     word-break: break-all;
   }
-  .scrollToLatest {
+  .scrollTo {
     bottom: var(--theme-sizes-layout-huge);
-    box-shadow: var(--theme-shadow);
-    opacity: 0;
+    display: flex;
+    flex-direction: column;
     position: absolute;
     right: var(--theme-sizes-layout-huge);
+  }
+  .scrollTo > *:not(:first-child) {
+    margin-top: var(--theme-sizes-layout-big);
+  }
+  .scrollTo > button {
+    border-color: var(--theme-colors-monochrome-9);
+    box-shadow: var(--theme-shadow);
+    color: var(--theme-colors-monochrome-9);
     transition: opacity 0.2s linear;
     user-select: none;
-    visibility: hidden;
   }
-  .scrollToLatest.show {
+  .scrollToTop {
+    opacity: 0.2;
+  }
+  .scrollToTop:focus {
+    border-color: var(--theme-colors-core-action);
+    color: var(--theme-colors-monochrome-9);
+
+    &::after {
+      border-radius: var(--theme-sizes-border-radius);
+      box-shadow: var(--theme-outline);
+      content: '';
+      height: 100%;
+      position: absolute;
+      width: 100%;
+    }
+  }
+  .scrollToTop.show {
     opacity: 1;
     user-select: auto;
-    visibility: visible;
+  }
+  .enableTailing {
+    transition: all 0.2s linear;
+  }
+  .enableTailing:focus {
+    border-color: var(--theme-colors-core-action);
+
+    &::after {
+      border-radius: var(--theme-sizes-border-radius);
+      box-shadow: var(--theme-outline);
+      content: '';
+      height: 100%;
+      position: absolute;
+      width: 100%;
+    }
+  }
+  .enableTailing.enabled {
+    border-color: var(--theme-colors-core-action);
+    color: var(--theme-colors-core-action);
   }
   .debugger {
     display: flex;
