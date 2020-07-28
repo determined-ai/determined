@@ -22,9 +22,9 @@ interface Props {
   debugMode?: boolean;
   disableLevel?: boolean;
   disableLineNumber?: boolean;
-  onDownload?: () => Promise<void>;
   isLoading?: boolean;
   noWrap?: boolean;
+  onDownload?: () => Promise<void>;
   onScrollToTop?: (oldestLogId: number) => void;
   ref?: React.Ref<LogViewerHandles>;
   title: string;
@@ -99,7 +99,7 @@ const defaultLogConfig = {
  * a reference to be able to call functions inside the LogViewer.
  */
 const LogViewer: React.FC<Props> = forwardRef((
-  { onScrollToTop, ...props }: Props,
+  { onDownload, onScrollToTop, ...props }: Props,
   ref?: React.Ref<LogViewerHandles>,
 ) => {
   const baseRef = useRef<HTMLDivElement>(null);
@@ -113,6 +113,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   const [ scrollToInfo, setScrollToInfo ] =
     useState({ isBottom: false, isPrepend: false, logId: 0 });
   const [ config, setConfig ] = useState<LogConfig>(defaultLogConfig);
+  const [ isDownloading, setIsDownloading ] = useState<boolean>(false);
   const previousScroll = usePrevious(scroll, defaultScrollInfo);
   const previousLogs = usePrevious<Log[]>(logs, []);
   const classes = [ css.base ];
@@ -420,6 +421,13 @@ const LogViewer: React.FC<Props> = forwardRef((
     container.current.scrollTo({ behavior: 'smooth', top: container.current.scrollHeight });
   }, []);
 
+  const handleDownload = useCallback(() => {
+    if (!onDownload) return;
+    setIsDownloading(true);
+    onDownload()
+      .then(() => setIsDownloading(false));
+  }, [ onDownload ]);
+
   const logOptions = (
     <Space>
       {props.debugMode && <div className={css.debugger}>
@@ -441,11 +449,12 @@ const LogViewer: React.FC<Props> = forwardRef((
           icon={<Icon name="fullscreen" />}
           onClick={handleFullScreen} />
       </Tooltip>
-      {props.onDownload && <Tooltip placement="bottomRight" title="Download Logs">
+      {onDownload && <Tooltip placement="bottomRight" title="Download Logs">
         <Button
           aria-label="Download Logs"
           icon={<Icon name="download" />}
-          onClick={props.onDownload} />
+          loading={isDownloading}
+          onClick={handleDownload} />
       </Tooltip>}
     </Space>
   );
