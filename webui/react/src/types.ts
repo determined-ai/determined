@@ -169,7 +169,7 @@ interface DataLayer {
 export interface ExperimentConfig {
   checkpointPolicy: string;
   checkpointStorage?: CheckpointStorage;
-  dataLayer: DataLayer;
+  dataLayer?: DataLayer;
   description: string;
   searcher: {
     smallerIsBetter: boolean;

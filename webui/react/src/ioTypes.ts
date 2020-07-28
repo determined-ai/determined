@@ -181,7 +181,7 @@ export type ioTypeTrialDetails = io.TypeOf<typeof ioTrialDetails>;
 export const ioTrial = io.type({
   best_available_checkpoint: io.union([ ioCheckpoint, io.null ]),
   best_validation_metric: io.union([ io.number, io.null ]),
-  end_time: io.string,
+  end_time: io.union([ io.string, io.null ]),
   experiment_id: io.number,
   hparams: io.any,
   id: io.number,
@@ -207,6 +207,7 @@ export const ioCheckpointStorage = io.type({
     io.literal('aws'),
     io.literal('gcs'),
     io.literal('hdfs'),
+    io.literal('s3'),
     io.literal('shared_fs'),
     io.undefined,
   ]),
@@ -224,7 +225,7 @@ const ioExpResources = io.type({
 export const ioExperimentConfig = io.type({
   checkpoint_policy: io.string,
   checkpoint_storage: io.union([ ioCheckpointStorage, io.null ]),
-  data_layer: ioDataLayer,
+  data_layer: io.union([ ioDataLayer, io.undefined ]),
   description: io.string,
   resources: ioExpResources,
   searcher: io.type({

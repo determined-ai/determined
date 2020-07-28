@@ -137,10 +137,10 @@ const jsonToExperimentConfig = (data: unknown): ExperimentConfig => {
       storagePath: io.checkpoint_storage.storage_path || undefined,
       type: io.checkpoint_storage.type as CheckpointStorageType || undefined,
     } : undefined,
-    dataLayer: {
+    dataLayer: io.data_layer ? {
       containerStoragePath: io.data_layer.container_storage_path || undefined,
       type: io.data_layer.type,
-    },
+    } : undefined,
     description: io.description,
     resources: {},
     searcher: {
