@@ -98,12 +98,12 @@ const ioCommandAddress = io.type({
   container_port: io.number,
   host_ip: io.string,
   host_port: io.number,
-  protocol: io.string,
+  protocol: io.union([ io.string, io.undefined ]),
 });
 
 const ioCommandMisc = io.partial({
   experiment_ids: io.union([ io.array(io.number), io.null ]),
-  privateKey: io.string,
+  private_key: io.union([ io.string, io.undefined ]),
   trial_ids: io.union([ io.array(io.number), io.null ]),
 });
 
@@ -116,7 +116,7 @@ const commandStates: Record<string, null> = Object.values(CommandState)
 const commandStatesIoType = io.keyof(commandStates);
 
 export const ioGenericCommand = io.type({
-  addresses: io.union([ io.array(ioCommandAddress), io.null ]),
+  addresses: io.union([ io.array(ioCommandAddress), io.null, io.undefined ]),
   config: ioCommandConfig,
   exit_status: io.union([ io.string, io.null ]),
   id: io.string,

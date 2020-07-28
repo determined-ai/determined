@@ -69,27 +69,24 @@ export const jsonToAgents = (data: ioTypeAgents): Agent[] => {
 
 export const jsonToGenericCommand = (data: unknown, type: CommandType): Command => {
   const ioType = decode<ioTypeGenericCommand>(ioGenericCommand, data);
-  const addresses = ioType.addresses ?
-    ioType.addresses.map((address: ioTypeCommandAddress) => ({
-      containerIp: address.container_ip,
-      containerPort: address.container_port,
-      hostIp: address.host_ip,
-      hostPort: address.host_port,
-      protocol: address.protocol,
-    })) : undefined;
-  const misc = ioType.misc ? {
-    experimentIds: ioType.misc.experiment_ids || undefined,
-    privateKey: ioType.misc.privateKey || undefined,
-    trialIds: ioType.misc.trial_ids || undefined,
-  } : undefined;
-
   return {
-    addresses,
+    addresses: ioType.addresses ?
+      ioType.addresses.map((address: ioTypeCommandAddress) => ({
+        containerIp: address.container_ip,
+        containerPort: address.container_port,
+        hostIp: address.host_ip,
+        hostPort: address.host_port,
+        protocol: address.protocol,
+      })) : undefined,
     config: { ...ioType.config },
     exitStatus: ioType.exit_status || undefined,
     id: ioType.id,
     kind: type,
-    misc,
+    misc: ioType.misc ? {
+      experimentIds: ioType.misc.experiment_ids || undefined,
+      privateKey: ioType.misc.private_key,
+      trialIds: ioType.misc.trial_ids || undefined,
+    } : undefined,
     owner: {
       id: ioType.owner.id,
       username: ioType.owner.username,

@@ -110,7 +110,7 @@ export interface CommandAddress {
   containerPort: number;
   hostIp: string;
   hostPort: number;
-  protocol: string;
+  protocol?: string;
 }
 
 export interface Owner {
@@ -127,8 +127,8 @@ export enum CommandType {
 
 export interface CommandMisc {
   experimentIds?: number[];
-  trialIds?: number[];
   privateKey?: string;
+  trialIds?: number[];
 }
 
 export interface CommandConfig {
