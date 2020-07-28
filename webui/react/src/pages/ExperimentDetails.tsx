@@ -1,11 +1,11 @@
-import { Alert, Breadcrumb, Button, Modal, Space, Table, Tooltip } from 'antd';
+import { Breadcrumb, Button, Space, Table, Tooltip } from 'antd';
 import { ColumnType } from 'antd/lib/table';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useState } from 'react';
-import MonacoEditor from 'react-monaco-editor';
 import { useParams } from 'react-router';
 
 import CheckpointModal from 'components/CheckpointModal';
+import CreateExperimentModal from 'components/CreateExperimentModal';
 import ExperimentActions from 'components/ExperimentActions';
 import ExperimentChart from 'components/ExperimentChart';
 import ExperimentInfoBox from 'components/ExperimentInfoBox';
@@ -20,16 +20,13 @@ import { durationRenderer, relativeTimeRenderer, stateRenderer } from 'component
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
-import { routeAll } from 'routes';
-import { forkExperiment, getExperimentDetails, isNotFound } from 'services/api';
+import { getExperimentDetails, isNotFound } from 'services/api';
 import { ExperimentDetailsParams } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
 import { clone } from 'utils/data';
 import { alphanumericSorter, numericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
 import { humanReadableFloat } from 'utils/string';
 import { getDuration } from 'utils/time';
-
-import css from './ExperimentDetails.module.scss';
 
 interface Params {
   experimentId: string;
@@ -40,9 +37,6 @@ const ExperimentDetailsComp: React.FC = () => {
   const id = parseInt(experimentId);
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
-  const [ forkValue, setForkValue ] = useState<string>('Loading');
-  const [ forkModalState, setForkModalState ] = useState({ visible: false });
-  const [ forkError, setForkError ] = useState<string>();
   const [ experimentResponse, triggerExperimentRequest ] =
     useRestApi<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
   const experiment = experimentResponse.data;
@@ -54,6 +48,8 @@ const ExperimentDetailsComp: React.FC = () => {
   }, [ id, triggerExperimentRequest ]);
 
   usePolling(pollExperimentDetails);
+  const [ forkValue, setForkValue ] = useState<string>('Loading');
+  const [ forkModalState, setForkModalState ] = useState({ config: '', visible: false });
 
   useEffect(() => {
     if (experiment && experiment.config) {
@@ -77,9 +73,8 @@ const ExperimentDetailsComp: React.FC = () => {
     setForkModalState(state => ({ ...state, visible: true }));
   }, [ setForkModalState ]);
 
-  const editorOnChange = useCallback((newValue) => {
-    setForkValue(newValue);
-    setForkError(undefined);
+  const setVisible = useCallback((isVisible: boolean) => {
+    setForkModalState(state => ({ ...state, visible: isVisible }));
   }, []);
 
   const handleTableRow = useCallback((record: TrialItem) => ({
@@ -102,28 +97,6 @@ const ExperimentDetailsComp: React.FC = () => {
   } else if (!experiment) {
     return <Spinner fillContainer />;
   }
-
-  const handleOk = async (): Promise<void> => {
-    try {
-      // Validate the yaml syntax by attempting to load it.
-      yaml.safeLoad(forkValue);
-      const forkId = await forkExperiment({ experimentConfig: forkValue, parentId: id });
-      setForkModalState(state => ({ ...state, visible: false }));
-      routeAll(`/det/experiments/${forkId}`);
-    } catch (e) {
-      let errorMessage = 'Failed to fork using the provided config.';
-      if (e.name === 'YAMLException') {
-        errorMessage = e.message;
-      } else if (e.response?.data?.message) {
-        errorMessage = e.response.data.message;
-      }
-      setForkError(errorMessage);
-    }
-  };
-
-  const handleCancel = (): void => {
-    setForkModalState(state => ({ ...state, visible: false }));
-  };
 
   const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
     event.stopPropagation();
@@ -227,30 +200,8 @@ const ExperimentDetailsComp: React.FC = () => {
         experiment={experiment}
         onClick={{ Fork: showForkModal }}
         onSettled={pollExperimentDetails} />
-      <div className={css.topRow}>
+      <div>
         <ExperimentInfoBox experiment={experiment} />
-        <Modal
-          bodyStyle={{ padding: 0 }}
-          className={css.forkModal}
-          okText="Fork"
-          title={`Fork Experiment ${experimentId}`}
-          visible={forkModalState.visible}
-          width={768}
-          onCancel={handleCancel}
-          onOk={handleOk}>
-          <MonacoEditor
-            height="80vh"
-            language="yaml"
-            options={{
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-              selectOnLineNumbers: true,
-            }}
-            theme="vs-light"
-            value={forkValue}
-            onChange={editorOnChange} />
-          {forkError && <Alert className={css.error} message={forkError} type="error" />}
-        </Modal>
         <ExperimentChart
           startTime={experiment.startTime}
           validationHistory={experiment.validationHistory}
@@ -271,6 +222,14 @@ const ExperimentDetailsComp: React.FC = () => {
         show={showCheckpoint}
         title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
         onHide={handleCheckpointDismiss} />}
+      <CreateExperimentModal
+        configValue={forkValue}
+        parentId={id}
+        setConfigValue={setForkValue}
+        setVisible={setVisible}
+        title="Fork"
+        visible={forkModalState.visible}
+      />
     </Page>
   );
 };
