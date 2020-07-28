@@ -237,8 +237,8 @@ created with the Determined CLI. It may contain the following fields:
 
   - ``name: single``: This search method trains a single trial for a
     fixed length. By default, validation metrics are only
-    computed once, after the specified training units have
-    been completed; ``min_validation_period`` (see above) can be used
+    computed once, after the specified length has been completed;
+    ``min_validation_period`` (see above) can be used
     to specify that validation metrics should be computed more
     frequently.
 

@@ -73,7 +73,9 @@ fixed amount of training, determined by the experiment configuration.
 -  ``population_size``: The number of trials that should run at the same
    time.
 -  ``num_rounds``: The total number of rounds to run.
--  ``length_per_round``: The training length for each trial during a round.
+-  ``length_per_round``: The training units to train each trial for during a
+      round, in terms of records, batches or epochs
+      (see :ref:`Training Units<experiment-configuration_training_units>`).
 
 The parameters for the cloning process are also configurable using two
 nested objects, called ``replace_function`` and ``explore_function``,
