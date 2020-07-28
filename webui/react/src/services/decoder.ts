@@ -5,12 +5,14 @@ import {
   ioExperiments, ioGenericCommand, ioLog, ioLogs, ioTrialDetails, ioTypeAgents,
   ioTypeCheckpoint, ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo, ioTypeExperiment,
   ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand,
-  ioTypeGenericCommands, ioTypeLog, ioTypeLogs, ioTypeTrial, ioTypeTrialDetails, ioTypeUsers,
+  ioTypeGenericCommands, ioTypeLatestValidationMetrics, ioTypeLog, ioTypeLogs, ioTypeTrial,
+  ioTypeTrialDetails, ioTypeUsers,
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, CheckpointStorageType, Command, CommandState,
-  CommandType, DeterminedInfo, Experiment, ExperimentConfig, ExperimentDetails, Log, LogLevel,
-  ResourceState, ResourceType, RunState, TrialDetails, TrialItem, User,
+  CommandType, DeterminedInfo, Experiment, ExperimentConfig, ExperimentDetails,
+  LatestValidationMetrics, Log, LogLevel, ResourceState, ResourceType, RunState,
+  TrialDetails, TrialItem, User,
 } from 'types';
 import { capitalize } from 'utils/string';
 
@@ -188,20 +190,33 @@ const ioToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
   };
 };
 
+const ioToLatestValidationMetrics = (
+  io: ioTypeLatestValidationMetrics,
+): LatestValidationMetrics => {
+  return {
+    numInputs: io.num_inputs,
+    validationMetrics: io.validation_metrics,
+  };
+};
+
 const ioToTrial = (io: ioTypeTrial): TrialItem => {
   return {
     bestAvailableCheckpoint: io.best_available_checkpoint
       ? ioToCheckpoint(io.best_available_checkpoint) : undefined,
+    bestValidationMetric: io.best_validation_metric ? io.best_validation_metric : undefined,
     endTime: io.end_time || undefined,
     experimentId: io.experiment_id,
     hparams: io.hparams || {},
     id: io.id,
-    numBatches: io.num_batches,
+    latestValidationMetrics: io.latest_validation_metrics
+      ? ioToLatestValidationMetrics(io.latest_validation_metrics) : undefined,
+    numBatches: io.num_batches || 0,
     numCompletedCheckpoints: io.num_completed_checkpoints,
     numSteps: io.num_steps,
     seed: io.seed,
     startTime: io.start_time,
     state: io.state as RunState,// TODO add checkpoint decoder
+    url: `/ui/trials/${io.id}`,
   };
 };
 

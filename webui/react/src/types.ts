@@ -87,6 +87,11 @@ export interface ClusterOverview {
   totalResources: ClusterOverviewResource;
 }
 
+export interface StartEndTimes {
+  endTime?: string;
+  startTime: string;
+}
+
 /* Command */
 export enum CommandState {
   Pending = 'PENDING',
@@ -221,22 +226,30 @@ export interface Checkpoint {
 
 export interface CheckpointDetail extends Checkpoint {
   batch: number;
-  experimentId: number;
+  experimentId?: number;
   trialId: number;
+}
+
+export interface LatestValidationMetrics {
+  numInputs: number;
+  validationMetrics: Record<string, number>;
 }
 
 export interface TrialItem {
   bestAvailableCheckpoint?: Checkpoint;
+  bestValidationMetric?: number;
   endTime?: string;
   experimentId: number;
   hparams: Record<string, string>;
   id: number;
+  latestValidationMetrics?: LatestValidationMetrics;
   numBatches: number;
   numCompletedCheckpoints: number;
   numSteps: number;
   seed: number;
   startTime: string;
   state: RunState;
+  url: string;
 }
 
 export interface Step {

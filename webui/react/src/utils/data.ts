@@ -84,6 +84,13 @@ export const commandStateSorter = (a: CommandState, b: CommandState): number => 
   return commandStateSortValues[a] - commandStateSortValues[b];
 };
 
+export const numericSorter = (a?: number, b?: number): number => {
+  if (a != null && b != null) return a - b;
+  if (a != null && b == null) return 1;
+  if (b == null && b != null) return -1;
+  return 0;
+};
+
 export const runStateSorter = (a: RunState, b: RunState): number => {
   return runStateSortValues[a] - runStateSortValues[b];
 };

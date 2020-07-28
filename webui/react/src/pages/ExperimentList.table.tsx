@@ -2,12 +2,12 @@ import { ColumnsType } from 'antd/lib/table';
 import React from 'react';
 
 import {
-  actionsRenderer, experimentDescriptionRenderer, experimentProgressRenderer,
+  experimentActionRenderer, experimentDescriptionRenderer, experimentProgressRenderer,
   expermentDurationRenderer, relativeTimeRenderer, stateRenderer, userRenderer,
 } from 'components/Table';
 import { ExperimentItem } from 'types';
 import { alphanumericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
-import { experimentDuration } from 'utils/time';
+import { getDuration } from 'utils/time';
 
 export const columns: ColumnsType<ExperimentItem> = [
   {
@@ -31,8 +31,7 @@ export const columns: ColumnsType<ExperimentItem> = [
   },
   {
     render: expermentDurationRenderer,
-    sorter: (a: ExperimentItem, b: ExperimentItem): number =>
-      experimentDuration(a) - experimentDuration(b),
+    sorter: (a: ExperimentItem, b: ExperimentItem): number => getDuration(a) - getDuration(b),
     title: 'Duration',
   },
   {
@@ -58,7 +57,7 @@ export const columns: ColumnsType<ExperimentItem> = [
   },
   {
     align: 'right',
-    render: actionsRenderer,
+    render: experimentActionRenderer,
     title: '',
   },
 ];
