@@ -211,21 +211,6 @@ created with the Determined CLI. It may contain the following fields:
       and
       :func:`context.get_global_batch_size() <determined.TrialContext.get_global_batch_size>`.
 
-.. _experiment-configuration_training_units:
-
-  Some configurations, such as searcher training lengths and budgets, ``min_validation_period``, and
-  ``min_checkpoint_period``, can be expressed in terms of a few training units: records,
-  batches or epochs. For example, to specify the ``max_length`` for a searcher in terms of batches,
-  the configuration would read as shown below.
-
-  .. code:: yaml
-
-    max_length:
-      batches: 900
-
-  To express it terms of records or epochs, records or epochs are specified in place of ``batches``.
-  In the case of epochs, ``records_per_epoch`` must also be specified.
-
 .. _experiment-configuration_searcher:
 
 - ``searcher``: Specifies the procedure for searching through the
@@ -677,3 +662,21 @@ created with the Determined CLI. It may contain the following fields:
        copy of the cache, which is synchronized with the GCS cache.
      - ``local_cache_container_path``: The optional file system path to use as the
        mount point in the trial runner container for storing the local cache.
+
+Training Units
+--------------
+
+.. _experiment-configuration_training_units:
+
+Some configurations, such as searcher training lengths and budgets, ``min_validation_period``, and
+``min_checkpoint_period``, can be expressed in terms of a few training units: records,
+batches or epochs. For example, to specify the ``max_length`` for a searcher in terms of batches,
+the configuration would read as shown below.
+
+.. code:: yaml
+
+  max_length:
+    batches: 900
+
+To express it terms of records or epochs, records or epochs would be specified in place of
+``batches``. In the case of epochs, ``records_per_epoch`` must also be specified.
