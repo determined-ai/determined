@@ -113,6 +113,7 @@ const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
           language="yaml"
           options={{
             minimap: { enabled: false },
+            occurrencesHighlight: false,
             readOnly: true,
             scrollBeyondLastLine: false,
             selectOnLineNumbers: true,
