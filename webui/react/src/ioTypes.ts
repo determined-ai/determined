@@ -141,12 +141,6 @@ const checkpointStates: Record<string, null> = Object.values(CheckpointState)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 const checkpointStatesIoType = io.keyof(checkpointStates);
 
-const ioValidationHistory = io.type({
-  end_time: io.string,
-  trial_id: io.number,
-  validation_error: io.union([ io.number, io.null ]),
-});
-
 export const ioCheckpoint = io.type({
   end_time: io.union([ io.string, io.null ]),
   id: io.number,
@@ -261,7 +255,7 @@ export const ioExperiments = io.array(ioExperiment);
 export type ioTypeExperiment = io.TypeOf<typeof ioExperiment>;
 export type ioTypeExperiments = io.TypeOf<typeof ioExperiments>;
 
-const validationHistoryIoType = io.type({
+const ioValidationHistory = io.type({
   end_time: io.string,
   trial_id: io.number,
   validation_error: io.union([ io.number, io.null ]),
