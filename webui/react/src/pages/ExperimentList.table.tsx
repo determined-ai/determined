@@ -1,19 +1,26 @@
-import { ColumnType } from 'antd/lib/table';
+import { ColumnsType } from 'antd/lib/table';
 import React from 'react';
 
 import {
-  experimentActionRenderer, experimentProgressRenderer, expermentDurationRenderer,
-  relativeTimeRenderer, stateRenderer, userRenderer,
+  experimentActionRenderer, experimentArchivedRenderer, experimentDescriptionRenderer,
+  experimentProgressRenderer, expermentDurationRenderer, relativeTimeRenderer, stateRenderer,
+  userRenderer,
 } from 'components/Table';
 import { ExperimentItem } from 'types';
 import { alphanumericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
 import { getDuration } from 'utils/time';
 
-export const columns: ColumnType<ExperimentItem>[] = [
+export const columns: ColumnsType<ExperimentItem> = [
   {
     dataIndex: 'id',
     sorter: (a: ExperimentItem, b: ExperimentItem): number => alphanumericSorter(a.id, b.id),
     title: 'ID',
+  },
+  {
+    dataIndex: 'name',
+    render: experimentDescriptionRenderer,
+    sorter: (a: ExperimentItem, b: ExperimentItem): number => alphanumericSorter(a.name, b.name),
+    title: 'Name',
   },
   {
     defaultSortOrder: 'descend',
@@ -42,6 +49,13 @@ export const columns: ColumnType<ExperimentItem>[] = [
     render: experimentProgressRenderer,
     sorter: (a: ExperimentItem, b: ExperimentItem): number => (a.progress || 0) - (b.progress || 0),
     title: 'Progress',
+  },
+  {
+    align: 'center',
+    render: experimentArchivedRenderer,
+    sorter: (a: ExperimentItem, b: ExperimentItem): number =>
+      (a.archived === b.archived)? 0 : a.archived? 1 : -1,
+    title: 'Archived',
   },
   {
     render: userRenderer,
