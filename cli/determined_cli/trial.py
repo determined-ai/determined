@@ -46,7 +46,7 @@ def describe_trial(args: Namespace) -> None:
 
     # Print information about individual steps.
     headers = [
-        "Training Workload #",
+        "# of Batches",
         "State",
         "Start Time",
         "End Time",
@@ -59,18 +59,20 @@ def describe_trial(args: Namespace) -> None:
     if args.metrics:
         headers.append("Workload Metrics")
 
-    values = [
-        [
-            s["id"],
+
+    total_batches = 0
+    values = [] 
+    for s in trial["steps"]:
+        total_batches += s["num_batches"]
+        values += [[
+            total_batches,
             s["state"],
             render.format_time(s["start_time"]),
             render.format_time(s["end_time"]),
             *format_checkpoint(s["checkpoint"]),
             *format_validation(s["validation"]),
             *([json.dumps(s["metrics"], indent=4)] if args.metrics else []),
-        ]
-        for s in trial["steps"]
-    ]
+        ]]
 
     print()
     print("Workloads:")
