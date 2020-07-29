@@ -11,7 +11,7 @@ import (
 
 func TestEventLog(t *testing.T) {
 	rand := nprand.New(0)
-	log := NewEventLog()
+	log := NewEventLog(model.Batches)
 
 	trialIDs := []int{7, 11, 13, 17}
 
@@ -29,24 +29,20 @@ func TestEventLog(t *testing.T) {
 	}
 
 	for i, trialID := range trialIDs {
-		assert.Equal(t, log.TotalStepsStarted, i)
-		log.OperationsCreated(NewTrain(log.RequestIDs[trialID], 1, defaultBatchesPerStep))
-		assert.Equal(t, log.TotalStepsStarted, i+1)
-
-		assert.Equal(t, log.TotalStepsCompleted, i)
-		log.WorkloadCompleted(CompletedMessage{
-			Type: "WORKLOAD_COMPLETED",
+		// Check that units completed are recorded and workloads saved.
+		msg := CompletedMessage{
 			Workload: Workload{
-				Kind:         RunStep,
-				ExperimentID: 1,
-				TrialID:      trialID,
-				StepID:       1,
-				NumBatches:   defaultBatchesPerStep,
+				StepID: trialID*trialID + i,
 			},
-			RunMetrics: make(map[string]interface{}),
-		})
-		assert.Equal(t, log.TotalStepsCompleted, i+1)
+		}
+		assert.Equal(t, log.TotalUnitsCompleted.Units, i*10)
+		log.WorkloadCompleted(msg, model.NewLengthInBatches(10))
+		assert.Equal(t, log.TotalUnitsCompleted.Units, (i+1)*10)
+	}
 
+	assert.Equal(t, log.TotalUnitsCompleted, model.NewLengthInBatches(10*len(trialIDs)))
+
+	for i, trialID := range trialIDs {
 		// Check that closing trials counts them correctly.
 		assert.Equal(t, log.TrialsClosed, i)
 		log.TrialClosed(log.RequestIDs[trialID])
@@ -59,94 +55,4 @@ func TestEventLog(t *testing.T) {
 	assert.Assert(t, log.Shutdown)
 }
 
-func TestEventLogCheckpointCaching(t *testing.T) {
-	rand := nprand.New(0)
-	log := NewEventLog()
-
-	trialID := 1
-	stepID := 1
-
-	create := NewCreate(rand, nil, model.TrialWorkloadSequencerType)
-	log.TrialCreated(create, trialID)
-
-	checkpointOperation := WorkloadOperation{
-		Kind:      CheckpointModel,
-		RequestID: create.RequestID,
-		StepID:    stepID,
-	}
-
-	completedMessage := CompletedMessage{
-		Type: "WORKLOAD_COMPLETED",
-		Workload: Workload{
-			Kind:         CheckpointModel,
-			ExperimentID: 1,
-			TrialID:      trialID,
-			StepID:       stepID,
-		},
-	}
-
-	_, ok := log.completedWorkloads[checkpointOperation]
-	assert.Assert(t, !ok)
-	log.uncommitted = nil
-
-	// Check that an unrequested CheckpointModel CompletedMessage is logged but not acted upon.
-	assert.Assert(t, !log.WorkloadCompleted(completedMessage))
-	completed, ok := log.completedWorkloads[checkpointOperation]
-	assert.Assert(t, ok)
-	assert.Assert(t, !completed)
-	assert.Equal(t, len(log.uncommitted), 1)
-	log.uncommitted = nil
-
-	// Check that another CompletedMessage has no effect.
-	assert.Assert(t, !log.WorkloadCompleted(completedMessage))
-	assert.Assert(t, !log.completedWorkloads[checkpointOperation])
-	assert.Equal(t, len(log.uncommitted), 0)
-
-	// Check that FilterCompletedCheckpoints catches the already-completed checkpoint.
-	filteredOps, replayMsgs := log.FilterCompletedCheckpoints([]Operation{checkpointOperation})
-	assert.Equal(t, len(filteredOps), 0)
-	assert.Equal(t, len(replayMsgs), 1)
-	assert.DeepEqual(t, completedMessage, replayMsgs[0])
-
-	// Tell the EventLog the SearchMethod has now asked for the CheckpointModel operation.
-	log.OperationsCreated(checkpointOperation)
-	log.uncommitted = nil
-
-	// Check that the next call to WorkloadCompleted returns true, that EventLog.completedWorkloads
-	// is updated, and that there is no duplicated searcher event was created.
-	assert.Assert(t, log.WorkloadCompleted(completedMessage))
-	assert.Assert(t, log.completedWorkloads[checkpointOperation])
-	assert.Equal(t, len(log.uncommitted), 0)
-
-	// Check that another CompletedMessage has no effect
-	assert.Assert(t, !log.WorkloadCompleted(completedMessage))
-	assert.Assert(t, log.completedWorkloads[checkpointOperation])
-	assert.Equal(t, len(log.uncommitted), 0)
-
-	// Check that a requested CheckpointModel message is both logged and acted upon the first time.
-	stepID++
-	checkpointOperation = WorkloadOperation{
-		Kind:      CheckpointModel,
-		RequestID: create.RequestID,
-		StepID:    stepID,
-	}
-
-	completedMessage = CompletedMessage{
-		Type: "WORKLOAD_COMPLETED",
-		Workload: Workload{
-			Kind:         CheckpointModel,
-			ExperimentID: 1,
-			TrialID:      trialID,
-			StepID:       stepID,
-		},
-	}
-
-	log.OperationsCreated(checkpointOperation)
-	log.uncommitted = nil
-	_, ok = log.completedWorkloads[checkpointOperation]
-	assert.Assert(t, !ok)
-
-	assert.Assert(t, log.WorkloadCompleted(completedMessage))
-	assert.Assert(t, log.completedWorkloads[checkpointOperation])
-	assert.Equal(t, len(log.uncommitted), 1)
-}
+// TODO(brad) when we rollback the sequencer, rollback searcher events to the last checkpoint too

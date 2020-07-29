@@ -20,7 +20,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			SmallerIsBetter: false,
 			PopulationSize:  2,
 			NumRounds:       2,
-			StepsPerRound:   2,
+			LengthPerRound:  model.NewLengthInBatches(200),
 			PBTReplaceConfig: model.PBTReplaceConfig{
 				TruncateFraction: .5,
 			},
@@ -31,12 +31,12 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			return float64(trialID)
 		}
 
-		expected := [][]Kind{
-			toKinds("2S 1V 1C 2S 1V"),
-			toKinds("2S 1V"),
-			toKinds("2S 1V"),
+		expected := [][]Runnable{
+			toOps("200B V C 200B V"),
+			toOps("200B V"),
+			toOps("200B V"),
 		}
-		checkSimulation(t, newPBTSearch(config, defaultBatchesPerStep), nil, val, expected)
+		checkSimulation(t, newPBTSearch(config), nil, val, expected)
 	})
 
 	t.Run("no_truncation", func(t *testing.T) {
@@ -46,7 +46,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			SmallerIsBetter: false,
 			PopulationSize:  3,
 			NumRounds:       4,
-			StepsPerRound:   4,
+			LengthPerRound:  model.NewLengthInBatches(400),
 			PBTReplaceConfig: model.PBTReplaceConfig{
 				TruncateFraction: 0.,
 			},
@@ -57,12 +57,12 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			return float64(trialID)
 		}
 
-		expected := [][]Kind{
-			toKinds("4S 1V 4S 1V 4S 1V 4S 1V"),
-			toKinds("4S 1V 4S 1V 4S 1V 4S 1V"),
-			toKinds("4S 1V 4S 1V 4S 1V 4S 1V"),
+		expected := [][]Runnable{
+			toOps("400B V 400B V 400B V 400B V"),
+			toOps("400B V 400B V 400B V 400B V"),
+			toOps("400B V 400B V 400B V 400B V"),
 		}
-		checkSimulation(t, newPBTSearch(config, defaultBatchesPerStep), nil, val, expected)
+		checkSimulation(t, newPBTSearch(config), nil, val, expected)
 	})
 
 	t.Run("even_odd", func(t *testing.T) {
@@ -74,7 +74,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			SmallerIsBetter: false,
 			PopulationSize:  2,
 			NumRounds:       3,
-			StepsPerRound:   17,
+			LengthPerRound:  model.NewLengthInBatches(1700),
 			PBTReplaceConfig: model.PBTReplaceConfig{
 				TruncateFraction: .5,
 			},
@@ -88,13 +88,13 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			return float64(trialID)
 		}
 
-		expected := [][]Kind{
-			toKinds("17S 1V 1C 17S 1V"),
-			toKinds("17S 1V 1C 17S 1V"),
-			toKinds("17S 1V"),
-			toKinds("17S 1V"),
+		expected := [][]Runnable{
+			toOps("1700B V C 1700B V"),
+			toOps("1700B V C 1700B V"),
+			toOps("1700B V"),
+			toOps("1700B V"),
 		}
-		checkSimulation(t, newPBTSearch(config, defaultBatchesPerStep), nil, val, expected)
+		checkSimulation(t, newPBTSearch(config), nil, val, expected)
 	})
 
 	t.Run("new_is_better", func(t *testing.T) {
@@ -106,7 +106,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			SmallerIsBetter: false,
 			PopulationSize:  4,
 			NumRounds:       8,
-			StepsPerRound:   5,
+			LengthPerRound:  model.NewLengthInBatches(500),
 			PBTReplaceConfig: model.PBTReplaceConfig{
 				TruncateFraction: .5,
 			},
@@ -117,27 +117,27 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			return float64(trialID)
 		}
 
-		expected := [][]Kind{
-			toKinds("5S 1V 1C 5S 1V"),
-			toKinds("5S 1V 1C 5S 1V"),
-			toKinds("5S 1V 1C 5S 1V"),
-			toKinds("5S 1V 1C 5S 1V"),
-			toKinds("5S 1V 1C 5S 1V"),
-			toKinds("5S 1V 1C 5S 1V"),
-			toKinds("5S 1V 1C 5S 1V"),
-			toKinds("5S 1V 1C 5S 1V"),
-			toKinds("5S 1V 1C 5S 1V"),
-			toKinds("5S 1V 1C 5S 1V"),
-			toKinds("5S 1V 1C 5S 1V"),
-			toKinds("5S 1V 1C 5S 1V"),
-			toKinds("5S 1V 1C 5S 1V"),
-			toKinds("5S 1V 1C 5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
+		expected := [][]Runnable{
+			toOps("500B V C 500B V"),
+			toOps("500B V C 500B V"),
+			toOps("500B V C 500B V"),
+			toOps("500B V C 500B V"),
+			toOps("500B V C 500B V"),
+			toOps("500B V C 500B V"),
+			toOps("500B V C 500B V"),
+			toOps("500B V C 500B V"),
+			toOps("500B V C 500B V"),
+			toOps("500B V C 500B V"),
+			toOps("500B V C 500B V"),
+			toOps("500B V C 500B V"),
+			toOps("500B V C 500B V"),
+			toOps("500B V C 500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
 		}
-		checkSimulation(t, newPBTSearch(config, defaultBatchesPerStep), nil, val, expected)
+		checkSimulation(t, newPBTSearch(config), nil, val, expected)
 	})
 
 	t.Run("old_is_better", func(t *testing.T) {
@@ -148,7 +148,7 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			SmallerIsBetter: true,
 			PopulationSize:  4,
 			NumRounds:       8,
-			StepsPerRound:   5,
+			LengthPerRound:  model.NewLengthInBatches(500),
 			PBTReplaceConfig: model.PBTReplaceConfig{
 				TruncateFraction: .5,
 			},
@@ -159,38 +159,38 @@ func TestPBTSearcherWorkloads(t *testing.T) {
 			return float64(trialID)
 		}
 
-		expected := [][]Kind{
-			toKinds("5S 1V 1C 5S 1V 1C 5S 1V 1C 5S 1V 1C 5S 1V 1C 5S 1V 1C 5S 1V 1C 5S 1V"),
-			toKinds("5S 1V 1C 5S 1V 1C 5S 1V 1C 5S 1V 1C 5S 1V 1C 5S 1V 1C 5S 1V 1C 5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
-			toKinds("5S 1V"),
+		expected := [][]Runnable{
+			toOps("500B V C 500B V C 500B V C 500B V C 500B V C 500B V C 500B V C 500B V"),
+			toOps("500B V C 500B V C 500B V C 500B V C 500B V C 500B V C 500B V C 500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
+			toOps("500B V"),
 		}
-		checkSimulation(t, newPBTSearch(config, defaultBatchesPerStep), nil, val, expected)
+		checkSimulation(t, newPBTSearch(config), nil, val, expected)
 	})
 }
 
 func TestPBTSearcherReproducibility(t *testing.T) {
 	conf := model.PBTConfig{
 		Metric: defaultMetric, SmallerIsBetter: true,
-		PopulationSize: 10, NumRounds: 10, StepsPerRound: 10,
+		PopulationSize: 10, NumRounds: 10, LengthPerRound: model.NewLengthInBatches(1000),
 		PBTReplaceConfig: model.PBTReplaceConfig{TruncateFraction: 0.5},
 		PBTExploreConfig: model.PBTExploreConfig{ResampleProbability: 0.5, PerturbFactor: 0.5},
 	}
-	searchMethod := func() SearchMethod { return newPBTSearch(conf, defaultBatchesPerStep) }
+	searchMethod := func() SearchMethod { return newPBTSearch(conf) }
 	checkReproducibility(t, searchMethod, nil, defaultMetric)
 }
 
@@ -200,7 +200,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 		SmallerIsBetter:  true,
 		PopulationSize:   10,
 		NumRounds:        10,
-		StepsPerRound:    10,
+		LengthPerRound:   model.NewLengthInBatches(1000),
 		PBTReplaceConfig: model.PBTReplaceConfig{},
 		PBTExploreConfig: model.PBTExploreConfig{},
 	}
@@ -244,7 +244,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 
 	// Test that exploring with no resampling and no perturbing does not change the hyperparameters.
 	{
-		pbt := newPBTSearch(nullConfig, defaultBatchesPerStep).(*pbtSearch)
+		pbt := newPBTSearch(nullConfig).(*pbtSearch)
 		newSample := pbt.exploreParams(ctx, sample)
 		assert.DeepEqual(t, sample, newSample)
 	}
@@ -259,7 +259,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 		spec.Each(func(name string, _ model.Hyperparameter) {
 			invalidSample[name] = nil
 		})
-		pbt := newPBTSearch(nullConfig, defaultBatchesPerStep).(*pbtSearch)
+		pbt := newPBTSearch(nullConfig).(*pbtSearch)
 		newSample := pbt.exploreParams(ctx, sample)
 
 		assert.Equal(t, len(invalidSample), len(newSample))
@@ -274,7 +274,7 @@ func testPBTExploreWithSeed(t *testing.T, seed uint32) {
 	{
 		perturbingConfig := nullConfig
 		perturbingConfig.PerturbFactor = .5
-		pbt := newPBTSearch(perturbingConfig, defaultBatchesPerStep).(*pbtSearch)
+		pbt := newPBTSearch(perturbingConfig).(*pbtSearch)
 
 		newSample := pbt.exploreParams(ctx, sample)
 
@@ -309,7 +309,7 @@ func TestPBTValidation(t *testing.T) {
 		SmallerIsBetter:  true,
 		PopulationSize:   10,
 		NumRounds:        10,
-		StepsPerRound:    10,
+		LengthPerRound:   model.NewLengthInBatches(1000),
 		PBTReplaceConfig: model.PBTReplaceConfig{},
 		PBTExploreConfig: model.PBTExploreConfig{},
 	}
@@ -333,10 +333,10 @@ func TestPBTValidation(t *testing.T) {
 
 	{
 		badConfig := goodConfig
-		badConfig.StepsPerRound = 0
-		assert.ErrorContains(t, check.Validate(badConfig), "steps_per_round")
-		badConfig.StepsPerRound = -1
-		assert.ErrorContains(t, check.Validate(badConfig), "steps_per_round")
+		badConfig.LengthPerRound = model.NewLengthInBatches(0)
+		assert.ErrorContains(t, check.Validate(badConfig), "length_per_round")
+		badConfig.LengthPerRound = model.NewLengthInBatches(-1)
+		assert.ErrorContains(t, check.Validate(badConfig), "length_per_round")
 	}
 
 	{
@@ -370,14 +370,14 @@ func TestPBTSearchMethod(t *testing.T) {
 			name: "smaller is better",
 			expectedTrials: []predefinedTrial{
 				// First generation.
-				newConstantPredefinedTrial(0.5, 4, []int{2, 4}, []int{2}),
-				newConstantPredefinedTrial(0.6, 2, []int{2}, nil),
+				newConstantPredefinedTrial(toOps("200B V C 200B V"), 0.5),
+				newConstantPredefinedTrial(toOps("200B V"), 0.6),
 				// Second generation beats first generation.
-				newConstantPredefinedTrial(0.1, 6, []int{2, 4, 6}, []int{2, 4}),
+				newConstantPredefinedTrial(toOps("200B V C 200B V C 200B V"), 0.1),
 				// Third generation loses to second generation.
-				newConstantPredefinedTrial(0.2, 2, []int{2}, nil),
+				newConstantPredefinedTrial(toOps("200B V"), 0.2),
 				// Fourth generation loses to second generation also.
-				newConstantPredefinedTrial(0.3, 2, []int{2}, nil),
+				newConstantPredefinedTrial(toOps("200B V"), 0.3),
 			},
 			config: model.SearcherConfig{
 				PBTConfig: &model.PBTConfig{
@@ -385,7 +385,7 @@ func TestPBTSearchMethod(t *testing.T) {
 					SmallerIsBetter: true,
 					PopulationSize:  2,
 					NumRounds:       4,
-					StepsPerRound:   2,
+					LengthPerRound:  model.NewLengthInBatches(200),
 					PBTReplaceConfig: model.PBTReplaceConfig{
 						TruncateFraction: .5,
 					},
@@ -397,14 +397,14 @@ func TestPBTSearchMethod(t *testing.T) {
 			name: "early exit -- smaller is better",
 			expectedTrials: []predefinedTrial{
 				// First generation.
-				newEarlyExitPredefinedTrial(0.5, 4, []int{2}, []int{2}),
-				newConstantPredefinedTrial(0.6, 2, []int{2}, nil),
+				newEarlyExitPredefinedTrial(toOps("200B"), 0.5),
+				newConstantPredefinedTrial(toOps("200B V C 200B V"), 0.6),
 				// Second generation beats first generation.
-				newConstantPredefinedTrial(0.1, 6, []int{2, 4, 6}, []int{2, 4}),
+				newConstantPredefinedTrial(toOps("200B V C 200B V C 200B V"), 0.1),
 				// Third generation loses to second generation.
-				newConstantPredefinedTrial(0.2, 2, []int{2}, nil),
+				newConstantPredefinedTrial(toOps("200B V"), 0.2),
 				// Fourth generation loses to second generation also.
-				newConstantPredefinedTrial(0.3, 2, []int{2}, nil),
+				newConstantPredefinedTrial(toOps("200B V"), 0.3),
 			},
 			config: model.SearcherConfig{
 				PBTConfig: &model.PBTConfig{
@@ -412,7 +412,7 @@ func TestPBTSearchMethod(t *testing.T) {
 					SmallerIsBetter: true,
 					PopulationSize:  2,
 					NumRounds:       4,
-					StepsPerRound:   2,
+					LengthPerRound:  model.NewLengthInBatches(200),
 					PBTReplaceConfig: model.PBTReplaceConfig{
 						TruncateFraction: .5,
 					},
@@ -424,14 +424,14 @@ func TestPBTSearchMethod(t *testing.T) {
 			name: "smaller is not better",
 			expectedTrials: []predefinedTrial{
 				// First generation.
-				newConstantPredefinedTrial(0.5, 4, []int{2, 4}, []int{2}),
-				newConstantPredefinedTrial(0.4, 2, []int{2}, nil),
+				newConstantPredefinedTrial(toOps("200B V C 200B V"), 0.5),
+				newConstantPredefinedTrial(toOps("200B V"), 0.4),
 				// Second generation beats first generation.
-				newConstantPredefinedTrial(0.9, 6, []int{2, 4, 6}, []int{2, 4}),
+				newConstantPredefinedTrial(toOps("200B V C 200B V C 200B V"), 0.9),
 				// Third generation loses to second generation.
-				newConstantPredefinedTrial(0.8, 2, []int{2}, nil),
+				newConstantPredefinedTrial(toOps("200B V"), 0.8),
 				// Fourth generation loses to second generation also.
-				newConstantPredefinedTrial(0.7, 2, []int{2}, nil),
+				newConstantPredefinedTrial(toOps("200B V"), 0.7),
 			},
 			config: model.SearcherConfig{
 				PBTConfig: &model.PBTConfig{
@@ -439,7 +439,7 @@ func TestPBTSearchMethod(t *testing.T) {
 					SmallerIsBetter: false,
 					PopulationSize:  2,
 					NumRounds:       4,
-					StepsPerRound:   2,
+					LengthPerRound:  model.NewLengthInBatches(200),
 					PBTReplaceConfig: model.PBTReplaceConfig{
 						TruncateFraction: .5,
 					},
@@ -451,14 +451,14 @@ func TestPBTSearchMethod(t *testing.T) {
 			name: "early exit -- smaller is not better",
 			expectedTrials: []predefinedTrial{
 				// First generation.
-				newEarlyExitPredefinedTrial(0.5, 4, []int{2}, []int{2}),
-				newConstantPredefinedTrial(0.4, 2, []int{2}, nil),
+				newEarlyExitPredefinedTrial(toOps("200B V C 200B"), 0.5),
+				newConstantPredefinedTrial(toOps("200B V"), 0.4),
 				// Second generation beats first generation.
-				newConstantPredefinedTrial(0.9, 6, []int{2, 4, 6}, []int{2, 4}),
+				newConstantPredefinedTrial(toOps("200B V C 200B V C 200B V"), 0.9),
 				// Third generation loses to second generation.
-				newConstantPredefinedTrial(0.8, 2, []int{2}, nil),
+				newConstantPredefinedTrial(toOps("200B V"), 0.8),
 				// Fourth generation loses to second generation also.
-				newConstantPredefinedTrial(0.7, 2, []int{2}, nil),
+				newConstantPredefinedTrial(toOps("200B V"), 0.7),
 			},
 			config: model.SearcherConfig{
 				PBTConfig: &model.PBTConfig{
@@ -466,7 +466,7 @@ func TestPBTSearchMethod(t *testing.T) {
 					SmallerIsBetter: false,
 					PopulationSize:  2,
 					NumRounds:       4,
-					StepsPerRound:   2,
+					LengthPerRound:  model.NewLengthInBatches(200),
 					PBTReplaceConfig: model.PBTReplaceConfig{
 						TruncateFraction: .5,
 					},

@@ -8,6 +8,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
+// GlobalBatchSize is the name of the hyperparameter for global_batch_size.
+const GlobalBatchSize = "global_batch_size"
+
 // Hyperparameters holds a mapping from hyperparameter name to its configuration.
 type Hyperparameters map[string]Hyperparameter
 

@@ -425,7 +425,7 @@ def test_log_null_bytes() -> None:
     config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config_obj["hyperparameters"]["write_null"] = True
     config_obj["max_restarts"] = 0
-    config_obj["searcher"]["max_steps"] = 1
+    config_obj["searcher"]["max_length"] = {"batches": 1}
     experiment_id = exp.run_basic_test_with_temp_config(config_obj, conf.fixtures_path("no_op"), 1)
 
     trials = exp.experiment_trials(experiment_id)
@@ -461,7 +461,7 @@ def test_pytorch_parallel() -> None:
     config = conf.load_config(conf.official_examples_path("trial/mnist_pytorch/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_native_parallel(config, False)
-    config = conf.set_max_steps(config, 2)
+    config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_tensor_auto_tuning(config, True)
 
     exp.run_basic_test_with_temp_config(

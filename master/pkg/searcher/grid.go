@@ -12,37 +12,34 @@ import (
 type gridSearch struct {
 	defaultSearchMethod
 	model.GridConfig
-	trials         int
-	batchesPerStep int
+	trials int
 }
 
-func newGridSearch(config model.GridConfig, batchesPerStep int) SearchMethod {
-	return &gridSearch{GridConfig: config, batchesPerStep: batchesPerStep}
+func newGridSearch(config model.GridConfig) SearchMethod {
+	return &gridSearch{GridConfig: config}
 }
 
 func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
-	var operations []Operation
+	var ops []Operation
 	grid := newHyperparameterGrid(ctx.hparams)
 	s.trials = len(grid)
 	for _, params := range grid {
 		create := NewCreate(ctx.rand, params, model.TrialWorkloadSequencerType)
-		operations = append(operations, create)
-		trainVal := trainAndValidate(create.RequestID, 0, s.MaxSteps, s.batchesPerStep)
-		operations = append(operations, trainVal...)
-		operations = append(operations, NewClose(create.RequestID))
+		ops = append(ops, create)
+		ops = append(ops, NewTrain(create.RequestID, s.MaxLength))
+		ops = append(ops, NewValidate(create.RequestID))
+		ops = append(ops, NewClose(create.RequestID))
 	}
-	return operations, nil
+	return ops, nil
 }
 
-func (s *gridSearch) progress(workloadsCompleted int) float64 {
-	return float64(workloadsCompleted) / float64((s.MaxSteps+1)*s.trials)
+func (s *gridSearch) progress(unitsCompleted model.Length) float64 {
+	return float64(unitsCompleted.Units) / float64(s.GridConfig.MaxLength.MultInt(s.trials).Units)
 }
 
 // trialExitedEarly does nothing since grid does not take actions based on
 // search status or progress.
-func (s *gridSearch) trialExitedEarly(
-	ctx context, requestID RequestID, message Workload,
-) ([]Operation, error) {
+func (s *gridSearch) trialExitedEarly(context, RequestID) ([]Operation, error) {
 	return nil, nil
 }
 

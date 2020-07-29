@@ -234,9 +234,9 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	case []searcher.Operation:
 		for _, operation := range msg {
 			switch op := operation.(type) {
-			case searcher.WorkloadOperation:
+			case searcher.Runnable:
 				if err := t.sequencer.OperationRequested(op); err != nil {
-					return errors.Wrap(err, "error passing workload to sequencer")
+					return errors.Wrap(err, "error passing runnable to sequencer")
 				}
 			case searcher.Close:
 				t.close = &op
@@ -432,7 +432,7 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 	t.numContainers = msg.NumContainers
 
 	if err = saveWorkload(t.db, w); err != nil {
-		ctx.Log().WithError(err).Error("failed to save workload to the database")
+		ctx.Log().WithError(err).Error("failed to save workload to the database after assigned")
 	}
 
 	ctx.Log().Infof("starting trial container: %v", w)
@@ -498,26 +498,37 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 		}
 	}
 
-	// Now that we have marked the workload as completed in the database, we can relay the message
-	// to the Experiment. We use Ask and not Tell because in the case of completed validation
-	// metrics, the Experiment will respond with whether or not we should take a checkpoint.
-	experimentFuture := ctx.Ask(ctx.Self().Parent(), msg)
+	ctx.Log().Infof("trial completed workload: %v", msg.Workload)
 
-	if err := t.sequencer.WorkloadCompleted(msg, experimentFuture); err != nil {
-		return errors.Wrap(err, "Error passing CompletedMessage to sequencer")
+	units := model.NewLengthFromBatches(msg.Workload.NumBatches, t.sequencer.unitContext)
+	isBestValidation := ctx.Ask(ctx.Self().Parent(), trialCompletedWorkload{t.id, msg, units})
+	op, metrics, err := t.sequencer.WorkloadCompleted(msg, isBestValidation)
+	switch {
+	case err != nil:
+		return errors.Wrap(err, "Error passing completed message to sequencer")
+	case op != nil:
+		ctx.Tell(ctx.Self().Parent(), trialCompletedOperation{t.id, op, metrics})
+	}
+
+	switch op, metrics, err = t.sequencer.CompleteCachedCheckpoints(); {
+	case err != nil:
+		return errors.Wrap(err, "Error completing cached checkpoints")
+	case op != nil:
+		ctx.Tell(ctx.Self().Parent(), trialCompletedOperation{t.id, op, metrics})
 	}
 
 	// Decide what to do next.
 	terminateNow := false
 	if msg.ExitedReason != nil {
 		ctx.Log().Info("exiting trial early")
+		ctx.Tell(ctx.Self().Parent(), trialExitedEarly{t.id, msg.ExitedReason})
 		t.earlyExit = true
 		if *msg.ExitedReason == searcher.Errored {
 			return nil
 		}
 	}
+
 	var w searcher.Workload
-	var err error
 	switch {
 	// We have another workload to run.
 	case !t.pendingGracefulTermination && !t.sequencer.UpToDate():
@@ -893,6 +904,7 @@ func (t *trial) restore(ctx *actor.Context) {
 	step := t.sequencer.RollBackSequencer()
 
 	ctx.Log().Infof("restoring trial %d to end of step %d", t.id, step)
+
 	// Delete things in the database that are now invalid. (Even if the last completed
 	// step had its checkpoint done, the following step may have been started and thus
 	// added to the database already.)
