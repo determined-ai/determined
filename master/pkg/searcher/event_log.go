@@ -21,8 +21,7 @@ type TrialClosedEvent struct {
 
 // EventLog records all actions coming to and from a searcher.
 type EventLog struct {
-	uncommitted        []Event
-	completedWorkloads map[Workload]bool
+	uncommitted []Event
 
 	// Searcher state.
 	earlyExits          map[RequestID]bool
@@ -39,7 +38,6 @@ type EventLog struct {
 // NewEventLog initializes an empty event log.
 func NewEventLog(unit model.Unit) *EventLog {
 	return &EventLog{
-		completedWorkloads:  map[Workload]bool{},
 		earlyExits:          map[RequestID]bool{},
 		TotalUnitsCompleted: model.NewLength(unit, 0),
 		Shutdown:            false,
@@ -85,11 +83,8 @@ func (el *EventLog) TrialExitedEarly(requestID RequestID) {
 
 // WorkloadCompleted records that the workload has been completed.
 func (el *EventLog) WorkloadCompleted(msg CompletedMessage, unitsCompleted model.Length) {
-	if _, ok := el.completedWorkloads[msg.Workload]; !ok {
-		el.TotalUnitsCompleted = el.TotalUnitsCompleted.Add(unitsCompleted)
-		el.uncommitted = append(el.uncommitted, msg)
-		el.completedWorkloads[msg.Workload] = true
-	}
+	el.TotalUnitsCompleted = el.TotalUnitsCompleted.Add(unitsCompleted)
+	el.uncommitted = append(el.uncommitted, msg)
 }
 
 // TrialClosed records that a trial with the specified trial id has been closed.

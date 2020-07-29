@@ -40,7 +40,6 @@ func TestEventLog(t *testing.T) {
 		assert.Equal(t, log.TotalUnitsCompleted.Units, (i+1)*10)
 	}
 
-	assert.Equal(t, len(log.completedWorkloads), len(trialIDs))
 	assert.Equal(t, log.TotalUnitsCompleted, model.NewLengthInBatches(10*len(trialIDs)))
 
 	for i, trialID := range trialIDs {
