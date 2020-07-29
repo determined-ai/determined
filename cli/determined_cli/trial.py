@@ -59,13 +59,13 @@ def describe_trial(args: Namespace) -> None:
     if args.metrics:
         headers.append("Workload Metrics")
 
-    total_batches = 0
+    total_processed_batches = 0
     values = []
     for s in trial["steps"]:
-        total_batches += s["num_batches"]
+        total_processed_batches += s["num_batches"]
         values += [
             [
-                total_batches,
+                total_processed_batches,
                 s["state"],
                 render.format_time(s["start_time"]),
                 render.format_time(s["end_time"]),

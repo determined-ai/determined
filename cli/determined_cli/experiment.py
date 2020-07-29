@@ -296,9 +296,9 @@ def describe(args: Namespace) -> None:
     values = []
     for doc in docs:
         for trial in doc["trials"]:
-            batch_number = 0
+            total_batches_processed = 0
             for step in trial["steps"]:
-                batch_number += step["num_batches"]
+                total_batches_processed += step["num_batches"]
                 t_metrics_fields = []
                 if step.get("metrics"):
                     avg_metrics = step["metrics"]["avg_metrics"]
@@ -339,7 +339,7 @@ def describe(args: Namespace) -> None:
                 row = (
                     [
                         step["trial_id"],
-                        batch_number,
+                        total_batches_processed,
                         step["state"],
                         render.format_time(step.get("start_time")),
                         render.format_time(step.get("end_time")),
