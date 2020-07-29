@@ -1,6 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
 import { Input, Tag, Tooltip } from 'antd';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { truncate } from 'utils/string';
 
@@ -31,8 +31,15 @@ const EditableTagList: React.FC<Props> = ({ tags, setTags, className }: Props) =
 
   const handleTagPlus = useCallback(() => {
     setState(state => ({ ...state, inputVisible: true }));
-    inputRef.current?.focus();
   }, []);
+
+  useEffect(() => {
+    if (state.inputVisible) inputRef.current?.focus();
+  }, [ state.inputVisible ]);
+
+  useEffect(() => {
+    if (state.editInputIndex !== -1) editInputRef.current?.focus();
+  }, [ state.editInputIndex ]);
 
   const stopPropagation = useCallback( (e: React.MouseEvent) => e.stopPropagation(), []);
 
@@ -101,7 +108,6 @@ const EditableTagList: React.FC<Props> = ({ tags, setTags, className }: Props) =
               onDoubleClick={e => {
                 e.preventDefault();
                 setState(state => ({ ...state, editInputIndex: index, editInputValue: tag }));
-                editInputRef.current?.focus();
               }}
             >
               {isLongTag ? truncate(tag, TAG_MAX_LENGTH) : tag}
