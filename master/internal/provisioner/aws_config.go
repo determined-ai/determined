@@ -106,6 +106,13 @@ type ec2NetworkInterface struct {
 type ec2InstanceType string
 
 var ec2InstanceSlots = map[ec2InstanceType]int{
+	"g4dn.xlarge":   1,
+	"g4dn.2xlarge":  1,
+	"g4dn.4xlarge":  1,
+	"g4dn.8xlarge":  1,
+	"g4dn.16xlarge": 1,
+	"g4dn.12xlarge": 4,
+	"g4dn.metal":    8,
 	"p2.xlarge":     1,
 	"p2.8xlarge":    8,
 	"p2.16xlarge":   16,
