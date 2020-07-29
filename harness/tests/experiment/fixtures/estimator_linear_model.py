@@ -21,19 +21,48 @@ def range_data_loader(batch_size, length):
     return tf.data.Dataset.zip(({"x": data}, label))
 
 
-def sum_reducer(batch_metrics: List):
-    """A function that is able to operate as a custom reducer."""
+def sum_tensor_reducer(batch_metrics: List):
     return np.hstack(batch_metrics).sum()
 
 
-class SumReducer(estimator.MetricReducer):
-    """A class that is able to operate as a custom reducer."""
-
+class SumTensorReducer(estimator.MetricReducer):
     def __init__(self):
         self.sum = 0
 
     def accumulate(self, metric: Any):
         self.sum += metric.sum()
+        return self.sum
+
+    def cross_slot_reduce(self, per_slot_metrics: List):
+        return sum(per_slot_metrics)
+
+
+def sum_list_reducer(batch_metrics: List):
+    return sum(m.sum() for metrics in batch_metrics for m in metrics)
+
+
+class SumListReducer(estimator.MetricReducer):
+    def __init__(self):
+        self.sum = 0
+
+    def accumulate(self, metric: Any):
+        self.sum += sum(m.sum() for m in metric)
+        return self.sum
+
+    def cross_slot_reduce(self, per_slot_metrics: List):
+        return sum(per_slot_metrics)
+
+
+def sum_dict_reducer(batch_metrics: List):
+    return sum(m.sum() for metrics in batch_metrics for m in metrics.values())
+
+
+class SumDictReducer(estimator.MetricReducer):
+    def __init__(self):
+        self.sum = 0
+
+    def accumulate(self, metric: Any):
+        self.sum += sum(m.sum() for m in metric.values())
         return self.sum
 
     def cross_slot_reduce(self, per_slot_metrics: List):
@@ -65,15 +94,20 @@ class LinearEstimator(estimator.EstimatorTrial):
             loss = tf.losses.mean_squared_error(labels, predictions)
 
             if mode == tf.estimator.ModeKeys.EVAL:
-                # Use the custom metrics API.
-                fn_sum = self.context.experimental.make_metric(labels, sum_reducer, np.float32)
-                cls_sum = self.context.experimental.make_metric(labels, SumReducer(), np.float32)
+                # Use the custom metrics API with all allowable input types.
+                eval_metric_ops = {
+                    name: self.context.experimental.make_metric(metric, reducer, np.float32)
+                    for name, metric, reducer in [
+                        ("label_sum_tensor_fn", labels, sum_tensor_reducer),
+                        ("label_sum_tensor_cls", labels, SumTensorReducer()),
+                        ("label_sum_list_fn", [labels, labels], sum_list_reducer),
+                        ("label_sum_list_cls", [labels, labels], SumListReducer()),
+                        ("label_sum_dict_fn", {"1": labels, "2": labels}, sum_dict_reducer),
+                        ("label_sum_dict_cls", {"1": labels, "2": labels}, SumDictReducer()),
+                    ]
+                }
 
-                return tf.estimator.EstimatorSpec(
-                    mode,
-                    loss=loss,
-                    eval_metric_ops={"label_sum_fn": fn_sum, "label_sum_cls": cls_sum},
-                )
+                return tf.estimator.EstimatorSpec(mode, loss=loss, eval_metric_ops=eval_metric_ops)
 
             if mode == tf.estimator.ModeKeys.TRAIN:
                 train_op = optimizer.minimize(

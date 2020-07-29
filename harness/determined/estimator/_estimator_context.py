@@ -179,6 +179,7 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
         passed to ``make_metric``.
 
         The ``metric`` input can be a tensor, a list of tensors, or a dictionary of tensors.
+        Nested structures are not supported.
 
         The ``reducer`` should be either a single function that can calculate the metric from a
         list of the per-batch values of ``metric``, or it can be an instance of a
