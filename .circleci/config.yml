@@ -835,7 +835,7 @@ jobs:
       - run: pip install --find-links build determined-cli==<< pipeline.parameters.det-version >>
       # Ensure Determined cli can run without installing cli test requirements
       - run: det --help
-      - run: pip install -r cli/tests/requirements.txt
+      - run: pip install config --global http.sslVerify false -r cli/tests/requirements.txt
       - run: pytest cli/tests
 
   test-e2e:
