@@ -10,7 +10,7 @@ hyperparameters:
   layer2_dropout: 0.25
   layer3_dropout: 0.5
   global_batch_size: 32
-records_per_epoch: 50_000
+records_per_epoch: 50000
 searcher:
   name: single
   metric: validation_error

@@ -14,7 +14,7 @@ searcher:
   name: random
   max_trials: 1
   max_length:
-    batches: 36_864
+    batches: 36864
 
 bind_mounts:
   - host_path: /tmp

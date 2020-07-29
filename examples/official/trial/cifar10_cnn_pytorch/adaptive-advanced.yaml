@@ -24,7 +24,7 @@ hyperparameters:
     type: int
     minval: 16
     maxval: 64
-records_per_epoch: 50_000
+records_per_epoch: 50000
 searcher:
   name: adaptive
   metric: validation_error

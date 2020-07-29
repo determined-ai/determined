@@ -37,7 +37,7 @@ hyperparameters:
     vals:
       - True
       - False
-records_per_epoch: 50_000
+records_per_epoch: 50000
 searcher:
   name: adaptive_simple
   mode: aggressive

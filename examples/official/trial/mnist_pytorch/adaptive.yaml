@@ -25,7 +25,7 @@ hyperparameters:
     type: double
     minval: .2
     maxval: .8
-records_per_epoch: 50_000
+records_per_epoch: 50000
 searcher:
   name: adaptive_simple
   metric: validation_loss

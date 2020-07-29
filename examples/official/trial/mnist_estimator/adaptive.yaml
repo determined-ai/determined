@@ -26,7 +26,7 @@ searcher:
   name: adaptive_simple
   metric: accuracy
   max_length:
-    batches: 6_400
+    batches: 6400
   max_trials: 16
   smaller_is_better: false
 entrypoint: model_def:MNistTrial

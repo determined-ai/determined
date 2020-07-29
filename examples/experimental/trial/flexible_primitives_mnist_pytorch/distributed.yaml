@@ -11,7 +11,7 @@ searcher:
   name: single
   metric: loss
   max_length:
-    batches: 20_000
+    batches: 20000
   smaller_is_better: True
 entrypoint: model_def:GANTrial
 resources:

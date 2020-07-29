@@ -11,7 +11,7 @@ hyperparameters:
 resources:
   # Use 16 GPUs to train the model.
   slots_per_trial: 16
-records_per_epoch: 50_000
+records_per_epoch: 50000
 searcher:
   name: single
   metric: validation_loss

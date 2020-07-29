@@ -14,5 +14,5 @@ searcher:
   name: single
   metric: val_categorical_accuracy
   max_length:
-    batches: 5_000
+    batches: 5000
 entrypoint: model_def:IrisTrial

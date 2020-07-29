@@ -10,6 +10,6 @@ searcher:
   name: single
   metric: accuracy
   max_length:
-    batches: 2_000
+    batches: 2000
   smaller_is_better: false
 entrypoint: model_def:MNistTrial

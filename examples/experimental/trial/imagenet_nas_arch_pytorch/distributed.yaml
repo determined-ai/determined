@@ -66,7 +66,7 @@ searcher:
   name: single
   metric: top1_accuracy 
   max_length:
-    batches: 30_000 # 1.2 million images in training set of imagenet
+    batches: 30000 # 1.2 million images in training set of imagenet
   smaller_is_better: false 
 
 optimizations:
