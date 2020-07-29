@@ -1,0 +1,15 @@
+.base {
+  color: var(--theme-colors-monochrome-9);
+  font-size: var(--theme-sizes-layout-big);
+  margin-right: var(--theme-sizes-layout-medium);
+
+  table {
+    border-collapse: separate;
+    border-spacing: 1rem 1rem;
+  }
+  ul.duration {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+}

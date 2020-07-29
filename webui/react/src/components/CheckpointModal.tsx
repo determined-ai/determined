@@ -5,6 +5,7 @@ import Badge, { BadgeType } from 'components/Badge';
 import { CheckpointDetail, CheckpointStorageType, ExperimentConfig, RunState } from 'types';
 import { formatDatetime } from 'utils/date';
 import { humanReadableBytes, humanReadableFloat } from 'utils/string';
+import { checkpointSize } from 'utils/types';
 
 import css from './CheckpointModal.module.scss';
 import Link from './Link';
@@ -63,9 +64,8 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, ti
   const state = checkpoint.state as unknown as RunState;
 
   const totalSize = useMemo(() => {
-    const total = Object.values(checkpoint.resources).reduce((acc, size) => acc + size, 0);
-    return humanReadableBytes(total);
-  }, [ checkpoint.resources ]);
+    return humanReadableBytes(checkpointSize(checkpoint));
+  }, [ checkpoint ]);
 
   const resources = useMemo(() => {
     return Object.keys(checkpoint.resources)

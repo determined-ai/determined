@@ -218,34 +218,41 @@ export enum CheckpointState {
   Deleted = 'DELETED',
 }
 
-export interface Checkpoint {
-  endTime? : string;
+interface StepBase {
   id: number;
+  trialId: number;
+}
+
+// Checkpoint sub step.
+export interface Checkpoint extends StepBase, StartEndTimes {
   resources: Record<string, number>;
-  startTime: string;
   state: CheckpointState;
   stepId: number;
-  trialId: number;
   uuid? : string;
   validationMetric? : number;
+}
+
+// Validation sub step.
+export interface Validation extends StepBase, StartEndTimes {
+  state: RunState;
+  stepId: number;
+  metrics?: ValidationMetrics;
+}
+
+export interface Step extends StepBase, StartEndTimes {
+  state: RunState;
+  checkpoint?: Checkpoint;
+  validation?: Validation;
 }
 
 export interface CheckpointDetail extends Checkpoint {
   batch: number;
   experimentId?: number;
-  trialId: number;
 }
 
-export interface LatestValidationMetrics {
+export interface ValidationMetrics {
   numInputs: number;
   validationMetrics: Record<string, number>;
-}
-
-export interface Step {
-  endTime?: string;
-  id: number;
-  startTime: string;
-  state: RunState;
 }
 
 interface TrialBase extends StartEndTimes {
@@ -259,7 +266,7 @@ interface TrialBase extends StartEndTimes {
 export interface TrialItem extends TrialBase {
   bestAvailableCheckpoint?: Checkpoint;
   bestValidationMetric?: number;
-  latestValidationMetrics?: LatestValidationMetrics;
+  latestValidationMetrics?: ValidationMetrics;
   numBatches: number;
   numCompletedCheckpoints: number;
   numSteps: number;
