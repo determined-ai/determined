@@ -107,6 +107,5 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
 };
 
 export const experimentArchivedRenderer: ExperimentRenderer = (_, record) => {
-  if (!record.archived) return null;
-  return <CheckOutlined />;
+  return record.archived ? <CheckOutlined /> : null;
 };
