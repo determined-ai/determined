@@ -8,15 +8,16 @@ import { CommandLogsParams, EmptyParams, ExperimentDetailsParams, ExperimentsPar
   LogsParams, PatchExperimentParams, PatchExperimentState, TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import {
-  AnyTask, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log,
-  TrialDetails,
-  User,
+  Agent, AnyTask, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails,
+  Log, TrialDetails, User,
 } from 'types';
 import { serverAddress } from 'utils/routes';
 import { isExperimentTask } from 'utils/task';
 
 export const detAuthApi = new DetSwagger.AuthenticationApi(undefined, serverAddress());
 export const detExperimentsStreamingApi = DetSwagger.ExperimentsApiFetchParamCreator();
+
+/* Authentication */
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAuthFailure = (e: any): boolean => {
@@ -36,7 +37,17 @@ export const isNotFound = (e: any): boolean => {
 
 export const getCurrentUser = generateApi<EmptyParams, User>(Config.getCurrentUser);
 
+export const getUsers = generateApi<EmptyParams, User[]>(Config.getUsers);
+
+/* Info */
+
 export const getInfo = generateApi<EmptyParams, DeterminedInfo>(Config.getInfo);
+
+/* Agent */
+
+export const getAgents = generateApi<EmptyParams, Agent[]>(Config.getAgents);
+
+/* Experiments */
 
 export const getExperimentSummaries =
   generateApi<ExperimentsParams, Experiment[]>(Config.getExperimentSummaries);
@@ -49,11 +60,35 @@ export const getTrialDetails =
 
 export const killExperiment = generateApi<KillExpParams, void>(Config.killExperiment);
 
-export const killCommand = generateApi<KillCommandParams, void>(Config.killCommand);
-
 export const forkExperiment = generateApi<ForkExperimentParams, number>(Config.forkExperiment);
 
 export const patchExperiment = generateApi<PatchExperimentParams, void>(Config.patchExperiment);
+
+export const archiveExperiment = async (
+  experimentId: number,
+  isArchived: boolean,
+  cancelToken?: CancelToken,
+): Promise<void> => {
+  return await patchExperiment({ body: { archived: isArchived }, cancelToken, experimentId });
+};
+
+export const setExperimentState = async (
+  { state, ...rest }: PatchExperimentState,
+): Promise<void> => {
+  return await patchExperiment({
+    body: { state },
+    ...rest,
+  });
+};
+
+/* Tasks */
+
+export const getCommands = generateApi<EmptyParams, Command[]>(Config.getCommands);
+export const getNotebooks = generateApi<EmptyParams, Command[]>(Config.getNotebooks);
+export const getShells = generateApi<EmptyParams, Command[]>(Config.getShells);
+export const getTensorboards = generateApi<EmptyParams, Command[]>(Config.getTensorboards);
+
+export const killCommand = generateApi<KillCommandParams, void>(Config.killCommand);
 
 export const launchTensorboard =
   generateApi<LaunchTensorboardParams, Command>(Config.launchTensorboard);
@@ -69,14 +104,6 @@ export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promis
   });
 };
 
-export const archiveExperiment = async (
-  experimentId: number,
-  isArchived: boolean,
-  cancelToken?: CancelToken,
-): Promise<void> => {
-  return await patchExperiment({ body: { archived: isArchived }, cancelToken, experimentId });
-};
-
 export const login = generateApi<Credentials, void>(Config.login);
 
 // TODO set up a generic error handler for swagger sdk
@@ -87,15 +114,6 @@ export function logout(): DetSwagger.V1LogoutResponse {
   const apiName = arguments.callee.name;
   return detAuthApi.determinedLogout().catch(e => processApiError(apiName, e));
 }
-
-export const setExperimentState = async (
-  { state, ...rest }: PatchExperimentState,
-): Promise<void> => {
-  return await patchExperiment({
-    body: { state },
-    ...rest,
-  });
-};
 
 export const getMasterLogs = generateApi<LogsParams, Log[]>(Config.getMasterLogs);
 

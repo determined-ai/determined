@@ -12,9 +12,11 @@ import Auth from 'contexts/Auth';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Users from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
-import { killCommand } from 'services/api';
-import { ALL_VALUE, CommandTask, CommandType, TaskFilters } from 'types';
+import { getCommands, getNotebooks, getShells, getTensorboards, killCommand } from 'services/api';
+import { EmptyParams } from 'services/types';
+import { ALL_VALUE, Command, CommandTask, CommandType, TaskFilters } from 'types';
 import { getPath } from 'utils/data';
 import { canBeOpened, filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
@@ -48,13 +50,16 @@ const TaskList: React.FC = () => {
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
   const [ search, setSearch ] = useState('');
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
+  const [ commandsResponse, triggerCommandsRequest ] =
+    useRestApi<EmptyParams, Command[]>(getCommands, {});
+  const [ notebooksResponse, triggerNotebooksRequest ] =
+    useRestApi<EmptyParams, Command[]>(getNotebooks, {});
+  const [ shellsResponse, triggerShellsRequest ] =
+    useRestApi<EmptyParams, Command[]>(getShells, {});
+  const [ tensorboardsResponse, triggerTensorboardsRequest ] =
+    useRestApi<EmptyParams, Command[]>(getTensorboards, {});
 
-  const sources = [
-    commands,
-    notebooks,
-    shells,
-    tensorboards,
-  ];
+  const sources = [ commands, notebooks, shells, tensorboards ];
 
   const loadedTasks = sources
     .filter(src => src.data !== undefined)
@@ -88,6 +93,41 @@ const TaskList: React.FC = () => {
     return false;
   }, [ selectedTasks ]);
 
+  const fetchTasks = useCallback((): void => {
+    triggerCommandsRequest({});
+    triggerNotebooksRequest({});
+    triggerShellsRequest({});
+    triggerTensorboardsRequest({});
+  }, [
+    triggerCommandsRequest,
+    triggerNotebooksRequest,
+    triggerShellsRequest,
+    triggerTensorboardsRequest,
+  ]);
+
+  /*
+   * Check once every second to see if all task endpoints have resolved.
+   * Consider it a failure if the number of checks exceed 10 times.
+   */
+  const checkForTaskListUpdate = useCallback((): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      let counter = 0;
+      const timer = setInterval(() => {
+        if (!commandsResponse.isLoading && !notebooksResponse.isLoading &&
+            !shellsResponse.isLoading && !tensorboardsResponse.isLoading) {
+          clearInterval(timer);
+          resolve();
+        } else if (counter > 10) reject();
+        counter++;
+      }, 1000);
+    });
+  }, [
+    commandsResponse.isLoading,
+    notebooksResponse.isLoading,
+    shellsResponse.isLoading,
+    tensorboardsResponse.isLoading,
+  ]);
+
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value || '');
   }, []);
@@ -99,11 +139,12 @@ const TaskList: React.FC = () => {
 
   const handleBatchKill = useCallback(async () => {
     try {
-      const promises = selectedTasks.map(task => killCommand({
-        commandId: task.id,
-        commandType: task.type,
-      }));
+      const promises = selectedTasks
+        .filter(task => isTaskKillable(task))
+        .map(task => killCommand({ commandId: task.id, commandType: task.type }));
       await Promise.all(promises);
+      fetchTasks();
+      await checkForTaskListUpdate();
     } catch (e) {
       handleError({
         error: e,
@@ -115,7 +156,7 @@ const TaskList: React.FC = () => {
         type: ErrorType.Server,
       });
     }
-  }, [ selectedTasks ]);
+  }, [ checkForTaskListUpdate, fetchTasks, selectedTasks ]);
 
   const handleConfirmation = useCallback(() => {
     Modal.confirm({

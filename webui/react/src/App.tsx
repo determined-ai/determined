@@ -18,7 +18,7 @@ import Info from 'contexts/Info';
 import UI from 'contexts/UI';
 import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
-import { useRestApiSimple } from 'hooks/useRestApi';
+import useRestApi from 'hooks/useRestApi';
 import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
 import { appRoutes } from 'routes';
@@ -38,10 +38,10 @@ const AppView: React.FC = () => {
   const setInfo = Info.useActionContext();
   const setUI = UI.useActionContext();
   const username = user ? user.username : undefined;
-  const [ infoResponse, requestInfo ] = useRestApiSimple<EmptyParams, DeterminedInfo>(getInfo, {});
+  const [ infoResponse, triggerInfoRequest ] = useRestApi<EmptyParams, DeterminedInfo>(getInfo, {});
   const classes = [ css.base ];
 
-  const fetchInfo = useCallback(() => requestInfo({}), [ requestInfo ]);
+  const fetchInfo = useCallback(() => triggerInfoRequest({}), [ triggerInfoRequest ]);
 
   if (!ui.showChrome) classes.push(css.noChrome);
 

@@ -1,12 +1,7 @@
 import axios from 'axios';
-import * as io from 'io-ts';
 import { Dispatch, Reducer, SetStateAction, useEffect, useReducer, useState } from 'react';
 
-import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { decode } from 'ioTypes';
-import { isAuthFailure } from 'services/api';
-import { http, HttpOptions } from 'services/apiBuilder';
-import { applyMappers, isEqual } from 'utils/data';
+import { clone, isEqual } from 'utils/data';
 
 export enum ActionType {
   SetData,
@@ -31,15 +26,10 @@ type Action<T> =
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 type Mapper = (x: any) => any;
-interface HookOptions<T> {
-  httpOptions?: HttpOptions;
-  data?: T;
-  mappers?: Mapper | Mapper[];
-}
 
-type Output<T> = [
-  State<T>,
-  Dispatch<SetStateAction<HttpOptions>>,
+type Output<In, Out> = [
+  State<Out>,
+  Dispatch<SetStateAction<In>>,
 ];
 
 const defaultReducer = <T>(state: State<T>, action: Action<T>): State<T> => {
@@ -62,69 +52,22 @@ const defaultReducer = <T>(state: State<T>, action: Action<T>): State<T> => {
   }
 };
 
-const useRestApi = <T>(ioType: io.Mixed, options: HookOptions<T> = {}): Output<T> => {
-  const [ httpOptions, setHttpOptions ] = useState<HttpOptions>(options.httpOptions || {});
-  const [ state, dispatch ] = useReducer<Reducer<State<T>, Action<T>>>(defaultReducer, {
-    data: options.data,
-    errorCount: 0,
-    hasLoaded: false,
-    isLoading: false,
-  });
+export const applyMappers = <T>(data: unknown, mappers: Mapper | Mapper[]): T => {
+  let currentData = clone(data);
 
-  useEffect(() => {
-    const source = axios.CancelToken.source();
-    if (!httpOptions.url) return;
-    httpOptions.method = httpOptions.method || 'GET';
+  if (Array.isArray(mappers)) {
+    currentData = mappers.reduce((acc, mapper) => mapper(acc), currentData);
+  } else {
+    currentData = mappers(currentData);
+  }
 
-    const fetchData = async (): Promise<void> => {
-      dispatch({ type: ActionType.SetLoading, value: true });
-
-      try {
-        const response = await http.request({
-          cancelToken: source.token,
-          data: httpOptions.body,
-          method: httpOptions.method,
-          url: httpOptions.url as string,
-        });
-        const result = decode<io.TypeOf<typeof ioType>>(ioType, response.data);
-
-        dispatch({
-          type: ActionType.SetData,
-          value: options.mappers ? applyMappers(result, options.mappers) : result,
-        });
-      } catch (error) {
-        // Only report errors not related cancel exits.
-        if (!axios.isCancel(error)) {
-          handleError({
-            error: error,
-            // this does not necessarily have to be true for all usages of this hook we should
-            // allow the user of the hook to set this value or let the caller handle the error.
-            isUserTriggered: false,
-            level: ErrorLevel.Warn,
-            message: `${httpOptions.method} request to ${httpOptions.url} failed`,
-            type: isAuthFailure(error) ? ErrorType.Auth : ErrorType.Server,
-          });
-
-          dispatch({ type: ActionType.SetError, value: error });
-        }
-      }
-    };
-
-    fetchData();
-
-    return (): void => source.cancel();
-  }, [ httpOptions, ioType, options.mappers ]);
-
-  return [ state, setHttpOptions ];
+  return currentData;
 };
 
-type SimpleOutput<In, Out> = [
-  State<Out>,
-  Dispatch<SetStateAction<In>>,
-];
-
-export const useRestApiSimple =
-<In, Out>(apiReq: (a: In) => Promise<Out>, initialParams: In): SimpleOutput<In, Out> => {
+const useRestApi = <In, Out>(
+  apiRequest: (a: In) => Promise<Out>,
+  initialParams: In,
+): Output<In, Out> => {
   const [ params, setParams ] = useState<In>(initialParams);
   const [ state, dispatch ] = useReducer<Reducer<State<Out>, Action<Out>>>(defaultReducer, {
     errorCount: 0,
@@ -136,15 +79,14 @@ export const useRestApiSimple =
     const source = axios.CancelToken.source();
 
     dispatch({ type: ActionType.SetLoading, value: true });
-    apiReq({ ...params, cancelToken: source.token })
+    apiRequest({ ...params, cancelToken: source.token })
       .then((result) => dispatch({ type: ActionType.SetData, value: result } ))
       .catch((e) => (!axios.isCancel(e)) && dispatch({ type: ActionType.SetError, value: e }));
 
     return (): void => source.cancel();
-  }, [ apiReq, params ]);
+  }, [ apiRequest, params ]);
 
   return [ state, setParams ];
 };
-// use state to share.
 
 export default useRestApi;

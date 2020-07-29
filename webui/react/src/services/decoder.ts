@@ -1,12 +1,12 @@
 import dayjs from 'dayjs';
 
 import {
-  decode, ioCommandLogs, ioDeterminedInfo, ioExperiment, ioExperimentConfig, ioExperimentDetails,
-  ioExperiments, ioGenericCommand, ioLog, ioLogs, ioTrialDetails, ioTypeAgents,
-  ioTypeCheckpoint, ioTypeCommandLogs, ioTypeDeterminedInfo, ioTypeExperiment,
-  ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand,
-  ioTypeGenericCommands, ioTypeLatestValidationMetrics, ioTypeLog, ioTypeLogs, ioTypeTrial,
-  ioTypeTrialDetails, ioTypeUsers,
+  decode, ioAgents, ioCommandLogs, ioDeterminedInfo, ioExperiment, ioExperimentConfig,
+  ioExperimentDetails, ioExperiments, ioGenericCommand, ioGenericCommands, ioLog, ioLogs,
+  ioTrialDetails, ioTypeAgents, ioTypeCheckpoint, ioTypeCommandLogs, ioTypeDeterminedInfo,
+  ioTypeExperiment, ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments,
+  ioTypeGenericCommand, ioTypeGenericCommands, ioTypeLatestValidationMetrics, ioTypeLog,
+  ioTypeLogs, ioTypeTrial, ioTypeTrialDetails, ioTypeUsers, ioUsers,
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, CheckpointStorageType, Command, CommandState,
@@ -16,8 +16,9 @@ import {
 } from 'types';
 import { capitalize } from 'utils/string';
 
-export const jsonToUsers = (data: ioTypeUsers): User[] => {
-  return data.map(user => ({
+export const jsonToUsers = (data: unknown): User[] => {
+  const ioType = decode<ioTypeUsers>(ioUsers, data);
+  return ioType.map(user => ({
     id: user.id,
     isActive: user.active,
     isAdmin: user.admin,
@@ -38,9 +39,10 @@ export const jsonToDeterminedInfo = (data: unknown): DeterminedInfo => {
   };
 };
 
-export const jsonToAgents = (data: ioTypeAgents): Agent[] => {
-  return Object.keys(data).map(agentId => {
-    const agent = data[agentId];
+export const jsonToAgents = (data: unknown): Agent[] => {
+  const ioType = decode<ioTypeAgents>(ioAgents, data);
+  return Object.keys(ioType).map(agentId => {
+    const agent = ioType[agentId];
     const resources = Object.keys(agent.slots).map(slotId => {
       const slot = agent.slots[slotId];
 
@@ -88,21 +90,22 @@ export const jsonToGenericCommand = (data: unknown, type: CommandType): Command 
   };
 };
 
-const jsonToGenericCommands = (data: ioTypeGenericCommands, type: CommandType): Command[] => {
-  return Object.keys(data).map(genericCommandId => {
-    return jsonToGenericCommand(data[genericCommandId], type);
+const jsonToGenericCommands = (data: unknown, type: CommandType): Command[] => {
+  const ioType = decode<ioTypeGenericCommands>(ioGenericCommands, data);
+  return Object.keys(ioType).map(genericCommandId => {
+    return jsonToGenericCommand(ioType[genericCommandId], type);
   });
 };
 
-export const jsonToCommands = (data: ioTypeGenericCommands): Command[] => {
+export const jsonToCommands = (data: unknown): Command[] => {
   return jsonToGenericCommands(data, CommandType.Command);
 };
 
-export const jsonToNotebooks = (data: ioTypeGenericCommands): Command[] => {
+export const jsonToNotebooks = (data: unknown): Command[] => {
   return jsonToGenericCommands(data, CommandType.Notebook);
 };
 
-export const jsonToShells = (data: ioTypeGenericCommands): Command[] => {
+export const jsonToShells = (data: unknown): Command[] => {
   return jsonToGenericCommands(data, CommandType.Shell);
 };
 
@@ -110,7 +113,7 @@ export const jsonToTensorboard = (data: unknown): Command => {
   return jsonToGenericCommand(data, CommandType.Tensorboard);
 };
 
-export const jsonToTensorboards = (data: ioTypeGenericCommands): Command[] => {
+export const jsonToTensorboards = (data: unknown): Command[] => {
   return jsonToGenericCommands(data, CommandType.Tensorboard);
 };
 

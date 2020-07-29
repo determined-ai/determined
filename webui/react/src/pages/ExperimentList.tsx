@@ -17,7 +17,7 @@ import Auth from 'contexts/Auth';
 import Users from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
-import { useRestApiSimple } from 'hooks/useRestApi';
+import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
 import { setupUrlForDev } from 'routes';
 import {
@@ -59,8 +59,8 @@ const ExperimentList: React.FC = () => {
   const auth = Auth.useStateContext();
   const users = Users.useStateContext();
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>([]);
-  const [ experimentsResponse, requestExperiments ] =
-    useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
+  const [ experimentsResponse, triggerExperimentsRequest ] =
+    useRestApi<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
   const storage = useStorage('experiment-list');
   const initFilters = storage.getWithDefault(
     'filters',
@@ -121,8 +121,8 @@ const ExperimentList: React.FC = () => {
   }, [ selectedExperiments ]);
 
   const fetchExperiments = useCallback((): void => {
-    requestExperiments({});
-  }, [ requestExperiments ]);
+    triggerExperimentsRequest({});
+  }, [ triggerExperimentsRequest ]);
 
   usePolling(fetchExperiments);
 

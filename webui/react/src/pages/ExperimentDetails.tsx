@@ -18,7 +18,7 @@ import Spinner from 'components/Spinner';
 import { durationRenderer, relativeTimeRenderer, stateRenderer } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
-import { useRestApiSimple } from 'hooks/useRestApi';
+import useRestApi from 'hooks/useRestApi';
 import { routeAll } from 'routes';
 import { forkExperiment, getExperimentDetails, isNotFound } from 'services/api';
 import { ExperimentDetailsParams } from 'services/types';
@@ -37,21 +37,21 @@ interface Params {
 const ExperimentDetailsComp: React.FC = () => {
   const { experimentId } = useParams<Params>();
   const id = parseInt(experimentId);
-  const [ experimentResponse, setExpRequestParams ] =
-    useRestApiSimple<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
-  const experiment = experimentResponse.data;
-  const validationKey = experiment?.config.searcher.metric;
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
-
-  const pollExperimentDetails = useCallback(() => {
-    setExpRequestParams({ id });
-  }, [ id, setExpRequestParams ]);
-
-  usePolling(pollExperimentDetails);
   const [ forkValue, setForkValue ] = useState<string>('Loading');
   const [ forkModalState, setForkModalState ] = useState({ visible: false });
   const [ forkError, setForkError ] = useState<string>();
+  const [ experimentResponse, triggerExperimentRequest ] =
+    useRestApi<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
+  const experiment = experimentResponse.data;
+  const validationKey = experiment?.config.searcher.metric;
+
+  const pollExperimentDetails = useCallback(() => {
+    triggerExperimentRequest({ id });
+  }, [ id, triggerExperimentRequest ]);
+
+  usePolling(pollExperimentDetails);
 
   useEffect(() => {
     if (experiment && experiment.config) {

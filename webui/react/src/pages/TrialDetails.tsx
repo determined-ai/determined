@@ -10,7 +10,7 @@ import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import TrialActions from 'components/TrialActions';
 import usePolling from 'hooks/usePolling';
-import { useRestApiSimple } from 'hooks/useRestApi';
+import useRestApi from 'hooks/useRestApi';
 import { getTrialDetails, isNotFound } from 'services/api';
 import { TrialDetailsParams } from 'services/types';
 import { TrialDetails } from 'types';
@@ -22,11 +22,11 @@ interface Params {
 const TrialDetailsComp: React.FC = () => {
   const { trialId: trialIdParam } = useParams<Params>();
   const trialId = parseInt(trialIdParam);
-  const [ trial, setExpRequestParams ] =
-  useRestApiSimple<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
+  const [ trial, triggerTrialRequest ] =
+    useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
   const pollTrialDetails = useCallback(
-    () => setExpRequestParams({ id: trialId }),
-    [ setExpRequestParams, trialId ],
+    () => triggerTrialRequest({ id: trialId }),
+    [ triggerTrialRequest, trialId ],
   );
   usePolling(pollTrialDetails);
 

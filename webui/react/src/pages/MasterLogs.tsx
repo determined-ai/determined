@@ -4,7 +4,7 @@ import LogViewer, { LogViewerHandles } from 'components/LogViewer';
 import Page from 'components/Page';
 import UI from 'contexts/UI';
 import usePolling from 'hooks/usePolling';
-import { useRestApiSimple } from 'hooks/useRestApi';
+import useRestApi from 'hooks/useRestApi';
 import { getMasterLogs } from 'services/api';
 import { LogsParams } from 'services/types';
 import { Log } from 'types';
@@ -17,22 +17,22 @@ const MasterLogs: React.FC = () => {
   const [ oldestFetchedId, setOldestFetchedId ] = useState(Number.MAX_SAFE_INTEGER);
   const [ logIdRange, setLogIdRange ] =
     useState({ max: Number.MIN_SAFE_INTEGER, min: Number.MAX_SAFE_INTEGER });
-  const [ logsResponse, setLogsParams ] =
-    useRestApiSimple<LogsParams, Log[]>(getMasterLogs, { tail: TAIL_SIZE });
-  const [ pollingLogsResponse, setPollingLogsParams ] =
-    useRestApiSimple<LogsParams, Log[]>(getMasterLogs, { tail: TAIL_SIZE });
+  const [ logsResponse, triggerOldLogsRequest ] =
+    useRestApi<LogsParams, Log[]>(getMasterLogs, { tail: TAIL_SIZE });
+  const [ pollingLogsResponse, triggerNewLogsRequest ] =
+    useRestApi<LogsParams, Log[]>(getMasterLogs, { tail: TAIL_SIZE });
 
   const fetchOlderLogs = useCallback((oldestLogId: number) => {
     const startLogId = Math.max(0, oldestLogId - TAIL_SIZE);
     if (startLogId >= oldestFetchedId) return;
     setOldestFetchedId(startLogId);
-    setLogsParams({ greaterThanId: startLogId, tail: TAIL_SIZE });
-  }, [ oldestFetchedId, setLogsParams ]);
+    triggerOldLogsRequest({ greaterThanId: startLogId, tail: TAIL_SIZE });
+  }, [ oldestFetchedId, triggerOldLogsRequest ]);
 
   const fetchNewerLogs = useCallback(() => {
     if (logIdRange.max < 0) return;
-    setPollingLogsParams({ greaterThanId: logIdRange.max, tail: TAIL_SIZE });
-  }, [ logIdRange.max, setPollingLogsParams ]);
+    triggerNewLogsRequest({ greaterThanId: logIdRange.max, tail: TAIL_SIZE });
+  }, [ logIdRange.max, triggerNewLogsRequest ]);
 
   const handleScrollToTop = useCallback((oldestLogId: number) => {
     fetchOlderLogs(oldestLogId);
