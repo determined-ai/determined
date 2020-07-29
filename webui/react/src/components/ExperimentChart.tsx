@@ -68,7 +68,6 @@ const ExperimentChart: React.FC<Props> = ({ validationMetric, ...props }: Props)
       const y = validation.validationError;
       const text = [
         `Trial ${validation.trialId}`,
-        `Time: ${formatDatetime(validation.endTime)}`,
         `Elapsed Time: ${x} sec`,
         `Metric Value: ${y}`,
       ].join('<br>');

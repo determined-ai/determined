@@ -4,9 +4,9 @@ export const capitalize = (str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
-const characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const CHARACTERS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-export const generateAlphaNumeric = (length = 8, chars = characters): string => {
+export const generateAlphaNumeric = (length = 8, chars = CHARACTERS): string => {
   let result = '';
   for (let i = length; i > 0; --i) {
     result += chars[ Math.floor(Math.random() * chars.length) ];
