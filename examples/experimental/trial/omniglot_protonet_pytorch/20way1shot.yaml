@@ -34,8 +34,10 @@ searcher:
   metric: loss
   smaller_is_better: true
   # Original paper trained for 10,000 epochs with a plateau stopping condition
-  max_steps: 300
+  max_length:
+    batches: 30000
 
 entrypoint: model_def:OmniglotProtoNetTrial
-min_validation_period: 50
+min_validation_period:
+  batches: 5000
 checkpoint_policy: none

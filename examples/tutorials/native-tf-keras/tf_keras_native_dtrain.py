@@ -15,7 +15,11 @@ import determined as det
 from determined.experimental.keras import init
 
 config = {
-    "searcher": {"name": "single", "metric": "val_accuracy", "max_steps": 5},
+    "searcher": {
+        "name": "single",
+        "metric": "val_accuracy", "max_length": {
+            "batches": 500,
+        }},
     "hyperparameters": {"global_batch_size": "256"},
     "resources": {"slots_per_trial": 8},
 }

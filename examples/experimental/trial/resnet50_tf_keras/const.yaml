@@ -5,7 +5,8 @@ hyperparameters:
 searcher:
   name: single
   metric: val_loss
-  max_steps: 2
+  max_length:
+    batches: 200
 data:
   run_eagerly: False
   use_tensor_lr: False
