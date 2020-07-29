@@ -37,6 +37,7 @@ type PlotArguments = [
 ];
 
 const defaultLayout: Partial<Plotly.Layout> = {
+  height: 450,
   xaxis: {
     hoverformat: '',
     title: 'Elapsed Time (seconds)',
