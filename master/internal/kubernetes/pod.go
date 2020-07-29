@@ -232,16 +232,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 			},
 		}
 
-		ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
-			Container:        p.container,
-			ContainerStopped: &containerStopped,
-		})
-
-		ctx.Tell(p.cluster, sproto.PodTerminated{
-			ContainerID:      p.container.ID,
-			ContainerStopped: &containerStopped,
-		})
-
+		p.informThatContainerStopped(ctx, containerStopped)
 		ctx.Self().Stop()
 
 	case k8sV1.PodSucceeded:
@@ -253,16 +244,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		ctx.Log().Infof("pod exited successfully")
 		containerStopped := agent.ContainerStopped{}
 
-		ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
-			Container:        p.container,
-			ContainerStopped: &containerStopped,
-		})
-
-		ctx.Tell(p.cluster, sproto.PodTerminated{
-			ContainerID:      p.container.ID,
-			ContainerStopped: &containerStopped,
-		})
-
+		p.informThatContainerStopped(ctx, containerStopped)
 		ctx.Self().Stop()
 
 	default:
@@ -281,9 +263,6 @@ func (p *pod) processMissingPodDeletion(ctx *actor.Context) {
 		return
 	}
 
-	// When deleting pods, we do not always receive status updates containing PodFailed
-	// or PodSucceeded. We currently detect this by checking all PodPending messages if
-	// they contain a deletion timestamp.
 	if !p.resourcesDeleted {
 		ctx.Log().Errorf("processing missing pod deletion for a pod that was never deleted")
 	}
@@ -298,14 +277,7 @@ func (p *pod) processMissingPodDeletion(ctx *actor.Context) {
 			ExitCode:    &exitCodeConverted,
 		},
 	}
-	ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
-		Container:        p.container,
-		ContainerStopped: &containerStopped,
-	})
-	ctx.Tell(p.cluster, sproto.PodTerminated{
-		ContainerID:      p.container.ID,
-		ContainerStopped: &containerStopped,
-	})
+	p.informThatContainerStopped(ctx, containerStopped)
 	ctx.Self().Stop()
 }
 
@@ -343,16 +315,23 @@ func (p *pod) finalizeTaskState(ctx *actor.Context) {
 		containerStopped := agent.ContainerError(
 			agent.TaskError, errors.New("agent failed while container was running"))
 
-		ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
-			Container:        p.container,
-			ContainerStopped: &containerStopped,
-		})
-
-		ctx.Tell(p.cluster, sproto.PodTerminated{
-			ContainerID:      p.container.ID,
-			ContainerStopped: &containerStopped,
-		})
+		p.informThatContainerStopped(ctx, containerStopped)
 	}
+}
+
+func (p *pod) informThatContainerStopped(
+	ctx *actor.Context,
+	containerStopped agent.ContainerStopped,
+) {
+	ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
+		Container:        p.container,
+		ContainerStopped: &containerStopped,
+	})
+
+	ctx.Tell(p.cluster, sproto.PodTerminated{
+		ContainerID:      p.container.ID,
+		ContainerStopped: &containerStopped,
+	})
 }
 
 func (p *pod) receiveContainerLogs(ctx *actor.Context, msg sproto.ContainerLog) {
