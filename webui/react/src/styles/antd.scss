@@ -76,6 +76,13 @@ html {
     font-size: var(--theme-sizes-icon-small);
   }
 
+  /* PageHeader */
+
+  .ant-page-header {
+    padding: 0;
+    width: 100%;
+  }
+
   /* Select */
 
   .ant-select > .ant-select-arrow {
