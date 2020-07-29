@@ -1,5 +1,5 @@
 import { Alert, Breadcrumb, Button, Modal, Space, Table, Tooltip } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import { ColumnType } from 'antd/lib/table';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
@@ -130,7 +130,7 @@ const ExperimentDetailsComp: React.FC = () => {
   };
   const handleCheckpointDismiss = () => setShowCheckpoint(false);
 
-  const columns: ColumnsType<TrialItem> = [
+  const columns: ColumnType<TrialItem>[] = [
     {
       dataIndex: 'id',
       sorter: (a: TrialItem, b: TrialItem): number => alphanumericSorter(a.id, b.id),

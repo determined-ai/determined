@@ -132,6 +132,7 @@ const jsonToExperimentConfig = (data: unknown): ExperimentConfig => {
       type: io.data_layer.type,
     } : undefined,
     description: io.description,
+    labels: io.labels,
     resources: {},
     searcher: {
       ...io.searcher,

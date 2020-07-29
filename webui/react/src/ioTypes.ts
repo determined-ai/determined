@@ -230,6 +230,7 @@ export const ioExperimentConfig = io.type({
   checkpoint_storage: io.union([ ioCheckpointStorage, io.null ]),
   data_layer: io.union([ ioDataLayer, io.undefined ]),
   description: io.string,
+  labels: io.union([ io.undefined, io.array(io.string) ]),
   resources: ioExpResources,
   searcher: io.type({
     metric: io.string,

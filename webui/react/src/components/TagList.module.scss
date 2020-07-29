@@ -1,0 +1,14 @@
+.base {
+  .tagPlus {
+    background: #fff;
+    border-style: dashed;
+  }
+  .editTag {
+    user-select: none;
+  }
+  .tagInput {
+    margin-right: 8px;
+    vertical-align: top;
+    width: 78px;
+  }
+}

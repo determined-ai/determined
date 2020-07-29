@@ -25,6 +25,7 @@ module.exports = {
     'rule-empty-line-before': [ 'always', {
       except: [ 'after-rule', 'first-nested', 'inside-block-and-after-rule' ],
     } ],
+    'selector-pseudo-class-no-unknown': [ true, { ignorePseudoClasses: [ 'global' ] } ],
     'value-keyword-case': null,
   },
 };

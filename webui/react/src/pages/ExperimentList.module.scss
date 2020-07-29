@@ -17,4 +17,19 @@
     margin-right: var(--theme-sizes-layout-medium);
     max-width: 30rem;
   }
+  .nameColumn {
+    line-height: 3rem;
+    word-break: break-word;
+    word-wrap: break-word;
+  }
+  .nameColumn :global .tagPlus {
+    display: none;
+  }
+  .nameColumn:hover :global .tagPlus {
+    display: inline-block;
+  }
+  .tagList {
+    display: inline;
+    margin-left: var(--theme-sizes-layout-small);
+  }
 }
