@@ -298,7 +298,7 @@ def describe(args: Namespace) -> None:
         for trial in doc["trials"]:
             batch_number = 0
             for step in trial["steps"]:
-                batch_number += step['num_batches']
+                batch_number += step["num_batches"]
                 t_metrics_fields = []
                 if step.get("metrics"):
                     avg_metrics = step["metrics"]["avg_metrics"]
@@ -502,7 +502,7 @@ def list_trials(args: Namespace) -> None:
             json.dumps(t["hparams"], indent=4),
             render.format_time(t["start_time"]),
             render.format_time(t["end_time"]),
-            t['num_batches'],
+            t["num_batches"],
         ]
         for t in experiment["trials"]
     ]
