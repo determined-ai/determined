@@ -1,11 +1,10 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import Plotly, { PlotData } from 'plotly.js/lib/core';
+import Plotly, { PlotData, PlotlyHTMLElement, PlotRelayoutEvent } from 'plotly.js/lib/core';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ValidationHistory } from 'types';
 import { clone } from 'utils/data';
-import { formatDatetime } from 'utils/date';
 import { capitalize, generateAlphaNumeric } from 'utils/string';
 
 import Section from './Section';
@@ -18,6 +17,11 @@ interface Props {
   startTime?: string;
   validationMetric?: string;
   validationHistory?: ValidationHistory[];
+}
+
+interface Range {
+  xaxis: [ number | undefined, number | undefined ];
+  yaxis: [ number | undefined, number | undefined ];
 }
 
 enum Scale {
@@ -52,6 +56,10 @@ const ExperimentChart: React.FC<Props> = ({ validationMetric, ...props }: Props)
   const titleDetail = validationMetric ? ` (${validationMetric})` : '';
   const title = `Best Validation Metric${titleDetail}`;
   const [ scale, setScale ] = useState<Scale>(Scale.Linear);
+  const [ range, setRange ] = useState<Range>({
+    xaxis: [ undefined, undefined ],
+    yaxis: [ undefined, undefined ],
+  });
   const [ isRendered, setIsRendered ] = useState(false);
 
   const data: Partial<PlotData>[] = useMemo(() => {
@@ -98,10 +106,21 @@ const ExperimentChart: React.FC<Props> = ({ validationMetric, ...props }: Props)
     const layout = plotLayout || defaultLayout;
     const config = plotConfig || defaultConfig;
     const args: PlotArguments = [ elementId, plotData, layout, config ];
+
     if (isRendered) {
       await Plotly.react.apply(null, args);
     } else {
-      await Plotly.newPlot.apply(null, args);
+      const chart: PlotlyHTMLElement = await Plotly.newPlot.apply(null, args);
+      chart.on('plotly_relayout', (event: PlotRelayoutEvent) => {
+        /*
+         * Preserve the zoom and pan range. When new data comes in
+         * the re-rendering of the plot will render the same zoom level.
+         */
+        setRange({
+          xaxis: [ event['xaxis.range[0]'], event['xaxis.range[1]'] ],
+          yaxis: [ event['yaxis.range[0]'], event['yaxis.range[1]'] ],
+        });
+      });
       setIsRendered(true);
     }
   }, [ isRendered ]);
@@ -109,8 +128,15 @@ const ExperimentChart: React.FC<Props> = ({ validationMetric, ...props }: Props)
   useEffect(() => {
     const layout = clone(defaultLayout);
     layout.yaxis.type = scale;
+
+    if (range.xaxis[0] != null && range.xaxis[1] != null &&
+        range.yaxis[0] != null && range.yaxis[1] != null) {
+      layout.xaxis.range = range.xaxis;
+      layout.yaxis.range = range.yaxis;
+    }
+
     renderPlot(id, data, layout);
-  }, [ id, data, renderPlot, scale ]);
+  }, [ id, data, renderPlot, range, scale ]);
 
   const handleSelect = useCallback((newValue: SelectValue) => {
     setScale(newValue as Scale);
