@@ -1,3 +1,4 @@
 requests
+iniconfig
 pytest
 requests_mock
