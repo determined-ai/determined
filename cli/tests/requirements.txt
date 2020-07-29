@@ -1,4 +1,4 @@
 requests
-iniconfig
+setuptools_scm
 pytest
 requests_mock
