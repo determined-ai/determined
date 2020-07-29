@@ -117,38 +117,47 @@ class _SimpleMetricReducer(MetricReducer):
         return self.reduce_fn(flat_metrics)
 
 
-def _distributed_metric(
-    context: estimator.EstimatorExperimentalContext,
-    metric: Any,
-    reducer: MetricReducer,
-    numpy_dtype: Any,
-) -> Tuple[tf.Operation, tf.Operation]:
+class _DistributedMetricMaker:
     """
-    _distributed_metric returns a tf.metrics-style tuple of (value_op, update_op).  The value_op is
-    apparently read once after all evaluation is completed, which is where we do the allgather and
-    call the user's cross_slot_reduce to calculate the distributed metric.
+    _DistributedMetricMaker.make_metric() returns a tf.metrics-style tuple of (value_op,
+    update_op).  The value_op is read once after all evaluation is completed, which is where we do
+    the allgather and call the user's cross_slot_reduce to calculate the distributed metric.
     """
-    if isinstance(numpy_dtype, tf.dtypes.DType):
-        raise TypeError(f"numpy_dtype parameter must not be a TensorFlow dtype: {numpy_dtype}")
-    np_dtype = np.dtype(numpy_dtype)
-    tf_dtype = tf.compat.v1.as_dtype(numpy_dtype)
 
-    last_accumulate = None  # type: Any
+    def __init__(
+        self,
+        context: estimator.EstimatorExperimentalContext,
+        metric: Any,
+        reducer: MetricReducer,
+        numpy_dtype: Any,
+    ) -> None:
+        self.context = context
+        self.metric = metric
+        self.reducer = reducer
 
-    def py_update(metric: Any) -> None:
-        nonlocal last_accumulate
-        last_accumulate = reducer.accumulate(metric)
+        if isinstance(numpy_dtype, tf.dtypes.DType):
+            raise TypeError(f"numpy_dtype parameter must not be a TensorFlow dtype: {numpy_dtype}")
+        self.np_dtype = np.dtype(numpy_dtype)
+        self.tf_dtype = tf.compat.v1.as_dtype(numpy_dtype)
 
-    update_op = tf.compat.v1.py_func(py_update, [metric], [])
+        self.last_accumulate = None
 
-    def py_value() -> Any:
-        allgathered = context.allgather_metrics(last_accumulate)
-        value = reducer.cross_slot_reduce(allgathered)
-        return np.array(value).astype(np_dtype)
+    def _update(self, metric) -> None:
+        self.last_accumulate = self.reducer.accumulate(metric)
 
-    def build_value_op() -> tf.Operation:
-        return tf.compat.v1.py_func(py_value, [], tf_dtype)
+    def _update_op(self) -> tf.Operation:
+        return tf.compat.v1.py_func(self._update, [self.metric], [])
 
-    value_op = context._build_allgather_op(build_value_op)
+    def _value(self) -> Any:
+        allgathered = self.context.allgather_metrics(self.last_accumulate)
+        value = self.reducer.cross_slot_reduce(allgathered)
+        return np.array(value).astype(self.np_dtype)
 
-    return value_op, update_op
+    def _value_op(self) -> tf.Operation:
+        return tf.compat.v1.py_func(self._value, [], self.tf_dtype)
+
+    def make_metric(self) -> Tuple[tf.Operation, tf.Operation]:
+        value_op = self.context._build_allgather_op(self._value_op)
+        update_op = self._update_op()
+
+        return value_op, update_op

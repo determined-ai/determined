@@ -227,7 +227,11 @@ class EstimatorExperimentalContext(_data_layer.DataLayerContext):
                    )
         """
         if isinstance(reducer, estimator.MetricReducer):
-            return estimator._distributed_metric(self, metric, reducer, numpy_dtype)
+            return estimator._DistributedMetricMaker(
+                self, metric, reducer, numpy_dtype
+            ).make_metric()
 
         simple_reducer = estimator._SimpleMetricReducer(reducer)
-        return estimator._distributed_metric(self, metric, simple_reducer, numpy_dtype)
+        return estimator._DistributedMetricMaker(
+            self, metric, simple_reducer, numpy_dtype
+        ).make_metric()
