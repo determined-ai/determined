@@ -13,52 +13,22 @@ import (
 type Searcher struct {
 	rand     *nprand.State
 	hparams  model.Hyperparameters
-	eventLog *EventLog
 	method   SearchMethod
+	eventLog *EventLog
 }
 
 // NewSearcher creates a new Searcher configured with the provided searcher config.
 func NewSearcher(seed uint32, method SearchMethod, hparams model.Hyperparameters) *Searcher {
-	rand := nprand.New(seed)
-	return &Searcher{rand: rand, hparams: hparams, eventLog: NewEventLog(), method: method}
+	return &Searcher{
+		rand:     nprand.New(seed),
+		hparams:  hparams,
+		method:   method,
+		eventLog: NewEventLog(method.Unit()),
+	}
 }
 
 func (s *Searcher) context() context {
 	return context{rand: s.rand, hparams: s.hparams}
-}
-
-// filterCompletedCheckpoints identifies operations which request checkpoints that have already
-// been completed and replays the corresponding WorkloadCompleted messages to the SearchMethod.
-// This situation arises when a SearchMethod requests a checkpoint after the scheduler has forced
-// that trial to checkpoint and be descheduled. The Searcher intercepts and saves that checkpoint
-// completed message, and this function is where that message gets replayed to the SearchMethod.
-// The returned operations will not include already-completed checkpoints.
-func (s *Searcher) filterCompletedCheckpoints(ops []Operation) ([]Operation, error) {
-	var filteredOps []Operation
-	for len(ops) > 0 {
-		newFilteredOps, replayMsgs := s.eventLog.FilterCompletedCheckpoints(ops)
-		filteredOps = append(filteredOps, newFilteredOps...)
-		// Replay WorkloadCompleted messges and get additional operations.
-		ops = nil
-		for _, msg := range replayMsgs {
-			// The EventLog should internally recognize the message as replayed and not duplicate
-			// the message in the searcher_events, but it should not tell us to ignore the message.
-			if !s.eventLog.WorkloadCompleted(msg) {
-				return nil, errors.Errorf("event log ignored a cached WorkloadCompleted message")
-			}
-			requestID := s.eventLog.RequestIDs[msg.Workload.TrialID]
-			moreOps, err := s.method.checkpointCompleted(
-				s.context(), requestID, msg.Workload, *msg.CheckpointMetrics)
-			if err != nil {
-				return filteredOps, errors.Wrapf(err,
-					"error while replaying WorkloadCompleted message for workload: %v",
-					msg.Workload)
-			}
-			ops = append(ops, moreOps...)
-		}
-		s.eventLog.OperationsCreated(ops...)
-	}
-	return filteredOps, nil
 }
 
 // InitialOperations return a set of initial operations that the searcher would like to take.
@@ -69,10 +39,6 @@ func (s *Searcher) InitialOperations() ([]Operation, error) {
 		return nil, errors.Wrap(err, "error while fetching initial operations of search method")
 	}
 	s.eventLog.OperationsCreated(operations...)
-	operations, err = s.filterCompletedCheckpoints(operations)
-	if err != nil {
-		return nil, errors.Wrap(err, "error while filtering initial operations of search method")
-	}
 	return operations, nil
 }
 
@@ -86,56 +52,61 @@ func (s *Searcher) TrialCreated(create Create, trialID int) ([]Operation, error)
 			"error while handling a trial created event: %s", create.RequestID)
 	}
 	s.eventLog.OperationsCreated(operations...)
-	operations, err = s.filterCompletedCheckpoints(operations)
+	return operations, nil
+}
+
+// TrialExitedEarly indicates to the searcher that the trial with the given trialID exited early.
+func (s *Searcher) TrialExitedEarly(trialID int) ([]Operation, error) {
+	requestID, ok := s.eventLog.RequestIDs[trialID]
+	if !ok {
+		return nil, errors.Errorf("unexpected trial ID sent to searcher: %d", trialID)
+	}
+
+	s.eventLog.TrialExitedEarly(requestID)
+	operations, err := s.method.trialExitedEarly(s.context(), requestID)
+	s.eventLog.OperationsCreated(operations...)
 	if err != nil {
-		return nil, errors.Wrap(err, "error while filtering operations after trial created event")
+		return nil, errors.Wrapf(err, "error relaying trial exited early to trial %d", trialID)
 	}
 	return operations, nil
 }
 
-// WorkloadCompleted informs the searcher that the given workload initiated by the same searcher
-// has completed. Returns any new operations as a result of this workload completing.
-func (s *Searcher) WorkloadCompleted(message CompletedMessage) ([]Operation, error) {
-	requestID, ok := s.eventLog.RequestIDs[message.Workload.TrialID]
-	if !ok {
-		return nil, errors.Errorf("unexpected trial ID sent to searcher: %d",
-			message.Workload.TrialID)
-	}
+// WorkloadCompleted informs the searcher that the workload is completed. This relays the message
+// to the event log and records the units as complete for search method progress.
+func (s *Searcher) WorkloadCompleted(msg CompletedMessage, unitsCompleted model.Length) {
+	s.eventLog.WorkloadCompleted(msg, unitsCompleted)
+}
 
-	// The event log will tell us if this workload should not be sent to the search method (either
-	// because it was not initiated by the search method, or because it is a duplicate).
-	if !s.eventLog.WorkloadCompleted(message) {
-		return nil, nil
+// OperationCompleted informs the searcher that the given workload initiated by the same searcher
+// has completed. Returns any new operations as a result of this workload completing.
+func (s *Searcher) OperationCompleted(
+	trialID int, op Runnable, metrics interface{},
+) ([]Operation, error) {
+	requestID, ok := s.eventLog.RequestIDs[trialID]
+	if !ok {
+		return nil, errors.Errorf("unexpected trial ID sent to searcher: %d", trialID)
 	}
 
 	var operations []Operation
 	var err error
 
-	switch {
-	case message.ExitedReason != nil:
-		operations, err = s.method.trialExitedEarly(s.context(), requestID, message.Workload)
-	case message.Workload.Kind == RunStep:
-		operations, err = s.method.trainCompleted(
-			s.context(), requestID, message.Workload)
-	case message.Workload.Kind == CheckpointModel:
+	switch tOp := op.(type) {
+	case Train:
+		operations, err = s.method.trainCompleted(s.context(), requestID, tOp)
+	case Checkpoint:
 		operations, err = s.method.checkpointCompleted(
-			s.context(), requestID, message.Workload, *message.CheckpointMetrics)
-	case message.Workload.Kind == ComputeValidationMetrics:
+			s.context(), requestID, tOp, *metrics.(*CheckpointMetrics))
+	case Validate:
 		operations, err = s.method.validationCompleted(
-			s.context(), requestID, message.Workload, *message.ValidationMetrics)
+			s.context(), requestID, tOp, *metrics.(*ValidationMetrics))
 	default:
-		return nil, errors.Errorf("unexpected workload: %s", message.Workload.Kind)
+		return nil, errors.Errorf("unexpected op: %s", tOp)
 	}
 
 	if err != nil {
 		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
 	}
 	s.eventLog.OperationsCreated(operations...)
-	operations, err = s.filterCompletedCheckpoints(operations)
-	if err != nil {
-		return nil, errors.Wrap(
-			err, "error while filtering operations after workload complete event")
-	}
 	return operations, nil
 }
 
@@ -152,16 +123,12 @@ func (s *Searcher) TrialClosed(requestID RequestID) ([]Operation, error) {
 		s.eventLog.OperationsCreated(shutdown)
 		operations = append(operations, shutdown)
 	}
-	operations, err = s.filterCompletedCheckpoints(operations)
-	if err != nil {
-		return nil, errors.Wrap(err, "error while filtering operations after trial closed event")
-	}
 	return operations, nil
 }
 
 // Progress returns experiment progress as a float between 0.0 and 1.0.
 func (s *Searcher) Progress() float64 {
-	progress := s.method.progress(s.eventLog.TotalWorkloadsCompleted)
+	progress := s.method.progress(s.eventLog.TotalUnitsCompleted)
 	if math.IsNaN(progress) || math.IsInf(progress, 0) {
 		return 0.0
 	}

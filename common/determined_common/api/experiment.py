@@ -256,7 +256,7 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
                 config_test.get("description", str(uuid.uuid4()))
             ),
             "batches_per_step": 1,
-            "min_validation_period": 1,
+            "min_validation_period": {"batches": 1},
             "checkpoint_storage": {
                 **config_test.get("checkpoint_storage", {}),
                 "save_experiment_best": 0,
@@ -266,7 +266,7 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
             "searcher": {
                 "name": "single",
                 "metric": config_test["searcher"]["metric"],
-                "max_steps": 1,
+                "max_length": {"batches": 1},
             },
             "hyperparameters": generate_random_hparam_values(config.get("hyperparameters", {})),
             "resources": {**config_test.get("resources", {"slots_per_trial": 1})},

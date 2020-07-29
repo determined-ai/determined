@@ -68,7 +68,7 @@ func (a *apiServer) PreviewHPSearch(
 		return nil, status.Errorf(codes.InvalidArgument, "invalid experiment config: %s", err)
 	}
 
-	sm := searcher.NewSearchMethod(config.Searcher, config.BatchesPerStep)
+	sm := searcher.NewSearchMethod(config.Searcher)
 	s := searcher.NewSearcher(req.Seed, sm, config.Hyperparameters)
 	sim, err := searcher.Simulate(s, nil, searcher.RandomValidation, true, config.Searcher.Metric)
 	if err != nil {
@@ -76,13 +76,13 @@ func (a *apiServer) PreviewHPSearch(
 	}
 	protoSim := &experimentv1.ExperimentSimulation{Seed: req.Seed}
 	indexes := make(map[string]int)
-	toProto := func(k searcher.Kind) experimentv1.WorkloadKind {
-		switch k {
-		case searcher.RunStep:
+	toProto := func(w searcher.Runnable) experimentv1.WorkloadKind {
+		switch w.(type) {
+		case searcher.Train:
 			return experimentv1.WorkloadKind_WORKLOAD_KIND_RUN_STEP
-		case searcher.ComputeValidationMetrics:
+		case searcher.Validate:
 			return experimentv1.WorkloadKind_WORKLOAD_KIND_COMPUTE_VALIDATION_METRICS
-		case searcher.CheckpointModel:
+		case searcher.Checkpoint:
 			return experimentv1.WorkloadKind_WORKLOAD_KIND_CHECKPOINT_MODEL
 		default:
 			return experimentv1.WorkloadKind_WORKLOAD_KIND_UNSPECIFIED
@@ -91,7 +91,7 @@ func (a *apiServer) PreviewHPSearch(
 	for _, result := range sim.Results {
 		var workloads []experimentv1.WorkloadKind
 		for _, msg := range result {
-			w := toProto(msg.Workload.Kind)
+			w := toProto(msg)
 			workloads = append(workloads, w)
 		}
 		hash := fmt.Sprint(workloads)

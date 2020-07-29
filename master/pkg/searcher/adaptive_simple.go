@@ -15,64 +15,57 @@ func maxTrials(maxTrials, brackets, index int) int {
 	return count
 }
 
-func newAdaptiveSimpleSearch(config model.AdaptiveSimpleConfig, batchesPerStep int) SearchMethod {
+func newAdaptiveSimpleSearch(config model.AdaptiveSimpleConfig) SearchMethod {
 	brackets := parseAdaptiveMode(config.Mode)(config.MaxRungs)
 	sort.Sort(sort.Reverse(sort.IntSlice(brackets)))
 
 	methods := make([]SearchMethod, 0, len(brackets))
 	for i, numRungs := range brackets {
 		c := model.SyncHalvingConfig{
-			Metric:           config.Metric,
-			SmallerIsBetter:  config.SmallerIsBetter,
-			TargetTrialSteps: config.MaxSteps,
-			Divisor:          config.Divisor,
-			NumRungs:         numRungs,
-			TrainStragglers:  true,
+			Metric:          config.Metric,
+			SmallerIsBetter: config.SmallerIsBetter,
+			MaxLength:       config.MaxLength,
+			Divisor:         config.Divisor,
+			NumRungs:        numRungs,
+			TrainStragglers: true,
 		}
 		numTrials := max(maxTrials(config.MaxTrials, len(brackets), i), 1)
-		methods = append(methods, newSyncHalvingSimpleSearch(c, numTrials, batchesPerStep))
+		methods = append(methods, newSyncHalvingSimpleSearch(c, numTrials))
 	}
 
 	return newTournamentSearch(methods...)
 }
 
-func newSyncHalvingSimpleSearch(
-	config model.SyncHalvingConfig,
-	trials,
-	batchesPerStep int,
-) SearchMethod {
+func newSyncHalvingSimpleSearch(config model.SyncHalvingConfig, trials int) SearchMethod {
 	rungs := make([]*rung, 0, config.NumRungs)
-	expectedSteps := 0
-	expectedWorkloads := 0
+	expectedUnits := 0
 	for id := 0; id < config.NumRungs; id++ {
-		stepsNeeded := max(int(float64(config.TargetTrialSteps)/
+		unitsNeeded := max(int(float64(config.MaxLength.Units)/
 			math.Pow(config.Divisor, float64(config.NumRungs-id-1))), 1)
 		startTrials := max(int(float64(trials)/math.Pow(config.Divisor, float64(id))), 1)
 		if id != 0 {
 			prev := rungs[id-1]
-			stepsNeeded = max(stepsNeeded, prev.stepsNeeded+1)
+			unitsNeeded = max(unitsNeeded, prev.unitsNeeded.Units)
 			startTrials = max(startTrials, prev.promoteTrials)
 			prev.promoteTrials = startTrials
-			expectedSteps += (stepsNeeded - rungs[id-1].stepsNeeded) * startTrials
-			expectedWorkloads += (stepsNeeded - rungs[id-1].stepsNeeded + 1) * startTrials
+			expectedUnits += (unitsNeeded - rungs[id-1].unitsNeeded.Units) * startTrials
 		} else {
-			expectedSteps += stepsNeeded * startTrials
-			expectedWorkloads += (stepsNeeded + 1) * startTrials
+			expectedUnits += unitsNeeded * startTrials
 		}
 		rungs = append(rungs,
 			&rung{
-				stepsNeeded: stepsNeeded,
+				unitsNeeded: model.NewLength(config.Unit(), unitsNeeded),
 				startTrials: startTrials,
 			},
 		)
 	}
-	config.StepBudget = expectedSteps
+
+	config.Budget = model.NewLength(config.Unit(), expectedUnits)
 	return &syncHalvingSearch{
 		SyncHalvingConfig: config,
 		rungs:             rungs,
 		trialRungs:        make(map[RequestID]int),
 		earlyExitTrials:   make(map[RequestID]bool),
-		expectedWorkloads: expectedWorkloads,
-		batchesPerStep:    batchesPerStep,
+		expectedUnits:     model.NewLength(config.Unit(), expectedUnits),
 	}
 }
