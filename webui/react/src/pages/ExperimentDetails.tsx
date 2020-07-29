@@ -1,4 +1,4 @@
-import { Breadcrumb, Button, Space, Table, Tooltip } from 'antd';
+import { Alert, BreadCrumb, Button, Modal, Table, Tooltip } from 'antd';
 import { ColumnType } from 'antd/lib/table';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -7,7 +7,6 @@ import { useParams } from 'react-router';
 import CheckpointModal from 'components/CheckpointModal';
 import Icon from 'components/Icon';
 import { makeClickHandler } from 'components/Link';
-import Link from 'components/Link';
 import Message from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
@@ -87,7 +86,7 @@ const ExperimentDetailsComp: React.FC = () => {
   }
   if (message) {
     return (
-      <Page hideTitle title="Not Found">
+      <Page id="not-found">
         <Message>{message}</Message>
       </Page>
     );
@@ -181,29 +180,45 @@ const ExperimentDetailsComp: React.FC = () => {
   ];
 
   return (
-    <Page title={`Experiment ${experimentConfig?.description}`}>
-      <Breadcrumb>
-        <Breadcrumb.Item>
-          <Space align="center" size="small">
-            <Icon name="experiment" size="small" />
-            <Link path="/det/experiments">Experiments</Link>
-          </Space>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>
-          <span>{experimentId}</span>
-        </Breadcrumb.Item>
-      </Breadcrumb>
-      <ExperimentActions
+    <Page
+      backPath={'/det/experiments'}
+      breadcrumb={[
+        { breadcrumbName: 'Experiments', path: '/det/experiments' },
+        { breadcrumbName: `Experiment ${experimentId}`, path: `/det/experiments/${experimentId}` },
+      ]}
+      options={<ExperimentActions
         experiment={experiment}
         onClick={{ Fork: showForkModal }}
-        onSettled={pollExperimentDetails} />
-      <div>
-        <ExperimentInfoBox experiment={experiment} />
-        <ExperimentChart
-          startTime={experiment.startTime}
-          validationHistory={experiment.validationHistory}
-          validationMetric={experimentConfig?.searcher.metric} />
-      </div>
+        onSettled={pollExperimentDetails} />}
+      subTitle={experiment?.config.description}
+      title={`Experiment ${experimentId}`}>
+      <ExperimentInfoBox experiment={experiment} />
+      <Modal
+        bodyStyle={{ padding: 0 }}
+        className={css.forkModal}
+        okText="Fork"
+        title={`Fork Experiment ${experimentId}`}
+        visible={forkModalState.visible}
+        width={768}
+        onCancel={handleCancel}
+        onOk={handleOk}>
+        <MonacoEditor
+          height="80vh"
+          language="yaml"
+          options={{
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            selectOnLineNumbers: true,
+          }}
+          theme="vs-light"
+          value={forkValue}
+          onChange={editorOnChange} />
+        {forkError && <Alert className={css.error} message={forkError} type="error" />}
+      </Modal>
+      <ExperimentChart
+        startTime={experiment.startTime}
+        validationHistory={experiment.validationHistory}
+        validationMetric={experimentConfig?.searcher.metric} />
       <Section title="Trials">
         <Table
           columns={columns}
