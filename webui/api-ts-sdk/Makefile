@@ -35,7 +35,4 @@ build: build-swagger
 
 .PHONY: clean
 clean:
-	rm -r deps/ || true
-	rm -r node_modules/ || true
-	rm -r src/ || true
-	rm -r lib/ || true
+	rm -rf deps/ node_modules/ src/ lib/
