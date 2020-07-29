@@ -13,6 +13,7 @@ data_layer:
 searcher:
   name: single
   metric: accuracy
-  max_steps: 40
+  max_length:
+    batches: 4000
   smaller_is_better: false
 entrypoint: model_def:MNistTrial

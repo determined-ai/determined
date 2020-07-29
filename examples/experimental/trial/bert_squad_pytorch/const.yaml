@@ -16,18 +16,19 @@ hyperparameters:
     null_score_diff_threshold: 0.0
     max_grad_norm: 1.0
     num_training_steps: 15000 # This is the number of optimizer steps. Set it
-                              # to max_steps * batches_per_step (assuming we
-                              # step every batch in the LR scheduler definition)
+                              # to max_length.batches (assuming we step every
+                              # batch in the LR scheduler definition)
 searcher:
     name: single
     metric: f1
-    max_steps: 150 # There are ~90k examples in the training set, and we run for
-                   # 2 epochs as in the huggingface repo. We get 150 by:
-                   # 90k / global_batch_size / (100 batches per step) * 2 epochs
+    max_length:
+        records: 180000 # There are ~90k examples in the training set, and we run for
+                        # 2 epochs as in the huggingface repo.
     smaller_is_better: false
-min_validation_period: 10 # Validation is fairly costly (~10 minutes per), but
-                          # relative to overall runtime it's not that high, so
-                          # validate often to give more frequent feedback.
+min_validation_period:
+    records: 12000 # Validation is fairly costly (~10 minutes per), but
+                   # relative to overall runtime it's not that high, so
+                   # validate often to give more frequent feedback.
 data:
     pretrained_model_name: "bert-base-uncased"
     download_data: False

@@ -40,4 +40,4 @@ This project can perform multiple functions:
    This project also allows for multiple architectures to be evaluate based on the same model. This is similar to weight sharing; however during training, only one architecture is used. This should only be used if you want to see what weight sharing might look like in Determined.
 
 ### Results
-   Running an experiment with train_one_arch.yaml after 434 steps should return about 71 perplexity while using the ASHA genotype. If you continue training over 300 epochs, perplexity should reach about 64.
+   Running an experiment with train_one_arch.yaml after 100 epochs should return about 71 perplexity while using the ASHA genotype. If you continue training over 300 epochs, perplexity should reach about 64.

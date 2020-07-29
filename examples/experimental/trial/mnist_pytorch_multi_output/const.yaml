@@ -10,6 +10,7 @@ hyperparameters:
 searcher:
   name: single
   metric: validation_error
-  max_steps: 10
+  max_length:
+    batches: 1000
   smaller_is_better: true
 entrypoint: model_def:MultiMNistTrial

@@ -14,7 +14,14 @@ if __name__ == "__main__":
 
     config = {
         "description": "PyTorch Bert",
-        "searcher": {"name": "single", "metric": "acc", "max_steps": 4, "smaller_is_better": True},
+        "searcher": {
+            "name": "single",
+            "metric": "acc",
+            "max_length": {
+                "batches": 400,
+            },
+            "smaller_is_better": True,
+        },
         "data": {
             "data_dir": "/tmp/data",
             "task": "MRPC",

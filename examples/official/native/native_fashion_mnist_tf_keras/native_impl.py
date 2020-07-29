@@ -56,7 +56,14 @@ if __name__ == "__main__":
             "global_batch_size": det.Constant(value=32),
             "dense1": det.Constant(value=128),
         },
-        "searcher": {"name": "single", "metric": "val_accuracy", "max_steps": 40},
+        "records_per_epoch": 50000,
+        "searcher": {
+            "name": "single",
+            "metric": "val_accuracy",
+            "max_length": {
+                "epochs": 5,
+            }
+        },
     }
     config.update(json.loads(args.config))
 

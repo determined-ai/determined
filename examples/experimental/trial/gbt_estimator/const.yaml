@@ -14,7 +14,8 @@ hyperparameters:
 searcher:
   name: single
   metric: accuracy
-  max_steps: 100
+  max_length:
+    batches: 100
   smaller_is_better: false
 entrypoint: model_def:BoostedTreesTrial
 batches_per_step: 1
