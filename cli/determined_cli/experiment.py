@@ -280,7 +280,7 @@ def describe(args: Namespace) -> None:
         v_metrics_headers = []
 
     headers = (
-        ["Trial ID", "Train Workload #", "State", "Start Time", "End Time"]
+        ["Trial ID", "# of Batches", "State", "Start Time", "End Time"]
         + t_metrics_headers
         + [
             "Checkpoint State",
@@ -296,7 +296,9 @@ def describe(args: Namespace) -> None:
     values = []
     for doc in docs:
         for trial in doc["trials"]:
+            batch_number = 0
             for step in trial["steps"]:
+                batch_number += step['num_batches']
                 t_metrics_fields = []
                 if step.get("metrics"):
                     avg_metrics = step["metrics"]["avg_metrics"]
@@ -337,7 +339,7 @@ def describe(args: Namespace) -> None:
                 row = (
                     [
                         step["trial_id"],
-                        step["id"],
+                        batch_number,
                         step["state"],
                         render.format_time(step.get("start_time")),
                         render.format_time(step.get("end_time")),
@@ -492,7 +494,7 @@ def list_trials(args: Namespace) -> None:
     r = api.get(args.master, "experiments/{}/summary".format(args.experiment_id))
     experiment = r.json()
 
-    headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Train Workloads"]
+    headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Batches"]
     values = [
         [
             t["id"],
@@ -500,7 +502,7 @@ def list_trials(args: Namespace) -> None:
             json.dumps(t["hparams"], indent=4),
             render.format_time(t["start_time"]),
             render.format_time(t["end_time"]),
-            t["num_steps"],
+            t['num_batches'],
         ]
         for t in experiment["trials"]
     ]
@@ -562,7 +564,7 @@ def set_gc_policy(args: Namespace) -> None:
 
         headers = [
             "Trial ID",
-            "Train Workload #",
+            "# of Batches",
             "State",
             "Validation Metric\n({})".format(metric_name),
             "UUID",
@@ -571,7 +573,7 @@ def set_gc_policy(args: Namespace) -> None:
         values = [
             [
                 c["trial_id"],
-                c["step_id"],
+                c["step"]["num_batches"],
                 c["state"],
                 api.metric.get_validation_metric(metric_name, c["step"]["validation"]),
                 c["uuid"],

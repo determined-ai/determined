@@ -411,15 +411,19 @@ FROM (
                            c.resources, c.metadata,
                            (SELECT row_to_json(s)
                             FROM (
-                                SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
-                                       (SELECT row_to_json(v)
-                                        FROM (
-                                            SELECT v.end_time, v.id, v.metrics, v.start_time,
-                                                   v.state, v.step_id, v.trial_id
-                                            FROM validations v
-                                            WHERE v.trial_id = s.trial_id AND v.step_id = s.id
-                                        ) v
-                                       ) AS validation
+								SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
+									(SELECT sum(ss.num_batches)
+									FROM steps ss
+									WHERE ss.id <= s.id AND ss.trial_id = c.trial_id
+									) AS num_batches,
+									(SELECT row_to_json(v)
+									FROM (
+										SELECT v.end_time, v.id, v.metrics, v.start_time,
+												v.state, v.step_id, v.trial_id
+										FROM validations v
+										WHERE v.trial_id = s.trial_id AND v.step_id = s.id
+									) v
+									) AS validation
                                 FROM steps s
                                 WHERE s.id = c.step_id AND s.trial_id = c.trial_id
                             ) s
@@ -504,7 +508,7 @@ FROM (
                        t.warm_start_checkpoint_id,
                 (SELECT coalesce(jsonb_agg(s ORDER BY id ASC), '[]'::jsonb)
                  FROM (
-                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
+                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id, s.num_batches,
                      (SELECT row_to_json(c)
                       FROM (
                           SELECT c.end_time, c.id, c.metadata, c.resources, c.start_time, c.state,
@@ -998,7 +1002,11 @@ WITH const AS (
                    c.resources, c.metadata,
                    (SELECT row_to_json(s)
                     FROM (
-                        SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
+						SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
+								(SELECT sum(ss.num_batches)
+								FROM steps ss
+								WHERE ss.id <= s.id AND ss.trial_id = c.trial_id
+								) AS num_batches,
                                (SELECT row_to_json(v)
                                 FROM (
                                     SELECT v.end_time, v.id, v.metrics, v.start_time,

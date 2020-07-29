@@ -74,7 +74,7 @@ def list(args: Namespace) -> None:
 
     headers = [
         "Trial ID",
-        "Train Workload #",
+        "# of Batches",
         "State",
         "Validation Metric",
         "UUID",
@@ -84,7 +84,7 @@ def list(args: Namespace) -> None:
     values = [
         [
             c["trial_id"],
-            c["step_id"],
+            c["step"]["num_batches"],
             c["state"],
             api.metric.get_validation_metric(searcher_metric, c["step"]["validation"]),
             c["uuid"],
