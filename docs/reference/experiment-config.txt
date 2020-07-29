@@ -223,7 +223,7 @@ created with the Determined CLI. It may contain the following fields:
 
   - ``name: single``: This search method trains a single trial for a
     fixed length. By default, validation metrics are only
-    computed once, after the specified length has been completed;
+    computed once, after the specified length of training has been completed;
     ``min_validation_period`` (see above) can be used
     to specify that validation metrics should be computed more
     frequently.
@@ -490,7 +490,7 @@ created with the Determined CLI. It may contain the following fields:
   parameter can be used to control how long a trial is trained on a
   single agent:
 
-  - Doing more work in a workload allows per-workload overheads (such as
+  - Training longer per workload allows per-workload overheads (such as
     downloading training data) to be amortized over more training
     work. However, if the size of a single workload is too large, a trial might
     be trained for a long time before Determined gets an opportunity to
@@ -670,10 +670,10 @@ Training Units
 
 .. _experiment-configuration_training_units:
 
-Some configurations, such as searcher training lengths and budgets, ``min_validation_period``, and
-``min_checkpoint_period``, can be expressed in terms of a few training units: records,
-batches or epochs. For example, to specify the ``max_length`` for a searcher in terms of batches,
-the configuration would read as shown below.
+Some configuration setiings, such as searcher training lengths and budgets,
+``min_validation_period``, and ``min_checkpoint_period``, can be expressed in terms of a few
+training units: records, batches or epochs. For example, to specify the ``max_length`` for a
+searcher in terms of batches, the configuration would read as shown below.
 
 .. code:: yaml
 
@@ -681,4 +681,15 @@ the configuration would read as shown below.
     batches: 900
 
 To express it terms of records or epochs, records or epochs would be specified in place of
-``batches``. In the case of epochs, ``records_per_epoch`` must also be specified.
+``batches``. In the case of epochs, ``records_per_epoch`` must also be specified. Below is an
+example of a single searcher in terms of epochs.
+
+.. code:: yaml
+
+  records_per_epoch: 50000
+  searcher:
+    name: single
+    metric: validation_error
+    max_length:
+      epochs: 64
+    smaller_is_better: true
