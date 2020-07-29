@@ -34,7 +34,7 @@ import { filterExperiments, processExperiments } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates, waitPageUrl } from 'utils/types';
 
 import css from './ExperimentList.module.scss';
-import { columns } from './ExperimentList.table';
+import { columns as experimentColumns } from './ExperimentList.table';
 
 enum Action {
   Activate = 'Activate',
@@ -52,6 +52,8 @@ const defaultFilters: ExperimentFilters = {
   states: [ ALL_VALUE ],
   username: undefined,
 };
+
+const columns = [ ...experimentColumns ];
 
 const ExperimentList: React.FC = () => {
   const auth = Auth.useStateContext();
