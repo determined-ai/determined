@@ -5,14 +5,14 @@ import React, { useCallback, useMemo, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 
 import Badge, { BadgeType } from 'components/Badge';
+import CheckpointModal from 'components/CheckpointModal';
 import Link from 'components/Link';
+import ProgressBar from 'components/ProgressBar';
 import { CheckpointDetail, CheckpointState, ExperimentDetails } from 'types';
 import { formatDatetime } from 'utils/date';
 import { floatToPercent, humanReadableFloat } from 'utils/string';
 
-import CheckpointModal from './CheckpointModal';
 import css from './ExperimentInfoBox.module.scss';
-import ProgressBar from './ProgressBar';
 
 interface Props {
   experiment: ExperimentDetails;

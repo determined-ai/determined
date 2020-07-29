@@ -5,10 +5,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 
 import CheckpointModal from 'components/CheckpointModal';
-import CreateExperimentModal from 'components/CreateExperimentModal';
-import ExperimentActions from 'components/ExperimentActions';
-import ExperimentChart from 'components/ExperimentChart';
-import ExperimentInfoBox from 'components/ExperimentInfoBox';
 import Icon from 'components/Icon';
 import { makeClickHandler } from 'components/Link';
 import Link from 'components/Link';
@@ -20,7 +16,12 @@ import { durationRenderer, relativeTimeRenderer, stateRenderer } from 'component
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
+import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
+import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
+import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
+import { routeAll } from 'routes';
 import { getExperimentDetails, isNotFound } from 'services/api';
+import { forkExperiment, getExperimentDetails, isNotFound } from 'services/api';
 import { ExperimentDetailsParams } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
 import { clone } from 'utils/data';
