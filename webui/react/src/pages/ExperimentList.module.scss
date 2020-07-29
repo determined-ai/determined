@@ -18,9 +18,9 @@
     max-width: 30rem;
   }
   .nameColumn {
+    line-height: 3rem;
     word-break: break-word;
     word-wrap: break-word;
-    line-height: 3rem;
   }
   .nameColumn :global .tagPlus {
     display: none;
