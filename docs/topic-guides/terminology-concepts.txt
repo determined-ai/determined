@@ -18,7 +18,7 @@ command-line interface (CLI)
 configuration file
    A :ref:`YAML <topic-guides_yaml>` file that contains options to pass
    to Determined. For example, an experiment configuration file contains
-   information on training length, data location, hyperparameters, and
+   information on the training length, data location, hyperparameters, and
    other options for an experiment. More information can be found at
    :ref:`experiment-configuration`, :ref:`cluster-configuration`, and
    :ref:`command-configuration`.

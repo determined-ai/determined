@@ -128,8 +128,8 @@ created with the Determined CLI. It may contain the following fields:
   - ``none``: A checkpoint will never be taken *due* to a validation.
     However, even with this policy selected, checkpoints are
     still expected to be taken after the trial is finished training,
-    due to cluster scheduling decisions, prior to searcher requested
-    validations or due to ``checkpoint_period``.
+    due to cluster scheduling decisions, before the search method makes
+    a decision based on a validation of a trial, or due to ``min_checkpoint_period``.
 
 - ``min_checkpoint_period``: Instructs Determined to take periodic
   checkpoints of each trial during training. If set, this variable
@@ -142,8 +142,9 @@ created with the Determined CLI. It may contain the following fields:
   allow the trial's execution to be suspended and later resumed on
   a different Determined agent (b) when the trial's experiment is
   completed, to allow the resulting model to be exported from
-  Determined (e.g., for deployment) (c) before a searcher requested
-  validation, to maintain consistency in the event of a failure.
+  Determined (e.g., for deployment) (c) before the search method makes
+  a decision based on a validation of a trial, to maintain consistency
+  in the event of a failure.
 
 .. _experiment-configuration_hyperparameters:
 
@@ -248,7 +249,7 @@ created with the Determined CLI. It may contain the following fields:
   - ``name: random``: This search method performs a random search.
     Each random trial configuration is trained for the specified
     length, and then validation metrics are computed.
-    ``validation_period`` (see above) can be used to specify that
+    ``min_validation_period`` (see above) can be used to specify that
     validation metrics should be computed more frequently.
 
     - ``metric``: Specifies the name of the validation metric used to
@@ -327,8 +328,9 @@ created with the Determined CLI. It may contain the following fields:
       for this long. We suggest setting this to a multiple of
       ``divisor^(max_rungs-1)``, which is 4^(5-1) = 256 with the default
       values.
-    - ``budget``: Specifies the total training length across all
-      trials. We suggest setting this to be a multiple of ``max_length``,
+    - ``budget``: Specifies the total training length across all trials,
+      in terms of the same unit (see :ref:`Training Units<experiment-configuration_training_units>`)
+      as ``max_length``. We suggest setting this to be a multiple of ``max_length``,
       which implies interpreting this subfield as the effective number
       of complete trials to evaluate. Note that some trials might be
       in-progress when this budget is exhausted; adaptive search
@@ -485,7 +487,7 @@ created with the Determined CLI. It may contain the following fields:
   training workload. As discussed above, Determined divides the training of a
   single trial into a sequence of training workloads; each workload corresponds
   to a certain number of model updates. Therefore, this configuration
-  parameter can be used to control how long a trial is trained at a
+  parameter can be used to control how long a trial is trained on a
   single agent:
 
   - Doing more work in a workload allows per-workload overheads (such as

@@ -147,7 +147,7 @@ To create an experiment, we start by writing a configuration file which defines 
           epochs: 5
     entrypoint: model_def:FashionMNISTTrial
 
-For this model, we have two hyperparameters: the size of the ``Dense`` layer and the batch size. The model we train on five epochs and should reach about 85% accuracy on the validation set, which mimics the original ``tf.keras`` implementation.
+For this model, we have two hyperparameters: the size of the ``Dense`` layer and the batch size. We train the model on five epochs and should reach about 85% accuracy on the validation set, which mimics the original ``tf.keras`` implementation.
 
 The ``entrypoint`` specifies the name of the trial class to use. This is useful if our model code contains more than one trial class. In this case, we use an entrypoint of ``model_def:FashionMNISTTrial`` because our trial class is named ``FashionMNISTTrial`` and it is defined in a Python file named ``model_def.py``.
 
