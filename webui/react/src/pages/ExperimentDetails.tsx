@@ -42,14 +42,14 @@ const ExperimentDetailsComp: React.FC = () => {
   const [ forkValue, setForkValue ] = useState<string>('Loading');
   const [ forkModalState, setForkModalState ] = useState({ visible: false });
   const [ forkError, setForkError ] = useState<string>();
-  const [ experimentResponse, setExpRequestParams ] =
+  const [ experimentResponse, triggerExperimentRequest ] =
     useRestApi<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
   const experiment = experimentResponse.data;
   const validationKey = experiment?.config.searcher.metric;
 
   const pollExperimentDetails = useCallback(() => {
-    setExpRequestParams({ id });
-  }, [ id, setExpRequestParams ]);
+    triggerExperimentRequest({ id });
+  }, [ id, triggerExperimentRequest ]);
 
   usePolling(pollExperimentDetails);
 

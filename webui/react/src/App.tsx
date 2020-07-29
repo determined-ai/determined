@@ -38,10 +38,10 @@ const AppView: React.FC = () => {
   const setInfo = Info.useActionContext();
   const setUI = UI.useActionContext();
   const username = user ? user.username : undefined;
-  const [ infoResponse, requestInfo ] = useRestApi<EmptyParams, DeterminedInfo>(getInfo, {});
+  const [ infoResponse, triggerInfoRequest ] = useRestApi<EmptyParams, DeterminedInfo>(getInfo, {});
   const classes = [ css.base ];
 
-  const fetchInfo = useCallback(() => requestInfo({}), [ requestInfo ]);
+  const fetchInfo = useCallback(() => triggerInfoRequest({}), [ triggerInfoRequest ]);
 
   if (!ui.showChrome) classes.push(css.noChrome);
 

@@ -50,13 +50,13 @@ const TaskList: React.FC = () => {
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
   const [ search, setSearch ] = useState('');
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
-  const [ commandsResponse, requestCommands ] =
+  const [ commandsResponse, triggerCommandsRequest ] =
     useRestApi<EmptyParams, Command[]>(getCommands, {});
-  const [ notebooksResponse, requestNotebooks ] =
+  const [ notebooksResponse, triggerNotebooksRequest ] =
     useRestApi<EmptyParams, Command[]>(getNotebooks, {});
-  const [ shellsResponse, requestShells ] =
+  const [ shellsResponse, triggerShellsRequest ] =
     useRestApi<EmptyParams, Command[]>(getShells, {});
-  const [ tensorboardsResponse, requestTensorboards ] =
+  const [ tensorboardsResponse, triggerTensorboardsRequest ] =
     useRestApi<EmptyParams, Command[]>(getTensorboards, {});
 
   const sources = [ commands, notebooks, shells, tensorboards ];
@@ -94,11 +94,16 @@ const TaskList: React.FC = () => {
   }, [ selectedTasks ]);
 
   const fetchTasks = useCallback((): void => {
-    requestCommands({});
-    requestNotebooks({});
-    requestShells({});
-    requestTensorboards({});
-  }, [ requestCommands, requestNotebooks, requestShells, requestTensorboards ]);
+    triggerCommandsRequest({});
+    triggerNotebooksRequest({});
+    triggerShellsRequest({});
+    triggerTensorboardsRequest({});
+  }, [
+    triggerCommandsRequest,
+    triggerNotebooksRequest,
+    triggerShellsRequest,
+    triggerTensorboardsRequest,
+  ]);
 
   /*
    * Check once every second to see if all task endpoints have resolved.

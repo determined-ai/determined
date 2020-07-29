@@ -22,11 +22,11 @@ interface Params {
 const TrialDetailsComp: React.FC = () => {
   const { trialId: trialIdParam } = useParams<Params>();
   const trialId = parseInt(trialIdParam);
-  const [ trial, setExpRequestParams ] =
+  const [ trial, triggerTrialRequest ] =
     useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
   const pollTrialDetails = useCallback(
-    () => setExpRequestParams({ id: trialId }),
-    [ setExpRequestParams, trialId ],
+    () => triggerTrialRequest({ id: trialId }),
+    [ triggerTrialRequest, trialId ],
   );
   usePolling(pollTrialDetails);
 

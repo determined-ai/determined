@@ -53,7 +53,7 @@ const ExperimentList: React.FC = () => {
   const auth = Auth.useStateContext();
   const users = Users.useStateContext();
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>([]);
-  const [ experimentsResponse, requestExperiments ] =
+  const [ experimentsResponse, triggerExperimentsRequest ] =
     useRestApi<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
   const storage = useStorage('experiment-list');
   const initFilters = storage.getWithDefault(
@@ -115,8 +115,8 @@ const ExperimentList: React.FC = () => {
   }, [ selectedExperiments ]);
 
   const fetchExperiments = useCallback((): void => {
-    requestExperiments({});
-  }, [ requestExperiments ]);
+    triggerExperimentsRequest({});
+  }, [ triggerExperimentsRequest ]);
 
   usePolling(fetchExperiments);
 
