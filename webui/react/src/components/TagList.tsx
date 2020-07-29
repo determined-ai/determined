@@ -2,8 +2,11 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Input, Tag, Tooltip } from 'antd';
 import React, { useCallback, useRef, useState } from 'react';
 
+import { truncate } from 'utils/string';
+
 import css from './TagList.module.scss';
 
+const TAG_MAX_LENGTH = 20;
 interface Props {
   tags: string[];
   setTags: (tags: string[]) => void;
@@ -31,12 +34,7 @@ const EditableTagList: React.FC<Props> = ({ tags, setTags, className }: Props) =
     inputRef.current?.focus();
   }, []);
 
-  const stopPropagation = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-    },
-    [],
-  );
+  const stopPropagation = useCallback( (e: React.MouseEvent) => e.stopPropagation(), []);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     e.persist();
@@ -90,7 +88,7 @@ const EditableTagList: React.FC<Props> = ({ tags, setTags, className }: Props) =
           );
         }
 
-        const isLongTag = tag.length > 20;
+        const isLongTag = tag.length > TAG_MAX_LENGTH;
 
         const tagElem = (
           <Tag
@@ -106,7 +104,7 @@ const EditableTagList: React.FC<Props> = ({ tags, setTags, className }: Props) =
                 editInputRef.current?.focus();
               }}
             >
-              {isLongTag ? `${tag.slice(0, 20)}...` : tag}
+              {isLongTag ? truncate(tag, TAG_MAX_LENGTH) : tag}
             </span>
           </Tag>
         );
