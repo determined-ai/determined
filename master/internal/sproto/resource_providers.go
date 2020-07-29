@@ -45,8 +45,8 @@ type (
 		Echo   *echo.Echo
 	}
 
-	// GetEndpointActorName request the name of the actor that is managing the resources.
-	GetEndpointActorName struct{}
+	// GetEndpointActorAddress requests the name of the actor that is managing the resources.
+	GetEndpointActorAddress struct{}
 )
 
 func (c ContainerLog) String() string {

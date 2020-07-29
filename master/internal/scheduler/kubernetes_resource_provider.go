@@ -105,7 +105,7 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 	case GetTaskSummaries:
 		ctx.Respond(k.taskList.TaskSummaries())
 
-	case sproto.GetEndpointActorName:
+	case sproto.GetEndpointActorAddress:
 		ctx.Respond("/pods")
 
 	default:

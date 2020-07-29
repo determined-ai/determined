@@ -27,10 +27,9 @@ func Route(system *actor.System, recipient *actor.Ref) echo.HandlerFunc {
 
 func handleWSRequest(system *actor.System, recipient *actor.Ref, ctx echo.Context) error {
 	var addr actor.Address
-	switch {
-	case recipient != nil:
+	if recipient != nil {
 		addr = recipient.Address()
-	default:
+	} else {
 		addr = parseAddr(ctx.Request().URL.Path)
 	}
 
@@ -56,10 +55,9 @@ func handleWSRequest(system *actor.System, recipient *actor.Ref, ctx echo.Contex
 
 func handleRequest(system *actor.System, recipient *actor.Ref, ctx echo.Context) error {
 	var addr actor.Address
-	switch {
-	case recipient != nil:
+	if recipient != nil {
 		addr = recipient.Address()
-	default:
+	} else {
 		addr = parseAddr(ctx.Request().URL.Path)
 	}
 

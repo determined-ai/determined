@@ -8,7 +8,7 @@ import (
 	proto "github.com/determined-ai/determined/proto/pkg/agentv1"
 )
 
-// ToProtoAgent converts agent summary to a proto struct.
+// ToProtoAgent converts an agent summary to a proto struct.
 func ToProtoAgent(a AgentSummary) *proto.Agent {
 	slots := make(map[string]*proto.Slot)
 	for _, s := range a.Slots {

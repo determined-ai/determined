@@ -300,7 +300,7 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 		reschedule = false
 		ctx.Respond(d.taskList.TaskSummaries())
 
-	case sproto.GetEndpointActorName:
+	case sproto.GetEndpointActorAddress:
 		reschedule = false
 		ctx.Respond("/agents")
 

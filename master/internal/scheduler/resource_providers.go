@@ -23,7 +23,7 @@ func (rp *ResourceProviders) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case AddTask, StartTask, sproto.ContainerStateChanged, SetMaxSlots, SetWeight,
 		SetTaskName, TerminateTask, GetTaskSummary, GetTaskSummaries, sproto.ConfigureEndpoints,
-		sproto.GetEndpointActorName:
+		sproto.GetEndpointActorAddress:
 		rp.forward(ctx, msg)
 
 	default:
