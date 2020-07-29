@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"gotest.tools/assert"
@@ -104,21 +105,26 @@ func TestAdaptiveBracketRungsConfig(t *testing.T) {
 {
   "name": "adaptive",
   "metric": "metric",
-  "target_trial_steps": 128,
-  "step_budget": 100,
+  "max_length": {
+	  "batches": 128
+  },
+  "budget": {
+	  "batches": 100
+  },
   "bracket_rungs": [5, 10, 15, 20]
 }
 `)
 	var actual SearcherConfig
 	assert.NilError(t, json.Unmarshal(json1, &actual))
 
+	maxLength, budget := 128, 100
 	expected := SearcherConfig{
 		Metric: "metric",
 		AdaptiveConfig: &AdaptiveConfig{
-			Metric:           "metric",
-			TargetTrialSteps: 128,
-			StepBudget:       100,
-			BracketRungs:     []int{5, 10, 15, 20},
+			Metric:       "metric",
+			MaxLength:    NewLengthInBatches(maxLength),
+			Budget:       NewLengthInBatches(budget),
+			BracketRungs: []int{5, 10, 15, 20},
 		},
 	}
 	assert.DeepEqual(t, actual, expected)
@@ -130,7 +136,9 @@ func TestAdaptiveASHABracketRungsConfig(t *testing.T) {
 {
   "name": "adaptive_asha",
   "metric": "metric",
-  "target_trial_steps": 128,
+  "max_length": {
+	  "batches": 12800
+  },
   "max_trials": 100,
   "bracket_rungs": [5, 10, 15, 20]
 }
@@ -141,10 +149,10 @@ func TestAdaptiveASHABracketRungsConfig(t *testing.T) {
 	expected := SearcherConfig{
 		Metric: "metric",
 		AdaptiveASHAConfig: &AdaptiveASHAConfig{
-			Metric:           "metric",
-			TargetTrialSteps: 128,
-			MaxTrials:        100,
-			BracketRungs:     []int{5, 10, 15, 20},
+			Metric:       "metric",
+			MaxLength:    NewLengthInBatches(12800),
+			MaxTrials:    100,
+			BracketRungs: []int{5, 10, 15, 20},
 		},
 	}
 	assert.DeepEqual(t, actual, expected)
@@ -158,7 +166,9 @@ func TestPBTConfig(t *testing.T) {
   "metric": "metric",
   "population_size": 101,
   "num_rounds": 102,
-  "steps_per_round": 103,
+  "length_per_round": {
+    "batches": 103
+  },
   "replace_function": {
     "truncate_fraction": 0.17
   },
@@ -177,7 +187,7 @@ func TestPBTConfig(t *testing.T) {
 			Metric:         "metric",
 			PopulationSize: 101,
 			NumRounds:      102,
-			StepsPerRound:  103,
+			LengthPerRound: NewLengthInBatches(103),
 			PBTReplaceConfig: PBTReplaceConfig{
 				TruncateFraction: .17,
 			},
@@ -188,4 +198,62 @@ func TestPBTConfig(t *testing.T) {
 		},
 	}
 	assert.DeepEqual(t, actual, expected)
+}
+
+// TestLength tests basic serialization and deserialization of length.
+func TestLength(t *testing.T) {
+	testCases := []struct {
+		name      string
+		json      string
+		expected  Length
+		shouldErr bool
+	}{
+		{
+			name:      "records",
+			json:      "{\"records\":1000}",
+			expected:  NewLength(Records, 1000),
+			shouldErr: false,
+		},
+		{
+			name:      "batches",
+			json:      "{\"batches\":100}",
+			expected:  NewLength(Batches, 100),
+			shouldErr: false,
+		},
+		{
+			name:      "epochs",
+			json:      "{\"epochs\":1}",
+			expected:  NewLength(Epochs, 1),
+			shouldErr: false,
+		},
+		{
+			name:      "invalid configuration -- more than one unit",
+			json:      "{\"batches\":100,\"epochs\": 1}",
+			shouldErr: true,
+		},
+		{
+			name:      "invalid configuration -- no units",
+			json:      "{}",
+			shouldErr: true,
+		},
+	}
+
+	for idx := range testCases {
+		tc := testCases[idx]
+
+		t.Run(tc.name, func(t *testing.T) {
+			var actual Length
+			err := json.Unmarshal([]byte(tc.json), &actual)
+			if tc.shouldErr {
+				assert.Error(t, err, fmt.Sprintf("invalid length: %s", tc.json))
+				return
+			}
+			assert.NilError(t, err)
+			assert.DeepEqual(t, actual, tc.expected)
+
+			b, err := json.Marshal(actual)
+			assert.NilError(t, err)
+			assert.DeepEqual(t, tc.json, string(b))
+		})
+	}
 }

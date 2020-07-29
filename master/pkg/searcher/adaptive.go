@@ -7,7 +7,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-func newAdaptiveSearch(config model.AdaptiveConfig, batchesPerStep int) SearchMethod {
+func newAdaptiveSearch(config model.AdaptiveConfig) SearchMethod {
 	modeFunc := parseAdaptiveMode(config.Mode)
 
 	brackets := config.BracketRungs
@@ -19,15 +19,15 @@ func newAdaptiveSearch(config model.AdaptiveConfig, batchesPerStep int) SearchMe
 	methods := make([]SearchMethod, 0, len(brackets))
 	for _, numRungs := range brackets {
 		c := model.SyncHalvingConfig{
-			Metric:           config.Metric,
-			SmallerIsBetter:  config.SmallerIsBetter,
-			NumRungs:         numRungs,
-			TargetTrialSteps: config.TargetTrialSteps,
-			StepBudget:       config.StepBudget / len(brackets),
-			Divisor:          config.Divisor,
-			TrainStragglers:  config.TrainStragglers,
+			Metric:          config.Metric,
+			SmallerIsBetter: config.SmallerIsBetter,
+			NumRungs:        numRungs,
+			MaxLength:       config.MaxLength,
+			Budget:          config.Budget.DivInt(len(brackets)),
+			Divisor:         config.Divisor,
+			TrainStragglers: config.TrainStragglers,
 		}
-		methods = append(methods, newSyncHalvingSearch(c, batchesPerStep))
+		methods = append(methods, newSyncHalvingSearch(c))
 	}
 
 	return newTournamentSearch(methods...)

@@ -18,13 +18,14 @@ type ExperimentConfig struct {
 	Data                map[string]interface{}    `json:"data,omitempty"`
 	CheckpointStorage   CheckpointStorageConfig   `json:"checkpoint_storage"`
 	TensorboardStorage  *TensorboardStorageConfig `json:"tensorboard_storage,omitempty"`
-	MinCheckpointPeriod *int                      `json:"min_checkpoint_period"`
-	MinValidationPeriod *int                      `json:"min_validation_period"`
+	MinCheckpointPeriod Length                    `json:"min_checkpoint_period"`
+	MinValidationPeriod Length                    `json:"min_validation_period"`
 	CheckpointPolicy    string                    `json:"checkpoint_policy"`
 	Hyperparameters     Hyperparameters           `json:"hyperparameters"`
 	Searcher            SearcherConfig            `json:"searcher"`
 	Resources           ResourcesConfig           `json:"resources"`
 	Optimizations       OptimizationsConfig       `json:"optimizations"`
+	RecordsPerEpoch     int                       `json:"records_per_epoch"`
 	BatchesPerStep      int                       `json:"batches_per_step"`
 	BindMounts          []BindMount               `json:"bind_mounts,omitempty"`
 	Environment         Environment               `json:"environment"`
@@ -98,8 +99,6 @@ func (e ExperimentConfig) Validate() []error {
 		check.LessThanOrEqualTo(gridTrials, MaxAllowedTrials,
 			"number of trials for grid search must be <= %d", MaxAllowedTrials),
 		check.GreaterThanOrEqualTo(e.MaxRestarts, 0, "max_restarts must be >= 0"),
-		check.GreaterThan(e.MinCheckpointPeriod, 0, "min_checkpoint_period must be > 0"),
-		check.GreaterThan(e.MinValidationPeriod, 0, "min_validation_period must be > 0"),
 	}...)
 }
 
@@ -123,6 +122,16 @@ func (e *ExperimentConfig) Scan(src interface{}) error {
 	}
 	*e = config
 	return nil
+}
+
+// Unit implements the model.InUnits interface.
+func (e ExperimentConfig) Unit() Unit {
+	return e.Searcher.Unit()
+}
+
+// InUnits is describes a type that is in terms of a specific unit.
+type InUnits interface {
+	Unit() Unit
 }
 
 // Labels holds the set of labels on the experiment.

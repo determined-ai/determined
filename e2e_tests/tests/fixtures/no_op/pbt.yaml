@@ -15,7 +15,8 @@ searcher:
   name: pbt
   metric: validation_error
   population_size: 9
-  steps_per_round: 6
+  length_per_round:
+    batches: 600
   num_rounds: 3
   replace_function:
     truncate_fraction: 0.2

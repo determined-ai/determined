@@ -6,24 +6,61 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-func TestASHASearcher(t *testing.T) {
+func TestASHASearcherRecords(t *testing.T) {
 	actual := model.AsyncHalvingConfig{
 		Metric: defaultMetric, NumRungs: 3,
-		TargetTrialSteps: 90,
-		Divisor:          3,
-		MaxTrials:        12,
+		MaxLength: model.NewLengthInRecords(576000),
+		Divisor:   3,
+		MaxTrials: 12,
 	}
-	expected := [][]Kind{
-		toKinds("10S 1V"), toKinds("10S 1V"), toKinds("10S 1V"),
-		toKinds("10S 1V"), toKinds("10S 1V"), toKinds("10S 1V"),
-		toKinds("10S 1V"), toKinds("10S 1V"),
-		toKinds("10S 1V 20S 1V"),
-		toKinds("10S 1V 20S 1V"),
-		toKinds("10S 1V 20S 1V"),
-		toKinds("10S 1V 20S 1V 60S 1V"),
+	expected := [][]Runnable{
+		toOps("64000R V"), toOps("64000R V"), toOps("64000R V"),
+		toOps("64000R V"), toOps("64000R V"), toOps("64000R V"),
+		toOps("64000R V"), toOps("64000R V"),
+		toOps("64000R V 128000R V"),
+		toOps("64000R V 128000R V"),
+		toOps("64000R V 128000R V"),
+		toOps("64000R V 128000R V 384000R V"),
 	}
-	searchMethod := newAsyncHalvingSearch(actual, defaultBatchesPerStep)
-	checkSimulation(t, searchMethod, nil, ConstantValidation, expected)
+	checkSimulation(t, newAsyncHalvingSearch(actual), nil, ConstantValidation, expected)
+}
+
+func TestASHASearcherBatches(t *testing.T) {
+	actual := model.AsyncHalvingConfig{
+		Metric: defaultMetric, NumRungs: 3,
+		MaxLength: model.NewLengthInBatches(9000),
+		Divisor:   3,
+		MaxTrials: 12,
+	}
+	expected := [][]Runnable{
+		toOps("1000B V"), toOps("1000B V"), toOps("1000B V"),
+		toOps("1000B V"), toOps("1000B V"), toOps("1000B V"),
+		toOps("1000B V"), toOps("1000B V"),
+		toOps("1000B V 2000B V"),
+		toOps("1000B V 2000B V"),
+		toOps("1000B V 2000B V"),
+		toOps("1000B V 2000B V 6000B V"),
+	}
+	checkSimulation(t, newAsyncHalvingSearch(actual), nil, ConstantValidation, expected)
+}
+
+func TestASHASearcherEpochs(t *testing.T) {
+	actual := model.AsyncHalvingConfig{
+		Metric: defaultMetric, NumRungs: 3,
+		MaxLength: model.NewLengthInEpochs(12),
+		Divisor:   3,
+		MaxTrials: 12,
+	}
+	expected := [][]Runnable{
+		toOps("1E V"), toOps("1E V"), toOps("1E V"),
+		toOps("1E V"), toOps("1E V"), toOps("1E V"),
+		toOps("1E V"), toOps("1E V"),
+		toOps("1E V 3E V"),
+		toOps("1E V 3E V"),
+		toOps("1E V 3E V"),
+		toOps("1E V 3E V 8E V"),
+	}
+	checkSimulation(t, newAsyncHalvingSearch(actual), nil, ConstantValidation, expected)
 }
 
 func TestASHASearchMethod(t *testing.T) {
@@ -32,25 +69,25 @@ func TestASHASearchMethod(t *testing.T) {
 		{
 			name: "smaller is better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(0.01, 90, []int{10, 30, 90}, nil),
-				newConstantPredefinedTrial(0.02, 30, []int{10, 30}, nil),
-				newConstantPredefinedTrial(0.03, 30, []int{10, 30}, nil),
-				newConstantPredefinedTrial(0.04, 30, []int{10, 30}, nil),
-				newConstantPredefinedTrial(0.05, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.06, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.07, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.08, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.09, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.10, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.11, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.12, 10, []int{10}, nil),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.05),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.06),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.07),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.08),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.09),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.10),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.11),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.12),
 			},
 			config: model.SearcherConfig{
 				AsyncHalvingConfig: &model.AsyncHalvingConfig{
 					Metric:              "error",
 					NumRungs:            3,
 					SmallerIsBetter:     true,
-					TargetTrialSteps:    90,
+					MaxLength:           model.NewLengthInBatches(9000),
 					MaxTrials:           12,
 					Divisor:             3,
 					MaxConcurrentTrials: maxConcurrentTrials,
@@ -60,25 +97,25 @@ func TestASHASearchMethod(t *testing.T) {
 		{
 			name: "early exit -- smaller is better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(0.01, 90, []int{10, 30, 90}, nil),
-				newConstantPredefinedTrial(0.02, 30, []int{10, 30}, nil),
-				newEarlyExitPredefinedTrial(0.03, 30, []int{10}, nil),
-				newConstantPredefinedTrial(0.04, 30, []int{10, 30}, nil),
-				newConstantPredefinedTrial(0.05, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.06, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.07, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.08, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.09, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.10, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.11, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.12, 10, []int{10}, nil),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.02),
+				newEarlyExitPredefinedTrial(toOps("1000B V 2000B"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.05),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.06),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.07),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.08),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.09),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.10),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.11),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.12),
 			},
 			config: model.SearcherConfig{
 				AsyncHalvingConfig: &model.AsyncHalvingConfig{
 					Metric:              "error",
 					NumRungs:            3,
 					SmallerIsBetter:     true,
-					TargetTrialSteps:    90,
+					MaxLength:           model.NewLengthInBatches(9000),
 					MaxTrials:           12,
 					Divisor:             3,
 					MaxConcurrentTrials: maxConcurrentTrials,
@@ -88,25 +125,25 @@ func TestASHASearchMethod(t *testing.T) {
 		{
 			name: "smaller is not better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(0.12, 90, []int{10, 30, 90}, nil),
-				newConstantPredefinedTrial(0.11, 30, []int{10, 30}, nil),
-				newConstantPredefinedTrial(0.10, 30, []int{10, 30}, nil),
-				newConstantPredefinedTrial(0.09, 30, []int{10, 30}, nil),
-				newConstantPredefinedTrial(0.08, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.07, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.06, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.05, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.04, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.03, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.02, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.01, 10, []int{10}, nil),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.12),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.11),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.10),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.09),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.08),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.07),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.06),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.05),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.01),
 			},
 			config: model.SearcherConfig{
 				AsyncHalvingConfig: &model.AsyncHalvingConfig{
 					Metric:              "error",
 					NumRungs:            3,
 					SmallerIsBetter:     false,
-					TargetTrialSteps:    90,
+					MaxLength:           model.NewLengthInBatches(9000),
 					MaxTrials:           12,
 					Divisor:             3,
 					MaxConcurrentTrials: maxConcurrentTrials,
@@ -116,25 +153,25 @@ func TestASHASearchMethod(t *testing.T) {
 		{
 			name: "early exit -- smaller is not better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(0.12, 90, []int{10, 30, 90}, nil),
-				newConstantPredefinedTrial(0.11, 30, []int{10, 30}, nil),
-				newEarlyExitPredefinedTrial(0.10, 30, []int{10}, nil),
-				newConstantPredefinedTrial(0.09, 30, []int{10, 30}, nil),
-				newConstantPredefinedTrial(0.08, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.07, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.06, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.05, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.04, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.03, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.02, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.01, 10, []int{10}, nil),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.12),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.11),
+				newEarlyExitPredefinedTrial(toOps("1000B V 2000B"), 0.10),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.09),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.08),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.07),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.06),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.05),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.01),
 			},
 			config: model.SearcherConfig{
 				AsyncHalvingConfig: &model.AsyncHalvingConfig{
 					Metric:              "error",
 					NumRungs:            3,
 					SmallerIsBetter:     false,
-					TargetTrialSteps:    90,
+					MaxLength:           model.NewLengthInBatches(9000),
 					MaxTrials:           12,
 					Divisor:             3,
 					MaxConcurrentTrials: maxConcurrentTrials,
@@ -147,25 +184,25 @@ func TestASHASearchMethod(t *testing.T) {
 				// The first trial is promoted due to asynchronous
 				// promotions despite being below top 1/3 of trials in
 				// base rung.
-				newConstantPredefinedTrial(0.10, 30, []int{10, 30}, nil),
-				newConstantPredefinedTrial(0.11, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.12, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.01, 90, []int{10, 30, 90}, nil),
-				newConstantPredefinedTrial(0.02, 30, []int{10, 30}, nil),
-				newConstantPredefinedTrial(0.03, 30, []int{10, 30}, nil),
-				newConstantPredefinedTrial(0.04, 30, []int{10, 30}, nil),
-				newConstantPredefinedTrial(0.05, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.06, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.07, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.08, 10, []int{10}, nil),
-				newConstantPredefinedTrial(0.09, 10, []int{10}, nil),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.10),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.11),
+				newEarlyExitPredefinedTrial(toOps("1000B V"), 0.12),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V 6000B V"), 0.01),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.02),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.03),
+				newConstantPredefinedTrial(toOps("1000B V 2000B V"), 0.04),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.05),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.06),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.07),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.08),
+				newConstantPredefinedTrial(toOps("1000B V"), 0.09),
 			},
 			config: model.SearcherConfig{
 				AsyncHalvingConfig: &model.AsyncHalvingConfig{
 					Metric:              "error",
 					NumRungs:            3,
 					SmallerIsBetter:     true,
-					TargetTrialSteps:    90,
+					MaxLength:           model.NewLengthInBatches(9000),
 					MaxTrials:           12,
 					Divisor:             3,
 					MaxConcurrentTrials: maxConcurrentTrials,

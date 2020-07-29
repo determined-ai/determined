@@ -20,7 +20,7 @@ def test_tensorpack_native_parallel() -> None:
     config = conf.load_config(conf.official_examples_path("trial/mnist_tp/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_native_parallel(config, True)
-    config = conf.set_max_steps(config, 2)
+    config = conf.set_max_length(config, {"batches": 200})
 
     experiment_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("trial/mnist_tp"), 1
@@ -35,7 +35,7 @@ def test_tensorpack_parallel(aggregation_frequency: int) -> None:
     config = conf.load_config(conf.official_examples_path("trial/mnist_tp/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_native_parallel(config, False)
-    config = conf.set_max_steps(config, 2)
+    config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
 
     experiment_id = exp.run_basic_test_with_temp_config(

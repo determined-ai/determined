@@ -35,7 +35,7 @@ def test_pytorch_load() -> None:
 @pytest.mark.e2e_gpu  # type: ignore
 def test_pytorch_const_multi_output() -> None:
     config = conf.load_config(conf.experimental_path("trial/mnist_pytorch_multi_output/const.yaml"))
-    config = conf.set_max_steps(config, 2)
+    config = conf.set_max_length(config, {"batches": 200})
 
     exp.run_basic_test_with_temp_config(
         config, conf.experimental_path("trial/mnist_pytorch_multi_output"), 1
@@ -49,7 +49,7 @@ def test_pytorch_const_warm_start() -> None:
     correctly populates the later trials' `warm_start_checkpoint_id` fields.
     """
     config = conf.load_config(conf.official_examples_path("trial/mnist_pytorch/const.yaml"))
-    config = conf.set_max_steps(config, 2)
+    config = conf.set_max_length(config, {"batches": 200})
 
     experiment_id1 = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("trial/mnist_pytorch"), 1
@@ -70,7 +70,7 @@ def test_pytorch_const_warm_start() -> None:
     # start from.
     config_obj["searcher"]["source_trial_id"] = first_trial_id
     config_obj["searcher"]["name"] = "random"
-    config_obj["searcher"]["max_steps"] = 1
+    config_obj["searcher"]["max_length"] = {"batches": 100}
     config_obj["searcher"]["max_trials"] = 3
 
     experiment_id2 = exp.run_basic_test_with_temp_config(
@@ -88,7 +88,7 @@ def test_pytorch_const_native_parallel() -> None:
     config = conf.load_config(conf.official_examples_path("trial/mnist_pytorch/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_native_parallel(config, True)
-    config = conf.set_max_steps(config, 2)
+    config = conf.set_max_length(config, {"batches": 200})
 
     exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("trial/mnist_pytorch"), 1
@@ -105,7 +105,7 @@ def test_pytorch_const_parallel(aggregation_frequency: int, use_amp: bool) -> No
     config = conf.load_config(conf.official_examples_path("trial/mnist_pytorch/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_native_parallel(config, False)
-    config = conf.set_max_steps(config, 2)
+    config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
     if use_amp:
         config = conf.set_amp_level(config, "O1")
@@ -118,7 +118,7 @@ def test_pytorch_const_parallel(aggregation_frequency: int, use_amp: bool) -> No
 @pytest.mark.e2e_gpu  # type: ignore
 def test_pytorch_const_with_amp() -> None:
     config = conf.load_config(conf.official_examples_path("trial/mnist_pytorch/const.yaml"))
-    config = conf.set_max_steps(config, 2)
+    config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_amp_level(config, "O1")
 
     exp.run_basic_test_with_temp_config(
@@ -129,7 +129,7 @@ def test_pytorch_const_with_amp() -> None:
 @pytest.mark.parallel  # type: ignore
 def test_pytorch_cifar10_parallel() -> None:
     config = conf.load_config(conf.official_examples_path("trial/cifar10_cnn_pytorch/const.yaml"))
-    config = conf.set_max_steps(config, 2)
+    config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
 
     experiment_id = exp.run_basic_test_with_temp_config(
