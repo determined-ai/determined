@@ -1,4 +1,4 @@
-# Reaches an approximate validation error of ~74.9% after 500 steps (32 epochs).
+# Reaches an approximate validation error of ~74.9% after 32 epochs.
 
 description: cifar10_pytorch_const
 data:
@@ -10,14 +10,13 @@ hyperparameters:
   layer2_dropout: 0.25
   layer3_dropout: 0.5
   global_batch_size: 32
+records_per_epoch: 50000
 searcher:
   name: single
   metric: validation_error
   smaller_is_better: true
-
-  # 32 images per batch * 100 batches per step = 3,200 images per step
-  # 500 steps * 3,200 images per step = 1,600,000 total images
-  # 1,600,000 images / 50,000 images in training set = 32 epochs training
-  max_steps: 500
+  max_length:
+    epochs: 32
 entrypoint: model_def:CIFARTrial
-min_validation_period: 10
+min_validation_period:
+  epochs: 1

@@ -35,7 +35,9 @@ if __name__ == "__main__":
         "searcher": {
             "name": "single",
             "metric": "accuracy",
-            "max_steps": 10,
+            "max_length": {
+                "batches": 1000,
+            },
             "smaller_is_better": False,
         },
     }

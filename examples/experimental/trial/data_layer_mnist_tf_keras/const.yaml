@@ -16,7 +16,9 @@ data_layer:
 searcher:
   name: single
   metric: val_loss
-  max_steps: 20
+  max_length:
+    batches: 2000
   smaller_is_better: true
-min_validation_period: 10
+min_validation_period:
+  batches: 1000
 entrypoint: model_def:MnistTrial

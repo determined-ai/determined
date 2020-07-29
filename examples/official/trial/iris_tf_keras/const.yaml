@@ -10,5 +10,6 @@ hyperparameters:
 searcher:
   name: single
   metric: val_categorical_accuracy
-  max_steps: 50
+  max_length:
+    batches: 5000
 entrypoint: model_def:IrisTrial
