@@ -24,7 +24,7 @@ import {
   archiveExperiment, getExperimentSummaries, killExperiment, launchTensorboard, setExperimentState,
 } from 'services/api';
 import { patchExperiment } from 'services/api';
-import { ExperimentsParams, PatchExperimentParams } from 'services/types';
+import { ExperimentsParams } from 'services/types';
 import {
   ALL_VALUE, Command, Experiment, ExperimentFilters, ExperimentItem, RunState, TBSourceType,
 } from 'types';
