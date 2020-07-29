@@ -339,11 +339,12 @@ func (p *pod) configureEnvVars(
 	environment model.Environment,
 	deviceType device.Type,
 ) ([]k8sV1.EnvVar, error) {
-	// TODO (DET-3457): Include env variables set in experiment config.
-	if len(environment.EnvironmentVariables.For(deviceType)) > 0 {
-		return nil, errors.Errorf(
-			"kubernetes resource provider does not currently support environment " +
-				"variables set in the experiment config; use startup-hook.sh instead")
+	for _, envVar := range environment.EnvironmentVariables.For(deviceType) {
+		envVarSplit := strings.Split(envVar, "=")
+		if len(envVarSplit) != 2 {
+			return nil, errors.Errorf("unable to split envVar %s", envVar)
+		}
+		envVarsMap[envVarSplit[0]] = envVarSplit[1]
 	}
 
 	var slotIds []string
