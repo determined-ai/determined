@@ -157,11 +157,12 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 
 	switch msg.updatedPod.Status.Phase {
 	case k8sV1.PodPending:
-		// When pods are deleted, Kubernetes sometimes transitions pod statuses
-		// to pending prior to deleting them. We ignore this state if we have
-		// triggered the deletion.
-		if p.resourcesDeleted {
-			ctx.Log().Info("ignoring pod status because resources are being deleted")
+		// When pods are deleted, Kubernetes sometimes transitions pod statuses to pending prior
+		// to deleting them. In these cases we have observed that we do not always receive a PodFailed
+		// or a PodSucceeded message. We check if pods have a set pod deletion timestamp to see if this
+		// is the case.
+		if p.pod.ObjectMeta.DeletionTimestamp != nil {
+			p.processMissingPodDeletion(ctx)
 			return nil
 		}
 
@@ -234,16 +235,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 			},
 		}
 
-		ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
-			Container:        p.container,
-			ContainerStopped: &containerStopped,
-		})
-
-		ctx.Tell(p.cluster, sproto.PodTerminated{
-			ContainerID:      p.container.ID,
-			ContainerStopped: &containerStopped,
-		})
-
+		p.informThatContainerStopped(ctx, containerStopped)
 		ctx.Self().Stop()
 
 	case k8sV1.PodSucceeded:
@@ -255,16 +247,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		ctx.Log().Infof("pod exited successfully")
 		containerStopped := agent.ContainerStopped{}
 
-		ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
-			Container:        p.container,
-			ContainerStopped: &containerStopped,
-		})
-
-		ctx.Tell(p.cluster, sproto.PodTerminated{
-			ContainerID:      p.container.ID,
-			ContainerStopped: &containerStopped,
-		})
-
+		p.informThatContainerStopped(ctx, containerStopped)
 		ctx.Self().Stop()
 
 	default:
@@ -273,6 +256,32 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 	}
 
 	return nil
+}
+
+func (p *pod) processMissingPodDeletion(ctx *actor.Context) {
+	ctx.Log().Warn("processing missing pod deletion")
+	if p.container.State == container.Terminated {
+		ctx.Log().Info(
+			"skipping processing missing pod deletion as container is in a terminated state")
+		return
+	}
+
+	if !p.resourcesDeleted {
+		ctx.Log().Errorf("processing missing pod deletion for a pod that was never deleted")
+	}
+
+	p.container = p.container.Transition(container.Terminated)
+	// Missed pod deletions occur only when a pod is deleted so we assume
+	// that the container was killed.
+	exitCodeConverted := agent.ExitCode(137)
+	containerStopped := agent.ContainerStopped{
+		Failure: &agent.ContainerFailure{
+			FailureType: agent.ContainerFailed,
+			ExitCode:    &exitCodeConverted,
+		},
+	}
+	p.informThatContainerStopped(ctx, containerStopped)
+	ctx.Self().Stop()
 }
 
 func (p *pod) deleteKubernetesResources(ctx *actor.Context) error {
@@ -309,16 +318,23 @@ func (p *pod) finalizeTaskState(ctx *actor.Context) {
 		containerStopped := agent.ContainerError(
 			agent.TaskError, errors.New("agent failed while container was running"))
 
-		ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
-			Container:        p.container,
-			ContainerStopped: &containerStopped,
-		})
-
-		ctx.Tell(p.cluster, sproto.PodTerminated{
-			ContainerID:      p.container.ID,
-			ContainerStopped: &containerStopped,
-		})
+		p.informThatContainerStopped(ctx, containerStopped)
 	}
+}
+
+func (p *pod) informThatContainerStopped(
+	ctx *actor.Context,
+	containerStopped agent.ContainerStopped,
+) {
+	ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
+		Container:        p.container,
+		ContainerStopped: &containerStopped,
+	})
+
+	ctx.Tell(p.cluster, sproto.PodTerminated{
+		ContainerID:      p.container.ID,
+		ContainerStopped: &containerStopped,
+	})
 }
 
 func (p *pod) receiveContainerLogs(ctx *actor.Context, msg sproto.ContainerLog) {
