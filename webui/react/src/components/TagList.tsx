@@ -2,8 +2,6 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Input, Tag, Tooltip } from 'antd';
 import React, { useCallback, useRef, useState } from 'react';
 
-import { CommonProps } from 'types';
-
 import css from './TagList.module.scss';
 
 interface Props {
@@ -28,10 +26,10 @@ const EditableTagList: React.FC<Props> = ({ tags, setTags, className }: Props) =
     setTags(newTags);
   }, [ tags, setTags ]);
 
-  const showInput = (e: React.MouseEvent) => {
+  const handleTagPlus = useCallback(() => {
     setState(state => ({ ...state, inputVisible: true }));
     inputRef.current?.focus();
-  };
+  }, []);
 
   const stopPropagation = useCallback(
     (e: React.MouseEvent) => {
@@ -40,26 +38,26 @@ const EditableTagList: React.FC<Props> = ({ tags, setTags, className }: Props) =
     [],
   );
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     e.persist();
     setState(state => ({ ...state, inputValue: e.target?.value }));
-  };
+  }, []);
 
-  const handleInputConfirm = () => {
+  const handleInputConfirm = useCallback(() => {
     const { inputValue } = state;
     if (inputValue && tags.indexOf(inputValue) === -1) {
       const newTags = [ ...tags, inputValue ];
       setTags(newTags);
     }
     setState(state => ({ ...state, inputValue: '', inputVisible: false }));
-  };
+  }, [ setTags, state, tags ]);
 
-  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     e.persist();
     setState(state => ({ ...state, editInputValue: e.target?.value }));
-  };
+  }, []);
 
-  const handleEditInputConfirm = () => {
+  const handleEditInputConfirm = useCallback(() => {
     const { editInputIndex, editInputValue } = state;
     if (editInputValue && editInputIndex > -1) {
       const newTags = [ ...tags ];
@@ -67,7 +65,7 @@ const EditableTagList: React.FC<Props> = ({ tags, setTags, className }: Props) =
       setTags(newTags);
     }
     setState(state => ({ ...state, editInputIndex: -1, editInputValue: '' }));
-  };
+  }, [ setTags, state, tags ]);
 
   const { inputVisible, inputValue, editInputIndex, editInputValue } = state;
 
@@ -133,7 +131,7 @@ const EditableTagList: React.FC<Props> = ({ tags, setTags, className }: Props) =
         />
       )}
       {!inputVisible && (
-        <Tag className={css.tagPlus + ' tagPlus'} onClick={showInput}>
+        <Tag className={css.tagPlus + ' tagPlus'} onClick={handleTagPlus}>
           <PlusOutlined /> New Tag
         </Tag>
       )}
