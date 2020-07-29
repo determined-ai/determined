@@ -70,13 +70,29 @@ export const generateExperiments = (count = 10): ExperimentItem[] => {
     .map((_, idx) => {
       const experimentTask = generateExperimentTask(idx);
       const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
+      const config = {
+        description: experimentTask.name,
+        resources: {},
+        searcher: { metric: 'val_error', smallerIsBetter: true },
+      };
       return {
         ...experimentTask,
         config: {
+          checkpointPolicy: 'best',
+          checkpointStorage: {
+            hostPath: '/tmp',
+            saveExperimentBest: 0,
+            saveTrialBest: 1,
+            saveTrialLatest: 1,
+            storagePath: 'determined-integration-checkpoints',
+            type: 'shared_fs',
+          },
+          dataLayer: { type: 'shared_fs' },
           description: experimentTask.name,
           resources: {},
           searcher: { metric: 'val_error', smallerIsBetter: true },
         },
+        configRaw: config,
         id: idx,
         name: experimentTask.name,
         username: user.username,
@@ -128,7 +144,10 @@ const matchesUser = <T extends AnyTask | ExperimentItem>(
 };
 
 export const filterExperiments = (
-  experiments: ExperimentItem[], filters: ExperimentFilters, users: User[] = [], search = '',
+  experiments: ExperimentItem[],
+  filters: ExperimentFilters,
+  users: User[] = [],
+  search = '',
 ): ExperimentItem[] => {
   return experiments
     .filter(experiment => {

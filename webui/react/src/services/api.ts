@@ -4,11 +4,9 @@ import * as DetSwagger from 'services/api-ts-sdk';
 import { generateApi, processApiError } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
 import { CommandLogsParams, EmptyParams, ExperimentDetailsParams, ExperimentsParams,
-  KillCommandParams, KillExpParams, LaunchTensorboardParams, LogsParams,
-  PatchExperimentParams,
-  PatchExperimentState,
-  TrialDetailsParams,
-  TrialLogsParams } from 'services/types';
+  ForkExperimentParams, KillCommandParams, KillExpParams, LaunchTensorboardParams,
+  LogsParams, PatchExperimentParams, PatchExperimentState, TrialDetailsParams, TrialLogsParams,
+} from 'services/types';
 import {
   AnyTask, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log,
   TrialDetails,
@@ -18,6 +16,7 @@ import { serverAddress } from 'utils/routes';
 import { isExperimentTask } from 'utils/task';
 
 export const detAuthApi = new DetSwagger.AuthenticationApi(undefined, serverAddress());
+export const detExperimentsStreamingApi = DetSwagger.ExperimentsApiFetchParamCreator();
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const isAuthFailure = (e: any): boolean => {
@@ -51,6 +50,8 @@ export const getTrialDetails =
 export const killExperiment = generateApi<KillExpParams, void>(Config.killExperiment);
 
 export const killCommand = generateApi<KillCommandParams, void>(Config.killCommand);
+
+export const forkExperiment = generateApi<ForkExperimentParams, number>(Config.forkExperiment);
 
 export const patchExperiment = generateApi<PatchExperimentParams, void>(Config.patchExperiment);
 

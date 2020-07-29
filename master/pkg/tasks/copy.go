@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"archive/tar"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/version"
 )
 
 const (
@@ -22,9 +24,11 @@ const (
 
 func harnessArchive(harnessPath string, aug *model.AgentUserGroup) container.RunArchive {
 	var harnessFiles archive.Archive
-	wheelPaths, err := filepath.Glob(filepath.Join(harnessPath, "*.whl"))
+	validWhlNames := fmt.Sprintf("*%s*.whl", version.Version)
+	wheelPaths, err := filepath.Glob(filepath.Join(harnessPath, validWhlNames))
 	if err != nil {
-		panic(errors.Wrapf(err, "error finding Python wheel files in path: %s", harnessPath))
+		panic(errors.Wrapf(err, "error finding Python wheel files for version %s in path: %s",
+			version.Version, harnessPath))
 	}
 	for _, path := range wheelPaths {
 		info, err := os.Stat(path)

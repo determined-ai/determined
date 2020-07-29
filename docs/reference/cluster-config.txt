@@ -274,16 +274,16 @@ The master supports the following configuration settings:
     from GCR securely (see :ref:`this example <gcp-pull-gcr>` for more
     details). The default value is the empty string.
 
+  - ``agent_docker_image``: The Docker image to use for the Determined agents.
+    A valid form is ``determinedai/determined-agent:<version>``. (*Required*)
+
   - ``agent_docker_network``: The Docker network to use for the Determined
     agent and task containers. If this is set to "host", Docker
     host-mode networking will be used instead. The default value is
-    "determined".
+    ``determined``.
 
   - ``agent_docker_runtime``: The Docker runtime to use for the Determined
     agent and task containers. Defaults to ``runc``.
-
-  - ``agent_docker_image``: The Docker image to use for the Determined agents.
-    A valid form is ``determinedai/determined-agent:<version>``. (*Required*)
 
   - ``max_idle_agent_period``: How long to wait before terminating idle
     dynamic agents. This string is a sequence of decimal numbers, each
@@ -343,9 +343,11 @@ The master supports the following configuration settings:
     - ``max_instances``: Max number of Determined agent instances. Defaults
       to ``5``.
 
-    - ``instance_type``: Type of instance for the Determined agents. We
-      only support P3 and P2 type instances. Defaults to
-      ``p3.8xlarge``.
+    - ``instance_type``: AWS instance type to use for dynamic agents. This must be one of
+      the following: ``g4dn.xlarge``, ``g4dn.2xlarge``, ``g4dn.4xlarge``,
+      ``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``, ``g4dn.metal``,
+      ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``, ``p3.8xlarge``,
+      ``p3.16xlarge``, or ``p3dn.24xlarge``. Defaults to ``p3.8xlarge``.
 
   - ``provider: gcp``: Specifies running dynamic agents on GCP.
     (*Required*)
@@ -376,7 +378,7 @@ The master supports the following configuration settings:
       Defaults to ``managed-by``.
 
     - ``label_value``: Value for labeling the Determined agent instances.
-      Defaults to the master instance name if the master is on GCP
+      Defaults to the master instance name if the master is on GCP,
       otherwise ``determined-ai-determined``.
 
     - ``name_prefix``: Name prefix to set for the Determined agent

@@ -24,6 +24,7 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: [ 'import', 'react', 'react-hooks', 'sort-keys-fix' ],
+  root: true,
   rules: {
     '@typescript-eslint/explicit-module-boundary-types': [ 'warn', {
       allowArgumentsExplicitlyTypedAsAny: true,
@@ -37,6 +38,7 @@ module.exports = {
     'comma-dangle': [ 'error', 'always-multiline' ],
     'eol-last': [ 'error', 'always' ],
     'eqeqeq': [ 'error', 'smart' ],
+    'function-paren-newline': [ 'error', 'multiline-arguments' ],
     'import/order': [ 'error', {
       'alphabetize': { caseInsensitive: true, order: 'asc' },
       'groups': [ 'builtin', 'external', 'internal', 'parent', 'sibling', 'index' ],

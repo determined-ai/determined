@@ -29,15 +29,16 @@ export interface Api<Input, Output>{
 
 export const processApiError = (name: string, e: Error): void => {
   const isAuthError = isAuthFailure(e);
+  const silent = !process.env.IS_DEV || isAuthError || axios.isCancel(e);
   if (isDaError(e)) {
     if (e.type === ErrorType.ApiBadResponse) {
       e.message = `failed in decoding ${name} API response`;
       e.publicMessage = 'Failed to interpret data sent from the server.';
       e.publicSubject = 'Unexpected API response';
+      e.silent = silent;
     }
     throw handleError(e);
   }
-  const silent = !process.env.IS_DEV || isAuthError || axios.isCancel(e);
   handleError({
     error: e,
     level: isAuthError ? ErrorLevel.Fatal : ErrorLevel.Error,
@@ -75,14 +76,14 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
   to make a request and handle events one by one.
   Example:
   consumeStream<DetSwagger.V1TrialLogsResponse>(
-    DetSwagger.ExperimentsApiFetchParamCreator().determinedTrialLogs(1),
+    DetSwagger.ExperimentsApiFetchParamCreator().determinedTrialLogs(1, undefined, undefined, true),
     console.log,
   ).then(() => console.log('finished'));
 */
 export const consumeStream = async <T = unknown>(
   fetchArgs: DetSwagger.FetchArgs, onEvent: (event: T) => void): Promise<void> => {
   try {
-    const response = await fetch(serverAddress() + fetchArgs.url, fetchArgs.options);
+    const response = await fetch(serverAddress(true) + fetchArgs.url, fetchArgs.options);
     const exampleReader = ndjsonStream(response.body).getReader();
     let result;
     while (!result || !result.done) {

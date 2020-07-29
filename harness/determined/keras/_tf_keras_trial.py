@@ -589,8 +589,7 @@ class TFKerasTrialController(det.LoopTrialController):
 
 class TFKerasTrial(det.Trial):
     """
-    ``tf.keras`` trials are created by subclassing the abstract class
-    :class:`TFKerasTrial`.
+    ``tf.keras`` trials are created by subclassing this abstract class.
 
     Users must define all the abstract methods to create the deep
     learning model associated with a specific trial, and to subsequently
@@ -600,32 +599,35 @@ class TFKerasTrial(det.Trial):
     use TensorFlow 2.x, set a TF 2.x image in the experiment configuration
     (e.g. ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.5.0``).
 
-    By default, trials using TF 2.x use execute eagerly, and trials using TF
-    1.x do not execute eagerly. If you want to override the default, you must
-    call the appropriate function in the ``__init__``. For example, if you
-    wanted to disable eager execution while running a TF 2.x trial, you would
-    call ``tf.compat.v1.disable_eager_execution`` at the top of your
-    ``__init__``.
+    By default, trials using TF 2.x use eager execution and trials using TF
+    1.x do not. If you want to override the default, you must call the
+    appropriate function in the ``__init__``. For example, if you want to
+    disable eager execution while running a TF 2.x trial, call
+    ``tf.compat.v1.disable_eager_execution`` at the top of your
+    ``__init__`` function.
     """
 
     trial_controller_class = TFKerasTrialController
     trial_context_class = keras.TFKerasTrialContext
 
-    def __init__(self, trial_context: keras.TFKerasTrialContext) -> None:
+    def __init__(self, context: keras.TFKerasTrialContext) -> None:
         """
-        Initializes a trial using the provided trial_context.
+        Initializes a trial using the provided ``context``.
 
-        Override this function to initialize any shared state between the
-        estimator, train spec, and/or validation spec.
+        This method should typically be overridden by trial definitions: at minimum,
+        it is important to store ``context`` as an instance variable so that
+        it can be accessed by other methods of the trial class. This can also be a
+        convenient place to initialize other state that is shared between methods.
         """
-        self.context = trial_context
+        self.context = context
 
     @abstractmethod
     def build_model(self) -> tf.keras.models.Model:
         """
-        Defines the deep learning architecture associated with a trial, which
-        may depend on the trial’s specific hyperparameter settings that are
-        stored in the ``hparams`` dictionary. This function returns a
+        Defines the deep learning architecture associated with a trial.  The
+        architecture might depend on the current values of the model's
+        hyperparameters, which can be accessed via :func:`context.get_hparam()
+        <determined.TrialContext.get_hparam>`.  This function returns a
         ``tf.keras.Model`` object. Users *must* compile this model by calling
         ``model.compile()`` on the ``tf.keras.Model`` instance before it is
         returned.
@@ -638,31 +640,30 @@ class TFKerasTrial(det.Trial):
         Defines the data loader to use during training.
 
         Should return one of the following:
-            1) A tuple (x_train, y_train) of Numpy arrays. x_train must be a Numpy array
+            1) A tuple ``(x_train, y_train)``, where ``x_train`` is a NumPy array
             (or array-like), a list of arrays (in case the model has multiple inputs), or
             a dict mapping input names to the corresponding array, if the model has named inputs.
-            y_train should be a numpy array.
+            ``y_train`` should be a NumPy array.
 
-            2) A tuple (x_train, y_train, sample_weights) of
-            Numpy arrays.
+            2) A tuple ``(x_train, y_train, sample_weights)``
+            of NumPy arrays.
 
             3) A `tf.data.Dataset
-            <https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/data/Dataset>`__
-            returning a tuple of either (inputs, targets) or (inputs, targets, sample_weights).
+            <https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/data/Dataset>`__ returning
+            a tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample_weights)``.
 
             4) A `keras.utils.Sequence
-            <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__
-            returning a tuple of either (inputs, targets) or (inputs, targets, sample weights).
+            <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__ returning a tuple
+            of either ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
 
-            5) A det.keras.SequenceAdapter returning a tuple of either (inputs, targets) or
-            (inputs, targets, sample weights).
+            5) A :class:`determined.keras.SequenceAdapter` returning a tuple of either
+            ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
 
         .. warning::
             If you are using ``tf.data.Dataset``, Determined’s support for
             automatically checkpointing the dataset does not currently work correctly.
             This means that resuming workloads will start from the beginning of the dataset
             if using ``tf.data.Dataset``.
-
         """
         pass
 
@@ -672,24 +673,24 @@ class TFKerasTrial(det.Trial):
         Defines the data loader to use during validation.
 
         Should return one of the following:
-            1) A tuple (x_val, y_val) of Numpy arrays. x_val must be a Numpy array
+            1) A tuple ``(x_val, y_val)``, where ``x_val`` is a NumPy array
             (or array-like), a list of arrays (in case the model has multiple inputs), or
             a dict mapping input names to the corresponding array, if the model has named inputs.
-            y_train should be a numpy array.
+            ``y_val`` should be a NumPy array.
 
-            2) A tuple (x_val, y_val, sample_weights) of
-            Numpy arrays.
+            2) A tuple ``(x_val, y_val, sample_weights)``
+            of NumPy arrays.
 
             3) A `tf.data.Dataset
-            <https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/data/Dataset>`__
-            returning a tuple of either (inputs, targets) or (inputs, targets, sample_weights).
+            <https://www.tensorflow.org/versions/r1.14/api_docs/python/tf/data/Dataset>`__ returning
+            a tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample_weights)``.
 
             4) A `keras.utils.Sequence
-            <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__
-            returning a tuple of either (inputs, targets) or (inputs, targets, sample weights).
+            <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__ returning a tuple
+            of either ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
 
-            5) A det.keras.SequenceAdapter returning a tuple of either (inputs, targets) or
-            (inputs, targets, sample weights).
+            5) A :class:`determined.keras.SequenceAdapter` returning a tuple of either
+            (inputs, targets) or (inputs, targets, sample weights).
         """
         pass
 
@@ -708,7 +709,7 @@ class TFKerasTrial(det.Trial):
         <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/Callback>`__
         objects to be used during the trial’s lifetime.
 
-        Callbacks should avoid calling model.predict(), as this will affect
+        Callbacks should avoid calling ``model.predict()``, as this will affect
         Determined training behavior.
         """
         return []

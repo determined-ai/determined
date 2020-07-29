@@ -21,11 +21,13 @@ class Trial(metaclass=abc.ABCMeta):
     trial_context_class = det.TrialContext  # type: Type[det.TrialContext]
 
     @abc.abstractmethod
-    def __init__(self, trial_context: det.TrialContext) -> None:
+    def __init__(self, context: det.TrialContext) -> None:
         """
-        Initializes a trial using the provided trial_context.
+        Initializes a trial using the provided ``context``.
 
-        Override this function to initialize any shared state between the
-        function implementations.
+        Override this method to initialize any common state that is shared
+        by the other methods in the trial class. it is also typically useful
+        to store ``context`` as an instance variable so that it can be accessed
+        by other methods.
         """
         pass

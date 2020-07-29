@@ -118,7 +118,6 @@ type rendezvousAddress struct {
 	ContainerIP   string `json:"container_ip"`
 	HostPort      int    `json:"host_port"`
 	HostIP        string `json:"host_ip"`
-	Protocol      string `json:"protocol"`
 }
 
 // terminatedContainerWithState records the terminatedContainer message with some state about the
@@ -171,6 +170,7 @@ type trial struct {
 
 	replaying bool
 	earlyExit bool
+	killed    bool
 
 	task                       *scheduler.Task
 	pendingGracefulTermination bool
@@ -362,6 +362,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		t.processTaskTerminated(ctx, msg)
 
 	case killTrial:
+		t.killed = true
 		if t.task != nil {
 			ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
 		}
@@ -697,7 +698,6 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 				ContainerIP:   addr.ContainerIP,
 				HostPort:      addr.HostPort,
 				HostIP:        addr.HostIP,
-				Protocol:      addr.Protocol,
 			})
 		}
 
@@ -803,7 +803,7 @@ func (t *trial) processTaskTerminated(ctx *actor.Context, msg scheduler.TaskTerm
 		status = classifyStatus(leaderState)
 	}
 
-	t.resetTrial(ctx, msg, status)
+	t.resetTrial(ctx, status)
 }
 
 func classifyStatus(state terminatedContainerWithState) agent.ContainerStopped {
@@ -820,15 +820,16 @@ func classifyStatus(state terminatedContainerWithState) agent.ContainerStopped {
 
 func (t *trial) resetTrial(
 	ctx *actor.Context,
-	msg scheduler.TaskTerminated,
 	status agent.ContainerStopped,
 ) {
 	terminationSent := t.terminationSent
+	trialKilled := t.killed
 
 	t.runID++
 	t.task = nil
 	t.pendingGracefulTermination = false
 	t.terminationSent = false
+	t.killed = false
 	t.terminatedContainers = nil
 	t.startedContainers = 0
 
@@ -839,6 +840,11 @@ func (t *trial) resetTrial(
 	case terminationSent:
 		ctx.Log().WithField("failure", status.Failure).Info(
 			"ignoring trial runner failure since termination was requested",
+		)
+		return
+	case trialKilled:
+		ctx.Log().WithField("failure", status.Failure).Info(
+			"ignoring trial runner failure since it was killed",
 		)
 		return
 	case status.Failure.FailureType == agent.TaskAborted:

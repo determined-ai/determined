@@ -87,6 +87,11 @@ export interface ClusterOverview {
   totalResources: ClusterOverviewResource;
 }
 
+export interface StartEndTimes {
+  endTime?: string;
+  startTime: string;
+}
+
 /* Command */
 export enum CommandState {
   Pending = 'PENDING',
@@ -105,7 +110,7 @@ export interface CommandAddress {
   containerPort: number;
   hostIp: string;
   hostPort: number;
-  protocol: string;
+  protocol?: string;
 }
 
 export interface Owner {
@@ -123,7 +128,6 @@ export enum CommandType {
 export interface CommandMisc {
   experimentIds?: number[];
   trialIds?: number[];
-  privateKey?: string;
 }
 
 export interface CommandConfig {
@@ -132,7 +136,6 @@ export interface CommandConfig {
 
 // The command type is shared between Commands, Notebooks, Tensorboards, and Shells.
 export interface Command {
-  addresses?: CommandAddress[];
   kind: CommandType;
   config: CommandConfig; // We do not use this field in the WebUI.
   exitStatus?: string;
@@ -144,8 +147,33 @@ export interface Command {
   state: CommandState;
 }
 
-// TODO compelete the config object as we start using different attributes.
+export enum CheckpointStorageType {
+  AWS = 'aws',
+  GCS = 'gcs',
+  HDFS = 'hdfs',
+  S3 = 's3',
+  SharedFS = 'shared_fs',
+}
+
+interface CheckpointStorage {
+  bucket?: string;
+  hostPath?: string;
+  saveExperimentBest: number;
+  saveTrialBest: number;
+  saveTrialLatest: number;
+  storagePath?: string;
+  type?: CheckpointStorageType;
+}
+
+interface DataLayer {
+  containerStoragePath?: string;
+  type: string;
+}
+
 export interface ExperimentConfig {
+  checkpointPolicy: string;
+  checkpointStorage?: CheckpointStorage;
+  dataLayer?: DataLayer;
   description: string;
   searcher: {
     smallerIsBetter: boolean;
@@ -183,34 +211,67 @@ export enum CheckpointState {
 }
 
 export interface Checkpoint {
+  endTime? : string;
   id: number;
+  resources: Record<string, number>;
+  startTime: string;
+  state: CheckpointState;
   stepId: number;
   trialId: number;
-  state: CheckpointState;
-  startTime: string;
-  endTime? : string;
   uuid? : string;
   validationMetric? : number;
+}
+
+export interface CheckpointDetail extends Checkpoint {
+  batch: number;
+  experimentId?: number;
+  trialId: number;
+}
+
+export interface LatestValidationMetrics {
+  numInputs: number;
+  validationMetrics: Record<string, number>;
+}
+
+export interface TrialItem {
+  bestAvailableCheckpoint?: Checkpoint;
+  bestValidationMetric?: number;
+  endTime?: string;
+  experimentId: number;
+  hparams: Record<string, string>;
+  id: number;
+  latestValidationMetrics?: LatestValidationMetrics;
+  numBatches: number;
+  numCompletedCheckpoints: number;
+  numSteps: number;
+  seed: number;
+  startTime: string;
+  state: RunState;
+  url: string;
+}
+
+export interface Step {
+  endTime?: string;
+  id: number;
+  startTime: string;
+  state: RunState;
 }
 
 export interface TrialDetails {
   id: number;
   state: RunState;
   experimentId: number;
-}
-
-export interface TrialSummary {
-  hparams: Record<string, string>;
-  id: number;
-  state: RunState;
-  bestAvailableCheckpoint?: Checkpoint;
-  numSteps: number;
-  numBatches: number;
+  endTime?: string;
+  seed: number;
+  startTime: string;
+  steps: Step[];
+  warmStartCheckpointId?: number;
 }
 
 export interface Experiment {
   archived: boolean;
   config: ExperimentConfig;
+  configRaw: Record<string, unknown>; // Readonly unparsed config object.
   endTime?: string;
   id: number;
   ownerId: number;
@@ -227,7 +288,7 @@ export interface ExperimentItem extends Experiment {
 
 export interface ExperimentDetails extends Experiment {
   validationHistory: ValidationHistory[];
-  trials: TrialSummary[];
+  trials: TrialItem[];
   username: string;
 }
 

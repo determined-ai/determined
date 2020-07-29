@@ -42,8 +42,9 @@ git clone git@github.com:determined-ai/determined.git
 #### Prerequisites
 
 - Go (>= 1.13)
-- Python (>= 3.6)
+- Python (>= 3.6, < 3.8)
 - Node (>= 12)
+- NPM (>= 6.12)
 - Docker (>= 19.03)
 - Protoc (>= 3.0)
 - Java (>= 7)

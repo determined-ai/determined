@@ -47,7 +47,9 @@ model = tf.keras.models.Sequential(
     ]
 )
 model = context.wrap_model(model)
-model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(name='Adam'), 
+    loss="sparse_categorical_crossentropy", metrics=["accuracy"])
 model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=5)
 
 ###############################################################################

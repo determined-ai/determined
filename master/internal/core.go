@@ -170,7 +170,7 @@ func (m *Master) startServers() error {
 		errs <- errors.Wrap(m.echo.StartServer(server), servers[server]+" failed")
 	}
 	go func() {
-		if err := grpc.RegisterHTTPProxy(m.echo, m.config.GRPCPort); err != nil {
+		if err := grpc.RegisterHTTPProxy(m.echo, m.config.GRPCPort, m.config.EnableCors); err != nil {
 			errs <- err
 			return
 		}
@@ -287,9 +287,7 @@ func (m *Master) initializeResourceProviders(proxyRef *actor.Ref, provisionerSlo
 			actor.Addr("kubernetesRP"),
 			scheduler.NewKubernetesResourceProvider(
 				m.ClusterID,
-				m.config.Scheduler.ResourceProvider.KubernetesRPConfig.Namespace,
-				m.config.Scheduler.ResourceProvider.KubernetesRPConfig.SlotsPerNode,
-				m.config.Scheduler.ResourceProvider.KubernetesRPConfig.MasterServiceName,
+				m.config.Scheduler.ResourceProvider.KubernetesRPConfig,
 				proxyRef,
 				filepath.Join(m.config.Root, "wheels"),
 				m.config.TaskContainerDefaults,

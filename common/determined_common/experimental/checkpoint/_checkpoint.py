@@ -196,7 +196,7 @@ class Checkpoint(object):
                 <https://pytorch.org/docs/stable/torch.html?highlight=torch%20load#torch.load>`_.
         """
         ckpt_path = self.download(path)
-        return Checkpoint.load_from_path(ckpt_path, tags=tags)
+        return Checkpoint.load_from_path(ckpt_path, tags=tags, **kwargs)
 
     def add_metadata(self, metadata: Dict[str, Any]) -> None:
         """
@@ -231,7 +231,7 @@ class Checkpoint(object):
             self.metadata = r.json()
 
     @staticmethod
-    def load_from_path(path: str, tags: Optional[List[str]] = None) -> Any:
+    def load_from_path(path: str, tags: Optional[List[str]] = None, **kwargs: Any) -> Any:
         """
         Loads a Determined checkpoint from a local file system path into
         memory. If the checkpoint is a PyTorch model, a ``torch.nn.Module`` is returned.
@@ -254,7 +254,7 @@ class Checkpoint(object):
             import determined_common.experimental.checkpoint._torch
 
             return determined_common.experimental.checkpoint._torch.load_model(
-                checkpoint_dir, metadata,
+                checkpoint_dir, metadata, **kwargs
             )
 
         elif checkpoint_type == ModelFramework.TENSORFLOW:

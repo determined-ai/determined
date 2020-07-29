@@ -40,6 +40,13 @@ The ``determined-deploy`` package requires credentials in order to create resour
 
 -  Use :ref:`service account credentials <gcp-service-account-credentials>`.
 
+Resource Quotas
+_______________
+
+The default `GCP Resource Quotas <https://cloud.google.com/compute/quotas>`__ for GPUs are relatively low; you may
+wish to request a quota increase.
+
+
 .. _gcp-install:
 
 Install

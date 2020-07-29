@@ -8,15 +8,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
-// Outgoing agent actor messages; agent actors must send these events back to the cluster.
-type (
-	// containerStartedOnAgent notifies the cluster that the task container has started running.
-	containerStartedOnAgent struct {
-		ContainerID ContainerID
-		Addresses   []Address
-	}
-)
-
 // agentState holds the scheduler state for an agent. The implementation of agent-related operations
 // (e.g., socket I/O) is deferred to the actor.
 type agentState struct {

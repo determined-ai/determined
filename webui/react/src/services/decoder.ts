@@ -1,23 +1,18 @@
 import dayjs from 'dayjs';
 
 import {
-  decode, ioCommandLogs, ioDeterminedInfo, ioExperimentConfig, ioExperimentDetails, ioExperiments,
-  ioGenericCommand, ioLogs, ioTrialDetails, ioTypeAgents,
-  ioTypeCheckpoint, ioTypeCommandAddress, ioTypeCommandLogs, ioTypeDeterminedInfo,
-  ioTypeExperimentConfig,
-  ioTypeExperimentDetails,
-  ioTypeExperiments,
-  ioTypeGenericCommand,
-  ioTypeGenericCommands,
-  ioTypeLogs,
-  ioTypeTrialDetails,
-  ioTypeTrialSummary,
-  ioTypeUsers,
+  decode, ioCommandLogs, ioDeterminedInfo, ioExperiment, ioExperimentConfig, ioExperimentDetails,
+  ioExperiments, ioGenericCommand, ioLog, ioLogs, ioTrialDetails, ioTypeAgents,
+  ioTypeCheckpoint, ioTypeCommandLogs, ioTypeDeterminedInfo, ioTypeExperiment,
+  ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand,
+  ioTypeGenericCommands, ioTypeLatestValidationMetrics, ioTypeLog, ioTypeLogs, ioTypeTrial,
+  ioTypeTrialDetails, ioTypeUsers,
 } from 'ioTypes';
 import {
-  Agent, Checkpoint, CheckpointState, Command, CommandState, CommandType,
-  DeterminedInfo, Experiment, ExperimentConfig, ExperimentDetails, Log, LogLevel, ResourceState,
-  ResourceType, RunState, TrialDetails, TrialSummary, User,
+  Agent, Checkpoint, CheckpointState, CheckpointStorageType, Command, CommandState,
+  CommandType, DeterminedInfo, Experiment, ExperimentConfig, ExperimentDetails,
+  LatestValidationMetrics, Log, LogLevel, ResourceState, ResourceType, RunState,
+  TrialDetails, TrialItem, User,
 } from 'types';
 import { capitalize } from 'utils/string';
 
@@ -74,27 +69,15 @@ export const jsonToAgents = (data: ioTypeAgents): Agent[] => {
 
 export const jsonToGenericCommand = (data: unknown, type: CommandType): Command => {
   const ioType = decode<ioTypeGenericCommand>(ioGenericCommand, data);
-  const addresses = ioType.addresses ?
-    ioType.addresses.map((address: ioTypeCommandAddress) => ({
-      containerIp: address.container_ip,
-      containerPort: address.container_port,
-      hostIp: address.host_ip,
-      hostPort: address.host_port,
-      protocol: address.protocol,
-    })) : undefined;
-  const misc = ioType.misc ? {
-    experimentIds: ioType.misc.experiment_ids || undefined,
-    privateKey: ioType.misc.privateKey || undefined,
-    trialIds: ioType.misc.trial_ids || undefined,
-  } : undefined;
-
   return {
-    addresses,
     config: { ...ioType.config },
     exitStatus: ioType.exit_status || undefined,
     id: ioType.id,
     kind: type,
-    misc,
+    misc: ioType.misc ? {
+      experimentIds: ioType.misc.experiment_ids || undefined,
+      trialIds: ioType.misc.trial_ids || undefined,
+    } : undefined,
     owner: {
       id: ioType.owner.id,
       username: ioType.owner.username,
@@ -133,64 +116,115 @@ export const jsonToTensorboards = (data: ioTypeGenericCommands): Command[] => {
 
 const jsonToExperimentConfig = (data: unknown): ExperimentConfig => {
   const io = decode<ioTypeExperimentConfig>(ioExperimentConfig, data);
-  return {
+  const config: ExperimentConfig = {
+    checkpointPolicy: io.checkpoint_policy,
+    checkpointStorage: io.checkpoint_storage ? {
+      bucket: io.checkpoint_storage.bucket || undefined,
+      hostPath: io.checkpoint_storage.host_path || undefined,
+      saveExperimentBest: io.checkpoint_storage.save_experiment_best,
+      saveTrialBest: io.checkpoint_storage.save_trial_best,
+      saveTrialLatest: io.checkpoint_storage.save_trial_latest,
+      storagePath: io.checkpoint_storage.storage_path || undefined,
+      type: io.checkpoint_storage.type as CheckpointStorageType || undefined,
+    } : undefined,
+    dataLayer: io.data_layer ? {
+      containerStoragePath: io.data_layer.container_storage_path || undefined,
+      type: io.data_layer.type,
+    } : undefined,
     description: io.description,
-    resources: {
-      maxSlots: io.resources.max_slots,
-    },
+    resources: {},
     searcher: {
       ...io.searcher,
       smallerIsBetter: io.searcher.smaller_is_better,
     },
   };
+  if (io.resources.max_slots !== undefined)
+    config.resources.maxSlots = io.resources.max_slots;
+  return config;
+};
 
+export const jsonToExperiment = (data: unknown): Experiment => {
+  const io = decode<ioTypeExperiment>(ioExperiment, data);
+  return {
+    archived: io.archived,
+    config: jsonToExperimentConfig(io.config),
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    configRaw: (data as any).config,
+    endTime: io.end_time || undefined,
+    id: io.id,
+    ownerId: io.owner_id,
+    progress: io.progress !== null ? io.progress : undefined,
+    startTime: io.start_time,
+    state: io.state as RunState,
+  };
 };
 
 export const jsonToExperiments = (data: unknown): Experiment[] => {
   const ioType = decode<ioTypeExperiments>(ioExperiments, data);
-  return ioType.map(experiment => {
-    return {
-      archived: experiment.archived,
-      config: jsonToExperimentConfig(experiment.config),
-      endTime: experiment.end_time || undefined,
-      id: experiment.id,
-      ownerId: experiment.owner_id,
-      progress: experiment.progress !== null ? experiment.progress : undefined,
-      startTime: experiment.start_time,
-      state: experiment.state as RunState,
-    };
-  });
+  return ioType.map(jsonToExperiment);
 };
 
-const ioCheckpoinToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
-  return { ...io,
+const ioToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
+  return {
     endTime: io.end_time || undefined,
     id: io.id,
+    resources: io.resources,
     startTime: io.start_time,
     state: io.state as CheckpointState,
     stepId: io.step_id,
     trialId: io.trial_id,
     uuid: io.uuid || undefined,
-    validationMetric: io.valiation_metric !== null ? io.valiation_metric : undefined,
+    validationMetric: io.validation_metric !== null ? io.validation_metric : undefined,
   };
 };
 
-const ioTrialToTrial = (io: ioTypeTrialSummary): TrialSummary => {
-  return { ...io,
+const ioToLatestValidationMetrics = (
+  io: ioTypeLatestValidationMetrics,
+): LatestValidationMetrics => {
+  return {
+    numInputs: io.num_inputs,
+    validationMetrics: io.validation_metrics,
+  };
+};
+
+const ioToTrial = (io: ioTypeTrial): TrialItem => {
+  return {
     bestAvailableCheckpoint: io.best_available_checkpoint
-      ? ioCheckpoinToCheckpoint(io.best_available_checkpoint) : undefined,
-    numBatches: io.num_batches,
+      ? ioToCheckpoint(io.best_available_checkpoint) : undefined,
+    bestValidationMetric: io.best_validation_metric ? io.best_validation_metric : undefined,
+    endTime: io.end_time || undefined,
+    experimentId: io.experiment_id,
+    hparams: io.hparams || {},
+    id: io.id,
+    latestValidationMetrics: io.latest_validation_metrics
+      ? ioToLatestValidationMetrics(io.latest_validation_metrics) : undefined,
+    numBatches: io.num_batches || 0,
+    numCompletedCheckpoints: io.num_completed_checkpoints,
     numSteps: io.num_steps,
+    seed: io.seed,
+    startTime: io.start_time,
     state: io.state as RunState,// TODO add checkpoint decoder
+    url: `/ui/trials/${io.id}`,
   };
 };
 
 export const jsonToTrialDetails = (data: unknown): TrialDetails => {
   const io = decode<ioTypeTrialDetails>(ioTrialDetails, data);
   return {
+    endTime: io.end_time || undefined,
     experimentId: io.experiment_id,
     id: io.id,
+    seed: io.seed,
+    startTime: io.start_time,
     state: io.state as RunState,
+    steps: io.steps.map((step) => ({
+      endTime: step.end_time || undefined,
+      id: step.id,
+      startTime: step.start_time,
+      state: step.state as RunState,
+    })),
+    warmStartCheckpointId: io.warm_start_checkpoint_id !== null ?
+      io.warm_start_checkpoint_id : undefined,
   };
 };
 
@@ -199,13 +233,15 @@ export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
   return {
     archived: ioType.archived,
     config: jsonToExperimentConfig(ioType.config),
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    configRaw: (data as any).config,
     endTime: ioType.end_time || undefined,
     id: ioType.id,
     ownerId: ioType.owner.id,
     progress: ioType.progress !== null ? ioType.progress : undefined,
     startTime: ioType.start_time,
     state: ioType.state as RunState,
-    trials: ioType.trials.map(ioTrialToTrial),
+    trials: ioType.trials.map(ioToTrial),
     username: ioType.owner.username,
     validationHistory: ioType.validation_history.map(vh => ({
       endTime: vh.end_time,
@@ -225,14 +261,32 @@ export const jsonToLogs = (data: unknown): Log[] => {
   }));
 };
 
+const defaultRegex = /^\[([^\]]+)\]\s(.*)$/im;
+const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s(.*)$/im;
+
+const ioTrialLogToLog = (io: ioTypeLog): Log => {
+  if (defaultRegex.test(io.message)) {
+    const matches = io.message.match(defaultRegex) || [];
+    const time = matches[1];
+    const message = matches[2] || '';
+    return { id: io.id, message, time };
+  } else if (kubernetesRegex.test(io.message)) {
+    const matches = io.message.match(kubernetesRegex) || [];
+    const time = matches[3];
+    const message = [ matches[1], matches[2], matches[4] ].join(' ');
+    return { id: io.id, message, time };
+  }
+  return { id: io.id, message: io.message };
+};
+
+export const jsonToTrialLog = (data: unknown): Log => {
+  const ioType = decode<ioTypeLog>(ioLog, data);
+  return ioTrialLogToLog(ioType);
+};
+
 export const jsonToTrialLogs = (data: unknown): Log[] => {
   const ioType = decode<ioTypeLogs>(ioLogs, data);
-  return ioType.map(log => {
-    const matches = log.message.match(/\[([^\]]+)\] (.*)/);
-    const time = matches && matches[1] ? matches[1] : undefined;
-    const message = matches && matches[2] ? matches[2] : '';
-    return { id: log.id, message, time };
-  });
+  return ioType.map(ioTrialLogToLog);
 };
 
 export const jsonToCommandLogs = (data: unknown): Log[] => {

@@ -1,6 +1,6 @@
 import * as io from 'io-ts';
 
-import { applyMappers } from './useRestApi';
+import { applyMappers } from 'utils/data';
 
 const ioAddress = io.type({
   address: io.string,

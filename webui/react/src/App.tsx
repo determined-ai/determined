@@ -1,6 +1,7 @@
 import { Button, notification } from 'antd';
 import React, { useCallback, useEffect } from 'react';
 
+import { setupAnalytics } from 'Analytics';
 import NavBar from 'components/NavBar';
 import Router from 'components/Router';
 import SideBar from 'components/SideBar';
@@ -58,16 +59,7 @@ const AppView: React.FC = () => {
   }, [ infoResponse, setInfo ]);
 
   useEffect(() => {
-    /*
-     * Check for analytics library and the validity of the segment key:
-     * 32 characters composed of upper case letters, lower case letters and numbers 0-9.
-     */
-    if (window.analytics && info.telemetry.enabled &&
-        info.telemetry.segmentKey && /^[a-z0-9]{32}$/i.test(info.telemetry.segmentKey)) {
-      window.analytics.load(info.telemetry.segmentKey);
-      window.analytics.identify(info.clusterId);
-      window.analytics.page();
-    }
+    setupAnalytics(info);
 
     // Check to make sure the WebUI version matches the platform version.
     if (info.version !== process.env.VERSION) {

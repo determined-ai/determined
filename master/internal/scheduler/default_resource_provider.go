@@ -255,18 +255,15 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 		ctx.Log().Infof("removing agent: %s", msg.Agent.Address().Local())
 		delete(d.agents, msg.Agent)
 
-	case sproto.ContainerStateChanged:
-		cid := ContainerID(msg.Container.ID)
-		switch msg.Container.State {
-		case cproto.Running:
-			d.receiveContainerStartedOnAgent(ctx, containerStartedOnAgent{
-				ContainerID: cid,
-				Addresses: toAddresses(
-					msg.ContainerStarted.ProxyAddress, msg.ContainerStarted.ContainerInfo),
-			})
-		case cproto.Terminated:
-			d.receiveContainerTerminated(ctx, cid, *msg.ContainerStopped, false)
-		}
+	case sproto.TaskStartedOnAgent:
+		cid := ContainerID(msg.ContainerID)
+		addresses := toAddresses(
+			msg.ContainerStarted.ProxyAddress, msg.ContainerStarted.ContainerInfo)
+		d.receiveContainerStartedOnAgent(ctx, cid, addresses)
+
+	case sproto.TaskTerminatedOnAgent:
+		cid := ContainerID(msg.ContainerID)
+		d.receiveContainerTerminated(ctx, cid, *msg.ContainerStopped, false)
 
 	case StartTask:
 		d.receiveStartTask(ctx, msg)
@@ -382,33 +379,35 @@ func (d *DefaultRP) receiveStartTask(ctx *actor.Context, msg StartTask) {
 	for _, a := range assignments {
 		a.StartTask(msg.Spec)
 	}
+	delete(d.assigmentByHandler, msg.TaskHandler)
 }
 
 func (d *DefaultRP) receiveContainerStartedOnAgent(
 	ctx *actor.Context,
-	msg containerStartedOnAgent,
+	containerID ContainerID,
+	addresses []Address,
 ) {
-	task := d.tasksByContainerID[msg.ContainerID]
+	task := d.tasksByContainerID[containerID]
 	if task == nil {
 		ctx.Log().Warnf(
 			"ignoring stale start message for container %s",
-			msg.ContainerID,
+			containerID,
 		)
 		return
 	}
 
-	container := task.containers[msg.ContainerID]
-	container.addresses = msg.Addresses
+	container := task.containers[containerID]
+	container.addresses = addresses
 	container.mustTransition(containerRunning)
 	handler := container.task.handler
 	handler.System().Tell(handler, ContainerStarted{Container: container})
 
-	if len(msg.Addresses) == 0 {
+	if len(addresses) == 0 {
 		return
 	}
 
-	names := make([]string, 0, len(msg.Addresses))
-	for _, address := range msg.Addresses {
+	names := make([]string, 0, len(addresses))
+	for _, address := range addresses {
 		// We are keying on task ID instead of container ID. Revisit this when we need to
 		// proxy multi-container tasks or when containers are created prior to being
 		// assigned to an agent.
@@ -524,10 +523,7 @@ func (d *DefaultRP) taskTerminated(task *Task, aborted bool) {
 		delete(d.tasksByContainerID, id)
 	}
 
-	task.handler.System().Tell(task.handler, TaskTerminated{
-		Task:    newTaskSummary(task),
-		Aborted: aborted,
-	})
+	task.handler.System().Tell(task.handler, TaskTerminated{})
 	// This is somewhat redundant with the message above, but we're transitioning between them.
 	if aborted {
 		task.handler.System().Tell(task.handler, TaskAborted{})
@@ -544,7 +540,6 @@ func toAddresses(proxy string, info types.ContainerJSON) []Address {
 				ContainerPort: port.Int(),
 				HostIP:        proxy,
 				HostPort:      port.Int(),
-				Protocol:      port.Proto(),
 			})
 		}
 	default:
@@ -572,7 +567,6 @@ func toAddresses(proxy string, info types.ContainerJSON) []Address {
 						ContainerPort: port.Int(),
 						HostIP:        hostIP,
 						HostPort:      hostPort,
-						Protocol:      port.Proto(),
 					})
 				}
 			}

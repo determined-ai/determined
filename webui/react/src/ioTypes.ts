@@ -2,7 +2,7 @@ import { isLeft } from 'fp-ts/lib/Either';
 import * as io from 'io-ts';
 
 import { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { CheckpointState, CommandState, LogLevel, RunState } from 'types';
+import { CheckpointState, CheckpointStorageType, CommandState, LogLevel, RunState } from 'types';
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const decode = <T>(type: io.Mixed, data: any): T => {
@@ -98,12 +98,11 @@ const ioCommandAddress = io.type({
   container_port: io.number,
   host_ip: io.string,
   host_port: io.number,
-  protocol: io.string,
+  protocol: io.union([ io.string, io.undefined ]),
 });
 
 const ioCommandMisc = io.partial({
   experiment_ids: io.union([ io.array(io.number), io.null ]),
-  privateKey: io.string,
   trial_ids: io.union([ io.array(io.number), io.null ]),
 });
 
@@ -116,7 +115,6 @@ const commandStates: Record<string, null> = Object.values(CommandState)
 const commandStatesIoType = io.keyof(commandStates);
 
 export const ioGenericCommand = io.type({
-  addresses: io.union([ io.array(ioCommandAddress), io.null ]),
   config: ioCommandConfig,
   exit_status: io.union([ io.string, io.null ]),
   id: io.string,
@@ -137,52 +135,100 @@ const runStates: Record<string, null> = Object.values(RunState)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 const runStatesIoType = io.keyof(runStates);
 
+/* Trials */
+
 const checkpointStates: Record<string, null> = Object.values(CheckpointState)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 const checkpointStatesIoType = io.keyof(checkpointStates);
 
-const validationHistoryIoType = io.type({
-  end_time: io.string,
-  trial_id: io.number,
-  validation_error: io.union([ io.number, io.null ]),
-});
-
 export const ioCheckpoint = io.type({
   end_time: io.union([ io.string, io.null ]),
   id: io.number,
+  resources: io.record(io.string, io.number),
   start_time: io.string,
   state: checkpointStatesIoType,
   step_id: io.number,
   trial_id: io.number,
   uuid: io.union([ io.string, io.null ]),
-  valiation_metric: io.union([ io.number, io.undefined ]),
+  validation_metric: io.union([ io.number, io.undefined ]),
 });
 export type ioTypeCheckpoint = io.TypeOf<typeof ioCheckpoint>;
 
-export const ioTrialDetails = io.type({
-  experiment_id: io.number,
+export const ioStep = io.type({
+  end_time: io.union([ io.string, io.null ]),
   id: io.number,
+  start_time: io.string,
   state: runStatesIoType,
+});
+
+export const ioTrialDetails = io.type({
+  end_time: io.union([ io.string, io.null ]),
+  experiment_id: io.number,
+
+  id: io.number,
+
+  seed: io.number,
+  start_time: io.string,
+
+  state: runStatesIoType,
+  steps: io.array(ioStep),
+  warm_start_checkpoint_id: io.union([ io.number, io.null ]),
 });
 export type ioTypeTrialDetails = io.TypeOf<typeof ioTrialDetails>;
 
-export const ioTrialSummary = io.type({
+export const ioLatestValidatonMetrics = io.type({
+  num_inputs: io.number,
+  validation_metrics: io.record(io.string, io.number),
+});
+export type ioTypeLatestValidationMetrics = io.TypeOf<typeof ioLatestValidatonMetrics>;
+
+export const ioTrial = io.type({
   best_available_checkpoint: io.union([ ioCheckpoint, io.null ]),
+  best_validation_metric: io.union([ io.number, io.null ]),
+  end_time: io.union([ io.string, io.null ]),
+  experiment_id: io.number,
   hparams: io.any,
   id: io.number,
-  num_batches: io.number,
+  latest_validation_metrics: io.union([ ioLatestValidatonMetrics, io.null ]),
+  num_batches: io.union([ io.number, io.null ]),
+  num_completed_checkpoints: io.number,
   num_steps: io.number,
+  seed: io.number,
+  start_time: io.string,
   state: runStatesIoType,
 });
-export type ioTypeTrialSummary = io.TypeOf<typeof ioTrialSummary>;
+export type ioTypeTrial = io.TypeOf<typeof ioTrial>;
 
 /* Experiments */
+
+const checkpointStorageTypes: Record<string, null> = Object
+  .values(CheckpointStorageType)
+  .reduce((acc, val) => ({ ...acc, [val]: null }), {});
+const ioCheckpointStorageType = io.keyof(checkpointStorageTypes);
+
+export const ioCheckpointStorage = io.type({
+  bucket: io.union([ io.string, io.undefined ]),
+  host_path: io.union([ io.string, io.undefined ]),
+  save_experiment_best: io.number,
+  save_trial_best: io.number,
+  save_trial_latest: io.number,
+  storage_path: io.union([ io.string, io.undefined ]),
+  type: io.union([ ioCheckpointStorageType, io.undefined ]),
+});
+
+const ioDataLayer = io.type({
+  container_storage_path: io.union([ io.string, io.null ]),
+  type: io.string,
+});
 
 const ioExpResources = io.type({
   max_slots: io.union([ io.number, io.undefined ]),
 });
 
 export const ioExperimentConfig = io.type({
+  checkpoint_policy: io.string,
+  checkpoint_storage: io.union([ ioCheckpointStorage, io.null ]),
+  data_layer: io.union([ ioDataLayer, io.undefined ]),
   description: io.string,
   resources: ioExpResources,
   searcher: io.type({
@@ -208,6 +254,12 @@ export const ioExperiments = io.array(ioExperiment);
 export type ioTypeExperiment = io.TypeOf<typeof ioExperiment>;
 export type ioTypeExperiments = io.TypeOf<typeof ioExperiments>;
 
+const validationHistoryIoType = io.type({
+  end_time: io.string,
+  trial_id: io.number,
+  validation_error: io.union([ io.number, io.null ]),
+});
+
 export const ioExperimentDetails = io.type({
   archived: io.boolean,
   config: ioExperimentConfig,
@@ -217,7 +269,7 @@ export const ioExperimentDetails = io.type({
   progress: io.union([ io.number, io.null ]),
   start_time: io.string,
   state: runStatesIoType,
-  trials: io.array(ioTrialSummary),
+  trials: io.array(ioTrial),
   validation_history: io.array(validationHistoryIoType),
 });
 
@@ -228,7 +280,7 @@ export type ioTypeExperimentDetails = io.TypeOf<typeof ioExperimentDetails>;
 const ioLogLevels: Record<string, null> = Object.values(LogLevel)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 const ioLogLevelType = io.keyof(ioLogLevels);
-const ioLog = io.type({
+export const ioLog = io.type({
   id: io.number,
   level: io.union([ ioLogLevelType, io.undefined ]),
   message: io.string,
@@ -237,6 +289,7 @@ const ioLog = io.type({
 
 export const ioLogs = io.array(ioLog);
 
+export type ioTypeLog = io.TypeOf<typeof ioLog>;
 export type ioTypeLogs = io.TypeOf<typeof ioLogs>;
 
 const ioCommandLogConfig = io.type({

@@ -56,10 +56,7 @@ type (
 	// scheduler.
 	TerminateRequest struct{}
 	// TaskTerminated notifies the task actor that all of its containers have terminated.
-	TaskTerminated struct {
-		Task    TaskSummary
-		Aborted bool
-	}
+	TaskTerminated struct{}
 	// TaskAborted notifies the task actor that it was terminated before being scheduled.
 	TaskAborted struct{}
 	// TaskAssigned notifies the task actor that it has been assigned to run

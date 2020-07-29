@@ -6,6 +6,43 @@ Release Notes
 Version 0.12
 ------------
 
+Version 0.12.12
+^^^^^^^^^^^^^^^
+
+**Release Date:** July 22, 2020
+
+**Improvements**
+
+- Remove support for ``on_train_step_begin`` and ``on_train_step_end``, deprecate ``on_validation_step_end``, and introduce new callback ``on_validation_end`` with same functionality. Add helper methods ``is_epoch_start`` and ``is_epoch_end`` to PyTorch context.
+
+- Add a new API to support custom reducers in ``EstimatorTrial``. See :ref:``estimator-trial`` for details.
+
+- CLI: Add the ``register_version`` command for registering a new version of a model.
+
+- CLI: Add a ``--head`` option when printing trial logs.
+
+- WebUI: Make it possible to launch TensorBoard from experiment dashboard cards.
+
+**Bug Fixes**
+
+- Fix distributed training and Determined shell with non-root containers. The default task environments now include a user plugin to support running containers with arbitrary non-root users. Custom images based on the latest default task environments should also work.
+
+- Fix convergence issue for TF 2 multi-GPU models. Change default TF1 version from 1.14 to 1.15.
+
+- Fix issue affecting TensorFlow TensorBoard outputs.
+
+- Use local log line IDs for trial logs.
+
+- CLI: Improve the CLI's custom TLS certificate handling with non-self-signed certs.
+
+- WebUI: Fix a parsing problem with task start times.
+
+- WebUI: Fix log viewer timestamp copy/paste.
+
+**Known Issues**
+
+- WebUI: Older trial logs are not loaded by scrolling to the top of the page.
+
 Version 0.12.11
 ^^^^^^^^^^^^^^^
 

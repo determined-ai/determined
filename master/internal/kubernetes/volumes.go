@@ -4,54 +4,54 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/container"
-
 	"github.com/pkg/errors"
 
 	"github.com/docker/docker/api/types/mount"
 
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sV1 "k8s.io/api/core/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
+
+	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/container"
 )
 
-func configureMountPropagation(b *mount.BindOptions) *v1.MountPropagationMode {
+func configureMountPropagation(b *mount.BindOptions) *k8sV1.MountPropagationMode {
 	if b == nil {
 		return nil
 	}
 
 	switch b.Propagation {
 	case mount.PropagationPrivate:
-		p := v1.MountPropagationNone
+		p := k8sV1.MountPropagationNone
 		return &p
 	case mount.PropagationRSlave:
-		p := v1.MountPropagationHostToContainer
+		p := k8sV1.MountPropagationHostToContainer
 		return &p
 	case mount.PropagationRShared:
-		p := v1.MountPropagationBidirectional
+		p := k8sV1.MountPropagationBidirectional
 		return &p
 	default:
 		return nil
 	}
 }
 
-func dockerMountsToHostVolumes(dockerMounts []mount.Mount) ([]v1.VolumeMount, []v1.Volume) {
-	volumeMounts := make([]v1.VolumeMount, 0, len(dockerMounts))
-	volumes := make([]v1.Volume, 0, len(dockerMounts))
+func dockerMountsToHostVolumes(dockerMounts []mount.Mount) ([]k8sV1.VolumeMount, []k8sV1.Volume) {
+	volumeMounts := make([]k8sV1.VolumeMount, 0, len(dockerMounts))
+	volumes := make([]k8sV1.Volume, 0, len(dockerMounts))
 
 	for idx, d := range dockerMounts {
 		name := fmt.Sprintf("det-host-volume-%d", idx)
-		volumeMounts = append(volumeMounts, v1.VolumeMount{
+		volumeMounts = append(volumeMounts, k8sV1.VolumeMount{
 			Name:             name,
 			ReadOnly:         d.ReadOnly,
 			MountPath:        d.Target,
 			MountPropagation: configureMountPropagation(d.BindOptions),
 		})
-		volumes = append(volumes, v1.Volume{
+		volumes = append(volumes, k8sV1.Volume{
 			Name: name,
-			VolumeSource: v1.VolumeSource{
-				HostPath: &v1.HostPathVolumeSource{
+			VolumeSource: k8sV1.VolumeSource{
+				HostPath: &k8sV1.HostPathVolumeSource{
 					Path: d.Source,
 				},
 			},
@@ -61,20 +61,20 @@ func dockerMountsToHostVolumes(dockerMounts []mount.Mount) ([]v1.VolumeMount, []
 	return volumeMounts, volumes
 }
 
-func configureShmVolume(_ int64) (v1.VolumeMount, v1.Volume) {
+func configureShmVolume(_ int64) (k8sV1.VolumeMount, k8sV1.Volume) {
 	// Kubernetes does not support a native way to set shm size for
 	// containers. The workaround for this is to create an emptyDir
 	// volume and mount it to /dev/shm.
 	volumeName := "det-shm-volume"
-	volumeMount := v1.VolumeMount{
+	volumeMount := k8sV1.VolumeMount{
 		Name:      volumeName,
 		ReadOnly:  false,
 		MountPath: "/dev/shm",
 	}
-	volume := v1.Volume{
+	volume := k8sV1.Volume{
 		Name: volumeName,
-		VolumeSource: v1.VolumeSource{EmptyDir: &v1.EmptyDirVolumeSource{
-			Medium: v1.StorageMediumMemory,
+		VolumeSource: k8sV1.VolumeSource{EmptyDir: &k8sV1.EmptyDirVolumeSource{
+			Medium: k8sV1.StorageMediumMemory,
 		}},
 	}
 	return volumeMount, volume
@@ -84,11 +84,13 @@ func createConfigMapSpec(
 	namePrefix string,
 	data map[string][]byte,
 	namespace string,
-) *v1.ConfigMap {
-	return &v1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
+	taskID string,
+) *k8sV1.ConfigMap {
+	return &k8sV1.ConfigMap{
+		ObjectMeta: metaV1.ObjectMeta{
 			GenerateName: namePrefix,
 			Namespace:    namespace,
+			Labels:       map[string]string{determinedLabel: taskID},
 		},
 		BinaryData: data,
 	}
@@ -96,9 +98,9 @@ func createConfigMapSpec(
 
 func startConfigMap(
 	ctx *actor.Context,
-	configMapSpec *v1.ConfigMap,
+	configMapSpec *k8sV1.ConfigMap,
 	configMapInterface typedV1.ConfigMapInterface,
-) (*v1.ConfigMap, error) {
+) (*k8sV1.ConfigMap, error) {
 	configMap, err := configMapInterface.Create(configMapSpec)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create configMap")
@@ -109,29 +111,29 @@ func startConfigMap(
 }
 
 func configureAdditionalFilesVolumes(
-	archiveConfigMap *v1.ConfigMap,
-	entryPointConfigMap *v1.ConfigMap,
+	archiveConfigMap *k8sV1.ConfigMap,
+	entryPointConfigMap *k8sV1.ConfigMap,
 	runArchives []container.RunArchive,
-) ([]v1.VolumeMount, []v1.VolumeMount, []v1.Volume) {
-	initContainerVolumeMounts := make([]v1.VolumeMount, 0)
-	mainContainerVolumeMounts := make([]v1.VolumeMount, 0)
-	volumes := make([]v1.Volume, 0)
+) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume) {
+	initContainerVolumeMounts := make([]k8sV1.VolumeMount, 0)
+	mainContainerVolumeMounts := make([]k8sV1.VolumeMount, 0)
+	volumes := make([]k8sV1.Volume, 0)
 
 	// In order to inject additional files into k8 pods, we un-tar the archives
 	// in an initContainer from a configMap to an emptyDir, and then mount the
 	// emptyDir into the main container.
 
 	archiveVolumeName := "archive-volume"
-	archiveVolume := v1.Volume{
+	archiveVolume := k8sV1.Volume{
 		Name: archiveVolumeName,
-		VolumeSource: v1.VolumeSource{
-			ConfigMap: &v1.ConfigMapVolumeSource{
-				LocalObjectReference: v1.LocalObjectReference{Name: archiveConfigMap.Name},
+		VolumeSource: k8sV1.VolumeSource{
+			ConfigMap: &k8sV1.ConfigMapVolumeSource{
+				LocalObjectReference: k8sV1.LocalObjectReference{Name: archiveConfigMap.Name},
 			},
 		},
 	}
 	volumes = append(volumes, archiveVolume)
-	archiveVolumeMount := v1.VolumeMount{
+	archiveVolumeMount := k8sV1.VolumeMount{
 		Name:      archiveVolumeName,
 		MountPath: initContainerTarSrcPath,
 		ReadOnly:  true,
@@ -140,17 +142,17 @@ func configureAdditionalFilesVolumes(
 
 	entryPointVolumeName := "entrypoint-volume"
 	var entryPointVolumeMode int32 = 0700
-	entryPointVolume := v1.Volume{
+	entryPointVolume := k8sV1.Volume{
 		Name: entryPointVolumeName,
-		VolumeSource: v1.VolumeSource{
-			ConfigMap: &v1.ConfigMapVolumeSource{
-				LocalObjectReference: v1.LocalObjectReference{Name: entryPointConfigMap.Name},
+		VolumeSource: k8sV1.VolumeSource{
+			ConfigMap: &k8sV1.ConfigMapVolumeSource{
+				LocalObjectReference: k8sV1.LocalObjectReference{Name: entryPointConfigMap.Name},
 				DefaultMode:          &entryPointVolumeMode,
 			},
 		},
 	}
 	volumes = append(volumes, entryPointVolume)
-	entrypointVolumeMount := v1.VolumeMount{
+	entrypointVolumeMount := k8sV1.VolumeMount{
 		Name:      entryPointVolumeName,
 		MountPath: initContainerWorkDir,
 		ReadOnly:  true,
@@ -158,12 +160,12 @@ func configureAdditionalFilesVolumes(
 	initContainerVolumeMounts = append(initContainerVolumeMounts, entrypointVolumeMount)
 
 	additionalFilesVolumeName := "additional-files-volume"
-	dstVolume := v1.Volume{
+	dstVolume := k8sV1.Volume{
 		Name:         additionalFilesVolumeName,
-		VolumeSource: v1.VolumeSource{EmptyDir: &v1.EmptyDirVolumeSource{}},
+		VolumeSource: k8sV1.VolumeSource{EmptyDir: &k8sV1.EmptyDirVolumeSource{}},
 	}
 	volumes = append(volumes, dstVolume)
-	dstVolumeMount := v1.VolumeMount{
+	dstVolumeMount := k8sV1.VolumeMount{
 		Name:      additionalFilesVolumeName,
 		MountPath: initContainerTarDstPath,
 		ReadOnly:  false,
@@ -172,7 +174,7 @@ func configureAdditionalFilesVolumes(
 
 	for idx, runArchive := range runArchives {
 		for _, item := range runArchive.Archive {
-			mainContainerVolumeMounts = append(mainContainerVolumeMounts, v1.VolumeMount{
+			mainContainerVolumeMounts = append(mainContainerVolumeMounts, k8sV1.VolumeMount{
 				Name:      additionalFilesVolumeName,
 				MountPath: path.Join(runArchive.Path, item.Path),
 				SubPath:   path.Join(fmt.Sprintf("%d", idx), item.Path),

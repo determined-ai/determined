@@ -8,10 +8,12 @@ const {
 } = require('customize-cra');
 const AntdDayjsWebpackPlugin = require('antd-dayjs-webpack-plugin');
 const AntDesignThemePlugin = require('antd-theme-webpack-plugin');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 const path = require('path');
 const webpack = require('webpack');
+const jestConfig = require('./jest.config');
 
-module.exports = override(
+const webpackConfig = override(
   // Disable eslint for webpack config.
   disableEsLint(),
 
@@ -52,5 +54,26 @@ module.exports = override(
       'process.env.VERSION': '"0.12.12.dev0"',
       'process.env.IS_DEV': JSON.stringify(process.env.NODE_ENV === 'development'),
     })
-  )
+  ),
+
+  addWebpackPlugin(
+    new MonacoWebpackPlugin({
+      // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
+      languages: ['yaml'],
+      features: [
+        'suggest',
+        'quickOutline',
+        'wordHighlighter',
+        'colorDetector',
+        'codelens',
+        'parameterHints'
+      ],
+    })
+  ),
 );
+
+module.exports = {
+  webpack: webpackConfig,
+  jest: (config, env) => ({...config, ...jestConfig}),
+  // devServer: (config, env) => config,
+}

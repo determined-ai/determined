@@ -27,7 +27,7 @@ def build_model(context: TFKerasNativeContext) -> tf.keras.Model:
     )
     model = context.wrap_model(model)
     model.compile(
-        optimizer="adam",
+        optimizer=tf.keras.optimizers.Adam(name='Adam'),
         loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
         metrics=[tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy")],
     )
