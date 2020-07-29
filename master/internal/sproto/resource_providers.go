@@ -16,16 +16,38 @@ import (
 	"github.com/determined-ai/determined/master/pkg/container"
 )
 
-// ContainerLog notifies the task actor that a new log message is available for the container.
-// It is used by the resource providers to communicate internally and with the task handlers.
-type ContainerLog struct {
-	Container container.Container
-	Timestamp time.Time
+// Outgoing messages.
+type (
+	// ContainerLog notifies the task actor that a new log message is available for the container.
+	// It is used by the resource providers to communicate internally and with the task handlers.
+	ContainerLog struct {
+		Container container.Container
+		Timestamp time.Time
 
-	PullMessage *jsonmessage.JSONMessage
-	RunMessage  *agent.RunMessage
-	AuxMessage  *string
-}
+		PullMessage *jsonmessage.JSONMessage
+		RunMessage  *agent.RunMessage
+		AuxMessage  *string
+	}
+
+	// ContainerStateChanged notifies that the recipient container state has been transitioned.
+	// It is used by the resource providers to communicate with the task handlers.
+	ContainerStateChanged struct {
+		Container        container.Container
+		ContainerStopped *agent.ContainerStopped
+	}
+)
+
+// Incoming messages.
+type (
+	// ConfigureEndpoints informs the resource provider to configure the endpoints resources.
+	ConfigureEndpoints struct {
+		System *actor.System
+		Echo   *echo.Echo
+	}
+
+	// GetEndpointActorAddress requests the name of the actor that is managing the resources.
+	GetEndpointActorAddress struct{}
+)
 
 func (c ContainerLog) String() string {
 	msg := ""
@@ -52,18 +74,4 @@ func (c ContainerLog) String() string {
 	shortID := c.Container.ID[:8]
 	timestamp := c.Timestamp.UTC().Format(time.RFC3339)
 	return fmt.Sprintf("[%s] %s [%s] || %s", timestamp, shortID, c.Container.State, msg)
-}
-
-// ContainerStateChanged notifies that the recipient container state has been transitioned.
-// It is used by the resource providers to communicate with the task handlers.
-type ContainerStateChanged struct {
-	Container        container.Container
-	ContainerStopped *agent.ContainerStopped
-}
-
-// ConfigureEndpoints informs the resource provider to configure
-// the endpoints resources.
-type ConfigureEndpoints struct {
-	System *actor.System
-	Echo   *echo.Echo
 }

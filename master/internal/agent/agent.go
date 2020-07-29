@@ -35,10 +35,11 @@ type agent struct {
 	uuid uuid.UUID
 }
 
-type agentSummary struct {
+// AgentSummary summarizes the state on an agent.
+type AgentSummary struct {
 	ID             string       `json:"id"`
 	RegisteredTime time.Time    `json:"registered_time"`
-	Slots          slotsSummary `json:"slots"`
+	Slots          SlotsSummary `json:"slots"`
 	NumContainers  int          `json:"num_containers"`
 	Label          string       `json:"label"`
 }
@@ -49,7 +50,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		a.uuid = uuid.New()
 		a.slots, _ = ctx.ActorOf("slots", &slots{cluster: a.cluster})
 		a.containers = make(map[container.ID]*actor.Ref)
-	case agentSummary:
+	case AgentSummary:
 		ctx.Respond(a.summarize(ctx))
 	case ws.WebSocketConnected:
 		check.Panic(check.True(a.socket == nil, "websocket already connected"))
@@ -72,7 +73,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 	case aproto.MasterMessage:
 		a.handleIncomingWSMessage(ctx, msg)
 	case *proto.GetAgentRequest:
-		ctx.Respond(&proto.GetAgentResponse{Agent: toProtoAgent(a.summarize(ctx))})
+		ctx.Respond(&proto.GetAgentResponse{Agent: ToProtoAgent(a.summarize(ctx))})
 	case *proto.GetSlotsRequest:
 		var slots []*agentv1.Slot
 		for _, s := range a.summarize(ctx).Slots {
@@ -82,10 +83,10 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		ctx.Respond(&proto.GetSlotsResponse{Slots: slots})
 	case *proto.EnableAgentRequest:
 		ctx.Tell(a.slots, patchSlot{Enabled: true})
-		ctx.Respond(&proto.EnableAgentResponse{Agent: toProtoAgent(a.summarize(ctx))})
+		ctx.Respond(&proto.EnableAgentResponse{Agent: ToProtoAgent(a.summarize(ctx))})
 	case *proto.DisableAgentRequest:
 		ctx.Tell(a.slots, patchSlot{Enabled: false})
-		ctx.Respond(&proto.DisableAgentResponse{Agent: toProtoAgent(a.summarize(ctx))})
+		ctx.Respond(&proto.DisableAgentResponse{Agent: ToProtoAgent(a.summarize(ctx))})
 	case echo.Context:
 		a.handleAPIRequest(ctx, msg)
 	case actor.ChildFailed:
@@ -178,11 +179,11 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 	}
 }
 
-func (a *agent) summarize(ctx *actor.Context) agentSummary {
-	return agentSummary{
+func (a *agent) summarize(ctx *actor.Context) AgentSummary {
+	return AgentSummary{
 		ID:             ctx.Self().Address().Local(),
 		RegisteredTime: ctx.Self().RegisteredTime(),
-		Slots:          ctx.Ask(a.slots, slotsSummary{}).Get().(slotsSummary),
+		Slots:          ctx.Ask(a.slots, SlotsSummary{}).Get().(SlotsSummary),
 		NumContainers:  len(a.containers),
 		Label:          a.label,
 	}

@@ -17,6 +17,7 @@ type kubernetesResourceProvider struct {
 	harnessPath           string
 	taskContainerDefaults model.TaskContainerDefaultsConfig
 
+	taskList           *taskList
 	tasksByHandler     map[*actor.Ref]*Task
 	tasksByID          map[TaskID]*Task
 	tasksByContainerID map[ContainerID]*Task
@@ -43,6 +44,7 @@ func NewKubernetesResourceProvider(
 		harnessPath:           harnessPath,
 		taskContainerDefaults: taskContainerDefaults,
 
+		taskList:           newTaskList(),
 		tasksByHandler:     make(map[*actor.Ref]*Task),
 		tasksByID:          make(map[TaskID]*Task),
 		tasksByContainerID: make(map[ContainerID]*Task),
@@ -95,6 +97,17 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 	case TerminateTask:
 		k.receiveTerminateTask(ctx, msg)
 
+	case GetTaskSummary:
+		if resp := k.getTaskSummary(*msg.ID); resp != nil {
+			ctx.Respond(*resp)
+		}
+
+	case GetTaskSummaries:
+		ctx.Respond(k.taskList.TaskSummaries())
+
+	case sproto.GetEndpointActorAddress:
+		ctx.Respond("/pods")
+
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
@@ -139,6 +152,7 @@ func (k *kubernetesResourceProvider) receiveAddTask(ctx *actor.Context, msg AddT
 		fittingRequirements: msg.FittingRequirements,
 	})
 
+	k.taskList.Add(task)
 	k.tasksByID[task.ID] = task
 	k.tasksByHandler[task.handler] = task
 
@@ -293,6 +307,7 @@ func (k *kubernetesResourceProvider) receivePodTerminated(
 func (k *kubernetesResourceProvider) taskTerminated(task *Task, aborted bool) {
 	task.mustTransition(taskTerminated)
 
+	k.taskList.Remove(task)
 	delete(k.tasksByID, task.ID)
 	delete(k.tasksByHandler, task.handler)
 
@@ -370,6 +385,14 @@ func (k *kubernetesResourceProvider) terminateTask(task *Task, forcible bool) {
 		}
 		task.handler.System().Tell(task.handler, TerminateRequest{})
 	}
+}
+
+func (k *kubernetesResourceProvider) getTaskSummary(id TaskID) *TaskSummary {
+	if task := k.tasksByID[id]; task != nil {
+		summary := newTaskSummary(task)
+		return &summary
+	}
+	return nil
 }
 
 func constructAddresses(ip string, ports []int) []Address {
