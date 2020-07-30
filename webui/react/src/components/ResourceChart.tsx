@@ -1,10 +1,13 @@
-import Plotly, { Data, Layout } from 'plotly.js/lib/core';
 import React, { useMemo, useState } from 'react';
-import createPlotlyComponent from 'react-plotly.js/factory';
 
 import { getStateColor, lightTheme } from 'themes';
 import { CommandState, CommonProps, Resource, ResourceState } from 'types';
 import { clone } from 'utils/data';
+// The react-plotly import needs to come after Plotly import
+/* eslint-disable import/order */
+import Plotly, { Data, Layout } from 'Plotly';
+import createPlotlyComponent from 'react-plotly.js/factory';
+/* eslint-enable import/order */
 
 const Plot = createPlotlyComponent(Plotly);
 interface Props extends CommonProps {
