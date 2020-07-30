@@ -8,6 +8,7 @@ import css from './Link.module.scss';
 interface Props {
   disabled?: boolean;
   inherit?: boolean;
+  isButton?: boolean;
   path: string;
   popout?: boolean;
   onClick?: MouseEventHandler;
@@ -35,27 +36,25 @@ export const makeClickHandler = (
   return handler;
 };
 
-const Link: React.FC<Props> = ({
-  disabled, inherit, path, popout, onClick, children,
-}: PropsWithChildren<Props>) => {
+const Link: React.FC<Props> = ({ path, popout, onClick, ...props }: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
   const rel = windowOpenFeatures.join(' ');
   const handleClick =
     useCallback(makeClickHandler(path, onClick, popout), [ path, onClick, popout ]);
 
-  if (!disabled) classes.push(css.link);
-  if (inherit) classes.push(css.inherit);
+  if (!props.disabled) classes.push(css.link);
+  if (props.inherit) classes.push(css.inherit);
+  if (props.isButton) classes.push('ant-btn');
 
-  if (disabled) {
+  if (props.disabled) {
     return <span className={classes.join(' ')}>
-      {children}
+      {props.children}
     </span>;
   }
 
   return (
-    <a className={classes.join(' ')} href={path} rel={rel}
-      onClick={handleClick}>
-      {children}
+    <a className={classes.join(' ')} href={path} rel={rel} onClick={handleClick}>
+      {props.children}
     </a>
   );
 };

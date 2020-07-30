@@ -14,9 +14,10 @@ interface BreadCrumbRoute {
 interface Props extends CommonProps {
   breadcrumb?: BreadCrumbRoute[];
   backPath?: string;
+  headerInfo?: React.ReactNode;
   id?: string;
   options?: React.ReactNode;
-  subTitle?: string;
+  subTitle?: React.ReactNode;
   title?: string;
   maxHeight?: boolean;
 }
@@ -38,7 +39,9 @@ const Page: React.FC<Props> = (props: Props) => {
         extra={props.options}
         subTitle={props.subTitle}
         title={props.title}
-        onBack={props.backPath ? handleBack : undefined} />}
+        onBack={props.backPath ? handleBack : undefined}>
+        {props.headerInfo}
+      </PageHeader>}
       <div className={css.body}>{props.children}</div>
     </main>
   );
