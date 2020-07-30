@@ -94,7 +94,8 @@ Consider the experiment configuration below:
    searcher:
      name: single
      metric: error
-     max_steps: 5
+     max_length:
+       batches: 500
      smaller_is_better: true
 
 You may find that the values for the ``checkpoint_storage`` field are the same
@@ -130,7 +131,8 @@ below:
    searcher:
      name: single
      metric: error
-     max_steps: 5
+     max_length:
+       batches: 500
      smaller_is_better: true
 
 To launch the experiment with the template:

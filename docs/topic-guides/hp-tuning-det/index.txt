@@ -76,7 +76,7 @@ callback such as `tf.keras.callbacks.EarlyStopping
 <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/EarlyStopping>`__
 or manually by calling :meth:`determined.TrialContext.set_stop_requested`. When
 early stopping is requested, Determined will finish the current training or
-validation step and checkpoint the trial. Trials that are stopped early are
+validation workload and checkpoint the trial. Trials that are stopped early are
 considered to be "completed", whereas trials that fail are marked as "errored".
 
 Next Steps

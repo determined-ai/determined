@@ -108,12 +108,12 @@ created with the Determined CLI. It may contain the following fields:
 
 - ``min_validation_period``: Instructs Determined to periodically compute
   validation metrics for each trial during training. If set, this
-  variable specifies the maximum number of training steps that can be
-  completed for a given trial since the last validation operation for
-  that trial; if this limit is reached, a new validation operation is
-  performed. Validation metrics can be computed more frequently than
-  specified by this parameter, depending on the hyperparameter search
-  method being used by the experiment.
+  variable specifies the maximum length, in terms of records, batches or epochs
+  (see :ref:`Training Units<experiment-configuration_training_units>`), that a
+  given trial can be trained without a validation operation; if this limit is
+  reached, a new validation operation is performed. Validation metrics can be
+  computed more frequently than specified by this parameter, depending on the
+  hyperparameter search method being used by the experiment.
 - ``checkpoint_policy``: Controls how Determined performs checkpoints after
   validation operations, if at all. Should be set to one of the
   following values:
@@ -123,24 +123,28 @@ created with the Determined CLI. It may contain the following fields:
     validations for this experiment. Validation metrics are compared
     according to the ``metric`` and ``smaller_is_better`` options in
     the ``searcher`` configuration.
-  - ``all``: A checkpoint will be taken after every validation step,
-    no matter the validation performance of the step.
-  - ``none``: A checkpoint will never be taken *due* to a validation
-    step. However, even with this policy selected, checkpoints are
-    still expected to be taken after the last training step of a
-    trial, due to cluster scheduling decisions or due to
-    ``min_checkpoint_period``.
+  - ``all``: A checkpoint will be taken after every validation, no matter
+    the validation performance.
+  - ``none``: A checkpoint will never be taken *due* to a validation.
+    However, even with this policy selected, checkpoints are
+    still expected to be taken after the trial is finished training,
+    due to cluster scheduling decisions, before the search method makes
+    a decision based on a validation of a trial, or due to ``min_checkpoint_period``.
 
 - ``min_checkpoint_period``: Instructs Determined to take periodic
   checkpoints of each trial during training. If set, this variable
-  specifies the maximum number of training steps that can be completed
-  for a given trial since the last checkpoint of that trial; if this
-  limit is reached, a checkpoint of the trial is taken. There are two
-  other situations in which a trial might be checkpointed: (a) during
-  training, a model may be checkpointed to allow the trial's execution
-  to be suspended and later resumed on a different Determined agent (b) when
-  the trial's experiment is completed, to allow the resulting model to
-  be exported from Determined (e.g., for deployment).
+  specifies the maximum length that a trial can be trained without a
+  checkpoint, in terms of records, batches or epochs
+  (see :ref:`Training Units<experiment-configuration_training_units>`);
+  if this limit is reached, a checkpoint of the trial is
+  taken. There are three other situations in which a trial might be
+  checkpointed: (a) during training, a model may be checkpointed to
+  allow the trial's execution to be suspended and later resumed on
+  a different Determined agent (b) when the trial's experiment is
+  completed, to allow the resulting model to be exported from
+  Determined (e.g., for deployment) (c) before the search method makes
+  a decision based on a validation of a trial, to maintain consistency
+  in the event of a failure.
 
 .. _experiment-configuration_hyperparameters:
 
@@ -218,9 +222,9 @@ created with the Determined CLI. It may contain the following fields:
   methods, the following subfields must be specified:
 
   - ``name: single``: This search method trains a single trial for a
-    fixed number of steps. By default, validation metrics are only
-    computed once, after the specified number of training steps have
-    been completed; ``min_validation_period`` (see above) can be used
+    fixed length. By default, validation metrics are only
+    computed once, after the specified length of training has been completed;
+    ``min_validation_period`` (see above) can be used
     to specify that validation metrics should be computed more
     frequently.
 
@@ -229,8 +233,9 @@ created with the Determined CLI. It may contain the following fields:
     - ``smaller_is_better``: Specifies whether to minimize or
       maximize the metric defined above. The default value is true
       (minimize).
-    - ``max_steps``: Specifies how many steps to allocate to the
-      trial.
+    - ``max_length``: Specifies how long to train the trial, in terms
+      of records, batches or epochs
+      (see :ref:`Training Units<experiment-configuration_training_units>`).
     - (optional) ``source_trial_id``: If specified, the weights of
       this trial will be initialized to the most recent checkpoint of
       the given trial ID. Note that this will fail if the source
@@ -243,7 +248,7 @@ created with the Determined CLI. It may contain the following fields:
 
   - ``name: random``: This search method performs a random search.
     Each random trial configuration is trained for the specified
-    number of steps, and then validation metrics are computed.
+    length, and then validation metrics are computed.
     ``min_validation_period`` (see above) can be used to specify that
     validation metrics should be computed more frequently.
 
@@ -257,8 +262,9 @@ created with the Determined CLI. It may contain the following fields:
       (minimize).
     - ``max_trials``: Specifies how many trials, i.e., hyperparameter
       configurations, to evaluate.
-    - ``max_steps``: Specifies the number of training steps to run
-      for each trial.
+    - ``max_length``: Specifies how long to train each trial, in terms
+      of records, batches or epochs
+      (see :ref:`Training Units<experiment-configuration_training_units>`).
     - (optional) ``source_trial_id``: If specified, the weights of
       *every* trial in the search will be initialized to the most
       recent checkpoint of the given trial ID. Note that this will
@@ -280,6 +286,9 @@ created with the Determined CLI. It may contain the following fields:
     - ``smaller_is_better``: Specifies whether to minimize or
       maximize the metric defined above. The default value is true
       (minimize).
+    - ``max_length``: Specifies how long to train each trial, in terms
+      of records, batches or epochs
+      (see :ref:`Training Units<experiment-configuration_training_units>`).
     - (optional) ``source_trial_id``: If specified, the weights of
       this trial will be initialized to the most recent checkpoint of
       the given trial ID. Note that this will fail if the source
@@ -311,23 +320,24 @@ created with the Determined CLI. It may contain the following fields:
       significantly less downsampling, but as a consequence does not
       explore as many configurations given the same budget. We
       suggest using either ``aggressive`` or ``standard`` mode.
-    - ``target_trial_steps``: Specifies the maximum number of
-      training steps to allocate to any one trial. The vast majority
-      of trials will be stopped early, and thus only a small fraction
-      of trials will actually be trained for this number of steps. We
-      suggest setting this to a multiple of
-      ``divisor^(max_rungs-1)``, which is 45-1 = 256 with the default
+    - ``max_length``: Specifies the maximum training length of any
+      one trial, in terms of records, batches or epochs
+      (see :ref:`Training Units<experiment-configuration_training_units>`).
+      The vast majority of trials will be stopped early,
+      and thus only a small fraction of trials will actually be trained
+      for this long. We suggest setting this to a multiple of
+      ``divisor^(max_rungs-1)``, which is 4^(5-1) = 256 with the default
       values.
-    - ``step_budget``: Specifies the total number of steps to
-      allocate across all trials. We suggest setting this to be a
-      multiple of ``target_trial_steps``, which implies interpreting
-      this subfield as the effective number of complete trials to
-      evaluate. Note that some trials might be in-progress when this
-      budget is exhausted; adaptive search will allocate some
-      additional steps to complete these in-progress trials.
+    - ``budget``: Specifies the total training length across all trials,
+      in terms of the same unit (see :ref:`Training Units<experiment-configuration_training_units>`)
+      as ``max_length``. We suggest setting this to be a multiple of ``max_length``,
+      which implies interpreting this subfield as the effective number
+      of complete trials to evaluate. Note that some trials might be
+      in-progress when this budget is exhausted; adaptive search
+      will allow these to complete.
     - (optional) ``divisor``: Specifies the fraction of trials to
-      keep at each rung, and also determines how many steps are
-      allocated at each rung. The default setting is ``4``; only
+      keep at each rung, and also determines the training length
+      for each rung. The default setting is ``4``; only
       advanced users should consider changing this value.
     - (optional) ``max_rungs``: Specifies the maximum number of times
       we evaluate intermediate results for a trial and terminate
@@ -351,10 +361,11 @@ created with the Determined CLI. It may contain the following fields:
     - ``smaller_is_better``: Specifies whether to minimize or
       maximize the metric defined above. The default value is true
       (minimize).
-    - ``max_steps``: Specifies the maximum number of training steps
-      to allocate to any one trial. The vast majority of trials will
-      be stopped early, and thus only a small fraction of trials will
-      actually be trained for this number of steps.
+    - ``max_length``: Specifies the maximum training length of
+      any one trial, in terms of records, batches or epochs
+      (see :ref:`Training Units<experiment-configuration_training_units>`).
+      The vast majority of trials will be stopped early, and thus only
+      a small fraction of trials will actually be trained for this long.
     - ``max_trials``: Specifies how many trials, i.e., hyperparameter
       configurations, to evaluate.
     - (optional) ``mode``: Specifies how aggressively to perform
@@ -370,8 +381,8 @@ created with the Determined CLI. It may contain the following fields:
       same budget. We suggest using either ``aggressive`` or
       ``standard`` mode.
     - (optional) ``divisor``: Specifies the fraction of trials to
-      keep at each rung, and also determines how many steps are
-      allocated at each rung. The default setting is ``4``; only
+      keep at each rung, and also determines the training length
+      for each rung. The default setting is ``4``; only
       advanced users should consider changing this value.
     - (optional) ``max_rungs``: Specifies the maximum number of times
       we evaluate intermediate results for a trial and terminate
@@ -390,9 +401,9 @@ created with the Determined CLI. It may contain the following fields:
   - ``name: pbt``: This search method uses `population-based
     training <https://deepmind.com/blog/population-based-training-neural-networks/>`__,
     which maintains a population of active trials to train. After each
-    trial has been trained for a certain number of steps, all the
-    trials are validated. The searcher then closes some trials and
-    replaces them with altered copies of other trials. This process
+    trial has been trained the length specified by ``length_per_round``,
+    all the trials are validated. The searcher then closes some trials
+    and replaces them with altered copies of other trials. This process
     makes up one "round"; the searcher runs some number of rounds to
     execute a complete search. The model definition class must be able
     to restore from a checkpoint that was created with a different set
@@ -407,8 +418,9 @@ created with the Determined CLI. It may contain the following fields:
       (minimize).
     - ``population_size``: The number of trials (i.e., different
       hyperparameter configurations) to keep active at a time.
-    - ``steps_per_round``: The number of steps to train each trial
-      between validations.
+    - ``length_per_round``: Specfies how long to train each trial during a
+      round, in terms of records, batches or epochs
+      (see :ref:`Training Units<experiment-configuration_training_units>`).
     - ``num_rounds``: The total number of rounds to execute.
     - ``replace_function``: Describes how to choose which trials to
       close and which trials to copy at the end of each round.
@@ -472,21 +484,21 @@ created with the Determined CLI. It may contain the following fields:
 .. _batches-per-step:
 
 - ``batches_per_step``: Specifies the number of batches in a single
-  training step. As discussed above, Determined divides the training of a
-  single trial into a sequence of steps; each step corresponds to a
-  certain number of model updates. Therefore, this configuration
-  parameter can be used to control how long a trial is trained at a
+  training workload. As discussed above, Determined divides the training of a
+  single trial into a sequence of training workloads; each workload corresponds
+  to a certain number of model updates. Therefore, this configuration
+  parameter can be used to control how long a trial is trained on a
   single agent:
 
-  - Doing more work in a step allows per-step overheads (such as
+  - Training longer per workload allows per-workload overheads (such as
     downloading training data) to be amortized over more training
-    work. However, if the step size is too large, a single trial might
+    work. However, if the size of a single workload is too large, a trial might
     be trained for a long time before Determined gets an opportunity to
     suspend training of that trial and replace it with a different
     workload.
-  - The default value is 100. As a rule of thumb, the step size should
-    be set so that training a single step takes 60--180 seconds.
-  - *NOTE:* The step size is defined as a fixed number of *batches*;
+  - The default value is 100. As a rule of thumb, the training workload size
+    should be set so that a single workload takes 60--180 seconds.
+  - *NOTE:* The workload size is defined as a fixed number of *batches*;
     the size (number of records) in a batch is controlled by the
     ``global_batch_size`` hyperparameter in the experiment's model
     definition.
@@ -652,3 +664,32 @@ created with the Determined CLI. It may contain the following fields:
        copy of the cache, which is synchronized with the GCS cache.
      - ``local_cache_container_path``: The optional file system path to use as the
        mount point in the trial runner container for storing the local cache.
+
+Training Units
+--------------
+
+.. _experiment-configuration_training_units:
+
+Some configuration setiings, such as searcher training lengths and budgets,
+``min_validation_period``, and ``min_checkpoint_period``, can be expressed in terms of a few
+training units: records, batches or epochs. For example, to specify the ``max_length`` for a
+searcher in terms of batches, the configuration would read as shown below.
+
+.. code:: yaml
+
+  max_length:
+    batches: 900
+
+To express it terms of records or epochs, records or epochs would be specified in place of
+``batches``. In the case of epochs, ``records_per_epoch`` must also be specified. Below is an
+example of a single searcher in terms of epochs.
+
+.. code:: yaml
+
+  records_per_epoch: 50000
+  searcher:
+    name: single
+    metric: validation_error
+    max_length:
+      epochs: 64
+    smaller_is_better: true

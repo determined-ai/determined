@@ -47,7 +47,7 @@ TensorBoard for multiple experiments use
 
 .. note::
   Initially, TensorBoard may not contain metrics when the browser window opens.
-  Data will be available after a trial step is completed. TensorBoard pulls
+  Data will be available after a trial workload is completed. TensorBoard pulls
   metrics from persistent storage. It may take up to 5 minutes for TensorBoard
   to receive data and render visualizations.
 
@@ -89,7 +89,7 @@ configured with Determined TensorBoard support.
 Determined Batch Metrics
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-At the end of every Determined step, batch metrics are collected and stored in
+At the end of every training workload, batch metrics are collected and stored in
 the database, providing a granular view of model metrics over time.
 Batch metrics will appear in TensorBoard under the Determined group. The
 x-axis of each plot corresponds to the batch number. For example, a point

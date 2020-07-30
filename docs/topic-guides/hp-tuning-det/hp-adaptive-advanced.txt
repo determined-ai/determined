@@ -22,15 +22,15 @@ Search mode:
 
 Resource budget:
 
--  ``target_trial_steps``: The maximum number of steps that any trial
-   that survives to the end of the experiment will be trained for (a
-   *step* is a `fixed number <batches-per-step>`__ of batches). This quantity
-   is domain-specific and should roughly reflect the number of training steps
-   needed for the model to converge on the data set. For users who would like
-   to determine this number experimentally, train a model with reasonable
-   hyperparameters using the ``single`` search method.
--  ``step_budget``: Set ``step_budget`` to roughly 10 times
-   ``target_trial_steps``. A higher ``step_budget`` will result in
+-  ``max_length``: The maximum training length
+   (see :ref:`Training Units<experiment-configuration_training_units>`) of any
+   trial that survives to the end of the experiment. This quantity is domain-specific
+   and should roughly reflect the number of minibatches the model must be trained on
+   for it to converge on the data set. For users who would like to determine this number
+   experimentally, train a model with reasonable hyperparameters using the
+   ``single`` search method.
+-  ``budget``: Set ``budget`` to roughly 10 times
+   ``max_length``. A higher ``budget`` will result in
    hyperparameter search that consumes more resources and takes longer
    to complete, but may produce better-performing models.
 
@@ -61,46 +61,47 @@ configuration settings.
 ASHA
 ~~~~
 
-At a high level, ASHA prunes ("halves") a set of trials in successive rounds we
-call *rungs*. ASHA starts with an initial set of trials. (A trial means a single
-model with a fixed set of hyperparameter values.) ASHA trains all the trials for
-some number of steps and the trials with the worst validation performance are
-discarded. In the next rung, the remaining trials are trained for a longer
-period of time, and then trials with the worst validation performance are pruned
-once again.  This is repeated until the maximum number of training steps is
-reached.
+At a high level, ASHA prunes ("halves") a set of trials in successive
+rounds we call *rungs*. ASHA starts with an initial set of trials. (A
+trial means one model, with a fixed set of hyperparameter values.) ASHA
+trains all the trials for some length and the trials with the worst
+validation performance are discarded. In the next rung, the remaining
+trials are trained for a longer period of time, and then trials with
+the worst validation performance are pruned once again. This is
+repeated until the maximum training length is reached.
 
 First, an example of ASHA.
 
 -  Rung 1: ASHA creates N initial trials; the hyperparameter values for
    each trial are randomly sampled from the hyperparameters defined in
-   the experiment configuration file. Each trial is trained for 3 steps,
+   the experiment configuration file. Each trial is trained for 1 epoch,
    and then validation metrics are computed.
 -  Rung 2: ASHA picks the N/4 top-performing trials according to
-   validation metrics. These are trained for 12 steps.
+   validation metrics. These are trained for 4 epochs.
 -  Rung 3: ASHA picks the N/16 top-performing trials according to
-   validation metrics. These are trained for 48 steps.
+   validation metrics. These are trained for 16 epochs.
 
 At the end, the trial with best performance has the hyperparameter
 setting the ASHA searcher returns.
 
-In the example above, ``divisor`` is 4, which controls the fraction
-of trials that are kept in successive rungs, as well as the number of steps
-in successive rungs. ``target_trial_steps`` is 48, which is the maximum
-number of steps a trial is trained for.
+In the example above, ``divisor`` is 4, which determines what fraction
+of trials are kept in successive rungs, as well as the training length
+in successive rungs. ``max_length`` is 16 epochs, which is the maximum
+length a trial is trained for.
 
 The remaining degree of freedom in this ASHA example is the number N of
-initial trials. This is determined by the top-level adaptive algorithm,
-through ``step_budget`` and the number/types of ASHA subroutines called.
+trials initialized. This is determined by the top-level adaptive
+algorithm, through ``budget`` and the number/types of ASHA
+subroutines called.
 
 In general, ASHA has a fixed ``divisor`` d. In the first rung, it
 generates an initial set of randomly chosen trials and runs until each
-trial has completed the same number of steps. In the next rung, it keeps
+trial has trained for the same length. In the next rung, it keeps
 1/d of those trials and closes the rest. Then it runs each remaining
-trial until it has completed d times as many steps as after the previous
+trial until it has trained for d times as long as the previous
 rung. ASHA iterates this process until some stopping criterion is
 reached, such as completing a specified number of rungs or having only
-one trial remaining. The number of steps, rungs, and trials within rungs
+one trial remaining. The total training length, rungs, and trials within rungs
 are fixed within each ASHA searcher, but vary across different calls to
 ASHA by the adaptive algorithm. Note that although the name "ASHA"
 includes the phrase "halving", the fraction of trials pruned after every
@@ -120,27 +121,27 @@ allowed to run to completion).
 On one end, ``aggressive`` applies early stopping in a very eager
 manner; this mode essentially corresponds to only making a single call
 to ASHA. With the default ``divisor`` of 4, 75% of the remaining trials
-will be eliminated in each rung after only being trained for 25% as many
-training steps as will be performed in the next rung. This implies that
-relatively few of the trials will be allowed to finish even a small
-fraction of the training steps needed for a full training run
-(``target_trial_steps``). This aggressive early stopping behavior allows
+will be eliminated in each rung after only being trained for 25% the
+length of the next rung. This implies that
+relatively few trials will be allowed to finish even a small
+fraction of the length needed train to convergence (``max_length``).
+This aggressive early stopping behavior allows
 the searcher to start more trials for a wider exploration of
 hyperparameter configurations, at the risk of discarding a configuration
 too soon.
 
 On the other end, ``conservative`` mode is more similar to a ``random``
 search, in that it performs significantly less pruning. Extra ASHA
-subroutines are spawned with fewer rungs and larger training steps to
-account for the high percentage of trials eliminated after only a few
-steps. However, a ``conservative`` adaptive search will only explore a
+subroutines are spawned with fewer rungs and longer training lengths to
+account for the high percentage of trials eliminated after only a short
+time. However, a ``conservative`` adaptive search will only explore a
 small fraction of the configurations explored by an ``aggressive``
-search, given the same step budget.
+search, given the same budget.
 
 Once the number and types of calls to ASHA are determined (via
-``mode``), the adaptive algorithm will allocate budgets of steps to the
-ASHA subroutines, from the overall step_budget for the adaptive
-algorithm (user-specified through ``step_budget``). This determines the
+``mode``), the adaptive algorithm will allocate training length budgets to
+the ASHA subroutines, from the overall budget for the adaptive
+algorithm (user-specified through ``budget``). This determines the
 number of trials at each rung (N in the above ASHA example).
 
 Configuration
@@ -151,10 +152,10 @@ Users specify configurations for the ``adaptive`` searcher through the
 
 **Parameters for ASHA:**
 
--  ``target_trial_steps``: The maximum number of steps that any one
-   trial will be trained.
+-  ``max_length``: The maximum training length
+   (see :ref:`Training Units<experiment-configuration_training_units>`) for any one trial.
 -  (optional, for advanced users only) ``divisor``: The multiplier for
-   eliminating trials and increasing steps trained at each rung. The
+   eliminating trials and increasing time trained at each rung. The
    default is 4.
 -  (optional, for advanced users only) ``max_rungs``: The maximum number
    of rungs. The default is 5.
@@ -165,10 +166,10 @@ Users specify configurations for the ``adaptive`` searcher through the
    ``conservative``. Specifies how aggressively to perform early
    stopping. We suggest using either ``aggressive`` or ``standard``
    mode.
--  ``step_budget``: A budget for total steps taken across all trials and
+-  ``budget``: A budget for the total training length across all trials and
    ASHA calls. The budget is split evenly between ASHA calls. The
    recommendation above was to set
-   ``step_budget = 10 * target_trial_steps``.
+   ``budget = 10 * max_length``.
 
 Examples
 ~~~~~~~~
@@ -177,16 +178,16 @@ The table below illustrates the difference between ``aggressive``,
 ``standard``, and ``conservative`` for an otherwise fixed configuration.
 While ``aggressive`` tries out 64 hyperparameter configurations,
 ``conservative`` tries only 31 hyperparameter configurations but has the
-budget to run more of them to the full 16 steps. More ASHA instances are
+budget to run more of them to the full 16 epochs. More ASHA instances are
 generated by ``conservative``, which are responsible for creating the
-trials run for the full 16 steps.
+trials run for the full 16 epochs.
 
 The settings are ``divisor: 4``, ``max_rungs: 3``,
-``target_trial_steps: 16``, and ``step_budget: 160``.
+``max_length: {epochs: 16}``, and ``budget: {epochs: 160}``.
 
 +----------+----------------+--------------+-------+------------------+-------+-------+
 | Total    | Number of      |              |       |                  |       |       |
-| steps    | trials         |              |       |                  |       |       |
+| epochs   | trials         |              |       |                  |       |       |
 | trained  |                |              |       |                  |       |       |
 +==========+================+==============+=======+==================+=======+=======+
 |          | 64             | 43           |       | 31               |       |       |
@@ -204,7 +205,7 @@ The settings are ``divisor: 4``, ``max_rungs: 3``,
 
 For an experiment generated by a specific ``.yaml`` experiment
 configuration file, this information (ASHA instances and number of
-trials vs. number of steps) can be found with the command
+trials vs. training length) can be found with the command
 
 .. code:: bash
 
@@ -213,28 +214,28 @@ trials vs. number of steps) can be found with the command
 FAQ
 ---
 
-**Q: How do I control how many batches a trial is trained for before it
+**Q: How do I control how long a trial is trained for before it
 is potentially discarded?**
 
-Two factors affect the number of batches a trial is guaranteed to be
-trained on. The field :ref:`batches_per_step <batches-per-step>` affects how many
-batches make up one step. The number of steps guaranteed is affected by
-``target_trial_steps``, and is at least ``target_trial_steps / 256`` by
-default, or ``target_trial_steps / divisor ^ (max_rungs-1)`` in general.
+The training length is guaranteed to be at least ``max_length / 256``
+by default, or ``max_length / divisor ^ max_rungs-1`` in general. It
+is recommended to configure this in records or epochs if the
+``global_batch_size`` hyperparameter is not constant, to ensure
+each trial trains on the same amount of data.
 
-**Q: How do I set the initial number of trials? How do I make sure that a
-certain number of trials are trained to completion?**
+**Q: How do I set the initial number of trials? How do I make sure ``x``
+trials are run the full training length (``max_length``)?**
 
 The number of initial trials is determined by a combination of ``mode``,
-``step_budget``, ``divisor``, ``max_rungs``, and ``target_trial_steps``.
+``budget``, ``divisor``, ``max_rungs``, and ``max_length``.
 Here is a rule of thumb for the default configuration of
 ``max_rungs: 5`` and ``divisor: 4``, with ``mode: aggressive`` and a
-large enough ``step_budget``:
+large enough ``budget``:
 
 -  The initial number of trials is
-   ``step_budget / (4 * target_trial_steps)``.
--  To ensure that ``x`` trials are run ``target_trial_steps``, set
-   ``step_budget`` to be ``4 * x * target_trial_steps``.
+   ``budget / (4 * max_length)``.
+-  To ensure that ``x`` trials are run ``max_length``, set
+   ``budget`` to be ``4 * x * max_length``.
 
 A configuration setting that meets set goals can also be found by trial
 and error. The command
@@ -243,12 +244,12 @@ and error. The command
 
    det preview-search <file_name.yaml>
 
-will display information on the number of trials versus number of steps for the
-configuration specified in ``file_name.yaml``. Increasing ``step_budget``
-increases both the initial number of trials and the number of trials that are
-trained for the full number of steps. On the other hand, increasing
-``target_trial_steps`` decreases both. The ``mode`` decides on allocation of
-steps between trials; ``mode: conservative`` runs more trials for longer,
+will display information on the number of trials versus training length
+for the configuration specified in ``file_name.yaml``. Increasing
+``budget`` increases both the initial number of trials and the
+number of trials that train the full length. On the other hand, ``max_length``
+decreases both. The ``mode`` decides on allocation of training length
+between trials; ``mode: conservative`` runs more trials for longer,
 whereas ``mode: aggressive`` eliminates the most trials early in training.
 
 **Q: The adaptive algorithm sounds great so far. What are its

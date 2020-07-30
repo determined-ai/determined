@@ -140,8 +140,8 @@ When an experiment is created, we report:
 When an experiment terminates, we report:
 
 - the number of trials in the experiment
-- the total number of steps across all trials in the experiment
-- the total elapsed time for all steps across all trials in the experiment
+- the total number of training workloads across all trials in the experiment
+- the total elapsed time for all workloads across all trials in the experiment
 
 The information we collect from the WebUI includes:
 

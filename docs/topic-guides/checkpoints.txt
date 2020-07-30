@@ -46,15 +46,17 @@ The exact checkpoint format depends on the application framework being used:
    hyperparameters respectively.
 
 Determined will automatically create checkpoints for all the trials in an
-experiment. Checkpoints are created in three situations:
+experiment. Checkpoints are created in four situations:
 
 1. When Determined suspends training of a trial at one agent, before later
    resuming training that trial at a different agent.
 2. If ``min_checkpoint_period`` is set in the experiment configuration,
-   each trial will be checkpointed whenever the specified number of
-   training steps are completed since the last checkpoint.
+   each trial will be checkpointed whenever the specified training length
+   is completed since the last checkpoint.
 3. When a trial has been trained to completion (according to the
    configuration of the experiment's trial search method).
+4. Before the search method makes a decision based on a validation of a trial,
+   Determined will checkpoint that trial to guarantee consistency in the event of a failure.
 
 The Determined CLI can be used to view all the checkpoints associated with an
 experiment:
