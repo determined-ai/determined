@@ -29,7 +29,7 @@ Determined's key capabilities include:
 - flexible GPU scheduling, including dynamically resizing training jobs on-the-fly and automatic management of cloud resources on AWS and GCP
 - built-in experiment tracking, metrics storage, and visualization
 - automatic fault tolerance for deep learning training jobs
-- integrated support for :ref:`TensorBoard <how-to-tensorboard>` and GPU-powered :ref:`Jupyter notebooks <run-notebooks>`
+- integrated support for :ref:`TensorBoard <how-to-tensorboard>` and GPU-powered :ref:`Jupyter notebooks <how-to-notebooks>`
 
 To use Determined, you can continue using popular deep learning frameworks such as TensorFlow and PyTorch; you just need to modify your model code to implement the Determined API.
 
@@ -96,8 +96,8 @@ Use the links below to start learning more about Determined's capabilities.
 **Reproducibility, TensorBoard, and Notebooks**
 
 - :ref:`reproducibility`
-- :ref:`notebooks-topic-guide`
 - :ref:`notebook-tutorial`
+- :ref:`how-to-notebooks`
 - :ref:`how-to-tensorboard`
 
 **Installation**

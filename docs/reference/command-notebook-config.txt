@@ -1,36 +1,58 @@
-.. _command-configuration:
+.. _command-notebook-configuration:
 
-Command Configuration
-=====================
+Command and Notebook Configuration
+==================================
 
-A command/notebook configuration file is a YAML file that provides
-settings for commands and notebook tasks. Typically, the configuration
-is passed as a command-line argument when commands and notebooks are
-created with the Determined CLI.  It may contain the following fields. All
-fields are optional unless otherwise specified.
+The behavior of command and notebook workloads can be influenced by
+setting a variety of configuration variables. Configuration settings can
+be specified by passing a YAML configuration file when launching the
+workload via the Determined CLI:
+
+.. code::
+
+  $ det cmd run --config-file=my_config.yaml
+  $ det notebook start --config-file=my_config.yaml
+
+Configuration variables can also be set directly on the command-line
+when the workload is launched:
+
+.. code::
+
+  $ det cmd run --config resources.slots=2 ...
+  $ det notebook start --config resources.slots=2
+
+Options set via ``--config`` take precedence over values specified in
+the configuration file.
+
+Configuration Settings
+**********************
+
+The following configuration settings are supported:
 
 - ``description``: A human-readable description of the
   command/notebook. This does not need to be unique. The default
   description consists of a timestamp and the entrypoint of the
   command.
 - ``environment``: Specifies the environment of the container that is
-  used to execute the command/notebook. Default values are in bold.
+  used to execute the command/notebook.
 
-  - ``image``: Specifies a Docker image to use when
-    executing the command. The image must be available via
-    ``docker pull`` to every Determined agent host in the cluster. Users
-    can customize environment variables for GPU vs. CPU agents differently by
-    specifying a dict with two keys, ``cpu`` and ``gpu``. Defaults to
-    **determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu** for CPU
-    agents and
-    **determinedai/environments:cuda-10-py-3.6.9-pytorch-1.4-tf-1.15-gpu** for
-    GPU agents.
+  - ``image``: Specifies a Docker image to use when executing the
+    workload. The image must be available via ``docker pull`` to every
+    Determined agent machine in the cluster. Users can customize the image
+    used for GPU vs. CPU agents by specifying a dict with two keys,
+    ``cpu`` and ``gpu``. Defaults to
+    ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.5.0``
+    for CPU agents and
+    ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.5.0``
+    for GPU agents.
   - ``force_pull_image``: Forcibly pull the image from the Docker
     registry and bypass the Docker cache. Defaults to ``false``.
   - ``environment_variables``: Specifies a list of environment
-    variables for the command container. Each element of the list
+    variables for the container. Each element of the list
     should be a string of the form ``NAME=VALUE``. See :ref:`environment-variables`
-    for more details.
+    for more details. Users
+    can customize environment variables for GPU vs. CPU agents differently by
+    specifying a dict with two keys, ``cpu`` and ``gpu``.
   - ``registry_auth``: Specifies the `Docker registry
     credentials <https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__
     to use when pulling a Docker image, if needed.
@@ -70,11 +92,3 @@ fields are optional unless otherwise specified.
   - ``propagation``: (Advanced users only) Optional `propagation
     behavior <https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__
     for replicas of the bind-mount. Defaults to ``rprivate``.
-
-.. hint::
-  In addition to ``--config-file``, ``det cmd run`` offers a ``--config`` flag to
-  directly set configuration options from the command line with ``field=value``
-  syntax. ``field`` can use the dot character (``.``) to indicate nested fields
-  (e.g., ``environment.python``). ``value`` will be interpreted as a comma-separated
-  list if it contains any commas. Options set by ``--config`` take precedence
-  over those set by ``--config-file``.
