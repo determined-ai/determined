@@ -382,6 +382,7 @@ func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 		Limits: map[k8sV1.ResourceName]resource.Quantity{
 			"nvidia.com/gpu": *resource.NewQuantity(int64(p.gpus), resource.DecimalSI),
 		},
+		Requests: map[k8sV1.ResourceName]resource.Quantity{},
 	}
 }
 
@@ -496,24 +497,61 @@ func (p *pod) configureVolumes(
 }
 
 func (p *pod) configurePodSpec(
+	ctx *actor.Context,
 	volumes []k8sV1.Volume,
 	initContainers []k8sV1.Container,
 	containers []k8sV1.Container,
+	podSpec *k8sV1.Pod,
 ) *k8sV1.Pod {
-	return &k8sV1.Pod{
-		ObjectMeta: metaV1.ObjectMeta{
-			Name:      p.podName,
-			Namespace: p.namespace,
-			Labels:    map[string]string{determinedLabel: p.taskSpec.TaskID},
-		},
-		Spec: k8sV1.PodSpec{
-			Volumes:        volumes,
-			HostNetwork:    p.taskSpec.TaskContainerDefaults.NetworkMode.IsHost(),
-			InitContainers: initContainers,
-			Containers:     containers,
-			RestartPolicy:  k8sV1.RestartPolicyNever,
-		},
+	if podSpec == nil {
+		podSpec = &k8sV1.Pod{}
+	} else {
+		ctx.Log().Info("using user provided pod spec as as template")
+		podSpec = podSpec.DeepCopy()
 	}
+	ctx.Log().Debugf("using base pods spec: %v", podSpec.Spec)
+
+	podSpec.ObjectMeta.Name = p.podName
+	podSpec.ObjectMeta.Namespace = p.namespace
+	if podSpec.ObjectMeta.Labels == nil {
+		podSpec.ObjectMeta.Labels = make(map[string]string)
+	}
+	podSpec.ObjectMeta.Labels[determinedLabel] = p.taskSpec.TaskID
+
+	if len(podSpec.Spec.Containers) > 0 {
+		if len(podSpec.Spec.Containers) > 1 {
+			ctx.Log().Warnf(
+				"only the first container in pod spec being used, " +
+					"remaining containers are being ignored")
+		}
+
+		for k, v := range podSpec.Spec.Containers[0].Resources.Limits {
+			if _, present := containers[0].Resources.Limits[k]; !present {
+				containers[0].Resources.Limits[k] = v
+			}
+		}
+
+		for k, v := range podSpec.Spec.Containers[0].Resources.Requests {
+			if _, present := containers[0].Resources.Requests[k]; !present {
+				containers[0].Resources.Requests[k] = v
+			}
+		}
+
+		containers[0].VolumeMounts = append(
+			containers[0].VolumeMounts, podSpec.Spec.Containers[0].VolumeMounts...)
+
+		containers[0].VolumeDevices = append(
+			containers[0].VolumeDevices, podSpec.Spec.Containers[0].VolumeDevices...)
+	}
+
+	podSpec.Spec.Volumes = append(podSpec.Spec.Volumes, volumes...)
+	podSpec.Spec.HostNetwork = p.taskSpec.TaskContainerDefaults.NetworkMode.IsHost()
+	podSpec.Spec.InitContainers = initContainers
+	podSpec.Spec.Containers = containers
+	podSpec.Spec.RestartPolicy = k8sV1.RestartPolicyNever
+
+	ctx.Log().Debugf("launching pod spec %v", podSpec.Spec.Volumes)
+	return podSpec
 }
 
 func (p *pod) launchPod(ctx *actor.Context, podSpec *k8sV1.Pod) error {
@@ -579,7 +617,8 @@ func (p *pod) startPodForTrial(ctx *actor.Context) error {
 		},
 	}
 
-	podSpec := p.configurePodSpec(volumes, initContainers, containers)
+	podSpec := p.configurePodSpec(
+		ctx, volumes, initContainers, containers, exp.ExperimentConfig.PodSpec)
 	return p.launchPod(ctx, podSpec)
 }
 
@@ -634,7 +673,7 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 		},
 	}
 
-	podSpec := p.configurePodSpec(volumes, initContainers, containers)
+	podSpec := p.configurePodSpec(ctx, volumes, initContainers, containers, cmd.Config.PodSpec)
 	return p.launchPod(ctx, podSpec)
 }
 
@@ -685,7 +724,8 @@ func (p *pod) startPodForGC(ctx *actor.Context) error {
 		},
 	}
 
-	podSpec := p.configurePodSpec(volumes, initContainers, containers)
+	podSpec := p.configurePodSpec(
+		ctx, volumes, initContainers, containers, gcc.ExperimentConfig.PodSpec)
 	return p.launchPod(ctx, podSpec)
 }
 

@@ -1,6 +1,8 @@
 package model
 
 import (
+	v1 "k8s.io/api/core/v1"
+
 	"github.com/determined-ai/determined/master/pkg/check"
 )
 
@@ -12,6 +14,7 @@ type CommandConfig struct {
 	Environment Environment     `json:"environment"`
 	Resources   ResourcesConfig `json:"resources"`
 	Entrypoint  []string        `json:"entrypoint"`
+	PodSpec     *v1.Pod         `json:"pod_spec"`
 }
 
 // Validate implements the check.Validatable interface.
