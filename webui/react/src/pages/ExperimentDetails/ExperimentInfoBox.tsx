@@ -1,16 +1,17 @@
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import Modal from 'antd/lib/modal/Modal';
 import yaml from 'js-yaml';
 import React, { useCallback, useMemo, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
+import TimeAgo from 'timeago-react';
 
-import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
+import Section from 'components/Section';
 import { CheckpointDetail, CheckpointState, ExperimentDetails } from 'types';
-import { formatDatetime } from 'utils/date';
 import { floatToPercent, humanReadableFloat } from 'utils/string';
+import { getDuration, shortEnglishHumannizer } from 'utils/time';
 
 import css from './ExperimentInfoBox.module.scss';
 
@@ -18,35 +19,32 @@ interface Props {
   experiment: ExperimentDetails;
 }
 
-const renderRow = (label: string, value: React.ReactNode): React.ReactNode => {
-  if (value === undefined) return <></>;
+const renderInfo = (label: string, content: React.ReactNode): React.ReactNode => {
+  if (!content) return null;
   return (
-    <tr key={label}>
-      <td className={css.label}>{label}</td>
-      <td>
-        {[ 'string', 'number' ].includes(typeof value) ?
-          <span>{value}</span> : value
-        }
-      </td>
-    </tr>
+    <div className={css.info}>
+      <div className={css.label}>{label}</div>
+      <div className={css.content}>{content}</div>
+    </div>
   );
 };
 
-const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
+const InfoBox: React.FC<Props> = ({ experiment }: Props) => {
+  const config = experiment.config;
   const [ showConfig, setShowConfig ] = useState(false);
   const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
 
-  const orderFactor = exp.config.searcher.smallerIsBetter ? 1 : -1;
+  const orderFactor = experiment.config.searcher.smallerIsBetter ? 1 : -1;
 
   const bestValidation = useMemo(() => {
-    const sortedValidations = exp.validationHistory
+    const sortedValidations = experiment.validationHistory
       .filter(a => a.validationError !== undefined)
       .sort((a, b) => (a.validationError as number - (b.validationError as number)) * orderFactor);
     return sortedValidations[0]?.validationError;
-  }, [ exp.validationHistory, orderFactor ]);
+  }, [ experiment.validationHistory, orderFactor ]);
 
-  const bestCheckpoint: CheckpointDetail = useMemo(() => {
-    const sortedCheckpoints: CheckpointDetail[] = exp.trials
+  const bestCheckpoint: CheckpointDetail | undefined = useMemo(() => {
+    const sortedCheckpoints: CheckpointDetail[] = experiment.trials
       .filter(trial => trial.bestAvailableCheckpoint
         && trial.bestAvailableCheckpoint.validationMetric
         && trial.bestAvailableCheckpoint.state === CheckpointState.Completed)
@@ -60,7 +58,7 @@ const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
         return (a.validationMetric as number - (b.validationMetric as number)) * orderFactor;
       });
     return sortedCheckpoints[0];
-  }, [ exp.trials, orderFactor ]);
+  }, [ experiment.trials, orderFactor ]);
 
   const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
   const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
@@ -68,43 +66,57 @@ const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
   const handleHideConfig = useCallback(() => setShowConfig(false), []);
 
   return (
-    <div className={css.base}>
-      <table>
-        <tbody>
-          {renderRow('State', <Badge state={exp.state} type={BadgeType.State} />)}
-          {renderRow('Progress', exp.progress && <ProgressBar
-            percent={exp.progress * 100}
-            state={exp.state}
-            title={floatToPercent(exp.progress, 0)} />)}
-          {renderRow('Start Time', formatDatetime(exp.startTime))}
-          {renderRow('End Time', exp.endTime && formatDatetime(exp.endTime))}
-          {renderRow('Max Slot', exp.config.resources.maxSlots || 'Unlimited')}
-          {bestValidation && renderRow(
-            'Best Validation',
-            `${humanReadableFloat(bestValidation)} (${exp.config.searcher.metric})`,
-          )}
-          {renderRow('Best Checkpoint', bestCheckpoint && (<>
+    <Section maxHeight title="Summary">
+      <div className={css.base}>
+        {renderInfo(
+          'Progress',
+          experiment.progress && <ProgressBar
+            percent={experiment.progress * 100}
+            state={experiment.state}
+            title={floatToPercent(experiment.progress, 0)} />,
+        )}
+        {renderInfo(
+          'Best Validation',
+          bestValidation && `${humanReadableFloat(bestValidation)} (${config.searcher.metric})`,
+        )}
+        {renderInfo(
+          'Configuration',
+          <Button onClick={handleShowConfig}>View Configuration</Button>,
+        )}
+        {renderInfo(
+          'Best Checkpoint',
+          bestCheckpoint &&
             <Button onClick={handleShowBestCheckpoint}>
               Trial {bestCheckpoint.trialId} Batch {bestCheckpoint.batch}
-            </Button>
-            <CheckpointModal
-              checkpoint={bestCheckpoint}
-              config={exp.config}
-              show={showBestCheckpoint}
-              title={`Best Checkpoint for Experiment ${exp.id}`}
-              onHide={handleHideBestCheckpoint} />
-          </>))}
-          {renderRow('Configuration',<Button onClick={handleShowConfig}>Show</Button>)}
-          {renderRow('Model Definition', <Button>
-            <Link path={`/exps/${exp.id}/model_def`}>Download</Link>
-          </Button>)}
-        </tbody>
-      </table>
+            </Button>,
+        )}
+        {renderInfo('Max Slot', config.resources.maxSlots || 'Unlimited')}
+        {renderInfo(
+          'Start Time',
+          <Tooltip title={new Date(experiment.startTime).toLocaleString()}>
+            <TimeAgo datetime={new Date(experiment.startTime)} />
+          </Tooltip>,
+        )}
+        {renderInfo(
+          'Duration',
+          experiment.endTime != null && shortEnglishHumannizer(getDuration(experiment)),
+        )}
+        {renderInfo(
+          'Model Definition',
+          <Link isButton path={`/experiments/${experiment.id}/model_def`}>Download Model</Link>,
+        )}
+      </div>
+      {bestCheckpoint && <CheckpointModal
+        checkpoint={bestCheckpoint}
+        config={config}
+        show={showBestCheckpoint}
+        title={`Best Checkpoint for Experiment ${experiment.id}`}
+        onHide={handleHideBestCheckpoint} />}
       <Modal
         bodyStyle={{ padding: 0 }}
         className={css.forkModal}
         footer={null}
-        title={`Configuration for Experiment ${exp.id}`}
+        title={`Configuration for Experiment ${experiment.id}`}
         visible={showConfig}
         width={768}
         onCancel={handleHideConfig}>
@@ -119,9 +131,9 @@ const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
             selectOnLineNumbers: true,
           }}
           theme="vs-light"
-          value={yaml.safeDump(exp.configRaw)} />
+          value={yaml.safeDump(experiment.configRaw)} />
       </Modal>
-    </div>
+    </Section>
   );
 };
 

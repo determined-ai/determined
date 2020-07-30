@@ -3,12 +3,13 @@ import { SelectValue } from 'antd/es/select';
 import Plotly, { PlotData, PlotlyHTMLElement, PlotRelayoutEvent } from 'plotly.js/lib/core';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Section from 'components/Section';
+import SelectFilter from 'components/SelectFilter';
 import { ValidationHistory } from 'types';
 import { clone } from 'utils/data';
 import { capitalize, generateAlphaNumeric } from 'utils/string';
 
-import Section from './Section';
-import SelectFilter from './SelectFilter';
+import css from './ExperimentChart.module.scss';
 
 const { Option } = Select;
 
@@ -37,7 +38,7 @@ type PlotArguments = [
 ];
 
 const defaultLayout: Partial<Plotly.Layout> = {
-  height: 400,
+  height: 368,
   margin: { b: 50, l: 50, pad: 6, r: 10, t: 10 },
   xaxis: {
     hoverformat: '',
@@ -159,8 +160,10 @@ const ExperimentChart: React.FC<Props> = ({ validationMetric, ...props }: Props)
   );
 
   return (
-    <Section options={chartOptions} title={title}>
-      <div id={id} />
+    <Section maxHeight options={chartOptions} title={title}>
+      <div className={css.base}>
+        <div id={id} />
+      </div>
     </Section>
   );
 };

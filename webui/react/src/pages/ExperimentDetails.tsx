@@ -1,9 +1,10 @@
-import { Alert, BreadCrumb, Button, Modal, Table, Tooltip } from 'antd';
+import { Alert, Button, Col, Modal, Row, Space, Table, Tooltip } from 'antd';
 import { ColumnType } from 'antd/lib/table';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 
+import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
 import Icon from 'components/Icon';
 import { makeClickHandler } from 'components/Link';
@@ -190,9 +191,33 @@ const ExperimentDetailsComp: React.FC = () => {
         experiment={experiment}
         onClick={{ Fork: showForkModal }}
         onSettled={pollExperimentDetails} />}
-      subTitle={experiment?.config.description}
+      subTitle={<Space align="center" size="small">
+        {experiment?.config.description}
+        <Badge state={experiment.state} type={BadgeType.State} />
+      </Space>}
       title={`Experiment ${experimentId}`}>
-      <ExperimentInfoBox experiment={experiment} />
+      <Row className={css.topRow} gutter={[ 16, 16 ]}>
+        <Col lg={10} span={24} xl={8} xxl={6}>
+          <ExperimentInfoBox experiment={experiment} />
+        </Col>
+        <Col lg={14} span={24} xl={16} xxl={18}>
+          <ExperimentChart
+            startTime={experiment.startTime}
+            validationHistory={experiment.validationHistory}
+            validationMetric={experimentConfig?.searcher.metric} />
+        </Col>
+        <Col span={24}>
+          <Section title="Trials">
+            <Table
+              columns={columns}
+              dataSource={experiment?.trials}
+              loading={!experimentResponse.hasLoaded}
+              rowKey="id"
+              size="small"
+              onRow={handleTableRow} />
+          </Section>
+        </Col>
+      </Row>
       <Modal
         bodyStyle={{ padding: 0 }}
         className={css.forkModal}
@@ -215,19 +240,6 @@ const ExperimentDetailsComp: React.FC = () => {
           onChange={editorOnChange} />
         {forkError && <Alert className={css.error} message={forkError} type="error" />}
       </Modal>
-      <ExperimentChart
-        startTime={experiment.startTime}
-        validationHistory={experiment.validationHistory}
-        validationMetric={experimentConfig?.searcher.metric} />
-      <Section title="Trials">
-        <Table
-          columns={columns}
-          dataSource={experiment?.trials}
-          loading={!experimentResponse.hasLoaded}
-          rowKey="id"
-          size="small"
-          onRow={handleTableRow} />
-      </Section>
       {activeCheckpoint && <CheckpointModal
         checkpoint={activeCheckpoint}
         config={experiment.config}

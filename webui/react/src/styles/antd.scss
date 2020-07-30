@@ -79,14 +79,16 @@ html {
   /* PageHeader */
 
   .ant-page-header {
-    padding: 0 0 var(--theme-sizes-layout-medium) 0;
+    border-bottom: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
+    margin-bottom: var(--theme-sizes-layout-big);
+    padding: 0 0 var(--theme-sizes-layout-big) 0;
     width: 100%;
   }
   .ant-page-header.has-breadcrumb { padding-top: 0; }
   .ant-page-header-heading,
   .ant-page-header-heading + .ant-breadcrumb { margin-top: 0; }
   .ant-page-header-heading-left,
-  .ant-page-header-heading-right { margin: 0; }
+  .ant-page-header-heading-extra { margin: 0; }
   .ant-page-header-heading-title {
     font-size: var(--theme-sizes-font-jumbo);
     font-weight: normal;
