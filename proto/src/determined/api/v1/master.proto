@@ -18,3 +18,21 @@ message GetMasterResponse {
     // The config file loaded by the master.
     google.protobuf.Struct config = 4;
 }
+
+// Stream master logs.
+message MasterLogsRequest {
+    // Skip the number of master logs before returning results. Negative values
+    // denote number of master logs to skip from the end before returning results.
+    int32 offset = 3;
+    // Limit the number of master logs. A value of 0 denotes no limit.
+    int32 limit = 4;
+    // Continue following logs until the master stops or the limit is reached.
+    bool follow = 5;
+}
+// Response to MasterLogsRequest.
+message MasterLogsResponse {
+    // The id of the master log.
+    int32 id = 1;
+    // The log message.
+    string message = 2;
+}

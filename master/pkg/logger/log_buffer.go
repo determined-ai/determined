@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 func min(a, b int) int {
@@ -86,6 +88,15 @@ type Entry struct {
 	Level   logrus.Level `json:"level"`
 }
 
+// Proto returns the proto representation of the log entry.
+func (e *Entry) Proto() *apiv1.MasterLogsResponse {
+	return &apiv1.MasterLogsResponse{
+		Id: int32(e.ID),
+		Message: fmt.Sprintf("[%s] [%s] %s",
+			e.Level.String(), e.Time.Format(time.RFC822), e.Message),
+	}
+}
+
 // LogBuffer is an in-memory buffer based logger.
 type LogBuffer struct {
 	lock         sync.RWMutex
@@ -139,6 +150,13 @@ func (lb *LogBuffer) Entries(startID int, endID int, limit int) []*Entry {
 	copy(entries[copiedCount:], lb.buffer)
 
 	return entries
+}
+
+// Len returns the total number of entries written to the buffer.
+func (lb *LogBuffer) Len() int {
+	lb.lock.RLock()
+	defer lb.lock.RUnlock()
+	return lb.totalEntries
 }
 
 // Fire implements the logrus.Hook interface.

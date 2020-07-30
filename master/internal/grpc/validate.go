@@ -20,3 +20,8 @@ func ValidateRequest(checks ...Check) error {
 	}
 	return nil
 }
+
+// ValidateLimit validates Limit message fields.
+func ValidateLimit(limit int32) Check {
+	return func() (bool, string) { return limit >= 0, "Limit must be >= 0" }
+}

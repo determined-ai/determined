@@ -32,7 +32,7 @@ func trialStatus(d *db.PgDB, trialID int32) (model.State, int, error) {
 func (a *apiServer) TrialLogs(
 	req *apiv1.TrialLogsRequest, resp apiv1.Determined_TrialLogsServer) error {
 	if err := grpc.ValidateRequest(
-		func() (bool, string) { return req.Limit >= 0, "Limit must be >= 0" },
+		grpc.ValidateLimit(req.Limit),
 	); err != nil {
 		return err
 	}
