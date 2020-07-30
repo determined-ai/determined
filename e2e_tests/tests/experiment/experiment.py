@@ -26,6 +26,7 @@ def maybe_create_native_experiment(context_dir: str, command: List[str]) -> Opti
     with subprocess.Popen(
         command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, cwd=context_dir, env=target_env
     ) as p:
+        assert p.stdout is not None
         for line in p.stdout:
             m = re.search(r"Created experiment (\d+)\n", line.decode())
             if m is not None:
@@ -39,7 +40,7 @@ def create_native_experiment(context_dir: str, command: List[str]) -> int:
     if experiment_id is None:
         pytest.fail(f"Failed to create experiment in {context_dir}: {command}")
 
-    return experiment_id  # type: ignore
+    return experiment_id
 
 
 def maybe_create_experiment(

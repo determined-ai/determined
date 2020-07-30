@@ -90,7 +90,7 @@ def pytest_itemcollected(item: Any) -> None:
         pytest.exit(f"{item.nodeid} is missing an integration test mark (any of {_INTEG_MARKERS})")
 
 
-@pytest.fixture(scope="session")  # type: ignore
+@pytest.fixture(scope="session")
 def secrets(request: SubRequest) -> Dict[str, str]:
     """
     Connect to S3 secretsmanager to get the secret values used in integrations tests.

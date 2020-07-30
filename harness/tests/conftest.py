@@ -20,7 +20,7 @@ def pytest_collection_modifyitems(config: Any, items: List[Any]) -> None:
             item.add_marker(skip_slow)
 
 
-@pytest.fixture(scope="function")  # type: ignore
+@pytest.fixture(scope="function")
 def expose_gpus() -> Generator:
     """
     Set the environment variables to mimic what the agent uses to control which

@@ -129,6 +129,7 @@ def maybe_create_experiment(implementation: NativeImplementation) -> typing.Opti
         cwd=implementation.cwd,
         env=target_env,
     ) as p:
+        assert p.stdout is not None
         for line in p.stdout:
             m = re.search(r"Created experiment (\d+)\n", line.decode())
             if m is not None:
