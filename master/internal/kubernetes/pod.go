@@ -37,6 +37,7 @@ const (
 
 type pod struct {
 	cluster                  *actor.Ref
+	clusterID                string
 	taskHandler              *actor.Ref
 	clientSet                *k8sClient.Clientset
 	namespace                string
@@ -67,6 +68,7 @@ type podNodeInfo struct {
 
 func newPod(
 	cluster *actor.Ref,
+	clusterID string,
 	taskHandler *actor.Ref,
 	clientSet *k8sClient.Clientset,
 	namespace string,
@@ -87,6 +89,7 @@ func newPod(
 
 	return &pod{
 		cluster:                  cluster,
+		clusterID:                clusterID,
 		taskHandler:              taskHandler,
 		clientSet:                clientSet,
 		namespace:                namespace,
@@ -387,11 +390,12 @@ func (p *pod) configureEnvVars(
 	environment model.Environment,
 	deviceType device.Type,
 ) ([]k8sV1.EnvVar, error) {
-	// TODO (DET-3457): Include env variables set in experiment config.
-	if len(environment.EnvironmentVariables.For(deviceType)) > 0 {
-		return nil, errors.Errorf(
-			"kubernetes resource provider does not currently support environment " +
-				"variables set in the experiment config; use startup-hook.sh instead")
+	for _, envVar := range environment.EnvironmentVariables.For(deviceType) {
+		envVarSplit := strings.Split(envVar, "=")
+		if len(envVarSplit) != 2 {
+			return nil, errors.Errorf("unable to split envVar %s", envVar)
+		}
+		envVarsMap[envVarSplit[0]] = envVarSplit[1]
 	}
 
 	var slotIds []string
@@ -399,7 +403,7 @@ func (p *pod) configureEnvVars(
 		slotIds = append(slotIds, strconv.Itoa(i))
 	}
 
-	envVarsMap["DET_CLUSTER_ID"] = "k8cluster"
+	envVarsMap["DET_CLUSTER_ID"] = p.clusterID
 	envVarsMap["DET_MASTER"] = fmt.Sprintf("%s:%d", p.masterIP, p.masterPort)
 	envVarsMap["DET_MASTER_HOST"] = p.masterIP
 	envVarsMap["DET_MASTER_ADDR"] = p.masterIP
@@ -592,6 +596,10 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 		ctx, tasks.ToDockerMounts(cmd.Config.BindMounts), runArchives)
 	if err != nil {
 		return err
+	}
+
+	for _, port := range cmd.Config.Environment.Ports {
+		p.ports = append(p.ports, port)
 	}
 
 	envVars, err := p.configureEnvVars(

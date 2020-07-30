@@ -1,7 +1,11 @@
 package scheduler
 
 import (
+	"fmt"
+	"net/url"
+
 	"github.com/determined-ai/determined/master/internal/kubernetes"
+	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -22,6 +26,7 @@ type kubernetesResourceProvider struct {
 	tasksByID          map[TaskID]*Task
 	tasksByContainerID map[ContainerID]*Task
 	groups             map[*actor.Ref]*group
+	registeredNames    map[*container][]string
 
 	assignmentsByTaskHandler map[*actor.Ref][]podAssignment
 
@@ -49,6 +54,7 @@ func NewKubernetesResourceProvider(
 		tasksByID:          make(map[TaskID]*Task),
 		tasksByContainerID: make(map[ContainerID]*Task),
 		groups:             make(map[*actor.Ref]*group),
+		registeredNames:    make(map[*container][]string),
 
 		assignmentsByTaskHandler: make(map[*actor.Ref][]podAssignment),
 	}
@@ -64,6 +70,7 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 			msg.System,
 			msg.Echo,
 			ctx.Self(),
+			k.clusterID,
 			k.config.Namespace,
 			k.config.MasterServiceName,
 			k.config.LeaveKubernetesResources,
@@ -257,6 +264,7 @@ func (k *kubernetesResourceProvider) receivePodStarted(ctx *actor.Context, msg s
 	task, ok := k.tasksByContainerID[ContainerID(msg.ContainerID)]
 	if !ok {
 		ctx.Log().Warnf("received pod start from unknown container %s", msg.ContainerID)
+		return
 	}
 
 	container := task.containers[ContainerID(msg.ContainerID)]
@@ -265,7 +273,21 @@ func (k *kubernetesResourceProvider) receivePodStarted(ctx *actor.Context, msg s
 	handler := container.task.handler
 	handler.System().Tell(handler, ContainerStarted{Container: container})
 
-	// TODO (DET-3422): add in proxying initialization.
+	names := make([]string, 0, len(msg.Ports))
+	for _, port := range msg.Ports {
+		// We are keying on task ID instead of container ID. Revisit this when we need to
+		// proxy multi-container tasks or when containers are created prior to being
+		// assigned to an agent.
+		ctx.Ask(k.proxy, proxy.Register{
+			Service: string(task.ID),
+			Target: &url.URL{
+				Scheme: "http",
+				Host:   fmt.Sprintf("%s:%d", msg.IP, port),
+			},
+		})
+		names = append(names, string(task.ID))
+	}
+	k.registeredNames[container] = names
 }
 
 func (k *kubernetesResourceProvider) receivePodTerminated(
@@ -286,7 +308,9 @@ func (k *kubernetesResourceProvider) receivePodTerminated(
 	container.mustTransition(containerTerminated)
 	container.exitStatus = msg.ContainerStopped
 
-	// TODO(DET-3422): de-register proxying info.
+	for _, name := range k.registeredNames[container] {
+		ctx.Tell(k.proxy, proxy.Unregister{Service: name})
+	}
 
 	delete(container.agent.containers, container.id)
 	delete(container.task.containers, container.id)
