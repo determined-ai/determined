@@ -91,6 +91,9 @@ html {
     font-size: var(--theme-sizes-font-jumbo);
     font-weight: normal;
   }
+  .ant-page-header-content {
+    padding: var(--theme-sizes-layout-medium) 0;
+  }
 
   /* Select */
 
@@ -121,6 +124,15 @@ html {
   .ant-space.ant-space-horizontal.ant-space-align-center > .ant-space-item {
     align-items: center;
     display: inline-flex;
+  }
+
+  /* Statistic */
+
+  .ant-statistic-title {
+    font-size: var(--theme-sizes-font-small);
+  }
+  .ant-statistic-content {
+    font-size: var(--theme-sizes-font-big);
   }
 
   /* Table */
