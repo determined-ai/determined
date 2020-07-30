@@ -1,3 +1,3 @@
-declare module 'plotly.js-basic-dist' {
-  export { Data, Layout } from '@types/plotly.js';
+declare module 'plotly.js/lib/core' {
+  export * from '@types/plotly.js';
 }
