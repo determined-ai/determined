@@ -31,7 +31,7 @@ const NavBar: React.FC<Props> = (props: Props) => {
       <div className={css.group}>
         <NavItem
           icon="cluster"
-          path="/ui/cluster"
+          path="/det/cluster"
           type={NavItemType.Main}>
           {agents.hasLoaded &&
             (overview.totalResources.total !== 0 ? `${overview.allocation}%` : 'No Agents')}
