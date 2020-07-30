@@ -46,7 +46,7 @@ def describe_trial(args: Namespace) -> None:
 
     # Print information about individual steps.
     headers = [
-        "Step #",
+        "# of Batches",
         "State",
         "Start Time",
         "End Time",
@@ -57,11 +57,11 @@ def describe_trial(args: Namespace) -> None:
         "Validation Metrics",
     ]
     if args.metrics:
-        headers.append("Step Metrics")
+        headers.append("Workload Metrics")
 
     values = [
         [
-            s["id"],
+            s["total_batches_processed"] + s["num_batches"],
             s["state"],
             render.format_time(s["start_time"]),
             render.format_time(s["end_time"]),
@@ -73,7 +73,7 @@ def describe_trial(args: Namespace) -> None:
     ]
 
     print()
-    print("Steps:")
+    print("Workloads:")
     render.tabulate_or_csv(headers, values, args.csv)
 
 

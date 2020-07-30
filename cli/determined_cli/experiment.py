@@ -280,7 +280,7 @@ def describe(args: Namespace) -> None:
         v_metrics_headers = []
 
     headers = (
-        ["Trial ID", "Step ID", "State", "Start Time", "End Time"]
+        ["Trial ID", "# of Batches", "State", "Start Time", "End Time"]
         + t_metrics_headers
         + [
             "Checkpoint State",
@@ -337,7 +337,7 @@ def describe(args: Namespace) -> None:
                 row = (
                     [
                         step["trial_id"],
-                        step["id"],
+                        step["num_batches"] + step["total_batches_processed"],
                         step["state"],
                         render.format_time(step.get("start_time")),
                         render.format_time(step.get("end_time")),
@@ -357,9 +357,9 @@ def describe(args: Namespace) -> None:
 
     if not args.outdir:
         outfile = None
-        print("\nSteps:")
+        print("\nWorkloads:")
     else:
-        outfile = args.outdir.joinpath("steps.csv")
+        outfile = args.outdir.joinpath("workloads.csv")
     render.tabulate_or_csv(headers, values, args.csv, outfile)
 
 
@@ -492,7 +492,7 @@ def list_trials(args: Namespace) -> None:
     r = api.get(args.master, "experiments/{}/summary".format(args.experiment_id))
     experiment = r.json()
 
-    headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Steps"]
+    headers = ["Trial ID", "State", "H-Params", "Start Time", "End Time", "# of Batches"]
     values = [
         [
             t["id"],
@@ -500,7 +500,7 @@ def list_trials(args: Namespace) -> None:
             json.dumps(t["hparams"], indent=4),
             render.format_time(t["start_time"]),
             render.format_time(t["end_time"]),
-            t["num_steps"],
+            t["total_batches_processed"],
         ]
         for t in experiment["trials"]
     ]
@@ -562,7 +562,7 @@ def set_gc_policy(args: Namespace) -> None:
 
         headers = [
             "Trial ID",
-            "Step ID",
+            "# of Batches",
             "State",
             "Validation Metric\n({})".format(metric_name),
             "UUID",
@@ -571,7 +571,7 @@ def set_gc_policy(args: Namespace) -> None:
         values = [
             [
                 c["trial_id"],
-                c["step_id"],
+                c["step"]["num_batches"] + c["step"]["total_batches_processed"],
                 c["state"],
                 api.metric.get_validation_metric(metric_name, c["step"]["validation"]),
                 c["uuid"],
@@ -741,7 +741,7 @@ args_description = Cmd(
                         help="Test the experiment configuration and model "
                         "definition by creating and scheduling a very small "
                         "experiment. This command will verify that a training "
-                        "step and validation step run successfully and that "
+                        "workload and validation workload run successfully and that "
                         "checkpoints can be saved. The test experiment will "
                         "be archived on creation.",
                     ),

@@ -292,7 +292,7 @@ def run_describe_cli_tests(experiment_id: int) -> None:
         )
 
         assert os.path.exists(os.path.join(tmpdir, "experiments.csv"))
-        assert os.path.exists(os.path.join(tmpdir, "steps.csv"))
+        assert os.path.exists(os.path.join(tmpdir, "workloads.csv"))
         assert os.path.exists(os.path.join(tmpdir, "trials.csv"))
 
     # "det experiment describe" with metrics.
@@ -312,7 +312,7 @@ def run_describe_cli_tests(experiment_id: int) -> None:
         )
 
         assert os.path.exists(os.path.join(tmpdir, "experiments.csv"))
-        assert os.path.exists(os.path.join(tmpdir, "steps.csv"))
+        assert os.path.exists(os.path.join(tmpdir, "workloads.csv"))
         assert os.path.exists(os.path.join(tmpdir, "trials.csv"))
 
 

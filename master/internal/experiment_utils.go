@@ -122,7 +122,7 @@ func checkpointFromCheckpointMetrics(metrics searcher.CheckpointMetrics) model.C
 func saveWorkload(db *db.PgDB, w searcher.Workload) error {
 	switch w.Kind {
 	case searcher.RunStep:
-		return db.AddStep(model.NewStep(w.TrialID, w.StepID, w.NumBatches))
+		return db.AddStep(model.NewStep(w.TrialID, w.StepID, w.NumBatches, w.TotalBatchesProcessed))
 	case searcher.CheckpointModel:
 		return db.AddCheckpoint(model.NewCheckpoint(w.TrialID, w.StepID))
 	case searcher.ComputeValidationMetrics:
