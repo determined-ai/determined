@@ -11,12 +11,12 @@ from determined_common import storage
 from tests.storage import util as storage_util
 
 
-@pytest.fixture()  # type: ignore
+@pytest.fixture()
 def manager(tmp_path: Path) -> storage.StorageManager:
     return storage.SharedFSStorageManager(str(tmp_path))
 
 
-@pytest.fixture(params=[0, 1, 5])  # type: ignore
+@pytest.fixture(params=[0, 1, 5])
 def to_delete(request: Any, manager: storage.StorageManager) -> List[Dict[str, Any]]:
     metadata = []
     for _ in range(request.param):
