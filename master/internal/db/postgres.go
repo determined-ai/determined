@@ -334,7 +334,7 @@ FROM (
                        t.warm_start_checkpoint_id,
                 (SELECT coalesce(jsonb_agg(s ORDER BY id ASC), '[]'::jsonb)
                  FROM (
-                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
+                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id, s.num_batches,
                      -- Drop batch_metrics field from metrics column because it
                      -- can be very large and compute average on the fly for legacy
                      -- metrics.
