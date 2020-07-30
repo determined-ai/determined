@@ -212,9 +212,9 @@ FROM (
                         FROM steps s
                         WHERE s.trial_id = t.id
                        ) AS num_steps,
-                       (SELECT sum(s.num_batches)
+                       (SELECT coalesce(sum(s.num_batches), 0)
                         FROM steps s
-                        WHERE s.trial_id = t.id
+                        WHERE s.trial_id = t.id AND s.state = 'COMPLETED'
                        ) AS total_batches_processed,
                        (SELECT v.metrics
                         FROM validations v
