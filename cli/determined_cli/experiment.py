@@ -296,9 +296,7 @@ def describe(args: Namespace) -> None:
     values = []
     for doc in docs:
         for trial in doc["trials"]:
-            total_batches_processed = 0
             for step in trial["steps"]:
-                total_batches_processed += step["num_batches"]
                 t_metrics_fields = []
                 if step.get("metrics"):
                     avg_metrics = step["metrics"]["avg_metrics"]
@@ -339,7 +337,7 @@ def describe(args: Namespace) -> None:
                 row = (
                     [
                         step["trial_id"],
-                        total_batches_processed,
+                        step["num_batches"] + step["total_batches_processed"],
                         step["state"],
                         render.format_time(step.get("start_time")),
                         render.format_time(step.get("end_time")),
@@ -502,7 +500,7 @@ def list_trials(args: Namespace) -> None:
             json.dumps(t["hparams"], indent=4),
             render.format_time(t["start_time"]),
             render.format_time(t["end_time"]),
-            t["num_batches"],
+            t["total_batches_processed"],
         ]
         for t in experiment["trials"]
     ]
@@ -573,7 +571,7 @@ def set_gc_policy(args: Namespace) -> None:
         values = [
             [
                 c["trial_id"],
-                c["step"]["num_batches"],
+                c["step"]["num_batches"] + c["step"]["total_batches_processed"],
                 c["state"],
                 api.metric.get_validation_metric(metric_name, c["step"]["validation"]),
                 c["uuid"],
