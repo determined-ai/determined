@@ -649,6 +649,26 @@ class PyTorchTrialController(det.LoopTrialController):
             for idx, lr_scheduler in enumerate(self.context.lr_schedulers):
                 lr_scheduler.load_state_dict(checkpoint["lr_schedulers_state_dict"][idx])
 
+        if "rng_state" in checkpoint:
+            rng_state = checkpoint["rng_state"]
+            np.random.set_state(rng_state["np_rng_state"])
+            random.setstate(rng_state["random_rng_state"])
+            torch.random.set_rng_state(rng_state["cpu_rng_state"])
+            if torch.cuda.device_count():
+                if "gpu_rng_state" in rng_state:
+                    rng_state["gpu_rng_state"] = torch.cuda.get_rng_state(self.local_rank)
+                else:
+                    logging.warn(
+                        "The system has a gpu but no gpu_rng_state exists in the checkpoint."
+                    )
+            else:
+                if "gpu_rng_state" in rng_state:
+                    logging.warn(
+                        "There exists gpu_rng_state in checkpoint but the system has no gpu."
+                    )
+        else:
+            logging.warn("The checkpoint has no random state to restore.")
+
         callback_state = checkpoint.get("callbacks", {})
         for name in self.callbacks:
             if name in callback_state:
@@ -671,6 +691,15 @@ class PyTorchTrialController(det.LoopTrialController):
         # The model code is the current working directory.
         util.write_user_code(path)
 
+        rng_state = {
+            "cpu_rng_state": torch.random.get_rng_state(),
+            "np_rng_state": np.random.get_state(),
+            "random_rng_state": random.getstate(),
+        }
+
+        if torch.cuda.device_count():
+            rng_state["gpu_rng_state"] = torch.cuda.get_rng_state(self.local_rank)
+
         # PyTorch uses optimizer objects that take the model parameters to
         # optimize on construction, so we store and reload the `state_dict()`
         # of the model and optimizer explicitly (instead of dumping the entire
@@ -685,6 +714,7 @@ class PyTorchTrialController(det.LoopTrialController):
                 lr_scheduler.state_dict() for lr_scheduler in self.context.lr_schedulers
             ],
             "callbacks": {name: callback.state_dict() for name, callback in self.callbacks.items()},
+            "rng_state": rng_state,
         }
 
         torch.save(  # type: ignore
