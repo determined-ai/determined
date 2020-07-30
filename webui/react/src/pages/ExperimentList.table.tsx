@@ -2,9 +2,8 @@ import { ColumnType } from 'antd/lib/table';
 import React from 'react';
 
 import {
-  experimentActionRenderer, experimentArchivedRenderer, experimentDescriptionRenderer,
-  experimentProgressRenderer, expermentDurationRenderer, relativeTimeRenderer, stateRenderer,
-  userRenderer,
+  experimentActionRenderer, experimentArchivedRenderer, experimentProgressRenderer,
+  expermentDurationRenderer, relativeTimeRenderer, stateRenderer, userRenderer,
 } from 'components/Table';
 import { ExperimentItem } from 'types';
 import { alphanumericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
