@@ -85,6 +85,11 @@ service Determined {
         option (google.api.http) = {get: "/api/v1/master"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Cluster"};
     }
+    // Stream master logs.
+    rpc MasterLogs(MasterLogsRequest) returns (stream MasterLogsResponse) {
+        option (google.api.http) = {get: "/api/v1/master/logs"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Cluster"};
+    }
     // Get a set of agents from the cluster
     rpc GetAgents(GetAgentsRequest) returns (GetAgentsResponse) {
         option (google.api.http) = {get: "/api/v1/agents"};
