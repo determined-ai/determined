@@ -59,19 +59,18 @@ def describe_trial(args: Namespace) -> None:
     if args.metrics:
         headers.append("Workload Metrics")
 
-    values = []
-    for s in trial["steps"]:
-        values += [
-            [
-                s["total_batches_processed"] + s["num_batches"],
-                s["state"],
-                render.format_time(s["start_time"]),
-                render.format_time(s["end_time"]),
-                *format_checkpoint(s["checkpoint"]),
-                *format_validation(s["validation"]),
-                *([json.dumps(s["metrics"], indent=4)] if args.metrics else []),
-            ]
+    values = [
+        [
+            s["total_batches_processed"] + s["num_batches"],
+            s["state"],
+            render.format_time(s["start_time"]),
+            render.format_time(s["end_time"]),
+            *format_checkpoint(s["checkpoint"]),
+            *format_validation(s["validation"]),
+            *([json.dumps(s["metrics"], indent=4)] if args.metrics else []),
         ]
+        for s in trial["steps"]
+    ]
 
     print()
     print("Workloads:")
