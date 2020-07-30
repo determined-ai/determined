@@ -203,7 +203,7 @@ const ExperimentDetailsComp: React.FC = () => {
         onCancel={handleCancel}
         onOk={handleOk}>
         <MonacoEditor
-          height="80vh"
+          height="60vh"
           language="yaml"
           options={{
             minimap: { enabled: false },

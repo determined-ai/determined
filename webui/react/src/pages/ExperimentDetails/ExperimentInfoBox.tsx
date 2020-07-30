@@ -109,7 +109,7 @@ const InfoBox: React.FC<Props> = ({ experiment: exp }: Props) => {
         width={768}
         onCancel={handleHideConfig}>
         <MonacoEditor
-          height="80vh"
+          height="60vh"
           language="yaml"
           options={{
             minimap: { enabled: false },
