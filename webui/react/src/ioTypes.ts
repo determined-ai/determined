@@ -255,7 +255,7 @@ export const ioExperiments = io.array(ioExperiment);
 export type ioTypeExperiment = io.TypeOf<typeof ioExperiment>;
 export type ioTypeExperiments = io.TypeOf<typeof ioExperiments>;
 
-const validationHistoryIoType = io.type({
+const ioValidationHistory = io.type({
   end_time: io.string,
   trial_id: io.number,
   validation_error: io.union([ io.number, io.null ]),
@@ -271,7 +271,7 @@ export const ioExperimentDetails = io.type({
   start_time: io.string,
   state: runStatesIoType,
   trials: io.array(ioTrial),
-  validation_history: io.array(validationHistoryIoType),
+  validation_history: io.array(ioValidationHistory),
 });
 
 export type ioTypeExperimentDetails = io.TypeOf<typeof ioExperimentDetails>;

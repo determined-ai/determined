@@ -249,7 +249,7 @@ export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
     username: ioType.owner.username,
     validationHistory: ioType.validation_history.map(vh => ({
       endTime: vh.end_time,
-      id: vh.trial_id,
+      trialId: vh.trial_id,
       validationError: vh.validation_error || undefined,
     })),
   };

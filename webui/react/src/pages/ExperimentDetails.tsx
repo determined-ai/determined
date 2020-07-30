@@ -7,6 +7,7 @@ import { useParams } from 'react-router';
 
 import CheckpointModal from 'components/CheckpointModal';
 import ExperimentActions from 'components/ExperimentActions';
+import ExperimentChart from 'components/ExperimentChart';
 import ExperimentInfoBox from 'components/ExperimentInfoBox';
 import Icon from 'components/Icon';
 import { makeClickHandler } from 'components/Link';
@@ -45,6 +46,7 @@ const ExperimentDetailsComp: React.FC = () => {
   const [ experimentResponse, triggerExperimentRequest ] =
     useRestApi<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
   const experiment = experimentResponse.data;
+  const experimentConfig = experiment?.config;
   const validationKey = experiment?.config.searcher.metric;
 
   const pollExperimentDetails = useCallback(() => {
@@ -209,7 +211,7 @@ const ExperimentDetailsComp: React.FC = () => {
   ];
 
   return (
-    <Page title={`Experiment ${experiment?.config.description}`}>
+    <Page title={`Experiment ${experimentConfig?.description}`}>
       <Breadcrumb>
         <Breadcrumb.Item>
           <Space align="center" size="small">
@@ -225,30 +227,35 @@ const ExperimentDetailsComp: React.FC = () => {
         experiment={experiment}
         onClick={{ Fork: showForkModal }}
         onSettled={pollExperimentDetails} />
-      <ExperimentInfoBox experiment={experiment} />
-      <Modal
-        bodyStyle={{ padding: 0 }}
-        className={css.forkModal}
-        okText="Fork"
-        title={`Fork Experiment ${experimentId}`}
-        visible={forkModalState.visible}
-        width={768}
-        onCancel={handleCancel}
-        onOk={handleOk}>
-        <MonacoEditor
-          height="80vh"
-          language="yaml"
-          options={{
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            selectOnLineNumbers: true,
-          }}
-          theme="vs-light"
-          value={forkValue}
-          onChange={editorOnChange} />
-        {forkError && <Alert className={css.error} message={forkError} type="error" />}
-      </Modal>
-      <Section title="Chart" />
+      <div className={css.topRow}>
+        <ExperimentInfoBox experiment={experiment} />
+        <Modal
+          bodyStyle={{ padding: 0 }}
+          className={css.forkModal}
+          okText="Fork"
+          title={`Fork Experiment ${experimentId}`}
+          visible={forkModalState.visible}
+          width={768}
+          onCancel={handleCancel}
+          onOk={handleOk}>
+          <MonacoEditor
+            height="80vh"
+            language="yaml"
+            options={{
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              selectOnLineNumbers: true,
+            }}
+            theme="vs-light"
+            value={forkValue}
+            onChange={editorOnChange} />
+          {forkError && <Alert className={css.error} message={forkError} type="error" />}
+        </Modal>
+        <ExperimentChart
+          startTime={experiment.startTime}
+          validationHistory={experiment.validationHistory}
+          validationMetric={experimentConfig?.searcher.metric} />
+      </div>
       <Section title="Trials">
         <Table
           columns={columns}

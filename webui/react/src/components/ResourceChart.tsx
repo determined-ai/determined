@@ -1,4 +1,4 @@
-import Plotly, { Data, Layout } from 'plotly.js-basic-dist';
+import Plotly, { Data, Layout } from 'plotly.js/lib/core';
 import React, { useMemo, useState } from 'react';
 import createPlotlyComponent from 'react-plotly.js/factory';
 
