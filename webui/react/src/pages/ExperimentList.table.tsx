@@ -1,4 +1,4 @@
-import { ColumnsType } from 'antd/lib/table';
+import { ColumnType } from 'antd/lib/table';
 import React from 'react';
 
 import {
@@ -10,17 +10,11 @@ import { ExperimentItem } from 'types';
 import { alphanumericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
 import { getDuration } from 'utils/time';
 
-export const columns: ColumnsType<ExperimentItem> = [
+export const columns: ColumnType<ExperimentItem>[] = [
   {
     dataIndex: 'id',
     sorter: (a: ExperimentItem, b: ExperimentItem): number => alphanumericSorter(a.id, b.id),
     title: 'ID',
-  },
-  {
-    dataIndex: 'name',
-    render: experimentDescriptionRenderer,
-    sorter: (a: ExperimentItem, b: ExperimentItem): number => alphanumericSorter(a.name, b.name),
-    title: 'Name',
   },
   {
     defaultSortOrder: 'descend',
