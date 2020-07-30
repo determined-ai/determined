@@ -60,6 +60,10 @@ func validate(v reflect.Value, path interface{}) []error {
 		}
 	case reflect.Struct:
 		for i := 0; i < v.NumField(); i++ {
+			if !v.Field(i).CanInterface() {
+				continue
+			}
+
 			errs = append(errs, validate(v.Field(i),
 				fmt.Sprintf("%s.%s", path, v.Type().Field(i).Name))...)
 		}
