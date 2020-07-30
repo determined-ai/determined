@@ -212,10 +212,10 @@ FROM (
                         FROM steps s
                         WHERE s.trial_id = t.id
                        ) AS num_steps,
-                       (SELECT sum(s.num_batches)
+                       (SELECT coalesce(sum(s.num_batches), 0)
                         FROM steps s
-                        WHERE s.trial_id = t.id
-                       ) AS num_batches,
+                        WHERE s.trial_id = t.id AND s.state = 'COMPLETED'
+                       ) AS total_batches_processed,
                        (SELECT v.metrics
                         FROM validations v
                         WHERE v.trial_id = t.id AND v.state = 'COMPLETED'
@@ -334,7 +334,8 @@ FROM (
                        t.warm_start_checkpoint_id,
                 (SELECT coalesce(jsonb_agg(s ORDER BY id ASC), '[]'::jsonb)
                  FROM (
-                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
+                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id, s.num_batches,
+                     s.total_batches_processed,
                      -- Drop batch_metrics field from metrics column because it
                      -- can be very large and compute average on the fly for legacy
                      -- metrics.
@@ -412,14 +413,15 @@ FROM (
                            (SELECT row_to_json(s)
                             FROM (
                                 SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
-                                       (SELECT row_to_json(v)
-                                        FROM (
-                                            SELECT v.end_time, v.id, v.metrics, v.start_time,
-                                                   v.state, v.step_id, v.trial_id
-                                            FROM validations v
-                                            WHERE v.trial_id = s.trial_id AND v.step_id = s.id
-                                        ) v
-                                       ) AS validation
+                                    s.num_batches, s.total_batches_processed,
+                                    (SELECT row_to_json(v)
+                                    FROM (
+                                        SELECT v.end_time, v.id, v.metrics, v.start_time,
+                                            v.state, v.step_id, v.trial_id
+                                        FROM validations v
+                                        WHERE v.trial_id = s.trial_id AND v.step_id = s.id
+                                    ) v
+                                    ) AS validation
                                 FROM steps s
                                 WHERE s.id = c.step_id AND s.trial_id = c.trial_id
                             ) s
@@ -504,7 +506,8 @@ FROM (
                        t.warm_start_checkpoint_id,
                 (SELECT coalesce(jsonb_agg(s ORDER BY id ASC), '[]'::jsonb)
                  FROM (
-                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
+                     SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id, s.num_batches,
+                     s.total_batches_processed,
                      (SELECT row_to_json(c)
                       FROM (
                           SELECT c.end_time, c.id, c.metadata, c.resources, c.start_time, c.state,
@@ -999,10 +1002,11 @@ WITH const AS (
                    (SELECT row_to_json(s)
                     FROM (
                         SELECT s.end_time, s.id, s.start_time, s.state, s.trial_id,
-                               (SELECT row_to_json(v)
-                                FROM (
-                                    SELECT v.end_time, v.id, v.metrics, v.start_time,
-                                           v.state, v.step_id, v.trial_id
+                            s.num_batches, s.total_batches_processed,
+                            (SELECT row_to_json(v)
+                            FROM (
+                                SELECT v.end_time, v.id, v.metrics, v.start_time,
+                                    v.state, v.step_id, v.trial_id
                                     FROM validations v
                                     WHERE v.trial_id = t.id AND v.step_id = s.id
                                 ) v
@@ -1210,6 +1214,7 @@ FROM (
            (SELECT coalesce(jsonb_agg(row_to_json(r2) ORDER BY r2.id ASC), '[]'::jsonb)
             FROM (
                 SELECT s.end_time, s.id, s.state, s.start_time, s.num_batches,
+                       s.total_batches_processed,
                        (SELECT CASE
                            WHEN s.metrics->'avg_metrics' IS NOT NULL THEN
                                (s.metrics->'avg_metrics')::json
@@ -1336,8 +1341,9 @@ func (db *PgDB) AddStep(step *model.Step) error {
 	}
 	err = db.namedExecOne(`
 INSERT INTO steps
-(trial_id, id, state, start_time, end_time, num_batches)
-VALUES (:trial_id, :id, :state, :start_time, :end_time, :num_batches)`, step)
+(trial_id, id, state, start_time, end_time, num_batches, total_batches_processed)
+VALUES (:trial_id, :id, :state, :start_time, :end_time, :num_batches, :total_batches_processed)`,
+		step)
 	if err != nil {
 		return errors.Wrapf(err, "error inserting step %v", *step)
 	}
@@ -1348,7 +1354,7 @@ VALUES (:trial_id, :id, :state, :start_time, :end_time, :num_batches)`, step)
 func (db *PgDB) StepByID(trialID, stepID int) (*model.Step, error) {
 	var step model.Step
 	if err := db.query(`
-SELECT trial_id, id, state, start_time, end_time, metrics, num_batches
+SELECT trial_id, id, state, start_time, end_time, metrics, num_batches, total_batches_processed
 FROM steps
 WHERE trial_id = $1 AND id = $2`, &step, trialID, stepID); err != nil {
 		return nil, errors.Wrapf(err, "error querying for step %v, %v", trialID, stepID)

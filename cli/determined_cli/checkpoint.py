@@ -72,11 +72,19 @@ def list(args: Namespace) -> None:
     ).json()
     searcher_metric = r["metric_name"]
 
-    headers = ["Trial ID", "Step ID", "State", "Validation Metric", "UUID", "Resources", "Size"]
+    headers = [
+        "Trial ID",
+        "# of Batches",
+        "State",
+        "Validation Metric",
+        "UUID",
+        "Resources",
+        "Size",
+    ]
     values = [
         [
             c["trial_id"],
-            c["step_id"],
+            c["step"]["total_batches_processed"] + c["step"]["num_batches"],
             c["state"],
             api.metric.get_validation_metric(searcher_metric, c["step"]["validation"]),
             c["uuid"],
