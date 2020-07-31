@@ -139,13 +139,13 @@ func (p *pod) Receive(ctx *actor.Context) error {
 		})
 
 	case actor.PostStop:
+		defer p.finalizeTaskState(ctx)
+
 		if !p.leaveKubernetesResources {
 			if err := p.deleteKubernetesResources(ctx); err != nil {
 				return err
 			}
 		}
-
-		p.finalizeTaskState(ctx)
 
 	case actor.ChildStopped:
 
@@ -311,19 +311,21 @@ func (p *pod) deleteKubernetesResources(ctx *actor.Context) error {
 	var gracePeriod int64 = 15
 	err := p.podInterface.Delete(p.podName, &metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 	if err != nil {
-		return errors.Wrapf(err, "pod deletion failed %s", p.podName)
+		ctx.Log().WithError(err).Errorf("pod deletion failed %s", p.podName)
 	}
 
 	for _, cf := range p.configMaps {
-		err = p.configMapInterface.Delete(cf.Name, &metaV1.DeleteOptions{
+		errDeletingConfigMap := p.configMapInterface.Delete(cf.Name, &metaV1.DeleteOptions{
 			GracePeriodSeconds: &gracePeriod})
-		if err != nil {
-			return errors.Wrapf(err, "config map deletion failed %s", cf.Name)
+
+		if errDeletingConfigMap != nil {
+			ctx.Log().WithError(errDeletingConfigMap).Errorf("config map deletion failed %s", cf.Name)
+			err = errDeletingConfigMap
 		}
 	}
 
 	p.resourcesDeleted = true
-	return nil
+	return err
 }
 
 func (p *pod) finalizeTaskState(ctx *actor.Context) {
