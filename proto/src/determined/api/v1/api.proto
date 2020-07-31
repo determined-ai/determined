@@ -8,11 +8,15 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/api/v1/agent.proto";
 import "determined/api/v1/auth.proto";
+import "determined/api/v1/command.proto";
 import "determined/api/v1/experiment.proto";
 import "determined/api/v1/master.proto";
 import "determined/api/v1/model.proto";
+import "determined/api/v1/notebook.proto";
 import "determined/api/v1/template.proto";
+import "determined/api/v1/tensorboard.proto";
 import "determined/api/v1/trial.proto";
+import "determined/api/v1/shell.proto";
 import "determined/api/v1/user.proto";
 
 option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
@@ -157,6 +161,70 @@ service Determined {
     rpc DeleteTemplate(DeleteTemplateRequest) returns (DeleteTemplateResponse) {
         option (google.api.http) = {delete: "/api/v1/templates/{template_name}"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Templates"};
+    }
+
+    // Get a list of notebooks.
+    rpc GetNotebooks(GetNotebooksRequest) returns (GetNotebooksResponse) {
+        option (google.api.http) = {get: "/api/v1/notebooks"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Notebooks"};
+    }
+    // Get the requested notebook.
+    rpc GetNotebook(GetNotebookRequest) returns (GetNotebookResponse) {
+        option (google.api.http) = {get: "/api/v1/notebooks/{notebook_id}"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Notebooks"};
+    }
+    // Kill the requested notebook.
+    rpc KillNotebook(KillNotebookRequest) returns (KillNotebookResponse) {
+        option (google.api.http) = {post: "/api/v1/notebooks/{notebook_id}/kill"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Notebooks"};
+    }
+
+    // Get a list of shells.
+    rpc GetShells(GetShellsRequest) returns (GetShellsResponse) {
+        option (google.api.http) = {get: "/api/v1/shells"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Shells"};
+    }
+    // Get the requested shell.
+    rpc GetShell(GetShellRequest) returns (GetShellResponse) {
+        option (google.api.http) = {get: "/api/v1/shells/{shell_id}"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Shells"};
+    }
+    // Kill the requested shell.
+    rpc KillShell(KillShellRequest) returns (KillShellResponse) {
+        option (google.api.http) = {post: "/api/v1/shells/{shell_id}/kill"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Shells"};
+    }
+
+    // Get a list of commands.
+    rpc GetCommands(GetCommandsRequest) returns (GetCommandsResponse) {
+        option (google.api.http) = {get: "/api/v1/commands"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Commands"};
+    }
+    // Get the requested command.
+    rpc GetCommand(GetCommandRequest) returns (GetCommandResponse) {
+        option (google.api.http) = {get: "/api/v1/commands/{command_id}"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Commands"};
+    }
+    // Kill the requested command.
+    rpc KillCommand(KillCommandRequest) returns (KillCommandResponse) {
+        option (google.api.http) = {post: "/api/v1/commands/{command_id}/kill"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Commands"};
+    }
+
+    // Get a list of tensorboards.
+    rpc GetTensorboards(GetTensorboardsRequest) returns (GetTensorboardsResponse) {
+        option (google.api.http) = {get: "/api/v1/tensorboards"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Tensorboards"};
+    }
+    // Get the requested tensorboard.
+    rpc GetTensorboard(GetTensorboardRequest) returns (GetTensorboardResponse) {
+        option (google.api.http) = {get: "/api/v1/tensorboards/{tensorboard_id}"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Tensorboards"};
+    }
+    // Kill the requested tensorboard.
+    rpc KillTensorboard(KillTensorboardRequest) returns (KillTensorboardResponse) {
+        option (google.api.http) = {post: "/api/v1/tensorboards/{tensorboard_id}/kill"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Tensorboards"};
     }
 
     // Get the requested model.

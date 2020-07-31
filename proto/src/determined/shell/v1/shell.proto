@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package determined.shell.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/shellv1";
+
+import "google/protobuf/timestamp.proto";
+
+import "determined/container/v1/container.proto";
+
+// Shell is an ssh server in a containerized environment.
+message Shell {
+    // The id of the shell.
+    string id = 1;
+    // The description of the shell.
+    string description = 2;
+    // The time the shell was started.
+    google.protobuf.Timestamp start_time = 4;
+    // The container running the shell.
+    determined.container.v1.Container container = 6;
+    // The private key for this shell.
+    string private_key = 7;
+    // The public key for this shell.
+    string public_key = 8;
+    // The username of the user that created the shell.
+    string username = 10;
+}

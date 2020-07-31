@@ -4,6 +4,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/proto/pkg/containerv1"
+	"github.com/determined-ai/determined/proto/pkg/devicev1"
 )
 
 // Container tracks a container running in the cluster.
@@ -35,4 +37,21 @@ func (c Container) GPUDeviceUUIDs() []string {
 		}
 	}
 	return uuids
+}
+
+// Proto returns the proto representation of the container.
+func (c *Container) Proto() *containerv1.Container {
+	if c == nil {
+		return nil
+	}
+	var devices []*devicev1.Device
+	for _, d := range c.Devices {
+		devices = append(devices, d.Proto())
+	}
+	return &containerv1.Container{
+		Parent:  c.Parent.String(),
+		Id:      c.ID.String(),
+		State:   c.State.Proto(),
+		Devices: devices,
+	}
 }

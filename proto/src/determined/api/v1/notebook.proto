@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "google/protobuf/struct.proto";
+
+import "determined/api/v1/pagination.proto";
+import "determined/notebook/v1/notebook.proto";
+
+// Get a list of notebooks.
+message GetNotebooksRequest {
+    // Sorts notebooks by the given field.
+    enum SortBy {
+        // Returns notebooks in an unsorted list.
+        SORT_BY_UNSPECIFIED = 0;
+        // Returns notebooks sorted by id.
+        SORT_BY_ID = 1;
+        // Returns notebooks sorted by description.
+        SORT_BY_DESCRIPTION = 2;
+        // Return notebooks sorted by start time.
+        SORT_BY_START_TIME = 4;
+
+    }
+    // Sort notebooks by the given field
+    SortBy sort_by = 1;
+    // Order notebooks in either ascending or descending order.
+    OrderBy order_by = 2;
+    // Skip the number of notebooks before returning results. Negative values
+    // denote number of notebooks to skip from the end before returning results.
+    int32 offset = 3;
+    // Limit the number of notebooks. A value of 0 denotes no limit.
+    int32 limit = 4;
+    // Limit notebooks to those that are owned by the specified users.
+    repeated string users = 8;
+}
+// Response to GetNotebooksRequest.
+message GetNotebooksResponse {
+    // The list of returned notebooks.
+    repeated determined.notebook.v1.Notebook notebooks = 1;
+    // Pagination information of the full dataset.
+    Pagination pagination = 2;
+}
+
+// Get the requested notebook.
+message GetNotebookRequest {
+    // The id of the notebook.
+    string notebook_id = 1;
+}
+// Response to GetNotebookRequest.
+message GetNotebookResponse {
+    // The requested notebook.
+    determined.notebook.v1.Notebook notebook = 1;
+    // The notebook config.
+    google.protobuf.Struct config = 2;
+}
+
+// Kill the requested notebook.
+message KillNotebookRequest {
+    // The id of the notebook.
+    string notebook_id = 1;
+}
+// Response to KillNotebookRequest.
+message KillNotebookResponse {
+    // The requested notebook.
+    determined.notebook.v1.Notebook notebook = 1;
+}
