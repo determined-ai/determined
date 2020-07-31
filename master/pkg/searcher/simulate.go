@@ -6,6 +6,7 @@ import (
 	"io"
 	"math/rand"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -31,28 +32,27 @@ func (s SimulationResults) MarshalJSON() ([]byte, error) {
 	summary := make(map[string]int)
 
 	for _, ops := range s {
-		key := ""
+		var keyParts []string
 		for _, op := range ops {
 			switch op := op.(type) {
 			case Train:
 				switch op.Length.Unit {
 				case model.Records:
-					key += fmt.Sprintf("%dR", op.Length.Units)
+					keyParts = append(keyParts, fmt.Sprintf("%dR", op.Length.Units))
 				case model.Batches:
-					key += fmt.Sprintf("%dB", op.Length.Units)
+					keyParts = append(keyParts, fmt.Sprintf("%dB", op.Length.Units))
 				case model.Epochs:
-					key += fmt.Sprintf("%dE", op.Length.Units)
+					keyParts = append(keyParts, fmt.Sprintf("%dE", op.Length.Units))
 				}
 			case Validate:
-				key += "V"
+				keyParts = append(keyParts, "V")
 			case Checkpoint:
-				key += "C"
+				keyParts = append(keyParts, "C")
 			default:
 				return nil, errors.Errorf("unexpected operation: %v", op)
 			}
-			key += " "
 		}
-		summary[key]++
+		summary[strings.Join(keyParts, " ")]++
 	}
 
 	return json.Marshal(summary)

@@ -10,12 +10,13 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-	"github.com/pkg/errors"
 )
 
 func (a *apiServer) GetExperiments(
