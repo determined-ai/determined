@@ -1,5 +1,5 @@
 import abc
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable, List, Sequence, Tuple
 
 import numpy as np
 import tensorflow as tf
@@ -117,38 +117,107 @@ class _SimpleMetricReducer(MetricReducer):
         return self.reduce_fn(flat_metrics)
 
 
-def _distributed_metric(
-    context: estimator.EstimatorExperimentalContext,
-    metric: Any,
-    reducer: MetricReducer,
-    numpy_dtype: Any,
-) -> Tuple[tf.Operation, tf.Operation]:
+def _deconstruct_metric(metric: Any) -> Tuple[Sequence, Any]:
     """
-    _distributed_metric returns a tf.metrics-style tuple of (value_op, update_op).  The value_op is
-    apparently read once after all evaluation is completed, which is where we do the allgather and
-    call the user's cross_slot_reduce to calculate the distributed metric.
+    Break down lists and dictionaries into a list of tensors that can each be passed through the
+    graph as individual inputs to a tf.compat.v1.py_func. A py_func can take arbitrary numbers of
+    inputs, but if you try to pass many inputs as e.g. a single dictionary, it will attempt to
+    convert that dictionary to a single tensor, and that will fail.
     """
-    if isinstance(numpy_dtype, tf.dtypes.DType):
-        raise TypeError(f"numpy_dtype parameter must not be a TensorFlow dtype: {numpy_dtype}")
-    np_dtype = np.dtype(numpy_dtype)
-    tf_dtype = tf.compat.v1.as_dtype(numpy_dtype)
+    if isinstance(metric, (tf.Tensor, tf.Operation)):
+        return [metric], (tf.Tensor, None)
 
-    last_accumulate = None  # type: Any
+    if isinstance(metric, (list, tuple)):
+        for m in metric:
+            if not isinstance(m, (tf.Tensor, tf.Operation)):
+                raise TypeError(
+                    "list-type metric parameters must be a flat list of tf.Tensors but found "
+                    f"element of type {type(m)}"
+                )
+        return metric, (list, None)
 
-    def py_update(metric: Any) -> None:
-        nonlocal last_accumulate
-        last_accumulate = reducer.accumulate(metric)
+    if isinstance(metric, dict):
+        for k, v in metric.items():
+            if not isinstance(k, str):
+                raise TypeError(
+                    "dict-type metric parameters must be a flat list mapping strings to "
+                    f"tf.Tensors but found key of type {type(k)}"
+                )
+            if not isinstance(v, (tf.Tensor, tf.Operation)):
+                raise TypeError(
+                    "dict-type metric parameters must be a flat list mapping strings to "
+                    f"tf.Tensors but found value of type {type(v)}"
+                )
+        keys, args = zip(*metric.items())
+        return args, (dict, keys)
 
-    update_op = tf.compat.v1.py_func(py_update, [metric], [])
+    else:
+        # Try to convert the arbitrary input to a constant Tensor.
+        try:
+            const_metric = tf.compat.v1.constant(metric)
+        except TypeError:
+            raise TypeError(
+                "metric parameter must be a tf.Tensor, a list of tf.Tensors, "
+                f"or a dict mapping strings to tf.Tensors, not {type(metric)}"
+            )
+        return const_metric, (tf.Tensor, None)
 
-    def py_value() -> Any:
-        allgathered = context.allgather_metrics(last_accumulate)
-        value = reducer.cross_slot_reduce(allgathered)
-        return np.array(value).astype(np_dtype)
 
-    def build_value_op() -> tf.Operation:
-        return tf.compat.v1.py_func(py_value, [], tf_dtype)
+def _reconstruct_metric(args: Sequence, reconstruct_info: Any) -> Any:
+    """Reconstruct lists or dictionaries after passing them through the graph."""
+    metric_type, update_keys = reconstruct_info
+    if metric_type == tf.Tensor:
+        return args[0]
+    if metric_type == list:
+        return args
+    if metric_type == dict:
+        return {k: v for k, v in zip(update_keys, args)}
+    raise AssertionError(f"invalid metric_type: {metric_type}")
 
-    value_op = context._build_allgather_op(build_value_op)
 
-    return value_op, update_op
+class _DistributedMetricMaker:
+    """
+    _DistributedMetricMaker.make_metric() returns a tf.metrics-style tuple of (value_op, update_op).
+    The value_op is read once after all evaluation is completed, which is where we do the allgather
+    and call the user's cross_slot_reduce to calculate the distributed metric.
+    """
+
+    def __init__(
+        self,
+        context: estimator.EstimatorExperimentalContext,
+        metric: Any,
+        reducer: MetricReducer,
+        numpy_dtype: Any,
+    ) -> None:
+        self.context = context
+        self.reducer = reducer
+
+        # Determine how we are going to pass the metric parameter through the graph, so we can
+        # reconstruct it for the user inside of a py_func.
+        self.update_args, self.reconstruct_info = _deconstruct_metric(metric)
+        self.np_dtype = np.dtype(numpy_dtype)
+        self.tf_dtype = tf.compat.v1.as_dtype(numpy_dtype)
+
+        self.last_accumulate = None
+
+    def _update(self, *args: List) -> None:
+        # Reconstruct the format of the input that the user gave us.
+        metric = _reconstruct_metric(args, self.reconstruct_info)
+        self.last_accumulate = self.reducer.accumulate(metric)
+
+    def _update_op(self) -> tf.Operation:
+        return tf.compat.v1.py_func(self._update, self.update_args, [])
+
+    def _value(self) -> Any:
+        allgathered = self.context.allgather_metrics(self.last_accumulate)
+        value = self.reducer.cross_slot_reduce(allgathered)
+        return np.array(value).astype(self.np_dtype)
+
+    def _value_op(self) -> tf.Operation:
+        return tf.compat.v1.py_func(self._value, [], self.tf_dtype)
+
+    def make_metric(self) -> Tuple[tf.Operation, tf.Operation]:
+        value_op = self.context._build_allgather_op(self._value_op)
+        update_op = self._update_op()
+
+        return value_op, update_op
