@@ -256,7 +256,7 @@ class LoopTrialController(TrialController):
         super().__init__(*args, **kwargs)  # type: ignore
 
         self.batch_size = self.context.get_per_slot_batch_size()
-        self.batches_per_step = self.env.experiment_config.batches_per_step()
+        self.scheduling_unit = self.env.experiment_config.scheduling_unit()
 
         logging.debug("Starting LoopTrialController initialization.")
 

@@ -49,7 +49,7 @@ def xor_trial_controller(request):
         def _xor_trial_controller(
             hparams: Dict[str, Any],
             workloads: workload.Stream,
-            batches_per_step: int = 1,
+            scheduling_unit: int = 1,
             load_path: Optional[str] = None,
             trial_seed: int = 0,
         ) -> det.TrialController:
@@ -57,7 +57,7 @@ def xor_trial_controller(request):
                 command=request.param,
                 hparams=hparams,
                 workloads=workloads,
-                batches_per_step=batches_per_step,
+                scheduling_unit=scheduling_unit,
                 load_path=load_path,
                 trial_seed=trial_seed,
             )
@@ -68,7 +68,7 @@ def xor_trial_controller(request):
         def _xor_trial_controller(
             hparams: Dict[str, Any],
             workloads: workload.Stream,
-            batches_per_step: int = 1,
+            scheduling_unit: int = 1,
             load_path: Optional[str] = None,
             trial_seed: int = 0,
         ) -> det.TrialController:
@@ -76,7 +76,7 @@ def xor_trial_controller(request):
                 request.param,
                 hparams,
                 workloads,
-                batches_per_step=batches_per_step,
+                scheduling_unit=scheduling_unit,
                 load_path=load_path,
                 trial_seed=trial_seed,
             )
@@ -192,7 +192,7 @@ class TestKerasTrial:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
 
-            yield from trainer.send(steps=10, validation_freq=1, batches_per_step=100)
+            yield from trainer.send(steps=10, validation_freq=1, scheduling_unit=100)
             training_metrics, validation_metrics = trainer.result()
 
             # We expect the validation error and training loss to be
@@ -211,7 +211,7 @@ class TestKerasTrial:
             yield workload.terminate_workload(), [], workload.ignore_workload_response
 
         controller = xor_trial_controller(
-            self.hparams, make_workloads(), batches_per_step=100, trial_seed=self.trial_seed
+            self.hparams, make_workloads(), scheduling_unit=100, trial_seed=self.trial_seed
         )
         controller.run()
 
@@ -265,7 +265,7 @@ class TestKerasTrial:
             return xor_trial_controller(
                 self.hparams,
                 workloads,
-                batches_per_step=100,
+                scheduling_unit=100,
                 load_path=load_path,
                 trial_seed=self.trial_seed,
             )
@@ -275,17 +275,17 @@ class TestKerasTrial:
     def test_reproducibility(self, xor_trial_controller: Callable) -> None:
         def controller_fn(workloads: workload.Stream) -> det.TrialController:
             return xor_trial_controller(
-                self.hparams, workloads, batches_per_step=100, trial_seed=self.trial_seed
+                self.hparams, workloads, scheduling_unit=100, trial_seed=self.trial_seed
             )
 
         utils.reproducibility_test(
-            controller_fn=controller_fn, steps=3, validation_freq=1, batches_per_step=100
+            controller_fn=controller_fn, steps=3, validation_freq=1, scheduling_unit=100
         )
 
     def test_early_stopping(self) -> None:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate(request_stop_step_id=1)
-            yield from trainer.send(steps=100, validation_freq=2, batches_per_step=5)
+            yield from trainer.send(steps=100, validation_freq=2, scheduling_unit=5)
             tm, vm = trainer.result()
             yield workload.terminate_workload(), [], workload.ignore_workload_response
 
@@ -293,7 +293,7 @@ class TestKerasTrial:
         hparams["stop_early"] = True
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            tf_keras_xor_model.XORTrial, hparams, make_workloads(), batches_per_step=5,
+            tf_keras_xor_model.XORTrial, hparams, make_workloads(), scheduling_unit=5,
         )
         controller.run()
 

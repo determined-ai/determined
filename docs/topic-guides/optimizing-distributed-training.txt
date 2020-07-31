@@ -100,7 +100,7 @@ optimizations are available in :ref:`experiment-configuration` under ``optimizat
 * ``optimizations.average_training_metrics`` averages the training metrics across
   GPUs at the end of every training workload, which requires communication. This will
   typically not have a major impact on training performance, but if you have a very small
-  ``batches_per_step``, ensuring it is disabled may improve performance. If this
+  ``scheduling_unit``, ensuring it is disabled may improve performance. If this
   option is disabled (which is the default behavior), only the training metrics from
   the chief GPU are used. This impacts shown in the Determined UI and TensorBoard,
   but does not influence model behavior or hyperparameter search.

@@ -17,7 +17,7 @@ def get_dummy_env() -> det.EnvContext:
             determined_common.types.ExperimentID(1),
             determined_common.types.TrialID(1),
             determined_common.types.StepID(1),
-            constants.DEFAULT_BATCHES_PER_STEP,
+            constants.DEFAULT_SCHEDULING_UNIT,
             0,
         ),
         latest_checkpoint=None,

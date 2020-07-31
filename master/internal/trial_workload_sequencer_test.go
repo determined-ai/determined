@@ -46,7 +46,7 @@ checkpoint_policy: none
 	}, model.TrialWorkloadSequencerType)
 
 	// Sequencer input/output messages.
-	batchesPerStep := model.DefaultExperimentConfig().BatchesPerStep
+	schedulingUnit := model.DefaultExperimentConfig().SchedulingUnit
 	train := searcher.NewTrain(create.RequestID, model.NewLength(model.Batches, 500))
 	validate := searcher.NewValidate(create.RequestID)
 	checkpoint := searcher.NewCheckpoint(create.RequestID)
@@ -57,7 +57,7 @@ checkpoint_policy: none
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                1,
-		NumBatches:            batchesPerStep,
+		NumBatches:            schedulingUnit,
 		TotalBatchesProcessed: 0,
 	}
 	trainWorkload2 := searcher.Workload{
@@ -65,81 +65,81 @@ checkpoint_policy: none
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                2,
-		NumBatches:            batchesPerStep,
-		TotalBatchesProcessed: batchesPerStep,
+		NumBatches:            schedulingUnit,
+		TotalBatchesProcessed: schedulingUnit,
 	}
 	trainWorkload3 := searcher.Workload{
 		Kind:                  searcher.RunStep,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                3,
-		NumBatches:            batchesPerStep,
-		TotalBatchesProcessed: 2 * batchesPerStep,
+		NumBatches:            schedulingUnit,
+		TotalBatchesProcessed: 2 * schedulingUnit,
 	}
 	trainWorkload4 := searcher.Workload{
 		Kind:                  searcher.RunStep,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                4,
-		NumBatches:            batchesPerStep,
-		TotalBatchesProcessed: 3 * batchesPerStep,
+		NumBatches:            schedulingUnit,
+		TotalBatchesProcessed: 3 * schedulingUnit,
 	}
 	trainWorkload5 := searcher.Workload{
 		Kind:                  searcher.RunStep,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                5,
-		NumBatches:            batchesPerStep,
-		TotalBatchesProcessed: 4 * batchesPerStep,
+		NumBatches:            schedulingUnit,
+		TotalBatchesProcessed: 4 * schedulingUnit,
 	}
 	checkpointWorkload1 := searcher.Workload{
 		Kind:                  searcher.CheckpointModel,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                1,
-		TotalBatchesProcessed: batchesPerStep,
+		TotalBatchesProcessed: schedulingUnit,
 	}
 	checkpointWorkload2 := searcher.Workload{
 		Kind:                  searcher.CheckpointModel,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                2,
-		TotalBatchesProcessed: batchesPerStep * 2,
+		TotalBatchesProcessed: schedulingUnit * 2,
 	}
 	checkpointWorkload4 := searcher.Workload{
 		Kind:                  searcher.CheckpointModel,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                4,
-		TotalBatchesProcessed: batchesPerStep * 4,
+		TotalBatchesProcessed: schedulingUnit * 4,
 	}
 	checkpointWorkload5 := searcher.Workload{
 		Kind:                  searcher.CheckpointModel,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                5,
-		TotalBatchesProcessed: batchesPerStep * 5,
+		TotalBatchesProcessed: schedulingUnit * 5,
 	}
 	validationWorkload2 := searcher.Workload{
 		Kind:                  searcher.ComputeValidationMetrics,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                2,
-		TotalBatchesProcessed: batchesPerStep * 2,
+		TotalBatchesProcessed: schedulingUnit * 2,
 	}
 	validationWorkload4 := searcher.Workload{
 		Kind:                  searcher.ComputeValidationMetrics,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                4,
-		TotalBatchesProcessed: batchesPerStep * 4,
+		TotalBatchesProcessed: schedulingUnit * 4,
 	}
 	validationWorkload5 := searcher.Workload{
 		Kind:                  searcher.ComputeValidationMetrics,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                5,
-		TotalBatchesProcessed: batchesPerStep * 5,
+		TotalBatchesProcessed: schedulingUnit * 5,
 	}
 
 	s := newTrialWorkloadSequencer(experiment, create, nil)

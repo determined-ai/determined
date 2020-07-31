@@ -41,7 +41,7 @@ func ReportExperimentCreated(system *actor.System, e model.Experiment) {
 		"resources":        e.Config.Resources,
 		"image":            e.Config.Environment.Image,
 		"num_hparams":      len(e.Config.Hyperparameters),
-		"batches_per_step": e.Config.BatchesPerStep,
+		"batches_per_step": e.Config.SchedulingUnit,
 	})
 }
 

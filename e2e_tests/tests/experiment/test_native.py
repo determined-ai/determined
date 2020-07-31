@@ -43,7 +43,7 @@ class NativeImplementations:
             conf.official_examples_path("native/native_mnist_estimator/native_impl.py"),
         ],
         configuration={
-            "batches_per_step": 4,
+            "scheduling_unit": 4,
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
             "searcher": {"name": "single", "max_length": {"batches": 4}, "metric": "accuracy"},
             "max_restarts": 0,
@@ -59,7 +59,7 @@ class NativeImplementations:
             conf.official_examples_path("native/native_mnist_estimator/trial_impl.py"),
         ],
         configuration={
-            "batches_per_step": 4,
+            "scheduling_unit": 4,
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
             "searcher": {"name": "single", "max_length": {"batches": 4}, "metric": "accuracy"},
             "max_restarts": 0,
@@ -77,7 +77,7 @@ class NativeImplementations:
             "--use-fit",
         ],
         configuration={
-            "batches_per_step": 4,
+            "scheduling_unit": 4,
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
             "searcher": {"name": "single", "max_length": {"batches": 4}, "metric": "val_accuracy"},
             "max_restarts": 2,
@@ -94,7 +94,7 @@ class NativeImplementations:
             conf.official_examples_path("native/native_fashion_mnist_tf_keras/native_impl.py"),
         ],
         configuration={
-            "batches_per_step": 4,
+            "scheduling_unit": 4,
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
             "searcher": {"name": "single", "max_length": {"batches": 4}, "metric": "val_accuracy"},
             "max_restarts": 2,
@@ -110,7 +110,7 @@ class NativeImplementations:
             conf.official_examples_path("native/native_fashion_mnist_tf_keras/trial_impl.py"),
         ],
         configuration={
-            "batches_per_step": 4,
+            "scheduling_unit": 4,
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
             "searcher": {"name": "single", "max_length": {"batches": 4}, "metric": "val_accuracy"},
             "max_restarts": 2,

@@ -31,7 +31,7 @@ class TrainAndValidate:
         self.request_stop_step_id = request_stop_step_id
 
     def send(
-        self, steps: int, validation_freq: int, initial_step_id: int = 1, batches_per_step: int = 1
+        self, steps: int, validation_freq: int, initial_step_id: int = 1, scheduling_unit: int = 1
     ) -> workload.Stream:
         self._training_metrics = []
         self._validation_metrics = []
@@ -43,16 +43,16 @@ class TrainAndValidate:
             yield from interceptor.send(
                 workload.train_workload(
                     step_id,
-                    num_batches=batches_per_step,
+                    num_batches=scheduling_unit,
                     total_batches_processed=total_batches_processed,
                 ),
                 [],
             )
             metrics = interceptor.metrics_result()
             batch_metrics = metrics["metrics"]["batch_metrics"]
-            assert len(batch_metrics) == batches_per_step
+            assert len(batch_metrics) == scheduling_unit
             self._training_metrics.extend(batch_metrics)
-            total_batches_processed += batches_per_step
+            total_batches_processed += scheduling_unit
             if metrics["stop_requested"]:
                 assert step_id == self.request_stop_step_id
                 stop_requested = True
@@ -83,9 +83,9 @@ class TrainAndValidate:
         return self._training_metrics, self._validation_metrics
 
 
-def make_default_exp_config(hparams: Dict[str, Any], batches_per_step: int) -> Dict:
+def make_default_exp_config(hparams: Dict[str, Any], scheduling_unit: int) -> Dict:
     return {
-        "batches_per_step": batches_per_step,
+        "scheduling_unit": scheduling_unit,
         "resources": {"native_parallel": False, "slots_per_trial": 1},
         "hyperparameters": hparams,
         "optimizations": {
@@ -116,7 +116,7 @@ def make_default_env_context(
             ExperimentID(1),
             TrialID(1),
             StepID(1),
-            det.ExperimentConfig(experiment_config).batches_per_step(),
+            det.ExperimentConfig(experiment_config).scheduling_unit(),
             0,
         ),
         master_addr="",
@@ -239,13 +239,13 @@ def make_trial_controller_from_trial_implementation(
     trial_class: Type[det.Trial],
     hparams: Dict,
     workloads: workload.Stream,
-    batches_per_step: int = 1,
+    scheduling_unit: int = 1,
     load_path: Optional[pathlib.Path] = None,
     trial_seed: int = 0,
     exp_config: Optional[Dict] = None,
 ) -> det.TrialController:
     if not exp_config:
-        exp_config = make_default_exp_config(hparams, batches_per_step)
+        exp_config = make_default_exp_config(hparams, scheduling_unit)
     env = make_default_env_context(
         hparams=hparams, experiment_config=exp_config, trial_seed=trial_seed
     )
@@ -270,14 +270,14 @@ def make_trial_controller_from_native_implementation(
     command: List[str],
     hparams: Dict,
     workloads: workload.Stream,
-    batches_per_step: int,
+    scheduling_unit: int,
     load_path: Optional[pathlib.Path] = None,
     trial_seed: int = 0,
     exp_config: Optional[Dict] = None,
 ) -> det.TrialController:
     # TODO(shiyuan): change the way to determine whether the code runs inside trial container.
     if not exp_config:
-        exp_config = make_default_exp_config(hparams, batches_per_step)
+        exp_config = make_default_exp_config(hparams, scheduling_unit)
     exp_config["internal"] = {"native": {"command": command}}
 
     env = make_default_env_context(
@@ -306,7 +306,7 @@ def reproducibility_test(
     steps: int,
     validation_freq: int,
     seed: int = 123,
-    batches_per_step: int = 1,
+    scheduling_unit: int = 1,
 ) -> Tuple[
     Tuple[Sequence[Dict[str, Any]], Sequence[Dict[str, Any]]],
     Tuple[Sequence[Dict[str, Any]], Sequence[Dict[str, Any]]],
@@ -320,7 +320,7 @@ def reproducibility_test(
 
         trainer = TrainAndValidate()
 
-        yield from trainer.send(steps, validation_freq, batches_per_step=batches_per_step)
+        yield from trainer.send(steps, validation_freq, scheduling_unit=scheduling_unit)
         tm, vm = trainer.result()
 
         training_metrics[tag] = tm
@@ -382,7 +382,7 @@ def checkpointing_and_restoring_test(
     ) -> workload.Stream:
         trainer = TrainAndValidate()
 
-        yield from trainer.send(steps, validation_freq=1, batches_per_step=100)
+        yield from trainer.send(steps, validation_freq=1, scheduling_unit=100)
         tm, vm = trainer.result()
         training_metrics[tag] += tm
         validation_metrics[tag] += vm

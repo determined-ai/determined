@@ -34,14 +34,14 @@ def xor_trial_controller(request):
         def _xor_trial_controller(
             hparams: Dict[str, Any],
             workloads: workload.Stream,
-            batches_per_step: int = 1,
+            scheduling_unit: int = 1,
             load_path: Optional[str] = None,
         ) -> det.TrialController:
             return utils.make_trial_controller_from_native_implementation(
                 command=request.param,
                 hparams=hparams,
                 workloads=workloads,
-                batches_per_step=batches_per_step,
+                scheduling_unit=scheduling_unit,
                 load_path=load_path,
                 trial_seed=325,
             )
@@ -52,7 +52,7 @@ def xor_trial_controller(request):
         def _xor_trial_controller(
             hparams: Dict[str, Any],
             workloads: workload.Stream,
-            batches_per_step: int = 1,
+            scheduling_unit: int = 1,
             load_path: Optional[str] = None,
             exp_config: Optional[Dict] = None,
         ) -> det.TrialController:
@@ -60,7 +60,7 @@ def xor_trial_controller(request):
                 trial_class=request.param,
                 hparams=hparams,
                 workloads=workloads,
-                batches_per_step=batches_per_step,
+                scheduling_unit=scheduling_unit,
                 load_path=load_path,
                 exp_config=exp_config,
                 trial_seed=325,
@@ -89,7 +89,7 @@ class TestXORTrial:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
 
-            yield from trainer.send(steps=10, validation_freq=5, batches_per_step=1000)
+            yield from trainer.send(steps=10, validation_freq=5, scheduling_unit=1000)
             training_metrics, validation_metrics = trainer.result()
 
             # We expect the training loss to be monotonically decreasing and the
@@ -105,15 +105,15 @@ class TestXORTrial:
 
             yield workload.terminate_workload(), [], workload.ignore_workload_response
 
-        controller = xor_trial_controller(self.hparams, make_workloads(), batches_per_step=1000)
+        controller = xor_trial_controller(self.hparams, make_workloads(), scheduling_unit=1000)
         controller.run()
 
     def test_reproducibility(self, xor_trial_controller: Callable) -> None:
         def controller_fn(workloads: workload.Stream) -> det.TrialController:
-            return xor_trial_controller(self.hparams, workloads, batches_per_step=100)
+            return xor_trial_controller(self.hparams, workloads, scheduling_unit=100)
 
         utils.reproducibility_test(
-            controller_fn=controller_fn, steps=3, validation_freq=1, batches_per_step=100
+            controller_fn=controller_fn, steps=3, validation_freq=1, scheduling_unit=100
         )
 
     def test_checkpointing(self, tmp_path: Path, xor_trial_controller: Callable) -> None:
@@ -125,7 +125,7 @@ class TestXORTrial:
 
             trainer = utils.TrainAndValidate()
 
-            yield from trainer.send(steps=1, validation_freq=1, batches_per_step=10)
+            yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=10)
             training_metrics, validation_metrics = trainer.result()
             old_loss = validation_metrics[-1]["loss"]
 
@@ -135,7 +135,7 @@ class TestXORTrial:
 
             yield workload.terminate_workload(), [], workload.ignore_workload_response
 
-        controller = xor_trial_controller(self.hparams, make_workloads_1(), batches_per_step=10)
+        controller = xor_trial_controller(self.hparams, make_workloads_1(), scheduling_unit=10)
         controller.run()
 
         # Restore the checkpoint on a new trial instance and recompute
@@ -153,7 +153,7 @@ class TestXORTrial:
             yield workload.terminate_workload(), [], workload.ignore_workload_response
 
         controller = xor_trial_controller(
-            self.hparams, make_workloads_2(), batches_per_step=10, load_path=checkpoint_dir
+            self.hparams, make_workloads_2(), scheduling_unit=10, load_path=checkpoint_dir
         )
         controller.run()
 
@@ -164,13 +164,13 @@ class TestXORTrial:
 
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
-            yield from trainer.send(steps=1, validation_freq=1, batches_per_step=10)
+            yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=10)
             yield workload.checkpoint_workload(), [
                 checkpoint_dir
             ], workload.ignore_workload_response
             yield workload.terminate_workload(), [], workload.ignore_workload_response
 
-        controller = xor_trial_controller(self.hparams, make_workloads(), batches_per_step=10)
+        controller = xor_trial_controller(self.hparams, make_workloads(), scheduling_unit=10)
         controller.run()
 
         def load_saved_model(path: str) -> None:
@@ -200,7 +200,7 @@ class TestXORTrial:
 
     def test_hooks(self) -> None:
         with tempfile.TemporaryDirectory() as temp_directory:
-            batches_per_step = 5
+            scheduling_unit = 5
             steps = 10
             validation_freq = 5
 
@@ -208,7 +208,7 @@ class TestXORTrial:
                 trainer = utils.TrainAndValidate()
 
                 yield from trainer.send(
-                    steps=steps, validation_freq=validation_freq, batches_per_step=batches_per_step
+                    steps=steps, validation_freq=validation_freq, scheduling_unit=scheduling_unit
                 )
                 yield workload.terminate_workload(), [], workload.ignore_workload_response
 
@@ -220,12 +220,12 @@ class TestXORTrial:
                 trial_class=estimator_xor_model.XORTrialWithHooks,
                 hparams=hparams,
                 workloads=make_workloads(),
-                batches_per_step=batches_per_step,
+                scheduling_unit=scheduling_unit,
             )
             controller.run()
 
             with open(hparams["training_log_path"], "r") as fp:
-                assert int(fp.readline()) == batches_per_step * steps
+                assert int(fp.readline()) == scheduling_unit * steps
 
             with open(hparams["val_log_path"], "r") as fp:
                 assert int(fp.readline()) == steps / validation_freq
@@ -234,7 +234,7 @@ class TestXORTrial:
         def make_workloads(checkpoint_dir: pathlib.Path) -> workload.Stream:
             trainer = utils.TrainAndValidate()
 
-            yield from trainer.send(steps=10, validation_freq=5, batches_per_step=5)
+            yield from trainer.send(steps=10, validation_freq=5, scheduling_unit=5)
             yield workload.checkpoint_workload(), [
                 checkpoint_dir
             ], workload.ignore_workload_response
@@ -249,7 +249,7 @@ class TestXORTrial:
             trial_class=estimator_xor_model.XORTrialWithCustomHook,
             hparams=self.hparams,
             workloads=make_workloads(checkpoint_dir=checkpoint_dir1),
-            batches_per_step=5,
+            scheduling_unit=5,
         )
         controller.run()
         verify_callback(checkpoint_dir=checkpoint_dir1, checkpoint_num=1)
@@ -259,7 +259,7 @@ class TestXORTrial:
             trial_class=estimator_xor_model.XORTrialWithCustomHook,
             hparams=self.hparams,
             workloads=make_workloads(checkpoint_dir=checkpoint_dir2),
-            batches_per_step=5,
+            scheduling_unit=5,
             load_path=checkpoint_dir1,
         )
         controller.run()
@@ -271,7 +271,7 @@ class TestXORTrial:
             def make_workloads() -> workload.Stream:
                 trainer = utils.TrainAndValidate()
 
-                yield from trainer.send(steps=2, validation_freq=2, batches_per_step=5)
+                yield from trainer.send(steps=2, validation_freq=2, scheduling_unit=5)
                 yield workload.terminate_workload(), [], workload.ignore_workload_response
 
             hparams = self.hparams.copy()
@@ -281,7 +281,7 @@ class TestXORTrial:
                 trial_class=estimator_xor_model.XORTrialEndOfTrainingHook,
                 hparams=hparams,
                 workloads=make_workloads(),
-                batches_per_step=5,
+                scheduling_unit=5,
             )
             controller.run()
 
@@ -292,7 +292,7 @@ class TestXORTrial:
     def test_early_stopping(self, stop_early: str, request_stop_step_id: int) -> None:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate(request_stop_step_id=request_stop_step_id)
-            yield from trainer.send(steps=2, validation_freq=2, batches_per_step=5)
+            yield from trainer.send(steps=2, validation_freq=2, scheduling_unit=5)
             tm, vm = trainer.result()
             yield workload.terminate_workload(), [], workload.ignore_workload_response
 
@@ -302,7 +302,7 @@ class TestXORTrial:
             trial_class=estimator_xor_model.XORTrial,
             hparams=hparams,
             workloads=make_workloads(),
-            batches_per_step=5,
+            scheduling_unit=5,
         )
         controller.run()
 
@@ -325,7 +325,7 @@ class TestLinearTrial:
             trainer = utils.TrainAndValidate()
 
             # Test >1 validation to ensure that resetting the allgather_op list is working.
-            yield from trainer.send(steps=2, validation_freq=1, batches_per_step=1)
+            yield from trainer.send(steps=2, validation_freq=1, scheduling_unit=1)
             training_metrics, validation_metrics = trainer.result()
 
             for metrics in validation_metrics:
