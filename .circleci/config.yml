@@ -389,18 +389,20 @@ commands:
         type: string
       det-version:
         type: string
-      cluster-version:
+      gke-version:
         type: string
       machine-type:
         type: string
       num-machines:
         type: integer
-        default: 1
       gpu-type:
         type: string
       gpus-per-machine:
         type: integer
-        default: 1
+      region:
+        type: string
+      node-locations:
+        type: string
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
@@ -409,12 +411,12 @@ commands:
           perform-login: true
           install-kubectl: true
           additional-args: |
-            --cluster-version=<<parameters.cluster-version>> \
+            --cluster-version=<<parameters.gke-version>> \
             --machine-type=<<parameters.machine-type>> \
             --num-nodes=<<parameters.num-machines>> \
             --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> \
-            --region=us-west1 \
-            --node-locations=us-west1-b \
+            --region=<<parameters.region>> \
+            --node-locations=<<parameters.node-locations>> \
             --scopes=storage-rw \
             --image-type=UBUNTU
       - kubernetes/create-or-update-resource:
@@ -1066,7 +1068,7 @@ jobs:
       parallelism:
         type: integer
         default: 1
-      cluster-version:
+      gke-version:
         type: string
         default: "1.16.12-gke.3"
       machine-type:
@@ -1081,6 +1083,12 @@ jobs:
       gpus-per-machine:
         type: integer
         default: 1
+      region:
+        type: string
+        default: "us-west1"
+      node-locations:
+        type: string
+        default: "us-west1-b"
       slack-mentions:
         type: string
         default: ""
@@ -1102,11 +1110,13 @@ jobs:
       - setup-gke-cluster:
           cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
           det-version: ${CIRCLE_SHA1}
-          cluster-version: <<parameters.cluster-version>>
+          gke-version: <<parameters.gke-version>>
           machine-type: <<parameters.machine-type>>
           num-machines: <<parameters.num-machines>>
           gpu-type: <<parameters.gpu-type>>
           gpus-per-machine: <<parameters.gpus-per-machine>>
+          region: <<parameters.region>>
+          node-locations: <<parameters.node-locations>>
       - set-google-application-credentials
       - run-e2e-tests:
           mark: <<parameters.mark>>
