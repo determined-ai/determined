@@ -15,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+	"github.com/pkg/errors"
 )
 
 func (a *apiServer) GetExperiments(
@@ -76,58 +77,58 @@ func (a *apiServer) PreviewHPSearch(
 	}
 	protoSim := &experimentv1.ExperimentSimulation{Seed: req.Seed}
 	indexes := make(map[string]int)
-	toProto := func(op searcher.Runnable) experimentv1.RunnableOperation {
+	toProto := func(op searcher.Runnable) (experimentv1.RunnableOperation, error) {
 		switch op := op.(type) {
 		case searcher.Train:
 			switch op.Length.Unit {
 			case model.Records:
 				return experimentv1.RunnableOperation{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
-					Length: &experimentv1.TrainingLength{
+					Length: &experimentv1.TrainingUnits{
 						Unit:  experimentv1.Unit_UNIT_RECORDS,
-						Units: int32(op.Length.Units),
+						Count: int32(op.Length.Units),
 					},
-				}
+				}, nil
 			case model.Batches:
 				return experimentv1.RunnableOperation{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
-					Length: &experimentv1.TrainingLength{
+					Length: &experimentv1.TrainingUnits{
 						Unit:  experimentv1.Unit_UNIT_BATCHES,
-						Units: int32(op.Length.Units),
+						Count: int32(op.Length.Units),
 					},
-				}
+				}, nil
 			case model.Epochs:
 				return experimentv1.RunnableOperation{
 					Type: experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
-					Length: &experimentv1.TrainingLength{
+					Length: &experimentv1.TrainingUnits{
 						Unit:  experimentv1.Unit_UNIT_EPOCHS,
-						Units: int32(op.Length.Units),
+						Count: int32(op.Length.Units),
 					},
-				}
+				}, nil
 			default:
-				return experimentv1.RunnableOperation{
-					Type:   experimentv1.RunnableType_RUNNABLE_TYPE_TRAIN,
-					Length: &experimentv1.TrainingLength{Unit: experimentv1.Unit_UNIT_UNSPECIFIED},
-				}
+				return experimentv1.RunnableOperation{},
+					fmt.Errorf("unrecognized unit %s", op.Length.Unit)
 			}
 		case searcher.Validate:
 			return experimentv1.RunnableOperation{
 				Type: experimentv1.RunnableType_RUNNABLE_TYPE_VALIDATE,
-			}
+			}, nil
 		case searcher.Checkpoint:
 			return experimentv1.RunnableOperation{
 				Type: experimentv1.RunnableType_RUNNABLE_TYPE_CHECKPOINT,
-			}
+			}, nil
 		default:
-			return experimentv1.RunnableOperation{
-				Type: experimentv1.RunnableType_RUNNABLE_TYPE_UNSPECIFIED,
-			}
+			return experimentv1.RunnableOperation{},
+				fmt.Errorf("unrecognized searcher.Runnable %s", op)
 		}
 	}
 	for _, result := range sim.Results {
 		var operations []*experimentv1.RunnableOperation
 		for _, msg := range result {
-			op := toProto(msg)
+			op, err := toProto(msg)
+			if err != nil {
+				return nil, errors.Wrapf(err, "error converting msg in simultion result %s", msg)
+			}
 			operations = append(operations, &op)
 		}
 		hash := fmt.Sprint(operations)

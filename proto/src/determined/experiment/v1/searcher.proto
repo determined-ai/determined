@@ -7,34 +7,30 @@ import "google/protobuf/struct.proto";
 
 // WorkloadKind defines the kind of workload that should be executed by trial runners.
 enum Unit {
-    // Denotes an unknown unit.
-    UNIT_UNSPECIFIED = 0;
     // Unit type "Batches".
-    UNIT_BATCHES = 1;
+    UNIT_BATCHES = 0;
     // Unit type "Records".
-    UNIT_RECORDS = 2;
+    UNIT_RECORDS = 1;
     // Unit type "Epochs".
-    UNIT_EPOCHS = 3;
+    UNIT_EPOCHS = 2;
 }
 
-// TrainingLength represents a single runnable operation emitted by a searcher.
-message TrainingLength {
+// TrainingUnits represents a single runnable operation emitted by a searcher.
+message TrainingUnits {
     // This is the unit the TrainingLength is in terms of.
     Unit unit = 1;
     // This is the magnitude of the TrainingLength.
-    int32 units = 2;
+    int32 count = 2;
 }
 
 // RunnableType defines the type of operation that should be executed by trial runners.
 enum RunnableType {
-    // Denotes an unknown operation type.
-    RUNNABLE_TYPE_UNSPECIFIED = 0;
     // Signals to a trial runner that it should run a train.
-    RUNNABLE_TYPE_TRAIN = 1;
+    RUNNABLE_TYPE_TRAIN = 0;
     // Signals to a trial runner it should compute validation metrics.
-    RUNNABLE_TYPE_VALIDATE = 2;
+    RUNNABLE_TYPE_VALIDATE = 1;
     // Signals to the trial runner that the current model state should be checkpointed.
-    RUNNABLE_TYPE_CHECKPOINT = 3;
+    RUNNABLE_TYPE_CHECKPOINT = 2;
 }
 
 // RunnableOperation represents a single runnable operation emitted by a searcher.
@@ -42,7 +38,7 @@ message RunnableOperation {
     // This is the type of the operation.
     RunnableType type = 1;
     // If the type == WORKLOAD_KIND_TRAIN, this is the number of units
-    TrainingLength length = 2;
+    TrainingUnits length = 2;
 }
 
 // TrialSimulation is a specific sequence of workloads that were run before the trial was completed.
