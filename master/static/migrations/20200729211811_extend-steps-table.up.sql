@@ -1,4 +1,4 @@
-ALTER TABLE public.steps ADD COLUMN total_batches_processed integer NULL;
+ALTER TABLE public.steps ADD COLUMN prior_batches_processed integer NULL;
 
 WITH legacy_num_batches AS (
     SELECT
@@ -16,11 +16,11 @@ SET num_batches = (
 )
 WHERE s.num_batches IS NULL;
 
--- then backfill total_batches_processed using the value of num_batches we just backfilled.
+-- then backfill prior_batches_processed using the value of num_batches we just backfilled.
 UPDATE public.steps AS s
-SET total_batches_processed = (
+SET prior_batches_processed = (
     SELECT coalesce(sum(ss.num_batches), 0)
     FROM public.steps ss
     WHERE ss.id < s.id
 )
-WHERE s.total_batches_processed IS NULL;
+WHERE s.prior_batches_processed IS NULL;

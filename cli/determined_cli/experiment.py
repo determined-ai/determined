@@ -337,7 +337,7 @@ def describe(args: Namespace) -> None:
                 row = (
                     [
                         step["trial_id"],
-                        step["num_batches"] + step["total_batches_processed"],
+                        step["num_batches"] + step["prior_batches_processed"],
                         step["state"],
                         render.format_time(step.get("start_time")),
                         render.format_time(step.get("end_time")),
@@ -571,7 +571,7 @@ def set_gc_policy(args: Namespace) -> None:
         values = [
             [
                 c["trial_id"],
-                c["step"]["num_batches"] + c["step"]["total_batches_processed"],
+                c["step"]["num_batches"] + c["step"]["prior_batches_processed"],
                 c["state"],
                 api.metric.get_validation_metric(metric_name, c["step"]["validation"]),
                 c["uuid"],
