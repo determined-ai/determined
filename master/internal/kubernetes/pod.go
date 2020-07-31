@@ -5,6 +5,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -560,6 +561,14 @@ func (p *pod) launchPod(ctx *actor.Context, podSpec *k8sV1.Pod) error {
 	var err error
 	p.pod, err = p.podInterface.Create(podSpec)
 	if err != nil {
+		errMsg := err.Error()
+		ctx.Tell(p.taskHandler, sproto.ContainerLog{
+			Container:   p.container,
+			Timestamp:   time.Now(),
+			PullMessage: nil,
+			RunMessage:  nil,
+			AuxMessage:  &errMsg,
+		})
 		return errors.Wrap(err, "error creating pod")
 	}
 	ctx.Log().Infof("Created pod %s", p.pod.Name)
