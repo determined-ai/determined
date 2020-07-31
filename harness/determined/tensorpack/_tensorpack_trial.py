@@ -22,6 +22,7 @@ import tensorflow as tf
 import tensorpack as tp
 from tensorpack.callbacks.base import Callback
 from tensorpack.tfutils.common import get_global_step_var
+from tensorpack.train.base import TrainLoop
 from tensorpack.train.tower import TowerTrainer
 
 import determined as det
@@ -101,6 +102,7 @@ class ManagerCallback(tp.callbacks.Callback):  # type: ignore
         is_chief: bool,
         machine_rank: int,
         context: Any,
+        train_loop: TrainLoop,
     ) -> None:
         self.metric_names = metric_names
         self.batch_metrics = []  # type: List[Dict[str, Any]]
@@ -110,6 +112,7 @@ class ManagerCallback(tp.callbacks.Callback):  # type: ignore
         self.is_chief = is_chief
         self.machine_rank = machine_rank
         self.context = context
+        self.train_loop = train_loop
 
         # Store the response_func for train_for_step workloads while we do the training.
         self.train_response_func = None  # type: Optional[workload.ResponseFunc]
@@ -247,6 +250,7 @@ class ManagerCallback(tp.callbacks.Callback):  # type: ignore
             if wkld.kind == workload.Workload.Kind.RUN_STEP:
                 # Move on to the next step.
                 self.train_response_func = response_func
+                self.train_loop.steps_per_epoch = wkld.num_batches
                 break
             elif wkld.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
                 response_func(
@@ -464,6 +468,7 @@ class TensorpackTrialController(det.LoopTrialController):
             self.is_chief,
             self.rendezvous_info.get_rank(),
             self.context,
+            self.trainer.loop,
         )
 
         # TODO: check to make sure users don't pass in InferenceRunner
