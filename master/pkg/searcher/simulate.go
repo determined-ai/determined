@@ -2,13 +2,17 @@ package searcher
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"math/rand"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // ValidationFunction calculates the validation metric for the validation step.
@@ -27,21 +31,28 @@ type SimulationResults map[RequestID][]Runnable
 func (s SimulationResults) MarshalJSON() ([]byte, error) {
 	summary := make(map[string]int)
 
-	for _, workloads := range s {
-		key := ""
-		for _, workload := range workloads {
-			switch workload.(type) {
+	for _, ops := range s {
+		var keyParts []string
+		for _, op := range ops {
+			switch op := op.(type) {
 			case Train:
-				key += "S"
+				switch op.Length.Unit {
+				case model.Records:
+					keyParts = append(keyParts, fmt.Sprintf("%dR", op.Length.Units))
+				case model.Batches:
+					keyParts = append(keyParts, fmt.Sprintf("%dB", op.Length.Units))
+				case model.Epochs:
+					keyParts = append(keyParts, fmt.Sprintf("%dE", op.Length.Units))
+				}
 			case Validate:
-				key += "V"
+				keyParts = append(keyParts, "V")
 			case Checkpoint:
-				key += "C"
+				keyParts = append(keyParts, "C")
 			default:
-				return nil, errors.Errorf("unexpected workload: %v", workload)
+				return nil, errors.Errorf("unexpected operation: %v", op)
 			}
 		}
-		summary[key]++
+		summary[strings.Join(keyParts, " ")]++
 	}
 
 	return json.Marshal(summary)
