@@ -7,12 +7,14 @@ import "google/protobuf/struct.proto";
 
 // WorkloadKind defines the kind of workload that should be executed by trial runners.
 enum Unit {
+    // Denotes an unknown Uz.
+    UNIT_UNSPECIFIED = 0;
     // Unit type "Batches".
-    UNIT_BATCHES = 0;
+    UNIT_BATCHES = 1;
     // Unit type "Records".
-    UNIT_RECORDS = 1;
+    UNIT_RECORDS = 2;
     // Unit type "Epochs".
-    UNIT_EPOCHS = 2;
+    UNIT_EPOCHS = 3;
 }
 
 // TrainingUnits represents a single runnable operation emitted by a searcher.
@@ -25,12 +27,14 @@ message TrainingUnits {
 
 // RunnableType defines the type of operation that should be executed by trial runners.
 enum RunnableType {
+    // Denotes an unknown runnable type.
+    RUNNABLE_TYPE_UNSPECIFIED = 0;
     // Signals to a trial runner that it should run a train.
-    RUNNABLE_TYPE_TRAIN = 0;
+    RUNNABLE_TYPE_TRAIN = 1;
     // Signals to a trial runner it should compute validation metrics.
-    RUNNABLE_TYPE_VALIDATE = 1;
+    RUNNABLE_TYPE_VALIDATE = 2;
     // Signals to the trial runner that the current model state should be checkpointed.
-    RUNNABLE_TYPE_CHECKPOINT = 2;
+    RUNNABLE_TYPE_CHECKPOINT = 3;
 }
 
 // RunnableOperation represents a single runnable operation emitted by a searcher.
