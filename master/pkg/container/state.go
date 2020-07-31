@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/proto/pkg/containerv1"
 )
 
 // State represents the current state of the container.
@@ -56,4 +57,22 @@ func (s *State) UnmarshalText(text []byte) error {
 	}
 	*s = parsed
 	return nil
+}
+
+// Proto returns the proto representation of the container state.
+func (s State) Proto() containerv1.State {
+	switch s {
+	case Assigned:
+		return containerv1.State_STATE_ASSIGNED
+	case Pulling:
+		return containerv1.State_STATE_PULLING
+	case Starting:
+		return containerv1.State_STATE_STARTING
+	case Running:
+		return containerv1.State_STATE_RUNNING
+	case Terminated:
+		return containerv1.State_STATE_TERMINATED
+	default:
+		return containerv1.State_STATE_UNSPECIFIED
+	}
 }

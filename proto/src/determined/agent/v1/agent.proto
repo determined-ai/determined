@@ -5,6 +5,10 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/agentv1";
 
 import "google/protobuf/timestamp.proto";
 
+import "determined/container/v1/container.proto";
+import "determined/device/v1/device.proto";
+
+
 // Agent is a pool of resources where containers are run.
 message Agent {
     // The unique id of the agent.
@@ -14,7 +18,7 @@ message Agent {
     // A map of slot id to each slot of this agent.
     map<string, Slot> slots = 3;
     // A map of container id to all containers assigned to this agent.
-    map<string, Container> containers = 4;
+    map<string, determined.container.v1.Container> containers = 4;
     // An optional label applied to the agent for scheduling restrictions.
     string label = 5;
 }
@@ -24,60 +28,10 @@ message Slot {
     // The unqiue id of the slot for a given agent.
     string id = 1;
     // The individual resource this slot wraps.
-    Device device = 2;
+    determined.device.v1.Device device = 2;
     // Flag notifying if containers can be scheduled on this slot.
     bool enabled = 3;
     // Container that is currently running on this agent. It is unset if there is
     // no container currently running on this slot.
-    Container container = 4;
-}
-
-// Container is a Docker container that is either scheduled to run or is currently running on a
-// set of slots.
-message Container {
-    // The current state of the container.
-    enum State {
-        // The container state is unknown.
-        STATE_UNSPECIFIED = 0;
-        // The container has been assigned to an agent but has not started yet.
-        STATE_ASSIGNED = 1;
-        // The container's base image is being pulled from the Docker registry.
-        STATE_PULLING = 2;
-        // The image has been built and the container is being started, but the service in the container is not ready yet.
-        STATE_STARTING = 3;
-        // The service in the container is able to accept requests.
-        STATE_RUNNING = 4;
-        // The container has completely exited or the container has been aborted prior to getting assigned.
-        STATE_TERMINATED = 5;
-    }
-    // The id of the task that is currently managing this container.
-    string parent = 1;
-    // The unique id of this instance of a container.
-    string id = 2;
-    // The current state that the container is currently in.
-    State state = 3;
-    // A list of devices that is being used by this container.
-    repeated Device devices = 4;
-}
-
-// Device represents a single computational device on an agent.
-message Device {
-    // The type of the Device.
-    enum Type {
-        // An unspecified device type.
-        TYPE_UNSPECIFIED = 0;
-        // A CPU device.
-        TYPE_CPU = 1;
-        // A GPU device.
-        TYPE_GPU = 2;
-    }
-
-    // The index of the device.
-    int32 id = 1;
-    // The brand name of the device.
-    string brand = 2;
-    // The unique UUID of the device.
-    string uuid = 3;
-    // The type of the Device.
-    Type type = 4;
+    determined.container.v1.Container container = 4;
 }
