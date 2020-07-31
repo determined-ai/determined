@@ -602,3 +602,20 @@ def test_link_without_agent_user(auth: Authentication) -> None:
                 break
         else:
             raise AssertionError(f"Did not find {expected_output} in output")
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+def test_non_root_shell(auth: Authentication, tmp_path: pathlib.Path) -> None:
+    user = create_linked_user(1234, "someuser", 1234, "somegroup")
+
+    expected_output = "someuser:1234:somegroup:1234"
+
+    with logged_in_user(user), command.interactive_command("shell", "start") as shell:
+        shell.stdin.write(b"echo $(id -u -n):$(id -u):$(id -g -n):$(id -g)\n")
+        shell.stdin.close()
+
+        for line in shell.stdout:
+            if expected_output in line:
+                break
+        else:
+            raise AssertionError(f"Did not find {expected_output} in output")

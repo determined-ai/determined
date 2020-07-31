@@ -8,6 +8,7 @@ from typing import Any, Dict, List
 from termcolor import colored
 
 from determined_common import api
+from determined_common.api import request
 from determined_common.api.authentication import authentication_required
 from determined_common.check import check_eq, check_len
 
@@ -48,7 +49,7 @@ def start_shell(args: Namespace) -> None:
                 break
             render_event_stream(msg)
     if command:
-        _open_shell(command, args.ssh_opts)
+        _open_shell(args.master, command, args.ssh_opts)
 
 
 @authentication_required
@@ -57,10 +58,10 @@ def open_shell(args: Namespace) -> None:
         Command, api.get(args.master, "shells/{}".format(args.shell_id)).json()
     )
     check_eq(shell.state, "RUNNING", "Shell must be in a running state")
-    _open_shell(shell, args.ssh_opts)
+    _open_shell(args.master, shell, args.ssh_opts)
 
 
-def _open_shell(shell: Command, additional_opts: str) -> None:
+def _open_shell(master: str, shell: Command, additional_opts: str) -> None:
     LOOPBACK_ADDRESS = "[::1]"
     with tempfile.NamedTemporaryFile("w") as fp:
         fp.write(shell.misc["privateKey"])
@@ -70,13 +71,18 @@ def _open_shell(shell: Command, additional_opts: str) -> None:
         if host == LOOPBACK_ADDRESS:
             host = "localhost"
 
+        proxy_cmd = "python -m determined_cli.tunnel {} %h".format(master)
+        if request.get_master_cert_bundle():
+            proxy_cmd += ' "{}"'.format(request.get_master_cert_bundle())
+        proxy_opt = "-o ProxyCommand='{}'".format(proxy_cmd)
+
         username = shell.agent_user_group["user"] or "root"
 
-        os.system(
-            "ssh -o StrictHostKeyChecking=no -tt -o IdentitiesOnly=yes -i {} -p {} {} {}@{}".format(
-                fp.name, port, additional_opts, username, host
-            )
-        )
+        cmd = "ssh {} -o StrictHostKeyChecking=no -tt -o IdentitiesOnly=yes -i {} -p {} {} {}@{}"
+        cmd = cmd.format(proxy_opt, fp.name, port, additional_opts, username, shell.id)
+
+        os.system(cmd)
+
         print(colored("To reconnect, run: det shell open {}".format(shell.id), "green"))
 
 

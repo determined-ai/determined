@@ -126,6 +126,10 @@ func (n *shellManager) newShell(
 			petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),
 		)
 	}
+
+	taskID := scheduler.NewTaskID()
+	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
+
 	config.Environment.Ports = shellPorts
 	config.Entrypoint = shellEntrypoint
 
@@ -149,7 +153,7 @@ func (n *shellManager) newShell(
 	}
 
 	return &command{
-		taskID:          scheduler.NewTaskID(),
+		taskID:          taskID,
 		config:          config,
 		userFiles:       req.UserFiles,
 		additionalFiles: additionalFiles,
@@ -158,6 +162,7 @@ func (n *shellManager) newShell(
 			"publicKey":  string(keyPair.PublicKey),
 		},
 
+		serviceAddress: &serviceAddress,
 		owner:          req.Owner,
 		agentUserGroup: req.AgentUserGroup,
 	}

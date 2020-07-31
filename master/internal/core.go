@@ -561,8 +561,11 @@ func (m *Master) Run() error {
 	m.echo.Any("/debug/pprof/symbol", echo.WrapHandler(http.HandlerFunc(pprof.Symbol)))
 	m.echo.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
 
-	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewHandler{ServiceKey: "service"})
+	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewProxyHandler{ServiceKey: "service"})
 	m.echo.Any("/proxy/:service/*", handler.Get().(echo.HandlerFunc))
+
+	handler = m.system.AskAt(actor.Addr("proxy"), proxy.NewConnectHandler{})
+	m.echo.CONNECT("*", handler.Get().(echo.HandlerFunc))
 
 	user.RegisterAPIHandler(m.echo, userService, authFuncs...)
 	command.RegisterAPIHandler(
