@@ -183,7 +183,24 @@ export const killCommand: Api<KillCommandParams, void> = {
   name: 'killCommand',
 };
 
-export const launchTensorboard: Api<LaunchTensorboardParams, Command> = {
+export const createNotebook: Api<CreateNotebookParams, Command> = {
+  httpOptions: (params) => {
+    return {
+      body: {
+        config: {
+          resources: { slots: params.slots },
+        },
+        context: null,
+      },
+      method: 'POST',
+      url: `${commandToEndpoint[CommandType.Notebook]}`,
+    };
+  },
+  name: 'createNotebook',
+  postProcess: (response) => jsonToNotebook(response.data),
+};
+
+export const createTensorboard: Api<CreateTensorboardParams, Command> = {
   httpOptions: (params) => {
     const attrName = params.type === TBSourceType.Trial ? 'trial_ids' : 'experiment_ids';
     return {
@@ -194,7 +211,7 @@ export const launchTensorboard: Api<LaunchTensorboardParams, Command> = {
       url: `${commandToEndpoint[CommandType.Tensorboard]}`,
     };
   },
-  name: 'launchTensorboard',
+  name: 'createTensorboard',
   postProcess: (response) => jsonToTensorboard(response.data),
 };
 

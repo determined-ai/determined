@@ -1,6 +1,6 @@
 import { CancelToken } from 'axios';
-
 import * as DetSwagger from 'services/api-ts-sdk';
+
 import { generateApi, processApiError } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
 import { EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
@@ -90,8 +90,10 @@ export const getTensorboards = generateApi<EmptyParams, Command[]>(Config.getTen
 
 export const killCommand = generateApi<KillCommandParams, void>(Config.killCommand);
 
-export const launchTensorboard =
-  generateApi<LaunchTensorboardParams, Command>(Config.launchTensorboard);
+export const createNotebook = generateApi<CreateNotebookParams, Command>(Config.createNotebook);
+
+export const createTensorboard =
+  generateApi<CreateTensorboardParams, Command>(Config.createTensorboard);
 
 export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promise<void> => {
   if (isExperimentTask(task)) {
