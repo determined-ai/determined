@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react';
 
 import Link from 'components/Link';
 import { ConditionalButton } from 'components/types';
-import { launchTensorboard } from 'services/api';
+import { createTensorboard } from 'services/api';
 import { RunState, TBSourceType, TrialDetails } from 'types';
 import { openCommand } from 'utils/routes';
 import { terminalRunStates } from 'utils/types';
@@ -32,9 +32,9 @@ const TrialActions: React.FC<Props> = ({ trial, onClick, onSettled: updateFn }: 
     Tensorboard: false,
   });
 
-  const handleLaunchTensorboard = useCallback(() => {
+  const handleCreateTensorboard = useCallback(() => {
     setButtonStates(state => ({ ...state, tensorboard: true }));
-    launchTensorboard({ ids: [ trial.id ], type: TBSourceType.Trial })
+    createTensorboard({ ids: [ trial.id ], type: TBSourceType.Trial })
       .then((tensorboard) => {
         openCommand(tensorboard);
         return updateFn();
@@ -56,7 +56,7 @@ const TrialActions: React.FC<Props> = ({ trial, onClick, onSettled: updateFn }: 
     </Button> },
     {
       button: <Button key={Action.Tensorboard}
-        loading={buttonStates.Tensorboard} type="primary" onClick={handleLaunchTensorboard}>
+        loading={buttonStates.Tensorboard} type="primary" onClick={handleCreateTensorboard}>
       Tensorboard</Button>,
       showIf: (aTrial): boolean => !trialWillNeverHaveData(aTrial),
     },

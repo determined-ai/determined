@@ -21,7 +21,7 @@ import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
 import { setupUrlForDev } from 'routes';
 import {
-  archiveExperiment, getExperimentSummaries, killExperiment, launchTensorboard, setExperimentState,
+  archiveExperiment, createTensorboard, getExperimentSummaries, killExperiment, setExperimentState,
 } from 'services/api';
 import { patchExperiment } from 'services/api';
 import { ExperimentsParams } from 'services/types';
@@ -189,7 +189,7 @@ const ExperimentList: React.FC = () => {
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | Command> => {
     if (action === Action.OpenTensorBoard) {
-      return launchTensorboard({
+      return createTensorboard({
         ids: selectedExperiments.map(experiment => experiment.id),
         type: TBSourceType.Experiment,
       });

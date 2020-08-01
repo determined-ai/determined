@@ -5,7 +5,7 @@ import React from 'react';
 import Icon from 'components/Icon';
 import Experiments from 'contexts/Experiments';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { archiveExperiment, killTask, launchTensorboard, setExperimentState } from 'services/api';
+import { archiveExperiment, createTensorboard, killTask, setExperimentState } from 'services/api';
 import { AnyTask, CommandTask, Experiment, RunState, TBSourceType } from 'types';
 import { openCommand } from 'utils/routes';
 import { capitalize } from 'utils/string';
@@ -85,8 +85,8 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
           });
           updateExperimentLocally(exp => ({ ...exp, state: RunState.Paused }));
           break;
-        case 'launchTensorboard': {
-          const tensorboard = await launchTensorboard({
+        case 'createTensorboard': {
+          const tensorboard = await createTensorboard({
             ids: [ parseInt(task.id) ],
             type: TBSourceType.Experiment,
           });
@@ -115,7 +115,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
   if (isCancelable) menuItems.push(<Menu.Item key="cancel">Cancel</Menu.Item>);
   if (isKillable) menuItems.push(<Menu.Item key="kill">Kill</Menu.Item>);
   if (isExperiment) {
-    menuItems.push(<Menu.Item key="launchTensorboard">Launch Tensorboard</Menu.Item>);
+    menuItems.push(<Menu.Item key="createTensorboard">Launch Tensorboard</Menu.Item>);
   } else {
     const taskType = (task as CommandTask).type.toLocaleLowerCase();
     const path = `/det/${taskType}/${task.id}/logs?id=${task.name}`;
