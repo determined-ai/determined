@@ -3,7 +3,6 @@ describe('Navigation', () => {
     cy.login();
   });
 
-  const elmTitleSelector = '#det-main-container div.text-2xl';
   const pageTitleSelector = '[class*="Page_base_"]';
   const sectionTitleSelector = '[class*="Section_title_"]';
 
@@ -21,34 +20,19 @@ describe('Navigation', () => {
       cy.get(sectionTitleSelector).contains('Overview');
     });
 
-    it('path /ui/experiments should display experiments', () => {
-      cy.visit('/ui/experiments');
-      cy.get(elmTitleSelector).contains('Experiments');
+    it('path /det/experiments should display experiments', () => {
+      cy.visit('/det/experiments');
+      cy.get(pageTitleSelector).contains('Experiments');
     });
 
-    it('path /ui/notebooks should display Notebooks', () => {
-      cy.visit('/ui/notebooks');
-      cy.get(elmTitleSelector).contains('Notebooks');
-    });
-
-    it('path /ui/tensorboards should display TensorBorads', () => {
-      cy.visit('/ui/tensorboards');
-      cy.get(elmTitleSelector).contains('TensorBoards');
+    it('path /det/tasks should display Tasks', () => {
+      cy.visit('/det/tasks');
+      cy.get(pageTitleSelector).contains('Tasks');
     });
 
     it('path /det/cluster should display Cluster', () => {
       cy.visit('/det/cluster');
       cy.get(pageTitleSelector).contains('Cluster');
-    });
-
-    it('path /ui/shells should display Shells', () => {
-      cy.visit('/ui/shells');
-      cy.get(elmTitleSelector).contains('Shells');
-    });
-
-    it('path /ui/commands should display Commands', () => {
-      cy.visit('/ui/commands');
-      cy.get(elmTitleSelector).contains('Commands');
     });
 
     it.skip('path /det/logs should display Master Logs', () => {
@@ -69,23 +53,15 @@ describe('Navigation', () => {
       SPAs.forEach(page => {
         cy.visit(page);
         cy.get('#side-menu').contains(/experiments/i).click();
-        return cy.get(elmTitleSelector).contains('Experiments');
+        return cy.get(pageTitleSelector).contains('Experiments');
       });
     });
 
-    it('clicking notebooks in side menu should navigate to notebooks', () => {
+    it('clicking tasks in side menu should navigate to tasks', () => {
       SPAs.forEach(page => {
         cy.visit(page);
-        cy.get('#side-menu').contains(/notebooks/i).click();
-        cy.get(elmTitleSelector).contains('Notebooks');
-      });
-    });
-
-    it('clicking tensorboards in side menu should navigate to tensorboards', () => {
-      SPAs.forEach(page => {
-        cy.visit(page);
-        cy.get('#side-menu').contains(/tensorboards/i).click();
-        cy.get(elmTitleSelector).contains('TensorBoards');
+        cy.get('#side-menu').contains(/tasks/i).click();
+        cy.get(pageTitleSelector).contains('Tasks');
       });
     });
 
@@ -97,28 +73,12 @@ describe('Navigation', () => {
       });
     });
 
-    it('clicking shells in side menu should navigate to shells', () => {
-      SPAs.forEach(page => {
-        cy.visit(page);
-        cy.get('#side-menu').contains(/shells/i).click();
-        cy.get(elmTitleSelector).contains('Shells');
-      });
-    });
-
-    it('clicking commands in side menu should navigate to commands', () => {
-      SPAs.forEach(page => {
-        cy.visit(page);
-        cy.get('#side-menu').contains(/commands/i).click();
-        cy.get(elmTitleSelector).contains('Commands');
-      });
-    });
-
     it('clicking dashboard in side menu should navigate to dashboard', () => {
       SPAs.forEach(page => {
         cy.visit(page);
         cy.get('#side-menu').contains(/dashboard/i).click();
-        cy.get('section h5').contains('Recent Tasks');
-        cy.get('section h5').contains('Overview');
+        cy.get(sectionTitleSelector).contains('Recent Tasks');
+        cy.get(sectionTitleSelector).contains('Overview');
       });
     });
   });
