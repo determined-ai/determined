@@ -22,7 +22,7 @@ The full list of reference guides can be found below:
 
   cli
   cluster-config
-  command-config
+  command-notebook-config
   config-template
   experiment-config
   api/index

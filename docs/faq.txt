@@ -4,19 +4,14 @@ Frequently Asked Questions
 Installation
 ------------
 
-Which dependencies are required to install the Determined command-line interface?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You'll need to have Python >= 3.5 and ``pip`` installed in your
-development environment. If you need to install a new version of Python,
-one tool you can use is `pyenv <https://github.com/pyenv/pyenv>`__.
-
-How do I install the Determined command-line interface?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+How do I install the CLI?
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: bash
 
    pip install determined-cli
+
+For more details, see the :ref:`installation instructions <install-cli>`.
 
 When trying to install the Determined command-line interface, I encounter this ``distutils`` error
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,6 +36,32 @@ recommended solutions:
    .. code:: bash
 
       pip install --ignore-installed determined-cli
+
+Packages and Containers
+-----------------------
+
+How do I install Python packages that my model code depends on?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, workloads execute inside a Determined-provided container
+that includes common deep learning libraries and frameworks. If your
+model code has additional dependencies, the easiest way to install them
+is to specify a container :ref:`startup hook <startup-hooks>`. For more
+complex dependencies, you can also use a :ref:`custom Docker image
+<custom-docker-images>`.
+
+Can I use a custom container image?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Yes; see the documentation on :ref:`custom Docker images
+<custom-docker-images>` for details.
+
+Can I use Determined with a private Docker Registry?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Yes: specify the registry path as part of the custom image name. See the
+documentation on :ref:`custom Docker images <custom-docker-images>` for
+more details.
 
 Multi-GPU Training
 ------------------
@@ -75,8 +96,8 @@ the :ref:`cluster-configuration`.
 TensorFlow Support
 ------------------
 
-Can I train Tensorflow core model in Determined?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Can I train a Tensorflow Core model in Determined?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Determined has support for TensorFlow models that use the :ref:`tf.keras <tf-keras-trial>`
 or :ref:`Estimator <estimator-trial>` APIs. For models that use the low-level TensorFlow
