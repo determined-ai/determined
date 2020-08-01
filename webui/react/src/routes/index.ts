@@ -87,7 +87,7 @@ const taskLogsRoute = {
 
 const taskListRoute = {
   component: TaskList,
-  icon: 'list',
+  icon: 'tasks',
   id: 'taskList',
   needAuth: true,
   path: '/det/tasks',
