@@ -56,7 +56,7 @@ Handling Trial Errors and Early Stopping Requests
 
 When a trial encounters an error or fails unexpectedly, Determined will
 restart it from the latest checkpoint unless we have done so
-``max_restarts`` times, which is configured in the experiment
+:ref:`max_restarts <max-restarts>` times, which is configured in the experiment
 configuration. Once we have reached ``max_restarts``, any further trials
 that fail will be marked as errored and will not be restarted. For
 search methods that adapt to validation metric values (:ref:`Adaptive
