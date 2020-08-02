@@ -2,7 +2,9 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Input, Tag, Tooltip } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import { truncate } from 'utils/string';
+import { alphanumericSorter } from 'utils/data';
+import { toRem } from 'utils/dom';
+import { toHtmlId, truncate } from 'utils/string';
 
 import css from './TagList.module.scss';
 
@@ -19,6 +21,7 @@ const EditableTagList: React.FC<Props> = ({ tags, setTags, className }: Props) =
     editInputValue: '',
     inputValue: '',
     inputVisible: false,
+    inputWidth: 82,
   };
   const [ state, setState ] = useState(initialState);
   const inputRef = useRef<Input>(null);
@@ -72,69 +75,72 @@ const EditableTagList: React.FC<Props> = ({ tags, setTags, className }: Props) =
     setState(state => ({ ...state, editInputIndex: -1, editInputValue: '' }));
   }, [ setTags, state, tags ]);
 
-  const { inputVisible, inputValue, editInputIndex, editInputValue } = state;
+  const { editInputIndex, editInputValue, inputVisible, inputValue, inputWidth } = state;
 
   const classes = [ css.base ];
   if (className) classes.push(className);
 
   return (
     <div className={classes.join(' ')} onClick={stopPropagation}>
-      {tags.map((tag, index) => {
-        if (editInputIndex === index) {
-          return (
-            <Input
-              className={css.tagInput}
+      {tags
+        .sort((a, b) => alphanumericSorter(a, b))
+        .map((tag, index) => {
+          if (editInputIndex === index) {
+            return (
+              <Input
+                className={css.tagInput}
+                key={tag}
+                ref={editInputRef}
+                size="small"
+                style={{ width: toRem(inputWidth) }}
+                value={editInputValue}
+                width={inputWidth}
+                onBlur={handleEditInputConfirm}
+                onChange={handleEditInputChange}
+                onPressEnter={handleEditInputConfirm} />
+            );
+          }
+
+          const htmlId = toHtmlId(tag);
+          const isLongTag = tag.length > TAG_MAX_LENGTH;
+
+          const tagElement = (
+            <Tag
+              className={css.tagEdit}
+              closable={true}
+              id={htmlId}
               key={tag}
-              ref={editInputRef}
-              size="small"
-              value={editInputValue}
-              onBlur={handleEditInputConfirm}
-              onChange={handleEditInputChange}
-              onPressEnter={handleEditInputConfirm}
-            />
+              onClose={() => handleClose(tag)}>
+              <span
+                onDoubleClick={e => {
+                  e.preventDefault();
+                  const element = document.getElementById(htmlId);
+                  const rect = element?.getBoundingClientRect();
+                  setState(state => ({
+                    ...state,
+                    editInputIndex: index,
+                    editInputValue: tag,
+                    inputWidth: rect?.width || state.inputWidth,
+                  }));
+                }}>
+                {isLongTag ? truncate(tag, TAG_MAX_LENGTH) : tag}
+              </span>
+            </Tag>
           );
-        }
-
-        const isLongTag = tag.length > TAG_MAX_LENGTH;
-
-        const tagElem = (
-          <Tag
-            className={css.editTag}
-            closable={true}
-            key={tag}
-            onClose={() => handleClose(tag)}
-          >
-            <span
-              onDoubleClick={e => {
-                e.preventDefault();
-                setState(state => ({ ...state, editInputIndex: index, editInputValue: tag }));
-              }}
-            >
-              {isLongTag ? truncate(tag, TAG_MAX_LENGTH) : tag}
-            </span>
-          </Tag>
-        );
-        return isLongTag ? (
-          <Tooltip key={tag} title={tag}>
-            {tagElem}
-          </Tooltip>
-        ) : (
-          tagElem
-        );
-      })}
-      {inputVisible && (
+          return isLongTag ? <Tooltip key={tag} title={tag}>{tagElement}</Tooltip> : tagElement;
+        })}
+      {inputVisible ? (
         <Input
           className={css.tagInput}
           ref={inputRef}
           size="small"
+          style={{ width: toRem(inputWidth) }}
           type="text"
           value={inputValue}
           onBlur={handleInputConfirm}
           onChange={handleInputChange}
-          onPressEnter={handleInputConfirm}
-        />
-      )}
-      {!inputVisible && (
+          onPressEnter={handleInputConfirm} />
+      ) : (
         <Tag className={css.tagPlus + ' tagPlus'} onClick={handleTagPlus}>
           <PlusOutlined /> New Tag
         </Tag>

@@ -135,7 +135,6 @@ const ExperimentList: React.FC = () => {
         experimentId: id })
         .then(fetchExperiments);
     };
-
   }, [ fetchExperiments ]);
 
   useEffect(() => {
@@ -145,8 +144,9 @@ const ExperimentList: React.FC = () => {
         return (
           <div className={css.nameColumn}>
             {record.name || ''}
-            <TagList className={css.tagList}
-              setTags={setLabels(record.id)} tags={record.config.labels || []} />
+            <TagList
+              setTags={setLabels(record.id)}
+              tags={record.config.labels || []} />
           </div>
         );
       },
