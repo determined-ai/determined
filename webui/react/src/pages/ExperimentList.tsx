@@ -315,6 +315,7 @@ const ExperimentList: React.FC = () => {
           rowClassName={(): string => linkCss.base}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
+          showSorterTooltip={false}
           size="small"
           onRow={handleTableRow}
         />

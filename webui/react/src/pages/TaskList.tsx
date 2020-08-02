@@ -207,6 +207,7 @@ const TaskList: React.FC = () => {
           rowClassName={(record): string => canBeOpened(record) ? linkCss.base : ''}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
+          showSorterTooltip={false}
           size="small"
           onRow={handleTableRow} />
       </div>
