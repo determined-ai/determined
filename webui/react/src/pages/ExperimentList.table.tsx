@@ -28,11 +28,11 @@ export const columns: ColumnType<ExperimentItem>[] = [
     sorter: (a: ExperimentItem, b: ExperimentItem): number => getDuration(a) - getDuration(b),
     title: 'Duration',
   },
-  {
-    // TODO bring in actual trial counts once available.
-    render: (): number => Math.floor(Math.random() * 100),
-    title: 'Trials',
-  },
+  // TODO bring in actual trial counts once available.
+  // {
+  //   render: (): number => Math.floor(Math.random() * 100),
+  //   title: 'Trials',
+  // },
   {
     render: stateRenderer,
     sorter: (a: ExperimentItem, b: ExperimentItem): number => runStateSorter(a.state, b.state),
