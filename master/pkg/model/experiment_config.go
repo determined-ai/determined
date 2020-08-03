@@ -269,3 +269,8 @@ type InternalConfig struct {
 type NativeConfig struct {
 	Command []string `json:"command"`
 }
+
+// KubernetesConfig configures kubernetes specific settings.
+type KubernetesConfig struct {
+	PodSpec *v1.Pod `json:"pod_spec"`
+}
