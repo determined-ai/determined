@@ -69,11 +69,12 @@ Multi-GPU Training
 Why do my multi-GPU training experiments never start?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-It might be that ``slots_per_trial`` in the experiment configuration is
-not a multiple of the number of GPUs on a machine or that there are
-running tasks preventing your multi-GPU trials from acquiring all the
-GPUs on a single machine. Consider adjusting ``slots_per_trial`` or
-terminating existing tasks to free up slots in your cluster.
+It might be that :ref:`slots_per_trial <exp-config-resources-slots-per-trial>`
+in the experiment configuration is not a multiple of the number of GPUs on a
+machine or that there are running tasks preventing your multi-GPU trials from
+acquiring all the GPUs on a single machine. Consider adjusting
+``slots_per_trial`` or terminating existing tasks to free up slots in your
+cluster.
 
 See :ref:`multi-gpu-training` for more details.
 
