@@ -92,7 +92,7 @@ class Model:
             if data["versions"] == []:
                 return None
 
-            latest_version = data["versions"][0]
+            latest_version = data["model_versions"][0]
             return Checkpoint.from_json(
                 {
                     **latest_version["checkpoint"],
