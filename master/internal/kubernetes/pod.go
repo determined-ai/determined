@@ -522,12 +522,6 @@ func (p *pod) configurePodSpec(
 	podSpec.ObjectMeta.Labels[determinedLabel] = p.taskSpec.TaskID
 
 	if len(podSpec.Spec.Containers) > 0 {
-		if len(podSpec.Spec.Containers) > 1 {
-			ctx.Log().Warnf(
-				"only the first container in pod spec being used, " +
-					"remaining containers are being ignored")
-		}
-
 		for k, v := range podSpec.Spec.Containers[0].Resources.Limits {
 			if _, present := containers[0].Resources.Limits[k]; !present {
 				containers[0].Resources.Limits[k] = v
