@@ -1,3 +1,5 @@
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { Modal } from 'antd';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { throttle } from 'throttle-debounce';
@@ -33,6 +35,7 @@ const TrialLogs: React.FC = () => {
   const [ offset, setOffset ] = useState(-TAIL_SIZE);
   const [ oldestId, setOldestId ] = useState(Number.MAX_SAFE_INTEGER);
   const [ oldestReached, setOldestReached ] = useState(false);
+  const [ isDownloading, setIsDownloading ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ isIdInvalid, setIsIdInvalid ] = useState(false);
   const [ trial ] = useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id });
@@ -58,8 +61,12 @@ const TrialLogs: React.FC = () => {
     });
   }, [ id, offset, oldestId, oldestReached ]);
 
-  const handleDownloadLogs = useCallback(() => {
-    return downloadTrialLogs(id).catch(e => {
+  const handleDownloadConfirm = useCallback(async () => {
+    setIsDownloading(true);
+
+    try {
+      await downloadTrialLogs(id);
+    } catch (e) {
       handleError({
         error: e,
         message: 'trial log download failed.',
@@ -70,8 +77,27 @@ const TrialLogs: React.FC = () => {
         publicSubject: 'Download Failed',
         type: ErrorType.Ui,
       });
-    });
+    }
+
+    setIsDownloading(false);
   }, [ id ]);
+
+  const handleDownloadLogs = useCallback(() => {
+    Modal.confirm({
+      content: <div>
+        For large trial logs it will take a significant amount of
+        time and browser memory to complete download. We recommend
+        using the CLI to download instead:
+        <code className="block">
+          det trial logs {id}
+        </code>
+      </div>,
+      icon: <ExclamationCircleOutlined />,
+      okText: 'Confirm Download',
+      onOk: handleDownloadConfirm,
+      title: `Confirm Download for Trial ${id} Logs`,
+    });
+  }, [ handleDownloadConfirm, id ]);
 
   useEffect(() => setUI({ type: UI.ActionType.HideChrome }), [ setUI ]);
 
@@ -113,6 +139,7 @@ const TrialLogs: React.FC = () => {
     <Page hideTitle maxHeight title={title}>
       <LogViewer
         disableLevel
+        isDownloading={isDownloading}
         isLoading={isLoading}
         noWrap
         ref={logsRef}

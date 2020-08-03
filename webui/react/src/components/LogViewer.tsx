@@ -22,9 +22,10 @@ interface Props {
   debugMode?: boolean;
   disableLevel?: boolean;
   disableLineNumber?: boolean;
+  isDownloading?: boolean;
   isLoading?: boolean;
   noWrap?: boolean;
-  onDownload?: () => Promise<void>;
+  onDownload?: () => void;
   onScrollToTop?: (oldestLogId: number) => void;
   ref?: React.Ref<LogViewerHandles>;
   title: string;
@@ -115,7 +116,6 @@ const LogViewer: React.FC<Props> = forwardRef((
   const [ scrollToInfo, setScrollToInfo ] =
     useState({ isPrepend: false, logId: 0 });
   const [ config, setConfig ] = useState<LogConfig>(defaultLogConfig);
-  const [ isDownloading, setIsDownloading ] = useState<boolean>(false);
   const [ isTailing, setIsTailing ] = useState(true);
   const previousScroll = usePrevious(scroll, defaultScrollInfo);
   const previousLogs = usePrevious<Log[]>(logs, []);
@@ -438,10 +438,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   }, []);
 
   const handleDownload = useCallback(() => {
-    if (!onDownload) return;
-    setIsDownloading(true);
-    onDownload()
-      .then(() => setIsDownloading(false));
+    if (onDownload) onDownload();
   }, [ onDownload ]);
 
   const logOptions = (
@@ -469,7 +466,7 @@ const LogViewer: React.FC<Props> = forwardRef((
         <Button
           aria-label="Download Logs"
           icon={<Icon name="download" />}
-          loading={isDownloading}
+          loading={props.isDownloading}
           onClick={handleDownload} />
       </Tooltip>}
     </Space>
