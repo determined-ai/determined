@@ -11,7 +11,6 @@ import TaskActionDropdown from 'components/TaskActionDropdown';
 import {
   CommandState, CommandTask, CommandType, ExperimentItem, RunState, StartEndTimes, TrialItem,
 } from 'types';
-import { floatToPercent } from 'utils/string';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 import { commandTypeToLabel, experimentToTask } from 'utils/types';
 
