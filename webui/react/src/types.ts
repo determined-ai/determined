@@ -241,23 +241,6 @@ export interface LatestValidationMetrics {
   validationMetrics: Record<string, number>;
 }
 
-export interface TrialItem {
-  bestAvailableCheckpoint?: Checkpoint;
-  bestValidationMetric?: number;
-  endTime?: string;
-  experimentId: number;
-  hparams: Record<string, string>;
-  id: number;
-  latestValidationMetrics?: LatestValidationMetrics;
-  numBatches: number;
-  numCompletedCheckpoints: number;
-  numSteps: number;
-  seed: number;
-  startTime: string;
-  state: RunState;
-  url: string;
-}
-
 export interface Step {
   endTime?: string;
   id: number;
@@ -265,15 +248,25 @@ export interface Step {
   state: RunState;
 }
 
-// FIXME this vs TrialItem
-export interface TrialDetails {
-  endTime?: string;
+interface TrialBase extends StartEndTimes {
   experimentId: number;
-  hparams: Record<string, unknown>;
   id: number;
-  seed: number;
-  startTime: string;
   state: RunState;
+  seed: number;
+  hparams: Record<string, string>;
+}
+
+export interface TrialItem extends TrialBase {
+  bestAvailableCheckpoint?: Checkpoint;
+  bestValidationMetric?: number;
+  latestValidationMetrics?: LatestValidationMetrics;
+  numBatches: number;
+  numCompletedCheckpoints: number;
+  numSteps: number;
+  url: string;
+}
+
+export interface TrialDetails extends TrialBase {
   steps: Step[];
   warmStartCheckpointId?: number;
 }
