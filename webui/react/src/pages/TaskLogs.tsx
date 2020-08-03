@@ -2,7 +2,7 @@ import queryString from 'query-string';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import LogViewer, { LogViewerHandles } from 'components/LogViewer';
+import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
 import Page from 'components/Page';
 import UI from 'contexts/UI';
 import usePolling from 'hooks/usePolling';
@@ -20,8 +20,6 @@ interface Params {
 interface Queries {
   id?: string;
 }
-
-const TAIL_SIZE = 1000;
 
 const TaskLogs: React.FC = () => {
   const { taskId, taskType } = useParams<Params>();

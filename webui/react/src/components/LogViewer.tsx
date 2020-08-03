@@ -68,6 +68,8 @@ export interface LogViewerHandles {
   addLogs: (newLogs: Log[], prepend?: boolean) => void;
 }
 
+export const TAIL_SIZE = 1000;
+
 // What factor to multiply against the displayable lines in the visible view.
 const BUFFER_FACTOR = 1;
 

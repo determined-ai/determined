@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-import LogViewer, { LogViewerHandles } from 'components/LogViewer';
+import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
 import Page from 'components/Page';
 import UI from 'contexts/UI';
 import usePolling from 'hooks/usePolling';
@@ -8,8 +8,6 @@ import useRestApi from 'hooks/useRestApi';
 import { getMasterLogs } from 'services/api';
 import { LogsParams } from 'services/types';
 import { Log } from 'types';
-
-const TAIL_SIZE = 1000;
 
 const MasterLogs: React.FC = () => {
   const setUI = UI.useActionContext();
