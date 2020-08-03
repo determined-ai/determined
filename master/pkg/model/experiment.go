@@ -290,19 +290,19 @@ type Step struct {
 	StartTime             time.Time  `db:"start_time"`
 	EndTime               *time.Time `db:"end_time"`
 	NumBatches            int        `db:"num_batches"`
-	TotalBatchesProcessed int        `db:"total_batches_processed"`
+	PriorBatchesProcessed int        `db:"prior_batches_processed"`
 	Metrics               JSONObj    `db:"metrics"`
 }
 
 // NewStep creates a new step in the active state.
-func NewStep(trialID, stepID, numBatches, totalBatchesProcessed int) *Step {
+func NewStep(trialID, stepID, numBatches, priorBatchesProcessed int) *Step {
 	return &Step{
 		TrialID:               trialID,
 		ID:                    stepID,
 		State:                 ActiveState,
 		StartTime:             time.Now().UTC(),
 		NumBatches:            numBatches,
-		TotalBatchesProcessed: totalBatchesProcessed,
+		PriorBatchesProcessed: priorBatchesProcessed,
 	}
 }
 
