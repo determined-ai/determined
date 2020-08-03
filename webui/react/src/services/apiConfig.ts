@@ -4,14 +4,16 @@ import queryString from 'query-string';
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { Api } from 'services/apiBuilder';
 import {
-  jsonToAgents, jsonToCommands, jsonToDeterminedInfo, jsonToExperimentDetails,
-  jsonToExperiments, jsonToLogs, jsonToNotebooks, jsonToShells, jsonToTaskLogs,
-  jsonToTensorboard, jsonToTensorboards, jsonToTrialDetails, jsonToTrialLogs, jsonToUsers,
+  jsonToAgents, jsonToCommands, jsonToDeterminedInfo,
+  jsonToExperimentDetails, jsonToExperiments, jsonToLogs, jsonToNotebook, jsonToNotebooks,
+  jsonToShells, jsonToTaskLogs, jsonToTensorboard, jsonToTensorboards, jsonToTrialDetails,
+  jsonToTrialLogs,jsonToUsers,
 } from 'services/decoder';
 import {
-  EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
-  KillCommandParams, KillExpParams, LaunchTensorboardParams, LogsParams,
-  PatchExperimentParams, TaskLogsParams, TrialDetailsParams, TrialLogsParams,
+  CreateNotebookParams, CreateTensorboardParams, EmptyParams,
+  ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
+  KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams, TaskLogsParams,
+  TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails,
