@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/searcher"
@@ -104,4 +105,48 @@ func (a *apiServer) PreviewHPSearch(
 		}
 	}
 	return &apiv1.PreviewHPSearchResponse{Simulation: protoSim}, nil
+}
+
+func (a *apiServer) ActivateExperiment(
+	ctx context.Context, req *apiv1.ActivateExperimentRequest,
+) (resp *apiv1.ActivateExperimentResponse, err error) {
+	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
+	switch {
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to check if experiment exists: %s", err)
+	case !ok:
+		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	}
+
+	addr := actor.Addr("experiments", req.Id).String()
+	switch err = a.actorRequest(addr, req, &resp); {
+	case status.Code(err) == codes.NotFound:
+		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed passing request to experiment actor: %s", err)
+	default:
+		return resp, nil
+	}
+}
+
+func (a *apiServer) PauseExperiment(
+	ctx context.Context, req *apiv1.PauseExperimentRequest,
+) (resp *apiv1.PauseExperimentResponse, err error) {
+	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
+	switch {
+	case err != nil:
+		return nil, status.Error(codes.Internal, err.Error())
+	case !ok:
+		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	}
+
+	addr := actor.Addr("experiments", req.Id).String()
+	switch err = a.actorRequest(addr, req, &resp); {
+	case status.Code(err) == codes.NotFound:
+		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed passing request to experiment actor: %s", err)
+	default:
+		return resp, nil
+	}
 }
