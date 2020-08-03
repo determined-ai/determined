@@ -14,6 +14,9 @@ type ContainerFailure struct {
 }
 
 func (c ContainerFailure) Error() string {
+	if c.ExitCode == nil {
+		return fmt.Sprintf("%s: %s", c.FailureType, c.ErrMsg)
+	}
 	return fmt.Sprintf("%s: %s (exit code %d)", c.FailureType, c.ErrMsg, *c.ExitCode)
 }
 
