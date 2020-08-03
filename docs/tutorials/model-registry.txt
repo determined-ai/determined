@@ -8,6 +8,29 @@ Model Registry. Before reading this guide, we recommend that users first read
 the :ref:`use-trained-models` how to guide which describes how to interact
 with checkpoints.
 
+The model registry is designed to organize checkpoints that are relevant to
+track overtime. A model in this context is a named collection of related
+checkpoints. Each checkpoint added to a model is known as a model version. With
+this tiered system you can:
+
+* group related checkpoints, including checkpoints across experiments.
+* store metadata is specific to your problem or organization. Examples include:
+    * References to production systems
+    * Dataset identifiers
+    * Git urls
+    * Metrics calculated outside of Determined
+    * etc.
+* Retrieve the latest version of a model for downstream tasks like serving.
+
+The registry offers a great deal of flexibility. You can define models for
+tasks, datasets, or architectures and add checkpoints as model versions as you
+see fit. A checkpoint can be registered as a version of multiple models as
+well. An example setup would be to define a model for "object-detection" and
+register checkpoints that accomplish that task. Another option would be to
+define a "FasterRCNN" model and register checkpoints that contain that
+architecture. It is up to you and your organization to decide how best to use
+the registry.
+
 
 Managing Models
 ---------------
