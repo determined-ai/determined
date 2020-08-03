@@ -2,6 +2,7 @@ SELECT
     c.uuid AS uuid,
     e.config AS experiment_config,
     e.id AS  experiment_id,
+    t.id AS trial_id,
     t.hparams as hparams,
     s.id * (e.config->>'batches_per_step')::int AS batch_number,
     s.start_time AS start_time,
