@@ -179,11 +179,13 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 	// the same port on an agent.
 	port := getPort(minNotebookPort, maxNotebookPort)
 	notebookPorts := map[string]int{"notebook": port}
+	portVar := fmt.Sprintf("NOTEBOOK_PORT=%d", port)
+
 	config.Environment.Ports = notebookPorts
-	config.Environment.EnvironmentVariables = model.RuntimeItems{
-		CPU: []string{fmt.Sprintf("NOTEBOOK_PORT=%d", port)},
-		GPU: []string{fmt.Sprintf("NOTEBOOK_PORT=%d", port)},
-	}
+	config.Environment.EnvironmentVariables.CPU = append(
+		config.Environment.EnvironmentVariables.CPU, portVar)
+	config.Environment.EnvironmentVariables.GPU = append(
+		config.Environment.EnvironmentVariables.GPU, portVar)
 
 	config.Entrypoint = notebookEntrypoint
 
