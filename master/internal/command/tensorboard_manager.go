@@ -4,12 +4,10 @@ import (
 	"archive/tar"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"sort"
 	"strings"
-	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/labstack/echo"
@@ -28,7 +26,8 @@ import (
 )
 
 const (
-	expConfPath               = "/run/determined/workdir/experiment_config.json"
+	expConfPath = "/run/determined/workdir/experiment_config.json"
+	// Agent port range is 2600 - 3000. Ports are split between TensorBoard and Notebooks
 	minTensorBoardPort        = 2600
 	maxTensorBoardPort        = minTensorBoardPort + 299
 	tensorboardEntrypointFile = "/run/determined/workdir/tensorboard-entrypoint.sh"
@@ -331,14 +330,6 @@ func (t *tensorboardManager) getTensorBoardConfigs(req tensorboardRequest) (
 	}
 
 	return configs, nil
-}
-
-func getPort(min, max int) int {
-	// Set the seed here or else the compiler will generate a random number at
-	// compile time and each invocation of this function will return the same
-	// number.
-	rand.Seed(time.Now().Unix())
-	return rand.Intn(max-min) + min
 }
 
 func getMounts(m map[model.BindMount]bool) []model.BindMount {
