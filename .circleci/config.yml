@@ -376,13 +376,15 @@ commands:
     parameters:
       cluster-id:
         type: string
+      region:
+        type: string
     steps:
       # Use a run instead of `gke/delete-cluster` because circle CI orbs do not support `when`.
       - run:
           name: Terminate GKE Cluster
           when: always
           command: |
-            gcloud container clusters delete <<parameters.cluster-id>> --quiet --region=us-west1
+            gcloud container clusters delete <<parameters.cluster-id>> --quiet --region=<<parameters.region>>
 
   setup-gke-cluster:
     parameters:
@@ -1124,6 +1126,7 @@ jobs:
           master-host: ${MASTER_HOST}
       - terminate-gke-cluster:
           cluster-id: ${CLUSTER_ID}
+          region: <<parameters.region>>
       - slack/status:
           fail_only: True
           failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GKE GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
