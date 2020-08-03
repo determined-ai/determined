@@ -3,6 +3,7 @@ package command
 import (
 	"archive/tar"
 	"bytes"
+	"fmt"
 	"net/http"
 	"strings"
 	"text/template"
@@ -24,18 +25,20 @@ import (
 )
 
 const (
-	jupyterDir          = "/run/determined/jupyter/"
-	jupyterConfigDir    = "/run/determined/jupyter/config"
-	jupyterDataDir      = "/run/determined/jupyter/data"
-	jupyterRuntimeDir   = "/run/determined/jupyter/runtime"
-	jupyterEntrypoint   = "/run/determined/jupyter/notebook-entrypoint.sh"
+	jupyterDir        = "/run/determined/jupyter/"
+	jupyterConfigDir  = "/run/determined/jupyter/config"
+	jupyterDataDir    = "/run/determined/jupyter/data"
+	jupyterRuntimeDir = "/run/determined/jupyter/runtime"
+	jupyterEntrypoint = "/run/determined/jupyter/notebook-entrypoint.sh"
+	// Agent port range is 2600 - 3200. Ports are split between TensorBoard and Notebooks.
+	minNotebookPort     = 2900
+	maxNotebookPort     = minNotebookPort + 299
 	notebookConfigFile  = "/run/determined/workdir/jupyter-conf.py"
 	notebookDefaultPage = "/run/determined/workdir/Notebook.ipynb"
 )
 
 var (
 	notebookEntrypoint = []string{jupyterEntrypoint}
-	notebookPorts      = map[string]int{"notebook": 8888}
 )
 
 func generateNotebookDescription() (string, error) {
@@ -170,7 +173,20 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 	taskID := scheduler.NewTaskID()
 
 	// Postprocess the config. Add Jupyter and configuration to the container.
+
+	// Select a random port from the range to assign to the notebook. In host
+	// mode, this mitigates the risk of multiple notebook processes binding
+	// the same port on an agent.
+	port := getPort(minNotebookPort, maxNotebookPort)
+	notebookPorts := map[string]int{"notebook": port}
+	portVar := fmt.Sprintf("NOTEBOOK_PORT=%d", port)
+
 	config.Environment.Ports = notebookPorts
+	config.Environment.EnvironmentVariables.CPU = append(
+		config.Environment.EnvironmentVariables.CPU, portVar)
+	config.Environment.EnvironmentVariables.GPU = append(
+		config.Environment.EnvironmentVariables.GPU, portVar)
+
 	config.Entrypoint = notebookEntrypoint
 
 	if config.Description == "" {
