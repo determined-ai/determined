@@ -85,19 +85,18 @@ const TrialLogs: React.FC = () => {
   const handleDownloadLogs = useCallback(() => {
     Modal.confirm({
       content: <div>
-        For large trial logs it will take a significant amount of
-        time and browser memory to complete download. We recommend
-        using the CLI to download instead:
+        We recommend using the Determined CLI to download trial logs:
         <code className="block">
-          det trial logs {id}
+          det trial logs {id} &gt; experiment_{trial.data?.experimentId}_trial_{trialId}_logs.txt
         </code>
       </div>,
       icon: <ExclamationCircleOutlined />,
-      okText: 'Confirm Download',
+      okText: 'Proceed to Download',
       onOk: handleDownloadConfirm,
       title: `Confirm Download for Trial ${id} Logs`,
+      width: 640,
     });
-  }, [ handleDownloadConfirm, id ]);
+  }, [ handleDownloadConfirm, id, trial.data, trialId ]);
 
   useEffect(() => setUI({ type: UI.ActionType.HideChrome }), [ setUI ]);
 
