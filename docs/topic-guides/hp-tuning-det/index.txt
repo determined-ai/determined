@@ -100,4 +100,5 @@ Next Steps
   hp-random
   hp-adaptive-simple
   hp-adaptive-advanced
+  hp-adaptive-asha
   hp-pbt
