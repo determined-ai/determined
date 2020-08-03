@@ -4,14 +4,14 @@ import queryString from 'query-string';
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { Api } from 'services/apiBuilder';
 import {
-  jsonToAgents, jsonToCommandLogs, jsonToCommands, jsonToDeterminedInfo,
-  jsonToExperimentDetails, jsonToExperiments, jsonToLogs, jsonToNotebooks, jsonToShells,
+  jsonToAgents, jsonToCommands, jsonToDeterminedInfo, jsonToExperimentDetails,
+  jsonToExperiments, jsonToLogs, jsonToNotebooks, jsonToShells, jsonToTaskLogs,
   jsonToTensorboard, jsonToTensorboards, jsonToTrialDetails, jsonToTrialLogs, jsonToUsers,
 } from 'services/decoder';
 import {
-  CommandLogsParams, EmptyParams, ExperimentDetailsParams, ExperimentsParams,
-  ForkExperimentParams, KillCommandParams, KillExpParams,
-  LaunchTensorboardParams, LogsParams, PatchExperimentParams, TrialDetailsParams, TrialLogsParams,
+  EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
+  KillCommandParams, KillExpParams, LaunchTensorboardParams, LogsParams,
+  PatchExperimentParams, TaskLogsParams, TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails,
@@ -26,7 +26,7 @@ const saltAndHashPassword = (password?: string): string => {
   return sha512(passwordSalt + password);
 };
 
-const commandToEndpoint: Record<CommandType, string> = {
+export const commandToEndpoint: Record<CommandType, string> = {
   [CommandType.Command]: '/commands',
   [CommandType.Notebook]: '/notebooks',
   [CommandType.Tensorboard]: '/tensorboard',
@@ -215,21 +215,21 @@ export const getMasterLogs: Api<LogsParams, Log[]> = {
   postProcess: response => jsonToLogs(response.data),
 };
 
+export const getTaskLogs: Api<TaskLogsParams, Log[]> = {
+  httpOptions: (params: TaskLogsParams) => ({
+    url: [
+      `${commandToEndpoint[params.taskType]}/${params.taskId}/events`,
+      buildQuery(params),
+    ].join('?'),
+  }),
+  name: 'getTaskLogs',
+  postProcess: response => jsonToTaskLogs(response.data),
+};
+
 export const getTrialLogs: Api<TrialLogsParams, Log[]> = {
   httpOptions: (params: TrialLogsParams) => ({
     url: [ `/trials/${params.trialId}/logs`, buildQuery(params) ].join('?'),
   }),
   name: 'getTrialLogs',
   postProcess: response => jsonToTrialLogs(response.data),
-};
-
-export const getCommandLogs: Api<CommandLogsParams, Log[]> = {
-  httpOptions: (params: CommandLogsParams) => ({
-    url: [
-      `/${params.commandType}/${params.commandId}/events`,
-      buildQuery(params),
-    ].join('?'),
-  }),
-  name: 'getCommandLogs',
-  postProcess: response => jsonToCommandLogs(response.data),
 };

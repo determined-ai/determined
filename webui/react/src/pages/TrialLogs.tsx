@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { throttle } from 'throttle-debounce';
 
-import LogViewer, { LogViewerHandles } from 'components/LogViewer';
+import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
 import Message from 'components/Message';
 import Page from 'components/Page';
 import Spinner from 'components/Spinner';
@@ -21,7 +21,6 @@ interface Params {
   trialId: string;
 }
 
-const TAIL_SIZE = 1000;
 const THROTTLE_TIME = 500;
 
 const TrialLogs: React.FC = () => {

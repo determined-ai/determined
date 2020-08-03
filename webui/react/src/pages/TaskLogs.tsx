@@ -1,36 +1,56 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import queryString from 'query-string';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
 import Page from 'components/Page';
 import UI from 'contexts/UI';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
-import { getMasterLogs } from 'services/api';
-import { LogsParams } from 'services/types';
-import { Log } from 'types';
+import { getTaskLogs } from 'services/api';
+import { TaskLogsParams } from 'services/types';
+import { CommandType, Log } from 'types';
+import { capitalize } from 'utils/string';
 
-const MasterLogs: React.FC = () => {
+interface Params {
+  taskId: string;
+  taskType: string;
+}
+
+interface Queries {
+  id?: string;
+}
+
+const TaskLogs: React.FC = () => {
+  const { taskId, taskType } = useParams<Params>();
+  const queries: Queries = queryString.parse(location.search);
+  const title = `${capitalize(taskType)} Logs${queries.id ? ` (${queries.id})` : ''}`;
   const setUI = UI.useActionContext();
   const logsRef = useRef<LogViewerHandles>(null);
   const [ oldestFetchedId, setOldestFetchedId ] = useState(Number.MAX_SAFE_INTEGER);
   const [ logIdRange, setLogIdRange ] =
     useState({ max: Number.MIN_SAFE_INTEGER, min: Number.MAX_SAFE_INTEGER });
-  const [ logsResponse, triggerOldLogsRequest ] =
-    useRestApi<LogsParams, Log[]>(getMasterLogs, { tail: TAIL_SIZE });
-  const [ pollingLogsResponse, triggerNewLogsRequest ] =
-    useRestApi<LogsParams, Log[]>(getMasterLogs, { tail: TAIL_SIZE });
+  const baseParams = useMemo(() => ({
+    tail: TAIL_SIZE,
+    taskId,
+    taskType: taskType.toLocaleUpperCase() as CommandType,
+  }), [ taskId, taskType ]);
+  const [ logsResponse, setLogsParams ] =
+    useRestApi<TaskLogsParams, Log[]>(getTaskLogs, baseParams);
+  const [ pollingLogsResponse, setPollingLogsParams ] =
+    useRestApi<TaskLogsParams, Log[]>(getTaskLogs, baseParams);
 
   const fetchOlderLogs = useCallback((oldestLogId: number) => {
     const startLogId = Math.max(0, oldestLogId - TAIL_SIZE);
     if (startLogId >= oldestFetchedId) return;
     setOldestFetchedId(startLogId);
-    triggerOldLogsRequest({ greaterThanId: startLogId, tail: TAIL_SIZE });
-  }, [ oldestFetchedId, triggerOldLogsRequest ]);
+    setLogsParams({ ...baseParams, greaterThanId: startLogId });
+  }, [ baseParams, oldestFetchedId, setLogsParams ]);
 
   const fetchNewerLogs = useCallback(() => {
     if (logIdRange.max < 0) return;
-    triggerNewLogsRequest({ greaterThanId: logIdRange.max, tail: TAIL_SIZE });
-  }, [ logIdRange.max, triggerNewLogsRequest ]);
+    setPollingLogsParams({ ...baseParams, greaterThanId: logIdRange.max });
+  }, [ baseParams, logIdRange.max, setPollingLogsParams ]);
 
   const handleScrollToTop = useCallback((oldestLogId: number) => {
     fetchOlderLogs(oldestLogId);
@@ -75,14 +95,15 @@ const MasterLogs: React.FC = () => {
   }, [ logIdRange, pollingLogsResponse.data ]);
 
   return (
-    <Page hideTitle maxHeight title="Master Logs">
+    <Page hideTitle maxHeight title={title}>
       <LogViewer
+        disableLevel
         noWrap
         ref={logsRef}
-        title="Master Logs"
+        title={title}
         onScrollToTop={handleScrollToTop} />
     </Page>
   );
 };
 
-export default MasterLogs;
+export default TaskLogs;
