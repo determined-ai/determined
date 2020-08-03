@@ -8,6 +8,7 @@ import { floatToPercent } from 'utils/string';
 import css from './ProgressBar.module.scss';
 
 interface Props {
+  barOnly?: boolean;
   percent: number;
   state: RunState | CommandState;
 }
@@ -16,15 +17,18 @@ const defaultProps = {
   percent: 0,
 };
 
-const ProgressBar: React.FC<Props> = ({ percent, state }: Props) => {
+const ProgressBar: React.FC<Props> = ({ barOnly, percent, state }: Props) => {
+  const classes = [ css.base ];
   const style = {
     backgroundColor: getStateColor(state),
     width: `${percent}%`,
   };
 
+  if (barOnly) classes.push(css.barOnly);
+
   return (
     <Tooltip title={floatToPercent(percent / 100, 0)}>
-      <div className={css.base}>
+      <div className={classes.join(' ')}>
         <div className={css.bar}>
           <span className={css.progress} style={style} />
         </div>
