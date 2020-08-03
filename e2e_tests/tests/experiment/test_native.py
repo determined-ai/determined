@@ -26,7 +26,7 @@ class NativeImplementations:
         ],
         configuration={
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
-            "searcher": {"name": "single", "max_steps": 1, "metric": "validation_error"},
+            "searcher": {"name": "single", "max_steps": 1, "metric": "validation_loss"},
             "max_restarts": 0,
         },
         num_expected_steps_per_trial=1,

@@ -46,7 +46,7 @@ def _make_local_execution_exp_config(input_config: Optional[Dict[str, Any]]) -> 
 
 
 def _make_local_execution_env(
-    config: Optional[Dict[str, Any]], hparams: Optional[Dict[str, Any]] = None,
+    training: bool, config: Optional[Dict[str, Any]], hparams: Optional[Dict[str, Any]] = None,
 ) -> Tuple[det.EnvContext, det.RendezvousInfo, horovod.HorovodContext]:
     config = det.ExperimentConfig(_make_local_execution_exp_config(config))
     hparams = hparams or api.generate_random_hparam_values(config.get("hyperparameters", {}))
@@ -74,6 +74,7 @@ def _make_local_execution_env(
         det_experiment_id="",
         det_cluster_id="",
         trial_seed=config.experiment_seed(),
+        training=training,
     )
     rendezvous_ports = env.rendezvous_ports()
     rendezvous_info = det.RendezvousInfo(

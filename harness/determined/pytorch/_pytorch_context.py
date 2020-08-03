@@ -24,22 +24,21 @@ class _WarningLogs(enum.Enum):
 
 
 class PyTorchTrialContext(det.TrialContext):
-    """Contains runtime information for any Determined workflow that uses the ``pytorch`` API."""
+    """Contains runtime information for any Determined workflow that uses the ``PyTorch`` API.
 
-    # TODO(DET-3204): Add the following comments to the docstring.
-    #
-    #     With this class, users can do the following things:
-    #
-    #     1. Wrap Pytorch models, optimizers, and LR schedulers with their Determined-compatible
-    #        counterparts using :meth:`Model`, :meth:`Optimizer`, :meth:`LRScheduler`,
-    #        respectively. The Determined-compatible objects are capable of transparent
-    #        distributed training, checkpointing and exporting, mixed-precision training,
-    #        and gradient aggregation.
-    #     2. Configure apex amp by :meth:`_configure_apex_amp`.
-    #     3. Calculate the gradients with :meth:`backward` on a specified loss.
-    #     4. Run an optimization step with :meth:`step_optimizer`.
-    #     5. Functionalities inherited from TrialContext, including getting the runtime
-    #        information and properly handling training data in distributed training.
+    With this class, users can do the following things:
+
+    1. Wrap PyTorch models, optimizers, and LR schedulers with their Determined-compatible
+       counterparts using :meth:`wrap_model`, :meth:`wrap_optimizer`, :meth:`wrap_lrscheduler`,
+       respectively. The Determined-compatible objects are capable of transparent
+       distributed training, checkpointing and exporting, mixed-precision training,
+       and gradient aggregation.
+    2. Configure apex amp by calling :meth:`configure_apex_amp`.
+    3. Calculate the gradients with :meth:`backward` on a specified loss.
+    4. Run an optimization step with :meth:`step_optimizer`.
+    5. Functionalities inherited from :class:`determined.TrialContext`, including getting
+       the runtime information and properly handling training data in distributed training.
+    """
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -65,7 +64,6 @@ class PyTorchTrialContext(det.TrialContext):
         self._use_amp = False
         self._loss_ids = {}  # type: Dict[torch.Tensor, int]
         self._last_backward_batch_idx = None  # type: Optional[int]
-
         self._current_batch_idx = None  # type: Optional[int]
 
     def get_model(self) -> torch.nn.Module:
@@ -75,8 +73,15 @@ class PyTorchTrialContext(det.TrialContext):
 
             * ``__init__``
             * ``build_model()``
+
+        .. warning::
+            This is deprecated.
         """
-        # TODO(DET-3267): deprecate this when releasing pytorch flexible primitives.
+        # TODO(DET-3262): remove this backward compatibility of old interface.
+        logging.warning(
+            "PyTorchTrialContext.get_model is deprecated. "
+            "Please directly use the model wrapped by context.wrap_model()."
+        )
         check.len_eq(self.models, 1)
         return self.models[0]
 
@@ -88,8 +93,16 @@ class PyTorchTrialContext(det.TrialContext):
             * ``__init__``
             * ``build_model()``
             * ``optimizer()``
+
+
+        .. warning::
+            This is deprecated.
         """
-        # TODO(DET-3267): deprecate this when releasing pytorch flexible primitives.
+        # TODO(DET-3262): remove this backward compatibility of old interface.
+        logging.warning(
+            "PyTorchTrialContext.get_optimizer is deprecated. "
+            "Please directly use the model wrapped by context.wrap_optimizer()."
+        )
         check.len_eq(self.optimizers, 1)
         return self.optimizers[0]
 
@@ -102,29 +115,37 @@ class PyTorchTrialContext(det.TrialContext):
             * ``build_model()``
             * ``optimizer()``
             * ``create_lr_scheduler()``
+
+        .. warning::
+            This is deprecated.
         """
-        # TODO(DET-3267): deprecate this when releasing pytorch flexible primitives.
+        # TODO(DET-3262): remove this backward compatibility of old interface.
+        logging.warning(
+            "PyTorchTrialContext.get_lr_scheduler is deprecated. "
+            "Please directly use the model wrapped by context.wrap_lrscheduler()."
+        )
         check.lt_eq(len(self.lr_schedulers), 1)
         if len(self.lr_schedulers) == 1:
             return self.lr_schedulers[0]
         return None
 
-    def _Model(self, model: torch.nn.Module) -> torch.nn.Module:
-        """Wraps a model. It returns a wrapped model."""
+    def wrap_model(self, model: torch.nn.Module) -> torch.nn.Module:
+        """Returns a wrapped model."""
 
-        check.false(self._use_amp, "Must call Model() before _configure_apex_amp.")
+        if self.env.training:
+            check.false(self._use_amp, "Must call Model() before configure_apex_amp.")
 
-        model = model.to(self.device)
-        if not self.hvd_config.use and self.n_gpus > 1:
-            check.eq(
-                self.hvd_config.aggregation_frequency,
-                1,
-                "Please enable `optimized_parallel` to use aggregation "
-                "frequency greater than 1 for single machine multi-GPU "
-                "training.",
-            )
-            model = nn.DataParallel(model)
-            logging.debug("Initialized model for native parallel training.")
+            model = model.to(self.device)
+            if not self.hvd_config.use and self.n_gpus > 1:
+                check.eq(
+                    self.hvd_config.aggregation_frequency,
+                    1,
+                    "Please enable `optimized_parallel` to use aggregation "
+                    "frequency greater than 1 for single machine multi-GPU "
+                    "training.",
+                )
+                model = nn.DataParallel(model)
+                logging.debug("Initialized model for native parallel training.")
 
         model_id = len(self.models)
         self._main_model.__setattr__(f"model_{model_id}", model)
@@ -132,36 +153,40 @@ class PyTorchTrialContext(det.TrialContext):
         self.models.append(model)
         return model
 
-    def _Optimizer(self, optimizer: torch.optim.Optimizer) -> torch.optim.Optimizer:  # type: ignore
-        """Wraps an optimizer. It returns a wrapped optimizer.
+    def wrap_optimizer(
+        self, optimizer: torch.optim.Optimizer  # type: ignore
+    ) -> torch.optim.Optimizer:  # type: ignore
+        """Returns a wrapped optimizer.
 
-        The optimizer must use the models wrapped by :meth:`Model`. This function
+        The optimizer must use the models wrapped by :meth:`wrap_model`. This function
         creates a ``horovod.DistributedOptimizer`` if using parallel/distributed training.
         """
+        if self.env.training:
+            check.false(self._use_amp, "Must call Optimizer() before configure_apex_amp.")
 
-        check.false(self._use_amp, "Must call Optimizer() before _configure_apex_amp.")
-
-        if self.hvd_config.use:
-            use_compression = self.hvd_config.fp16_compression
-            optimizer = hvd.DistributedOptimizer(
-                optimizer,
-                named_parameters=self._filter_named_parameters(optimizer),
-                backward_passes_per_step=self.hvd_config.aggregation_frequency,
-                compression=hvd.Compression.fp16 if use_compression else hvd.Compression.none,
-            )
-            logging.debug("Initialized optimizer for distributed and optimized parallel training.")
+            if self.hvd_config.use:
+                use_compression = self.hvd_config.fp16_compression
+                optimizer = hvd.DistributedOptimizer(
+                    optimizer,
+                    named_parameters=self._filter_named_parameters(optimizer),
+                    backward_passes_per_step=self.hvd_config.aggregation_frequency,
+                    compression=hvd.Compression.fp16 if use_compression else hvd.Compression.none,
+                )
+                logging.debug(
+                    "Initialized optimizer for distributed and optimized parallel training."
+                )
 
         self.optimizers.append(optimizer)
         return optimizer
 
-    def _LRScheduler(
+    def wrap_lrscheduler(
         self,
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler,
         step_mode: pytorch.LRScheduler.StepMode,
     ) -> pytorch.LRScheduler:
-        """Wraps a LR scheduler. It returns a wrapped LR scheduler.
+        """Returns a wrapped LR scheduler.
 
-        The LR scheduler must use an optimizer wrapped by :meth:`Optimizer` and configured with
+        The LR scheduler must use an optimizer wrapped by :meth:`wrap_optimizer` and configured with
         :meth:`configure_apex_amp`.
         """
 
@@ -197,12 +222,18 @@ class PyTorchTrialContext(det.TrialContext):
             self.device = torch.device("cpu")
         check.is_not_none(self.device)
 
-    def _to_device(self, data: pytorch._Data) -> pytorch.TorchData:
+    def to_device(self, data: pytorch._Data) -> pytorch.TorchData:
+        """Map generated data to the device allocated by the Determined cluster.
+
+        All the data in the data loader and the models are automatically moved to the
+        allocated device. This method aims at providing a function for the data generated
+        on the fly.
+        """
         return pytorch.to_device(
             data, self.device, self.warning_logged[_WarningLogs.FAILED_MOVING_TO_DEVICE]
         )
 
-    def _configure_apex_amp(
+    def configure_apex_amp(
         self,
         models: Union[torch.nn.Module, List[torch.nn.Module]],
         optimizers: Union[torch.optim.Optimizer, List[torch.optim.Optimizer]],  # type: ignore
@@ -224,7 +255,7 @@ class PyTorchTrialContext(det.TrialContext):
         for apex.amp are handled automatically within Determined after this call.
 
         This function must be called **after** you have finished constructing your models and
-        optimizers with :meth:`Model` and :meth:`Optimizer`.
+        optimizers with :meth:`wrap_model` and :meth:`wrap_optimizer`.
 
         This function has the same arguments as
         `apex.amp.initialize <https://nvidia.github.io/apex/amp.html#apex.amp.initialize>`_.
@@ -233,7 +264,7 @@ class PyTorchTrialContext(det.TrialContext):
             When using distributed training and automatic mixed precision,
             we only support ``num_losses=1`` and calling backward on the loss once.
 
-        Args:
+        Arguments:
             models (``torch.nn.Module`` or list of ``torch.nn.Module`` s):  Model(s) to modify/cast.
             optimizers (``torch.optim.Optimizer`` or list of ``torch.optim.Optimizer`` s):
                 Optimizers to modify/cast. REQUIRED for training.
@@ -272,6 +303,9 @@ class PyTorchTrialContext(det.TrialContext):
             If  ``optimizers`` args were lists, the corresponding return value will
             also be a list.
         """
+        if not self.env.training:
+            return models, optimizers
+
         check.false(self._use_amp, "Please only call configure_apex_amp once.")
         if self.hvd_config.use:
             check.eq(
@@ -326,7 +360,7 @@ class PyTorchTrialContext(det.TrialContext):
             raise det.errors.InternalException("Training hasn't started.")
         return (self._current_batch_idx + 1) % self.hvd_config.aggregation_frequency == 0
 
-    def _backward(
+    def backward(
         self,
         loss: torch.Tensor,
         gradient: Optional[torch.Tensor] = None,
@@ -339,7 +373,6 @@ class PyTorchTrialContext(det.TrialContext):
         See https://pytorch.org/docs/1.4.0/_modules/torch/tensor.html#Tensor.backward for details.
 
         .. warning::
-
             When using distributed training, we don't support manual gradient accumulation.
             That means the gradient on each parameter can only be calculated once on each batch.
             If a parameter is associated with multiple losses, you can either choose to call
@@ -412,26 +445,45 @@ class PyTorchTrialContext(det.TrialContext):
         for p in filter(lambda param: param.grad is not None, parameters):
             p.grad.data.div_(divisor_value)
 
-    def _step_optimizer(
+    def step_optimizer(
         self,
         optimizer: torch.optim.Optimizer,  # type: ignore
         clip_grads: Optional[Callable[[Iterator], None]] = None,
+        auto_zero_grads: bool = True,
     ) -> None:
         """
         Perform a single optimization step.
 
         This function must be called once for each optimizer. However, the order of
-        different optimizers' optimization steps can be specified by calling
-        this function in different orders. Also, gradient accumulation across iterations
-        is performed by the Determined training loop by setting the experiment configuration
-        optimization.aggregation_frequency.
+        different optimizers' steps can be specified by calling this function in different
+        orders. Also, gradient accumulation across iterations is performed by the Determined
+        training loop by setting the experiment configuration field
+        ``optimization.aggregation_frequency``.
+
+        Here is a code example:
+
+        .. code-block:: python
+
+            def clip_grads(params):
+                torch.nn.utils.clip_grad_norm_(params, 0.0001),
+
+            self.context.step_optimizer(self.opt1, clip_grads)
 
         Arguments:
             optimizer(``torch.optim.Optimizer``): Which optimizer should be stepped.
             clip_grads(a function, optional): This function should have one argument for
                 parameters in order to clip the gradients
+            auto_zero_grads(bool, optional): Automatically zero out gradients automatically
+                after stepping the optimizer. If false, you need to call ``optimizer.zero_grad()``
+                manually. Note that if ``optimizations.aggregation_frequency`` is larger than 1,
+                auto_zero_grads must be true.
         """
 
+        check.true(
+            auto_zero_grads or self.hvd_config.aggregation_frequency > 1,
+            "if optimizations.aggregation_frequency is larger than 1, "
+            "you can only set auto_zero_grads to be true. ",
+        )
         if self._should_communicate_and_update():
             # Communication needs to be synchronized so that is completed
             # before we apply gradient clipping and `step()`.
@@ -457,7 +509,9 @@ class PyTorchTrialContext(det.TrialContext):
                     optimizer.step()
             else:
                 optimizer.step()
-            optimizer.zero_grad()
+
+            if auto_zero_grads:
+                optimizer.zero_grad()
 
     def is_epoch_start(self) -> bool:
         """

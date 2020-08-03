@@ -1,4 +1,4 @@
-description: Flexible Primitive MNIST Pytorch Const
+description: MNIST GAN Pytorch Const
 data:
   url: "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
 hyperparameters:
@@ -10,6 +10,6 @@ hyperparameters:
 searcher:
   name: single
   metric: loss
-  max_steps: 200
+  max_steps: 400
   smaller_is_better: True
 entrypoint: model_def:GANTrial
