@@ -2,6 +2,7 @@ description: mnist_pytorch_adaptive
 data:
   url: https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz
 hyperparameters:
+  global_batch_size: 64
   learning_rate:
     type: log
     minval: -3.0
@@ -11,9 +12,6 @@ hyperparameters:
     type: double
     minval: .2
     maxval: .8
-  global_batch_size:
-    type: const
-    val: 64
   n_filters1:
     type: int
     minval: 8
