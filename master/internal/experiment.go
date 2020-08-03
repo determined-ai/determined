@@ -506,7 +506,7 @@ func (e *experiment) isBestValidation(msg searcher.CompletedMessage) bool {
 
 func (e *experiment) updateState(ctx *actor.Context, state model.State) bool {
 	if wasPatched, err := e.Transition(state); err != nil {
-		ctx.Log().Error(err)
+		ctx.Log().Errorf("error transitioning experiment state: %s", err)
 		return false
 	} else if !wasPatched {
 		return true
@@ -518,7 +518,7 @@ func (e *experiment) updateState(ctx *actor.Context, state model.State) bool {
 		ctx.Tell(child, state)
 	}
 	if err := e.db.SaveExperimentState(e.Experiment); err != nil {
-		ctx.Log().Error(err)
+		ctx.Log().Errorf("error saving experiment state: %s", err)
 	}
 	if e.canTerminate(ctx) {
 		ctx.Self().Stop()

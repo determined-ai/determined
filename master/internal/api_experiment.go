@@ -113,17 +113,20 @@ func (a *apiServer) ActivateExperiment(
 	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
 	switch {
 	case err != nil:
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, status.Errorf(codes.Internal, "failed to check if experiment exists: %s", err)
 	case !ok:
 		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
 	}
 
 	addr := actor.Addr("experiments", req.Id).String()
-	err = a.actorRequest(addr, req, &resp)
-	if status.Code(err) == codes.NotFound {
+	switch err = a.actorRequest(addr, req, &resp); {
+	case status.Code(err) == codes.NotFound:
 		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed passing request to experiment actor: %s", err)
+	default:
+		return resp, nil
 	}
-	return resp, err
 }
 
 func (a *apiServer) PauseExperiment(
@@ -138,9 +141,12 @@ func (a *apiServer) PauseExperiment(
 	}
 
 	addr := actor.Addr("experiments", req.Id).String()
-	err = a.actorRequest(addr, req, &resp)
-	if status.Code(err) == codes.NotFound {
+	switch err = a.actorRequest(addr, req, &resp); {
+	case status.Code(err) == codes.NotFound:
 		return nil, status.Error(codes.FailedPrecondition, "experiment in terminal state")
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed passing request to experiment actor: %s", err)
+	default:
+		return resp, nil
 	}
-	return resp, err
 }
