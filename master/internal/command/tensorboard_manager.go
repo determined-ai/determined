@@ -27,7 +27,7 @@ import (
 
 const (
 	expConfPath = "/run/determined/workdir/experiment_config.json"
-	// Agent port range is 2600 - 3000. Ports are split between TensorBoard and Notebooks
+	// Agent port range is 2600 - 3200. Ports are split between TensorBoard and Notebooks
 	minTensorBoardPort        = 2600
 	maxTensorBoardPort        = minTensorBoardPort + 299
 	tensorboardEntrypointFile = "/run/determined/workdir/tensorboard-entrypoint.sh"
