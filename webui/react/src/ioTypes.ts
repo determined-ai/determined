@@ -59,7 +59,7 @@ export const ioSlotDevice = io.type({
 });
 
 export const ioSlotContainer = io.type({
-  devices: io.array(ioSlotDevice),
+  devices: io.union([ io.array(ioSlotDevice), io.null ]),
   id: io.string,
   state: io.string,
 });
