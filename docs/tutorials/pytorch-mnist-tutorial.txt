@@ -83,8 +83,6 @@ The current values of the model's hyperparameters can be accessed via the :func:
 
 .. code:: python
 
-    from determined.pytorch import reset_parameters
-
     def __init__(self, context: PyTorchTrialContext):
         # Store trial context for later use.
         self.context = context
@@ -106,7 +104,6 @@ The current values of the model's hyperparameters can be accessed via the :func:
             nn.Linear(128, 10),
             nn.LogSoftmax(),
         ))
-        reset_parameters(self.model)
 
         # Initialize the optimizers and wrap them with self.context.wrap_optimizer().
         self.optimizer = self.context.wrap_optimizer(
