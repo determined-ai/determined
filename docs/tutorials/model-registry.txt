@@ -13,13 +13,10 @@ track overtime. A model in this context is a named collection of related
 checkpoints. Each checkpoint added to a model is known as a model version. With
 this tiered system you can:
 
-* group related checkpoints, including checkpoints across experiments.
-* store metadata is specific to your problem or organization. Examples include:
-    * References to production systems
-    * Dataset identifiers
-    * Git urls
-    * Metrics calculated outside of Determined
-    * etc.
+* Group related checkpoints, including checkpoints across experiments.
+* Store metadata is specific to your problem or organization. Examples include,
+  references to production systems, dataset links, git links, and metrics
+  calculated outside of Determined.
 * Retrieve the latest version of a model for downstream tasks like serving.
 
 The registry offers a great deal of flexibility. You can define models for
@@ -30,7 +27,6 @@ register checkpoints that accomplish that task. Another option would be to
 define a "FasterRCNN" model and register checkpoints that contain that
 architecture. It is up to you and your organization to decide how best to use
 the registry.
-
 
 Managing Models
 ---------------
