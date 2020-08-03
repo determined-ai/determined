@@ -85,17 +85,17 @@ class MetricMaker(det.CallbackTrialController):
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         pass
 
-    def train_for_step(self, step_id: int, scheduling_unit: int) -> Dict[str, Any]:
+    def train_for_step(self, step_id: int, num_batches: int) -> Dict[str, Any]:
         # Get the base value for each batch
-        batch_values = self.value + self.gain_per_batch * np.arange(scheduling_unit)
+        batch_values = self.value + self.gain_per_batch * np.arange(num_batches)
 
         # Get a training metric structure for each batch.
         batch_metrics = [structure_to_metrics(v, self.training_structure) for v in batch_values]
 
         # Update the overall base value for the trial..
-        self.value += self.gain_per_batch * scheduling_unit
+        self.value += self.gain_per_batch * num_batches
 
-        return {"metrics": {"batch_metrics": batch_metrics, "num_inputs": scheduling_unit}}
+        return {"metrics": {"batch_metrics": batch_metrics, "num_inputs": num_batches}}
 
     def compute_validation_metrics(self, step_id: int) -> Dict[str, Any]:
         return {
