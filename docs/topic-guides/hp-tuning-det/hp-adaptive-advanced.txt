@@ -38,88 +38,88 @@ Details
 -------
 
 Conceptually, the ``adaptive`` searcher is a carefully tuned strategy
-for spawning multiple *ASHA* (asynchronous successive halving algorithm)
-searchers, themselves hyperparameter search algorithms. ASHA can be
+for spawning multiple *SHA* (successive halving algorithm)
+searchers, themselves hyperparameter search algorithms. SHA can be
 configured to make different tradeoffs between exploration and
 exploitation, i.e., how many trials are explored versus how long a
 single trial is trained for. Because the right tradeoff between
 exploration and exploitation is hard to know in advance, the
-``adaptive`` algorithm tries several ASHA searches with different
+``adaptive`` algorithm tries several SHA searches with different
 tradeoffs.
 
 The configuration settings available to Determined experiments running
-in ``adaptive`` mode mostly affect the ASHA subroutines directly. The
+in ``adaptive`` mode mostly affect the SHA subroutines directly. The
 ``mode`` configuration is the only one affecting the decisions of the
-``adaptive`` searcher, by changing the number and types of ASHA
+``adaptive`` searcher, by changing the number and types of SHA
 subroutines spawned.
 
-The first section here gives a description of ASHA. The second section
+The first section here gives a description of SHA. The second section
 describes the configuration parameters that influence how this search
 method behaves. The third section gives a summary of the ``adaptive``
 configuration settings.
 
-ASHA
+SHA
 ~~~~
 
-At a high level, ASHA prunes ("halves") a set of trials in successive rounds we
-call *rungs*. ASHA starts with an initial set of trials. (A trial means a single
-model with a fixed set of hyperparameter values.) ASHA trains all the trials for
+At a high level, SHA prunes ("halves") a set of trials in successive rounds we
+call *rungs*. SHA starts with an initial set of trials. (A trial means a single
+model with a fixed set of hyperparameter values.) SHA trains all the trials for
 some number of steps and the trials with the worst validation performance are
 discarded. In the next rung, the remaining trials are trained for a longer
 period of time, and then trials with the worst validation performance are pruned
 once again.  This is repeated until the maximum number of training steps is
 reached.
 
-First, an example of ASHA.
+First, an example of SHA.
 
--  Rung 1: ASHA creates N initial trials; the hyperparameter values for
+-  Rung 1: SHA creates N initial trials; the hyperparameter values for
    each trial are randomly sampled from the hyperparameters defined in
    the experiment configuration file. Each trial is trained for 3 steps,
    and then validation metrics are computed.
--  Rung 2: ASHA picks the N/4 top-performing trials according to
+-  Rung 2: SHA picks the N/4 top-performing trials according to
    validation metrics. These are trained for 12 steps.
--  Rung 3: ASHA picks the N/16 top-performing trials according to
+-  Rung 3: SHA picks the N/16 top-performing trials according to
    validation metrics. These are trained for 48 steps.
 
 At the end, the trial with best performance has the hyperparameter
-setting the ASHA searcher returns.
+setting the SHA searcher returns.
 
 In the example above, ``divisor`` is 4, which controls the fraction
 of trials that are kept in successive rungs, as well as the number of steps
 in successive rungs. ``target_trial_steps`` is 48, which is the maximum
 number of steps a trial is trained for.
 
-The remaining degree of freedom in this ASHA example is the number N of
+The remaining degree of freedom in this SHA example is the number N of
 initial trials. This is determined by the top-level adaptive algorithm,
-through ``step_budget`` and the number/types of ASHA subroutines called.
+through ``step_budget`` and the number/types of SHA subroutines called.
 
-In general, ASHA has a fixed ``divisor`` d. In the first rung, it
+In general, SHA has a fixed ``divisor`` d. In the first rung, it
 generates an initial set of randomly chosen trials and runs until each
 trial has completed the same number of steps. In the next rung, it keeps
 1/d of those trials and closes the rest. Then it runs each remaining
 trial until it has completed d times as many steps as after the previous
-rung. ASHA iterates this process until some stopping criterion is
+rung. SHA iterates this process until some stopping criterion is
 reached, such as completing a specified number of rungs or having only
 one trial remaining. The number of steps, rungs, and trials within rungs
-are fixed within each ASHA searcher, but vary across different calls to
-ASHA by the adaptive algorithm. Note that although the name "ASHA"
+are fixed within each SHA searcher, but vary across different calls to
+SHA by the adaptive algorithm. Note that although the name "SHA"
 includes the phrase "halving", the fraction of trials pruned after every
 rung is controlled by ``divisor``.
 
-Adaptive over ASHA
+Adaptive over SHA
 ~~~~~~~~~~~~~~~~~~
 
-The adaptive algorithm calls ASHA subroutines with varying parameters.
+The adaptive algorithm calls SHA subroutines with varying parameters.
 The exact calls are configured through the choice of ``mode``, which
 specifies how aggressively to perform early stopping. One way to think
-about this behavior is as a spectrum that ranges from "one ASHA run"
+about this behavior is as a spectrum that ranges from "one SHA run"
 (aggressive early stopping; eliminate most trials every rung) to
 "``searcher: random``" (no early stopping; all initialized trials are
 allowed to run to completion).
 
 On one end, ``aggressive`` applies early stopping in a very eager
 manner; this mode essentially corresponds to only making a single call
-to ASHA. With the default ``divisor`` of 4, 75% of the remaining trials
+to SHA. With the default ``divisor`` of 4, 75% of the remaining trials
 will be eliminated in each rung after only being trained for 25% as many
 training steps as will be performed in the next rung. This implies that
 relatively few of the trials will be allowed to finish even a small
@@ -130,18 +130,18 @@ hyperparameter configurations, at the risk of discarding a configuration
 too soon.
 
 On the other end, ``conservative`` mode is more similar to a ``random``
-search, in that it performs significantly less pruning. Extra ASHA
+search, in that it performs significantly less pruning. Extra SHA
 subroutines are spawned with fewer rungs and larger training steps to
 account for the high percentage of trials eliminated after only a few
 steps. However, a ``conservative`` adaptive search will only explore a
 small fraction of the configurations explored by an ``aggressive``
 search, given the same step budget.
 
-Once the number and types of calls to ASHA are determined (via
+Once the number and types of calls to SHA are determined (via
 ``mode``), the adaptive algorithm will allocate budgets of steps to the
-ASHA subroutines, from the overall step_budget for the adaptive
+SHA subroutines, from the overall step_budget for the adaptive
 algorithm (user-specified through ``step_budget``). This determines the
-number of trials at each rung (N in the above ASHA example).
+number of trials at each rung (N in the above SHA example).
 
 Configuration
 ~~~~~~~~~~~~~
@@ -149,7 +149,7 @@ Configuration
 Users specify configurations for the ``adaptive`` searcher through the
 :ref:`experiment-configuration`. They fall into two categories described below.
 
-**Parameters for ASHA:**
+**Parameters for SHA:**
 
 -  ``target_trial_steps``: The maximum number of steps that any one
    trial will be trained.
@@ -166,7 +166,7 @@ Users specify configurations for the ``adaptive`` searcher through the
    stopping. We suggest using either ``aggressive`` or ``standard``
    mode.
 -  ``step_budget``: A budget for total steps taken across all trials and
-   ASHA calls. The budget is split evenly between ASHA calls. The
+   SHA calls. The budget is split evenly between SHA calls. The
    recommendation above was to set
    ``step_budget = 10 * target_trial_steps``.
 
@@ -177,7 +177,7 @@ The table below illustrates the difference between ``aggressive``,
 ``standard``, and ``conservative`` for an otherwise fixed configuration.
 While ``aggressive`` tries out 64 hyperparameter configurations,
 ``conservative`` tries only 31 hyperparameter configurations but has the
-budget to run more of them to the full 16 steps. More ASHA instances are
+budget to run more of them to the full 16 steps. More SHA instances are
 generated by ``conservative``, which are responsible for creating the
 trials run for the full 16 steps.
 
@@ -193,7 +193,7 @@ The settings are ``divisor: 4``, ``max_rungs: 3``,
 +----------+----------------+--------------+-------+------------------+-------+-------+
 |          | ``aggressive`` | ``standard`` |       | ``conservative`` |       |       |
 +----------+----------------+--------------+-------+------------------+-------+-------+
-|          | ASHA0          | ASHA0        | ASHA1 | ASHA0            | ASHA1 | ASHA2 |
+|          | SHA0           | SHA0         | SHA1  | SHA0             | SHA1  | SHA2  |
 +----------+----------------+--------------+-------+------------------+-------+-------+
 | 1        | 48             | 23           |       | 14               |       |       |
 +----------+----------------+--------------+-------+------------------+-------+-------+
@@ -203,7 +203,7 @@ The settings are ``divisor: 4``, ``max_rungs: 3``,
 +----------+----------------+--------------+-------+------------------+-------+-------+
 
 For an experiment generated by a specific ``.yaml`` experiment
-configuration file, this information (ASHA instances and number of
+configuration file, this information (SHA instances and number of
 trials vs. number of steps) can be found with the command
 
 .. code:: bash
