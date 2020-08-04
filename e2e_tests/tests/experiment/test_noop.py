@@ -253,14 +253,12 @@ def test_rng_restore() -> None:
         1,
     )
 
-    trials = exp.experiment_trials(experiment)
-    first_trial = trials[0]
+    first_trial = exp.experiment_trials(experiment)[0]
 
-    assert len(trials) == 1
     assert len(first_trial["steps"]) == 3
 
     first_step = first_trial["steps"][0]
-    second_checkpoint_id = first_step["checkpoint"]["id"]
+    first_checkpoint_id = first_trial["steps"][0]["checkpoint"]["id"]
 
     config_base = conf.load_config(conf.fixtures_path("pytorch-rng-saver/const.yaml"))
     config_obj = copy.deepcopy(config_base)
@@ -270,42 +268,21 @@ def test_rng_restore() -> None:
         config_obj, conf.fixtures_path("pytorch-rng-saver"), 1
     )
 
-    trials = exp.experiment_trials(experiment2)
-    second_trial = trials[0]
+    second_trial = exp.experiment_trials(experiment2)[0]
 
-    assert len(trials) == 1
     assert len(second_trial["steps"]) == 3
-    assert second_trial["warm_start_checkpoint_id"] == second_checkpoint_id
+    assert second_trial["warm_start_checkpoint_id"] == first_checkpoint_id
 
-    assert (
-        first_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["np_rand"]
-        == second_trial["steps"][0]["validation"]["metrics"]["validation_metrics"]["np_rand"]
-    )
-
-    assert (
-            first_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["rand_rand"]
-            == second_trial["steps"][0]["validation"]["metrics"]["validation_metrics"]["rand_rand"]
-    )
-
-    assert (
-            first_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["torch_rand"]
-            == second_trial["steps"][0]["validation"]["metrics"]["validation_metrics"]["torch_rand"]
-    )
-
-    assert (
-        first_trial["steps"][2]["validation"]["metrics"]["validation_metrics"]["np_rand"]
-        == second_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["np_rand"]
-    )
-
-    assert (
-            first_trial["steps"][2]["validation"]["metrics"]["validation_metrics"]["rand_rand"]
-            == second_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["rand_rand"]
-    )
-
-    assert (
-            first_trial["steps"][2]["validation"]["metrics"]["validation_metrics"]["torch_rand"]
-            == second_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["torch_rand"]
-    )
+    for step in range(0, 2):
+        for metric in ["np_rand", "rand_rand", "torch_rand"]:
+            assert (
+                first_trial["steps"][step + 1]["validation"]["metrics"]["validation_metrics"][
+                    metric
+                ]
+                == second_trial["steps"][step]["validation"]["metrics"]["validation_metrics"][
+                    metric
+                ]
+            )
 
 
 @pytest.mark.e2e_gpu  # type: ignore
@@ -316,10 +293,8 @@ def test_gpu_restore() -> None:
         1,
     )
 
-    trials = exp.experiment_trials(experiment)
-    first_trial = trials[0]
+    first_trial = exp.experiment_trials(experiment)[0]
 
-    assert len(trials) == 1
     assert len(first_trial["steps"]) == 3
 
     first_step = first_trial["steps"][0]
@@ -333,49 +308,18 @@ def test_gpu_restore() -> None:
         config_obj, conf.fixtures_path("pytorch-rng-saver"), 1
     )
 
-    trials = exp.experiment_trials(experiment2)
-    second_trial = trials[0]
+    second_trial = exp.experiment_trials(experiment2)[0]
 
-    assert len(trials) == 1
     assert len(second_trial["steps"]) == 3
     assert second_trial["warm_start_checkpoint_id"] == second_checkpoint_id
 
-    assert (
-            first_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["np_rand"]
-            == second_trial["steps"][0]["validation"]["metrics"]["validation_metrics"]["np_rand"]
-    )
-
-    assert (
-            first_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["rand_rand"]
-            == second_trial["steps"][0]["validation"]["metrics"]["validation_metrics"]["rand_rand"]
-    )
-
-    assert (
-            first_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["torch_rand"]
-            == second_trial["steps"][0]["validation"]["metrics"]["validation_metrics"]["torch_rand"]
-    )
-
-    assert (
-            first_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["gpu_rand"]
-            == second_trial["steps"][0]["validation"]["metrics"]["validation_metrics"]["gpu_rand"]
-    )
-
-    assert (
-            first_trial["steps"][2]["validation"]["metrics"]["validation_metrics"]["np_rand"]
-            == second_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["np_rand"]
-    )
-
-    assert (
-            first_trial["steps"][2]["validation"]["metrics"]["validation_metrics"]["rand_rand"]
-            == second_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["rand_rand"]
-    )
-
-    assert (
-            first_trial["steps"][2]["validation"]["metrics"]["validation_metrics"]["torch_rand"]
-            == second_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["torch_rand"]
-    )
-
-    assert (
-            first_trial["steps"][2]["validation"]["metrics"]["validation_metrics"]["gpu_rand"]
-            == second_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["gpu_rand"]
-    )
+    for step in range(0, 2):
+        for metric in ["np_rand", "rand_rand", "torch_rand", "gpu_rand"]:
+            assert (
+                first_trial["steps"][step + 1]["validation"]["metrics"]["validation_metrics"][
+                    metric
+                ]
+                == second_trial["steps"][step]["validation"]["metrics"]["validation_metrics"][
+                    metric
+                ]
+            )
