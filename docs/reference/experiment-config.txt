@@ -128,6 +128,8 @@ Top-Level Fields
   experiment is considered to complete successfully if at least one of its
   trials completes successfully. The default value is ``5``.
 
+.. _checkpoint-storage:
+
 Checkpoint Storage
 ******************
 
@@ -643,9 +645,9 @@ applications of hyperparameter search.
 Adaptive (ASHA)
 ----------------
 
-The ``adaptive_ashe`` search method is an asynchronous version of the 
-``adaptive <experiment-configuration-searcher-adaptive>`` method above that is 
-more suitable for large experiments with many trials.  
+The ``adaptive_asha`` search method is an asynchronous version of the
+``adaptive <experiment-configuration-searcher-adaptive>`` method above that is
+more suitable for large experiments with many trials.
 
 **Required Fields**
 
@@ -662,9 +664,9 @@ more suitable for large experiments with many trials.
 
 ``max_trials``
   The number of trials, i.e., hyperparameter configurations, to evaluate.
-  
+
 ``max_concurrent_trials``
-  The maximum number of trials that can be worked on simultaneously.  This is 
+  The maximum number of trials that can be worked on simultaneously.  This is
   akin to controlling the degree of parallelism of the experiment.
 
 **Optional Fields**

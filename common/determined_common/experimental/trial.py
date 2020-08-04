@@ -10,7 +10,7 @@ class TrialReference:
     :class:`~determined.experimental.Checkpoint` instances.
 
     Arguments:
-        trial_id (int): the trial ID.
+        trial_id (int): The trial ID.
         master (string, optional): The URL of the Determined master. If this
             class is obtained via :class:`determined.experimental.Determined`, the
             master URL is automatically passed into this constructor.
@@ -29,12 +29,12 @@ class TrialReference:
         arguments.
 
         Arguments:
-            sort_by (string, optional): the name of the validation metric to
+            sort_by (string, optional): The name of the validation metric to
                 order checkpoints by. If this parameter is unset the metric defined
                 in the related experiment configuration searcher field will be
                 used.
 
-            smaller_is_better (bool, optional): specifies whether to sort the
+            smaller_is_better (bool, optional): Whether to sort the
                 metric above in ascending or descending order. If ``sort_by`` is unset,
                 this parameter is ignored. By default, the value of ``smaller_is_better``
                 from the experiment's configuration is used.
@@ -59,22 +59,22 @@ class TrialReference:
         Exactly one of the ``best``, ``latest``, or ``uuid`` parameters must be set.
 
         Arguments:
-            latest (bool, optional): return the most recent checkpoint.
+            latest (bool, optional): Return the most recent checkpoint.
 
-            best (bool, optional): return the checkpoint with the best validation
+            best (bool, optional): Return the checkpoint with the best validation
                 metric as defined by the ``sort_by`` and ``smaller_is_better``
                 arguments. If ``sort_by`` and ``smaller_is_better`` are not
                 specified, the values from the associated experiment
                 configuration will be used.
 
-            uuid (string, optional): return the checkpoint for the specified UUID.
+            uuid (string, optional): Return the checkpoint for the specified UUID.
 
-            sort_by (string, optional): the name of the validation metric to
+            sort_by (string, optional): The name of the validation metric to
                 order checkpoints by. If this parameter is unset the metric defined
                 in the related experiment configuration searcher field will be
                 used.
 
-            smaller_is_better (bool, optional): specifies whether to sort the
+            smaller_is_better (bool, optional): Whether to sort the
                 metric above in ascending or descending order. If ``sort_by`` is unset,
                 this parameter is ignored. By default, the value of ``smaller_is_better``
                 from the experiment's configuration is used.
@@ -93,7 +93,7 @@ class TrialReference:
 
         if sort_by is not None and not best:
             raise AssertionError(
-                "sort_by and smaller_is_better parameters can only be used with best"
+                "`sort_by` and `smaller_is_better` parameters can only be used with `best`"
             )
 
         if uuid:
