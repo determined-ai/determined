@@ -385,7 +385,9 @@ func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 		Limits: map[k8sV1.ResourceName]resource.Quantity{
 			"nvidia.com/gpu": *resource.NewQuantity(int64(p.gpus), resource.DecimalSI),
 		},
-		Requests: map[k8sV1.ResourceName]resource.Quantity{},
+		Requests: map[k8sV1.ResourceName]resource.Quantity{
+			"nvidia.com/gpu": *resource.NewQuantity(int64(p.gpus), resource.DecimalSI),
+		},
 	}
 }
 
@@ -509,7 +511,7 @@ func (p *pod) configurePodSpec(
 	if podSpec == nil {
 		podSpec = &k8sV1.Pod{}
 	} else {
-		ctx.Log().Info("using user provided pod spec as as template")
+		ctx.Log().Info("using user provided pod_spec as a template")
 		podSpec = podSpec.DeepCopy()
 	}
 	ctx.Log().Debugf("using base pods spec: %v", podSpec.Spec)
@@ -547,7 +549,7 @@ func (p *pod) configurePodSpec(
 	podSpec.Spec.Containers = containers
 	podSpec.Spec.RestartPolicy = k8sV1.RestartPolicyNever
 
-	ctx.Log().Debugf("launching pod spec %v", podSpec.Spec.Volumes)
+	ctx.Log().Debugf("launching pod spec %v", podSpec.Spec)
 	return podSpec
 }
 
