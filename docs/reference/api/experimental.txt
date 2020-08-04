@@ -23,6 +23,22 @@ determined.experimental
     :inherited-members:
     :member-order: bysource
 
+``ModelOrderBy``
+-----------------------
+
+.. autoclass:: determined.experimental.ModelOrderBy
+    :members:
+    :inherited-members:
+    :member-order: bysource
+
+``ModelSortBy``
+-----------------------
+
+.. autoclass:: determined.experimental.ModelSortBy
+    :members:
+    :inherited-members:
+    :member-order: bysource
+
 ``ExperimentReference``
 -----------------------
 

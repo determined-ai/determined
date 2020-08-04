@@ -3,58 +3,65 @@
 Organizing Models in the Model Registry
 =======================================
 
-In this tutorial, we focus on organization of checkpoints via the Determined
-Model Registry. Before reading this guide, we recommend that users first read
-the :ref:`use-trained-models` how to guide which describes how to interact
-with checkpoints.
+Determined includes built-in support for a *model registry*, which makes it easy
+to organize trained models and their respective versions.
 
-The model registry is designed to organize checkpoints that are relevant to
-track overtime. A model in this context is a named collection of related
-checkpoints. Each checkpoint added to a model is known as a model version. With
-this tiered system you can:
+The model registry contains a set of *models*. Each model has a unique name and
+zero or more *model versions*. A model version consists of a version number and
+a checkpoint, which represents the state of a trained model. Common use-cases
+for the model registry include:
 
-* Group related checkpoints, including checkpoints across experiments.
-* Store metadata is specific to your problem or organization. Examples include,
-  references to production systems, dataset links, git links, and metrics
-  calculated outside of Determined.
-* Retrieve the latest version of a model for downstream tasks like serving.
+* Grouping related checkpoints together, including checkpoints across experiments.
+* Storing metadata about a model that is specific to your problem or
+  organization. Examples include references to production systems, dataset
+  links, Git links, and metrics calculated outside of Determined.
+* Retrieving the latest version of a model for downstream tasks like serving or
+  batch inference.
 
-The registry offers a great deal of flexibility. You can define models for
-tasks, datasets, or architectures and add checkpoints as model versions as you
-see fit. A checkpoint can be registered as a version of multiple models as
-well. An example setup would be to define a model for "object-detection" and
-register checkpoints that accomplish that task. Another option would be to
-define a "FasterRCNN" model and register checkpoints that contain that
-architecture. It is up to you and your organization to decide how best to use
-the registry.
+The model registry is designed to be flexible, and the best way to use it
+depends on your organization's requirements and workflow. For example, one
+approach is to define a model for each high-level task you want to use machine
+learning for (e.g., "object-detection", "sentiment-analysis", etc.). Then each
+version of this model would correspond to a new approach to solving that
+task. Note that different versions of a model might come from different
+experiments, use different network architectures, or can even use different deep
+learning frameworks. Another approach would be to register a model named
+"FasterRCNN", and ensure that each version of the model uses that network
+architecture.
 
 Managing Models
 ---------------
 
-A model is a named set of checkpoints. Each model in Determined must have a
-unique name. You can also store a description for each model which provides
-extra context. Finally, models can contain JSON metadata. This is useful for
-storing additional attributes related a model. The following is an example JSON
-representation of a model for illustration.
+A *model* has a unique name, an optional description, user-defined metadata, and
+zero or more *model versions*. A model's metadata can contain arbitrary
+information about the model. The following is an example JSON representation of
+a model for illustration.
 
 .. code:: json
 
   {
-    "name": "mnist_cnn",
-    "description": "a character recognition model",
-    "metadata": {
-      "dataset_url": "http://yann.lecun.com/exdb/mnist/",
-      "git_url": "http://github.com/user/repo"
+    "mnist_cnn": {
+      "description": "a character recognition model",
+      "metadata": {
+        "dataset_url": "http://yann.lecun.com/exdb/mnist/",
+        "git_url": "http://github.com/user/repo"
+      },
+      "versions": []
     }
   }
 
-Models are created via the Determined Python API, REST API, or CLI. This guide
-will cover the Python and CLI methods. For information on the REST API see
-the `Swagger API documentation </swagger-ui/#/Models>`__.
+Registering Models
+******************
 
-The following snippet creates a model and returns a
-:class:`~determined.experimental.Model`. The
-:class:`~determined.experimental.Model` is covered below.
+A model can be added to the registry via the Python API, REST API, or CLI. This
+guide will cover the Python and CLI methods. For information on the REST API,
+see the `Swagger API documentation </swagger-ui/#/Models>`__.
+
+The following example demonstrates how to add a new model to the registry;
+:func:`~determined.experimental.Determined.create_model` returns an instance of the
+:class:`~determined.experimental.Model` class. The new model will not have any
+versions (model checkpoints) associated with it; adding versions to a model is
+described below.
 
 .. code:: Python
 
@@ -70,14 +77,16 @@ Similarly, you can create a model from the CLI using the following command.
 
 .. code:: bash
 
-  det model create <model_name> description=""
+  det model create <model_name>
 
+Querying Models
+***************
 
-The following snippet returns models registered in Determined as a list of
+The following example returns models registered in Determined as a list of
 :class:`~determined.experimental.Model` objects. Models can be sorted by name,
-description, creation time and last updated time. Additionally, models can be
+description, creation time, and last updated time. Additionally, models can be
 filtered by name or description via the Python API. For sorting and ordering
-options see :class:`~determined.experimental.ModelSortBy` and
+options, see :class:`~determined.experimental.ModelSortBy` and
 :class:`~determined.experimental.ModelOrderBy` respectively.
 
 .. code:: python
@@ -90,23 +99,20 @@ options see :class:`~determined.experimental.ModelSortBy` and
 
   chronological_sort = d.get_models(sort_by=ModelSortBy.CREATION_TIME)
 
-  # The following will return all models with "mnist" in their name. Some
-  # potential model names are "mnist_pytorch", "mnist_cnn", "mnist", etc.
+  # Find all models with "mnist" in their name. Some possible model names
+  # are "mnist_pytorch", "mnist_cnn", "mnist", etc.
   mnist_models = d.get_models(name="mnist")
 
-  # Similarly models can be filtered by description. The following line returns
-  # models whose description contains "ocr".
+  # Find all models whose description contains "ocr".
   ocr_models = d.get_models(description="ocr")
-
 
 Similarly, you can list models from the CLI using the following command.
 
 .. code:: bash
 
-   det model list --sort-by={name,description,creation_time,last_updated_time} --order-by={asc, desc}
+   det model list --sort-by={name,description,creation_time,last_updated_time} --order-by={asc,desc}
 
-
-The following snippet queries a model by name.
+The following snippet queries for a single model by name.
 
 .. code:: python
 
@@ -114,15 +120,18 @@ The following snippet queries a model by name.
 
   model = Determined().get_model("model_name")
 
-The CLI equivalent is below. The describe command will print the information of
-the latest version of the model by default as well.
+The CLI equivalent is below. The ``describe`` command will print information
+about the latest version of the model by default as well.
 
 .. code:: bash
 
   det model describe <model_name>
 
-Currently, metadata from models can only be edited via the Python API. The
-methods are as follows.
+Modifying Model Metadata
+************************
+
+Currently, model metadata can only be edited via the Python API. The following
+example demonstrates how to use this API.
 
 .. code:: python
 
@@ -130,76 +139,71 @@ methods are as follows.
 
   model = Determined().get_model("model_name")
 
-  model.add_metadata({"key", "value"})
-
   # Metadata is merged with existing metadata.
+  model.add_metadata({"key", "value"})
   model.add_metadata({"metrics": {"test_set_loss": 0.091}})
-  # results in {"key": "value", "metrics": { "test_set_loss": 0.091 } }.
 
-  # Only top-level keys are merged. The following line will override all values
-  # underneath the "metrics" key.
+  # Result: {"key": "value", "metrics": { "test_set_loss": 0.091 } }.
+
+  # Only top-level keys are merged. The following statement will replace the
+  # previous value of the "metrics" key.
   model.add_metadata({"metrics": {"test_set_acc": 0.97}})
-  # Results in {"key": "value", "metrics": { "test_set_acc": 0.97 } }.
 
-  # Removes a top level key from the metadata.
+  # Result: {"key": "value", "metrics": { "test_set_acc": 0.97 } }.
+
   model.remove_metadata(["key"])
-  # Results in {"metrics": { "test_set_acc": 0.97 } }.
+
+  # Result: {"metrics": { "test_set_acc": 0.97 } }.
 
 
 Managing Model Versions
 -----------------------
 
-Once the model exists in Determined, you can register checkpoints as versions
-of the model. These registered checkpoints are known as model versions in
-Determined. A model version can be thought of as a pointer to a checkpoint. For
-each model in the system, the version number will start at 1 and increment each
-time a model version is registered. Model versions are retrieved via the model
-(see :class:`~determined.experimental.Model`) and can be used to download and
-load the checkpoints they refer to. The following is an example JSON
-representation of a model version for illustration.
+Once a model has been added to the registry, you can add one or more checkpoints
+to it. These registered checkpoints are known as *model versions*. Version
+numbers are assigned by the registry; version numbers start at ``1`` and
+increment each time a new model version is registered.
+
+For illustration, this JSON document illustrates an example model with a single
+registered version.
 
 .. code:: json
 
   {
-    "model_version": {
-      "model": {
-        "name": "mnist_cnn",
-        "description": "a character recognition model",
-        "metadata": {
-          "dataset_url": "http://yann.lecun.com/exdb/mnist/",
-          "git_url": "http://github.com/user/repo"
-        },
+    "mnist_cnn": {
+      "description": "a character recognition model",
+      "metadata": {
+        "dataset_url": "http://yann.lecun.com/exdb/mnist/",
+        "git_url": "http://github.com/user/repo"
       },
-      "checkpoint": {
-        "uuid": "6a24d772-f1f7-4655-9061-22d582afd96c",
-        "experiment_config": { "...": "..." },
-        "experimentId": 1,
-        "trialId": 1,
-        "hparams": { "...": "..." },
-        "batchNumber": 100,
-        "resources": {
-          "code/": "0",
-          "code/const.yaml": "391",
-          "code/model_def.py": "4067",
-          "determined-keras-model.h5": "25224"
-        },
-        "metadata": {},
-        "framework": "tensorflow-1.14.0",
-        "format": "h5",
-        "metrics": { "...": "..." }
-      },
-      "version": 1
+      "versions": [
+        {
+          "version_number": 1,
+          "checkpoint": {
+            "uuid": "6a24d772-f1f7-4655-9061-22d582afd96c",
+            "experiment_config": { "...": "..." },
+            "experimentId": 1,
+            "trialId": 1,
+            "hparams": { "...": "..." },
+            "batchNumber": 100,
+            "resources": { "...": "..." },
+            "metadata": {},
+            "framework": "tensorflow-1.14.0",
+            "format": "h5",
+            "metrics": { "...": "..." }
+          }
+        }
+      ]
     }
   }
 
-Methods accessing model versions often return a
-:class:`~determined.experimental.Checkpoint` since a model version is simply a
-pointer to a checkpoint. Therefore, the model_version can be used to download
-and load checkpoints as well as manage checkpoint metadata. See the
-:ref:`use-trained-models` guide for more information.
+Creating Versions
+*****************
 
-The following snippet registers a version of a model and returns the updated
-:class:`~determined.experimental.Checkpoint` object.
+The following snippet registers a new version of a model.
+:func:`~determined.experimental.Model.register_version()` returns an updated
+:class:`~determined.experimental.Checkpoint` object representing the new model
+version.
 
 .. code:: python
 
@@ -213,20 +217,21 @@ The following snippet registers a version of a model and returns the updated
 
   model_version = model.register_version(checkpoint.uuid)
 
-  # Depending on the framework used to generate the checkpoint, the
-  # model_version will either load a TensorFlow or PyTorch object with the
-  # architecture and weights loaded from the checkpoint.
-  tf_or_torch_model = model_version.load()
-
-Similarly, to register a new model version from the CLI use the following
-command.
+Similarly, a new model version can be registered using the CLI as follows:
 
 .. code:: bash
 
-  det model register <model_name> <checkpoint-uuid>
+  det model register <model_name> <checkpoint_uuid>
 
-The following snippet retrieves a specific version of a model. If no version
-number is specified the most recent version of the model is returned.
+Accessing Versions
+******************
+
+The example below demonstrates how to retrieve versions of a model from the
+registry. If no version number is specified, the most recent version of the
+model is returned. :func:`~determined.experimental.Model.get_version()` returns
+an instance of :class:`~determined.experimental.Checkpoint`; as shown in the
+example, this makes it easy to perform common operations like downloading the
+checkpoint to local storage or loading the trained model into memory.
 
 .. code:: python
 
@@ -234,12 +239,16 @@ number is specified the most recent version of the model is returned.
 
   model = Determined().get_model("model_name")
 
+  specific_version = model.get_version(3)
   latest_version = model.get_version()
 
-  specific_version = model.get_version(3)
+  # Depending on the framework used to create the checkpoint, calling
+  # load() on a model version (checkpoint) will return either a TensorFlow or
+  # PyTorch object representing the trained model.
+  tf_or_torch_model = latest_version.load()
 
-To list all the versions of a model use the following snippet. By default model
-versions are returned in descending order such that the most recent models are
+The following example lists all the versions of a model. By default, model
+versions are returned in descending order such that the most recent versions are
 returned first.
 
 .. code:: python
@@ -250,7 +259,7 @@ returned first.
 
   model_versions = model.get_versions()
 
-The CLI equivalent is as follows.
+The CLI equivalent is as follows:
 
 .. code:: bash
 

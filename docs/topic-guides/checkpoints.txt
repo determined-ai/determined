@@ -10,7 +10,8 @@ In the current version of Determined, exporting models is supported by copying
 the **checkpoints** that are automatically created during the training
 process.
 
-A checkpoint includes the model architecture and the values of the model's
+A checkpoint includes the model definition (Python source code), experiment
+configuration file, network architecture, and the values of the model's
 parameters (i.e., weights) and hyperparameters. When using a stateful optimizer
 during training, checkpoints will also include the state of the optimizer (i.e.,
 learning rate). Users can also embed arbitrary metadata in checkpoints via a
@@ -18,34 +19,27 @@ learning rate). Users can also embed arbitrary metadata in checkpoints via a
 
 The exact checkpoint format depends on the application framework being used:
 
--  TensorFlow Estimator trials are checkpointed using the
-   `SavedModel <https://www.tensorflow.org/programmers_guide/saved_model#structure_of_a_savedmodel_directory>`__
-   format. Please consult the TensorFlow documentation to restore models
-   from the SavedModel format.
--  TensorFlow Keras trials are checkpointed as an HDF5 file with the model weights
-   and a JSON file describing the model's architecture. When using a stateful
-   optimization method, the optimizer state is also saved as a separate HDF5
-   file. To restore the architecture and/or weights of a Keras trial checkpoint,
-   use the `keras.models.model_from_json()
-   <https://keras.io/models/about-keras-models/>`__ and `model.load_weights()
-   <https://keras.io/getting-started/faq/#how-can-i-save-a-keras-model>`__ Keras
-   APIs, respectively. Optimizer state is currently saved in a custom
-   experimental format---to restore it outside of Determined, please contact the
-   Determined AI team for a consultation.
--  TF Keras trials are checkpointed to a file named ``determined-keras-model.h5``
-   using ``tf.keras.models.save_model``. You can learn more from the `TF
-   Keras
-   docs <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/models/save_model>`__.
--  PyTorch trials are checkpointed as a ``state-dict.pth`` file. This file is
-   created in a similar manner to the procedure described in the `PyTorch
-   documentation <https://pytorch.org/tutorials/beginner/saving_loading_models.html#saving-loading-a-general-checkpoint-for-inference-and-or-resuming-training>`__.
-   Instead of the fields in the documentation linked above, there are
-   four fields for the dictionary that is saved by Determined:
-   "models_state_dict", "optimizers_state_dict", "lr_schedulers_state_dict", and "callbacks",
-   which are the ``state_dict`` of the models, optimizers, LR schedulers, and callbacks
-   respectively.
+TensorFlow Estimator
+  Trials are checkpointed using the
+  `SavedModel <https://www.tensorflow.org/programmers_guide/saved_model#structure_of_a_savedmodel_directory>`__
+  format. Please consult the TensorFlow documentation to restore models
+  from the SavedModel format.
 
-Determined will automatically create checkpoints for all the trials in an
+TensorFlow Keras
+  Trials are checkpointed to a file named ``determined-keras-model.h5`` using
+  ``tf.keras.models.save_model``. You can learn more from the `TF Keras docs
+  <https://www.tensorflow.org/versions/r1.15/api_docs/python/tf/keras/models/save_model>`__.
+
+PyTorch
+  Trials are checkpointed as a ``state-dict.pth`` file. This file is created in
+  a similar manner to the procedure described in the `PyTorch documentation
+  <https://pytorch.org/tutorials/beginner/saving_loading_models.html#saving-loading-a-general-checkpoint-for-inference-and-or-resuming-training>`__. Instead
+  of the fields in the documentation linked above, the dictionary will have four
+  keys: ``models_state_dict``, ``optimizers_state_dict``,
+  ``lr_schedulers_state_dict``, and ``callbacks``, which are the ``state_dict`` of
+  the models, optimizers, LR schedulers, and callbacks respectively.
+
+Determined will automatically create checkpoints for each trial in an
 experiment. Checkpoints are created in three situations:
 
 1. When Determined suspends training of a trial at one agent, before later
@@ -64,11 +58,12 @@ experiment:
 
    $ det experiment list-checkpoints <experiment-id>
 
-Checkpoints are saved to external storage, as specified in the
-experiment configuration; see the discussion of ``checkpoint_storage``
-above. Each checkpoint has a UUID, which is used as the name of the
-checkpoint directory on the external storage system. For example, if the
-experiment is configured to save checkpoints to a shared file system:
+Checkpoints are saved to external storage, according to the
+:ref:`checkpoint_storage <checkpoint-storage>` section in either the experiment
+configuration or the master configuration. Each checkpoint has a UUID, which is
+used as the name of the checkpoint directory on the external storage system. For
+example, if the experiment is configured to save checkpoints to a shared file
+system:
 
 .. code:: yaml
 
@@ -96,7 +91,7 @@ The Determined CLI can be used to download a checkpoint saved on a shared file s
 Checkpoint Garbage Collection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Typically only some checkpoints are appropriate for deployment. Once an
+Typically only some checkpoints need to be retained for future use. Once an
 experiment has finished, Determined can optionally garbage collect some or all
 of the checkpoints taken when the experiment was running. The following
 parameters in the ``checkpoint_storage`` section of the experiment
@@ -128,7 +123,7 @@ following respective value:
 This policy will save the most recent *and* the best checkpoint per
 trial. In other words, if the most recent checkpoint is also the *best*
 checkpoint for a given trial, only one checkpoint will be saved for that
-trial. Otherwise, two checkpoints will be saved for that trial.
+trial. Otherwise, two checkpoints will be saved.
 
 Example
 ^^^^^^^
@@ -193,16 +188,16 @@ subcommand of the Determined CLI.
 Checkpoint Storage Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A default checkpoint storage will be used when each experiment is created. It
-is recommended to create a default checkpoint configuration that will be used
-by all pertinent tasks started by the cluster. To configure this value, edit
-the ``checkpoint_storage`` configuration in cluster configuration with the
-desired type and location of checkpoint storage. See
-:ref:`cluster-configuration` for details. However, every experiment can still
-be configured with a specific checkpoint storage. See
-:ref:`experiment-configuration` for details.
+A default checkpoint storage will be used when each experiment is created. It is
+recommended to create a default checkpoint configuration that will be used by
+all pertinent tasks started by the cluster. To configure this value, edit the
+``checkpoint_storage`` section in the :ref:`master configuration
+<master-configuration>` with the desired type and location of checkpoint
+storage. Individual experiments can override this value to specify a custom
+checkpoint storage location via the experiment configuration file.
 
 See Also
 ~~~~~~~~
 
 * :ref:`use-trained-models`
+* :ref:`organizing-models`
