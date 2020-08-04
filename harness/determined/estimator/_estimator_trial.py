@@ -353,6 +353,16 @@ class EstimatorTrialController(det.LoopTrialController):
             hvd.require_horovod_type("tensorflow", "EstimatorTrial is in use.")
             hvd.init()
 
+            # This is option is available for when TF ignores `gpu_options.visible_device_list`.
+            # TODO (DET-3762): Remove this once it's no longer necessary.
+            if env.experiment_config.get("data", {}).get("set_cuda_visible_devices", False):
+                logging.info(
+                    "Setting `CUDA_VISIBLE_DEVICES` environment variables "
+                    "and disabling NCCL_P2P_DISABLE"
+                )
+                os.environ["CUDA_VISIBLE_DEVICES"] = str(hvd.local_rank())
+                os.environ["NCCL_P2P_DISABLE"] = "1"
+
         # Initialize random seeds.
         if env.experiment_config.input_from_dataflow():
             logging.debug("Using tensorpack dataflows as input.")
@@ -552,9 +562,16 @@ class EstimatorTrialController(det.LoopTrialController):
             if session_config is None:
                 session_config = tf.compat.v1.ConfigProto()
             session_config.gpu_options.allow_growth = True
-            session_config.gpu_options.visible_device_list = str(
-                self.env.slot_ids[horovod.hvd.local_rank()]
-            )
+
+            # If using CUDA_VISIBLE_DEVICES there is only one visible GPU
+            # so there is no need to set visible devices for TF.
+            # TODO (DET-3762): Remove this once it's no longer necessary.
+            if not self.env.experiment_config.get("data", {}).get(
+                "set_cuda_visible_devices", False
+            ):
+                session_config.gpu_options.visible_device_list = str(
+                    self.env.slot_ids[horovod.hvd.local_rank()]
+                )
         elif len(self.env.container_gpus) > 1:
             check.true(len(self.rendezvous_info.get_addrs()) == 1)
             train_distribute = tf.distribute.MirroredStrategy()
