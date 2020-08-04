@@ -7,7 +7,7 @@ import torch
 import determined as det
 from determined import pytorch, workload
 from tests.experiment import utils  # noqa: I100
-from tests.experiment.fixtures import pytorch_xor_model
+from tests.experiment.fixtures import pytorch_onevar_model, pytorch_xor_model
 
 
 def check_equal_structures(a: typing.Any, b: typing.Any) -> None:
@@ -47,12 +47,16 @@ class TestPyTorchTrial:
             "lr_scheduler_step_mode": pytorch.LRScheduler.StepMode.MANUAL_STEP.value,
         }
 
-    def test_xor_single(self) -> None:
+    def test_onevar_single(self) -> None:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
 
-            yield from trainer.send(steps=1000, validation_freq=100)
+            yield from trainer.send(steps=100, validation_freq=10)
             training_metrics, validation_metrics = trainer.result()
+
+            # Check the gradient update at every step.
+            for idx, batch_metrics in enumerate(training_metrics):
+                pytorch_onevar_model.OneVarTrial.check_batch_metrics(batch_metrics, idx)
 
             # We expect the validation error and training loss to be
             # monotonically decreasing.
@@ -62,36 +66,9 @@ class TestPyTorchTrial:
             yield workload.terminate_workload(), [], workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrial,
+            trial_class=pytorch_onevar_model.OneVarTrial,
             hparams=self.hparams,
             workloads=make_workloads(),
-            trial_seed=self.trial_seed,
-        )
-        controller.run()
-
-    def test_xor_multi(self) -> None:
-        def make_workloads() -> workload.Stream:
-            trainer = utils.TrainAndValidate()
-
-            yield from trainer.send(steps=1000, validation_freq=100)
-            training_metrics, validation_metrics = trainer.result()
-
-            # We expect the validation error and training loss to be
-            # monotonically decreasing.
-            for older, newer in zip(training_metrics, training_metrics[1:]):
-                assert newer["loss"] <= older["loss"]
-
-            for older, newer in zip(validation_metrics, validation_metrics[1:]):
-                assert newer["binary_error"] <= older["binary_error"]
-
-            assert validation_metrics[-1]["binary_error"] == pytest.approx(0.0)
-
-            yield workload.terminate_workload(), [], workload.ignore_workload_response
-
-        controller = utils.make_trial_controller_from_trial_implementation(
-            trial_class=pytorch_xor_model.XORTrialMulti,
-            workloads=make_workloads(),
-            hparams=self.hparams,
             trial_seed=self.trial_seed,
         )
         controller.run()
