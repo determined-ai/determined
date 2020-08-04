@@ -27,6 +27,39 @@ func (a *apiServer) GetMaster(
 	}, err
 }
 
+// effectiveOffset Returns effective offset.
+func effectiveOffset(reqOffset int, totalItems int) (offset int) {
+	offset = reqOffset
+	if reqOffset < 0 {
+		offset = totalItems + offset
+		if offset < 0 {
+			offset = 0
+		}
+	}
+	return offset
+}
+
+// effectiveLimit Returns effective limit.
+// Input: Limit 0 is treated as no limit
+// Output: Limit -1 is treated as no limit
+func effectiveLimit(reqLimit int, offset int, totalItems int) (limit int) {
+	limit = -1
+	if reqLimit != 0 {
+		limit = reqLimit
+		if limit > totalItems-offset {
+			limit = totalItems - offset
+		}
+	}
+	return limit
+}
+
+// TODO could we have this work with generic requests that have offset and limit?
+func effectiveOffsetNLimit(reqOffset int, reqLimit int, totalItems int) (offset int, limit int) {
+	offset = effectiveOffset(reqOffset, totalItems)
+	limit = effectiveLimit(reqLimit, offset, totalItems)
+	return offset, limit
+}
+
 func (a *apiServer) MasterLogs(
 	req *apiv1.MasterLogsRequest, resp apiv1.Determined_MasterLogsServer) error {
 	if err := grpc.ValidateRequest(
@@ -35,21 +68,7 @@ func (a *apiServer) MasterLogs(
 		return err
 	}
 	total := a.m.logs.Len()
-	offset := int(req.Offset)
-	if req.Offset < 0 {
-		offset = total + offset
-		if offset < 0 {
-			offset = 0
-		}
-	}
-
-	limit := -1
-	if req.Limit != 0 {
-		limit = int(req.Limit)
-		if limit > total-offset {
-			limit = total - offset
-		}
-	}
+	offset, limit := effectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
 
 	for {
 		for _, log := range a.m.logs.Entries(offset, -1, limit) {
