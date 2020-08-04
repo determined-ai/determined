@@ -5,7 +5,9 @@ import {
   taskTypeRenderer, userRenderer,
 } from 'components/Table';
 import { CommandTask } from 'types';
-import { alphanumericSorter, commandStateSorter, stringTimeSorter } from 'utils/data';
+import {
+  alphanumericSorter, commandSourceSorter, commandStateSorter, stringTimeSorter,
+} from 'utils/data';
 
 export const columns: ColumnType<CommandTask>[] = [
   {
@@ -35,6 +37,10 @@ export const columns: ColumnType<CommandTask>[] = [
     render: stateRenderer,
     sorter: (a: CommandTask, b: CommandTask): number => commandStateSorter(a.state, b.state),
     title: 'State',
+  },
+  {
+    sorter: (a: CommandTask, b: CommandTask): number => commandSourceSorter(a.misc, b.misc),
+    title: 'Sources',
   },
   {
     render: userRenderer,
