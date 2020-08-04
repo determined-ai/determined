@@ -562,6 +562,8 @@ class EstimatorTrialController(det.LoopTrialController):
                 session_config = tf.compat.v1.ConfigProto()
             session_config.gpu_options.allow_growth = True
 
+            # If using CUDA_VISIBLE_DEVICES there is only one visible GPU
+            # so there is no need to set visible devices for TF.
             if not self.env.experiment_config.get("data", {}).get(
                 "set_cuda_visible_devices", False
             ):
