@@ -42,10 +42,10 @@ type of hyperparameter:
    could be specified as a ``double`` hyperparameter with ``minval: 0.1``,
    ``maxval: 0.5``, ``count: 3``.
 -  ``log``: The set of ``count`` values is taken logarithmically evenly from the
-   range [baseminval, basemaxval], inclusive of endpoints. For example, the set
+   range ``[base^minval, base^maxval]``, inclusive of endpoints. For example, the set
    ``{0.00001, 0.0001, 0.001}`` could be specified as a ``log`` hyperparameter
    with ``base: 10``, ``minval: -5``, ``maxval: -3``, and ``count: 3``.
 
-Under the special case of ``count: 1`` for ``int``, ``double``, or ``log``, the
+In the special case of ``count: 1`` for ``int``, ``double``, or ``log``, the
 midpoint (with rounding for ``int`` and with base midpoint for ``log``) is
 returned.

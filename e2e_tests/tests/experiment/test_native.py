@@ -26,7 +26,7 @@ class NativeImplementations:
         ],
         configuration={
             "checkpoint_storage": experiment.shared_fs_checkpoint_config(),
-            "searcher": {"name": "single", "max_steps": 1, "metric": "validation_error"},
+            "searcher": {"name": "single", "max_steps": 1, "metric": "validation_loss"},
             "max_restarts": 0,
         },
         num_expected_steps_per_trial=1,
@@ -129,6 +129,7 @@ def maybe_create_experiment(implementation: NativeImplementation) -> typing.Opti
         cwd=implementation.cwd,
         env=target_env,
     ) as p:
+        assert p.stdout is not None
         for line in p.stdout:
             m = re.search(r"Created experiment (\d+)\n", line.decode())
             if m is not None:

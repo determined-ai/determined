@@ -48,13 +48,13 @@ export interface LogsParams {
   greaterThanId?: number;
 }
 
-export interface TrialLogsParams extends LogsParams {
-  trialId: number;
+export interface TaskLogsParams extends LogsParams {
+  taskId: string;
+  taskType: CommandType;
 }
 
-export interface CommandLogsParams extends LogsParams {
-  commandId: string;
-  commandType: CommandType;
+export interface TrialLogsParams extends LogsParams {
+  trialId: number;
 }
 
 /* eslint-disable-next-line @typescript-eslint/ban-types */

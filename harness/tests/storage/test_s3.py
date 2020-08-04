@@ -11,7 +11,7 @@ from tests import s3
 from tests.storage import util
 
 
-@pytest.fixture  # type: ignore
+@pytest.fixture
 def manager(tmp_path: Path, monkeypatch: MonkeyPatch) -> storage.S3StorageManager:
     monkeypatch.setattr("boto3.client", s3.s3_client)
     return storage.S3StorageManager(

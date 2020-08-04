@@ -38,7 +38,7 @@ def get_gpus() -> List[GPU]:
 
     gpus = []
     with proc:
-        for field_list in csv.reader(proc.stdout):
+        for field_list in csv.reader(proc.stdout):  # type: ignore
             if len(field_list) != len(gpu_fields):
                 logging.warning(f"Ignoring unexpected nvidia-smi output: {field_list}")
                 continue

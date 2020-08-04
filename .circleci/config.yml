@@ -4,6 +4,9 @@ version: 2.1
 orbs:
   win: circleci/windows@2.3.0
   slack: circleci/slack@3.4.2
+  gke: circleci/gcp-gke@1.0.4
+  kubernetes: circleci/kubernetes@0.11.0
+  helm: circleci/helm@1.0.0
 
 executors:
   python-35:
@@ -22,7 +25,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.12.12.dev0
+    default: 0.12.13.dev0
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -96,11 +99,11 @@ commands:
       - when:
           condition: <<parameters.tf1>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-23863bb
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-aaa3750
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-23863bb
+            - run: docker pull determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-aaa3750
 
   login-docker:
     steps:
@@ -364,10 +367,77 @@ commands:
           det-version: <<parameters.det-version>>
           agent-instance-type: <<parameters.agent-instance-type>>
           max-dynamic-agents: <<parameters.max-dynamic-agents>>
-      - set-master-address:
+      - set-master-address-aws:
           cluster-id: ${CLUSTER_ID}
       - wait-for-master:
           host: ${MASTER_HOST}
+
+  terminate-gke-cluster:
+    parameters:
+      cluster-id:
+        type: string
+      region:
+        type: string
+    steps:
+      # Use a run instead of `gke/delete-cluster` because circle CI orbs do not support `when`.
+      - run:
+          name: Terminate GKE Cluster
+          when: always
+          command: |
+            gcloud container clusters delete <<parameters.cluster-id>> --quiet --region=<<parameters.region>>
+
+  setup-gke-cluster:
+    parameters:
+      cluster-id:
+        type: string
+      det-version:
+        type: string
+      gke-version:
+        type: string
+      machine-type:
+        type: string
+      num-machines:
+        type: integer
+      gpu-type:
+        type: string
+      gpus-per-machine:
+        type: integer
+      region:
+        type: string
+      node-locations:
+        type: string
+    steps:
+      - set-cluster-id:
+          cluster-id: <<parameters.cluster-id>>
+      - gke/create-cluster:
+          cluster: ${CLUSTER_ID}
+          perform-login: true
+          install-kubectl: true
+          additional-args: |
+            --cluster-version=<<parameters.gke-version>> \
+            --machine-type=<<parameters.machine-type>> \
+            --num-nodes=<<parameters.num-machines>> \
+            --accelerator type=<<parameters.gpu-type>>,count=<<parameters.gpus-per-machine>> \
+            --region=<<parameters.region>> \
+            --node-locations=<<parameters.node-locations>> \
+            --scopes=storage-rw \
+            --image-type=UBUNTU
+      - kubernetes/create-or-update-resource:
+          resource-file-path: .circleci/scripts/gpu-daemonset.yaml
+      - helm/install-helm-chart:
+          chart: helm/charts/determined
+          helm-version: v3.2.4
+          namespace: "default"
+          wait: true
+          release-name: "ci"
+          values-to-override: |
+            detVersion=<<parameters.det-version>>,\
+            slotsPerNode=<<parameters.gpus-per-machine>>,\
+            checkpointStorage.type=gcs,\
+            checkpointStorage.bucket=det-ci
+      - set-master-address-gke:
+          release-name: "ci"
+          namespace: "default"
 
   install-webui-test-deps:
     steps:
@@ -406,7 +476,7 @@ commands:
             --config "defaultCommandTimeout=30000,baseUrl=http://determined-master:8080" \
             --browser electron
 
-  set-master-address:
+  set-master-address-aws:
     parameters:
       cluster-id:
         type: string
@@ -414,6 +484,29 @@ commands:
       - run: |
           MASTER_HOST=$(python .circleci/scripts/get_output_from_stack.py <<parameters.cluster-id>> DeterminedAddress)
           echo "export MASTER_HOST=\"${MASTER_HOST}\"" >> $BASH_ENV
+
+  set-master-address-gke:
+    parameters:
+      release-name:
+        type: string
+      namespace:
+        type: string
+    steps:
+      - run:
+          name: Set Master Address
+          command: |
+            MASTER_HOST=$(kubectl get -n <<parameters.namespace>>  service determined-master-service-<<parameters.release-name>> \
+            --output jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            echo "export MASTER_HOST=\"${MASTER_HOST}\"" >> $BASH_ENV
+            echo "${MASTER_HOST}"
+
+  set-google-application-credentials:
+    steps:
+      - run:
+          name: Set Google Application Credentials
+          command: |
+            GOOGLE_APPLICATION_CREDENTIALS=${HOME}/gcloud-service-key.json
+            echo "export GOOGLE_APPLICATION_CREDENTIALS=\"${GOOGLE_APPLICATION_CREDENTIALS}\"" >> $BASH_ENV
 
   set-cluster-id:
     parameters:
@@ -969,6 +1062,76 @@ jobs:
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
 
+  test-e2e-gke:
+    parameters:
+      cluster-id-prefix:
+        type: string
+      mark:
+        type: string
+      parallelism:
+        type: integer
+        default: 1
+      gke-version:
+        type: string
+        default: "1.16.13-gke.1"
+      machine-type:
+        type: string
+        default: "n1-standard-8"
+      num-machines:
+        type: integer
+        default: 1
+      gpu-type:
+        type: string
+        default: "nvidia-tesla-k80"
+      gpus-per-machine:
+        type: integer
+        default: 1
+      region:
+        type: string
+        default: "us-west1"
+      node-locations:
+        type: string
+        default: "us-west1-b"
+      slack-mentions:
+        type: string
+        default: ""
+      slack-channel:
+        type: string
+        default: ""
+    docker:
+      - image: determinedai/cimg-base:stable
+    parallelism: <<parameters.parallelism>>
+    steps:
+      - checkout
+      - set-slack-user-id
+      - setup-python-venv:
+          determined-common: true
+          determined-cli: true
+          determined: true
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          executor: determinedai/cimg-base:stable
+      - setup-gke-cluster:
+          cluster-id: <<parameters.cluster-id-prefix>>-$(git rev-parse --short HEAD)-${CIRCLE_BUILD_NUM}-${CIRCLE_NODE_INDEX}
+          det-version: ${CIRCLE_SHA1}
+          gke-version: <<parameters.gke-version>>
+          machine-type: <<parameters.machine-type>>
+          num-machines: <<parameters.num-machines>>
+          gpu-type: <<parameters.gpu-type>>
+          gpus-per-machine: <<parameters.gpus-per-machine>>
+          region: <<parameters.region>>
+          node-locations: <<parameters.node-locations>>
+      - set-google-application-credentials
+      - run-e2e-tests:
+          mark: <<parameters.mark>>
+          master-host: ${MASTER_HOST}
+      - terminate-gke-cluster:
+          cluster-id: ${CLUSTER_ID}
+          region: <<parameters.region>>
+      - slack/status:
+          fail_only: True
+          failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GKE GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
+          mentions: <<parameters.slack-mentions>>
+          channel: <<parameters.slack-channel>>
 
 workflows:
   lint:
@@ -1180,6 +1343,75 @@ workflows:
               cluster-id-prefix: ["e2e-gpu"]
               mark: ["e2e_gpu"]
               slack-mentions: ["${SLACK_USER_ID}"]
+
+      - test-e2e-gke:
+          name: test-e2e-gke-single-gpu
+          context: gcp
+          filters:
+            branches:
+              only: master
+          requires:
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-gpu"]
+              mark: ["e2e_gpu"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+
+      - test-e2e-gke:
+          name: test-e2e-gke-parallel
+          context: gcp
+          filters:
+            branches:
+              only: master
+          requires:
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-32"]
+              gpus-per-machine: [4]
+              num-machines: [2]
+
+      - request-k8-tests:
+          type: approval
+          filters: *upstream-feature-branch
+
+      - test-e2e-gke:
+          name: test-e2e-gke-single-gpu
+          context: gcp
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["e2e-gpu"]
+              mark: ["e2e_gpu"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+
+      - test-e2e-gke:
+          name: test-e2e-gke-parallel
+          context: gcp
+          filters: *upstream-feature-branch
+          requires:
+            - request-k8-tests
+            - package-and-push-system-dev
+          matrix:
+            parameters:
+              cluster-id-prefix: ["parallel"]
+              mark: ["parallel"]
+              parallelism: [1]
+              slack-mentions: ["${SLACK_USER_ID}"]
+              machine-type: ["n1-standard-32"]
+              gpus-per-machine: [4]
+              num-machines: [2]
+
 
   nightly:
     triggers:

@@ -7,14 +7,12 @@ import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Experiments from 'contexts/Experiments';
 import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
-import useRestApi, { useRestApiSimple } from 'hooks/useRestApi';
-import { ioAgents, ioGenericCommands, ioUsers } from 'ioTypes';
-import { getExperimentSummaries } from 'services/api';
+import useRestApi from 'hooks/useRestApi';
 import {
-  jsonToAgents, jsonToCommands, jsonToNotebooks,
-  jsonToShells, jsonToTensorboards, jsonToUsers,
-} from 'services/decoder';
-import { ExperimentsParams } from 'services/types';
+  getAgents, getCommands, getExperimentSummaries, getNotebooks, getShells,
+  getTensorboards, getUsers,
+} from 'services/api';
+import { EmptyParams, ExperimentsParams } from 'services/types';
 import { Agent, Command, Experiment, User } from 'types';
 import { activeRunStates } from 'utils/types';
 
@@ -28,42 +26,44 @@ const AppContexts: React.FC = () => {
   const setShells = Shells.useActionContext();
   const setTensorboards = Tensorboards.useActionContext();
   const setOverview = ClusterOverview.useActionContext();
-  const [ usersResponse, requestUsers ] =
-    useRestApi<User[]>(ioUsers, { mappers: jsonToUsers });
-  const [ agentsResponse, requestAgents ] =
-    useRestApi<Agent[]>(ioAgents, { mappers: jsonToAgents });
-  const [ commandsResponse, requestCommands ] =
-    useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToCommands });
-  const [ activeExperimentsResponse, requestActiveExperiments ] =
-    useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
-  const [ notebooksResponse, requestNotebooks ] =
-    useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToNotebooks });
-  const [ shellsResponse, requestShells ] =
-    useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToShells });
-  const [ tensorboardsResponse, requestTensorboards ] =
-    useRestApi<Command[]>(ioGenericCommands, { mappers: jsonToTensorboards });
-  const [ experimentsResponse, requestExperiments ] =
-    useRestApiSimple<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
+  const [ usersResponse, triggerUsersRequest ] =
+    useRestApi<EmptyParams, User[]>(getUsers, {});
+  const [ agentsResponse, triggerAgentsRequest ] =
+    useRestApi<EmptyParams, Agent[]>(getAgents, {});
+  const [ commandsResponse, triggerCommandsRequest ] =
+    useRestApi<EmptyParams, Command[]>(getCommands, {});
+  const [ notebooksResponse, triggerNotebooksRequest ] =
+    useRestApi<EmptyParams, Command[]>(getNotebooks, {});
+  const [ shellsResponse, triggerShellsRequest ] =
+    useRestApi<EmptyParams, Command[]>(getShells, {});
+  const [ tensorboardsResponse, triggerTensorboardsRequest ] =
+    useRestApi<EmptyParams, Command[]>(getTensorboards, {});
+  const [ experimentsResponse, triggerExperimentsRequest ] =
+    useRestApi<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
+  const [ activeExperimentsResponse, triggerActiveExperimentsRequest ] =
+    useRestApi<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
 
   const fetchAll = useCallback((): void => {
-    requestAgents({ url: '/agents' });
-    requestCommands({ url: '/commands' });
-    requestNotebooks({ url: '/notebooks' });
-    requestShells({ url: '/shells' });
-    requestTensorboards({ url: '/tensorboard' });
-    requestActiveExperiments({ states: activeRunStates });
-    requestExperiments({});
+    triggerAgentsRequest({});
+    triggerCommandsRequest({});
+    triggerNotebooksRequest({});
+    triggerShellsRequest({});
+    triggerTensorboardsRequest({});
+    triggerActiveExperimentsRequest({ states: activeRunStates });
+    triggerExperimentsRequest({});
   }, [
-    requestAgents,
-    requestCommands,
-    requestNotebooks,
-    requestShells,
-    requestTensorboards,
-    requestExperiments,
-    requestActiveExperiments,
+    triggerAgentsRequest,
+    triggerCommandsRequest,
+    triggerNotebooksRequest,
+    triggerShellsRequest,
+    triggerTensorboardsRequest,
+    triggerExperimentsRequest,
+    triggerActiveExperimentsRequest,
   ]);
 
-  const fetchUsers = useCallback((): void => requestUsers({ url: '/users' }), [ requestUsers ]);
+  const fetchUsers = useCallback((): void => {
+    triggerUsersRequest({ url: '/users' });
+  }, [ triggerUsersRequest ]);
 
   usePolling(fetchAll);
   usePolling(fetchUsers, { delay: 60000 });

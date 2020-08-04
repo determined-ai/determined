@@ -66,6 +66,12 @@ taskContainerDefaults:
   # ncclPortRange: <MIN:MAX>
   # glooPortRange: <MIN:MAX>
 
+# Configure Determined enterprise edition.
+enterpriseEdition: false
+
+# Should be configured if using the Determined enterprise edition master.
+# imagePullSecretName: regcred
+
 ## Configure whether we collect anonymous information about the usage of Determined.
 telemetry:
   enabled: true

@@ -59,7 +59,7 @@ export const ioSlotDevice = io.type({
 });
 
 export const ioSlotContainer = io.type({
-  devices: io.array(ioSlotDevice),
+  devices: io.union([ io.array(ioSlotDevice), io.null ]),
   id: io.string,
   state: io.string,
 });
@@ -230,6 +230,7 @@ export const ioExperimentConfig = io.type({
   checkpoint_storage: io.union([ ioCheckpointStorage, io.null ]),
   data_layer: io.union([ ioDataLayer, io.undefined ]),
   description: io.string,
+  labels: io.union([ io.undefined, io.array(io.string) ]),
   resources: ioExpResources,
   searcher: io.type({
     metric: io.string,
@@ -254,7 +255,7 @@ export const ioExperiments = io.array(ioExperiment);
 export type ioTypeExperiment = io.TypeOf<typeof ioExperiment>;
 export type ioTypeExperiments = io.TypeOf<typeof ioExperiments>;
 
-const validationHistoryIoType = io.type({
+const ioValidationHistory = io.type({
   end_time: io.string,
   trial_id: io.number,
   validation_error: io.union([ io.number, io.null ]),
@@ -270,7 +271,7 @@ export const ioExperimentDetails = io.type({
   start_time: io.string,
   state: runStatesIoType,
   trials: io.array(ioTrial),
-  validation_history: io.array(validationHistoryIoType),
+  validation_history: io.array(ioValidationHistory),
 });
 
 export type ioTypeExperimentDetails = io.TypeOf<typeof ioExperimentDetails>;
@@ -292,20 +293,35 @@ export const ioLogs = io.array(ioLog);
 export type ioTypeLog = io.TypeOf<typeof ioLog>;
 export type ioTypeLogs = io.TypeOf<typeof ioLogs>;
 
-const ioCommandLogConfig = io.type({
-  description: io.string,
-});
-const ioCommandLogSnapshot = io.type({
-  config: ioCommandLogConfig,
-});
-const ioCommandLog = io.type({
+const ioTaskLog = io.type({
+  assigned_event: io.union([
+    io.type({ NumContainers: io.number }),
+    io.null,
+  ]),
+  container_started_event: io.union([
+    io.type({ Container: io.type({}) }),
+    io.null,
+  ]),
+  exited_event: io.union([ io.string, io.null ]),
   id: io.string,
+  log_event: io.union([ io.string, io.null ]),
   parent_id: io.string,
+  scheduled_event: io.union([ io.string, io.null ]),
   seq: io.number,
-  snapshot: ioCommandLogSnapshot,
+  service_ready_event: io.union([
+    io.type({}),
+    io.null,
+  ]),
+  snapshot: io.type({
+    config: io.type({
+      description: io.string,
+    }),
+  }),
+  terminate_request_event: io.union([ io.string, io.null ]),
   time: io.string,
 });
 
-export const ioCommandLogs = io.array(ioCommandLog);
+export const ioTaskLogs = io.array(ioTaskLog);
 
-export type ioTypeCommandLogs = io.TypeOf<typeof ioCommandLogs>;
+export type ioTypeTaskLog = io.TypeOf<typeof ioTaskLog>;
+export type ioTypeTaskLogs = io.TypeOf<typeof ioTaskLogs>;

@@ -37,6 +37,7 @@ const (
 
 type pod struct {
 	cluster                  *actor.Ref
+	clusterID                string
 	taskHandler              *actor.Ref
 	clientSet                *k8sClient.Clientset
 	namespace                string
@@ -57,8 +58,17 @@ type pod struct {
 	resourcesDeleted bool
 }
 
+type getPodNodeInfo struct{}
+
+type podNodeInfo struct {
+	nodeName  string
+	numGPUs   int
+	container *container.Container
+}
+
 func newPod(
 	cluster *actor.Ref,
+	clusterID string,
 	taskHandler *actor.Ref,
 	clientSet *k8sClient.Clientset,
 	namespace string,
@@ -79,6 +89,7 @@ func newPod(
 
 	return &pod{
 		cluster:                  cluster,
+		clusterID:                clusterID,
 		taskHandler:              taskHandler,
 		clientSet:                clientSet,
 		namespace:                namespace,
@@ -120,6 +131,13 @@ func (p *pod) Receive(ctx *actor.Context) error {
 			return err
 		}
 
+	case getPodNodeInfo:
+		ctx.Respond(podNodeInfo{
+			nodeName:  p.pod.Spec.NodeName,
+			numGPUs:   p.gpus,
+			container: &p.container,
+		})
+
 	case actor.PostStop:
 		if !p.leaveKubernetesResources {
 			if err := p.deleteKubernetesResources(ctx); err != nil {
@@ -157,11 +175,12 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 
 	switch msg.updatedPod.Status.Phase {
 	case k8sV1.PodPending:
-		// When pods are deleted, Kubernetes sometimes transitions pod statuses
-		// to pending prior to deleting them. We ignore this state if we have
-		// triggered the deletion.
-		if p.resourcesDeleted {
-			ctx.Log().Info("ignoring pod status because resources are being deleted")
+		// When pods are deleted, Kubernetes sometimes transitions pod statuses to pending prior
+		// to deleting them. In these cases we have observed that we do not always receive a PodFailed
+		// or a PodSucceeded message. We check if pods have a set pod deletion timestamp to see if this
+		// is the case.
+		if p.pod.ObjectMeta.DeletionTimestamp != nil {
+			p.processMissingPodDeletion(ctx)
 			return nil
 		}
 
@@ -234,16 +253,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 			},
 		}
 
-		ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
-			Container:        p.container,
-			ContainerStopped: &containerStopped,
-		})
-
-		ctx.Tell(p.cluster, sproto.PodTerminated{
-			ContainerID:      p.container.ID,
-			ContainerStopped: &containerStopped,
-		})
-
+		p.informThatContainerStopped(ctx, containerStopped)
 		ctx.Self().Stop()
 
 	case k8sV1.PodSucceeded:
@@ -255,16 +265,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		ctx.Log().Infof("pod exited successfully")
 		containerStopped := agent.ContainerStopped{}
 
-		ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
-			Container:        p.container,
-			ContainerStopped: &containerStopped,
-		})
-
-		ctx.Tell(p.cluster, sproto.PodTerminated{
-			ContainerID:      p.container.ID,
-			ContainerStopped: &containerStopped,
-		})
-
+		p.informThatContainerStopped(ctx, containerStopped)
 		ctx.Self().Stop()
 
 	default:
@@ -273,6 +274,32 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 	}
 
 	return nil
+}
+
+func (p *pod) processMissingPodDeletion(ctx *actor.Context) {
+	ctx.Log().Warn("processing missing pod deletion")
+	if p.container.State == container.Terminated {
+		ctx.Log().Info(
+			"skipping processing missing pod deletion as container is in a terminated state")
+		return
+	}
+
+	if !p.resourcesDeleted {
+		ctx.Log().Errorf("processing missing pod deletion for a pod that was never deleted")
+	}
+
+	p.container = p.container.Transition(container.Terminated)
+	// Missed pod deletions occur only when a pod is deleted so we assume
+	// that the container was killed.
+	exitCodeConverted := agent.ExitCode(137)
+	containerStopped := agent.ContainerStopped{
+		Failure: &agent.ContainerFailure{
+			FailureType: agent.ContainerFailed,
+			ExitCode:    &exitCodeConverted,
+		},
+	}
+	p.informThatContainerStopped(ctx, containerStopped)
+	ctx.Self().Stop()
 }
 
 func (p *pod) deleteKubernetesResources(ctx *actor.Context) error {
@@ -309,16 +336,23 @@ func (p *pod) finalizeTaskState(ctx *actor.Context) {
 		containerStopped := agent.ContainerError(
 			agent.TaskError, errors.New("agent failed while container was running"))
 
-		ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
-			Container:        p.container,
-			ContainerStopped: &containerStopped,
-		})
-
-		ctx.Tell(p.cluster, sproto.PodTerminated{
-			ContainerID:      p.container.ID,
-			ContainerStopped: &containerStopped,
-		})
+		p.informThatContainerStopped(ctx, containerStopped)
 	}
+}
+
+func (p *pod) informThatContainerStopped(
+	ctx *actor.Context,
+	containerStopped agent.ContainerStopped,
+) {
+	ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
+		Container:        p.container,
+		ContainerStopped: &containerStopped,
+	})
+
+	ctx.Tell(p.cluster, sproto.PodTerminated{
+		ContainerID:      p.container.ID,
+		ContainerStopped: &containerStopped,
+	})
 }
 
 func (p *pod) receiveContainerLogs(ctx *actor.Context, msg sproto.ContainerLog) {
@@ -356,11 +390,12 @@ func (p *pod) configureEnvVars(
 	environment model.Environment,
 	deviceType device.Type,
 ) ([]k8sV1.EnvVar, error) {
-	// TODO (DET-3457): Include env variables set in experiment config.
-	if len(environment.EnvironmentVariables.For(deviceType)) > 0 {
-		return nil, errors.Errorf(
-			"kubernetes resource provider does not currently support environment " +
-				"variables set in the experiment config; use startup-hook.sh instead")
+	for _, envVar := range environment.EnvironmentVariables.For(deviceType) {
+		envVarSplit := strings.Split(envVar, "=")
+		if len(envVarSplit) != 2 {
+			return nil, errors.Errorf("unable to split envVar %s", envVar)
+		}
+		envVarsMap[envVarSplit[0]] = envVarSplit[1]
 	}
 
 	var slotIds []string
@@ -368,7 +403,7 @@ func (p *pod) configureEnvVars(
 		slotIds = append(slotIds, strconv.Itoa(i))
 	}
 
-	envVarsMap["DET_CLUSTER_ID"] = "k8cluster"
+	envVarsMap["DET_CLUSTER_ID"] = p.clusterID
 	envVarsMap["DET_MASTER"] = fmt.Sprintf("%s:%d", p.masterIP, p.masterPort)
 	envVarsMap["DET_MASTER_HOST"] = p.masterIP
 	envVarsMap["DET_MASTER_ADDR"] = p.masterIP
@@ -561,6 +596,10 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 		ctx, tasks.ToDockerMounts(cmd.Config.BindMounts), runArchives)
 	if err != nil {
 		return err
+	}
+
+	for _, port := range cmd.Config.Environment.Ports {
+		p.ports = append(p.ports, port)
 	}
 
 	envVars, err := p.configureEnvVars(

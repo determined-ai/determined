@@ -4,6 +4,16 @@ export const capitalize = (str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
+const CHARACTERS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+export const generateAlphaNumeric = (length = 8, chars = CHARACTERS): string => {
+  let result = '';
+  for (let i = length; i > 0; --i) {
+    result += chars[ Math.floor(Math.random() * chars.length) ];
+  }
+  return result;
+};
+
 export const truncate = (str: string, maxLen: number): string => {
   if (maxLen < 4) {
     str.slice(0, maxLen);

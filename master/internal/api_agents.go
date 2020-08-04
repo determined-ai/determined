@@ -4,12 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 func (a *apiServer) GetAgents(
 	_ context.Context, req *apiv1.GetAgentsRequest) (resp *apiv1.GetAgentsResponse, err error) {
-	err = a.actorRequest("/agents", req, &resp)
+	response := a.m.system.AskAt(
+		actor.Addr("resourceProviders"), sproto.GetEndpointActorAddress{}).Get()
+	endpointActorName := response.(string)
+
+	err = a.actorRequest(endpointActorName, req, &resp)
 	if err != nil {
 		return nil, err
 	}

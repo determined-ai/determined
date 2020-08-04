@@ -67,7 +67,7 @@ more details.
 Callbacks
 ~~~~~~~~~
 
-To execute arbitrary Python functionality during the lifecycle of a
+To execute arbitrary Python code during the lifecycle of a
 ``EstimatorTrial``, ``determined.estimator.RunHook`` extends
 `tf.estimator.SessionRunHook <https://www.tensorflow.org/api_docs/python/tf/estimator/SessionRunHook/>`_.
 When utilizing ``determined.estimator.RunHook``, users can use native estimator hooks

@@ -4,17 +4,18 @@ import queryString from 'query-string';
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { Api } from 'services/apiBuilder';
 import {
-  jsonToCommandLogs, jsonToDeterminedInfo, jsonToExperimentDetails,
-  jsonToExperiments, jsonToLogs, jsonToTensorboard, jsonToTrialDetails, jsonToTrialLogs,
+  jsonToAgents, jsonToCommands, jsonToDeterminedInfo, jsonToExperimentDetails,
+  jsonToExperiments, jsonToLogs, jsonToNotebooks, jsonToShells, jsonToTaskLogs,
+  jsonToTensorboard, jsonToTensorboards, jsonToTrialDetails, jsonToTrialLogs, jsonToUsers,
 } from 'services/decoder';
 import {
-  CommandLogsParams, EmptyParams, ExperimentDetailsParams, ExperimentsParams,
-  ForkExperimentParams, KillCommandParams, KillExpParams,
-  LaunchTensorboardParams, LogsParams, PatchExperimentParams, TrialDetailsParams, TrialLogsParams,
+  EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
+  KillCommandParams, KillExpParams, LaunchTensorboardParams, LogsParams,
+  PatchExperimentParams, TaskLogsParams, TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import {
-  Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails, Log,
-  TBSourceType, TrialDetails, User,
+  Agent, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails,
+  Log, TBSourceType, TrialDetails, User,
 } from 'types';
 
 /* Helpers */
@@ -25,7 +26,7 @@ const saltAndHashPassword = (password?: string): string => {
   return sha512(passwordSalt + password);
 };
 
-const commandToEndpoint: Record<CommandType, string> = {
+export const commandToEndpoint: Record<CommandType, string> = {
   [CommandType.Command]: '/commands',
   [CommandType.Notebook]: '/notebooks',
   [CommandType.Tensorboard]: '/tensorboard',
@@ -33,6 +34,17 @@ const commandToEndpoint: Record<CommandType, string> = {
 };
 
 /* Authentication */
+
+export const login: Api<Credentials, void> = {
+  httpOptions: ({ password, username }) => {
+    return {
+      body: { password: saltAndHashPassword(password), username },
+      method: 'POST',
+      url: '/login?cookie=true',
+    };
+  },
+  name: 'login',
+};
 
 export const getCurrentUser: Api<EmptyParams, User> = {
   httpOptions: () => ({ url: '/users/me' }),
@@ -48,15 +60,10 @@ export const getCurrentUser: Api<EmptyParams, User> = {
   },
 };
 
-export const login: Api<Credentials, void> = {
-  httpOptions: ({ password, username }) => {
-    return {
-      body: { password: saltAndHashPassword(password), username },
-      method: 'POST',
-      url: '/login?cookie=true',
-    };
-  },
-  name: 'login',
+export const getUsers: Api<EmptyParams, User[]> = {
+  httpOptions: () => ({ url: '/users' }),
+  name: 'getUsers',
+  postProcess: (response) => jsonToUsers(response.data),
 };
 
 /* Info */
@@ -67,31 +74,12 @@ export const getInfo: Api<EmptyParams, DeterminedInfo> = {
   postProcess: (response) => jsonToDeterminedInfo(response.data),
 };
 
-/* Commands */
+/* Agent */
 
-export const killCommand: Api<KillCommandParams, void> = {
-  httpOptions: (params) => {
-    return {
-      method: 'DELETE',
-      url: `${commandToEndpoint[params.commandType]}/${params.commandId}`,
-    };
-  },
-  name: 'killCommand',
-};
-
-export const launchTensorboard: Api<LaunchTensorboardParams, Command> = {
-  httpOptions: (params) => {
-    const attrName = params.type === TBSourceType.Trial ? 'trial_ids' : 'experiment_ids';
-    return {
-      body: {
-        [attrName]: params.ids,
-      },
-      method: 'POST',
-      url: `${commandToEndpoint[CommandType.Tensorboard]}`,
-    };
-  },
-  name: 'launchTensorboard',
-  postProcess: (response) => jsonToTensorboard(response.data),
+export const getAgents: Api<EmptyParams, Agent[]> = {
+  httpOptions: () => ({ url: '/agents' }),
+  name: 'getAgents',
+  postProcess: (response) => jsonToAgents(response.data),
 };
 
 /* Experiment */
@@ -159,6 +147,57 @@ export const getTrialDetails: Api<TrialDetailsParams, TrialDetails> = {
   postProcess: response => jsonToTrialDetails(response.data),
 };
 
+/* Tasks */
+
+export const getCommands: Api<EmptyParams, Command[]> = {
+  httpOptions: () => ({ url: '/commands' }),
+  name: 'getCommands',
+  postProcess: (response) => jsonToCommands(response.data),
+};
+
+export const getNotebooks: Api<EmptyParams, Command[]> = {
+  httpOptions: () => ({ url: '/notebooks' }),
+  name: 'getNotebooks',
+  postProcess: (response) => jsonToNotebooks(response.data),
+};
+
+export const getShells: Api<EmptyParams, Command[]> = {
+  httpOptions: () => ({ url: '/shells' }),
+  name: 'getShells',
+  postProcess: (response) => jsonToShells(response.data),
+};
+
+export const getTensorboards: Api<EmptyParams, Command[]> = {
+  httpOptions: () => ({ url: '/tensorboard' }),
+  name: 'getTensorboards',
+  postProcess: (response) => jsonToTensorboards(response.data),
+};
+
+export const killCommand: Api<KillCommandParams, void> = {
+  httpOptions: (params) => {
+    return {
+      method: 'DELETE',
+      url: `${commandToEndpoint[params.commandType]}/${params.commandId}`,
+    };
+  },
+  name: 'killCommand',
+};
+
+export const launchTensorboard: Api<LaunchTensorboardParams, Command> = {
+  httpOptions: (params) => {
+    const attrName = params.type === TBSourceType.Trial ? 'trial_ids' : 'experiment_ids';
+    return {
+      body: {
+        [attrName]: params.ids,
+      },
+      method: 'POST',
+      url: `${commandToEndpoint[CommandType.Tensorboard]}`,
+    };
+  },
+  name: 'launchTensorboard',
+  postProcess: (response) => jsonToTensorboard(response.data),
+};
+
 /* Logs */
 
 const buildQuery = (params: LogsParams): string => {
@@ -176,21 +215,21 @@ export const getMasterLogs: Api<LogsParams, Log[]> = {
   postProcess: response => jsonToLogs(response.data),
 };
 
+export const getTaskLogs: Api<TaskLogsParams, Log[]> = {
+  httpOptions: (params: TaskLogsParams) => ({
+    url: [
+      `${commandToEndpoint[params.taskType]}/${params.taskId}/events`,
+      buildQuery(params),
+    ].join('?'),
+  }),
+  name: 'getTaskLogs',
+  postProcess: response => jsonToTaskLogs(response.data),
+};
+
 export const getTrialLogs: Api<TrialLogsParams, Log[]> = {
   httpOptions: (params: TrialLogsParams) => ({
     url: [ `/trials/${params.trialId}/logs`, buildQuery(params) ].join('?'),
   }),
   name: 'getTrialLogs',
   postProcess: response => jsonToTrialLogs(response.data),
-};
-
-export const getCommandLogs: Api<CommandLogsParams, Log[]> = {
-  httpOptions: (params: CommandLogsParams) => ({
-    url: [
-      `/${params.commandType}/${params.commandId}/events`,
-      buildQuery(params),
-    ].join('?'),
-  }),
-  name: 'getCommandLogs',
-  postProcess: response => jsonToCommandLogs(response.data),
 };

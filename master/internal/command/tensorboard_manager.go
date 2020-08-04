@@ -4,12 +4,10 @@ import (
 	"archive/tar"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"sort"
 	"strings"
-	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/labstack/echo"
@@ -23,10 +21,13 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
 
 const (
-	expConfPath               = "/run/determined/workdir/experiment_config.json"
+	expConfPath = "/run/determined/workdir/experiment_config.json"
+	// Agent port range is 2600 - 3200. Ports are split between TensorBoard and Notebooks.
 	minTensorBoardPort        = 2600
 	maxTensorBoardPort        = minTensorBoardPort + 299
 	tensorboardEntrypointFile = "/run/determined/workdir/tensorboard-entrypoint.sh"
@@ -55,6 +56,13 @@ type tensorboardManager struct {
 
 func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
+	case *apiv1.GetTensorboardsRequest:
+		resp := &apiv1.GetTensorboardsResponse{}
+		for _, tensorboard := range ctx.AskAll(&tensorboardv1.Tensorboard{}, ctx.Children()...).GetAll() {
+			resp.Tensorboards = append(resp.Tensorboards, tensorboard.(*tensorboardv1.Tensorboard))
+		}
+		ctx.Respond(resp)
+
 	case echo.Context:
 		t.handleAPIRequest(ctx, msg)
 	}
@@ -322,14 +330,6 @@ func (t *tensorboardManager) getTensorBoardConfigs(req tensorboardRequest) (
 	}
 
 	return configs, nil
-}
-
-func getPort(min, max int) int {
-	// Set the seed here or else the compiler will generate a random number at
-	// compile time and each invocation of this function will return the same
-	// number.
-	rand.Seed(time.Now().Unix())
-	return rand.Intn(max-min) + min
 }
 
 func getMounts(m map[model.BindMount]bool) []model.BindMount {

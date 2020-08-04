@@ -150,7 +150,7 @@ for details).
 
 PyTorch checkpoints are saved using `pickle
 <https://docs.python.org/3/library/pickle.html>`__ and loaded as
-``nn.Module`` objects (see `the PyTorch documentation
+:ref:`pytorch-trial` objects (see `the PyTorch documentation
 <https://pytorch.org/docs/stable/notes/serialization.html>`__ for
 details).
 

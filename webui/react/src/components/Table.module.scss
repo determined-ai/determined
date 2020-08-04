@@ -2,10 +2,6 @@
   align-items: center;
   display: flex;
 }
-.nameColumn {
-  word-break: break-word;
-  word-wrap: break-word;
-}
 [class*="Badge"]:not(:last-child) {
   margin-right: var(--theme-sizes-layout-small);
 }

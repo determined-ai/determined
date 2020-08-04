@@ -3,6 +3,7 @@ package command
 import (
 	"archive/tar"
 	"bytes"
+	"fmt"
 	"net/http"
 	"strings"
 	"text/template"
@@ -19,21 +20,25 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 )
 
 const (
-	jupyterDir          = "/run/determined/jupyter/"
-	jupyterConfigDir    = "/run/determined/jupyter/config"
-	jupyterDataDir      = "/run/determined/jupyter/data"
-	jupyterRuntimeDir   = "/run/determined/jupyter/runtime"
-	jupyterEntrypoint   = "/run/determined/jupyter/notebook-entrypoint.sh"
+	jupyterDir        = "/run/determined/jupyter/"
+	jupyterConfigDir  = "/run/determined/jupyter/config"
+	jupyterDataDir    = "/run/determined/jupyter/data"
+	jupyterRuntimeDir = "/run/determined/jupyter/runtime"
+	jupyterEntrypoint = "/run/determined/jupyter/notebook-entrypoint.sh"
+	// Agent port range is 2600 - 3200. Ports are split between TensorBoard and Notebooks.
+	minNotebookPort     = 2900
+	maxNotebookPort     = minNotebookPort + 299
 	notebookConfigFile  = "/run/determined/workdir/jupyter-conf.py"
 	notebookDefaultPage = "/run/determined/workdir/Notebook.ipynb"
 )
 
 var (
 	notebookEntrypoint = []string{jupyterEntrypoint}
-	notebookPorts      = map[string]int{"notebook": 8888}
 )
 
 func generateNotebookDescription() (string, error) {
@@ -103,6 +108,13 @@ type notebookManager struct {
 
 func (n *notebookManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
+	case *apiv1.GetNotebooksRequest:
+		resp := &apiv1.GetNotebooksResponse{}
+		for _, notebook := range ctx.AskAll(&notebookv1.Notebook{}, ctx.Children()...).GetAll() {
+			resp.Notebooks = append(resp.Notebooks, notebook.(*notebookv1.Notebook))
+		}
+		ctx.Respond(resp)
+
 	case echo.Context:
 		n.handleAPIRequest(ctx, msg)
 	}
@@ -161,7 +173,20 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 	taskID := scheduler.NewTaskID()
 
 	// Postprocess the config. Add Jupyter and configuration to the container.
+
+	// Select a random port from the range to assign to the notebook. In host
+	// mode, this mitigates the risk of multiple notebook processes binding
+	// the same port on an agent.
+	port := getPort(minNotebookPort, maxNotebookPort)
+	notebookPorts := map[string]int{"notebook": port}
+	portVar := fmt.Sprintf("NOTEBOOK_PORT=%d", port)
+
 	config.Environment.Ports = notebookPorts
+	config.Environment.EnvironmentVariables.CPU = append(
+		config.Environment.EnvironmentVariables.CPU, portVar)
+	config.Environment.EnvironmentVariables.GPU = append(
+		config.Environment.EnvironmentVariables.GPU, portVar)
+
 	config.Entrypoint = notebookEntrypoint
 
 	if config.Description == "" {

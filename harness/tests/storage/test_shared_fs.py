@@ -9,7 +9,7 @@ from determined_common.storage import shared
 from tests.storage import util
 
 
-@pytest.fixture()  # type: ignore
+@pytest.fixture()
 def manager(tmp_path: Path) -> storage.SharedFSStorageManager:
     return storage.SharedFSStorageManager(str(tmp_path))
 

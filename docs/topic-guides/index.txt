@@ -45,7 +45,6 @@ The full list of our topic guides can be found below:
   checkpoints
   hp-tuning-defined
   hp-tuning-det/index
-  jupyter-notebooks
   model-definitions/index
   model-definitions/native-api
   model-definitions/trial-api

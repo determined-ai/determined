@@ -3,7 +3,7 @@ from typing import Any, Dict, Union, cast
 
 import torch
 
-from determined import experimental
+from determined import experimental, util
 from determined.pytorch import PyTorchTrial, PyTorchTrialContext
 
 
@@ -14,6 +14,7 @@ def load_model(
 
     trial_cls, trial_context = experimental._load_trial_on_local(
         ckpt_dir.joinpath("code"),
+        training=False,
         config=metadata["experiment_config"],
         hparams=metadata["hparams"],
     )
@@ -26,10 +27,12 @@ def load_model(
         model.load_state_dict(checkpoint["model_state_dict"])
         return model
     else:
-        model = trial.build_model()
-        model.load_state_dict(checkpoint["models_state_dict"][0])
-        return model
-        # TODO: Fix for multiple model case
-        # for idx, model in enumerate(trial_context.models):
-        #     model.load_state_dict(checkpoint["models_state_dict"][idx])
-        # return trial
+        # Backward compatible with older interface
+        if util.is_overridden(trial.build_model, PyTorchTrial):
+            model = trial.build_model()
+            model.load_state_dict(checkpoint["models_state_dict"][0])
+            return model
+        else:
+            for idx, model in enumerate(trial_context.models):
+                model.load_state_dict(checkpoint["models_state_dict"][idx])
+            return trial

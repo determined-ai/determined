@@ -17,6 +17,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ssh"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/shellv1"
 )
 
 const (
@@ -44,6 +46,13 @@ type shellManager struct {
 
 func (n *shellManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
+	case *apiv1.GetShellsRequest:
+		resp := &apiv1.GetShellsResponse{}
+		for _, shell := range ctx.AskAll(&shellv1.Shell{}, ctx.Children()...).GetAll() {
+			resp.Shells = append(resp.Shells, shell.(*shellv1.Shell))
+		}
+		ctx.Respond(resp)
+
 	case echo.Context:
 		n.handleAPIRequest(ctx, msg)
 	}

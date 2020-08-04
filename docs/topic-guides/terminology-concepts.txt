@@ -21,7 +21,7 @@ configuration file
    information on number of steps, data location, hyperparameters, and
    other options for an experiment. More information can be found at
    :ref:`experiment-configuration`, :ref:`cluster-configuration`, and
-   :ref:`command-configuration`.
+   :ref:`command-notebook-configuration`.
 
 context directory
    The directory that is uploaded to the master when an experiment is

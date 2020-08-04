@@ -1,7 +1,11 @@
 package scheduler
 
 import (
+	"fmt"
+	"net/url"
+
 	"github.com/determined-ai/determined/master/internal/kubernetes"
+	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -17,10 +21,12 @@ type kubernetesResourceProvider struct {
 	harnessPath           string
 	taskContainerDefaults model.TaskContainerDefaultsConfig
 
+	taskList           *taskList
 	tasksByHandler     map[*actor.Ref]*Task
 	tasksByID          map[TaskID]*Task
 	tasksByContainerID map[ContainerID]*Task
 	groups             map[*actor.Ref]*group
+	registeredNames    map[*container][]string
 
 	assignmentsByTaskHandler map[*actor.Ref][]podAssignment
 
@@ -43,10 +49,12 @@ func NewKubernetesResourceProvider(
 		harnessPath:           harnessPath,
 		taskContainerDefaults: taskContainerDefaults,
 
+		taskList:           newTaskList(),
 		tasksByHandler:     make(map[*actor.Ref]*Task),
 		tasksByID:          make(map[TaskID]*Task),
 		tasksByContainerID: make(map[ContainerID]*Task),
 		groups:             make(map[*actor.Ref]*group),
+		registeredNames:    make(map[*container][]string),
 
 		assignmentsByTaskHandler: make(map[*actor.Ref][]podAssignment),
 	}
@@ -62,6 +70,7 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 			msg.System,
 			msg.Echo,
 			ctx.Self(),
+			k.clusterID,
 			k.config.Namespace,
 			k.config.MasterServiceName,
 			k.config.LeaveKubernetesResources,
@@ -94,6 +103,17 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 
 	case TerminateTask:
 		k.receiveTerminateTask(ctx, msg)
+
+	case GetTaskSummary:
+		if resp := k.getTaskSummary(*msg.ID); resp != nil {
+			ctx.Respond(*resp)
+		}
+
+	case GetTaskSummaries:
+		ctx.Respond(k.taskList.TaskSummaries())
+
+	case sproto.GetEndpointActorAddress:
+		ctx.Respond("/pods")
 
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
@@ -139,6 +159,7 @@ func (k *kubernetesResourceProvider) receiveAddTask(ctx *actor.Context, msg AddT
 		fittingRequirements: msg.FittingRequirements,
 	})
 
+	k.taskList.Add(task)
 	k.tasksByID[task.ID] = task
 	k.tasksByHandler[task.handler] = task
 
@@ -243,6 +264,7 @@ func (k *kubernetesResourceProvider) receivePodStarted(ctx *actor.Context, msg s
 	task, ok := k.tasksByContainerID[ContainerID(msg.ContainerID)]
 	if !ok {
 		ctx.Log().Warnf("received pod start from unknown container %s", msg.ContainerID)
+		return
 	}
 
 	container := task.containers[ContainerID(msg.ContainerID)]
@@ -251,7 +273,21 @@ func (k *kubernetesResourceProvider) receivePodStarted(ctx *actor.Context, msg s
 	handler := container.task.handler
 	handler.System().Tell(handler, ContainerStarted{Container: container})
 
-	// TODO (DET-3422): add in proxying initialization.
+	names := make([]string, 0, len(msg.Ports))
+	for _, port := range msg.Ports {
+		// We are keying on task ID instead of container ID. Revisit this when we need to
+		// proxy multi-container tasks or when containers are created prior to being
+		// assigned to an agent.
+		ctx.Ask(k.proxy, proxy.Register{
+			Service: string(task.ID),
+			Target: &url.URL{
+				Scheme: "http",
+				Host:   fmt.Sprintf("%s:%d", msg.IP, port),
+			},
+		})
+		names = append(names, string(task.ID))
+	}
+	k.registeredNames[container] = names
 }
 
 func (k *kubernetesResourceProvider) receivePodTerminated(
@@ -272,7 +308,9 @@ func (k *kubernetesResourceProvider) receivePodTerminated(
 	container.mustTransition(containerTerminated)
 	container.exitStatus = msg.ContainerStopped
 
-	// TODO(DET-3422): de-register proxying info.
+	for _, name := range k.registeredNames[container] {
+		ctx.Tell(k.proxy, proxy.Unregister{Service: name})
+	}
 
 	delete(container.agent.containers, container.id)
 	delete(container.task.containers, container.id)
@@ -293,6 +331,7 @@ func (k *kubernetesResourceProvider) receivePodTerminated(
 func (k *kubernetesResourceProvider) taskTerminated(task *Task, aborted bool) {
 	task.mustTransition(taskTerminated)
 
+	k.taskList.Remove(task)
 	delete(k.tasksByID, task.ID)
 	delete(k.tasksByHandler, task.handler)
 
@@ -370,6 +409,14 @@ func (k *kubernetesResourceProvider) terminateTask(task *Task, forcible bool) {
 		}
 		task.handler.System().Tell(task.handler, TerminateRequest{})
 	}
+}
+
+func (k *kubernetesResourceProvider) getTaskSummary(id TaskID) *TaskSummary {
+	if task := k.tasksByID[id]; task != nil {
+		summary := newTaskSummary(task)
+		return &summary
+	}
+	return nil
 }
 
 func constructAddresses(ip string, ports []int) []Address {

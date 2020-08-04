@@ -182,6 +182,7 @@ export interface ExperimentConfig {
   resources: {
     maxSlots?: number;
   };
+  labels?: string[];
 }
 
 /* Experiment */
@@ -197,9 +198,9 @@ export enum RunState {
   StoppingError = 'STOPPING_ERROR',
 }
 
-interface ValidationHistory {
+export interface ValidationHistory {
   endTime: string;
-  id: number;
+  trialId: number;
   validationError?: number;
 }
 

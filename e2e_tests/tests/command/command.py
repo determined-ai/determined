@@ -32,11 +32,11 @@ def interactive_command(*args: str) -> Generator:
             self.task_id = None  # type: Optional[str]
 
             if self.detach:
-                iterator = iter(self.process.stdout)
+                iterator = iter(self.process.stdout)  # type: ignore
                 line = next(iterator)
                 self.task_id = line.decode().strip()
             else:
-                iterator = iter(self.process.stdout)
+                iterator = iter(self.process.stdout)  # type: ignore
                 line = next(iterator)
                 m = re.search(rb"Scheduling .* \(id: (.*)\)\.\.\.", line)
                 assert m is not None
@@ -44,15 +44,18 @@ def interactive_command(*args: str) -> Generator:
 
         @property
         def stdout(self) -> Generator[str, None, None]:
+            assert self.process.stdout is not None
             for line in self.process.stdout:
                 yield line.decode()
 
         @property
         def stderr(self) -> Generator[str, None, None]:
+            assert self.process.stderr is not None
             return (line.decode() for line in self.process.stderr)
 
         @property
         def stdin(self) -> IO:
+            assert self.process.stdin is not None
             return self.process.stdin
 
     with subprocess.Popen(

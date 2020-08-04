@@ -28,8 +28,6 @@ The full list of our how-to guides can be found below:
   hyperparameter-tuning
   install-cli
   install-main
-  notebook-state
-  notebook-configuration
-  run-notebooks
+  notebooks
   tensorboard
   use-trained-models

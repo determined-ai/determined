@@ -4,11 +4,11 @@ Mappings:
   RegionMap:
     us-east-1:
       Master: ami-66506c1c
-      Agent: ami-0c6f00e65049f009c
+      Agent: ami-07a25d724ee82aad5
       Bastion: ami-0a1262fb77d0911ef
     us-west-2:
       Master: ami-79873901
-      Agent: ami-00eb27f81ce3b3211
+      Agent: ami-0eb085752fdbec583
       Bastion: ami-0ec8cdd8937453529
 
 Parameters:
@@ -59,7 +59,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.12.12.dev0
+    Default: 0.12.13.dev0
 
   DBPassword:
     Type: String

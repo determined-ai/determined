@@ -93,7 +93,7 @@ wrap dataset immediately after creating it.
 Trial Context
 ~~~~~~~~~~~~~
 
-``determined.keras.TFKerasTrialContext`` subclasses :ref:`trial-context`.
+``determined.keras.TFKerasTrialContext`` subclasses :class:`determined.TrialContext`.
 It provides useful methods for writing ``Trial`` subclasses. It also provides
 the model and dataset wrappers.
 

@@ -1,4 +1,4 @@
-import { ColumnsType } from 'antd/lib/table';
+import { ColumnType } from 'antd/lib/table';
 
 import {
   relativeTimeRenderer, stateRenderer, taskActionRenderer, taskIdRenderer,
@@ -7,7 +7,7 @@ import {
 import { CommandTask } from 'types';
 import { alphanumericSorter, commandStateSorter, stringTimeSorter } from 'utils/data';
 
-export const columns: ColumnsType<CommandTask> = [
+export const columns: ColumnType<CommandTask>[] = [
   {
     dataIndex: 'id',
     render: taskIdRenderer,

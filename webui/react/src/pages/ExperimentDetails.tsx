@@ -1,5 +1,5 @@
 import { Alert, Breadcrumb, Button, Modal, Space, Table, Tooltip } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import { ColumnType } from 'antd/lib/table';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
@@ -7,6 +7,7 @@ import { useParams } from 'react-router';
 
 import CheckpointModal from 'components/CheckpointModal';
 import ExperimentActions from 'components/ExperimentActions';
+import ExperimentChart from 'components/ExperimentChart';
 import ExperimentInfoBox from 'components/ExperimentInfoBox';
 import Icon from 'components/Icon';
 import { makeClickHandler } from 'components/Link';
@@ -18,7 +19,7 @@ import Spinner from 'components/Spinner';
 import { durationRenderer, relativeTimeRenderer, stateRenderer } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
-import { useRestApiSimple } from 'hooks/useRestApi';
+import useRestApi from 'hooks/useRestApi';
 import { routeAll } from 'routes';
 import { forkExperiment, getExperimentDetails, isNotFound } from 'services/api';
 import { ExperimentDetailsParams } from 'services/types';
@@ -37,21 +38,22 @@ interface Params {
 const ExperimentDetailsComp: React.FC = () => {
   const { experimentId } = useParams<Params>();
   const id = parseInt(experimentId);
-  const [ experimentResponse, setExpRequestParams ] =
-    useRestApiSimple<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
-  const experiment = experimentResponse.data;
-  const validationKey = experiment?.config.searcher.metric;
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
-
-  const pollExperimentDetails = useCallback(() => {
-    setExpRequestParams({ id });
-  }, [ id, setExpRequestParams ]);
-
-  usePolling(pollExperimentDetails);
   const [ forkValue, setForkValue ] = useState<string>('Loading');
   const [ forkModalState, setForkModalState ] = useState({ visible: false });
   const [ forkError, setForkError ] = useState<string>();
+  const [ experimentResponse, triggerExperimentRequest ] =
+    useRestApi<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
+  const experiment = experimentResponse.data;
+  const experimentConfig = experiment?.config;
+  const validationKey = experiment?.config.searcher.metric;
+
+  const pollExperimentDetails = useCallback(() => {
+    triggerExperimentRequest({ id });
+  }, [ id, triggerExperimentRequest ]);
+
+  usePolling(pollExperimentDetails);
 
   useEffect(() => {
     if (experiment && experiment.config) {
@@ -101,11 +103,6 @@ const ExperimentDetailsComp: React.FC = () => {
     return <Spinner fillContainer />;
   }
 
-  const monacoOpts = {
-    minimap: { enabled: false },
-    selectOnLineNumbers: true,
-  };
-
   const handleOk = async (): Promise<void> => {
     try {
       // Validate the yaml syntax by attempting to load it.
@@ -135,7 +132,7 @@ const ExperimentDetailsComp: React.FC = () => {
   };
   const handleCheckpointDismiss = () => setShowCheckpoint(false);
 
-  const columns: ColumnsType<TrialItem> = [
+  const columns: ColumnType<TrialItem>[] = [
     {
       dataIndex: 'id',
       sorter: (a: TrialItem, b: TrialItem): number => alphanumericSorter(a.id, b.id),
@@ -214,7 +211,7 @@ const ExperimentDetailsComp: React.FC = () => {
   ];
 
   return (
-    <Page title={`Experiment ${experiment?.config.description}`}>
+    <Page title={`Experiment ${experimentConfig?.description}`}>
       <Breadcrumb>
         <Breadcrumb.Item>
           <Space align="center" size="small">
@@ -230,34 +227,35 @@ const ExperimentDetailsComp: React.FC = () => {
         experiment={experiment}
         onClick={{ Fork: showForkModal }}
         onSettled={pollExperimentDetails} />
-      <ExperimentInfoBox experiment={experiment} />
-      <Modal
-        bodyStyle={{
-          padding: 0,
-        }}
-        className={css.forkModal}
-        okText="Fork"
-        style={{
-          minWidth: '60rem',
-        }}
-        title={`Fork Experiment ${experimentId}`}
-        visible={forkModalState.visible}
-        onCancel={handleCancel}
-        onOk={handleOk}
-      >
-        <MonacoEditor
-          height="40vh"
-          language="yaml"
-          options={monacoOpts}
-          theme="vs-light"
-          value={forkValue}
-          onChange={editorOnChange}
-        />
-        {forkError &&
-          <Alert className={css.error} message={forkError} type="error" />
-        }
-      </Modal>
-      <Section title="Chart" />
+      <div className={css.topRow}>
+        <ExperimentInfoBox experiment={experiment} />
+        <Modal
+          bodyStyle={{ padding: 0 }}
+          className={css.forkModal}
+          okText="Fork"
+          title={`Fork Experiment ${experimentId}`}
+          visible={forkModalState.visible}
+          width={768}
+          onCancel={handleCancel}
+          onOk={handleOk}>
+          <MonacoEditor
+            height="80vh"
+            language="yaml"
+            options={{
+              minimap: { enabled: false },
+              scrollBeyondLastLine: false,
+              selectOnLineNumbers: true,
+            }}
+            theme="vs-light"
+            value={forkValue}
+            onChange={editorOnChange} />
+          {forkError && <Alert className={css.error} message={forkError} type="error" />}
+        </Modal>
+        <ExperimentChart
+          startTime={experiment.startTime}
+          validationHistory={experiment.validationHistory}
+          validationMetric={experimentConfig?.searcher.metric} />
+      </div>
       <Section title="Trials">
         <Table
           columns={columns}

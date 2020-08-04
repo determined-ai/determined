@@ -1,7 +1,7 @@
 .. _notebook-tutorial:
 
-Jupyter Notebooks Tutorial
-==========================
+Notebooks Tutorial
+==================
 
 To launch a notebook, start by installing the :ref:`Determined command-line
 interface <install-cli>` on a development machine.
@@ -58,3 +58,8 @@ launch new deep learning workloads or examine the metrics from an active
 or historical Determined experiment. For example, to list Determined experiments
 from inside a notebook, run the notebook command ``!det experiment
 list``.
+
+Next Steps
+----------
+
+- :ref:`how-to-notebooks`

@@ -14,7 +14,7 @@ export PATH="/run/determined/pythonuserbase/bin:$PATH"
 # training, so we try to query the user system for a valid HOME, or default to
 # the working directory otherwise.
 if [ "$HOME" = "/" ] ; then
-    HOME="$(getent passwd "$(whoami)" | cut -d: -f6)" || HOME="$WORKING_DIR"
+    HOME="$(set -o pipefail; getent passwd "$(whoami)" | cut -d: -f6)" || HOME="$WORKING_DIR"
     export HOME
 fi
 

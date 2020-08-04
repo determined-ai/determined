@@ -22,9 +22,10 @@ interface Props {
   debugMode?: boolean;
   disableLevel?: boolean;
   disableLineNumber?: boolean;
+  isDownloading?: boolean;
   isLoading?: boolean;
   noWrap?: boolean;
-  onDownload?: () => Promise<void>;
+  onDownload?: () => void;
   onScrollToTop?: (oldestLogId: number) => void;
   ref?: React.Ref<LogViewerHandles>;
   title: string;
@@ -67,6 +68,8 @@ interface LogConfig {
 export interface LogViewerHandles {
   addLogs: (newLogs: Log[], prepend?: boolean) => void;
 }
+
+export const TAIL_SIZE = 1000;
 
 // What factor to multiply against the displayable lines in the visible view.
 const BUFFER_FACTOR = 1;
@@ -115,7 +118,6 @@ const LogViewer: React.FC<Props> = forwardRef((
   const [ scrollToInfo, setScrollToInfo ] =
     useState({ isPrepend: false, logId: 0 });
   const [ config, setConfig ] = useState<LogConfig>(defaultLogConfig);
-  const [ isDownloading, setIsDownloading ] = useState<boolean>(false);
   const [ isTailing, setIsTailing ] = useState(true);
   const previousScroll = usePrevious(scroll, defaultScrollInfo);
   const previousLogs = usePrevious<Log[]>(logs, []);
@@ -126,6 +128,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   const spacerStyle = { height: toRem(config.totalContentHeight) };
   const dateTimeStyle = { width: toRem(config.dateTimeWidth) };
   const lineNumberStyle = { width: toRem(config.lineNumberWidth) };
+  const messageStyle = { width: toRem(config.messageWidth) };
   const levelStyle = { width: toRem(ICON_WIDTH) };
 
   if (props.noWrap) classes.push(css.noWrap);
@@ -176,7 +179,7 @@ const LogViewer: React.FC<Props> = forwardRef((
      * after rendering line and timestamp.
      */
     const iconWidth = props.disableLevel ? 0 : ICON_WIDTH;
-    const messageWidth = spacerRect.width - iconWidth - lineNumberWidth - dateTimeWidth;
+    const messageWidth = Math.floor(spacerRect.width - iconWidth - lineNumberWidth - dateTimeWidth);
     const messageCharCount = Math.floor(messageWidth / charRect.width);
 
     /*
@@ -438,10 +441,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   }, []);
 
   const handleDownload = useCallback(() => {
-    if (!onDownload) return;
-    setIsDownloading(true);
-    onDownload()
-      .then(() => setIsDownloading(false));
+    if (onDownload) onDownload();
   }, [ onDownload ]);
 
   const logOptions = (
@@ -469,7 +469,7 @@ const LogViewer: React.FC<Props> = forwardRef((
         <Button
           aria-label="Download Logs"
           icon={<Icon name="download" />}
-          loading={isDownloading}
+          loading={props.isDownloading}
           onClick={handleDownload} />
       </Tooltip>}
     </Space>
@@ -504,7 +504,8 @@ const LogViewer: React.FC<Props> = forwardRef((
                 <div className={css.time} style={dateTimeStyle}>{log.formattedTime}</div>
                 <div
                   className={levelCss(css.message, log.level)}
-                  dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }} />
+                  dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }}
+                  style={messageStyle} />
               </div>
             ))}
           </div>

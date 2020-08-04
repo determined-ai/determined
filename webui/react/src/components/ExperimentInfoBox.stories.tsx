@@ -40,7 +40,7 @@ const experimentDetails: ExperimentDetails = {
   username: 'hamid',
   validationHistory: [ {
     endTime: Date.now().toString(),
-    id: 0,
+    trialId: 0,
     validationError: 0.023,
   } ],
 };
