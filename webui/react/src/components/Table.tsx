@@ -106,3 +106,12 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
 export const experimentArchivedRenderer: ExperimentRenderer = (_, record) => {
   return record.archived ? <CheckOutlined /> : null;
 };
+
+/* Table Helper Functions */
+
+export const isAlternativeAction = (event: React.MouseEvent): boolean => {
+  const target = event.target as unknown as HTMLElement;
+  if (target.className.includes('ant-checkbox-wrapper') ||
+      target.className.includes('ignoreEvent')) return true;
+  return false;
+};

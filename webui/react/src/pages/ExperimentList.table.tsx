@@ -54,6 +54,7 @@ export const columns: ColumnType<ExperimentItem>[] = [
   },
   {
     align: 'right',
+    className: 'fullCell',
     render: experimentActionRenderer,
     title: '',
   },

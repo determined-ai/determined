@@ -9,6 +9,7 @@ import { makeClickHandler } from 'components/Link';
 import linkCss from 'components/Link.module.scss';
 import Page from 'components/Page';
 import StateSelectFilter from 'components/StateSelectFilter';
+import { isAlternativeAction } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
@@ -256,7 +257,10 @@ const ExperimentList: React.FC = () => {
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
   const handleTableRow = useCallback((record: ExperimentItem) => ({
-    onClick: makeClickHandler(record.url as string),
+    onClick: (event: React.MouseEvent) => {
+      if (isAlternativeAction(event)) return;
+      makeClickHandler(record.url)(event);
+    },
   }), []);
 
   return (
