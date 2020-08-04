@@ -1,6 +1,6 @@
 import { Alert, Modal } from 'antd';
 import yaml from 'js-yaml';
-import React, { SetStateAction, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 
 import { routeAll } from 'routes';
@@ -8,36 +8,32 @@ import { forkExperiment } from 'services/api';
 
 import css from './CreateExperimentModal.module.scss';
 
-export interface CreateExpModalState {
-  visible: boolean;
-  config: string;
-}
-
 interface Props {
   title: string;
   okText: string;
   parentId: number;
   visible: boolean;
   config: string;
-  setState: (arg0: SetStateAction<CreateExpModalState>) => void;
+  onVisibleChange: (arg0: boolean) => void;
+  onConfigChange: (arg0: string) => void;
 }
 
 const CreateExperimentModal: React.FC<Props> = (
-  { visible, config, setState, parentId, ...props }: Props,
+  { visible, config, onVisibleChange, onConfigChange, parentId, ...props }: Props,
 ) => {
   const [ configError, setConfigError ] = useState<string>();
 
   const editorOnChange = useCallback((newValue: string) => {
-    setState((existingState: CreateExpModalState) => ({ ...existingState, config: newValue }));
+    onConfigChange(newValue);
     setConfigError(undefined);
-  }, [ setState, setConfigError ]);
+  }, [ onConfigChange, setConfigError ]);
 
   const handleOk = async (): Promise<void> => {
     try {
       // Validate the yaml syntax by attempting to load it.
       yaml.safeLoad(config);
       const configId = await forkExperiment({ experimentConfig: config, parentId });
-      setState(existingState => ({ ...existingState, visible: false }));
+      onVisibleChange(false);
       routeAll(`/det/experiments/${configId}`);
     } catch (e) {
       let errorMessage = 'Failed to config using the provided config.';
@@ -51,7 +47,7 @@ const CreateExperimentModal: React.FC<Props> = (
   };
 
   const handleCancel = (): void => {
-    setState(existingState => ({ ...existingState, visible: false }));
+    onVisibleChange(false);
   };
   return <Modal
     bodyStyle={{

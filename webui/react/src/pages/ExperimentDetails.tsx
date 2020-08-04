@@ -48,7 +48,8 @@ const ExperimentDetailsComp: React.FC = () => {
   }, [ id, triggerExperimentRequest ]);
 
   usePolling(pollExperimentDetails);
-  const [ forkModalState, setForkModalState ] = useState({ config: 'Loading', visible: false });
+  const [ forkModalVisible, setForkModalVisible ] = useState(false);
+  const [ forkModalConfig, setForkModalConfig ] = useState('Loading');
 
   useEffect(() => {
     if (experiment && experiment.config) {
@@ -56,21 +57,21 @@ const ExperimentDetailsComp: React.FC = () => {
         const prefix = 'Fork of ';
         const rawConfig = clone(experiment.configRaw);
         rawConfig.description = prefix + rawConfig.description;
-        setForkModalState(state => ({ ...state, config: yaml.safeDump(rawConfig) }));
+        setForkModalConfig(yaml.safeDump(rawConfig));
       } catch (e) {
         handleError({
           error: e,
           message: 'failed to load experiment config',
           type: ErrorType.ApiBadResponse,
         });
-        setForkModalState(state => ({ ...state, config: 'failed to load experiment config' }));
+        setForkModalConfig('failed to load experiment config');
       }
     }
   }, [ experiment ]);
 
   const showForkModal = useCallback((): void => {
-    setForkModalState(state => ({ ...state, visible: true }));
-  }, [ setForkModalState ]);
+    setForkModalVisible(true);
+  }, [ setForkModalVisible ]);
 
   const handleTableRow = useCallback((record: TrialItem) => ({
     onClick: makeClickHandler(record.url as string),
@@ -218,12 +219,13 @@ const ExperimentDetailsComp: React.FC = () => {
         title={`Best Checkpoint for Trial ${activeCheckpoint.trialId}`}
         onHide={handleCheckpointDismiss} />}
       <CreateExperimentModal
-        config={forkModalState.config}
+        config={forkModalConfig}
         okText="Fork"
         parentId={id}
-        setState={setForkModalState}
         title={`Fork Experiment ${id}`}
-        visible={forkModalState.visible}
+        visible={forkModalVisible}
+        onConfigChange={setForkModalConfig}
+        onVisibleChange={setForkModalVisible}
       />
     </Page>
   );

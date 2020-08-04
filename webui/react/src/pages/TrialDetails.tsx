@@ -3,7 +3,7 @@ import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 
-import CreateExperimentModal, { CreateExpModalState } from 'components/CreateExperimentModal';
+import CreateExperimentModal from 'components/CreateExperimentModal';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import Message from 'components/Message';
@@ -29,9 +29,8 @@ const TrialDetailsComp: React.FC = () => {
   const trialId = parseInt(trialIdParam);
   const [ trial, triggerTrialRequest ] =
     useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
-  const [ ContModalState, setContModalState ] = useState<CreateExpModalState>(
-    { config: 'Loading', visible: false },
-  );
+  const [ contModalVisible, setContModalVisible ] = useState(false);
+  const [ contModalConfig, setContModalConfig ] = useState('Loading');
 
   const pollTrialDetails = useCallback(
     () => triggerTrialRequest({ id: trialId }),
@@ -59,15 +58,14 @@ const TrialDetailsComp: React.FC = () => {
           };
           const newHyperparameters = trialHParamsToExperimentHParams(hparams);
 
-          setContModalState(state => ({ ...state,
-            config: yaml.safeDump({
-              ...rawConfig,
-              description: newDescription,
-              hyperparameters: newHyperparameters,
-              searcher: newSearcher,
-            }) }));
+          setContModalConfig(yaml.safeDump({
+            ...rawConfig,
+            description: newDescription,
+            hyperparameters: newHyperparameters,
+            searcher: newSearcher,
+          }));
         } catch (e) {
-          setContModalState(state => ({ ...state, config: 'failed to load experiment config' }));
+          setContModalConfig('failed to load experiment config');
           handleError({
             error: e,
             message: 'failed to load experiment config',
@@ -81,7 +79,7 @@ const TrialDetailsComp: React.FC = () => {
   const handleActionClick = useCallback((action: TrialAction) => (): void => {
     switch (action) {
       case TrialAction.Continue:
-        setContModalState(state => ({ ...state, visible: true }));
+        setContModalVisible(true);
         break;
     }
   }, [ ]);
@@ -128,12 +126,13 @@ const TrialDetailsComp: React.FC = () => {
       <Section title="Chart" />
       <Section title="Steps" />
       <CreateExperimentModal
-        config={ContModalState.config}
+        config={contModalConfig}
         okText="Create"
         parentId={experimentId}
-        setState={setContModalState}
         title={`Continue Trial ${trialId}`}
-        visible={ContModalState.visible}
+        visible={contModalVisible}
+        onConfigChange={setContModalConfig}
+        onVisibleChange={setContModalVisible}
       />
     </Page>
   );
