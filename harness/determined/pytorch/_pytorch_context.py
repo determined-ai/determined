@@ -133,7 +133,7 @@ class PyTorchTrialContext(det.TrialContext):
         """Returns a wrapped model."""
 
         if self.env.training:
-            check.false(self._use_amp, "Must call Model() before configure_apex_amp.")
+            check.false(self._use_amp, "Must call wrap_model() before configure_apex_amp.")
 
             model = model.to(self.device)
             if not self.hvd_config.use and self.n_gpus > 1:
@@ -162,7 +162,7 @@ class PyTorchTrialContext(det.TrialContext):
         creates a ``horovod.DistributedOptimizer`` if using parallel/distributed training.
         """
         if self.env.training:
-            check.false(self._use_amp, "Must call Optimizer() before configure_apex_amp.")
+            check.false(self._use_amp, "Must call wrap_optimizer() before configure_apex_amp.")
 
             if self.hvd_config.use:
                 use_compression = self.hvd_config.fp16_compression
