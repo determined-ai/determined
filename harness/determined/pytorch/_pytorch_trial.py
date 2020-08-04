@@ -649,6 +649,19 @@ class PyTorchTrialController(det.LoopTrialController):
             for idx, lr_scheduler in enumerate(self.context.lr_schedulers):
                 lr_scheduler.load_state_dict(checkpoint["lr_schedulers_state_dict"][idx])
 
+        if "amp_state" in checkpoint:
+            if self.context.get_use_amp():
+                self.context.load_apex_amp(checkpoint["amp_state"])
+            else:
+                logging.warn(
+                    "There exists amp_state in checkpoint but the experiment is not using AMP."
+                )
+        else:
+            if self.context.get_use_amp():
+                logging.warn(
+                    "The experiment is using AMP but amp_state does not exist in the checkpoint."
+                )
+
         if "rng_state" in checkpoint:
             rng_state = checkpoint["rng_state"]
             np.random.set_state(rng_state["np_rng_state"])
@@ -716,6 +729,9 @@ class PyTorchTrialController(det.LoopTrialController):
             "callbacks": {name: callback.state_dict() for name, callback in self.callbacks.items()},
             "rng_state": rng_state,
         }
+
+        if self.context.get_use_amp():
+            checkpoint["amp_state"] = self.context.get_amp_state()
 
         torch.save(  # type: ignore
             checkpoint, str(path.joinpath("state_dict.pth")), pickle_module=cloudpickle

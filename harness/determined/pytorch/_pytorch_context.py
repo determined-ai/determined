@@ -129,6 +129,12 @@ class PyTorchTrialContext(det.TrialContext):
             return self.lr_schedulers[0]
         return None
 
+    def get_use_amp(self):
+        return self._use_amp
+
+    def get_amp_state(self):
+        return apex.amp.state_dict()
+
     def wrap_model(self, model: torch.nn.Module) -> torch.nn.Module:
         """Returns a wrapped model."""
 
@@ -354,6 +360,9 @@ class PyTorchTrialContext(det.TrialContext):
         if not isinstance(optimizers, list):
             self.optimizers = [optimizers]
         return models, optimizers
+
+    def load_apex_amp(self, state: Dict) -> None:
+        apex.amp.load_state_dict(state)
 
     def _should_communicate_and_update(self) -> bool:
         if self._current_batch_idx is None:
