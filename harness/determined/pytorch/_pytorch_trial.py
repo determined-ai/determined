@@ -40,13 +40,13 @@ class PyTorchTrialController(det.LoopTrialController):
             len(self.context.models),
             1,
             "Must have at least one model. "
-            "This might be caused by not wrapping your model with Model()",
+            "This might be caused by not wrapping your model with wrap_model()",
         )
         check.gt_eq(
             len(self.context.optimizers),
             1,
             "Must have at least one optimizer. "
-            "This might be caused by not wrapping your model with Optimizer()",
+            "This might be caused by not wrapping your optimizer with wrap_optimizer()",
         )
         self._check_evaluate_implementation()
 
