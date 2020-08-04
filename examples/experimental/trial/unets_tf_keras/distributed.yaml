@@ -23,3 +23,5 @@ resources:
 min_validation_period: 1
 batches_per_step: 8
 entrypoint: model_def:UNetsTrial
+environment:
+    image: determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-23863bb
