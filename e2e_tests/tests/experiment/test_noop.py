@@ -259,18 +259,13 @@ def test_rng_restore() -> None:
     assert len(trials) == 1
     assert len(first_trial["steps"]) == 3
 
-    second_step = first_trial["steps"][1]
-    second_checkpoint_id = second_step["checkpoint"]["id"]
+    first_step = first_trial["steps"][0]
+    second_checkpoint_id = first_step["checkpoint"]["id"]
 
     config_base = conf.load_config(conf.fixtures_path("pytorch-rng-saver/const.yaml"))
     config_obj = copy.deepcopy(config_base)
-    config_obj["searcher"]["source_checkpoint_uuid"] = second_step["checkpoint"]["uuid"]
+    config_obj["searcher"]["source_checkpoint_uuid"] = first_step["checkpoint"]["uuid"]
 
-    # with tempfile.NamedTemporaryFile() as tf:
-    #     with open(tf.name, "w") as f:
-    #         yaml.dump(config_obj, f)
-    #
-    #     experiment2 = exp.run_basic_test(tf.name, conf.fixtures_path("no_op"), 1)
     experiment2 = exp.run_basic_test_with_temp_config(
         config_obj, conf.fixtures_path("pytorch-rng-saver"), 1
     )
@@ -283,56 +278,104 @@ def test_rng_restore() -> None:
     assert second_trial["warm_start_checkpoint_id"] == second_checkpoint_id
 
     assert (
-        first_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["rand_int"]
-        == second_trial["steps"][0]["validation"]["metrics"]["validation_metrics"]["rand_int"]
+        first_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["np_rand"]
+        == second_trial["steps"][0]["validation"]["metrics"]["validation_metrics"]["np_rand"]
     )
 
     assert (
-        first_trial["steps"][2]["validation"]["metrics"]["validation_metrics"]["rand_int"]
-        == second_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["rand_int"]
+            first_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["rand_rand"]
+            == second_trial["steps"][0]["validation"]["metrics"]["validation_metrics"]["rand_rand"]
+    )
+
+    assert (
+            first_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["torch_rand"]
+            == second_trial["steps"][0]["validation"]["metrics"]["validation_metrics"]["torch_rand"]
+    )
+
+    assert (
+        first_trial["steps"][2]["validation"]["metrics"]["validation_metrics"]["np_rand"]
+        == second_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["np_rand"]
+    )
+
+    assert (
+            first_trial["steps"][2]["validation"]["metrics"]["validation_metrics"]["rand_rand"]
+            == second_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["rand_rand"]
+    )
+
+    assert (
+            first_trial["steps"][2]["validation"]["metrics"]["validation_metrics"]["torch_rand"]
+            == second_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["torch_rand"]
     )
 
 
 @pytest.mark.e2e_gpu  # type: ignore
 def test_gpu_restore() -> None:
     experiment = exp.run_basic_test(
-        conf.fixtures_path("pytorch-rng-saver/const_gpu.yaml"),
+        conf.fixtures_path("pytorch-rng-saver/const.yaml"),
         conf.fixtures_path("pytorch-rng-saver"),
         1,
     )
 
     trials = exp.experiment_trials(experiment)
-    assert len(trials) == 1
-
     first_trial = trials[0]
 
+    assert len(trials) == 1
     assert len(first_trial["steps"]) == 3
 
-    second_step = first_trial["steps"][1]
-    second_checkpoint_id = second_step["checkpoint"]["id"]
+    first_step = first_trial["steps"][0]
+    second_checkpoint_id = first_step["checkpoint"]["id"]
 
     config_base = conf.load_config(conf.fixtures_path("pytorch-rng-saver/const.yaml"))
     config_obj = copy.deepcopy(config_base)
-    config_obj["searcher"]["source_checkpoint_uuid"] = second_step["checkpoint"]["uuid"]
+    config_obj["searcher"]["source_checkpoint_uuid"] = first_step["checkpoint"]["uuid"]
 
     experiment2 = exp.run_basic_test_with_temp_config(
         config_obj, conf.fixtures_path("pytorch-rng-saver"), 1
     )
 
     trials = exp.experiment_trials(experiment2)
-    assert len(trials) == 1
-
     second_trial = trials[0]
 
+    assert len(trials) == 1
     assert len(second_trial["steps"]) == 3
     assert second_trial["warm_start_checkpoint_id"] == second_checkpoint_id
 
     assert (
-        first_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["rand_tensor"]
-        == second_trial["steps"][0]["validation"]["metrics"]["validation_metrics"]["rand_tensor"]
+            first_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["np_rand"]
+            == second_trial["steps"][0]["validation"]["metrics"]["validation_metrics"]["np_rand"]
     )
 
     assert (
-        first_trial["steps"][2]["validation"]["metrics"]["validation_metrics"]["rand_int"]
-        == second_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["rand_tensor"]
+            first_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["rand_rand"]
+            == second_trial["steps"][0]["validation"]["metrics"]["validation_metrics"]["rand_rand"]
+    )
+
+    assert (
+            first_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["torch_rand"]
+            == second_trial["steps"][0]["validation"]["metrics"]["validation_metrics"]["torch_rand"]
+    )
+
+    assert (
+            first_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["gpu_rand"]
+            == second_trial["steps"][0]["validation"]["metrics"]["validation_metrics"]["gpu_rand"]
+    )
+
+    assert (
+            first_trial["steps"][2]["validation"]["metrics"]["validation_metrics"]["np_rand"]
+            == second_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["np_rand"]
+    )
+
+    assert (
+            first_trial["steps"][2]["validation"]["metrics"]["validation_metrics"]["rand_rand"]
+            == second_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["rand_rand"]
+    )
+
+    assert (
+            first_trial["steps"][2]["validation"]["metrics"]["validation_metrics"]["torch_rand"]
+            == second_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["torch_rand"]
+    )
+
+    assert (
+            first_trial["steps"][2]["validation"]["metrics"]["validation_metrics"]["gpu_rand"]
+            == second_trial["steps"][1]["validation"]["metrics"]["validation_metrics"]["gpu_rand"]
     )

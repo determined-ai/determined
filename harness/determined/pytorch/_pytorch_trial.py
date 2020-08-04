@@ -24,6 +24,12 @@ from determined.pytorch import (
 )
 from determined_common import check
 
+# Apex is included only for GPU trials.
+try:
+    import apex
+except ImportError:
+    pass
+
 
 class PyTorchTrialController(det.LoopTrialController):
     def __init__(self, trial_inst: det.Trial, *args: Any, **kwargs: Any) -> None:
@@ -55,6 +61,8 @@ class PyTorchTrialController(det.LoopTrialController):
         self.validation_loader = None  # type: Optional[torch.utils.data.DataLoader]
         self._set_data_loaders()
 
+        self.training_iterator = iter(self.training_loader)
+
         # If a load path is provided load weights and restore the data location.
         self._load()
 
@@ -62,8 +70,6 @@ class PyTorchTrialController(det.LoopTrialController):
             hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
             for optimizer in self.context.optimizers:
                 hvd.broadcast_optimizer_state(optimizer, root_rank=0)
-
-        self.training_iterator = iter(self.training_loader)
 
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
@@ -650,14 +656,14 @@ class PyTorchTrialController(det.LoopTrialController):
                 lr_scheduler.load_state_dict(checkpoint["lr_schedulers_state_dict"][idx])
 
         if "amp_state" in checkpoint:
-            if self.context.get_use_amp():
-                self.context.load_apex_amp(checkpoint["amp_state"])
+            if self.context._use_amp:
+                apex.amp.load_state_dict(checkpoint["amp_state"])
             else:
                 logging.warn(
                     "There exists amp_state in checkpoint but the experiment is not using AMP."
                 )
         else:
-            if self.context.get_use_amp():
+            if self.context._use_amp:
                 logging.warn(
                     "The experiment is using AMP but amp_state does not exist in the checkpoint."
                 )
@@ -670,7 +676,7 @@ class PyTorchTrialController(det.LoopTrialController):
 
             if torch.cuda.device_count():
                 if "gpu_rng_state" in rng_state:
-                    torch.cuda.set_rng_state(rng_state["gpu_rng_state"])  # type: ignore
+                    torch.cuda.set_rng_state(rng_state["gpu_rng_state"], device=self.context.distributed.get_local_rank())  # type: ignore
                 else:
                     logging.warn(
                         "The system has a gpu but no gpu_rng_state exists in the checkpoint."
@@ -712,7 +718,7 @@ class PyTorchTrialController(det.LoopTrialController):
         }
 
         if torch.cuda.device_count():
-            rng_state["gpu_rng_state"] = torch.cuda.get_rng_state(self.local_rank)  # type: ignore
+            rng_state["gpu_rng_state"] = torch.cuda.get_rng_state(self.context.distributed.get_local_rank())  # type: ignore
 
         # PyTorch uses optimizer objects that take the model parameters to
         # optimize on construction, so we store and reload the `state_dict()`
@@ -731,8 +737,8 @@ class PyTorchTrialController(det.LoopTrialController):
             "rng_state": rng_state,
         }
 
-        if self.context.get_use_amp():
-            checkpoint["amp_state"] = self.context.get_amp_state()
+        if self.context._use_amp:
+            checkpoint["amp_state"] = apex.amp.state_dict()
 
         torch.save(  # type: ignore
             checkpoint, str(path.joinpath("state_dict.pth")), pickle_module=cloudpickle

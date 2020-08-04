@@ -1,4 +1,4 @@
-description: noop-rv-cpu
+description: noop-rv
 data:
   model_type: single_output
 entrypoint: model_def:NoopPytorchTrial
