@@ -421,8 +421,8 @@ updateWithRoute url model =
                             Page.ExperimentList.init model.previousExperimentListModel options
                                 |> mapInit model experimentListInfo
 
-                Just Route.ExperimentReactList ->
-                    ( model, Navigation.load (Route.toString Route.ExperimentReactList) )
+                Just Route.ExperimentListReact ->
+                    ( model, Navigation.load (Route.toString Route.ExperimentListReact) )
 
                 Just (Route.Login maybeRedirect) ->
                     ( model, goToLogin maybeRedirect )

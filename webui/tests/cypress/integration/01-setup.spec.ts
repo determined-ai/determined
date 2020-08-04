@@ -13,11 +13,10 @@ describe('setup', () => {
     cy.get(recordSelector).should('have.lengthOf', 4);
   });
 
-  it('should have 4 active experiments listed', () => {
-    cy.get(recordSelector).should('have.lengthOf', 4)
-      .each(($tr) => {
-        cy.wrap($tr).should('contain', 'Active');
-      });
+  it('should have 4 active or completed experiments listed', () => {
+    cy.get(recordSelector)
+      .should('have.lengthOf', 4)
+      .each(($tr) => cy.wrap($tr).contains(/(active|completed)/i));
   });
 
   it('should pause all experiments listed', () => {
@@ -27,9 +26,7 @@ describe('setup', () => {
     /* eslint-disable-next-line cypress/no-unnecessary-waiting */
     cy.wait(5000);
     cy.get(recordSelector)
-      .each(($tr) => {
-        cy.wrap($tr).should('contain', 'Paused');
-      });
+      .each(($tr) => cy.wrap($tr).should('contain', 'Paused'));
     cy.get('thead input[type=checkbox]').click();
   });
 

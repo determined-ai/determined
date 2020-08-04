@@ -6,24 +6,68 @@ describe('Task List', () => {
     cy.visit('/det/tasks');
   });
 
-  describe('launch notebooks', () => {
-    it('should launch notebooks', () => {
-      cy.visit('/ui/notebooks');
-      cy.get('button').contains(/launch new notebook/i).click().click();
+  describe('Notebooks', () => {
+    before(() => {
       cy.visit('/det/tasks');
-      cy.get(recordSelector).should('have.length', 2);
+      cy.get('button[aria-label="Notebook"]').click();
+    });
+
+    it('should launch notebooks', () => {
+      cy.server();
+      cy.route('POST', /\/notebook.*/).as('createRequest');
+      cy.visit('/ui/notebooks');
+      cy.get('#det-main-container button').contains(/launch new notebook/i).click().click();
+      cy.wait('@createRequest');
+      cy.visit('/det/tasks');
+      cy.get(recordSelector).should('have.lengthOf', 2);
+    });
+
+    it('should terminate notebook', () => {
+      cy.server();
+      cy.route('DELETE', /\/notebook.*/).as('terminateRequest');
+      cy.get(`${recordSelector}:first-child .ant-dropdown-trigger`).click();
+      cy.get('.ant-dropdown .ant-dropdown-menu-item').contains(/kill/i).click();
+      cy.wait('@terminateRequest');
+      cy.visit('/det/tasks');
+      cy.get(recordSelector).contains(/terminated/i).should('be.visible');
+    });
+
+    after(() => {
+      cy.get('button[aria-label="Notebook"]').click();
     });
   });
 
-  describe('launch tensorboards', () => {
-    it('should launch tensorboards', () => {
+  describe('Tensorboards', () => {
+    before(() => {
+      cy.visit('/det/tasks');
+      cy.get('button[aria-label="Tensorboard"]').click();
+    });
+
+    it('should launch tensorboard', () => {
+      cy.server();
+      cy.route('POST', /\/tensorboard.*/).as('createRequest');
       cy.visit('/det/experiments');
       cy.get('thead input[type=checkbox]').click();
-      cy.get('[class*="TableBatch_actions_"] button:first-child')
-        .should('contain', 'Open TensorBoard')
+      cy.get('[class*="TableBatch_actions_"] button')
+        .contains(/open tensorBoard/i)
         .click();
+      cy.wait('@createRequest');
       cy.visit('/det/tasks');
-      cy.get(recordSelector).should('have.length', 3);
+      cy.get(recordSelector).should('have.lengthOf', 1);
+    });
+
+    it('should terminate tensorboard', () => {
+      cy.server();
+      cy.route('DELETE', /\/tensorboard.*/).as('terminateRequest');
+      cy.get(`${recordSelector}:first-child .ant-dropdown-trigger`).click();
+      cy.get('.ant-dropdown .ant-dropdown-menu-item').contains(/kill/i).click();
+      cy.wait('@terminateRequest');
+      cy.visit('/det/tasks');
+      cy.get(recordSelector).contains(/terminated/i).should('be.visible');
+    });
+
+    after(() => {
+      cy.get('button[aria-label="Tensorboard"]').click();
     });
   });
 
@@ -31,15 +75,6 @@ describe('Task List', () => {
     it('should have 1 button', () => {
       cy.get('thead input[type=checkbox]').click();
       cy.get('[class*="TableBatch_actions_"] button').should('have.lengthOf', 1);
-    });
-  });
-
-  describe('table filter', () => {
-    it('should filter notebooks by task type', () => {
-      cy.get('button[aria-label="Tensorboard"]').click();
-      cy.get(recordSelector).should('have.length', 1);
-      cy.get('button[aria-label="Tensorboard"]').click();
-      cy.get(recordSelector).should('have.length', 3);
     });
   });
 });

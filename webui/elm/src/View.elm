@@ -352,7 +352,7 @@ sideTabs model =
 
         tabs =
             [ ( text "Dashboard", Route.Dashboard, i [ class "icon-user flex-grow-0", iconAttribute ] [] )
-            , ( text "Experiments", Route.ExperimentReactList, i [ class "icon-experiment flex-grow-0", iconAttribute ] [] )
+            , ( text "Experiments", Route.ExperimentListReact, i [ class "icon-experiment flex-grow-0", iconAttribute ] [] )
             , ( text "Tasks", Route.TaskList, i [ class "icon-tasks flex-grow-0", iconAttribute ] [] )
             , ( text "Cluster", Route.Cluster, i [ class "icon-cluster flex-grow-0", iconAttribute ] [] )
             ]

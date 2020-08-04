@@ -6,10 +6,14 @@ describe('Experiment List', () => {
     cy.visit('/det/experiments');
   });
 
-  describe('batch buttons', () => {
+  describe('batch action buttons', () => {
     it('should have 7 buttons', () => {
       cy.get('thead input[type=checkbox]').click();
       cy.get('[class*="TableBatch_actions_"] button').should('have.lengthOf', 7);
+    });
+
+    it('should have 2 disabled buttons', () => {
+      cy.get('[class*="TableBatch_actions_"] button[disabled]').should('have.lengthOf', 2);
     });
 
     describe('Open TensorBoard', () => {
@@ -33,12 +37,10 @@ describe('Experiment List', () => {
         cy.get(recordSelector).should('have.length', 3);
       });
 
-      // TODO: fix when Archived column has landed
-      // it('should default to hiding archived experiments', () => {
-      //   cy.get('#experimentsList .filters input[type=checkbox]').should('not.have.attr', 'checked');
-      //   cy.get(recordSelector).should('have.length', 3);
-      //   cy.get(recordSelector).should('not.contain', 'Yes');
-      // });
+      it('should show archived column', () => {
+        cy.get('[class*="Toggle_base_"] button').click();
+        cy.get(`${recordSelector} .anticon-check`).should('have.lengthOf', 1);
+      });
     });
   });
 });

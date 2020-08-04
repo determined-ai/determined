@@ -144,7 +144,7 @@ type Route
     | CommandList CommandLikeListOptions
     | ExperimentDetail Int
     | ExperimentList ExperimentListOptions
-    | ExperimentReactList
+    | ExperimentListReact
     | Login (Maybe Url.Url)
     | Logout
     | NotebookList CommandLikeListOptions
@@ -273,7 +273,7 @@ toString r =
             in
             absolute [ "ui", "experiments" ] parameters
 
-        ExperimentReactList ->
+        ExperimentListReact ->
             absolute [ "det", "experiments" ] []
 
         Login maybeRedirect ->

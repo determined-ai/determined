@@ -152,6 +152,11 @@ export const sidebarRoutes: RouteConfig[] = [
 ];
 export const defaultSideBarRoute = sidebarRoutes[0];
 
+// Add pages we don't want to expose to the public yet.
+if (process.env.IS_DEV) {
+  // sidebarRoutes.push();
+}
+
 // Is the path going to be served from the same host?
 const isDetRoute = (url: string): boolean => {
   if (!isFullPath(url)) return true;
