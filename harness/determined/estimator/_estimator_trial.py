@@ -354,6 +354,7 @@ class EstimatorTrialController(det.LoopTrialController):
             hvd.init()
 
             # This is option is available for when TF ignores `gpu_options.visible_device_list`.
+            # TODO (DET-3762): Remove this once it's no longer necessary.
             if env.experiment_config.get("data", {}).get("set_cuda_visible_devices", False):
                 logging.info(
                     "Setting `CUDA_VISIBLE_DEVICES` environment variables "
@@ -564,6 +565,7 @@ class EstimatorTrialController(det.LoopTrialController):
 
             # If using CUDA_VISIBLE_DEVICES there is only one visible GPU
             # so there is no need to set visible devices for TF.
+            # TODO (DET-3762): Remove this once it's no longer necessary.
             if not self.env.experiment_config.get("data", {}).get(
                 "set_cuda_visible_devices", False
             ):
