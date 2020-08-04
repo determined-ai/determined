@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -129,9 +128,6 @@ func (a *apiServer) GetModelVersions(
 	}
 
 	a.sort(resp.ModelVersions, req.OrderBy, req.SortBy, apiv1.GetModelVersionsRequest_SORT_BY_VERSION)
-	for _, v := range resp.ModelVersions {
-		fmt.Printf("v: %v, uuid: %v\n", v.Version, v.Checkpoint.Uuid)
-	}
 	return resp, a.paginate(&resp.Pagination, &resp.ModelVersions, req.Offset, req.Limit)
 }
 

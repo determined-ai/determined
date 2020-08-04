@@ -122,9 +122,6 @@ class Model:
         )
         data = resp.json()
 
-        for v in data["modelVersions"]:
-            print(v["version"])
-
         return [
             Checkpoint.from_json(
                 {
