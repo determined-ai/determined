@@ -129,10 +129,10 @@ class PyTorchTrialContext(det.TrialContext):
             return self.lr_schedulers[0]
         return None
 
-    def get_use_amp(self):
+    def get_use_amp(self) -> bool:
         return self._use_amp
 
-    def get_amp_state(self):
+    def get_amp_state(self):  # type: ignore
         return apex.amp.state_dict()
 
     def wrap_model(self, model: torch.nn.Module) -> torch.nn.Module:

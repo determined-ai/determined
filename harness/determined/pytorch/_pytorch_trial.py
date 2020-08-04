@@ -666,10 +666,11 @@ class PyTorchTrialController(det.LoopTrialController):
             rng_state = checkpoint["rng_state"]
             np.random.set_state(rng_state["np_rng_state"])
             random.setstate(rng_state["random_rng_state"])
-            torch.random.set_rng_state(rng_state["cpu_rng_state"])
+            torch.random.set_rng_state(rng_state["cpu_rng_state"])  # type: ignore
+
             if torch.cuda.device_count():
                 if "gpu_rng_state" in rng_state:
-                    rng_state["gpu_rng_state"] = torch.cuda.get_rng_state(self.local_rank)
+                    torch.cuda.set_rng_state(rng_state["gpu_rng_state"])  # type: ignore
                 else:
                     logging.warn(
                         "The system has a gpu but no gpu_rng_state exists in the checkpoint."
@@ -705,13 +706,13 @@ class PyTorchTrialController(det.LoopTrialController):
         util.write_user_code(path)
 
         rng_state = {
-            "cpu_rng_state": torch.random.get_rng_state(),
+            "cpu_rng_state": torch.random.get_rng_state(),  # type: ignore
             "np_rng_state": np.random.get_state(),
             "random_rng_state": random.getstate(),
         }
 
         if torch.cuda.device_count():
-            rng_state["gpu_rng_state"] = torch.cuda.get_rng_state(self.local_rank)
+            rng_state["gpu_rng_state"] = torch.cuda.get_rng_state(self.local_rank)  # type: ignore
 
         # PyTorch uses optimizer objects that take the model parameters to
         # optimize on construction, so we store and reload the `state_dict()`
