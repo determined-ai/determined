@@ -51,7 +51,7 @@ class Model:
         self.last_updated_time = last_updated_time
         self.metadata = metadata or {}
 
-    def get_version(self, version: int = 0) -> Checkpoint:
+    def get_version(self, version: int = 0) -> Optional[Checkpoint]:
         """
         Retrieve the checkpoint corresponding to the specified version of the
         model. If no version is specified the latest model version is returned.
@@ -67,6 +67,9 @@ class Model:
             )
 
             data = resp.json()
+            if data["versions"] == []:
+                return None
+
             latest_version = data["versions"][0]
             return Checkpoint.from_json(
                 {
