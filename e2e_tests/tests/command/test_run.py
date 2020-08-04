@@ -1,5 +1,6 @@
 import re
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 from typing import Any, List
@@ -7,6 +8,7 @@ from typing import Any, List
 import docker
 import docker.errors
 import pytest
+import yaml
 
 from tests import command as cmd
 from tests import config as conf
@@ -37,6 +39,12 @@ def _run_and_verify_exit_code_zero(args: List[str], **kwargs: Any) -> None:
     # TODO(#2903): remove this once exit status are propagated through cli
     output = subprocess.check_output(args, **kwargs)
     assert re.search(b"command exited successfully", output) is not None
+
+
+def _run_and_verify_failure(args: List[str], **kwargs: Any) -> None:
+    output = subprocess.check_output(args, **kwargs)
+    if re.search(b"was terminated: container failed with non-zero exit code:", output):
+        raise subprocess.CalledProcessError(1, " ".join(args), output=output)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -350,3 +358,51 @@ def test_killed_pending_command_terminates() -> None:
     else:
         state = cmd.get_command(command.task_id)["state"]
         raise AssertionError(f"Task was in state {state} rather than TERMINATED")
+
+
+@pytest.mark.e2e_gpu  # type: ignore
+def test_k8_mount(using_k8s: bool) -> None:
+    if not using_k8s:
+        pytest.skip("only need to run test on kubernetes")
+
+    mount_path = "/ci/"
+
+    with pytest.raises(subprocess.CalledProcessError):
+        _run_and_verify_failure(
+            [
+                "det",
+                "-m",
+                conf.make_master_url(),
+                "cmd",
+                "run",
+                f"sleep 3; touch {mount_path}",
+            ]
+        )
+
+    with tempfile.NamedTemporaryFile() as tf:
+        config = {
+            "kubernetes": {
+                "pod_spec": {
+                    "spec": {
+                        "containers": [{"volumeMounts": [{"name": "temp1", "mountPath": mount_path}]}],
+                        "volumes": [{"name": "temp1", "emptyDir": {}}],
+                    }
+                }
+            }
+        }
+
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+
+        _run_and_verify_exit_code_zero(
+            [
+                "det",
+                "-m",
+                conf.make_master_url(),
+                "cmd",
+                "run",
+                "--config-file",
+                tf.name,
+                f"sleep 3; touch {mount_path}",
+            ]
+        )
