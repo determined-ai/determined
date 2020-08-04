@@ -29,3 +29,15 @@ h6 { font-size: 1.8rem; }
   opacity: 0;
   user-select: none;
 }
+code {
+  background-color: var(--theme-colors-monochrome-13);
+  border-radius: var(--theme-sizes-border-radius);
+  font-family: 'Source Code Pro', monospace;
+  padding: 0 var(--theme-sizes-layout-tiny);
+}
+code.block {
+  display: block;
+  margin: var(--theme-sizes-layout-medium) 0;
+  padding: var(--theme-sizes-layout-medium);
+  white-space: pre;
+}
