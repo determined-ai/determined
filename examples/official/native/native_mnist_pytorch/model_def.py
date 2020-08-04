@@ -10,7 +10,7 @@ from torch import nn
 
 from layers import Flatten  # noqa: I100
 
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, reset_parameters
+from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
 
 import data
 
@@ -41,10 +41,6 @@ class MNistTrial(PyTorchTrial):
             nn.Linear(128, 10),
             nn.LogSoftmax(),
         ))
-
-        # If loading backbone weights, do not call reset_parameters() or
-        # call before loading the backbone weights.
-        reset_parameters(self.model)
 
         self.optimizer = self.context.wrap_optimizer(torch.optim.Adadelta(
             self.model.parameters(), lr=self.context.get_hparam("learning_rate"))

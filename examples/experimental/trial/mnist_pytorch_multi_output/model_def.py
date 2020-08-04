@@ -13,7 +13,7 @@ from torch import nn
 
 import determined as det
 from layers import Flatten, Squeeze  # noqa: I100
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, TorchData, reset_parameters
+from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, TorchData
 
 import data
 
@@ -105,10 +105,6 @@ class MultiMNistTrial(PyTorchTrial):
         self.data_downloaded = False
 
         self.model = self.context.wrap_model(MultiNet(self.context))
-
-        # If loading backbone weights, do not call reset_parameters() or
-        # call before loading the backbone weights.
-        reset_parameters(self.model)
 
         self.optimizer = self.context.wrap_optimizer(torch.optim.SGD(
             self.model.parameters(), lr=self.context.get_hparam("learning_rate"), momentum=0.9

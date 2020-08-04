@@ -60,7 +60,6 @@ class XORNet(nn.Module):
             nn.Linear(context.get_hparam("hidden_size"), 1),
             nn.Sigmoid(),
         )
-        pytorch.reset_parameters(self.main_net)
 
     def forward(self, model_input: Any):
         return self.main_net(model_input)

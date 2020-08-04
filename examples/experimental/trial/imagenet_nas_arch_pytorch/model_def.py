@@ -19,7 +19,7 @@ import torchvision.transforms as transforms
 from torch import nn
 
 from data import ImageNetDataset
-from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext, reset_parameters
+from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
 from model import NetworkImageNet
 from utils import AutoAugment, CrossEntropyLabelSmooth, Cutout, HSwish, Swish, accuracy
 
@@ -73,10 +73,6 @@ class ImageNetTrial(PyTorchTrial):
             auxiliary=self.context.get_hparam("auxiliary"),
             do_SE=self.context.get_hparam("do_SE"),
         ))
-
-        # If loading backbone weights, do not call reset_parameters() or
-        # call before loading the backbone weights.
-        reset_parameters(self.model)
 
         self.optimizer = self.context.wrap_optimizer(torch.optim.SGD(
             self.model.parameters(),
