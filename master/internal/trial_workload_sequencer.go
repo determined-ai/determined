@@ -30,7 +30,7 @@ type trialWorkloadSequencer struct {
 
 	unitContext model.UnitContext
 
-	targetBatchesPerStep int
+	schedulingUnit int
 
 	trialID      int
 	trialIDValid bool
@@ -93,9 +93,9 @@ func newTrialWorkloadSequencer(
 		minCheckpointPeriod:               exp.Config.MinCheckpointPeriod,
 		unitContext: model.NewUnitContext(
 			exp.Config.Unit(), create.Hparams.GlobalBatchSize(), exp.Config.RecordsPerEpoch),
-		targetBatchesPerStep: exp.Config.BatchesPerStep,
-		create:               create,
-		experiment:           exp,
+		schedulingUnit: exp.Config.SchedulingUnit,
+		create:         create,
+		experiment:     exp,
 	}
 }
 
@@ -322,7 +322,7 @@ func (s trialWorkloadSequencer) Workload() (searcher.Workload, error) {
 			batchesLeft,
 			batchesTilVal,
 			batchesTilCkpt,
-			s.targetBatchesPerStep,
+			s.schedulingUnit,
 		)
 		return s.train(batchesThisStep), nil
 	default:

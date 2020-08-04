@@ -244,7 +244,7 @@ func TestExperiment(t *testing.T) {
 		"batches": 1000
 	}
   },
-  "batches_per_step": 32,
+  "scheduling_unit": 32,
   "bind_mounts": [
     { "host_path": "/host/path",
       "container_path": "/container/path",
@@ -344,7 +344,7 @@ func TestExperiment(t *testing.T) {
 			TensorFusionCycleTime:      5,
 			AutoTuneTensorFusion:       false,
 		},
-		BatchesPerStep: 32,
+		SchedulingUnit: 32,
 		BindMounts: []BindMount{
 			{
 				HostPath:      "/host/path",

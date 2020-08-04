@@ -255,7 +255,7 @@ def make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
             "description": "[test-mode] {}".format(
                 config_test.get("description", str(uuid.uuid4()))
             ),
-            "batches_per_step": 1,
+            "scheduling_unit": 1,
             "min_validation_period": {"batches": 1},
             "checkpoint_storage": {
                 **config_test.get("checkpoint_storage", {}),

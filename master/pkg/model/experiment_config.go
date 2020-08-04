@@ -26,7 +26,7 @@ type ExperimentConfig struct {
 	Resources           ResourcesConfig           `json:"resources"`
 	Optimizations       OptimizationsConfig       `json:"optimizations"`
 	RecordsPerEpoch     int                       `json:"records_per_epoch"`
-	BatchesPerStep      int                       `json:"batches_per_step"`
+	SchedulingUnit      int                       `json:"scheduling_unit"`
 	BindMounts          []BindMount               `json:"bind_mounts,omitempty"`
 	Environment         Environment               `json:"environment"`
 	Reproducibility     ReproducibilityConfig     `json:"reproducibility"`

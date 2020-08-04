@@ -94,7 +94,7 @@ def _make_test_workloads(
     yield from interceptor.send(workload.train_workload(1), [])
     metrics = interceptor.metrics_result()
     batch_metrics = metrics["metrics"]["batch_metrics"]
-    check.eq(len(batch_metrics), config.batches_per_step())
+    check.eq(len(batch_metrics), config.scheduling_unit())
     logging.debug(f"Finished training, metrics: {batch_metrics}")
 
     logging.info("Validating one step")
@@ -187,9 +187,9 @@ def test_one_batch(
     trial_class: Optional[Type[det.Trial]] = None,
     config: Optional[Dict[str, Any]] = None,
 ) -> Any:
-    # Override the batches_per_step value to 1.
+    # Override the scheduling_unit value to 1.
     # TODO(DET-2931): Make the validation step a single batch as well.
-    config = {**(config or {}), "batches_per_step": 1}
+    config = {**(config or {}), "scheduling_unit": 1}
 
     logging.info("Running a minimal test experiment locally")
     checkpoint_dir = tempfile.TemporaryDirectory()

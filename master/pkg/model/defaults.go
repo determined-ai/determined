@@ -94,7 +94,7 @@ func DefaultExperimentConfig() ExperimentConfig {
 			AutoTuneTensorFusion:       false,
 		},
 		RecordsPerEpoch: 0,
-		BatchesPerStep:  100,
+		SchedulingUnit:  100,
 		Environment: Environment{
 			Image: RuntimeItem{
 				CPU: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-23863bb",

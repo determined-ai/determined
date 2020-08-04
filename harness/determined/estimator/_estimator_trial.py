@@ -753,9 +753,9 @@ class EstimatorTrial(det.Trial):
         ``tf.data.Dataset`` object. A function that returns a tuple of features
         and labels is currently not supported by ``EstimatorTrial``.
         Additionally, the ``max_steps`` attribute of the training specification
-        will be ignored; instead, the ``batches_per_step`` option in the
+        will be ignored; instead, the ``scheduling_unit`` option in the
         experiment configuration is used to determine how many batches each
-        training step uses.
+        training workload uses.
         """
         pass
 

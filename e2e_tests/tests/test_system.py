@@ -55,19 +55,19 @@ def test_metric_gathering() -> None:
     training_structure = config["hyperparameters"]["training_structure"]["val"]
     validation_structure = config["hyperparameters"]["validation_structure"]["val"]
 
-    batches_per_step = 100
+    scheduling_unit = 100
 
     # Check training metrics.
     full_trial_metrics = exp.trial_metrics(trials[0]["id"])
     for step in full_trial_metrics["steps"]:
         metrics = step["metrics"]
-        assert metrics["num_inputs"] == batches_per_step
+        assert metrics["num_inputs"] == scheduling_unit
 
         actual = metrics["batch_metrics"]
-        assert len(actual) == batches_per_step
+        assert len(actual) == scheduling_unit
 
-        first_base_value = base_value + (step["id"] - 1) * batches_per_step
-        batch_values = first_base_value + gain_per_batch * np.arange(batches_per_step)
+        first_base_value = base_value + (step["id"] - 1) * scheduling_unit
+        batch_values = first_base_value + gain_per_batch * np.arange(scheduling_unit)
         expected = [structure_to_metrics(value, training_structure) for value in batch_values]
         assert structure_equal(expected, actual)
 
@@ -77,7 +77,7 @@ def test_metric_gathering() -> None:
         metrics = validation["metrics"]
         actual = metrics["validation_metrics"]
 
-        value = base_value + step["id"] * batches_per_step
+        value = base_value + step["id"] * scheduling_unit
         expected = structure_to_metrics(value, validation_structure)
         assert structure_equal(expected, actual)
 

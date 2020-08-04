@@ -481,9 +481,9 @@ created with the Determined CLI. It may contain the following fields:
     described in the PyTorch
     documentation <https://pytorch.org/docs/stable/nn.html#torch.nn.DataParallel>`__.
 
-.. _batches-per-step:
+.. _scheduling-unit:
 
-- ``batches_per_step``: Specifies the number of batches in a single
+- ``scheduling_unit``: Specifies the number of batches in a single
   training workload. As discussed above, Determined divides the training of a
   single trial into a sequence of training workloads; each workload corresponds
   to a certain number of model updates. Therefore, this configuration

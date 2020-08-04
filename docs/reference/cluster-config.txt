@@ -135,7 +135,7 @@ When an experiment is created, we report:
 - the ``searcher`` and ``resources`` sections of the experiment config
 - the name of the container image used
 - the total number of hyperparameters
-- the value of the ``batches_per_step`` configuration setting
+- the value of the ``scheduling_unit`` configuration setting
 
 When an experiment terminates, we report:
 

@@ -13,7 +13,7 @@ c AS (
     e.id AS  experiment_id,
     t.id AS trial_id,
     t.hparams as hparams,
-    s.id * (e.config->>'batches_per_step')::int AS batch_number,
+    s.prior_batches_processed + s.num_batches AS batch_number,
     s.start_time AS start_time,
     s.end_time AS end_time,
     c.resources AS resources,

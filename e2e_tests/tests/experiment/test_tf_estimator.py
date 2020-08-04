@@ -85,7 +85,7 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
 
 def run_dataset_experiment(
     searcher_max_length: Dict[str, int],
-    batches_per_step: int,
+    scheduling_unit: int,
     secrets: Dict[str, str],
     tf2: bool,
     slots_per_trial: int = 1,
@@ -94,7 +94,7 @@ def run_dataset_experiment(
     config = conf.load_config(conf.fixtures_path("estimator_dataset/const.yaml"))
     config.setdefault("searcher", {})
     config["searcher"]["max_length"] = searcher_max_length
-    config["batches_per_step"] = batches_per_step
+    config["scheduling_unit"] = scheduling_unit
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
 
     if source_trial_id is not None:
@@ -115,9 +115,9 @@ def run_dataset_experiment(
 @pytest.mark.e2e_gpu  # type: ignore
 @pytest.mark.parametrize("tf2", [False])  # type: ignore
 def test_dataset_restore(secrets: Dict[str, str], tf2: bool) -> None:
-    for searcher_max_batches, batches_per_step in [(4, 1), (4, 2), (4, 4)]:
+    for searcher_max_batches, scheduling_unit in [(4, 1), (4, 2), (4, 4)]:
         trials = run_dataset_experiment(
-            {"batches": searcher_max_batches}, batches_per_step, secrets, tf2
+            {"batches": searcher_max_batches}, scheduling_unit, secrets, tf2
         )
         losses = exp.get_flat_metrics(trials[0]["id"], "loss")
         assert losses == DATASET_EXPERIMENT_EXPECTED_LOSSES

@@ -18,7 +18,7 @@ searcher:
     batches: 64
   smaller_is_better: true
 max_restarts: 0
-batches_per_step: 16
+scheduling_unit: 16
 min_checkpoint_period:
   batches: 32
 entrypoint: model_def:MnistTensorpackInEstimator

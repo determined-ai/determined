@@ -17,7 +17,7 @@ def create_default_env_context(experiment_config: Dict[str, Any]) -> det.EnvCont
             ExperimentID(1),
             TrialID(1),
             StepID(1),
-            det.ExperimentConfig(experiment_config).batches_per_step(),
+            det.ExperimentConfig(experiment_config).scheduling_unit(),
             0,
         ),
         master_addr="",

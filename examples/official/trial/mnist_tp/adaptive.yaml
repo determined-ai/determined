@@ -36,7 +36,7 @@ searcher:
     batches: 320
   max_trials: 16
   smaller_is_better: false
-batches_per_step: 16
+scheduling_unit: 16
 min_checkpoint_period:
   batches: 32
 entrypoint: model_def:MNISTTrial

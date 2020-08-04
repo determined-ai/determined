@@ -61,7 +61,7 @@ def _make_local_execution_env(
         container_id="",
         experiment_config=config,
         hparams=hparams,
-        initial_workload=workload.train_workload(1, 1, 1, config.batches_per_step()),
+        initial_workload=workload.train_workload(1, 1, 1, config.scheduling_unit()),
         latest_checkpoint=None,
         use_gpu=use_gpu,
         container_gpus=container_gpus,

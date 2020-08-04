@@ -30,7 +30,7 @@ if __name__ == "__main__":
             "weight_decay": det.Constant(value=0.0005),
             "global_batch_size": det.Constant(value=2),
         },
-        "batches_per_step": 1,
+        "scheduling_unit": 1,
         "searcher": {
             "name": "single",
             "metric": "val_avg_iou",

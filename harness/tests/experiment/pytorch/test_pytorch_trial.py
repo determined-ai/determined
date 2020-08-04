@@ -323,7 +323,7 @@ class TestPyTorchTrial:
     def test_per_metric_reducers(self) -> None:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
-            yield from trainer.send(steps=2, validation_freq=1, batches_per_step=1)
+            yield from trainer.send(steps=2, validation_freq=1, scheduling_unit=1)
             yield workload.terminate_workload(), [], workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
@@ -378,7 +378,7 @@ class TestPyTorchTrial:
     def test_context(self) -> None:
         def make_workloads() -> workload.Stream:
             trainer = utils.TrainAndValidate()
-            yield from trainer.send(steps=1, validation_freq=1, batches_per_step=1)
+            yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
             yield workload.terminate_workload(), [], workload.ignore_workload_response
 
         controller = utils.make_trial_controller_from_trial_implementation(
