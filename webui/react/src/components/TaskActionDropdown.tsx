@@ -6,12 +6,13 @@ import Icon from 'components/Icon';
 import Experiments from 'contexts/Experiments';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { archiveExperiment, killTask, launchTensorboard, setExperimentState } from 'services/api';
-import { AnyTask, Experiment, RunState, TBSourceType } from 'types';
+import { AnyTask, CommandTask, Experiment, RunState, TBSourceType } from 'types';
 import { openCommand } from 'utils/routes';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';
 
+import Link from './Link';
 import css from './TaskActionDropdown.module.scss';
 
 interface Props {
@@ -30,7 +31,6 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
     && task.state === RunState.Paused;
   const isCancelable = isExperiment
     && cancellableRunStates.includes(task.state as RunState);
-  const canLaunchTensorboard = isExperiment;
 
   const experimentsResponse = Experiments.useStateContext();
   const setExperiments = Experiments.useActionContext();
@@ -93,7 +93,6 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
           openCommand(tensorboard);
           break;
         }
-
       }
     } catch (e) {
       handleError({
@@ -115,9 +114,13 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
   if (isArchivable) menuItems.push(<Menu.Item key="archive">Archive</Menu.Item>);
   if (isCancelable) menuItems.push(<Menu.Item key="cancel">Cancel</Menu.Item>);
   if (isKillable) menuItems.push(<Menu.Item key="kill">Kill</Menu.Item>);
-  if (canLaunchTensorboard) menuItems.push(
-    <Menu.Item key="launchTensorboard">Launch Tensorboard</Menu.Item>,
-  );
+  if (isExperiment) {
+    menuItems.push(<Menu.Item key="launchTensorboard">Launch Tensorboard</Menu.Item>);
+  } else {
+    const taskType = (task as CommandTask).type.toLocaleLowerCase();
+    const path = `/det/${taskType}/${task.id}/logs?id=${task.name}`;
+    menuItems.push(<Menu.Item key="viewLogs"><Link path={path} popout>View Logs</Link></Menu.Item>);
+  }
 
   if (menuItems.length === 0) {
     return (

@@ -328,9 +328,14 @@ class TestLinearTrial:
             yield from trainer.send(steps=2, validation_freq=1, scheduling_unit=1)
             training_metrics, validation_metrics = trainer.result()
 
+            label_sum = estimator_linear_model.validation_label_sum()
             for metrics in validation_metrics:
-                assert metrics["label_sum_fn"] == estimator_linear_model.validation_label_sum()
-                assert metrics["label_sum_cls"] == estimator_linear_model.validation_label_sum()
+                assert metrics["label_sum_tensor_fn"] == label_sum
+                assert metrics["label_sum_tensor_cls"] == label_sum
+                assert metrics["label_sum_list_fn"] == 2 * label_sum
+                assert metrics["label_sum_list_cls"] == 2 * label_sum
+                assert metrics["label_sum_dict_fn"] == 2 * label_sum
+                assert metrics["label_sum_dict_cls"] == 2 * label_sum
 
             yield workload.terminate_workload(), [], workload.ignore_workload_response
 

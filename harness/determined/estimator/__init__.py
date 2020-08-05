@@ -6,7 +6,11 @@ from determined.estimator._estimator_context import (
     EstimatorTrialContext,
     ServingInputReceiverFn,
 )
-from determined.estimator._reducer import MetricReducer, _SimpleMetricReducer, _distributed_metric
+from determined.estimator._reducer import (
+    MetricReducer,
+    _SimpleMetricReducer,
+    _DistributedMetricMaker,
+)
 from determined.estimator._util import (
     _cleanup_after_train_step,
     _cleanup_after_validation_step,

@@ -1,4 +1,4 @@
-description: Flexible Primitive MNIST Pytorch Distributed
+description: MNIST GAN Pytorch Distributed
 data:
   url: "https://s3-us-west-2.amazonaws.com/determined-ai-test-data/pytorch_mnist.tar.gz"
 hyperparameters:
@@ -11,7 +11,7 @@ searcher:
   name: single
   metric: loss
   max_length:
-    batches: 20000
+    batches: 40000
   smaller_is_better: True
 entrypoint: model_def:GANTrial
 resources:

@@ -90,7 +90,7 @@ Next Steps
 ----------
 
 - :ref:`experiment-configuration`
-- :ref:`command-configuration`
+- :ref:`command-notebook-configuration`
 - :ref:`cluster-configuration`
 
 Reference

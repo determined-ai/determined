@@ -13,7 +13,7 @@ from torch import nn
 
 import determined as det
 from layers import Flatten, Squeeze  # noqa: I100
-from determined.pytorch import DataLoader, PyTorchTrial, TorchData, reset_parameters
+from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, TorchData, reset_parameters
 
 import data
 
@@ -97,12 +97,22 @@ def compute_loss(predictions: TorchData, labels: TorchData) -> torch.Tensor:
 
 
 class MultiMNistTrial(PyTorchTrial):
-    def __init__(self, context: det.TrialContext) -> None:
+    def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
 
         # Create a unique download directory for each rank so they don't overwrite each other.
         self.download_directory = f"/tmp/data-rank{self.context.distributed.get_rank()}"
         self.data_downloaded = False
+
+        self.model = self.context.wrap_model(MultiNet(self.context))
+
+        # If loading backbone weights, do not call reset_parameters() or
+        # call before loading the backbone weights.
+        reset_parameters(self.model)
+
+        self.optimizer = self.context.wrap_optimizer(torch.optim.SGD(
+            self.model.parameters(), lr=self.context.get_hparam("learning_rate"), momentum=0.9
+        ))
 
     def build_training_data_loader(self) -> DataLoader:
         if not self.data_downloaded:
@@ -134,36 +144,24 @@ class MultiMNistTrial(PyTorchTrial):
             collate_fn=data.collate_fn,
         )
 
-    def build_model(self) -> nn.Module:
-        model = MultiNet(self.context)
-
-        # If loading backbone weights, do not call reset_parameters() or
-        # call before loading the backbone weights.
-        reset_parameters(model)
-        return model
-
-    def optimizer(self, model: nn.Module) -> torch.optim.Optimizer:  # type: ignore
-        return torch.optim.SGD(
-            model.parameters(), lr=self.context.get_hparam("learning_rate"), momentum=0.9
-        )
-
-    def train_batch(
-        self, batch: Any, model: nn.Module, epoch_idx: int, batch_idx: int
-    ) -> Dict[str, torch.Tensor]:
+    def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int) -> Dict[str, torch.Tensor]:
         batch = cast(Tuple[TorchData, Dict[str, torch.Tensor]], batch)
         data, labels = batch
 
-        output = model(data)
+        output = self.model(data)
         loss = compute_loss(output, labels)
         error = error_rate(output["digit_predictions"], labels["digit_labels"])
 
+        self.context.backward(loss)
+        self.context.step_optimizer(self.optimizer)
+
         return {"loss": loss, "classification_error": error}
 
-    def evaluate_batch(self, batch: Any, model: nn.Module) -> Dict[str, Any]:
+    def evaluate_batch(self, batch: Any) -> Dict[str, Any]:
         batch = cast(Tuple[TorchData, Dict[str, torch.Tensor]], batch)
         data, labels = batch
 
-        output = model(data)
+        output = self.model(data)
         error = error_rate(output["digit_predictions"], labels["digit_labels"])
 
         return {"validation_error": error}

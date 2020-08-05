@@ -1,0 +1,42 @@
+.. _topic-guides_hp-tuning-det_adaptive-asha:
+
+Hyperparameter Search: Adaptive (Asynchronous)
+==============================================
+
+The ``adaptive_asha`` search method employs the same underlying algorithm as the
+:ref:`Adaptive (Advanced) <topic-guides_hp-tuning-det_adaptive-advanced>` method,
+but it uses an asynchronous version of successive halving
+(`ASHA <https://arxiv.org/pdf/1810.05934.pdf>`_), which is more
+suitable for large-scale experiments with hundreds or thousands of trials.
+
+Quick start
+-----------
+
+Here are some suggested initial settings for ``adaptive_asha`` that typically
+work well.
+
+Search mode:
+
+-  ``mode``: Set to ``standard``.
+
+Resource budget:
+
+-  ``max_length``: The maximum training length
+   (see :ref:`Training Units<experiment-configuration_training_units>`) of any
+   trial that survives to the end of the experiment. This quantity is domain-specific
+   and should roughly reflect the number of minibatches the model must be trained on
+   for it to converge on the data set. For users who would like to determine this number
+   experimentally, train a model with reasonable hyperparameters using the
+   ``single`` search method.
+-  ``max_trials``: This indicates the total number of hyperparameter settings
+   that will be evaluated in the experiment.  Set ``max_trials`` to at least 
+   500 to take advantage of speedups from early-stopping. You can also 
+   set a large ``max_trials``  and stop the experiment once the desired
+   performance is achieved. 
+-  ``max_concurrent_trials``: This field controls the degree of parallelism
+   of the experiment.  The experiment will have a maximum of this many trials 
+   training simultaneously at any one time.  The ``adaptive_asha`` searcher 
+   scales nearly perfectly with additional compute, so you should set this 
+   field based on compute environment constraints.  
+   
+

@@ -425,6 +425,15 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 		ctx.Tell(ctx.Self().Parent(), trialCreated{create: t.create, trialID: t.id})
 	}
 
+	// We need to complete cached checkpoints here in the event that between when we last shutdown
+	// and now the searcher asked for a checkpoint we already created (this happens in PBT).
+	switch op, metrics, err := t.sequencer.CompleteCachedCheckpoints(); {
+	case err != nil:
+		return errors.Wrap(err, "Error completing cached checkpoints")
+	case op != nil:
+		ctx.Tell(ctx.Self().Parent(), trialCompletedOperation{t.id, op, metrics})
+	}
+
 	w, err := t.sequencer.Workload()
 	if err != nil {
 		return errors.Wrap(err, "error getting workload from sequencer")

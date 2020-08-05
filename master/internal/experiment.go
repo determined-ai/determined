@@ -6,6 +6,8 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/scheduler"
@@ -14,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/searcher"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 // Experiment-specific actor messages.
@@ -396,6 +399,23 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		}
 
 		ctx.Log().Info("experiment shut down successfully")
+
+	case *apiv1.ActivateExperimentRequest:
+		switch ok := e.updateState(ctx, model.ActiveState); ok {
+		case true:
+			ctx.Respond(&apiv1.ActivateExperimentResponse{})
+		default:
+			ctx.Respond(status.Errorf(codes.FailedPrecondition,
+				"experiment in incompatible state %s", e.State))
+		}
+	case *apiv1.PauseExperimentRequest:
+		switch ok := e.updateState(ctx, model.PausedState); ok {
+		case true:
+			ctx.Respond(&apiv1.PauseExperimentResponse{})
+		default:
+			ctx.Respond(status.Errorf(codes.FailedPrecondition,
+				"experiment in incompatible state %s", e.State))
+		}
 	}
 	return nil
 }
@@ -501,12 +521,12 @@ func (e *experiment) isBestValidation(metrics searcher.ValidationMetrics) bool {
 	return isBest
 }
 
-func (e *experiment) updateState(ctx *actor.Context, state model.State) {
+func (e *experiment) updateState(ctx *actor.Context, state model.State) bool {
 	if wasPatched, err := e.Transition(state); err != nil {
-		ctx.Log().Error(err)
-		return
+		ctx.Log().Errorf("error transitioning experiment state: %s", err)
+		return false
 	} else if !wasPatched {
-		return
+		return true
 	}
 	telemetry.ReportExperimentStateChanged(ctx.Self().System(), e.db, *e.Experiment)
 
@@ -515,11 +535,13 @@ func (e *experiment) updateState(ctx *actor.Context, state model.State) {
 		ctx.Tell(child, state)
 	}
 	if err := e.db.SaveExperimentState(e.Experiment); err != nil {
-		ctx.Log().Error(err)
+		ctx.Log().Errorf("error saving experiment state: %s", err)
 	}
 	if e.canTerminate(ctx) {
 		ctx.Self().Stop()
 	}
+	// The database error is explicitly ignored.
+	return true
 }
 
 func (e *experiment) canTerminate(ctx *actor.Context) bool {

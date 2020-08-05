@@ -1,3 +1,4 @@
+import { CheckOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import React from 'react';
 import TimeAgo from 'timeago-react';
@@ -75,7 +76,7 @@ export const taskTypeRenderer: TaskRenderer = (_, record) => (
   </Tooltip>
 );
 
-/* Experiemnt Table Column Renderers */
+/* Experiment Table Column Renderers */
 
 export const experimentActionRenderer: ExperimentRenderer = (_, record) => (
   <TaskActionDropdown task={experimentToTask(record)} />
@@ -103,4 +104,8 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
     percent={record.progress * 100}
     state={record.state}
     title={floatToPercent(record.progress, 0)} />;
+};
+
+export const experimentArchivedRenderer: ExperimentRenderer = (_, record) => {
+  return record.archived ? <CheckOutlined /> : null;
 };

@@ -40,19 +40,20 @@ The exact checkpoint format depends on the application framework being used:
    created in a similar manner to the procedure described in the `PyTorch
    documentation <https://pytorch.org/tutorials/beginner/saving_loading_models.html#saving-loading-a-general-checkpoint-for-inference-and-or-resuming-training>`__.
    Instead of the fields in the documentation linked above, there are
-   three fields for the dictionary that is saved by Determined:
-   "model_state_dict", "optimizer_state_dict", and "hparams", which are
-   the model's ``state_dict``, optimizer's ``state_dict``, and trial's
-   hyperparameters respectively.
+   four fields for the dictionary that is saved by Determined:
+   "models_state_dict", "optimizers_state_dict", "lr_schedulers_state_dict", and "callbacks",
+   which are the ``state_dict`` of the models, optimizers, LR schedulers, and callbacks
+   respectively.
 
 Determined will automatically create checkpoints for all the trials in an
 experiment. Checkpoints are created in four situations:
 
 1. When Determined suspends training of a trial at one agent, before later
    resuming training that trial at a different agent.
-2. If ``min_checkpoint_period`` is set in the experiment configuration,
-   each trial will be checkpointed whenever the specified training length
-   is completed since the last checkpoint.
+2. If :ref:`min_checkpoint_period <experiment-config-min-checkpoint-period>` is
+   set in the experiment configuration, each trial will be checkpointed whenever
+   the specified training length is completed since the last
+   checkpoint.
 3. When a trial has been trained to completion (according to the
    configuration of the experiment's trial search method).
 4. Before the search method makes a decision based on a validation of a trial,

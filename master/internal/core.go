@@ -439,7 +439,6 @@ func (m *Master) Run() error {
 	elmFiles := [...]fileRoute{
 		{"/ui", "public/index.html"},
 		{"/ui/*", "public/index.html"},
-		{"/wait", "public/wait.html"},
 	}
 
 	elmDirs := [...]fileRoute{
@@ -460,12 +459,14 @@ func (m *Master) Run() error {
 		{"/manifest.json", "manifest.json"},
 		{"/favicon.ico", "favicon.ico"},
 		{"/favicon.ico", "favicon.ico"},
+		{"/wait", "wait/index.html"},
 	}
 
 	reactDirs := [...]fileRoute{
 		{"/favicons", "favicons"},
 		{"/fonts", "fonts"},
 		{"/static", "static"},
+		{"/wait", "wait"},
 	}
 
 	// Apply WebUI routes in order.

@@ -2,8 +2,8 @@ import { ColumnType } from 'antd/lib/table';
 import React from 'react';
 
 import {
-  experimentActionRenderer, experimentProgressRenderer, expermentDurationRenderer,
-  relativeTimeRenderer, stateRenderer, userRenderer,
+  experimentActionRenderer, experimentArchivedRenderer, experimentProgressRenderer,
+  expermentDurationRenderer, relativeTimeRenderer, stateRenderer, userRenderer,
 } from 'components/Table';
 import { ExperimentItem } from 'types';
 import { alphanumericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
@@ -42,6 +42,13 @@ export const columns: ColumnType<ExperimentItem>[] = [
     render: experimentProgressRenderer,
     sorter: (a: ExperimentItem, b: ExperimentItem): number => (a.progress || 0) - (b.progress || 0),
     title: 'Progress',
+  },
+  {
+    align: 'center',
+    render: experimentArchivedRenderer,
+    sorter: (a: ExperimentItem, b: ExperimentItem): number =>
+      (a.archived === b.archived) ? 0 : (a.archived ? 1 : -1),
+    title: 'Archived',
   },
   {
     render: userRenderer,

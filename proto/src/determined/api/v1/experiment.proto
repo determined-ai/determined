@@ -72,3 +72,22 @@ message PreviewHPSearchResponse {
     // The resulting simulation.
     determined.experiment.v1.ExperimentSimulation simulation = 1;
 }
+
+// Activate an experiment.
+message ActivateExperimentRequest {
+    // The experiment id
+    int32 id = 1;
+}
+// Response to ActivateExperimentRequest.
+message ActivateExperimentResponse {
+}
+
+// Pause an experiment.
+message PauseExperimentRequest {
+    // The experiment id
+    int32 id = 1;
+}
+// Response to PauseExperimentRequest.
+message PauseExperimentResponse {
+}
+

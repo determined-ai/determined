@@ -29,7 +29,7 @@ class NativeImplementations:
             "searcher": {
                 "name": "single",
                 "max_length": {"batches": 100},
-                "metric": "validation_error",
+                "metric": "validation_loss",
             },
             "max_restarts": 0,
         },

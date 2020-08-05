@@ -20,10 +20,10 @@ The full list of reference guides can be found below:
 .. toctree::
   :maxdepth: 1
 
-  cli
+  api/index
   cluster-config
-  command-config
+  cli
+  command-notebook-config
   config-template
   experiment-config
-  api/index
   attributions

@@ -12,6 +12,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/commandv1"
 )
 
 // If an entrypoint is specified as a singleton string, Determined will follow the "shell form"
@@ -29,6 +31,13 @@ type commandManager struct {
 
 func (c *commandManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
+	case *apiv1.GetCommandsRequest:
+		resp := &apiv1.GetCommandsResponse{}
+		for _, command := range ctx.AskAll(&commandv1.Command{}, ctx.Children()...).GetAll() {
+			resp.Commands = append(resp.Commands, command.(*commandv1.Command))
+		}
+		ctx.Respond(resp)
+
 	case echo.Context:
 		c.handleAPIRequest(ctx, msg)
 	}

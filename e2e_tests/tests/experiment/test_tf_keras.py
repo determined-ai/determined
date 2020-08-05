@@ -1,3 +1,5 @@
+from typing import Dict
+
 import pytest
 
 from tests import config as conf
@@ -118,7 +120,9 @@ def test_tf_keras_mnist_data_layer_lfs(tf2: bool) -> None:
 @pytest.mark.e2e_gpu  # type: ignore
 @pytest.mark.parametrize("tf2", [False])  # type: ignore
 @pytest.mark.parametrize("storage_type", ["s3"])  # type: ignore
-def test_tf_keras_mnist_data_layer_s3(tf2: bool, storage_type: str) -> None:
+def test_tf_keras_mnist_data_layer_s3(
+    tf2: bool, storage_type: str, secrets: Dict[str, str]
+) -> None:
     run_tf_keras_mnist_data_layer_test(tf2, storage_type)
 
 
@@ -140,7 +144,9 @@ def run_tf_keras_mnist_data_layer_test(tf2: bool, storage_type: str) -> None:
 @pytest.mark.parallel  # type: ignore
 @pytest.mark.parametrize("tf2", [False])  # type: ignore
 @pytest.mark.parametrize("storage_type", ["lfs", "s3"])  # type: ignore
-def test_tf_keras_mnist_data_layer_parallel(tf2: bool, storage_type: str) -> None:
+def test_tf_keras_mnist_data_layer_parallel(
+    tf2: bool, storage_type: str, secrets: Dict[str, str]
+) -> None:
     config = conf.load_config(conf.experimental_path("trial/data_layer_mnist_tf_keras/const.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)

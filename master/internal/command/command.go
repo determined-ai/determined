@@ -1,6 +1,7 @@
 package command
 
 import (
+	"math/rand"
 	"net/http"
 	"time"
 
@@ -13,7 +14,13 @@ import (
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/tasks"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/commandv1"
+	"github.com/determined-ai/determined/proto/pkg/notebookv1"
+	"github.com/determined-ai/determined/proto/pkg/shellv1"
+	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
 
 // terminatedDuration defines the amount of time the command stays in a
@@ -102,6 +109,55 @@ func (c *command) Receive(ctx *actor.Context) error {
 		if msg.userFilter == "" || c.owner.Username == msg.userFilter {
 			ctx.Respond(newSummary(c))
 		}
+
+	case *notebookv1.Notebook:
+		ctx.Respond(c.toNotebook(ctx))
+
+	case *apiv1.GetNotebookRequest:
+		ctx.Respond(&apiv1.GetNotebookResponse{
+			Notebook: c.toNotebook(ctx),
+			Config:   protoutils.ToStruct(c.config),
+		})
+
+	case *apiv1.KillNotebookRequest:
+		c.terminate(ctx)
+		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
+
+	case *commandv1.Command:
+		ctx.Respond(c.toCommand(ctx))
+
+	case *apiv1.GetCommandRequest:
+		ctx.Respond(&apiv1.GetCommandResponse{
+			Command: c.toCommand(ctx),
+			Config:  protoutils.ToStruct(c.config),
+		})
+
+	case *apiv1.KillCommandRequest:
+		c.terminate(ctx)
+		ctx.Respond(&apiv1.KillCommandResponse{Command: c.toCommand(ctx)})
+
+	case *shellv1.Shell:
+		ctx.Respond(c.toShell(ctx))
+
+	case *apiv1.GetShellRequest:
+		ctx.Respond(&apiv1.GetShellResponse{
+			Shell:  c.toShell(ctx),
+			Config: protoutils.ToStruct(c.config),
+		})
+
+	case *apiv1.KillShellRequest:
+		c.terminate(ctx)
+		ctx.Respond(&apiv1.KillShellResponse{Shell: c.toShell(ctx)})
+
+	case *tensorboardv1.Tensorboard:
+		ctx.Respond(c.toTensorboard(ctx))
+
+	case *apiv1.GetTensorboardRequest:
+		ctx.Respond(&apiv1.GetTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
+
+	case *apiv1.KillTensorboardRequest:
+		c.terminate(ctx)
+		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
 
 	case sproto.ContainerStateChanged:
 		c.container = &msg.Container
@@ -198,4 +254,64 @@ func (c *command) exit(ctx *actor.Context, exitStatus string) {
 	c.exitStatus = &exitStatus
 	ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ExitedEvent: c.exitStatus})
 	actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
+}
+
+func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
+	return &notebookv1.Notebook{
+		Id:          ctx.Self().Address().Local(),
+		Description: c.config.Description,
+		Container:   c.container.Proto(),
+		StartTime:   protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		Username:    c.owner.Username,
+	}
+}
+
+func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
+	return &commandv1.Command{
+		Id:          ctx.Self().Address().Local(),
+		Description: c.config.Description,
+		Container:   c.container.Proto(),
+		StartTime:   protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		Username:    c.owner.Username,
+	}
+}
+
+func (c *command) toShell(ctx *actor.Context) *shellv1.Shell {
+	return &shellv1.Shell{
+		Id:          ctx.Self().Address().Local(),
+		Description: c.config.Description,
+		StartTime:   protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		Container:   c.container.Proto(),
+		PrivateKey:  c.metadata["privateKey"].(string),
+		PublicKey:   c.metadata["publicKey"].(string),
+		Username:    c.owner.Username,
+	}
+}
+
+func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
+	var eids []int32
+	for _, id := range c.metadata["experiment_ids"].([]int) {
+		eids = append(eids, int32(id))
+	}
+	var tids []int32
+	for _, id := range c.metadata["trial_ids"].([]int) {
+		tids = append(tids, int32(id))
+	}
+	return &tensorboardv1.Tensorboard{
+		Id:            ctx.Self().Address().Local(),
+		Description:   c.config.Description,
+		StartTime:     protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		Container:     c.container.Proto(),
+		ExperimentIds: eids,
+		TrialIds:      tids,
+		Username:      c.owner.Username,
+	}
+}
+
+func getPort(min, max int) int {
+	// Set the seed here or else the compiler will generate a random number at
+	// compile time and each invocation of this function will return the same
+	// number.
+	rand.Seed(time.Now().Unix())
+	return rand.Intn(max-min) + min
 }

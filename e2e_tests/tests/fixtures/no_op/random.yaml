@@ -5,9 +5,7 @@ checkpoint_storage:
   storage_path: determined-integration-checkpoints
 hyperparameters:
   global_batch_size: 32
-  num_training_metrics:
-    type: const
-    val: 5
+  num_training_metrics: 5
 searcher:
   metric: validation_error
   smaller_is_better: true

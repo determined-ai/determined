@@ -1,12 +1,12 @@
 import dayjs from 'dayjs';
 
 import {
-  decode, ioAgents, ioCommandLogs, ioDeterminedInfo, ioExperiment, ioExperimentConfig,
+  decode, ioAgents, ioDeterminedInfo, ioExperiment, ioExperimentConfig,
   ioExperimentDetails, ioExperiments, ioGenericCommand, ioGenericCommands, ioLog, ioLogs,
-  ioTrialDetails, ioTypeAgents, ioTypeCheckpoint, ioTypeCommandLogs, ioTypeDeterminedInfo,
+  ioTaskLogs, ioTrialDetails, ioTypeAgents, ioTypeCheckpoint, ioTypeDeterminedInfo,
   ioTypeExperiment, ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments,
-  ioTypeGenericCommand, ioTypeGenericCommands, ioTypeLatestValidationMetrics, ioTypeLog,
-  ioTypeLogs, ioTypeTrial, ioTypeTrialDetails, ioTypeUsers, ioUsers,
+  ioTypeGenericCommand, ioTypeGenericCommands, ioTypeLatestValidationMetrics,
+  ioTypeLog, ioTypeLogs, ioTypeTaskLogs, ioTypeTrial, ioTypeTrialDetails, ioTypeUsers, ioUsers,
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, CheckpointStorageType, Command, CommandState,
@@ -288,16 +288,43 @@ export const jsonToTrialLog = (data: unknown): Log => {
   return ioTrialLogToLog(ioType);
 };
 
+const ioTaskEventToMessage = (event: string): string => {
+  if (defaultRegex.test(event)) {
+    const matches = event.match(defaultRegex) || [];
+    return matches[2];
+  }
+  return event;
+};
+
+export const jsonToTaskLogs = (data: unknown): Log[] => {
+  const ioType = decode<ioTypeTaskLogs>(ioTaskLogs, data);
+  return ioType
+    .filter(log => !log.service_ready_event)
+    .map(log => {
+      const description = log.snapshot.config.description || '';
+      let message = '';
+      if (log.scheduled_event) {
+        message = `Scheduling ${log.parent_id} (id: ${description})...`;
+      } else if (log.assigned_event) {
+        message = `${description} was assigned to an agent...`;
+      } else if (log.container_started_event) {
+        message = `Container of ${description} has started...`;
+      } else if (log.terminate_request_event) {
+        message = `${description} was requested to terminate...`;
+      } else if (log.exited_event) {
+        message = `${description} was terminated: ${log.exited_event}`;
+      } else if (log.log_event) {
+        message = ioTaskEventToMessage(log.log_event);
+      }
+      return {
+        id: log.seq,
+        message,
+        time: log.time,
+      };
+    });
+};
+
 export const jsonToTrialLogs = (data: unknown): Log[] => {
   const ioType = decode<ioTypeLogs>(ioLogs, data);
   return ioType.map(ioTrialLogToLog);
-};
-
-export const jsonToCommandLogs = (data: unknown): Log[] => {
-  const ioType = decode<ioTypeCommandLogs>(ioCommandLogs, data);
-  return ioType.map(log => ({
-    id: log.seq,
-    message: log.snapshot.config.description,
-    time: log.time,
-  }));
 };
