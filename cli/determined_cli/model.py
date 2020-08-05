@@ -112,14 +112,15 @@ def create(args: Namespace) -> None:
 
 def describe(args: Namespace) -> None:
     model = Determined(args.master, None).get_model(args.name)
-    checkpoint = model.get_version()
+    checkpoint = model.get_version(args.version)
 
     if args.json:
         print(json.dumps(model.to_json(), indent=2))
     else:
         render_model(model)
-        print("\n")
-        render_model_version(checkpoint)
+        if checkpoint is not None:
+            print("\n")
+            render_model_version(checkpoint)
 
 
 def register_version(args: Namespace) -> None:

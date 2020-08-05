@@ -18,10 +18,10 @@ The full list of our tutorials can be found below:
   :maxdepth: 0
   :titlesonly:
 
-  quick-start
+  data-access
+  native-tf-keras/index
+  notebook-tutorial
+  model-registry
   pytorch-mnist-tutorial
   tf-mnist-tutorial
-  data-access
-  notebook-tutorial
-  native-tf-keras/index
-  model-registry
+  quick-start

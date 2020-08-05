@@ -96,7 +96,7 @@ class UNetsTrial(TFKerasTrial):
 
         model.compile(optimizer=tf.keras.optimizers.Adam(name='Adam'),
               loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-              metrics=['accuracy'])
+              metrics=[tf.keras.metrics.SparseCategoricalAccuracy(name="accuracy")])
         return model
 
     def build_training_data_loader(self):
@@ -145,5 +145,5 @@ class UNetsTrial(TFKerasTrial):
         test = dataset.map(load_image_test)
         test = self.context.wrap_dataset(test)
         test_dataset = test.batch(self.context.get_per_slot_batch_size())
-        
+
         return test_dataset

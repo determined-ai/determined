@@ -411,7 +411,10 @@ def test_model_registry() -> None:
     checkpoint = d.get_experiment(exp_id).top_checkpoint()
     model_version = mnist.register_version(checkpoint.uuid)
     assert model_version.version == 1
-    assert mnist.get_version().uuid == checkpoint.uuid
+
+    latest_version = mnist.get_version()
+    assert latest_version is not None
+    assert latest_version.uuid == checkpoint.uuid
 
     d.create_model("transformer", "all you need is attention")
     d.create_model("object-detection", "a bounding box model")

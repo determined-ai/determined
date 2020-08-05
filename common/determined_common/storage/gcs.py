@@ -1,6 +1,7 @@
 import contextlib
 import logging
 import os
+import random
 import tempfile
 from typing import Iterator, Optional
 
@@ -65,6 +66,7 @@ class GCSStorageManager(StorageManager):
             self._remove_checkpoint_directory(metadata.storage_id)
 
     def upload(self, metadata: StorageMetadata, storage_dir: str) -> None:
+        rand_state = random.getstate()
         for rel_path in metadata.resources.keys():
             blob_name = "{}/{}".format(metadata.storage_id, rel_path)
             blob = self.bucket.blob(blob_name)
@@ -78,6 +80,10 @@ class GCSStorageManager(StorageManager):
             else:
                 abs_path = os.path.join(storage_dir, rel_path)
                 retry_network_errors(blob.upload_from_filename)(abs_path)
+
+        # retry_network_errors affects the random state.
+        # For reproducibility, restore the random state to what it was before uploading
+        random.setstate(rand_state)
 
     def download(self, metadata: StorageMetadata, storage_dir: str) -> None:
         for rel_path in metadata.resources.keys():

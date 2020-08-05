@@ -116,11 +116,13 @@ The :class:`~determined.experimental.Checkpoint` class can both
 download the checkpoint from persistent storage and load it into memory in a
 Python process.
 
-The :meth:`~determined.experimental.Checkpoint.download` method downloads a
-checkpoint from persistent storage to the local file system. By default, the
-method downloads the checkpoint to ``checkpoints/<checkpoint-uuid>/``. The
-method accepts ``path`` as an optional parameter, which changes the checkpoint
-download location.
+The :meth:`~determined.experimental.Checkpoint.download` method
+downloads a checkpoint from persistent storage to a directory on the
+local file system. By default, checkpoints are downloaded to
+``checkpoints/<checkpoint-uuid>/`` (relative to the current working
+directory). The :meth:`~determined.experimental.Checkpoint.download`
+method accepts ``path`` as an optional parameter, which changes the
+checkpoint download location.
 
 .. code:: python
 
@@ -160,7 +162,7 @@ User-Defined Checkpoint Metadata
 --------------------------------
 
 You can add arbitrary user-defined metadata to a checkpoint via the Python API.
-This feature is useful for storing post training metrics, labels, information
+This feature is useful for storing post-training metrics, labels, information
 related to deployment, etc.
 
 .. code:: python
@@ -185,7 +187,7 @@ be overwritten.
   checkpoint.add_metadata({"metrics": {"loss": 0.12}})
   checkpoint.add_metadata({"metrics": {"acc": 0.92}})
 
-  print(checkpoint.metadata)  # will output: {"metrics": {"acc": 0.92}}
+  print(checkpoint.metadata)  # Output: {"metrics": {"acc": 0.92}}
 
 You may remove metadata via the
 :meth:`~determined.experimental.Checkpoint.remove_metadata` method. The method
@@ -338,8 +340,8 @@ Loading From a Local Path
 -------------------------
 
 :class:`~determined.experimental.Checkpoint` contains a static method,
-:meth:`~determined.experimental.Checkpoint.load_from_path`, for loading
-a checkpoint from a local path.
+:meth:`~determined.experimental.Checkpoint.load_from_path`, that loads
+a checkpoint from a path on the local file system.
 
 Suppose a checkpoint is downloaded using a command like this:
 
@@ -347,7 +349,7 @@ Suppose a checkpoint is downloaded using a command like this:
 
   det trial download <trial_id> --best --output-dir local_checkpoint
 
-Then it can be loaded in Python with this code:
+The checkpoint can then be loaded in Python with this code:
 
 .. code:: python
 
@@ -360,3 +362,4 @@ Next Steps
 
 - :ref:`experimental`: The reference documentation for this API.
 - :ref:`exporting-checkpoints`
+- :ref:`organizing-models`

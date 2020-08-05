@@ -1,5 +1,11 @@
 description: imagenet_gaea
 
+# Setting batch size and slots_per_trial.
+#   - Nvidia Tesla V100: set batch size to 1024 and slots_per_trial to 8
+#   - Nvidia Tesla K80: 
+#       - set batch size to 2048 and slots_per_trial to 24
+#       - set batch size to 4048 and slots_per_trial to 48
+
 data:
   # Change bucket_name to GCP bucket with imagenet dataset
   # Data folder structure assumed to be imagenet/train and 
@@ -31,42 +37,53 @@ data:
 #    container_path: /mnt/data
 #    read_only: false
 
-min_validation_period:
-  batches: 1000
+min_validation_period: 5
 
 hyperparameters:
   num_classes: 1000
-  learning_rate: 0.5
+  learning_rate: 0.25
   momentum: 0.9
-  weight_decay: 3e-5
+  weight_decay: 1e-5
+  drop_path_prob: 0.2
+  drop_prob: 0.2
   label_smoothing_rate: 0.1
-  cosine_annealing_epochs: 300
+  ema_decay: 0.999
+  clip_gradients_l2_norm: 5
+  # Choices include linear, efficientnet, and cosine
+  lr_scheduler: efficientnet 
+  lr_epochs: 350
+  warmup_epochs: 5
+  # These HPs only used for efficientnet scheduler
+  lr_gamma: 0.975
+  lr_decay_every: 2
+
   init_channels: 48
   layers: 14
-  # Set global_batch_size to 1024
-  # if not using randomly generated data.
   # Batch size may be too big for GPU memory depending
   # on your GPU and number of slots_per_trial.
-  global_batch_size: 1024
+  global_batch_size: 4096
   auxiliary: false
   auxiliary_weight: 0.4
-  autoaugment: true
+  randaugment: true
   cutout: true
   cutout_length: 16
   do_SE: true
   activation: swish 
 
+checkpoint_storage:
+  save_experiment_best: 5
+  save_trial_best: 2
+  save_trial_latest: 1
+
 resources:
-  # We recommend 8 slots with V100
-  # and at least 16 slots with K80 GPUs.
-  slots_per_trial: 8
+  slots_per_trial: 48
   shm_size: 30000000000
 
 searcher:
   name: single
   metric: top1_accuracy 
   max_length:
-    batches: 30000 # 1.2 million images in training set of imagenet
+    batches: 100000 # 1.2 million images in training set of imagenet
   smaller_is_better: false 
 
 optimizations:

@@ -8,7 +8,7 @@ hyperparameters:
   learning_rate: 1e-4
   learning_rate_decay: 1e-6
   layer1_dense_size: 16
-  global_batch_size: 512 # per slot batch size = 64
+  global_batch_size: 512 # per slot batch size = 64 
   OUTPUT_CHANNELS: 3
 
 records_per_epoch: 7400
@@ -16,14 +16,15 @@ searcher:
   name: single
   metric: val_accuracy
   smaller_is_better: false
-  max_length: 
-    epochs: 20
+  max_length:
+    batches: 160 
+
 resources:
     slots_per_trial: 8
 
 min_validation_period:
-  epochs: 1
+  batches: 8
+batches_per_step: 8
 entrypoint: model_def:UNetsTrial
 environment:
-  image:
-    gpu: "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.5.0"
+    image: determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-23863bb

@@ -15,13 +15,13 @@ records_per_epoch: 7400
 searcher:
   name: single
   metric: val_accuracy
-  smaller_is_better: false 
-  max_length: 
-    epochs: 20
+  smaller_is_better: false
+  max_length:
+    batches: 1140
 
 min_validation_period:
-  epochs: 1
+  batches: 57
 entrypoint: model_def:UNetsTrial
+batches_per_step: 57
 environment:
-  image:
-    gpu: "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.5.0"
+    image: determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-23863bb

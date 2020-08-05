@@ -11,7 +11,7 @@ import torchvision
 from torch import nn
 from torchvision import transforms
 
-from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext, reset_parameters
+from determined.pytorch import DataLoader, PyTorchTrial, PyTorchTrialContext
 
 # Constants about the data set.
 IMAGE_SIZE = 32
@@ -65,10 +65,6 @@ class CIFARTrial(PyTorchTrial):
             nn.Dropout2d(self.context.get_hparam("layer3_dropout")),
             nn.Linear(512, NUM_CLASSES),
         ))
-
-        # If loading backbone weights, do not call reset_parameters() or
-        # call before loading the backbone weights.
-        reset_parameters(self.model)
 
         self.optimizer = self.context.wrap_optimizer(torch.optim.RMSprop(  # type: ignore
             self.model.parameters(),

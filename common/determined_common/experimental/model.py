@@ -7,6 +7,17 @@ from determined_common.experimental.checkpoint import Checkpoint
 
 
 class ModelSortBy(enum.Enum):
+    """
+    Specifies the field to sort a list of models on.
+
+    Attributes:
+        UNSPECIFIED
+        NAME
+        DESCRIPTION
+        CREATION_TIME
+        LAST_UPDATED_TIME
+    """
+
     UNSPECIFIED = 0
     NAME = 1
     DESCRIPTION = 2
@@ -15,6 +26,17 @@ class ModelSortBy(enum.Enum):
 
 
 class ModelOrderBy(enum.Enum):
+    """
+    Specifies whether a sorted list of models should be in ascending or
+    descending order.
+
+    Attributes:
+        ASCENDING
+        ASC
+        DESCENDING
+        DESC
+    """
+
     ASCENDING = 1
     ASC = 1
     DESCENDING = 2
@@ -51,7 +73,7 @@ class Model:
         self.last_updated_time = last_updated_time
         self.metadata = metadata or {}
 
-    def get_version(self, version: int = 0) -> Checkpoint:
+    def get_version(self, version: int = 0) -> Optional[Checkpoint]:
         """
         Retrieve the checkpoint corresponding to the specified version of the
         model. If no version is specified the latest model version is returned.
@@ -67,6 +89,9 @@ class Model:
             )
 
             data = resp.json()
+            if data["versions"] == []:
+                return None
+
             latest_version = data["versions"][0]
             return Checkpoint.from_json(
                 {
@@ -88,7 +113,7 @@ class Model:
         order by default.
 
         Arguments:
-            order_by (enum): A member of the ModelOrderBy enum.
+            order_by (enum): A member of the :class:`ModelOrderBy` enum.
         """
         resp = api.get(
             self._master,
@@ -111,12 +136,12 @@ class Model:
 
     def register_version(self, checkpoint_uuid: str) -> Checkpoint:
         """
-        Creats a new model version and returns the
+        Creates a new model version and returns the
         :class:`~determined.experimental.Checkpoint` corresponding to the
         version.
 
         Arguments:
-            checkpoint_uuid: The uuid to associated with the new model version.
+            checkpoint_uuid: The uuid to associate with the new model version.
         """
         resp = api.post(
             self._master,
@@ -139,8 +164,7 @@ class Model:
         """
         Adds user-defined metadata to the model. The ``metadata`` argument must be a
         JSON-serializable dictionary. If any keys from this dictionary already appear in
-        the model metadata, the corresponding dictionary entries in the model are
-        replaced by the passed-in dictionary values.
+        the model's metadata, the previous dictionary entries are replaced.
 
         Arguments:
             metadata (dict): Dictionary of metadata to add to the model.

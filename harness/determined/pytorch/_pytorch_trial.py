@@ -24,6 +24,12 @@ from determined.pytorch import (
 )
 from determined_common import check
 
+# Apex is included only for GPU trials.
+try:
+    import apex
+except ImportError:
+    pass
+
 
 class PyTorchTrialController(det.LoopTrialController):
     def __init__(self, trial_inst: det.Trial, *args: Any, **kwargs: Any) -> None:
@@ -40,13 +46,13 @@ class PyTorchTrialController(det.LoopTrialController):
             len(self.context.models),
             1,
             "Must have at least one model. "
-            "This might be caused by not wrapping your model with Model()",
+            "This might be caused by not wrapping your model with wrap_model()",
         )
         check.gt_eq(
             len(self.context.optimizers),
             1,
             "Must have at least one optimizer. "
-            "This might be caused by not wrapping your model with Optimizer()",
+            "This might be caused by not wrapping your optimizer with wrap_optimizer()",
         )
         self._check_evaluate_implementation()
 
@@ -55,6 +61,9 @@ class PyTorchTrialController(det.LoopTrialController):
         self.validation_loader = None  # type: Optional[torch.utils.data.DataLoader]
         self._set_data_loaders()
 
+        # We don't want the training_iterator shuffling values after we load state
+        self.training_iterator = iter(self.training_loader)
+
         # If a load path is provided load weights and restore the data location.
         self._load()
 
@@ -62,8 +71,6 @@ class PyTorchTrialController(det.LoopTrialController):
             hvd.broadcast_parameters(self.context._main_model.state_dict(), root_rank=0)
             for optimizer in self.context.optimizers:
                 hvd.broadcast_optimizer_state(optimizer, root_rank=0)
-
-        self.training_iterator = iter(self.training_loader)
 
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
@@ -649,6 +656,42 @@ class PyTorchTrialController(det.LoopTrialController):
             for idx, lr_scheduler in enumerate(self.context.lr_schedulers):
                 lr_scheduler.load_state_dict(checkpoint["lr_schedulers_state_dict"][idx])
 
+        if "amp_state" in checkpoint:
+            if self.context._use_amp:
+                apex.amp.load_state_dict(checkpoint["amp_state"])
+            else:
+                logging.warning(
+                    "There exists amp_state in checkpoint but the experiment is not using AMP."
+                )
+        else:
+            if self.context._use_amp:
+                logging.warning(
+                    "The experiment is using AMP but amp_state does not exist in the checkpoint."
+                )
+
+        if "rng_state" in checkpoint:
+            rng_state = checkpoint["rng_state"]
+            np.random.set_state(rng_state["np_rng_state"])
+            random.setstate(rng_state["random_rng_state"])
+            torch.random.set_rng_state(rng_state["cpu_rng_state"])  # type: ignore
+
+            if torch.cuda.device_count():
+                if "gpu_rng_state" in rng_state:
+                    torch.cuda.set_rng_state(  # type: ignore
+                        rng_state["gpu_rng_state"], device=self.context.distributed.get_local_rank()
+                    )
+                else:
+                    logging.warning(
+                        "The system has a gpu but no gpu_rng_state exists in the checkpoint."
+                    )
+            else:
+                if "gpu_rng_state" in rng_state:
+                    logging.warning(
+                        "There exists gpu_rng_state in checkpoint but the system has no gpu."
+                    )
+        else:
+            logging.warning("The checkpoint has no random state to restore.")
+
         callback_state = checkpoint.get("callbacks", {})
         for name in self.callbacks:
             if name in callback_state:
@@ -671,6 +714,17 @@ class PyTorchTrialController(det.LoopTrialController):
         # The model code is the current working directory.
         util.write_user_code(path)
 
+        rng_state = {
+            "cpu_rng_state": torch.random.get_rng_state(),  # type: ignore
+            "np_rng_state": np.random.get_state(),
+            "random_rng_state": random.getstate(),
+        }
+
+        if torch.cuda.device_count():
+            rng_state["gpu_rng_state"] = torch.cuda.get_rng_state(  # type: ignore
+                self.context.distributed.get_local_rank()
+            )
+
         # PyTorch uses optimizer objects that take the model parameters to
         # optimize on construction, so we store and reload the `state_dict()`
         # of the model and optimizer explicitly (instead of dumping the entire
@@ -685,7 +739,11 @@ class PyTorchTrialController(det.LoopTrialController):
                 lr_scheduler.state_dict() for lr_scheduler in self.context.lr_schedulers
             ],
             "callbacks": {name: callback.state_dict() for name, callback in self.callbacks.items()},
+            "rng_state": rng_state,
         }
+
+        if self.context._use_amp:
+            checkpoint["amp_state"] = apex.amp.state_dict()
 
         torch.save(  # type: ignore
             checkpoint, str(path.joinpath("state_dict.pth")), pickle_module=cloudpickle
@@ -959,12 +1017,20 @@ class PyTorchTrial(det.Trial):
 
 def reset_parameters(model: torch.nn.Module) -> None:
     """
-    Recursively calls ``reset_parameters()`` for all modules.
+    .. warning::
+        ``det.pytorch.reset_parameters()`` is deprecated and should not be called. For custom
+        nn.Modules which do need a call to reset_parameters(), it is recommended to call
+        self.reset_parameters() directly in their __init__() function, as is standard in all
+        built-in nn.Modules.
 
-    Important: Call this prior to loading any backbone weights,
-    otherwise those weights will be overwritten.
+    Recursively calls ``reset_parameters()`` for all modules.
     """
-    logging.info("Resetting model parameters.")
+    logging.warning(
+        "det.pytorch.reset_parameters() is deprecated and should not be called.  For custom "
+        "nn.Modules which do need a call to reset_parameters(), it is recommended to call "
+        "self.reset_parameters() directly in their __init__() function, as is standard in all "
+        "built-in nn.Modules."
+    )
     for _, module in model.named_modules():
         reset_params = getattr(module, "reset_parameters", None)
         if callable(reset_params):
