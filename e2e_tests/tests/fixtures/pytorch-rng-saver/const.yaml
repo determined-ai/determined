@@ -4,7 +4,7 @@ data:
 entrypoint: model_def:NoopPytorchTrial
 hyperparameters:
   global_batch_size: 32
-batches_per_step: 1
+scheduling_unit: 1
 searcher:
   name: single
   metric: validation_error
