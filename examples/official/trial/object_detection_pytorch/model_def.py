@@ -45,14 +45,17 @@ class ObjectDetectionTrial(PyTorchTrial):
             dataset, [train_size, test_size]
         )
 
-        self.model = self.context.wrap_model(fasterrcnn_resnet50_fpn(pretrained=True))
-
+        model = fasterrcnn_resnet50_fpn(pretrained=True)
         # Replace the classifier with a new two-class classifier.  There are
         # only two "classes": pedestrian and background.
         num_classes = 2
-        in_features = self.model.roi_heads.box_predictor.cls_score.in_features
-        self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+        in_features = model.roi_heads.box_predictor.cls_score.in_features
+        model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
 
+        # Wrap the model.
+        self.model = self.context.wrap_model(model)
+
+        # Wrap the optimizer.
         self.optimizer = self.context.wrap_optimizer(torch.optim.SGD(
             self.model.parameters(),
             lr=self.context.get_hparam("learning_rate"),
@@ -60,6 +63,7 @@ class ObjectDetectionTrial(PyTorchTrial):
             weight_decay=self.context.get_hparam("weight_decay"),
         ))
 
+        # Wrap the LR scheduler.
         self.lr_scheduler = self.context.wrap_lrscheduler(
             torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=3, gamma=0.1),
             step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH
