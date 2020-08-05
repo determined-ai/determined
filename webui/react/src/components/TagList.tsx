@@ -45,7 +45,9 @@ const EditableTagList: React.FC<Props> = ({
   }, [ state.inputVisible ]);
 
   useEffect(() => {
-    if (state.editInputIndex !== -1) editInputRef.current?.focus();
+    if (state.editInputIndex === -1) return;
+    editInputRef.current?.focus();
+    editInputRef.current?.select();
   }, [ state.editInputIndex ]);
 
   const stopPropagation = useCallback( (e: React.MouseEvent) => e.stopPropagation(), []);

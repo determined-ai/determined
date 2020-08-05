@@ -1,7 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Input, Modal, Table } from 'antd';
 import { SelectValue } from 'antd/lib/select';
-import { ColumnType } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
@@ -29,13 +28,12 @@ import { ExperimentsParams } from 'services/types';
 import {
   ALL_VALUE, Command, Experiment, ExperimentFilters, ExperimentItem, RunState, TBSourceType,
 } from 'types';
-import { alphanumericSorter } from 'utils/data';
 import { openBlank } from 'utils/routes';
 import { filterExperiments, processExperiments } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates, waitPageUrl } from 'utils/types';
 
 import css from './ExperimentList.module.scss';
-import { columns as experimentColumns } from './ExperimentList.table';
+import { columns as defaultColumns } from './ExperimentList.table';
 
 enum Action {
   Activate = 'Activate',
@@ -53,8 +51,6 @@ const defaultFilters: ExperimentFilters = {
   states: [ ALL_VALUE ],
   username: undefined,
 };
-
-const columns = [ ...experimentColumns ];
 
 const ExperimentList: React.FC = () => {
   const auth = Auth.useStateContext();
@@ -144,28 +140,24 @@ const ExperimentList: React.FC = () => {
     updateTags(id, { [tag]: null });
   }, [ updateTags ]);
 
-  useEffect(() => {
-    const nameColumn: ColumnType<ExperimentItem> = {
-      dataIndex: 'name',
-      render: function nameRenderer(_, record) {
-        return (
-          <div className={css.nameColumn}>
-            {record.name || ''}
-            <TagList
-              tags={record.config.labels || []}
-              onChange={handleTagListChange(record.id)}
-              onCreate={handleTagListCreate(record.id)}
-              onDelete={handleTagListDelete(record.id)} />
-          </div>
-        );
-      },
-      sorter: (a: ExperimentItem, b: ExperimentItem): number => alphanumericSorter(a.name, b.name),
-      title: 'Name',
-    };
+  const columns = useMemo(() => {
+    const nameRenderer = (_: string, record: ExperimentItem) => (
+      <div className={css.nameColumn}>
+        {record.name || ''}
+        <TagList
+          tags={record.config.labels || []}
+          onChange={handleTagListChange(record.id)}
+          onCreate={handleTagListCreate(record.id)}
+          onDelete={handleTagListDelete(record.id)} />
+      </div>
+    );
 
-    const existingCol = columns.find(col => col.dataIndex === nameColumn.dataIndex);
-    if (!existingCol) columns.splice(1, 0, nameColumn);
-  }, [ handleTagListChange ]);
+    const newColumns = [ ...defaultColumns ];
+    const nameColumn = newColumns.find(column => /name/i.test(column.title as string));
+    if (nameColumn) nameColumn.render = nameRenderer;
+
+    return newColumns;
+  }, [ handleTagListChange, handleTagListCreate, handleTagListDelete ]);
 
   useEffect(() => {
     const experiments = processExperiments(experimentsResponse.data || [], users.data || []);

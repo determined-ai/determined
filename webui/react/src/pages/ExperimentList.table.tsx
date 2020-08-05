@@ -16,6 +16,11 @@ export const columns: ColumnType<ExperimentItem>[] = [
     title: 'ID',
   },
   {
+    dataIndex: 'name',
+    sorter: (a: ExperimentItem, b: ExperimentItem): number => alphanumericSorter(a.name, b.name),
+    title: 'Name',
+  },
+  {
     defaultSortOrder: 'descend',
     render: (_: number, record: ExperimentItem): React.ReactNode =>
       relativeTimeRenderer(new Date(record.startTime)),
