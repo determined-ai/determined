@@ -36,7 +36,7 @@ def render_model_version(checkpoint: Checkpoint) -> None:
 
     values = [
         [
-            checkpoint.version,
+            checkpoint.model_version,
             checkpoint.trial_id,
             checkpoint.batch_number,
             checkpoint.uuid,
@@ -88,7 +88,7 @@ def list_versions(args: Namespace) -> None:
 
         values = [
             [
-                ckpt.version,
+                ckpt.model_version,
                 ckpt.trial_id,
                 ckpt.batch_number,
                 ckpt.uuid,
@@ -123,6 +123,7 @@ def describe(args: Namespace) -> None:
             render_model_version(checkpoint)
 
 
+@authentication_required
 def register_version(args: Namespace) -> None:
     if args.json:
         resp = api.post(
@@ -170,7 +171,7 @@ args_description = [
                 is_default=True,
             ),
             Cmd(
-                "register_version",
+                "register-version",
                 register_version,
                 "register a new version of a model",
                 [
@@ -195,7 +196,7 @@ args_description = [
                 ],
             ),
             Cmd(
-                "list_versions",
+                "list-versions",
                 list_versions,
                 "list the versions of a model",
                 [

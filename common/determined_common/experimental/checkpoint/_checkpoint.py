@@ -37,7 +37,7 @@ class Checkpoint(object):
         determined_version: Optional[str] = None,
         framework: Optional[str] = None,
         format: Optional[str] = None,
-        version: Optional[int] = None,
+        model_version: Optional[int] = None,
         model_name: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
         master: Optional[str] = None,
@@ -80,7 +80,7 @@ class Checkpoint(object):
         self.framework = framework
         self.format = format
         self.determined_version = determined_version
-        self.version = version
+        self.model_version = model_version
         self.model_name = model_name
         self.metadata = metadata
         self._master = master
@@ -318,7 +318,7 @@ class Checkpoint(object):
             framework=data.get("framework"),
             format=data.get("format"),
             determined_version=data.get("determined_version", data.get("determinedVersion")),
-            version=data.get("version"),
+            model_version=data.get("model_version"),
             model_name=data.get("model_name"),
             master=master,
         )

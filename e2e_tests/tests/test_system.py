@@ -410,7 +410,8 @@ def test_model_registry() -> None:
 
     checkpoint = d.get_experiment(exp_id).top_checkpoint()
     model_version = mnist.register_version(checkpoint.uuid)
-    assert model_version.version == 1
+
+    assert model_version.model_version == 1
 
     latest_version = mnist.get_version()
     assert latest_version is not None
