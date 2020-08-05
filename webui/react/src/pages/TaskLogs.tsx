@@ -95,7 +95,7 @@ const TaskLogs: React.FC = () => {
   }, [ logIdRange, pollingLogsResponse.data ]);
 
   return (
-    <Page hideTitle maxHeight title={title}>
+    <Page maxHeight title={title}>
       <LogViewer
         disableLevel
         noWrap

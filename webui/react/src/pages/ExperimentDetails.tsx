@@ -1,4 +1,4 @@
-import { Alert, Button, Col, Modal, Row, Space, Table, Tooltip } from 'antd';
+import { Button, Col, Row, Space, Table, Tooltip } from 'antd';
 import { ColumnType } from 'antd/lib/table';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -6,6 +6,7 @@ import { useParams } from 'react-router';
 
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
+import CreateExperimentModal from 'components/CreateExperimentModal';
 import Icon from 'components/Icon';
 import { makeClickHandler } from 'components/Link';
 import Message from 'components/Message';
@@ -19,15 +20,15 @@ import useRestApi from 'hooks/useRestApi';
 import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
 import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
-import { routeAll } from 'routes';
 import { getExperimentDetails, isNotFound } from 'services/api';
-import { forkExperiment, getExperimentDetails, isNotFound } from 'services/api';
 import { ExperimentDetailsParams } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
 import { clone } from 'utils/data';
 import { alphanumericSorter, numericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
 import { humanReadableFloat } from 'utils/string';
 import { getDuration } from 'utils/time';
+
+import css from './ExperimentDetails.module.scss';
 
 interface Params {
   experimentId: string;
@@ -218,28 +219,6 @@ const ExperimentDetailsComp: React.FC = () => {
           </Section>
         </Col>
       </Row>
-      <Modal
-        bodyStyle={{ padding: 0 }}
-        className={css.forkModal}
-        okText="Fork"
-        title={`Fork Experiment ${experimentId}`}
-        visible={forkModalState.visible}
-        width={768}
-        onCancel={handleCancel}
-        onOk={handleOk}>
-        <MonacoEditor
-          height="60vh"
-          language="yaml"
-          options={{
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            selectOnLineNumbers: true,
-          }}
-          theme="vs-light"
-          value={forkValue}
-          onChange={editorOnChange} />
-        {forkError && <Alert className={css.error} message={forkError} type="error" />}
-      </Modal>
       {activeCheckpoint && <CheckpointModal
         checkpoint={activeCheckpoint}
         config={experiment.config}
