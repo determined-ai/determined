@@ -4,11 +4,7 @@ Organizing Models in the Model Registry
 =======================================
 
 Determined includes built-in support for a *model registry*, which makes it easy
-to organize trained models and their respective versions.
-
-The model registry contains a set of *models*. Each model has a unique name and
-zero or more *model versions*. A model version consists of a version number and
-a checkpoint, which represents the state of a trained model. Common use-cases
+to organize trained models and their respective versions.  Common use-cases
 for the model registry include:
 
 * Grouping related checkpoints together, including checkpoints across experiments.
@@ -18,13 +14,17 @@ for the model registry include:
 * Retrieving the latest version of a model for downstream tasks like serving or
   batch inference.
 
+The model registry contains a set of *models*. Each model has a unique name and
+zero or more *model versions*. A model version consists of a version number and
+a checkpoint, which represents the state of a trained model.
+
 The model registry is designed to be flexible, and the best way to use it
 depends on your organization's requirements and workflow. For example, one
 approach is to define a model for each high-level task you want to use machine
 learning for (e.g., "object-detection", "sentiment-analysis", etc.). Then each
 version of this model would correspond to a new approach to solving that
 task. Note that different versions of a model might come from different
-experiments, use different network architectures, or can even use different deep
+experiments, use different network architectures, or even use different deep
 learning frameworks. Another approach would be to register a model named
 "FasterRCNN", and ensure that each version of the model uses that network
 architecture.
@@ -91,7 +91,7 @@ options, see :class:`~determined.experimental.ModelSortBy` and
 
 .. code:: python
 
-  from determined.experimental import Determined
+  from determined.experimental import Determined, ModelOrderBy
 
   d = Determined()
 
@@ -143,17 +143,17 @@ example demonstrates how to use this API.
   model.add_metadata({"key", "value"})
   model.add_metadata({"metrics": {"test_set_loss": 0.091}})
 
-  # Result: {"key": "value", "metrics": { "test_set_loss": 0.091 } }.
+  # Result: {"key": "value", "metrics": {"test_set_loss": 0.091}}.
 
   # Only top-level keys are merged. The following statement will replace the
   # previous value of the "metrics" key.
   model.add_metadata({"metrics": {"test_set_acc": 0.97}})
 
-  # Result: {"key": "value", "metrics": { "test_set_acc": 0.97 } }.
+  # Result: {"key": "value", "metrics": {"test_set_acc": 0.97}}.
 
   model.remove_metadata(["key"])
 
-  # Result: {"metrics": { "test_set_acc": 0.97 } }.
+  # Result: {"metrics": {"test_set_acc": 0.97}}.
 
 
 Managing Model Versions
