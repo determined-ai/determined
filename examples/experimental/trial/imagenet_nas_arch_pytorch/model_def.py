@@ -55,79 +55,9 @@ class ImageNetTrial(PyTorchTrial):
         )
         self.last_epoch_idx = -1
 
-        def build_model():
-            genotype = Genotype(
-                normal=[
-                    ("skip_connect", 1),
-                    ("skip_connect", 0),
-                    ("sep_conv_3x3", 2),
-                    ("sep_conv_3x3", 1),
-                    ("sep_conv_5x5", 2),
-                    ("sep_conv_3x3", 0),
-                    ("sep_conv_5x5", 3),
-                    ("sep_conv_5x5", 2),
-                ],
-                normal_concat=range(2, 6),
-                reduce=[
-                    ("max_pool_3x3", 1),
-                    ("sep_conv_3x3", 0),
-                    ("sep_conv_5x5", 1),
-                    ("dil_conv_5x5", 2),
-                    ("sep_conv_3x3", 1),
-                    ("sep_conv_3x3", 3),
-                    ("sep_conv_5x5", 1),
-                    ("max_pool_3x3", 2),
-                ],
-                reduce_concat=range(2, 6),
-            )
-            activation_function = activation_map[self.context.get_hparam("activation")]
 
-            model = NetworkImageNet(
-                genotype,
-                activation_function,
-                self.context.get_hparam("init_channels"),
-                self.context.get_hparam("num_classes"),
-                self.context.get_hparam("layers"),
-                auxiliary=self.context.get_hparam("auxiliary"),
-                do_SE=self.context.get_hparam("do_SE"),
-                drop_path_prob=self.context.get_hparam("drop_path_prob"),
-                drop_prob=self.context.get_hparam("drop_prob"),
-            )
 
-            ema_model = EMAWrapper(self.context.get_hparam("ema_decay"), model)
-            return ema_model
-
-        def create_lr_scheduler(optimizer):
-            if self.context.get_hparam("lr_scheduler") == "cosine":
-                scheduler_cls = WarmupWrapper(
-                    torch.optim.lr_scheduler.CosineAnnealingLR
-                )
-                scheduler = scheduler_cls(
-                    self.context.get_hparam("warmup_epochs"),
-                    optimizer,
-                    self.context.get_hparam("lr_epochs"),
-                )
-            elif self.context.get_hparam("lr_scheduler") == "linear":
-                scheduler_cls = WarmupWrapper(LinearLRScheduler)
-                scheduler = scheduler_cls(
-                    self.context.get_hparam("warmup_epochs"),
-                    optimizer,
-                    self.context.get_hparam("lr_epochs"),
-                    self.context.get_hparam("warmup_epochs"),
-                )
-            elif self.context.get_hparam("lr_scheduler") == "efficientnet":
-                scheduler_cls = WarmupWrapper(EfficientNetScheduler)
-                scheduler = scheduler_cls(
-                    self.context.get_hparam("warmup_epochs"),
-                    optimizer,
-                    self.context.get_hparam("lr_gamma"),
-                    self.context.get_hparam("lr_decay_every"),
-                )
-            else:
-                raise NotImplementedError
-            return scheduler
-
-        self.model = self.context.wrap_model(build_model())
+        self.model = self.context.wrap_model(self.build_model_from_config())
 
         self.optimizer = self.context.wrap_optimizer(
             torch.optim.SGD(
@@ -139,9 +69,81 @@ class ImageNetTrial(PyTorchTrial):
         )
 
         self.lr_scheduler = self.context.wrap_lr_scheduler(
-            create_lr_scheduler(self.optimizer),
+            self.build_lr_scheduler_from_config(self.optimizer),
             step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH,
         )
+
+    def build_model_from_config(self):
+        genotype = Genotype(
+            normal=[
+                ("skip_connect", 1),
+                ("skip_connect", 0),
+                ("sep_conv_3x3", 2),
+                ("sep_conv_3x3", 1),
+                ("sep_conv_5x5", 2),
+                ("sep_conv_3x3", 0),
+                ("sep_conv_5x5", 3),
+                ("sep_conv_5x5", 2),
+            ],
+            normal_concat=range(2, 6),
+            reduce=[
+                ("max_pool_3x3", 1),
+                ("sep_conv_3x3", 0),
+                ("sep_conv_5x5", 1),
+                ("dil_conv_5x5", 2),
+                ("sep_conv_3x3", 1),
+                ("sep_conv_3x3", 3),
+                ("sep_conv_5x5", 1),
+                ("max_pool_3x3", 2),
+            ],
+            reduce_concat=range(2, 6),
+        )
+        activation_function = activation_map[self.context.get_hparam("activation")]
+
+        model = NetworkImageNet(
+            genotype,
+            activation_function,
+            self.context.get_hparam("init_channels"),
+            self.context.get_hparam("num_classes"),
+            self.context.get_hparam("layers"),
+            auxiliary=self.context.get_hparam("auxiliary"),
+            do_SE=self.context.get_hparam("do_SE"),
+            drop_path_prob=self.context.get_hparam("drop_path_prob"),
+            drop_prob=self.context.get_hparam("drop_prob"),
+        )
+
+        ema_model = EMAWrapper(self.context.get_hparam("ema_decay"), model)
+        return ema_model
+
+    def build_lr_scheduler_from_config(self, optimizer):
+        if self.context.get_hparam("lr_scheduler") == "cosine":
+            scheduler_cls = WarmupWrapper(
+                torch.optim.lr_scheduler.CosineAnnealingLR
+            )
+            scheduler = scheduler_cls(
+                self.context.get_hparam("warmup_epochs"),
+                optimizer,
+                self.context.get_hparam("lr_epochs"),
+            )
+        elif self.context.get_hparam("lr_scheduler") == "linear":
+            scheduler_cls = WarmupWrapper(LinearLRScheduler)
+            scheduler = scheduler_cls(
+                self.context.get_hparam("warmup_epochs"),
+                optimizer,
+                self.context.get_hparam("lr_epochs"),
+                self.context.get_hparam("warmup_epochs"),
+            )
+        elif self.context.get_hparam("lr_scheduler") == "efficientnet":
+            scheduler_cls = WarmupWrapper(EfficientNetScheduler)
+            scheduler = scheduler_cls(
+                self.context.get_hparam("warmup_epochs"),
+                optimizer,
+                self.context.get_hparam("lr_gamma"),
+                self.context.get_hparam("lr_decay_every"),
+            )
+        else:
+            raise NotImplementedError
+        return scheduler
 
     def build_training_data_loader(self) -> DataLoader:
         bucket_name = self.data_config["bucket_name"]
@@ -246,7 +248,6 @@ class ImageNetTrial(PyTorchTrial):
         top1, top5 = accuracy(logits, target, topk=(1, 5))
 
         self.model.restore_ema()
-
         input, target = batch
         logits, _ = self.model(input)
         ema_loss = self.criterion(logits, target)
