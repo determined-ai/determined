@@ -170,6 +170,13 @@ interface DataLayer {
   type: string;
 }
 
+interface ExperimentHyperParam {
+  type: string;
+  val: unknown;
+}
+
+export type ExperimentHyperParams = Record<string, ExperimentHyperParam>;
+
 export interface ExperimentConfig {
   checkpointPolicy: string;
   checkpointStorage?: CheckpointStorage;
@@ -234,23 +241,6 @@ export interface LatestValidationMetrics {
   validationMetrics: Record<string, number>;
 }
 
-export interface TrialItem {
-  bestAvailableCheckpoint?: Checkpoint;
-  bestValidationMetric?: number;
-  endTime?: string;
-  experimentId: number;
-  hparams: Record<string, string>;
-  id: number;
-  latestValidationMetrics?: LatestValidationMetrics;
-  numBatches: number;
-  numCompletedCheckpoints: number;
-  numSteps: number;
-  seed: number;
-  startTime: string;
-  state: RunState;
-  url: string;
-}
-
 export interface Step {
   endTime?: string;
   id: number;
@@ -258,13 +248,25 @@ export interface Step {
   state: RunState;
 }
 
-export interface TrialDetails {
+interface TrialBase extends StartEndTimes {
+  experimentId: number;
   id: number;
   state: RunState;
-  experimentId: number;
-  endTime?: string;
   seed: number;
-  startTime: string;
+  hparams: Record<string, string>;
+}
+
+export interface TrialItem extends TrialBase {
+  bestAvailableCheckpoint?: Checkpoint;
+  bestValidationMetric?: number;
+  latestValidationMetrics?: LatestValidationMetrics;
+  numBatches: number;
+  numCompletedCheckpoints: number;
+  numSteps: number;
+  url: string;
+}
+
+export interface TrialDetails extends TrialBase {
   steps: Step[];
   warmStartCheckpointId?: number;
 }

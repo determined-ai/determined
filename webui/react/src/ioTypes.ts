@@ -164,12 +164,10 @@ export const ioStep = io.type({
 export const ioTrialDetails = io.type({
   end_time: io.union([ io.string, io.null ]),
   experiment_id: io.number,
-
+  hparams: io.record(io.string, io.any),
   id: io.number,
-
   seed: io.number,
   start_time: io.string,
-
   state: runStatesIoType,
   steps: io.array(ioStep),
   warm_start_checkpoint_id: io.union([ io.number, io.null ]),
@@ -187,7 +185,7 @@ export const ioTrial = io.type({
   best_validation_metric: io.union([ io.number, io.null ]),
   end_time: io.union([ io.string, io.null ]),
   experiment_id: io.number,
-  hparams: io.any,
+  hparams: io.record(io.string, io.any),
   id: io.number,
   latest_validation_metrics: io.union([ ioLatestValidatonMetrics, io.null ]),
   num_batches: io.union([ io.number, io.null ]),

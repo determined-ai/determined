@@ -66,7 +66,7 @@ class BertSQuADPyTorch(PyTorchTrial):
             eps=self.context.get_hparam("adam_epsilon")
         ))
 
-        self.lr_scheduler = self.context.wrap_lrscheduler(
+        self.lr_scheduler = self.context.wrap_lr_scheduler(
             get_linear_schedule_with_warmup(
                 self.optimizer,
                 num_warmup_steps=self.context.get_hparam("num_warmup_steps"),
