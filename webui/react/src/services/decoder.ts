@@ -217,6 +217,7 @@ export const jsonToTrialDetails = (data: unknown): TrialDetails => {
   return {
     endTime: io.end_time || undefined,
     experimentId: io.experiment_id,
+    hparams: io.hparams,
     id: io.id,
     seed: io.seed,
     startTime: io.start_time,
