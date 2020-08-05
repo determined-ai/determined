@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
@@ -10,6 +11,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
+
+const logCheckWaitTime = 100 * time.Millisecond
 
 func (a *apiServer) GetMaster(
 	_ context.Context, _ *apiv1.GetMasterRequest) (*apiv1.GetMasterResponse, error) {
@@ -70,12 +73,16 @@ func (a *apiServer) MasterLogs(
 	offset, limit := effectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
 
 	for {
-		for _, log := range a.m.logs.Entries(offset, -1, limit) {
+		logEnties := a.m.logs.Entries(offset, -1, limit)
+		for _, log := range logEnties {
 			offset++
 			limit--
 			if err := resp.Send(log.Proto()); err != nil {
 				return err
 			}
+		}
+		if len(logEnties) == 0 {
+			time.Sleep(logCheckWaitTime)
 		}
 		if !req.Follow || limit == 0 {
 			return nil
