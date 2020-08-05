@@ -89,7 +89,7 @@ class Model:
             )
 
             data = resp.json()
-            if data["versions"] == []:
+            if data["modelVersions"] == []:
                 return None
 
             latest_version = data["modelVersions"][0]
