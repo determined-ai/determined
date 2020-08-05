@@ -14,8 +14,8 @@ interface Props {
   parentId: number;
   visible: boolean;
   config: string;
-  onVisibleChange: (arg0: boolean) => void;
-  onConfigChange: (arg0: string) => void;
+  onVisibleChange: (visible: boolean) => void;
+  onConfigChange: (config: string) => void;
 }
 
 const CreateExperimentModal: React.FC<Props> = (
