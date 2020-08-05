@@ -7,7 +7,7 @@ import Experiments from 'contexts/Experiments';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { setupUrlForDev } from 'routes';
 import { archiveExperiment, createTensorboard, killTask, setExperimentState } from 'services/api';
-import { AnyTask, CommandTask, Experiment, RunState, TBSourceType } from 'types';
+import { AnyTask, CommandTask, Experiment, ExperimentTask, RunState, TBSourceType } from 'types';
 import { openBlank, openCommand } from 'utils/routes';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
@@ -23,7 +23,9 @@ const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
   const isExperiment = isExperimentTask(task);
-  const isArchivable = isExperiment && terminalRunStates.has(task.state as RunState);
+  const isExperimentTerminal = terminalRunStates.has(task.state as RunState);
+  const isArchivable = isExperiment && isExperimentTerminal && !(task as ExperimentTask).archived;
+  const isUnarchivable = isExperiment && isExperimentTerminal && (task as ExperimentTask).archived;
   const isKillable = isTaskKillable(task);
   const isPausable = isExperiment
     && task.state === RunState.Active;
@@ -36,7 +38,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
   const setExperiments = Experiments.useActionContext();
 
   // update the local state of a single experiment.
-  // TODO refactor to contexts.
+  // TODO refactor to send change event back to parent via callback
   const updateExperimentLocally = (updater: (arg0: Experiment) => Experiment): void => {
     if (experimentsResponse.data) {
       const experiments = experimentsResponse.data
@@ -61,7 +63,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
           break;
         case 'archive':
           if (!isExperimentTask(task)) break;
-          await archiveExperiment(parseInt(task.id), !task.archived);
+          await archiveExperiment(parseInt(task.id), true);
           updateExperimentLocally(exp => ({ ...exp, archived: true }));
           break;
         case 'cancel':
@@ -99,6 +101,10 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
           openBlank(setupUrlForDev(path));
           break;
         }
+        case 'unarchive':
+          if (!isExperimentTask(task)) break;
+          await archiveExperiment(parseInt(task.id), false);
+          updateExperimentLocally(exp => ({ ...exp, archived: false }));
       }
     } catch (e) {
       handleError({
@@ -118,6 +124,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
   if (isResumable) menuItems.push(<Menu.Item key="activate">Activate</Menu.Item>);
   if (isPausable) menuItems.push(<Menu.Item key="pause">Pause</Menu.Item>);
   if (isArchivable) menuItems.push(<Menu.Item key="archive">Archive</Menu.Item>);
+  if (isUnarchivable) menuItems.push(<Menu.Item key="unarchive">Unarchive</Menu.Item>);
   if (isCancelable) menuItems.push(<Menu.Item key="cancel">Cancel</Menu.Item>);
   if (isKillable) menuItems.push(<Menu.Item key="kill">Kill</Menu.Item>);
   if (isExperiment) {
