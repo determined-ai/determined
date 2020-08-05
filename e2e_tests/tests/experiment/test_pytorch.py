@@ -147,7 +147,7 @@ def test_pytorch_cifar10_parallel() -> None:
 @pytest.mark.parallel  # type: ignore
 def test_pytorch_gan_parallel() -> None:
     config = conf.load_config(conf.official_examples_path("trial/mnist_gan_pytorch/const.yaml"))
-    config = conf.set_max_steps(config, 2)
+    config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 8)
 
     experiment_id = exp.run_basic_test_with_temp_config(
