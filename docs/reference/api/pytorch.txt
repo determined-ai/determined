@@ -138,9 +138,10 @@ Then, implement the ``build_callbacks`` function in ``PyTorchTrial``:
     def build_callbacks(self):
         return {"reduce_lr": ReduceLROnPlateauEveryValidationStep(self.context)}
 
+.. _migration-guide-flexible-primitives:
 
 Migration from deprecated interface
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------
 
 The current approach to implementing PyTorchTrial is more powerful given its
 support for multiple models, optimizers, and LR schedulers. The ability to run
