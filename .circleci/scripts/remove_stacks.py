@@ -1,10 +1,10 @@
 import boto3
 import datetime
 import os
+import json
+import requests
 
 from dateutil.tz import tzutc
-from slack import WebClient
-from slack.errors import SlackApiError
 from typing import Any, Dict, List
 
 
@@ -20,30 +20,39 @@ def check_conditions(
             target_stacks[k].append(stack["StackName"])
 
 
+def send_message(data: Dict[str, str], hook):
+    response = requests.post(hook, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+    if response.status_code != 200:
+        if response.text:
+            raise ValueError(
+                f"Response to Slack Request returned error {response.status_code} with message: {response.text}"
+            )
+        else:
+            raise ValueError(f"Response to Slack Request returned error {response.status_code}")
+
+
 if __name__ == "__main__":
     client = boto3.client("cloudformation")
     response = client.describe_stacks()
     timeout = datetime.timedelta(hours=6)
-    slack_token = os.environ["SLACK_API_TOKEN"]
-    print(slack_token)
-    client = WebClient(token=slack_token)
 
     targetStacks = {"nightly": ["nightly-test"], "e2e-gpu": [], "parallel": []}
 
     for each in response["Stacks"]:
         check_conditions(each, targetStacks, timeout)
 
-    print("about to list all qualifying stacks")
+    deleted_stacks = ""
+    print(os.getenv("SLACK_DELETION_WEBHOOK"))
+
     for k, lists in targetStacks.items():
         for stack in lists:
-            print("stack: " + stack)
+            # print("stack: " + stack)
             # os.system(f"det-deploy aws down --cluster-id {stack}")
-            try:
-                print("sending message")
-                response = client.chat_postMessage(
-                    channel="D015DMR4XKR",
-                    text="tearing down "+ stack,
-                    username = "alfred"
-                )
-            except SlackApiError as e :
-                print(e.response["error"])
+            deleted_stacks += f"•`{stack}`\n"
+
+    print(deleted_stacks)
+
+    # send_message({'text': '<!channel>'}, my_hook)
+    # payload = {"text": f"*The following stacks have been terminated*\n {deleted_stacks}"}
+    # send_message(payload, my_hook)
+
