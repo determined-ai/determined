@@ -86,6 +86,8 @@ func (a *apiServer) MasterLogs(
 		}
 		if !req.Follow || limit == 0 {
 			return nil
+		} else if req.Follow {
+			limit = -1
 		}
 	}
 }
