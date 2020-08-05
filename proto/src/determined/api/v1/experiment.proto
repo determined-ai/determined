@@ -91,3 +91,21 @@ message PauseExperimentRequest {
 message PauseExperimentResponse {
 }
 
+// Cancel an experiment.
+message CancelExperimentRequest {
+    // The experiment id
+    int32 id = 1;
+}
+// Response to CancelExperimentRequest.
+message CancelExperimentResponse {
+}
+
+// Kill an experiment.
+message KillExperimentRequest {
+    // The experiment id
+    int32 id = 1;
+}
+// Response to KillExperimentRequest.
+message KillExperimentResponse {
+}
+
