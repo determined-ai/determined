@@ -275,14 +275,15 @@ def test_rng_restore() -> None:
 
     for step in range(0, 2):
         for metric in ["np_rand", "rand_rand", "torch_rand"]:
+            first_metric = first_trial["steps"][step + 1]["validation"]["metrics"][
+                "validation_metrics"
+            ][metric]
+            second_metric = second_trial["steps"][step]["validation"]["metrics"][
+                "validation_metrics"
+            ][metric]
             assert (
-                first_trial["steps"][step + 1]["validation"]["metrics"]["validation_metrics"][
-                    metric
-                ]
-                == second_trial["steps"][step]["validation"]["metrics"]["validation_metrics"][
-                    metric
-                ]
-            )
+                first_metric == second_metric
+            ), f"failures on iteration: {step} with metric: {metric}"
 
 
 @pytest.mark.e2e_gpu  # type: ignore
@@ -315,11 +316,12 @@ def test_gpu_restore() -> None:
 
     for step in range(0, 2):
         for metric in ["np_rand", "rand_rand", "torch_rand", "gpu_rand"]:
+            first_metric = first_trial["steps"][step + 1]["validation"]["metrics"][
+                "validation_metrics"
+            ][metric]
+            second_metric = second_trial["steps"][step]["validation"]["metrics"][
+                "validation_metrics"
+            ][metric]
             assert (
-                first_trial["steps"][step + 1]["validation"]["metrics"]["validation_metrics"][
-                    metric
-                ]
-                == second_trial["steps"][step]["validation"]["metrics"]["validation_metrics"][
-                    metric
-                ]
-            )
+                first_metric == second_metric
+            ), f"failures on iteration: {step} with metric: {metric}"
