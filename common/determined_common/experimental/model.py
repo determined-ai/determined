@@ -89,14 +89,14 @@ class Model:
             )
 
             data = resp.json()
-            if data["versions"] == []:
+            if data["modelVersions"] == []:
                 return None
 
-            latest_version = data["versions"][0]
+            latest_version = data["modelVersions"][0]
             return Checkpoint.from_json(
                 {
                     **latest_version["checkpoint"],
-                    "version": latest_version["version"],
+                    "model_version": latest_version["version"],
                     "model_name": data["model"]["name"],
                 }
             )
@@ -104,7 +104,7 @@ class Model:
             resp = api.get(self._master, "/api/v1/models/{}/versions/{}".format(self.name, version))
 
         data = resp.json()
-        return Checkpoint.from_json(data["version"]["checkpoint"], self._master)
+        return Checkpoint.from_json(data["model_version"]["checkpoint"], self._master)
 
     def get_versions(self, order_by: ModelOrderBy = ModelOrderBy.DESC) -> List[Checkpoint]:
         """
@@ -126,12 +126,12 @@ class Model:
             Checkpoint.from_json(
                 {
                     **version["checkpoint"],
-                    "version": version["version"],
+                    "model_version": version["version"],
                     "model_name": data["model"]["name"],
                 },
                 self._master,
             )
-            for version in data["versions"]
+            for version in data["modelVersions"]
         ]
 
     def register_version(self, checkpoint_uuid: str) -> Checkpoint:
@@ -153,9 +153,9 @@ class Model:
 
         return Checkpoint.from_json(
             {
-                **data["version"]["checkpoint"],
-                "version": data["version"]["version"],
-                "model_name": data["version"]["model"]["name"],
+                **data["modelVersion"]["checkpoint"],
+                "model_version": data["modelVersion"]["version"],
+                "model_name": data["modelVersion"]["model"]["name"],
             },
             self._master,
         )

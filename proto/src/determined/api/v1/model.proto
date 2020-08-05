@@ -99,7 +99,7 @@ message GetModelVersionRequest {
 // Response for GetModelVersionRequest.
 message GetModelVersionResponse {
   // The model version requested.
-  determined.model.v1.ModelVersion version = 1;
+  determined.model.v1.ModelVersion model_version = 1;
 }
 
 
@@ -133,7 +133,7 @@ message GetModelVersionsResponse {
   // The model requested.
   determined.model.v1.Model model = 1;
   // The list of returned model versions.
-  repeated determined.model.v1.ModelVersion versions = 2;
+  repeated determined.model.v1.ModelVersion model_versions = 2;
   // Pagination information of the full dataset.
   Pagination pagination = 3;
 }
@@ -149,5 +149,5 @@ message PostModelVersionRequest {
 // Response for PostModelVersionRequest.
 message PostModelVersionResponse {
   // The model version requested.
-  determined.model.v1.ModelVersion version = 1;
+  determined.model.v1.ModelVersion model_version = 1;
 }
