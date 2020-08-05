@@ -260,7 +260,7 @@ const ExperimentList: React.FC = () => {
   }), []);
 
   return (
-    <Page title="Experiments">
+    <Page id="experiments" title="Experiments">
       <div className={css.base}>
         <div className={css.header}>
           <Input

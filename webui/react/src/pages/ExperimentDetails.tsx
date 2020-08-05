@@ -1,17 +1,14 @@
-import { Breadcrumb, Button, Space, Table, Tooltip } from 'antd';
+import { Button, Col, Row, Space, Table, Tooltip } from 'antd';
 import { ColumnType } from 'antd/lib/table';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 
+import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
 import CreateExperimentModal from 'components/CreateExperimentModal';
-import ExperimentActions from 'components/ExperimentActions';
-import ExperimentChart from 'components/ExperimentChart';
-import ExperimentInfoBox from 'components/ExperimentInfoBox';
 import Icon from 'components/Icon';
 import { makeClickHandler } from 'components/Link';
-import Link from 'components/Link';
 import Message from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
@@ -20,6 +17,9 @@ import { durationRenderer, relativeTimeRenderer, stateRenderer } from 'component
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
+import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
+import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
+import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
 import { getExperimentDetails, isNotFound } from 'services/api';
 import { ExperimentDetailsParams } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
@@ -27,6 +27,8 @@ import { clone } from 'utils/data';
 import { alphanumericSorter, numericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
 import { humanReadableFloat } from 'utils/string';
 import { getDuration } from 'utils/time';
+
+import css from './ExperimentDetails.module.scss';
 
 interface Params {
   experimentId: string;
@@ -86,7 +88,7 @@ const ExperimentDetailsComp: React.FC = () => {
   }
   if (message) {
     return (
-      <Page hideTitle title="Not Found">
+      <Page id="page-error-message">
         <Message>{message}</Message>
       </Page>
     );
@@ -180,38 +182,43 @@ const ExperimentDetailsComp: React.FC = () => {
   ];
 
   return (
-    <Page title={`Experiment ${experimentConfig?.description}`}>
-      <Breadcrumb>
-        <Breadcrumb.Item>
-          <Space align="center" size="small">
-            <Icon name="experiment" size="small" />
-            <Link path="/det/experiments">Experiments</Link>
-          </Space>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>
-          <span>{experimentId}</span>
-        </Breadcrumb.Item>
-      </Breadcrumb>
-      <ExperimentActions
+    <Page
+      backPath={'/det/experiments'}
+      breadcrumb={[
+        { breadcrumbName: 'Experiments', path: '/det/experiments' },
+        { breadcrumbName: `Experiment ${experimentId}`, path: `/det/experiments/${experimentId}` },
+      ]}
+      options={<ExperimentActions
         experiment={experiment}
         onClick={{ Fork: showForkModal }}
-        onSettled={pollExperimentDetails} />
-      <div>
-        <ExperimentInfoBox experiment={experiment} />
-        <ExperimentChart
-          startTime={experiment.startTime}
-          validationHistory={experiment.validationHistory}
-          validationMetric={experimentConfig?.searcher.metric} />
-      </div>
-      <Section title="Trials">
-        <Table
-          columns={columns}
-          dataSource={experiment?.trials}
-          loading={!experimentResponse.hasLoaded}
-          rowKey="id"
-          size="small"
-          onRow={handleTableRow} />
-      </Section>
+        onSettled={pollExperimentDetails} />}
+      subTitle={<Space align="center" size="small">
+        {experiment?.config.description}
+        <Badge state={experiment.state} type={BadgeType.State} />
+      </Space>}
+      title={`Experiment ${experimentId}`}>
+      <Row className={css.topRow} gutter={[ 16, 16 ]}>
+        <Col lg={10} span={24} xl={8} xxl={6}>
+          <ExperimentInfoBox experiment={experiment} />
+        </Col>
+        <Col lg={14} span={24} xl={16} xxl={18}>
+          <ExperimentChart
+            startTime={experiment.startTime}
+            validationHistory={experiment.validationHistory}
+            validationMetric={experimentConfig?.searcher.metric} />
+        </Col>
+        <Col span={24}>
+          <Section title="Trials">
+            <Table
+              columns={columns}
+              dataSource={experiment?.trials}
+              loading={!experimentResponse.hasLoaded}
+              rowKey="id"
+              size="small"
+              onRow={handleTableRow} />
+          </Section>
+        </Col>
+      </Row>
       {activeCheckpoint && <CheckpointModal
         checkpoint={activeCheckpoint}
         config={experiment.config}

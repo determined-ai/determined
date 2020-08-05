@@ -86,7 +86,7 @@ const TrialDetailsComp: React.FC = () => {
 
   if (isNaN(trialId)) {
     return (
-      <Page hideTitle title="Not Found">
+      <Page id="page-error-message">
         <Message>Bad trial ID {trialIdParam}</Message>
       </Page>
     );
@@ -96,7 +96,7 @@ const TrialDetailsComp: React.FC = () => {
     const message = isNotFound(trial.error) ? `Trial ${trialId} not found.`
       : `Failed to fetch trial ${trialId}.`;
     return (
-      <Page hideTitle title="Not Found">
+      <Page id="page-error-message">
         <Message>{message}</Message>
       </Page>
     );

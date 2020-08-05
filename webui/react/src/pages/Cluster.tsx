@@ -38,7 +38,7 @@ const Cluster: React.FC = () => {
   }
 
   return (
-    <Page title="Cluster">
+    <Page id="cluster" title="Cluster">
       {unhappyView ? unhappyView :
         <Grid minItemWidth={50}>
           {Object.values(ResourceType).map((resourceType, idx) => (

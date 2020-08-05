@@ -178,7 +178,7 @@ const TaskList: React.FC = () => {
   }), []);
 
   return (
-    <Page title="Tasks">
+    <Page id="tasks" title="Tasks">
       <div className={css.base}>
         <div className={css.header}>
           <Input

@@ -1,4 +1,4 @@
-import { Button, Popconfirm } from 'antd';
+import { Button, Popconfirm, Space } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import { ConditionalButton } from 'components/types';
@@ -7,8 +7,6 @@ import { archiveExperiment, killExperiment, launchTensorboard, setExperimentStat
 import { ExperimentDetails, RunState, TBSourceType } from 'types';
 import { openCommand } from 'utils/routes';
 import { cancellableRunStates, killableRunStates, terminalRunStates } from 'utils/types';
-
-import css from './ExperimentActions.module.scss';
 
 export enum Action {
   Activate = 'Activate',
@@ -92,36 +90,42 @@ const ExperimentActions: React.FC<Props> = ({
   };
 
   const actionButtons: ConditionalButton<ExperimentDetails>[] = [
-    { button: <Button key="fork" type="primary" onClick={onClick[Action.Fork]}>Fork</Button> },
+    {
+      button: <Button key="activate" loading={buttonStates.Activate}
+        onClick={handleStateChange(RunState.Active)}>Activate</Button>,
+      showIf: (exp): boolean => exp.state === RunState.Paused,
+    },
+    {
+      button: <Button key="pause" loading={buttonStates.Pause}
+        onClick={handleStateChange(RunState.Paused)}>Pause</Button>,
+      showIf: (exp): boolean => exp.state === RunState.Active,
+    },
+    { button: <Button key="fork" onClick={onClick[Action.Fork]}>Fork</Button> },
     {
       button: <Button key="archive" loading={buttonStates.Archive}
-        type="primary" onClick={handleArchive(true)}>Archive</Button>,
+        onClick={handleArchive(true)}>Archive</Button>,
       showIf: (exp): boolean => terminalRunStates.has(exp.state) && !exp.archived,
     },
     {
       button: <Button key="unarchive" loading={buttonStates.Archive}
-        type="primary" onClick={handleArchive(false)}>Unarchive</Button>,
+        onClick={handleArchive(false)}>Unarchive</Button>,
       showIf: (exp): boolean => terminalRunStates.has(exp.state) && exp.archived,
     },
     {
-      button: <Button key="pause" loading={buttonStates.Pause}
-        type="primary" onClick={handleStateChange(RunState.Paused)}>Pause</Button>,
-      showIf: (exp): boolean => exp.state === RunState.Active,
-    },
-    {
-      button: <Button key="activate" loading={buttonStates.Activate}
-        type="primary" onClick={handleStateChange(RunState.Active)}>Activate</Button>,
-      showIf: (exp): boolean => exp.state === RunState.Paused,
+      button: <Button key="tensorboard"
+        loading={buttonStates.Tensorboard}
+        onClick={handleLaunchTensorboard}>Tensorboard</Button>,
+      showIf: (exp): boolean => !experimentWillNeverHaveData(exp),
     },
     {
       button: <Popconfirm
         cancelText="No"
         key="cancel"
         okText="Yes"
-        title="Are you sure you want to kill the experiment?"
+        title="Are you sure you want to cancel the experiment?"
         onConfirm={handleStateChange(RunState.StoppingCanceled)}
       >
-        <Button danger loading={buttonStates.Cancel} type="primary">Cancel</Button>
+        <Button danger loading={buttonStates.Cancel}>Cancel</Button>
       </Popconfirm>,
       showIf: (exp): boolean => cancellableRunStates.includes(exp.state),
     },
@@ -137,24 +141,16 @@ const ExperimentActions: React.FC<Props> = ({
       </Popconfirm>,
       showIf: (exp): boolean => killableRunStates.includes(exp.state),
     },
-    {
-      button: <Button key="tensorboard"
-        loading={buttonStates.Tensorboard}
-        type="primary"
-        onClick={handleLaunchTensorboard}>Tensorboard</Button>,
-      showIf: (exp): boolean => !experimentWillNeverHaveData(exp),
-    },
   ];
 
   return (
-    <ul className={css.base}>
+    <Space size="small">
       {actionButtons
         .filter(ab => !ab.showIf || ab.showIf(experiment as ExperimentDetails))
         .map(ab => ab.button)
       }
-    </ul>
+    </Space>
   );
-
 };
 
 export default ExperimentActions;
