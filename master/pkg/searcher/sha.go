@@ -176,6 +176,8 @@ func (s *syncHalvingSearch) promoteSync(
 				ops = append(ops, trainAndValidate(promotionID, rung.stepsNeeded,
 					s.rungs[rungIndex+1].stepsNeeded, s.batchesPerStep)...)
 			} else {
+				// Since the trial being promoted has already exited and will never finish any more workloads,
+				// we should treat it as immediately completing the next rung with the worst possible result.
 				step := s.rungs[rungIndex+1].stepsNeeded
 				wkld := Workload{
 					Kind:         ComputeValidationMetrics,
@@ -183,22 +185,12 @@ func (s *syncHalvingSearch) promoteSync(
 					TrialID:      message.TrialID,
 					StepID:       step,
 				}
-
-				// We can make a recursive call (and discard the results)
-				// because of the following invariants:
-				//   1) There are other trials executing that will receive any
-				//   extra operations when they complete workloads. We know
-				//   this is true since otherwise we would have received
-				//   TrialClosed responses already and the searcher would have
-				//   closed.
-				//
-				//   2) We are bounded on the depth of this recursive stack by
-				//   the number of rungs. We default this to max out at 5.
-				_, err := s.promoteSync(ctx, promotionID, wkld, shaExitedMetricValue)
-				return nil, err
+				// The recursive call is safe because the rung being considered goes up by one each time and
+				// there are a finite number of rungs.
+				return s.promoteSync(ctx, promotionID, wkld, shaExitedMetricValue)
 			}
 		}
-		// Closes the unpromoted trials in the rung once all trials in the rung finish.
+		// Close the unpromoted trials in the rung once all trials in the rung finish.
 		if rung.startTrials < len(rung.metrics) {
 			return nil, errors.Errorf("number of trials exceeded initial trials for rung: %d < %d",
 				rung.startTrials, len(rung.metrics))
