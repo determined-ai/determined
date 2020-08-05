@@ -127,16 +127,22 @@ const ExperimentList: React.FC = () => {
 
   usePolling(fetchExperiments);
 
-  const setLabels = useCallback((id) => {
-    return (labels: string[]) => {
-      patchExperiment({
-        body: {
-          labels: labels.reduce((a, c) => ({ ...a, [c]: true }), {}),
-        },
-        experimentId: id })
-        .then(fetchExperiments);
-    };
+  const updateTags = useCallback(async (id: number, labels: Record<string, boolean | null>) => {
+    await patchExperiment({ body: { labels }, experimentId: id });
+    await fetchExperiments();
   }, [ fetchExperiments ]);
+
+  const handleTagListChange = useCallback((id: number) => (oldTag: string, newTag: string) => {
+    updateTags(id, { [newTag]: true, [oldTag]: null });
+  }, [ updateTags ]);
+
+  const handleTagListCreate = useCallback((id: number) => (tag: string) => {
+    updateTags(id, { [tag]: true });
+  }, [ updateTags ]);
+
+  const handleTagListDelete = useCallback((id: number) => (tag: string) => {
+    updateTags(id, { [tag]: null });
+  }, [ updateTags ]);
 
   useEffect(() => {
     const nameColumn: ColumnType<ExperimentItem> = {
@@ -146,8 +152,10 @@ const ExperimentList: React.FC = () => {
           <div className={css.nameColumn}>
             {record.name || ''}
             <TagList
-              setTags={setLabels(record.id)}
-              tags={record.config.labels || []} />
+              tags={record.config.labels || []}
+              onChange={handleTagListChange(record.id)}
+              onCreate={handleTagListCreate(record.id)}
+              onDelete={handleTagListDelete(record.id)} />
           </div>
         );
       },
@@ -157,7 +165,7 @@ const ExperimentList: React.FC = () => {
 
     const existingCol = columns.find(col => col.dataIndex === nameColumn.dataIndex);
     if (!existingCol) columns.splice(1, 0, nameColumn);
-  }, [ setLabels ]);
+  }, [ handleTagListChange ]);
 
   useEffect(() => {
     const experiments = processExperiments(experimentsResponse.data || [], users.data || []);
