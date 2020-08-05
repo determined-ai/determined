@@ -127,7 +127,7 @@ const TrialLogs: React.FC = () => {
 
   if (isIdInvalid) {
     return (
-      <Page id="not-found">
+      <Page id="page-error-message">
         <Message>Unable to find Trial {trialId}</Message>
       </Page>
     );

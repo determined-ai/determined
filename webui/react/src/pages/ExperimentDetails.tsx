@@ -87,7 +87,7 @@ const ExperimentDetailsComp: React.FC = () => {
   }
   if (message) {
     return (
-      <Page id="not-found">
+      <Page id="page-error-message">
         <Message>{message}</Message>
       </Page>
     );
