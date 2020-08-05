@@ -65,7 +65,6 @@ def test_mnist_pytorch_multi_output() -> None:
 
 @pytest.mark.nightly  # type: ignore
 def test_imagenet_nas() -> None:
-    pytest.skip("DET-3769 Test is temporarily broken")
     config = conf.load_config(conf.experimental_path("trial/imagenet_nas_arch_pytorch/const.yaml"))
     config = conf.set_max_steps(config, 2)
 
