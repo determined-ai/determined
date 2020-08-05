@@ -2,9 +2,6 @@
 This example shows how to interact with the new Determined PyTorch interface with multiple models,
 optimizers, and LR schedulers support to build a GAN network.
 
-The functions of the new interface starts with underscores and we will remove these underscores
-when the new interface is public.
-
 In the new interface, you need to instantiate your models, optimizers, and LR schedulers in
 __init__ and run forward and backward passes and step the optimizer in train_batch. By doing so,
 you could be flexible in building your own training workflows.
@@ -94,7 +91,7 @@ class GANTrial(PyTorchTrial):
         b2 = self.context.get_hparam("b2")
         self.opt_g = self.context.wrap_optimizer(torch.optim.Adam(self.generator.parameters(), lr=lr, betas=(b1, b2)))
         self.opt_d = self.context.wrap_optimizer(torch.optim.Adam(self.discriminator.parameters(), lr=lr, betas=(b1, b2)))
-        self.lr_g = self.context.wrap_lrscheduler(
+        self.lr_g = self.context.wrap_lr_scheduler(
             lr_scheduler=LambdaLR(self.opt_g, lr_lambda=lambda epoch: 0.95 ** epoch),
             step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH,
         )

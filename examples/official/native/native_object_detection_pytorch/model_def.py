@@ -60,7 +60,7 @@ class ObjectDetectionTrial(PyTorchTrial):
             weight_decay=self.context.get_hparam("weight_decay"),
         ))
 
-        self.lr_scheduler = self.context.wrap_lrscheduler(
+        self.lr_scheduler = self.context.wrap_lr_scheduler(
             torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=3, gamma=0.1),
             step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH
         )

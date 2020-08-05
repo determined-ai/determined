@@ -770,7 +770,7 @@ class PyTorchTrial(det.Trial):
     * **Define models, optimizers, and LR schedulers**.
 
        Initialize models, optimizers, and LR schedulers and wrap them with
-       ``wrap_model``, ``wrap_optimizer``, ``wrap_lrscheduler`` provided by
+       ``wrap_model``, ``wrap_optimizer``, ``wrap_lr_scheduler`` provided by
        :class:`PyTorchTrialContext <determined.pytorch.PyTorchTrialContext>`
        in the :meth:`__init__`.
 
@@ -804,7 +804,7 @@ class PyTorchTrial(det.Trial):
 
         1. Initialize model(s) and wrap them with ``context.wrap_model``.
         2. Initialize optimizer(s) and wrap them with ``context.wrap_optimizer``.
-        3. Initialize learning rate schedulers and wrap them with ``context.wrap_lrscheduler``.
+        3. Initialize learning rate schedulers and wrap them with ``context.wrap_lr_scheduler``.
         4. If desired, wrap models and optimizer with ``context.configure_apex_amp``
            to use ``apex.amp`` for automatic mixed precision.
 
@@ -825,7 +825,7 @@ class PyTorchTrial(det.Trial):
                 num_losses=2,
             )
 
-            self.lrs1 = self.context.wrap_lrscheduler(
+            self.lrs1 = self.context.wrap_lr_scheduler(
                 lr_scheduler=LambdaLR(self.opt1, lr_lambda=lambda epoch: 0.95 ** epoch),
                 step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH,
             ))
@@ -865,7 +865,7 @@ class PyTorchTrial(det.Trial):
 
         .. warning::
             This is deprecated. Please instantiate your LR scheduler and wrap it with
-            :meth:`determined.pytorch.PytorchTrialContext.wrap_lrscheduler`.
+            :meth:`determined.pytorch.PytorchTrialContext.wrap_lr_scheduler`.
 
         Arguments:
             optimizer (torch.optim.Optimizer): instance of the optimizer to be

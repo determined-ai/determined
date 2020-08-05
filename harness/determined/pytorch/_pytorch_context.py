@@ -29,11 +29,11 @@ class PyTorchTrialContext(det.TrialContext):
     With this class, users can do the following things:
 
     1. Wrap PyTorch models, optimizers, and LR schedulers with their Determined-compatible
-       counterparts using :meth:`wrap_model`, :meth:`wrap_optimizer`, :meth:`wrap_lrscheduler`,
+       counterparts using :meth:`wrap_model`, :meth:`wrap_optimizer`, :meth:`wrap_lr_scheduler`,
        respectively. The Determined-compatible objects are capable of transparent
        distributed training, checkpointing and exporting, mixed-precision training,
        and gradient aggregation.
-    2. Configure apex amp by calling :meth:`configure_apex_amp`.
+    2. Configure apex amp by calling :meth:`configure_apex_amp` (optional).
     3. Calculate the gradients with :meth:`backward` on a specified loss.
     4. Run an optimization step with :meth:`step_optimizer`.
     5. Functionalities inherited from :class:`determined.TrialContext`, including getting
@@ -122,7 +122,7 @@ class PyTorchTrialContext(det.TrialContext):
         # TODO(DET-3262): remove this backward compatibility of old interface.
         logging.warning(
             "PyTorchTrialContext.get_lr_scheduler is deprecated. "
-            "Please directly use the model wrapped by context.wrap_lrscheduler()."
+            "Please directly use the model wrapped by context.wrap_lr_scheduler()."
         )
         check.lt_eq(len(self.lr_schedulers), 1)
         if len(self.lr_schedulers) == 1:
@@ -179,25 +179,28 @@ class PyTorchTrialContext(det.TrialContext):
         self.optimizers.append(optimizer)
         return optimizer
 
-    def wrap_lrscheduler(
+    def wrap_lr_scheduler(
         self,
         lr_scheduler: torch.optim.lr_scheduler._LRScheduler,
         step_mode: pytorch.LRScheduler.StepMode,
-    ) -> pytorch.LRScheduler:
+    ) -> torch.optim.lr_scheduler._LRScheduler:
         """Returns a wrapped LR scheduler.
 
-        The LR scheduler must use an optimizer wrapped by :meth:`wrap_optimizer` and configured with
-        :meth:`configure_apex_amp`.
+        The LR scheduler must use an optimizer wrapped by :meth:`wrap_optimizer`.  If ``apex.amp``
+        is in use, the optimizer must also have been configured with :meth:`configure_apex_amp`.
         """
 
         check.is_in(
             lr_scheduler.optimizer,  # type: ignore
             self.optimizers,
-            "Must use an optimizer that is returned by Optimizer()",
+            "Must use an optimizer that is returned by wrap_optimizer()",
         )
         wrapped = pytorch.LRScheduler(lr_scheduler, step_mode)
         self.lr_schedulers.append(wrapped)
-        return wrapped
+
+        # Return the original LR scheduler to the user in case they have customizations that we
+        # don't care about.
+        return lr_scheduler
 
     def _filter_named_parameters(self, optimizer: torch.optim.Optimizer) -> List:  # type: ignore
         """_filter_named_parameters filters the named parameters of a specified optimizer out
