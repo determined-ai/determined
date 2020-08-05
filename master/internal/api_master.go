@@ -27,19 +27,19 @@ func (a *apiServer) GetMaster(
 	}, err
 }
 
-// effectiveOffset Returns effective offset.
+// effectiveOffset returns effective offset.
 func effectiveOffset(reqOffset int, totalItems int) (offset int) {
-	offset = reqOffset
-	if reqOffset < 0 {
-		offset = totalItems + offset
-		if offset < 0 {
-			offset = 0
-		}
+	switch {
+	case reqOffset < -totalItems:
+		return 0
+	case reqOffset < 0:
+		return totalItems + reqOffset
+	default:
+		return reqOffset
 	}
-	return offset
 }
 
-// effectiveLimit Returns effective limit.
+// effectiveLimit returns effective limit.
 // Input: Limit 0 is treated as no limit
 // Output: Limit -1 is treated as no limit
 func effectiveLimit(reqLimit int, offset int, totalItems int) (limit int) {
@@ -53,7 +53,6 @@ func effectiveLimit(reqLimit int, offset int, totalItems int) (limit int) {
 	return limit
 }
 
-// TODO could we have this work with generic requests that have offset and limit?
 func effectiveOffsetNLimit(reqOffset int, reqLimit int, totalItems int) (offset int, limit int) {
 	offset = effectiveOffset(reqOffset, totalItems)
 	limit = effectiveLimit(reqLimit, offset, totalItems)
