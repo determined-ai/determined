@@ -6,4 +6,5 @@ git+https://github.com/determined-ai/determined_sphinx_theme.git@23d12b0c0f11f75
 sphinx-gallery>=0.6.1
 sphinx-sitemap>=2.2.0
 pillow
+rstfmt==0.0.5
 sphinx-copybutton

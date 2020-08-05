@@ -452,6 +452,7 @@ Version 0.12.2
   .. code:: python
 
      def __init__(self, context) -> None:
+         ...
 
   where ``context`` is an instance of the new ``det.TrialContext`` class. This new object is the primary mechanism for querying information about the system. Some of its methods include:
 

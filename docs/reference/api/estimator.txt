@@ -90,7 +90,7 @@ Example usage of ``determined.estimator.RunHook`` which adds custom metadata che
             with open(os.path.join(checkpoint_dir, "metadata.txt"), "w") as fp:
                 fp.write(self._metadata)
 
-    class MyEstimatorTrial(determined.estimator.EstimatorTrial) -> None:
+    class MyEstimatorTrial(determined.estimator.EstimatorTrial):
         ...
 
         def build_train_spec(self) -> tf.estimator.TrainSpec:
