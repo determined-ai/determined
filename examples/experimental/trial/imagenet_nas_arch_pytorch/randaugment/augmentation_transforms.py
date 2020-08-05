@@ -1,4 +1,6 @@
-# Copyright 2018 The TensorFlow Authors All Rights Reserved.
+# source: https://raw.githubusercontent.com/google-research/uda/master/image/randaugment/augmentation_transforms.py
+# coding=utf-8
+# Copyright 2019 The Google UDA Team Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,53 +13,26 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ==============================================================================
+"""Transforms used in the Augmentation Policies.
 
-"""Transforms used in the Augmentation Policies."""
+Copied from AutoAugment: https://github.com/tensorflow/models/blob/master/research/autoaugment/
+"""
 
 import random
-
 import numpy as np
 
 # pylint:disable=g-multiple-import
-from PIL import Image, ImageEnhance, ImageFilter, ImageOps
+from PIL import ImageOps, ImageEnhance, ImageFilter, Image
 
 # pylint:enable=g-multiple-import
 
 
-IMAGE_SIZE = 32
-# What is the dataset mean and std of the images on the training set
-MEANS = [0.49139968, 0.48215841, 0.44653091]
-STDS = [0.24703223, 0.24348513, 0.26158784]
 PARAMETER_MAX = 10  # What is the max 'level' a transform could be predicted
 
 
-def random_flip(x):
-    """Flip the input x horizontally with 50% probability."""
-    if np.random.rand(1)[0] > 0.5:
-        return np.fliplr(x)
-    return x
-
-
-def zero_pad_and_crop(img, amount=4):
-    """Zero pad by `amount` zero pixels on each side then take a random crop.
-
-  Args:
-    img: numpy image that will be zero padded and cropped.
-    amount: amount of zeros to pad `img` with horizontally and verically.
-
-  Returns:
-    The cropped zero padded img. The returned numpy array will be of the same
-    shape as `img`.
-  """
-    padded_img = np.zeros(
-        (img.shape[0] + amount * 2, img.shape[1] + amount * 2, img.shape[2])
-    )
-    padded_img[amount : img.shape[0] + amount, amount : img.shape[1] + amount, :] = img
-    top = np.random.randint(low=0, high=2 * amount)
-    left = np.random.randint(low=0, high=2 * amount)
-    new_img = padded_img[top : top + img.shape[0], left : left + img.shape[1], :]
-    return new_img
+def _width_height_from_img_shape(img_shape):
+    """`img_shape` in autoaugment is (height, width)."""
+    return (img_shape[1], img_shape[0])
 
 
 def create_cutout_mask(img_height, img_width, num_channels, size):
@@ -76,8 +51,6 @@ def create_cutout_mask(img_height, img_width, num_channels, size):
     the `upper_coord` and `lower_coord` which specify where the cutout mask
     will be applied.
   """
-    assert img_height == img_width
-
     # Sample center where cutout mask will be applied
     height_loc = np.random.randint(low=0, high=img_height)
     width_loc = np.random.randint(low=0, high=img_width)
@@ -97,26 +70,6 @@ def create_cutout_mask(img_height, img_width, num_channels, size):
     zeros = np.zeros((mask_height, mask_width, num_channels))
     mask[upper_coord[0] : lower_coord[0], upper_coord[1] : lower_coord[1], :] = zeros
     return mask, upper_coord, lower_coord
-
-
-def cutout_numpy(img, size=16):
-    """Apply cutout with mask of shape `size` x `size` to `img`.
-
-  The cutout operation is from the paper https://arxiv.org/abs/1708.04552.
-  This operation applies a `size`x`size` mask of zeros to a random location
-  within `img`.
-
-  Args:
-    img: Numpy image that cutout will be applied to.
-    size: Height/width of the cutout mask that will be
-
-  Returns:
-    A numpy tensor that is the result of applying the cutout mask to `img`.
-  """
-    img_height, img_width, num_channels = (img.shape[0], img.shape[1], img.shape[2])
-    assert len(img.shape) == 3
-    mask, _, _ = create_cutout_mask(img_height, img_width, num_channels, size)
-    return img * mask
 
 
 def float_parameter(level, maxval):
@@ -147,40 +100,31 @@ def int_parameter(level, maxval):
     return int(level * maxval / PARAMETER_MAX)
 
 
-def pil_wrap(img):
-    """Convert the `img` numpy tensor to a PIL Image."""
-    return Image.fromarray(np.uint8((img * STDS + MEANS) * 255.0)).convert("RGBA")
-
-
-def pil_unwrap(pil_img):
-    """Converts the PIL img to a numpy array."""
-    pic_array = np.array(pil_img.getdata()).reshape((32, 32, 4)) / 255.0
-    i1, i2 = np.where(pic_array[:, :, 3] == 0)
-    pic_array = (pic_array[:, :, :3] - MEANS) / STDS
-    pic_array[i1, i2] = [0, 0, 0]
-    return pic_array
-
-
 def apply_policy(policy, img):
     """Apply the `policy` to the numpy `img`.
 
-  Args:
-    policy: A list of tuples with the form (name, probability, level) where
-      `name` is the name of the augmentation operation to apply, `probability`
-      is the probability of applying the operation and `level` is what strength
-      the operation to apply.
-    img: Numpy image that will have `policy` applied to it.
+    Args:
+      policy: A list of tuples with the form (name, probability, level) where
+        `name` is the name of the augmentation operation to apply, `probability`
+        is the probability of applying the operation and `level` is what strength
+        the operation to apply.
+      img: PIL image that will have `policy` applied to it.
 
-  Returns:
-    The result of applying `policy` to `img`.
-  """
+    Returns:
+      The result of applying `policy` to `img`.
+    """
+    width, height = img.size
+    img_shape = [height, width]
     pil_img = img
+
     for xform in policy:
         assert len(xform) == 3
         name, probability, level = xform
-        xform_fn = NAME_TO_TRANSFORM[name].pil_transformer(probability, level)
+        xform_fn = NAME_TO_TRANSFORM[name].pil_transformer(
+            probability, level, img_shape
+        )
         pil_img = xform_fn(pil_img)
-    return pil_img.convert("RGB")
+    return pil_img
 
 
 class TransformFunction(object):
@@ -204,49 +148,38 @@ class TransformT(object):
         self.name = name
         self.xform = xform_fn
 
-    def pil_transformer(self, probability, level):
+    def pil_transformer(self, probability, level, img_shape):
         def return_function(im):
             if random.random() < probability:
-                im = self.xform(im, level)
+                im = self.xform(im, level, img_shape)
             return im
 
         name = self.name + "({:.1f},{})".format(probability, level)
         return TransformFunction(return_function, name)
 
-    def do_transform(self, image, level):
-        f = self.pil_transformer(PARAMETER_MAX, level)
-        return pil_unwrap(f(pil_wrap(image)))
-
 
 ################## Transform Functions ##################
-identity = TransformT("identity", lambda pil_img, level: pil_img)
+identity = TransformT("identity", lambda pil_img, level, _: pil_img)
 flip_lr = TransformT(
-    "FlipLR", lambda pil_img, level: pil_img.transpose(Image.FLIP_LEFT_RIGHT)
+    "FlipLR", lambda pil_img, level, _: pil_img.transpose(Image.FLIP_LEFT_RIGHT)
 )
 flip_ud = TransformT(
-    "FlipUD", lambda pil_img, level: pil_img.transpose(Image.FLIP_TOP_BOTTOM)
+    "FlipUD", lambda pil_img, level, _: pil_img.transpose(Image.FLIP_TOP_BOTTOM)
 )
 # pylint:disable=g-long-lambda
 auto_contrast = TransformT(
-    "AutoContrast",
-    lambda pil_img, level: ImageOps.autocontrast(pil_img.convert("RGB")).convert(
-        "RGBA"
-    ),
+    "AutoContrast", lambda pil_img, level, _: ImageOps.autocontrast(pil_img)
 )
-equalize = TransformT(
-    "Equalize",
-    lambda pil_img, level: ImageOps.equalize(pil_img.convert("RGB")).convert("RGBA"),
-)
-invert = TransformT(
-    "Invert",
-    lambda pil_img, level: ImageOps.invert(pil_img.convert("RGB")).convert("RGBA"),
-)
+equalize = TransformT("Equalize", lambda pil_img, level, _: ImageOps.equalize(pil_img))
+invert = TransformT("Invert", lambda pil_img, level, _: ImageOps.invert(pil_img))
 # pylint:enable=g-long-lambda
-blur = TransformT("Blur", lambda pil_img, level: pil_img.filter(ImageFilter.BLUR))
-smooth = TransformT("Smooth", lambda pil_img, level: pil_img.filter(ImageFilter.SMOOTH))
+blur = TransformT("Blur", lambda pil_img, level, _: pil_img.filter(ImageFilter.BLUR))
+smooth = TransformT(
+    "Smooth", lambda pil_img, level, _: pil_img.filter(ImageFilter.SMOOTH)
+)
 
 
-def _rotate_impl(pil_img, level):
+def _rotate_impl(pil_img, level, _):
     """Rotates `pil_img` from -30 to 30 degrees depending on `level`."""
     degrees = int_parameter(level, 30)
     if random.random() > 0.5:
@@ -257,16 +190,16 @@ def _rotate_impl(pil_img, level):
 rotate = TransformT("Rotate", _rotate_impl)
 
 
-def _posterize_impl(pil_img, level):
+def _posterize_impl(pil_img, level, _):
     """Applies PIL Posterize to `pil_img`."""
     level = int_parameter(level, 4)
-    return ImageOps.posterize(pil_img.convert("RGB"), 4 - level).convert("RGBA")
+    return ImageOps.posterize(pil_img, 4 - level)
 
 
 posterize = TransformT("Posterize", _posterize_impl)
 
 
-def _shear_x_impl(pil_img, level):
+def _shear_x_impl(pil_img, level, img_shape):
     """Applies PIL ShearX to `pil_img`.
 
   The ShearX operation shears the image along the horizontal axis with `level`
@@ -283,13 +216,15 @@ def _shear_x_impl(pil_img, level):
     level = float_parameter(level, 0.3)
     if random.random() > 0.5:
         level = -level
-    return pil_img.transform((32, 32), Image.AFFINE, (1, level, 0, 0, 1, 0))
+    return pil_img.transform(
+        _width_height_from_img_shape(img_shape), Image.AFFINE, (1, level, 0, 0, 1, 0)
+    )
 
 
 shear_x = TransformT("ShearX", _shear_x_impl)
 
 
-def _shear_y_impl(pil_img, level):
+def _shear_y_impl(pil_img, level, img_shape):
     """Applies PIL ShearY to `pil_img`.
 
   The ShearY operation shears the image along the vertical axis with `level`
@@ -306,13 +241,15 @@ def _shear_y_impl(pil_img, level):
     level = float_parameter(level, 0.3)
     if random.random() > 0.5:
         level = -level
-    return pil_img.transform((32, 32), Image.AFFINE, (1, 0, 0, level, 1, 0))
+    return pil_img.transform(
+        _width_height_from_img_shape(img_shape), Image.AFFINE, (1, 0, 0, level, 1, 0)
+    )
 
 
 shear_y = TransformT("ShearY", _shear_y_impl)
 
 
-def _translate_x_impl(pil_img, level):
+def _translate_x_impl(pil_img, level, img_shape):
     """Applies PIL TranslateX to `pil_img`.
 
   Translate the image in the horizontal direction by `level`
@@ -329,13 +266,15 @@ def _translate_x_impl(pil_img, level):
     level = int_parameter(level, 10)
     if random.random() > 0.5:
         level = -level
-    return pil_img.transform((32, 32), Image.AFFINE, (1, 0, level, 0, 1, 0))
+    return pil_img.transform(
+        _width_height_from_img_shape(img_shape), Image.AFFINE, (1, 0, level, 0, 1, 0)
+    )
 
 
 translate_x = TransformT("TranslateX", _translate_x_impl)
 
 
-def _translate_y_impl(pil_img, level):
+def _translate_y_impl(pil_img, level, img_shape):
     """Applies PIL TranslateY to `pil_img`.
 
   Translate the image in the vertical direction by `level`
@@ -352,23 +291,26 @@ def _translate_y_impl(pil_img, level):
     level = int_parameter(level, 10)
     if random.random() > 0.5:
         level = -level
-    return pil_img.transform((32, 32), Image.AFFINE, (1, 0, 0, 0, 1, level))
+    return pil_img.transform(
+        _width_height_from_img_shape(img_shape), Image.AFFINE, (1, 0, 0, 0, 1, level)
+    )
 
 
 translate_y = TransformT("TranslateY", _translate_y_impl)
 
 
-def _crop_impl(pil_img, level, interpolation=Image.BILINEAR):
+def _crop_impl(pil_img, level, img_shape, interpolation=Image.BILINEAR):
     """Applies a crop to `pil_img` with the size depending on the `level`."""
-    cropped = pil_img.crop((level, level, IMAGE_SIZE - level, IMAGE_SIZE - level))
-    resized = cropped.resize((IMAGE_SIZE, IMAGE_SIZE), interpolation)
+    height, width = img_shape
+    cropped = pil_img.crop((level, level, width - level, height - level))
+    resized = cropped.resize((width, height), interpolation)
     return resized
 
 
 crop_bilinear = TransformT("CropBilinear", _crop_impl)
 
 
-def _solarize_impl(pil_img, level):
+def _solarize_impl(pil_img, level, _):
     """Applies PIL Solarize to `pil_img`.
 
   Translate the image in the vertical direction by `level`
@@ -383,25 +325,26 @@ def _solarize_impl(pil_img, level):
     A PIL Image that has had Solarize applied to it.
   """
     level = int_parameter(level, 256)
-    return ImageOps.solarize(pil_img.convert("RGB"), 256 - level).convert("RGBA")
+    return ImageOps.solarize(pil_img, 256 - level)
 
 
 solarize = TransformT("Solarize", _solarize_impl)
 
 
-def _cutout_pil_impl(pil_img, level):
+def _cutout_pil_impl(pil_img, level, img_shape):
     """Apply cutout to pil_img at the specified level."""
     size = int_parameter(level, 20)
     if size <= 0:
         return pil_img
-    img_height, img_width, num_channels = (32, 32, 3)
+    img_height, img_width, num_channels = (img_shape[0], img_shape[1], 3)
     _, upper_coord, lower_coord = create_cutout_mask(
         img_height, img_width, num_channels, size
     )
     pixels = pil_img.load()  # create the pixel map
-    for i in range(upper_coord[0], lower_coord[0]):  # for every col:
-        for j in range(upper_coord[1], lower_coord[1]):  # For every row
-            pixels[i, j] = (125, 122, 113, 0)  # set the colour accordingly
+
+    for i in range(upper_coord[1], lower_coord[1]):  # for every col:
+        for j in range(upper_coord[0], lower_coord[0]):  # For every row
+            pixels[i, j] = (125, 115, 104)  # set the colour accordingly
     return pil_img
 
 
@@ -411,7 +354,7 @@ cutout = TransformT("Cutout", _cutout_pil_impl)
 def _enhancer_impl(enhancer):
     """Sets level to be between 0.1 and 1.8 for ImageEnhance transforms of PIL."""
 
-    def impl(pil_img, level):
+    def impl(pil_img, level, _):
         v = float_parameter(level, 1.8) + 0.1  # going to 0 just destroys it
         return enhancer(pil_img).enhance(v)
 

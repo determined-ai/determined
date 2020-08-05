@@ -19,9 +19,26 @@ import torchvision.transforms as transforms
 from torch import nn
 
 from data import ImageNetDataset
-from determined.pytorch import DataLoader, LRScheduler, PyTorchTrial, PyTorchTrialContext
+from determined.pytorch import (
+    DataLoader,
+    LRScheduler,
+    PyTorchTrial,
+    reset_parameters,
+    PyTorchCallback,
+    ClipGradsL2Norm,
+)
 from model import NetworkImageNet
-from utils import AutoAugment, CrossEntropyLabelSmooth, Cutout, HSwish, Swish, accuracy
+from utils import (
+    RandAugment,
+    CrossEntropyLabelSmooth,
+    Cutout,
+    HSwish,
+    Swish,
+    accuracy,
+    AvgrageMeter,
+    EMAWrapper,
+)
+from lr_schedulers import *
 
 Genotype = namedtuple("Genotype", "normal normal_concat reduce reduce_concat")
 
@@ -108,8 +125,8 @@ class ImageNetTrial(PyTorchTrial):
             train_transforms.transforms.append(
                 Cutout(self.context.get_hparam("cutout_length"))
             )
-        if self.context.get_hparam("autoaugment"):
-            train_transforms.transforms.insert(0, AutoAugment)
+        if self.context.get_hparam("randaugment"):
+            train_transforms.transforms.insert(0, RandAugment())
 
         train_data = ImageNetDataset(
             "train",
@@ -158,26 +175,101 @@ class ImageNetTrial(PyTorchTrial):
         )
         return valid_queue
 
-    def train_batch(self, batch: Any, epoch_idx: int, batch_idx: int) -> Dict[str, torch.Tensor]:
+    def build_model(self) -> nn.Module:
+        genotype = Genotype(
+            normal=[
+                ("skip_connect", 1),
+                ("skip_connect", 0),
+                ("sep_conv_3x3", 2),
+                ("sep_conv_3x3", 1),
+                ("sep_conv_5x5", 2),
+                ("sep_conv_3x3", 0),
+                ("sep_conv_5x5", 3),
+                ("sep_conv_5x5", 2),
+            ],
+            normal_concat=range(2, 6),
+            reduce=[
+                ("max_pool_3x3", 1),
+                ("sep_conv_3x3", 0),
+                ("sep_conv_5x5", 1),
+                ("dil_conv_5x5", 2),
+                ("sep_conv_3x3", 1),
+                ("sep_conv_3x3", 3),
+                ("sep_conv_5x5", 1),
+                ("max_pool_3x3", 2),
+            ],
+            reduce_concat=range(2, 6),
+        )
+        activation_function = activation_map[self.context.get_hparam("activation")]
+
+        model = NetworkImageNet(
+            genotype,
+            activation_function,
+            self.context.get_hparam("init_channels"),
+            self.context.get_hparam("num_classes"),
+            self.context.get_hparam("layers"),
+            auxiliary=self.context.get_hparam("auxiliary"),
+            do_SE=self.context.get_hparam("do_SE"),
+            drop_path_prob=self.context.get_hparam("drop_path_prob"),
+            drop_prob=self.context.get_hparam("drop_prob"),
+        )
+
+        ema_model = EMAWrapper(self.context.get_hparam("ema_decay"), model)
+
+        return ema_model
+
+    def optimizer(self, model: nn.Module) -> torch.optim.Optimizer:  # type: ignore
+        return torch.optim.SGD(
+            model.parameters(),
+            lr=self.context.get_hparam("learning_rate"),
+            momentum=self.context.get_hparam("momentum"),
+            weight_decay=self.context.get_hparam("weight_decay"),
+        )
+
+    def create_lr_scheduler(self, optimizer):
+        if self.context.get_hparam("lr_scheduler") == "cosine":
+            scheduler_cls = WarmupWrapper(torch.optim.lr_scheduler.CosineAnnealingLR)
+            self.scheduler = scheduler_cls(
+                self.context.get_hparam("warmup_epochs"),
+                optimizer,
+                self.context.get_hparam("lr_epochs"),
+            )
+        elif self.context.get_hparam("lr_scheduler") == "linear":
+            scheduler_cls = WarmupWrapper(LinearLRScheduler)
+            self.scheduler = scheduler_cls(
+                self.context.get_hparam("warmup_epochs"),
+                optimizer,
+                self.context.get_hparam("lr_epochs"),
+                self.context.get_hparam("warmup_epochs"),
+            )
+        elif self.context.get_hparam("lr_scheduler") == "efficientnet":
+            scheduler_cls = WarmupWrapper(EfficientNetScheduler)
+            self.scheduler = scheduler_cls(
+                self.context.get_hparam("warmup_epochs"),
+                optimizer,
+                self.context.get_hparam("lr_gamma"),
+                self.context.get_hparam("lr_decay_every"),
+            )
+        else:
+            raise NotImplementedError
+        step_mode = LRScheduler.StepMode.STEP_EVERY_EPOCH
+        self._optimizer = self.context.get_optimizer()
+
+        return LRScheduler(self.scheduler, step_mode=step_mode)
+
+    def train_batch(
+        self, batch: Any, model: nn.Module, epoch_idx: int, batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
+
+        # Update EMA vars
+        model.update_ema()
 
         if batch_idx == 0 or self.last_epoch_idx < epoch_idx:
-            self.lr_scheduler.step()
-            current_lr = self.lr_scheduler.get_last_lr()[0]
-
-            if epoch_idx < 5:
-                lr = self.context.get_hparam("learning_rate")
-                for param_group in self.optimizer.param_groups:
-                    param_group["lr"] = lr * (epoch_idx + 1) / 5.0
-                print(
-                    "Warming-up Epoch: {}, LR: {}".format(
-                        epoch_idx, lr * (epoch_idx + 1) / 5.0
-                    )
-                )
-            else:
-                print("Epoch: {} lr {}".format(epoch_idx, current_lr))
+            current_lr = self.scheduler.get_last_lr()[0]
+            print("Epoch: {} lr {}".format(epoch_idx, current_lr))
+        self.last_epoch_idx = epoch_idx
 
         input, target = batch
-        self.model.drop_path_prob = 0
 
         logits, logits_aux = self.model(input)
         loss = self.criterion(logits, target)
@@ -185,7 +277,6 @@ class ImageNetTrial(PyTorchTrial):
             loss_aux = self.criterion(logits_aux, target)
             loss += self.context.get_hparam("auxiliary_weight") * loss_aux
         top1, top5 = accuracy(logits, target, topk=(1, 5))
-        self.last_epoch_idx = epoch_idx
 
         self.context.backward(loss)
         self.context.step_optimizer(self.optimizer)
@@ -198,4 +289,21 @@ class ImageNetTrial(PyTorchTrial):
         loss = self.criterion(logits, target)
         top1, top5 = accuracy(logits, target, topk=(1, 5))
 
-        return {"loss": loss, "top1_accuracy": top1, "top5_accuracy": top5}
+        model.restore_ema()
+
+        input, target = batch
+        logits, _ = model(input)
+        ema_loss = self.criterion(logits, target)
+        ema_top1, ema_top5 = accuracy(logits, target, topk=(1, 5))
+
+        model.restore_latest()
+
+        return {"loss": loss, "top1_accuracy": top1, "top5_accuracy": top5,
+                "ema_loss": ema_loss, "top1_ema": ema_top1, "top5_ema": ema_top5}
+
+    def build_callbacks(self) -> Dict[str, PyTorchCallback]:
+        return {
+            "clip_grads": ClipGradsL2Norm(
+                self.context.get_hparam("clip_gradients_l2_norm")
+            )
+        }
