@@ -114,7 +114,7 @@ class NASModel(PyTorchTrial):
             step_mode = LRScheduler.StepMode.STEP_EVERY_BATCH
         elif self.context.get_hparam("step_every_epoch"):
             step_mode = LRScheduler.StepMode.STEP_EVERY_EPOCH
-        self.myLR = self.context.wrap_lrscheduler(myLR, step_mode=step_mode)
+        self.myLR = self.context.wrap_lr_scheduler(myLR, step_mode=step_mode)
 
     def sample_arch(self):
         """

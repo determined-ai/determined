@@ -253,7 +253,7 @@ class XORTrialWithLRScheduler(XORTrialMulti):
             torch.optim.SGD(self.model.parameters(), self.context.get_hparam("learning_rate"))
         )
 
-        self.lr_scheduler = self.context.wrap_lrscheduler(
+        self.lr_scheduler = self.context.wrap_lr_scheduler(
             StepableLRSchedule(self.optimizer),
             step_mode=pytorch.LRScheduler.StepMode(
                 self.context.get_hparam("lr_scheduler_step_mode")
@@ -325,13 +325,13 @@ class XORTrialAccessContext(BaseXORTrial):
         self.opt_b = self.context.wrap_optimizer(
             torch.optim.SGD(self.model_b.parameters(), self.context.get_hparam("learning_rate"))
         )
-        self.lrs_a = self.context.wrap_lrscheduler(
+        self.lrs_a = self.context.wrap_lr_scheduler(
             StepableLRSchedule(self.opt_a),
             step_mode=pytorch.LRScheduler.StepMode(
                 self.context.get_hparam("lr_scheduler_step_mode")
             ),
         )
-        self.lrs_b = self.context.wrap_lrscheduler(
+        self.lrs_b = self.context.wrap_lr_scheduler(
             StepableLRSchedule(self.opt_b),
             step_mode=pytorch.LRScheduler.StepMode(
                 self.context.get_hparam("lr_scheduler_step_mode")

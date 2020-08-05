@@ -98,7 +98,7 @@ class ImageNetTrial(PyTorchTrial):
             weight_decay=self.context.get_hparam("weight_decay"),
         ))
 
-        self.lr_scheduler = self.context.wrap_lrscheduler(
+        self.lr_scheduler = self.context.wrap_lr_scheduler(
             torch.optim.lr_scheduler.CosineAnnealingLR(
                 self.optimizer, self.context.get_hparam("cosine_annealing_epochs")
             ),
