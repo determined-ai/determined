@@ -1,3 +1,4 @@
+import { Tooltip } from 'antd';
 import React from 'react';
 
 import { hex2hsl, hsl2str } from 'utils/color';
@@ -28,9 +29,11 @@ const getColor = (name = ''): string => {
 
 const Avatar: React.FC<Props> = ({ name }: Props) => {
   const style = { backgroundColor: getColor(name) };
-  return <div className={css.base} id="avatar" style={style} title={name}>
-    {getInitials(name)}
-  </div>;
+  return <Tooltip placement="right" title={name}>
+    <div className={css.base} id="avatar" style={style}>
+      {getInitials(name)}
+    </div>
+  </Tooltip>;
 };
 
 export default Avatar;

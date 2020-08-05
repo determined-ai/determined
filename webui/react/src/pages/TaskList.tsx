@@ -3,9 +3,9 @@ import { Button, Input, Modal, Table } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
-import { makeClickHandler } from 'components/Link';
 import linkCss from 'components/Link.module.scss';
 import Page from 'components/Page';
+import { isAlternativeAction } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TaskFilter from 'components/TaskFilter';
 import Auth from 'contexts/Auth';
@@ -18,6 +18,7 @@ import { getCommands, getNotebooks, getShells, getTensorboards, killCommand } fr
 import { EmptyParams } from 'services/types';
 import { ALL_VALUE, Command, CommandTask, CommandType, TaskFilters } from 'types';
 import { getPath } from 'utils/data';
+import { openBlank } from 'utils/routes';
 import { canBeOpened, filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
 
@@ -174,7 +175,10 @@ const TaskList: React.FC = () => {
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
   const handleTableRow = useCallback((record: CommandTask) => ({
-    onClick: canBeOpened(record) ? makeClickHandler(record.url as string) : undefined,
+    onClick: (event: React.MouseEvent) => {
+      if (isAlternativeAction(event) || !canBeOpened(record)) return;
+      openBlank(record.url as string);
+    },
   }), []);
 
   return (
@@ -207,6 +211,7 @@ const TaskList: React.FC = () => {
           rowClassName={(record): string => canBeOpened(record) ? linkCss.base : ''}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
+          showSorterTooltip={false}
           size="small"
           onRow={handleTableRow} />
       </div>

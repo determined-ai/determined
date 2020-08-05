@@ -39,21 +39,23 @@ export const makeClickHandler = (
 const Link: React.FC<Props> = ({ path, popout, onClick, ...props }: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
   const rel = windowOpenFeatures.join(' ');
-  const handleClick =
-    useCallback(makeClickHandler(path, onClick, popout), [ path, onClick, popout ]);
 
   if (!props.disabled) classes.push(css.link);
   if (props.inherit) classes.push(css.inherit);
   if (props.isButton) classes.push('ant-btn');
 
-  if (props.disabled) {
-    return <span className={classes.join(' ')}>
-      {props.children}
-    </span>;
-  }
+  const handleClick = useCallback(() => {
+    return makeClickHandler(path, onClick, popout);
+  }, [ path, onClick, popout ]);
 
-  return (
-    <a className={classes.join(' ')} href={path} rel={rel} onClick={handleClick}>
+  return props.disabled ? (
+    <span className={classes.join(' ')}>{props.children}</span>
+  ) : (
+    <a
+      className={classes.join(' ')}
+      href={path}
+      rel={rel}
+      onClick={handleClick}>
       {props.children}
     </a>
   );

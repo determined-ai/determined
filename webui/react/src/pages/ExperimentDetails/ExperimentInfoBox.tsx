@@ -10,7 +10,7 @@ import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
 import Section from 'components/Section';
 import { CheckpointDetail, CheckpointState, ExperimentDetails } from 'types';
-import { floatToPercent, humanReadableFloat } from 'utils/string';
+import { humanReadableFloat } from 'utils/string';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 
 import css from './ExperimentInfoBox.module.scss';
@@ -72,8 +72,7 @@ const InfoBox: React.FC<Props> = ({ experiment }: Props) => {
           'Progress',
           experiment.progress && <ProgressBar
             percent={experiment.progress * 100}
-            state={experiment.state}
-            title={floatToPercent(experiment.progress, 0)} />,
+            state={experiment.state} />,
         )}
         {renderInfo(
           'Best Validation',

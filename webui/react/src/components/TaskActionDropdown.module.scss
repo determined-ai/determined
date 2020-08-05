@@ -10,8 +10,11 @@
     cursor: pointer;
     display: flex;
     font: inherit;
+    height: 100%;
+    justify-content: center;
     outline: inherit;
     padding: 0;
+    width: 100%;
 
     &:hover { color: var(--theme-colors-core-action); }
   }

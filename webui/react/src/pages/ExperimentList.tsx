@@ -1,7 +1,6 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Input, Modal, Table } from 'antd';
 import { SelectValue } from 'antd/lib/select';
-import { ColumnType } from 'antd/lib/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
@@ -9,6 +8,7 @@ import { makeClickHandler } from 'components/Link';
 import linkCss from 'components/Link.module.scss';
 import Page from 'components/Page';
 import StateSelectFilter from 'components/StateSelectFilter';
+import { isAlternativeAction } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
@@ -28,13 +28,12 @@ import { ExperimentsParams } from 'services/types';
 import {
   ALL_VALUE, Command, Experiment, ExperimentFilters, ExperimentItem, RunState, TBSourceType,
 } from 'types';
-import { alphanumericSorter } from 'utils/data';
 import { openBlank } from 'utils/routes';
 import { filterExperiments, processExperiments } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates, waitPageUrl } from 'utils/types';
 
 import css from './ExperimentList.module.scss';
-import { columns as experimentColumns } from './ExperimentList.table';
+import { columns as defaultColumns } from './ExperimentList.table';
 
 enum Action {
   Activate = 'Activate',
@@ -52,8 +51,6 @@ const defaultFilters: ExperimentFilters = {
   states: [ ALL_VALUE ],
   username: undefined,
 };
-
-const columns = [ ...experimentColumns ];
 
 const ExperimentList: React.FC = () => {
   const auth = Auth.useStateContext();
@@ -126,37 +123,41 @@ const ExperimentList: React.FC = () => {
 
   usePolling(fetchExperiments);
 
-  const setLabels = useCallback((id) => {
-    return (labels: string[]) => {
-      patchExperiment({
-        body: {
-          labels: labels.reduce((a, c) => ({ ...a, [c]: true }), {}),
-        },
-        experimentId: id })
-        .then(fetchExperiments);
-    };
-
+  const updateTags = useCallback(async (id: number, labels: Record<string, boolean | null>) => {
+    await patchExperiment({ body: { labels }, experimentId: id });
+    await fetchExperiments();
   }, [ fetchExperiments ]);
 
-  useEffect(() => {
-    const nameColumn: ColumnType<ExperimentItem> = {
-      dataIndex: 'name',
-      render: function nameRenderer(_, record) {
-        return (
-          <div className={css.nameColumn}>
-            {record.name || ''}
-            <TagList className={css.tagList}
-              setTags={setLabels(record.id)} tags={record.config.labels || []} />
-          </div>
-        );
-      },
-      sorter: (a: ExperimentItem, b: ExperimentItem): number => alphanumericSorter(a.name, b.name),
-      title: 'Name',
-    };
+  const handleTagListChange = useCallback((id: number) => (oldTag: string, newTag: string) => {
+    updateTags(id, { [newTag]: true, [oldTag]: null });
+  }, [ updateTags ]);
 
-    const existingCol = columns.find(col => col.dataIndex === nameColumn.dataIndex);
-    if (!existingCol) columns.splice(1, 0, nameColumn);
-  }, [ setLabels ]);
+  const handleTagListCreate = useCallback((id: number) => (tag: string) => {
+    updateTags(id, { [tag]: true });
+  }, [ updateTags ]);
+
+  const handleTagListDelete = useCallback((id: number) => (tag: string) => {
+    updateTags(id, { [tag]: null });
+  }, [ updateTags ]);
+
+  const columns = useMemo(() => {
+    const nameRenderer = (_: string, record: ExperimentItem) => (
+      <div className={css.nameColumn}>
+        {record.name || ''}
+        <TagList
+          tags={record.config.labels || []}
+          onChange={handleTagListChange(record.id)}
+          onCreate={handleTagListCreate(record.id)}
+          onDelete={handleTagListDelete(record.id)} />
+      </div>
+    );
+
+    const newColumns = [ ...defaultColumns ];
+    const nameColumn = newColumns.find(column => /name/i.test(column.title as string));
+    if (nameColumn) nameColumn.render = nameRenderer;
+
+    return newColumns;
+  }, [ handleTagListChange, handleTagListCreate, handleTagListDelete ]);
 
   useEffect(() => {
     const experiments = processExperiments(experimentsResponse.data || [], users.data || []);
@@ -256,7 +257,10 @@ const ExperimentList: React.FC = () => {
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
   const handleTableRow = useCallback((record: ExperimentItem) => ({
-    onClick: makeClickHandler(record.url as string),
+    onClick: (event: React.MouseEvent) => {
+      if (isAlternativeAction(event)) return;
+      makeClickHandler(record.url)(event);
+    },
   }), []);
 
   return (
@@ -315,6 +319,7 @@ const ExperimentList: React.FC = () => {
           rowClassName={(): string => linkCss.base}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
+          showSorterTooltip={false}
           size="small"
           onRow={handleTableRow}
         />
