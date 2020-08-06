@@ -45,15 +45,15 @@ func effectiveOffset(reqOffset int, totalItems int) (offset int) {
 // effectiveLimit returns effective limit.
 // Input: Limit 0 is treated as no limit
 // Output: Limit -1 is treated as no limit
-func effectiveLimit(reqLimit int, offset int, totalItems int) (limit int) {
-	limit = -1
-	if reqLimit != 0 {
-		limit = reqLimit
-		if limit > totalItems-offset {
-			limit = totalItems - offset
-		}
+func effectiveLimit(limit int, offset int, total int) int {
+	switch {
+	case limit == 0:
+		return -1
+	case limit > total - offset:
+		return total - offset
+	default:
+		return limit
 	}
-	return limit
 }
 
 func effectiveOffsetNLimit(reqOffset int, reqLimit int, totalItems int) (offset int, limit int) {
