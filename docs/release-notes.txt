@@ -9,7 +9,7 @@ Version 0.12
 Version 0.12.13
 ^^^^^^^^^^^^^^^
 
-**Release Date:** August 5, 2020
+**Release Date:** August 6, 2020
 
 **New Features**
 
