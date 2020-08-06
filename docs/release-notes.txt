@@ -15,7 +15,7 @@ Version 0.12.13
 
 - **Model Registry:** Determined now includes a built-in model registry, which makes it easy to organize trained models by providing versioning and labeling tools. See :ref:`organizing-models` to get started.
 
-- **New PyTorch API:** Add a new version of the PyTorch API that is more flexible and supports deep learning experiments that use multiple models, optimizers, and LR schedulers. The old API is still supported but is now deprecated and will be removed in a future release. See the :ref:`migration guide <migration-guide-flexible-primitives>` for details on updating your PyTorch model code. *Deprecated methods will be retained until at least the next minor release.*
+- **New PyTorch API:** Add a new version of the PyTorch API that is more flexible and supports deep learning experiments that use multiple models, optimizers, and LR schedulers. The old API is still supported but is now deprecated and will be removed in a future release. See the :ref:`migration guide <migration-guide-flexible-primitives>` for details on updating your PyTorch model code. *Deprecated methods will be supported until at least the next minor release.*
 
   - The new API supports PyTorch code that uses multiple models, optimizers, and LR schedulers. In your trial class, you should instantiate those objects and wrap them with :meth:`~determined.pytorch.PyTorchTrialContext.wrap_model`, :meth:`~determined.pytorch.PyTorchTrialContext.wrap_optimizer`, and :meth:`~determined.pytorch.PyTorchTrialContext.wrap_lr_scheduler` in the constructor of your PyTorch trial class. The previous API methods ``build_model``, ``optimizer``, and ``create_lr_scheduler`` in :class:`~determined.pytorch.PyTorchTrial` are now deprecated.
 
@@ -33,7 +33,7 @@ Version 0.12.13
 
 - Preserve random state for PyTorch experiments when checkpointing and restoring.
 
-- Remove ``determined.pytorch.reset_parameters()``. This should have no effect except when using highly-customized ``nn.Module`` implementations.
+- Remove ``determined.pytorch.reset_parameters()``. This should have no effect except when using highly customized ``nn.Module`` implementations.
 
 - WebUI: Show total number of resources in the cluster resource charts.
 
