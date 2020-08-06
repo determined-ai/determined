@@ -39,6 +39,8 @@ Version 0.12.13
 
 **Bug Fixes**
 
+- Fix an issue with the SHA searcher that could cause searches to stop making progress without finishing.
+
 - Fix an issue where ``$HOME`` was not properly set in notebooks running in nonroot containers.
 
 - Fix an issue where killed experiments had their state reset to the latest checkpoint.
