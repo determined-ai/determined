@@ -6,6 +6,43 @@ Release Notes
 Version 0.12
 ------------
 
+Version 0.12.13
+^^^^^^^^^^^^^^^
+
+**Release Date:** August 5, 2020
+
+**New Features**
+
+- Add the Determined Model Registry. The Model Registry makes it easy to organize models by providing versioning and labeling tools. See :ref:`organizing-models` to get started.
+
+- Add a new PyTorch interface to customize your workflows. See the :ref:`migration guide <migration-guide-flexible-primitives>` to upgrade your PyTorch interface. *Deprecated methods will be retained until at least the next minor release.*
+
+  - Support multiple models, optimizers, and LR schedulers. Instantiate those objects and wrap them with :meth:`PyTorchTrialContext.wrap_model`, :meth:`PyTorchTrialContext.wrap_optimizer`, and :meth:`PyTorchTrialContext.wrap_lr_scheduler` in :meth:`PyTorchTrial.__init__`. ``build_model``, ``optimizer``, and ``create_lr_scheduler`` in :class:`PyTorchTrial` are now deprecated.
+
+  - Support customizing forward and backward passes in :meth:`PyTorchTrial.train_batch`. Support gradient clipping by passing a function to the ``clip_grads`` argument of :meth:`PyTorchTrialContext.step_optimizer`. The callback ``on_before_optimizer_step`` is now deprecated.
+
+  - Configure automatic mixed precision in :meth:`PyTorchTrial.__init__`. The ``optimizations.mixed_precision`` experiment configuration key is now deprecated.
+
+  - The ``model`` arguments in :meth:`PyTorchTrial.train_batch`, :meth:`PyTorchTrial.evaluate_batch`, and :meth:`PyTorchTrial.evaluate_full_dataset` are now deprecated.
+
+**Improvements**
+
+- Allow proxy environment variables to be set in the agent config. See :ref:`environment-variables` for more information.
+
+- Preserve random state for PyTorch experiments when checkpointing and restoring.
+
+- Remove ``det.pytorch.reset_parameters()``. This should have no effect except when using highly-customized ``nn.Module`` implementations.
+
+- WebUI: Show total number of resources in the cluster resource charts.
+
+**Bug Fixes**
+
+- Fix an issue where ``$HOME`` was not properly set in notebooks running in nonroot containers.
+
+- Fix an issue where killed experiments had their state reset to the latest checkpoint.
+
+- Randomize the notebook listening port to avoid port binding issues in host mode.
+
 Version 0.12.12
 ^^^^^^^^^^^^^^^
 
