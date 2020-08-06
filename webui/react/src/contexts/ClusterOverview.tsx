@@ -29,14 +29,16 @@ const agentsToOverview = (agents: Agent[]): ClusterOverview => {
   const tally = { available: 0, total: 0 };
 
   agents.forEach(agent => {
-    agent.resources.forEach(resource => {
-      const isResourceFree = resource.container == null;
-      const availableResource = isResourceFree ? 1 : 0;
-      overview[resource.type].available += availableResource;
-      overview[resource.type].total++;
-      tally.available += availableResource;
-      tally.total++;
-    });
+    agent.resources
+      .filter(resource => resource.enabled)
+      .forEach(resource => {
+        const isResourceFree = resource.container == null;
+        const availableResource = isResourceFree ? 1 : 0;
+        overview[resource.type].available += availableResource;
+        overview[resource.type].total++;
+        tally.available += availableResource;
+        tally.total++;
+      });
   });
 
   overview.totalResources = tally;
