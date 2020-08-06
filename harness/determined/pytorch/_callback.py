@@ -25,9 +25,9 @@ class PyTorchCallback:
     # TODO(DET-3262): remove this backward compatibility of old interface.
     def on_before_optimizer_step(self, parameters: Iterator) -> None:
         """
-        Run before every before ``optimizer.step()``.  For multi-GPU training,
-        executes after gradient updates have been communicated. Typically used to perform gradient
-        clipping.
+        Run before every ``optimizer.step()``.  For multi-GPU training, executes
+        after gradient updates have been communicated. Typically used to perform
+        gradient clipping.
 
         .. warning::
             This is deprecated. Please pass a function into

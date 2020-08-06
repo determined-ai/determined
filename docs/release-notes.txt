@@ -33,7 +33,7 @@ Version 0.12.13
 
 - Preserve random state for PyTorch experiments when checkpointing and restoring.
 
-- Remove ``det.pytorch.reset_parameters()``. This should have no effect except when using highly-customized ``nn.Module`` implementations.
+- Remove ``determined.pytorch.reset_parameters()``. This should have no effect except when using highly-customized ``nn.Module`` implementations.
 
 - WebUI: Show total number of resources in the cluster resource charts.
 

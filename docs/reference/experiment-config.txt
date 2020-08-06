@@ -928,9 +928,12 @@ performance of the experiment.
   better space reduction. Defaults to ``false``.
 
 ``mixed_precision``
-  Whether to use mixed precision training during
+  Whether to use mixed precision training with PyTorch during
   :ref:`multi-gpu-training`. Setting ``O1`` enables mixed precision and loss
-  scaling. Defaults to ``O0`` which disables mixed precision training.
+  scaling. Defaults to ``O0`` which disables mixed precision training. This
+  configuration setting is deprecated; users are advised to call
+  :meth:`context.configure_apex_amp <determined.pytorch.PyTorchTrialContext>` in
+  the constructor of their trial class instead.
 
 ``tensor_fusion_threshold``
   The threshold in MB for batching together gradients that are exchanged during
