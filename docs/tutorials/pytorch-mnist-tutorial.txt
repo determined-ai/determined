@@ -87,7 +87,7 @@ The current values of the model's hyperparameters can be accessed via the :func:
         # Store trial context for later use.
         self.context = context
 
-        # Initialize the models and wrap them with self.context.wrap_model().
+        # Initialize the model and wrap it using self.context.wrap_model().
         self.model = self.context.wrap_model(nn.Sequential(
             nn.Conv2d(1, self.context.get_hparam("n_filters1"), 3, 1),
             nn.ReLU(),
@@ -105,7 +105,7 @@ The current values of the model's hyperparameters can be accessed via the :func:
             nn.LogSoftmax(),
         ))
 
-        # Initialize the optimizers and wrap them with self.context.wrap_optimizer().
+        # Initialize the optimizer and wrap it using self.context.wrap_optimizer().
         self.optimizer = self.context.wrap_optimizer(
             torch.optim.Adadelta(model.parameters(), lr=self.context.get_hparam("learning_rate"))
         )
