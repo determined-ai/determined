@@ -13,19 +13,19 @@ Version 0.12.13
 
 **New Features**
 
-- Add the Determined Model Registry. The Model Registry makes it easy to organize trained models by providing versioning and labeling tools. See :ref:`organizing-models` to get started.
+- **Model Registry:** Determined now includes a built-in model registry, which makes it easy to organize trained models by providing versioning and labeling tools. See :ref:`organizing-models` to get started.
 
-- Add a new PyTorch interface to customize your workflows. See the :ref:`migration guide <migration-guide-flexible-primitives>` to upgrade your PyTorch interface. *Deprecated methods will be retained until at least the next minor release.*
+- **New PyTorch API:** Add a new version of the PyTorch API that is more flexible and supports deep learning experiments that use multiple models, optimizers, and LR schedulers. The old API is still supported but is now deprecated and will be removed in a future release. See the :ref:`migration guide <migration-guide-flexible-primitives>` for details on updating your PyTorch model code. *Deprecated methods will be retained until at least the next minor release.*
 
-  - Support multiple models, optimizers, and LR schedulers. Instantiate those objects and wrap them with :meth:`PyTorchTrialContext.wrap_model`, :meth:`PyTorchTrialContext.wrap_optimizer`, and :meth:`PyTorchTrialContext.wrap_lr_scheduler` in :meth:`PyTorchTrial.__init__`. ``build_model``, ``optimizer``, and ``create_lr_scheduler`` in :class:`PyTorchTrial` are now deprecated.
+  - The new API supports PyTorch code that uses multiple models, optimizers, and LR schedulers. In your trial class, you should instantiate those objects and wrap them with :meth:`~determined.pytorch.PyTorchTrialContext.wrap_model`, :meth:`~determined.pytorch.PyTorchTrialContext.wrap_optimizer`, and :meth:`~determined.pytorch.PyTorchTrialContext.wrap_lr_scheduler` in the constructor of your PyTorch trial class. The previous API methods ``build_model``, ``optimizer``, and ``create_lr_scheduler`` in :class:`~determined.pytorch.PyTorchTrial` are now deprecated.
 
-  - Support customizing forward and backward passes in :meth:`PyTorchTrial.train_batch`. Support gradient clipping by passing a function to the ``clip_grads`` argument of :meth:`PyTorchTrialContext.step_optimizer`. The callback ``on_before_optimizer_step`` is now deprecated.
+  - Support customizing forward and backward passes in :meth:`~determined.pytorch.PyTorchTrial.train_batch`. Support gradient clipping by passing a function to the ``clip_grads`` argument of :meth:`~determined.pytorch.PyTorchTrialContext.step_optimizer`. The callback ``on_before_optimizer_step`` is now deprecated.
 
-  - Configure automatic mixed precision in :meth:`PyTorchTrial.__init__`. The ``optimizations.mixed_precision`` experiment configuration key is now deprecated.
+  - Configuring automatic mixed precision (AMP) in PyTorch should now be done by calling :meth:`~determined.pytorch.PyTorchTrialContext.configure_apex_amp` in the constructor of your PyTorch trial class. The ``optimizations.mixed_precision`` experiment configuration key is now deprecated.
 
-  - The ``model`` arguments in :meth:`PyTorchTrial.train_batch`, :meth:`PyTorchTrial.evaluate_batch`, and :meth:`PyTorchTrial.evaluate_full_dataset` are now deprecated.
+  - The ``model`` arguments in :meth:`~determined.pytorch.PyTorchTrial.train_batch`, :meth:`~determined.pytorch.PyTorchTrial.evaluate_batch`, and :meth:`~determined.pytorch.PyTorchTrial.evaluate_full_dataset` are now deprecated.
 
-- Implement :ref:`topic-guides_hp-tuning-det_adaptive-asha` for large-scale hyperparameter search. See the `associated paper <https://arxiv.org/pdf/1810.05934.pdf>`__ for more information.
+- **More Efficient Hyperparameter Search:** This release introduces a new hyperparameter search method, ``adaptive_asha``. This is based on an asynchronous version of the ``adaptive`` algorithm, and should enable large searches to find high-quality hyperparameter configurations more quickly. See the :ref:`documentation <topic-guides_hp-tuning-det_adaptive-asha>` and the `associated paper <https://arxiv.org/pdf/1810.05934.pdf>`__ for more information.
 
 **Improvements**
 
