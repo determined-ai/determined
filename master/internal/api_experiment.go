@@ -188,3 +188,42 @@ func (a *apiServer) PauseExperiment(
 		return resp, nil
 	}
 }
+
+func (a *apiServer) CancelExperiment(
+	ctx context.Context, req *apiv1.CancelExperimentRequest,
+) (resp *apiv1.CancelExperimentResponse, err error) {
+	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
+	switch {
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to check if experiment exists: %s", err)
+	case !ok:
+		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	}
+
+	addr := actor.Addr("experiments", req.Id).String()
+	err = a.actorRequest(addr, req, &resp)
+	if status.Code(err) == codes.NotFound {
+		return &apiv1.CancelExperimentResponse{}, nil
+	}
+	return resp, err
+}
+
+func (a *apiServer) KillExperiment(
+	ctx context.Context, req *apiv1.KillExperimentRequest,
+) (
+	resp *apiv1.KillExperimentResponse, err error) {
+	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
+	switch {
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to check if experiment exists: %s", err)
+	case !ok:
+		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	}
+
+	addr := actor.Addr("experiments", req.Id).String()
+	err = a.actorRequest(addr, req, &resp)
+	if status.Code(err) == codes.NotFound {
+		return &apiv1.KillExperimentResponse{}, nil
+	}
+	return resp, err
+}
