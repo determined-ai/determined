@@ -31,7 +31,7 @@ const TaskCard: React.FC<RecentTask> = (props: RecentTask) => {
         path={props.url || '#'}
         popout={!isExperimentTask(props)}>
         {isExperimentTask(props) && <div className={css.progressBar}>
-          <ProgressBar percent={(props.progress || 0) * 100} state={props.state} />
+          <ProgressBar barOnly percent={(props.progress || 0) * 100} state={props.state} />
         </div>}
         <div className={css.upper}>
           <div className={css.icon}><Icon name={iconName} /></div>

@@ -127,14 +127,14 @@ const TrialLogs: React.FC = () => {
 
   if (isIdInvalid) {
     return (
-      <Page hideTitle title={title}>
+      <Page id="page-error-message">
         <Message>Unable to find Trial {trialId}</Message>
       </Page>
     );
   }
 
   return (
-    <Page hideTitle maxHeight title={title}>
+    <Page id="trial-logs" maxHeight>
       <LogViewer
         disableLevel
         isDownloading={isDownloading}

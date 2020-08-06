@@ -16,6 +16,11 @@ export const columns: ColumnType<ExperimentItem>[] = [
     title: 'ID',
   },
   {
+    dataIndex: 'name',
+    sorter: (a: ExperimentItem, b: ExperimentItem): number => alphanumericSorter(a.name, b.name),
+    title: 'Name',
+  },
+  {
     defaultSortOrder: 'descend',
     render: (_: number, record: ExperimentItem): React.ReactNode =>
       relativeTimeRenderer(new Date(record.startTime)),
@@ -28,11 +33,7 @@ export const columns: ColumnType<ExperimentItem>[] = [
     sorter: (a: ExperimentItem, b: ExperimentItem): number => getDuration(a) - getDuration(b),
     title: 'Duration',
   },
-  {
-    // TODO bring in actual trial counts once available.
-    render: (): number => Math.floor(Math.random() * 100),
-    title: 'Trials',
-  },
+  // TODO bring in actual trial counts once available.
   {
     render: stateRenderer,
     sorter: (a: ExperimentItem, b: ExperimentItem): number => runStateSorter(a.state, b.state),
@@ -58,6 +59,7 @@ export const columns: ColumnType<ExperimentItem>[] = [
   },
   {
     align: 'right',
+    className: 'fullCell',
     render: experimentActionRenderer,
     title: '',
   },

@@ -4,21 +4,21 @@ describe('Navigation', () => {
   });
 
   const elmTitleSelector = '#det-main-container div.text-2xl';
-  const pageTitleSelector = '[class^="Page_title_"]';
-  const sectionTitleSelector = '[class^="Section_title_"]';
+  const pageTitleSelector = '[class*="Page_base_"]';
+  const sectionTitleSelector = '[class*="Section_title_"]';
 
   describe('paths', () => {
 
     it('path / should display dashboard', () => {
       cy.visit('/');
-      cy.get('section h5').contains('Recent Tasks');
-      cy.get('section h5').contains('Overview');
+      cy.get(sectionTitleSelector).contains('Recent Tasks');
+      cy.get(sectionTitleSelector).contains('Overview');
     });
 
     it('path /det/dashboard should display dashboard', () => {
       cy.visit('/det/dashboard');
-      cy.get('section h5').contains('Recent Tasks');
-      cy.get('section h5').contains('Overview');
+      cy.get(sectionTitleSelector).contains('Recent Tasks');
+      cy.get(sectionTitleSelector).contains('Overview');
     });
 
     it('path /ui/experiments should display experiments', () => {
@@ -53,12 +53,12 @@ describe('Navigation', () => {
 
     it.skip('path /det/logs should display Master Logs', () => {
       cy.visit('/det/logs');
-      cy.get(sectionTitleSelector).contains('Master Logs');
+      cy.get(pageTitleSelector).contains('Master Logs');
     });
 
     it.skip('path /det/trials/:id/logs should display Trial Logs', () => {
       cy.visit('/det/trials/1/logs');
-      cy.get(sectionTitleSelector).contains('Logs for Trial');
+      cy.get(pageTitleSelector).contains('Logs for Trial');
     });
   });
 

@@ -64,6 +64,10 @@
     display: flex;
     justify-content: space-between;
 
+    & > *:last-child {
+      height: var(--theme-sizes-icon-large);
+      width: var(--theme-sizes-icon-large);
+    }
     .badges {
       display: flex;
 

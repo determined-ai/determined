@@ -11,7 +11,6 @@ import TaskActionDropdown from 'components/TaskActionDropdown';
 import {
   CommandState, CommandTask, CommandType, ExperimentItem, RunState, StartEndTimes, TrialItem,
 } from 'types';
-import { floatToPercent } from 'utils/string';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 import { commandTypeToLabel, experimentToTask } from 'utils/types';
 
@@ -99,13 +98,26 @@ export const expermentDurationRenderer: ExperimentRenderer = (_, record) => {
 };
 
 export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
-  if (!record.progress) return;
-  return <ProgressBar
+  return record.progress ? <ProgressBar
     percent={record.progress * 100}
-    state={record.state}
-    title={floatToPercent(record.progress, 0)} />;
+    state={record.state} /> : '-';
 };
 
 export const experimentArchivedRenderer: ExperimentRenderer = (_, record) => {
   return record.archived ? <CheckOutlined /> : null;
+};
+
+/* Table Helper Functions */
+
+/*
+ * For an `onClick` event on a table row, sometimes we have alternative and secondary
+ * click interactions we want to capture. For example, we might want to capture different
+ * link besides the one the table row is linked to. This function provides the means to
+ * detect these alternative actions based on className definitions.
+ */
+export const isAlternativeAction = (event: React.MouseEvent): boolean => {
+  const target = event.target as Element;
+  if (target.className.includes('ant-checkbox-wrapper') ||
+      target.className.includes('ignoreEvent')) return true;
+  return false;
 };

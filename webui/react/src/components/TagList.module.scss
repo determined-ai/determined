@@ -1,14 +1,24 @@
 .base {
+  display: inline;
+  margin-left: var(--theme-sizes-layout-medium);
+  vertical-align: bottom;
+
+  & > * {
+    cursor: pointer;
+    font-size: var(--theme-sizes-font-small);
+    height: 2rem;
+    margin-right: var(--theme-sizes-layout-medium);
+  }
   .tagPlus {
-    background: #fff;
+    background: var(--theme-colors-monochrome-17);
     border-style: dashed;
   }
-  .editTag {
-    user-select: none;
+  .tagPlus:hover,
+  .tagEdit:hover {
+    border-color: var(--theme-colors-core-action);
   }
   .tagInput {
-    margin-right: 8px;
+    top: 0.5rem;
     vertical-align: top;
-    width: 78px;
   }
 }
