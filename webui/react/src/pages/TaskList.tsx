@@ -146,7 +146,7 @@ const TaskList: React.FC = () => {
       const isExpanded = sourceExpanded[record.id];
       const sourceCount = info.source.length;
       const showToggle = info.source.length > MAX_SOURCES;
-      const toggleLabel = `${isExpanded ? 'Hide' : 'Show'} ${sourceCount}${!isExpanded && '+'}`;
+      const toggleLabel = `${isExpanded ? 'Hide' : 'Show'} ${sourceCount}${isExpanded ? '' : '+'}`;
 
       return sourceCount !== 0 ? (
         <div className={css.sourceLinks}>
