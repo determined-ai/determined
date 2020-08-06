@@ -13,7 +13,6 @@ import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';
 
-import Link, { makeClickHandler } from './Link';
 import css from './TaskActionDropdown.module.scss';
 
 interface Props {
@@ -122,7 +121,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
   if (isCancelable) menuItems.push(<Menu.Item key="cancel">Cancel</Menu.Item>);
   if (isKillable) menuItems.push(<Menu.Item key="kill">Kill</Menu.Item>);
   if (isExperiment) {
-    menuItems.push(<Menu.Item key="createTensorboard">Launch Tensorboard</Menu.Item>);
+    menuItems.push(<Menu.Item key="createTensorboard">Open Tensorboard</Menu.Item>);
   } else {
     menuItems.push(<Menu.Item key="viewLogs">View Logs</Menu.Item>);
   }
