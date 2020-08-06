@@ -13,7 +13,7 @@ Version 0.12.13
 
 **New Features**
 
-- Add the Determined Model Registry. The Model Registry makes it easy to organize models by providing versioning and labeling tools. See :ref:`organizing-models` to get started.
+- Add the Determined Model Registry. The Model Registry makes it easy to organize trained models by providing versioning and labeling tools. See :ref:`organizing-models` to get started.
 
 - Add a new PyTorch interface to customize your workflows. See the :ref:`migration guide <migration-guide-flexible-primitives>` to upgrade your PyTorch interface. *Deprecated methods will be retained until at least the next minor release.*
 
