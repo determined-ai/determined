@@ -153,8 +153,7 @@ func (a *apiServer) PauseExperiment(
 
 func (a *apiServer) CancelExperiment(
 	ctx context.Context, req *apiv1.CancelExperimentRequest,
-) (
-	resp *apiv1.CancelExperimentResponse, err error) {
+) (resp *apiv1.CancelExperimentResponse, err error) {
 	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
 	switch {
 	case err != nil:
