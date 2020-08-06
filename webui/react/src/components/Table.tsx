@@ -1,4 +1,3 @@
-import { CheckOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import React from 'react';
 import TimeAgo from 'timeago-react';
@@ -104,7 +103,7 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
 };
 
 export const experimentArchivedRenderer: ExperimentRenderer = (_, record) => {
-  return record.archived ? <CheckOutlined /> : null;
+  return record.archived ? <Icon name="checkmark" /> : null;
 };
 
 /* Table Helper Functions */

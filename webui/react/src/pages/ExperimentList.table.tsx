@@ -45,7 +45,6 @@ export const columns: ColumnType<ExperimentItem>[] = [
     title: 'Progress',
   },
   {
-    align: 'center',
     render: experimentArchivedRenderer,
     sorter: (a: ExperimentItem, b: ExperimentItem): number =>
       (a.archived === b.archived) ? 0 : (a.archived ? 1 : -1),
