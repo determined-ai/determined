@@ -3,9 +3,8 @@ import { Button, Input, Modal, Space, Table } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
-import linkCss from 'components/Link.module.scss';
 import Page from 'components/Page';
-import { isAlternativeAction } from 'components/Table';
+import { defaultRowClassName, isAlternativeAction } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TaskFilter from 'components/TaskFilter';
 import Auth from 'contexts/Auth';
@@ -240,7 +239,7 @@ const TaskList: React.FC = () => {
           columns={columns}
           dataSource={filteredTasks}
           loading={!hasLoaded}
-          rowClassName={(record): string => canBeOpened(record) ? linkCss.base : ''}
+          rowClassName={record => defaultRowClassName(canBeOpened(record))}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
           showSorterTooltip={false}

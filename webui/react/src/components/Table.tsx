@@ -120,3 +120,10 @@ export const isAlternativeAction = (event: React.MouseEvent): boolean => {
       target.className.includes('ignoreEvent')) return true;
   return false;
 };
+
+/*
+ * Default clickable row class name for Table components.
+ */
+export const defaultRowClassName = (clickable = true): string=> {
+  return clickable ? 'clickable' : '';
+};
