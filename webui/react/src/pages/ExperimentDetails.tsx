@@ -192,6 +192,7 @@ const ExperimentDetailsComp: React.FC = () => {
         experiment={experiment}
         onClick={{ Fork: showForkModal }}
         onSettled={pollExperimentDetails} />}
+      showDivider
       subTitle={<Space align="center" size="small">
         {experiment?.config.description}
         <Badge state={experiment.state} type={BadgeType.State} />

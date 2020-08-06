@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
-import Page from 'components/Page';
 import UI from 'contexts/UI';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
@@ -75,13 +74,11 @@ const MasterLogs: React.FC = () => {
   }, [ logIdRange, pollingLogsResponse.data ]);
 
   return (
-    <Page id="master-logs" maxHeight>
-      <LogViewer
-        noWrap
-        ref={logsRef}
-        title="Master Logs"
-        onScrollToTop={handleScrollToTop} />
-    </Page>
+    <LogViewer
+      noWrap
+      ref={logsRef}
+      title="Master Logs"
+      onScrollToTop={handleScrollToTop} />
   );
 };
 

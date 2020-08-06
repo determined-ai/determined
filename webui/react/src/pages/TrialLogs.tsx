@@ -7,7 +7,6 @@ import { throttle } from 'throttle-debounce';
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
 import Message from 'components/Message';
 import Page from 'components/Page';
-import Spinner from 'components/Spinner';
 import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
@@ -134,18 +133,15 @@ const TrialLogs: React.FC = () => {
   }
 
   return (
-    <Page id="trial-logs" maxHeight>
-      <LogViewer
-        disableLevel
-        isDownloading={isDownloading}
-        isLoading={isLoading}
-        noWrap
-        ref={logsRef}
-        title={title}
-        onDownload={handleDownloadLogs}
-        onScrollToTop={handleScrollToTop} />
-      {isLoading && <Spinner fullPage opaque />}
-    </Page>
+    <LogViewer
+      disableLevel
+      isDownloading={isDownloading}
+      isLoading={isLoading}
+      noWrap
+      ref={logsRef}
+      title={title}
+      onDownload={handleDownloadLogs}
+      onScrollToTop={handleScrollToTop} />
   );
 };
 

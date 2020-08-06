@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Input, Modal, Table } from 'antd';
+import { Button, Input, Modal, Space, Table } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
@@ -207,11 +207,14 @@ const TaskList: React.FC = () => {
   }), []);
 
   return (
-    <Page id="tasks" title="Tasks">
-      <div>
-        <Button onClick={handleNotebookLaunch}>Launch New Notebook</Button>
-        <Button onClick={handleCpuNotebookLaunch}>Launch New CPU-only Notebook</Button>
-      </div>
+    <Page
+      id="tasks"
+      options={<Space size="small">
+        <Button onClick={handleNotebookLaunch}>Launch Notebook</Button>
+        <Button onClick={handleCpuNotebookLaunch}>Launch CPU-only Notebook</Button>
+      </Space>}
+      showDivider
+      title="Tasks">
       <div className={css.base}>
         <div className={css.header}>
           <Input

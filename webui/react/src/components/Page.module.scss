@@ -12,6 +12,11 @@
     color: var(--theme-colors-core-secondary);
     width: 100%
   }
+  .divider {
+    border-bottom: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
+    margin-bottom: var(--theme-sizes-layout-medium);
+    width: 100%;
+  }
   .body {
     height: max-content;
     min-height: 0;

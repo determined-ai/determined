@@ -7,7 +7,6 @@ import screenfull from 'screenfull';
 import { sprintf } from 'sprintf-js';
 
 import Icon from 'components/Icon';
-import Section from 'components/Section';
 import Spinner from 'components/Spinner';
 import usePrevious from 'hooks/usePrevious';
 import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
@@ -17,6 +16,7 @@ import { ansiToHtml, copyToClipboard, toRem } from 'utils/dom';
 import { capitalize } from 'utils/string';
 
 import css from './LogViewer.module.scss';
+import Page from './Page';
 
 interface Props {
   debugMode?: boolean;
@@ -482,8 +482,8 @@ const LogViewer: React.FC<Props> = forwardRef((
   };
 
   return (
-    <div className={css.base} ref={baseRef}>
-      <Section maxHeight options={logOptions} title={props.title}>
+    <Page maxHeight options={logOptions} title={props.title}>
+      <div className={css.base} ref={baseRef}>
         <div className={css.container} ref={container}>
           <div className={css.scrollSpacer} ref={spacer} style={spacerStyle}>
             {visibleLogs.map(log => (
@@ -528,8 +528,8 @@ const LogViewer: React.FC<Props> = forwardRef((
               onClick={handleEnableTailing} />
           </Tooltip>
         </div>
-      </Section>
-    </div>
+      </div>
+    </Page>
   );
 });
 
