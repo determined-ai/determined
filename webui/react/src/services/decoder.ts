@@ -101,6 +101,10 @@ export const jsonToCommands = (data: unknown): Command[] => {
   return jsonToGenericCommands(data, CommandType.Command);
 };
 
+export const jsonToNotebook = (data: unknown): Command => {
+  return jsonToGenericCommand(data, CommandType.Notebook);
+};
+
 export const jsonToNotebooks = (data: unknown): Command[] => {
   return jsonToGenericCommands(data, CommandType.Notebook);
 };

@@ -8,7 +8,7 @@ import RouterDecorator from 'storybook/RouterDecorator';
 import { CommandTask, ExperimentItem } from 'types';
 import { generateCommandTask, generateExperiments } from 'utils/task';
 
-import linkCss from './Link.module.scss';
+import { defaultRowClassName } from './Table';
 import css from './Table.module.scss';
 
 export default {
@@ -36,8 +36,9 @@ export const TaskTable = (): React.ReactNode => {
     columns={taskColumns}
     dataSource={commandTasks}
     loading={commandTasks === undefined}
-    rowClassName={(): string => linkCss.base}
-    rowKey="id" />;
+    rowClassName={defaultRowClassName()}
+    rowKey="id"
+    showSorterTooltip={false} />;
 };
 
 export const ExperimentTable = (): React.ReactNode => {
@@ -46,6 +47,7 @@ export const ExperimentTable = (): React.ReactNode => {
     columns={experimentColumns}
     dataSource={experimentItems}
     loading={experimentItems === undefined}
-    rowClassName={(): string => linkCss.base}
-    rowKey="id" />;
+    rowClassName={defaultRowClassName()}
+    rowKey="id"
+    showSorterTooltip={false} />;
 };

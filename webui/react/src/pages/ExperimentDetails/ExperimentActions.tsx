@@ -2,7 +2,7 @@ import { Button, Popconfirm, Space } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import { ConditionalButton } from 'components/types';
-import { archiveExperiment, killExperiment, launchTensorboard, setExperimentState,
+import { archiveExperiment, createTensorboard, killExperiment, setExperimentState,
 } from 'services/api';
 import { ExperimentDetails, RunState, TBSourceType } from 'types';
 import { openCommand } from 'utils/routes';
@@ -60,9 +60,9 @@ const ExperimentActions: React.FC<Props> = ({
       .finally(() => setButtonStates(state => ({ ...state, kill: false })));
   }, [ experiment.id, updateFn ]);
 
-  const handleLaunchTensorboard = useCallback(() => {
+  const handleCreateTensorboard = useCallback(() => {
     setButtonStates(state => ({ ...state, tensorboard: true }));
-    launchTensorboard({ ids: [ experiment.id ], type: TBSourceType.Experiment })
+    createTensorboard({ ids: [ experiment.id ], type: TBSourceType.Experiment })
       .then((tensorboard) => {
         openCommand(tensorboard);
         return updateFn();
@@ -114,7 +114,8 @@ const ExperimentActions: React.FC<Props> = ({
     {
       button: <Button key="tensorboard"
         loading={buttonStates.Tensorboard}
-        onClick={handleLaunchTensorboard}>Tensorboard</Button>,
+        type="primary"
+        onClick={handleCreateTensorboard}>Open Tensorboard</Button>,
       showIf: (exp): boolean => !experimentWillNeverHaveData(exp),
     },
     {

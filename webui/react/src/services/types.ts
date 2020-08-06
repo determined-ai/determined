@@ -37,7 +37,11 @@ export interface PatchExperimentState {
   state: RunState;
 }
 
-export interface LaunchTensorboardParams {
+export interface CreateNotebookParams {
+  slots: number;
+}
+
+export interface CreateTensorboardParams {
   // currently we don't support launching from a mix of both trial ids and experiment ids
   ids: number[];
   type: TBSourceType;

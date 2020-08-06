@@ -1,108 +1,114 @@
 @font-face {
-  font-family: 'determined-ai';
-  src:
-    url('../webfonts/determined-ai.woff2?wf6ygv') format('woff2'),
-    url('../webfonts/determined-ai.woff?wf6ygv') format('woff'),
-    url('../webfonts/determined-ai.ttf?wf6ygv') format('truetype'),
-    url('../webfonts/determined-ai.svg?wf6ygv#determined-ai') format('svg');
-  font-weight: normal;
-  font-style: normal;
   font-display: block;
+  font-family: 'determined-ai';
+  font-style: normal;
+  font-weight: normal;
+  src:
+    url('../webfonts/determined-ai.woff2?e8eakm') format('woff2'),
+    url('../webfonts/determined-ai.woff?e8eakm') format('woff'),
+    url('../webfonts/determined-ai.ttf?e8eakm') format('truetype'),
+    url('../webfonts/determined-ai.svg?e8eakm#determined-ai') format('svg');
 }
 
-[class^="icon-"], [class*=" icon-"] {
+[class^="icon-"],
+[class*=" icon-"] {
   /* use !important to prevent issues with browser extensions that change fonts */
   font-family: 'determined-ai' !important;
-  speak: none;
-  font-style: normal;
-  font-weight: normal;
-  font-variant: normal;
-  text-transform: none;
-  line-height: 1;
 
   /* Better Font Rendering =========== */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  line-height: 1;
+  speak: none;
+  text-transform: none;
 }
-
 .icon-arrow-down::before {
-  content: '\e901';
+  content: "\e901";
 }
 .icon-arrow-up::before {
-  content: '\e902';
+  content: "\e902";
 }
-.icon-dai-logo:before {
+.icon-dai-logo::before {
   content: "\e900";
 }
-.icon-tensorboard:before {
-  content: "\e90c";
+.icon-checkpoint::before {
+  content: "\e91f";
+}
+.icon-checkmark::before {
+  content: "\e921";
 }
 .icon-clipboard::before {
-  content: '\e919';
+  content: "\e919";
 }
-.icon-cluster:before {
+.icon-cluster::before {
   content: "\e913";
 }
-.icon-command:before {
+.icon-command::before {
   content: "\e914";
 }
-.icon-experiment:before {
+.icon-docs::before {
+  content: "\e922";
+}
+.icon-experiment::before {
   content: "\e903";
 }
-.icon-eye-close:before {
+.icon-eye-close::before {
   content: "\e917";
 }
-.icon-eye-open:before {
+.icon-eye-open::before {
   content: "\e918";
 }
-.icon-fullscreen:before {
+.icon-fullscreen::before {
   content: "\e91a";
 }
-.icon-grid:before {
+.icon-grid::before {
   content: "\e904";
 }
 .icon-jupyter::before {
-  content: '\e915';
+  content: "\e915";
 }
-.icon-list:before {
+.icon-list::before {
   content: "\e905";
 }
 .icon-lock::before {
-  content: '\e911';
+  content: "\e911";
 }
-.icon-logs:before {
+.icon-logs::before {
   content: "\e91b";
 }
-.icon-notebook:before {
+.icon-notebook::before {
   content: "\e906";
 }
-.icon-overflow-horizontal:before {
+.icon-overflow-horizontal::before {
   content: "\e907";
 }
-.icon-overflow-vertical:before {
+.icon-overflow-vertical::before {
   content: "\e908";
 }
 .icon-popout::before {
   content: "\e910";
 }
-.icon-shell:before {
+.icon-shell::before {
   content: "\e909";
 }
 .icon-spinner::before {
-  content: '\e90f';
+  content: "\e90f";
 }
-.icon-star:before {
+.icon-star::before {
   content: "\e90a";
 }
 .icon-tensorboard::before {
-  content: '\e90c';
+  content: "\e90c";
 }
-.icon-tensorflow:before {
+.icon-tensorflow::before {
   content: "\e90b";
 }
 .icon-user::before {
-  content: '\e916';
+  content: "\e916";
 }
 .icon-user-small::before {
-  content: '\e912';
+  content: "\e912";
 }

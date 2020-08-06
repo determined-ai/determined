@@ -1,4 +1,3 @@
-import { CheckOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import React from 'react';
 import TimeAgo from 'timeago-react';
@@ -104,7 +103,7 @@ export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
 };
 
 export const experimentArchivedRenderer: ExperimentRenderer = (_, record) => {
-  return record.archived ? <CheckOutlined /> : null;
+  return record.archived ? <Icon name="checkmark" /> : null;
 };
 
 /* Table Helper Functions */
@@ -120,4 +119,11 @@ export const isAlternativeAction = (event: React.MouseEvent): boolean => {
   if (target.className.includes('ant-checkbox-wrapper') ||
       target.className.includes('ignoreEvent')) return true;
   return false;
+};
+
+/*
+ * Default clickable row class name for Table components.
+ */
+export const defaultRowClassName = (clickable = true): string=> {
+  return clickable ? 'clickable' : '';
 };

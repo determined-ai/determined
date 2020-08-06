@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom';
 
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
-import Page from 'components/Page';
 import UI from 'contexts/UI';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
@@ -95,14 +94,12 @@ const TaskLogs: React.FC = () => {
   }, [ logIdRange, pollingLogsResponse.data ]);
 
   return (
-    <Page maxHeight title={title}>
-      <LogViewer
-        disableLevel
-        noWrap
-        ref={logsRef}
-        title={title}
-        onScrollToTop={handleScrollToTop} />
-    </Page>
+    <LogViewer
+      disableLevel
+      noWrap
+      ref={logsRef}
+      title={title}
+      onScrollToTop={handleScrollToTop} />
   );
 };
 

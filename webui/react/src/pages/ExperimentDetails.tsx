@@ -13,7 +13,9 @@ import Message from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
-import { durationRenderer, relativeTimeRenderer, stateRenderer } from 'components/Table';
+import {
+  defaultRowClassName, durationRenderer, relativeTimeRenderer, stateRenderer,
+} from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
@@ -192,6 +194,7 @@ const ExperimentDetailsComp: React.FC = () => {
         experiment={experiment}
         onClick={{ Fork: showForkModal }}
         onSettled={pollExperimentDetails} />}
+      showDivider
       subTitle={<Space align="center" size="small">
         {experiment?.config.description}
         <Badge state={experiment.state} type={BadgeType.State} />
@@ -213,7 +216,9 @@ const ExperimentDetailsComp: React.FC = () => {
               columns={columns}
               dataSource={experiment?.trials}
               loading={!experimentResponse.hasLoaded}
+              rowClassName={defaultRowClassName()}
               rowKey="id"
+              showSorterTooltip={false}
               size="small"
               onRow={handleTableRow} />
           </Section>

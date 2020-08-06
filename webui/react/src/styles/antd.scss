@@ -79,9 +79,7 @@ html {
   /* PageHeader */
 
   .ant-page-header {
-    border-bottom: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
-    margin-bottom: var(--theme-sizes-layout-big);
-    padding: 0 0 var(--theme-sizes-layout-big) 0;
+    padding: 0 0 var(--theme-sizes-layout-medium) 0;
     width: 100%;
   }
   .ant-page-header.has-breadcrumb { padding-top: 0; }
@@ -162,10 +160,10 @@ html {
   .ant-table-tbody > tr > td:last-child {
     border-width: 0.1rem 0.1rem 0.1rem 0;
   }
-  .ant-table-tbody > tr.ant-table-row:hover {
+  .ant-table-tbody > tr.ant-table-row.clickable {
     cursor: pointer;
   }
-  .ant-table-tbody > tr.ant-table-row:hover > td {
+  .ant-table-tbody > tr.ant-table-row.clickable:hover > td {
     background-color: var(--theme-colors-monochrome-17);
     border-color: var(--theme-colors-core-action);
     border-style: solid;

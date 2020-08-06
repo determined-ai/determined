@@ -20,6 +20,7 @@ interface Props extends CommonProps {
   subTitle?: React.ReactNode;
   title?: string;
   maxHeight?: boolean;
+  showDivider?: boolean;
 }
 
 const Page: React.FC<Props> = (props: Props) => {
@@ -42,6 +43,7 @@ const Page: React.FC<Props> = (props: Props) => {
         onBack={props.backPath ? handleBack : undefined}>
         {props.headerInfo}
       </PageHeader>}
+      {props.showDivider && <div className={css.divider} />}
       <div className={css.body}>{props.children}</div>
     </main>
   );

@@ -3,8 +3,8 @@ import { CancelToken } from 'axios';
 import * as DetSwagger from 'services/api-ts-sdk';
 import { generateApi, processApiError } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
-import { EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
-  KillCommandParams, KillExpParams, LaunchTensorboardParams, LogsParams,
+import { CreateNotebookParams, CreateTensorboardParams, EmptyParams, ExperimentDetailsParams,
+  ExperimentsParams, ForkExperimentParams, KillCommandParams, KillExpParams, LogsParams,
   PatchExperimentParams, PatchExperimentState, TaskLogsParams, TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import {
@@ -90,8 +90,10 @@ export const getTensorboards = generateApi<EmptyParams, Command[]>(Config.getTen
 
 export const killCommand = generateApi<KillCommandParams, void>(Config.killCommand);
 
-export const launchTensorboard =
-  generateApi<LaunchTensorboardParams, Command>(Config.launchTensorboard);
+export const createNotebook = generateApi<CreateNotebookParams, Command>(Config.createNotebook);
+
+export const createTensorboard =
+  generateApi<CreateTensorboardParams, Command>(Config.createTensorboard);
 
 export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promise<void> => {
   if (isExperimentTask(task)) {
@@ -110,10 +112,15 @@ export const login = generateApi<Credentials, void>(Config.login);
 // It would be nice to have the input and output types be set automatically
 // One this can be achieved is by directly exposing sApi and expecting the user to
 // use processApiError.
-export function logout(): DetSwagger.V1LogoutResponse {
-  const apiName = arguments.callee.name;
-  return detAuthApi.determinedLogout().catch(e => processApiError(apiName, e));
-}
+export const logout = async (): Promise<DetSwagger.V1LogoutResponse> => {
+  try {
+    const response = await detAuthApi.determinedLogout();
+    return response;
+  } catch (e) {
+    processApiError('logout', e);
+    throw e;
+  }
+};
 
 export const getMasterLogs = generateApi<LogsParams, Log[]>(Config.getMasterLogs);
 

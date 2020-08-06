@@ -4,14 +4,16 @@ import queryString from 'query-string';
 import { decode, ioTypeUser, ioUser } from 'ioTypes';
 import { Api } from 'services/apiBuilder';
 import {
-  jsonToAgents, jsonToCommands, jsonToDeterminedInfo, jsonToExperimentDetails,
-  jsonToExperiments, jsonToLogs, jsonToNotebooks, jsonToShells, jsonToTaskLogs,
-  jsonToTensorboard, jsonToTensorboards, jsonToTrialDetails, jsonToTrialLogs, jsonToUsers,
+  jsonToAgents, jsonToCommands, jsonToDeterminedInfo,
+  jsonToExperimentDetails, jsonToExperiments, jsonToLogs, jsonToNotebook, jsonToNotebooks,
+  jsonToShells, jsonToTaskLogs, jsonToTensorboard, jsonToTensorboards, jsonToTrialDetails,
+  jsonToTrialLogs,jsonToUsers,
 } from 'services/decoder';
 import {
-  EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
-  KillCommandParams, KillExpParams, LaunchTensorboardParams, LogsParams,
-  PatchExperimentParams, TaskLogsParams, TrialDetailsParams, TrialLogsParams,
+  CreateNotebookParams, CreateTensorboardParams, EmptyParams,
+  ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
+  KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams, TaskLogsParams,
+  TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails,
@@ -183,7 +185,24 @@ export const killCommand: Api<KillCommandParams, void> = {
   name: 'killCommand',
 };
 
-export const launchTensorboard: Api<LaunchTensorboardParams, Command> = {
+export const createNotebook: Api<CreateNotebookParams, Command> = {
+  httpOptions: (params) => {
+    return {
+      body: {
+        config: {
+          resources: { slots: params.slots },
+        },
+        context: null,
+      },
+      method: 'POST',
+      url: `${commandToEndpoint[CommandType.Notebook]}`,
+    };
+  },
+  name: 'createNotebook',
+  postProcess: (response) => jsonToNotebook(response.data),
+};
+
+export const createTensorboard: Api<CreateTensorboardParams, Command> = {
   httpOptions: (params) => {
     const attrName = params.type === TBSourceType.Trial ? 'trial_ids' : 'experiment_ids';
     return {
@@ -194,7 +213,7 @@ export const launchTensorboard: Api<LaunchTensorboardParams, Command> = {
       url: `${commandToEndpoint[CommandType.Tensorboard]}`,
     };
   },
-  name: 'launchTensorboard',
+  name: 'createTensorboard',
   postProcess: (response) => jsonToTensorboard(response.data),
 };
 

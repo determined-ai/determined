@@ -5,10 +5,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
 import { makeClickHandler } from 'components/Link';
-import linkCss from 'components/Link.module.scss';
 import Page from 'components/Page';
 import StateSelectFilter from 'components/StateSelectFilter';
-import { isAlternativeAction } from 'components/Table';
+import { defaultRowClassName, isAlternativeAction } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
@@ -21,7 +20,7 @@ import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
 import { setupUrlForDev } from 'routes';
 import {
-  archiveExperiment, getExperimentSummaries, killExperiment, launchTensorboard, setExperimentState,
+  archiveExperiment, createTensorboard, getExperimentSummaries, killExperiment, setExperimentState,
 } from 'services/api';
 import { patchExperiment } from 'services/api';
 import { ExperimentsParams } from 'services/types';
@@ -189,7 +188,7 @@ const ExperimentList: React.FC = () => {
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | Command> => {
     if (action === Action.OpenTensorBoard) {
-      return launchTensorboard({
+      return createTensorboard({
         ids: selectedExperiments.map(experiment => experiment.id),
         type: TBSourceType.Experiment,
       });
@@ -316,7 +315,7 @@ const ExperimentList: React.FC = () => {
           columns={columns}
           dataSource={filteredExperiments}
           loading={!experimentsResponse.hasLoaded}
-          rowClassName={(): string => linkCss.base}
+          rowClassName={defaultRowClassName()}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
           showSorterTooltip={false}
