@@ -31,25 +31,24 @@ func (a *apiServer) GetMaster(
 }
 
 // effectiveOffset returns effective offset.
-func effectiveOffset(reqOffset int, totalItems int) (offset int) {
+func effectiveOffset(reqOffset int, total int) (offset int) {
 	switch {
-	case reqOffset < -totalItems:
+	case reqOffset < -total:
 		return 0
 	case reqOffset < 0:
-		return totalItems + reqOffset
+		return total + reqOffset
 	default:
 		return reqOffset
 	}
 }
 
 // effectiveLimit returns effective limit.
-// Input: Limit 0 is treated as no limit
-// Output: Limit -1 is treated as no limit
+// Input: non-negative offset and limit.
 func effectiveLimit(limit int, offset int, total int) int {
 	switch {
 	case limit == 0:
 		return -1
-	case limit > total - offset:
+	case limit > total-offset:
 		return total - offset
 	default:
 		return limit
