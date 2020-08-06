@@ -5,14 +5,15 @@ import React from 'react';
 import Icon from 'components/Icon';
 import Experiments from 'contexts/Experiments';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import { setupUrlForDev } from 'routes';
 import { archiveExperiment, createTensorboard, killTask, setExperimentState } from 'services/api';
 import { AnyTask, CommandTask, Experiment, RunState, TBSourceType } from 'types';
-import { openCommand } from 'utils/routes';
+import { openBlank, openCommand } from 'utils/routes';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';
 
-import Link from './Link';
+import Link, { makeClickHandler } from './Link';
 import css from './TaskActionDropdown.module.scss';
 
 interface Props {
@@ -71,6 +72,14 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
           });
           updateExperimentLocally(exp => ({ ...exp, state: RunState.StoppingCanceled }));
           break;
+        case 'createTensorboard': {
+          const tensorboard = await createTensorboard({
+            ids: [ parseInt(task.id) ],
+            type: TBSourceType.Experiment,
+          });
+          openCommand(tensorboard);
+          break;
+        }
         case 'kill':
           await killTask(task);
           if (isExperiment) {
@@ -85,12 +94,10 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
           });
           updateExperimentLocally(exp => ({ ...exp, state: RunState.Paused }));
           break;
-        case 'createTensorboard': {
-          const tensorboard = await createTensorboard({
-            ids: [ parseInt(task.id) ],
-            type: TBSourceType.Experiment,
-          });
-          openCommand(tensorboard);
+        case 'viewLogs': {
+          const taskType = (task as CommandTask).type.toLocaleLowerCase();
+          const path = `/det/${taskType}/${task.id}/logs?id=${task.name}`;
+          openBlank(setupUrlForDev(path));
           break;
         }
       }
@@ -117,9 +124,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
   if (isExperiment) {
     menuItems.push(<Menu.Item key="createTensorboard">Launch Tensorboard</Menu.Item>);
   } else {
-    const taskType = (task as CommandTask).type.toLocaleLowerCase();
-    const path = `/det/${taskType}/${task.id}/logs?id=${task.name}`;
-    menuItems.push(<Menu.Item key="viewLogs"><Link path={path} popout>View Logs</Link></Menu.Item>);
+    menuItems.push(<Menu.Item key="viewLogs">View Logs</Menu.Item>);
   }
 
   if (menuItems.length === 0) {
@@ -132,7 +137,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
     );
   }
 
-  const menu = <Menu onClick={handleMenuClick}> {menuItems} </Menu>;
+  const menu = <Menu onClick={handleMenuClick}>{menuItems}</Menu>;
 
   return (
     <div className={css.base} title="Open actions menu" onClick={stopPropagation}>
