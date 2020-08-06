@@ -147,6 +147,18 @@ func (db *PgDB) rawQuery(q string, args ...interface{}) ([]byte, error) {
 	return ret, nil
 }
 
+// QueryDB query the database and ignore the returned rows.
+func (db *PgDB) QueryDB(queryName string, args ...interface{}) error {
+	query, ok := db.queries[queryName]
+	if !ok {
+		query = string(etc.MustStaticFile(fmt.Sprintf("%s.sql", queryName)))
+		db.queries[queryName] = query
+	}
+	rows, err := db.sql.Queryx(query, args...)
+	defer rows.Close()
+	return err
+}
+
 // query executes a query returning a single row and unmarshals the result into
 // obj.
 func (db *PgDB) query(q string, obj interface{}, args ...interface{}) error {

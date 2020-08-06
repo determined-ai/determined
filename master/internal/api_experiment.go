@@ -22,6 +22,17 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
 
+func (a *apiServer) checkExperimentExists(id int) error {
+	ok, err := a.m.db.CheckExperimentExists(id)
+	switch {
+	case err != nil:
+		return status.Errorf(codes.Internal, "failed to check if experiment exists: %s", err)
+	case !ok:
+		return status.Errorf(codes.NotFound, "experiment %d not found", id)
+	default:
+		return nil
+	}
+}
 func (a *apiServer) GetExperiments(
 	_ context.Context, req *apiv1.GetExperimentsRequest) (*apiv1.GetExperimentsResponse, error) {
 	resp := &apiv1.GetExperimentsResponse{}
@@ -230,6 +241,39 @@ func (a *apiServer) KillExperiment(
 	return resp, err
 }
 
+func (a *apiServer) ArchiveExperiment(
+	ctx context.Context, req *apiv1.ArchiveExperimentRequest,
+) (*apiv1.ArchiveExperimentResponse, error) {
+	if err := a.checkExperimentExists(int(req.Id)); err != nil {
+		return nil, err
+	}
+
+	err := a.m.db.QueryDB("set_experiment_archive", req.Id, true)
+	switch err {
+	case nil:
+		return &apiv1.ArchiveExperimentResponse{}, nil
+	default:
+		return nil, errors.Wrapf(err, "failed to archive experiment %d",
+			req.Id)
+	}
+}
+
+func (a *apiServer) UnarchiveExperiment(
+	ctx context.Context, req *apiv1.UnarchiveExperimentRequest,
+) (*apiv1.UnarchiveExperimentResponse, error) {
+	if err := a.checkExperimentExists(int(req.Id)); err != nil {
+		return nil, err
+	}
+	err := a.m.db.QueryDB("set_experiment_archive", req.Id, false)
+	switch err {
+	case nil:
+		return &apiv1.UnarchiveExperimentResponse{}, nil
+	default:
+		return nil, errors.Wrapf(err, "failed to archive experiment %d",
+			req.Id)
+	}
+}
+
 func (a *apiServer) GetExperimentCheckpoints(
 	ctx context.Context, req *apiv1.GetExperimentCheckpointsRequest,
 ) (*apiv1.GetExperimentCheckpointsResponse, error) {
@@ -285,4 +329,5 @@ func (a *apiServer) GetExperimentCheckpoints(
 	a.sort(
 		resp.Checkpoints, req.OrderBy, req.SortBy, apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
+
 }
