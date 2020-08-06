@@ -182,7 +182,7 @@ Training the Model
 
 Now that we have ported our model code to the trial API, we can use Determined to train a single instance of the model or to do a hyperparameter search. In Determined, a :ref:`trial <concept-trial>` is a training task that consists of a dataset, a deep learning model, and values for all of the model's hyperparameters. An :ref:`experiment <concept-experiment>` is a collection of one or more trials: an experiment can either train a single model (with a single trial), or can define a search over a user-defined hyperparameter space.
 
-To create an experiment, we start by writing a configuration file that defines the kind of experiment we want to run. In this case, we want to train a single model for a fixed number of batches, using fixed values for the model's hyperparameters:
+To create an experiment, we start by writing a configuration file that defines the kind of experiment we want to run. In this case, we want to train a single model for a fixed number of epochs, using fixed values for the model's hyperparameters:
 
 .. code:: yaml
 
@@ -196,14 +196,14 @@ To create an experiment, we start by writing a configuration file that defines t
       n_filters2: 64
       dropout1: 0.25
       dropout2: 0.5
+    records_per_epoch: 50_000
     searcher:
       name: single
       metric: validation_loss
-      max_steps: 9 # 9 steps is ~ one epoch
+      max_length:
+        epochs: 1
       smaller_is_better: true
     entrypoint: model_def:MNistTrial
-
-Rather than specifying the number of batches to train for directly, we instead specify the number of :ref:`steps <concept-step>`. By default, a step consists of 100 batches, so the config file above specifies that the model should be trained on 900 batches of data.
 
 The ``entrypoint`` specifies the name of the trial class to use. This is useful if our model code contains more than one trial class. In this case, we use an entrypoint of ``model_def:MNistTrial`` because our trial class is named ``MNistTrial`` and it is defined in a Python file named ``model_def.py``.
 

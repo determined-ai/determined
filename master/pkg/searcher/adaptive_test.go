@@ -35,10 +35,10 @@ func TestAggressiveMode(t *testing.T) {
 func TestAdaptiveSearcherReproducibility(t *testing.T) {
 	conf := model.AdaptiveConfig{
 		Metric: defaultMetric, SmallerIsBetter: true,
-		TargetTrialSteps: 64, StepBudget: 1024, Divisor: 4, TrainStragglers: true,
-		Mode: model.AggressiveMode, MaxRungs: 3,
+		MaxLength: model.NewLengthInBatches(6400), Budget: model.NewLengthInBatches(102400),
+		Divisor: 4, TrainStragglers: true, Mode: model.AggressiveMode, MaxRungs: 3,
 	}
-	gen := func() SearchMethod { return newAdaptiveSearch(conf, defaultBatchesPerStep) }
+	gen := func() SearchMethod { return newAdaptiveSearch(conf) }
 	checkReproducibility(t, gen, nil, defaultMetric)
 }
 
@@ -47,76 +47,76 @@ func TestAdaptiveSearchMethod(t *testing.T) {
 		{
 			name: "smaller is better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(0.1, 32, []int{8, 32}, nil),
-				newConstantPredefinedTrial(0.2, 8, []int{8}, nil),
-				newConstantPredefinedTrial(0.3, 32, []int{32}, nil),
+				newConstantPredefinedTrial(toOps("800B V 2400B V"), 0.1),
+				newConstantPredefinedTrial(toOps("800B V"), 0.2),
+				newConstantPredefinedTrial(toOps("3200B V"), 0.3),
 			},
 			config: model.SearcherConfig{
 				AdaptiveConfig: &model.AdaptiveConfig{
-					Metric:           "error",
-					SmallerIsBetter:  true,
-					TargetTrialSteps: 32,
-					StepBudget:       64,
-					Mode:             model.StandardMode,
-					MaxRungs:         2,
-					Divisor:          4,
+					Metric:          "error",
+					SmallerIsBetter: true,
+					MaxLength:       model.NewLengthInBatches(3200),
+					Budget:          model.NewLengthInBatches(6400),
+					Mode:            model.StandardMode,
+					MaxRungs:        2,
+					Divisor:         4,
 				},
 			},
 		},
 		{
 			name: "early exit -- smaller is better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(0.1, 32, []int{8, 32}, nil),
-				newEarlyExitPredefinedTrial(0.2, 8, nil, nil),
-				newConstantPredefinedTrial(0.3, 32, []int{32}, nil),
+				newConstantPredefinedTrial(toOps("800B V 2400B V"), 0.1),
+				newEarlyExitPredefinedTrial(toOps("800B"), 0.2),
+				newConstantPredefinedTrial(toOps("3200B V"), 0.3),
 			},
 			config: model.SearcherConfig{
 				AdaptiveConfig: &model.AdaptiveConfig{
-					Metric:           "error",
-					SmallerIsBetter:  true,
-					TargetTrialSteps: 32,
-					StepBudget:       64,
-					Mode:             model.StandardMode,
-					MaxRungs:         2,
-					Divisor:          4,
+					Metric:          "error",
+					SmallerIsBetter: true,
+					MaxLength:       model.NewLengthInBatches(3200),
+					Budget:          model.NewLengthInBatches(6400),
+					Mode:            model.StandardMode,
+					MaxRungs:        2,
+					Divisor:         4,
 				},
 			},
 		},
 		{
 			name: "smaller is not better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(0.3, 32, []int{8, 32}, nil),
-				newConstantPredefinedTrial(0.2, 8, []int{8}, nil),
-				newConstantPredefinedTrial(0.1, 32, []int{32}, nil),
+				newConstantPredefinedTrial(toOps("800B V 2400B V"), 0.3),
+				newConstantPredefinedTrial(toOps("800B V"), 0.2),
+				newConstantPredefinedTrial(toOps("3200B V"), 0.1),
 			},
 			config: model.SearcherConfig{
 				AdaptiveConfig: &model.AdaptiveConfig{
-					Metric:           "error",
-					SmallerIsBetter:  false,
-					TargetTrialSteps: 32,
-					StepBudget:       64,
-					Mode:             model.StandardMode,
-					MaxRungs:         2,
-					Divisor:          4,
+					Metric:          "error",
+					SmallerIsBetter: false,
+					MaxLength:       model.NewLengthInBatches(3200),
+					Budget:          model.NewLengthInBatches(6400),
+					Mode:            model.StandardMode,
+					MaxRungs:        2,
+					Divisor:         4,
 				},
 			},
 		},
 		{
 			name: "early exit -- smaller is not better",
 			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(0.3, 32, []int{8, 32}, nil),
-				newEarlyExitPredefinedTrial(0.2, 8, nil, nil),
-				newConstantPredefinedTrial(0.1, 32, []int{32}, nil),
+				newConstantPredefinedTrial(toOps("800B V 2400B V"), 0.1),
+				newEarlyExitPredefinedTrial(toOps("800B"), 0.2),
+				newConstantPredefinedTrial(toOps("3200B V"), 0.3),
 			},
 			config: model.SearcherConfig{
 				AdaptiveConfig: &model.AdaptiveConfig{
-					Metric:           "error",
-					SmallerIsBetter:  false,
-					TargetTrialSteps: 32,
-					StepBudget:       64,
-					Mode:             model.StandardMode,
-					MaxRungs:         2,
-					Divisor:          4,
+					Metric:          "error",
+					SmallerIsBetter: false,
+					MaxLength:       model.NewLengthInBatches(3200),
+					Budget:          model.NewLengthInBatches(6400),
+					Mode:            model.StandardMode,
+					MaxRungs:        2,
+					Divisor:         4,
 				},
 			},
 		},

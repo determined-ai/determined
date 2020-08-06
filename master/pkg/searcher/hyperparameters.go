@@ -10,6 +10,17 @@ import (
 
 type hparamSample map[string]interface{}
 
+func (h hparamSample) GlobalBatchSize() int {
+	// If the hyperparameters.global_batch_size is configured as a const hyperparameter,
+	// we infer its type to be a float but in some cases, its type can be specified and an
+	// int is also valid.
+	f, ok := h[model.GlobalBatchSize].(float64)
+	if ok {
+		return int(f)
+	}
+	return h[model.GlobalBatchSize].(int)
+}
+
 func sampleAll(h model.Hyperparameters, rand *nprand.State) hparamSample {
 	results := make(hparamSample)
 	h.Each(func(name string, param model.Hyperparameter) {

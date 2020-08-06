@@ -84,11 +84,11 @@ class NoOpTrialController(det.CallbackTrialController):
         else:
             raise ValueError("Invalid `metrics_progression` {}".format(self.metrics_progression))
 
-    def train_for_step(self, step_id: int, batches_per_step: int) -> Dict[str, Any]:
+    def train_for_step(self, step_id: int, num_batches: int) -> Dict[str, Any]:
         if self.request_stop:
             self.context.set_stop_requested(True)
         self.chaos_failure(self.chaos_probability_train)
-        time.sleep(self.train_batch_secs * batches_per_step)
+        time.sleep(self.train_batch_secs * num_batches)
         if self.write_null:
             with open("/dev/stdout", "wb") as f:
                 f.write(b"\x00")
@@ -96,7 +96,7 @@ class NoOpTrialController(det.CallbackTrialController):
         metrics = {name: self.current_metric() for name in ["loss", *self.training_metrics()]}
         response = {
             "metrics": det.util.make_metrics(
-                self._batch_size * batches_per_step, [metrics] * batches_per_step
+                self._batch_size * num_batches, [metrics] * num_batches
             ),
             "stop_requested": self.context.get_stop_requested(),
         }

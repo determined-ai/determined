@@ -20,5 +20,5 @@ We use the Omniglot download script from the [meta-blocks](https://github.com/al
      `det -m <master host:port> experiment create -f 20way1shot.yaml . `
 
 ### Expected Result
-For 20-way 1-shot classification on Omniglot, this implementation should reach ~96% test accuracy  in 200 steps and converge to over 97% (beating the published 96% result in the original paper).  See an example learning curve below.
+For 20-way 1-shot classification on Omniglot, this implementation should reach ~96% test accuracy in 20k batches and converge to over 97% (beating the published 96% result in the original paper).  See an example learning curve below.
 ![](omniglot_20w1s.png)

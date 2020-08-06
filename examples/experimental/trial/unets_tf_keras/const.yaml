@@ -11,14 +11,17 @@ hyperparameters:
   global_batch_size: 64
   OUTPUT_CHANNELS: 3
 
+records_per_epoch: 7400
 searcher:
   name: single
   metric: val_accuracy
   smaller_is_better: false
-  max_steps: 20 
+  max_length:
+    batches: 1140
 
-min_validation_period: 1
+min_validation_period:
+  batches: 57
 entrypoint: model_def:UNetsTrial
-batches_per_step: 57
+scheduling_unit: 57
 environment:
     image: determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-23863bb

@@ -82,7 +82,8 @@ resources:
 searcher:
   name: single
   metric: top1_accuracy 
-  max_steps: 1000 # 1.2 million images in training set of imagenet
+  max_length:
+    batches: 100000 # 1.2 million images in training set of imagenet
   smaller_is_better: false 
 
 optimizations:

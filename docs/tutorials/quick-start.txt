@@ -67,10 +67,12 @@ The Python files contain the model and data pipeline definitions. The ``.yaml`` 
         n_filters2: 64
         dropout1: 0.25
         dropout2: 0.5
+    records_per_epoch: 50_000
     searcher:
         name: single
         metric: validation_loss
-        max_steps: 9
+        max_length:
+          epochs: 1
         smaller_is_better: true
     entrypoint: model_def:MNistTrial
 
@@ -136,7 +138,7 @@ A trial page contains detailed information about the model, the configuration, o
 
 |
 
-During training, the graph on the right will update with the most current metrics you have defined. In this case, the graph displays the loss and error rate per step. A :ref:`step <concept-step>` is a workload consisting of training a model on a certain number of batches of data, where a batch is defined by the model definition's data loader. The default is 100 batches per step, but the number can be overridden in the configuration file.
+During training, the graph on the right will update with the most current metrics you have defined. In this case, the graph displays the loss and error rate per batch.
 
 Left of the graph displays time information, the hyperparameter configuration, the best validation metric and their respective checkpoint.
 
@@ -170,10 +172,12 @@ Below is the ``distributed.yaml`` file, which is very similar to the ``const.yam
       n_filters2: 40
     resources:
       slots_per_trial: 8
+    records_per_epoch: 50_000
     searcher:
       name: single
       metric: validation_error
-      max_steps: 600
+      max_length:
+        epochs: 64
       smaller_is_better: true
     entrypoint: model_def:MNistTrial
 

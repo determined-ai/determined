@@ -16,7 +16,8 @@ hyperparameters:
 searcher:
   name: single
   metric: validation_error
-  max_steps: 5
+  max_length:
+    batches: 500
 reproducibility:
   experiment_seed: 999
 max_restarts: 0

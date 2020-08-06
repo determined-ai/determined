@@ -15,7 +15,8 @@ hyperparameters:
 searcher:
   name: adaptive_simple
   metric: val_avg_iou
-  max_steps: 8
+  max_length:
+    batches: 800
   smaller_is_better: false
   max_trials: 16
 entrypoint: model_def:ObjectDetectionTrial

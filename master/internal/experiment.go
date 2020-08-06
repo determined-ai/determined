@@ -25,6 +25,20 @@ type (
 		create  searcher.Create
 		trialID int
 	}
+	trialCompletedOperation struct {
+		trialID int
+		op      searcher.Runnable
+		metrics interface{}
+	}
+	trialCompletedWorkload struct {
+		trialID          int
+		completedMessage searcher.CompletedMessage
+		unitsCompleted   model.Length
+	}
+	trialExitedEarly struct {
+		trialID      int
+		exitedReason *searcher.ExitedReason
+	}
 	getProgress    struct{}
 	getTrial       struct{ trialID int }
 	restoreTrials  struct{}
@@ -81,9 +95,8 @@ type experiment struct {
 // the returned object's ID appropriately.
 func newExperiment(master *Master, expModel *model.Experiment) (*experiment, error) {
 	conf := expModel.Config
-	method := searcher.NewSearchMethod(conf.Searcher, conf.BatchesPerStep)
-	search := searcher.NewSearcher(
-		conf.Reproducibility.ExperimentSeed, method, conf.Hyperparameters)
+	method := searcher.NewSearchMethod(conf.Searcher)
+	search := searcher.NewSearcher(conf.Reproducibility.ExperimentSeed, method, conf.Hyperparameters)
 
 	// Retrieve the warm start checkpoint, if provided.
 	checkpoint, err := checkpointFromTrialIDOrUUID(
@@ -229,6 +242,10 @@ func restoreExperiment(master *Master, expModel *model.Experiment) error {
 	// Wait for the experiment to handle any initial searcher operations.
 	master.system.Ask(ref, doneProcessingSearcherOperations{}).Get()
 
+	if err = e.db.RollbackSearcherEvents(e.ID); err != nil {
+		return errors.Wrapf(err, "failed to rollback searcher events")
+	}
+
 	if err = e.db.ForEachSearcherEvent(e.ID, newSearcherEventCallback(master, ref)); err != nil {
 		return errors.Wrapf(err, "failed to get searcher events")
 	}
@@ -269,16 +286,22 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case trialCreated:
 		ops, err := e.searcher.TrialCreated(msg.create, msg.trialID)
 		e.processOperations(ctx, ops, err)
-	case searcher.CompletedMessage:
-		ops, err := e.searcher.WorkloadCompleted(msg)
+	case trialCompletedOperation:
+		ops, err := e.searcher.OperationCompleted(msg.trialID, msg.op, msg.metrics)
 		e.processOperations(ctx, ops, err)
-		if msg.Workload.Kind == searcher.ComputeValidationMetrics {
-			ctx.Respond(e.isBestValidation(msg))
+	case trialCompletedWorkload:
+		e.searcher.WorkloadCompleted(msg.completedMessage, msg.unitsCompleted)
+		e.processOperations(ctx, nil, nil) // we call processOperations to flush searcher events.
+		if msg.completedMessage.Workload.Kind == searcher.ComputeValidationMetrics {
+			ctx.Respond(e.isBestValidation(*msg.completedMessage.ValidationMetrics))
 		}
 		progress := e.searcher.Progress()
-		if err = e.db.SaveExperimentProgress(e.ID, &progress); err != nil {
+		if err := e.db.SaveExperimentProgress(e.ID, &progress); err != nil {
 			ctx.Log().WithError(err).Error("failed to save experiment progress")
 		}
+	case trialExitedEarly:
+		ops, err := e.searcher.TrialExitedEarly(msg.trialID)
+		e.processOperations(ctx, ops, err)
 	case actor.ChildFailed:
 		ctx.Log().WithError(msg.Error).Error("trial failed unexpectedly")
 		requestID := searcher.MustParse(msg.Child.Address().Local())
@@ -432,10 +455,8 @@ func (e *experiment) processOperations(
 				checkpoint = checkpointModel
 			}
 			ctx.ActorOf(op.RequestID, newTrial(e, op, checkpoint))
-		case searcher.WorkloadOperation:
-			trialOperations[op.RequestID] = append(trialOperations[op.RequestID], op)
-		case searcher.Close:
-			trialOperations[op.RequestID] = append(trialOperations[op.RequestID], op)
+		case searcher.Requested:
+			trialOperations[op.GetRequestID()] = append(trialOperations[op.GetRequestID()], op)
 		case searcher.Shutdown:
 			if op.Failure {
 				e.updateState(ctx, model.StoppingErrorState)
@@ -483,13 +504,9 @@ func (e *experiment) processOperations(
 	}
 }
 
-func (e *experiment) isBestValidation(msg searcher.CompletedMessage) bool {
-	if msg.ExitedReason != nil {
-		return false
-	}
-
+func (e *experiment) isBestValidation(metrics searcher.ValidationMetrics) bool {
 	metricName := e.Config.Searcher.Metric
-	validation, err := msg.ValidationMetrics.Metric(metricName)
+	validation, err := metrics.Metric(metricName)
 	if err != nil {
 		// TODO: Better error handling here.
 		return false

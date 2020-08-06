@@ -161,8 +161,8 @@ class _TrainingTFDatasetManager(_TrainingInputManager):
         return 0
 
     def get_training_input_and_batches_per_epoch(self) -> Tuple[tf.data.Dataset, int]:
-        # Tensorflow dataset doesn't provide length api so use the configured batches_per_step.
-        steps_per_epoch = self._context.env.experiment_config.batches_per_step()
+        # Tensorflow dataset doesn't provide length api so use the configured scheduling_unit.
+        steps_per_epoch = self._context.env.experiment_config.scheduling_unit()
         return self._training_dataset.repeat(), steps_per_epoch  # type: ignore
 
 

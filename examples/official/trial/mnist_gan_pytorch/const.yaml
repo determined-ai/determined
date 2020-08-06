@@ -10,6 +10,7 @@ hyperparameters:
 searcher:
   name: single
   metric: loss
-  max_steps: 400
+  max_length:
+    batches: 40000
   smaller_is_better: True
 entrypoint: model_def:GANTrial

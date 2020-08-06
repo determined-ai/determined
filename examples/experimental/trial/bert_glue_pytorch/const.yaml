@@ -12,7 +12,8 @@ hyperparameters:
 searcher:
   name: single
   metric: acc
-  max_steps: 4
+  max_length:
+    batches: 400
   smaller_is_better: false
 max_restarts: 0
 data:

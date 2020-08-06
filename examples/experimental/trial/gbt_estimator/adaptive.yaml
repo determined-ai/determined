@@ -35,10 +35,11 @@ hyperparameters:
 searcher:
   name: adaptive_simple
   metric: accuracy
-  max_steps: 500
+  max_length:
+    batches: 500
   max_trials: 100
   smaller_is_better: false
 entrypoint: model_def:BoostedTreesTrial
-batches_per_step: 1
+scheduling_unit: 1
 environment:
   image: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.5.0"

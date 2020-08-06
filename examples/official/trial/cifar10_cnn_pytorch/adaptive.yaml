@@ -24,10 +24,13 @@ hyperparameters:
     type: int
     minval: 16
     maxval: 64
+records_per_epoch: 50000
 searcher:
   name: adaptive_simple
   metric: validation_error
-  max_steps: 800
+  max_length:
+    epochs: 50
   max_trials: 16
 entrypoint: model_def:CIFARTrial
-min_validation_period: 10
+min_validation_period:
+  epochs: 1

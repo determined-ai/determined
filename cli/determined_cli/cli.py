@@ -96,12 +96,13 @@ def preview_search(args: Namespace) -> None:
     r = api.post(args.master, "searcher/preview", body=experiment_config)
     j = r.json()
 
-    def count_steps(sequence: str) -> int:
-        return sum(1 for k in sequence if k == "S")
-
     def to_full_name(kind: str) -> str:
-        if kind == "S":
-            return "step"
+        if kind[-1] == "R":
+            return "train {} records".format(kind[:-1])
+        if kind[-1] == "B":
+            return "train {} batch(es)".format(kind[:-1])
+        if kind[-1] == "E":
+            return "train {} epoch(s)".format(kind[:-1])
         elif kind == "V":
             return "validation"
         elif kind == "C":
@@ -109,7 +110,7 @@ def preview_search(args: Namespace) -> None:
         else:
             raise ValueError("unexpected kind: {}".format(kind))
 
-    def render_sequence(sequence: str) -> str:
+    def render_sequence(sequence: List[str]) -> str:
         if not sequence:
             return "N/A"
         instructions = []
@@ -125,10 +126,9 @@ def preview_search(args: Namespace) -> None:
         instructions.append("{} x {}".format(count, to_full_name(current)))
         return ", ".join(instructions)
 
-    headers = ["Trials", "Steps", "Breakdown"]
+    headers = ["Trials", "Breakdown"]
     values = [
-        (count, count_steps(workloads), render_sequence(workloads))
-        for workloads, count in j["results"].items()
+        (count, render_sequence(operations.split())) for operations, count in j["results"].items()
     ]
 
     print(colored("Using search configuration:", "green"))
@@ -136,12 +136,7 @@ def preview_search(args: Namespace) -> None:
     yml.indent(mapping=2, sequence=4, offset=2)
     yml.dump(experiment_config["searcher"], sys.stdout)
     print()
-    print(
-        "This search will create a total of {} trial(s) and run {} steps".format(
-            sum(j["results"].values()),
-            sum(count_steps(workloads) * cnt for workloads, cnt in j["results"].items()),
-        )
-    )
+    print("This search will create a total of {} trial(s).".format(sum(j["results"].values())))
     print(tabulate.tabulate(values, headers, tablefmt="presto"), flush=False)
 
 

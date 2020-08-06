@@ -23,10 +23,12 @@ hyperparameters:
     type: double
     minval: .2
     maxval: .8
+records_per_epoch: 50000
 searcher:
   name: adaptive_simple
   metric: validation_loss
   smaller_is_better: true
-  max_steps: 9
+  max_length:
+    epochs: 1
   max_trials: 16
 entrypoint: model_def:MNistTrial

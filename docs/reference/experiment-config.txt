@@ -54,26 +54,29 @@ Top-Level Fields
 ``min_validation_period``
   Instructs Determined to periodically compute validation metrics for
   each trial during training. If set, this variable specifies the
-  maximum number of training steps that can be completed for a given
-  trial since the last validation operation for that trial; if this
-  limit is reached, a new validation operation is performed. Validation
-  metrics can be computed more frequently than specified by this
-  parameter, depending on the hyperparameter search method being used by
-  the experiment.
+  maximum length, in terms of records, batches or epochs
+  (see :ref:`Training Units<experiment-configuration_training_units>`), that a
+  given trial can be trained without a validation operation; if this limit is
+  reached, a new validation operation is performed. Validation metrics can be
+  computed more frequently than specified by this parameter, depending on the
+  hyperparameter search method being used by the experiment.
 
 .. _experiment-config-min-checkpoint-period:
 
 ``min_checkpoint_period``
   Instructs Determined to take periodic checkpoints of each trial during
-  training. If set, this variable specifies the maximum number of
-  training steps that can be completed for a given trial since the last
-  checkpoint of that trial; if this limit is reached, a checkpoint of
-  the trial is taken. There are two other situations in which a trial
-  might be checkpointed: (a) during training, a model may be
-  checkpointed to allow the trial's execution to be suspended and later
-  resumed on a different Determined agent (b) when the trial's
-  experiment is completed, to allow the resulting model to be exported
-  from Determined (e.g., for deployment).
+  training. If set, this variable specifies the maximum length that a trial
+  can be trained without a checkpoint, in terms of records, batches or epochs
+  (see :ref:`Training Units<experiment-configuration_training_units>`);
+  if this limit is reached, a checkpoint of the trial is
+  taken. There are three other situations in which a trial might be
+  checkpointed: (a) during training, a model may be checkpointed to
+  allow the trial's execution to be suspended and later resumed on
+  a different Determined agent (b) when the trial's experiment is
+  completed, to allow the resulting model to be exported from
+  Determined (e.g., for deployment) (c) before the search method makes
+  a decision based on a validation of a trial, to maintain consistency
+  in the event of a failure.
 
 ``checkpoint_policy``
   Controls how Determined performs checkpoints after validation operations, if
@@ -84,33 +87,33 @@ Top-Level Fields
     validations for this experiment. Validation metrics are compared
     according to the ``metric`` and ``smaller_is_better`` options in
     the :ref:`searcher configuration <experiment-configuration_searcher>`.
-  - ``all``: A checkpoint will be taken after every validation step,
-    no matter the validation performance of the step.
-  - ``none``: A checkpoint will never be taken *due* to a validation
-    step. However, even with this policy selected, checkpoints are
-    still expected to be taken after the last training step of a
-    trial, due to cluster scheduling decisions or due to
+  - ``all``: A checkpoint will be taken after every validation, no matter
+    the validation performance.
+  - ``none``:  A checkpoint will never be taken *due* to a validation.
+    However, even with this policy selected, checkpoints are still
+    expected to be taken after the trial is finished training, due to
+    cluster scheduling decisions, before search method decisions, or due to
     :ref:`min_checkpoint_period <experiment-config-min-checkpoint-period>`.
 
-.. _batches-per-step:
+.. _scheduling-unit:
 
-``batches_per_step``
-  The number of batches in a single training step. As discussed above,
-  Determined divides the training of a single trial into a sequence of steps;
-  each step corresponds to a certain number of model updates. Therefore, this
-  configuration parameter can be used to control how long a trial is trained at
-  a single agent:
+- ``scheduling_unit``: Specifies the number of batches in a single
+  training workload. As discussed above, Determined divides the training of a
+  single trial into a sequence of training workloads; each workload corresponds
+  to a certain number of model updates. Therefore, this configuration
+  parameter can be used to control how long a trial is trained on a
+  single agent:
 
-  - Doing more work in a step allows per-step overheads (such as
+  - Training longer per workload allows per-workload overheads (such as
     downloading training data) to be amortized over more training
-    work. However, if the step size is too large, a single trial might
+    work. However, if the size of a single workload is too large, a trial might
     be trained for a long time before Determined gets an opportunity to
     suspend training of that trial and replace it with a different
     workload.
-  - The default value is ``100``. As a rule of thumb, the step size should
-    be set so that training a single step takes 60--180 seconds.
+  - The default value is 100. As a rule of thumb, the training workload size
+    should be set so that a single workload takes 60--180 seconds.
 
-  The step size is defined as a fixed number of *batches*; the number of records
+  The workload size is defined as a fixed number of *batches*; the number of records
   in a batch is controlled by the ``global_batch_size`` hyperparameter.
 
 .. _max-restarts:
@@ -387,7 +390,7 @@ hyperparameter search algorithms: ``random``, ``grid``, ``adaptive_simple``,
 The name of the hyperparameter search algorithm to use is configured via the
 ``name`` field; the remaining fields configure the behavior of the searcher and
 depend on the searcher being used. For example, to configure a ``random``
-hyperparameter search that trains 5 trials for 10 steps each:
+hyperparameter search that trains 5 trials for 1000 batches each:
 
 .. code:: yaml
 
@@ -395,7 +398,8 @@ hyperparameter search that trains 5 trials for 10 steps each:
     name: random
     metric: accuracy
     max_trials: 5
-    max_steps: 10
+    max_length:
+      batches: 1000
 
 For details on using Determined to perform hyperparameter search, refer to
 :ref:`hyperparameter-tuning`. For more information on the search methods
@@ -405,11 +409,11 @@ Single
 ------
 
 The ``single`` search method does not really perform a hyperparameter search at
-all; rather, it trains a single trial for a fixed number of steps. When using
+all; rather, it trains a single trial for a fixed length. When using
 this search method, all of the hyperparameters specified in the
 :ref:`hyperparameters <experiment-configuration_hyperparameters>` section must
 be constants. By default, validation metrics are only computed once, after the
-specified number of training steps have been completed;
+specified length of training has been completed;
 :ref:`min_validation_period <experiment-config-min-validation-period>` can be
 used to specify that validation metrics should be computed more frequently.
 
@@ -419,8 +423,9 @@ used to specify that validation metrics should be computed more frequently.
   The name of the validation metric used to evaluate the performance of a
   hyperparameter configuration.
 
-``max_steps``
-  The number of steps to train the model for.
+``max_length``
+  The length of the trial, in terms of records, batches or epochs
+  (see :ref:`Training Units<experiment-configuration_training_units>`).
 
 **Optional Fields**
 
@@ -445,8 +450,8 @@ The ``random`` search method implements a simple random search. The user
 specifies how many hyperparameter configurations should be trained and how long
 each configuration should be trained for; the configurations are sampled
 randomly from the hyperparameter space. Each trial is trained for the specified
-number of steps and then validation metrics are
-computed. :ref:`min_validation_period <experiment-config-min-validation-period>`
+length and then validation metrics are computed.
+:ref:`min_validation_period <experiment-config-min-validation-period>`
 can be used to specify that validation metrics should be computed more
 frequently.
 
@@ -459,8 +464,9 @@ frequently.
 ``max_trials``
   The number of trials, i.e., hyperparameter configurations, to evaluate.
 
-``max_steps``
-  The number of steps to train each trial for.
+``max_length``
+  The length to train each trial, in terms of records, batches or epochs
+  (see :ref:`Training Units<experiment-configuration_training_units>`).
 
 **Optional Fields**
 
@@ -491,6 +497,10 @@ more details see the :ref:`topic-guides_hp-tuning-det_grid`.
 ``metric``
   The name of the validation metric used to evaluate the performance of a
   hyperparameter configuration.
+
+``max_length``
+  The length to train each trial, in terms of records, batches or epochs
+  (see :ref:`Training Units<experiment-configuration_training_units>`).
 
 **Optional Fields**
 
@@ -523,20 +533,21 @@ hyperparameter configurations while quickly eliminating poor ones.
   The name of the validation metric used to evaluate the performance of a
   hyperparameter configuration.
 
-``target_trial_steps``
-  The maximum number of training steps to allocate to any one trial. The vast
-  majority of trials will be stopped early, and thus only a small fraction of
-  trials will actually be trained for this number of steps. We recommend setting
-  this to a multiple of ``divisor^(max_rungs-1)``, which is ``4^(5-1) = 256``
-  with the default values.
+``max_length``
+  The maximum training length of any one trial, in terms of records, batches or 
+  epochs (see :ref:`Training Units<experiment-configuration_training_units>`).
+  The vast majority of trials will be stopped early, and thus only a small fraction
+  of trials will actually be trained for this long. We suggest setting this to a
+  multiple of ``divisor^(max_rungs-1)``, which is 4^(5-1) = 256 with the default
+  values.
 
-``step_budget``
-  The total number of steps to allocate across all trials. We recommend setting
-  this to be a multiple of ``target_trial_steps``, which implies interpreting
-  this subfield as the effective number of complete trials to evaluate. Note
-  that some trials might be in-progress when this budget is exhausted; adaptive
-  search will allocate some additional steps to complete these in-progress
-  trials.
+``budget``
+  The total training length across all trials, in terms of the same unit
+  (see :ref:`Training Units<experiment-configuration_training_units>`)
+  as ``max_length``. We suggest setting this to be a multiple of ``max_length``,
+  which implies interpreting this subfield as the effective number of complete
+  trials to evaluate. Note that some trials might be in-progress when this budget
+  is exhausted; adaptive search will allow these to complete.
 
 **Optional Fields**
 
@@ -558,8 +569,8 @@ hyperparameter configurations while quickly eliminating poor ones.
   recommend using either ``aggressive`` or ``standard`` mode.
 
 ``divisor``
-  The fraction of trials to keep at each rung, and also determines how many
-  steps are allocated at each rung. The default setting is ``4``; only advanced
+  The fraction of trials to keep at each rung, and also determines the
+  training length for each rung. The default setting is ``4``; only advanced
   users should consider changing this value.
 
 ``max_rungs``
@@ -592,12 +603,13 @@ applications of hyperparameter search.
   The name of the validation metric used to evaluate the performance of a
   hyperparameter configuration.
 
-``max_steps``
-  The maximum number of training steps to allocate to any one trial. The vast
-  majority of trials will be stopped early, and thus only a small fraction of
-  trials will actually be trained for this number of steps. This quantity is
-  domain-specific and should roughly reflect the number of training steps needed
-  for the model to converge on the data set.
+``max_length``: 
+  The maximum training length of any one trial, in terms of records, batches or epochs
+  (see :ref:`Training Units<experiment-configuration_training_units>`).
+  The vast majority of trials will be stopped early, and thus only a small fraction
+  of trials will actually be trained for this long. This quantity is domain-specific
+  and should roughly reflect the length of training needed for the model to
+  converge on the data set.
 
 ``max_trials``
   The number of trials, i.e., hyperparameter configurations, to evaluate.
@@ -622,9 +634,9 @@ applications of hyperparameter search.
   recommend using either ``aggressive`` or ``standard`` mode.
 
 ``divisor``
-  The fraction of trials to keep at each rung, and also determines how many
-  steps are allocated at each rung. The default setting is ``4``; only advanced
-  users should consider changing this value.
+  The fraction of trials to keep at each rung, and also determines the training
+  length for each rung. The default setting is ``4``; only advanced users should
+  consider changing this value.
 
 ``max_rungs``
   The maximum number of times we evaluate intermediate results for a trial and
@@ -655,12 +667,12 @@ more suitable for large experiments with many trials.
   The name of the validation metric used to evaluate the performance of a
   hyperparameter configuration.
 
-``target_trial_steps``
-  The maximum number of training steps to allocate to any one trial. The vast
+``max_length``
+  The maximum training length of any one trial, in terms of records, batches or epochs
+  (see :ref:`Training Units<experiment-configuration_training_units>`). The vast
   majority of trials will be stopped early, and thus only a small fraction of
-  trials will actually be trained for this number of steps. This quantity is
-  domain-specific and should roughly reflect the number of training steps needed
-  for the model to converge on the data set.
+  trials will actually be trained for this long. This quantity is domain-specific and should
+  roughly reflect the length of training needed for the model to converge on the data set.
 
 ``max_trials``
   The number of trials, i.e., hyperparameter configurations, to evaluate.
@@ -689,9 +701,9 @@ more suitable for large experiments with many trials.
   recommend using either ``aggressive`` or ``standard`` mode.
 
 ``divisor``
-  The fraction of trials to keep at each rung, and also determines how many
-  steps are allocated at each rung. The default setting is ``4``; only advanced
-  users should consider changing this value.
+  The fraction of trials to keep at each rung, and also determines the training
+  length for each rung. The default setting is ``4``; only advanced users should
+  consider changing this value.
 
 ``max_rungs``
   The maximum number of times we evaluate intermediate results for a trial and
@@ -714,8 +726,8 @@ PBT
 
 The ``pbt`` search method uses `population-based training
 <https://deepmind.com/blog/population-based-training-neural-networks/>`__, which
-maintains a population of active trials to train. After each trial has been
-trained for a certain number of steps, all the trials are validated. The
+maintains a population of active trials to train. After each trial has been trained
+the length specified by ``length_per_round``, all the trials are validated. The
 searcher then closes some trials and replaces them with altered copies of other
 trials. This process makes up one "round"; the searcher runs some number of
 rounds to execute a complete search. The model definition class must be able to
@@ -734,8 +746,9 @@ restore models.
   The number of trials (i.e., different hyperparameter configurations) to keep
   active at a time.
 
-``steps_per_round``
-  The number of steps to train each trial between validations.
+``length_per_round``
+  The length to train each trial during a round, in terms of records, batches or
+  epochs (see :ref:`Training Units<experiment-configuration_training_units>`).
 
 ``num_rounds``
   The total number of rounds to execute.
@@ -1049,3 +1062,32 @@ details on how to set environment variables in containers.
 ``local_cache_container_path``
   The file system path to use as the mount point in the trial runner container
   for storing the local cache.
+
+.. _experiment-configuration_training_units:
+
+Training Units
+**************
+
+Some configuration setiings, such as searcher training lengths and budgets,
+``min_validation_period``, and ``min_checkpoint_period``, can be expressed in terms of a few
+training units: records, batches or epochs. For example, to specify the ``max_length`` for a
+searcher in terms of batches, the configuration would read as shown below.
+
+.. code:: yaml
+
+  max_length:
+    batches: 900
+
+To express it terms of records or epochs, records or epochs would be specified in place of
+``batches``. In the case of epochs, ``records_per_epoch`` must also be specified. Below is an
+example of a single searcher in terms of epochs.
+
+.. code:: yaml
+
+  records_per_epoch: 50000
+  searcher:
+    name: single
+    metric: validation_error
+    max_length:
+      epochs: 64
+    smaller_is_better: true

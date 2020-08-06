@@ -1,8 +1,6 @@
 """
 CNN on Cifar10 from Keras example:
 https://github.com/fchollet/keras/blob/master/examples/cifar10_cnn.py
-- const.yaml, ~50% accuracy after 50 steps
-- adaptive.yaml, accuracy comparable to Keras example after 50 steps
 """
 
 import tempfile

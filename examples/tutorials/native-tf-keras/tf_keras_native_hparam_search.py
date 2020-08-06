@@ -15,7 +15,8 @@ import determined as det
 from determined.experimental.keras import init
 
 config = {
-    "searcher": {"name": "adaptive_simple", "metric": "val_loss", "max_steps": 5, "max_trials": 5},
+    "searcher": {"name": "adaptive_simple", "metric": "val_loss",
+        "max_length": {"batches": 500}, "max_trials": 5},
     "hyperparameters": {
         "num_units": det.Integer(64, 256),
         "dropout": det.Double(0.0, 0.5),

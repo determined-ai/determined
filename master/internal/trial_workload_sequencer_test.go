@@ -20,10 +20,16 @@ checkpoint_storage:
   secret_key: my secret
   bucket: my bucket
 hyperparameters:
+  global_batch_size: 64
+min_validation_period:
+  batches: 200
+min_checkpoint_period:
+  batches: 400
 searcher:
   name: single
   metric: loss
-  max_steps: 1
+  max_length:
+    batches: 500
 reproducibility:
   experiment_seed: 42
 checkpoint_policy: none
@@ -35,24 +41,23 @@ checkpoint_policy: none
 	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
 
 	rand := nprand.New(0)
-	create := searcher.NewCreate(rand, nil, model.TrialWorkloadSequencerType)
+	create := searcher.NewCreate(rand, map[string]interface{}{
+		model.GlobalBatchSize: 64,
+	}, model.TrialWorkloadSequencerType)
 
-	// Sequencer input messages.
-	batches := model.DefaultExperimentConfig().BatchesPerStep
-	trainOperation1 := searcher.NewTrain(create.RequestID, 1, batches)
-	trainOperation2 := searcher.NewTrain(create.RequestID, 2, batches)
-	trainOperation3 := searcher.NewTrain(create.RequestID, 3, batches)
-	trainOperation4 := searcher.NewTrain(create.RequestID, 4, batches)
-	trainOperation5 := searcher.NewTrain(create.RequestID, 5, batches)
-	checkpointOperation2 := searcher.NewCheckpoint(create.RequestID, 2)
-	validateOperation2 := searcher.NewValidate(create.RequestID, 2)
+	// Sequencer input/output messages.
+	schedulingUnit := model.DefaultExperimentConfig().SchedulingUnit
+	train := searcher.NewTrain(create.RequestID, model.NewLength(model.Batches, 500))
+	validate := searcher.NewValidate(create.RequestID)
+	checkpoint := searcher.NewCheckpoint(create.RequestID)
 
+	// Sequencer internal workloads.
 	trainWorkload1 := searcher.Workload{
 		Kind:                  searcher.RunStep,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                1,
-		NumBatches:            batches,
+		NumBatches:            schedulingUnit,
 		TotalBatchesProcessed: 0,
 	}
 	trainWorkload2 := searcher.Workload{
@@ -60,74 +65,81 @@ checkpoint_policy: none
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                2,
-		NumBatches:            batches,
-		TotalBatchesProcessed: batches,
+		NumBatches:            schedulingUnit,
+		TotalBatchesProcessed: schedulingUnit,
 	}
 	trainWorkload3 := searcher.Workload{
 		Kind:                  searcher.RunStep,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                3,
-		NumBatches:            batches,
-		TotalBatchesProcessed: 2 * batches,
+		NumBatches:            schedulingUnit,
+		TotalBatchesProcessed: 2 * schedulingUnit,
 	}
 	trainWorkload4 := searcher.Workload{
 		Kind:                  searcher.RunStep,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                4,
-		NumBatches:            batches,
-		TotalBatchesProcessed: 3 * batches,
+		NumBatches:            schedulingUnit,
+		TotalBatchesProcessed: 3 * schedulingUnit,
 	}
 	trainWorkload5 := searcher.Workload{
 		Kind:                  searcher.RunStep,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                5,
-		NumBatches:            batches,
-		TotalBatchesProcessed: 4 * batches,
+		NumBatches:            schedulingUnit,
+		TotalBatchesProcessed: 4 * schedulingUnit,
 	}
 	checkpointWorkload1 := searcher.Workload{
 		Kind:                  searcher.CheckpointModel,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                1,
-		TotalBatchesProcessed: 0,
+		TotalBatchesProcessed: schedulingUnit,
 	}
 	checkpointWorkload2 := searcher.Workload{
 		Kind:                  searcher.CheckpointModel,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                2,
-		TotalBatchesProcessed: batches,
+		TotalBatchesProcessed: schedulingUnit * 2,
+	}
+	checkpointWorkload4 := searcher.Workload{
+		Kind:                  searcher.CheckpointModel,
+		ExperimentID:          1,
+		TrialID:               1,
+		StepID:                4,
+		TotalBatchesProcessed: schedulingUnit * 4,
+	}
+	checkpointWorkload5 := searcher.Workload{
+		Kind:                  searcher.CheckpointModel,
+		ExperimentID:          1,
+		TrialID:               1,
+		StepID:                5,
+		TotalBatchesProcessed: schedulingUnit * 5,
 	}
 	validationWorkload2 := searcher.Workload{
 		Kind:                  searcher.ComputeValidationMetrics,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                2,
-		TotalBatchesProcessed: batches,
+		TotalBatchesProcessed: schedulingUnit * 2,
 	}
-
-	// Sequencer output messages.
-	trainCompleted1 := searcher.CompletedMessage{
-		Workload: trainWorkload1,
+	validationWorkload4 := searcher.Workload{
+		Kind:                  searcher.ComputeValidationMetrics,
+		ExperimentID:          1,
+		TrialID:               1,
+		StepID:                4,
+		TotalBatchesProcessed: schedulingUnit * 4,
 	}
-	trainCompleted2 := searcher.CompletedMessage{
-		Workload: trainWorkload2,
-	}
-	trainCompleted3 := searcher.CompletedMessage{
-		Workload: trainWorkload3,
-	}
-	trainCompleted4 := searcher.CompletedMessage{
-		Workload: trainWorkload4,
-	}
-	checkpointCompleted2 := searcher.CompletedMessage{
-		Workload:          checkpointWorkload2,
-		CheckpointMetrics: &searcher.CheckpointMetrics{UUID: uuid.New()},
-	}
-	validationCompleted2 := searcher.CompletedMessage{
-		Workload: validationWorkload2,
+	validationWorkload5 := searcher.Workload{
+		Kind:                  searcher.ComputeValidationMetrics,
+		ExperimentID:          1,
+		TrialID:               1,
+		StepID:                5,
+		TotalBatchesProcessed: schedulingUnit * 5,
 	}
 
 	s := newTrialWorkloadSequencer(experiment, create, nil)
@@ -136,11 +148,10 @@ checkpoint_policy: none
 	assert.Assert(t, s.UpToDate())
 
 	// Request a few operations so the sequencer builds its internal desired state.
-	assert.NilError(t, s.OperationRequested(trainOperation1))
+	assert.NilError(t, s.OperationRequested(train))
 	assert.Assert(t, !s.UpToDate())
-	assert.NilError(t, s.OperationRequested(trainOperation2))
-	assert.NilError(t, s.OperationRequested(checkpointOperation2))
-	assert.NilError(t, s.OperationRequested(validateOperation2))
+	assert.NilError(t, s.OperationRequested(validate))
+	assert.NilError(t, s.OperationRequested(checkpoint))
 
 	// Check that workload() returns an error before setTrialID is set
 	_, err := s.Workload()
@@ -155,53 +166,120 @@ checkpoint_policy: none
 	// Check that before training has completed, there is nothing to checkpoint.
 	assert.Assert(t, s.PrecloseCheckpointWorkload() == nil)
 
-	assert.NilError(t, s.WorkloadCompleted(trainCompleted1, nil))
+	// Complete first RUN_STEP.
+	op, _, err := s.WorkloadCompleted(searcher.CompletedMessage{Workload: trainWorkload1}, nil)
+	assert.NilError(t, err)
+	assert.Equal(t, op, nil, "should not have finished %v yet", op)
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, trainWorkload2)
 	assert.Equal(t, *s.PrecloseCheckpointWorkload(), checkpointWorkload1)
 
-	assert.NilError(t, s.WorkloadCompleted(trainCompleted2, nil))
+	// Complete second RUN_STEP.
+	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{Workload: trainWorkload2}, nil)
+	assert.NilError(t, err)
+	assert.Equal(t, op, nil, "should not have finished %v yet", op)
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, validationWorkload2)
 	assert.Equal(t, *s.PrecloseCheckpointWorkload(), checkpointWorkload2)
 
-	assert.NilError(t, s.WorkloadCompleted(validationCompleted2, nil))
+	// Complete first COMPUTE_VALIDATION_METRICS.
+	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{Workload: validationWorkload2}, nil)
+	assert.NilError(t, err)
+	assert.Equal(t, op, nil, "should not have finished %v yet", op)
 	w, err = s.Workload()
 	assert.NilError(t, err)
-	assert.Equal(t, w, checkpointWorkload2)
+	assert.Equal(t, w, trainWorkload3)
 
-	assert.NilError(t, s.WorkloadCompleted(checkpointCompleted2, nil))
+	// Complete third and fourth RUN_STEP.
+	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{Workload: trainWorkload3}, nil)
+	assert.NilError(t, err)
+	assert.Equal(t, op, nil, "should not have finished %v yet", op)
+	w, err = s.Workload()
+	assert.NilError(t, err)
+	assert.Equal(t, w, trainWorkload4)
+
+	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{Workload: trainWorkload4}, nil)
+	assert.NilError(t, err)
+	assert.Equal(t, op, nil, "should not have finished %v yet", op)
+	w, err = s.Workload()
+	assert.NilError(t, err)
+	assert.Equal(t, w, validationWorkload4)
+
+	// Complete second COMPUTE_VALIDATION_METRICS.
+	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{
+		Workload:          validationWorkload4,
+		ValidationMetrics: &searcher.ValidationMetrics{},
+	}, nil)
+	assert.NilError(t, err)
+	assert.Equal(t, op, nil, "should not have finished %v yet", op)
+	w, err = s.Workload()
+	assert.NilError(t, err)
+	assert.Equal(t, w, checkpointWorkload4)
+
+	// Complete first CHECKPOINT_MODEL.
+	fakeCheckpointMetrics := searcher.CheckpointMetrics{UUID: uuid.New()}
+	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{
+		Workload:          checkpointWorkload4,
+		CheckpointMetrics: &fakeCheckpointMetrics,
+	}, nil)
+	assert.NilError(t, err)
+	assert.Equal(t, op, nil, "should not have finished %v yet", op)
 	assert.Assert(t, s.PrecloseCheckpointWorkload() == nil)
 
+	// Complete last RUN_STEP.
+	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{Workload: trainWorkload5}, nil)
+	assert.NilError(t, err)
+	assert.Equal(t, op, train, "expected searcher op to be returned")
+	w, err = s.Workload()
+	assert.NilError(t, err)
+	assert.Equal(t, w, checkpointWorkload5)
+
+	// Check that rollBackSequencer() affects nothing before a completed checkpoint.
+	assert.Equal(t, s.RollBackSequencer(), 4)
+	w, err = s.Workload()
+	assert.NilError(t, err)
+	assert.Equal(t, w, trainWorkload5)
+
+	// Replay last RUN_STEP after rollback.
+	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{Workload: trainWorkload5}, nil)
+	assert.NilError(t, err)
+	assert.Equal(t, op, train, "expected searcher op to be returned")
+	w, err = s.Workload()
+	assert.NilError(t, err)
+	assert.Equal(t, w, checkpointWorkload5)
+
+	// Complete last CHECKPOINT_MODEL.
+	fakeCheckpointMetrics = searcher.CheckpointMetrics{UUID: uuid.New()}
+	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{
+		Workload:          checkpointWorkload5,
+		CheckpointMetrics: &fakeCheckpointMetrics,
+	}, nil)
+	assert.NilError(t, err)
+	assert.Equal(t, op, nil, "should not have finished %v yet", op)
+	w, err = s.Workload()
+	assert.NilError(t, err)
+	assert.Equal(t, w, validationWorkload5)
+
+	// Complete last COMPUTE_VALIDATION_METRICS.
+	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{
+		Workload:          validationWorkload5,
+		ValidationMetrics: &searcher.ValidationMetrics{},
+	}, nil)
+	assert.NilError(t, err)
+	assert.Equal(t, op, validate, "expected searcher op to be returned")
+	assert.Assert(t, s.PrecloseCheckpointWorkload() == nil)
+
+	// Complete cached CHECKPOINT_MODEL.
+	op, _, err = s.CompleteCachedCheckpoints()
+	assert.NilError(t, err)
+	assert.Equal(t, op, checkpoint, "expected searcher op to be returned")
+
+	// Check that we are up to date now.
 	assert.Assert(t, s.UpToDate())
 
 	// Check that workload() returns an error when upToDate returns true
 	_, err = s.Workload()
 	assert.Error(t, err, "cannot call sequencer.Workload() with sequencer.UpToDate() == true")
-
-	// Check that rollBackSequencer() affects nothing after a completed checkpoint.
-	assert.Equal(t, s.RollBackSequencer(), 2)
-	assert.Assert(t, s.UpToDate())
-
-	// Check that rollBackSequencer() causes workload() to replay workloads.
-	assert.NilError(t, s.OperationRequested(trainOperation3))
-	assert.NilError(t, s.OperationRequested(trainOperation4))
-	assert.NilError(t, s.OperationRequested(trainOperation5))
-	w, err = s.Workload()
-	assert.NilError(t, err)
-	assert.Equal(t, w, trainWorkload3)
-	assert.NilError(t, s.WorkloadCompleted(trainCompleted3, nil))
-	w, err = s.Workload()
-	assert.NilError(t, err)
-	assert.Equal(t, w, trainWorkload4)
-	assert.NilError(t, s.WorkloadCompleted(trainCompleted4, nil))
-	w, err = s.Workload()
-	assert.NilError(t, err)
-	assert.Equal(t, w, trainWorkload5)
-	assert.Equal(t, s.RollBackSequencer(), 2)
-	w, err = s.Workload()
-	assert.NilError(t, err)
-	assert.Equal(t, w, trainWorkload3)
 }

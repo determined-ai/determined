@@ -32,9 +32,11 @@ hyperparameters:
 searcher:
   name: adaptive_simple
   metric: val_accuracy
-  max_steps: 20
+  max_length:
+    batches: 320
   max_trials: 16
   smaller_is_better: false
-batches_per_step: 16
-min_checkpoint_period: 2
+scheduling_unit: 16
+min_checkpoint_period:
+  batches: 32
 entrypoint: model_def:MNISTTrial

@@ -31,9 +31,10 @@ type Workload struct {
 }
 
 func (w Workload) String() string {
-	extra := ""
+	var extra string
 	if w.Kind == RunStep {
-		extra = fmt.Sprintf(" (%d Batches)", w.NumBatches)
+		extra += fmt.Sprintf(" (%d Batches)", w.NumBatches)
 	}
+	extra += fmt.Sprintf(" (%d Prior Batches)", w.TotalBatchesProcessed)
 	return fmt.Sprintf("<%s%s: (%d,%d,%d)>", w.Kind, extra, w.ExperimentID, w.TrialID, w.StepID)
 }

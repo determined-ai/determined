@@ -494,7 +494,7 @@ class TensorpackTrialController(det.LoopTrialController):
             self.trainer.train_with_defaults(
                 callbacks=self.cbs,
                 monitors=self.trial.tensorpack_monitors(),
-                steps_per_epoch=self.batches_per_step,
+                steps_per_epoch=self.scheduling_unit,
                 starting_epoch=self.env.first_step(),
                 max_epoch=self.env.first_step() + IMPOSSIBLY_LARGE_EPOCHS,
                 session_init=self.session_init,
