@@ -1,6 +1,6 @@
 import axios, { AxiosResponse, CancelToken, Method } from 'axios';
 
-import handleError, { ErrorLevel, ErrorType, isDaError } from 'ErrorHandler';
+import handleError, { DaError, ErrorLevel, ErrorType, isDaError } from 'ErrorHandler';
 import { isAuthFailure } from 'services/api';
 import * as DetSwagger from 'services/api-ts-sdk';
 import { serverAddress } from 'utils/routes';
@@ -27,7 +27,7 @@ export interface Api<Input, Output>{
   // middlewares?: Middleware[]; // success/failure middlewares
 }
 
-export const processApiError = (name: string, e: Error): void => {
+export const processApiError = (name: string, e: Error): DaError | Error => {
   const isAuthError = isAuthFailure(e);
   const silent = !process.env.IS_DEV || isAuthError || axios.isCancel(e);
   if (isDaError(e)) {
@@ -37,7 +37,7 @@ export const processApiError = (name: string, e: Error): void => {
       e.publicSubject = 'Unexpected API response';
       e.silent = silent;
     }
-    throw handleError(e);
+    return handleError(e);
   }
   handleError({
     error: e,
@@ -47,7 +47,7 @@ export const processApiError = (name: string, e: Error): void => {
     silent,
     type: isAuthError ? ErrorType.Auth : ErrorType.Server,
   });
-  throw e;
+  return e;
 };
 
 export function generateApi<Input, Output>(api: Api<Input, Output>) {
@@ -65,7 +65,7 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
 
       return api.postProcess ? api.postProcess(response) : response.data as Output;
     } catch (e) {
-      return processApiError(api.name, e) as unknown as Output;
+      throw processApiError(api.name, e);
     }
   };
 }
@@ -92,6 +92,6 @@ export const consumeStream = async <T = unknown>(
       onEvent(result.value.result);
     }
   } catch (e) {
-    processApiError(fetchArgs.url, e);
+    throw processApiError(fetchArgs.url, e);
   }
 };
