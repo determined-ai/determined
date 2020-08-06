@@ -25,6 +25,8 @@ Version 0.12.13
 
   - The ``model`` arguments in :meth:`PyTorchTrial.train_batch`, :meth:`PyTorchTrial.evaluate_batch`, and :meth:`PyTorchTrial.evaluate_full_dataset` are now deprecated.
 
+- Implement :ref:`topic-guides_hp-tuning-det_adaptive-asha` for large-scale hyperparameter search. See the `associated paper <https://arxiv.org/pdf/1810.05934.pdf>`__ for more information.
+
 **Improvements**
 
 - Allow proxy environment variables to be set in the agent config. See :ref:`environment-variables` for more information.
