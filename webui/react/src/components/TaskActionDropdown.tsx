@@ -1,5 +1,5 @@
 import { Dropdown, Menu } from 'antd';
-import { ClickParam } from 'antd/es/menu';
+import { MenuInfo } from 'rc-menu/lib/interface';
 import React from 'react';
 
 import Icon from 'components/Icon';
@@ -50,7 +50,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
     }
   };
 
-  const handleMenuClick = async (params: ClickParam): Promise<void> => {
+  const handleMenuClick = async (params: MenuInfo): Promise<void> => {
     params.domEvent.stopPropagation();
     try {
       switch (params.key) { // Cases should match menu items.
@@ -112,7 +112,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
         level: ErrorLevel.Error,
         message: e.message,
         publicMessage: `Unable to ${params.key} task ${task.id}.`,
-        publicSubject: `${capitalize(params.key)} failed.`,
+        publicSubject: `${capitalize(params.key.toString())} failed.`,
         silent: false,
         type: ErrorType.Server,
       });
