@@ -3,6 +3,7 @@ import { Button, Input, Modal, Space, Table } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
+import { makeClickHandler } from 'components/Link';
 import Page from 'components/Page';
 import { defaultRowClassName, isAlternativeAction } from 'components/Table';
 import { TaskRenderer } from 'components/Table';
