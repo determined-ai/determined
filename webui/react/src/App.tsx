@@ -3,6 +3,7 @@ import React, { useCallback, useEffect } from 'react';
 
 import { setupAnalytics } from 'Analytics';
 import NavBar from 'components/NavBar';
+import Navigation from 'components/Navigation';
 import Router from 'components/Router';
 import SideBar from 'components/SideBar';
 import Spinner from 'components/Spinner';
@@ -98,10 +99,9 @@ const AppView: React.FC = () => {
   return (
     <div className={classes.join(' ')}>
       <Spinner spinning={ui.showSpinner}>
-        {isAuthenticated && ui.showChrome && <NavBar username={username} />}
         {isAuthenticated && <AppContexts />}
         <div className={css.body}>
-          {isAuthenticated && ui.showChrome && <SideBar />}
+          <Navigation />
           <Router routes={appRoutes} />
         </div>
       </Spinner>

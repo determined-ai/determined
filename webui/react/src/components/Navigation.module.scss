@@ -1,0 +1,194 @@
+$transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
+
+.navItem {
+  align-items: center;
+  color: var(--theme-colors-monochrome-17);
+  cursor: pointer;
+  display: flex;
+  padding: var(--theme-sizes-layout-large) var(--theme-sizes-layout-big);
+
+  .label {
+    font-size: var(--theme-sizes-font-small);
+    margin-left: var(--theme-sizes-layout-big);
+    transition: all $transition-props;
+    white-space: nowrap;
+    width: auto;
+  }
+}
+.navItem:hover {
+  background-color: var(--theme-colors-base-3);
+}
+.navItem.collapsed {
+  .label {
+    margin-left: 0;
+    opacity: 0;
+    visibility: hidden;
+    width: 0;
+  }
+}
+.base {
+  background-color: var(--theme-colors-base-2);
+  display: flex;
+  flex-basis: var(--theme-sizes-navigation-maxWidth);
+  flex-direction: column;
+  flex-grow: 0;
+  flex-shrink: 0;
+  transition: flex-basis $transition-props;
+
+  header {
+    height: 14rem;
+    position: relative;
+    transition: height $transition-props;
+  }
+  main {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+  section.launch {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+  }
+  section.top,
+  section.bottom {
+    padding: var(--theme-sizes-layout-large) 0;
+  }
+  section.top {
+    flex-grow: 1;
+  }
+  .logo {
+    height: 6.494rem;
+    left: 6rem;
+    position: absolute;
+    top: 2.4rem;
+    transition: all $transition-props;
+    width: 12.8rem;
+  }
+  .logoIcon {
+    background-image: url('~assets/logo-icon.svg');
+    background-repeat: no-repeat;
+    background-size: contain;
+    height: 4rem;
+    left: 3.2rem;
+    position: absolute;
+    top: 0;
+    transition:
+      height $transition-props,
+      left $transition-props,
+      width $transition-props;
+    width: 5.2rem;
+  }
+  .logoLabel {
+    background-image: url('~assets/logo-on-dark-label.svg');
+    background-repeat: no-repeat;
+    height: 1.3rem;
+    left: 0;
+    position: absolute;
+    top: 5.2rem;
+    transition:
+      opacity $transition-props,
+      width $transition-props;
+    width: 12rem;
+  }
+  .version {
+    color: var(--theme-colors-base-12);
+    font-size: var(--theme-sizes-font-tiny);
+    font-style: italic;
+    height: 1.7rem;
+    position: absolute;
+    top: 10.4rem;
+    transition:
+      top $transition-props,
+      width $transition-props;
+    width: 100%;
+  }
+  .versionLabel {
+    left: 50%;
+    overflow: hidden;
+    padding: 0 var(--theme-sizes-layout-medium);
+    position: absolute;
+    text-align: center;
+    text-overflow: ellipsis;
+    transform: translate(-50%, 0);
+    transition: all $transition-props;
+    width: 100%;
+  }
+  .launchBlock {
+    align-items: center;
+    display: flex;
+
+    .launchButton {
+      background-color: transparent;
+      border-color: var(--theme-colors-monochrome-9);
+      border-radius: var(--theme-sizes-border-radius) 0 0 var(--theme-sizes-border-radius);
+      border-style: solid;
+      border-width: var(--theme-sizes-border-width) 0 var(--theme-sizes-border-width) var(--theme-sizes-border-width);
+      color: var(--theme-colors-monochrome-17);
+    }
+    .launchIcon {
+      align-items: center;
+      background-color: transparent;
+      border-color: var(--theme-colors-monochrome-9);
+      border-radius: 0 var(--theme-sizes-border-radius) var(--theme-sizes-border-radius) 0;
+      border-style: solid;
+      border-width: var(--theme-sizes-border-width);
+      color: var(--theme-colors-monochrome-17);
+      display: flex;
+      justify-content: center;
+      width: var(--theme-sizes-layout-giant);
+    }
+  }
+  .launchBlock:hover {
+    .launchButton,
+    .launchIcon { border-color: var(--theme-colors-monochrome-17); }
+  }
+  .user {
+    align-items: center;
+    background-color: var(--theme-colors-base-3);
+    display: flex;
+    padding: var(--theme-sizes-layout-big) var(--theme-sizes-layout-big);
+    width: 100%;
+  }
+  .user > span {
+    color: var(--theme-colors-monochrome-17);
+    font-size: var(--theme-sizes-font-medium);
+    margin-left: var(--theme-sizes-layout-big);
+  }
+}
+.base.collapsed {
+  flex-basis: var(--theme-sizes-navigation-minWidth);
+
+  header {
+    height: 7.2rem;
+  }
+  .logo {
+    height: 2.4rem;
+    left: 1.2rem;
+    top: 1.6rem;
+    width: 3.2rem;
+  }
+  .logoIcon {
+    height: 2.4rem;
+    left: 0;
+    width: 3.2rem;
+  }
+  .logoLabel {
+    opacity: 0;
+    width: 0;
+  }
+  .version {
+    top: 4.4rem;
+    width: 100%;
+  }
+  .launchBlock {
+    .launchButton {
+      display: none;
+      opacity: 0;
+      width: 0;
+    }
+    .launchIcon {
+      border-radius: 100%;
+    }
+  }
+}
