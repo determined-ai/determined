@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom';
 import Auth from 'contexts/Auth';
 import UI from 'contexts/UI';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import useStorage from 'hooks/useStorage';
 import { setupUrlForDev } from 'routes';
 import { createNotebook } from 'services/api';
 import { handlePath, openBlank } from 'utils/routes';
@@ -30,7 +31,7 @@ const NavigationItem: React.FC<ItemProps> = (props: ItemProps) => {
   const [ isActive, setIsActive ] = useState(false);
   const classes = [ css.navItem ];
 
-  if (ui.collapseChrome) classes.push(css.collapsed);
+  if (ui.chromeCollapsed) classes.push(css.collapsed);
   if (isActive) classes.push(css.active);
 
   useEffect(() => {
@@ -47,10 +48,14 @@ const NavigationItem: React.FC<ItemProps> = (props: ItemProps) => {
   </div>;
 };
 
+const STORAGE_KEY = 'collapsed';
+
 const Navigation: React.FC = () => {
   const { isAuthenticated, user } = Auth.useStateContext();
   const ui = UI.useStateContext();
   const setUI = UI.useActionContext();
+  const storage = useStorage('navigation');
+  const [ isCollapsed, setIsCollapsed ] = useState(storage.getWithDefault(STORAGE_KEY, false));
   const [ isShowingCpu, setIsShowingCpu ] = useState(false);
   const classes = [ css.base ];
 
@@ -59,7 +64,7 @@ const Navigation: React.FC = () => {
   const isVersionLong = (version?.match(/\./g) || []).length > 2;
   const username = user?.username || 'Anonymous';
 
-  if (ui.collapseChrome) classes.push(css.collapsed);
+  if (isCollapsed) classes.push(css.collapsed);
 
   const launchNotebook = useCallback(async (slots: number) => {
     try {
@@ -85,8 +90,14 @@ const Navigation: React.FC = () => {
   const handleVisibleChange = useCallback((visible: boolean) => setIsShowingCpu(visible), []);
 
   const handleCollapse = useCallback(() => {
-    setUI({ type: UI.ActionType.ToggleChromeCollapse });
-  }, [ setUI ]);
+    const newCollapsed = !isCollapsed;
+    storage.set(STORAGE_KEY, newCollapsed);
+    setIsCollapsed(newCollapsed);
+  }, [ isCollapsed, storage ]);
+
+  useEffect(() => {
+    setUI({ type: isCollapsed ? UI.ActionType.CollapseChrome : UI.ActionType.ExpandChrome });
+  }, [ isCollapsed, setUI ]);
 
   return showNavigation ? (
     <nav className={classes.join(' ')}>
@@ -115,7 +126,7 @@ const Navigation: React.FC = () => {
               arrow
               overlay={(
                 <Menu>
-                  {ui.collapseChrome &&
+                  {isCollapsed &&
                     <Menu.Item onClick={handleNotebookLaunch}>Launch Notebook</Menu.Item>}
                   <Menu.Item onClick={handleCpuNotebookLaunch}>Launch CPU-only Notebook</Menu.Item>
                 </Menu>
@@ -155,7 +166,7 @@ const Navigation: React.FC = () => {
           trigger={[ 'click' ]}>
           <a className={css.user} href="#">
             <Avatar hideTooltip name={username} />
-            {!ui.collapseChrome && <span>{username}</span>}
+            {!isCollapsed && <span>{username}</span>}
           </a>
         </Dropdown>
       </footer>

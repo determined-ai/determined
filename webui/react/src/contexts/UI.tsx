@@ -1,42 +1,50 @@
 import { generateContext } from 'contexts';
 
 enum ActionType {
+  CollapseChrome,
+  ExpandChrome,
   HideChrome,
   HideSpinner,
+  ShowChrome,
   ShowSpinner,
-  ToggleChromeCollapse,
 }
 
 type State = {
-  collapseChrome: boolean;
+  chromeCollapsed: boolean;
   showChrome: boolean;
   showSpinner: boolean;
 }
 
 type Action =
+  | { type: ActionType.CollapseChrome }
+  | { type: ActionType.ExpandChrome }
   | { type: ActionType.HideChrome }
   | { type: ActionType.HideSpinner }
+  | { type: ActionType.ShowChrome }
   | { type: ActionType.ShowSpinner }
-  | { type: ActionType.ToggleChromeCollapse }
 
 const defaultState = {
-  collapseChrome: false,
+  chromeCollapsed: false,
   showChrome: true,
   showSpinner: false,
 };
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
+    case ActionType.CollapseChrome:
+      return { ...state, chromeCollapsed: true };
+    case ActionType.ExpandChrome:
+      return { ...state, chromeCollapsed: false };
     case ActionType.HideChrome:
       return { ...state, showChrome: false };
     case ActionType.HideSpinner:
       if (!state.showSpinner) return state;
       return { ...state, showSpinner: false };
+    case ActionType.ShowChrome:
+      return { ...state, showChrome: true };
     case ActionType.ShowSpinner:
       if (state.showSpinner) return state;
       return { ...state, showSpinner: true };
-    case ActionType.ToggleChromeCollapse:
-      return { ...state, collapseChrome: !state.collapseChrome };
     default:
       return state;
   }
