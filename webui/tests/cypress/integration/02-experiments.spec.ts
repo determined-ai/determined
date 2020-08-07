@@ -39,7 +39,7 @@ describe('Experiment List', () => {
 
       it('should show archived column', () => {
         cy.get('[class*="Toggle_base_"] button').click();
-        cy.get(`${recordSelector} .anticon-check`).should('have.lengthOf', 1);
+        cy.get(`${recordSelector} .icon-checkmark`).should('have.lengthOf', 1);
       });
     });
   });
