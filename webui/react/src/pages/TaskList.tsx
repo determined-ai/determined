@@ -1,5 +1,5 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Input, Modal, Space, Table } from 'antd';
+import { Button, Input, Modal, Table } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
@@ -16,9 +16,8 @@ import Users from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
-import { setupUrlForDev } from 'routes';
 import {
-  createNotebook, getCommands, getNotebooks, getShells, getTensorboards, killCommand,
+  getCommands, getNotebooks, getShells, getTensorboards, killCommand,
 } from 'services/api';
 import { EmptyParams } from 'services/types';
 import { ALL_VALUE, Command, CommandTask, CommandType, TaskFilters } from 'types';
@@ -197,28 +196,6 @@ const TaskList: React.FC = () => {
     tensorboardsResponse.isLoading,
   ]);
 
-  const launchNotebook = useCallback(async (slots: number) => {
-    try {
-      const notebook = await createNotebook({ slots });
-      const task = commandToTask(notebook);
-      if (task.url) openBlank(setupUrlForDev(task.url));
-      else throw new Error('Notebook URL not available.');
-    } catch (e) {
-      handleError({
-        error: e,
-        level: ErrorLevel.Error,
-        message: e.message,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to Launch Notebook',
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, []);
-
-  const handleNotebookLaunch = useCallback(() => launchNotebook(1), [ launchNotebook ]);
-  const handleCpuNotebookLaunch = useCallback(() => launchNotebook(0), [ launchNotebook ]);
-
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value || '');
   }, []);
@@ -272,14 +249,7 @@ const TaskList: React.FC = () => {
   }), []);
 
   return (
-    <Page
-      id="tasks"
-      options={<Space size="small">
-        <Button onClick={handleNotebookLaunch}>Launch Notebook</Button>
-        <Button onClick={handleCpuNotebookLaunch}>Launch CPU-only Notebook</Button>
-      </Space>}
-      showDivider
-      title="Tasks">
+    <Page id="tasks" title="Tasks">
       <div className={css.base}>
         <div className={css.header}>
           <Input
