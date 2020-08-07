@@ -10,13 +10,14 @@ import Message from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
-import TrialActions, { Action as TrialAction } from 'components/TrialActions';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
+import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
+import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { TrialDetailsParams } from 'services/types';
-import { TrialDetails } from 'types';
+import { ExperimentDetails, TrialDetails } from 'types';
 import { clone } from 'utils/data';
 import { trialHParamsToExperimentHParams } from 'utils/types';
 
@@ -84,6 +85,15 @@ const TrialDetailsComp: React.FC = () => {
     }
   }, [ ]);
 
+  const [ experiment, setExperiment ] = useState<ExperimentDetails>();
+
+  useEffect(() => {
+    // TODO find a solution to conditional polling
+    if (experimentId === undefined) return;
+    getExperimentDetails({ id:experimentId })
+      .then(experiment => setExperiment(experiment));
+  }, [ experimentId ]);
+
   if (isNaN(trialId)) {
     return (
       <Page id="page-error-message">
@@ -102,7 +112,7 @@ const TrialDetailsComp: React.FC = () => {
     );
   }
 
-  if (!trial.data || !experimentId) {
+  if (!trial.data || !experiment) {
     return <Spinner fillContainer />;
   }
 
@@ -122,13 +132,15 @@ const TrialDetailsComp: React.FC = () => {
       <TrialActions trial={trial.data}
         onClick={handleActionClick}
         onSettled={pollTrialDetails} />
-      <Section title="Info Box" />
+      <Section title="Info Box">
+        <TrialInfoBox experiment={experiment} trial={trial.data} />
+      </Section>
       <Section title="Chart" />
       <Section title="Steps" />
       <CreateExperimentModal
         config={contModalConfig}
         okText="Create"
-        parentId={experimentId}
+        parentId={experiment.id}
         title={`Continue Trial ${trialId}`}
         visible={contModalVisible}
         onConfigChange={setContModalConfig}

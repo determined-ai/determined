@@ -21,6 +21,8 @@ export const decode = <T>(type: io.Mixed, data: any): T => {
   }
 };
 
+const ioNullUndefined = io.union([ io.null, io.undefined ]);
+
 /* User */
 
 export const ioUser = io.type({
@@ -141,25 +143,48 @@ const checkpointStates: Record<string, null> = Object.values(CheckpointState)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 const checkpointStatesIoType = io.keyof(checkpointStates);
 
-export const ioCheckpoint = io.type({
+export const ioValidationMetrics = io.type({
+  num_inputs: io.number,
+  validation_metrics: io.record(io.string, io.number),
+});
+export type ioTypeValidationMetrics = io.TypeOf<typeof ioValidationMetrics>;
+
+const startEndTimeDef = {
   end_time: io.union([ io.string, io.null ]),
-  id: io.number,
-  resources: io.record(io.string, io.number),
   start_time: io.string,
+};
+
+const baseStepDef = {
+  ...startEndTimeDef,
+  id: io.number,
+  trial_id: io.number,
+};
+
+export const ioCheckpoint = io.type({
+  ...baseStepDef,
+  resources: io.record(io.string, io.number),
   state: checkpointStatesIoType,
   step_id: io.number,
-  trial_id: io.number,
   uuid: io.union([ io.string, io.null ]),
-  validation_metric: io.union([ io.number, io.undefined ]),
+  validation_metric: io.union([ io.number, ioNullUndefined ]),
 });
 export type ioTypeCheckpoint = io.TypeOf<typeof ioCheckpoint>;
 
-export const ioStep = io.type({
-  end_time: io.union([ io.string, io.null ]),
-  id: io.number,
-  start_time: io.string,
+export const ioValidation = io.type({
+  ...baseStepDef,
+  metrics: io.union([ io.null, ioValidationMetrics ]),
   state: runStatesIoType,
+  step_id: io.number,
 });
+export type ioTypeValidation = io.TypeOf<typeof ioValidation>;
+
+export const ioStep = io.type({
+  ...baseStepDef,
+  checkpoint: io.union([ ioNullUndefined, ioCheckpoint ]),
+  state: runStatesIoType,
+  validation: io.union([ ioNullUndefined, ioValidation ]),
+});
+export type ioTypeStep = io.TypeOf<typeof ioStep>;
 
 export const ioTrialDetails = io.type({
   end_time: io.union([ io.string, io.null ]),
@@ -174,12 +199,6 @@ export const ioTrialDetails = io.type({
 });
 export type ioTypeTrialDetails = io.TypeOf<typeof ioTrialDetails>;
 
-export const ioLatestValidatonMetrics = io.type({
-  num_inputs: io.number,
-  validation_metrics: io.record(io.string, io.number),
-});
-export type ioTypeLatestValidationMetrics = io.TypeOf<typeof ioLatestValidatonMetrics>;
-
 export const ioTrial = io.type({
   best_available_checkpoint: io.union([ ioCheckpoint, io.null ]),
   best_validation_metric: io.union([ io.number, io.null ]),
@@ -187,8 +206,8 @@ export const ioTrial = io.type({
   experiment_id: io.number,
   hparams: io.record(io.string, io.any),
   id: io.number,
-  latest_validation_metrics: io.union([ ioLatestValidatonMetrics, io.null ]),
-  num_batches: io.union([ io.number, io.null ]),
+  latest_validation_metrics: io.union([ ioValidationMetrics, ioNullUndefined ]),
+  num_batches: io.union([ io.number, ioNullUndefined ]),
   num_completed_checkpoints: io.number,
   num_steps: io.number,
   seed: io.number,

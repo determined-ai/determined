@@ -1,7 +1,9 @@
 import {
-  AnyTask, Command, CommandState, CommandType, Experiment, ExperimentHyperParams,
-  ExperimentItem, RecentCommandTask, RecentExperimentTask, RecentTask, RunState,
+  AnyTask, Checkpoint, Command, CommandState, CommandType, Experiment, ExperimentHyperParams,
+  ExperimentItem, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
 } from 'types';
+
+import { getDuration } from './time';
 
 /* Conversions to Tasks */
 
@@ -168,4 +170,31 @@ export const trialHParamsToExperimentHParams = (hParams: Record<string, unknown>
     };
   });
   return experimentHParams;
+};
+
+// size in bytes
+export const checkpointSize = (checkpoint: Checkpoint): number => {
+  const total = Object.values(checkpoint.resources).reduce((acc, size) => acc + size, 0);
+  return total;
+};
+
+interface TrialDurations {
+  train: number;
+  checkpoint: number;
+  validation: number;
+}
+
+export const trialDurations = (steps: Step[]): TrialDurations => {
+  const initialDurations: TrialDurations = {
+    checkpoint: 0,
+    train: 0,
+    validation: 0,
+  };
+
+  return steps.reduce((acc: TrialDurations, cur: Step) => {
+    acc.train += getDuration(cur);
+    if (cur.checkpoint) acc.checkpoint += getDuration(cur.checkpoint);
+    if (cur.validation) acc.validation += getDuration(cur.validation);
+    return acc;
+  }, initialDurations);
 };

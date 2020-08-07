@@ -3,16 +3,17 @@ import dayjs from 'dayjs';
 import {
   decode, ioAgents, ioDeterminedInfo, ioExperiment, ioExperimentConfig,
   ioExperimentDetails, ioExperiments, ioGenericCommand, ioGenericCommands, ioLog, ioLogs,
-  ioTaskLogs, ioTrialDetails, ioTypeAgents, ioTypeCheckpoint, ioTypeDeterminedInfo,
-  ioTypeExperiment, ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments,
-  ioTypeGenericCommand, ioTypeGenericCommands, ioTypeLatestValidationMetrics,
-  ioTypeLog, ioTypeLogs, ioTypeTaskLogs, ioTypeTrial, ioTypeTrialDetails, ioTypeUsers, ioUsers,
+  ioTaskLogs, ioTrialDetails, ioTypeAgents, ioTypeCheckpoint,
+  ioTypeDeterminedInfo, ioTypeExperiment, ioTypeExperimentConfig,
+  ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand, ioTypeGenericCommands,
+  ioTypeLog, ioTypeLogs, ioTypeStep, ioTypeTaskLogs, ioTypeTrial, ioTypeTrialDetails, ioTypeUsers,
+  ioTypeValidationMetrics, ioUsers,
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, CheckpointStorageType, Command, CommandState,
   CommandType, DeterminedInfo, Experiment, ExperimentConfig, ExperimentDetails,
-  LatestValidationMetrics, Log, LogLevel, ResourceState, ResourceType, RunState,
-  TrialDetails, TrialItem, User,
+  Log, LogLevel, ResourceState, ResourceType, RunState, Step,
+  TrialDetails, TrialItem, User, ValidationMetrics,
 } from 'types';
 import { capitalize } from 'utils/string';
 
@@ -186,13 +187,33 @@ const ioToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
   };
 };
 
-const ioToLatestValidationMetrics = (
-  io: ioTypeLatestValidationMetrics,
-): LatestValidationMetrics => {
+const ioToValidationMetrics = (io: ioTypeValidationMetrics): ValidationMetrics => {
   return {
     numInputs: io.num_inputs,
     validationMetrics: io.validation_metrics,
   };
+};
+
+const ioToStep = (io: ioTypeStep): Step => {
+  return {
+    checkpoint: io.checkpoint ? ioToCheckpoint(io.checkpoint) : undefined,
+    endTime: io.end_time || undefined,
+    id: io.id,
+    startTime: io.start_time,
+    state: io.state as RunState,
+    trialId: io.trial_id,
+    validation: !io.validation ? undefined : {
+      endTime: io.validation.end_time || undefined,
+      id: io.validation.id,
+      metrics: io.validation.metrics === null ? undefined :
+        ioToValidationMetrics(io.validation.metrics),
+      startTime: io.validation.start_time,
+      state: io.validation.state as RunState,
+      stepId: io.validation.step_id,
+      trialId: io.trial_id,
+    },
+  };
+
 };
 
 const ioToTrial = (io: ioTypeTrial): TrialItem => {
@@ -205,7 +226,7 @@ const ioToTrial = (io: ioTypeTrial): TrialItem => {
     hparams: io.hparams || {},
     id: io.id,
     latestValidationMetrics: io.latest_validation_metrics
-      ? ioToLatestValidationMetrics(io.latest_validation_metrics) : undefined,
+      ? ioToValidationMetrics(io.latest_validation_metrics) : undefined,
     numBatches: io.num_batches || 0,
     numCompletedCheckpoints: io.num_completed_checkpoints,
     numSteps: io.num_steps,
@@ -226,12 +247,7 @@ export const jsonToTrialDetails = (data: unknown): TrialDetails => {
     seed: io.seed,
     startTime: io.start_time,
     state: io.state as RunState,
-    steps: io.steps.map((step) => ({
-      endTime: step.end_time || undefined,
-      id: step.id,
-      startTime: step.start_time,
-      state: step.state as RunState,
-    })),
+    steps: io.steps.map(ioToStep),
     warmStartCheckpointId: io.warm_start_checkpoint_id !== null ?
       io.warm_start_checkpoint_id : undefined,
   };
