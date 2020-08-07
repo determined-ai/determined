@@ -2,6 +2,7 @@ import { Button, List, Modal } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import CheckpointModal from 'components/CheckpointModal';
 import InfoBox from 'components/InfoBox';
 import { Checkpoint, CheckpointState, ExperimentDetails, RunState, TrialDetails,
   ValidationMetrics } from 'types';
@@ -9,8 +10,6 @@ import { formatDatetime } from 'utils/date';
 import { humanReadableBytes, humanReadableFloat } from 'utils/string';
 import { shortEnglishHumannizer } from 'utils/time';
 import { checkpointSize, trialDurations } from 'utils/types';
-
-import CheckpointModal from '../../components/CheckpointModal';
 
 import css from './TrialInfoBox.module.scss';
 
@@ -93,8 +92,8 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       label: 'Durations',
     },
     {
-      info: bestValidation && `${humanReadableFloat(bestValidation)}` +
-      `(${experiment.config.searcher.metric})`,
+      info: bestValidation &&
+        `${humanReadableFloat(bestValidation)} (${experiment.config.searcher.metric})`,
       label: 'Best Validation',
     },
     {
