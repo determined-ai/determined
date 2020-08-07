@@ -10,7 +10,8 @@ import { humanReadableBytes, humanReadableFloat } from 'utils/string';
 import { shortEnglishHumannizer } from 'utils/time';
 import { checkpointSize, trialDurations } from 'utils/types';
 
-import CheckpointModal from './CheckpointModal';
+import CheckpointModal from '../../components/CheckpointModal';
+
 import css from './TrialInfoBox.module.scss';
 
 interface Props {
