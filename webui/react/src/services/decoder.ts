@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
 import {
-  decode, ioAgents, ioDeterminedInfo, ioExperiment, ioExperimentConfig,
+  decode, ioAgents, ioDeterminedInfo, ioExperiment,
   ioExperimentDetails, ioExperiments, ioGenericCommand, ioGenericCommands, ioLog, ioLogs,
   ioTaskLogs, ioTrialDetails, ioTypeAgents, ioTypeCheckpoint,
   ioTypeDeterminedInfo, ioTypeExperiment, ioTypeExperimentConfig,
@@ -122,8 +122,7 @@ export const jsonToTensorboards = (data: unknown): Command[] => {
   return jsonToGenericCommands(data, CommandType.Tensorboard);
 };
 
-const jsonToExperimentConfig = (data: unknown): ExperimentConfig => {
-  const io = decode<ioTypeExperimentConfig>(ioExperimentConfig, data);
+const ioToExperimentConfig = (io: ioTypeExperimentConfig): ExperimentConfig => {
   const config: ExperimentConfig = {
     checkpointPolicy: io.checkpoint_policy,
     checkpointStorage: io.checkpoint_storage ? {
@@ -156,7 +155,7 @@ export const jsonToExperiment = (data: unknown): Experiment => {
   const io = decode<ioTypeExperiment>(ioExperiment, data);
   return {
     archived: io.archived,
-    config: jsonToExperimentConfig(io.config),
+    config: ioToExperimentConfig(io.config),
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     configRaw: (data as any).config,
     endTime: io.end_time || undefined,
@@ -257,7 +256,7 @@ export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
   const io = decode<ioTypeExperimentDetails>(ioExperimentDetails, data);
   return {
     archived: io.archived,
-    config: jsonToExperimentConfig(io.config),
+    config: ioToExperimentConfig(io.config),
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     configRaw: (data as any).config,
     endTime: io.end_time || undefined,
@@ -289,7 +288,7 @@ export const jsonToLogs = (data: unknown): Log[] => {
 const defaultRegex = /^\[([^\]]+)\]\s(.*)$/im;
 const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s(.*)$/im;
 
-const ioTrialLogToLog = (io: ioTypeLog): Log => {
+const ioToTrialLog = (io: ioTypeLog): Log => {
   if (defaultRegex.test(io.message)) {
     const matches = io.message.match(defaultRegex) || [];
     const time = matches[1];
@@ -306,7 +305,7 @@ const ioTrialLogToLog = (io: ioTypeLog): Log => {
 
 export const jsonToTrialLog = (data: unknown): Log => {
   const io = decode<ioTypeLog>(ioLog, data);
-  return ioTrialLogToLog(io);
+  return ioToTrialLog(io);
 };
 
 const ioTaskEventToMessage = (event: string): string => {
@@ -347,5 +346,5 @@ export const jsonToTaskLogs = (data: unknown): Log[] => {
 
 export const jsonToTrialLogs = (data: unknown): Log[] => {
   const io = decode<ioTypeLogs>(ioLogs, data);
-  return io.map(ioTrialLogToLog);
+  return io.map(ioToTrialLog);
 };

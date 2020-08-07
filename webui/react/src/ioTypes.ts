@@ -243,7 +243,7 @@ const ioExpResources = io.type({
   max_slots: io.union([ io.number, ioNullUndefined ]),
 });
 
-export const ioExperimentConfig = io.type({
+const ioExperimentConfig = io.type({
   checkpoint_policy: io.string,
   checkpoint_storage: io.union([ ioCheckpointStorage, ioNullUndefined ]),
   data_layer: io.union([ ioDataLayer, ioNullUndefined ]),
