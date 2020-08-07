@@ -156,8 +156,7 @@ export const jsonToExperiment = (data: unknown): Experiment => {
   return {
     archived: io.archived,
     config: ioToExperimentConfig(io.config),
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    configRaw: (data as any).config,
+    configRaw: (data as { config: Record<string, unknown> }).config,
     endTime: io.end_time || undefined,
     id: io.id,
     ownerId: io.owner_id,
@@ -257,8 +256,7 @@ export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
   return {
     archived: io.archived,
     config: ioToExperimentConfig(io.config),
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    configRaw: (data as any).config,
+    configRaw: (data as { config: Record<string, unknown> }).config,
     endTime: io.end_time || undefined,
     id: io.id,
     ownerId: io.owner.id,
