@@ -15,6 +15,9 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     width: auto;
   }
 }
+.navItem.active {
+  background-color: var(--theme-colors-base-0);
+}
 .navItem:hover {
   background-color: var(--theme-colors-base-3);
 }
@@ -149,6 +152,9 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     display: flex;
     padding: var(--theme-sizes-layout-big) var(--theme-sizes-layout-big);
     width: 100%;
+  }
+  .user:hover {
+    background-color: var(--theme-colors-base-4);
   }
   .user > span {
     color: var(--theme-colors-monochrome-17);

@@ -1,5 +1,6 @@
 import { Button, Dropdown, Menu, Tooltip } from 'antd';
-import React, { MouseEventHandler, useCallback, useState } from 'react';
+import React, { MouseEventHandler, useCallback, useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import Auth from 'contexts/Auth';
 import UI from 'contexts/UI';
@@ -25,9 +26,16 @@ interface ItemProps {
 
 const NavigationItem: React.FC<ItemProps> = (props: ItemProps) => {
   const ui = UI.useStateContext();
+  const location = useLocation();
+  const [ isActive, setIsActive ] = useState(false);
   const classes = [ css.navItem ];
 
   if (ui.collapseChrome) classes.push(css.collapsed);
+  if (isActive) classes.push(css.active);
+
+  useEffect(() => {
+    setIsActive(location.pathname === props.path);
+  }, [ classes, location.pathname, props.path ]);
 
   const handleClick = useCallback((event: React.MouseEvent) => {
     handlePath(event, { onClick: props.onClick, path: props.path, popout: props.popout });
