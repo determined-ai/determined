@@ -99,6 +99,7 @@
     "eslint-plugin-sort-keys-fix": "^1.1.1",
     "less": "^3.12.0",
     "less-loader": "^6.2.0",
+    "loki": "^0.24.0",
     "node-sass": "^4.14.1",
     "npm-force-resolutions": "^0.0.3",
     "path-to-regexp": "^6.1.0",
@@ -114,5 +115,16 @@
   },
   "resolutions": {
     "marked": "^0.7.0"
+  },
+  "loki": {
+    "configurations": {
+      "chrome.laptop": {
+        "target": "chrome.app",
+        "width": 1366,
+        "height": 768,
+        "deviceScaleFactor": 1,
+        "mobile": false
+      }
+    }
   }
 }

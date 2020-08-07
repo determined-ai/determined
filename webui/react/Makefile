@@ -1,5 +1,5 @@
-swagger_client = "src/services/swagger"
 PROJECT_ROOT := "../../"
+SKIPPED_STORIES = "^(Experiment|Table|TaskCard|Nav).*"
 
 .PHONY: get-deps-api
 get-deps-api:
@@ -45,3 +45,11 @@ fmt:
 .PHONY: test
 test:
 	npm run test -- --watchAll=false
+
+.PHONY: test-update
+test-update:
+	npx loki update --skipStories ${SKIPPED_STORIES} --chromeConcurrency 4
+
+.PHONY: test-visual
+test-visual:
+	npx loki test --skipStories ${SKIPPED_STORIES} --chromeConcurrency 4
