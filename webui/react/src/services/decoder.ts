@@ -34,7 +34,7 @@ export const jsonToDeterminedInfo = (data: unknown): DeterminedInfo => {
     masterId: info.master_id,
     telemetry: {
       enabled: info.telemetry.enabled,
-      segmentKey: info.telemetry.segment_key,
+      segmentKey: info.telemetry.segment_key || undefined,
     },
     version: info.version,
   };
@@ -140,14 +140,14 @@ const jsonToExperimentConfig = (data: unknown): ExperimentConfig => {
       type: io.data_layer.type,
     } : undefined,
     description: io.description,
-    labels: io.labels,
+    labels: io.labels || undefined,
     resources: {},
     searcher: {
       ...io.searcher,
       smallerIsBetter: io.searcher.smaller_is_better,
     },
   };
-  if (io.resources.max_slots !== undefined)
+  if (io.resources.max_slots != null)
     config.resources.maxSlots = io.resources.max_slots;
   return config;
 };
@@ -162,7 +162,7 @@ export const jsonToExperiment = (data: unknown): Experiment => {
     endTime: io.end_time || undefined,
     id: io.id,
     ownerId: io.owner_id,
-    progress: io.progress !== null ? io.progress : undefined,
+    progress: io.progress || undefined,
     startTime: io.start_time,
     state: io.state as RunState,
   };
@@ -183,7 +183,7 @@ const ioToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
     stepId: io.step_id,
     trialId: io.trial_id,
     uuid: io.uuid || undefined,
-    validationMetric: io.validation_metric !== null ? io.validation_metric : undefined,
+    validationMetric: io.validation_metric || undefined,
   };
 };
 
@@ -220,7 +220,7 @@ const ioToTrial = (io: ioTypeTrial): TrialItem => {
   return {
     bestAvailableCheckpoint: io.best_available_checkpoint
       ? ioToCheckpoint(io.best_available_checkpoint) : undefined,
-    bestValidationMetric: io.best_validation_metric ? io.best_validation_metric : undefined,
+    bestValidationMetric: io.best_validation_metric || undefined,
     endTime: io.end_time || undefined,
     experimentId: io.experiment_id,
     hparams: io.hparams || {},
@@ -263,7 +263,7 @@ export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
     endTime: ioType.end_time || undefined,
     id: ioType.id,
     ownerId: ioType.owner.id,
-    progress: ioType.progress !== null ? ioType.progress : undefined,
+    progress: ioType.progress || undefined,
     startTime: ioType.start_time,
     state: ioType.state as RunState,
     trials: ioType.trials.map(ioToTrial),
@@ -282,7 +282,7 @@ export const jsonToLogs = (data: unknown): Log[] => {
     id: log.id,
     level: log.level ? LogLevel[capitalize(log.level) as keyof typeof LogLevel] : undefined,
     message: log.message,
-    time: log.time,
+    time: log.time || undefined,
   }));
 };
 
