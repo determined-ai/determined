@@ -36,6 +36,7 @@ const TrialLogs: React.FC = () => {
   const [ isDownloading, setIsDownloading ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(true);
   const [ isIdInvalid, setIsIdInvalid ] = useState(false);
+  const [ downloadModal, setDownloadModal ] = useState<{ destroy: () => void }>();
   const [ trial ] = useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id });
 
   const handleScrollToTop = useCallback(() => {
@@ -60,6 +61,11 @@ const TrialLogs: React.FC = () => {
   }, [ id, offset, oldestId, oldestReached ]);
 
   const handleDownloadConfirm = useCallback(async () => {
+    if (downloadModal) {
+      downloadModal.destroy();
+      setDownloadModal(undefined);
+    }
+
     setIsDownloading(true);
 
     try {
@@ -78,10 +84,10 @@ const TrialLogs: React.FC = () => {
     }
 
     setIsDownloading(false);
-  }, [ id ]);
+  }, [ downloadModal, id ]);
 
   const handleDownloadLogs = useCallback(() => {
-    Modal.confirm({
+    const modal = Modal.confirm({
       content: <div>
         We recommend using the Determined CLI to download trial logs:
         <code className="block">
@@ -94,6 +100,7 @@ const TrialLogs: React.FC = () => {
       title: `Confirm Download for Trial ${id} Logs`,
       width: 640,
     });
+    setDownloadModal(modal);
   }, [ handleDownloadConfirm, id, trial.data, trialId ]);
 
   useEffect(() => setUI({ type: UI.ActionType.HideChrome }), [ setUI ]);
