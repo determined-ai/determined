@@ -8,7 +8,6 @@ import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
 import CreateExperimentModal from 'components/CreateExperimentModal';
 import Icon from 'components/Icon';
-import { makeClickHandler } from 'components/Link';
 import Message from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
@@ -25,6 +24,7 @@ import { ExperimentDetailsParams } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
 import { clone } from 'utils/data';
 import { numericSorter } from 'utils/data';
+import { handlePath } from 'utils/routes';
 import { humanReadableFloat } from 'utils/string';
 import { upgradeConfig } from 'utils/types';
 
@@ -144,6 +144,15 @@ const ExperimentDetailsComp: React.FC = () => {
     }
   }, [ setFreshForkConfig ]);
 
+  const showForkModal = useCallback((): void => {
+    setForkModalVisible(true);
+  }, [ setForkModalVisible ]);
+
+  const handleTableRow = useCallback((record: TrialItem) => ({
+    onClick: (event: React.MouseEvent) => handlePath(event, { path: record.url }),
+  }), []);
+
+  const message = '';
   if (isNaN(id)) return <Message title={`Invalid Experiment ID ${experimentId}`} />;
   if (experimentResponse.error) {
     const message = isNotFound(experimentResponse.error) ?

@@ -4,7 +4,6 @@ import { SelectValue } from 'antd/lib/select';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
-import { makeClickHandler } from 'components/Link';
 import Page from 'components/Page';
 import { Indicator } from 'components/Spinner';
 import StateSelectFilter from 'components/StateSelectFilter';
@@ -29,7 +28,7 @@ import { ExperimentsParams } from 'services/types';
 import {
   ALL_VALUE, Command, Experiment, ExperimentFilters, ExperimentItem, RunState, TBSourceType,
 } from 'types';
-import { openBlank } from 'utils/routes';
+import { handlePath, openBlank } from 'utils/routes';
 import { filterExperiments, processExperiments } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates, waitPageUrl } from 'utils/types';
 
@@ -260,7 +259,7 @@ const ExperimentList: React.FC = () => {
   const handleTableRow = useCallback((record: ExperimentItem) => ({
     onClick: (event: React.MouseEvent) => {
       if (isAlternativeAction(event)) return;
-      makeClickHandler(record.url)(event);
+      handlePath(event, { path: record.url });
     },
   }), []);
 

@@ -1,7 +1,6 @@
-import React, { MouseEventHandler, PropsWithChildren, useCallback } from 'react';
+import React, { MouseEvent, MouseEventHandler, PropsWithChildren, useCallback } from 'react';
 
-import { routeAll, setupUrlForDev } from 'routes';
-import { openBlank, windowOpenFeatures } from 'utils/routes';
+import { handlePath, windowOpenFeatures } from 'utils/routes';
 
 import css from './Link.module.scss';
 
@@ -14,28 +13,6 @@ interface Props {
   onClick?: MouseEventHandler;
 }
 
-export const makeClickHandler = (
-  path: string,
-  onClick?: MouseEventHandler,
-  popout?: boolean,
-): MouseEventHandler => {
-  const handler: MouseEventHandler = (event) => {
-    const url = setupUrlForDev(path);
-
-    event.persist();
-    event.preventDefault();
-
-    if (onClick) {
-      onClick(event);
-    } else if (event.metaKey || event.ctrlKey || popout) {
-      openBlank(url);
-    } else {
-      routeAll(url);
-    }
-  };
-  return handler;
-};
-
 const Link: React.FC<Props> = ({ path, popout, onClick, ...props }: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
   const rel = windowOpenFeatures.join(' ');
@@ -44,9 +21,9 @@ const Link: React.FC<Props> = ({ path, popout, onClick, ...props }: PropsWithChi
   if (props.inherit) classes.push(css.inherit);
   if (props.isButton) classes.push('ant-btn');
 
-  const handleClick = useCallback((event: React.MouseEvent) => {
-    makeClickHandler(path, onClick, popout)(event);
-  }, [ path, onClick, popout ]);
+  const handleClick = useCallback((event: MouseEvent) => {
+    handlePath(event, { onClick, path, popout });
+  }, [ onClick, path, popout ]);
 
   return props.disabled ? (
     <span className={classes.join(' ')}>{props.children}</span>
