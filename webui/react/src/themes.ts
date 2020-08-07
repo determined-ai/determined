@@ -65,14 +65,7 @@ export interface Theme {
       large: string;
     };
     layout: {[size in ShirtSize]: string};
-    navbar: {
-      height: string;
-    };
     navigation: {
-      minWidth: string;
-      maxWidth: string;
-    };
-    sidebar: {
       minWidth: string;
       maxWidth: string;
     };
@@ -192,16 +185,9 @@ export const lightTheme: Theme = {
       mega: '4rem',
     },
     /* eslint-enable sort-keys-fix/sort-keys-fix */
-    navbar: {
-      height: '4.8rem',
-    },
     navigation: {
       maxWidth: '24rem',
       minWidth: '5.6rem',
-    },
-    sidebar: {
-      maxWidth: '14.9rem',
-      minWidth: '4.8rem',
     },
   },
 };

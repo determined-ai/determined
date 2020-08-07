@@ -3,8 +3,6 @@ import React, { PropsWithChildren } from 'react';
 import css from './Label.module.scss';
 
 export enum LabelTypes {
-  NavMain = 'navMain',
-  NavSideBar = 'navSideBar',
   TextOnly = 'textOnly',
 }
 

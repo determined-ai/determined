@@ -2,10 +2,8 @@ import { Button, notification } from 'antd';
 import React, { useCallback, useEffect } from 'react';
 
 import { setupAnalytics } from 'Analytics';
-import NavBar from 'components/NavBar';
 import Navigation from 'components/Navigation';
 import Router from 'components/Router';
-import SideBar from 'components/SideBar';
 import Spinner from 'components/Spinner';
 import Compose from 'Compose';
 import ActiveExperiments from 'contexts/ActiveExperiments';
@@ -32,13 +30,12 @@ import { parseUrl } from 'utils/routes';
 import css from './App.module.scss';
 
 const AppView: React.FC = () => {
-  const { isAuthenticated, user } = Auth.useStateContext();
+  const { isAuthenticated } = Auth.useStateContext();
   const ui = UI.useStateContext();
   const cluster = ClusterOverview.useStateContext();
   const info = Info.useStateContext();
   const setInfo = Info.useActionContext();
   const setUI = UI.useActionContext();
-  const username = user ? user.username : undefined;
   const [ infoResponse, triggerInfoRequest ] = useRestApi<EmptyParams, DeterminedInfo>(getInfo, {});
   const classes = [ css.base ];
 

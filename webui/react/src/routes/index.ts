@@ -144,16 +144,9 @@ export const appRoutes: RouteConfig[] = [
   },
 ];
 
-export const sidebarRoutes: RouteConfig[] = [
-  dashboardRoute,
-  experimentListRoute,
-  taskListRoute,
-  clusterRoute,
-];
-
 // Add pages we don't want to expose to the public yet.
 if (process.env.IS_DEV) {
-  // sidebarRoutes.push();
+  // appRoutes.push();
 }
 
 // Is the path going to be served from the same host?
