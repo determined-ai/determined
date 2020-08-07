@@ -2,7 +2,7 @@
   align-items: center;
   display: flex;
 
-  & > *:not(:first-child) { margin-left: var(--theme-sizes-layout-jumbo); }
+  & > *:not(:first-child) { margin-left: var(--theme-sizes-layout-enormous); }
   .filter {
     align-items: center;
     display: flex;

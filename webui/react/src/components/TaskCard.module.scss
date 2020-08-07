@@ -46,7 +46,7 @@
     .name {
       color: var(--theme-colors-monochrome-2);
       font-size: var(--theme-sizes-font-medium);
-      line-height: var(--theme-sizes-font-jumbo);
+      line-height: var(--theme-sizes-font-great);
       overflow: hidden;
       padding-bottom: var(--theme-sizes-layout-tiny);
       text-overflow: ellipsis;
@@ -55,7 +55,7 @@
     .age {
       display: flex;
       font-size: var(--theme-sizes-font-small);
-      line-height: var(--theme-sizes-font-large);
+      line-height: var(--theme-sizes-font-big);
     }
     .event { padding-right: var(--theme-sizes-layout-tiny); }
   }
@@ -84,7 +84,7 @@
 }
 .link {
   &:hover {
-    border-color: var(--theme-colors-core-action);
+    border-color: var(--theme-colors-action-normal);
     box-shadow: var(--theme-shadow);
     margin-bottom: calc(-1 * var(--theme-sizes-layout-micro));
     margin-left: 0;

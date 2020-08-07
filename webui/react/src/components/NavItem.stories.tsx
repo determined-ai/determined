@@ -15,7 +15,7 @@ export default {
 const mainStory = {
   parameters: {
     backgrounds: [
-      { default: true, name: 'main background', value: lightTheme.colors.core.secondary },
+      { default: true, name: 'main background', value: lightTheme.colors.base[0] },
     ],
   },
 };

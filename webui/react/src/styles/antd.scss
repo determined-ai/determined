@@ -88,7 +88,7 @@ html {
   .ant-page-header-heading-left,
   .ant-page-header-heading-extra { margin: 0; }
   .ant-page-header-heading-title {
-    font-size: var(--theme-sizes-font-jumbo);
+    font-size: var(--theme-sizes-font-great);
     font-weight: normal;
   }
   .ant-page-header-content {
@@ -138,7 +138,7 @@ html {
     font-size: var(--theme-sizes-font-small);
   }
   .ant-statistic-content {
-    font-size: var(--theme-sizes-font-big);
+    font-size: var(--theme-sizes-font-large);
   }
 
   /* Table */
@@ -178,12 +178,12 @@ html {
   }
   .ant-table-tbody > tr.ant-table-row.clickable:hover > td {
     background-color: var(--theme-colors-monochrome-17);
-    border-color: var(--theme-colors-core-action);
+    border-color: var(--theme-colors-action-normal);
     border-style: solid;
   }
   .ant-table .ant-table-tbody > tr > td.ant-table-selection-column,
   .ant-table .ant-table-tbody > tr > td.fullCell {
-    min-width: var(--theme-sizes-layout-huge);
+    min-width: var(--theme-sizes-layout-giant);
     padding: 0;
     position: relative;
     
