@@ -33,6 +33,7 @@ func (a *apiServer) checkExperimentExists(id int) error {
 		return nil
 	}
 }
+
 func (a *apiServer) GetExperiments(
 	_ context.Context, req *apiv1.GetExperimentsRequest) (*apiv1.GetExperimentsResponse, error) {
 	resp := &apiv1.GetExperimentsResponse{}
@@ -161,12 +162,8 @@ func (a *apiServer) PreviewHPSearch(
 func (a *apiServer) ActivateExperiment(
 	ctx context.Context, req *apiv1.ActivateExperimentRequest,
 ) (resp *apiv1.ActivateExperimentResponse, err error) {
-	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
-	switch {
-	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to check if experiment exists: %s", err)
-	case !ok:
-		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	if err = a.checkExperimentExists(int(req.Id)); err != nil {
+		return nil, err
 	}
 
 	addr := actor.Addr("experiments", req.Id).String()
@@ -183,12 +180,8 @@ func (a *apiServer) ActivateExperiment(
 func (a *apiServer) PauseExperiment(
 	ctx context.Context, req *apiv1.PauseExperimentRequest,
 ) (resp *apiv1.PauseExperimentResponse, err error) {
-	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
-	switch {
-	case err != nil:
-		return nil, status.Error(codes.Internal, err.Error())
-	case !ok:
-		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	if err = a.checkExperimentExists(int(req.Id)); err != nil {
+		return nil, err
 	}
 
 	addr := actor.Addr("experiments", req.Id).String()
@@ -205,12 +198,8 @@ func (a *apiServer) PauseExperiment(
 func (a *apiServer) CancelExperiment(
 	ctx context.Context, req *apiv1.CancelExperimentRequest,
 ) (resp *apiv1.CancelExperimentResponse, err error) {
-	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
-	switch {
-	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to check if experiment exists: %s", err)
-	case !ok:
-		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	if err = a.checkExperimentExists(int(req.Id)); err != nil {
+		return nil, err
 	}
 
 	addr := actor.Addr("experiments", req.Id).String()
@@ -225,12 +214,8 @@ func (a *apiServer) KillExperiment(
 	ctx context.Context, req *apiv1.KillExperimentRequest,
 ) (
 	resp *apiv1.KillExperimentResponse, err error) {
-	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
-	switch {
-	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to check if experiment exists: %s", err)
-	case !ok:
-		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	if err = a.checkExperimentExists(int(req.Id)); err != nil {
+		return nil, err
 	}
 
 	addr := actor.Addr("experiments", req.Id).String()
