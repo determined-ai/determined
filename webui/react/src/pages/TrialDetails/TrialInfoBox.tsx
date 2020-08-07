@@ -93,7 +93,8 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       label: 'Durations',
     },
     {
-      info: `${humanReadableFloat(bestValidation)} (${experiment.config.searcher.metric})`,
+      info: bestValidation && `${humanReadableFloat(bestValidation)}` +
+      `(${experiment.config.searcher.metric})`,
       label: 'Best Validation',
     },
     {
