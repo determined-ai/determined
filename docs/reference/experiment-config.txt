@@ -54,7 +54,7 @@ Top-Level Fields
 ``min_validation_period``
   Instructs Determined to periodically compute validation metrics for
   each trial during training. If set, this variable specifies the
-  maximum length, in terms of records, batches or epochs
+  maximum length, in terms of records, batches, or epochs
   (see :ref:`Training Units<experiment-configuration_training_units>`), that a
   given trial can be trained without a validation operation; if this limit is
   reached, a new validation operation is performed. Validation metrics can be
@@ -66,17 +66,18 @@ Top-Level Fields
 ``min_checkpoint_period``
   Instructs Determined to take periodic checkpoints of each trial during
   training. If set, this variable specifies the maximum length that a trial
-  can be trained without a checkpoint, in terms of records, batches or epochs
+  can be trained without a checkpoint, in terms of records, batches, or epochs
   (see :ref:`Training Units<experiment-configuration_training_units>`);
   if this limit is reached, a checkpoint of the trial is
   taken. There are three other situations in which a trial might be
-  checkpointed: (a) during training, a model may be checkpointed to
-  allow the trial's execution to be suspended and later resumed on
-  a different Determined agent (b) when the trial's experiment is
-  completed, to allow the resulting model to be exported from
-  Determined (e.g., for deployment) (c) before the search method makes
-  a decision based on a validation of a trial, to maintain consistency
-  in the event of a failure.
+  checkpointed:
+
+  1. During training, a model may be checkpointed to allow the trial's execution
+     to be suspended and later resumed on a different Determined agent.
+  2. When the trial's experiment is completed, to allow the resulting model to
+     be exported from Determined (e.g., for deployment).
+  3. Before the search method makes a decision based on a validation of a trial,
+     to maintain consistency in the event of a failure.
 
 ``checkpoint_policy``
   Controls how Determined performs checkpoints after validation operations, if
@@ -97,24 +98,35 @@ Top-Level Fields
 
 .. _scheduling-unit:
 
-- ``scheduling_unit``: Specifies the number of batches in a single
-  training workload. As discussed above, Determined divides the training of a
-  single trial into a sequence of training workloads; each workload corresponds
-  to a certain number of model updates. Therefore, this configuration
-  parameter can be used to control how long a trial is trained on a
-  single agent:
+``scheduling_unit``
+  The number of batches in a single training workload. Determined divides the
+  training of a single trial into a sequence of training workloads; each
+  workload corresponds to a certain number of model updates.  Therefore, this
+  configuration parameter can be used to control how long a trial is trained on
+  a single agent:
 
-  - Training longer per workload allows per-workload overheads (such as
-    downloading training data) to be amortized over more training
-    work. However, if the size of a single workload is too large, a trial might
-    be trained for a long time before Determined gets an opportunity to
-    suspend training of that trial and replace it with a different
-    workload.
-  - The default value is 100. As a rule of thumb, the training workload size
+  - Training longer per workload allows per-workload overheads to be amortized
+    over more training work. However, if the size of a single workload is too
+    large, a trial might be trained for a long time before Determined gets an
+    opportunity to suspend training of that trial and replace it with a
+    different workload.
+  - The default value is ``100``. As a rule of thumb, the training workload size
     should be set so that a single workload takes 60--180 seconds.
 
-  The workload size is defined as a fixed number of *batches*; the number of records
-  in a batch is controlled by the ``global_batch_size`` hyperparameter.
+  This field is defined as a fixed number of *batches*; the number of records in
+  a batch is controlled by the :ref:`global_batch_size
+  <config-global-batch-size>` hyperparameter.
+
+.. _config-records-per-epoch:
+
+``records_per_epoch``
+  The number of records in the training data set. This is optional; it must be
+  configured if you want to specify other fields (e.g.,
+  ``min_validation_period``) in units of ``epochs``. Determined does not attempt
+  to determine the size of an epoch automatically, because the size of the
+  training set might vary based on data augmentation, changes to external
+  storage, or other factors. See :ref:`experiment-configuration_training_units`
+  for details.
 
 .. _max-restarts:
 
@@ -285,6 +297,8 @@ trial context using :func:`context.get_hparam()
 hyperparameter named ``learning_rate`` can be accessed by
 ``context.get_hparam("learning_rate")``.
 
+.. _config-global-batch-size:
+
 .. note::
 
   Every experiment must specify a hyperparameter named
@@ -344,7 +358,7 @@ Double
 
 A ``double`` hyperparameter is a floating point variable. The minimum and
 maximum values of the variable are defined by the ``minval`` and ``maxval``
-keys, respectively.
+keys, respectively (inclusive of endpoints).
 
 When doing a grid search, the ``count`` key can also be specified; this defines
 the number of points in the grid for this hyperparameter. Grid points are evenly
@@ -355,7 +369,8 @@ Integer
 -------
 
 An ``int`` hyperparameter is an integer variable. The minimum and maximum values
-of the variable are defined by the ``minval`` and ``maxval`` keys, respectively.
+of the variable are defined by the ``minval`` and ``maxval`` keys, respectively
+(inclusive of endpoints).
 
 When doing a grid search, the ``count`` key can also be specified; this defines
 the number of points in the grid for this hyperparameter. Grid points are evenly
@@ -368,7 +383,7 @@ Log
 A ``log`` hyperparameter is a floating point variable that is searched on a
 logarithmic scale. The base of the logarithm is specified by the ``base`` field;
 the minimum and maximum exponent values of the hyperparameter are given by the
-``minval`` and ``maxval`` fields, respectively.
+``minval`` and ``maxval`` fields, respectively (inclusive of endpoints).
 
 When doing a grid search, the ``count`` key can also be specified; this defines
 the number of points in the grid for this hyperparameter. Grid points are evenly
@@ -383,9 +398,9 @@ Searcher
 The ``searcher`` section defines how the experiment's hyperparameter space will
 be explored. To run an experiment that trains a single trial with fixed
 hyperparameters, specify the ``single`` searcher and specify constant values for
-the model's hyperparameters. Otherwise, Determined supports five different
-hyperparameter search algorithms: ``random``, ``grid``, ``adaptive_simple``,
-``adaptive``, and ``pbt``.
+the model's hyperparameters. Otherwise, Determined supports six different
+hyperparameter search algorithms: ``random``, ``grid``, ``adaptive_asha``,
+``adaptive_simple``, ``adaptive``, and ``pbt``.
 
 The name of the hyperparameter search algorithm to use is configured via the
 ``name`` field; the remaining fields configure the behavior of the searcher and
@@ -408,7 +423,7 @@ supported by Determined, refer to :ref:`topic-guides_hp-tuning-det`.
 Single
 ------
 
-The ``single`` search method does not really perform a hyperparameter search at
+The ``single`` search method does not perform a hyperparameter search at
 all; rather, it trains a single trial for a fixed length. When using
 this search method, all of the hyperparameters specified in the
 :ref:`hyperparameters <experiment-configuration_hyperparameters>` section must
@@ -424,7 +439,7 @@ used to specify that validation metrics should be computed more frequently.
   hyperparameter configuration.
 
 ``max_length``
-  The length of the trial, in terms of records, batches or epochs
+  The length of the trial, in terms of records, batches, or epochs
   (see :ref:`Training Units<experiment-configuration_training_units>`).
 
 **Optional Fields**
@@ -465,7 +480,7 @@ frequently.
   The number of trials, i.e., hyperparameter configurations, to evaluate.
 
 ``max_length``
-  The length to train each trial, in terms of records, batches or epochs
+  The length to train each trial, in terms of records, batches, or epochs
   (see :ref:`Training Units<experiment-configuration_training_units>`).
 
 **Optional Fields**
@@ -499,7 +514,7 @@ more details see the :ref:`topic-guides_hp-tuning-det_grid`.
   hyperparameter configuration.
 
 ``max_length``
-  The length to train each trial, in terms of records, batches or epochs
+  The length to train each trial, in terms of records, batches, or epochs
   (see :ref:`Training Units<experiment-configuration_training_units>`).
 
 **Optional Fields**
@@ -534,7 +549,7 @@ hyperparameter configurations while quickly eliminating poor ones.
   hyperparameter configuration.
 
 ``max_length``
-  The maximum training length of any one trial, in terms of records, batches or 
+  The maximum training length of any one trial, in terms of records, batches or
   epochs (see :ref:`Training Units<experiment-configuration_training_units>`).
   The vast majority of trials will be stopped early, and thus only a small fraction
   of trials will actually be trained for this long. We suggest setting this to a
@@ -603,8 +618,8 @@ applications of hyperparameter search.
   The name of the validation metric used to evaluate the performance of a
   hyperparameter configuration.
 
-``max_length``: 
-  The maximum training length of any one trial, in terms of records, batches or epochs
+``max_length``:
+  The maximum training length of any one trial, in terms of records, batches, or epochs
   (see :ref:`Training Units<experiment-configuration_training_units>`).
   The vast majority of trials will be stopped early, and thus only a small fraction
   of trials will actually be trained for this long. This quantity is domain-specific
@@ -658,7 +673,7 @@ Adaptive (ASHA)
 ----------------
 
 The ``adaptive_asha`` search method is an asynchronous version of the
-``adaptive <experiment-configuration-searcher-adaptive>`` method above that is
+:ref:`adaptive <experiment-configuration-searcher-adaptive>` method above that is
 more suitable for large experiments with many trials.
 
 **Required Fields**
@@ -668,7 +683,7 @@ more suitable for large experiments with many trials.
   hyperparameter configuration.
 
 ``max_length``
-  The maximum training length of any one trial, in terms of records, batches or epochs
+  The maximum training length of any one trial, in terms of records, batches, or epochs
   (see :ref:`Training Units<experiment-configuration_training_units>`). The vast
   majority of trials will be stopped early, and thus only a small fraction of
   trials will actually be trained for this long. This quantity is domain-specific and should
@@ -920,6 +935,8 @@ performance of the experiment.
 
 **Optional Fields**
 
+.. _config-aggregation-frequency:
+
 ``aggregation_frequency``
   Specifies after how many batches gradients are exchanged during
   :ref:`multi-gpu-training`. Defaults to ``1``.
@@ -1059,7 +1076,7 @@ details on how to set environment variables in containers.
 **Optional Fields**
 
 ``local_cache_host_path``
-  The file system path, to store a local copy of the cache, which is
+  The file system path to store a local copy of the cache, which is
   synchronized with the GCS cache.
 
 ``local_cache_container_path``
@@ -1071,19 +1088,28 @@ details on how to set environment variables in containers.
 Training Units
 **************
 
-Some configuration setiings, such as searcher training lengths and budgets,
-``min_validation_period``, and ``min_checkpoint_period``, can be expressed in terms of a few
-training units: records, batches or epochs. For example, to specify the ``max_length`` for a
-searcher in terms of batches, the configuration would read as shown below.
+Some configuration settings, such as searcher training lengths and budgets,
+``min_validation_period``, and ``min_checkpoint_period``, can be expressed in
+terms of a few training units: records, batches, or epochs. A *record* is a
+single labeled example. A *batch* is a group of records (the number of records
+in a batch is configured via the ``global_batch_size`` hyperparameter). An
+*epoch* is a single copy of the entire training data set; the number of records
+in an epoch is configured via the :ref:`records_per_epoch
+<config-records-per-epoch>` configuration field.
+
+For example, to specify the ``max_length`` for a searcher in terms of batches,
+the configuration would read as shown below.
 
 .. code:: yaml
 
   max_length:
     batches: 900
 
-To express it terms of records or epochs, records or epochs would be specified in place of
-``batches``. In the case of epochs, ``records_per_epoch`` must also be specified. Below is an
-example of a single searcher in terms of epochs.
+To express it terms of records or epochs, ``records`` or ``epochs`` would be
+specified in place of ``batches``. In the case of epochs,
+:ref:`records_per_epoch <config-records-per-epoch>` must also be
+specified. Below is an example that configures a ``single`` searcher to train a
+model for 64 epochs.
 
 .. code:: yaml
 
