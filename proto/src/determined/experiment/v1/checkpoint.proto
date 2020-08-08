@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/experimentv1"
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // Metrics calculated during validation.
 message Metrics {
@@ -16,6 +17,11 @@ message Metrics {
 
 // Checkpoint is an artifact created by a trial during training.
 message Checkpoint {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+      json_schema: {
+          required: ["uuid", "state"]
+      }
+  };
   // The current state of the checkpoint.
   enum State {
     // The state of the checkpoint is unknown.
