@@ -146,8 +146,7 @@ const ioToExperimentConfig = (io: ioTypeExperimentConfig): ExperimentConfig => {
       smallerIsBetter: io.searcher.smaller_is_better,
     },
   };
-  if (io.resources.max_slots != null)
-    config.resources.maxSlots = io.resources.max_slots;
+  if (io.resources.max_slots != null) config.resources.maxSlots = io.resources.max_slots;
   return config;
 };
 
@@ -160,7 +159,7 @@ export const jsonToExperiment = (data: unknown): Experiment => {
     endTime: io.end_time || undefined,
     id: io.id,
     ownerId: io.owner_id,
-    progress: io.progress || undefined,
+    progress: io.progress != null ? io.progress : undefined,
     startTime: io.start_time,
     state: io.state as RunState,
   };
@@ -181,7 +180,7 @@ const ioToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
     stepId: io.step_id,
     trialId: io.trial_id,
     uuid: io.uuid || undefined,
-    validationMetric: io.validation_metric || undefined,
+    validationMetric: io.validation_metric != null ? io.validation_metric : undefined,
   };
 };
 
@@ -218,7 +217,7 @@ const ioToTrial = (io: ioTypeTrial): TrialItem => {
   return {
     bestAvailableCheckpoint: io.best_available_checkpoint
       ? ioToCheckpoint(io.best_available_checkpoint) : undefined,
-    bestValidationMetric: io.best_validation_metric || undefined,
+    bestValidationMetric: io.best_validation_metric != null ? io.best_validation_metric : undefined,
     endTime: io.end_time || undefined,
     experimentId: io.experiment_id,
     hparams: io.hparams || {},
@@ -246,7 +245,7 @@ export const jsonToTrialDetails = (data: unknown): TrialDetails => {
     startTime: io.start_time,
     state: io.state as RunState,
     steps: io.steps.map(ioToStep),
-    warmStartCheckpointId: io.warm_start_checkpoint_id !== null ?
+    warmStartCheckpointId: io.warm_start_checkpoint_id != null ?
       io.warm_start_checkpoint_id : undefined,
   };
 };
@@ -260,7 +259,7 @@ export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
     endTime: io.end_time || undefined,
     id: io.id,
     ownerId: io.owner.id,
-    progress: io.progress || undefined,
+    progress: io.progress != null ? io.progress : undefined,
     startTime: io.start_time,
     state: io.state as RunState,
     trials: io.trials.map(ioToTrial),
@@ -268,7 +267,7 @@ export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
     validationHistory: io.validation_history.map(vh => ({
       endTime: vh.end_time,
       trialId: vh.trial_id,
-      validationError: vh.validation_error || undefined,
+      validationError: vh.validation_error != null ? vh.validation_error : undefined,
     })),
   };
 };
