@@ -19,11 +19,11 @@ Version 0.12.13
 
   - The new API supports PyTorch code that uses multiple models, optimizers, and LR schedulers. In your trial class, you should instantiate those objects and wrap them with :meth:`~determined.pytorch.PyTorchTrialContext.wrap_model`, :meth:`~determined.pytorch.PyTorchTrialContext.wrap_optimizer`, and :meth:`~determined.pytorch.PyTorchTrialContext.wrap_lr_scheduler` in the constructor of your PyTorch trial class. The previous API methods ``build_model``, ``optimizer``, and ``create_lr_scheduler`` in :class:`~determined.pytorch.PyTorchTrial` are now deprecated.
 
-  - Support customizing forward and backward passes in :meth:`~determined.pytorch.PyTorchTrial.train_batch`. Support gradient clipping by passing a function to the ``clip_grads`` argument of :meth:`~determined.pytorch.PyTorchTrialContext.step_optimizer`. The callback ``on_before_optimizer_step`` is now deprecated.
+  - Support customizing forward and backward passes in :meth:`~determined.pytorch.PyTorchTrial.train_batch`. Gradient clipping should now be done by passing a function to the ``clip_grads`` argument of :meth:`~determined.pytorch.PyTorchTrialContext.step_optimizer`. The callback ``on_before_optimizer_step`` is now deprecated.
 
   - Configuring automatic mixed precision (AMP) in PyTorch should now be done by calling :meth:`~determined.pytorch.PyTorchTrialContext.configure_apex_amp` in the constructor of your PyTorch trial class. The ``optimizations.mixed_precision`` experiment configuration key is now deprecated.
 
-  - The ``model`` arguments in :meth:`~determined.pytorch.PyTorchTrial.train_batch`, :meth:`~determined.pytorch.PyTorchTrial.evaluate_batch`, and :meth:`~determined.pytorch.PyTorchTrial.evaluate_full_dataset` are now deprecated.
+  - The ``model`` arguments to :meth:`~determined.pytorch.PyTorchTrial.train_batch`, :meth:`~determined.pytorch.PyTorchTrial.evaluate_batch`, and :meth:`~determined.pytorch.PyTorchTrial.evaluate_full_dataset` are now deprecated.
 
 - **More Efficient Hyperparameter Search:** This release introduces a new hyperparameter search method, ``adaptive_asha``. This is based on an asynchronous version of the ``adaptive`` algorithm, and should enable large searches to find high-quality hyperparameter configurations more quickly. See the :ref:`documentation <topic-guides_hp-tuning-det_adaptive-asha>` and the `associated paper <https://arxiv.org/pdf/1810.05934.pdf>`__ for more information.
 
@@ -36,6 +36,12 @@ Version 0.12.13
 - Remove ``determined.pytorch.reset_parameters()``. This should have no effect except when using highly customized ``nn.Module`` implementations.
 
 - WebUI: Show total number of resources in the cluster resource charts.
+
+- Add support for Nvidia T4 GPUs.
+
+- ``det-deploy``: Add support for ``g4`` instance types on AWS.
+
+- Upgrade Nvidia drivers on the default AWS and GCP images from ``410.104`` to ``450.51.05``.
 
 **Bug Fixes**
 
