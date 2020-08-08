@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
 import {
-  decode, ioAgents, ioDeterminedInfo, ioExperiment, ioExperimentConfig,
+  decode, ioAgents, ioDeterminedInfo, ioExperiment,
   ioExperimentDetails, ioExperiments, ioGenericCommand, ioGenericCommands, ioLog, ioLogs,
   ioTaskLogs, ioTrialDetails, ioTypeAgents, ioTypeCheckpoint,
   ioTypeDeterminedInfo, ioTypeExperiment, ioTypeExperimentConfig,
@@ -18,8 +18,8 @@ import {
 import { capitalize } from 'utils/string';
 
 export const jsonToUsers = (data: unknown): User[] => {
-  const ioType = decode<ioTypeUsers>(ioUsers, data);
-  return ioType.map(user => ({
+  const io = decode<ioTypeUsers>(ioUsers, data);
+  return io.map(user => ({
     id: user.id,
     isActive: user.active,
     isAdmin: user.admin,
@@ -28,22 +28,22 @@ export const jsonToUsers = (data: unknown): User[] => {
 };
 
 export const jsonToDeterminedInfo = (data: unknown): DeterminedInfo => {
-  const info = decode<ioTypeDeterminedInfo>(ioDeterminedInfo, data);
+  const io = decode<ioTypeDeterminedInfo>(ioDeterminedInfo, data);
   return {
-    clusterId: info.cluster_id,
-    masterId: info.master_id,
+    clusterId: io.cluster_id,
+    masterId: io.master_id,
     telemetry: {
-      enabled: info.telemetry.enabled,
-      segmentKey: info.telemetry.segment_key,
+      enabled: io.telemetry.enabled,
+      segmentKey: io.telemetry.segment_key || undefined,
     },
-    version: info.version,
+    version: io.version,
   };
 };
 
 export const jsonToAgents = (data: unknown): Agent[] => {
-  const ioType = decode<ioTypeAgents>(ioAgents, data);
-  return Object.keys(ioType).map(agentId => {
-    const agent = ioType[agentId];
+  const io = decode<ioTypeAgents>(ioAgents, data);
+  return Object.keys(io).map(agentId => {
+    const agent = io[agentId];
     const resources = Object.keys(agent.slots).map(slotId => {
       const slot = agent.slots[slotId];
 
@@ -71,30 +71,30 @@ export const jsonToAgents = (data: unknown): Agent[] => {
 };
 
 export const jsonToGenericCommand = (data: unknown, type: CommandType): Command => {
-  const ioType = decode<ioTypeGenericCommand>(ioGenericCommand, data);
+  const io = decode<ioTypeGenericCommand>(ioGenericCommand, data);
   return {
-    config: { ...ioType.config },
-    exitStatus: ioType.exit_status || undefined,
-    id: ioType.id,
+    config: { ...io.config },
+    exitStatus: io.exit_status || undefined,
+    id: io.id,
     kind: type,
-    misc: ioType.misc ? {
-      experimentIds: ioType.misc.experiment_ids || undefined,
-      trialIds: ioType.misc.trial_ids || undefined,
+    misc: io.misc ? {
+      experimentIds: io.misc.experiment_ids || undefined,
+      trialIds: io.misc.trial_ids || undefined,
     } : undefined,
     owner: {
-      id: ioType.owner.id,
-      username: ioType.owner.username,
+      id: io.owner.id,
+      username: io.owner.username,
     },
-    registeredTime: ioType.registered_time,
-    serviceAddress: ioType.service_address || undefined,
-    state: ioType.state as CommandState,
+    registeredTime: io.registered_time,
+    serviceAddress: io.service_address || undefined,
+    state: io.state as CommandState,
   };
 };
 
 const jsonToGenericCommands = (data: unknown, type: CommandType): Command[] => {
-  const ioType = decode<ioTypeGenericCommands>(ioGenericCommands, data);
-  return Object.keys(ioType).map(genericCommandId => {
-    return jsonToGenericCommand(ioType[genericCommandId], type);
+  const io = decode<ioTypeGenericCommands>(ioGenericCommands, data);
+  return Object.keys(io).map(genericCommandId => {
+    return jsonToGenericCommand(io[genericCommandId], type);
   });
 };
 
@@ -122,8 +122,7 @@ export const jsonToTensorboards = (data: unknown): Command[] => {
   return jsonToGenericCommands(data, CommandType.Tensorboard);
 };
 
-const jsonToExperimentConfig = (data: unknown): ExperimentConfig => {
-  const io = decode<ioTypeExperimentConfig>(ioExperimentConfig, data);
+const ioToExperimentConfig = (io: ioTypeExperimentConfig): ExperimentConfig => {
   const config: ExperimentConfig = {
     checkpointPolicy: io.checkpoint_policy,
     checkpointStorage: io.checkpoint_storage ? {
@@ -140,15 +139,14 @@ const jsonToExperimentConfig = (data: unknown): ExperimentConfig => {
       type: io.data_layer.type,
     } : undefined,
     description: io.description,
-    labels: io.labels,
+    labels: io.labels || undefined,
     resources: {},
     searcher: {
       ...io.searcher,
       smallerIsBetter: io.searcher.smaller_is_better,
     },
   };
-  if (io.resources.max_slots !== undefined)
-    config.resources.maxSlots = io.resources.max_slots;
+  if (io.resources.max_slots != null) config.resources.maxSlots = io.resources.max_slots;
   return config;
 };
 
@@ -156,21 +154,20 @@ export const jsonToExperiment = (data: unknown): Experiment => {
   const io = decode<ioTypeExperiment>(ioExperiment, data);
   return {
     archived: io.archived,
-    config: jsonToExperimentConfig(io.config),
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    configRaw: (data as any).config,
+    config: ioToExperimentConfig(io.config),
+    configRaw: (data as { config: Record<string, unknown> }).config,
     endTime: io.end_time || undefined,
     id: io.id,
     ownerId: io.owner_id,
-    progress: io.progress !== null ? io.progress : undefined,
+    progress: io.progress != null ? io.progress : undefined,
     startTime: io.start_time,
     state: io.state as RunState,
   };
 };
 
 export const jsonToExperiments = (data: unknown): Experiment[] => {
-  const ioType = decode<ioTypeExperiments>(ioExperiments, data);
-  return ioType.map(jsonToExperiment);
+  const io = decode<ioTypeExperiments>(ioExperiments, data);
+  return io.map(jsonToExperiment);
 };
 
 const ioToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
@@ -183,7 +180,7 @@ const ioToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
     stepId: io.step_id,
     trialId: io.trial_id,
     uuid: io.uuid || undefined,
-    validationMetric: io.validation_metric !== null ? io.validation_metric : undefined,
+    validationMetric: io.validation_metric != null ? io.validation_metric : undefined,
   };
 };
 
@@ -220,7 +217,7 @@ const ioToTrial = (io: ioTypeTrial): TrialItem => {
   return {
     bestAvailableCheckpoint: io.best_available_checkpoint
       ? ioToCheckpoint(io.best_available_checkpoint) : undefined,
-    bestValidationMetric: io.best_validation_metric ? io.best_validation_metric : undefined,
+    bestValidationMetric: io.best_validation_metric != null ? io.best_validation_metric : undefined,
     endTime: io.end_time || undefined,
     experimentId: io.experiment_id,
     hparams: io.hparams || {},
@@ -248,48 +245,47 @@ export const jsonToTrialDetails = (data: unknown): TrialDetails => {
     startTime: io.start_time,
     state: io.state as RunState,
     steps: io.steps.map(ioToStep),
-    warmStartCheckpointId: io.warm_start_checkpoint_id !== null ?
+    warmStartCheckpointId: io.warm_start_checkpoint_id != null ?
       io.warm_start_checkpoint_id : undefined,
   };
 };
 
 export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
-  const ioType = decode<ioTypeExperimentDetails>(ioExperimentDetails, data);
+  const io = decode<ioTypeExperimentDetails>(ioExperimentDetails, data);
   return {
-    archived: ioType.archived,
-    config: jsonToExperimentConfig(ioType.config),
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    configRaw: (data as any).config,
-    endTime: ioType.end_time || undefined,
-    id: ioType.id,
-    ownerId: ioType.owner.id,
-    progress: ioType.progress !== null ? ioType.progress : undefined,
-    startTime: ioType.start_time,
-    state: ioType.state as RunState,
-    trials: ioType.trials.map(ioToTrial),
-    username: ioType.owner.username,
-    validationHistory: ioType.validation_history.map(vh => ({
+    archived: io.archived,
+    config: ioToExperimentConfig(io.config),
+    configRaw: (data as { config: Record<string, unknown> }).config,
+    endTime: io.end_time || undefined,
+    id: io.id,
+    ownerId: io.owner.id,
+    progress: io.progress != null ? io.progress : undefined,
+    startTime: io.start_time,
+    state: io.state as RunState,
+    trials: io.trials.map(ioToTrial),
+    username: io.owner.username,
+    validationHistory: io.validation_history.map(vh => ({
       endTime: vh.end_time,
       trialId: vh.trial_id,
-      validationError: vh.validation_error || undefined,
+      validationError: vh.validation_error != null ? vh.validation_error : undefined,
     })),
   };
 };
 
 export const jsonToLogs = (data: unknown): Log[] => {
-  const ioType = decode<ioTypeLogs>(ioLogs, data);
-  return ioType.map(log => ({
+  const io = decode<ioTypeLogs>(ioLogs, data);
+  return io.map(log => ({
     id: log.id,
     level: log.level ? LogLevel[capitalize(log.level) as keyof typeof LogLevel] : undefined,
     message: log.message,
-    time: log.time,
+    time: log.time || undefined,
   }));
 };
 
 const defaultRegex = /^\[([^\]]+)\]\s(.*)$/im;
 const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s(.*)$/im;
 
-const ioTrialLogToLog = (io: ioTypeLog): Log => {
+const ioToTrialLog = (io: ioTypeLog): Log => {
   if (defaultRegex.test(io.message)) {
     const matches = io.message.match(defaultRegex) || [];
     const time = matches[1];
@@ -305,8 +301,8 @@ const ioTrialLogToLog = (io: ioTypeLog): Log => {
 };
 
 export const jsonToTrialLog = (data: unknown): Log => {
-  const ioType = decode<ioTypeLog>(ioLog, data);
-  return ioTrialLogToLog(ioType);
+  const io = decode<ioTypeLog>(ioLog, data);
+  return ioToTrialLog(io);
 };
 
 const ioTaskEventToMessage = (event: string): string => {
@@ -318,8 +314,8 @@ const ioTaskEventToMessage = (event: string): string => {
 };
 
 export const jsonToTaskLogs = (data: unknown): Log[] => {
-  const ioType = decode<ioTypeTaskLogs>(ioTaskLogs, data);
-  return ioType
+  const io = decode<ioTypeTaskLogs>(ioTaskLogs, data);
+  return io
     .filter(log => !log.service_ready_event)
     .map(log => {
       const description = log.snapshot.config.description || '';
@@ -346,6 +342,6 @@ export const jsonToTaskLogs = (data: unknown): Log[] => {
 };
 
 export const jsonToTrialLogs = (data: unknown): Log[] => {
-  const ioType = decode<ioTypeLogs>(ioLogs, data);
-  return ioType.map(ioTrialLogToLog);
+  const io = decode<ioTypeLogs>(ioLogs, data);
+  return io.map(ioToTrialLog);
 };
