@@ -150,7 +150,7 @@ export const ioValidationMetrics = io.type({
 export type ioTypeValidationMetrics = io.TypeOf<typeof ioValidationMetrics>;
 
 const startEndTimeDef = {
-  end_time: io.union([ io.string, ioNullUndefined ]),
+  end_time: io.union([ io.string, ioNullOrUndefined ]),
   start_time: io.string,
 };
 
@@ -181,9 +181,9 @@ export type ioTypeValidation = io.TypeOf<typeof ioValidation>;
 
 export const ioStep = io.type({
   ...baseStepDef,
-  checkpoint: io.union([ ioNullUndefined, ioCheckpoint ]),
+  checkpoint: io.union([ ioCheckpoint, ioNullOrUndefined ]),
   state: runStatesIoType,
-  validation: io.union([ ioNullUndefined, ioValidation ]),
+  validation: io.union([ ioValidation, ioNullOrUndefined ]),
 });
 export type ioTypeStep = io.TypeOf<typeof ioStep>;
 
@@ -207,8 +207,8 @@ export const ioTrial = io.type({
   experiment_id: io.number,
   hparams: io.record(io.string, io.any),
   id: io.number,
-  latest_validation_metrics: io.union([ ioValidationMetrics, ioNullUndefined ]),
-  num_batches: io.union([ io.number, ioNullUndefined ]),
+  latest_validation_metrics: io.union([ ioValidationMetrics, ioNullOrUndefined ]),
+  num_batches: io.union([ io.number, ioNullOrUndefined ]),
   num_completed_checkpoints: io.number,
   num_steps: io.number,
   seed: io.number,
