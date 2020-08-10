@@ -6,7 +6,7 @@ from determined.pytorch._data import (
     TorchData,
     _Data,
     adapt_batch_sampler,
-    data_length,
+    _data_length,
     to_device,
 )
 from determined.pytorch._callback import PyTorchCallback, ClipGradsL2Norm, ClipGradsL2Value

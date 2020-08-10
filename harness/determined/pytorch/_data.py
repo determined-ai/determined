@@ -317,7 +317,7 @@ class SkipBatchSampler(torch.utils.data.BatchSampler):
         yield from iterator
 
 
-def data_length(data: _Data) -> int:
+def _data_length(data: _Data) -> int:
     """
     Calculate length of data input.
 

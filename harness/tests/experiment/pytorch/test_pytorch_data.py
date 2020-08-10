@@ -5,13 +5,7 @@ import pytest
 import torch
 
 import determined as det
-from determined.pytorch import (
-    DistributedBatchSampler,
-    RepeatBatchSampler,
-    SkipBatchSampler,
-    data_length,
-    to_device,
-)
+from determined import pytorch
 
 
 def make_dataset() -> torch.utils.data.Dataset:
@@ -31,7 +25,7 @@ def test_skip_batch_sampler():
     sampler = torch.utils.data.BatchSampler(
         torch.utils.data.SequentialSampler(range(15)), batch_size=2, drop_last=False
     )
-    skip_sampler = SkipBatchSampler(sampler, skip)
+    skip_sampler = pytorch.SkipBatchSampler(sampler, skip)
 
     assert len(skip_sampler) == 6
 
@@ -45,13 +39,13 @@ def test_skip_batch_sampler():
         assert samp == skip_samp
 
     # Confirm that same_length works.
-    same_size_skip_sampler = SkipBatchSampler(sampler, skip, same_length=True)
+    same_size_skip_sampler = pytorch.SkipBatchSampler(sampler, skip, same_length=True)
     assert len(same_size_skip_sampler) == len(sampler)
 
 
 def test_repeat_batch_sampler():
     sampler = torch.utils.data.BatchSampler(torch.utils.data.SequentialSampler(range(10)), 3, False)
-    repeat_sampler = RepeatBatchSampler(sampler)
+    repeat_sampler = pytorch.RepeatBatchSampler(sampler)
 
     assert len(repeat_sampler) == 4
 
@@ -76,7 +70,7 @@ def test_distributed_batch_sampler():
     expected_samples.append([[6, 7], [14, 15]])
 
     for rank in range(num_replicas):
-        dist_sampler = DistributedBatchSampler(sampler, 4, rank)
+        dist_sampler = pytorch.DistributedBatchSampler(sampler, 4, rank)
         samples = list(dist_sampler)
         assert len(dist_sampler) == len(samples)
         assert samples == expected_samples[rank]
@@ -139,13 +133,13 @@ Data = typing.Union[typing.Dict[str, Array], Array]
 
 @pytest.mark.parametrize("data,length", TEST_DATA_LENGTH_SUITE)
 def test_data_length(data: Data, length: int):
-    assert data_length(data) == length
+    assert pytorch._data_length(data) == length
 
 
 @pytest.mark.parametrize("data,error", [({}, ValueError), (0, TypeError)])
 def test_data_type_error(data: typing.Any, error: typing.Any) -> None:
     with pytest.raises(error):
-        data_length(data)
+        pytorch._data_length(data)
 
 
 def test_to_device() -> None:
@@ -159,5 +153,5 @@ def test_to_device() -> None:
         "input_4": 1,
     }
 
-    assert to_device(data_structure, "cpu") == data_structure
-    assert np.array_equal(to_device(np.array([0, 1, 2]), "cpu"), np.array([0, 1, 2]))
+    assert pytorch.to_device(data_structure, "cpu") == data_structure
+    assert np.array_equal(pytorch.to_device(np.array([0, 1, 2]), "cpu"), np.array([0, 1, 2]))
