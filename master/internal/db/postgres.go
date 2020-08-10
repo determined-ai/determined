@@ -147,26 +147,6 @@ func (db *PgDB) rawQuery(q string, args ...interface{}) ([]byte, error) {
 	return ret, nil
 }
 
-// ArchiveExperiment sets the experiment archived flag.
-func (db *PgDB) ArchiveExperiment(experimentID int, isArchived bool) error {
-	query := `
-UPDATE experiments
-SET archived = $2
-WHERE id = $1
-	`
-	res, err := db.sql.Exec(query, experimentID, isArchived)
-	if err != nil {
-		return errors.Wrap(err, "failed to execute query to set archived status")
-	}
-	if numRows, rowsErr := res.RowsAffected(); rowsErr != nil {
-		return errors.Wrap(rowsErr, "checking affected rows for saving experiment archived status")
-	} else if numRows != 1 {
-		return errors.Errorf("saving experiment %d's archive status affected %d rows instead of 1",
-			experimentID, numRows)
-	}
-	return err
-}
-
 // query executes a query returning a single row and unmarshals the result into
 // obj.
 func (db *PgDB) query(q string, obj interface{}, args ...interface{}) error {

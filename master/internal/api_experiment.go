@@ -240,7 +240,8 @@ func (a *apiServer) ArchiveExperiment(
 			id, dbExp.State)
 	}
 
-	err = a.m.db.ArchiveExperiment(id, true)
+	dbExp.Archived = true
+	err = a.m.db.SaveExperimentArchiveStatus(dbExp)
 	switch err {
 	case nil:
 		return &apiv1.ArchiveExperimentResponse{}, nil
@@ -254,6 +255,7 @@ func (a *apiServer) UnarchiveExperiment(
 	ctx context.Context, req *apiv1.UnarchiveExperimentRequest,
 ) (*apiv1.UnarchiveExperimentResponse, error) {
 	id := int(req.Id)
+
 	dbExp, err := a.m.db.ExperimentByID(id)
 	if err != nil {
 		return nil, errors.Wrapf(err, "loading experiment %v", id)
@@ -263,7 +265,8 @@ func (a *apiServer) UnarchiveExperiment(
 			id, dbExp.State)
 	}
 
-	err = a.m.db.ArchiveExperiment(id, false)
+	dbExp.Archived = false
+	err = a.m.db.SaveExperimentArchiveStatus(dbExp)
 	switch err {
 	case nil:
 		return &apiv1.UnarchiveExperimentResponse{}, nil
