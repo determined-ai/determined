@@ -421,6 +421,9 @@ updateWithRoute url model =
                             Page.ExperimentList.init model.previousExperimentListModel options
                                 |> mapInit model experimentListInfo
 
+                Just Route.ExperimentListReact ->
+                    ( model, Navigation.load (Route.toString Route.ExperimentListReact) )
+
                 Just (Route.Login maybeRedirect) ->
                     ( model, goToLogin maybeRedirect )
 
@@ -443,6 +446,9 @@ updateWithRoute url model =
                         _ ->
                             Page.ShellList.init model.previousShellListModel options
                                 |> mapInit model shellListInfo
+
+                Just Route.TaskList ->
+                    ( model, Navigation.load (Route.toString Route.TaskList) )
 
                 Just (Route.TensorBoardList options) ->
                     case model.page of

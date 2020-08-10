@@ -87,7 +87,7 @@ const taskLogsRoute = {
 
 const taskListRoute = {
   component: TaskList,
-  icon: 'list',
+  icon: 'tasks',
   id: 'taskList',
   needAuth: true,
   path: '/det/tasks',
@@ -146,45 +146,15 @@ export const appRoutes: RouteConfig[] = [
 
 export const sidebarRoutes: RouteConfig[] = [
   dashboardRoute,
-  {
-    icon: 'experiment',
-    id: 'experiments',
-    path: '/ui/experiments',
-    title: 'Experiments',
-  },
-  {
-    icon: 'notebook',
-    id: 'notebooks',
-    path: '/ui/notebooks',
-    title: 'Notebooks',
-  },
-  {
-    icon: 'tensorboard',
-    id: 'tensorboards',
-    path: '/ui/tensorboards',
-    title: 'TensorBoards',
-  },
+  experimentListRoute,
+  taskListRoute,
   clusterRoute,
-  {
-    icon: 'shell',
-    id: 'shells',
-    path: '/ui/shells',
-    title: 'Shells',
-  },
-  {
-    icon: 'command',
-    id: 'commands',
-    path: '/ui/commands',
-    title: 'Commands',
-  },
 ];
 export const defaultSideBarRoute = sidebarRoutes[0];
 
+// Add pages we don't want to expose to the public yet.
 if (process.env.IS_DEV) {
-  sidebarRoutes.push(
-    taskListRoute,
-    experimentListRoute,
-  );
+  // sidebarRoutes.push();
 }
 
 // Is the path going to be served from the same host?

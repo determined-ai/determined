@@ -144,10 +144,12 @@ type Route
     | CommandList CommandLikeListOptions
     | ExperimentDetail Int
     | ExperimentList ExperimentListOptions
+    | ExperimentListReact
     | Login (Maybe Url.Url)
     | Logout
     | NotebookList CommandLikeListOptions
     | ShellList CommandLikeListOptions
+    | TaskList
     | TensorBoardList CommandLikeListOptions
     | TrialDetail Int
     | LogViewer Int
@@ -271,6 +273,9 @@ toString r =
             in
             absolute [ "ui", "experiments" ] parameters
 
+        ExperimentListReact ->
+            absolute [ "det", "experiments" ] []
+
         Login maybeRedirect ->
             case maybeRedirect of
                 Just redirect ->
@@ -295,6 +300,9 @@ toString r =
             absolute
                 [ "ui", "shells" ]
                 (commandLikeParameters options)
+
+        TaskList ->
+            absolute [ "det", "tasks" ] []
 
         TensorBoardList options ->
             absolute
