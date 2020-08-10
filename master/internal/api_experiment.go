@@ -229,11 +229,12 @@ func (a *apiServer) KillExperiment(
 func (a *apiServer) ArchiveExperiment(
 	ctx context.Context, req *apiv1.ArchiveExperimentRequest,
 ) (*apiv1.ArchiveExperimentResponse, error) {
-	if err := a.checkExperimentExists(int(req.Id)); err != nil {
+	id := int(req.Id)
+	if err := a.checkExperimentExists(id); err != nil {
 		return nil, err
 	}
 
-	err := a.m.db.QueryDB("archive_experiment", req.Id, true)
+	err := a.m.db.ArchiveExperiment(id, true)
 	switch err {
 	case nil:
 		return &apiv1.ArchiveExperimentResponse{}, nil
@@ -246,10 +247,11 @@ func (a *apiServer) ArchiveExperiment(
 func (a *apiServer) UnarchiveExperiment(
 	ctx context.Context, req *apiv1.UnarchiveExperimentRequest,
 ) (*apiv1.UnarchiveExperimentResponse, error) {
-	if err := a.checkExperimentExists(int(req.Id)); err != nil {
+	id := int(req.Id)
+	if err := a.checkExperimentExists(id); err != nil {
 		return nil, err
 	}
-	err := a.m.db.QueryDB("archive_experiment", req.Id, false)
+	err := a.m.db.ArchiveExperiment(id, false)
 	switch err {
 	case nil:
 		return &apiv1.UnarchiveExperimentResponse{}, nil
