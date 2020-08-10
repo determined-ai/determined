@@ -24,7 +24,7 @@ export type GenericRenderer = <T extends TableRecord>(
 ) => React.ReactNode;
 
 type ExperimentRenderer = (text: string, record: ExperimentItem, index: number) => React.ReactNode;
-type TaskRenderer = (text: string, record: CommandTask, index: number) => React.ReactNode;
+export type TaskRenderer = (text: string, record: CommandTask, index: number) => React.ReactNode;
 
 /* Table Column Renderers */
 

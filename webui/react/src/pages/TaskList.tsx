@@ -3,8 +3,10 @@ import { Button, Input, Modal, Space, Table } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
+import { makeClickHandler } from 'components/Link';
 import Page from 'components/Page';
 import { defaultRowClassName, isAlternativeAction } from 'components/Table';
+import { TaskRenderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TaskFilter from 'components/TaskFilter';
 import Auth from 'contexts/Auth';
@@ -19,13 +21,15 @@ import {
 } from 'services/api';
 import { EmptyParams } from 'services/types';
 import { ALL_VALUE, Command, CommandTask, CommandType, TaskFilters } from 'types';
-import { getPath } from 'utils/data';
+import { getPath, numericSorter } from 'utils/data';
 import { openBlank } from 'utils/routes';
 import { canBeOpened, filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
 
 import css from './TaskList.module.scss';
-import { columns } from './TaskList.table';
+import { columns as defaultColumns } from './TaskList.table';
+
+const MAX_SOURCES = 5;
 
 const defaultFilters: TaskFilters<CommandType> = {
   limit: 25,
@@ -53,6 +57,7 @@ const TaskList: React.FC = () => {
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
   const [ search, setSearch ] = useState('');
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
+  const [ sourceExpanded, setSourceExpanded ] = useState<Record<string, boolean>>({});
   const [ commandsResponse, triggerCommandsRequest ] =
     useRestApi<EmptyParams, Command[]>(getCommands, {});
   const [ notebooksResponse, triggerNotebooksRequest ] =
@@ -107,6 +112,66 @@ const TaskList: React.FC = () => {
     triggerShellsRequest,
     triggerTensorboardsRequest,
   ]);
+
+  const handleSourceExpand = useCallback((event: React.MouseEvent, id: string) => {
+    event.stopPropagation();
+    setSourceExpanded(prev => {
+      const newSourceExpanded = { ...prev };
+      if (!newSourceExpanded[id]) newSourceExpanded[id] = true;
+      else delete newSourceExpanded[id];
+      return newSourceExpanded;
+    });
+  }, []);
+
+  const columns = useMemo(() => {
+    const sourceRenderer: TaskRenderer = (_, record) => {
+      const info = {
+        isPlural: false,
+        label: '',
+        path: '',
+        source: [] as number[],
+      };
+      if (record.misc?.experimentIds) {
+        info.label = 'Experiment';
+        info.path = '/ui/experiments';
+        info.source = record.misc.experimentIds || [];
+      } else if (record.misc?.trialIds) {
+        info.label = 'Trial';
+        info.path = '/ui/trials';
+        info.source = record.misc.trialIds || [];
+      }
+      info.isPlural = info.source.length > 1;
+      info.source.sort(numericSorter);
+
+      const isExpanded = sourceExpanded[record.id];
+      const sourceCount = info.source.length - MAX_SOURCES;
+      const showToggle = info.source.length > MAX_SOURCES;
+      const toggleLabel = isExpanded ? 'Collapse' : `Show ${sourceCount}+`;
+
+      return sourceCount !== 0 ? (
+        <div className={css.sourceLinks}>
+          <label>{info.label}{info.isPlural ? 's' : ''}</label>
+          {info.source.map((id, index) => {
+            const display = index < MAX_SOURCES || isExpanded ? 'inline' : 'none';
+            const handleClick = (event: React.MouseEvent) => {
+              event.stopPropagation();
+              makeClickHandler(`${info.path}/${id}`)(event);
+            };
+            return <a key={id} style={{ display }} onClick={handleClick}>{id}</a>;
+          })}
+          {showToggle && <button onClick={e => handleSourceExpand(e, record.id)}>
+            {toggleLabel}
+          </button>}
+        </div>
+      ) : '-';
+    };
+
+    const newColumns = [ ...defaultColumns ];
+    const sourceColumn = newColumns.find(column => /sources/i.test(column.title as string));
+    if (sourceColumn) sourceColumn.render = sourceRenderer;
+
+    return newColumns;
+  }, [ handleSourceExpand, sourceExpanded ]);
 
   /*
    * Check once every second to see if all task endpoints have resolved.
