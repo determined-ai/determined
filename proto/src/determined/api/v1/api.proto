@@ -158,6 +158,12 @@ service Determined {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
 
+    // Get a list of checkpoints for an experiment.
+    rpc GetExperimentCheckpoints(GetExperimentCheckpointsRequest) returns (GetExperimentCheckpointsResponse) {
+        option (google.api.http) = {get: "/api/v1/experiments/{id}/checkpoints" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
+
     // Preview hyperparameter search.
     rpc PreviewHPSearch(PreviewHPSearchRequest) returns (PreviewHPSearchResponse) {
         option (google.api.http) = {post: "/api/v1/preview-hp-search" body: "*"};

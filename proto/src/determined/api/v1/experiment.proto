@@ -7,6 +7,7 @@ import "google/protobuf/wrappers.proto";
 import "google/protobuf/struct.proto";
 
 import "determined/api/v1/pagination.proto";
+import "determined/checkpoint/v1/checkpoint.proto";
 import "determined/experiment/v1/experiment.proto";
 import "determined/experiment/v1/searcher.proto";
 
@@ -109,3 +110,49 @@ message KillExperimentRequest {
 message KillExperimentResponse {
 }
 
+// Get a list of checkpoints for an experiment.
+message GetExperimentCheckpointsRequest {
+    // Sorts experiments by the given field.
+    enum SortBy {
+        // Returns checkpoints in an unsorted list.
+        SORT_BY_UNSPECIFIED = 0;
+        // Returns checkpoints sorted by UUID.
+        SORT_BY_UUID = 1;
+        // Returns checkpoints sorted by trial id.
+        SORT_BY_TRIAL_ID = 4;
+        // Returns checkpoints sorted by batch number.
+        SORT_BY_BATCH_NUMBER = 6;
+        // Returns checkpoints sorted by start time.
+        SORT_BY_START_TIME = 7;
+        // Returns checkpoints sorted by end time.
+        SORT_BY_END_TIME = 8;
+        // Returns checkpoints sorted by validation state.
+        SORT_BY_VALIDATION_STATE = 15;
+        // Returns checkpoints sorted by state.
+        SORT_BY_STATE = 16;
+    }
+    // The experiment id.
+    int32 id = 1;
+    // Sort checkpoints by the given field
+    SortBy sort_by = 2;
+    // Order checkpoints in either ascending or descending order.
+    OrderBy order_by = 3;
+    // Skip the number of checkpoints before returning results. Negative values
+    // denote number of checkpoints to skip from the end before returning results.
+    int32 offset = 4;
+    // Limit the number of experiments. A value of 0 denotes no limit.
+    int32 limit = 5;
+
+    // Limit the checkpoints to those that match the validation states.
+    repeated determined.checkpoint.v1.State validation_states = 6;
+    // Limit the checkpoints to those that match the states.
+    repeated determined.checkpoint.v1.State states = 7;
+}
+
+// Response to GetExperimentCheckpointsRequest.
+message GetExperimentCheckpointsResponse {
+  // The list of returned checkpoints.
+  repeated determined.checkpoint.v1.Checkpoint checkpoints = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
+}

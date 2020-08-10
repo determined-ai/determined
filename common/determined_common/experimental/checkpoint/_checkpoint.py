@@ -13,6 +13,14 @@ class ModelFramework(enum.Enum):
     TENSORFLOW = 2
 
 
+class CheckpointState(enum.Enum):
+    UNSPECIFIED = 0
+    ACTIVE = 1
+    COMPLETED = 2
+    ERROR = 3
+    DELETED = 4
+
+
 class Checkpoint(object):
     """
     Class representing a checkpoint. Contains methods for downloading

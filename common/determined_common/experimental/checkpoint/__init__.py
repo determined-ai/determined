@@ -1,1 +1,1 @@
-from determined_common.experimental.checkpoint._checkpoint import Checkpoint
+from determined_common.experimental.checkpoint._checkpoint import Checkpoint, CheckpointState

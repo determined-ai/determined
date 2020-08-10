@@ -1,5 +1,6 @@
 SELECT
-    c.uuid AS uuid,
+    c.uuid::text AS uuid,
+    'STATE_' || c.state AS state,
     e.config AS experiment_config,
     e.id AS  experiment_id,
     t.id AS trial_id,
@@ -13,11 +14,11 @@ SELECT
     COALESCE(c.format, '') as format,
     COALESCE(c.determined_version, '') as determined_version,
     v.metrics AS metrics,
-    v.state AS validation_state
+    'STATE_' || v.state AS validation_state
 FROM checkpoints c
 JOIN steps s ON c.step_id = s.id AND c.trial_id = s.trial_id
-JOIN validations v ON v.step_id = s.id AND v.trial_id = s.trial_id
+LEFT JOIN validations v ON v.step_id = s.id AND v.trial_id = s.trial_id
 JOIN trials t ON s.trial_id = t.id
 JOIN experiments e ON t.experiment_id = e.id
-WHERE e.id = $1 AND c.state = 'COMPLETED' AND v.state = 'COMPLETED'
+WHERE e.id = $1
 ORDER BY start_time DESC

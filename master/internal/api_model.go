@@ -150,7 +150,7 @@ func (a *apiServer) PostModelVersion(
 		return nil, getCheckpointErr
 	}
 
-	if c.State != checkpointv1.Checkpoint_STATE_COMPLETED {
+	if c.State != checkpointv1.State_STATE_COMPLETED {
 		return nil, errors.Errorf(
 			"checkpoint %s is in %s state. checkpoints for model versions must be in a COMPLETED state",
 			c.Uuid, c.State,

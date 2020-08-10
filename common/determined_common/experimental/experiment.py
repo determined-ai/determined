@@ -49,7 +49,10 @@ class ExperimentReference:
         return checkpoints[0]
 
     def top_n_checkpoints(
-        self, limit: int, sort_by: Optional[str] = None, smaller_is_better: Optional[bool] = None
+        self,
+        limit: int = 0,
+        sort_by: Optional[str] = None,
+        smaller_is_better: Optional[bool] = None,
     ) -> List[checkpoint.Checkpoint]:
         """
         Return the N :class:`~determined.experimental.Checkpoint` instances with the best
@@ -68,17 +71,26 @@ class ExperimentReference:
                 this parameter is ignored. By default, the value of ``smaller_is_better``
                 from the experiment's configuration is used.
         """
-        r = api.get(self._master, "checkpoints", params={"experiment_id": self.id}).json()
+        r = api.get(
+            self._master,
+            "/api/v1/experiments/{}/checkpoints".format(self.id),
+            params={
+                "states": checkpoint.CheckpointState.COMPLETED.value,
+                "validation_states": checkpoint.CheckpointState.COMPLETED.value,
+                "limit": limit,
+            },
+        )
+        checkpoints = r.json()["checkpoints"]
 
         if not r:
             raise AssertionError("No checkpoint found for trial {}".format(self.id))
 
         if not sort_by:
-            sort_by = r[0]["experiment_config"]["searcher"]["metric"]
-            smaller_is_better = r[0]["experiment_config"]["searcher"]["smaller_is_better"]
+            sort_by = checkpoints[0]["experimentConfig"]["searcher"]["metric"]
+            smaller_is_better = checkpoints[0]["experimentConfig"]["searcher"]["smaller_is_better"]
 
-        r.sort(
-            reverse=not smaller_is_better, key=lambda x: x["metrics"]["validation_metrics"][sort_by]
+        checkpoints.sort(
+            reverse=not smaller_is_better, key=lambda x: x["metrics"]["validationMetrics"][sort_by]
         )
 
-        return [checkpoint.Checkpoint.from_json(ckpt, self._master) for ckpt in r[:limit]]
+        return [checkpoint.Checkpoint.from_json(ckpt, self._master) for ckpt in checkpoints]
