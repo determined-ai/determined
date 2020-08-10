@@ -27,7 +27,7 @@ export interface Api<Input, Output>{
   // middlewares?: Middleware[]; // success/failure middlewares
 }
 
-export const processApiError = (name: string, e: Error): DaError | Error => {
+export const processApiError = (name: string, e: Error): DaError => {
   const isAuthError = isAuthFailure(e);
   const silent = !process.env.IS_DEV || isAuthError || axios.isCancel(e);
   if (isDaError(e)) {
@@ -39,7 +39,7 @@ export const processApiError = (name: string, e: Error): DaError | Error => {
     }
     return handleError(e);
   }
-  handleError({
+  return handleError({
     error: e,
     level: isAuthError ? ErrorLevel.Fatal : ErrorLevel.Error,
     message: isAuthError ?
@@ -47,7 +47,6 @@ export const processApiError = (name: string, e: Error): DaError | Error => {
     silent,
     type: isAuthError ? ErrorType.Auth : ErrorType.Server,
   });
-  return e;
 };
 
 export function generateApi<Input, Output>(api: Api<Input, Output>) {
@@ -65,7 +64,8 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
 
       return api.postProcess ? api.postProcess(response) : response.data as Output;
     } catch (e) {
-      throw processApiError(api.name, e);
+      processApiError(api.name, e);
+      throw e;
     }
   };
 }
@@ -92,6 +92,7 @@ export const consumeStream = async <T = unknown>(
       onEvent(result.value.result);
     }
   } catch (e) {
-    throw processApiError(fetchArgs.url, e);
+    processApiError(fetchArgs.url, e);
+    throw e;
   }
 };
