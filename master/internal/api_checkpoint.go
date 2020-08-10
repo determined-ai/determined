@@ -9,13 +9,13 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 )
 
 func (a *apiServer) GetCheckpoint(
 	_ context.Context, req *apiv1.GetCheckpointRequest) (*apiv1.GetCheckpointResponse, error) {
 	resp := &apiv1.GetCheckpointResponse{}
-	resp.Checkpoint = &experimentv1.Checkpoint{}
+	resp.Checkpoint = &checkpointv1.Checkpoint{}
 	switch err := a.m.db.QueryProto("get_checkpoint", resp.Checkpoint, req.CheckpointUuid); err {
 	case db.ErrNotFound:
 		return nil, status.Errorf(

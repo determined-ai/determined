@@ -44,8 +44,8 @@ class Determined:
         Get the :class:`~determined.experimental.Checkpoint` representing the
         checkpoint with the provided UUID.
         """
-        r = api.get(self._session._master, "checkpoints/{}".format(uuid)).json()
-        return Checkpoint.from_json(r, master=self._session._master)
+        r = api.get(self._session._master, "/api/v1/checkpoints/{}".format(uuid)).json()
+        return Checkpoint.from_json(r["checkpoint"], master=self._session._master)
 
     def create_model(
         self, name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None

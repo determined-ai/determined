@@ -12,7 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/experimentv1"
+	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/modelv1"
 )
 
@@ -140,7 +140,7 @@ func (a *apiServer) PostModelVersion(
 	}
 
 	// make sure the checkpoint exists
-	c := &experimentv1.Checkpoint{}
+	c := &checkpointv1.Checkpoint{}
 
 	switch getCheckpointErr := a.m.db.QueryProto("get_checkpoint", c, req.CheckpointUuid); {
 	case getCheckpointErr == db.ErrNotFound:
@@ -150,7 +150,7 @@ func (a *apiServer) PostModelVersion(
 		return nil, getCheckpointErr
 	}
 
-	if c.State != experimentv1.Checkpoint_STATE_COMPLETED {
+	if c.State != checkpointv1.Checkpoint_STATE_COMPLETED {
 		return nil, errors.Errorf(
 			"checkpoint %s is in %s state. checkpoints for model versions must be in a COMPLETED state",
 			c.Uuid, c.State,
