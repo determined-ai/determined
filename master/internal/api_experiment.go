@@ -233,7 +233,7 @@ func (a *apiServer) ArchiveExperiment(
 		return nil, err
 	}
 
-	err := a.m.db.QueryDB("set_experiment_archive", req.Id, true)
+	err := a.m.db.QueryDB("archive_experiment", req.Id, true)
 	switch err {
 	case nil:
 		return &apiv1.ArchiveExperimentResponse{}, nil
@@ -249,7 +249,7 @@ func (a *apiServer) UnarchiveExperiment(
 	if err := a.checkExperimentExists(int(req.Id)); err != nil {
 		return nil, err
 	}
-	err := a.m.db.QueryDB("set_experiment_archive", req.Id, false)
+	err := a.m.db.QueryDB("archive_experiment", req.Id, false)
 	switch err {
 	case nil:
 		return &apiv1.UnarchiveExperimentResponse{}, nil
