@@ -163,7 +163,7 @@ class TFKerasContext:
 
         return _WrappedModel()
 
-    def wrap_dataset(self, dataset: Any) -> Any:
+    def wrap_dataset(self, dataset: Any, shard_dataset: bool = True) -> Any:
         """
         This should be used to wrap ``tf.data.Dataset`` objects immediately after
         they have been created. Users should use the output of this wrapper as the
@@ -173,9 +173,16 @@ class TFKerasContext:
 
         Args:
             dataset: tf.data.Dataset
+            shard_dataset: When performing multi-slot (distributed) training, this
+            controls whether the dataset is sharded so that each training process
+            (one per slot) sees unique data. If set to False, users must manually
+            configure each process to see unique data.
         """
         self.dataset_initialized = True
-        if not self.hvd_config.use or not isinstance(dataset, tf.data.Dataset):
+        if not self.hvd_config.use or not isinstance(dataset, tf.data.Dataset) or not shard_dataset:
+
+            if self.hvd_config and not shard_dataset:
+                logging.info("Dataset sharding skipped.")
             return dataset
 
         hvd.require_horovod_type("tensorflow.keras", "TFKerasContext.wrap_dataset was called.")

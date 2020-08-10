@@ -364,6 +364,7 @@ class EstimatorTrialController(det.LoopTrialController):
                 os.environ["NCCL_P2P_DISABLE"] = "1"
 
         # Initialize random seeds.
+        # TODO (DET-3798): Remove input_from_dataflow in 0.12.14.
         if env.experiment_config.input_from_dataflow():
             logging.debug("Using tensorpack dataflows as input.")
             process_rank = 0 if not hvd_config.use else hvd.rank()
