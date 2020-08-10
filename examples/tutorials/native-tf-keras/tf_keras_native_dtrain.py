@@ -17,7 +17,7 @@ from determined.experimental.keras import init
 config = {
     "searcher": {
         "name": "single",
-        "metric": "val_accuracy", "max_length": {
+        "metric": "val_acc", "max_length": {
             "batches": 500,
         }},
     "hyperparameters": {"global_batch_size": 256},

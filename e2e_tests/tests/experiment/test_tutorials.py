@@ -22,6 +22,9 @@ def test_tutorial() -> None:
 
 @pytest.mark.parallel  # type: ignore
 def test_tutorial_dtrain() -> None:
-    create_native_experiment(
+    exp_id = create_native_experiment(
         conf.tutorials_path("native-tf-keras"), ["python", "tf_keras_native_dtrain.py"]
+    )
+    experiment.wait_for_experiment_state(
+        exp_id, "COMPLETED", max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS
     )
