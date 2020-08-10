@@ -158,8 +158,8 @@ WHERE id = $1
 	if err != nil {
 		return errors.Wrap(err, "failed to execute query to set archived status")
 	}
-	if numRows, err := res.RowsAffected(); err != nil {
-		return errors.Wrap(err, "checking affected rows for saving experiment archived status")
+	if numRows, rowsErr := res.RowsAffected(); rowsErr != nil {
+		return errors.Wrap(rowsErr, "checking affected rows for saving experiment archived status")
 	} else if numRows != 1 {
 		return errors.Errorf("saving experiment %d's archive status affected %d rows instead of 1",
 			experimentID, numRows)

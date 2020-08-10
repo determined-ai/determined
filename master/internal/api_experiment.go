@@ -230,11 +230,17 @@ func (a *apiServer) ArchiveExperiment(
 	ctx context.Context, req *apiv1.ArchiveExperimentRequest,
 ) (*apiv1.ArchiveExperimentResponse, error) {
 	id := int(req.Id)
-	if err := a.checkExperimentExists(id); err != nil {
-		return nil, err
+
+	dbExp, err := a.m.db.ExperimentByID(id)
+	if err != nil {
+		return nil, errors.Wrapf(err, "loading experiment %v", id)
+	}
+	if _, ok := model.TerminalStates[dbExp.State]; !ok {
+		return nil, errors.Errorf("cannot delete experiment %v in non terminate state %v",
+			id, dbExp.State)
 	}
 
-	err := a.m.db.ArchiveExperiment(id, true)
+	err = a.m.db.ArchiveExperiment(id, true)
 	switch err {
 	case nil:
 		return &apiv1.ArchiveExperimentResponse{}, nil
@@ -248,10 +254,16 @@ func (a *apiServer) UnarchiveExperiment(
 	ctx context.Context, req *apiv1.UnarchiveExperimentRequest,
 ) (*apiv1.UnarchiveExperimentResponse, error) {
 	id := int(req.Id)
-	if err := a.checkExperimentExists(id); err != nil {
-		return nil, err
+	dbExp, err := a.m.db.ExperimentByID(id)
+	if err != nil {
+		return nil, errors.Wrapf(err, "loading experiment %v", id)
 	}
-	err := a.m.db.ArchiveExperiment(id, false)
+	if _, ok := model.TerminalStates[dbExp.State]; !ok {
+		return nil, errors.Errorf("cannot delete experiment %v in non terminate state %v",
+			id, dbExp.State)
+	}
+
+	err = a.m.db.ArchiveExperiment(id, false)
 	switch err {
 	case nil:
 		return &apiv1.UnarchiveExperimentResponse{}, nil
