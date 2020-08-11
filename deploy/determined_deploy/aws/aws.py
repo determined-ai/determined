@@ -17,6 +17,7 @@ def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
     ec2 = boto3_session.client("ec2")
     waiter = ec2.get_waiter("instance_stopped")
 
+    # First, shut down the master so no new agents are started.
     stack_output = get_output(stack_name, boto3_session)
     master_id = stack_output[constants.cloudformation.MASTER_ID]
     describe_instance_response = ec2.describe_instances(
@@ -32,10 +33,13 @@ def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
         waiter.wait(InstanceIds=[master_id], WaiterConfig={"Delay": 10})
         print("Master Instance Stopped")
 
+    # Second, terminate the agents so nothing can write to the checkpoint bucket. We create agent
+    # instances outside of cloudformation, so we have to manually terminate them.
     print("Terminating Running Agents")
     terminate_running_agents(stack_output[constants.cloudformation.AGENT_TAG_NAME], boto3_session)
     print("Agents Terminated")
 
+    # Third, empty the bucket that was created for this stack.
     bucket_name = get_output(stack_name, boto3_session).get(
         constants.cloudformation.CHECKPOINT_BUCKET
     )
