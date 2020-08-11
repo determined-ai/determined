@@ -49,16 +49,14 @@ class ExperimentReference:
         return checkpoints[0]
 
     def top_n_checkpoints(
-        self,
-        limit: int = 0,
-        sort_by: Optional[str] = None,
-        smaller_is_better: Optional[bool] = None,
+        self, limit: int, sort_by: Optional[str] = None, smaller_is_better: Optional[bool] = None,
     ) -> List[checkpoint.Checkpoint]:
         """
         Return the N :class:`~determined.experimental.Checkpoint` instances with the best
         validation metric values as defined by the ``sort_by`` and ``smaller_is_better``
         arguments. This method will return the best checkpoint from the
-        top N performing distinct trials of the experiment.
+        top N performing distinct trials of the experiment. Only checkpoints in
+        a COMPLETED state with a matching COMPLETED validation are considered.
 
         Arguments:
             sort_by (string, optional): The name of the validation metric to use for
@@ -77,7 +75,6 @@ class ExperimentReference:
             params={
                 "states": checkpoint.CheckpointState.COMPLETED.value,
                 "validation_states": checkpoint.CheckpointState.COMPLETED.value,
-                "limit": limit,
             },
         )
         checkpoints = r.json()["checkpoints"]
@@ -93,4 +90,12 @@ class ExperimentReference:
             reverse=not smaller_is_better, key=lambda x: x["metrics"]["validationMetrics"][sort_by]
         )
 
-        return [checkpoint.Checkpoint.from_json(ckpt, self._master) for ckpt in checkpoints]
+        # Ensure returned checkpoints are from distinct trials.
+        t_ids = set()
+        checkpoint_refs = []
+        for ckpt in checkpoints[:limit]:
+            if ckpt["trialId"] not in t_ids:
+                checkpoint_refs.append(checkpoint.Checkpoint.from_json(ckpt, self._master))
+                t_ids.add(ckpt["trialId"])
+
+        return checkpoint_refs
