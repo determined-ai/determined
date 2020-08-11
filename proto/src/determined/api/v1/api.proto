@@ -157,6 +157,17 @@ service Determined {
         option (google.api.http) = {post: "/api/v1/experiments/{id}/kill" };
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
+    // Archive an experiment.
+    rpc ArchiveExperiment(ArchiveExperimentRequest) returns (ArchiveExperimentResponse) {
+        option (google.api.http) = {post: "/api/v1/experiments/{id}/archive" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
+    // Unarchive an experiment.
+    rpc UnarchiveExperiment(UnarchiveExperimentRequest) returns (UnarchiveExperimentResponse) {
+        option (google.api.http) = {post: "/api/v1/experiments/{id}/unarchive" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
+
 
     // Get a list of checkpoints for an experiment.
     rpc GetExperimentCheckpoints(GetExperimentCheckpointsRequest) returns (GetExperimentCheckpointsResponse) {

@@ -110,6 +110,23 @@ message KillExperimentRequest {
 message KillExperimentResponse {
 }
 
+// Archive an experiment.
+message ArchiveExperimentRequest {
+  // The experiment id
+  int32 id = 1;
+}
+// Response to ArchiveExperimentRequest.
+message ArchiveExperimentResponse {}
+
+// Unarchive an experiment.
+message UnarchiveExperimentRequest {
+  // The experiment id
+  int32 id = 1;
+}
+// Response to UnarchiveExperimentRequest.
+message UnarchiveExperimentResponse {}
+
+
 // Get a list of checkpoints for an experiment.
 message GetExperimentCheckpointsRequest {
     // Sorts checkpoints by the given field.
