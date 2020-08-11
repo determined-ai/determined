@@ -97,23 +97,33 @@ class TrialReference:
             )
 
         if uuid:
-            resp = api.get(self._master, "checkpoints/{}".format(uuid))
-            return checkpoint.Checkpoint.from_json(resp.json(), master=self._master)
+            resp = api.get(self._master, "/api/v1/checkpoints/{}".format(uuid))
+            return checkpoint.Checkpoint.from_json(resp.json()["checkpoint"], master=self._master)
 
-        r = api.get(self._master, "checkpoints", params={"trial_id": self.id}).json()
+        r = api.get(
+            self._master,
+            "/api/v1/trials/{}/checkpoints".format(self.id),
+            # The default sort order from the API is by batch number. The order
+            # by parameter indicates descending order.
+            params={"order_by": 2},
+        ).json()
+        checkpoints = r["checkpoints"]
 
-        if not r:
+        if not checkpoints:
             raise AssertionError("No checkpoint found for trial {}".format(self.id))
 
         if latest:
-            return checkpoint.Checkpoint.from_json(r[0], master=self._master)
+            return checkpoint.Checkpoint.from_json(checkpoints[0], master=self._master)
 
         if not sort_by:
-            sort_by = r[0]["experiment_config"]["searcher"]["metric"]
-            smaller_is_better = r[0]["experiment_config"]["searcher"]["smaller_is_better"]
+            sort_by = checkpoints[0]["experimentConfig"]["searcher"]["metric"]
+            smaller_is_better = checkpoints[0]["experimentConfig"]["searcher"]["smaller_is_better"]
 
         best_checkpoint_func = min if smaller_is_better else max
         return checkpoint.Checkpoint.from_json(
-            best_checkpoint_func(r, key=lambda x: x["metrics"]["validation_metrics"][sort_by]),
+            best_checkpoint_func(
+                [c for c in checkpoints if c["metrics"] is not None],
+                key=lambda x: x["metrics"]["validationMetrics"][sort_by],
+            ),
             master=self._master,
         )
