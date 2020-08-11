@@ -1,10 +1,10 @@
 """
-This example shows how to interact with the new Determined PyTorch interface with multiple models,
-optimizers, and LR schedulers support to build a GAN network.
+This example demonstrates how to train a GAN with Determined's PyTorch API.
 
-In the new interface, you need to instantiate your models, optimizers, and LR schedulers in
-__init__ and run forward and backward passes and step the optimizer in train_batch. By doing so,
-you could be flexible in building your own training workflows.
+The PyTorch API supports multiple model graphs, optimizers, and LR
+schedulers. Those objects should be created and wrapped in the trial class's
+__init__ method. Then in train_batch(), you can run forward and backward passes
+and step the optimizer according to your requirements.
 """
 
 from typing import Any, Dict, Union, Sequence
@@ -82,15 +82,18 @@ class GANTrial(PyTorchTrial):
 
         # Initialize the models.
         mnist_shape = (1, 28, 28)
-        self.generator = self.context.wrap_model(Generator(latent_dim=self.context.get_hparam("latent_dim"), img_shape=mnist_shape))
+        self.generator = self.context.wrap_model(Generator(latent_dim=self.context.get_hparam("latent_dim"),
+                                                           img_shape=mnist_shape))
         self.discriminator = self.context.wrap_model(Discriminator(img_shape=mnist_shape))
 
         # Initialize the optimizers and learning rate scheduler.
         lr = self.context.get_hparam("lr")
         b1 = self.context.get_hparam("b1")
         b2 = self.context.get_hparam("b2")
-        self.opt_g = self.context.wrap_optimizer(torch.optim.Adam(self.generator.parameters(), lr=lr, betas=(b1, b2)))
-        self.opt_d = self.context.wrap_optimizer(torch.optim.Adam(self.discriminator.parameters(), lr=lr, betas=(b1, b2)))
+        self.opt_g = self.context.wrap_optimizer(torch.optim.Adam(self.generator.parameters(),
+                                                                  lr=lr, betas=(b1, b2)))
+        self.opt_d = self.context.wrap_optimizer(torch.optim.Adam(self.discriminator.parameters(),
+                                                                  lr=lr, betas=(b1, b2)))
         self.lr_g = self.context.wrap_lr_scheduler(
             lr_scheduler=LambdaLR(self.opt_g, lr_lambda=lambda epoch: 0.95 ** epoch),
             step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH,
@@ -124,7 +127,7 @@ class GANTrial(PyTorchTrial):
         imgs, _ = batch
 
         # Train generator.
-        # Set the requires_grad to only update parameters on the generator.
+        # Set `requires_grad_` to only update parameters on the generator.
         self.generator.requires_grad_(True)
         self.discriminator.requires_grad_(False)
 
@@ -149,8 +152,8 @@ class GANTrial(PyTorchTrial):
         self.context.step_optimizer(self.opt_g)
 
 
-        # Train discriminator
-        # Set the requires_grad to only update parameters on the discriminator.
+        # Train discriminator.
+        # Set `requires_grad_` to only update parameters on the discriminator.
         self.generator.requires_grad_(False)
         self.discriminator.requires_grad_(True)
 
