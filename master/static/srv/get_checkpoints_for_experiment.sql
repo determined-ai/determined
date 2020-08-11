@@ -1,4 +1,6 @@
 SELECT
+    /* We need to cast uuid to text here otherwise the db.QueryProto method
+       will try to deserialize the uuid as a []byte and parse it into json. */
     c.uuid::text AS uuid,
     'STATE_' || c.state AS state,
     e.config AS experiment_config,

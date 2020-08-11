@@ -13,6 +13,11 @@ searcher:
   name: single
   metric: validation_loss
   max_length:
-    epochs: 1
+    batches: 800
   smaller_is_better: true
 entrypoint: model_def:MNistTrial
+min_checkpoint_period:
+  batches: 100
+min_validation_period:
+  batches: 200
+max_restarts: 0

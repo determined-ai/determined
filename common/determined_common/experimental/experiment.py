@@ -79,7 +79,7 @@ class ExperimentReference:
         )
         checkpoints = r.json()["checkpoints"]
 
-        if not r:
+        if not checkpoints:
             raise AssertionError("No checkpoint found for trial {}".format(self.id))
 
         if not sort_by:
