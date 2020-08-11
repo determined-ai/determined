@@ -12,11 +12,13 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
 
@@ -226,4 +228,61 @@ func (a *apiServer) KillExperiment(
 		return &apiv1.KillExperimentResponse{}, nil
 	}
 	return resp, err
+}
+
+func (a *apiServer) GetExperimentCheckpoints(
+	ctx context.Context, req *apiv1.GetExperimentCheckpointsRequest,
+) (*apiv1.GetExperimentCheckpointsResponse, error) {
+	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
+	switch {
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to check if experiment exists: %s", err)
+	case !ok:
+		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	}
+
+	resp := &apiv1.GetExperimentCheckpointsResponse{}
+	resp.Checkpoints = []*checkpointv1.Checkpoint{}
+	switch err := a.m.db.QueryProto("get_checkpoints_for_experiment", &resp.Checkpoints, req.Id); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(
+			codes.NotFound, "no checkpoints found for experiment %d", req.Id)
+	case err != nil:
+		return nil,
+			errors.Wrapf(err, "error fetching checkpoints for experiment %d from database", req.Id)
+	}
+
+	a.filter(&resp.Checkpoints, func(i int) bool {
+		v := resp.Checkpoints[i]
+
+		found := false
+		for _, state := range req.States {
+			if state == v.State {
+				found = true
+				break
+			}
+		}
+
+		if len(req.States) != 0 && !found {
+			return false
+		}
+
+		found = false
+		for _, state := range req.ValidationStates {
+			if state == v.ValidationState {
+				found = true
+				break
+			}
+		}
+
+		if len(req.ValidationStates) != 0 && !found {
+			return false
+		}
+
+		return true
+	})
+
+	a.sort(
+		resp.Checkpoints, req.OrderBy, req.SortBy, apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID)
+	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
