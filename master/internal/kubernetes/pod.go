@@ -511,10 +511,8 @@ func (p *pod) configurePodSpec(
 	if podSpec == nil {
 		podSpec = &k8sV1.Pod{}
 	} else {
-		ctx.Log().Info("using user provided pod_spec as a template")
 		podSpec = podSpec.DeepCopy()
 	}
-	ctx.Log().Debugf("using base pods spec: %v", podSpec.Spec)
 
 	podSpec.ObjectMeta.Name = p.podName
 	podSpec.ObjectMeta.Namespace = p.namespace
