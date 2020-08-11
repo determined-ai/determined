@@ -93,9 +93,9 @@ class ExperimentReference:
         # Ensure returned checkpoints are from distinct trials.
         t_ids = set()
         checkpoint_refs = []
-        for ckpt in checkpoints[:limit]:
+        for ckpt in checkpoints:
             if ckpt["trialId"] not in t_ids:
                 checkpoint_refs.append(checkpoint.Checkpoint.from_json(ckpt, self._master))
                 t_ids.add(ckpt["trialId"])
 
-        return checkpoint_refs
+        return checkpoint_refs[:limit]
