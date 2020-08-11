@@ -160,7 +160,7 @@ const ExperimentChart: React.FC<Props> = ({ validationMetric, ...props }: Props)
   );
 
   return (
-    <Section maxHeight options={chartOptions} title={title}>
+    <Section bodyBorder maxHeight options={chartOptions} title={title}>
       <div className={css.base}>
         <div id={id} />
       </div>
