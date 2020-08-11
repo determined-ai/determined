@@ -22,6 +22,18 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
 
+func (a *apiServer) checkExperimentExists(id int) error {
+	ok, err := a.m.db.CheckExperimentExists(id)
+	switch {
+	case err != nil:
+		return status.Errorf(codes.Internal, "failed to check if experiment exists: %s", err)
+	case !ok:
+		return status.Errorf(codes.NotFound, "experiment %d not found", id)
+	default:
+		return nil
+	}
+}
+
 func (a *apiServer) GetExperiments(
 	_ context.Context, req *apiv1.GetExperimentsRequest) (*apiv1.GetExperimentsResponse, error) {
 	resp := &apiv1.GetExperimentsResponse{}
@@ -150,12 +162,8 @@ func (a *apiServer) PreviewHPSearch(
 func (a *apiServer) ActivateExperiment(
 	ctx context.Context, req *apiv1.ActivateExperimentRequest,
 ) (resp *apiv1.ActivateExperimentResponse, err error) {
-	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
-	switch {
-	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to check if experiment exists: %s", err)
-	case !ok:
-		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	if err = a.checkExperimentExists(int(req.Id)); err != nil {
+		return nil, err
 	}
 
 	addr := actor.Addr("experiments", req.Id).String()
@@ -172,12 +180,8 @@ func (a *apiServer) ActivateExperiment(
 func (a *apiServer) PauseExperiment(
 	ctx context.Context, req *apiv1.PauseExperimentRequest,
 ) (resp *apiv1.PauseExperimentResponse, err error) {
-	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
-	switch {
-	case err != nil:
-		return nil, status.Error(codes.Internal, err.Error())
-	case !ok:
-		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	if err = a.checkExperimentExists(int(req.Id)); err != nil {
+		return nil, err
 	}
 
 	addr := actor.Addr("experiments", req.Id).String()
@@ -194,12 +198,8 @@ func (a *apiServer) PauseExperiment(
 func (a *apiServer) CancelExperiment(
 	ctx context.Context, req *apiv1.CancelExperimentRequest,
 ) (resp *apiv1.CancelExperimentResponse, err error) {
-	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
-	switch {
-	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to check if experiment exists: %s", err)
-	case !ok:
-		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	if err = a.checkExperimentExists(int(req.Id)); err != nil {
+		return nil, err
 	}
 
 	addr := actor.Addr("experiments", req.Id).String()
@@ -214,12 +214,8 @@ func (a *apiServer) KillExperiment(
 	ctx context.Context, req *apiv1.KillExperimentRequest,
 ) (
 	resp *apiv1.KillExperimentResponse, err error) {
-	ok, err := a.m.db.CheckExperimentExists(int(req.Id))
-	switch {
-	case err != nil:
-		return nil, status.Errorf(codes.Internal, "failed to check if experiment exists: %s", err)
-	case !ok:
-		return nil, status.Errorf(codes.NotFound, "experiment %d not found", req.Id)
+	if err = a.checkExperimentExists(int(req.Id)); err != nil {
+		return nil, err
 	}
 
 	addr := actor.Addr("experiments", req.Id).String()
@@ -228,6 +224,62 @@ func (a *apiServer) KillExperiment(
 		return &apiv1.KillExperimentResponse{}, nil
 	}
 	return resp, err
+}
+
+func (a *apiServer) ArchiveExperiment(
+	ctx context.Context, req *apiv1.ArchiveExperimentRequest,
+) (*apiv1.ArchiveExperimentResponse, error) {
+	id := int(req.Id)
+
+	dbExp, err := a.m.db.ExperimentByID(id)
+	if err != nil {
+		return nil, errors.Wrapf(err, "loading experiment %v", id)
+	}
+	if _, ok := model.TerminalStates[dbExp.State]; !ok {
+		return nil, errors.Errorf("cannot delete experiment %v in non terminate state %v",
+			id, dbExp.State)
+	}
+
+	if dbExp.Archived {
+		return &apiv1.ArchiveExperimentResponse{}, nil
+	}
+	dbExp.Archived = true
+	err = a.m.db.SaveExperimentArchiveStatus(dbExp)
+	switch err {
+	case nil:
+		return &apiv1.ArchiveExperimentResponse{}, nil
+	default:
+		return nil, errors.Wrapf(err, "failed to archive experiment %d",
+			req.Id)
+	}
+}
+
+func (a *apiServer) UnarchiveExperiment(
+	ctx context.Context, req *apiv1.UnarchiveExperimentRequest,
+) (*apiv1.UnarchiveExperimentResponse, error) {
+	id := int(req.Id)
+
+	dbExp, err := a.m.db.ExperimentByID(id)
+	if err != nil {
+		return nil, errors.Wrapf(err, "loading experiment %v", id)
+	}
+	if _, ok := model.TerminalStates[dbExp.State]; !ok {
+		return nil, errors.Errorf("cannot delete experiment %v in non terminate state %v",
+			id, dbExp.State)
+	}
+
+	if !dbExp.Archived {
+		return &apiv1.UnarchiveExperimentResponse{}, nil
+	}
+	dbExp.Archived = false
+	err = a.m.db.SaveExperimentArchiveStatus(dbExp)
+	switch err {
+	case nil:
+		return &apiv1.UnarchiveExperimentResponse{}, nil
+	default:
+		return nil, errors.Wrapf(err, "failed to archive experiment %d",
+			req.Id)
+	}
 }
 
 func (a *apiServer) GetExperimentCheckpoints(
