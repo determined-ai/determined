@@ -254,7 +254,6 @@ func (a *apiServer) GetExperimentCheckpoints(
 
 	a.filter(&resp.Checkpoints, func(i int) bool {
 		v := resp.Checkpoints[i]
-		fmt.Printf("v.State = %+v\n", v.State)
 
 		found := false
 		for _, state := range req.States {
