@@ -10,6 +10,7 @@ minimal set of code changes. This example builds on top of
 :ref:`tutorials_native-api-basics` to demonstrate this.
 
 """
+import tempfile
 import tensorflow as tf
 import determined as det
 from determined.experimental.keras import init
@@ -36,12 +37,17 @@ config = {
 # In this case, we've configured our experiment to use a ``global_batch_size``
 # of 256 across all slots, or a sub-batch size of 32 on each slot.
 
-(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
-x_train, x_test = x_train / 255.0, x_test / 255.0
-
 # When running this code from a notebook, add a `command` argument to init()
 # specifying the notebook file name.
 context = init(config, context_dir=".")
+
+# When downloading data for a distributed training job, download to a unique
+# filepath on each worker so that multiple workers on the same machine do
+# not conflict.
+path = tempfile.NamedTemporaryFile().name
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data(path)
+x_train, x_test = x_train / 255.0, x_test / 255.0
+
 model = tf.keras.models.Sequential(
     [
         tf.keras.layers.Flatten(input_shape=(28, 28)),
@@ -52,7 +58,7 @@ model = tf.keras.models.Sequential(
 )
 model = context.wrap_model(model)
 model.compile(
-    optimizer=tf.keras.optimizers.Adam(name='Adam'), 
+    optimizer=tf.keras.optimizers.Adam(name='Adam'),
     loss="sparse_categorical_crossentropy", metrics=["accuracy"])
 model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=5)
 
