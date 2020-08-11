@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path"
 
+	"github.com/determined-ai/determined/master/pkg/etc"
+
 	"github.com/pkg/errors"
 
 	"github.com/docker/docker/api/types/mount"
@@ -111,8 +113,7 @@ func startConfigMap(
 }
 
 func configureAdditionalFilesVolumes(
-	archiveConfigMap *k8sV1.ConfigMap,
-	entryPointConfigMap *k8sV1.ConfigMap,
+	configMap *k8sV1.ConfigMap,
 	runArchives []container.RunArchive,
 ) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume) {
 	initContainerVolumeMounts := make([]k8sV1.VolumeMount, 0)
@@ -128,7 +129,7 @@ func configureAdditionalFilesVolumes(
 		Name: archiveVolumeName,
 		VolumeSource: k8sV1.VolumeSource{
 			ConfigMap: &k8sV1.ConfigMapVolumeSource{
-				LocalObjectReference: k8sV1.LocalObjectReference{Name: archiveConfigMap.Name},
+				LocalObjectReference: k8sV1.LocalObjectReference{Name: configMap.Name},
 			},
 		},
 	}
@@ -146,8 +147,12 @@ func configureAdditionalFilesVolumes(
 		Name: entryPointVolumeName,
 		VolumeSource: k8sV1.VolumeSource{
 			ConfigMap: &k8sV1.ConfigMapVolumeSource{
-				LocalObjectReference: k8sV1.LocalObjectReference{Name: entryPointConfigMap.Name},
-				DefaultMode:          &entryPointVolumeMode,
+				LocalObjectReference: k8sV1.LocalObjectReference{Name: configMap.Name},
+				Items: []k8sV1.KeyToPath{{
+					Key:  etc.K8InitContainerEntryScriptResource,
+					Path: etc.K8InitContainerEntryScriptResource,
+				}},
+				DefaultMode: &entryPointVolumeMode,
 			},
 		},
 	}
