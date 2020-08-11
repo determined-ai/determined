@@ -2,22 +2,42 @@ import argparse
 import time
 import sys
 
+import botocore
 import boto3
 
 logs = boto3.client("logs")
 
 
-def upload_cloud_watch_logs(log_group_name: str, bucket_name: str, prefix: str) -> str:
-    task_id = logs.create_export_task(
-        logGroupName=log_group_name,
-        fromTime=0,
-        to=int(round(time.time() * 1000)),
-        destination=bucket_name,
-        destinationPrefix=prefix
-    )["taskId"]
+def upload_cloud_watch_logs(log_group_name: str, bucket_name: str, prefix: str, retries: int) -> str:
+    attempts = 0
 
-    print(f"Uploading logs to s3://{bucket_name}/{prefix}/{task_id}.")
-    return task_id
+    while attempts <= retries:
+        try:
+            task_id = logs.create_export_task(
+                logGroupName=log_group_name,
+                fromTime=0,
+                to=int(round(time.time() * 1000)),
+                destination=bucket_name,
+                destinationPrefix=prefix
+            )["taskId"]
+
+            print(f"Uploading logs to s3://{bucket_name}/{prefix}/{task_id}.")
+            return task_id
+
+        except botocore.exceptions.ClientError as error:
+            if error.response['Error']['Code'] == 'LimitExceededException':
+                print(f"Got an error possibly due to concurrent uploads: {error}.")
+            else:
+                raise error
+
+            attempts += 1
+            if attempts > retries:
+                raise error
+
+            time.sleep(10)
+            print("Retrying...")
+
+    raise AssertionError
 
 
 def wait_for_export_task(task_id: str, retries: int = 300) -> None:
@@ -49,7 +69,13 @@ def main() -> None:
     parser.add_argument("bucket_name", help="S3 bucket to move logs to.")
     parser.add_argument("prefix", help="Upload path in S3 bucket.")
     args = parser.parse_args()
-    task_id = upload_cloud_watch_logs(args.log_group_name, args.bucket_name, args.prefix)
+
+    task_id = upload_cloud_watch_logs(
+        log_group_name=args.log_group_name,
+        bucket_name=args.bucket_name,
+        prefix=args.prefix,
+        retries=3
+    )
     wait_for_export_task(task_id)
 
 
