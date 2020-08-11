@@ -2,37 +2,30 @@ import React from 'react';
 
 import css from './InfoBox.module.scss';
 
-interface Row {
+export interface InfoRow {
   label: string;
-  info?: React.ReactNode;
+  content?: React.ReactNode;
 }
 
 interface Props {
-  rows: Row[];
+  rows: InfoRow[];
 }
 
-export const renderRow = ({ label, info }: Row): React.ReactNode => {
-  if (info === undefined) return <></>;
+export const renderRow = ({ label, content }: InfoRow): React.ReactNode => {
+  if (!content) return null;
   return (
-    <tr key={label}>
-      <td className={css.label}>{label}</td>
-      <td>
-        {[ 'string', 'number' ].includes(typeof info) ?
-          <span>{info}</span> : info
-        }
-      </td>
-    </tr>
+    <div className={css.info} key={label}>
+      <div className={css.label}>{label}</div>
+      <div className={css.content}>{content}</div>
+    </div>
   );
 };
 
 const InfoBox: React.FC<Props> = ({ rows }: Props) => {
-
   return (
-    <table className={css.base}>
-      <tbody>
-        {rows.map(renderRow)}
-      </tbody>
-    </table>
+    <div className={css.base}>
+      {rows.map(renderRow)}
+    </div>
   );
 };
 
