@@ -6,6 +6,7 @@ import MonacoEditor from 'react-monaco-editor';
 import TimeAgo from 'timeago-react';
 
 import CheckpointModal from 'components/CheckpointModal';
+import InfoBox, { InfoRow } from 'components/InfoBox';
 import Link from 'components/Link';
 import ProgressBar from 'components/ProgressBar';
 import Section from 'components/Section';
@@ -19,17 +20,7 @@ interface Props {
   experiment: ExperimentDetails;
 }
 
-const renderInfo = (label: string, content: React.ReactNode): React.ReactNode => {
-  if (!content) return null;
-  return (
-    <div className={css.info}>
-      <div className={css.label}>{label}</div>
-      <div className={css.content}>{content}</div>
-    </div>
-  );
-};
-
-const InfoBox: React.FC<Props> = ({ experiment }: Props) => {
+const ExperimentInfoBox: React.FC<Props> = ({ experiment }: Props) => {
   const config = experiment.config;
   const [ showConfig, setShowConfig ] = useState(false);
   const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
@@ -65,46 +56,54 @@ const InfoBox: React.FC<Props> = ({ experiment }: Props) => {
   const handleShowConfig = useCallback(() => setShowConfig(true), []);
   const handleHideConfig = useCallback(() => setShowConfig(false), []);
 
-  return (
-    <Section maxHeight title="Summary">
-      <div className={css.base}>
-        {renderInfo(
-          'Progress',
-          experiment.progress && <ProgressBar
-            percent={experiment.progress * 100}
-            state={experiment.state} />,
-        )}
-        {renderInfo(
-          'Best Validation',
-          bestValidation && `${humanReadableFloat(bestValidation)} (${config.searcher.metric})`,
-        )}
-        {renderInfo(
-          'Configuration',
+  const infoRows: InfoRow[] = [
+    {
+      content: experiment.progress && <ProgressBar
+        percent={experiment.progress * 100}
+        state={experiment.state} />,
+      label: 'Progress',
+    },
+    {
+      content: bestValidation &&
+      `${humanReadableFloat(bestValidation)} (${config.searcher.metric})`,
+      label: 'Best Validation',
+    },
+    {
+      content:
           <Button onClick={handleShowConfig}>View Configuration</Button>,
-        )}
-        {renderInfo(
-          'Best Checkpoint',
-          bestCheckpoint &&
-            <Button onClick={handleShowBestCheckpoint}>
+      label: 'Configuration',
+    },
+    {
+      content: bestCheckpoint && <Button onClick={handleShowBestCheckpoint}>
               Trial {bestCheckpoint.trialId} Batch {bestCheckpoint.batch}
-            </Button>,
-        )}
-        {renderInfo('Max Slot', config.resources.maxSlots || 'Unlimited')}
-        {renderInfo(
-          'Start Time',
-          <Tooltip title={new Date(experiment.startTime).toLocaleString()}>
-            <TimeAgo datetime={new Date(experiment.startTime)} />
-          </Tooltip>,
-        )}
-        {renderInfo(
-          'Duration',
-          experiment.endTime != null && shortEnglishHumannizer(getDuration(experiment)),
-        )}
-        {renderInfo(
-          'Model Definition',
-          <Link isButton path={`/experiments/${experiment.id}/model_def`}>Download Model</Link>,
-        )}
-      </div>
+      </Button>,
+      label: 'Best Checkpoint',
+    },
+    {
+      content: config.resources.maxSlots || 'Unlimited',
+      label: 'Max Slots',
+    },
+    {
+      content: <Tooltip title={new Date(experiment.startTime).toLocaleString()}>
+        <TimeAgo datetime={new Date(experiment.startTime)} />
+      </Tooltip>,
+      label: 'Start Time',
+    },
+    {
+      content: experiment.endTime != null && shortEnglishHumannizer(getDuration(experiment)),
+      label: 'Duration',
+    },
+    {
+      content: <Link isButton path={`/experiments/${experiment.id}/model_def`}>
+        Download Model
+      </Link>,
+      label: 'Model Definition',
+    },
+  ];
+
+  return (
+    <Section bodyBorder maxHeight title="Summary">
+      <InfoBox rows={infoRows} />
       {bestCheckpoint && <CheckpointModal
         checkpoint={bestCheckpoint}
         config={config}
@@ -136,4 +135,4 @@ const InfoBox: React.FC<Props> = ({ experiment }: Props) => {
   );
 };
 
-export default InfoBox;
+export default ExperimentInfoBox;
