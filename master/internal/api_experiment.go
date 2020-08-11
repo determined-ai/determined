@@ -240,6 +240,9 @@ func (a *apiServer) ArchiveExperiment(
 			id, dbExp.State)
 	}
 
+	if dbExp.Archived {
+		return &apiv1.ArchiveExperimentResponse{}, nil
+	}
 	dbExp.Archived = true
 	err = a.m.db.SaveExperimentArchiveStatus(dbExp)
 	switch err {
@@ -265,6 +268,9 @@ func (a *apiServer) UnarchiveExperiment(
 			id, dbExp.State)
 	}
 
+	if !dbExp.Archived {
+		return &apiv1.UnarchiveExperimentResponse{}, nil
+	}
 	dbExp.Archived = false
 	err = a.m.db.SaveExperimentArchiveStatus(dbExp)
 	switch err {
@@ -331,5 +337,4 @@ func (a *apiServer) GetExperimentCheckpoints(
 	a.sort(
 		resp.Checkpoints, req.OrderBy, req.SortBy, apiv1.GetExperimentCheckpointsRequest_SORT_BY_TRIAL_ID)
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
-
 }
