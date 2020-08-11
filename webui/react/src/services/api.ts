@@ -117,8 +117,7 @@ export const logout = async (): Promise<DetSwagger.V1LogoutResponse> => {
     const response = await detAuthApi.determinedLogout();
     return response;
   } catch (e) {
-    processApiError('logout', e);
-    throw e;
+    throw processApiError('logout', e);
   }
 };
 
