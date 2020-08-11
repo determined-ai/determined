@@ -237,7 +237,6 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		if p.container.State == container.Terminated {
 			return nil
 		}
-		p.container = p.container.Transition(container.Terminated)
 
 		exitCode, exitMessage, err := getExitCodeAndMessage(p.pod)
 		if err != nil {
@@ -245,6 +244,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		}
 		ctx.Log().Infof("pod failed: %d %s", exitCode, exitMessage)
 
+		p.container = p.container.Transition(container.Terminated)
 		exitCodeConverted := agent.ExitCode(exitCode)
 		containerStopped := agent.ContainerStopped{
 			Failure: &agent.ContainerFailure{
