@@ -2,6 +2,7 @@ package internal
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -181,12 +182,48 @@ func (a *agent) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	}
 }
 
+func (a *agent) tlsConfig() (*tls.Config, error) {
+	if !a.Options.Security.TLS.Enabled {
+		return nil, nil
+	}
+
+	var pool *x509.CertPool
+	if certFile := a.Options.Security.TLS.MasterCert; certFile != "" {
+		certData, err := ioutil.ReadFile(certFile) //nolint:gosec
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to read certificate file")
+		}
+		pool = x509.NewCertPool()
+		if !pool.AppendCertsFromPEM(certData) {
+			return nil, errors.New("certificate file contains no certificates")
+		}
+	}
+
+	return &tls.Config{
+		InsecureSkipVerify: a.Options.Security.TLS.SkipVerify, //nolint:gosec
+		MinVersion:         tls.VersionTLS12,
+		RootCAs:            pool,
+	}, nil
+}
+
 func (a *agent) getMasterInfo() error {
+	tlsConfig, err := a.tlsConfig()
+	if err != nil {
+		return errors.Wrap(err, "failed to construct TLS config")
+	}
+
 	masterProto := "http"
-	if a.TLS {
+	if tlsConfig != nil {
 		masterProto = "https"
 	}
-	resp, err := http.Get(fmt.Sprintf("%s://%s:%d/info", masterProto, a.MasterHost, a.MasterPort))
+	client := &http.Client{
+		Transport: &http.Transport{
+			Proxy:           http.DefaultTransport.(*http.Transport).Proxy,
+			TLSClientConfig: tlsConfig,
+		},
+	}
+
+	resp, err := client.Get(fmt.Sprintf("%s://%s:%d/info", masterProto, a.MasterHost, a.MasterPort))
 	if err != nil {
 		return errors.Wrap(err, "failed to get master info")
 	}
@@ -228,7 +265,7 @@ func (a *agent) setup(ctx *actor.Context) error {
 	}
 
 	if a.MasterPort == 0 {
-		if a.TLS {
+		if a.Options.Security.TLS.Enabled {
 			a.MasterPort = 443
 		} else {
 			a.MasterPort = 80
@@ -254,17 +291,21 @@ func (a *agent) setup(ctx *actor.Context) error {
 }
 
 func (a *agent) connectToMaster(ctx *actor.Context) error {
+	tlsConfig, err := a.tlsConfig()
+	if err != nil {
+		return errors.Wrap(err, "failed to construct TLS config")
+	}
+
+	masterProto := "ws"
+	if tlsConfig != nil {
+		masterProto = "wss"
+	}
 	dialer := websocket.Dialer{
 		Proxy:            websocket.DefaultDialer.Proxy,
 		HandshakeTimeout: websocket.DefaultDialer.HandshakeTimeout,
+		TLSClientConfig:  tlsConfig,
 	}
-	masterProto := "ws"
-	if a.TLS {
-		masterProto = "wss"
-		dialer.TLSClientConfig = &tls.Config{
-			MinVersion: tls.VersionTLS12,
-		}
-	}
+
 	masterAddr := fmt.Sprintf("%s://%s:%d/agents?id=%s",
 		masterProto, a.MasterHost, a.MasterPort, a.AgentID)
 	ctx.Log().Infof("connecting to master at: %s", masterAddr)
@@ -284,17 +325,7 @@ func (a *agent) connectToMaster(ctx *actor.Context) error {
 	return nil
 }
 
-// Run runs a new agent system and actor with the provided options.
-func Run(version string, options Options) error {
-	printableConfig, err := options.Printable()
-	if err != nil {
-		return err
-	}
-	logrus.Infof("agent configuration: %s", printableConfig)
-
-	system := actor.NewSystem(options.AgentID)
-	ref, _ := system.ActorOf(actor.Addr("agent"), &agent{Version: version, Options: options})
-
+func runAPIServer(options Options, system *actor.System) error {
 	server := echo.New()
 	server.Logger = logger.New()
 	server.HidePort = true
@@ -309,16 +340,29 @@ func Run(version string, options Options) error {
 	server.Any("/debug/pprof/symbol", echo.WrapHandler(http.HandlerFunc(pprof.Symbol)))
 	server.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
 
+	bindAddr := fmt.Sprintf("%s:%d", options.BindIP, options.BindPort)
+	logrus.Infof("starting agent server on [%s]", bindAddr)
+	if options.TLS {
+		return server.StartTLS(bindAddr, options.CertFile, options.KeyFile)
+	}
+	return server.Start(bindAddr)
+}
+
+// Run runs a new agent system and actor with the provided options.
+func Run(version string, options Options) error {
+	printableConfig, err := options.Printable()
+	if err != nil {
+		return err
+	}
+	logrus.Infof("agent configuration: %s", printableConfig)
+
+	system := actor.NewSystem(options.AgentID)
+	ref, _ := system.ActorOf(actor.Addr("agent"), &agent{Version: version, Options: options})
+
 	errs := make(chan error)
 	if options.APIEnabled {
 		go func() {
-			bindAddr := fmt.Sprintf("%s:%d", options.BindIP, options.BindPort)
-			logrus.Infof("starting agent server on [%s]", bindAddr)
-			if options.TLS {
-				errs <- server.StartTLS(bindAddr, options.CertFile, options.KeyFile)
-			} else {
-				errs <- server.Start(bindAddr)
-			}
+			errs <- runAPIServer(options, system)
 		}()
 	}
 	go func() {
