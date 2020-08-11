@@ -8,8 +8,6 @@ bind_mounts:
     container_path: /data
     read_only: false
 
-min_validation_period: 10
-
 hyperparameters:
     global_batch_size: 256
     learning_rate: 0.1
@@ -25,10 +23,15 @@ hyperparameters:
 resources:
   slots_per_trial: 2
 
+min_validation_period: 
+  epochs: 1
+
+records_per_epoch: 25000
 searcher:
   name: single
   metric: top1_accuracy 
-  max_steps: 300
+  max_length: 
+    epochs: 50
   smaller_is_better: false 
 
 optimizations:

@@ -32,7 +32,7 @@ class GAEATrial(PyTorchTrial):
 
         # Initialize the models.
         criterion = nn.CrossEntropyLoss()
-        self.model = self.context._Model(
+        self.model = self.context.wrap_model(
             Network(
                 self.hparams.init_channels,
                 10,
@@ -43,7 +43,7 @@ class GAEATrial(PyTorchTrial):
         )
 
         # Initialize the optimizers and learning rate scheduler.
-        self.ws_opt = self.context._Optimizer(
+        self.ws_opt = self.context.wrap_optimizer(
             torch.optim.SGD(
                 self.model.ws_parameters(),
                 self.hparams.learning_rate,
@@ -51,7 +51,7 @@ class GAEATrial(PyTorchTrial):
                 weight_decay=self.hparams.weight_decay,
             )
         )
-        self.arch_opt = self.context._Optimizer(
+        self.arch_opt = self.context.wrap_optimizer(
             EG(
                 self.model.arch_parameters(), 
                 self.hparams.arch_learning_rate,
@@ -59,7 +59,7 @@ class GAEATrial(PyTorchTrial):
             )
         )
 
-        self.lr_scheduler = self.context._LRScheduler(
+        self.lr_scheduler = self.context.wrap_lr_scheduler(
             lr_scheduler=CosineAnnealingLR(
                 self.ws_opt, 
                 self.hparams.scheduler_epochs,
@@ -103,7 +103,7 @@ class GAEATrial(PyTorchTrial):
         return valid_queue
 
     def train_batch(
-        self, batch: TorchData, model: nn.Module, epoch_idx: int, batch_idx: int
+        self, batch: TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
         if epoch_idx != self.last_epoch:
             self.train_data.shuffle_val_inds()
@@ -116,8 +116,8 @@ class GAEATrial(PyTorchTrial):
         for w in self.model.ws_parameters():
             w.requires_grad=True
         loss = self.model._loss(x_train, y_train)
-        self.context._backward(loss)
-        self.context._step_optimizer(self.ws_opt)
+        self.context.backward(loss)
+        self.context.step_optimizer(self.ws_opt)
 
         # Train arch parameters
         for a in self.model.arch_parameters():
@@ -125,18 +125,18 @@ class GAEATrial(PyTorchTrial):
         for w in self.model.ws_parameters():
             w.requires_grad=False
         arch_loss = self.model._loss(x_val, y_val)
-        self.context._backward(arch_loss)
-        self.context._step_optimizer(self.arch_opt)
+        self.context.backward(arch_loss)
+        self.context.step_optimizer(self.arch_opt)
 
         return {
             'loss': loss,
             'arch_loss': arch_loss,
         }
 
-    def evaluate_batch(self, batch: TorchData, model: nn.Module) -> Dict[str, Any]:
+    def evaluate_batch(self, batch: TorchData) -> Dict[str, Any]:
         input, target = batch
-        logits, _ = self.model(input)
-        loss = self.model._loss(logits, target)
+        logits = self.model(input)
+        loss = self.model._loss(input, target)
         top1, top5 = accuracy(logits, target, topk=(1, 5))
 
         return {"loss": loss, "top1_accuracy": top1, "top5_accuracy": top5}
