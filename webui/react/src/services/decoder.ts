@@ -282,8 +282,8 @@ export const jsonToLogs = (data: unknown): Log[] => {
   }));
 };
 
-const defaultRegex = /^\[([^\]]+)\]\s(.*)$/im;
-const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s(.*)$/im;
+const defaultRegex = /^\[([^\]]+)\]\s([\s\S]*)(\r|\n)$/im;
+const kubernetesRegex = /^\s*([0-9a-f]+)\s+(\[[^\]]+\])\s\|\|\s(\S+)\s([\s\S]*)(\r|\n)$/im;
 
 const ioToTrialLog = (io: ioTypeLog): Log => {
   if (defaultRegex.test(io.message)) {
