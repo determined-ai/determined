@@ -132,11 +132,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         visible={showHParams}
         onCancel={handleHideHParams}
         onOk={handleHideHParams}>
-        {/* FIXME blocked https://github.com/determined-ai/determined/pull/971 */}
-        {hyperparamsView({
-          param1: 234,
-          param2: 'asdfasdf',
-        })}
+        {hyperparamsView(trial.hparams)}
       </Modal>
     </div>
   );
