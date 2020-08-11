@@ -23,7 +23,7 @@ model = tf.keras.models.Sequential(
     ]
 )
 model.compile(
-    tf.keras.optimizers.Adam(name='Adam'), 
+    tf.keras.optimizers.Adam(name='Adam'),
     loss="sparse_categorical_crossentropy", metrics=["accuracy"])
 model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=1)
 
@@ -44,6 +44,10 @@ config = {
 # When running this code from a notebook, add a `command` argument to init()
 # specifying the notebook file name.
 context = init(config, context_dir=".")
+
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+x_train, x_test = x_train / 255.0, x_test / 255.0
+
 model = tf.keras.models.Sequential(
     [
         tf.keras.layers.Flatten(input_shape=(28, 28)),
@@ -54,7 +58,7 @@ model = tf.keras.models.Sequential(
 )
 model = context.wrap_model(model)
 model.compile(
-    tf.keras.optimizers.Adam(name='Adam'), 
+    tf.keras.optimizers.Adam(name='Adam'),
     loss="sparse_categorical_crossentropy", metrics=["accuracy"])
 model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=5)
 
