@@ -623,7 +623,7 @@ func (p *pod) startPodForTrial(ctx *actor.Context) error {
 	}
 
 	podSpec := p.configurePodSpec(
-		ctx, volumes, initContainers, containers, exp.ExperimentConfig.Kuberenetes.PodSpec)
+		ctx, volumes, initContainers, containers, exp.ExperimentConfig.Environment.PodSpec)
 	return p.launchPod(ctx, podSpec)
 }
 
@@ -679,7 +679,7 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 	}
 
 	podSpec := p.configurePodSpec(
-		ctx, volumes, initContainers, containers, cmd.Config.Kubernetes.PodSpec)
+		ctx, volumes, initContainers, containers, cmd.Config.Environment.PodSpec)
 	return p.launchPod(ctx, podSpec)
 }
 
@@ -731,7 +731,7 @@ func (p *pod) startPodForGC(ctx *actor.Context) error {
 	}
 
 	podSpec := p.configurePodSpec(
-		ctx, volumes, initContainers, containers, gcc.ExperimentConfig.Kuberenetes.PodSpec)
+		ctx, volumes, initContainers, containers, gcc.ExperimentConfig.Environment.PodSpec)
 	return p.launchPod(ctx, podSpec)
 }
 

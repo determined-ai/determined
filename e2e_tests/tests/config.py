@@ -145,6 +145,6 @@ def set_perform_initial_validation(config: Dict[Any, Any], init_val: bool) -> Di
 
 def set_pod_spec(config: Dict[Any, Any], pod_spec: Dict[Any, Any]) -> Dict[Any, Any]:
     config = config.copy()
-    config.setdefault("kubernetes", {})
-    config["kubernetes"]["pod_spec"] = pod_spec
+    config.setdefault("environment", {})
+    config["environment"]["pod_spec"] = pod_spec
     return config

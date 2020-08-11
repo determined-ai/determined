@@ -369,22 +369,17 @@ def test_k8_mount(using_k8s: bool) -> None:
 
     with pytest.raises(subprocess.CalledProcessError):
         _run_and_verify_failure(
-            [
-                "det",
-                "-m",
-                conf.make_master_url(),
-                "cmd",
-                "run",
-                f"sleep 3; touch {mount_path}",
-            ]
+            ["det", "-m", conf.make_master_url(), "cmd", "run", f"sleep 3; touch {mount_path}"]
         )
 
     with tempfile.NamedTemporaryFile() as tf:
         config = {
-            "kubernetes": {
+            "environment": {
                 "pod_spec": {
                     "spec": {
-                        "containers": [{"volumeMounts": [{"name": "temp1", "mountPath": mount_path}]}],
+                        "containers": [
+                            {"volumeMounts": [{"name": "temp1", "mountPath": mount_path}]}
+                        ],
                         "volumes": [{"name": "temp1", "emptyDir": {}}],
                     }
                 }

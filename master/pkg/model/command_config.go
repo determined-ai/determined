@@ -7,12 +7,11 @@ import (
 // CommandConfig holds the necessary configurations to launch a command task in
 // the cluster.
 type CommandConfig struct {
-	Description string           `json:"description"`
-	BindMounts  []BindMount      `json:"bind_mounts"`
-	Environment Environment      `json:"environment"`
-	Resources   ResourcesConfig  `json:"resources"`
-	Entrypoint  []string         `json:"entrypoint"`
-	Kubernetes  KubernetesConfig `json:"kubernetes"`
+	Description string          `json:"description"`
+	BindMounts  []BindMount     `json:"bind_mounts"`
+	Environment Environment     `json:"environment"`
+	Resources   ResourcesConfig `json:"resources"`
+	Entrypoint  []string        `json:"entrypoint"`
 }
 
 // Validate implements the check.Validatable interface.

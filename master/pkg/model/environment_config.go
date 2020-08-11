@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	k8sV1 "k8s.io/api/core/v1"
+
+	"github.com/determined-ai/determined/master/pkg/check"
+
 	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
 
@@ -18,6 +22,7 @@ type Environment struct {
 	Ports          map[string]int    `json:"ports"`
 	RegistryAuth   *types.AuthConfig `json:"registry_auth,omitempty"`
 	ForcePullImage bool              `json:"force_pull_image"`
+	PodSpec        *k8sV1.Pod        `json:"pod_spec"`
 }
 
 // RuntimeItem configures the runtime image.
@@ -90,4 +95,56 @@ func (r *RuntimeItems) For(deviceType device.Type) []string {
 	default:
 		panic(fmt.Sprintf("unexpected device type: %s", deviceType))
 	}
+}
+
+// Validate implements the check.Validatable interface.
+func (e Environment) Validate() []error {
+	if e.PodSpec != nil {
+		podSpecErrors := []error{
+			check.Equal(e.PodSpec.Name, "", "pod Name is not a configurable option"),
+			check.Equal(e.PodSpec.Namespace, "", "pod Namespace is not a configurable option"),
+			check.False(e.PodSpec.Spec.HostNetwork, "host networking must be configured via master.yaml"),
+			check.Equal(
+				len(e.PodSpec.Spec.InitContainers), 0,
+				"init containers are not a configurable option"),
+			check.LessThanOrEqualTo(
+				len(e.PodSpec.Spec.Containers), 1,
+				"can specify at most one container in pod_spec"),
+		}
+
+		if len(e.PodSpec.Spec.Containers) > 0 {
+			container := e.PodSpec.Spec.Containers[0]
+			containerSpecErrors := []error{
+				check.Equal(container.Name, "", "container Name is not configurable"),
+				check.Equal(container.Image, "",
+					"container Image is not configurable, set it in the experiment config"),
+				check.Equal(container.Command, nil, "container Command is not configurable"),
+				check.Equal(container.Args, nil, "container Args are not configurable"),
+				check.Equal(container.WorkingDir, "", "container WorkingDir is not configurable"),
+				check.Equal(container.Ports, nil, "container Ports are not configurable"),
+				check.Equal(container.EnvFrom, nil, "container EnvFrom is not configurable"),
+				check.Equal(container.Env, nil,
+					"container Env is not configurable, set it in the experiment config"),
+				check.Equal(container.LivenessProbe, nil,
+					"container LivenessProbe is not configurable"),
+				check.Equal(container.ReadinessProbe, nil,
+					"container ReadinessProbe is not configurable"),
+				check.Equal(container.StartupProbe, nil,
+					"container StartupProbe is not configurable"),
+				check.Equal(container.Lifecycle, nil, "container Lifecycle is not configurable"),
+				check.Equal(container.TerminationMessagePath, "",
+					"container TerminationMessagePath is not configurable"),
+				check.Equal(container.TerminationMessagePolicy, "",
+					"container TerminationMessagePolicy is not configurable"),
+				check.Equal(container.ImagePullPolicy, "",
+					"container ImagePullPolicy is not configurable, set it in the experiment config"),
+				check.Equal(container.SecurityContext, nil,
+					"container SecurityContext is not configurable, set it in the experiment config"),
+			}
+			podSpecErrors = append(podSpecErrors, containerSpecErrors...)
+		}
+
+		return podSpecErrors
+	}
+	return nil
 }
