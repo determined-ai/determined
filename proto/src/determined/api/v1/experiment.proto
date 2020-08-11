@@ -112,7 +112,7 @@ message KillExperimentResponse {
 
 // Get a list of checkpoints for an experiment.
 message GetExperimentCheckpointsRequest {
-    // Sorts experiments by the given field.
+    // Sorts checkpoints by the given field.
     enum SortBy {
         // Returns checkpoints in an unsorted list.
         SORT_BY_UNSPECIFIED = 0;
@@ -140,7 +140,7 @@ message GetExperimentCheckpointsRequest {
     // Skip the number of checkpoints before returning results. Negative values
     // denote number of checkpoints to skip from the end before returning results.
     int32 offset = 4;
-    // Limit the number of experiments. A value of 0 denotes no limit.
+    // Limit the number of checkpoints. A value of 0 denotes no limit.
     int32 limit = 5;
 
     // Limit the checkpoints to those that match the validation states.
