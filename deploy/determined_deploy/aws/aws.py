@@ -15,12 +15,9 @@ def get_user(boto3_session: boto3.session.Session) -> str:
 
 def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
     ec2 = boto3_session.client("ec2")
-    bucket_name = get_output(stack_name, boto3_session).get(
-        constants.cloudformation.CHECKPOINT_BUCKET
-    )
-    if bucket_name:
-        empty_bucket(bucket_name, boto3_session)
+    waiter = ec2.get_waiter("instance_stopped")
 
+    # First, shut down the master so no new agents are started.
     stack_output = get_output(stack_name, boto3_session)
     master_id = stack_output[constants.cloudformation.MASTER_ID]
     describe_instance_response = ec2.describe_instances(
@@ -28,12 +25,29 @@ def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
     )
 
     if describe_instance_response["Reservations"]:
+        print("Stopping Master Instance")
         ec2.stop_instances(InstanceIds=[master_id])
         ec2.modify_instance_attribute(
             Attribute="disableApiTermination", Value="false", InstanceId=master_id
         )
+        waiter.wait(InstanceIds=[master_id], WaiterConfig={"Delay": 10})
+        print("Master Instance Stopped")
 
+    # Second, terminate the agents so nothing can write to the checkpoint bucket. We create agent
+    # instances outside of cloudformation, so we have to manually terminate them.
+    print("Terminating Running Agents")
     terminate_running_agents(stack_output[constants.cloudformation.AGENT_TAG_NAME], boto3_session)
+    print("Agents Terminated")
+
+    # Third, empty the bucket that was created for this stack.
+    bucket_name = get_output(stack_name, boto3_session).get(
+        constants.cloudformation.CHECKPOINT_BUCKET
+    )
+    if bucket_name:
+        print("Emptying Checkpoint Bucket")
+        empty_bucket(bucket_name, boto3_session)
+        print("Checkpoint Bucket Empty")
+
     delete_stack(stack_name, boto3_session)
 
 
@@ -209,6 +223,7 @@ def check_keypair(name: str, boto3_session: boto3.session.Session) -> bool:
 
 def terminate_running_agents(agent_tag_name: str, boto3_session: boto3.session.Session) -> None:
     ec2 = boto3_session.client("ec2")
+    waiter = ec2.get_waiter("instance_terminated")
 
     response = ec2.describe_instances(
         Filters=[
@@ -226,6 +241,7 @@ def terminate_running_agents(agent_tag_name: str, boto3_session: boto3.session.S
 
     if instance_ids:
         ec2.terminate_instances(InstanceIds=instance_ids)
+        waiter.wait(InstanceIds=instance_ids, WaiterConfig={"Delay": 10})
 
 
 # S3
