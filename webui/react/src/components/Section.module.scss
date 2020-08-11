@@ -27,6 +27,11 @@
   &:not(:last-child) {
     padding-bottom: var(--theme-sizes-layout-big);
   }
+  .bodyBorder {
+    border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
+    border-radius: var(--theme-sizes-border-radius);
+    padding: var(--theme-sizes-layout-big);
+  }
 }
 .maxHeight {
   height: 100%;
