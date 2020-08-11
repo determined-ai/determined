@@ -431,45 +431,34 @@ func (p *pod) configureRunArchives(
 	ctx *actor.Context,
 	runArchives []container.RunArchive,
 ) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume, error) {
-	tarredArchives := make(map[string][]byte)
+	configMapData := make(map[string][]byte)
+	// Add additional files as tar.gz archive.
 	for idx, runArchive := range runArchives {
 		zippedArchive, errZip := archive.ToTarGz(runArchive.Archive)
 		if errZip != nil {
 			return nil, nil, nil, errors.Wrap(errZip, "failed to zip archive")
 		}
-		tarredArchives[fmt.Sprintf("%d.tar.gz", idx)] = zippedArchive
+		configMapData[fmt.Sprintf("%d.tar.gz", idx)] = zippedArchive
 	}
 
-	// Create configMap of AdditionalFiles as .tar.gz archive.
-	archiveConfigMap, err := startConfigMap(
+	// Add initContainer script.
+	configMapData[etc.K8InitContainerEntryScriptResource] = etc.MustStaticFile(
+		etc.K8InitContainerEntryScriptResource)
+
+	// Create configMap of AdditionalFiles as .tar.gz archive and the entrypoint script
+	// for the init container.
+	configMap, err := startConfigMap(
 		ctx,
-		createConfigMapSpec(p.podName, tarredArchives, p.namespace, p.taskSpec.TaskID),
+		createConfigMapSpec(p.podName, configMapData, p.namespace, p.taskSpec.TaskID),
 		p.configMapInterface,
 	)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	p.configMaps = append(p.configMaps, archiveConfigMap)
-
-	// Create a configMap for the executable for un-taring.
-	initContainerEntrypointArchive := map[string][]byte{
-		etc.K8InitContainerEntryScriptResource: etc.MustStaticFile(
-			etc.K8InitContainerEntryScriptResource),
-	}
-	initContainerEntrypointConfigMap, err := startConfigMap(
-		ctx,
-		createConfigMapSpec(
-			p.podName, initContainerEntrypointArchive, p.namespace, p.taskSpec.TaskID),
-		p.configMapInterface,
-	)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	p.configMaps = append(p.configMaps, initContainerEntrypointConfigMap)
+	p.configMaps = append(p.configMaps, configMap)
 
 	initContainerVolumeMounts, mainContainerVolumeMounts, volumes :=
-		configureAdditionalFilesVolumes(
-			archiveConfigMap, initContainerEntrypointConfigMap, runArchives)
+		configureAdditionalFilesVolumes(configMap, runArchives)
 
 	return initContainerVolumeMounts, mainContainerVolumeMounts, volumes, nil
 }
