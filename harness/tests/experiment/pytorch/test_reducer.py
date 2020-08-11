@@ -1,14 +1,42 @@
 import numpy as np
 
-from determined.pytorch import Reducer, _reduce_metrics
+from determined import pytorch
 
 
-def test_reducer() -> None:
-    metrics = np.array([0.25, 0.5, 0.75, 1, 25.5, 1.9])
-    assert np.around(_reduce_metrics(Reducer.AVG, metrics), decimals=2) == 4.98
-    assert _reduce_metrics(Reducer.SUM, metrics) == 29.9
-    assert _reduce_metrics(Reducer.MIN, metrics) == 0.25
-    assert _reduce_metrics(Reducer.MAX, metrics) == 25.5
+def do_test_reducer(reducer_cls, metrics_1, metrics_2, expected):
+    reducer_1 = reducer_cls()
+    reducer_2 = reducer_cls()
+    for i in metrics_1:
+        last_state_1 = reducer_1.accumulate(np.array(i))
+    for i in metrics_2:
+        last_state_2 = reducer_2.accumulate(np.array(i))
+    reduced = reducer_1.cross_slot_reduce([last_state_1, last_state_2])
+    assert reduced == expected
 
-    batches_per_process = [1, 2, 5, 4, 5, 6]
-    assert np.around(_reduce_metrics(Reducer.AVG, metrics, batches_per_process), decimals=2) == 6.43
+
+def test_avg_reducer() -> None:
+    metrics_1 = list(range(10))
+    metrics_2 = list(range(10, 15))
+    expected = sum([*metrics_1, *metrics_2]) / (len(metrics_1) + len(metrics_2))
+    do_test_reducer(pytorch.AvgMetricReducer, metrics_1, metrics_2, expected)
+
+
+def test_sum_reducer() -> None:
+    metrics_1 = list(range(10))
+    metrics_2 = list(range(10, 15))
+    expected = sum([*metrics_1, *metrics_2])
+    do_test_reducer(pytorch.SumMetricReducer, metrics_1, metrics_2, expected)
+
+
+def test_max_reducer() -> None:
+    metrics_1 = list(range(10))
+    metrics_2 = list(range(10, 15))
+    expected = max([*metrics_1, *metrics_2])
+    do_test_reducer(pytorch.MaxMetricReducer, metrics_1, metrics_2, expected)
+
+
+def test_min_reducer() -> None:
+    metrics_1 = list(range(10))
+    metrics_2 = list(range(10, 15))
+    expected = min([*metrics_1, *metrics_2])
+    do_test_reducer(pytorch.MinMetricReducer, metrics_1, metrics_2, expected)

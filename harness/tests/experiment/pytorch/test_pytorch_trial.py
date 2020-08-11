@@ -398,6 +398,32 @@ class TestPyTorchTrial:
         )
         controller.run()
 
+    def test_custom_reducer(self) -> None:
+        def make_workloads() -> workload.Stream:
+            trainer = utils.TrainAndValidate()
+
+            yield from trainer.send(steps=1, validation_freq=1, scheduling_unit=1)
+            training_metrics, validation_metrics = trainer.result()
+
+            batch_idx_sum = pytorch_onevar_model.batch_idx_sum()
+            for metrics in validation_metrics:
+                assert metrics["batch_idx_tensor_cls"] == batch_idx_sum
+                assert metrics["batch_idx_tensor_fn"] == batch_idx_sum
+                assert metrics["batch_idx_list_cls"] == 2 * batch_idx_sum
+                assert metrics["batch_idx_list_fn"] == 2 * batch_idx_sum
+                assert metrics["batch_idx_dict_cls"] == 2 * batch_idx_sum
+                assert metrics["batch_idx_dict_fn"] == 2 * batch_idx_sum
+
+            yield workload.terminate_workload(), [], workload.ignore_workload_response
+
+        controller = utils.make_trial_controller_from_trial_implementation(
+            trial_class=pytorch_onevar_model.OneVarTrial,
+            hparams=self.hparams,
+            workloads=make_workloads(),
+            trial_seed=self.trial_seed,
+        )
+        controller.run()
+
 
 def test_create_trial_instance() -> None:
     utils.create_trial_instance(pytorch_xor_model.XORTrial)

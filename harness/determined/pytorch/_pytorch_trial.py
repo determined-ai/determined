@@ -2,7 +2,7 @@ import logging
 import pathlib
 import random
 from abc import abstractmethod
-from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union, cast
+from typing import Any, Callable, Dict, Iterator, KeysView, List, Optional, Tuple, Union, cast
 
 import cloudpickle
 import numpy as np
@@ -425,8 +425,9 @@ class PyTorchTrialController(det.LoopTrialController):
         metrics = {}  # type: Optional[Dict[str, Any]]
 
         if self._evaluate_batch_defined():
-            keys = None
-            batch_metrics = []
+            keys = None  # type: Optional[KeysView[str]]
+            reducers = {}
+            last_state = {}  # type: Dict[str, Any]
 
             self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
             check.gt(len(self.validation_loader), 0)
@@ -434,34 +435,39 @@ class PyTorchTrialController(det.LoopTrialController):
                 batch = self.context.to_device(batch)
                 num_inputs += pytorch._data_length(batch)
 
-                vld_metrics = self.trial.evaluate_batch(batch=batch)
+                vld_metrics = self.trial.evaluate_batch(batch)
                 # Verify validation metric names are the same across batches.
                 if keys is None:
                     keys = vld_metrics.keys()
+                    reducers = self._prepare_metrics_reducers(keys)
                 else:
                     check.eq(
                         keys,
                         vld_metrics.keys(),
                         "Validation metric names must match across all batches of data.",
                     )
-                check.is_instance(
-                    vld_metrics,
-                    dict,
-                    "validation_metrics() must return a "
-                    "dictionary of string names to Tensor "
-                    "metrics",
-                )
                 # TODO: For performance perform -> cpu() only at the end of validation.
-                batch_metrics.append(self._convert_metrics_to_numpy(vld_metrics))
+                # XXX: figure this out, as it will be part of the reducers API.
+                numpy_metrics = self._convert_metrics_to_numpy(vld_metrics)
+                for key in keys:
+                    last_state[key] = reducers[key].accumulate(numpy_metrics[key])
 
-            metrics = self._reduce_metrics(
-                batch_metrics=batch_metrics,
-                keys=keys,
-                metrics_reducers=self._prepare_metrics_reducers(keys=keys),
+            check.is_not_none(
+                keys,
+                "empty dataset detected, please ensure that the validation dataset is long enough "
+                "for every worker to have at least one batch",
             )
+            assert keys is not None
 
-            if self.hvd_config.use:
-                num_inputs *= hvd.size()
+            # Allgather all num_inputs and the last_state dictionaries from every worker.
+            all_last_states, all_num_inputs = zip(*self.allgather_metrics((last_state, num_inputs)))
+
+            # Call cross_slot_reduce() on each metric.
+            metrics = {
+                k: reducers[k].cross_slot_reduce([ls[k] for ls in all_last_states]) for k in keys
+            }
+
+            num_inputs = sum(all_num_inputs)
 
         else:
             check.true(self._evaluate_full_dataset_defined())
@@ -503,66 +509,19 @@ class PyTorchTrialController(det.LoopTrialController):
 
         return {"num_inputs": num_inputs, "validation_metrics": metrics}
 
-    def _prepare_metrics_reducers(self, keys: Any) -> Dict[str, pytorch.Reducer]:
-        metrics_reducers = {}  # type: Dict[str, pytorch.Reducer]
-        if isinstance(self.trial.evaluation_reducer(), Dict):
-            metrics_reducers = cast(Dict[str, Any], self.trial.evaluation_reducer())
+    def _prepare_metrics_reducers(self, keys: Any) -> Dict[str, pytorch.MetricReducer]:
+        user_reducer = self.trial.evaluation_reducer()
+
+        if isinstance(user_reducer, Dict):
             check.eq(
-                metrics_reducers.keys(),
+                user_reducer.keys(),
                 keys,
-                "Please provide a single evaluation reducer or "
-                "provide a reducer for every validation metric. "
-                f"Expected keys: {keys}, provided keys: {metrics_reducers.keys()}.",
+                "Please provide a single evaluation reducer or provide a reducer for every "
+                f"validation metric. Expected keys: {keys}, provided keys: {user_reducer.keys()}.",
             )
-        elif isinstance(self.trial.evaluation_reducer(), pytorch.Reducer):
-            for key in keys:
-                metrics_reducers[key] = cast(pytorch.Reducer, self.trial.evaluation_reducer())
+            return {k: pytorch._make_reducer(v) for k, v in user_reducer.items()}
 
-        for key in keys:
-            check.true(
-                isinstance(metrics_reducers[key], pytorch.Reducer),
-                "Please select `determined.pytorch.Reducer` for reducing validation metrics.",
-            )
-
-        return metrics_reducers
-
-    def _reduce_metrics(
-        self, batch_metrics: List, keys: Any, metrics_reducers: Dict[str, pytorch.Reducer]
-    ) -> Optional[Dict[str, Any]]:
-        metrics = {
-            name: pytorch._reduce_metrics(
-                reducer=metrics_reducers[name],
-                metrics=np.stack([b[name] for b in batch_metrics], axis=0),
-                num_batches=None,
-            )
-            for name in keys or []
-        }
-
-        if self.hvd_config.use:
-            # If using horovod combine metrics across all processes.
-            # Only the chief process will receive all the metrics.
-            self.validation_loader = cast(torch.utils.data.DataLoader, self.validation_loader)
-            num_batches = len(self.validation_loader)
-            combined_metrics, batches_per_process = self._combine_metrics_across_processes(
-                metrics, num_batches
-            )
-            if self.is_chief:
-                # Only the chief collects all the metrics.
-                combined_metrics = self._convert_metrics_to_numpy(
-                    cast(Dict[str, Any], combined_metrics)
-                )
-                metrics = {
-                    name: pytorch._reduce_metrics(
-                        reducer=metrics_reducers[name],
-                        metrics=combined_metrics[name],
-                        num_batches=batches_per_process,
-                    )
-                    for name in keys or []
-                }
-            else:
-                return {}
-
-        return metrics
+        return {key: pytorch._make_reducer(user_reducer) for key in keys}
 
     def _combine_metrics_across_processes(
         self, metrics: Dict[str, Any], num_batches: int
@@ -978,12 +937,12 @@ class PyTorchTrial(det.Trial):
         """
         pass
 
-    def evaluation_reducer(self) -> Union[pytorch.Reducer, Dict[str, pytorch.Reducer]]:
+    def evaluation_reducer(self) -> Union[pytorch.ReducerType, Dict[str, pytorch.ReducerType]]:
         """
         Return a reducer for all evaluation metrics, or a dict mapping metric
         names to individual reducers. Defaults to :obj:`determined.pytorch.Reducer.AVG`.
         """
-        return pytorch.Reducer.AVG
+        return pytorch.AvgMetricReducer
 
     def evaluate_full_dataset(self, data_loader: torch.utils.data.DataLoader) -> Dict[str, Any]:
         """

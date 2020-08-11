@@ -46,7 +46,15 @@ class OnesDataset(torch.utils.data.Dataset):
         return 64
 
     def __getitem__(self, index: int) -> Tuple:
-        return torch.Tensor([float(1)]), torch.Tensor([float(1)])
+        return {
+            "data": torch.Tensor([float(1)]),
+            "label": torch.Tensor([float(1)]),
+            "idx": torch.Tensor([float(index)]),
+        }
+
+
+def batch_idx_sum():
+    return sum(range(len(OnesDataset())))
 
 
 class OneVarTrial(pytorch.PyTorchTrial):
@@ -70,7 +78,8 @@ class OneVarTrial(pytorch.PyTorchTrial):
     def train_batch(
         self, batch: pytorch.TorchData, epoch_idx: int, batch_idx: int
     ) -> Dict[str, torch.Tensor]:
-        data, label = batch
+        data = batch["data"]
+        label = batch["label"]
 
         # Measure the weight right now.
         w_before = self.model.weight.data.item()
@@ -113,12 +122,84 @@ class OneVarTrial(pytorch.PyTorchTrial):
         ), f'{metrics["w_after"]} does not match {metrics["w_exp"]} at batch {batch_idx}'
 
     def evaluate_batch(self, batch: pytorch.TorchData) -> Dict[str, Any]:
-        data, label = batch
+        data = batch["data"]
+        label = batch["label"]
+        idx = batch["idx"]
+
         loss = self.loss_fn(self.model(data), label)
-        return {"val_loss": loss}
+
+        # Return the batch index many different ways to test many different reducer types.
+        return {
+            "val_loss": loss,
+            "batch_idx_tensor_fn": idx,
+            "batch_idx_tensor_cls": idx,
+            "batch_idx_list_fn": [idx, idx],
+            "batch_idx_list_cls": [idx, idx],
+            "batch_idx_dict_fn": {"a": idx, "b": idx},
+            "batch_idx_dict_cls": {"a": idx, "b": idx},
+        }
+
+    def evaluation_reducer(self):
+        return {
+            "val_loss": pytorch.AvgMetricReducer,
+            "batch_idx_tensor_cls": TensorSumReducer,
+            "batch_idx_tensor_fn": tensor_sum_reducer,
+            "batch_idx_list_cls": ListSumReducer,
+            "batch_idx_list_fn": list_sum_reducer,
+            "batch_idx_dict_cls": DictSumReducer,
+            "batch_idx_dict_fn": dict_sum_reducer,
+        }
 
     def build_training_data_loader(self) -> pytorch.DataLoader:
         return pytorch.DataLoader(OnesDataset(), batch_size=self.context.get_per_slot_batch_size())
 
     def build_validation_data_loader(self) -> pytorch.DataLoader:
         return pytorch.DataLoader(OnesDataset(), batch_size=self.context.get_per_slot_batch_size())
+
+
+class TensorSumReducer(pytorch.MetricReducer):
+    def __init__(self):
+        self.sum = 0
+
+    def accumulate(self, val):
+        self.sum += val.sum()
+        return self.sum
+
+    def cross_slot_reduce(self, per_slot_metrics):
+        return sum(per_slot_metrics)
+
+
+def tensor_sum_reducer(metrics):
+    return sum(m.sum() for m in metrics)
+
+
+class ListSumReducer(pytorch.MetricReducer):
+    def __init__(self):
+        self.sum = 0
+
+    def accumulate(self, vals):
+        self.sum += sum(val.sum() for val in vals)
+        return self.sum
+
+    def cross_slot_reduce(self, per_slot_metrics):
+        return sum(per_slot_metrics)
+
+
+def list_sum_reducer(metric_lists):
+    return sum(m.sum() for metric_list in metric_lists for m in metric_list)
+
+
+class DictSumReducer(pytorch.MetricReducer):
+    def __init__(self):
+        self.sum = 0
+
+    def accumulate(self, val_dict):
+        self.sum += sum(val.sum() for val in val_dict.values())
+        return self.sum
+
+    def cross_slot_reduce(self, per_slot_metrics):
+        return sum(per_slot_metrics)
+
+
+def dict_sum_reducer(metric_dicts):
+    return sum(m.sum() for metric_dict in metric_dicts for m in metric_dict.values())

@@ -105,9 +105,6 @@ class _SimpleMetricReducer(MetricReducer):
         self.updates = []  # type: List[Any]
         self.reduce_fn = reduce_fn
 
-    def reset(self) -> None:
-        self.updates = []
-
     def accumulate(self, metric: Any) -> List[Any]:
         self.updates.append(metric)
         return self.updates
