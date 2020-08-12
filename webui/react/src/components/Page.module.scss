@@ -7,7 +7,7 @@
   padding: var(--theme-sizes-layout-big);
   width: 100%;
 
-  .overview { padding-bottom: var(--theme-sizes-layout-big); }
+  .breadcrumbs { align-self: flex-start; }
   .title {
     color: var(--theme-colors-core-secondary);
     width: 100%
