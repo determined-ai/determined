@@ -91,16 +91,44 @@ const ExperimentActions: React.FC<Props> = ({
 
   const actionButtons: ConditionalButton<ExperimentDetails>[] = [
     {
-      button: <Button key="activate" loading={buttonStates.Activate}
-        onClick={handleStateChange(RunState.Active)}>Activate</Button>,
-      showIf: (exp): boolean => exp.state === RunState.Paused,
+      button: <Popconfirm
+        cancelText="No"
+        key="kill"
+        okText="Yes"
+        title="Are you sure you want to kill the experiment?"
+        onConfirm={handleKill}>
+        <Button danger loading={buttonStates.Kill} type="primary">Kill</Button>
+      </Popconfirm>,
+      showIf: (exp): boolean => killableRunStates.includes(exp.state),
+    },
+    {
+      button: <Popconfirm
+        cancelText="No"
+        key="cancel"
+        okText="Yes"
+        title="Are you sure you want to cancel the experiment?"
+        onConfirm={handleStateChange(RunState.StoppingCanceled)}>
+        <Button danger loading={buttonStates.Cancel}>Cancel</Button>
+      </Popconfirm>,
+      showIf: (exp): boolean => cancellableRunStates.includes(exp.state),
     },
     {
       button: <Button key="pause" loading={buttonStates.Pause}
         onClick={handleStateChange(RunState.Paused)}>Pause</Button>,
       showIf: (exp): boolean => exp.state === RunState.Active,
     },
+    {
+      button: <Button key="activate" loading={buttonStates.Activate} type="primary"
+        onClick={handleStateChange(RunState.Active)}>Activate</Button>,
+      showIf: (exp): boolean => exp.state === RunState.Paused,
+    },
     { button: <Button key="fork" onClick={onClick[Action.Fork]}>Fork</Button> },
+    {
+      button: <Button key="tensorboard"
+        loading={buttonStates.Tensorboard}
+        onClick={handleCreateTensorboard}>Open Tensorboard</Button>,
+      showIf: (exp): boolean => !experimentWillNeverHaveData(exp),
+    },
     {
       button: <Button key="archive" loading={buttonStates.Archive}
         onClick={handleArchive(true)}>Archive</Button>,
@@ -110,37 +138,6 @@ const ExperimentActions: React.FC<Props> = ({
       button: <Button key="unarchive" loading={buttonStates.Archive}
         onClick={handleArchive(false)}>Unarchive</Button>,
       showIf: (exp): boolean => terminalRunStates.has(exp.state) && exp.archived,
-    },
-    {
-      button: <Button key="tensorboard"
-        loading={buttonStates.Tensorboard}
-        type="primary"
-        onClick={handleCreateTensorboard}>Open Tensorboard</Button>,
-      showIf: (exp): boolean => !experimentWillNeverHaveData(exp),
-    },
-    {
-      button: <Popconfirm
-        cancelText="No"
-        key="cancel"
-        okText="Yes"
-        title="Are you sure you want to cancel the experiment?"
-        onConfirm={handleStateChange(RunState.StoppingCanceled)}
-      >
-        <Button danger loading={buttonStates.Cancel}>Cancel</Button>
-      </Popconfirm>,
-      showIf: (exp): boolean => cancellableRunStates.includes(exp.state),
-    },
-    {
-      button: <Popconfirm
-        cancelText="No"
-        key="kill"
-        okText="Yes"
-        title="Are you sure you want to kill the experiment?"
-        onConfirm={handleKill}
-      >
-        <Button danger loading={buttonStates.Kill} type="primary">Kill</Button>
-      </Popconfirm>,
-      showIf: (exp): boolean => killableRunStates.includes(exp.state),
     },
   ];
 
