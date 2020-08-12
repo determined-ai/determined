@@ -60,6 +60,7 @@ func validate(v reflect.Value, path interface{}) []error {
 		}
 	case reflect.Struct:
 		for i := 0; i < v.NumField(); i++ {
+			// Skip non-exported fields.
 			if !v.Field(i).CanInterface() {
 				continue
 			}

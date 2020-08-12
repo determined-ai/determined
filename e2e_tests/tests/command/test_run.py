@@ -41,9 +41,9 @@ def _run_and_verify_exit_code_zero(args: List[str], **kwargs: Any) -> None:
     assert re.search(b"command exited successfully", output) is not None
 
 
-def _run_and_verify_failure(args: List[str], **kwargs: Any) -> None:
+def _run_and_verify_failure(args: List[str], message: str, **kwargs: Any) -> None:
     output = subprocess.check_output(args, **kwargs)
-    if re.search(b"was terminated: container failed with non-zero exit code:", output):
+    if re.search(message.encode(), output):
         raise subprocess.CalledProcessError(1, " ".join(args), output=output)
 
 
@@ -369,7 +369,8 @@ def test_k8_mount(using_k8s: bool) -> None:
 
     with pytest.raises(subprocess.CalledProcessError):
         _run_and_verify_failure(
-            ["det", "-m", conf.make_master_url(), "cmd", "run", f"sleep 3; touch {mount_path}"]
+            ["det", "-m", conf.make_master_url(), "cmd", "run", f"sleep 3; touch {mount_path}"],
+            "No such file or directory",
         )
 
     with tempfile.NamedTemporaryFile() as tf:
