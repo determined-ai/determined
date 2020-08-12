@@ -173,7 +173,7 @@ export type ioTypeCheckpoint = io.TypeOf<typeof ioCheckpoint>;
 
 export const ioValidation = io.type({
   ...baseStepDef,
-  metrics: io.union([ io.null, ioValidationMetrics ]),
+  metrics: io.union([ ioValidationMetrics, ioNullOrUndefined ]),
   state: runStatesIoType,
   step_id: io.number,
 });
@@ -181,7 +181,10 @@ export type ioTypeValidation = io.TypeOf<typeof ioValidation>;
 
 export const ioStep = io.type({
   ...baseStepDef,
+  avg_metrics: io.union([ io.record(io.string, io.number), ioNullOrUndefined ]),
   checkpoint: io.union([ ioCheckpoint, ioNullOrUndefined ]),
+  num_batches: io.union([ io.number, ioNullOrUndefined ]),
+  prior_batches_processed: io.union([ io.number, ioNullOrUndefined ]),
   state: runStatesIoType,
   validation: io.union([ ioValidation, ioNullOrUndefined ]),
 });
