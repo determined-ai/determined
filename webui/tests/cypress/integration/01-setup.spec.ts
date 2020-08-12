@@ -40,7 +40,7 @@ describe('setup', () => {
   it('should kill experiment 2', () => {
     cy.get(`${recordSelector} td:nth-child(2)`).contains('2').click();
     cy.contains('Kill').click();
-    cy.get('.modal button').contains(/kill/i).click();
+    cy.get('.ant-popover button').contains(/yes/i).click();
     cy.contains('Canceled', { timeout: Cypress.config('responseTimeout') });
   });
 
@@ -49,7 +49,7 @@ describe('setup', () => {
     cy.contains('Canceled');
     cy.get('body').should('not.contain', /archived/i);
     cy.contains('Archive').click();
-    cy.contains(/archived/i);
+    cy.contains(/unarchive/i);
     cy.visit('/det/experiments');
     cy.get(recordSelector).should('have.lengthOf', 3);
   });

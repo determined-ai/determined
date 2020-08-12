@@ -133,7 +133,7 @@ const TaskList: React.FC = () => {
       };
       if (record.misc?.experimentIds) {
         info.label = 'Experiment';
-        info.path = '/ui/experiments';
+        info.path = '/det/experiments';
         info.source = record.misc.experimentIds || [];
       } else if (record.misc?.trialIds) {
         info.label = 'Trial';

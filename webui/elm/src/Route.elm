@@ -143,6 +143,7 @@ type Route
     | Dashboard
     | CommandList CommandLikeListOptions
     | ExperimentDetail Int
+    | ExperimentDetailReact Int
     | ExperimentList ExperimentListOptions
     | ExperimentListReact
     | Login (Maybe Url.Url)
@@ -254,6 +255,9 @@ toString r =
 
         ExperimentDetail id ->
             absolute [ "ui", "experiments", String.fromInt id ] []
+
+        ExperimentDetailReact id ->
+            absolute [ "det", "experiments", String.fromInt id ] []
 
         ExperimentList options ->
             let

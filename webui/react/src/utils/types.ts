@@ -56,7 +56,7 @@ export const experimentToTask = (experiment: Experiment): RecentExperimentTask =
     progress: experiment.progress,
     startTime: experiment.startTime,
     state: experiment.state,
-    url: `/ui/experiments/${experiment.id}`,
+    url: `/det/experiments/${experiment.id}`,
   };
   return task;
 };

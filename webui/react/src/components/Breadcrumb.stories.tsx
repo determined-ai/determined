@@ -18,7 +18,7 @@ export const Default = (): React.ReactNode => (
       </Space>
     </Breadcrumb.Item>
     <Breadcrumb.Item>
-      <Link path="/ui/experiments/3">Experiment 3</Link>
+      <Link path="/det/experiments/3">Experiment 3</Link>
     </Breadcrumb.Item>
   </Breadcrumb>
 );
@@ -31,10 +31,10 @@ export const TrialDetail = (): React.ReactNode => (
       </Space>
     </Breadcrumb.Item>
     <Breadcrumb.Item>
-      <Link path="/ui/experiments/3"> Experiment 3</Link>
+      <Link path="/det/experiments/3"> Experiment 3</Link>
     </Breadcrumb.Item>
     <Breadcrumb.Item>
-      <Link path="/ui/experiments/3/trials/34">Trial 34</Link>
+      <Link path="/det/trials/34">Trial 34</Link>
     </Breadcrumb.Item>
   </Breadcrumb>
 );

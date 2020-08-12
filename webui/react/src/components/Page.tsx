@@ -1,9 +1,11 @@
-import { PageHeader } from 'antd';
+import { Breadcrumb, PageHeader } from 'antd';
+import { Route } from 'antd/lib/breadcrumb/Breadcrumb';
 import React, { useCallback } from 'react';
 
 import history from 'routes/history';
 import { CommonProps } from 'types';
 
+import Link from './Link';
 import css from './Page.module.scss';
 
 interface BreadCrumbRoute {
@@ -23,6 +25,15 @@ interface Props extends CommonProps {
   showDivider?: boolean;
 }
 
+const breadCrumbRender = (route: Route, params: unknown, routes: Route[]) => {
+  const last = routes.indexOf(route) === routes.length - 1;
+  return last ? (
+    <span>{route.breadcrumbName}</span>
+  ) : (
+    <Link path={route.path}>{route.breadcrumbName}</Link>
+  );
+};
+
 const Page: React.FC<Props> = (props: Props) => {
   const showHeader = props.breadcrumb || props.title || props.backPath;
   const classes = [ props.className, css.base ];
@@ -35,8 +46,10 @@ const Page: React.FC<Props> = (props: Props) => {
 
   return (
     <main className={classes.join(' ')} id={props.id}>
+      {props.breadcrumb && <div className={css.breadcrumbs}>
+        <Breadcrumb itemRender={breadCrumbRender} routes={props.breadcrumb} />
+      </div>}
       {showHeader && <PageHeader
-        breadcrumb={props.breadcrumb && { routes: props.breadcrumb }}
         extra={props.options}
         subTitle={props.subTitle}
         title={props.title}
