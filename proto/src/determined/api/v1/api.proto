@@ -185,6 +185,11 @@ service Determined {
         option (google.api.http) = {get: "/api/v1/trials/{trial_id}/logs"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
+    // Kill an trial.
+    rpc KillTrial(KillTrialRequest) returns (KillTrialResponse) {
+        option (google.api.http) = {post: "/api/v1/trials/{id}/kill" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
 
     // Get a list of checkpoints for a trial.
     rpc GetTrialCheckpoints(GetTrialCheckpointsRequest) returns (GetTrialCheckpointsResponse) {
