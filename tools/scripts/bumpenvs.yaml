@@ -1,0 +1,26 @@
+gcp_env:
+  new: "pedl-environments-aaa3750"
+tf1_cpu_hashed:
+  new: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-aaa3750"
+tf1_cpu_versioned:
+  new: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.5.0"
+tf1_gpu_hashed:
+  new: "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-aaa3750"
+tf1_gpu_versioned:
+  new: "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.5.0"
+tf2_cpu_hashed:
+  new: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-aaa3750"
+tf2_cpu_versioned:
+  new: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-2.2-cpu-0.5.0"
+tf2_gpu_hashed:
+  new: "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-aaa3750"
+tf2_gpu_versioned:
+  new: "determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.5.0"
+us_east_1_agent_ami:
+  new: "ami-07a25d724ee82aad5"
+us_east_1_master_ami:
+  new: "ami-66506c1c"
+us_west_2_agent_ami:
+  new: "ami-0eb085752fdbec583"
+us_west_2_master_ami:
+  new: "ami-79873901"
