@@ -1152,7 +1152,8 @@ USING (
 	) latest_checkpoint
 WHERE experiment_id = $1
     AND (se.content->'msg'->'workload'->>'trial_id')::int = latest_checkpoint.trial_id
-    AND (se.content->'msg'->'workload'->>'step_id')::int > latest_checkpoint.step_id;
+    AND (se.content->'msg'->'workload'->>'step_id')::int > latest_checkpoint.step_id
+    AND (se.content->'msg'->'workload'->>'step_id')::int != 0;
 	`, experimentID)
 	if err != nil {
 		return errors.Wrapf(err, "error rolling back events for experiment %d", experimentID)
@@ -1167,10 +1168,19 @@ func (db *PgDB) RollBackTrial(id int, lastStep int) error {
 	_, err := db.sql.Exec(`
 DELETE FROM steps
 WHERE trial_id = $1 AND id > $2
-   OR trial_id = $1 AND id = $2 AND state != 'COMPLETED'
 `, id, lastStep)
 	if err != nil {
 		return errors.Wrapf(err, "error rolling back trial %v to step %v", id, lastStep)
+	}
+
+	// This explicitly deletes any unfinished validations for the current step. These can occur
+	// any time we checkpoint before we validate.
+	_, err = db.sql.Exec(`
+DELETE FROM validations
+WHERE trial_id = $1 AND step_id = $2 AND state != 'COMPLETED'
+`, id, lastStep)
+	if err != nil {
+		return errors.Wrapf(err, "error rolling back vals for trial %v on step %v", id, lastStep)
 	}
 	return nil
 }
@@ -1343,6 +1353,30 @@ ORDER BY id ASC
 // AddStep adds the step to the database.
 func (db *PgDB) AddStep(step *model.Step) error {
 	if !step.IsNew() {
+		return errors.Errorf("unexpected state for new step: %v", step)
+	}
+	trial, err := db.TrialByID(step.TrialID)
+	if err != nil {
+		return errors.Wrapf(err, "error finding trial %v for new step", step.TrialID)
+	}
+	if trial.State != model.ActiveState {
+		return errors.Errorf("can't add step to trial %v with state %v", trial.ID, trial.State)
+	}
+	err = db.namedExecOne(`
+INSERT INTO steps
+(trial_id, id, state, start_time, end_time, num_batches, prior_batches_processed)
+VALUES (:trial_id, :id, :state, :start_time, :end_time, :num_batches, :prior_batches_processed)`,
+		step)
+	if err != nil {
+		return errors.Wrapf(err, "error inserting step %v", *step)
+	}
+	return nil
+}
+
+// AddNoOpStep adds a no-op completed step to the database. This is used for trials with initial
+// validations (used for testing models pre-fine-tuning).
+func (db *PgDB) AddNoOpStep(step *model.Step) error {
+	if step.State != model.CompletedState {
 		return errors.Errorf("unexpected state for new step: %v", step)
 	}
 	trial, err := db.TrialByID(step.TrialID)

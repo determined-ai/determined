@@ -42,6 +42,7 @@ type trialWorkloadSequencerState struct {
 	batchesSinceLastCkpt    int
 	totalBatchesProcessed   int
 
+	needInitialValidation  bool
 	needPostValidationCkpt bool
 
 	exitingEarly      bool
@@ -67,6 +68,7 @@ func (s *trialWorkloadSequencerState) deepCopy() trialWorkloadSequencerState {
 		batchesTowardsCurrentOp: s.batchesTowardsCurrentOp,
 		batchesSinceLastVal:     s.batchesSinceLastVal,
 		batchesSinceLastCkpt:    s.batchesSinceLastCkpt,
+		needInitialValidation:   s.needInitialValidation,
 		needPostValidationCkpt:  s.needPostValidationCkpt,
 		exitingEarly:            s.exitingEarly,
 		userRequestedStop:       s.userRequestedStop,
@@ -82,8 +84,9 @@ func newTrialWorkloadSequencer(
 	exp *model.Experiment, create searcher.Create, firstCheckpoint *model.Checkpoint,
 ) *trialWorkloadSequencer {
 	state := trialWorkloadSequencerState{
-		latestCheckpoint:  firstCheckpoint,
-		cachedCheckpoints: map[searcher.Workload]searcher.CompletedMessage{},
+		needInitialValidation: exp.Config.PerformInitialValidation,
+		latestCheckpoint:      firstCheckpoint,
+		cachedCheckpoints:     map[searcher.Workload]searcher.CompletedMessage{},
 	}
 	return &trialWorkloadSequencer{
 		trialWorkloadSequencerState:       state,
@@ -221,6 +224,9 @@ func (s *trialWorkloadSequencer) computeValidationMetricsCompleted(
 	msg searcher.CompletedMessage, isBestValFuture actor.Response,
 ) (searcher.Runnable, interface{}) {
 	s.batchesSinceLastVal = 0
+	if s.needInitialValidation {
+		s.needInitialValidation = false
+	}
 	if s.batchesSinceLastCkpt != 0 {
 		switch s.checkpointPolicy {
 		case model.AllCheckpointPolicy:
@@ -285,6 +291,10 @@ func (s trialWorkloadSequencer) Workload() (searcher.Workload, error) {
 	if !s.trialIDValid {
 		return searcher.Workload{},
 			errors.New("cannot call sequencer.Workload() before sequencer.SetTrialID()")
+	}
+
+	if s.needInitialValidation {
+		return s.validate(), nil
 	}
 
 	if s.postUserCancellationCheckpointNeeded() {

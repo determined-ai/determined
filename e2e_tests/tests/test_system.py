@@ -481,3 +481,21 @@ def test_fail_on_first_validation() -> None:
     exp.run_failure_test_with_temp_config(
         config_obj, conf.fixtures_path("no_op"), error_log,
     )
+
+
+def test_perform_initial_validation() -> None:
+    config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
+    config = conf.set_max_length(config, {"batches": 1})
+    config = conf.set_perform_initial_validation(config, True)
+    exp_id = exp.run_basic_test_with_temp_config(
+        config, conf.fixtures_path("no_op"), 1, has_zeroth_step=True
+    )
+
+    trials = exp.experiment_trials(exp_id)
+    assert len(trials) == 1
+    steps = trials[0]["steps"]
+    assert len(steps) == 2
+    zeroth_step = steps[0]
+    assert zeroth_step["id"] == 0
+    assert zeroth_step["validation"] is not None
+    assert zeroth_step["validation"]["state"] == "COMPLETED"

@@ -418,6 +418,13 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 			return nil
 		}
 		t.processID(ctx, modelTrial.ID)
+		if t.experiment.Config.PerformInitialValidation {
+			if err := t.db.AddNoOpStep(model.NewNoOpStep(t.id, 0)); err != nil {
+				ctx.Log().WithError(err).Error("failed to save zeroth step for initial validation")
+				ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+				return nil
+			}
+		}
 		ctx.Tell(t.rp, scheduler.SetTaskName{
 			Name:        fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID),
 			TaskHandler: ctx.Self(),

@@ -135,3 +135,9 @@ def set_random_seed(config: Dict[Any, Any], seed: int) -> Dict[Any, Any]:
     config.setdefault("reproducibility", {})
     config["reproducibility"]["experiment_seed"] = seed
     return config
+
+
+def set_perform_initial_validation(config: Dict[Any, Any], init_val: bool) -> Dict[Any, Any]:
+    config = config.copy()
+    config["perform_initial_validation"] = init_val
+    return config
