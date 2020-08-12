@@ -1,10 +1,10 @@
 import numpy as np
 from torch.utils.data import Dataset
 
+
 class BilevelDataset(Dataset):
     def __init__(
-        self, 
-        dataset, 
+        self, dataset,
     ):
         """
         We will split the data into a train split and a validation split
@@ -18,15 +18,15 @@ class BilevelDataset(Dataset):
         # Make sure train and val splits are of equal size.
         # This is so we make sure to loop images in both train
         # and val splits exactly once in an epoch.
-        n_train = int(0.5*len(inds))
+        n_train = int(0.5 * len(inds))
         self.train_inds = inds[0:n_train]
-        self.val_inds = inds[n_train:2*n_train]
-        assert(len(self.train_inds)==len(self.val_inds))
+        self.val_inds = inds[n_train : 2 * n_train]
+        assert len(self.train_inds) == len(self.val_inds)
 
     def shuffle_val_inds(self):
         # This is so we will see different pairs of images
         # from train and val splits.  Will need to call this
-        # manually at epoch end.  
+        # manually at epoch end.
         np.random.shuffle(self.val_inds)
 
     def __len__(self):

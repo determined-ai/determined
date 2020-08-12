@@ -5,17 +5,21 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.datasets as dset
-from torch.optim.lr_scheduler import CosineAnnealingLR	
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
-from determined.pytorch import PyTorchTrial, PyTorchTrialContext, DataLoader, LRScheduler
+from determined.pytorch import (
+    PyTorchTrial,
+    PyTorchTrialContext,
+    DataLoader,
+    LRScheduler,
+)
 
 from data import BilevelDataset
 from model_search import Network
-from optimizer import EG 
+from optimizer import EG
 from utils import AttrDict, data_transforms_cifar10, accuracy
 
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
-
 
 
 class GAEATrial(PyTorchTrial):
@@ -24,10 +28,10 @@ class GAEATrial(PyTorchTrial):
         self.data_config = trial_context.get_data_config()
         self.hparams = AttrDict(trial_context.get_hparams())
         self.last_epoch = 0
-        
+
         self.data_dir = os.path.join(
-            self.data_config['download_dir'], 
-            f"data-rank{self.context.distributed.get_rank()}"
+            self.data_config["download_dir"],
+            f"data-rank{self.context.distributed.get_rank()}",
         )
 
         # Initialize the models.
@@ -53,17 +57,17 @@ class GAEATrial(PyTorchTrial):
         )
         self.arch_opt = self.context.wrap_optimizer(
             EG(
-                self.model.arch_parameters(), 
+                self.model.arch_parameters(),
                 self.hparams.arch_learning_rate,
-                lambda p: p / p.sum(dim=-1, keepdim=True)
+                lambda p: p / p.sum(dim=-1, keepdim=True),
             )
         )
 
         self.lr_scheduler = self.context.wrap_lr_scheduler(
             lr_scheduler=CosineAnnealingLR(
-                self.ws_opt, 
+                self.ws_opt,
                 self.hparams.scheduler_epochs,
-                self.hparams.min_learning_rate
+                self.hparams.min_learning_rate,
             ),
             step_mode=LRScheduler.StepMode.STEP_EVERY_EPOCH,
         )
@@ -85,7 +89,7 @@ class GAEATrial(PyTorchTrial):
             bilevel_data,
             batch_size=self.context.get_per_slot_batch_size(),
             shuffle=True,
-            num_workers=2
+            num_workers=2,
         )
         return train_queue
 
@@ -98,7 +102,7 @@ class GAEATrial(PyTorchTrial):
             valid_data,
             batch_size=self.context.get_per_slot_batch_size(),
             shuffle=False,
-            num_workers=2
+            num_workers=2,
         )
         return valid_queue
 
@@ -112,25 +116,25 @@ class GAEATrial(PyTorchTrial):
 
         # Train shared-weights
         for a in self.model.arch_parameters():
-            a.requires_grad=False
+            a.requires_grad = False
         for w in self.model.ws_parameters():
-            w.requires_grad=True
+            w.requires_grad = True
         loss = self.model._loss(x_train, y_train)
         self.context.backward(loss)
         self.context.step_optimizer(self.ws_opt)
 
         # Train arch parameters
         for a in self.model.arch_parameters():
-            a.requires_grad=True
+            a.requires_grad = True
         for w in self.model.ws_parameters():
-            w.requires_grad=False
+            w.requires_grad = False
         arch_loss = self.model._loss(x_val, y_val)
         self.context.backward(arch_loss)
         self.context.step_optimizer(self.arch_opt)
 
         return {
-            'loss': loss,
-            'arch_loss': arch_loss,
+            "loss": loss,
+            "arch_loss": arch_loss,
         }
 
     def evaluate_batch(self, batch: TorchData) -> Dict[str, Any]:

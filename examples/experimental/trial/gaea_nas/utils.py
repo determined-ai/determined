@@ -6,6 +6,7 @@ class AttrDict(dict):
         super(AttrDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
 
+
 def data_transforms_cifar10():
     CIFAR_MEAN = [0.49139968, 0.48215827, 0.44653124]
     CIFAR_STD = [0.24703233, 0.24348505, 0.26158768]
@@ -22,6 +23,7 @@ def data_transforms_cifar10():
         [transforms.ToTensor(), transforms.Normalize(CIFAR_MEAN, CIFAR_STD),]
     )
     return train_transform, valid_transform
+
 
 def accuracy(output, target, topk=(1,)):
     maxk = max(topk)

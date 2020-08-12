@@ -1,6 +1,7 @@
 import torch
 from torch.optim.optimizer import Optimizer, required
 
+
 class EG(Optimizer):
     def __init__(self, params, lr=required, normalize_fn=lambda x: x):
         if lr is not required and lr < 0.0:
@@ -17,12 +18,11 @@ class EG(Optimizer):
                 loss = closure()
 
         for group in self.param_groups:
-            for p in group['params']:
+            for p in group["params"]:
                 if p.grad is None:
                     continue
                 d_p = p.grad
-                p.mul_(torch.exp(-group['lr'] * d_p))
+                p.mul_(torch.exp(-group["lr"] * d_p))
                 p.data = self.normalize_fn(p.data)
 
         return loss
-
