@@ -475,8 +475,8 @@ def test_pytorch_parallel() -> None:
 
 @pytest.mark.e2e_cpu  # type: ignore
 def test_fail_on_first_validation() -> None:
-    exp.run_failure_test(
-        conf.fixtures_path("no_op/fail_on_first_validation.yaml"),
-        conf.fixtures_path("no_op"),
-        "failed on first validation",
+    config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
+    config_obj["hyperparameters"]["fail_on_first_validation"] = True
+    exp.run_failure_test_with_temp_config(
+        config_obj, conf.fixtures_path("no_op"), "failed on first validation",
     )

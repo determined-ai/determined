@@ -17,6 +17,7 @@ from .experiment import (
     run_basic_test,
     run_basic_test_with_temp_config,
     run_failure_test,
+    run_failure_test_with_temp_config,
     s3_checkpoint_config,
     s3_checkpoint_config_no_creds,
     shared_fs_checkpoint_config,
