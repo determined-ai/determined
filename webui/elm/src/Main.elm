@@ -412,6 +412,9 @@ updateWithRoute url model =
                 Just (Route.ExperimentDetail id) ->
                     Page.ExperimentDetail.init id |> mapInit model experimentDetailInfo
 
+                Just (Route.ExperimentDetailReact id) ->
+                    ( model, Navigation.load (Route.toString (Route.ExperimentDetailReact id)) )
+
                 Just (Route.ExperimentList options) ->
                     case model.page of
                         ExperimentList _ ->
