@@ -127,3 +127,6 @@ class TrialReference:
             ),
             master=self._master,
         )
+
+    def __repr__(self) -> str:
+        return "Trial(id={})".format(self.id)

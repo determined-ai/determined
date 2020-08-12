@@ -205,6 +205,9 @@ class Model:
             "metadata": self.metadata,
         }
 
+    def __repr__(self) -> str:
+        return "Model(name={})".format(self.name)
+
     @staticmethod
     def from_json(data: Dict[str, Any], master: str) -> "Model":
         return Model(
