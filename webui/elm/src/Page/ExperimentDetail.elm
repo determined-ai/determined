@@ -766,7 +766,7 @@ titleView : ExperimentModel -> H.Html Msg
 titleView model =
     let
         parents =
-            [ ( Route.toString <| Route.ExperimentList Route.defaultExperimentListOptions
+            [ ( Route.toString <| Route.ExperimentListReact
               , "Experiments"
               )
             ]
