@@ -1,17 +1,8 @@
-import { Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
-import Plotly, { PlotData, PlotlyHTMLElement, PlotRelayoutEvent } from 'plotly.js/lib/core';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { PlotData } from 'plotly.js/lib/core';
+import React, { useMemo } from 'react';
 
-import Section from 'components/Section';
-import SelectFilter from 'components/SelectFilter';
+import MetricChart from 'components/MetricChart';
 import { ValidationHistory } from 'types';
-import { clone } from 'utils/data';
-import { capitalize, generateAlphaNumeric } from 'utils/string';
-
-import css from './ExperimentChart.module.scss';
-
-const { Option } = Select;
 
 interface Props {
   id?: string;
@@ -20,51 +11,9 @@ interface Props {
   validationHistory?: ValidationHistory[];
 }
 
-interface Range {
-  xaxis: [ number | undefined, number | undefined ];
-  yaxis: [ number | undefined, number | undefined ];
-}
-
-enum Scale {
-  Linear = 'linear',
-  Log = 'log',
-}
-
-type PlotArguments = [
-  string,
-  Partial<PlotData>[],
-  Partial<Plotly.Layout>,
-  Partial<Plotly.Config>,
-];
-
-const defaultLayout: Partial<Plotly.Layout> = {
-  height: 368,
-  margin: { b: 50, l: 50, pad: 6, r: 10, t: 10 },
-  xaxis: {
-    hoverformat: '',
-    title: 'Elapsed Time (seconds)',
-  },
-  yaxis: {
-    title: 'Metric Value',
-    type: Scale.Linear,
-  },
-};
-
-const defaultConfig: Partial<Plotly.Config> = {
-  displayModeBar: false,
-  responsive: true,
-};
-
 const ExperimentChart: React.FC<Props> = ({ validationMetric, ...props }: Props) => {
-  const id = props.id ? props.id : generateAlphaNumeric();
   const titleDetail = validationMetric ? ` (${validationMetric})` : '';
   const title = `Best Validation Metric${titleDetail}`;
-  const [ scale, setScale ] = useState<Scale>(Scale.Linear);
-  const [ range, setRange ] = useState<Range>({
-    xaxis: [ undefined, undefined ],
-    yaxis: [ undefined, undefined ],
-  });
-  const [ isRendered, setIsRendered ] = useState(false);
 
   const data: Partial<PlotData>[] = useMemo(() => {
     if (!props.startTime || !props.validationHistory) return [];
