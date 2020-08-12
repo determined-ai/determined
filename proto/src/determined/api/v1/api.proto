@@ -186,6 +186,12 @@ service Determined {
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
 
+    // Get a list of checkpoints for a trial.
+    rpc GetTrialCheckpoints(GetTrialCheckpointsRequest) returns (GetTrialCheckpointsResponse) {
+      option (google.api.http) = {get: "/api/v1/trials/{id}/checkpoints"};
+      option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
+
     // Get a list of templates.
     rpc GetTemplates(GetTemplatesRequest) returns (GetTemplatesResponse) {
         option (google.api.http) = {get: "/api/v1/templates"};
