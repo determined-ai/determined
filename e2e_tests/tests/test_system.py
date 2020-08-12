@@ -472,9 +472,10 @@ def test_pytorch_parallel() -> None:
         config, conf.official_examples_path("trial/mnist_pytorch"), 1
     )
 
+
 @pytest.mark.e2e_cpu  # type: ignore
 def test_fail_on_first_validation() -> None:
-    exp_id = exp.run_failure_test(
+    exp.run_failure_test(
         conf.fixtures_path("no_op/fail_on_first_validation.yaml"),
         conf.fixtures_path("no_op"),
         "failed on first validation",
