@@ -292,11 +292,8 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case trialCompletedWorkload:
 		e.searcher.WorkloadCompleted(msg.completedMessage, msg.unitsCompleted)
 		e.processOperations(ctx, nil, nil) // we call processOperations to flush searcher events.
-		if msg.completedMessage.Workload.Kind == searcher.ComputeValidationMetrics {
-			if msg.completedMessage.ValidationMetrics == nil {
-				return fmt.Errorf("completed validation workload missing metrics %s",
-					msg.completedMessage.Workload)
-			}
+		if msg.completedMessage.Workload.Kind == searcher.ComputeValidationMetrics &&
+			msg.completedMessage.ExitedReason == nil {
 			ctx.Respond(e.isBestValidation(*msg.completedMessage.ValidationMetrics))
 		}
 		progress := e.searcher.Progress()
