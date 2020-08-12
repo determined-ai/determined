@@ -132,7 +132,7 @@ const TrialDetailsComp: React.FC = () => {
       <TrialActions trial={trial.data}
         onClick={handleActionClick}
         onSettled={pollTrialDetails} />
-      <Section title="Info Box">
+      <Section bodyBorder title="Info Box">
         <TrialInfoBox experiment={experiment} trial={trial.data} />
       </Section>
       <Section title="Chart" />

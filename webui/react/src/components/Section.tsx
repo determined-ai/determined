@@ -10,6 +10,7 @@ interface Props {
   options?: React.ReactNode;
   title: string;
   hideTitle?: boolean;
+  bodyBorder?: boolean;
 }
 
 const defaultProps = {
@@ -18,9 +19,11 @@ const defaultProps = {
 
 const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
+  const bodyClasses = [ css.body ];
 
   if (props.divider) classes.push(css.divider);
   if (props.maxHeight) classes.push(css.maxHeight);
+  if (props.bodyBorder) bodyClasses.push(css.bodyBorder);
 
   return (
     <section className={classes.join(' ')} id={toHtmlId(props.title)}>
@@ -28,7 +31,7 @@ const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
         {!props.hideTitle && <h5 className={css.title}>{props.title}</h5>}
         {props.options && <div className={css.options}>{props.options}</div>}
       </div>
-      <div className={css.body}>
+      <div className={bodyClasses.join(' ')}>
         {props.children}
       </div>
     </section>

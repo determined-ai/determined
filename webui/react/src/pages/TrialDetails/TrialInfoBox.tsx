@@ -70,21 +70,21 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
   const durations = trialDurations(trial.steps);
 
-  const rows = [
+  const infoRows = [
     {
-      info: <Badge state={experiment.state} type={BadgeType.State} />,
+      content: <Badge state={experiment.state} type={BadgeType.State} />,
       label: 'State',
     },
     {
-      info: formatDatetime(experiment.startTime),
+      content: formatDatetime(experiment.startTime),
       label: 'Start Time',
     },
     {
-      info: trial.endTime && formatDatetime(experiment.startTime),
+      content: trial.endTime && formatDatetime(experiment.startTime),
       label: 'End Time',
     },
     {
-      info: <ul className={css.duration}>
+      content: <ul className={css.duration}>
         <li>Training: {shortEnglishHumannizer(durations.train)}</li>
         <li>Checkpointing: {shortEnglishHumannizer(durations.checkpoint)}</li>
         <li>Validation: {shortEnglishHumannizer(durations.validation)}</li>
@@ -92,16 +92,16 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       label: 'Durations',
     },
     {
-      info: bestValidation &&
+      content: bestValidation &&
         `${humanReadableFloat(bestValidation)} (${experiment.config.searcher.metric})`,
       label: 'Best Validation',
     },
     {
-      info: <Button onClick={handleShowHParams}>Show</Button>,
+      content: <Button onClick={handleShowHParams}>Show</Button>,
       label: 'H-params',
     },
     {
-      info: bestCheckpoint && (<>
+      content: bestCheckpoint && (<>
         <Button onClick={handleShowBestCheckpoint}>
           {/* FIXME remove steps project */}
               Trial {bestCheckpoint.trialId} Step ID {bestCheckpoint.stepId}
@@ -117,14 +117,14 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       label: 'Best Checkpoint',
     },
     {
-      info: totalCheckpointsSize,
+      content: totalCheckpointsSize,
       label: 'Checkpoint Size',
     },
   ];
 
   return (
     <div className={css.base}>
-      <InfoBox rows={rows} />
+      <InfoBox rows={infoRows} />
       <Modal
         bodyStyle={{ padding: 0 }}
         cancelButtonProps={{ style: { display: 'none' } }}
@@ -132,11 +132,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         visible={showHParams}
         onCancel={handleHideHParams}
         onOk={handleHideHParams}>
-        {/* FIXME blocked https://github.com/determined-ai/determined/pull/971 */}
-        {hyperparamsView({
-          param1: 234,
-          param2: 'asdfasdf',
-        })}
+        {hyperparamsView(trial.hparams)}
       </Modal>
     </div>
   );
