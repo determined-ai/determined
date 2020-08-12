@@ -34,7 +34,7 @@ export const TrialDetail = (): React.ReactNode => (
       <Link path="/det/experiments/3"> Experiment 3</Link>
     </Breadcrumb.Item>
     <Breadcrumb.Item>
-      <Link path="/ui/trials/34">Trial 34</Link>
+      <Link path="/det/trials/34">Trial 34</Link>
     </Breadcrumb.Item>
   </Breadcrumb>
 );
