@@ -1,7 +1,6 @@
 import contextlib
 import os
 import pathlib
-import re
 import shutil
 import time
 import uuid
@@ -490,32 +489,32 @@ def create_linked_user(uid: int, user: str, gid: int, group: str) -> Credentials
 
 @pytest.mark.e2e_cpu  # type: ignore
 def test_link_with_agent_user(auth: Authentication) -> None:
-    user = create_linked_user(200, "user", 300, "group")
+    user = create_linked_user(200, "someuser", 300, "somegroup")
 
-    expected_regex = r".*:200:.*:300"
+    expected_output = "someuser:200:somegroup:300"
     with logged_in_user(user), command.interactive_command(
         "cmd", "run", "bash", "-c", "echo $(id -u -n):$(id -u):$(id -g -n):$(id -g)"
     ) as cmd:
         for line in cmd.stdout:
-            if re.match(expected_regex, line):
+            if expected_output in line:
                 break
         else:
-            raise AssertionError(f"Did not find {expected_regex} in output")
+            raise AssertionError(f"Did not find {expected_output} in output")
 
 
 @pytest.mark.e2e_cpu  # type: ignore
 def test_link_with_large_uid(auth: Authentication) -> None:
-    user = create_linked_user(2000000000, "user", 2000000000, "group")
+    user = create_linked_user(2000000000, "someuser", 2000000000, "somegroup")
 
-    expected_regex = r".*:2000000000:.*:2000000000"
+    expected_output = "someuser:2000000000:somegroup:2000000000"
     with logged_in_user(user), command.interactive_command(
         "cmd", "run", "bash", "-c", "echo $(id -u -n):$(id -u):$(id -g -n):$(id -g)"
     ) as cmd:
         for line in cmd.stdout:
-            if re.match(expected_regex, line):
+            if expected_output in line:
                 break
         else:
-            raise AssertionError(f"Did not find {expected_regex} in output")
+            raise AssertionError(f"Did not find {expected_output} in output")
 
 
 @pytest.mark.e2e_cpu  # type: ignore
