@@ -105,7 +105,7 @@ class NoOpTrialController(det.CallbackTrialController):
 
     def compute_validation_metrics(self, step_id: int) -> Dict[str, Any]:
         if self.fail_on_first_validation:
-            raise Exception("failed on first validation")
+            raise Exception(self.fail_on_first_validation)
         self.chaos_failure(self.chaos_probability_validate)
         time.sleep(self.validation_secs)
         metrics = {
