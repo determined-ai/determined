@@ -27,14 +27,9 @@ const (
 	shellSSHDConfigFile     = "/run/determined/ssh/sshd_config"
 	shellHostPrivKeyFile    = "/run/determined/ssh/id_rsa"
 	shellHostPubKeyFile     = "/run/determined/ssh/id_rsa.pub"
-	sshdPort                = 2222
-)
-
-var (
-	shellEntrypoint = []string{
-		"/usr/sbin/sshd", "-f", shellSSHDConfigFile, "-p", strconv.Itoa(sshdPort), "-D",
-	}
-	shellPorts = map[string]int{"shell": sshdPort}
+	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
+	minSshdPort = 3200
+	maxSshdPort = minSshdPort + 299
 )
 
 type shellManager struct {
@@ -130,8 +125,15 @@ func (n *shellManager) newShell(
 	taskID := scheduler.NewTaskID()
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
 
-	config.Environment.Ports = shellPorts
-	config.Entrypoint = shellEntrypoint
+	// Select a random port from the range to assign to sshd. In host
+	// mode, this mitigates the risk of multiple sshd processes binding
+	// the same port on an agent.
+	port := getPort(minSshdPort, maxSshdPort)
+
+	config.Environment.Ports = map[string]int{"shell": port}
+	config.Entrypoint = []string{
+		"/usr/sbin/sshd", "-f", shellSSHDConfigFile, "-p", strconv.Itoa(port), "-D",
+	}
 
 	additionalFiles := archive.Archive{
 		req.AgentUserGroup.OwnedArchiveItem(shellSSHDir, nil, 0700, tar.TypeDir),
