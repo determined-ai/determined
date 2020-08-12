@@ -291,8 +291,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.processOperations(ctx, ops, err)
 	case trialCompletedWorkload:
 		e.searcher.WorkloadCompleted(msg.completedMessage, msg.unitsCompleted)
-		e.processOperations(ctx, nil, nil) // we call processOperations to flush searcher events.
+		e.processOperations(ctx, nil, nil) // We call processOperations to flush searcher events.
 		if msg.completedMessage.Workload.Kind == searcher.ComputeValidationMetrics &&
+			// Messages indicating trial failures won't have metrics (or need their status).
 			msg.completedMessage.ExitedReason == nil {
 			ctx.Respond(e.isBestValidation(*msg.completedMessage.ValidationMetrics))
 		}
