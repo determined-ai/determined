@@ -25,6 +25,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/master/pkg/union"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 const (
@@ -383,6 +384,13 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		}
 
 	case actor.ChildStopped:
+
+	case *apiv1.KillTrialRequest:
+		t.killed = true
+		if t.task != nil {
+			ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+		}
+		ctx.Respond(&apiv1.KillTrialResponse{})
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
