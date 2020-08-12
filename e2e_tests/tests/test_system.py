@@ -471,3 +471,13 @@ def test_pytorch_parallel() -> None:
     exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("trial/mnist_pytorch"), 1
     )
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+def test_fail_on_first_validation() -> None:
+    error_log = "failed on first validation"
+    config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
+    config_obj["hyperparameters"]["fail_on_first_validation"] = error_log
+    exp.run_failure_test_with_temp_config(
+        config_obj, conf.fixtures_path("no_op"), error_log,
+    )

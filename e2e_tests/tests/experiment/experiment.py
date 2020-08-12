@@ -555,6 +555,15 @@ def run_basic_test_with_temp_config(
     return experiment_id
 
 
+def run_failure_test_with_temp_config(
+    config: Dict[Any, Any], model_def_path: str, error_str: Optional[str] = None,
+) -> None:
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+        run_failure_test(tf.name, model_def_path, error_str=error_str)
+
+
 def shared_fs_checkpoint_config() -> Dict[str, str]:
     return {
         "type": "shared_fs",

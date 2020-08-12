@@ -35,6 +35,7 @@ class NoOpTrialController(det.CallbackTrialController):
         self.chaos_probability_train = self.env.hparams.get("chaos_probability_train")
         self.chaos_probability_validate = self.env.hparams.get("chaos_probability_validate")
         self.chaos_probability_checkpoint = self.env.hparams.get("chaos_probability_checkpoint")
+        self.fail_on_first_validation = self.env.hparams.get("fail_on_first_validation", "")
         self.validation_set_size = self.env.hparams.get("validation_set_size", 32 * 32)
         self.train_batch_secs = self.env.hparams.get("training_batch_seconds", 0)
         self.validation_secs = self.env.hparams.get(
@@ -103,6 +104,8 @@ class NoOpTrialController(det.CallbackTrialController):
         return response
 
     def compute_validation_metrics(self, step_id: int) -> Dict[str, Any]:
+        if self.fail_on_first_validation:
+            raise Exception(self.fail_on_first_validation)
         self.chaos_failure(self.chaos_probability_validate)
         time.sleep(self.validation_secs)
         metrics = {
