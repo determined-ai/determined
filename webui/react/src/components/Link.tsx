@@ -44,8 +44,8 @@ const Link: React.FC<Props> = ({ path, popout, onClick, ...props }: PropsWithChi
   if (props.inherit) classes.push(css.inherit);
   if (props.isButton) classes.push('ant-btn');
 
-  const handleClick = useCallback(() => {
-    return makeClickHandler(path, onClick, popout);
+  const handleClick = useCallback((event: React.MouseEvent) => {
+    makeClickHandler(path, onClick, popout)(event);
   }, [ path, onClick, popout ]);
 
   return props.disabled ? (
