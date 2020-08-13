@@ -61,12 +61,13 @@ const webpackConfig = override(
       // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
       languages: ['yaml'],
       features: [
-        'suggest',
-        'quickOutline',
-        'wordHighlighter',
-        'colorDetector',
         'codelens',
-        'parameterHints'
+        'colorDetector',
+        'find',
+        'parameterHints',
+        'quickOutline',
+        'suggest',
+        'wordHighlighter',
       ],
     })
   ),
