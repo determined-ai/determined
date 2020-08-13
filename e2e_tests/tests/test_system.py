@@ -485,6 +485,7 @@ def test_fail_on_first_validation() -> None:
     )
 
 
+@pytest.mark.e2e_cpu  # type: ignore
 def test_perform_initial_validation() -> None:
     config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config = conf.set_max_length(config, {"batches": 1})
