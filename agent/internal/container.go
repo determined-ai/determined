@@ -146,8 +146,13 @@ func (c *containerActor) containerStarted(ctx *actor.Context, started aproto.Con
 }
 
 func (c *containerActor) containerStopped(ctx *actor.Context, stopped aproto.ContainerStopped) {
-	ctx.Log().Infof("transitioning state from %s to %s", c.State, cproto.Terminated)
-	c.Container = c.Transition(cproto.Terminated)
-	ctx.Tell(ctx.Self().Parent(), aproto.ContainerStateChanged{
-		Container: c.Container, ContainerStopped: &stopped})
+	if c.State == cproto.Terminated {
+		ctx.Log().Infof(
+			"attempted transition of state from %s to %s", cproto.Terminated, cproto.Terminated)
+	} else {
+		ctx.Log().Infof("transitioning state from %s to %s", c.State, cproto.Terminated)
+		c.Container = c.Transition(cproto.Terminated)
+		ctx.Tell(ctx.Self().Parent(), aproto.ContainerStateChanged{
+			Container: c.Container, ContainerStopped: &stopped})
+	}
 }
