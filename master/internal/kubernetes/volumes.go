@@ -6,15 +6,10 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/etc"
 
-	"github.com/pkg/errors"
-
 	"github.com/docker/docker/api/types/mount"
 
 	k8sV1 "k8s.io/api/core/v1"
-	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/container"
 )
 
@@ -80,36 +75,6 @@ func configureShmVolume(_ int64) (k8sV1.VolumeMount, k8sV1.Volume) {
 		}},
 	}
 	return volumeMount, volume
-}
-
-func createConfigMapSpec(
-	name string,
-	data map[string][]byte,
-	namespace string,
-	taskID string,
-) *k8sV1.ConfigMap {
-	return &k8sV1.ConfigMap{
-		ObjectMeta: metaV1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-			Labels:    map[string]string{determinedLabel: taskID},
-		},
-		BinaryData: data,
-	}
-}
-
-func startConfigMap(
-	ctx *actor.Context,
-	configMapSpec *k8sV1.ConfigMap,
-	configMapInterface typedV1.ConfigMapInterface,
-) (*k8sV1.ConfigMap, error) {
-	configMap, err := configMapInterface.Create(configMapSpec)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create configMap")
-	}
-	ctx.Log().Infof("created configMap %s", configMap.Name)
-
-	return configMap, nil
 }
 
 func configureAdditionalFilesVolumes(

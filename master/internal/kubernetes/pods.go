@@ -45,6 +45,8 @@ type pods struct {
 
 	informer                *actor.Ref
 	eventListener           *actor.Ref
+	resourceCreationTokens  *actor.Ref
+	resourceDeleter         *actor.Ref
 	podNameToPodHandler     map[string]*actor.Ref
 	containerIDToPodHandler map[string]*actor.Ref
 	podHandlerToMetadata    map[*actor.Ref]podMetadata
@@ -89,11 +91,13 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		if err := p.getMasterIPAndPort(ctx); err != nil {
 			return err
 		}
+		p.startResourceDeleter(ctx)
 		if err := p.deleteExistingKubernetesResources(ctx); err != nil {
 			return err
 		}
 		p.startPodInformer(ctx)
 		p.startEventListener(ctx)
+		p.startTokens(ctx)
 
 	case sproto.StartPod:
 		if err := p.receiveStartPod(ctx, msg); err != nil {
@@ -109,6 +113,11 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case sproto.StopPod:
 		p.receiveStopPod(ctx, msg)
 
+	case deletedKubernetesResources:
+		if msg.err != nil {
+			return errors.Wrap(msg.err, "error deleting leftover kubernetes resource")
+		}
+
 	case actor.ChildStopped:
 		if err := p.cleanUpPodHandler(ctx, msg.Child); err != nil {
 			return err
@@ -120,6 +129,10 @@ func (p *pods) Receive(ctx *actor.Context) error {
 			return errors.Errorf("pod informer failed")
 		case p.eventListener:
 			return errors.Errorf("event listener failed")
+		case p.resourceCreationTokens:
+			return errors.Errorf("tokens actor failed")
+		case p.resourceDeleter:
+			return errors.Errorf("kubernetes client dealer failed")
 		}
 
 		if err := p.cleanUpPodHandler(ctx, msg.Child); err != nil {
@@ -172,8 +185,6 @@ func (p *pods) getMasterIPAndPort(ctx *actor.Context) error {
 
 func (p *pods) deleteExistingKubernetesResources(ctx *actor.Context) error {
 	listOptions := metaV1.ListOptions{LabelSelector: determinedLabel}
-	var gracePeriod int64 = 15
-	deleteOptions := &metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod}
 
 	configMaps, err := p.configMapInterface.List(listOptions)
 	if err != nil {
@@ -184,10 +195,8 @@ func (p *pods) deleteExistingKubernetesResources(ctx *actor.Context) error {
 			continue
 		}
 
-		ctx.Log().WithField("name", configMap.Name).Info("deleting configMap")
-		if err = p.configMapInterface.Delete(configMap.Name, deleteOptions); err != nil {
-			return errors.Wrapf(err, "error deleting configMap: %s", configMap.Name)
-		}
+		ctx.Tell(p.resourceDeleter, deleteKubernetesResources{
+			handler: ctx.Self(), configMapName: configMap.Name})
 	}
 
 	pods, err := p.podInterface.List(listOptions)
@@ -199,10 +208,8 @@ func (p *pods) deleteExistingKubernetesResources(ctx *actor.Context) error {
 			continue
 		}
 
-		ctx.Log().WithField("name", pod.Name).Info("deleting pod")
-		if err = p.podInterface.Delete(pod.Name, deleteOptions); err != nil {
-			return errors.Wrapf(err, "error deleting pod: %s", pod.Name)
-		}
+		ctx.Tell(p.resourceDeleter, deleteKubernetesResources{
+			handler: ctx.Self(), podName: pod.Name})
 	}
 
 	return nil
@@ -217,11 +224,22 @@ func (p *pods) startEventListener(ctx *actor.Context) {
 		"event-listener", newEventListener(p.clientSet, p.namespace, ctx.Self()))
 }
 
+func (p *pods) startResourceDeleter(ctx *actor.Context) {
+	p.resourceDeleter, _ = ctx.ActorOf(
+		"kubernetes-deletion-dealer",
+		newKubernetesDeletionDealer(p.podInterface, p.configMapInterface),
+	)
+}
+
+func (p *pods) startTokens(ctx *actor.Context) {
+	p.resourceCreationTokens, _ = ctx.ActorOf("kubernetes-tokens", newTokens())
+}
+
 func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
 	newPodHandler := newPod(
-		p.cluster, p.clusterID, msg.TaskHandler, p.clientSet, p.namespace, p.masterIP,
-		p.masterPort, msg.Spec, msg.Slots, msg.Rank, p.podInterface,
-		p.configMapInterface, p.leaveKubernetesResources,
+		msg, p.cluster, p.clusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
+		p.podInterface, p.configMapInterface, p.resourceCreationTokens,
+		p.resourceDeleter, p.leaveKubernetesResources,
 	)
 	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s-%d", msg.Spec.TaskID, msg.Rank), newPodHandler)
 	if !ok {
@@ -332,6 +350,9 @@ func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
 	podByNode := make(map[string][]podNodeInfo)
 	for _, result := range results {
 		info := result.(podNodeInfo)
+		if len(info.nodeName) == 0 {
+			continue
+		}
 		podByNode[info.nodeName] = append(podByNode[info.nodeName], info)
 	}
 
@@ -354,7 +375,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
 		for _, podInfo := range podByNode[node.Name] {
 			for i := 0; i < podInfo.numGPUs; i++ {
 				if curSlot >= int(numSlots) {
-					ctx.Log().Errorf("too many pods mapping to node %s", node.Name)
+					ctx.Log().Warnf("too many pods mapping to node %s", node.Name)
 					continue
 				}
 

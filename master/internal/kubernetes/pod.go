@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/docker/docker/api/types/mount"
-	petname "github.com/dustinkirkland/golang-petname"
+	petName "github.com/dustinkirkland/golang-petname"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -49,14 +49,18 @@ type pod struct {
 	rank                     int
 	podInterface             typedV1.PodInterface
 	configMapInterface       typedV1.ConfigMapInterface
+	resourceCreationTokens   *actor.Ref
+	resourceDeleter          *actor.Ref
 	leaveKubernetesResources bool
 
 	pod              *k8sV1.Pod
 	podName          string
+	configMap        *k8sV1.ConfigMap
 	configMapName    string
 	container        container.Container
 	ports            []int
 	resourcesDeleted bool
+	tokenRequested   bool
 }
 
 type getPodNodeInfo struct{}
@@ -68,40 +72,41 @@ type podNodeInfo struct {
 }
 
 func newPod(
+	msg sproto.StartPod,
 	cluster *actor.Ref,
 	clusterID string,
-	taskHandler *actor.Ref,
 	clientSet *k8sClient.Clientset,
 	namespace string,
 	masterIP string,
 	masterPort int32,
-	taskSpec tasks.TaskSpec,
-	gpus int,
-	rank int,
 	podInterface typedV1.PodInterface,
 	configMapInterface typedV1.ConfigMapInterface,
+	resourceCreationTokens *actor.Ref,
+	resourceDeleter *actor.Ref,
 	leaveKubernetesResources bool,
 ) *pod {
 	podContainer := container.Container{
-		Parent: taskHandler.Address(),
-		ID:     container.ID(taskSpec.ContainerID),
+		Parent: msg.TaskHandler.Address(),
+		ID:     container.ID(msg.Spec.ContainerID),
 		State:  container.Assigned,
 	}
-	uniqueName := configureUniqueName(taskSpec, rank)
+	uniqueName := configureUniqueName(msg.Spec, msg.Rank)
 
 	return &pod{
 		cluster:                  cluster,
 		clusterID:                clusterID,
-		taskHandler:              taskHandler,
+		taskHandler:              msg.TaskHandler,
 		clientSet:                clientSet,
 		namespace:                namespace,
 		masterIP:                 masterIP,
 		masterPort:               masterPort,
-		taskSpec:                 taskSpec,
-		gpus:                     gpus,
-		rank:                     rank,
+		taskSpec:                 msg.Spec,
+		gpus:                     msg.Slots,
+		rank:                     msg.Rank,
 		podInterface:             podInterface,
 		configMapInterface:       configMapInterface,
+		resourceCreationTokens:   resourceCreationTokens,
+		resourceDeleter:          resourceDeleter,
 		leaveKubernetesResources: leaveKubernetesResources,
 		podName:                  uniqueName,
 		configMapName:            uniqueName,
@@ -114,6 +119,11 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		ctx.AddLabel("pod", p.podName)
 		if err := p.startPod(ctx); err != nil {
+			return err
+		}
+
+	case grantToken:
+		if err := p.launchPod(ctx); err != nil {
 			return err
 		}
 
@@ -130,24 +140,25 @@ func (p *pod) Receive(ctx *actor.Context) error {
 
 	case sproto.StopPod:
 		ctx.Log().Info("received request to stop pod")
-		if err := p.deleteKubernetesResources(ctx); err != nil {
+		p.deleteKubernetesResources(ctx)
+
+	case deletedKubernetesResources:
+		if err := p.receiveDeletedKubernetesResources(ctx, msg); err != nil {
 			return err
 		}
 
 	case getPodNodeInfo:
-		ctx.Respond(podNodeInfo{
-			nodeName:  p.pod.Spec.NodeName,
-			numGPUs:   p.gpus,
-			container: &p.container,
-		})
+		p.receiveGetPodNodeInfo(ctx)
 
 	case actor.PostStop:
 		defer p.finalizeTaskState(ctx)
 
+		if p.tokenRequested {
+			ctx.Tell(p.resourceCreationTokens, releaseToken{handler: ctx.Self()})
+		}
+
 		if !p.leaveKubernetesResources {
-			if err := p.deleteKubernetesResources(ctx); err != nil {
-				return err
-			}
+			p.deleteKubernetesResources(ctx)
 		}
 
 	case actor.ChildStopped:
@@ -161,16 +172,54 @@ func (p *pod) Receive(ctx *actor.Context) error {
 }
 
 func (p *pod) startPod(ctx *actor.Context) error {
+	var err error
 	switch {
 	case p.taskSpec.StartCommand != nil:
-		return p.startPodForCommand(ctx)
+		err = p.startPodForCommand(ctx)
 	case p.taskSpec.StartContainer != nil:
-		return p.startPodForTrial(ctx)
+		err = p.startPodForTrial(ctx)
 	case p.taskSpec.GCCheckpoints != nil:
-		return p.startPodForGC(ctx)
+		err = p.startPodForGC(ctx)
 	default:
 		return errors.Errorf("unexpected task spec received")
 	}
+
+	if err != nil {
+		return err
+	}
+
+	ctx.Tell(p.resourceCreationTokens, requestToken{handler: ctx.Self()})
+	p.tokenRequested = true
+	return nil
+}
+
+func (p *pod) launchPod(ctx *actor.Context) error {
+	var err error
+	p.configMap, err = p.configMapInterface.Create(p.configMap)
+	if err != nil {
+		return errors.Wrapf(err, "error creating configMap %s", p.configMapName)
+	}
+	ctx.Log().Infof("created configMap %s", p.configMap.Name)
+
+	ctx.Log().Debugf("launching pod with spec %v", p.pod)
+	p.pod, err = p.podInterface.Create(p.pod)
+	if err != nil {
+		errMsg := err.Error()
+		ctx.Tell(p.taskHandler, sproto.ContainerLog{
+			Container:   p.container,
+			Timestamp:   time.Now(),
+			PullMessage: nil,
+			RunMessage:  nil,
+			AuxMessage:  &errMsg,
+		})
+		return errors.Wrapf(err, "error creating pod %s", p.podName)
+	}
+	ctx.Log().Infof("created pod %s", p.pod.Name)
+
+	ctx.Tell(p.resourceCreationTokens, releaseToken{handler: ctx.Self()})
+	p.tokenRequested = false
+
+	return nil
 }
 
 func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) error {
@@ -305,29 +354,49 @@ func (p *pod) processMissingPodDeletion(ctx *actor.Context) {
 	ctx.Self().Stop()
 }
 
-func (p *pod) deleteKubernetesResources(ctx *actor.Context) error {
+func (p *pod) deleteKubernetesResources(ctx *actor.Context) {
+	if p.tokenRequested {
+		// If a termination request is received while waiting for a token
+		// to create a pod, it means that the pod has not been created.
+		p.resourcesDeleted = true
+		ctx.Self().Stop()
+		return
+	}
+
 	if p.resourcesDeleted {
-		return nil
+		return
 	}
 
-	ctx.Log().Infof("deleting pod")
-	var gracePeriod int64 = 15
-	err := p.podInterface.Delete(p.podName, &metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
-	if err != nil {
-		ctx.Log().WithError(err).Errorf("pod deletion failed %s", p.podName)
-	}
-
-	errDeletingConfigMap := p.configMapInterface.Delete(p.configMapName, &metaV1.DeleteOptions{
-		GracePeriodSeconds: &gracePeriod})
-
-	if errDeletingConfigMap != nil {
-		ctx.Log().WithError(errDeletingConfigMap).Errorf(
-			"config map deletion failed %s", p.configMapName)
-		err = errDeletingConfigMap
-	}
+	ctx.Log().Infof("requesting to delete kubernetes resources")
+	ctx.Tell(p.resourceDeleter, deleteKubernetesResources{
+		handler:       ctx.Self(),
+		podName:       p.podName,
+		configMapName: p.configMapName,
+	})
 
 	p.resourcesDeleted = true
-	return err
+}
+
+func (p *pod) receiveDeletedKubernetesResources(
+	ctx *actor.Context,
+	msg deletedKubernetesResources,
+) error {
+	if msg.err != nil {
+		return errors.Wrap(msg.err, "pod actor notified about error deleting kubernetes resources")
+	}
+	return nil
+}
+
+func (p *pod) receiveGetPodNodeInfo(ctx *actor.Context) {
+	nodeName := ""
+	if p.pod != nil {
+		nodeName = p.pod.Spec.NodeName
+	}
+	ctx.Respond(podNodeInfo{
+		nodeName:  nodeName,
+		numGPUs:   p.gpus,
+		container: &p.container,
+	})
 }
 
 func (p *pod) finalizeTaskState(ctx *actor.Context) {
@@ -428,16 +497,13 @@ func (p *pod) configureEnvVars(
 	return envVars, nil
 }
 
-func (p *pod) configureRunArchives(
-	ctx *actor.Context,
-	runArchives []container.RunArchive,
-) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume, error) {
+func (p *pod) configureConfigMapSpec(runArchives []container.RunArchive) (*k8sV1.ConfigMap, error) {
 	configMapData := make(map[string][]byte)
 	// Add additional files as tar.gz archive.
 	for idx, runArchive := range runArchives {
-		zippedArchive, errZip := archive.ToTarGz(runArchive.Archive)
-		if errZip != nil {
-			return nil, nil, nil, errors.Wrap(errZip, "failed to zip archive")
+		zippedArchive, err := archive.ToTarGz(runArchive.Archive)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to zip archive")
 		}
 		configMapData[fmt.Sprintf("%d.tar.gz", idx)] = zippedArchive
 	}
@@ -448,26 +514,21 @@ func (p *pod) configureRunArchives(
 
 	// Create configMap of AdditionalFiles as .tar.gz archive and the entrypoint script
 	// for the init container.
-	_, err := startConfigMap(
-		ctx,
-		createConfigMapSpec(p.configMapName, configMapData, p.namespace, p.taskSpec.TaskID),
-		p.configMapInterface,
-	)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	initContainerVolumeMounts, mainContainerVolumeMounts, volumes :=
-		configureAdditionalFilesVolumes(p.configMapName, runArchives)
-
-	return initContainerVolumeMounts, mainContainerVolumeMounts, volumes, nil
+	return &k8sV1.ConfigMap{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      p.configMapName,
+			Namespace: p.namespace,
+			Labels:    map[string]string{determinedLabel: p.taskSpec.TaskID},
+		},
+		BinaryData: configMapData,
+	}, nil
 }
 
 func (p *pod) configureVolumes(
 	ctx *actor.Context,
 	dockerMounts []mount.Mount,
 	runArchives []container.RunArchive,
-) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume, error) {
+) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume) {
 	volumeMounts := make([]k8sV1.VolumeMount, 0)
 	volumes := make([]k8sV1.Volume, 0)
 
@@ -479,15 +540,13 @@ func (p *pod) configureVolumes(
 	volumeMounts = append(volumeMounts, shmVolumeMount)
 	volumes = append(volumes, shmVolume)
 
-	initContainerVolumeMounts, mainContainerRunArchiveVolumeMounts, runArchiveVolumes, err :=
-		p.configureRunArchives(ctx, runArchives)
-	if err != nil {
-		return nil, nil, nil, err
-	}
+	initContainerVolumeMounts, mainContainerRunArchiveVolumeMounts, runArchiveVolumes :=
+		configureAdditionalFilesVolumes(p.configMapName, runArchives)
+
 	volumeMounts = append(volumeMounts, mainContainerRunArchiveVolumeMounts...)
 	volumes = append(volumes, runArchiveVolumes...)
 
-	return initContainerVolumeMounts, volumeMounts, volumes, nil
+	return initContainerVolumeMounts, volumeMounts, volumes
 }
 
 func (p *pod) configurePodSpec(
@@ -539,25 +598,6 @@ func (p *pod) configurePodSpec(
 	return podSpec
 }
 
-func (p *pod) launchPod(ctx *actor.Context, podSpec *k8sV1.Pod) error {
-	ctx.Log().Debugf("launching pod with spec %v", podSpec.Spec)
-	var err error
-	p.pod, err = p.podInterface.Create(podSpec)
-	if err != nil {
-		errMsg := err.Error()
-		ctx.Tell(p.taskHandler, sproto.ContainerLog{
-			Container:   p.container,
-			Timestamp:   time.Now(),
-			PullMessage: nil,
-			RunMessage:  nil,
-			AuxMessage:  &errMsg,
-		})
-		return errors.Wrap(err, "error creating pod")
-	}
-	ctx.Log().Infof("Created pod %s", p.pod.Name)
-	return nil
-}
-
 func (p *pod) startPodForTrial(ctx *actor.Context) error {
 	exp := *p.taskSpec.StartContainer
 
@@ -567,11 +607,8 @@ func (p *pod) startPodForTrial(ctx *actor.Context) error {
 	}
 
 	runArchives := tasks.TrialArchives(p.taskSpec)
-	initContainerVolumeMounts, volumeMounts, volumes, err := p.configureVolumes(
+	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(
 		ctx, tasks.TrialDockerMounts(exp), runArchives)
-	if err != nil {
-		return err
-	}
 
 	p.ports = []int{
 		tasks.LocalRendezvousPort, tasks.LocalRendezvousPort + tasks.LocalRendezvousPortOffset}
@@ -611,9 +648,15 @@ func (p *pod) startPodForTrial(ctx *actor.Context) error {
 		},
 	}
 
-	podSpec := p.configurePodSpec(
+	p.pod = p.configurePodSpec(
 		ctx, volumes, initContainers, containers, exp.ExperimentConfig.Environment.PodSpec)
-	return p.launchPod(ctx, podSpec)
+
+	p.configMap, err = p.configureConfigMapSpec(runArchives)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p *pod) startPodForCommand(ctx *actor.Context) error {
@@ -625,11 +668,8 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 	}
 
 	runArchives := tasks.CommandArchives(p.taskSpec)
-	initContainerVolumeMounts, volumeMounts, volumes, err := p.configureVolumes(
+	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(
 		ctx, tasks.ToDockerMounts(cmd.Config.BindMounts), runArchives)
-	if err != nil {
-		return err
-	}
 
 	for _, port := range cmd.Config.Environment.Ports {
 		p.ports = append(p.ports, port)
@@ -667,9 +707,15 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 		},
 	}
 
-	podSpec := p.configurePodSpec(
+	p.pod = p.configurePodSpec(
 		ctx, volumes, initContainers, containers, cmd.Config.Environment.PodSpec)
-	return p.launchPod(ctx, podSpec)
+
+	p.configMap, err = p.configureConfigMapSpec(runArchives)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (p *pod) startPodForGC(ctx *actor.Context) error {
@@ -681,11 +727,8 @@ func (p *pod) startPodForGC(ctx *actor.Context) error {
 	}
 
 	runArchives := tasks.GCArchives(p.taskSpec)
-	initContainerVolumeMounts, volumeMounts, volumes, err := p.configureVolumes(
+	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(
 		ctx, tasks.GCDockerMounts(gcc), runArchives)
-	if err != nil {
-		return err
-	}
 
 	envVars, err := p.configureEnvVars(
 		tasks.GCEnvVars(),
@@ -719,13 +762,19 @@ func (p *pod) startPodForGC(ctx *actor.Context) error {
 		},
 	}
 
-	podSpec := p.configurePodSpec(
+	p.pod = p.configurePodSpec(
 		ctx, volumes, initContainers, containers, gcc.ExperimentConfig.Environment.PodSpec)
-	return p.launchPod(ctx, podSpec)
+
+	p.configMap, err = p.configureConfigMapSpec(runArchives)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func configureUniqueName(t tasks.TaskSpec, rank int) string {
-	uniqueName := petname.Generate(2, "-")
+	uniqueName := petName.Generate(2, "-")
 	switch {
 	case t.StartCommand != nil:
 		return fmt.Sprintf("cmd-%s-%s", t.TaskID, uniqueName)
