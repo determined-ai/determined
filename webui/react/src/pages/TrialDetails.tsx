@@ -1,6 +1,6 @@
-import { Breadcrumb, Space } from 'antd';
+import { Breadcrumb, Col, Row, Space } from 'antd';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
 import CreateExperimentModal from 'components/CreateExperimentModal';
@@ -19,7 +19,11 @@ import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api'
 import { TrialDetailsParams } from 'services/types';
 import { ExperimentDetails, TrialDetails } from 'types';
 import { clone } from 'utils/data';
+import { extractMetricNames } from 'utils/trial';
 import { trialHParamsToExperimentHParams } from 'utils/types';
+
+import css from './TrialDetails.module.scss';
+import TrialChart from './TrialDetails/TrialChart';
 
 interface Params {
   trialId: string;
@@ -32,6 +36,8 @@ const TrialDetailsComp: React.FC = () => {
     useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
   const [ contModalVisible, setContModalVisible ] = useState(false);
   const [ contModalConfig, setContModalConfig ] = useState('Loading');
+
+  const metricNames = useMemo(() => extractMetricNames(trial.data?.steps), [ trial.data?.steps ]);
 
   const pollTrialDetails = useCallback(
     () => triggerTrialRequest({ id: trialId }),
@@ -132,11 +138,22 @@ const TrialDetailsComp: React.FC = () => {
       <TrialActions trial={trial.data}
         onClick={handleActionClick}
         onSettled={pollTrialDetails} />
-      <Section bodyBorder title="Info Box">
-        <TrialInfoBox experiment={experiment} trial={trial.data} />
-      </Section>
-      <Section title="Chart" />
-      <Section title="Steps" />
+      <Row className={css.topRow} gutter={[ 16, 16 ]}>
+        <Col lg={10} span={24} xl={8} xxl={6}>
+          <TrialInfoBox experiment={experiment} trial={trial.data} />
+        </Col>
+        <Col lg={14} span={24} xl={16} xxl={18}>
+          <TrialChart
+            metricNames={metricNames}
+            steps={trial.data?.steps}
+            validationMetric={experiment.config?.searcher.metric} />
+        </Col>
+        <Col span={24}>
+          <Section title="Trial Information">
+            {/* Table */}
+          </Section>
+        </Col>
+      </Row>
       <CreateExperimentModal
         config={contModalConfig}
         okText="Create"
