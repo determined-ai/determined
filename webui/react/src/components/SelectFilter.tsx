@@ -7,8 +7,11 @@ import Label from './Label';
 import css from './SelectFilter.module.scss';
 
 interface Props {
+  defaultValue?: SelectValue;
   enableSearchFilter?: boolean;
   label: string;
+  mode?: 'multiple' | 'tags';
+  onDeselect?: (value: SelectValue) => void;
   onSelect?: (value: SelectValue) => void;
   placeholder?: string | React.ReactNode;
   showSearch?: boolean;
@@ -43,13 +46,16 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = (props: PropsWithChildr
     <div className={css.base}>
       <Label>{props.label}</Label>
       <Select
-        defaultValue={props.value}
+        defaultValue={props.defaultValue}
         dropdownMatchSelectWidth={false}
         filterOption={props.enableSearchFilter ? handleFilter : true}
+        mode={props.mode}
         placeholder={props.placeholder}
         showSearch={props.showSearch}
         style={props.style}
         suffixIcon={<Icon name="arrow-down" size="tiny" />}
+        value={props.value}
+        onDeselect={props.onDeselect}
         onSelect={props.onSelect}>
         {props.children}
       </Select>
