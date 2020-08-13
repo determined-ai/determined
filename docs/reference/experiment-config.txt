@@ -61,6 +61,13 @@ Top-Level Fields
   computed more frequently than specified by this parameter, depending on the
   hyperparameter search method being used by the experiment.
 
+.. _experiment-config-perform-initial-validation:
+
+``perform_initial_validation``
+  Instructs Determined to perform an initial validation before any training
+  begins, for each trial. This can be useful to determine a baseline when
+  fine-tuning a model on a new dataset.
+
 .. _experiment-config-min-checkpoint-period:
 
 ``min_checkpoint_period``

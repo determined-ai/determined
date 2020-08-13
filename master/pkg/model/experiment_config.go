@@ -13,29 +13,30 @@ import (
 
 // ExperimentConfig is the defaulted configuration.
 type ExperimentConfig struct {
-	Description         string                    `json:"description"`
-	Labels              Labels                    `json:"labels,omitempty"`
-	Data                map[string]interface{}    `json:"data,omitempty"`
-	CheckpointStorage   CheckpointStorageConfig   `json:"checkpoint_storage"`
-	TensorboardStorage  *TensorboardStorageConfig `json:"tensorboard_storage,omitempty"`
-	MinCheckpointPeriod Length                    `json:"min_checkpoint_period"`
-	MinValidationPeriod Length                    `json:"min_validation_period"`
-	CheckpointPolicy    string                    `json:"checkpoint_policy"`
-	Hyperparameters     Hyperparameters           `json:"hyperparameters"`
-	Searcher            SearcherConfig            `json:"searcher"`
-	Resources           ResourcesConfig           `json:"resources"`
-	Optimizations       OptimizationsConfig       `json:"optimizations"`
-	RecordsPerEpoch     int                       `json:"records_per_epoch"`
-	SchedulingUnit      int                       `json:"scheduling_unit"`
-	BindMounts          []BindMount               `json:"bind_mounts,omitempty"`
-	Environment         Environment               `json:"environment"`
-	Reproducibility     ReproducibilityConfig     `json:"reproducibility"`
-	MaxRestarts         int                       `json:"max_restarts"`
-	Security            *SecurityConfig           `json:"security,omitempty"`
-	Debug               bool                      `json:"debug"`
-	Internal            *InternalConfig           `json:"internal"`
-	Entrypoint          string                    `json:"entrypoint"`
-	DataLayer           DataLayerConfig           `json:"data_layer"`
+	Description              string                    `json:"description"`
+	Labels                   Labels                    `json:"labels,omitempty"`
+	Data                     map[string]interface{}    `json:"data,omitempty"`
+	CheckpointStorage        CheckpointStorageConfig   `json:"checkpoint_storage"`
+	TensorboardStorage       *TensorboardStorageConfig `json:"tensorboard_storage,omitempty"`
+	PerformInitialValidation bool                      `json:"perform_initial_validation"`
+	MinCheckpointPeriod      Length                    `json:"min_checkpoint_period"`
+	MinValidationPeriod      Length                    `json:"min_validation_period"`
+	CheckpointPolicy         string                    `json:"checkpoint_policy"`
+	Hyperparameters          Hyperparameters           `json:"hyperparameters"`
+	Searcher                 SearcherConfig            `json:"searcher"`
+	Resources                ResourcesConfig           `json:"resources"`
+	Optimizations            OptimizationsConfig       `json:"optimizations"`
+	RecordsPerEpoch          int                       `json:"records_per_epoch"`
+	SchedulingUnit           int                       `json:"scheduling_unit"`
+	BindMounts               []BindMount               `json:"bind_mounts,omitempty"`
+	Environment              Environment               `json:"environment"`
+	Reproducibility          ReproducibilityConfig     `json:"reproducibility"`
+	MaxRestarts              int                       `json:"max_restarts"`
+	Security                 *SecurityConfig           `json:"security,omitempty"`
+	Debug                    bool                      `json:"debug"`
+	Internal                 *InternalConfig           `json:"internal"`
+	Entrypoint               string                    `json:"entrypoint"`
+	DataLayer                DataLayerConfig           `json:"data_layer"`
 }
 
 // Validate implements the check.Validatable interface.

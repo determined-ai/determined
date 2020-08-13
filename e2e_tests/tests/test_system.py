@@ -467,10 +467,12 @@ def test_pytorch_parallel() -> None:
     config = conf.set_native_parallel(config, False)
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_tensor_auto_tuning(config, True)
+    config = conf.set_perform_initial_validation(config, True)
 
-    exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/mnist_pytorch"), 1
+    exp_id = exp.run_basic_test_with_temp_config(
+        config, conf.official_examples_path("trial/mnist_pytorch"), 1, has_zeroth_step=True
     )
+    exp.assert_performed_initial_validation(exp_id)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -481,3 +483,14 @@ def test_fail_on_first_validation() -> None:
     exp.run_failure_test_with_temp_config(
         config_obj, conf.fixtures_path("no_op"), error_log,
     )
+
+
+@pytest.mark.e2e_cpu  # type: ignore
+def test_perform_initial_validation() -> None:
+    config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
+    config = conf.set_max_length(config, {"batches": 1})
+    config = conf.set_perform_initial_validation(config, True)
+    exp_id = exp.run_basic_test_with_temp_config(
+        config, conf.fixtures_path("no_op"), 1, has_zeroth_step=True
+    )
+    exp.assert_performed_initial_validation(exp_id)

@@ -270,6 +270,20 @@ def assert_equivalent_trials(A: int, B: int, validation_metrics: List[str]) -> N
                 assert val1 == pytest.approx(val2)
 
 
+def assert_performed_initial_validation(exp_id: int) -> None:
+    trials = experiment_trials(exp_id)
+
+    assert len(trials) > 0
+    steps = trials[0]["steps"]
+
+    assert len(steps) > 0
+    zeroth_step = steps[0]
+
+    assert zeroth_step["id"] == 0
+    assert zeroth_step["validation"] is not None
+    assert zeroth_step["validation"]["state"] == "COMPLETED"
+
+
 def run_describe_cli_tests(experiment_id: int) -> None:
     """
     Runs `det experiment describe` CLI command on a finished
@@ -381,18 +395,19 @@ def run_basic_test(
     expected_trials: Optional[int],
     create_args: Optional[List[str]] = None,
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
+    has_zeroth_step: bool = False,
 ) -> int:
     experiment_id = create_experiment(config_file, model_def_file, create_args)
     wait_for_experiment_state(experiment_id, "COMPLETED", max_wait_secs=max_wait_secs)
     assert num_active_trials(experiment_id) == 0
 
-    verify_completed_experiment_metadata(experiment_id, expected_trials)
+    verify_completed_experiment_metadata(experiment_id, expected_trials, has_zeroth_step)
 
     return experiment_id
 
 
 def verify_completed_experiment_metadata(
-    experiment_id: int, num_expected_trials: Optional[int]
+    experiment_id: int, num_expected_trials: Optional[int], has_zeroth_step: bool = False
 ) -> None:
     # If `expected_trials` is None, the expected number of trials is
     # non-deterministic.
@@ -412,10 +427,13 @@ def verify_completed_experiment_metadata(
         assert len(trial["steps"]) > 0
 
         # Check that steps appear in increasing order of step ID.
-        # Step IDs should start at 1 and have no gaps.
+        # Step IDs should start at 0 or 1 and have no gaps.
         step_ids = [s["id"] for s in trial["steps"]]
         assert step_ids == sorted(step_ids)
-        assert step_ids == list(range(1, len(step_ids) + 1))
+        if has_zeroth_step:
+            assert step_ids == list(range(0, len(step_ids)))
+        else:
+            assert step_ids == list(range(1, len(step_ids) + 1))
 
         for step in trial["steps"]:
             assert step["state"] == "COMPLETED"
@@ -545,12 +563,18 @@ def run_basic_test_with_temp_config(
     expected_trials: Optional[int],
     create_args: Optional[List[str]] = None,
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
+    has_zeroth_step: bool = False,
 ) -> int:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             yaml.dump(config, f)
         experiment_id = run_basic_test(
-            tf.name, model_def_path, expected_trials, create_args, max_wait_secs=max_wait_secs
+            tf.name,
+            model_def_path,
+            expected_trials,
+            create_args,
+            max_wait_secs=max_wait_secs,
+            has_zeroth_step=has_zeroth_step,
         )
     return experiment_id
 
