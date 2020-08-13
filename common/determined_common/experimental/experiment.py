@@ -80,7 +80,7 @@ class ExperimentReference:
         checkpoints = r.json()["checkpoints"]
 
         if not checkpoints:
-            raise AssertionError("No checkpoint found for trial {}".format(self.id))
+            raise AssertionError("No checkpoint found for experiment {}".format(self.id))
 
         if not sort_by:
             sort_by = checkpoints[0]["experimentConfig"]["searcher"]["metric"]
