@@ -1,18 +1,11 @@
-from typing import Any, Dict, List, Optional
+from typing import Dict
 
 import pytest
 from tensorflow.python.training.tracking.tracking import AutoTrackable
 
 from determined.experimental import Determined
-from tests import cluster
 from tests import config as conf
 from tests import experiment as exp
-
-# The loss and gradient update for this model is deterministic and can
-# be computed by hand if you are patient enough. See
-#   tests/fixtures/estimator_dataset/model.py
-# for how these values were computed.
-DATASET_EXPERIMENT_EXPECTED_LOSSES = [14, 4536, 50648544, 3364532256768]
 
 
 @pytest.mark.e2e_gpu  # type: ignore
@@ -83,66 +76,6 @@ def test_mnist_estimator_warm_start(tf2: bool) -> None:
     trials = exp.experiment_trials(experiment_id2)
     assert len(trials) == 1
     assert trials[0]["warm_start_checkpoint_id"] == first_checkpoint_id
-
-
-def run_dataset_experiment(
-    searcher_max_length: Dict[str, int],
-    scheduling_unit: int,
-    secrets: Dict[str, str],
-    tf2: bool,
-    slots_per_trial: int = 1,
-    source_trial_id: Optional[str] = None,
-) -> List[Dict[str, Any]]:
-    config = conf.load_config(conf.fixtures_path("estimator_dataset/const.yaml"))
-    config.setdefault("searcher", {})
-    config["searcher"]["max_length"] = searcher_max_length
-    config["scheduling_unit"] = scheduling_unit
-    config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
-
-    if source_trial_id is not None:
-        config["searcher"]["source_trial_id"] = source_trial_id
-
-    config.setdefault("resources", {})
-    config["resources"]["slots_per_trial"] = slots_per_trial
-
-    if cluster.num_agents() > 1:
-        config["checkpoint_storage"] = exp.s3_checkpoint_config(secrets)
-
-    experiment_id = exp.run_basic_test_with_temp_config(
-        config, conf.fixtures_path("estimator_dataset"), 1
-    )
-    return exp.experiment_trials(experiment_id)
-
-
-@pytest.mark.e2e_gpu  # type: ignore
-@pytest.mark.parametrize("tf2", [False])  # type: ignore
-def test_dataset_restore(secrets: Dict[str, str], tf2: bool) -> None:
-    for searcher_max_batches, scheduling_unit in [(4, 1), (4, 2), (4, 4)]:
-        trials = run_dataset_experiment(
-            {"batches": searcher_max_batches}, scheduling_unit, secrets, tf2
-        )
-        losses = exp.get_flat_metrics(trials[0]["id"], "loss")
-        assert losses == DATASET_EXPERIMENT_EXPECTED_LOSSES
-
-    trials = run_dataset_experiment({"batches": 1}, 1, secrets, tf2)
-    next_trials = run_dataset_experiment(
-        {"batches": 3}, 1, secrets, tf2, source_trial_id=trials[0]["id"]
-    )
-    losses = exp.get_flat_metrics(trials[0]["id"], "loss") + exp.get_flat_metrics(
-        next_trials[0]["id"], "loss"
-    )
-
-    # TODO(DET-834): Separate step ID from from data loader state.
-    #
-    # To match the behavior of other Trials, when we warm start, reset the
-    # data loader state. Thus, we expect warm started trials to behave
-    # differently from non-warm started ones.
-    #
-    # Below are the adjusted losses for the dataset experiment if we start from
-    # the beginning of the dataset after warm starting.
-    modified_losses = [14, 504, 163296, 1823347456]
-    assert modified_losses != DATASET_EXPERIMENT_EXPECTED_LOSSES
-    assert losses == modified_losses
 
 
 @pytest.mark.parametrize(  # type: ignore
