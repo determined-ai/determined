@@ -6,7 +6,7 @@ from typing import Iterator, Optional
 
 import boto3
 
-import determined_common.util as util
+from determined_common import util
 from determined_common.storage.base import StorageManager, StorageMetadata
 
 
@@ -53,6 +53,7 @@ class S3StorageManager(StorageManager):
         finally:
             self._remove_checkpoint_directory(metadata.storage_id)
 
+    @util.preserve_random_state
     def upload(self, metadata: StorageMetadata, storage_dir: str) -> None:
         for rel_path in metadata.resources.keys():
             key_name = "{}/{}".format(metadata.storage_id, rel_path)
@@ -67,6 +68,7 @@ class S3StorageManager(StorageManager):
                 abs_path = os.path.join(storage_dir, rel_path)
                 self.client.upload_file(abs_path, self.bucket, key_name)
 
+    @util.preserve_random_state
     def download(self, metadata: StorageMetadata, storage_dir: str) -> None:
         for rel_path in metadata.resources.keys():
             abs_path = os.path.join(storage_dir, rel_path)
@@ -84,6 +86,7 @@ class S3StorageManager(StorageManager):
 
             self.client.download_file(self.bucket, key_name, abs_path)
 
+    @util.preserve_random_state
     def delete(self, metadata: StorageMetadata) -> None:
         logging.info("Deleting checkpoint {} from S3".format(metadata.storage_id))
 

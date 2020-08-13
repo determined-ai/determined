@@ -4,6 +4,7 @@ from typing import Any
 from google.cloud import storage
 
 from determined.tensorboard import base
+from determined_common import util
 
 
 class GCSTensorboardManager(base.TensorboardManager):
@@ -22,6 +23,7 @@ class GCSTensorboardManager(base.TensorboardManager):
         self.client = storage.Client()
         self.bucket = self.client.bucket(bucket)
 
+    @util.preserve_random_state
     def sync(self) -> None:
         for path in self.to_sync():
             blob_name = str(self.sync_path.joinpath(path.name))

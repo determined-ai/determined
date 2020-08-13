@@ -13,9 +13,10 @@ import numpy as np
 import simplejson
 
 import determined as det
-from determined_common import check
+from determined_common import check, util
 
 
+@util.preserve_random_state
 def download_gcs_blob_with_backoff(blob: Any, n_retries: int = 32, max_backoff: int = 32) -> Any:
     for n in range(n_retries):
         try:
