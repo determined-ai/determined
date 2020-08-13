@@ -270,6 +270,20 @@ def assert_equivalent_trials(A: int, B: int, validation_metrics: List[str]) -> N
                 assert val1 == pytest.approx(val2)
 
 
+def assert_performed_initial_validation(exp_id: int) -> None:
+    trials = experiment_trials(exp_id)
+
+    assert len(trials) > 0
+    steps = trials[0]["steps"]
+
+    assert len(steps) > 0
+    zeroth_step = steps[0]
+
+    assert zeroth_step["id"] == 0
+    assert zeroth_step["validation"] is not None
+    assert zeroth_step["validation"]["state"] == "COMPLETED"
+
+
 def run_describe_cli_tests(experiment_id: int) -> None:
     """
     Runs `det experiment describe` CLI command on a finished

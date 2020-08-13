@@ -40,10 +40,12 @@ def test_mnist_estimmator_const_parallel(native_parallel: bool, tf2: bool) -> No
     config = conf.set_native_parallel(config, native_parallel)
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_tf2_image(config) if tf2 else conf.set_tf1_image(config)
+    config = conf.set_perform_initial_validation(config, True)
 
-    exp.run_basic_test_with_temp_config(
+    exp_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("trial/mnist_estimator"), 1
     )
+    exp.assert_performed_initial_validation(exp_id)
 
 
 @pytest.mark.parametrize(  # type: ignore

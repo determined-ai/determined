@@ -467,10 +467,12 @@ def test_pytorch_parallel() -> None:
     config = conf.set_native_parallel(config, False)
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_tensor_auto_tuning(config, True)
+    config = conf.set_perform_initial_validation(config, True)
 
-    exp.run_basic_test_with_temp_config(
+    exp_id = exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("trial/mnist_pytorch"), 1
     )
+    exp.assert_performed_initial_validation(exp_id)
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -490,12 +492,4 @@ def test_perform_initial_validation() -> None:
     exp_id = exp.run_basic_test_with_temp_config(
         config, conf.fixtures_path("no_op"), 1, has_zeroth_step=True
     )
-
-    trials = exp.experiment_trials(exp_id)
-    assert len(trials) == 1
-    steps = trials[0]["steps"]
-    assert len(steps) == 2
-    zeroth_step = steps[0]
-    assert zeroth_step["id"] == 0
-    assert zeroth_step["validation"] is not None
-    assert zeroth_step["validation"]["state"] == "COMPLETED"
+    exp.assert_performed_initial_validation(exp_id)
