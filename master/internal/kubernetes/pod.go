@@ -52,8 +52,8 @@ type pod struct {
 	leaveKubernetesResources bool
 
 	pod              *k8sV1.Pod
-	configMaps       []*k8sV1.ConfigMap
 	podName          string
+	configMapName    string
 	container        container.Container
 	ports            []int
 	resourcesDeleted bool
@@ -87,6 +87,7 @@ func newPod(
 		ID:     container.ID(taskSpec.ContainerID),
 		State:  container.Assigned,
 	}
+	uniqueName := configureUniqueName(taskSpec, rank)
 
 	return &pod{
 		cluster:                  cluster,
@@ -102,7 +103,8 @@ func newPod(
 		podInterface:             podInterface,
 		configMapInterface:       configMapInterface,
 		leaveKubernetesResources: leaveKubernetesResources,
-		podName:                  configurePodName(taskSpec, rank),
+		podName:                  uniqueName,
+		configMapName:            uniqueName,
 		container:                podContainer,
 	}
 }
@@ -315,14 +317,13 @@ func (p *pod) deleteKubernetesResources(ctx *actor.Context) error {
 		ctx.Log().WithError(err).Errorf("pod deletion failed %s", p.podName)
 	}
 
-	for _, cf := range p.configMaps {
-		errDeletingConfigMap := p.configMapInterface.Delete(cf.Name, &metaV1.DeleteOptions{
-			GracePeriodSeconds: &gracePeriod})
+	errDeletingConfigMap := p.configMapInterface.Delete(p.configMapName, &metaV1.DeleteOptions{
+		GracePeriodSeconds: &gracePeriod})
 
-		if errDeletingConfigMap != nil {
-			ctx.Log().WithError(errDeletingConfigMap).Errorf("config map deletion failed %s", cf.Name)
-			err = errDeletingConfigMap
-		}
+	if errDeletingConfigMap != nil {
+		ctx.Log().WithError(errDeletingConfigMap).Errorf(
+			"config map deletion failed %s", p.configMapName)
+		err = errDeletingConfigMap
 	}
 
 	p.resourcesDeleted = true
@@ -447,18 +448,17 @@ func (p *pod) configureRunArchives(
 
 	// Create configMap of AdditionalFiles as .tar.gz archive and the entrypoint script
 	// for the init container.
-	configMap, err := startConfigMap(
+	_, err := startConfigMap(
 		ctx,
-		createConfigMapSpec(p.podName, configMapData, p.namespace, p.taskSpec.TaskID),
+		createConfigMapSpec(p.configMapName, configMapData, p.namespace, p.taskSpec.TaskID),
 		p.configMapInterface,
 	)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	p.configMaps = append(p.configMaps, configMap)
 
 	initContainerVolumeMounts, mainContainerVolumeMounts, volumes :=
-		configureAdditionalFilesVolumes(configMap, runArchives)
+		configureAdditionalFilesVolumes(p.configMapName, runArchives)
 
 	return initContainerVolumeMounts, mainContainerVolumeMounts, volumes, nil
 }
@@ -724,7 +724,7 @@ func (p *pod) startPodForGC(ctx *actor.Context) error {
 	return p.launchPod(ctx, podSpec)
 }
 
-func configurePodName(t tasks.TaskSpec, rank int) string {
+func configureUniqueName(t tasks.TaskSpec, rank int) string {
 	uniqueName := petname.Generate(2, "-")
 	switch {
 	case t.StartCommand != nil:

@@ -83,16 +83,16 @@ func configureShmVolume(_ int64) (k8sV1.VolumeMount, k8sV1.Volume) {
 }
 
 func createConfigMapSpec(
-	namePrefix string,
+	name string,
 	data map[string][]byte,
 	namespace string,
 	taskID string,
 ) *k8sV1.ConfigMap {
 	return &k8sV1.ConfigMap{
 		ObjectMeta: metaV1.ObjectMeta{
-			GenerateName: namePrefix,
-			Namespace:    namespace,
-			Labels:       map[string]string{determinedLabel: taskID},
+			Name:      name,
+			Namespace: namespace,
+			Labels:    map[string]string{determinedLabel: taskID},
 		},
 		BinaryData: data,
 	}
@@ -113,7 +113,7 @@ func startConfigMap(
 }
 
 func configureAdditionalFilesVolumes(
-	configMap *k8sV1.ConfigMap,
+	configMapName string,
 	runArchives []container.RunArchive,
 ) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume) {
 	initContainerVolumeMounts := make([]k8sV1.VolumeMount, 0)
@@ -129,7 +129,7 @@ func configureAdditionalFilesVolumes(
 		Name: archiveVolumeName,
 		VolumeSource: k8sV1.VolumeSource{
 			ConfigMap: &k8sV1.ConfigMapVolumeSource{
-				LocalObjectReference: k8sV1.LocalObjectReference{Name: configMap.Name},
+				LocalObjectReference: k8sV1.LocalObjectReference{Name: configMapName},
 			},
 		},
 	}
@@ -147,7 +147,7 @@ func configureAdditionalFilesVolumes(
 		Name: entryPointVolumeName,
 		VolumeSource: k8sV1.VolumeSource{
 			ConfigMap: &k8sV1.ConfigMapVolumeSource{
-				LocalObjectReference: k8sV1.LocalObjectReference{Name: configMap.Name},
+				LocalObjectReference: k8sV1.LocalObjectReference{Name: configMapName},
 				Items: []k8sV1.KeyToPath{{
 					Key:  etc.K8InitContainerEntryScriptResource,
 					Path: etc.K8InitContainerEntryScriptResource,
