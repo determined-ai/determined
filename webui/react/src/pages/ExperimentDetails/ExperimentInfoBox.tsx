@@ -80,7 +80,7 @@ const ExperimentInfoBox: React.FC<Props> = ({ experiment }: Props) => {
       label: 'Best Checkpoint',
     },
     {
-      content: config.resources.maxSlots || 'Unlimited',
+      content: config.resources.maxSlots !== undefined ? config.resources.maxSlots : undefined,
       label: 'Max Slots',
     },
     {
