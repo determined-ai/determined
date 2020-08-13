@@ -50,71 +50,12 @@ const ExperimentChart: React.FC<Props> = ({ validationMetric, ...props }: Props)
     } ];
   }, [ props.startTime, props.validationHistory ]);
 
-  const renderPlot = useCallback(async (
-    elementId: string,
-    plotData: Partial<PlotData>[],
-    plotLayout?: Partial<Plotly.Layout>,
-    plotConfig?: Partial<Plotly.Config>,
-  ) => {
-    const layout = plotLayout || defaultLayout;
-    const config = plotConfig || defaultConfig;
-    const args: PlotArguments = [ elementId, plotData, layout, config ];
-
-    if (isRendered) {
-      await Plotly.react.apply(null, args);
-    } else {
-      const chart: PlotlyHTMLElement = await Plotly.newPlot.apply(null, args);
-      chart.on('plotly_relayout', (event: PlotRelayoutEvent) => {
-        /*
-         * Preserve the zoom and pan range. When new data comes in
-         * the re-rendering of the plot will render the same zoom level.
-         */
-        setRange({
-          xaxis: [ event['xaxis.range[0]'], event['xaxis.range[1]'] ],
-          yaxis: [ event['yaxis.range[0]'], event['yaxis.range[1]'] ],
-        });
-      });
-      setIsRendered(true);
-    }
-  }, [ isRendered ]);
-
-  useEffect(() => {
-    const layout = clone(defaultLayout);
-    layout.yaxis.type = scale;
-
-    if (range.xaxis[0] != null && range.xaxis[1] != null &&
-        range.yaxis[0] != null && range.yaxis[1] != null) {
-      layout.xaxis.range = range.xaxis;
-      layout.yaxis.range = range.yaxis;
-    }
-
-    renderPlot(id, data, layout);
-  }, [ id, data, renderPlot, range, scale ]);
-
-  const handleSelect = useCallback((newValue: SelectValue) => {
-    setScale(newValue as Scale);
-  }, []);
-
-  const chartOptions = (
-    <SelectFilter
-      enableSearchFilter={false}
-      label="Scale"
-      showSearch={false}
-      value={scale}
-      onSelect={handleSelect}>
-      {Object.values(Scale).map(scale => (
-        <Option key={scale} value={scale}>{capitalize(scale)}</Option>
-      ))}
-    </SelectFilter>
-  );
-
-  return (
-    <Section bodyBorder maxHeight options={chartOptions} title={title}>
-      <div className={css.base}>
-        <div id={id} />
-      </div>
-    </Section>
-  );
+  return <MetricChart
+    data={data}
+    id={props.id}
+    title={title}
+    xLabel="Time Elapsed (sec)"
+    yLabel="Metric Value" />;
 };
 
 export default ExperimentChart;

@@ -4,6 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
 import InfoBox from 'components/InfoBox';
+import Section from 'components/Section';
 import { Checkpoint, CheckpointState, ExperimentDetails, RunState, TrialDetails,
   ValidationMetrics } from 'types';
 import { formatDatetime } from 'utils/date';
@@ -123,7 +124,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   ];
 
   return (
-    <div className={css.base}>
+    <Section bodyBorder maxHeight title="Info Box">
       <InfoBox rows={infoRows} />
       <Modal
         bodyStyle={{ padding: 0 }}
@@ -134,7 +135,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         onOk={handleHideHParams}>
         {hyperparamsView(trial.hparams)}
       </Modal>
-    </div>
+    </Section>
   );
 };
 

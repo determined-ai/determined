@@ -126,7 +126,7 @@ const MetricChart: React.FC<Props> = (props: Props) => {
   );
 
   return (
-    <Section maxHeight options={chartOptions} title={props.title}>
+    <Section bodyBorder maxHeight options={chartOptions} title={props.title}>
       <div className={css.base}>
         <div id={id} />
       </div>
