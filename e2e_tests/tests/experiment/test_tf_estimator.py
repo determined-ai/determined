@@ -43,7 +43,7 @@ def test_mnist_estimmator_const_parallel(native_parallel: bool, tf2: bool) -> No
     config = conf.set_perform_initial_validation(config, True)
 
     exp_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/mnist_estimator"), 1
+        config, conf.official_examples_path("trial/mnist_estimator"), 1, has_zeroth_step=True
     )
     exp.assert_performed_initial_validation(exp_id)
 

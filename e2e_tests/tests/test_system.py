@@ -470,7 +470,7 @@ def test_pytorch_parallel() -> None:
     config = conf.set_perform_initial_validation(config, True)
 
     exp_id = exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/mnist_pytorch"), 1
+        config, conf.official_examples_path("trial/mnist_pytorch"), 1, has_zeroth_step=True
     )
     exp.assert_performed_initial_validation(exp_id)
 
