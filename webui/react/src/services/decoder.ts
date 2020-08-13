@@ -193,17 +193,20 @@ const ioToValidationMetrics = (io: ioTypeValidationMetrics): ValidationMetrics =
 
 const ioToStep = (io: ioTypeStep): Step => {
   return {
+    avgMetrics: io.avg_metrics || undefined,
     checkpoint: io.checkpoint ? ioToCheckpoint(io.checkpoint) : undefined,
     endTime: io.end_time || undefined,
     id: io.id,
+    numBatches: io.num_batches || 0,
+    priorBatchesProcessed: io.prior_batches_processed || 0,
     startTime: io.start_time,
     state: io.state as RunState,
     trialId: io.trial_id,
     validation: !io.validation ? undefined : {
       endTime: io.validation.end_time || undefined,
       id: io.validation.id,
-      metrics: io.validation.metrics === null ? undefined :
-        ioToValidationMetrics(io.validation.metrics),
+      metrics: io.validation.metrics != null ?
+        ioToValidationMetrics(io.validation.metrics) : undefined,
       startTime: io.validation.start_time,
       state: io.validation.state as RunState,
       stepId: io.validation.step_id,

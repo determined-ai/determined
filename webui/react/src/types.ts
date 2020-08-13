@@ -218,6 +218,11 @@ export enum CheckpointState {
   Deleted = 'DELETED',
 }
 
+export interface MetricNames {
+  training: string[];
+  validation: string[];
+}
+
 interface StepBase {
   id: number;
   trialId: number;
@@ -240,8 +245,11 @@ export interface Validation extends StepBase, StartEndTimes {
 }
 
 export interface Step extends StepBase, StartEndTimes {
-  state: RunState;
+  avgMetrics?: Record<string, number>;
   checkpoint?: Checkpoint;
+  numBatches: number;
+  priorBatchesProcessed: number;
+  state: RunState;
   validation?: Validation;
 }
 
