@@ -40,6 +40,7 @@ func newInformer(
 	}
 }
 
+// Receive implements the actor interface.
 func (i *informer) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
@@ -69,6 +70,10 @@ func (i *informer) startInformer(ctx *actor.Context) error {
 	ctx.Log().Info("pod informer is starting")
 	for event := range watch.ResultChan() {
 		pod := event.Object.(*k8sV1.Pod)
+		if pod.Namespace != i.namespace {
+			continue
+		}
+
 		ctx.Log().Debugf("informer got new pod event for pod: %s %s", pod.Name, pod.Status.Phase)
 		ctx.Tell(i.podsHandler, podStatusUpdate{updatedPod: pod})
 	}
