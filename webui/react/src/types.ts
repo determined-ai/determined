@@ -223,30 +223,28 @@ export interface MetricNames {
   validation: string[];
 }
 
-interface StepBase {
-  id: number;
-  trialId: number;
-}
-
 // Checkpoint sub step.
-export interface Checkpoint extends StepBase, StartEndTimes {
+export interface Checkpoint extends StartEndTimes {
+  id: number;
   resources: Record<string, number>;
   state: CheckpointState;
   stepId: number;
+  trialId: number;
   uuid? : string;
   validationMetric? : number;
 }
 
 // Validation sub step.
-export interface Validation extends StepBase, StartEndTimes {
+export interface Validation extends StartEndTimes {
+  id: number;
   state: RunState;
-  stepId: number;
   metrics?: ValidationMetrics;
 }
 
-export interface Step extends StepBase, StartEndTimes {
+export interface Step extends StartEndTimes {
   avgMetrics?: Record<string, number>;
   checkpoint?: Checkpoint;
+  id: number;
   numBatches: number;
   priorBatchesProcessed: number;
   state: RunState;
