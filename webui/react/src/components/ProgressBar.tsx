@@ -1,7 +1,7 @@
 import { Tooltip } from 'antd';
 import React from 'react';
 
-import { getStateColor } from 'themes';
+import { getStateColorCssVar } from 'themes';
 import { CommandState, RunState } from 'types';
 import { floatToPercent } from 'utils/string';
 
@@ -20,7 +20,7 @@ const defaultProps = {
 const ProgressBar: React.FC<Props> = ({ barOnly, percent, state }: Props) => {
   const classes = [ css.base ];
   const style = {
-    backgroundColor: getStateColor(state),
+    backgroundColor: getStateColorCssVar(state),
     width: `${percent}%`,
   };
 

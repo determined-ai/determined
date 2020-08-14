@@ -1,6 +1,6 @@
 import React, { CSSProperties, PropsWithChildren } from 'react';
 
-import { getStateColor } from 'themes';
+import { getStateColorCssVar } from 'themes';
 import { CommandState, RunState } from 'types';
 import { stateToLabel } from 'utils/types';
 
@@ -28,7 +28,7 @@ const Badge: React.FC<Props> = ({ state, type, children }: PropsWithChildren<Pro
 
   if (type === BadgeType.State) {
     classes.push(css.state);
-    style.backgroundColor = getStateColor(state);
+    style.backgroundColor = getStateColorCssVar(state);
   } else if (type === BadgeType.Id) {
     classes.push(css.id);
   }

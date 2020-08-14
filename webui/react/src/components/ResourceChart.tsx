@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 
-import { getStateColor, lightTheme } from 'themes';
+import { getStateColorCssVar, lightTheme } from 'themes';
 import { CommandState, CommonProps, Resource, ResourceState } from 'types';
 import { clone } from 'utils/data';
 // The react-plotly import needs to come after Plotly import
