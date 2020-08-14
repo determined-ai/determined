@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 
+	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -30,6 +31,7 @@ import (
 type podMetadata struct {
 	podName     string
 	containerID string
+	latestPod   *k8sV1.Pod
 }
 
 type pods struct {
@@ -49,7 +51,7 @@ type pods struct {
 	resourceDeleter         *actor.Ref
 	podNameToPodHandler     map[string]*actor.Ref
 	containerIDToPodHandler map[string]*actor.Ref
-	podHandlerToMetadata    map[*actor.Ref]podMetadata
+	podHandlerToMetadata    map[*actor.Ref]*podMetadata
 
 	podInterface       typedV1.PodInterface
 	configMapInterface typedV1.ConfigMapInterface
@@ -72,7 +74,7 @@ func Initialize(
 		masterServiceName:        masterServiceName,
 		podNameToPodHandler:      make(map[string]*actor.Ref),
 		containerIDToPodHandler:  make(map[string]*actor.Ref),
-		podHandlerToMetadata:     make(map[*actor.Ref]podMetadata),
+		podHandlerToMetadata:     make(map[*actor.Ref]*podMetadata),
 		leaveKubernetesResources: leaveKubernetesResources,
 	})
 	check.Panic(check.True(ok, "pods address already taken"))
@@ -256,7 +258,7 @@ func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
 
 	p.podNameToPodHandler[newPodHandler.podName] = ref
 	p.containerIDToPodHandler[msg.Spec.ContainerID] = ref
-	p.podHandlerToMetadata[ref] = podMetadata{
+	p.podHandlerToMetadata[ref] = &podMetadata{
 		podName:     newPodHandler.podName,
 		containerID: msg.Spec.ContainerID,
 	}
@@ -272,6 +274,7 @@ func (p *pods) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) {
 		return
 	}
 
+	p.podHandlerToMetadata[ref].latestPod = msg.updatedPod
 	ctx.Tell(ref, msg)
 }
 
@@ -342,6 +345,14 @@ func (p *pods) handleGetAgentsRequest(ctx *actor.Context) {
 func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
 	podHandlers := make([]*actor.Ref, 0, len(p.podNameToPodHandler))
 	for _, podHandler := range p.podNameToPodHandler {
+		// Skip pod actors that have not yet received a pod update
+		// because it means the pod is in an Assigned state and it
+		// may be blocked by creating Kubernetes resources and be slow
+		// to respond.
+		if p.podHandlerToMetadata[podHandler].latestPod == nil {
+			continue
+		}
+
 		podHandlers = append(podHandlers, podHandler)
 	}
 	results := ctx.AskAll(getPodNodeInfo{}, podHandlers...).GetAll()
