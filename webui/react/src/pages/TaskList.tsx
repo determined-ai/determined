@@ -304,6 +304,7 @@ const TaskList: React.FC = () => {
           columns={columns}
           dataSource={filteredTasks}
           loading={!hasLoaded}
+          pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
           rowClassName={record => defaultRowClassName(canBeOpened(record))}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
