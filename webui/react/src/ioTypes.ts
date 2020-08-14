@@ -154,14 +154,9 @@ const startEndTimeDef = {
   start_time: io.string,
 };
 
-const baseStepDef = {
+export const ioCheckpoint = io.type({
   ...startEndTimeDef,
   id: io.number,
-  trial_id: io.number,
-};
-
-export const ioCheckpoint = io.type({
-  ...baseStepDef,
   resources: io.record(io.string, io.number),
   state: checkpointStatesIoType,
   step_id: io.number,
@@ -172,17 +167,18 @@ export const ioCheckpoint = io.type({
 export type ioTypeCheckpoint = io.TypeOf<typeof ioCheckpoint>;
 
 export const ioValidation = io.type({
-  ...baseStepDef,
+  ...startEndTimeDef,
+  id: io.number,
   metrics: io.union([ ioValidationMetrics, ioNullOrUndefined ]),
   state: runStatesIoType,
-  step_id: io.number,
 });
 export type ioTypeValidation = io.TypeOf<typeof ioValidation>;
 
 export const ioStep = io.type({
-  ...baseStepDef,
+  ...startEndTimeDef,
   avg_metrics: io.union([ io.record(io.string, io.number), ioNullOrUndefined ]),
   checkpoint: io.union([ ioCheckpoint, ioNullOrUndefined ]),
+  id: io.number,
   num_batches: io.union([ io.number, ioNullOrUndefined ]),
   prior_batches_processed: io.union([ io.number, ioNullOrUndefined ]),
   state: runStatesIoType,

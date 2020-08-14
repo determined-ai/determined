@@ -201,7 +201,6 @@ const ioToStep = (io: ioTypeStep): Step => {
     priorBatchesProcessed: io.prior_batches_processed || 0,
     startTime: io.start_time,
     state: io.state as RunState,
-    trialId: io.trial_id,
     validation: !io.validation ? undefined : {
       endTime: io.validation.end_time || undefined,
       id: io.validation.id,
@@ -209,8 +208,6 @@ const ioToStep = (io: ioTypeStep): Step => {
         ioToValidationMetrics(io.validation.metrics) : undefined,
       startTime: io.validation.start_time,
       state: io.validation.state as RunState,
-      stepId: io.validation.step_id,
-      trialId: io.trial_id,
     },
   };
 
