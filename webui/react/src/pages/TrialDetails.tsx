@@ -26,7 +26,7 @@ import { forkExperiment } from 'services/api';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { TrialDetailsParams } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, RawJson, Step, TrialDetails } from 'types';
-import { alphanumericSorter, clone, metricNameSorter } from 'utils/data';
+import { clone, metricNameSorter } from 'utils/data';
 import { extractMetricNames, extractMetricValue } from 'utils/trial';
 import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
 
@@ -129,7 +129,12 @@ const TrialDetailsComp: React.FC = () => {
       });
     });
 
-    newColumns.push({ fixed: 'right', render: checkpointRenderer, title: 'Checkpoint', width: 100 });
+    newColumns.push({
+      fixed: 'right',
+      render: checkpointRenderer,
+      title: 'Checkpoint',
+      width: 100,
+    });
 
     return newColumns;
   }, [ metric, trial.data?.experimentId ]);
@@ -283,10 +288,7 @@ If the problem persists please contact support.',
   useEffect(() => {
     if (experimentId === undefined) return;
     getExperimentDetails({ id:experimentId })
-      .then(experiment => {
-        setExperiment(experiment);
-        setMetric([ experiment.config.searcher.metric ]);
-      });
+      .then(experiment => setExperiment(experiment));
   }, [ experimentId ]);
 
   const handleEditContConfig = useCallback(() => {
@@ -294,6 +296,20 @@ If the problem persists please contact support.',
     setContFormVisible(false);
     setContModalVisible(true);
   }, [ updateStatesFromForm ]);
+
+  /*
+   * By default enable all metric columns for table because:
+   * 1. The metric columns as sorted by order of relevance.
+   * 2. The table supports horizontal scrolling to show additional columns.
+   */
+  useEffect(() => {
+    if (metric && metric?.length !== 0) return;
+    if (metricNames.training.length === 0 && metricNames.validation.length === 0) return;
+    setMetric([
+      ...metricNames.training,
+      ...metricNames.validation,
+    ].sort(metricNameSorter(metricNames)));
+  }, [ metric, metricNames ]);
 
   if (isNaN(trialId)) {
     return (
