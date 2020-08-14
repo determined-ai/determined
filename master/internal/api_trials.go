@@ -139,7 +139,8 @@ func (a *apiServer) GetTrialCheckpoints(
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
 }
 
-func (a *apiServer) KillTrial(ctx context.Context, req *apiv1.KillTrialRequest,
+func (a *apiServer) KillTrial(
+	ctx context.Context, req *apiv1.KillTrialRequest,
 ) (*apiv1.KillTrialResponse, error) {
 	ok, err := a.m.db.CheckTrialExists(int(req.Id))
 	switch {
