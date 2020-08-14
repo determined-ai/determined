@@ -26,9 +26,13 @@ import { routeAll } from 'routes';
 import { forkExperiment } from 'services/api';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { TrialDetailsParams } from 'services/types';
-import { CheckpointDetail, ExperimentDetails, RawJson, Step, TrialDetails } from 'types';
+import {
+  CheckpointDetail, ExperimentDetails, MetricName, MetricType, Step, TrialDetails,
+} from 'types';
 import { clone, metricNameSorter, numericSorter } from 'utils/data';
-import { extractMetricNames, extractMetricValue } from 'utils/trial';
+import {
+  extractMetricNames, extractMetricValue, metricNameToValue, valueToMetricName,
+} from 'utils/trial';
 import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
 
 import css from './TrialDetails.module.scss';
@@ -81,7 +85,7 @@ const TrialDetailsComp: React.FC = () => {
   const [ form ] = Form.useForm();
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
-  const [ metrics, setMetrics ] = useState<string[]>([]);
+  const [ metrics, setMetrics ] = useState<MetricName[]>([]);
   const [ trial, triggerTrialRequest ] =
     useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
 
@@ -100,6 +104,18 @@ const TrialDetailsComp: React.FC = () => {
   const trialLength = useMemo(() => {
     return getTrialLength(upgradedConfig);
   }, [ upgradedConfig ]);
+
+  const metricNameValues = useMemo(() => {
+    return metrics.map(metric => metricNameToValue(metric));
+  }, [ metrics ]);
+
+  const trainingMetricNames = useMemo(() => {
+    return metrics.filter(metric => metric.type === MetricType.Training);
+  }, [ metrics ]);
+
+  const validationMetricNames = useMemo(() => {
+    return metrics.filter(metric => metric.type === MetricType.Validation);
+  }, [ metrics ]);
 
   const columns = useMemo(() => {
     const checkpointRenderer = (_: string, record: Step) => {
@@ -130,7 +146,7 @@ const TrialDetailsComp: React.FC = () => {
           extractMetricValue(a, metricName),
           extractMetricValue(b, metricName),
         ),
-        title: metricName,
+        title: `${metricName.name} [${metricName.type}]`,
       });
     });
 
@@ -271,25 +287,26 @@ If the problem persists please contact support.',
   const handleCheckpointDismiss = () => setShowCheckpoint(false);
 
   const handleMetricSelect = useCallback((value: SelectValue) => {
-    const metricName = value as string;
+    const metricName = valueToMetricName(value as string);
+    if (!metricName) return;
+
     setMetrics(prev => {
       const newMetric = [ ...prev ];
       if (newMetric.indexOf(metricName) === -1) newMetric.push(metricName);
-      return newMetric.sort(metricNameSorter(metricNames));
+      return newMetric.sort(metricNameSorter);
     });
-  }, [ metricNames ]);
+  }, []);
 
   const handleMetricDeselect = useCallback((value: SelectValue) => {
     if (metrics.length <= 1) return;
 
-    const metricName = value as string;
     setMetrics(prev => {
       const newMetric = [ ...prev ];
-      const index = newMetric.indexOf(metricName);
+      const index = newMetric.findIndex(metric => metricNameToValue(metric) === value);
       if (index !== -1) newMetric.splice(index, 1);
-      return newMetric.sort(metricNameSorter(metricNames));
+      return newMetric.sort(metricNameSorter);
     });
-  }, [ metricNames, metrics ]);
+  }, [ metrics ]);
 
   useEffect(() => {
     if (experimentId === undefined) return;
@@ -310,11 +327,8 @@ If the problem persists please contact support.',
    */
   useEffect(() => {
     if (metrics && metrics?.length !== 0) return;
-    if (metricNames.training.length === 0 && metricNames.validation.length === 0) return;
-    setMetrics([
-      ...metricNames.validation,
-      ...metricNames.training,
-    ].sort(metricNameSorter(metricNames)));
+    if (metricNames.length === 0) return;
+    setMetrics(metricNames);
   }, [ metricNames, metrics ]);
 
   if (isNaN(trialId)) {
@@ -346,14 +360,20 @@ If the problem persists please contact support.',
       mode="multiple"
       showSearch={false}
       style={{ minWidth: 220 }}
-      value={metrics}
+      value={metricNameValues}
       onDeselect={handleMetricDeselect}
       onSelect={handleMetricSelect}>
-      {metricNames.validation.length > 0 && <OptGroup label="Validation Metrics">
-        {metricNames.validation.map(key => <Option key={key} value={key}>{key}</Option>)}
+      {validationMetricNames.length > 0 && <OptGroup label="Validation Metrics">
+        {validationMetricNames.map(key => {
+          const value = metricNameToValue(key);
+          return <Option key={value} value={value}>{key.name} [{key.type}]</Option>;
+        })}
       </OptGroup>}
-      {metricNames.training.length > 0 && <OptGroup label="Training Metrics">
-        {metricNames.training.map(key => <Option key={key} value={key}>{key}</Option>)}
+      {trainingMetricNames.length > 0 && <OptGroup label="Training Metrics">
+        {trainingMetricNames.map(key => {
+          const value = metricNameToValue(key);
+          return <Option key={value} value={value}>{key.name} [{key.type}]</Option>;
+        })}
       </OptGroup>}
     </SelectFilter>
   ) : null;

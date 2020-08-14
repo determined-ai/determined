@@ -5,13 +5,14 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import MetricChart from 'components/MetricChart';
 import SelectFilter from 'components/SelectFilter';
-import { MetricNames, Step } from 'types';
+import { MetricName, MetricType, Step } from 'types';
+import { metricNameToValue, valueToMetricName } from 'utils/trial';
 
 const { OptGroup, Option } = Select;
 
 interface Props {
   id?: string;
-  metricNames: MetricNames;
+  metricNames: MetricName[];
   steps?: Step[];
   validationMetric?: string;
 }
@@ -19,7 +20,17 @@ interface Props {
 const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }: Props) => {
   const titleDetail = validationMetric ? ` (${validationMetric})` : '';
   const title = `Training Metric${titleDetail}`;
-  const [ metric, setMetric ] = useState(validationMetric);
+  const [ metric, setMetric ] = useState<MetricName | undefined>(
+    validationMetric ? { name: validationMetric, type: MetricType.Validation } : undefined,
+  );
+
+  const trainingMetricNames = useMemo(() => {
+    return metricNames.filter(metric => metric.type === MetricType.Training);
+  }, [ metricNames ]);
+
+  const validationMetricNames = useMemo(() => {
+    return metricNames.filter(metric => metric.type === MetricType.Validation);
+  }, [ metricNames ]);
 
   const data: Partial<PlotData>[] = useMemo(() => {
     const textData: string[] = [];
@@ -29,12 +40,11 @@ const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }
     (props.steps || []).forEach(step => {
       if (!metric) return;
 
-      const metricSources = [
-        step.avgMetrics || {},
-        step.validation?.metrics?.validationMetrics || {},
-      ];
+      const trainingSource = step.avgMetrics || {};
+      const validationSource = step.validation?.metrics?.validationMetrics || {};
       const x = step.numBatches + step.priorBatchesProcessed;
-      const y = (metricSources.find(source => source[metric] != null) || {})[metric];
+      const y = metric.type === MetricType.Validation ?
+        validationSource[metric.name] : trainingSource[metric.name];
 
       const text = [
         `Batches: ${x}`,
@@ -59,8 +69,8 @@ const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }
     } ];
   }, [ metric, props.steps ]);
 
-  const handleMetricSelect = useCallback((newValue: SelectValue) => {
-    setMetric(newValue as string);
+  const handleMetricSelect = useCallback((value: SelectValue) => {
+    setMetric(valueToMetricName(value as string));
   }, []);
 
   const options = (
@@ -68,13 +78,19 @@ const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }
       enableSearchFilter={false}
       label="Metric"
       showSearch={false}
-      value={metric}
+      value={metric && metricNameToValue(metric)}
       onSelect={handleMetricSelect}>
-      {metricNames.validation.length > 0 && <OptGroup label="Validation Metrics">
-        {metricNames.validation.map(key => <Option key={key} value={key}>{key}</Option>)}
+      {validationMetricNames.length > 0 && <OptGroup label="Validation Metrics">
+        {validationMetricNames.map(key => {
+          const value = metricNameToValue(key);
+          return <Option key={value} value={value}>{key.name} [{key.type}]</Option>;
+        })}
       </OptGroup>}
-      {metricNames.training.length > 0 && <OptGroup label="Training Metrics">
-        {metricNames.training.map(key => <Option key={key} value={key}>{key}</Option>)}
+      {trainingMetricNames.length > 0 && <OptGroup label="Training Metrics">
+        {trainingMetricNames.map(key => {
+          const value = metricNameToValue(key);
+          return <Option key={value} value={value}>{key.name} [{key.type}]</Option>;
+        })}
       </OptGroup>}
     </SelectFilter>
   );
