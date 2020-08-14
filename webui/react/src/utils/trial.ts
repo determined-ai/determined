@@ -1,5 +1,5 @@
 import { MetricNames, Step } from 'types';
-import { isNumber } from 'utils/data';
+import { alphanumericSorter, isNumber } from 'utils/data';
 
 export const extractMetricValue = (step: Step, metricName: string): number | undefined => {
   const trainingSource = step.avgMetrics || {};
@@ -31,7 +31,7 @@ export const extractMetricNames = (steps: Step[] = []): MetricNames => {
   });
 
   return {
-    training: Object.keys(trainingMap).sort(),
-    validation: Object.keys(validationMap).sort(),
+    training: Object.keys(trainingMap).sort(alphanumericSorter),
+    validation: Object.keys(validationMap).sort(alphanumericSorter),
   };
 };
