@@ -1,17 +1,19 @@
-import { MetricNames, Step } from 'types';
-import { alphanumericSorter, isNumber } from 'utils/data';
+import { MetricName, MetricType, Step } from 'types';
+import { isNumber, metricNameSorter } from 'utils/data';
 
-export const extractMetricValue = (step: Step, metricName: string): number | undefined => {
-  const trainingSource = step.avgMetrics || {};
-  const validationSource = step.validation?.metrics?.validationMetrics || {};
-  if (isNumber(trainingSource[metricName])) return trainingSource[metricName];
-  if (isNumber(validationSource[metricName])) return validationSource[metricName];
+export const extractMetricValue = (step: Step, metricName: MetricName): number | undefined => {
+  if (metricName.type === MetricType.Training) {
+    const source = step.avgMetrics || {};
+    if (isNumber(source[metricName.name])) return source[metricName.name];
+  } else if (metricName.type === MetricType.Validation) {
+    const source = step.validation?.metrics?.validationMetrics || {};
+    if (isNumber(source[metricName.name])) return source[metricName.name];
+  }
   return undefined;
 };
 
-export const extractMetricNames = (steps: Step[] = []): MetricNames => {
-  const trainingMap: Record<string, boolean> = {};
-  const validationMap: Record<string, boolean> = {};
+export const extractMetricNames = (steps: Step[] = []): MetricName[] => {
+  const map: Record<string, MetricName> = {};
 
   steps.forEach(step => {
     const trainingSource = step.avgMetrics || {};
@@ -20,18 +22,29 @@ export const extractMetricNames = (steps: Step[] = []): MetricNames => {
     // Extract training metric names
     Object.keys(trainingSource).forEach(key => {
       if (!isNumber(trainingSource[key])) return;
-      trainingMap[key] = true;
+      const metricName = { name: key, type: MetricType.Training };
+      const value = metricNameToValue(metricName);
+      if (!map[value]) map[value] = metricName;
     });
 
     // Extract validation metric names
     Object.keys(validationSource).forEach(key => {
       if (!isNumber(validationSource[key])) return;
-      validationMap[key] = true;
+      const metricName = { name: key, type: MetricType.Validation };
+      const value = metricNameToValue(metricName);
+      if (!map[value]) map[value] = metricName;
     });
   });
 
-  return {
-    training: Object.keys(trainingMap).sort(alphanumericSorter),
-    validation: Object.keys(validationMap).sort(alphanumericSorter),
-  };
+  return Object.values(map).sort(metricNameSorter);
+};
+
+export const metricNameToValue = (metricName: MetricName): string => {
+  return `${metricName.type}|${metricName.type}`;
+};
+
+export const valueToMetricName = (value: string): MetricName | undefined => {
+  const parts = value.split('|');
+  if (parts.length === 2) return { name: parts[0], type: parts[1] as MetricType };
+  return undefined;
 };

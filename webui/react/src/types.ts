@@ -221,9 +221,14 @@ export enum CheckpointState {
   Deleted = 'DELETED',
 }
 
-export interface MetricNames {
-  training: string[];
-  validation: string[];
+export enum MetricType {
+  Training = 'training',
+  Validation = 'validation',
+}
+
+export interface MetricName {
+  name: string;
+  type: MetricType;
 }
 
 // Checkpoint sub step.
