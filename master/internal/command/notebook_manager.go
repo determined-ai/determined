@@ -110,14 +110,8 @@ func (n *notebookManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case *apiv1.GetNotebooksRequest:
 		resp := &apiv1.GetNotebooksResponse{}
-		for _, notebookMsg := range ctx.AskAll(&notebookv1.Notebook{}, ctx.Children()...).GetAll() {
-			notebook := notebookMsg.(*notebookv1.Notebook)
-			serviceAddress, err := generateServiceAddress(notebook.Id)
-			if err != nil {
-				return errors.Wrapf(err, "generating service address for %s", notebook.Id)
-			}
-			notebook.ServiceAddress = serviceAddress
-			resp.Notebooks = append(resp.Notebooks, notebook)
+		for _, notebook := range ctx.AskAll(&notebookv1.Notebook{}, ctx.Children()...).GetAll() {
+			resp.Notebooks = append(resp.Notebooks, notebook.(*notebookv1.Notebook))
 		}
 		ctx.Respond(resp)
 
