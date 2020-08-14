@@ -12,6 +12,15 @@ export enum ShirtSize {
   giant = 'giant',
 }
 
+enum StateColors {
+  transitioning = 'transitioning',
+  active = 'active',
+  failed = 'failed',
+  inactive = 'inactive',
+  success = 'success',
+  suspended = 'suspended',
+}
+
 export interface Theme {
   colors: {
     core: {
@@ -21,13 +30,7 @@ export interface Theme {
       tertiary: string;
     };
     monochrome: string[];
-    states: {
-      active: string;
-      failed: string;
-      inactive: string;
-      success: string;
-      suspended: string;
-    };
+    states: Record<StateColors, string>;
   };
   focus: {
     shadow: string;
@@ -178,6 +181,14 @@ export const getStateColorCssVar = (
 ): string => {
   const name = state ? stateColorMapping[state] : 'active';
   return `var(--theme-colors-states-${name})`;
+};
+
+export const getStateColor = (
+  state: RunState | CommandState | ResourceState,
+  theme = lightTheme,
+): string => {
+  const name = state ? stateColorMapping[state] : 'active';
+  return theme.colors.states[name as StateColors];
 };
 
 export enum ThemeId {

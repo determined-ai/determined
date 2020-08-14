@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 
-import { getStateColorCssVar, lightTheme } from 'themes';
+import { getStateColor, getStateColorCssVar, lightTheme } from 'themes';
 import { CommandState, CommonProps, Resource, ResourceState } from 'types';
 import { clone } from 'utils/data';
 // The react-plotly import needs to come after Plotly import
@@ -42,11 +42,7 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
     if (rsValue === 0) return;
     labels.push(rsState);
     values.push(rsValue);
-    if (rsState === ResourceState.Free) {
-      colors.push(lightTheme.colors.states.inactive);
-    } else {
-      colors.push(getStateColor(rsState as CommandState));
-    }
+    colors.push(getStateColor(rsState as CommandState));
   });
 
   const data: Data[] = [ {
