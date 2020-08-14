@@ -179,6 +179,14 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 			}
 		}
 	}
+	if msg.ExitedReason != nil {
+		s.exitingEarly = true
+		if *msg.ExitedReason == searcher.UserCanceled {
+			s.userRequestedStop = true
+		} else {
+			return nil, nil, nil
+		}
+	}
 
 	switch msg.Workload.Kind {
 	case searcher.RunStep:
@@ -208,12 +216,6 @@ func (s *trialWorkloadSequencer) runStepCompleted(msg searcher.CompletedMessage)
 		s.curOpIdx++
 		s.batchesTowardsCurrentOp = 0
 		return tOp
-	}
-	if msg.ExitedReason != nil {
-		s.exitingEarly = true
-		if *msg.ExitedReason == searcher.UserCanceled {
-			s.userRequestedStop = true
-		}
 	}
 	return nil
 }
@@ -248,12 +250,6 @@ func (s *trialWorkloadSequencer) computeValidationMetricsCompleted(
 	if s.batchesSinceLastCkpt == 0 {
 		// If this we haven't run any more batches since we checkpointed, we can snapshot here, too.
 		s.snapshotState()
-	}
-	if msg.ExitedReason != nil {
-		s.exitingEarly = true
-		if *msg.ExitedReason == searcher.UserCanceled {
-			s.userRequestedStop = true
-		}
 	}
 	return nil, nil
 }

@@ -45,13 +45,11 @@ checkpoint_policy: none
 		model.GlobalBatchSize: 64,
 	}, model.TrialWorkloadSequencerType)
 
-	// Sequencer input/output messages.
 	schedulingUnit := model.DefaultExperimentConfig().SchedulingUnit
 	train := searcher.NewTrain(create.RequestID, model.NewLength(model.Batches, 500))
 	validate := searcher.NewValidate(create.RequestID)
 	checkpoint := searcher.NewCheckpoint(create.RequestID)
 
-	// Sequencer internal workloads.
 	trainWorkload1 := searcher.Workload{
 		Kind:                  searcher.RunStep,
 		ExperimentID:          1,
@@ -282,4 +280,50 @@ checkpoint_policy: none
 	// Check that workload() returns an error when upToDate returns true
 	_, err = s.Workload()
 	assert.Error(t, err, "cannot call sequencer.Workload() with sequencer.UpToDate() == true")
+}
+
+func TestTrialWorkloadSequencerFailures(t *testing.T) {
+	expConfig := model.DefaultExperimentConfig()
+	expConfig.MinCheckpointPeriod = model.NewLengthInBatches(100)
+	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
+
+	rand := nprand.New(0)
+	create := searcher.NewCreate(rand, map[string]interface{}{
+		model.GlobalBatchSize: 64,
+	}, model.TrialWorkloadSequencerType)
+
+	s := newTrialWorkloadSequencer(experiment, create, nil)
+	s.SetTrialID(1)
+
+	assert.NilError(t, s.OperationRequested(
+		searcher.NewTrain(create.RequestID, model.NewLength(model.Batches, 500)),
+	))
+
+	_, _, err := s.WorkloadCompleted(searcher.CompletedMessage{
+		Workload: searcher.Workload{
+			Kind:                  searcher.RunStep,
+			ExperimentID:          1,
+			TrialID:               1,
+			StepID:                1,
+			NumBatches:            expConfig.SchedulingUnit,
+			TotalBatchesProcessed: 0,
+		},
+	}, nil)
+	assert.NilError(t, err)
+
+	exitedReason := searcher.ExitedReason("not ok")
+	op, _, err := s.WorkloadCompleted(searcher.CompletedMessage{
+		Workload: searcher.Workload{
+			Kind:                  searcher.CheckpointModel,
+			ExperimentID:          1,
+			TrialID:               1,
+			StepID:                1,
+			TotalBatchesProcessed: expConfig.SchedulingUnit,
+		},
+		CheckpointMetrics: nil,
+		ExitedReason:      &exitedReason,
+	}, nil)
+	assert.NilError(t, err)
+	assert.Equal(t, op, nil, "should not have finished %v yet", op)
+	assert.Equal(t, s.exitingEarly, true, "should have been exiting early")
 }
