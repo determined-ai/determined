@@ -117,9 +117,9 @@ const ExperimentDetailsComp: React.FC = () => {
       title: 'State',
     },
     {
-      dataIndex: 'numBatches',
+      dataIndex: 'totalBatchesProcessed',
       sorter: (a: TrialItem, b: TrialItem): number => {
-        return numericSorter(a.numBatches, b.numBatches);
+        return numericSorter(a.totalBatchesProcessed, b.totalBatchesProcessed);
       },
       title: 'Batches',
     },
@@ -166,7 +166,7 @@ const ExperimentDetailsComp: React.FC = () => {
         if (record.bestAvailableCheckpoint) {
           const checkpoint: CheckpointDetail = {
             ...record.bestAvailableCheckpoint,
-            batch: record.numBatches,
+            batch: record.totalBatchesProcessed,
             experimentId: id,
             trialId: record.id,
           };

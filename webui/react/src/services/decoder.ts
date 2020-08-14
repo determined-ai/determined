@@ -224,12 +224,12 @@ const ioToTrial = (io: ioTypeTrial): TrialItem => {
     id: io.id,
     latestValidationMetrics: io.latest_validation_metrics
       ? ioToValidationMetrics(io.latest_validation_metrics) : undefined,
-    numBatches: io.num_batches || 0,
     numCompletedCheckpoints: io.num_completed_checkpoints,
     numSteps: io.num_steps,
     seed: io.seed,
     startTime: io.start_time,
     state: io.state as RunState,// TODO add checkpoint decoder
+    totalBatchesProcessed: io.total_batches_processed || 0,
     url: `/ui/trials/${io.id}`,
   };
 };
