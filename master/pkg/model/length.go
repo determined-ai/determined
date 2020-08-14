@@ -3,7 +3,6 @@ package model
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 
 	"github.com/pkg/errors"
 
@@ -105,16 +104,15 @@ func NewLengthInEpochs(epochs int) Length {
 	return Length{Unit: Epochs, Units: epochs}
 }
 
-// NewLengthFromBatches return the number of units completed by the given batches, rounded up.
-func NewLengthFromBatches(batches int, ctx UnitContext) Length {
+// UnitsFromBatches return the number of units completed by the given batches, rounded up.
+func UnitsFromBatches(batches int, ctx UnitContext) float64 {
 	switch ctx.defaultUnit {
 	case Records:
-		return NewLengthInRecords(batches * ctx.globalBatchSize)
+		return float64(batches * ctx.globalBatchSize)
 	case Batches:
-		return NewLengthInBatches(batches)
+		return float64(batches)
 	case Epochs:
-		numEpochs := math.Ceil(float64(batches*ctx.globalBatchSize) / float64(ctx.recordsPerEpoch))
-		return NewLengthInEpochs(int(numEpochs))
+		return float64(batches*ctx.globalBatchSize) / float64(ctx.recordsPerEpoch)
 	default:
 		panic(fmt.Sprintf("invalid unit in ctx: %s", ctx.defaultUnit))
 	}

@@ -33,8 +33,8 @@ func (s *gridSearch) initialOperations(ctx context) ([]Operation, error) {
 	return ops, nil
 }
 
-func (s *gridSearch) progress(unitsCompleted model.Length) float64 {
-	return float64(unitsCompleted.Units) / float64(s.GridConfig.MaxLength.MultInt(s.trials).Units)
+func (s *gridSearch) progress(unitsCompleted float64) float64 {
+	return unitsCompleted / float64(s.GridConfig.MaxLength.MultInt(s.trials).Units)
 }
 
 // trialExitedEarly does nothing since grid does not take actions based on

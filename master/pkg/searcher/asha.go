@@ -223,7 +223,7 @@ func (s *asyncHalvingSearch) closeOutRungs() []Operation {
 	return ops
 }
 
-func (s *asyncHalvingSearch) progress(unitsCompleted model.Length) float64 {
+func (s *asyncHalvingSearch) progress(float64) float64 {
 	allTrials := len(s.rungs[0].metrics)
 	// Give ourselves an overhead of 20% of maxTrials when calculating progress.
 	progress := float64(allTrials) / (1.2 * float64(s.maxTrials))

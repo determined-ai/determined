@@ -25,7 +25,7 @@ type EventLog struct {
 
 	// Searcher state.
 	earlyExits          map[RequestID]bool
-	TotalUnitsCompleted model.Length
+	TotalUnitsCompleted float64
 	Shutdown            bool
 
 	// Trial state and metrics.
@@ -39,7 +39,7 @@ type EventLog struct {
 func NewEventLog(unit model.Unit) *EventLog {
 	return &EventLog{
 		earlyExits:          map[RequestID]bool{},
-		TotalUnitsCompleted: model.NewLength(unit, 0),
+		TotalUnitsCompleted: 0,
 		Shutdown:            false,
 		TrialsRequested:     0,
 		TrialsClosed:        0,
@@ -82,8 +82,8 @@ func (el *EventLog) TrialExitedEarly(requestID RequestID) {
 }
 
 // WorkloadCompleted records that the workload has been completed.
-func (el *EventLog) WorkloadCompleted(msg CompletedMessage, unitsCompleted model.Length) {
-	el.TotalUnitsCompleted = el.TotalUnitsCompleted.Add(unitsCompleted)
+func (el *EventLog) WorkloadCompleted(msg CompletedMessage, unitsCompleted float64) {
+	el.TotalUnitsCompleted += unitsCompleted
 	el.uncommitted = append(el.uncommitted, msg)
 }
 

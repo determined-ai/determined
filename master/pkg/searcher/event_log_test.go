@@ -35,12 +35,12 @@ func TestEventLog(t *testing.T) {
 				StepID: trialID*trialID + i,
 			},
 		}
-		assert.Equal(t, log.TotalUnitsCompleted.Units, i*10)
-		log.WorkloadCompleted(msg, model.NewLengthInBatches(10))
-		assert.Equal(t, log.TotalUnitsCompleted.Units, (i+1)*10)
+		assert.Equal(t, log.TotalUnitsCompleted, float64(i*10))
+		log.WorkloadCompleted(msg, 10)
+		assert.Equal(t, log.TotalUnitsCompleted, float64((i+1)*10))
 	}
 
-	assert.Equal(t, log.TotalUnitsCompleted, model.NewLengthInBatches(10*len(trialIDs)))
+	assert.Equal(t, log.TotalUnitsCompleted, float64(10*len(trialIDs)))
 
 	for i, trialID := range trialIDs {
 		// Check that closing trials counts them correctly.

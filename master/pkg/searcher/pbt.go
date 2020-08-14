@@ -201,8 +201,8 @@ func (s *pbtSearch) checkpointCompleted(
 	return ops, nil
 }
 
-func (s *pbtSearch) progress(unitsCompleted model.Length) float64 {
-	return float64(unitsCompleted.Units) / float64(
+func (s *pbtSearch) progress(unitsCompleted float64) float64 {
+	return unitsCompleted / float64(
 		s.LengthPerRound.MultInt(s.PopulationSize).MultInt(s.NumRounds).Units)
 }
 

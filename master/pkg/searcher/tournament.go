@@ -8,20 +8,16 @@ import (
 // are sent to the originating search method that created the corresponding operation.
 type tournamentSearch struct {
 	subSearches             []SearchMethod
-	subSearchUnitsCompleted map[SearchMethod]model.Length
+	subSearchUnitsCompleted map[SearchMethod]float64
 	trialTable              map[RequestID]SearchMethod
 }
 
 func newTournamentSearch(subSearches ...SearchMethod) *tournamentSearch {
-	s := &tournamentSearch{
+	return &tournamentSearch{
 		subSearches:             subSearches,
-		subSearchUnitsCompleted: make(map[SearchMethod]model.Length),
+		subSearchUnitsCompleted: make(map[SearchMethod]float64),
 		trialTable:              make(map[RequestID]SearchMethod),
 	}
-	for _, subSearch := range s.subSearches {
-		s.subSearchUnitsCompleted[subSearch] = model.NewLength(s.Unit(), 0)
-	}
-	return s
 }
 
 func (s *tournamentSearch) initialOperations(ctx context) ([]Operation, error) {
@@ -47,7 +43,7 @@ func (s *tournamentSearch) trainCompleted(
 	ctx context, requestID RequestID, train Train,
 ) ([]Operation, error) {
 	subSearch := s.trialTable[requestID]
-	s.subSearchUnitsCompleted[subSearch] = s.subSearchUnitsCompleted[subSearch].Add(train.Length)
+	s.subSearchUnitsCompleted[subSearch] += float64(train.Length.Units)
 	ops, err := subSearch.trainCompleted(ctx, requestID, train)
 	return s.markCreates(subSearch, ops), err
 }
@@ -82,7 +78,7 @@ func (s *tournamentSearch) trialExitedEarly(ctx context, requestID RequestID) ([
 }
 
 // progress returns experiment progress as a float between 0.0 and 1.0.
-func (s *tournamentSearch) progress(model.Length) float64 {
+func (s *tournamentSearch) progress(float64) float64 {
 	sum := 0.0
 	for _, subSearch := range s.subSearches {
 		sum += subSearch.progress(s.subSearchUnitsCompleted[subSearch])
