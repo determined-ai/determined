@@ -19,4 +19,6 @@ message Notebook {
     determined.container.v1.Container container = 6;
     // The username of the user that created the notebook.
     string username = 10;
+    // The service address.
+    string service_address = 11;
 }

@@ -1,11 +1,13 @@
 package command
 
 import (
+	"fmt"
 	"math/rand"
 	"net/http"
 	"time"
 
 	"github.com/labstack/echo"
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/scheduler"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -111,17 +113,35 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 
 	case *notebookv1.Notebook:
-		ctx.Respond(c.toNotebook(ctx))
+		notebook, err := c.toNotebook(ctx)
+		switch {
+		case err != nil:
+			ctx.Log().Error(err)
+		default:
+			ctx.Respond(notebook)
+		}
 
 	case *apiv1.GetNotebookRequest:
-		ctx.Respond(&apiv1.GetNotebookResponse{
-			Notebook: c.toNotebook(ctx),
-			Config:   protoutils.ToStruct(c.config),
-		})
+		notebook, err := c.toNotebook(ctx)
+		switch {
+		case err != nil:
+			ctx.Log().Error(err)
+		default:
+			ctx.Respond(&apiv1.GetNotebookResponse{
+				Notebook: notebook,
+				Config:   protoutils.ToStruct(c.config),
+			})
+		}
 
 	case *apiv1.KillNotebookRequest:
-		c.terminate(ctx)
-		ctx.Respond(&apiv1.KillNotebookResponse{Notebook: c.toNotebook(ctx)})
+		notebook, err := c.toNotebook(ctx)
+		switch {
+		case err != nil:
+			ctx.Log().Error(err)
+		default:
+			c.terminate(ctx)
+			ctx.Respond(&apiv1.KillNotebookResponse{Notebook: notebook})
+		}
 
 	case *commandv1.Command:
 		ctx.Respond(c.toCommand(ctx))
@@ -256,14 +276,19 @@ func (c *command) exit(ctx *actor.Context, exitStatus string) {
 	actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 }
 
-func (c *command) toNotebook(ctx *actor.Context) *notebookv1.Notebook {
-	return &notebookv1.Notebook{
-		Id:          ctx.Self().Address().Local(),
-		Description: c.config.Description,
-		Container:   c.container.Proto(),
-		StartTime:   protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
-		Username:    c.owner.Username,
+func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {
+	serviceAddress, err := generateServiceAddress(string(c.taskID))
+	if err != nil {
+		return nil, errors.Wrapf(err, "generating service address for %s", c.taskID)
 	}
+	return &notebookv1.Notebook{
+		Id:             ctx.Self().Address().Local(),
+		Description:    c.config.Description,
+		Container:      c.container.Proto(),
+		ServiceAddress: serviceAddress,
+		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		Username:       c.owner.Username,
+	}, nil
 }
 
 func (c *command) toCommand(ctx *actor.Context) *commandv1.Command {
@@ -298,13 +323,14 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		tids = append(tids, int32(id))
 	}
 	return &tensorboardv1.Tensorboard{
-		Id:            ctx.Self().Address().Local(),
-		Description:   c.config.Description,
-		StartTime:     protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
-		Container:     c.container.Proto(),
-		ExperimentIds: eids,
-		TrialIds:      tids,
-		Username:      c.owner.Username,
+		Id:             ctx.Self().Address().Local(),
+		Description:    c.config.Description,
+		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		Container:      c.container.Proto(),
+		ServiceAddress: fmt.Sprintf(tensorboardServiceAddress, c.taskID),
+		ExperimentIds:  eids,
+		TrialIds:       tids,
+		Username:       c.owner.Username,
 	}
 }
 
