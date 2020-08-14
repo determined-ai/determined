@@ -40,7 +40,7 @@ type SearchMethod interface {
 	trialClosed(ctx context, requestID RequestID) ([]Operation, error)
 	// progress returns experiment progress as a float between 0.0 and 1.0. As search methods
 	// receive completed workloads, they should internally track progress.
-	progress(totalUnitsCompleted model.Length) float64
+	progress(totalUnitsCompleted float64) float64
 	// trialExitedEarly informs the searcher that the trial has exited earlier than expected.
 	trialExitedEarly(ctx context, requestID RequestID) ([]Operation, error)
 	// SearchMethod embeds the InUnits interface because it is in terms of a specific unit.

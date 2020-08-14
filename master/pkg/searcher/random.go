@@ -33,8 +33,8 @@ func (s *randomSearch) initialOperations(ctx context) ([]Operation, error) {
 	return ops, nil
 }
 
-func (s *randomSearch) progress(unitsCompleted model.Length) float64 {
-	return float64(unitsCompleted.Units) / float64(s.MaxLength.MultInt(s.MaxTrials).Units)
+func (s *randomSearch) progress(unitsCompleted float64) float64 {
+	return unitsCompleted / float64(s.MaxLength.MultInt(s.MaxTrials).Units)
 }
 
 // trialExitedEarly does nothing since random does not take actions based on

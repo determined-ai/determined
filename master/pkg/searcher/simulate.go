@@ -134,7 +134,7 @@ func Simulate(
 					Kind:    RunStep,
 					TrialID: trialIDs[requestID],
 					StepID:  trialOpIdxs[requestID],
-				}}, train.Length)
+				}}, float64(train.Length.Units))
 			}
 			ops, err := s.OperationCompleted(trialIDs[requestID], operation, metrics)
 			if err != nil {

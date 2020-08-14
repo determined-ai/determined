@@ -73,7 +73,7 @@ func (s *Searcher) TrialExitedEarly(trialID int) ([]Operation, error) {
 
 // WorkloadCompleted informs the searcher that the workload is completed. This relays the message
 // to the event log and records the units as complete for search method progress.
-func (s *Searcher) WorkloadCompleted(msg CompletedMessage, unitsCompleted model.Length) {
+func (s *Searcher) WorkloadCompleted(msg CompletedMessage, unitsCompleted float64) {
 	s.eventLog.WorkloadCompleted(msg, unitsCompleted)
 }
 

@@ -519,7 +519,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 
 	ctx.Log().Infof("trial completed workload: %v", msg.Workload)
 
-	units := model.NewLengthFromBatches(msg.Workload.NumBatches, t.sequencer.unitContext)
+	units := model.UnitsFromBatches(msg.Workload.NumBatches, t.sequencer.unitContext)
 	isBestValidation := ctx.Ask(ctx.Self().Parent(), trialCompletedWorkload{t.id, msg, units})
 	op, metrics, err := t.sequencer.WorkloadCompleted(msg, isBestValidation)
 	switch {

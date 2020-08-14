@@ -33,7 +33,9 @@ type (
 	trialCompletedWorkload struct {
 		trialID          int
 		completedMessage searcher.CompletedMessage
-		unitsCompleted   model.Length
+		// unitsCompleted is passed as a float because while the searcher will only request integral
+		// units, a trial may complete partial units (especially in the case of epochs).
+		unitsCompleted float64
 	}
 	trialExitedEarly struct {
 		trialID      int
