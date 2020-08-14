@@ -385,22 +385,19 @@ If the problem persists please contact support.',
             validationMetric={experiment.config?.searcher.metric} />
         </Col>
         <Col span={24}>
-          <Section title="Trial Information">
-            {/* Table */}
+          <Section options={options} title="Trial Information">
+            <Table
+              columns={columns}
+              dataSource={trial.data?.steps}
+              loading={!trial.hasLoaded}
+              rowClassName={defaultRowClassName()}
+              rowKey="id"
+              scroll={{ x: 1000 }}
+              showSorterTooltip={false}
+              size="small" />
           </Section>
         </Col>
       </Row>
-      <Section options={options} title="Trial Information">
-        <Table
-          columns={columns}
-          dataSource={trial.data?.steps}
-          loading={!trial.hasLoaded}
-          rowClassName={defaultRowClassName()}
-          rowKey="id"
-          scroll={{ x: 1000 }}
-          showSorterTooltip={false}
-          size="small" />
-      </Section>
       {activeCheckpoint && <CheckpointModal
         checkpoint={activeCheckpoint}
         config={experiment.config}
