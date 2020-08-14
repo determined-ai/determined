@@ -20,7 +20,7 @@ as teams, clusters, and data sets all increase in size.
   - intelligent hyperparameter optimization based on cutting-edge research
   - flexible GPU scheduling, including dynamically resizing training jobs
     on-the-fly and automatic management of cloud resources on AWS and GCP
-  - built-in experiment tracking, metrics storage, and visualization
+  - built-in experiment tracking, metrics visualization, and model registry
   - automatic fault tolerance for DL training jobs
   - integrated support for TensorBoard and GPU-powered Jupyter notebooks
 

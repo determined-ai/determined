@@ -21,6 +21,8 @@ export const decode = <T>(type: io.Mixed, data: any): T => {
   }
 };
 
+const ioNullOrUndefined = io.union([ io.null, io.undefined ]);
+
 /* User */
 
 export const ioUser = io.type({
@@ -42,7 +44,7 @@ export const ioDeterminedInfo = io.type({
   master_id: io.string,
   telemetry: io.type({
     enabled: io.boolean,
-    segment_key: io.union([ io.string, io.undefined ]),
+    segment_key: io.union([ io.string, ioNullOrUndefined ]),
   }),
   version: io.string,
 });
@@ -55,17 +57,17 @@ export const ioSlotDevice = io.type({
   brand: io.string,
   id: io.number,
   type: io.string,
-  uuid: io.union([ io.string, io.null ]),
+  uuid: io.union([ io.string, ioNullOrUndefined ]),
 });
 
 export const ioSlotContainer = io.type({
-  devices: io.union([ io.array(ioSlotDevice), io.null ]),
+  devices: io.union([ io.array(ioSlotDevice), ioNullOrUndefined ]),
   id: io.string,
   state: io.string,
 });
 
 export const ioSlot = io.type({
-  container: io.union([ ioSlotContainer, io.null ]),
+  container: io.union([ ioSlotContainer, ioNullOrUndefined ]),
   device: ioSlotDevice,
   enabled: io.boolean,
   id: io.string,
@@ -98,12 +100,12 @@ const ioCommandAddress = io.type({
   container_port: io.number,
   host_ip: io.string,
   host_port: io.number,
-  protocol: io.union([ io.string, io.undefined ]),
+  protocol: io.union([ io.string, ioNullOrUndefined ]),
 });
 
 const ioCommandMisc = io.partial({
-  experiment_ids: io.union([ io.array(io.number), io.null ]),
-  trial_ids: io.union([ io.array(io.number), io.null ]),
+  experiment_ids: io.union([ io.array(io.number), ioNullOrUndefined ]),
+  trial_ids: io.union([ io.array(io.number), ioNullOrUndefined ]),
 });
 
 const ioCommandConfig = io.exact(io.type({
@@ -116,12 +118,12 @@ const commandStatesIoType = io.keyof(commandStates);
 
 export const ioGenericCommand = io.type({
   config: ioCommandConfig,
-  exit_status: io.union([ io.string, io.null ]),
+  exit_status: io.union([ io.string, ioNullOrUndefined ]),
   id: io.string,
-  misc: io.union([ ioCommandMisc, io.null ]),
+  misc: io.union([ ioCommandMisc, ioNullOrUndefined ]),
   owner: ioOwner,
   registered_time: io.string,
-  service_address: io.union([ io.string, io.null ]),
+  service_address: io.union([ io.string, ioNullOrUndefined ]),
   state: commandStatesIoType,
 });
 
@@ -141,28 +143,51 @@ const checkpointStates: Record<string, null> = Object.values(CheckpointState)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 const checkpointStatesIoType = io.keyof(checkpointStates);
 
+export const ioValidationMetrics = io.type({
+  num_inputs: io.number,
+  validation_metrics: io.record(io.string, io.number),
+});
+export type ioTypeValidationMetrics = io.TypeOf<typeof ioValidationMetrics>;
+
+const startEndTimeDef = {
+  end_time: io.union([ io.string, ioNullOrUndefined ]),
+  start_time: io.string,
+};
+
 export const ioCheckpoint = io.type({
-  end_time: io.union([ io.string, io.null ]),
+  ...startEndTimeDef,
   id: io.number,
   resources: io.record(io.string, io.number),
-  start_time: io.string,
   state: checkpointStatesIoType,
   step_id: io.number,
   trial_id: io.number,
-  uuid: io.union([ io.string, io.null ]),
-  validation_metric: io.union([ io.number, io.undefined ]),
+  uuid: io.union([ io.string, ioNullOrUndefined ]),
+  validation_metric: io.union([ io.number, ioNullOrUndefined ]),
 });
 export type ioTypeCheckpoint = io.TypeOf<typeof ioCheckpoint>;
 
-export const ioStep = io.type({
-  end_time: io.union([ io.string, io.null ]),
+export const ioValidation = io.type({
+  ...startEndTimeDef,
   id: io.number,
-  start_time: io.string,
+  metrics: io.union([ ioValidationMetrics, ioNullOrUndefined ]),
   state: runStatesIoType,
 });
+export type ioTypeValidation = io.TypeOf<typeof ioValidation>;
+
+export const ioStep = io.type({
+  ...startEndTimeDef,
+  avg_metrics: io.union([ io.record(io.string, io.number), ioNullOrUndefined ]),
+  checkpoint: io.union([ ioCheckpoint, ioNullOrUndefined ]),
+  id: io.number,
+  num_batches: io.union([ io.number, ioNullOrUndefined ]),
+  prior_batches_processed: io.union([ io.number, ioNullOrUndefined ]),
+  state: runStatesIoType,
+  validation: io.union([ ioValidation, ioNullOrUndefined ]),
+});
+export type ioTypeStep = io.TypeOf<typeof ioStep>;
 
 export const ioTrialDetails = io.type({
-  end_time: io.union([ io.string, io.null ]),
+  end_time: io.union([ io.string, ioNullOrUndefined ]),
   experiment_id: io.number,
   hparams: io.record(io.string, io.any),
   id: io.number,
@@ -170,25 +195,19 @@ export const ioTrialDetails = io.type({
   start_time: io.string,
   state: runStatesIoType,
   steps: io.array(ioStep),
-  warm_start_checkpoint_id: io.union([ io.number, io.null ]),
+  warm_start_checkpoint_id: io.union([ io.number, ioNullOrUndefined ]),
 });
 export type ioTypeTrialDetails = io.TypeOf<typeof ioTrialDetails>;
 
-export const ioLatestValidatonMetrics = io.type({
-  num_inputs: io.number,
-  validation_metrics: io.record(io.string, io.number),
-});
-export type ioTypeLatestValidationMetrics = io.TypeOf<typeof ioLatestValidatonMetrics>;
-
 export const ioTrial = io.type({
-  best_available_checkpoint: io.union([ ioCheckpoint, io.null ]),
-  best_validation_metric: io.union([ io.number, io.null ]),
-  end_time: io.union([ io.string, io.null ]),
+  best_available_checkpoint: io.union([ ioCheckpoint, ioNullOrUndefined ]),
+  best_validation_metric: io.union([ io.number, ioNullOrUndefined ]),
+  end_time: io.union([ io.string, ioNullOrUndefined ]),
   experiment_id: io.number,
   hparams: io.record(io.string, io.any),
   id: io.number,
-  latest_validation_metrics: io.union([ ioLatestValidatonMetrics, io.null ]),
-  num_batches: io.union([ io.number, io.null ]),
+  latest_validation_metrics: io.union([ ioValidationMetrics, ioNullOrUndefined ]),
+  num_batches: io.union([ io.number, ioNullOrUndefined ]),
   num_completed_checkpoints: io.number,
   num_steps: io.number,
   seed: io.number,
@@ -205,30 +224,30 @@ const checkpointStorageTypes: Record<string, null> = Object
 const ioCheckpointStorageType = io.keyof(checkpointStorageTypes);
 
 export const ioCheckpointStorage = io.type({
-  bucket: io.union([ io.string, io.undefined ]),
-  host_path: io.union([ io.string, io.undefined ]),
+  bucket: io.union([ io.string, ioNullOrUndefined ]),
+  host_path: io.union([ io.string, ioNullOrUndefined ]),
   save_experiment_best: io.number,
   save_trial_best: io.number,
   save_trial_latest: io.number,
-  storage_path: io.union([ io.string, io.undefined ]),
-  type: io.union([ ioCheckpointStorageType, io.undefined ]),
+  storage_path: io.union([ io.string, ioNullOrUndefined ]),
+  type: io.union([ ioCheckpointStorageType, ioNullOrUndefined ]),
 });
 
 const ioDataLayer = io.type({
-  container_storage_path: io.union([ io.string, io.null ]),
+  container_storage_path: io.union([ io.string, ioNullOrUndefined ]),
   type: io.string,
 });
 
 const ioExpResources = io.type({
-  max_slots: io.union([ io.number, io.undefined ]),
+  max_slots: io.union([ io.number, ioNullOrUndefined ]),
 });
 
-export const ioExperimentConfig = io.type({
+const ioExperimentConfig = io.type({
   checkpoint_policy: io.string,
-  checkpoint_storage: io.union([ ioCheckpointStorage, io.null ]),
-  data_layer: io.union([ ioDataLayer, io.undefined ]),
+  checkpoint_storage: io.union([ ioCheckpointStorage, ioNullOrUndefined ]),
+  data_layer: io.union([ ioDataLayer, ioNullOrUndefined ]),
   description: io.string,
-  labels: io.union([ io.undefined, io.array(io.string) ]),
+  labels: io.union([ io.array(io.string), ioNullOrUndefined ]),
   resources: ioExpResources,
   searcher: io.type({
     metric: io.string,
@@ -240,10 +259,10 @@ export type ioTypeExperimentConfig = io.TypeOf<typeof ioExperimentConfig>;
 export const ioExperiment = io.type({
   archived: io.boolean,
   config: ioExperimentConfig,
-  end_time: io.union([ io.string, io.null ]),
+  end_time: io.union([ io.string, ioNullOrUndefined ]),
   id: io.number,
   owner_id: io.number,
-  progress: io.union([ io.number, io.null ]),
+  progress: io.union([ io.number, ioNullOrUndefined ]),
   start_time: io.string,
   state: runStatesIoType,
 });
@@ -256,16 +275,16 @@ export type ioTypeExperiments = io.TypeOf<typeof ioExperiments>;
 const ioValidationHistory = io.type({
   end_time: io.string,
   trial_id: io.number,
-  validation_error: io.union([ io.number, io.null ]),
+  validation_error: io.union([ io.number, ioNullOrUndefined ]),
 });
 
 export const ioExperimentDetails = io.type({
   archived: io.boolean,
   config: ioExperimentConfig,
-  end_time: io.union([ io.string, io.null ]),
+  end_time: io.union([ io.string, ioNullOrUndefined ]),
   id: io.number,
   owner: ioOwner,
-  progress: io.union([ io.number, io.null ]),
+  progress: io.union([ io.number, ioNullOrUndefined ]),
   start_time: io.string,
   state: runStatesIoType,
   trials: io.array(ioTrial),
@@ -281,9 +300,9 @@ const ioLogLevels: Record<string, null> = Object.values(LogLevel)
 const ioLogLevelType = io.keyof(ioLogLevels);
 export const ioLog = io.type({
   id: io.number,
-  level: io.union([ ioLogLevelType, io.undefined ]),
+  level: io.union([ ioLogLevelType, ioNullOrUndefined ]),
   message: io.string,
-  time: io.union([ io.string, io.undefined ]),
+  time: io.union([ io.string, ioNullOrUndefined ]),
 });
 
 export const ioLogs = io.array(ioLog);
@@ -294,28 +313,25 @@ export type ioTypeLogs = io.TypeOf<typeof ioLogs>;
 const ioTaskLog = io.type({
   assigned_event: io.union([
     io.type({ NumContainers: io.number }),
-    io.null,
+    ioNullOrUndefined,
   ]),
   container_started_event: io.union([
     io.type({ Container: io.type({}) }),
-    io.null,
+    ioNullOrUndefined,
   ]),
-  exited_event: io.union([ io.string, io.null ]),
+  exited_event: io.union([ io.string, ioNullOrUndefined ]),
   id: io.string,
-  log_event: io.union([ io.string, io.null ]),
+  log_event: io.union([ io.string, ioNullOrUndefined ]),
   parent_id: io.string,
-  scheduled_event: io.union([ io.string, io.null ]),
+  scheduled_event: io.union([ io.string, ioNullOrUndefined ]),
   seq: io.number,
-  service_ready_event: io.union([
-    io.type({}),
-    io.null,
-  ]),
+  service_ready_event: io.union([ io.type({}), ioNullOrUndefined ]),
   snapshot: io.type({
     config: io.type({
       description: io.string,
     }),
   }),
-  terminate_request_event: io.union([ io.string, io.null ]),
+  terminate_request_event: io.union([ io.string, ioNullOrUndefined ]),
   time: io.string,
 });
 

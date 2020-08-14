@@ -143,7 +143,7 @@ export const getExperimentDetails: Api<ExperimentDetailsParams, ExperimentDetail
 
 export const getTrialDetails: Api<TrialDetailsParams, TrialDetails> = {
   httpOptions: (params: TrialDetailsParams) => ({
-    url: `/trials/${params.id}`,
+    url: `/trials/${params.id}/details`,
   }),
   name: 'getTrialDetails',
   postProcess: response => jsonToTrialDetails(response.data),

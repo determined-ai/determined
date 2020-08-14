@@ -352,12 +352,9 @@ sideTabs model =
 
         tabs =
             [ ( text "Dashboard", Route.Dashboard, i [ class "icon-user flex-grow-0", iconAttribute ] [] )
-            , ( text "Experiments", Route.ExperimentList Route.defaultExperimentListOptions, i [ class "icon-experiment flex-grow-0", iconAttribute ] [] )
-            , ( text "Notebooks", Route.NotebookList Route.defaultCommandLikeListOptions, i [ class "icon-notebook flex-grow-0", iconAttribute ] [] )
-            , ( text "TensorBoards", Route.TensorBoardList Route.defaultCommandLikeListOptions, i [ class "icon-tensorboard flex-grow-0", iconAttribute ] [] )
+            , ( text "Experiments", Route.ExperimentListReact, i [ class "icon-experiment flex-grow-0", iconAttribute ] [] )
+            , ( text "Tasks", Route.TaskList, i [ class "icon-tasks flex-grow-0", iconAttribute ] [] )
             , ( text "Cluster", Route.Cluster, i [ class "icon-cluster flex-grow-0", iconAttribute ] [] )
-            , ( text "Shells", Route.ShellList Route.defaultCommandLikeListOptions, i [ class "icon-shell flex-grow-0", iconAttribute ] [] )
-            , ( text "Commands", Route.CommandList Route.defaultCommandLikeListOptions, i [ class "icon-command flex-grow-0", iconAttribute ] [] )
             ]
 
         selectedTabRoute =

@@ -1058,6 +1058,7 @@ jobs:
           path: /tmp/test-results/
       - slack/status:
           fail_only: True
+          only_for_branches: master
           failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
@@ -1129,6 +1130,7 @@ jobs:
           region: <<parameters.region>>
       - slack/status:
           fail_only: True
+          only_for_branches: master
           failure_message: ':thisisfine: A \`<<parameters.mark>>\` E2E GKE GPU job on branch \`${CIRCLE_BRANCH}\` has failed! Author Email: \`${AUTHOR_EMAIL}\`'
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>

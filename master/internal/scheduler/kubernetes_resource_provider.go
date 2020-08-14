@@ -181,7 +181,7 @@ func (k *kubernetesResourceProvider) scheduleTask(ctx *actor.Context, task *Task
 		}
 
 		if task.SlotsNeeded()%k.config.SlotsPerNode != 0 {
-			ctx.Log().WithField("task-id", task.ID).Error(
+			ctx.Log().WithField("task-id", task.ID).Errorf(
 				"task number of slots (%d) is not schedulable on the configured "+
 					"slots_per_node (%d)", task.SlotsNeeded(), k.config.SlotsPerNode)
 			return

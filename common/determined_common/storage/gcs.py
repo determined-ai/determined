@@ -1,7 +1,6 @@
 import contextlib
 import logging
 import os
-import random
 import tempfile
 from typing import Iterator, Optional
 
@@ -10,6 +9,7 @@ import urllib3.exceptions
 from google.api_core import retry
 from google.cloud import storage
 
+from determined_common import util
 from determined_common.storage.base import StorageManager, StorageMetadata
 
 retry_network_errors = retry.Retry(
@@ -65,8 +65,8 @@ class GCSStorageManager(StorageManager):
         finally:
             self._remove_checkpoint_directory(metadata.storage_id)
 
+    @util.preserve_random_state
     def upload(self, metadata: StorageMetadata, storage_dir: str) -> None:
-        rand_state = random.getstate()
         for rel_path in metadata.resources.keys():
             blob_name = "{}/{}".format(metadata.storage_id, rel_path)
             blob = self.bucket.blob(blob_name)
@@ -81,10 +81,7 @@ class GCSStorageManager(StorageManager):
                 abs_path = os.path.join(storage_dir, rel_path)
                 retry_network_errors(blob.upload_from_filename)(abs_path)
 
-        # retry_network_errors affects the random state.
-        # For reproducibility, restore the random state to what it was before uploading
-        random.setstate(rand_state)
-
+    @util.preserve_random_state
     def download(self, metadata: StorageMetadata, storage_dir: str) -> None:
         for rel_path in metadata.resources.keys():
             abs_path = os.path.join(storage_dir, rel_path)
@@ -102,6 +99,7 @@ class GCSStorageManager(StorageManager):
 
             blob.download_to_filename(abs_path)
 
+    @util.preserve_random_state
     def delete(self, metadata: StorageMetadata) -> None:
         logging.info("Deleting checkpoint {} from GCS".format(metadata.storage_id))
 

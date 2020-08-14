@@ -29,26 +29,25 @@ def structure_equal(a: Any, b: Any) -> bool:
     Confirm two structures are equal. Does not handle floating point error.
     """
     if isinstance(a, np.ndarray) and isinstance(b, np.ndarray):
-        return np.all(a == b)
+        if not np.all(a == b):
+            print(f"ndarrays not equal: {a} vs {b}")
+            return False
+        return True
 
     if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
         if len(a) != len(b):
             return False
         for a_elem, b_elem in zip(a, b):
-            print(f"{a_elem} vs {b_elem}: {structure_equal(a_elem, b_elem)}")
-        for a_elem, b_elem in zip(a, b):
             if not structure_equal(a_elem, b_elem):
-                print("listfalse")
+                print(f"lists not equal: {a_elem} vs {b_elem}")
                 return False
         return True
 
     if isinstance(a, dict) and isinstance(b, dict):
         assert set(a.keys()) == set(b.keys())
         for key in a:
-            print(f"{a[key]} vs {b[key]}: {structure_equal(a[key], b[key])}")
-        for key in a:
             if not structure_equal(a[key], b[key]):
-                print("dictfalse")
+                print(f"dict values for key {key} not equal: {a[key]} vs {b[key]}")
                 return False
         return True
 

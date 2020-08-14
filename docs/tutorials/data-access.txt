@@ -57,11 +57,11 @@ Rather than downloading the entire training data set from object storage during 
 * If the data set is extremely large, streaming can avoid the need to store the entire data set on disk.
 * Streaming can allow model training and data downloading to happen in parallel, improving performance.
 
-To enable streaming data loading, the data must be stored in a format that allows efficient random access, so that the model code can fetch a specific batch of training or validation data. One way to do this is to store each batch of data as a separate object on the object store. Alternatively, if the data set consists of fixed-size records, you can use a single object and then read the appropriate byte range from it.
+To perform streaming data loading, the data must be stored in a format that allows efficient random access, so that the model code can fetch a specific batch of training or validation data. One way to do this is to store each batch of data as a separate object in the object store. Alternatively, if the data set consists of fixed-size records, you can use a single object and then read the appropriate byte range from it.
 
-To stream data, a custom ``torch.utils.data.Dataset`` or ``tf.keras.utils.Sequence`` object is required, depending on whether you are using PyTorch or TensorFlow Keras, respectively. These classes require a ``__getitem__`` function that returns a batch or specific item based on provided an index. When streaming data, the implementation of ``__getitem__`` should fetch the required data from the object store.
+To stream data, a custom ``torch.utils.data.Dataset`` or ``tf.keras.utils.Sequence`` object is required, depending on whether you are using PyTorch or TensorFlow Keras, respectively. These classes require a ``__getitem__`` method that is passed an index and returns the associated batch or record of data. When streaming data, the implementation of ``__getitem__`` should fetch the required data from the object store.
 
-For example, the code below demonstrates a custom ``tf.keras.utils.Sequence`` class that implements streaming data loading from Amazon S3. In the ``__getitem__`` function, ``boto3`` fetches the data based on the provided bucket and key.
+The code below demonstrates a custom ``tf.keras.utils.Sequence`` class that streams data from Amazon S3. In the ``__getitem__`` method, ``boto3`` is used to fetch the data based on the provided bucket and key.
 
 .. code:: python
 

@@ -4,6 +4,7 @@ from typing import Any, Optional
 import boto3
 
 from determined.tensorboard import base
+from determined_common import util
 
 
 class S3TensorboardManager(base.TensorboardManager):
@@ -29,6 +30,7 @@ class S3TensorboardManager(base.TensorboardManager):
             aws_secret_access_key=secret_key,
         )
 
+    @util.preserve_random_state
     def sync(self) -> None:
         for path in self.to_sync():
             key_name = str(self.sync_path.joinpath(path.name))

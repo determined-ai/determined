@@ -49,13 +49,14 @@ class ExperimentReference:
         return checkpoints[0]
 
     def top_n_checkpoints(
-        self, limit: int, sort_by: Optional[str] = None, smaller_is_better: Optional[bool] = None
+        self, limit: int, sort_by: Optional[str] = None, smaller_is_better: Optional[bool] = None,
     ) -> List[checkpoint.Checkpoint]:
         """
         Return the N :class:`~determined.experimental.Checkpoint` instances with the best
         validation metric values as defined by the ``sort_by`` and ``smaller_is_better``
         arguments. This method will return the best checkpoint from the
-        top N performing distinct trials of the experiment.
+        top N performing distinct trials of the experiment. Only checkpoints in
+        a COMPLETED state with a matching COMPLETED validation are considered.
 
         Arguments:
             sort_by (string, optional): The name of the validation metric to use for
@@ -68,17 +69,33 @@ class ExperimentReference:
                 this parameter is ignored. By default, the value of ``smaller_is_better``
                 from the experiment's configuration is used.
         """
-        r = api.get(self._master, "checkpoints", params={"experiment_id": self.id}).json()
+        r = api.get(
+            self._master,
+            "/api/v1/experiments/{}/checkpoints".format(self.id),
+            params={
+                "states": checkpoint.CheckpointState.COMPLETED.value,
+                "validation_states": checkpoint.CheckpointState.COMPLETED.value,
+            },
+        )
+        checkpoints = r.json()["checkpoints"]
 
-        if not r:
-            raise AssertionError("No checkpoint found for trial {}".format(self.id))
+        if not checkpoints:
+            raise AssertionError("No checkpoint found for experiment {}".format(self.id))
 
         if not sort_by:
-            sort_by = r[0]["experiment_config"]["searcher"]["metric"]
-            smaller_is_better = r[0]["experiment_config"]["searcher"]["smaller_is_better"]
+            sort_by = checkpoints[0]["experimentConfig"]["searcher"]["metric"]
+            smaller_is_better = checkpoints[0]["experimentConfig"]["searcher"]["smaller_is_better"]
 
-        r.sort(
-            reverse=not smaller_is_better, key=lambda x: x["metrics"]["validation_metrics"][sort_by]
+        checkpoints.sort(
+            reverse=not smaller_is_better, key=lambda x: x["metrics"]["validationMetrics"][sort_by]
         )
 
-        return [checkpoint.Checkpoint.from_json(ckpt, self._master) for ckpt in r[:limit]]
+        # Ensure returned checkpoints are from distinct trials.
+        t_ids = set()
+        checkpoint_refs = []
+        for ckpt in checkpoints:
+            if ckpt["trialId"] not in t_ids:
+                checkpoint_refs.append(checkpoint.Checkpoint.from_json(ckpt, self._master))
+                t_ids.add(ckpt["trialId"])
+
+        return checkpoint_refs[:limit]

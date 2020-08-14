@@ -63,6 +63,34 @@ Yes: specify the registry path as part of the custom image name. See the
 documentation on :ref:`custom Docker images <custom-docker-images>` for
 more details.
 
+Experiment Management
+---------------------
+
+What happens when an experiment is archived?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Archiving is designed to make it easier to organize experiments by omitting
+information about experiment runs that are no longer relevant (e.g., training
+jobs that failed with an error or jobs submitted as part of the model
+development process).
+
+When an experiment is archived, it is hidden from the default view in both the
+WebUI and the CLI, but all of the metadata associated with the experiment
+(including checkpoints) is preserved. An experiment can subsequently be
+unarchived if desired, without losing any of the experiment's
+metadata.
+
+How can I delete model checkpoints that are no longer useful?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The best way to delete a checkpoint is to modify the garbage collection policy
+of the experiment that created the checkpoint. For example, to delete *all* of
+the experiments associated with an experiment, run:
+
+.. code::
+
+    det experiment set gc-policy --save-experiment-best 0 --save-trial-best 0 --save-trial-latest 0 <experiment-id>
+
 Multi-GPU Training
 ------------------
 

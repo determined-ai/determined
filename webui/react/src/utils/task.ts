@@ -192,7 +192,7 @@ export const processExperiments = (experiments: Experiment[], users: User[]): Ex
     return {
       ...experiment,
       name: experiment.config.description,
-      url: `/ui/experiments/${experiment.id}`,
+      url: `/det/experiments/${experiment.id}`,
       username: userMap[experiment.ownerId],
     };
   });

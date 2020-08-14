@@ -379,10 +379,11 @@ class PyTorchTrialContext(det.TrialContext):
             When using distributed training, we don't support manual gradient accumulation.
             That means the gradient on each parameter can only be calculated once on each batch.
             If a parameter is associated with multiple losses, you can either choose to call
-            backward on only one of those losses or you could set require_grads flag of a
+            backward on only one of those losses or you could set ``require_grads`` flag of a
             parameter or module to false to avoid manual gradient accumulation on that parameter.
-            However, you could do gradient accumulation across batches by setting the aggregation
-            frequency in the experiment configuration to be more than 1.
+            However, you can do gradient accumulation across batches by setting
+            :ref:`optimizations.aggregation_frequency <config-aggregation-frequency>` in the
+            experiment configuration to be greater than 1.
 
         Arguments:
             gradient (Tensor or None): Gradient w.r.t. the
@@ -461,7 +462,7 @@ class PyTorchTrialContext(det.TrialContext):
         different optimizers' steps can be specified by calling this function in different
         orders. Also, gradient accumulation across iterations is performed by the Determined
         training loop by setting the experiment configuration field
-        ``optimization.aggregation_frequency``.
+        :ref:`optimizations.aggregation_frequency <config-aggregation-frequency>`.
 
         Here is a code example:
 
@@ -475,11 +476,11 @@ class PyTorchTrialContext(det.TrialContext):
         Arguments:
             optimizer(``torch.optim.Optimizer``): Which optimizer should be stepped.
             clip_grads(a function, optional): This function should have one argument for
-                parameters in order to clip the gradients
-            auto_zero_grads(bool, optional): Automatically zero out gradients automatically
-                after stepping the optimizer. If false, you need to call ``optimizer.zero_grad()``
-                manually. Note that if ``optimizations.aggregation_frequency`` is larger than 1,
-                auto_zero_grads must be true.
+                parameters in order to clip the gradients.
+            auto_zero_grads(bool, optional): Automatically zero out gradients automatically after
+                stepping the optimizer. If false, you need to call ``optimizer.zero_grad()``
+                manually. Note that if :ref:`optimizations.aggregation_frequency
+                <config-aggregation-frequency>` is greater than 1, ``auto_zero_grads`` must be true.
         """
 
         check.true(

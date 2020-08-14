@@ -7,9 +7,19 @@ from tests import experiment as exp
 
 @pytest.mark.e2e_gpu  # type: ignore
 @pytest.mark.parametrize("aggregation_frequency", [1, 4])  # type: ignore
-def test_pytorch_11_const(aggregation_frequency: int) -> None:
+def test_pytorch_11_const(aggregation_frequency: int, using_k8s: bool) -> None:
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
+
+    if using_k8s:
+        pod_spec = {
+            "metadata": {"labels": {"ci": "testing"}},
+            "spec": {
+                "containers": [{"volumeMounts": [{"name": "temp1", "mountPath": "/random"}]}],
+                "volumes": [{"name": "temp1", "emptyDir": {}}],
+            },
+        }
+        config = conf.set_pod_spec(config, pod_spec)
 
     exp.run_basic_test_with_temp_config(
         config, conf.official_examples_path("trial/mnist_pytorch"), 1

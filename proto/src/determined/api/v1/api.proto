@@ -8,6 +8,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/api/v1/agent.proto";
 import "determined/api/v1/auth.proto";
+import "determined/api/v1/checkpoint.proto";
 import "determined/api/v1/command.proto";
 import "determined/api/v1/experiment.proto";
 import "determined/api/v1/master.proto";
@@ -146,6 +147,33 @@ service Determined {
         option (google.api.http) = {post: "/api/v1/experiments/{id}/pause" };
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
+    // Cancel an experiment.
+    rpc CancelExperiment(CancelExperimentRequest) returns (CancelExperimentResponse) {
+        option (google.api.http) = {post: "/api/v1/experiments/{id}/cancel" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
+    // Kill an experiment.
+    rpc KillExperiment(KillExperimentRequest) returns (KillExperimentResponse) {
+        option (google.api.http) = {post: "/api/v1/experiments/{id}/kill" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
+    // Archive an experiment.
+    rpc ArchiveExperiment(ArchiveExperimentRequest) returns (ArchiveExperimentResponse) {
+        option (google.api.http) = {post: "/api/v1/experiments/{id}/archive" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
+    // Unarchive an experiment.
+    rpc UnarchiveExperiment(UnarchiveExperimentRequest) returns (UnarchiveExperimentResponse) {
+        option (google.api.http) = {post: "/api/v1/experiments/{id}/unarchive" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
+
+
+    // Get a list of checkpoints for an experiment.
+    rpc GetExperimentCheckpoints(GetExperimentCheckpointsRequest) returns (GetExperimentCheckpointsResponse) {
+        option (google.api.http) = {get: "/api/v1/experiments/{id}/checkpoints" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
 
     // Preview hyperparameter search.
     rpc PreviewHPSearch(PreviewHPSearchRequest) returns (PreviewHPSearchResponse) {
@@ -156,6 +184,12 @@ service Determined {
     rpc TrialLogs(TrialLogsRequest) returns (stream TrialLogsResponse) {
         option (google.api.http) = {get: "/api/v1/trials/{trial_id}/logs"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
+
+    // Get a list of checkpoints for a trial.
+    rpc GetTrialCheckpoints(GetTrialCheckpointsRequest) returns (GetTrialCheckpointsResponse) {
+      option (google.api.http) = {get: "/api/v1/trials/{id}/checkpoints"};
+      option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
 
     // Get a list of templates.
@@ -277,5 +311,11 @@ service Determined {
     rpc PostModelVersion(PostModelVersionRequest) returns (PostModelVersionResponse) {
       option (google.api.http) = {post: "/api/v1/models/{model_name}/versions" body: "*"};
       option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Models"};
+    }
+
+    // Get the requested checkpoint.
+    rpc GetCheckpoint(GetCheckpointRequest) returns (GetCheckpointResponse) {
+      option (google.api.http) = {get: "/api/v1/checkpoints/{checkpoint_uuid}"};
+      option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Checkpoints"};
     }
 }

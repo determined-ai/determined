@@ -1,5 +1,7 @@
+import functools
 import os
-from typing import Iterator, Sequence, TypeVar, Union, overload
+import random
+from typing import Any, Callable, Iterator, Sequence, TypeVar, Union, overload
 
 T = TypeVar("T")
 
@@ -42,3 +44,17 @@ def get_default_master_address() -> str:
 
 def debug_mode() -> bool:
     return os.getenv("DET_DEBUG", "").lower() in ("true", "1", "yes")
+
+
+def preserve_random_state(fn: Callable) -> Callable:
+    """A decorator to run a function with a fork of the random state."""
+
+    @functools.wraps(fn)
+    def wrapped(*arg: Any, **kwarg: Any) -> Any:
+        state = random.getstate()
+        try:
+            return fn(*arg, **kwarg)
+        finally:
+            random.setstate(state)
+
+    return wrapped

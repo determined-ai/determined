@@ -291,8 +291,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		e.processOperations(ctx, ops, err)
 	case trialCompletedWorkload:
 		e.searcher.WorkloadCompleted(msg.completedMessage, msg.unitsCompleted)
-		e.processOperations(ctx, nil, nil) // we call processOperations to flush searcher events.
-		if msg.completedMessage.Workload.Kind == searcher.ComputeValidationMetrics {
+		e.processOperations(ctx, nil, nil) // We call processOperations to flush searcher events.
+		if msg.completedMessage.Workload.Kind == searcher.ComputeValidationMetrics &&
+			// Messages indicating trial failures won't have metrics (or need their status).
+			msg.completedMessage.ExitedReason == nil {
 			ctx.Respond(e.isBestValidation(*msg.completedMessage.ValidationMetrics))
 		}
 		progress := e.searcher.Progress()
@@ -408,6 +410,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(status.Errorf(codes.FailedPrecondition,
 				"experiment in incompatible state %s", e.State))
 		}
+
 	case *apiv1.PauseExperimentRequest:
 		switch ok := e.updateState(ctx, model.PausedState); ok {
 		case true:
@@ -416,7 +419,42 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 			ctx.Respond(status.Errorf(codes.FailedPrecondition,
 				"experiment in incompatible state %s", e.State))
 		}
+
+	case *apiv1.CancelExperimentRequest:
+		switch {
+		case model.StoppingStates[e.State] || model.TerminalStates[e.State]:
+			ctx.Respond(&apiv1.CancelExperimentResponse{})
+		default:
+			switch ok := e.updateState(ctx, model.StoppingCanceledState); ok {
+			case true:
+				ctx.Respond(&apiv1.CancelExperimentResponse{})
+				for _, child := range ctx.Children() {
+					ctx.Tell(child, killTrial{})
+				}
+			default:
+				ctx.Respond(status.Errorf(codes.FailedPrecondition,
+					"experiment in incompatible state %s", e.State))
+			}
+		}
+
+	case *apiv1.KillExperimentRequest:
+		switch {
+		case model.StoppingStates[e.State] || model.TerminalStates[e.State]:
+			ctx.Respond(&apiv1.KillExperimentResponse{})
+		default:
+			switch ok := e.updateState(ctx, model.StoppingCanceledState); ok {
+			case true:
+				ctx.Respond(&apiv1.KillExperimentResponse{})
+				for _, child := range ctx.Children() {
+					ctx.Tell(child, killTrial{})
+				}
+			default:
+				ctx.Respond(status.Errorf(codes.FailedPrecondition,
+					"experiment in incompatible state %s", e.State))
+			}
+		}
 	}
+
 	return nil
 }
 

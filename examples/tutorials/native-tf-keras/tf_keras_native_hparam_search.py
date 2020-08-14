@@ -38,12 +38,13 @@ config = {
 # possible choices of hyperparameters. See :ref:`topic-guides_hp-tuning-det` for
 # a full list of available hyperparameter tuning algorithms.
 
-(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
-x_train, x_test = x_train / 255.0, x_test / 255.0
-
 # When running this code from a notebook, add a `command` argument to init()
 # specifying the notebook file name.
 context = init(config, context_dir=".")
+
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+x_train, x_test = x_train / 255.0, x_test / 255.0
+
 model = tf.keras.models.Sequential(
     [
         tf.keras.layers.Flatten(input_shape=(28, 28)),

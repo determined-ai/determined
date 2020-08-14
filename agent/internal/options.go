@@ -34,6 +34,8 @@ type Options struct {
 	HTTPSProxy string `json:"https_proxy"`
 	FTPProxy   string `json:"ftp_proxy"`
 	NoProxy    string `json:"no_proxy"`
+
+	Security SecurityOptions `json:"security"`
 }
 
 // Validate validates the state of the Options struct.
@@ -63,4 +65,25 @@ func (o Options) Printable() ([]byte, error) {
 		return nil, errors.Wrap(err, "unable to convert config to JSON")
 	}
 	return optJSON, nil
+}
+
+// SecurityOptions stores configurable security-related options.
+type SecurityOptions struct {
+	TLS TLSOptions `json:"tls"`
+}
+
+// TLSOptions is the TLS connection configuration for the agent.
+type TLSOptions struct {
+	Enabled    bool   `json:"enabled"`
+	SkipVerify bool   `json:"skip_verify"`
+	MasterCert string `json:"master_cert"`
+}
+
+// Validate implements the check.Validatable interface.
+func (t TLSOptions) Validate() []error {
+	var errs []error
+	if t.MasterCert != "" && t.SkipVerify {
+		errs = append(errs, errors.New("cannot specify a master cert file with verification off"))
+	}
+	return errs
 }

@@ -143,11 +143,14 @@ type Route
     | Dashboard
     | CommandList CommandLikeListOptions
     | ExperimentDetail Int
+    | ExperimentDetailReact Int
     | ExperimentList ExperimentListOptions
+    | ExperimentListReact
     | Login (Maybe Url.Url)
     | Logout
     | NotebookList CommandLikeListOptions
     | ShellList CommandLikeListOptions
+    | TaskList
     | TensorBoardList CommandLikeListOptions
     | TrialDetail Int
     | LogViewer Int
@@ -253,6 +256,9 @@ toString r =
         ExperimentDetail id ->
             absolute [ "ui", "experiments", String.fromInt id ] []
 
+        ExperimentDetailReact id ->
+            absolute [ "det", "experiments", String.fromInt id ] []
+
         ExperimentList options ->
             let
                 statesToString =
@@ -270,6 +276,9 @@ toString r =
                         |> List.filterMap identity
             in
             absolute [ "ui", "experiments" ] parameters
+
+        ExperimentListReact ->
+            absolute [ "det", "experiments" ] []
 
         Login maybeRedirect ->
             case maybeRedirect of
@@ -295,6 +304,9 @@ toString r =
             absolute
                 [ "ui", "shells" ]
                 (commandLikeParameters options)
+
+        TaskList ->
+            absolute [ "det", "tasks" ] []
 
         TensorBoardList options ->
             absolute

@@ -4,6 +4,7 @@ from typing import Any, Optional
 from hdfs.client import InsecureClient
 
 from determined.tensorboard import base
+from determined_common import util
 
 
 class HDFSTensorboardManager(base.TensorboardManager):
@@ -11,6 +12,7 @@ class HDFSTensorboardManager(base.TensorboardManager):
     Store and tfevents files to HDFS.
     """
 
+    @util.preserve_random_state
     def __init__(
         self, hdfs_url: str, hdfs_path: str, user: Optional[str] = None, *args: Any, **kwargs: Any,
     ) -> None:
@@ -22,6 +24,7 @@ class HDFSTensorboardManager(base.TensorboardManager):
         self.client = InsecureClient(self.hdfs_url, root=self.hdfs_path, user=self.user)
         self.client.makedirs(str(self.sync_path))
 
+    @util.preserve_random_state
     def sync(self) -> None:
         for path in self.to_sync():
             file_name = str(self.sync_path.joinpath(path.name))

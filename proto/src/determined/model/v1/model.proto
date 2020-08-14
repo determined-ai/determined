@@ -3,7 +3,7 @@ syntax = "proto3";
 package determined.model.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/modelv1";
 
-import "determined/experiment/v1/checkpoint.proto";
+import "determined/checkpoint/v1/checkpoint.proto";
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
@@ -35,7 +35,7 @@ message ModelVersion {
   // The model the version is related to.
   Model model = 1;
   // The checkpoint of the model version.
-  determined.experiment.v1.Checkpoint checkpoint = 2;
+  determined.checkpoint.v1.Checkpoint checkpoint = 2;
   // The version number.
   int32 version = 3;
   // The time the model version was created.

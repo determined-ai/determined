@@ -25,7 +25,7 @@ def test_bert_glue() -> None:
 @pytest.mark.nightly  # type: ignore
 def test_faster_rcnn() -> None:
     config = conf.load_config(conf.experimental_path("trial/FasterRCNN_tp/16-gpus.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_max_length(config, {"batches": 128})
     config = conf.set_slots_per_trial(config, 1)
 
     exp.run_basic_test_with_temp_config(
@@ -36,7 +36,7 @@ def test_faster_rcnn() -> None:
 @pytest.mark.nightly  # type: ignore
 def test_mnist_tp_to_estimator() -> None:
     config = conf.load_config(conf.experimental_path("trial/mnist_tp_to_estimator/const.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
+    config = conf.set_max_length(config, {"batches": 32})
 
     exp.run_basic_test_with_temp_config(
         config, conf.experimental_path("trial/mnist_tp_to_estimator"), 1

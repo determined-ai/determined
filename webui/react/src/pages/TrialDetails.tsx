@@ -1,6 +1,6 @@
-import { Breadcrumb, Space } from 'antd';
+import { Breadcrumb, Col, Row, Space } from 'antd';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
 import CreateExperimentModal from 'components/CreateExperimentModal';
@@ -10,15 +10,20 @@ import Message from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
-import TrialActions, { Action as TrialAction } from 'components/TrialActions';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
+import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
+import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { TrialDetailsParams } from 'services/types';
-import { TrialDetails } from 'types';
+import { ExperimentDetails, TrialDetails } from 'types';
 import { clone } from 'utils/data';
+import { extractMetricNames } from 'utils/trial';
 import { trialHParamsToExperimentHParams } from 'utils/types';
+
+import css from './TrialDetails.module.scss';
+import TrialChart from './TrialDetails/TrialChart';
 
 interface Params {
   trialId: string;
@@ -31,6 +36,8 @@ const TrialDetailsComp: React.FC = () => {
     useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
   const [ contModalVisible, setContModalVisible ] = useState(false);
   const [ contModalConfig, setContModalConfig ] = useState('Loading');
+
+  const metricNames = useMemo(() => extractMetricNames(trial.data?.steps), [ trial.data?.steps ]);
 
   const pollTrialDetails = useCallback(
     () => triggerTrialRequest({ id: trialId }),
@@ -84,6 +91,15 @@ const TrialDetailsComp: React.FC = () => {
     }
   }, [ ]);
 
+  const [ experiment, setExperiment ] = useState<ExperimentDetails>();
+
+  useEffect(() => {
+    // TODO find a solution to conditional polling
+    if (experimentId === undefined) return;
+    getExperimentDetails({ id:experimentId })
+      .then(experiment => setExperiment(experiment));
+  }, [ experimentId ]);
+
   if (isNaN(trialId)) {
     return (
       <Page id="page-error-message">
@@ -102,7 +118,7 @@ const TrialDetailsComp: React.FC = () => {
     );
   }
 
-  if (!trial.data || !experimentId) {
+  if (!trial.data || !experiment) {
     return <Spinner fillContainer />;
   }
 
@@ -122,13 +138,26 @@ const TrialDetailsComp: React.FC = () => {
       <TrialActions trial={trial.data}
         onClick={handleActionClick}
         onSettled={pollTrialDetails} />
-      <Section title="Info Box" />
-      <Section title="Chart" />
-      <Section title="Steps" />
+      <Row className={css.topRow} gutter={[ 16, 16 ]}>
+        <Col lg={10} span={24} xl={8} xxl={6}>
+          <TrialInfoBox experiment={experiment} trial={trial.data} />
+        </Col>
+        <Col lg={14} span={24} xl={16} xxl={18}>
+          <TrialChart
+            metricNames={metricNames}
+            steps={trial.data?.steps}
+            validationMetric={experiment.config?.searcher.metric} />
+        </Col>
+        <Col span={24}>
+          <Section title="Trial Information">
+            {/* Table */}
+          </Section>
+        </Col>
+      </Row>
       <CreateExperimentModal
         config={contModalConfig}
         okText="Create"
-        parentId={experimentId}
+        parentId={experiment.id}
         title={`Continue Trial ${trialId}`}
         visible={contModalVisible}
         onConfigChange={setContModalConfig}
