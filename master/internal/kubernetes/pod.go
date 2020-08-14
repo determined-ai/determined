@@ -5,6 +5,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -139,13 +140,13 @@ func (p *pod) Receive(ctx *actor.Context) error {
 		})
 
 	case actor.PostStop:
+		defer p.finalizeTaskState(ctx)
+
 		if !p.leaveKubernetesResources {
 			if err := p.deleteKubernetesResources(ctx); err != nil {
 				return err
 			}
 		}
-
-		p.finalizeTaskState(ctx)
 
 	case actor.ChildStopped:
 
@@ -311,19 +312,21 @@ func (p *pod) deleteKubernetesResources(ctx *actor.Context) error {
 	var gracePeriod int64 = 15
 	err := p.podInterface.Delete(p.podName, &metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
 	if err != nil {
-		return errors.Wrapf(err, "pod deletion failed %s", p.podName)
+		ctx.Log().WithError(err).Errorf("pod deletion failed %s", p.podName)
 	}
 
 	for _, cf := range p.configMaps {
-		err = p.configMapInterface.Delete(cf.Name, &metaV1.DeleteOptions{
+		errDeletingConfigMap := p.configMapInterface.Delete(cf.Name, &metaV1.DeleteOptions{
 			GracePeriodSeconds: &gracePeriod})
-		if err != nil {
-			return errors.Wrapf(err, "config map deletion failed %s", cf.Name)
+
+		if errDeletingConfigMap != nil {
+			ctx.Log().WithError(errDeletingConfigMap).Errorf("config map deletion failed %s", cf.Name)
+			err = errDeletingConfigMap
 		}
 	}
 
 	p.resourcesDeleted = true
-	return nil
+	return err
 }
 
 func (p *pod) finalizeTaskState(ctx *actor.Context) {
@@ -380,6 +383,9 @@ func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 	return k8sV1.ResourceRequirements{
 		Limits: map[k8sV1.ResourceName]resource.Quantity{
+			"nvidia.com/gpu": *resource.NewQuantity(int64(p.gpus), resource.DecimalSI),
+		},
+		Requests: map[k8sV1.ResourceName]resource.Quantity{
 			"nvidia.com/gpu": *resource.NewQuantity(int64(p.gpus), resource.DecimalSI),
 		},
 	}
@@ -496,30 +502,67 @@ func (p *pod) configureVolumes(
 }
 
 func (p *pod) configurePodSpec(
+	ctx *actor.Context,
 	volumes []k8sV1.Volume,
 	initContainers []k8sV1.Container,
 	containers []k8sV1.Container,
+	podSpec *k8sV1.Pod,
 ) *k8sV1.Pod {
-	return &k8sV1.Pod{
-		ObjectMeta: metaV1.ObjectMeta{
-			Name:      p.podName,
-			Namespace: p.namespace,
-			Labels:    map[string]string{determinedLabel: p.taskSpec.TaskID},
-		},
-		Spec: k8sV1.PodSpec{
-			Volumes:        volumes,
-			HostNetwork:    p.taskSpec.TaskContainerDefaults.NetworkMode.IsHost(),
-			InitContainers: initContainers,
-			Containers:     containers,
-			RestartPolicy:  k8sV1.RestartPolicyNever,
-		},
+	if podSpec == nil {
+		podSpec = &k8sV1.Pod{}
+	} else {
+		podSpec = podSpec.DeepCopy()
 	}
+
+	podSpec.ObjectMeta.Name = p.podName
+	podSpec.ObjectMeta.Namespace = p.namespace
+	if podSpec.ObjectMeta.Labels == nil {
+		podSpec.ObjectMeta.Labels = make(map[string]string)
+	}
+	podSpec.ObjectMeta.Labels[determinedLabel] = p.taskSpec.TaskID
+
+	if len(podSpec.Spec.Containers) > 0 {
+		for k, v := range podSpec.Spec.Containers[0].Resources.Limits {
+			if _, present := containers[0].Resources.Limits[k]; !present {
+				containers[0].Resources.Limits[k] = v
+			}
+		}
+
+		for k, v := range podSpec.Spec.Containers[0].Resources.Requests {
+			if _, present := containers[0].Resources.Requests[k]; !present {
+				containers[0].Resources.Requests[k] = v
+			}
+		}
+
+		containers[0].VolumeMounts = append(
+			containers[0].VolumeMounts, podSpec.Spec.Containers[0].VolumeMounts...)
+
+		containers[0].VolumeDevices = append(
+			containers[0].VolumeDevices, podSpec.Spec.Containers[0].VolumeDevices...)
+	}
+
+	podSpec.Spec.Volumes = append(podSpec.Spec.Volumes, volumes...)
+	podSpec.Spec.HostNetwork = p.taskSpec.TaskContainerDefaults.NetworkMode.IsHost()
+	podSpec.Spec.InitContainers = initContainers
+	podSpec.Spec.Containers = containers
+	podSpec.Spec.RestartPolicy = k8sV1.RestartPolicyNever
+
+	return podSpec
 }
 
 func (p *pod) launchPod(ctx *actor.Context, podSpec *k8sV1.Pod) error {
+	ctx.Log().Debugf("launching pod with spec %v", podSpec.Spec)
 	var err error
 	p.pod, err = p.podInterface.Create(podSpec)
 	if err != nil {
+		errMsg := err.Error()
+		ctx.Tell(p.taskHandler, sproto.ContainerLog{
+			Container:   p.container,
+			Timestamp:   time.Now(),
+			PullMessage: nil,
+			RunMessage:  nil,
+			AuxMessage:  &errMsg,
+		})
 		return errors.Wrap(err, "error creating pod")
 	}
 	ctx.Log().Infof("Created pod %s", p.pod.Name)
@@ -579,7 +622,8 @@ func (p *pod) startPodForTrial(ctx *actor.Context) error {
 		},
 	}
 
-	podSpec := p.configurePodSpec(volumes, initContainers, containers)
+	podSpec := p.configurePodSpec(
+		ctx, volumes, initContainers, containers, exp.ExperimentConfig.Environment.PodSpec)
 	return p.launchPod(ctx, podSpec)
 }
 
@@ -634,7 +678,8 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 		},
 	}
 
-	podSpec := p.configurePodSpec(volumes, initContainers, containers)
+	podSpec := p.configurePodSpec(
+		ctx, volumes, initContainers, containers, cmd.Config.Environment.PodSpec)
 	return p.launchPod(ctx, podSpec)
 }
 
@@ -685,7 +730,8 @@ func (p *pod) startPodForGC(ctx *actor.Context) error {
 		},
 	}
 
-	podSpec := p.configurePodSpec(volumes, initContainers, containers)
+	podSpec := p.configurePodSpec(
+		ctx, volumes, initContainers, containers, gcc.ExperimentConfig.Environment.PodSpec)
 	return p.launchPod(ctx, podSpec)
 }
 

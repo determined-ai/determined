@@ -108,6 +108,7 @@ func (e ExperimentConfig) Value() (driver.Value, error) {
 	if err := check.Validate(e); err != nil {
 		return nil, err
 	}
+
 	return json.Marshal(e)
 }
 

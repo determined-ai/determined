@@ -95,7 +95,6 @@ def secrets(request: SubRequest) -> Dict[str, str]:
     """
     Connect to S3 secretsmanager to get the secret values used in integrations tests.
     """
-
     secret_name = "integrations-s3"
     region_name = "us-west-2"
 
@@ -111,3 +110,19 @@ def secrets(request: SubRequest) -> Dict[str, str]:
         pytest.skip("No S3 access")
 
     return cast(Dict[str, str], json.loads(response["SecretString"]))
+
+
+@pytest.fixture(scope="session")
+def using_k8s(request: SubRequest) -> bool:
+    command = [
+        "det",
+        "-m",
+        config.make_master_url(),
+        "master",
+        "config",
+    ]
+
+    output = subprocess.check_output(command, universal_newlines=True, stderr=subprocess.PIPE)
+
+    rp = json.loads(output)["scheduler"]["resource_provider"]["type"]
+    return bool(rp == "kubernetes")

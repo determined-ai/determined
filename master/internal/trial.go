@@ -182,7 +182,7 @@ type trial struct {
 	// numContainers is the number of containers that the scheduler has most recently assigned to run
 	// this trial.
 	numContainers        int
-	startedContainers    int
+	startedContainers    map[container.ID]bool
 	containers           map[scheduler.ContainerID]scheduler.Container
 	terminatedContainers []terminatedContainerWithState
 
@@ -217,8 +217,9 @@ func newTrial(
 		create:    create,
 		replaying: exp.replaying,
 
-		containers: make(map[scheduler.ContainerID]scheduler.Container),
-		sockets:    make(map[scheduler.ContainerID]*actor.Ref),
+		startedContainers: make(map[container.ID]bool),
+		containers:        make(map[scheduler.ContainerID]scheduler.Container),
+		sockets:           make(map[scheduler.ContainerID]*actor.Ref),
 
 		agentUserGroup: exp.agentUserGroup,
 	}
@@ -349,11 +350,12 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		t.pendingGracefulTermination = true
 
 	case sproto.ContainerStateChanged:
+		if msg.Container.State != container.Assigned {
+			t.startedContainers[msg.Container.ID] = true
+		}
 		switch msg.Container.State {
 		case container.Terminated:
 			t.processContainerTerminated(ctx, msg)
-		case container.Pulling:
-			t.startedContainers++
 		}
 
 	case scheduler.TaskAborted:
@@ -822,7 +824,7 @@ func (t *trial) processTaskTerminated(ctx *actor.Context, msg scheduler.TaskTerm
 	}
 
 	status := agent.ContainerError(agent.AgentError, errors.New("no error status provided"))
-	if t.startedContainers == 0 {
+	if len(t.startedContainers) == 0 {
 		// If we have no containers, we haven't started executing anything, so
 		// let resetTrial reset our state rather than treating this as an error.
 		status = agent.ContainerError(agent.TaskAborted, errors.New("task aborted"))
@@ -858,7 +860,7 @@ func (t *trial) resetTrial(
 	t.terminationSent = false
 	t.killed = false
 	t.terminatedContainers = nil
-	t.startedContainers = 0
+	t.startedContainers = make(map[container.ID]bool)
 
 	switch {
 	case status.Failure == nil:
