@@ -259,7 +259,13 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 
 	dbExp, err := m.db.ExperimentByID(args.ExperimentID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "loading experiment %v", args.ExperimentID)
+		if patch.CheckpointStorage != nil {
+			return nil, errors.Wrapf(err, "loading experiment with config %v", args.ExperimentID)
+		}
+		dbExp, err = m.db.ExperimentWithoutConfigByID(args.ExperimentID)
+		if err != nil {
+			return nil, errors.Wrapf(err, "loading experiment %v", args.ExperimentID)
+		}
 	}
 
 	agentUserGroup, err := m.db.AgentUserGroup(*dbExp.OwnerID)
