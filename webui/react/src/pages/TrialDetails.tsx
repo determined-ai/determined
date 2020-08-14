@@ -1,4 +1,4 @@
-import { Breadcrumb, Col, Row, Space } from 'antd';
+import { Breadcrumb, Button, Col, Form, Input, Modal, Row, Space } from 'antd';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
@@ -15,12 +15,14 @@ import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
 import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
+import { routeAll } from 'routes';
+import { forkExperiment } from 'services/api';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { TrialDetailsParams } from 'services/types';
-import { ExperimentDetails, TrialDetails } from 'types';
+import { ExperimentDetails, RawJson, TrialDetails } from 'types';
 import { clone } from 'utils/data';
 import { extractMetricNames } from 'utils/trial';
-import { trialHParamsToExperimentHParams } from 'utils/types';
+import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
 
 import css from './TrialDetails.module.scss';
 import TrialChart from './TrialDetails/TrialChart';
@@ -29,6 +31,32 @@ interface Params {
   trialId: string;
 }
 
+const getTrialLength = (config: RawJson): [string, number] => {
+  const maxLength = config.searcher.max_length;
+  return Object.entries(maxLength)[0] as [string, number];
+};
+
+const setTrialLength = (experimentConfig: RawJson, length: number): void => {
+  const lengthType = getTrialLength(experimentConfig)[0];
+  experimentConfig.searcher.max_length = { [lengthType]: length } ;
+};
+
+const trialContinueConfig =
+(experimentConfig: RawJson, trialHparams: Record<string, string>, trialId: number): RawJson => {
+
+  return {
+    ...experimentConfig,
+    hyperparameters: trialHParamsToExperimentHParams(trialHparams),
+    searcher: {
+      max_length: experimentConfig.searcher.max_length,
+      metric: experimentConfig.searcher.metric,
+      name: experimentConfig.searcher.name,
+      smaller_is_better: experimentConfig.searcher.smaller_is_better,
+      source_trial_id: trialId,
+    },
+  };
+};
+
 const TrialDetailsComp: React.FC = () => {
   const { trialId: trialIdParam } = useParams<Params>();
   const trialId = parseInt(trialIdParam);
@@ -36,6 +64,12 @@ const TrialDetailsComp: React.FC = () => {
     useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
   const [ contModalVisible, setContModalVisible ] = useState(false);
   const [ contModalConfig, setContModalConfig ] = useState('Loading');
+  const [ contFormVisible, setContFormVisible ] = useState<boolean>(false);
+  const [ contMaxLength, setContMaxLength ] = useState<number>();
+  const [ contDescription, setContDescription ] = useState<string>('Loading');
+  const [ contError, setContError ] = useState<string>();
+  const [ experiment, setExperiment ] = useState<ExperimentDetails>();
+  const [ form ] = Form.useForm();
 
   const metricNames = useMemo(() => extractMetricNames(trial.data?.steps), [ trial.data?.steps ]);
 
@@ -47,58 +81,124 @@ const TrialDetailsComp: React.FC = () => {
   const experimentId = trial.data?.experimentId;
   const hparams = trial.data?.hparams;
 
-  useEffect(() => {
-    if (!experimentId || !hparams) return;
-    getExperimentDetails({ id: experimentId })
-      .then(experiment => {
-
-        try {
-          const rawConfig = clone(experiment.configRaw);
-          const newDescription = `Continuation of trial ${trialId}, experiment` +
-          ` ${experiment.id} (${rawConfig.description})`;
-          const newSearcher = {
-            max_steps: 100, // TODO add form
-            metric: rawConfig.searcher.metric,
-            name: rawConfig.searcher.name,
-            smaller_is_better: rawConfig.searcher.smaller_is_better,
-            source_trial_id: trialId,
-          };
-          const newHyperparameters = trialHParamsToExperimentHParams(hparams);
-
-          setContModalConfig(yaml.safeDump({
-            ...rawConfig,
-            description: newDescription,
-            hyperparameters: newHyperparameters,
-            searcher: newSearcher,
-          }));
-        } catch (e) {
-          setContModalConfig('failed to load experiment config');
-          handleError({
-            error: e,
-            message: 'failed to load experiment config',
-            type: ErrorType.ApiBadResponse,
-          });
-        }
-      });
-
-  } , [ experimentId, trialId, hparams ]);
-
   const handleActionClick = useCallback((action: TrialAction) => (): void => {
     switch (action) {
       case TrialAction.Continue:
-        setContModalVisible(true);
+        setContFormVisible(true);
         break;
     }
   }, [ ]);
 
-  const [ experiment, setExperiment ] = useState<ExperimentDetails>();
+  const setFreshContinueConfig = useCallback(() => {
+    if (!experiment?.configRaw || !hparams) return;
+    // do not reset the config if the modal is open
+    if (contModalVisible || contFormVisible) return;
+    const config = clone(experiment.configRaw);
+
+    const newDescription = `Continuation of trial ${trialId}, experiment` +
+      ` ${experimentId} (${experiment.configRaw.description})`;
+    setContDescription(newDescription);
+    const maxLength = getTrialLength(experiment.configRaw)[1];
+    if (maxLength !== undefined) setContMaxLength(maxLength);
+
+    config.description = newDescription;
+    if (maxLength) setTrialLength(config, maxLength);
+    upgradeConfig(config);
+    const newConfig = trialContinueConfig(config, hparams, trialId);
+    setContModalConfig(yaml.safeDump(newConfig));
+  }, [ hparams, trialId, experiment?.configRaw, experimentId, contFormVisible, contModalVisible ]);
+
+  const handleContFormCancel = useCallback(() => {
+    setContFormVisible(false);
+    setFreshContinueConfig();
+    form.resetFields();
+  }, [ setFreshContinueConfig, form ]);
+
+  const handleContModalCancel = useCallback(() => {
+    setContModalVisible(false);
+    setFreshContinueConfig();
+  }, [ setFreshContinueConfig ]);
+
+  const updateStatesFromForm = useCallback(() => {
+    if (!hparams || !trialId) return;
+    const formValues = form.getFieldsValue();
+    try {
+      const expConfig = yaml.safeLoad(contModalConfig) as RawJson;
+      expConfig.description = formValues.description;
+      setTrialLength(expConfig, parseInt(formValues.maxLength));
+      const updateConfig = trialContinueConfig(expConfig, hparams, trialId);
+      setContModalConfig(yaml.safeDump(updateConfig));
+      return updateConfig;
+    } catch (e) {
+      handleError({
+        error: e,
+        message: 'Failed to parse experiment config',
+        publicMessage: 'Please check the experiment config. \
+If the problem persists please contact support.',
+        publicSubject: 'Failed to parse experiment config',
+        silent: false,
+        type: ErrorType.Api,
+      });
+    }
+  }, [ contModalConfig, form, hparams, trialId ]);
+
+  const handleFormCreate = useCallback(async () => {
+    if (!experimentId) return;
+    const updatedConfig = updateStatesFromForm();
+    try {
+      const newExperiementId = await forkExperiment({
+        experimentConfig: JSON.stringify(updatedConfig),
+        parentId: experimentId,
+      });
+      routeAll(`/det/experiments/${newExperiementId}`);
+    } catch (e) {
+      handleError({
+        error: e,
+        message: 'Failed to continue trial',
+        publicMessage: 'Check the experiment config. \
+If the problem persists please contact support.',
+        publicSubject: 'Failed to continue trial',
+        silent: false,
+        type: ErrorType.Api,
+      });
+      setContError(e.response?.data?.message || e.message);
+      setContModalVisible(true);
+    } finally {
+      setContFormVisible(false);
+    }
+  }, [ experimentId, updateStatesFromForm ]);
+
+  const onConfigChange = useCallback( (config: string) => {
+    setContModalConfig(config);
+    setContError(undefined);
+  }, []);
 
   useEffect(() => {
-    // TODO find a solution to conditional polling
+    try {
+      setFreshContinueConfig();
+    } catch (e) {
+      handleError({
+        error: e,
+        message: 'failed to load experiment config',
+        type: ErrorType.ApiBadResponse,
+      });
+      setContModalConfig('failed to load experiment config');
+    }
+  }, [ setFreshContinueConfig ]);
+
+  useEffect(() => {
     if (experimentId === undefined) return;
     getExperimentDetails({ id:experimentId })
-      .then(experiment => setExperiment(experiment));
-  }, [ experimentId ]);
+      .then(experiment => {
+        setExperiment(experiment);
+      });
+  }, [ experimentId, trialId ]);
+
+  const handleEditContConfig = useCallback(() => {
+    updateStatesFromForm();
+    setContFormVisible(false);
+    setContModalVisible(true);
+  }, [ updateStatesFromForm ]);
 
   if (isNaN(trialId)) {
     return (
@@ -156,13 +256,52 @@ const TrialDetailsComp: React.FC = () => {
       </Row>
       <CreateExperimentModal
         config={contModalConfig}
-        okText="Create"
+        error={contError}
+        okText="Continue Trial"
         parentId={experiment.id}
         title={`Continue Trial ${trialId}`}
         visible={contModalVisible}
-        onConfigChange={setContModalConfig}
+        onCancel={handleContModalCancel}
+        onConfigChange={onConfigChange}
         onVisibleChange={setContModalVisible}
       />
+      <Modal
+        footer={<>
+          <Button onClick={handleEditContConfig}>Edit Full Config</Button>
+          <Button type="primary" onClick={handleFormCreate}>Continue Trial</Button>
+        </>}
+        style={{
+          minWidth: '60rem',
+        }}
+        title={`Continue Trial ${trialId} of Experiment ${experimentId}`}
+        visible={contFormVisible}
+        onCancel={handleContFormCancel}
+      >
+        <Form
+          form={form}
+          initialValues={{ description: contDescription, maxLength: contMaxLength }}
+          labelCol={{ span: 8 }}
+          name="basic"
+        >
+          <Form.Item
+            label={`Max ${getTrialLength(experiment.configRaw)[0]}`}
+            name="maxLength"
+            rules={[ { message: 'Please set max length', required: true } ]}
+          >
+            <Input type="number" />
+          </Form.Item>
+
+          <Form.Item
+            label="Experiment description"
+            name="description"
+            rules={[
+              { message: 'Please set a description for the new experiment', required: true },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
     </Page>
   );
 };

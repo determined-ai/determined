@@ -1,8 +1,9 @@
 import {
   AnyTask, Checkpoint, Command, CommandState, CommandType, Experiment, ExperimentHyperParams,
-  ExperimentItem, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
+  ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
 } from 'types';
 
+import { isNumber } from './data';
 import { getDuration } from './time';
 
 /* Conversions to Tasks */
@@ -160,18 +161,6 @@ export const oneOfProperties = <T>(obj: any, props: string[]): T => {
   throw new Error('no matching property');
 };
 
-export const trialHParamsToExperimentHParams = (hParams: Record<string, unknown>)
-: ExperimentHyperParams => {
-  const experimentHParams: ExperimentHyperParams = {};
-  Object.entries(hParams).forEach(([ param, value ]) => {
-    experimentHParams[param] = {
-      type: 'const',
-      val: value,
-    };
-  });
-  return experimentHParams;
-};
-
 // size in bytes
 export const checkpointSize = (checkpoint: Checkpoint): number => {
   const total = Object.values(checkpoint.resources).reduce((acc, size) => acc + size, 0);
@@ -197,4 +186,42 @@ export const trialDurations = (steps: Step[]): TrialDurations => {
     if (cur.validation) acc.validation += getDuration(cur.validation);
     return acc;
   }, initialDurations);
+};
+
+/* Experiment Config */
+export const trialHParamsToExperimentHParams = (hParams: Record<string, unknown>)
+: ExperimentHyperParams => {
+  const experimentHParams: ExperimentHyperParams = {};
+  Object.entries(hParams).forEach(([ param, value ]) => {
+    experimentHParams[param] = {
+      type: 'const',
+      val: value,
+    };
+  });
+  return experimentHParams;
+};
+
+export const getLengthFromStepCount = (config: RawJson, stepCount: number): [string, number] => {
+  const DEFAULT_BATCHES_PER_STEP = 100;
+  // provide backward compat for step count
+  const batchesPerStep = config.batches_per_step || DEFAULT_BATCHES_PER_STEP;
+  return [ 'batches', stepCount * batchesPerStep ];
+};
+
+// Add opportunistic backward compatibility to old configs.
+export const upgradeConfig = (config: RawJson): void => {
+  if (isNumber(config.searcher.max_steps)) {
+    const [ key, count ] = getLengthFromStepCount(config, config.searcher.max_steps);
+    config.searcher.max_length = { [key]: count };
+    delete config.searcher.max_steps;
+    delete config.batches_per_step;
+  }
+  if (isNumber(config.min_validation_period)) {
+    const [ key, count ] = getLengthFromStepCount(config, config.min_validation_period);
+    config.min_validation_period = { [key]: count };
+  }
+  if (isNumber(config.min_checkpoint_period)) {
+    const [ key, count ] = getLengthFromStepCount(config, config.min_checkpoint_period);
+    config.min_checkpoint_period = { [key]: count };
+  }
 };

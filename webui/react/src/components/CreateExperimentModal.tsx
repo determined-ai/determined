@@ -9,17 +9,19 @@ import { forkExperiment } from 'services/api';
 import css from './CreateExperimentModal.module.scss';
 
 interface Props {
-  title: string;
-  okText: string;
-  parentId: number;
-  visible: boolean;
   config: string;
-  onVisibleChange: (visible: boolean) => void;
+  error?: string;
+  okText: string;
+  onCancel?: () => void;
   onConfigChange: (config: string) => void;
+  onVisibleChange: (visible: boolean) => void;
+  parentId: number; // parent experiment ID.
+  title: string;
+  visible: boolean;
 }
 
 const CreateExperimentModal: React.FC<Props> = (
-  { visible, config, onVisibleChange, onConfigChange, parentId, ...props }: Props,
+  { visible, config, onVisibleChange, onConfigChange, parentId, error, ...props }: Props,
 ) => {
   const [ configError, setConfigError ] = useState<string>();
 
@@ -47,6 +49,7 @@ const CreateExperimentModal: React.FC<Props> = (
   };
 
   const handleCancel = (): void => {
+    props.onCancel && props.onCancel();
     onVisibleChange(false);
   };
   return <Modal
@@ -77,6 +80,9 @@ const CreateExperimentModal: React.FC<Props> = (
     />
     {configError &&
           <Alert className={css.error} message={configError} type="error" />
+    }
+    {error &&
+          <Alert className={css.error} message={error} type="error" />
     }
   </Modal>;
 

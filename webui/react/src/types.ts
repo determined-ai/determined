@@ -1,3 +1,6 @@
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export type RawJson = Record<string, any>;
+
 export interface User {
   id: number;
   isActive: boolean;
@@ -287,7 +290,7 @@ export interface TrialDetails extends TrialBase {
 export interface Experiment {
   archived: boolean;
   config: ExperimentConfig;
-  configRaw: Record<string, unknown>; // Readonly unparsed config object.
+  configRaw: RawJson; // Readonly unparsed config object.
   endTime?: string;
   id: number;
   ownerId: number;

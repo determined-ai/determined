@@ -29,6 +29,7 @@ import { clone } from 'utils/data';
 import { alphanumericSorter, numericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
 import { humanReadableFloat } from 'utils/string';
 import { getDuration } from 'utils/time';
+import { upgradeConfig } from 'utils/types';
 
 import css from './ExperimentDetails.module.scss';
 
@@ -55,23 +56,34 @@ const ExperimentDetailsComp: React.FC = () => {
   const [ forkModalVisible, setForkModalVisible ] = useState(false);
   const [ forkModalConfig, setForkModalConfig ] = useState('Loading');
 
+  const setFreshForkConfig = useCallback(() => {
+    if (!experiment?.configRaw) return;
+    // do not reset the config if the modal is open
+    if (forkModalVisible) return;
+    const prefix = 'Fork of ';
+    const rawConfig = clone(experiment.configRaw);
+    rawConfig.description = prefix + rawConfig.description;
+    upgradeConfig(rawConfig);
+    setForkModalConfig(yaml.safeDump(rawConfig));
+  }, [ experiment?.configRaw, forkModalVisible ]);
+
+  const handleForkModalCancel = useCallback(() => {
+    setForkModalVisible(false);
+    setFreshForkConfig();
+  }, [ setFreshForkConfig ]);
+
   useEffect(() => {
-    if (experiment && experiment.config) {
-      try {
-        const prefix = 'Fork of ';
-        const rawConfig = clone(experiment.configRaw);
-        rawConfig.description = prefix + rawConfig.description;
-        setForkModalConfig(yaml.safeDump(rawConfig));
-      } catch (e) {
-        handleError({
-          error: e,
-          message: 'failed to load experiment config',
-          type: ErrorType.ApiBadResponse,
-        });
-        setForkModalConfig('failed to load experiment config');
-      }
+    try {
+      setFreshForkConfig();
+    } catch (e) {
+      handleError({
+        error: e,
+        message: 'failed to load experiment config',
+        type: ErrorType.ApiBadResponse,
+      });
+      setForkModalConfig('failed to load experiment config');
     }
-  }, [ experiment ]);
+  }, [ setFreshForkConfig ]);
 
   const showForkModal = useCallback((): void => {
     setForkModalVisible(true);
@@ -237,6 +249,7 @@ const ExperimentDetailsComp: React.FC = () => {
         parentId={id}
         title={`Fork Experiment ${id}`}
         visible={forkModalVisible}
+        onCancel={handleForkModalCancel}
         onConfigChange={setForkModalConfig}
         onVisibleChange={setForkModalVisible}
       />
