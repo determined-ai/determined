@@ -81,7 +81,7 @@ const TrialDetailsComp: React.FC = () => {
   const [ form ] = Form.useForm();
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
-  const [ metric, setMetric ] = useState<string[]>([]);
+  const [ metrics, setMetrics ] = useState<string[]>([]);
   const [ trial, triggerTrialRequest ] =
     useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
 
@@ -122,7 +122,7 @@ const TrialDetailsComp: React.FC = () => {
 
     const newColumns: ColumnType<Step>[] = [ ...defaultColumns ];
 
-    metric.forEach(metricName => {
+    metrics.forEach(metricName => {
       const stateIndex = newColumns.findIndex(column => /state/i.test(column.title as string));
       newColumns.splice(stateIndex, 0, {
         render: (_: string, record: Step) => extractMetricValue(record, metricName),
@@ -142,7 +142,7 @@ const TrialDetailsComp: React.FC = () => {
     });
 
     return newColumns;
-  }, [ metric, trial.data?.experimentId ]);
+  }, [ metrics, trial.data?.experimentId ]);
 
   const pollTrialDetails = useCallback(
     () => triggerTrialRequest({ id: trialId }),
@@ -272,7 +272,7 @@ If the problem persists please contact support.',
 
   const handleMetricSelect = useCallback((value: SelectValue) => {
     const metricName = value as string;
-    setMetric(prev => {
+    setMetrics(prev => {
       const newMetric = [ ...prev ];
       if (newMetric.indexOf(metricName) === -1) newMetric.push(metricName);
       return newMetric.sort(metricNameSorter(metricNames));
@@ -280,16 +280,16 @@ If the problem persists please contact support.',
   }, [ metricNames ]);
 
   const handleMetricDeselect = useCallback((value: SelectValue) => {
-    if (metric.length <= 1) return;
+    if (metrics.length <= 1) return;
 
     const metricName = value as string;
-    setMetric(prev => {
+    setMetrics(prev => {
       const newMetric = [ ...prev ];
       const index = newMetric.indexOf(metricName);
       if (index !== -1) newMetric.splice(index, 1);
       return newMetric.sort(metricNameSorter(metricNames));
     });
-  }, [ metric, metricNames ]);
+  }, [ metricNames, metrics ]);
 
   useEffect(() => {
     if (experimentId === undefined) return;
@@ -309,13 +309,13 @@ If the problem persists please contact support.',
    * 2. The table supports horizontal scrolling to show additional columns.
    */
   useEffect(() => {
-    if (metric && metric?.length !== 0) return;
+    if (metrics && metrics?.length !== 0) return;
     if (metricNames.training.length === 0 && metricNames.validation.length === 0) return;
-    setMetric([
+    setMetrics([
       ...metricNames.validation,
       ...metricNames.training,
     ].sort(metricNameSorter(metricNames)));
-  }, [ metric, metricNames ]);
+  }, [ metricNames, metrics ]);
 
   if (isNaN(trialId)) {
     return (
@@ -339,14 +339,14 @@ If the problem persists please contact support.',
     return <Spinner fillContainer />;
   }
 
-  const options = metric ? (
+  const options = metrics ? (
     <SelectFilter
       enableSearchFilter={false}
       label="Metric"
       mode="multiple"
       showSearch={false}
       style={{ minWidth: 220 }}
-      value={metric}
+      value={metrics}
       onDeselect={handleMetricDeselect}
       onSelect={handleMetricSelect}>
       {metricNames.validation.length > 0 && <OptGroup label="Validation Metrics">
@@ -356,7 +356,7 @@ If the problem persists please contact support.',
         {metricNames.training.map(key => <Option key={key} value={key}>{key}</Option>)}
       </OptGroup>}
     </SelectFilter>
-  ) : undefined;
+  ) : null;
 
   return (
     <Page title={`Trial ${trialId}`}>
