@@ -1234,6 +1234,10 @@ SELECT row_to_json(r1)::text
 FROM (
     SELECT t.end_time, t.experiment_id, t.hparams, t.id, t.seed, t.start_time, t.state,
            t.warm_start_checkpoint_id,
+           (SELECT coalesce(sum(s.num_batches), 0)
+            FROM steps s
+            WHERE s.trial_id = t.id AND s.state = 'COMPLETED'
+           ) AS total_batches_processed,
            (SELECT coalesce(jsonb_agg(row_to_json(r2) ORDER BY r2.id ASC), '[]'::jsonb)
             FROM (
                 SELECT s.end_time, s.id, s.state, s.start_time, s.num_batches,
