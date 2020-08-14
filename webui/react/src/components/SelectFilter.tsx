@@ -27,6 +27,9 @@ const defaultProps = {
 export const ALL_VALUE = 'all';
 
 const SelectFilter: React.FC<PropsWithChildren<Props>> = (props: PropsWithChildren<Props>) => {
+
+  const getPopupContainer = useCallback((triggerNode) => triggerNode, []);
+
   const handleFilter = useCallback((search: string, option) => {
     /*
      * `option.children` is one of the following:
@@ -49,6 +52,7 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = (props: PropsWithChildr
         defaultValue={props.defaultValue}
         dropdownMatchSelectWidth={false}
         filterOption={props.enableSearchFilter ? handleFilter : true}
+        getPopupContainer={getPopupContainer}
         mode={props.mode}
         placeholder={props.placeholder}
         showSearch={props.showSearch}
