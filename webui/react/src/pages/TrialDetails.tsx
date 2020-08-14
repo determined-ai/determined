@@ -1,7 +1,8 @@
 import {
   Breadcrumb, Button, Col, Form, Input, Modal, Row, Select, Space, Table, Tooltip,
 } from 'antd';
-import { SelectValue } from 'antd/lib/select';
+import { SelectValue } from 'antd/es/select';
+import { ColumnType } from 'antd/es/table';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
@@ -26,7 +27,7 @@ import { forkExperiment } from 'services/api';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { TrialDetailsParams } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, RawJson, Step, TrialDetails } from 'types';
-import { clone, metricNameSorter } from 'utils/data';
+import { clone, metricNameSorter, numericSorter } from 'utils/data';
 import { extractMetricNames, extractMetricValue } from 'utils/trial';
 import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
 
@@ -80,7 +81,7 @@ const TrialDetailsComp: React.FC = () => {
   const [ form ] = Form.useForm();
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
-  const [ metric, setMetric ] = useState<string[]>();
+  const [ metric, setMetric ] = useState<string[]>([]);
   const [ trial, triggerTrialRequest ] =
     useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
 
@@ -119,12 +120,16 @@ const TrialDetailsComp: React.FC = () => {
       return null;
     };
 
-    const newColumns = [ ...defaultColumns ];
-    const stateIndex = newColumns.findIndex(column => /state/i.test(column.title as string));
+    const newColumns: ColumnType<Step>[] = [ ...defaultColumns ];
 
-    (metric || []).forEach(metricName => {
+    metric.forEach(metricName => {
+      const stateIndex = newColumns.findIndex(column => /state/i.test(column.title as string));
       newColumns.splice(stateIndex, 0, {
         render: (_: string, record: Step) => extractMetricValue(record, metricName),
+        sorter: (a, b) => numericSorter(
+          extractMetricValue(a, metricName),
+          extractMetricValue(b, metricName),
+        ),
         title: metricName,
       });
     });
@@ -266,19 +271,20 @@ If the problem persists please contact support.',
   const handleCheckpointDismiss = () => setShowCheckpoint(false);
 
   const handleMetricSelect = useCallback((value: SelectValue) => {
+    const metricName = value as string;
     setMetric(prev => {
-      const metricName = value as string;
-      const newMetric = [ ...(prev || []) ];
+      const newMetric = [ ...prev ];
       if (newMetric.indexOf(metricName) === -1) newMetric.push(metricName);
       return newMetric.sort(metricNameSorter(metricNames));
     });
   }, [ metricNames ]);
 
   const handleMetricDeselect = useCallback((value: SelectValue) => {
-    if (!metric || metric?.length <= 1) return;
+    if (metric.length <= 1) return;
+
+    const metricName = value as string;
     setMetric(prev => {
-      const metricName = value as string;
-      const newMetric = [ ...(prev || []) ];
+      const newMetric = [ ...prev ];
       const index = newMetric.indexOf(metricName);
       if (index !== -1) newMetric.splice(index, 1);
       return newMetric.sort(metricNameSorter(metricNames));
@@ -306,8 +312,8 @@ If the problem persists please contact support.',
     if (metric && metric?.length !== 0) return;
     if (metricNames.training.length === 0 && metricNames.validation.length === 0) return;
     setMetric([
-      ...metricNames.training,
       ...metricNames.validation,
+      ...metricNames.training,
     ].sort(metricNameSorter(metricNames)));
   }, [ metric, metricNames ]);
 
