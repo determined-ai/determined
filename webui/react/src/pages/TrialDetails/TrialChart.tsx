@@ -70,11 +70,11 @@ const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }
       showSearch={false}
       value={metric}
       onSelect={handleMetricSelect}>
-      {metricNames.training.length > 0 && <OptGroup label="Training Metrics">
-        {metricNames.training.map(key => <Option key={key} value={key}>{key}</Option>)}
-      </OptGroup>}
       {metricNames.validation.length > 0 && <OptGroup label="Validation Metrics">
         {metricNames.validation.map(key => <Option key={key} value={key}>{key}</Option>)}
+      </OptGroup>}
+      {metricNames.training.length > 0 && <OptGroup label="Training Metrics">
+        {metricNames.training.map(key => <Option key={key} value={key}>{key}</Option>)}
       </OptGroup>}
     </SelectFilter>
   );
