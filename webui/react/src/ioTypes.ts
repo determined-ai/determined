@@ -207,12 +207,12 @@ export const ioTrial = io.type({
   hparams: io.record(io.string, io.any),
   id: io.number,
   latest_validation_metrics: io.union([ ioValidationMetrics, ioNullOrUndefined ]),
-  num_batches: io.union([ io.number, ioNullOrUndefined ]),
   num_completed_checkpoints: io.number,
   num_steps: io.number,
   seed: io.number,
   start_time: io.string,
   state: runStatesIoType,
+  total_batches_processed: io.union([ io.number, ioNullOrUndefined ]),
 });
 export type ioTypeTrial = io.TypeOf<typeof ioTrial>;
 

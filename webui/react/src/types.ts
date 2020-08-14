@@ -273,9 +273,9 @@ export interface TrialItem extends TrialBase {
   bestAvailableCheckpoint?: Checkpoint;
   bestValidationMetric?: number;
   latestValidationMetrics?: ValidationMetrics;
-  numBatches: number;
   numCompletedCheckpoints: number;
   numSteps: number;
+  totalBatchesProcessed: number;
   url: string;
 }
 
