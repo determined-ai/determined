@@ -17,7 +17,11 @@ def set_s3_region(bucket: str) -> None:
 
     region = bucketLocation["LocationConstraint"]
 
-    os.environ["AWS_REGION"] = str(region)
+    if region is not None:
+        # We have observed that in US-EAST-1 the region comes back as None
+        # and if AWS_REGION is set to None, tensorboard fails to pull events.
+        print(f"Setting AWS_REGION environment variable to {region}.")
+        os.environ["AWS_REGION"] = str(region)
 
 
 def wait_for_tensorboard(max_seconds: float, url: str, still_alive_fn: Callable[[], bool]) -> bool:
