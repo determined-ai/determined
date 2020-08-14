@@ -183,8 +183,9 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 		s.exitingEarly = true
 		if *msg.ExitedReason == searcher.UserCanceled {
 			s.userRequestedStop = true
+		} else {
+			return nil, nil, nil
 		}
-		return nil, nil, nil
 	}
 
 	switch msg.Workload.Kind {
