@@ -26,7 +26,7 @@ import { forkExperiment } from 'services/api';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { TrialDetailsParams } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, RawJson, Step, TrialDetails } from 'types';
-import { clone } from 'utils/data';
+import { alphanumericSorter, clone, metricNameSorter } from 'utils/data';
 import { extractMetricNames, extractMetricValue } from 'utils/trial';
 import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
 
@@ -120,15 +120,16 @@ const TrialDetailsComp: React.FC = () => {
     };
 
     const newColumns = [ ...defaultColumns ];
+    const stateIndex = newColumns.findIndex(column => /state/i.test(column.title as string));
 
     (metric || []).forEach(metricName => {
-      newColumns.push({
+      newColumns.splice(stateIndex, 0, {
         render: (_: string, record: Step) => extractMetricValue(record, metricName),
         title: metricName,
       });
     });
 
-    newColumns.push({ render: checkpointRenderer, title: 'Checkpoint' });
+    newColumns.push({ fixed: 'right', render: checkpointRenderer, title: 'Checkpoint', width: 100 });
 
     return newColumns;
   }, [ metric, trial.data?.experimentId ]);
@@ -261,21 +262,23 @@ If the problem persists please contact support.',
 
   const handleMetricSelect = useCallback((value: SelectValue) => {
     setMetric(prev => {
-      const prevMetric = prev || [];
       const metricName = value as string;
-      return prevMetric.indexOf(metricName) !== -1 ? [ ...prevMetric, metricName ] : prev;
+      const newMetric = [ ...(prev || []) ];
+      if (newMetric.indexOf(metricName) === -1) newMetric.push(metricName);
+      return newMetric.sort(metricNameSorter(metricNames));
     });
-  }, []);
+  }, [ metricNames ]);
 
   const handleMetricDeselect = useCallback((value: SelectValue) => {
     if (!metric || metric?.length <= 1) return;
     setMetric(prev => {
-      const prevMetric = prev || [];
       const metricName = value as string;
-      const index = prevMetric.indexOf(metricName);
-      return index !== -1 ? [ ...prevMetric ].splice(index, 1) : prevMetric;
+      const newMetric = [ ...(prev || []) ];
+      const index = newMetric.indexOf(metricName);
+      if (index !== -1) newMetric.splice(index, 1);
+      return newMetric.sort(metricNameSorter(metricNames));
     });
-  }, [ metric ]);
+  }, [ metric, metricNames ]);
 
   useEffect(() => {
     if (experimentId === undefined) return;
@@ -320,6 +323,7 @@ If the problem persists please contact support.',
       label="Metric"
       mode="multiple"
       showSearch={false}
+      style={{ minWidth: 220 }}
       value={metric}
       onDeselect={handleMetricDeselect}
       onSelect={handleMetricSelect}>
@@ -371,6 +375,7 @@ If the problem persists please contact support.',
           loading={!trial.hasLoaded}
           rowClassName={defaultRowClassName()}
           rowKey="id"
+          scroll={{ x: 1000 }}
           showSorterTooltip={false}
           size="small" />
       </Section>
