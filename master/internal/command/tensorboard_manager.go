@@ -58,11 +58,8 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case *apiv1.GetTensorboardsRequest:
 		resp := &apiv1.GetTensorboardsResponse{}
-		for _, tensorboardMsg := range ctx.AskAll(&tensorboardv1.Tensorboard{}, ctx.Children()...,
-		).GetAll() {
-			tensorboard := tensorboardMsg.(*tensorboardv1.Tensorboard)
-			tensorboard.ServiceAddress = fmt.Sprintf(tensorboardServiceAddress, tensorboard.Id)
-			resp.Tensorboards = append(resp.Tensorboards, tensorboard)
+		for _, tensorboard := range ctx.AskAll(&tensorboardv1.Tensorboard{}, ctx.Children()...).GetAll() {
+			resp.Tensorboards = append(resp.Tensorboards, tensorboard.(*tensorboardv1.Tensorboard))
 		}
 		ctx.Respond(resp)
 

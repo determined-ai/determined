@@ -1,6 +1,7 @@
 package command
 
 import (
+	"fmt"
 	"math/rand"
 	"net/http"
 	"time"
@@ -322,13 +323,14 @@ func (c *command) toTensorboard(ctx *actor.Context) *tensorboardv1.Tensorboard {
 		tids = append(tids, int32(id))
 	}
 	return &tensorboardv1.Tensorboard{
-		Id:            ctx.Self().Address().Local(),
-		Description:   c.config.Description,
-		StartTime:     protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
-		Container:     c.container.Proto(),
-		ExperimentIds: eids,
-		TrialIds:      tids,
-		Username:      c.owner.Username,
+		Id:             ctx.Self().Address().Local(),
+		Description:    c.config.Description,
+		StartTime:      protoutils.ToTimestamp(ctx.Self().RegisteredTime()),
+		Container:      c.container.Proto(),
+		ServiceAddress: fmt.Sprintf(tensorboardServiceAddress, c.taskID),
+		ExperimentIds:  eids,
+		TrialIds:       tids,
+		Username:       c.owner.Username,
 	}
 }
 
