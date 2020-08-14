@@ -216,6 +216,7 @@ const ExperimentDetailsComp: React.FC = () => {
               columns={columns}
               dataSource={experiment?.trials}
               loading={!experimentResponse.hasLoaded}
+              pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
               rowClassName={defaultRowClassName()}
               rowKey="id"
               showSorterTooltip={false}

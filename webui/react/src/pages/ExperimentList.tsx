@@ -315,6 +315,7 @@ const ExperimentList: React.FC = () => {
           columns={columns}
           dataSource={filteredExperiments}
           loading={!experimentsResponse.hasLoaded}
+          pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
           rowClassName={defaultRowClassName()}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
