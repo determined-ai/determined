@@ -547,11 +547,11 @@ func (p *pod) configurePodSpec(
 	podSpec.Spec.Containers = containers
 	podSpec.Spec.RestartPolicy = k8sV1.RestartPolicyNever
 
-	ctx.Log().Debugf("launching pod spec %v", podSpec.Spec)
 	return podSpec
 }
 
 func (p *pod) launchPod(ctx *actor.Context, podSpec *k8sV1.Pod) error {
+	ctx.Log().Debugf("launching pod with spec %v", podSpec.Spec)
 	var err error
 	p.pod, err = p.podInterface.Create(podSpec)
 	if err != nil {
