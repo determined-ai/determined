@@ -390,6 +390,7 @@ If the problem persists please contact support.',
               columns={columns}
               dataSource={trial.data?.steps}
               loading={!trial.hasLoaded}
+              pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
               rowClassName={defaultRowClassName()}
               rowKey="id"
               scroll={{ x: 1000 }}
