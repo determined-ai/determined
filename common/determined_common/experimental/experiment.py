@@ -99,3 +99,6 @@ class ExperimentReference:
                 t_ids.add(ckpt["trialId"])
 
         return checkpoint_refs[:limit]
+
+    def __repr__(self) -> str:
+        return "Experiment(id={})".format(self.id)

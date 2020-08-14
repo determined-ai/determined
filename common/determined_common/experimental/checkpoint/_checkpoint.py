@@ -302,7 +302,11 @@ class Checkpoint(object):
         raise AssertionError("Unknown checkpoint format")
 
     def __repr__(self) -> str:
-        return "Checkpoint(uuid={})".format(self.uuid)
+        if self.model_name is not None:
+            return "Checkpoint(uuid={}, trial_id={}, model={}, version={})".format(
+                self.uuid, self.trial_id, self.model_name, self.model_version
+            )
+        return "Checkpoint(uuid={}, trial_id={})".format(self.uuid, self.trial_id)
 
     @staticmethod
     def from_json(data: Dict[str, Any], master: Optional[str] = None) -> "Checkpoint":

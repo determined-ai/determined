@@ -1,5 +1,6 @@
 import datetime
 import enum
+import json
 from typing import Any, Dict, List, Optional
 
 from determined_common import api
@@ -204,6 +205,9 @@ class Model:
             "last_updated_time": self.last_updated_time,
             "metadata": self.metadata,
         }
+
+    def __repr__(self) -> str:
+        return "Model(name={}, metadata={})".format(self.name, json.dumps(self.metadata))
 
     @staticmethod
     def from_json(data: Dict[str, Any], master: str) -> "Model":
