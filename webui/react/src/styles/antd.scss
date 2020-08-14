@@ -141,6 +141,7 @@ html {
     border-color: var(--theme-colors-monochrome-13);
     border-style: solid;
     border-width: 0.1rem 0;
+    white-space: nowrap;
   }
   .ant-table-thead > tr > th:first-child {
     border-width: 0.1rem 0 0.1rem 0.1rem;
