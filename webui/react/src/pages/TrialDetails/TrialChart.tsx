@@ -3,6 +3,7 @@ import { SelectValue } from 'antd/es/select';
 import { PlotData } from 'plotly.js/lib/core';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import Badge from 'components/Badge';
 import MetricChart from 'components/MetricChart';
 import SelectFilter from 'components/SelectFilter';
 import { MetricName, MetricType, Step } from 'types';
@@ -83,13 +84,13 @@ const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }
       {validationMetricNames.length > 0 && <OptGroup label="Validation Metrics">
         {validationMetricNames.map(key => {
           const value = metricNameToValue(key);
-          return <Option key={value} value={value}>{key.name} [{key.type}]</Option>;
+          return <Option key={value} value={value}>{key.name} <Badge>{key.type}</Badge></Option>;
         })}
       </OptGroup>}
       {trainingMetricNames.length > 0 && <OptGroup label="Training Metrics">
         {trainingMetricNames.map(key => {
           const value = metricNameToValue(key);
-          return <Option key={value} value={value}>{key.name} [{key.type}]</Option>;
+          return <Option key={value} value={value}>{key.name} <Badge>{key.type}</Badge></Option>;
         })}
       </OptGroup>}
     </SelectFilter>

@@ -7,6 +7,7 @@ import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
+import Badge from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
 import CreateExperimentModal from 'components/CreateExperimentModal';
 import Icon from 'components/Icon';
@@ -146,7 +147,7 @@ const TrialDetailsComp: React.FC = () => {
           extractMetricValue(a, metricName),
           extractMetricValue(b, metricName),
         ),
-        title: `${metricName.name} [${metricName.type}]`,
+        title: <span>{metricName.name} <Badge>{metricName.type}</Badge></span>,
       });
     });
 
@@ -366,13 +367,13 @@ If the problem persists please contact support.',
       {validationMetricNames.length > 0 && <OptGroup label="Validation Metrics">
         {validationMetricNames.map(key => {
           const value = metricNameToValue(key);
-          return <Option key={value} value={value}>{key.name} [{key.type}]</Option>;
+          return <Option key={value} value={value}>{key.name} <Badge>{key.type}</Badge></Option>;
         })}
       </OptGroup>}
       {trainingMetricNames.length > 0 && <OptGroup label="Training Metrics">
         {trainingMetricNames.map(key => {
           const value = metricNameToValue(key);
-          return <Option key={value} value={value}>{key.name} [{key.type}]</Option>;
+          return <Option key={value} value={value}>{key.name} <Badge>{key.type}</Badge></Option>;
         })}
       </OptGroup>}
     </SelectFilter>
