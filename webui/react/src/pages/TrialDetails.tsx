@@ -104,20 +104,18 @@ const TrialDetailsComp: React.FC = () => {
   }, [ ]);
 
   const setFreshContinueConfig = useCallback(() => {
-    if (upgradeConfig || !hparams) return;
+    if (!upgradedConfig || !hparams) return;
     // do not reset the config if the modal is open
     if (contModalVisible || contFormVisible) return;
     const config = clone(upgradedConfig);
-
     const newDescription = `Continuation of trial ${trialId}, experiment` +
-      ` ${experimentId} (${upgradedConfig.description})`;
+      ` ${experimentId} (${config.description})`;
     setContDescription(newDescription);
     const maxLength = trialLength && trialLength[1];
     if (maxLength !== undefined) setContMaxLength(maxLength);
 
     config.description = newDescription;
     if (maxLength) setTrialLength(config, maxLength);
-
     const newConfig = trialContinueConfig(config, hparams, trialId);
     setContModalConfig(yaml.safeDump(newConfig));
   }, [
@@ -240,7 +238,7 @@ If the problem persists please contact support.',
     );
   }
 
-  if (!trial.data || !experiment || !upgradeConfig) {
+  if (!trial.data || !experiment || !upgradedConfig) {
     return <Spinner fillContainer />;
   }
 
