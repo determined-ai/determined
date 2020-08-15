@@ -215,6 +215,7 @@ var gceMachineTypes = []string{
 	"m2-ultramem",
 	"n1-megamem",
 	"c2-standard",
+	"a2-highgpu",
 	"custom",
 }
 
@@ -224,6 +225,7 @@ var gceGPUTypes = map[string][]int{
 	"nvidia-tesla-p4":   {1, 2, 4},
 	"nvidia-tesla-v100": {1, 2, 4, 8},
 	"nvidia-tesla-k80":  {1, 2, 4, 8},
+	"nvidia-tesla-a100": {1, 2, 4, 8},
 }
 
 type gceInstanceType struct {
