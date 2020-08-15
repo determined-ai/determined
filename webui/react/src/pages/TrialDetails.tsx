@@ -138,10 +138,13 @@ const TrialDetailsComp: React.FC = () => {
     };
 
     const newColumns: ColumnType<Step>[] = [ ...defaultColumns ];
+    const searcher = experiment?.config.searcher;
 
     metrics.forEach(metricName => {
       const stateIndex = newColumns.findIndex(column => /state/i.test(column.title as string));
       newColumns.splice(stateIndex, 0, {
+        defaultSortOrder: searcher && searcher.metric === metricName.name ?
+          (searcher.smallerIsBetter ? 'ascend' : 'descend') : undefined,
         render: (_: string, record: Step) => extractMetricValue(record, metricName),
         sorter: (a, b) => numericSorter(
           extractMetricValue(a, metricName),
@@ -159,7 +162,7 @@ const TrialDetailsComp: React.FC = () => {
     });
 
     return newColumns;
-  }, [ metrics, trial.data?.experimentId ]);
+  }, [ experiment?.config.searcher, metrics, trial.data?.experimentId ]);
 
   const pollTrialDetails = useCallback(
     () => triggerTrialRequest({ id: trialId }),
