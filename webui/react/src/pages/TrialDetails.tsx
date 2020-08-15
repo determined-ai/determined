@@ -99,16 +99,18 @@ const TrialDetailsComp: React.FC = () => {
     // do not reset the config if the modal is open
     if (contModalVisible || contFormVisible) return;
     const config = clone(experiment.configRaw);
+    upgradeConfig(config);
 
     const newDescription = `Continuation of trial ${trialId}, experiment` +
       ` ${experimentId} (${experiment.configRaw.description})`;
     setContDescription(newDescription);
+
     const maxLength = trialLength && trialLength[1];
     if (maxLength !== undefined) setContMaxLength(maxLength);
 
     config.description = newDescription;
     if (maxLength) setTrialLength(config, maxLength);
-    upgradeConfig(config);
+
     const newConfig = trialContinueConfig(config, hparams, trialId);
     setContModalConfig(yaml.safeDump(newConfig));
   }, [
