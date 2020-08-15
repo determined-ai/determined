@@ -31,14 +31,15 @@ interface Params {
   trialId: string;
 }
 
-const getTrialLength = (config: RawJson): [string, number] => {
-  const maxLength = config.searcher.max_length;
-  return Object.entries(maxLength)[0] as [string, number];
+const getTrialLength = (config?: RawJson): [string, number] | undefined => {
+  const entries = Object.entries(config?.searcher.max_length || {});
+  if (entries.length !== 0) return entries[0] as [string, number];
+  return undefined;
 };
 
 const setTrialLength = (experimentConfig: RawJson, length: number): void => {
-  const lengthType = getTrialLength(experimentConfig)[0];
-  experimentConfig.searcher.max_length = { [lengthType]: length } ;
+  const trialLength = getTrialLength(experimentConfig);
+  if (trialLength) experimentConfig.searcher.max_length = { [trialLength[0]]: length } ;
 };
 
 const trialContinueConfig =
@@ -73,6 +74,10 @@ const TrialDetailsComp: React.FC = () => {
 
   const metricNames = useMemo(() => extractMetricNames(trial.data?.steps), [ trial.data?.steps ]);
 
+  const trialLength = useMemo(() => {
+    return getTrialLength(experiment?.configRaw);
+  }, [ experiment?.configRaw ]);
+
   const pollTrialDetails = useCallback(
     () => triggerTrialRequest({ id: trialId }),
     [ triggerTrialRequest, trialId ],
@@ -98,7 +103,7 @@ const TrialDetailsComp: React.FC = () => {
     const newDescription = `Continuation of trial ${trialId}, experiment` +
       ` ${experimentId} (${experiment.configRaw.description})`;
     setContDescription(newDescription);
-    const maxLength = getTrialLength(experiment.configRaw)[1];
+    const maxLength = trialLength && trialLength[1];
     if (maxLength !== undefined) setContMaxLength(maxLength);
 
     config.description = newDescription;
@@ -106,7 +111,15 @@ const TrialDetailsComp: React.FC = () => {
     upgradeConfig(config);
     const newConfig = trialContinueConfig(config, hparams, trialId);
     setContModalConfig(yaml.safeDump(newConfig));
-  }, [ hparams, trialId, experiment?.configRaw, experimentId, contFormVisible, contModalVisible ]);
+  }, [
+    contFormVisible,
+    contModalVisible,
+    experiment?.configRaw,
+    experimentId,
+    hparams,
+    trialId,
+    trialLength,
+  ]);
 
   const handleContFormCancel = useCallback(() => {
     setContFormVisible(false);
@@ -284,7 +297,7 @@ If the problem persists please contact support.',
           name="basic"
         >
           <Form.Item
-            label={`Max ${getTrialLength(experiment.configRaw)[0]}`}
+            label={`Max ${trialLength && trialLength[0]}`}
             name="maxLength"
             rules={[ { message: 'Please set max length', required: true } ]}
           >
