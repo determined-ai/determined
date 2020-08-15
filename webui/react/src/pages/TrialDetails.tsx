@@ -74,9 +74,18 @@ const TrialDetailsComp: React.FC = () => {
 
   const metricNames = useMemo(() => extractMetricNames(trial.data?.steps), [ trial.data?.steps ]);
 
+  const upgradedConfig = useMemo(
+    () => {
+      if (!experiment?.configRaw) return;
+      const configClone = clone(experiment.configRaw);
+      upgradeConfig(configClone);
+      return configClone;
+    },
+    [ experiment?.configRaw ],
+  );
   const trialLength = useMemo(() => {
-    return getTrialLength(experiment?.configRaw);
-  }, [ experiment?.configRaw ]);
+    return getTrialLength(upgradedConfig);
+  }, [ upgradedConfig ]);
 
   const pollTrialDetails = useCallback(
     () => triggerTrialRequest({ id: trialId }),
@@ -95,16 +104,14 @@ const TrialDetailsComp: React.FC = () => {
   }, [ ]);
 
   const setFreshContinueConfig = useCallback(() => {
-    if (!experiment?.configRaw || !hparams) return;
+    if (upgradeConfig || !hparams) return;
     // do not reset the config if the modal is open
     if (contModalVisible || contFormVisible) return;
-    const config = clone(experiment.configRaw);
-    upgradeConfig(config);
+    const config = clone(upgradedConfig);
 
     const newDescription = `Continuation of trial ${trialId}, experiment` +
-      ` ${experimentId} (${experiment.configRaw.description})`;
+      ` ${experimentId} (${upgradedConfig.description})`;
     setContDescription(newDescription);
-
     const maxLength = trialLength && trialLength[1];
     if (maxLength !== undefined) setContMaxLength(maxLength);
 
@@ -116,7 +123,7 @@ const TrialDetailsComp: React.FC = () => {
   }, [
     contFormVisible,
     contModalVisible,
-    experiment?.configRaw,
+    upgradedConfig,
     experimentId,
     hparams,
     trialId,
@@ -233,7 +240,7 @@ If the problem persists please contact support.',
     );
   }
 
-  if (!trial.data || !experiment) {
+  if (!trial.data || !experiment || !upgradeConfig) {
     return <Spinner fillContainer />;
   }
 
