@@ -10,10 +10,10 @@ import {
   jsonToTrialLogs,jsonToUsers,
 } from 'services/decoder';
 import {
-  CreateNotebookParams, CreateTensorboardParams, EmptyParams,
-  ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
-  KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams, TaskLogsParams,
-  TrialDetailsParams, TrialLogsParams,
+  CreateNotebookParams, CreateTensorboardParams,
+  EmptyParams, ExperimentDetailsParams, ExperimentsParams,
+  ForkExperimentParams, KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams,
+  TaskLogsParams, TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails,

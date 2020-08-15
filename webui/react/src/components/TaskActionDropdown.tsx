@@ -63,7 +63,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
           break;
         case 'archive':
           if (!isExperimentTask(task)) break;
-          await archiveExperiment(parseInt(task.id), true);
+          await archiveExperiment(parseInt(task.id));
           updateExperimentLocally(exp => ({ ...exp, archived: true }));
           break;
         case 'cancel':

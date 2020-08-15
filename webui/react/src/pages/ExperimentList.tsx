@@ -20,7 +20,8 @@ import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
 import { setupUrlForDev } from 'routes';
 import {
-  archiveExperiment, createTensorboard, getExperimentSummaries, killExperiment, setExperimentState,
+  archiveExperiment, createTensorboard, getExperimentSummaries, killExperiment,
+  setExperimentState,
 } from 'services/api';
 import { patchExperiment } from 'services/api';
 import { ExperimentsParams } from 'services/types';
@@ -199,7 +200,7 @@ const ExperimentList: React.FC = () => {
           case Action.Activate:
             return setExperimentState({ experimentId: experiment.id, state: RunState.Active });
           case Action.Archive:
-            return archiveExperiment(experiment.id, true);
+            return archiveExperiment(experiment.id);
           case Action.Cancel:
             return setExperimentState({ experimentId: experiment.id, state: RunState.Canceled });
           case Action.Kill:

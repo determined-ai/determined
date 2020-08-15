@@ -3,9 +3,10 @@ import { CancelToken } from 'axios';
 import * as DetSwagger from 'services/api-ts-sdk';
 import { generateApi, processApiError } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
-import { CreateNotebookParams, CreateTensorboardParams, EmptyParams, ExperimentDetailsParams,
-  ExperimentsParams, ForkExperimentParams, KillCommandParams, KillExpParams, LogsParams,
-  PatchExperimentParams, PatchExperimentState, TaskLogsParams, TrialDetailsParams, TrialLogsParams,
+import { CreateNotebookParams, CreateTensorboardParams, EmptyParams,
+  ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams, KillCommandParams,
+  KillExpParams, LogsParams, PatchExperimentParams, PatchExperimentState, TaskLogsParams,
+  TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import {
   Agent, AnyTask, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails,
@@ -14,7 +15,9 @@ import {
 import { serverAddress } from 'utils/routes';
 import { isExperimentTask } from 'utils/task';
 
-export const detAuthApi = new DetSwagger.AuthenticationApi(undefined, serverAddress());
+const address = serverAddress();
+export const detAuthApi = new DetSwagger.AuthenticationApi(undefined, address);
+export const detExperimentApi = new DetSwagger.ExperimentsApi(undefined, address);
 export const detExperimentsStreamingApi = DetSwagger.ExperimentsApiFetchParamCreator();
 
 /* Authentication */
@@ -64,12 +67,15 @@ export const forkExperiment = generateApi<ForkExperimentParams, number>(Config.f
 
 export const patchExperiment = generateApi<PatchExperimentParams, void>(Config.patchExperiment);
 
-export const archiveExperiment = async (
-  experimentId: number,
-  isArchived: boolean,
-  cancelToken?: CancelToken,
-): Promise<void> => {
-  return await patchExperiment({ body: { archived: isArchived }, cancelToken, experimentId });
+export const archiveExperiment = async (id: number, archive = true): Promise<void> => {
+  try {
+    await archive ?
+      detExperimentApi.determinedArchiveExperiment(id) :
+      detExperimentApi.determinedUnarchiveExperiment(id);
+  } catch (e) {
+    processApiError('archiveExperiment', e);
+    throw e;
+  }
 };
 
 export const setExperimentState = async (

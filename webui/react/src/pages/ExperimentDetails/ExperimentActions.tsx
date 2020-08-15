@@ -2,7 +2,8 @@ import { Button, Popconfirm, Space } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import { ConditionalButton } from 'components/types';
-import { archiveExperiment, createTensorboard, killExperiment, setExperimentState,
+import {
+  archiveExperiment, createTensorboard, killExperiment, setExperimentState,
 } from 'services/api';
 import { ExperimentDetails, RunState, TBSourceType } from 'types';
 import { openCommand } from 'utils/routes';
@@ -45,7 +46,7 @@ const ExperimentActions: React.FC<Props> = ({
   const handleArchive = useCallback(
     (archive: boolean) =>
       (): Promise<unknown> => {
-        setButtonStates(state => ({ ...state, archive: true }));
+        setButtonStates(state => ({ ...state, archive }));
         return archiveExperiment(experiment.id, archive)
           .then(updateFn)
           .finally(() => setButtonStates(state => ({ ...state, archive: false })));
