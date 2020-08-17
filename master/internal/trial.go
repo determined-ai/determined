@@ -226,7 +226,7 @@ func newTrial(
 	}
 }
 
-func (t *trial) doKillTrial(ctx *actor.Context) {
+func (t *trial) killTrial(ctx *actor.Context) {
 	t.killed = true
 	if t.task != nil {
 		ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
@@ -372,7 +372,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		t.processTaskTerminated(ctx, msg)
 
 	case killTrial:
-		t.doKillTrial(ctx)
+		t.killTrial(ctx)
 
 	case terminateTimeout:
 		if t.task != nil && msg.runID == t.runID {
@@ -390,7 +390,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 	case actor.ChildStopped:
 
 	case *apiv1.KillTrialRequest:
-		t.doKillTrial(ctx)
+		t.killTrial(ctx)
 		ctx.Respond(&apiv1.KillTrialResponse{})
 
 	default:
