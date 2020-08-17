@@ -58,6 +58,8 @@ def _make_local_execution_env(
     env = det.EnvContext(
         master_addr="",
         master_port=0,
+        use_tls=False,
+        master_cert_file=None,
         container_id="",
         experiment_config=config,
         hparams=hparams,

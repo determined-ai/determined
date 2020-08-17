@@ -124,7 +124,25 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 	return entries, nil
 }
 
-func (m *Master) startServers() error {
+func (m *Master) readTLSCertificate() (*tls.Certificate, error) {
+	certFile := m.config.Security.TLS.Cert
+	keyFile := m.config.Security.TLS.Key
+	switch {
+	case certFile == "" && keyFile != "":
+		return nil, errors.New("TLS key was provided without a cert")
+	case certFile != "" && keyFile == "":
+		return nil, errors.New("TLS cert was provided without a key")
+	case certFile != "" && keyFile != "":
+		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to load TLS files")
+		}
+		return &cert, nil
+	}
+	return nil, nil
+}
+
+func (m *Master) startServers(cert *tls.Certificate) error {
 	// Create the desired server configurations. The values of the servers map are descriptions to be
 	// used in making error messages more informative.
 	servers := make(map[*http.Server]string)
@@ -135,23 +153,11 @@ func (m *Master) startServers() error {
 		}] = "http server"
 	}
 
-	certFile := m.config.Security.TLS.Cert
-	keyFile := m.config.Security.TLS.Key
-	switch {
-	case certFile == "" && keyFile != "":
-		return errors.New("TLS key was provided without a cert")
-	case certFile != "" && keyFile == "":
-		return errors.New("TLS cert was provided without a key")
-	case certFile != "" && keyFile != "":
-		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-		if err != nil {
-			return err
-		}
-
+	if cert != nil {
 		servers[&http.Server{
 			Addr: fmt.Sprintf(":%d", m.config.HTTPSPort),
 			TLSConfig: &tls.Config{
-				Certificates:             []tls.Certificate{cert},
+				Certificates:             []tls.Certificate{*cert},
 				MinVersion:               tls.VersionTLS12,
 				PreferServerCipherSuites: true,
 			},
@@ -267,7 +273,11 @@ func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) 
 	return actorRef.AwaitTermination()
 }
 
-func (m *Master) initializeResourceProviders(proxyRef *actor.Ref, provisionerSlotsPerInstance int) {
+func (m *Master) initializeResourceProviders(
+	proxyRef *actor.Ref,
+	provisionerSlotsPerInstance int,
+	cert *tls.Certificate,
+) {
 	var resourceProvider *actor.Ref
 	switch {
 	case m.config.Scheduler.ResourceProvider.DefaultRPConfig != nil:
@@ -280,6 +290,7 @@ func (m *Master) initializeResourceProviders(proxyRef *actor.Ref, provisionerSlo
 			m.config.TaskContainerDefaults,
 			m.provisioner,
 			provisionerSlotsPerInstance,
+			cert,
 		))
 
 	case m.config.Scheduler.ResourceProvider.KubernetesRPConfig != nil:
@@ -291,6 +302,7 @@ func (m *Master) initializeResourceProviders(proxyRef *actor.Ref, provisionerSlo
 				proxyRef,
 				filepath.Join(m.config.Root, "wheels"),
 				m.config.TaskContainerDefaults,
+				cert,
 			),
 		)
 
@@ -365,7 +377,12 @@ func (m *Master) Run() error {
 
 	proxyRef, _ := m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{})
 
-	m.initializeResourceProviders(proxyRef, provisionerSlotsPerInstance)
+	cert, err := m.readTLSCertificate()
+	if err != nil {
+		return errors.Wrap(err, "failed to read TLS certificate")
+	}
+
+	m.initializeResourceProviders(proxyRef, provisionerSlotsPerInstance, cert)
 
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 
@@ -598,5 +615,5 @@ func (m *Master) Run() error {
 		log.Info("telemetry reporting is disabled")
 	}
 
-	return m.startServers()
+	return m.startServers(cert)
 }

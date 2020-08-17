@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"crypto/tls"
 	"encoding/json"
 
 	"github.com/pkg/errors"
@@ -20,6 +21,7 @@ type TaskSpec struct {
 	Devices               []device.Device                   `json:"devices"`
 	HarnessPath           string                            `json:"harness_path"`
 	TaskContainerDefaults model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
+	MasterCert            *tls.Certificate                  `json:"master_cert"`
 
 	StartCommand   *StartCommand   `union:"type,START_TASK" json:"-"`
 	StartContainer *StartContainer `union:"type,START_CONTAINER" json:"-"`

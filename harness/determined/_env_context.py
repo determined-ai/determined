@@ -11,6 +11,8 @@ class EnvContext:
         self,
         master_addr: str,
         master_port: int,
+        use_tls: bool,
+        master_cert_file: Optional[str],
         container_id: str,
         experiment_config: Dict[str, Any],
         hparams: Dict[str, Any],
@@ -31,6 +33,8 @@ class EnvContext:
     ):
         self.master_addr = master_addr
         self.master_port = master_port
+        self.use_tls = use_tls
+        self.master_cert_file = master_cert_file
         self.container_id = container_id
         self.experiment_config = det.ExperimentConfig(experiment_config)
         self.hparams = hparams

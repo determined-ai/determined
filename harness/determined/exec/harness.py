@@ -157,6 +157,8 @@ def main() -> None:
 
     master_addr = os.environ["DET_MASTER_ADDR"]
     master_port = int(os.environ["DET_MASTER_PORT"])
+    use_tls = distutils.util.strtobool(os.environ.get("DET_USE_TLS", "false"))
+    master_cert_file = os.environ.get("DET_MASTER_CERT_FILE")
     agent_id = os.environ["DET_AGENT_ID"]
     container_id = os.environ["DET_CONTAINER_ID"]
     hparams = simplejson.loads(os.environ["DET_HPARAMS"])
@@ -177,6 +179,8 @@ def main() -> None:
     env = det.EnvContext(
         master_addr,
         master_port,
+        use_tls,
+        master_cert_file,
         container_id,
         experiment_config,
         hparams,

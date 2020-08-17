@@ -1,11 +1,34 @@
 import logging
+import socket
+import ssl
 from typing import Any, Optional
 
 import lomond
+import lomond.session
 import simplejson
 
 import determined as det
 from determined import layers, util, workload
+
+
+class CustomSSLWebsocketSession(lomond.session.WebsocketSession):  # type: ignore
+    """
+    A session class that allows for the TLS verification mode of a WebSocket connection to be
+    configured based on values from the context.
+    """
+
+    def __init__(self, socket: lomond.WebSocket, env: det.EnvContext) -> None:
+        super().__init__(socket)
+        self.ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+        self.ctx.verify_mode = ssl.CERT_REQUIRED
+        self.ctx.check_hostname = True
+        if env.master_cert_file is not None:
+            self.ctx.load_verify_locations(cafile=env.master_cert_file)
+        else:
+            self.ctx.load_default_certs()
+
+    def _wrap_socket(self, sock: socket.SocketType, host: str) -> socket.SocketType:
+        return self.ctx.wrap_socket(sock, server_hostname=host)
 
 
 class SocketManager(workload.Source):
@@ -18,7 +41,8 @@ class SocketManager(workload.Source):
     def __init__(self, env: det.EnvContext) -> None:
         self.env = env
 
-        url = "ws://{}:{}/ws/trial/{}/{}/{}".format(
+        url = "{}://{}:{}/ws/trial/{}/{}/{}".format(
+            "wss" if self.env.use_tls else "ws",
             self.env.master_addr,
             self.env.master_port,
             self.env.initial_workload.experiment_id,
@@ -30,7 +54,9 @@ class SocketManager(workload.Source):
         # own connection to the master.
         self.socket = lomond.WebSocket(url, proxies={})
 
-        self.ws_events = self.socket.connect(ping_rate=0)
+        self.ws_events = self.socket.connect(
+            ping_rate=0, session_class=lambda socket: CustomSSLWebsocketSession(socket, env)
+        )
 
         # Handle the messages up to and including the rendezvous message.
         for ws_event in self.ws_events:

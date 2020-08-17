@@ -121,6 +121,8 @@ def make_default_env_context(
         ),
         master_addr="",
         master_port=0,
+        use_tls=False,
+        master_cert_file=None,
         container_id="",
         hparams=hparams,
         latest_checkpoint=None,

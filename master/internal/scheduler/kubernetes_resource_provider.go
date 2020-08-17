@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/url"
 
@@ -20,6 +21,7 @@ type kubernetesResourceProvider struct {
 	proxy                 *actor.Ref
 	harnessPath           string
 	taskContainerDefaults model.TaskContainerDefaultsConfig
+	masterCert            *tls.Certificate
 
 	taskList           *taskList
 	tasksByHandler     map[*actor.Ref]*Task
@@ -41,6 +43,7 @@ func NewKubernetesResourceProvider(
 	proxy *actor.Ref,
 	harnessPath string,
 	taskContainerDefaults model.TaskContainerDefaultsConfig,
+	masterCert *tls.Certificate,
 ) actor.Actor {
 	return &kubernetesResourceProvider{
 		clusterID:             clusterID,
@@ -48,6 +51,7 @@ func NewKubernetesResourceProvider(
 		proxy:                 proxy,
 		harnessPath:           harnessPath,
 		taskContainerDefaults: taskContainerDefaults,
+		masterCert:            masterCert,
 
 		taskList:           newTaskList(),
 		tasksByHandler:     make(map[*actor.Ref]*Task),
@@ -217,6 +221,7 @@ func (k *kubernetesResourceProvider) assignPod(ctx *actor.Context, task *Task, s
 			harnessPath: k.harnessPath,
 
 			taskContainerDefaults: k.taskContainerDefaults,
+			masterCert:            k.masterCert,
 		})
 }
 
@@ -440,6 +445,7 @@ type podAssignment struct {
 	clusterID             string
 	harnessPath           string
 	taskContainerDefaults model.TaskContainerDefaultsConfig
+	masterCert            *tls.Certificate
 }
 
 // StartTask notifies the pods actor that it should launch a pod for the provided task spec.
@@ -450,6 +456,7 @@ func (p *podAssignment) StartTask(spec image.TaskSpec) {
 	spec.TaskID = string(p.task.ID)
 	spec.HarnessPath = p.harnessPath
 	spec.TaskContainerDefaults = p.taskContainerDefaults
+	spec.MasterCert = p.masterCert
 	handler.System().Tell(handler, sproto.StartPod{
 		TaskHandler: p.task.handler,
 		Spec:        spec,
