@@ -29,7 +29,7 @@ import { forkExperiment } from 'services/api';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { TrialDetailsParams } from 'services/types';
 import {
-  CheckpointDetail, ExperimentDetails, MetricName, MetricType, Step, TrialDetails,
+  CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step, TrialDetails,
 } from 'types';
 import { clone, metricNameSorter, numericSorter } from 'utils/data';
 import { humanReadableFloat } from 'utils/string';
