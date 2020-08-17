@@ -578,7 +578,7 @@ func (m *Master) Run() error {
 	m.echo.Any("/debug/pprof/symbol", echo.WrapHandler(http.HandlerFunc(pprof.Symbol)))
 	m.echo.Any("/debug/pprof/trace", echo.WrapHandler(http.HandlerFunc(pprof.Trace)))
 
-	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewProxyHandler{ServiceKey: "service"})
+	handler := m.system.AskAt(actor.Addr("proxy"), proxy.NewProxyHandler{ServiceID: "service"})
 	m.echo.Any("/proxy/:service/*", handler.Get().(echo.HandlerFunc))
 
 	handler = m.system.AskAt(actor.Addr("proxy"), proxy.NewConnectHandler{})
@@ -590,6 +590,8 @@ func (m *Master) Run() error {
 		m.echo,
 		m.db,
 		m.ClusterID,
+		proxyRef,
+		m.config.TensorBoardTimeout,
 		m.config.Security.DefaultTask,
 		authFuncs...,
 	)

@@ -36,7 +36,8 @@ func DefaultConfig() *Config {
 			ShmSizeBytes: 4294967296,
 			NetworkMode:  "bridge",
 		},
-		Scheduler: *scheduler.DefaultConfig(),
+		TensorBoardTimeout: 5 * 60,
+		Scheduler:          *scheduler.DefaultConfig(),
 		Security: SecurityConfig{
 			DefaultTask: model.AgentUserGroup{
 				UID:   0,
@@ -71,6 +72,7 @@ type Config struct {
 	DB                    db.Config                         `json:"db"`
 	Scheduler             scheduler.Config                  `json:"scheduler"`
 	Provisioner           *provisioner.Config               `json:"provisioner"`
+	TensorBoardTimeout    int                               `json:"tensorboard_timeout"`
 	Security              SecurityConfig                    `json:"security"`
 	CheckpointStorage     CheckpointStorageConfig           `json:"checkpoint_storage"`
 	TaskContainerDefaults model.TaskContainerDefaultsConfig `json:"task_container_defaults"`

@@ -284,7 +284,7 @@ func (k *kubernetesResourceProvider) receivePodStarted(ctx *actor.Context, msg s
 		// proxy multi-container tasks or when containers are created prior to being
 		// assigned to an agent.
 		ctx.Ask(k.proxy, proxy.Register{
-			Service: string(task.ID),
+			ServiceID: string(task.ID),
 			Target: &url.URL{
 				Scheme: "http",
 				Host:   fmt.Sprintf("%s:%d", msg.IP, port),
@@ -314,7 +314,7 @@ func (k *kubernetesResourceProvider) receivePodTerminated(
 	container.exitStatus = msg.ContainerStopped
 
 	for _, name := range k.registeredNames[container] {
-		ctx.Tell(k.proxy, proxy.Unregister{Service: name})
+		ctx.Tell(k.proxy, proxy.Unregister{ServiceID: name})
 	}
 
 	delete(container.agent.containers, container.id)

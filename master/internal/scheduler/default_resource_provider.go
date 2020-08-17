@@ -421,7 +421,7 @@ func (d *DefaultRP) receiveContainerStartedOnAgent(
 		// proxy multi-container tasks or when containers are created prior to being
 		// assigned to an agent.
 		ctx.Ask(d.proxy, proxy.Register{
-			Service: string(task.ID),
+			ServiceID: string(task.ID),
 			Target: &url.URL{
 				Scheme: "http",
 				Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
@@ -456,7 +456,7 @@ func (d *DefaultRP) receiveContainerTerminated(
 	container := task.containers[id]
 	if names, ok := d.registeredNames[container]; ok {
 		for _, name := range names {
-			ctx.Tell(d.proxy, proxy.Unregister{Service: name})
+			ctx.Tell(d.proxy, proxy.Unregister{ServiceID: name})
 		}
 		delete(d.registeredNames, container)
 	}

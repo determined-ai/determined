@@ -1,6 +1,8 @@
 package command
 
 import (
+	"time"
+
 	"github.com/labstack/echo"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -15,6 +17,8 @@ func RegisterAPIHandler(
 	echo *echo.Echo,
 	db *db.PgDB,
 	cID string,
+	proxyRef *actor.Ref,
+	timeout int,
 	defaultAgentUserGroup model.AgentUserGroup,
 	middleware ...echo.MiddlewareFunc,
 ) {
@@ -43,6 +47,8 @@ func RegisterAPIHandler(
 		defaultAgentUserGroup: defaultAgentUserGroup,
 		db:                    db,
 		clusterID:             cID,
+		proxyRef:              proxyRef,
+		timeout:               time.Duration(timeout) * time.Second,
 	})
 	echo.Any("/tensorboard*", api.Route(system, nil), middleware...)
 }
