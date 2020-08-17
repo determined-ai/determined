@@ -711,5 +711,11 @@ class TFKerasTrial(det.Trial):
 
         Callbacks should avoid calling ``model.predict()``, as this will affect
         Determined training behavior.
+
+        .. note::
+            If a callback is supplied that has implemented `keras.callbacks.Callback.on_epoch_end
+            <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/Callback#on_epoch_end>`__
+            , it will use the epoch length as determined by the length of the training dataset, not
+            the Determined configuration setting ``records_per_epoch`` of the associated experiment.
         """
         return []
