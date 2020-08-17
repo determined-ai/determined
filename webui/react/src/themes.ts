@@ -13,7 +13,6 @@ export enum ShirtSize {
 }
 
 enum StateColors {
-  transitioning = 'transitioning',
   active = 'active',
   failed = 'failed',
   inactive = 'inactive',
@@ -101,7 +100,6 @@ export const lightTheme: Theme = {
       inactive: '#666666',
       success: '#009900',
       suspended: '#cc9900',
-      transitioning: '#00b2ff',
     },
   },
   focus: {
@@ -169,8 +167,8 @@ const stateColorMapping = {
   [RunState.StoppingError]: 'failed',
   [CommandState.Pending]: 'suspended',
   [CommandState.Assigned]: 'suspended',
-  [CommandState.Pulling]: 'transitioning',
-  [CommandState.Starting]: 'transitioning',
+  [CommandState.Pulling]: 'active',
+  [CommandState.Starting]: 'active',
   [CommandState.Running]: 'active',
   [CommandState.Terminating]: 'inactive',
   [CommandState.Terminated]: 'inactive',
