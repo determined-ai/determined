@@ -31,6 +31,7 @@ import {
   CheckpointDetail, ExperimentDetails, MetricName, MetricType, Step, TrialDetails,
 } from 'types';
 import { clone, metricNameSorter, numericSorter } from 'utils/data';
+import { humanReadableFloat } from 'utils/string';
 import {
   extractMetricNames, extractMetricValue, metricNameToValue, valueToMetricName,
 } from 'utils/trial';
@@ -111,12 +112,12 @@ const TrialDetailsComp: React.FC = () => {
   }, [ metrics ]);
 
   const trainingMetricNames = useMemo(() => {
-    return metrics.filter(metric => metric.type === MetricType.Training);
-  }, [ metrics ]);
+    return metricNames.filter(metric => metric.type === MetricType.Training);
+  }, [ metricNames ]);
 
   const validationMetricNames = useMemo(() => {
-    return metrics.filter(metric => metric.type === MetricType.Validation);
-  }, [ metrics ]);
+    return metricNames.filter(metric => metric.type === MetricType.Validation);
+  }, [ metricNames ]);
 
   const columns = useMemo(() => {
     const checkpointRenderer = (_: string, record: Step) => {
@@ -136,6 +137,12 @@ const TrialDetailsComp: React.FC = () => {
       }
       return null;
     };
+    const metricRenderer = (metricName: MetricName) => (_: string, record: Step) => {
+      const value = extractMetricValue(record, metricName);
+      return value ? <Tooltip title={value}>
+        <span>{humanReadableFloat(value)}</span>
+      </Tooltip> : undefined;
+    };
 
     const newColumns: ColumnType<Step>[] = [ ...defaultColumns ];
     const searcher = experiment?.config.searcher;
@@ -145,7 +152,7 @@ const TrialDetailsComp: React.FC = () => {
       newColumns.splice(stateIndex, 0, {
         defaultSortOrder: searcher && searcher.metric === metricName.name ?
           (searcher.smallerIsBetter ? 'ascend' : 'descend') : undefined,
-        render: (_: string, record: Step) => extractMetricValue(record, metricName),
+        render: metricRenderer(metricName),
         sorter: (a, b) => numericSorter(
           extractMetricValue(a, metricName),
           extractMetricValue(b, metricName),

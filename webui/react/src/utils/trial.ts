@@ -40,11 +40,11 @@ export const extractMetricNames = (steps: Step[] = []): MetricName[] => {
 };
 
 export const metricNameToValue = (metricName: MetricName): string => {
-  return `${metricName.type}|${metricName.type}`;
+  return `${metricName.type}|${metricName.name}`;
 };
 
 export const valueToMetricName = (value: string): MetricName | undefined => {
   const parts = value.split('|');
-  if (parts.length === 2) return { name: parts[0], type: parts[1] as MetricType };
+  if (parts.length === 2) return { name: parts[1], type: parts[0] as MetricType };
   return undefined;
 };
