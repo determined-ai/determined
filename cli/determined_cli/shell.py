@@ -1,5 +1,5 @@
 import getpass
-import os
+import subprocess
 import tempfile
 from argparse import ONE_OR_MORE, FileType, Namespace
 from pathlib import Path
@@ -61,7 +61,7 @@ def open_shell(args: Namespace) -> None:
     _open_shell(args.master, shell, args.ssh_opts)
 
 
-def _open_shell(master: str, shell: Command, additional_opts: str) -> None:
+def _open_shell(master: str, shell: Command, additional_opts: List[str]) -> None:
     LOOPBACK_ADDRESS = "[::1]"
     with tempfile.NamedTemporaryFile("w") as fp:
         fp.write(shell.misc["privateKey"])
@@ -71,17 +71,32 @@ def _open_shell(master: str, shell: Command, additional_opts: str) -> None:
         if host == LOOPBACK_ADDRESS:
             host = "localhost"
 
+        # Use determined_cli.tunnel as a portable script for using the HTTP CONNECT mechanism,
+        # similar to `nc -X CONNECT -x ...` but without any dependency on external binaries.
         proxy_cmd = "python -m determined_cli.tunnel {} %h".format(master)
         if request.get_master_cert_bundle():
             proxy_cmd += ' "{}"'.format(request.get_master_cert_bundle())
-        proxy_opt = "-o ProxyCommand='{}'".format(proxy_cmd)
 
         username = shell.agent_user_group["user"] or "root"
 
-        cmd = "ssh {} -o StrictHostKeyChecking=no -tt -o IdentitiesOnly=yes -i {} -p {} {} {}@{}"
-        cmd = cmd.format(proxy_opt, fp.name, port, additional_opts, username, shell.id)
+        cmd = [
+            "ssh",
+            "-o",
+            "ProxyCommand={}".format(proxy_cmd),
+            "-o",
+            "StrictHostKeyChecking=no",
+            "-tt",
+            "-o",
+            "IdentitiesOnly=yes",
+            "-i",
+            str(fp.name),
+            "-p",
+            str(port),
+            "{}@{}".format(username, shell.id),
+            *additional_opts,
+        ]
 
-        os.system(cmd)
+        subprocess.run(cmd)
 
         print(colored("To reconnect, run: det shell open {}".format(shell.id), "green"))
 
@@ -148,13 +163,12 @@ args_description = [
                 Arg("id", type=str, help="shell ID"),
             ]),
         Cmd("start", start_shell, "start a new shell", [
+            Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
             Arg("--config-file", default=None, type=FileType("r"),
                 help="command config file (.yaml)"),
             Arg("-v", "--volume", action="append", default=[],
                 help=VOLUME_DESC),
             Arg("-c", "--context", default=None, type=Path, help=CONTEXT_DESC),
-            Arg("-o", "--ssh-opts", default="", type=str,
-                help="additional SSH options when connecting to the shell"),
             Arg("--config", action="append", default=[], help=CONFIG_DESC),
             Arg("-p", "--passphrase", action="store_true",
                 help="passphrase to encrypt the shell private key"),
@@ -165,8 +179,7 @@ args_description = [
         ]),
         Cmd("open", open_shell, "open an existing shell", [
             Arg("shell_id", help="shell ID"),
-            Arg("-o", "--ssh-opts", default="", type=str,
-                help="additional ssh options when connecting to the shell")
+            Arg("ssh_opts", nargs="*", help="additional SSH options when connecting to the shell"),
         ]),
         Cmd("logs", tail_shell_logs, "fetch shell logs", [
             Arg("shell_id", help="shell ID"),
