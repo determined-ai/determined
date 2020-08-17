@@ -2,12 +2,14 @@ package proxy
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"sync"
 
 	"github.com/labstack/echo"
+	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
@@ -24,9 +26,12 @@ type (
 	// registered again will be responded with a 404 response. If the service is not registered with
 	// the proxy, the message is ignored.
 	Unregister struct{ Service string }
-	// NewHandler returns a middleware function for proxying requests to services running in the
-	// cluster.
-	NewHandler struct{ ServiceKey string }
+	// NewProxyHandler returns a middleware function for proxying HTTP-like traffic to services
+	// running in the cluster.
+	NewProxyHandler struct{ ServiceKey string }
+	// NewConnectHandler returns a middleware function for tunneling TCP-like traffic (via HTTP
+	// CONNECT) to services running in the cluster.
+	NewConnectHandler struct{}
 )
 
 // Proxy is an actor that proxies requests to registered services.
@@ -56,8 +61,10 @@ func (p *Proxy) Receive(ctx *actor.Context) error {
 		p.lock.Lock()
 		defer p.lock.Unlock()
 		delete(p.services, msg.Service)
-	case NewHandler:
-		ctx.Respond(p.newHandler(msg.ServiceKey))
+	case NewProxyHandler:
+		ctx.Respond(p.newProxyHandler(msg.ServiceKey))
+	case NewConnectHandler:
+		ctx.Respond(p.newConnectHandler())
 	case actor.PostStop:
 		p.lock.Lock()
 		defer p.lock.Unlock()
@@ -67,16 +74,19 @@ func (p *Proxy) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (p *Proxy) newHandler(serviceKey string) echo.HandlerFunc {
+func (p *Proxy) getTarget(serviceName string) (*url.URL, bool) {
+	p.lock.RLock()
+	defer p.lock.RUnlock()
+	target, ok := p.services[serviceName]
+	return target, ok
+}
+
+// Service a normal (non-CONNECT) HTTP request through the /proxy/:service/* route.
+func (p *Proxy) newProxyHandler(serviceKey string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Look up the service name in the url path.
 		serviceName := c.Param(serviceKey)
-		target, ok := func() (*url.URL, bool) {
-			p.lock.RLock()
-			defer p.lock.RUnlock()
-			target, ok := p.services[serviceName]
-			return target, ok
-		}()
+		target, ok := p.getTarget(serviceName)
 		if !ok {
 			return echo.NewHTTPError(http.StatusNotFound,
 				fmt.Sprintf("service not found: %s", serviceName))
@@ -105,4 +115,40 @@ func (p *Proxy) newHandler(serviceKey string) echo.HandlerFunc {
 
 		return nil
 	}
+}
+
+// Service an HTTP CONNECT request, which have a hostname:port in place of a normal route.
+func (p *Proxy) newConnectHandler() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		// Parse the request-target, which must be in hostname[:port] format, per RFC 7231.
+		u, err := url.Parse("tcp://" + c.Request().RequestURI)
+		if err != nil {
+			return errors.Wrap(err, "failed to parse host for CONNECT")
+		}
+		serviceName := u.Hostname()
+
+		target, ok := p.getTarget(serviceName)
+		if !ok {
+			return echo.NewHTTPError(http.StatusNotFound,
+				fmt.Sprintf("service not found: %s", serviceName))
+		}
+
+		proxy := newSingleHostReverseTCPProxy(c, target)
+
+		proxy.ServeHTTP(c.Response(), c.Request())
+
+		return nil
+	}
+}
+
+func asyncCopy(dst io.Writer, src io.Reader) chan error {
+	errs := make(chan error, 1)
+	go func() {
+		defer close(errs)
+		_, err := io.Copy(dst, src)
+		if err != io.EOF {
+			errs <- err
+		}
+	}()
+	return errs
 }
