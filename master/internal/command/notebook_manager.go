@@ -30,7 +30,7 @@ const (
 	jupyterDataDir    = "/run/determined/jupyter/data"
 	jupyterRuntimeDir = "/run/determined/jupyter/runtime"
 	jupyterEntrypoint = "/run/determined/jupyter/notebook-entrypoint.sh"
-	// Agent port range is 2600 - 3200. Ports are split between TensorBoard and Notebooks.
+	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minNotebookPort     = 2900
 	maxNotebookPort     = minNotebookPort + 299
 	notebookConfigFile  = "/run/determined/workdir/jupyter-conf.py"
