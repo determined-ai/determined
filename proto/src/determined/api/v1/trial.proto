@@ -70,3 +70,12 @@ message GetTrialCheckpointsResponse {
     // Pagination information of the full dataset.
     Pagination pagination = 2;
 }
+
+// Kill an trial.
+message KillTrialRequest {
+    // The trial id
+    int32 id = 1;
+}
+// Response to KillTrialRequest.
+message KillTrialResponse {}
+

@@ -11,6 +11,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
@@ -136,4 +137,24 @@ func (a *apiServer) GetTrialCheckpoints(
 		resp.Checkpoints, req.OrderBy, req.SortBy, apiv1.GetTrialCheckpointsRequest_SORT_BY_BATCH_NUMBER)
 
 	return resp, a.paginate(&resp.Pagination, &resp.Checkpoints, req.Offset, req.Limit)
+}
+
+func (a *apiServer) KillTrial(
+	ctx context.Context, req *apiv1.KillTrialRequest,
+) (*apiv1.KillTrialResponse, error) {
+	ok, err := a.m.db.CheckTrialExists(int(req.Id))
+	switch {
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to check if trial exists: %s", err)
+	case !ok:
+		return nil, status.Errorf(codes.NotFound, "trial %d not found", req.Id)
+	}
+
+	resp := apiv1.KillTrialResponse{}
+	addr := actor.Addr("trials", req.Id).String()
+	err = a.actorRequest(addr, req, &resp)
+	if status.Code(err) == codes.NotFound {
+		return &apiv1.KillTrialResponse{}, nil
+	}
+	return &resp, err
 }
