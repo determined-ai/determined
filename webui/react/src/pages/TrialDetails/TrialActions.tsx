@@ -22,6 +22,12 @@ interface Props {
 
 type ButtonLoadingStates = Record<Action, boolean>;
 
+const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
+  const isTerminal = terminalRunStates.has(trial.state);
+  const stepsWithSomeMetric = trial.steps.filter(step => step.state === RunState.Completed);
+  return isTerminal && stepsWithSomeMetric.length === 0;
+};
+
 const TrialActions: React.FC<Props> = ({ trial, onClick, onSettled }: Props) => {
   const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
     Continue: false,
@@ -36,12 +42,6 @@ const TrialActions: React.FC<Props> = ({ trial, onClick, onSettled }: Props) => 
     onSettled();
     setButtonStates(state => ({ ...state, tensorboard: false }));
   }, [ trial.id, onSettled ]);
-
-  const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
-    const isTerminal = terminalRunStates.has(trial.state);
-    const stepsWithSomeMetric = trial.steps.filter(step => step.state === RunState.Completed);
-    return isTerminal && stepsWithSomeMetric.length === 0;
-  };
 
   const actionButtons: ConditionalButton<TrialDetails>[] = [
     {
