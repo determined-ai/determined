@@ -1,3 +1,4 @@
+import { Tooltip } from 'antd';
 import React, { CSSProperties, PropsWithChildren } from 'react';
 
 import { getStateColor } from 'themes';
@@ -14,15 +15,16 @@ export enum BadgeType {
 
 interface Props {
   state?: RunState | CommandState;
+  tooltip?: string;
   type?: BadgeType;
 }
 
-const defaultProps = {
-  state: RunState.Active,
-  type: BadgeType.Default,
-};
-
-const Badge: React.FC<Props> = ({ state, type, children }: PropsWithChildren<Props>) => {
+const Badge: React.FC<Props> = ({
+  state = RunState.Active,
+  tooltip,
+  type = BadgeType.Default,
+  ...props
+}: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
   const style: CSSProperties = {};
 
@@ -33,13 +35,11 @@ const Badge: React.FC<Props> = ({ state, type, children }: PropsWithChildren<Pro
     classes.push(css.id);
   }
 
-  return (
-    <span className={classes.join(' ')} style={style}>
-      {type === BadgeType.State && state ? stateToLabel(state) : children}
-    </span>
-  );
-};
+  const badge = <span className={classes.join(' ')} style={style}>
+    {type === BadgeType.State && state ? stateToLabel(state) : props.children}
+  </span>;
 
-Badge.defaultProps = defaultProps;
+  return tooltip ? <Tooltip title={tooltip}>{badge}</Tooltip> : badge;
+};
 
 export default Badge;

@@ -1,15 +1,9 @@
-import { Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
 import { PlotData } from 'plotly.js/lib/core';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import Badge from 'components/Badge';
 import MetricChart from 'components/MetricChart';
-import SelectFilter from 'components/SelectFilter';
+import MetricSelectFilter from 'components/MetricSelectFilter';
 import { MetricName, MetricType, Step } from 'types';
-import { metricNameToValue, valueToMetricName } from 'utils/trial';
-
-const { OptGroup, Option } = Select;
 
 interface Props {
   id?: string;
@@ -24,14 +18,6 @@ const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }
   const [ metric, setMetric ] = useState<MetricName | undefined>(
     validationMetric ? { name: validationMetric, type: MetricType.Validation } : undefined,
   );
-
-  const trainingMetricNames = useMemo(() => {
-    return metricNames.filter(metric => metric.type === MetricType.Training);
-  }, [ metricNames ]);
-
-  const validationMetricNames = useMemo(() => {
-    return metricNames.filter(metric => metric.type === MetricType.Validation);
-  }, [ metricNames ]);
 
   const data: Partial<PlotData>[] = useMemo(() => {
     const textData: string[] = [];
@@ -70,36 +56,15 @@ const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }
     } ];
   }, [ metric, props.steps ]);
 
-  const handleMetricSelect = useCallback((value: SelectValue) => {
-    setMetric(valueToMetricName(value as string));
-  }, []);
-
-  const options = (
-    <SelectFilter
-      enableSearchFilter={false}
-      label="Metric"
-      showSearch={false}
-      value={metric && metricNameToValue(metric)}
-      onSelect={handleMetricSelect}>
-      {validationMetricNames.length > 0 && <OptGroup label="Validation Metrics">
-        {validationMetricNames.map(key => {
-          const value = metricNameToValue(key);
-          return <Option key={value} value={value}>{key.name} <Badge>{key.type}</Badge></Option>;
-        })}
-      </OptGroup>}
-      {trainingMetricNames.length > 0 && <OptGroup label="Training Metrics">
-        {trainingMetricNames.map(key => {
-          const value = metricNameToValue(key);
-          return <Option key={value} value={value}>{key.name} <Badge>{key.type}</Badge></Option>;
-        })}
-      </OptGroup>}
-    </SelectFilter>
-  );
+  const handleMetricChange = useCallback((value: MetricName) => setMetric(value), []);
 
   return <MetricChart
     data={data}
     id={props.id}
-    options={options}
+    options={<MetricSelectFilter
+      metricNames={metricNames}
+      value={metric}
+      onChange={handleMetricChange} />}
     title={title}
     xLabel="Batches"
     yLabel="Metric Value" />;

@@ -1,7 +1,6 @@
 import {
-  Breadcrumb, Button, Col, Form, Input, Modal, Row, Select, Space, Table, Tooltip,
+  Breadcrumb, Button, Col, Form, Input, Modal, Row, Space, Table, Tooltip,
 } from 'antd';
-import { SelectValue } from 'antd/es/select';
 import { ColumnType } from 'antd/es/table';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -13,9 +12,9 @@ import CreateExperimentModal from 'components/CreateExperimentModal';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import Message from 'components/Message';
+import MetricSelectFilter from 'components/MetricSelectFilter';
 import Page from 'components/Page';
 import Section from 'components/Section';
-import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import { defaultRowClassName } from 'components/Table';
 import Toggle from 'components/Toggle';
@@ -29,20 +28,16 @@ import { forkExperiment } from 'services/api';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { TrialDetailsParams } from 'services/types';
 import {
-  CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step, TrialDetails,
+  CheckpointDetail, ExperimentDetails, MetricName, RawJson, Step, TrialDetails,
 } from 'types';
-import { clone, metricNameSorter, numericSorter } from 'utils/data';
+import { clone, numericSorter } from 'utils/data';
 import { humanReadableFloat } from 'utils/string';
-import {
-  extractMetricNames, extractMetricValue, metricNameToValue, valueToMetricName,
-} from 'utils/trial';
+import { extractMetricNames, extractMetricValue } from 'utils/trial';
 import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
 
 import css from './TrialDetails.module.scss';
 import { columns as defaultColumns } from './TrialDetails.table';
 import TrialChart from './TrialDetails/TrialChart';
-
-const { OptGroup, Option } = Select;
 
 interface Params {
   trialId: string;
@@ -109,18 +104,6 @@ const TrialDetailsComp: React.FC = () => {
     return getTrialLength(upgradedConfig);
   }, [ upgradedConfig ]);
 
-  const metricNameValues = useMemo(() => {
-    return metrics.map(metric => metricNameToValue(metric));
-  }, [ metrics ]);
-
-  const trainingMetricNames = useMemo(() => {
-    return metricNames.filter(metric => metric.type === MetricType.Training);
-  }, [ metricNames ]);
-
-  const validationMetricNames = useMemo(() => {
-    return metricNames.filter(metric => metric.type === MetricType.Validation);
-  }, [ metricNames ]);
-
   const columns = useMemo(() => {
     const checkpointRenderer = (_: string, record: Step) => {
       if (record.checkpoint) {
@@ -159,7 +142,10 @@ const TrialDetailsComp: React.FC = () => {
           extractMetricValue(a, metricName),
           extractMetricValue(b, metricName),
         ),
-        title: <span>{metricName.name} <Badge>{metricName.type}</Badge></span>,
+        title: <>
+          <Badge tooltip={metricName.type}>{metricName.type.substr(0, 1).toUpperCase()}</Badge>
+          <span>{metricName.name}</span>
+        </>,
       });
     });
 
@@ -308,27 +294,7 @@ If the problem persists please contact support.',
     setShowHasCheckpoint(value);
   }, [ setShowHasCheckpoint ]);
 
-  const handleMetricSelect = useCallback((value: SelectValue) => {
-    const metricName = valueToMetricName(value as string);
-    if (!metricName) return;
-
-    setMetrics(prev => {
-      const newMetric = [ ...prev ];
-      if (newMetric.indexOf(metricName) === -1) newMetric.push(metricName);
-      return newMetric.sort(metricNameSorter);
-    });
-  }, []);
-
-  const handleMetricDeselect = useCallback((value: SelectValue) => {
-    if (metrics.length <= 1) return;
-
-    setMetrics(prev => {
-      const newMetric = [ ...prev ];
-      const index = newMetric.findIndex(metric => metricNameToValue(metric) === value);
-      if (index !== -1) newMetric.splice(index, 1);
-      return newMetric.sort(metricNameSorter);
-    });
-  }, [ metrics ]);
+  const handleMetricChange = useCallback((value: MetricName[]) => setMetrics(value), []);
 
   useEffect(() => {
     if (experimentId === undefined) return;
@@ -381,28 +347,11 @@ If the problem persists please contact support.',
         checked={showHasCheckpoint}
         prefixLabel="Has Checkpoint"
         onChange={handleHasCheckpointChange} />
-      <SelectFilter
-        enableSearchFilter={false}
-        label="Metric"
-        mode="multiple"
-        showSearch={false}
-        style={{ minWidth: 220 }}
-        value={metricNameValues}
-        onDeselect={handleMetricDeselect}
-        onSelect={handleMetricSelect}>
-        {validationMetricNames.length > 0 && <OptGroup label="Validation Metrics">
-          {validationMetricNames.map(key => {
-            const value = metricNameToValue(key);
-            return <Option key={value} value={value}>{key.name} <Badge>{key.type}</Badge></Option>;
-          })}
-        </OptGroup>}
-        {trainingMetricNames.length > 0 && <OptGroup label="Training Metrics">
-          {trainingMetricNames.map(key => {
-            const value = metricNameToValue(key);
-            return <Option key={value} value={value}>{key.name} <Badge>{key.type}</Badge></Option>;
-          })}
-        </OptGroup>}
-      </SelectFilter>
+      <MetricSelectFilter
+        metricNames={metricNames}
+        multiple
+        value={metrics}
+        onChange={handleMetricChange} />
     </Space>
   ) : null;
 

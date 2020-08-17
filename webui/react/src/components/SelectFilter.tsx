@@ -1,32 +1,25 @@
 import { Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
+import { SelectProps, SelectValue } from 'antd/es/select';
 import React, { PropsWithChildren, useCallback } from 'react';
 
 import Icon from './Icon';
 import Label from './Label';
 import css from './SelectFilter.module.scss';
 
-interface Props {
-  defaultValue?: SelectValue;
+interface Props<T = SelectValue> extends SelectProps<T> {
   enableSearchFilter?: boolean;
   label: string;
-  mode?: 'multiple' | 'tags';
-  onDeselect?: (value: SelectValue) => void;
-  onSelect?: (value: SelectValue) => void;
-  placeholder?: string | React.ReactNode;
-  showSearch?: boolean;
   style?: React.CSSProperties;
-  value?: SelectValue;
 }
-
-const defaultProps = {
-  enableSearchFilter: true,
-  showSearch: true,
-};
 
 export const ALL_VALUE = 'all';
 
-const SelectFilter: React.FC<PropsWithChildren<Props>> = (props: PropsWithChildren<Props>) => {
+const SelectFilter: React.FC<PropsWithChildren<Props>> = ({
+  dropdownMatchSelectWidth = false,
+  enableSearchFilter = true,
+  showSearch = true,
+  ...props
+}: PropsWithChildren<Props>) => {
 
   const getPopupContainer = useCallback((triggerNode) => triggerNode, []);
 
@@ -49,24 +42,16 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = (props: PropsWithChildr
     <div className={css.base}>
       <Label>{props.label}</Label>
       <Select
-        defaultValue={props.defaultValue}
-        dropdownMatchSelectWidth={false}
-        filterOption={props.enableSearchFilter ? handleFilter : true}
+        dropdownMatchSelectWidth={dropdownMatchSelectWidth}
+        filterOption={enableSearchFilter ? handleFilter : true}
         getPopupContainer={getPopupContainer}
-        mode={props.mode}
-        placeholder={props.placeholder}
-        showSearch={props.showSearch}
-        style={props.style}
+        showSearch={showSearch}
         suffixIcon={<Icon name="arrow-down" size="tiny" />}
-        value={props.value}
-        onDeselect={props.onDeselect}
-        onSelect={props.onSelect}>
+        {...props}>
         {props.children}
       </Select>
     </div>
   );
 };
-
-SelectFilter.defaultProps = defaultProps;
 
 export default SelectFilter;
