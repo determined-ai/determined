@@ -224,7 +224,7 @@ trialsTableConfig session m =
                         { attributes = [ HA.class "p-2" ]
                         , children =
                             [ H.a
-                                [ HA.href <| Route.toString (Route.TrialDetail trial.id)
+                                [ HA.href <| Route.toString (Route.TrialDetailReact trial.id)
                                 , Page.Common.onClickStopPropagation NoOp
                                 ]
                                 [ H.text <| String.fromInt trial.id ]
@@ -251,7 +251,7 @@ trialsTableConfig session m =
                 rowAttrs trial =
                     [ HA.class "cursor-pointer hover:bg-orange-100"
                     , HE.on "click"
-                        (D.map (SendOut << Comm.RouteRequested (Route.TrialDetail trial.id))
+                        (D.map (SendOut << Comm.RouteRequested (Route.TrialDetailReact trial.id))
                             (D.map2 (||) (D.field "ctrlKey" D.bool) (D.field "metaKey" D.bool))
                         )
                     ]

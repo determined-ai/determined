@@ -221,7 +221,7 @@ sourceToHtml tableRecord =
                             "Trials "
                         )
                         :: (List.sort trialIds
-                                |> List.map (linkHtml Route.TrialDetail)
+                                |> List.map (linkHtml Route.TrialDetailReact)
                                 |> linksToHtml
                            )
                         |> Page.Common.horizontalList
