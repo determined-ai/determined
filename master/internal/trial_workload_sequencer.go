@@ -324,12 +324,12 @@ func (s trialWorkloadSequencer) Workload() (searcher.Workload, error) {
 		batchesLeft := tOp.Length.ToNearestBatch(s.unitContext) - s.batchesTowardsCurrentOp
 		batchesTilVal := s.batchesUntilValNeeded()
 		batchesTilCkpt := s.batchesUntilCkptNeeded()
-		batchesThisStep := min(
+		batchesThisStep := max(min(
 			batchesLeft,
 			batchesTilVal,
 			batchesTilCkpt,
 			s.schedulingUnit,
-		)
+		), 1)
 		return s.train(batchesThisStep), nil
 	default:
 		return searcher.Workload{}, errors.New("unexpected op type determining workload")
@@ -452,4 +452,14 @@ func min(initial int, values ...int) int {
 		}
 	}
 	return minValue
+}
+
+func max(initial int, values ...int) int {
+	maxValue := initial
+	for _, value := range values {
+		if value > maxValue {
+			maxValue = value
+		}
+	}
+	return maxValue
 }
