@@ -15,34 +15,32 @@ parallelization of these methods.
 
 Adaptive Search
 ---------------
-Our default recommended search method is adaptive search, an early-stopping
-based technique that speeds up traditional techniques like random search by
-periodically abandoning low-performing hyperparameter configurations in a
-principled fashion. Adaptive search builds on the two prototypical adaptive
+Our default recommended search method is
+(`Adaptive (ASHA) <https://arxiv.org/pdf/1810.05934.pdf>`_), a state-of-the-art
+early-stopping based technique that speeds up traditional techniques
+like random search by periodically abandoning low-performing hyperparameter
+configurations in a principled fashion.
+
+:ref:`Adaptive (ASHA) <topic-guides_hp-tuning-det_adaptive-asha>` offers asynchronous
+search functionality more suitable for large-scale HP search experiments in the distributed setting.
+
+Synchronous Searchers
+~~~~~~~~~~~~~~~~~~~~~
+Determined also offers two synchronous adaptive searchers that differ in their level of configurability.
+
+Adaptive (Simple) and Adaptive (Advanced) build on the two prototypical adaptive
 downsampling approaches, `Successive Halving
 <https://arxiv.org/pdf/1502.07943.pdf>`_ (SHA) and `Hyperband
-<https://arxiv.org/abs/1603.06560>`_, while also enabling seamless
-parallelization and a simpler user interface.
-
-Determined offers two adaptive searchers that employ the same underlying
-algorithm but differ in their level of configurability.
+<https://arxiv.org/abs/1603.06560>`_.
 
 #. :ref:`Adaptive (Simple)<topic-guides_hp-tuning-det_adaptive-simple>` is
    easier to configure and provides sensible default settings for most
    situations. This searcher requires just two intuitive settings: the number of
    configurations to evaluate, and the maximum allowed resource budget per
-   configuration.  We recommend starting with this searcher.
+   configuration.
 #. :ref:`Adaptive (Advanced) <topic-guides_hp-tuning-det_adaptive-advanced>`
    allows users to control the adaptive search behavior in a more fine-grained
    way.
-
-Experimental
-~~~~~~~~~~~~
-
-:ref:`Adaptive (Asynchronous) <topic-guides_hp-tuning-det_adaptive-asha>`
-is an asynchronous version of the above adaptive searchers
-(`ASHA <https://arxiv.org/pdf/1810.05934.pdf>`_) that is more
-suitable for large-scale HP search experiments in the distributed setting.
 
 Other Supported Methods
 -----------------------
@@ -68,7 +66,8 @@ restart it from the latest checkpoint unless we have done so
 configuration. Once we have reached ``max_restarts``, any further trials
 that fail will be marked as errored and will not be restarted. For
 search methods that adapt to validation metric values (:ref:`Adaptive
-(Simple)<topic-guides_hp-tuning-det_adaptive-simple>`, :ref:`Adaptive
+(ASHA) <topic-guides_hp-tuning-det_adaptive-asha>`, :ref:`Adaptive(Simple)
+<topic-guides_hp-tuning-det_adaptive-simple>`, :ref:`Adaptive
 (Advanced) <topic-guides_hp-tuning-det_adaptive-advanced>`, and
 :ref:`Population-based training (PBT)<topic-guides_hp-tuning-det_pbt>`),
 we do not continue training errored trials, even if the search method

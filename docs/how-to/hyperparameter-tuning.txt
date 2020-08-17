@@ -74,20 +74,22 @@ Determined supports a :ref:`variety of hyperparameter search algorithms
 searcher runs multiple trials and decides the hyperparameter values to
 use in each trial.  Every searcher is configured with the name of the
 validation metric to optimize (via the ``metric`` field), in addition to
-other searcher-specific options. For example, the ``adaptive_simple``
-searcher implements adaptive downsampling, and is configured with the
-maximum number of trials to run and the maximum training length
-(see :ref:`Training Units<experiment-configuration_training_units>`)
-allowed per trial:
+other searcher-specific options. For example, the
+(`state-of-the-art <https://arxiv.org/pdf/1810.05934.pdf>`_)
+``adaptive_asha`` searcher, suitable for larger experiments with many trials,
+is configured with the maximum number of trials to run, the
+maximum training length allowed per trial, and the maximum number
+of trials that can be worked on simultaneously:
 
 .. code:: yaml
 
   searcher:
-    name: adaptive_simple
-    metric: validation_error
+    name: "adaptive_asha"
+    metric: "validation_loss"
+    max_trials: 16
     max_length:
-      batches: 102400
-    max_trials: 32
+        epochs: 1
+    max_concurrent_trials: 8
 
 For details on the supported searchers and their respective configuration
 options, refer to :ref:`topic-guides_hp-tuning-det`.
@@ -98,7 +100,7 @@ WebUI.  After the experiment has completed, they can view the
 hyperparameter values for the best-performing trials and then export the
 associated model checkpoints for downstream serving.
 
-.. image:: /assets/images/adaptive-experiment-detail.png
+.. image:: /assets/images/adaptive-asha-experiment-detail.png
 
 Next Steps
 ----------
