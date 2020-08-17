@@ -42,11 +42,7 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
     if (rsValue === 0) return;
     labels.push(rsState);
     values.push(rsValue);
-    if (rsState === ResourceState.Free) {
-      colors.push(lightTheme.colors.states.inactive);
-    } else {
-      colors.push(getStateColor(rsState as CommandState));
-    }
+    colors.push(getStateColor(rsState as CommandState));
   });
 
   const data: Data[] = [ {

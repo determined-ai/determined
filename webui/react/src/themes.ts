@@ -1,4 +1,4 @@
-import { CommandState, RunState } from 'types';
+import { CommandState, ResourceState, RunState } from 'types';
 
 export enum ShirtSize {
   micro = 'micro',
@@ -12,6 +12,14 @@ export enum ShirtSize {
   giant = 'giant',
 }
 
+enum StateColors {
+  active = 'active',
+  failed = 'failed',
+  inactive = 'inactive',
+  success = 'success',
+  suspended = 'suspended',
+}
+
 export interface Theme {
   colors: {
     core: {
@@ -21,13 +29,7 @@ export interface Theme {
       tertiary: string;
     };
     monochrome: string[];
-    states: {
-      active: string;
-      failed: string;
-      inactive: string;
-      success: string;
-      suspended: string;
-    };
+    states: Record<StateColors, string>;
   };
   focus: {
     shadow: string;
@@ -154,26 +156,37 @@ export const lightTheme: Theme = {
 };
 
 const stateColorMapping = {
-  [RunState.Active]: 'var(--theme-colors-states-active)',
-  [RunState.Canceled]: 'var(--theme-colors-states-inactive)',
-  [RunState.Completed]: 'var(--theme-colors-states-success)',
-  [RunState.Deleted]: 'var(--theme-colors-states-failed)',
-  [RunState.Errored]: 'var(--theme-colors-states-failed)',
-  [RunState.Paused]: 'var(--theme-colors-states-suspended)',
-  [RunState.StoppingCanceled]: 'var(--theme-colors-states-inactive)',
-  [RunState.StoppingCompleted]: 'var(--theme-colors-states-success)',
-  [RunState.StoppingError]: 'var(--theme-colors-states-failed)',
-  [CommandState.Pending]: 'var(--theme-colors-states-suspended)',
-  [CommandState.Assigned]: 'var(--theme-colors-states-suspended)',
-  [CommandState.Pulling]: 'var(--theme-colors-states-active)',
-  [CommandState.Starting]: 'var(--theme-colors-states-active)',
-  [CommandState.Running]: 'var(--theme-colors-states-active)',
-  [CommandState.Terminating]: 'var(--theme-colors-states-inactive)',
-  [CommandState.Terminated]: 'var(--theme-colors-states-inactive)',
+  [RunState.Active]: 'active',
+  [RunState.Canceled]: 'inactive',
+  [RunState.Completed]: 'success',
+  [RunState.Deleted]: 'failed',
+  [RunState.Errored]: 'failed',
+  [RunState.Paused]: 'suspended',
+  [RunState.StoppingCanceled]: 'inactive',
+  [RunState.StoppingCompleted]: 'success',
+  [RunState.StoppingError]: 'failed',
+  [CommandState.Pending]: 'suspended',
+  [CommandState.Assigned]: 'suspended',
+  [CommandState.Pulling]: 'active',
+  [CommandState.Starting]: 'active',
+  [CommandState.Running]: 'active',
+  [CommandState.Terminating]: 'inactive',
+  [CommandState.Terminated]: 'inactive',
+  [ResourceState.Free]: 'inactive',
 };
 
-export const getStateColor = (state: RunState | CommandState | undefined): string => {
-  return stateColorMapping[state || RunState.Active];
+export const getStateColorCssVar = (
+  state: RunState | CommandState | ResourceState | undefined,
+): string => {
+  const name = state ? stateColorMapping[state] : 'active';
+  return `var(--theme-colors-states-${name})`;
+};
+
+export const getStateColor = (
+  state: RunState | CommandState | ResourceState,
+): string => {
+  const name = state ? stateColorMapping[state] : 'active';
+  return window.getComputedStyle(document.body).getPropertyValue(`--theme-colors-states-${name}`);
 };
 
 export enum ThemeId {

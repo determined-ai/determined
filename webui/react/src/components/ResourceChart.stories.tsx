@@ -45,4 +45,24 @@ export const HalfHalf = (): React.ReactNode => <ResourceChart resources={[
   { container: { state: ResourceState.Running } },
 ] as Resource[]} title="GPUs" />;
 
+export const MostlyStarting = (): React.ReactNode => <ResourceChart resources={[
+  { container: undefined },
+  { container: undefined },
+  { container: { state: ResourceState.Running } },
+  { container: { state: ResourceState.Starting } },
+  { container: { state: ResourceState.Starting } },
+  { container: { state: ResourceState.Starting } },
+  { container: { state: ResourceState.Starting } },
+] as Resource[]} title="GPUs" />;
+
+export const MostlyRunning = (): React.ReactNode => <ResourceChart resources={[
+  { container: undefined },
+  { container: undefined },
+  { container: { state: ResourceState.Starting } },
+  { container: { state: ResourceState.Running } },
+  { container: { state: ResourceState.Running } },
+  { container: { state: ResourceState.Running } },
+  { container: { state: ResourceState.Running } },
+] as Resource[]} title="GPUs" />;
+
 export const Empty = (): React.ReactNode => <ResourceChart resources={[]} title="DPUs" />;
