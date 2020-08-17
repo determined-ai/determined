@@ -1,16 +1,15 @@
 import {
-  Breadcrumb, Button, Col, Form, Input, Modal, Row, Space, Table, Tooltip,
+  Button, Col, Form, Input, Modal, Row, Space, Table, Tooltip,
 } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
-import Badge from 'components/Badge';
+import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
 import CreateExperimentModal from 'components/CreateExperimentModal';
 import Icon from 'components/Icon';
-import Link from 'components/Link';
 import Message from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import Page from 'components/Page';
@@ -87,6 +86,9 @@ const TrialDetailsComp: React.FC = () => {
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
   const [ trial, triggerTrialRequest ] =
     useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
+
+  const experimentId = trial.data?.experimentId;
+  const hparams = trial.data?.hparams;
 
   const metricNames = useMemo(() => extractMetricNames(trial.data?.steps), [ trial.data?.steps ]);
 
@@ -169,8 +171,6 @@ const TrialDetailsComp: React.FC = () => {
     [ triggerTrialRequest, trialId ],
   );
   usePolling(pollTrialDetails);
-  const experimentId = trial.data?.experimentId;
-  const hparams = trial.data?.hparams;
 
   const handleActionClick = useCallback((action: TrialAction) => (): void => {
     switch (action) {
@@ -356,21 +356,23 @@ If the problem persists please contact support.',
   ) : null;
 
   return (
-    <Page title={`Trial ${trialId}`}>
-      <Breadcrumb>
-        <Breadcrumb.Item>
-          <Space align="center" size="small">
-            <Icon name="trial" size="small" />
-            <Link path="/det/trials">Trials</Link>
-          </Space>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>
-          <span>{trialId}</span>
-        </Breadcrumb.Item>
-      </Breadcrumb>
-      <TrialActions trial={trial.data}
+    <Page
+      backPath={`/det/experiments/${experimentId}`}
+      breadcrumb={[
+        { breadcrumbName: 'Experiments', path: '/det/experiments' },
+        {
+          breadcrumbName: `Experiment ${experimentId}`,
+          path: `/det/experiments/${experimentId}`,
+        },
+        { breadcrumbName: `Trial ${trialId}`, path: `/det/trials/${trialId}` },
+      ]}
+      maxHeight
+      options={<TrialActions trial={trial.data}
         onClick={handleActionClick}
-        onSettled={pollTrialDetails} />
+        onSettled={pollTrialDetails} />}
+      showDivider
+      subTitle={<Badge state={trial.data?.state} type={BadgeType.State} />}
+      title={`Trial ${trialId}`}>
       <Row className={css.topRow} gutter={[ 16, 16 ]}>
         <Col lg={10} span={24} xl={8} xxl={6}>
           <TrialInfoBox experiment={experiment} trial={trial.data} />

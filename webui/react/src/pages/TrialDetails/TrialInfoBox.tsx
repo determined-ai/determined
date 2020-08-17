@@ -73,15 +73,11 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
   const infoRows = [
     {
-      content: <Badge state={experiment.state} type={BadgeType.State} />,
-      label: 'State',
-    },
-    {
-      content: formatDatetime(experiment.startTime),
+      content: formatDatetime(trial.startTime),
       label: 'Start Time',
     },
     {
-      content: trial.endTime && formatDatetime(experiment.startTime),
+      content: trial.endTime && formatDatetime(trial.endTime),
       label: 'End Time',
     },
     {
