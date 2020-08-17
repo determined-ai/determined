@@ -184,10 +184,9 @@ export const getStateColorCssVar = (
 
 export const getStateColor = (
   state: RunState | CommandState | ResourceState,
-  theme = lightTheme,
 ): string => {
   const name = state ? stateColorMapping[state] : 'active';
-  return theme.colors.states[name as StateColors];
+  return window.getComputedStyle(document.body).getPropertyValue(`--theme-colors-states-${name}`);
 };
 
 export enum ThemeId {
