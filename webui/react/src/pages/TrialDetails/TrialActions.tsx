@@ -16,29 +16,26 @@ export enum Action {
 
 interface Props {
   trial: TrialDetails;
-  onSettled: () => void; // A callback to trigger after an action is done.
   onClick: (action: Action) => (() => void);
+  onSettled: () => void; // A callback to trigger after an action is done.
 }
 
 type ButtonLoadingStates = Record<Action, boolean>;
 
-const TrialActions: React.FC<Props> = ({ trial, onClick, onSettled: updateFn }: Props) => {
-
+const TrialActions: React.FC<Props> = ({ trial, onClick, onSettled }: Props) => {
   const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
     Continue: false,
     Logs: false,
     Tensorboard: false,
   });
 
-  const handleCreateTensorboard = useCallback(() => {
+  const handleCreateTensorboard = useCallback(async () => {
     setButtonStates(state => ({ ...state, tensorboard: true }));
-    createTensorboard({ ids: [ trial.id ], type: TBSourceType.Trial })
-      .then((tensorboard) => {
-        openCommand(tensorboard);
-        return updateFn();
-      })
-      .finally(() => setButtonStates(state => ({ ...state, tensorboard: false })));
-  }, [ trial.id, updateFn ]);
+    const tensorboard = await createTensorboard({ ids: [ trial.id ], type: TBSourceType.Trial });
+    openCommand(tensorboard);
+    onSettled();
+    setButtonStates(state => ({ ...state, tensorboard: false }));
+  }, [ trial.id, onSettled ]);
 
   const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
     const isTerminal = terminalRunStates.has(trial.state);
