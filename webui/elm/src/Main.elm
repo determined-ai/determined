@@ -468,7 +468,6 @@ updateWithRoute url model =
                 Just (Route.TrialDetailReact id) ->
                     ( model, Navigation.load (Route.toString (Route.TrialDetailReact id)) )
 
-
                 Just (Route.LogViewer id) ->
                     Page.LogViewer.init id |> mapInit model logViewerInfo
 
