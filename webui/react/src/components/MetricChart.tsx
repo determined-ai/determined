@@ -39,7 +39,7 @@ type PlotArguments = [
 ];
 
 const defaultLayout: Partial<Plotly.Layout> = {
-  height: 368,
+  height: 400,
   margin: { b: 50, l: 50, pad: 6, r: 10, t: 10 },
   xaxis: {
     hoverformat: '',
