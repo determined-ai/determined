@@ -20,7 +20,10 @@ export const columns: ColumnType<Step>[] = [
   {
     fixed: 'left',
     render: batchRender,
-    sorter: (a: Step, b: Step): number => alphanumericSorter(a.numBatches, b.numBatches),
+    sorter: (a: Step, b: Step): number => alphanumericSorter(
+      a.numBatches + a.priorBatchesProcessed,
+      b.numBatches + b.priorBatchesProcessed,
+    ),
     title: 'Batches',
     width: 100,
   },
