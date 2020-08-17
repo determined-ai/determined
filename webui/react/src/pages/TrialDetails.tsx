@@ -366,7 +366,6 @@ If the problem persists please contact support.',
         },
         { breadcrumbName: `Trial ${trialId}`, path: `/det/trials/${trialId}` },
       ]}
-      maxHeight
       options={<TrialActions trial={trial.data}
         onClick={handleActionClick}
         onSettled={pollTrialDetails} />}

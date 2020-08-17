@@ -482,7 +482,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   };
 
   return (
-    <Page maxHeight options={logOptions} title={props.title}>
+    <Page options={logOptions} title={props.title}>
       <div className={css.base} ref={baseRef}>
         <div className={css.container} ref={container}>
           <div className={css.scrollSpacer} ref={spacer} style={spacerStyle}>
