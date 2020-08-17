@@ -422,7 +422,7 @@ func (d *DefaultRP) receiveContainerStartedOnAgent(
 		// assigned to an agent.
 		ctx.Ask(d.proxy, proxy.Register{
 			ServiceID: string(task.ID),
-			Target: &url.URL{
+			URL: &url.URL{
 				Scheme: "http",
 				Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
 			},

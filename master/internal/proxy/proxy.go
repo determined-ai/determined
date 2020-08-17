@@ -21,7 +21,7 @@ type (
 	// format ".../:service-name/*" are forwarded to the service via the target URL.
 	Register struct {
 		ServiceID string
-		Target    *url.URL
+		URL       *url.URL
 	}
 	// Unregister removes the service from the proxy. All future requests until the service name is
 	// registered again will be responded with a 404 response. If the service is not registered with
@@ -62,8 +62,8 @@ func (p *Proxy) Receive(ctx *actor.Context) error {
 		}
 		p.lock.Lock()
 		defer p.lock.Unlock()
-		ctx.Log().Infof("registering service: %s (%v)", msg.ServiceID, msg.Target)
-		p.services[msg.ServiceID] = &Service{msg.Target, time.Now()}
+		ctx.Log().Infof("registering service: %s (%v)", msg.ServiceID, msg.URL)
+		p.services[msg.ServiceID] = &Service{msg.URL, time.Now()}
 
 		if ctx.ExpectingResponse() {
 			ctx.Respond(nil)
@@ -92,8 +92,6 @@ func (p *Proxy) getTargetURL(serviceName string) (*url.URL, bool) {
 	defer p.lock.Unlock()
 	service, ok := p.services[serviceName]
 	service.LastRequested = time.Now()
-	fmt.Printf("p.services = %+v\n", p.services)
-	fmt.Printf("service = %+v\n", service)
 	// Make a copy to avoid callers mutating the url outside of this locked
 	// method.
 	sURL := *service.URL

@@ -285,7 +285,7 @@ func (k *kubernetesResourceProvider) receivePodStarted(ctx *actor.Context, msg s
 		// assigned to an agent.
 		ctx.Ask(k.proxy, proxy.Register{
 			ServiceID: string(task.ID),
-			Target: &url.URL{
+			URL: &url.URL{
 				Scheme: "http",
 				Host:   fmt.Sprintf("%s:%d", msg.IP, port),
 			},
