@@ -1,15 +1,23 @@
-import { Breadcrumb, Button, Col, Form, Input, Modal, Row, Space } from 'antd';
+import {
+  Breadcrumb, Button, Col, Form, Input, Modal, Row, Space, Table, Tooltip,
+} from 'antd';
+import { ColumnType } from 'antd/es/table';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
+import Badge from 'components/Badge';
+import CheckpointModal from 'components/CheckpointModal';
 import CreateExperimentModal from 'components/CreateExperimentModal';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import Message from 'components/Message';
+import MetricSelectFilter from 'components/MetricSelectFilter';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
+import { defaultRowClassName } from 'components/Table';
+import Toggle from 'components/Toggle';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
@@ -19,12 +27,16 @@ import { routeAll } from 'routes';
 import { forkExperiment } from 'services/api';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { TrialDetailsParams } from 'services/types';
-import { ExperimentDetails, RawJson, TrialDetails } from 'types';
-import { clone } from 'utils/data';
-import { extractMetricNames } from 'utils/trial';
+import {
+  CheckpointDetail, ExperimentDetails, MetricName, RawJson, Step, TrialDetails,
+} from 'types';
+import { clone, numericSorter } from 'utils/data';
+import { humanReadableFloat } from 'utils/string';
+import { extractMetricNames, extractMetricValue } from 'utils/trial';
 import { trialHParamsToExperimentHParams, upgradeConfig } from 'utils/types';
 
 import css from './TrialDetails.module.scss';
+import { columns as defaultColumns } from './TrialDetails.table';
 import TrialChart from './TrialDetails/TrialChart';
 
 interface Params {
@@ -61,16 +73,20 @@ const trialContinueConfig =
 const TrialDetailsComp: React.FC = () => {
   const { trialId: trialIdParam } = useParams<Params>();
   const trialId = parseInt(trialIdParam);
-  const [ trial, triggerTrialRequest ] =
-    useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
+  const [ experiment, setExperiment ] = useState<ExperimentDetails>();
+  const [ showHasCheckpoint, setShowHasCheckpoint ] = useState(true);
   const [ contModalVisible, setContModalVisible ] = useState(false);
   const [ contModalConfig, setContModalConfig ] = useState('Loading');
   const [ contFormVisible, setContFormVisible ] = useState<boolean>(false);
   const [ contMaxLength, setContMaxLength ] = useState<number>();
   const [ contDescription, setContDescription ] = useState<string>('Loading');
   const [ contError, setContError ] = useState<string>();
-  const [ experiment, setExperiment ] = useState<ExperimentDetails>();
   const [ form ] = Form.useForm();
+  const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
+  const [ showCheckpoint, setShowCheckpoint ] = useState(false);
+  const [ metrics, setMetrics ] = useState<MetricName[]>([]);
+  const [ trial, triggerTrialRequest ] =
+    useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
 
   const metricNames = useMemo(() => extractMetricNames(trial.data?.steps), [ trial.data?.steps ]);
 
@@ -83,9 +99,70 @@ const TrialDetailsComp: React.FC = () => {
     },
     [ experiment?.configRaw ],
   );
+
   const trialLength = useMemo(() => {
     return getTrialLength(upgradedConfig);
   }, [ upgradedConfig ]);
+
+  const columns = useMemo(() => {
+    const checkpointRenderer = (_: string, record: Step) => {
+      if (record.checkpoint) {
+        const checkpoint: CheckpointDetail = {
+          ...record.checkpoint,
+          batch: record.numBatches + record.priorBatchesProcessed,
+          experimentId: trial.data?.experimentId,
+          trialId: record.id,
+        };
+        return <Tooltip title="View Checkpoint">
+          <Button
+            aria-label="View Checkpoint"
+            icon={<Icon name="checkpoint" />}
+            onClick={e => handleCheckpointShow(e, checkpoint)} />
+        </Tooltip>;
+      }
+      return null;
+    };
+    const metricRenderer = (metricName: MetricName) => (_: string, record: Step) => {
+      const value = extractMetricValue(record, metricName);
+      return value ? <Tooltip title={value}>
+        <span>{humanReadableFloat(value)}</span>
+      </Tooltip> : undefined;
+    };
+
+    const newColumns: ColumnType<Step>[] = [ ...defaultColumns ];
+    const searcher = experiment?.config.searcher;
+
+    metrics.forEach(metricName => {
+      const stateIndex = newColumns.findIndex(column => /state/i.test(column.title as string));
+      newColumns.splice(stateIndex, 0, {
+        defaultSortOrder: searcher && searcher.metric === metricName.name ?
+          (searcher.smallerIsBetter ? 'ascend' : 'descend') : undefined,
+        render: metricRenderer(metricName),
+        sorter: (a, b) => numericSorter(
+          extractMetricValue(a, metricName),
+          extractMetricValue(b, metricName),
+        ),
+        title: <>
+          <Badge tooltip={metricName.type}>{metricName.type.substr(0, 1).toUpperCase()}</Badge>
+          <span>{metricName.name}</span>
+        </>,
+      });
+    });
+
+    newColumns.push({
+      fixed: 'right',
+      render: checkpointRenderer,
+      title: 'Checkpoint',
+      width: 100,
+    });
+
+    return newColumns;
+  }, [ experiment?.config.searcher, metrics, trial.data?.experimentId ]);
+
+  const steps = useMemo(() => {
+    const data = trial.data?.steps || [];
+    return showHasCheckpoint ? data.filter(step => !!step.checkpoint) : data;
+  }, [ showHasCheckpoint, trial.data?.steps ]);
 
   const pollTrialDetails = useCallback(
     () => triggerTrialRequest({ id: trialId }),
@@ -101,7 +178,7 @@ const TrialDetailsComp: React.FC = () => {
         setContFormVisible(true);
         break;
     }
-  }, [ ]);
+  }, []);
 
   const setFreshContinueConfig = useCallback(() => {
     if (!upgradedConfig || !hparams) return;
@@ -206,19 +283,41 @@ If the problem persists please contact support.',
     }
   }, [ setFreshContinueConfig ]);
 
+  const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
+    event.stopPropagation();
+    setActiveCheckpoint(checkpoint);
+    setShowCheckpoint(true);
+  };
+  const handleCheckpointDismiss = () => setShowCheckpoint(false);
+
+  const handleHasCheckpointChange = useCallback((value: boolean): void => {
+    setShowHasCheckpoint(value);
+  }, [ setShowHasCheckpoint ]);
+
+  const handleMetricChange = useCallback((value: MetricName[]) => setMetrics(value), []);
+
   useEffect(() => {
     if (experimentId === undefined) return;
     getExperimentDetails({ id:experimentId })
-      .then(experiment => {
-        setExperiment(experiment);
-      });
-  }, [ experimentId, trialId ]);
+      .then(experiment => setExperiment(experiment));
+  }, [ experimentId ]);
 
   const handleEditContConfig = useCallback(() => {
     updateStatesFromForm();
     setContFormVisible(false);
     setContModalVisible(true);
   }, [ updateStatesFromForm ]);
+
+  /*
+   * By default enable all metric columns for table because:
+   * 1. The metric columns as sorted by order of relevance.
+   * 2. The table supports horizontal scrolling to show additional columns.
+   */
+  useEffect(() => {
+    if (metrics && metrics?.length !== 0) return;
+    if (metricNames.length === 0) return;
+    setMetrics(metricNames);
+  }, [ metricNames, metrics ]);
 
   if (isNaN(trialId)) {
     return (
@@ -241,6 +340,20 @@ If the problem persists please contact support.',
   if (!trial.data || !experiment || !upgradedConfig) {
     return <Spinner fillContainer />;
   }
+
+  const options = metrics ? (
+    <Space size="middle">
+      <Toggle
+        checked={showHasCheckpoint}
+        prefixLabel="Has Checkpoint"
+        onChange={handleHasCheckpointChange} />
+      <MetricSelectFilter
+        metricNames={metricNames}
+        multiple
+        value={metrics}
+        onChange={handleMetricChange} />
+    </Space>
+  ) : null;
 
   return (
     <Page title={`Trial ${trialId}`}>
@@ -269,11 +382,26 @@ If the problem persists please contact support.',
             validationMetric={experiment.config?.searcher.metric} />
         </Col>
         <Col span={24}>
-          <Section title="Trial Information">
-            {/* Table */}
+          <Section options={options} title="Trial Information">
+            <Table
+              columns={columns}
+              dataSource={steps}
+              loading={!trial.hasLoaded}
+              pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
+              rowClassName={defaultRowClassName()}
+              rowKey="id"
+              scroll={{ x: 1000 }}
+              showSorterTooltip={false}
+              size="small" />
           </Section>
         </Col>
       </Row>
+      {activeCheckpoint && <CheckpointModal
+        checkpoint={activeCheckpoint}
+        config={experiment.config}
+        show={showCheckpoint}
+        title={`Checkpoint for Batch ${activeCheckpoint.batch}`}
+        onHide={handleCheckpointDismiss} />}
       <CreateExperimentModal
         config={contModalConfig}
         error={contError}

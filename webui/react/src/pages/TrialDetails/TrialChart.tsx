@@ -1,17 +1,13 @@
-import { Select } from 'antd';
-import { SelectValue } from 'antd/es/select';
 import { PlotData } from 'plotly.js/lib/core';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import MetricChart from 'components/MetricChart';
-import SelectFilter from 'components/SelectFilter';
-import { MetricNames, Step } from 'types';
-
-const { OptGroup, Option } = Select;
+import MetricSelectFilter from 'components/MetricSelectFilter';
+import { MetricName, MetricType, Step } from 'types';
 
 interface Props {
   id?: string;
-  metricNames: MetricNames;
+  metricNames: MetricName[];
   steps?: Step[];
   validationMetric?: string;
 }
@@ -19,7 +15,9 @@ interface Props {
 const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }: Props) => {
   const titleDetail = validationMetric ? ` (${validationMetric})` : '';
   const title = `Training Metric${titleDetail}`;
-  const [ metric, setMetric ] = useState(validationMetric);
+  const [ metric, setMetric ] = useState<MetricName | undefined>(
+    validationMetric ? { name: validationMetric, type: MetricType.Validation } : undefined,
+  );
 
   const data: Partial<PlotData>[] = useMemo(() => {
     const textData: string[] = [];
@@ -29,12 +27,11 @@ const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }
     (props.steps || []).forEach(step => {
       if (!metric) return;
 
-      const metricSources = [
-        step.avgMetrics || {},
-        step.validation?.metrics?.validationMetrics || {},
-      ];
+      const trainingSource = step.avgMetrics || {};
+      const validationSource = step.validation?.metrics?.validationMetrics || {};
       const x = step.numBatches + step.priorBatchesProcessed;
-      const y = (metricSources.find(source => source[metric] != null) || {})[metric];
+      const y = metric.type === MetricType.Validation ?
+        validationSource[metric.name] : trainingSource[metric.name];
 
       const text = [
         `Batches: ${x}`,
@@ -59,30 +56,15 @@ const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }
     } ];
   }, [ metric, props.steps ]);
 
-  const handleMetricSelect = useCallback((newValue: SelectValue) => {
-    setMetric(newValue as string);
-  }, []);
-
-  const options = (
-    <SelectFilter
-      enableSearchFilter={false}
-      label="Metric"
-      showSearch={false}
-      value={metric}
-      onSelect={handleMetricSelect}>
-      {metricNames.validation.length > 0 && <OptGroup label="Validation Metrics">
-        {metricNames.validation.map(key => <Option key={key} value={key}>{key}</Option>)}
-      </OptGroup>}
-      {metricNames.training.length > 0 && <OptGroup label="Training Metrics">
-        {metricNames.training.map(key => <Option key={key} value={key}>{key}</Option>)}
-      </OptGroup>}
-    </SelectFilter>
-  );
+  const handleMetricChange = useCallback((value: MetricName) => setMetric(value), []);
 
   return <MetricChart
     data={data}
     id={props.id}
-    options={options}
+    options={<MetricSelectFilter
+      metricNames={metricNames}
+      value={metric}
+      onChange={handleMetricChange} />}
     title={title}
     xLabel="Batches"
     yLabel="Metric Value" />;

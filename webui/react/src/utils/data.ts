@@ -1,4 +1,4 @@
-import { CommandMisc, CommandState, RunState, State } from 'types';
+import { CommandMisc, CommandState, MetricName, MetricType, RunState, State } from 'types';
 
 export const isMap = <T>(data: T): boolean => data instanceof Map;
 export const isNumber = <T>(data: T): boolean => typeof data === 'number';
@@ -88,6 +88,19 @@ export const commandSourceSorter = (a: CommandMisc = {}, b: CommandMisc = {}): n
 
 export const commandStateSorter = (a: CommandState, b: CommandState): number => {
   return commandStateSortValues[a] - commandStateSortValues[b];
+};
+
+/*
+ * Sort the metric names by having the validation metrics come first followed by training metrics.
+ * Within each type of metric, sort in the order they appear in the `MetricNames` array.
+ * Within the respective type of metrics, `MetricNames` is currently sorted alphanumerically.
+ */
+export const metricNameSorter = (a: MetricName, b: MetricName): number => {
+  const isAValidation = a.type === MetricType.Validation;
+  const isBValidation = b.type === MetricType.Validation;
+  if (isAValidation && !isBValidation) return -1;
+  if (isBValidation && !isAValidation) return 1;
+  return alphanumericSorter(a.name, b.name);
 };
 
 export const numericSorter = (a?: number, b?: number): number => {
