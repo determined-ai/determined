@@ -47,32 +47,39 @@ describe('Navigation', () => {
   });
 
   describe('side menu buttons', () => {
-    const SPA = '/det';
+    const SPAs = [ '/det', '/ui' ];
 
     it('clicking experiments in side menu should navigate to experiments', () => {
-      cy.visit(SPA);
-      cy.get('#side-menu').contains(/experiments/i).click();
-      return cy.get(pageTitleSelector).contains('Experiments');
+      SPAs.forEach(page => {
+        cy.visit(page);
+        cy.get('#side-menu').contains(/experiments/i).click();
+        return cy.get(pageTitleSelector).contains('Experiments');
+      });
     });
 
     it('clicking tasks in side menu should navigate to tasks', () => {
-      cy.visit(SPA);
-      cy.get('#side-menu').contains(/tasks/i).click();
-      cy.get(pageTitleSelector).contains('Tasks');
+      SPAs.forEach(page => {
+        cy.visit(page);
+        cy.get('#side-menu').contains(/tasks/i).click();
+        cy.get(pageTitleSelector).contains('Tasks');
+      });
     });
 
     it('clicking cluster in side menu should navigate to cluster', () => {
-      cy.visit(SPA);
-      cy.get('#side-menu').contains(/cluster/i).click();
-      cy.get(pageTitleSelector).contains('Cluster');
+      SPAs.forEach(page => {
+        cy.visit(page);
+        cy.get('#side-menu').contains(/cluster/i).click();
+        cy.get(pageTitleSelector).contains('Cluster');
+      });
     });
 
     it('clicking dashboard in side menu should navigate to dashboard', () => {
-      cy.visit(SPA);
-      cy.get('#side-menu').contains(/dashboard/i).click();
-      cy.get(sectionTitleSelector).contains('Recent Tasks');
-      cy.get(sectionTitleSelector).contains('Overview');
+      SPAs.forEach(page => {
+        cy.visit(page);
+        cy.get('#side-menu').contains(/dashboard/i).click();
+        cy.get(sectionTitleSelector).contains('Recent Tasks');
+        cy.get(sectionTitleSelector).contains('Overview');
+      });
     });
   });
-
 });
