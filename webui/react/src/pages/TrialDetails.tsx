@@ -18,6 +18,7 @@ import Section from 'components/Section';
 import SelectFilter from 'components/SelectFilter';
 import Spinner from 'components/Spinner';
 import { defaultRowClassName } from 'components/Table';
+import Toggle from 'components/Toggle';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
@@ -78,6 +79,7 @@ const TrialDetailsComp: React.FC = () => {
   const { trialId: trialIdParam } = useParams<Params>();
   const trialId = parseInt(trialIdParam);
   const [ experiment, setExperiment ] = useState<ExperimentDetails>();
+  const [ showHasCheckpoint, setShowHasCheckpoint ] = useState(true);
   const [ contModalVisible, setContModalVisible ] = useState(false);
   const [ contModalConfig, setContModalConfig ] = useState('Loading');
   const [ contFormVisible, setContFormVisible ] = useState<boolean>(false);
@@ -170,6 +172,11 @@ const TrialDetailsComp: React.FC = () => {
 
     return newColumns;
   }, [ experiment?.config.searcher, metrics, trial.data?.experimentId ]);
+
+  const steps = useMemo(() => {
+    const data = trial.data?.steps || [];
+    return showHasCheckpoint ? data.filter(step => !!step.checkpoint) : data;
+  }, [ showHasCheckpoint, trial.data?.steps ]);
 
   const pollTrialDetails = useCallback(
     () => triggerTrialRequest({ id: trialId }),
@@ -297,6 +304,10 @@ If the problem persists please contact support.',
   };
   const handleCheckpointDismiss = () => setShowCheckpoint(false);
 
+  const handleHasCheckpointChange = useCallback((value: boolean): void => {
+    setShowHasCheckpoint(value);
+  }, [ setShowHasCheckpoint ]);
+
   const handleMetricSelect = useCallback((value: SelectValue) => {
     const metricName = valueToMetricName(value as string);
     if (!metricName) return;
@@ -365,28 +376,34 @@ If the problem persists please contact support.',
   }
 
   const options = metrics ? (
-    <SelectFilter
-      enableSearchFilter={false}
-      label="Metric"
-      mode="multiple"
-      showSearch={false}
-      style={{ minWidth: 220 }}
-      value={metricNameValues}
-      onDeselect={handleMetricDeselect}
-      onSelect={handleMetricSelect}>
-      {validationMetricNames.length > 0 && <OptGroup label="Validation Metrics">
-        {validationMetricNames.map(key => {
-          const value = metricNameToValue(key);
-          return <Option key={value} value={value}>{key.name} <Badge>{key.type}</Badge></Option>;
-        })}
-      </OptGroup>}
-      {trainingMetricNames.length > 0 && <OptGroup label="Training Metrics">
-        {trainingMetricNames.map(key => {
-          const value = metricNameToValue(key);
-          return <Option key={value} value={value}>{key.name} <Badge>{key.type}</Badge></Option>;
-        })}
-      </OptGroup>}
-    </SelectFilter>
+    <Space size="middle">
+      <Toggle
+        checked={showHasCheckpoint}
+        prefixLabel="Has Checkpoint"
+        onChange={handleHasCheckpointChange} />
+      <SelectFilter
+        enableSearchFilter={false}
+        label="Metric"
+        mode="multiple"
+        showSearch={false}
+        style={{ minWidth: 220 }}
+        value={metricNameValues}
+        onDeselect={handleMetricDeselect}
+        onSelect={handleMetricSelect}>
+        {validationMetricNames.length > 0 && <OptGroup label="Validation Metrics">
+          {validationMetricNames.map(key => {
+            const value = metricNameToValue(key);
+            return <Option key={value} value={value}>{key.name} <Badge>{key.type}</Badge></Option>;
+          })}
+        </OptGroup>}
+        {trainingMetricNames.length > 0 && <OptGroup label="Training Metrics">
+          {trainingMetricNames.map(key => {
+            const value = metricNameToValue(key);
+            return <Option key={value} value={value}>{key.name} <Badge>{key.type}</Badge></Option>;
+          })}
+        </OptGroup>}
+      </SelectFilter>
+    </Space>
   ) : null;
 
   return (
@@ -419,7 +436,7 @@ If the problem persists please contact support.',
           <Section options={options} title="Trial Information">
             <Table
               columns={columns}
-              dataSource={trial.data?.steps}
+              dataSource={steps}
               loading={!trial.hasLoaded}
               pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
               rowClassName={defaultRowClassName()}
