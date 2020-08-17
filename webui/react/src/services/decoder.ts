@@ -230,7 +230,7 @@ const ioToTrial = (io: ioTypeTrial): TrialItem => {
     startTime: io.start_time,
     state: io.state as RunState,// TODO add checkpoint decoder
     totalBatchesProcessed: io.total_batches_processed || 0,
-    url: `/ui/trials/${io.id}`,
+    url: `/det/trials/${io.id}`,
   };
 };
 
