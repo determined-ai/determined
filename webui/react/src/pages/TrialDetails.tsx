@@ -389,7 +389,7 @@ If the problem persists please contact support.',
               dataSource={steps}
               loading={!trial.hasLoaded}
               pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
-              rowClassName={defaultRowClassName()}
+              rowClassName={defaultRowClassName(false)}
               rowKey="id"
               scroll={{ x: 1000 }}
               showSorterTooltip={false}
