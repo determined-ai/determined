@@ -66,6 +66,14 @@ type (
 	killTrial    struct{}
 	restoreTrial struct{}
 
+	// This message is used to synchronize the trial workload sequencer with the searcher. It allows
+	// the searcher to get more operations to the trial workload sequencer as a result of the trial
+	// completing a searcher operation before the trial decides to tell the scheduler it is
+	// done, since stopping and restarting trials has relatively high overhead.
+	continueTrial struct {
+		trialID int
+	}
+
 	// When we issue a TERMINATE workload, we send a delayed terminateTimeout message with a record
 	// of the number of runID that the trial had at the time we issued the TERMINATE. If we
 	// receive the terminateTimeout message and t.runID has not changed, we forcibly kill the
@@ -337,6 +345,11 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 			return err
 		}
 
+	case continueTrial:
+		if err := t.continueTrial(ctx); err != nil {
+			return err
+		}
+
 	case actor.ChildFailed:
 		ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
 
@@ -519,6 +532,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 
 	ctx.Log().Infof("trial completed workload: %v", msg.Workload)
 
+	completedSearcherOp := false
 	units := model.UnitsFromBatches(msg.Workload.NumBatches, t.sequencer.unitContext)
 	isBestValidation := ctx.Ask(ctx.Self().Parent(), trialCompletedWorkload{t.id, msg, units})
 	op, metrics, err := t.sequencer.WorkloadCompleted(msg, isBestValidation)
@@ -527,6 +541,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 		return errors.Wrap(err, "Error passing completed message to sequencer")
 	case op != nil:
 		ctx.Tell(ctx.Self().Parent(), trialCompletedOperation{t.id, op, metrics})
+		completedSearcherOp = true
 	}
 
 	switch op, metrics, err = t.sequencer.CompleteCachedCheckpoints(); {
@@ -534,10 +549,9 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 		return errors.Wrap(err, "Error completing cached checkpoints")
 	case op != nil:
 		ctx.Tell(ctx.Self().Parent(), trialCompletedOperation{t.id, op, metrics})
+		completedSearcherOp = true
 	}
 
-	// Decide what to do next.
-	terminateNow := false
 	if msg.ExitedReason != nil {
 		ctx.Log().Info("exiting trial early")
 		ctx.Tell(ctx.Self().Parent(), trialExitedEarly{t.id, msg.ExitedReason})
@@ -547,7 +561,19 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 		}
 	}
 
+	// If we completed a searcher operation, synchronize with the searcher to allow it to relay any
+	// new operations to the trial. Otherwise just continue the trial immediately.
+	if completedSearcherOp {
+		ctx.Tell(ctx.Self().Parent(), continueTrial{trialID: t.id})
+		return nil
+	}
+	return t.continueTrial(ctx)
+}
+
+func (t *trial) continueTrial(ctx *actor.Context) error {
+	terminateNow := false
 	var w searcher.Workload
+	var err error
 	switch {
 	// We have another workload to run.
 	case !t.pendingGracefulTermination && !t.sequencer.UpToDate():
