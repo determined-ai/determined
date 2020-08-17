@@ -182,15 +182,11 @@ export const getStateColorCssVar = (
   return `var(--theme-colors-states-${name})`;
 };
 
-export const getComputedCssVar = (name: string): string => {
-  return window.getComputedStyle(document.body).getPropertyValue(name);
-};
-
 export const getStateColor = (
   state: RunState | CommandState | ResourceState,
 ): string => {
   const name = state ? stateColorMapping[state] : 'active';
-  return getComputedCssVar(`--theme-colors-states-${name}`);
+  return window.getComputedStyle(document.body).getPropertyValue(`--theme-colors-states-${name}`);
 };
 
 export enum ThemeId {

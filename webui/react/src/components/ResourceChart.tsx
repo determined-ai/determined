@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 
-import { getComputedCssVar, getStateColor } from 'themes';
+import { getStateColor, getStateColorCssVar, lightTheme } from 'themes';
 import { CommandState, CommonProps, Resource, ResourceState } from 'types';
 import { clone } from 'utils/data';
 // The react-plotly import needs to come after Plotly import
@@ -62,7 +62,7 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
       ...data[0],
       labels: [ `no ${title} available` ],
       marker: {
-        colors: [ getComputedCssVar('--theme-colors-monochrome-13') ],
+        colors: [ lightTheme.colors.monochrome[13] ],
       },
       textinfo: 'label',
       values: [ 1 ],
