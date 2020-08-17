@@ -16,6 +16,8 @@ const (
 	SSHConfigResource = "ssh_config"
 	// SSHDConfigResource is the template SSHD config file.
 	SSHDConfigResource = "sshd_config"
+	// ShellEntrypointResource is the script to set up sshd.
+	ShellEntrypointResource = "shell-entrypoint.sh"
 	// GCCheckpointsEntrypointResource is the script to run checkpoint GC.
 	GCCheckpointsEntrypointResource = "gc-checkpoints-entrypoint.sh"
 	// NotebookTemplateResource is the template notebook config file.

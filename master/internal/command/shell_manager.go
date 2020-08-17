@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/labstack/echo"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -27,6 +29,7 @@ const (
 	shellSSHDConfigFile     = "/run/determined/ssh/sshd_config"
 	shellHostPrivKeyFile    = "/run/determined/ssh/id_rsa"
 	shellHostPubKeyFile     = "/run/determined/ssh/id_rsa.pub"
+	shellEntrypointScript   = "/run/determined/ssh/shell-entrypoint.sh"
 	// Agent ports 2600 - 3500 are split between TensorBoards, Notebooks, and Shells.
 	minSshdPort = 3200
 	maxSshdPort = minSshdPort + 299
@@ -132,7 +135,7 @@ func (n *shellManager) newShell(
 
 	config.Environment.Ports = map[string]int{"shell": port}
 	config.Entrypoint = []string{
-		"/usr/sbin/sshd", "-f", shellSSHDConfigFile, "-p", strconv.Itoa(port), "-D",
+		shellEntrypointScript, "-f", shellSSHDConfigFile, "-p", strconv.Itoa(port), "-D", "-e",
 	}
 
 	additionalFiles := archive.Archive{
@@ -152,6 +155,12 @@ func (n *shellManager) newShell(
 			0644,
 			tar.TypeReg,
 		),
+		req.AgentUserGroup.OwnedArchiveItem(
+			shellEntrypointScript,
+			etc.MustStaticFile(etc.ShellEntrypointResource),
+			0700,
+			tar.TypeReg,
+		),
 	}
 
 	return &command{
@@ -162,6 +171,11 @@ func (n *shellManager) newShell(
 		metadata: map[string]interface{}{
 			"privateKey": string(keyPair.PrivateKey),
 			"publicKey":  string(keyPair.PublicKey),
+		},
+		readinessChecks: map[string]readinessCheck{
+			"shell": func(log sproto.ContainerLog) bool {
+				return strings.Contains(log.String(), "Server listening on")
+			},
 		},
 
 		serviceAddress: &serviceAddress,

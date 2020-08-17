@@ -74,3 +74,21 @@ Subsystem sftp /usr/lib/openssh/sftp-server
 # PAM authentication, then enable this but set PasswordAuthentication
 # and ChallengeResponseAuthentication to 'no'.
 UsePAM no
+
+# In Determined, we will set PermitUserEnvironment to yes so that we can use
+# the `environment="KEY=VALUE"` option syntax in the authorized_keys file to
+# inject environment variables in the ssh client session for the user.  It is
+# ok to do this via the normally-user-owned authorized_keys file because the
+# user would not be able to customize that file anyway.  Generally speaking, it
+# is ok to set PermitUserEnvironment to yes for us because we always expose
+# interactive sessions to the user, so letting the user specify their starting
+# environment is no different than letting them set it interactively.
+#
+# After openssh 8+ is the only version of openssh supported (that is, after we
+# only support ubuntu >= 20.04), we can use the more obvious SetEnv option and
+# skip this awkwardness.
+PermitUserEnvironment yes
+
+# We already allow interactive sessions, so just make user customizations easy.
+AcceptEnv *
+PermitUserRC yes

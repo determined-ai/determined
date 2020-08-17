@@ -44,7 +44,7 @@ def start_shell(args: Namespace) -> None:
     command = None
     with api.ws(args.master, "shells/{}/events".format(resp["id"])) as ws:
         for msg in ws:
-            if msg["container_started_event"]:
+            if msg["service_ready_event"]:
                 command = render.unmarshal(Command, msg["snapshot"])
                 break
             render_event_stream(msg)
