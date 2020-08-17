@@ -1,4 +1,4 @@
-import { Button } from 'antd';
+import { Button, Space } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import Link from 'components/Link';
@@ -7,8 +7,6 @@ import { createTensorboard } from 'services/api';
 import { RunState, TBSourceType, TrialDetails } from 'types';
 import { openCommand } from 'utils/routes';
 import { terminalRunStates } from 'utils/types';
-
-import css from './TrialActions.module.scss';
 
 export enum Action {
   Continue = 'Continue',
@@ -49,26 +47,30 @@ const TrialActions: React.FC<Props> = ({ trial, onClick, onSettled: updateFn }: 
   };
 
   const actionButtons: ConditionalButton<TrialDetails>[] = [
-    { button: <Button key={Action.Continue} type="primary"
-      onClick={onClick(Action.Continue)}>Continue Trial</Button> },
-    { button: <Button key={Action.Logs} type="primary">
-      <Link path={`/det/trials/${trial.id}/logs`} popout>Logs</Link>
-    </Button> },
     {
-      button: <Button key={Action.Tensorboard}
-        loading={buttonStates.Tensorboard} type="primary" onClick={handleCreateTensorboard}>
-      Tensorboard</Button>,
+      button: <Button
+        key={Action.Continue}
+        onClick={onClick(Action.Continue)}>Continue Trial</Button>,
+    },
+    {
+      button: <Button
+        key={Action.Tensorboard}
+        loading={buttonStates.Tensorboard}
+        onClick={handleCreateTensorboard}>View in Tensorboard</Button>,
       showIf: (aTrial): boolean => !trialWillNeverHaveData(aTrial),
     },
+    { button: <Button key={Action.Logs}>
+      <Link path={`/det/trials/${trial.id}/logs`} popout>Logs</Link>
+    </Button> },
   ];
 
   return (
-    <ul className={css.base}>
+    <Space size="small">
       {actionButtons
         .filter(ab => !ab.showIf || ab.showIf(trial))
         .map(ab => ab.button)
       }
-    </ul>
+    </Space>
   );
 
 };

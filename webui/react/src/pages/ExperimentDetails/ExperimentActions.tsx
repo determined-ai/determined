@@ -127,7 +127,7 @@ const ExperimentActions: React.FC<Props> = ({
     {
       button: <Button key="tensorboard"
         loading={buttonStates.Tensorboard}
-        onClick={handleCreateTensorboard}>Open Tensorboard</Button>,
+        onClick={handleCreateTensorboard}>View in Tensorboard</Button>,
       showIf: (exp): boolean => !experimentWillNeverHaveData(exp),
     },
     {
