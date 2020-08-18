@@ -108,6 +108,8 @@ def deploy_aws(args: argparse.Namespace) -> None:
         except Exception as e:
             print(e)
             print("Stack Deletion Failed. Check the AWS CloudFormation Console for details.")
+            sys.exit(1)
+
         print("Delete Successful")
         return
 
