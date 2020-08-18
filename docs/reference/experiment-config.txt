@@ -677,7 +677,7 @@ applications of hyperparameter search.
   ``source_checkpoint_uuid`` should be set.
 
 Adaptive (Advanced)
-------------------
+--------------------
 
 The ``adaptive`` search method is a theoretically principled and empirically
 state-of-the-art method that adaptively allocates resources to promising
