@@ -78,8 +78,8 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 		t.handleAPIRequest(ctx, msg)
 	case tensorboardTick:
 		services := ctx.Ask(t.proxyRef, proxy.GetSummary{}).Get().(map[string]proxy.Service)
-		for _, v := range ctx.Children() {
-			boardSummary := ctx.Ask(v, getSummary{}).Get().(summary)
+		for _, boardRef := range ctx.Children() {
+			boardSummary := ctx.Ask(boardRef, getSummary{}).Get().(summary)
 			if boardSummary.State != container.Running.String() {
 				continue
 			}
@@ -91,7 +91,7 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 
 			if time.Now().After(service.LastRequested.Add(t.timeout)) {
 				ctx.Log().Infof("Killing %s due to inactivity", boardSummary.Config.Description)
-				ctx.Ask(ctx.Child(boardSummary.ID), &apiv1.KillTensorboardRequest{})
+				ctx.Ask(boardRef, &apiv1.KillTensorboardRequest{})
 			}
 		}
 
