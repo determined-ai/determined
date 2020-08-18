@@ -11,23 +11,10 @@ import (
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
-// The kubernetesDeletionDealer and kubernetesDeletionWorker actors are responsible for processing
-// the deletion of Kubernetes resources. The single kubernetesDeletionDealer actor receives
-// deletion requests and forwards it to one of the kubernetesDeletionWorker in a round-robin
-// manner.
-//
-// The reason that requests are processed by a pool of workers rather than processed
-// asynchronously by the pod actors (the pods actor may also request to delete left-over resources
-// at startup) is to avoid saturating the Kubernetes API server with deletion requests, which
-// may make it less responsive to other requests (e.g., resource creation).
-//
-// The reason that a worker pool is used rather than a token system (the way creation is done),
-// is that the pod actors often request to delete resources after stopping (in actor.PostStop),
-// which makes it impossible to receive additional messages which would be necessary to request
-// a token. We considered rewriting the pod actor to always delete resources before stopping,
-// however we found that that would significantly increase the complexity of the pod actor.
-
-const numKubernetesDeletionWorkers = 5
+const (
+	numKubernetesDeletionWorkers = 5
+	deletionGracePeriod          = 15
+)
 
 // message types received by the dealer and forwarded to the workers.
 type (
@@ -45,8 +32,26 @@ type (
 	}
 )
 
-// kubernetesDeletionDealer is responsible for distributed deletion requests
-// amongst the workers in a round-robin manner.
+// The kubernetesDeletionDealer and kubernetesDeletionWorker actors are responsible for processing
+// the deletion of Kubernetes resources. The single kubernetesDeletionDealer actor receives
+// deletion requests and forwards it to one of the kubernetesDeletionWorker in a round-robin
+// manner.
+//
+// The reason that requests are processed by a pool of workers rather than processed
+// asynchronously by the pod actors (the pods actor may also request to delete left-over resources
+// at startup) is to avoid saturating the Kubernetes API server with deletion requests, which
+// may make it less responsive to other requests (e.g., resource creation).
+//
+// The reason that a worker pool is used rather than a token system (the way creation is done),
+// is that the pod actors often request to delete resources after stopping (in actor.PostStop),
+// which makes it impossible to receive additional messages which would be necessary to request
+// a token. We considered rewriting the pod actor to always delete resources before stopping,
+// however we found that that would significantly increase the complexity of the pod actor.
+//
+// The message protocol consists of deleteKubernetesResources being sent by the pods / pod actors.
+// If there is an error during the deletion process, a deletedKubernetesResources message is sent
+// in response, containing the error.
+
 type kubernetesDeletionDealer struct {
 	podInterface       typedV1.PodInterface
 	configMapInterface typedV1.ConfigMapInterface
@@ -86,8 +91,7 @@ func (k *kubernetesDeletionDealer) Receive(ctx *actor.Context) error {
 
 	case deleteKubernetesResources:
 		ctx.Tell(k.workers[k.nextWorkerIndex], msg)
-		k.nextWorkerIndex++
-		k.nextWorkerIndex %= numKubernetesDeletionWorkers
+		k.nextWorkerIndex = (k.nextWorkerIndex + 1) % numKubernetesDeletionWorkers
 
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
@@ -123,7 +127,7 @@ func (k *kubernetesDeletionWorker) receiveDeleteKubernetesResources(
 	ctx *actor.Context,
 	msg deleteKubernetesResources,
 ) {
-	var gracePeriod int64 = 15
+	var gracePeriod int64 = deletionGracePeriod
 	var err error
 
 	if len(msg.podName) > 0 {

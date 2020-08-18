@@ -48,7 +48,7 @@ type pod struct {
 	container        container.Container
 	ports            []int
 	resourcesDeleted bool
-	tokenRequested   bool
+	mustReleaseToken bool
 }
 
 type getPodNodeInfo struct{}
@@ -141,12 +141,12 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 		defer p.finalizeTaskState(ctx)
 
-		if p.tokenRequested {
-			ctx.Tell(p.resourceCreationTokens, releaseToken{handler: ctx.Self()})
-		}
-
 		if !p.leaveKubernetesResources {
 			p.deleteKubernetesResources(ctx)
+		}
+
+		if p.mustReleaseToken {
+			p.releaseToken(ctx)
 		}
 
 	case actor.ChildStopped:
@@ -177,11 +177,13 @@ func (p *pod) startPod(ctx *actor.Context) error {
 	}
 
 	ctx.Tell(p.resourceCreationTokens, requestToken{handler: ctx.Self()})
-	p.tokenRequested = true
+	p.mustReleaseToken = true
 	return nil
 }
 
 func (p *pod) launchPod(ctx *actor.Context) error {
+	defer p.releaseToken(ctx)
+
 	var err error
 	p.configMap, err = p.configMapInterface.Create(p.configMap)
 	if err != nil {
@@ -204,10 +206,12 @@ func (p *pod) launchPod(ctx *actor.Context) error {
 	}
 	ctx.Log().Infof("created pod %s", p.pod.Name)
 
-	ctx.Tell(p.resourceCreationTokens, releaseToken{handler: ctx.Self()})
-	p.tokenRequested = false
-
 	return nil
+}
+
+func (p *pod) releaseToken(ctx *actor.Context) {
+	ctx.Tell(p.resourceCreationTokens, releaseToken{handler: ctx.Self()})
+	p.mustReleaseToken = false
 }
 
 func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) error {
@@ -343,9 +347,10 @@ func (p *pod) processMissingPodDeletion(ctx *actor.Context) {
 }
 
 func (p *pod) deleteKubernetesResources(ctx *actor.Context) {
-	if p.tokenRequested {
-		// If a termination request is received while waiting for a token
-		// to create a pod, it means that the pod has not been created.
+	if p.mustReleaseToken {
+		// If a termination request is received while having a token requested
+		// to create a pod but not yet granted, it means that the pod has not
+		// been created and there is no need to delete resources.
 		p.resourcesDeleted = true
 		ctx.Self().Stop()
 		return

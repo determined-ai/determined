@@ -9,6 +9,27 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 )
 
+const (
+	numTokens     = 5
+	tokenCoolDown = time.Millisecond * 250
+)
+
+// message types received by the tokens actor.
+type (
+	requestToken struct {
+		handler *actor.Ref
+	}
+
+	releaseToken struct {
+		handler *actor.Ref
+	}
+)
+
+// message types sent by the tokens actor.
+type (
+	grantToken struct{}
+)
+
 // The tokens actor is responsible for providing tokens to the pod actors which indicate
 // to the pod actors that they are allowed to make calls to the Kubernetes API server
 // to create Kubernetes resources (configMaps and pods).
@@ -34,27 +55,11 @@ import (
 //  then killed moments later. By having the pod actors request tokens, if the termination request
 //  arrives while the pod actor is awaiting to receive a token, the pod actor can just cancel its
 //  request for a token and avoid an unnecessary pod creation and deletion.
-
-const (
-	numTokens     = 5
-	tokenCoolDown = time.Millisecond * 250
-)
-
-// message types received by the tokens actor.
-type (
-	requestToken struct {
-		handler *actor.Ref
-	}
-
-	releaseToken struct {
-		handler *actor.Ref
-	}
-)
-
-// message types sent by the tokens actor.
-type (
-	grantToken struct{}
-)
+//
+//  The message protocol consists of pod actors sending a `requestToken` message. Once granted by
+//  the tokens actor it responds with a `grantToken` message which allows the receiving pod actor
+//  to create kubernetes resources. For every `requestToken` message that a pod actor sends, it is
+//  required to send a corresponding `releaseToken` message.
 
 type tokens struct {
 	provisionedTokens map[*actor.Ref]bool
@@ -118,8 +123,9 @@ func (t *tokens) receiveReleaseToken(ctx *actor.Context, msg releaseToken) {
 		return
 	}
 
-	// It's possible that an actor requests a token and then releases the token
-	// prior to receiving it. In this case if the token has not yet been granted
-	// we need to avoid granting it.
+	// If a token is not available when receiving a requestToken message, the message
+	// is deferred to be processed later. If during this deferral the pod actor cancels
+	// its request prior to receiving the token, it is possible the releaseToken message
+	// arrives before the requestToken message is processed.
 	t.cancelledTokens[msg.handler] = true
 }

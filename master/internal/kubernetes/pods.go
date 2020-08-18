@@ -2,17 +2,6 @@
 // and stopping tasks, monitoring their status, and fetching logs.
 package kubernetes
 
-// High lever overview of the actors within the kubernetes package:
-//
-//   pods
-//     +- pod(s): manages pod lifecycle. One per container in a task.
-//        +- podLogStreamer: stream logs for a specific pod.
-//     +- informer: sends updates about pod states
-//     +- events: sends updates about kubernetes events.
-//     +- tokens: provisions tokens for kubernetes resource creation.
-//     +- kubernetesDeletionDealer: round robins kubernetes deletion requests
-//        +- kubernetesDeletionWorker(s): processes deletion requests.
-
 import (
 	"fmt"
 	"net/http"
@@ -42,6 +31,17 @@ type podMetadata struct {
 	podName     string
 	containerID string
 }
+
+// High lever overview of the actors within the kubernetes package:
+//
+//   pods
+//     +- pod(s): manages pod lifecycle. One per container in a task.
+//        +- podLogStreamer: stream logs for a specific pod.
+//     +- informer: sends updates about pod states
+//     +- events: sends updates about kubernetes events.
+//     +- tokens: provisions tokens for kubernetes resource creation.
+//     +- kubernetesDeletionDealer: round robins kubernetes deletion requests
+//        +- kubernetesDeletionWorker(s): processes deletion requests.
 
 type pods struct {
 	cluster                  *actor.Ref
