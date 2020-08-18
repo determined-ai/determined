@@ -307,11 +307,9 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ops, err := e.searcher.TrialExitedEarly(msg.trialID)
 		e.processOperations(ctx, ops, err)
 	case sendNextWorkload:
-		requestID, ok := e.searcher.RequestID(msg.trialID)
-		if !ok {
-			return fmt.Errorf("requested continuation of non-existent trial %d", msg.trialID)
-		}
-		ctx.Tell(ctx.Child(requestID), msg)
+		// Pass this back to the trial; this message is just used to allow the trial to synchronize
+		// with the searcher.
+		ctx.Tell(ctx.Sender(), msg)
 	case actor.ChildFailed:
 		ctx.Log().WithError(msg.Error).Error("trial failed unexpectedly")
 		requestID := searcher.MustParse(msg.Child.Address().Local())

@@ -71,8 +71,7 @@ type (
 	// completing a searcher operation before the trial decides to tell the scheduler it is
 	// done, since stopping and restarting trials has relatively high overhead.
 	sendNextWorkload struct {
-		trialID int
-		runID   int
+		runID int
 	}
 
 	// When we issue a TERMINATE workload, we send a delayed terminateTimeout message with a record
@@ -569,7 +568,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 	// If we completed a searcher operation, synchronize with the searcher to allow it to relay any
 	// new operations to the trial. Otherwise just continue the trial immediately.
 	if completedSearcherOp {
-		ctx.Tell(ctx.Self().Parent(), sendNextWorkload{trialID: t.id, runID: t.runID})
+		ctx.Tell(ctx.Self().Parent(), sendNextWorkload{runID: t.runID})
 		return nil
 	}
 	return t.sendNextWorkload(ctx)
