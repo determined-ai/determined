@@ -16,11 +16,11 @@ describe('Experiment List', () => {
       cy.get('[class*="TableBatch_actions_"] button[disabled]').should('have.lengthOf', 2);
     });
 
-    describe('Open TensorBoard', () => {
+    describe('View in TensorBoard', () => {
       it('should be enabled when all experiments are selected', () => {
         cy.get('thead input[type=checkbox]').click();
         cy.get('[class*="TableBatch_actions_"] button:first-child')
-          .should('contain', 'Open TensorBoard')
+          .should('contain', 'View in TensorBoard')
           .should('be.enabled');
         cy.get('thead input[type=checkbox]').click();
       });
