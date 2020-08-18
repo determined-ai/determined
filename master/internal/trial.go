@@ -278,7 +278,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		}
 		ctx.Log().Info("trial stopped successfully")
 		endState := model.CompletedState
-		if t.experimentState == model.StoppingCanceledState {
+		if t.experimentState == model.StoppingCanceledState || t.killed {
 			endState = model.CanceledState
 		}
 		if !t.replaying {
@@ -861,13 +861,11 @@ func (t *trial) resetTrial(
 	status agent.ContainerStopped,
 ) {
 	terminationSent := t.terminationSent
-	trialKilled := t.killed
 
 	t.runID++
 	t.task = nil
 	t.pendingGracefulTermination = false
 	t.terminationSent = false
-	t.killed = false
 	t.terminatedContainers = nil
 	t.startedContainers = make(map[container.ID]bool)
 
@@ -880,7 +878,7 @@ func (t *trial) resetTrial(
 			"ignoring trial runner failure since termination was requested",
 		)
 		return
-	case trialKilled:
+	case t.killed:
 		ctx.Log().WithField("failure", status.Failure).Info(
 			"ignoring trial runner failure since it was killed",
 		)
@@ -947,7 +945,7 @@ func (t *trial) restore(ctx *actor.Context) {
 }
 
 func (t *trial) trialClosing() bool {
-	return t.earlyExit || t.restarts > t.experiment.Config.MaxRestarts ||
+	return t.earlyExit || t.killed || t.restarts > t.experiment.Config.MaxRestarts ||
 		(t.close != nil && t.sequencer.UpToDate()) ||
 		model.StoppingStates[t.experimentState]
 }
