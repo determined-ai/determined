@@ -171,6 +171,7 @@ const ExperimentDetailsComp: React.FC = () => {
       subTitle={<Space align="center" size="small">
         {experiment?.config.description}
         <Badge state={experiment.state} type={BadgeType.State} />
+        {experiment.archived && <Badge>ARCHIVED</Badge>}
       </Space>}
       title={`Experiment ${experimentId}`}>
       <Row className={css.topRow} gutter={[ 16, 16 ]}>
