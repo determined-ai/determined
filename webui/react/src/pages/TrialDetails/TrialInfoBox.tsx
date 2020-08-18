@@ -54,11 +54,6 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     return sortedCheckpoints[0];
   }, [ trial.steps, orderFactor ]);
 
-  const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
-  const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
-  const handleShowHParams = useCallback(() => setShowHParams(true), []);
-  const handleHideHParams = useCallback(() => setShowHParams(false), []);
-
   const totalCheckpointsSize = useMemo(() => {
     const totalBytes = trial.steps
       .filter(step => step.checkpoint
@@ -68,7 +63,12 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     return humanReadableBytes(totalBytes);
   }, [ trial.steps ]);
 
-  const durations = trialDurations(trial.steps);
+  const durations = useMemo(() => trialDurations(trial.steps), [ trial.steps ]);
+
+  const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
+  const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
+  const handleShowHParams = useCallback(() => setShowHParams(true), []);
+  const handleHideHParams = useCallback(() => setShowHParams(false), []);
 
   const infoRows = [
     {
@@ -80,11 +80,11 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       label: 'End Time',
     },
     {
-      content: <ul className={css.duration}>
-        <li>Training: {shortEnglishHumannizer(durations.train)}</li>
-        <li>Checkpointing: {shortEnglishHumannizer(durations.checkpoint)}</li>
-        <li>Validation: {shortEnglishHumannizer(durations.validation)}</li>
-      </ul>,
+      content: <div className={css.duration}>
+        <div>Training: {shortEnglishHumannizer(durations.train)}</div>
+        <div>Checkpointing: {shortEnglishHumannizer(durations.checkpoint)}</div>
+        <div>Validating: {shortEnglishHumannizer(durations.validation)}</div>
+      </div>,
       label: 'Durations',
     },
     {
