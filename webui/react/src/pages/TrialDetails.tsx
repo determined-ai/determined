@@ -88,8 +88,9 @@ const TrialDetailsComp: React.FC = () => {
     useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
 
   const trial = trialResponse.data;
-  const experimentId = trial?.experimentId;
   const hparams = trial?.hparams;
+  const experimentId = trial?.experimentId;
+  const experimentConfig = experiment?.config;
 
   const metricNames = useMemo(() => extractMetricNames(trial?.steps), [ trial?.steps ]);
 
@@ -106,14 +107,14 @@ const TrialDetailsComp: React.FC = () => {
 
   const columns = useMemo(() => {
     const newColumns: ColumnType<Step>[] = [ ...defaultColumns ];
-    const searcher = experiment?.config.searcher;
+    const { metric, smallerIsBetter } = experimentConfig?.searcher || {};
 
     const checkpointRenderer = (_: string, record: Step) => {
       if (record.checkpoint) {
         const checkpoint: CheckpointDetail = {
           ...record.checkpoint,
           batch: record.numBatches + record.priorBatchesProcessed,
-          experimentId: trial?.experimentId,
+          experimentId,
           trialId: record.id,
         };
         return (
@@ -138,8 +139,8 @@ const TrialDetailsComp: React.FC = () => {
     metrics.forEach(metricName => {
       const stateIndex = findColumnByTitle<Step>(newColumns, 'state');
       newColumns.splice(stateIndex, 0, {
-        defaultSortOrder: searcher && searcher.metric === metricName.name ?
-          (searcher.smallerIsBetter ? 'ascend' : 'descend') : undefined,
+        defaultSortOrder: metric && metric === metricName.name ?
+          (smallerIsBetter ? 'ascend' : 'descend') : undefined,
         render: metricRenderer(metricName),
         sorter: (a, b) => numericSorter(
           extractMetricValue(a, metricName),
@@ -156,7 +157,7 @@ const TrialDetailsComp: React.FC = () => {
     newColumns[checkpointIndex].render = checkpointRenderer;
 
     return newColumns;
-  }, [ experiment?.config.searcher, metrics, trial?.experimentId ]);
+  }, [ experimentConfig, experimentId, metrics ]);
 
   const steps = useMemo(() => {
     const data = trial?.steps || [];
@@ -377,7 +378,7 @@ If the problem persists please contact support.',
           <TrialChart
             metricNames={metricNames}
             steps={trial?.steps}
-            validationMetric={experiment.config?.searcher.metric} />
+            validationMetric={experimentConfig?.searcher.metric} />
         </Col>
         <Col span={24}>
           <Section options={options} title="Trial Information">
@@ -394,9 +395,9 @@ If the problem persists please contact support.',
           </Section>
         </Col>
       </Row>
-      {activeCheckpoint && <CheckpointModal
+      {activeCheckpoint && experimentConfig && <CheckpointModal
         checkpoint={activeCheckpoint}
-        config={experiment.config}
+        config={experimentConfig}
         show={showCheckpoint}
         title={`Checkpoint for Batch ${activeCheckpoint.batch}`}
         onHide={handleCheckpointDismiss} />}
@@ -409,8 +410,7 @@ If the problem persists please contact support.',
         visible={contModalVisible}
         onCancel={handleContModalCancel}
         onConfigChange={onConfigChange}
-        onVisibleChange={setContModalVisible}
-      />
+        onVisibleChange={setContModalVisible} />
       <Modal
         footer={<>
           <Button onClick={handleEditContConfig}>Edit Full Config</Button>

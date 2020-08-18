@@ -42,25 +42,26 @@ const ExperimentDetailsComp: React.FC = () => {
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
   const [ experimentResponse, triggerExperimentRequest ] =
     useRestApi<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
+
   const experiment = experimentResponse.data;
   const experimentConfig = experiment?.config;
 
   const columns = useMemo(() => {
     const newColumns: ColumnType<TrialItem>[] = [ ...defaultColumns ];
-    const { metric: validationKey, smallerIsBetter } = experimentConfig?.searcher || {};
+    const { metric, smallerIsBetter } = experimentConfig?.searcher || {};
     const bestValidationIndex = findColumnByTitle<TrialItem>(newColumns, 'best validation');
     const latestValidationIndex = findColumnByTitle<TrialItem>(newColumns, 'latest validation');
     const checkpointIndex = findColumnByTitle<TrialItem>(newColumns, 'checkpoint');
 
     const latestValidationRenderer = (_: string, record: TrialItem): React.ReactNode => {
-      return record.latestValidationMetrics && validationKey &&
-        humanReadableFloat(record.latestValidationMetrics.validationMetrics[validationKey]);
+      return record.latestValidationMetrics && metric &&
+        humanReadableFloat(record.latestValidationMetrics.validationMetrics[metric]);
     };
 
     const latestValidationSorter = (a: TrialItem, b: TrialItem): number => {
-      if (!validationKey) return 0;
-      const aMetric = a.latestValidationMetrics?.validationMetrics[validationKey];
-      const bMetric = b.latestValidationMetrics?.validationMetrics[validationKey];
+      if (!metric) return 0;
+      const aMetric = a.latestValidationMetrics?.validationMetrics[metric];
+      const bMetric = b.latestValidationMetrics?.validationMetrics[metric];
       return numericSorter(aMetric, bMetric);
     };
 
@@ -215,8 +216,7 @@ const ExperimentDetailsComp: React.FC = () => {
         visible={forkModalVisible}
         onCancel={handleForkModalCancel}
         onConfigChange={setForkModalConfig}
-        onVisibleChange={setForkModalVisible}
-      />
+        onVisibleChange={setForkModalVisible} />
     </Page>
   );
 };
