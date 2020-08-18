@@ -257,7 +257,7 @@ func (a *apiServer) ArchiveExperiment(
 		return nil, errors.Wrapf(err, "loading experiment %v", id)
 	}
 	if _, ok := model.TerminalStates[dbExp.State]; !ok {
-		return nil, errors.Errorf("cannot delete experiment %v in non terminate state %v",
+		return nil, errors.Errorf("cannot archive experiment %v in non terminate state %v",
 			id, dbExp.State)
 	}
 
@@ -285,7 +285,7 @@ func (a *apiServer) UnarchiveExperiment(
 		return nil, errors.Wrapf(err, "loading experiment %v", id)
 	}
 	if _, ok := model.TerminalStates[dbExp.State]; !ok {
-		return nil, errors.Errorf("cannot delete experiment %v in non terminate state %v",
+		return nil, errors.Errorf("cannot unarchive experiment %v in non terminate state %v",
 			id, dbExp.State)
 	}
 
