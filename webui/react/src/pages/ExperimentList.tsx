@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Icon from 'components/Icon';
 import { makeClickHandler } from 'components/Link';
 import Page from 'components/Page';
+import { Indicator } from 'components/Spinner';
 import StateSelectFilter from 'components/StateSelectFilter';
 import { defaultRowClassName, isAlternativeAction } from 'components/Table';
 import TableBatch from 'components/TableBatch';
@@ -315,7 +316,10 @@ const ExperimentList: React.FC = () => {
         <Table
           columns={columns}
           dataSource={filteredExperiments}
-          loading={!experimentsResponse.hasLoaded}
+          loading={{
+            indicator: <Indicator />,
+            spinning: !experimentsResponse.hasLoaded,
+          }}
           pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
           rowClassName={defaultRowClassName()}
           rowKey="id"

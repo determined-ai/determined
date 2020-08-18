@@ -12,7 +12,7 @@ import { makeClickHandler } from 'components/Link';
 import Message from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
+import Spinner, { Indicator } from 'components/Spinner';
 import { defaultRowClassName, findColumnByTitle } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
@@ -158,7 +158,7 @@ const ExperimentDetailsComp: React.FC = () => {
       </Page>
     );
   } else if (!experiment) {
-    return <Spinner fillContainer />;
+    return <Spinner />;
   }
 
   return (
@@ -166,7 +166,10 @@ const ExperimentDetailsComp: React.FC = () => {
       backPath={'/det/experiments'}
       breadcrumb={[
         { breadcrumbName: 'Experiments', path: '/det/experiments' },
-        { breadcrumbName: `Experiment ${experimentId}`, path: `/det/experiments/${experimentId}` },
+        {
+          breadcrumbName: `Experiment ${experimentId}`,
+          path: `/det/experiments/${experimentId}`,
+        },
       ]}
       options={<ExperimentActions
         experiment={experiment}
@@ -193,7 +196,10 @@ const ExperimentDetailsComp: React.FC = () => {
             <Table
               columns={columns}
               dataSource={experiment?.trials}
-              loading={!experimentResponse.hasLoaded}
+              loading={{
+                indicator: <Indicator />,
+                spinning: !experimentResponse.hasLoaded,
+              }}
               pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
               rowClassName={defaultRowClassName()}
               rowKey="id"

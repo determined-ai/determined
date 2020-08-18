@@ -1,5 +1,5 @@
 import {
-  Button, Col, Form, Input, Modal, Row, Space, Table, Tooltip,
+  Button, Col, Form, Input, Modal, Row, Skeleton, Space, Table, Tooltip,
 } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import yaml from 'js-yaml';
@@ -14,7 +14,7 @@ import Message from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import Page from 'components/Page';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
+import Spinner, { Indicator } from 'components/Spinner';
 import { defaultRowClassName, findColumnByTitle } from 'components/Table';
 import Toggle from 'components/Toggle';
 import handleError, { ErrorType } from 'ErrorHandler';
@@ -338,7 +338,7 @@ If the problem persists please contact support.',
   }
 
   if (!trial || !experiment || !upgradedConfig) {
-    return <Spinner fillContainer />;
+    return <Spinner />;
   }
 
   const options = metrics ? (
@@ -387,7 +387,10 @@ If the problem persists please contact support.',
             <Table
               columns={columns}
               dataSource={steps}
-              loading={!trialResponse.hasLoaded}
+              loading={{
+                indicator: <Indicator />,
+                spinning: !trialResponse.hasLoaded,
+              }}
               pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
               rowClassName={defaultRowClassName(false)}
               rowKey="id"
