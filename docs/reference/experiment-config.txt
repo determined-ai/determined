@@ -902,6 +902,8 @@ customizing the trial environment, refer to :ref:`custom-env`.
 
 **Optional Fields**
 
+.. _exp-environment-image:
+
 ``image``
   The Docker image to use when executing the workload. This image must be
   accessible via ``docker pull`` to every Determined agent machine in the
@@ -1127,3 +1129,8 @@ model for 64 epochs.
     max_length:
       epochs: 64
     smaller_is_better: true
+
+The epoch size configured here is only used for interpreting configuration
+fields that are expressed in epochs. Actual epoch boundaries are still
+determined by the dataset itself (specifically, the end of an epoch occurs when
+the training data loader runs out of records).

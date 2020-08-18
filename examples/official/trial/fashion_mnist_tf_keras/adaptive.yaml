@@ -5,7 +5,7 @@ hyperparameters:
     type: int
     minval: 32
     maxval: 256
-records_per_epoch: 28800
+records_per_epoch: 50000
 searcher:
   name: adaptive_simple
   metric: val_accuracy
