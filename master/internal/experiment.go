@@ -306,6 +306,10 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case trialExitedEarly:
 		ops, err := e.searcher.TrialExitedEarly(msg.trialID)
 		e.processOperations(ctx, ops, err)
+	case sendNextWorkload:
+		// Pass this back to the trial; this message is just used to allow the trial to synchronize
+		// with the searcher.
+		ctx.Tell(ctx.Sender(), msg)
 	case actor.ChildFailed:
 		ctx.Log().WithError(msg.Error).Error("trial failed unexpectedly")
 		requestID := searcher.MustParse(msg.Child.Address().Local())
