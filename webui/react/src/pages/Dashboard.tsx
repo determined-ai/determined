@@ -148,7 +148,7 @@ const Dashboard: React.FC = () => {
           ? <Spinner />
           : tasks.length !== 0
             ? <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>{tasks}</Grid>
-            : <Message>No recent tasks matching the current filters.</Message>
+            : <Message title="No recent tasks matching the current filters" />
         }
       </Section>
     </Page>

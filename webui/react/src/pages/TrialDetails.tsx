@@ -1,5 +1,5 @@
 import {
-  Button, Col, Form, Input, Modal, Row, Skeleton, Space, Table, Tooltip,
+  Button, Col, Empty, Form, Input, Modal, Result, Row, Space, Table, Tooltip,
 } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import yaml from 'js-yaml';
@@ -319,27 +319,14 @@ If the problem persists please contact support.',
     setMetrics(metricNames);
   }, [ metricNames, metrics ]);
 
-  if (isNaN(trialId)) {
-    return (
-      <Page id="page-error-message">
-        <Message>Bad trial ID {trialIdParam}</Message>
-      </Page>
-    );
-  }
-
+  if (isNaN(trialId)) return <Message title={`Invalid Trial ID ${trialIdParam}`} />;
   if (trialResponse.error !== undefined) {
-    const message = isNotFound(trialResponse.error) ? `Trial ${trialId} not found.`
-      : `Failed to fetch trial ${trialId}.`;
-    return (
-      <Page id="page-error-message">
-        <Message>{message}</Message>
-      </Page>
-    );
+    const message = isNotFound(trialResponse.error) ?
+      `Unable to find Trial ${trialId}` :
+      `Unable to fetch Trial ${trialId}`;
+    return <Message message={trialResponse.error.message} title={message} />;
   }
-
-  if (!trial || !experiment || !upgradedConfig) {
-    return <Spinner />;
-  }
+  if (!trial || !experiment || !upgradedConfig) return <Spinner />;
 
   const options = metrics ? (
     <Space size="middle">

@@ -144,22 +144,14 @@ const ExperimentDetailsComp: React.FC = () => {
     }
   }, [ setFreshForkConfig ]);
 
-  let message = '';
-  if (isNaN(id)) message = `Bad experiment ID ${experimentId}`;
+  if (isNaN(id)) return <Message title={`Invalid Experiment ID ${experimentId}`} />;
   if (experimentResponse.error) {
-    message = isNotFound(experimentResponse.error) ?
-      `Experiment ${experimentId} not found.` :
-      `Failed to fetch experiment ${experimentId}.`;
+    const message = isNotFound(experimentResponse.error) ?
+      `Unable to find Experiment ${experimentId}` :
+      `Unable to fetch Experiment ${experimentId}`;
+    return <Message title={message} />;
   }
-  if (message) {
-    return (
-      <Page id="page-error-message">
-        <Message>{message}</Message>
-      </Page>
-    );
-  } else if (!experiment) {
-    return <Spinner />;
-  }
+  if (!experiment) return <Spinner />;
 
   return (
     <Page

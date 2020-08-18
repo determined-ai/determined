@@ -1,15 +1,20 @@
 import React from 'react';
 
-import { CommonProps } from 'types';
+import warningImage from 'assets/warning.svg';
 
 import css from './Message.module.scss';
 
-type Props = CommonProps
+interface Props {
+  message?: string;
+  title: string;
+}
 
-const Message: React.FC<Props> = ({ children }: Props) => {
+const Message: React.FC<Props> = ({ message, title }: Props) => {
   return (
     <div className={css.base}>
-      {children}
+      <img src={warningImage} />
+      <div className={css.title}>{title}</div>
+      {message && <span>{message}</span>}
     </div>
   );
 };
