@@ -352,6 +352,7 @@ const LogViewer: React.FC<Props> = forwardRef((
       setTimeout(() => {
         if (!container.current || !scrollToInfo.logId) return;
         const top = config.messageSizes[scrollToInfo.logId].top;
+        setScrollToInfo({ isPrepend: false, logId: 0 });
         container.current.scrollTo({ top });
       });
     }
