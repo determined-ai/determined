@@ -54,34 +54,46 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
 
   const handleArchive = useCallback((archive: boolean) => async (): Promise<void> => {
     setButtonStates(state => ({ ...state, archive }));
-    await archiveExperiment(experiment.id, archive);
-    onSettled();
-    setButtonStates(state => ({ ...state, archive: false }));
+    try {
+      await archiveExperiment(experiment.id, archive);
+      onSettled();
+    } finally {
+      setButtonStates(state => ({ ...state, archive: false }));
+    }
   }, [ experiment.id, onSettled ]);
 
   const handleKill = useCallback(async () => {
     setButtonStates(state => ({ ...state, kill: true }));
-    await killExperiment({ experimentId: experiment.id });
-    onSettled();
-    setButtonStates(state => ({ ...state, kill: false }));
+    try {
+      await killExperiment({ experimentId: experiment.id });
+      onSettled();
+    } finally {
+      setButtonStates(state => ({ ...state, kill: false }));
+    }
   }, [ experiment.id, onSettled ]);
 
   const handleCreateTensorboard = useCallback(async () => {
     setButtonStates(state => ({ ...state, tensorboard: true }));
-    const tensorboard = await createTensorboard({
-      ids: [ experiment.id ],
-      type: TBSourceType.Experiment,
-    });
-    openCommand(tensorboard);
-    onSettled();
-    setButtonStates(state => ({ ...state, tensorboard: false }));
+    try {
+      const tensorboard = await createTensorboard({
+        ids: [ experiment.id ],
+        type: TBSourceType.Experiment,
+      });
+      openCommand(tensorboard);
+      onSettled();
+    } finally {
+      setButtonStates(state => ({ ...state, tensorboard: false }));
+    }
   }, [ experiment.id, onSettled ]);
 
   const handleStateChange = useCallback((targetState: RunState) => async (): Promise<void> => {
     setButtonStates(state => ({ ...state, [targetState]: true }));
-    await setExperimentState({ experimentId: experiment.id, state: targetState });
-    onSettled();
-    setButtonStates(state => ({ ...state, [targetState]: false }));
+    try {
+      await setExperimentState({ experimentId: experiment.id, state: targetState });
+      onSettled();
+    } finally {
+      setButtonStates(state => ({ ...state, [targetState]: false }));
+    }
   }, [ experiment.id, onSettled ]);
 
   const actionButtons: ConditionalButton<ExperimentDetails>[] = [
