@@ -6,7 +6,7 @@ import React, { useCallback, useState } from 'react';
  * all the commented pieces below to enable it again.
  */
 
-import { defaultSideBarRoute, sidebarRoutes } from 'routes';
+import { sidebarRoutes } from 'routes';
 
 import NavItem, { NavItemType } from './NavItem';
 import NavMenu, { NavMenuType } from './NavMenu';
@@ -30,7 +30,6 @@ const SideBar: React.FC<Props> = (props: Props) => {
   return (
     <div className={classes.join(' ')} id="side-menu">
       <NavMenu
-        defaultRouteId={defaultSideBarRoute.id}
         routes={sidebarRoutes}
         showLabels={!collapsed}
         type={collapsed ? NavMenuType.SideBarIconOnly : NavMenuType.SideBar} />

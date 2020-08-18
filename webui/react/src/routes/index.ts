@@ -150,7 +150,6 @@ export const sidebarRoutes: RouteConfig[] = [
   taskListRoute,
   clusterRoute,
 ];
-export const defaultSideBarRoute = sidebarRoutes[0];
 
 // Add pages we don't want to expose to the public yet.
 if (process.env.IS_DEV) {
