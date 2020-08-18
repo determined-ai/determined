@@ -1,12 +1,14 @@
 import { Button, List, Modal } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
 import InfoBox from 'components/InfoBox';
 import Section from 'components/Section';
-import { Checkpoint, CheckpointState, ExperimentDetails, RunState, TrialDetails,
+import { Checkpoint, CheckpointDetail, CheckpointState, ExperimentDetails, RunState,
+  Step,
+  TrialDetails,
   ValidationMetrics } from 'types';
+import { numericSorter } from 'utils/data';
 import { formatDatetime } from 'utils/date';
 import { humanReadableBytes, humanReadableFloat } from 'utils/string';
 import { shortEnglishHumannizer } from 'utils/time';
@@ -31,7 +33,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   const [ showHParams, setShowHParams ] = useState(false);
   const [ showBestCheckpoint, setShowBestCheckpoint ] = useState(false);
 
-  const orderFactor = experiment.config.searcher.smallerIsBetter ? 1 : -1;
+  const { metric, smallerIsBetter } = experiment.config.searcher || {};
 
   const bestValidation = useMemo(() => {
     const sortedValidations = trial.steps
@@ -39,26 +41,27 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         && step.validation.state === RunState.Completed
         && !!step.validation.metrics )
       .map(step => (step.validation?.metrics as ValidationMetrics)
-        .validationMetrics[experiment.config.searcher.metric])
-      .sort((a, b) => (a - b) * orderFactor);
+        .validationMetrics[metric])
+      .sort((a, b) => numericSorter(a, b, !smallerIsBetter));
 
     return sortedValidations[0];
-  }, [ trial.steps, orderFactor, experiment.config.searcher.metric ]);
+  }, [ metric, smallerIsBetter, trial.steps ]);
 
-  const bestCheckpoint: Checkpoint = useMemo(() => {
-    const sortedCheckpoints: Checkpoint[] = trial.steps
+  const bestCheckpoint: CheckpointDetail | undefined = useMemo(() => {
+    const sortedSteps: Step[] = trial.steps
       .filter(step => step.checkpoint && step.checkpoint.state === CheckpointState.Completed)
-      .map(step => step.checkpoint as Checkpoint)
-      .sort((a, b) => {
-        return (a.validationMetric as number - (b.validationMetric as number)) * orderFactor;
-      });
-    return sortedCheckpoints[0];
-  }, [ trial.steps, orderFactor ]);
-
-  const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
-  const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
-  const handleShowHParams = useCallback(() => setShowHParams(true), []);
-  const handleHideHParams = useCallback(() => setShowHParams(false), []);
+      .sort((a, b) => numericSorter(
+        a.checkpoint?.validationMetric,
+        b.checkpoint?.validationMetric,
+        !smallerIsBetter,
+      ));
+    const bestStep = sortedSteps[0];
+    return bestStep ? {
+      ...(bestStep.checkpoint as Checkpoint),
+      batch: bestStep.numBatches + bestStep.priorBatchesProcessed,
+      experimentId: experiment.id,
+    } : undefined;
+  }, [ experiment.id, smallerIsBetter, trial.steps ]);
 
   const totalCheckpointsSize = useMemo(() => {
     const totalBytes = trial.steps
@@ -69,27 +72,28 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     return humanReadableBytes(totalBytes);
   }, [ trial.steps ]);
 
-  const durations = trialDurations(trial.steps);
+  const durations = useMemo(() => trialDurations(trial.steps), [ trial.steps ]);
+
+  const handleShowBestCheckpoint = useCallback(() => setShowBestCheckpoint(true), []);
+  const handleHideBestCheckpoint = useCallback(() => setShowBestCheckpoint(false), []);
+  const handleShowHParams = useCallback(() => setShowHParams(true), []);
+  const handleHideHParams = useCallback(() => setShowHParams(false), []);
 
   const infoRows = [
     {
-      content: <Badge state={experiment.state} type={BadgeType.State} />,
-      label: 'State',
-    },
-    {
-      content: formatDatetime(experiment.startTime),
+      content: formatDatetime(trial.startTime),
       label: 'Start Time',
     },
     {
-      content: trial.endTime && formatDatetime(experiment.startTime),
+      content: trial.endTime && formatDatetime(trial.endTime),
       label: 'End Time',
     },
     {
-      content: <ul className={css.duration}>
-        <li>Training: {shortEnglishHumannizer(durations.train)}</li>
-        <li>Checkpointing: {shortEnglishHumannizer(durations.checkpoint)}</li>
-        <li>Validation: {shortEnglishHumannizer(durations.validation)}</li>
-      </ul>,
+      content: <div className={css.duration}>
+        <div>Training: {shortEnglishHumannizer(durations.train)}</div>
+        <div>Checkpointing: {shortEnglishHumannizer(durations.checkpoint)}</div>
+        <div>Validating: {shortEnglishHumannizer(durations.validation)}</div>
+      </div>,
       label: 'Durations',
     },
     {
@@ -98,18 +102,12 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       label: 'Best Validation',
     },
     {
-      content: <Button onClick={handleShowHParams}>Show</Button>,
-      label: 'H-params',
-    },
-    {
       content: bestCheckpoint && (<>
         <Button onClick={handleShowBestCheckpoint}>
-          {/* FIXME remove steps project */}
-              Trial {bestCheckpoint.trialId} Step ID {bestCheckpoint.stepId}
+          Trial {bestCheckpoint.trialId} Batch {bestCheckpoint.batch}
         </Button>
         <CheckpointModal
-          // FIXME remove steps project
-          checkpoint={{ ...bestCheckpoint, batch: bestCheckpoint.stepId }}
+          checkpoint={bestCheckpoint}
           config={experiment.config}
           show={showBestCheckpoint}
           title={`Best Checkpoint for Trial ${trial.id}`}
@@ -120,6 +118,10 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     {
       content: totalCheckpointsSize,
       label: 'Checkpoint Size',
+    },
+    {
+      content: <Button onClick={handleShowHParams}>Show</Button>,
+      label: 'H-params',
     },
   ];
 

@@ -21,7 +21,6 @@ interface Props extends CommonProps {
   options?: React.ReactNode;
   subTitle?: React.ReactNode;
   title?: string;
-  maxHeight?: boolean;
   showDivider?: boolean;
 }
 
@@ -37,8 +36,6 @@ const breadCrumbRender = (route: Route, params: unknown, routes: Route[]) => {
 const Page: React.FC<Props> = (props: Props) => {
   const showHeader = props.breadcrumb || props.title || props.backPath;
   const classes = [ props.className, css.base ];
-
-  if (props.maxHeight) classes.push(css.maxHeight);
 
   const handleBack = useCallback(() => {
     if (props.backPath) history.push(props.backPath);

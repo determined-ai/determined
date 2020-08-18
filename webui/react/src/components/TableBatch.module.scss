@@ -48,11 +48,14 @@
     align-items: center;
     display: flex;
   }
-  .actions > *:not(:last-child) {
+  .actions > * {
     margin-right: var(--theme-sizes-layout-medium);
   }
   .message {
     font-size: var(--theme-sizes-font-medium);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   &.show {
     height: 4.8rem;

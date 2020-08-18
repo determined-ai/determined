@@ -5,6 +5,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import Icon from 'components/Icon';
 import { makeClickHandler } from 'components/Link';
 import Page from 'components/Page';
+import { Indicator } from 'components/Spinner';
 import { defaultRowClassName, isAlternativeAction } from 'components/Table';
 import { TaskRenderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
@@ -163,7 +164,7 @@ const TaskList: React.FC = () => {
             {toggleLabel}
           </button>}
         </div>
-      ) : '-';
+      ) : null;
     };
 
     const newColumns = [ ...defaultColumns ];
@@ -303,7 +304,10 @@ const TaskList: React.FC = () => {
         <Table
           columns={columns}
           dataSource={filteredTasks}
-          loading={!hasLoaded}
+          loading={{
+            indicator: <Indicator />,
+            spinning: !hasLoaded,
+          }}
           pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
           rowClassName={record => defaultRowClassName(canBeOpened(record))}
           rowKey="id"

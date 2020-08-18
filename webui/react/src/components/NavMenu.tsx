@@ -14,7 +14,6 @@ export enum NavMenuType {
 
 interface Props {
   basePath?: string;
-  defaultRouteId: string;
   routes: RouteConfig[];
   showLabels?: boolean;
   type?: NavMenuType;
@@ -29,7 +28,7 @@ const menuToItemTypes = {
 const NavMenu: React.FC<Props> = (props: Props) => {
   const location = useLocation();
   const { basePath, routes } = props;
-  const [ selectedId, setSelectedId ] = useState(props.defaultRouteId);
+  const [ selectedId, setSelectedId ] = useState<string>();
   const navMenuType = props.type || NavMenuType.Main;
   const navItemType = menuToItemTypes[navMenuType];
   const classes = [ css.base, css[navMenuType] ];

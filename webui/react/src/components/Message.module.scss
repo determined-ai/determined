@@ -1,10 +1,21 @@
 .base {
   align-items: center;
-  background-color: var(--theme-colors-monochrome-13);
-  color: var(--theme-colors-monochrome-9);
   display: flex;
-  font-size: var(--theme-sizes-font-medium);
-  font-style: italic;
+  flex-direction: column;
+  height: 100%;
   justify-content: center;
-  padding: var(--theme-sizes-layout-giant);
+
+  img {
+    height: 10rem;
+    width: 10rem;
+  }
+  .title {
+    color: var(--theme-colors-monochrome-8);
+    font-size: var(--theme-sizes-font-medium);
+  }
+  span {
+    color: var(--theme-colors-monochrome-10);
+    font-size: var(--theme-sizes-font-small);
+    margin-top: var(--theme-sizes-layout-medium);
+  }
 }

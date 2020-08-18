@@ -27,7 +27,7 @@ const DeterminedAuth: React.FC = () => {
   const [ canSubmit, setCanSubmit ] = useState(!!storage.get(STORAGE_KEY_LAST_USERNAME));
 
   const onFinish = useCallback(async (creds: FromValues): Promise<void> => {
-    setUI({ opaque: false, type: UI.ActionType.ShowSpinner });
+    setUI({ type: UI.ActionType.ShowSpinner });
     setCanSubmit(false);
     try {
       await login(creds as Credentials);
@@ -100,7 +100,6 @@ const DeterminedAuth: React.FC = () => {
       </p>
     </div>
   );
-
 };
 
 export default DeterminedAuth;

@@ -13,8 +13,6 @@ interface Props {
 }
 
 const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }: Props) => {
-  const titleDetail = validationMetric ? ` (${validationMetric})` : '';
-  const title = `Training Metric${titleDetail}`;
   const [ metric, setMetric ] = useState<MetricName | undefined>(
     validationMetric ? { name: validationMetric, type: MetricType.Validation } : undefined,
   );
@@ -65,7 +63,7 @@ const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }
       metricNames={metricNames}
       value={metric}
       onChange={handleMetricChange} />}
-    title={title}
+    title="Metrics"
     xLabel="Batches"
     yLabel="Metric Value" />;
 };

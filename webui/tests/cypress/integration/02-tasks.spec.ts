@@ -49,7 +49,7 @@ describe('Task List', () => {
       cy.visit('/det/experiments');
       cy.get('thead input[type=checkbox]').click();
       cy.get('[class*="TableBatch_actions_"] button')
-        .contains(/open tensorBoard/i)
+        .contains(/view in tensorBoard/i)
         .click();
       cy.wait('@createRequest');
       cy.visit('/det/tasks');

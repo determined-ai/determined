@@ -21,18 +21,27 @@ export enum Action {
 
 interface Props {
   experiment: ExperimentDetails;
-  onSettled: () => void; // A callback to trigger after an action is done.
   onClick: {
     [key in Action]?: () => void;
-  }
+  };
+  onSettled: () => void; // A callback to trigger after an action is done.
 }
 
 type ButtonLoadingStates = Record<Action, boolean>;
 
-const ExperimentActions: React.FC<Props> = ({
-  experiment, onSettled: updateFn, onClick,
-}: Props) => {
+/*
+  * We use `numSteps` or `totalBatchesProcessed` as a
+  * proxy to trials that definietly have some metric.
+  */
+const experimentWillNeverHaveData = (experiment: ExperimentDetails): boolean => {
+  const isTerminal = terminalRunStates.has(experiment.state);
+  const trialsWithSomeMetric = experiment.trials.filter(trial => {
+    return trial.numSteps > 1 || trial.totalBatchesProcessed > 0;
+  });
+  return isTerminal && trialsWithSomeMetric.length === 0;
+};
 
+const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: Props) => {
   const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
     Activate: false,
     Archive: false,
@@ -43,52 +52,49 @@ const ExperimentActions: React.FC<Props> = ({
     Tensorboard: false,
   });
 
-  const handleArchive = useCallback(
-    (archive: boolean) =>
-      (): Promise<unknown> => {
-        setButtonStates(state => ({ ...state, archive }));
-        return archiveExperiment(experiment.id, archive)
-          .then(updateFn)
-          .finally(() => setButtonStates(state => ({ ...state, archive: false })));
-      },
-    [ experiment.id, updateFn ],
-  );
+  const handleArchive = useCallback((archive: boolean) => async (): Promise<void> => {
+    setButtonStates(state => ({ ...state, archive }));
+    try {
+      await archiveExperiment(experiment.id, archive);
+      onSettled();
+    } finally {
+      setButtonStates(state => ({ ...state, archive: false }));
+    }
+  }, [ experiment.id, onSettled ]);
 
-  const handleKill = useCallback(() => {
+  const handleKill = useCallback(async () => {
     setButtonStates(state => ({ ...state, kill: true }));
-    killExperiment({ experimentId: experiment.id })
-      .then(updateFn)
-      .finally(() => setButtonStates(state => ({ ...state, kill: false })));
-  }, [ experiment.id, updateFn ]);
+    try {
+      await killExperiment({ experimentId: experiment.id });
+      onSettled();
+    } finally {
+      setButtonStates(state => ({ ...state, kill: false }));
+    }
+  }, [ experiment.id, onSettled ]);
 
-  const handleCreateTensorboard = useCallback(() => {
+  const handleCreateTensorboard = useCallback(async () => {
     setButtonStates(state => ({ ...state, tensorboard: true }));
-    createTensorboard({ ids: [ experiment.id ], type: TBSourceType.Experiment })
-      .then((tensorboard) => {
-        openCommand(tensorboard);
-        return updateFn();
-      })
-      .finally(() => setButtonStates(state => ({ ...state, tensorboard: false })));
-  }, [ experiment.id, updateFn ]);
+    try {
+      const tensorboard = await createTensorboard({
+        ids: [ experiment.id ],
+        type: TBSourceType.Experiment,
+      });
+      openCommand(tensorboard);
+      onSettled();
+    } finally {
+      setButtonStates(state => ({ ...state, tensorboard: false }));
+    }
+  }, [ experiment.id, onSettled ]);
 
-  const handleStateChange = useCallback(
-    (targetState: RunState) =>
-      (): Promise<unknown> => {
-        setButtonStates(state => ({ ...state, [targetState]: true }));
-        return setExperimentState({ experimentId: experiment.id, state: targetState })
-          .then(updateFn)
-          .finally(() => setButtonStates(state => ({ ...state, [targetState]: false })));
-      }
-    , [ experiment.id, updateFn ],
-  );
-
-  const experimentWillNeverHaveData = (experiment: ExperimentDetails): boolean => {
-    const isTerminal = terminalRunStates.has(experiment.state);
-    // with lack of step state we can use numSteps as a proxy to trials that definietly have some
-    // metric.
-    const trialsWithSomeMetric = experiment.trials.filter(trial => trial.numSteps > 1);
-    return isTerminal && trialsWithSomeMetric.length === 0;
-  };
+  const handleStateChange = useCallback((targetState: RunState) => async (): Promise<void> => {
+    setButtonStates(state => ({ ...state, [targetState]: true }));
+    try {
+      await setExperimentState({ experimentId: experiment.id, state: targetState });
+      onSettled();
+    } finally {
+      setButtonStates(state => ({ ...state, [targetState]: false }));
+    }
+  }, [ experiment.id, onSettled ]);
 
   const actionButtons: ConditionalButton<ExperimentDetails>[] = [
     {
@@ -127,7 +133,7 @@ const ExperimentActions: React.FC<Props> = ({
     {
       button: <Button key="tensorboard"
         loading={buttonStates.Tensorboard}
-        onClick={handleCreateTensorboard}>Open Tensorboard</Button>,
+        onClick={handleCreateTensorboard}>View in Tensorboard</Button>,
       showIf: (exp): boolean => !experimentWillNeverHaveData(exp),
     },
     {

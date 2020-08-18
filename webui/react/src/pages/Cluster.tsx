@@ -23,27 +23,23 @@ const Cluster: React.FC = () => {
 
   const availableResourceTypes = Object.keys(availableResources);
 
-  let unhappyView: React.ReactNode = null;
-
   if (!agents.data) {
-    unhappyView = <Spinner />;
+    return <Spinner />;
   } else if (agents.data.length === 0) {
-    unhappyView = <Message>No agents connected.</Message>;
+    return <Message title="No Agents connected" />;
   } else if (availableResourceTypes.length === 0) {
-    unhappyView = <Message>No slots available.</Message>;
+    return <Message title="No Slots available" />;
   }
 
   return (
     <Page id="cluster" title="Cluster">
-      {unhappyView ||
-        <Grid minItemWidth={50}>
-          {Object.values(ResourceType).map((resourceType, idx) => (
-            <ResourceChart key={idx}
-              resources={availableResources[resourceType]}
-              title={resourceType + 's'} />
-          ))}
-        </Grid>
-      }
+      <Grid minItemWidth={50}>
+        {Object.values(ResourceType).map((resourceType, idx) => (
+          <ResourceChart key={idx}
+            resources={availableResources[resourceType]}
+            title={resourceType + 's'} />
+        ))}
+      </Grid>
     </Page>
   );
 };

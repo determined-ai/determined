@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { appRoutes, defaultAppRoute, defaultSideBarRoute, sidebarRoutes } from 'routes';
+import { appRoutes, sidebarRoutes } from 'routes';
 import RouterDecorator from 'storybook/RouterDecorator';
 import { StoryMetadata } from 'storybook/types';
 
@@ -13,7 +13,7 @@ export default {
 } as StoryMetadata;
 
 export const NavBarMenu = (): React.ReactNode => (
-  <NavMenu defaultRouteId={defaultAppRoute.id} routes={appRoutes} />
+  <NavMenu routes={appRoutes} />
 );
 
 NavBarMenu.story = {
@@ -25,13 +25,9 @@ NavBarMenu.story = {
 };
 
 export const SideBarMenu = (): React.ReactNode => (
-  <NavMenu defaultRouteId={defaultSideBarRoute.id} routes={sidebarRoutes}
-    type={NavMenuType.SideBar} />
+  <NavMenu routes={sidebarRoutes} type={NavMenuType.SideBar} />
 );
 
 export const SideBarMenuIconOnly = (): React.ReactNode => (
-  <NavMenu
-    defaultRouteId={defaultSideBarRoute.id}
-    routes={sidebarRoutes}
-    type={NavMenuType.SideBarIconOnly} />
+  <NavMenu routes={sidebarRoutes} type={NavMenuType.SideBarIconOnly} />
 );

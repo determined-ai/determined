@@ -483,54 +483,55 @@ const LogViewer: React.FC<Props> = forwardRef((
   };
 
   return (
-    <Page maxHeight options={logOptions} title={props.title}>
-      <div className={css.base} ref={baseRef}>
-        <div className={css.container} ref={container}>
-          <div className={css.scrollSpacer} ref={spacer} style={spacerStyle}>
-            {visibleLogs.map(log => (
-              <div className={css.line} id={`log-${log.id}`} key={log.id} style={{
-                height: toRem(config.messageSizes[log.id]?.height),
-                top: toRem(config.messageSizes[log.id]?.top),
-              }}>
-                {!props.disableLineNumber &&
+    <Spinner spinning={!!props.isLoading}>
+      <Page options={logOptions} title={props.title}>
+        <div className={css.base} ref={baseRef}>
+          <div className={css.container} ref={container}>
+            <div className={css.scrollSpacer} ref={spacer} style={spacerStyle}>
+              {visibleLogs.map(log => (
+                <div className={css.line} id={`log-${log.id}`} key={log.id} style={{
+                  height: toRem(config.messageSizes[log.id]?.height),
+                  top: toRem(config.messageSizes[log.id]?.top),
+                }}>
+                  {!props.disableLineNumber &&
                   <div className={css.number} data-label={log.id + 1} style={lineNumberStyle} />}
-                {!props.disableLevel ? (
-                  <Tooltip placement="top" title={`Level: ${capitalize(log.level || '')}`}>
-                    <div className={levelCss(css.level, log.level)} style={levelStyle}>
-                      <div className={css.levelLabel}>&lt;[{log.level || ''}]&gt;</div>
-                      <Icon name={log.level} size="small" />
-                    </div>
-                  </Tooltip>
-                ) : null}
-                <div className={css.time} style={dateTimeStyle}>{log.formattedTime}</div>
-                <div
-                  className={levelCss(css.message, log.level)}
-                  dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }}
-                  style={messageStyle} />
-              </div>
-            ))}
+                  {!props.disableLevel ? (
+                    <Tooltip placement="top" title={`Level: ${capitalize(log.level || '')}`}>
+                      <div className={levelCss(css.level, log.level)} style={levelStyle}>
+                        <div className={css.levelLabel}>&lt;[{log.level || ''}]&gt;</div>
+                        <Icon name={log.level} size="small" />
+                      </div>
+                    </Tooltip>
+                  ) : null}
+                  <div className={css.time} style={dateTimeStyle}>{log.formattedTime}</div>
+                  <div
+                    className={levelCss(css.message, log.level)}
+                    dangerouslySetInnerHTML={{ __html: ansiToHtml(log.message) }}
+                    style={messageStyle} />
+                </div>
+              ))}
+            </div>
+            <div className={css.measure} ref={measure} />
           </div>
-          <div className={css.measure} ref={measure} />
-          {props.isLoading && <Spinner fillContainer />}
+          <div className={css.scrollTo}>
+            <Tooltip placement="topRight" title="Scroll to Top">
+              <Button
+                aria-label="Scroll to Top"
+                className={scrollToTopClasses.join(' ')}
+                icon={<Icon name="arrow-up" />}
+                onClick={handleScrollToTop} />
+            </Tooltip>
+            <Tooltip placement="topRight" title={isTailing ? 'Tailing Enabled' : 'Enable Tailing'}>
+              <Button
+                aria-label="Enable Tailing"
+                className={enableTailingClasses.join(' ')}
+                icon={<Icon name="arrow-down" />}
+                onClick={handleEnableTailing} />
+            </Tooltip>
+          </div>
         </div>
-        <div className={css.scrollTo}>
-          <Tooltip placement="topRight" title="Scroll to Top">
-            <Button
-              aria-label="Scroll to Top"
-              className={scrollToTopClasses.join(' ')}
-              icon={<Icon name="arrow-up" />}
-              onClick={handleScrollToTop} />
-          </Tooltip>
-          <Tooltip placement="topRight" title={isTailing ? 'Tailing Enabled' : 'Enable Tailing'}>
-            <Button
-              aria-label="Enable Tailing"
-              className={enableTailingClasses.join(' ')}
-              icon={<Icon name="arrow-down" />}
-              onClick={handleEnableTailing} />
-          </Tooltip>
-        </div>
-      </div>
-    </Page>
+      </Page>
+    </Spinner>
   );
 });
 

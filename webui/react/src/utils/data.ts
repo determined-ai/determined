@@ -103,10 +103,10 @@ export const metricNameSorter = (a: MetricName, b: MetricName): number => {
   return alphanumericSorter(a.name, b.name);
 };
 
-export const numericSorter = (a?: number, b?: number): number => {
-  if (a != null && b != null) return a - b;
-  if (a != null && b == null) return 1;
-  if (b == null && b != null) return -1;
+export const numericSorter = (a?: number, b?: number, reverseOrder = false): number => {
+  if (a != null && b != null) return reverseOrder ? b - a : a - b;
+  if (a != null && b == null) return reverseOrder ? -1 : 1;
+  if (b == null && b != null) return reverseOrder ? 1 : -1;
   return 0;
 };
 

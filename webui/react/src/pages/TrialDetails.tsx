@@ -1,22 +1,21 @@
 import {
-  Breadcrumb, Button, Col, Form, Input, Modal, Row, Space, Table, Tooltip,
+  Button, Col, Form, Input, Modal, Row, Space, Table, Tooltip,
 } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
-import Badge from 'components/Badge';
+import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
 import CreateExperimentModal from 'components/CreateExperimentModal';
 import Icon from 'components/Icon';
-import Link from 'components/Link';
 import Message from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import Page from 'components/Page';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
-import { defaultRowClassName } from 'components/Table';
+import Spinner, { Indicator } from 'components/Spinner';
+import { defaultRowClassName, findColumnByTitle } from 'components/Table';
 import Toggle from 'components/Toggle';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
@@ -54,9 +53,11 @@ const setTrialLength = (experimentConfig: RawJson, length: number): void => {
   if (trialLength) experimentConfig.searcher.max_length = { [trialLength[0]]: length } ;
 };
 
-const trialContinueConfig =
-(experimentConfig: RawJson, trialHparams: Record<string, string>, trialId: number): RawJson => {
-
+const trialContinueConfig = (
+  experimentConfig: RawJson,
+  trialHparams: Record<string, string>,
+  trialId: number,
+): RawJson => {
   return {
     ...experimentConfig,
     hyperparameters: trialHParamsToExperimentHParams(trialHparams),
@@ -76,52 +77,60 @@ const TrialDetailsComp: React.FC = () => {
   const [ experiment, setExperiment ] = useState<ExperimentDetails>();
   const [ showHasCheckpoint, setShowHasCheckpoint ] = useState(true);
   const [ contModalVisible, setContModalVisible ] = useState(false);
+  const [ contFormVisible, setContFormVisible ] = useState(false);
+  const [ showCheckpoint, setShowCheckpoint ] = useState(false);
   const [ contModalConfig, setContModalConfig ] = useState('Loading');
-  const [ contFormVisible, setContFormVisible ] = useState<boolean>(false);
   const [ contMaxLength, setContMaxLength ] = useState<number>();
   const [ contDescription, setContDescription ] = useState<string>('Loading');
   const [ contError, setContError ] = useState<string>();
   const [ form ] = Form.useForm();
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
-  const [ showCheckpoint, setShowCheckpoint ] = useState(false);
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
-  const [ trial, triggerTrialRequest ] =
+  const [ trialResponse, triggerTrialRequest ] =
     useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
 
-  const metricNames = useMemo(() => extractMetricNames(trial.data?.steps), [ trial.data?.steps ]);
+  const trial = trialResponse.data;
+  const hparams = trial?.hparams;
+  const experimentId = trial?.experimentId;
+  const experimentConfig = experiment?.config;
 
-  const upgradedConfig = useMemo(
-    () => {
-      if (!experiment?.configRaw) return;
-      const configClone = clone(experiment.configRaw);
-      upgradeConfig(configClone);
-      return configClone;
-    },
-    [ experiment?.configRaw ],
-  );
+  const metricNames = useMemo(() => extractMetricNames(trial?.steps), [ trial?.steps ]);
+
+  const upgradedConfig = useMemo(() => {
+    if (!experiment?.configRaw) return;
+    const configClone = clone(experiment.configRaw);
+    upgradeConfig(configClone);
+    return configClone;
+  }, [ experiment?.configRaw ]);
 
   const trialLength = useMemo(() => {
     return getTrialLength(upgradedConfig);
   }, [ upgradedConfig ]);
 
   const columns = useMemo(() => {
+    const newColumns: ColumnType<Step>[] = [ ...defaultColumns ];
+    const { metric, smallerIsBetter } = experimentConfig?.searcher || {};
+
     const checkpointRenderer = (_: string, record: Step) => {
       if (record.checkpoint) {
         const checkpoint: CheckpointDetail = {
           ...record.checkpoint,
           batch: record.numBatches + record.priorBatchesProcessed,
-          experimentId: trial.data?.experimentId,
+          experimentId,
           trialId: record.id,
         };
-        return <Tooltip title="View Checkpoint">
-          <Button
-            aria-label="View Checkpoint"
-            icon={<Icon name="checkpoint" />}
-            onClick={e => handleCheckpointShow(e, checkpoint)} />
-        </Tooltip>;
+        return (
+          <Tooltip title="View Checkpoint">
+            <Button
+              aria-label="View Checkpoint"
+              icon={<Icon name="checkpoint" />}
+              onClick={e => handleCheckpointShow(e, checkpoint)} />
+          </Tooltip>
+        );
       }
       return null;
     };
+
     const metricRenderer = (metricName: MetricName) => (_: string, record: Step) => {
       const value = extractMetricValue(record, metricName);
       return value ? <Tooltip title={value}>
@@ -129,14 +138,11 @@ const TrialDetailsComp: React.FC = () => {
       </Tooltip> : undefined;
     };
 
-    const newColumns: ColumnType<Step>[] = [ ...defaultColumns ];
-    const searcher = experiment?.config.searcher;
-
     metrics.forEach(metricName => {
-      const stateIndex = newColumns.findIndex(column => /state/i.test(column.title as string));
+      const stateIndex = findColumnByTitle<Step>(newColumns, 'state');
       newColumns.splice(stateIndex, 0, {
-        defaultSortOrder: searcher && searcher.metric === metricName.name ?
-          (searcher.smallerIsBetter ? 'ascend' : 'descend') : undefined,
+        defaultSortOrder: metric && metric === metricName.name ?
+          (smallerIsBetter ? 'ascend' : 'descend') : undefined,
         render: metricRenderer(metricName),
         sorter: (a, b) => numericSorter(
           extractMetricValue(a, metricName),
@@ -149,28 +155,20 @@ const TrialDetailsComp: React.FC = () => {
       });
     });
 
-    newColumns.push({
-      fixed: 'right',
-      render: checkpointRenderer,
-      title: 'Checkpoint',
-      width: 100,
-    });
+    const checkpointIndex = findColumnByTitle(newColumns, 'checkpoint');
+    newColumns[checkpointIndex].render = checkpointRenderer;
 
     return newColumns;
-  }, [ experiment?.config.searcher, metrics, trial.data?.experimentId ]);
+  }, [ experimentConfig, experimentId, metrics ]);
 
   const steps = useMemo(() => {
-    const data = trial.data?.steps || [];
+    const data = trial?.steps || [];
     return showHasCheckpoint ? data.filter(step => !!step.checkpoint) : data;
-  }, [ showHasCheckpoint, trial.data?.steps ]);
+  }, [ showHasCheckpoint, trial?.steps ]);
 
-  const pollTrialDetails = useCallback(
-    () => triggerTrialRequest({ id: trialId }),
-    [ triggerTrialRequest, trialId ],
-  );
-  usePolling(pollTrialDetails);
-  const experimentId = trial.data?.experimentId;
-  const hparams = trial.data?.hparams;
+  const pollTrialDetails = useCallback(() => {
+    triggerTrialRequest({ id: trialId });
+  }, [ triggerTrialRequest, trialId ]);
 
   const handleActionClick = useCallback((action: TrialAction) => (): void => {
     switch (action) {
@@ -265,23 +263,10 @@ If the problem persists please contact support.',
     }
   }, [ experimentId, updateStatesFromForm ]);
 
-  const onConfigChange = useCallback( (config: string) => {
+  const handleConfigChange = useCallback((config: string) => {
     setContModalConfig(config);
     setContError(undefined);
   }, []);
-
-  useEffect(() => {
-    try {
-      setFreshContinueConfig();
-    } catch (e) {
-      handleError({
-        error: e,
-        message: 'failed to load experiment config',
-        type: ErrorType.ApiBadResponse,
-      });
-      setContModalConfig('failed to load experiment config');
-    }
-  }, [ setFreshContinueConfig ]);
 
   const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
     event.stopPropagation();
@@ -296,17 +281,32 @@ If the problem persists please contact support.',
 
   const handleMetricChange = useCallback((value: MetricName[]) => setMetrics(value), []);
 
-  useEffect(() => {
-    if (experimentId === undefined) return;
-    getExperimentDetails({ id:experimentId })
-      .then(experiment => setExperiment(experiment));
-  }, [ experimentId ]);
-
   const handleEditContConfig = useCallback(() => {
     updateStatesFromForm();
     setContFormVisible(false);
     setContModalVisible(true);
   }, [ updateStatesFromForm ]);
+
+  usePolling(pollTrialDetails);
+
+  useEffect(() => {
+    try {
+      setFreshContinueConfig();
+    } catch (e) {
+      handleError({
+        error: e,
+        message: 'failed to load experiment config',
+        type: ErrorType.ApiBadResponse,
+      });
+      setContModalConfig('failed to load experiment config');
+    }
+  }, [ setFreshContinueConfig ]);
+
+  useEffect(() => {
+    if (experimentId === undefined) return;
+    getExperimentDetails({ id:experimentId })
+      .then(experiment => setExperiment(experiment));
+  }, [ experimentId ]);
 
   /*
    * By default enable all metric columns for table because:
@@ -319,27 +319,14 @@ If the problem persists please contact support.',
     setMetrics(metricNames);
   }, [ metricNames, metrics ]);
 
-  if (isNaN(trialId)) {
-    return (
-      <Page id="page-error-message">
-        <Message>Bad trial ID {trialIdParam}</Message>
-      </Page>
-    );
+  if (isNaN(trialId)) return <Message title={`Invalid Trial ID ${trialIdParam}`} />;
+  if (trialResponse.error !== undefined) {
+    const message = isNotFound(trialResponse.error) ?
+      `Unable to find Trial ${trialId}` :
+      `Unable to fetch Trial ${trialId}`;
+    return <Message message={trialResponse.error.message} title={message} />;
   }
-
-  if (trial.error !== undefined) {
-    const message = isNotFound(trial.error) ? `Trial ${trialId} not found.`
-      : `Failed to fetch trial ${trialId}.`;
-    return (
-      <Page id="page-error-message">
-        <Message>{message}</Message>
-      </Page>
-    );
-  }
-
-  if (!trial.data || !experiment || !upgradedConfig) {
-    return <Spinner fillContainer />;
-  }
+  if (!trial || !experiment || !upgradedConfig) return <Spinner />;
 
   const options = metrics ? (
     <Space size="middle">
@@ -356,39 +343,43 @@ If the problem persists please contact support.',
   ) : null;
 
   return (
-    <Page title={`Trial ${trialId}`}>
-      <Breadcrumb>
-        <Breadcrumb.Item>
-          <Space align="center" size="small">
-            <Icon name="trial" size="small" />
-            <Link path="/det/trials">Trials</Link>
-          </Space>
-        </Breadcrumb.Item>
-        <Breadcrumb.Item>
-          <span>{trialId}</span>
-        </Breadcrumb.Item>
-      </Breadcrumb>
-      <TrialActions trial={trial.data}
+    <Page
+      backPath={`/det/experiments/${experimentId}`}
+      breadcrumb={[
+        { breadcrumbName: 'Experiments', path: '/det/experiments' },
+        {
+          breadcrumbName: `Experiment ${experimentId}`,
+          path: `/det/experiments/${experimentId}`,
+        },
+        { breadcrumbName: `Trial ${trialId}`, path: `/det/trials/${trialId}` },
+      ]}
+      options={<TrialActions trial={trial}
         onClick={handleActionClick}
-        onSettled={pollTrialDetails} />
+        onSettled={pollTrialDetails} />}
+      showDivider
+      subTitle={<Badge state={trial?.state} type={BadgeType.State} />}
+      title={`Trial ${trialId}`}>
       <Row className={css.topRow} gutter={[ 16, 16 ]}>
         <Col lg={10} span={24} xl={8} xxl={6}>
-          <TrialInfoBox experiment={experiment} trial={trial.data} />
+          <TrialInfoBox experiment={experiment} trial={trial} />
         </Col>
         <Col lg={14} span={24} xl={16} xxl={18}>
           <TrialChart
             metricNames={metricNames}
-            steps={trial.data?.steps}
-            validationMetric={experiment.config?.searcher.metric} />
+            steps={trial?.steps}
+            validationMetric={experimentConfig?.searcher.metric} />
         </Col>
         <Col span={24}>
           <Section options={options} title="Trial Information">
             <Table
               columns={columns}
               dataSource={steps}
-              loading={!trial.hasLoaded}
+              loading={{
+                indicator: <Indicator />,
+                spinning: !trialResponse.hasLoaded,
+              }}
               pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
-              rowClassName={defaultRowClassName()}
+              rowClassName={defaultRowClassName(false)}
               rowKey="id"
               scroll={{ x: 1000 }}
               showSorterTooltip={false}
@@ -396,9 +387,9 @@ If the problem persists please contact support.',
           </Section>
         </Col>
       </Row>
-      {activeCheckpoint && <CheckpointModal
+      {activeCheckpoint && experimentConfig && <CheckpointModal
         checkpoint={activeCheckpoint}
-        config={experiment.config}
+        config={experimentConfig}
         show={showCheckpoint}
         title={`Checkpoint for Batch ${activeCheckpoint.batch}`}
         onHide={handleCheckpointDismiss} />}
@@ -410,9 +401,8 @@ If the problem persists please contact support.',
         title={`Continue Trial ${trialId}`}
         visible={contModalVisible}
         onCancel={handleContModalCancel}
-        onConfigChange={onConfigChange}
-        onVisibleChange={setContModalVisible}
-      />
+        onConfigChange={handleConfigChange}
+        onVisibleChange={setContModalVisible} />
       <Modal
         footer={<>
           <Button onClick={handleEditContConfig}>Edit Full Config</Button>

@@ -6,7 +6,6 @@ import { throttle } from 'throttle-debounce';
 
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
 import Message from 'components/Message';
-import Page from 'components/Page';
 import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
@@ -35,7 +34,6 @@ const TrialLogs: React.FC = () => {
   const [ oldestReached, setOldestReached ] = useState(false);
   const [ isDownloading, setIsDownloading ] = useState(false);
   const [ isLoading, setIsLoading ] = useState(true);
-  const [ isIdInvalid, setIsIdInvalid ] = useState(false);
   const [ downloadModal, setDownloadModal ] = useState<{ destroy: () => void }>();
   const [ trial ] = useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id });
 
@@ -106,10 +104,6 @@ const TrialLogs: React.FC = () => {
   useEffect(() => setUI({ type: UI.ActionType.HideChrome }), [ setUI ]);
 
   useEffect(() => {
-    if (trial.errorCount > 0 && !trial.isLoading) setIsIdInvalid(true);
-  }, [ trial ]);
-
-  useEffect(() => {
     if (!trial.hasLoaded) return;
 
     let buffer: Log[] = [];
@@ -131,12 +125,8 @@ const TrialLogs: React.FC = () => {
     return (): void => throttleFunc.cancel();
   }, [ id, trial.hasLoaded ]);
 
-  if (isIdInvalid) {
-    return (
-      <Page id="page-error-message">
-        <Message>Unable to find Trial {trialId}</Message>
-      </Page>
-    );
+  if (trial.errorCount > 0 && !trial.isLoading) {
+    return <Message title={`Unable to find Trial ${trialId}`} />;
   }
 
   return (

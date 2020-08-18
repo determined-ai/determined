@@ -1,7 +1,7 @@
 import { Button, Col, Row, Space, Table, Tooltip } from 'antd';
 import { ColumnType } from 'antd/lib/table';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -12,10 +12,8 @@ import { makeClickHandler } from 'components/Link';
 import Message from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
-import Spinner from 'components/Spinner';
-import {
-  defaultRowClassName, durationRenderer, relativeTimeRenderer, stateRenderer,
-} from 'components/Table';
+import Spinner, { Indicator } from 'components/Spinner';
+import { defaultRowClassName, findColumnByTitle } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
@@ -26,12 +24,12 @@ import { getExperimentDetails, isNotFound } from 'services/api';
 import { ExperimentDetailsParams } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
 import { clone } from 'utils/data';
-import { alphanumericSorter, numericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
+import { numericSorter } from 'utils/data';
 import { humanReadableFloat } from 'utils/string';
-import { getDuration } from 'utils/time';
 import { upgradeConfig } from 'utils/types';
 
 import css from './ExperimentDetails.module.scss';
+import { columns as defaultColumns } from './ExperimentDetails.table';
 
 interface Params {
   experimentId: string;
@@ -42,19 +40,62 @@ const ExperimentDetailsComp: React.FC = () => {
   const id = parseInt(experimentId);
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
+  const [ forkModalVisible, setForkModalVisible ] = useState(false);
+  const [ forkModalConfig, setForkModalConfig ] = useState('Loading');
   const [ experimentResponse, triggerExperimentRequest ] =
     useRestApi<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
+
   const experiment = experimentResponse.data;
   const experimentConfig = experiment?.config;
-  const validationKey = experiment?.config.searcher.metric;
+
+  const columns = useMemo(() => {
+    const newColumns: ColumnType<TrialItem>[] = [ ...defaultColumns ];
+    const { metric, smallerIsBetter } = experimentConfig?.searcher || {};
+    const bestValidationIndex = findColumnByTitle<TrialItem>(newColumns, 'best validation');
+    const latestValidationIndex = findColumnByTitle<TrialItem>(newColumns, 'latest validation');
+    const checkpointIndex = findColumnByTitle<TrialItem>(newColumns, 'checkpoint');
+
+    const latestValidationRenderer = (_: string, record: TrialItem): React.ReactNode => {
+      return record.latestValidationMetrics && metric &&
+        humanReadableFloat(record.latestValidationMetrics.validationMetrics[metric]);
+    };
+
+    const latestValidationSorter = (a: TrialItem, b: TrialItem): number => {
+      if (!metric) return 0;
+      const aMetric = a.latestValidationMetrics?.validationMetrics[metric];
+      const bMetric = b.latestValidationMetrics?.validationMetrics[metric];
+      return numericSorter(aMetric, bMetric);
+    };
+
+    const checkpointRenderer = (_: string, record: TrialItem): React.ReactNode => {
+      if (!record.bestAvailableCheckpoint) return;
+      const checkpoint: CheckpointDetail = {
+        ...record.bestAvailableCheckpoint,
+        batch: record.totalBatchesProcessed,
+        experimentId: id,
+        trialId: record.id,
+      };
+      return (
+        <Tooltip title="View Checkpoint">
+          <Button
+            aria-label="View Checkpoint"
+            icon={<Icon name="checkpoint" />}
+            onClick={e => handleCheckpointShow(e, checkpoint)} />
+        </Tooltip>
+      );
+    };
+
+    newColumns[bestValidationIndex].defaultSortOrder = smallerIsBetter ? 'ascend' : 'descend';
+    newColumns[latestValidationIndex].render = latestValidationRenderer;
+    newColumns[latestValidationIndex].sorter = latestValidationSorter;
+    newColumns[checkpointIndex].render = checkpointRenderer;
+
+    return newColumns;
+  }, [ experimentConfig, id ]);
 
   const pollExperimentDetails = useCallback(() => {
     triggerExperimentRequest({ id });
   }, [ id, triggerExperimentRequest ]);
-
-  usePolling(pollExperimentDetails);
-  const [ forkModalVisible, setForkModalVisible ] = useState(false);
-  const [ forkModalConfig, setForkModalConfig ] = useState('Loading');
 
   const setFreshForkConfig = useCallback(() => {
     if (!experiment?.configRaw) return;
@@ -72,6 +113,24 @@ const ExperimentDetailsComp: React.FC = () => {
     setFreshForkConfig();
   }, [ setFreshForkConfig ]);
 
+  const showForkModal = useCallback((): void => {
+    setForkModalVisible(true);
+  }, [ setForkModalVisible ]);
+
+  const handleTableRow = useCallback((record: TrialItem) => ({
+    onClick: makeClickHandler(record.url as string),
+  }), []);
+
+  const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
+    event.stopPropagation();
+    setActiveCheckpoint(checkpoint);
+    setShowCheckpoint(true);
+  };
+
+  const handleCheckpointDismiss = useCallback(() => setShowCheckpoint(false), []);
+
+  usePolling(pollExperimentDetails);
+
   useEffect(() => {
     try {
       setFreshForkConfig();
@@ -85,122 +144,24 @@ const ExperimentDetailsComp: React.FC = () => {
     }
   }, [ setFreshForkConfig ]);
 
-  const showForkModal = useCallback((): void => {
-    setForkModalVisible(true);
-  }, [ setForkModalVisible ]);
-
-  const handleTableRow = useCallback((record: TrialItem) => ({
-    onClick: makeClickHandler(record.url as string),
-  }), []);
-
-  let message = '';
-  if (isNaN(id)) message = `Bad experiment ID ${experimentId}`;
+  if (isNaN(id)) return <Message title={`Invalid Experiment ID ${experimentId}`} />;
   if (experimentResponse.error) {
-    message = isNotFound(experimentResponse.error) ?
-      `Experiment ${experimentId} not found.` :
-      `Failed to fetch experiment ${experimentId}.`;
+    const message = isNotFound(experimentResponse.error) ?
+      `Unable to find Experiment ${experimentId}` :
+      `Unable to fetch Experiment ${experimentId}`;
+    return <Message title={message} />;
   }
-  if (message) {
-    return (
-      <Page id="page-error-message">
-        <Message>{message}</Message>
-      </Page>
-    );
-  } else if (!experiment) {
-    return <Spinner fillContainer />;
-  }
-
-  const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
-    event.stopPropagation();
-    setActiveCheckpoint(checkpoint);
-    setShowCheckpoint(true);
-  };
-  const handleCheckpointDismiss = () => setShowCheckpoint(false);
-
-  const columns: ColumnType<TrialItem>[] = [
-    {
-      dataIndex: 'id',
-      sorter: (a: TrialItem, b: TrialItem): number => alphanumericSorter(a.id, b.id),
-      title: 'ID',
-    },
-    {
-      render: stateRenderer,
-      sorter: (a: TrialItem, b: TrialItem): number => runStateSorter(a.state, b.state),
-      title: 'State',
-    },
-    {
-      dataIndex: 'totalBatchesProcessed',
-      sorter: (a: TrialItem, b: TrialItem): number => {
-        return numericSorter(a.totalBatchesProcessed, b.totalBatchesProcessed);
-      },
-      title: 'Batches',
-    },
-    {
-      defaultSortOrder: experiment.config.searcher.smallerIsBetter ? 'ascend' : 'descend',
-      render: (_: string, record: TrialItem): React.ReactNode => {
-        return record.bestValidationMetric ? humanReadableFloat(record.bestValidationMetric) : '-';
-      },
-      sorter: (a: TrialItem, b: TrialItem): number => {
-        return numericSorter(a.bestValidationMetric, b.bestValidationMetric);
-      },
-      title: 'Best Validation Metric',
-    },
-    {
-      render: (_: string, record: TrialItem): React.ReactNode => {
-        return record.latestValidationMetrics && validationKey ?
-          humanReadableFloat(record.latestValidationMetrics.validationMetrics[validationKey]) :
-          '-';
-      },
-      sorter: (a: TrialItem, b: TrialItem): number => {
-        if (!validationKey) return 0;
-        const aMetric = a.latestValidationMetrics?.validationMetrics[validationKey];
-        const bMetric = b.latestValidationMetrics?.validationMetrics[validationKey];
-        return numericSorter(aMetric, bMetric);
-      },
-      title: 'Latest Validation Metric',
-    },
-    {
-      render: (_: string, record: TrialItem): React.ReactNode => {
-        return relativeTimeRenderer(new Date(record.startTime));
-      },
-      sorter: (a: TrialItem, b: TrialItem): number => {
-        return stringTimeSorter(a.startTime, b.startTime);
-      },
-      title: 'Start Time',
-    },
-    {
-      render: (_: string, record: TrialItem): React.ReactNode => durationRenderer(record),
-      sorter: (a: TrialItem, b: TrialItem): number => getDuration(a) - getDuration(b),
-      title: 'Duration',
-    },
-    {
-      render: (_: string, record: TrialItem): React.ReactNode => {
-        if (record.bestAvailableCheckpoint) {
-          const checkpoint: CheckpointDetail = {
-            ...record.bestAvailableCheckpoint,
-            batch: record.totalBatchesProcessed,
-            experimentId: id,
-            trialId: record.id,
-          };
-          return <Tooltip title="View Checkpoint">
-            <Button
-              aria-label="View Checkpoint"
-              icon={<Icon name="checkpoint" />}
-              onClick={e => handleCheckpointShow(e, checkpoint)} />
-          </Tooltip>;
-        }
-        return '-';
-      },
-      title: 'Checkpoint',
-    },
-  ];
+  if (!experiment) return <Spinner />;
 
   return (
     <Page
       backPath={'/det/experiments'}
       breadcrumb={[
         { breadcrumbName: 'Experiments', path: '/det/experiments' },
-        { breadcrumbName: `Experiment ${experimentId}`, path: `/det/experiments/${experimentId}` },
+        {
+          breadcrumbName: `Experiment ${experimentId}`,
+          path: `/det/experiments/${experimentId}`,
+        },
       ]}
       options={<ExperimentActions
         experiment={experiment}
@@ -210,6 +171,7 @@ const ExperimentDetailsComp: React.FC = () => {
       subTitle={<Space align="center" size="small">
         {experiment?.config.description}
         <Badge state={experiment.state} type={BadgeType.State} />
+        {experiment.archived && <Badge>ARCHIVED</Badge>}
       </Space>}
       title={`Experiment ${experimentId}`}>
       <Row className={css.topRow} gutter={[ 16, 16 ]}>
@@ -227,7 +189,10 @@ const ExperimentDetailsComp: React.FC = () => {
             <Table
               columns={columns}
               dataSource={experiment?.trials}
-              loading={!experimentResponse.hasLoaded}
+              loading={{
+                indicator: <Indicator />,
+                spinning: !experimentResponse.hasLoaded,
+              }}
               pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
               rowClassName={defaultRowClassName()}
               rowKey="id"
@@ -251,8 +216,7 @@ const ExperimentDetailsComp: React.FC = () => {
         visible={forkModalVisible}
         onCancel={handleForkModalCancel}
         onConfigChange={setForkModalConfig}
-        onVisibleChange={setForkModalVisible}
-      />
+        onVisibleChange={setForkModalVisible} />
     </Page>
   );
 };

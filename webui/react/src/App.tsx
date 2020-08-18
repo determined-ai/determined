@@ -92,18 +92,19 @@ const AppView: React.FC = () => {
   }, [ info ]);
 
   useEffect(() => {
-    setUI({ opaque: true, type: UI.ActionType.ShowSpinner });
+    setUI({ type: UI.ActionType.ShowSpinner });
   }, [ setUI ]);
 
   return (
     <div className={classes.join(' ')}>
-      {isAuthenticated && ui.showChrome && <NavBar username={username} />}
-      {isAuthenticated && <AppContexts />}
-      <div className={css.body}>
-        {isAuthenticated && ui.showChrome && <SideBar />}
-        <Router routes={appRoutes} />
-      </div>
-      {ui.showSpinner && <Spinner fullPage opaque={ui.opaqueSpinner} />}
+      <Spinner spinning={ui.showSpinner}>
+        {isAuthenticated && ui.showChrome && <NavBar username={username} />}
+        {isAuthenticated && <AppContexts />}
+        <div className={css.body}>
+          {isAuthenticated && ui.showChrome && <SideBar />}
+          <Router routes={appRoutes} />
+        </div>
+      </Spinner>
     </div>
   );
 };
