@@ -1,31 +1,21 @@
-import React from 'react';
+import { Spin } from 'antd';
+import { SpinProps, SpinState } from 'antd/es/spin';
+import React, { PropsWithChildren } from 'react';
 
 import Icon from 'components/Icon';
 
 import css from './Spinner.module.scss';
 
-interface Props {
-  fillContainer?: boolean;
-  fullPage?: boolean;
-  opaque?: boolean;
-  shade?: boolean;
-}
+interface Props extends SpinProps, SpinState {}
 
-const Spinner: React.FC<Props> = (props: Props) => {
-  const classes = [ css.base ];
+export const Indicator: React.FC = () => {
+  return <div className={css.spin}>
+    <Icon name="spinner" size="large" />
+  </div>;
+};
 
-  if (props.fillContainer) classes.push(css.fillContainer);
-  if (props.fullPage) classes.push(css.fullPage);
-  if (props.opaque) classes.push(css.opaque);
-  if (props.shade) classes.push(css.shade);
-
-  return (
-    <div className={classes.join(' ')}>
-      <div className={css.spin}>
-        <Icon name="spinner" size="large" />
-      </div>
-    </div>
-  );
+const Spinner: React.FC<Props> = (props: PropsWithChildren<Props>) => {
+  return <Spin indicator={<Indicator />} {...props}>{props.children}</Spin>;
 };
 
 export default Spinner;

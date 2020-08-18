@@ -1,5 +1,6 @@
 import React from 'react';
 
+import Page from './Page';
 import Spinner from './Spinner';
 
 export default {
@@ -10,5 +11,9 @@ export default {
 export const Default = (): React.ReactNode => <Spinner />;
 
 export const FullPageSpinner = (): React.ReactNode => (
-  <Spinner fullPage={true}>NavMain Spinner</Spinner>
+  <Spinner spinning={true}>
+    <Page title="Page Title">
+      Some page content
+    </Page>
+  </Spinner>
 );

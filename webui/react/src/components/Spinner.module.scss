@@ -3,36 +3,10 @@
   to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
-.base {
-  position: relative;
-
-  .spin {
-    animation: rotate 1s linear infinite;
-    left: 50%;
-    position: absolute;
-    top: 50%;
-    transform: translate(-50%, -50%);
-  }
-}
-.fillContainer {
-  height: 100%;
-  left: 0;
+.spin {
+  animation: rotate 1s linear infinite;
+  left: 50%;
   position: absolute;
-  top: 0;
-  width: 100%;
-}
-.fullPage {
-  background-color: rgba(var(--theme-colors-monochrome-17), 0.8);
-  height: 100%;
-  left: 0;
-  position: absolute;
-  top: 0;
-  width: 100%;
-  z-index: 1000;
-}
-.opaque {
-  background-color: var(--theme-colors-monochrome-17);
-}
-.shade {
-  background-color: rgba(var(--theme-colors-monochrome-17), 0.8);
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
