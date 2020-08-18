@@ -87,15 +87,18 @@ func (p *Proxy) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (p *Proxy) getTargetURL(serviceName string) (*url.URL, bool) {
+func (p *Proxy) getTargetURL(serviceName string) *url.URL {
 	p.lock.Lock()
 	defer p.lock.Unlock()
-	service, ok := p.services[serviceName]
+	service := p.services[serviceName]
+	if service == nil {
+		return nil
+	}
 	service.LastRequested = time.Now()
 	// Make a copy to avoid callers mutating the url outside of this locked
 	// method.
 	sURL := *service.URL
-	return &sURL, ok
+	return &sURL
 }
 
 // Service a normal (non-CONNECT) HTTP request through the /proxy/:service/* route.
@@ -103,8 +106,8 @@ func (p *Proxy) newProxyHandler(serviceID string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Look up the service name in the url path.
 		serviceName := c.Param(serviceID)
-		serviceURL, ok := p.getTargetURL(serviceName)
-		if !ok {
+		serviceURL := p.getTargetURL(serviceName)
+		if serviceURL == nil {
 			return echo.NewHTTPError(http.StatusNotFound,
 				fmt.Sprintf("service not found: %s", serviceName))
 		}
@@ -144,8 +147,8 @@ func (p *Proxy) newConnectHandler() echo.HandlerFunc {
 		}
 		serviceName := u.Hostname()
 
-		target, ok := p.getTargetURL(serviceName)
-		if !ok {
+		target := p.getTargetURL(serviceName)
+		if target == nil {
 			return echo.NewHTTPError(http.StatusNotFound,
 				fmt.Sprintf("service not found: %s", serviceName))
 		}
