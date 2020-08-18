@@ -40,6 +40,8 @@ const ExperimentDetailsComp: React.FC = () => {
   const id = parseInt(experimentId);
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
+  const [ forkModalVisible, setForkModalVisible ] = useState(false);
+  const [ forkModalConfig, setForkModalConfig ] = useState('Loading');
   const [ experimentResponse, triggerExperimentRequest ] =
     useRestApi<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
 
@@ -95,10 +97,6 @@ const ExperimentDetailsComp: React.FC = () => {
     triggerExperimentRequest({ id });
   }, [ id, triggerExperimentRequest ]);
 
-  usePolling(pollExperimentDetails);
-  const [ forkModalVisible, setForkModalVisible ] = useState(false);
-  const [ forkModalConfig, setForkModalConfig ] = useState('Loading');
-
   const setFreshForkConfig = useCallback(() => {
     if (!experiment?.configRaw) return;
     // do not reset the config if the modal is open
@@ -115,6 +113,24 @@ const ExperimentDetailsComp: React.FC = () => {
     setFreshForkConfig();
   }, [ setFreshForkConfig ]);
 
+  const showForkModal = useCallback((): void => {
+    setForkModalVisible(true);
+  }, [ setForkModalVisible ]);
+
+  const handleTableRow = useCallback((record: TrialItem) => ({
+    onClick: makeClickHandler(record.url as string),
+  }), []);
+
+  const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
+    event.stopPropagation();
+    setActiveCheckpoint(checkpoint);
+    setShowCheckpoint(true);
+  };
+
+  const handleCheckpointDismiss = useCallback(() => setShowCheckpoint(false), []);
+
+  usePolling(pollExperimentDetails);
+
   useEffect(() => {
     try {
       setFreshForkConfig();
@@ -127,14 +143,6 @@ const ExperimentDetailsComp: React.FC = () => {
       setForkModalConfig('failed to load experiment config');
     }
   }, [ setFreshForkConfig ]);
-
-  const showForkModal = useCallback((): void => {
-    setForkModalVisible(true);
-  }, [ setForkModalVisible ]);
-
-  const handleTableRow = useCallback((record: TrialItem) => ({
-    onClick: makeClickHandler(record.url as string),
-  }), []);
 
   let message = '';
   if (isNaN(id)) message = `Bad experiment ID ${experimentId}`;
@@ -152,13 +160,6 @@ const ExperimentDetailsComp: React.FC = () => {
   } else if (!experiment) {
     return <Spinner fillContainer />;
   }
-
-  const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
-    event.stopPropagation();
-    setActiveCheckpoint(checkpoint);
-    setShowCheckpoint(true);
-  };
-  const handleCheckpointDismiss = () => setShowCheckpoint(false);
 
   return (
     <Page

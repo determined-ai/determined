@@ -53,9 +53,11 @@ const setTrialLength = (experimentConfig: RawJson, length: number): void => {
   if (trialLength) experimentConfig.searcher.max_length = { [trialLength[0]]: length } ;
 };
 
-const trialContinueConfig =
-(experimentConfig: RawJson, trialHparams: Record<string, string>, trialId: number): RawJson => {
-
+const trialContinueConfig = (
+  experimentConfig: RawJson,
+  trialHparams: Record<string, string>,
+  trialId: number,
+): RawJson => {
   return {
     ...experimentConfig,
     hyperparameters: trialHParamsToExperimentHParams(trialHparams),
@@ -75,14 +77,14 @@ const TrialDetailsComp: React.FC = () => {
   const [ experiment, setExperiment ] = useState<ExperimentDetails>();
   const [ showHasCheckpoint, setShowHasCheckpoint ] = useState(true);
   const [ contModalVisible, setContModalVisible ] = useState(false);
+  const [ contFormVisible, setContFormVisible ] = useState(false);
+  const [ showCheckpoint, setShowCheckpoint ] = useState(false);
   const [ contModalConfig, setContModalConfig ] = useState('Loading');
-  const [ contFormVisible, setContFormVisible ] = useState<boolean>(false);
   const [ contMaxLength, setContMaxLength ] = useState<number>();
   const [ contDescription, setContDescription ] = useState<string>('Loading');
   const [ contError, setContError ] = useState<string>();
   const [ form ] = Form.useForm();
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
-  const [ showCheckpoint, setShowCheckpoint ] = useState(false);
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
   const [ trialResponse, triggerTrialRequest ] =
     useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
@@ -164,11 +166,9 @@ const TrialDetailsComp: React.FC = () => {
     return showHasCheckpoint ? data.filter(step => !!step.checkpoint) : data;
   }, [ showHasCheckpoint, trial?.steps ]);
 
-  const pollTrialDetails = useCallback(
-    () => triggerTrialRequest({ id: trialId }),
-    [ triggerTrialRequest, trialId ],
-  );
-  usePolling(pollTrialDetails);
+  const pollTrialDetails = useCallback(() => {
+    triggerTrialRequest({ id: trialId });
+  }, [ triggerTrialRequest, trialId ]);
 
   const handleActionClick = useCallback((action: TrialAction) => (): void => {
     switch (action) {
@@ -263,23 +263,10 @@ If the problem persists please contact support.',
     }
   }, [ experimentId, updateStatesFromForm ]);
 
-  const onConfigChange = useCallback( (config: string) => {
+  const handleConfigChange = useCallback((config: string) => {
     setContModalConfig(config);
     setContError(undefined);
   }, []);
-
-  useEffect(() => {
-    try {
-      setFreshContinueConfig();
-    } catch (e) {
-      handleError({
-        error: e,
-        message: 'failed to load experiment config',
-        type: ErrorType.ApiBadResponse,
-      });
-      setContModalConfig('failed to load experiment config');
-    }
-  }, [ setFreshContinueConfig ]);
 
   const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
     event.stopPropagation();
@@ -294,17 +281,32 @@ If the problem persists please contact support.',
 
   const handleMetricChange = useCallback((value: MetricName[]) => setMetrics(value), []);
 
-  useEffect(() => {
-    if (experimentId === undefined) return;
-    getExperimentDetails({ id:experimentId })
-      .then(experiment => setExperiment(experiment));
-  }, [ experimentId ]);
-
   const handleEditContConfig = useCallback(() => {
     updateStatesFromForm();
     setContFormVisible(false);
     setContModalVisible(true);
   }, [ updateStatesFromForm ]);
+
+  usePolling(pollTrialDetails);
+
+  useEffect(() => {
+    try {
+      setFreshContinueConfig();
+    } catch (e) {
+      handleError({
+        error: e,
+        message: 'failed to load experiment config',
+        type: ErrorType.ApiBadResponse,
+      });
+      setContModalConfig('failed to load experiment config');
+    }
+  }, [ setFreshContinueConfig ]);
+
+  useEffect(() => {
+    if (experimentId === undefined) return;
+    getExperimentDetails({ id:experimentId })
+      .then(experiment => setExperiment(experiment));
+  }, [ experimentId ]);
 
   /*
    * By default enable all metric columns for table because:
@@ -409,7 +411,7 @@ If the problem persists please contact support.',
         title={`Continue Trial ${trialId}`}
         visible={contModalVisible}
         onCancel={handleContModalCancel}
-        onConfigChange={onConfigChange}
+        onConfigChange={handleConfigChange}
         onVisibleChange={setContModalVisible} />
       <Modal
         footer={<>
