@@ -139,6 +139,15 @@ message UnarchiveExperimentRequest {
 // Response to UnarchiveExperimentRequest.
 message UnarchiveExperimentResponse {}
 
+// Set labels for an experiment.
+message SetExperimentLabelsRequest {
+  // The experiment id.
+  int32 id = 1;
+  // The set of labels.
+  repeated string labels = 2;
+}
+// Response to SetExperimentLabelsRequest.
+message SetExperimentLabelsResponse {}
 
 // Get a list of checkpoints for an experiment.
 message GetExperimentCheckpointsRequest {

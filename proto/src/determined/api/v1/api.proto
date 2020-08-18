@@ -172,7 +172,11 @@ service Determined {
         option (google.api.http) = {post: "/api/v1/experiments/{id}/unarchive" };
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
-
+    // Set labels for an experiment.
+    rpc SetExperimentLabels(SetExperimentLabelsRequest) returns (SetExperimentLabelsResponse) {
+        option (google.api.http) = {patch: "/api/v1/experiments/{id}/labels" body: "*" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
 
     // Get a list of checkpoints for an experiment.
     rpc GetExperimentCheckpoints(GetExperimentCheckpointsRequest) returns (GetExperimentCheckpointsResponse) {
