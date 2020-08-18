@@ -2,9 +2,13 @@ import sys
 from typing import Dict, List, Optional
 
 import boto3
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, WaiterError
 
 from determined_deploy.aws import constants
+
+# Try waiting for stack to delete this many times. We break up the waiting so the delete job
+# will not fail CI.
+NUM_WAITS = 5
 
 
 def get_user(boto3_session: boto3.session.Session) -> str:
@@ -13,9 +17,28 @@ def get_user(boto3_session: boto3.session.Session) -> str:
     return response["Arn"].split("/")[-1]
 
 
-def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
+def stop_master(master_id: str, boto3_session: boto3.session.Session):
     ec2 = boto3_session.client("ec2")
     waiter = ec2.get_waiter("instance_stopped")
+    ec2.stop_instances(InstanceIds=[master_id])
+    ec2.modify_instance_attribute(
+        Attribute="disableApiTermination", Value="false", InstanceId=master_id
+    )
+
+    for n in range(NUM_WAITS):
+        print("Waiting For Master Instance To Stop")
+        try:
+            waiter.wait(InstanceIds=[master_id], WaiterConfig={"Delay": 10})
+            break
+        except WaiterError as e:
+            if n == NUM_WAITS - 1:
+                raise e
+
+    print("Master Instance Stopped")
+
+
+def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
+    ec2 = boto3_session.client("ec2")
 
     # First, shut down the master so no new agents are started.
     stack_output = get_output(stack_name, boto3_session)
@@ -26,12 +49,7 @@ def delete(stack_name: str, boto3_session: boto3.session.Session) -> None:
 
     if describe_instance_response["Reservations"]:
         print("Stopping Master Instance")
-        ec2.stop_instances(InstanceIds=[master_id])
-        ec2.modify_instance_attribute(
-            Attribute="disableApiTermination", Value="false", InstanceId=master_id
-        )
-        waiter.wait(InstanceIds=[master_id], WaiterConfig={"Delay": 10})
-        print("Master Instance Stopped")
+        stop_master(master_id, boto3_session)
 
     # Second, terminate the agents so nothing can write to the checkpoint bucket. We create agent
     # instances outside of cloudformation, so we have to manually terminate them.
@@ -96,13 +114,8 @@ def update_stack(
         f"Check the CloudFormation Console for updates"
     )
     stack_output = get_output(stack_name, boto3_session)
-    ec2.stop_instances(InstanceIds=[stack_output[constants.cloudformation.MASTER_ID]])
 
-    stop_waiter = ec2.get_waiter("instance_stopped")
-    stop_waiter.wait(
-        InstanceIds=[stack_output[constants.cloudformation.MASTER_ID]], WaiterConfig={"Delay": 10},
-    )
-
+    stop_master(stack_output[constants.cloudformation.MASTER_ID], boto3_session)
     terminate_running_agents(stack_output[constants.cloudformation.AGENT_TAG_NAME], boto3_session)
 
     try:
@@ -241,7 +254,14 @@ def terminate_running_agents(agent_tag_name: str, boto3_session: boto3.session.S
 
     if instance_ids:
         ec2.terminate_instances(InstanceIds=instance_ids)
-        waiter.wait(InstanceIds=instance_ids, WaiterConfig={"Delay": 10})
+        for n in range(NUM_WAITS):
+            print("Waiting For Agents To Terminate")
+            try:
+                waiter.wait(InstanceIds=instance_ids, WaiterConfig={"Delay": 10})
+                break
+            except WaiterError as e:
+                if n == NUM_WAITS - 1:
+                    raise e
 
 
 # S3
