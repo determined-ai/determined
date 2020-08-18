@@ -173,10 +173,11 @@ class TFKerasContext:
 
         Args:
             dataset: tf.data.Dataset
-            shard_dataset: When performing multi-slot (distributed) training, this
-            controls whether the dataset is sharded so that each training process
-            (one per slot) sees unique data. If set to False, users must manually
-            configure each process to see unique data.
+            shard_dataset:
+                When performing multi-slot (distributed) training, this
+                controls whether the dataset is sharded so that each training process
+                (one per slot) sees unique data. If set to False, users must manually
+                configure each process to use unique data.
         """
         self.dataset_initialized = True
         if not self.hvd_config.use or not isinstance(dataset, tf.data.Dataset) or not shard_dataset:

@@ -35,7 +35,7 @@ class EstimatorContext:
 
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         self.hvd_config = hvd_config
-        # TODO (DET-3798): Remove input_from_dataflow in 0.12.14.
+        # TODO (DET-3798): Remove once customers are migrated.
         self.input_from_dataflow = env.experiment_config.input_from_dataflow()
 
         self.experimental = EstimatorExperimentalContext(env=env, hvd_config=hvd_config)
@@ -86,10 +86,11 @@ class EstimatorContext:
 
         Args:
             dataset: tf.data.Dataset
-            shard_dataset: When performing multi-slot (distributed) training, this
-            controls whether the dataset is sharded so that each training process
-            (one per slot) sees unique data. If set to False, users must manually
-            configure each process to see unique data.
+            shard_dataset:
+                When performing multi-slot (distributed) training, this
+                controls whether the dataset is sharded so that each training process
+                (one per slot) sees unique data. If set to False, users must manually
+                configure each process to use unique data.
 
         """
         hvd.require_horovod_type("tensorflow", "EstimatorContext.wrap_dataset was called.")

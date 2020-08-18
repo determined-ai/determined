@@ -27,7 +27,7 @@ class ExperimentConfig(dict):
     def averaging_training_metrics_enabled(self) -> bool:
         return bool(self["optimizations"]["average_training_metrics"])
 
-    # TODO (DET-3798): Remove input_from_dataflow in 0.12.14.
+    # TODO (DET-3798): Remove once customers are migrated.
     def input_from_dataflow(self) -> bool:
         # When using tensorpack dataflows as input, it's inefficient
         # to apply sharding, so we only apply sharding to the test set.
