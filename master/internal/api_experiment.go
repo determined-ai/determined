@@ -303,6 +303,27 @@ func (a *apiServer) UnarchiveExperiment(
 	}
 }
 
+func (a *apiServer) SetExperimentDescription(
+	ctx context.Context, req *apiv1.SetExperimentDescriptionRequest,
+) (*apiv1.SetExperimentDescriptionResponse, error) {
+	id := int(req.Id)
+
+	dbExp, err := a.m.db.ExperimentByID(id)
+	if err != nil {
+		return nil, errors.Wrapf(err, "loading experiment %v", id)
+	}
+
+	dbExp.Config.Description = req.Description
+	err = a.m.db.SaveExperimentConfig(dbExp)
+	switch err {
+	case nil:
+		return &apiv1.SetExperimentDescriptionResponse{}, nil
+	default:
+		return nil, errors.Wrapf(err, "failed to save experiment %d config",
+			req.Id)
+	}
+}
+
 func (a *apiServer) SetExperimentLabels(
 	ctx context.Context, req *apiv1.SetExperimentLabelsRequest,
 ) (*apiv1.SetExperimentLabelsResponse, error) {
