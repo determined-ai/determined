@@ -179,6 +179,9 @@ class TFKerasContext:
                 (one per slot) sees unique data. If set to False, users must manually
                 configure each process to use unique data.
         """
+        if not self.env.training:
+            return dataset
+
         self.dataset_initialized = True
         if not self.hvd_config.use or not isinstance(dataset, tf.data.Dataset) or not shard_dataset:
 
@@ -207,6 +210,9 @@ class TFKerasTrialContext(det.TrialContext, TFKerasContext):
         Args:
             model: tf.keras.Model
         """
+
+        if not self.env.training:
+            return model
         return self._wrap_model_with_train_fn(model, None)
 
 
@@ -216,6 +222,8 @@ class TFKerasNativeContext(det.NativeContext, TFKerasContext):
         TFKerasContext.__init__(self, env, hvd_config)
 
     def wrap_model(self, model: Any) -> Any:
+        if not self.env.training:
+            return model
         return self._wrap_model_with_train_fn(model, self._train_fn)
 
 

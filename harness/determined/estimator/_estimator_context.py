@@ -34,6 +34,7 @@ class EstimatorContext:
     """
 
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
+        self.env = env
         self.hvd_config = hvd_config
         # TODO (DET-3798): Remove once customers are migrated.
         self.input_from_dataflow = env.experiment_config.input_from_dataflow()
@@ -52,6 +53,9 @@ class EstimatorContext:
         ``build_estimator()``, they should call ``optimizer = wrap_optimizer(optimzer)``
         prior to passing the optimizer into their Estimator.
         """
+        if not self.env.training:
+            return optimizer
+
         self.optimizer_initialized = True
         if not self.hvd_config.use:
             return optimizer
@@ -93,6 +97,9 @@ class EstimatorContext:
                 configure each process to use unique data.
 
         """
+        if not self.env.training:
+            return dataset
+
         hvd.require_horovod_type("tensorflow", "EstimatorContext.wrap_dataset was called.")
 
         self.dataset_initialized = True
