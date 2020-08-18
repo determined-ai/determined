@@ -70,8 +70,9 @@ type (
 	// the searcher to get more operations to the trial workload sequencer as a result of the trial
 	// completing a searcher operation before the trial decides to tell the scheduler it is
 	// done, since stopping and restarting trials has relatively high overhead.
-	continueTrial struct {
+	sendNextWorkload struct {
 		trialID int
+		runID   int
 	}
 
 	// When we issue a TERMINATE workload, we send a delayed terminateTimeout message with a record
@@ -345,8 +346,12 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 			return err
 		}
 
-	case continueTrial:
-		if err := t.continueTrial(ctx); err != nil {
+	case sendNextWorkload:
+		if msg.runID != t.runID {
+			ctx.Log().Warnf("ignoring sendNextWorkload with stale runID %d", msg.runID)
+			return nil
+		}
+		if err := t.sendNextWorkload(ctx); err != nil {
 			return err
 		}
 
@@ -564,13 +569,13 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 	// If we completed a searcher operation, synchronize with the searcher to allow it to relay any
 	// new operations to the trial. Otherwise just continue the trial immediately.
 	if completedSearcherOp {
-		ctx.Tell(ctx.Self().Parent(), continueTrial{trialID: t.id})
+		ctx.Tell(ctx.Self().Parent(), sendNextWorkload{trialID: t.id, runID: t.runID})
 		return nil
 	}
-	return t.continueTrial(ctx)
+	return t.sendNextWorkload(ctx)
 }
 
-func (t *trial) continueTrial(ctx *actor.Context) error {
+func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 	terminateNow := false
 	var w searcher.Workload
 	var err error

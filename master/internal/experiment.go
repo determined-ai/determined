@@ -306,7 +306,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case trialExitedEarly:
 		ops, err := e.searcher.TrialExitedEarly(msg.trialID)
 		e.processOperations(ctx, ops, err)
-	case continueTrial:
+	case sendNextWorkload:
 		requestID, ok := e.searcher.RequestID(msg.trialID)
 		if !ok {
 			return fmt.Errorf("requested continuation of non-existent trial %d", msg.trialID)
