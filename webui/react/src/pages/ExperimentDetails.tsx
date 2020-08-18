@@ -1,7 +1,7 @@
 import { Button, Col, Row, Space, Table, Tooltip } from 'antd';
 import { ColumnType } from 'antd/lib/table';
 import yaml from 'js-yaml';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -13,9 +13,7 @@ import Message from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
-import {
-  defaultRowClassName, durationRenderer, relativeTimeRenderer, stateRenderer,
-} from 'components/Table';
+import { defaultRowClassName, findColumnByTitle } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
@@ -26,12 +24,12 @@ import { getExperimentDetails, isNotFound } from 'services/api';
 import { ExperimentDetailsParams } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
 import { clone } from 'utils/data';
-import { alphanumericSorter, numericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
+import { numericSorter } from 'utils/data';
 import { humanReadableFloat } from 'utils/string';
-import { getDuration } from 'utils/time';
 import { upgradeConfig } from 'utils/types';
 
 import css from './ExperimentDetails.module.scss';
+import { columns as defaultColumns } from './ExperimentDetails.table';
 
 interface Params {
   experimentId: string;
@@ -46,7 +44,51 @@ const ExperimentDetailsComp: React.FC = () => {
     useRestApi<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
   const experiment = experimentResponse.data;
   const experimentConfig = experiment?.config;
-  const validationKey = experiment?.config.searcher.metric;
+
+  const columns = useMemo(() => {
+    const newColumns: ColumnType<TrialItem>[] = [ ...defaultColumns ];
+    const { metric: validationKey, smallerIsBetter } = experimentConfig?.searcher || {};
+    const bestValidationIndex = findColumnByTitle<TrialItem>(newColumns, 'best validation');
+    const latestValidationIndex = findColumnByTitle<TrialItem>(newColumns, 'latest validation');
+    const checkpointIndex = findColumnByTitle<TrialItem>(newColumns, 'checkpoint');
+
+    const latestValidationRenderer = (_: string, record: TrialItem): React.ReactNode => {
+      return record.latestValidationMetrics && validationKey &&
+        humanReadableFloat(record.latestValidationMetrics.validationMetrics[validationKey]);
+    };
+
+    const latestValidationSorter = (a: TrialItem, b: TrialItem): number => {
+      if (!validationKey) return 0;
+      const aMetric = a.latestValidationMetrics?.validationMetrics[validationKey];
+      const bMetric = b.latestValidationMetrics?.validationMetrics[validationKey];
+      return numericSorter(aMetric, bMetric);
+    };
+
+    const checkpointRenderer = (_: string, record: TrialItem): React.ReactNode => {
+      if (!record.bestAvailableCheckpoint) return;
+      const checkpoint: CheckpointDetail = {
+        ...record.bestAvailableCheckpoint,
+        batch: record.totalBatchesProcessed,
+        experimentId: id,
+        trialId: record.id,
+      };
+      return (
+        <Tooltip title="View Checkpoint">
+          <Button
+            aria-label="View Checkpoint"
+            icon={<Icon name="checkpoint" />}
+            onClick={e => handleCheckpointShow(e, checkpoint)} />
+        </Tooltip>
+      );
+    };
+
+    newColumns[bestValidationIndex].defaultSortOrder = smallerIsBetter ? 'ascend' : 'descend';
+    newColumns[latestValidationIndex].render = latestValidationRenderer;
+    newColumns[latestValidationIndex].sorter = latestValidationSorter;
+    newColumns[checkpointIndex].render = checkpointRenderer;
+
+    return newColumns;
+  }, [ experimentConfig, id ]);
 
   const pollExperimentDetails = useCallback(() => {
     triggerExperimentRequest({ id });
@@ -116,84 +158,6 @@ const ExperimentDetailsComp: React.FC = () => {
     setShowCheckpoint(true);
   };
   const handleCheckpointDismiss = () => setShowCheckpoint(false);
-
-  const columns: ColumnType<TrialItem>[] = [
-    {
-      dataIndex: 'id',
-      sorter: (a: TrialItem, b: TrialItem): number => alphanumericSorter(a.id, b.id),
-      title: 'ID',
-    },
-    {
-      render: stateRenderer,
-      sorter: (a: TrialItem, b: TrialItem): number => runStateSorter(a.state, b.state),
-      title: 'State',
-    },
-    {
-      dataIndex: 'totalBatchesProcessed',
-      sorter: (a: TrialItem, b: TrialItem): number => {
-        return numericSorter(a.totalBatchesProcessed, b.totalBatchesProcessed);
-      },
-      title: 'Batches',
-    },
-    {
-      defaultSortOrder: experiment.config.searcher.smallerIsBetter ? 'ascend' : 'descend',
-      render: (_: string, record: TrialItem): React.ReactNode => {
-        return record.bestValidationMetric ? humanReadableFloat(record.bestValidationMetric) : '-';
-      },
-      sorter: (a: TrialItem, b: TrialItem): number => {
-        return numericSorter(a.bestValidationMetric, b.bestValidationMetric);
-      },
-      title: 'Best Validation Metric',
-    },
-    {
-      render: (_: string, record: TrialItem): React.ReactNode => {
-        return record.latestValidationMetrics && validationKey ?
-          humanReadableFloat(record.latestValidationMetrics.validationMetrics[validationKey]) :
-          '-';
-      },
-      sorter: (a: TrialItem, b: TrialItem): number => {
-        if (!validationKey) return 0;
-        const aMetric = a.latestValidationMetrics?.validationMetrics[validationKey];
-        const bMetric = b.latestValidationMetrics?.validationMetrics[validationKey];
-        return numericSorter(aMetric, bMetric);
-      },
-      title: 'Latest Validation Metric',
-    },
-    {
-      render: (_: string, record: TrialItem): React.ReactNode => {
-        return relativeTimeRenderer(new Date(record.startTime));
-      },
-      sorter: (a: TrialItem, b: TrialItem): number => {
-        return stringTimeSorter(a.startTime, b.startTime);
-      },
-      title: 'Start Time',
-    },
-    {
-      render: (_: string, record: TrialItem): React.ReactNode => durationRenderer(record),
-      sorter: (a: TrialItem, b: TrialItem): number => getDuration(a) - getDuration(b),
-      title: 'Duration',
-    },
-    {
-      render: (_: string, record: TrialItem): React.ReactNode => {
-        if (record.bestAvailableCheckpoint) {
-          const checkpoint: CheckpointDetail = {
-            ...record.bestAvailableCheckpoint,
-            batch: record.totalBatchesProcessed,
-            experimentId: id,
-            trialId: record.id,
-          };
-          return <Tooltip title="View Checkpoint">
-            <Button
-              aria-label="View Checkpoint"
-              icon={<Icon name="checkpoint" />}
-              onClick={e => handleCheckpointShow(e, checkpoint)} />
-          </Tooltip>;
-        }
-        return '-';
-      },
-      title: 'Checkpoint',
-    },
-  ];
 
   return (
     <Page

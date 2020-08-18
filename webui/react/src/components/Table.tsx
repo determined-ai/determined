@@ -1,4 +1,5 @@
 import { Tooltip } from 'antd';
+import { ColumnType } from 'antd/es/table';
 import React from 'react';
 import TimeAgo from 'timeago-react';
 
@@ -126,4 +127,14 @@ export const isAlternativeAction = (event: React.MouseEvent): boolean => {
  */
 export const defaultRowClassName = (clickable = true): string=> {
   return clickable ? 'clickable' : '';
+};
+
+/*
+ * Utility for find a column by title.
+ */
+export const findColumnByTitle: <T>(c: ColumnType<T>[], s: string) => number = (
+  columns,
+  search,
+) => {
+  return columns.findIndex(column => new RegExp(search, 'i').test(column.title as string));
 };
