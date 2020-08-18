@@ -189,12 +189,14 @@ class PyTorchTrialContext(det.TrialContext):
         The LR scheduler must use an optimizer wrapped by :meth:`wrap_optimizer`.  If ``apex.amp``
         is in use, the optimizer must also have been configured with :meth:`configure_apex_amp`.
         """
+        opt = getattr(lr_scheduler, "optimizer", None)
+        if opt is not None:
+            check.is_in(
+                opt,
+                self.optimizers,
+                "Must use an optimizer that is returned by wrap_optimizer()",
 
-        check.is_in(
-            lr_scheduler.optimizer,  # type: ignore
-            self.optimizers,
-            "Must use an optimizer that is returned by wrap_optimizer()",
-        )
+            )
         wrapped = pytorch.LRScheduler(lr_scheduler, step_mode)
         self.lr_schedulers.append(wrapped)
 
