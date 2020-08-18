@@ -1,7 +1,6 @@
 import { Button, List, Modal } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
 import InfoBox from 'components/InfoBox';
 import Section from 'components/Section';

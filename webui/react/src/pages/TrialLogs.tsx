@@ -6,7 +6,6 @@ import { throttle } from 'throttle-debounce';
 
 import LogViewer, { LogViewerHandles, TAIL_SIZE } from 'components/LogViewer';
 import Message from 'components/Message';
-import Page from 'components/Page';
 import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';

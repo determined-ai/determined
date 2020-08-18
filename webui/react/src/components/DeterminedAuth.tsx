@@ -11,7 +11,6 @@ import { Credentials } from 'types';
 import { Storage } from 'utils/storage';
 
 import css from './DeterminedAuth.module.scss';
-import Spinner from './Spinner';
 
 interface FromValues {
   password?: string;
