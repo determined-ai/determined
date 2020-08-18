@@ -8,17 +8,21 @@ import (
 	"net/url"
 	"sort"
 	"strings"
+	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/scheduler"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -33,6 +37,7 @@ const (
 	tensorboardEntrypointFile = "/run/determined/workdir/tensorboard-entrypoint.sh"
 	tensorboardResourcesSlots = 0
 	tensorboardServiceAddress = "/proxy/%s/"
+	tickInterval              = 5 * time.Second
 )
 
 type tensorboardRequest struct {
@@ -52,10 +57,16 @@ type tensorboardManager struct {
 
 	defaultAgentUserGroup model.AgentUserGroup
 	clusterID             string
+	timeout               time.Duration
+	proxyRef              *actor.Ref
 }
+
+type tensorboardTick struct{}
 
 func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
+	case actor.PreStart:
+		actors.NotifyAfter(ctx, tickInterval, tensorboardTick{})
 	case *apiv1.GetTensorboardsRequest:
 		resp := &apiv1.GetTensorboardsResponse{}
 		for _, tensorboard := range ctx.AskAll(&tensorboardv1.Tensorboard{}, ctx.Children()...).GetAll() {
@@ -65,7 +76,28 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 
 	case echo.Context:
 		t.handleAPIRequest(ctx, msg)
+	case tensorboardTick:
+		services := ctx.Ask(t.proxyRef, proxy.GetSummary{}).Get().(map[string]proxy.Service)
+		for _, boardRef := range ctx.Children() {
+			boardSummary := ctx.Ask(boardRef, getSummary{}).Get().(summary)
+			if boardSummary.State != container.Running.String() {
+				continue
+			}
+
+			service, ok := services[string(boardSummary.ID)]
+			if !ok {
+				continue
+			}
+
+			if time.Now().After(service.LastRequested.Add(t.timeout)) {
+				ctx.Log().Infof("Killing %s due to inactivity", boardSummary.Config.Description)
+				ctx.Ask(boardRef, &apiv1.KillTensorboardRequest{})
+			}
+		}
+
+		actors.NotifyAfter(ctx, tickInterval, tensorboardTick{})
 	}
+
 	return nil
 }
 

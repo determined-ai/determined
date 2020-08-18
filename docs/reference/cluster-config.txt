@@ -233,6 +233,9 @@ The master supports the following configuration settings:
 - ``root``: Specifies the root directory of the state files. Defaults to
   ``/usr/share/determined/master``.
 
+- ``tensorboard_timeout``: Specifies the duration in seconds a TensorBoard
+  instance can be idle before it is automatically killed.
+
 - ``provisioner``: Specifies the configuration of dynamic agents.
 
   - ``master_url``: The full URL of the master. A valid URL is in the
