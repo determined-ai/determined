@@ -92,7 +92,7 @@ const AppView: React.FC = () => {
   }, [ info ]);
 
   useEffect(() => {
-    setUI({ opaque: true, type: UI.ActionType.ShowSpinner });
+    setUI({ type: UI.ActionType.ShowSpinner });
   }, [ setUI ]);
 
   return (

@@ -7,7 +7,6 @@ enum ActionType {
 }
 
 type State = {
-  opaqueSpinner: boolean;
   showChrome: boolean;
   showSpinner: boolean;
 }
@@ -15,10 +14,9 @@ type State = {
 type Action =
   | { type: ActionType.HideChrome }
   | { type: ActionType.HideSpinner }
-  | { type: ActionType.ShowSpinner; opaque?: boolean }
+  | { type: ActionType.ShowSpinner }
 
 const defaultState = {
-  opaqueSpinner: false,
   showChrome: true,
   showSpinner: false,
 };
@@ -29,14 +27,10 @@ const reducer = (state: State, action: Action): State => {
       return { ...state, showChrome: false };
     case ActionType.HideSpinner:
       if (!state.showSpinner) return state;
-      return { ...state, opaqueSpinner: state.opaqueSpinner, showSpinner: false };
+      return { ...state, showSpinner: false };
     case ActionType.ShowSpinner:
       if (state.showSpinner) return state;
-      return {
-        ...state,
-        opaqueSpinner: action.opaque != null ? action.opaque : state.opaqueSpinner,
-        showSpinner: true,
-      };
+      return { ...state, showSpinner: true };
     default:
       return state;
   }
