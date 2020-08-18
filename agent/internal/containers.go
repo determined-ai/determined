@@ -47,6 +47,11 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 		}
 		c.docker = d
 
+		masterScheme := insecureScheme
+		if c.Options.Security.TLS.Enabled {
+			masterScheme = secureScheme
+		}
+
 		masterHost := c.Options.ContainerMasterHost
 		if masterHost == "" {
 			masterHost = c.Options.MasterHost
@@ -60,7 +65,7 @@ func (c *containerManager) Receive(ctx *actor.Context) error {
 		c.GlobalEnvVars = []string{
 			fmt.Sprintf("DET_CLUSTER_ID=%s", c.MasterInfo.ClusterID),
 			fmt.Sprintf("DET_MASTER_ID=%s", c.MasterInfo.MasterID),
-			fmt.Sprintf("DET_MASTER=%s:%d", masterHost, masterPort),
+			fmt.Sprintf("DET_MASTER=%s://%s:%d", masterScheme, masterHost, masterPort),
 			fmt.Sprintf("DET_MASTER_HOST=%s", masterHost),
 			fmt.Sprintf("DET_MASTER_ADDR=%s", masterHost),
 			fmt.Sprintf("DET_MASTER_PORT=%d", masterPort),
