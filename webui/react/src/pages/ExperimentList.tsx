@@ -287,13 +287,12 @@ const ExperimentList: React.FC = () => {
           </div>
         </div>
         <TableBatch message="Apply batch operations to multiple experiments." show={showBatch}>
-          <Button
-            type="primary"
-            onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
-              Open TensorBoard
+          <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
+            View in TensorBoard
           </Button>
           <Button
             disabled={!hasActivatable}
+            type="primary"
             onClick={(): void => handleConfirmation(Action.Activate)}>Activate</Button>
           <Button
             disabled={!hasPausable}
