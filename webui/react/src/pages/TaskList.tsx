@@ -164,7 +164,7 @@ const TaskList: React.FC = () => {
             {toggleLabel}
           </button>}
         </div>
-      ) : '-';
+      ) : null;
     };
 
     const newColumns = [ ...defaultColumns ];

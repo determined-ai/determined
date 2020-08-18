@@ -27,7 +27,7 @@ export const columns: ColumnType<TrialItem>[] = [
   },
   {
     render: (_: string, record: TrialItem): ReactNode => {
-      return record.bestValidationMetric ? humanReadableFloat(record.bestValidationMetric) : '-';
+      return record.bestValidationMetric ? humanReadableFloat(record.bestValidationMetric) : null;
     },
     sorter: (a: TrialItem, b: TrialItem): number => {
       return numericSorter(a.bestValidationMetric, b.bestValidationMetric);

@@ -100,7 +100,7 @@ export const expermentDurationRenderer: ExperimentRenderer = (_, record) => {
 export const experimentProgressRenderer: ExperimentRenderer = (_, record) => {
   return record.progress ? <ProgressBar
     percent={record.progress * 100}
-    state={record.state} /> : '-';
+    state={record.state} /> : null;
 };
 
 export const experimentArchivedRenderer: ExperimentRenderer = (_, record) => {
