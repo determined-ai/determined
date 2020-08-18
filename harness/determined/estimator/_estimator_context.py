@@ -35,6 +35,7 @@ class EstimatorContext:
 
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         self.hvd_config = hvd_config
+        # TODO (DET-3798): Remove once customers are migrated.
         self.input_from_dataflow = env.experiment_config.input_from_dataflow()
 
         self.experimental = EstimatorExperimentalContext(env=env, hvd_config=hvd_config)
@@ -73,7 +74,7 @@ class EstimatorContext:
         logging.debug("Initialized optimizer for distributed and optimized parallel training.")
         return optimizer
 
-    def wrap_dataset(self, dataset: Any) -> Any:
+    def wrap_dataset(self, dataset: Any, shard_dataset: bool = True) -> Any:
         """
         This should be used to wrap ``tf.data.Dataset`` objects immediately after
         they have been created. Users should use the output of this wrapper as the
@@ -82,12 +83,24 @@ class EstimatorContext:
         independently. E.g., If users instantiate their training dataset within
         ``build_train_spec()``, they should call ``dataset = wrap_dataset(dataset)``
         prior to passing it into ``tf.estimator.TrainSpec``.
+
+        Args:
+            dataset: tf.data.Dataset
+            shard_dataset:
+                When performing multi-slot (distributed) training, this
+                controls whether the dataset is sharded so that each training process
+                (one per slot) sees unique data. If set to False, users must manually
+                configure each process to use unique data.
+
         """
         hvd.require_horovod_type("tensorflow", "EstimatorContext.wrap_dataset was called.")
 
         self.dataset_initialized = True
-        if not self.hvd_config.use or self.input_from_dataflow:
+        if not self.hvd_config.use or self.input_from_dataflow or not shard_dataset:
+            if self.hvd_config and not shard_dataset:
+                logging.info("Dataset sharding skipped.")
             return dataset
+
         dataset = dataset.shard(hvd.size(), hvd.rank())
         logging.debug(f"Sharded dataset to index {hvd.rank()} of {hvd.size()}.")
         return dataset
