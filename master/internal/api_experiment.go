@@ -303,6 +303,31 @@ func (a *apiServer) UnarchiveExperiment(
 	}
 }
 
+func (a *apiServer) SetExperimentLabels(
+	ctx context.Context, req *apiv1.SetExperimentLabelsRequest,
+) (*apiv1.SetExperimentLabelsResponse, error) {
+	id := int(req.Id)
+
+	dbExp, err := a.m.db.ExperimentByID(id)
+	if err != nil {
+		return nil, errors.Wrapf(err, "loading experiment %v", id)
+	}
+
+	labelsMap := make(map[string]bool)
+	for _, label := range req.Labels {
+		labelsMap[label] = true
+	}
+	dbExp.Config.Labels = labelsMap
+	err = a.m.db.SaveExperimentConfig(dbExp)
+	switch err {
+	case nil:
+		return &apiv1.SetExperimentLabelsResponse{}, nil
+	default:
+		return nil, errors.Wrapf(err, "failed to save experiment %d config",
+			req.Id)
+	}
+}
+
 func (a *apiServer) GetExperimentCheckpoints(
 	ctx context.Context, req *apiv1.GetExperimentCheckpointsRequest,
 ) (*apiv1.GetExperimentCheckpointsResponse, error) {
