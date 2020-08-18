@@ -1,0 +1,5 @@
+:orphan:
+
+**Improvements**
+
+- Remind users to remove ``sys.exit()`` if ``SystemExit`` exception is caught.

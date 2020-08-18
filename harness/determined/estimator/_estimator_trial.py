@@ -318,7 +318,6 @@ class DeterminedControlHook(tf.estimator.SessionRunHook):  # type: ignore
                 raise det.errors.WorkerFinishedGracefully("Exiting normally.")
             else:
                 raise AssertionError(f"Unknown wkld kind {wkld.kind}.")
-                exit(1)
 
 
 class EstimatorTrialController(det.LoopTrialController):

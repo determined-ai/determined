@@ -1,9 +1,9 @@
 import csv
 import logging
 import subprocess
-import sys
 from typing import List, NamedTuple, Optional, Tuple
 
+import determined as det
 from determined_common import check
 
 gpu_fields = [
@@ -70,7 +70,7 @@ def get_gpu_uuids_and_validate(use_gpu: bool, slot_ids: Optional[List[str]] = No
         # no GPUs are available, this indicates a misconfiguration.
         _, gpu_uuids = get_gpu_ids_and_uuids()
         if not gpu_uuids:
-            sys.exit("Failed to find GPUs for GPU-only trial")
+            raise det.errors.InternalException("Failed to find GPUs for GPU-only trial")
 
         if slot_ids is not None:
             check.equal_lengths(slot_ids, gpu_uuids, "Mismatched slot_ids and container_gpus.")

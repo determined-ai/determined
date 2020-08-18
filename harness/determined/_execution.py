@@ -16,6 +16,18 @@ def _get_gpus() -> Tuple[bool, List[str], List[int]]:
     return use_gpu, gpu_uuids, gpu_ids
 
 
+@contextlib.contextmanager
+def _catch_sys_exit() -> Any:
+    try:
+        yield
+    except SystemExit as e:
+        raise det.errors.InvalidExperimentException(
+            "Caught a SystemExit exception. "
+            "This might be raised by directly calling or using a library calling sys.exit(). "
+            "Please remove any calls to sys.exit() from your model code."
+        ) from e
+
+
 def _make_local_execution_exp_config(input_config: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     """
     Create a local experiment configuration based on an input configuration and
@@ -101,6 +113,7 @@ def _local_execution_manager(context_dir: pathlib.Path) -> Iterator:
     It does the following things:
     1. Set the current working directory to be the context directory.
     2. Add the current working directory to importing paths.
+    3. Catch SystemExit.
     """
     current_directory = os.getcwd()
     current_path = sys.path[0]
@@ -114,7 +127,8 @@ def _local_execution_manager(context_dir: pathlib.Path) -> Iterator:
         # the current directory first.
         # Reference: https://docs.python.org/3/library/sys.html#sys.path
         sys.path[0] = ""
-        yield
+        with det._catch_sys_exit():
+            yield
     finally:
         os.chdir(current_directory)
         sys.path[0] = current_path

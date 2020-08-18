@@ -136,14 +136,15 @@ def build_and_run_training_pipeline(env: det.EnvContext) -> None:
                 if env.experiment_config.debug_enabled():
                     faulthandler.dump_traceback_later(30, repeat=True)
 
-                controller = load.prepare_controller(
-                    env,
-                    iter(workload_mgr),
-                    load_path,
-                    socket_mgr.get_rendezvous_info(),
-                    hvd_config,
-                )
-                controller.run()
+                with det._catch_sys_exit():
+                    controller = load.prepare_controller(
+                        env,
+                        iter(workload_mgr),
+                        load_path,
+                        socket_mgr.get_rendezvous_info(),
+                        hvd_config,
+                    )
+                    controller.run()
 
 
 def main() -> None:
