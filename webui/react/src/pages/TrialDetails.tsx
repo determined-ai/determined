@@ -15,7 +15,7 @@ import MetricSelectFilter from 'components/MetricSelectFilter';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner from 'components/Spinner';
-import { defaultRowClassName } from 'components/Table';
+import { defaultRowClassName, findColumnByTitle } from 'components/Table';
 import Toggle from 'components/Toggle';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
@@ -84,46 +84,50 @@ const TrialDetailsComp: React.FC = () => {
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
-  const [ trial, triggerTrialRequest ] =
+  const [ trialResponse, triggerTrialRequest ] =
     useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
 
-  const experimentId = trial.data?.experimentId;
-  const hparams = trial.data?.hparams;
+  const trial = trialResponse.data;
+  const experimentId = trial?.experimentId;
+  const hparams = trial?.hparams;
 
-  const metricNames = useMemo(() => extractMetricNames(trial.data?.steps), [ trial.data?.steps ]);
+  const metricNames = useMemo(() => extractMetricNames(trial?.steps), [ trial?.steps ]);
 
-  const upgradedConfig = useMemo(
-    () => {
-      if (!experiment?.configRaw) return;
-      const configClone = clone(experiment.configRaw);
-      upgradeConfig(configClone);
-      return configClone;
-    },
-    [ experiment?.configRaw ],
-  );
+  const upgradedConfig = useMemo(() => {
+    if (!experiment?.configRaw) return;
+    const configClone = clone(experiment.configRaw);
+    upgradeConfig(configClone);
+    return configClone;
+  }, [ experiment?.configRaw ]);
 
   const trialLength = useMemo(() => {
     return getTrialLength(upgradedConfig);
   }, [ upgradedConfig ]);
 
   const columns = useMemo(() => {
+    const newColumns: ColumnType<Step>[] = [ ...defaultColumns ];
+    const searcher = experiment?.config.searcher;
+
     const checkpointRenderer = (_: string, record: Step) => {
       if (record.checkpoint) {
         const checkpoint: CheckpointDetail = {
           ...record.checkpoint,
           batch: record.numBatches + record.priorBatchesProcessed,
-          experimentId: trial.data?.experimentId,
+          experimentId: trial?.experimentId,
           trialId: record.id,
         };
-        return <Tooltip title="View Checkpoint">
-          <Button
-            aria-label="View Checkpoint"
-            icon={<Icon name="checkpoint" />}
-            onClick={e => handleCheckpointShow(e, checkpoint)} />
-        </Tooltip>;
+        return (
+          <Tooltip title="View Checkpoint">
+            <Button
+              aria-label="View Checkpoint"
+              icon={<Icon name="checkpoint" />}
+              onClick={e => handleCheckpointShow(e, checkpoint)} />
+          </Tooltip>
+        );
       }
       return null;
     };
+
     const metricRenderer = (metricName: MetricName) => (_: string, record: Step) => {
       const value = extractMetricValue(record, metricName);
       return value ? <Tooltip title={value}>
@@ -131,11 +135,8 @@ const TrialDetailsComp: React.FC = () => {
       </Tooltip> : undefined;
     };
 
-    const newColumns: ColumnType<Step>[] = [ ...defaultColumns ];
-    const searcher = experiment?.config.searcher;
-
     metrics.forEach(metricName => {
-      const stateIndex = newColumns.findIndex(column => /state/i.test(column.title as string));
+      const stateIndex = findColumnByTitle<Step>(newColumns, 'state');
       newColumns.splice(stateIndex, 0, {
         defaultSortOrder: searcher && searcher.metric === metricName.name ?
           (searcher.smallerIsBetter ? 'ascend' : 'descend') : undefined,
@@ -151,20 +152,16 @@ const TrialDetailsComp: React.FC = () => {
       });
     });
 
-    newColumns.push({
-      fixed: 'right',
-      render: checkpointRenderer,
-      title: 'Checkpoint',
-      width: 100,
-    });
+    const checkpointIndex = findColumnByTitle(newColumns, 'checkpoint');
+    newColumns[checkpointIndex].render = checkpointRenderer;
 
     return newColumns;
-  }, [ experiment?.config.searcher, metrics, trial.data?.experimentId ]);
+  }, [ experiment?.config.searcher, metrics, trial?.experimentId ]);
 
   const steps = useMemo(() => {
-    const data = trial.data?.steps || [];
+    const data = trial?.steps || [];
     return showHasCheckpoint ? data.filter(step => !!step.checkpoint) : data;
-  }, [ showHasCheckpoint, trial.data?.steps ]);
+  }, [ showHasCheckpoint, trial?.steps ]);
 
   const pollTrialDetails = useCallback(
     () => triggerTrialRequest({ id: trialId }),
@@ -327,8 +324,8 @@ If the problem persists please contact support.',
     );
   }
 
-  if (trial.error !== undefined) {
-    const message = isNotFound(trial.error) ? `Trial ${trialId} not found.`
+  if (trialResponse.error !== undefined) {
+    const message = isNotFound(trialResponse.error) ? `Trial ${trialId} not found.`
       : `Failed to fetch trial ${trialId}.`;
     return (
       <Page id="page-error-message">
@@ -337,7 +334,7 @@ If the problem persists please contact support.',
     );
   }
 
-  if (!trial.data || !experiment || !upgradedConfig) {
+  if (!trial || !experiment || !upgradedConfig) {
     return <Spinner fillContainer />;
   }
 
@@ -366,20 +363,20 @@ If the problem persists please contact support.',
         },
         { breadcrumbName: `Trial ${trialId}`, path: `/det/trials/${trialId}` },
       ]}
-      options={<TrialActions trial={trial.data}
+      options={<TrialActions trial={trial}
         onClick={handleActionClick}
         onSettled={pollTrialDetails} />}
       showDivider
-      subTitle={<Badge state={trial.data?.state} type={BadgeType.State} />}
+      subTitle={<Badge state={trial?.state} type={BadgeType.State} />}
       title={`Trial ${trialId}`}>
       <Row className={css.topRow} gutter={[ 16, 16 ]}>
         <Col lg={10} span={24} xl={8} xxl={6}>
-          <TrialInfoBox experiment={experiment} trial={trial.data} />
+          <TrialInfoBox experiment={experiment} trial={trial} />
         </Col>
         <Col lg={14} span={24} xl={16} xxl={18}>
           <TrialChart
             metricNames={metricNames}
-            steps={trial.data?.steps}
+            steps={trial?.steps}
             validationMetric={experiment.config?.searcher.metric} />
         </Col>
         <Col span={24}>
@@ -387,7 +384,7 @@ If the problem persists please contact support.',
             <Table
               columns={columns}
               dataSource={steps}
-              loading={!trial.hasLoaded}
+              loading={!trialResponse.hasLoaded}
               pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
               rowClassName={defaultRowClassName(false)}
               rowKey="id"

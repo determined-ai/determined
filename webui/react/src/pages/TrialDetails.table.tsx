@@ -34,4 +34,9 @@ export const columns: ColumnType<Step>[] = [
     title: 'State',
     width: 120,
   },
+  {
+    fixed: 'right',
+    title: 'Checkpoint',
+    width: 100,
+  },
 ];
