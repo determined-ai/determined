@@ -67,6 +67,10 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &msg}})
 	case sproto.StartTaskOnAgent:
 		start := ws.WriteMessage{Message: aproto.AgentMessage{StartContainer: &msg.StartContainer}}
+		ctx.Log().Infof("starting container id: %s slots: %d task handler: %s",
+			msg.StartContainer.Container.ID, len(msg.StartContainer.Container.Devices),
+			msg.Task.Address())
+
 		ctx.Ask(a.socket, start)
 		ctx.Tell(a.slots, msg.StartContainer)
 		a.containers[msg.Container.ID] = msg.Task
@@ -94,6 +98,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 
 		return errors.Wrapf(msg.Error, "child failed: %s", msg.Child.Address())
 	case actor.PostStop:
+		ctx.Log().Infof("agent disconnected")
 		for cid := range a.containers {
 			stopped := aproto.ContainerError(
 				aproto.AgentFailed, errors.New("agent failed while container was running"))
@@ -125,6 +130,8 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 	switch {
 	case msg.AgentStarted != nil:
 		telemetry.ReportAgentConnected(ctx.Self().System(), a.uuid, msg.AgentStarted.Devices)
+		ctx.Log().Infof("agent connected ip: %v slots: %d",
+			a.address, len(msg.AgentStarted.Devices))
 
 		ctx.Tell(a.cluster, sproto.AddAgent{Agent: ctx.Self(), Label: msg.AgentStarted.Label})
 		ctx.Tell(a.slots, *msg.AgentStarted)
@@ -170,6 +177,7 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 			ContainerStarted: sc.ContainerStarted,
 		})
 	case container.Terminated:
+		ctx.Log().Infof("stopped container id: %s", sc.Container.ID)
 		delete(a.containers, sc.Container.ID)
 
 		ctx.Tell(a.cluster, sproto.TaskTerminatedOnAgent{
