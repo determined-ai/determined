@@ -192,10 +192,7 @@ class PyTorchTrialContext(det.TrialContext):
         opt = getattr(lr_scheduler, "optimizer", None)
         if opt is not None:
             check.is_in(
-                opt,
-                self.optimizers,
-                "Must use an optimizer that is returned by wrap_optimizer()",
-
+                opt, self.optimizers, "Must use an optimizer that is returned by wrap_optimizer()",
             )
         wrapped = pytorch.LRScheduler(lr_scheduler, step_mode)
         self.lr_schedulers.append(wrapped)

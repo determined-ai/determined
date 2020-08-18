@@ -176,8 +176,8 @@ class PyTorchTrialController(det.LoopTrialController):
                     check.is_in(
                         opt,
                         self.context.optimizers,
-                        "Must use a wrapped optimizer that is passed in by the optimizer argument of "
-                        "create_lr_scheduler",
+                        "Must use a wrapped optimizer that is passed in by the optimizer "
+                        "argument of create_lr_scheduler",
                     )
                 self.context.lr_schedulers.append(lr_scheduler)
 
