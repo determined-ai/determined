@@ -3,7 +3,6 @@ import { Button, Input, Modal, Table } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
-import { makeClickHandler } from 'components/Link';
 import Page from 'components/Page';
 import { Indicator } from 'components/Spinner';
 import { defaultRowClassName, isAlternativeAction } from 'components/Table';
@@ -22,7 +21,7 @@ import {
 import { EmptyParams } from 'services/types';
 import { ALL_VALUE, Command, CommandTask, CommandType, TaskFilters } from 'types';
 import { getPath, numericSorter } from 'utils/data';
-import { openBlank } from 'utils/routes';
+import { handlePath, openBlank } from 'utils/routes';
 import { canBeOpened, filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
 
@@ -155,7 +154,7 @@ const TaskList: React.FC = () => {
             const display = index < MAX_SOURCES || isExpanded ? 'inline' : 'none';
             const handleClick = (event: React.MouseEvent) => {
               event.stopPropagation();
-              makeClickHandler(`${info.path}/${id}`)(event);
+              handlePath(event, { path: `${info.path}/${id}` });
             };
             return <a key={id} style={{ display }} onClick={handleClick}>{id}</a>;
           })}

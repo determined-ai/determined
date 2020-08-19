@@ -118,7 +118,7 @@ const ExperimentDetailsComp: React.FC = () => {
   }, [ setForkModalVisible ]);
 
   const handleTableRow = useCallback((record: TrialItem) => ({
-    onClick: makeClickHandler(record.url as string),
+    onClick: (event: React.MouseEvent) => handlePath(event, { path: record.url }),
   }), []);
 
   const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
@@ -144,15 +144,6 @@ const ExperimentDetailsComp: React.FC = () => {
     }
   }, [ setFreshForkConfig ]);
 
-  const showForkModal = useCallback((): void => {
-    setForkModalVisible(true);
-  }, [ setForkModalVisible ]);
-
-  const handleTableRow = useCallback((record: TrialItem) => ({
-    onClick: (event: React.MouseEvent) => handlePath(event, { path: record.url }),
-  }), []);
-
-  const message = '';
   if (isNaN(id)) return <Message title={`Invalid Experiment ID ${experimentId}`} />;
   if (experimentResponse.error) {
     const message = isNotFound(experimentResponse.error) ?
