@@ -26,7 +26,7 @@ class GCSTensorboardManager(base.TensorboardManager):
     @util.preserve_random_state
     def sync(self) -> None:
         for path in self.to_sync():
-            blob_name = str(self.sync_path.joinpath(path.name))
+            blob_name = str(self.sync_path.joinpath(path.relative_to(self.base_path)))
             blob = self.bucket.blob(blob_name)
             logging.debug(f"Uploading to GCS: {blob_name}")
 
