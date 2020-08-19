@@ -9,8 +9,7 @@ hyperparameters:
   dropout1: 0.25
   dropout2: 0.5
 resources:
-  # Use 16 GPUs to train the model.
-  slots_per_trial: 16
+  slots_per_trial: 8
 records_per_epoch: 50000
 searcher:
   name: single

@@ -168,7 +168,7 @@ class TFKerasContext:
         This should be used to wrap ``tf.data.Dataset`` objects immediately after
         they have been created. Users should use the output of this wrapper as the
         new instance of their dataset. If users create multiple datasets (e.g.,
-        one for training and one for testing), users should wrap each dataset
+        one for training and one for validation), users should wrap each dataset
         independently.
 
         Args:
@@ -206,7 +206,6 @@ class TFKerasTrialContext(det.TrialContext, TFKerasContext):
 
         Args:
             model: tf.keras.Model
-
         """
         return self._wrap_model_with_train_fn(model, None)
 

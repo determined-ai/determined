@@ -589,22 +589,25 @@ class TFKerasTrialController(det.LoopTrialController):
 
 class TFKerasTrial(det.Trial):
     """
-    ``tf.keras`` trials are created by subclassing this abstract class.
+    To implement a new ``tf.keras`` trial, subclass this class and
+    implement the abstract methods described below (:meth:`build_model`,
+    :meth:`build_training_data_loader`, and :meth:`build_validation_data_loader`).
+    In most cases you should provide a custom :meth:`__init__` method as well.
 
-    Users must define all the abstract methods to create the deep
-    learning model associated with a specific trial, and to subsequently
-    train and evaluate it.
+    By default, experiments use TensorFlow 1.x. To configure your trial to use
+    TensorFlow 2.x, specify a TensorFlow 2.x image in the
+    :ref:`environment.image <exp-environment-image>` field of the experiment
+    configuration (e.g.,
+    ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.5.0``).
 
-    By default, experiments run with TensorFlow 1.x. To configure your trial to
-    use TensorFlow 2.x, set a TF 2.x image in the experiment configuration
-    (e.g. ``determinedai/environments:cuda-10.1-pytorch-1.4-tf-2.2-gpu-0.5.0``).
+    Trials default to using eager execution with TensorFlow 2.x but not with
+    TensorFlow 1.x. To override the default behavior, call the appropriate
+    function in your ``__init__`` method. For example, if you want to disable
+    eager execution while using TensorFlow 2.x, call
+    ``tf.compat.v1.disable_eager_execution`` at the top of your ``__init__`` method.
 
-    By default, trials using TF 2.x use eager execution and trials using TF
-    1.x do not. If you want to override the default, you must call the
-    appropriate function in the ``__init__``. For example, if you want to
-    disable eager execution while running a TF 2.x trial, call
-    ``tf.compat.v1.disable_eager_execution`` at the top of your
-    ``__init__`` function.
+    For more information on writing ``tf.keras`` trial classes, refer to the
+    :ref:`tutorial <tf-mnist-tutorial>`.
     """
 
     trial_controller_class = TFKerasTrialController
@@ -624,13 +627,19 @@ class TFKerasTrial(det.Trial):
     @abstractmethod
     def build_model(self) -> tf.keras.models.Model:
         """
-        Defines the deep learning architecture associated with a trial.  The
+        Returns the deep learning architecture associated with a trial.  The
         architecture might depend on the current values of the model's
         hyperparameters, which can be accessed via :func:`context.get_hparam()
         <determined.TrialContext.get_hparam>`.  This function returns a
-        ``tf.keras.Model`` object. Users *must* compile this model by calling
-        ``model.compile()`` on the ``tf.keras.Model`` instance before it is
-        returned.
+        ``tf.keras.Model`` object.
+
+        After constructing the ``tf.keras.Model`` object, users **must** do two
+        things before returning it:
+
+          1. Wrap the model using :meth:`context.wrap_model()
+             <determined.keras.TFKerasTrialContext.wrap_model>`.
+
+          2. Compile the model using ``model.compile()``.
         """
         pass
 
@@ -658,6 +667,11 @@ class TFKerasTrial(det.Trial):
 
             5) A :class:`determined.keras.SequenceAdapter` returning a tuple of either
             ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
+
+        When using ``tf.data.Dataset``, you must wrap the dataset using
+        :meth:`determined.keras.TFKerasTrialContext.wrap_dataset`. This wrapper is used
+        to shard the dataset for distributed training. For optimal performance, users
+        should wrap a dataset immediately after creating it.
 
         .. warning::
             If you are using ``tf.data.Dataset``, Determined’s support for
@@ -691,6 +705,11 @@ class TFKerasTrial(det.Trial):
 
             5) A :class:`determined.keras.SequenceAdapter` returning a tuple of either
             (inputs, targets) or (inputs, targets, sample weights).
+
+        When using ``tf.data.Dataset``, you must wrap the dataset using
+        :meth:`determined.keras.TFKerasTrialContext.wrap_dataset`. This wrapper is used
+        to shard the dataset for distributed training. For optimal performance, users
+        should wrap a dataset immediately after creating it.
         """
         pass
 
@@ -713,9 +732,12 @@ class TFKerasTrial(det.Trial):
         Determined training behavior.
 
         .. note::
-            If a callback is supplied that has implemented `keras.callbacks.Callback.on_epoch_end
+            If you specify a Keras callback that uses the `on_epoch_begin
+            <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/Callback#on_epoch_begin>`__
+            or <`on_epoch_end
             <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/Callback#on_epoch_end>`__
-            , it will use the epoch length as determined by the length of the training dataset, not
-            the Determined configuration setting ``records_per_epoch`` of the associated experiment.
+            interfaces, epoch boundaries are determined by the length of the
+            training data set, not by the value of the Determined configuration
+            setting :ref:`records_per_epoch <config-records-per-epoch>`.
         """
         return []

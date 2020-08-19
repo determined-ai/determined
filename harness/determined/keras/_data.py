@@ -138,8 +138,9 @@ class _SequenceWithOffset(tf.keras.utils.Sequence):  # type: ignore
 
 class SequenceAdapter:
     """
-    A class to assist to optimize performance of tf.keras.sequence and help
-    with restoring and saving iterators for a dataset.
+    A class to assist to optimize the performance of loading data with
+    ``tf.keras.utils.Sequence`` and help with restoring and saving iterators for
+    a dataset.
     """
 
     def __init__(
@@ -154,7 +155,7 @@ class SequenceAdapter:
         If you want these performance accelerations, please consider using a Sequence.
 
         Args:
-            sequence: A tf.keras.utils.Sequence that holds the data.
+            sequence: A ``tf.keras.utils.Sequence`` that holds the data.
 
             use_multiprocessing: If True, use process-based threading. If unspecified,
                 `use_multiprocessing` will default to False. Note that because this implementation

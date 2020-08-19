@@ -79,7 +79,7 @@ As with any Python class, the ``__init__`` method is invoked to construct our tr
 Building the Model
 """"""""""""""""""
 
-The ``build_model`` method returns a compiled ``tf.keras.Model`` object. The Fashion MNIST model code uses the Keras Sequential API and we can continue to use that API in our implementation of ``build_model``. The only minor difference is that the model needs to be wrapped by calling :func:`self.context.wrap_model() <determined.keras.TFKerasTrialContext.wrap_model>` before it is compiled.
+The :meth:`~determined.keras.TFKerasTrial.build_model` method returns a compiled ``tf.keras.Model`` object. The Fashion MNIST model code uses the Keras Sequential API and we can continue to use that API in our implementation of ``build_model``. The only minor difference is that the model needs to be wrapped by calling :func:`self.context.wrap_model() <determined.keras.TFKerasTrialContext.wrap_model>` before it is compiled.
 
 .. code:: python
 
@@ -102,7 +102,7 @@ The ``build_model`` method returns a compiled ``tf.keras.Model`` object. The Fas
 Loading Data
 """"""""""""
 
-The last two methods we need to define are ``build_training_data_loader`` and ``build_validation_data_loader``. Determined uses these methods to load the training and validation datasets, respectively.
+The last two methods we need to define are :meth:`~determined.keras.TFKerasTrial.build_training_data_loader` and :meth:`~determined.keras.TFKerasTrial.build_validation_data_loader`. Determined uses these methods to load the training and validation datasets, respectively.
 
 Determined supports three ways of loading data into a ``tf.keras`` model: as a `tf.keras.utils.Sequence <https://www.tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__, a `tf.data.Dataset <https://www.tensorflow.org/api_docs/python/tf/data/Dataset>`__, or as a pair of NumPy arrays. Because the dataset is small, the Fashion MNIST model represents the data using NumPy arrays.
 
@@ -129,9 +129,9 @@ For more information on loading data in Determined, refer to the tutorial on :re
 Training the Model
 ------------------
 
-Now that we have ported our model code to the trial API, we can use Determined to train a single instance of the model or to do a hyperparameter search. In Determined, a :ref:`trial <concept-trial>` is a training task that consists of a dataset, a deep learning model, and values for all of the model's hyperparameters. An :ref:`experiment <concept-experiment>` is a collection of one or more trials: an experiment can either train a single model (with a single trial), or can define a search over a user-defined hyperparameter space.
+Now that we have ported our model code to the trial API, we can use Determined to train a single instance of the model or to do a hyperparameter search. In Determined, a :ref:`trial <concept-trial>` is a training task that consists of a dataset, a deep learning model, and values for all of the model's hyperparameters. An :ref:`experiment <concept-experiment>` is a collection of one or more trials: an experiment can either train a single model (with a single trial), or it can perform a search over a user-defined hyperparameter space.
 
-To create an experiment, we start by writing a configuration file which defines the kind of experiment we want to run. In this case, we want to train a single model for a fixed number of batches, using fixed values for the model's hyperparameters:
+To create an experiment, we start by writing a configuration file which defines the kind of experiment we want to run. In this case, we want to train a single model for five epochs, using fixed values for the model's hyperparameters:
 
 .. code:: yaml
 
@@ -139,7 +139,7 @@ To create an experiment, we start by writing a configuration file which defines 
     hyperparameters:
         global_batch_size: 32
         dense1: 128
-    records_per_epoch: 50_000
+    records_per_epoch: 50000
     searcher:
         name: single
         metric: val_accuracy
@@ -147,7 +147,7 @@ To create an experiment, we start by writing a configuration file which defines 
           epochs: 5
     entrypoint: model_def:FashionMNISTTrial
 
-For this model, we have two hyperparameters: the size of the ``Dense`` layer and the batch size. We train the model on five epochs and should reach about 85% accuracy on the validation set, which mimics the original ``tf.keras`` implementation.
+For this model, we have chosen two hyperparameters: the size of the ``Dense`` layer and the batch size. Training the model for five epochs should reach about 85% accuracy on the validation set, which matches the original ``tf.keras`` implementation.
 
 The ``entrypoint`` specifies the name of the trial class to use. This is useful if our model code contains more than one trial class. In this case, we use an entrypoint of ``model_def:FashionMNISTTrial`` because our trial class is named ``FashionMNISTTrial`` and it is defined in a Python file named ``model_def.py``.
 
