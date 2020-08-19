@@ -39,9 +39,8 @@ type podMetadata struct {
 //        +- podLogStreamer: stream logs for a specific pod.
 //     +- informer: sends updates about pod states
 //     +- events: sends updates about kubernetes events.
-//     +- tokens: provisions tokens for kubernetes resource creation.
-//     +- kubernetesDeletionDealer: round robins kubernetes deletion requests
-//        +- kubernetesDeletionWorker(s): processes deletion requests.
+//     +- requestQueue: queues requests to create / delete kubernetes resources.
+//        +- requestProcessingWorkers: processes request to create / delete kubernetes resources.
 
 type pods struct {
 	cluster                  *actor.Ref
@@ -56,8 +55,7 @@ type pods struct {
 
 	informer                *actor.Ref
 	eventListener           *actor.Ref
-	resourceCreationTokens  *actor.Ref
-	resourceDeleter         *actor.Ref
+	resourceRequestQueue    *actor.Ref
 	podNameToPodHandler     map[string]*actor.Ref
 	containerIDToPodHandler map[string]*actor.Ref
 	podHandlerToMetadata    map[*actor.Ref]podMetadata
@@ -102,13 +100,12 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		if err := p.getMasterIPAndPort(ctx); err != nil {
 			return err
 		}
-		p.startResourceDeleter(ctx)
+		p.startResourceRequestQueue(ctx)
 		if err := p.deleteExistingKubernetesResources(ctx); err != nil {
 			return err
 		}
 		p.startPodInformer(ctx)
 		p.startEventListener(ctx)
-		p.startTokens(ctx)
 
 	case sproto.StartPod:
 		if err := p.receiveStartPod(ctx, msg); err != nil {
@@ -124,7 +121,7 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case sproto.StopPod:
 		p.receiveStopPod(ctx, msg)
 
-	case deletedKubernetesResources:
+	case resourceDeletionFailed:
 		if msg.err != nil {
 			return errors.Wrap(msg.err, "error deleting leftover kubernetes resource")
 		}
@@ -140,10 +137,8 @@ func (p *pods) Receive(ctx *actor.Context) error {
 			return errors.Errorf("pod informer failed")
 		case p.eventListener:
 			return errors.Errorf("event listener failed")
-		case p.resourceCreationTokens:
-			return errors.Errorf("tokens actor failed")
-		case p.resourceDeleter:
-			return errors.Errorf("kubernetes client dealer failed")
+		case p.resourceRequestQueue:
+			return errors.Errorf("resource request actor failed")
 		}
 
 		if err := p.cleanUpPodHandler(ctx, msg.Child); err != nil {
@@ -206,7 +201,7 @@ func (p *pods) deleteExistingKubernetesResources(ctx *actor.Context) error {
 			continue
 		}
 
-		ctx.Tell(p.resourceDeleter, deleteKubernetesResources{
+		ctx.Tell(p.resourceRequestQueue, deleteKubernetesResources{
 			handler: ctx.Self(), configMapName: configMap.Name})
 	}
 
@@ -219,7 +214,7 @@ func (p *pods) deleteExistingKubernetesResources(ctx *actor.Context) error {
 			continue
 		}
 
-		ctx.Tell(p.resourceDeleter, deleteKubernetesResources{
+		ctx.Tell(p.resourceRequestQueue, deleteKubernetesResources{
 			handler: ctx.Self(), podName: pod.Name})
 	}
 
@@ -235,22 +230,17 @@ func (p *pods) startEventListener(ctx *actor.Context) {
 		"event-listener", newEventListener(p.clientSet, p.namespace, ctx.Self()))
 }
 
-func (p *pods) startResourceDeleter(ctx *actor.Context) {
-	p.resourceDeleter, _ = ctx.ActorOf(
-		"kubernetes-deletion-dealer",
-		newKubernetesDeletionDealer(p.podInterface, p.configMapInterface),
+func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
+	p.resourceRequestQueue, _ = ctx.ActorOf(
+		"kubernetes-resource-request-queue",
+		newRequestQueue(p.podInterface, p.configMapInterface),
 	)
-}
-
-func (p *pods) startTokens(ctx *actor.Context) {
-	p.resourceCreationTokens, _ = ctx.ActorOf("kubernetes-tokens", newTokens())
 }
 
 func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
 	newPodHandler := newPod(
 		msg, p.cluster, p.clusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
-		p.podInterface, p.configMapInterface, p.resourceCreationTokens,
-		p.resourceDeleter, p.leaveKubernetesResources,
+		p.podInterface, p.configMapInterface, p.resourceRequestQueue, p.leaveKubernetesResources,
 	)
 	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s-%d", msg.Spec.TaskID, msg.Rank), newPodHandler)
 	if !ok {

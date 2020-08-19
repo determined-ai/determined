@@ -37,8 +37,7 @@ type pod struct {
 	rank                     int
 	podInterface             typedV1.PodInterface
 	configMapInterface       typedV1.ConfigMapInterface
-	resourceCreationTokens   *actor.Ref
-	resourceDeleter          *actor.Ref
+	resourceRequestQueue     *actor.Ref
 	leaveKubernetesResources bool
 
 	pod              *k8sV1.Pod
@@ -48,7 +47,6 @@ type pod struct {
 	container        container.Container
 	ports            []int
 	resourcesDeleted bool
-	mustReleaseToken bool
 }
 
 type getPodNodeInfo struct{}
@@ -69,8 +67,7 @@ func newPod(
 	masterPort int32,
 	podInterface typedV1.PodInterface,
 	configMapInterface typedV1.ConfigMapInterface,
-	resourceCreationTokens *actor.Ref,
-	resourceDeleter *actor.Ref,
+	resourceRequestQueue *actor.Ref,
 	leaveKubernetesResources bool,
 ) *pod {
 	podContainer := container.Container{
@@ -93,8 +90,7 @@ func newPod(
 		rank:                     msg.Rank,
 		podInterface:             podInterface,
 		configMapInterface:       configMapInterface,
-		resourceCreationTokens:   resourceCreationTokens,
-		resourceDeleter:          resourceDeleter,
+		resourceRequestQueue:     resourceRequestQueue,
 		leaveKubernetesResources: leaveKubernetesResources,
 		podName:                  uniqueName,
 		configMapName:            uniqueName,
@@ -106,14 +102,12 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		ctx.AddLabel("pod", p.podName)
-		if err := p.createPodSpecAndRequestToken(ctx); err != nil {
+		if err := p.createPodSpecAndSubmit(ctx); err != nil {
 			return err
 		}
 
-	case grantToken:
-		if err := p.launchPod(ctx); err != nil {
-			return err
-		}
+	case resourceCreationFailed:
+		p.receiveResourceCreationFailed(ctx, msg)
 
 	case podStatusUpdate:
 		if err := p.receivePodStatusUpdate(ctx, msg); err != nil {
@@ -130,10 +124,11 @@ func (p *pod) Receive(ctx *actor.Context) error {
 		ctx.Log().Info("received request to stop pod")
 		p.deleteKubernetesResources(ctx)
 
-	case deletedKubernetesResources:
-		if err := p.receiveDeletedKubernetesResources(ctx, msg); err != nil {
-			return err
-		}
+	case resourceCreationCancelled:
+		p.receiveResourceCreationCancelled(ctx)
+
+	case resourceDeletionFailed:
+		p.receiveResourceDeletionFailed(ctx, msg)
 
 	case getPodNodeInfo:
 		p.receiveGetPodNodeInfo(ctx)
@@ -143,10 +138,6 @@ func (p *pod) Receive(ctx *actor.Context) error {
 
 		if !p.leaveKubernetesResources {
 			p.deleteKubernetesResources(ctx)
-		}
-
-		if p.mustReleaseToken {
-			p.releaseToken(ctx)
 		}
 
 	case actor.ChildStopped:
@@ -159,7 +150,7 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (p *pod) createPodSpecAndRequestToken(ctx *actor.Context) error {
+func (p *pod) createPodSpecAndSubmit(ctx *actor.Context) error {
 	var err error
 	switch {
 	case p.taskSpec.StartCommand != nil:
@@ -176,42 +167,28 @@ func (p *pod) createPodSpecAndRequestToken(ctx *actor.Context) error {
 		return err
 	}
 
-	ctx.Tell(p.resourceCreationTokens, requestToken{handler: ctx.Self()})
-	p.mustReleaseToken = true
+	ctx.Tell(p.resourceRequestQueue, createKubernetesResources{
+		handler:       ctx.Self(),
+		podSpec:       p.pod,
+		configMapSpec: p.configMap,
+	})
 	return nil
 }
 
-func (p *pod) launchPod(ctx *actor.Context) error {
-	defer p.releaseToken(ctx)
+func (p *pod) receiveResourceCreationFailed(ctx *actor.Context, msg resourceCreationFailed) {
+	ctx.Log().WithError(msg.err).Error("pod actor notified that resource creation failed")
+	errMsg := msg.err.Error()
+	ctx.Tell(p.taskHandler, sproto.ContainerLog{
+		Container:   p.container,
+		Timestamp:   time.Now(),
+		PullMessage: nil,
+		RunMessage:  nil,
+		AuxMessage:  &errMsg,
+	})
 
-	var err error
-	p.configMap, err = p.configMapInterface.Create(p.configMap)
-	if err != nil {
-		return errors.Wrapf(err, "error creating configMap %s", p.configMapName)
-	}
-	ctx.Log().Infof("created configMap %s", p.configMap.Name)
-
-	ctx.Log().Debugf("launching pod with spec %v", p.pod)
-	p.pod, err = p.podInterface.Create(p.pod)
-	if err != nil {
-		errMsg := err.Error()
-		ctx.Tell(p.taskHandler, sproto.ContainerLog{
-			Container:   p.container,
-			Timestamp:   time.Now(),
-			PullMessage: nil,
-			RunMessage:  nil,
-			AuxMessage:  &errMsg,
-		})
-		return errors.Wrapf(err, "error creating pod %s", p.podName)
-	}
-	ctx.Log().Infof("created pod %s", p.pod.Name)
-
-	return nil
-}
-
-func (p *pod) releaseToken(ctx *actor.Context) {
-	ctx.Tell(p.resourceCreationTokens, releaseToken{handler: ctx.Self()})
-	p.mustReleaseToken = false
+	// If a subset of resources were created (e.g., configMap but podCreation failed) they will
+	// be deleted during actor.PostStop.
+	ctx.Self().Stop()
 }
 
 func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) error {
@@ -347,21 +324,12 @@ func (p *pod) processMissingPodDeletion(ctx *actor.Context) {
 }
 
 func (p *pod) deleteKubernetesResources(ctx *actor.Context) {
-	if p.mustReleaseToken {
-		// If a termination request is received while having a token requested
-		// to create a pod but not yet granted, it means that the pod has not
-		// been created and there is no need to delete resources.
-		p.resourcesDeleted = true
-		ctx.Self().Stop()
-		return
-	}
-
 	if p.resourcesDeleted {
 		return
 	}
 
 	ctx.Log().Infof("requesting to delete kubernetes resources")
-	ctx.Tell(p.resourceDeleter, deleteKubernetesResources{
+	ctx.Tell(p.resourceRequestQueue, deleteKubernetesResources{
 		handler:       ctx.Self(),
 		podName:       p.podName,
 		configMapName: p.configMapName,
@@ -370,23 +338,23 @@ func (p *pod) deleteKubernetesResources(ctx *actor.Context) {
 	p.resourcesDeleted = true
 }
 
-func (p *pod) receiveDeletedKubernetesResources(
+func (p *pod) receiveResourceCreationCancelled(ctx *actor.Context) {
+	ctx.Log().Infof("pod actor notified that resource creation was canceled")
+	p.resourcesDeleted = true
+	ctx.Self().Stop()
+}
+
+func (p *pod) receiveResourceDeletionFailed(
 	ctx *actor.Context,
-	msg deletedKubernetesResources,
-) error {
-	if msg.err != nil {
-		return errors.Wrap(msg.err, "pod actor notified about error deleting kubernetes resources")
-	}
-	return nil
+	msg resourceDeletionFailed,
+) {
+	ctx.Log().WithError(msg.err).Error("pod actor notified that resource deletion failed")
+	ctx.Self().Stop()
 }
 
 func (p *pod) receiveGetPodNodeInfo(ctx *actor.Context) {
-	nodeName := ""
-	if p.pod != nil {
-		nodeName = p.pod.Spec.NodeName
-	}
 	ctx.Respond(podNodeInfo{
-		nodeName:  nodeName,
+		nodeName:  p.pod.Spec.NodeName,
 		numGPUs:   p.gpus,
 		container: &p.container,
 	})
