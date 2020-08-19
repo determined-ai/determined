@@ -14,7 +14,7 @@ build:
 
 .PHONY: publish
 publish:
-	twine upload --non-interactive dist/*
+	twine upload --verbose --non-interactive dist/*
 
 .PHONY: fmt
 fmt:
