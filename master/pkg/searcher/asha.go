@@ -158,6 +158,13 @@ func (s *asyncHalvingSearch) promoteAsync(
 	var ops []Operation
 	// If the trial has completed the top rung's validation, close the trial.
 	if rungIndex == s.NumRungs-1 {
+		rung.metrics = append(rung.metrics,
+			trialMetric{
+				requestID: requestID,
+				metric:    metric,
+			},
+		)
+
 		if !s.earlyExitTrials[requestID] {
 			ops = append(ops, NewClose(requestID))
 			s.closedTrials[requestID] = true
@@ -228,7 +235,7 @@ func (s *asyncHalvingSearch) progress(float64) float64 {
 	// Give ourselves an overhead of 20% of maxTrials when calculating progress.
 	progress := float64(allTrials) / (1.2 * float64(s.maxTrials))
 	if allTrials == s.maxTrials {
-		return math.Max(float64(s.trialsCompleted)/float64(s.maxTrials), progress)
+		progress = math.Max(float64(s.trialsCompleted)/float64(s.maxTrials), progress)
 	}
 	return progress
 }
