@@ -1,4 +1,4 @@
-import { CommandMisc, CommandState, MetricName, MetricType, RunState, State } from 'types';
+import { CommandMisc, CommandState, MetricName, MetricType, RawJson, RunState, State } from 'types';
 
 export const isMap = <T>(data: T): boolean => data instanceof Map;
 export const isNumber = <T>(data: T): boolean => typeof data === 'number';
@@ -148,4 +148,32 @@ export const applyMappers = <T>(data: unknown, mappers: Mapper | Mapper[]): T =>
 export const isEqual = (a: unknown, b: unknown): boolean => {
   if (a === b) return true;
   return JSON.stringify(a) === JSON.stringify(b);
+};
+
+// export const getSubObjectCopy = (obj: RawJson, accessors: string[]): any => {
+//   return accessors
+//     .reduce((acc, cur) => acc === undefined ? acc : acc[cur], obj);
+// };
+
+// returns the sub object access by accessors (by reference).
+export const getSubObject = (obj: RawJson, accessors: string[]): any => {
+  let curIdx = 0;
+  let cur = obj;
+  while (isObject(cur) && curIdx < accessors.length) {
+    cur = cur[accessors[curIdx]];
+    curIdx++;
+  }
+  return cur;
+};
+
+export const setSubObject = (obj: RawJson, accessors: string[], value: unknown): void => {
+  const lastIndex = accessors.length-1;
+  const parentObj = getSubObject(obj, accessors.slice(0, lastIndex));
+  parentObj[accessors[lastIndex]] = value;
+};
+
+export const deleteSubObject = (obj: RawJson, accessors: string[]): void => {
+  const lastIndex = accessors.length-1;
+  const parentObj = getSubObject(obj, accessors.slice(0, lastIndex));
+  delete parentObj[accessors[lastIndex]];
 };
