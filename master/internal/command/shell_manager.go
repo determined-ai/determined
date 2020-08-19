@@ -25,7 +25,7 @@ import (
 
 const (
 	shellSSHDir             = "/run/determined/ssh"
-	shellAuthorizedKeysFile = "/run/determined/ssh/authorized_keys"
+	shellAuthorizedKeysFile = "/run/determined/ssh/authorized_keys_unmodified"
 	shellSSHDConfigFile     = "/run/determined/ssh/sshd_config"
 	shellHostPrivKeyFile    = "/run/determined/ssh/id_rsa"
 	shellHostPubKeyFile     = "/run/determined/ssh/id_rsa.pub"
