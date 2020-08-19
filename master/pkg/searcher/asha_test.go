@@ -209,6 +209,29 @@ func TestASHASearchMethod(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "single rung bracket",
+			expectedTrials: []predefinedTrial{
+				// The first trial is promoted due to asynchronous
+				// promotions despite being below top 1/3 of trials in
+				// base rung.
+				newConstantPredefinedTrial(toOps("9000B V"), 0.05),
+				newConstantPredefinedTrial(toOps("9000B V"), 0.06),
+				newConstantPredefinedTrial(toOps("9000B V"), 0.07),
+				newConstantPredefinedTrial(toOps("9000B V"), 0.08),
+			},
+			config: model.SearcherConfig{
+				AsyncHalvingConfig: &model.AsyncHalvingConfig{
+					Metric:              "error",
+					NumRungs:            1,
+					SmallerIsBetter:     true,
+					MaxLength:           model.NewLengthInBatches(9000),
+					MaxTrials:           4,
+					Divisor:             3,
+					MaxConcurrentTrials: maxConcurrentTrials,
+				},
+			},
+		},
 	}
 
 	runValueSimulationTestCases(t, testCases)
