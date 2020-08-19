@@ -15,8 +15,7 @@ describe('Task List', () => {
     it('should launch notebooks', () => {
       cy.server();
       cy.route('POST', /\/notebook.*/).as('createRequest');
-      cy.visit('/det/tasks');
-      cy.get('[class*="Page_base_"] button').contains(/launch notebook/i).click().click();
+      cy.get('[class*="Navigation_launch_"] button').contains(/launch notebook/i).click().click();
       cy.wait('@createRequest');
       cy.visit('/det/tasks');
       cy.get(recordSelector).should('have.lengthOf', 2);

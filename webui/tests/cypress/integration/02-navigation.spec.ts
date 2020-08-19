@@ -5,6 +5,7 @@ describe('Navigation', () => {
 
   const pageTitleSelector = '[class*="Page_base_"]';
   const sectionTitleSelector = '[class*="Section_title_"]';
+  const navSelector = '[class*="Navigation_base_"]';
 
   describe('paths', () => {
 
@@ -35,51 +36,41 @@ describe('Navigation', () => {
       cy.get(pageTitleSelector).contains('Cluster');
     });
 
-    it.skip('path /det/logs should display Master Logs', () => {
+    it('path /det/logs should display Master Logs', () => {
       cy.visit('/det/logs');
       cy.get(pageTitleSelector).contains('Master Logs');
     });
 
-    it.skip('path /det/trials/:id/logs should display Trial Logs', () => {
+    it('path /det/trials/:id/logs should display Trial Logs', () => {
       cy.visit('/det/trials/1/logs');
-      cy.get(pageTitleSelector).contains('Logs for Trial');
+      cy.get(pageTitleSelector).contains('Trial 1 Logs');
     });
   });
 
   describe('side menu buttons', () => {
-    const SPAs = [ '/det', '/ui' ];
-
-    it('clicking experiments in side menu should navigate to experiments', () => {
-      SPAs.forEach(page => {
-        cy.visit(page);
-        cy.get('#side-menu').contains(/experiments/i).click();
-        return cy.get(pageTitleSelector).contains('Experiments');
-      });
+    beforeEach(() => {
+      cy.visit('/det');
     });
 
-    it('clicking tasks in side menu should navigate to tasks', () => {
-      SPAs.forEach(page => {
-        cy.visit(page);
-        cy.get('#side-menu').contains(/tasks/i).click();
-        cy.get(pageTitleSelector).contains('Tasks');
-      });
+    it('clicking experiments on navigation should navigate to experiments', () => {
+      cy.get(navSelector).contains(/experiments/i).click();
+      return cy.get(pageTitleSelector).contains('Experiments');
     });
 
-    it('clicking cluster in side menu should navigate to cluster', () => {
-      SPAs.forEach(page => {
-        cy.visit(page);
-        cy.get('#side-menu').contains(/cluster/i).click();
-        cy.get(pageTitleSelector).contains('Cluster');
-      });
+    it('clicking tasks on navigation should navigate to tasks', () => {
+      cy.get(navSelector).contains(/tasks/i).click();
+      cy.get(pageTitleSelector).contains('Tasks');
     });
 
-    it('clicking dashboard in side menu should navigate to dashboard', () => {
-      SPAs.forEach(page => {
-        cy.visit(page);
-        cy.get('#side-menu').contains(/dashboard/i).click();
-        cy.get(sectionTitleSelector).contains('Recent Tasks');
-        cy.get(sectionTitleSelector).contains('Overview');
-      });
+    it('clicking cluster on navigation should navigate to cluster', () => {
+      cy.get(navSelector).contains(/cluster/i).click();
+      cy.get(pageTitleSelector).contains('Cluster');
+    });
+
+    it('clicking dashboard on navigation should navigate to dashboard', () => {
+      cy.get(navSelector).contains(/dashboard/i).click();
+      cy.get(sectionTitleSelector).contains('Recent Tasks');
+      cy.get(sectionTitleSelector).contains('Overview');
     });
   });
 });

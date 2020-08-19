@@ -14,6 +14,13 @@ const saltAndHashPassword = password => {
   return sha512(passwordSalt + password);
 };
 
+Cypress.on('uncaught:exception', (err, runnable) => {
+  // returning false here prevents Cypress from failing the test
+  console.warn('err', err);
+  console.warn('runnable', runnable);
+  return false;
+});
+
 Cypress.Commands.add('dataCy', (value) => {
   return cy.get(`[data-test=${value}]`);
 });
