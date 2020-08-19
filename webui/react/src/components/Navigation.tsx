@@ -1,4 +1,4 @@
-import { Button, Dropdown, Menu, Tooltip } from 'antd';
+import { Button, Menu, Tooltip } from 'antd';
 import React, { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -13,6 +13,7 @@ import { handlePath, openBlank } from 'utils/routes';
 import { commandToTask } from 'utils/types';
 
 import Avatar from './Avatar';
+import DropdownMenu, { Placement } from './DropdownMenu';
 import Icon from './Icon';
 import Link from './Link';
 import css from './Navigation.module.scss';
@@ -69,7 +70,7 @@ const Navigation: React.FC = () => {
   const shortVersion = version.split('.').slice(0, 3).join('.');
   const isVersionLong = (version.match(/\./g) || []).length > 2;
   const username = user?.username || 'Anonymous';
-  const cluster = isCollapsed && overview.allocation === 0 ? undefined : `${overview.allocation}%`;
+  const allocation = overview.allocation === 0 ? undefined : `${overview.allocation}%`;
 
   if (isCollapsed) classes.push(css.collapsed);
 
@@ -114,7 +115,7 @@ const Navigation: React.FC = () => {
           <div className={css.logoLabel} />
         </div>
         <div className={css.version}>
-          {isVersionLong && isCollapsed ? (
+          {isVersionLong ? (
             <Tooltip placement="right" title={`Version ${version}`}>
               <span className={css.versionLabel}>{shortVersion}</span>
             </Tooltip>
@@ -129,28 +130,28 @@ const Navigation: React.FC = () => {
             <Button
               className={css.launchButton}
               onClick={handleNotebookLaunch}>Launch Notebook</Button>
-            <Dropdown
-              arrow
-              overlay={(
+            <DropdownMenu
+              menu={(
                 <Menu>
                   {isCollapsed &&
                     <Menu.Item onClick={handleNotebookLaunch}>Launch Notebook</Menu.Item>}
                   <Menu.Item onClick={handleCpuNotebookLaunch}>Launch CPU-only Notebook</Menu.Item>
                 </Menu>
-              )} placement="bottomRight"
-              trigger={[ 'click' ]}
+              )}
+              offset={isCollapsed ? { x: 8, y: 0 } : { x: 0, y: 8 }}
+              placement={isCollapsed ? Placement.RightTop : Placement.BottomRight}
               onVisibleChange={handleVisibleChange}>
               <Button className={css.launchIcon}>
                 <Icon name={isShowingCpu ? 'arrow-up': 'arrow-down'} size="tiny" />
               </Button>
-            </Dropdown>
+            </DropdownMenu>
           </div>
         </section>
         <section className={css.top}>
           <NavigationItem icon="user" label="Dashboard" path="/det/dashboard" />
           <NavigationItem icon="experiment" label="Experiments" path="/det/experiments" />
           <NavigationItem icon="tasks" label="Tasks" path="/det/tasks" />
-          <NavigationItem icon="cluster" label="Cluster" path="/det/cluster" status={cluster} />
+          <NavigationItem icon="cluster" label="Cluster" path="/det/cluster" status={allocation} />
         </section>
         <section className={css.bottom}>
           <NavigationItem icon="logs" label="Master Logs" path="/det/logs" popout />
@@ -160,22 +161,19 @@ const Navigation: React.FC = () => {
         </section>
       </main>
       <footer>
-        <Dropdown
-          arrow
-          overlay={(
-            <Menu>
-              <Menu.Item>
-                <Link path={'/det/logout'}>Sign Out</Link>
-              </Menu.Item>
-            </Menu>
-          )}
-          placement="topLeft"
-          trigger={[ 'click' ]}>
-          <a className={css.user} href="#">
+        <DropdownMenu
+          menu={<Menu>
+            <Menu.Item>
+              <Link path={'/det/logout'}>Sign Out</Link>
+            </Menu.Item>
+          </Menu>}
+          offset={isCollapsed ? { x: -8, y: 0 } : { x: 16, y: -8 }}
+          placement={isCollapsed ? Placement.Right : Placement.TopLeft}>
+          <div className={css.user}>
             <Avatar hideTooltip name={username} />
             {!isCollapsed && <span>{username}</span>}
-          </a>
-        </Dropdown>
+          </div>
+        </DropdownMenu>
       </footer>
     </nav>
   ) : null;
