@@ -42,12 +42,12 @@ class Checkpoint(object):
         end_time: str,
         resources: Dict[str, Any],
         validation: Dict[str, Any],
+        metadata: Dict[str, Any],
         determined_version: Optional[str] = None,
         framework: Optional[str] = None,
         format: Optional[str] = None,
         model_version: Optional[int] = None,
         model_name: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
         master: Optional[str] = None,
     ):
         """
@@ -216,13 +216,15 @@ class Checkpoint(object):
         Arguments:
             metadata (dict): Dictionary of metadata to add to the checkpoint.
         """
+        for key, val in metadata.items():
+            self.metadata[key] = val
+
         if self._master:
-            r = api.post(
+            api.patch(
                 self._master,
-                "checkpoints/{}/metadata".format(self.uuid),
-                body={"metadata": metadata},
+                "/api/v1/checkpoints/{}".format(self.uuid),
+                body={"checkpoint": {"metadata": self.metadata}},
             )
-            self.metadata = r.json()
 
     def remove_metadata(self, keys: List[str]) -> None:
         """
@@ -232,11 +234,17 @@ class Checkpoint(object):
         Arguments:
             keys (List[string]): Top-level keys to remove from the checkpoint metadata.
         """
+
+        for key in keys:
+            if key in self.metadata:
+                del self.metadata[key]
+
         if self._master:
-            r = api.delete(
-                self._master, "checkpoints/{}/metadata".format(self.uuid), params={"keys": keys}
+            api.patch(
+                self._master,
+                "/api/v1/checkpoints/{}".format(self.uuid),
+                body={"checkpoint": {"metadata": self.metadata}},
             )
-            self.metadata = r.json()
 
     @staticmethod
     def load_from_path(path: str, tags: Optional[List[str]] = None, **kwargs: Any) -> Any:
@@ -326,7 +334,7 @@ class Checkpoint(object):
             data.get("end_time", data.get("endTime")),
             data["resources"],
             validation,
-            metadata=data.get("metadata"),
+            data.get("metadata", {}),
             framework=data.get("framework"),
             format=data.get("format"),
             determined_version=data.get("determined_version", data.get("determinedVersion")),
