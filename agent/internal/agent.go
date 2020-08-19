@@ -317,7 +317,7 @@ func (a *agent) connectToMaster(ctx *actor.Context) error {
 	}
 	ctx.Log().Infof("successfully connected to master")
 
-	a.socket, _ = ctx.ActorOf("socket", api.WrapSocket(conn, proto.AgentMessage{}, true))
+	a.socket, _ = ctx.ActorOf("websocket", api.WrapSocket(conn, proto.AgentMessage{}, true))
 
 	started := proto.MasterMessage{AgentStarted: &proto.AgentStarted{
 		Version: a.Version, Devices: a.Devices, Label: a.Label}}
