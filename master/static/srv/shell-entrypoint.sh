@@ -36,6 +36,12 @@ options="$(
         echo -n "environment=\"$var=$val\","
     done
 )"
-sed -i -e "s/^/$options /" "/run/determined/ssh/authorized_keys"
+
+# In k8s, the files we inject into the container are injected via individual
+# file-level bind mounts, which are effectively read-only in docker, so we are
+# unable to edit authorized_keys in place.
+unmodified="/run/determined/ssh/authorized_keys_unmodified"
+modified="/run/determined/ssh/authorized_keys"
+sed -e "s/^/$options /" "$unmodified" > "$modified"
 
 exec /usr/sbin/sshd "$@"
