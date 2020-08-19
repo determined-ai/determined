@@ -2,6 +2,7 @@ import { isNumber } from 'util';
 
 import dayjs from 'dayjs';
 
+import testConfig from 'fixtures/old-trial-config-noop-adaptive.json';
 import {
   decode, ioAgents, ioDeterminedInfo, ioExperiment,
   ioExperimentDetails, ioExperiments, ioGenericCommand, ioGenericCommands, ioLog, ioLogs,
@@ -165,7 +166,7 @@ export const jsonToExperiment = (data: unknown): Experiment => {
   return {
     archived: io.archived,
     config: ioToExperimentConfig(io.config),
-    configRaw: (data as { config: Record<string, unknown> }).config,
+    configRaw: testConfig, //(data as { config: Record<string, unknown> }).config,
     endTime: io.end_time || undefined,
     id: io.id,
     ownerId: io.owner_id,
@@ -265,7 +266,7 @@ export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
   return {
     archived: io.archived,
     config: ioToExperimentConfig(io.config),
-    configRaw: (data as { config: Record<string, unknown> }).config,
+    configRaw: testConfig, // (data as { config: Record<string, unknown> }).config,
     endTime: io.end_time || undefined,
     id: io.id,
     ownerId: io.owner.id,
