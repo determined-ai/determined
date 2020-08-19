@@ -3,6 +3,7 @@ import React, { MouseEventHandler, useCallback, useEffect, useState } from 'reac
 import { useLocation } from 'react-router-dom';
 
 import Auth from 'contexts/Auth';
+import ClusterOverview from 'contexts/ClusterOverview';
 import UI from 'contexts/UI';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useStorage from 'hooks/useStorage';
@@ -22,6 +23,7 @@ interface ItemProps {
   label: string;
   path?: string;
   popout?: boolean;
+  status?: string;
   onClick?: MouseEventHandler;
 }
 
@@ -33,6 +35,7 @@ const NavigationItem: React.FC<ItemProps> = (props: ItemProps) => {
 
   if (ui.chromeCollapsed) classes.push(css.collapsed);
   if (isActive) classes.push(css.active);
+  if (props.status) classes.push(css.hasStatus);
 
   useEffect(() => {
     setIsActive(location.pathname === props.path);
@@ -45,6 +48,7 @@ const NavigationItem: React.FC<ItemProps> = (props: ItemProps) => {
   return <div className={classes.join(' ')} onClick={handleClick}>
     <Icon name={props.icon} size="large" />
     <div className={css.label}>{props.label}</div>
+    {props.status && <div className={css.status}>{props.status}</div>}
   </div>;
 };
 
@@ -52,6 +56,7 @@ const STORAGE_KEY = 'collapsed';
 
 const Navigation: React.FC = () => {
   const { isAuthenticated, user } = Auth.useStateContext();
+  const overview = ClusterOverview.useStateContext();
   const ui = UI.useStateContext();
   const setUI = UI.useActionContext();
   const storage = useStorage('navigation');
@@ -64,6 +69,7 @@ const Navigation: React.FC = () => {
   const shortVersion = version.split('.').slice(0, 3).join('.');
   const isVersionLong = (version.match(/\./g) || []).length > 2;
   const username = user?.username || 'Anonymous';
+  const cluster = isCollapsed && overview.allocation === 0 ? undefined : `${overview.allocation}%`;
 
   if (isCollapsed) classes.push(css.collapsed);
 
@@ -144,7 +150,7 @@ const Navigation: React.FC = () => {
           <NavigationItem icon="user" label="Dashboard" path="/det/dashboard" />
           <NavigationItem icon="experiment" label="Experiments" path="/det/experiments" />
           <NavigationItem icon="tasks" label="Tasks" path="/det/tasks" />
-          <NavigationItem icon="cluster" label="Cluster" path="/det/cluster" />
+          <NavigationItem icon="cluster" label="Cluster" path="/det/cluster" status={cluster} />
         </section>
         <section className={css.bottom}>
           <NavigationItem icon="logs" label="Master Logs" path="/det/logs" popout />
