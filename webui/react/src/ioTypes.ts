@@ -143,9 +143,13 @@ const checkpointStates: Record<string, null> = Object.values(CheckpointState)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 const checkpointStatesIoType = io.keyof(checkpointStates);
 
+const ioMetricValue = io.union([ io.number, ioNullOrUndefined ]);
+const ioMetric = io.record(io.string, ioMetricValue);
+export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
+
 export const ioValidationMetrics = io.type({
   num_inputs: io.number,
-  validation_metrics: io.record(io.string, io.number),
+  validation_metrics: ioMetric,
 });
 export type ioTypeValidationMetrics = io.TypeOf<typeof ioValidationMetrics>;
 
@@ -162,7 +166,7 @@ export const ioCheckpoint = io.type({
   step_id: io.number,
   trial_id: io.number,
   uuid: io.union([ io.string, ioNullOrUndefined ]),
-  validation_metric: io.union([ io.number, ioNullOrUndefined ]),
+  validation_metric: ioMetricValue,
 });
 export type ioTypeCheckpoint = io.TypeOf<typeof ioCheckpoint>;
 
@@ -176,7 +180,7 @@ export type ioTypeValidation = io.TypeOf<typeof ioValidation>;
 
 export const ioStep = io.type({
   ...startEndTimeDef,
-  avg_metrics: io.union([ io.record(io.string, io.number), ioNullOrUndefined ]),
+  avg_metrics: io.union([ ioMetric, ioNullOrUndefined ]),
   checkpoint: io.union([ ioCheckpoint, ioNullOrUndefined ]),
   id: io.number,
   num_batches: io.union([ io.number, ioNullOrUndefined ]),
@@ -201,7 +205,7 @@ export type ioTypeTrialDetails = io.TypeOf<typeof ioTrialDetails>;
 
 export const ioTrial = io.type({
   best_available_checkpoint: io.union([ ioCheckpoint, ioNullOrUndefined ]),
-  best_validation_metric: io.union([ io.number, ioNullOrUndefined ]),
+  best_validation_metric: ioMetricValue,
   end_time: io.union([ io.string, ioNullOrUndefined ]),
   experiment_id: io.number,
   hparams: io.record(io.string, io.any),

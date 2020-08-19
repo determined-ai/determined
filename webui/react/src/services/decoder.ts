@@ -1,3 +1,5 @@
+import { isNumber } from 'util';
+
 import dayjs from 'dayjs';
 
 import {
@@ -6,8 +8,8 @@ import {
   ioTaskLogs, ioTrialDetails, ioTypeAgents, ioTypeCheckpoint,
   ioTypeDeterminedInfo, ioTypeExperiment, ioTypeExperimentConfig,
   ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand, ioTypeGenericCommands,
-  ioTypeLog, ioTypeLogs, ioTypeStep, ioTypeTaskLogs, ioTypeTrial, ioTypeTrialDetails, ioTypeUsers,
-  ioTypeValidationMetrics, ioUsers,
+  ioTypeLog, ioTypeLogs, ioTypeMetric, ioTypeStep, ioTypeTaskLogs, ioTypeTrial, ioTypeTrialDetails,
+  ioTypeUsers, ioTypeValidationMetrics, ioUsers,
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, CheckpointStorageType, Command, CommandState,
@@ -16,6 +18,14 @@ import {
   TrialDetails, TrialItem, User, ValidationMetrics,
 } from 'types';
 import { capitalize } from 'utils/string';
+
+const dropNullMetrics = (ioMetrics: ioTypeMetric): Record<string, number> => {
+  const metrics: Record<string, number> = {};
+  Object.entries(ioMetrics).forEach(([ name, value ]) => {
+    if (isNumber(value)) metrics[name] = value;
+  });
+  return metrics;
+};
 
 export const jsonToUsers = (data: unknown): User[] => {
   const io = decode<ioTypeUsers>(ioUsers, data);
@@ -187,13 +197,13 @@ const ioToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
 const ioToValidationMetrics = (io: ioTypeValidationMetrics): ValidationMetrics => {
   return {
     numInputs: io.num_inputs,
-    validationMetrics: io.validation_metrics,
+    validationMetrics: dropNullMetrics(io.validation_metrics),
   };
 };
 
 const ioToStep = (io: ioTypeStep): Step => {
   return {
-    avgMetrics: io.avg_metrics || undefined,
+    avgMetrics: io.avg_metrics ? dropNullMetrics(io.avg_metrics) : undefined,
     checkpoint: io.checkpoint ? ioToCheckpoint(io.checkpoint) : undefined,
     endTime: io.end_time || undefined,
     id: io.id,
