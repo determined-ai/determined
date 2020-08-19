@@ -33,7 +33,7 @@ class S3TensorboardManager(base.TensorboardManager):
     @util.preserve_random_state
     def sync(self) -> None:
         for path in self.to_sync():
-            key_name = str(self.sync_path.joinpath(path.name))
+            key_name = str(self.sync_path.joinpath(path.relative_to(self.base_path)))
 
             url = f"s3://{self.bucket}/{key_name}"
             logging.debug(f"Uploading {path} to {url}")

@@ -31,7 +31,7 @@ class TensorboardManager:
             )
             return []
 
-        return [f.resolve() for f in self.base_path.iterdir() if "tfevents" in f.name]
+        return [f.resolve() for f in self.base_path.glob("**/*tfevents*")]
 
     def to_sync(self) -> List[pathlib.Path]:
         """
