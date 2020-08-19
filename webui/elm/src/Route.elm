@@ -153,6 +153,7 @@ type Route
     | TaskList
     | TensorBoardList CommandLikeListOptions
     | TrialDetail Int
+    | TrialDetailReact Int
     | LogViewer Int
 
 
@@ -315,6 +316,9 @@ toString r =
 
         TrialDetail id ->
             absolute [ "ui", "trials", String.fromInt id ] []
+
+        TrialDetailReact id ->
+            absolute [ "det", "trials", String.fromInt id ] []
 
         LogViewer id ->
             absolute [ "ui", "logs", "trials", String.fromInt id ] []

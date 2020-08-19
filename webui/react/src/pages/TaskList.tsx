@@ -138,7 +138,7 @@ const TaskList: React.FC = () => {
         info.source = record.misc.experimentIds || [];
       } else if (record.misc?.trialIds) {
         info.label = 'Trial';
-        info.path = '/ui/trials';
+        info.path = '/det/trials';
         info.source = record.misc.trialIds || [];
       }
       info.isPlural = info.source.length > 1;
