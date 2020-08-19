@@ -62,6 +62,8 @@ can also be used to compare trials from *different* experiments.
 To launch TensorBoard to analyze specific trials, use
 ``det tensorboard start --trial-ids <trial_id 1> <trial_id 2> ...``.
 
+.. _data-in-tensorboard:
+
 Data in TensorBoard
 -------------------
 

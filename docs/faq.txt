@@ -133,3 +133,12 @@ or :ref:`Estimator <estimator-trial>` APIs. For models that use the low-level Te
 Core APIs, we recommend porting your model to use :ref:`Estimator Trial <estimator-trial>`.
 `Example of converting a Tensorflow graph into an Estimator
 <https://github.com/determined-ai/determined/blob/master/examples/experimental/trial/mnist_tp_to_estimator/model_def.py>`_.
+
+
+Tensorboard Support
+-------------------
+
+Can I log Tensorboards events in Determined?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Yes you can log TF Events to ``/tmp/tensorboard``. For more details see the
+:ref:`Tensorboard How-To Guide <data-in-tensorboard>`.
