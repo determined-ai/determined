@@ -171,7 +171,7 @@ func (p *pod) configurePodSpec(
 	return podSpec
 }
 
-func (p *pod) startPodForTrial(ctx *actor.Context) error {
+func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 	exp := *p.taskSpec.StartContainer
 
 	deviceType := device.CPU
@@ -232,7 +232,7 @@ func (p *pod) startPodForTrial(ctx *actor.Context) error {
 	return nil
 }
 
-func (p *pod) startPodForCommand(ctx *actor.Context) error {
+func (p *pod) createPodSpecForCommand(ctx *actor.Context) error {
 	cmd := *p.taskSpec.StartCommand
 
 	deviceType := device.CPU
@@ -291,7 +291,7 @@ func (p *pod) startPodForCommand(ctx *actor.Context) error {
 	return nil
 }
 
-func (p *pod) startPodForGC(ctx *actor.Context) error {
+func (p *pod) createPodSpecForGC(ctx *actor.Context) error {
 	gcc := *p.taskSpec.GCCheckpoints
 
 	deviceType := device.CPU

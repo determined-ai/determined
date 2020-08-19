@@ -106,7 +106,7 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		ctx.AddLabel("pod", p.podName)
-		if err := p.startPod(ctx); err != nil {
+		if err := p.createPodSpecAndRequestToken(ctx); err != nil {
 			return err
 		}
 
@@ -159,15 +159,15 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (p *pod) startPod(ctx *actor.Context) error {
+func (p *pod) createPodSpecAndRequestToken(ctx *actor.Context) error {
 	var err error
 	switch {
 	case p.taskSpec.StartCommand != nil:
-		err = p.startPodForCommand(ctx)
+		err = p.createPodSpecForCommand(ctx)
 	case p.taskSpec.StartContainer != nil:
-		err = p.startPodForTrial(ctx)
+		err = p.createPodSpecForTrial(ctx)
 	case p.taskSpec.GCCheckpoints != nil:
-		err = p.startPodForGC(ctx)
+		err = p.createPodSpecForGC(ctx)
 	default:
 		return errors.Errorf("unexpected task spec received")
 	}
