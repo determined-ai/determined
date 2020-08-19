@@ -142,3 +142,7 @@ Can I log Tensorboards events in Determined?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Yes you can log TF Events to ``/tmp/tensorboard``. For more details see the
 :ref:`Tensorboard How-To Guide <data-in-tensorboard>`.
+
+Can I use Tensorboard with PyTorch?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Yes! For an example of this check out the `mnist-GAN example <https://github.com/determined-ai/determined/blob/master/examples/official/trial/mnist_gan_pytorch/model_def.py>`_.
