@@ -47,7 +47,7 @@ func (w WebSocketConnected) Accept(
 		ctx.Respond(errors.Wrap(err, "websocket connection error"))
 		return nil, false
 	}
-	a, _ := ctx.ActorOf("websocket", WrapSocket(conn, msgType, usePing))
+	a, _ := ctx.ActorOf("websocket-" + uuid.New().String(), WrapSocket(conn, msgType, usePing))
 	ctx.Respond(a)
 	return a, true
 }
