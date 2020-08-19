@@ -58,7 +58,7 @@ const ExperimentInfoBox: React.FC<Props> = ({ experiment }: Props) => {
 
   const infoRows: InfoRow[] = [
     {
-      content: experiment.progress && <ProgressBar
+      content: experiment.progress != null && <ProgressBar
         percent={experiment.progress * 100}
         state={experiment.state} />,
       label: 'Progress',
