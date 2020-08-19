@@ -11,7 +11,7 @@ upload-try-now-template:
 
 .PHONY: publish
 publish: build
-	twine upload --non-interactive dist/*
+	twine upload --verbose --non-interactive dist/*
 
 .PHONY: clean
 clean:
