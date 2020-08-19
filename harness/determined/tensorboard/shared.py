@@ -27,7 +27,8 @@ class SharedFSTensorboardManager(base.TensorboardManager):
 
     def sync(self) -> None:
         for path in self.to_sync():
-            shared_fs_path = self.shared_fs_base.joinpath(path.name)
+            shared_fs_path = self.shared_fs_base.joinpath(path.relative_to(self.base_path))
+            pathlib.Path.mkdir(shared_fs_path.parent, exist_ok=True)
             shutil.copy(path, shared_fs_path)
 
             self._synced_event_sizes[path] = path.stat().st_size
