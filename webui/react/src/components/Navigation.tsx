@@ -60,8 +60,9 @@ const Navigation: React.FC = () => {
   const classes = [ css.base ];
 
   const showNavigation = isAuthenticated && ui.showChrome;
-  const version = process.env.VERSION;
-  const isVersionLong = (version?.match(/\./g) || []).length > 2;
+  const version = process.env.VERSION || '';
+  const shortVersion = version.split('.').slice(0, 3).join('.');
+  const isVersionLong = (version.match(/\./g) || []).length > 2;
   const username = user?.username || 'Anonymous';
 
   if (isCollapsed) classes.push(css.collapsed);
@@ -107,9 +108,9 @@ const Navigation: React.FC = () => {
           <div className={css.logoLabel} />
         </div>
         <div className={css.version}>
-          {isVersionLong ? (
+          {isVersionLong && isCollapsed ? (
             <Tooltip placement="right" title={`Version ${version}`}>
-              <span className={css.versionLabel}>{version}</span>
+              <span className={css.versionLabel}>{shortVersion}</span>
             </Tooltip>
           ) : (
             <span className={css.versionLabel}>{version}</span>
