@@ -83,7 +83,7 @@ func masterCertArchive(cert *tls.Certificate) container.RunArchive {
 
 	var arch archive.Archive
 	if len(certBytes) != 0 {
-		arch = append(arch, archive.RootItem(certPath, certBytes, 0600, tar.TypeReg))
+		arch = append(arch, archive.RootItem(certPath, certBytes, 0644, tar.TypeReg))
 	}
 	return wrapArchive(arch, "/")
 }
