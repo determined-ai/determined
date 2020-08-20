@@ -42,7 +42,7 @@ This release of Determined introduces several significant new features and modif
 
 - **Shell Mode Improvements:** Determined supports launching GPU-attached terminal sessions via ``det shell``. This release includes several changes to improve the usability of this feature, including:
 
-  - Install the ``determined`` and ``determined-cli`` Python packages inside ``det shell``.  Also, pass any user-defined environment variables for the task image into the ssh sessions opened via ``det shell start`` or ``det shell open``.
+  - The ``determined`` and ``determined-cli`` Python packages are now automatically installed inside containers launched by ``det shell``.  Any user-defined environment variables for the task image will be passed into the ssh sessions opened via ``det shell start`` or ``det shell open``.
 
   - ``det shell`` should now work correctly in "host" networking mode.
 
