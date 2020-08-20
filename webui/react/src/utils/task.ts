@@ -116,8 +116,8 @@ export const isExperimentTask = (task: AnyTask): task is ExperimentTask => {
 };
 
 export const canBeOpened = (task: AnyTask): boolean => {
-  if (!isExperimentTask(task) && task.state in terminalCommandStates) return false;
-  if (isExperiment(task)) return true;
+  if (isExperimentTask(task)) return true;
+  if (terminalCommandStates.has(task.state)) return false;
   return !!task.url;
 };
 

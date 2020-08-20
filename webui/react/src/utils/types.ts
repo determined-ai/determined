@@ -1,6 +1,6 @@
 import {
   AnyTask, Checkpoint, Command, CommandState, CommandType, Experiment, ExperimentHyperParams,
-  ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
+  ExperimentItem, ExperimentTask, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
 } from 'types';
 
 import { deletePathList, getPathList, isNumber, setPathList } from './data';
@@ -149,7 +149,7 @@ export function hasKey<O>(obj: O, key: keyof any): key is keyof O {
 
 // differentiate Experiment from Task
 export const isExperiment = (obj: AnyTask | Experiment): obj is Experiment => {
-  return 'config' in obj; // FIXME
+  return 'config' in obj && 'archived' in obj;
 };
 
 // used when properties are named differently between objects.
