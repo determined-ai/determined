@@ -1,7 +1,7 @@
-import { CommandMisc, CommandState, MetricName, MetricType, RunState, State } from 'types';
+import { CommandMisc, CommandState, MetricName, MetricType, RawJson, RunState, State } from 'types';
 
 export const isMap = <T>(data: T): boolean => data instanceof Map;
-export const isNumber = <T>(data: T): boolean => typeof data === 'number';
+export const isNumber = (data: unknown): data is number => typeof data === 'number';
 export const isObject = <T>(data: T): boolean => typeof data === 'object' && data !== null;
 export const isPrimitive = <T>(data: T): boolean => data !== Object(data);
 export const isSet = <T>(data: T): boolean => data instanceof Set;
@@ -26,12 +26,16 @@ export const clone = (data: any, deep = true): any => {
   return deep ? JSON.parse(JSON.stringify(data)) : { ...data };
 };
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const getPath = <T>(obj: Record<string, any>, path: string): T | undefined => {
+export const getPath = <T>(obj: RawJson, path: string): T | undefined => {
   // Reassigns to obj[key] on each array.every iteration
+  if (path === '') return obj as T;
   let value = obj || {};
   return path.split('.').every(key => ((value = value[key]) !== undefined)) ?
     value as T : undefined;
+};
+
+export const getPathList = <T>(obj: RawJson, path: string[]): T | undefined => {
+  return getPath<T>(obj, path.join('.'));
 };
 
 export const getPathOrElse = <T>(
@@ -148,4 +152,16 @@ export const applyMappers = <T>(data: unknown, mappers: Mapper | Mapper[]): T =>
 export const isEqual = (a: unknown, b: unknown): boolean => {
   if (a === b) return true;
   return JSON.stringify(a) === JSON.stringify(b);
+};
+
+export const setPathList = (obj: RawJson, path: string[], value: unknown): void => {
+  const lastIndex = path.length-1;
+  const parentObj = getPathList<RawJson>(obj, path.slice(0, lastIndex));
+  if (parentObj) parentObj[path[lastIndex]] = value;
+};
+
+export const deletePathList = (obj: RawJson, path: string[]): void => {
+  const lastIndex = path.length-1;
+  const parentObj = getPathList<RawJson>(obj, path.slice(0, lastIndex));
+  if (parentObj) delete parentObj[path[lastIndex]];
 };

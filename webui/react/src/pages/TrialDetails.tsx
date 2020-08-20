@@ -43,9 +43,9 @@ interface Params {
 }
 
 const getTrialLength = (config?: RawJson): [string, number] | undefined => {
+  if (!config) return undefined;
   const entries = Object.entries(config?.searcher.max_length || {});
-  if (entries.length !== 0) return entries[0] as [string, number];
-  return undefined;
+  return entries[0] as [string, number] || [ 'batches', 100 ];
 };
 
 const setTrialLength = (experimentConfig: RawJson, length: number): void => {
@@ -64,7 +64,7 @@ const trialContinueConfig = (
     searcher: {
       max_length: experimentConfig.searcher.max_length,
       metric: experimentConfig.searcher.metric,
-      name: experimentConfig.searcher.name,
+      name: 'single',
       smaller_is_better: experimentConfig.searcher.smaller_is_better,
       source_trial_id: trialId,
     },

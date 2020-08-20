@@ -14,8 +14,8 @@ import {
 import {
   Agent, Checkpoint, CheckpointState, CheckpointStorageType, Command, CommandState,
   CommandType, DeterminedInfo, Experiment, ExperimentConfig, ExperimentDetails,
-  Log, LogLevel, ResourceState, ResourceType, RunState, Step,
-  TrialDetails, TrialItem, User, ValidationMetrics,
+  Log, LogLevel, RawJson, ResourceState, ResourceType, RunState,
+  Step, TrialDetails, TrialItem, User, ValidationMetrics,
 } from 'types';
 import { capitalize } from 'utils/string';
 
@@ -165,7 +165,7 @@ export const jsonToExperiment = (data: unknown): Experiment => {
   return {
     archived: io.archived,
     config: ioToExperimentConfig(io.config),
-    configRaw: (data as { config: Record<string, unknown> }).config,
+    configRaw: (data as { config: RawJson }).config,
     endTime: io.end_time || undefined,
     id: io.id,
     ownerId: io.owner_id,
@@ -265,7 +265,7 @@ export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
   return {
     archived: io.archived,
     config: ioToExperimentConfig(io.config),
-    configRaw: (data as { config: Record<string, unknown> }).config,
+    configRaw: (data as { config: RawJson }).config,
     endTime: io.end_time || undefined,
     id: io.id,
     ownerId: io.owner.id,
