@@ -8,6 +8,10 @@ How-To guides are goal-oriented guides. They provide a detailed set of steps to 
 - :ref:`install-cli`
 - :ref:`install-cluster`
 
+**Kubernetes**
+
+- :ref:`install-on-kubernetes`
+
 **Hyperparameter**
 
 - :ref:`hyperparameter-tuning`
@@ -28,6 +32,7 @@ The full list of our how-to guides can be found below:
   hyperparameter-tuning
   install-cli
   install-main
+  install-on-kubernetes
   notebooks
   tensorboard
   use-trained-models
