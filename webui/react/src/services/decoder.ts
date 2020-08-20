@@ -2,6 +2,7 @@ import { isNumber } from 'util';
 
 import dayjs from 'dayjs';
 
+import testResponse from 'fixtures/trialdetails-2994.json';
 import {
   decode, ioAgents, ioDeterminedInfo, ioExperiment,
   ioExperimentDetails, ioExperiments, ioGenericCommand, ioGenericCommands, ioLog, ioLogs,
@@ -245,6 +246,7 @@ const ioToTrial = (io: ioTypeTrial): TrialItem => {
 };
 
 export const jsonToTrialDetails = (data: unknown): TrialDetails => {
+  data = testResponse;
   const io = decode<ioTypeTrialDetails>(ioTrialDetails, data);
   return {
     endTime: io.end_time || undefined,
