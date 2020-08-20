@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/determined-ai/determined/master/pkg/check"
 	"gotest.tools/assert"
+
+	"github.com/determined-ai/determined/master/pkg/check"
 )
 
 func TestValidateGlobalBatchSize(t *testing.T) {

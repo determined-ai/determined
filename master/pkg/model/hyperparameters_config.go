@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"sort"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/union"
-	"github.com/pkg/errors"
 )
 
 // GlobalBatchSize is the name of the hyperparameter for global_batch_size.
@@ -27,14 +28,14 @@ func (h Hyperparameters) Validate() []error {
 	case b.ConstHyperparameter != nil:
 		if !isNumeric(b.ConstHyperparameter.Val) {
 			return []error{
-				errors.New("global_batch_size must be a numeric value"),
+				errors.New("global_batch_size hyperparameter must be a numeric value"),
 			}
 		}
 	case b.CategoricalHyperparameter != nil:
 		for _, val := range b.CategoricalHyperparameter.Vals {
 			if !isNumeric(val) {
 				return []error{
-					errors.New("global_batch_size must be a numeric value"),
+					errors.New("global_batch_size hyperparameter must be a numeric value"),
 				}
 			}
 		}
