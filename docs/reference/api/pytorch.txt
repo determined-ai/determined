@@ -20,6 +20,8 @@ determined.pytorch
 .. autoclass:: determined.pytorch.Reducer
     :members:
 
+.. autoclass:: determined.tensorboard.metric_writers.pytorch.TorchWriter
+
 .. _pytorch-data-loading:
 
 Data Loading
@@ -138,13 +140,6 @@ Then, implement the ``build_callbacks`` function in ``PyTorchTrial``:
     def build_callbacks(self):
         return {"reduce_lr": ReduceLROnPlateauEveryValidationStep(self.context)}
 
-
-.. _pytorch-tensorboard:
-
-TensorBoard
-~~~~~~~~~~~
-
-.. autoclass:: determined.tensorboard.metric_writers.pytorch.TorchWriter
 
 .. _migration-guide-flexible-primitives:
 
