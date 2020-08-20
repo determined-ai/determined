@@ -73,19 +73,8 @@ func (a *apiServer) PatchModel(
 		return nil, err
 	}
 
-	paths := req.UpdateMask.GetPaths()
-	for _, path := range paths {
-		switch {
-		case path == "model.description":
-			getResp.Model.Description = req.Model.Description
-		case strings.HasPrefix(path, "model.metadata"):
-			getResp.Model.Metadata = req.Model.Metadata
-		case !strings.HasPrefix(path, "update_mask"):
-			return nil, status.Errorf(
-				codes.InvalidArgument,
-				"only description and metadata fields are mutable. cannot update %s", path)
-		}
-	}
+	getResp.Model.Description = req.Model.Description
+	getResp.Model.Metadata = req.Model.Metadata
 
 	b, err := protojson.Marshal(getResp.Model.Metadata)
 	if err != nil {

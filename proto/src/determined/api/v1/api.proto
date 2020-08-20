@@ -294,7 +294,7 @@ service Determined {
     }
     // Update model fields
     rpc PatchModel(PatchModelRequest) returns (PatchModelResponse) {
-        option (google.api.http) = {patch: "/api/v1/models/{model.name}" body: "model"};
+        option (google.api.http) = {patch: "/api/v1/models/{model.name}" body: "*"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Models"};
     }
     // Get a list of models.
