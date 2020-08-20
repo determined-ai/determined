@@ -231,7 +231,7 @@ func (a *apiServer) ArchiveExperiment(
 ) (*apiv1.ArchiveExperimentResponse, error) {
 	id := int(req.Id)
 
-	dbExp, err := a.m.db.ExperimentByID(id)
+	dbExp, err := a.m.db.ExperimentWithoutConfigByID(id)
 	if err != nil {
 		return nil, errors.Wrapf(err, "loading experiment %v", id)
 	}
@@ -259,7 +259,7 @@ func (a *apiServer) UnarchiveExperiment(
 ) (*apiv1.UnarchiveExperimentResponse, error) {
 	id := int(req.Id)
 
-	dbExp, err := a.m.db.ExperimentByID(id)
+	dbExp, err := a.m.db.ExperimentWithoutConfigByID(id)
 	if err != nil {
 		return nil, errors.Wrapf(err, "loading experiment %v", id)
 	}
