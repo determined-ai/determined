@@ -11,13 +11,6 @@ const batchRender: Renderer<Step> = (_, record) => (
 
 export const columns: ColumnType<Step>[] = [
   {
-    dataIndex: 'id',
-    fixed: 'left',
-    sorter: (a: Step, b: Step): number => alphanumericSorter(a.id, b.id),
-    title: 'ID',
-    width: 80,
-  },
-  {
     fixed: 'left',
     render: batchRender,
     sorter: (a: Step, b: Step): number => alphanumericSorter(
