@@ -13,7 +13,7 @@ hyperparameters:
   weight_decay: 0.0005
   global_batch_size: 2
 searcher:
-  name: adaptive_simple
+  name: adaptive_asha
   metric: val_avg_iou
   max_length:
     batches: 800

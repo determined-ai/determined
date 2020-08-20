@@ -25,10 +25,10 @@ hyperparameters:
     maxval: .8
 records_per_epoch: 50000
 searcher:
-  name: adaptive_simple
+  name: adaptive_asha
   metric: validation_loss
   smaller_is_better: true
+  max_trials: 16
   max_length:
     epochs: 1
-  max_trials: 16
 entrypoint: model_def:MNistTrial

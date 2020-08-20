@@ -542,12 +542,14 @@ more details see the :ref:`topic-guides_hp-tuning-det_grid`.
 
 .. _experiment-configuration-searcher-adaptive:
 
-Adaptive
---------
+Adaptive (ASHA)
+----------------
 
-The ``adaptive`` search method is a theoretically principled and empirically
-state-of-the-art method that adaptively allocates resources to promising
-hyperparameter configurations while quickly eliminating poor ones.
+The ``adaptive_asha`` search method employs the same underlying algorithm as the
+:ref:`adaptive <experiment-configuration-searcher-adaptive>` method below,
+but it uses an asynchronous version of successive halving
+(`ASHA <https://arxiv.org/pdf/1810.05934.pdf>`_), which is more
+suitable for large-scale experiments with hundreds or thousands of trials.
 
 **Required Fields**
 
@@ -556,20 +558,14 @@ hyperparameter configurations while quickly eliminating poor ones.
   hyperparameter configuration.
 
 ``max_length``
-  The maximum training length of any one trial, in terms of records, batches or
-  epochs (see :ref:`Training Units<experiment-configuration_training_units>`).
-  The vast majority of trials will be stopped early, and thus only a small fraction
-  of trials will actually be trained for this long. We suggest setting this to a
-  multiple of ``divisor^(max_rungs-1)``, which is 4^(5-1) = 256 with the default
-  values.
+  The maximum training length of any one trial, in terms of records, batches, or epochs
+  (see :ref:`Training Units<experiment-configuration_training_units>`). The vast
+  majority of trials will be stopped early, and thus only a small fraction of
+  trials will actually be trained for this long. This quantity is domain-specific and should
+  roughly reflect the length of training needed for the model to converge on the data set.
 
-``budget``
-  The total training length across all trials, in terms of the same unit
-  (see :ref:`Training Units<experiment-configuration_training_units>`)
-  as ``max_length``. We suggest setting this to be a multiple of ``max_length``,
-  which implies interpreting this subfield as the effective number of complete
-  trials to evaluate. Note that some trials might be in-progress when this budget
-  is exhausted; adaptive search will allow these to complete.
+``max_trials``
+  The number of trials, i.e., hyperparameter configurations, to evaluate.
 
 **Optional Fields**
 
@@ -591,14 +587,20 @@ hyperparameter configurations while quickly eliminating poor ones.
   recommend using either ``aggressive`` or ``standard`` mode.
 
 ``divisor``
-  The fraction of trials to keep at each rung, and also determines the
-  training length for each rung. The default setting is ``4``; only advanced
-  users should consider changing this value.
+  The fraction of trials to keep at each rung, and also determines the training
+  length for each rung. The default setting is ``4``; only advanced users should
+  consider changing this value.
 
 ``max_rungs``
   The maximum number of times we evaluate intermediate results for a trial and
   terminate poorly performing trials. The default value is ``5``; only advanced
   users should consider changing this value.
+
+``max_concurrent_trials``
+  The maximum number of trials that can be worked on simultaneously. The default
+  value is ``0``, and we set reasonable values depending on max_trials and
+  the number of rungs in the brackets. This is akin to controlling the degree of
+  parallelism of the experiment.
 
 ``source_trial_id``
   If specified, the weights of *every* trial in the search will be initialized
@@ -676,12 +678,12 @@ applications of hyperparameter search.
   initialize weights. At most one of ``source_trial_id`` or
   ``source_checkpoint_uuid`` should be set.
 
-Adaptive (ASHA)
-----------------
+Adaptive (Advanced)
+--------------------
 
-The ``adaptive_asha`` search method is an asynchronous version of the
-:ref:`adaptive <experiment-configuration-searcher-adaptive>` method above that is
-more suitable for large experiments with many trials.
+The ``adaptive`` search method is a theoretically principled and empirically
+state-of-the-art method that adaptively allocates resources to promising
+hyperparameter configurations while quickly eliminating poor ones.
 
 **Required Fields**
 
@@ -690,18 +692,20 @@ more suitable for large experiments with many trials.
   hyperparameter configuration.
 
 ``max_length``
-  The maximum training length of any one trial, in terms of records, batches, or epochs
-  (see :ref:`Training Units<experiment-configuration_training_units>`). The vast
-  majority of trials will be stopped early, and thus only a small fraction of
-  trials will actually be trained for this long. This quantity is domain-specific and should
-  roughly reflect the length of training needed for the model to converge on the data set.
+  The maximum training length of any one trial, in terms of records, batches or
+  epochs (see :ref:`Training Units<experiment-configuration_training_units>`).
+  The vast majority of trials will be stopped early, and thus only a small fraction
+  of trials will actually be trained for this long. We suggest setting this to a
+  multiple of ``divisor^(max_rungs-1)``, which is 4^(5-1) = 256 with the default
+  values.
 
-``max_trials``
-  The number of trials, i.e., hyperparameter configurations, to evaluate.
-
-``max_concurrent_trials``
-  The maximum number of trials that can be worked on simultaneously.  This is
-  akin to controlling the degree of parallelism of the experiment.
+``budget``
+  The total training length across all trials, in terms of the same unit
+  (see :ref:`Training Units<experiment-configuration_training_units>`)
+  as ``max_length``. We suggest setting this to be a multiple of ``max_length``,
+  which implies interpreting this subfield as the effective number of complete
+  trials to evaluate. Note that some trials might be in-progress when this budget
+  is exhausted; adaptive search will allow these to complete.
 
 **Optional Fields**
 
@@ -723,9 +727,9 @@ more suitable for large experiments with many trials.
   recommend using either ``aggressive`` or ``standard`` mode.
 
 ``divisor``
-  The fraction of trials to keep at each rung, and also determines the training
-  length for each rung. The default setting is ``4``; only advanced users should
-  consider changing this value.
+  The fraction of trials to keep at each rung, and also determines the
+  training length for each rung. The default setting is ``4``; only advanced
+  users should consider changing this value.
 
 ``max_rungs``
   The maximum number of times we evaluate intermediate results for a trial and
