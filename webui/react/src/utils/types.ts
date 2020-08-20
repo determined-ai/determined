@@ -3,7 +3,7 @@ import {
   ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
 } from 'types';
 
-import { deleteSubObject, getSubObject, isNumber, setSubObject } from './data';
+import { deleteSubObject, getPathList, isNumber, setSubObject } from './data';
 import { getDuration } from './time';
 
 /* Conversions to Tasks */
@@ -221,7 +221,7 @@ const stepRemovalTranslations = [
 export const upgradeConfig = (config: RawJson): void => {
   stepRemovalTranslations.forEach(translation => {
     const oldPath = translation.oldName.split('.');
-    const curValue = getSubObject(config, oldPath);
+    const curValue = getPathList<undefined | null | number | unknown>(config, oldPath);
     if (curValue === undefined) return;
     if (curValue === null) {
       deleteSubObject(config, oldPath);

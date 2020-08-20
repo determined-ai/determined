@@ -1,11 +1,12 @@
 import testConfig from 'fixtures/old-trial-config-noop-adaptive.json';
+import { RawJson } from 'types';
 
 import {
   clone,
   deleteSubObject,
   getPath,
+  getPathList,
   getPathOrElse,
-  getSubObject,
   isAsyncFunction,
   isFunction,
   isMap,
@@ -124,6 +125,11 @@ describe('data utility', () => {
       expect(getPath<string>(object, 'x.x')).toBeUndefined();
       expect(getPath<number>(object, 'c.x.y')).toBe(-1.2e10);
     });
+
+    it('should support empty path', () => {
+      expect(getPath<RawJson>(object, '')).toBe(object);
+    });
+
   });
 
   describe('getPathOrElse', () => {
@@ -148,32 +154,32 @@ describe('data utility', () => {
       config = clone(testConfig);
     });
 
-    describe('getSubObject', () => {
+    describe('getPathList', () => {
       it('should return undefined for bad paths', () => {
-        const actual = getSubObject(config, [ 'x', 'y', 'z' ]);
+        const actual = getPathList(config, [ 'x', 'y', 'z' ]);
         expect(actual).toBeUndefined();
       });
 
       it('should return undefined for partial matching bad paths', () => {
         const path = [ 'searcher', 'step_budget' ];
-        expect(getSubObject(config, path)).not.toBeUndefined();
-        const actual = getSubObject(config, [ ...path, 'xyz' ]);
+        expect(getPathList(config, path)).not.toBeUndefined();
+        const actual = getPathList(config, [ ...path, 'xyz' ]);
         expect(actual).toBeUndefined();
       });
 
       it('should return null', () => {
-        const actual = getSubObject(config, [ 'min_checkpoint_period' ]);
+        const actual = getPathList(config, [ 'min_checkpoint_period' ]);
         expect(actual).toBeNull();
       });
 
       it('should return objects', () => {
-        const actual = getSubObject(config, [ 'searcher' ]);
+        const actual = getPathList(config, [ 'searcher' ]);
         expect(actual).toHaveProperty('mode');
         expect(typeof actual).toEqual('object');
       });
 
       it('should return a reference', () => {
-        const searcher = getSubObject(config, [ 'searcher' ]);
+        const searcher = getPathList<RawJson>(config, [ 'searcher' ]);
         const TEST_VALUE = 'TEST';
         expect(searcher).toHaveProperty('mode');
         searcher.mode = TEST_VALUE;

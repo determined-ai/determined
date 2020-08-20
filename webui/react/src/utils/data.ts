@@ -1,7 +1,7 @@
 import { CommandMisc, CommandState, MetricName, MetricType, RawJson, RunState, State } from 'types';
 
 export const isMap = <T>(data: T): boolean => data instanceof Map;
-export const isNumber = <T>(data: T): boolean => typeof data === 'number';
+export const isNumber = (data: unknown): data is number => typeof data === 'number';
 export const isObject = <T>(data: T): boolean => typeof data === 'object' && data !== null;
 export const isPrimitive = <T>(data: T): boolean => data !== Object(data);
 export const isSet = <T>(data: T): boolean => data instanceof Set;
@@ -26,12 +26,16 @@ export const clone = (data: any, deep = true): any => {
   return deep ? JSON.parse(JSON.stringify(data)) : { ...data };
 };
 
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export const getPath = <T>(obj: RawJson, path: string): T | undefined => {
   // Reassigns to obj[key] on each array.every iteration
+  if (path === '') return obj as T;
   let value = obj || {};
   return path.split('.').every(key => ((value = value[key]) !== undefined)) ?
     value as T : undefined;
+};
+
+export const getPathList = <T>(obj: RawJson, path: string[]): T | undefined => {
+  return getPath<T>(obj, path.join('.'));
 };
 
 export const getPathOrElse = <T>(
@@ -150,21 +154,14 @@ export const isEqual = (a: unknown, b: unknown): boolean => {
   return JSON.stringify(a) === JSON.stringify(b);
 };
 
-// returns the sub object accessed by accessors (by reference).
-export const getSubObject = (obj: RawJson, accessors: string[]): any => {
-  // return getPath(obj, accessors.join('.'));
-  return accessors
-    .reduce((acc, cur) => acc === undefined ? acc : acc[cur], obj);
+export const setSubObject = (obj: RawJson, path: string[], value: unknown): void => {
+  const lastIndex = path.length-1;
+  const parentObj = getPathList<any>(obj, path.slice(0, lastIndex));
+  parentObj[path[lastIndex]] = value;
 };
 
-export const setSubObject = (obj: RawJson, accessors: string[], value: unknown): void => {
-  const lastIndex = accessors.length-1;
-  const parentObj = getSubObject(obj, accessors.slice(0, lastIndex));
-  parentObj[accessors[lastIndex]] = value;
-};
-
-export const deleteSubObject = (obj: RawJson, accessors: string[]): void => {
-  const lastIndex = accessors.length-1;
-  const parentObj = getSubObject(obj, accessors.slice(0, lastIndex));
-  delete parentObj[accessors[lastIndex]];
+export const deleteSubObject = (obj: RawJson, path: string[]): void => {
+  const lastIndex = path.length-1;
+  const parentObj = getPathList<any>(obj, path.slice(0, lastIndex));
+  delete parentObj[path[lastIndex]];
 };
