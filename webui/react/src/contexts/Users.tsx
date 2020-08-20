@@ -1,8 +1,8 @@
 import { generateContext } from 'contexts';
 import { RestApiState } from 'hooks/useRestApi';
-import { User } from 'types';
+import { DetailedUser } from 'types';
 
-const contextProvider = generateContext<RestApiState<User[]>>({
+const contextProvider = generateContext<RestApiState<DetailedUser[]>>({
   initialState: {
     errorCount: 0,
     hasLoaded: false,

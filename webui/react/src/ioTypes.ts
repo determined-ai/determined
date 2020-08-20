@@ -25,17 +25,17 @@ const ioNullOrUndefined = io.union([ io.null, io.undefined ]);
 
 /* User */
 
-export const ioUser = io.type({
+export const ioDetailedUser = io.type({
   active: io.boolean,
   admin: io.boolean,
   id: io.number,
   username: io.string,
 });
 
-export const ioUsers = io.array(ioUser);
+export const ioDetailedUsers = io.array(ioDetailedUser);
 
-export type ioTypeUser = io.TypeOf<typeof ioUser>;
-export type ioTypeUsers = io.TypeOf<typeof ioUsers>;
+export type ioTypeDetailedUser = io.TypeOf<typeof ioDetailedUser>;
+export type ioTypeDetailedUsers = io.TypeOf<typeof ioDetailedUsers>;
 
 /* Info */
 
@@ -90,7 +90,7 @@ export type ioTypeAgents = io.TypeOf<typeof ioAgents>;
 
 /* Generic Command */
 
-const ioOwner = io.type({
+const ioUser = io.type({
   id: io.number,
   username: io.string,
 });
@@ -121,7 +121,7 @@ export const ioGenericCommand = io.type({
   exit_status: io.union([ io.string, ioNullOrUndefined ]),
   id: io.string,
   misc: io.union([ ioCommandMisc, ioNullOrUndefined ]),
-  owner: ioOwner,
+  owner: ioUser,
   registered_time: io.string,
   service_address: io.union([ io.string, ioNullOrUndefined ]),
   state: commandStatesIoType,
@@ -287,7 +287,7 @@ export const ioExperimentDetails = io.type({
   config: ioExperimentConfig,
   end_time: io.union([ io.string, ioNullOrUndefined ]),
   id: io.number,
-  owner: ioOwner,
+  owner: ioUser,
   progress: io.union([ io.number, ioNullOrUndefined ]),
   start_time: io.string,
   state: runStatesIoType,

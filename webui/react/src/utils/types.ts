@@ -34,12 +34,12 @@ export const commandToTask = (command: Command): RecentCommandTask => {
     },
     misc: command.misc,
     name,
-    ownerId: command.owner.id,
     startTime: command.registeredTime,
     state: command.state as CommandState,
     type: command.kind,
     url: waitPageUrl(command),
-    username: command.owner.username,
+    userId: command.user.id,
+    username: command.user.username,
   };
   return task;
 };
@@ -53,11 +53,11 @@ export const experimentToTask = (experiment: Experiment): RecentExperimentTask =
     id: `${experiment.id}`,
     lastEvent,
     name: experiment.config.description,
-    ownerId: experiment.ownerId,
     progress: experiment.progress,
     startTime: experiment.startTime,
     state: experiment.state,
     url: `/det/experiments/${experiment.id}`,
+    userId: experiment.userId,
   };
   return task;
 };

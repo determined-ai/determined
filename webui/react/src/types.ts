@@ -3,9 +3,12 @@ export type RawJson = Record<string, any>;
 
 export interface User {
   id: number;
+  username: string;
+}
+
+export interface DetailedUser extends User {
   isActive: boolean;
   isAdmin: boolean;
-  username: string;
 }
 
 export interface Auth {
@@ -116,11 +119,6 @@ export interface CommandAddress {
   protocol?: string;
 }
 
-export interface Owner {
-  id: number;
-  username: string;
-}
-
 export enum CommandType {
   Command = 'COMMAND',
   Notebook = 'NOTEBOOK',
@@ -144,7 +142,7 @@ export interface Command {
   exitStatus?: string;
   id: string;
   misc?: CommandMisc;
-  owner: Owner;
+  user: User;
   registeredTime: string;
   serviceAddress?: string;
   state: CommandState;
@@ -298,7 +296,7 @@ export interface Experiment {
   configRaw: RawJson; // Readonly unparsed config object.
   endTime?: string;
   id: number;
-  ownerId: number;
+  userId: number;
   progress?: number;
   startTime: string;
   state: RunState;
@@ -319,7 +317,7 @@ export interface ExperimentDetails extends Experiment {
 export interface Task {
   name: string;
   id: string;
-  ownerId: number;
+  userId: number;
   url?: string;
   startTime: string;
 }

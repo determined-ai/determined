@@ -1,7 +1,7 @@
 import { sha512 } from 'js-sha512';
 import queryString from 'query-string';
 
-import { decode, ioTypeUser, ioUser } from 'ioTypes';
+import { decode, ioDetailedUser, ioTypeDetailedUser } from 'ioTypes';
 import { Api } from 'services/apiBuilder';
 import {
   jsonToAgents, jsonToCommands, jsonToDeterminedInfo,
@@ -16,8 +16,8 @@ import {
   TaskLogsParams, TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import {
-  Agent, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails,
-  Log, TBSourceType, TrialDetails, User,
+  Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, Experiment,
+  ExperimentDetails, Log, TBSourceType, TrialDetails,
 } from 'types';
 
 /* Helpers */
@@ -48,11 +48,11 @@ export const login: Api<Credentials, void> = {
   name: 'login',
 };
 
-export const getCurrentUser: Api<EmptyParams, User> = {
+export const getCurrentUser: Api<EmptyParams, DetailedUser> = {
   httpOptions: () => ({ url: '/users/me' }),
   name: 'getCurrentUser',
   postProcess: (response) => {
-    const result = decode<ioTypeUser>(ioUser, response.data);
+    const result = decode<ioTypeDetailedUser>(ioDetailedUser, response.data);
     return {
       id: result.id,
       isActive: result.active,
@@ -62,7 +62,7 @@ export const getCurrentUser: Api<EmptyParams, User> = {
   },
 };
 
-export const getUsers: Api<EmptyParams, User[]> = {
+export const getUsers: Api<EmptyParams, DetailedUser[]> = {
   httpOptions: () => ({ url: '/users' }),
   name: 'getUsers',
   postProcess: (response) => jsonToUsers(response.data),
