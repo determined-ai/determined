@@ -1,7 +1,6 @@
 import logging
 import math
 import pathlib
-import sys
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, cast
 
@@ -206,7 +205,15 @@ class _TrialWorkloadManager(WorkloadManager):
                         searcher_metric, list(v_metrics.keys())
                     )
                 )
-                sys.exit(1)
+
+            # Check that the searcher metric has a scalar value so that it can be compared for
+            # search purposes. Other metrics don't have to be scalars.
+            metric_value = v_metrics[searcher_metric]
+            if not tensorboard.metric_writers.util.is_numerical_scalar(metric_value):
+                raise AssertionError(
+                    "Searcher validation metric '{}' returned "
+                    "a non-scalar value: {}".format(searcher_metric, metric_value)
+                )
 
             non_serializable_metrics = set()
             # NaN and bytes are not JSON serializable. None does not have a
@@ -229,7 +236,6 @@ class _TrialWorkloadManager(WorkloadManager):
                         "Validation metric '{}' returned "
                         "an invalid scalar value: {}".format(metric_name, metric_value)
                     )
-                    sys.exit(1)
 
                 if isinstance(metric_value, (bytes, bytearray)):
                     non_serializable_metrics.add(metric_name)
