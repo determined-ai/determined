@@ -5,8 +5,6 @@ import {
 } from 'types';
 import { terminalCommandStates } from 'utils/types';
 
-import { isExperiment } from './types';
-
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export function getRandomElementOfEnum(e: any): any {
   const keys = Object.keys(e);
