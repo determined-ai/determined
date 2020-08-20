@@ -68,9 +68,11 @@ const CheckpointModal: React.FC<Props> = ({ config, checkpoint, onHide, show, ti
   }, [ checkpoint ]);
 
   const resources = useMemo(() => {
+    if (checkpoint.resources === undefined) return [];
+    const checkpointResources = checkpoint.resources;
     return Object.keys(checkpoint.resources)
-      .sort((a, b) => checkpoint.resources[a] - checkpoint.resources[b])
-      .map(key => ({ name: key, size: humanReadableBytes(checkpoint.resources[key]) }));
+      .sort((a, b) => checkpointResources[a] - checkpointResources[b])
+      .map(key => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
   }, [ checkpoint.resources ]);
 
   return (

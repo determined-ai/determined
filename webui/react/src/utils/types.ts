@@ -163,6 +163,7 @@ export const oneOfProperties = <T>(obj: any, props: string[]): T => {
 
 // size in bytes
 export const checkpointSize = (checkpoint: Checkpoint): number => {
+  if (!checkpoint.resources) return 0;
   const total = Object.values(checkpoint.resources).reduce((acc, size) => acc + size, 0);
   return total;
 };
