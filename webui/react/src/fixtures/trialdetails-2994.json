@@ -1,13 +1,13 @@
 {
   "end_time": "2020-08-20T00:16:46.465441+00:00",
-  "experiment_id": 183,
+  "experiment_id": 1,
   "hparams": {
     "metrics_base": 0.9,
     "metrics_sigma": 0,
     "global_batch_size": 32,
     "metrics_progression": "decreasing"
   },
-  "id": 2944,
+  "id": 1,
   "seed": 511579848,
   "start_time": "2020-08-20T00:09:44.800485+00:00",
   "state": "ERROR",
@@ -25,7 +25,7 @@
         "step_id": 1,
         "end_time": null,
         "metadata": {},
-        "trial_id": 2944,
+        "trial_id": 1,
         "resources": null,
         "start_time": "2020-08-20T00:16:45.682217+00:00",
         "validation_metric": 0.9
