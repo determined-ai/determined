@@ -56,7 +56,7 @@ Version 0.13.0
 
   - Experiment Detail: ``/det/experiments/<id>``
 
-    - Implement charting with plotly with zooming capability.
+    - Implement charting with Plotly with zooming capability.
     - Trial table paginates on the webui side in preparation for API pagination in the near future.
     - Convert steps to batches in trials table and metric chart.
     - Update continue trial flow to use batches, epochs or records.
@@ -67,7 +67,7 @@ Version 0.13.0
 
     - Add trial information table.
     - Add trial metrics chart.
-    - Implement charting with plotly with zooming capability.
+    - Implement charting with Plotly with zooming capability.
     - Trial info table paginates on the webui side in preparation for API pagination in the near future.
     - Add support for batches, records and epochs for experiment config.
     - Convert metric chart to show batches.
@@ -76,7 +76,7 @@ Version 0.13.0
   - Master Logs: ``/det/logs``, Trial Logs: ``/det/trials/<id>/logs``, Task Logs: ``/det/<tasktype>/<id>/logs``
 
     - Logs now stream in new logs events on the fly.
-    - Limit logs to 1000 lines for initial load and load additional 1000 for each subsequent older log fetches.
+    - Limit logs to 1000 lines for initial load and load an additional 1000 for each subsequent fetch of older logs.
     - Use new log viewer optimized for efficient rendering.
     - Introduce log line numbers.
     - Add ANSI color support.
@@ -101,7 +101,7 @@ Version 0.13.0
 
 - Configuration: Do not load the entire experiment configuration when trying to check if an experiment is valid to be archived or unarchived.
 
-- Hyperparameter search: Add validation to the hyperparameter configuration section, to check if ``global_batch_size`` has been specified and if it is numeric.
+- Hyperparameter search: Improve the master to validation hyperparameter configurations when experiments are submitted. Currently, the master checks whether ``global_batch_size`` has been specified and if it is numeric.
 
 - Logs: Fix issue of not detecting newlines in the log messages, particularly Kubernetes log messages.
 
@@ -125,9 +125,9 @@ Version 0.13.0
 
 - WebUI: Fix colors used for different states in the cluster resources chart.
 
-- WebUI: Correct the numbers in the `Batches` column on the experiment list page.
+- WebUI: Correct the numbers in the ``Batches`` column on the experiment list page.
 
-- WebUI: Fix cluster and dashboard reporting on not reporting disabled slots.
+- WebUI: Fix cluster and dashboard reporting for disabled slots.
 
 - WebUI: Fix issue of archive/unarchive not showing up properly under the task actions.
 
