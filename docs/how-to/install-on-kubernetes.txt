@@ -3,7 +3,7 @@
 Install Determined on Kubernetes
 ================================
 
-This document descrives how to install Determined on `Kubernetes <https://kubernetes.io/>`_. The installation
+This document describes how to install Determined on `Kubernetes <https://kubernetes.io/>`_. The installation
 is performed via the `Determined Helm Chart <https://github.com/determined-ai/determined/tree/master/helm/charts/determined>`_.
 When installing via Helm, all user configuration will be done within
 `values.yaml <https://github.com/determined-ai/determined/blob/master/helm/charts/determined/values.yaml>`_ and
@@ -13,12 +13,12 @@ When installing via Helm, all user configuration will be done within
 Prerequisites
 -------------
 
-Before installing Determined on Kuberentes users need to have:
+Before installing Determined on Kubernetes users need to have:
 
 #. A Kubernetes version 1.15 or higher with GPU support enabled.
 #. Have access to your cluster via `kubectl <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_.
 #. Have `Helm installed <https://helm.sh/docs/helm/helm_install/>`_.
-#. Have a local copy of the `Determined Helm Chart <https://github.com/determined-ai/determined/tree/master/helm/charts/determined>`_. This can be done by cloning the Determined repo: ``git clone https://github.com/determined-ai/determined.git``.
+#. Have a local copy of the `Determined Helm Chart <https://github.com/determined-ai/determined/tree/master/helm/charts/determined>`_. This can be done by cloning the Determined repo:  ``git clone https://github.com/determined-ai/determined.git``.
 
 
 What Gets Installed
@@ -28,11 +28,11 @@ As part of the installation the Determined helm chart will create a:
 
 #. Deployment of the Determined master.
 #. ConfigMap containing configurations for the Determined master.
-#. LoadBalancer service to make the Determined master accesible.
+#. LoadBalancer service to make the Determined master accessible.
 #. ServiceAcccount which will be used by the Determined master.
 #. Deployment of a Postgres database. Later in this guide we demonstrate how an external database instead.
-#. PersistentVolumeClaim for the Postgres databese. Omitted if using an external database.
-#. Service to allow the Determined master to communite with the Postgres dataset. Omitted if using an external database.
+#. PersistentVolumeClaim for the Postgres database. Omitted if using an external database.
+#. Service to allow the Determined master to communicate with the Postgres dataset. Omitted if using an external database.
 
 
 .. _configure-determined-kubernetes-version:
@@ -46,7 +46,7 @@ a release version (e.g., ``0.13.0``) or specify any commit hash from the `upstre
 
 .. note::
 
-    If using non-release branch of the Determined repository, ``appVersion`` is going to be set to ``X.Y.Z.dev0``.
+    If using a non-release branch of the Determined repository, ``appVersion`` is going to be set to ``X.Y.Z.dev0``.
     This is not an official release version and deploying this version result in a ``ImagePullBackOff`` error.
     Users should remove ``.dev0`` to get the latest released version, or they can specify a specific commit hash
     instead.
@@ -64,9 +64,9 @@ common denominator.
 
 
 Configuring Checkpoint Storage
------------------------------
+------------------------------
 
-Checkpoints and TensorBoards events can be cofigured to be stored in ``shared_fs``, `AWS S3 <https://aws.amazon.com/s3/>`_,
+Checkpoints and TensorBoards events can be configured to be stored in ``shared_fs``, `AWS S3 <https://aws.amazon.com/s3/>`_,
 or `GCS <https://cloud.google.com/storage>`_. By default checkpoints and TensorBoard events are stored using
 ``shared_fs`` which creates a `hostPath Volume <https://kubernetes.io/docs/concepts/storage/volumes/#hostpath>`_ and
 saves the checkpoints to the host file system. Users are strongly discouraged from using ``shared_fs`` for storage
@@ -77,11 +77,11 @@ Instead of using ``shared_fs`` users should configure either ``AWS S3`` or ``GCS
 - ``AWS S3``: To configure Determined to use AWS S3 for checkpoint and TensorBoard storage, users need to set
   ``checkpointStorage.type`` in ``values.yaml` to ``s3`` and set ``checkpointStorage.bucket`` to the name of
   the bucket. The pods launched by the Determined master must have read, write, and delete access
-  to the bucket. To enbale this, users may optionally configure ``checkpointStorage.accessKey``,
+  to the bucket. To enable this, users may optionally configure ``checkpointStorage.accessKey``,
   ``checkpointStorage.secretKey``. Users may also optionally configure ``checkpointStorage.endpointUrl`` which
   specifies the endpoint to use for S3 clones (e.g., ``http://<minio-endpoint>:<minio-port|default=9000>``).
 
-- ``GCS``: To configure Determined to use Google Clous Storage for checkpoint and TensorBoard storage, users need to
+- ``GCS``: To configure Determined to use Google Cloud Storage for checkpoint and TensorBoard storage, users need to
   set ``checkpointStorage.type`` in ``values.yaml`` to ``gcs`` and set ``checkpointStorage.bucket`` to the name of
   the bucket. The pods launched by the Determined master must have read, write, and delete access to the bucket.
   For example, when launching their `GKE nodes <https://cloud.google.com/sdk/gcloud/reference/container/node-pools/create>`_
@@ -92,14 +92,14 @@ Configuring an External Database (Optional)
 -------------------------------------------
 
 Instead of having the Determined deploy a Postgres database users can deploy their own instance by setting
-``db.hostAddress`` to be the url of their database. When the ``db.hostAddress`` is configured, the Determined
-helm chart will omit deploying a database.
+``db.hostAddress`` to be the IP address of their database. When the ``db.hostAddress`` is configured, the
+Determined helm chart will omit deploying a database.
 
 
 Installing Determined
 ---------------------
 
-Once fininshed making configuration changes in ``values.yaml` and ``Chart.yaml`` Determined is ready to
+Once finished making configuration changes in ``values.yaml`` and ``Chart.yaml`` Determined is ready to
 be installed. To install Determined run:
 
 .. code::
@@ -110,8 +110,8 @@ be installed. To install Determined run:
 Determined within the default namespace. If you wish to install Determined into a non-default namespace
 add `` -n <namespace name>`` to the installation command.
 
-Once the instalation is completed instructions for discovering the IP address assigned to the Determined
-master will be printed out. Additionaly the IP address can be discovered by running ``kubectl get services``.
+Once the installation is completed instructions for discovering the IP address assigned to the Determined
+master will be printed out. Additionally the IP address can be discovered by running ``kubectl get services``.
 
 Upgrading Determined
 --------------------
@@ -128,3 +128,4 @@ Next Steps
 ----------
 
 - :ref:`quick-start`
+- :ref:`helm-config`
