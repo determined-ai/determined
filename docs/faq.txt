@@ -37,6 +37,18 @@ recommended solutions:
 
       pip install --ignore-installed determined-cli
 
+
+Is it possilbe to install Determined on Kubernetes?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Yes please see :ref:`Installling Determined on Kubernetes <install-on-kubernetes>` for instructions.
+
+When installing Determined on Kubernetes I get a  ``ImagePullBackOff`` error
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You are trying to install a non-released version of Determined. Please see instructions on how to correctly
+configure which :ref:`version of Determined <configure-determined-kubernetes-version>` to install on Kubernetes.
+
 Packages and Containers
 -----------------------
 

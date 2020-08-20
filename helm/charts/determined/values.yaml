@@ -27,7 +27,9 @@ checkpointStorage:
   saveTrialLatest: 1
 
 
-  # Comment out if not using `shared_fs`
+  # Comment out if not using `shared_fs`. Users are strongly discouraged
+  # from using ``shared_fs`` for storage beyond initial testing as most
+  # Kubernetes cluster nodes do not have a shared file system.
   type: shared_fs
   hostPath: /checkpoints
 
