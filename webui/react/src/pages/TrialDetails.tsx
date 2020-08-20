@@ -45,8 +45,7 @@ interface Params {
 const getTrialLength = (config?: RawJson): [string, number] | undefined => {
   if (!config) return undefined;
   const entries = Object.entries(config?.searcher.max_length || {});
-  const currentMaxLength = entries[0];
-  return currentMaxLength as [string, number] || [ 'batches', 100 ];
+  return entries[0] as [string, number] || [ 'batches', 100 ];
 };
 
 const setTrialLength = (experimentConfig: RawJson, length: number): void => {

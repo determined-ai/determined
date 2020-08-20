@@ -27,7 +27,7 @@ export const clone = (data: any, deep = true): any => {
 };
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const getPath = <T>(obj: Record<string, any>, path: string): T | undefined => {
+export const getPath = <T>(obj: RawJson, path: string): T | undefined => {
   // Reassigns to obj[key] on each array.every iteration
   let value = obj || {};
   return path.split('.').every(key => ((value = value[key]) !== undefined)) ?
@@ -150,20 +150,11 @@ export const isEqual = (a: unknown, b: unknown): boolean => {
   return JSON.stringify(a) === JSON.stringify(b);
 };
 
-// export const getSubObjectCopy = (obj: RawJson, accessors: string[]): any => {
-//   return accessors
-//     .reduce((acc, cur) => acc === undefined ? acc : acc[cur], obj);
-// };
-
-// returns the sub object access by accessors (by reference).
+// returns the sub object accessed by accessors (by reference).
 export const getSubObject = (obj: RawJson, accessors: string[]): any => {
-  let curIdx = 0;
-  let cur = obj;
-  while (isObject(cur) && curIdx < accessors.length) {
-    cur = cur[accessors[curIdx]];
-    curIdx++;
-  }
-  return cur;
+  // return getPath(obj, accessors.join('.'));
+  return accessors
+    .reduce((acc, cur) => acc === undefined ? acc : acc[cur], obj);
 };
 
 export const setSubObject = (obj: RawJson, accessors: string[], value: unknown): void => {

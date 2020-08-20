@@ -154,6 +154,13 @@ describe('data utility', () => {
         expect(actual).toBeUndefined();
       });
 
+      it('should return undefined for partial matching bad paths', () => {
+        const path = [ 'searcher', 'step_budget' ];
+        expect(getSubObject(config, path)).not.toBeUndefined();
+        const actual = getSubObject(config, [ ...path, 'xyz' ]);
+        expect(actual).toBeUndefined();
+      });
+
       it('should return null', () => {
         const actual = getSubObject(config, [ 'min_checkpoint_period' ]);
         expect(actual).toBeNull();
