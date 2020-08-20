@@ -567,10 +567,6 @@ suitable for large-scale experiments with hundreds or thousands of trials.
 ``max_trials``
   The number of trials, i.e., hyperparameter configurations, to evaluate.
 
-``max_concurrent_trials``
-  The maximum number of trials that can be worked on simultaneously.  This is
-  akin to controlling the degree of parallelism of the experiment.
-
 **Optional Fields**
 
 ``smaller_is_better``
@@ -599,6 +595,12 @@ suitable for large-scale experiments with hundreds or thousands of trials.
   The maximum number of times we evaluate intermediate results for a trial and
   terminate poorly performing trials. The default value is ``5``; only advanced
   users should consider changing this value.
+
+``max_concurrent_trials``
+  The maximum number of trials that can be worked on simultaneously. The default
+  value is ``0``, and we set reasonable values depending on max_trials and
+  the number of rungs in the brackets. This is akin to controlling the degree of
+  parallelism of the experiment.
 
 ``source_trial_id``
   If specified, the weights of *every* trial in the search will be initialized
