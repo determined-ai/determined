@@ -676,6 +676,23 @@ WHERE id = $1`, &experiment, id); err != nil {
 	return &experiment, nil
 }
 
+// ExperimentWithoutConfigByID looks up an experiment by ID in a database, returning an error if
+// none exists. It loads the experiment without its configuration, for callers that do not need
+// it, or can't handle backwards incompatible changes.
+func (db *PgDB) ExperimentWithoutConfigByID(id int) (*model.Experiment, error) {
+	var experiment model.Experiment
+
+	if err := db.query(`
+SELECT id, state, model_definition, start_time, end_time, archived,
+       git_remote, git_commit, git_committer, git_commit_date, owner_id
+FROM experiments
+WHERE id = $1`, &experiment, id); err != nil {
+		return nil, err
+	}
+
+	return &experiment, nil
+}
+
 // ExperimentByTrialID looks up an experiment by a trial ID in the
 // database, returning an error if the experiment doesn't exist.
 func (db *PgDB) ExperimentByTrialID(id int) (*model.Experiment, error) {
