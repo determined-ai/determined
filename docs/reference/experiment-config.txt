@@ -1149,11 +1149,11 @@ the :ref:`training units<experiment-configuration_training_units>` records, batc
 instead of steps.
 
 This migration guide describes the steps to migrate your experiment configurations from v0.12.13 to
-v0.13.0 while maintaining nearly identical behavior. 
+v0.13.0 while maintaining nearly identical behavior.
 
 .. warning ::
-  
-  Before migrating, make sure to cancel or kill all experiments in the ``ACTIVE`` or ``CANCELED``
+
+  Before migrating, make sure to cancel or kill all experiments in the ``ACTIVE`` or ``PAUSED``
   state, as they will not be able to resume on the new version of the Determined master. Also,
   we recommend taking a database snapshot and archiving any old experiments ahead of time.
 
