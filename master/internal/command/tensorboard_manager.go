@@ -90,7 +90,7 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 			}
 
 			if time.Now().After(service.LastRequested.Add(t.timeout)) {
-				ctx.Log().Infof("Killing %s due to inactivity", boardSummary.Config.Description)
+				ctx.Log().Infof("killing %s due to inactivity", boardSummary.Config.Description)
 				ctx.Ask(boardRef, &apiv1.KillTensorboardRequest{})
 			}
 		}

@@ -233,8 +233,10 @@ The master supports the following configuration settings:
 - ``root``: Specifies the root directory of the state files. Defaults to
   ``/usr/share/determined/master``.
 
-- ``tensorboard_timeout``: Specifies the duration in seconds a TensorBoard
-  instance can be idle before it is automatically killed.
+- ``tensorboard_timeout``: Specifies the duration in seconds before idle
+  TensorBoard instances are automatically terminated. A TensorBoard instance is
+  considered to be idle if it does not receive any HTTP traffic. The default
+  timeout is ``300`` (5 minutes).
 
 - ``provisioner``: Specifies the configuration of dynamic agents.
 
@@ -246,7 +248,7 @@ The master supports the following configuration settings:
     ``public-ipv4``, ``local-hostname``, or ``public-hostname``. If
     the master is deployed on GCP, rather than hardcoding the IP
     address, we advise you use one of the following to set the host as
-    an alias: ``internal-ip`` or\ ``external-ip``. Which one you
+    an alias: ``internal-ip`` or ``external-ip``. Which one you
     should select is based on your network configuration. On master
     startup, we will replace the above alias host with its real value.
     Defaults to ``http`` as scheme, local IP address as host, and
