@@ -68,7 +68,18 @@ func GetUser(ctx context.Context, d *db.PgDB) (*model.User, *model.UserSession, 
 	}
 }
 
-func authInterceptor(db *db.PgDB) grpc.UnaryServerInterceptor {
+func streamAuthInterceptor(db *db.PgDB) grpc.StreamServerInterceptor {
+	return func(
+		srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler,
+	) error {
+		if _, _, err := GetUser(ss.Context(), db); err != nil {
+			return err
+		}
+		return handler(srv, ss)
+	}
+}
+
+func unaryAuthInterceptor(db *db.PgDB) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
