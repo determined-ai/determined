@@ -13,17 +13,17 @@ Version 0.13.0
 
 **New Features**
 
-- Allow experiments to connect to the master using TLS.
+- Allow trial containers to connect to the master using TLS.
 
 - Allow agent's TLS verification to skip verification or use a custom certificate for the master.
 
-- For ``TFKerasTrial`` and ``EstimatorTrial``, add functionality to ``context.wrap_dataset()`` which allows users to skip sharding their training dataset for distributed training. If using this option, users are responsible for splitting their dataset in such a manner that every GPU (rank) sees unique data.
+- For :class:`~determined.keras.TFKerasTrial` and :class:`~determined.estimator.EstimatorTrial`, add support for disabling automatic sharding of the training dataset when doing distributed training. When wrapping a dataset via ``context.wrap_dataset``, users can now pass ``shard_dataset=True``. If this is done, users are responsible for splitting their dataset in such a manner that every GPU (rank) sees unique data.
 
 **Improvements**
 
 - **Breaking Change:** Change how additional arguments to ``ssh`` are passed through ``det shell start`` and ``det shell open``.  Previously they were passed as a single string, like ``det shell open SHELL_ID --ssh-opt '-X -Y -o SomeSetting="some string"'``, but now the ``--ssh-opt`` has been removed and all extra positional arguments are passed through without requiring double-layers of quoting, like ``det shell open SHELL_ID -- -X -Y -o SomeSetting="some string"`` (note the use of ``--`` to indicate all following arguments are positional arguments).
 
-- Install the ``determined`` and ``determined_cli`` Python packages inside ``det shell``.  Also, pass any user-defined environment variables for the task image into the ssh sessions opened via ``det shell start`` or ``det shell open``.
+- Install the ``determined`` and ``determined-cli`` Python packages inside ``det shell``.  Also, pass any user-defined environment variables for the task image into the ssh sessions opened via ``det shell start`` or ``det shell open``.
 
 - **Remove Steps from the UX:** Remove the concept of a "step" from the CLI, WebUI, and configuration files. Add new configuration settings to allow settings previously in terms of steps to be configured instead in terms of records, batches or epochs. See the :ref:`migration guide <migration-guide_remove-steps>` for details on migrating from the old configuration to the new configuration.
 
@@ -103,7 +103,7 @@ Version 0.13.0
 
 - Hyperparameter search: Add validation to the hyperparameter configuration section, to check if ``global_batch_size`` has been specified and if it is numeric.
 
-- Logs: Fix issue of not detecting newlines in the log messages, particularly kubernetes log messages.
+- Logs: Fix issue of not detecting newlines in the log messages, particularly Kubernetes log messages.
 
 - Logs: Add intermediate step to trial log download to alert user that the CLI is the recommended action, especially for large logs.
 
