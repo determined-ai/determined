@@ -62,6 +62,8 @@ can also be used to compare trials from *different* experiments.
 To launch TensorBoard to analyze specific trials, use
 ``det tensorboard start --trial-ids <trial_id 1> <trial_id 2> ...``.
 
+.. _data-in-tensorboard:
+
 Data in TensorBoard
 -------------------
 
@@ -121,8 +123,10 @@ trial class:
 Estimator
 ~~~~~~~~~
 
-There is no configuration necessary for trials using
-:class:`~determined.estimator.EstimatorTrial`.
+There is no configuration necessary for trials using :class:`~determined.estimator.EstimatorTrial`.
+Unless configured otherwise, Estimators automatically log TensorBoard events to the ``model_dir``,
+which Determined then moves to ``/tmp/tensorboard``.
+
 
 Tensorpack
 ~~~~~~~~~~
@@ -138,6 +142,27 @@ add a :class:`~determined.tensorpack.TFEventWriter` callback to your trial:
        ...
        def tensorpack_monitors(self):
            return [TFEventWriter()]
+
+PyTorch
+~~~~~~~
+
+To add TensorBoard support for models that use :ref:`PyTorch <pytorch-trial>`, use the writer
+object in :ref:`TorchWriter <pytorch-tensorboard>`:
+
+
+.. code:: python
+
+    from determined.tensorboard.metric_writers.pytorch import TorchWriter
+
+    class MyModel(PyTorchTrial):
+        def __init__(self, context):
+            ...
+            self.logger = TorchWriter()
+
+        def train_batch(self, batch, epoch_idx, batch_idx):
+            self.logger.writer.add_scalar('my_metric', np.random.random(), batch_idx)
+
+For a full-length example see the `mnist-GAN model <https://github.com/determined-ai/determined/blob/master/examples/official/trial/mnist_gan_pytorch/model_def.py>`_.
 
 Lifecycle Management
 --------------------

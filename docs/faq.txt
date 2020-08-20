@@ -132,4 +132,29 @@ Determined has support for TensorFlow models that use the :ref:`tf.keras <tf-ker
 or :ref:`Estimator <estimator-trial>` APIs. For models that use the low-level TensorFlow
 Core APIs, we recommend porting your model to use :ref:`Estimator Trial <estimator-trial>`.
 `Example of converting a Tensorflow graph into an Estimator
-<https://github.com/determined-ai/determined/blob/master/examples/experimental/mnist_tp_to_estimator/model_def.py>`_.
+<https://github.com/determined-ai/determined/blob/master/examples/experimental/trial/mnist_tp_to_estimator/model_def.py>`_.
+
+
+TensorBoard Support
+-------------------
+
+Can I log additional TensorBoards events beyond what Determined logs automatically?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Yes you can log TF Events to ``/tmp/tensorboard``. An example of how this can be done in PyTorch:
+
+.. code:: python
+
+    from torch.utils.tensorboard import SummaryWriter
+
+    writer = SummaryWriter(log_dir="/tmp/tensorboard")
+    writer.add_scalar('my_metric', np.random.random(), batch_idx)
+
+For more details and to see how to do this for EstimatorTrial and TFKerasTrial please see the
+:ref:`TensorBoard How-To Guide <data-in-tensorboard>`.
+
+Can I use TensorBoard with PyTorch?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Yes! For an example of this check out the `mnist-GAN model <https://github.com/determined-ai/determined/blob/master/examples/official/trial/mnist_gan_pytorch/model_def.py>`_.
+This example uses the :ref:`Determined TorchWriter <pytorch-tensorboard>` class which automatically
+configures the location for writing TensorBoards. Users can also directly use ``torch.utils.tensorboard.SummaryWriter``
+as shown in the snippet above.
