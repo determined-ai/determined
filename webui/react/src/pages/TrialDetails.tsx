@@ -64,7 +64,7 @@ const trialContinueConfig = (
     searcher: {
       max_length: experimentConfig.searcher.max_length,
       metric: experimentConfig.searcher.metric,
-      name: experimentConfig.searcher.name,
+      name: 'single',
       smaller_is_better: experimentConfig.searcher.smaller_is_better,
       source_trial_id: trialId,
     },
