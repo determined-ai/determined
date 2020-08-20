@@ -33,7 +33,7 @@ export type GenericRenderer = <T extends TableRecord>(
 type ExperimentRenderer = (text: string, record: ExperimentItem, index: number) => React.ReactNode;
 export type TaskRenderer = (text: string, record: CommandTask, index: number) => React.ReactNode;
 
-const MINIMUM_PAGE_SIZE = 10;
+export const MINIMUM_PAGE_SIZE = 10;
 
 /* Table Column Renderers */
 

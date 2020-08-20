@@ -8,7 +8,9 @@ import { makeClickHandler } from 'components/Link';
 import Page from 'components/Page';
 import { Indicator } from 'components/Spinner';
 import StateSelectFilter from 'components/StateSelectFilter';
-import { defaultRowClassName, getPaginationConfig, isAlternativeAction } from 'components/Table';
+import {
+  defaultRowClassName, getPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE,
+} from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
@@ -47,7 +49,7 @@ enum Action {
 }
 
 const defaultFilters: ExperimentFilters = {
-  limit: 25,
+  limit: MINIMUM_PAGE_SIZE,
   showArchived: false,
   states: [ ALL_VALUE ],
   username: undefined,
@@ -319,7 +321,7 @@ const ExperimentList: React.FC = () => {
             indicator: <Indicator />,
             spinning: !experimentsResponse.hasLoaded,
           }}
-          pagination={getPaginationConfig(filterExperiments.length)}
+          pagination={getPaginationConfig(filteredExperiments.length)}
           rowClassName={defaultRowClassName()}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}

@@ -153,8 +153,7 @@ export const filterExperiments = (
         matchesUser<ExperimentItem>(experiment, users, filters.username) &&
         matchesState<ExperimentItem>(experiment, filters.states) &&
         matchesSearch<ExperimentItem>(experiment, search);
-    })
-    .slice(0, filters.limit);
+    });
 };
 
 export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = AnyTask>(
@@ -171,8 +170,7 @@ export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = A
         matchesSearch<A>(task, search) &&
         (!isExperiment || !(task as ExperimentTask).archived);
     })
-    .filter(task => matchesSearch<A>(task, search))
-    .slice(0, filters.limit);
+    .filter(task => matchesSearch<A>(task, search));
 };
 
 /*
