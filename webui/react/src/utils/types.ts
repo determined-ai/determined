@@ -3,7 +3,7 @@ import {
   ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
 } from 'types';
 
-import { isNumber } from './data';
+import { deletePathList, getPathList, isNumber, setPathList } from './data';
 import { getDuration } from './time';
 
 /* Conversions to Tasks */
@@ -208,20 +208,31 @@ export const getLengthFromStepCount = (config: RawJson, stepCount: number): [str
   return [ 'batches', stepCount * batchesPerStep ];
 };
 
+const stepRemovalTranslations = [
+  { newName: 'searcher.max_length', oldName: 'searcher.max_steps' },
+  { oldName: 'min_validation_period' },
+  { oldName: 'min_checkpoint_period' },
+  { newName: 'searcher.max_length', oldName: 'searcher.target_trial_steps' },
+  { newName: 'searcher.length_per_round', oldName: 'searcher.steps_per_round' },
+  { newName: 'searcher.budget', oldName: 'searcher.step_budget' },
+];
+
 // Add opportunistic backward compatibility to old configs.
 export const upgradeConfig = (config: RawJson): void => {
-  if (isNumber(config.searcher.max_steps)) {
-    const [ key, count ] = getLengthFromStepCount(config, config.searcher.max_steps);
-    config.searcher.max_length = { [key]: count };
-    delete config.searcher.max_steps;
-    delete config.batches_per_step;
-  }
-  if (isNumber(config.min_validation_period)) {
-    const [ key, count ] = getLengthFromStepCount(config, config.min_validation_period);
-    config.min_validation_period = { [key]: count };
-  }
-  if (isNumber(config.min_checkpoint_period)) {
-    const [ key, count ] = getLengthFromStepCount(config, config.min_checkpoint_period);
-    config.min_checkpoint_period = { [key]: count };
-  }
+  stepRemovalTranslations.forEach(translation => {
+    const oldPath = translation.oldName.split('.');
+    const curValue = getPathList<undefined | null | number | unknown>(config, oldPath);
+    if (curValue === undefined) return;
+    if (curValue === null) {
+      deletePathList(config, oldPath);
+    }
+    if (isNumber(curValue)) {
+      const [ key, count ] = getLengthFromStepCount(config, curValue);
+      const newPath = (translation.newName || translation.oldName).split('.');
+      setPathList(config, newPath, { [key]: count });
+      if (translation.newName) deletePathList(config, oldPath);
+    }
+  });
+
+  delete config.batches_per_step;
 };

@@ -1,6 +1,11 @@
+import testConfig from 'fixtures/old-trial-config-noop-adaptive.json';
+import { RawJson } from 'types';
+
 import {
   clone,
+  deletePathList,
   getPath,
+  getPathList,
   getPathOrElse,
   isAsyncFunction,
   isFunction,
@@ -10,6 +15,7 @@ import {
   isPrimitive,
   isSet,
   isSyncFunction,
+  setPathList,
 } from './data';
 
 enum Type {
@@ -119,6 +125,11 @@ describe('data utility', () => {
       expect(getPath<string>(object, 'x.x')).toBeUndefined();
       expect(getPath<number>(object, 'c.x.y')).toBe(-1.2e10);
     });
+
+    it('should support empty path', () => {
+      expect(getPath<RawJson>(object, '')).toBe(object);
+    });
+
   });
 
   describe('getPathOrElse', () => {
@@ -134,6 +145,65 @@ describe('data utility', () => {
       expect(getPathOrElse<string>(object, 'c.x.w', fallback)).toBe(fallback);
       expect(getPathOrElse<string | undefined>(object, 'c.x.z', undefined)).toBeUndefined();
     });
+  });
+
+  describe('chained object manipulators', () => {
+    let config = clone(testConfig);
+
+    beforeAll(() => {
+      config = clone(testConfig);
+    });
+
+    describe('getPathList', () => {
+      it('should return undefined for bad paths', () => {
+        const actual = getPathList(config, [ 'x', 'y', 'z' ]);
+        expect(actual).toBeUndefined();
+      });
+
+      it('should return undefined for partial matching bad paths', () => {
+        const path = [ 'searcher', 'step_budget' ];
+        expect(getPathList(config, path)).not.toBeUndefined();
+        const actual = getPathList(config, [ ...path, 'xyz' ]);
+        expect(actual).toBeUndefined();
+      });
+
+      it('should return null', () => {
+        const actual = getPathList(config, [ 'min_checkpoint_period' ]);
+        expect(actual).toBeNull();
+      });
+
+      it('should return objects', () => {
+        const actual = getPathList(config, [ 'searcher' ]);
+        expect(actual).toHaveProperty('mode');
+        expect(typeof actual).toEqual('object');
+      });
+
+      it('should return a reference', () => {
+        const searcher = getPathList<RawJson>(config, [ 'searcher' ]);
+        const TEST_VALUE = 'TEST';
+        expect(searcher).toHaveProperty('mode');
+        searcher.mode = TEST_VALUE;
+        expect(config.searcher.mode).toEqual(TEST_VALUE);
+      });
+    });
+
+    describe('deleteSubObject', () => {
+      it('should remove from input', () => {
+        expect(config.min_validation_period).not.toBeUndefined();
+        deletePathList(config, [ 'min_validation_period' ]);
+        expect(config.min_validation_period).toBeUndefined();
+      });
+    });
+
+    describe('setSubObject', () => {
+      it('should set on input', () => {
+        const value = { abc: 3 };
+        setPathList(config, [ 'min_validation_period' ], value);
+        expect(config.min_validation_period).toStrictEqual(value);
+        expect(config.min_validation_period === value).toBeTruthy();
+      });
+    });
+
   });
 
   testGroups.forEach(group => {
