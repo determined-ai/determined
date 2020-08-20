@@ -1134,3 +1134,66 @@ The epoch size configured here is only used for interpreting configuration
 fields that are expressed in epochs. Actual epoch boundaries are still
 determined by the dataset itself (specifically, the end of an epoch occurs when
 the training data loader runs out of records).
+
+.. _migration-guide_remove-steps:
+
+Migration from v0.12.13 to v0.13.0
+----------------------------------
+
+This migration guide describes the steps to migrate your experiment configurations from v0.12.13 to
+v0.13.0 while maintaining nearly identical behavior.
+
+.. warning ::
+  
+  Before migrating, make sure to cancel or kill all experiments in the ``ACTIVE`` or ``CANCELED``
+  state, as they will not be able to resume on the new version of the Determined master. Also,
+  we recommend taking a database snapshot and archiving any old experiments ahead of time.
+
+The table below describes the field names that have changed.
+
+.. list-table::
+  :header-rows: 1
+
+  * - Old name
+    - New name
+  * - searcher.step_budget
+    - searcher.budget
+  * - searcher.max_steps
+    - searcher.max_length
+  * - searcher.target_trial_steps
+    - searcher.max_length
+  * - searcher.steps_per_round
+    - searcher.length_per_round
+  * - min_validation_period
+    - min_validation_period
+  * - min_checkpoint_period
+    - min_checkpoint_period
+
+For each configuration setting in the table, if it exists in your configuration, it should be
+renamed as shown above and the value should be changed from an integer to a map, `{batches: value}`,
+where value is the old value multiplied by the old value for ``batches_per_step``. If
+``batches_per_step`` was not specified, use the default value of 100. For example, to migrate this
+single searcher:
+
+.. code:: yaml
+
+  batches_per_step: 100
+  searcher:
+    name: single
+    metric: accuracy
+    max_trials: 5
+    max_steps: 10
+
+We replace ``max_steps`` by ``max_length``, change the value to ``{batches: 100*10}``.
+
+.. code:: yaml
+
+  scheduling_unit: 100
+  searcher:
+    name: single
+    metric: accuracy
+    max_trials: 5
+    max_steps:
+      batches: 1000
+
+Finally, we also rename ``batches_per_step`` to ``scheduling_unit``, leaving the value the same.
