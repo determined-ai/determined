@@ -41,7 +41,6 @@ type podMetadata struct {
 //     +- events: sends updates about kubernetes events.
 //     +- requestQueue: queues requests to create / delete kubernetes resources.
 //        +- requestProcessingWorkers: processes request to create / delete kubernetes resources.
-
 type pods struct {
 	cluster                  *actor.Ref
 	clusterID                string

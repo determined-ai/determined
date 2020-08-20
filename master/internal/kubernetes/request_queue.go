@@ -60,7 +60,7 @@ type queuedResourceRequest struct {
 // kubernetes resources that require interaction with the kubernetes API. It accomplishes
 // this by forwarding requests to requestProcessingWorker actors which prcess the request.
 // There are two reasons a queue system is required as opposed to allowing the pod actors
-// to create and delete Kubernetes resources asynchronously:
+// to create and delete Kubernetes resources asynchronously themselves:
 //
 //    1) Each pod creation first requires the creation of a configMap, however creating the two
 //       is not an atomic operation. If there is a large number of concurrent creation requests
@@ -91,7 +91,6 @@ type queuedResourceRequest struct {
 //  notify the task handler of this by sending a `resourceCreationCancelled` message.
 //  requestProcessingWorkers notify the requestQueue that they are available to receive work
 //  by sending a `workerAvailable` message.
-
 type requestQueue struct {
 	podInterface       typedV1.PodInterface
 	configMapInterface typedV1.ConfigMapInterface
@@ -132,9 +131,7 @@ func (r *requestQueue) Receive(ctx *actor.Context) error {
 		}
 
 	case createKubernetesResources:
-		if err := r.receiveCreateKubernetesResources(ctx, msg); err != nil {
-			return err
-		}
+		r.receiveCreateKubernetesResources(ctx, msg)
 
 	case deleteKubernetesResources:
 		r.receiveDeleteKubernetesResources(ctx, msg)
@@ -153,24 +150,23 @@ func (r *requestQueue) Receive(ctx *actor.Context) error {
 func (r *requestQueue) receiveCreateKubernetesResources(
 	ctx *actor.Context,
 	msg createKubernetesResources,
-) error {
+) {
 	if _, requestAlreadyExists := r.pendingResourceCreations[msg.handler]; requestAlreadyExists {
-		return errors.Errorf(
+		ctx.Log().Errorf(
 			"actor %s issued multiple request requests to create kubernetes resources",
 			msg.handler.Address())
+		return
 	}
 
 	if len(r.availableWorkers) > 0 {
 		ctx.Tell(r.availableWorkers[0], msg)
 		r.availableWorkers = r.availableWorkers[1:]
-		return nil
+		return
 	}
 
 	queuedRequest := &queuedResourceRequest{createResources: &msg}
 	r.queue = append(r.queue, queuedRequest)
 	r.pendingResourceCreations[msg.handler] = queuedRequest
-
-	return nil
 }
 
 func (r *requestQueue) receiveDeleteKubernetesResources(
