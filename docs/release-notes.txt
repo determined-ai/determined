@@ -75,13 +75,12 @@ Version 0.13.0
 
   - Master Logs: ``/det/logs``, Trial Logs: ``/det/trials/<id>/logs``, Task Logs: ``/det/<tasktype>/<id>/logs``
 
-    - Logs now stream in new logs events on the fly.
     - Limit logs to 1000 lines for initial load and load an additional 1000 for each subsequent fetch of older logs.
     - Use new log viewer optimized for efficient rendering.
     - Introduce log line numbers.
     - Add ANSI color support.
     - Add error, warning, and debug visual icons and colors.
-    - Add tailing button to enable tailing lob behavior.
+    - Add tailing button to enable tailing log behavior.
     - Add scroll to top button to load older logs out
     - Fix back and forth scrolling behavior on log viewer.
 
