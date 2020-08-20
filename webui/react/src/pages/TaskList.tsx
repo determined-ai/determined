@@ -6,7 +6,7 @@ import Icon from 'components/Icon';
 import { makeClickHandler } from 'components/Link';
 import Page from 'components/Page';
 import { Indicator } from 'components/Spinner';
-import { defaultRowClassName, isAlternativeAction } from 'components/Table';
+import { defaultRowClassName, getPaginationConfig, isAlternativeAction } from 'components/Table';
 import { TaskRenderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TaskFilter from 'components/TaskFilter';
@@ -308,7 +308,7 @@ const TaskList: React.FC = () => {
             indicator: <Indicator />,
             spinning: !hasLoaded,
           }}
-          pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
+          pagination={getPaginationConfig(filteredTasks.length)}
           rowClassName={record => defaultRowClassName(canBeOpened(record))}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
