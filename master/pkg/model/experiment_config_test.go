@@ -107,6 +107,11 @@ func validGridSearchConfig() ExperimentConfig {
 		},
 	}
 	config.Hyperparameters = map[string]Hyperparameter{
+		GlobalBatchSize: {
+			ConstHyperparameter: &ConstHyperparameter{
+				Val: 64,
+			},
+		},
 		"const": {
 			ConstHyperparameter: &ConstHyperparameter{
 				Val: map[string]interface{}{
