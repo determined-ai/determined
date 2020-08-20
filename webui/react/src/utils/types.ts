@@ -3,7 +3,7 @@ import {
   ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
 } from 'types';
 
-import { deleteSubObject, getPathList, isNumber, setSubObject } from './data';
+import { deletePathList, getPathList, isNumber, setPathList } from './data';
 import { getDuration } from './time';
 
 /* Conversions to Tasks */
@@ -224,13 +224,13 @@ export const upgradeConfig = (config: RawJson): void => {
     const curValue = getPathList<undefined | null | number | unknown>(config, oldPath);
     if (curValue === undefined) return;
     if (curValue === null) {
-      deleteSubObject(config, oldPath);
+      deletePathList(config, oldPath);
     }
     if (isNumber(curValue)) {
       const [ key, count ] = getLengthFromStepCount(config, curValue);
       const newPath = (translation.newName || translation.oldName).split('.');
-      setSubObject(config, newPath, { [key]: count });
-      if (translation.newName) deleteSubObject(config, oldPath);
+      setPathList(config, newPath, { [key]: count });
+      if (translation.newName) deletePathList(config, oldPath);
     }
   });
 

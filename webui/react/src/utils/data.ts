@@ -154,13 +154,13 @@ export const isEqual = (a: unknown, b: unknown): boolean => {
   return JSON.stringify(a) === JSON.stringify(b);
 };
 
-export const setSubObject = (obj: RawJson, path: string[], value: unknown): void => {
+export const setPathList = (obj: RawJson, path: string[], value: unknown): void => {
   const lastIndex = path.length-1;
   const parentObj = getPathList<RawJson>(obj, path.slice(0, lastIndex));
   if (parentObj) parentObj[path[lastIndex]] = value;
 };
 
-export const deleteSubObject = (obj: RawJson, path: string[]): void => {
+export const deletePathList = (obj: RawJson, path: string[]): void => {
   const lastIndex = path.length-1;
   const parentObj = getPathList<RawJson>(obj, path.slice(0, lastIndex));
   if (parentObj) delete parentObj[path[lastIndex]];

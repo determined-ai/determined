@@ -3,7 +3,7 @@ import { RawJson } from 'types';
 
 import {
   clone,
-  deleteSubObject,
+  deletePathList,
   getPath,
   getPathList,
   getPathOrElse,
@@ -15,7 +15,7 @@ import {
   isPrimitive,
   isSet,
   isSyncFunction,
-  setSubObject,
+  setPathList,
 } from './data';
 
 enum Type {
@@ -190,7 +190,7 @@ describe('data utility', () => {
     describe('deleteSubObject', () => {
       it('should remove from input', () => {
         expect(config.min_validation_period).not.toBeUndefined();
-        deleteSubObject(config, [ 'min_validation_period' ]);
+        deletePathList(config, [ 'min_validation_period' ]);
         expect(config.min_validation_period).toBeUndefined();
       });
     });
@@ -198,7 +198,7 @@ describe('data utility', () => {
     describe('setSubObject', () => {
       it('should set on input', () => {
         const value = { abc: 3 };
-        setSubObject(config, [ 'min_validation_period' ], value);
+        setPathList(config, [ 'min_validation_period' ], value);
         expect(config.min_validation_period).toStrictEqual(value);
         expect(config.min_validation_period === value).toBeTruthy();
       });
