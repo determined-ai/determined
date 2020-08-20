@@ -41,7 +41,7 @@ func TestValidateGlobalBatchSize(t *testing.T) {
 					"val": "okok"
 				}
 			}}`,
-			"global_batch_size must be a numeric value",
+			"global_batch_size hyperparameter must be a numeric value",
 		},
 		{
 			"valid categorical global_batch_size",
@@ -63,7 +63,7 @@ func TestValidateGlobalBatchSize(t *testing.T) {
 				  "vals": ["32", "hello"]
 				}
 			}}`,
-			"global_batch_size must be a numeric value",
+			"global_batch_size hyperparameter must be a numeric value",
 		},
 	}
 
