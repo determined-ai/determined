@@ -27,3 +27,4 @@ The full list of reference guides can be found below:
   config-template
   experiment-config
   attributions
+  helm-config

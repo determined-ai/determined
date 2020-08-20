@@ -1,4 +1,4 @@
-# httpPort controls the port at which the listens for connections on.
+# httpPort configures the port at which the Determined master listens for connections on.
 httpPort: 8080 
 
 # db sets the configurations for the database.
@@ -15,7 +15,8 @@ db:
   password: postgres
   port: 5432
 
-  # Only used for Determined db deployment.
+  # Only used for Determined db deployment. Configures the size
+  # of the PersistentVolumeClaim for the Determined delpoyed database.
   storageSize: 30Gi
 
 # checkpointStorage controls where checkpoints are stored.
@@ -62,7 +63,6 @@ masterMemRequest: "8Gi"
 ## GLOO libraries during distributed training are configurable. These default to auto-discovery and
 ## random non-privileged ports, respectively.
 taskContainerDefaults:
-  shmSizeBytes: 4294967296
   # networkMode: bridge
   # dtrainNetworkInterface: <network interface name>
   # ncclPortRange: <MIN:MAX>
