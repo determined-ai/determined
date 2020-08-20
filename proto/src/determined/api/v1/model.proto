@@ -3,8 +3,6 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
-import "google/protobuf/field_mask.proto";
-
 import "determined/api/v1/pagination.proto";
 import "determined/model/v1/model.proto";
 
@@ -77,8 +75,6 @@ message PostModelResponse {
 message PatchModelRequest {
   // The model desired model fields and values.
   determined.model.v1.Model model = 1;
-  // An update mask for the above model.
-  google.protobuf.FieldMask update_mask = 2;
 }
 
 // Response to PatchModelRequest.

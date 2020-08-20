@@ -47,7 +47,6 @@ def clean(fn: str) -> None:
         paths[key.replace(".", "_")] = value
     spec["paths"] = paths
 
-    del spec["definitions"]["protobufFieldMask"]
     for key, value in spec["definitions"].items():
         # Remove definitions that should be hidden from the user.
         if key == "protobufAny":
