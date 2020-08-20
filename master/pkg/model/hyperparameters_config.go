@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"sort"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/union"
 )
@@ -13,6 +15,39 @@ const GlobalBatchSize = "global_batch_size"
 
 // Hyperparameters holds a mapping from hyperparameter name to its configuration.
 type Hyperparameters map[string]Hyperparameter
+
+// Validate implements the check.Validatable interface.
+func (h Hyperparameters) Validate() []error {
+	b, ok := h[GlobalBatchSize]
+	if !ok {
+		return []error{
+			errors.New("global_batch_size hyperparameter must be specified"),
+		}
+	}
+	switch {
+	case b.ConstHyperparameter != nil:
+		if !isNumeric(b.ConstHyperparameter.Val) {
+			return []error{
+				errors.New("global_batch_size hyperparameter must be a numeric value"),
+			}
+		}
+	case b.CategoricalHyperparameter != nil:
+		for _, val := range b.CategoricalHyperparameter.Vals {
+			if !isNumeric(val) {
+				return []error{
+					errors.New("global_batch_size hyperparameter must be a numeric value"),
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func isNumeric(val interface{}) bool {
+	_, iOk := val.(int)
+	_, fOk := val.(float64)
+	return iOk || fOk
+}
 
 // Each applies the function to each hyperparameter in string order of the name.
 func (h Hyperparameters) Each(f func(name string, param Hyperparameter)) {
