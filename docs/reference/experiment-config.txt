@@ -1140,8 +1140,12 @@ the training data loader runs out of records).
 Migration from v0.12.13 to v0.13.0
 ----------------------------------
 
+In v0.13.0, many configuration settings were renamed and updated to be configured in terms of
+the :ref:`training units<experiment-configuration_training_units>` records, batches, and epochs
+instead of steps.
+
 This migration guide describes the steps to migrate your experiment configurations from v0.12.13 to
-v0.13.0 while maintaining nearly identical behavior.
+v0.13.0 while maintaining nearly identical behavior. 
 
 .. warning ::
   
@@ -1170,30 +1174,38 @@ The table below describes the field names that have changed.
     - min_checkpoint_period
 
 For each configuration setting in the table, if it exists in your configuration, it should be
-renamed as shown above and the value should be changed from an integer to a map, `{batches: value}`,
-where value is the old value multiplied by the old value for ``batches_per_step``. If
-``batches_per_step`` was not specified, use the default value of 100. For example, to migrate this
-single searcher:
+renamed as shown above and changed to use the new units. To migrate the value to the new units,
+it should be changed from an integer to a map, ``{batches: value}``, where value is the old value
+multiplied by the old value for ``batches_per_step``. If ``batches_per_step`` was not specified, use
+the default value of 100. For example, to migrate this single searcher:
 
 .. code:: yaml
 
   batches_per_step: 100
+  min_validation_period: 1
+  min_checkpoint_period: 2
   searcher:
     name: single
     metric: accuracy
     max_trials: 5
     max_steps: 10
 
-We replace ``max_steps`` by ``max_length``, change the value to ``{batches: 100*10}``.
+We replace ``max_steps`` by ``max_length`` and change the value to ``{batches: 100*10}``, change the
+value for ``min_validation_period`` to ``{batches: 100*1}``, and change the value for
+``min_checkpoint_period`` to ``{batches: 100*2}``.
 
 .. code:: yaml
 
   scheduling_unit: 100
+  min_validation_period:
+    batches: 100
+  min_checkpoint_period:
+    batches: 200
   searcher:
     name: single
     metric: accuracy
     max_trials: 5
-    max_steps:
+    max_length:
       batches: 1000
 
 Finally, we also rename ``batches_per_step`` to ``scheduling_unit``, leaving the value the same.
