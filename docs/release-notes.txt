@@ -25,13 +25,13 @@ Version 0.13.0
 
 - Install the ``determined`` and ``determined_cli`` Python packages inside ``det shell``.  Also, pass any user-defined environment variables for the task image into the ssh sessions opened via ``det shell start`` or ``det shell open``.
 
-- **Remove Determined Steps from the UX:** Remove the concept of a "Determined step" from the UX and add new configuration settings to allow settings previously in terms of steps to be configured instead in terms of records, batches or epochs. See the :ref:`migration guide <migration-guide_remove-steps>` for details on migrating from the old configuration to the new configuration.
+- **Remove Steps from the UX:** Remove the concept of a "step" from the CLI, WebUI, and configuration files. Add new configuration settings to allow settings previously in terms of steps to be configured instead in terms of records, batches or epochs. See the :ref:`migration guide <migration-guide_remove-steps>` for details on migrating from the old configuration to the new configuration.
 
   - Many configuration settings can now be set in terms of records, batches or epochs. For example, a single searcher can be configured to run for 100 records by setting ``max_length: {records: 100}``, 100 batches by setting ``max_length: {batches: 100}``, or 100 epochs by setting ``records_per_epoch`` at the root of the config and ``max_length: {epochs: 100}``.
   - A new configuration setting, ``records_per_epoch``, is added that must be specified when any quantity is configured in terms of epochs.
-  - For single, random and grid searchers ``searcher.max_steps`` was replaced by ``searcher.max_length``
-  - For ASHA based searchers, ``searcher.target_trial_steps`` and ``searcher.step_budget`` were replaced by ``searcher.max_length`` and ``searcher.budget``, respectively.
-  - For PBT, ``searcher.steps_per_round`` was replaced by ``searcher.length_per_round``.
+  - For single, random and grid searchers ``searcher.max_steps`` has been replaced by ``searcher.max_length``
+  - For ASHA based searchers, ``searcher.target_trial_steps`` and ``searcher.step_budget`` has been replaced by ``searcher.max_length`` and ``searcher.budget``, respectively.
+  - For PBT, ``searcher.steps_per_round`` has been replaced by ``searcher.length_per_round``.
   - For all experiments, the names for ``min_validation_period`` and ``min_checkpoint_period`` are unchanged but they are now configured in terms of records, batches or epochs.
 
 - **WebUI changes**
@@ -85,7 +85,7 @@ Version 0.13.0
     - Add scroll to top button to load older logs out
     - Fix back and forth scrolling behavior on log viewer.
 
-  - Cluster: ``/det/Cluster``
+  - Cluster: ``/det/cluster``
 
     - Separate out GPU from CPU resources.
     - Show resource availability and resource count (per type).
@@ -117,7 +117,7 @@ Version 0.13.0
 
 - Tasks: Allow the master certificate file to be readable even for a non-root task.
 
-- TensorBoard: Fix issue affecting TensorBoards on AWS in US-EAST-1 region.
+- TensorBoard: Fix issue affecting TensorBoards on AWS in us-east-1 region.
 
 - TensorBoard: Recursively search for tfevents files in subdirectories, not just the top level log directory.
 
