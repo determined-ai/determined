@@ -18,7 +18,7 @@ hyperparameters:
     minval: 5
     maxval: 30
 searcher:
-  name: adaptive_simple
+  name: adaptive_asha
   metric: val_categorical_accuracy
   smaller_is_better: false
   max_length:

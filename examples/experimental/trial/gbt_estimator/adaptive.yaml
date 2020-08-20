@@ -33,7 +33,7 @@ hyperparameters:
     maxval: 0.5
   global_batch_size: 8
 searcher:
-  name: adaptive_simple
+  name: adaptive_asha
   metric: accuracy
   max_length:
     batches: 500

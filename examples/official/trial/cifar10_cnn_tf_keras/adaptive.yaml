@@ -39,7 +39,7 @@ hyperparameters:
       - False
 records_per_epoch: 50000
 searcher:
-  name: adaptive_simple
+  name: adaptive_asha
   mode: aggressive
   metric: val_categorical_error
   max_length:

@@ -29,7 +29,6 @@ searcher:
   metric: validation_loss
   smaller_is_better: true
   max_trials: 16
-  max_concurrent_trials: 8
   max_length:
     epochs: 1
 entrypoint: model_def:MNistTrial

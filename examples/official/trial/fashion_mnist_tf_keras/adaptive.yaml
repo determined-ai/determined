@@ -7,7 +7,7 @@ hyperparameters:
     maxval: 256
 records_per_epoch: 28800
 searcher:
-  name: adaptive_simple
+  name: adaptive_asha
   metric: val_accuracy
   smaller_is_better: false
   max_length:

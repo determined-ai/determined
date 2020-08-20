@@ -21,7 +21,7 @@ hyperparameters:
     minval: 8
     maxval: 64
 searcher:
-  name: adaptive_simple
+  name: adaptive_asha
   metric: validation_error
   smaller_is_better: true
   max_length:
