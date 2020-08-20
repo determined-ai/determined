@@ -8,13 +8,13 @@ from determined import tensorboard
 
 class TorchWriter(tensorboard.MetricWriter):
     """
-    TorchWriter uses pytorch file writers and summary operations to write
-    out tfevent files containing scalar batch metrics. It instantiates
-    as instance of ``torch.utils.tensorboard.SummaryWriter`` which can be
-    accessed via the ``writer`` class variable, and configures the SummaryWriter
-    to write to the correct directory.
+    TorchWriter uses PyTorch file writers and summary operations to write
+    out tfevent files containing scalar batch metrics. It creates
+    an instance of ``torch.utils.tensorboard.SummaryWriter`` which can be
+    accessed via the ``writer`` field and configures the SummaryWriter
+    to write to the correct directory inside the trial container.
 
-    Code example:
+    Usage example:
 
      .. code-block:: python
 
@@ -27,8 +27,6 @@ class TorchWriter(tensorboard.MetricWriter):
 
             def train_batch(self, batch, epoch_idx, batch_idx):
                 self.logger.writer.add_scalar('my_metric', np.random.random(), batch_idx)
-
-
     """
 
     def __init__(self) -> None:
