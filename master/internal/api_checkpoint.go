@@ -30,7 +30,8 @@ func (a *apiServer) GetCheckpoint(
 
 func (a *apiServer) PatchCheckpoint(
 	ctx context.Context, req *apiv1.PatchCheckpointRequest) (*apiv1.PatchCheckpointResponse, error) {
-	getResp, err := a.GetCheckpoint(ctx, &apiv1.GetCheckpointRequest{CheckpointUuid: req.Checkpoint.Uuid})
+	getResp, err := a.GetCheckpoint(ctx,
+		&apiv1.GetCheckpointRequest{CheckpointUuid: req.Checkpoint.Uuid})
 	if err != nil {
 		return nil, err
 	}
@@ -48,8 +49,10 @@ func (a *apiServer) PatchCheckpoint(
 	}
 
 	currCheckpoint.Metadata = req.Checkpoint.Metadata
-	log.Infof("checkpoint (%s) metadata changing from %s to %s", req.Checkpoint.Uuid, currMeta, newMeta)
-	err = a.m.db.QueryProto("update_checkpoint", &checkpointv1.Checkpoint{}, req.Checkpoint.Uuid, newMeta)
+	log.Infof("checkpoint (%s) metadata changing from %s to %s",
+		req.Checkpoint.Uuid, currMeta, newMeta)
+	err = a.m.db.QueryProto("update_checkpoint",
+		&checkpointv1.Checkpoint{}, req.Checkpoint.Uuid, newMeta)
 
 	return &apiv1.PatchCheckpointResponse{Checkpoint: currCheckpoint},
 		errors.Wrapf(err, "error updating checkpoint %s in database", req.Checkpoint.Uuid)
