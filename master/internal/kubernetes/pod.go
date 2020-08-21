@@ -141,6 +141,9 @@ func (p *pod) Receive(ctx *actor.Context) error {
 		}
 
 	case actor.ChildStopped:
+		if !p.resourcesDeleted {
+			ctx.Log().Errorf("pod logger exited unexpectedly")
+		}
 
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
