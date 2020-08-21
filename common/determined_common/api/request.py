@@ -1,3 +1,4 @@
+import os
 import webbrowser
 from types import TracebackType
 from typing import Any, Dict, Iterator, Optional
@@ -16,6 +17,15 @@ _master_cert_bundle = None
 def set_master_cert_bundle(path: str) -> None:
     global _master_cert_bundle
     _master_cert_bundle = path
+
+
+# Set the bundle if one is specified by the environment. This is done on import since we can't
+# always count on having an entry point we control (e.g., if someone is importing this code in a
+# notebook).
+try:
+    set_master_cert_bundle(os.environ["DET_MASTER_CERT_FILE"])
+except KeyError:
+    pass
 
 
 def get_master_cert_bundle() -> Optional[str]:

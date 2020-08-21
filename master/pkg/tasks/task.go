@@ -36,6 +36,13 @@ func defaultEnvVars() map[string]string {
 	return envVars
 }
 
+func addTLSVars(t TaskSpec, env map[string]string) {
+	if t.MasterCert != nil {
+		env["DET_USE_TLS"] = "true"
+		env["DET_MASTER_CERT_FILE"] = certPath
+	}
+}
+
 // workDirArchive ensures that the workdir is created and owned by the user.
 func workDirArchive(aug *model.AgentUserGroup) container.RunArchive {
 	return wrapArchive(
@@ -96,6 +103,8 @@ func getUser(agentUserGroup *model.AgentUserGroup) string {
 func CommandEnvVars(t TaskSpec) map[string]string {
 	envVarsMap := defaultEnvVars()
 	envVarsMap["DET_TASK_ID"] = t.TaskID
+	addTLSVars(t, envVarsMap)
+
 	return envVarsMap
 }
 
@@ -109,6 +118,7 @@ func CommandArchives(t TaskSpec) []container.RunArchive {
 		wrapArchive(cmd.AgentUserGroup.OwnArchive(cmd.UserFiles), ContainerWorkDir),
 		wrapArchive(cmd.AdditionalFiles, rootDir),
 		harnessArchive(t.HarnessPath, cmd.AgentUserGroup),
+		masterCertArchive(t.MasterCert),
 	}
 }
 
@@ -219,11 +229,7 @@ func TrialEnvVars(t TaskSpec, rendezvousPorts []string) map[string]string {
 	envVars["DET_WORKLOAD_MANAGER_TYPE"] = string(exp.WorkloadManagerType)
 	envVars["DET_RENDEZVOUS_PORTS"] = strings.Join(rendezvousPorts, ",")
 	envVars["DET_TRIAL_RUNNER_NETWORK_INTERFACE"] = networkInterface
-
-	if t.MasterCert != nil {
-		envVars["DET_USE_TLS"] = "true"
-		envVars["DET_MASTER_CERT_FILE"] = certPath
-	}
+	addTLSVars(t, envVars)
 
 	if t.TaskContainerDefaults.NCCLPortRange != "" {
 		envVars["NCCL_PORT_RANGE"] = t.TaskContainerDefaults.NCCLPortRange

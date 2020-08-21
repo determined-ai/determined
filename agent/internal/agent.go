@@ -29,6 +29,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 )
 
+const (
+	insecureScheme = "http"
+	secureScheme   = "https"
+)
+
 type agent struct {
 	Version    string
 	Options    `json:"options"`
@@ -212,9 +217,9 @@ func (a *agent) getMasterInfo() error {
 		return errors.Wrap(err, "failed to construct TLS config")
 	}
 
-	masterProto := "http"
+	masterProto := insecureScheme
 	if tlsConfig != nil {
-		masterProto = "https"
+		masterProto = secureScheme
 	}
 	client := &http.Client{
 		Transport: &http.Transport{
