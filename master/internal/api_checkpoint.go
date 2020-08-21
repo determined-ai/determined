@@ -52,7 +52,7 @@ func (a *apiServer) PostCheckpointMetadata(
 	currCheckpoint.Metadata = req.Checkpoint.Metadata
 	log.Infof("checkpoint (%s) metadata changing from %s to %s",
 		req.Checkpoint.Uuid, currMeta, newMeta)
-	err = a.m.db.QueryProto("update_checkpoint",
+	err = a.m.db.QueryProto("update_checkpoint_metadata",
 		&checkpointv1.Checkpoint{}, req.Checkpoint.Uuid, newMeta)
 
 	return &apiv1.PostCheckpointMetadataResponse{Checkpoint: currCheckpoint},
