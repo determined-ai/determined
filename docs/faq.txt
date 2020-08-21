@@ -38,7 +38,7 @@ recommended solutions:
       pip install --ignore-installed determined-cli
 
 
-Is it possilbe to install Determined on Kubernetes?
+Is it possible to install Determined on Kubernetes?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Yes please see :ref:`Installling Determined on Kubernetes <install-on-kubernetes>` for instructions.
