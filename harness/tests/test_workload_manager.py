@@ -1,7 +1,9 @@
 import contextlib
+import os
 import pathlib
-from typing import Any, Iterator, cast
+from typing import Any, Dict, Iterator, Optional, cast
 
+import numpy as np
 import pytest
 
 import determined as det
@@ -29,6 +31,12 @@ class NoopBatchMetricWriter(tensorboard.BatchMetricWriter):
         pass
 
 
+class NoopStorageManager(storage.StorageManager):
+    @contextlib.contextmanager
+    def restore_path(self, metadata: storage.StorageMetadata) -> Iterator[str]:
+        raise NotImplementedError()
+
+
 class FailOnUploadStorageManager(storage.StorageManager):
     def post_store_path(
         self, storage_id: str, storage_dir: str, metadata: storage.StorageMetadata
@@ -41,8 +49,11 @@ class FailOnUploadStorageManager(storage.StorageManager):
 
 
 class NoopTrialController(det.TrialController):
-    def __init__(self, workloads: workload.Stream) -> None:
+    def __init__(
+        self, workloads: workload.Stream, validation_metrics: Optional[Dict[str, Any]] = None
+    ) -> None:
         self.workloads = workloads
+        self.validation_metrics = validation_metrics
 
     @staticmethod
     def pre_execute_hook(*_: Any, **__: Any) -> Any:
@@ -64,7 +75,8 @@ class NoopTrialController(det.TrialController):
                 )
                 response_func({"metrics": metrics})
             elif w.kind == workload.Workload.Kind.COMPUTE_VALIDATION_METRICS:
-                raise NotImplementedError()
+                check.len_eq(args, 0)
+                response_func({"metrics": {"validation_metrics": self.validation_metrics}})
             elif w.kind == workload.Workload.Kind.CHECKPOINT_MODEL:
                 check.len_eq(args, 1)
                 check.is_instance(args[0], pathlib.Path)
@@ -102,3 +114,49 @@ def test_checkpoint_upload_failure(tmp_path: pathlib.Path) -> None:
     # Iterate through the events in the workload_manager as the TrialController would.
     with pytest.raises(ValueError, match="upload error"):
         trial_controller.run()
+
+
+def test_reject_nonscalar_searcher_metric() -> None:
+    metric_name = "validation_error"
+
+    hparams = {"global_batch_size": 64}
+    experiment_config = utils.make_default_exp_config(hparams, 1)
+    experiment_config["searcher"] = {"metric": metric_name}
+    env = utils.make_default_env_context(hparams=hparams, experiment_config=experiment_config)
+    rendezvous_info = utils.make_default_rendezvous_info()
+    storage_manager = NoopStorageManager(os.devnull)
+    tensorboard_manager = NoopTensorboardManager()
+    metric_writer = NoopBatchMetricWriter()
+
+    def make_workloads() -> workload.Stream:
+        yield workload.train_workload(1, num_batches=100), [], workload.ignore_workload_response
+        yield workload.validation_workload(), [], workload.ignore_workload_response
+
+    # Normal Python numbers and NumPy scalars are acceptable; other values are not.
+    cases = [
+        (True, 17),
+        (True, 0.17),
+        (True, np.float64(0.17)),
+        (True, np.float32(0.17)),
+        (False, "foo"),
+        (False, [0.17]),
+        (False, {}),
+    ]
+    for is_valid, metric_value in cases:
+        workload_manager = layers.build_workload_manager(
+            env,
+            make_workloads(),
+            rendezvous_info,
+            storage_manager,
+            tensorboard_manager,
+            metric_writer,
+        )
+
+        trial_controller = NoopTrialController(
+            iter(workload_manager), validation_metrics={metric_name: metric_value}
+        )
+        if is_valid:
+            trial_controller.run()
+        else:
+            with pytest.raises(AssertionError, match="non-scalar"):
+                trial_controller.run()
