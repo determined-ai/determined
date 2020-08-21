@@ -228,22 +228,22 @@ The master supports the following configuration settings:
     - ``type: default``: The default resource provider includes static and
       dynamic agents.
 
-    - ``type: kubernetes``: The kuberentes resource provider launches tasks on a Kubernetes
-      cluster. The Determineed master must be running within the kubernetes cluster. When
-      using the kubernetes resource provider, it is highly reccomended to deploy Determined
-      using the :ref:`Determined Helm Chart <install-on-kubernetes>`.
+    - ``type: kubernetes``: The ``kubernetes`` resource provider launches tasks on a Kubernetes
+      cluster. The Determined master must be running within the Kubernetes cluster. When
+      using the ``kubernetes`` resource provider, we recommend deploying
+      Determined using using the :ref:`Determined Helm Chart <install-on-kubernetes>`.
 
-      - ``namespace``: The namespace in which Determined will deploy Pods and ConfigMaps,
+      - ``namespace``: The namespace in which Determined will deploy Pods and ConfigMaps.
 
       - ``slots_per_node``: Each multi-GPU (distributed training) task will be scheduled
         as a set of ``slots_per_task / slots_per_node`` separate pods, with each pod
-        assigned to ``slots_per_node`` GPUs. Tasks sizes that are not divisible by
+        assigned to ``slots_per_node`` GPUs. Tasks with sizes that are not divisible by
         ``slots_per_node`` are never scheduled. If you have a cluster of different size
-        nodes (e.g., 4 and 8 GPUs per node), set the ``slots_per_node`` to the smallest
-        common denominator.
+        nodes (e.g., some nodes with 4 GPUs and other nodes with 8 GPUs), set
+        ``slots_per_node`` to the smallest common denominator.
 
       - ``master_service_name``: The service account Determined uses to interact with
-        the Kuberentes API.
+        the Kubernetes API.
 
 - ``task_container_defaults``: Specifies Docker defaults for all task containers. A task represents a single schedulable unit, such as a trial, command, or tensorboard.
 

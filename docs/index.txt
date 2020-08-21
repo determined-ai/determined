@@ -25,8 +25,8 @@ You can think of Determined as a platform that bridges the gap between tools lik
 Determined's key capabilities include:
 
 - high-performance :ref:`distributed training <multi-gpu-training>` without any additional changes to your model code
-- intelligent :ref:`hyperparameter optimization <hyperparameter-tuning>` based on cutting-edge research
-- flexible GPU scheduling, including dynamically resizing training jobs on-the-fly and automatic management of cloud resources on AWS and GCP
+- intelligent :ref:`hyperparameter tuning <hyperparameter-tuning>` based on cutting-edge research
+- flexible GPU scheduling, including dynamically resizing training jobs on-the-fly, automatic management of cloud resources on AWS and GCP, and optional :ref:`support for Kubernetes <install-on-kubernetes>`
 - built-in experiment tracking, metrics visualization, and :ref:`model registry <organizing-models>`
 - automatic fault tolerance for deep learning training jobs
 - integrated support for :ref:`TensorBoard <how-to-tensorboard>` and GPU-powered :ref:`Jupyter notebooks <how-to-notebooks>`

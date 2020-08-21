@@ -13,18 +13,19 @@ When installing using the Helm chart, all configurations will be done within
 Prerequisites
 -------------
 
-Before installing Determined on Kubernetes users need to have:
+Before installing Determined on a Kubernetes cluster, please ensure that the
+following prerequisites are satisfied:
 
-#. A Kubernetes cluster version 1.15 or higher with GPU support enabled. :ref:`Instructions for setting up a GKE cluster <setup-gke-cluster>`.
-#. Have access to the cluster via `kubectl <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_.
-#. Have `Helm installed <https://helm.sh/docs/helm/helm_install/>`_.
-#. Have a local copy of the `Determined Helm Chart <https://github.com/determined-ai/determined/tree/master/helm/charts/determined>`_. This can be done by cloning the Determined repo:  ``git clone https://github.com/determined-ai/determined.git``.
+* The Kubernetes cluster should be running Kubernetes >= 1.15, with GPU support enabled. :ref:`Instructions for setting up a GKE cluster <setup-gke-cluster>`.
+* You should have access to the cluster via `kubectl <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_.
+* `Helm <https://helm.sh/docs/helm/helm_install/>`_ should be installed.
+* You should have a local copy of the `Determined Helm Chart <https://github.com/determined-ai/determined/tree/master/helm/charts/determined>`_. This can be done by cloning the Determined repository: ``git clone https://github.com/determined-ai/determined.git``.
 
 
 What Gets Installed
 -------------------
 
-As part of the installation the Determined helm chart will create a:
+When the Determined Helm chart is installed, the following entities will be created:
 
 #. Deployment of the Determined master.
 #. ConfigMap containing configurations for the Determined master.
@@ -32,7 +33,7 @@ As part of the installation the Determined helm chart will create a:
 #. ServiceAcccount which will be used by the Determined master.
 #. Deployment of a Postgres database. Later in this guide we demonstrate how an external database can be used instead.
 #. PersistentVolumeClaim for the Postgres database. Omitted if using an external database.
-#. Service to allow the Determined master to communicate with the Postgres dataset. Omitted if using an external database.
+#. Service to allow the Determined master to communicate with the Postgres database. Omitted if using an external database.
 
 
 .. _configure-determined-kubernetes-version:
@@ -55,12 +56,12 @@ a release version (e.g., ``0.13.0``) or specify any commit hash from the `upstre
 Specifying the Number of GPUs Per Node
 --------------------------------------
 
-Users are required to specify the number of gpus that there are on each node (gpu enabled nodes only). This is done
+Users are required to specify the number of GPUs on each node (for GPU-enabled nodes only). This is done
 by setting ``slotsPerNode`` in ``values.yaml``. Determined uses this information when scheduling multi-GPU tasks.
 Each multi-GPU (distributed training) task will be scheduled as a set of ``slotsPerTask / slotsPerNode`` separate pods,
-with each pod assigned to ``slotsPerNode`` GPUs. Tasks sizes that are not divisible by ``slotsPerNode`` are never scheduled.
-If you have a cluster of different size nodes (e.g., 4 and 8 GPUs per node), set the ``slotsPerNode`` to the smallest
-common denominator.
+with each pod assigned to ``slotsPerNode`` GPUs. Tasks with sizes that are not divisible by ``slotsPerNode`` are never scheduled.
+If you have a cluster of different size nodes (e.g., some nodes with 4 GPUs and
+other nodes with 8 GPUs), set ``slotsPerNode`` to the smallest common denominator.
 
 
 Configuring Checkpoint Storage
@@ -72,7 +73,7 @@ or `GCS <https://cloud.google.com/storage>`_. By default checkpoints and TensorB
 saves to the host file system. Users are strongly discouraged from using ``shared_fs`` for storage
 beyond initial testing as most Kubernetes cluster nodes do not have a shared file system.
 
-Instead of using ``shared_fs`` users should configure either ``AWS S3`` or ``GCS``:
+Instead of using ``shared_fs``, users should configure either ``AWS S3`` or ``GCS``:
 
 - ``AWS S3``: To configure Determined to use AWS S3 for checkpoint and TensorBoard storage, users need to set
   ``checkpointStorage.type`` in ``values.yaml` to ``s3`` and set ``checkpointStorage.bucket`` to the name of
@@ -91,9 +92,11 @@ Instead of using ``shared_fs`` users should configure either ``AWS S3`` or ``GCS
 Configuring an External Database (Optional)
 -------------------------------------------
 
-Instead of having the Determined deploy a Postgres database users can deploy their own instance by setting
-``db.hostAddress`` to be the IP address of their database. When the ``db.hostAddress`` is configured the
-Determined helm chart will omit deploying a database.
+By default, the Helm chart will deploy an instance of Postgres on the same
+Kubernetes cluster where Determined itself is deployed. If this is undesirable,
+users can configure the Helm chart to use an external Postgres database by setting
+``db.hostAddress`` to the IP address of their database. If ``db.hostAddress`` is
+configured, the Determined Helm chart will not deploy a database.
 
 
 Installing Determined
@@ -107,7 +110,7 @@ be installed. To install Determined run:
     helm install <name for your deployment> --wait helm/charts/determined
 
 ``helm/charts/determined`` is a relative path from the root of the Determined repository. Helm will install
-Determined within the default namespace. If you wish to install Determined into a non-default namespace
+Determined within the default namespace. If you wish to install Determined into a non-default namespace,
 add ``-n <namespace name>`` to the installation command.
 
 Once the installation is completed instructions for discovering the IP address assigned to the Determined
@@ -116,7 +119,7 @@ master will be displayed. Additionally the IP address can be discovered by runni
 Upgrading Determined
 --------------------
 
-To upgrade Determined or to change a configuration setting first make the appropriate
+To upgrade Determined or to change a configuration setting, first make the appropriate
 changes in ``values.yaml`` and ``Chart.yaml`` and then run:
 
 .. code::
