@@ -4,5 +4,6 @@ sphinx==2.4.4
 sphinx-argparse>=0.2.5
 git+https://github.com/determined-ai/determined_sphinx_theme.git@c2a37e6db59f40d024516017c27896cd9d60700a
 sphinx-gallery>=0.6.1
+sphinx-sitemap>=2.2.0
 pillow
 sphinx-copybutton
