@@ -324,7 +324,7 @@ service Determined {
       option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Checkpoints"};
     }
 
-    // Update checkpoint fields
+    // Update checkpoint metadata.
     rpc PatchCheckpoint(PatchCheckpointRequest) returns (PatchCheckpointResponse) {
         option (google.api.http) = {patch: "/api/v1/checkpoints/{checkpoint.uuid}" body: "*"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Checkpoints"};
