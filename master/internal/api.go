@@ -26,6 +26,7 @@ type apiServer struct {
 // offsets should be calculated from the end.
 func (a *apiServer) paginate(p **apiv1.Pagination, values interface{}, offset, limit int32) error {
 	rv := reflect.ValueOf(values)
+	// DISCUSS disallow no limit?
 	if rv.Elem().Kind() != reflect.Slice {
 		return errors.Errorf("error paginating non-slice type: %T", rv.Kind())
 	}

@@ -3,8 +3,12 @@ syntax = "proto3";
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
+import "determined/experiment/v1/experiment.proto";
+import "determined/trial/v1/trial.proto";
+import "determined/step/v1/step.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // Stream Trial logs.
 message TrialLogsRequest {
@@ -79,3 +83,59 @@ message KillTrialRequest {
 // Response to KillTrialRequest.
 message KillTrialResponse {}
 
+// Get the list of trials for an experiment.
+message GetExperimentTrialsRequest {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: {
+        required: ["experiment_id"]
+     }
+    };
+    // Sorts trials by the given field.
+    enum SortBy {
+        // Returns trials in an unsorted list.
+        SORT_BY_UNSPECIFIED = 0;
+        // Returns trials sorted by id.
+        SORT_BY_ID = 1;
+        // Return trials sorted by start time.
+        SORT_BY_START_TIME = 4;
+        // Return trials sorted by end time. Trials without end times are
+        // returned after trials that are.
+        SORT_BY_END_TIME = 5;
+        // Return trials sorted by state.
+        SORT_BY_STATE = 6;
+    }
+    // Sort trials by the given field
+    SortBy sort_by = 1;
+    // Order trials in either ascending or descending order.
+    OrderBy order_by = 2;
+    // Skip the number of trials before returning results. Negative values
+    // denote number of trials to skip from the end before returning results.
+    int32 offset = 3;
+    // Limit the number of trials. A value of 0 denotes no limit.
+    int32 limit = 4;
+    // Limit trials to those that match the provided state.
+    repeated determined.experiment.v1.State states = 7;
+    // Limit trials to those that are owned by the specified experiments.
+    int32 experiment_id = 8;
+}
+// Response to GetExperimentTrialsRequest.
+message GetExperimentTrialsResponse {
+    // The list of returned trials.
+    repeated determined.trial.v1.Trial trials = 1;
+    // Pagination information of the full dataset.
+    Pagination pagination = 2;
+}
+
+
+// Get trial details.
+message GetTrialRequest {
+    // The requested trial's id.
+    int32 id = 1;
+    // Whether to inclue the list of steps or not.
+    bool include_steps = 2;
+}
+// Response to GetTrialRequest.
+message GetTrialResponse {
+    determined.trial.v1.Trial trial = 1;
+    repeated determined.step.v1.Step steps = 2;
+}
