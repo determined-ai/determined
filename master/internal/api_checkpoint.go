@@ -28,8 +28,8 @@ func (a *apiServer) GetCheckpoint(
 	}
 }
 
-func (a *apiServer) PatchCheckpoint(
-	ctx context.Context, req *apiv1.PatchCheckpointRequest) (*apiv1.PatchCheckpointResponse, error) {
+func (a *apiServer) PatchCheckpointMetadata(
+	ctx context.Context, req *apiv1.PatchCheckpointMetadataRequest) (*apiv1.PatchCheckpointMetadataResponse, error) {
 	getResp, err := a.GetCheckpoint(ctx,
 		&apiv1.GetCheckpointRequest{CheckpointUuid: req.Checkpoint.Uuid})
 	if err != nil {
@@ -54,6 +54,6 @@ func (a *apiServer) PatchCheckpoint(
 	err = a.m.db.QueryProto("update_checkpoint",
 		&checkpointv1.Checkpoint{}, req.Checkpoint.Uuid, newMeta)
 
-	return &apiv1.PatchCheckpointResponse{Checkpoint: currCheckpoint},
+	return &apiv1.PatchCheckpointMetadataResponse{Checkpoint: currCheckpoint},
 		errors.Wrapf(err, "error updating checkpoint %s in database", req.Checkpoint.Uuid)
 }

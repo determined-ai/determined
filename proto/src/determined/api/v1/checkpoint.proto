@@ -17,14 +17,14 @@ message GetCheckpointResponse {
   determined.checkpoint.v1.Checkpoint checkpoint = 1;
 }
 
-// Request for updating a checkpoint.
-message PatchCheckpointRequest {
+// Request for updating a checkpoints metadata.
+message PatchCheckpointMetadataRequest {
   // The desired checkpoint fields and values.
   determined.checkpoint.v1.Checkpoint checkpoint = 1;
 }
 
 // Response to PatchCheckpointRequest.
-message PatchCheckpointResponse {
+message PatchCheckpointMetadataResponse {
   // The updated checkpoint.
   determined.checkpoint.v1.Checkpoint checkpoint = 1;
 }
