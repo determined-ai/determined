@@ -122,7 +122,7 @@ func (p *pods) Receive(ctx *actor.Context) error {
 
 	case resourceDeletionFailed:
 		if msg.err != nil {
-			return errors.Wrap(msg.err, "error deleting leftover kubernetes resource")
+			ctx.Log().WithError(msg.err).Error("error deleting leftover kubernetes resource")
 		}
 
 	case actor.ChildStopped:
@@ -351,6 +351,8 @@ func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
 	for _, result := range results {
 		info := result.(podNodeInfo)
 		if len(info.nodeName) == 0 {
+			// If a pod doesn't have a nodeName it means it has not yet
+			// been assigned to a node.
 			continue
 		}
 		podByNode[info.nodeName] = append(podByNode[info.nodeName], info)

@@ -19,9 +19,11 @@ func (r *requestProcessingWorker) Receive(ctx *actor.Context) error {
 
 	case createKubernetesResources:
 		r.receiveCreateKubernetesResources(ctx, msg)
+		ctx.Tell(ctx.Self().Parent(), workerAvailable{})
 
 	case deleteKubernetesResources:
 		r.receiveDeleteKubernetesResources(ctx, msg)
+		ctx.Tell(ctx.Self().Parent(), workerAvailable{})
 
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
@@ -34,8 +36,6 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 	ctx *actor.Context,
 	msg createKubernetesResources,
 ) {
-	defer ctx.Tell(ctx.Self().Parent(), workerAvailable{})
-
 	configMap, err := r.configMapInterface.Create(msg.configMapSpec)
 	if err != nil {
 		ctx.Log().WithField("handler", msg.handler.Address()).WithError(err).Errorf(
@@ -61,8 +61,6 @@ func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
 	ctx *actor.Context,
 	msg deleteKubernetesResources,
 ) {
-	defer ctx.Tell(ctx.Self().Parent(), workerAvailable{})
-
 	var gracePeriod int64 = deletionGracePeriod
 	var err error
 
