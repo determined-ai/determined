@@ -12,10 +12,10 @@ should be set within ``values.yaml`` and ``Chart.yaml`` in the
 ``Chart.yaml`` Configurations
 -----------------------------
 
-- ``appVersion``:  Configures which version of Determined users need to modify ``appVersion`` in ``Chart.yaml``.
+- ``appVersion``:  Configures which version of Determined is installed.
   Users can specify a release version (e.g., ``0.13.0``) or specify any commit hash from the
   `upstream Determined repo <https://github.com/determined-ai/determined>`_
-  (e.g., ``b13461ed06f2fad339e179af8028d4575db71a81``). Users are encouraged to use released versions.
+  (e.g., ``b13461ed06f2fad339e179af8028d4575db71a81``). Users are encouraged to use a released version.
 
 .. note::
 
@@ -50,7 +50,7 @@ should be set within ``values.yaml`` and ``Chart.yaml`` in the
   stored. This can be overridden on a per-experiment basis in the
   :ref:`experiment-configuration`. A checkpoint contains the
   architecture and weights of the model being trained. Determined currently
-  supports four kinds of checkpoint storage, ``gcs``, ``hdfs``, ``s3``,
+  supports three kinds of checkpoint storage, ``gcs``, ``s3``,
   and ``shared_fs``, identified by the ``type`` subfield.
 
   - ``type: gcs``: Checkpoints are stored on Google Cloud Storage
@@ -68,26 +68,26 @@ should be set within ``values.yaml`` and ``Chart.yaml`` in the
     container path where the credentials are located. See :ref:`environment-variables`
     for more information on how to set environment variables in trial environments.
 
-  - ``bucket``: The GCS bucket name to use.
+    - ``bucket``: The GCS bucket name to use.
 
   - ``type: s3``: Checkpoints are stored in Amazon S3.
 
-  - ``bucket``: The S3 bucket name to use.
+    - ``bucket``: The S3 bucket name to use.
 
-  - ``accessKey``: The AWS access key to use.
+    - ``accessKey``: The AWS access key to use.
 
-  - ``secretKey``: The AWS secret key to use.
+    - ``secretKey``: The AWS secret key to use.
 
-  - ``endpointUrl``: The optional endpoint to use for S3 clones,
-    e.g., http://127.0.0.1:8080/.
+    - ``endpointUrl``: The optional endpoint to use for S3 clones,
+      e.g., http://127.0.0.1:8080/.
 
   - ``type: shared_fs``: Checkpoints are written to a ``hostPath Volume``. Users are strongly
     discouraged from using ``shared_fs`` for storage beyond initial testing as most Kubernetes
     cluster nodes do not have a shared file system.
 
-  - ``hostPath``: The file system path on each node to use. This
-    directory will be mounted to ``/determined_shared_fs`` inside the
-    trial pod.
+    - ``hostPath``: The file system path on each node to use. This
+      directory will be mounted to ``/determined_shared_fs`` inside the
+      trial pod.
 
   - When an experiment finishes, the system will optionally delete some
     checkpoints to reclaim space. The ``saveExperimentBest``,
@@ -97,9 +97,9 @@ should be set within ``values.yaml`` and ``Chart.yaml`` in the
 
 - ``slotsPerNode``: Specifies number of GPUs there are per machine. Determined uses this information when
   scheduling multi-GPU tasks. Each multi-GPU (distributed training) task will be scheduled as
-  a set of `slotsPerTask / slotsPerNode` separate pods, with each pod assigned to `slotsPerNode` GPUs.
-  Tasks sizes that are not divisible by `slotsPerNode` are never scheduled. If you have a cluster of
-  different size nodes (e.g., 4 and 8 GPUs per node), set the `slotsPerNode` to the smallest
+  a set of ``slotsPerTask / slotsPerNode`` separate pods, with each pod assigned to ``slotsPerNode`` GPUs.
+  Tasks sizes that are not divisible by ``slotsPerNode`` are never scheduled. If you have a cluster of
+  different size nodes (e.g., 4 and 8 GPUs per node), set the ``slotsPerNode`` to the smallest
   common denominator. (*Required*)
 
 - ``masterCpuRequest``: The CPU requirements for the Determined master.
@@ -121,7 +121,7 @@ should be set within ``values.yaml`` and ``Chart.yaml`` in the
     but it is not routable between machines. Determined already filters out
     common interfaces like ``lo`` and ``docker0``, but agent machines
     may have others. If interface detection is not finding the appropriate interface, the
-    ``dtrain_network_interface`` option can be used to set it explicitly (e.g.,
+    ``dtrainNetworkInterface`` option can be used to set it explicitly (e.g.,
     ``eth11``).
 
   - ``ncclPortRange``: The range of ports that nccl is permitted to use
