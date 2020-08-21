@@ -26,7 +26,7 @@ min_validation_period:
   batches: 4096
 min_checkpoint_period:
   batches: 4096
-checkpoint_policy: none
+checkpoint_policy: all
 scheduling_unit: 64
 reproducibility:
   experiment_seed: 12345
