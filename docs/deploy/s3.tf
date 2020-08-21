@@ -35,6 +35,13 @@ resource "aws_s3_bucket_object" "index" {
   website_redirect = "/latest/"
 }
 
+resource "aws_s3_bucket_object" "robots" {
+  bucket           = "${aws_s3_bucket.docs.id}"
+  key              = "robots.txt"
+  content          = "User-agent: *\nSitemap: https://docs.determined.ai/latest/sitemap.xml"
+  content_type     = "text"
+}
+
 resource "null_resource" "upload" {
   triggers = {
     version = "${var.det_version}"
