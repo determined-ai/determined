@@ -220,7 +220,7 @@ class Checkpoint(object):
             self.metadata[key] = val
 
         if self._master:
-            api.patch(
+            api.post(
                 self._master,
                 "/api/v1/checkpoints/{}/metadata".format(self.uuid),
                 body={"checkpoint": {"metadata": self.metadata}},
@@ -240,7 +240,7 @@ class Checkpoint(object):
                 del self.metadata[key]
 
         if self._master:
-            api.patch(
+            api.post(
                 self._master,
                 "/api/v1/checkpoints/{}/metadata".format(self.uuid),
                 body={"checkpoint": {"metadata": self.metadata}},

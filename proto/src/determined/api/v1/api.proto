@@ -325,8 +325,8 @@ service Determined {
     }
 
     // Update checkpoint metadata.
-    rpc PatchCheckpointMetadata(PatchCheckpointMetadataRequest) returns (PatchCheckpointMetadataResponse) {
-        option (google.api.http) = {patch: "/api/v1/checkpoints/{checkpoint.uuid}/metadata" body: "*"};
+    rpc PostCheckpointMetadata(PostCheckpointMetadataRequest) returns (PostCheckpointMetadataResponse) {
+        option (google.api.http) = {post: "/api/v1/checkpoints/{checkpoint.uuid}/metadata" body: "*"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Checkpoints"};
     }
 }
