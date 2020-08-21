@@ -1,11 +1,13 @@
 package internal
 
 import (
+	"bytes"
 	"context"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -73,19 +75,38 @@ func (a *apiServer) PatchModel(
 		return nil, err
 	}
 
-	getResp.Model.Description = req.Model.Description
-	getResp.Model.Metadata = req.Model.Metadata
+	currModel := getResp.Model
 
-	b, err := protojson.Marshal(getResp.Model.Metadata)
-	if err != nil {
-		return nil, errors.Wrap(err, "error marshaling model.Metadata")
+	if currModel.Description != req.Model.Description {
+		log.Infof("model (%s) description changing from \"%s\" to \"%s\"",
+			req.Model.Name, currModel.Description, req.Model.Description)
+		currModel.Description = req.Model.Description
 	}
 
-	respModel := &modelv1.Model{}
-	err = a.m.db.QueryProto(
-		"update_model", respModel, req.Model.Name, getResp.Model.Description, b, time.Now())
+	currMeta, err := protojson.Marshal(currModel.Metadata)
+	if err != nil {
+		return nil, errors.Wrap(err, "error marshaling database model metadata")
+	}
 
-	return &apiv1.PatchModelResponse{Model: respModel},
+	newMeta, err := protojson.Marshal(req.Model.Metadata)
+	if err != nil {
+		return nil, errors.Wrap(err, "error marshaling request model metadata")
+	}
+
+	if currModel.Description == req.Model.Description && bytes.Equal(currMeta, newMeta) {
+		return &apiv1.PatchModelResponse{Model: currModel}, nil
+	}
+
+	if !bytes.Equal(currMeta, newMeta) {
+		log.Infof("model (%s) metadata changing from %s to %s",
+			req.Model.Name, currMeta, newMeta)
+		currModel.Metadata = req.Model.Metadata
+	}
+
+	err = a.m.db.QueryProto(
+		"update_model", &modelv1.Model{}, req.Model.Name, currModel.Description, newMeta, time.Now())
+
+	return &apiv1.PatchModelResponse{Model: currModel},
 		errors.Wrapf(err, "error updating model %s in database", req.Model.Name)
 }
 
