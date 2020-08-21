@@ -371,16 +371,25 @@ def test_end_to_end_adaptive() -> None:
 
     checkpoint = top_k[0]
     checkpoint.add_metadata({"testing": "metadata"})
+    db_check = d.get_checkpoint(checkpoint.uuid)
+    # Make sure the checkpoint metadata is correct and correctly saved to the db.
     assert checkpoint.metadata == {"testing": "metadata"}
+    assert checkpoint.metadata == db_check.metadata
 
     checkpoint.add_metadata({"some_key": "some_value"})
+    db_check = d.get_checkpoint(checkpoint.uuid)
     assert checkpoint.metadata == {"testing": "metadata", "some_key": "some_value"}
+    assert checkpoint.metadata == db_check.metadata
 
     checkpoint.add_metadata({"testing": "override"})
+    db_check = d.get_checkpoint(checkpoint.uuid)
     assert checkpoint.metadata == {"testing": "override", "some_key": "some_value"}
+    assert checkpoint.metadata == db_check.metadata
 
     checkpoint.remove_metadata(["some_key"])
+    db_check = d.get_checkpoint(checkpoint.uuid)
     assert checkpoint.metadata == {"testing": "override"}
+    assert checkpoint.metadata == db_check.metadata
 
 
 @pytest.mark.e2e_cpu  # type: ignore

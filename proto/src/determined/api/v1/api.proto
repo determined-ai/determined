@@ -323,4 +323,10 @@ service Determined {
       option (google.api.http) = {get: "/api/v1/checkpoints/{checkpoint_uuid}"};
       option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Checkpoints"};
     }
+
+    // Update checkpoint metadata.
+    rpc PostCheckpointMetadata(PostCheckpointMetadataRequest) returns (PostCheckpointMetadataResponse) {
+        option (google.api.http) = {post: "/api/v1/checkpoints/{checkpoint.uuid}/metadata" body: "*"};
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Checkpoints"};
+    }
 }
