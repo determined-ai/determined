@@ -4,15 +4,12 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/pkg/errors"
+	"github.com/determined-ai/determined/master/pkg/etc"
 
 	"github.com/docker/docker/api/types/mount"
 
 	k8sV1 "k8s.io/api/core/v1"
-	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/container"
 )
 
@@ -80,39 +77,8 @@ func configureShmVolume(_ int64) (k8sV1.VolumeMount, k8sV1.Volume) {
 	return volumeMount, volume
 }
 
-func createConfigMapSpec(
-	namePrefix string,
-	data map[string][]byte,
-	namespace string,
-	taskID string,
-) *k8sV1.ConfigMap {
-	return &k8sV1.ConfigMap{
-		ObjectMeta: metaV1.ObjectMeta{
-			GenerateName: namePrefix,
-			Namespace:    namespace,
-			Labels:       map[string]string{determinedLabel: taskID},
-		},
-		BinaryData: data,
-	}
-}
-
-func startConfigMap(
-	ctx *actor.Context,
-	configMapSpec *k8sV1.ConfigMap,
-	configMapInterface typedV1.ConfigMapInterface,
-) (*k8sV1.ConfigMap, error) {
-	configMap, err := configMapInterface.Create(configMapSpec)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create configMap")
-	}
-	ctx.Log().Infof("created configMap %s", configMap.Name)
-
-	return configMap, nil
-}
-
 func configureAdditionalFilesVolumes(
-	archiveConfigMap *k8sV1.ConfigMap,
-	entryPointConfigMap *k8sV1.ConfigMap,
+	configMapName string,
 	runArchives []container.RunArchive,
 ) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume) {
 	initContainerVolumeMounts := make([]k8sV1.VolumeMount, 0)
@@ -128,7 +94,7 @@ func configureAdditionalFilesVolumes(
 		Name: archiveVolumeName,
 		VolumeSource: k8sV1.VolumeSource{
 			ConfigMap: &k8sV1.ConfigMapVolumeSource{
-				LocalObjectReference: k8sV1.LocalObjectReference{Name: archiveConfigMap.Name},
+				LocalObjectReference: k8sV1.LocalObjectReference{Name: configMapName},
 			},
 		},
 	}
@@ -146,8 +112,12 @@ func configureAdditionalFilesVolumes(
 		Name: entryPointVolumeName,
 		VolumeSource: k8sV1.VolumeSource{
 			ConfigMap: &k8sV1.ConfigMapVolumeSource{
-				LocalObjectReference: k8sV1.LocalObjectReference{Name: entryPointConfigMap.Name},
-				DefaultMode:          &entryPointVolumeMode,
+				LocalObjectReference: k8sV1.LocalObjectReference{Name: configMapName},
+				Items: []k8sV1.KeyToPath{{
+					Key:  etc.K8InitContainerEntryScriptResource,
+					Path: etc.K8InitContainerEntryScriptResource,
+				}},
+				DefaultMode: &entryPointVolumeMode,
 			},
 		},
 	}

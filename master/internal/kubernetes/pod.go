@@ -2,29 +2,17 @@ package kubernetes
 
 import (
 	"fmt"
-	"path"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 
-	"github.com/docker/docker/api/types/mount"
-	petname "github.com/dustinkirkland/golang-petname"
-
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/agent"
-	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/container"
-	"github.com/determined-ai/determined/master/pkg/device"
-	"github.com/determined-ai/determined/master/pkg/etc"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	k8sV1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
-	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
@@ -49,11 +37,13 @@ type pod struct {
 	rank                     int
 	podInterface             typedV1.PodInterface
 	configMapInterface       typedV1.ConfigMapInterface
+	resourceRequestQueue     *actor.Ref
 	leaveKubernetesResources bool
 
 	pod              *k8sV1.Pod
-	configMaps       []*k8sV1.ConfigMap
 	podName          string
+	configMap        *k8sV1.ConfigMap
+	configMapName    string
 	container        container.Container
 	ports            []int
 	resourcesDeleted bool
@@ -68,41 +58,42 @@ type podNodeInfo struct {
 }
 
 func newPod(
+	msg sproto.StartPod,
 	cluster *actor.Ref,
 	clusterID string,
-	taskHandler *actor.Ref,
 	clientSet *k8sClient.Clientset,
 	namespace string,
 	masterIP string,
 	masterPort int32,
-	taskSpec tasks.TaskSpec,
-	gpus int,
-	rank int,
 	podInterface typedV1.PodInterface,
 	configMapInterface typedV1.ConfigMapInterface,
+	resourceRequestQueue *actor.Ref,
 	leaveKubernetesResources bool,
 ) *pod {
 	podContainer := container.Container{
-		Parent: taskHandler.Address(),
-		ID:     container.ID(taskSpec.ContainerID),
+		Parent: msg.TaskHandler.Address(),
+		ID:     container.ID(msg.Spec.ContainerID),
 		State:  container.Assigned,
 	}
+	uniqueName := configureUniqueName(msg.Spec, msg.Rank)
 
 	return &pod{
 		cluster:                  cluster,
 		clusterID:                clusterID,
-		taskHandler:              taskHandler,
+		taskHandler:              msg.TaskHandler,
 		clientSet:                clientSet,
 		namespace:                namespace,
 		masterIP:                 masterIP,
 		masterPort:               masterPort,
-		taskSpec:                 taskSpec,
-		gpus:                     gpus,
-		rank:                     rank,
+		taskSpec:                 msg.Spec,
+		gpus:                     msg.Slots,
+		rank:                     msg.Rank,
 		podInterface:             podInterface,
 		configMapInterface:       configMapInterface,
+		resourceRequestQueue:     resourceRequestQueue,
 		leaveKubernetesResources: leaveKubernetesResources,
-		podName:                  configurePodName(taskSpec, rank),
+		podName:                  uniqueName,
+		configMapName:            uniqueName,
 		container:                podContainer,
 	}
 }
@@ -111,9 +102,12 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		ctx.AddLabel("pod", p.podName)
-		if err := p.startPod(ctx); err != nil {
+		if err := p.createPodSpecAndSubmit(ctx); err != nil {
 			return err
 		}
+
+	case resourceCreationFailed:
+		p.receiveResourceCreationFailed(ctx, msg)
 
 	case podStatusUpdate:
 		if err := p.receivePodStatusUpdate(ctx, msg); err != nil {
@@ -128,27 +122,28 @@ func (p *pod) Receive(ctx *actor.Context) error {
 
 	case sproto.StopPod:
 		ctx.Log().Info("received request to stop pod")
-		if err := p.deleteKubernetesResources(ctx); err != nil {
-			return err
-		}
+		p.deleteKubernetesResources(ctx)
+
+	case resourceCreationCancelled:
+		p.receiveResourceCreationCancelled(ctx)
+
+	case resourceDeletionFailed:
+		p.receiveResourceDeletionFailed(ctx, msg)
 
 	case getPodNodeInfo:
-		ctx.Respond(podNodeInfo{
-			nodeName:  p.pod.Spec.NodeName,
-			numGPUs:   p.gpus,
-			container: &p.container,
-		})
+		p.receiveGetPodNodeInfo(ctx)
 
 	case actor.PostStop:
 		defer p.finalizeTaskState(ctx)
 
 		if !p.leaveKubernetesResources {
-			if err := p.deleteKubernetesResources(ctx); err != nil {
-				return err
-			}
+			p.deleteKubernetesResources(ctx)
 		}
 
 	case actor.ChildStopped:
+		if !p.resourcesDeleted {
+			ctx.Log().Errorf("pod logger exited unexpectedly")
+		}
 
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
@@ -158,17 +153,45 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (p *pod) startPod(ctx *actor.Context) error {
+func (p *pod) createPodSpecAndSubmit(ctx *actor.Context) error {
+	var err error
 	switch {
 	case p.taskSpec.StartCommand != nil:
-		return p.startPodForCommand(ctx)
+		err = p.createPodSpecForCommand(ctx)
 	case p.taskSpec.StartContainer != nil:
-		return p.startPodForTrial(ctx)
+		err = p.createPodSpecForTrial(ctx)
 	case p.taskSpec.GCCheckpoints != nil:
-		return p.startPodForGC(ctx)
+		err = p.createPodSpecForGC(ctx)
 	default:
 		return errors.Errorf("unexpected task spec received")
 	}
+
+	if err != nil {
+		return err
+	}
+
+	ctx.Tell(p.resourceRequestQueue, createKubernetesResources{
+		handler:       ctx.Self(),
+		podSpec:       p.pod,
+		configMapSpec: p.configMap,
+	})
+	return nil
+}
+
+func (p *pod) receiveResourceCreationFailed(ctx *actor.Context, msg resourceCreationFailed) {
+	ctx.Log().WithError(msg.err).Error("pod actor notified that resource creation failed")
+	errMsg := msg.err.Error()
+	ctx.Tell(p.taskHandler, sproto.ContainerLog{
+		Container:   p.container,
+		Timestamp:   time.Now(),
+		PullMessage: nil,
+		RunMessage:  nil,
+		AuxMessage:  &errMsg,
+	})
+
+	// If a subset of resources were created (e.g., configMap but podCreation failed) they will
+	// be deleted during actor.PostStop.
+	ctx.Self().Stop()
 }
 
 func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) error {
@@ -237,14 +260,14 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		if p.container.State == container.Terminated {
 			return nil
 		}
-		p.container = p.container.Transition(container.Terminated)
 
 		exitCode, exitMessage, err := getExitCodeAndMessage(p.pod)
 		if err != nil {
 			return err
 		}
-		ctx.Log().Infof("pod failed: %d %s", exitCode, exitMessage)
+		ctx.Log().Infof("pod failed with exit code: %d %s", exitCode, exitMessage)
 
+		p.container = p.container.Transition(container.Terminated)
 		exitCodeConverted := agent.ExitCode(exitCode)
 		containerStopped := agent.ContainerStopped{
 			Failure: &agent.ContainerFailure{
@@ -303,30 +326,41 @@ func (p *pod) processMissingPodDeletion(ctx *actor.Context) {
 	ctx.Self().Stop()
 }
 
-func (p *pod) deleteKubernetesResources(ctx *actor.Context) error {
+func (p *pod) deleteKubernetesResources(ctx *actor.Context) {
 	if p.resourcesDeleted {
-		return nil
+		return
 	}
 
-	ctx.Log().Infof("deleting pod")
-	var gracePeriod int64 = 15
-	err := p.podInterface.Delete(p.podName, &metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
-	if err != nil {
-		ctx.Log().WithError(err).Errorf("pod deletion failed %s", p.podName)
-	}
-
-	for _, cf := range p.configMaps {
-		errDeletingConfigMap := p.configMapInterface.Delete(cf.Name, &metaV1.DeleteOptions{
-			GracePeriodSeconds: &gracePeriod})
-
-		if errDeletingConfigMap != nil {
-			ctx.Log().WithError(errDeletingConfigMap).Errorf("config map deletion failed %s", cf.Name)
-			err = errDeletingConfigMap
-		}
-	}
+	ctx.Log().Infof("requesting to delete kubernetes resources")
+	ctx.Tell(p.resourceRequestQueue, deleteKubernetesResources{
+		handler:       ctx.Self(),
+		podName:       p.podName,
+		configMapName: p.configMapName,
+	})
 
 	p.resourcesDeleted = true
-	return err
+}
+
+func (p *pod) receiveResourceCreationCancelled(ctx *actor.Context) {
+	ctx.Log().Infof("pod actor notified that resource creation was canceled")
+	p.resourcesDeleted = true
+	ctx.Self().Stop()
+}
+
+func (p *pod) receiveResourceDeletionFailed(
+	ctx *actor.Context,
+	msg resourceDeletionFailed,
+) {
+	ctx.Log().WithError(msg.err).Error("pod actor notified that resource deletion failed")
+	ctx.Self().Stop()
+}
+
+func (p *pod) receiveGetPodNodeInfo(ctx *actor.Context) {
+	ctx.Respond(podNodeInfo{
+		nodeName:  p.pod.Spec.NodeName,
+		numGPUs:   p.gpus,
+		container: &p.container,
+	})
 }
 
 func (p *pod) finalizeTaskState(ctx *actor.Context) {
@@ -378,419 +412,6 @@ func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 		RunMessage:  nil,
 		AuxMessage:  &message,
 	})
-}
-
-func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
-	return k8sV1.ResourceRequirements{
-		Limits: map[k8sV1.ResourceName]resource.Quantity{
-			"nvidia.com/gpu": *resource.NewQuantity(int64(p.gpus), resource.DecimalSI),
-		},
-		Requests: map[k8sV1.ResourceName]resource.Quantity{
-			"nvidia.com/gpu": *resource.NewQuantity(int64(p.gpus), resource.DecimalSI),
-		},
-	}
-}
-
-func (p *pod) configureEnvVars(
-	envVarsMap map[string]string,
-	environment model.Environment,
-	deviceType device.Type,
-) ([]k8sV1.EnvVar, error) {
-	for _, envVar := range environment.EnvironmentVariables.For(deviceType) {
-		envVarSplit := strings.Split(envVar, "=")
-		if len(envVarSplit) != 2 {
-			return nil, errors.Errorf("unable to split envVar %s", envVar)
-		}
-		envVarsMap[envVarSplit[0]] = envVarSplit[1]
-	}
-
-	var slotIds []string
-	for i := 0; i < p.gpus; i++ {
-		slotIds = append(slotIds, strconv.Itoa(i))
-	}
-
-	envVarsMap["DET_CLUSTER_ID"] = p.clusterID
-	envVarsMap["DET_MASTER"] = fmt.Sprintf("%s:%d", p.masterIP, p.masterPort)
-	envVarsMap["DET_MASTER_HOST"] = p.masterIP
-	envVarsMap["DET_MASTER_ADDR"] = p.masterIP
-	envVarsMap["DET_MASTER_PORT"] = fmt.Sprintf("%d", p.masterPort)
-	envVarsMap["DET_AGENT_ID"] = "k8agent"
-	envVarsMap["DET_CONTAINER_ID"] = p.taskSpec.ContainerID
-	envVarsMap["DET_SLOT_IDS"] = fmt.Sprintf("[%s]", strings.Join(slotIds, ","))
-	envVarsMap["DET_USE_GPU"] = fmt.Sprintf("%t", p.gpus > 0)
-
-	envVars := make([]k8sV1.EnvVar, 0, len(envVarsMap))
-	for envVarKey, envVarValue := range envVarsMap {
-		envVars = append(envVars, k8sV1.EnvVar{Name: envVarKey, Value: envVarValue})
-	}
-
-	return envVars, nil
-}
-
-func (p *pod) configureRunArchives(
-	ctx *actor.Context,
-	runArchives []container.RunArchive,
-) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume, error) {
-	tarredArchives := make(map[string][]byte)
-	for idx, runArchive := range runArchives {
-		zippedArchive, errZip := archive.ToTarGz(runArchive.Archive)
-		if errZip != nil {
-			return nil, nil, nil, errors.Wrap(errZip, "failed to zip archive")
-		}
-		tarredArchives[fmt.Sprintf("%d.tar.gz", idx)] = zippedArchive
-	}
-
-	// Create configMap of AdditionalFiles as .tar.gz archive.
-	archiveConfigMap, err := startConfigMap(
-		ctx,
-		createConfigMapSpec(p.podName, tarredArchives, p.namespace, p.taskSpec.TaskID),
-		p.configMapInterface,
-	)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	p.configMaps = append(p.configMaps, archiveConfigMap)
-
-	// Create a configMap for the executable for un-taring.
-	initContainerEntrypointArchive := map[string][]byte{
-		etc.K8InitContainerEntryScriptResource: etc.MustStaticFile(
-			etc.K8InitContainerEntryScriptResource),
-	}
-	initContainerEntrypointConfigMap, err := startConfigMap(
-		ctx,
-		createConfigMapSpec(
-			p.podName, initContainerEntrypointArchive, p.namespace, p.taskSpec.TaskID),
-		p.configMapInterface,
-	)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	p.configMaps = append(p.configMaps, initContainerEntrypointConfigMap)
-
-	initContainerVolumeMounts, mainContainerVolumeMounts, volumes :=
-		configureAdditionalFilesVolumes(
-			archiveConfigMap, initContainerEntrypointConfigMap, runArchives)
-
-	return initContainerVolumeMounts, mainContainerVolumeMounts, volumes, nil
-}
-
-func (p *pod) configureVolumes(
-	ctx *actor.Context,
-	dockerMounts []mount.Mount,
-	runArchives []container.RunArchive,
-) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume, error) {
-	volumeMounts := make([]k8sV1.VolumeMount, 0)
-	volumes := make([]k8sV1.Volume, 0)
-
-	hostVolumeMounts, hostVolumes := dockerMountsToHostVolumes(dockerMounts)
-	volumeMounts = append(volumeMounts, hostVolumeMounts...)
-	volumes = append(volumes, hostVolumes...)
-
-	shmVolumeMount, shmVolume := configureShmVolume(p.taskSpec.TaskContainerDefaults.ShmSizeBytes)
-	volumeMounts = append(volumeMounts, shmVolumeMount)
-	volumes = append(volumes, shmVolume)
-
-	initContainerVolumeMounts, mainContainerRunArchiveVolumeMounts, runArchiveVolumes, err :=
-		p.configureRunArchives(ctx, runArchives)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	volumeMounts = append(volumeMounts, mainContainerRunArchiveVolumeMounts...)
-	volumes = append(volumes, runArchiveVolumes...)
-
-	return initContainerVolumeMounts, volumeMounts, volumes, nil
-}
-
-func (p *pod) configurePodSpec(
-	ctx *actor.Context,
-	volumes []k8sV1.Volume,
-	initContainers []k8sV1.Container,
-	containers []k8sV1.Container,
-	podSpec *k8sV1.Pod,
-) *k8sV1.Pod {
-	if podSpec == nil {
-		podSpec = &k8sV1.Pod{}
-	} else {
-		podSpec = podSpec.DeepCopy()
-	}
-
-	podSpec.ObjectMeta.Name = p.podName
-	podSpec.ObjectMeta.Namespace = p.namespace
-	if podSpec.ObjectMeta.Labels == nil {
-		podSpec.ObjectMeta.Labels = make(map[string]string)
-	}
-	podSpec.ObjectMeta.Labels[determinedLabel] = p.taskSpec.TaskID
-
-	if len(podSpec.Spec.Containers) > 0 {
-		for k, v := range podSpec.Spec.Containers[0].Resources.Limits {
-			if _, present := containers[0].Resources.Limits[k]; !present {
-				containers[0].Resources.Limits[k] = v
-			}
-		}
-
-		for k, v := range podSpec.Spec.Containers[0].Resources.Requests {
-			if _, present := containers[0].Resources.Requests[k]; !present {
-				containers[0].Resources.Requests[k] = v
-			}
-		}
-
-		containers[0].VolumeMounts = append(
-			containers[0].VolumeMounts, podSpec.Spec.Containers[0].VolumeMounts...)
-
-		containers[0].VolumeDevices = append(
-			containers[0].VolumeDevices, podSpec.Spec.Containers[0].VolumeDevices...)
-	}
-
-	podSpec.Spec.Volumes = append(podSpec.Spec.Volumes, volumes...)
-	podSpec.Spec.HostNetwork = p.taskSpec.TaskContainerDefaults.NetworkMode.IsHost()
-	podSpec.Spec.InitContainers = initContainers
-	podSpec.Spec.Containers = containers
-	podSpec.Spec.RestartPolicy = k8sV1.RestartPolicyNever
-
-	return podSpec
-}
-
-func (p *pod) launchPod(ctx *actor.Context, podSpec *k8sV1.Pod) error {
-	ctx.Log().Debugf("launching pod with spec %v", podSpec.Spec)
-	var err error
-	p.pod, err = p.podInterface.Create(podSpec)
-	if err != nil {
-		errMsg := err.Error()
-		ctx.Tell(p.taskHandler, sproto.ContainerLog{
-			Container:   p.container,
-			Timestamp:   time.Now(),
-			PullMessage: nil,
-			RunMessage:  nil,
-			AuxMessage:  &errMsg,
-		})
-		return errors.Wrap(err, "error creating pod")
-	}
-	ctx.Log().Infof("Created pod %s", p.pod.Name)
-	return nil
-}
-
-func (p *pod) startPodForTrial(ctx *actor.Context) error {
-	exp := *p.taskSpec.StartContainer
-
-	deviceType := device.CPU
-	if p.gpus > 0 {
-		deviceType = device.GPU
-	}
-
-	runArchives := tasks.TrialArchives(p.taskSpec)
-	initContainerVolumeMounts, volumeMounts, volumes, err := p.configureVolumes(
-		ctx, tasks.TrialDockerMounts(exp), runArchives)
-	if err != nil {
-		return err
-	}
-
-	p.ports = []int{
-		tasks.LocalRendezvousPort, tasks.LocalRendezvousPort + tasks.LocalRendezvousPortOffset}
-	rendezvousPorts := []string{
-		fmt.Sprintf("%d", p.ports[0]), fmt.Sprintf("%d", p.ports[1]),
-	}
-
-	envVars, err := p.configureEnvVars(
-		tasks.TrialEnvVars(p.taskSpec, rendezvousPorts),
-		p.taskSpec.StartContainer.ExperimentConfig.Environment,
-		deviceType,
-	)
-	if err != nil {
-		return err
-	}
-
-	initContainers := []k8sV1.Container{
-		configureInitContainer(
-			len(runArchives),
-			initContainerVolumeMounts,
-			exp.ExperimentConfig.Environment.Image.For(deviceType),
-			configureImagePullPolicy(exp.ExperimentConfig.Environment),
-		),
-	}
-
-	containers := []k8sV1.Container{
-		{
-			Name:            "determined-trial",
-			Command:         []string{"/run/determined/workdir/entrypoint.sh"},
-			Image:           exp.ExperimentConfig.Environment.Image.For(deviceType),
-			ImagePullPolicy: configureImagePullPolicy(exp.ExperimentConfig.Environment),
-			SecurityContext: configureSecurityContext(exp.AgentUserGroup),
-			Resources:       p.configureResourcesRequirements(),
-			VolumeMounts:    volumeMounts,
-			Env:             envVars,
-			WorkingDir:      tasks.ContainerWorkDir,
-		},
-	}
-
-	podSpec := p.configurePodSpec(
-		ctx, volumes, initContainers, containers, exp.ExperimentConfig.Environment.PodSpec)
-	return p.launchPod(ctx, podSpec)
-}
-
-func (p *pod) startPodForCommand(ctx *actor.Context) error {
-	cmd := *p.taskSpec.StartCommand
-
-	deviceType := device.CPU
-	if p.gpus > 0 {
-		deviceType = device.GPU
-	}
-
-	runArchives := tasks.CommandArchives(p.taskSpec)
-	initContainerVolumeMounts, volumeMounts, volumes, err := p.configureVolumes(
-		ctx, tasks.ToDockerMounts(cmd.Config.BindMounts), runArchives)
-	if err != nil {
-		return err
-	}
-
-	for _, port := range cmd.Config.Environment.Ports {
-		p.ports = append(p.ports, port)
-	}
-
-	envVars, err := p.configureEnvVars(
-		tasks.CommandEnvVars(p.taskSpec),
-		p.taskSpec.StartCommand.Config.Environment,
-		deviceType,
-	)
-	if err != nil {
-		return err
-	}
-
-	initContainers := []k8sV1.Container{
-		configureInitContainer(
-			len(runArchives),
-			initContainerVolumeMounts,
-			cmd.Config.Environment.Image.For(deviceType),
-			configureImagePullPolicy(cmd.Config.Environment),
-		),
-	}
-
-	containers := []k8sV1.Container{
-		{
-			Name:            "determined-task",
-			Command:         cmd.Config.Entrypoint,
-			Env:             envVars,
-			Image:           cmd.Config.Environment.Image.For(deviceType),
-			ImagePullPolicy: configureImagePullPolicy(cmd.Config.Environment),
-			SecurityContext: configureSecurityContext(cmd.AgentUserGroup),
-			Resources:       p.configureResourcesRequirements(),
-			VolumeMounts:    volumeMounts,
-			WorkingDir:      tasks.ContainerWorkDir,
-		},
-	}
-
-	podSpec := p.configurePodSpec(
-		ctx, volumes, initContainers, containers, cmd.Config.Environment.PodSpec)
-	return p.launchPod(ctx, podSpec)
-}
-
-func (p *pod) startPodForGC(ctx *actor.Context) error {
-	gcc := *p.taskSpec.GCCheckpoints
-
-	deviceType := device.CPU
-	if p.gpus > 0 {
-		deviceType = device.GPU
-	}
-
-	runArchives := tasks.GCArchives(p.taskSpec)
-	initContainerVolumeMounts, volumeMounts, volumes, err := p.configureVolumes(
-		ctx, tasks.GCDockerMounts(gcc), runArchives)
-	if err != nil {
-		return err
-	}
-
-	envVars, err := p.configureEnvVars(
-		tasks.GCEnvVars(),
-		p.taskSpec.GCCheckpoints.ExperimentConfig.Environment,
-		deviceType,
-	)
-	if err != nil {
-		return err
-	}
-
-	initContainers := []k8sV1.Container{
-		configureInitContainer(
-			len(runArchives),
-			initContainerVolumeMounts,
-			gcc.ExperimentConfig.Environment.Image.For(deviceType),
-			configureImagePullPolicy(gcc.ExperimentConfig.Environment),
-		),
-	}
-
-	containers := []k8sV1.Container{
-		{
-			Name:            "determined-gc",
-			Command:         tasks.GCCmd(),
-			Env:             envVars,
-			Image:           gcc.ExperimentConfig.Environment.Image.For(deviceType),
-			ImagePullPolicy: configureImagePullPolicy(gcc.ExperimentConfig.Environment),
-			SecurityContext: configureSecurityContext(gcc.AgentUserGroup),
-			Resources:       p.configureResourcesRequirements(),
-			VolumeMounts:    volumeMounts,
-			WorkingDir:      tasks.ContainerWorkDir,
-		},
-	}
-
-	podSpec := p.configurePodSpec(
-		ctx, volumes, initContainers, containers, gcc.ExperimentConfig.Environment.PodSpec)
-	return p.launchPod(ctx, podSpec)
-}
-
-func configurePodName(t tasks.TaskSpec, rank int) string {
-	uniqueName := petname.Generate(2, "-")
-	switch {
-	case t.StartCommand != nil:
-		return fmt.Sprintf("cmd-%s-%s", t.TaskID, uniqueName)
-	case t.StartContainer != nil:
-		return fmt.Sprintf(
-			"exp-%d-trial-%d-%d-%s",
-			t.StartContainer.InitialWorkload.ExperimentID,
-			t.StartContainer.InitialWorkload.TrialID, rank,
-			uniqueName,
-		)
-	case t.GCCheckpoints != nil:
-		return fmt.Sprintf("gc-%s-%s", t.TaskID, uniqueName)
-	default:
-		return ""
-	}
-}
-
-func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *k8sV1.SecurityContext {
-	if agentUserGroup != nil {
-		userID := int64(agentUserGroup.ID)
-		groupID := int64(agentUserGroup.GID)
-		return &k8sV1.SecurityContext{
-			RunAsUser:  &userID,
-			RunAsGroup: &groupID,
-		}
-	}
-
-	return nil
-}
-
-func configureImagePullPolicy(environment model.Environment) k8sV1.PullPolicy {
-	pullPolicy := k8sV1.PullAlways
-	if !environment.ForcePullImage {
-		pullPolicy = k8sV1.PullIfNotPresent
-	}
-	return pullPolicy
-}
-
-func configureInitContainer(
-	numArchives int,
-	volumeMounts []k8sV1.VolumeMount,
-	image string,
-	imagePullPolicy k8sV1.PullPolicy,
-) k8sV1.Container {
-	return k8sV1.Container{
-		Name:    "determined-init-container",
-		Command: []string{path.Join(initContainerWorkDir, etc.K8InitContainerEntryScriptResource)},
-		Args: []string{
-			fmt.Sprintf("%d", numArchives), initContainerTarSrcPath, initContainerTarDstPath},
-		Image:           image,
-		ImagePullPolicy: imagePullPolicy,
-		VolumeMounts:    volumeMounts,
-		WorkingDir:      initContainerWorkDir,
-	}
 }
 
 func getContainerState(conditions []k8sV1.PodCondition) container.State {
