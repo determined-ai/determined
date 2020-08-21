@@ -15,7 +15,7 @@ Prerequisites
 
 Before installing Determined on Kubernetes users need to have:
 
-#. A Kubernetes cluster version 1.15 or higher with GPU support enabled.
+#. A Kubernetes cluster version 1.15 or higher with GPU support enabled. :ref:`Instructions for setting up a GKE cluster <setup-gke-cluster>`.
 #. Have access to the cluster via `kubectl <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_.
 #. Have `Helm installed <https://helm.sh/docs/helm/helm_install/>`_.
 #. Have a local copy of the `Determined Helm Chart <https://github.com/determined-ai/determined/tree/master/helm/charts/determined>`_. This can be done by cloning the Determined repo:  ``git clone https://github.com/determined-ai/determined.git``.
