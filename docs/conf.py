@@ -104,6 +104,7 @@ html_favicon = "assets/images/favicon.ico"
 
 html_theme_options = {
     "analytics_id": "UA-110089850-1",
+    "kickfire_id": "258260",
     "collapse_navigation": False,
     "display_version": True,
     "logo_only": False,
