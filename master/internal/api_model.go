@@ -93,6 +93,10 @@ func (a *apiServer) PatchModel(
 		return nil, errors.Wrap(err, "error marshaling request model metadata")
 	}
 
+	if currModel.Description == req.Model.Description && bytes.Equal(currMeta, newMeta) {
+		return &apiv1.PatchModelResponse{Model: currModel}, nil
+	}
+
 	if !bytes.Equal(currMeta, newMeta) {
 		log.Infof("model (%s) metadata changing from %s to %s",
 			req.Model.Name, currMeta, newMeta)
