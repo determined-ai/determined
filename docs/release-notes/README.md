@@ -20,22 +20,30 @@ new release.
   look at proposed release note changes as part of reviewing a PR.
 
 * Write the release note entry as a separate file and add it to the
-  `docs/release-notes` directory. Name the file with the PR number as a
-  prefix. For example, `1097-nvidia-a100-support.txt`. The file should be in
-  reStructuredText format and consist of one or more list elements. Be sure to
-  highlight API changes and backward incompatibilities, discuss any steps that
-  must be taken to upgrade safely, and link to other locations in the
-  documentation as needed. For example:
+  `docs/release-notes` directory.
+  
+  * Name the file with the PR number as a prefix. For example, `1097-nvidia-a100-support.txt`. 
+  * The file should be in reStructuredText format and contain a separate line 
+  `:orphan:` to exclude from being in a toctree.
+  * The file should contains one or more list elements, which should be categorized 
+  into one of **New Features**, **Improvements**, **Bug Fixes**.
+  * Be sure to highlight API changes and backward incompatibilities with a prefix 
+  "**Breaking Change:**", discuss any steps that must be taken to upgrade safely, 
+  and link to other locations in the documentation as needed. For example:
 
-```
-- Add support for provisioning Nvidia A100 GPU instances on GCP.
-
-  - Running workloads on A100 chips currently requires building a custom task
-    environment with CUDA 11, because the default task environments provided by
-    Determined contain either CUDA 10.0 or CUDA 10.1. Refer to the
-    :ref:`custom-env` documentation for more details. The default task
-    environments will be upgraded to CUDA 11 in a future release of Determined.
-```
+    ```
+    :orphan:
+    
+    **New Features**
+    
+    - Add support for provisioning Nvidia A100 GPU instances on GCP.
+    
+      - Running workloads on A100 chips currently requires building a custom task
+        environment with CUDA 11, because the default task environments provided by
+        Determined contain either CUDA 10.0 or CUDA 10.1. Refer to the
+        :ref:`custom-env` documentation for more details. The default task
+        environments will be upgraded to CUDA 11 in a future release of Determined.
+    ```
 
 * As part of the release process, the release manager will merge these files
   together into `docs/release-notes.txt`, delete the individual files from
