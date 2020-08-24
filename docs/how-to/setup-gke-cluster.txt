@@ -9,7 +9,7 @@ will host the Determined master and database, and a autoscaling group of GPU nod
 
 
 Prerequisites
-------------
+-------------
 
 Before setting up a GKE cluster users need to have `Google Cloud SDK <https://cloud.google.com/sdk/docs/quickstarts/>`_
 and `kubectl <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ installed.
