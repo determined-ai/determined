@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+- Fix Keras and Estimator wrapping functions not returning the original objects
+  when exporting checkpoints.
