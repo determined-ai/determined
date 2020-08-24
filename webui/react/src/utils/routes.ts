@@ -1,6 +1,6 @@
 import { MouseEvent, MouseEventHandler } from 'react';
 
-import { routeAll, setupUrlForDev } from 'routes';
+import { routeAll } from 'routes';
 import { Command } from 'types';
 
 import { waitPageUrl } from './types';
@@ -40,7 +40,7 @@ export const openBlank = (url: string): void => {
 export const openCommand = (command: Command): void => {
   const url = waitPageUrl(command);
   if (!url) throw new Error('command cannot be opened');
-  openBlank(setupUrlForDev(url));
+  openBlank(url);
 };
 
 export const handlePath = (
@@ -57,11 +57,10 @@ export const handlePath = (
   if (options.onClick) {
     options.onClick(event);
   } else if (options.path) {
-    const url = setupUrlForDev(options.path);
     if (event.metaKey || event.ctrlKey || options.popout) {
-      openBlank(url);
+      openBlank(options.path);
     } else {
-      routeAll(url);
+      routeAll(options.path);
     }
   }
 };

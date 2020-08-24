@@ -5,7 +5,6 @@ import React from 'react';
 import Icon from 'components/Icon';
 import Experiments from 'contexts/Experiments';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { setupUrlForDev } from 'routes';
 import { archiveExperiment, createTensorboard, killTask, setExperimentState } from 'services/api';
 import { AnyTask, CommandTask, Experiment, ExperimentTask, RunState, TBSourceType } from 'types';
 import { openBlank, openCommand } from 'utils/routes';
@@ -98,7 +97,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
         case 'viewLogs': {
           const taskType = (task as CommandTask).type.toLocaleLowerCase();
           const path = `/det/${taskType}/${task.id}/logs?id=${task.name}`;
-          openBlank(setupUrlForDev(path));
+          openBlank(path);
           break;
         }
         case 'unarchive':

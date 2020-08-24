@@ -7,7 +7,6 @@ import ClusterOverview from 'contexts/ClusterOverview';
 import UI from 'contexts/UI';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useStorage from 'hooks/useStorage';
-import { setupUrlForDev } from 'routes';
 import { createNotebook } from 'services/api';
 import { handlePath, openBlank } from 'utils/routes';
 import { commandToTask } from 'utils/types';
@@ -78,7 +77,7 @@ const Navigation: React.FC = () => {
     try {
       const notebook = await createNotebook({ slots });
       const task = commandToTask(notebook);
-      if (task.url) openBlank(setupUrlForDev(task.url));
+      if (task.url) openBlank(task.url);
       else throw new Error('Notebook URL not available.');
     } catch (e) {
       handleError({

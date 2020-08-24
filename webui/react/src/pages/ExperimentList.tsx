@@ -18,7 +18,6 @@ import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
-import { setupUrlForDev } from 'routes';
 import {
   archiveExperiment, createTensorboard, getExperimentSummaries, killExperiment,
   setExperimentState,
@@ -220,7 +219,7 @@ const ExperimentList: React.FC = () => {
       const result = await sendBatchActions(action);
       if (action === Action.OpenTensorBoard) {
         const url = waitPageUrl(result as Command);
-        if (url) openBlank(setupUrlForDev(url));
+        if (url) openBlank(url);
       }
 
       // Refetch experiment list to get updates based on batch action.
