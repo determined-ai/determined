@@ -1,5 +1,9 @@
 import { CommandState, ResourceState, RunState } from 'types';
 
+/*
+ * Where did we get our sizes from?
+ * https://www.quora.com/What-is-the-difference-among-big-large-huge-enormous-and-giant
+ */
 export enum ShirtSize {
   micro = 'micro',
   tiny = 'tiny',
