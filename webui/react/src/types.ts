@@ -234,7 +234,7 @@ export interface MetricName {
 // Checkpoint sub step.
 export interface Checkpoint extends StartEndTimes {
   id: number;
-  resources: Record<string, number>;
+  resources?: Record<string, number>;
   state: CheckpointState;
   stepId: number;
   trialId: number;

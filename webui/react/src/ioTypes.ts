@@ -22,6 +22,7 @@ export const decode = <T>(type: io.Mixed, data: any): T => {
 };
 
 const ioNullOrUndefined = io.union([ io.null, io.undefined ]);
+const optional = (x: io.Mixed) => io.union([ x, ioNullOrUndefined ]);
 
 /* User */
 
@@ -161,7 +162,7 @@ const startEndTimeDef = {
 export const ioCheckpoint = io.type({
   ...startEndTimeDef,
   id: io.number,
-  resources: io.record(io.string, io.number),
+  resources: optional(io.record(io.string, io.number)),
   state: checkpointStatesIoType,
   step_id: io.number,
   trial_id: io.number,
