@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import { OptionProps, SelectProps, SelectValue } from 'antd/es/select';
+import { SelectProps, SelectValue } from 'antd/es/select';
 import React, { PropsWithChildren, useCallback, useMemo } from 'react';
 
 import Icon from './Icon';
@@ -39,6 +39,10 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = ({
   showSearch = true,
   ...props
 }: PropsWithChildren<Props>) => {
+  const classes = [ css.base ];
+
+  if (disableTags) classes.push('disableTags');
+
   const optionsCount = useMemo(() => countOptions(props.children), [ props.children ]);
 
   const [ maxTagCount, maxTagPlaceholder ] = useMemo(() => {
@@ -67,7 +71,7 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = ({
   }, []);
 
   return (
-    <div className={css.base}>
+    <div className={classes.join(' ')}>
       <Label>{props.label}</Label>
       <Select
         dropdownMatchSelectWidth={dropdownMatchSelectWidth}
