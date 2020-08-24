@@ -5,8 +5,6 @@ import {
 } from 'types';
 import { terminalCommandStates } from 'utils/types';
 
-import { isExperiment } from './types';
-
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 export function getRandomElementOfEnum(e: any): any {
   const keys = Object.keys(e);
@@ -116,8 +114,8 @@ export const isExperimentTask = (task: AnyTask): task is ExperimentTask => {
 };
 
 export const canBeOpened = (task: AnyTask): boolean => {
-  if (!isExperimentTask(task) && task.state in terminalCommandStates) return false;
-  if (isExperiment(task)) return true;
+  if (isExperimentTask(task)) return true;
+  if (terminalCommandStates.has(task.state)) return false;
   return !!task.url;
 };
 
