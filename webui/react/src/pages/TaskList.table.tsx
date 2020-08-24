@@ -49,6 +49,8 @@ export const columns: ColumnType<CommandTask>[] = [
     title: 'User',
   },
   {
+    align: 'right',
+    className: 'fullCell',
     render: taskActionRenderer,
     title: '',
   },
