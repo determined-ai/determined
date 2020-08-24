@@ -93,6 +93,13 @@ func (e ExperimentConfig) Validate() []error {
 			e.Entrypoint, "Must specify an entrypoint that references the trial class."))
 	}
 
+	// If any fields that are a model.Length are in epochs, validate records_per_epoch is non-zero.
+	if e.Searcher.Unit() == Epochs || e.MinCheckpointPeriod.Unit == Epochs ||
+		e.MinValidationPeriod.Unit == Epochs {
+		errs = append(errs, check.GreaterThan(e.RecordsPerEpoch, 0,
+			"Must specify records_per_epoch when any configuration is in terms of epochs"))
+	}
+
 	return append(errs, []error{
 		check.TrueSilent(len(noCountParams) == 0,
 			"these hyperparameters must specify counts for grid search: %s",
