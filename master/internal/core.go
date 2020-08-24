@@ -438,7 +438,6 @@ func (m *Master) Run() error {
 	m.echo.HTTPErrorHandler = api.JSONErrorHandler
 
 	webuiRoot := filepath.Join(m.config.Root, "webui")
-	elmRoot := filepath.Join(webuiRoot, "elm")
 	reactRoot := filepath.Join(webuiRoot, "react")
 
 	// Docs.
@@ -447,16 +446,6 @@ func (m *Master) Run() error {
 	type fileRoute struct {
 		route string
 		path  string
-	}
-
-	// Elm WebUI.
-	elmFiles := [...]fileRoute{
-		{"/ui", "public/index.html"},
-		{"/ui/*", "public/index.html"},
-	}
-
-	elmDirs := [...]fileRoute{
-		{"/public", "public"},
 	}
 
 	// React WebUI.
@@ -480,21 +469,6 @@ func (m *Master) Run() error {
 		{"/fonts", "fonts"},
 		{"/static", "static"},
 		{"/wait", "wait"},
-	}
-
-	// Apply WebUI routes in order.
-	for _, fileRoute := range elmFiles {
-		elmIndexPath := filepath.Join(elmRoot, fileRoute.path)
-		m.echo.GET(fileRoute.route, func(c echo.Context) error {
-			c.Response().Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-			c.Response().Header().Set("Pragma", "no-cache")
-			c.Response().Header().Set("Expires", "0")
-			return c.File(elmIndexPath)
-		})
-	}
-
-	for _, dirRoute := range elmDirs {
-		m.echo.Static(dirRoute.route, filepath.Join(elmRoot, dirRoute.path))
 	}
 
 	for _, indexRoute := range reactIndexFiles {
