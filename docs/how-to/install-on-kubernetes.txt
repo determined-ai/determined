@@ -132,4 +132,5 @@ Next Steps
 
 - :ref:`quick-start`
 - :ref:`helm-config`
+- :ref:`useful-kubectl-commands`
 - :ref:`limitations-on-kubernetes`

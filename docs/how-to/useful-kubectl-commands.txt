@@ -1,0 +1,86 @@
+.. _useful-kubectl-commands:
+
+Useful Helm and Kubectl Commands
+================================
+
+The Kubernetes command-line tool, `kubectl <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_,
+allows you to run commands against Kubernetes clusters. `Helm <https://helm.sh/docs/helm/helm_install/>`_
+is used to install and upgrade Determined on Kubernetes. This document covers some of the useful kubectl
+and helm commands when :ref:`running Determined on Kubernetes <install-on-kubernetes>`. For all these commands
+please include ``-n <kubernetes namespace name>`` if running Determined not in the default
+`namespace <https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/>`_.
+
+
+List Installations of Determined
+--------------------------------
+
+To list the current installation of Determined on the Kubernetes cluster run:
+
+.. code:: bash
+
+    # To list in the current namespace.
+    helm list
+
+    # To list in all namespaces.
+    helm list -A
+
+Please note that it is recommended to have just one instance of Determined per Kubernetes cluster.
+
+
+Get the IP Address of the Determined Master
+-------------------------------------------
+
+To get the IP and port address of the Determined master run:
+
+.. code:: bash
+
+    # Get all services.
+    kubectl get services
+
+    # Get the master service. Exact name of the master service depends on the name given to your helm deployment
+    # which can be looked up by running ``helm list``.
+    kubectl get service determined-master-service-development-<helm deployment name>
+
+
+Check the Status of the Determined Master
+-----------------------------------------
+
+Logs for the Determined master are available via the CLI and WebUI. ``Kubectl`` commands are useful
+for diagnosing any issues that arise during installation.
+
+.. code:: bash
+
+    # Get all deployments.
+    kubectl get deployments
+
+    # Describe the current state of Determined master deployment. Exact name of the master deployment depends on
+    # the name given to your helm deploy which can be loooked up by running ``helm list``.
+    kubectl describe deployment determined-master-deployment-<helm deployment name>
+
+    # Get all pods associated with the Determined master deployment. Note this will not include pods running
+    # tasks, only the the pod(s) running the Determined master.
+    kubectl get pods -l=app=determined-master-<helm deployment name>
+
+    # Get logs for the pod running the Determined master.
+    kubectl logs <determined-master-pod-name>
+
+
+Get All the Running Task Pods
+-----------------------------
+
+These kubectl commands help list and delete pods which are running Determined tasks:
+
+.. code:: bash
+
+    # Get all pods that are running determined tasks.
+    kubectl get pods -l=determined
+
+    # Delete all Determined task pods. Users never have to run this unless they are removing
+    # a deployment of Determined.
+    kubectl get pods --no-headers=true -l=determined | awk '{print $1}' | xargs kubectl delete pod
+
+
+Next Steps
+----------
+
+- :ref:`install-on-kubernetes`

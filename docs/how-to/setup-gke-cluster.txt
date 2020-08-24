@@ -19,7 +19,7 @@ Setting Up the Cluster
 ----------------------
 
 
-.. code::
+.. code:: bash
 
     # Set a unique name for your cluster.
     GKE_CLUSTER_NAME=<any unique name, e.g. "determined-cluster">

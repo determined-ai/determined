@@ -41,7 +41,28 @@ recommended solutions:
 Is it possible to install Determined on Kubernetes?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Yes please see :ref:`Installling Determined on Kubernetes <install-on-kubernetes>` for instructions.
+Yes please see :ref:`Installing Determined on Kubernetes <install-on-kubernetes>` for instructions.
+
+After Installing Determined on Kubernetes I can't reach the Determined master
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Useful steps for debugging this include:
+
+.. code:: bash
+
+    # Get the name of the helm deployment.
+    helm list
+
+    # Double check the IP address and port assigned to the Determined master by looking up the master service.
+    kubectl get service determined-master-service-development-<helm deployment name>
+
+    # Check the status of master deployment.
+    kubectl describe deployment determined-master-deployment-<helm deployment name>
+
+    # Check the logs of master pod.
+    kubectl logs <determined-master-pod-name>
+
+Please see :ref:`useful-kubectl-commands` for more debugging tips.
 
 When installing Determined on Kubernetes I get a  ``ImagePullBackOff`` error
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

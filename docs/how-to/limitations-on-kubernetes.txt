@@ -4,7 +4,7 @@ Limitations of Determined on Kubernetes
 =======================================
 
 Deploying :ref:`Determined on Kubernetes <install-on-kubernetes>` is currently in beta and is under active
-deveolpment. This document outlines the current limitations of Determined on Kubernetes.
+development. This document outlines the current limitations of Determined on Kubernetes.
 
 
 Scheduling
@@ -22,7 +22,7 @@ fail to make any progress. For example, if you have a cluster with three 4-GPU n
 that requires four such nodes will deadlock the cluster. Three pods will start up on the available nodes
 and wait for the fourth pod launch, which will never happen due to resource limitations.
 
-To avoid deadlocking your cluster it is recommended to enable cluster autoscaling if posssible.
+To avoid deadlocking your cluster it is recommended to enable cluster autoscaling if possible.
 If a possible deadlock is detected, a warning will be displayed in the trial logs.
 Upon encountering a deadlock, users should pause, cancel, or kill the deadlocked
 experiment(s).
@@ -32,7 +32,7 @@ Dynamic Agents
 --------------
 
 Determined on :ref:`AWS <install-aws>` and :ref:`GCP <install-gcp>` autoscales compute resources.
-Determined on Kuberentes does not yet offer this functionality. Users are encouraged to use
+Determined on Kubernetes does not yet offer this functionality. Users are encouraged to use
 the `Kubernetes Cluster Autoscaler <https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler>`_
 which is supported on `GKE <https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-autoscaler>`_
 and `EKS <https://docs.aws.amazon.com/eks/latest/userguide/cluster-autoscaler.html>`_.
