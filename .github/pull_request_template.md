@@ -1,9 +1,9 @@
 ## Description
 
 <!---
-Lead with the intended commit body in this description field. For breaking changes, 
-please include "BREAKING CHANGE:" at the beginning of your commit body. 
-At minimum, this section should include a bracketed reference to the Jira ticket, 
+Lead with the intended commit body in this description field. For breaking changes,
+please include "BREAKING CHANGE:" at the beginning of your commit body.
+At minimum, this section should include a bracketed reference to the Jira ticket,
 e.g. "[DET-1234]". When squash-and-merging, copy this directly into the description field.
 -->
 
@@ -11,7 +11,7 @@ e.g. "[DET-1234]". When squash-and-merging, copy this directly into the descript
 ## Test Plan
 
 <!---
-Describe the situations in which you've tested your change, and/or a screenshot as appropriate. 
+Describe the situations in which you've tested your change, and/or a screenshot as appropriate.
 Reviewers may ask questions of this test plan to ensure adequate manual coverage of changes.
 -->
 
@@ -19,8 +19,8 @@ Reviewers may ask questions of this test plan to ensure adequate manual coverage
 ## Commentary (optional)
 
 <!---
-Use this section of your description to add context to the PR. Could be for particularly 
-tricky bits of code that could use extra scrutiny, historical context useful for reviewers, etc. 
+Use this section of your description to add context to the PR. Could be for particularly
+tricky bits of code that could use extra scrutiny, historical context useful for reviewers, etc.
 You may intentionally leave this section blank and remove the title.
 --->
 
@@ -28,8 +28,8 @@ You may intentionally leave this section blank and remove the title.
 ## Checklist
 
 - [ ] User-facing API changes need the "User-facing API Change" label.
-- [ ] Release note need to be put in a separate file under `docs/release-notes/`. 
-See [Release Note](../docs/release-notes/README.md) for details. 
+- [ ] Release notes should be added as a separate file under `docs/release-notes/`.
+See [Release Note](../docs/release-notes/README.md) for details.
 
 
 <!---
