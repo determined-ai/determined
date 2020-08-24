@@ -198,14 +198,14 @@ export interface ExperimentConfig {
 /* Experiment */
 export enum RunState {
   Active = 'ACTIVE',
-  Canceled = 'CANCELED',
-  Completed = 'COMPLETED',
-  Deleted = 'DELETED',
-  Errored = 'ERROR',
   Paused = 'PAUSED',
   StoppingCanceled = 'STOPPING_CANCELED',
+  Canceled = 'CANCELED',
   StoppingCompleted = 'STOPPING_COMPLETED',
+  Completed = 'COMPLETED',
   StoppingError = 'STOPPING_ERROR',
+  Errored = 'ERROR',
+  Deleted = 'DELETED',
 }
 
 export interface ValidationHistory {
