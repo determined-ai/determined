@@ -5,16 +5,16 @@ Cluster Configuration
 
 The behavior of the master and agent can be controlled by setting
 configuration variables; this can be done using a configuration file,
-environment variables, or command-line options. (Although values from
+environment variables, or command-line options. Although values from
 different sources will be merged, we generally recommend sticking to a
-single source for each service to keep things simple.)
+single source for each service to keep things simple.
 
 The master and the agent both accept an optional ``--config-file``
 command-line option, which specifies the path of the configuration file
 to use. Note that when running the master or agent inside a container,
 you will need to make the configuration file accessible inside the
 container (e.g., via a bind mount). For example, this command starts the
-agent using a custom configuration file:
+agent using a configuration file:
 
 .. code::
 
@@ -23,29 +23,53 @@ agent using a custom configuration file:
     determinedai/determined-agent
     --config-file /etc/determined/agent-config.yaml
 
-Each option in the configuration file corresponds directly to an
-environment variable or command-line option. For example, the master
-configuration file might contain
-
-.. code:: yaml
-
-   db:
-     host: the-db-host
-
-
-to configure the host where the PostgreSQL database is running. The same
-thing could be done by starting the master with the
-``DET_DB_HOST=the-db-host`` environment variable or ``--db-host
-the-db-host`` command-line option.
-
-The agent configuration file might contain
+The ``agent-config.yaml`` file might contain
 
 .. code:: yaml
 
   master_host: 127.0.0.1
   master_port: 8080
 
-to configure the address of the Determined master.
+to configure the address of the Determined master that the agent will attempt to
+connect to.
+
+Each option in the master or agent configuration file can also be specified as
+an environment variable or a command-line option. To configure the behavior of
+the master or agent using environment variables, specify an environment variable
+starting with ``DET_`` followed by the name of the configuration variable.
+Underscores (``_``) should be used to indicate nested options: for example, the
+``scheduler.fit`` master configuration option can be specified via an
+environment variable named ``DET_SCHEDULER_FIT``.
+
+The equivalent of the agent configuration file shown above can be specified by
+setting two environment variables, ``DET_MASTER_HOST`` and ``DET_MASTER_PORT``.
+When starting the agent as a container, environment variables can be specified
+as part of ``docker run``:
+
+.. code::
+
+  docker run \
+    -e DET_MASTER_HOST=127.0.0.1 \
+    -e DET_MASTER_PORT=8080 \
+    determinedai/determined-agent
+
+The equivalent behavior can be achieved using command-line options:
+
+.. code::
+
+  determined-agent run --master-host=127.0.0.1 --master-port=8080
+
+The same behavior applies to master configuration settings as well. For example,
+configuring the host where the Postgres database is running can be done via a
+configuration file containing:
+
+.. code:: yaml
+
+   db:
+     host: the-db-host
+
+Equivalent behavior can be achieved by setting the ``DET_DB_HOST=the-db-host``
+environment variable or ``--db-host the-db-host`` command-line option.
 
 In the rest of this document, we will refer to options using their names
 in the configuration file. Periods (``.``) will be used to indicate
@@ -81,7 +105,7 @@ Configuring Trial Runner Networking
 The master is capable of selecting the network interface that trial
 runners will use to communicate when performing distributed
 (multi-machine) training. The network interface can be configured by
-editing the ``task_container_defaults.dtrain_network_interface``. If left unspecified,
+editing ``task_container_defaults.dtrain_network_interface``. If left unspecified,
 which is the default setting, Determined will auto-discover a common
 network interface shared by the trial runners.
 
@@ -100,6 +124,8 @@ Default Checkpoint Storage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See :ref:`checkpoint-storage-configuration` for details.
+
+.. _telemetry:
 
 Telemetry
 ~~~~~~~~~
@@ -172,6 +198,10 @@ Determined CLI with the command ``det master config``.
 
 The master supports the following configuration settings:
 
+- ``config_file``: Path to the master configuration file. Normally this should
+  only be set via an environment variable or command-line option. Defaults to
+  ``/etc/determined/master.yaml``.
+
 - ``scheduler``: Specifies how Determined schedules tasks to agents.
 
   - ``fit``: The scheduling policy to use when assigning tasks to
@@ -202,23 +232,22 @@ The master supports the following configuration settings:
 
   - ``shm_size_bytes``: The size (in bytes) of ``/dev/shm`` for Determined task containers. Defaults to ``4294967296``.
 
-  - ``network_mode``: The Docker network to use for the Determined task containers.
-    If this is set to "host", Docker host-mode networking will be used
-    instead. Defaults to "bridge".
+  - ``network_mode``: The Docker network to use for the Determined task
+    containers.  If this is set to ``host``, `Docker host-mode networking
+    <https://docs.docker.com/network/host/>`__ will be used instead. Defaults to
+    ``bridge``.
 
   - ``dtrain_network_interface``: The network interface to use during
     :ref:`multi-gpu-training`. If not set, Determined automatically determines
-    the network interface.
+    the network interface to use.
 
-    When training a model with multiple machines, the host network
-    interface used by each machine must have the same interface name
-    across machines. This is usually determined automatically, but there
-    may be issues if there is an interface name common to all machines
-    but it is not routable between machines. Determined already filters out
-    common interfaces like ``lo`` and ``docker0``, but agent machines
-    may have others.
-
-    If interface detection is not finding the appropriate interface, the
+    When training a model with multiple machines, the host network interface
+    used by each machine must have the same interface name across machines. The
+    network interface to use can be determined automatically, but there may be
+    issues if there is an interface name common to all machines but it is not
+    routable between machines. Determined already filters out common interfaces
+    like ``lo`` and ``docker0``, but agent machines may have others. If
+    interface detection is not finding the appropriate interface, the
     ``dtrain_network_interface`` option can be used to set it explicitly (e.g.,
     ``eth11``).
 
@@ -280,10 +309,10 @@ The master supports the following configuration settings:
   - ``agent_docker_image``: The Docker image to use for the Determined agents.
     A valid form is ``determinedai/determined-agent:<version>``. (*Required*)
 
-  - ``agent_docker_network``: The Docker network to use for the Determined
-    agent and task containers. If this is set to "host", Docker
-    host-mode networking will be used instead. The default value is
-    ``determined``.
+  - ``agent_docker_network``: The Docker network to use for the Determined agent
+    and task containers. If this is set to ``host``, `Docker host-mode
+    networking <https://docs.docker.com/network/host/>`__ will be used
+    instead. The default value is ``determined``.
 
   - ``agent_docker_runtime``: The Docker runtime to use for the Determined
     agent and task containers. Defaults to ``runc``.
@@ -332,18 +361,18 @@ The master supports the following configuration settings:
 
       - ``public_ip``: Whether to use public IP addresses for the
         Determined agents. See :ref:`aws-network-requirements` for
-        instruction on whether an external IP should be used. Defaults
+        instructions on whether a public IP should be used. Defaults
         to ``false``.
 
-      - ``security_group_id``: The ID of the security group to run the Determined
-        agents as. This is the one you identified or created in
-        :ref:`aws-network-requirements`. Defaults to the default security
-        group of the specified VPC.
+      - ``security_group_id``: The ID of the security group to run the
+        Determined agents as. This should be the security group you identified
+        or created in :ref:`aws-network-requirements`. Defaults to the default
+        security group of the specified VPC.
 
       - ``subnet_id``: The ID of the subnet to run the Determined agents
         in. Defaults to the default subnet of the default VPC.
 
-    - ``max_instances``: Max number of Determined agent instances. Defaults
+    - ``max_instances``: Maximum number of dynamic agent instances. Defaults
       to ``5``.
 
     - ``instance_type``: AWS instance type to use for dynamic agents. This must be one of
@@ -533,26 +562,46 @@ The master supports the following configuration settings:
   - ``port``: The database port to use. (*Required*)
   - ``name``: The database name to use. (*Required*)
 
-- ``telemetry``: Specifies whether we collect anonymous information about the
-  usage of Determined.
+- ``telemetry``: Specifies whether we collect and report anonymous information
+  about the usage of Determined. See :ref:`telemetry` for details on what kinds
+  of information are reported.
 
-  - ``enabled``: Whether collection is enabled. Defaults to ``true``.
+  - ``enabled``: Whether telemetry is enabled. Defaults to ``true``.
 
 .. _agent-configuration:
 
 Agent Configuration
 -------------------
 
+- ``config_file``: Path to the agent configuration file. Normally this should
+  only be set via an environment variable or command-line option. Defaults to
+  ``/etc/determined/agent.yaml``.
 - ``master_host`` (required): The hostname or IP address of the Determined master.
-- ``master_port`` (required): The port of the Determined master.
+- ``master_port``: The port of the Determined master. Defaults to ``443`` if TLS
+  is enabled and ``80`` otherwise.
 - ``agent_id``: The ID of this agent; defaults to the hostname of the current
   machine. Agent IDs must be unique within a cluster.
-- ``label``: An agent with a label will only be assigned workloads that have been assigned the same label.
-- ``visible_gpus``: The GPUs that should be exposed as slots by the agent. A comma-separated list of GPUs,
-  each specified by a 0-based index, UUID, PCI bus ID, or board serial number.
-  The 0-based index of NVIDIA GPUs can be obtained via the ``nvidia-smi``
-  command.
+- ``container-master-host``: Master hostname that containers started by this
+  agent will connect to. Defaults to the value of ``master_host``.
+- ``container-master-port``: Master port that containers started by this agent
+  will connect to. Defaults to the value of ``master_port``.
+- ``label``: The label to assign to this agent. An agent with a label will only
+  be assigned workloads that have been assigned the same label (e.g., via the
+  :ref:`agent_label <exp-config-agent_label>` field in the experiment configuration).
+- ``visible_gpus``: The GPUs that should be exposed as slots by the agent. A
+  comma-separated list of GPUs, each specified by a 0-based index, UUID, PCI bus
+  ID, or board serial number.  The 0-based index of NVIDIA GPUs can be obtained
+  via the ``nvidia-smi`` command.
 - ``http_proxy``: The HTTP proxy address for the agent's containers.
 - ``https_proxy``: The HTTPS proxy address for the agent's containers.
 - ``ftp_proxy``: The FTP proxy address for the agent's containers.
-- ``no_proxy``: The addresses that the container should not proxy.
+- ``no_proxy``: The addresses that the agent's containers should not proxy.
+- ``security``: Security-related configuration settings.
+
+  - ``tls``: TLS-related configuration settings.
+  
+    - ``enabled``: Whether to use TLS to connect to the master. Defaults to ``false``.
+    - ``skip_verify``: Skip verifying the master certificate when using TLS.
+      Defaults to ``false``. Enabling this setting will reduce the security of
+      your Determined cluster.
+    - ``master_cert``: CA cert file for the master when using TLS.

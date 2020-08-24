@@ -820,6 +820,29 @@ use.
 
 **Optional Fields**
 
+``slots_per_trial``
+  The number of slots to use for each trial of this experiment. The default
+  value is ``1``; specifying a value greater than 1 means that multiple GPUs will be
+  used in parallel. Training on multiple GPUs is done using data
+  parallelism. Configuring ``slots_per_trial`` to be greater than ``max_slots``
+  is not sensible and will result in an error.
+
+  .. note::
+
+    Using ``slots_per_trial`` to enable data parallel training for PyTorch
+    can alter the behavior of certain models, as described in the `PyTorch
+    documentation
+    <https://pytorch.org/docs/stable/generated/torch.nn.DataParallel.html#torch.nn.DataParallel>`__.
+
+.. _exp-config-agent_label:
+
+``agent_label``
+  If set, tasks launched for this experiment will *only* be scheduled on agents
+  that have the given label set. If this is not set (the default behavior),
+  tasks launched for this experiment will only be scheduled on unlabeled
+  agents. An agent's label can be configured via the ``label`` field in the
+  :ref:`agent configuration <agent-configuration>`.
+
 ``max_slots``
   The maximum number of scheduler slots that this experiment is allowed to use
   at any one time. The slot limit of an active experiment can be changed using
@@ -840,20 +863,6 @@ use.
   <weight>``. The default weight is ``1``.
 
 .. _exp-config-resources-slots-per-trial:
-
-``slots_per_trial``
-  The number of slots to use for each trial of this experiment. The default
-  value is ``1``; specifying a value greater than 1 means that multiple GPUs will be
-  used in parallel. Training on multiple GPUs is done using data
-  parallelism. Configuring ``slots_per_trial`` to be greater than ``max_slots``
-  is not sensible and will result in an error.
-
-  .. note::
-
-    Using ``slots_per_trial`` to enable data parallel training for PyTorch
-    can alter the behavior of certain models, as described in the `PyTorch
-    documentation
-    <https://pytorch.org/docs/stable/generated/torch.nn.DataParallel.html#torch.nn.DataParallel>`__.
 
 ``shm_size``
   The size in bytes of ``/dev/shm`` for trial containers. Defaults to

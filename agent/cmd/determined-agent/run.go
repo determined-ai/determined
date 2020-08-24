@@ -77,11 +77,10 @@ func newRunCmd() *cobra.Command {
 	}
 
 	// Top-level flags.
-	cmd.Flags().StringVar(&opts.ConfigFile, "config-file", "", "Config file")
+	cmd.Flags().StringVar(&opts.ConfigFile, "config-file", "", "Path to agent configuration file")
 	cmd.Flags().StringVar(&opts.MasterHost, "master-host", "", "Hostname of the master")
 	cmd.Flags().IntVar(&opts.MasterPort, "master-port", 0, "Port of the master")
-	cmd.Flags().StringVar(&opts.AgentID, "agent-id", "",
-		"unique ID of this Determined agent")
+	cmd.Flags().StringVar(&opts.AgentID, "agent-id", "", "Unique ID of this Determined agent")
 
 	// Labels flags.
 	cmd.Flags().StringVar(&opts.Label, "label", "",
@@ -89,9 +88,9 @@ func newRunCmd() *cobra.Command {
 
 	// Container flags.
 	cmd.Flags().StringVar(&opts.ContainerMasterHost, "container-master-host", "",
-		"Hostname of the master that the container connect to")
+		"Master hostname that containers started by this agent will connect to")
 	cmd.Flags().IntVar(&opts.ContainerMasterPort, "container-master-port", 0,
-		"Port of the master that the container connect to")
+		"Master port that containers started by this agent will connect to")
 
 	// Device flags.
 	cmd.Flags().StringVar(&opts.VisibleGPUs, "visible-gpus", "", "GPUs to expose as slots")
@@ -120,8 +119,19 @@ func newRunCmd() *cobra.Command {
 
 	// Endpoint flags.
 	cmd.Flags().BoolVar(&opts.APIEnabled, "enable-api", false, "Enable agent API endpoints")
-	cmd.Flags().StringVar(&opts.BindIP, "bind-ip", "0.0.0.0", "IP address to listen on")
-	cmd.Flags().IntVar(&opts.BindPort, "bind-port", 9090, "port to listen on")
+	cmd.Flags().StringVar(&opts.BindIP, "bind-ip", "0.0.0.0",
+		"IP address to listen on for API requests")
+	cmd.Flags().IntVar(&opts.BindPort, "bind-port", 9090, "Port to listen on for API requests")
+
+	// Proxy flags.
+	cmd.Flags().StringVar(&opts.HTTPProxy, "http-proxy", "",
+		"The HTTP proxy address for the agent's containers")
+	cmd.Flags().StringVar(&opts.HTTPSProxy, "https-proxy", "",
+		"The HTTPS proxy address for the agent's containers")
+	cmd.Flags().StringVar(&opts.FTPProxy, "ftp-proxy", "",
+		"The FTP proxy address for the agent's containers")
+	cmd.Flags().StringVar(&opts.NoProxy, "no-proxy", "",
+		"Addresses that the agent's containers should not proxy")
 
 	return cmd
 }
