@@ -171,6 +171,14 @@ class PyTorchTrialController(det.LoopTrialController):
 
             lr_scheduler = self.trial.create_lr_scheduler(optim)
             if lr_scheduler is not None:
+                opt = getattr(lr_scheduler._scheduler, "optimizer", None)
+                if opt is not None:
+                    check.is_in(
+                        opt,
+                        self.context.optimizers,
+                        "Must use a wrapped optimizer that is passed in by the optimizer "
+                        "argument of create_lr_scheduler",
+                    )
                 self.context.lr_schedulers.append(lr_scheduler)
 
             if det.ExperimentConfig(self.context.get_experiment_config()).mixed_precision_enabled():

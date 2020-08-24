@@ -135,6 +135,21 @@ Core APIs, we recommend porting your model to use :ref:`Estimator Trial <estimat
 <https://github.com/determined-ai/determined/blob/master/examples/experimental/trial/mnist_tp_to_estimator/model_def.py>`_.
 
 
+Pytorch Supporrt
+----------------
+
+Why am I seeing significantly different metrics for trials which are paused and later continued (jumps in loss, worse convergence, etc) than trials which aren't paused?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Please verify the following in the model code:
+
+* The model is wrapped with :meth:`wrap_model <determined.pytorch.PyTorchTrialContext.wrap_model>`.
+* The optimizer is wrapped with :meth:`wrap_optimizer <determined.pytorch.PyTorchTrialContext.wrap_optimizer>`
+  and based on the output of ``wrap_model``, not the original unwrapped model.
+* The LR scheduler is wrapped with :meth:`wrap_lr_scheduler <determined.pytorch.PyTorchTrialContext.wrap_lr_scheduler>`
+  and based on the output of ``wrap_optimizer``, not the original unwrapped optimizer.
+
+
 TensorBoard Support
 -------------------
 
