@@ -132,3 +132,4 @@ Next Steps
 
 - :ref:`quick-start`
 - :ref:`helm-config`
+- :ref:`limitations-on-kubernetes`

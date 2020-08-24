@@ -1,0 +1,46 @@
+.. _limitations-on-kubernetes:
+
+Limitations of Determined on Kubernetes
+=======================================
+
+Deploying :ref:`Determined on Kubernetes <install-on-kubernetes>` is currently in beta and is under active
+deveolpment. This document outlines the current limitations of Determined on Kubernetes.
+
+
+Scheduling
+----------
+
+Determined on Kubernetes does not currently support the scheduling policies that are available when
+deploying Determined on VMs. These policies include: priority scheduling, fair sharing resources
+across experiments and gang-scheduling for distributed training. Determined relies on Kubernetes
+to handle scheduling which does not natively support these scheduling policies.
+
+Distributed training experiments that require more than one pod must have all pods scheduled and
+running in order to make progress. Due to a lack of gang-scheduling in Kubernetes, when running
+distributed training experiments it is possible to deadlock the Kubernetes cluster such that it will
+fail to make any progress. For example, if you have a cluster with three 4-GPU nodes, scheduling an experiment
+that requires four such nodes will deadlock the cluster. Three pods will start up on the available nodes
+and wait for the fourth pod launch, which will never happen due to resource limitations.
+
+To avoid deadlocking your cluster it is recommended to enable cluster autoscaling if posssible.
+If a possible deadlock is detected, a warning will be displayed in the trial logs.
+Upon encountering a deadlock, users should pause, cancel, or kill the deadlocked
+experiment(s).
+
+
+Dynamic Agents
+--------------
+
+Determined on :ref:`AWS <install-aws>` and :ref:`GCP <install-gcp>` autoscales compute resources.
+Determined on Kuberentes does not yet offer this functionality. Users are encouraged to use
+the `Kubernetes Cluster Autoscaler <https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler>`_
+which is supported on `GKE <https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-autoscaler>`_
+and `EKS <https://docs.aws.amazon.com/eks/latest/userguide/cluster-autoscaler.html>`_.
+
+
+Sidecars and InitContainers
+---------------------------
+
+Determined on Kubernetes supports user provided pod template specs, however specifying
+`init containers <https://kubernetes.io/docs/concepts/workloads/pods/init-containers/>`_
+and `sidecar containers <https://www.magalix.com/blog/the-sidecar-pattern>`_.

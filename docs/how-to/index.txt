@@ -12,6 +12,7 @@ How-To guides are goal-oriented guides. They provide a detailed set of steps to 
 
 - :ref:`install-on-kubernetes`
 - :ref:`setup-gke-cluster`
+- :ref:`limitations-on-kubernetes`
 
 **Hyperparameter**
 
@@ -38,3 +39,4 @@ The full list of our how-to guides can be found below:
   notebooks
   tensorboard
   use-trained-models
+  limitations-on-kubernetes
