@@ -13,9 +13,11 @@ interface Props {
 }
 
 const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }: Props) => {
-  const [ metric, setMetric ] = useState<MetricName | undefined>(
-    validationMetric ? { name: validationMetric, type: MetricType.Validation } : undefined,
-  );
+  const defaultMetric = metricNames.find(metricName => {
+    return metricName.name === validationMetric && metricName.type === MetricType.Validation;
+  });
+  const fallbackMetric = metricNames && metricNames.length !== 0 ? metricNames[0] : undefined;
+  const [ metric, setMetric ] = useState<MetricName | undefined>(defaultMetric || fallbackMetric);
 
   const data: Partial<PlotData>[] = useMemo(() => {
     const textData: string[] = [];
