@@ -84,8 +84,9 @@ Use the links below to start learning more about Determined's capabilities.
 
 **Distributed Training**
 
-- :ref:`optimizing-multi-gpu-training`
 - :ref:`multi-gpu-training`
+- :ref:`optimizing-multi-gpu-training`
+- :ref:`effective-distributed-training`
 
 **Elastic Infrastructure**
 
@@ -109,6 +110,7 @@ Use the links below to start learning more about Determined's capabilities.
   - :ref:`install-aws`
   - :ref:`install-gcp`
   - :ref:`install-using-linux-packages`
+  - :ref:`install-on-kubernetes`
 
 Documentation Structure
 -----------------------
