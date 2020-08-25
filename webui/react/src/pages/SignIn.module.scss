@@ -11,7 +11,7 @@
     flex-direction: column;
     max-width: 22rem;
 
-    & > * { margin-bottom: var(--theme-sizes-layout-jumbo); }
+    & > * { margin-bottom: var(--theme-sizes-layout-enormous); }
     & > *:last-child { margin-bottom: 0; }
   }
 }

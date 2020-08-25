@@ -12,7 +12,7 @@
     & > *:first-child { flex-grow: 0; }
     & > *:last-child {
       flex-grow: 1;
-      height: calc(100vh - var(--theme-sizes-navbar-height));
+      height: 100vh;
       overflow: auto;
     }
   }

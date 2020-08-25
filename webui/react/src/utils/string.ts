@@ -4,6 +4,7 @@ export const capitalize = (str: string): string => {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 };
 
+const LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const CHARACTERS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 export const generateAlphaNumeric = (length = 8, chars = CHARACTERS): string => {
@@ -12,6 +13,10 @@ export const generateAlphaNumeric = (length = 8, chars = CHARACTERS): string => 
     result += chars[ Math.floor(Math.random() * chars.length) ];
   }
   return result;
+};
+
+export const generateLetters = (length = 8): string => {
+  return generateAlphaNumeric(length, LETTERS);
 };
 
 export const truncate = (str: string, maxLen: number): string => {

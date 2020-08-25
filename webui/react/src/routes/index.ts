@@ -14,7 +14,7 @@ import TrialDetails from 'pages/TrialDetails';
 import TrialLogs from 'pages/TrialLogs';
 import history from 'routes/history';
 import { clone } from 'utils/data';
-import { ensureAbsolutePath, isFullPath, parseUrl } from 'utils/routes';
+import { isFullPath, parseUrl } from 'utils/routes';
 
 /*
  * Router Configuration
@@ -144,16 +144,9 @@ export const appRoutes: RouteConfig[] = [
   },
 ];
 
-export const sidebarRoutes: RouteConfig[] = [
-  dashboardRoute,
-  experimentListRoute,
-  taskListRoute,
-  clusterRoute,
-];
-
 // Add pages we don't want to expose to the public yet.
 if (process.env.IS_DEV) {
-  // sidebarRoutes.push();
+  // appRoutes.push();
 }
 
 // Is the path going to be served from the same host?
@@ -178,18 +171,8 @@ const isReactRoute = (url: string): boolean => {
     });
 };
 
-// to support running the SPA off of a separate port from the cluster and have the links to Elm
-// SPA work.
-export const setupUrlForDev = (path: string): string => {
-  if (process.env.IS_DEV && !isFullPath(path) && isDetRoute(path) && !isReactRoute(path)) {
-    const pathPrefix = process.env.IS_DEV ? 'http://localhost:8080' : '';
-    return pathPrefix + ensureAbsolutePath(path);
-  }
-  return path;
-};
-
 export const routeToExternalUrl = (path: string): void => {
-  window.location.assign(setupUrlForDev(path));
+  window.location.assign(path);
 };
 
 export const routeAll = (path: string): void => {

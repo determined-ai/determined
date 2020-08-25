@@ -1,4 +1,6 @@
-import { setupUrlForDev } from 'routes';
+import { MouseEvent, MouseEventHandler } from 'react';
+
+import { routeAll } from 'routes';
 import { Command } from 'types';
 
 import { waitPageUrl } from './types';
@@ -38,5 +40,27 @@ export const openBlank = (url: string): void => {
 export const openCommand = (command: Command): void => {
   const url = waitPageUrl(command);
   if (!url) throw new Error('command cannot be opened');
-  openBlank(setupUrlForDev(url));
+  openBlank(url);
+};
+
+export const handlePath = (
+  event: MouseEvent,
+  options: {
+    onClick?: MouseEventHandler,
+    path?: string,
+    popout?: boolean,
+  } = {},
+): void => {
+  event.persist();
+  event.preventDefault();
+
+  if (options.onClick) {
+    options.onClick(event);
+  } else if (options.path) {
+    if (event.metaKey || event.ctrlKey || options.popout) {
+      openBlank(options.path);
+    } else {
+      routeAll(options.path);
+    }
+  }
 };

@@ -7,6 +7,7 @@ import md5 from 'utils/md5';
 import css from './Avatar.module.scss';
 
 interface Props {
+  hideTooltip?: boolean;
   name: string;
 }
 
@@ -27,13 +28,10 @@ const getColor = (name = ''): string => {
   return hsl2str({ ...hslColor, l: 50 });
 };
 
-const Avatar: React.FC<Props> = ({ name }: Props) => {
+const Avatar: React.FC<Props> = ({ hideTooltip, name }: Props) => {
   const style = { backgroundColor: getColor(name) };
-  return <Tooltip placement="right" title={name}>
-    <div className={css.base} id="avatar" style={style}>
-      {getInitials(name)}
-    </div>
-  </Tooltip>;
+  const avatar = <div className={css.base} id="avatar" style={style}>{getInitials(name)}</div>;
+  return hideTooltip ? avatar : <Tooltip placement="right" title={name}>{avatar}</Tooltip>;
 };
 
 export default Avatar;

@@ -1,15 +1,22 @@
 import { CommandState, ResourceState, RunState } from 'types';
 
+/*
+ * Where did we get our sizes from?
+ * https://www.quora.com/What-is-the-difference-among-big-large-huge-enormous-and-giant
+ */
 export enum ShirtSize {
   micro = 'micro',
   tiny = 'tiny',
   small = 'small',
   medium = 'medium',
-  big = 'big',
   large = 'large',
-  jumbo = 'jumbo',
+  big = 'big',
+  great = 'great',
   huge = 'huge',
+  enormous = 'enormous',
   giant = 'giant',
+  jumbo = 'jumbo',
+  mega = 'mega',
 }
 
 enum StateColors {
@@ -22,11 +29,21 @@ enum StateColors {
 
 export interface Theme {
   colors: {
-    core: {
-      action: string;
-      primary: string;
-      secondary: string;
-      tertiary: string;
+    action: {
+      dark: string;
+      light: string;
+      normal: string;
+    };
+    base: string[];
+    brand: {
+      dark: string;
+      light: string;
+      normal: string;
+    };
+    danger: {
+      dark: string;
+      light: string;
+      normal: string;
     };
     monochrome: string[];
     states: Record<StateColors, string>;
@@ -52,10 +69,7 @@ export interface Theme {
       large: string;
     };
     layout: {[size in ShirtSize]: string};
-    navbar: {
-      height: string;
-    };
-    sidebar: {
+    navigation: {
       minWidth: string;
       maxWidth: string;
     };
@@ -68,11 +82,35 @@ export interface Theme {
  */
 export const lightTheme: Theme = {
   colors: {
-    core: {
-      action: '#009bde',
-      primary: '#f77b21',
-      secondary: '#0d1e2b',
-      tertiary: '#234b65',
+    action: {
+      dark: '#0088cc',
+      light: '#00b2ff',
+      normal: '#009bde',
+    },
+    base: [
+      '#0d1e2b',  // 0 - A
+      '#132231',  // 1 - B
+      '#1f2d3c',  // 2 - C
+      '#273847',  // 3 - D
+      '#334251',  // 4 - E
+      '#3d4c5a',  // 5 - F
+      '#4A5764',  // 6 - G
+      '#55626e',  // 7 - H
+      '#616c78',  // 8 - I
+      '#6B7681',  // 9 - J
+      '#77818b',  // 10 - K
+      '#828c95',  // 11 - L
+      '#8d959e',  // 12 - M
+    ],
+    brand: {
+      dark: '#ee6600',
+      light: '#ff9933',
+      normal: '#f77b21',
+    },
+    danger: {
+      dark: '#aa0000',
+      light: '#ee0000',
+      normal: '#cc0000',
     },
     monochrome: [
       '#000000',  // 0 - Black
@@ -121,11 +159,14 @@ export const lightTheme: Theme = {
       tiny: '1.1rem',
       small: '1.2rem',
       medium: '1.4rem',
-      big: '1.6rem',
-      large: '1.8rem',
-      jumbo: '2.0rem',
-      huge: '2.4rem',
-      giant: '3.6rem',
+      large: '1.6rem',
+      big: '1.8rem',
+      great: '2.0rem',
+      huge: '2.2rem',
+      enormous: '2.4rem',
+      giant: '2.8rem',
+      jumbo: '3.6rem',
+      mega: '4rem',
     },
     icon: {
       tiny: '1.2rem',
@@ -138,19 +179,19 @@ export const lightTheme: Theme = {
       tiny: '0.4rem',
       small: '0.6rem',
       medium: '0.8rem',
+      large: '1.2rem',
       big: '1.6rem',
-      large: '2rem',
-      jumbo: '2.4rem',
-      huge: '3.2rem',
-      giant: '3.6rem',
+      great: '1.8rem',
+      huge: '2rem',
+      enormous: '2.4rem',
+      giant: '3.2rem',
+      jumbo: '3.6rem',
+      mega: '4rem',
     },
     /* eslint-enable sort-keys-fix/sort-keys-fix */
-    navbar: {
-      height: '4.8rem',
-    },
-    sidebar: {
-      maxWidth: '14.9rem',
-      minWidth: '4.8rem',
+    navigation: {
+      maxWidth: '24rem',
+      minWidth: '5.6rem',
     },
   },
 };

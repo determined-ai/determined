@@ -1,11 +1,10 @@
 import { Dropdown, Menu } from 'antd';
-import { ClickParam } from 'antd/es/menu';
+import { MenuInfo } from 'rc-menu/lib/interface';
 import React from 'react';
 
 import Icon from 'components/Icon';
 import Experiments from 'contexts/Experiments';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
-import { setupUrlForDev } from 'routes';
 import { archiveExperiment, createTensorboard, killTask, setExperimentState } from 'services/api';
 import { AnyTask, CommandTask, Experiment, ExperimentTask, RunState, TBSourceType } from 'types';
 import { openBlank, openCommand } from 'utils/routes';
@@ -50,7 +49,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
     }
   };
 
-  const handleMenuClick = async (params: ClickParam): Promise<void> => {
+  const handleMenuClick = async (params: MenuInfo): Promise<void> => {
     params.domEvent.stopPropagation();
     try {
       switch (params.key) { // Cases should match menu items.
@@ -98,7 +97,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
         case 'viewLogs': {
           const taskType = (task as CommandTask).type.toLocaleLowerCase();
           const path = `/det/${taskType}/${task.id}/logs?id=${task.name}`;
-          openBlank(setupUrlForDev(path));
+          openBlank(path);
           break;
         }
         case 'unarchive':
@@ -112,7 +111,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task }: Props) => {
         level: ErrorLevel.Error,
         message: e.message,
         publicMessage: `Unable to ${params.key} task ${task.id}.`,
-        publicSubject: `${capitalize(params.key)} failed.`,
+        publicSubject: `${capitalize(params.key.toString())} failed.`,
         silent: false,
         type: ErrorType.Server,
       });

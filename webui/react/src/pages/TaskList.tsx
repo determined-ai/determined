@@ -1,9 +1,8 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
-import { Button, Input, Modal, Space, Table } from 'antd';
+import { Button, Input, Modal, Table } from 'antd';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
-import { makeClickHandler } from 'components/Link';
 import Page from 'components/Page';
 import { Indicator } from 'components/Spinner';
 import { defaultRowClassName, isAlternativeAction } from 'components/Table';
@@ -16,14 +15,13 @@ import Users from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
-import { setupUrlForDev } from 'routes';
 import {
-  createNotebook, getCommands, getNotebooks, getShells, getTensorboards, killCommand,
+  getCommands, getNotebooks, getShells, getTensorboards, killCommand,
 } from 'services/api';
 import { EmptyParams } from 'services/types';
 import { ALL_VALUE, Command, CommandTask, CommandType, TaskFilters } from 'types';
 import { getPath, numericSorter } from 'utils/data';
-import { openBlank } from 'utils/routes';
+import { handlePath, openBlank } from 'utils/routes';
 import { canBeOpened, filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
 
@@ -156,7 +154,7 @@ const TaskList: React.FC = () => {
             const display = index < MAX_SOURCES || isExpanded ? 'inline' : 'none';
             const handleClick = (event: React.MouseEvent) => {
               event.stopPropagation();
-              makeClickHandler(`${info.path}/${id}`)(event);
+              handlePath(event, { path: `${info.path}/${id}` });
             };
             return <a key={id} style={{ display }} onClick={handleClick}>{id}</a>;
           })}
@@ -196,28 +194,6 @@ const TaskList: React.FC = () => {
     shellsResponse.isLoading,
     tensorboardsResponse.isLoading,
   ]);
-
-  const launchNotebook = useCallback(async (slots: number) => {
-    try {
-      const notebook = await createNotebook({ slots });
-      const task = commandToTask(notebook);
-      if (task.url) openBlank(setupUrlForDev(task.url));
-      else throw new Error('Notebook URL not available.');
-    } catch (e) {
-      handleError({
-        error: e,
-        level: ErrorLevel.Error,
-        message: e.message,
-        publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to Launch Notebook',
-        silent: false,
-        type: ErrorType.Server,
-      });
-    }
-  }, []);
-
-  const handleNotebookLaunch = useCallback(() => launchNotebook(1), [ launchNotebook ]);
-  const handleCpuNotebookLaunch = useCallback(() => launchNotebook(0), [ launchNotebook ]);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value || '');
@@ -272,14 +248,7 @@ const TaskList: React.FC = () => {
   }), []);
 
   return (
-    <Page
-      id="tasks"
-      options={<Space size="small">
-        <Button onClick={handleNotebookLaunch}>Launch Notebook</Button>
-        <Button onClick={handleCpuNotebookLaunch}>Launch CPU-only Notebook</Button>
-      </Space>}
-      showDivider
-      title="Tasks">
+    <Page id="tasks" title="Tasks">
       <div className={css.base}>
         <div className={css.header}>
           <Input

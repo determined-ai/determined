@@ -56,7 +56,7 @@
   .line > .error { color: var(--theme-colors-states-failed); }
   .line > .warning { color: var(--theme-colors-states-suspended); }
   .line > .time {
-    color: var(--theme-colors-core-secondary);
+    color: var(--theme-colors-base-0);
     flex-shrink: 0;
   }
   .line > .time::after { content: '\00a0'; }
@@ -66,11 +66,11 @@
     word-break: break-all;
   }
   .scrollTo {
-    bottom: var(--theme-sizes-layout-huge);
+    bottom: var(--theme-sizes-layout-giant);
     display: flex;
     flex-direction: column;
     position: absolute;
-    right: var(--theme-sizes-layout-huge);
+    right: var(--theme-sizes-layout-giant);
   }
   .scrollTo > *:not(:first-child) {
     margin-top: var(--theme-sizes-layout-big);
@@ -86,7 +86,7 @@
     opacity: 0.2;
   }
   .scrollToTop:focus {
-    border-color: var(--theme-colors-core-action);
+    border-color: var(--theme-colors-action-normal);
     color: var(--theme-colors-monochrome-9);
 
     &::after {
@@ -106,7 +106,7 @@
     transition: all 0.2s linear;
   }
   .enableTailing:focus {
-    border-color: var(--theme-colors-core-action);
+    border-color: var(--theme-colors-action-normal);
 
     &::after {
       border-radius: var(--theme-sizes-border-radius);
@@ -118,8 +118,8 @@
     }
   }
   .enableTailing.enabled {
-    border-color: var(--theme-colors-core-action);
-    color: var(--theme-colors-core-action);
+    border-color: var(--theme-colors-action-normal);
+    color: var(--theme-colors-action-normal);
   }
   .debugger {
     display: flex;

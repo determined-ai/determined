@@ -8,7 +8,6 @@ import Badge, { BadgeType } from 'components/Badge';
 import CheckpointModal from 'components/CheckpointModal';
 import CreateExperimentModal from 'components/CreateExperimentModal';
 import Icon from 'components/Icon';
-import { makeClickHandler } from 'components/Link';
 import Message from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
@@ -25,6 +24,7 @@ import { ExperimentDetailsParams } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
 import { clone } from 'utils/data';
 import { numericSorter } from 'utils/data';
+import { handlePath } from 'utils/routes';
 import { humanReadableFloat } from 'utils/string';
 import { upgradeConfig } from 'utils/types';
 
@@ -118,7 +118,7 @@ const ExperimentDetailsComp: React.FC = () => {
   }, [ setForkModalVisible ]);
 
   const handleTableRow = useCallback((record: TrialItem) => ({
-    onClick: makeClickHandler(record.url as string),
+    onClick: (event: React.MouseEvent) => handlePath(event, { path: record.url }),
   }), []);
 
   const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
