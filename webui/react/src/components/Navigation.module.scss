@@ -1,69 +1,6 @@
+/* stylelint-disable no-descending-specificity */
 $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
 
-.navItem {
-  align-items: center;
-  color: var(--theme-colors-monochrome-17);
-  cursor: pointer;
-  display: flex;
-  padding: var(--theme-sizes-layout-large) var(--theme-sizes-layout-big);
-
-  [class*=Icon_base_] {
-    flex-shrink: 0;
-    overflow: hidden;
-  }
-  .label {
-    flex-grow: 1;
-    font-size: var(--theme-sizes-font-small);
-    margin-left: var(--theme-sizes-layout-big);
-    overflow: hidden;
-    transition: margin-left $transition-props width $transition-props;
-    white-space: nowrap;
-    width: auto;
-  }
-  .status {
-    color: var(--theme-colors-monochrome-17);
-    font-size: var(--theme-sizes-font-small);
-    transition: width $transition-props;
-    white-space: nowrap;
-    width: auto;
-  }
-}
-.navItem.active {
-  background-color: var(--theme-colors-base-0);
-}
-.navItem:hover {
-  background-color: var(--theme-colors-base-3);
-  color: var(--theme-colors-monochrome-17);
-}
-.navItem.collapsed {
-  justify-content: center;
-
-  .label {
-    flex-grow: 0;
-    flex-shrink: 1;
-    height: 0;
-    margin-left: 0;
-    opacity: 0;
-    width: 0;
-  }
-  .status {
-    opacity: 0;
-    width: 0;
-  }
-}
-.navItem.collapsed.hasStatus {
-  flex-wrap: wrap;
-  padding: var(--theme-sizes-layout-large) var(--theme-sizes-layout-small);
-
-  .status {
-    align-items: center;
-    display: flex;
-    height: var(--theme-sizes-icon-large);
-    justify-content: center;
-    opacity: 1;
-    width: 100%;
-  }
-}
 .base {
   background-color: var(--theme-colors-base-2);
   display: flex;
@@ -71,12 +8,10 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
   flex-direction: column;
   flex-grow: 0;
   flex-shrink: 0;
-  transition: flex-basis $transition-props;
 
   header {
     height: 14rem;
     position: relative;
-    transition: height $transition-props;
   }
   main {
     display: flex;
@@ -87,10 +22,8 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     align-items: center;
     display: flex;
     justify-content: center;
-  }
-  section.top,
-  section.bottom {
-    padding: var(--theme-sizes-layout-large) 0;
+    padding: 0 0 var(--theme-sizes-layout-big) 0;
+    width: var(--theme-sizes-navigation-maxWidth);
   }
   section.top {
     flex-grow: 1;
@@ -104,7 +37,6 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     left: 6rem;
     position: absolute;
     top: 2.4rem;
-    transition: all $transition-props;
     width: 12.8rem;
   }
   .logoIcon {
@@ -115,10 +47,6 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     left: 3.2rem;
     position: absolute;
     top: 0;
-    transition:
-      height $transition-props,
-      left $transition-props,
-      width $transition-props;
     width: 5.2rem;
   }
   .logoLabel {
@@ -126,11 +54,9 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     background-repeat: no-repeat;
     height: 1.3rem;
     left: 0;
+    opacity: 1;
     position: absolute;
     top: 5.2rem;
-    transition:
-      opacity $transition-props,
-      width $transition-props;
     width: 12rem;
   }
   .version {
@@ -140,25 +66,19 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     height: 1.7rem;
     position: absolute;
     top: 10.4rem;
-    transition:
-      top $transition-props,
-      width $transition-props;
     width: 100%;
   }
   .versionLabel {
-    left: 50%;
+    align-items: center;
+    display: flex;
+    justify-content: center;
     overflow: hidden;
-    padding: 0 var(--theme-sizes-layout-medium);
-    position: absolute;
-    text-align: center;
-    text-overflow: ellipsis;
-    transform: translate(-50%, 0);
-    transition: all $transition-props;
-    width: 100%;
   }
   .launchBlock {
     align-items: center;
     display: flex;
+    height: 3.2rem;
+    width: 19rem;
 
     .launchButton {
       background-color: transparent;
@@ -167,6 +87,10 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
       border-style: solid;
       border-width: var(--theme-sizes-border-width) 0 var(--theme-sizes-border-width) var(--theme-sizes-border-width);
       color: var(--theme-colors-monochrome-17);
+      flex-grow: 1;
+      flex-shrink: 1;
+      overflow: hidden;
+      padding: 0 var(--theme-sizes-layout-big);
     }
     .launchIcon {
       align-items: center;
@@ -177,6 +101,7 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
       border-width: var(--theme-sizes-border-width);
       color: var(--theme-colors-monochrome-17);
       display: flex;
+      flex-shrink: 0;
       justify-content: center;
       width: var(--theme-sizes-layout-giant);
     }
@@ -185,17 +110,59 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     .launchButton,
     .launchIcon { border-color: var(--theme-colors-monochrome-17); }
   }
+  .navItem {
+    color: var(--theme-colors-monochrome-17);
+    cursor: pointer;
+    display: block;
+    height: 4.8rem;
+    position: relative;
+    width: var(--theme-sizes-navigation-maxWidth);
+  
+    [class*=Icon_base_] {
+      left: var(--theme-sizes-layout-big);
+      position: absolute;
+      top: var(--theme-sizes-layout-large);
+    }
+    .label {
+      font-size: var(--theme-sizes-font-small);
+      height: var(--theme-sizes-layout-enormous);
+      left: 5.6rem;
+      line-height: var(--theme-sizes-layout-enormous);
+      overflow: hidden;
+      position: absolute;
+      top: var(--theme-sizes-layout-large);
+      white-space: nowrap;
+      width: auto;
+    }
+    .status {
+      background-color: var(--theme-colors-action-normal);
+      border-radius: var(--theme-sizes-layout-medium);
+      color: var(--theme-colors-monochrome-17);
+      font-size: var(--theme-sizes-font-tiny);
+      height: 0 var(--theme-sizes-layout-big);
+      padding: 0 var(--theme-sizes-layout-small);
+      position: absolute;
+      white-space: nowrap;
+    }
+  }
+  .navItem.active {
+    background-color: var(--theme-colors-base-0);
+  }
+  .navItem:hover {
+    background-color: var(--theme-colors-base-3);
+    color: var(--theme-colors-monochrome-17);
+  }
   .user {
     align-items: center;
-    background-color: var(--theme-colors-base-3);
+    background-color: var(--theme-colors-base-4);
     cursor: pointer;
     display: flex;
     padding: var(--theme-sizes-layout-big) var(--theme-sizes-layout-big);
     position: relative;
-    width: 100%;
+    width: var(--theme-sizes-navigation-maxWidth);
   }
   .user:hover {
-    background-color: var(--theme-colors-base-5);
+    background-color: var(--theme-colors-base-3);
   }
   .user > [class*=Avatar_base_] {
     flex-shrink: 0;
@@ -206,14 +173,153 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     margin-left: var(--theme-sizes-layout-big);
   }
 }
-.base.collapsed {
+.collapsedEnter,
+.collapsedExitDone {
+  flex-basis: var(--theme-sizes-navigation-maxWidth);
+
+  header { height: 14rem; }
+  section.launch {
+    padding: 0 0 var(--theme-sizes-layout-big) 0;
+    width: var(--theme-sizes-navigation-maxWidth);
+  }
+  .logo {
+    height: 6.494rem;
+    left: 6rem;
+    top: 2.4rem;
+    width: 12.8rem;
+  }
+  .logoIcon {
+    height: 4rem;
+    left: 3.2rem;
+    width: 5.2rem;
+  }
+  .logoLabel {
+    opacity: 1;
+    width: 12rem;
+  }
+  .version { top: 10.4rem; }
+  .navItem {
+    width: var(--theme-sizes-navigation-maxWidth);
+
+    .label { opacity: 1; }
+    .status {
+      right: var(--theme-sizes-layout-big);
+      transform: translateX(0);
+    }
+  }
+  .navItem.hasStatus {
+    height: 4.8rem;
+
+    .status { bottom: var(--theme-sizes-layout-big); }
+  }
+  .user {
+    width: var(--theme-sizes-navigation-maxWidth);
+
+    span { opacity: 1; }
+  }
+}
+.collapsedEnterActive {
   flex-basis: var(--theme-sizes-navigation-minWidth);
+  transition: flex-basis $transition-props;
 
   header {
     height: 7.2rem;
+    transition: height $transition-props;
   }
   section.launch {
-    padding-top: var(--theme-sizes-layout-large);
+    padding: var(--theme-sizes-layout-medium) 0;
+    transition: padding $transition-props, width $transition-props;
+    width: var(--theme-sizes-navigation-minWidth);
+  }
+  .logo {
+    height: 2.4rem;
+    left: 1.2rem;
+    top: 1.6rem;
+    transition:
+      height $transition-props,
+      left $transition-props,
+      top $transition-props,
+      width $transition-props;
+    width: 3.2rem;
+  }
+  .logoIcon {
+    height: 2.4rem;
+    left: 0;
+    transition:
+      height $transition-props,
+      left $transition-props,
+      width $transition-props;
+    width: 3.2rem;
+  }
+  .logoLabel {
+    opacity: 0;
+    transition:
+      opacity $transition-props,
+      width $transition-props;
+    width: 0;
+  }
+  .version {
+    top: 4.4rem;
+    transition: top $transition-props,
+  }
+  .launchBlock {
+    transition: width $transition-props;
+    width: 3.2rem;
+
+    .launchButton {
+      opacity: 0;
+      padding: 0;
+      transition:
+        opacity $transition-props,
+        padding $transition-props,
+        width $transition-props;
+      width: 0;
+    }
+    .launchIcon {
+      border-radius: 100%;
+      transition: border-radius $transition-props;
+    }
+  }
+  .navItem {
+    transition: height $transition-props, width $transition-props;
+    width: var(--theme-sizes-navigation-minWidth);
+    
+    .label {
+      opacity: 0;
+      transition: opacity $transition-props;
+    }
+    .status {
+      right: 50%;
+      transform: translateX(50%);
+      transition:
+        bottom $transition-props,
+        right $transition-props,
+        transform $transition-props;
+    }
+  }
+  .navItem.hasStatus {
+    height: 7.2rem;
+
+    .status { bottom: var(--theme-sizes-layout-large); }
+  }
+  .user {
+    transition: width $transition-props;
+    width: var(--theme-sizes-navigation-minWidth);
+
+    span {
+      opacity: 0;
+      transition: opacity $transition-props;
+    }
+  }
+}
+.collapsedExit,
+.collapsedEnterDone {
+  flex-basis: var(--theme-sizes-navigation-minWidth);
+
+  header { height: 7.2rem; }
+  section.launch {
+    padding: var(--theme-sizes-layout-medium) 0;
+    width: var(--theme-sizes-navigation-minWidth);
   }
   .logo {
     height: 2.4rem;
@@ -230,18 +336,128 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     opacity: 0;
     width: 0;
   }
-  .version {
-    top: 4.4rem;
-    width: 100%;
-  }
+  .version { top: 4.4rem; }
   .launchBlock {
+    width: 3.2rem;
+
     .launchButton {
-      display: none;
       opacity: 0;
+      padding: 0;
       width: 0;
     }
+    .launchIcon { border-radius: 100%; }
+  }
+  .navItem {
+    width: var(--theme-sizes-navigation-minWidth);
+
+    .label { opacity: 0; }
+    .status {
+      right: 50%;
+      transform: translateX(50%);
+    }
+  }
+  .navItem.hasStatus {
+    height: 7.2rem;
+
+    .status { bottom: var(--theme-sizes-layout-large); }
+  }
+  .user {
+    width: var(--theme-sizes-navigation-minWidth);
+
+    span { opacity: 0; }
+  }
+}
+.collapsedExitActive {
+  flex-basis: var(--theme-sizes-navigation-maxWidth);
+  transition: flex-basis $transition-props;
+
+  header {
+    height: 14rem;
+    transition: height $transition-props;
+  }
+  section.launch {
+    padding: 0 0 var(--theme-sizes-layout-big) 0;
+    transition: padding $transition-props, width $transition-props;
+    width: var(--theme-sizes-navigation-maxWidth);
+  }
+  .logo {
+    height: 6.494rem;
+    left: 6rem;
+    top: 2.4rem;
+    transition:
+      height $transition-props,
+      left $transition-props,
+      top $transition-props,
+      width $transition-props;
+    width: 12.8rem;
+  }
+  .logoIcon {
+    height: 4rem;
+    left: 3.2rem;
+    transition:
+      height $transition-props,
+      left $transition-props,
+      width $transition-props;
+    width: 5.2rem;
+  }
+  .logoLabel {
+    opacity: 1;
+    transition:
+      opacity $transition-props,
+      width $transition-props;
+    width: 12rem;
+  }
+  .version {
+    top: 10.4rem;
+    transition: top $transition-props,
+  }
+  .launchBlock {
+    transition: width $transition-props;
+    width: 19rem;
+    
+    .launchButton {
+      opacity: 1;
+      padding: 0 var(--theme-sizes-layout-big);
+      transition:
+        opacity $transition-props,
+        padding $transition-props,
+        width $transition-props;
+      width: 100%;
+    }
     .launchIcon {
-      border-radius: 100%;
+      border-radius: 0 var(--theme-sizes-border-radius) var(--theme-sizes-border-radius) 0;
+      transition: border-radius $transition-props;
+    }
+  }
+  .navItem {
+    transition: height $transition-props, width $transition-props;
+    width: var(--theme-sizes-navigation-maxWidth);
+
+    .label {
+      opacity: 1;
+      transition: opacity $transition-props;
+    }
+    .status {
+      right: var(--theme-sizes-layout-big);
+      transform: translateX(0);
+      transition:
+        bottom $transition-props,
+        right $transition-props,
+        transform $transition-props;
+    }
+  }
+  .navItem.hasStatus {
+    height: 4.8rem;
+
+    .status { bottom: var(--theme-sizes-layout-big); }
+  }
+  .user {
+    transition: width $transition-props;
+    width: var(--theme-sizes-navigation-maxWidth);
+
+    span {
+      opacity: 1;
+      transition: opacity $transition-props;
     }
   }
 }

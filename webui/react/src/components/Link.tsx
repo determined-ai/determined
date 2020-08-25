@@ -14,7 +14,12 @@ interface Props {
   onClick?: MouseEventHandler;
 }
 
-const Link: React.FC<Props> = ({ path = '#', popout, onClick, ...props }: PropsWithChildren<Props>) => {
+const Link: React.FC<Props> = ({
+  path = '#',
+  popout,
+  onClick,
+  ...props
+}: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
   const rel = windowOpenFeatures.join(' ');
 
