@@ -34,9 +34,7 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemPro
   if (isActive) classes.push(css.active);
   if (status) classes.push(css.hasStatus);
 
-  useEffect(() => {
-    setIsActive(location.pathname === path);
-  }, [ classes, location.pathname, path ]);
+  useEffect(() => setIsActive(location.pathname === path), [ location.pathname, path ]);
 
   const link = (
     <Link className={classes.join(' ')} path={path} {...props}>
@@ -167,7 +165,10 @@ const Navigation: React.FC = () => {
             <NavigationItem icon="logs" label="Master Logs" path="/det/logs" popout />
             <NavigationItem icon="docs" label="Docs" noProxy path="/docs" popout />
             <NavigationItem icon="cloud" label="API" noProxy path="/swagger-ui" popout />
-            <NavigationItem icon="collapse" label="Collapse" onClick={handleCollapse} />
+            <NavigationItem
+              icon={isCollapsed ? 'expand' : 'collapse'}
+              label={isCollapsed ? 'Expand' : 'Collapse'}
+              onClick={handleCollapse} />
           </section>
         </main>
         <footer>
