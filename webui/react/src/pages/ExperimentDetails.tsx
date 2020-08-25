@@ -12,7 +12,7 @@ import Message from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner, { Indicator } from 'components/Spinner';
-import { defaultRowClassName, findColumnByTitle } from 'components/Table';
+import { defaultRowClassName, findColumnByTitle, getPaginationConfig } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
@@ -193,7 +193,7 @@ const ExperimentDetailsComp: React.FC = () => {
                 indicator: <Indicator />,
                 spinning: !experimentResponse.hasLoaded,
               }}
-              pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
+              pagination={getPaginationConfig(experiment?.trials.length || 0)}
               rowClassName={defaultRowClassName()}
               rowKey="id"
               showSorterTooltip={false}

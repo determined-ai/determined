@@ -15,7 +15,7 @@ import MetricSelectFilter from 'components/MetricSelectFilter';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner, { Indicator } from 'components/Spinner';
-import { defaultRowClassName, findColumnByTitle } from 'components/Table';
+import { defaultRowClassName, findColumnByTitle, getPaginationConfig } from 'components/Table';
 import Toggle from 'components/Toggle';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
@@ -378,7 +378,7 @@ If the problem persists please contact support.',
                 indicator: <Indicator />,
                 spinning: !trialResponse.hasLoaded,
               }}
-              pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
+              pagination={getPaginationConfig(steps.length)}
               rowClassName={defaultRowClassName(false)}
               rowKey="id"
               scroll={{ x: 1000 }}

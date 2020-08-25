@@ -18,6 +18,12 @@ import css from './Table.module.scss';
 
 type TableRecord = CommandTask | ExperimentItem | TrialItem;
 
+export interface TablePagination {
+  defaultPageSize: number;
+  hideOnSinglePage: boolean;
+  showSizeChanger: boolean;
+}
+
 export type Renderer<T = unknown> = (text: string, record: T, index: number) => React.ReactNode;
 
 export type GenericRenderer = <T extends TableRecord>(
@@ -26,6 +32,8 @@ export type GenericRenderer = <T extends TableRecord>(
 
 type ExperimentRenderer = (text: string, record: ExperimentItem, index: number) => React.ReactNode;
 export type TaskRenderer = (text: string, record: CommandTask, index: number) => React.ReactNode;
+
+export const MINIMUM_PAGE_SIZE = 10;
 
 /* Table Column Renderers */
 
@@ -137,4 +145,12 @@ export const findColumnByTitle: <T>(c: ColumnType<T>[], s: string) => number = (
   search,
 ) => {
   return columns.findIndex(column => new RegExp(search, 'i').test(column.title as string));
+};
+
+export const getPaginationConfig = (count: number): TablePagination => {
+  return {
+    defaultPageSize: MINIMUM_PAGE_SIZE,
+    hideOnSinglePage: count < MINIMUM_PAGE_SIZE,
+    showSizeChanger: true,
+  };
 };

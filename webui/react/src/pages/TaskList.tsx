@@ -5,7 +5,9 @@ import React, { useCallback, useMemo, useState } from 'react';
 import Icon from 'components/Icon';
 import Page from 'components/Page';
 import { Indicator } from 'components/Spinner';
-import { defaultRowClassName, isAlternativeAction } from 'components/Table';
+import {
+  defaultRowClassName, getPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE,
+} from 'components/Table';
 import { TaskRenderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TaskFilter from 'components/TaskFilter';
@@ -31,7 +33,7 @@ import { columns as defaultColumns } from './TaskList.table';
 const MAX_SOURCES = 5;
 
 const defaultFilters: TaskFilters<CommandType> = {
-  limit: 25,
+  limit: MINIMUM_PAGE_SIZE,
   states: [ ALL_VALUE ],
   types: {
     [CommandType.Command]: false,
@@ -277,7 +279,7 @@ const TaskList: React.FC = () => {
             indicator: <Indicator />,
             spinning: !hasLoaded,
           }}
-          pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
+          pagination={getPaginationConfig(filteredTasks.length)}
           rowClassName={record => defaultRowClassName(canBeOpened(record))}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
