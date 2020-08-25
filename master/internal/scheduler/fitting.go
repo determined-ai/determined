@@ -29,6 +29,10 @@ type fittingState struct {
 type FittingRequirements struct {
 	// SingleAgent specifies that the task must be located within a single agent.
 	SingleAgent bool
+	// DedicatedAgent specifies that the task must be scheduled on dedicated agents. This is
+	// necessary in the event that host networking is used.
+	// TODO(DET-3821): Remove this field when single node multiple dtrain works in host mode.
+	DedicatedAgent bool
 }
 
 type candidateList []*fittingState
@@ -66,18 +70,17 @@ func (c candidateList) Swap(i, j int) {
 func findFits(
 	task *Task, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 ) []*fittingState {
-	if fit := findSingleAgentFit(task, agents, fittingMethod); fit != nil {
-		return []*fittingState{
-			fit,
+	if !task.fittingRequirements.DedicatedAgent {
+		if fit := findSharedAgentFit(task, agents, fittingMethod); fit != nil {
+			return []*fittingState{fit}
 		}
-	} else if task.fittingRequirements.SingleAgent {
+	}
+	if task.fittingRequirements.SingleAgent {
 		return nil
 	}
-
-	if fits := findMultiAgentFits(task, agents, fittingMethod); len(fits) != 0 {
+	if fits := findDedicatedAgentFits(task, agents, fittingMethod); len(fits) != 0 {
 		return fits
 	}
-
 	return nil
 }
 
@@ -90,7 +93,7 @@ func isViable(task *Task, agent *agentState, constraints ...HardConstraint) bool
 	return true
 }
 
-func findMultiAgentFits(
+func findDedicatedAgentFits(
 	task *Task, agentStates map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 ) []*fittingState {
 	if len(agentStates) == 0 {
@@ -142,8 +145,9 @@ func findMultiAgentFits(
 
 	if candidateNumSlots == 0 {
 		log.Infof("Task: %s which requires %d slots, can not be scheduled onto multiple agents "+
-			"in the current cluster configuration. The number of slots per trial must be either "+
-			"set to 1 or a multiple of the GPUs per agent.", task.ID, task.SlotsNeeded(),
+			"in the current cluster configuration. When running on multiple agents, number of "+
+			"slots per trial must be either set to 1 or a multiple of the GPUs per agent.",
+			task.ID, task.SlotsNeeded(),
 		)
 		return nil
 	}
@@ -169,7 +173,7 @@ func findMultiAgentFits(
 	return fits
 }
 
-func findSingleAgentFit(
+func findSharedAgentFit(
 	task *Task, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 ) *fittingState {
 	var candidates candidateList

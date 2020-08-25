@@ -246,7 +246,7 @@ func TestFindFit(t *testing.T) {
 	}
 }
 
-func TestFindMultiAgentFits(t *testing.T) {
+func TestFindDedicatedAgentFits(t *testing.T) {
 	system := actor.NewSystem(t.Name())
 
 	type testCase struct {
@@ -310,7 +310,7 @@ func TestFindMultiAgentFits(t *testing.T) {
 				agentIndex[agent] = idx
 			}
 
-			fits := findMultiAgentFits(newTask(&Task{
+			fits := findDedicatedAgentFits(newTask(&Task{
 				slotsNeeded:         tc.SlotsNeeded,
 				fittingRequirements: tc.FittingRequirements,
 			}), agents, WorstFit)
