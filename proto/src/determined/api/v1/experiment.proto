@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/field_mask.proto";
 
 import "determined/api/v1/pagination.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
@@ -158,6 +159,14 @@ message SetExperimentDescriptionRequest {
 }
 // Response to SetExperimentDescriptionRequest.
 message SetExperimentDescriptionResponse {}
+
+// Update experiment.
+message UpdateExperimentRequest {
+  determined.experiment.v1.Experiment experiment = 1;
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateExperimentResponse {}
 
 // Get a list of checkpoints for an experiment.
 message GetExperimentCheckpointsRequest {

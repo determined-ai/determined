@@ -23,6 +23,34 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
 
+func listToMapSet(list *[]string) *map[string]bool {
+	mapSet := make(map[string]bool)
+	for _, key := range *list {
+		mapSet[key] = true
+	}
+	return &mapSet
+}
+
+func mapSetToList(mapSet *map[string]bool) *[]string {
+	var list []string
+	for key, value := range *mapSet {
+		if value {
+			list = append(list, key)
+		}
+	}
+	return &list
+}
+
+// CHECK don't we do this anywhere else?
+func modelExpToProtoV1Experiment(exp *model.Experiment) *experimentv1.Experiment {
+	labels := map[string]bool(exp.Config.Labels) // CHECK there is gotta be a better way
+	return &experimentv1.Experiment{
+		Description: exp.Config.Description,
+		Id:          int32(exp.ID),
+		Labels:      *mapSetToList(&labels),
+	}
+	// TODO finish the translation
+}
 func (a *apiServer) checkExperimentExists(id int) error {
 	ok, err := a.m.db.CheckExperimentExists(id)
 	switch {
@@ -346,6 +374,42 @@ func (a *apiServer) SetExperimentLabels(
 	default:
 		return nil, errors.Wrapf(err, "failed to save experiment %d config",
 			req.Id)
+	}
+}
+
+func (a *apiServer) UpdateExperiment(
+	ctx context.Context, req *apiv1.UpdateExperimentRequest,
+) (*experimentv1.Experiment, error) {
+
+	fmt.Printf("description: %s\n", req.Experiment.Description)
+
+	// DISCUSS or we could start with a experimentv1 query.
+	dbExp, err := a.m.db.ExperimentByID(int(req.Experiment.Id))
+	if err != nil {
+		return nil, errors.Wrapf(err, "loading experiment %v", req.Experiment.Id)
+	}
+
+	paths := req.UpdateMask.GetPaths()
+	fmt.Printf("paths: %v \n", paths)
+	for _, path := range paths {
+		switch {
+		case path == "description":
+			dbExp.Config.Description = req.Experiment.Description
+		case path == "labels":
+			dbExp.Config.Labels = *listToMapSet(&req.Experiment.Labels)
+		case !strings.HasPrefix(path, "update_mask"):
+			return nil, status.Errorf(
+				codes.InvalidArgument,
+				"only description and labels fields are mutable. cannot update %s", path)
+		}
+	}
+	err = a.m.db.SaveExperimentConfig(dbExp)
+	switch err {
+	case nil:
+		return modelExpToProtoV1Experiment(dbExp), nil
+	default:
+		return nil, errors.Wrapf(err, "failed to save experiment %d config",
+			req.Experiment.Id)
 	}
 }
 
