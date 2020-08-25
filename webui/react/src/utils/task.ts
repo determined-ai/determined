@@ -1,5 +1,5 @@
 import {
-  ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType, DetailedUser, Experiment,
+  ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType, Experiment,
   ExperimentFilters, ExperimentItem, ExperimentTask, RecentCommandTask, RecentEvent,
   RecentExperimentTask, RecentTask, RunState, Task, TaskFilters, TaskType, User,
 } from 'types';

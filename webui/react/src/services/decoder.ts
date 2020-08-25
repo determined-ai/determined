@@ -8,8 +8,8 @@ import {
   ioLogs, ioTaskLogs, ioTrialDetails, ioTypeAgents,
   ioTypeCheckpoint, ioTypeDetailedUsers, ioTypeDeterminedInfo,
   ioTypeExperiment, ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments,
-  ioTypeGenericCommand, ioTypeGenericCommands, ioTypeLog, ioTypeLogs, ioTypeMetric, ioTypeStep, ioTypeTaskLogs,
-  ioTypeTrial, ioTypeTrialDetails, ioTypeValidationMetrics,
+  ioTypeGenericCommand, ioTypeGenericCommands, ioTypeLog, ioTypeLogs, ioTypeMetric, ioTypeStep,
+  ioTypeTaskLogs, ioTypeTrial, ioTypeTrialDetails, ioTypeValidationMetrics,
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, CheckpointStorageType, Command, CommandState,
