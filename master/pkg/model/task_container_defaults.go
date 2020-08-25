@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"strconv"
 
+	k8sV1 "k8s.io/api/core/v1"
+
 	"github.com/docker/docker/api/types/container"
 	"github.com/pkg/errors"
 
@@ -17,6 +19,8 @@ type TaskContainerDefaultsConfig struct {
 	GLOOPortRange          string                `json:"gloo_port_range,omitempty"`
 	ShmSizeBytes           int64                 `json:"shm_size_bytes,omitempty"`
 	NetworkMode            container.NetworkMode `json:"network_mode,omitempty"`
+	CPUPodSpec             *k8sV1.Pod            `json:"cpu_pod_spec"`
+	GPUPodSpec             *k8sV1.Pod            `json:"gpu_pod_spec"`
 }
 
 func validatePortRange(portRange string) []error {
@@ -65,6 +69,9 @@ func (c TaskContainerDefaultsConfig) Validate() []error {
 	if err := validatePortRange(c.GLOOPortRange); err != nil {
 		errs = append(errs, err...)
 	}
+
+	errs = append(errs, validatePodSpec(c.CPUPodSpec)...)
+	errs = append(errs, validatePodSpec(c.GPUPodSpec)...)
 
 	return errs
 }

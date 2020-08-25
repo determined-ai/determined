@@ -341,3 +341,18 @@ func getPort(min, max int) int {
 	rand.Seed(time.Now().Unix())
 	return rand.Intn(max-min) + min
 }
+
+func setPodSpec(
+	config *model.CommandConfig,
+	taskContainerDefaults model.TaskContainerDefaultsConfig,
+) {
+	if config.Environment.PodSpec != nil {
+		return
+	}
+
+	if config.Resources.Slots == 0 {
+		config.Environment.PodSpec = taskContainerDefaults.CPUPodSpec
+	} else {
+		config.Environment.PodSpec = taskContainerDefaults.GPUPodSpec
+	}
+}

@@ -99,21 +99,25 @@ func (r *RuntimeItems) For(deviceType device.Type) []string {
 
 // Validate implements the check.Validatable interface.
 func (e Environment) Validate() []error {
-	if e.PodSpec != nil {
+	return validatePodSpec(e.PodSpec)
+}
+
+func validatePodSpec(podSpec *k8sV1.Pod) []error {
+	if podSpec != nil {
 		podSpecErrors := []error{
-			check.Equal(e.PodSpec.Name, "", "pod Name is not a configurable option"),
-			check.Equal(e.PodSpec.Namespace, "", "pod Namespace is not a configurable option"),
-			check.False(e.PodSpec.Spec.HostNetwork, "host networking must be configured via master.yaml"),
+			check.Equal(podSpec.Name, "", "pod Name is not a configurable option"),
+			check.Equal(podSpec.Namespace, "", "pod Namespace is not a configurable option"),
+			check.False(podSpec.Spec.HostNetwork, "host networking must be configured via master.yaml"),
 			check.Equal(
-				len(e.PodSpec.Spec.InitContainers), 0,
+				len(podSpec.Spec.InitContainers), 0,
 				"init containers are not a configurable option"),
 			check.LessThanOrEqualTo(
-				len(e.PodSpec.Spec.Containers), 1,
+				len(podSpec.Spec.Containers), 1,
 				"can specify at most one container in pod_spec"),
 		}
 
-		if len(e.PodSpec.Spec.Containers) > 0 {
-			container := e.PodSpec.Spec.Containers[0]
+		if len(podSpec.Spec.Containers) > 0 {
+			container := podSpec.Spec.Containers[0]
 			containerSpecErrors := []error{
 				check.Equal(container.Name, "", "container Name is not configurable"),
 				check.Equal(container.Image, "",

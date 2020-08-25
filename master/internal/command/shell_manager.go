@@ -40,9 +40,10 @@ type shellManager struct {
 
 	defaultAgentUserGroup model.AgentUserGroup
 	clusterID             string
+	taskContainerDefaults model.TaskContainerDefaultsConfig
 }
 
-func (n *shellManager) Receive(ctx *actor.Context) error {
+func (s *shellManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case *apiv1.GetShellsRequest:
 		resp := &apiv1.GetShellsResponse{}
@@ -52,12 +53,12 @@ func (n *shellManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(resp)
 
 	case echo.Context:
-		n.handleAPIRequest(ctx, msg)
+		s.handleAPIRequest(ctx, msg)
 	}
 	return nil
 }
 
-func (n *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
+func (s *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	switch apiCtx.Request().Method {
 	case echo.GET:
 		userFilter := apiCtx.QueryParam("user")
@@ -72,14 +73,14 @@ func (n *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 			return
 		}
 
-		req, err := parseCommandRequest(apiCtx, n.db, &params)
+		req, err := parseCommandRequest(apiCtx, s.db, &params)
 		if err != nil {
 			respondBadRequest(ctx, err)
 			return
 		}
 
 		if req.AgentUserGroup == nil {
-			req.AgentUserGroup = &n.defaultAgentUserGroup
+			req.AgentUserGroup = &s.defaultAgentUserGroup
 		}
 
 		var passphrase *string
@@ -96,7 +97,7 @@ func (n *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 
 		ctx.Log().Info("creating shell")
 
-		shell := n.newShell(req, generatedKeys)
+		shell := s.newShell(req, generatedKeys)
 		if err := check.Validate(shell.config); err != nil {
 			respondBadRequest(ctx, err)
 			return
@@ -111,7 +112,7 @@ func (n *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 	}
 }
 
-func (n *shellManager) newShell(
+func (s *shellManager) newShell(
 	req *commandRequest,
 	keyPair ssh.PrivateAndPublicKeys,
 ) *command {
@@ -137,6 +138,8 @@ func (n *shellManager) newShell(
 	config.Entrypoint = []string{
 		shellEntrypointScript, "-f", shellSSHDConfigFile, "-p", strconv.Itoa(port), "-D", "-e",
 	}
+
+	setPodSpec(&config, s.taskContainerDefaults)
 
 	additionalFiles := archive.Archive{
 		req.AgentUserGroup.OwnedArchiveItem(shellSSHDir, nil, 0700, tar.TypeDir),
