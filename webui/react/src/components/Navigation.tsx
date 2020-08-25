@@ -29,6 +29,7 @@ interface ItemProps {
 }
 
 const NavigationItem: React.FC<ItemProps> = ({ status, ...props }: ItemProps) => {
+  const ui = UI.useStateContext();
   const location = useLocation();
   const [ isActive, setIsActive ] = useState(false);
   const classes = [ css.navItem ];
@@ -40,13 +41,17 @@ const NavigationItem: React.FC<ItemProps> = ({ status, ...props }: ItemProps) =>
     setIsActive(location.pathname === props.path);
   }, [ classes, location.pathname, props.path ]);
 
-  return (
+  const link = (
     <Link className={classes.join(' ')} {...props}>
       <Icon name={props.icon} size="large" />
       <div className={css.label}>{props.label}</div>
       {status && <div className={css.status}>{status}</div>}
     </Link>
   );
+
+  return ui.chromeCollapsed ? (
+    <Tooltip placement="right" title={props.label}><div>{link}</div></Tooltip>
+  ) : link;
 };
 
 const STORAGE_KEY = 'collapsed';
