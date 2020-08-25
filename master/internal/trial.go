@@ -530,6 +530,7 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 				WorkloadManagerType: t.sequencer.WorkloadManagerType(),
 				AdditionalFiles:     additionalFiles,
 				AgentUserGroup:      t.agentUserGroup,
+				IsMultiAgent:        t.numContainers > 1,
 			},
 		},
 		TaskHandler: ctx.Self(),

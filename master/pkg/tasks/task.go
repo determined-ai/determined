@@ -264,7 +264,7 @@ func startContainer(t TaskSpec) container.Spec {
 	}
 	mounts := TrialDockerMounts(exp)
 	networkMode := t.TaskContainerDefaults.NetworkMode
-	if exp.ExperimentConfig.Resources.SlotsPerTrial > 1 {
+	if exp.IsMultiAgent {
 		networkMode = hostMode
 	}
 	rPorts := rendezvousPorts(t.Devices, networkMode)
