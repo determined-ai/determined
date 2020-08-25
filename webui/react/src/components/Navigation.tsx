@@ -27,7 +27,7 @@ interface ItemProps {
   onClick?: MouseEventHandler;
 }
 
-const NavigationItem: React.FC<ItemProps> = (props: ItemProps) => {
+const NavigationItem: React.FC<ItemProps> = ({ status, ...props }: ItemProps) => {
   const ui = UI.useStateContext();
   const location = useLocation();
   const [ isActive, setIsActive ] = useState(false);
@@ -35,21 +35,19 @@ const NavigationItem: React.FC<ItemProps> = (props: ItemProps) => {
 
   if (ui.chromeCollapsed) classes.push(css.collapsed);
   if (isActive) classes.push(css.active);
-  if (props.status) classes.push(css.hasStatus);
+  if (status) classes.push(css.hasStatus);
 
   useEffect(() => {
     setIsActive(location.pathname === props.path);
   }, [ classes, location.pathname, props.path ]);
 
-  const handleClick = useCallback((event: React.MouseEvent) => {
-    handlePath(event, { onClick: props.onClick, path: props.path, popout: props.popout });
-  }, [ props.onClick, props.path, props.popout ]);
-
-  return <div className={classes.join(' ')} onClick={handleClick}>
-    <Icon name={props.icon} size="large" />
-    <div className={css.label}>{props.label}</div>
-    {props.status && <div className={css.status}>{props.status}</div>}
-  </div>;
+  return (
+    <Link className={classes.join(' ')} {...props}>
+      <Icon name={props.icon} size="large" />
+      <div className={css.label}>{props.label}</div>
+      {status && <div className={css.status}>{status}</div>}
+    </Link>
+  );
 };
 
 const STORAGE_KEY = 'collapsed';
