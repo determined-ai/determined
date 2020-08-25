@@ -63,6 +63,23 @@ func TestLabelsJoin(t *testing.T) {
 	assert.DeepEqual(t, actual, expected)
 }
 
+func TestRecordsPerEpochMissing(t *testing.T) {
+	conf := DefaultExperimentConfig()
+	assert.NilError(t, json.Unmarshal([]byte(`{
+  "searcher": {
+    "name": "single",
+    "metric": "loss",
+    "smaller_is_better": false,
+    "max_length": {
+      "batches": 1000
+    }
+  },
+  "min_checkpoint_period": {"epochs": 1}
+}`), &conf))
+
+	assert.ErrorContains(t, check.Validate(conf), "Must specify records_per_epoch")
+}
+
 func TestDefaultDescription(t *testing.T) {
 	json1 := []byte(`{
   "description": "test"
