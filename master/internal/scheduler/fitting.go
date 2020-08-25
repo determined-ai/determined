@@ -129,7 +129,7 @@ func findMultiAgentFits(
 			continue
 		}
 
-		if s := task.SlotsNeeded(); s > n && s%n != 0 {
+		if s := task.SlotsNeeded(); s%n != 0 {
 			continue
 		}
 
@@ -141,9 +141,9 @@ func findMultiAgentFits(
 	}
 
 	if candidateNumSlots == 0 {
-		log.Infof("Task: %s which requires %d slots, can not be scheduled in the current "+
-			"cluster configuration. The number of slots per trial must be either set to 1 or "+
-			"a multiple of the GPUs per agent.", task.ID, task.SlotsNeeded(),
+		log.Infof("Task: %s which requires %d slots, can not be scheduled onto multiple agents "+
+			"in the current cluster configuration. The number of slots per trial must be either "+
+			"set to 1 or a multiple of the GPUs per agent.", task.ID, task.SlotsNeeded(),
 		)
 		return nil
 	}
@@ -157,19 +157,10 @@ func findMultiAgentFits(
 		})
 	}
 
-	numContainers := task.SlotsNeeded() / candidateNumSlots
-	slotsPerContainer := task.SlotsNeeded() / numContainers
-
-	if len(candidates) < numContainers {
-		log.Infof("Task: %s requires %d machines with %d slots to be scheduled. There are "+
-			"currently %d machines fully available.", task.ID, numContainers,
-			candidateNumSlots, len(candidates),
-		)
-		return nil
-	}
-
 	sort.Sort(candidates)
 
+	numContainers := task.SlotsNeeded() / candidateNumSlots
+	slotsPerContainer := task.SlotsNeeded() / numContainers
 	fits := candidates[:numContainers]
 	for _, c := range fits {
 		c.Slots = slotsPerContainer
@@ -198,8 +189,6 @@ func findSingleAgentFit(
 		return nil
 	}
 
-	// For the single agent case, we want prioritize using the smallest
-	// available agents.
 	sort.Sort(candidates)
 
 	candidates[0].Slots = task.SlotsNeeded()
