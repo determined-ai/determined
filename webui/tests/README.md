@@ -1,9 +1,9 @@
 # WebUI End-to-end Tests
 
 We use [Cypress](https://www.cypress.io/) to enable end-to-end testing of our
-two SPAs, Elm and React, and in some sense the whole det cluster.
+React SPA, and in some sense the whole determined cluster.
 
-We provide a test script to take care of depdencies around Cypress commands.
+We provide a test script to take care of dependencies around Cypress commands.
 Let's call this the "test script" for the rest of the this document.
 
 ## Running the Tests
@@ -20,7 +20,7 @@ with the cluster
 
 Once the cluster is ready and accessible run the tests:
 
-```
+```bash
 ./bin/e2e-tests.py --det-port $PORT pre-e2e-tests && \
 ./bin/e2e-tests.py --det-port $PORT run-e2e-tests
 ```

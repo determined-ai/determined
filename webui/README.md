@@ -9,49 +9,6 @@ We are currently exploring [React](https://reactjs.org/) as a serious contender 
 * Larger pool of candidates we can hire from due to React's popularity.
 * Faster development in general.
 
-## Current WebUI State
-
-We are currently testing React single page app (SPA) in conjunction with the original Elm SPA. The setup involves running both SPAs simultaneously and seamlessly to reduce UX friction. As far as the WebUI user is concerned, the goal is to provide an experience where they can not discern the boundaries between Elm and React.
-
-As part of master, a Go web server serves the built WebUI static files. This includes the static files for docs, Elm SPA and React SPA. Depending on the requested route path, the web server serves from one of three files. The diagram below illustrates which SPA owns which routes.
-
-```
-+-----------------------------------------------------------------------------------------------------+
-|                                                                                                     |
-|    Determined Master                                                                                      |
-|                                                                                                     |
-|    +-------------------------------------------------------------------------------------------+    |
-|    |                                                                                           |    |
-|    |    Go Web Server                                                                          |    |
-|    |                                                                                           |    |
-|    |    +----------------------------+    +----------------------------+    +-------------+    |    |
-|    |    |                            |    |                            |    |             |    |    |
-|    |    |    Elm SPA Routes          |    |    React SPA Routes        |    |    Docs     |    |    |
-|    |    |    /                       |    |    /det                    |    |    /docs    |    |    |
-|    |    |    /ui                     |    |      /dashboard            |    |             |    |    |
-|    |    |      /login                |    |                            |    |             |    |    |
-|    |    |      /logout               |    |                            |    |             |    |    |
-|    |    |      /experiments          |    |                            |    |             |    |    |
-|    |    |        /<exp id>           |    |                            |    |             |    |    |
-|    |    |      /trials/<trial id>    |    |                            |    |             |    |    |
-|    |    |      /notebooks            |    |                            |    |             |    |    |
-|    |    |      /commands             |    |                            |    |             |    |    |
-|    |    |      /tensorboards         |    |                            |    |             |    |    |
-|    |    |      /shells               |    |                            |    |             |    |    |
-|    |    |      /cluster              |    |                            |    |             |    |    |
-|    |    |                            |    |                            |    |             |    |    |
-|    |    +----------------------------+    +----------------------------+    +-------------+    |    |
-|    |                                                                                           |    |
-|    +-------------------------------------------------------------------------------------------+    |
-|                                                                                                     |
-+-----------------------------------------------------------------------------------------------------+
-```
-
-Assuming we are on localhost, when pointing the browser to `http://localhost:8080/det/dashboard`, the web server serves the static files from the React directory. Where as with `http://localhost:8080/ui/experiments`, the web server serves from the Elm directory.
-
-During a `make build` under master, Docs, Elm and React `make build` are automatically triggered to build their respective static files. Upon completion, they are copied over into the build directory.
-
-
 ## Running the WebUI
 
 Before starting this section, please get Determined setup properly by following the [Determined setup instructions](https://github.com/determined-ai/determined).
@@ -68,26 +25,6 @@ For local development, our goal is to set up an environment to...
 
 * Auto detect changes in the source code and update the WebUI on the browser to speed up development. Also known as [Hot Module Replacement](https://webpack.js.org/concepts/hot-module-replacement/)
 * Provide a debugging environment via source maps. Only applicable to the React SPA.
-
-
-### Running Elm Live
-
-Run the following from the shell and hit the browser refresh button after any Elm code changes.
-
-```sh
-# sometimes elm-live doesn't cleanly exit and blocks the 8000 port
-kill $(lsof -i4TCP:8000 | grep node | awk '{print $2}')
-# change directory to the elm project directory and run elm-live
-cd /PATH/TO/DETERMINED/webui/elm
-make live
-```
-
-Elm live detects changes to elm files and automatically builds the core Elm file `determined-ui.js` and places it in shared build directory for Go web server to pick.
-
-Couple of things to note:
-
-* This still requires the browser to be manually refreshed to see the changes.
-* Changes in the static files such as `public/styles-in.css` and `public/css/wait.css` will NOT get auto updated. A fix is in the works to address this.
 
 
 ### Running React Live
@@ -109,7 +46,7 @@ npm install
 Couple of things to note:
 
 * No need to manually reload the browser page upon code change. The page itself will auto reload upon TypeScript, JavaScript, HTML, CSS, SASS and LESS changes.
-* Pointing to `http://localhost:3000` will show a blank page until you refresh because the base route of `/` is owned by the Elm app.
+* Pointing to `http://localhost:3000` will show a blank page until you refresh because the base route of `/` is not owned by the React app.
 
 ## Testing
 

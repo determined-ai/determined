@@ -4,28 +4,11 @@ describe('Sign in/out', () => {
 
   const LOGIN_ROUTE = '/det/login';
   const LOGOUT_ROUTE = '/det/logout';
-  const elmTitleSelector = '#det-main-container div.text-2xl';
 
   it('should be logged in React side', () => {
     cy.login();
     cy.visit('/det');
     cy.checkLoggedIn();
-  });
-
-  it('should be logged in Elm side', () => {
-    cy.login();
-    cy.visit('/ui');
-    cy.checkLoggedIn();
-  });
-
-  it('should be able to log out from Elm', () => {
-    // Open the dropdown menu and click the button to log out.
-    cy.login();
-    cy.visit('/ui');
-    cy.get('#avatar').click();
-    cy.get(`nav a[href="${LOGOUT_ROUTE}"]`).should('have.lengthOf', 1);
-    cy.get(`nav a[href="${LOGOUT_ROUTE}"]`).click();
-    cy.checkLoggedOut();
   });
 
   it('should be able to log out from React', () => {
@@ -73,11 +56,5 @@ describe('Sign in/out', () => {
   it('should end up redirecting to login page when visiting logout page', () => {
     cy.visit(LOGOUT_ROUTE);
     cy.url().should('contain', LOGIN_ROUTE);
-  });
-
-  it('should redirect to the requested elm url after login', () => {
-    cy.login();
-    cy.visit(`${LOGIN_ROUTE}?redirect=/ui/experiments`);
-    cy.get(elmTitleSelector).contains('Experiments');
   });
 });
