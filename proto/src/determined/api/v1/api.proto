@@ -187,6 +187,7 @@ service Determined {
     // Patch experiment fields.
     rpc UpdateExperiment(UpdateExperimentRequest) returns (determined.experiment.v1.Experiment) {
         option (google.api.http) = { patch: "/api/v1/experiments/{experiment.id}" body: "experiment" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
 
     // Get a list of checkpoints for an experiment.
