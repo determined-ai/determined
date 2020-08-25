@@ -61,6 +61,12 @@ data:
       {{- if .Values.taskContainerDefaults.glooPortRange }}
       gloo_port_range: {{ .Values.taskContainerDefaults.glooPortRange }}
       {{- end }}
+      {{- if .Values.taskContainerDefaults.cpuPodSpec }}
+      cpu_pod_spec: {{ .Values.taskContainerDefaults.cpuPodSpec | toJson }}
+      {{- end }}
+      {{- if .Values.taskContainerDefaults.gpuPodSpec }}
+      gpu_pod_spec: {{ .Values.taskContainerDefaults.gpuPodSpec | toJson }}
+      {{- end }}
     {{ end }}
 
     {{- if .Values.telemetry }}
