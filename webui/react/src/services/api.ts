@@ -1,7 +1,7 @@
 import { CancelToken } from 'axios';
 
 import * as DetSwagger from 'services/api-ts-sdk';
-import { generateApi, processApiError } from 'services/apiBuilder';
+import { generateApi, processApiError, serverAddress } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
 import { CreateNotebookParams, CreateTensorboardParams, EmptyParams,
   ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams, KillCommandParams,
@@ -11,7 +11,6 @@ import {
   Agent, AnyTask, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, Experiment,
   ExperimentDetails, Log, TrialDetails,
 } from 'types';
-import { serverAddress } from 'utils/routes';
 import { isExperimentTask } from 'utils/task';
 
 const address = serverAddress();
