@@ -1,0 +1,5 @@
+:orphan:
+
+**Bug Fixes**
+
+- Fix the issue where the Dashboard recent task list did not apply the limit filter properly
