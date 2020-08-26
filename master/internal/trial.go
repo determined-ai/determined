@@ -198,7 +198,8 @@ type trial struct {
 	// sockets maps each running container for this trial to the corresponding websocket actor.
 	sockets map[scheduler.ContainerID]*actor.Ref
 
-	agentUserGroup *model.AgentUserGroup
+	agentUserGroup        *model.AgentUserGroup
+	taskContainerDefaults *model.TaskContainerDefaultsConfig
 }
 
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
@@ -230,7 +231,8 @@ func newTrial(
 		containers:        make(map[scheduler.ContainerID]scheduler.Container),
 		sockets:           make(map[scheduler.ContainerID]*actor.Ref),
 
-		agentUserGroup: exp.agentUserGroup,
+		agentUserGroup:        exp.agentUserGroup,
+		taskContainerDefaults: exp.taskContainerDefaults,
 	}
 }
 
@@ -323,7 +325,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				Label:        label,
 				FittingRequirements: scheduler.FittingRequirements{
 					SingleAgent:    false,
-					DedicatedAgent: slotsNeeded > 1,
+					DedicatedAgent: t.taskContainerDefaults.NetworkMode.IsHost() && slotsNeeded > 1,
 				},
 				TaskHandler: ctx.Self(),
 			}).Get().(*scheduler.Task)

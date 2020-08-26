@@ -89,7 +89,8 @@ type experiment struct {
 
 	pendingEvents []*model.SearcherEvent
 
-	agentUserGroup *model.AgentUserGroup
+	agentUserGroup        *model.AgentUserGroup
+	taskContainerDefaults *model.TaskContainerDefaultsConfig
 }
 
 // Create a new experiment object from the given model experiment object, along with its searcher
@@ -138,7 +139,8 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 		warmStartCheckpoint: checkpoint,
 		pendingEvents:       make([]*model.SearcherEvent, 0, searcherEventBuffer),
 
-		agentUserGroup: agentUserGroup,
+		agentUserGroup:        agentUserGroup,
+		taskContainerDefaults: &master.config.TaskContainerDefaults,
 	}, nil
 }
 
