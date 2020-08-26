@@ -1173,18 +1173,28 @@ The table below describes the field names that have changed.
 
   * - Old name
     - New name
+    - Units changed
   * - searcher.step_budget
     - searcher.budget
+    - true
   * - searcher.max_steps
     - searcher.max_length
+    - true
   * - searcher.target_trial_steps
     - searcher.max_length
+    - true
   * - searcher.steps_per_round
     - searcher.length_per_round
+    - true
   * - min_validation_period
     - min_validation_period
+    - true
   * - min_checkpoint_period
     - min_checkpoint_period
+    - true
+  * - batches_per_step
+    - scheduling_unit
+    - false
 
 For each configuration setting in the table, if it exists in your configuration, it should be
 renamed as shown above and changed to use the new units. To migrate the value to the new units,
