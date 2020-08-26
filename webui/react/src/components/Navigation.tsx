@@ -156,7 +156,7 @@ const Navigation: React.FC = () => {
             </div>
           </section>
           <section className={css.top}>
-            <NavigationItem icon="user" label="Dashboard" path="/det/dashboard" />
+            <NavigationItem icon="dashboard" label="Dashboard" path="/det/dashboard" />
             <NavigationItem icon="experiment" label="Experiments" path="/det/experiments" />
             <NavigationItem icon="tasks" label="Tasks" path="/det/tasks" />
             <NavigationItem icon="cluster" label="Cluster" path="/det/cluster" status={cluster} />

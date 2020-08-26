@@ -4,10 +4,10 @@
   font-style: normal;
   font-weight: normal;
   src:
-    url('/fonts/determined-ai.woff2?ry33x8') format('woff2'),
-    url('/fonts/determined-ai.woff?ry33x8') format('woff'),
-    url('/fonts/determined-ai.ttf?ry33x8') format('truetype'),
-    url('/fonts/determined-ai.svg?ry33x8#determined-ai') format('svg');
+    url('/fonts/determined-ai.woff2?vusz4x') format('woff2'),
+    url('/fonts/determined-ai.woff?vusz4x') format('woff'),
+    url('/fonts/determined-ai.ttf?vusz4x') format('truetype'),
+    url('/fonts/determined-ai.svg?vusz4x#determined-ai') format('svg');
 }
 
 [class^='icon-'],
@@ -29,6 +29,7 @@
 .icon-arrow-down::before { content: '\ea02'; }
 .icon-arrow-up::before { content: '\ea03'; }
 .icon-dai-logo::before { content: '\e900'; }
+.icon-dashboard::before { content: '\e924'; }
 .icon-download::before { content: '\e91d'; }
 .icon-checkpoint::before { content: '\e91f'; }
 .icon-checkmark::before { content: '\e921'; }
