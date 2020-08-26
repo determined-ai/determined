@@ -30,6 +30,7 @@ Setting Up the Cluster
     GKE_GPU_NODE_POOL_NAME=<any unique name, e.g., "determined-node-pool">
 
     # Set a unique name for the GCS bucket that will store your checkpoints.
+    # When installing Determined, set checkpointStorage.bucket to the value defined here.
     GCS_BUCKET_NAME=<any unique name, e.g., "determined-checkpoint-bucket">
 
     # Set the GPU type for your node pool. Other options include p100, p4, and v100.
@@ -61,7 +62,7 @@ Setting Up the Cluster
       --machine-type=n1-standard-32 \
       --scopes=storage-full
 
-    # Deploy a DaemonSet that  enables the GPUs.
+    # Deploy a DaemonSet that enables the GPUs.
     kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/ubuntu/daemonset-preloaded.yaml
 
     # Create a GCS bucket to store checkpoints.
