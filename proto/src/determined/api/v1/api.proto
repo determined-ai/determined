@@ -11,7 +11,6 @@ import "determined/api/v1/auth.proto";
 import "determined/api/v1/checkpoint.proto";
 import "determined/api/v1/command.proto";
 import "determined/api/v1/experiment.proto";
-import "determined/experiment/v1/experiment.proto";
 import "determined/api/v1/master.proto";
 import "determined/api/v1/model.proto";
 import "determined/api/v1/notebook.proto";
@@ -178,14 +177,8 @@ service Determined {
         option (google.api.http) = {patch: "/api/v1/experiments/{id}/labels" body: "*" };
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
-    // Set description for an experiment.
-    rpc SetExperimentDescription(SetExperimentDescriptionRequest) returns (SetExperimentDescriptionResponse) {
-        option (google.api.http) = {patch: "/api/v1/experiments/{id}/description" body: "*" };
-        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
-    }
-    // DISCUSS directly returning experiment object vs defining individual messages that wrap it
     // Patch experiment fields.
-    rpc UpdateExperiment(UpdateExperimentRequest) returns (determined.experiment.v1.Experiment) {
+    rpc PatchExperiment(PatchExperimentRequest) returns (PatchExperimentResponse) {
         option (google.api.http) = { patch: "/api/v1/experiments/{experiment.id}" body: "experiment" };
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
@@ -313,7 +306,7 @@ service Determined {
         option (google.api.http) = {post: "/api/v1/models/{model.name}" body: "model"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Models"};
     }
-    // Update model fields
+    // Patch model fields
     rpc PatchModel(PatchModelRequest) returns (PatchModelResponse) {
         option (google.api.http) = {patch: "/api/v1/models/{model.name}" body: "*"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Models"};

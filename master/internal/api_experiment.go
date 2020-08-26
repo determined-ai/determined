@@ -41,8 +41,7 @@ func mapSetToList(mapSet *map[string]bool) *[]string {
 	return &list
 }
 
-// CHECK don't we do this anywhere else?
-func modelExpToProtoV1Experiment(exp *model.Experiment) *experimentv1.Experiment {
+func toProtoExpFromFullExp(exp *model.Experiment) *experimentv1.Experiment {
 	labels := map[string]bool(exp.Config.Labels) // CHECK there is gotta be a better way
 	return &experimentv1.Experiment{
 		Description: exp.Config.Description,
@@ -51,6 +50,7 @@ func modelExpToProtoV1Experiment(exp *model.Experiment) *experimentv1.Experiment
 	}
 	// TODO finish the translation
 }
+
 func (a *apiServer) checkExperimentExists(id int) error {
 	ok, err := a.m.db.CheckExperimentExists(id)
 	switch {
@@ -377,14 +377,12 @@ func (a *apiServer) SetExperimentLabels(
 	}
 }
 
-// rename
-func (a *apiServer) UpdateExperiment(
-	ctx context.Context, req *apiv1.UpdateExperimentRequest,
-) (*experimentv1.Experiment, error) {
+func (a *apiServer) PatchExperiment(
+	ctx context.Context, req *apiv1.PatchExperimentRequest,
+) (*apiv1.PatchExperimentResponse, error) {
 
 	fmt.Printf("description: %s\n", req.Experiment.Description)
 
-	// DISCUSS or we could start with a experimentv1 query.
 	dbExp, err := a.m.db.ExperimentByID(int(req.Experiment.Id))
 	if err != nil {
 		return nil, errors.Wrapf(err, "loading experiment %v", req.Experiment.Id)
@@ -408,7 +406,7 @@ func (a *apiServer) UpdateExperiment(
 	err = a.m.db.SaveExperimentConfig(dbExp)
 	switch err {
 	case nil:
-		return modelExpToProtoV1Experiment(dbExp), nil
+		return &apiv1.PatchExperimentResponse{Experiment: toProtoExpFromFullExp(dbExp)}, nil
 	default:
 		return nil, errors.Wrapf(err, "failed to save experiment %d config",
 			req.Experiment.Id)
