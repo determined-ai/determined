@@ -331,52 +331,6 @@ func (a *apiServer) UnarchiveExperiment(
 	}
 }
 
-func (a *apiServer) SetExperimentDescription(
-	ctx context.Context, req *apiv1.SetExperimentDescriptionRequest,
-) (*apiv1.SetExperimentDescriptionResponse, error) {
-	id := int(req.Id)
-
-	dbExp, err := a.m.db.ExperimentByID(id)
-	if err != nil {
-		return nil, errors.Wrapf(err, "loading experiment %v", id)
-	}
-
-	dbExp.Config.Description = req.Description
-	err = a.m.db.SaveExperimentConfig(dbExp)
-	switch err {
-	case nil:
-		return &apiv1.SetExperimentDescriptionResponse{}, nil
-	default:
-		return nil, errors.Wrapf(err, "failed to save experiment %d config",
-			req.Id)
-	}
-}
-
-func (a *apiServer) SetExperimentLabels(
-	ctx context.Context, req *apiv1.SetExperimentLabelsRequest,
-) (*apiv1.SetExperimentLabelsResponse, error) {
-	id := int(req.Id)
-
-	dbExp, err := a.m.db.ExperimentByID(id)
-	if err != nil {
-		return nil, errors.Wrapf(err, "loading experiment %v", id)
-	}
-
-	labelsMap := make(map[string]bool)
-	for _, label := range req.Labels {
-		labelsMap[label] = true
-	}
-	dbExp.Config.Labels = labelsMap
-	err = a.m.db.SaveExperimentConfig(dbExp)
-	switch err {
-	case nil:
-		return &apiv1.SetExperimentLabelsResponse{}, nil
-	default:
-		return nil, errors.Wrapf(err, "failed to save experiment %d config",
-			req.Id)
-	}
-}
-
 func (a *apiServer) PatchExperiment(
 	ctx context.Context, req *apiv1.PatchExperimentRequest,
 ) (*apiv1.PatchExperimentResponse, error) {

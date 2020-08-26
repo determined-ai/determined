@@ -140,26 +140,6 @@ message UnarchiveExperimentRequest {
 // Response to UnarchiveExperimentRequest.
 message UnarchiveExperimentResponse {}
 
-// Set experiment labels.
-message SetExperimentLabelsRequest {
-  // The experiment id.
-  int32 id = 1;
-  // The set of labels.
-  repeated string labels = 2;
-}
-// Response to SetExperimentLabelsRequest.
-message SetExperimentLabelsResponse {}
-
-// Set experiment description.
-message SetExperimentDescriptionRequest {
-  // The experiment id.
-  int32 id = 1;
-  // New description.
-  string description = 2;
-}
-// Response to SetExperimentDescriptionRequest.
-message SetExperimentDescriptionResponse {}
-
 // Patch experiment.
 message PatchExperimentRequest {
   determined.experiment.v1.Experiment experiment = 1;
