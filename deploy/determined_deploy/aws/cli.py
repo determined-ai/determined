@@ -6,7 +6,7 @@ from typing import Dict, Type, Union
 import boto3
 
 from determined_deploy.aws import aws, constants
-from determined_deploy.aws.deployment_types import secure, simple, vpc
+from determined_deploy.aws.deployment_types import secure, simple, vpc, efs
 
 
 def make_down_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -138,6 +138,7 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.deployment_types.SIMPLE: simple.Simple,
         constants.deployment_types.SECURE: secure.Secure,
         constants.deployment_types.VPC: vpc.VPC,
+        constants.deployment_types.EFS: efs.EFS,
     }  # type: Dict[str, Union[Type[simple.Simple], Type[secure.Secure], Type[vpc.VPC]]]
 
     det_configs = {

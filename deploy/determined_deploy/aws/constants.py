@@ -2,7 +2,8 @@ class deployment_types:
     SIMPLE = "simple"
     SECURE = "secure"
     VPC = "vpc"
-    DEPLOYMENT_TYPES = [SIMPLE, SECURE, VPC]
+    EFS = "efs"
+    DEPLOYMENT_TYPES = [SIMPLE, SECURE, VPC, EFS]
 
 
 class defaults:
