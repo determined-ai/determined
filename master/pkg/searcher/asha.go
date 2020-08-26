@@ -245,6 +245,5 @@ func (s *asyncHalvingSearch) trialExitedEarly(
 ) ([]Operation, error) {
 	s.earlyExitTrials[requestID] = true
 	s.closedTrials[requestID] = true
-	s.trialsCompleted++
 	return s.promoteAsync(ctx, requestID, ashaExitedMetricValue), nil
 }
