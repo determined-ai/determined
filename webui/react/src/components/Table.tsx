@@ -142,16 +142,6 @@ export const defaultRowClassName = (clickable = true): string=> {
   return clickable ? 'clickable' : '';
 };
 
-/*
- * Utility for find a column by title.
- */
-export const findColumnByTitle: <T>(c: ColumnType<T>[], s: string) => number = (
-  columns,
-  search,
-) => {
-  return columns.findIndex(column => new RegExp(search, 'i').test(column.title as string));
-};
-
 export const getPaginationConfig = (count: number): TablePagination => {
   return {
     defaultPageSize: MINIMUM_PAGE_SIZE,
