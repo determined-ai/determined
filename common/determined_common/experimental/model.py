@@ -46,15 +46,15 @@ class ModelOrderBy(enum.Enum):
 
 class Model:
     """
-    Class representing a model. Contains methods for managing metadata and
-    model versions.
+    Class representing a model in the model registry. It contains methods for model
+    versions and metadata.
 
     Arguments:
         name (string): The name of the model.
         description (string, optional): The description of the model.
         creation_time (datetime): The time the model was created.
         last_updated_time (datetime): The time the model was most recently updated.
-        metadata (dict, optional): User defined metadata associated with the checkpoint.
+        metadata (dict, optional): User-defined metadata associated with the checkpoint.
         master (string, optional): The address of the Determined master instance.
     """
 
@@ -77,7 +77,12 @@ class Model:
     def get_version(self, version: int = 0) -> Optional[Checkpoint]:
         """
         Retrieve the checkpoint corresponding to the specified version of the
-        model. If no version is specified the latest model version is returned.
+        model. If the specified version of the model does not exist, an exception
+        is raised.
+
+        If no version is specified, the latest version of the model is
+        returned. In this case, if there are no registered versions of the
+        model, ``None`` is returned.
 
         Arguments:
             version (int, optional): The model version number requested.
@@ -142,7 +147,7 @@ class Model:
         version.
 
         Arguments:
-            checkpoint_uuid: The uuid to associate with the new model version.
+            checkpoint_uuid: The UUID of the checkpoint to register.
         """
         resp = api.post(
             self._master,
