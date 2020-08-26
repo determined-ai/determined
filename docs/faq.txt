@@ -91,11 +91,11 @@ the experiments associated with an experiment, run:
 
     det experiment set gc-policy --save-experiment-best 0 --save-trial-best 0 --save-trial-latest 0 <experiment-id>
 
-Multi-GPU Training
-------------------
+Distributed Training
+--------------------
 
-Why do my multi-GPU training experiments never start?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Why do my distributed training experiments never start?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It might be that :ref:`slots_per_trial <exp-config-resources-slots-per-trial>`
 in the experiment configuration is not a multiple of the number of GPUs on a
@@ -109,7 +109,7 @@ See :ref:`multi-gpu-training` for more details.
 Why do my multi-machine training experiments appear to be stuck?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Multi-machine training requires that all machines be able to connect to
+Multi-machine training requires that all machines are able to connect to
 each other directly. There may be firewall rules or network
 configuration that prevent machines in your cluster from communicating.
 Please check if agent machines can access each other outside of Determined
@@ -118,8 +118,24 @@ Please check if agent machines can access each other outside of Determined
 More rarely, if agents have multiple network interfaces and some of them
 are not routable, Determined may pick one of those interfaces rather than one
 that allows one agent to contact another. In this case, it is possible
-to set the network interface used for multi-GPU training explicitly in
+to set the network interface used for distributed training explicitly in
 the :ref:`cluster-configuration`.
+
+Scheduling
+----------
+
+How can I control which agents a task is scheduled on?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This can be done by assigning a label to certain agents in the cluster, and then
+using the :ref:`resources.agent_label <exp-config-agent_label>` setting in
+experiment, notebook, or command configurations. Each agent can have at most one
+label, which can be set via the :ref:`agent configuration
+<agent-configuration>`. Similarly, each task can have at most one
+``agent_label``. If a task is configured with an ``agent_label``, it will *only*
+be launched on agents that have that label. Similarly, if an agent has a label,
+it will never be assigned tasks that do not have an ``agent_label`` or that
+specify a different ``agent_label``.
 
 
 TensorFlow Support
@@ -135,11 +151,20 @@ Core APIs, we recommend porting your model to use :ref:`Estimator Trial <estimat
 <https://github.com/determined-ai/determined/blob/master/examples/experimental/trial/mnist_tp_to_estimator/model_def.py>`_.
 
 
-Pytorch Supporrt
-----------------
+PyTorch Support
+---------------
 
-Why am I seeing significantly different metrics for trials which are paused and later continued (jumps in loss, worse convergence, etc) than trials which aren't paused?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Why am I seeing significantly different metrics for trials which are paused and later continued than trials which aren't paused?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When a trial is paused, the current state of the trial is saved to a
+:ref:`checkpoint <exporting-checkpoints>`. When the trial later resumes
+training, Determined will reload the state of the model from the most recent
+checkpoint. If you observe that this process degrades the model's training or
+validation metrics (compared to a model trained on the same data without
+interruption), one explanation is that the model's state might not be restored
+accurately or completely from the checkpoint. When using PyTorch, this can
+sometimes happen if the PyTorch API is not used correctly.
 
 Please verify the following in the model code:
 
@@ -179,3 +204,18 @@ Yes! For an example of this check out the :download:`mnist-GAN
 automatically configures the location for writing TensorBoards. Users can also
 directly use ``torch.utils.tensorboard.SummaryWriter`` as shown in the snippet
 above.
+
+Ecosystem Integrations
+----------------------
+
+How can I use Determined with Spark, Airflow, or Pachyderm?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Determined is focused on helping teams of deep learning engineers train better
+models more quickly. However, Determined is also designed to easily integrate
+with other popular ML ecosystem tools for tasks that are related to model
+training, such as ETL, ML pipelines, and model serving. The `Works with
+Determined <https://github.com/determined-ai/works-with-determined>`__
+repository includes examples of how to use Determined with a variety of ML
+ecosystem tools, including Pachyderm, DVC, Delta Lake, Seldon, Spark, Argo,
+Airflow, and Kubeflow.
