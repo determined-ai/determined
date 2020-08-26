@@ -4,7 +4,7 @@ Install Determined on Kubernetes
 ================================
 
 This document describes how to install Determined on `Kubernetes <https://kubernetes.io/>`_. The installation
-is performed using the `Determined Helm Chart <https://github.com/determined-ai/determined/tree/master/helm/charts/determined>`_.
+is performed using the :download:`Determined Helm Chart </helm/determined-helm-chart.tgz>`.
 When installing using the Helm chart, all configurations will be done within
 `values.yaml <https://github.com/determined-ai/determined/blob/master/helm/charts/determined/values.yaml>`_ and
 `Chart.yaml <https://github.com/determined-ai/determined/blob/master/helm/charts/determined/Chart.yaml>`_.
@@ -19,7 +19,7 @@ following prerequisites are satisfied:
 * The Kubernetes cluster should be running Kubernetes >= 1.15, with GPU support enabled. :ref:`Instructions for setting up a GKE cluster <setup-gke-cluster>`.
 * You should have access to the cluster via `kubectl <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_.
 * `Helm <https://helm.sh/docs/helm/helm_install/>`_ should be installed.
-* You should have a local copy of the `Determined Helm Chart <https://github.com/determined-ai/determined/tree/master/helm/charts/determined>`_. This can be done by cloning the Determined repository: ``git clone https://github.com/determined-ai/determined.git``.
+* You should have a local copy of the:download:`Determined Helm Chart </helm/determined-helm-chart.tgz>`.
 
 
 What Gets Installed
@@ -108,11 +108,11 @@ be installed. To install Determined run:
 
 .. code::
 
-    helm install <name for your deployment> --wait helm/charts/determined
+    helm install <name for your deployment> --wait charts/determined
 
-``helm/charts/determined`` is a relative path from the root of the Determined repository. Helm will install
-Determined within the default namespace. If you wish to install Determined into a non-default namespace,
-add ``-n <namespace name>`` to the command shown above.
+``charts/determined`` is a relative path to where the :download:`Determined Helm Chart </helm/determined-helm-chart.tgz>`
+is located. Helm will install Determined within the default namespace. If you wish to install Determined into a
+non-default namespace, add ``-n <namespace name>`` to the command shown above.
 
 Once the installation has completed, instructions will be displayed for
 discovering the IP address assigned to the Determined master. The IP address can

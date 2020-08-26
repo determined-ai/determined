@@ -7,6 +7,8 @@ SPHINXBUILD   = sphinx-build
 build:
 	mkdir -p site/downloads/examples
 	cp ../examples/build/* site/downloads/examples
+	mkdir -p site/downloads/helm
+	cp ../helm/build/* site/downloads/helm
 	$(MAKE) sp-html
 
 .PHONY: clean
