@@ -91,17 +91,16 @@ When using distributed training, there are different scheduler constraints on th
 ``slots_per_trial`` can take depending on the default network mode and whether or not it can fit on
 a single agent.
 
-- If ``slots_per_trial`` is smaller than the number of slots on any available agents and
-  ``task_container_defaults.network_mode`` is not set to ``host``, the experiment will prefer to run
-  on a single, potentially shared, machine. For example, if you have a cluster of machines with
-  8 GPUs each, and ``slots_per_trial`` is set to 4 and ``task_container_defaults.network_mode`` is
-  not ``host``, the experiment will be scheduled onto any agent with at least 4 free slots.
-- If ``slots_per_trial`` is larger than or equal to the number of slots on any available agents or
-  ``task_container_defaults.network_mode`` is set to ``host``, ``slots_per_trial`` must be set to a
-  multiple of the number of GPUs per machine. For example, if you have a cluster of
-  machines with 8 GPUs each, you should set ``slots_per_trial`` to a multiple of 8, such as 8, 16, or
-  24. This ensures that the full network and interconnect bandwidth are available to
-  multi-GPU workloads and results in better performance.
+- If ``network_mode`` is ``host``, Determined will schedule dtrain jobs onto dedicated
+  machines. This is to avoid potential port network port conflicts between host-mode jobs on the
+  same machine.
+- Similarly, if ``slots_per_trial`` is greater than the number of slots on a single agent,
+  Determined will again schedule dtrain jobs onto dedicated machines. This is to ensure good
+  performance and utilize the full network bandwidth of each machine, while minimizing
+  inter-machine networking.
+- Otherwise, if ``slots_per_trial`` is smaller than the size of an agent in the cluster and Docker
+  networking is in use, Determined will try to schedule dtrain jobs onto shared machines. This is to
+  improve utilization and allow multiple small dtrain jobs to run on a single machine.
 
 .. warning::
 
