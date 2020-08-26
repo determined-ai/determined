@@ -56,9 +56,11 @@ const TrialActions: React.FC<Props> = ({ trial, onClick, onSettled }: Props) => 
         onClick={handleCreateTensorboard}>View in Tensorboard</Button>,
       showIf: (aTrial): boolean => !trialWillNeverHaveData(aTrial),
     },
-    { button: <Button key={Action.Logs}>
-      <Link path={`/det/trials/${trial.id}/logs`} popout>Logs</Link>
-    </Button> },
+    {
+      button: <Button key={Action.Logs}>
+        <Link path={`/det/trials/${trial.id}/logs`} popout>Logs</Link>
+      </Button>,
+    },
   ];
 
   return (

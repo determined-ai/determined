@@ -53,7 +53,8 @@ const TaskList: React.FC = () => {
   const tensorboards = Tensorboards.useStateContext();
   const storage = useStorage('task-list');
   const initFilters = storage.getWithDefault('filters', {
-    ...defaultFilters, username: getPath<string>(auth, 'user.username'),
+    ...defaultFilters,
+    username: getPath<string>(auth, 'user.username'),
   });
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
   const [ search, setSearch ] = useState('');

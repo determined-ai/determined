@@ -13,9 +13,7 @@ interface Props {
   state: RunState | CommandState;
 }
 
-const defaultProps = {
-  percent: 0,
-};
+const defaultProps = { percent: 0 };
 
 const ProgressBar: React.FC<Props> = ({ barOnly, percent, state }: Props) => {
   const classes = [ css.base ];

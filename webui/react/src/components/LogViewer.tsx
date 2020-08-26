@@ -489,10 +489,14 @@ const LogViewer: React.FC<Props> = forwardRef((
           <div className={css.container} ref={container}>
             <div className={css.scrollSpacer} ref={spacer} style={spacerStyle}>
               {visibleLogs.map(log => (
-                <div className={css.line} id={`log-${log.id}`} key={log.id} style={{
-                  height: toRem(config.messageSizes[log.id]?.height),
-                  top: toRem(config.messageSizes[log.id]?.top),
-                }}>
+                <div
+                  className={css.line}
+                  id={`log-${log.id}`}
+                  key={log.id}
+                  style={{
+                    height: toRem(config.messageSizes[log.id]?.height),
+                    top: toRem(config.messageSizes[log.id]?.top),
+                  }}>
                   {!props.disableLineNumber &&
                   <div className={css.number} data-label={log.id + 1} style={lineNumberStyle} />}
                   {!props.disableLevel ? (

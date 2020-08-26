@@ -1,6 +1,4 @@
-import {
-  Button, Col, Form, Input, Modal, Row, Space, Table, Tooltip,
-} from 'antd';
+import { Button, Col, Form, Input, Modal, Row, Space, Table, Tooltip } from 'antd';
 import { ColumnType } from 'antd/es/table';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -353,7 +351,8 @@ If the problem persists please contact support.',
         },
         { breadcrumbName: `Trial ${trialId}`, path: `/det/trials/${trialId}` },
       ]}
-      options={<TrialActions trial={trial}
+      options={<TrialActions
+        trial={trial}
         onClick={handleActionClick}
         onSettled={pollTrialDetails} />}
       showDivider
@@ -408,9 +407,7 @@ If the problem persists please contact support.',
           <Button onClick={handleEditContConfig}>Edit Full Config</Button>
           <Button type="primary" onClick={handleFormCreate}>Continue Trial</Button>
         </>}
-        style={{
-          minWidth: '60rem',
-        }}
+        style={{ minWidth: '60rem' }}
         title={`Continue Trial ${trialId} of Experiment ${experimentId}`}
         visible={contFormVisible}
         onCancel={handleContFormCancel}

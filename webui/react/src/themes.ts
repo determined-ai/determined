@@ -140,12 +140,8 @@ export const lightTheme: Theme = {
       suspended: '#cc9900',
     },
   },
-  focus: {
-    shadow: '0 0 0 0.2rem rgba(0, 155, 222, 0.25)',
-  },
-  font: {
-    family: 'Objektiv Mk3',
-  },
+  focus: { shadow: '0 0 0 0.2rem rgba(0, 155, 222, 0.25)' },
+  font: { family: 'Objektiv Mk3' },
   outline: '0 0 0.4rem 0 #009bde',
   shadow: '0.2rem 0.2rem 0.4rem 0 rgba(0, 0, 0, 0.25)',
   sizes: {
