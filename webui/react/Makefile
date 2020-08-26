@@ -1,8 +1,8 @@
 swagger_client = "src/services/swagger"
 PROJECT_ROOT := "../../"
 
-.PHONY: all
-all: get-deps
+.PHONY: default
+default: get-deps
 	$(MAKE) build
 
 .PHONY: get-deps-api
