@@ -377,6 +377,7 @@ func (a *apiServer) SetExperimentLabels(
 	}
 }
 
+// rename
 func (a *apiServer) UpdateExperiment(
 	ctx context.Context, req *apiv1.UpdateExperimentRequest,
 ) (*experimentv1.Experiment, error) {
@@ -403,6 +404,7 @@ func (a *apiServer) UpdateExperiment(
 				"only description and labels fields are mutable. cannot update %s", path)
 		}
 	}
+
 	err = a.m.db.SaveExperimentConfig(dbExp)
 	switch err {
 	case nil:
