@@ -75,7 +75,10 @@ class DataLayerContext:
         )
 
     def cache_validation_dataset(
-        self, dataset_id: str, dataset_version: str, shuffle: bool = False,
+        self,
+        dataset_id: str,
+        dataset_version: str,
+        shuffle: bool = False,
     ) -> Callable:
         """cache_validation_dataset is a decorator for creating your validation dataset.  It should
         decorate a function that outputs a ``tf.data.Dataset`` object. The dataset will be

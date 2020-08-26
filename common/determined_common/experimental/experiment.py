@@ -21,7 +21,9 @@ class ExperimentReference:
         self._master = master
 
     def top_checkpoint(
-        self, sort_by: Optional[str] = None, smaller_is_better: Optional[bool] = None,
+        self,
+        sort_by: Optional[str] = None,
+        smaller_is_better: Optional[bool] = None,
     ) -> checkpoint.Checkpoint:
         """
         Return the :class:`~determined.experimental.Checkpoint` instance with the best
@@ -49,7 +51,10 @@ class ExperimentReference:
         return checkpoints[0]
 
     def top_n_checkpoints(
-        self, limit: int, sort_by: Optional[str] = None, smaller_is_better: Optional[bool] = None,
+        self,
+        limit: int,
+        sort_by: Optional[str] = None,
+        smaller_is_better: Optional[bool] = None,
     ) -> List[checkpoint.Checkpoint]:
         """
         Return the N :class:`~determined.experimental.Checkpoint` instances with the best

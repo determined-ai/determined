@@ -192,7 +192,9 @@ class PyTorchTrialContext(det.TrialContext):
         opt = getattr(lr_scheduler, "optimizer", None)
         if opt is not None:
             check.is_in(
-                opt, self.optimizers, "Must use an optimizer that is returned by wrap_optimizer()",
+                opt,
+                self.optimizers,
+                "Must use an optimizer that is returned by wrap_optimizer()",
             )
         wrapped = pytorch.LRScheduler(lr_scheduler, step_mode)
         self.lr_schedulers.append(wrapped)
@@ -436,7 +438,9 @@ class PyTorchTrialContext(det.TrialContext):
                         optimizer.synchronize()
         else:
             loss.backward(  # type: ignore
-                gradient=gradient, retain_graph=retain_graph, create_graph=create_graph,
+                gradient=gradient,
+                retain_graph=retain_graph,
+                create_graph=create_graph,
             )
 
     def _average_gradients(self, parameters: Any, divisor: int) -> None:

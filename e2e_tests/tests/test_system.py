@@ -499,7 +499,9 @@ def test_fail_on_first_validation() -> None:
     config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config_obj["hyperparameters"]["fail_on_first_validation"] = error_log
     exp.run_failure_test_with_temp_config(
-        config_obj, conf.fixtures_path("no_op"), error_log,
+        config_obj,
+        conf.fixtures_path("no_op"),
+        error_log,
     )
 
 
@@ -509,7 +511,9 @@ def test_fail_on_chechpoint_save() -> None:
     config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config_obj["hyperparameters"]["fail_on_chechpoint_save"] = error_log
     exp.run_failure_test_with_temp_config(
-        config_obj, conf.fixtures_path("no_op"), error_log,
+        config_obj,
+        conf.fixtures_path("no_op"),
+        error_log,
     )
 
 

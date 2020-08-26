@@ -7,7 +7,9 @@ from determined_common.storage.base import StorageManager, StorageMetadata
 
 
 def _full_storage_path(
-    host_path: str, storage_path: Optional[str] = None, container_path: Optional[str] = None,
+    host_path: str,
+    storage_path: Optional[str] = None,
+    container_path: Optional[str] = None,
 ) -> str:
     """
     Return the full path to the storage_path, either as a subdirectory of the host_path in the

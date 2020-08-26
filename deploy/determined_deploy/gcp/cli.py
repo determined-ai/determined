@@ -10,7 +10,10 @@ def make_down_subparser(subparsers: argparse._SubParsersAction) -> None:
 
     optional_named = subparser.add_argument_group("optional named arguments")
     optional_named.add_argument(
-        "--local-state-path", type=str, default=os.getcwd(), help=argparse.SUPPRESS,
+        "--local-state-path",
+        type=str,
+        default=os.getcwd(),
+        help=argparse.SUPPRESS,
     )
     optional_named.add_argument(
         "--keypath",
@@ -58,7 +61,10 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="network name to create (the network should not already exist in the project)",
     )
     optional_named.add_argument(
-        "--det-version", type=str, default=determined_deploy.__version__, help=argparse.SUPPRESS,
+        "--det-version",
+        type=str,
+        default=determined_deploy.__version__,
+        help=argparse.SUPPRESS,
     )
     optional_named.add_argument(
         "--region",
@@ -79,7 +85,10 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help=argparse.SUPPRESS,
     )
     optional_named.add_argument(
-        "--local-state-path", type=str, default=os.getcwd(), help=argparse.SUPPRESS,
+        "--local-state-path",
+        type=str,
+        default=os.getcwd(),
+        help=argparse.SUPPRESS,
     )
     optional_named.add_argument(
         "--preemptible",

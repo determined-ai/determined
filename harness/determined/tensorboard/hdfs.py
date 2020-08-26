@@ -14,7 +14,12 @@ class HDFSTensorboardManager(base.TensorboardManager):
 
     @util.preserve_random_state
     def __init__(
-        self, hdfs_url: str, hdfs_path: str, user: Optional[str] = None, *args: Any, **kwargs: Any,
+        self,
+        hdfs_url: str,
+        hdfs_path: str,
+        user: Optional[str] = None,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.hdfs_url = hdfs_url

@@ -16,7 +16,10 @@ def make_down_subparser(subparsers: argparse._SubParsersAction):
     )
 
     subparser.add_argument(
-        "--region", type=str, default=None, help="AWS region",
+        "--region",
+        type=str,
+        default=None,
+        help="AWS region",
     )
     subparser.add_argument("--aws-profile", type=str, default=None, help=argparse.SUPPRESS)
 
@@ -31,10 +34,14 @@ def make_up_subparser(subparsers: argparse._SubParsersAction):
         "--keypair", type=str, help="aws ec2 keypair for master and agent", required=True
     )
     subparser.add_argument(
-        "--master-instance-type", type=str, help="instance type for master",
+        "--master-instance-type",
+        type=str,
+        help="instance type for master",
     )
     subparser.add_argument(
-        "--agent-instance-type", type=str, help="instance type for agent",
+        "--agent-instance-type",
+        type=str,
+        help="instance type for agent",
     )
     subparser.add_argument(
         "--deployment-type",
@@ -46,10 +53,14 @@ def make_up_subparser(subparsers: argparse._SubParsersAction):
     )
     subparser.add_argument("--aws-profile", type=str, default=None, help=argparse.SUPPRESS)
     subparser.add_argument(
-        "--inbound-cidr", type=str, help="inbound IP Range in CIDR format",
+        "--inbound-cidr",
+        type=str,
+        help="inbound IP Range in CIDR format",
     )
     subparser.add_argument(
-        "--det-version", type=str, help=argparse.SUPPRESS,
+        "--det-version",
+        type=str,
+        help=argparse.SUPPRESS,
     )
     subparser.add_argument(
         "--db-password",
@@ -58,13 +69,20 @@ def make_up_subparser(subparsers: argparse._SubParsersAction):
         help="password for master database",
     )
     subparser.add_argument(
-        "--region", type=str, default=None, help="AWS region",
+        "--region",
+        type=str,
+        default=None,
+        help="AWS region",
     )
     subparser.add_argument(
-        "--max-idle-agent-period", type=str, help="max agent idle time",
+        "--max-idle-agent-period",
+        type=str,
+        help="max agent idle time",
     )
     subparser.add_argument(
-        "--max-agent-starting-period", type=str, help="max agent starting time",
+        "--max-agent-starting-period",
+        type=str,
+        help="max agent starting time",
     )
     subparser.add_argument(
         "--max-dynamic-agents",
@@ -72,7 +90,9 @@ def make_up_subparser(subparsers: argparse._SubParsersAction):
         help="maximum number of dynamic agent instances at one time",
     )
     subparser.add_argument(
-        "--dry-run", action="store_true", help="print deployment template",
+        "--dry-run",
+        action="store_true",
+        help="print deployment template",
     )
 
 

@@ -141,7 +141,9 @@ args_description = [
                             help="download the most recent checkpoint",
                         ),
                         Arg(
-                            "--uuid", type=str, help="download a checkpoint by specifying its UUID",
+                            "--uuid",
+                            type=str,
+                            help="download a checkpoint by specifying its UUID",
                         ),
                         required=True,
                     ),

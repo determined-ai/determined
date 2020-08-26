@@ -145,7 +145,11 @@ class _CacheableDecorator:
         return cast(int, self._dataset_length)
 
     def cache_dataset(
-        self, dataset_id: str, dataset_version: str, shuffle: bool, skip_shuffle_at_epoch_end: bool,
+        self,
+        dataset_id: str,
+        dataset_version: str,
+        shuffle: bool,
+        skip_shuffle_at_epoch_end: bool,
     ) -> Callable:
 
         # Perform lazy initialization of storage so that if users are not
@@ -169,7 +173,8 @@ class _CacheableDecorator:
             @functools.wraps(make_dataset_fn)
             def _decorated_fn(*args: Any, **kwargs: Any) -> Any:
                 @self._storage.cacheable(  # type: ignore
-                    dataset_id=dataset_id, dataset_version=dataset_version,
+                    dataset_id=dataset_id,
+                    dataset_version=dataset_version,
                 )
                 def make_dataset() -> yogadl.DataRef:
                     return make_dataset_fn(*args, **kwargs)

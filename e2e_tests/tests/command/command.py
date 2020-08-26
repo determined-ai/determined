@@ -101,7 +101,11 @@ def get_command_config(command_type: str, id: str) -> str:
     env = os.environ.copy()
     env["DET_DEBUG"] = "true"
     completed_process = subprocess.run(
-        command, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
+        command,
+        universal_newlines=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
     )
     assert completed_process.returncode == 0, "\nstdout:\n{} \nstderr:\n{}".format(
         completed_process.stdout, completed_process.stderr

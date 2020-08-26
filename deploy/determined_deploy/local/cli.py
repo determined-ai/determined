@@ -21,10 +21,15 @@ def add_cluster_up_subparser(subparsers: argparse._SubParsersAction) -> None:
     )
     parser.add_argument("--det-version", type=str, default=None, help="version or commit to use")
     parser.add_argument(
-        "--db-password", type=str, default="postgres", help="password for master database",
+        "--db-password",
+        type=str,
+        default="postgres",
+        help="password for master database",
     )
     parser.add_argument(
-        "--delete-db", action="store_true", help="remove current master database",
+        "--delete-db",
+        action="store_true",
+        help="remove current master database",
     )
     parser.add_argument("--no-gpu", help="enable GPU support for agent", action="store_true")
     parser.add_argument(
@@ -44,7 +49,9 @@ def add_cluster_down_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--cluster-name", type=str, default="determined", help="name for the cluster resources"
     )
     parser.add_argument(
-        "--delete-db", action="store_true", help="remove current master database",
+        "--delete-db",
+        action="store_true",
+        help="remove current master database",
     )
 
 
@@ -63,10 +70,15 @@ def add_master_up_subparser(subparsers: argparse._SubParsersAction) -> None:
     )
     parser.add_argument("--det-version", type=str, default=None, help="version or commit to use")
     parser.add_argument(
-        "--db-password", type=str, default="postgres", help="password for master database",
+        "--db-password",
+        type=str,
+        default="postgres",
+        help="password for master database",
     )
     parser.add_argument(
-        "--delete-db", action="store_true", help="remove current master database",
+        "--delete-db",
+        action="store_true",
+        help="remove current master database",
     )
     parser.add_argument(
         "--no-autorestart",
@@ -85,7 +97,9 @@ def add_master_down_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--master-name", type=str, default="determined", help="name for the cluster resources"
     )
     parser.add_argument(
-        "--delete-db", action="store_true", help="remove current master database",
+        "--delete-db",
+        action="store_true",
+        help="remove current master database",
     )
 
 

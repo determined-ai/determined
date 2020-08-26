@@ -201,7 +201,10 @@ class PyTorchTrialController(det.LoopTrialController):
 
             def new_train_batch(batch: TorchData, epoch_idx: int, batch_idx: int) -> Any:
                 tr_metrics = train_batch(
-                    batch=batch, model=model, epoch_idx=epoch_idx, batch_idx=batch_idx,
+                    batch=batch,
+                    model=model,
+                    epoch_idx=epoch_idx,
+                    batch_idx=batch_idx,
                 )
                 if isinstance(tr_metrics, torch.Tensor):
                     tr_metrics = {"loss": tr_metrics}
@@ -374,7 +377,9 @@ class PyTorchTrialController(det.LoopTrialController):
             self.context._current_batch_idx = batch_idx
             self.context._loss_ids = {}
             tr_metrics = self.trial.train_batch(
-                batch=batch, epoch_idx=self.get_epoch_idx(batch_idx), batch_idx=batch_idx,
+                batch=batch,
+                epoch_idx=self.get_epoch_idx(batch_idx),
+                batch_idx=batch_idx,
             )
             if isinstance(tr_metrics, torch.Tensor):
                 tr_metrics = {"loss": tr_metrics}
