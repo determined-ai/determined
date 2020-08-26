@@ -1,7 +1,7 @@
 import { Select, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import Plotly, { PlotData, PlotlyHTMLElement, PlotRelayoutEvent } from 'plotly.js/lib/core';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { clone } from 'utils/data';
 import { capitalize, generateAlphaNumeric } from 'utils/string';
@@ -56,36 +56,8 @@ const MetricChart: React.FC<Props> = (props: Props) => {
   const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
   const [ scale, setScale ] = useState<Scale>(Scale.Linear);
   const [ range, setRange ] = useState<Range>();
+  const [ maxRange, setMaxRange ] = useState<Range>();
   const [ isRendered, setIsRendered ] = useState(false);
-
-  const maxRange = useMemo(() => {
-    let xMin = Number.POSITIVE_INFINITY;
-    let xMax = Number.NEGATIVE_INFINITY;
-    let yMin = Number.POSITIVE_INFINITY;
-    let yMax = Number.NEGATIVE_INFINITY;
-
-    // Figure out the ranges based on the provided data.
-    props.data.forEach(data => {
-      (data.y as number[] || []).forEach(y => {
-        if (y < yMin) yMin = y;
-        if (y > yMax) yMax = y;
-      });
-      (data.x as number[] || []).forEach(x => {
-        if (x < xMin) xMin = x;
-        if (x > xMax) xMax = x;
-      });
-    });
-
-    // Add padding to the ranges.
-    const [ xPad, yPad ] = [ (xMax - xMin) * PADDING_PERCENT, (yMax - yMin) * PADDING_PERCENT ];
-    const [ xMinEdge, xMaxEdge ] = [ xMin - xPad, xMax + xPad ];
-    const [ yMinEdge, yMaxEdge ] = [ yMin - yPad, yMax + yPad ];
-
-    return {
-      xaxis: [ Math.max(0, xMinEdge), xMaxEdge ],
-      yaxis: [ yMinEdge < 0 ? yMinEdge : Math.max(0, yMinEdge), yMaxEdge ],
-    };
-  }, [ props.data ]);
 
   const handleRelayout = useCallback((event: PlotRelayoutEvent) => {
     // Brute force check to keep Typescript happy.
@@ -100,9 +72,9 @@ const MetricChart: React.FC<Props> = (props: Props) => {
         yaxis: [ event['yaxis.range[0]'], event['yaxis.range[1]'] ],
       });
     } else if (event['xaxis.autorange'] || event['yaxis.autorange']) {
-      setRange(clone(maxRange));
+      setRange(undefined);
     }
-  }, [ maxRange ]);
+  }, []);
 
   const renderPlot = useCallback(async (
     elementId: string,
@@ -126,18 +98,44 @@ const MetricChart: React.FC<Props> = (props: Props) => {
   const handleScaleSelect = useCallback((newValue: SelectValue) => setScale(newValue as Scale), []);
 
   useEffect(() => {
+    let xMin = Number.POSITIVE_INFINITY;
+    let xMax = Number.NEGATIVE_INFINITY;
+    let yMin = Number.POSITIVE_INFINITY;
+    let yMax = Number.NEGATIVE_INFINITY;
+
+    // Figure out the ranges based on the provided data.
+    props.data.forEach(data => {
+      (data.y as number[] || []).forEach(y => {
+        if (y < yMin) yMin = y;
+        if (y > yMax) yMax = y;
+      });
+      (data.x as number[] || []).forEach(x => {
+        if (x < xMin) xMin = x;
+        if (x > xMax) xMax = x;
+      });
+    });
+
+    // Add padding to the ranges.
+    const [ xPad, yPad ] = [ (xMax - xMin) * PADDING_PERCENT, (yMax - yMin) * PADDING_PERCENT ];
+    const [ xMinEdge, xMaxEdge ] = [ xMin - xPad, xMax + xPad ];
+    const [ yMinEdge, yMaxEdge ] = [ yMin - yPad, yMax + yPad ];
+
+    setMaxRange({
+      xaxis: [ Math.max(0, xMinEdge), xMaxEdge ],
+      yaxis: [ yMinEdge < 0 ? yMinEdge : Math.max(0, yMinEdge), yMaxEdge ],
+    });
+  }, [ props.data ]);
+
+  useEffect(() => {
     const layout = clone(defaultLayout);
     layout.xaxis.title = props.xLabel;
     layout.yaxis.title = props.yLabel;
     layout.yaxis.type = scale;
-
-    if (range != null) {
-      layout.xaxis.range = range.xaxis;
-      layout.yaxis.range = range.yaxis;
-    }
+    layout.xaxis.range = range ? range.xaxis : (maxRange ? maxRange.xaxis : undefined);
+    layout.yaxis.range = range ? range.yaxis : (maxRange ? maxRange.yaxis : undefined);
 
     renderPlot(id, props.data || [], layout);
-  }, [ id, props.data, props.xLabel, props.yLabel, renderPlot, range, scale ]);
+  }, [ id, maxRange, props.data, props.xLabel, props.yLabel, renderPlot, range, scale ]);
 
   /*
    * Dynamcially swapping out chart handlers is needed otherwise
