@@ -100,6 +100,10 @@ func findDedicatedAgentFits(
 		return nil
 	}
 
+	if task.slotsNeeded < 1 {
+		return nil
+	}
+
 	// Scheduling assumption(s):
 	// 1) Multi-agent tasks will receive the same number of slots on every agent. This is
 	//    a valid assumption, because the only multi-agent tasks are distributed experiments
