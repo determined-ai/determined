@@ -1,5 +1,4 @@
 import { Button, Col, Form, Input, Modal, Row, Space, Table, Tooltip } from 'antd';
-import { ColumnType } from 'antd/es/table';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';

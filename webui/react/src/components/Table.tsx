@@ -1,5 +1,4 @@
 import { Tooltip } from 'antd';
-import { ColumnType } from 'antd/es/table';
 import React from 'react';
 import TimeAgo from 'timeago-react';
 
