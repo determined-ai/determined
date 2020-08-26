@@ -97,12 +97,14 @@ Distributed Training
 Why do my distributed training experiments never start?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-It might be that :ref:`slots_per_trial <exp-config-resources-slots-per-trial>`
-in the experiment configuration is not a multiple of the number of GPUs on a
-machine or that there are running tasks preventing your multi-GPU trials from
-acquiring all the GPUs on a single machine. Consider adjusting
-``slots_per_trial`` or terminating existing tasks to free up slots in your
-cluster.
+It might be that both :ref:`slots_per_trial <exp-config-resources-slots-per-trial>` in the
+experiment configuration is not a multiple of the number of GPUs on a machine, and
+``task_container_defaults.network_mode`` is set to ``host`` or `slots_per_trial`` is larger than
+the number of slots on a single agent machine.
+
+There may also be running tasks preventing your multi-GPU trials from acquiring enough GPUs on a
+single machine. Consider adjusting ``slots_per_trial`` or terminating existing tasks to free up
+slots in your cluster.
 
 See :ref:`multi-gpu-training` for more details.
 
