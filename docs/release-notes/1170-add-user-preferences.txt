@@ -1,0 +1,9 @@
+:orphan:
+
+**New Features**
+
+- Save more WebUI user preferences to local storage, for restoring UI states for future revisits.
+
+  - Experiment List Page: Save selected table sort column and order.
+  - Task List Page: Save selected table sort column and order.
+  - Experiment Detail Page: Save selected table sort column and order.
