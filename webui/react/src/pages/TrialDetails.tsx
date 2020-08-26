@@ -72,7 +72,7 @@ const TrialDetailsComp: React.FC = () => {
   const { trialId: trialIdParam } = useParams<Params>();
   const trialId = parseInt(trialIdParam);
   const [ experiment, setExperiment ] = useState<ExperimentDetails>();
-  const [ showHasCheckpoint, setShowHasCheckpoint ] = useState(true);
+  const [ showHasCheckpointOrValidation, setShowHasCheckpointOrValidation ] = useState(true);
   const [ contModalVisible, setContModalVisible ] = useState(false);
   const [ contFormVisible, setContFormVisible ] = useState(false);
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
@@ -160,8 +160,9 @@ const TrialDetailsComp: React.FC = () => {
 
   const steps = useMemo(() => {
     const data = trial?.steps || [];
-    return showHasCheckpoint ? data.filter(step => !!step.checkpoint) : data;
-  }, [ showHasCheckpoint, trial?.steps ]);
+    return !showHasCheckpointOrValidation ?
+      data : data.filter(step => !!step.checkpoint || !!step.validation);
+  }, [ showHasCheckpointOrValidation, trial?.steps ]);
 
   const pollTrialDetails = useCallback(() => {
     triggerTrialRequest({ id: trialId });
@@ -272,9 +273,9 @@ If the problem persists please contact support.',
   };
   const handleCheckpointDismiss = () => setShowCheckpoint(false);
 
-  const handleHasCheckpointChange = useCallback((value: boolean): void => {
-    setShowHasCheckpoint(value);
-  }, [ setShowHasCheckpoint ]);
+  const handleHasCheckpointOrValidationChange = useCallback((value: boolean): void => {
+    setShowHasCheckpointOrValidation(value);
+  }, [ setShowHasCheckpointOrValidation ]);
 
   const handleMetricChange = useCallback((value: MetricName[]) => setMetrics(value), []);
 
@@ -328,9 +329,9 @@ If the problem persists please contact support.',
   const options = metrics ? (
     <Space size="middle">
       <Toggle
-        checked={showHasCheckpoint}
-        prefixLabel="Has Checkpoint"
-        onChange={handleHasCheckpointChange} />
+        checked={showHasCheckpointOrValidation}
+        prefixLabel="Has Checkpoint Or Validation"
+        onChange={handleHasCheckpointOrValidationChange} />
       <MetricSelectFilter
         metricNames={metricNames}
         multiple
