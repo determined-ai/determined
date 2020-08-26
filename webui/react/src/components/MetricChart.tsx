@@ -1,7 +1,7 @@
 import { Select, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import Plotly, { PlotData, PlotlyHTMLElement, PlotRelayoutEvent } from 'plotly.js/lib/core';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { clone } from 'utils/data';
 import { capitalize, generateAlphaNumeric } from 'utils/string';
@@ -53,6 +53,7 @@ const defaultConfig: Partial<Plotly.Config> = {
 const PADDING_PERCENT = 0.1;
 
 const MetricChart: React.FC<Props> = (props: Props) => {
+  const chartRef = useRef<HTMLDivElement>(null);
   const [ id ] = useState(props.id ? props.id : generateAlphaNumeric());
   const [ scale, setScale ] = useState<Scale>(Scale.Linear);
   const [ range, setRange ] = useState<Range>();
@@ -142,7 +143,7 @@ const MetricChart: React.FC<Props> = (props: Props) => {
    * referenced data such as `maxRange` within the handlers will be stale.
    */
   useEffect(() => {
-    const chart = document.getElementById(id) as PlotlyHTMLElement;
+    const chart = chartRef.current as unknown as PlotlyHTMLElement;
     if (!chart) return;
 
     chart.removeAllListeners('plotly_relayout');
@@ -170,7 +171,7 @@ const MetricChart: React.FC<Props> = (props: Props) => {
   return (
     <Section bodyBorder maxHeight options={chartOptions} title={props.title}>
       <div className={css.base}>
-        <div id={id} />
+        <div id={id} ref={chartRef} />
       </div>
     </Section>
   );
