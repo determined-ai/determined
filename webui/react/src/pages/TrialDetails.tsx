@@ -17,6 +17,7 @@ import Toggle from 'components/Toggle';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
+import useStorage from 'hooks/useStorage';
 import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { routeAll } from 'routes';
@@ -68,11 +69,21 @@ const trialContinueConfig = (
   };
 };
 
+const STORAGE_PATH = 'trial-detail';
+const STORAGE_CHECKPOINT_VALIDATION_KEY = 'checkpoint-validation';
+const STORAGE_METRICS_KEY = 'metrics';
+
 const TrialDetailsComp: React.FC = () => {
   const { trialId: trialIdParam } = useParams<Params>();
   const trialId = parseInt(trialIdParam);
+  const [ trialResponse, triggerTrialRequest ] =
+    useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
   const [ experiment, setExperiment ] = useState<ExperimentDetails>();
-  const [ showHasCheckpointOrValidation, setShowHasCheckpointOrValidation ] = useState(true);
+  const storage = useStorage(STORAGE_PATH);
+  const trialStorage = useStorage(`${STORAGE_PATH}/${trialResponse?.data?.experimentId}`);
+  const initFilter = storage.getWithDefault(STORAGE_CHECKPOINT_VALIDATION_KEY, true);
+  const initMetrics = trialStorage.getWithDefault(STORAGE_METRICS_KEY, []);
+  const [ showHasCheckpointOrValidation, setShowHasCheckpointOrValidation ] = useState(initFilter);
   const [ contModalVisible, setContModalVisible ] = useState(false);
   const [ contFormVisible, setContFormVisible ] = useState(false);
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
@@ -82,9 +93,7 @@ const TrialDetailsComp: React.FC = () => {
   const [ contError, setContError ] = useState<string>();
   const [ form ] = Form.useForm();
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
-  const [ metrics, setMetrics ] = useState<MetricName[]>([]);
-  const [ trialResponse, triggerTrialRequest ] =
-    useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
+  const [ metrics, setMetrics ] = useState<MetricName[]>(initMetrics);
 
   const trial = trialResponse.data;
   const hparams = trial?.hparams;
@@ -275,9 +284,13 @@ If the problem persists please contact support.',
 
   const handleHasCheckpointOrValidationChange = useCallback((value: boolean): void => {
     setShowHasCheckpointOrValidation(value);
-  }, [ setShowHasCheckpointOrValidation ]);
+    storage.set(STORAGE_CHECKPOINT_VALIDATION_KEY, value);
+  }, [ setShowHasCheckpointOrValidation, storage ]);
 
-  const handleMetricChange = useCallback((value: MetricName[]) => setMetrics(value), []);
+  const handleMetricChange = useCallback((value: MetricName[]) => {
+    setMetrics(value);
+    trialStorage.set(STORAGE_METRICS_KEY, value);
+  }, [ trialStorage ]);
 
   const handleEditContConfig = useCallback(() => {
     updateStatesFromForm();
