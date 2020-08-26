@@ -1,0 +1,9 @@
+:orphan:
+
+**Feature Upgrades**
+
+- Update scheduler to allow multiple distributed training jobs per node when using docker bridge networking.
+
+  - The scheduler will now schedule distributed training jobs onto shared agents if host networking
+    is not being used. For example, in a cluster of 8-slot agents, 2 4-slot distributed training
+    jobs may now be scheduled per node.
