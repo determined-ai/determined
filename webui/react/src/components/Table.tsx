@@ -18,6 +18,11 @@ import css from './Table.module.scss';
 
 type TableRecord = CommandTask | ExperimentItem | TrialItem;
 
+export interface TableSorter {
+  descend: boolean;
+  key: string;
+}
+
 export interface TablePagination {
   defaultPageSize: number;
   hideOnSinglePage: boolean;
