@@ -34,7 +34,12 @@ def start_shell(args: Namespace) -> None:
         data["passphrase"] = getpass.getpass("Enter new passphrase: ")
     config = parse_config(args.config_file, None, args.config, args.volume)
     resp = launch_command(
-        args.master, "shells", config, args.template, context_path=args.context, data=data,
+        args.master,
+        "shells",
+        config,
+        args.template,
+        context_path=args.context,
+        data=data,
     )
 
     if args.detach:

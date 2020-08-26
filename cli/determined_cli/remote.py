@@ -27,7 +27,11 @@ from .declarative_argparse import Arg, Cmd
 def run_command(args: Namespace) -> None:
     config = parse_config(args.config_file, args.entrypoint, args.config, args.volume)
     resp = launch_command(
-        args.master, "commands", config, args.template, context_path=args.context,
+        args.master,
+        "commands",
+        config,
+        args.template,
+        context_path=args.context,
     )
 
     if args.detach:

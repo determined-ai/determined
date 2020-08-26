@@ -62,7 +62,9 @@ def build(
         host_path = checkpoint_config["host_path"]
         storage_path = checkpoint_config.get("storage_path")
         return shared.SharedFSTensorboardManager(
-            _full_storage_path(host_path, storage_path, container_path), base_path, sync_path,
+            _full_storage_path(host_path, storage_path, container_path),
+            base_path,
+            sync_path,
         )
 
     elif type_name == "gcs":
