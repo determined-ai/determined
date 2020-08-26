@@ -23,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
 
+// CHECK is there a better place for these?
 func listToMapSet(list *[]string) *map[string]bool {
 	mapSet := make(map[string]bool)
 	for _, key := range *list {
@@ -47,8 +48,14 @@ func toProtoExpFromFullExp(exp *model.Experiment) *experimentv1.Experiment {
 		Description: exp.Config.Description,
 		Id:          int32(exp.ID),
 		Labels:      *mapSetToList(&labels),
+		StartTime:   protoutils.ToTimestamp(exp.StartTime),
+		EndTime:     protoutils.ToTimestamp(exp.StartTime),
+		Archived:    exp.Archived,
+		// NumTrials: // requires another db query
+		// Progress: exp.prog, // actor call
+		// Username: , // db query
+		// State: exp.State, // a new mapping
 	}
-	// TODO finish the translation
 }
 
 func (a *apiServer) checkExperimentExists(id int) error {
@@ -86,6 +93,7 @@ func (a *apiServer) GetExperiment(
 func (a *apiServer) GetExperiments(
 	_ context.Context, req *apiv1.GetExperimentsRequest) (*apiv1.GetExperimentsResponse, error) {
 	resp := &apiv1.GetExperimentsResponse{}
+	// FIXME missing experiment progress information.
 	if err := a.m.db.QueryProto("get_experiments", &resp.Experiments); err != nil {
 		return nil, err
 	}
