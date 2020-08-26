@@ -31,7 +31,7 @@ When the Determined Helm chart is installed, the following entities will be crea
 #. ConfigMap containing configurations for the Determined master.
 #. LoadBalancer service to make the Determined master accessible.
 #. ServiceAcccount which will be used by the Determined master.
-#. Deployment of a Postgres database. Later in this guide we demonstrate how an external database can be used instead.
+#. Deployment of a Postgres database. Later in this guide, we demonstrate how an external database can be used instead.
 #. PersistentVolumeClaim for the Postgres database. Omitted if using an external database.
 #. Service to allow the Determined master to communicate with the Postgres database. Omitted if using an external database.
 
@@ -48,7 +48,7 @@ a release version (e.g., ``0.13.0``) or specify any commit hash from the `upstre
 .. note::
 
     If using a non-release branch of the Determined repository, ``appVersion`` is going to be set to ``X.Y.Z.dev0``.
-    This is not an official release version and deploying this version result in a ``ImagePullBackOff`` error.
+    This is not an official release version and deploying this version will result in an ``ImagePullBackOff`` error.
     Users should remove ``.dev0`` to get the released version, or they can specify a specific commit hash
     instead.
 
@@ -67,25 +67,26 @@ other nodes with 8 GPUs), set ``slotsPerNode`` to the smallest common denominato
 Configuring Checkpoint Storage
 ------------------------------
 
-Checkpoints and TensorBoards events can be configured to be stored in ``shared_fs``, `AWS S3 <https://aws.amazon.com/s3/>`_,
-or `GCS <https://cloud.google.com/storage>`_. By default checkpoints and TensorBoard events are stored using
-``shared_fs`` which creates a `hostPath Volume <https://kubernetes.io/docs/concepts/storage/volumes/#hostpath>`_ and
+Checkpoints and TensorBoards events can be configured to be stored in ``shared_fs``, `AWS S3 <https://aws.amazon.com/s3/>`__,
+or `GCS <https://cloud.google.com/storage>`__. By default checkpoints and TensorBoard events are stored using
+``shared_fs`` which creates a `hostPath Volume <https://kubernetes.io/docs/concepts/storage/volumes/#hostpath>`__ and
 saves to the host file system. Users are strongly discouraged from using ``shared_fs`` for storage
 beyond initial testing as most Kubernetes cluster nodes do not have a shared file system.
 
 Instead of using ``shared_fs``, users should configure either ``AWS S3`` or ``GCS``:
 
 - ``AWS S3``: To configure Determined to use AWS S3 for checkpoint and TensorBoard storage, users need to set
-  ``checkpointStorage.type`` in ``values.yaml` to ``s3`` and set ``checkpointStorage.bucket`` to the name of
+  ``checkpointStorage.type`` in ``values.yaml`` to ``s3`` and set ``checkpointStorage.bucket`` to the name of
   the bucket. The pods launched by the Determined master must have read, write, and delete access
-  to the bucket. To enable this users may optionally configure ``checkpointStorage.accessKey``,
+  to the bucket. To enable this users may optionally configure
+  ``checkpointStorage.accessKey`` and
   ``checkpointStorage.secretKey``. Users may also optionally configure ``checkpointStorage.endpointUrl`` which
   specifies the endpoint to use for S3 clones (e.g., ``http://<minio-endpoint>:<minio-port|default=9000>``).
 
-- ``GCS``: To configure Determined to use Google Cloud Storage for checkpoint and TensorBoard storage, users need to
+- ``GCS``: To configure Determined to use Google Cloud Storage for checkpoints and TensorBoard data, users need to
   set ``checkpointStorage.type`` in ``values.yaml`` to ``gcs`` and set ``checkpointStorage.bucket`` to the name of
   the bucket. The pods launched by the Determined master must have read, write, and delete access to the bucket.
-  For example, when launching their `GKE nodes <https://cloud.google.com/sdk/gcloud/reference/container/node-pools/create>`_
+  For example, when launching their `GKE nodes <https://cloud.google.com/sdk/gcloud/reference/container/node-pools/create>`__
   users need to specify ``--scopes=storage-full`` to configure proper GCS access.
 
 
@@ -102,7 +103,7 @@ configured, the Determined Helm chart will not deploy a database.
 Installing Determined
 ---------------------
 
-Once finished making configuration changes in ``values.yaml`` and ``Chart.yaml`` Determined is ready to
+Once finished making configuration changes in ``values.yaml`` and ``Chart.yaml``, Determined is ready to
 be installed. To install Determined run:
 
 .. code::
@@ -111,16 +112,17 @@ be installed. To install Determined run:
 
 ``helm/charts/determined`` is a relative path from the root of the Determined repository. Helm will install
 Determined within the default namespace. If you wish to install Determined into a non-default namespace,
-add ``-n <namespace name>`` to the installation command.
+add ``-n <namespace name>`` to the command shown above.
 
-Once the installation is completed instructions for discovering the IP address assigned to the Determined
-master will be displayed. Additionally the IP address can be discovered by running ``kubectl get services``.
+Once the installation has completed, instructions will be displayed for
+discovering the IP address assigned to the Determined master. The IP address can
+also be discovered by running ``kubectl get services``.
 
 Upgrading Determined
 --------------------
 
 To upgrade Determined or to change a configuration setting, first make the appropriate
-changes in ``values.yaml`` and ``Chart.yaml`` and then run:
+changes in ``values.yaml`` and ``Chart.yaml``, and then run:
 
 .. code::
 

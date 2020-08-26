@@ -76,8 +76,9 @@ To install on the cloud, please follow the instructions for your preferred cloud
 Kubernetes
 ~~~~~~~~~~
 
-Determined can also be deployed onto Kubernetes clusters. To install on Kuberentes,
-please follow the :ref:`install Determined on Kubernetes <install-on-kubernetes>` instructions.
+Determined can also be deployed onto Kubernetes clusters. To install on
+Kubernetes, please follow the :ref:`Determined on Kubernetes
+<install-on-kubernetes>` installation instructions.
 
 Notes
 ~~~~~

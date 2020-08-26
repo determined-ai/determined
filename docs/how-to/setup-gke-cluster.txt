@@ -4,15 +4,17 @@ Setting up a Google Kubernetes Engine (GKE) Cluster
 ===================================================
 
 This document describes how to set up a `GKE <https://cloud.google.com/kubernetes-engine>`_ cluster
-with GPU enabled nodes. The recommended setup includes deploying a cluster with a single non-GPU node that
-will host the Determined master and database, and a autoscaling group of GPU nodes.
+with GPU-enabled nodes. The recommended setup includes deploying a cluster with a single non-GPU node that
+will host the Determined master and database, and an autoscaling group of GPU nodes.
 
 
 Prerequisites
 -------------
 
-Before setting up a GKE cluster users need to have `Google Cloud SDK <https://cloud.google.com/sdk/docs/quickstarts/>`_
-and `kubectl <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ installed.
+Before setting up a GKE cluster, the user should have `Google Cloud SDK
+<https://cloud.google.com/sdk/docs/quickstarts/>`_ and `kubectl
+<https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_ installed on their
+local machine.
 
 
 Setting Up the Cluster
@@ -27,10 +29,10 @@ Setting Up the Cluster
     # Set a unique name for your node pool.
     GKE_GPU_NODE_POOL_NAME=<any unique name, e.g., "determined-node-pool">
 
-    # Set a unique name for you GCS bucket that will store your checkpoints.
+    # Set a unique name for the GCS bucket that will store your checkpoints.
     GCS_BUCKET_NAME=<any unique name, e.g., "determined-checkpoint-bucket">
 
-    # Set the GPU type for you node pool. Other options include: p100, p4, and v100.
+    # Set the GPU type for your node pool. Other options include p100, p4, and v100.
     GPU_TYPE=nvidia-tesla-k80
 
     # Set the number of GPUs per node.
