@@ -342,16 +342,12 @@ func (a *apiServer) UnarchiveExperiment(
 func (a *apiServer) PatchExperiment(
 	ctx context.Context, req *apiv1.PatchExperimentRequest,
 ) (*apiv1.PatchExperimentResponse, error) {
-
-	fmt.Printf("description: %s\n", req.Experiment.Description)
-
 	dbExp, err := a.m.db.ExperimentByID(int(req.Experiment.Id))
 	if err != nil {
 		return nil, errors.Wrapf(err, "loading experiment %v", req.Experiment.Id)
 	}
 
 	paths := req.UpdateMask.GetPaths()
-	fmt.Printf("paths: %v \n", paths)
 	for _, path := range paths {
 		switch {
 		case path == "description":

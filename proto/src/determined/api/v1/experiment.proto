@@ -140,13 +140,17 @@ message UnarchiveExperimentRequest {
 // Response to UnarchiveExperimentRequest.
 message UnarchiveExperimentResponse {}
 
-// Patch experiment.
+// Patch an experiment by providing the updated attributes.
 message PatchExperimentRequest {
+  // Patched experiment attributes.
   determined.experiment.v1.Experiment experiment = 1;
+  // Update mask.
   google.protobuf.FieldMask update_mask = 2;
 }
 
+// Response to PatchExperimentRequest.
 message PatchExperimentResponse {
+  // Patched experiment.
   determined.experiment.v1.Experiment experiment = 1;
 }
 
