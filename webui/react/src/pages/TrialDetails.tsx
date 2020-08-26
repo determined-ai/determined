@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 
 import Badge, { BadgeType } from 'components/Badge';
+import BadgeTag from 'components/BadgeTag';
 import CheckpointModal from 'components/CheckpointModal';
 import CreateExperimentModal from 'components/CreateExperimentModal';
 import Icon from 'components/Icon';
@@ -167,10 +168,9 @@ const TrialDetailsComp: React.FC = () => {
           extractMetricValue(a, metricName),
           extractMetricValue(b, metricName),
         ),
-        title: <>
-          <Badge tooltip={metricName.type}>{metricName.type.substr(0, 1).toUpperCase()}</Badge>
-          <span>{metricName.name}</span>
-        </>,
+        title: <BadgeTag
+          label={metricName.name}
+          tooltip={metricName.type}>{metricName.type.substr(0, 1).toUpperCase()}</BadgeTag>,
       });
     });
 
