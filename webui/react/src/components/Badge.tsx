@@ -13,18 +13,18 @@ export enum BadgeType {
   State,
 }
 
-interface Props {
+export interface BadgeProps {
   state?: RunState | CommandState;
   tooltip?: string;
   type?: BadgeType;
 }
 
-const Badge: React.FC<Props> = ({
+const Badge: React.FC<BadgeProps> = ({
   state = RunState.Active,
   tooltip,
   type = BadgeType.Default,
   ...props
-}: PropsWithChildren<Props>) => {
+}: PropsWithChildren<BadgeProps>) => {
   const classes = [ css.base ];
   const style: CSSProperties = {};
 

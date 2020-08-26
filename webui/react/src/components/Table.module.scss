@@ -2,6 +2,3 @@
   align-items: center;
   display: flex;
 }
-[class*="Badge"]:not(:last-child) {
-  margin-right: var(--theme-sizes-layout-small);
-}
