@@ -118,6 +118,7 @@ Once the installation has completed, instructions will be displayed for
 discovering the IP address assigned to the Determined master. The IP address can
 also be discovered by running ``kubectl get services``.
 
+
 Upgrading Determined
 --------------------
 
@@ -129,10 +130,25 @@ changes in ``values.yaml`` and ``Chart.yaml``, and then run:
     helm upgrade <name for your deployment> --wait helm/charts/determined
 
 
+Uninstalling Determined
+-----------------------
+
+To uninstall Determined run:
+
+.. code::
+
+    # Please note that ff the Postgres Database was deployed by Determined it will
+    # deleted as part of this, permanently removing all records of your experiments.
+    helm delete <name for your deployment>
+
+    # If there were any active tasks when uninstalling, this commmand will
+    # delete all of the leftover Kubernetes resources.
+    kubectl get pods --no-headers=true -l=determined | awk '{print $1}' | xargs kubectl delete pod
+
+
 Next Steps
 ----------
 
 - :ref:`quick-start`
 - :ref:`helm-config`
-- :ref:`useful-kubectl-commands`
-- :ref:`limitations-on-kubernetes`
+- :ref:`determined-on-kubernetes`

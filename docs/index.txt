@@ -101,6 +101,11 @@ Use the links below to start learning more about Determined's capabilities.
 - :ref:`how-to-notebooks`
 - :ref:`how-to-tensorboard`
 
+**Kubernetes**
+
+- :ref:`install-on-kubernetes`
+- :ref:`determined-on-kubernetes`
+
 **Installation**
 
 - :ref:`install-cli`

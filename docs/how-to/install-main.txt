@@ -80,6 +80,12 @@ Determined can also be deployed onto Kubernetes clusters. To install on
 Kubernetes, please follow the :ref:`Determined on Kubernetes
 <install-on-kubernetes>` installation instructions.
 
+.. toctree::
+   :titlesonly:
+
+   installation/install-on-kubernetes
+   installation/setup-gke-cluster
+
 Notes
 ~~~~~
 
