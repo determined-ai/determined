@@ -13,7 +13,7 @@ import MetricSelectFilter from 'components/MetricSelectFilter';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner, { Indicator } from 'components/Spinner';
-import { defaultRowClassName, findColumnByTitle, getPaginationConfig } from 'components/Table';
+import { defaultRowClassName, getPaginationConfig } from 'components/Table';
 import Toggle from 'components/Toggle';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
@@ -106,9 +106,6 @@ const TrialDetailsComp: React.FC = () => {
   }, [ upgradedConfig ]);
 
   const columns = useMemo(() => {
-    const newColumns: ColumnType<Step>[] = [ ...defaultColumns ];
-    const { metric, smallerIsBetter } = experimentConfig?.searcher || {};
-
     const checkpointRenderer = (_: string, record: Step) => {
       if (record.checkpoint) {
         const checkpoint: CheckpointDetail = {
@@ -136,8 +133,14 @@ const TrialDetailsComp: React.FC = () => {
       </Tooltip> : undefined;
     };
 
+    const { metric, smallerIsBetter } = experimentConfig?.searcher || {};
+    const newColumns = [ ...defaultColumns ].map(column => {
+      if (column.key === 'checkpoint') column.render = checkpointRenderer;
+      return column;
+    });
+
     metrics.forEach(metricName => {
-      const stateIndex = findColumnByTitle<Step>(newColumns, 'state');
+      const stateIndex = newColumns.findIndex(column => column.key === 'state');
       newColumns.splice(stateIndex, 0, {
         defaultSortOrder: metric && metric === metricName.name ?
           (smallerIsBetter ? 'ascend' : 'descend') : undefined,
@@ -152,9 +155,6 @@ const TrialDetailsComp: React.FC = () => {
         </>,
       });
     });
-
-    const checkpointIndex = findColumnByTitle(newColumns, 'checkpoint');
-    newColumns[checkpointIndex].render = checkpointRenderer;
 
     return newColumns;
   }, [ experimentConfig, experimentId, metrics ]);
