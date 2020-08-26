@@ -1,0 +1,11 @@
+:orphan:
+
+**New Features**
+
+- Update the Has Checkpoint filter on the trial details table to Has Checkpoint Or Validation filter.
+  If the trial batches has a checkpoint or a validation, it will show up when the filter toggle is enabled.
+
+- Add the ability save filter states to user preferences. The Has Checkpoint Or Validation will get applied
+  across all trial detail pages, while the Metrics filter save on a per unique experiment trial. If the user
+  selects metrics X, Y and Z on trial 1 of experiment 1, when they visit trial 5 of experiment 1, the metrics
+  X, Y and Z will be selected by default.
