@@ -1,6 +1,10 @@
 swagger_client = "src/services/swagger"
 PROJECT_ROOT := "../../"
 
+.PHONY: default
+default: get-deps
+	$(MAKE) build
+
 .PHONY: get-deps-api
 get-deps-api:
 	cp -r ../api-ts-sdk/src src/services/api-ts-sdk
