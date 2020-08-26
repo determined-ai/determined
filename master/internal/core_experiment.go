@@ -379,6 +379,14 @@ func (m *Master) parseExperiment(body []byte) (*model.Experiment, bool, error) {
 		return nil, false, errors.Wrap(yerr, "invalid experiment configuration")
 	}
 
+	if config.Environment.PodSpec == nil {
+		if config.Resources.SlotsPerTrial == 0 {
+			config.Environment.PodSpec = m.config.TaskContainerDefaults.CPUPodSpec
+		} else {
+			config.Environment.PodSpec = m.config.TaskContainerDefaults.GPUPodSpec
+		}
+	}
+
 	if cerr := check.Validate(config); cerr != nil {
 		return nil, false, errors.Wrap(cerr, "invalid experiment configuration")
 	}

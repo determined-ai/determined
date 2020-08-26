@@ -20,12 +20,14 @@ func RegisterAPIHandler(
 	proxyRef *actor.Ref,
 	timeout int,
 	defaultAgentUserGroup model.AgentUserGroup,
+	taskContainerDefaults model.TaskContainerDefaultsConfig,
 	middleware ...echo.MiddlewareFunc,
 ) {
 	system.ActorOf(actor.Addr("commands"), &commandManager{
 		defaultAgentUserGroup: defaultAgentUserGroup,
 		db:                    db,
 		clusterID:             cID,
+		taskContainerDefaults: taskContainerDefaults,
 	})
 	echo.Any("/commands*", api.Route(system, nil), middleware...)
 
@@ -33,6 +35,7 @@ func RegisterAPIHandler(
 		defaultAgentUserGroup: defaultAgentUserGroup,
 		db:                    db,
 		clusterID:             cID,
+		taskContainerDefaults: taskContainerDefaults,
 	})
 	echo.Any("/notebooks*", api.Route(system, nil), middleware...)
 
@@ -40,6 +43,7 @@ func RegisterAPIHandler(
 		defaultAgentUserGroup: defaultAgentUserGroup,
 		db:                    db,
 		clusterID:             cID,
+		taskContainerDefaults: taskContainerDefaults,
 	})
 	echo.Any("/shells*", api.Route(system, nil), middleware...)
 
@@ -49,6 +53,7 @@ func RegisterAPIHandler(
 		clusterID:             cID,
 		proxyRef:              proxyRef,
 		timeout:               time.Duration(timeout) * time.Second,
+		taskContainerDefaults: taskContainerDefaults,
 	})
 	echo.Any("/tensorboard*", api.Route(system, nil), middleware...)
 }

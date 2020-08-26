@@ -593,6 +593,7 @@ func (m *Master) Run() error {
 		proxyRef,
 		m.config.TensorBoardTimeout,
 		m.config.Security.DefaultTask,
+		m.config.TaskContainerDefaults,
 		authFuncs...,
 	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)

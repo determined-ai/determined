@@ -27,6 +27,7 @@ type commandManager struct {
 
 	defaultAgentUserGroup model.AgentUserGroup
 	clusterID             string
+	taskContainerDefaults model.TaskContainerDefaultsConfig
 }
 
 func (c *commandManager) Receive(ctx *actor.Context) error {
@@ -99,6 +100,7 @@ func (c *commandManager) newCommand(req *commandRequest) *command {
 	if len(config.Entrypoint) == 1 {
 		config.Entrypoint = append(shellFormEntrypoint, config.Entrypoint...)
 	}
+	setPodSpec(&config, c.taskContainerDefaults)
 
 	return &command{
 		taskID:    scheduler.NewTaskID(),

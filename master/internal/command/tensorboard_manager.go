@@ -59,6 +59,7 @@ type tensorboardManager struct {
 	clusterID             string
 	timeout               time.Duration
 	proxyRef              *actor.Ref
+	taskContainerDefaults model.TaskContainerDefaultsConfig
 }
 
 type tensorboardTick struct{}
@@ -300,6 +301,8 @@ func (t *tensorboardManager) newTensorBoard(
 	config.Resources.Slots = tensorboardResourcesSlots
 	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: envVars, GPU: envVars}
 	config.BindMounts = getMounts(uniqMounts)
+
+	setPodSpec(&config, t.taskContainerDefaults)
 
 	return &command{
 		taskID:          taskID,

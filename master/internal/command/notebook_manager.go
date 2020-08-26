@@ -104,6 +104,7 @@ type notebookManager struct {
 
 	defaultAgentUserGroup model.AgentUserGroup
 	clusterID             string
+	taskContainerDefaults model.TaskContainerDefaultsConfig
 }
 
 func (n *notebookManager) Receive(ctx *actor.Context) error {
@@ -188,6 +189,8 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 		config.Environment.EnvironmentVariables.GPU, portVar)
 
 	config.Entrypoint = notebookEntrypoint
+
+	setPodSpec(&config, n.taskContainerDefaults)
 
 	if config.Description == "" {
 		var err error

@@ -66,6 +66,12 @@ taskContainerDefaults:
   # ncclPortRange: <MIN:MAX>
   # glooPortRange: <MIN:MAX>
 
+  # Configure a default pod spec for all GPU tasks (experiments, notebooks, commands) and
+  # CPU tasks (cpu notebooks, tensorboards, zero slot commands). If a pod spec is defined
+  # for an individual task, that pod spec will replace the default one that is defined here.
+  # cpuPodSpec:
+  # gpuPodSpec:
+
 # Configure Determined enterprise edition.
 enterpriseEdition: false
 
