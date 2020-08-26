@@ -78,6 +78,11 @@ type StartContainer struct {
 	InitialWorkload     searcher.Workload         `json:"initial_workload"`
 	WorkloadManagerType model.WorkloadManagerType `json:"workload_manager_type"`
 	AdditionalFiles     archive.Archive           `json:"additional_files"`
+
+	// TODO(DET-3821): This is used to hint the resource provider to override defaults and start
+	// the container in host mode iff it has been scheduled across multiple agents. Remove this
+	// when multiple horovod containers can run per agent in host-mode.
+	IsMultiAgent bool `json:"is_multi_agent"`
 }
 
 // KillContainer is the information sent to an agent to kill a task (i.e., container or
