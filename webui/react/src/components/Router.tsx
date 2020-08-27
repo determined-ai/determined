@@ -1,8 +1,10 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 
 // import Route from 'components/Route';
 import Auth from 'contexts/Auth';
+import UI from 'contexts/UI';
+import useAuthCheck from 'hooks/useAuthCheck';
 import { RouteConfig } from 'routes';
 import { clone } from 'utils/data';
 
@@ -12,13 +14,27 @@ interface Props {
 
 const Router: React.FC<Props> = (props: Props) => {
   const auth = Auth.useStateContext();
+  const checkAuth = useAuthCheck();
+  const setUI = UI.useActionContext();
+
+  useEffect(() => {
+    checkAuth();
+  }, [ checkAuth ]);
+
+  useEffect(() => {
+    if (auth.checked) {
+      setUI({ type: UI.ActionType.HideSpinner });
+    } else {
+      setUI({ type: UI.ActionType.ShowSpinner });
+    }
+  }, [ auth.checked, setUI ]);
 
   return (
     <Switch>
       {props.routes.map(config => {
         const { component, ...route } = config;
 
-        if (route.needAuth && !auth.isAuthenticated) {
+        if (route.needAuth && auth.checked && !auth.isAuthenticated) {
           return <Route
             key={route.id}
             {...route}
