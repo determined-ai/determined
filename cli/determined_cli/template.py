@@ -3,10 +3,9 @@ from argparse import FileType, Namespace
 from collections import namedtuple
 from typing import Any, List
 
-from ruamel import yaml
 from termcolor import colored
 
-from determined_common import api
+from determined_common import api, yaml
 from determined_common.api.authentication import authentication_required
 
 from . import render

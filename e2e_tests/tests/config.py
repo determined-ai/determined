@@ -1,7 +1,7 @@
 import os
 from typing import Any, Dict
 
-from ruamel import yaml
+from determined_common import yaml
 
 MASTER_IP = "localhost"
 MASTER_PORT = "8080"

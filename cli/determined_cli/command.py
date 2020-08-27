@@ -2,10 +2,9 @@ from collections import namedtuple
 from pathlib import Path
 from typing import IO, Any, Dict, Iterable, List, Optional, Tuple
 
-from ruamel import yaml
 from termcolor import colored
 
-from determined_common import api, context
+from determined_common import api, context, yaml
 
 CONFIG_DESC = """
 Additional configuration arguments for setting up a command.

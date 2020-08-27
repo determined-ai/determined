@@ -10,9 +10,8 @@ import appdirs
 import pexpect
 import pytest
 from pexpect import spawn
-from ruamel import yaml
 
-from determined_common import constants
+from determined_common import constants, yaml
 from determined_common.api.authentication import Authentication, Credentials, TokenStore
 from tests import command
 from tests import config as conf

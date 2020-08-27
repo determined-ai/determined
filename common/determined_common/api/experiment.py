@@ -6,10 +6,9 @@ import uuid
 from argparse import Namespace
 from typing import Any, Dict, Optional
 
-from ruamel import yaml
 from termcolor import colored
 
-from determined_common import api, constants, context
+from determined_common import api, constants, context, yaml
 from determined_common.api import request as req
 from determined_common.api.authentication import authentication_required
 
