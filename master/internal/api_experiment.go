@@ -16,47 +16,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
-
-// CHECK is there a better place for these?
-func listToMapSet(list *[]string) *map[string]bool {
-	mapSet := make(map[string]bool)
-	for _, key := range *list {
-		mapSet[key] = true
-	}
-	return &mapSet
-}
-
-func mapSetToList(mapSet *map[string]bool) *[]string {
-	var list []string
-	for key, value := range *mapSet {
-		if value {
-			list = append(list, key)
-		}
-	}
-	return &list
-}
-
-func toProtoExpFromFullExp(exp *model.Experiment) *experimentv1.Experiment {
-	labels := map[string]bool(exp.Config.Labels) // CHECK there is gotta be a better way
-	return &experimentv1.Experiment{
-		Description: exp.Config.Description,
-		Id:          int32(exp.ID),
-		Labels:      *mapSetToList(&labels),
-		StartTime:   protoutils.ToTimestamp(exp.StartTime),
-		EndTime:     protoutils.ToTimestamp(exp.StartTime),
-		Archived:    exp.Archived,
-		// NumTrials: // requires another db query
-		// Progress: exp.prog, // actor call
-		// Username: , // db query
-		// State: exp.State, // a new mapping
-	}
-}
 
 func (a *apiServer) checkExperimentExists(id int) error {
 	ok, err := a.m.db.CheckExperimentExists(id)
