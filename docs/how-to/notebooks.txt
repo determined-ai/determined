@@ -78,15 +78,19 @@ To kill a notebook, you need its ID, which can be found using the list command.
 WebUI
 ~~~~~
 
-Notebooks can also be started from the WebUI by first going to the Determined home page. On the left-hand side, you can click the notebooks tab to take you to the notebooks page.
+Notebooks can also be started from the WebUI. You can click the "Tasks" tab to take you to a list of the tasks currently running on the cluster.
 
-.. image:: /assets/images/UI-Notebooks-View.png
+.. image:: /assets/images/task-list@2x.jpg
+    :width: 100%
+
+|
 
 From here, you can find running notebooks. You can reopen, kill, or view logs for each notebook.
 
-To create a new notebook, click "Launch new notebook". If you would like to use a CPU-only notebook, click the dropdown arrow and select "Launch new CPU-only notebook".
+To create a new notebook, click "Launch Notebook". If you would like to use a CPU-only notebook, click the dropdown arrow and select "Launch CPU-only Notebook".
 
-.. image:: /assets/images/UI-Notebooks-Dropdown.png
+.. image:: /assets/images/launch-cpu-notebook@2x.jpg
+    :width: 100%
 
 .. _notebook-configuration:
 
