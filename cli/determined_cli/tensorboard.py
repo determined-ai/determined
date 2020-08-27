@@ -1,5 +1,5 @@
 import sys
-from argparse import ONE_OR_MORE, Namespace
+from argparse import ONE_OR_MORE, FileType, Namespace
 from collections import namedtuple
 from typing import Any, Dict, List
 
@@ -10,7 +10,7 @@ from determined_common.api.authentication import authentication_required
 from determined_common.check import check_eq
 
 from . import render
-from .command import Command, render_event_stream
+from .command import Command, launch_command, parse_config, render_event_stream
 from .declarative_argparse import Arg, Cmd
 
 Tensorboard = namedtuple(
@@ -33,20 +33,21 @@ def to_tensorboard(command: Command) -> Tensorboard:
 
 @authentication_required
 def start_tensorboard(args: Namespace) -> None:
+    # this is the place where you add some stuff related to importing the config
+    # think about if you need to add the option for manual config options
     if args.trial_ids is None and args.experiment_ids is None:
         print("Either experiment_ids or trial_ids must be specified.")
         sys.exit(1)
 
-    req_body = {"trial_ids": args.trial_ids, "experiment_ids": args.experiment_ids}
-    resp = api.post(args.master, "tensorboard", body=req_body)
-
-    res_body = resp.json()
+    config = parse_config(args.config_file, None, [], [])
+    req_body = {"config": config, "trial_ids": args.trial_ids, "experiment_ids": args.experiment_ids}
+    resp = api.post(args.master, "tensorboard", body=req_body).json()
 
     if args.detach:
-        print(res_body["id"])
+        print(resp["id"])
         return
 
-    url = "tensorboard/{}/events".format(res_body["id"])
+    url = "tensorboard/{}/events".format(resp["id"])
     with api.ws(args.master, url) as ws:
         for msg in ws:
             if msg["log_event"] is not None:
@@ -57,9 +58,9 @@ def start_tensorboard(args: Namespace) -> None:
 
             if msg["service_ready_event"]:
                 if args.no_browser:
-                    url = api.make_url(args.master, res_body["service_address"])
+                    url = api.make_url(args.master, resp["service_address"])
                 else:
-                    url = api.open(args.master, res_body["service_address"])
+                    url = api.open(args.master, resp["service_address"])
 
                 print(colored("TensorBoard is running at: {}".format(url), "green"))
                 render_event_stream(msg)
@@ -135,6 +136,8 @@ args_description = [
                      "the specified experiment will be loaded into TensorBoard. If the "
                      "experiment has more trials, the 100 best-performing trials will "
                      "be used."),
+            Arg("--config-file", default=None, type=FileType("r"),
+                help="command config file (.yaml)"),
             Arg("-t", "--trial-ids", nargs=ONE_OR_MORE, type=int,
                 help="trial IDs to load into TensorBoard; at most 100 trials are "
                      "allowed per TensorBoard instance"),

@@ -50,7 +50,7 @@ def tail_db_logs():
 def run_master():
     return proc(
         "master",
-        ["../master/build/determined-master", "--config-file", "master.yaml"],
+        ["../master/build/determined-master", "--config-file", "/usr/local/determined/etc/master.yaml"],
         logs_handler=lambda line: f"{MAGENTA}determined-master  |{CLEAR} {line}"
     )
 
@@ -83,26 +83,26 @@ def main():
     db, master, agent, db_logs = False, None, None, None
     try:
         master = run_master()
-        agent = run_agent()
-        db_logs = tail_db_logs()
-        if not is_db_running():
-            db = True
-            subprocess.check_call(["docker-compose", "up", "-d"])
+        # agent = run_agent()
+        # db_logs = tail_db_logs()
+        # if not is_db_running():
+        #     db = True
+        #     subprocess.check_call(["docker-compose", "up", "-d"])
 
-        wait_for_server(5432)
-        db_logs.start()
+        # wait_for_server(5432)
+        # db_logs.start()
         master.start()
         wait_for_server(8080)
-        agent.start()
+        # agent.start()
 
         # Join the agent first so we can exit if the agent fails to connect to
         # the master.
-        agent.join()
-        if agent.exitcode != 0:
-            raise Exception(f"agent failed with non-zero exit code {agent.exitcode}")
+        # agent.join()
+        # if agent.exitcode != 0:
+        #     raise Exception(f"agent failed with non-zero exit code {agent.exitcode}")
 
         master.join()
-        db_logs.join()
+        # db_logs.join()
     except KeyboardInterrupt:
         pass
     finally:
