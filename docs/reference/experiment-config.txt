@@ -1166,14 +1166,14 @@ v0.13.0 while maintaining nearly identical behavior.
   state, as they will not be able to resume on the new version of the Determined master. Also,
   we recommend taking a database snapshot and archiving any old experiments ahead of time.
 
-The table below describes the field names that have changed.
+The table below describes the fields whose name or value has changed.
 
 .. list-table::
   :header-rows: 1
 
   * - Old name
     - New name
-    - Units changed
+    - Value changed
   * - searcher.step_budget
     - searcher.budget
     - true
@@ -1200,7 +1200,8 @@ For each configuration setting in the table, if it exists in your configuration,
 renamed as shown above and changed to use the new units. To migrate the value to the new units,
 it should be changed from an integer to a map, ``{batches: value}``, where value is the old value
 multiplied by the old value for ``batches_per_step``. If ``batches_per_step`` was not specified, use
-the default value of 100. For example, to migrate this single searcher:
+the default value of 100. For example, to migrate this snippet of a single searcher experiment
+configuration:
 
 .. code:: yaml
 
@@ -1232,3 +1233,9 @@ value for ``min_validation_period`` to ``{batches: 100*1}``, and change the valu
       batches: 1000
 
 Finally, we also rename ``batches_per_step`` to ``scheduling_unit``, leaving the value the same.
+
+To see how a full experiment configuration for one of our official examples changed, please compare
+`this <https://github.com/determined-ai/determined/blob/0.12.13/examples/official/trial/cifar10_cnn_pytorch/adaptive.yaml>`__
+0.12.13 CIFAR10 PyTorch adaptive experiment configuration to the 0.13.0 version
+`here <https://github.com/determined-ai/determined/blob/0.13.0/examples/official/trial/cifar10_cnn_pytorch/adaptive.yaml>`__
+that uses epoch training units.
