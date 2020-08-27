@@ -24,6 +24,7 @@ class EnvContext:
         debug: bool,
         workload_manager_type: str,
         det_rendezvous_ports: str,
+        det_trial_unique_port_offset: int,
         det_trial_runner_network_interface: str,
         det_trial_id: str,
         det_experiment_id: str,
@@ -46,6 +47,7 @@ class EnvContext:
         self.debug = debug
         self.workload_manager_type = workload_manager_type
         self.det_rendezvous_ports = det_rendezvous_ports
+        self.det_trial_unique_port_offset = det_trial_unique_port_offset
         self.det_trial_runner_network_interface = det_trial_runner_network_interface
         self.det_trial_id = det_trial_id
         self.det_experiment_id = det_experiment_id

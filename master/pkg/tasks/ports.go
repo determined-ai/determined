@@ -12,28 +12,31 @@ import (
 // LocalRendezvousPort is the start of the range of ports used for rendezvous by tasks.
 const LocalRendezvousPort = 1734
 
-// LocalRendezvousPortOffset is the difference between the two rendezvous ports.
+// LocalRendezvousPortOffset is the difference between the two rendezvous ports. It is chosen to be
+// 16 since this is the maximum number of GPUs expected per agent.
 const LocalRendezvousPortOffset = 16
 
 const (
 	hostMode container.NetworkMode = "host"
 )
 
-func rendezvousPorts(devices []device.Device, networkMode container.NetworkMode) []nat.Port {
-	ports := make([]nat.Port, 0)
-	var min int
-	if networkMode == hostMode {
-		min = devices[0].ID
-		for _, d := range devices {
-			if d.ID < min {
-				min = d.ID
-			}
+func rendezvousPorts(offset int) []nat.Port {
+	return []nat.Port{
+		nat.Port(fmt.Sprintf("%d/tcp", LocalRendezvousPort+offset)),
+		nat.Port(fmt.Sprintf("%d/tcp", LocalRendezvousPort+offset+LocalRendezvousPortOffset)),
+	}
+}
+
+// trialUniquePortOffset determines a deterministic, unique offset for ports that would otherwise
+// collide when using host networking.
+func trialUniquePortOffset(devices []device.Device) int {
+	min := devices[0].ID
+	for _, d := range devices {
+		if d.ID < min {
+			min = d.ID
 		}
 	}
-	ports = append(ports, nat.Port(fmt.Sprintf("%d/tcp", LocalRendezvousPort+min)))
-	ports = append(
-		ports, nat.Port(fmt.Sprintf("%d/tcp", LocalRendezvousPort+min+LocalRendezvousPortOffset)))
-	return ports
+	return min
 }
 
 func toPortSet(ports map[string]int) nat.PortSet {

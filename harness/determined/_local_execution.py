@@ -73,6 +73,7 @@ def _make_local_execution_env(
         debug=config.debug_enabled(),
         workload_manager_type="",
         det_rendezvous_ports=local_rendezvous_ports,
+        det_trial_unique_port_offset=0,
         det_trial_runner_network_interface=constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE,
         det_trial_id="",
         det_experiment_id="",

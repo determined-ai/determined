@@ -190,7 +190,7 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 	}
 
 	envVars, err := p.configureEnvVars(
-		tasks.TrialEnvVars(p.taskSpec, rendezvousPorts),
+		tasks.TrialEnvVars(p.taskSpec, rendezvousPorts, 0),
 		p.taskSpec.StartContainer.ExperimentConfig.Environment,
 		deviceType,
 	)

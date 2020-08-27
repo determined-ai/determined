@@ -324,8 +324,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				CanTerminate: true,
 				Label:        label,
 				FittingRequirements: scheduler.FittingRequirements{
-					SingleAgent:    false,
-					DedicatedAgent: t.taskContainerDefaults.NetworkMode.IsHost() && slotsNeeded > 1,
+					SingleAgent: false,
 				},
 				TaskHandler: ctx.Self(),
 			}).Get().(*scheduler.Task)

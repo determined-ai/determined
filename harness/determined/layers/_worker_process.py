@@ -167,7 +167,9 @@ class SubprocessLauncher:
         subprocess_env = {
             **os.environ,
             "NCCL_DEBUG": "INFO",
-            "DET_HOROVOD_GLOO_RENDEZVOUS_PORT": str(constants.HOROVOD_GLOO_RENDEZVOUS_PORT),
+            "DET_HOROVOD_GLOO_RENDEZVOUS_PORT": str(
+                constants.HOROVOD_GLOO_RENDEZVOUS_PORT + self.env.det_trial_unique_port_offset
+            ),
         }
         return subprocess.Popen(horovod_process_cmd, env=subprocess_env)
 

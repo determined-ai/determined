@@ -210,7 +210,7 @@ func TrialDockerMounts(exp StartContainer) []mount.Mount {
 }
 
 // TrialEnvVars returns environment variables for a trial.
-func TrialEnvVars(t TaskSpec, rendezvousPorts []string) map[string]string {
+func TrialEnvVars(t TaskSpec, rendezvousPorts []string, tPortOffset int) map[string]string {
 	exp := *t.StartContainer
 
 	networkInterface := t.TaskContainerDefaults.DtrainNetworkInterface
@@ -228,6 +228,7 @@ func TrialEnvVars(t TaskSpec, rendezvousPorts []string) map[string]string {
 	envVars["DET_LATEST_CHECKPOINT"] = jsonify(exp.LatestCheckpoint)
 	envVars["DET_WORKLOAD_MANAGER_TYPE"] = string(exp.WorkloadManagerType)
 	envVars["DET_RENDEZVOUS_PORTS"] = strings.Join(rendezvousPorts, ",")
+	envVars["DET_TRIAL_UNIQUE_PORT_OFFSET"] = fmt.Sprintf("%d", tPortOffset)
 	envVars["DET_TRIAL_RUNNER_NETWORK_INTERFACE"] = networkInterface
 	addTLSVars(t, envVars)
 
@@ -267,7 +268,8 @@ func startContainer(t TaskSpec) container.Spec {
 	if exp.IsMultiAgent {
 		networkMode = hostMode
 	}
-	rPorts := rendezvousPorts(t.Devices, networkMode)
+	tPortOffset := trialUniquePortOffset(t.Devices)
+	rPorts := rendezvousPorts(tPortOffset)
 	ports := make(nat.PortSet)
 	var rPortsEnvVars []string
 	for _, port := range rPorts {
@@ -275,7 +277,7 @@ func startContainer(t TaskSpec) container.Spec {
 		ports[port] = struct{}{}
 	}
 
-	envVarsMap := TrialEnvVars(t, rPortsEnvVars)
+	envVarsMap := TrialEnvVars(t, rPortsEnvVars, tPortOffset)
 	envVars := make([]string, 0, len(envVarsMap))
 	for envVarKey, envVarValue := range envVarsMap {
 		envVars = append(envVars, fmt.Sprintf("%s=%s", envVarKey, envVarValue))

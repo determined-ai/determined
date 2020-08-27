@@ -29,10 +29,6 @@ type fittingState struct {
 type FittingRequirements struct {
 	// SingleAgent specifies that the task must be located within a single agent.
 	SingleAgent bool
-	// DedicatedAgent specifies that the task must be scheduled on dedicated agents. This is
-	// necessary in the event that host networking is used.
-	// TODO(DET-3821): Remove this field when single node multiple dtrain works in host mode.
-	DedicatedAgent bool
 }
 
 type candidateList []*fittingState
@@ -70,12 +66,10 @@ func (c candidateList) Swap(i, j int) {
 func findFits(
 	task *Task, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 ) []*fittingState {
-	if !task.fittingRequirements.DedicatedAgent {
-		if fit := findSharedAgentFit(task, agents, fittingMethod); fit != nil {
-			return []*fittingState{fit}
-		}
+	if fit := findSharedAgentFit(task, agents, fittingMethod); fit != nil {
+		return []*fittingState{fit}
 	}
-	if task.fittingRequirements.SingleAgent {
+	if task.fittingRequirements.SingleAgent || task.slotsNeeded <= 1 {
 		return nil
 	}
 	if fits := findDedicatedAgentFits(task, agents, fittingMethod); len(fits) != 0 {
@@ -97,10 +91,6 @@ func findDedicatedAgentFits(
 	task *Task, agentStates map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 ) []*fittingState {
 	if len(agentStates) == 0 {
-		return nil
-	}
-
-	if task.slotsNeeded < 1 {
 		return nil
 	}
 
