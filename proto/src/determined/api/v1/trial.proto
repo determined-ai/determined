@@ -5,7 +5,6 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "determined/experiment/v1/experiment.proto";
 import "determined/trial/v1/trial.proto";
-import "determined/step/v1/step.proto";
 import "determined/api/v1/pagination.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "protoc-gen-swagger/options/annotations.proto";
@@ -131,11 +130,8 @@ message GetExperimentTrialsResponse {
 message GetTrialRequest {
     // The requested trial's id.
     int32 id = 1;
-    // Whether to inclue the list of steps or not.
-    bool include_steps = 2;
 }
 // Response to GetTrialRequest.
 message GetTrialResponse {
     determined.trial.v1.Trial trial = 1;
-    repeated determined.step.v1.Step steps = 2;
 }

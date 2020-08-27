@@ -15,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
-	"github.com/determined-ai/determined/proto/pkg/stepv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
@@ -161,12 +160,6 @@ func (a *apiServer) KillTrial(
 	return &resp, err
 }
 
-// func trialToProcessedLength() {
-
-// 	// addr := actor.Addr("trials", req.Id).String()
-// 	// switch err = a.actorRequest(addr, req, &resp); {
-// }
-
 func (a *apiServer) GetExperimentTrials(
 	_ context.Context, req *apiv1.GetExperimentTrialsRequest) (*apiv1.GetExperimentTrialsResponse, error) {
 	resp := &apiv1.GetExperimentTrialsResponse{}
@@ -199,76 +192,18 @@ func (a *apiServer) GetExperimentTrials(
 		return nil, err
 	}
 
-	// expConfig, err := a.m.db.ExperimentConfig(int(req.ExperimentId))
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// type valCheckpoint struct {
-	// 	BestValidation   float64 `json:"best_validation"`
-	// 	LatestValidation float64 `json:"latest_validation"`
-	// 	BestCheckpoint   string  `json:"best_checkpoint"`
-	// }
-
-	// for _, trial := range resp.Trials {
-	// 	// TODO consider missing (eg terminal) trials
-	// 	trialAddr := actor.Addr("trials", trial.Id)
-	// 	var tbp int
-	// 	// OPT do in parallel?
-
-	// 	resp := a.m.system.AskAt(trialAddr, trialProgress{})
-	// 	switch {
-	// 	case resp.Empty():
-	// 		// status.Errorf(codes.NotFound, "/api/v1%s not found", addr)
-	// 		fmt.Println("no active actor")
-	// 		// FIXME how do I calculate this
-	// 	case resp.Error() != nil:
-	// 		return nil, resp.Error()
-	// 	default:
-	// 		reflect.ValueOf(tbp).Elem().Set(reflect.ValueOf(resp.Get()))
-	// 		trial.ProcessedLength = &trialv1.Length{
-	// 			Value: int32(tbp),
-	// 			Unit:  trialv1.LengthUnit_LENGTH_UNIT_BATCHES,
-	// 		}
-
-	// 	}
-
-	// var stats valCheckpoint
-	// res, err := a.m.db.RawQuery("get_trial_stats", req.ExperimentId, trial.Id)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// fmt.Println(res)
-	// if err = json.Unmarshal(res, &stats); err != nil {
-	// 	return nil, err
-	// }
-
-	// // TODO populate the whole checkpoint
-	// trial.BestCheckpoint = &checkpointv1.Checkpoint{Uuid: stats.BestCheckpoint}
-	// trial.BestValidation = stats.BestValidation
-	// trial.LatestValidation = stats.LatestValidation
-	// }
-
 	return resp, nil
 }
 
-// this could basically be a special case of getTrials assuming we support include_steps query param
 func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 	*apiv1.GetTrialResponse, error,
 ) {
 	var protoTrial trialv1.Trial
 	var response apiv1.GetTrialResponse
+	// DISCUSS name query and var this way? y/n
 	if err := a.m.db.QueryProto("get_prototrial", &protoTrial, req.Id); err != nil {
 		return nil, err
 	}
 	response.Trial = &protoTrial
-	if req.IncludeSteps {
-		var protoSteps []*stepv1.Step
-		// OPT merge with first query for better performance.
-		if err := a.m.db.QueryProto("get_trial_protosteps", &protoSteps); err != nil {
-			return nil, err
-		}
-		response.Steps = protoSteps
-	}
 	return &response, nil
 }

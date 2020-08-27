@@ -23,10 +23,4 @@ message Trial {
   google.protobuf.Struct hparams = 6;
   // The current processed batches.
   int32 batches_processed = 7;
-  // The best validation metric for trial.
-  /* double best_validation = 7; */
-  // Best checkpoint for trial.
-  /* determined.checkpoint.v1.Checkpoint best_checkpoint = 8; */
-  // Latest trial validation.
-  /* double latest_validation = 10; */
 }
