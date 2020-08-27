@@ -11,6 +11,19 @@ import "determined/checkpoint/v1/checkpoint.proto";
 import "determined/experiment/v1/experiment.proto";
 import "determined/experiment/v1/searcher.proto";
 
+// Get a single experiment.
+message GetExperimentRequest {
+    // The id of the experiment.
+    int32 experiment_id = 1;
+}
+// Response to GetExperimentRequest.
+message GetExperimentResponse {
+    // The requested experiment.
+    determined.experiment.v1.Experiment experiment = 1;
+    // The experiment config.
+    google.protobuf.Struct config = 2;
+}
+
 // Get a list of experiments.
 message GetExperimentsRequest {
     // Sorts experiments by the given field.
