@@ -27,10 +27,8 @@ Preparing Your First Job
 
 In this guide, we will build an image classification model for the MNIST dataset.  MNIST is a dataset consisting of grayscale images of handwritten digits (as seen below); it is commonly used to test image classification models.
 
-|
-
 .. image:: /assets/images/mnist-example@2x.jpg
-    :align: center
+    :width: 100%
 
 |
 
@@ -105,10 +103,8 @@ Once the experiment has been submitted, you should see the following output:
 
 We can view the status of the experiment in the WebUI. In a browser, go to ``http://DET_MASTER/``, where ``DET_MASTER`` is the URL or IP address of your Determined cluster. If you installed locally via ``det-deploy local``, this will likely be ``http://localhost:8080/`` . A Determined dashboard will be displayed similar to the one below:
 
-|
-
 .. image:: /assets/images/pytorch_dashboard@2x.jpg
-    :align: center
+    :width: 100%
 
 |
 
@@ -116,12 +112,8 @@ Here, you can see recent tasks, which includes experiments, notebooks, and Tenso
 
 Clicking on the experiment takes you to the experiment page similar to below.
 
-|
-
 .. image:: /assets/images/pytorch_experiment@2x.jpg
-    :align: center
-
-|
+    :width: 100%
 
 Experiment Page
 ---------------
@@ -132,9 +124,8 @@ For this experiment, we have one trial because we define all the hyperparameters
 
 A trial page contains detailed information about the model, the configuration, output logs and the training metrics. Typically, you have to code the metric frequency output, plots, and checkpointing while managing the configuration for each model; however, by integrating into Determined's API, every experiment will automatically have these capabilities without any extra code.
 
-|
-
 .. image:: /assets/images/pytorch_trial_completed@2x.jpg
+    :width: 100%
 
 |
 
@@ -142,9 +133,8 @@ During training, the graph on the right will update with the most current metric
 
 Left of the graph displays time information, the hyperparameter configuration, the best validation metric and their respective checkpoint.
 
-|
-
 .. image:: /assets/images/pytorch_trial_lhs@2x.jpg
+    :scale: 50%
     :align: center
 
 |
@@ -191,7 +181,7 @@ Next, submit the experiment with the same command as above; however, our experim
 Once again, we access the experiment's trial in the browser. You will notice the loss curve is very similar to the single GPU experiment we previously ran. However, we reduced the time from 2 minutes and 16 seconds down to 1 minute and 5 seconds.
 
 .. image:: /assets/images/dtrain_results@2x.jpg
-    :align: center
+    :width: 100%
 
 
 Tuning the Model
@@ -210,7 +200,9 @@ Next, run the same command as above to submit an experiment, except change the c
 In the browser, navigate to the experiment page. You should notice more trials have started running.
 
 .. image:: /assets/images/hp_experiment_page@2x.jpg
-    :align: center
+    :width: 100%
+
+|
 
 Determined will run the number of ``max_trials`` trials and automatically start new trials as resources become available while the hyperparameter search will stop poor performing trials. On a typical laptop, 16 trials should take around 10 minutes to train with at least one trial performing at about 98% validation accuracy.
 
@@ -219,11 +211,14 @@ Once all the trials are completed, we want to evaluate the performance across tr
 In TensorBoard, you should see a page similar to below. Determined created TensorBoard plots to show the training loss, validation loss and validation accuracy for each trial for comparison.
 
 .. image:: /assets/images/tensorboard@2x.jpg
+    :width: 100%
+
+|
 
 The training loss plot illustrates why certain trials had early-stopping applied. For example, the graph below shows ``trial 10`` (seen in light blue) had a significantly higher training loss than the other trials. Due to the notable difference, this trial did not require any extra training.
 
 .. image:: /assets/images/early-stopping-tensorboard@2x.jpg
-    :align: center
+    :width: 100%
 
 
 Next Steps
