@@ -1,6 +1,6 @@
 :orphan:
 
-**Feature Upgrades**
+**New Features**
 
 - Support running multiple distributed training jobs on a single agent.
 

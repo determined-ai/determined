@@ -83,39 +83,49 @@ S3. In this example, the S3 bucket name is configured via a field
           s3.download_file(s3_bucket, data_file, filepath)
       return download_directory
 
+.. _dtrain-scheduling:
 
 Scheduling Behavior
 -------------------
 
-When using distributed training, there are different scheduler constraints on the value
-``slots_per_trial`` can take depending on the default network mode and whether or not it can fit on
-a single agent.
+The Determined master takes care of scheduling distributed training jobs
+automatically, ensuring that all of the compute resources required for a job are
+available before the job itself is launched. Users should be aware of the
+following details about scheduler behavior when using distributed training:
 
-- If ``network_mode`` is ``host``, Determined will schedule dtrain jobs onto dedicated
-  machines. This is to avoid potential port network port conflicts between host-mode jobs on the
-  same machine.
-- Similarly, if ``slots_per_trial`` is greater than the number of slots on a single agent,
-  Determined will again schedule dtrain jobs onto dedicated machines. This is to ensure good
-  performance and utilize the full network bandwidth of each machine, while minimizing
-  inter-machine networking.
-- Otherwise, if ``slots_per_trial`` is smaller than the size of an agent in the cluster and Docker
-  networking is in use, Determined will try to schedule dtrain jobs onto shared machines. This is to
-  improve utilization and allow multiple small dtrain jobs to run on a single machine.
+- When using Docker host-mode networking (e.g., when
+  ``task_container_defaults.network_mode`` is set to ``host`` in the
+  :ref:`master configuration <master-configuration>`), Determined will schedule
+  distributed training jobs onto dedicated agent machines. This is to avoid potential
+  network port conflicts between host-mode jobs on the same machine. In other
+  words, a distributed training job will only be scheduled onto an agent if this
+  will result in utilizing all of the agent's GPUs. For example, if all of the
+  agents in your cluster have 8 GPUs each and you are using host-mode
+  networking, you should submit jobs with ``slots_per_trial`` set to a multiple
+  of 8 (e.g., 8, 16, or 24).
+- Similarly, if ``slots_per_trial`` is greater than the number of slots on a
+  single agent, Determined will again schedule distributed training jobs onto
+  dedicated agents. This is to ensure good performance and utilize the full
+  network bandwidth of each machine, while minimizing inter-machine networking.
+- Otherwise, if ``slots_per_trial`` is smaller than the number of slots on a
+  single agent and Docker networking is being used, Determined will consider
+  scheduling multiple distributed training jobs on a single agent. This is
+  designed to improve utilization and to allow multiple small training jobs to
+  run on a single agent. For example, an agent with 8 GPUs could be assigned two
+  4-GPU jobs, or four 2-GPU jobs.
 
 .. warning::
 
-  Distributed training is designed to maximize performance by training with all the
-  resources of a machine. This can lead to situations where an experiment is created
-  but never starts running on the cluster, for example if the number of GPUs
-  requested is not a multiple of the number of GPUs per machine. Similarly, if a
-  task is running on a multi-GPU machine and using one or more of its GPUs, that
-  will prevent a distributed training job from starting on that machine.
+  If the scheduling constraints described above are not satisfied, distributed
+  training jobs will not be scheduled and will wait indefinitely. For example,
+  if every agent in the cluster has 8 GPUs, a job with ``slots_per_trial`` set
+  to ``12`` will never be scheduled.
 
-  If a multi-GPU experiment does not become active after a minute or so,
-  please confirm that ``slots_per_trial`` is set so that it can be scheduled within the
-  constraints described above. Also, you can also use the CLI command ``det task
-  list`` to check if any other tasks are using GPUs and preventing your
-  experiment from using all the GPUs on a machine.
+  If a multi-GPU experiment does not become active after a minute or so, please
+  confirm that ``slots_per_trial`` is set so that it can be scheduled within the
+  constraints described above. The CLI command ``det task list`` can also be
+  used to check if any other tasks are using GPUs and preventing your experiment
+  from using all the GPUs on a machine.
 
 Next Steps
 ----------
