@@ -53,12 +53,12 @@ class Determined:
         self, name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
     ) -> Model:
         """
-        Add a model to the registry.
+        Add a model to the model registry.
 
         Arguments:
             name (string): The name of the model. This name must be unique.
-            description (string): A description of the model.
-            metadata (dict): Dictionary of metadata to add to the model.
+            description (string, optional): A description of the model.
+            metadata (dict, optional): Dictionary of metadata to add to the model.
         """
         r = api.post(
             self._session._master,
@@ -70,8 +70,9 @@ class Determined:
 
     def get_model(self, name: str) -> Model:
         """
-        Get the :class:`~determined.experimental.Model` representing the
-        model with the provided name.
+        Get the :class:`~determined.experimental.Model` from the model registry
+        with the provided name. If no model with that name is found in the registry,
+        an exception is raised.
         """
         r = api.get(self._session._master, "/api/v1/models/{}".format(name))
         return Model.from_json(r.json().get("model"), self._session._master)
