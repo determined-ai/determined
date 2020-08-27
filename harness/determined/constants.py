@@ -5,7 +5,10 @@ from pathlib import Path
 # match LocalRendezvousPort in master/internal/trial.go.
 LOCAL_RENDEZVOUS_PORT = 1734
 
-# The maximum number of slots we expect any agent to have.
+# The maximum number of slots we expect any agent to have. Since we offset some ports
+# by the min(device_id) belonging to the trial, if we have two ports offset in this way,
+# we separate them by the max(min(device_id)) to avoid collisions. The two rendezvous ports
+# are examples of this.
 MAX_SLOTS_PER_AGENT = 16
 
 # The path used to serialize the training process environment variables

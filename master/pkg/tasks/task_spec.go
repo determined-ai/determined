@@ -80,8 +80,7 @@ type StartContainer struct {
 	AdditionalFiles     archive.Archive           `json:"additional_files"`
 
 	// This is used to hint the resource provider to override defaults and start
-	// the container in host mode iff it has been scheduled across multiple agents. Remove this
-	// when multiple horovod containers can run per agent in host-mode.
+	// the container in host mode iff it has been scheduled across multiple agents.
 	IsMultiAgent bool `json:"is_multi_agent"`
 }
 
