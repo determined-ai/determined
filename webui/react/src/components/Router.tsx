@@ -32,7 +32,9 @@ const Router: React.FC<Props> = (props: Props) => {
       {props.routes.map(config => {
         const { component, ...route } = config;
 
-        if (route.needAuth && auth.checked && !auth.isAuthenticated) {
+        if (route.needAuth && !auth.isAuthenticated) {
+          // Do not mount login page until auth is checked.
+          if (!auth.checked) return <Route key={route.id} {...route} />;
           return <Route
             key={route.id}
             {...route}
