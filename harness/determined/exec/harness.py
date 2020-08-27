@@ -166,7 +166,7 @@ def main() -> None:
 
     # Load latest checkpoint from file to handle large data format
     with open(os.environ["DET_LATEST_CHECKPOINT"]) as f:
-        latest_checkpoint = json.load(f)
+        latest_checkpoint = simplejson.load(f)
 
     use_gpu = distutils.util.strtobool(os.environ.get("DET_USE_GPU", "false"))
     slot_ids = json.loads(os.environ["DET_SLOT_IDS"])
