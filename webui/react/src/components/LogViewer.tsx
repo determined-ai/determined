@@ -5,10 +5,12 @@ import React, {
 } from 'react';
 import screenfull from 'screenfull';
 import { sprintf } from 'sprintf-js';
+import { throttle } from 'throttle-debounce';
 
 import Icon from 'components/Icon';
 import Spinner from 'components/Spinner';
 import usePrevious from 'hooks/usePrevious';
+import useResize, { DEFAULT_RESIZE_THROTTLE_TIME } from 'hooks/useResize';
 import useScroll, { defaultScrollInfo } from 'hooks/useScroll';
 import { Log, LogLevel } from 'types';
 import { formatDatetime } from 'utils/date';
@@ -111,6 +113,7 @@ const LogViewer: React.FC<Props> = forwardRef((
   const container = useRef<HTMLDivElement>(null);
   const spacer = useRef<HTMLDivElement>(null);
   const measure = useRef<HTMLDivElement>(null);
+  const resize = useResize(container);
   const scroll = useScroll(container);
   const [ logs, setLogs ] = useState<ViewerLog[]>([]);
   const [ logIdRange, setLogIdRange ] =
@@ -298,21 +301,13 @@ const LogViewer: React.FC<Props> = forwardRef((
    * recalculation of measured log entries.
    */
   useLayoutEffect(() => {
-    if (!container.current) return;
-
-    const element = container.current;
-    const handleResize: ResizeObserverCallback = entries => {
-      // Check to make sure the log viewer container is being observed for resize.
-      const elements = entries.map((entry: ResizeObserverEntry) => entry.target);
-      if (!element || elements.indexOf(element) === -1) return;
-
+    const throttleFunc = throttle(DEFAULT_RESIZE_THROTTLE_TIME, () => {
+      if (!container.current) return;
       setConfig(measureLogs(logs));
-    };
-    const resizeObserver = new ResizeObserver(handleResize);
-    resizeObserver.observe(element);
+    });
 
-    return (): void => resizeObserver.unobserve(element);
-  }, [ logs, measureLogs ]);
+    throttleFunc();
+  }, [ logs, measureLogs, resize ]);
 
   /*
    * Scroll to the latest log entry when showing the very first
