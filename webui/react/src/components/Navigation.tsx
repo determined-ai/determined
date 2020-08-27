@@ -104,6 +104,9 @@ const Navigation: React.FC = () => {
     <CSSTransition
       appear={true}
       classNames={{
+        appear: css.collapsedAppear,
+        appearActive: isCollapsed ? css.collapsedEnterActive : css.collapsedExitActive,
+        appearDone: isCollapsed ? css.collapsedEnterDone : css.collapsedExitDone,
         enter: css.collapsedEnter,
         enterActive: css.collapsedEnterActive,
         enterDone: css.collapsedEnterDone,
