@@ -1,0 +1,5 @@
+:orphan:
+
+**Bug Fixes**
+
+- Fix ``adaptive_asha`` progress in the event of failed trials.
