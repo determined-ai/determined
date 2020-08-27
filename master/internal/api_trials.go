@@ -15,7 +15,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 const (
@@ -161,7 +160,8 @@ func (a *apiServer) KillTrial(
 }
 
 func (a *apiServer) GetExperimentTrials(
-	_ context.Context, req *apiv1.GetExperimentTrialsRequest) (*apiv1.GetExperimentTrialsResponse, error) {
+	_ context.Context, req *apiv1.GetExperimentTrialsRequest,
+) (*apiv1.GetExperimentTrialsResponse, error) {
 	resp := &apiv1.GetExperimentTrialsResponse{}
 
 	switch err := a.m.db.QueryProto("get_trials_for_experiment", &resp.Trials, req.ExperimentId); {
@@ -196,14 +196,14 @@ func (a *apiServer) GetExperimentTrials(
 }
 
 func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
-	*apiv1.GetTrialResponse, error,
+	resp *apiv1.GetTrialResponse, err error,
 ) {
-	var protoTrial trialv1.Trial
-	var response apiv1.GetTrialResponse
 	// DISCUSS name query and var this way? y/n
-	if err := a.m.db.QueryProto("get_prototrial", &protoTrial, req.Id); err != nil {
+	switch err := a.m.db.QueryProto("get_prototrial", &resp.Trial, req.Id); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.Id)
+	case err != nil:
 		return nil, err
 	}
-	response.Trial = &protoTrial
-	return &response, nil
+	return resp, nil
 }
