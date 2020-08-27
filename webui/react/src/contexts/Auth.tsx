@@ -8,6 +8,8 @@ enum ActionType {
   Set,
 }
 
+export const AUTH_COOKIE_KEY = 'auth';
+
 /*
  * `checkCount` allows the `useAuthCheck` hook to keep tabs of how many times
  * is has been called in sign in. It is kept here to avoid a situation where
@@ -30,7 +32,7 @@ const defaultAuth: State = {
 };
 
 const clearAuthCookie = (): void => {
-  document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  document.cookie = `${AUTH_COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 };
 
 const reducer = (state: State, action: Action): State => {

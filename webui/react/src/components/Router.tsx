@@ -1,8 +1,10 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useEffect } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 
 // import Route from 'components/Route';
 import Auth from 'contexts/Auth';
+import UI from 'contexts/UI';
+import useAuthCheck from 'hooks/useAuthCheck';
 import { RouteConfig } from 'routes';
 import { clone } from 'utils/data';
 
@@ -12,6 +14,18 @@ interface Props {
 
 const Router: React.FC<Props> = (props: Props) => {
   const auth = Auth.useStateContext();
+  const checkAuth = useAuthCheck();
+  const setUI = UI.useActionContext();
+
+  useEffect(() => {
+    checkAuth();
+  }, [ checkAuth ]);
+
+  useEffect(() => {
+    if (auth.isAuthenticated) {
+      setUI({ type: UI.ActionType.HideSpinner });
+    }
+  }, [ auth.isAuthenticated, setUI ]);
 
   return (
     <Switch>
@@ -19,6 +33,8 @@ const Router: React.FC<Props> = (props: Props) => {
         const { component, ...route } = config;
 
         if (route.needAuth && !auth.isAuthenticated) {
+          // Do not mount login page until auth is checked.
+          if (!auth.checked) return <Route key={route.id} {...route} />;
           return <Route
             key={route.id}
             {...route}
