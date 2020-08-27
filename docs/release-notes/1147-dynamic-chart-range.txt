@@ -1,0 +1,8 @@
+:orphan:
+
+**Improvements**
+
+- Upgrade metric charts to dynamically adjust x and y axis ranges to be max ranges dictated
+  by the data points plus 10% padding.
+- Upgrade chart to change the range dynamically as new data points come in, except for when
+  the user has manually zoomed in.
