@@ -342,18 +342,18 @@ func (a *apiServer) UnarchiveExperiment(
 func (a *apiServer) PatchExperiment(
 	ctx context.Context, req *apiv1.PatchExperimentRequest,
 ) (*apiv1.PatchExperimentResponse, error) {
-	dbExp, err := a.m.db.ExperimentByID(int(req.Experiment.Id))
-	if err != nil {
-		return nil, errors.Wrapf(err, "loading experiment %v", req.Experiment.Id)
+	var exp experimentv1.Experiment
+	if err := a.m.db.QueryProto("get_experiment", &exp, req.Experiment.Id); err != nil {
+		return nil, err
 	}
 
 	paths := req.UpdateMask.GetPaths()
 	for _, path := range paths {
 		switch {
 		case path == "description":
-			dbExp.Config.Description = req.Experiment.Description
+			exp.Description = req.Experiment.Description
 		case path == "labels":
-			dbExp.Config.Labels = *listToMapSet(&req.Experiment.Labels)
+			exp.Labels = req.Experiment.Labels
 		case !strings.HasPrefix(path, "update_mask"):
 			return nil, status.Errorf(
 				codes.InvalidArgument,
@@ -361,14 +361,25 @@ func (a *apiServer) PatchExperiment(
 		}
 	}
 
-	err = a.m.db.SaveExperimentConfig(dbExp)
-	switch err {
-	case nil:
-		return &apiv1.PatchExperimentResponse{Experiment: toProtoExpFromFullExp(dbExp)}, nil
-	default:
-		return nil, errors.Wrapf(err, "failed to save experiment %d config",
-			req.Experiment.Id)
+	type experimentPatch struct {
+		Labels      []string `json:"labels"`
+		Description string   `json:"description"`
 	}
+	patches := experimentPatch{Description: exp.Description, Labels: exp.Labels}
+	// QUESTION if I maks this json or manually generate the json string
+	// we can submit only the necessary parts of the patch and avoid getting the experiment at start.
+	marshalledPatches, err := json.Marshal(patches)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := a.m.db.RawQuery(
+		"patch_experiment",
+		req.Experiment.Id,
+		string(marshalledPatches)); err != nil {
+		return nil, err
+	}
+	return &apiv1.PatchExperimentResponse{Experiment: &exp}, nil
 }
 
 func (a *apiServer) GetExperimentCheckpoints(
