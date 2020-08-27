@@ -1,9 +1,18 @@
 package scheduler
 
 import (
+	"time"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
+
+const (
+	actionCoolDown = 500 * time.Millisecond
+)
+
+// schedulerTick periodically triggers the scheduler to act.
+type schedulerTick struct{}
 
 // ResourceProviders manages the configured resource providers.
 // Currently support only one resource provider at a time.

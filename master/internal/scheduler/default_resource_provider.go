@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"strconv"
 	"syscall"
-	"time"
 
 	"github.com/determined-ai/determined/master/pkg/device"
 
@@ -24,13 +23,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
-
-const (
-	actionCooldown = 500 * time.Millisecond
-)
-
-// schedulerTick periodically triggers the scheduler to act.
-type schedulerTick struct{}
 
 // DefaultRP manages the agent and task lifecycles.
 type DefaultRP struct {
@@ -225,7 +217,7 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		actors.NotifyAfter(ctx, actionCooldown, schedulerTick{})
+		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
 	case sproto.ConfigureEndpoints:
 		ctx.Log().Infof("initializing endpoints for agents")
@@ -316,7 +308,7 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 		}
 		d.reschedule = false
 		reschedule = false
-		actors.NotifyAfter(ctx, actionCooldown, schedulerTick{})
+		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
 	default:
 		reschedule = false

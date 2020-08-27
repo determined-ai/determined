@@ -28,12 +28,15 @@ type kubernetesResourceProvider struct {
 	tasksByID          map[TaskID]*Task
 	tasksByContainerID map[ContainerID]*Task
 	groups             map[*actor.Ref]*group
+	slotsUsedPerGroup  map[*group]int
 	registeredNames    map[*container][]string
 
 	assignmentsByTaskHandler map[*actor.Ref][]podAssignment
 
 	// Represent all pods as a single agent.
 	agent *agentState
+
+	reschedule bool
 }
 
 // NewKubernetesResourceProvider initializes a new kubernetesResourceProvider.
@@ -58,6 +61,7 @@ func NewKubernetesResourceProvider(
 		tasksByID:          make(map[TaskID]*Task),
 		tasksByContainerID: make(map[ContainerID]*Task),
 		groups:             make(map[*actor.Ref]*group),
+		slotsUsedPerGroup:  make(map[*group]int),
 		registeredNames:    make(map[*container][]string),
 
 		assignmentsByTaskHandler: make(map[*actor.Ref][]podAssignment),
@@ -65,8 +69,16 @@ func NewKubernetesResourceProvider(
 }
 
 func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
+	reschedule := true
+	defer func() {
+		// Default to scheduling every 500ms if a message was received, but allow messages
+		// that don't affect the cluster to be skipped.
+		k.reschedule = k.reschedule || reschedule
+	}()
+
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
+		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
 	case sproto.ConfigureEndpoints:
 		ctx.Log().Infof("initializing endpoints for pods")
@@ -85,10 +97,14 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 	case AddTask:
 		k.receiveAddTask(ctx, msg)
 
-	case SetMaxSlots, SetWeight:
-		// These parameters are not supported by the Kubernetes RP.
+	case SetWeight:
+		// SetWeight is not supported by the Kubernetes RP.
+
+	case SetMaxSlots:
+		k.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
 
 	case SetTaskName:
+		reschedule = false
 		k.receiveSetTaskName(ctx, msg)
 
 	case StartTask:
@@ -104,6 +120,8 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 		k.receiveTaskStopped(ctx, msg)
 
 	case groupStopped:
+		delete(k.slotsUsedPerGroup, k.groups[msg.Ref])
+		delete(k.groups, msg.Ref)
 
 	case TerminateTask:
 		k.receiveTerminateTask(ctx, msg)
@@ -112,14 +130,26 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 		if resp := k.getTaskSummary(*msg.ID); resp != nil {
 			ctx.Respond(*resp)
 		}
+		reschedule = false
 
 	case GetTaskSummaries:
+		reschedule = false
 		ctx.Respond(k.taskList.TaskSummaries())
 
 	case sproto.GetEndpointActorAddress:
+		reschedule = false
 		ctx.Respond("/pods")
 
+	case schedulerTick:
+		if k.reschedule {
+			k.schedulePendingTasks(ctx)
+		}
+		k.reschedule = false
+		reschedule = false
+		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
+
 	default:
+		reschedule = false
 		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -170,8 +200,21 @@ func (k *kubernetesResourceProvider) receiveAddTask(ctx *actor.Context, msg AddT
 	if ctx.ExpectingResponse() {
 		ctx.Respond(task)
 	}
+}
 
-	k.scheduleTask(ctx, task)
+func (k *kubernetesResourceProvider) schedulePendingTasks(ctx *actor.Context) {
+	for it := k.taskList.iterator(); it.next(); {
+		task := it.value()
+		if task.state == taskPending {
+			if maxSlots := task.group.maxSlots; maxSlots != nil {
+				if k.slotsUsedPerGroup[task.group]+task.SlotsNeeded() > *maxSlots {
+					continue
+				}
+			}
+
+			k.scheduleTask(ctx, task)
+		}
+	}
 }
 
 func (k *kubernetesResourceProvider) scheduleTask(ctx *actor.Context, task *Task) {
@@ -193,6 +236,8 @@ func (k *kubernetesResourceProvider) scheduleTask(ctx *actor.Context, task *Task
 		numPods = task.SlotsNeeded() / k.config.SlotsPerNode
 		slotsPerNode = k.config.SlotsPerNode
 	}
+
+	k.slotsUsedPerGroup[task.group] += task.SlotsNeeded()
 
 	for pod := 0; pod < numPods; pod++ {
 		k.assignPod(ctx, task, slotsPerNode)
@@ -234,6 +279,8 @@ func (k *kubernetesResourceProvider) getOrCreateGroup(
 	}
 	g := &group{handler: handler, weight: 1}
 	k.groups[handler] = g
+	k.slotsUsedPerGroup[g] = 0
+
 	if ctx != nil && handler != nil { // ctx is nil only for testing purposes.
 		actors.NotifyOnStop(ctx, handler, groupStopped{})
 	}
@@ -312,6 +359,8 @@ func (k *kubernetesResourceProvider) receivePodTerminated(
 	container := task.containers[cid]
 	container.mustTransition(containerTerminated)
 	container.exitStatus = msg.ContainerStopped
+
+	k.slotsUsedPerGroup[task.group] -= container.slots
 
 	for _, name := range k.registeredNames[container] {
 		ctx.Tell(k.proxy, proxy.Unregister{ServiceID: name})
