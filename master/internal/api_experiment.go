@@ -57,7 +57,6 @@ func (a *apiServer) GetExperiment(
 func (a *apiServer) GetExperiments(
 	_ context.Context, req *apiv1.GetExperimentsRequest) (*apiv1.GetExperimentsResponse, error) {
 	resp := &apiv1.GetExperimentsResponse{}
-	// FIXME missing experiment progress information.
 	if err := a.m.db.QueryProto("get_experiments", &resp.Experiments); err != nil {
 		return nil, err
 	}
