@@ -22,12 +22,10 @@ const Router: React.FC<Props> = (props: Props) => {
   }, [ checkAuth ]);
 
   useEffect(() => {
-    if (auth.checked) {
+    if (auth.isAuthenticated) {
       setUI({ type: UI.ActionType.HideSpinner });
-    } else {
-      setUI({ type: UI.ActionType.ShowSpinner });
     }
-  }, [ auth.checked, setUI ]);
+  }, [ auth.isAuthenticated, setUI ]);
 
   return (
     <Switch>
