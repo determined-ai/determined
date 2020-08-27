@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"time"
+
+	"github.com/determined-ai/determined/master/internal/proxy"
 
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
@@ -78,9 +81,11 @@ type command struct {
 
 	registeredTime time.Time
 	container      *container.Container
+	proxyNames     []string
 	exitStatus     *string
 	addresses      []scheduler.Address
 
+	proxy       *actor.Ref
 	rps         *actor.Ref
 	eventStream *actor.Ref
 }
@@ -94,6 +99,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.eventStream, _ = ctx.ActorOf("events", newEventManager())
 		// Schedule the command with the cluster.
 		c.rps = ctx.Self().System().Get(actor.Addr("resourceProviders"))
+		c.proxy = ctx.Self().System().Get(actor.Addr("proxy"))
 		ctx.Tell(c.rps, scheduler.AddTask{
 			ID:           &c.taskID,
 			Name:         c.config.Description,
@@ -182,6 +188,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case sproto.ContainerStateChanged:
 		c.container = &msg.Container
 		if msg.Container.State == container.Terminated {
+			for _, name := range c.proxyNames {
+				ctx.Tell(c.proxy, proxy.Unregister{ServiceID: name})
+			}
+			c.proxyNames = make([]string, 0)
+
 			exitStatus := "command exited successfully"
 			if msg.ContainerStopped.Failure != nil {
 				exitStatus = msg.ContainerStopped.Failure.Error()
@@ -212,6 +223,23 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case scheduler.ContainerStarted:
 		c.addresses = msg.Container.Addresses()
+
+		names := make([]string, 0, len(msg.Container.Addresses()))
+		for _, address := range msg.Container.Addresses() {
+			// We are keying on task ID instead of container ID. Revisit this when we need to
+			// proxy multi-container tasks or when containers are created prior to being
+			// assigned to an agent.
+			ctx.Ask(c.proxy, proxy.Register{
+				ServiceID: string(c.taskID),
+				URL: &url.URL{
+					Scheme: "http",
+					Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
+				},
+			})
+			names = append(names, string(c.taskID))
+		}
+		c.proxyNames = names
+
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ContainerStartedEvent: &msg})
 
 	case scheduler.TerminateRequest:

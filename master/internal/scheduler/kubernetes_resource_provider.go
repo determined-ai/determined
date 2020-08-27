@@ -2,11 +2,8 @@ package scheduler
 
 import (
 	"crypto/tls"
-	"fmt"
-	"net/url"
 
 	"github.com/determined-ai/determined/master/internal/kubernetes"
-	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -18,7 +15,6 @@ import (
 type kubernetesResourceProvider struct {
 	clusterID             string
 	config                *KubernetesResourceProviderConfig
-	proxy                 *actor.Ref
 	harnessPath           string
 	taskContainerDefaults model.TaskContainerDefaultsConfig
 	masterCert            *tls.Certificate
@@ -29,7 +25,6 @@ type kubernetesResourceProvider struct {
 	tasksByContainerID map[ContainerID]*Task
 	groups             map[*actor.Ref]*group
 	slotsUsedPerGroup  map[*group]int
-	registeredNames    map[*container][]string
 
 	assignmentsByTaskHandler map[*actor.Ref][]podAssignment
 
@@ -43,7 +38,6 @@ type kubernetesResourceProvider struct {
 func NewKubernetesResourceProvider(
 	clusterID string,
 	config *KubernetesResourceProviderConfig,
-	proxy *actor.Ref,
 	harnessPath string,
 	taskContainerDefaults model.TaskContainerDefaultsConfig,
 	masterCert *tls.Certificate,
@@ -51,7 +45,6 @@ func NewKubernetesResourceProvider(
 	return &kubernetesResourceProvider{
 		clusterID:             clusterID,
 		config:                config,
-		proxy:                 proxy,
 		harnessPath:           harnessPath,
 		taskContainerDefaults: taskContainerDefaults,
 		masterCert:            masterCert,
@@ -62,7 +55,6 @@ func NewKubernetesResourceProvider(
 		tasksByContainerID: make(map[ContainerID]*Task),
 		groups:             make(map[*actor.Ref]*group),
 		slotsUsedPerGroup:  make(map[*group]int),
-		registeredNames:    make(map[*container][]string),
 
 		assignmentsByTaskHandler: make(map[*actor.Ref][]podAssignment),
 	}
@@ -330,22 +322,6 @@ func (k *kubernetesResourceProvider) receivePodStarted(ctx *actor.Context, msg s
 	container.mustTransition(containerRunning)
 	handler := container.task.handler
 	handler.System().Tell(handler, ContainerStarted{Container: container})
-
-	names := make([]string, 0, len(msg.Ports))
-	for _, port := range msg.Ports {
-		// We are keying on task ID instead of container ID. Revisit this when we need to
-		// proxy multi-container tasks or when containers are created prior to being
-		// assigned to an agent.
-		ctx.Ask(k.proxy, proxy.Register{
-			ServiceID: string(task.ID),
-			URL: &url.URL{
-				Scheme: "http",
-				Host:   fmt.Sprintf("%s:%d", msg.IP, port),
-			},
-		})
-		names = append(names, string(task.ID))
-	}
-	k.registeredNames[container] = names
 }
 
 func (k *kubernetesResourceProvider) receivePodTerminated(
@@ -367,10 +343,6 @@ func (k *kubernetesResourceProvider) receivePodTerminated(
 	container.exitStatus = msg.ContainerStopped
 
 	k.slotsUsedPerGroup[task.group] -= container.slots
-
-	for _, name := range k.registeredNames[container] {
-		ctx.Tell(k.proxy, proxy.Unregister{ServiceID: name})
-	}
 
 	delete(container.agent.containers, container.id)
 	delete(container.task.containers, container.id)

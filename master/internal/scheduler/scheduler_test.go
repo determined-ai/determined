@@ -143,7 +143,6 @@ func setupCluster(
 		fittingMethod:         fittingMethod,
 		agents:                make(map[*actor.Ref]*agentState),
 		groups:                make(map[*actor.Ref]*group),
-		registeredNames:       make(map[*container][]string),
 		harnessPath:           "/opt/determined",
 		taskContainerDefaults: model.TaskContainerDefaultsConfig{},
 

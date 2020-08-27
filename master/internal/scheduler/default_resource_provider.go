@@ -2,8 +2,6 @@ package scheduler
 
 import (
 	"crypto/tls"
-	"fmt"
-	"net/url"
 	"strconv"
 	"syscall"
 
@@ -13,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/agent"
-	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
@@ -31,8 +28,6 @@ type DefaultRP struct {
 	fittingMethod         SoftConstraint
 	agents                map[*actor.Ref]*agentState
 	groups                map[*actor.Ref]*group
-	proxy                 *actor.Ref
-	registeredNames       map[*container][]string
 	harnessPath           string
 	taskContainerDefaults model.TaskContainerDefaultsConfig
 	masterCert            *tls.Certificate
@@ -58,7 +53,6 @@ func NewDefaultRP(
 	clusterID string,
 	scheduler Scheduler,
 	fittingMethod SoftConstraint,
-	proxy *actor.Ref,
 	harnessPath string,
 	taskContainerDefaults model.TaskContainerDefaultsConfig,
 	provisioner *actor.Ref,
@@ -71,7 +65,6 @@ func NewDefaultRP(
 		fittingMethod:         fittingMethod,
 		agents:                make(map[*actor.Ref]*agentState),
 		groups:                make(map[*actor.Ref]*group),
-		registeredNames:       make(map[*container][]string),
 		harnessPath:           harnessPath,
 		taskContainerDefaults: taskContainerDefaults,
 		masterCert:            masterCert,
@@ -83,7 +76,6 @@ func NewDefaultRP(
 
 		assigmentByHandler: make(map[*actor.Ref][]containerAssignment),
 
-		proxy:           proxy,
 		provisioner:     provisioner,
 		provisionerView: newProvisionerView(provisionerSlotsPerInstance),
 
@@ -402,27 +394,6 @@ func (d *DefaultRP) receiveContainerStartedOnAgent(
 	container.mustTransition(containerRunning)
 	handler := container.task.handler
 	handler.System().Tell(handler, ContainerStarted{Container: container})
-
-	if len(addresses) == 0 {
-		return
-	}
-
-	names := make([]string, 0, len(addresses))
-	for _, address := range addresses {
-		// We are keying on task ID instead of container ID. Revisit this when we need to
-		// proxy multi-container tasks or when containers are created prior to being
-		// assigned to an agent.
-		ctx.Ask(d.proxy, proxy.Register{
-			ServiceID: string(task.ID),
-			URL: &url.URL{
-				Scheme: "http",
-				Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
-			},
-		})
-		names = append(names, string(task.ID))
-	}
-
-	d.registeredNames[container] = names
 }
 
 // receiveContainerTerminated performs the necessary updates to the cluster
@@ -446,13 +417,6 @@ func (d *DefaultRP) receiveContainerTerminated(
 	}
 
 	container := task.containers[id]
-	if names, ok := d.registeredNames[container]; ok {
-		for _, name := range names {
-			ctx.Tell(d.proxy, proxy.Unregister{ServiceID: name})
-		}
-		delete(d.registeredNames, container)
-	}
-
 	container.mustTransition(containerTerminated)
 	container.exitStatus = &reason
 
