@@ -1,15 +1,9 @@
 from pathlib import Path
 
-# The container path which we use as a working directory.
-WORKDIR_CONTAINER_PATH = "/run/determined/workdir"
-
 # The port to use (from the container's point of view; it will be mapped to
 # some arbitrary port on the host) for communication across containers. Must
 # match LocalRendezvousPort in master/internal/trial.go.
 LOCAL_RENDEZVOUS_PORT = 1734
-
-# The default docker repository for task environments.
-TASK_ENV_REPO = "determinedai/task-environment"
 
 # The path used to serialize the training process environment variables
 # inside the trial container.
@@ -50,9 +44,6 @@ INTER_TRAIN_PROCESS_COMM_PORT_2 = 12361
 # Default trial runner interface. For distributed training this
 # specifies that the network interface must be auto-detected.
 AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE = "DET_AUTO_DETECT_NETWORK_INTERFACE"
-
-# The key of user's experiment in the globals that retrieved by running users' code.
-EXPERIMENT_GLOBALS_KEY = "__det__experiment"
 
 # How many seconds horovod waits for startup to complete before failing.
 HOROVOD_STARTUP_TIMEOUT_SECONDS = 1200
