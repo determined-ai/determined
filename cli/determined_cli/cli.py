@@ -11,7 +11,6 @@ import argcomplete.completers
 import OpenSSL
 import requests
 import tabulate
-from ruamel import yaml
 from termcolor import colored
 
 import determined_cli
@@ -31,7 +30,7 @@ from determined_cli.trial import args_description as trial_args_description
 from determined_cli.user import args_description as user_args_description
 from determined_cli.version import args_description as version_args_description
 from determined_cli.version import check_version
-from determined_common import api
+from determined_common import api, yaml
 from determined_common.api.authentication import authentication_required
 from determined_common.check import check_not_none
 from determined_common.util import chunks, debug_mode, get_default_master_address

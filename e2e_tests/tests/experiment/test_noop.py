@@ -3,9 +3,8 @@ import tempfile
 import time
 
 import pytest
-from ruamel import yaml
 
-from determined_common import check
+from determined_common import check, yaml
 from tests import config as conf
 from tests import experiment as exp
 

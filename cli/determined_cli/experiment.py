@@ -12,12 +12,11 @@ from pprint import pformat
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import tabulate
-from ruamel import yaml
 
 import determined_common
 from determined_cli import checkpoint, render
 from determined_cli.declarative_argparse import Arg, Cmd, Group
-from determined_common import api, constants, context
+from determined_common import api, constants, context, yaml
 from determined_common.api.authentication import authentication_required
 from determined_common.experimental import Determined
 
