@@ -132,6 +132,12 @@ should be set within ``values.yaml`` and ``Chart.yaml`` in the
     during distributed training. A valid port range is in the format of
     ``MIN:MAX``.
 
+  - ``cpuPodSpec``: Sets the default pod spec for all non-gpu tasks.
+    See :ref:`custom-pod-specs` for details.
+
+  - ``gpuPodSpec``: Sets the default pod spec for all ngpu tasks.
+    See :ref:`custom-pod-specs` for details.
+
 - ``enterpriseEdition``: Specifies whether to use Determined enterprise edition.
 
 - ``imagePullSecretName``: Specifies the image pull secret for pulling the Determined master image. Required

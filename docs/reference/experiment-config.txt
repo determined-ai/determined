@@ -949,6 +949,11 @@ customizing the trial environment, refer to :ref:`custom-env`.
   customize environment variables for GPU vs. CPU agents differently by
   specifying a dict with two keys, ``cpu`` and ``gpu``.
 
+``pod_spec``
+  Only applicable when running Determined on Kubernetes. Applies a pod spec
+  to the pod(s) that are launched by Determined for this task. See
+  :ref:`custom-pod-specs` for details.
+
 Optimizations
 *************
 

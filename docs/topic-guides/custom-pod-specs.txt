@@ -1,0 +1,125 @@
+.. _custom-pod-specs:
+
+Specifying Custom Pod Specs
+===========================
+
+As described in the :ref:`determined-on-kubernetes` guide, when tasks (e.g., experiments, notebooks) are started
+in a Determined cluster running on Kubernetes, the Determined master launches pods to execute these tasks. In this guide, we
+focus on how users can customize these pods by providing their own pod specs. Common use cases include but
+are not limited to: assigning pods to specific nodes, specifying additional volume mounts, attaching permissions.
+Please note that configuring pod specs is not required to use Determined on kubernetes.
+
+In this topic guide, we will cover:
+
+#. The different ways to configure custom pod specs.
+#. Supported pod spec fields.
+#. How to configuring default pod specs.
+#. How to configuring per-task pods specs.
+
+
+Ways to Configure Pod Specs
+---------------------------
+
+Determined provides two ways to configure pod specs. Users can configure default pod specs for all GPU and CPU tasks.
+It is also possible configure pod specs for individual tasks. If a custom pod spec is specified for a
+task, it overrides the default pod spec of one is configured.
+
+
+Supported Pod Spec Fields
+-------------------------
+
+This section describes which fields users can and can't configure when specifying custom `pod specs <https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#pod-v1-core>`__.
+
+Determined does not currently support configuring:
+
+- Pod Name - Determined automatically assigns a name for every pod that is created.
+- Pod Namespace - Determined launches all tasks in the Namespace in which the Determined master is running.
+- Host Networking - This must be configured via the :ref:`master-configuration`.
+- Init Containers - Determined does not currently support init containers.
+
+Additionally users are allowed to specify the spec for exactly one container within the pod. The specs
+of this container will be applied to the container that executes the task launched by Determined.
+For the container spec Determined does not currently support configuring:
+
+- Container Name - Determined automatically assigns this.
+- Container Image - Please see :ref:`container-images` for how to specify custom docker images.
+- Container Command.
+- Container Args.
+- Container WorkingDir - Determined sets the working directory to be ``/run/determined/workdir``.
+- Container Ports.
+- Container EnvFrom.
+- Container Env - Please see :ref:`environment-variables` for how to set environment variables.
+- Container LivelinessProbe.
+- Container ReadinessProbe.
+- Container StartupProbe.
+- Container Lifecycle.
+- Container TerminationMessagePath.
+- Container TerminationMessagePolicy.
+- Container ImagePullPolicy - Please see :ref:`force_pull_image <exp-environment-image>` for how to configure. Defaults to ``PullIfNotPresent``.
+- Container SecurityContext.
+
+
+Configuring Default Pod Specs
+-----------------------------
+
+Defining default pod specs must be done when :ref:`installing or updating <install-on-kubernetes>` Determined.
+The default pod specs are configured in ``values.yaml`` of the :ref:`Determined helm chart <helm-config>` under
+``taskContainerDefaults.cpuPodSpec`` and ``taskContainerDefaults.gpuPodSpec``. The ``gpuPodSpec`` is applied to
+all tasks that use GPUs (e.g., experiments, notebooks). ``cpuPodSpec`` is applied to all tasks that use only CPUs
+(e.g, TensorBoards, cpu only notebooks).
+
+Example of configuring default pod specs:
+
+.. code:: yaml
+
+    taskContainerDefaults:
+      cpuPodSpec:
+        metadata:
+          labels:
+            customLabel: cpu-label
+        spec:
+          containers:
+            volumeMounts:
+            - mountPath: /example-data
+              name: example-volume
+          volumes:
+            - name: example-volume
+              hostPath:
+                path: /data
+      gpuPodSpec:
+        metadata:
+          labels:
+            customLabel: gpu-label
+        spec:
+          containers:
+            volumeMounts:
+            - mountPath: /example-data
+              name: example-volume
+          volumes:
+            - name: example-volume
+              hostPath:
+                path: /data
+
+
+Configuring Per Task Pod Specs
+------------------------------
+
+In addition to default pod specs, it is also possible to configure custom pod specs for individual tasks. When defining
+a custom pod spec for a task, it will overwrite the default pod spec if one is defined. Pod specs for individual tasks
+can be configured under ``environment`` in the :ref:`experiment config <exp-environment>`.
+
+Example of configuring a pod spec for an individual task:
+
+.. code:: yaml
+
+    environment:
+      pod_spec:
+        metadata:
+          labels:
+            customLabel: task-specific-label
+
+Next Steps
+----------
+
+- :ref:`install-on-kubernetes`
+- :ref:`determined-on-kubernetes`

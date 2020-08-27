@@ -71,6 +71,7 @@ taskContainerDefaults:
   # Configure a default pod spec for all GPU tasks (experiments, notebooks, commands) and
   # CPU tasks (cpu notebooks, tensorboards, zero slot commands). If a pod spec is defined
   # for an individual task, that pod spec will replace the default one that is defined here.
+  # See https://docs:determined.ai/latest/topic-guides/custom-pod-specs.html for more details.
   # cpuPodSpec:
   # gpuPodSpec:
 

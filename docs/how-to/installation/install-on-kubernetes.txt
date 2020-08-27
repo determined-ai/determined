@@ -90,6 +90,17 @@ Instead of using ``shared_fs``, users should configure either ``AWS S3`` or ``GC
   users need to specify ``--scopes=storage-full`` to configure proper GCS access.
 
 
+Configuring Default Pod Specs (Optional)
+----------------------------------------
+
+As described in the :ref:`determined-on-kubernetes` guide, when tasks (e.g., experiments, notebooks) are started
+in a Determined cluster running on Kubernetes, the Determined master launches pods to execute these tasks.
+The Determined helm chart makes it possible to set default pod specs for all CPU and GPU tasks.
+The defaults can be defined in ``values.yaml`` under ``taskContainerDefaults.cpuPodSpec`` and
+``taskContainerDefaults.gpuPodSpec``. For examples of how to do this and a description of permissable
+fields please see the :ref:`specifying custom pod specs <custom-pod-specs>` guide.
+
+
 Configuring an External Database (Optional)
 -------------------------------------------
 
@@ -137,7 +148,7 @@ To uninstall Determined run:
 
 .. code::
 
-    # Please note that ff the Postgres Database was deployed by Determined it will
+    # Please note that if the Postgres Database was deployed by Determined it will
     # deleted as part of this, permanently removing all records of your experiments.
     helm delete <name for your deployment>
 
@@ -152,3 +163,4 @@ Next Steps
 - :ref:`quick-start`
 - :ref:`helm-config`
 - :ref:`determined-on-kubernetes`
+- :ref:`custom-pod-specs`

@@ -37,6 +37,7 @@ Topic guides discuss different concepts and topics about Determined and deep lea
 **Kubernetes**
 
 - :ref:`determined-on-kubernetes`
+- :ref:`custom-pod-specs`
 
 
 The full list of our topic guides can be found below:
@@ -46,6 +47,7 @@ The full list of our topic guides can be found below:
 
   benefits-of-determined
   determined-on-kubernetes
+  custom-pod-specs
   effective-distributed-training
   experiment-lifecycle
   checkpoints

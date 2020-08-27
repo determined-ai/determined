@@ -276,6 +276,14 @@ The master supports the following configuration settings:
     during distributed training. A valid port range is in the format of
     ``MIN:MAX``.
 
+  - ``cpu_pod_spec``: Defines the default pod spec which will be applied
+    to all CPU-only tasks when running on kubernetes. See :ref:`custom-pod-specs`
+    for details.
+
+  - ``gpu_pod_spec``: Defines the default pod spec which will be applied
+    to all GPU tasks when running on kubernetes. See :ref:`custom-pod-specs`
+    for details.
+
 - ``root``: Specifies the root directory of the state files. Defaults to
   ``/usr/share/determined/master``.
 
