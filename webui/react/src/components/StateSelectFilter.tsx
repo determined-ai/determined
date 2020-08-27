@@ -1,6 +1,6 @@
 import { Select } from 'antd';
 import { SelectValue } from 'antd/es/select';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { ALL_VALUE, CommandState, RunState } from 'types';
 import { commandStateToLabel, runStateToLabel } from 'utils/types';
@@ -32,6 +32,19 @@ const experimentOptions = Object.values(RunState).map((value) => (
 const StateSelectFilter: React.FC<Props> = ({
   onChange, showCommandStates, showExperimentStates, value,
 }: Props) => {
+  const options = useMemo(() => {
+    if (showExperimentStates && showCommandStates) {
+      return <>
+        <OptGroup key="experimentGroup" label="Experiment States">{experimentOptions}</OptGroup>
+        <OptGroup key="commandGroup" label="Command States">{commandOptions}</OptGroup>
+      </>;
+    } else if (showExperimentStates) {
+      return experimentOptions;
+    } else if (showCommandStates) {
+      return commandOptions;
+    }
+  }, [ showExperimentStates, showCommandStates ]);
+
   const handleSelect = useCallback((newValue: SelectValue) => {
     const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
     onChange(singleValue);
@@ -40,10 +53,7 @@ const StateSelectFilter: React.FC<Props> = ({
   return (
     <SelectFilter label="State" value={value} onSelect={handleSelect}>
       <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
-      {showExperimentStates &&
-        <OptGroup key="experimentGroup" label="Experiment States">{experimentOptions}</OptGroup>}
-      {showCommandStates &&
-        <OptGroup key="commandGroup" label="Command States">{commandOptions}</OptGroup>}
+      {options}
     </SelectFilter>
   );
 };
