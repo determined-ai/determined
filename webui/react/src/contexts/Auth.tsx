@@ -1,6 +1,5 @@
 import { generateContext } from 'contexts';
 import { Auth } from 'types';
-import { getCookie } from 'utils/browser';
 
 enum ActionType {
   MarkChecked,
