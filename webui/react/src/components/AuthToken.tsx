@@ -2,13 +2,14 @@ import { CopyOutlined } from '@ant-design/icons';
 import { Button, notification, Result } from 'antd';
 import React, { useCallback } from 'react';
 
+import { AUTH_COOKIE_KEY } from 'contexts/Auth';
 import { getCookie } from 'utils/browser';
 import { copyToClipboard } from 'utils/dom';
 
 import css from './AuthToken.module.scss';
 
 const AuthToken: React.FC = () => {
-  const token = getCookie('auth') || 'Auth token not found.';
+  const token = getCookie(AUTH_COOKIE_KEY) || 'Auth token not found.';
 
   const handleCopyToClipboard = useCallback(async () => {
     try {

@@ -1,7 +1,7 @@
 import axios, { CancelToken, CancelTokenSource } from 'axios';
 import { useCallback, useEffect, useState } from 'react';
 
-import Auth from 'contexts/Auth';
+import Auth, { AUTH_COOKIE_KEY } from 'contexts/Auth';
 import handleError, { ErrorType } from 'ErrorHandler';
 import { getCurrentUser, isAuthFailure } from 'services/api';
 import { getCookie } from 'utils/browser';
@@ -18,7 +18,7 @@ const useAuthCheck = (): (() => void) => {
 
   useEffect(() => {
     const checkAuth = async (cancelToken: CancelToken): Promise<void> => {
-      const authCookie = getCookie('auth');
+      const authCookie = getCookie(AUTH_COOKIE_KEY);
       if (!authCookie) {
         setAuth({ type: Auth.ActionType.MarkChecked });
         return;

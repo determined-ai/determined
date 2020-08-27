@@ -1,5 +1,6 @@
 import { generateContext } from 'contexts';
 import { Auth } from 'types';
+import { getCookie } from 'utils/browser';
 
 enum ActionType {
   MarkChecked,
@@ -7,6 +8,8 @@ enum ActionType {
   ResetChecked,
   Set,
 }
+
+export const AUTH_COOKIE_KEY = 'auth';
 
 /*
  * `checkCount` allows the `useAuthCheck` hook to keep tabs of how many times
@@ -30,7 +33,7 @@ const defaultAuth: State = {
 };
 
 const clearAuthCookie = (): void => {
-  document.cookie = 'auth=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+  document.cookie = `${AUTH_COOKIE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 };
 
 const reducer = (state: State, action: Action): State => {
