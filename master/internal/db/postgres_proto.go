@@ -5,6 +5,8 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -38,5 +40,11 @@ func (db *PgDB) QueryProto(queryName string, v interface{}, args ...interface{})
 		return errors.Wrapf(protojson.Unmarshal(bytes, message),
 			"error converting row to Protobuf struct")
 	}
-	return db.queryRows(queryName, parser, v, args...)
+	err := db.queryRows(queryName, parser, v, args...)
+	switch {
+	case err == ErrNotFound:
+		return status.Errorf(codes.NotFound, "not found")
+	default:
+		return err
+	}
 }
