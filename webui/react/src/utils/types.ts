@@ -4,6 +4,7 @@ import {
 } from 'types';
 
 import { deletePathList, getPathList, isNumber, setPathList } from './data';
+import { serverAddress } from './routes';
 import { getDuration } from './time';
 
 /* Conversions to Tasks */
@@ -20,7 +21,7 @@ export const waitPageUrl = (command: Command): string | undefined => {
   if (!eventUrl || !proxyUrl) return;
   const event = encodeURIComponent(eventUrl);
   const jump = encodeURIComponent(proxyUrl);
-  return `/wait?event=${event}&jump=${jump}`;
+  return `${serverAddress(true)}/wait?event=${event}&jump=${jump}`;
 };
 
 export const commandToTask = (command: Command): RecentCommandTask => {
