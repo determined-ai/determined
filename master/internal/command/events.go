@@ -2,6 +2,7 @@ package command
 
 import (
 	"container/ring"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/logger"
 )
 
 const defaultEventBufferSize = 200
@@ -44,11 +46,22 @@ type event struct {
 	LogEvent *string `json:"log_event"`
 }
 
+type requestParams struct {
+	Offset int
+}
+
+type Subscriber struct {
+	Send   webAPI.ServerSend
+	Params requestParams
+	// Handler ctx
+}
+
 type eventManager struct {
-	bufferSize int
-	buffer     *ring.Ring
-	closed     bool
-	seq        int
+	bufferSize  int
+	buffer      *ring.Ring
+	closed      bool
+	seq         int
+	subscribers []Subscriber
 }
 
 func newEventManager() *eventManager {
@@ -58,9 +71,41 @@ func newEventManager() *eventManager {
 	}
 }
 
+func (e *eventManager) addSubscriber(s Subscriber) {
+	// sync?
+	msg := fmt.Sprintf("added subscriber")
+	// fmt.Println(msg)
+	s.Send(logger.Entry{ID: 0, Message: msg})
+	e.subscribers = append(e.subscribers, s)
+}
+
+func (e *eventManager) removeSubscriber(s Subscriber) {
+	// TODO
+}
+
+// type LogRequest interface {
+// 	Props() LogStreamRequest
+// }
+
+func (e *eventManager) publish(ev *event) {
+	// fmt.Println("publishing message")
+	if ev.LogEvent == nil {
+		fmt.Println("no log content")
+		return
+	}
+	for _, s := range e.subscribers {
+		// fmt.Printf("sending to subscriber %v\n", idx)
+		s.Send(logger.Entry{ID: e.seq, Message: *ev.LogEvent})
+	}
+}
+
 func (e *eventManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
+	case Subscriber:
+		e.addSubscriber(msg)
 	case event:
+		// str, _ := json.Marshal(msg)
+		// fmt.Println(string(str))
 		msg.ParentID = ctx.Self().Address().Parent().Local()
 		msg.ID = uuid.New().String()
 		msg.Seq = e.seq
@@ -88,6 +133,20 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 				child.Stop()
 			}
 		}
+		e.publish(&msg)
+
+	case webAPI.LogStreamRequest:
+		events := e.getClientEvents(msg)
+		var logs []logger.Entry
+		for _, event := range events {
+			// FIXME use ok instead?
+			evMsg, err := eventToAPILogResponse(event)
+			if err != nil {
+				continue
+			}
+			logs = append(logs, *evMsg)
+		}
+		ctx.Respond(logs)
 
 	case api.WebSocketConnected:
 		follow, err := strconv.ParseBool(msg.Ctx.QueryParam("follow"))
@@ -150,6 +209,36 @@ func validEvent(e event, greaterThanSeq, lessThanSeq *int) bool {
 	return true
 }
 
+func eventToAPILogResponse(ev event) (*logger.Entry, error) {
+	// evJSON, err := json.Marshal(ev)
+	// if err != nil {
+	// 	return nil, errors.Wrapf(err, "failed to marshal event")
+	// }
+	return &logger.Entry{
+		ID: ev.Seq,
+		// Message: string(evJSON),
+	}, nil
+}
+
+func (e *eventManager) getClientEvents(req webAPI.LogStreamRequest) []event {
+	events := e.buffer
+	clientEvents := make([]event, 0)
+
+	offset, limit := webAPI.EffectiveOffsetNLimit(req.Offset, req.Limit, e.bufferSize)
+
+	for i := 0; i < e.bufferSize; i++ {
+		if events.Value != nil {
+			event := events.Value.(event)
+			fmt.Printf("looking at event seq%d\n, off is %d, limit is %d \n", event.Seq, offset, limit)
+			if event.Seq >= offset && (limit < 1 || len(clientEvents) < limit) {
+				clientEvents = append(clientEvents, event)
+			}
+		}
+		events = events.Next()
+	}
+	return clientEvents
+}
+
 // handleAPIRequest handles HTTP API requests inbound to this actor.
 func (e *eventManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	switch apiCtx.Request().Method {
@@ -163,6 +252,7 @@ func (e *eventManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 			ctx.Respond(echo.NewHTTPError(http.StatusBadRequest))
 			return
 		}
+		// TODO maybe rewrite using clientEvents?
 		events := e.buffer
 		clientEvents := make([]event, 0)
 

@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -26,4 +29,39 @@ func (a *apiServer) GetNotebook(
 func (a *apiServer) KillNotebook(
 	_ context.Context, req *apiv1.KillNotebookRequest) (resp *apiv1.KillNotebookResponse, err error) {
 	return resp, a.actorRequest(fmt.Sprintf("/notebooks/%s", req.NotebookId), req, &resp)
+}
+
+func logToProtoNotebookLog(log logger.Entry) *apiv1.NotebookLogsResponse {
+	return &apiv1.NotebookLogsResponse{Id: int32(log.ID), Message: log.Message}
+}
+
+func (a *apiServer) NotebookLogs(
+	req *apiv1.NotebookLogsRequest, resp apiv1.Determined_NotebookLogsServer) error {
+	// if err := grpc.ValidateRequest(
+	// 	grpc.ValidateLimit(req.Limit),
+	// ); err != nil {
+	// 	return err
+	// }
+	// total := a.m.logs.Len()
+	// offset, limit := effectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
+
+	logRequest := api.LogStreamRequest{
+		Offset: int(req.Offset),
+		Limit:  int(req.Limit),
+		Follow: req.Follow,
+	}
+
+	eventManagerAddr := actor.Addr("notebooks", req.NotebookId, "events")
+
+	onLogEntry := func(log logger.Entry) error {
+		return resp.Send(logToProtoNotebookLog(log))
+	}
+
+	// resp.Context().Done()
+	// a.m.system.TellAt(
+	// 	eventsActorAddr,
+	// 	command.Subscriber{Send: convert(resp.Send)},
+	// )
+
+	return api.ProcessLogs(logRequest, eventManagerAddr, a.m.system, onLogEntry)
 }
