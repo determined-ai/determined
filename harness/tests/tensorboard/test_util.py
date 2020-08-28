@@ -30,6 +30,7 @@ def get_dummy_env() -> det.EnvContext:
         workload_manager_type="",
         hparams={"global_batch_size": 1},
         det_rendezvous_ports="",
+        det_trial_unique_port_offset=0,
         det_trial_runner_network_interface=constants.AUTO_DETECT_TRIAL_RUNNER_NETWORK_INTERFACE,
         det_trial_id="1",
         det_experiment_id="1",

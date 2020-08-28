@@ -79,9 +79,8 @@ type StartContainer struct {
 	WorkloadManagerType model.WorkloadManagerType `json:"workload_manager_type"`
 	AdditionalFiles     archive.Archive           `json:"additional_files"`
 
-	// TODO(DET-3821): This is used to hint the resource provider to override defaults and start
-	// the container in host mode iff it has been scheduled across multiple agents. Remove this
-	// when multiple horovod containers can run per agent in host-mode.
+	// This is used to hint the resource provider to override defaults and start
+	// the container in host mode iff it has been scheduled across multiple agents.
 	IsMultiAgent bool `json:"is_multi_agent"`
 }
 

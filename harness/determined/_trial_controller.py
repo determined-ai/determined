@@ -287,8 +287,12 @@ class LoopTrialController(TrialController):
     def _initialize_train_process_comm(self) -> None:
         check.true(self.hvd_config.use)
 
-        srv_pub_port = constants.INTER_TRAIN_PROCESS_COMM_PORT_1
-        srv_pull_port = constants.INTER_TRAIN_PROCESS_COMM_PORT_2
+        srv_pub_port = (
+            constants.INTER_TRAIN_PROCESS_COMM_PORT_1 + self.env.det_trial_unique_port_offset
+        )
+        srv_pull_port = (
+            constants.INTER_TRAIN_PROCESS_COMM_PORT_2 + self.env.det_trial_unique_port_offset
+        )
 
         if self.is_chief:
             logging.debug(f"Chief setting up server with ports {srv_pub_port}/{srv_pull_port}.")
