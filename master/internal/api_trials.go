@@ -164,7 +164,11 @@ func (a *apiServer) GetExperimentTrials(
 ) (*apiv1.GetExperimentTrialsResponse, error) {
 	resp := &apiv1.GetExperimentTrialsResponse{}
 
-	switch err := a.m.db.QueryProto("get_trials_for_experiment", &resp.Trials, req.ExperimentId); {
+	switch err := a.m.db.QueryProto(
+		"proto_get_trials_for_experiment",
+		&resp.Trials,
+		req.ExperimentId,
+	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "experiment %d not found:", req.ExperimentId)
 	case err != nil:
@@ -173,7 +177,7 @@ func (a *apiServer) GetExperimentTrials(
 	a.filter(&resp.Trials, func(i int) bool {
 		v := resp.Trials[i]
 		// If there are no filters, return true.
-		if len(req.States) != 0 {
+		if len(req.States) == 0 {
 			return true
 		}
 
@@ -195,8 +199,7 @@ func (a *apiServer) GetExperimentTrials(
 func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 	resp *apiv1.GetTrialResponse, err error,
 ) {
-	// DISCUSS name query and var this way? y/n
-	switch err := a.m.db.QueryProto("get_prototrial", &resp.Trial, req.TrialId); {
+	switch err := a.m.db.QueryProto("proto_get_trial", &resp.Trial, req.TrialId); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.TrialId)
 	case err != nil:
