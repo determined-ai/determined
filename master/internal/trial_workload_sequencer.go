@@ -259,11 +259,11 @@ func (s *trialWorkloadSequencer) computeValidationMetricsCompleted(
 func (s *trialWorkloadSequencer) checkpointModelCompleted(
 	msg searcher.CompletedMessage,
 ) (searcher.Runnable, interface{}) {
+	defer s.snapshotState()
 	checkpoint := checkpointFromCheckpointMetrics(*msg.CheckpointMetrics)
 	s.batchesSinceLastCkpt = 0
 	s.needPostValidationCkpt = false
 	s.latestCheckpoint = &checkpoint
-	s.snapshotState()
 	if !s.UpToDate() {
 		if tOp, ok := s.ops[s.curOpIdx].(searcher.Checkpoint); ok {
 			s.curOpIdx++
