@@ -23,4 +23,4 @@ Prerequisites
   not yet installed Determined, refer to the :ref:`installation instructions
   <install-cluster>`.
 - The ``determined`` Python package should be installed in your local development
-  environment, including TensorFlow: ``pip install determined[tensorflow]``.
+  environment, including TensorFlow: ``pip install 'determined[tensorflow]'``.
