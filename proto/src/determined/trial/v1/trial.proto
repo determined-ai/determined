@@ -23,5 +23,5 @@ message Trial {
   // Trial hyperparameters.
   google.protobuf.Struct hparams = 6;
   // The current processed batches.
-  int32 batches_processed = 7;
+  int32 total_batches_processed = 7;
 }

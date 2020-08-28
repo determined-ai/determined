@@ -50,7 +50,7 @@ message GetTrialCheckpointsRequest {
     }
     // The trial id.
     int32 id = 1;
-    // Sort checkpoints by the given field
+    // Sort checkpoints by the given field.
     SortBy sort_by = 2;
     // Order checkpoints in either ascending or descending order.
     OrderBy order_by = 3;
@@ -103,7 +103,7 @@ message GetExperimentTrialsRequest {
         // Return trials sorted by state.
         SORT_BY_STATE = 6;
     }
-    // Sort trials by the given field
+    // Sort trials by the given field.
     SortBy sort_by = 1;
     // Order trials in either ascending or descending order.
     OrderBy order_by = 2;

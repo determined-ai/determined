@@ -11,6 +11,6 @@ SELECT t.id AS id,
             AND s.state = 'COMPLETED'
         ORDER BY s.id DESC
         LIMIT 1
-    ) AS batches_processed
+    ) AS total_batches_processed
 FROM trials t
 WHERE t.experiment_id = $1
