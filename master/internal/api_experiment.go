@@ -333,18 +333,17 @@ func (a *apiServer) PatchExperiment(
 		Description string   `json:"description"`
 	}
 	patches := experimentPatch{Description: exp.Description, Labels: exp.Labels}
-	// QUESTION if I maks this json or manually generate the json string
-	// we can submit only the necessary parts of the patch and avoid getting the experiment at start.
 	marshalledPatches, err := json.Marshal(patches)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to marshal experiment patches")
 	}
 
 	if _, err := a.m.db.RawQuery(
 		"patch_experiment",
 		req.Experiment.Id,
-		string(marshalledPatches)); err != nil {
-		return nil, err
+		marshalledPatches,
+	); err != nil {
+		return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
 	}
 	return &apiv1.PatchExperimentResponse{Experiment: &exp}, nil
 }
