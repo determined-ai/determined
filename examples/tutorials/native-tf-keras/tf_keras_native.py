@@ -32,6 +32,8 @@ model.fit(x_train, y_train, validation_data=(x_test, y_test), epochs=1)
 # Here is what it looks like to train the exact same model using the Native API
 # to launch an experiment on a Determined cluster.
 
+import tensorflow as tf
+
 import determined as det
 from determined import experimental
 from determined.experimental.keras import init
