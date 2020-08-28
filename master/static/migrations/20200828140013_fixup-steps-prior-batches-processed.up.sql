@@ -1,6 +1,6 @@
 -- This backfills steps.prior_batches_processed, again.
 -- In 0.13.0, a bad migration was released that set this value incorrectly, but that was also
--- so ineffecient it hung for large installations. If a user skipped 0.13.0, this will
+-- so inefficient it hung for large installations. If a user skipped 0.13.0, this will
 -- be a no-op since migration 20200729211811 was corrected post-release; however, if a user
 -- already successfully upgraded to 0.13.1, this will correct the old, incorrect values
 -- from migration found in 0.13.0.
