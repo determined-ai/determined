@@ -199,9 +199,9 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 	resp *apiv1.GetTrialResponse, err error,
 ) {
 	// DISCUSS name query and var this way? y/n
-	switch err := a.m.db.QueryProto("get_prototrial", &resp.Trial, req.Id); {
+	switch err := a.m.db.QueryProto("get_prototrial", &resp.Trial, req.TrialId); {
 	case err == db.ErrNotFound:
-		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.Id)
+		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.TrialId)
 	case err != nil:
 		return nil, err
 	}

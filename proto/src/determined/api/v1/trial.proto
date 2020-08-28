@@ -129,7 +129,7 @@ message GetExperimentTrialsResponse {
 // Get trial details.
 message GetTrialRequest {
     // The requested trial's id.
-    int32 id = 1;
+    int32 trial_id = 1;
 }
 // Response to GetTrialRequest.
 message GetTrialResponse {
