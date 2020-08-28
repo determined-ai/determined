@@ -8,6 +8,7 @@ import "determined/experiment/v1/experiment.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
 import "google/protobuf/timestamp.proto";
 
+// Trial is a set of workloads and are exploring a determined set of hyperparameters.
 message Trial {
   // The id of the trial.
   int32 id = 1;

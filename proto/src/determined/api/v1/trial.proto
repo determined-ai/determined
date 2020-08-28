@@ -133,5 +133,6 @@ message GetTrialRequest {
 }
 // Response to GetTrialRequest.
 message GetTrialResponse {
+    // The requested trial.
     determined.trial.v1.Trial trial = 1;
 }
