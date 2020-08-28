@@ -10,7 +10,3 @@
     agent with 8 GPUs can now be used to run two 4-GPU distributed training
     jobs. This feature is particularly useful as a way to improve utilization
     and fair resource allocation for smaller clusters.
-
-  - This feature is currently disabled for clusters configured to use host-mode
-    networking (i.e., ``task_container_defaults.network_mode`` is set to
-    ``host`` in the :ref:`master configuration <master-configuration>`).

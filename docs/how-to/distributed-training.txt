@@ -93,39 +93,33 @@ automatically, ensuring that all of the compute resources required for a job are
 available before the job itself is launched. Users should be aware of the
 following details about scheduler behavior when using distributed training:
 
-- When using Docker host-mode networking (e.g., when
-  ``task_container_defaults.network_mode`` is set to ``host`` in the
-  :ref:`master configuration <master-configuration>`), Determined will schedule
-  distributed training jobs onto dedicated agent machines. This is to avoid potential
-  network port conflicts between host-mode jobs on the same machine. In other
-  words, a distributed training job will only be scheduled onto an agent if this
-  will result in utilizing all of the agent's GPUs. For example, if all of the
+- If ``slots_per_trial`` is smaller than the number of slots on a
+  single agent, Determined will consider scheduling multiple distributed training
+  jobs on a single agent. This is designed to improve utilization and to allow
+  multiple small training jobs to run on a single agent. For example, an agent
+  with 8 GPUs could be assigned two 4-GPU jobs, or four 2-GPU jobs.
+- Otherwise, if ``slots_per_trial`` is greater than the number of slots on a single agent,
+  Determined will schedule the distributed training jobs onto multiple agents.
+  A multi-machine distributed training job will only be scheduled onto an agent if
+  this will result in utilizing all of the agent's GPUs. This is to ensure good
+  performance and utilize the full network bandwidth of each machine, while
+  minimizing inter-machine networking. For example, if all of the
   agents in your cluster have 8 GPUs each and you are using host-mode
   networking, you should submit jobs with ``slots_per_trial`` set to a multiple
   of 8 (e.g., 8, 16, or 24).
-- Similarly, if ``slots_per_trial`` is greater than the number of slots on a
-  single agent, Determined will again schedule distributed training jobs onto
-  dedicated agents. This is to ensure good performance and utilize the full
-  network bandwidth of each machine, while minimizing inter-machine networking.
-- Otherwise, if ``slots_per_trial`` is smaller than the number of slots on a
-  single agent and Docker networking is being used, Determined will consider
-  scheduling multiple distributed training jobs on a single agent. This is
-  designed to improve utilization and to allow multiple small training jobs to
-  run on a single agent. For example, an agent with 8 GPUs could be assigned two
-  4-GPU jobs, or four 2-GPU jobs.
 
 .. warning::
 
-  If the scheduling constraints described above are not satisfied, distributed
-  training jobs will not be scheduled and will wait indefinitely. For example,
-  if every agent in the cluster has 8 GPUs, a job with ``slots_per_trial`` set
-  to ``12`` will never be scheduled.
+  If the scheduling constraints for multi-machine distributed training described
+  above are not satisfied, distributed training jobs will not be scheduled and
+  will wait indefinitely. For example, if every agent in the cluster has 8 GPUs,
+  a job with ``slots_per_trial`` set to ``12`` will never be scheduled.
 
   If a multi-GPU experiment does not become active after a minute or so, please
-  confirm that ``slots_per_trial`` is set so that it can be scheduled within the
-  constraints described above. The CLI command ``det task list`` can also be
-  used to check if any other tasks are using GPUs and preventing your experiment
-  from using all the GPUs on a machine.
+  confirm that ``slots_per_trial`` is set so that it can be scheduled within these
+  constraints. The CLI command ``det task list`` can also be used to check if any
+  other tasks are using GPUs and preventing your experiment from using all the
+  GPUs on a machine.
 
 Next Steps
 ----------
