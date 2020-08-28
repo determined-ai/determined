@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/struct.proto";
+import "google/protobuf/field_mask.proto";
 
 import "determined/api/v1/pagination.proto";
 import "determined/checkpoint/v1/checkpoint.proto";
@@ -48,7 +49,7 @@ message GetExperimentsRequest {
         // Return experiments sorted by user.
         SORT_BY_USER = 10;
     }
-    // Sort experiments by the given field
+    // Sort experiments by the given field.
     SortBy sort_by = 1;
     // Order experiments in either ascending or descending order.
     OrderBy order_by = 2;
@@ -89,7 +90,7 @@ message PreviewHPSearchResponse {
 
 // Activate an experiment.
 message ActivateExperimentRequest {
-    // The experiment id
+    // The experiment id.
     int32 id = 1;
 }
 // Response to ActivateExperimentRequest.
@@ -98,7 +99,7 @@ message ActivateExperimentResponse {
 
 // Pause an experiment.
 message PauseExperimentRequest {
-    // The experiment id
+    // The experiment id.
     int32 id = 1;
 }
 // Response to PauseExperimentRequest.
@@ -107,7 +108,7 @@ message PauseExperimentResponse {
 
 // Cancel an experiment.
 message CancelExperimentRequest {
-    // The experiment id
+    // The experiment id.
     int32 id = 1;
 }
 // Response to CancelExperimentRequest.
@@ -116,7 +117,7 @@ message CancelExperimentResponse {
 
 // Kill an experiment.
 message KillExperimentRequest {
-    // The experiment id
+    // The experiment id.
     int32 id = 1;
 }
 // Response to KillExperimentRequest.
@@ -125,7 +126,7 @@ message KillExperimentResponse {
 
 // Archive an experiment.
 message ArchiveExperimentRequest {
-  // The experiment id
+  // The experiment id.
   int32 id = 1;
 }
 // Response to ArchiveExperimentRequest.
@@ -133,12 +134,25 @@ message ArchiveExperimentResponse {}
 
 // Unarchive an experiment.
 message UnarchiveExperimentRequest {
-  // The experiment id
+  // The experiment id.
   int32 id = 1;
 }
 // Response to UnarchiveExperimentRequest.
 message UnarchiveExperimentResponse {}
 
+// Patch an experiment by providing the updated attributes.
+message PatchExperimentRequest {
+  // Patched experiment attributes.
+  determined.experiment.v1.Experiment experiment = 1;
+  // Update mask.
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+// Response to PatchExperimentRequest.
+message PatchExperimentResponse {
+  // Patched experiment.
+  determined.experiment.v1.Experiment experiment = 1;
+}
 
 // Get a list of checkpoints for an experiment.
 message GetExperimentCheckpointsRequest {

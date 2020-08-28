@@ -257,7 +257,7 @@ func (a *apiServer) ArchiveExperiment(
 		return nil, errors.Wrapf(err, "loading experiment %v", id)
 	}
 	if _, ok := model.TerminalStates[dbExp.State]; !ok {
-		return nil, errors.Errorf("cannot delete experiment %v in non terminate state %v",
+		return nil, errors.Errorf("cannot archive experiment %v in non terminate state %v",
 			id, dbExp.State)
 	}
 
@@ -285,7 +285,7 @@ func (a *apiServer) UnarchiveExperiment(
 		return nil, errors.Wrapf(err, "loading experiment %v", id)
 	}
 	if _, ok := model.TerminalStates[dbExp.State]; !ok {
-		return nil, errors.Errorf("cannot delete experiment %v in non terminate state %v",
+		return nil, errors.Errorf("cannot unarchive experiment %v in non terminate state %v",
 			id, dbExp.State)
 	}
 
@@ -301,6 +301,51 @@ func (a *apiServer) UnarchiveExperiment(
 		return nil, errors.Wrapf(err, "failed to archive experiment %d",
 			req.Id)
 	}
+}
+
+func (a *apiServer) PatchExperiment(
+	ctx context.Context, req *apiv1.PatchExperimentRequest,
+) (*apiv1.PatchExperimentResponse, error) {
+	var exp experimentv1.Experiment
+	switch err := a.m.db.QueryProto("get_experiment", &exp, req.Experiment.Id); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", req.Experiment.Id)
+	case err != nil:
+		return nil, errors.Wrapf(err, "error fetching experiment from database: %d", req.Experiment.Id)
+	}
+
+	paths := req.UpdateMask.GetPaths()
+	for _, path := range paths {
+		switch {
+		case path == "description":
+			exp.Description = req.Experiment.Description
+		case path == "labels":
+			exp.Labels = req.Experiment.Labels
+		case !strings.HasPrefix(path, "update_mask"):
+			return nil, status.Errorf(
+				codes.InvalidArgument,
+				"only description and labels fields are mutable. cannot update %s", path)
+		}
+	}
+
+	type experimentPatch struct {
+		Labels      []string `json:"labels"`
+		Description string   `json:"description"`
+	}
+	patches := experimentPatch{Description: exp.Description, Labels: exp.Labels}
+	marshalledPatches, err := json.Marshal(patches)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal experiment patches")
+	}
+
+	if _, err := a.m.db.RawQuery(
+		"patch_experiment",
+		req.Experiment.Id,
+		marshalledPatches,
+	); err != nil {
+		return nil, errors.Wrapf(err, "error updating experiment in database: %d", req.Experiment.Id)
+	}
+	return &apiv1.PatchExperimentResponse{Experiment: &exp}, nil
 }
 
 func (a *apiServer) GetExperimentCheckpoints(

@@ -172,7 +172,11 @@ service Determined {
         option (google.api.http) = {post: "/api/v1/experiments/{id}/unarchive" };
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
     }
-
+    // Patch experiment fields.
+    rpc PatchExperiment(PatchExperimentRequest) returns (PatchExperimentResponse) {
+        option (google.api.http) = { patch: "/api/v1/experiments/{experiment.id}" body: "experiment" };
+        option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Experiments"};
+    }
 
     // Get a list of checkpoints for an experiment.
     rpc GetExperimentCheckpoints(GetExperimentCheckpointsRequest) returns (GetExperimentCheckpointsResponse) {
@@ -297,7 +301,7 @@ service Determined {
         option (google.api.http) = {post: "/api/v1/models/{model.name}" body: "model"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Models"};
     }
-    // Update model fields
+    // Patch model fields
     rpc PatchModel(PatchModelRequest) returns (PatchModelResponse) {
         option (google.api.http) = {patch: "/api/v1/models/{model.name}" body: "*"};
         option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {tags: "Models"};
