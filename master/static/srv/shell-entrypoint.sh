@@ -13,16 +13,21 @@ python3.6 -m pip install --user /opt/determined/wheels/determined*.whl
 # Prepend each key in authorized_keys with a set of environment="KEY=VALUE"
 # options to inject the entire docker environment into the eventual ssh
 # session via an options in the authorized keys file.  See syntax described in
-# `man 8 sshd`.  Normal ssh mechanisms for overriding variables as part of the
-# protocol (like TERM or LANG) will take precedence, as will normal mechanisms
-# like a ~/.bashrc.  The purpose of this is to honor the environment variable
+# `man 8 sshd`.  The purpose of this is to honor the environment variable
 # settings as they are set for experiment or notebook configs, while still
 # allowing customizations via normal ssh mechanisms.
+#
+# Not all variables should be overwritten this way; the HOME variable should be
+# set by ssh, and the TERM, LANG, and LC_* variables should be passed in from
+# the client.
+#
+# Normal mechanisms like a ~/.bashrc will override these variables.
 #
 # After openssh 8+ is the only version of openssh supported (that is, after we
 # only support ubuntu >= 20.04), we can use the more obvious SetEnv option and
 # skip this awkwardness.
-vars="$(env | sed -e 's/=.*//')"
+blacklist="^(_|HOME|TERM|LANG|LC_.*)"
+vars="$(env | sed -E -e "s/=.*//; /$blacklist/d")"
 options="$(
     for var in $vars ; do
         # Note that the syntax ${!var} is for a double dereference.
