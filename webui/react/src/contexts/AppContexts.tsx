@@ -13,7 +13,7 @@ import {
   getTensorboards, getUsers,
 } from 'services/api';
 import { EmptyParams, ExperimentsParams } from 'services/types';
-import { Agent, Command, Experiment, User } from 'types';
+import { Agent, Command, DetailedUser, Experiment } from 'types';
 import { activeRunStates } from 'utils/types';
 
 const AppContexts: React.FC = () => {
@@ -27,7 +27,7 @@ const AppContexts: React.FC = () => {
   const setTensorboards = Tensorboards.useActionContext();
   const setOverview = ClusterOverview.useActionContext();
   const [ usersResponse, triggerUsersRequest ] =
-    useRestApi<EmptyParams, User[]>(getUsers, {});
+    useRestApi<EmptyParams, DetailedUser[]>(getUsers, {});
   const [ agentsResponse, triggerAgentsRequest ] =
     useRestApi<EmptyParams, Agent[]>(getAgents, {});
   const [ commandsResponse, triggerCommandsRequest ] =

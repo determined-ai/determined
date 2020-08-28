@@ -1,7 +1,7 @@
 import {
-  ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType, Experiment, ExperimentFilters,
-  ExperimentItem, ExperimentTask, RecentCommandTask, RecentEvent, RecentExperimentTask,
-  RecentTask, RunState, Task, TaskFilters, TaskType, User,
+  ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType, Experiment,
+  ExperimentFilters, ExperimentItem, ExperimentTask, RecentCommandTask, RecentEvent,
+  RecentExperimentTask, RecentTask, RunState, Task, TaskFilters, TaskType, User,
 } from 'types';
 import { terminalCommandStates } from 'utils/types';
 
@@ -30,9 +30,9 @@ function generateTask(idx: number): Task & RecentEvent {
       name: 'opened',
     },
     name: `${idx}`,
-    ownerId: user.id,
     startTime,
     url: '#',
+    userId: user.id,
   };
 }
 
@@ -51,7 +51,7 @@ export function generateExperimentTask(idx: number): RecentExperimentTask {
 export function generateCommandTask(idx: number): RecentCommandTask {
   const state = getRandomElementOfEnum(CommandState);
   const task = generateTask(idx);
-  let username = sampleUsers.find(user => user.id === task.ownerId)?.username;
+  let username = sampleUsers.find(user => user.id === task.userId)?.username;
   if (!username)
     username = sampleUsers[Math.floor(Math.random() * sampleUsers.length)].username;
   return {
@@ -138,7 +138,7 @@ const matchesUser = <T extends AnyTask | ExperimentItem>(
 ): boolean => {
   if (!username) return true;
   const selectedUser = users.find(u => u.username === username);
-  return !!selectedUser && (task.ownerId === selectedUser.id);
+  return !!selectedUser && (task.userId === selectedUser.id);
 };
 
 export const filterExperiments = (
@@ -189,7 +189,7 @@ export const processExperiments = (experiments: Experiment[], users: User[]): Ex
       ...experiment,
       name: experiment.config.description,
       url: `/det/experiments/${experiment.id}`,
-      username: userMap[experiment.ownerId],
+      username: userMap[experiment.userId],
     };
   });
 };

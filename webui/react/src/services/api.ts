@@ -8,8 +8,8 @@ import { CreateNotebookParams, CreateTensorboardParams, EmptyParams,
   KillExpParams, LogsParams, PatchExperimentParams, PatchExperimentState, TaskLogsParams,
   TrialDetailsParams, TrialLogsParams } from 'services/types';
 import {
-  Agent, AnyTask, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails,
-  Log, TrialDetails, User,
+  Agent, AnyTask, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, Experiment,
+  ExperimentDetails, Log, TrialDetails,
 } from 'types';
 import { serverAddress } from 'utils/routes';
 import { isExperimentTask } from 'utils/task';
@@ -37,9 +37,9 @@ export const isNotFound = (e: any): boolean => {
   return e.response && e.response.status && e.response.status === 404;
 };
 
-export const getCurrentUser = generateApi<EmptyParams, User>(Config.getCurrentUser);
+export const getCurrentUser = generateApi<EmptyParams, DetailedUser>(Config.getCurrentUser);
 
-export const getUsers = generateApi<EmptyParams, User[]>(Config.getUsers);
+export const getUsers = generateApi<EmptyParams, DetailedUser[]>(Config.getUsers);
 
 /* Info */
 

@@ -3,19 +3,19 @@ import { isNumber } from 'util';
 import dayjs from 'dayjs';
 
 import {
-  decode, ioAgents, ioDeterminedInfo, ioExperiment,
-  ioExperimentDetails, ioExperiments, ioGenericCommand, ioGenericCommands, ioLog, ioLogs,
-  ioTaskLogs, ioTrialDetails, ioTypeAgents, ioTypeCheckpoint,
-  ioTypeDeterminedInfo, ioTypeExperiment, ioTypeExperimentConfig,
-  ioTypeExperimentDetails, ioTypeExperiments, ioTypeGenericCommand, ioTypeGenericCommands,
-  ioTypeLog, ioTypeLogs, ioTypeMetric, ioTypeStep, ioTypeTaskLogs, ioTypeTrial, ioTypeTrialDetails,
-  ioTypeUsers, ioTypeValidationMetrics, ioUsers,
+  decode, ioAgents, ioDetailedUsers, ioDeterminedInfo,
+  ioExperiment, ioExperimentDetails, ioExperiments, ioGenericCommand, ioGenericCommands, ioLog,
+  ioLogs, ioTaskLogs, ioTrialDetails, ioTypeAgents,
+  ioTypeCheckpoint, ioTypeDetailedUsers, ioTypeDeterminedInfo,
+  ioTypeExperiment, ioTypeExperimentConfig, ioTypeExperimentDetails, ioTypeExperiments,
+  ioTypeGenericCommand, ioTypeGenericCommands, ioTypeLog, ioTypeLogs, ioTypeMetric, ioTypeStep,
+  ioTypeTaskLogs, ioTypeTrial, ioTypeTrialDetails, ioTypeValidationMetrics,
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, CheckpointStorageType, Command, CommandState,
-  CommandType, DeterminedInfo, Experiment, ExperimentConfig, ExperimentDetails,
-  Log, LogLevel, RawJson, ResourceState, ResourceType, RunState,
-  Step, TrialDetails, TrialItem, User, ValidationMetrics,
+  CommandType, DetailedUser, DeterminedInfo, Experiment, ExperimentConfig,
+  ExperimentDetails, Log, LogLevel, RawJson, ResourceState, ResourceType,
+  RunState, Step, TrialDetails, TrialItem, ValidationMetrics,
 } from 'types';
 import { capitalize } from 'utils/string';
 
@@ -27,8 +27,8 @@ const dropNullMetrics = (ioMetrics: ioTypeMetric): Record<string, number> => {
   return metrics;
 };
 
-export const jsonToUsers = (data: unknown): User[] => {
-  const io = decode<ioTypeUsers>(ioUsers, data);
+export const jsonToUsers = (data: unknown): DetailedUser[] => {
+  const io = decode<ioTypeDetailedUsers>(ioDetailedUsers, data);
   return io.map(user => ({
     id: user.id,
     isActive: user.active,
@@ -91,13 +91,13 @@ export const jsonToGenericCommand = (data: unknown, type: CommandType): Command 
       experimentIds: io.misc.experiment_ids || undefined,
       trialIds: io.misc.trial_ids || undefined,
     } : undefined,
-    owner: {
-      id: io.owner.id,
-      username: io.owner.username,
-    },
     registeredTime: io.registered_time,
     serviceAddress: io.service_address || undefined,
     state: io.state as CommandState,
+    user: {
+      id: io.owner.id,
+      username: io.owner.username,
+    },
   };
 };
 
@@ -168,10 +168,10 @@ export const jsonToExperiment = (data: unknown): Experiment => {
     configRaw: (data as { config: RawJson }).config,
     endTime: io.end_time || undefined,
     id: io.id,
-    ownerId: io.owner_id,
     progress: io.progress != null ? io.progress : undefined,
     startTime: io.start_time,
     state: io.state as RunState,
+    userId: io.owner_id,
   };
 };
 
@@ -268,11 +268,11 @@ export const jsonToExperimentDetails = (data: unknown): ExperimentDetails => {
     configRaw: (data as { config: RawJson }).config,
     endTime: io.end_time || undefined,
     id: io.id,
-    ownerId: io.owner.id,
     progress: io.progress != null ? io.progress : undefined,
     startTime: io.start_time,
     state: io.state as RunState,
     trials: io.trials.map(ioToTrial),
+    userId: io.owner.id,
     username: io.owner.username,
     validationHistory: io.validation_history.map(vh => ({
       endTime: vh.end_time,
