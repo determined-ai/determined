@@ -97,9 +97,11 @@ Distributed Training
 Why do my distributed training experiments never start?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When scheduling a multi-machine distributed training job, Determined requires 
-that the job uses all of the slots (GPUs) on an agent. For example, in a
-cluster that consists of 8-GPU agents, an experiment with
+If :ref:`slots_per_trial <exp-config-resources-slots-per-trial>` is greater than
+the number of slots on a single agent, Determined will schedule it over multiple
+machines. When scheduling a multi-machine distributed training job, Determined
+requires  that the job uses all of the slots (GPUs) on an agent. For example, in
+a cluster that consists of 8-GPU agents, an experiment with
 :ref:`slots_per_trial <exp-config-resources-slots-per-trial>` set to ``12`` will
 never be scheduled, and will instead wait indefinitely. The :ref:`distributed
 training documentation <dtrain-scheduling>` describes this scheduling behavior
