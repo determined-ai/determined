@@ -120,6 +120,12 @@ def kill_tensorboard(args: Namespace) -> None:
             print(colored("Skipping: {} ({})".format(e, type(e).__name__), "red"))
 
 
+@authentication_required
+def tensorboard_config(args: Namespace) -> None:
+    res_json = api.get(args.master, "tensorboard/{}".format(args.tensorboard_id)).json()
+    print(render.format_object_as_yaml(res_json["config"]))
+
+
 # fmt: off
 
 args_description = [
@@ -146,6 +152,10 @@ args_description = [
             Arg("-d", "--detach", action="store_true",
                 help="run in the background and print the ID")
         ]),
+        Cmd("config", tensorboard_config,
+            "display TensorBoard config", [
+                Arg("tensorboard_id", type=str, help="TensorBoard ID")
+            ]),
         Cmd("open", open_tensorboard,
             "open existing TensorBoard instance", [
                 Arg("tensorboard_id", help="TensorBoard ID")
