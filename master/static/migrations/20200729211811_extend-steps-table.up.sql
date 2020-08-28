@@ -21,6 +21,6 @@ UPDATE public.steps AS s
 SET prior_batches_processed = (
     SELECT coalesce(sum(ss.num_batches), 0)
     FROM public.steps ss
-    WHERE ss.id < s.id
+    WHERE ss.id < s.id AND ss.trial_id = s.trial_id
 )
 WHERE s.prior_batches_processed IS NULL;
