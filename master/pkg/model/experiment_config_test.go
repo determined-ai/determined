@@ -17,6 +17,13 @@ func intP(x int) *int {
 	return &x
 }
 
+func zeroizeRandomSeedsBeforeCompare(a *ExperimentConfig, b *ExperimentConfig) {
+	// Because the default random seed is determined by the time, once in a great while these tests
+	// will fail due to the experiment configs being created at different times.
+	a.Reproducibility.ExperimentSeed = 0
+	b.Reproducibility.ExperimentSeed = 0
+}
+
 func TestLabelsMap(t *testing.T) {
 	actual := DefaultExperimentConfig()
 	assert.NilError(t, json.Unmarshal([]byte(`{
@@ -29,6 +36,7 @@ func TestLabelsMap(t *testing.T) {
 	expected.Labels = map[string]bool{
 		"l1": true, "l2": true,
 	}
+	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
 	assert.DeepEqual(t, actual, expected)
 }
 
@@ -44,6 +52,7 @@ func TestLabelsList(t *testing.T) {
 	expected.Labels = map[string]bool{
 		"l1": true, "l2": true,
 	}
+	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
 	assert.DeepEqual(t, actual, expected)
 }
 
@@ -60,6 +69,7 @@ func TestLabelsJoin(t *testing.T) {
 	expected.Labels = map[string]bool{
 		"l1": true, "l2": true, "l3": true,
 	}
+	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
 	assert.DeepEqual(t, actual, expected)
 }
 
