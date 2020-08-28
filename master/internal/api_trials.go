@@ -172,27 +172,24 @@ func (a *apiServer) GetExperimentTrials(
 	}
 	a.filter(&resp.Trials, func(i int) bool {
 		v := resp.Trials[i]
-		eliminate := false
+		// If there are no filters, return true.
+		if len(req.States) != 0 {
+			return true
+		}
 
-		if len(req.States) != 0 && !eliminate {
-			eliminate = true
-			for _, state := range req.States {
-				if state == v.State {
-					eliminate = false
-					break
-				}
+		// Or if the filters are matched, return true.
+		for _, state := range req.States {
+			if state == v.State {
+				return true
 			}
 		}
 
-		return !eliminate
+		// Else return false.
+		return false
 	})
 
 	a.sort(resp.Trials, req.OrderBy, req.SortBy, apiv1.GetExperimentTrialsRequest_SORT_BY_ID)
-	if err := a.paginate(&resp.Pagination, &resp.Trials, req.Offset, req.Limit); err != nil {
-		return nil, err
-	}
-
-	return resp, nil
+	return resp, a.paginate(&resp.Pagination, &resp.Trials, req.Offset, req.Limit)
 }
 
 func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
