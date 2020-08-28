@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
@@ -32,6 +33,26 @@ func (a *apiServer) checkExperimentExists(id int) error {
 	default:
 		return nil
 	}
+}
+
+func (a *apiServer) GetExperiment(
+	_ context.Context, req *apiv1.GetExperimentRequest,
+) (*apiv1.GetExperimentResponse, error) {
+	exp := &experimentv1.Experiment{}
+	switch err := a.m.db.QueryProto("get_experiment", exp, req.ExperimentId); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", req.ExperimentId)
+	case err != nil:
+		return nil, errors.Wrapf(err,
+			"error fetching experiment from database: %d", req.ExperimentId)
+	}
+
+	conf, err := a.m.db.ExperimentConfig(int(req.ExperimentId))
+	if err != nil {
+		return nil, errors.Wrapf(err,
+			"error fetching experiment config from database: %d", req.ExperimentId)
+	}
+	return &apiv1.GetExperimentResponse{Experiment: exp, Config: protoutils.ToStruct(conf)}, nil
 }
 
 func (a *apiServer) GetExperiments(
