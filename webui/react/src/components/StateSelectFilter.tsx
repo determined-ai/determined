@@ -30,7 +30,10 @@ const experimentOptions = Object.values(RunState).map((value) => (
 ));
 
 const StateSelectFilter: React.FC<Props> = ({
-  onChange, showCommandStates, showExperimentStates, value,
+  onChange,
+  showCommandStates,
+  showExperimentStates,
+  value,
 }: Props) => {
   const options = useMemo(() => {
     if (showExperimentStates && showCommandStates) {

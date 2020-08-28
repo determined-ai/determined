@@ -52,7 +52,8 @@ const Dashboard: React.FC = () => {
 
   const storage = useStorage('dashboard/tasks');
   const initFilters = storage.getWithDefault('filters', {
-    ...defaultFilters, username: getPath<string>(auth, 'user.username'),
+    ...defaultFilters,
+    username: getPath<string>(auth, 'user.username'),
   });
   const [ filters, setFilters ] = useState<TaskFilters>(initFilters);
 

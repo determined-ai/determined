@@ -30,8 +30,10 @@ const AuthToken: React.FC = () => {
     <Result
       className={css.base}
       extra={[
-        <Button icon={<CopyOutlined />}
-          key="copy" type="primary"
+        <Button
+          icon={<CopyOutlined />}
+          key="copy"
+          type="primary"
           onClick={handleCopyToClipboard}>
           Copy token to clipboard
         </Button>,

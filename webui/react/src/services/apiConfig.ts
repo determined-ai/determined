@@ -127,24 +127,23 @@ export const killExperiment: Api<KillExpParams, void> = {
 
 export const getExperimentSummaries: Api<ExperimentsParams, Experiment[]> = {
   httpOptions: (params) => ({
-    url: '/experiment-summaries' + (params.states ? '?states='+params.states.join(',') : ''),
+    url: [
+      '/experiment-summaries',
+      params.states ? `?states=${params.states.join(',')}` : '',
+    ].join(''),
   }),
   name: 'getExperimentSummaries',
   postProcess: (response) => jsonToExperiments(response.data),
 };
 
 export const getExperimentDetails: Api<ExperimentDetailsParams, ExperimentDetails> = {
-  httpOptions: (params) => ({
-    url: `/experiments/${params.id}/summary`,
-  }),
+  httpOptions: (params) => ({ url: `/experiments/${params.id}/summary` }),
   name: 'getExperimentDetails',
   postProcess: (response) => jsonToExperimentDetails(response.data),
 };
 
 export const getTrialDetails: Api<TrialDetailsParams, TrialDetails> = {
-  httpOptions: (params: TrialDetailsParams) => ({
-    url: `/trials/${params.id}/details`,
-  }),
+  httpOptions: (params: TrialDetailsParams) => ({ url: `/trials/${params.id}/details` }),
   name: 'getTrialDetails',
   postProcess: response => jsonToTrialDetails(response.data),
 };
@@ -189,9 +188,7 @@ export const createNotebook: Api<CreateNotebookParams, Command> = {
   httpOptions: (params) => {
     return {
       body: {
-        config: {
-          resources: { slots: params.slots },
-        },
+        config: { resources: { slots: params.slots } },
         context: null,
       },
       method: 'POST',
@@ -206,9 +203,7 @@ export const createTensorboard: Api<CreateTensorboardParams, Command> = {
   httpOptions: (params) => {
     const attrName = params.type === TBSourceType.Trial ? 'trial_ids' : 'experiment_ids';
     return {
-      body: {
-        [attrName]: params.ids,
-      },
+      body: { [attrName]: params.ids },
       method: 'POST',
       url: `${commandToEndpoint[CommandType.Tensorboard]}`,
     };
@@ -227,9 +222,7 @@ const buildQuery = (params: LogsParams): string => {
 };
 
 export const getMasterLogs: Api<LogsParams, Log[]> = {
-  httpOptions: (params: LogsParams) => ({
-    url: [ '/logs', buildQuery(params) ].join('?'),
-  }),
+  httpOptions: (params: LogsParams) => ({ url: [ '/logs', buildQuery(params) ].join('?') }),
   name: 'getMasterLogs',
   postProcess: response => jsonToLogs(response.data),
 };
@@ -247,7 +240,10 @@ export const getTaskLogs: Api<TaskLogsParams, Log[]> = {
 
 export const getTrialLogs: Api<TrialLogsParams, Log[]> = {
   httpOptions: (params: TrialLogsParams) => ({
-    url: [ `/trials/${params.trialId}/logs`, buildQuery(params) ].join('?'),
+    url: [
+      `/trials/${params.trialId}/logs`,
+      buildQuery(params),
+    ].join('?'),
   }),
   name: 'getTrialLogs',
   postProcess: response => jsonToTrialLogs(response.data),

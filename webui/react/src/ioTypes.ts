@@ -109,9 +109,7 @@ const ioCommandMisc = io.partial({
   trial_ids: io.union([ io.array(io.number), ioNullOrUndefined ]),
 });
 
-const ioCommandConfig = io.exact(io.type({
-  description: io.string,
-}));
+const ioCommandConfig = io.exact(io.type({ description: io.string }));
 
 const commandStates: Record<string, null> = Object.values(CommandState)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
@@ -243,9 +241,7 @@ const ioDataLayer = io.type({
   type: io.string,
 });
 
-const ioExpResources = io.type({
-  max_slots: io.union([ io.number, ioNullOrUndefined ]),
-});
+const ioExpResources = io.type({ max_slots: io.union([ io.number, ioNullOrUndefined ]) });
 
 const ioExperimentConfig = io.type({
   checkpoint_policy: io.string,
@@ -331,11 +327,7 @@ const ioTaskLog = io.type({
   scheduled_event: io.union([ io.string, ioNullOrUndefined ]),
   seq: io.number,
   service_ready_event: io.union([ io.type({}), ioNullOrUndefined ]),
-  snapshot: io.type({
-    config: io.type({
-      description: io.string,
-    }),
-  }),
+  snapshot: io.type({ config: io.type({ description: io.string }) }),
   terminate_request_event: io.union([ io.string, ioNullOrUndefined ]),
   time: io.string,
 });

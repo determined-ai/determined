@@ -26,9 +26,10 @@ module.exports = {
   plugins: [ 'import', 'react', 'react-hooks', 'sort-keys-fix' ],
   root: true,
   rules: {
-    '@typescript-eslint/explicit-module-boundary-types': [ 'warn', {
-      allowArgumentsExplicitlyTypedAsAny: true,
-    } ],
+    '@typescript-eslint/explicit-module-boundary-types': [
+      'warn',
+      { allowArgumentsExplicitlyTypedAsAny: true },
+    ],
     '@typescript-eslint/indent': [ 'error', 2 ],
     '@typescript-eslint/no-unused-vars': 'error',
     'array-bracket-spacing': [ 'error', 'always' ],
@@ -50,10 +51,18 @@ module.exports = {
     'no-multi-spaces': [ 'error', { ignoreEOLComments: true } ],
     'no-multiple-empty-lines': [ 'error', { max: 1, maxBOF: 0, maxEOF: 0 } ],
     'no-trailing-spaces': [ 'error', {} ],
+    'object-curly-newline': [ 'error', {
+      ExportDeclaration: { consistent: true },
+      ImportDeclaration: { consistent: true },
+      ObjectExpression: { multiline: true },
+      ObjectPattern: { multiline: true },
+    } ],
     'object-curly-spacing': [ 'error', 'always' ],
     'object-property-newline': [ 'error', { allowAllPropertiesOnSameLine: true } ],
     'quote-props': [ 'error', 'consistent-as-needed' ],
     'quotes': [ 'error', 'single', { avoidEscape: true } ],
+    'react/jsx-first-prop-new-line': [ 'error', 'multiline-multiprop' ],
+    'react/jsx-max-props-per-line': [ 'error', { when: 'multiline' } ],
     'react/jsx-sort-props': [ 'error', {
       callbacksLast: true,
       ignoreCase: true,
@@ -82,9 +91,7 @@ module.exports = {
     } ],
   },
   settings: {
-    'import/resolver': {
-      typescript: {}, // This loads <rootdir>/tsconfig.json to eslint
-    },
+    'import/resolver': { typescript: {} }, // This loads <rootdir>/tsconfig.json to eslint
     'react': { version: 'detect' },
   },
 };

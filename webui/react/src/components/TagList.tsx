@@ -18,7 +18,11 @@ interface Props {
 }
 
 const EditableTagList: React.FC<Props> = ({
-  className, tags, onChange, onCreate, onDelete,
+  className,
+  tags,
+  onChange,
+  onCreate,
+  onDelete,
 }: Props) => {
   const initialState = {
     editInputIndex: -1,

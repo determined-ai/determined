@@ -53,14 +53,10 @@ const CreateExperimentModal: React.FC<Props> = (
     onVisibleChange(false);
   };
   return <Modal
-    bodyStyle={{
-      padding: 0,
-    }}
+    bodyStyle={{ padding: 0 }}
     className={css.configModal}
     okText={props.okText}
-    style={{
-      minWidth: '60rem',
-    }}
+    style={{ minWidth: '60rem' }}
     title={props.title}
     visible={visible}
     onCancel={handleCancel}

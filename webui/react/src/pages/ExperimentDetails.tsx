@@ -118,7 +118,9 @@ const ExperimentDetailsComp: React.FC = () => {
   }, [ setForkModalVisible ]);
 
   const handleTableRow = useCallback((record: TrialItem) => ({
-    onClick: (event: React.MouseEvent) => handlePath(event, { path: record.url }),
+    onClick: (event: React.MouseEvent) => {
+      return handlePath(event, { path: record.url });
+    },
   }), []);
 
   const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {

@@ -13,9 +13,7 @@ interface Props {
   bodyBorder?: boolean;
 }
 
-const defaultProps = {
-  divider: false,
-};
+const defaultProps = { divider: false };
 
 const Section: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   const classes = [ css.base ];

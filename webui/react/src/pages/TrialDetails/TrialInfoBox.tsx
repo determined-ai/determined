@@ -4,10 +4,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 import CheckpointModal from 'components/CheckpointModal';
 import InfoBox from 'components/InfoBox';
 import Section from 'components/Section';
-import { Checkpoint, CheckpointDetail, CheckpointState, ExperimentDetails, RunState,
-  Step,
-  TrialDetails,
-  ValidationMetrics } from 'types';
+import {
+  Checkpoint, CheckpointDetail, CheckpointState, ExperimentDetails, RunState,
+  Step, TrialDetails, ValidationMetrics,
+} from 'types';
 import { numericSorter } from 'utils/data';
 import { formatDatetime } from 'utils/date';
 import { humanReadableBytes, humanReadableFloat } from 'utils/string';

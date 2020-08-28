@@ -6,8 +6,7 @@ import * as Config from 'services/apiConfig';
 import { CreateNotebookParams, CreateTensorboardParams, EmptyParams,
   ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams, KillCommandParams,
   KillExpParams, LogsParams, PatchExperimentParams, PatchExperimentState, TaskLogsParams,
-  TrialDetailsParams, TrialLogsParams,
-} from 'services/types';
+  TrialDetailsParams, TrialLogsParams } from 'services/types';
 import {
   Agent, AnyTask, Command, CommandType, Credentials, DeterminedInfo, Experiment, ExperimentDetails,
   Log, TrialDetails, User,

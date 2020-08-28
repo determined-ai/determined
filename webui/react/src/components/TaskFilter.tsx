@@ -33,7 +33,9 @@ const commandConfig = [
 const experimentConfig = [ { id: 'Experiment' } ];
 
 const TaskFilter: TaskFilterFC = <T extends TaskType = TaskType>({
-  filters, onChange, showExperiments = true, showLimit = true,
+  filters, onChange,
+  showExperiments = true,
+  showLimit = true,
 }: Props<T>) => {
   const allTypesOff = !Object.values(filters.types).reduce((acc, type) => (acc || type), false);
   const showCommandStates = allTypesOff ||

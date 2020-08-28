@@ -49,9 +49,7 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
     hole: 0.5,
     hoverinfo: 'skip',
     labels,
-    marker: {
-      colors,
-    },
+    marker: { colors },
     textinfo: 'label+value',
     type: 'pie',
     values,
@@ -61,21 +59,18 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
     data[0] = {
       ...data[0],
       labels: [ `no ${title} available` ],
-      marker: {
-        colors: [ lightTheme.colors.monochrome[13] ],
-      },
+      marker: { colors: [ lightTheme.colors.monochrome[13] ] },
       textinfo: 'label',
       values: [ 1 ],
     };
   }
 
-  return { data,
+  return {
+    data,
     layout: {
       annotations: [
         {
-          font: {
-            size: 20,
-          },
+          font: { size: 20 },
           showarrow: false,
           text: `${title} (${resources.length})`,
           x: 0.5,
@@ -84,7 +79,8 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
       ],
       hovermode: false,
       showlegend: false,
-    } };
+    },
+  };
 };
 
 const SlotChart: React.FC<Props> = ({ title, resources, ...rest }: Props) => {
