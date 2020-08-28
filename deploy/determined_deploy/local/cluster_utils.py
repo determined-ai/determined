@@ -90,7 +90,7 @@ def docker_compose(
     subprocess.run(args, env=process_env)
 
 
-def _wait_for_master(master_host: str, master_port: int) -> None:
+def _wait_for_master(master_host: str, master_port: int, cluster_name: str) -> None:
     for _ in range(50):
         try:
             r = api.get(_make_master_url(master_host, master_port), "info", authenticated=False)
@@ -100,7 +100,10 @@ def _wait_for_master(master_host: str, master_port: int) -> None:
             pass
         print("Waiting for master to be available...")
         time.sleep(2)
-    raise ConnectionError("Timed out connecting to Master")
+
+    print("Timed out connecting to master, but attempting to dump logs from cluster...")
+    docker_compose(["logs"], cluster_name)
+    raise ConnectionError("Timed out connecting to master")
 
 
 def master_up(
@@ -111,6 +114,7 @@ def master_up(
     db_password: str,
     delete_db: bool,
     autorestart: bool,
+    cluster_name: str,
 ):
     command = ["up", "-d"]
     extra_files = []
@@ -133,7 +137,7 @@ def master_up(
     }
     master_down(master_name, delete_db)
     docker_compose(command, master_name, env, extra_files=extra_files)
-    _wait_for_master("localhost", port)
+    _wait_for_master("localhost", port, cluster_name)
 
 
 def master_down(master_name: str, delete_db: bool) -> None:
@@ -163,6 +167,7 @@ def cluster_up(
         db_password=db_password,
         delete_db=delete_db,
         autorestart=autorestart,
+        cluster_name=cluster_name,
     )
     for agent_number in range(num_agents):
         agent_name = cluster_name + f"-agent-{agent_number}"
