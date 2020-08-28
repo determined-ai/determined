@@ -99,14 +99,13 @@ following details about scheduler behavior when using distributed training:
   multiple small training jobs to run on a single agent. For example, an agent
   with 8 GPUs could be assigned two 4-GPU jobs, or four 2-GPU jobs.
 - Otherwise, if ``slots_per_trial`` is greater than the number of slots on a single agent,
-  Determined will schedule the distributed training jobs onto multiple agents.
+  Determined will schedule the distributed training job onto multiple agents.
   A multi-machine distributed training job will only be scheduled onto an agent if
   this will result in utilizing all of the agent's GPUs. This is to ensure good
   performance and utilize the full network bandwidth of each machine, while
   minimizing inter-machine networking. For example, if all of the
-  agents in your cluster have 8 GPUs each and you are using host-mode
-  networking, you should submit jobs with ``slots_per_trial`` set to a multiple
-  of 8 (e.g., 8, 16, or 24).
+  agents in your cluster have 8 GPUs each , you should submit jobs with ``slots_per_trial``
+  set to a multiple of 8 (e.g., 8, 16, or 24).
 
 .. warning::
 
