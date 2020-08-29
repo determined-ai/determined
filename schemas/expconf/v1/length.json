@@ -1,0 +1,52 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v1/length.json",
+    "title": "Length",
+    "union": {
+        "defaultMessage": "a length object must have one attribute named \"batches\", \"records\", or \"epochs\"",
+        "items": [
+            {
+                "unionKey": "hasattr:batches",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "batches"
+                ],
+                "properties": {
+                    "batches": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                }
+            },
+            {
+                "unionKey": "hasattr:records",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "records"
+                ],
+                "properties": {
+                    "records": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                }
+            },
+            {
+                "unionKey": "hasattr:epochs",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "epochs"
+                ],
+                "properties": {
+                    "epochs": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                }
+            }
+        ]
+    }
+}

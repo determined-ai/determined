@@ -1,0 +1,106 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v1/searcher-adaptive.json",
+    "title": "AdaptiveSearcherConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "name",
+        "budget",
+        "max_length",
+        "metric"
+    ],
+    "properties": {
+        "name": {
+            "const": "adaptive"
+        },
+        "budget": {
+            "$ref": "http://determined.ai/schemas/expconf/v1/length.json"
+        },
+        "bracket_rungs": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": [],
+            "items": {
+                "type": "integer"
+            }
+        },
+        "mode": {
+            "enum": [
+                null,
+                "aggressive",
+                "standard",
+                "conservative"
+            ],
+            "default": "standard"
+        },
+        "divisor": {
+            "type": [
+                "number",
+                "null"
+            ],
+            "exclusiveMinimum": 1,
+            "default": 4
+        },
+        "max_rungs": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "default": 5
+        },
+        "max_length": {
+            "$ref": "http://determined.ai/schemas/expconf/v1/check-positive-length.json"
+        },
+        "train_stragglers": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "metric": {
+            "type": "string"
+        },
+        "smaller_is_better": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "source_trial_id": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
+        "source_checkpoint_uuid": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        }
+    },
+    "checks": {
+        "max_length and budget must be specified in terms of the same unit": {
+            "compareProperties": {
+                "type": "same_units",
+                "a": "max_length",
+                "b": "budget"
+            }
+        },
+        "budget must be greater than max_length": {
+            "compareProperties": {
+                "type": "length_a<length_b",
+                "a": "max_length",
+                "b": "budget"
+            }
+        }
+    }
+}

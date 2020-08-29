@@ -1,10 +1,30 @@
+GENERATED_COMMITTED := pkg/schemas/expconf/v1_gen.go
+GENERATED := $(GENERATED_COMMITTED) packaging/LICENSE
+
 export VERSION := $(shell cat ../VERSION)
 export GO111MODULE := on
 
 .PHONY: clean
-clean:
+clean: ungen
 	rm -rf dist
 	rm -rf build
+
+.PHONY: ungen
+ungen:
+	rm -f $(GENERATED)
+
+.PHONY: gen
+gen: $(GENERATED)
+
+.PHONY: force-gen
+force-gen:
+	touch ../schemas/gen.py
+
+.PHONY: check-gen
+check-gen: force-gen $(GENERATED_COMMITTED)
+	# Checking that committed, generated code is up-to-date by ensuring that
+	# git reports the files as unchanged after forcibly regenerating the files:
+	test -z "$(shell git status --porcelain $(GENERATED_COMMITTED))"
 
 .PHONY: get-deps
 get-deps:
@@ -14,14 +34,14 @@ get-deps:
 	go install github.com/goreleaser/goreleaser
 
 .PHONY: build
-build:
+build: gen
 	go build \
 		-ldflags "-X github.com/determined-ai/determined/master/version.Version=$(VERSION)" \
 		-o build/determined-master \
 		./cmd/determined-master
 
 .PHONY: check
-check:
+check: check-gen
 	golangci-lint run --timeout 10m
 
 .PHONY: fmt
@@ -52,14 +72,11 @@ pre-package:
 	cp ../cli/dist/*.whl build/wheels/
 	cp ../harness/dist/*.whl build/wheels/
 
-packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
-	../tools/scripts/gen-attributions.py agent $@
-
 .PHONY: package
 package: export DET_SEGMENT_MASTER_KEY ?=
 package: export DET_SEGMENT_WEBUI_KEY ?=
 package: export GORELEASER_CURRENT_TAG := $(VERSION)
-package: packaging/LICENSE
+package: gen
 	goreleaser --snapshot --rm-dist
 
 .PHONY: release
@@ -67,7 +84,7 @@ release: export DET_SEGMENT_MASTER_KEY ?=
 release: export DET_SEGMENT_WEBUI_KEY ?=
 release: export GORELEASER_CURRENT_TAG := $(VERSION)
 release: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-creatordate | grep -v "rc\|v" | grep "$(VERSION)" -A1 | sed -n '2 p')
-release: packaging/LICENSE
+release: gen
 	goreleaser --rm-dist
 
 .PHONY: publish
@@ -78,3 +95,13 @@ publish:
 publish-dev:
 	docker push determinedai/determined-master:$(shell git rev-parse HEAD)
 	docker push determinedai/determined-dev:determined-master-$(shell git rev-parse HEAD)
+
+packaging/LICENSE: $(shell find ../tools/scripts/licenses -type f)
+	../tools/scripts/gen-attributions.py master $@
+
+pkg/schemas/expconf/v1_gen.go: ../schemas/gen.py $(shell find ../schemas/expconf -name "*.json")
+	../schemas/gen.py \
+		--output $@ \
+		go \
+		$(shell find ../schemas/expconf/v1 -name "*.json")
+	goimports -l -local github.com/determined-ai -w $@

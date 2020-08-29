@@ -1,0 +1,298 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v1/experiment.json",
+    "title": "ExperimentConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "hyperparameters",
+        "searcher"
+    ],
+    "eventuallyRequired": [
+        "checkpoint_storage"
+    ],
+    "properties": {
+        "bind_mounts": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "$ref": "http://determined.ai/schemas/expconf/v1/bind-mount.json"
+            },
+            "default": []
+        },
+        "checkpoint_policy": {
+            "enum": [
+                null,
+                "best",
+                "all",
+                "none"
+            ],
+            "default": "best"
+        },
+        "checkpoint_storage": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "$ref": "http://determined.ai/schemas/expconf/v1/checkpoint-storage.json",
+            "default": "null"
+        },
+        "data": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": {}
+        },
+        "data_layer": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "$ref": "http://determined.ai/schemas/expconf/v1/data-layer.json",
+            "default": {
+                "type": "shared_fs"
+            }
+        },
+        "debug": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        },
+        "description": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": ""
+        },
+        "entrypoint": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "checks": {
+                "entrypoint must be of the form \"module.submodule:ClassName\"": {
+                    "pattern": "^[a-zA-Z0-9_.]+:[a-zA-Z0-9_]+$"
+                }
+            },
+            "default": null
+        },
+        "environment": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "$ref": "http://determined.ai/schemas/expconf/v1/environment.json",
+            "default": null
+        },
+        "hyperparameters": {
+            "type": "object",
+            "required": [
+                "global_batch_size"
+            ],
+            "properties": {
+                "global_batch_size": {
+                    "$ref": "http://determined.ai/schemas/expconf/v1/check-global-batch-size.json"
+                }
+            },
+            "additionalProperties": {
+                "$ref": "http://determined.ai/schemas/expconf/v1/hyperparameter.json"
+            }
+        },
+        "internal": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null
+        },
+        "labels": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "items": {
+                "type": "string"
+            },
+            "default": null
+        },
+        "max_restarts": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 0,
+            "default": 5
+        },
+        "min_checkpoint_period": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "$ref": "http://determined.ai/schemas/expconf/v1/length.json",
+            "default": {
+                "batches": 0
+            }
+        },
+        "min_validation_period": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "$ref": "http://determined.ai/schemas/expconf/v1/length.json",
+            "default": {
+                "batches": 0
+            }
+        },
+        "optimizations": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "$ref": "http://determined.ai/schemas/expconf/v1/optimizations.json",
+            "default": {}
+        },
+        "perform_initial_validation": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": true
+        },
+        "records_per_epoch": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": 0
+        },
+        "reproducibility": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "experiment_seed": {
+                    "type": [
+                        "integer",
+                        "null"
+                    ],
+                    "default": null
+                }
+            },
+            "default": {}
+        },
+        "resources": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "$ref": "http://determined.ai/schemas/expconf/v1/resources.json",
+            "default": {}
+        },
+        "scheduling_unit": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "minimum": 1,
+            "default": 100
+        },
+        "searcher": {
+            "$ref": "http://determined.ai/schemas/expconf/v1/searcher.json"
+        },
+        "security": {
+            "type": "null",
+            "default": "null"
+        },
+        "tensorboard_storage": {
+            "type": "null",
+            "default": "null"
+        }
+    },
+    "allOf": [
+        {
+            "conditional": {
+                "$comment": "when grid search is in use, expect hp counts",
+                "when": {
+                    "properties": {
+                        "searcher": {
+                            "properties": {
+                                "name": {
+                                    "const": "grid"
+                                }
+                            }
+                        }
+                    }
+                },
+                "enforce": {
+                    "properties": {
+                        "hyperparameters": {
+                            "additionalProperties": {
+                                "$ref": "http://determined.ai/schemas/expconf/v1/check-grid-hyperparameter.json"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "conditional": {
+                "$comment": "when records per epoch not set, forbid epoch lengths",
+                "when": {
+                    "properties": {
+                        "records_per_epoch": {
+                            "maximum": 0
+                        }
+                    }
+                },
+                "enforce": {
+                    "properties": {
+                        "min_validation_period": {
+                            "$ref": "http://determined.ai/schemas/expconf/v1/check-epoch-not-used.json"
+                        },
+                        "min_checkpoint_period": {
+                            "$ref": "http://determined.ai/schemas/expconf/v1/check-epoch-not-used.json"
+                        },
+                        "searcher": {
+                            "$ref": "http://determined.ai/schemas/expconf/v1/check-epoch-not-used.json"
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "checks": {
+        "must specify an entrypoint that references the trial class": {
+            "conditional": {
+                "$comment": "when internal.native is null, expect an entrypoint",
+                "when": {
+                    "properties": {
+                        "internal": {
+                            "properties": {
+                                "native": {
+                                    "type": "null"
+                                }
+                            }
+                        }
+                    }
+                },
+                "enforce": {
+                    "not": {
+                        "properties": {
+                            "entrypoint": {
+                                "type": "null"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

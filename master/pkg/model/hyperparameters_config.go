@@ -104,7 +104,7 @@ type IntHyperparameter struct {
 func (i IntHyperparameter) Validate() []error {
 	return []error{
 		check.GreaterThan(i.Maxval, i.Minval, "minval is greater than maxval"),
-		check.GreaterThan(i.Count, 0, "count must be >= 0"),
+		check.GreaterThan(i.Count, 0, "count must be > 0"),
 	}
 }
 
@@ -119,7 +119,7 @@ type DoubleHyperparameter struct {
 func (d DoubleHyperparameter) Validate() []error {
 	return []error{
 		check.GreaterThan(d.Maxval, d.Minval, "minval is greater than maxval"),
-		check.GreaterThan(d.Count, 0, "count must be >= 0"),
+		check.GreaterThan(d.Count, 0, "count must be > 0"),
 	}
 }
 
@@ -137,8 +137,8 @@ type LogHyperparameter struct {
 func (h *LogHyperparameter) Validate() []error {
 	return []error{
 		check.GreaterThan(h.Maxval, h.Minval, "minval is greater than maxval"),
-		check.GreaterThan(h.Base, 0.0, "base must be >= 0"),
-		check.GreaterThan(h.Count, 0, "count must be >= 0"),
+		check.GreaterThan(h.Base, 0.0, "base must be > 0"),
+		check.GreaterThan(h.Count, 0, "count must be > 0"),
 	}
 }
 

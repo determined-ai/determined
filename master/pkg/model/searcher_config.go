@@ -3,6 +3,8 @@ package model
 import (
 	"encoding/json"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/union"
 )
@@ -42,7 +44,7 @@ func (s *SearcherConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	type DefaultParser *SearcherConfig
-	return json.Unmarshal(data, DefaultParser(s))
+	return errors.Wrap(json.Unmarshal(data, DefaultParser(s)), "failed to parse searcher config")
 }
 
 // Unit implements the model.InUnits interface.

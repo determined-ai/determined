@@ -1,0 +1,44 @@
+JSON-SCHEMA AS THE EXPERIMENT CONFIG DEFINITION
+
+Linting:
+  - There is a linter which enforces various custom checks to ensure that the
+    assumptions we make in our system will be enforced by the schemas
+  - The linter also enforces basic formatting requirements
+
+Validation:
+  - Validation happens in two steps:
+    - Sanity check: make sure everything is parsable
+    - Validation: make sure everything is present
+  - Sanity check is applied to raw user inputs
+  - Validation is applied after cluster defaults have been applied
+  - The implementation difference between sanity check and validation is the
+    inclusion of a single eventuallyRequired schema in the latter.
+
+Null handling:
+  - There is no pythonic or golangic way to represent values which were
+    provided in the configuration as literal nulls, rather than values which
+    were not provided at all.  In theory, you could have singleton
+    "NotProvided" pointers, which you would check for every time that you
+    checked a value in the schema, but in practice that would be a pain in the
+    ass.  Additionally, the golang json-schema library we use treats
+    not-present values a nil values anyway.
+
+    Conclusion: null values shall be treated as if they were not present.
+
+Default values:
+  - "default" refers to "encoded in json-schema" and not "cluster default"
+  - otherwise, there's no way to do client-side defaults, as the master would
+    need to be involved in deciding all default values.
+
+Customization strategy:
+  - Json-schema alone does not provide the behavior we want out of the box
+  - Most json-schema libraries have great support for custom validation logic
+  - We have json-schema extensions for the following keywords:
+    - checks: Custom messages for arbitrary validation logic
+    - compareProperties: Support customizable value comparisons
+    - conditional: Enforce a schema whenever some condition is met.
+    - disallowProperties: Custom messages when disallowing properties
+    - eventuallyRequired: Support two-step validation
+    - union: Excellent error messages when validating union types
+  - The canonical implementations (with thorough comments) may be found in
+    determined_common/schemas/extensions.py

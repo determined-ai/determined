@@ -8,8 +8,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Marshal marshals the provided union type into a JSON byte array.
-func Marshal(v interface{}) ([]byte, error) {
+// MarshalEx allows for configurable error handling.
+func MarshalEx(v interface{}, allowEmptyUnion bool) ([]byte, error) {
 	data := make(map[string]interface{})
 	value := reflect.ValueOf(v)
 	valueType := reflect.TypeOf(v)
@@ -50,7 +50,7 @@ func Marshal(v interface{}) ([]byte, error) {
 		}
 
 		// At least one union type must be defined.
-		if !unionDefined {
+		if !unionDefined && !allowEmptyUnion {
 			return nil, errors.Errorf("no union field defined: %s", key)
 		}
 	}
@@ -74,6 +74,11 @@ func Marshal(v interface{}) ([]byte, error) {
 	}
 
 	return json.Marshal(data)
+}
+
+// Marshal marshals the provided union type into a JSON byte array.
+func Marshal(v interface{}) ([]byte, error) {
+	return MarshalEx(v, false)
 }
 
 // marshalToMap returns a map representation of the provided interface.
