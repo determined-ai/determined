@@ -93,7 +93,7 @@ automatically, ensuring that all of the compute resources required for a job are
 available before the job itself is launched. Users should be aware of the
 following details about scheduler behavior when using distributed training:
 
-- If ``slots_per_trial`` is smaller than the number of slots on a
+- If ``slots_per_trial`` is smaller than or equal to the number of slots on a
   single agent, Determined will consider scheduling multiple distributed training
   jobs on a single agent. This is designed to improve utilization and to allow
   multiple small training jobs to run on a single agent. For example, an agent
