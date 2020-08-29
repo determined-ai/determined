@@ -8,9 +8,8 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 import dateutil.parser
 import tabulate
-from ruamel import yaml
 
-from determined_common import util
+from determined_common import util, yaml
 
 # Avoid reporting BrokenPipeError when piping `tabulate` output through
 # a filter like `head`.
