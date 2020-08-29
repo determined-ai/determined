@@ -162,7 +162,7 @@ func (t *tensorboardManager) newTensorBoard(
 	// Warning! Since certain fields are incompatible with the current model.Experiment,
 	// internally this avoids loading certain parts of the experiment configuration so
 	// we can load their tensorboards still.
-	// TODO(brad): Fix this in the experiment configuration backwards compatibility project.
+	// TODO(DET-4009): Fix this in the experiment configuration backwards compatibility project.
 	exps, err := t.getTensorBoardConfigs(req)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
