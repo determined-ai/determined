@@ -6,6 +6,21 @@ Release Notes
 Version 0.13
 ------------
 
+Version 0.13.1
+^^^^^^^^^^^^^^
+
+**Release Date:** August 31, 2020
+
+**Bug Fixes**
+
+- Database migration: Fix a bug with a database migration in Determined version 0.13.0 which caused it to run slow and backfill incorrect values. Users on Determined versions 0.12.13 or earlier are recommended to upgrade to version 0.13.1. Users already on version 0.13.0 should upgrade to version 0.13.1 as usual.
+
+- Tensorboard: Fix a bug that prevents tensorboards from experiments with old experiment configuration versions from being loaded.
+
+- WebUI: Fix an API response decoding issue on React where a null checkpoint resource was unhandled and could prevent trial detail page from rendering.
+
+- WebUI: Fix an issue where terminated tensorboard and notebook tasks were rendered as openable.
+
 Version 0.13.0
 ^^^^^^^^^^^^^^
 
