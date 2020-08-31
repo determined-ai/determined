@@ -80,9 +80,7 @@ const TrialDetailsComp: React.FC = () => {
     useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
   const [ experiment, setExperiment ] = useState<ExperimentDetails>();
   const storage = useStorage(STORAGE_PATH);
-  const trialStorage = useStorage(`${STORAGE_PATH}/${trialResponse?.data?.experimentId}`);
   const initFilter = storage.getWithDefault(STORAGE_CHECKPOINT_VALIDATION_KEY, true);
-  const initMetrics = trialStorage.getWithDefault(STORAGE_METRICS_KEY, []);
   const [ showHasCheckpointOrValidation, setShowHasCheckpointOrValidation ] = useState(initFilter);
   const [ contModalVisible, setContModalVisible ] = useState(false);
   const [ contFormVisible, setContFormVisible ] = useState(false);
@@ -93,7 +91,7 @@ const TrialDetailsComp: React.FC = () => {
   const [ contError, setContError ] = useState<string>();
   const [ form ] = Form.useForm();
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
-  const [ metrics, setMetrics ] = useState<MetricName[]>(initMetrics);
+  const [ metrics, setMetrics ] = useState<MetricName[]>([]);
 
   const trial = trialResponse.data;
   const hparams = trial?.hparams;
@@ -289,8 +287,10 @@ If the problem persists please contact support.',
 
   const handleMetricChange = useCallback((value: MetricName[]) => {
     setMetrics(value);
-    trialStorage.set(STORAGE_METRICS_KEY, value);
-  }, [ trialStorage ]);
+
+    if (!experiment) return;
+    storage.set(`experiments/${experiment.id}/${STORAGE_METRICS_KEY}`, value);
+  }, [ experiment, storage ]);
 
   const handleEditContConfig = useCallback(() => {
     updateStatesFromForm();
@@ -315,9 +315,29 @@ If the problem persists please contact support.',
 
   useEffect(() => {
     if (experimentId === undefined) return;
-    getExperimentDetails({ id:experimentId })
-      .then(experiment => setExperiment(experiment));
-  }, [ experimentId ]);
+
+    const fetchExperimentDetails = async () => {
+      try {
+        const response = await getExperimentDetails({ id: experimentId });
+        setExperiment(response);
+
+        const storageMetricsKey = `experiments/${response.id}/STORAGE_METRICS_KEY`;
+        const initMetrics = storage.getWithDefault(storageMetricsKey, []);
+        setMetrics(initMetrics);
+      } catch (e) {
+        handleError({
+          error: e,
+          message: 'Failed to load experiment details.',
+          publicMessage: 'Failed to load experiment details.',
+          publicSubject: 'Unable to fetch Trial Experiment Detail',
+          silent: false,
+          type: ErrorType.Api,
+        });
+      }
+    };
+
+    fetchExperimentDetails();
+  }, [ experimentId, storage ]);
 
   /*
    * By default enable all metric columns for table because:
@@ -343,7 +363,7 @@ If the problem persists please contact support.',
     <Space size="middle">
       <Toggle
         checked={showHasCheckpointOrValidation}
-        prefixLabel="Has Checkpoint Or Validation"
+        prefixLabel="Has Checkpoint or Validation"
         onChange={handleHasCheckpointOrValidationChange} />
       <MetricSelectFilter
         metricNames={metricNames}
