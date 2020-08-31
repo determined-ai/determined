@@ -159,10 +159,6 @@ const MetricChart: React.FC<Props> = (props: Props) => {
     Plotly.Plots.resize(chartRef.current);
   }, [ resize ]);
 
-  const handleScaleSelect = useCallback((newValue: SelectValue) => {
-    setScale(newValue as Scale);
-  }, []);
-
   const chartOptions = (
     <Space size="small">
       {props.options}
