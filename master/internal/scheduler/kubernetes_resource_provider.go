@@ -227,14 +227,20 @@ func (k *kubernetesResourceProvider) scheduleTask(ctx *actor.Context, task *Task
 			return
 		}
 
-		if task.SlotsNeeded()%k.config.SlotsPerNode != 0 {
-			ctx.Log().WithField("task-id", task.ID).Errorf(
-				"task number of slots (%d) is not schedulable on the configured "+
-					"slots_per_node (%d)", task.SlotsNeeded(), k.config.SlotsPerNode)
-			return
+		if task.SlotsNeeded() <= k.config.SlotsPerNode {
+			numPods = 1
+			slotsPerNode = task.SlotsNeeded()
+		} else {
+			if task.SlotsNeeded()%k.config.SlotsPerNode != 0 {
+				ctx.Log().WithField("task-id", task.ID).Errorf(
+					"task number of slots (%d) is not schedulable on the configured "+
+						"slots_per_node (%d)", task.SlotsNeeded(), k.config.SlotsPerNode)
+				return
+			}
+
+			numPods = task.SlotsNeeded() / k.config.SlotsPerNode
+			slotsPerNode = k.config.SlotsPerNode
 		}
-		numPods = task.SlotsNeeded() / k.config.SlotsPerNode
-		slotsPerNode = k.config.SlotsPerNode
 	}
 
 	k.slotsUsedPerGroup[task.group] += task.SlotsNeeded()
