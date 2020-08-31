@@ -460,6 +460,15 @@ commands:
       - wait-for-master:
           host: localhost
 
+  dump-local-cluster-logs:
+    steps:
+      - run:
+          name: Dump docker-compose logs
+          when: always
+          command:
+            docker-compose -f .circleci/compose/e2e/docker-compose.yaml logs
+
+
   run-e2e-webui-tests:
     steps:
       - run: python webui/tests/bin/createUserAndExperiments.py
@@ -729,6 +738,7 @@ jobs:
       - setup-local-cluster:
           det-version: ${CIRCLE_SHA1}
       - run-e2e-webui-tests
+      - dump-local-cluster-logs
       - store_test_results:
           path: webui/tests/results/
       - store_artifacts:
