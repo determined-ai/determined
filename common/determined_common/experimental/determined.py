@@ -21,7 +21,9 @@ class Determined:
     """
 
     def __init__(
-        self, master: Optional[str] = None, user: Optional[str] = None,
+        self,
+        master: Optional[str] = None,
+        user: Optional[str] = None,
     ):
         self._session = Session(master, user)
 

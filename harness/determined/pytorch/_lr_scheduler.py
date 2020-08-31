@@ -30,7 +30,9 @@ class LRScheduler:
         MANUAL_STEP = 3
 
     def __init__(
-        self, scheduler: torch.optim.lr_scheduler._LRScheduler, step_mode: StepMode,
+        self,
+        scheduler: torch.optim.lr_scheduler._LRScheduler,
+        step_mode: StepMode,
     ):
         """LRScheduler constructor
 

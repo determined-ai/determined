@@ -111,7 +111,8 @@ def test_tf_keras_mnist_parallel() -> None:
 
 
 @pytest.mark.parametrize(  # type: ignore
-    "tf2", [pytest.param(False, marks=pytest.mark.tensorflow1_cpu)],
+    "tf2",
+    [pytest.param(False, marks=pytest.mark.tensorflow1_cpu)],
 )
 def test_tf_keras_mnist_data_layer_lfs(tf2: bool) -> None:
     run_tf_keras_mnist_data_layer_test(tf2, "lfs")

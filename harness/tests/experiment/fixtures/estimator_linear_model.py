@@ -83,7 +83,10 @@ class LinearEstimator(estimator.EstimatorTrial):
         def model_fn(features, labels, mode):
             input_layer = tf.compat.v1.feature_column.input_layer(features, feature_columns)
             dense = tf.compat.v1.layers.Dense(
-                units=1, use_bias=False, kernel_initializer=tf.zeros_initializer(), name="my_dense",
+                units=1,
+                use_bias=False,
+                kernel_initializer=tf.zeros_initializer(),
+                name="my_dense",
             )
             output_layer = dense(input_layer)
             predictions = tf.squeeze(output_layer, 1)

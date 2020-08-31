@@ -74,7 +74,12 @@ class _TrialWorkloadManager(WorkloadManager):
         metric_writer: tensorboard.BatchMetricWriter,
     ) -> None:
         super().__init__(
-            env, workloads, rendezvous_info, storage_mgr, tensorboard_mgr, metric_writer,
+            env,
+            workloads,
+            rendezvous_info,
+            storage_mgr,
+            tensorboard_mgr,
+            metric_writer,
         )
         self.workload = None  # type: Optional[workload.Workload]
 

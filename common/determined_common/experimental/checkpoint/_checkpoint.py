@@ -150,7 +150,8 @@ class Checkpoint(object):
             else:
                 local_ckpt_dir.mkdir(parents=True, exist_ok=True)
                 manager = storage.build(
-                    self.experiment_config["checkpoint_storage"], container_path=None,
+                    self.experiment_config["checkpoint_storage"],
+                    container_path=None,
                 )
                 if not isinstance(manager, (storage.S3StorageManager, storage.GCSStorageManager)):
                     raise AssertionError(

@@ -197,7 +197,10 @@ def train_workload(
 
 
 def validation_workload(
-    step_id: int = 1, exp_id: int = 1, trial_id: int = 1, total_batches_processed: int = 0,
+    step_id: int = 1,
+    exp_id: int = 1,
+    trial_id: int = 1,
+    total_batches_processed: int = 0,
 ) -> Workload:
     return Workload(
         Workload.Kind.COMPUTE_VALIDATION_METRICS,
@@ -224,5 +227,10 @@ def checkpoint_workload(
 
 def terminate_workload(step_id: int = 1, exp_id: int = 1, trial_id: int = 1) -> Workload:
     return Workload(
-        Workload.Kind.TERMINATE, ExperimentID(exp_id), TrialID(trial_id), StepID(step_id), 0, 0,
+        Workload.Kind.TERMINATE,
+        ExperimentID(exp_id),
+        TrialID(trial_id),
+        StepID(step_id),
+        0,
+        0,
     )

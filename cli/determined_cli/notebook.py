@@ -28,7 +28,11 @@ def start_notebook(args: Namespace) -> None:
     config = parse_config(args.config_file, None, args.config, args.volume)
 
     resp = launch_command(
-        args.master, "notebooks", config, args.template, context_path=args.context,
+        args.master,
+        "notebooks",
+        config,
+        args.template,
+        context_path=args.context,
     )
 
     if args.detach:

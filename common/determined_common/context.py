@@ -94,7 +94,9 @@ class Context:
 
     @classmethod
     def from_local(
-        cls, local_path: pathlib.Path, limit: int = constants.MAX_CONTEXT_SIZE,
+        cls,
+        local_path: pathlib.Path,
+        limit: int = constants.MAX_CONTEXT_SIZE,
     ) -> "Context":
         """
         Given the path to a local directory, return a Context object.
@@ -190,7 +192,8 @@ class Context:
 
 
 def read_context(
-    local_path: pathlib.Path, limit: int = constants.MAX_CONTEXT_SIZE,
+    local_path: pathlib.Path,
+    limit: int = constants.MAX_CONTEXT_SIZE,
 ) -> Tuple[List[Dict[str, Any]], int]:
     context = Context.from_local(local_path, limit)
     return [e.dict() for e in context.entries], context.size

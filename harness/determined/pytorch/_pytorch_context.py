@@ -437,7 +437,9 @@ class PyTorchTrialContext(det.TrialContext):
                         optimizer.synchronize()
         else:
             loss.backward(  # type: ignore
-                gradient=gradient, retain_graph=retain_graph, create_graph=create_graph,
+                gradient=gradient,
+                retain_graph=retain_graph,
+                create_graph=create_graph,
             )
 
     def _average_gradients(self, parameters: Any, divisor: int) -> None:

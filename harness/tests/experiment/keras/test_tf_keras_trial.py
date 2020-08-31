@@ -293,7 +293,10 @@ class TestKerasTrial:
         hparams["stop_early"] = True
 
         controller = utils.make_trial_controller_from_trial_implementation(
-            tf_keras_xor_model.XORTrial, hparams, make_workloads(), scheduling_unit=5,
+            tf_keras_xor_model.XORTrial,
+            hparams,
+            make_workloads(),
+            scheduling_unit=5,
         )
         controller.run()
 

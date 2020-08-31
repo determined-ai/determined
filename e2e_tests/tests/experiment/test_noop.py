@@ -13,7 +13,9 @@ from tests import experiment as exp
 @pytest.mark.e2e_cpu  # type: ignore
 def test_noop_long_train_step() -> None:
     exp.run_basic_test(
-        conf.fixtures_path("no_op/single-long-train-step.yaml"), conf.fixtures_path("no_op"), 1,
+        conf.fixtures_path("no_op/single-long-train-step.yaml"),
+        conf.fixtures_path("no_op"),
+        1,
     )
 
 
@@ -72,7 +74,8 @@ def test_noop_pause() -> None:
         else:
             time.sleep(1)
     check.true(
-        not workload_active, "The experiment cannot be paused within 20 seconds.",
+        not workload_active,
+        "The experiment cannot be paused within 20 seconds.",
     )
 
     # Resume the experiment and wait for completion.
@@ -177,7 +180,8 @@ def test_noop_single_warm_start() -> None:
 @pytest.mark.e2e_cpu  # type: ignore
 def test_cancel_one_experiment() -> None:
     experiment_id = exp.create_experiment(
-        conf.fixtures_path("no_op/single-many-long-steps.yaml"), conf.fixtures_path("no_op"),
+        conf.fixtures_path("no_op/single-many-long-steps.yaml"),
+        conf.fixtures_path("no_op"),
     )
 
     exp.cancel_single(experiment_id)
@@ -186,7 +190,8 @@ def test_cancel_one_experiment() -> None:
 @pytest.mark.e2e_cpu  # type: ignore
 def test_cancel_one_active_experiment() -> None:
     experiment_id = exp.create_experiment(
-        conf.fixtures_path("no_op/single-many-long-steps.yaml"), conf.fixtures_path("no_op"),
+        conf.fixtures_path("no_op/single-many-long-steps.yaml"),
+        conf.fixtures_path("no_op"),
     )
 
     for _ in range(15):
@@ -214,7 +219,8 @@ def test_cancel_one_paused_experiment() -> None:
 def test_cancel_ten_experiments() -> None:
     experiment_ids = [
         exp.create_experiment(
-            conf.fixtures_path("no_op/single-many-long-steps.yaml"), conf.fixtures_path("no_op"),
+            conf.fixtures_path("no_op/single-many-long-steps.yaml"),
+            conf.fixtures_path("no_op"),
         )
         for _ in range(10)
     ]
@@ -241,7 +247,9 @@ def test_cancel_ten_paused_experiments() -> None:
 @pytest.mark.e2e_cpu  # type: ignore
 def test_startup_hook() -> None:
     exp.run_basic_test(
-        conf.fixtures_path("no_op/startup-hook.yaml"), conf.fixtures_path("no_op"), 1,
+        conf.fixtures_path("no_op/startup-hook.yaml"),
+        conf.fixtures_path("no_op"),
+        1,
     )
 
 
