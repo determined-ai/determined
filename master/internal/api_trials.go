@@ -172,23 +172,20 @@ func (a *apiServer) GetExperimentTrials(
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "experiment %d not found:", req.ExperimentId)
 	case err != nil:
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to get trials for experiment %d", req.ExperimentId)
 	}
 	a.filter(&resp.Trials, func(i int) bool {
 		v := resp.Trials[i]
-		// If there are no filters, return true.
 		if len(req.States) == 0 {
 			return true
 		}
 
-		// Or if the filters are matched, return true.
 		for _, state := range req.States {
 			if state == v.State {
 				return true
 			}
 		}
 
-		// Else return false.
 		return false
 	})
 
@@ -203,7 +200,7 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.TrialId)
 	case err != nil:
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
 	}
 	return resp, nil
 }
