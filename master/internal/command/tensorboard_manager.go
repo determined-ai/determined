@@ -299,8 +299,11 @@ func (t *tensorboardManager) newTensorBoard(
 	)
 	config.Entrypoint = []string{tensorboardEntrypointFile, "--logdir", strings.Join(logDirs, ",")}
 	config.Resources.Slots = tensorboardResourcesSlots
-	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: envVars, GPU: envVars}
-	config.BindMounts = getMounts(uniqMounts)
+
+	cpuEnvVars := append(config.Environment.EnvironmentVariables.CPU, envVars...)
+	gpuEnvVars := append(config.Environment.EnvironmentVariables.GPU, envVars...)
+	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: cpuEnvVars, GPU: gpuEnvVars}
+	config.BindMounts = append(config.BindMounts, getMounts(uniqMounts)...)
 
 	setPodSpec(&config, t.taskContainerDefaults)
 

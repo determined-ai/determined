@@ -51,6 +51,32 @@ TensorBoard for multiple experiments use
   metrics from persistent storage. It may take up to 5 minutes for TensorBoard
   to receive data and render visualizations.
 
+Customizing Tensorboards
+------------------------
+
+Determined supports initializing TensorBoard with a YAML configuration file.
+For example, this feature can be useful for running TensorBoard with a
+specific container image or for enabling access to additional data with a
+bind-mount.
+
+.. code:: yaml
+
+  environment:
+    image: determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-cpu-0.5.0
+  bind_mounts:
+    - host_path: /my/agent/path
+      container_path: /my/container/path
+      read_only: true
+
+Details of configuration settings can be found in the
+:ref:`command-notebook-configuration`.
+
+To launch Tensorboard with a config file, use
+``det tensorboard start <experiment-id> --config-file=my_config.yaml``.
+
+To view the configuration of a running Tensorboard instance, use
+``det tensorboard config <tensorboard_id>``.
+
 Analyzing Specific Trials
 -------------------------
 

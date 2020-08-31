@@ -10,7 +10,7 @@ from determined_common.api.authentication import authentication_required
 from determined_common.check import check_eq
 
 from . import render
-from .command import Command, launch_command, parse_config, render_event_stream
+from .command import Command, parse_config, render_event_stream
 from .declarative_argparse import Arg, Cmd
 
 Tensorboard = namedtuple(
@@ -33,14 +33,16 @@ def to_tensorboard(command: Command) -> Tensorboard:
 
 @authentication_required
 def start_tensorboard(args: Namespace) -> None:
-    # this is the place where you add some stuff related to importing the config
-    # think about if you need to add the option for manual config options
     if args.trial_ids is None and args.experiment_ids is None:
         print("Either experiment_ids or trial_ids must be specified.")
         sys.exit(1)
 
     config = parse_config(args.config_file, None, [], [])
-    req_body = {"config": config, "trial_ids": args.trial_ids, "experiment_ids": args.experiment_ids}
+    req_body = {
+        "config": config,
+        "trial_ids": args.trial_ids,
+        "experiment_ids": args.experiment_ids,
+    }
     resp = api.post(args.master, "tensorboard", body=req_body).json()
 
     if args.detach:
