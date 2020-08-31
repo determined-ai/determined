@@ -83,30 +83,42 @@ S3. In this example, the S3 bucket name is configured via a field
           s3.download_file(s3_bucket, data_file, filepath)
       return download_directory
 
+.. _dtrain-scheduling:
 
 Scheduling Behavior
 -------------------
 
-To use distributed training, ``slots_per_trial`` must be set to a multiple
-of the number of GPUs per machine. For example, if you have a cluster of machines with
-8 GPUs each, you should set ``slots_per_trial`` to a multiple of 8, such as 8, 16, or 24.
-This ensures that the full network and interconnect bandwidth are available to
-multi-GPU workloads and results in better performance.
+The Determined master takes care of scheduling distributed training jobs
+automatically, ensuring that all of the compute resources required for a job are
+available before the job itself is launched. Users should be aware of the
+following details about scheduler behavior when using distributed training:
+
+- If ``slots_per_trial`` is smaller than or equal to the number of slots on a
+  single agent, Determined will consider scheduling multiple distributed training
+  jobs on a single agent. This is designed to improve utilization and to allow
+  multiple small training jobs to run on a single agent. For example, an agent
+  with 8 GPUs could be assigned two 4-GPU jobs, or four 2-GPU jobs.
+- Otherwise, if ``slots_per_trial`` is greater than the number of slots on a single agent,
+  Determined will schedule the distributed training job onto multiple agents.
+  A multi-machine distributed training job will only be scheduled onto an agent if
+  this will result in utilizing all of the agent's GPUs. This is to ensure good
+  performance and utilize the full network bandwidth of each machine, while
+  minimizing inter-machine networking. For example, if all of the
+  agents in your cluster have 8 GPUs each , you should submit jobs with ``slots_per_trial``
+  set to a multiple of 8 (e.g., 8, 16, or 24).
 
 .. warning::
 
-  Distributed training is designed to maximize performance by training with all the
-  resources of a machine. This can lead to situations where an experiment is created
-  but never starts running on the cluster, for example if the number of GPUs
-  requested is not a multiple of the number of GPUs per machine. Similarly, if a
-  task is running on a multi-GPU machine and using one or more of its GPUs, that
-  will prevent a distributed training job from starting on that machine.
+  If the scheduling constraints for multi-machine distributed training described
+  above are not satisfied, distributed training jobs will not be scheduled and
+  will wait indefinitely. For example, if every agent in the cluster has 8 GPUs,
+  a job with ``slots_per_trial`` set to ``12`` will never be scheduled.
 
-  If a multi-GPU experiment does not become active after a minute or so,
-  please confirm that ``slots_per_trial`` is a multiple of the number of GPUs
-  available on a machine. Also, you can also use the CLI command ``det task
-  list`` to check if any other tasks are using GPUs and preventing your
-  experiment from using all the GPUs on a machine.
+  If a multi-GPU experiment does not become active after a minute or so, please
+  confirm that ``slots_per_trial`` is set so that it can be scheduled within these
+  constraints. The CLI command ``det task list`` can also be used to check if any
+  other tasks are using GPUs and preventing your experiment from using all the
+  GPUs on a machine.
 
 Next Steps
 ----------

@@ -1,0 +1,12 @@
+:orphan:
+
+**New Features**
+
+- Support running multiple distributed training jobs on a single agent.
+
+  - In previous versions of Determined, a distributed training job could only be
+    scheduled on an agent if it was configured to use all of the GPUs on that
+    agent. In this release, that restriction has been lifted: for example, an
+    agent with 8 GPUs can now be used to run two 4-GPU distributed training
+    jobs. This feature is particularly useful as a way to improve utilization
+    and fair resource allocation for smaller clusters.

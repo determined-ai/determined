@@ -52,8 +52,8 @@ configuration file:
    resources:
      slots_per_trial: N
 
-where N is the total number of GPUs on an agent machine. In this
-configuration, trials will train using all the resources on a single machine.
+where N is any number less than or equal to the number of GPUs on an agent machine. In this
+configuration, trials will train using some or all the resources on a single machine.
 
 
 Multi-Machine Training
@@ -113,13 +113,13 @@ to verify the performance of multi-GPU training.
 
 .. warning::
 
-  Distributed training is designed to maximize performance by training with
+  Multi-machine distributed training is designed to maximize performance by training with
   all the resources of a machine. This can lead to situations where an experiment
   is created but never becomes active: if the number of GPUs requested does not
   divide into the machines available, for instance, or if another experiment
   is already using some GPUs on a machine.
 
-  If a multi-GPU experiment does not become active after a minute or so,
+  If an experiment does not become active after a minute or so,
   please confirm that ``slots_per_trial`` is a multiple of the number of GPUs
   available on a machine. You can also use the CLI command ``det task
   list`` to check if any other tasks are using GPUs and preventing your

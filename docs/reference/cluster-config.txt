@@ -251,13 +251,13 @@ The master supports the following configuration settings:
     ``dtrain_network_interface`` option can be used to set it explicitly (e.g.,
     ``eth11``).
 
-  - ``nccl_port_range``: The range of ports that nccl is permitted to use
-    during distributed training. A valid port range is in the format of
-    ``MIN:MAX``.
+  - ``nccl_port_range``: The range of ports that NCCL is permitted to use during
+    distributed training. A valid port range is in the format of ``MIN:MAX``. By
+    default, no restrictions are placed on the NCCL port range.
 
-  - ``gloo_port_range``: The range of ports that gloo is permitted to use
-    during distributed training. A valid port range is in the format of
-    ``MIN:MAX``.
+  - ``gloo_port_range``: The range of ports that Gloo is permitted to use during
+    distributed training. A valid port range is in the format of ``MIN:MAX``. By
+    default, no restrictions are placed on the Gloo port range.
 
 - ``root``: Specifies the root directory of the state files. Defaults to
   ``/usr/share/determined/master``.
