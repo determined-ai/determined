@@ -32,7 +32,10 @@ func schedulableTaskFilter(provisionerSlotsPerInstance int) func(*Task) bool {
 		switch {
 		case task.state != taskPending:
 			return false
-		case slotsNeeded == 0 || slotsNeeded == 1:
+		// TODO(DET-4035): This code is duplicated from the fitting functions in the
+		// scheduler. To determine is a task is schedulable, we would ideally interface
+		// with the scheduler in some way and not duplicate this logic.
+		case slotsNeeded <= provisionerSlotsPerInstance:
 			return true
 		case slotsNeeded%provisionerSlotsPerInstance == 0:
 			return true
