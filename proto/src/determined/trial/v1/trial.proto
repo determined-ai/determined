@@ -12,7 +12,7 @@ import "google/protobuf/timestamp.proto";
 message Trial {
   // The id of the trial.
   int32 id = 1;
-  // The id of parent experiment
+  // The id of the parent experiment.
   int32 experiment_id = 2;
   // The time the trial was started.
   google.protobuf.Timestamp start_time = 3;
