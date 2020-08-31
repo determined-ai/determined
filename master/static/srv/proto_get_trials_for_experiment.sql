@@ -1,9 +1,9 @@
 SELECT t.id AS id,
-    t.start_time AS start_time,
-    t.end_time AS end_time,
-    t.experiment_id AS experiment_id,
-    t.hparams AS hparams,
+    t.experiment_id,
     'STATE_' || t.state AS state,
+    t.start_time,
+    t.end_time,
+    t.hparams,
     (
         SELECT s.prior_batches_processed + s.num_batches
         FROM steps s
