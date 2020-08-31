@@ -18,7 +18,7 @@ Object stores manage data as a collection of key-value pairs. Object storage is 
 
 Unless you are accessing a publicly available data set, you will need to ensure that Determined trial containers can access data in the object storage service you are using. This can be done by configuring a :ref:`custom environment<custom-env>` with the appropriate credentials. When using :ref:`Dynamic Agents on GCP<dynamic-agents-gcp>`, a system administrator will need to configure a valid :ref:`service account<cluster-configuration>` with read credentials. When using :ref:`Dynamic Agents on AWS<dynamic-agents-aws>`, the system administrator will need to configure an :ref:`iam_instance_profile_arn<cluster-configuration>` with read credentials.
 
-Once security access has been configured, we can use open-source libraries such as `boto3 <https://boto3.amazonaws.com/>`__ or `gcsfs <https://gcsfs.readthedocs.io/en/latest/>`__ to access data from object storage. The simplest way to do this is for your model definition code to download the entire data set whenever a trial container starts up.
+Once security access has been configured, we can use open-source libraries such as `boto3 <https://aws.amazon.com/sdk-for-python/>`__ or `gcsfs <https://gcsfs.readthedocs.io/en/latest/>`__ to access data from object storage. The simplest way to do this is for your model definition code to download the entire data set whenever a trial container starts up.
 
 Downloading from Object Storage
 """""""""""""""""""""""""""""""
