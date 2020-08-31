@@ -1,0 +1,6 @@
+:orphan:
+
+**Bug Fixes**
+
+- Fix a bug that prevents tensorboards from experiments with old experiment configurations versions
+  from being loaded.

@@ -54,5 +54,3 @@ func TestEventLog(t *testing.T) {
 	log.OperationsCreated(NewShutdown())
 	assert.Assert(t, log.Shutdown)
 }
-
-// TODO(brad) when we rollback the sequencer, rollback searcher events to the last checkpoint too
