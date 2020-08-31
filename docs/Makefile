@@ -3,8 +3,17 @@ export VERSION := $(shell cat ../VERSION)
 SPHINXOPTS    = -W
 SPHINXBUILD   = sphinx-build
 
+.PHONY: build-examples
+build-examples:
+	make -C ../examples build
+
+
+.PHONE: build-helm
+build-helm:
+	make -C ../helm build
+
 .PHONY: build
-build:
+build: build-examples build-helm
 	mkdir -p site/downloads/examples
 	cp ../examples/build/* site/downloads/examples
 	mkdir -p site/downloads/helm
