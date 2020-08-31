@@ -1376,8 +1376,8 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               machine-type: ["n1-standard-32"]
-              gpus-per-machine: [4]
-              num-machines: [2]
+              gpus-per-machine: [8]
+              num-machines: [1]
 
       - request-k8-tests:
           type: approval
@@ -1411,8 +1411,8 @@ workflows:
               parallelism: [1]
               slack-mentions: ["${SLACK_USER_ID}"]
               machine-type: ["n1-standard-32"]
-              gpus-per-machine: [4]
-              num-machines: [2]
+              gpus-per-machine: [8]
+              num-machines: [1]
 
 
   nightly:
