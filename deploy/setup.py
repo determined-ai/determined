@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="determined-deploy",
-    version="0.13.1rc1",
+    version="0.13.1",
     author="Determined AI",
     author_email="hello@determined.ai",
     url="https://determined.ai/",
@@ -18,7 +18,7 @@ setup(
         "docker[ssh]>=3.7.3",
         "paramiko>=2.4.2",  # explicitly pull in paramiko to prevent DistributionNotFound error
         "docker-compose>=1.13.0",
-        "determined-common==0.13.1rc1",
+        "determined-common==0.13.1",
     ],
     entry_points={"console_scripts": ["det-deploy = determined_deploy.__main__:main"]},
 )
