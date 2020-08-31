@@ -15,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 const (
@@ -194,9 +195,10 @@ func (a *apiServer) GetExperimentTrials(
 }
 
 func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
-	resp *apiv1.GetTrialResponse, err error,
+	*apiv1.GetTrialResponse, error,
 ) {
-	switch err := a.m.db.QueryProto("proto_get_trial", &resp.Trial, req.TrialId); {
+	resp := &apiv1.GetTrialResponse{Trial: &trialv1.Trial{}}
+	switch err := a.m.db.QueryProto("proto_get_trial", resp.Trial, req.TrialId); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.TrialId)
 	case err != nil:
