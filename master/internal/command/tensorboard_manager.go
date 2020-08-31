@@ -2,7 +2,6 @@ package command
 
 import (
 	"archive/tar"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -159,6 +158,10 @@ func (t *tensorboardManager) newTensorBoard(
 	commandReq *commandRequest,
 	req tensorboardRequest,
 ) (*command, error) {
+	// Warning! Since certain fields are incompatible with the current model.Experiment,
+	// internally this avoids loading certain parts of the experiment configuration so
+	// we can load their tensorboards still.
+	// TODO(DET-4009): Fix this in the experiment configuration backwards compatibility project.
 	exps, err := t.getTensorBoardConfigs(req)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -266,18 +269,21 @@ func (t *tensorboardManager) newTensorBoard(
 		}
 	}
 
-	// Take the most recent experiment config and add it to the container. This
+	// Get the most recent experiment config as raw json and add it to the container. This
 	// is used to determine if the experiment is backed by S3.
-	finalExpConf := exps[len(exps)-1].Config
+	mostRecentExpID := exps[len(exps)-1].ID
+	confBytes, err := t.db.ExperimentConfigRaw(mostRecentExpID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error loading raw experiment config: %d", mostRecentExpID)
+	}
 
-	eConf, err := json.Marshal(finalExpConf)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError,
 			"unable to marshal experiment configuration")
 	}
 
 	additionalFiles = append(additionalFiles,
-		commandReq.AgentUserGroup.OwnedArchiveItem(expConfPath, eConf, 0700, tar.TypeReg))
+		commandReq.AgentUserGroup.OwnedArchiveItem(expConfPath, confBytes, 0700, tar.TypeReg))
 
 	// Multiple experiments may have different s3 credentials. We sort the
 	// experiments in ascending experiment ID order and dedupicate the
@@ -328,7 +334,7 @@ func (t *tensorboardManager) getTensorBoardConfigs(req tensorboardRequest) (
 	var err error
 
 	for _, id := range req.ExperimentIDs {
-		exp, err = t.db.ExperimentByID(id)
+		exp, err = t.db.ExperimentWithoutBackwardsIncompatibleFieldsByID(id)
 		if err != nil {
 			return nil, err
 		}
@@ -337,7 +343,12 @@ func (t *tensorboardManager) getTensorBoardConfigs(req tensorboardRequest) (
 	}
 
 	for _, id := range req.TrialIDs {
-		exp, err = t.db.ExperimentByTrialID(id)
+		expID, err := t.db.ExperimentIDByTrialID(id)
+		if err != nil {
+			return nil, err
+		}
+
+		exp, err = t.db.ExperimentWithoutBackwardsIncompatibleFieldsByID(expID)
 		if err != nil {
 			return nil, err
 		}

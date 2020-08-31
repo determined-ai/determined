@@ -676,6 +676,27 @@ WHERE id = $1`, &experiment, id); err != nil {
 	return &experiment, nil
 }
 
+// ExperimentWithoutBackwardsIncompatibleFieldsByID looks up an experiment by ID in a database,
+// returning an error if none exists.
+// TODO(DET-4009): Remove when we have a better story for backwards compatibility.
+func (db *PgDB) ExperimentWithoutBackwardsIncompatibleFieldsByID(
+	id int,
+) (*model.Experiment, error) {
+	var experiment model.Experiment
+
+	if err := db.query(`
+SELECT id, state,
+  config #- '{searcher}' #- '{min_validation_period}' #- '{min_checkpoint_period}' AS config,
+  model_definition, start_time, end_time, archived,
+  git_remote, git_commit, git_committer, git_commit_date, owner_id
+FROM experiments
+WHERE id = $1`, &experiment, id); err != nil {
+		return nil, err
+	}
+
+	return &experiment, nil
+}
+
 // ExperimentWithoutConfigByID looks up an experiment by ID in a database, returning an error if
 // none exists. It loads the experiment without its configuration, for callers that do not need
 // it, or can't handle backwards incompatible changes.
@@ -691,6 +712,17 @@ WHERE id = $1`, &experiment, id); err != nil {
 	}
 
 	return &experiment, nil
+}
+
+// ExperimentIDByTrialID looks up an experiment ID by a trial ID.
+func (db *PgDB) ExperimentIDByTrialID(trialID int) (int, error) {
+	var experimentID int
+	if err := db.sql.Get(&experimentID, `
+SELECT experiment_id FROM trials where id = $1
+`, trialID); err != nil {
+		return 0, errors.Wrapf(err, "querying for experiment id for trial %v", trialID)
+	}
+	return experimentID, nil
 }
 
 // ExperimentByTrialID looks up an experiment by a trial ID in the
