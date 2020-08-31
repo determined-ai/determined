@@ -165,9 +165,12 @@ def main() -> None:
     initial_work = workload.Workload.from_json(simplejson.loads(os.environ["DET_INITIAL_WORKLOAD"]))
 
     # Load latest checkpoint from file to handle large data format
-    with open(os.environ["DET_LATEST_CHECKPOINT"]) as f:
-        latest_checkpoint_string = simplejson.load(f)
-        latest_checkpoint = simplejson.loads(latest_checkpoint_string)
+    with open("checkpoint.txt", "w") as f:
+        f.write(os.environ["DET_LATEST_CHECKPOINT"])
+    f.close()
+    with open("checkpoint.txt", "r") as f:
+        latest_checkpoint = simplejson.load(f)
+    f.close()
 
     use_gpu = distutils.util.strtobool(os.environ.get("DET_USE_GPU", "false"))
     slot_ids = json.loads(os.environ["DET_SLOT_IDS"])
