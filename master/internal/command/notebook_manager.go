@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -38,7 +39,8 @@ const (
 )
 
 var (
-	notebookEntrypoint = []string{jupyterEntrypoint}
+	notebookEntrypoint  = []string{jupyterEntrypoint}
+	jupyterReadyPattern = regexp.MustCompile("Jupyter Notebook .*is running at")
 )
 
 func generateNotebookDescription() (string, error) {
@@ -238,7 +240,7 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 
 		readinessChecks: map[string]readinessCheck{
 			"notebook": func(log sproto.ContainerLog) bool {
-				return strings.Contains(log.String(), "Jupyter Notebook is running")
+				return jupyterReadyPattern.MatchString(log.String())
 			},
 		},
 		serviceAddress: &serviceAddress,
