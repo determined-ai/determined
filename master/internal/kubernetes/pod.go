@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -402,6 +403,10 @@ func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 	switch p.container.State {
 	case container.Running, container.Terminated:
 		return
+	}
+
+	if msg.event.Message[0:23] == gpuTextReplacement {
+		msg.event.Message += strconv.Itoa(p.gpus) + " GPUs required."
 	}
 
 	message := fmt.Sprintf("Pod %s: %s", msg.event.InvolvedObject.Name, msg.event.Message)
