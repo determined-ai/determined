@@ -1,4 +1,5 @@
-import { Button, Col, Form, Input, Modal, Row, Space, Table, Tooltip } from 'antd';
+import { Button, Col, Form, Input, Modal, Row, Select, Space, Table, Tooltip } from 'antd';
+import { SelectValue } from 'antd/lib/select';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
@@ -11,12 +12,13 @@ import Message from 'components/Message';
 import MetricSelectFilter from 'components/MetricSelectFilter';
 import Page from 'components/Page';
 import Section from 'components/Section';
+import SelectFilter, { ALL_VALUE } from 'components/SelectFilter';
 import Spinner, { Indicator } from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig } from 'components/Table';
-import Toggle from 'components/Toggle';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
+import useStorage from 'hooks/useStorage';
 import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { routeAll } from 'routes';
@@ -35,8 +37,16 @@ import css from './TrialDetails.module.scss';
 import { columns as defaultColumns } from './TrialDetails.table';
 import TrialChart from './TrialDetails/TrialChart';
 
+const { Option } = Select;
+
 interface Params {
   trialId: string;
+}
+
+enum TrialInfoFilter {
+  HasCheckpoint = 'Has Checkpoint',
+  HasValidation = 'Has Validation',
+  HasCheckpointOrValidation = 'Has Checkpoint or Validation',
 }
 
 const getTrialLength = (config?: RawJson): [string, number] | undefined => {
@@ -68,11 +78,22 @@ const trialContinueConfig = (
   };
 };
 
+const STORAGE_PATH = 'trial-detail';
+const STORAGE_CHECKPOINT_VALIDATION_KEY = 'checkpoint-validation';
+const STORAGE_METRICS_KEY = 'metrics';
+
 const TrialDetailsComp: React.FC = () => {
   const { trialId: trialIdParam } = useParams<Params>();
   const trialId = parseInt(trialIdParam);
+  const [ trialResponse, triggerTrialRequest ] =
+    useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
   const [ experiment, setExperiment ] = useState<ExperimentDetails>();
-  const [ showHasCheckpoint, setShowHasCheckpoint ] = useState(true);
+  const storage = useStorage(STORAGE_PATH);
+  const initFilter = storage.getWithDefault(
+    STORAGE_CHECKPOINT_VALIDATION_KEY,
+    TrialInfoFilter.HasCheckpointOrValidation,
+  );
+  const [ hasCheckpointOrValidation, setHasCheckpointOrValidation ] = useState(initFilter);
   const [ contModalVisible, setContModalVisible ] = useState(false);
   const [ contFormVisible, setContFormVisible ] = useState(false);
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
@@ -83,8 +104,6 @@ const TrialDetailsComp: React.FC = () => {
   const [ form ] = Form.useForm();
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
-  const [ trialResponse, triggerTrialRequest ] =
-    useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
 
   const trial = trialResponse.data;
   const hparams = trial?.hparams;
@@ -160,8 +179,18 @@ const TrialDetailsComp: React.FC = () => {
 
   const steps = useMemo(() => {
     const data = trial?.steps || [];
-    return showHasCheckpoint ? data.filter(step => !!step.checkpoint) : data;
-  }, [ showHasCheckpoint, trial?.steps ]);
+    return hasCheckpointOrValidation as string === ALL_VALUE ?
+      data : data.filter(step => {
+        if (hasCheckpointOrValidation === TrialInfoFilter.HasCheckpoint) {
+          return !!step.checkpoint;
+        } else if (hasCheckpointOrValidation === TrialInfoFilter.HasValidation) {
+          return !!step.validation;
+        } else if (hasCheckpointOrValidation === TrialInfoFilter.HasCheckpointOrValidation) {
+          return !!step.checkpoint || !!step.validation;
+        }
+        return false;
+      });
+  }, [ hasCheckpointOrValidation, trial?.steps ]);
 
   const pollTrialDetails = useCallback(() => {
     triggerTrialRequest({ id: trialId });
@@ -272,11 +301,19 @@ If the problem persists please contact support.',
   };
   const handleCheckpointDismiss = () => setShowCheckpoint(false);
 
-  const handleHasCheckpointChange = useCallback((value: boolean): void => {
-    setShowHasCheckpoint(value);
-  }, [ setShowHasCheckpoint ]);
+  const handleHasCheckpointOrValidationSelect = useCallback((value: SelectValue): void => {
+    const filter = value as unknown as TrialInfoFilter;
+    if (value as string !== ALL_VALUE && !Object.values(TrialInfoFilter).includes(filter)) return;
+    setHasCheckpointOrValidation(filter);
+    storage.set(STORAGE_CHECKPOINT_VALIDATION_KEY, filter);
+  }, [ setHasCheckpointOrValidation, storage ]);
 
-  const handleMetricChange = useCallback((value: MetricName[]) => setMetrics(value), []);
+  const handleMetricChange = useCallback((value: MetricName[]) => {
+    setMetrics(value);
+
+    if (!experiment) return;
+    storage.set(`experiments/${experiment.id}/${STORAGE_METRICS_KEY}`, value);
+  }, [ experiment, storage ]);
 
   const handleEditContConfig = useCallback(() => {
     updateStatesFromForm();
@@ -301,9 +338,29 @@ If the problem persists please contact support.',
 
   useEffect(() => {
     if (experimentId === undefined) return;
-    getExperimentDetails({ id:experimentId })
-      .then(experiment => setExperiment(experiment));
-  }, [ experimentId ]);
+
+    const fetchExperimentDetails = async () => {
+      try {
+        const response = await getExperimentDetails({ id: experimentId });
+        setExperiment(response);
+
+        const storageMetricsKey = `experiments/${response.id}/${STORAGE_METRICS_KEY}`;
+        const initMetrics = storage.getWithDefault(storageMetricsKey, []);
+        setMetrics(initMetrics);
+      } catch (e) {
+        handleError({
+          error: e,
+          message: 'Failed to load experiment details.',
+          publicMessage: 'Failed to load experiment details.',
+          publicSubject: 'Unable to fetch Trial Experiment Detail',
+          silent: false,
+          type: ErrorType.Api,
+        });
+      }
+    };
+
+    fetchExperimentDetails();
+  }, [ experimentId, storage ]);
 
   /*
    * By default enable all metric columns for table because:
@@ -327,10 +384,13 @@ If the problem persists please contact support.',
 
   const options = metrics ? (
     <Space size="middle">
-      <Toggle
-        checked={showHasCheckpoint}
-        prefixLabel="Has Checkpoint"
-        onChange={handleHasCheckpointChange} />
+      <SelectFilter
+        label="Show"
+        value={hasCheckpointOrValidation}
+        onSelect={handleHasCheckpointOrValidationSelect}>
+        <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
+        {Object.values(TrialInfoFilter).map(key => <Option key={key} value={key}>{key}</Option>)}
+      </SelectFilter>
       <MetricSelectFilter
         metricNames={metricNames}
         multiple

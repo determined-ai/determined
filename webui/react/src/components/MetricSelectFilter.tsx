@@ -65,7 +65,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
   return <SelectFilter
     disableTags
     enableSearchFilter={false}
-    label="Metric"
+    label="Metrics"
     mode={multiple ? 'multiple' : undefined}
     showArrow
     showSearch={false}
