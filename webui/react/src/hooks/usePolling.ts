@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { isAsyncFunction } from 'utils/data';
 
-const DEFAULT_DELAY = 5000;
+const DEFAULT_DELAY = 15000;
 
 type PollingFn = (() => Promise<void>) | (() => void);
 
