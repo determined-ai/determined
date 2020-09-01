@@ -162,7 +162,7 @@ use the ``writer`` field in an instance of the
             self.logger.writer.add_scalar('my_metric', np.random.random(), batch_idx)
 
 For a full-length example of using TensorBoard with PyTorch, see the
-:download:`mnist-GAN model </examples/mnist_gan_pytorch.gz>`.
+:download:`mnist-GAN model </examples/mnist_gan_pytorch.tgz>`.
 
 Lifecycle Management
 --------------------
