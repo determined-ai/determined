@@ -2,9 +2,11 @@ fmt:
 	helm lint charts/determined/
 
 .PHONY: build
-build:
+build: clean
 	mkdir -p build/
-	tar -czf build/determined-helm-chart.tgz charts/determined
+	cp -r charts/determined build/determined-helm-chart
+	tar -C build -czf build/determined-helm-chart.tgz determined-helm-chart
+	rm -rf build/determined-helm-chart
 
 .PHONY: clean
 clean:
