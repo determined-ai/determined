@@ -139,7 +139,7 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.deployment_types.SECURE: secure.Secure,
         constants.deployment_types.VPC: vpc.VPC,
         constants.deployment_types.EFS: efs.EFS,
-        constants.deployment_types.FSX: fsx.FSx
+        constants.deployment_types.FSX: fsx.FSx,
     }  # type: Dict[str, Union[Type[simple.Simple], Type[secure.Secure], Type[vpc.VPC]]]
 
     det_configs = {
