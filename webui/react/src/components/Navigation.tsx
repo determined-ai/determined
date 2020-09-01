@@ -1,5 +1,5 @@
 import { Button, Menu, Tooltip } from 'antd';
-import React, { MouseEventHandler, useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CSSTransition } from 'react-transition-group';
 
@@ -15,20 +15,17 @@ import { commandToTask } from 'utils/types';
 import Avatar from './Avatar';
 import DropdownMenu, { Placement } from './DropdownMenu';
 import Icon from './Icon';
-import Link from './Link';
+import Link, { Props as LinkProps } from './Link';
 import css from './Navigation.module.scss';
 
-interface ItemProps {
+interface ItemProps extends LinkProps {
   badge?: number;
   icon: string;
   label: string;
-  path?: string;
-  popout?: boolean;
   status?: string;
-  onClick?: MouseEventHandler;
 }
 
-const NavigationItem: React.FC<ItemProps> = ({ status, ...props }: ItemProps) => {
+const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemProps) => {
   const ui = UI.useStateContext();
   const location = useLocation();
   const [ isActive, setIsActive ] = useState(false);
@@ -38,11 +35,11 @@ const NavigationItem: React.FC<ItemProps> = ({ status, ...props }: ItemProps) =>
   if (status) classes.push(css.hasStatus);
 
   useEffect(() => {
-    setIsActive(location.pathname === props.path);
-  }, [ classes, location.pathname, props.path ]);
+    setIsActive(location.pathname === path);
+  }, [ classes, location.pathname, path ]);
 
   const link = (
-    <Link className={classes.join(' ')} {...props}>
+    <Link className={classes.join(' ')} path={path} {...props}>
       <Icon name={props.icon} size="large" />
       <div className={css.label}>{props.label}</div>
       {status && <div className={css.status}>{status}</div>}
@@ -168,8 +165,8 @@ const Navigation: React.FC = () => {
           </section>
           <section className={css.bottom}>
             <NavigationItem icon="logs" label="Master Logs" path="/det/logs" popout />
-            <NavigationItem icon="docs" label="Docs" path="/docs" popout />
-            <NavigationItem icon="cloud" label="API" path="/swagger-ui" popout />
+            <NavigationItem icon="docs" label="Docs" noProxy path="/docs" popout />
+            <NavigationItem icon="cloud" label="API" noProxy path="/swagger-ui" popout />
             <NavigationItem icon="collapse" label="Collapse" onClick={handleCollapse} />
           </section>
         </main>
