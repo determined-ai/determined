@@ -26,5 +26,5 @@ The full list of reference guides can be found below:
   command-notebook-config
   config-template
   experiment-config
-  attributions
   helm-config
+  attributions
