@@ -56,7 +56,7 @@ Example:
 
 .. code:: bash
 
-  curl -s "${host}/login?cookie=true" \
+  curl -s "${host}/api/v1/auth/login" \
     -H 'Content-Type: application/json' \
     --data-binary '{"username":"john","password":"2k34h5@$"}' \
 
