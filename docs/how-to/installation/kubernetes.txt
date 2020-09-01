@@ -5,9 +5,6 @@ Install Determined on Kubernetes
 
 This document describes how to install Determined on `Kubernetes <https://kubernetes.io/>`_. The installation
 is performed using the :download:`Determined Helm Chart </helm/determined-helm-chart.tgz>`.
-When installing using the Helm chart, all configurations will be done within
-`values.yaml <https://github.com/determined-ai/determined/blob/master/helm/charts/determined/values.yaml>`_ and
-`Chart.yaml <https://github.com/determined-ai/determined/blob/master/helm/charts/determined/Chart.yaml>`_.
 
 
 Prerequisites
@@ -19,7 +16,7 @@ following prerequisites are satisfied:
 * The Kubernetes cluster should be running Kubernetes >= 1.15, with GPU support enabled. :ref:`Instructions for setting up a GKE cluster <setup-gke-cluster>`.
 * You should have access to the cluster via `kubectl <https://kubernetes.io/docs/tasks/tools/install-kubectl/>`_.
 * `Helm <https://helm.sh/docs/helm/helm_install/>`_ should be installed.
-* You should have a local copy of the:download:`Determined Helm Chart </helm/determined-helm-chart.tgz>`.
+* You should have a local copy of the :download:`Determined Helm Chart </helm/determined-helm-chart.tgz>`.
 
 
 What Gets Installed
@@ -35,26 +32,27 @@ When the Determined Helm chart is installed, the following entities will be crea
 #. PersistentVolumeClaim for the Postgres database. Omitted if using an external database.
 #. Service to allow the Determined master to communicate with the Postgres database. Omitted if using an external database.
 
+Configuration
+-------------
+
+When installing Determined using the Helm chart, you should first configure some
+aspects of the Determined deployment by editing the ``values.yaml`` and
+``Chart.yaml`` files in the Helm chart.
 
 .. _configure-determined-kubernetes-version:
 
-Configuring Which Version of Determined to Install
---------------------------------------------------
+Version Configuration
+#####################
 
-To configure which version of Determined users need to modify ``appVersion`` in ``Chart.yaml``. Users can specify
-a release version (e.g., ``0.13.0``) or specify any commit hash from the `upstream Determined repo <https://github.com/determined-ai/determined>`_
-(e.g., ``b13461ed06f2fad339e179af8028d4575db71a81``). Users are encouraged to use a released version.
+To configure which version of Determined will be installed by the Helm chart,
+users should modify ``appVersion`` in ``Chart.yaml``. Users can specify a
+release version (e.g., ``0.13.0``) or specify any commit hash from the `upstream
+Determined repo <https://github.com/determined-ai/determined>`_ (e.g.,
+``b13461ed06f2fad339e179af8028d4575db71a81``). Users are strongly encouraged to
+use a released version.
 
-.. note::
-
-    If using a non-release branch of the Determined repository, ``appVersion`` is going to be set to ``X.Y.Z.dev0``.
-    This is not an official release version and deploying this version will result in an ``ImagePullBackOff`` error.
-    Users should remove ``.dev0`` to get the released version, or they can specify a specific commit hash
-    instead.
-
-
-Specifying the Number of GPUs Per Node
---------------------------------------
+Number of GPUs Per Node
+#######################
 
 Users are required to specify the number of GPUs on each node (for GPU-enabled nodes only). This is done
 by setting ``slotsPerNode`` in ``values.yaml``. Determined uses this information when scheduling multi-GPU tasks.
@@ -64,14 +62,15 @@ If you have a cluster of different size nodes (e.g., some nodes with 4 GPUs and
 other nodes with 8 GPUs), set ``slotsPerNode`` to the smallest common denominator.
 
 
-Configuring Checkpoint Storage
-------------------------------
+Checkpoint Storage
+##################
 
 Checkpoints and TensorBoards events can be configured to be stored in ``shared_fs``, `AWS S3 <https://aws.amazon.com/s3/>`__,
-or `GCS <https://cloud.google.com/storage>`__. By default checkpoints and TensorBoard events are stored using
-``shared_fs`` which creates a `hostPath Volume <https://kubernetes.io/docs/concepts/storage/volumes/#hostpath>`__ and
-saves to the host file system. Users are strongly discouraged from using ``shared_fs`` for storage
-beyond initial testing as most Kubernetes cluster nodes do not have a shared file system.
+or `GCS <https://cloud.google.com/storage>`__. By default, checkpoints and TensorBoard events are stored using
+``shared_fs``, which creates a `hostPath Volume <https://kubernetes.io/docs/concepts/storage/volumes/#hostpath>`__ and
+saves to the host file system. This configuration is intended for *initial
+testing only*; users are strongly discouraged from using ``shared_fs`` for
+actual deployments of Determined on Kubernetes, because most Kubernetes cluster nodes do not have a shared file system.
 
 Instead of using ``shared_fs``, users should configure either ``AWS S3`` or ``GCS``:
 
@@ -90,8 +89,8 @@ Instead of using ``shared_fs``, users should configure either ``AWS S3`` or ``GC
   users need to specify ``--scopes=storage-full`` to configure proper GCS access.
 
 
-Configuring Default Pod Specs (Optional)
-----------------------------------------
+Default Pod Specs (Optional)
+############################
 
 As described in the :ref:`determined-on-kubernetes` guide, when tasks (e.g., experiments, notebooks) are started
 in a Determined cluster running on Kubernetes, the Determined master launches pods to execute these tasks.
@@ -101,8 +100,8 @@ The defaults can be defined in ``values.yaml`` under ``taskContainerDefaults.cpu
 fields please see the :ref:`specifying custom pod specs <custom-pod-specs>` guide.
 
 
-Configuring an External Database (Optional)
--------------------------------------------
+Database (Optional)
+###################
 
 By default, the Helm chart will deploy an instance of Postgres on the same
 Kubernetes cluster where Determined itself is deployed. If this is undesirable,
@@ -148,7 +147,7 @@ To uninstall Determined run:
 
 .. code::
 
-    # Please note that if the Postgres Database was deployed by Determined it will
+    # Please note that if the Postgres Database was deployed by Determined, it will
     # deleted as part of this, permanently removing all records of your experiments.
     helm delete <name for your deployment>
 
