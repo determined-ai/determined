@@ -36,3 +36,4 @@ The full list of our how-to guides can be found below:
    notebooks
    tensorboard
    use-trained-models
+   rest-apis

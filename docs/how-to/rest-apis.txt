@@ -1,0 +1,89 @@
+.. _rest-api-getting-started:
+
+Getting Started with Determined REST APIs
+=========================================
+
+We use `protobuf <https://developers.google.com/protocol-buffers>`_ to define
+language agnostic message structures. We use these type defintions with
+`gRPC-gateway <https://grpc-ecosystem.github.io/grpc-gateway/>`_ to provide
+consistent REST endpoints to serve various needs.
+
+Using these two tools we also auto generate OpenAPI v2 spec (ka Swagger RESTful API Documentation Specification) which let's us inline documentation for each endpoint
+and response in our codebase.
+
+Having this specification prepared we can serve it to different tools to generate
+code for different lanugages (eg swagger codegen) as well as provide web based explorers into our APIs (eg Swagger UI).
+
+Swagger UI
+----------
+
+As Swagger puts it:
+
+Swagger UI allows anyone — be it your development team or your end consumers — to visualize and interact with the API’s resources without having any of the implementation logic in place. It’s automatically generated from your OpenAPI (formerly known as Swagger) Specification, with the visual documentation making it easy for back end implementation and client side consumption.
+
+
+
+Reach the Swagger UI for your Determined installation by click API icon from the
+Determined WebUI or by visiting the path `/swagger-ui` on your Determined cluster.
+
+.. image:: /assets/images/swagger-ui-location.png
+
+
+
+Authentication
+--------------
+
+Most of the API calls to Determined cluster needs to be authenticated.
+On each API call the server expects a Bearer token to be present.
+
+To receive a token POST a valid username and password combination to the login
+endpoint, currently at `/api/v1/auth/login` with the following format:
+
+.. code:: json
+
+  {
+    "username": "string",
+    "password": "string"
+  }
+
+Example:
+
+.. code:: bash
+
+  curl -s "${host}/login?cookie=true" \
+    -H 'Content-Type: application/json' \
+    --data-binary '{"username":"john","password":"2k34h5@$"}' \
+
+Sample Response: 
+
+.. code:: json
+
+  {
+    "token": "string",
+    "user": {
+      "username": "string",
+      "admin": true,
+      "active": true,
+      "agent_user_group": {
+        "agent_uid": 0,
+        "agent_gid": 0
+      }
+    }
+  }
+
+Now store and attach the provided token to your future API calls under
+`Authorization` header and with the following format: `Bearer $TOKEN`.
+
+
+Example:
+
+.. code:: bash
+
+  # using a bearer token
+  curl -H "Authorization: Bearer ${token}" "${@}"
+
+  # or (not recommended) through a cookie value
+  curl -H "Cookie: auth=${token}" "${@}"
+
+Find experimental dev-scripts for working with Determined APIs at
+https://github.com/determined-ai/dev-scripts/tree/master/apis
