@@ -15,7 +15,7 @@ import { commandToTask } from 'utils/types';
 import Avatar from './Avatar';
 import DropdownMenu, { Placement } from './DropdownMenu';
 import Icon from './Icon';
-import Link, { LinkProps } from './Link';
+import Link, { Props as LinkProps } from './Link';
 import css from './Navigation.module.scss';
 
 interface ItemProps extends LinkProps {
@@ -165,8 +165,8 @@ const Navigation: React.FC = () => {
           </section>
           <section className={css.bottom}>
             <NavigationItem icon="logs" label="Master Logs" path="/det/logs" popout />
-            <NavigationItem icon="docs" label="Docs" path="/docs" popout proxy />
-            <NavigationItem icon="cloud" label="API" path="/swagger-ui" popout proxy />
+            <NavigationItem icon="docs" label="Docs" noProxy path="/docs" popout />
+            <NavigationItem icon="cloud" label="API" noProxy path="/swagger-ui" popout />
             <NavigationItem icon="collapse" label="Collapse" onClick={handleCollapse} />
           </section>
         </main>
