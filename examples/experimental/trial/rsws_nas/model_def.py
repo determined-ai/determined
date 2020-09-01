@@ -24,7 +24,14 @@ from randomNAS_files.model import RNNModel
 from torch import nn
 from torch.optim.lr_scheduler import _LRScheduler
 
-from determined.pytorch import ClipGradsL2Norm, DataLoader, PyTorchCallback, PyTorchTrial, PyTorchTrialContext, LRScheduler
+from determined.pytorch import (
+    ClipGradsL2Norm,
+    DataLoader,
+    PyTorchCallback,
+    PyTorchTrial,
+    PyTorchTrialContext,
+    LRScheduler,
+)
 
 
 import data
@@ -46,7 +53,8 @@ class MyLR(_LRScheduler):
     def get_lr(self):
         ret = list(self.base_lrs)
         self.base_lrs = [
-            self.start_lr * self.seq_len / self.hparams["bptt"] for base_lr in self.base_lrs
+            self.start_lr * self.seq_len / self.hparams["bptt"]
+            for base_lr in self.base_lrs
         ]
         return ret
 
@@ -88,7 +96,7 @@ class NASModel(PyTorchTrial):
         # Made for stacking multiple cells, by default the depth is set to 1
         # which will not run this for loop
         for _ in range(
-                self.context.get_hparam("depth") - 1
+            self.context.get_hparam("depth") - 1
         ):  # minus 1 because 1 gets auto added by the main model
             new_cell = model.cell_cls(
                 self.context.get_hparam("emsize"),
@@ -102,11 +110,13 @@ class NASModel(PyTorchTrial):
 
         model.batch_size = self.context.get_per_slot_batch_size()
         self.model = self.context.wrap_model(model)
-        self.optimizer = self.context.wrap_optimizer(torch.optim.SGD(
-            self.model.parameters(),
-            lr=self.context.get_hparam("learning_rate"),
-            weight_decay=self.context.get_hparam("wdecay"),
-        ))
+        self.optimizer = self.context.wrap_optimizer(
+            torch.optim.SGD(
+                self.model.parameters(),
+                lr=self.context.get_hparam("learning_rate"),
+                weight_decay=self.context.get_hparam("wdecay"),
+            )
+        )
 
         myLR = MyLR(self.optimizer, self.context.get_hparams())
         step_mode = LRScheduler.StepMode.MANUAL_STEP
@@ -156,7 +166,9 @@ class NASModel(PyTorchTrial):
         for i in range(len(self.hidden)):
             self.hidden[i] = self.hidden[i].detach()
 
-        log_prob, self.hidden, rnn_hs, dropped_rnn_hs = self.model(features, self.hidden, return_h=True)
+        log_prob, self.hidden, rnn_hs, dropped_rnn_hs = self.model(
+            features, self.hidden, return_h=True
+        )
 
         loss = nn.functional.nll_loss(
             log_prob.view(-1, log_prob.size(2)), labels.contiguous().view(-1)
@@ -189,7 +201,7 @@ class NASModel(PyTorchTrial):
             self.optimizer,
             clip_grads=lambda params: torch.nn.utils.clip_grad_norm_(
                 params, self.context.get_hparam("clip_gradients_l2_norm")
-            )
+            ),
         )
 
         return {"loss": loss, "perplexity": perplexity}
@@ -248,7 +260,9 @@ class NASModel(PyTorchTrial):
             features, targets = features.cuda(), targets.cuda()
 
             log_prob, hidden = model(features, hidden)
-            loss = nn.functional.nll_loss(log_prob.view(-1, log_prob.size(2)), targets).data
+            loss = nn.functional.nll_loss(
+                log_prob.view(-1, log_prob.size(2)), targets
+            ).data
             total_loss += loss * len(features)
 
             for i in range(len(hidden)):
@@ -270,7 +284,9 @@ class NASModel(PyTorchTrial):
         return {"loss": total_loss, "perplexity": perplexity}
 
     def save_archs(self, data):
-        out_file = self.context.get_data_config().get("out_file") + self.context.get_hparam("seed")
+        out_file = self.context.get_data_config().get(
+            "out_file"
+        ) + self.context.get_hparam("seed")
 
         with open(os.path.join(out_file), "wb+") as f:
             pkl.dump(data, f)
@@ -329,4 +345,3 @@ class NASModel(PyTorchTrial):
             ),
             collate_fn=data.PadSequence(),
         )
-

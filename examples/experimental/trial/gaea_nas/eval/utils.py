@@ -22,7 +22,7 @@ class EMA(nn.Module):
         # be saved as part of state_dict.
         for i, p in enumerate(params):
             copy = p.clone().detach()
-            self.register_buffer('shadow'+str(i), copy)
+            self.register_buffer("shadow" + str(i), copy)
 
     def shadow_vars(self):
         for b in self.buffers():
@@ -32,6 +32,7 @@ class EMA(nn.Module):
         for avg, new in zip(self.shadow_vars(), new_params):
             new_avg = self.mu * avg + (1 - self.mu) * new.detach()
             avg.data = new_avg.data
+
 
 class EMAWrapper(nn.Module):
     def __init__(self, ema_decay, model):
@@ -43,18 +44,18 @@ class EMAWrapper(nn.Module):
         # Create copies in case we have to resume.
         for i, p in enumerate(self.ema_vars()):
             copy = p.clone().detach()
-            self.register_buffer('curr'+str(i), copy)
+            self.register_buffer("curr" + str(i), copy)
 
     def curr_vars(self):
         for n, b in self.named_buffers():
-            if n[0:4]=='curr':
+            if n[0:4] == "curr":
                 yield b
 
     def ema_vars(self):
         for p in self.model.parameters():
             yield p
         for n, b in self.model.named_buffers():
-            if 'running_mean' or 'running_var' in n:
+            if "running_mean" or "running_var" in n:
                 yield b
 
     def forward(self, *args):
@@ -64,13 +65,16 @@ class EMAWrapper(nn.Module):
         self.ema(self.ema_vars())
 
     def restore_ema(self):
-        for curr, shad, p in zip(self.curr_vars(), self.ema.shadow_vars(), self.ema_vars()):
+        for curr, shad, p in zip(
+            self.curr_vars(), self.ema.shadow_vars(), self.ema_vars()
+        ):
             curr.data = p.data
             p.data = shad.data
 
     def restore_latest(self):
         for curr, p in zip(self.curr_vars(), self.ema_vars()):
             p.data = curr.data
+
 
 def accuracy(output, target, topk=(1,)):
     maxk = max(topk)

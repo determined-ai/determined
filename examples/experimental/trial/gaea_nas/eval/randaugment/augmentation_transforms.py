@@ -38,19 +38,19 @@ def _width_height_from_img_shape(img_shape):
 def create_cutout_mask(img_height, img_width, num_channels, size):
     """Creates a zero mask used for cutout of shape `img_height` x `img_width`.
 
-  Args:
-    img_height: Height of image cutout mask will be applied to.
-    img_width: Width of image cutout mask will be applied to.
-    num_channels: Number of channels in the image.
-    size: Size of the zeros mask.
+    Args:
+      img_height: Height of image cutout mask will be applied to.
+      img_width: Width of image cutout mask will be applied to.
+      num_channels: Number of channels in the image.
+      size: Size of the zeros mask.
 
-  Returns:
-    A mask of shape `img_height` x `img_width` with all ones except for a
-    square of zeros of shape `size` x `size`. This mask is meant to be
-    elementwise multiplied with the original image. Additionally returns
-    the `upper_coord` and `lower_coord` which specify where the cutout mask
-    will be applied.
-  """
+    Returns:
+      A mask of shape `img_height` x `img_width` with all ones except for a
+      square of zeros of shape `size` x `size`. This mask is meant to be
+      elementwise multiplied with the original image. Additionally returns
+      the `upper_coord` and `lower_coord` which specify where the cutout mask
+      will be applied.
+    """
     # Sample center where cutout mask will be applied
     height_loc = np.random.randint(low=0, high=img_height)
     width_loc = np.random.randint(low=0, high=img_width)
@@ -75,28 +75,28 @@ def create_cutout_mask(img_height, img_width, num_channels, size):
 def float_parameter(level, maxval):
     """Helper function to scale `val` between 0 and maxval .
 
-  Args:
-    level: Level of the operation that will be between [0, `PARAMETER_MAX`].
-    maxval: Maximum value that the operation can have. This will be scaled
-      to level/PARAMETER_MAX.
+    Args:
+      level: Level of the operation that will be between [0, `PARAMETER_MAX`].
+      maxval: Maximum value that the operation can have. This will be scaled
+        to level/PARAMETER_MAX.
 
-  Returns:
-    A float that results from scaling `maxval` according to `level`.
-  """
+    Returns:
+      A float that results from scaling `maxval` according to `level`.
+    """
     return float(level) * maxval / PARAMETER_MAX
 
 
 def int_parameter(level, maxval):
     """Helper function to scale `val` between 0 and maxval .
 
-  Args:
-    level: Level of the operation that will be between [0, `PARAMETER_MAX`].
-    maxval: Maximum value that the operation can have. This will be scaled
-      to level/PARAMETER_MAX.
+    Args:
+      level: Level of the operation that will be between [0, `PARAMETER_MAX`].
+      maxval: Maximum value that the operation can have. This will be scaled
+        to level/PARAMETER_MAX.
 
-  Returns:
-    An int that results from scaling `maxval` according to `level`.
-  """
+    Returns:
+      An int that results from scaling `maxval` according to `level`.
+    """
     return int(level * maxval / PARAMETER_MAX)
 
 
@@ -202,17 +202,17 @@ posterize = TransformT("Posterize", _posterize_impl)
 def _shear_x_impl(pil_img, level, img_shape):
     """Applies PIL ShearX to `pil_img`.
 
-  The ShearX operation shears the image along the horizontal axis with `level`
-  magnitude.
+    The ShearX operation shears the image along the horizontal axis with `level`
+    magnitude.
 
-  Args:
-    pil_img: Image in PIL object.
-    level: Strength of the operation specified as an Integer from
-      [0, `PARAMETER_MAX`].
+    Args:
+      pil_img: Image in PIL object.
+      level: Strength of the operation specified as an Integer from
+        [0, `PARAMETER_MAX`].
 
-  Returns:
-    A PIL Image that has had ShearX applied to it.
-  """
+    Returns:
+      A PIL Image that has had ShearX applied to it.
+    """
     level = float_parameter(level, 0.3)
     if random.random() > 0.5:
         level = -level
@@ -227,17 +227,17 @@ shear_x = TransformT("ShearX", _shear_x_impl)
 def _shear_y_impl(pil_img, level, img_shape):
     """Applies PIL ShearY to `pil_img`.
 
-  The ShearY operation shears the image along the vertical axis with `level`
-  magnitude.
+    The ShearY operation shears the image along the vertical axis with `level`
+    magnitude.
 
-  Args:
-    pil_img: Image in PIL object.
-    level: Strength of the operation specified as an Integer from
-      [0, `PARAMETER_MAX`].
+    Args:
+      pil_img: Image in PIL object.
+      level: Strength of the operation specified as an Integer from
+        [0, `PARAMETER_MAX`].
 
-  Returns:
-    A PIL Image that has had ShearX applied to it.
-  """
+    Returns:
+      A PIL Image that has had ShearX applied to it.
+    """
     level = float_parameter(level, 0.3)
     if random.random() > 0.5:
         level = -level
@@ -252,17 +252,17 @@ shear_y = TransformT("ShearY", _shear_y_impl)
 def _translate_x_impl(pil_img, level, img_shape):
     """Applies PIL TranslateX to `pil_img`.
 
-  Translate the image in the horizontal direction by `level`
-  number of pixels.
+    Translate the image in the horizontal direction by `level`
+    number of pixels.
 
-  Args:
-    pil_img: Image in PIL object.
-    level: Strength of the operation specified as an Integer from
-      [0, `PARAMETER_MAX`].
+    Args:
+      pil_img: Image in PIL object.
+      level: Strength of the operation specified as an Integer from
+        [0, `PARAMETER_MAX`].
 
-  Returns:
-    A PIL Image that has had TranslateX applied to it.
-  """
+    Returns:
+      A PIL Image that has had TranslateX applied to it.
+    """
     level = int_parameter(level, 10)
     if random.random() > 0.5:
         level = -level
@@ -277,17 +277,17 @@ translate_x = TransformT("TranslateX", _translate_x_impl)
 def _translate_y_impl(pil_img, level, img_shape):
     """Applies PIL TranslateY to `pil_img`.
 
-  Translate the image in the vertical direction by `level`
-  number of pixels.
+    Translate the image in the vertical direction by `level`
+    number of pixels.
 
-  Args:
-    pil_img: Image in PIL object.
-    level: Strength of the operation specified as an Integer from
-      [0, `PARAMETER_MAX`].
+    Args:
+      pil_img: Image in PIL object.
+      level: Strength of the operation specified as an Integer from
+        [0, `PARAMETER_MAX`].
 
-  Returns:
-    A PIL Image that has had TranslateY applied to it.
-  """
+    Returns:
+      A PIL Image that has had TranslateY applied to it.
+    """
     level = int_parameter(level, 10)
     if random.random() > 0.5:
         level = -level
@@ -313,17 +313,17 @@ crop_bilinear = TransformT("CropBilinear", _crop_impl)
 def _solarize_impl(pil_img, level, _):
     """Applies PIL Solarize to `pil_img`.
 
-  Translate the image in the vertical direction by `level`
-  number of pixels.
+    Translate the image in the vertical direction by `level`
+    number of pixels.
 
-  Args:
-    pil_img: Image in PIL object.
-    level: Strength of the operation specified as an Integer from
-      [0, `PARAMETER_MAX`].
+    Args:
+      pil_img: Image in PIL object.
+      level: Strength of the operation specified as an Integer from
+        [0, `PARAMETER_MAX`].
 
-  Returns:
-    A PIL Image that has had Solarize applied to it.
-  """
+    Returns:
+      A PIL Image that has had Solarize applied to it.
+    """
     level = int_parameter(level, 256)
     return ImageOps.solarize(pil_img, 256 - level)
 
