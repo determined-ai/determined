@@ -10,7 +10,8 @@ from determined._trial_controller import (
     LoopTrialController,
     TrialController,
 )
-from determined._local_execution import (
+from determined._execution import (
+    _catch_sys_exit,
     _make_local_execution_env,
     _local_execution_manager,
 )

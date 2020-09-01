@@ -263,7 +263,7 @@ def init_native(
 
     if local:
         if not test:
-            logging.warn("local training is not supported, testing instead")
+            logging.warning("local training is not supported, testing instead")
 
         with det._local_execution_manager(pathlib.Path(context_dir).resolve()):
             return test_one_batch(

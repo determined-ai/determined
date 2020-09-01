@@ -188,12 +188,6 @@ def load_native_implementation(
         with overwrite_sys_args(command):
             try:
                 runpy.run_path(command[0], run_name="__main__")
-            except SystemExit as e:
-                logging.warning(
-                    "Model code raised a SystemExit (sys.exit()) before entering "
-                    "the training loop. Please remove this sys.exit() from your script."
-                )
-                raise e
             except det.errors.StopLoadingImplementation:
                 # If caught this exception, will skip running the rest of the user code.
                 pass

@@ -1,10 +1,10 @@
-import logging
 import time
 from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 import zmq
 from zmq.error import ZMQBindError, ZMQError
 
+import determined as det
 from determined_common import check
 
 
@@ -280,9 +280,8 @@ class ZMQServer:
             socket = self.context.socket(zmq.REP)
             try:
                 socket.bind(f"tcp://*:{port}")
-            except ZMQError:
-                logging.warning(f"Failed to bind to port {port}.")
-                exit(1)
+            except ZMQError as e:
+                raise det.errors.InternalException(f"Failed to bind to port {port}.") from e
             self.sockets.append(socket)
             self.ports.append(port)
 
@@ -295,9 +294,10 @@ class ZMQServer:
                     addr="tcp://*", min_port=port_range[0], max_port=port_range[1]
                 )
                 self.ports.append(selected_port)
-            except ZMQBindError:
-                logging.warning(f"Failed to bind to port range {port_range}.")
-                exit(1)
+            except ZMQBindError as e:
+                raise det.errors.InternalException(
+                    f"Failed to bind to port range {port_range}."
+                ) from e
             self.sockets.append(socket)
 
     def get_ports(self) -> List[int]:
