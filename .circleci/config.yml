@@ -563,11 +563,13 @@ jobs:
           extra-requirements-file: "docs/requirements.txt"
           executor: determinedai/cimg-base:stable
       - run: make -C examples build
+      - run: make -C helm build
       - run: make -C docs build
       - persist_to_workspace:
           root: .
           paths:
             - examples/build
+            - helm/build
             - cli/dist
             - common/dist
             - harness/dist

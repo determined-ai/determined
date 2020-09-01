@@ -17,9 +17,10 @@ as teams, clusters, and data sets all increase in size.
 
   - high-performance distributed training without any additional changes to
     your model code
-  - intelligent hyperparameter optimization based on cutting-edge research
+  - intelligent hyperparameter tuning based on cutting-edge research
   - flexible GPU scheduling, including dynamically resizing training jobs
-    on-the-fly and automatic management of cloud resources on AWS and GCP
+    on-the-fly, automatic management of cloud resources on AWS and GCP and
+    optional support for Kubernetes
   - built-in experiment tracking, metrics visualization, and model registry
   - automatic fault tolerance for DL training jobs
   - integrated support for TensorBoard and GPU-powered Jupyter notebooks

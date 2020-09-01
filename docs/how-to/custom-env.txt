@@ -69,6 +69,8 @@ Python package ``pandas``:
 The :download:`Iris example </examples/iris_tf_keras.tgz>` contains a TensorFlow
 Keras model that uses a startup hook to install an additional Python dependency.
 
+.. _container-images:
+
 Container Images
 ~~~~~~~~~~~~~~~~
 

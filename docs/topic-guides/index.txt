@@ -34,12 +34,20 @@ Topic guides discuss different concepts and topics about Determined and deep lea
 - :ref:`model-definitions_best-practices`
 
 
+**Kubernetes**
+
+- :ref:`determined-on-kubernetes`
+- :ref:`custom-pod-specs`
+
+
 The full list of our topic guides can be found below:
 
 .. toctree::
   :maxdepth: 1
 
   benefits-of-determined
+  determined-on-kubernetes
+  custom-pod-specs
   effective-distributed-training
   experiment-lifecycle
   checkpoints

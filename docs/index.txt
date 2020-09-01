@@ -25,8 +25,8 @@ You can think of Determined as a platform that bridges the gap between tools lik
 Determined's key capabilities include:
 
 - high-performance :ref:`distributed training <multi-gpu-training>` without any additional changes to your model code
-- intelligent :ref:`hyperparameter optimization <hyperparameter-tuning>` based on cutting-edge research
-- flexible GPU scheduling, including dynamically resizing training jobs on-the-fly and automatic management of cloud resources on AWS and GCP
+- intelligent :ref:`hyperparameter tuning <hyperparameter-tuning>` based on cutting-edge research
+- flexible GPU scheduling, including dynamically resizing training jobs on-the-fly, automatic management of cloud resources on AWS and GCP, and optional :ref:`support for Kubernetes <install-on-kubernetes>`
 - built-in experiment tracking, metrics visualization, and :ref:`model registry <organizing-models>`
 - automatic fault tolerance for deep learning training jobs
 - integrated support for :ref:`TensorBoard <how-to-tensorboard>` and GPU-powered :ref:`Jupyter notebooks <how-to-notebooks>`
@@ -84,8 +84,9 @@ Use the links below to start learning more about Determined's capabilities.
 
 **Distributed Training**
 
-- :ref:`optimizing-multi-gpu-training`
 - :ref:`multi-gpu-training`
+- :ref:`optimizing-multi-gpu-training`
+- :ref:`effective-distributed-training`
 
 **Elastic Infrastructure**
 
@@ -100,6 +101,11 @@ Use the links below to start learning more about Determined's capabilities.
 - :ref:`how-to-notebooks`
 - :ref:`how-to-tensorboard`
 
+**Kubernetes**
+
+- :ref:`install-on-kubernetes`
+- :ref:`determined-on-kubernetes`
+
 **Installation**
 
 - :ref:`install-cli`
@@ -109,6 +115,7 @@ Use the links below to start learning more about Determined's capabilities.
   - :ref:`install-aws`
   - :ref:`install-gcp`
   - :ref:`install-using-linux-packages`
+  - :ref:`install-on-kubernetes`
 
 Documentation Structure
 -----------------------

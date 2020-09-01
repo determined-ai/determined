@@ -46,9 +46,6 @@ data:
 
     {{ if .Values.taskContainerDefaults -}}
     task_container_defaults:
-      {{- if .Values.taskContainerDefaults.shmSizeBytes }}
-      shm_size_bytes: {{ int $.Values.taskContainerDefaults.shmSizeBytes }}
-      {{- end }}
       {{- if .Values.taskContainerDefaults.networkMode }}
       network_mode: {{ .Values.taskContainerDefaults.networkMode }}
       {{- end }}

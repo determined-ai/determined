@@ -1,4 +1,4 @@
-# httpPort controls the port at which the listens for connections on.
+# httpPort configures the port at which the Determined master listens for connections on.
 httpPort: 8080 
 
 # db sets the configurations for the database.
@@ -15,7 +15,8 @@ db:
   password: postgres
   port: 5432
 
-  # Only used for Determined db deployment.
+  # Only used for Determined db deployment. Configures the size
+  # of the PersistentVolumeClaim for the Determined delpoyed database.
   storageSize: 30Gi
 
 # checkpointStorage controls where checkpoints are stored.
@@ -27,7 +28,9 @@ checkpointStorage:
   saveTrialLatest: 1
 
 
-  # Comment out if not using `shared_fs`
+  # Comment out if not using `shared_fs`. Users are strongly discouraged
+  # from using ``shared_fs`` for storage beyond initial testing as most
+  # Kubernetes cluster nodes do not have a shared file system.
   type: shared_fs
   hostPath: /checkpoints
 
@@ -60,7 +63,6 @@ masterMemRequest: "8Gi"
 ## GLOO libraries during distributed training are configurable. These default to auto-discovery and
 ## random non-privileged ports, respectively.
 taskContainerDefaults:
-  shmSizeBytes: 4294967296
   # networkMode: bridge
   # dtrainNetworkInterface: <network interface name>
   # ncclPortRange: <MIN:MAX>
@@ -69,6 +71,7 @@ taskContainerDefaults:
   # Configure a default pod spec for all GPU tasks (experiments, notebooks, commands) and
   # CPU tasks (cpu notebooks, tensorboards, zero slot commands). If a pod spec is defined
   # for an individual task, that pod spec will replace the default one that is defined here.
+  # See https://docs:determined.ai/latest/topic-guides/custom-pod-specs.html for more details.
   # cpuPodSpec:
   # gpuPodSpec:
 

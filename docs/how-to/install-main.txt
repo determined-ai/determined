@@ -73,6 +73,19 @@ To install on the cloud, please follow the instructions for your preferred cloud
    installation/aws
    installation/gcp
 
+Kubernetes
+~~~~~~~~~~
+
+Determined can also be deployed onto Kubernetes clusters. To install on
+Kubernetes, please follow the :ref:`Determined on Kubernetes
+<install-on-kubernetes>` installation instructions.
+
+.. toctree::
+   :titlesonly:
+
+   installation/kubernetes
+   installation/setup-gke-cluster
+
 Notes
 ~~~~~
 
