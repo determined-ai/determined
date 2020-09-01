@@ -716,7 +716,7 @@ class TFKerasTrial(det.Trial):
     def session_config(self) -> tf.compat.v1.ConfigProto:
         """
         Specifies the `tf.ConfigProto
-        <https://www.tensorflow.org/api_docs/python/tf/ConfigProto>`__ to be
+        <https://www.tensorflow.org/api_docs/python/tf/compat/v1/ConfigProto>`__ to be
         used by the TensorFlow session. By default,
         ``tf.ConfigProto(allow_soft_placement=True)`` is used.
         """
