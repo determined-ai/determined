@@ -1,6 +1,7 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Input, Modal, Table } from 'antd';
-import { SelectValue } from 'antd/lib/select';
+import { SelectValue } from 'antd/es/select';
+import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
@@ -8,7 +9,7 @@ import Page from 'components/Page';
 import { Indicator } from 'components/Spinner';
 import StateSelectFilter from 'components/StateSelectFilter';
 import {
-  defaultRowClassName, getPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE,
+  defaultRowClassName, getPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE, TableSorter,
 } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TagList from 'components/TagList';
@@ -53,18 +54,29 @@ const defaultFilters: ExperimentFilters = {
   username: undefined,
 };
 
+const defaultSorter: TableSorter = {
+  descend: true,
+  key: 'startTime',
+};
+
+const STORAGE_PATH = 'experiment-list';
+const STORAGE_FILTERS_KEY = 'filters';
+const STORAGE_SORTER_KEY = 'sorter';
+
 const ExperimentList: React.FC = () => {
   const auth = Auth.useStateContext();
   const users = Users.useStateContext();
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>([]);
   const [ experimentsResponse, triggerExperimentsRequest ] =
     useRestApi<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
-  const storage = useStorage('experiment-list');
+  const storage = useStorage(STORAGE_PATH);
   const initFilters = storage.getWithDefault(
-    'filters',
+    STORAGE_FILTERS_KEY,
     { ...defaultFilters, username: (auth.user || {}).username },
   );
   const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
+  const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
+  const [ sorter, setSorter ] = useState<TableSorter>(initSorter);
   const [ search, setSearch ] = useState('');
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
 
@@ -153,12 +165,15 @@ const ExperimentList: React.FC = () => {
       </div>
     );
 
-    const newColumns = [ ...defaultColumns ];
-    const nameColumn = newColumns.find(column => /name/i.test(column.title as string));
-    if (nameColumn) nameColumn.render = nameRenderer;
+    const newColumns = [ ...defaultColumns ].map(column => {
+      column.sortOrder = null;
+      if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
+      if (column.key === 'name') column.render = nameRenderer;
+      return column;
+    });
 
     return newColumns;
-  }, [ handleTagListChange, handleTagListCreate, handleTagListDelete ]);
+  }, [ handleTagListChange, handleTagListCreate, handleTagListDelete, sorter ]);
 
   useEffect(() => {
     const experiments = processExperiments(experimentsResponse.data || [], users.data || []);
@@ -170,7 +185,7 @@ const ExperimentList: React.FC = () => {
   }, []);
 
   const handleFilterChange = useCallback((filters: ExperimentFilters): void => {
-    storage.set('filters', filters);
+    storage.set(STORAGE_FILTERS_KEY, filters);
     setFilters(filters);
   }, [ setFilters, storage ]);
 
@@ -255,6 +270,16 @@ const ExperimentList: React.FC = () => {
     });
   }, [ handleBatchAction ]);
 
+  const handleTableChange = useCallback((pagination, filters, sorter) => {
+    if (Array.isArray(sorter)) return;
+
+    const { columnKey, order } = sorter as SorterResult<ExperimentItem>;
+    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+
+    storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
+    setSorter({ descend: order === 'descend', key: columnKey as string });
+  }, [ columns, setSorter, storage ]);
+
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
   const handleTableRow = useCallback((record: ExperimentItem) => ({
@@ -325,6 +350,7 @@ const ExperimentList: React.FC = () => {
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
           showSorterTooltip={false}
           size="small"
+          onChange={handleTableChange}
           onRow={handleTableRow}
         />
       </div>

@@ -1,5 +1,5 @@
 import { Button, Col, Row, Space, Table, Tooltip } from 'antd';
-import { ColumnType } from 'antd/lib/table';
+import { SorterResult } from 'antd/es/table/interface';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
@@ -12,10 +12,11 @@ import Message from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner, { Indicator } from 'components/Spinner';
-import { defaultRowClassName, findColumnByTitle, getPaginationConfig } from 'components/Table';
+import { defaultRowClassName, getPaginationConfig, TableSorter } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
+import useStorage from 'hooks/useStorage';
 import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
 import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
@@ -35,6 +36,9 @@ interface Params {
   experimentId: string;
 }
 
+const STORAGE_PATH = 'experiment-detail';
+const STORAGE_SORTER_KEY = 'sorter';
+
 const ExperimentDetailsComp: React.FC = () => {
   const { experimentId } = useParams<Params>();
   const id = parseInt(experimentId);
@@ -44,17 +48,14 @@ const ExperimentDetailsComp: React.FC = () => {
   const [ forkModalConfig, setForkModalConfig ] = useState('Loading');
   const [ experimentResponse, triggerExperimentRequest ] =
     useRestApi<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
+  const storage = useStorage(STORAGE_PATH);
+  const initSorter: TableSorter | null = storage.get(STORAGE_SORTER_KEY);
+  const [ sorter, setSorter ] = useState<TableSorter | null>(initSorter);
 
   const experiment = experimentResponse.data;
   const experimentConfig = experiment?.config;
 
   const columns = useMemo(() => {
-    const newColumns: ColumnType<TrialItem>[] = [ ...defaultColumns ];
-    const { metric, smallerIsBetter } = experimentConfig?.searcher || {};
-    const bestValidationIndex = findColumnByTitle<TrialItem>(newColumns, 'best validation');
-    const latestValidationIndex = findColumnByTitle<TrialItem>(newColumns, 'latest validation');
-    const checkpointIndex = findColumnByTitle<TrialItem>(newColumns, 'checkpoint');
-
     const latestValidationRenderer = (_: string, record: TrialItem): React.ReactNode => {
       return record.latestValidationMetrics && metric &&
         humanReadableFloat(record.latestValidationMetrics.validationMetrics[metric]);
@@ -85,13 +86,24 @@ const ExperimentDetailsComp: React.FC = () => {
       );
     };
 
-    newColumns[bestValidationIndex].defaultSortOrder = smallerIsBetter ? 'ascend' : 'descend';
-    newColumns[latestValidationIndex].render = latestValidationRenderer;
-    newColumns[latestValidationIndex].sorter = latestValidationSorter;
-    newColumns[checkpointIndex].render = checkpointRenderer;
+    const { metric, smallerIsBetter } = experimentConfig?.searcher || {};
+    const newColumns = [ ...defaultColumns ].map(column => {
+      column.sortOrder = null;
+      if (!sorter && column.key === 'bestValidation') {
+        column.sortOrder = smallerIsBetter ? 'ascend' : 'descend';
+      } else if (sorter && column.key === sorter.key) {
+        column.sortOrder = sorter.descend ? 'descend' : 'ascend';
+      }
+      if (column.key === 'latestValidation') {
+        column.render = latestValidationRenderer;
+        column.sorter = latestValidationSorter;
+      }
+      if (column.key === 'checkpoint') column.render = checkpointRenderer;
+      return column;
+    });
 
     return newColumns;
-  }, [ experimentConfig, id ]);
+  }, [ experimentConfig, id, sorter ]);
 
   const pollExperimentDetails = useCallback(() => {
     triggerExperimentRequest({ id });
@@ -116,6 +128,16 @@ const ExperimentDetailsComp: React.FC = () => {
   const showForkModal = useCallback((): void => {
     setForkModalVisible(true);
   }, [ setForkModalVisible ]);
+
+  const handleTableChange = useCallback((pagination, filters, sorter) => {
+    if (Array.isArray(sorter)) return;
+
+    const { columnKey, order } = sorter as SorterResult<TrialItem>;
+    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+
+    storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
+    setSorter({ descend: order === 'descend', key: columnKey as string });
+  }, [ columns, setSorter, storage ]);
 
   const handleTableRow = useCallback((record: TrialItem) => ({
     onClick: (event: React.MouseEvent) => {
@@ -200,6 +222,7 @@ const ExperimentDetailsComp: React.FC = () => {
               rowKey="id"
               showSorterTooltip={false}
               size="small"
+              onChange={handleTableChange}
               onRow={handleTableRow} />
           </Section>
         </Col>

@@ -1,12 +1,13 @@
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Input, Modal, Table } from 'antd';
+import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
 import Page from 'components/Page';
 import { Indicator } from 'components/Spinner';
 import {
-  defaultRowClassName, getPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE,
+  defaultRowClassName, getPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE, TableSorter,
 } from 'components/Table';
 import { TaskRenderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
@@ -44,6 +45,15 @@ const defaultFilters: TaskFilters<CommandType> = {
   username: undefined,
 };
 
+const defaultSorter: TableSorter = {
+  descend: true,
+  key: 'startTime',
+};
+
+const STORAGE_PATH = 'task-list';
+const STORAGE_FILTERS_KEY = 'filters';
+const STORAGE_SORTER_KEY = 'sorter';
+
 const TaskList: React.FC = () => {
   const auth = Auth.useStateContext();
   const users = Users.useStateContext();
@@ -51,12 +61,14 @@ const TaskList: React.FC = () => {
   const notebooks = Notebooks.useStateContext();
   const shells = Shells.useStateContext();
   const tensorboards = Tensorboards.useStateContext();
-  const storage = useStorage('task-list');
-  const initFilters = storage.getWithDefault('filters', {
-    ...defaultFilters,
-    username: getPath<string>(auth, 'user.username'),
-  });
+  const storage = useStorage(STORAGE_PATH);
+  const initFilters = storage.getWithDefault(
+    STORAGE_FILTERS_KEY,
+    { ...defaultFilters, username: getPath<string>(auth, 'user.username') },
+  );
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
+  const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
+  const [ sorter, setSorter ] = useState<TableSorter>(initSorter);
   const [ search, setSearch ] = useState('');
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
   const [ sourceExpanded, setSourceExpanded ] = useState<Record<string, boolean>>({});
@@ -168,12 +180,15 @@ const TaskList: React.FC = () => {
       ) : null;
     };
 
-    const newColumns = [ ...defaultColumns ];
-    const sourceColumn = newColumns.find(column => /sources/i.test(column.title as string));
-    if (sourceColumn) sourceColumn.render = sourceRenderer;
+    const newColumns = [ ...defaultColumns ].map(column => {
+      column.sortOrder = null;
+      if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
+      if (column.key === 'sources') column.render = sourceRenderer;
+      return column;
+    });
 
     return newColumns;
-  }, [ handleSourceExpand, sourceExpanded ]);
+  }, [ handleSourceExpand, sorter, sourceExpanded ]);
 
   /*
    * Check once every second to see if all task endpoints have resolved.
@@ -203,7 +218,7 @@ const TaskList: React.FC = () => {
   }, []);
 
   const handleFilterChange = useCallback((filters: TaskFilters<CommandType>): void => {
-    storage.set('filters', filters);
+    storage.set(STORAGE_FILTERS_KEY, filters);
     setFilters(filters);
   }, [ setFilters, storage ]);
 
@@ -240,6 +255,16 @@ const TaskList: React.FC = () => {
       title: 'Confirm Batch Kill',
     });
   }, [ handleBatchKill ]);
+
+  const handleTableChange = useCallback((pagination, filters, sorter) => {
+    if (Array.isArray(sorter)) return;
+
+    const { columnKey, order } = sorter as SorterResult<CommandTask>;
+    if (!columnKey || !columns.find(column => column.key === columnKey)) return;
+
+    storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
+    setSorter({ descend: order === 'descend', key: columnKey as string });
+  }, [ columns, setSorter, storage ]);
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
@@ -286,6 +311,7 @@ const TaskList: React.FC = () => {
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
           showSorterTooltip={false}
           size="small"
+          onChange={handleTableChange}
           onRow={handleTableRow} />
       </div>
     </Page>

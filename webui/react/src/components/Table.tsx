@@ -1,5 +1,4 @@
 import { Tooltip } from 'antd';
-import { ColumnType } from 'antd/es/table';
 import React from 'react';
 import TimeAgo from 'timeago-react';
 
@@ -17,6 +16,11 @@ import { commandTypeToLabel, experimentToTask } from 'utils/types';
 import css from './Table.module.scss';
 
 type TableRecord = CommandTask | ExperimentItem | TrialItem;
+
+export interface TableSorter {
+  descend: boolean;
+  key: string;
+}
 
 export interface TablePagination {
   defaultPageSize: number;
@@ -135,16 +139,6 @@ export const isAlternativeAction = (event: React.MouseEvent): boolean => {
  */
 export const defaultRowClassName = (clickable = true): string=> {
   return clickable ? 'clickable' : '';
-};
-
-/*
- * Utility for find a column by title.
- */
-export const findColumnByTitle: <T>(c: ColumnType<T>[], s: string) => number = (
-  columns,
-  search,
-) => {
-  return columns.findIndex(column => new RegExp(search, 'i').test(column.title as string));
 };
 
 export const getPaginationConfig = (count: number): TablePagination => {
