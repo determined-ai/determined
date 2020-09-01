@@ -344,7 +344,7 @@ If the problem persists please contact support.',
         const response = await getExperimentDetails({ id: experimentId });
         setExperiment(response);
 
-        const storageMetricsKey = `experiments/${response.id}/STORAGE_METRICS_KEY`;
+        const storageMetricsKey = `experiments/${response.id}/${STORAGE_METRICS_KEY}`;
         const initMetrics = storage.getWithDefault(storageMetricsKey, []);
         setMetrics(initMetrics);
       } catch (e) {
