@@ -378,6 +378,12 @@ class EstimatorTrialController(det.LoopTrialController):
         if version.parse(tf.__version__) >= version.parse("2.0.0"):
             tf.compat.v1.disable_v2_behavior()
 
+        # Set the default session before importing any user code. If the default session isn't
+        # set and users call TF code that detects GPUs, it would map the processes to all of
+        # the GPUs. We set the default session before importing any user code to prevent this
+        # this problem.
+        EstimatorTrialController._set_default_tensorflow_session(env=env, hvd_config=hvd_config)
+
     @staticmethod
     def set_random_seed(seed: int) -> None:
         random.seed(seed)
@@ -385,6 +391,17 @@ class EstimatorTrialController(det.LoopTrialController):
         # This seed value will be overwritten by
         # tf.estimator.RunConfig.tf_random_seed.
         tf.compat.v1.set_random_seed(seed)
+
+    @staticmethod
+    def _set_default_tensorflow_session(
+        env: det.EnvContext, hvd_config: horovod.HorovodContext
+    ) -> None:
+        session_config = EstimatorTrialController._init_session_config(
+            session_config=None,
+            env=env,
+            hvd_config=hvd_config,
+        )
+        tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=session_config))
 
     @staticmethod
     def from_trial(
@@ -553,27 +570,41 @@ class EstimatorTrialController(det.LoopTrialController):
     def _init_val_hooks(self) -> List[tf.estimator.SessionRunHook]:
         return [*self.val_spec.hooks, DeterminedEarlyStoppingHook(self.context)]
 
+    @staticmethod
+    def _init_session_config(
+        session_config: tf.compat.v1.ConfigProto,
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+    ) -> tf.compat.v1.ConfigProto:
+        if session_config is None:
+            session_config = tf.compat.v1.ConfigProto()
+        session_config.gpu_options.allow_growth = True
+
+        if not hvd_config.use:
+            return session_config
+
+        # If using CUDA_VISIBLE_DEVICES there is only one visible GPU
+        # so there is no need to set visible devices for TF.
+        # TODO (DET-3762): Remove this once it's no longer necessary.
+        if not env.experiment_config.get("data", {}).get("set_cuda_visible_devices", False):
+            session_config.gpu_options.visible_device_list = str(
+                env.slot_ids[horovod.hvd.local_rank()]
+            )
+
+        return session_config
+
     def _init_run_config(self, config: tf.estimator.RunConfig) -> tf.estimator.RunConfig:
         logging.debug(f"Initializing RunConfig. Got RunConfig: {config} .")
 
         session_config = config.session_config
         train_distribute = None
         eval_distribute = None
-        if self.hvd_config.use:
-            if session_config is None:
-                session_config = tf.compat.v1.ConfigProto()
-            session_config.gpu_options.allow_growth = True
 
-            # If using CUDA_VISIBLE_DEVICES there is only one visible GPU
-            # so there is no need to set visible devices for TF.
-            # TODO (DET-3762): Remove this once it's no longer necessary.
-            if not self.env.experiment_config.get("data", {}).get(
-                "set_cuda_visible_devices", False
-            ):
-                session_config.gpu_options.visible_device_list = str(
-                    self.env.slot_ids[horovod.hvd.local_rank()]
-                )
-        elif len(self.env.container_gpus) > 1:
+        # The default session should already be defined, here we also set the session
+        # for the estimator itself.
+        self._init_session_config(session_config, self.env, self.hvd_config)
+
+        if not self.hvd_config.use and len(self.env.container_gpus) > 1:
             check.true(len(self.rendezvous_info.get_addrs()) == 1)
             train_distribute = tf.distribute.MirroredStrategy()
             eval_distribute = tf.distribute.MirroredStrategy()
