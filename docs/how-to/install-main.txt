@@ -83,7 +83,7 @@ Kubernetes, please follow the :ref:`Determined on Kubernetes
 .. toctree::
    :titlesonly:
 
-   installation/install-on-kubernetes
+   installation/kubernetes
    installation/setup-gke-cluster
 
 Notes
