@@ -24,7 +24,7 @@ const useResize = (ref: RefObject<HTMLElement>): ResizeInfo => {
     if (!element) return;
 
     const handleResize: ResizeObserverCallback = entries => {
-      // Check to make sure the log viewer container is being observed for resize.
+      // Check to make sure the ref container is being observed for resize.
       const elements = entries.map((entry: ResizeObserverEntry) => entry.target);
       if (!element || elements.indexOf(element) === -1) return;
 

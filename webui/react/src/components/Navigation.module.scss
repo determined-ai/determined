@@ -8,7 +8,7 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
   flex-direction: column;
   flex-grow: 0;
   flex-shrink: 0;
-  overflow: auto;
+  overflow: visible;
 
   header {
     height: 14rem;
