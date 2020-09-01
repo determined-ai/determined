@@ -69,7 +69,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     mode={multiple ? 'multiple' : undefined}
     showArrow
     showSearch={false}
-    style={multiple ? { minWidth: 200 } : undefined}
+    style={{ width: 200 }}
     value={metricValues}
     onDeselect={handleMetricDeselect}
     onSelect={handleMetricSelect}>

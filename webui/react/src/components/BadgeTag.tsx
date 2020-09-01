@@ -1,3 +1,4 @@
+import { Tooltip } from 'antd';
 import React, { PropsWithChildren } from 'react';
 
 import Badge, { BadgeProps } from './Badge';
@@ -10,6 +11,8 @@ interface Props extends BadgeProps {
   label?: React.ReactNode;
 }
 
+const TOOLTIP_DELAY = 1.0;
+
 const BadgeTag: React.FC<Props> = ({
   children,
   label,
@@ -18,9 +21,13 @@ const BadgeTag: React.FC<Props> = ({
 }: PropsWithChildren<Props>) => {
   return (
     <span className={css.base}>
-      {preLabel && <span className={css.preLabel}>{preLabel}</span>}
+      {preLabel && <Tooltip mouseEnterDelay={TOOLTIP_DELAY} title={label}>
+        <span className={css.preLabel}>{preLabel}</span>
+      </Tooltip>}
       <Badge {...props}>{children}</Badge>
-      {label && <span className={css.label}>{label}</span>}
+      {label && <Tooltip mouseEnterDelay={TOOLTIP_DELAY} title={label}>
+        <span className={css.label}>{label}</span>
+      </Tooltip>}
     </span>
   );
 };
