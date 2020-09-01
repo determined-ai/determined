@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 
 import Grid, { GridMode } from 'components/Grid';
-import Message from 'components/Message';
+import Message, { MessageType } from 'components/Message';
 import OverviewStats from 'components/OverviewStats';
 import Page from 'components/Page';
 import Section from 'components/Section';
@@ -150,7 +150,9 @@ const Dashboard: React.FC = () => {
           ? <Spinner />
           : tasks.length !== 0
             ? <Grid gap={ShirtSize.medium} mode={GridMode.AutoFill}>{tasks}</Grid>
-            : <Message title="No recent tasks matching the current filters" />
+            : <Message
+              title="No recent tasks matching the current filters"
+              type={MessageType.Empty} />
         }
       </Section>
     </Page>

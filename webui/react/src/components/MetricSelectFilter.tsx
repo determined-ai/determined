@@ -6,7 +6,7 @@ import { MetricName, MetricType } from 'types';
 import { metricNameSorter } from 'utils/data';
 import { metricNameToValue, valueToMetricName } from 'utils/trial';
 
-import Badge from './Badge';
+import BadgeTag from './BadgeTag';
 import SelectFilter from './SelectFilter';
 
 const { OptGroup, Option } = Select;
@@ -69,7 +69,7 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     mode={multiple ? 'multiple' : undefined}
     showArrow
     showSearch={false}
-    style={multiple ? { minWidth: 200 } : undefined}
+    style={{ width: 200 }}
     value={metricValues}
     onDeselect={handleMetricDeselect}
     onSelect={handleMetricSelect}>
@@ -77,7 +77,9 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
       {validationMetricNames.map(key => {
         const value = metricNameToValue(key);
         return <Option key={value} value={value}>
-          <Badge tooltip={key.type}>{key.type.substr(0, 1).toUpperCase()}</Badge> {key.name}
+          <BadgeTag
+            label={key.name}
+            tooltip={key.type}>{key.type.substr(0, 1).toUpperCase()}</BadgeTag>
         </Option>;
       })}
     </OptGroup>}
@@ -85,7 +87,9 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
       {trainingMetricNames.map(key => {
         const value = metricNameToValue(key);
         return <Option key={value} value={value}>
-          <Badge tooltip={key.type}>{key.type.substr(0, 1).toUpperCase()}</Badge> {key.name}
+          <BadgeTag
+            label={key.name}
+            tooltip={key.type}>{key.type.substr(0, 1).toUpperCase()}</BadgeTag>
         </Option>;
       })}
     </OptGroup>}

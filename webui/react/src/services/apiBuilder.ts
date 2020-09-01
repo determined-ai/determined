@@ -3,15 +3,9 @@ import axios, { AxiosResponse, CancelToken, Method } from 'axios';
 import handleError, { DaError, ErrorLevel, ErrorType, isDaError } from 'ErrorHandler';
 import { isAuthFailure } from 'services/api';
 import * as DetSwagger from 'services/api-ts-sdk';
-import { serverAddress } from 'utils/routes';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const ndjsonStream = require('can-ndjson-stream');
-
-export const http = axios.create({
-  responseType: 'json',
-  withCredentials: true,
-});
 
 export interface HttpOptions {
   url?: string;
@@ -26,6 +20,16 @@ export interface Api<Input, Output>{
   postProcess?: (response: AxiosResponse<unknown>) => Output; // io type decoder.
   // middlewares?: Middleware[]; // success/failure middlewares
 }
+
+export const http = axios.create({
+  responseType: 'json',
+  withCredentials: true,
+});
+
+export const serverAddress = (avoidDevProxy = false): string => {
+  if (avoidDevProxy && process.env.IS_DEV) return 'http://localhost:8080';
+  return `${window.location.protocol}//${window.location.host}`;
+};
 
 export const processApiError = (name: string, e: Error): DaError => {
   const isAuthError = isAuthFailure(e);

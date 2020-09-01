@@ -1,10 +1,10 @@
+import { serverAddress } from 'services/apiBuilder';
 import {
   AnyTask, Checkpoint, Command, CommandState, CommandType, Experiment, ExperimentHyperParams,
   ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
 } from 'types';
 
 import { deletePathList, getPathList, isNumber, setPathList } from './data';
-import { serverAddress } from './routes';
 import { getDuration } from './time';
 
 /* Conversions to Tasks */

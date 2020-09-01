@@ -8,6 +8,7 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
   flex-direction: column;
   flex-grow: 0;
   flex-shrink: 0;
+  overflow: visible;
 
   header {
     height: 14rem;
@@ -137,11 +138,13 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     .status {
       background-color: var(--theme-colors-action-normal);
       border-radius: var(--theme-sizes-layout-medium);
+      bottom: var(--theme-sizes-layout-big);
       color: var(--theme-colors-monochrome-17);
       font-size: var(--theme-sizes-font-tiny);
       height: 0 var(--theme-sizes-layout-big);
       padding: 0 var(--theme-sizes-layout-small);
       position: absolute;
+      right: var(--theme-sizes-layout-big);
       white-space: nowrap;
     }
   }
@@ -172,6 +175,10 @@ $transition-props: 0.2s cubic-bezier(0.785, 0.135, 0.15, 0.86);
     font-size: var(--theme-sizes-font-small);
     margin-left: var(--theme-sizes-layout-big);
   }
+}
+.collapsedAppear {
+  flex-basis: 0;
+  overflow: hidden;
 }
 .collapsedEnter,
 .collapsedExitDone {

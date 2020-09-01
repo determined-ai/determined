@@ -9,7 +9,12 @@
     display: flex;
     flex-grow: 1;
 
-    & > *:first-child { flex-grow: 0; }
+    & > *:first-child {
+      flex-grow: 0;
+      position: relative;
+      // Avoid setting anything else with a z-index of 1000 or higher  in the non-nav/main content area
+      z-index: 1000;
+    }
     & > *:last-child {
       flex-grow: 1;
       height: 100vh;

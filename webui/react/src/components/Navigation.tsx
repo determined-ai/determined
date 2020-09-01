@@ -34,9 +34,7 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemPro
   if (isActive) classes.push(css.active);
   if (status) classes.push(css.hasStatus);
 
-  useEffect(() => {
-    setIsActive(location.pathname === path);
-  }, [ classes, location.pathname, path ]);
+  useEffect(() => setIsActive(location.pathname === path), [ location.pathname, path ]);
 
   const link = (
     <Link className={classes.join(' ')} path={path} {...props}>
@@ -106,6 +104,9 @@ const Navigation: React.FC = () => {
     <CSSTransition
       appear={true}
       classNames={{
+        appear: css.collapsedAppear,
+        appearActive: isCollapsed ? css.collapsedEnterActive : css.collapsedExitActive,
+        appearDone: isCollapsed ? css.collapsedEnterDone : css.collapsedExitDone,
         enter: css.collapsedEnter,
         enterActive: css.collapsedEnterActive,
         enterDone: css.collapsedEnterDone,
@@ -158,7 +159,7 @@ const Navigation: React.FC = () => {
             </div>
           </section>
           <section className={css.top}>
-            <NavigationItem icon="user" label="Dashboard" path="/det/dashboard" />
+            <NavigationItem icon="dashboard" label="Dashboard" path="/det/dashboard" />
             <NavigationItem icon="experiment" label="Experiments" path="/det/experiments" />
             <NavigationItem icon="tasks" label="Tasks" path="/det/tasks" />
             <NavigationItem icon="cluster" label="Cluster" path="/det/cluster" status={cluster} />
@@ -167,7 +168,10 @@ const Navigation: React.FC = () => {
             <NavigationItem icon="logs" label="Master Logs" path="/det/logs" popout />
             <NavigationItem icon="docs" label="Docs" noProxy path="/docs" popout />
             <NavigationItem icon="cloud" label="API" noProxy path="/swagger-ui" popout />
-            <NavigationItem icon="collapse" label="Collapse" onClick={handleCollapse} />
+            <NavigationItem
+              icon={isCollapsed ? 'expand' : 'collapse'}
+              label={isCollapsed ? 'Expand' : 'Collapse'}
+              onClick={handleCollapse} />
           </section>
         </main>
         <footer>

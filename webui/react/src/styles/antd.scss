@@ -107,6 +107,9 @@ html {
   .ant-select.ant-select-open.ant-select-show-search {
     min-width: 10rem;
   }
+  .ant-select-item-option-content {
+    width: 0;
+  }
   .ant-select-dropdown {
     border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-12);
     border-radius: var(--theme-sizes-border-radius);

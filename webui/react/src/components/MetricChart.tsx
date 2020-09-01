@@ -1,8 +1,9 @@
 import { Select, Space } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import Plotly, { PlotData, PlotlyHTMLElement, PlotRelayoutEvent } from 'plotly.js/lib/core';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
+import useResize from 'hooks/useResize';
 import { clone } from 'utils/data';
 import { capitalize, generateAlphaNumeric } from 'utils/string';
 
@@ -59,6 +60,7 @@ const MetricChart: React.FC<Props> = (props: Props) => {
   const [ range, setRange ] = useState<Range>();
   const [ maxRange, setMaxRange ] = useState<Range>();
   const [ isRendered, setIsRendered ] = useState(false);
+  const resize = useResize(chartRef);
 
   const handleRelayout = useCallback((event: PlotRelayoutEvent) => {
     // Brute force check to keep Typescript happy.
@@ -151,6 +153,11 @@ const MetricChart: React.FC<Props> = (props: Props) => {
 
     return () => chart.removeAllListeners('plotly_relayout');
   }, [ handleRelayout, id ]);
+
+  useLayoutEffect(() => {
+    if (!chartRef.current) return;
+    Plotly.Plots.resize(chartRef.current);
+  }, [ resize ]);
 
   const chartOptions = (
     <Space size="small">

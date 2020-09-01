@@ -14,8 +14,14 @@
     height: var(--theme-sizes-layout-giant);
     line-height: var(--theme-sizes-layout-giant);
     margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-  .options { display: flex; }
+  .options {
+    display: flex;
+    margin-left: var(--theme-sizes-layout-medium);
+  }
   .body {
     border-color: var(--theme-colors-monochrome-13);
     border-style: solid;
