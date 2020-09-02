@@ -27,8 +27,8 @@ type (
 		Spec        tasks.TaskSpec
 		TaskHandler *actor.Ref
 	}
-	// taskStopped notifies that the task actor is stopped.
-	taskStopped struct {
+	// taskActorStopped notifies that the task actor is stopped.
+	taskActorStopped struct {
 		Ref *actor.Ref
 	}
 	// SetTaskName sets the name of the task handled by the sender of the message.

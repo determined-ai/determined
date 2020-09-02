@@ -108,10 +108,10 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 	case sproto.PodTerminated:
 		k.receivePodTerminated(ctx, msg, false)
 
-	case taskStopped:
+	case taskActorStopped:
 		k.receiveTaskStopped(ctx, msg)
 
-	case groupStopped:
+	case groupActorStopped:
 		delete(k.slotsUsedPerGroup, k.groups[msg.Ref])
 		delete(k.groups, msg.Ref)
 
@@ -150,7 +150,7 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 }
 
 func (k *kubernetesResourceProvider) receiveAddTask(ctx *actor.Context, msg AddTask) {
-	actors.NotifyOnStop(ctx, msg.TaskHandler, taskStopped{Ref: msg.TaskHandler})
+	actors.NotifyOnStop(ctx, msg.TaskHandler, taskActorStopped{Ref: msg.TaskHandler})
 
 	if task, ok := k.tasksByHandler[msg.TaskHandler]; ok {
 		if ctx.ExpectingResponse() {
@@ -280,7 +280,7 @@ func (k *kubernetesResourceProvider) getOrCreateGroup(
 	k.slotsUsedPerGroup[g] = 0
 
 	if ctx != nil && handler != nil { // ctx is nil only for testing purposes.
-		actors.NotifyOnStop(ctx, handler, groupStopped{})
+		actors.NotifyOnStop(ctx, handler, groupActorStopped{})
 	}
 	return g
 }
@@ -378,7 +378,7 @@ func (k *kubernetesResourceProvider) taskTerminated(task *Task, aborted bool) {
 	}
 }
 
-func (k *kubernetesResourceProvider) receiveTaskStopped(ctx *actor.Context, msg taskStopped) {
+func (k *kubernetesResourceProvider) receiveTaskStopped(ctx *actor.Context, msg taskActorStopped) {
 	task := k.tasksByHandler[msg.Ref]
 	if task == nil {
 		return

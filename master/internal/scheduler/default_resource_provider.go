@@ -170,7 +170,7 @@ func (d *DefaultRP) getOrCreateGroup(handler *actor.Ref, ctx *actor.Context) *gr
 	g := &group{handler: handler, weight: 1}
 	d.groups[handler] = g
 	if ctx != nil && handler != nil { // ctx is nil only for testing purposes.
-		actors.NotifyOnStop(ctx, handler, groupStopped{})
+		actors.NotifyOnStop(ctx, handler, groupActorStopped{})
 	}
 	return g
 }
@@ -223,8 +223,8 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 		return d.receiveAgentMsg(ctx)
 
 	case
-		taskStopped,
-		groupStopped,
+		taskActorStopped,
+		groupActorStopped,
 		SetMaxSlots,
 		SetWeight,
 		AddTask,
@@ -316,10 +316,10 @@ func (d *DefaultRP) receiveAgentMsg(ctx *actor.Context) error {
 
 func (d *DefaultRP) receiveTaskMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case taskStopped:
-		d.receiveTaskStopped(ctx, msg)
+	case taskActorStopped:
+		d.receiveTaskActorStopped(ctx, msg)
 
-	case groupStopped:
+	case groupActorStopped:
 		delete(d.groups, msg.Ref)
 
 	case SetMaxSlots:
@@ -341,7 +341,7 @@ func (d *DefaultRP) receiveTaskMsg(ctx *actor.Context) error {
 }
 
 func (d *DefaultRP) receiveAddTask(ctx *actor.Context, msg AddTask) {
-	d.notifyOnStop(ctx, msg.TaskHandler, taskStopped{Ref: msg.TaskHandler})
+	d.notifyOnStop(ctx, msg.TaskHandler, taskActorStopped{Ref: msg.TaskHandler})
 
 	if task, ok := d.tasksByHandler[msg.TaskHandler]; ok {
 		if ctx.ExpectingResponse() {
@@ -467,7 +467,7 @@ func (d *DefaultRP) receiveContainerTerminated(
 	}
 }
 
-func (d *DefaultRP) receiveTaskStopped(ctx *actor.Context, msg taskStopped) {
+func (d *DefaultRP) receiveTaskActorStopped(ctx *actor.Context, msg taskActorStopped) {
 	task := d.tasksByHandler[msg.Ref]
 	if task == nil {
 		return
