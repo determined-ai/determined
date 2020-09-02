@@ -1,5 +1,10 @@
 import { CommandType, RunState, TBSourceType } from 'types';
 
+export interface ApiSorter<T = string> {
+  descend: boolean;
+  key: T;
+}
+
 export interface ExperimentsParams {
   states?: string[];
 }

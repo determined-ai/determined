@@ -7,10 +7,11 @@ import Icon from 'components/Icon';
 import Page from 'components/Page';
 import { Indicator } from 'components/Spinner';
 import {
-  defaultRowClassName, getPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE, TableSorter,
+  defaultRowClassName, getPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE,
 } from 'components/Table';
 import { TaskRenderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
+import TaskActionDropdown from 'components/TaskActionDropdown';
 import TaskFilter from 'components/TaskFilter';
 import Auth from 'contexts/Auth';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
@@ -21,7 +22,7 @@ import useStorage from 'hooks/useStorage';
 import {
   getCommands, getNotebooks, getShells, getTensorboards, killCommand,
 } from 'services/api';
-import { EmptyParams } from 'services/types';
+import { ApiSorter, EmptyParams } from 'services/types';
 import { ALL_VALUE, Command, CommandTask, CommandType, TaskFilters } from 'types';
 import { getPath, numericSorter } from 'utils/data';
 import { handlePath, openBlank } from 'utils/routes';
@@ -45,7 +46,7 @@ const defaultFilters: TaskFilters<CommandType> = {
   username: undefined,
 };
 
-const defaultSorter: TableSorter = {
+const defaultSorter: ApiSorter = {
   descend: true,
   key: 'startTime',
 };
@@ -68,7 +69,7 @@ const TaskList: React.FC = () => {
   );
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
-  const [ sorter, setSorter ] = useState<TableSorter>(initSorter);
+  const [ sorter, setSorter ] = useState<ApiSorter>(initSorter);
   const [ search, setSearch ] = useState('');
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
   const [ sourceExpanded, setSourceExpanded ] = useState<Record<string, boolean>>({});
@@ -137,6 +138,8 @@ const TaskList: React.FC = () => {
     });
   }, []);
 
+  const handleActionComplete = useCallback(() => fetchTasks(), [ fetchTasks ]);
+
   const columns = useMemo(() => {
     const sourceRenderer: TaskRenderer = (_, record) => {
       const info = {
@@ -180,15 +183,20 @@ const TaskList: React.FC = () => {
       ) : null;
     };
 
+    const actionRenderer: TaskRenderer = (_, record) => (
+      <TaskActionDropdown task={record} onComplete={handleActionComplete} />
+    );
+
     const newColumns = [ ...defaultColumns ].map(column => {
       column.sortOrder = null;
       if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
       if (column.key === 'sources') column.render = sourceRenderer;
+      if (column.key === 'action') column.render = actionRenderer;
       return column;
     });
 
     return newColumns;
-  }, [ handleSourceExpand, sorter, sourceExpanded ]);
+  }, [ handleActionComplete, handleSourceExpand, sorter, sourceExpanded ]);
 
   /*
    * Check once every second to see if all task endpoints have resolved.

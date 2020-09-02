@@ -1,6 +1,6 @@
 import {
-  ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType, Experiment,
-  ExperimentFilters, ExperimentItem, ExperimentTask, RecentCommandTask, RecentEvent,
+  ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType,
+  ExperimentItem, ExperimentOld, ExperimentTask, RecentCommandTask, RecentEvent,
   RecentExperimentTask, RecentTask, RunState, Task, TaskFilters, TaskType, User,
 } from 'types';
 import { terminalCommandStates } from 'utils/types';
@@ -22,7 +22,6 @@ function generateTask(idx: number): Task & RecentEvent {
   const now = Date.now();
   const range = Math.random() * 2 * 356 * 24 * 60 * 60 * 1000;
   const startTime = new Date(now - range).toString();
-  const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
   return {
     id: `${idx}`,
     lastEvent: {
@@ -32,7 +31,6 @@ function generateTask(idx: number): Task & RecentEvent {
     name: `${idx}`,
     startTime,
     url: '#',
-    userId: user.id,
   };
 }
 
@@ -40,29 +38,30 @@ export function generateExperimentTask(idx: number): RecentExperimentTask {
   const state = getRandomElementOfEnum(RunState);
   const task = generateTask(idx);
   const progress = Math.random();
+  const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
   return {
+    ...task,
     archived: false,
-    ... task,
     progress,
     state: state as RunState,
+    url: '#',
+    username: user.username,
   };
 }
 
 export function generateCommandTask(idx: number): RecentCommandTask {
   const state = getRandomElementOfEnum(CommandState);
   const task = generateTask(idx);
-  let username = sampleUsers.find(user => user.id === task.userId)?.username;
-  if (!username)
-    username = sampleUsers[Math.floor(Math.random() * sampleUsers.length)].username;
+  const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
   return {
     ...task,
     state: state as CommandState,
     type: getRandomElementOfEnum(CommandType),
-    username,
+    username: user.username,
   };
 }
 
-export const generateExperiments = (count = 10): ExperimentItem[] => {
+export const generateOldExperiments = (count = 10): ExperimentOld[] => {
   return new Array(Math.floor(count))
     .fill(null)
     .map((_, idx) => {
@@ -93,6 +92,25 @@ export const generateExperiments = (count = 10): ExperimentItem[] => {
         configRaw: config,
         id: idx,
         name: experimentTask.name,
+        userId: user.id,
+        username: user.username,
+      } as ExperimentOld;
+    });
+};
+
+export const generateExperiments = (count = 30): ExperimentItem[] => {
+  return new Array(Math.floor(count))
+    .fill(null)
+    .map((_, idx) => {
+      const experimentTask = generateExperimentTask(idx);
+      const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
+      return {
+        ...experimentTask,
+        id: idx,
+        labels: [],
+        name: experimentTask.name,
+        numTrials: Math.round(Math.random() * 60000),
+        userId: user.id,
         username: user.username,
       } as ExperimentItem;
     });
@@ -138,22 +156,7 @@ const matchesUser = <T extends AnyTask | ExperimentItem>(
 ): boolean => {
   if (!username) return true;
   const selectedUser = users.find(u => u.username === username);
-  return !!selectedUser && (task.userId === selectedUser.id);
-};
-
-export const filterExperiments = (
-  experiments: ExperimentItem[],
-  filters: ExperimentFilters,
-  users: User[] = [],
-  search = '',
-): ExperimentItem[] => {
-  return experiments
-    .filter(experiment => {
-      return (filters.showArchived || !experiment.archived) &&
-        matchesUser<ExperimentItem>(experiment, users, filters.username) &&
-        matchesState<ExperimentItem>(experiment, filters.states) &&
-        matchesSearch<ExperimentItem>(experiment, search);
-    });
+  return !!selectedUser && (task.username === username);
 };
 
 export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = AnyTask>(
@@ -171,25 +174,4 @@ export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = A
         (!isExperiment || !(task as ExperimentTask).archived);
     })
     .filter(task => matchesSearch<A>(task, search));
-};
-
-/*
- * This function maps `username` and other fields to `Experiment`. Future API work
- * will provide `username` but until then this is done prior to passing it into a
- * `Table` component for efficiency and cleanliness reasons. Once v1 API lands,
- * we may not need this function.
- */
-export const processExperiments = (experiments: Experiment[], users: User[]): ExperimentItem[] => {
-  const userMap = users.reduce((acc, user) => {
-    acc[user.id] = user.username;
-    return acc;
-  }, {} as Record<number, string>);
-  return experiments.map(experiment => {
-    return {
-      ...experiment,
-      name: experiment.config.description,
-      url: `/det/experiments/${experiment.id}`,
-      username: userMap[experiment.userId],
-    };
-  });
 };

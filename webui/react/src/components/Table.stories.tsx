@@ -3,7 +3,6 @@ import React from 'react';
 
 import { columns as experimentColumns } from 'pages/ExperimentList.table';
 import { columns as taskColumns } from 'pages/TaskList.table';
-import { ExperimentsDecorator } from 'storybook/ContextDecorators';
 import RouterDecorator from 'storybook/RouterDecorator';
 import { CommandTask, ExperimentItem } from 'types';
 import { generateCommandTask, generateExperiments } from 'utils/task';
@@ -13,14 +12,14 @@ import css from './Table.module.scss';
 
 export default {
   component: Table,
-  decorators: [ RouterDecorator, ExperimentsDecorator ],
+  decorators: [ RouterDecorator ],
   title: 'Table',
 };
 
 const commandTasks: CommandTask[] = new Array(20)
   .fill(null)
   .map((_, index) => generateCommandTask(index));
-const experimentItems: ExperimentItem[] = generateExperiments(30);
+const experiments: ExperimentItem[] = generateExperiments(30);
 
 export const LoadingTable = (): React.ReactNode => {
   return <Table loading={true} />;
@@ -45,8 +44,8 @@ export const ExperimentTable = (): React.ReactNode => {
   return <Table
     className={css.base}
     columns={experimentColumns}
-    dataSource={experimentItems}
-    loading={experimentItems === undefined}
+    dataSource={experiments}
+    loading={experiments === undefined}
     rowClassName={defaultRowClassName()}
     rowKey="id"
     showSorterTooltip={false} />;

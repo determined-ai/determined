@@ -4,16 +4,15 @@ import ActiveExperiments from 'contexts/ActiveExperiments';
 import Agents from 'contexts/Agents';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
-import Experiments from 'contexts/Experiments';
 import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
 import {
-  getAgents, getCommands, getExperimentSummaries, getNotebooks, getShells,
-  getTensorboards, getUsers,
+  getAgents, getCommands, getExperimentSummaries, getNotebooks,
+  getShells, getTensorboards, getUsers,
 } from 'services/api';
 import { EmptyParams, ExperimentsParams } from 'services/types';
-import { Agent, Command, DetailedUser, Experiment } from 'types';
+import { Agent, Command, DetailedUser, ExperimentBase } from 'types';
 import { activeRunStates } from 'utils/types';
 
 const AppContexts: React.FC = () => {
@@ -21,7 +20,6 @@ const AppContexts: React.FC = () => {
   const setAgents = Agents.useActionContext();
   const setCommands = Commands.useActionContext();
   const setActiveExperiments = ActiveExperiments.useActionContext();
-  const setExperiments = Experiments.useActionContext();
   const setNotebooks = Notebooks.useActionContext();
   const setShells = Shells.useActionContext();
   const setTensorboards = Tensorboards.useActionContext();
@@ -38,10 +36,8 @@ const AppContexts: React.FC = () => {
     useRestApi<EmptyParams, Command[]>(getShells, {});
   const [ tensorboardsResponse, triggerTensorboardsRequest ] =
     useRestApi<EmptyParams, Command[]>(getTensorboards, {});
-  const [ experimentsResponse, triggerExperimentsRequest ] =
-    useRestApi<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
   const [ activeExperimentsResponse, triggerActiveExperimentsRequest ] =
-    useRestApi<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
+    useRestApi<ExperimentsParams, ExperimentBase[]>(getExperimentSummaries, {});
 
   const fetchAll = useCallback((): void => {
     triggerAgentsRequest({});
@@ -50,14 +46,12 @@ const AppContexts: React.FC = () => {
     triggerShellsRequest({});
     triggerTensorboardsRequest({});
     triggerActiveExperimentsRequest({ states: activeRunStates });
-    triggerExperimentsRequest({});
   }, [
     triggerAgentsRequest,
     triggerCommandsRequest,
     triggerNotebooksRequest,
     triggerShellsRequest,
     triggerTensorboardsRequest,
-    triggerExperimentsRequest,
     triggerActiveExperimentsRequest,
   ]);
 
@@ -85,9 +79,6 @@ const AppContexts: React.FC = () => {
       value: activeExperimentsResponse,
     });
   }, [ activeExperimentsResponse, setActiveExperiments ]);
-  useEffect(() => {
-    setExperiments({ type: Experiments.ActionType.Set, value: experimentsResponse });
-  }, [ experimentsResponse, setExperiments ]);
   useEffect(() => {
     setNotebooks({ type: Commands.ActionType.Set, value: notebooksResponse });
   }, [ notebooksResponse, setNotebooks ]);
