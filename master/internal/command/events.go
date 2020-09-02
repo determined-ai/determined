@@ -46,22 +46,11 @@ type event struct {
 	LogEvent *string `json:"log_event"`
 }
 
-type requestParams struct {
-	Offset int
-}
-
-type Subscriber struct {
-	Send   webAPI.ServerSend
-	Params requestParams
-	// Handler ctx
-}
-
 type eventManager struct {
-	bufferSize  int
-	buffer      *ring.Ring
-	closed      bool
-	seq         int
-	subscribers []Subscriber
+	bufferSize int
+	buffer     *ring.Ring
+	closed     bool
+	seq        int
 }
 
 func newEventManager() *eventManager {
@@ -71,41 +60,9 @@ func newEventManager() *eventManager {
 	}
 }
 
-func (e *eventManager) addSubscriber(s Subscriber) {
-	// sync?
-	msg := fmt.Sprintf("added subscriber")
-	// fmt.Println(msg)
-	s.Send(logger.Entry{ID: 0, Message: msg})
-	e.subscribers = append(e.subscribers, s)
-}
-
-func (e *eventManager) removeSubscriber(s Subscriber) {
-	// TODO
-}
-
-// type LogRequest interface {
-// 	Props() LogStreamRequest
-// }
-
-func (e *eventManager) publish(ev *event) {
-	// fmt.Println("publishing message")
-	if ev.LogEvent == nil {
-		fmt.Println("no log content")
-		return
-	}
-	for _, s := range e.subscribers {
-		// fmt.Printf("sending to subscriber %v\n", idx)
-		s.Send(logger.Entry{ID: e.seq, Message: *ev.LogEvent})
-	}
-}
-
 func (e *eventManager) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case Subscriber:
-		e.addSubscriber(msg)
 	case event:
-		// str, _ := json.Marshal(msg)
-		// fmt.Println(string(str))
 		msg.ParentID = ctx.Self().Address().Parent().Local()
 		msg.ID = uuid.New().String()
 		msg.Seq = e.seq
@@ -133,7 +90,6 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 				child.Stop()
 			}
 		}
-		e.publish(&msg)
 
 	case webAPI.LogStreamRequest:
 		events := e.getClientEvents(msg)

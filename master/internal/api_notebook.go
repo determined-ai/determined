@@ -37,31 +37,15 @@ func logToProtoNotebookLog(log logger.Entry) *apiv1.NotebookLogsResponse {
 
 func (a *apiServer) NotebookLogs(
 	req *apiv1.NotebookLogsRequest, resp apiv1.Determined_NotebookLogsServer) error {
-	// if err := grpc.ValidateRequest(
-	// 	grpc.ValidateLimit(req.Limit),
-	// ); err != nil {
-	// 	return err
-	// }
-	// total := a.m.logs.Len()
-	// offset, limit := effectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
-
 	logRequest := api.LogStreamRequest{
 		Offset: int(req.Offset),
 		Limit:  int(req.Limit),
 		Follow: req.Follow,
 	}
-
 	eventManagerAddr := actor.Addr("notebooks", req.NotebookId, "events")
-
 	onLogEntry := func(log logger.Entry) error {
 		return resp.Send(logToProtoNotebookLog(log))
 	}
-
-	// resp.Context().Done()
-	// a.m.system.TellAt(
-	// 	eventsActorAddr,
-	// 	command.Subscriber{Send: convert(resp.Send)},
-	// )
 
 	return api.ProcessLogs(logRequest, eventManagerAddr, a.m.system, onLogEntry)
 }
