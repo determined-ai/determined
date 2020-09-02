@@ -211,6 +211,63 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
+	case
+		sproto.ConfigureEndpoints,
+		sproto.AddAgent,
+		sproto.AddDevice,
+		sproto.FreeDevice,
+		sproto.RemoveDevice,
+		sproto.RemoveAgent,
+		sproto.TaskStartedOnAgent,
+		sproto.TaskTerminatedOnAgent:
+		return d.receiveAgentMsg(ctx)
+
+	case
+		taskStopped,
+		groupStopped,
+		SetMaxSlots,
+		SetWeight,
+		AddTask,
+		StartTask,
+		TerminateTask:
+		return d.receiveTaskMsg(ctx)
+
+	case SetTaskName:
+		reschedule = false
+		d.receiveSetTaskName(ctx, msg)
+
+	case GetTaskSummary:
+		reschedule = false
+		if resp := d.getTaskSummary(*msg.ID); resp != nil {
+			ctx.Respond(*resp)
+		}
+
+	case GetTaskSummaries:
+		reschedule = false
+		ctx.Respond(d.taskList.TaskSummaries())
+
+	case sproto.GetEndpointActorAddress:
+		reschedule = false
+		ctx.Respond("/agents")
+
+	case schedulerTick:
+		if d.reschedule {
+			d.scheduler.Schedule(d)
+			d.sendProvisionerView(ctx)
+		}
+		d.reschedule = false
+		reschedule = false
+		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
+
+	default:
+		reschedule = false
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
+func (d *DefaultRP) receiveAgentMsg(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
 	case sproto.ConfigureEndpoints:
 		ctx.Log().Infof("initializing endpoints for agents")
 		agent.Initialize(msg.System, msg.Echo, ctx.Self())
@@ -253,10 +310,12 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 	case sproto.TaskTerminatedOnAgent:
 		cid := ContainerID(msg.ContainerID)
 		d.receiveContainerTerminated(ctx, cid, *msg.ContainerStopped, false)
+	}
+	return nil
+}
 
-	case StartTask:
-		d.receiveStartTask(ctx, msg)
-
+func (d *DefaultRP) receiveTaskMsg(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
 	case taskStopped:
 		d.receiveTaskStopped(ctx, msg)
 
@@ -272,39 +331,11 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 	case AddTask:
 		d.receiveAddTask(ctx, msg)
 
-	case SetTaskName:
-		reschedule = false
-		d.receiveSetTaskName(ctx, msg)
+	case StartTask:
+		d.receiveStartTask(ctx, msg)
 
 	case TerminateTask:
 		d.receiveTerminateTask(ctx, msg)
-
-	case GetTaskSummary:
-		reschedule = false
-		if resp := d.getTaskSummary(*msg.ID); resp != nil {
-			ctx.Respond(*resp)
-		}
-
-	case GetTaskSummaries:
-		reschedule = false
-		ctx.Respond(d.taskList.TaskSummaries())
-
-	case sproto.GetEndpointActorAddress:
-		reschedule = false
-		ctx.Respond("/agents")
-
-	case schedulerTick:
-		if d.reschedule {
-			d.scheduler.Schedule(d)
-			d.sendProvisionerView(ctx)
-		}
-		d.reschedule = false
-		reschedule = false
-		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
-
-	default:
-		reschedule = false
-		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
 }
