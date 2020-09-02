@@ -7,7 +7,8 @@ import Badge, { BadgeType } from 'components/Badge';
 import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
 import {
-  CommandState, CommandTask, CommandType, ExperimentItem, RunState, StartEndTimes, TrialItem,
+  CommandState, CommandTask, CommandType, ExperimentItem,
+  Pagination, RunState, StartEndTimes, TrialItem,
 } from 'types';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 import { commandTypeToLabel } from 'utils/types';
@@ -16,11 +17,6 @@ import css from './Table.module.scss';
 
 type TableRecord = CommandTask | ExperimentItem | TrialItem;
 
-export interface TablePagination {
-  offset: number;
-  limit: number;
-}
-
 export interface TablePaginationConfig {
   current: number;
   pageSize: number;
@@ -28,11 +24,6 @@ export interface TablePaginationConfig {
   hideOnSinglePage: boolean;
   showSizeChanger: boolean;
   total: number;
-}
-
-export interface TableSorter {
-  descend: boolean;
-  key: string;
 }
 
 export type Renderer<T = unknown> = (text: string, record: T, index: number) => React.ReactNode;
@@ -163,7 +154,7 @@ export const getPaginationConfig = (count: number): Partial<TablePaginationConfi
 };
 
 export const getFullPaginationConfig = (
-  pagination: TablePagination,
+  pagination: Pagination,
   total: number,
 ): TablePaginationConfig => {
   return {

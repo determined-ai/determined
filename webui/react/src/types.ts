@@ -98,6 +98,11 @@ export interface StartEndTimes {
   startTime: string;
 }
 
+export interface Pagination {
+  offset: number;
+  limit: number;
+}
+
 /* Command */
 export enum CommandState {
   Pending = 'PENDING',

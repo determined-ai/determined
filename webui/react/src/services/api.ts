@@ -1,21 +1,21 @@
 import { CancelToken } from 'axios';
 
-import { TablePagination, TableSorter } from 'components/Table';
 import * as DetSwagger from 'services/api-ts-sdk';
-import { V1GetExperimentsResponse } from 'services/api-ts-sdk';
+import { V1GetExperimentsRequestSortBy, V1Pagination } from 'services/api-ts-sdk';
 import { generateApi, processApiError, serverAddress } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
-import { CreateNotebookParams, CreateTensorboardParams, EmptyParams,
-  ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams, KillCommandParams,
-  KillExpParams, LogsParams, PatchExperimentParams, PatchExperimentState, TaskLogsParams,
-  TrialDetailsParams, TrialLogsParams } from 'services/types';
+import { ApiSorter, CreateNotebookParams, CreateTensorboardParams,
+  EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
+  KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams, PatchExperimentState,
+  TaskLogsParams, TrialDetailsParams, TrialLogsParams } from 'services/types';
 import {
-  Agent, ALL_VALUE, AnyTask, Command, CommandTask, Credentials, DetailedUser,
-  DeterminedInfo, ExperimentBase, ExperimentDetails, ExperimentFilters, Log, RunState, TrialDetails,
+  Agent, ALL_VALUE, AnyTask, Command, CommandTask, Credentials,
+  DetailedUser, DeterminedInfo, ExperimentBase, ExperimentDetails,
+  ExperimentFilters, ExperimentItem, Log, Pagination, RunState, TrialDetails,
 } from 'types';
 import { isExperimentTask } from 'utils/task';
 
-import { encodeExperimentState } from './decoder';
+import { decodeExperimentList, encodeExperimentState } from './decoder';
 
 const address = serverAddress();
 export const detAuthApi = new DetSwagger.AuthenticationApi(undefined, address);
@@ -54,61 +54,33 @@ export const getAgents = generateApi<EmptyParams, Agent[]>(Config.getAgents);
 
 /* Experiments */
 
-type ExperimentListSortKey =
-  | 'SORT_BY_UNSPECIFIED'
-  | 'SORT_BY_ID'
-  | 'SORT_BY_DESCRIPTION'
-  | 'SORT_BY_START_TIME'
-  | 'SORT_BY_END_TIME'
-  | 'SORT_BY_STATE'
-  | 'SORT_BY_NUM_TRIALS'
-  | 'SORT_BY_PROGRESS'
-  | 'SORT_BY_USER';
-
-const experimentSortKeys = {
-  endTime: 'SORT_BY_END_TIME',
-  id: 'SORT_BY_ID',
-  name: 'SORT_BY_DESCRIPTION',
-  numTrials: 'SORT_BY_NUM_TRIALS',
-  progress: 'SORT_BY_PROGRESS',
-  startTime: 'SORT_BY_START_TIME',
-  state: 'SORT_BY_STATE',
-  user: 'SORT_BY_USER',
-};
-type ExperimentSortKey = keyof typeof experimentSortKeys;
-
-type ExperimentListState =
-  | 'STATE_UNSPECIFIED'
-  | 'STATE_ACTIVE'
-  | 'STATE_PAUSED'
-  | 'STATE_STOPPING_COMPLETED'
-  | 'STATE_STOPPING_CANCELED'
-  | 'STATE_STOPPING_ERROR'
-  | 'STATE_COMPLETED'
-  | 'STATE_CANCELED'
-  | 'STATE_ERROR'
-  | 'STATE_DELETED';
-
 export const getExperimentList = async (
-  sorter: TableSorter,
-  pagination: TablePagination,
+  sorter: ApiSorter<V1GetExperimentsRequestSortBy>,
+  pagination: Pagination,
   filters: ExperimentFilters,
   search?: string,
-): Promise<V1GetExperimentsResponse> => {
+): Promise<{ experiments: ExperimentItem[], pagination?: V1Pagination }> => {
   try {
+    const sortBy = Object.values(V1GetExperimentsRequestSortBy).includes(sorter.key) ?
+      sorter.key : V1GetExperimentsRequestSortBy.UNSPECIFIED;
+
     const response = await detExperimentApi.determinedGetExperiments(
-      experimentSortKeys[sorter.key as ExperimentSortKey] as ExperimentListSortKey,
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      sortBy as any,
       sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
       pagination.offset,
       pagination.limit,
       search,
       filters.showArchived ? undefined : false,
       filters.states.includes(ALL_VALUE) ? undefined : filters.states.map(state => {
-        return encodeExperimentState(state as RunState) as unknown as ExperimentListState;
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        return encodeExperimentState(state as RunState) as any;
       }),
       filters.username ? [ filters.username ] : undefined,
     );
-    return response;
+
+    const experiments = decodeExperimentList(response.experiments || []);
+    return { experiments, pagination: response.pagination };
   } catch (e) {
     processApiError('getExperimentList', e);
     throw e;

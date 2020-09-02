@@ -18,7 +18,7 @@ import handleError from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { getExperimentList } from 'services/api';
-import { decodeExperimentList } from 'services/decoder';
+import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { ShirtSize } from 'themes';
 import {
   ALL_VALUE, Command, CommandType, ExperimentItem, RecentTask,
@@ -64,12 +64,11 @@ const Dashboard: React.FC = () => {
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
       const response = await getExperimentList(
-        { descend: true, key: 'startTime' },
+        { descend: true, key: V1GetExperimentsRequestSortBy.STARTTIME },
         { limit: 100, offset: 0 },
         { showArchived: false, states: filters.states, username: filters.username },
       );
-      const experiments = decodeExperimentList(response.experiments || []);
-      setExperiments(experiments);
+      setExperiments(response.experiments);
     } catch (e) {
       handleError({ message: 'Unable to fetch experiments.', silent: true, type: ErrorType.Api });
     }
@@ -127,7 +126,8 @@ const Dashboard: React.FC = () => {
   const handleFilterChange = useCallback((filters: TaskFilters): void => {
     storage.set('filters', filters);
     setFilters(filters);
-  }, [ setFilters, storage ]);
+    setExperiments(undefined);
+  }, [ setExperiments, setFilters, storage ]);
 
   const taskFilter = <TaskFilter filters={filters} onChange={handleFilterChange} />;
 

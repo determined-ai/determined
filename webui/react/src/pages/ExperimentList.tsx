@@ -9,8 +9,8 @@ import Page from 'components/Page';
 import { Indicator } from 'components/Spinner';
 import StateSelectFilter from 'components/StateSelectFilter';
 import {
-  defaultRowClassName, ExperimentRenderer, getFullPaginationConfig, isAlternativeAction,
-  MINIMUM_PAGE_SIZE, TablePagination, TableSorter,
+  defaultRowClassName, ExperimentRenderer,
+  getFullPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE,
 } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TagList from 'components/TagList';
@@ -25,9 +25,10 @@ import {
   archiveExperiment, createTensorboard, getExperimentList, killExperiment, setExperimentState,
 } from 'services/api';
 import { patchExperiment } from 'services/api';
-import { decodeExperimentList } from 'services/decoder';
+import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
+import { ApiSorter } from 'services/types';
 import {
-  ALL_VALUE, Command, ExperimentFilters, ExperimentItem, RunState, TBSourceType,
+  ALL_VALUE, Command, ExperimentFilters, ExperimentItem, Pagination, RunState, TBSourceType,
 } from 'types';
 import { handlePath, openBlank } from 'utils/routes';
 import {
@@ -53,9 +54,9 @@ const defaultFilters: ExperimentFilters = {
   username: undefined,
 };
 
-const defaultSorter: TableSorter = {
+const defaultSorter: ApiSorter<V1GetExperimentsRequestSortBy> = {
   descend: true,
-  key: 'startTime',
+  key: V1GetExperimentsRequestSortBy.STARTTIME,
 };
 
 const STORAGE_PATH = 'experiment-list';
@@ -72,18 +73,18 @@ const ExperimentList: React.FC = () => {
     { ...defaultFilters, username: (auth.user || {}).username },
   );
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
-  const [ pagination, setPagination ] = useState<TablePagination>({ limit: initLimit, offset: 0 });
+  const [ pagination, setPagination ] = useState<Pagination>({ limit: initLimit, offset: 0 });
   const [ total, setTotal ] = useState(0);
   const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
-  const [ sorter, setSorter ] = useState<TableSorter>(initSorter);
+  const [ sorter, setSorter ] = useState(initSorter);
   const [ search, setSearch ] = useState('');
-  const [ experiments, setExperiments ] = useState<ExperimentItem[]>([]);
+  const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
 
   const showBatch = selectedRowKeys.length !== 0;
 
   const experimentMap = useMemo(() => {
-    return experiments.reduce((acc, experiment) => {
+    return (experiments || []).reduce((acc, experiment) => {
       acc[experiment.id] = experiment;
       return acc;
     }, {} as Record<string, ExperimentItem>);
@@ -128,9 +129,11 @@ const ExperimentList: React.FC = () => {
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     try {
-      const response = await getExperimentList(sorter, pagination, filters, search);
-      const experiments = decodeExperimentList(response.experiments || []);
-      setTotal(response.pagination?.total || 0);
+      const {
+        experiments,
+        pagination: responsePagination,
+      } = await getExperimentList(sorter, pagination, filters, search);
+      setTotal(responsePagination?.total || 0);
       setExperiments(experiments);
     } catch (e) {
       handleError({ message: 'Unable to fetch experiments.', silent: true, type: ErrorType.Api });
@@ -288,7 +291,7 @@ const ExperimentList: React.FC = () => {
     if (!columnKey || !columns.find(column => column.key === columnKey)) return;
 
     storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
-    setSorter({ descend: order === 'descend', key: columnKey as string });
+    setSorter({ descend: order === 'descend', key: columnKey as V1GetExperimentsRequestSortBy });
 
     setPagination(prev => ({
       ...prev,
@@ -360,7 +363,7 @@ const ExperimentList: React.FC = () => {
           dataSource={experiments}
           loading={{
             indicator: <Indicator />,
-            spinning: false,
+            spinning: !experiments,
           }}
           pagination={getFullPaginationConfig(pagination, total)}
           rowClassName={defaultRowClassName()}

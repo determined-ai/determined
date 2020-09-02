@@ -12,7 +12,7 @@ import Message from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner, { Indicator } from 'components/Spinner';
-import { defaultRowClassName, getPaginationConfig, TableSorter } from 'components/Table';
+import { defaultRowClassName, getPaginationConfig } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
@@ -21,7 +21,7 @@ import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
 import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
 import { getExperimentDetails, isNotFound } from 'services/api';
-import { ExperimentDetailsParams } from 'services/types';
+import { ApiSorter, ExperimentDetailsParams } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
 import { clone } from 'utils/data';
 import { numericSorter } from 'utils/data';
@@ -49,8 +49,8 @@ const ExperimentDetailsComp: React.FC = () => {
   const [ experimentResponse, triggerExperimentRequest ] =
     useRestApi<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
   const storage = useStorage(STORAGE_PATH);
-  const initSorter: TableSorter | null = storage.get(STORAGE_SORTER_KEY);
-  const [ sorter, setSorter ] = useState<TableSorter | null>(initSorter);
+  const initSorter: ApiSorter | null = storage.get(STORAGE_SORTER_KEY);
+  const [ sorter, setSorter ] = useState<ApiSorter | null>(initSorter);
 
   const experiment = experimentResponse.data;
   const experimentConfig = experiment?.config;

@@ -5,23 +5,24 @@ import {
   experimentArchivedRenderer, experimentProgressRenderer,
   expermentDurationRenderer, relativeTimeRenderer, stateRenderer, userRenderer,
 } from 'components/Table';
+import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { ExperimentItem } from 'types';
 
 export const columns: ColumnType<ExperimentItem>[] = [
   {
     dataIndex: 'id',
-    key: 'id',
+    key: V1GetExperimentsRequestSortBy.ID,
     sorter: true,
     title: 'ID',
   },
   {
     dataIndex: 'name',
-    key: 'name',
+    key: V1GetExperimentsRequestSortBy.DESCRIPTION,
     sorter: true,
     title: 'Name',
   },
   {
-    key: 'startTime',
+    key: V1GetExperimentsRequestSortBy.STARTTIME,
     render: (_: number, record: ExperimentItem): React.ReactNode =>
       relativeTimeRenderer(new Date(record.startTime)),
     sorter: true,
@@ -34,18 +35,18 @@ export const columns: ColumnType<ExperimentItem>[] = [
   },
   {
     dataIndex: 'numTrials',
-    key: 'numTrials',
+    key: V1GetExperimentsRequestSortBy.NUMTRIALS,
     sorter: true,
     title: 'Trials',
   },
   {
-    key: 'state',
+    key: V1GetExperimentsRequestSortBy.STATE,
     render: stateRenderer,
     sorter: true,
     title: 'State',
   },
   {
-    key: 'progress',
+    key: V1GetExperimentsRequestSortBy.PROGRESS,
     render: experimentProgressRenderer,
     sorter: true,
     title: 'Progress',
@@ -56,7 +57,7 @@ export const columns: ColumnType<ExperimentItem>[] = [
     title: 'Archived',
   },
   {
-    key: 'user',
+    key: V1GetExperimentsRequestSortBy.USER,
     render: userRenderer,
     sorter: true,
     title: 'User',

@@ -7,7 +7,7 @@ import Icon from 'components/Icon';
 import Page from 'components/Page';
 import { Indicator } from 'components/Spinner';
 import {
-  defaultRowClassName, getPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE, TableSorter,
+  defaultRowClassName, getPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE,
 } from 'components/Table';
 import { TaskRenderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
@@ -22,7 +22,7 @@ import useStorage from 'hooks/useStorage';
 import {
   getCommands, getNotebooks, getShells, getTensorboards, killCommand,
 } from 'services/api';
-import { EmptyParams } from 'services/types';
+import { ApiSorter, EmptyParams } from 'services/types';
 import { ALL_VALUE, Command, CommandTask, CommandType, TaskFilters } from 'types';
 import { getPath, numericSorter } from 'utils/data';
 import { handlePath, openBlank } from 'utils/routes';
@@ -46,7 +46,7 @@ const defaultFilters: TaskFilters<CommandType> = {
   username: undefined,
 };
 
-const defaultSorter: TableSorter = {
+const defaultSorter: ApiSorter = {
   descend: true,
   key: 'startTime',
 };
@@ -69,7 +69,7 @@ const TaskList: React.FC = () => {
   );
   const [ filters, setFilters ] = useState<TaskFilters<CommandType>>(initFilters);
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
-  const [ sorter, setSorter ] = useState<TableSorter>(initSorter);
+  const [ sorter, setSorter ] = useState<ApiSorter>(initSorter);
   const [ search, setSearch ] = useState('');
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
   const [ sourceExpanded, setSourceExpanded ] = useState<Record<string, boolean>>({});
