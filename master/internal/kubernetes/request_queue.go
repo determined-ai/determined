@@ -47,7 +47,9 @@ type (
 
 // message types sent from requestProcessingWorkers to requestQueue.
 type (
-	workerAvailable struct{}
+	workerAvailable struct {
+		resourceHandler *actor.Ref
+	}
 )
 
 // queuedResourceRequest is used to represent requests that are being buffered by requestQueue.
@@ -98,6 +100,9 @@ type requestQueue struct {
 	queue                    []*queuedResourceRequest
 	pendingResourceCreations map[*actor.Ref]*queuedResourceRequest
 	availableWorkers         []*actor.Ref
+
+	creationInProgress       map[*actor.Ref]bool
+	blockedResourceDeletions map[*actor.Ref]*queuedResourceRequest
 }
 
 func newRequestQueue(
@@ -111,6 +116,9 @@ func newRequestQueue(
 		queue:                    make([]*queuedResourceRequest, 0),
 		pendingResourceCreations: make(map[*actor.Ref]*queuedResourceRequest),
 		availableWorkers:         make([]*actor.Ref, 0, numKubernetesWorkers),
+
+		creationInProgress:       make(map[*actor.Ref]bool),
+		blockedResourceDeletions: make(map[*actor.Ref]*queuedResourceRequest),
 	}
 }
 
@@ -137,7 +145,7 @@ func (r *requestQueue) Receive(ctx *actor.Context) error {
 		r.receiveDeleteKubernetesResources(ctx, msg)
 
 	case workerAvailable:
-		r.receiveWorkerAvailable(ctx)
+		r.receiveWorkerAvailable(ctx, msg)
 
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
@@ -159,6 +167,7 @@ func (r *requestQueue) receiveCreateKubernetesResources(
 	}
 
 	if len(r.availableWorkers) > 0 {
+		r.creationInProgress[msg.handler] = true
 		ctx.Tell(r.availableWorkers[0], msg)
 		r.availableWorkers = r.availableWorkers[1:]
 		return
@@ -181,6 +190,14 @@ func (r *requestQueue) receiveDeleteKubernetesResources(
 		return
 	}
 
+	// We do not want to trigger resource deletion concurrently with resource creation.
+	// If the creation request is currently being processed, we delay processing the
+	// deletion request.
+	if _, creationInProgress := r.creationInProgress[msg.handler]; creationInProgress {
+		r.blockedResourceDeletions[msg.handler] = &queuedResourceRequest{deleteResources: &msg}
+		return
+	}
+
 	if len(r.availableWorkers) > 0 {
 		ctx.Tell(r.availableWorkers[0], msg)
 		r.availableWorkers = r.availableWorkers[1:]
@@ -190,7 +207,18 @@ func (r *requestQueue) receiveDeleteKubernetesResources(
 	r.queue = append(r.queue, &queuedResourceRequest{deleteResources: &msg})
 }
 
-func (r *requestQueue) receiveWorkerAvailable(ctx *actor.Context) {
+func (r *requestQueue) receiveWorkerAvailable(ctx *actor.Context, msg workerAvailable) {
+	if msg.resourceHandler != nil {
+		delete(r.creationInProgress, msg.resourceHandler)
+
+		// Check if any deletions were blocked by this creation.
+		queuedMsg, resourceDeletionWasBlocked := r.blockedResourceDeletions[msg.resourceHandler]
+		if resourceDeletionWasBlocked {
+			r.queue = append(r.queue, queuedMsg)
+			delete(r.blockedResourceDeletions, msg.resourceHandler)
+		}
+	}
+
 	for len(r.queue) > 0 {
 		nextRequest := r.queue[0]
 		r.queue = r.queue[1:]
@@ -199,6 +227,7 @@ func (r *requestQueue) receiveWorkerAvailable(ctx *actor.Context) {
 		// request was canceled.
 		if nextRequest.createResources != nil {
 			delete(r.pendingResourceCreations, nextRequest.createResources.handler)
+			r.creationInProgress[nextRequest.createResources.handler] = true
 			ctx.Tell(ctx.Sender(), *nextRequest.createResources)
 			return
 		} else if nextRequest.deleteResources != nil {

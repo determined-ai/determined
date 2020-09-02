@@ -19,7 +19,7 @@ func (r *requestProcessingWorker) Receive(ctx *actor.Context) error {
 
 	case createKubernetesResources:
 		r.receiveCreateKubernetesResources(ctx, msg)
-		ctx.Tell(ctx.Self().Parent(), workerAvailable{})
+		ctx.Tell(ctx.Self().Parent(), workerAvailable{msg.handler})
 
 	case deleteKubernetesResources:
 		r.receiveDeleteKubernetesResources(ctx, msg)
@@ -71,8 +71,10 @@ func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
 		if err != nil {
 			ctx.Log().WithField("handler", msg.handler.Address()).WithError(err).Errorf(
 				"failed to delete pod %s", msg.podName)
+		} else {
+			ctx.Log().WithField("handler", msg.handler.Address()).Infof(
+				"deleted pod %s", msg.podName)
 		}
-		ctx.Log().WithField("handler", msg.handler.Address()).Infof("deleted pod %s", msg.podName)
 	}
 
 	if len(msg.configMapName) > 0 {
@@ -82,9 +84,10 @@ func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
 			ctx.Log().WithField("handler", msg.handler.Address()).WithError(err).Errorf(
 				"failed to delete configMap %s", msg.configMapName)
 			err = errDeletingConfigMap
+		} else {
+			ctx.Log().WithField("handler", msg.handler.Address()).Infof(
+				"deleted configMap %s", msg.configMapName)
 		}
-		ctx.Log().WithField("handler", msg.handler.Address()).Infof(
-			"deleted configMap %s", msg.configMapName)
 	}
 
 	// It is possible that the actor that sent the message is no longer around (if sent from
