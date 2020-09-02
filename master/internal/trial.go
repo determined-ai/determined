@@ -325,7 +325,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				name = fmt.Sprintf("Trial %d", t.id)
 			}
 
-			t.task = ctx.Ask(t.rp, scheduler.AddTask{
+			t.task = ctx.Ask(t.rp, scheduler.AssignResource{
 				Name:         fmt.Sprintf("%s (Experiment %d)", name, t.experiment.ID),
 				Group:        ctx.Self().Parent(),
 				SlotsNeeded:  slotsNeeded,

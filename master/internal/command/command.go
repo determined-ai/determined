@@ -101,7 +101,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		// Schedule the command with the cluster.
 		c.rps = ctx.Self().System().Get(actor.Addr("resourceProviders"))
 		c.proxy = ctx.Self().System().Get(actor.Addr("proxy"))
-		ctx.Tell(c.rps, scheduler.AddTask{
+		ctx.Tell(c.rps, scheduler.AssignResource{
 			ID:           &c.taskID,
 			Name:         c.config.Description,
 			SlotsNeeded:  c.config.Resources.Slots,

@@ -10,8 +10,8 @@ import (
 
 // Task-related cluster level messages.
 type (
-	// AddTask adds the sender of the message to the cluster as a task.
-	AddTask struct {
+	// AssignResource adds the sender of the message to the cluster as a task.
+	AssignResource struct {
 		ID                  *TaskID
 		Name                string
 		Group               *actor.Ref
