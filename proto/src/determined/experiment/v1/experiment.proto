@@ -4,6 +4,7 @@ package determined.experiment.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/experimentv1";
 
 import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // The current state of the experiment.
 enum State {
@@ -32,6 +33,11 @@ enum State {
 // Experiment is a collection of one or more trials that are exploring a user-defined
 // hyperparameter space.
 message Experiment {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: {
+            required: ["id", "description", "start_time", "end_time", "state", "archived", "num_trials", "username"]
+        }
+    };
     // The id of the experiment.
     int32 id = 1;
     // The description of the experiment.
