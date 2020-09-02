@@ -219,34 +219,34 @@ func (k *kubernetesResourceProvider) schedulePendingTasks(ctx *actor.Context) {
 
 func (k *kubernetesResourceProvider) scheduleTask(ctx *actor.Context, task *Task) {
 	numPods := 1
-	slotsPerNode := task.SlotsNeeded()
+	slotsPerPod := task.SlotsNeeded()
 	if task.SlotsNeeded() > 1 {
-		if k.config.SlotsPerNode == 0 {
+		if k.config.MaxSlotsPerPod == 0 {
 			ctx.Log().WithField("task-id", task.ID).Error(
-				"set slots_per_node > 0 to schedule tasks with slots")
+				"set max_slots_per_pod > 0 to schedule tasks with slots")
 			return
 		}
 
-		if task.SlotsNeeded() <= k.config.SlotsPerNode {
+		if task.SlotsNeeded() <= k.config.MaxSlotsPerPod {
 			numPods = 1
-			slotsPerNode = task.SlotsNeeded()
+			slotsPerPod = task.SlotsNeeded()
 		} else {
-			if task.SlotsNeeded()%k.config.SlotsPerNode != 0 {
+			if task.SlotsNeeded()%k.config.MaxSlotsPerPod != 0 {
 				ctx.Log().WithField("task-id", task.ID).Errorf(
 					"task number of slots (%d) is not schedulable on the configured "+
-						"slots_per_node (%d)", task.SlotsNeeded(), k.config.SlotsPerNode)
+						"max_slots_per_pod (%d)", task.SlotsNeeded(), k.config.MaxSlotsPerPod)
 				return
 			}
 
-			numPods = task.SlotsNeeded() / k.config.SlotsPerNode
-			slotsPerNode = k.config.SlotsPerNode
+			numPods = task.SlotsNeeded() / k.config.MaxSlotsPerPod
+			slotsPerPod = k.config.MaxSlotsPerPod
 		}
 	}
 
 	k.slotsUsedPerGroup[task.group] += task.SlotsNeeded()
 
 	for pod := 0; pod < numPods; pod++ {
-		k.assignPod(ctx, task, slotsPerNode)
+		k.assignPod(ctx, task, slotsPerPod)
 	}
 
 	ctx.Log().WithField("task-id", task.ID).Infof(
