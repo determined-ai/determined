@@ -9,7 +9,7 @@ import Page from 'components/Page';
 import { Indicator } from 'components/Spinner';
 import StateSelectFilter from 'components/StateSelectFilter';
 import {
-  defaultRowClassName, getPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE, TableSorter,
+  defaultPaginationConfig, defaultRowClassName, getPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE, TablePagination, TableSorter,
 } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TagList from 'components/TagList';
@@ -22,13 +22,15 @@ import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
 import {
-  archiveExperiment, createTensorboard, getExperimentSummaries, killExperiment,
+  archiveExperiment, createTensorboard, getExperimentList, getExperimentSummaries,
+  killExperiment,
   setExperimentState,
 } from 'services/api';
 import { patchExperiment } from 'services/api';
+import { decodeExperimentList } from 'services/decoder';
 import { ExperimentsParams } from 'services/types';
 import {
-  ALL_VALUE, Command, Experiment, ExperimentFilters, ExperimentItem, RunState, TBSourceType,
+  ALL_VALUE, Command, Experiment, ExperimentFilters, ExperimentX, RunState, TBSourceType,
 } from 'types';
 import { handlePath, openBlank } from 'utils/routes';
 import { filterExperiments, processExperiments } from 'utils/task';
@@ -48,7 +50,6 @@ enum Action {
 }
 
 const defaultFilters: ExperimentFilters = {
-  limit: MINIMUM_PAGE_SIZE,
   showArchived: false,
   states: [ ALL_VALUE ],
   username: undefined,
@@ -61,28 +62,32 @@ const defaultSorter: TableSorter = {
 
 const STORAGE_PATH = 'experiment-list';
 const STORAGE_FILTERS_KEY = 'filters';
+const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_SORTER_KEY = 'sorter';
 
 const ExperimentList: React.FC = () => {
   const auth = Auth.useStateContext();
   const users = Users.useStateContext();
-  const [ experiments, setExperiments ] = useState<ExperimentItem[]>([]);
-  const [ experimentsResponse, triggerExperimentsRequest ] =
-    useRestApi<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
+  const [ experiments, setExperiments ] = useState<ExperimentX[]>([]);
+  // const [ experimentsResponse, triggerExperimentsRequest ] =
+  //   useRestApi<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
   const storage = useStorage(STORAGE_PATH);
+  const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initFilters = storage.getWithDefault(
     STORAGE_FILTERS_KEY,
     { ...defaultFilters, username: (auth.user || {}).username },
   );
-  const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
+  const [ pagination, setPagination ] = useState<TablePagination>({ limit: initLimit, offset: 0 });
+  const [ total, setTotal ] = useState(0);
+  const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
   const [ sorter, setSorter ] = useState<TableSorter>(initSorter);
   const [ search, setSearch ] = useState('');
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
 
-  const filteredExperiments = useMemo(() => {
-    return filterExperiments(experiments, filters, users.data || [], search);
-  }, [ experiments, filters, search, users.data ]);
+  // const filteredExperiments = useMemo(() => {
+  //   return filterExperiments(experiments, filters, users.data || [], search);
+  // }, [ experiments, filters, search, users.data ]);
 
   const showBatch = selectedRowKeys.length !== 0;
 
@@ -90,7 +95,7 @@ const ExperimentList: React.FC = () => {
     return experiments.reduce((acc, task) => {
       acc[task.id] = task;
       return acc;
-    }, {} as Record<string, ExperimentItem>);
+    }, {} as Record<string, ExperimentX>);
   }, [ experiments ]);
 
   const selectedExperiments = useMemo(() => {
@@ -130,9 +135,17 @@ const ExperimentList: React.FC = () => {
     return tracker;
   }, [ selectedExperiments ]);
 
-  const fetchExperiments = useCallback((): void => {
-    triggerExperimentsRequest({});
-  }, [ triggerExperimentsRequest ]);
+  const fetchExperiments = useCallback(async (): Promise<void> => {
+    try {
+      const response = await getExperimentList(sorter, pagination, search, filters);
+      const experiments = decodeExperimentList(response.experiments || []);
+
+      setTotal(response.pagination?.total || 0);
+      setExperiments(experiments);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [ filters, pagination, search, sorter ]);
 
   usePolling(fetchExperiments);
 
@@ -154,11 +167,11 @@ const ExperimentList: React.FC = () => {
   }, [ updateTags ]);
 
   const columns = useMemo(() => {
-    const nameRenderer = (_: string, record: ExperimentItem) => (
+    const nameRenderer = (_: string, record: ExperimentX) => (
       <div className={css.nameColumn}>
         {record.name || ''}
         <TagList
-          tags={record.config.labels || []}
+          tags={record.labels || []}
           onChange={handleTagListChange(record.id)}
           onCreate={handleTagListCreate(record.id)}
           onDelete={handleTagListDelete(record.id)} />
@@ -175,10 +188,10 @@ const ExperimentList: React.FC = () => {
     return newColumns;
   }, [ handleTagListChange, handleTagListCreate, handleTagListDelete, sorter ]);
 
-  useEffect(() => {
-    const experiments = processExperiments(experimentsResponse.data || [], users.data || []);
-    setExperiments(experiments);
-  }, [ experimentsResponse, setExperiments, users ]);
+  // useEffect(() => {
+  //   const experiments = processExperiments(experimentsResponse.data || [], users.data || []);
+  //   setExperiments(experiments);
+  // }, [ experimentsResponse, setExperiments, users ]);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value || '');
@@ -270,19 +283,25 @@ const ExperimentList: React.FC = () => {
     });
   }, [ handleBatchAction ]);
 
-  const handleTableChange = useCallback((pagination, filters, sorter) => {
-    if (Array.isArray(sorter)) return;
+  const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
+    if (Array.isArray(tableSorter)) return;
 
-    const { columnKey, order } = sorter as SorterResult<ExperimentItem>;
+    const { columnKey, order } = tableSorter as SorterResult<ExperimentX>;
     if (!columnKey || !columns.find(column => column.key === columnKey)) return;
 
     storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
     setSorter({ descend: order === 'descend', key: columnKey as string });
+
+    setPagination(prev => ({
+      ...prev,
+      limit: tablePagination.pageSize,
+      offset: (tablePagination.current - 1) * tablePagination.pageSize,
+    }));
   }, [ columns, setSorter, storage ]);
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
-  const handleTableRow = useCallback((record: ExperimentItem) => ({
+  const handleTableRow = useCallback((record: ExperimentX) => ({
     onClick: (event: React.MouseEvent) => {
       if (isAlternativeAction(event)) return;
       handlePath(event, { path: record.url });
@@ -339,12 +358,12 @@ const ExperimentList: React.FC = () => {
         </TableBatch>
         <Table
           columns={columns}
-          dataSource={filteredExperiments}
+          dataSource={experiments}
           loading={{
             indicator: <Indicator />,
-            spinning: !experimentsResponse.hasLoaded,
+            spinning: false,
           }}
-          pagination={getPaginationConfig(filteredExperiments.length)}
+          pagination={getPaginationConfig(pagination, total)}
           rowClassName={defaultRowClassName()}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}
