@@ -122,7 +122,7 @@ func (d *DefaultRP) assignTask(task *Task) bool {
 		)
 	}
 
-	task.handler.System().Tell(task.handler, TaskAssigned{
+	task.handler.System().Tell(task.handler, ResourceAssigned{
 		Assignments: assignments,
 	})
 

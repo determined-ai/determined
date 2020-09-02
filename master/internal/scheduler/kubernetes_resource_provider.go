@@ -237,7 +237,7 @@ func (k *kubernetesResourceProvider) scheduleTask(ctx *actor.Context, task *Task
 
 	ctx.Log().WithField("task-id", task.ID).Infof(
 		"task assigned by scheduler with %d pods", numPods)
-	task.handler.System().Tell(task.handler, TaskAssigned{
+	task.handler.System().Tell(task.handler, ResourceAssigned{
 		Assignments: assignments,
 	})
 }

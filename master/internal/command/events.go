@@ -29,7 +29,7 @@ type event struct {
 
 	ScheduledEvent *scheduler.TaskID `json:"scheduled_event"`
 	// AssignedEvent is triggered when the parent was assigned to an agent.
-	AssignedEvent *scheduler.TaskAssigned `json:"assigned_event"`
+	AssignedEvent *scheduler.ResourceAssigned `json:"assigned_event"`
 	// ContainerStartedEvent is triggered when the container started on an agent.
 	ContainerStartedEvent *scheduler.ContainerStarted `json:"container_started_event"`
 	// ServiceReadyEvent is triggered when the service running in the container is ready to serve.

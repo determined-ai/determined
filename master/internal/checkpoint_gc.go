@@ -35,7 +35,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			TaskHandler: ctx.Self(),
 		})
 
-	case scheduler.TaskAssigned:
+	case scheduler.ResourceAssigned:
 		config := t.experiment.Config.CheckpointStorage
 
 		checkpoints, err := t.db.ExperimentCheckpointsToGCRaw(t.experiment.ID,
@@ -76,7 +76,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	case sproto.ContainerLog:
 		t.logs = append(t.logs, msg)
 
-	case scheduler.TerminateRequest:
 	case scheduler.ContainerStarted:
 	case scheduler.TaskAborted:
 	case scheduler.TaskTerminated:

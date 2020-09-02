@@ -80,7 +80,7 @@ func newMockTask(
 
 func (t *mockTask) Receive(ctx *actor.Context) error {
 	switch ctx.Message().(type) {
-	case TaskAssigned:
+	case ResourceAssigned:
 	case getSlots:
 		ctx.Respond(t.slotsNeeded)
 	case getGroup:

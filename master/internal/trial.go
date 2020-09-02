@@ -348,7 +348,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 func (t *trial) runningReceive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case
-		scheduler.TaskAssigned,
+		scheduler.ResourceAssigned,
 		scheduler.TerminateRequest,
 		scheduler.TaskAborted,
 		scheduler.TaskTerminated,
@@ -411,7 +411,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 
 func (t *trial) processSchedulerMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case scheduler.TaskAssigned:
+	case scheduler.ResourceAssigned:
 		if err := t.processAssigned(ctx, msg); err != nil {
 			return err
 		}
@@ -491,7 +491,7 @@ func (t *trial) processID(ctx *actor.Context, id int) {
 	ctx.AddLabel("trial-id", id)
 }
 
-func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) error {
+func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.ResourceAssigned) error {
 	if len(t.privateKey) == 0 {
 		generatedKeys, err := ssh.GenerateKey(nil)
 		if err != nil {
