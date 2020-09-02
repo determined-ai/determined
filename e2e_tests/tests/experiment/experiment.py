@@ -199,12 +199,6 @@ def cancel_single(experiment_id: int, should_have_trial: bool = False) -> None:
         trial = trials[0]
         assert trial["state"] == "CANCELED"
 
-        last_step = trial["steps"][-1]
-        assert last_step["state"] == "COMPLETED"
-
-        checkpoint = last_step["checkpoint"]
-        assert checkpoint["state"] == "COMPLETED"
-
 
 def is_terminal_state(state: str) -> bool:
     return state in ("CANCELED", "COMPLETED", "ERROR")

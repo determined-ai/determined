@@ -29,6 +29,11 @@ import (
 )
 
 const (
+	allReadyTimeoutPeriod  = 10 * time.Minute
+	terminateTimeoutPeriod = time.Minute
+)
+
+const (
 	// MinLocalRendezvousPort is the smallest port to use (from the container's point of view;
 	// it will be mapped to some arbitrary port on the host) for communication across containers.
 	MinLocalRendezvousPort = 1734
@@ -72,6 +77,14 @@ type (
 	// completing a searcher operation before the trial decides to tell the scheduler it is
 	// done, since stopping and restarting trials has relatively high overhead.
 	sendNextWorkload struct {
+		runID int
+	}
+
+	// It is possible that it takes very long for all containers to be connected after the first
+	// container is connected. This might happen when the k8s cluster waits for new instances
+	// to spin up, which might not happen at all. At the same time, taking up part of all
+	// the resources and waiting is wasteful. So we need to detect this situation.
+	allReadyTimeout struct {
 		runID int
 	}
 
@@ -184,16 +197,18 @@ type trial struct {
 	task                       *scheduler.Task
 	pendingGracefulTermination bool
 	terminationSent            bool
+	cancelUnready              bool
 
 	privateKey []byte
 	publicKey  []byte
 
 	// numContainers is the number of containers that the scheduler has most recently assigned to run
 	// this trial.
-	numContainers        int
-	startedContainers    map[container.ID]bool
-	containers           map[scheduler.ContainerID]scheduler.Container
-	terminatedContainers []terminatedContainerWithState
+	numContainers              int
+	startedContainers          map[container.ID]bool
+	containers                 map[scheduler.ContainerID]scheduler.Container
+	terminatedContainers       []terminatedContainerWithState
+	lastContainerConnectedTime time.Time
 
 	// sockets maps each running container for this trial to the corresponding websocket actor.
 	sockets map[scheduler.ContainerID]*actor.Ref
@@ -236,13 +251,6 @@ func newTrial(
 	}
 }
 
-func (t *trial) killTrial(ctx *actor.Context) {
-	t.killed = true
-	if t.task != nil {
-		ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
-	}
-}
-
 func (t *trial) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
@@ -270,7 +278,6 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		t.restore(ctx)
 		t.replaying = false
 
-	// Log-related messages.
 	case sproto.ContainerLog:
 		t.processLog(ctx, msg)
 
@@ -338,16 +345,19 @@ func (t *trial) Receive(ctx *actor.Context) error {
 
 func (t *trial) runningReceive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case *websocket.Conn:
-		a := api.WrapSocket(msg, searcher.CompletedMessage{}, false)
-		if ref, created := ctx.ActorOf("socket", a); created {
-			ctx.Respond(ref)
-		}
+	case
+		scheduler.TaskAssigned,
+		scheduler.TerminateRequest,
+		scheduler.TaskAborted,
+		scheduler.TaskTerminated,
+		scheduler.ContainerStarted:
+		return t.processSchedulerMsg(ctx)
 
-	case containerConnected:
-		if err := t.processContainerConnected(ctx, msg); err != nil {
-			return err
-		}
+	case containerConnected, sproto.ContainerStateChanged:
+		return t.processContainerMsg(ctx)
+
+	case *websocket.Conn, *apiv1.KillTrialRequest:
+		return t.processAPIMsg(ctx)
 
 	case searcher.CompletedMessage:
 		if err := t.processCompletedWorkload(ctx, msg); err != nil {
@@ -364,16 +374,78 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 		}
 
 	case actor.ChildFailed:
-		ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+		t.terminate(ctx, true)
 
+	case killTrial:
+		t.killed = true
+		t.terminate(ctx, true)
+
+	case allReadyTimeout:
+		if msg.runID == t.runID &&
+			time.Now().After(t.lastContainerConnectedTime.Add(allReadyTimeoutPeriod)) {
+			ctx.Tell(t.logger, model.TrialLog{
+				TrialID: t.id, Message: "some containers are taking a long time to " +
+					"connect to master; when running on kubernetes this may happen " +
+					"because only some of the pods have been scheduled; it is possible " +
+					"that some pods will never be scheduled without adding compute " +
+					"resources or pausing / killing other experiments in the cluster",
+			})
+		}
+
+	case terminateTimeout:
+		if msg.runID == t.runID {
+			ctx.Log().Info("forcibly terminating unresponsive trial after timeout expired")
+			t.terminate(ctx, true)
+		}
+
+	case actor.ChildStopped:
+
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+
+	return nil
+}
+
+func (t *trial) processSchedulerMsg(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
 	case scheduler.TaskAssigned:
 		if err := t.processAssigned(ctx, msg); err != nil {
 			return err
 		}
 
 	case scheduler.TerminateRequest:
-		ctx.Log().Info("trial runner requested to terminate")
-		t.pendingGracefulTermination = true
+		if !t.allReady(ctx) {
+			t.cancelUnready = true
+			t.terminate(ctx, true)
+		} else {
+			t.terminate(ctx, false)
+		}
+
+	case scheduler.TaskAborted:
+
+	case scheduler.TaskTerminated:
+		t.processTaskTerminated(ctx, msg)
+
+	case scheduler.ContainerStarted:
+		t.containers[msg.Container.ID()] = msg.Container
+
+		if err := t.pushRendezvous(ctx); err != nil {
+			return errors.Wrap(err, "failed to push rendezvous to trial containers")
+		}
+
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
+func (t *trial) processContainerMsg(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case containerConnected:
+		if err := t.processContainerConnected(ctx, msg); err != nil {
+			return err
+		}
 
 	case sproto.ContainerStateChanged:
 		if msg.Container.State != container.Assigned {
@@ -384,37 +456,29 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 			t.processContainerTerminated(ctx, msg)
 		}
 
-	case scheduler.TaskAborted:
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
 
-	case scheduler.TaskTerminated:
-		t.processTaskTerminated(ctx, msg)
-
-	case killTrial:
-		t.killTrial(ctx)
-
-	case terminateTimeout:
-		if t.task != nil && msg.runID == t.runID {
-			ctx.Log().Info("killing unresponsive trial after timeout")
-			ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+func (t *trial) processAPIMsg(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case *websocket.Conn:
+		a := api.WrapSocket(msg, searcher.CompletedMessage{}, false)
+		if ref, created := ctx.ActorOf("socket", a); created {
+			ctx.Respond(ref)
 		}
-
-	case scheduler.ContainerStarted:
-		t.containers[msg.Container.ID()] = msg.Container
-
-		if err := t.pushRendezvous(ctx); err != nil {
-			return errors.Wrap(err, "failed to push rendezvous to trial containers")
-		}
-
-	case actor.ChildStopped:
 
 	case *apiv1.KillTrialRequest:
-		t.killTrial(ctx)
+		ctx.Log().Info("received API request to kill trial")
+		t.killed = true
+		t.terminate(ctx, true)
 		ctx.Respond(&apiv1.KillTrialResponse{})
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
-
 	return nil
 }
 
@@ -443,14 +507,14 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 			int64(t.create.TrialSeed))
 		if err := t.db.AddTrial(modelTrial); err != nil {
 			ctx.Log().WithError(err).Error("failed to save trial to database")
-			ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+			t.terminate(ctx, true)
 			return nil
 		}
 		t.processID(ctx, modelTrial.ID)
 		if t.experiment.Config.PerformInitialValidation {
 			if err := t.db.AddNoOpStep(model.NewNoOpStep(t.id, 0)); err != nil {
 				ctx.Log().WithError(err).Error("failed to save zeroth step for initial validation")
-				ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+				t.terminate(ctx, true)
 				return nil
 			}
 		}
@@ -609,9 +673,8 @@ func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 
 	// We have nothing at all to do, so terminate now.
 	default:
-		ctx.Log().Info("terminating trial runner")
 		terminateNow = true
-		t.pendingGracefulTermination = true
+		t.terminate(ctx, false)
 	}
 
 	// Command the trial runner to do the thing we decided on (if this is not a replay).
@@ -626,7 +689,7 @@ func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 			}
 
 			t.terminationSent = true
-			actors.NotifyAfter(ctx, time.Minute, terminateTimeout{runID: t.runID})
+			actors.NotifyAfter(ctx, terminateTimeoutPeriod, terminateTimeout{runID: t.runID})
 		} else {
 			if err := saveWorkload(t.db, w); err != nil {
 				ctx.Log().WithError(err).Error("failed to save workload to the database")
@@ -647,6 +710,11 @@ func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 }
 
 func (t *trial) processContainerConnected(ctx *actor.Context, msg containerConnected) error {
+	t.lastContainerConnectedTime = time.Now()
+	if len(t.containers) < t.numContainers {
+		actors.NotifyAfter(ctx, allReadyTimeoutPeriod, allReadyTimeout{runID: t.runID})
+	}
+
 	// If we have all of the container IDs from ContainerStarted messages, we can guard against
 	// stale containers trying to connect.
 	if len(t.containers) == t.numContainers {
@@ -833,7 +901,7 @@ func (t *trial) processContainerTerminated(
 	// from ever being able to start), if the leader of the gang has exited out, or if
 	// one of the containers exited with a failure.
 	if c == nil || c.IsLeader() || msg.ContainerStopped.Failure != nil {
-		ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+		t.terminate(ctx, true)
 	}
 }
 
@@ -910,6 +978,12 @@ func (t *trial) resetTrial(
 			"ignoring trial runner failure since termination was requested",
 		)
 		return
+	case t.cancelUnready:
+		ctx.Log().WithField("failure", status.Failure).Info(
+			"ignoring trial runner failure since it was canceled or paused " +
+				"before all containers are connected",
+		)
+		return
 	case t.killed:
 		ctx.Log().WithField("failure", status.Failure).Info(
 			"ignoring trial runner failure since it was killed",
@@ -980,4 +1054,16 @@ func (t *trial) trialClosing() bool {
 	return t.earlyExit || t.killed || t.restarts > t.experiment.Config.MaxRestarts ||
 		(t.close != nil && t.sequencer.UpToDate()) ||
 		model.StoppingStates[t.experimentState]
+}
+
+func (t *trial) terminate(ctx *actor.Context, kill bool) {
+	if kill {
+		ctx.Log().Info("forcibly terminating trial")
+		if t.task != nil {
+			ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+		}
+	} else {
+		ctx.Log().Info("gracefully terminating trial")
+		t.pendingGracefulTermination = true
+	}
 }
