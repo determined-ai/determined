@@ -53,9 +53,9 @@ type (
 	TaskTerminated struct{}
 	// TaskAborted notifies the task actor that it was terminated before being scheduled.
 	TaskAborted struct{}
-	// TaskAssigned notifies the task actor that it has been assigned to run
-	// with a specified number of containers.
-	TaskAssigned struct {
+
+	// ResourceAssigned notifies the task actor to be assigned with resources.
+	ResourceAssigned struct {
 		Assignments []Assignment
 	}
 )

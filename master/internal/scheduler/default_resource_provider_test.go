@@ -21,7 +21,7 @@ var errMock = errors.New("mock error")
 type mockActor struct {
 	system             *actor.System
 	cluster            *actor.Ref
-	onAssigned         func(TaskAssigned) error
+	onAssigned         func(ResourceAssigned) error
 	onContainerStarted func(ContainerStarted) error
 	onTaskTerminated   func(TaskTerminated) error
 }
@@ -50,7 +50,7 @@ func (h *mockActor) Receive(ctx *actor.Context) error {
 	case ThrowPanic:
 		panic(errMock)
 
-	case TaskAssigned:
+	case ResourceAssigned:
 		if h.onAssigned != nil {
 			return h.onAssigned(msg)
 		}

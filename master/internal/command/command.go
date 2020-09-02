@@ -200,7 +200,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			c.exit(ctx, exitStatus)
 		}
 
-	case scheduler.TaskAssigned:
+	case scheduler.ResourceAssigned:
 		for _, a := range msg.Assignments {
 			a.StartTask(tasks.TaskSpec{
 				StartCommand: &tasks.StartCommand{
