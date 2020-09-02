@@ -22,6 +22,7 @@ const (
 	ContainerWorkDir  = "/run/determined/workdir"
 	userPythonBaseDir = "/run/determined/pythonuserbase"
 	runDir            = "/run/determined"
+    trainDir          = "/run/determined/train"
 	rootDir           = "/"
 	passwdPath        = "/run/determined/etc/passwd"
 	shadowPath        = "/run/determined/etc/shadow"
@@ -49,6 +50,7 @@ func workDirArchive(aug *model.AgentUserGroup) container.RunArchive {
 		archive.Archive{
 			aug.OwnedArchiveItem(runDir, nil, 0700, tar.TypeDir),
 			aug.OwnedArchiveItem(ContainerWorkDir, nil, 0700, tar.TypeDir),
+			aug.OwnedArchiveItem(trainDir, nil, 0700, tar.TypeDir),
 			aug.OwnedArchiveItem(userPythonBaseDir, nil, 0700, tar.TypeDir),
 		},
 		rootDir,
@@ -225,8 +227,7 @@ func TrialEnvVars(t TaskSpec, rendezvousPorts []string) map[string]string {
 	envVars["DET_EXPERIMENT_CONFIG"] = jsonify(exp.ExperimentConfig)
 	envVars["DET_HPARAMS"] = jsonify(exp.HParams)
 	envVars["DET_INITIAL_WORKLOAD"] = jsonify(exp.InitialWorkload)
-
-	envVars["DET_LATEST_CHECKPOINT"] = "/run/determined/checkpoint.json"
+	envVars["DET_LATEST_CHECKPOINT"] = "/run/determined/train/checkpoint.json"
 	envVars["DET_WORKLOAD_MANAGER_TYPE"] = string(exp.WorkloadManagerType)
 	envVars["DET_RENDEZVOUS_PORTS"] = strings.Join(rendezvousPorts, ",")
 	envVars["DET_TRIAL_RUNNER_NETWORK_INTERFACE"] = networkInterface
@@ -259,7 +260,7 @@ func TrialArchives(t TaskSpec) []container.RunArchive {
 					tar.TypeReg,
 				),
 			},
-			runDir,
+			trainDir,
 		),
 		wrapArchive(exp.AgentUserGroup.OwnArchive(exp.ModelDefinition), ContainerWorkDir),
 		harnessArchive(t.HarnessPath, exp.AgentUserGroup),
