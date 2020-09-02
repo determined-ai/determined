@@ -47,10 +47,16 @@ func (a *apiServer) GetExperiment(
 			"error fetching experiment from database: %d", req.ExperimentId)
 	}
 
-	conf, err := a.m.db.ExperimentConfig(int(req.ExperimentId))
+	confBytes, err := a.m.db.ExperimentConfigRaw(int(req.ExperimentId))
 	if err != nil {
 		return nil, errors.Wrapf(err,
 			"error fetching experiment config from database: %d", req.ExperimentId)
+	}
+	var conf map[string]interface{}
+	err = json.Unmarshal(confBytes, &conf)
+	if err != nil {
+		return nil, errors.Wrapf(err,
+			"error unmarshalling experiment config: %d", req.ExperimentId)
 	}
 	return &apiv1.GetExperimentResponse{Experiment: exp, Config: protoutils.ToStruct(conf)}, nil
 }
