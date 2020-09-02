@@ -9,18 +9,16 @@ import (
 
 type staticQueryMap struct {
 	queries map[string]string
-	sync.RWMutex
+	sync.Mutex
 }
 
 func (q *staticQueryMap) getOrLoad(queryName string) string {
-	q.RLock()
+	q.Lock()
+	defer q.Unlock()
 	query, ok := q.queries[queryName]
-	q.RUnlock()
 	if !ok {
 		query = string(etc.MustStaticFile(fmt.Sprintf("%s.sql", queryName)))
-		q.Lock()
 		q.queries[queryName] = query
-		q.Unlock()
 	}
 	return query
 }
