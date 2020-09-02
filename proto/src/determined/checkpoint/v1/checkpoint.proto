@@ -68,4 +68,6 @@ message Checkpoint {
   State validation_state = 15;
   // The state of the checkpoint.
   State state = 16;
+  // The value of the metric specified by `searcher.metric` for this metric.
+  float searcher_metric = 17;
 }
