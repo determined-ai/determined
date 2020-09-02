@@ -225,7 +225,8 @@ func TrialEnvVars(t TaskSpec, rendezvousPorts []string) map[string]string {
 	envVars["DET_EXPERIMENT_CONFIG"] = jsonify(exp.ExperimentConfig)
 	envVars["DET_HPARAMS"] = jsonify(exp.HParams)
 	envVars["DET_INITIAL_WORKLOAD"] = jsonify(exp.InitialWorkload)
-	envVars["DET_LATEST_CHECKPOINT"] = jsonify(exp.LatestCheckpoint)
+
+	envVars["DET_LATEST_CHECKPOINT"] = "/run/determined/checkpoint.json"
 	envVars["DET_WORKLOAD_MANAGER_TYPE"] = string(exp.WorkloadManagerType)
 	envVars["DET_RENDEZVOUS_PORTS"] = strings.Join(rendezvousPorts, ",")
 	envVars["DET_TRIAL_RUNNER_NETWORK_INTERFACE"] = networkInterface
@@ -249,6 +250,17 @@ func TrialArchives(t TaskSpec) []container.RunArchive {
 		workDirArchive(exp.AgentUserGroup),
 		injectUserArchive(exp.AgentUserGroup),
 		wrapArchive(exp.AdditionalFiles, rootDir),
+        wrapArchive(
+            archive.Archive{
+                exp.AgentUserGroup.OwnedArchiveItem(
+                    "checkpoint.json",
+                    []byte(jsonify(exp.LatestCheckpoint)),
+                    0600,
+                    tar.TypeReg,
+                ),
+            },
+            runDir,
+        ),
 		wrapArchive(exp.AgentUserGroup.OwnArchive(exp.ModelDefinition), ContainerWorkDir),
 		harnessArchive(t.HarnessPath, exp.AgentUserGroup),
 		masterCertArchive(t.MasterCert),
