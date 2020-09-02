@@ -18,7 +18,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -26,7 +25,7 @@ import (
 type PgDB struct {
 	tokenKeys *model.AuthTokenKeypair
 	sql       *sqlx.DB
-	queries   map[string]string
+	queries   *staticQueryMap
 }
 
 // ConnectPostgres connects to a Postgres database.
@@ -35,7 +34,7 @@ func ConnectPostgres(url string) (*PgDB, error) {
 	for {
 		sql, err := sqlx.Connect("postgres", url)
 		if err == nil {
-			return &PgDB{sql: sql, queries: make(map[string]string)}, err
+			return &PgDB{sql: sql, queries: &staticQueryMap{queries: make(map[string]string)}}, err
 		}
 		numTries++
 		if numTries >= 15 {
@@ -1945,12 +1944,7 @@ func (db *PgDB) AuthTokenKeypair() (*model.AuthTokenKeypair, error) {
 func (db *PgDB) queryRows(
 	queryName string, p func(*sqlx.Rows, interface{}) error, v interface{}, args ...interface{},
 ) error {
-	query, ok := db.queries[queryName]
-	if !ok {
-		query = string(etc.MustStaticFile(fmt.Sprintf("%s.sql", queryName)))
-		db.queries[queryName] = query
-	}
-	rows, err := db.sql.Queryx(query, args...)
+	rows, err := db.sql.Queryx(db.queries.getOrLoad(queryName), args...)
 	if err != nil {
 		return err
 	}
@@ -2000,10 +1994,5 @@ func (db *PgDB) Query(queryName string, v interface{}, args ...interface{}) erro
 // RawQuery returns the result of the query as a raw byte string. Any placeholder parameters are
 // replaced with supplied args.
 func (db *PgDB) RawQuery(queryName string, args ...interface{}) ([]byte, error) {
-	query, ok := db.queries[queryName]
-	if !ok {
-		query = string(etc.MustStaticFile(fmt.Sprintf("%s.sql", queryName)))
-		db.queries[queryName] = query
-	}
-	return db.rawQuery(query, args...)
+	return db.rawQuery(db.queries.getOrLoad(queryName), args...)
 }
