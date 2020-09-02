@@ -1,0 +1,26 @@
+:orphan:
+
+**New Features**
+
+- Support for `Kubernetes <https://kubernetes.io/>`__.
+
+  - Determined can now be deployed on Kubernetes. Determined workloads run as a
+    collection of pods, which allows standard Kubernetes tools for logging,
+    metrics, and tracing to be used. Determined is compatible with Kubernetes >=
+    1.15, including managed Kubernetes services such as Google Kubernetes Engine
+    (GKE) and AWS Elastic Kubernetes Service (EKS).
+
+  - When using Determined with Kubernetes, we currently do not support
+    fair-share scheduling, priority scheduling, per-experiment weights, or
+    gang-scheduling for distributed training experiments; workloads will be
+    scheduled according the behavior of the default Kubernetes scheduler.
+
+  - Users can configure the behavior of the pods that are launched for
+    Determined workloads by specifying a :ref:`custom pod spec
+    <custom-pod-specs>`. A default pod spec can be configured when installing
+    Kubernetes, but a custom pod spec can also be specified on a per-task basis
+    (e.g., via the :ref:`environment.pod_spec <exp-environment-pod-spec>` field
+    in the experiment configuration file).
+
+  - For more information on using Determined with Kubernetes, see the
+    :ref:`documentation <determined-on-kubernetes>`.
