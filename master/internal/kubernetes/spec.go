@@ -367,7 +367,7 @@ func configureUniqueName(t tasks.TaskSpec, rank int) string {
 
 func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *k8sV1.SecurityContext {
 	if agentUserGroup != nil {
-		userID := int64(agentUserGroup.ID)
+		userID := int64(agentUserGroup.UID)
 		groupID := int64(agentUserGroup.GID)
 		return &k8sV1.SecurityContext{
 			RunAsUser:  &userID,
