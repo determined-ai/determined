@@ -13,6 +13,8 @@ import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
 import Users from 'contexts/Users';
+import { ErrorType } from 'ErrorHandler';
+import handleError from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { getExperimentList } from 'services/api';
@@ -60,13 +62,17 @@ const Dashboard: React.FC = () => {
   const [ filters, setFilters ] = useState<TaskFilters>(initFilters);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
-    const response = await getExperimentList(
-      { descend: true, key: 'startTime' },
-      { limit: 100, offset: 0 },
-      { showArchived: false, states: filters.states, username: filters.username },
-    );
-    const experiments = decodeExperimentList(response.experiments || []);
-    setExperiments(experiments);
+    try {
+      const response = await getExperimentList(
+        { descend: true, key: 'startTime' },
+        { limit: 100, offset: 0 },
+        { showArchived: false, states: filters.states, username: filters.username },
+      );
+      const experiments = decodeExperimentList(response.experiments || []);
+      setExperiments(experiments);
+    } catch (e) {
+      handleError({ message: 'Unable to fetch experiments.', silent: true, type: ErrorType.Api });
+    }
   }, [ filters, setExperiments ]);
 
   usePolling(fetchExperiments);

@@ -124,10 +124,14 @@ const ExperimentList: React.FC = () => {
   }, [ selectedExperiments ]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
-    const response = await getExperimentList(sorter, pagination, filters, search);
-    const experiments = decodeExperimentList(response.experiments || []);
-    setTotal(response.pagination?.total || 0);
-    setExperiments(experiments);
+    try {
+      const response = await getExperimentList(sorter, pagination, filters, search);
+      const experiments = decodeExperimentList(response.experiments || []);
+      setTotal(response.pagination?.total || 0);
+      setExperiments(experiments);
+    } catch (e) {
+      handleError({ message: 'Unable to fetch experiments.', silent: true, type: ErrorType.Api });
+    }
   }, [ filters, pagination, search, sorter ]);
 
   usePolling(fetchExperiments);
