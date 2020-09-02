@@ -84,7 +84,7 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 
 		k.agent = newAgentState(sproto.AddAgent{Agent: podsActor})
 
-	case AddTask:
+	case AssignResource:
 		k.receiveAddTask(ctx, msg)
 
 	case SetWeight:
@@ -144,7 +144,7 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (k *kubernetesResourceProvider) receiveAddTask(ctx *actor.Context, msg AddTask) {
+func (k *kubernetesResourceProvider) receiveAddTask(ctx *actor.Context, msg AssignResource) {
 	actors.NotifyOnStop(ctx, msg.TaskHandler, taskActorStopped{Ref: msg.TaskHandler})
 
 	if task, ok := k.tasksByHandler[msg.TaskHandler]; ok {

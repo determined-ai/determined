@@ -225,7 +225,7 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 		groupActorStopped,
 		SetMaxSlots,
 		SetWeight,
-		AddTask,
+		AssignResource,
 		TerminateTask:
 		return d.receiveTaskMsg(ctx)
 
@@ -325,7 +325,7 @@ func (d *DefaultRP) receiveTaskMsg(ctx *actor.Context) error {
 	case SetWeight:
 		d.getOrCreateGroup(msg.Handler, ctx).weight = msg.Weight
 
-	case AddTask:
+	case AssignResource:
 		d.receiveAddTask(ctx, msg)
 
 	case TerminateTask:
@@ -334,7 +334,7 @@ func (d *DefaultRP) receiveTaskMsg(ctx *actor.Context) error {
 	return nil
 }
 
-func (d *DefaultRP) receiveAddTask(ctx *actor.Context, msg AddTask) {
+func (d *DefaultRP) receiveAddTask(ctx *actor.Context, msg AssignResource) {
 	d.notifyOnStop(ctx, msg.TaskHandler, taskActorStopped{Ref: msg.TaskHandler})
 
 	if task, ok := d.tasksByHandler[msg.TaskHandler]; ok {

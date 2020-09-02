@@ -28,7 +28,7 @@ type mockActor struct {
 
 type (
 	AskSchedulerToAddTask struct {
-		task AddTask
+		task AssignResource
 	}
 	ThrowError struct{}
 	ThrowPanic struct{}
@@ -110,7 +110,7 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 	taskID := NewTaskID()
 
 	system.Ask(mockActor, AskSchedulerToAddTask{
-		task: AddTask{
+		task: AssignResource{
 			ID:           &taskID,
 			Name:         "mock_task",
 			Group:        mockActor,
@@ -152,7 +152,7 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 
 	taskID := NewTaskID()
 	system.Ask(mockActor, AskSchedulerToAddTask{
-		task: AddTask{
+		task: AssignResource{
 			ID:           &taskID,
 			Name:         "mock_task",
 			Group:        mockActor,
@@ -195,7 +195,7 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 
 	taskID := NewTaskID()
 	system.Ask(mockActor, AskSchedulerToAddTask{
-		task: AddTask{
+		task: AssignResource{
 			ID:           &taskID,
 			Name:         "mock_task",
 			Group:        mockActor,
@@ -233,7 +233,7 @@ func testWhenActorsStopOrTaskIsKilled(t *testing.T, r *rand.Rand) {
 
 	taskID := NewTaskID()
 	system.Ask(mockActor, AskSchedulerToAddTask{
-		task: AddTask{
+		task: AssignResource{
 			ID:           &taskID,
 			Name:         "mock_task",
 			Group:        mockActor,
