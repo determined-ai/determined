@@ -46,8 +46,6 @@ type (
 type (
 	// ContainerStarted notifies the task actor that a container has been started on an agent.
 	ContainerStarted struct{ Container Container }
-	// TaskTerminated notifies the task actor that all of its containers have terminated.
-	TaskTerminated struct{}
 
 	// ResourceAssigned notifies the task actor to be assigned with resources.
 	ResourceAssigned struct {

@@ -248,9 +248,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ContainerStartedEvent: &msg})
 
-	case scheduler.TaskTerminated:
-		// This message is being deprecated; ignore it.
-
 	case sproto.ContainerLog:
 		if !c.readinessMessageSent && c.readinessChecksPass(ctx, msg) {
 			c.readinessMessageSent = true

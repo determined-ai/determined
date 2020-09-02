@@ -492,8 +492,6 @@ func (d *DefaultRP) taskTerminated(task *Task, aborted bool) {
 	for id := range task.containers {
 		delete(d.tasksByContainerID, id)
 	}
-
-	task.handler.System().Tell(task.handler, TaskTerminated{})
 }
 
 func toAddresses(proxy string, info types.ContainerJSON) []Address {

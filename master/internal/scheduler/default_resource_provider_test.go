@@ -23,7 +23,6 @@ type mockActor struct {
 	cluster            *actor.Ref
 	onAssigned         func(ResourceAssigned) error
 	onContainerStarted func(ContainerStarted) error
-	onTaskTerminated   func(TaskTerminated) error
 }
 
 type (
@@ -77,11 +76,6 @@ func (h *mockActor) Receive(ctx *actor.Context) error {
 			ContainerID:      cproto.ID(msg.Container.ID()),
 			ContainerStopped: &agent.ContainerStopped{},
 		})
-
-	case TaskTerminated:
-		if h.onTaskTerminated != nil {
-			return h.onTaskTerminated(msg)
-		}
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

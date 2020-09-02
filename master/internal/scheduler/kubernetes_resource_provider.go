@@ -350,8 +350,6 @@ func (k *kubernetesResourceProvider) taskTerminated(task *Task, aborted bool) {
 	for id := range task.containers {
 		delete(k.tasksByContainerID, id)
 	}
-
-	task.handler.System().Tell(task.handler, TaskTerminated{})
 }
 
 func (k *kubernetesResourceProvider) receiveTaskStopped(ctx *actor.Context, msg taskActorStopped) {
