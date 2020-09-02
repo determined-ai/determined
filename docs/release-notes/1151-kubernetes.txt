@@ -1,0 +1,8 @@
+:orphan:
+
+**New Features**
+
+- Support running Determined on Kubernetes.
+
+  - Determined is now deployable on Kubernetes. To get started please follow the
+    the Determined on Kubernetes :ref:`installation guide <install-on-kubernetes>`.
