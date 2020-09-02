@@ -1,6 +1,8 @@
 import { CancelToken } from 'axios';
 
+import { TablePagination, TableSorter } from 'components/Table';
 import * as DetSwagger from 'services/api-ts-sdk';
+import { V1GetExperimentsResponse } from 'services/api-ts-sdk';
 import { generateApi, processApiError, serverAddress } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
 import { CreateNotebookParams, CreateTensorboardParams, EmptyParams,
@@ -8,10 +10,12 @@ import { CreateNotebookParams, CreateTensorboardParams, EmptyParams,
   KillExpParams, LogsParams, PatchExperimentParams, PatchExperimentState, TaskLogsParams,
   TrialDetailsParams, TrialLogsParams } from 'services/types';
 import {
-  Agent, AnyTask, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, Experiment,
-  ExperimentDetails, Log, TrialDetails,
+  Agent, ALL_VALUE, AnyTask, Command, CommandType, Credentials, DetailedUser, DeterminedInfo,
+  Experiment, ExperimentDetails, ExperimentFilters, Log, RunState, TrialDetails,
 } from 'types';
 import { isExperimentTask } from 'utils/task';
+
+import { encodeExperimentState } from './decoder';
 
 const address = serverAddress();
 export const detAuthApi = new DetSwagger.AuthenticationApi(undefined, address);
@@ -49,6 +53,67 @@ export const getInfo = generateApi<EmptyParams, DeterminedInfo>(Config.getInfo);
 export const getAgents = generateApi<EmptyParams, Agent[]>(Config.getAgents);
 
 /* Experiments */
+
+type ExperimentListSortKey =
+  | 'SORT_BY_UNSPECIFIED'
+  | 'SORT_BY_ID'
+  | 'SORT_BY_DESCRIPTION'
+  | 'SORT_BY_START_TIME'
+  | 'SORT_BY_END_TIME'
+  | 'SORT_BY_STATE'
+  | 'SORT_BY_NUM_TRIALS'
+  | 'SORT_BY_PROGRESS'
+  | 'SORT_BY_USER';
+
+const experimentSortKeys = {
+  endTime: 'SORT_BY_END_TIME',
+  id: 'SORT_BY_ID',
+  name: 'SORT_BY_DESCRIPTION',
+  numTrials: 'SORT_BY_NUM_TRIALS',
+  progress: 'SORT_BY_PROGRESS',
+  startTime: 'SORT_BY_START_TIME',
+  state: 'SORT_BY_STATE',
+  user: 'SORT_BY_USER',
+};
+type ExperimentSortKey = keyof typeof experimentSortKeys;
+
+type ExperimentListState =
+  | 'STATE_UNSPECIFIED'
+  | 'STATE_ACTIVE'
+  | 'STATE_PAUSED'
+  | 'STATE_STOPPING_COMPLETED'
+  | 'STATE_STOPPING_CANCELED'
+  | 'STATE_STOPPING_ERROR'
+  | 'STATE_COMPLETED'
+  | 'STATE_CANCELED'
+  | 'STATE_ERROR'
+  | 'STATE_DELETED';
+
+export const getExperimentList = async (
+  sorter: TableSorter,
+  pagination: TablePagination,
+  search: string,
+  filters: ExperimentFilters,
+): Promise<V1GetExperimentsResponse> => {
+  try {
+    const response = await detExperimentApi.determinedGetExperiments(
+      experimentSortKeys[sorter.key as ExperimentSortKey] as ExperimentListSortKey,
+      sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+      pagination.offset,
+      pagination.limit,
+      search,
+      filters.showArchived ? undefined : false,
+      filters.states.includes(ALL_VALUE) ? undefined : filters.states.map(state => {
+        return encodeExperimentState(state as RunState) as unknown as ExperimentListState;
+      }),
+      filters.username ? [ filters.username ] : undefined,
+    );
+    return response;
+  } catch (e) {
+    processApiError('getExperimentList', e);
+    throw e;
+  }
+};
 
 export const getExperimentSummaries =
   generateApi<ExperimentsParams, Experiment[]>(Config.getExperimentSummaries);

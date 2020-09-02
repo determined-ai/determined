@@ -204,6 +204,7 @@ export enum RunState {
   StoppingError = 'STOPPING_ERROR',
   Errored = 'ERROR',
   Deleted = 'DELETED',
+  Unspecified = 'UNSPECIFIED',
 }
 
 export interface ValidationHistory {
@@ -290,6 +291,20 @@ export interface TrialDetails extends TrialBase {
   warmStartCheckpointId?: number;
 }
 
+export interface ExperimentX {
+  id: number;
+  name: string;
+  labels: string[];
+  startTime: string;
+  endTime?: string;
+  state: RunState;
+  archived: boolean;
+  numTrials: number;
+  progress?: number;
+  username: string;
+  url: string;
+}
+
 export interface Experiment {
   archived: boolean;
   config: ExperimentConfig;
@@ -355,7 +370,6 @@ export type TaskType = CommandType | 'Experiment';
 
 export interface ExperimentFilters {
   showArchived: boolean;
-  limit: number;
   states: string[];
   username?: string;
 }
