@@ -55,3 +55,11 @@ class VPC(base.DeterminedDeployment):
 
         ssh_command = self.ssh_command.format(master_ip=master_ip)
         print(ssh_command)
+
+
+class FSx(VPC):
+    template = "fsx.yaml"
+
+
+class EFS(VPC):
+    template = "efs.yaml"
