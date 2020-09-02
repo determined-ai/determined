@@ -242,7 +242,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ContainerStartedEvent: &msg})
 
-	case scheduler.TerminateRequest:
+	case scheduler.ReleaseResource:
 		c.terminate(ctx)
 
 	case scheduler.TaskAborted:
@@ -283,7 +283,7 @@ func (c *command) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 
 func (c *command) terminate(ctx *actor.Context) {
 	ctx.Ask(c.rps, scheduler.TerminateTask{TaskID: c.taskID, Forcible: true}).Get()
-	if msg, ok := ctx.Message().(scheduler.TerminateRequest); ok {
+	if msg, ok := ctx.Message().(scheduler.ReleaseResource); ok {
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), TerminateRequestEvent: &msg})
 	}
 }

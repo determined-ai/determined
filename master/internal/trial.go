@@ -347,7 +347,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case
 		scheduler.ResourceAssigned,
-		scheduler.TerminateRequest,
+		scheduler.ReleaseResource,
 		scheduler.TaskAborted,
 		scheduler.TaskTerminated,
 		scheduler.ContainerStarted:
@@ -414,7 +414,7 @@ func (t *trial) processSchedulerMsg(ctx *actor.Context) error {
 			return err
 		}
 
-	case scheduler.TerminateRequest:
+	case scheduler.ReleaseResource:
 		if !t.allReady(ctx) {
 			t.cancelUnready = true
 			t.terminate(ctx, true)

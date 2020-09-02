@@ -87,7 +87,7 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 		ctx.Respond(t.group)
 	case getLabel:
 		ctx.Respond(t.label)
-	case TerminateRequest:
+	case ReleaseResource:
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
