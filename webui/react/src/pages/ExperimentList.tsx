@@ -27,7 +27,7 @@ import {
 import { patchExperiment } from 'services/api';
 import { decodeExperimentList } from 'services/decoder';
 import {
-  ALL_VALUE, Command, ExperimentFilters, ExperimentX, RunState, TBSourceType,
+  ALL_VALUE, Command, ExperimentFilters, ExperimentItem, RunState, TBSourceType,
 } from 'types';
 import { handlePath, openBlank } from 'utils/routes';
 import { cancellableRunStates, isTaskKillable, terminalRunStates, waitPageUrl } from 'utils/types';
@@ -75,7 +75,7 @@ const ExperimentList: React.FC = () => {
   const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
   const [ sorter, setSorter ] = useState<TableSorter>(initSorter);
   const [ search, setSearch ] = useState('');
-  const [ experiments, setExperiments ] = useState<ExperimentX[]>([]);
+  const [ experiments, setExperiments ] = useState<ExperimentItem[]>([]);
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
 
   const showBatch = selectedRowKeys.length !== 0;
@@ -84,7 +84,7 @@ const ExperimentList: React.FC = () => {
     return experiments.reduce((acc, experiment) => {
       acc[experiment.id] = experiment;
       return acc;
-    }, {} as Record<string, ExperimentX>);
+    }, {} as Record<string, ExperimentItem>);
   }, [ experiments ]);
 
   const selectedExperiments = useMemo(() => {
@@ -157,7 +157,7 @@ const ExperimentList: React.FC = () => {
   const handleActionComplete = useCallback(() => fetchExperiments(), [ fetchExperiments ]);
 
   const columns = useMemo(() => {
-    const nameRenderer = (_: string, record: ExperimentX) => (
+    const nameRenderer = (_: string, record: ExperimentItem) => (
       <div className={css.nameColumn}>
         {record.name || ''}
         <TagList
@@ -282,7 +282,7 @@ const ExperimentList: React.FC = () => {
   const handleTableChange = useCallback((tablePagination, tableFilters, tableSorter) => {
     if (Array.isArray(tableSorter)) return;
 
-    const { columnKey, order } = tableSorter as SorterResult<ExperimentX>;
+    const { columnKey, order } = tableSorter as SorterResult<ExperimentItem>;
     if (!columnKey || !columns.find(column => column.key === columnKey)) return;
 
     storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
@@ -298,7 +298,7 @@ const ExperimentList: React.FC = () => {
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
-  const handleTableRow = useCallback((record: ExperimentX) => ({
+  const handleTableRow = useCallback((record: ExperimentItem) => ({
     onClick: (event: React.MouseEvent) => {
       if (isAlternativeAction(event)) return;
       handlePath(event, { path: record.url });

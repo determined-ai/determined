@@ -7,14 +7,14 @@ import Badge, { BadgeType } from 'components/Badge';
 import Icon from 'components/Icon';
 import ProgressBar from 'components/ProgressBar';
 import {
-  CommandState, CommandTask, CommandType, ExperimentX, RunState, StartEndTimes, TrialItem,
+  CommandState, CommandTask, CommandType, ExperimentItem, RunState, StartEndTimes, TrialItem,
 } from 'types';
 import { getDuration, shortEnglishHumannizer } from 'utils/time';
 import { commandTypeToLabel } from 'utils/types';
 
 import css from './Table.module.scss';
 
-type TableRecord = CommandTask | ExperimentX | TrialItem;
+type TableRecord = CommandTask | ExperimentItem | TrialItem;
 
 export interface TablePagination {
   offset: number;
@@ -43,7 +43,7 @@ export type GenericRenderer = <T extends TableRecord>(
 
 export type ExperimentRenderer = (
   text: string,
-  record: ExperimentX,
+  record: ExperimentItem,
   index: number,
 ) => React.ReactNode;
 

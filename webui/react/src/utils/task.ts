@@ -1,6 +1,6 @@
 import {
   ALL_VALUE, AnyTask, CommandState, CommandTask, CommandType,
-  ExperimentItem, ExperimentTask, RecentCommandTask, RecentEvent,
+  ExperimentItem, ExperimentOld, ExperimentTask, RecentCommandTask, RecentEvent,
   RecentExperimentTask, RecentTask, RunState, Task, TaskFilters, TaskType, User,
 } from 'types';
 import { terminalCommandStates } from 'utils/types';
@@ -40,8 +40,8 @@ export function generateExperimentTask(idx: number): RecentExperimentTask {
   const progress = Math.random();
   const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
   return {
+    ...task,
     archived: false,
-    ... task,
     progress,
     state: state as RunState,
     username: user.username,
@@ -60,7 +60,7 @@ export function generateCommandTask(idx: number): RecentCommandTask {
   };
 }
 
-export const generateExperiments = (count = 10): ExperimentItem[] => {
+export const generateOldExperiments = (count = 10): ExperimentOld[] => {
   return new Array(Math.floor(count))
     .fill(null)
     .map((_, idx) => {
@@ -91,6 +91,24 @@ export const generateExperiments = (count = 10): ExperimentItem[] => {
         configRaw: config,
         id: idx,
         name: experimentTask.name,
+        userId: user.id,
+        username: user.username,
+      } as ExperimentOld;
+    });
+};
+
+export const generateExperiments = (count = 30): ExperimentItem[] => {
+  return new Array(Math.floor(count))
+    .fill(null)
+    .map((_, idx) => {
+      const experimentTask = generateExperimentTask(idx);
+      const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
+      return {
+        ...experimentTask,
+        id: idx,
+        labels: [],
+        name: experimentTask.name,
+        numTrials: Math.round(Math.random() * 60000),
         userId: user.id,
         username: user.username,
       } as ExperimentItem;

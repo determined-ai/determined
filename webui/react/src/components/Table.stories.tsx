@@ -20,7 +20,7 @@ export default {
 const commandTasks: CommandTask[] = new Array(20)
   .fill(null)
   .map((_, index) => generateCommandTask(index));
-const experimentItems: ExperimentItem[] = generateExperiments(30);
+const experiments: ExperimentItem[] = generateExperiments(30);
 
 export const LoadingTable = (): React.ReactNode => {
   return <Table loading={true} />;
@@ -45,8 +45,8 @@ export const ExperimentTable = (): React.ReactNode => {
   return <Table
     className={css.base}
     columns={experimentColumns}
-    dataSource={experimentItems}
-    loading={experimentItems === undefined}
+    dataSource={experiments}
+    loading={experiments === undefined}
     rowClassName={defaultRowClassName()}
     rowKey="id"
     showSorterTooltip={false} />;

@@ -5,9 +5,9 @@ import {
   experimentArchivedRenderer, experimentProgressRenderer,
   expermentDurationRenderer, relativeTimeRenderer, stateRenderer, userRenderer,
 } from 'components/Table';
-import { ExperimentX } from 'types';
+import { ExperimentItem } from 'types';
 
-export const columns: ColumnType<ExperimentX>[] = [
+export const columns: ColumnType<ExperimentItem>[] = [
   {
     dataIndex: 'id',
     key: 'id',
@@ -22,7 +22,7 @@ export const columns: ColumnType<ExperimentX>[] = [
   },
   {
     key: 'startTime',
-    render: (_: number, record: ExperimentX): React.ReactNode =>
+    render: (_: number, record: ExperimentItem): React.ReactNode =>
       relativeTimeRenderer(new Date(record.startTime)),
     sorter: true,
     title: 'Start Time',

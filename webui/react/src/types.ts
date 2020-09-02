@@ -291,7 +291,7 @@ export interface TrialDetails extends TrialBase {
   warmStartCheckpointId?: number;
 }
 
-export interface ExperimentX {
+export interface ExperimentItem {
   id: number;
   name: string;
   labels: string[];
@@ -305,7 +305,7 @@ export interface ExperimentX {
   url: string;
 }
 
-export interface Experiment {
+export interface ExperimentBase {
   archived: boolean;
   config: ExperimentConfig;
   configRaw: RawJson; // Readonly unparsed config object.
@@ -317,13 +317,13 @@ export interface Experiment {
   state: RunState;
 }
 
-export interface ExperimentItem extends Experiment {
+export interface ExperimentOld extends ExperimentBase {
   name: string;
   url: string;
   username: string;
 }
 
-export interface ExperimentDetails extends Experiment {
+export interface ExperimentDetails extends ExperimentBase {
   validationHistory: ValidationHistory[];
   trials: TrialItem[];
   username: string;

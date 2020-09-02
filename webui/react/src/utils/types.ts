@@ -1,7 +1,7 @@
 import { serverAddress } from 'services/apiBuilder';
 import {
-  AnyTask, Checkpoint, Command, CommandState, CommandType, Experiment, ExperimentHyperParams,
-  ExperimentX, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
+  AnyTask, Checkpoint, Command, CommandState, CommandType, ExperimentHyperParams,
+  ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
 } from 'types';
 
 import { deletePathList, getPathList, isNumber, setPathList } from './data';
@@ -44,7 +44,7 @@ export const commandToTask = (command: Command): RecentCommandTask => {
   return task;
 };
 
-export const experimentToTask = (experiment: ExperimentX): RecentExperimentTask => {
+export const experimentToTask = (experiment: ExperimentItem): RecentExperimentTask => {
   const lastEvent = experiment.endTime ?
     { date: experiment.endTime, name: 'finished' } :
     { date: experiment.startTime, name: 'requested' };
@@ -122,7 +122,7 @@ export const commandStateToLabel: {[key in CommandState]: string} = {
   [CommandState.Terminated]: 'Terminated',
 };
 
-export const isTaskKillable = (task: AnyTask | ExperimentX): boolean => {
+export const isTaskKillable = (task: AnyTask | ExperimentItem): boolean => {
   return killableRunStates.includes(task.state as RunState)
     || killableCmdStates.includes(task.state as CommandState);
 };

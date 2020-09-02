@@ -13,9 +13,9 @@ import {
 } from 'ioTypes';
 import {
   Agent, Checkpoint, CheckpointState, CheckpointStorageType, Command, CommandState,
-  CommandType, DetailedUser, DeterminedInfo, Experiment, ExperimentConfig,
-  ExperimentDetails, ExperimentX, Log, LogLevel, RawJson, ResourceState,
-  ResourceType, RunState, Step, TrialDetails, TrialItem, ValidationMetrics,
+  CommandType, DetailedUser, DeterminedInfo, ExperimentBase,
+  ExperimentConfig, ExperimentDetails, ExperimentItem, Log, LogLevel, RawJson,
+  ResourceState, ResourceType, RunState, Step, TrialDetails, TrialItem, ValidationMetrics,
 } from 'types';
 import { capitalize } from 'utils/string';
 
@@ -162,7 +162,7 @@ const ioToExperimentConfig = (io: ioTypeExperimentConfig): ExperimentConfig => {
   return config;
 };
 
-export const jsonToExperiment = (data: unknown): Experiment => {
+export const jsonToExperiment = (data: unknown): ExperimentBase => {
   const io = decode<ioTypeExperiment>(ioExperiment, data);
   return {
     archived: io.archived,
@@ -177,7 +177,7 @@ export const jsonToExperiment = (data: unknown): Experiment => {
   };
 };
 
-export const jsonToExperiments = (data: unknown): Experiment[] => {
+export const jsonToExperiments = (data: unknown): ExperimentBase[] => {
   const io = decode<ioTypeExperiments>(ioExperiments, data);
   return io.map(jsonToExperiment);
 };
@@ -287,7 +287,7 @@ export const encodeExperimentState = (state: RunState): Determinedexperimentv1St
   return Determinedexperimentv1State.UNSPECIFIED;
 };
 
-export const decodeExperimentList = (data: V1Experiment[]): ExperimentX[] => {
+export const decodeExperimentList = (data: V1Experiment[]): ExperimentItem[] => {
   return data.map(item => ({
     archived: item.archived,
     endTime: item.endTime as unknown as string,

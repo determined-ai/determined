@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { CheckpointState, Experiment, ExperimentDetails, RunState } from 'types';
-import { generateExperiments } from 'utils/task';
+import { CheckpointState, ExperimentDetails, ExperimentOld, RunState } from 'types';
+import { generateOldExperiments } from 'utils/task';
 
 import ExperimentInfoBox from './ExperimentInfoBox';
 
@@ -10,7 +10,7 @@ export default {
   title: 'ExperimentInfoBox',
 };
 
-const sampleExperiment: Experiment = generateExperiments(1)[0];
+const sampleExperiment: ExperimentOld = generateOldExperiments(1)[0];
 
 const experimentDetails: ExperimentDetails = {
   ...sampleExperiment,

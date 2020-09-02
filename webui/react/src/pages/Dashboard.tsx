@@ -21,7 +21,7 @@ import { getExperimentList } from 'services/api';
 import { decodeExperimentList } from 'services/decoder';
 import { ShirtSize } from 'themes';
 import {
-  ALL_VALUE, Command, CommandType, ExperimentX, RecentTask,
+  ALL_VALUE, Command, CommandType, ExperimentItem, RecentTask,
   ResourceType, TaskFilters, TaskType,
 } from 'types';
 import { getPath } from 'utils/data';
@@ -52,7 +52,7 @@ const Dashboard: React.FC = () => {
   const notebooks = Notebooks.useStateContext();
   const shells = Shells.useStateContext();
   const tensorboards = Tensorboards.useStateContext();
-  const [ experiments, setExperiments ] = useState<ExperimentX[]>();
+  const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
 
   const storage = useStorage('dashboard/tasks');
   const initFilters = storage.getWithDefault('filters', {
