@@ -15,7 +15,7 @@ import css from './TaskCard.module.scss';
 const TaskCard: React.FC<RecentTask> = (props: RecentTask) => {
   let [ hasProgress, isComplete ] = [ false, false ];
   if (isExperimentTask(props)) {
-    hasProgress = props.progress != null;
+    hasProgress = !!props.progress;
     isComplete = props.progress === 1;
   }
   const classes = [ css.base ];

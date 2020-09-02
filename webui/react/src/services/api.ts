@@ -92,8 +92,8 @@ type ExperimentListState =
 export const getExperimentList = async (
   sorter: TableSorter,
   pagination: TablePagination,
-  search: string,
   filters: ExperimentFilters,
+  search?: string,
 ): Promise<V1GetExperimentsResponse> => {
   try {
     const response = await detExperimentApi.determinedGetExperiments(

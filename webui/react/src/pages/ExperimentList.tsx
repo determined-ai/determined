@@ -124,7 +124,7 @@ const ExperimentList: React.FC = () => {
   }, [ selectedExperiments ]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
-    const response = await getExperimentList(sorter, pagination, search, filters);
+    const response = await getExperimentList(sorter, pagination, filters, search);
     const experiments = decodeExperimentList(response.experiments || []);
     setTotal(response.pagination?.total || 0);
     setExperiments(experiments);

@@ -9,8 +9,8 @@ import Users from 'contexts/Users';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
 import {
-  getAgents, getCommands, getExperimentSummaries, getNotebooks, getShells,
-  getTensorboards, getUsers,
+  getAgents, getCommands, getExperimentSummaries, getNotebooks,
+  getShells, getTensorboards, getUsers,
 } from 'services/api';
 import { EmptyParams, ExperimentsParams } from 'services/types';
 import { Agent, Command, DetailedUser, Experiment } from 'types';
