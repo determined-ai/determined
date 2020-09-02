@@ -2,38 +2,33 @@ import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Button, Input, Modal, Table } from 'antd';
 import { SelectValue } from 'antd/es/select';
 import { SorterResult } from 'antd/es/table/interface';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import Icon from 'components/Icon';
 import Page from 'components/Page';
 import { Indicator } from 'components/Spinner';
 import StateSelectFilter from 'components/StateSelectFilter';
 import {
-  defaultPaginationConfig, defaultRowClassName, getPaginationConfig, isAlternativeAction, MINIMUM_PAGE_SIZE, TablePagination, TableSorter,
+  defaultRowClassName, getPaginationConfig, isAlternativeAction,
+  MINIMUM_PAGE_SIZE, TablePagination, TableSorter,
 } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TagList from 'components/TagList';
 import Toggle from 'components/Toggle';
 import UserSelectFilter from 'components/UserSelectFilter';
 import Auth from 'contexts/Auth';
-import Users from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
-import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
 import {
-  archiveExperiment, createTensorboard, getExperimentList, getExperimentSummaries,
-  killExperiment,
-  setExperimentState,
+  archiveExperiment, createTensorboard, getExperimentList, killExperiment, setExperimentState,
 } from 'services/api';
 import { patchExperiment } from 'services/api';
 import { decodeExperimentList } from 'services/decoder';
-import { ExperimentsParams } from 'services/types';
 import {
-  ALL_VALUE, Command, Experiment, ExperimentFilters, ExperimentX, RunState, TBSourceType,
+  ALL_VALUE, Command, ExperimentFilters, ExperimentX, RunState, TBSourceType,
 } from 'types';
 import { handlePath, openBlank } from 'utils/routes';
-import { filterExperiments, processExperiments } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates, waitPageUrl } from 'utils/types';
 
 import css from './ExperimentList.module.scss';
@@ -67,10 +62,6 @@ const STORAGE_SORTER_KEY = 'sorter';
 
 const ExperimentList: React.FC = () => {
   const auth = Auth.useStateContext();
-  const users = Users.useStateContext();
-  const [ experiments, setExperiments ] = useState<ExperimentX[]>([]);
-  // const [ experimentsResponse, triggerExperimentsRequest ] =
-  //   useRestApi<ExperimentsParams, Experiment[]>(getExperimentSummaries, {});
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initFilters = storage.getWithDefault(
@@ -83,17 +74,14 @@ const ExperimentList: React.FC = () => {
   const [ filters, setFilters ] = useState<ExperimentFilters>(initFilters);
   const [ sorter, setSorter ] = useState<TableSorter>(initSorter);
   const [ search, setSearch ] = useState('');
+  const [ experiments, setExperiments ] = useState<ExperimentX[]>([]);
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
-
-  // const filteredExperiments = useMemo(() => {
-  //   return filterExperiments(experiments, filters, users.data || [], search);
-  // }, [ experiments, filters, search, users.data ]);
 
   const showBatch = selectedRowKeys.length !== 0;
 
   const experimentMap = useMemo(() => {
-    return experiments.reduce((acc, task) => {
-      acc[task.id] = task;
+    return experiments.reduce((acc, experiment) => {
+      acc[experiment.id] = experiment;
       return acc;
     }, {} as Record<string, ExperimentX>);
   }, [ experiments ]);
@@ -136,15 +124,10 @@ const ExperimentList: React.FC = () => {
   }, [ selectedExperiments ]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
-    try {
-      const response = await getExperimentList(sorter, pagination, search, filters);
-      const experiments = decodeExperimentList(response.experiments || []);
-
-      setTotal(response.pagination?.total || 0);
-      setExperiments(experiments);
-    } catch (e) {
-      console.error(e);
-    }
+    const response = await getExperimentList(sorter, pagination, search, filters);
+    const experiments = decodeExperimentList(response.experiments || []);
+    setTotal(response.pagination?.total || 0);
+    setExperiments(experiments);
   }, [ filters, pagination, search, sorter ]);
 
   usePolling(fetchExperiments);
@@ -187,11 +170,6 @@ const ExperimentList: React.FC = () => {
 
     return newColumns;
   }, [ handleTagListChange, handleTagListCreate, handleTagListDelete, sorter ]);
-
-  // useEffect(() => {
-  //   const experiments = processExperiments(experimentsResponse.data || [], users.data || []);
-  //   setExperiments(experiments);
-  // }, [ experimentsResponse, setExperiments, users ]);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value || '');
@@ -297,6 +275,7 @@ const ExperimentList: React.FC = () => {
       limit: tablePagination.pageSize,
       offset: (tablePagination.current - 1) * tablePagination.pageSize,
     }));
+    setSelectedRowKeys([]);
   }, [ columns, setSorter, storage ]);
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);

@@ -141,21 +141,6 @@ const matchesUser = <T extends AnyTask | ExperimentItem>(
   return !!selectedUser && (task.userId === selectedUser.id);
 };
 
-export const filterExperiments = (
-  experiments: ExperimentItem[],
-  filters: ExperimentFilters,
-  users: User[] = [],
-  search = '',
-): ExperimentItem[] => {
-  return experiments
-    .filter(experiment => {
-      return (filters.showArchived || !experiment.archived) &&
-        matchesUser<ExperimentItem>(experiment, users, filters.username) &&
-        matchesState<ExperimentItem>(experiment, filters.states) &&
-        matchesSearch<ExperimentItem>(experiment, search);
-    });
-};
-
 export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = AnyTask>(
   tasks: A[], filters: TaskFilters<T>, users: User[], search = '',
 ): A[] => {
@@ -171,25 +156,4 @@ export const filterTasks = <T extends TaskType = TaskType, A extends AnyTask = A
         (!isExperiment || !(task as ExperimentTask).archived);
     })
     .filter(task => matchesSearch<A>(task, search));
-};
-
-/*
- * This function maps `username` and other fields to `Experiment`. Future API work
- * will provide `username` but until then this is done prior to passing it into a
- * `Table` component for efficiency and cleanliness reasons. Once v1 API lands,
- * we may not need this function.
- */
-export const processExperiments = (experiments: Experiment[], users: User[]): ExperimentItem[] => {
-  const userMap = users.reduce((acc, user) => {
-    acc[user.id] = user.username;
-    return acc;
-  }, {} as Record<number, string>);
-  return experiments.map(experiment => {
-    return {
-      ...experiment,
-      name: experiment.config.description,
-      url: `/det/experiments/${experiment.id}`,
-      username: userMap[experiment.userId],
-    };
-  });
 };
