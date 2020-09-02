@@ -7,6 +7,7 @@ default: get-deps
 
 .PHONY: get-deps-api
 get-deps-api:
+	rm -rf src/services/api-ts-sdk
 	cp -r ../api-ts-sdk/src src/services/api-ts-sdk
 
 .PHONY: get-deps-npm
