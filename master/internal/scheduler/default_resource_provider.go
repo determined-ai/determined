@@ -468,8 +468,6 @@ func (d *DefaultRP) receiveContainerTerminated(
 }
 
 func (d *DefaultRP) receiveTaskStopped(ctx *actor.Context, msg taskStopped) {
-	// TODO(shiyuan): refactor to update agent.py to complain less if we try to kill an
-	//  container that does not exist.
 	task := d.tasksByHandler[msg.Ref]
 	if task == nil {
 		return
@@ -481,6 +479,7 @@ func (d *DefaultRP) receiveTaskStopped(ctx *actor.Context, msg taskStopped) {
 	}
 
 	// Clean up a task even if it does not have any containers yet.
+	// Agents might error out that the containers do not exist.
 	if task.state != taskTerminated {
 		d.taskTerminated(task, true)
 	}
