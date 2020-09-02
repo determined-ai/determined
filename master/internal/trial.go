@@ -350,7 +350,6 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 	case
 		scheduler.ResourceAssigned,
 		scheduler.ReleaseResource,
-		scheduler.TaskTerminated,
 		scheduler.ContainerStarted:
 		return t.processSchedulerMsg(ctx)
 
@@ -417,9 +416,6 @@ func (t *trial) processSchedulerMsg(ctx *actor.Context) error {
 
 	case scheduler.ReleaseResource:
 		return t.processReleaseResource(ctx)
-
-	case scheduler.TaskTerminated:
-		t.processTaskTerminated(ctx, msg)
 
 	case scheduler.ContainerStarted:
 		t.containers[msg.Container.ID()] = msg.Container
@@ -908,6 +904,24 @@ func (t *trial) processContainerTerminated(
 	if c == nil || c.IsLeader() || msg.ContainerStopped.Failure != nil {
 		t.terminate(ctx, true)
 	}
+
+	getLeaderState := func() (terminatedContainerWithState, bool) {
+		for _, c := range t.terminatedContainers {
+			if c.isLeader {
+				return c, true
+			}
+		}
+		return terminatedContainerWithState{}, false
+	}
+	status := aproto.ContainerError(aproto.AgentError, errors.New("no error status provided"))
+	if len(t.startedContainers) == 0 {
+		// If we have no containers, we haven't started executing anything, so
+		// let resetTrial reset our state rather than treating this as an error.
+		status = aproto.ContainerError(aproto.TaskAborted, errors.New("task aborted"))
+	} else if leaderState, ok := getLeaderState(); ok {
+		status = classifyStatus(leaderState)
+	}
+	t.resetTrial(ctx, status)
 }
 
 func (t *trial) processLog(ctx *actor.Context, msg sproto.ContainerLog) {
@@ -925,28 +939,6 @@ func (t *trial) processLog(ctx *actor.Context, msg sproto.ContainerLog) {
 	}
 
 	ctx.Tell(t.logger, model.TrialLog{TrialID: t.id, Message: msg.String() + "\n"})
-}
-
-func (t *trial) processTaskTerminated(ctx *actor.Context, msg scheduler.TaskTerminated) {
-	getLeaderState := func() (terminatedContainerWithState, bool) {
-		for _, c := range t.terminatedContainers {
-			if c.isLeader {
-				return c, true
-			}
-		}
-		return terminatedContainerWithState{}, false
-	}
-
-	status := aproto.ContainerError(aproto.AgentError, errors.New("no error status provided"))
-	if len(t.startedContainers) == 0 {
-		// If we have no containers, we haven't started executing anything, so
-		// let resetTrial reset our state rather than treating this as an error.
-		status = aproto.ContainerError(aproto.TaskAborted, errors.New("task aborted"))
-	} else if leaderState, ok := getLeaderState(); ok {
-		status = classifyStatus(leaderState)
-	}
-
-	t.resetTrial(ctx, status)
 }
 
 func classifyStatus(state terminatedContainerWithState) aproto.ContainerStopped {

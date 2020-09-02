@@ -350,8 +350,6 @@ func (k *kubernetesResourceProvider) taskTerminated(task *Task, aborted bool) {
 	for id := range task.containers {
 		delete(k.tasksByContainerID, id)
 	}
-
-	task.handler.System().Tell(task.handler, TaskTerminated{})
 }
 
 func (k *kubernetesResourceProvider) receiveTaskStopped(ctx *actor.Context, msg taskActorStopped) {
@@ -403,8 +401,6 @@ func (k *kubernetesResourceProvider) terminateTask(task *Task, forcible bool) {
 			if c.state != containerTerminated {
 				c.mustTransition(containerTerminating)
 			}
-			c.agent.handler.System().Tell(
-				c.agent.handler, sproto.KillContainer{ContainerID: cproto.ID(c.id)})
 		}
 
 	case task.state != taskTerminating && task.canTerminate:
@@ -415,7 +411,6 @@ func (k *kubernetesResourceProvider) terminateTask(task *Task, forcible bool) {
 				c.mustTransition(containerTerminating)
 			}
 		}
-		task.handler.System().Tell(task.handler, ReleaseResource{})
 	}
 }
 
