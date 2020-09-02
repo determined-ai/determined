@@ -22,7 +22,7 @@ const (
 	ContainerWorkDir  = "/run/determined/workdir"
 	userPythonBaseDir = "/run/determined/pythonuserbase"
 	runDir            = "/run/determined"
-    trainDir          = "/run/determined/train"
+	trainDir          = "/run/determined/train"
 	rootDir           = "/"
 	passwdPath        = "/run/determined/etc/passwd"
 	shadowPath        = "/run/determined/etc/shadow"
