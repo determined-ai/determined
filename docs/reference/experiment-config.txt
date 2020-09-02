@@ -951,7 +951,7 @@ customizing the trial environment, refer to :ref:`custom-env`.
 
 ``pod_spec``
   Only applicable when running Determined on Kubernetes. Applies a pod spec
-  to the pod(s) that are launched by Determined for this task. See
+  to the pods that are launched by Determined for this task. See
   :ref:`custom-pod-specs` for details.
 
 Optimizations

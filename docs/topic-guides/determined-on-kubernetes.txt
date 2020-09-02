@@ -3,15 +3,16 @@
 Determined on Kubernetes
 ========================
 
-In this guide, we focus on how the Determined deep learning platform works on `Kubernetes <https://kubernetes.io/>`_.
-For a summary of how Determined can improve your deep learning training workflows please see the :ref:`benefits-of-determined` guide.
-For instructions on how to install Determined on Kubernetes please see the :ref:`installation guide <install-on-kubernetes>`.
+This guide describes how the Determined deep learning platform works on
+`Kubernetes <https://kubernetes.io/>`__.  For instructions on installing
+Determined on Kubernetes, please see the :ref:`installation guide
+<install-on-kubernetes>`.
 
 In this topic guide, we will cover:
 
 #. How Determined works on Kubernetes.
 #. Limitations of Determined on Kubernetes.
-#. Useful Helm and Kubectl Commands when running Determined on Kubernetes.
+#. Useful Helm and Kubectl commands.
 
 
 How Determined Works on Kubernetes
@@ -162,19 +163,20 @@ for diagnosing any issues that arise during installation.
 Get All the Running Task Pods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-These kubectl commands list and delete pods which are running Determined tasks:
+These ``kubectl`` commands list and delete pods which are running Determined tasks:
 
 .. code:: bash
 
-    # Get all pods that are running determined tasks.
+    # Get all pods that are running Determined tasks.
     kubectl get pods -l=determined
 
-    # Delete all Determined task pods. Users never have to run this unless they
-    # are removing a deployment of Determined.
+    # Delete all Determined task pods. Users should never have to run this,
+    # unless they are removing a deployment of Determined.
     kubectl get pods --no-headers=true -l=determined | awk '{print $1}' | xargs kubectl delete pod
 
 
 Next Steps
 ----------
 
+- :ref:`custom-pod-specs`
 - :ref:`install-on-kubernetes`

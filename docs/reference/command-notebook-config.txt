@@ -62,6 +62,9 @@ The following configuration settings are supported:
     for more details. Users
     can customize environment variables for GPU vs. CPU agents differently by
     specifying a dict with two keys, ``cpu`` and ``gpu``.
+  - ``pod_spec``: Only applicable when running Determined on Kubernetes. Applies
+    a pod spec to the pods that are launched by Determined for this task. See
+    :ref:`custom-pod-specs` for details.
   - ``registry_auth``: Specifies the `Docker registry
     credentials <https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__
     to use when pulling a Docker image, if needed.
