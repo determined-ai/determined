@@ -200,3 +200,19 @@ message GetExperimentCheckpointsResponse {
   // Pagination information of the full dataset.
   Pagination pagination = 2;
 }
+
+// Get the validation history for the requested experiment. The
+// validation history is a time ordered list of the historical
+// best validations.
+message GetExperimentValidationHistoryRequest {
+    // The id of the experiment.
+    int32 experiment_id = 1;
+}
+
+// Response to GetExperimentValidationHistoryRequest.
+message GetExperimentValidationHistoryResponse {
+    // validation_history is a collection of zero or more validation metrics for an experiment,
+    // describing the best metrics as they were reported through the lifetime of an experiment.
+    // The historical list of best validations.
+    repeated determined.experiment.v1.ValidationHistoryEntry validation_history = 1;
+}

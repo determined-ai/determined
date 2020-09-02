@@ -53,3 +53,13 @@ message Experiment {
     // The username of the user that created the experiment.
     string username = 10;
 }
+
+// ValidationHistoryEntry is a single entry for a validation history for an experiment.
+message ValidationHistoryEntry {
+    // The id for the trial associated with this validation entry.
+    int32 trial_id = 1;
+    // The time at which the completed validation was reported.
+    google.protobuf.Timestamp end_time = 2;
+    // The value of the `searcher.metric`, indicated by the experiment config, for the validation.
+    double searcher_metric = 3;
+}
