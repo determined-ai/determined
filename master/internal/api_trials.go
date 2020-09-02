@@ -15,6 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 const (
@@ -157,4 +158,51 @@ func (a *apiServer) KillTrial(
 		return &apiv1.KillTrialResponse{}, nil
 	}
 	return &resp, err
+}
+
+func (a *apiServer) GetExperimentTrials(
+	_ context.Context, req *apiv1.GetExperimentTrialsRequest,
+) (*apiv1.GetExperimentTrialsResponse, error) {
+	resp := &apiv1.GetExperimentTrialsResponse{}
+
+	switch err := a.m.db.QueryProto(
+		"proto_get_trials_for_experiment",
+		&resp.Trials,
+		req.ExperimentId,
+	); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "experiment %d not found:", req.ExperimentId)
+	case err != nil:
+		return nil, errors.Wrapf(err, "failed to get trials for experiment %d", req.ExperimentId)
+	}
+	a.filter(&resp.Trials, func(i int) bool {
+		v := resp.Trials[i]
+		if len(req.States) == 0 {
+			return true
+		}
+
+		for _, state := range req.States {
+			if state == v.State {
+				return true
+			}
+		}
+
+		return false
+	})
+
+	a.sort(resp.Trials, req.OrderBy, req.SortBy, apiv1.GetExperimentTrialsRequest_SORT_BY_ID)
+	return resp, a.paginate(&resp.Pagination, &resp.Trials, req.Offset, req.Limit)
+}
+
+func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
+	*apiv1.GetTrialResponse, error,
+) {
+	resp := &apiv1.GetTrialResponse{Trial: &trialv1.Trial{}}
+	switch err := a.m.db.QueryProto("proto_get_trial", resp.Trial, req.TrialId); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.TrialId)
+	case err != nil:
+		return nil, errors.Wrapf(err, "failed to get trial %d", req.TrialId)
+	}
+	return resp, nil
 }

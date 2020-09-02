@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package determined.trial.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/trialv1";
+
+import "google/protobuf/struct.proto";
+import "determined/experiment/v1/experiment.proto";
+import "determined/checkpoint/v1/checkpoint.proto";
+import "google/protobuf/timestamp.proto";
+
+// Trial is a set of workloads and are exploring a determined set of hyperparameters.
+message Trial {
+  // The id of the trial.
+  int32 id = 1;
+  // The id of the parent experiment.
+  int32 experiment_id = 2;
+  // The time the trial was started.
+  google.protobuf.Timestamp start_time = 3;
+  // The time the trial ended if the trial is stopped.
+  google.protobuf.Timestamp end_time = 4;
+  // The current state of the trial.
+  determined.experiment.v1.State state = 5;
+  // Trial hyperparameters.
+  google.protobuf.Struct hparams = 6;
+  // The current processed batches.
+  int32 total_batches_processed = 7;
+}
