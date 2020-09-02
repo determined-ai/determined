@@ -398,8 +398,6 @@ func (d *DefaultRP) receiveContainerStartedOnAgent(
 	container := task.containers[containerID]
 	container.addresses = addresses
 	container.mustTransition(containerRunning)
-	handler := container.task.handler
-	handler.System().Tell(handler, ContainerStarted{Container: container})
 }
 
 // receiveContainerTerminated performs the necessary updates to the cluster

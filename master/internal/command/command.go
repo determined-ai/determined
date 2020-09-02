@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"time"
 
+	aproto "github.com/determined-ai/determined/master/pkg/agent"
+
 	"github.com/determined-ai/determined/master/internal/proxy"
 
 	"github.com/labstack/echo"
@@ -84,7 +86,7 @@ type command struct {
 	assignment     scheduler.Assignment
 	proxyNames     []string
 	exitStatus     *string
-	addresses      []scheduler.Address
+	addresses      []aproto.Address
 
 	proxy       *actor.Ref
 	rps         *actor.Ref
@@ -191,7 +193,31 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case sproto.ContainerStateChanged:
 		c.container = &msg.Container
-		if msg.Container.State == container.Terminated {
+
+		switch {
+		case msg.Container.State == container.Running:
+			c.addresses = msg.ContainerStarted.Addresses()
+
+			names := make([]string, 0, len(c.addresses))
+			for _, address := range c.addresses {
+				// We are keying on task ID instead of container ID. Revisit this when we need to
+				// proxy multi-container tasks or when containers are created prior to being
+				// assigned to an agent.
+				ctx.Ask(c.proxy, proxy.Register{
+					ServiceID: string(c.taskID),
+					URL: &url.URL{
+						Scheme: "http",
+						Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
+					},
+				})
+				names = append(names, string(c.taskID))
+			}
+			c.proxyNames = names
+			ctx.Tell(c.eventStream, event{
+				Snapshot: newSummary(c), ContainerStartedEvent: msg.ContainerStarted,
+			})
+
+		case msg.Container.State == container.Terminated:
 			for _, name := range c.proxyNames {
 				ctx.Tell(c.proxy, proxy.Unregister{ServiceID: name})
 			}
@@ -226,27 +252,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case scheduler.ReleaseResource:
 		c.terminate(ctx)
-
-	case scheduler.ContainerStarted:
-		c.addresses = msg.Container.Addresses()
-
-		names := make([]string, 0, len(msg.Container.Addresses()))
-		for _, address := range msg.Container.Addresses() {
-			// We are keying on task ID instead of container ID. Revisit this when we need to
-			// proxy multi-container tasks or when containers are created prior to being
-			// assigned to an agent.
-			ctx.Ask(c.proxy, proxy.Register{
-				ServiceID: string(c.taskID),
-				URL: &url.URL{
-					Scheme: "http",
-					Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
-				},
-			})
-			names = append(names, string(c.taskID))
-		}
-		c.proxyNames = names
-
-		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ContainerStartedEvent: &msg})
 
 	case sproto.ContainerLog:
 		if !c.readinessMessageSent && c.readinessChecksPass(ctx, msg) {

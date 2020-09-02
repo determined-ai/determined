@@ -77,7 +77,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	case sproto.ContainerLog:
 		t.logs = append(t.logs, msg)
 
-	case scheduler.ContainerStarted:
 	case actor.PostStop:
 
 	default:

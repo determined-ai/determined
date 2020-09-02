@@ -209,12 +209,14 @@ type trial struct {
 	assignments                []scheduler.Assignment
 	numContainers              int
 	startedContainers          map[cproto.ID]bool
-	containers                 map[scheduler.ContainerID]scheduler.Container
+	containers                 map[cproto.ID]cproto.Container
+	containerOrdinals          map[cproto.ID]int
+	containerAddresses         map[cproto.ID][]aproto.Address
 	terminatedContainers       []terminatedContainerWithState
 	lastContainerConnectedTime time.Time
 
 	// sockets maps each running container for this trial to the corresponding websocket actor.
-	sockets map[scheduler.ContainerID]*actor.Ref
+	sockets map[cproto.ID]*actor.Ref
 
 	agentUserGroup        *model.AgentUserGroup
 	taskContainerDefaults *model.TaskContainerDefaultsConfig
@@ -245,9 +247,11 @@ func newTrial(
 		create:    create,
 		replaying: exp.replaying,
 
-		startedContainers: make(map[cproto.ID]bool),
-		containers:        make(map[scheduler.ContainerID]scheduler.Container),
-		sockets:           make(map[scheduler.ContainerID]*actor.Ref),
+		startedContainers:  make(map[cproto.ID]bool),
+		containers:         make(map[cproto.ID]cproto.Container),
+		containerOrdinals:  make(map[cproto.ID]int),
+		containerAddresses: make(map[cproto.ID][]aproto.Address),
+		sockets:            make(map[cproto.ID]*actor.Ref),
 
 		agentUserGroup:        exp.agentUserGroup,
 		taskContainerDefaults: exp.taskContainerDefaults,
@@ -349,10 +353,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 
 func (t *trial) runningReceive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case
-		scheduler.ResourceAssigned,
-		scheduler.ReleaseResource,
-		scheduler.ContainerStarted:
+	case scheduler.ResourceAssigned, scheduler.ReleaseResource:
 		return t.processSchedulerMsg(ctx)
 
 	case containerConnected, sproto.ContainerStateChanged:
@@ -419,13 +420,6 @@ func (t *trial) processSchedulerMsg(ctx *actor.Context) error {
 	case scheduler.ReleaseResource:
 		return t.processReleaseResource(ctx)
 
-	case scheduler.ContainerStarted:
-		t.containers[msg.Container.ID()] = msg.Container
-
-		if err := t.pushRendezvous(ctx); err != nil {
-			return errors.Wrap(err, "failed to push rendezvous to trial containers")
-		}
-
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -450,10 +444,15 @@ func (t *trial) processContainerMsg(ctx *actor.Context) error {
 		}
 
 	case sproto.ContainerStateChanged:
+		println(fmt.Sprint(msg.Container.ID))
 		if msg.Container.State != cproto.Assigned {
 			t.startedContainers[msg.Container.ID] = true
 		}
+
 		switch msg.Container.State {
+		case cproto.Running:
+			println("!@@#!@#!")
+			return t.processContainerRunning(ctx, msg)
 		case cproto.Terminated:
 			t.processContainerTerminated(ctx, msg)
 		}
@@ -721,7 +720,7 @@ func (t *trial) processContainerConnected(ctx *actor.Context, msg containerConne
 	// If we have all of the container IDs from ContainerStarted messages, we can guard against
 	// stale containers trying to connect.
 	if len(t.containers) == t.numContainers {
-		if _, ok := t.containers[msg.ContainerID]; !ok {
+		if _, ok := t.containers[cproto.ID(msg.ContainerID)]; !ok {
 			ctx.Respond(errors.Errorf(
 				"socket connection from stale container: %s", msg.ContainerID))
 			return nil
@@ -729,7 +728,7 @@ func (t *trial) processContainerConnected(ctx *actor.Context, msg containerConne
 	}
 	a := api.WrapSocket(msg.socket, workload.CompletedMessage{}, false)
 	ref, _ := ctx.ActorOf(fmt.Sprintf("socket-%s", msg.ContainerID), a)
-	t.sockets[msg.ContainerID] = ref
+	t.sockets[cproto.ID(msg.ContainerID)] = ref
 	ctx.Respond(ref)
 
 	if err := t.pushRendezvous(ctx); err != nil {
@@ -739,11 +738,11 @@ func (t *trial) processContainerConnected(ctx *actor.Context, msg containerConne
 	return nil
 }
 
-func formatAddress(p scheduler.Address) string {
+func formatAddress(p aproto.Address) string {
 	return fmt.Sprintf("%s:%d", p.HostIP, p.HostPort)
 }
 
-func (t *trial) killAndRemoveSocket(ctx *actor.Context, id scheduler.ContainerID) {
+func (t *trial) killAndRemoveSocket(ctx *actor.Context, id cproto.ID) {
 	if skt, ok := t.sockets[id]; ok {
 		addr := skt.Address().Local()
 		if ref := ctx.Child(addr); ref != nil {
@@ -771,6 +770,7 @@ func (t *trial) allReady(ctx *actor.Context) bool {
 	// order, it is not possible to detect which connections are from stale containers until after
 	// all of the ContainerStarted messages have arrived.
 	for id := range t.sockets {
+		print("ssss", id)
 		if _, ok := t.containers[id]; !ok {
 			ctx.Log().Warnf("detected stray socket for unknown container: %s", id)
 			t.killAndRemoveSocket(ctx, id)
@@ -789,15 +789,17 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 	}
 
 	type CAddress struct {
-		Container scheduler.Container
-		Addresses []scheduler.Address
+		Container cproto.Container
+		Addresses []aproto.Address
+		Ordinal   int
 	}
 
 	var caddrs []CAddress
-	for _, c := range t.containers {
+	for k, v := range t.containers {
 		caddr := CAddress{
-			Container: c,
-			Addresses: c.Addresses(),
+			Container: v,
+			Addresses: t.containerAddresses[k],
+			Ordinal:   t.containerOrdinals[k],
 		}
 		caddrs = append(caddrs, caddr)
 
@@ -810,15 +812,15 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 	}
 
 	sort.Slice(caddrs, func(i, j int) bool {
-		a := caddrs[i].Container
-		b := caddrs[j].Container
+		a := caddrs[i]
+		b := caddrs[j]
 		switch {
-		case a.IsLeader() && !b.IsLeader():
+		case a.Ordinal == 0 && b.Ordinal != 0:
 			return true
-		case !a.IsLeader() && b.IsLeader():
+		case a.Ordinal != 0 && b.Ordinal == 0:
 			return false
 		default:
-			return a.ID() < b.ID()
+			return a.Container.ID < b.Container.ID
 		}
 	})
 
@@ -828,7 +830,7 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 	for _, caddr := range caddrs {
 		var addresses []*rendezvousAddress
 
-		var addrs []scheduler.Address
+		var addrs []aproto.Address
 		for _, addr := range caddr.Addresses {
 			if MinLocalRendezvousPort <= addr.ContainerPort && addr.ContainerPort <= MaxLocalRendezvousPort {
 				addrs = append(addrs, addr)
@@ -848,7 +850,7 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 		} else {
 			ctx.Log().Errorf(
 				"found %d rendezvous addresses instead of 2 for container %s; dropping rendezvous addresses",
-				numAddrs, caddr.Container.ID())
+				numAddrs, caddr.Container.ID)
 		}
 
 		rcontainers = append(rcontainers, &rendezvousContainer{
@@ -858,7 +860,7 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 
 	for rank, caddr := range caddrs {
 		c := caddr.Container
-		socket := t.sockets[c.ID()]
+		socket := t.sockets[c.ID]
 
 		if err := api.WriteSocketJSON(ctx, socket, &trialMessage{
 			RendezvousInfo: &rendezvousInfoMessage{
@@ -875,14 +877,28 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 	return nil
 }
 
-func (t *trial) processContainerTerminated(
-	ctx *actor.Context,
-	msg sproto.ContainerStateChanged,
-) {
-	c := t.containers[scheduler.ContainerID(msg.Container.ID)]
-	delete(t.containers, scheduler.ContainerID(msg.Container.ID))
+func (t *trial) processContainerRunning(
+	ctx *actor.Context, msg sproto.ContainerStateChanged,
+) error {
+	t.containers[msg.Container.ID] = msg.Container
+	t.containerAddresses[msg.Container.ID] = msg.ContainerStarted.Addresses()
+	t.containerOrdinals[msg.Container.ID] = len(t.containerOrdinals)
+	print("ssss", msg.Container.ID)
+	if err := t.pushRendezvous(ctx); err != nil {
+		return errors.Wrap(err, "failed to push rendezvous to trial containers")
+	}
+	return nil
+}
 
-	t.killAndRemoveSocket(ctx, scheduler.ContainerID(msg.Container.ID))
+func (t *trial) processContainerTerminated(
+	ctx *actor.Context, msg sproto.ContainerStateChanged,
+) {
+	_, ok := t.containers[msg.Container.ID]
+	delete(t.containers, msg.Container.ID)
+	delete(t.containerAddresses, msg.Container.ID)
+	delete(t.containerOrdinals, msg.Container.ID)
+
+	t.killAndRemoveSocket(ctx, msg.Container.ID)
 
 	exitMsg := msg.ContainerStopped.String()
 	t.processLog(ctx, sproto.ContainerLog{
@@ -891,10 +907,10 @@ func (t *trial) processContainerTerminated(
 		AuxMessage: &exitMsg,
 	})
 
-	if c != nil {
+	if ok {
 		t.terminatedContainers = append(t.terminatedContainers, terminatedContainerWithState{
 			exitStatus:                 *msg.ContainerStopped,
-			isLeader:                   c.IsLeader(),
+			isLeader:                   t.containerOrdinals[msg.Container.ID] == 0,
 			pendingGracefulTermination: t.pendingGracefulTermination,
 			needsCheckpoint:            t.sequencer.PrecloseCheckpointWorkload() != nil,
 		})
@@ -903,7 +919,7 @@ func (t *trial) processContainerTerminated(
 	// Terminate the task if the container never started (since this prevents the gang
 	// from ever being able to start), if the leader of the gang has exited out, or if
 	// one of the containers exited with a failure.
-	if c == nil || c.IsLeader() || msg.ContainerStopped.Failure != nil {
+	if !ok || t.containerOrdinals[msg.Container.ID] == 0 || msg.ContainerStopped.Failure != nil {
 		t.terminate(ctx, true)
 	}
 

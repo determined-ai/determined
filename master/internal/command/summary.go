@@ -3,6 +3,8 @@ package command
 import (
 	"time"
 
+	aproto "github.com/determined-ai/determined/master/pkg/agent"
+
 	"github.com/determined-ai/determined/master/internal/scheduler"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -24,7 +26,7 @@ type (
 		Config         model.CommandConfig    `json:"config"`
 		State          string                 `json:"state"`
 		ServiceAddress *string                `json:"service_address"`
-		Addresses      []scheduler.Address    `json:"addresses"`
+		Addresses      []aproto.Address       `json:"addresses"`
 		ExitStatus     *string                `json:"exit_status"`
 		Misc           map[string]interface{} `json:"misc"`
 		IsReady        bool                   `json:"is_ready"`

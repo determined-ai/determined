@@ -300,8 +300,6 @@ func (k *kubernetesResourceProvider) receivePodStarted(ctx *actor.Context, msg s
 	container := task.containers[ContainerID(msg.ContainerID)]
 	container.addresses = constructAddresses(msg.IP, msg.Ports)
 	container.mustTransition(containerRunning)
-	handler := container.task.handler
-	handler.System().Tell(handler, ContainerStarted{Container: container})
 }
 
 func (k *kubernetesResourceProvider) receivePodTerminated(

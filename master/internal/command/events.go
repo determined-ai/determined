@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	aproto "github.com/determined-ai/determined/master/pkg/agent"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 
@@ -31,8 +33,9 @@ type event struct {
 	// AssignedEvent is triggered when the parent was assigned to an agent.
 	AssignedEvent *scheduler.ResourceAssigned `json:"assigned_event"`
 	// ContainerStartedEvent is triggered when the container started on an agent.
-	ContainerStartedEvent *scheduler.ContainerStarted `json:"container_started_event"`
+	ContainerStartedEvent *aproto.ContainerStarted `json:"container_started_event"`
 	// ServiceReadyEvent is triggered when the service running in the container is ready to serve.
+	ContainerStateChanged *sproto.ContainerStateChanged `json:"container_state_change_event"`
 	// TODO: Move to ServiceReadyEvent type to a specialized event with readiness checks.
 	ServiceReadyEvent *sproto.ContainerLog `json:"service_ready_event"`
 	// TerminateRequestEvent is triggered when the scheduler has requested the container to

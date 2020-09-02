@@ -19,10 +19,9 @@ import (
 var errMock = errors.New("mock error")
 
 type mockActor struct {
-	system             *actor.System
-	cluster            *actor.Ref
-	onAssigned         func(ResourceAssigned) error
-	onContainerStarted func(ContainerStarted) error
+	system     *actor.System
+	cluster    *actor.Ref
+	onAssigned func(ResourceAssigned) error
 }
 
 type (
@@ -67,15 +66,13 @@ func (h *mockActor) Receive(ctx *actor.Context) error {
 			},
 		})
 
-	case ContainerStarted:
-		if h.onContainerStarted != nil {
-			return h.onContainerStarted(msg)
+	case sproto.ContainerStateChanged:
+		if msg.Container.State == cproto.Running {
+			h.system.Tell(h.cluster, sproto.TaskTerminatedOnAgent{
+				ContainerID:      msg.Container.ID,
+				ContainerStopped: &agent.ContainerStopped{},
+			})
 		}
-
-		h.system.Tell(h.cluster, sproto.TaskTerminatedOnAgent{
-			ContainerID:      cproto.ID(msg.Container.ID()),
-			ContainerStopped: &agent.ContainerStopped{},
-		})
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -95,9 +92,6 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 		&mockActor{
 			cluster: cluster,
 			system:  system,
-			onContainerStarted: func(ContainerStarted) error {
-				return nil
-			},
 		},
 	)
 	assert.Assert(t, created)
@@ -137,9 +131,6 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 		&mockActor{
 			cluster: cluster,
 			system:  system,
-			onContainerStarted: func(ContainerStarted) error {
-				return nil
-			},
 		},
 	)
 	assert.Assert(t, created)
@@ -180,9 +171,6 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 		&mockActor{
 			cluster: cluster,
 			system:  system,
-			onContainerStarted: func(ContainerStarted) error {
-				return nil
-			},
 		},
 	)
 	assert.Assert(t, created)

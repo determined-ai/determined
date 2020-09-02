@@ -44,9 +44,6 @@ type (
 
 // Incoming task actor messages; task actors must accept these messages.
 type (
-	// ContainerStarted notifies the task actor that a container has been started on an agent.
-	ContainerStarted struct{ Container Container }
-
 	// ResourceAssigned notifies the task actor to be assigned with resources.
 	ResourceAssigned struct {
 		Assignments []Assignment

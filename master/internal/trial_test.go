@@ -5,6 +5,12 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
+
+	dockerTypes "github.com/docker/docker/api/types"
+	dockerContainer "github.com/docker/docker/api/types/container"
+	"github.com/docker/go-connections/nat"
+
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 
@@ -12,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/agent"
+	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -29,24 +36,8 @@ func (a *mockActor) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-type mockContainer struct {
-	id        string
-	slots     int
-	addresses []scheduler.Address
-	mockActor mockActor
-	isLeader  bool
-}
-
-func (c *mockContainer) ID() scheduler.ContainerID          { return scheduler.ContainerID(c.id) }
-func (c *mockContainer) TaskID() scheduler.TaskID           { panic("not implemented") }
-func (c *mockContainer) Slots() int                         { return c.slots }
-func (c *mockContainer) Addresses() []scheduler.Address     { return c.addresses }
-func (c *mockContainer) IsLeader() bool                     { return c.isLeader }
-func (c *mockContainer) ExitStatus() agent.ContainerStopped { panic("not implemented") }
-func (c *mockContainer) Tell(message actor.Message)         {}
-
 func TestRendezvousInfo(t *testing.T) {
-	addresses := [][]scheduler.Address{
+	addresses := [][]agent.Address{
 		{
 			{
 				ContainerPort: 1,
@@ -103,12 +94,15 @@ func TestRendezvousInfo(t *testing.T) {
 
 	// This is the minimal trial to receive scheduler.ContainerStarted messages.
 	trial := &trial{
-		rp:            rp,
-		experiment:    &model.Experiment{},
-		containers:    make(map[scheduler.ContainerID]scheduler.Container),
-		sockets:       make(map[scheduler.ContainerID]*actor.Ref),
-		task:          &scheduler.Task{},
-		numContainers: len(addresses),
+		rp:                 rp,
+		experiment:         &model.Experiment{},
+		task:               &scheduler.Task{},
+		numContainers:      len(addresses),
+		startedContainers:  make(map[cproto.ID]bool),
+		containers:         make(map[cproto.ID]cproto.Container),
+		containerOrdinals:  make(map[cproto.ID]int),
+		containerAddresses: make(map[cproto.ID][]agent.Address),
+		sockets:            make(map[cproto.ID]*actor.Ref),
 	}
 	trialRef, created := system.ActorOf(actor.Addr("trial"), trial)
 	if !created {
@@ -121,28 +115,46 @@ func TestRendezvousInfo(t *testing.T) {
 	if !created {
 		t.Fatal("unable to create cluster")
 	}
-	strayID := scheduler.ContainerID("stray-container-id")
+	strayID := cproto.ID("stray-container-id")
 	trial.sockets[strayID] = strayRef
 
-	var containers []*mockContainer
+	containers := make([]*cproto.Container, 0)
+	mockActors := make(map[*cproto.Container]*mockActor)
 	for idx, caddrs := range addresses {
-		c := &mockContainer{
-			id:        strconv.Itoa(idx),
-			slots:     1,
-			addresses: caddrs,
-			isLeader:  idx == 0,
+		c := &cproto.Container{
+			ID:    cproto.ID(strconv.Itoa(idx)),
+			State: cproto.Running,
 		}
-		ref, created := system.ActorOf(actor.Addr(uuid.New().String()), &c.mockActor)
+		mockActors[c] = &mockActor{}
+		ref, created := system.ActorOf(actor.Addr(uuid.New().String()), mockActors[c])
 		if !created {
 			t.Fatal("cannot make socket")
 		}
 
 		// Simulate trial containers connecting to the trial actor.
-		trial.sockets[c.ID()] = ref
+		trial.sockets[c.ID] = ref
 
 		// Simulate the scheduling of a container.
-		system.Ask(trialRef, scheduler.ContainerStarted{
-			Container: c,
+		ports := make(nat.PortSet)
+		for _, addrs := range caddrs {
+			ports[nat.Port(strconv.Itoa(addrs.ContainerPort))] = struct{}{}
+		}
+		info := dockerTypes.ContainerJSON{
+			ContainerJSONBase: &dockerTypes.ContainerJSONBase{
+				HostConfig: &dockerContainer.HostConfig{
+					NetworkMode: "host",
+				},
+			},
+			Config: &dockerContainer.Config{
+				ExposedPorts: ports,
+			},
+		}
+		system.Ask(trialRef, sproto.ContainerStateChanged{
+			Container: *c,
+			ContainerStarted: &agent.ContainerStarted{
+				ProxyAddress:  caddrs[0].ContainerIP,
+				ContainerInfo: info,
+			},
 		}).Get()
 
 		containers = append(containers, c)
@@ -155,7 +167,7 @@ func TestRendezvousInfo(t *testing.T) {
 
 	var rmsgs []*rendezvousInfoMessage
 	for _, c := range containers {
-		for _, msg := range c.mockActor.Messages {
+		for _, msg := range mockActors[c].Messages {
 			tmsg, ok := msg.(*trialMessage)
 			if !ok {
 				continue
