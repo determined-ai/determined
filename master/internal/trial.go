@@ -539,7 +539,7 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 		return errors.Wrap(err, "error getting workload from sequencer")
 	}
 
-	t.numContainers = msg.NumContainers
+	t.numContainers = len(msg.Assignments)
 
 	if err = saveWorkload(t.db, w); err != nil {
 		ctx.Log().WithError(err).Error("failed to save workload to the database after assigned")
@@ -581,8 +581,8 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 		),
 	}
 
-	ctx.Tell(t.rp, scheduler.StartTask{
-		Spec: tasks.TaskSpec{
+	for _, a := range msg.Assignments {
+		a.StartTask(tasks.TaskSpec{
 			StartContainer: &tasks.StartContainer{
 				ExperimentConfig:    t.experiment.Config,
 				ModelDefinition:     t.modelDefinition,
@@ -595,9 +595,8 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 				AgentUserGroup:      t.agentUserGroup,
 				IsMultiAgent:        t.numContainers > 1,
 			},
-		},
-		TaskHandler: ctx.Self(),
-	})
+		})
+	}
 
 	return nil
 }

@@ -201,8 +201,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 
 	case scheduler.TaskAssigned:
-		ctx.Tell(c.rps, scheduler.StartTask{
-			Spec: tasks.TaskSpec{
+		for _, a := range msg.Assignments {
+			a.StartTask(tasks.TaskSpec{
 				StartCommand: &tasks.StartCommand{
 					AgentUserGroup:  c.agentUserGroup,
 					Config:          c.config,
@@ -210,9 +210,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 					AdditionalFiles: c.additionalFiles,
 				},
 				HarnessPath: c.harnessPath,
-			},
-			TaskHandler: ctx.Self(),
-		})
+			})
+		}
+
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 
 		// Evict the context from memory after starting the command as it is no longer needed. We

@@ -9,7 +9,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 type getMaxSlots struct{}
@@ -82,7 +81,6 @@ func newMockTask(
 func (t *mockTask) Receive(ctx *actor.Context) error {
 	switch ctx.Message().(type) {
 	case TaskAssigned:
-		ctx.Respond(StartTask{Spec: tasks.TaskSpec{}, TaskHandler: ctx.Self()})
 	case getSlots:
 		ctx.Respond(t.slotsNeeded)
 	case getGroup:
@@ -150,8 +148,6 @@ func setupCluster(
 		tasksByHandler:     make(map[*actor.Ref]*Task),
 		tasksByID:          make(map[TaskID]*Task),
 		tasksByContainerID: make(map[ContainerID]*Task),
-
-		assigmentByHandler: make(map[*actor.Ref][]containerAssignment),
 
 		provisionerView: newProvisionerView(0),
 

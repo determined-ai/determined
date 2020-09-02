@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 // Task-related cluster level messages.
@@ -21,11 +20,6 @@ type (
 		Label               string
 		FittingRequirements FittingRequirements
 		TaskHandler         *actor.Ref
-	}
-	// StartTask signals that a scheduled task should be launched.
-	StartTask struct {
-		Spec        tasks.TaskSpec
-		TaskHandler *actor.Ref
 	}
 	// taskActorStopped notifies that the task actor is stopped.
 	taskActorStopped struct {
@@ -62,7 +56,7 @@ type (
 	// TaskAssigned notifies the task actor that it has been assigned to run
 	// with a specified number of containers.
 	TaskAssigned struct {
-		NumContainers int
+		Assignments []Assignment
 	}
 )
 
