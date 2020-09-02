@@ -3,7 +3,6 @@ import React from 'react';
 
 import { columns as experimentColumns } from 'pages/ExperimentList.table';
 import { columns as taskColumns } from 'pages/TaskList.table';
-import { ExperimentsDecorator } from 'storybook/ContextDecorators';
 import RouterDecorator from 'storybook/RouterDecorator';
 import { CommandTask, ExperimentItem } from 'types';
 import { generateCommandTask, generateExperiments } from 'utils/task';
@@ -13,7 +12,7 @@ import css from './Table.module.scss';
 
 export default {
   component: Table,
-  decorators: [ RouterDecorator, ExperimentsDecorator ],
+  decorators: [ RouterDecorator ],
   title: 'Table',
 };
 

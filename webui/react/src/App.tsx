@@ -12,7 +12,6 @@ import AppContexts from 'contexts/AppContexts';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
-import Experiments from 'contexts/Experiments';
 import Info from 'contexts/Info';
 import UI from 'contexts/UI';
 import Users from 'contexts/Users';
@@ -115,7 +114,6 @@ const App: React.FC = () => {
       Agents.Provider,
       ClusterOverview.Provider,
       ActiveExperiments.Provider,
-      Experiments.Provider,
       Commands.Provider,
       Notebooks.Provider,
       Shells.Provider,
