@@ -105,8 +105,7 @@ export const taskTypeRenderer: TaskRenderer = (_, record) => (
 /* Experiment Table Column Renderers */
 
 export const experimentActionRenderer: ExperimentRenderer = (_, record) => (
-  null
-  // <TaskActionDropdown task={experimentToTask(record)} />
+  <TaskActionDropdown task={experimentToTask(record)} />
 );
 
 export const experimentDescriptionRenderer: ExperimentRenderer = (_, record) => {
@@ -157,7 +156,10 @@ export const defaultRowClassName = (clickable = true): string=> {
   return clickable ? 'clickable' : '';
 };
 
-export const getPaginationConfig = (pagination: TablePagination, total: number): TablePaginationConfig => {
+export const getPaginationConfig = (
+  pagination: TablePagination,
+  total: number,
+): TablePaginationConfig => {
   return {
     current: Math.floor(pagination.offset / pagination.limit) + 1,
     defaultPageSize: MINIMUM_PAGE_SIZE,

@@ -1,7 +1,7 @@
 import { serverAddress } from 'services/apiBuilder';
 import {
   AnyTask, Checkpoint, Command, CommandState, CommandType, Experiment, ExperimentHyperParams,
-  ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
+  ExperimentX, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
 } from 'types';
 
 import { deletePathList, getPathList, isNumber, setPathList } from './data';
@@ -39,13 +39,12 @@ export const commandToTask = (command: Command): RecentCommandTask => {
     state: command.state as CommandState,
     type: command.kind,
     url: waitPageUrl(command),
-    userId: command.user.id,
     username: command.user.username,
   };
   return task;
 };
 
-export const experimentToTask = (experiment: Experiment): RecentExperimentTask => {
+export const experimentToTask = (experiment: ExperimentX): RecentExperimentTask => {
   const lastEvent = experiment.endTime ?
     { date: experiment.endTime, name: 'finished' } :
     { date: experiment.startTime, name: 'requested' };
@@ -53,12 +52,12 @@ export const experimentToTask = (experiment: Experiment): RecentExperimentTask =
     archived: experiment.archived,
     id: `${experiment.id}`,
     lastEvent,
-    name: experiment.config.description,
+    name: experiment.name,
     progress: experiment.progress,
     startTime: experiment.startTime,
     state: experiment.state,
-    url: `/det/experiments/${experiment.id}`,
-    userId: experiment.userId,
+    url: experiment.url,
+    username: experiment.username,
   };
   return task;
 };
@@ -110,6 +109,7 @@ export const runStateToLabel: {[key in RunState]: string} = {
   [RunState.StoppingCanceled]: 'Canceling',
   [RunState.StoppingCompleted]: 'Completing',
   [RunState.StoppingError]: 'Erroring',
+  [RunState.Unspecified]: 'Unspecified',
 };
 
 export const commandStateToLabel: {[key in CommandState]: string} = {
@@ -122,7 +122,7 @@ export const commandStateToLabel: {[key in CommandState]: string} = {
   [CommandState.Terminated]: 'Terminated',
 };
 
-export const isTaskKillable = (task: AnyTask | ExperimentItem): boolean => {
+export const isTaskKillable = (task: AnyTask | ExperimentX): boolean => {
   return killableRunStates.includes(task.state as RunState)
     || killableCmdStates.includes(task.state as CommandState);
 };

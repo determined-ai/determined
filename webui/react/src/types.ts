@@ -332,7 +332,6 @@ export interface ExperimentDetails extends Experiment {
 export interface Task {
   name: string;
   id: string;
-  userId: number;
   url?: string;
   startTime: string;
 }
@@ -341,6 +340,7 @@ export interface ExperimentTask extends Task {
   progress?: number;
   archived: boolean;
   state: RunState;
+  username: string;
 }
 
 export interface CommandTask extends Task {
