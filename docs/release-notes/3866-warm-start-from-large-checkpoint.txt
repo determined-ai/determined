@@ -1,6 +1,6 @@
-- Fix warm starting with large checkpoint data
+Fix warm starting with large checkpoint data
 
-    - Our previous solution to warm starting from a checkpoint was to pass the checkpoint
-    data directly to an environment variable. However, there's a limit to how much data you
-    can pass directly to an environment variable. This change modifies the master and
-    harness to load checkpoint data as a file to resolve these issues.
+Our previous solution to warm starting from a checkpoint was to pass the checkpoint
+data directly to an environment variable. However, there's a limit to how much data you
+can pass directly to an environment variable. This change modifies the master and
+harness to load checkpoint data as a file to resolve these issues.
