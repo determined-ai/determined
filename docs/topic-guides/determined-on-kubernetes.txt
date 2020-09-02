@@ -131,7 +131,7 @@ To get the IP and port address of the Determined master:
     # Get the master service. The exact name of the master service depends on
     # the name given to your helm deployment, which can be looked up by running
     # ``helm list``.
-    kubectl get service determined-master-service-development-<helm deployment name>
+    kubectl get service determined-master-service-<helm deployment name>
 
 
 Check the Status of the Determined Master
