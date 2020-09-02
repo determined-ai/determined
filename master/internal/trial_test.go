@@ -43,7 +43,7 @@ func (c *mockContainer) Slots() int                         { return c.slots }
 func (c *mockContainer) Addresses() []scheduler.Address     { return c.addresses }
 func (c *mockContainer) IsLeader() bool                     { return c.isLeader }
 func (c *mockContainer) ExitStatus() agent.ContainerStopped { panic("not implemented") }
-func (c *mockContainer) Tell(message actor.Message)         { panic("not implemented") }
+func (c *mockContainer) Tell(message actor.Message)         {}
 
 func TestRendezvousInfo(t *testing.T) {
 	addresses := [][]scheduler.Address{

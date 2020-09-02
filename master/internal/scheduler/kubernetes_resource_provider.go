@@ -3,6 +3,8 @@ package scheduler
 import (
 	"crypto/tls"
 
+	cproto "github.com/determined-ai/determined/master/pkg/container"
+
 	"github.com/determined-ai/determined/master/internal/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -406,7 +408,7 @@ func (k *kubernetesResourceProvider) terminateTask(task *Task, forcible bool) {
 				c.mustTransition(containerTerminating)
 			}
 			c.agent.handler.System().Tell(
-				c.agent.handler, sproto.StopPod{ContainerID: string(c.id)})
+				c.agent.handler, sproto.KillContainer{ContainerID: cproto.ID(c.id)})
 		}
 
 	case task.state != taskTerminating && task.canTerminate:
@@ -453,8 +455,8 @@ type podAssignment struct {
 	masterCert            *tls.Certificate
 }
 
-// StartTask notifies the pods actor that it should launch a pod for the provided task spec.
-func (p podAssignment) StartTask(spec image.TaskSpec) {
+// Start notifies the pods actor that it should launch a pod for the provided task spec.
+func (p podAssignment) StartContainer(spec image.TaskSpec) {
 	handler := p.agent.handler
 	spec.ClusterID = p.clusterID
 	spec.ContainerID = string(p.container.ID())
@@ -467,5 +469,13 @@ func (p podAssignment) StartTask(spec image.TaskSpec) {
 		Spec:        spec,
 		Slots:       p.container.Slots(),
 		Rank:        p.container.ordinal,
+	})
+}
+
+// Kill notifies the pods actor that it should stop the pod.
+func (p podAssignment) KillContainer() {
+	handler := p.agent.handler
+	handler.System().Tell(handler, sproto.KillContainer{
+		ContainerID: cproto.ID(p.container.ID()),
 	})
 }

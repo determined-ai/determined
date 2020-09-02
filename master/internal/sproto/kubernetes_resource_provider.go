@@ -17,11 +17,6 @@ type (
 		Slots       int
 		Rank        int
 	}
-
-	// StopPod notifies the pod actor to stop a pod associated with the container id.
-	StopPod struct {
-		ContainerID string
-	}
 )
 
 // Kubernetes resource provider must accept these messages.

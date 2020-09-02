@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/google/uuid"
@@ -63,6 +64,12 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		} else {
 			a.address = msg.Ctx.Request().RemoteAddr[0:lastColonIndex]
 		}
+	case sproto.KillContainer:
+		ctx.Log().Infof("killing container id: %s", msg.ContainerID)
+		killMsg := aproto.SignalContainer{
+			ContainerID: msg.ContainerID, Signal: syscall.SIGKILL,
+		}
+		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &killMsg}})
 	case aproto.SignalContainer:
 		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &msg}})
 	case sproto.StartTaskOnAgent:

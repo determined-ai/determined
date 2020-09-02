@@ -10,6 +10,7 @@ import (
 
 // Container tracks a container running in the cluster.
 type Container struct {
+	// Parent stores the task handler actor address.
 	Parent  actor.Address   `json:"parent"`
 	ID      ID              `json:"id"`
 	State   State           `json:"state"`

@@ -2,7 +2,6 @@ package agent
 
 import (
 	"net/http"
-	"syscall"
 
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
@@ -122,8 +121,7 @@ func (s *slot) patch(ctx *actor.Context) {
 		remove := sproto.RemoveDevice{DeviceID: s.deviceID(ctx)}
 		ctx.Tell(s.cluster, remove)
 		if s.container != nil {
-			kill := aproto.SignalContainer{ContainerID: s.container.ID, Signal: syscall.SIGKILL}
-			ctx.Tell(remove.Agent, kill)
+			ctx.Tell(remove.Agent, sproto.KillContainer{ContainerID: s.container.ID})
 		}
 	}
 }

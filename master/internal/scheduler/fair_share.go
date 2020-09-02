@@ -224,6 +224,7 @@ func assignTasks(rp *DefaultRP, states []*groupState) {
 			// TODO: We should terminate running tasks more intelligently.
 			for _, task := range state.runningTasks {
 				rp.terminateTask(task, false)
+				task.handler.System().Tell(task.handler, ReleaseResource{})
 				if task.state == taskTerminating {
 					state.activeSlots -= task.SlotsNeeded()
 				}
