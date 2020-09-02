@@ -41,7 +41,7 @@ data:
       resource_provider:
         type: "kubernetes"
         namespace: {{ .Release.Namespace }}
-        slots_per_node: {{ required "A valid Values.slotsPerNode entry is required!" .Values.slotsPerNode }}
+        max_slots_per_pod: {{ required "A valid Values.maxSlotsPerPod entry is required!" .Values.maxSlotsPerPod }}
         master_service_name: determined-master-service-{{ .Release.Name }}
 
     {{ if .Values.taskContainerDefaults -}}

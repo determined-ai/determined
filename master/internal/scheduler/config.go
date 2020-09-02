@@ -87,7 +87,7 @@ type DefaultResourceProviderConfig struct{}
 // KubernetesResourceProviderConfig hosts configuration fields for the kubernetes resource provider.
 type KubernetesResourceProviderConfig struct {
 	Namespace                string `json:"namespace"`
-	SlotsPerNode             int    `json:"slots_per_node"`
+	MaxSlotsPerPod           int    `json:"max_slots_per_pod"`
 	MasterServiceName        string `json:"master_service_name"`
 	LeaveKubernetesResources bool   `json:"leave_kubernetes_resources"`
 }
@@ -95,6 +95,6 @@ type KubernetesResourceProviderConfig struct {
 // Validate implements the check.Validatable interface.
 func (k *KubernetesResourceProviderConfig) Validate() []error {
 	return []error{
-		check.GreaterThanOrEqualTo(k.SlotsPerNode, 0, "slots_per_node must be >= 0"),
+		check.GreaterThanOrEqualTo(k.MaxSlotsPerPod, 0, "max_slots_per_pod must be >= 0"),
 	}
 }
