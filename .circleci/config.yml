@@ -432,7 +432,7 @@ commands:
           release-name: "ci"
           values-to-override: |
             detVersion=<<parameters.det-version>>,\
-            slotsPerNode=<<parameters.gpus-per-machine>>,\
+            maxSlotsPerPod=<<parameters.gpus-per-machine>>,\
             checkpointStorage.type=gcs,\
             checkpointStorage.bucket=det-ci
       - set-master-address-gke:
