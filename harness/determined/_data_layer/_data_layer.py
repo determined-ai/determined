@@ -75,9 +75,7 @@ class _CacheableDecorator:
             # that for each instantiation of `tf.Session`, the process is mapped
             # to the same GPU.
             session_config = tf.compat.v1.ConfigProto()
-            session_config.gpu_options.visible_device_list = str(
-                self._env.slot_ids[hvd.local_rank()]
-            )
+            session_config.gpu_options.visible_device_list = str(hvd.local_rank())
 
         rw_coordinator_url = f"ws://{self._env.master_addr}:{self._env.master_port}/ws/data-layer/"
         data_layer_type = self._env.experiment_config.get_data_layer_type()
