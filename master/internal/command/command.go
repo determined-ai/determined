@@ -248,9 +248,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ContainerStartedEvent: &msg})
 
-	case scheduler.TaskAborted:
-		c.exit(ctx, "command terminated without being scheduled")
-
 	case scheduler.TaskTerminated:
 		// This message is being deprecated; ignore it.
 

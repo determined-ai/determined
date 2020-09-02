@@ -352,7 +352,6 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 	case
 		scheduler.ResourceAssigned,
 		scheduler.ReleaseResource,
-		scheduler.TaskAborted,
 		scheduler.TaskTerminated,
 		scheduler.ContainerStarted:
 		return t.processSchedulerMsg(ctx)
@@ -420,8 +419,6 @@ func (t *trial) processSchedulerMsg(ctx *actor.Context) error {
 
 	case scheduler.ReleaseResource:
 		return t.processReleaseResource(ctx)
-
-	case scheduler.TaskAborted:
 
 	case scheduler.TaskTerminated:
 		t.processTaskTerminated(ctx, msg)

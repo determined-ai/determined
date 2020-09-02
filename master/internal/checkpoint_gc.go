@@ -78,7 +78,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		t.logs = append(t.logs, msg)
 
 	case scheduler.ContainerStarted:
-	case scheduler.TaskAborted:
 	case scheduler.TaskTerminated:
 	case actor.PostStop:
 
