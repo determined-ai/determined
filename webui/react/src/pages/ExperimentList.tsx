@@ -9,11 +9,12 @@ import Page from 'components/Page';
 import { Indicator } from 'components/Spinner';
 import StateSelectFilter from 'components/StateSelectFilter';
 import {
-  defaultRowClassName, getPaginationConfig, isAlternativeAction,
+  defaultRowClassName, ExperimentRenderer, getFullPaginationConfig, isAlternativeAction,
   MINIMUM_PAGE_SIZE, TablePagination, TableSorter,
 } from 'components/Table';
 import TableBatch from 'components/TableBatch';
 import TagList from 'components/TagList';
+import TaskActionDropdown from 'components/TaskActionDropdown';
 import Toggle from 'components/Toggle';
 import UserSelectFilter from 'components/UserSelectFilter';
 import Auth from 'contexts/Auth';
@@ -153,6 +154,8 @@ const ExperimentList: React.FC = () => {
     updateTags(id, { [tag]: null });
   }, [ updateTags ]);
 
+  const handleActionComplete = useCallback(() => fetchExperiments(), [ fetchExperiments ]);
+
   const columns = useMemo(() => {
     const nameRenderer = (_: string, record: ExperimentX) => (
       <div className={css.nameColumn}>
@@ -165,15 +168,26 @@ const ExperimentList: React.FC = () => {
       </div>
     );
 
+    const actionRenderer: ExperimentRenderer = (_, record) => (
+      <TaskActionDropdown task={record} onComplete={handleActionComplete} />
+    );
+
     const newColumns = [ ...defaultColumns ].map(column => {
       column.sortOrder = null;
       if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
       if (column.key === 'name') column.render = nameRenderer;
+      if (column.key === 'action') column.render = actionRenderer;
       return column;
     });
 
     return newColumns;
-  }, [ handleTagListChange, handleTagListCreate, handleTagListDelete, sorter ]);
+  }, [
+    handleActionComplete,
+    handleTagListChange,
+    handleTagListCreate,
+    handleTagListDelete,
+    sorter,
+  ]);
 
   const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value || '');
@@ -346,7 +360,7 @@ const ExperimentList: React.FC = () => {
             indicator: <Indicator />,
             spinning: false,
           }}
-          pagination={getPaginationConfig(pagination, total)}
+          pagination={getFullPaginationConfig(pagination, total)}
           rowClassName={defaultRowClassName()}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}

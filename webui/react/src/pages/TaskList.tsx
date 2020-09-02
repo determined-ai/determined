@@ -11,6 +11,7 @@ import {
 } from 'components/Table';
 import { TaskRenderer } from 'components/Table';
 import TableBatch from 'components/TableBatch';
+import TaskActionDropdown from 'components/TaskActionDropdown';
 import TaskFilter from 'components/TaskFilter';
 import Auth from 'contexts/Auth';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
@@ -137,6 +138,8 @@ const TaskList: React.FC = () => {
     });
   }, []);
 
+  const handleActionComplete = useCallback(() => fetchTasks(), [ fetchTasks ]);
+
   const columns = useMemo(() => {
     const sourceRenderer: TaskRenderer = (_, record) => {
       const info = {
@@ -180,15 +183,20 @@ const TaskList: React.FC = () => {
       ) : null;
     };
 
+    const actionRenderer: TaskRenderer = (_, record) => (
+      <TaskActionDropdown task={record} onComplete={handleActionComplete} />
+    );
+
     const newColumns = [ ...defaultColumns ].map(column => {
       column.sortOrder = null;
       if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
       if (column.key === 'sources') column.render = sourceRenderer;
+      if (column.key === 'action') column.render = actionRenderer;
       return column;
     });
 
     return newColumns;
-  }, [ handleSourceExpand, sorter, sourceExpanded ]);
+  }, [ handleActionComplete, handleSourceExpand, sorter, sourceExpanded ]);
 
   /*
    * Check once every second to see if all task endpoints have resolved.
