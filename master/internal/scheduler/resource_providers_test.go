@@ -15,7 +15,6 @@ func TestResourceProviderForwardMessage(t *testing.T) {
 		"cluster",
 		NewFairShareScheduler(),
 		BestFit,
-		nil,
 		"/opt/determined",
 		model.TaskContainerDefaultsConfig{},
 		nil,

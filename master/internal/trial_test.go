@@ -91,7 +91,6 @@ func TestRendezvousInfo(t *testing.T) {
 			uuid.New().String(),
 			scheduler.NewFairShareScheduler(),
 			scheduler.WorstFit,
-			nil,
 			"/opt/determined",
 			model.TaskContainerDefaultsConfig{},
 			nil,

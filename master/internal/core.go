@@ -55,6 +55,7 @@ type Master struct {
 	rwCoordinator *actor.Ref
 	provisioner   *actor.Ref
 	db            *db.PgDB
+	proxy         *actor.Ref
 	trialLogger   *actor.Ref
 }
 
@@ -274,7 +275,6 @@ func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) 
 }
 
 func (m *Master) initializeResourceProviders(
-	proxyRef *actor.Ref,
 	provisionerSlotsPerInstance int,
 	cert *tls.Certificate,
 ) {
@@ -285,7 +285,6 @@ func (m *Master) initializeResourceProviders(
 			m.ClusterID,
 			m.config.Scheduler.MakeScheduler(),
 			m.config.Scheduler.FitFunction(),
-			proxyRef,
 			filepath.Join(m.config.Root, "wheels"),
 			m.config.TaskContainerDefaults,
 			m.provisioner,
@@ -299,7 +298,6 @@ func (m *Master) initializeResourceProviders(
 			scheduler.NewKubernetesResourceProvider(
 				m.ClusterID,
 				m.config.Scheduler.ResourceProvider.KubernetesRPConfig,
-				proxyRef,
 				filepath.Join(m.config.Root, "wheels"),
 				m.config.TaskContainerDefaults,
 				cert,
@@ -375,14 +373,14 @@ func (m *Master) Run() error {
 		provisionerSlotsPerInstance = p.SlotsPerInstance()
 	}
 
-	proxyRef, _ := m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{})
+	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{})
 
 	cert, err := m.readTLSCertificate()
 	if err != nil {
 		return errors.Wrap(err, "failed to read TLS certificate")
 	}
 
-	m.initializeResourceProviders(proxyRef, provisionerSlotsPerInstance, cert)
+	m.initializeResourceProviders(provisionerSlotsPerInstance, cert)
 
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 
@@ -590,7 +588,7 @@ func (m *Master) Run() error {
 		m.echo,
 		m.db,
 		m.ClusterID,
-		proxyRef,
+		m.proxy,
 		m.config.TensorBoardTimeout,
 		m.config.Security.DefaultTask,
 		m.config.TaskContainerDefaults,
