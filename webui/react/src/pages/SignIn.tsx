@@ -90,7 +90,8 @@ const SignIn: React.FC = () => {
         <Logo type={LogoTypes.OnLightVertical} />
         <DeterminedAuth />
         {samlSso &&
-          <Button className={css.ssoButton}
+          <Button
+            className={css.ssoButton}
             href={samlUrl(samlSso.ssoUrl, queryString.stringify(queries))}
             type="primary">
             Sign in with Okta
