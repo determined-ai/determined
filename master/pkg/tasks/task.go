@@ -250,17 +250,17 @@ func TrialArchives(t TaskSpec) []container.RunArchive {
 		workDirArchive(exp.AgentUserGroup),
 		injectUserArchive(exp.AgentUserGroup),
 		wrapArchive(exp.AdditionalFiles, rootDir),
-        wrapArchive(
-            archive.Archive{
-                exp.AgentUserGroup.OwnedArchiveItem(
-                    "checkpoint.json",
-                    []byte(jsonify(exp.LatestCheckpoint)),
-                    0600,
-                    tar.TypeReg,
-                ),
-            },
-            runDir,
-        ),
+		wrapArchive(
+			archive.Archive{
+				exp.AgentUserGroup.OwnedArchiveItem(
+					"checkpoint.json",
+					[]byte(jsonify(exp.LatestCheckpoint)),
+					0600,
+					tar.TypeReg,
+				),
+			},
+			runDir,
+		),
 		wrapArchive(exp.AgentUserGroup.OwnArchive(exp.ModelDefinition), ContainerWorkDir),
 		harnessArchive(t.HarnessPath, exp.AgentUserGroup),
 		masterCertArchive(t.MasterCert),
