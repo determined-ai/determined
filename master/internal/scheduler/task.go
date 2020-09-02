@@ -48,8 +48,6 @@ type (
 	ContainerStarted struct{ Container Container }
 	// TaskTerminated notifies the task actor that all of its containers have terminated.
 	TaskTerminated struct{}
-	// TaskAborted notifies the task actor that it was terminated before being scheduled.
-	TaskAborted struct{}
 
 	// ResourceAssigned notifies the task actor to be assigned with resources.
 	ResourceAssigned struct {
