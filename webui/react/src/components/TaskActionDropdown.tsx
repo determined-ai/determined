@@ -1,3 +1,5 @@
+import { isNumber } from 'util';
+
 import { Dropdown, Menu } from 'antd';
 import { MenuInfo } from 'rc-menu/lib/interface';
 import React from 'react';
@@ -21,6 +23,7 @@ interface Props {
 const stopPropagation = (e: React.MouseEvent): void => e.stopPropagation();
 
 const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
+  const id = isNumber(task.id) ? task.id : parseInt(task.id);
   const isExperiment = isExperimentTask(task);
   const isExperimentTerminal = terminalRunStates.has(task.state as RunState);
   const isArchivable = isExperiment && isExperimentTerminal && !(task as ExperimentTask).archived;
@@ -39,26 +42,26 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
       switch (params.key) { // Cases should match menu items.
         case 'activate':
           await setExperimentState({
-            experimentId: parseInt(task.id),
+            experimentId: id,
             state: RunState.Active,
           });
           if (onComplete) onComplete();
           break;
         case 'archive':
           if (!isExperimentTask(task)) break;
-          await archiveExperiment(parseInt(task.id));
+          await archiveExperiment(id);
           if (onComplete) onComplete();
           break;
         case 'cancel':
           await setExperimentState({
-            experimentId: parseInt(task.id),
+            experimentId: id,
             state: RunState.StoppingCanceled,
           });
           if (onComplete) onComplete();
           break;
         case 'createTensorboard': {
           const tensorboard = await createTensorboard({
-            ids: [ parseInt(task.id) ],
+            ids: [ id ],
             type: TBSourceType.Experiment,
           });
           openCommand(tensorboard);
@@ -70,7 +73,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
           break;
         case 'pause':
           await setExperimentState({
-            experimentId: parseInt(task.id),
+            experimentId: id,
             state: RunState.Paused,
           });
           if (onComplete) onComplete();
@@ -83,7 +86,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
         }
         case 'unarchive':
           if (!isExperimentTask(task)) break;
-          await archiveExperiment(parseInt(task.id), false);
+          await archiveExperiment(id, false);
           if (onComplete) onComplete();
       }
     } catch (e) {

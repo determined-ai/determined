@@ -44,6 +44,7 @@ export function generateExperimentTask(idx: number): RecentExperimentTask {
     archived: false,
     progress,
     state: state as RunState,
+    url: '#',
     username: user.username,
   };
 }

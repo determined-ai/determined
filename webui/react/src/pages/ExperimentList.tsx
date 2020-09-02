@@ -30,7 +30,9 @@ import {
   ALL_VALUE, Command, ExperimentFilters, ExperimentItem, RunState, TBSourceType,
 } from 'types';
 import { handlePath, openBlank } from 'utils/routes';
-import { cancellableRunStates, isTaskKillable, terminalRunStates, waitPageUrl } from 'utils/types';
+import {
+  cancellableRunStates, experimentToTask, isTaskKillable, terminalRunStates, waitPageUrl,
+} from 'utils/types';
 
 import css from './ExperimentList.module.scss';
 import { columns as defaultColumns } from './ExperimentList.table';
@@ -169,7 +171,7 @@ const ExperimentList: React.FC = () => {
     );
 
     const actionRenderer: ExperimentRenderer = (_, record) => (
-      <TaskActionDropdown task={record} onComplete={handleActionComplete} />
+      <TaskActionDropdown task={experimentToTask(record)} onComplete={handleActionComplete} />
     );
 
     const newColumns = [ ...defaultColumns ].map(column => {

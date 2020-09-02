@@ -12,7 +12,7 @@ import {
   getShells, getTensorboards, getUsers,
 } from 'services/api';
 import { EmptyParams, ExperimentsParams } from 'services/types';
-import { Agent, Command, DetailedUser, ExperimentOld } from 'types';
+import { Agent, Command, DetailedUser, ExperimentBase } from 'types';
 import { activeRunStates } from 'utils/types';
 
 const AppContexts: React.FC = () => {
@@ -37,7 +37,7 @@ const AppContexts: React.FC = () => {
   const [ tensorboardsResponse, triggerTensorboardsRequest ] =
     useRestApi<EmptyParams, Command[]>(getTensorboards, {});
   const [ activeExperimentsResponse, triggerActiveExperimentsRequest ] =
-    useRestApi<ExperimentsParams, ExperimentOld[]>(getExperimentSummaries, {});
+    useRestApi<ExperimentsParams, ExperimentBase[]>(getExperimentSummaries, {});
 
   const fetchAll = useCallback((): void => {
     triggerAgentsRequest({});

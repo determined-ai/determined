@@ -149,7 +149,7 @@ export function hasKey<O>(obj: O, key: keyof any): key is keyof O {
 }
 
 // differentiate Experiment from Task
-export const isExperiment = (obj: AnyTask | Experiment): obj is Experiment => {
+export const isExperiment = (obj: AnyTask | ExperimentItem): obj is ExperimentItem => {
   return 'config' in obj && 'archived' in obj;
 };
 

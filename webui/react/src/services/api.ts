@@ -10,8 +10,8 @@ import { CreateNotebookParams, CreateTensorboardParams, EmptyParams,
   KillExpParams, LogsParams, PatchExperimentParams, PatchExperimentState, TaskLogsParams,
   TrialDetailsParams, TrialLogsParams } from 'services/types';
 import {
-  Agent, ALL_VALUE, AnyTask, Command, CommandType, Credentials, DetailedUser, DeterminedInfo,
-  Experiment, ExperimentDetails, ExperimentFilters, Log, RunState, TrialDetails,
+  Agent, ALL_VALUE, AnyTask, Command, CommandTask, Credentials, DetailedUser,
+  DeterminedInfo, ExperimentBase, ExperimentDetails, ExperimentFilters, Log, RunState, TrialDetails,
 } from 'types';
 import { isExperimentTask } from 'utils/task';
 
@@ -116,7 +116,7 @@ export const getExperimentList = async (
 };
 
 export const getExperimentSummaries =
-  generateApi<ExperimentsParams, Experiment[]>(Config.getExperimentSummaries);
+  generateApi<ExperimentsParams, ExperimentBase[]>(Config.getExperimentSummaries);
 
 export const getExperimentDetails =
   generateApi<ExperimentDetailsParams, ExperimentDetails>(Config.getExperimentDetails);
@@ -171,7 +171,7 @@ export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promis
   return await killCommand({
     cancelToken,
     commandId: task.id,
-    commandType: task.type as unknown as CommandType,
+    commandType: (task as CommandTask).type,
   });
 };
 
