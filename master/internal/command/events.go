@@ -37,7 +37,7 @@ type event struct {
 	ServiceReadyEvent *sproto.ContainerLog `json:"service_ready_event"`
 	// TerminateRequestEvent is triggered when the scheduler has requested the container to
 	// terminate.
-	TerminateRequestEvent *scheduler.TerminateRequest `json:"terminate_request_event"`
+	TerminateRequestEvent *scheduler.ReleaseResource `json:"terminate_request_event"`
 	// ExitedEvent is triggered when the command has terminated.
 	ExitedEvent *string `json:"exited_event"`
 	// LogEvent is triggered when a new log message is available.

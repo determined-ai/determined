@@ -46,9 +46,6 @@ type (
 type (
 	// ContainerStarted notifies the task actor that a container has been started on an agent.
 	ContainerStarted struct{ Container Container }
-	// TerminateRequest notifies the task actor that its task has been told to terminate by the
-	// scheduler.
-	TerminateRequest struct{}
 	// TaskTerminated notifies the task actor that all of its containers have terminated.
 	TaskTerminated struct{}
 	// TaskAborted notifies the task actor that it was terminated before being scheduled.
@@ -58,6 +55,8 @@ type (
 	ResourceAssigned struct {
 		Assignments []Assignment
 	}
+	// ReleaseResource notifies the task actor to release resources.
+	ReleaseResource struct{}
 )
 
 // TaskID is a unique ID assigned to tasks when added to the cluster.

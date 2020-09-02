@@ -417,7 +417,7 @@ func (k *kubernetesResourceProvider) terminateTask(task *Task, forcible bool) {
 				c.mustTransition(containerTerminating)
 			}
 		}
-		task.handler.System().Tell(task.handler, TerminateRequest{})
+		task.handler.System().Tell(task.handler, ReleaseResource{})
 	}
 }
 
