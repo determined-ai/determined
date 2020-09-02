@@ -33,6 +33,7 @@ type (
 	// It is used by the resource providers to communicate with the task handlers.
 	ContainerStateChanged struct {
 		Container        container.Container
+		ContainerStarted *agent.ContainerStarted
 		ContainerStopped *agent.ContainerStopped
 	}
 )
