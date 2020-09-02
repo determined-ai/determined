@@ -2,72 +2,70 @@ import { ColumnType } from 'antd/lib/table';
 import React from 'react';
 
 import {
-  experimentActionRenderer, experimentArchivedRenderer, experimentProgressRenderer,
+  experimentArchivedRenderer, experimentProgressRenderer,
   expermentDurationRenderer, relativeTimeRenderer, stateRenderer, userRenderer,
 } from 'components/Table';
+import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { ExperimentItem } from 'types';
-import { alphanumericSorter, runStateSorter, stringTimeSorter } from 'utils/data';
-import { getDuration } from 'utils/time';
 
 export const columns: ColumnType<ExperimentItem>[] = [
   {
     dataIndex: 'id',
-    key: 'id',
-    sorter: (a: ExperimentItem, b: ExperimentItem): number => alphanumericSorter(a.id, b.id),
+    key: V1GetExperimentsRequestSortBy.ID,
+    sorter: true,
     title: 'ID',
   },
   {
     dataIndex: 'name',
-    key: 'name',
-    sorter: (a: ExperimentItem, b: ExperimentItem): number => alphanumericSorter(a.name, b.name),
+    key: V1GetExperimentsRequestSortBy.DESCRIPTION,
+    sorter: true,
     title: 'Name',
   },
   {
-    key: 'startTime',
+    key: V1GetExperimentsRequestSortBy.STARTTIME,
     render: (_: number, record: ExperimentItem): React.ReactNode =>
       relativeTimeRenderer(new Date(record.startTime)),
-    sorter: (a: ExperimentItem, b: ExperimentItem): number =>
-      stringTimeSorter(a.startTime, b.startTime),
+    sorter: true,
     title: 'Start Time',
   },
   {
     key: 'duration',
     render: expermentDurationRenderer,
-    sorter: (a: ExperimentItem, b: ExperimentItem): number => getDuration(a) - getDuration(b),
     title: 'Duration',
   },
-  // TODO bring in actual trial counts once available.
   {
-    key: 'state',
+    dataIndex: 'numTrials',
+    key: V1GetExperimentsRequestSortBy.NUMTRIALS,
+    sorter: true,
+    title: 'Trials',
+  },
+  {
+    key: V1GetExperimentsRequestSortBy.STATE,
     render: stateRenderer,
-    sorter: (a: ExperimentItem, b: ExperimentItem): number => runStateSorter(a.state, b.state),
+    sorter: true,
     title: 'State',
   },
   {
-    key: 'progress',
+    key: V1GetExperimentsRequestSortBy.PROGRESS,
     render: experimentProgressRenderer,
-    sorter: (a: ExperimentItem, b: ExperimentItem): number => (a.progress || 0) - (b.progress || 0),
+    sorter: true,
     title: 'Progress',
   },
   {
     key: 'archived',
     render: experimentArchivedRenderer,
-    sorter: (a: ExperimentItem, b: ExperimentItem): number =>
-      (a.archived === b.archived) ? 0 : (a.archived ? 1 : -1),
     title: 'Archived',
   },
   {
-    key: 'user',
+    key: V1GetExperimentsRequestSortBy.USER,
     render: userRenderer,
-    sorter: (a: ExperimentItem, b: ExperimentItem): number =>
-      alphanumericSorter(a.username, b.username),
+    sorter: true,
     title: 'User',
   },
   {
     align: 'right',
     className: 'fullCell',
     key: 'action',
-    render: experimentActionRenderer,
     title: '',
   },
 ];

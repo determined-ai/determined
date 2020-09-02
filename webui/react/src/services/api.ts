@@ -1,17 +1,21 @@
 import { CancelToken } from 'axios';
 
 import * as DetSwagger from 'services/api-ts-sdk';
+import { V1GetExperimentsRequestSortBy, V1Pagination } from 'services/api-ts-sdk';
 import { generateApi, processApiError, serverAddress } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
-import { CreateNotebookParams, CreateTensorboardParams, EmptyParams,
-  ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams, KillCommandParams,
-  KillExpParams, LogsParams, PatchExperimentParams, PatchExperimentState, TaskLogsParams,
-  TrialDetailsParams, TrialLogsParams } from 'services/types';
+import { ApiSorter, CreateNotebookParams, CreateTensorboardParams,
+  EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
+  KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams, PatchExperimentState,
+  TaskLogsParams, TrialDetailsParams, TrialLogsParams } from 'services/types';
 import {
-  Agent, AnyTask, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, Experiment,
-  ExperimentDetails, Log, TrialDetails,
+  Agent, ALL_VALUE, AnyTask, Command, CommandTask, Credentials,
+  DetailedUser, DeterminedInfo, ExperimentBase, ExperimentDetails,
+  ExperimentFilters, ExperimentItem, Log, Pagination, RunState, TrialDetails,
 } from 'types';
 import { isExperimentTask } from 'utils/task';
+
+import { decodeExperimentList, encodeExperimentState } from './decoder';
 
 const address = serverAddress();
 export const detAuthApi = new DetSwagger.AuthenticationApi(undefined, address);
@@ -50,8 +54,41 @@ export const getAgents = generateApi<EmptyParams, Agent[]>(Config.getAgents);
 
 /* Experiments */
 
+export const getExperimentList = async (
+  sorter: ApiSorter<V1GetExperimentsRequestSortBy>,
+  pagination: Pagination,
+  filters: ExperimentFilters,
+  search?: string,
+): Promise<{ experiments: ExperimentItem[], pagination?: V1Pagination }> => {
+  try {
+    const sortBy = Object.values(V1GetExperimentsRequestSortBy).includes(sorter.key) ?
+      sorter.key : V1GetExperimentsRequestSortBy.UNSPECIFIED;
+
+    const response = await detExperimentApi.determinedGetExperiments(
+      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+      sortBy as any,
+      sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
+      pagination.offset,
+      pagination.limit,
+      search,
+      filters.showArchived ? undefined : false,
+      filters.states.includes(ALL_VALUE) ? undefined : filters.states.map(state => {
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+        return encodeExperimentState(state as RunState) as any;
+      }),
+      filters.username ? [ filters.username ] : undefined,
+    );
+
+    const experiments = decodeExperimentList(response.experiments || []);
+    return { experiments, pagination: response.pagination };
+  } catch (e) {
+    processApiError('getExperimentList', e);
+    throw e;
+  }
+};
+
 export const getExperimentSummaries =
-  generateApi<ExperimentsParams, Experiment[]>(Config.getExperimentSummaries);
+  generateApi<ExperimentsParams, ExperimentBase[]>(Config.getExperimentSummaries);
 
 export const getExperimentDetails =
   generateApi<ExperimentDetailsParams, ExperimentDetails>(Config.getExperimentDetails);
@@ -106,7 +143,7 @@ export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promis
   return await killCommand({
     cancelToken,
     commandId: task.id,
-    commandType: task.type as unknown as CommandType,
+    commandType: (task as CommandTask).type,
   });
 };
 

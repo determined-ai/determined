@@ -12,7 +12,7 @@ interface PollingOptions {
 }
 
 const usePolling =
-  (pollingFn: PollingFn, { delay, triggers }: PollingOptions = {}): (() => void) => {
+  (pollingFn: PollingFn, { delay }: PollingOptions = {}): (() => void) => {
     const timerId = useRef<NodeJS.Timeout>();
     const countId = useRef(0);
 
@@ -35,8 +35,7 @@ const usePolling =
       stopPolling();
       pollingRoutine();
       return stopPolling;
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
-    }, [ pollingRoutine, stopPolling, ...(triggers || []) ]);
+    }, [ pollingRoutine, stopPolling ]);
 
     return stopPolling;
   };

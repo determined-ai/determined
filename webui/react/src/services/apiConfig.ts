@@ -16,7 +16,7 @@ import {
   TaskLogsParams, TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
 import {
-  Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, Experiment,
+  Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
   ExperimentDetails, Log, TBSourceType, TrialDetails,
 } from 'types';
 
@@ -125,7 +125,7 @@ export const killExperiment: Api<KillExpParams, void> = {
   name: 'killExperiment',
 };
 
-export const getExperimentSummaries: Api<ExperimentsParams, Experiment[]> = {
+export const getExperimentSummaries: Api<ExperimentsParams, ExperimentBase[]> = {
   httpOptions: (params) => ({
     url: [
       '/experiment-summaries',

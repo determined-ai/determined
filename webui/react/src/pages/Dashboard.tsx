@@ -12,13 +12,17 @@ import ActiveExperiments from 'contexts/ActiveExperiments';
 import Auth from 'contexts/Auth';
 import ClusterOverview from 'contexts/ClusterOverview';
 import { Commands, Notebooks, Shells, Tensorboards } from 'contexts/Commands';
-import Experiments from 'contexts/Experiments';
 import Users from 'contexts/Users';
+import { ErrorType } from 'ErrorHandler';
+import handleError from 'ErrorHandler';
+import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
+import { getExperimentList } from 'services/api';
+import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
 import { ShirtSize } from 'themes';
 import {
-  ALL_VALUE, Command, CommandType, RecentTask, ResourceType,
-  TaskFilters, TaskType,
+  ALL_VALUE, Command, CommandType, ExperimentItem, RecentTask,
+  ResourceType, TaskFilters, TaskType,
 } from 'types';
 import { getPath } from 'utils/data';
 import { filterTasks } from 'utils/task';
@@ -44,11 +48,11 @@ const Dashboard: React.FC = () => {
   const users = Users.useStateContext();
   const overview = ClusterOverview.useStateContext();
   const activeExperiments = ActiveExperiments.useStateContext();
-  const experiments = Experiments.useStateContext();
   const commands = Commands.useStateContext();
   const notebooks = Notebooks.useStateContext();
   const shells = Shells.useStateContext();
   const tensorboards = Tensorboards.useStateContext();
+  const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
 
   const storage = useStorage('dashboard/tasks');
   const initFilters = storage.getWithDefault('filters', {
@@ -56,6 +60,21 @@ const Dashboard: React.FC = () => {
     username: getPath<string>(auth, 'user.username'),
   });
   const [ filters, setFilters ] = useState<TaskFilters>(initFilters);
+
+  const fetchExperiments = useCallback(async (): Promise<void> => {
+    try {
+      const response = await getExperimentList(
+        { descend: true, key: V1GetExperimentsRequestSortBy.STARTTIME },
+        { limit: 100, offset: 0 },
+        { showArchived: false, states: filters.states, username: filters.username },
+      );
+      setExperiments(response.experiments);
+    } catch (e) {
+      handleError({ message: 'Unable to fetch experiments.', silent: true, type: ErrorType.Api });
+    }
+  }, [ filters, setExperiments ]);
+
+  usePolling(fetchExperiments);
 
   /* Overview */
 
@@ -74,7 +93,7 @@ const Dashboard: React.FC = () => {
   /* Recent Tasks */
 
   const showTasksSpinner = (
-    !experiments.hasLoaded ||
+    !experiments ||
     !commands.hasLoaded ||
     !notebooks.hasLoaded ||
     !shells.hasLoaded ||
@@ -89,7 +108,7 @@ const Dashboard: React.FC = () => {
   ];
 
   const loadedTasks = [
-    ...(experiments.data || []).map(experimentToTask),
+    ...(experiments || []).map(experimentToTask),
     ...genericCommands.map(commandToTask),
   ];
 
@@ -107,7 +126,8 @@ const Dashboard: React.FC = () => {
   const handleFilterChange = useCallback((filters: TaskFilters): void => {
     storage.set('filters', filters);
     setFilters(filters);
-  }, [ setFilters, storage ]);
+    setExperiments(undefined);
+  }, [ setExperiments, setFilters, storage ]);
 
   const taskFilter = <TaskFilter filters={filters} onChange={handleFilterChange} />;
 

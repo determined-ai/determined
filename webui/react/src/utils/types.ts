@@ -1,6 +1,6 @@
 import { serverAddress } from 'services/apiBuilder';
 import {
-  AnyTask, Checkpoint, Command, CommandState, CommandType, Experiment, ExperimentHyperParams,
+  AnyTask, Checkpoint, Command, CommandState, CommandType, ExperimentHyperParams,
   ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
 } from 'types';
 
@@ -39,13 +39,12 @@ export const commandToTask = (command: Command): RecentCommandTask => {
     state: command.state as CommandState,
     type: command.kind,
     url: waitPageUrl(command),
-    userId: command.user.id,
     username: command.user.username,
   };
   return task;
 };
 
-export const experimentToTask = (experiment: Experiment): RecentExperimentTask => {
+export const experimentToTask = (experiment: ExperimentItem): RecentExperimentTask => {
   const lastEvent = experiment.endTime ?
     { date: experiment.endTime, name: 'finished' } :
     { date: experiment.startTime, name: 'requested' };
@@ -53,12 +52,12 @@ export const experimentToTask = (experiment: Experiment): RecentExperimentTask =
     archived: experiment.archived,
     id: `${experiment.id}`,
     lastEvent,
-    name: experiment.config.description,
+    name: experiment.name,
     progress: experiment.progress,
     startTime: experiment.startTime,
     state: experiment.state,
-    url: `/det/experiments/${experiment.id}`,
-    userId: experiment.userId,
+    url: experiment.url,
+    username: experiment.username,
   };
   return task;
 };
@@ -110,6 +109,7 @@ export const runStateToLabel: {[key in RunState]: string} = {
   [RunState.StoppingCanceled]: 'Canceling',
   [RunState.StoppingCompleted]: 'Completing',
   [RunState.StoppingError]: 'Erroring',
+  [RunState.Unspecified]: 'Unspecified',
 };
 
 export const commandStateToLabel: {[key in CommandState]: string} = {
@@ -149,7 +149,7 @@ export function hasKey<O>(obj: O, key: keyof any): key is keyof O {
 }
 
 // differentiate Experiment from Task
-export const isExperiment = (obj: AnyTask | Experiment): obj is Experiment => {
+export const isExperiment = (obj: AnyTask | ExperimentItem): obj is ExperimentItem => {
   return 'config' in obj && 'archived' in obj;
 };
 

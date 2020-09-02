@@ -98,6 +98,11 @@ export interface StartEndTimes {
   startTime: string;
 }
 
+export interface Pagination {
+  offset: number;
+  limit: number;
+}
+
 /* Command */
 export enum CommandState {
   Pending = 'PENDING',
@@ -204,6 +209,7 @@ export enum RunState {
   StoppingError = 'STOPPING_ERROR',
   Errored = 'ERROR',
   Deleted = 'DELETED',
+  Unspecified = 'UNSPECIFIED',
 }
 
 export interface ValidationHistory {
@@ -290,7 +296,21 @@ export interface TrialDetails extends TrialBase {
   warmStartCheckpointId?: number;
 }
 
-export interface Experiment {
+export interface ExperimentItem {
+  id: number;
+  name: string;
+  labels: string[];
+  startTime: string;
+  endTime?: string;
+  state: RunState;
+  archived: boolean;
+  numTrials: number;
+  progress?: number;
+  username: string;
+  url: string;
+}
+
+export interface ExperimentBase {
   archived: boolean;
   config: ExperimentConfig;
   configRaw: RawJson; // Readonly unparsed config object.
@@ -302,13 +322,13 @@ export interface Experiment {
   state: RunState;
 }
 
-export interface ExperimentItem extends Experiment {
+export interface ExperimentOld extends ExperimentBase {
   name: string;
   url: string;
   username: string;
 }
 
-export interface ExperimentDetails extends Experiment {
+export interface ExperimentDetails extends ExperimentBase {
   validationHistory: ValidationHistory[];
   trials: TrialItem[];
   username: string;
@@ -317,7 +337,6 @@ export interface ExperimentDetails extends Experiment {
 export interface Task {
   name: string;
   id: string;
-  userId: number;
   url?: string;
   startTime: string;
 }
@@ -326,6 +345,7 @@ export interface ExperimentTask extends Task {
   progress?: number;
   archived: boolean;
   state: RunState;
+  username: string;
 }
 
 export interface CommandTask extends Task {
@@ -355,7 +375,6 @@ export type TaskType = CommandType | 'Experiment';
 
 export interface ExperimentFilters {
   showArchived: boolean;
-  limit: number;
   states: string[];
   username?: string;
 }
