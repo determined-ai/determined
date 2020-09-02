@@ -3,11 +3,14 @@
 Specifying Custom Pod Specs
 ===========================
 
-As described in the :ref:`determined-on-kubernetes` guide, when tasks (e.g., experiments, notebooks) are started
-in a Determined cluster running on Kubernetes, the Determined master launches pods to execute these tasks. In this guide, we
-focus on how users can customize these pods by providing their own pod specs. Common use cases include but
-are not limited to: assigning pods to specific nodes, specifying additional volume mounts, attaching permissions.
-Please note that configuring pod specs is not required to use Determined on kubernetes.
+As described in the :ref:`determined-on-kubernetes` guide, when tasks (e.g.,
+experiments, notebooks) are started in a Determined cluster running on
+Kubernetes, the Determined master launches pods to execute these tasks. In this
+guide, we focus on how users can customize these pods by providing their own
+`pod specs <https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#pod-v1-core>`__.
+Common use cases include but are not limited to: assigning pods to specific
+nodes, specifying additional volume mounts, attaching permissions.  Please note
+that configuring pod specs is not required to use Determined on Kubernetes.
 
 In this topic guide, we will cover:
 
@@ -20,15 +23,18 @@ In this topic guide, we will cover:
 Ways to Configure Pod Specs
 ---------------------------
 
-Determined provides two ways to configure pod specs. Users can configure default pod specs for all GPU and CPU tasks.
-It is also possible configure pod specs for individual tasks. If a custom pod spec is specified for a
-task, it overrides the default pod spec of one is configured.
+Determined provides two ways to configure pod specs. When Determined is
+installed, the system administrator can configure pod specs that are used by
+default for all GPU and CPU tasks. In addition, users can specify a custom pod
+spec for individual tasks (e.g., for an experiment by specifying
+``environment.pod_spec`` in the experiment configuration). If a custom pod spec
+is specified for a task, it overrides the default pod spec (if any).
 
 
 Supported Pod Spec Fields
 -------------------------
 
-This section describes which fields users can and can't configure when specifying custom `pod specs <https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#pod-v1-core>`__.
+This section describes which fields users can and cannot configure when specifying custom `pod specs <https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#pod-v1-core>`__.
 
 Determined does not currently support configuring:
 
@@ -37,9 +43,9 @@ Determined does not currently support configuring:
 - Host Networking - This must be configured via the :ref:`master-configuration`.
 - Init Containers - Determined does not currently support init containers.
 
-Additionally users are allowed to specify the spec for exactly one container within the pod. The specs
+Additionally, users are allowed to specify the spec for exactly one container within the pod. The specs
 of this container will be applied to the container that executes the task launched by Determined.
-For the container spec Determined does not currently support configuring:
+For the container spec, Determined does not currently support configuring:
 
 - Container Name - Determined automatically assigns this.
 - Container Image - Please see :ref:`container-images` for how to specify custom docker images.
@@ -62,11 +68,13 @@ For the container spec Determined does not currently support configuring:
 Configuring Default Pod Specs
 -----------------------------
 
-Defining default pod specs must be done when :ref:`installing or updating <install-on-kubernetes>` Determined.
-The default pod specs are configured in ``values.yaml`` of the :ref:`Determined helm chart <helm-config>` under
-``taskContainerDefaults.cpuPodSpec`` and ``taskContainerDefaults.gpuPodSpec``. The ``gpuPodSpec`` is applied to
-all tasks that use GPUs (e.g., experiments, notebooks). ``cpuPodSpec`` is applied to all tasks that use only CPUs
-(e.g, TensorBoards, cpu only notebooks).
+Defining default pod specs must be done when :ref:`installing or updating
+<install-on-kubernetes>` Determined.  The default pod specs are configured in
+``values.yaml`` of the :ref:`Determined helm chart <helm-config>` under
+``taskContainerDefaults.cpuPodSpec`` and ``taskContainerDefaults.gpuPodSpec``.
+The ``gpuPodSpec`` is applied to all tasks that use GPUs (e.g., experiments,
+notebooks). ``cpuPodSpec`` is applied to all tasks that only use CPUs (e.g,
+TensorBoards, CPU-only notebooks).
 
 Example of configuring default pod specs:
 
@@ -101,12 +109,12 @@ Example of configuring default pod specs:
                 path: /data
 
 
-Configuring Per Task Pod Specs
+Configuring Per-Task Pod Specs
 ------------------------------
 
 In addition to default pod specs, it is also possible to configure custom pod specs for individual tasks. When defining
-a custom pod spec for a task, it will overwrite the default pod spec if one is defined. Pod specs for individual tasks
-can be configured under ``environment`` in the :ref:`experiment config <exp-environment>`.
+a custom pod spec for a task, it will override the default pod spec if one is defined. Pod specs for individual tasks
+can be configured under the ``environment`` field in the :ref:`experiment config <exp-environment>`.
 
 Example of configuring a pod spec for an individual task:
 

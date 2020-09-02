@@ -3,8 +3,11 @@
 Install Determined on Kubernetes
 ================================
 
-This document describes how to install Determined on `Kubernetes <https://kubernetes.io/>`_. The installation
-is performed using the :download:`Determined Helm Chart </helm/determined-helm-chart.tgz>`.
+This document describes how to install Determined on `Kubernetes
+<https://kubernetes.io/>`__. The installation is performed using the
+:download:`Determined Helm Chart </helm/determined-helm-chart.tgz>`. For general
+information about using Determined with Kubernetes, refer the
+:ref:`determined-on-kubernetes` guide.
 
 
 Prerequisites
