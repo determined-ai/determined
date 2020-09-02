@@ -47,6 +47,10 @@ type (
 
 	// GetEndpointActorAddress requests the name of the actor that is managing the resources.
 	GetEndpointActorAddress struct{}
+	// KillContainer notifies to stop a container/pod associated with the container id.
+	KillContainer struct {
+		ContainerID container.ID
+	}
 )
 
 func (c ContainerLog) String() string {

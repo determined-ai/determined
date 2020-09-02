@@ -16,9 +16,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
-	"github.com/determined-ai/determined/master/pkg/agent"
+	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/archive"
-	"github.com/determined-ai/determined/master/pkg/container"
+	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/searcher"
@@ -146,7 +146,7 @@ type rendezvousAddress struct {
 // trial at the time termination was received. That information is analyzed when determining if a
 // trial should be considered to have errored or not.
 type terminatedContainerWithState struct {
-	exitStatus                 agent.ContainerStopped
+	exitStatus                 aproto.ContainerStopped
 	isLeader                   bool
 	pendingGracefulTermination bool
 	needsCheckpoint            bool
@@ -204,8 +204,9 @@ type trial struct {
 
 	// numContainers is the number of containers that the scheduler has most recently assigned to run
 	// this trial.
+	assignments                []scheduler.Assignment
 	numContainers              int
-	startedContainers          map[container.ID]bool
+	startedContainers          map[cproto.ID]bool
 	containers                 map[scheduler.ContainerID]scheduler.Container
 	terminatedContainers       []terminatedContainerWithState
 	lastContainerConnectedTime time.Time
@@ -242,7 +243,7 @@ func newTrial(
 		create:    create,
 		replaying: exp.replaying,
 
-		startedContainers: make(map[container.ID]bool),
+		startedContainers: make(map[cproto.ID]bool),
 		containers:        make(map[scheduler.ContainerID]scheduler.Container),
 		sockets:           make(map[scheduler.ContainerID]*actor.Ref),
 
@@ -338,6 +339,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		}
 	} else if t.experimentState != model.ActiveState {
 		ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID})
+		_ = t.processReleaseResource(ctx)
 	}
 
 	return nil
@@ -415,12 +417,7 @@ func (t *trial) processSchedulerMsg(ctx *actor.Context) error {
 		}
 
 	case scheduler.ReleaseResource:
-		if !t.allReady(ctx) {
-			t.cancelUnready = true
-			t.terminate(ctx, true)
-		} else {
-			t.terminate(ctx, false)
-		}
+		return t.processReleaseResource(ctx)
 
 	case scheduler.TaskAborted:
 
@@ -440,6 +437,16 @@ func (t *trial) processSchedulerMsg(ctx *actor.Context) error {
 	return nil
 }
 
+func (t *trial) processReleaseResource(ctx *actor.Context) error {
+	if !t.allReady(ctx) {
+		t.cancelUnready = true
+		t.terminate(ctx, true)
+	} else {
+		t.terminate(ctx, false)
+	}
+	return nil
+}
+
 func (t *trial) processContainerMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case containerConnected:
@@ -448,11 +455,11 @@ func (t *trial) processContainerMsg(ctx *actor.Context) error {
 		}
 
 	case sproto.ContainerStateChanged:
-		if msg.Container.State != container.Assigned {
+		if msg.Container.State != cproto.Assigned {
 			t.startedContainers[msg.Container.ID] = true
 		}
 		switch msg.Container.State {
-		case container.Terminated:
+		case cproto.Terminated:
 			t.processContainerTerminated(ctx, msg)
 		}
 
@@ -490,6 +497,8 @@ func (t *trial) processID(ctx *actor.Context, id int) {
 }
 
 func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.ResourceAssigned) error {
+	t.assignments = msg.Assignments
+
 	if len(t.privateKey) == 0 {
 		generatedKeys, err := ssh.GenerateKey(nil)
 		if err != nil {
@@ -582,7 +591,7 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.ResourceAssign
 	}
 
 	for _, a := range msg.Assignments {
-		a.StartTask(tasks.TaskSpec{
+		a.StartContainer(tasks.TaskSpec{
 			StartContainer: &tasks.StartContainer{
 				ExperimentConfig:    t.experiment.Config,
 				ModelDefinition:     t.modelDefinition,
@@ -931,11 +940,11 @@ func (t *trial) processTaskTerminated(ctx *actor.Context, msg scheduler.TaskTerm
 		return terminatedContainerWithState{}, false
 	}
 
-	status := agent.ContainerError(agent.AgentError, errors.New("no error status provided"))
+	status := aproto.ContainerError(aproto.AgentError, errors.New("no error status provided"))
 	if len(t.startedContainers) == 0 {
 		// If we have no containers, we haven't started executing anything, so
 		// let resetTrial reset our state rather than treating this as an error.
-		status = agent.ContainerError(agent.TaskAborted, errors.New("task aborted"))
+		status = aproto.ContainerError(aproto.TaskAborted, errors.New("task aborted"))
 	} else if leaderState, ok := getLeaderState(); ok {
 		status = classifyStatus(leaderState)
 	}
@@ -943,12 +952,12 @@ func (t *trial) processTaskTerminated(ctx *actor.Context, msg scheduler.TaskTerm
 	t.resetTrial(ctx, status)
 }
 
-func classifyStatus(state terminatedContainerWithState) agent.ContainerStopped {
+func classifyStatus(state terminatedContainerWithState) aproto.ContainerStopped {
 	switch status := state.exitStatus; {
-	case status.Failure != nil && status.Failure.FailureType != agent.TaskAborted:
+	case status.Failure != nil && status.Failure.FailureType != aproto.TaskAborted:
 		return status
 	case !state.pendingGracefulTermination || state.needsCheckpoint:
-		return agent.ContainerError(agent.AgentError, errors.New(
+		return aproto.ContainerError(aproto.AgentError, errors.New(
 			"container exited when it wasn't supposed to"))
 	default:
 		return status
@@ -957,7 +966,7 @@ func classifyStatus(state terminatedContainerWithState) agent.ContainerStopped {
 
 func (t *trial) resetTrial(
 	ctx *actor.Context,
-	status agent.ContainerStopped,
+	status aproto.ContainerStopped,
 ) {
 	terminationSent := t.terminationSent
 
@@ -966,7 +975,7 @@ func (t *trial) resetTrial(
 	t.pendingGracefulTermination = false
 	t.terminationSent = false
 	t.terminatedContainers = nil
-	t.startedContainers = make(map[container.ID]bool)
+	t.startedContainers = make(map[cproto.ID]bool)
 
 	switch {
 	case status.Failure == nil:
@@ -988,7 +997,7 @@ func (t *trial) resetTrial(
 			"ignoring trial runner failure since it was killed",
 		)
 		return
-	case status.Failure.FailureType == agent.TaskAborted:
+	case status.Failure.FailureType == aproto.TaskAborted:
 		return
 	}
 
@@ -1060,6 +1069,11 @@ func (t *trial) terminate(ctx *actor.Context, kill bool) {
 		ctx.Log().Info("forcibly terminating trial")
 		if t.task != nil {
 			ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+			if t.assignments != nil {
+				for _, assignment := range t.assignments {
+					assignment.KillContainer()
+				}
+			}
 		}
 	} else {
 		ctx.Log().Info("gracefully terminating trial")

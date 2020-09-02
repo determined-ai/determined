@@ -81,6 +81,7 @@ type command struct {
 
 	registeredTime time.Time
 	container      *container.Container
+	assignment     scheduler.Assignment
 	proxyNames     []string
 	exitStatus     *string
 	addresses      []scheduler.Address
@@ -112,6 +113,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 			TaskHandler: ctx.Self(),
 		})
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ScheduledEvent: &c.taskID})
+
+	case actor.PostStop:
+		c.terminate(ctx)
 
 	case getSummary:
 		if msg.userFilter == "" || c.owner.Username == msg.userFilter {
@@ -201,17 +205,16 @@ func (c *command) Receive(ctx *actor.Context) error {
 		}
 
 	case scheduler.ResourceAssigned:
-		for _, a := range msg.Assignments {
-			a.StartTask(tasks.TaskSpec{
-				StartCommand: &tasks.StartCommand{
-					AgentUserGroup:  c.agentUserGroup,
-					Config:          c.config,
-					UserFiles:       c.userFiles,
-					AdditionalFiles: c.additionalFiles,
-				},
-				HarnessPath: c.harnessPath,
-			})
-		}
+		c.assignment = msg.Assignments[0]
+		msg.Assignments[0].StartContainer(tasks.TaskSpec{
+			StartCommand: &tasks.StartCommand{
+				AgentUserGroup:  c.agentUserGroup,
+				Config:          c.config,
+				UserFiles:       c.userFiles,
+				AdditionalFiles: c.additionalFiles,
+			},
+			HarnessPath: c.harnessPath,
+		})
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 
@@ -220,6 +223,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 		// TODO: Consider not storing the userFiles in memory at all.
 		c.userFiles = nil
 		c.additionalFiles = nil
+
+	case scheduler.ReleaseResource:
+		c.terminate(ctx)
 
 	case scheduler.ContainerStarted:
 		c.addresses = msg.Container.Addresses()
@@ -242,9 +248,6 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ContainerStartedEvent: &msg})
 
-	case scheduler.ReleaseResource:
-		c.terminate(ctx)
-
 	case scheduler.TaskAborted:
 		c.exit(ctx, "command terminated without being scheduled")
 
@@ -264,6 +267,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case echo.Context:
 		c.handleAPIRequest(ctx, msg)
+
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
 }
@@ -282,7 +288,13 @@ func (c *command) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 }
 
 func (c *command) terminate(ctx *actor.Context) {
+	ctx.Log().Info("terminating")
 	ctx.Ask(c.rps, scheduler.TerminateTask{TaskID: c.taskID, Forcible: true}).Get()
+	if c.assignment != nil {
+		c.assignment.KillContainer()
+	} else {
+		ctx.Log().Warn("found no started container")
+	}
 	if msg, ok := ctx.Message().(scheduler.ReleaseResource); ok {
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), TerminateRequestEvent: &msg})
 	}

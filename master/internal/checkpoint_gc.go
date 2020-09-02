@@ -47,7 +47,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		ctx.Log().Info("starting checkpoint garbage collection")
 
 		for _, a := range msg.Assignments {
-			a.StartTask(tasks.TaskSpec{
+			a.StartContainer(tasks.TaskSpec{
 				GCCheckpoints: &tasks.GCCheckpoints{
 					AgentUserGroup:   t.agentUserGroup,
 					ExperimentID:     t.experiment.ID,
@@ -56,6 +56,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 				},
 			})
 		}
+	case scheduler.ReleaseResource:
 
 	case sproto.ContainerStateChanged:
 		if msg.Container.State != container.Terminated {

@@ -3,7 +3,6 @@ package scheduler
 import (
 	"crypto/tls"
 	"strconv"
-	"syscall"
 
 	"github.com/determined-ai/determined/master/pkg/device"
 
@@ -149,8 +148,6 @@ func (d *DefaultRP) terminateTask(task *Task, forcible bool) {
 			if c.state != containerTerminated {
 				c.mustTransition(containerTerminating)
 			}
-			c.agent.handler.System().Tell(c.agent.handler, aproto.SignalContainer{
-				ContainerID: cproto.ID(c.id), Signal: syscall.SIGKILL})
 		}
 
 	case task.state != taskTerminating && task.canTerminate:
@@ -161,7 +158,6 @@ func (d *DefaultRP) terminateTask(task *Task, forcible bool) {
 				c.mustTransition(containerTerminating)
 			}
 		}
-		task.handler.System().Tell(task.handler, ReleaseResource{})
 	}
 }
 
@@ -561,8 +557,8 @@ type containerAssignment struct {
 	masterCert            *tls.Certificate
 }
 
-// StartTask notifies the agent that the task is ready to start with the provided task spec.
-func (c containerAssignment) StartTask(spec image.TaskSpec) {
+// Start notifies the agent to start a container.
+func (c containerAssignment) StartContainer(spec image.TaskSpec) {
 	handler := c.agent.handler
 	spec.ClusterID = c.clusterID
 	spec.ContainerID = string(c.container.ID())
@@ -582,5 +578,12 @@ func (c containerAssignment) StartTask(spec image.TaskSpec) {
 			},
 			Spec: image.ToContainerSpec(spec),
 		},
+	})
+}
+
+// Kill notifies the agent to kill the container.
+func (c containerAssignment) KillContainer() {
+	c.agent.handler.System().Tell(c.agent.handler, sproto.KillContainer{
+		ContainerID: cproto.ID(c.container.ID()),
 	})
 }

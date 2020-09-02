@@ -121,7 +121,7 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	case sproto.ContainerLog:
 		p.receiveContainerLogs(ctx, msg)
 
-	case sproto.StopPod:
+	case sproto.KillContainer:
 		ctx.Log().Info("received request to stop pod")
 		p.deleteKubernetesResources(ctx)
 
