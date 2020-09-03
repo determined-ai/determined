@@ -35,13 +35,15 @@ func ProcessLogs(req LogsRequest,
 	terminateCheck *TerminationCheck,
 ) error {
 
+	// FIXME how does it terminate when the caller goes away
 	for {
+		fmt.Printf("sending log request %v. ", req)
 		logEntries, err := logFetcher(req)
+		fmt.Printf("received %d logs.\n", len(logEntries))
 
 		if err != nil {
 			return errors.Wrapf(err, "failed to fetch logs for %v", req)
 		}
-		fmt.Printf("got %d log enties back\n", len(logEntries))
 		for _, log := range logEntries {
 			req.Offset++
 			req.Limit--

@@ -1,12 +1,14 @@
 package api
 
+import "math"
+
 // EffectiveOffset returns effective offset.
 func EffectiveOffset(reqOffset int, total int) (offset int) {
 	switch {
 	case reqOffset < -total:
 		return 0
 	case reqOffset < 0:
-		return total + reqOffset
+		return int(math.Max(float64(total+reqOffset), 0))
 	default:
 		return reqOffset
 	}

@@ -99,17 +99,8 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(e.buffer.Len())
 
 	case webAPI.LogsRequest:
-		events := e.getClientEvents(msg)
-		var logs []*logger.Entry
-		for _, event := range events {
-			// FIXME use ok instead?
-			evMsg, err := eventToLogEntry(event)
-			if err != nil {
-				continue
-			}
-			logs = append(logs, evMsg)
-		}
-		ctx.Respond(logs)
+		logEntries := e.getLogEntries(msg)
+		ctx.Respond(logEntries)
 
 	case api.WebSocketConnected:
 		follow, err := strconv.ParseBool(msg.Ctx.QueryParam("follow"))
@@ -187,7 +178,8 @@ func eventToLogEntry(ev *event) (*logger.Entry, error) {
 	case ev.LogEvent != nil:
 		message = fmt.Sprintf(*ev.LogEvent)
 	default:
-		return nil, errors.New("event has no supported message case")
+		// message = string(ev.ID)
+		return nil, errors.New(fmt.Sprintf("event %v has no supported log message", ev))
 	}
 	return &logger.Entry{
 		ID:      ev.Seq,
@@ -196,20 +188,27 @@ func eventToLogEntry(ev *event) (*logger.Entry, error) {
 	}, nil
 }
 
-func (e *eventManager) getClientEvents(req webAPI.LogsRequest) []*event {
+func (e *eventManager) getLogEntries(req webAPI.LogsRequest) []*logger.Entry {
 	events := e.buffer
-	clientEvents := make([]*event, 0)
+	var logs []*logger.Entry
 
 	for i := 0; i < e.bufferSize; i++ {
 		if events.Value != nil {
 			event := events.Value.(event)
-			if event.Seq >= req.Offset && (req.Limit < 1 || len(clientEvents) < req.Limit) {
-				clientEvents = append(clientEvents, &event)
+			if event.Seq >= req.Offset && (req.Limit < 1 || len(logs) < req.Limit) {
+				// FIXME use ok instead?
+				logEntry, err := eventToLogEntry(&event)
+				if err != nil {
+					fmt.Println("failed to turn into to log event")
+					fmt.Println(err)
+					continue
+				}
+				logs = append(logs, logEntry)
 			}
 		}
 		events = events.Next()
 	}
-	return clientEvents
+	return logs
 }
 
 // handleAPIRequest handles HTTP API requests inbound to this actor.
