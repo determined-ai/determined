@@ -57,7 +57,7 @@ Version 0.13.2
 
 - WebUI: Persist the sort order and sort column for the experiments, tasks, and trials tables to local storage.
 
-- WebUI: Improve the default axis ranges for metrics charts. Also, update the range as new data points arrive.
+- WebUI: Improve the default axes' ranges for metrics charts. Also, update the range as new data points arrive.
 
 - Add a warning when the PyTorch LR scheduler incorrectly uses an unwrapped optimizer. When using PyTorch with Determined, LR schedulers should be constructed using an optimizer that has been wrapped via the :meth:`~determined.pytorch.PyTorchTrialContext.wrap_optimizer` method.
 
