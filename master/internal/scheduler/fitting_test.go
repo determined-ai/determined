@@ -12,13 +12,11 @@ import (
 
 func TestIsViable(t *testing.T) {
 	system := actor.NewSystem(t.Name())
-	task := newTask(&Task{
-		slotsNeeded: 2,
-	})
+	req := &AssignRequest{SlotsNeeded: 2}
 
-	assert.Assert(t, isViable(task, newMockAgent(t, system, "agent1", 4, ""), slotsSatisfied))
-	assert.Assert(t, !isViable(task, newMockAgent(t, system, "agent2", 1, ""), slotsSatisfied))
-	assert.Assert(t, !isViable(task,
+	assert.Assert(t, isViable(req, newMockAgent(t, system, "agent1", 4, ""), slotsSatisfied))
+	assert.Assert(t, !isViable(req, newMockAgent(t, system, "agent2", 1, ""), slotsSatisfied))
+	assert.Assert(t, !isViable(req,
 		newMockAgent(t, system, "agent4", 1, ""), slotsSatisfied))
 }
 
@@ -208,20 +206,20 @@ func TestFindFit(t *testing.T) {
 
 	for idx := range testCases {
 		tc := testCases[idx]
-		taskID := TaskID(fmt.Sprintf("task%d", idx))
+		reqID := RequestID(fmt.Sprintf("task%d", idx))
 
 		t.Run(tc.Name, func(t *testing.T) {
-			task := newTask(&Task{
-				ID:                  taskID,
-				slotsNeeded:         tc.SlotsNeeded,
-				agentLabel:          tc.TaskLabel,
-				fittingRequirements: tc.FittingRequirements,
-			})
+			req := &AssignRequest{
+				ID:                  reqID,
+				SlotsNeeded:         tc.SlotsNeeded,
+				Label:               tc.TaskLabel,
+				FittingRequirements: tc.FittingRequirements,
+			}
 
 			agent1 := newMockAgent(
 				t,
 				system,
-				fmt.Sprintf("agent-%s-a", taskID),
+				fmt.Sprintf("agent-%s-a", reqID),
 				tc.AgentCapacities[0],
 				tc.AgentLabels[0],
 			)
@@ -229,7 +227,7 @@ func TestFindFit(t *testing.T) {
 			agent2 := newMockAgent(
 				t,
 				system,
-				fmt.Sprintf("agent-%s-b", taskID),
+				fmt.Sprintf("agent-%s-b", reqID),
 				tc.AgentCapacities[1],
 				tc.AgentLabels[1],
 			)
@@ -239,7 +237,7 @@ func TestFindFit(t *testing.T) {
 				consumeSlots(index[0], tc.AgentOccupiedSlots[0])
 				consumeSlots(index[1], tc.AgentOccupiedSlots[1])
 			}
-			fits := findFits(task, agents, tc.FittingMethod)
+			fits := findFits(req, agents, tc.FittingMethod)
 			assert.Assert(t, len(fits) > 0)
 			assert.Equal(t, fits[0].Agent, index[tc.ExpectedAgentFit])
 		})
@@ -310,10 +308,11 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 				agentIndex[agent] = idx
 			}
 
-			fits := findDedicatedAgentFits(newTask(&Task{
-				slotsNeeded:         tc.SlotsNeeded,
-				fittingRequirements: tc.FittingRequirements,
-			}), agents, WorstFit)
+			req := &AssignRequest{
+				SlotsNeeded:         tc.SlotsNeeded,
+				FittingRequirements: tc.FittingRequirements,
+			}
+			fits := findDedicatedAgentFits(req, agents, WorstFit)
 
 			var agentFit sort.IntSlice
 			for _, fit := range fits {

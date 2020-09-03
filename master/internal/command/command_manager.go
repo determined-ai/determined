@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
+
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/labstack/echo"
 
@@ -103,7 +105,7 @@ func (c *commandManager) newCommand(req *commandRequest) *command {
 	setPodSpec(&config, c.taskContainerDefaults)
 
 	return &command{
-		taskID:    scheduler.NewTaskID(),
+		taskID:    scheduler.RequestID(uuid.New().String()),
 		config:    config,
 		userFiles: req.UserFiles,
 

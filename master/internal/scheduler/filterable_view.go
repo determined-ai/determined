@@ -6,10 +6,10 @@ import "github.com/determined-ai/determined/master/pkg/actor"
 // The `TaskSummary`s and `AgentSummary` should not be modified because a reference to
 // this struct is contained in another goroutine.
 type FilterableView struct {
-	tasks           map[TaskID]*TaskSummary
+	tasks           map[RequestID]*TaskSummary
 	filteredAgents  map[*actor.Ref]*AgentSummary
 	connectedAgents map[*actor.Ref]*AgentSummary
-	taskFilter      func(*Task) bool
+	taskFilter      func(*AssignRequest, *ResourceAssigned) bool
 	agentFilter     func(*agentState) bool
 }
 
@@ -17,7 +17,7 @@ type FilterableView struct {
 // provisioner cares about (1) idle agents (2) pending tasks.
 func newProvisionerView(provisionerSlotsPerInstance int) *FilterableView {
 	return &FilterableView{
-		tasks:           make(map[TaskID]*TaskSummary),
+		tasks:           make(map[RequestID]*TaskSummary),
 		filteredAgents:  make(map[*actor.Ref]*AgentSummary),
 		connectedAgents: make(map[*actor.Ref]*AgentSummary),
 		taskFilter:      schedulableTaskFilter(provisionerSlotsPerInstance),
@@ -25,14 +25,16 @@ func newProvisionerView(provisionerSlotsPerInstance int) *FilterableView {
 	}
 }
 
-func schedulableTaskFilter(provisionerSlotsPerInstance int) func(*Task) bool {
+func schedulableTaskFilter(
+	provisionerSlotsPerInstance int,
+) func(*AssignRequest, *ResourceAssigned) bool {
 	// We only tell the provisioner about pending tasks that are compatible with the
 	// provisioner's configured instance type.
-	return func(task *Task) bool {
-		slotsNeeded := task.SlotsNeeded()
+	return func(req *AssignRequest, assigned *ResourceAssigned) bool {
+		slotsNeeded := req.SlotsNeeded
 
 		switch {
-		case task.state != taskPending:
+		case assigned != nil && len(assigned.Assignments) > 0:
 			return false
 		// TODO(DET-4035): This code is duplicated from the fitting functions in the
 		// scheduler. To determine is a task is schedulable, we would ideally interface
@@ -48,7 +50,7 @@ func schedulableTaskFilter(provisionerSlotsPerInstance int) func(*Task) bool {
 }
 
 func idleAgentFilter(agent *agentState) bool {
-	return len(agent.containers) == 0
+	return agent.numUsedSlots() == 0 && len(agent.zeroSlotContainers) == 0
 }
 
 // Update updates the FilterableView with the current state of the cluster.
@@ -62,14 +64,13 @@ func (v *FilterableView) Update(rp *DefaultRP) (ViewSnapshot, bool) {
 }
 
 func (v *FilterableView) updateTasks(rp *DefaultRP) bool {
-	newTasks := make(map[TaskID]*TaskSummary)
+	newTasks := make(map[RequestID]*TaskSummary)
 
-	for iterator := rp.taskList.iterator(); iterator.next(); {
-		task := iterator.value()
+	for iterator := rp.reqList.iterator(); iterator.next(); {
+		req := iterator.value()
 
-		if v.taskFilter(task) {
-			taskSummary := newTaskSummary(task)
-			newTasks[task.ID] = &taskSummary
+		if v.taskFilter(req, rp.reqList.GetAssignments(req.Handler)) {
+			newTasks[req.ID] = getTaskSummary(rp.reqList, req.ID)
 		}
 	}
 

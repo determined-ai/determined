@@ -29,7 +29,7 @@ type event struct {
 	Seq      int       `json:"seq"`
 	Time     time.Time `json:"time"`
 
-	ScheduledEvent *scheduler.TaskID `json:"scheduled_event"`
+	ScheduledEvent *scheduler.RequestID `json:"scheduled_event"`
 	// AssignedEvent is triggered when the parent was assigned to an agent.
 	AssignedEvent *scheduler.ResourceAssigned `json:"assigned_event"`
 	// ContainerStartedEvent is triggered when the container started on an agent.

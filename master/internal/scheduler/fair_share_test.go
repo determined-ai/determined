@@ -26,15 +26,15 @@ func TestFairShare_Schedule_MaxSlots(t *testing.T) {
 	}
 
 	expected := []schedulerState{
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 1}},
-		{state: taskPending},
-		{state: taskPending},
-		{state: taskPending},
+		{containers: map[*agentState]int{agents[0]: 1}},
+		{containers: map[*agentState]int{}},
+		{containers: map[*agentState]int{}},
+		{containers: map[*agentState]int{}},
 
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 1}},
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 1}},
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 1}},
-		{state: taskPending},
+		{containers: map[*agentState]int{agents[0]: 1}},
+		{containers: map[*agentState]int{agents[0]: 1}},
+		{containers: map[*agentState]int{agents[0]: 1}},
+		{containers: map[*agentState]int{}},
 	}
 
 	c := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
@@ -64,17 +64,17 @@ func TestFairShare_Schedule_Weights(t *testing.T) {
 	}
 
 	expected := []schedulerState{
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 1}},
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 1}},
-		{state: taskPending},
+		{containers: map[*agentState]int{agents[0]: 1}},
+		{containers: map[*agentState]int{agents[0]: 1}},
+		{containers: map[*agentState]int{}},
 
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 1}},
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 1}},
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 1}},
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 1}},
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 1}},
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 1}},
-		{state: taskPending},
+		{containers: map[*agentState]int{agents[0]: 1}},
+		{containers: map[*agentState]int{agents[0]: 1}},
+		{containers: map[*agentState]int{agents[0]: 1}},
+		{containers: map[*agentState]int{agents[0]: 1}},
+		{containers: map[*agentState]int{agents[0]: 1}},
+		{containers: map[*agentState]int{agents[0]: 1}},
+		{containers: map[*agentState]int{}},
 	}
 
 	c := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
@@ -98,8 +98,8 @@ func TestFairShare_Schedule_MultiSlot(t *testing.T) {
 	}
 
 	expected := []schedulerState{
-		{state: taskRunning, containers: map[*agentState]int{agents[1]: 4}},
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 4}},
+		{containers: map[*agentState]int{agents[1]: 4}},
+		{containers: map[*agentState]int{agents[0]: 4}},
 	}
 
 	c := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
@@ -121,10 +121,10 @@ func TestFairShare_Schedule_MaxSlotsStartingTasks(t *testing.T) {
 	}
 
 	expected := []schedulerState{
-		{state: taskTerminating, containers: map[*agentState]int{agents[0]: 1}},
-		{state: taskTerminating, containers: map[*agentState]int{agents[0]: 1}},
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 1}},
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 1}},
+		{containers: map[*agentState]int{}},
+		{containers: map[*agentState]int{}},
+		{containers: map[*agentState]int{agents[0]: 1}},
+		{containers: map[*agentState]int{agents[0]: 1}},
 	}
 
 	c := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
@@ -154,9 +154,9 @@ func TestFairShare_Schedule_UnscheduledNewTasks(t *testing.T) {
 	}
 
 	expected := []schedulerState{
-		{state: taskPending},
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 1}},
-		{state: taskRunning, containers: map[*agentState]int{agents[1]: 1}},
+		{containers: map[*agentState]int{}},
+		{containers: map[*agentState]int{agents[0]: 1}},
+		{containers: map[*agentState]int{agents[1]: 1}},
 	}
 
 	c := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
@@ -181,8 +181,8 @@ func TestFairShare_Schedule_MultiSlotDeadlock(t *testing.T) {
 	}
 
 	expected := []schedulerState{
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 2}},
-		{state: taskPending},
+		{containers: map[*agentState]int{agents[0]: 2}},
+		{containers: map[*agentState]int{}},
 	}
 
 	c := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
@@ -205,8 +205,8 @@ func TestFairShare_Schedule_BigTask(t *testing.T) {
 	}
 
 	expected := []schedulerState{
-		{state: taskPending},
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 4}},
+		{containers: map[*agentState]int{}},
+		{containers: map[*agentState]int{agents[0]: 4}},
 	}
 
 	c := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
@@ -235,11 +235,11 @@ func TestFairShare_Schedule_ActiveTasks(t *testing.T) {
 	}
 
 	expected := []schedulerState{
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 3}},
-		{state: taskRunning, containers: map[*agentState]int{agents[1]: 1}},
-		{state: taskRunning, containers: map[*agentState]int{agents[1]: 1}},
-		{state: taskPending},
-		{state: taskRunning, containers: map[*agentState]int{agents[1]: 1}},
+		{containers: map[*agentState]int{agents[0]: 3}},
+		{containers: map[*agentState]int{agents[1]: 1}},
+		{containers: map[*agentState]int{agents[1]: 1}},
+		{containers: map[*agentState]int{}},
+		{containers: map[*agentState]int{agents[1]: 1}},
 	}
 
 	c := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
@@ -260,8 +260,8 @@ func TestFairShare_ScheduleNilGroup(t *testing.T) {
 	}
 
 	expected := []schedulerState{
-		{state: taskRunning, containers: map[*agentState]int{agents[0]: 4}},
-		{state: taskPending},
+		{containers: map[*agentState]int{agents[0]: 4}},
+		{containers: map[*agentState]int{}},
 	}
 
 	c := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
@@ -286,9 +286,9 @@ func TestFairShare_Schedule_Labels(t *testing.T) {
 	}
 
 	expected := []schedulerState{
-		{state: taskRunning, containers: map[*agentState]int{agents[1]: 4}},
-		{state: taskRunning, containers: map[*agentState]int{agents[2]: 1}},
-		{state: taskRunning, containers: map[*agentState]int{agents[2]: 0}},
+		{containers: map[*agentState]int{agents[1]: 4}},
+		{containers: map[*agentState]int{agents[2]: 1}},
+		{containers: map[*agentState]int{agents[2]: 0}},
 	}
 
 	c := setupCluster(NewPriorityScheduler(), BestFit, agents, tasks)

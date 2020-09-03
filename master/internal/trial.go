@@ -73,6 +73,7 @@ const (
 type (
 	killTrial    struct{}
 	restoreTrial struct{}
+	trialAborted struct{}
 
 	// This message is used to synchronize the trial workload sequencer with the searcher. It allows
 	// the searcher to get more operations to the trial workload sequencer as a result of the trial
@@ -97,7 +98,7 @@ type (
 	terminateTimeout struct{ runID int }
 
 	containerConnected struct {
-		ContainerID scheduler.ContainerID
+		ContainerID cproto.ID
 		socket      *websocket.Conn
 	}
 )
@@ -196,7 +197,7 @@ type trial struct {
 	earlyExit bool
 	killed    bool
 
-	task                       *scheduler.Task
+	resourceRequest            *scheduler.AssignRequest
 	pendingGracefulTermination bool
 	terminationSent            bool
 	cancelUnready              bool
@@ -288,6 +289,17 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	case sproto.ContainerLog:
 		t.processLog(ctx, msg)
 
+	case trialAborted:
+		// This is a hack to handle trial being aborted. Previously, the scheduler
+		// sends TaskTerminated and TaskAborted message to notify trial that the
+		// resources are released. Now, the trial sends ResourceReleased message
+		// to the scheduler to notify it releases the resources and receives no
+		// messages. This change on the message protocol making the previous way
+		// for the trial to handle canceling and pausing not work. To avoid
+		// fundamentally changing the trial logic, when a trial is being aborted,
+		// the trial send a message to itself to reuse the previous logic of handling
+		// canceling and pausing.
+
 	case actor.PostStop:
 		if !t.idSet {
 			return nil
@@ -312,14 +324,14 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		}
 		return nil
 	default:
-		if t.task != nil || t.replaying {
+		if t.resourceRequest != nil || t.replaying {
 			if err := t.runningReceive(ctx); err != nil {
 				return err
 			}
 		}
 	}
 
-	if t.task == nil {
+	if t.resourceRequest == nil {
 		if t.trialClosing() {
 			ctx.Self().Stop()
 		} else if !t.sequencer.UpToDate() && t.experimentState == model.ActiveState &&
@@ -331,7 +343,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				name = fmt.Sprintf("Trial %d", t.id)
 			}
 
-			t.task = ctx.Ask(t.rp, scheduler.AssignResource{
+			t.resourceRequest = &scheduler.AssignRequest{
 				Name:         fmt.Sprintf("%s (Experiment %d)", name, t.experiment.ID),
 				Group:        ctx.Self().Parent(),
 				SlotsNeeded:  slotsNeeded,
@@ -340,11 +352,11 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				FittingRequirements: scheduler.FittingRequirements{
 					SingleAgent: false,
 				},
-				TaskHandler: ctx.Self(),
-			}).Get().(*scheduler.Task)
+				Handler: ctx.Self(),
+			}
+			ctx.Tell(t.rp, *t.resourceRequest)
 		}
 	} else if t.experimentState != model.ActiveState {
-		ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID})
 		_ = t.processReleaseResource(ctx)
 	}
 
@@ -444,14 +456,12 @@ func (t *trial) processContainerMsg(ctx *actor.Context) error {
 		}
 
 	case sproto.ContainerStateChanged:
-		println(fmt.Sprint(msg.Container.ID))
 		if msg.Container.State != cproto.Assigned {
 			t.startedContainers[msg.Container.ID] = true
 		}
 
 		switch msg.Container.State {
 		case cproto.Running:
-			println("!@@#!@#!")
 			return t.processContainerRunning(ctx, msg)
 		case cproto.Terminated:
 			t.processContainerTerminated(ctx, msg)
@@ -581,7 +591,7 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.ResourceAssign
 	}
 
 	for _, a := range msg.Assignments {
-		a.StartContainer(tasks.TaskSpec{
+		a.StartContainer(ctx, tasks.TaskSpec{
 			StartContainer: &tasks.StartContainer{
 				ExperimentConfig:    t.experiment.Config,
 				ModelDefinition:     t.modelDefinition,
@@ -716,7 +726,7 @@ func (t *trial) processContainerConnected(ctx *actor.Context, msg containerConne
 	// If we have all of the container IDs from ContainerStarted messages, we can guard against
 	// stale containers trying to connect.
 	if len(t.containers) == t.numContainers {
-		if _, ok := t.containers[cproto.ID(msg.ContainerID)]; !ok {
+		if _, ok := t.containers[msg.ContainerID]; !ok {
 			ctx.Respond(errors.Errorf(
 				"socket connection from stale container: %s", msg.ContainerID))
 			return nil
@@ -724,7 +734,7 @@ func (t *trial) processContainerConnected(ctx *actor.Context, msg containerConne
 	}
 	a := api.WrapSocket(msg.socket, workload.CompletedMessage{}, false)
 	ref, _ := ctx.ActorOf(fmt.Sprintf("socket-%s", msg.ContainerID), a)
-	t.sockets[cproto.ID(msg.ContainerID)] = ref
+	t.sockets[msg.ContainerID] = ref
 	ctx.Respond(ref)
 
 	if err := t.pushRendezvous(ctx); err != nil {
@@ -766,7 +776,6 @@ func (t *trial) allReady(ctx *actor.Context) bool {
 	// order, it is not possible to detect which connections are from stale containers until after
 	// all of the ContainerStarted messages have arrived.
 	for id := range t.sockets {
-		print("ssss", id)
 		if _, ok := t.containers[id]; !ok {
 			ctx.Log().Warnf("detected stray socket for unknown container: %s", id)
 			t.killAndRemoveSocket(ctx, id)
@@ -780,7 +789,9 @@ func (t *trial) allReady(ctx *actor.Context) bool {
 // pushRendezvous gathers up the external addresses for the exposed ports and sends them to all the
 // containers in the trial.
 func (t *trial) pushRendezvous(ctx *actor.Context) error {
+	ctx.Log().Info("pushing rendezvous information")
 	if !t.allReady(ctx) {
+		ctx.Log().Info("found not all containers are connected")
 		return nil
 	}
 
@@ -879,7 +890,6 @@ func (t *trial) processContainerRunning(
 	t.containers[msg.Container.ID] = msg.Container
 	t.containerAddresses[msg.Container.ID] = msg.ContainerStarted.Addresses()
 	t.containerOrdinals[msg.Container.ID] = len(t.containerOrdinals)
-	print("ssss", msg.Container.ID)
 	if err := t.pushRendezvous(ctx); err != nil {
 		return errors.Wrap(err, "failed to push rendezvous to trial containers")
 	}
@@ -919,23 +929,7 @@ func (t *trial) processContainerTerminated(
 		t.terminate(ctx, true)
 	}
 
-	getLeaderState := func() (terminatedContainerWithState, bool) {
-		for _, c := range t.terminatedContainers {
-			if c.isLeader {
-				return c, true
-			}
-		}
-		return terminatedContainerWithState{}, false
-	}
-	status := aproto.ContainerError(aproto.AgentError, errors.New("no error status provided"))
-	if len(t.startedContainers) == 0 {
-		// If we have no containers, we haven't started executing anything, so
-		// let resetTrial reset our state rather than treating this as an error.
-		status = aproto.ContainerError(aproto.TaskAborted, errors.New("task aborted"))
-	} else if leaderState, ok := getLeaderState(); ok {
-		status = classifyStatus(leaderState)
-	}
-	t.resetTrial(ctx, status)
+	t.terminated(ctx)
 }
 
 func (t *trial) processLog(ctx *actor.Context, msg sproto.ContainerLog) {
@@ -967,14 +961,31 @@ func classifyStatus(state terminatedContainerWithState) aproto.ContainerStopped 
 	}
 }
 
-func (t *trial) resetTrial(
-	ctx *actor.Context,
-	status aproto.ContainerStopped,
-) {
+func (t *trial) terminated(ctx *actor.Context) {
+	// Get container termination states.
+	// If there are no containers terminated, consider as aborted.
+	getLeaderState := func() (terminatedContainerWithState, bool) {
+		for _, c := range t.terminatedContainers {
+			if c.isLeader {
+				return c, true
+			}
+		}
+		return terminatedContainerWithState{}, false
+	}
+	status := aproto.ContainerError(aproto.AgentError, errors.New("no error status provided"))
+	if len(t.startedContainers) == 0 {
+		// If we have no containers, we haven't started executing anything, so
+		// let resetTrial reset our state rather than treating this as an error.
+		status = aproto.ContainerError(aproto.TaskAborted, errors.New("task aborted"))
+	} else if leaderState, ok := getLeaderState(); ok {
+		status = classifyStatus(leaderState)
+	}
+
 	terminationSent := t.terminationSent
 
 	t.runID++
-	t.task = nil
+	t.resourceRequest = nil
+	ctx.Tell(t.rp, scheduler.ResourceReleased{Handler: ctx.Self()})
 	t.pendingGracefulTermination = false
 	t.terminationSent = false
 	t.terminatedContainers = nil
@@ -1001,6 +1012,7 @@ func (t *trial) resetTrial(
 		)
 		return
 	case status.Failure.FailureType == aproto.TaskAborted:
+		ctx.Log().Info("trial runner is aborted successfully")
 		return
 	}
 
@@ -1068,17 +1080,22 @@ func (t *trial) trialClosing() bool {
 }
 
 func (t *trial) terminate(ctx *actor.Context, kill bool) {
-	if kill {
+	switch {
+	case len(t.assignments) == 0:
+		ctx.Log().Info("aborting trial")
+		t.terminated(ctx)
+		ctx.Tell(ctx.Self(), trialAborted{})
+	case kill:
 		ctx.Log().Info("forcibly terminating trial")
-		if t.task != nil {
-			ctx.Tell(t.rp, scheduler.TerminateTask{TaskID: t.task.ID, Forcible: true})
+		if t.resourceRequest != nil {
 			if t.assignments != nil {
 				for _, assignment := range t.assignments {
-					assignment.KillContainer()
+					assignment.KillContainer(ctx)
 				}
 			}
+			ctx.Tell(t.rp, scheduler.ResourceReleased{Handler: ctx.Self()})
 		}
-	} else {
+	default:
 		ctx.Log().Info("gracefully terminating trial")
 		t.pendingGracefulTermination = true
 	}

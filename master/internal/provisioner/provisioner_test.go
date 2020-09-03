@@ -288,7 +288,7 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 	}
 	mock := newMockEnvironment(t, setup)
 
-	// StartContainer the master.
+	// Start the master.
 	mock.system.Ask(mock.provisioner, scheduler.ViewSnapshot{
 		IdleAgents: []*scheduler.AgentSummary{
 			{

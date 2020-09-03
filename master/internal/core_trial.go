@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
+	cproto "github.com/determined-ai/determined/master/pkg/container"
+
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/scheduler"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
@@ -137,7 +138,7 @@ func (m *Master) trialWebSocket(socket *websocket.Conn, c echo.Context) error {
 
 	// Notify the trial actor that a websocket is attempting to connect.
 	socketActor := m.system.Ask(resp.Get().(*actor.Ref),
-		containerConnected{ContainerID: scheduler.ContainerID(args.ContainerID), socket: socket})
+		containerConnected{ContainerID: cproto.ID(args.ContainerID), socket: socket})
 	actorRef, ok := socketActor.Get().(*actor.Ref)
 	if !ok {
 		// TODO: Handle the case when multiple containers have been assigned to execute the same

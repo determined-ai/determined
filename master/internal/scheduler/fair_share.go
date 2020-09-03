@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"fmt"
 	"sort"
 )
 
@@ -25,18 +26,27 @@ type groupState struct {
 	// offered is the number of slots that were offered to the group for scheduling.
 	offered int
 
-	// tasks contains the contents of both pendingTasks and runningTasks, as well as all
-	// terminating tasks.
-	tasks        []*Task
-	pendingTasks []*Task
-	runningTasks []*Task
+	// reqs contains the contents of both pendingReqs and assignedReqs.
+	reqs         []*AssignRequest
+	pendingReqs  []*AssignRequest
+	assignedReqs []*AssignRequest
+}
+
+func (g groupState) String() string {
+	address := ""
+	if g.handler != nil {
+		address = fmt.Sprint("", g.handler.Address())
+	}
+	return fmt.Sprintf("Group %s: disabled %v, slotDemand %v, activeSlots %v, offered %v",
+		address, g.disabled, g.slotDemand, g.activeSlots, g.offered)
 }
 
 func (f *fairShare) Schedule(rp *DefaultRP) {
-	for it := rp.taskList.iterator(); it.next(); {
-		task := it.value()
-		if task.SlotsNeeded() == 0 && task.state == taskPending {
-			rp.assignTask(task)
+	for it := rp.reqList.iterator(); it.next(); {
+		req := it.value()
+		assignments := rp.reqList.GetAssignments(req.Handler)
+		if req.SlotsNeeded == 0 && assignments == nil {
+			rp.assignResources(req)
 		}
 	}
 
@@ -75,34 +85,34 @@ func calculateGroupStates(rp *DefaultRP, capacities map[string]int) map[string][
 	// Demand is calculated by summing the slots needed for each schedulable task.
 	states := make(map[string][]*groupState)
 	groupMapping := make(map[*group]*groupState)
-	for it := rp.taskList.iterator(); it.next(); {
-		task := it.value()
-		if task.state == taskTerminated ||
-			task.SlotsNeeded() == 0 ||
-			task.SlotsNeeded() > capacities[task.agentLabel] {
+	for it := rp.reqList.iterator(); it.next(); {
+		req := it.value()
+		if req.SlotsNeeded == 0 || req.SlotsNeeded > capacities[req.Label] {
 			continue
 		}
-		state, ok := groupMapping[task.group]
+		group := rp.groups[req.Group]
+		state, ok := groupMapping[group]
 		if !ok {
 			state = &groupState{
-				group:    task.group,
+				group:    group,
 				disabled: false,
 			}
-			states[task.agentLabel] = append(states[task.agentLabel], state)
-			groupMapping[task.group] = state
+			states[req.Label] = append(states[req.Label], state)
+			groupMapping[group] = state
 		}
-		state.tasks = append(state.tasks, task)
+		state.reqs = append(state.reqs, req)
 	}
 	for _, group := range states {
 		for _, state := range group {
-			for _, task := range state.tasks {
-				state.slotDemand += task.SlotsNeeded()
-				switch task.state {
-				case taskPending:
-					state.pendingTasks = append(state.pendingTasks, task)
-				case taskRunning:
-					state.runningTasks = append(state.runningTasks, task)
-					state.activeSlots += task.SlotsNeeded()
+			for _, req := range state.reqs {
+				assigned := rp.reqList.GetAssignments(req.Handler)
+				state.slotDemand += req.SlotsNeeded
+				switch {
+				case assigned == nil || len(assigned.Assignments) == 0:
+					state.pendingReqs = append(state.pendingReqs, req)
+				case len(assigned.Assignments) > 0:
+					state.assignedReqs = append(state.assignedReqs, req)
+					state.activeSlots += req.SlotsNeeded
 				}
 			}
 			if state.maxSlots != nil {
@@ -188,7 +198,7 @@ func allocateSlotOffers(states []*groupState, capacity int) {
 				smallestAllocatableTask := calculateSmallestAllocatableTask(state)
 				if !state.disabled && state.offered != state.slotDemand &&
 					smallestAllocatableTask != nil &&
-					smallestAllocatableTask.SlotsNeeded() > state.offered {
+					smallestAllocatableTask.SlotsNeeded > state.offered {
 					capacity += state.offered
 					state.offered = 0
 					state.disabled = true
@@ -207,10 +217,10 @@ func allocateSlotOffers(states []*groupState, capacity int) {
 	}
 }
 
-func calculateSmallestAllocatableTask(state *groupState) (smallest *Task) {
-	for _, task := range state.pendingTasks {
-		if smallest == nil || task.SlotsNeeded() < smallest.SlotsNeeded() {
-			smallest = task
+func calculateSmallestAllocatableTask(state *groupState) (smallest *AssignRequest) {
+	for _, req := range state.pendingReqs {
+		if smallest == nil || req.SlotsNeeded < smallest.SlotsNeeded {
+			smallest = req
 		}
 	}
 	return smallest
@@ -222,12 +232,9 @@ func assignTasks(rp *DefaultRP, states []*groupState) {
 			// Terminate tasks while the count of slots consumed by active tasks is greater than
 			// the count of offered slots.
 			// TODO: We should terminate running tasks more intelligently.
-			for _, task := range state.runningTasks {
-				rp.terminateTask(task, false)
-				task.handler.System().Tell(task.handler, ReleaseResource{})
-				if task.state == taskTerminating {
-					state.activeSlots -= task.SlotsNeeded()
-				}
+			for _, req := range state.assignedReqs {
+				rp.releaseResource(req.Handler)
+				state.activeSlots -= req.SlotsNeeded
 				if state.activeSlots <= state.offered {
 					break
 				}
@@ -236,10 +243,10 @@ func assignTasks(rp *DefaultRP, states []*groupState) {
 			// Start tasks while there are still offered slots remaining. Because slots are not
 			// freed immediately, we cannot terminate and start tasks in the same scheduling call.
 			state.offered -= state.activeSlots
-			for _, task := range state.pendingTasks {
-				if task.SlotsNeeded() <= state.offered {
-					if ok := rp.assignTask(task); ok {
-						state.offered -= task.SlotsNeeded()
+			for _, req := range state.pendingReqs {
+				if req.SlotsNeeded <= state.offered {
+					if ok := rp.assignResources(req); ok {
+						state.offered -= req.SlotsNeeded
 					}
 				}
 			}

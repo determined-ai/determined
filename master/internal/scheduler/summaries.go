@@ -2,14 +2,11 @@ package scheduler
 
 import (
 	"time"
-
-	"github.com/determined-ai/determined/master/pkg/agent"
 )
 
 // TaskSummary contains information about a task for external display.
 type TaskSummary struct {
-	ID             TaskID             `json:"id"`
-	State          string             `json:"state"`
+	ID             RequestID          `json:"id"`
 	Name           string             `json:"name"`
 	RegisteredTime time.Time          `json:"registered_time"`
 	SlotsNeeded    int                `json:"slots_needed"`
@@ -18,7 +15,6 @@ type TaskSummary struct {
 
 func (summary1 *TaskSummary) equals(summary2 *TaskSummary) bool {
 	if summary1.ID != summary2.ID ||
-		summary1.State != summary2.State ||
 		summary1.Name != summary2.Name ||
 		summary1.RegisteredTime != summary2.RegisteredTime ||
 		summary1.SlotsNeeded != summary2.SlotsNeeded {
@@ -44,6 +40,23 @@ func (summary1 *TaskSummary) equals(summary2 *TaskSummary) bool {
 	return true
 }
 
+func newTaskSummary(request *AssignRequest, assigned *ResourceAssigned) TaskSummary {
+	// Summary returns a new immutable view of the task state.
+	containerSummaries := make([]ContainerSummary, 0)
+	if assigned != nil {
+		for _, c := range assigned.Assignments {
+			containerSummaries = append(containerSummaries, c.Summary())
+		}
+	}
+	return TaskSummary{
+		ID:             request.ID,
+		Name:           request.Name,
+		RegisteredTime: request.Handler.RegisteredTime(),
+		SlotsNeeded:    request.SlotsNeeded,
+		Containers:     containerSummaries,
+	}
+}
+
 // AgentSummary contains information about an agent for external display.
 type AgentSummary struct {
 	Name string `json:"name"`
@@ -55,12 +68,9 @@ func (summary1 *AgentSummary) equals(summary2 *AgentSummary) bool {
 
 // ContainerSummary contains information about a task container for external display.
 type ContainerSummary struct {
-	TaskID     TaskID                  `json:"task_id"`
-	ID         ContainerID             `json:"id"`
-	State      string                  `json:"state"`
-	Agent      string                  `json:"agent"`
-	ExitStatus *agent.ContainerStopped `json:"exit_status"`
-	IsLeader   bool                    `json:"is_leader"`
+	TaskID RequestID   `json:"task_id"`
+	ID     ContainerID `json:"id"`
+	Agent  string      `json:"agent"`
 }
 
 // newAgentSummary returns a new immutable view of the agent.
@@ -70,30 +80,19 @@ func newAgentSummary(state *agentState) AgentSummary {
 	}
 }
 
-// newTaskSummary returns a new immutable view of the task state.
-func newTaskSummary(task *Task) TaskSummary {
-	containerSummaries := make([]ContainerSummary, 0, len(task.containers))
-	for _, c := range task.containers {
-		containerSummaries = append(containerSummaries, newContainerSummary(c))
+func getTaskSummary(reqList *assignRequestList, id RequestID) *TaskSummary {
+	if req, ok := reqList.GetByID(id); ok {
+		summary := newTaskSummary(req, reqList.GetAssignments(req.Handler))
+		return &summary
 	}
-	return TaskSummary{
-		ID:             task.ID,
-		Name:           task.name,
-		RegisteredTime: task.handler.RegisteredTime(),
-		State:          string(task.state),
-		SlotsNeeded:    task.SlotsNeeded(),
-		Containers:     containerSummaries,
-	}
+	return nil
 }
 
-// newContainerSummary returns a snapshot view of the container state.
-func newContainerSummary(c *container) ContainerSummary {
-	return ContainerSummary{
-		TaskID:     c.task.ID,
-		ID:         c.id,
-		State:      string(c.state),
-		Agent:      c.agent.handler.Address().Local(),
-		ExitStatus: c.exitStatus,
-		IsLeader:   c.IsLeader(),
+func getTaskSummaries(reqList *assignRequestList) map[RequestID]TaskSummary {
+	ret := make(map[RequestID]TaskSummary)
+	for it := reqList.iterator(); it.next(); {
+		req := it.value()
+		ret[req.ID] = newTaskSummary(req, reqList.GetAssignments(req.Handler))
 	}
+	return ret
 }

@@ -23,12 +23,12 @@ func newCustomGroup(
 	t *testing.T,
 	system *actor.System,
 	id string,
-	slots int,
+	maxSlots int,
 	weight float64,
 ) *actor.Ref {
 	ref, created := system.ActorOf(
 		actor.Addr(id),
-		&mockGroup{maxSlots: &slots, weight: weight},
+		&mockGroup{maxSlots: &maxSlots, weight: weight},
 	)
 	assert.Assert(t, created)
 	return ref
@@ -81,13 +81,13 @@ func newMockTask(
 func (t *mockTask) Receive(ctx *actor.Context) error {
 	switch ctx.Message().(type) {
 	case ResourceAssigned:
+	case ReleaseResource:
 	case getSlots:
 		ctx.Respond(t.slotsNeeded)
 	case getGroup:
 		ctx.Respond(t.group)
 	case getLabel:
 		ctx.Respond(t.label)
-	case ReleaseResource:
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
 	}
@@ -116,9 +116,7 @@ func (m mockAgent) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case sproto.StartTaskOnAgent:
 		if ctx.ExpectingResponse() {
-			ctx.Respond(newTask(&Task{
-				handler: msg.Task,
-			}))
+			ctx.Respond(msg.Task)
 		}
 
 	default:
@@ -128,7 +126,6 @@ func (m mockAgent) Receive(ctx *actor.Context) error {
 }
 
 type schedulerState struct {
-	state      taskState
 	containers map[*agentState]int
 }
 
@@ -144,10 +141,7 @@ func setupCluster(
 		harnessPath:           "/opt/determined",
 		taskContainerDefaults: model.TaskContainerDefaultsConfig{},
 
-		taskList:       newTaskList(),
-		tasksByHandler: make(map[*actor.Ref]*Task),
-		tasksByID:      make(map[TaskID]*Task),
-
+		reqList:         newAssignRequestList(),
 		provisionerView: newProvisionerView(0),
 
 		reschedule: false,
@@ -164,20 +158,21 @@ func setupCluster(
 		slots := system.Ask(handler, getSlots{}).Get().(int)
 		label := system.Ask(handler, getLabel{}).Get().(string)
 
-		d.addTask(&Task{
-			ID:           TaskID(handler.Address().String()),
-			name:         handler.Address().Local(),
-			group:        d.getOrCreateGroup(g, nil),
-			handler:      handler,
-			slotsNeeded:  slots,
-			canTerminate: true,
-			agentLabel:   label,
-		})
+		d.addRequest(&AssignRequest{
+			ID:           RequestID(handler.Address().String()),
+			Name:         handler.Address().Local(),
+			Group:        g,
+			Handler:      handler,
+			SlotsNeeded:  slots,
+			CanTerminate: true,
+			Label:        label,
+		}, nil)
+		_ = d.getOrCreateGroup(nil, g)
 		if resp := system.Ask(g, getMaxSlots{}); resp.Get() != nil {
-			d.getOrCreateGroup(g, nil).maxSlots = resp.Get().(*int)
+			d.getOrCreateGroup(nil, g).maxSlots = resp.Get().(*int)
 		}
 		if resp := system.Ask(g, getWeight{}); resp.Get() != nil {
-			d.getOrCreateGroup(g, nil).weight = resp.Get().(float64)
+			d.getOrCreateGroup(nil, g).weight = resp.Get().(float64)
 		}
 	}
 	return &d
@@ -187,25 +182,31 @@ func assertSchedulerState(
 	t *testing.T, rp *DefaultRP, actual []*actor.Ref, expected []schedulerState,
 ) {
 	for index, handler := range actual {
-		task := rp.tasksByHandler[handler]
 		expectedState := expected[index]
-		assert.Equal(t, task.state, expectedState.state, "task %d has an incorrect state", index)
-		if task.state != taskPending {
-			actualContainers := make(map[*agentState]int)
-			for _, container := range task.containers {
+		actualAssigned := rp.reqList.GetAssignments(handler)
+		actualContainers := make(map[*agentState]int)
+		if actualAssigned != nil {
+			for _, assignment := range actualAssigned.Assignments {
+				container := assignment.(*containerAssignment).container
 				actualContainers[container.agent] = container.slots
 			}
-			assert.DeepEqual(t, expectedState.containers, actualContainers)
-		} else {
-			assert.Equal(t, len(task.containers), 0,
-				"Pending task %d has a scheduled container", index)
 		}
+		assert.DeepEqual(t, expectedState.containers, actualContainers)
 	}
 	assert.Equal(t, len(actual), len(expected),
 		"actual tasks and expected task states must have the same length")
 }
 
 func forceSchedule(rp *DefaultRP, handler *actor.Ref, agent *agentState) {
-	task := rp.tasksByHandler[handler]
-	rp.assignContainer(task, agent, task.SlotsNeeded(), 1)
+	req, _ := rp.reqList.Get(handler)
+	assigned := rp.reqList.GetAssignments(handler)
+	if assigned == nil {
+		assigned = &ResourceAssigned{}
+	}
+	assigned.Assignments = append(assigned.Assignments, &containerAssignment{
+		req:       req,
+		agent:     agent,
+		container: newContainer(req, agent, req.SlotsNeeded, 1),
+	})
+	rp.reqList.SetAssignments(handler, assigned)
 }

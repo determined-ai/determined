@@ -4,19 +4,18 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/google/uuid"
+
+	cproto "github.com/determined-ai/determined/master/pkg/container"
+
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-func (d *DefaultRP) addTask(inTask *Task) *Task {
-	task := newTask(inTask)
-
-	d.tasksByID[task.ID] = task
-	d.tasksByHandler[task.handler] = task
-	d.taskList.Add(task)
-
-	return task
+func (d *DefaultRP) addRequest(req *AssignRequest, assigned *ResourceAssigned) {
+	d.reqList.Add(req)
+	d.reqList.SetAssignments(req.Handler, assigned)
 }
 
 func (d *DefaultRP) addAgent(
@@ -59,23 +58,18 @@ func createAgent(
 	numZeroSlotContainers int,
 ) *agentState {
 	state := newMockAgent(t, system, agentID, numSlots, "")
-	state.containers = createContainers(agentID+"-c", numUsedSlots, numZeroSlotContainers)
-	return state
-}
-
-func createContainers(
-	idPrefix string,
-	numSlots int,
-	numZeroSlotContainers int,
-) map[ContainerID]*container {
-	containers := make(map[ContainerID]*container)
-	for i := 0; i < numSlots; i++ {
-		containers[ContainerID(fmt.Sprintf("%s-%d", idPrefix, i))] = &container{slots: 1}
+	i := 0
+	for ix := range state.devices {
+		if i < numUsedSlots {
+			id := cproto.ID(uuid.New().String())
+			state.devices[ix] = &id
+		}
 	}
 	for i := 0; i < numZeroSlotContainers; i++ {
-		containers[ContainerID(fmt.Sprintf("%s-%d", idPrefix, i))] = &container{slots: 0}
+		id := cproto.ID(uuid.New().String())
+		state.zeroSlotContainers[&id] = true
 	}
-	return containers
+	return state
 }
 
 func (snapshot1 *ViewSnapshot) isSubset(snapshot2 *ViewSnapshot) bool {
@@ -171,19 +165,22 @@ func addTask(
 	system *actor.System,
 	d *DefaultRP,
 	taskID string,
-	state taskState,
+	numAssigned int,
 	slotsNeeded int,
-) *Task {
-	task := d.addTask(&Task{
-		ID:           TaskID(taskID),
-		group:        d.getOrCreateGroup(newGroup(t, system, taskID+"-group"), nil),
-		handler:      newGroup(t, system, taskID+"-handler"),
-		slotsNeeded:  slotsNeeded,
-		canTerminate: true,
-		state:        taskPending,
-	})
-	task.state = state
-	return task
+) *AssignRequest {
+	req := &AssignRequest{
+		ID:           RequestID(taskID),
+		Group:        newGroup(t, system, taskID+"-group"),
+		Handler:      newGroup(t, system, taskID+"-handler"),
+		SlotsNeeded:  slotsNeeded,
+		CanTerminate: true,
+	}
+	assigned := &ResourceAssigned{Assignments: []Assignment{}}
+	for i := 0; i < numAssigned; i++ {
+		assigned.Assignments = append(assigned.Assignments, containerAssignment{})
+	}
+	d.addRequest(req, assigned)
+	return req
 }
 
 func TestBasic(t *testing.T) {
@@ -193,9 +190,9 @@ func TestBasic(t *testing.T) {
 	var tasks []*actor.Ref
 	d := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
 	d.provisionerView = newProvisionerView(4)
-	addTask(t, system, d, "task1", taskRunning, 1)
-	addTask(t, system, d, "task2", taskPending, 1)
-	addTask(t, system, d, "task3", taskPending, 5)
+	addTask(t, system, d, "task1", 1, 1)
+	addTask(t, system, d, "task2", 0, 1)
+	addTask(t, system, d, "task3", 0, 5)
 
 	snapshot1, updated := d.provisionerView.Update(d)
 
@@ -211,13 +208,12 @@ func TestNoUpdate(t *testing.T) {
 	var tasks []*actor.Ref
 	c := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
 	c.provisionerView = newProvisionerView(4)
-	addTask(t, system, c, "task1", taskRunning, 1)
-	addTask(t, system, c, "task2", taskPending, 1)
+	addTask(t, system, c, "task1", 1, 1)
+	addTask(t, system, c, "task2", 0, 1)
 
 	snapshot1, _ := c.provisionerView.Update(c)
-	addTask(t, system, c, "task3", taskRunning, 1)
-	addTask(t, system, c, "task4", taskTerminated, 1)
-	addTask(t, system, c, "task5", taskTerminating, 1)
+	addTask(t, system, c, "task3", 1, 1)
+	c.addAgent(t, system, "agent-a", 4, 1, 0)
 
 	snapshot2, updated := c.provisionerView.Update(c)
 	assert.Check(t, !updated)
@@ -230,14 +226,12 @@ func TestAddTask(t *testing.T) {
 	var tasks []*actor.Ref
 	c := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
 	c.provisionerView = newProvisionerView(4)
-	addTask(t, system, c, "task1", taskRunning, 1)
-	addTask(t, system, c, "task2", taskPending, 1)
+	addTask(t, system, c, "task1", 1, 1)
+	addTask(t, system, c, "task2", 0, 1)
 
 	snapshot1, _ := c.provisionerView.Update(c)
-	addTask(t, system, c, "task3", taskPending, 1)
-	addTask(t, system, c, "task4", taskRunning, 1)
-	addTask(t, system, c, "task5", taskTerminated, 1)
-	addTask(t, system, c, "task6", taskTerminating, 1)
+	addTask(t, system, c, "task3", 0, 1)
+	addTask(t, system, c, "task4", 1, 1)
 	snapshot2, updated := c.provisionerView.Update(c)
 
 	isSubset := snapshot1.isSubset(&snapshot2)
@@ -255,8 +249,8 @@ func TestAddIdleAgent(t *testing.T) {
 	var tasks []*actor.Ref
 	c := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
 	c.provisionerView = newProvisionerView(4)
-	addTask(t, system, c, "task1", taskRunning, 1)
-	addTask(t, system, c, "task2", taskPending, 1)
+	addTask(t, system, c, "task1", 1, 1)
+	addTask(t, system, c, "task2", 0, 1)
 
 	snapshot1, _ := c.provisionerView.Update(c)
 	c.addAgent(t, system, "agent-a1", 4, 0, 0)
@@ -302,7 +296,7 @@ func TestTaskStateChange(t *testing.T) {
 	var tasks []*actor.Ref
 	c := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
 	c.provisionerView = newProvisionerView(4)
-	pendingTask := addTask(t, system, c, "task1", taskPending, 1)
+	pendingTask := addTask(t, system, c, "task1", 0, 1)
 
 	snapshot1, updated := c.provisionerView.Update(c)
 
@@ -311,7 +305,9 @@ func TestTaskStateChange(t *testing.T) {
 	assert.Equal(t, 6, len(snapshot1.ConnectedAgents))
 	assert.Check(t, updated)
 
-	pendingTask.mustTransition(taskRunning)
+	c.reqList.SetAssignments(pendingTask.Handler, &ResourceAssigned{
+		Assignments: make([]Assignment, 1),
+	})
 
 	snapshot2, updated := c.provisionerView.Update(c)
 
@@ -327,7 +323,7 @@ func TestTaskSlotsNeededChange(t *testing.T) {
 	var tasks []*actor.Ref
 	c := setupCluster(NewFairShareScheduler(), BestFit, agents, tasks)
 	c.provisionerView = newProvisionerView(4)
-	pendingTask := addTask(t, system, c, "task1", taskPending, 1)
+	pendingTask := addTask(t, system, c, "task1", 0, 1)
 
 	snapshot1, updated := c.provisionerView.Update(c)
 
@@ -336,7 +332,7 @@ func TestTaskSlotsNeededChange(t *testing.T) {
 	assert.Equal(t, 6, len(snapshot1.ConnectedAgents))
 	assert.Check(t, updated)
 
-	pendingTask.slotsNeeded = 4
+	pendingTask.SlotsNeeded = 4
 
 	snapshot2, updated := c.provisionerView.Update(c)
 
@@ -360,7 +356,14 @@ func TestAgentStateChange(t *testing.T) {
 	assert.Equal(t, 6, len(snapshot1.ConnectedAgents))
 	assert.Check(t, updated)
 
-	agents[0].containers = createContainers("agent-c", 1, 0)
+	i := 0
+	for d := range agents[0].devices {
+		if i == 0 {
+			id := cproto.ID(uuid.New().String())
+			agents[0].devices[d] = &id
+		}
+		i++
+	}
 
 	snapshot2, updated := c.provisionerView.Update(c)
 

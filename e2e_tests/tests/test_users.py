@@ -141,7 +141,7 @@ def activate_deactivate_user(
         ["-u", a_username, "user", "activate" if active else "deactivate", target_user]
     )
     expected_password_prompt = "Password for user '{}':".format(a_username)
-    i = child.expect([expected_password_prompt, pexpect.EOF])
+    i = child.expect([expected_password_prompt, pexpect.EOF], timeout=EXPECT_TIMEOUT)
     if i == 0:
         child.sendline(a_password)
 

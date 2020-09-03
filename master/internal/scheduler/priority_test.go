@@ -23,9 +23,9 @@ func TestPriority_Schedule_Labels(t *testing.T) {
 	}
 
 	expected := []schedulerState{
-		{state: taskRunning, containers: map[*agentState]int{agents[1]: 4}},
-		{state: taskRunning, containers: map[*agentState]int{agents[2]: 1}},
-		{state: taskRunning, containers: map[*agentState]int{agents[2]: 0}},
+		{containers: map[*agentState]int{agents[1]: 4}},
+		{containers: map[*agentState]int{agents[2]: 1}},
+		{containers: map[*agentState]int{agents[2]: 0}},
 	}
 
 	c := setupCluster(NewPriorityScheduler(), BestFit, agents, tasks)

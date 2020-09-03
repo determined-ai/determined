@@ -16,6 +16,7 @@ func (r *requestProcessingWorker) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		ctx.Tell(ctx.Self().Parent(), workerAvailable{})
+	case actor.PostStop:
 
 	case createKubernetesResources:
 		r.receiveCreateKubernetesResources(ctx, msg)

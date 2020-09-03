@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
+
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/labstack/echo"
 
@@ -126,7 +128,7 @@ func (s *shellManager) newShell(
 		)
 	}
 
-	taskID := scheduler.NewTaskID()
+	taskID := scheduler.RequestID(uuid.New().String())
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
 
 	// Select a random port from the range to assign to sshd. In host

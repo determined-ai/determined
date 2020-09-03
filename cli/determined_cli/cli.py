@@ -49,35 +49,19 @@ def list_tasks(args: Namespace) -> None:
             return agent
         return [c["agent"] for c in containers]
 
-    def get_state_rank(state: str) -> int:
-        if state == "PENDING":
-            return 0
-        if state == "RUNNING":
-            return 1
-        if state == "TERMINATING":
-            return 2
-        if state == "TERMINATED":
-            return 3
-        return 4
-
     tasks = r.json()
-    headers = ["ID", "Name", "Slots Needed", "Registered Time", "State", "Agent", "Exit Status"]
+    headers = ["ID", "Name", "Slots Needed", "Registered Time", "Agent"]
     values = [
         [
-            task_id,
+            task["id"],
             task["name"],
             task["slots_needed"],
             render.format_time(task["registered_time"]),
-            task["state"],
             agent_info(task),
-            task["exit_status"] if task.get("exit_status", None) else "N/A",
         ]
         for task_id, task in sorted(
             tasks.items(),
-            key=lambda tup: (
-                get_state_rank(tup[1]["state"]),
-                render.format_time(tup[1]["registered_time"]),
-            ),
+            key=lambda tup: (render.format_time(tup[1]["registered_time"]),),
         )
     ]
 

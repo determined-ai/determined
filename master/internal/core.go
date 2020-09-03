@@ -520,7 +520,6 @@ func (m *Master) Run() error {
 	tasksGroup := m.echo.Group("/tasks", authFuncs...)
 	tasksGroup.GET("", api.Route(m.getTasks))
 	tasksGroup.GET("/:task_id", api.Route(m.getTask))
-	tasksGroup.DELETE("/:task_id", api.Route(m.deleteTask))
 
 	trialsGroup := m.echo.Group("/trials", authFuncs...)
 	trialsGroup.GET("/:trial_id", api.Route(m.getTrial))

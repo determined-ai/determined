@@ -96,7 +96,8 @@ func TestRendezvousInfo(t *testing.T) {
 	trial := &trial{
 		rp:                 rp,
 		experiment:         &model.Experiment{},
-		task:               &scheduler.Task{},
+		resourceRequest:    &scheduler.AssignRequest{},
+		experimentState:    model.ActiveState,
 		numContainers:      len(addresses),
 		startedContainers:  make(map[cproto.ID]bool),
 		containers:         make(map[cproto.ID]cproto.Container),

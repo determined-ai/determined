@@ -11,11 +11,11 @@ import (
 )
 
 // HardConstraint returns true if the task can be assigned to the agent and false otherwise.
-type HardConstraint func(task *Task, agent *agentState) bool
+type HardConstraint func(req *AssignRequest, agent *agentState) bool
 
 // SoftConstraint returns a score from 0 (lowest) to 1 (highest) representing how optimal is the
 // state of the cluster if the task were assigned to the agent.
-type SoftConstraint func(task *Task, agent *agentState) float64
+type SoftConstraint func(req *AssignRequest, agent *agentState) float64
 
 // fittingState is the basis for assigning a task to one or more agents for execution.
 type fittingState struct {
@@ -64,26 +64,26 @@ func (c candidateList) Swap(i, j int) {
 }
 
 func findFits(
-	task *Task, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
+	req *AssignRequest, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 ) []*fittingState {
 	// TODO(DET-4035): Some of this code is duplicated in filterable_view.go to prevent
 	// the provisioner from scaling up for jobs that can never be scheduled in the
 	// current cluster configuration.
-	if fit := findSharedAgentFit(task, agents, fittingMethod); fit != nil {
+	if fit := findSharedAgentFit(req, agents, fittingMethod); fit != nil {
 		return []*fittingState{fit}
 	}
-	if task.fittingRequirements.SingleAgent || task.slotsNeeded <= 1 {
+	if req.FittingRequirements.SingleAgent || req.SlotsNeeded <= 1 {
 		return nil
 	}
-	if fits := findDedicatedAgentFits(task, agents, fittingMethod); len(fits) != 0 {
+	if fits := findDedicatedAgentFits(req, agents, fittingMethod); len(fits) != 0 {
 		return fits
 	}
 	return nil
 }
 
-func isViable(task *Task, agent *agentState, constraints ...HardConstraint) bool {
+func isViable(req *AssignRequest, agent *agentState, constraints ...HardConstraint) bool {
 	for _, constraint := range constraints {
-		if !constraint(task, agent) {
+		if !constraint(req, agent) {
 			return false
 		}
 	}
@@ -91,7 +91,7 @@ func isViable(task *Task, agent *agentState, constraints ...HardConstraint) bool
 }
 
 func findDedicatedAgentFits(
-	task *Task, agentStates map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
+	req *AssignRequest, agentStates map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 ) []*fittingState {
 	if len(agentStates) == 0 {
 		return nil
@@ -109,7 +109,7 @@ func findDedicatedAgentFits(
 		}
 
 		constraints := []HardConstraint{labelSatisfied}
-		if isViable(task, agent, constraints...) {
+		if isViable(req, agent, constraints...) {
 			agentsByNumSlots[agent.numEmptySlots()] = append(agentsByNumSlots[agent.numEmptySlots()], agent)
 		}
 	}
@@ -129,12 +129,12 @@ func findDedicatedAgentFits(
 			continue
 		}
 
-		if s := task.SlotsNeeded(); s%n != 0 {
+		if s := req.SlotsNeeded; s%n != 0 {
 			continue
 		}
 
 		maxSlots := len(agentsByNumSlots[n]) * n
-		if s := task.SlotsNeeded(); maxSlots >= s {
+		if s := req.SlotsNeeded; maxSlots >= s {
 			candidateNumSlots = n
 			break
 		}
@@ -144,7 +144,7 @@ func findDedicatedAgentFits(
 		log.Infof("Task: %s which requires %d slots, can not be scheduled onto multiple agents "+
 			"in the current cluster configuration. When running on multiple agents, number of "+
 			"slots per trial must be either set to 1 or a multiple of the GPUs per agent.",
-			task.ID, task.SlotsNeeded(),
+			req.ID, req.SlotsNeeded,
 		)
 		return nil
 	}
@@ -153,15 +153,15 @@ func findDedicatedAgentFits(
 	for _, agent := range agentsByNumSlots[candidateNumSlots] {
 		candidates = append(candidates, &fittingState{
 			Agent:        agent,
-			Score:        fittingMethod(task, agent),
-			HashDistance: hashDistance(task, agent),
+			Score:        fittingMethod(req, agent),
+			HashDistance: hashDistance(req, agent),
 		})
 	}
 
 	sort.Sort(candidates)
 
-	numContainers := task.SlotsNeeded() / candidateNumSlots
-	slotsPerContainer := task.SlotsNeeded() / numContainers
+	numContainers := req.SlotsNeeded / candidateNumSlots
+	slotsPerContainer := req.SlotsNeeded / numContainers
 	fits := candidates[:numContainers]
 	for _, c := range fits {
 		c.Slots = slotsPerContainer
@@ -171,18 +171,18 @@ func findDedicatedAgentFits(
 }
 
 func findSharedAgentFit(
-	task *Task, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
+	req *AssignRequest, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 ) *fittingState {
 	var candidates candidateList
 	for _, agent := range agents {
-		if !isViable(task, agent, slotsSatisfied, labelSatisfied) {
+		if !isViable(req, agent, slotsSatisfied, labelSatisfied) {
 			continue
 		}
 
 		candidates = append(candidates, &fittingState{
 			Agent:        agent,
-			Score:        fittingMethod(task, agent),
-			HashDistance: hashDistance(task, agent),
+			Score:        fittingMethod(req, agent),
+			HashDistance: hashDistance(req, agent),
 		})
 	}
 
@@ -192,7 +192,7 @@ func findSharedAgentFit(
 
 	sort.Sort(candidates)
 
-	candidates[0].Slots = task.SlotsNeeded()
+	candidates[0].Slots = req.SlotsNeeded
 	return candidates[0]
 }
 
@@ -202,6 +202,6 @@ func stringHashNumber(s string) uint64 {
 	return binary.LittleEndian.Uint64(hash[:])
 }
 
-func hashDistance(task *Task, agent *agentState) uint64 {
-	return stringHashNumber(string(task.ID)) - stringHashNumber(agent.handler.Address().String())
+func hashDistance(req *AssignRequest, agent *agentState) uint64 {
+	return stringHashNumber(string(req.ID)) - stringHashNumber(agent.handler.Address().String())
 }

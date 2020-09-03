@@ -7,17 +7,15 @@ import (
 	"net/url"
 	"time"
 
-	aproto "github.com/determined-ai/determined/master/pkg/agent"
-
-	"github.com/determined-ai/determined/master/internal/proxy"
-
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/scheduler"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
+	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -72,7 +70,7 @@ type command struct {
 	owner          commandOwner
 	agentUserGroup *model.AgentUserGroup
 
-	taskID               scheduler.TaskID
+	taskID               scheduler.RequestID
 	userFiles            archive.Archive
 	additionalFiles      archive.Archive
 	harnessPath          string
@@ -103,8 +101,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 		// Schedule the command with the cluster.
 		c.rps = ctx.Self().System().Get(actor.Addr("resourceProviders"))
 		c.proxy = ctx.Self().System().Get(actor.Addr("proxy"))
-		ctx.Tell(c.rps, scheduler.AssignResource{
-			ID:           &c.taskID,
+		ctx.Tell(c.rps, scheduler.AssignRequest{
+			ID:           c.taskID,
 			Name:         c.config.Description,
 			SlotsNeeded:  c.config.Resources.Slots,
 			Label:        c.config.Resources.AgentLabel,
@@ -112,7 +110,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 			FittingRequirements: scheduler.FittingRequirements{
 				SingleAgent: true,
 			},
-			TaskHandler: ctx.Self(),
+			Handler: ctx.Self(),
 		})
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ScheduledEvent: &c.taskID})
 
@@ -232,7 +230,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case scheduler.ResourceAssigned:
 		c.assignment = msg.Assignments[0]
-		msg.Assignments[0].StartContainer(tasks.TaskSpec{
+		msg.Assignments[0].StartContainer(ctx, tasks.TaskSpec{
 			StartCommand: &tasks.StartCommand{
 				AgentUserGroup:  c.agentUserGroup,
 				Config:          c.config,
@@ -288,11 +286,11 @@ func (c *command) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 
 func (c *command) terminate(ctx *actor.Context) {
 	ctx.Log().Info("terminating")
-	ctx.Ask(c.rps, scheduler.TerminateTask{TaskID: c.taskID, Forcible: true}).Get()
+	ctx.Tell(c.rps, scheduler.ResourceReleased{Handler: ctx.Self()})
 	if c.assignment != nil {
-		c.assignment.KillContainer()
+		c.assignment.KillContainer(ctx)
 	} else {
-		ctx.Log().Warn("found no started container")
+		c.exit(ctx, "command terminated without being scheduled")
 	}
 	if msg, ok := ctx.Message().(scheduler.ReleaseResource); ok {
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), TerminateRequestEvent: &msg})
@@ -312,6 +310,7 @@ func (c *command) readinessChecksPass(ctx *actor.Context, log sproto.ContainerLo
 func (c *command) exit(ctx *actor.Context, exitStatus string) {
 	c.exitStatus = &exitStatus
 	ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ExitedEvent: c.exitStatus})
+	ctx.Tell(c.rps, scheduler.ResourceReleased{Handler: ctx.Self()})
 	actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 }
 

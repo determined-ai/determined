@@ -15,19 +15,21 @@ func NewPriorityScheduler() Scheduler {
 func (p *priorityScheduler) Schedule(rp *DefaultRP) {
 	var states []*groupState
 	groupMapping := make(map[*group]*groupState)
-	for it := rp.taskList.iterator(); it.next(); {
-		task := it.value()
-		state, ok := groupMapping[task.group]
+	for it := rp.reqList.iterator(); it.next(); {
+		req := it.value()
+		group := rp.groups[req.Group]
+		state, ok := groupMapping[group]
 		if !ok {
-			state = &groupState{group: task.group}
+			state = &groupState{group: group}
 			states = append(states, state)
-			groupMapping[task.group] = state
+			groupMapping[group] = state
 		}
-		switch task.state {
-		case taskPending:
-			state.pendingTasks = append(state.pendingTasks, task)
-		case taskRunning, taskTerminating:
-			state.activeSlots += task.SlotsNeeded()
+		assigned := rp.reqList.GetAssignments(req.Handler)
+		switch {
+		case assigned == nil || len(assigned.Assignments) == 0:
+			state.pendingReqs = append(state.pendingReqs, req)
+		default:
+			state.activeSlots += req.SlotsNeeded
 		}
 	}
 
@@ -42,9 +44,9 @@ func (p *priorityScheduler) Schedule(rp *DefaultRP) {
 	for len(states) > 0 {
 		filtered := states[:0]
 		for _, state := range states {
-			if len(state.pendingTasks) > 0 {
-				if ok := rp.assignTask(state.pendingTasks[0]); ok {
-					state.pendingTasks = state.pendingTasks[1:]
+			if len(state.pendingReqs) > 0 {
+				if ok := rp.assignResources(state.pendingReqs[0]); ok {
+					state.pendingReqs = state.pendingReqs[1:]
 					filtered = append(filtered, state)
 				}
 			}
