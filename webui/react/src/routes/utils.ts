@@ -1,9 +1,13 @@
+import { pathToRegexp } from 'path-to-regexp';
 import { MouseEvent, MouseEventHandler } from 'react';
 
-import { routeAll } from 'routes';
+import history from 'routes/history';
 import { Command } from 'types';
+import { clone } from 'utils/data';
 
 import { waitPageUrl } from '../utils/types';
+
+import { appRoutes } from './routes';
 
 export const serverAddress = (path: string): string => {
   const { host, protocol } = window.location;
@@ -62,5 +66,39 @@ export const handlePath = (
     } else {
       routeAll(options.path);
     }
+  }
+};
+
+// Is the path going to be served from the same host?
+const isDetRoute = (url: string): boolean => {
+  if (!isFullPath(url)) return true;
+  if (process.env.IS_DEV) {
+    // dev live is served on a different port
+    return parseUrl(url).hostname === window.location.hostname;
+  }
+  return parseUrl(url).host === window.location.host;
+};
+
+const isReactRoute = (url: string): boolean => {
+  if (!isDetRoute(url)) return false;
+
+  // Check to see if the path matches any of the defined app routes.
+  const pathname = parseUrl(url).pathname;
+  return !!appRoutes
+    .filter(route => route.path !== '*')
+    .find(route => {
+      return route.exact ? pathname === route.path : !!pathToRegexp(route.path).exec(pathname);
+    });
+};
+
+const routeToExternalUrl = (path: string): void => {
+  window.location.assign(path);
+};
+
+export const routeAll = (path: string): void => {
+  if (!isReactRoute(path)) {
+    routeToExternalUrl(path);
+  } else {
+    history.push(path, { loginRedirect: clone(window.location) });
   }
 };
