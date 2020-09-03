@@ -1,7 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
-- Fix a bug with a database migration in v0.13.0 which caused it to run slow and backfill
-  incorrect values. Users on versions v0.12.13 or earlier of Determined are recommended to upgrade
-  straight to v0.13.1. Users already on v0.13.0 should upgrade to v0.13.1 as usual.

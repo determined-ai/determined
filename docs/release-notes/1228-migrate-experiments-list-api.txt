@@ -1,9 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
-- Migrate to new experiments list endpoint to support table pagination.
-
-**NEW FEATURES**
-
-- Add number of trials per experiment as a column in experiments list page.
