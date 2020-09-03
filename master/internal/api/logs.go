@@ -16,8 +16,8 @@ type LogStreamRequest struct {
 }
 
 // TODO another name?
-type onLogEntry func(logger.Entry) error
-type FetchLogs func(LogStreamRequest) (*[]logger.Entry, error)
+type onLogEntry func(*logger.Entry) error
+type FetchLogs func(LogStreamRequest) ([]*logger.Entry, error)
 
 func ProcessLogs(req LogStreamRequest,
 	logFetcher FetchLogs, // TODO a better name
@@ -36,15 +36,15 @@ func ProcessLogs(req LogStreamRequest,
 		if err != nil {
 			return err
 		}
-		fmt.Printf("got %d log enties back\n", len(*logEntries))
-		for _, log := range *logEntries {
+		fmt.Printf("got %d log enties back\n", len(logEntries))
+		for _, log := range logEntries {
 			req.Offset++
 			req.Limit--
 			if err := cb(log); err != nil {
 				return err
 			}
 		}
-		if len(*logEntries) == 0 {
+		if len(logEntries) == 0 {
 			time.Sleep(2000 * time.Millisecond)
 		}
 		if !req.Follow || req.Limit == 0 {

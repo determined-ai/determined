@@ -31,7 +31,7 @@ func (a *apiServer) KillNotebook(
 	return resp, a.actorRequest(fmt.Sprintf("/notebooks/%s", req.NotebookId), req, &resp)
 }
 
-func logToProtoNotebookLog(log logger.Entry) *apiv1.NotebookLogsResponse {
+func logToProtoNotebookLog(log *logger.Entry) *apiv1.NotebookLogsResponse {
 	return &apiv1.NotebookLogsResponse{Id: int32(log.ID), Message: log.Message}
 }
 
@@ -39,10 +39,10 @@ func fetchLogs(
 	eventMgrAddr actor.Address,
 	system *actor.System,
 ) api.FetchLogs {
-	return func(req api.LogStreamRequest) (*[]logger.Entry, error) {
-		logEntries := make([]logger.Entry, 0)
+	return func(req api.LogStreamRequest) ([]*logger.Entry, error) {
+		logEntries := make([]*logger.Entry, 0)
 		err := api.ActorRequest(system, eventMgrAddr, req, &logEntries)
-		return &logEntries, err
+		return logEntries, err
 	}
 }
 
@@ -55,7 +55,7 @@ func (a *apiServer) NotebookLogs(
 	}
 	eventManagerAddr := actor.Addr("notebooks", req.NotebookId, "events")
 
-	onLogEntry := func(log logger.Entry) error {
+	onLogEntry := func(log *logger.Entry) error {
 		return resp.Send(logToProtoNotebookLog(log))
 	}
 

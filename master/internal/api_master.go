@@ -10,6 +10,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -31,6 +32,16 @@ func (a *apiServer) GetMaster(
 	}, err
 }
 
+func logToProtoMasterLog(log *logger.Entry) *apiv1.MasterLogsResponse {
+	return &apiv1.MasterLogsResponse{Id: int32(log.ID), Message: log.Message}
+}
+
+func fetchMasterLogs(logBuffer *logger.LogBuffer) api.FetchLogs {
+	return func(req api.LogStreamRequest) ([]*logger.Entry, error) {
+		return logBuffer.Entries(req.Offset, -1, req.Limit), nil
+	}
+}
+
 func (a *apiServer) MasterLogs(
 	req *apiv1.MasterLogsRequest, resp apiv1.Determined_MasterLogsServer) error {
 	if err := grpc.ValidateRequest(
@@ -41,26 +52,11 @@ func (a *apiServer) MasterLogs(
 	total := a.m.logs.Len()
 	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
 
-	for {
-		logEntries := a.m.logs.Entries(offset, -1, limit)
-		for _, log := range logEntries {
-			offset++
-			limit--
-			if err := resp.Send(log.Proto()); err != nil {
-				return err
-			}
-		}
-		if len(logEntries) == 0 {
-			time.Sleep(logCheckWaitTime)
-		}
-		if !req.Follow || limit == 0 {
-			return nil
-		} else if req.Follow {
-			limit = -1
-		}
-		if err := resp.Context().Err(); err != nil {
-			// context is closed
-			return nil
-		}
+	logRequest := api.LogStreamRequest{Offset: offset, Limit: limit, Follow: req.Follow}
+
+	onLogEntry := func(log *logger.Entry) error {
+		return resp.Send(logToProtoMasterLog(log))
 	}
+
+	return api.ProcessLogs(logRequest, fetchMasterLogs(a.m.logs), onLogEntry)
 }
