@@ -586,9 +586,7 @@ class EstimatorTrialController(det.LoopTrialController):
         # so there is no need to set visible devices for TF.
         # TODO (DET-3762): Remove this once it's no longer necessary.
         if not env.experiment_config.get("data", {}).get("set_cuda_visible_devices", False):
-            session_config.gpu_options.visible_device_list = str(
-                env.slot_ids[horovod.hvd.local_rank()]
-            )
+            session_config.gpu_options.visible_device_list = str(horovod.hvd.local_rank())
 
         return session_config
 
