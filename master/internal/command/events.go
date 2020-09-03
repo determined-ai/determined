@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
-	"github.com/pkg/errors"
 
 	webAPI "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/scheduler"
@@ -163,7 +162,7 @@ func validEvent(e event, greaterThanSeq, lessThanSeq *int) bool {
 	return true
 }
 
-func eventToLogEntry(ev *event) (*logger.Entry, error) {
+func eventToLogEntry(ev *event) *logger.Entry {
 	description := ev.Snapshot.Config.Description
 	var message string
 	switch {
@@ -178,14 +177,18 @@ func eventToLogEntry(ev *event) (*logger.Entry, error) {
 	case ev.LogEvent != nil:
 		message = fmt.Sprintf(*ev.LogEvent)
 	default:
-		// message = string(ev.ID)
-		return nil, errors.New(fmt.Sprintf("event %v has no supported log message", ev))
+		// We rely on log entry IDs to provide pagination and since some of these events aren't actually
+		// log events we'd need to notify of them about these non existing logs either by adding a new
+		// attribute to our response or a sentient log entry or we could keep it simple and normalize
+		// command events as log struct by setting a special message.
+		// return nil, errors.New(fmt.Sprintf("event %v has no supported log message", ev))
+		message = ""
 	}
 	return &logger.Entry{
 		ID:      ev.Seq,
 		Message: message,
 		Time:    ev.Time,
-	}, nil
+	}
 }
 
 func (e *eventManager) getLogEntries(req webAPI.LogsRequest) []*logger.Entry {
@@ -196,13 +199,7 @@ func (e *eventManager) getLogEntries(req webAPI.LogsRequest) []*logger.Entry {
 		if events.Value != nil {
 			event := events.Value.(event)
 			if event.Seq >= req.Offset && (req.Limit < 1 || len(logs) < req.Limit) {
-				// FIXME use ok instead?
-				logEntry, err := eventToLogEntry(&event)
-				if err != nil {
-					fmt.Println("failed to turn into to log event")
-					fmt.Println(err)
-					continue
-				}
+				logEntry := eventToLogEntry(&event)
 				logs = append(logs, logEntry)
 			}
 		}
