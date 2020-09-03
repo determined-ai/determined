@@ -67,5 +67,5 @@ message ValidationHistoryEntry {
     // The time at which the completed validation was reported.
     google.protobuf.Timestamp end_time = 2;
     // The value of the `searcher.metric`, indicated by the experiment config, for the validation.
-    double searcher_metric = 3;
+    float searcher_metric = 3;
 }
