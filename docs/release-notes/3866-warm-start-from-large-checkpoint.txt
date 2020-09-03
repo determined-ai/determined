@@ -2,4 +2,4 @@
 
 **Fix warm starting with large checkpoint data**
 
-  - Fix an issue with warm-startgin from checkpoints that contained a large number of files
+  - Fix an issue with warm-starting from checkpoints that contained a large number of files
