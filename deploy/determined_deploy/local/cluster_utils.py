@@ -180,6 +180,7 @@ def cluster_up(
             labels=labels,
             no_gpu=no_gpu,
             autorestart=autorestart,
+            cluster_name=cluster_name,
         )
 
 
@@ -199,12 +200,13 @@ def agent_up(
     version: Optional[str],
     no_gpu: bool,
     autorestart: bool,
+    cluster_name: str,
     labels: Dict = None,
 ) -> None:
     if version is None:
         version = determined_deploy.__version__
 
-    _wait_for_master(master_host, master_port)
+    _wait_for_master(master_host, master_port, cluster_name)
 
     if master_host == "localhost":
         master_host = get_proxy_addr()
