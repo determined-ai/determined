@@ -363,16 +363,10 @@ class EstimatorTrialController(det.LoopTrialController):
                 os.environ["NCCL_P2P_DISABLE"] = "1"
 
         # Initialize random seeds.
-        # TODO (DET-3798): Remove once customers are migrated.
-        if env.experiment_config.input_from_dataflow():
-            logging.debug("Using tensorpack dataflows as input.")
-            process_rank = 0 if not hvd_config.use else hvd.rank()
-            EstimatorTrialController.set_random_seed(env.trial_seed + process_rank)
-        else:
-            # Set identical random seeds on all training processes.
-            # When using horovod, each worker will receive a unique
-            # shard of the dataset.
-            EstimatorTrialController.set_random_seed(env.trial_seed)
+        # Set identical random seeds on all training processes.
+        # When using horovod, each worker will receive a unique
+        # shard of the dataset.
+        EstimatorTrialController.set_random_seed(env.trial_seed)
 
         if version.parse(tf.__version__) >= version.parse("2.0.0"):
             tf.compat.v1.disable_v2_behavior()

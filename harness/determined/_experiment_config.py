@@ -27,15 +27,6 @@ class ExperimentConfig(dict):
     def averaging_training_metrics_enabled(self) -> bool:
         return bool(self["optimizations"]["average_training_metrics"])
 
-    # TODO (DET-3798): Remove once customers are migrated.
-    def input_from_dataflow(self) -> bool:
-        # When using tensorpack dataflows as input, it's inefficient
-        # to apply sharding, so we only apply sharding to the test set.
-        # To have each worker process unique data, we set different random
-        # seeds in every train process, and require users to shuffle
-        # their train data, but not their test data.
-        return bool(self.get("data", {}).get("dataflow_to_tf_dataset", False))
-
     def slots_per_trial(self) -> int:
         return int(self["resources"]["slots_per_trial"])
 
