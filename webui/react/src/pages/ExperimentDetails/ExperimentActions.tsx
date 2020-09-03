@@ -2,11 +2,11 @@ import { Button, Popconfirm, Space } from 'antd';
 import React, { useCallback, useState } from 'react';
 
 import { ConditionalButton } from 'components/types';
+import { openCommand } from 'routes/utils';
 import {
   archiveExperiment, createTensorboard, killExperiment, setExperimentState,
 } from 'services/api';
 import { ExperimentDetails, RunState, TBSourceType } from 'types';
-import { openCommand } from 'utils/routes';
 import { cancellableRunStates, killableRunStates, terminalRunStates } from 'utils/types';
 
 export enum Action {

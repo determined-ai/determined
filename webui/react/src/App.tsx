@@ -20,11 +20,11 @@ import useRestApi from 'hooks/useRestApi';
 import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
 import { appRoutes } from 'routes';
+import { parseUrl } from 'routes/utils';
 import { getInfo } from 'services/api';
 import { EmptyParams } from 'services/types';
 import { DeterminedInfo } from 'types';
 import { updateFaviconType } from 'utils/browser';
-import { parseUrl } from 'utils/routes';
 
 import css from './App.module.scss';
 

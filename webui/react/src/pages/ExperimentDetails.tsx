@@ -20,12 +20,12 @@ import useStorage from 'hooks/useStorage';
 import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
 import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
+import { handlePath } from 'routes/utils';
 import { getExperimentDetails, isNotFound } from 'services/api';
 import { ApiSorter, ExperimentDetailsParams } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
 import { clone } from 'utils/data';
 import { numericSorter } from 'utils/data';
-import { handlePath } from 'utils/routes';
 import { humanReadableFloat } from 'utils/string';
 import { upgradeConfig } from 'utils/types';
 

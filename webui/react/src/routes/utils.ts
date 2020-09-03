@@ -3,7 +3,7 @@ import { MouseEvent, MouseEventHandler } from 'react';
 import { routeAll } from 'routes';
 import { Command } from 'types';
 
-import { waitPageUrl } from './types';
+import { waitPageUrl } from '../utils/types';
 
 export const serverAddress = (avoidDevProxy = false): string => {
   if (avoidDevProxy && process.env.IS_DEV) return 'http://localhost:8080';

@@ -3,9 +3,9 @@ import React, { useCallback, useState } from 'react';
 
 import Link from 'components/Link';
 import { ConditionalButton } from 'components/types';
+import { openCommand } from 'routes/utils';
 import { createTensorboard } from 'services/api';
 import { RunState, TBSourceType, TrialDetails } from 'types';
-import { openCommand } from 'utils/routes';
 import { terminalRunStates } from 'utils/types';
 
 export enum Action {

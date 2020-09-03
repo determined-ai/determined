@@ -1,7 +1,7 @@
 import React, { MouseEvent, MouseEventHandler, PropsWithChildren, useCallback } from 'react';
 
+import { handlePath, windowOpenFeatures } from 'routes/utils';
 import { serverAddress } from 'services/apiBuilder';
-import { handlePath, windowOpenFeatures } from 'utils/routes';
 
 import css from './Link.module.scss';
 

@@ -8,8 +8,8 @@ import ClusterOverview from 'contexts/ClusterOverview';
 import UI from 'contexts/UI';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useStorage from 'hooks/useStorage';
+import { openBlank } from 'routes/utils';
 import { createNotebook } from 'services/api';
-import { openBlank } from 'utils/routes';
 import { commandToTask } from 'utils/types';
 
 import Avatar from './Avatar';

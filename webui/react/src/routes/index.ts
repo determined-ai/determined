@@ -13,8 +13,8 @@ import TaskLogs from 'pages/TaskLogs';
 import TrialDetails from 'pages/TrialDetails';
 import TrialLogs from 'pages/TrialLogs';
 import history from 'routes/history';
+import { isFullPath, parseUrl } from 'routes/utils';
 import { clone } from 'utils/data';
-import { isFullPath, parseUrl } from 'utils/routes';
 
 /*
  * Router Configuration

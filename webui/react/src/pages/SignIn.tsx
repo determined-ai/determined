@@ -12,8 +12,8 @@ import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { routeAll } from 'routes';
 import { defaultAppRoute } from 'routes';
+import { locationToPath } from 'routes/utils';
 import { getPath } from 'utils/data';
-import { locationToPath } from 'utils/routes';
 
 import css from './SignIn.module.scss';
 

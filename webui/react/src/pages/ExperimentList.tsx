@@ -21,6 +21,7 @@ import Auth from 'contexts/Auth';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
+import { handlePath, openBlank } from 'routes/utils';
 import {
   archiveExperiment, createTensorboard, getExperimentList, killExperiment, setExperimentState,
 } from 'services/api';
@@ -30,7 +31,6 @@ import { ApiSorter } from 'services/types';
 import {
   ALL_VALUE, Command, ExperimentFilters, ExperimentItem, Pagination, RunState, TBSourceType,
 } from 'types';
-import { handlePath, openBlank } from 'utils/routes';
 import {
   cancellableRunStates, experimentToTask, isTaskKillable, terminalRunStates, waitPageUrl,
 } from 'utils/types';
