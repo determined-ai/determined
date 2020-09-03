@@ -6,6 +6,89 @@ Release Notes
 Version 0.13
 ------------
 
+Version 0.13.2
+^^^^^^^^^^^^^^
+
+**Release Date:** September 3, 2020
+
+**New Features**
+
+- Support deploying Determined on `Kubernetes <https://kubernetes.io/>`__.
+
+  - Determined workloads run as a collection of pods, which allows standard Kubernetes tools for logging, metrics, and tracing to be used. Determined is compatible with Kubernetes >= 1.15, including managed Kubernetes services such as Google Kubernetes Engine (GKE) and AWS Elastic Kubernetes Service (EKS).
+
+  - When using Determined with Kubernetes, we currently do not support
+    fair-share scheduling, priority scheduling, per-experiment weights, or
+    gang-scheduling for distributed training experiments; workloads will be
+    scheduled according the behavior of the default Kubernetes scheduler.
+
+  - Users can configure the behavior of the pods that are launched for
+    Determined workloads by specifying a :ref:`custom pod spec
+    <custom-pod-specs>`. A default pod spec can be configured when installing
+    Kubernetes, but a custom pod spec can also be specified on a per-task basis
+    (e.g., via the :ref:`environment.pod_spec <exp-environment-pod-spec>` field
+    in the experiment configuration file).
+
+  - For more information on using Determined with Kubernetes, see the
+    :ref:`documentation <determined-on-kubernetes>`.
+
+- Support running multiple distributed training jobs on a single agent.
+
+  - In previous versions of Determined, a distributed training job could only be
+    scheduled on an agent if it was configured to use all of the GPUs on that
+    agent. In this release, that restriction has been lifted: for example, an
+    agent with 8 GPUs can now be used to run two 4-GPU distributed training
+    jobs. This feature is particularly useful as a way to improve utilization
+    and fair resource allocation for smaller clusters.
+
+**Improvements**
+
+- WebUI: Update primary navigation. The primary navigation is all to one side, and is now collapsible to maximize content space.
+
+- WebUI: Trial details improvements:
+
+  - Update metrics selector to show the number of metrics selected to improve readability.
+
+  - Add the "Has Checkpoint or Validation" filter.
+
+  - Persist the "Has Checkpoint or Validation" filter setting across all trials, and persist the "Metrics" filter on trials of the same experiment.
+
+- WebUI: Improve table pagination behavior. This will improve performance on Determined instances with many experiments.
+
+- WebUI: Persist the sort order and sort column for the experiments, tasks, and trials tables to local storage.
+
+- WebUI: Improve the default axis ranges for metrics charts. Also, update the range as new data points arrive.
+
+- Add a warning when the PyTorch LR scheduler incorrectly uses an unwrapped optimizer. When using PyTorch with Determined, LR schedulers should be constructed using an optimizer that has been wrapped via the :meth:`~determined.pytorch.PyTorchTrialContext.wrap_optimizer` method.
+
+- Add a reminder to remove ``sys.exit()`` if ``SystemExit`` exception is caught.
+
+**Bug Fixes**
+
+- WebUI: Fix an issue where the recent task list did not apply the limit filter properly.
+
+- Fix Keras and Estimator wrapping functions not returning the original objects
+  when exporting checkpoints.
+
+- Fix progress reporting for ``adaptive_asha`` searches that contain failed trials.
+
+- Fix an issue that was causing OOM errors for some distributed ``EstimatorTrial`` experiments.
+
+Version 0.13.1
+^^^^^^^^^^^^^^
+
+**Release Date:** August 31, 2020
+
+**Bug Fixes**
+
+- Database migration: Fix a bug with a database migration in Determined version 0.13.0 which caused it to run slow and backfill incorrect values. Users on Determined versions 0.12.13 or earlier are recommended to upgrade to version 0.13.1. Users already on version 0.13.0 should upgrade to version 0.13.1 as usual.
+
+- Tensorboard: Fix a bug that prevents Tensorboards from experiments with old experiment configuration versions from being loaded.
+
+- WebUI: Fix an API response decoding issue on React where a null checkpoint resource was unhandled and could prevent trial detail page from rendering.
+
+- WebUI: Fix an issue where terminated Tensorboard and notebook tasks were rendered as openable.
+
 Version 0.13.0
 ^^^^^^^^^^^^^^
 
