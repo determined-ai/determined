@@ -1,19 +1,19 @@
-WITH const AS (
-    SELECT config->'searcher'->>'metric' AS metric_name,
-           (SELECT
-               CASE
-                   WHEN coalesce((config->'searcher'
-                                        ->>'smaller_is_better')::boolean, true)
-                   THEN 1
-                   ELSE -1
-               END) AS sign
-    FROM experiments WHERE id = $1
-)
-SELECT (WITH vals AS (
+
+SELECT (WITH const AS (
+        SELECT config->'searcher'->>'metric' AS metric_name,
+            (SELECT
+                CASE
+                    WHEN coalesce((config->'searcher'
+                                            ->>'smaller_is_better')::boolean, true)
+                    THEN 1
+                    ELSE -1
+                END) AS sign
+        FROM experiments WHERE id = e.id
+        ), vals AS (
             SELECT v.trial_id, v.end_time, v.state,
-                    (v.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8
+                    (v.metrics->'validation_metrics'->>(const.metric_name))::float8
                     AS searcher_metric
-            FROM validations v, trials t
+            FROM validations v, trials t, const
             WHERE v.trial_id = t.id and t.experiment_id = e.id and v.state = 'COMPLETED'
         )
         SELECT coalesce(jsonb_agg(v), '[]'::jsonb)

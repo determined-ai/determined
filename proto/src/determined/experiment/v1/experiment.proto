@@ -4,6 +4,7 @@ package determined.experiment.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/experimentv1";
 
 import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // The current state of the experiment.
 enum State {
@@ -56,6 +57,11 @@ message Experiment {
 
 // ValidationHistoryEntry is a single entry for a validation history for an experiment.
 message ValidationHistoryEntry {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: {
+            required: ["trial_id", "end_time", "searcher_metric"]
+        }
+    };
     // The id for the trial associated with this validation entry.
     int32 trial_id = 1;
     // The time at which the completed validation was reported.
