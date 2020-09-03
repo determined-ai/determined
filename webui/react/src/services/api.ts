@@ -2,12 +2,12 @@ import { CancelToken } from 'axios';
 
 import * as DetSwagger from 'services/api-ts-sdk';
 import { V1GetExperimentsRequestSortBy, V1Pagination } from 'services/api-ts-sdk';
-import { generateApi, processApiError } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
 import { ApiSorter, CreateNotebookParams, CreateTensorboardParams,
   EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
   KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams, PatchExperimentState,
   TaskLogsParams, TrialDetailsParams, TrialLogsParams } from 'services/types';
+import { generateApi, processApiError } from 'services/utils';
 import {
   Agent, ALL_VALUE, AnyTask, Command, CommandTask, Credentials,
   DetailedUser, DeterminedInfo, ExperimentBase, ExperimentDetails,

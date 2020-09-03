@@ -11,9 +11,9 @@ import handleError, { ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
 import { detExperimentsStreamingApi, getTrialDetails } from 'services/api';
 import * as DetSwagger from 'services/api-ts-sdk';
-import { consumeStream } from 'services/apiBuilder';
 import { jsonToTrialLog } from 'services/decoder';
 import { TrialDetailsParams } from 'services/types';
+import { consumeStream } from 'services/utils';
 import { Log, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 

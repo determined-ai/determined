@@ -2,7 +2,6 @@ import { sha512 } from 'js-sha512';
 import queryString from 'query-string';
 
 import { decode, ioDetailedUser, ioTypeDetailedUser } from 'ioTypes';
-import { Api } from 'services/apiBuilder';
 import {
   jsonToAgents, jsonToCommands, jsonToDeterminedInfo,
   jsonToExperimentDetails, jsonToExperiments, jsonToLogs, jsonToNotebook, jsonToNotebooks,
@@ -15,6 +14,7 @@ import {
   ForkExperimentParams, KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams,
   TaskLogsParams, TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
+import { Api } from 'services/utils';
 import {
   Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
   ExperimentDetails, Log, TBSourceType, TrialDetails,

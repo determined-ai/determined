@@ -1,6 +1,6 @@
 import { getTrialDetails } from 'services/api';
 import * as DetSwagger from 'services/api-ts-sdk';
-import { consumeStream } from 'services/apiBuilder';
+import { consumeStream } from 'services/utils';
 
 const updateFavicon = (iconPath: string): void => {
   const linkEl: HTMLLinkElement | null = document.querySelector("link[rel*='shortcut icon']");
