@@ -22,6 +22,7 @@ const (
 	ContainerWorkDir  = "/run/determined/workdir"
 	userPythonBaseDir = "/run/determined/pythonuserbase"
 	runDir            = "/run/determined"
+	trainDir          = "/run/determined/train"
 	rootDir           = "/"
 	passwdPath        = "/run/determined/etc/passwd"
 	shadowPath        = "/run/determined/etc/shadow"
@@ -49,6 +50,7 @@ func workDirArchive(aug *model.AgentUserGroup) container.RunArchive {
 		archive.Archive{
 			aug.OwnedArchiveItem(runDir, nil, 0700, tar.TypeDir),
 			aug.OwnedArchiveItem(ContainerWorkDir, nil, 0700, tar.TypeDir),
+			aug.OwnedArchiveItem(trainDir, nil, 0700, tar.TypeDir),
 			aug.OwnedArchiveItem(userPythonBaseDir, nil, 0700, tar.TypeDir),
 		},
 		rootDir,
@@ -225,7 +227,7 @@ func TrialEnvVars(t TaskSpec, rendezvousPorts []string, tPortOffset int) map[str
 	envVars["DET_EXPERIMENT_CONFIG"] = jsonify(exp.ExperimentConfig)
 	envVars["DET_HPARAMS"] = jsonify(exp.HParams)
 	envVars["DET_INITIAL_WORKLOAD"] = jsonify(exp.InitialWorkload)
-	envVars["DET_LATEST_CHECKPOINT"] = jsonify(exp.LatestCheckpoint)
+	envVars["DET_LATEST_CHECKPOINT"] = "/run/determined/train/checkpoint.json"
 	envVars["DET_WORKLOAD_MANAGER_TYPE"] = string(exp.WorkloadManagerType)
 	envVars["DET_RENDEZVOUS_PORTS"] = strings.Join(rendezvousPorts, ",")
 	envVars["DET_TRIAL_UNIQUE_PORT_OFFSET"] = fmt.Sprintf("%d", tPortOffset)
@@ -250,6 +252,17 @@ func TrialArchives(t TaskSpec) []container.RunArchive {
 		workDirArchive(exp.AgentUserGroup),
 		injectUserArchive(exp.AgentUserGroup),
 		wrapArchive(exp.AdditionalFiles, rootDir),
+		wrapArchive(
+			archive.Archive{
+				exp.AgentUserGroup.OwnedArchiveItem(
+					"checkpoint.json",
+					[]byte(jsonify(exp.LatestCheckpoint)),
+					0600,
+					tar.TypeReg,
+				),
+			},
+			trainDir,
+		),
 		wrapArchive(exp.AgentUserGroup.OwnArchive(exp.ModelDefinition), ContainerWorkDir),
 		harnessArchive(t.HarnessPath, exp.AgentUserGroup),
 		masterCertArchive(t.MasterCert),
@@ -291,7 +304,7 @@ func startContainer(t TaskSpec) container.Spec {
 		},
 		RunSpec: container.RunSpec{
 			ContainerConfig: docker.Config{
-				Cmd:          []string{"/run/determined/workdir/entrypoint.sh"},
+				Cmd:          []string{"/run/determined/train/entrypoint.sh"},
 				User:         user,
 				Image:        exp.ExperimentConfig.Environment.Image.For(deviceType),
 				ExposedPorts: ports,

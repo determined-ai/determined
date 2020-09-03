@@ -164,7 +164,10 @@ def main() -> None:
     container_id = os.environ["DET_CONTAINER_ID"]
     hparams = simplejson.loads(os.environ["DET_HPARAMS"])
     initial_work = workload.Workload.from_json(simplejson.loads(os.environ["DET_INITIAL_WORKLOAD"]))
-    latest_checkpoint = simplejson.loads(os.environ["DET_LATEST_CHECKPOINT"])
+
+    with open(os.environ["DET_LATEST_CHECKPOINT"], "r") as f:
+        latest_checkpoint = json.load(f)
+
     use_gpu = distutils.util.strtobool(os.environ.get("DET_USE_GPU", "false"))
     slot_ids = json.loads(os.environ["DET_SLOT_IDS"])
     workload_manager_type = os.environ["DET_WORKLOAD_MANAGER_TYPE"]

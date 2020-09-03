@@ -210,7 +210,7 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 	containers := []k8sV1.Container{
 		{
 			Name:            "determined-trial",
-			Command:         []string{"/run/determined/workdir/entrypoint.sh"},
+			Command:         []string{"/run/determined/train/entrypoint.sh"},
 			Image:           exp.ExperimentConfig.Environment.Image.For(deviceType),
 			ImagePullPolicy: configureImagePullPolicy(exp.ExperimentConfig.Environment),
 			SecurityContext: configureSecurityContext(exp.AgentUserGroup),
