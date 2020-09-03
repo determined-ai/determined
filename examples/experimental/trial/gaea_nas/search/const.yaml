@@ -1,4 +1,4 @@
-description: gaea_nas
+description: gaea_search
 
 data:
   download_dir: /data
@@ -9,6 +9,10 @@ bind_mounts:
     read_only: false
 
 hyperparameters:
+    # Number of classes in dataset
+    n_classes: 10
+    # Channel shuffle factor.  1 / shuffle_factor channels are activated at a given time.
+    shuffle_factor: 4
     global_batch_size: 256
     learning_rate: 0.1
     momentum: 0.9
@@ -24,7 +28,7 @@ resources:
   slots_per_trial: 2
 
 min_validation_period: 
-  epochs: 1
+  batches: 100
 
 records_per_epoch: 25000
 searcher:
@@ -37,4 +41,4 @@ searcher:
 optimizations:
   aggregation_frequency:  1
 
-entrypoint: model_def:GAEATrial
+entrypoint: model_def:GAEASearchTrial

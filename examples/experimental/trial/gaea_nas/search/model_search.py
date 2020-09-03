@@ -23,11 +23,11 @@ def channel_shuffle(x, groups):
 
 
 class MixedOp(nn.Module):
-    def __init__(self, C, stride):
+    def __init__(self, C, stride, k=4):
         super(MixedOp, self).__init__()
         self._ops = nn.ModuleList()
         self.mp = nn.MaxPool2d(2, 2)
-        self.k = 4
+        self.k = k
         for primitive in PRIMITIVES:
             op = OPS[primitive](C // self.k, stride, False)
             if "pool" in primitive:
@@ -53,7 +53,7 @@ class MixedOp(nn.Module):
 
 class Cell(nn.Module):
     def __init__(
-        self, steps, multiplier, C_prev_prev, C_prev, C, reduction, reduction_prev
+        self, steps, multiplier, C_prev_prev, C_prev, C, reduction, reduction_prev, k=4
     ):
         super(Cell, self).__init__()
         self.reduction = reduction
@@ -71,7 +71,7 @@ class Cell(nn.Module):
         for i in range(self._steps):
             for j in range(2 + i):
                 stride = 2 if reduction and j < 2 else 1
-                op = MixedOp(C, stride)
+                op = MixedOp(C, stride, k=k)
                 self._ops.append(op)
 
     def forward(self, s0, s1, weights, weights2):
@@ -101,6 +101,7 @@ class Network(nn.Module):
         steps=4,
         multiplier=4,
         stem_multiplier=3,
+        k=4,
     ):
         super(Network, self).__init__()
         self._C = C
@@ -132,6 +133,7 @@ class Network(nn.Module):
                 C_curr,
                 reduction,
                 reduction_prev,
+                k=k,
             )
             reduction_prev = reduction
             self.cells += [cell]

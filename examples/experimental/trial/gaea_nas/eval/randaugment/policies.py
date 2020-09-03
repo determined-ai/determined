@@ -19,10 +19,10 @@
 def imagenet_policies():
     """AutoAugment policies found on ImageNet.
 
-  This policy also transfers to five FGVC datasets with image size similar to
-  ImageNet including Oxford 102 Flowers, Caltech-101, Oxford-IIIT Pets,
-  FGVC Aircraft and Stanford Cars.
-  """
+    This policy also transfers to five FGVC datasets with image size similar to
+    ImageNet including Oxford 102 Flowers, Caltech-101, Oxford-IIIT Pets,
+    FGVC Aircraft and Stanford Cars.
+    """
     policies = [
         [("Posterize", 0.4, 8), ("Rotate", 0.6, 9)],
         [("Solarize", 0.6, 5), ("AutoContrast", 0.6, 5)],

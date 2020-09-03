@@ -45,7 +45,7 @@ Genotype = namedtuple("Genotype", "normal normal_concat reduce reduce_concat")
 activation_map = {"relu": nn.ReLU, "swish": Swish, "hswish": HSwish}
 
 
-class ImageNetTrial(PyTorchTrial):
+class GAEAEvalTrial(PyTorchTrial):
     def __init__(self, context: PyTorchTrialContext) -> None:
         self.context = context
         self.data_config = context.get_data_config()
@@ -54,8 +54,6 @@ class ImageNetTrial(PyTorchTrial):
             context.get_hparam("label_smoothing_rate"),
         )
         self.last_epoch_idx = -1
-
-
 
         self.model = self.context.wrap_model(self.build_model_from_config())
 
@@ -117,9 +115,7 @@ class ImageNetTrial(PyTorchTrial):
 
     def build_lr_scheduler_from_config(self, optimizer):
         if self.context.get_hparam("lr_scheduler") == "cosine":
-            scheduler_cls = WarmupWrapper(
-                torch.optim.lr_scheduler.CosineAnnealingLR
-            )
+            scheduler_cls = WarmupWrapper(torch.optim.lr_scheduler.CosineAnnealingLR)
             scheduler = scheduler_cls(
                 self.context.get_hparam("warmup_epochs"),
                 optimizer,

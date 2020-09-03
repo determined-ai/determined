@@ -57,7 +57,9 @@ class BatchSamp:
 
 
 class PTBData(Dataset):
-    def __init__(self, data, seq_len, batch_size, bptt, max_seq_length_delta, valid=False):
+    def __init__(
+        self, data, seq_len, batch_size, bptt, max_seq_length_delta, valid=False
+    ):
         self.batch_size = batch_size
         self.data = self.batchify(data)
         self.max_seq_len = bptt + max_seq_length_delta
@@ -77,7 +79,9 @@ class PTBData(Dataset):
 
 
 def download_data(data_loc):
-    if os.path.exists(data_loc + "train.txt") and os.path.exists(data_loc + "valid.txt"):
+    if os.path.exists(data_loc + "train.txt") and os.path.exists(
+        data_loc + "valid.txt"
+    ):
         # Exit if the data already exists
         return data_loc
 
@@ -95,8 +99,16 @@ def download_data(data_loc):
     tf.close()
 
     temp_data_dir = os.path.join(data_loc, "simple-examples/data")
-    shutil.move(os.path.join(temp_data_dir, "ptb.train.txt"), os.path.join(data_loc, "train.txt"))
-    shutil.move(os.path.join(temp_data_dir, "ptb.valid.txt"), os.path.join(data_loc, "valid.txt"))
-    shutil.move(os.path.join(temp_data_dir, "ptb.test.txt"), os.path.join(data_loc, "test.txt"))
+    shutil.move(
+        os.path.join(temp_data_dir, "ptb.train.txt"),
+        os.path.join(data_loc, "train.txt"),
+    )
+    shutil.move(
+        os.path.join(temp_data_dir, "ptb.valid.txt"),
+        os.path.join(data_loc, "valid.txt"),
+    )
+    shutil.move(
+        os.path.join(temp_data_dir, "ptb.test.txt"), os.path.join(data_loc, "test.txt")
+    )
 
     logging.info("\tcompleted")

@@ -12,6 +12,7 @@ from determined.pytorch import (
     PyTorchTrialContext,
     DataLoader,
     LRScheduler,
+    PyTorchCallback
 )
 
 from data import BilevelDataset
@@ -22,7 +23,15 @@ from utils import AttrDict, data_transforms_cifar10, accuracy
 TorchData = Union[Dict[str, torch.Tensor], Sequence[torch.Tensor], torch.Tensor]
 
 
-class GAEATrial(PyTorchTrial):
+class GenotypeCallback(PyTorchCallback):
+    def __init__(self, context):
+        self.model = context.models[0]
+
+    def on_validation_end(self, metrics):
+        print(self.model.genotype())
+
+
+class GAEASearchTrial(PyTorchTrial):
     def __init__(self, trial_context: PyTorchTrialContext) -> None:
         self.context = trial_context
         self.data_config = trial_context.get_data_config()
@@ -39,10 +48,11 @@ class GAEATrial(PyTorchTrial):
         self.model = self.context.wrap_model(
             Network(
                 self.hparams.init_channels,
-                10,
+                self.hparams.n_classes,
                 self.hparams.layers,
                 criterion,
                 self.hparams.nodes,
+                k=self.hparams.shuffle_factor,
             )
         )
 
@@ -74,7 +84,7 @@ class GAEATrial(PyTorchTrial):
 
     def build_training_data_loader(self) -> DataLoader:
         """
-        For bi-level NAS, we'll need each instance from the dataloader to have one image 
+        For bi-level NAS, we'll need each instance from the dataloader to have one image
         for training shared-weights and another for updating architecture parameters.
         """
         train_transform, _ = data_transforms_cifar10()
@@ -144,3 +154,6 @@ class GAEATrial(PyTorchTrial):
         top1, top5 = accuracy(logits, target, topk=(1, 5))
 
         return {"loss": loss, "top1_accuracy": top1, "top5_accuracy": top5}
+
+    def build_callbacks(self):
+        return {"genotype": GenotypeCallback(self.context)}

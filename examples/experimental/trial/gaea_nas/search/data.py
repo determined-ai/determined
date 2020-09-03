@@ -4,7 +4,8 @@ from torch.utils.data import Dataset
 
 class BilevelDataset(Dataset):
     def __init__(
-        self, dataset,
+        self,
+        dataset,
     ):
         """
         We will split the data into a train split and a validation split
