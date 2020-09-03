@@ -36,8 +36,6 @@ class EstimatorContext:
     def __init__(self, env: det.EnvContext, hvd_config: horovod.HorovodContext) -> None:
         self.env = env
         self.hvd_config = hvd_config
-        # TODO (DET-3798): Remove once customers are migrated.
-        self.input_from_dataflow = env.experiment_config.input_from_dataflow()
 
         self.experimental = EstimatorExperimentalContext(env=env, hvd_config=hvd_config)
 
@@ -103,7 +101,7 @@ class EstimatorContext:
         hvd.require_horovod_type("tensorflow", "EstimatorContext.wrap_dataset was called.")
 
         self.dataset_initialized = True
-        if not self.hvd_config.use or self.input_from_dataflow or not shard_dataset:
+        if not self.hvd_config.use or not shard_dataset:
             if self.hvd_config and not shard_dataset:
                 logging.info("Dataset sharding skipped.")
             return dataset

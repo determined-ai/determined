@@ -1,6 +1,4 @@
 description: mnist_tp_const_visualize
-data:
-  dataflow_to_tf_dataset: true
 hyperparameters:
   base_learning_rate: 0.001
   weight_cost: 0.00001
