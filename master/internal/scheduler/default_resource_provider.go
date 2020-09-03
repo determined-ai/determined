@@ -27,7 +27,6 @@ type DefaultRP struct {
 	scheduler             Scheduler
 	fittingMethod         SoftConstraint
 	agents                map[*actor.Ref]*agentState
-	groups                map[*actor.Ref]*group
 	harnessPath           string
 	taskContainerDefaults model.TaskContainerDefaultsConfig
 	masterCert            *tls.Certificate
@@ -36,8 +35,7 @@ type DefaultRP struct {
 	tasksByHandler     map[*actor.Ref]*Task
 	tasksByID          map[TaskID]*Task
 	tasksByContainerID map[ContainerID]*Task
-
-	assigmentByHandler map[*actor.Ref][]containerAssignment
+	groups             map[*actor.Ref]*group
 
 	provisioner     *actor.Ref
 	provisionerView *FilterableView
@@ -74,8 +72,6 @@ func NewDefaultRP(
 		tasksByID:          make(map[TaskID]*Task),
 		tasksByContainerID: make(map[ContainerID]*Task),
 
-		assigmentByHandler: make(map[*actor.Ref][]containerAssignment),
-
 		provisioner:     provisioner,
 		provisionerView: newProvisionerView(provisionerSlotsPerInstance),
 
@@ -84,7 +80,9 @@ func NewDefaultRP(
 	return d
 }
 
-func (d *DefaultRP) assignContainer(task *Task, a *agentState, slots int, numContainers int) {
+func (d *DefaultRP) assignContainer(
+	task *Task, a *agentState, slots int, numContainers int,
+) *containerAssignment {
 	if task.state != taskRunning {
 		task.mustTransition(taskRunning)
 	}
@@ -92,18 +90,17 @@ func (d *DefaultRP) assignContainer(task *Task, a *agentState, slots int, numCon
 	a.containers[container.id] = container
 	task.containers[container.id] = container
 	d.tasksByContainerID[container.id] = task
-	d.assigmentByHandler[task.handler] = append(
-		d.assigmentByHandler[task.handler],
-		containerAssignment{
-			task:                  task,
-			agent:                 a,
-			container:             container,
-			clusterID:             d.clusterID,
-			devices:               a.assignFreeDevices(slots, container.id),
-			harnessPath:           d.harnessPath,
-			taskContainerDefaults: d.taskContainerDefaults,
-			masterCert:            d.masterCert,
-		})
+
+	return &containerAssignment{
+		task:                  task,
+		agent:                 a,
+		container:             container,
+		clusterID:             d.clusterID,
+		devices:               a.assignFreeDevices(slots, container.id),
+		harnessPath:           d.harnessPath,
+		taskContainerDefaults: d.taskContainerDefaults,
+		masterCert:            d.masterCert,
+	}
 }
 
 // assignTask allocates cluster data structures and sends the appropriate actor
@@ -116,13 +113,18 @@ func (d *DefaultRP) assignTask(task *Task) bool {
 		return false
 	}
 
-	d.assigmentByHandler[task.handler] = make([]containerAssignment, 0, len(fits))
+	assignments := make([]Assignment, 0, len(fits))
 
 	for _, fit := range fits {
-		d.assignContainer(task, fit.Agent, fit.Slots, len(fits))
+		assignments = append(
+			assignments,
+			d.assignContainer(task, fit.Agent, fit.Slots, len(fits)),
+		)
 	}
 
-	task.handler.System().Tell(task.handler, TaskAssigned{NumContainers: len(fits)})
+	task.handler.System().Tell(task.handler, TaskAssigned{
+		Assignments: assignments,
+	})
 
 	return true
 }
@@ -170,7 +172,7 @@ func (d *DefaultRP) getOrCreateGroup(handler *actor.Ref, ctx *actor.Context) *gr
 	g := &group{handler: handler, weight: 1}
 	d.groups[handler] = g
 	if ctx != nil && handler != nil { // ctx is nil only for testing purposes.
-		actors.NotifyOnStop(ctx, handler, groupStopped{})
+		actors.NotifyOnStop(ctx, handler, groupActorStopped{})
 	}
 	return g
 }
@@ -211,6 +213,62 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
 
+	case
+		sproto.ConfigureEndpoints,
+		sproto.AddAgent,
+		sproto.AddDevice,
+		sproto.FreeDevice,
+		sproto.RemoveDevice,
+		sproto.RemoveAgent,
+		sproto.TaskStartedOnAgent,
+		sproto.TaskTerminatedOnAgent:
+		return d.receiveAgentMsg(ctx)
+
+	case
+		taskActorStopped,
+		groupActorStopped,
+		SetMaxSlots,
+		SetWeight,
+		AddTask,
+		TerminateTask:
+		return d.receiveTaskMsg(ctx)
+
+	case SetTaskName:
+		reschedule = false
+		d.receiveSetTaskName(ctx, msg)
+
+	case GetTaskSummary:
+		reschedule = false
+		if resp := d.getTaskSummary(*msg.ID); resp != nil {
+			ctx.Respond(*resp)
+		}
+
+	case GetTaskSummaries:
+		reschedule = false
+		ctx.Respond(d.taskList.TaskSummaries())
+
+	case sproto.GetEndpointActorAddress:
+		reschedule = false
+		ctx.Respond("/agents")
+
+	case schedulerTick:
+		if d.reschedule {
+			d.scheduler.Schedule(d)
+			d.sendProvisionerView(ctx)
+		}
+		d.reschedule = false
+		reschedule = false
+		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
+
+	default:
+		reschedule = false
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
+func (d *DefaultRP) receiveAgentMsg(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
 	case sproto.ConfigureEndpoints:
 		ctx.Log().Infof("initializing endpoints for agents")
 		agent.Initialize(msg.System, msg.Echo, ctx.Self())
@@ -253,14 +311,16 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 	case sproto.TaskTerminatedOnAgent:
 		cid := ContainerID(msg.ContainerID)
 		d.receiveContainerTerminated(ctx, cid, *msg.ContainerStopped, false)
+	}
+	return nil
+}
 
-	case StartTask:
-		d.receiveStartTask(ctx, msg)
+func (d *DefaultRP) receiveTaskMsg(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case taskActorStopped:
+		d.receiveTaskActorStopped(ctx, msg)
 
-	case taskStopped:
-		d.receiveTaskStopped(ctx, msg)
-
-	case groupStopped:
+	case groupActorStopped:
 		delete(d.groups, msg.Ref)
 
 	case SetMaxSlots:
@@ -272,45 +332,14 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 	case AddTask:
 		d.receiveAddTask(ctx, msg)
 
-	case SetTaskName:
-		reschedule = false
-		d.receiveSetTaskName(ctx, msg)
-
 	case TerminateTask:
 		d.receiveTerminateTask(ctx, msg)
-
-	case GetTaskSummary:
-		reschedule = false
-		if resp := d.getTaskSummary(*msg.ID); resp != nil {
-			ctx.Respond(*resp)
-		}
-
-	case GetTaskSummaries:
-		reschedule = false
-		ctx.Respond(d.taskList.TaskSummaries())
-
-	case sproto.GetEndpointActorAddress:
-		reschedule = false
-		ctx.Respond("/agents")
-
-	case schedulerTick:
-		if d.reschedule {
-			d.scheduler.Schedule(d)
-			d.sendProvisionerView(ctx)
-		}
-		d.reschedule = false
-		reschedule = false
-		actors.NotifyAfter(ctx, actionCoolDown, schedulerTick{})
-
-	default:
-		reschedule = false
-		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
 }
 
 func (d *DefaultRP) receiveAddTask(ctx *actor.Context, msg AddTask) {
-	d.notifyOnStop(ctx, msg.TaskHandler, taskStopped{Ref: msg.TaskHandler})
+	d.notifyOnStop(ctx, msg.TaskHandler, taskActorStopped{Ref: msg.TaskHandler})
 
 	if task, ok := d.tasksByHandler[msg.TaskHandler]; ok {
 		if ctx.ExpectingResponse() {
@@ -354,25 +383,6 @@ func (d *DefaultRP) receiveAddTask(ctx *actor.Context, msg AddTask) {
 	if ctx.ExpectingResponse() {
 		ctx.Respond(task)
 	}
-}
-
-func (d *DefaultRP) receiveStartTask(ctx *actor.Context, msg StartTask) {
-	task := d.tasksByHandler[msg.TaskHandler]
-	if task == nil {
-		ctx.Log().WithField("address", msg.TaskHandler.Address()).Errorf("unknown task trying to start")
-		return
-	}
-
-	assignments := d.assigmentByHandler[msg.TaskHandler]
-	if len(assignments) == 0 {
-		ctx.Log().WithField("name", task.name).Error("task is trying to start without any assignments")
-		return
-	}
-
-	for _, a := range assignments {
-		a.StartTask(msg.Spec)
-	}
-	delete(d.assigmentByHandler, msg.TaskHandler)
 }
 
 func (d *DefaultRP) receiveContainerStartedOnAgent(
@@ -436,9 +446,7 @@ func (d *DefaultRP) receiveContainerTerminated(
 	}
 }
 
-func (d *DefaultRP) receiveTaskStopped(ctx *actor.Context, msg taskStopped) {
-	// TODO(shiyuan): refactor to update agent.py to complain less if we try to kill an
-	//  container that does not exist.
+func (d *DefaultRP) receiveTaskActorStopped(ctx *actor.Context, msg taskActorStopped) {
 	task := d.tasksByHandler[msg.Ref]
 	if task == nil {
 		return
@@ -450,6 +458,7 @@ func (d *DefaultRP) receiveTaskStopped(ctx *actor.Context, msg taskStopped) {
 	}
 
 	// Clean up a task even if it does not have any containers yet.
+	// Agents might error out that the containers do not exist.
 	if task.state != taskTerminated {
 		d.taskTerminated(task, true)
 	}
@@ -553,7 +562,7 @@ type containerAssignment struct {
 }
 
 // StartTask notifies the agent that the task is ready to start with the provided task spec.
-func (c *containerAssignment) StartTask(spec image.TaskSpec) {
+func (c containerAssignment) StartTask(spec image.TaskSpec) {
 	handler := c.agent.handler
 	spec.ClusterID = c.clusterID
 	spec.ContainerID = string(c.container.ID())

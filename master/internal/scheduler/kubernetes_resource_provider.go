@@ -26,8 +26,6 @@ type kubernetesResourceProvider struct {
 	groups             map[*actor.Ref]*group
 	slotsUsedPerGroup  map[*group]int
 
-	assignmentsByTaskHandler map[*actor.Ref][]podAssignment
-
 	// Represent all pods as a single agent.
 	agent *agentState
 
@@ -55,8 +53,6 @@ func NewKubernetesResourceProvider(
 		tasksByContainerID: make(map[ContainerID]*Task),
 		groups:             make(map[*actor.Ref]*group),
 		slotsUsedPerGroup:  make(map[*group]int),
-
-		assignmentsByTaskHandler: make(map[*actor.Ref][]podAssignment),
 	}
 }
 
@@ -99,19 +95,16 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 		reschedule = false
 		k.receiveSetTaskName(ctx, msg)
 
-	case StartTask:
-		k.receiveStartTask(ctx, msg)
-
 	case sproto.PodStarted:
 		k.receivePodStarted(ctx, msg)
 
 	case sproto.PodTerminated:
 		k.receivePodTerminated(ctx, msg, false)
 
-	case taskStopped:
+	case taskActorStopped:
 		k.receiveTaskStopped(ctx, msg)
 
-	case groupStopped:
+	case groupActorStopped:
 		delete(k.slotsUsedPerGroup, k.groups[msg.Ref])
 		delete(k.groups, msg.Ref)
 
@@ -150,7 +143,7 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 }
 
 func (k *kubernetesResourceProvider) receiveAddTask(ctx *actor.Context, msg AddTask) {
-	actors.NotifyOnStop(ctx, msg.TaskHandler, taskStopped{Ref: msg.TaskHandler})
+	actors.NotifyOnStop(ctx, msg.TaskHandler, taskActorStopped{Ref: msg.TaskHandler})
 
 	if task, ok := k.tasksByHandler[msg.TaskHandler]; ok {
 		if ctx.ExpectingResponse() {
@@ -237,16 +230,21 @@ func (k *kubernetesResourceProvider) scheduleTask(ctx *actor.Context, task *Task
 
 	k.slotsUsedPerGroup[task.group] += task.SlotsNeeded()
 
+	assignments := make([]Assignment, 0, numPods)
 	for pod := 0; pod < numPods; pod++ {
-		k.assignPod(ctx, task, slotsPerPod)
+		assignments = append(assignments, k.assignPod(ctx, task, slotsPerPod))
 	}
 
 	ctx.Log().WithField("task-id", task.ID).Infof(
 		"task assigned by scheduler with %d pods", numPods)
-	task.handler.System().Tell(task.handler, TaskAssigned{NumContainers: numPods})
+	task.handler.System().Tell(task.handler, TaskAssigned{
+		Assignments: assignments,
+	})
 }
 
-func (k *kubernetesResourceProvider) assignPod(ctx *actor.Context, task *Task, slots int) {
+func (k *kubernetesResourceProvider) assignPod(
+	ctx *actor.Context, task *Task, slots int,
+) *podAssignment {
 	if task.state != taskRunning {
 		task.mustTransition(taskRunning)
 	}
@@ -254,18 +252,17 @@ func (k *kubernetesResourceProvider) assignPod(ctx *actor.Context, task *Task, s
 	k.agent.containers[container.id] = container
 	task.containers[container.id] = container
 	k.tasksByContainerID[container.id] = task
-	k.assignmentsByTaskHandler[task.handler] = append(
-		k.assignmentsByTaskHandler[task.handler],
-		podAssignment{
-			task:        task,
-			agent:       k.agent,
-			container:   container,
-			clusterID:   k.clusterID,
-			harnessPath: k.harnessPath,
 
-			taskContainerDefaults: k.taskContainerDefaults,
-			masterCert:            k.masterCert,
-		})
+	return &podAssignment{
+		task:        task,
+		agent:       k.agent,
+		container:   container,
+		clusterID:   k.clusterID,
+		harnessPath: k.harnessPath,
+
+		taskContainerDefaults: k.taskContainerDefaults,
+		masterCert:            k.masterCert,
+	}
 }
 
 func (k *kubernetesResourceProvider) getOrCreateGroup(
@@ -280,7 +277,7 @@ func (k *kubernetesResourceProvider) getOrCreateGroup(
 	k.slotsUsedPerGroup[g] = 0
 
 	if ctx != nil && handler != nil { // ctx is nil only for testing purposes.
-		actors.NotifyOnStop(ctx, handler, groupStopped{})
+		actors.NotifyOnStop(ctx, handler, groupActorStopped{})
 	}
 	return g
 }
@@ -289,25 +286,6 @@ func (k *kubernetesResourceProvider) receiveSetTaskName(ctx *actor.Context, msg 
 	if task, ok := k.tasksByHandler[msg.TaskHandler]; ok {
 		task.name = msg.Name
 	}
-}
-
-func (k *kubernetesResourceProvider) receiveStartTask(ctx *actor.Context, msg StartTask) {
-	task := k.tasksByHandler[msg.TaskHandler]
-	if task == nil {
-		ctx.Log().WithField("address", msg.TaskHandler.Address()).Error("unknown task trying to start")
-		return
-	}
-
-	assignments := k.assignmentsByTaskHandler[msg.TaskHandler]
-	if len(assignments) == 0 {
-		ctx.Log().WithField("name", task.name).Error("task is trying to start without any assignments")
-		return
-	}
-
-	for _, a := range assignments {
-		a.StartTask(msg.Spec)
-	}
-	delete(k.assignmentsByTaskHandler, msg.TaskHandler)
 }
 
 func (k *kubernetesResourceProvider) receivePodStarted(ctx *actor.Context, msg sproto.PodStarted) {
@@ -378,7 +356,7 @@ func (k *kubernetesResourceProvider) taskTerminated(task *Task, aborted bool) {
 	}
 }
 
-func (k *kubernetesResourceProvider) receiveTaskStopped(ctx *actor.Context, msg taskStopped) {
+func (k *kubernetesResourceProvider) receiveTaskStopped(ctx *actor.Context, msg taskActorStopped) {
 	task := k.tasksByHandler[msg.Ref]
 	if task == nil {
 		return
@@ -476,7 +454,7 @@ type podAssignment struct {
 }
 
 // StartTask notifies the pods actor that it should launch a pod for the provided task spec.
-func (p *podAssignment) StartTask(spec image.TaskSpec) {
+func (p podAssignment) StartTask(spec image.TaskSpec) {
 	handler := p.agent.handler
 	spec.ClusterID = p.clusterID
 	spec.ContainerID = string(p.container.ID())
