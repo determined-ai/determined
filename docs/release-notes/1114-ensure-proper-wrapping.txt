@@ -1,6 +1,0 @@
-:orphan:
-
-**Improvements**
-
-- Warn out if not properly refer Pytorch LR schedulers with a optimizer wrapped with
-  :meth:`determined.pytorch.PytorchTrialContext.wrap_optimizer`.
