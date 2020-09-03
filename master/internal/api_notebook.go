@@ -6,10 +6,12 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
+	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/pkg/errors"
 )
 
 func (a *apiServer) GetNotebooks(
@@ -62,16 +64,32 @@ func commandIsTermianted(
 
 func (a *apiServer) NotebookLogs(
 	req *apiv1.NotebookLogsRequest, resp apiv1.Determined_NotebookLogsServer) error {
-	// We push off calculating effective offset & limit to the actor to avoid having to synchronize
-	// between two actor messages.
-	logRequest := api.LogsRequest{
-		Offset: int(req.Offset),
-		Limit:  int(req.Limit),
-		Follow: req.Follow,
+	if err := grpc.ValidateRequest(
+		grpc.ValidateLimit(req.Limit),
+	); err != nil {
+		return err
 	}
 
 	cmdManagerAddr := actor.Addr("notebooks", req.NotebookId)
 	eventManagerAddr := cmdManagerAddr.Child("events")
+
+	// CHECK Here we might have a synchronization issue which would only affect negative offsets since
+	// those are reliant on the total event number. Still it wouldn't cause any real miscalculations
+	// from an external POV would it? same situation with trial logs
+
+	var total int
+	err := api.ActorRequest(a.m.system, eventManagerAddr, command.GetEventCount{}, &total)
+	if err != nil {
+		return errors.Wrapf(err, "failed to get event count from %s actor", eventManagerAddr)
+	}
+
+	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
+
+	logRequest := api.LogsRequest{
+		Offset: offset,
+		Limit:  limit,
+		Follow: req.Follow,
+	}
 
 	onLogEntry := func(log *logger.Entry) error {
 		return resp.Send(&apiv1.NotebookLogsResponse{LogEntry: api.LogEntryToProtoLogEntry(log)})

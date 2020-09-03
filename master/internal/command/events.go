@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 
 	webAPI "github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/internal/scheduler"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -47,6 +46,9 @@ type event struct {
 	// LogEvent is triggered when a new log message is available.
 	LogEvent *string `json:"log_event"`
 }
+
+// GetEventCount is an actor message used to get the number of events in buffer.
+type GetEventCount struct{}
 
 type eventManager struct {
 	bufferSize int
@@ -93,16 +95,10 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 			}
 		}
 
+	case GetEventCount:
+		ctx.Respond(e.buffer.Len())
+
 	case webAPI.LogsRequest:
-		// DISCUSS should this be left out to the caller? leave, (and duplicate) this on the caller?
-		if err := grpc.ValidateRequest(
-			grpc.ValidateLimit(int32(msg.Limit)),
-		); err != nil {
-			return err
-		}
-		offset, limit := webAPI.EffectiveOffsetNLimit(msg.Offset, msg.Limit, e.bufferSize)
-		msg.Offset = offset
-		msg.Limit = limit
 		events := e.getClientEvents(msg)
 		var logs []*logger.Entry
 		for _, event := range events {
