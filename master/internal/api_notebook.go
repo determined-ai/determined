@@ -35,6 +35,17 @@ func logToProtoNotebookLog(log logger.Entry) *apiv1.NotebookLogsResponse {
 	return &apiv1.NotebookLogsResponse{Id: int32(log.ID), Message: log.Message}
 }
 
+func fetchLogs(
+	eventMgrAddr actor.Address,
+	system *actor.System,
+) api.FetchLogs {
+	return func(req api.LogStreamRequest) (*[]logger.Entry, error) {
+		logEntries := make([]logger.Entry, 0)
+		err := api.ActorRequest(system, eventMgrAddr, req, &logEntries)
+		return &logEntries, err
+	}
+}
+
 func (a *apiServer) NotebookLogs(
 	req *apiv1.NotebookLogsRequest, resp apiv1.Determined_NotebookLogsServer) error {
 	logRequest := api.LogStreamRequest{
@@ -43,9 +54,10 @@ func (a *apiServer) NotebookLogs(
 		Follow: req.Follow,
 	}
 	eventManagerAddr := actor.Addr("notebooks", req.NotebookId, "events")
+
 	onLogEntry := func(log logger.Entry) error {
 		return resp.Send(logToProtoNotebookLog(log))
 	}
 
-	return api.ProcessLogs(logRequest, eventManagerAddr, a.m.system, onLogEntry)
+	return api.ProcessLogs(logRequest, fetchLogs(eventManagerAddr, a.m.system), onLogEntry)
 }

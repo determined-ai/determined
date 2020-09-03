@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/grpc"
-	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 )
 
@@ -16,12 +15,13 @@ type LogStreamRequest struct {
 	Follow bool
 }
 
-type ServerSend func(logger.Entry) error
+// TODO another name?
+type onLogEntry func(logger.Entry) error
+type FetchLogs func(LogStreamRequest) (*[]logger.Entry, error)
 
 func ProcessLogs(req LogStreamRequest,
-	eventMgrAddr actor.Address,
-	system *actor.System,
-	cb ServerSend,
+	logFetcher FetchLogs, // TODO a better name
+	cb onLogEntry,
 ) error {
 
 	if err := grpc.ValidateRequest(
@@ -30,22 +30,21 @@ func ProcessLogs(req LogStreamRequest,
 		return err
 	}
 
-	logEntries := make([]logger.Entry, 0)
 	for {
-		err := ActorRequest(system, eventMgrAddr, req, &logEntries)
+		logEntries, err := logFetcher(req)
 
 		if err != nil {
 			return err
 		}
-		fmt.Printf("got %d log enties back\n", len(logEntries))
-		for _, log := range logEntries {
+		fmt.Printf("got %d log enties back\n", len(*logEntries))
+		for _, log := range *logEntries {
 			req.Offset++
 			req.Limit--
 			if err := cb(log); err != nil {
 				return err
 			}
 		}
-		if len(logEntries) == 0 {
+		if len(*logEntries) == 0 {
 			time.Sleep(2000 * time.Millisecond)
 		}
 		if !req.Follow || req.Limit == 0 {

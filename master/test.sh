@@ -7,7 +7,7 @@ echo
 
 # curl-da.sh "http://localhost:8080/api/v1/notebooks/$id/logs"
 
-curl-da.sh "http://localhost:8080/api/v1/notebooks/$id/logs?follow=true&limit=-1"
+curl-da.sh "http://localhost:8080/api/v1/notebooks/$id/logs?follow=true"
 
 # curl-da.sh "http://localhost:8080/notebooks/$id/events"
 
