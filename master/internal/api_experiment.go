@@ -98,6 +98,20 @@ func (a *apiServer) GetExperiments(
 	return resp, a.paginate(&resp.Pagination, &resp.Experiments, req.Offset, req.Limit)
 }
 
+func (a *apiServer) GetExperimentValidationHistory(
+	_ context.Context, req *apiv1.GetExperimentValidationHistoryRequest,
+) (*apiv1.GetExperimentValidationHistoryResponse, error) {
+	var resp apiv1.GetExperimentValidationHistoryResponse
+	switch err := a.m.db.QueryProto("proto_experiment_validation_history", &resp, req.ExperimentId); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "experiment not found: %d", req.ExperimentId)
+	case err != nil:
+		return nil, errors.Wrapf(err,
+			"error fetching validation history for experiment from database: %d", req.ExperimentId)
+	}
+	return &resp, nil
+}
+
 func (a *apiServer) PreviewHPSearch(
 	_ context.Context, req *apiv1.PreviewHPSearchRequest) (*apiv1.PreviewHPSearchResponse, error) {
 	bytes, err := protojson.Marshal(req.Config)
