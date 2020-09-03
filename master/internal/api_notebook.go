@@ -33,10 +33,6 @@ func (a *apiServer) KillNotebook(
 	return resp, a.actorRequest(fmt.Sprintf("/notebooks/%s", req.NotebookId), req, &resp)
 }
 
-func logToProtoNotebookLog(log *logger.Entry) *apiv1.NotebookLogsResponse {
-	return &apiv1.NotebookLogsResponse{Id: int32(log.ID), Message: log.Message}
-}
-
 /* Command Helpers */
 // TODO reorder args?
 // CHECK parts of this code could live on the command and events actors but the idea is to
@@ -78,7 +74,7 @@ func (a *apiServer) NotebookLogs(
 	eventManagerAddr := cmdManagerAddr.Child("events")
 
 	onLogEntry := func(log *logger.Entry) error {
-		return resp.Send(logToProtoNotebookLog(log))
+		return resp.Send(&apiv1.NotebookLogsResponse{LogEntry: api.LogEntryToProtoLogEntry(log)})
 	}
 
 	terminationCheck := commandIsTermianted(cmdManagerAddr, a.m.system)

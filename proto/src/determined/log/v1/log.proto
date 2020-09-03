@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package determined.log.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/logv1";
+
+import "protoc-gen-swagger/options/annotations.proto";
+
+// LogEntry is a log event.
+message LogEntry {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: {
+            required: ["id", "message"]
+        }
+    };
+    // The id of the log.
+    int32 id = 1;
+    // The message.
+    string message = 2;
+}

@@ -32,6 +32,7 @@ func (a *apiServer) GetMaster(
 	}, err
 }
 
+// TODO update the response format to wrap logv1.LogEntry.
 func logToProtoMasterLog(log *logger.Entry) *apiv1.MasterLogsResponse {
 	return &apiv1.MasterLogsResponse{Id: int32(log.ID), Message: log.Message}
 }

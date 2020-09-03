@@ -6,6 +6,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/proto/pkg/logv1"
 	"github.com/pkg/errors"
 )
 
@@ -49,7 +50,7 @@ func ProcessLogs(req LogStreamRequest,
 			req.Offset++
 			req.Limit--
 			if err := cb(log); err != nil {
-				return errors.Wrapf(err, "onLogEntry callback failed on entry %v", log)
+				return errors.Wrapf(err, "failed to process log entry %v", log)
 			}
 		}
 		if len(logEntries) == 0 {
@@ -70,4 +71,8 @@ func ProcessLogs(req LogStreamRequest,
 			req.Limit = -1
 		}
 	}
+}
+
+func LogEntryToProtoLogEntry(logEntry *logger.Entry) *logv1.LogEntry {
+	return &logv1.LogEntry{Id: int32(logEntry.ID), Message: logEntry.Message}
 }

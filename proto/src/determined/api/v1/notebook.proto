@@ -7,6 +7,7 @@ import "google/protobuf/struct.proto";
 
 import "determined/api/v1/pagination.proto";
 import "determined/notebook/v1/notebook.proto";
+import "determined/log/v1/log.proto";
 
 // Get a list of notebooks.
 message GetNotebooksRequest {
@@ -77,8 +78,6 @@ message NotebookLogsRequest {
 }
 // Response to NotebookLogsRequest.
 message NotebookLogsResponse {
-    // The id of the notebook log.
-    int32 id = 1;
-    // The log message.
-    string message = 2;
+    // The Notebook's log entry.
+    determined.log.v1.LogEntry log_entry = 1;
 }
