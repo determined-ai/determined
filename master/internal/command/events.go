@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
+	"github.com/pkg/errors"
 
 	webAPI "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/scheduler"
@@ -99,7 +100,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		var logs []*logger.Entry
 		for _, event := range events {
 			// FIXME use ok instead?
-			evMsg, err := eventToAPILogResponse(event)
+			evMsg, err := eventToLogEntry(event)
 			if err != nil {
 				continue
 			}
@@ -168,15 +169,27 @@ func validEvent(e event, greaterThanSeq, lessThanSeq *int) bool {
 	return true
 }
 
-func eventToAPILogResponse(ev *event) (*logger.Entry, error) {
-	// TODO
-	// evJSON, err := json.Marshal(ev)
-	// if err != nil {
-	// 	return nil, errors.Wrapf(err, "failed to marshal event")
-	// }
+func eventToLogEntry(ev *event) (*logger.Entry, error) {
+	description := ev.Snapshot.Config.Description
+	var message string
+	switch {
+	case ev.ScheduledEvent != nil:
+		message = fmt.Sprintf("Scheduling %s (id: %s)", ev.ParentID, description)
+	case ev.ContainerStartedEvent != nil:
+		message = fmt.Sprintf("Container of %s has started", description)
+	case ev.TerminateRequestEvent != nil:
+		message = fmt.Sprintf("%s was requested to terminate", description)
+	case ev.ExitedEvent != nil:
+		message = fmt.Sprintf("%s was terminated: %s", description, *ev.ExitedEvent)
+	case ev.LogEvent != nil:
+		message = fmt.Sprintf(*ev.LogEvent)
+	default:
+		return nil, errors.New("event has no supported message case")
+	}
 	return &logger.Entry{
-		ID: ev.Seq,
-		// Message: string(evJSON),
+		ID:      ev.Seq,
+		Message: message,
+		Time:    ev.Time,
 	}, nil
 }
 
