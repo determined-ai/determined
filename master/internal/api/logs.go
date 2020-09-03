@@ -4,16 +4,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
-	"github.com/pkg/errors"
 )
 
 const logCheckWaitTime = 500 * time.Millisecond
 
-/* Shared types? */
-type LogStreamRequest struct {
+// LogsRequest describes the parameters needed to target a subset of logs.
+type LogsRequest struct {
 	Offset int
 	Limit  int
 	Follow bool
@@ -21,16 +22,19 @@ type LogStreamRequest struct {
 
 // TODO rename? or define inline
 type onLogEntry func(*logger.Entry) error
-type FetchLogs func(LogStreamRequest) ([]*logger.Entry, error)
-type ShouldTerminateCheck func() (bool, error)
 
-// TODO add termination condition
-func ProcessLogs(req LogStreamRequest,
-	logFetcher FetchLogs, // TODO a better name
+// LogFetcher fetchs returns a subset of logs based on a LogRequest.
+type LogFetcher func(LogsRequest) ([]*logger.Entry, error)
+
+// TerminationCheck checks whether a log processing should stop or not.
+type TerminationCheck func() (bool, error)
+
+// ProcessLogs handles fetching and processing logs from a log store.
+func ProcessLogs(req LogsRequest,
+	logFetcher LogFetcher, // TODO a better name
 	cb onLogEntry,
-	terminateCheck *ShouldTerminateCheck,
+	terminateCheck *TerminationCheck,
 ) error {
-
 	// DISCUSS should this be left out to the caller? in some cases they can't leave it until this fn
 	// call
 	if err := grpc.ValidateRequest(
@@ -73,6 +77,7 @@ func ProcessLogs(req LogStreamRequest,
 	}
 }
 
+// LogEntryToProtoLogEntry turns a logger.LogEntry into logv1.LogEntry.
 func LogEntryToProtoLogEntry(logEntry *logger.Entry) *logv1.LogEntry {
 	return &logv1.LogEntry{Id: int32(logEntry.ID), Message: logEntry.Message}
 }

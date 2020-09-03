@@ -92,7 +92,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 			}
 		}
 
-	case webAPI.LogStreamRequest:
+	case webAPI.LogsRequest:
 		offset, limit := webAPI.EffectiveOffsetNLimit(msg.Offset, msg.Limit, e.bufferSize)
 		msg.Offset = offset
 		msg.Limit = limit
@@ -193,14 +193,13 @@ func eventToLogEntry(ev *event) (*logger.Entry, error) {
 	}, nil
 }
 
-func (e *eventManager) getClientEvents(req webAPI.LogStreamRequest) []*event {
+func (e *eventManager) getClientEvents(req webAPI.LogsRequest) []*event {
 	events := e.buffer
 	clientEvents := make([]*event, 0)
 
 	for i := 0; i < e.bufferSize; i++ {
 		if events.Value != nil {
 			event := events.Value.(event)
-			fmt.Printf("looking at event seq%d\n, off is %d, limit is %d \n", event.Seq, req.Offset, req.Limit)
 			if event.Seq >= req.Offset && (req.Limit < 1 || len(clientEvents) < req.Limit) {
 				clientEvents = append(clientEvents, &event)
 			}

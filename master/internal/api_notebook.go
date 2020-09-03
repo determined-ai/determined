@@ -40,8 +40,8 @@ func (a *apiServer) KillNotebook(
 func fetchCommandLogs(
 	eventMgrAddr actor.Address,
 	system *actor.System,
-) api.FetchLogs {
-	return func(req api.LogStreamRequest) ([]*logger.Entry, error) {
+) api.LogFetcher {
+	return func(req api.LogsRequest) ([]*logger.Entry, error) {
 		logEntries := make([]*logger.Entry, 0)
 		err := api.ActorRequest(system, eventMgrAddr, req, &logEntries)
 		return logEntries, err
@@ -51,7 +51,7 @@ func fetchCommandLogs(
 func commandIsTermianted(
 	cmdManagerAddr actor.Address,
 	system *actor.System,
-) api.ShouldTerminateCheck {
+) api.TerminationCheck {
 	return func() (bool, error) {
 		cmd := command.Summary{}
 		err := api.ActorRequest(system, cmdManagerAddr, command.GetSummary{}, &cmd)
@@ -64,7 +64,7 @@ func (a *apiServer) NotebookLogs(
 	req *apiv1.NotebookLogsRequest, resp apiv1.Determined_NotebookLogsServer) error {
 	// We push off calculating effective offset & limit to the actor to avoid having to synchronize
 	// between two actor messages.
-	logRequest := api.LogStreamRequest{
+	logRequest := api.LogsRequest{
 		Offset: int(req.Offset),
 		Limit:  int(req.Limit),
 		Follow: req.Follow,

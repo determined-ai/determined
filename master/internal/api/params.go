@@ -1,6 +1,6 @@
 package api
 
-// effectiveOffset returns effective offset.
+// EffectiveOffset returns effective offset.
 func EffectiveOffset(reqOffset int, total int) (offset int) {
 	switch {
 	case reqOffset < -total:
@@ -12,7 +12,7 @@ func EffectiveOffset(reqOffset int, total int) (offset int) {
 	}
 }
 
-// effectiveLimit returns effective limit.
+// EffectiveLimit returns effective limit.
 // Input: non-negative offset and limit.
 func EffectiveLimit(limit int, offset int, total int) int {
 	switch {
@@ -25,6 +25,7 @@ func EffectiveLimit(limit int, offset int, total int) int {
 	}
 }
 
+// EffectiveOffsetNLimit calculates effective offset and limit.
 func EffectiveOffsetNLimit(reqOffset int, reqLimit int, totalItems int) (offset int, limit int) {
 	offset = EffectiveOffset(reqOffset, totalItems)
 	limit = EffectiveLimit(reqLimit, offset, totalItems)

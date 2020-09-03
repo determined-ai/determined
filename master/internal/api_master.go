@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
 	"github.com/pkg/errors"
@@ -13,8 +12,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
-
-const logCheckWaitTime = 100 * time.Millisecond
 
 func (a *apiServer) GetMaster(
 	_ context.Context, _ *apiv1.GetMasterRequest) (*apiv1.GetMasterResponse, error) {
@@ -37,8 +34,8 @@ func logToProtoMasterLog(log *logger.Entry) *apiv1.MasterLogsResponse {
 	return &apiv1.MasterLogsResponse{Id: int32(log.ID), Message: log.Message}
 }
 
-func fetchMasterLogs(logBuffer *logger.LogBuffer) api.FetchLogs {
-	return func(req api.LogStreamRequest) ([]*logger.Entry, error) {
+func fetchMasterLogs(logBuffer *logger.LogBuffer) api.LogFetcher {
+	return func(req api.LogsRequest) ([]*logger.Entry, error) {
 		return logBuffer.Entries(req.Offset, -1, req.Limit), nil
 	}
 }
@@ -53,7 +50,7 @@ func (a *apiServer) MasterLogs(
 	total := a.m.logs.Len()
 	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
 
-	logRequest := api.LogStreamRequest{Offset: offset, Limit: limit, Follow: req.Follow}
+	logRequest := api.LogsRequest{Offset: offset, Limit: limit, Follow: req.Follow}
 
 	onLogEntry := func(log *logger.Entry) error {
 		return resp.Send(logToProtoMasterLog(log))
