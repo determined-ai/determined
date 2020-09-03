@@ -71,7 +71,7 @@ hyperparameters:
 resources:
   # We recommend 8 slots with V100
   # and at least 16 slots with K80 GPUs.
-  slots_per_trial: 2
+  slots_per_trial: 1
   shm_size: 30000000000
 
 searcher:
