@@ -123,7 +123,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case scheduler.ResourcesAllocated, scheduler.ReleaseResources:
 		return c.receiveSchedulerMsg(ctx)
 
-	case getSummary:
+	case GetSummary:
 		if msg.userFilter == "" || c.owner.Username == msg.userFilter {
 			ctx.Respond(newSummary(c))
 		}

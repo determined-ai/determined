@@ -64,7 +64,7 @@ func (s *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 		userFilter := apiCtx.QueryParam("user")
 		ctx.Respond(apiCtx.JSON(
 			http.StatusOK,
-			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
+			ctx.AskAll(GetSummary{userFilter: userFilter}, ctx.Children()...)))
 
 	case echo.POST:
 		var params commandParams
@@ -104,7 +104,7 @@ func (s *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 		}
 
 		a, _ := ctx.ActorOf(shell.taskID, shell)
-		ctx.Respond(apiCtx.JSON(http.StatusOK, ctx.Ask(a, getSummary{})))
+		ctx.Respond(apiCtx.JSON(http.StatusOK, ctx.Ask(a, GetSummary{})))
 		ctx.Log().Infof("created shell %s", a.Address().Local())
 
 	default:

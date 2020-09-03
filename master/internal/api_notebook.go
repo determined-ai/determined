@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -35,6 +37,10 @@ func logToProtoNotebookLog(log *logger.Entry) *apiv1.NotebookLogsResponse {
 	return &apiv1.NotebookLogsResponse{Id: int32(log.ID), Message: log.Message}
 }
 
+/* Command Helpers */
+// TODO reorder args?
+// CHECK parts of this code could live on the command and events actors but the idea is to
+// keep the api code out of there.
 func fetchCommandLogs(
 	eventMgrAddr actor.Address,
 	system *actor.System,
@@ -43,6 +49,18 @@ func fetchCommandLogs(
 		logEntries := make([]*logger.Entry, 0)
 		err := api.ActorRequest(system, eventMgrAddr, req, &logEntries)
 		return logEntries, err
+	}
+}
+
+func commandIsTermianted(
+	cmdManagerAddr actor.Address,
+	system *actor.System,
+) api.ShouldTerminateCheck {
+	return func() (bool, error) {
+		cmd := command.Summary{}
+		err := api.ActorRequest(system, cmdManagerAddr, command.GetSummary{}, &cmd)
+		isTerminated := cmd.State == container.Terminated.String()
+		return isTerminated, err
 	}
 }
 
@@ -55,11 +73,20 @@ func (a *apiServer) NotebookLogs(
 		Limit:  int(req.Limit),
 		Follow: req.Follow,
 	}
-	eventManagerAddr := actor.Addr("notebooks", req.NotebookId, "events")
+
+	cmdManagerAddr := actor.Addr("notebooks", req.NotebookId)
+	eventManagerAddr := cmdManagerAddr.Child("events")
 
 	onLogEntry := func(log *logger.Entry) error {
 		return resp.Send(logToProtoNotebookLog(log))
 	}
 
-	return api.ProcessLogs(logRequest, fetchCommandLogs(eventManagerAddr, a.m.system), onLogEntry)
+	terminationCheck := commandIsTermianted(cmdManagerAddr, a.m.system)
+
+	return api.ProcessLogs(
+		logRequest,
+		fetchCommandLogs(eventManagerAddr, a.m.system),
+		onLogEntry,
+		&terminationCheck,
+	)
 }

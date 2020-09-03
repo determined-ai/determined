@@ -58,5 +58,5 @@ func (a *apiServer) MasterLogs(
 		return resp.Send(logToProtoMasterLog(log))
 	}
 
-	return api.ProcessLogs(logRequest, fetchMasterLogs(a.m.logs), onLogEntry)
+	return api.ProcessLogs(logRequest, fetchMasterLogs(a.m.logs), onLogEntry, nil)
 }

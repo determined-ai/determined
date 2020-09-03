@@ -24,7 +24,7 @@ const defaultEventBufferSize = 200
 
 // event is the union of all event types during the parent lifecycle.
 type event struct {
-	Snapshot summary   `json:"snapshot"`
+	Snapshot Summary   `json:"snapshot"`
 	ParentID string    `json:"parent_id"`
 	ID       string    `json:"id"`
 	Seq      int       `json:"seq"`

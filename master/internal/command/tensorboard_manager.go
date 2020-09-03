@@ -79,7 +79,7 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 	case tensorboardTick:
 		services := ctx.Ask(t.proxyRef, proxy.GetSummary{}).Get().(map[string]proxy.Service)
 		for _, boardRef := range ctx.Children() {
-			boardSummary := ctx.Ask(boardRef, getSummary{}).Get().(summary)
+			boardSummary := ctx.Ask(boardRef, GetSummary{}).Get().(Summary)
 			if boardSummary.State != container.Running.String() {
 				continue
 			}
@@ -107,7 +107,7 @@ func (t *tensorboardManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Co
 		userFilter := apiCtx.QueryParam("user")
 		ctx.Respond(apiCtx.JSON(
 			http.StatusOK,
-			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
+			ctx.AskAll(GetSummary{userFilter: userFilter}, ctx.Children()...)))
 
 	case echo.POST:
 		req := tensorboardRequest{}
@@ -148,7 +148,7 @@ func (t *tensorboardManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Co
 		}
 
 		a, _ := ctx.ActorOf(b.taskID, b)
-		ctx.Respond(apiCtx.JSON(http.StatusOK, ctx.Ask(a, getSummary{})))
+		ctx.Respond(apiCtx.JSON(http.StatusOK, ctx.Ask(a, GetSummary{})))
 		ctx.Log().Infof("created tensorboard %s", a.Address().Local())
 
 	default:

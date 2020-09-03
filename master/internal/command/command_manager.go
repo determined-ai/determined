@@ -51,7 +51,7 @@ func (c *commandManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Contex
 		userFilter := apiCtx.QueryParam("user")
 		ctx.Respond(apiCtx.JSON(
 			http.StatusOK,
-			ctx.AskAll(getSummary{userFilter: userFilter}, ctx.Children()...)))
+			ctx.AskAll(GetSummary{userFilter: userFilter}, ctx.Children()...)))
 
 	case echo.POST:
 		var params commandParams
@@ -79,7 +79,7 @@ func (c *commandManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Contex
 		}
 
 		a, _ := ctx.ActorOf(command.taskID, command)
-		ctx.Respond(apiCtx.JSON(http.StatusOK, ctx.Ask(a, getSummary{})))
+		ctx.Respond(apiCtx.JSON(http.StatusOK, ctx.Ask(a, GetSummary{})))
 		ctx.Log().Infof("created command %s", a.Address().Local())
 
 	default:
