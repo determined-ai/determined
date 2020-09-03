@@ -164,7 +164,6 @@ def main() -> None:
     hparams = simplejson.loads(os.environ["DET_HPARAMS"])
     initial_work = workload.Workload.from_json(simplejson.loads(os.environ["DET_INITIAL_WORKLOAD"]))
 
-    # Load latest checkpoint from file to handle large data format
     with open(os.environ["DET_LATEST_CHECKPOINT"], "r") as f:
         latest_checkpoint = json.load(f)
 
