@@ -144,10 +144,9 @@ func setupCluster(
 		harnessPath:           "/opt/determined",
 		taskContainerDefaults: model.TaskContainerDefaultsConfig{},
 
-		taskList:           newTaskList(),
-		tasksByHandler:     make(map[*actor.Ref]*Task),
-		tasksByID:          make(map[TaskID]*Task),
-		tasksByContainerID: make(map[ContainerID]*Task),
+		taskList:       newTaskList(),
+		tasksByHandler: make(map[*actor.Ref]*Task),
+		tasksByID:      make(map[TaskID]*Task),
 
 		provisionerView: newProvisionerView(0),
 

@@ -183,19 +183,6 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 
 	ctx.Tell(task, rsc)
 	ctx.Tell(a.slots, rsc)
-
-	switch sc.Container.State {
-	case container.Running:
-		ctx.Tell(a.cluster, sproto.TaskStartedOnAgent{
-			ContainerID:      sc.Container.ID,
-			ContainerStarted: sc.ContainerStarted,
-		})
-	case container.Terminated:
-		ctx.Tell(a.cluster, sproto.TaskTerminatedOnAgent{
-			ContainerID:      sc.Container.ID,
-			ContainerStopped: sc.ContainerStopped,
-		})
-	}
 }
 
 func (a *agent) summarize(ctx *actor.Context) AgentSummary {

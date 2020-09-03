@@ -47,18 +47,3 @@ type (
 		agent.StartContainer
 	}
 )
-
-// Messages from agents to the RP.
-type (
-	//TaskStartedOnAgent notifies the resource provider that the task started on the agent.
-	TaskStartedOnAgent struct {
-		ContainerID      container.ID
-		ContainerStarted *agent.ContainerStarted
-	}
-
-	//TaskTerminatedOnAgent notifies the resource provider that the task has been terminated.
-	TaskTerminatedOnAgent struct {
-		ContainerID      container.ID
-		ContainerStopped *agent.ContainerStopped
-	}
-)

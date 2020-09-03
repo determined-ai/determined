@@ -2,12 +2,8 @@ package scheduler
 
 import (
 	"crypto/tls"
-	"strconv"
 
 	"github.com/determined-ai/determined/master/pkg/device"
-
-	"github.com/docker/docker/api/types"
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -30,11 +26,10 @@ type DefaultRP struct {
 	taskContainerDefaults model.TaskContainerDefaultsConfig
 	masterCert            *tls.Certificate
 
-	taskList           *taskList
-	tasksByHandler     map[*actor.Ref]*Task
-	tasksByID          map[TaskID]*Task
-	tasksByContainerID map[ContainerID]*Task
-	groups             map[*actor.Ref]*group
+	taskList       *taskList
+	tasksByHandler map[*actor.Ref]*Task
+	tasksByID      map[TaskID]*Task
+	groups         map[*actor.Ref]*group
 
 	provisioner     *actor.Ref
 	provisionerView *FilterableView
@@ -66,10 +61,9 @@ func NewDefaultRP(
 		taskContainerDefaults: taskContainerDefaults,
 		masterCert:            masterCert,
 
-		taskList:           newTaskList(),
-		tasksByHandler:     make(map[*actor.Ref]*Task),
-		tasksByID:          make(map[TaskID]*Task),
-		tasksByContainerID: make(map[ContainerID]*Task),
+		taskList:       newTaskList(),
+		tasksByHandler: make(map[*actor.Ref]*Task),
+		tasksByID:      make(map[TaskID]*Task),
 
 		provisioner:     provisioner,
 		provisionerView: newProvisionerView(provisionerSlotsPerInstance),
@@ -88,7 +82,6 @@ func (d *DefaultRP) assignContainer(
 	container := newContainer(task, a, slots, len(task.containers))
 	a.containers[container.id] = container
 	task.containers[container.id] = container
-	d.tasksByContainerID[container.id] = task
 
 	return &containerAssignment{
 		task:                  task,
@@ -215,9 +208,7 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 		sproto.AddDevice,
 		sproto.FreeDevice,
 		sproto.RemoveDevice,
-		sproto.RemoveAgent,
-		sproto.TaskStartedOnAgent,
-		sproto.TaskTerminatedOnAgent:
+		sproto.RemoveAgent:
 		return d.receiveAgentMsg(ctx)
 
 	case
@@ -293,16 +284,6 @@ func (d *DefaultRP) receiveAgentMsg(ctx *actor.Context) error {
 	case sproto.RemoveAgent:
 		ctx.Log().Infof("removing agent: %s", msg.Agent.Address().Local())
 		delete(d.agents, msg.Agent)
-
-	case sproto.TaskStartedOnAgent:
-		cid := ContainerID(msg.ContainerID)
-		addresses := toAddresses(
-			msg.ContainerStarted.ProxyAddress, msg.ContainerStarted.ContainerInfo)
-		d.receiveContainerStartedOnAgent(ctx, cid, addresses)
-
-	case sproto.TaskTerminatedOnAgent:
-		cid := ContainerID(msg.ContainerID)
-		d.receiveContainerTerminated(ctx, cid, *msg.ContainerStopped, false)
 	}
 	return nil
 }
@@ -377,74 +358,10 @@ func (d *DefaultRP) receiveAddTask(ctx *actor.Context, msg AssignResource) {
 	}
 }
 
-func (d *DefaultRP) receiveContainerStartedOnAgent(
-	ctx *actor.Context,
-	containerID ContainerID,
-	addresses []Address,
-) {
-	task := d.tasksByContainerID[containerID]
-	if task == nil {
-		ctx.Log().Warnf(
-			"ignoring stale start message for container %s",
-			containerID,
-		)
-		return
-	}
-
-	container := task.containers[containerID]
-	container.addresses = addresses
-	container.mustTransition(containerRunning)
-}
-
-// receiveContainerTerminated performs the necessary updates to the cluster
-// state after a container has actually terminated. This may happen gracefully
-// as part of responding to a ContainerTerminatedOnAgent message or abruptly
-// (e.g., an agent agent actor, task, or task actor has stopped). Because all
-// these scenarios can happen concurrently, this function is idempotent.
-func (d *DefaultRP) receiveContainerTerminated(
-	ctx *actor.Context,
-	id ContainerID,
-	reason aproto.ContainerStopped,
-	aborted bool,
-) {
-	task := d.tasksByContainerID[id]
-	if task == nil {
-		ctx.Log().Infof(
-			"ignoring stale terminated message for container %s",
-			id,
-		)
-		return
-	}
-
-	container := task.containers[id]
-	container.mustTransition(containerTerminated)
-	container.exitStatus = &reason
-
-	delete(container.agent.containers, container.id)
-	delete(container.task.containers, container.id)
-	delete(d.tasksByContainerID, container.id)
-
-	// A task is terminated if and only if all of its containers are terminated.
-	for _, container := range task.containers {
-		if container.state != containerTerminated {
-			return
-		}
-	}
-
-	if task.state != taskTerminated {
-		d.taskTerminated(task, aborted)
-	}
-}
-
 func (d *DefaultRP) receiveTaskActorStopped(ctx *actor.Context, msg taskActorStopped) {
 	task := d.tasksByHandler[msg.Ref]
 	if task == nil {
 		return
-	}
-
-	for _, container := range task.containers {
-		d.receiveContainerTerminated(ctx, container.ID(), aproto.ContainerError(aproto.TaskError,
-			errors.New("task has been stopped")), true)
 	}
 
 	// Clean up a task even if it does not have any containers yet.
@@ -476,55 +393,6 @@ func (d *DefaultRP) taskTerminated(task *Task, aborted bool) {
 	d.taskList.Remove(task)
 	delete(d.tasksByID, task.ID)
 	delete(d.tasksByHandler, task.handler)
-
-	for id := range task.containers {
-		delete(d.tasksByContainerID, id)
-	}
-}
-
-func toAddresses(proxy string, info types.ContainerJSON) []Address {
-	var addresses []Address
-	switch info.HostConfig.NetworkMode {
-	case "host":
-		for port := range info.Config.ExposedPorts {
-			addresses = append(addresses, Address{
-				ContainerIP:   proxy,
-				ContainerPort: port.Int(),
-				HostIP:        proxy,
-				HostPort:      port.Int(),
-			})
-		}
-	default:
-		if info.NetworkSettings == nil {
-			return nil
-		}
-		networks := info.NetworkSettings.Networks
-		ipAddresses := make([]string, 0, len(networks))
-		for _, network := range networks {
-			ipAddresses = append(ipAddresses, network.IPAddress)
-		}
-		for port, bindings := range info.NetworkSettings.Ports {
-			for _, binding := range bindings {
-				for _, ip := range ipAddresses {
-					hostIP := binding.HostIP
-					if hostIP == "" || hostIP == "0.0.0.0" {
-						hostIP = proxy
-					}
-					hostPort, err := strconv.Atoi(binding.HostPort)
-					if err != nil {
-						panic(errors.Wrapf(err, "unexpected host port: %s", binding.HostPort))
-					}
-					addresses = append(addresses, Address{
-						ContainerIP:   ip,
-						ContainerPort: port.Int(),
-						HostIP:        hostIP,
-						HostPort:      hostPort,
-					})
-				}
-			}
-		}
-	}
-	return addresses
 }
 
 // containerAssignment contains information for tasks have been assigned but not yet started.
