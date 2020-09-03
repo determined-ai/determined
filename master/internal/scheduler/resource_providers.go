@@ -31,7 +31,7 @@ func NewResourceProviders(resourceProvider *actor.Ref) *ResourceProviders {
 func (rp *ResourceProviders) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case AssignResource, sproto.ContainerStateChanged, SetMaxSlots, SetWeight,
-		SetTaskName, TerminateTask, GetTaskSummary, GetTaskSummaries, sproto.ConfigureEndpoints,
+		TerminateTask, GetTaskSummary, GetTaskSummaries, sproto.ConfigureEndpoints,
 		sproto.GetEndpointActorAddress:
 		rp.forward(ctx, msg)
 

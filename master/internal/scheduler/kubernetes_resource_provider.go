@@ -93,10 +93,6 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 	case SetMaxSlots:
 		k.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
 
-	case SetTaskName:
-		reschedule = false
-		k.receiveSetTaskName(ctx, msg)
-
 	case sproto.PodStarted:
 		k.receivePodStarted(ctx, msg)
 
@@ -282,12 +278,6 @@ func (k *kubernetesResourceProvider) getOrCreateGroup(
 		actors.NotifyOnStop(ctx, handler, groupActorStopped{})
 	}
 	return g
-}
-
-func (k *kubernetesResourceProvider) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) {
-	if task, ok := k.tasksByHandler[msg.TaskHandler]; ok {
-		task.name = msg.Name
-	}
 }
 
 func (k *kubernetesResourceProvider) receivePodStarted(ctx *actor.Context, msg sproto.PodStarted) {

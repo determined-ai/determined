@@ -521,10 +521,6 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.ResourceAssign
 				return nil
 			}
 		}
-		ctx.Tell(t.rp, scheduler.SetTaskName{
-			Name:        fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experiment.ID),
-			TaskHandler: ctx.Self(),
-		})
 		ctx.Tell(ctx.Self().Parent(), trialCreated{create: t.create, trialID: t.id})
 	}
 

@@ -25,11 +25,6 @@ type (
 	taskActorStopped struct {
 		Ref *actor.Ref
 	}
-	// SetTaskName sets the name of the task handled by the sender of the message.
-	SetTaskName struct {
-		Name        string
-		TaskHandler *actor.Ref
-	}
 	// GetTaskSummary returns the summary of the specified task.
 	GetTaskSummary struct{ ID *TaskID }
 	// GetTaskSummaries returns the summaries of all the tasks in the cluster.

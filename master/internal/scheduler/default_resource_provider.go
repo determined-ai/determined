@@ -229,10 +229,6 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 		TerminateTask:
 		return d.receiveTaskMsg(ctx)
 
-	case SetTaskName:
-		reschedule = false
-		d.receiveSetTaskName(ctx, msg)
-
 	case GetTaskSummary:
 		reschedule = false
 		if resp := d.getTaskSummary(*msg.ID); resp != nil {
@@ -455,12 +451,6 @@ func (d *DefaultRP) receiveTaskActorStopped(ctx *actor.Context, msg taskActorSto
 	// Agents might error out that the containers do not exist.
 	if task.state != taskTerminated {
 		d.taskTerminated(task, true)
-	}
-}
-
-func (d *DefaultRP) receiveSetTaskName(ctx *actor.Context, msg SetTaskName) {
-	if task, ok := d.tasksByHandler[msg.TaskHandler]; ok {
-		task.name = msg.Name
 	}
 }
 
