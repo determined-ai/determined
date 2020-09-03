@@ -61,6 +61,22 @@ func (a *apiServer) GetExperiment(
 	return &apiv1.GetExperimentResponse{Experiment: exp, Config: protoutils.ToStruct(conf)}, nil
 }
 
+func (a *apiServer) DeleteExperiment(
+	ctx context.Context, req *apiv1.DeleteExperimentRequest,
+) (*apiv1.DeleteExperimentResponse, error) {
+	resp, err := a.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: req.ExperimentId})
+	if err != nil {
+		return nil, err
+	}
+
+	err = a.m.db.DeleteExperiment(int(req.ExperimentId))
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to delete experiment %d", req.ExperimentId)
+	}
+
+	return &apiv1.DeleteExperimentResponse{Experiment: resp.Experiment, Config: resp.Config}, nil
+}
+
 func (a *apiServer) GetExperiments(
 	_ context.Context, req *apiv1.GetExperimentsRequest) (*apiv1.GetExperimentsResponse, error) {
 	resp := &apiv1.GetExperimentsResponse{}

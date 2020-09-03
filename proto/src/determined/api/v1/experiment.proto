@@ -75,6 +75,19 @@ message GetExperimentsResponse {
     Pagination pagination = 2;
 }
 
+// Delete a single experiment.
+message DeleteExperimentRequest {
+    // The id of the experiment.
+    int32 experiment_id = 1;
+}
+// Response to DeleteExperimentRequest.
+message DeleteExperimentResponse {
+    // The deleted experiment.
+    determined.experiment.v1.Experiment experiment = 1;
+    // The experiment config.
+    google.protobuf.Struct config = 2;
+}
+
 // Preview hyperparameter search.
 message PreviewHPSearchRequest {
     // The experiment config to simulate.
