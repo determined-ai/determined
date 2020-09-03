@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 )
@@ -22,6 +23,12 @@ func ProcessLogs(req LogStreamRequest,
 	system *actor.System,
 	cb ServerSend,
 ) error {
+
+	if err := grpc.ValidateRequest(
+		grpc.ValidateLimit(int32(req.Limit)),
+	); err != nil {
+		return err
+	}
 
 	logEntries := make([]logger.Entry, 0)
 	for {
