@@ -8,6 +8,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/logger"
 )
 
+const logCheckWaitTime = 500 * time.Millisecond
+
 /* Shared types? */
 type LogStreamRequest struct {
 	Offset int
@@ -15,10 +17,11 @@ type LogStreamRequest struct {
 	Follow bool
 }
 
-// TODO another name?
+// TODO rename?
 type onLogEntry func(*logger.Entry) error
 type FetchLogs func(LogStreamRequest) ([]*logger.Entry, error)
 
+// TODO add termination condition
 func ProcessLogs(req LogStreamRequest,
 	logFetcher FetchLogs, // TODO a better name
 	cb onLogEntry,
@@ -45,7 +48,7 @@ func ProcessLogs(req LogStreamRequest,
 			}
 		}
 		if len(logEntries) == 0 {
-			time.Sleep(2000 * time.Millisecond)
+			time.Sleep(logCheckWaitTime)
 		}
 		if !req.Follow || req.Limit == 0 {
 			return nil

@@ -92,6 +92,9 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		}
 
 	case webAPI.LogStreamRequest:
+		offset, limit := webAPI.EffectiveOffsetNLimit(msg.Offset, msg.Limit, e.bufferSize)
+		msg.Offset = offset
+		msg.Limit = limit
 		events := e.getClientEvents(msg)
 		var logs []*logger.Entry
 		for _, event := range events {
@@ -166,6 +169,7 @@ func validEvent(e event, greaterThanSeq, lessThanSeq *int) bool {
 }
 
 func eventToAPILogResponse(ev *event) (*logger.Entry, error) {
+	// TODO
 	// evJSON, err := json.Marshal(ev)
 	// if err != nil {
 	// 	return nil, errors.Wrapf(err, "failed to marshal event")
@@ -180,13 +184,11 @@ func (e *eventManager) getClientEvents(req webAPI.LogStreamRequest) []*event {
 	events := e.buffer
 	clientEvents := make([]*event, 0)
 
-	offset, limit := webAPI.EffectiveOffsetNLimit(req.Offset, req.Limit, e.bufferSize)
-
 	for i := 0; i < e.bufferSize; i++ {
 		if events.Value != nil {
 			event := events.Value.(event)
-			fmt.Printf("looking at event seq%d\n, off is %d, limit is %d \n", event.Seq, offset, limit)
-			if event.Seq >= offset && (limit < 1 || len(clientEvents) < limit) {
+			fmt.Printf("looking at event seq%d\n, off is %d, limit is %d \n", event.Seq, req.Offset, req.Limit)
+			if event.Seq >= req.Offset && (req.Limit < 1 || len(clientEvents) < req.Limit) {
 				clientEvents = append(clientEvents, &event)
 			}
 		}

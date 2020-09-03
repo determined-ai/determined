@@ -35,7 +35,7 @@ func logToProtoNotebookLog(log *logger.Entry) *apiv1.NotebookLogsResponse {
 	return &apiv1.NotebookLogsResponse{Id: int32(log.ID), Message: log.Message}
 }
 
-func fetchLogs(
+func fetchCommandLogs(
 	eventMgrAddr actor.Address,
 	system *actor.System,
 ) api.FetchLogs {
@@ -48,6 +48,8 @@ func fetchLogs(
 
 func (a *apiServer) NotebookLogs(
 	req *apiv1.NotebookLogsRequest, resp apiv1.Determined_NotebookLogsServer) error {
+	// We push off calculating effective offset & limit to the actor to avoid having to synchronize
+	// between two actor messages.
 	logRequest := api.LogStreamRequest{
 		Offset: int(req.Offset),
 		Limit:  int(req.Limit),
@@ -59,5 +61,5 @@ func (a *apiServer) NotebookLogs(
 		return resp.Send(logToProtoNotebookLog(log))
 	}
 
-	return api.ProcessLogs(logRequest, fetchLogs(eventManagerAddr, a.m.system), onLogEntry)
+	return api.ProcessLogs(logRequest, fetchCommandLogs(eventManagerAddr, a.m.system), onLogEntry)
 }
