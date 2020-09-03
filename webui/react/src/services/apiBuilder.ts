@@ -1,6 +1,7 @@
 import axios, { AxiosResponse, CancelToken, Method } from 'axios';
 
 import handleError, { DaError, ErrorLevel, ErrorType, isDaError } from 'ErrorHandler';
+import { serverAddress } from 'routes/utils';
 import { isAuthFailure } from 'services/api';
 import * as DetSwagger from 'services/api-ts-sdk';
 
@@ -26,11 +27,6 @@ export const http = axios.create({
   responseType: 'json',
   withCredentials: true,
 });
-
-export const serverAddress = (avoidDevProxy = false): string => {
-  if (avoidDevProxy && process.env.IS_DEV) return 'http://localhost:8080';
-  return `${window.location.protocol}//${window.location.host}`;
-};
 
 export const processApiError = (name: string, e: Error): DaError => {
   const isAuthError = isAuthFailure(e);
@@ -87,9 +83,11 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
   ).then(() => console.log('finished'));
 */
 export const consumeStream = async <T = unknown>(
-  fetchArgs: DetSwagger.FetchArgs, onEvent: (event: T) => void): Promise<void> => {
+  fetchArgs: DetSwagger.FetchArgs,
+  onEvent: (event: T) => void,
+): Promise<void> => {
   try {
-    const response = await fetch(serverAddress(true) + fetchArgs.url, fetchArgs.options);
+    const response = await fetch(serverAddress(fetchArgs.url), fetchArgs.options);
     const exampleReader = ndjsonStream(response.body).getReader();
     let result;
     while (!result || !result.done) {

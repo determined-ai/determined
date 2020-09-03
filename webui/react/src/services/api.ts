@@ -2,7 +2,7 @@ import { CancelToken } from 'axios';
 
 import * as DetSwagger from 'services/api-ts-sdk';
 import { V1GetExperimentsRequestSortBy, V1Pagination } from 'services/api-ts-sdk';
-import { generateApi, processApiError, serverAddress } from 'services/apiBuilder';
+import { generateApi, processApiError } from 'services/apiBuilder';
 import * as Config from 'services/apiConfig';
 import { ApiSorter, CreateNotebookParams, CreateTensorboardParams,
   EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
@@ -17,7 +17,7 @@ import { isExperimentTask } from 'utils/task';
 
 import { decodeExperimentList, encodeExperimentState } from './decoder';
 
-const address = serverAddress();
+const address = `${window.location.protocol}//${window.location.host}`;
 export const detAuthApi = new DetSwagger.AuthenticationApi(undefined, address);
 export const detExperimentApi = new DetSwagger.ExperimentsApi(undefined, address);
 export const detExperimentsStreamingApi = DetSwagger.ExperimentsApiFetchParamCreator();

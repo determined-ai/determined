@@ -1,4 +1,4 @@
-import { serverAddress } from 'services/apiBuilder';
+import { serverAddress } from 'routes/utils';
 import {
   AnyTask, Checkpoint, Command, CommandState, CommandType, ExperimentHyperParams,
   ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
@@ -21,7 +21,7 @@ export const waitPageUrl = (command: Command): string | undefined => {
   if (!eventUrl || !proxyUrl) return;
   const event = encodeURIComponent(eventUrl);
   const jump = encodeURIComponent(proxyUrl);
-  return `${serverAddress(true)}/wait?event=${event}&jump=${jump}`;
+  return serverAddress(`/wait?event=${event}&jump=${jump}`);
 };
 
 export const commandToTask = (command: Command): RecentCommandTask => {

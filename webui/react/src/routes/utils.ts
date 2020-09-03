@@ -5,9 +5,10 @@ import { Command } from 'types';
 
 import { waitPageUrl } from '../utils/types';
 
-export const serverAddress = (avoidDevProxy = false): string => {
-  if (avoidDevProxy && process.env.IS_DEV) return 'http://localhost:8080';
-  return `${window.location.protocol}//${window.location.host}`;
+export const serverAddress = (path: string): string => {
+  const { host, protocol } = window.location;
+  const address = process.env.IS_DEV ? 'http://localhost:8080' : `${protocol}//${host}`;
+  return address + path;
 };
 
 export const isFullPath = (url: string): boolean => url.startsWith('http');
