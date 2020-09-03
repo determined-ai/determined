@@ -6,7 +6,7 @@ from tests import experiment as exp
 
 @pytest.mark.nightly  # type: ignore
 def test_nas_search() -> None:
-    config = conf.load_config(conf.experimental_path("trial/nas_search/train_one_arch.yaml"))
+    config = conf.load_config(conf.experimental_path("trial/rsws_nas/train_one_arch.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
 
     exp.run_basic_test_with_temp_config(config, conf.experimental_path("trial/nas_search"), 1)
