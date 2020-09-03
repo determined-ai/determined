@@ -3,7 +3,7 @@ import yaml from 'js-yaml';
 import React, { useCallback, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 
-import { routeAll } from 'routes';
+import { routeAll } from 'routes/utils';
 import { forkExperiment } from 'services/api';
 
 import css from './CreateExperimentModal.module.scss';

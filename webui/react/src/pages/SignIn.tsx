@@ -10,9 +10,8 @@ import Auth from 'contexts/Auth';
 import UI from 'contexts/UI';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
-import { routeAll } from 'routes';
-import { defaultAppRoute } from 'routes';
-import { locationToPath } from 'routes/utils';
+import { defaultAppRoute } from 'routes/routes';
+import { locationToPath, routeAll } from 'routes/utils';
 import { getPath } from 'utils/data';
 
 import css from './SignIn.module.scss';

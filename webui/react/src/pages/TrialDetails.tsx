@@ -22,7 +22,7 @@ import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
 import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
-import { routeAll } from 'routes';
+import { routeAll } from 'routes/utils';
 import { forkExperiment } from 'services/api';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { TrialDetailsParams } from 'services/types';

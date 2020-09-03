@@ -5,7 +5,7 @@ import { Redirect, Route, Switch } from 'react-router-dom';
 import Auth from 'contexts/Auth';
 import UI from 'contexts/UI';
 import useAuthCheck from 'hooks/useAuthCheck';
-import { RouteConfig } from 'routes';
+import { RouteConfig } from 'routes/types';
 import { clone } from 'utils/data';
 
 interface Props {
