@@ -302,7 +302,7 @@ func startContainer(t TaskSpec) container.Spec {
 		},
 		RunSpec: container.RunSpec{
 			ContainerConfig: docker.Config{
-				Cmd:          []string{"/run/determined/workdir/entrypoint.sh"},
+				Cmd:          []string{"/run/determined/train/entrypoint.sh"},
 				User:         user,
 				Image:        exp.ExperimentConfig.Environment.Image.For(deviceType),
 				ExposedPorts: ports,

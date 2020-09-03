@@ -38,7 +38,7 @@ const (
 	// of 16 slot per agent. MaxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1.
 	MaxLocalRendezvousPort = MinLocalRendezvousPort + 2*16 - 1
 
-	trialEntrypointFile = "/run/determined/workdir/entrypoint.sh"
+	trialEntrypointFile = "/run/determined/train/entrypoint.sh"
 	trialEntrypointMode = 0744
 
 	// Put as many ssh-related files in /run/determined as possible. In particular, it is very
