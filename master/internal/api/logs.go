@@ -6,7 +6,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 )
@@ -35,13 +34,6 @@ func ProcessLogs(req LogsRequest,
 	cb onLogEntry,
 	terminateCheck *TerminationCheck,
 ) error {
-	// DISCUSS should this be left out to the caller? in some cases they can't leave it until this fn
-	// call
-	if err := grpc.ValidateRequest(
-		grpc.ValidateLimit(int32(req.Limit)),
-	); err != nil {
-		return err
-	}
 
 	for {
 		logEntries, err := logFetcher(req)
