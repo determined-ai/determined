@@ -1,9 +1,0 @@
-:orphan:
-
-**Feature Upgrades**
-
-- Update trial details multiple metric picker to display # of metrics selected instead of a series of tags.
-
-  - The list of tags can take up a significant amount screen space since the selector will grow to fit all
-    of the selected tags. Showing the total count of the selected metrics all the selector to stay small
-    and manageable.
