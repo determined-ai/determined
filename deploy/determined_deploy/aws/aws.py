@@ -14,10 +14,12 @@ NUM_WAITS = 5
 def get_user(boto3_session: boto3.session.Session) -> str:
     sts = boto3_session.client("sts")
     response = sts.get_caller_identity()
-    return response["Arn"].split("/")[-1]
+    arn = response["Arn"]
+    assert isinstance(arn, str), f"expected a string Arn but got {arn}"
+    return arn.split("/")[-1]
 
 
-def stop_master(master_id: str, boto3_session: boto3.session.Session):
+def stop_master(master_id: str, boto3_session: boto3.session.Session) -> None:
     ec2 = boto3_session.client("ec2")
     waiter = ec2.get_waiter("instance_stopped")
     ec2.stop_instances(InstanceIds=[master_id])
@@ -212,7 +214,9 @@ def get_ec2_info(instance_id: str, boto3_session: boto3.session.Session) -> Dict
     ec2 = boto3_session.client("ec2")
 
     response = ec2.describe_instances(InstanceIds=[instance_id])
-    return response["Reservations"][0]["Instances"][0]
+    info = response["Reservations"][0]["Instances"][0]
+    assert isinstance(info, dict), f"expected a dict of instance info but got {info}"
+    return info
 
 
 def check_keypair(name: str, boto3_session: boto3.session.Session) -> bool:
