@@ -176,7 +176,7 @@ def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
     )
 
 
-def make_gcp_parser(subparsers: argparse._SubParsersAction):
+def make_gcp_parser(subparsers: argparse._SubParsersAction) -> None:
     parser_gcp = subparsers.add_parser("gcp", help="gcp help")
     gcp_subparsers = parser_gcp.add_subparsers(help="command", dest="command")
     make_up_subparser(gcp_subparsers)

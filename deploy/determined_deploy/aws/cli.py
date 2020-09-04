@@ -1,6 +1,7 @@
 import argparse
 import re
 import sys
+from typing import Dict, Type, Union
 
 import boto3
 
@@ -8,7 +9,7 @@ from determined_deploy.aws import aws, constants
 from determined_deploy.aws.deployment_types import secure, simple, vpc
 
 
-def make_down_subparser(subparsers: argparse._SubParsersAction):
+def make_down_subparser(subparsers: argparse._SubParsersAction) -> None:
     subparser = subparsers.add_parser("down", help="delete CloudFormation stack")
     require_named = subparser.add_argument_group("required named arguments")
     require_named.add_argument(
@@ -24,7 +25,7 @@ def make_down_subparser(subparsers: argparse._SubParsersAction):
     subparser.add_argument("--aws-profile", type=str, default=None, help=argparse.SUPPRESS)
 
 
-def make_up_subparser(subparsers: argparse._SubParsersAction):
+def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
     subparser = subparsers.add_parser("up", help="deploy/update CloudFormation stack")
     require_named = subparser.add_argument_group("required named arguments")
     require_named.add_argument(
@@ -96,7 +97,7 @@ def make_up_subparser(subparsers: argparse._SubParsersAction):
     )
 
 
-def make_aws_parser(subparsers: argparse._SubParsersAction):
+def make_aws_parser(subparsers: argparse._SubParsersAction) -> None:
     parser_aws = subparsers.add_parser("aws", help="AWS help")
 
     aws_subparsers = parser_aws.add_subparsers(help="command", dest="command")
@@ -137,7 +138,7 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.deployment_types.SIMPLE: simple.Simple,
         constants.deployment_types.SECURE: secure.Secure,
         constants.deployment_types.VPC: vpc.VPC,
-    }
+    }  # type: Dict[str, Union[Type[simple.Simple], Type[secure.Secure], Type[vpc.VPC]]]
 
     det_configs = {
         constants.cloudformation.KEYPAIR: args.keypair,

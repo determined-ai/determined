@@ -6,20 +6,17 @@ from typing import Dict, List
 terraform_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "terraform")
 
 
-def deploy(configs: Dict, env: Dict, variables: List):
-
+def deploy(configs: Dict, env: Dict, variables: List) -> None:
     terraform_init(configs, env)
-    return terraform_apply(configs, env, variables)
+    terraform_apply(configs, env, variables)
 
 
-def dry_run(configs: Dict, env: Dict, variables: List):
-
+def dry_run(configs: Dict, env: Dict, variables: List) -> None:
     terraform_init(configs, env)
-    return terraform_plan(configs, env, variables)
+    terraform_plan(configs, env, variables)
 
 
-def terraform_init(configs: Dict, env: Dict):
-
+def terraform_init(configs: Dict, env: Dict) -> None:
     command = ["terraform init"]
     command += [
         "-backend-config='path={}'".format(
@@ -28,15 +25,12 @@ def terraform_init(configs: Dict, env: Dict):
     ]
 
     command += [terraform_dir]
-    command = " ".join(command)
 
-    output = subprocess.Popen(command, env=env, shell=True, stdout=sys.stdout)
+    output = subprocess.Popen(" ".join(command), env=env, shell=True, stdout=sys.stdout)
     output.wait()
-    return
 
 
-def terraform_plan(configs: Dict, env: Dict, variables: List):
-
+def terraform_plan(configs: Dict, env: Dict, variables: List) -> None:
     command = ["terraform", "plan"]
 
     for key in configs:
@@ -47,13 +41,11 @@ def terraform_plan(configs: Dict, env: Dict, variables: List):
 
     command += ["-input=false"]
     command += [terraform_dir]
-    command = " ".join(command)
 
-    return run_command(command, env)
+    run_command(" ".join(command), env)
 
 
-def terraform_apply(configs: Dict, env: Dict, variables: List):
-
+def terraform_apply(configs: Dict, env: Dict, variables: List) -> None:
     command = ["terraform", "apply"]
 
     for key in configs:
@@ -65,13 +57,11 @@ def terraform_apply(configs: Dict, env: Dict, variables: List):
     command += ["-input=false"]
     command += ["-auto-approve"]
     command += [terraform_dir]
-    command = " ".join(command)
 
-    return run_command(command, env)
+    run_command(" ".join(command), env)
 
 
-def delete(configs: Dict, env: Dict, variables: List):
-
+def delete(configs: Dict, env: Dict, variables: List) -> None:
     command = ["terraform", "destroy"]
 
     for key in configs:
@@ -83,13 +73,9 @@ def delete(configs: Dict, env: Dict, variables: List):
     command += ["-input=false"]
     command += ["-auto-approve"]
     command += [terraform_dir]
-    command = " ".join(command)
 
-    return run_command(command, env)
+    run_command(" ".join(command), env)
 
 
-def run_command(command: List, env):
-
-    output = subprocess.check_call(command, env=env, shell=True, stdout=sys.stdout)
-
-    return output
+def run_command(command: str, env: Dict[str, str]) -> None:
+    subprocess.check_call(command, env=env, shell=True, stdout=sys.stdout)
