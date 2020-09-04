@@ -2,10 +2,8 @@ import { pathToRegexp } from 'path-to-regexp';
 import { MouseEvent, MouseEventHandler } from 'react';
 
 import history from 'routes/history';
-import { Command } from 'types';
+import { Command, CommandType } from 'types';
 import { clone } from 'utils/data';
-
-import { waitPageUrl } from '../utils/types';
 
 import { appRoutes } from './routes';
 
@@ -33,6 +31,21 @@ export const parseUrl = (url: string): URL => {
 export const locationToPath = (location?: Location): string | null => {
   if (!location || !location.pathname) return null;
   return location.pathname + location.search + location.hash;
+};
+
+const commandToEventUrl = (command: Partial<Command>): string | undefined => {
+  if (command.kind === CommandType.Notebook) return `/notebooks/${command.id}/events`;
+  if (command.kind === CommandType.Tensorboard) return `/tensorboard/${command.id}/events?tail=1`;
+  return undefined;
+};
+
+export const waitPageUrl = (command: Partial<Command>): string | undefined => {
+  const eventUrl = commandToEventUrl(command);
+  const proxyUrl = command.serviceAddress;
+  if (!eventUrl || !proxyUrl) return;
+  const event = encodeURIComponent(eventUrl);
+  const jump = encodeURIComponent(proxyUrl);
+  return serverAddress(`/wait?event=${event}&jump=${jump}`);
 };
 
 export const windowOpenFeatures = [ 'noopener', 'noreferrer' ];

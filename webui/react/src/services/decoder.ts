@@ -11,6 +11,7 @@ import {
   ioTypeGenericCommand, ioTypeGenericCommands, ioTypeLog, ioTypeLogs, ioTypeMetric, ioTypeStep,
   ioTypeTaskLogs, ioTypeTrial, ioTypeTrialDetails, ioTypeValidationMetrics,
 } from 'ioTypes';
+import { waitPageUrl } from 'routes/utils';
 import {
   Agent, Checkpoint, CheckpointState, CheckpointStorageType, Command, CommandState,
   CommandType, DetailedUser, DeterminedInfo, ExperimentBase,
@@ -84,7 +85,7 @@ export const jsonToAgents = (data: unknown): Agent[] => {
 
 export const jsonToGenericCommand = (data: unknown, type: CommandType): Command => {
   const io = decode<ioTypeGenericCommand>(ioGenericCommand, data);
-  return {
+  const command: Partial<Command> = {
     config: { ...io.config },
     exitStatus: io.exit_status || undefined,
     id: io.id,
@@ -96,11 +97,14 @@ export const jsonToGenericCommand = (data: unknown, type: CommandType): Command 
     registeredTime: io.registered_time,
     serviceAddress: io.service_address || undefined,
     state: io.state as CommandState,
+    url: undefined,
     user: {
       id: io.owner.id,
       username: io.owner.username,
     },
   };
+  command.url = waitPageUrl(command);
+  return command as Command;
 };
 
 const jsonToGenericCommands = (data: unknown, type: CommandType): Command[] => {

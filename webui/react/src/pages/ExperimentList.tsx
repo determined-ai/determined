@@ -32,7 +32,7 @@ import {
   ALL_VALUE, Command, ExperimentFilters, ExperimentItem, Pagination, RunState, TBSourceType,
 } from 'types';
 import {
-  cancellableRunStates, experimentToTask, isTaskKillable, terminalRunStates, waitPageUrl,
+  cancellableRunStates, experimentToTask, isTaskKillable, terminalRunStates,
 } from 'utils/types';
 
 import css from './ExperimentList.module.scss';
@@ -249,7 +249,7 @@ const ExperimentList: React.FC = () => {
     try {
       const result = await sendBatchActions(action);
       if (action === Action.OpenTensorBoard) {
-        const url = waitPageUrl(result as Command);
+        const url = (result as Command).url;
         if (url) openBlank(url);
       }
 
