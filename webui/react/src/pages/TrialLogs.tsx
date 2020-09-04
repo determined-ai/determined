@@ -10,7 +10,7 @@ import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
 import { detApi, getTrialDetails } from 'services/api';
-import * as DetSwagger from 'services/api-ts-sdk';
+import { V1TrialLogsResponse } from 'services/api-ts-sdk';
 import { jsonToTrialLog } from 'services/decoder';
 import { TrialDetailsParams } from 'services/types';
 import { consumeStream } from 'services/utils';
@@ -42,7 +42,7 @@ const TrialLogs: React.FC = () => {
 
     let buffer: Log[] = [];
 
-    consumeStream<DetSwagger.V1TrialLogsResponse>(
+    consumeStream<V1TrialLogsResponse>(
       detApi.StreamingExperiments.determinedTrialLogs(id, offset - TAIL_SIZE, TAIL_SIZE),
       event => buffer.push(jsonToTrialLog(event)),
     ).then(() => {
@@ -114,7 +114,7 @@ const TrialLogs: React.FC = () => {
       setIsLoading(false);
     });
 
-    consumeStream<DetSwagger.V1TrialLogsResponse>(
+    consumeStream<V1TrialLogsResponse>(
       detApi.StreamingExperiments.determinedTrialLogs(id, -TAIL_SIZE, 0, true),
       event => {
         buffer.push(jsonToTrialLog(event));

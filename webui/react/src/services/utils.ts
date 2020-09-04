@@ -2,7 +2,7 @@ import axios, { AxiosResponse, CancelToken, Method } from 'axios';
 
 import handleError, { DaError, ErrorLevel, ErrorType, isDaError } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
-import * as DetSwagger from 'services/api-ts-sdk';
+import * as Api from 'services/api-ts-sdk';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const ndjsonStream = require('can-ndjson-stream');
@@ -95,13 +95,13 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
   We use the provided fetchParamCreator to create fetch arguments and use that
   to make a request and handle events one by one.
   Example:
-  consumeStream<DetSwagger.V1TrialLogsResponse>(
-    DetSwagger.ExperimentsApiFetchParamCreator().determinedTrialLogs(1, undefined, undefined, true),
+  consumeStream<Api.V1TrialLogsResponse>(
+    Api.ExperimentsApiFetchParamCreator().determinedTrialLogs(1, undefined, undefined, true),
     console.log,
   ).then(() => console.log('finished'));
 */
 export const consumeStream = async <T = unknown>(
-  fetchArgs: DetSwagger.FetchArgs,
+  fetchArgs: Api.FetchArgs,
   onEvent: (event: T) => void,
 ): Promise<void> => {
   try {

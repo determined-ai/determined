@@ -1,5 +1,5 @@
 import { detApi, getTrialDetails } from 'services/api';
-import * as DetSwagger from 'services/api-ts-sdk';
+import { V1TrialLogsResponse } from 'services/api-ts-sdk';
 import { consumeStream } from 'services/utils';
 
 const updateFavicon = (iconPath: string): void => {
@@ -46,7 +46,7 @@ export const downloadTrialLogs = async (trialId: number): Promise<void> => {
   const MAX_PART_SIZE = 128 * Math.pow(2, 20); // 128m * CHAR_SIZE
   const parts: BlobPart[] = [];
   let downloadStringBuffer = '';
-  await consumeStream<DetSwagger.V1TrialLogsResponse>(
+  await consumeStream<V1TrialLogsResponse>(
     detApi.StreamingExperiments.determinedTrialLogs(trialId),
     (ev) => {
       downloadStringBuffer += ev.message;

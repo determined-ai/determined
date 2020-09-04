@@ -1,7 +1,6 @@
 import { CancelToken } from 'axios';
 
-import * as DetSwagger from 'services/api-ts-sdk';
-import { V1GetExperimentsRequestSortBy, V1Pagination } from 'services/api-ts-sdk';
+import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import { ApiSorter, CreateNotebookParams, CreateTensorboardParams,
   EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
@@ -22,9 +21,9 @@ export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 const address = `${window.location.protocol}//${window.location.host}`;
 
 export const detApi = {
-  Auth: new DetSwagger.AuthenticationApi(undefined, address),
-  Experiments: new DetSwagger.ExperimentsApi(undefined, address),
-  StreamingExperiments: DetSwagger.ExperimentsApiFetchParamCreator(),
+  Auth: new Api.AuthenticationApi(undefined, address),
+  Experiments: new Api.ExperimentsApi(undefined, address),
+  StreamingExperiments: Api.ExperimentsApiFetchParamCreator(),
 };
 
 /* Authentication */
@@ -44,14 +43,14 @@ export const getAgents = generateApi<EmptyParams, Agent[]>(Config.getAgents);
 /* Experiments */
 
 export const getExperimentList = async (
-  sorter: ApiSorter<V1GetExperimentsRequestSortBy>,
+  sorter: ApiSorter<Api.V1GetExperimentsRequestSortBy>,
   pagination: Pagination,
   filters: ExperimentFilters,
   search?: string,
-): Promise<{ experiments: ExperimentItem[], pagination?: V1Pagination }> => {
+): Promise<{ experiments: ExperimentItem[], pagination?: Api.V1Pagination }> => {
   try {
-    const sortBy = Object.values(V1GetExperimentsRequestSortBy).includes(sorter.key) ?
-      sorter.key : V1GetExperimentsRequestSortBy.UNSPECIFIED;
+    const sortBy = Object.values(Api.V1GetExperimentsRequestSortBy).includes(sorter.key) ?
+      sorter.key : Api.V1GetExperimentsRequestSortBy.UNSPECIFIED;
 
     const response = await detApi.Experiments.determinedGetExperiments(
       /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
