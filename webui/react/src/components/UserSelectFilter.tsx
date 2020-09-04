@@ -11,7 +11,7 @@ import SelectFilter from './SelectFilter';
 const { Option } = Select;
 
 interface Props {
-  onChange: (value: SelectValue) => void;
+  onChange?: (value: SelectValue) => void;
   value?: SelectValue;
 }
 
@@ -23,6 +23,7 @@ const UserSelectFilter: React.FC<Props> = ({ onChange, value }: Props) => {
   const users = Users.useStateContext();
 
   const handleSelect = useCallback((newValue: SelectValue) => {
+    if (!onChange) return;
     const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
     onChange(singleValue);
   }, [ onChange ]);
