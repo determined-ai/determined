@@ -5,6 +5,7 @@ master/internal/scheduler/    @aaron276h @rb-determined-ai
 master/internal/provisioner/  @shiyuann
 
 # Model registry
+# @eecsliu @katport
 
 # WebUI
 webui/                        @hkang1 @hamidzr
@@ -23,7 +24,7 @@ master/pkg/actor              @dzhu
 master/pkg/searcher/          @stoksc @liamcli
 
 # Checkpoint export
-
+# 
 
 # Restart
 master/internal/experiment.go @rb-determined-ai @stoksc
