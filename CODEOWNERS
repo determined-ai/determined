@@ -61,7 +61,7 @@
 /.circleci/                    @aaron276h @rb-determined-ai @dzhu
 
 # Build/packaging
-packaging/               @dzhu @rb-determined-ai
+packaging/                     @dzhu @rb-determined-ai
 
 # Documentation
 /docs/                         @neilconway
