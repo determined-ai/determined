@@ -95,7 +95,15 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		}
 
 	case GetEventCount:
-		ctx.Respond(e.buffer.Len())
+		// OPT we could use log_buffer here instead of a plain ring buffer.
+		count := 0
+		e.buffer.Do(func(val interface{}) {
+			if val != nil {
+				count++
+			}
+		})
+
+		ctx.Respond(count)
 
 	case webAPI.LogsRequest:
 		logEntries := e.getLogEntries(msg)
