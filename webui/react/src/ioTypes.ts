@@ -142,7 +142,7 @@ const checkpointStates: Record<string, null> = Object.values(CheckpointState)
   .reduce((acc, val) => ({ ...acc, [val]: null }), {});
 const checkpointStatesIoType = io.keyof(checkpointStates);
 
-const ioMetricValue = io.union([ io.number, ioNullOrUndefined ]);
+const ioMetricValue = io.any;
 const ioMetric = io.record(io.string, ioMetricValue);
 export type ioTypeMetric = io.TypeOf<typeof ioMetric>;
 
