@@ -20,9 +20,12 @@ import { decodeExperimentList, encodeExperimentState } from './decoder';
 export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 
 const address = `${window.location.protocol}//${window.location.host}`;
-export const detAuthApi = new DetSwagger.AuthenticationApi(undefined, address);
-export const detExperimentApi = new DetSwagger.ExperimentsApi(undefined, address);
-export const detExperimentsStreamingApi = DetSwagger.ExperimentsApiFetchParamCreator();
+
+export const detApi = {
+  Auth: new DetSwagger.AuthenticationApi(undefined, address),
+  Experiments: new DetSwagger.ExperimentsApi(undefined, address),
+  StreamingExperiments: DetSwagger.ExperimentsApiFetchParamCreator(),
+};
 
 /* Authentication */
 
@@ -50,7 +53,7 @@ export const getExperimentList = async (
     const sortBy = Object.values(V1GetExperimentsRequestSortBy).includes(sorter.key) ?
       sorter.key : V1GetExperimentsRequestSortBy.UNSPECIFIED;
 
-    const response = await detExperimentApi.determinedGetExperiments(
+    const response = await detApi.Experiments.determinedGetExperiments(
       /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
       sortBy as any,
       sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
@@ -92,8 +95,8 @@ export const patchExperiment = generateApi<PatchExperimentParams, void>(Config.p
 export const archiveExperiment = async (id: number, archive = true): Promise<void> => {
   try {
     await archive ?
-      detExperimentApi.determinedArchiveExperiment(id) :
-      detExperimentApi.determinedUnarchiveExperiment(id);
+      detApi.Experiments.determinedArchiveExperiment(id) :
+      detApi.Experiments.determinedUnarchiveExperiment(id);
   } catch (e) {
     processApiError('archiveExperiment', e);
     throw e;
@@ -148,7 +151,7 @@ export const login = async (credentials: Credentials): Promise<DetSwagger.V1Logi
 
 export const logout = async (): Promise<DetSwagger.V1LogoutResponse> => {
   try {
-    const response = await detAuthApi.determinedLogout();
+    const response = await detApi.Auth.determinedLogout();
     return response;
   } catch (e) {
     throw processApiError('logout', e);

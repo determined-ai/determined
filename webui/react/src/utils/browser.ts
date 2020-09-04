@@ -1,4 +1,4 @@
-import { getTrialDetails } from 'services/api';
+import { detApi, getTrialDetails } from 'services/api';
 import * as DetSwagger from 'services/api-ts-sdk';
 import { consumeStream } from 'services/utils';
 
@@ -47,7 +47,7 @@ export const downloadTrialLogs = async (trialId: number): Promise<void> => {
   const parts: BlobPart[] = [];
   let downloadStringBuffer = '';
   await consumeStream<DetSwagger.V1TrialLogsResponse>(
-    DetSwagger.ExperimentsApiFetchParamCreator().determinedTrialLogs(trialId),
+    detApi.StreamingExperiments.determinedTrialLogs(trialId),
     (ev) => {
       downloadStringBuffer += ev.message;
       if (downloadStringBuffer.length > MAX_PART_SIZE) {
