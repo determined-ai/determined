@@ -98,6 +98,7 @@ func (a *apiServer) NotebookLogs(
 	terminationCheck := commandIsTermianted(cmdManagerAddr, a.m.system)
 
 	return api.ProcessLogs(
+		resp.Context(),
 		logRequest,
 		fetchCommandLogs(eventManagerAddr, a.m.system),
 		onLogEntry,

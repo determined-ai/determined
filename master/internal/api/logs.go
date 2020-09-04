@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -29,7 +30,8 @@ type LogFetcher func(LogsRequest) ([]*logger.Entry, error)
 type TerminationCheck func() (bool, error)
 
 // ProcessLogs handles fetching and processing logs from a log store.
-func ProcessLogs(req LogsRequest,
+func ProcessLogs(ctx context.Context,
+	req LogsRequest,
 	logFetcher LogFetcher, // TODO a better name
 	cb onLogEntry,
 	terminateCheck *TerminationCheck,
@@ -52,12 +54,16 @@ func ProcessLogs(req LogsRequest,
 			}
 		}
 		if len(logEntries) == 0 {
+			if err := ctx.Err(); err != nil {
+				// context is closed
+				return nil
+			}
 			if terminateCheck != nil {
 				terminate, err := (*terminateCheck)()
-				if err != nil {
+				switch {
+				case err != nil:
 					return errors.Wrap(err, "failed to check the termination status.")
-				}
-				if terminate {
+				case terminate:
 					return nil
 				}
 			}
