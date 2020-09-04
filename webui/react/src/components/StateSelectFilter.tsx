@@ -10,7 +10,7 @@ import SelectFilter from './SelectFilter';
 const { OptGroup, Option } = Select;
 
 interface Props {
-  onChange: (value: SelectValue) => void;
+  onChange?: (value: SelectValue) => void;
   showCommandStates?: boolean;
   showExperimentStates?: boolean;
   value?: SelectValue;
@@ -49,6 +49,7 @@ const StateSelectFilter: React.FC<Props> = ({
   }, [ showExperimentStates, showCommandStates ]);
 
   const handleSelect = useCallback((newValue: SelectValue) => {
+    if (!onChange) return;
     const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
     onChange(singleValue);
   }, [ onChange ]);
