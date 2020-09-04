@@ -81,8 +81,6 @@ const ExperimentList: React.FC = () => {
   const [ experiments, setExperiments ] = useState<ExperimentItem[]>();
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
 
-  const showBatch = selectedRowKeys.length !== 0;
-
   const experimentMap = useMemo(() => {
     return (experiments || []).reduce((acc, experiment) => {
       acc[experiment.id] = experiment;
@@ -334,7 +332,7 @@ const ExperimentList: React.FC = () => {
             <UserSelectFilter value={filters.username} onChange={handleUserChange} />
           </div>
         </div>
-        <TableBatch message="Apply batch operations to multiple experiments." show={showBatch}>
+        <TableBatch selectedRowCount={selectedRowKeys.length}>
           <Button onClick={(): Promise<void> => handleBatchAction(Action.OpenTensorBoard)}>
             View in TensorBoard
           </Button>

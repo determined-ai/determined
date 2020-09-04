@@ -4,25 +4,28 @@ import css from './TableBatch.module.scss';
 
 interface Props {
   ids?: string[];
-  message: string;
-  show?: boolean;
+  selectedRowCount?: number;
 }
 
 const defaultProps = {
   ids: [],
-  show: true,
+  selectedRowCount: 0,
 };
 
 const TableBatch: React.FC<Props> = (props: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
+  const selectedRowCount = props.selectedRowCount || 0;
 
-  if (props.show) classes.push(css.show);
+  const message = `Apply batch operations to ${selectedRowCount}`+
+    ` item${selectedRowCount === 1 ? '' : 's'}`;
+
+  if (selectedRowCount > 0) classes.push(css.show);
 
   return (
     <div className={classes.join(' ')}>
       <div className={css.container}>
         <div className={css.actions}>{props.children}</div>
-        <div className={css.message}>{props.message}</div>
+        <div className={css.message}>{message}</div>
       </div>
     </div>
   );
