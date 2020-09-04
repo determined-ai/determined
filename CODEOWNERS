@@ -55,7 +55,7 @@ master/internal/command/notebook_manager.go     @naren-determined @armandmcqueen
 
 # Commands/shell
 master/internal/command/command_manager.go      @dzhu
-master/internal/command/shell_manager.go
+master/internal/command/shell_manager.go        @dzhu
 
 # CI infrastructure
 .circleci/                    @aaron276h @rb-determined-ai @dzhu
