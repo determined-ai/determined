@@ -2,7 +2,6 @@ import axios, { AxiosResponse, CancelToken, Method } from 'axios';
 
 import handleError, { DaError, ErrorLevel, ErrorType, isDaError } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
-import { isAuthFailure } from 'services/api';
 import * as DetSwagger from 'services/api-ts-sdk';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
@@ -23,10 +22,27 @@ export interface Api<Input, Output>{
   // middlewares?: Middleware[]; // success/failure middlewares
 }
 
-export const http = axios.create({
-  responseType: 'json',
-  withCredentials: true,
-});
+/* Response Helpers */
+
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const isAuthFailure = (e: any): boolean => {
+  return e.response && e.response.status && e.response.status === 401;
+};
+
+// is a failure received from a failed login attempt due to bad credentials
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const isLoginFailure = (e: any): boolean => {
+  return e.response && e.response.status && e.response.status === 403;
+};
+
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const isNotFound = (e: any): boolean => {
+  return e.response && e.response.status && e.response.status === 404;
+};
+
+/* HTTP Helpers */
+
+export const http = axios.create({ responseType: 'json', withCredentials: true });
 
 export const processApiError = (name: string, e: Error): DaError => {
   const isAuthError = isAuthFailure(e);
@@ -72,6 +88,8 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
   };
 }
 
+/* gRPC Helpers */
+
 /*
   consumeStream is used to consume streams from the generated TS client.
   We use the provided fetchParamCreator to create fetch arguments and use that
@@ -88,10 +106,10 @@ export const consumeStream = async <T = unknown>(
 ): Promise<void> => {
   try {
     const response = await fetch(serverAddress(fetchArgs.url), fetchArgs.options);
-    const exampleReader = ndjsonStream(response.body).getReader();
+    const reader = ndjsonStream(response.body).getReader();
     let result;
     while (!result || !result.done) {
-      result = await exampleReader.read();
+      result = await reader.read();
       if (result.done) return;
       onEvent(result.value.result);
     }

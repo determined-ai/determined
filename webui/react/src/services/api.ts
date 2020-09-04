@@ -17,28 +17,14 @@ import { isExperimentTask } from 'utils/task';
 
 import { decodeExperimentList, encodeExperimentState } from './decoder';
 
+export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
+
 const address = `${window.location.protocol}//${window.location.host}`;
 export const detAuthApi = new DetSwagger.AuthenticationApi(undefined, address);
 export const detExperimentApi = new DetSwagger.ExperimentsApi(undefined, address);
 export const detExperimentsStreamingApi = DetSwagger.ExperimentsApiFetchParamCreator();
 
 /* Authentication */
-
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const isAuthFailure = (e: any): boolean => {
-  return e.response && e.response.status && e.response.status === 401;
-};
-
-// is a failure received from a failed login attempt due to bad credentials
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const isLoginFailure = (e: any): boolean => {
-  return e.response && e.response.status && e.response.status === 403;
-};
-
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const isNotFound = (e: any): boolean => {
-  return e.response && e.response.status && e.response.status === 404;
-};
 
 export const getCurrentUser = generateApi<EmptyParams, DetailedUser>(Config.getCurrentUser);
 
