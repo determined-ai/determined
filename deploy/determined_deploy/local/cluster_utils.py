@@ -73,7 +73,10 @@ def get_proxy_addr() -> str:
 
 
 def docker_compose(
-    args: List[str], cluster_name: str, env: Optional[Dict] = None, extra_files: List[str] = None
+    args: List[str],
+    cluster_name: str,
+    env: Optional[Dict] = None,
+    extra_files: Optional[List[str]] = None,
 ) -> None:
     path = Path(__file__).parent.joinpath("docker-compose.yaml")
     # Start with the user's environment to ensure that Docker and Docker Compose work correctly.
@@ -107,15 +110,15 @@ def _wait_for_master(master_host: str, master_port: int, cluster_name: str) -> N
 
 
 def master_up(
-    port: Optional[int],
+    port: int,
     master_config_path: Path,
     master_name: str,
-    version: str,
+    version: Optional[str],
     db_password: str,
     delete_db: bool,
     autorestart: bool,
     cluster_name: str,
-):
+) -> None:
     command = ["up", "-d"]
     extra_files = []
     if master_config_path is not None:
@@ -148,16 +151,16 @@ def master_down(master_name: str, delete_db: bool) -> None:
 
 
 def cluster_up(
-    num_agents: Optional[int],
-    port: Optional[int],
+    num_agents: int,
+    port: int,
     master_config_path: Path,
     cluster_name: str,
-    version: str,
+    version: Optional[str],
     db_password: str,
     delete_db: bool,
     no_gpu: bool,
     autorestart: bool,
-):
+) -> None:
     cluster_down(cluster_name, delete_db)
     master_up(
         port=port,
@@ -194,14 +197,14 @@ def logs(cluster_name: str) -> None:
 
 
 def agent_up(
-    master_host: Optional[str],
-    master_port: Optional[int],
-    agent_name: Optional[str],
+    master_host: str,
+    master_port: int,
+    agent_name: str,
     version: Optional[str],
     no_gpu: bool,
     autorestart: bool,
     cluster_name: str,
-    labels: Dict = None,
+    labels: Optional[Dict] = None,
 ) -> None:
     if version is None:
         version = determined_deploy.__version__
@@ -218,12 +221,12 @@ def agent_up(
     }
     init = True
     volumes = ["/var/run/docker.sock:/var/run/docker.sock"]
-    mounts = []
+    mounts = []  # type: List[str]
     if labels is None:
         labels = {}
     labels["ai.determined.type"] = "agent"
     if autorestart:
-        restart_policy = {"Name": "unless-stopped"}
+        restart_policy = {"Name": "unless-stopped"}  # type: Optional[Dict[str, str]]
     else:
         restart_policy = None
     if no_gpu:
@@ -249,7 +252,7 @@ def agent_up(
     )
 
 
-def _kill_containers(containers):
+def _kill_containers(containers: docker.models.containers.Container) -> None:
     for container in containers:
         print(f"Stopping {container.name}")
         container.stop(timeout=20)
@@ -257,14 +260,14 @@ def _kill_containers(containers):
         container.remove()
 
 
-def stop_all_agents():
+def stop_all_agents() -> None:
     docker_client = docker.from_env()
     filters = {"label": ["ai.determined.type=agent"]}
     to_stop = docker_client.containers.list(all=True, filters=filters)
     _kill_containers(to_stop)
 
 
-def stop_cluster_agents(cluster_name: str):
+def stop_cluster_agents(cluster_name: str) -> None:
     docker_client = docker.from_env()
     labels = [f"determined.cluster={cluster_name}"]
     filters = {"label": labels}

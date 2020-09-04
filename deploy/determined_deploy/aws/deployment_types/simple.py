@@ -1,7 +1,4 @@
-from typing import List
-
 import boto3
-import pkg_resources
 
 from determined_deploy.aws import aws, constants
 from determined_deploy.aws.deployment_types import base
@@ -29,10 +26,6 @@ class Simple(base.DeterminedDeployment):
         constants.cloudformation.MAX_AGENT_STARTING_PERIOD,
         constants.cloudformation.MAX_DYNAMIC_AGENTS,
     ]
-
-    def __init__(self, parameters: List) -> None:
-        template_path = pkg_resources.resource_filename(constants.misc.TEMPLATE_PATH, self.template)
-        super().__init__(template_path, parameters)
 
     def deploy(self) -> None:
         cfn_parameters = self.consolidate_parameters()

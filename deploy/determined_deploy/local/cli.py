@@ -1,4 +1,5 @@
 import argparse
+from typing import Callable, Dict
 
 from determined_deploy.local import cluster_utils
 
@@ -31,7 +32,7 @@ def add_cluster_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         action="store_true",
         help="remove current master database",
     )
-    parser.add_argument("--no-gpu", help="enable GPU support for agent", action="store_true")
+    parser.add_argument("--no-gpu", help="disable GPU support for agent", action="store_true")
     parser.add_argument(
         "--no-autorestart",
         help="disable container auto-restart (recommended for local development)",
@@ -85,6 +86,9 @@ def add_master_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="disable container auto-restart (recommended for local development)",
         action="store_true",
     )
+    parser.add_argument(
+        "--cluster-name", type=str, default="determined", help="name for the cluster resources"
+    )
 
 
 def add_master_down_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -100,6 +104,9 @@ def add_master_down_subparser(subparsers: argparse._SubParsersAction) -> None:
         "--delete-db",
         action="store_true",
         help="remove current master database",
+    )
+    parser.add_argument(
+        "--cluster-name", type=str, default="determined", help="name for the cluster resources"
     )
 
 
@@ -130,6 +137,9 @@ def add_agent_up_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="disable container auto-restart (recommended for local development)",
         action="store_true",
     )
+    parser.add_argument(
+        "--cluster-name", type=str, default="determined", help="name for the cluster resources"
+    )
 
 
 def add_agent_down_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -140,6 +150,9 @@ def add_agent_down_subparser(subparsers: argparse._SubParsersAction) -> None:
     )
     parser.add_argument("--agent-name", type=str, default="det-agent", help="agent name")
     parser.add_argument("--all", help="stop all running agents", action="store_true")
+    parser.add_argument(
+        "--cluster-name", type=str, default="determined", help="name for the cluster resources"
+    )
 
 
 def make_local_parser(subparsers: argparse._SubParsersAction) -> None:
@@ -157,7 +170,7 @@ def make_local_parser(subparsers: argparse._SubParsersAction) -> None:
     subparsers.required = True
 
 
-def handle_cluster_up(args):
+def handle_cluster_up(args: argparse.Namespace) -> None:
     cluster_utils.cluster_up(
         num_agents=args.agents,
         port=args.master_port,
@@ -171,15 +184,15 @@ def handle_cluster_up(args):
     )
 
 
-def handle_cluster_down(args):
+def handle_cluster_down(args: argparse.Namespace) -> None:
     cluster_utils.cluster_down(cluster_name=args.cluster_name, delete_db=args.delete_db)
 
 
-def handle_logs(args):
+def handle_logs(args: argparse.Namespace) -> None:
     cluster_utils.logs(cluster_name=args.cluster_name)
 
 
-def handle_master_up(args):
+def handle_master_up(args: argparse.Namespace) -> None:
     cluster_utils.master_up(
         port=args.master_port,
         master_config_path=args.master_config_path,
@@ -188,14 +201,15 @@ def handle_master_up(args):
         db_password=args.db_password,
         delete_db=args.delete_db,
         autorestart=(not args.no_autorestart),
+        cluster_name=args.cluster_name,
     )
 
 
-def handle_master_down(args):
+def handle_master_down(args: argparse.Namespace) -> None:
     cluster_utils.master_down(master_name=args.master_name, delete_db=args.delete_db)
 
 
-def handle_agent_up(args):
+def handle_agent_up(args: argparse.Namespace) -> None:
     cluster_utils.agent_up(
         master_host=args.master_host,
         master_port=args.master_port,
@@ -204,10 +218,11 @@ def handle_agent_up(args):
         version=args.det_version,
         labels=None,
         autorestart=(not args.no_autorestart),
+        cluster_name=args.cluster_name,
     )
 
 
-def handle_agent_down(args):
+def handle_agent_down(args: argparse.Namespace) -> None:
     if args.all:
         cluster_utils.stop_all_agents()
     else:
@@ -223,5 +238,5 @@ def deploy_local(args: argparse.Namespace) -> None:
         "logs": handle_logs,
         "master-up": handle_master_up,
         "master-down": handle_master_down,
-    }
-    OPERATION_TO_FN.get(args.command)(args)
+    }  # type: Dict[str, Callable[[argparse.Namespace], None]]
+    OPERATION_TO_FN[args.command](args)
