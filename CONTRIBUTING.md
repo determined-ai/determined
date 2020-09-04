@@ -1,8 +1,15 @@
 # Contributing to Determined
 
-## Reporting Issues
+## Reporting Issues and Feature Requests
 
-Please report any issues at https://github.com/determined-ai/determined/issues.
+If you encounter an issue or would like to request a new feature, please create
+[an issue on GitHub](https://github.com/determined-ai/determined/issues). You can
+also join the [Slack](https://join.slack.com/t/determined-community/shared_invite/zt-cnj7802v-KcVbaUrIzQOwmkmY7gP0Ew)
+to get support and talk with other users and developers in real-time.
+
+## Project Roadmap
+
+https://github.com/determined-ai/determined/wiki/Project-Roadmap
 
 ## Contributing Changes
 
@@ -19,9 +26,9 @@ We welcome outside contributions. If you'd like to make a contribution, please:
 1. The first time you submit code, you'll need to
    [sign a CLA](https://determined.ai/cla/).
 
-1. Submit a pull request. Someone from the Determined AI team will review the
+1. Submit a pull request. Someone from the Determined team will review the
    request and provide feedback. Once we agree that the code is in good shape,
-   we'll merge it into master.
+   it will be merged it into master branch.
 
 ## Installation from Source
 
