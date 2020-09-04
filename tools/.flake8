@@ -1,0 +1,43 @@
+[flake8]
+max-line-length = 100
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist
+
+# We ignore F401 in __init__.py because it is expected for there to be
+# "unused imports" when defining a "regular" package. (This file is
+# implicitly executed when the package is imported, and the imports would
+# be used by the importer.) We ignore patch_saver_restore.py because it includes
+# a near-verbatim TensorFlow function with a small patch.
+per-file-ignores = __init__.py:F401 patch_saver_restore.py:E111,E114,
+
+# Explanations for ignored error codes:
+# - D1* (no missing docstrings): too much effort to start enforcing
+# - D200 (short docstring must fit in one line with quotes): stylistic choice
+# - D202 (no blank lines after function docstrings): stylistic choice
+# - D203 (blank line before class docstring): stylistic choice
+# - D205 (blank line between summary and description): not enforcing single-line summaries
+# - D212 (docstring should start on first line): stylistic choice (prefer D213, docstrings start on second line)
+# - D4* (docstring content warnings): too much effort to start enforcing
+# - E203 (no space before colon): not PEP8-compliant; triggered by Black-formatted code
+# - W503 (no line breaks before binary operator): not PEP8-compliant; triggered by Black-formatted code
+# - C812-C816 (missing trailing comma): stylistic choice
+ignore = D1,D200,D202,D203,D205,D212,D4,E203,W503,C812,C813,C814,C815,C816
+
+show_source = true
+
+# flake8-colors
+format = ${cyan}%(path)s${reset}:${yellow_bold}%(row)d${reset}:${green_bold}%(col)d${reset}: ${red_bold}%(code)s${reset} %(text)s
+
+# flake8-docstrings
+docstring-convention = google
+
+# flake8-import-order
+application-import-names = determined
+import-order-style = edited
+
+# flake8-quotes
+inline-quotes = "
+multiline-quotes = """
