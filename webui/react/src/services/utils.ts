@@ -1,26 +1,13 @@
-import axios, { AxiosResponse, CancelToken, Method } from 'axios';
+import axios, { CancelToken } from 'axios';
 
 import handleError, { DaError, ErrorLevel, ErrorType, isDaError } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 
+import { HttpApi } from './types';
+
 /* eslint-disable @typescript-eslint/no-var-requires */
 const ndjsonStream = require('can-ndjson-stream');
-
-export interface HttpOptions {
-  url?: string;
-  method?: Method;
-  headers?: Record<string, unknown>;
-  body?: Record<keyof unknown, unknown> | string;
-}
-
-export interface Api<Input, Output>{
-  name: string;
-  httpOptions: (params: Input) => HttpOptions;
-  postProcess?: (response: AxiosResponse<unknown>) => Output; // io type decoder.
-  stubbedResponse?: unknown; // optional stubbed response body.
-  // middlewares?: Middleware[]; // success/failure middlewares
-}
 
 /* Response Helpers */
 
@@ -66,7 +53,7 @@ export const processApiError = (name: string, e: Error): DaError => {
   });
 };
 
-export function generateApi<Input, Output>(api: Api<Input, Output>) {
+export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
   return async function(params: Input & { cancelToken?: CancelToken }): Promise<Output> {
     const httpOpts = api.httpOptions(params);
 
