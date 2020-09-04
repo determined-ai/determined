@@ -56,8 +56,6 @@ func (a *apiServer) MasterLogs(
 		return resp.Send(logToProtoMasterLog(log))
 	}
 
-	resp.Context().Err()
-
 	return api.ProcessLogs(
 		resp.Context(),
 		logRequest,

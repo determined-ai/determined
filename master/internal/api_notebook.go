@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpc"
@@ -11,7 +13,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/pkg/errors"
 )
 
 func (a *apiServer) GetNotebooks(

@@ -36,7 +36,6 @@ func ProcessLogs(ctx context.Context,
 	cb onLogEntry,
 	terminateCheck *TerminationCheck,
 ) error {
-
 	// FIXME how does it terminate when the caller goes away
 	for {
 		fmt.Printf("sending log request %v. ", req)
