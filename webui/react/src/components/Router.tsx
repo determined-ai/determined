@@ -1,7 +1,6 @@
 import React, { ReactNode, useEffect } from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 
-// import Route from 'components/Route';
 import Auth from 'contexts/Auth';
 import UI from 'contexts/UI';
 import useAuthCheck from 'hooks/useAuthCheck';
