@@ -119,6 +119,7 @@ def add_logs_subparser(subparsers: argparse._SubParsersAction) -> None:
     parser.add_argument(
         "--cluster-name", type=str, default="determined", help="name for the cluster resources"
     )
+    parser.add_argument("--no-follow", help="disable following logs", action="store_true")
 
 
 def add_agent_up_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -189,7 +190,7 @@ def handle_cluster_down(args: argparse.Namespace) -> None:
 
 
 def handle_logs(args: argparse.Namespace) -> None:
-    cluster_utils.logs(cluster_name=args.cluster_name)
+    cluster_utils.logs(cluster_name=args.cluster_name, no_follow=args.no_follow)
 
 
 def handle_master_up(args: argparse.Namespace) -> None:

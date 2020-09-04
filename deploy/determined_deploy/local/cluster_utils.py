@@ -192,8 +192,8 @@ def cluster_down(cluster_name: str, delete_db: bool) -> None:
     stop_cluster_agents(cluster_name=cluster_name)
 
 
-def logs(cluster_name: str) -> None:
-    docker_compose(["logs", "-f"], cluster_name)
+def logs(cluster_name: str, no_follow: bool) -> None:
+    docker_compose(["logs"] if no_follow else ["logs", "-f"], cluster_name)
 
 
 def agent_up(
