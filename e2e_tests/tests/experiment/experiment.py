@@ -390,6 +390,7 @@ def run_basic_test(
     max_wait_secs: int = conf.DEFAULT_MAX_WAIT_SECS,
     has_zeroth_step: bool = False,
 ) -> int:
+    assert os.path.isdir(model_def_file)
     experiment_id = create_experiment(config_file, model_def_file, create_args)
     wait_for_experiment_state(experiment_id, "COMPLETED", max_wait_secs=max_wait_secs)
     assert num_active_trials(experiment_id) == 0
