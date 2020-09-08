@@ -4,10 +4,17 @@ import (
 	"sort"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/actor"
+
 	"github.com/determined-ai/determined/master/internal/scheduler"
 )
 
-const minRetryInterval = 10 * time.Second
+const (
+	minRetryInterval = 10 * time.Second
+	// Allows left-over agents to connect to the master
+	// before terminating them for not having a connection.
+	masterLaunchConnectionBuffer = time.Minute
+)
 
 // scaleDecider makes decisions based on the following assumptions:
 // 1. All pending tasks cannot fit into all agents when receiving the snapshots from
@@ -25,13 +32,15 @@ const minRetryInterval = 10 * time.Second
 type scaleDecider struct {
 	maxIdlePeriod     time.Duration
 	maxStartingPeriod time.Duration
+	launchTime        time.Time
 
-	lastProvision        time.Time
-	lastSchedulerUpdated time.Time
-	lastProviderUpdated  time.Time
-	instanceSnapshot     map[string]*Instance
-	agentSnapshot        map[string]*scheduler.AgentSummary
-	taskSnapshot         []*scheduler.TaskSummary
+	lastProvision          time.Time
+	lastSchedulerUpdated   time.Time
+	lastProviderUpdated    time.Time
+	instanceSnapshot       map[string]*Instance
+	idleAgentSnapshot      map[string]*scheduler.AgentSummary
+	connectedAgentSnapshot map[string]*scheduler.AgentSummary
+	taskSnapshot           []*scheduler.TaskSummary
 
 	pastIdleInstances map[string]time.Time
 }
@@ -42,6 +51,7 @@ func newScaleDecider(
 	return &scaleDecider{
 		maxStartingPeriod: maxStartingPeriod,
 		maxIdlePeriod:     maxIdlePeriod,
+		launchTime:        time.Now(),
 	}
 }
 
@@ -67,10 +77,16 @@ func (s *scaleDecider) needScale() bool {
 }
 
 func (s *scaleDecider) updateSchedulerSnapshot(snapshot *scheduler.ViewSnapshot) {
-	s.agentSnapshot = make(map[string]*scheduler.AgentSummary)
-	for _, agent := range snapshot.Agents {
-		s.agentSnapshot[agent.Name] = agent
+	s.idleAgentSnapshot = make(map[string]*scheduler.AgentSummary)
+	for _, agent := range snapshot.IdleAgents {
+		s.idleAgentSnapshot[agent.Name] = agent
 	}
+
+	s.connectedAgentSnapshot =  make(map[string]*scheduler.AgentSummary)
+	for _, agent := range snapshot.ConnectedAgents {
+		s.connectedAgentSnapshot[agent.Name] = agent
+	}
+
 	s.taskSnapshot = snapshot.Tasks
 	s.lastSchedulerUpdated = time.Now()
 }
@@ -98,6 +114,7 @@ func (s *scaleDecider) updateInstanceSnapshot(instances []*Instance) bool {
 }
 
 func (s *scaleDecider) findInstancesToTerminate(
+	ctx *actor.Context,
 	maxInstanceNum int,
 ) []string {
 	toTerminate := make(map[string]bool)
@@ -110,10 +127,30 @@ func (s *scaleDecider) findInstancesToTerminate(
 			toTerminate[inst.ID] = true
 
 		case Running:
-			if _, ok := s.agentSnapshot[inst.AgentName]; ok {
+			if _, ok := s.idleAgentSnapshot[inst.AgentName]; ok {
 				idleInstances[inst.ID] = true
 			}
 		}
+	}
+
+	// Terminate instances that have not connected to the master beyond the max startup period.
+	now := time.Now()
+	for _, inst := range s.instanceSnapshot {
+		if s.launchTime.Add(masterLaunchConnectionBuffer).After(now) {
+			continue
+		}
+
+		if _, connected := s.connectedAgentSnapshot[inst.AgentName]; connected {
+			continue
+		}
+
+		if inst.LaunchTime.Add(s.maxStartingPeriod).After(now) {
+			continue
+		}
+
+		ctx.Log().Infof(
+			"terminating instance %s because it is not connected to the master", inst.AgentName)
+		toTerminate[inst.AgentName] = true
 	}
 
 	// Terminate instances that are idle for a long time.

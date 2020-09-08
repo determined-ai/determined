@@ -109,7 +109,7 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 
 	ctx.Log().Debug("scale happening")
 	toTerminate := p.scaleDecider.findInstancesToTerminate(
-		p.provider.maxInstanceNum(),
+		ctx, p.provider.maxInstanceNum(),
 	)
 	if len(toTerminate) > 0 {
 		p.provider.terminate(ctx, toTerminate)

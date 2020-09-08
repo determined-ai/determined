@@ -7,6 +7,7 @@ type View interface {
 
 // ViewSnapshot is an immutable snapshot of a View.
 type ViewSnapshot struct {
-	Tasks  []*TaskSummary
-	Agents []*AgentSummary
+	Tasks           []*TaskSummary
+	ConnectedAgents []*AgentSummary
+	IdleAgents      []*AgentSummary
 }
