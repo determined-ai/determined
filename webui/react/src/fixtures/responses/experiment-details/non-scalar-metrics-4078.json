@@ -1,0 +1,195 @@
+{
+  "id": 34,
+  "state": "COMPLETED",
+  "config": {
+    "data": {
+      "dataflow_to_tf_dataset": true
+    },
+    "debug": false,
+    "internal": null,
+    "searcher": {
+      "name": "single",
+      "metric": "loss",
+      "max_length": {
+        "batches": 200
+      },
+      "source_trial_id": null,
+      "smaller_is_better": true,
+      "source_checkpoint_uuid": null
+    },
+    "resources": {
+      "weight": 1,
+      "agent_label": "",
+      "native_parallel": false,
+      "slots_per_trial": 1
+    },
+    "data_layer": {
+      "type": "shared_fs",
+      "container_storage_path": null
+    },
+    "entrypoint": "model_def:MnistTensorpackInEstimator",
+    "description": "Fork of Fork of mnist_tp_to_estimator_const",
+    "environment": {
+      "image": {
+        "cpu": "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-aaa3750",
+        "gpu": "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-aaa3750"
+      },
+      "ports": null,
+      "pod_spec": null,
+      "force_pull_image": false,
+      "environment_variables": {}
+    },
+    "max_restarts": 0,
+    "optimizations": {
+      "mixed_precision": "O0",
+      "gradient_compression": false,
+      "aggregation_frequency": 1,
+      "auto_tune_tensor_fusion": false,
+      "tensor_fusion_threshold": 64,
+      "average_training_metrics": false,
+      "tensor_fusion_cycle_time": 5,
+      "average_aggregated_gradients": true
+    },
+    "hyperparameters": {
+      "n_filters": {
+        "val": 40,
+        "type": "const"
+      },
+      "visualize": {
+        "val": false,
+        "type": "const"
+      },
+      "decay_rate": {
+        "val": 0.3,
+        "type": "const"
+      },
+      "image_size": {
+        "val": 28,
+        "type": "const"
+      },
+      "decay_steps": {
+        "val": 4680,
+        "type": "const"
+      },
+      "weight_cost": {
+        "val": 1e-05,
+        "type": "const"
+      },
+      "synthetic_data": {
+        "val": false,
+        "type": "const"
+      },
+      "global_batch_size": {
+        "val": 512,
+        "type": "const"
+      },
+      "base_learning_rate": {
+        "val": 0.001,
+        "type": "const"
+      }
+    },
+    "reproducibility": {
+      "experiment_seed": 1599257274
+    },
+    "scheduling_unit": 100,
+    "checkpoint_policy": "best",
+    "records_per_epoch": 0,
+    "checkpoint_storage": {
+      "type": "shared_fs",
+      "host_path": "/tmp",
+      "storage_path": "determined-cp",
+      "save_trial_best": 1,
+      "save_trial_latest": 1,
+      "save_experiment_best": 0
+    },
+    "min_checkpoint_period": {
+      "batches": 100
+    },
+    "min_validation_period": {
+      "batches": 0
+    },
+    "perform_initial_validation": false
+  },
+  "start_time": "2020-09-04T22:14:25.441633+00:00",
+  "end_time": "2020-09-04T22:14:55.208371+00:00",
+  "archived": false,
+  "git_remote": null,
+  "git_commit": null,
+  "git_committer": null,
+  "git_commit_date": null,
+  "progress": null,
+  "trials": [
+    {
+      "id": 111,
+      "seed": 112502859,
+      "state": "COMPLETED",
+      "hparams": {
+        "n_filters": 40,
+        "visualize": false,
+        "decay_rate": 0.3,
+        "image_size": 28,
+        "decay_steps": 4680,
+        "weight_cost": 1e-05,
+        "synthetic_data": false,
+        "global_batch_size": 512,
+        "base_learning_rate": 0.001
+      },
+      "end_time": "2020-09-04T22:14:55.202824+00:00",
+      "num_steps": 2,
+      "start_time": "2020-09-04T22:14:26.715097+00:00",
+      "experiment_id": 34,
+      "best_validation_metric": 0.044856347143650055,
+      "total_batches_processed": 200,
+      "warm_start_checkpoint_id": null,
+      "best_available_checkpoint": {
+        "id": 658,
+        "uuid": "b31358c9-cf36-48d5-8030-2b82c54fe013",
+        "state": "COMPLETED",
+        "step_id": 2,
+        "end_time": "2020-09-04T22:14:51.728686+00:00",
+        "metadata": {},
+        "trial_id": 111,
+        "resources": {
+          "code/": 0,
+          "checkpoint": 422,
+          "graph.pbtxt": 449086,
+          "code/const.yaml": 520,
+          "code/model_def.py": 8604,
+          "code/visualize.py": 1738,
+          "model.ckpt-99.meta": 175711,
+          "model.ckpt-199.meta": 175711,
+          "model.ckpt-99.index": 1583,
+          "code/startup-hook.sh": 20,
+          "model.ckpt-199.index": 1583,
+          "model.ckpt-99.data-00000-of-00001": 12634624,
+          "model.ckpt-199.data-00000-of-00001": 12634624
+        },
+        "start_time": "2020-09-04T22:14:51.628231+00:00",
+        "validation_metric": 0.044856347143650055
+      },
+      "latest_validation_metrics": {
+        "num_inputs": 0,
+        "validation_metrics": {
+          "loss": 0.044856347143650055,
+          "global_step": 200,
+          "roc_auc_score": [
+            0.9998809099197388,
+            0.9998809099197388
+          ]
+        }
+      },
+      "num_completed_checkpoints": 1
+    }
+  ],
+  "owner": {
+    "id": 2,
+    "username": "determined"
+  },
+  "validation_history": [
+    {
+      "end_time": "2020-09-04T22:14:54.229064+00:00",
+      "trial_id": 111,
+      "validation_error": 0.044856347143650055
+    }
+  ]
+}
