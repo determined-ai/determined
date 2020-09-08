@@ -110,7 +110,6 @@ func TestFindInstancesToTerminate(t *testing.T) {
 						Name: "agent2",
 					},
 				},
-				launchTime: time.Now(),
 			},
 			maxInstanceNum:        10,
 			pastIdleInstanceAfter: map[string]time.Time{},
@@ -177,7 +176,6 @@ func TestFindInstancesToTerminate(t *testing.T) {
 					"instance1": time.Now().Add(-time.Hour),
 					"instance2": time.Now().Add(-time.Minute),
 				},
-				launchTime: time.Now(),
 			},
 			maxInstanceNum: 10,
 			pastIdleInstanceAfter: map[string]time.Time{
@@ -229,7 +227,6 @@ func TestFindInstancesToTerminate(t *testing.T) {
 					},
 				},
 				pastIdleInstances: map[string]time.Time{},
-				launchTime:        time.Now(),
 			},
 			maxInstanceNum: 1,
 			toTerminate: []string{
@@ -309,7 +306,6 @@ func TestFindInstancesToTerminate(t *testing.T) {
 					"instance2": time.Now().Add(-time.Hour),
 					"instance3": time.Now().Add(-time.Minute),
 				},
-				launchTime: time.Now(),
 			},
 			maxInstanceNum: 10,
 			pastIdleInstanceAfter: map[string]time.Time{
@@ -343,7 +339,9 @@ func TestFindInstancesToTerminate(t *testing.T) {
 						Name: "agent2",
 					},
 				},
-				launchTime: time.Now().Add(-time.Hour),
+				pastDisconnectedInstances: map[string]time.Time{
+					"instance1": time.Now().Add(-time.Hour),
+				},
 			},
 			maxInstanceNum:        10,
 			pastIdleInstanceAfter: map[string]time.Time{},

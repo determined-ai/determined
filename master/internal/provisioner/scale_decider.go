@@ -11,9 +11,6 @@ import (
 
 const (
 	minRetryInterval = 10 * time.Second
-	// Allows left-over agents to connect to the master
-	// before terminating them for not having a connection.
-	masterLaunchConnectionBuffer = time.Minute
 )
 
 // scaleDecider makes decisions based on the following assumptions:
@@ -32,7 +29,6 @@ const (
 type scaleDecider struct {
 	maxIdlePeriod     time.Duration
 	maxStartingPeriod time.Duration
-	launchTime        time.Time
 
 	lastProvision          time.Time
 	lastSchedulerUpdated   time.Time
@@ -42,7 +38,8 @@ type scaleDecider struct {
 	connectedAgentSnapshot map[string]*scheduler.AgentSummary
 	taskSnapshot           []*scheduler.TaskSummary
 
-	pastIdleInstances map[string]time.Time
+	pastIdleInstances         map[string]time.Time
+	pastDisconnectedInstances map[string]time.Time
 }
 
 func newScaleDecider(
@@ -51,7 +48,6 @@ func newScaleDecider(
 	return &scaleDecider{
 		maxStartingPeriod: maxStartingPeriod,
 		maxIdlePeriod:     maxIdlePeriod,
-		launchTime:        time.Now(),
 	}
 }
 
@@ -119,6 +115,7 @@ func (s *scaleDecider) findInstancesToTerminate(
 ) []string {
 	toTerminate := make(map[string]bool)
 	idleInstances := make(map[string]bool)
+	disconnectedInstances := make(map[string]bool)
 
 	// Terminate stopped instances and find idle instances.
 	for _, inst := range s.instanceSnapshot {
@@ -133,34 +130,41 @@ func (s *scaleDecider) findInstancesToTerminate(
 		}
 	}
 
-	// Terminate instances that have not connected to the master beyond the max startup period.
+	// Identify instances that are not currently connected to the master.
 	now := time.Now()
 	for _, inst := range s.instanceSnapshot {
-		if s.launchTime.Add(masterLaunchConnectionBuffer).After(now) {
-			continue
-		}
-
+		// If instance is connected no need to do anything here.
 		if _, connected := s.connectedAgentSnapshot[inst.AgentName]; connected {
 			continue
 		}
 
+		// If instance instance is still in the start-up period, do not terminate it for
+		// being disconnected.
 		if inst.LaunchTime.Add(s.maxStartingPeriod).After(now) {
 			continue
 		}
 
-		if ctx != nil {
-			// nil during testing.
-			ctx.Log().Infof(
-				"terminating instance %s because it is not connected to the master",
-				inst.AgentName,
-			)
+		// Don't terminate instances that are already stopped or are stopping.
+		switch inst.State {
+		case Stopping, Stopped:
+			continue
 		}
-		toTerminate[inst.ID] = true
+
+		disconnectedInstances[inst.ID] = true
+	}
+
+	// Terminate instances that have not connected to the master for a long time.
+	var longUnconnected map[string]bool
+	s.pastDisconnectedInstances, longUnconnected = findInstancesLongInSameState(
+		s.pastDisconnectedInstances, disconnectedInstances, s.maxIdlePeriod)
+	for id := range longUnconnected {
+		toTerminate[id] = true
 	}
 
 	// Terminate instances that are idle for a long time.
 	var longIdle map[string]bool
-	s.pastIdleInstances, longIdle = findLongIdle(s.pastIdleInstances, idleInstances, s.maxIdlePeriod)
+	s.pastIdleInstances, longIdle = findInstancesLongInSameState(
+		s.pastIdleInstances, idleInstances, s.maxIdlePeriod)
 	for id := range longIdle {
 		toTerminate[id] = true
 	}
@@ -247,21 +251,23 @@ func min(a, b int) int {
 	return b
 }
 
-func findLongIdle(
-	pastIdle map[string]time.Time, presentIdle map[string]bool, duration time.Duration,
+func findInstancesLongInSameState(
+	pastInstancesInState map[string]time.Time,
+	presentInstanceInState map[string]bool,
+	duration time.Duration,
 ) (map[string]time.Time, map[string]bool) {
-	updatedPastIdle := make(map[string]time.Time)
-	longIdle := make(map[string]bool)
+	updatedInstancesInState := make(map[string]time.Time)
+	durationExceededInState := make(map[string]bool)
 	now := time.Now()
-	for id := range presentIdle {
-		switch t, ok := pastIdle[id]; {
+	for id := range presentInstanceInState {
+		switch t, ok := pastInstancesInState[id]; {
 		case ok && now.After(t.Add(duration)):
-			longIdle[id] = true
+			durationExceededInState[id] = true
 		case ok:
-			updatedPastIdle[id] = t
+			updatedInstancesInState[id] = t
 		default:
-			updatedPastIdle[id] = now
+			updatedInstancesInState[id] = now
 		}
 	}
-	return updatedPastIdle, longIdle
+	return updatedInstancesInState, durationExceededInState
 }

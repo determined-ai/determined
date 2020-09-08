@@ -65,7 +65,6 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) *mockEnvironment {
 		scaleDecider: &scaleDecider{
 			maxStartingPeriod: setup.maxAgentStartingPeriod,
 			maxIdlePeriod:     setup.maxIdleAgentPeriod,
-			launchTime:        setup.initTime,
 		},
 	}
 	provisioner, created := system.ActorOf(actor.Addr("provisioner"), p)
@@ -236,8 +235,13 @@ func TestProvisionerScaleDown(t *testing.T) {
 			{
 				Name: "agent2",
 			},
+		},
+		ConnectedAgents: []*scheduler.AgentSummary{
 			{
-				Name: "agent3",
+				Name: "agent1",
+			},
+			{
+				Name: "agent2",
 			},
 		},
 	}).Get()
@@ -315,7 +319,7 @@ func TestProvisionerTerminateUnconnectedInstances(t *testing.T) {
 	setup := &mockConfig{
 		initTime:               time.Now().Add(-time.Hour),
 		maxAgentStartingPeriod: 3 * time.Minute,
-		maxIdleAgentPeriod:     10 * time.Minute,
+		maxIdleAgentPeriod:     50 * time.Millisecond,
 		instanceType: TestInstanceType{
 			Name:  "test.instanceType",
 			Slots: 4,
@@ -323,13 +327,13 @@ func TestProvisionerTerminateUnconnectedInstances(t *testing.T) {
 		maxInstances: 100,
 		initInstances: []*Instance{
 			{
-				ID:         "instance1",
+				ID:         "disconnectedInstance",
 				LaunchTime: time.Now().Add(-time.Hour),
 				AgentName:  "agent1",
 				State:      Running,
 			},
 			{
-				ID: "instance2",
+				ID: "startingInstance",
 				// This instance should not be terminated because
 				// it is still in the agent startup period.
 				LaunchTime: time.Now().Add(-time.Minute),
@@ -350,9 +354,9 @@ func TestProvisionerTerminateUnconnectedInstances(t *testing.T) {
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
 		newMockFuncCall("list"),
-		newMockFuncCall("terminate", newInstanceIDSet([]string{
-			"instance1",
-		})),
 		newMockFuncCall("list"),
+		newMockFuncCall("terminate", newInstanceIDSet([]string{
+			"disconnectedInstance",
+		})),
 	})
 }
