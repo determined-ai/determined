@@ -80,25 +80,28 @@ func createContainers(
 
 func (snapshot1 *ViewSnapshot) isSubset(snapshot2 *ViewSnapshot) bool {
 	tasksSub := tasksIsSubset(snapshot1.Tasks, snapshot2.Tasks)
-	agentsSub := agentsIsSubset(snapshot1.Agents, snapshot2.Agents)
-	return tasksSub && agentsSub
+	idleAgentsSub := agentsIsSubset(snapshot1.IdleAgents, snapshot2.IdleAgents)
+	connectedAgentsSub := agentsIsSubset(snapshot1.ConnectedAgents, snapshot2.ConnectedAgents)
+	return tasksSub && idleAgentsSub && connectedAgentsSub
 }
 
 func (snapshot1 *ViewSnapshot) difference(snapshot2 *ViewSnapshot) *ViewSnapshot {
 	return &ViewSnapshot{
-		Tasks:  tasksDifference(snapshot1.Tasks, snapshot2.Tasks),
-		Agents: agentsDifference(snapshot1.Agents, snapshot2.Agents),
+		Tasks:           tasksDifference(snapshot1.Tasks, snapshot2.Tasks),
+		IdleAgents:      agentsDifference(snapshot1.IdleAgents, snapshot2.IdleAgents),
+		ConnectedAgents: agentsDifference(snapshot1.ConnectedAgents, snapshot2.ConnectedAgents),
 	}
 }
 
 func areEqual(snapshot1 *ViewSnapshot, snapshot2 *ViewSnapshot) bool {
 	if len(snapshot1.Tasks) != len(snapshot2.Tasks) ||
-		len(snapshot1.Agents) != len(snapshot2.Tasks) {
+		len(snapshot1.IdleAgents) != len(snapshot2.Tasks) {
 		return false
 	}
 	tasksDiff := tasksDifference(snapshot1.Tasks, snapshot2.Tasks)
-	agentsDiff := agentsDifference(snapshot1.Agents, snapshot2.Agents)
-	return len(tasksDiff) == 0 && len(agentsDiff) == 0
+	idleAgentsDiff := agentsDifference(snapshot1.IdleAgents, snapshot2.IdleAgents)
+	connectedAgentsDiff := agentsDifference(snapshot1.ConnectedAgents, snapshot2.ConnectedAgents)
+	return len(tasksDiff) == 0 && len(idleAgentsDiff) == 0 && len(connectedAgentsDiff) == 0
 }
 
 func taskIsMember(tasks []*TaskSummary, task *TaskSummary) bool {
@@ -196,8 +199,9 @@ func TestBasic(t *testing.T) {
 
 	snapshot1, updated := d.provisionerView.Update(d)
 
-	assert.Equal(t, 1, len(snapshot1.Agents))
+	assert.Equal(t, 1, len(snapshot1.IdleAgents))
 	assert.Equal(t, 1, len(snapshot1.Tasks))
+	assert.Equal(t, 7, len(snapshot1.ConnectedAgents))
 	assert.Check(t, updated)
 }
 
@@ -214,7 +218,6 @@ func TestNoUpdate(t *testing.T) {
 	addTask(t, system, c, "task3", taskRunning, 1)
 	addTask(t, system, c, "task4", taskTerminated, 1)
 	addTask(t, system, c, "task5", taskTerminating, 1)
-	c.addAgent(t, system, "agent-a", 4, 1, 0)
 
 	snapshot2, updated := c.provisionerView.Update(c)
 	assert.Check(t, !updated)
@@ -241,8 +244,9 @@ func TestAddTask(t *testing.T) {
 	difference := snapshot1.difference(&snapshot2)
 	assert.Check(t, updated)
 	assert.Check(t, isSubset)
-	assert.Equal(t, 0, len(difference.Agents))
+	assert.Equal(t, 0, len(difference.IdleAgents))
 	assert.Equal(t, 1, len(difference.Tasks))
+	assert.Equal(t, 0, len(difference.ConnectedAgents))
 }
 
 func TestAddIdleAgent(t *testing.T) {
@@ -264,7 +268,8 @@ func TestAddIdleAgent(t *testing.T) {
 	assert.Check(t, updated)
 	assert.Check(t, isSubset)
 	assert.Equal(t, 0, len(difference.Tasks))
-	assert.Equal(t, 1, len(difference.Agents))
+	assert.Equal(t, 1, len(difference.IdleAgents))
+	assert.Equal(t, 2, len(difference.ConnectedAgents))
 }
 
 func TestRemoveAgent(t *testing.T) {
@@ -276,16 +281,18 @@ func TestRemoveAgent(t *testing.T) {
 
 	snapshot1, updated := c.provisionerView.Update(c)
 
-	assert.Equal(t, 1, len(snapshot1.Agents))
+	assert.Equal(t, 1, len(snapshot1.IdleAgents))
 	assert.Equal(t, 0, len(snapshot1.Tasks))
+	assert.Equal(t, 6, len(snapshot1.ConnectedAgents))
 	assert.Check(t, updated)
 
 	delete(c.agents, agents[0].handler)
 
 	snapshot2, updated := c.provisionerView.Update(c)
 
-	assert.Equal(t, 0, len(snapshot2.Agents))
+	assert.Equal(t, 0, len(snapshot2.IdleAgents))
 	assert.Equal(t, 0, len(snapshot2.Tasks))
+	assert.Equal(t, 5, len(snapshot2.ConnectedAgents))
 	assert.Check(t, updated)
 }
 
@@ -299,16 +306,18 @@ func TestTaskStateChange(t *testing.T) {
 
 	snapshot1, updated := c.provisionerView.Update(c)
 
-	assert.Equal(t, 1, len(snapshot1.Agents))
+	assert.Equal(t, 1, len(snapshot1.IdleAgents))
 	assert.Equal(t, 1, len(snapshot1.Tasks))
+	assert.Equal(t, 6, len(snapshot1.ConnectedAgents))
 	assert.Check(t, updated)
 
 	pendingTask.mustTransition(taskRunning)
 
 	snapshot2, updated := c.provisionerView.Update(c)
 
-	assert.Equal(t, 1, len(snapshot2.Agents))
+	assert.Equal(t, 1, len(snapshot2.IdleAgents))
 	assert.Equal(t, 0, len(snapshot2.Tasks))
+	assert.Equal(t, 6, len(snapshot2.ConnectedAgents))
 	assert.Check(t, updated)
 }
 
@@ -322,16 +331,18 @@ func TestTaskSlotsNeededChange(t *testing.T) {
 
 	snapshot1, updated := c.provisionerView.Update(c)
 
-	assert.Equal(t, 1, len(snapshot1.Agents))
+	assert.Equal(t, 1, len(snapshot1.IdleAgents))
 	assert.Equal(t, 1, len(snapshot1.Tasks))
+	assert.Equal(t, 6, len(snapshot1.ConnectedAgents))
 	assert.Check(t, updated)
 
 	pendingTask.slotsNeeded = 4
 
 	snapshot2, updated := c.provisionerView.Update(c)
 
-	assert.Equal(t, 1, len(snapshot2.Agents))
+	assert.Equal(t, 1, len(snapshot2.IdleAgents))
 	assert.Equal(t, 1, len(snapshot2.Tasks))
+	assert.Equal(t, 6, len(snapshot2.ConnectedAgents))
 	assert.Check(t, updated)
 }
 
@@ -344,15 +355,17 @@ func TestAgentStateChange(t *testing.T) {
 
 	snapshot1, updated := c.provisionerView.Update(c)
 
-	assert.Equal(t, 1, len(snapshot1.Agents))
+	assert.Equal(t, 1, len(snapshot1.IdleAgents))
 	assert.Equal(t, 0, len(snapshot1.Tasks))
+	assert.Equal(t, 6, len(snapshot1.ConnectedAgents))
 	assert.Check(t, updated)
 
 	agents[0].containers = createContainers("agent-c", 1, 0)
 
 	snapshot2, updated := c.provisionerView.Update(c)
 
-	assert.Equal(t, 0, len(snapshot2.Agents))
+	assert.Equal(t, 0, len(snapshot2.IdleAgents))
 	assert.Equal(t, 0, len(snapshot2.Tasks))
+	assert.Equal(t, 6, len(snapshot2.ConnectedAgents))
 	assert.Check(t, updated)
 }

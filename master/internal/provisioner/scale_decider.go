@@ -82,7 +82,7 @@ func (s *scaleDecider) updateSchedulerSnapshot(snapshot *scheduler.ViewSnapshot)
 		s.idleAgentSnapshot[agent.Name] = agent
 	}
 
-	s.connectedAgentSnapshot =  make(map[string]*scheduler.AgentSummary)
+	s.connectedAgentSnapshot = make(map[string]*scheduler.AgentSummary)
 	for _, agent := range snapshot.ConnectedAgents {
 		s.connectedAgentSnapshot[agent.Name] = agent
 	}
@@ -148,9 +148,14 @@ func (s *scaleDecider) findInstancesToTerminate(
 			continue
 		}
 
-		ctx.Log().Infof(
-			"terminating instance %s because it is not connected to the master", inst.AgentName)
-		toTerminate[inst.AgentName] = true
+		if ctx != nil {
+			// nil during testing.
+			ctx.Log().Infof(
+				"terminating instance %s because it is not connected to the master",
+				inst.AgentName,
+			)
+		}
+		toTerminate[inst.ID] = true
 	}
 
 	// Terminate instances that are idle for a long time.

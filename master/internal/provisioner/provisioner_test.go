@@ -65,6 +65,7 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) *mockEnvironment {
 		scaleDecider: &scaleDecider{
 			maxStartingPeriod: setup.maxAgentStartingPeriod,
 			maxIdlePeriod:     setup.maxIdleAgentPeriod,
+			launchTime:        setup.initTime,
 		},
 	}
 	provisioner, created := system.ActorOf(actor.Addr("provisioner"), p)
@@ -228,7 +229,7 @@ func TestProvisionerScaleDown(t *testing.T) {
 	mock := newMockEnvironment(t, setup)
 
 	mock.system.Ask(mock.provisioner, scheduler.ViewSnapshot{
-		Agents: []*scheduler.AgentSummary{
+		IdleAgents: []*scheduler.AgentSummary{
 			{
 				Name: "agent1",
 			},
@@ -284,7 +285,7 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 
 	// Start the master.
 	mock.system.Ask(mock.provisioner, scheduler.ViewSnapshot{
-		Agents: []*scheduler.AgentSummary{
+		IdleAgents: []*scheduler.AgentSummary{
 			{
 				Name: "agent1",
 			},
@@ -308,4 +309,50 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history[len(mock.cluster.history)-1], newMockFuncCall("list"))
+}
+
+func TestProvisionerTerminateUnconnectedInstances(t *testing.T) {
+	setup := &mockConfig{
+		initTime:               time.Now().Add(-time.Hour),
+		maxAgentStartingPeriod: 3 * time.Minute,
+		maxIdleAgentPeriod:     10 * time.Minute,
+		instanceType: TestInstanceType{
+			Name:  "test.instanceType",
+			Slots: 4,
+		},
+		maxInstances: 100,
+		initInstances: []*Instance{
+			{
+				ID:         "instance1",
+				LaunchTime: time.Now().Add(-time.Hour),
+				AgentName:  "agent1",
+				State:      Running,
+			},
+			{
+				ID: "instance2",
+				// This instance should not be terminated because
+				// it is still in the agent startup period.
+				LaunchTime: time.Now().Add(-time.Minute),
+				AgentName:  "agent2",
+				State:      Running,
+			},
+		},
+	}
+	mock := newMockEnvironment(t, setup)
+
+	mock.system.Ask(mock.provisioner, scheduler.ViewSnapshot{
+		ConnectedAgents: []*scheduler.AgentSummary{},
+	}).Get()
+	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+	time.Sleep(100 * time.Millisecond)
+	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+
+	assert.NilError(t, mock.system.StopAndAwaitTermination())
+	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
+		newMockFuncCall("list"),
+		newMockFuncCall("terminate", newInstanceIDSet([]string{
+			"instance1",
+		})),
+		newMockFuncCall("list"),
+	})
 }

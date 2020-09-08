@@ -102,6 +102,15 @@ func TestFindInstancesToTerminate(t *testing.T) {
 						State:      Running,
 					},
 				},
+				connectedAgentSnapshot: map[string]*scheduler.AgentSummary{
+					"agent1": {
+						Name: "agent1",
+					},
+					"agent2": {
+						Name: "agent2",
+					},
+				},
+				launchTime: time.Now(),
 			},
 			maxInstanceNum:        10,
 			pastIdleInstanceAfter: map[string]time.Time{},
@@ -113,7 +122,7 @@ func TestFindInstancesToTerminate(t *testing.T) {
 			name: "terminate agents that are idle for a long time",
 			scaleDecider: scaleDecider{
 				maxIdlePeriod: 10 * time.Minute,
-				agentSnapshot: map[string]*scheduler.AgentSummary{
+				idleAgentSnapshot: map[string]*scheduler.AgentSummary{
 					"agent1": {
 						Name: "agent1",
 					},
@@ -122,6 +131,20 @@ func TestFindInstancesToTerminate(t *testing.T) {
 					},
 					"agent3": {
 						Name: "agent3",
+					},
+				},
+				connectedAgentSnapshot: map[string]*scheduler.AgentSummary{
+					"agent1": {
+						Name: "agent1",
+					},
+					"agent2": {
+						Name: "agent2",
+					},
+					"agent3": {
+						Name: "agent3",
+					},
+					"agent4": {
+						Name: "agent4",
 					},
 				},
 				instanceSnapshot: map[string]*Instance{
@@ -154,6 +177,7 @@ func TestFindInstancesToTerminate(t *testing.T) {
 					"instance1": time.Now().Add(-time.Hour),
 					"instance2": time.Now().Add(-time.Minute),
 				},
+				launchTime: time.Now(),
 			},
 			maxInstanceNum: 10,
 			pastIdleInstanceAfter: map[string]time.Time{
@@ -168,9 +192,20 @@ func TestFindInstancesToTerminate(t *testing.T) {
 			name: "terminate instances to the instance limit",
 			scaleDecider: scaleDecider{
 				maxIdlePeriod: 10 * time.Minute,
-				agentSnapshot: map[string]*scheduler.AgentSummary{
+				idleAgentSnapshot: map[string]*scheduler.AgentSummary{
 					"agent1": {
 						Name: "agent1",
+					},
+				},
+				connectedAgentSnapshot: map[string]*scheduler.AgentSummary{
+					"agent1": {
+						Name: "agent1",
+					},
+					"agent2": {
+						Name: "agent2",
+					},
+					"agent3": {
+						Name: "agent3",
 					},
 				},
 				instanceSnapshot: map[string]*Instance{
@@ -194,6 +229,7 @@ func TestFindInstancesToTerminate(t *testing.T) {
 					},
 				},
 				pastIdleInstances: map[string]time.Time{},
+				launchTime:        time.Now(),
 			},
 			maxInstanceNum: 1,
 			toTerminate: []string{
@@ -205,7 +241,7 @@ func TestFindInstancesToTerminate(t *testing.T) {
 			name: "overall besides the instance limit",
 			scaleDecider: scaleDecider{
 				maxIdlePeriod: 10 * time.Minute,
-				agentSnapshot: map[string]*scheduler.AgentSummary{
+				idleAgentSnapshot: map[string]*scheduler.AgentSummary{
 					"agent1": {
 						Name: "agent1",
 					},
@@ -217,6 +253,23 @@ func TestFindInstancesToTerminate(t *testing.T) {
 					},
 					"agent4": {
 						Name: "agent4",
+					},
+				},
+				connectedAgentSnapshot: map[string]*scheduler.AgentSummary{
+					"agent1": {
+						Name: "agent1",
+					},
+					"agent2": {
+						Name: "agent2",
+					},
+					"agent3": {
+						Name: "agent3",
+					},
+					"agent4": {
+						Name: "agent4",
+					},
+					"agent5": {
+						Name: "agent5",
 					},
 				},
 				instanceSnapshot: map[string]*Instance{
@@ -256,6 +309,7 @@ func TestFindInstancesToTerminate(t *testing.T) {
 					"instance2": time.Now().Add(-time.Hour),
 					"instance3": time.Now().Add(-time.Minute),
 				},
+				launchTime: time.Now(),
 			},
 			maxInstanceNum: 10,
 			pastIdleInstanceAfter: map[string]time.Time{
@@ -267,11 +321,41 @@ func TestFindInstancesToTerminate(t *testing.T) {
 				"instance2",
 			},
 		},
+		{
+			name: "terminate un-connected instances",
+			scaleDecider: scaleDecider{
+				instanceSnapshot: map[string]*Instance{
+					"instance1": {
+						ID:         "instance1",
+						LaunchTime: time.Now().Add(-time.Hour),
+						AgentName:  "agent1",
+						State:      Running,
+					},
+					"instance2": {
+						ID:         "instance2",
+						LaunchTime: time.Now().Add(-time.Hour),
+						AgentName:  "agent2",
+						State:      Running,
+					},
+				},
+				connectedAgentSnapshot: map[string]*scheduler.AgentSummary{
+					"agent2": {
+						Name: "agent2",
+					},
+				},
+				launchTime: time.Now().Add(-time.Hour),
+			},
+			maxInstanceNum:        10,
+			pastIdleInstanceAfter: map[string]time.Time{},
+			toTerminate: []string{
+				"instance1",
+			},
+		},
 	}
 	for idx := range tcs {
 		tc := tcs[idx]
 		t.Run(tc.name, func(t *testing.T) {
-			toTerminate := tc.scaleDecider.findInstancesToTerminate(tc.maxInstanceNum)
+			toTerminate := tc.scaleDecider.findInstancesToTerminate(nil, tc.maxInstanceNum)
 			assert.DeepEqual(t, newInstanceIDSet(toTerminate), newInstanceIDSet(tc.toTerminate))
 			assertEqualInstancesMarked(t, tc.scaleDecider.pastIdleInstances, tc.pastIdleInstanceAfter)
 		})
