@@ -377,7 +377,7 @@ If the problem persists please contact support.',
   }
   if (!trial || !experiment || !upgradedConfig) return <Spinner />;
 
-  const options = metrics ? (
+  const options = (
     <Space size="middle">
       <SelectFilter
         label="Show"
@@ -387,13 +387,13 @@ If the problem persists please contact support.',
         <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
         {Object.values(TrialInfoFilter).map(key => <Option key={key} value={key}>{key}</Option>)}
       </SelectFilter>
-      <MetricSelectFilter
+      {metrics && <MetricSelectFilter
         metricNames={metricNames}
         multiple
         value={metrics}
-        onChange={handleMetricChange} />
+        onChange={handleMetricChange} />}
     </Space>
-  ) : null;
+  );
 
   return (
     <Page
