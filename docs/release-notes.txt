@@ -14,6 +14,10 @@ Version 0.13.3
 **Bug Fixes**
 
 - Fix a bug where ``det-deploy local cluster-up`` was failing.
+ 
+- Fix a bug where experiment labels were not displayed on the experiment list page.
+
+- Fix a bug with decoding API responses because of unexpected non-numeric metric values.
 
 Version 0.13.2
 ^^^^^^^^^^^^^^
