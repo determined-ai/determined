@@ -6,6 +6,15 @@ Release Notes
 Version 0.13
 ------------
 
+Version 0.13.3
+^^^^^^^^^^^^^^
+
+**Release Date:** September 8, 2020
+
+**Bug Fixes**
+
+- Fix a bug where ``det-deploy local cluster-up`` was failing.
+
 Version 0.13.2
 ^^^^^^^^^^^^^^
 
