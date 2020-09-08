@@ -1,8 +1,6 @@
 package scheduler
 
 import (
-	"crypto/tls"
-
 	"github.com/google/uuid"
 
 	cproto "github.com/determined-ai/determined/master/pkg/container"
@@ -11,17 +9,12 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	"github.com/determined-ai/determined/master/pkg/model"
 	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 // kubernetesResourceProvider manages the lifecycle of k8s resources.
 type kubernetesResourceProvider struct {
-	clusterID             string
-	config                *KubernetesResourceProviderConfig
-	harnessPath           string
-	taskContainerDefaults model.TaskContainerDefaultsConfig
-	masterCert            *tls.Certificate
+	config *KubernetesResourceProviderConfig
 
 	reqList           *assignRequestList
 	groups            map[*actor.Ref]*group
@@ -35,18 +28,10 @@ type kubernetesResourceProvider struct {
 
 // NewKubernetesResourceProvider initializes a new kubernetesResourceProvider.
 func NewKubernetesResourceProvider(
-	clusterID string,
 	config *KubernetesResourceProviderConfig,
-	harnessPath string,
-	taskContainerDefaults model.TaskContainerDefaultsConfig,
-	masterCert *tls.Certificate,
 ) actor.Actor {
 	return &kubernetesResourceProvider{
-		clusterID:             clusterID,
-		config:                config,
-		harnessPath:           harnessPath,
-		taskContainerDefaults: taskContainerDefaults,
-		masterCert:            masterCert,
+		config: config,
 
 		reqList:           newAssignRequestList(),
 		groups:            make(map[*actor.Ref]*group),
@@ -72,7 +57,6 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 			msg.System,
 			msg.Echo,
 			ctx.Self(),
-			k.clusterID,
 			k.config.Namespace,
 			k.config.MasterServiceName,
 			k.config.LeaveKubernetesResources,
@@ -195,14 +179,9 @@ func (k *kubernetesResourceProvider) assignResources(ctx *actor.Context, req *As
 	for pod := 0; pod < numPods; pod++ {
 		container := newContainer(req, k.agent, slotsPerPod, len(assignments))
 		assignments = append(assignments, &podAssignment{
-			req:         req,
-			agent:       k.agent,
-			container:   container,
-			clusterID:   k.clusterID,
-			harnessPath: k.harnessPath,
-
-			taskContainerDefaults: k.taskContainerDefaults,
-			masterCert:            k.masterCert,
+			req:       req,
+			agent:     k.agent,
+			container: container,
 		})
 	}
 
@@ -264,13 +243,9 @@ func (k *kubernetesResourceProvider) schedulePendingTasks(ctx *actor.Context) {
 }
 
 type podAssignment struct {
-	req                   *AssignRequest
-	container             *container
-	agent                 *agentState
-	clusterID             string
-	harnessPath           string
-	taskContainerDefaults model.TaskContainerDefaultsConfig
-	masterCert            *tls.Certificate
+	req       *AssignRequest
+	container *container
+	agent     *agentState
 }
 
 // Summary summerizes a container assignment.
@@ -285,12 +260,8 @@ func (p podAssignment) Summary() ContainerSummary {
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
 func (p podAssignment) StartContainer(ctx *actor.Context, spec image.TaskSpec) {
 	handler := p.agent.handler
-	spec.ClusterID = p.clusterID
 	spec.ContainerID = string(p.container.ID())
 	spec.TaskID = string(p.req.ID)
-	spec.HarnessPath = p.harnessPath
-	spec.TaskContainerDefaults = p.taskContainerDefaults
-	spec.MasterCert = p.masterCert
 	ctx.Tell(handler, sproto.StartPod{
 		TaskHandler: p.req.Handler,
 		Spec:        spec,

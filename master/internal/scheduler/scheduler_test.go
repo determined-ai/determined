@@ -8,7 +8,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/device"
-	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 type getMaxSlots struct{}
@@ -133,13 +132,10 @@ func setupCluster(
 	scheduler Scheduler, fittingMethod SoftConstraint, agents []*agentState, tasks []*actor.Ref,
 ) *DefaultRP {
 	d := DefaultRP{
-		clusterID:             "cluster",
-		scheduler:             scheduler,
-		fittingMethod:         fittingMethod,
-		agents:                make(map[*actor.Ref]*agentState),
-		groups:                make(map[*actor.Ref]*group),
-		harnessPath:           "/opt/determined",
-		taskContainerDefaults: model.TaskContainerDefaultsConfig{},
+		scheduler:     scheduler,
+		fittingMethod: fittingMethod,
+		agents:        make(map[*actor.Ref]*agentState),
+		groups:        make(map[*actor.Ref]*group),
 
 		reqList:         newAssignRequestList(),
 		provisionerView: newProvisionerView(0),

@@ -26,6 +26,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
@@ -57,10 +58,9 @@ type tensorboardManager struct {
 	db *db.PgDB
 
 	defaultAgentUserGroup model.AgentUserGroup
-	clusterID             string
 	timeout               time.Duration
 	proxyRef              *actor.Ref
-	taskContainerDefaults model.TaskContainerDefaultsConfig
+	defaultTaskSpec       *tasks.TaskSpec
 }
 
 type tensorboardTick struct{}
@@ -259,14 +259,15 @@ func (t *tensorboardManager) newTensorBoard(
 		}
 
 		if len(exp.TrialIDs) == 0 {
-			expDir := fmt.Sprintf("%s/%s/tensorboard/experiment/%d/", logBasePath, t.clusterID, exp.ID)
+			expDir := fmt.Sprintf("%s/%s/tensorboard/experiment/%d/",
+				logBasePath, t.defaultTaskSpec.ClusterID, exp.ID)
 			logDirs = append(logDirs, expDir)
 			continue
 		}
 
 		for _, id := range exp.TrialIDs {
 			trialDir := fmt.Sprintf("trial_%d:%s/%s/tensorboard/experiment/%d/trial/%d/",
-				id, logBasePath, t.clusterID, exp.ID, id)
+				id, logBasePath, t.defaultTaskSpec.ClusterID, exp.ID, id)
 
 			logDirs = append(logDirs, trialDir)
 		}
@@ -318,7 +319,7 @@ func (t *tensorboardManager) newTensorBoard(
 	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: cpuEnvVars, GPU: gpuEnvVars}
 	config.BindMounts = append(config.BindMounts, getMounts(uniqMounts)...)
 
-	setPodSpec(&config, t.taskContainerDefaults)
+	setPodSpec(&config, t.defaultTaskSpec.TaskContainerDefaults)
 
 	return &command{
 		taskID:          taskID,
@@ -334,9 +335,10 @@ func (t *tensorboardManager) newTensorBoard(
 				return strings.Contains(log.String(), "TensorBoard contains metrics")
 			},
 		},
-		serviceAddress: &serviceAddress,
-		owner:          commandReq.Owner,
-		agentUserGroup: commandReq.AgentUserGroup,
+		serviceAddress:  &serviceAddress,
+		owner:           commandReq.Owner,
+		agentUserGroup:  commandReq.AgentUserGroup,
+		defaultTaskSpec: t.defaultTaskSpec,
 	}, nil
 }
 

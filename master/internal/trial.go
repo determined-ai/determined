@@ -219,8 +219,8 @@ type trial struct {
 	// sockets maps each running container for this trial to the corresponding websocket actor.
 	sockets map[cproto.ID]*actor.Ref
 
-	agentUserGroup        *model.AgentUserGroup
-	taskContainerDefaults *model.TaskContainerDefaultsConfig
+	agentUserGroup  *model.AgentUserGroup
+	defaultTaskSpec *tasks.TaskSpec
 }
 
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
@@ -254,8 +254,8 @@ func newTrial(
 		containerAddresses: make(map[cproto.ID][]aproto.Address),
 		sockets:            make(map[cproto.ID]*actor.Ref),
 
-		agentUserGroup:        exp.agentUserGroup,
-		taskContainerDefaults: exp.taskContainerDefaults,
+		agentUserGroup:  exp.agentUserGroup,
+		defaultTaskSpec: exp.defaultTaskSpec,
 	}
 }
 
@@ -591,20 +591,23 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.ResourceAssign
 	}
 
 	for _, a := range msg.Assignments {
-		a.StartContainer(ctx, tasks.TaskSpec{
-			StartContainer: &tasks.StartContainer{
-				ExperimentConfig:    t.experiment.Config,
-				ModelDefinition:     t.modelDefinition,
-				HParams:             t.create.Hparams,
-				TrialSeed:           t.create.TrialSeed,
-				LatestCheckpoint:    t.sequencer.LatestCheckpoint(),
-				InitialWorkload:     w,
-				WorkloadManagerType: t.sequencer.WorkloadManagerType(),
-				AdditionalFiles:     additionalFiles,
-				AgentUserGroup:      t.agentUserGroup,
-				IsMultiAgent:        t.numContainers > 1,
-			},
-		})
+		taskSpec := tasks.TaskSpec{}
+		if t.defaultTaskSpec != nil {
+			taskSpec = *t.defaultTaskSpec
+		}
+		taskSpec.StartContainer = &tasks.StartContainer{
+			ExperimentConfig:    t.experiment.Config,
+			ModelDefinition:     t.modelDefinition,
+			HParams:             t.create.Hparams,
+			TrialSeed:           t.create.TrialSeed,
+			LatestCheckpoint:    t.sequencer.LatestCheckpoint(),
+			InitialWorkload:     w,
+			WorkloadManagerType: t.sequencer.WorkloadManagerType(),
+			AdditionalFiles:     additionalFiles,
+			AgentUserGroup:      t.agentUserGroup,
+			IsMultiAgent:        t.numContainers > 1,
+		}
+		a.StartContainer(ctx, taskSpec)
 	}
 
 	return nil

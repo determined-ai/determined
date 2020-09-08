@@ -1,8 +1,6 @@
 package scheduler
 
 import (
-	"crypto/tls"
-
 	"github.com/google/uuid"
 
 	"github.com/determined-ai/determined/master/pkg/device"
@@ -14,19 +12,14 @@ import (
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/check"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
-	"github.com/determined-ai/determined/master/pkg/model"
 	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 // DefaultRP manages the agent and task lifecycles.
 type DefaultRP struct {
-	clusterID             string
-	scheduler             Scheduler
-	fittingMethod         SoftConstraint
-	agents                map[*actor.Ref]*agentState
-	harnessPath           string
-	taskContainerDefaults model.TaskContainerDefaultsConfig
-	masterCert            *tls.Certificate
+	scheduler     Scheduler
+	fittingMethod SoftConstraint
+	agents        map[*actor.Ref]*agentState
 
 	reqList *assignRequestList
 	groups  map[*actor.Ref]*group
@@ -43,24 +36,16 @@ type DefaultRP struct {
 
 // NewDefaultRP initializes a new empty default resource provider.
 func NewDefaultRP(
-	clusterID string,
 	scheduler Scheduler,
 	fittingMethod SoftConstraint,
-	harnessPath string,
-	taskContainerDefaults model.TaskContainerDefaultsConfig,
 	provisioner *actor.Ref,
 	provisionerSlotsPerInstance int,
-	masterCert *tls.Certificate,
 ) actor.Actor {
 	d := &DefaultRP{
-		clusterID:             clusterID,
-		scheduler:             scheduler,
-		fittingMethod:         fittingMethod,
-		agents:                make(map[*actor.Ref]*agentState),
-		groups:                make(map[*actor.Ref]*group),
-		harnessPath:           harnessPath,
-		taskContainerDefaults: taskContainerDefaults,
-		masterCert:            masterCert,
+		scheduler:     scheduler,
+		fittingMethod: fittingMethod,
+		agents:        make(map[*actor.Ref]*agentState),
+		groups:        make(map[*actor.Ref]*group),
 
 		reqList: newAssignRequestList(),
 
@@ -106,14 +91,10 @@ func (d *DefaultRP) assignResources(req *AssignRequest) bool {
 	for _, fit := range fits {
 		container := newContainer(req, fit.Agent, fit.Slots, len(assignments))
 		assignments = append(assignments, &containerAssignment{
-			req:                   req,
-			agent:                 fit.Agent,
-			container:             container,
-			clusterID:             d.clusterID,
-			devices:               fit.Agent.assignFreeDevices(fit.Slots, cproto.ID(container.id)),
-			harnessPath:           d.harnessPath,
-			taskContainerDefaults: d.taskContainerDefaults,
-			masterCert:            d.masterCert,
+			req:       req,
+			agent:     fit.Agent,
+			container: container,
+			devices:   fit.Agent.assignFreeDevices(fit.Slots, cproto.ID(container.id)),
 		})
 	}
 
@@ -303,14 +284,10 @@ func (d *DefaultRP) receiveRequestMsg(ctx *actor.Context) error {
 
 // containerAssignment contains information for tasks have been assigned but not yet started.
 type containerAssignment struct {
-	req                   *AssignRequest
-	container             *container
-	agent                 *agentState
-	clusterID             string
-	devices               []device.Device
-	harnessPath           string
-	taskContainerDefaults model.TaskContainerDefaultsConfig
-	masterCert            *tls.Certificate
+	req       *AssignRequest
+	container *container
+	agent     *agentState
+	devices   []device.Device
 }
 
 // Summary summerizes a container assignment.
@@ -325,12 +302,8 @@ func (c containerAssignment) Summary() ContainerSummary {
 // StartContainer notifies the agent to start a container.
 func (c containerAssignment) StartContainer(ctx *actor.Context, spec image.TaskSpec) {
 	handler := c.agent.handler
-	spec.ClusterID = c.clusterID
 	spec.ContainerID = string(c.container.ID())
 	spec.TaskID = string(c.req.ID)
-	spec.HarnessPath = c.harnessPath
-	spec.TaskContainerDefaults = c.taskContainerDefaults
-	spec.MasterCert = c.masterCert
 	spec.Devices = c.devices
 	ctx.Tell(handler, sproto.StartTaskOnAgent{
 		Task: c.req.Handler,

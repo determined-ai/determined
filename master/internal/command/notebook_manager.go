@@ -9,6 +9,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/determined-ai/determined/master/pkg/tasks"
+
 	"github.com/google/uuid"
 
 	petname "github.com/dustinkirkland/golang-petname"
@@ -107,8 +109,7 @@ type notebookManager struct {
 	db *db.PgDB
 
 	defaultAgentUserGroup model.AgentUserGroup
-	clusterID             string
-	taskContainerDefaults model.TaskContainerDefaultsConfig
+	defaultTaskSpec       *tasks.TaskSpec
 }
 
 func (n *notebookManager) Receive(ctx *actor.Context) error {
@@ -194,7 +195,7 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 
 	config.Entrypoint = notebookEntrypoint
 
-	setPodSpec(&config, n.taskContainerDefaults)
+	setPodSpec(&config, n.defaultTaskSpec.TaskContainerDefaults)
 
 	if config.Description == "" {
 		var err error
@@ -247,7 +248,8 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 		},
 		serviceAddress: &serviceAddress,
 
-		owner:          req.Owner,
-		agentUserGroup: req.AgentUserGroup,
+		owner:           req.Owner,
+		agentUserGroup:  req.AgentUserGroup,
+		defaultTaskSpec: n.defaultTaskSpec,
 	}, nil
 }

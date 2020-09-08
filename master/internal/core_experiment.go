@@ -327,10 +327,11 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	if patch.CheckpointStorage != nil {
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
 			&checkpointGCTask{
-				agentUserGroup: agentUserGroup,
-				rp:             m.rp,
-				db:             m.db,
-				experiment:     dbExp,
+				agentUserGroup:  agentUserGroup,
+				defaultTaskSpec: m.defaultTaskSpec,
+				rp:              m.rp,
+				db:              m.db,
+				experiment:      dbExp,
 			})
 	}
 
@@ -485,10 +486,11 @@ func (m *Master) deleteExperiment(c echo.Context) (interface{}, error) {
 	}
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
 	m.system.ActorOf(addr, &checkpointGCTask{
-		agentUserGroup: agentUserGroup,
-		rp:             m.rp,
-		db:             m.db,
-		experiment:     dbExp,
+		agentUserGroup:  agentUserGroup,
+		defaultTaskSpec: m.defaultTaskSpec,
+		rp:              m.rp,
+		db:              m.db,
+		experiment:      dbExp,
 	})
 
 	c.Logger().Infof("deleting experiment %v from database", expID)

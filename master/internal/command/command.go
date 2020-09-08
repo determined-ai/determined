@@ -67,13 +67,13 @@ func DefaultConfig(taskContainerDefaults *model.TaskContainerDefaultsConfig) mod
 type command struct {
 	config model.CommandConfig
 
-	owner          commandOwner
-	agentUserGroup *model.AgentUserGroup
+	owner           commandOwner
+	agentUserGroup  *model.AgentUserGroup
+	defaultTaskSpec *tasks.TaskSpec
 
 	taskID               scheduler.RequestID
 	userFiles            archive.Archive
 	additionalFiles      archive.Archive
-	harnessPath          string
 	readinessChecks      map[string]readinessCheck
 	readinessMessageSent bool
 	metadata             map[string]interface{}
@@ -230,15 +230,18 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case scheduler.ResourceAssigned:
 		c.assignment = msg.Assignments[0]
-		msg.Assignments[0].StartContainer(ctx, tasks.TaskSpec{
-			StartCommand: &tasks.StartCommand{
-				AgentUserGroup:  c.agentUserGroup,
-				Config:          c.config,
-				UserFiles:       c.userFiles,
-				AdditionalFiles: c.additionalFiles,
-			},
-			HarnessPath: c.harnessPath,
-		})
+
+		taskSpec := tasks.TaskSpec{}
+		if c.defaultTaskSpec != nil {
+			taskSpec = *c.defaultTaskSpec
+		}
+		taskSpec.StartCommand = &tasks.StartCommand{
+			AgentUserGroup:  c.agentUserGroup,
+			Config:          c.config,
+			UserFiles:       c.userFiles,
+			AdditionalFiles: c.additionalFiles,
+		}
+		msg.Assignments[0].StartContainer(ctx, taskSpec)
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/determined-ai/determined/master/pkg/tasks"
+
 	"github.com/google/uuid"
 
 	petname "github.com/dustinkirkland/golang-petname"
@@ -28,8 +30,7 @@ type commandManager struct {
 	db *db.PgDB
 
 	defaultAgentUserGroup model.AgentUserGroup
-	clusterID             string
-	taskContainerDefaults model.TaskContainerDefaultsConfig
+	defaultTaskSpec       *tasks.TaskSpec
 }
 
 func (c *commandManager) Receive(ctx *actor.Context) error {
@@ -102,14 +103,15 @@ func (c *commandManager) newCommand(req *commandRequest) *command {
 	if len(config.Entrypoint) == 1 {
 		config.Entrypoint = append(shellFormEntrypoint, config.Entrypoint...)
 	}
-	setPodSpec(&config, c.taskContainerDefaults)
+	setPodSpec(&config, c.defaultTaskSpec.TaskContainerDefaults)
 
 	return &command{
 		taskID:    scheduler.RequestID(uuid.New().String()),
 		config:    config,
 		userFiles: req.UserFiles,
 
-		owner:          req.Owner,
-		agentUserGroup: req.AgentUserGroup,
+		owner:           req.Owner,
+		agentUserGroup:  req.AgentUserGroup,
+		defaultTaskSpec: c.defaultTaskSpec,
 	}
 }

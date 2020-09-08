@@ -21,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ssh"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/shellv1"
 )
@@ -41,8 +42,7 @@ type shellManager struct {
 	db *db.PgDB
 
 	defaultAgentUserGroup model.AgentUserGroup
-	clusterID             string
-	taskContainerDefaults model.TaskContainerDefaultsConfig
+	defaultTaskSpec       *tasks.TaskSpec
 }
 
 func (s *shellManager) Receive(ctx *actor.Context) error {
@@ -141,7 +141,7 @@ func (s *shellManager) newShell(
 		shellEntrypointScript, "-f", shellSSHDConfigFile, "-p", strconv.Itoa(port), "-D", "-e",
 	}
 
-	setPodSpec(&config, s.taskContainerDefaults)
+	setPodSpec(&config, s.defaultTaskSpec.TaskContainerDefaults)
 
 	additionalFiles := archive.Archive{
 		req.AgentUserGroup.OwnedArchiveItem(shellSSHDir, nil, 0700, tar.TypeDir),
@@ -183,8 +183,9 @@ func (s *shellManager) newShell(
 			},
 		},
 
-		serviceAddress: &serviceAddress,
-		owner:          req.Owner,
-		agentUserGroup: req.AgentUserGroup,
+		serviceAddress:  &serviceAddress,
+		owner:           req.Owner,
+		agentUserGroup:  req.AgentUserGroup,
+		defaultTaskSpec: s.defaultTaskSpec,
 	}
 }

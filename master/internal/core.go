@@ -36,6 +36,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 const defaultAskTimeout = 2 * time.Second
@@ -46,7 +47,8 @@ type Master struct {
 	MasterID  string
 	Version   string
 
-	config *Config
+	config          *Config
+	defaultTaskSpec *tasks.TaskSpec
 
 	logs          *logger.LogBuffer
 	system        *actor.System
@@ -273,33 +275,22 @@ func (m *Master) rwCoordinatorWebSocket(socket *websocket.Conn, c echo.Context) 
 	return actorRef.AwaitTermination()
 }
 
-func (m *Master) initializeResourceProviders(
-	provisionerSlotsPerInstance int,
-	cert *tls.Certificate,
-) {
+func (m *Master) initializeResourceProviders(provisionerSlotsPerInstance int) {
 	var resourceProvider *actor.Ref
 	switch {
 	case m.config.Scheduler.ResourceProvider.DefaultRPConfig != nil:
 		resourceProvider, _ = m.system.ActorOf(actor.Addr("defaultRP"), scheduler.NewDefaultRP(
-			m.ClusterID,
 			m.config.Scheduler.MakeScheduler(),
 			m.config.Scheduler.FitFunction(),
-			filepath.Join(m.config.Root, "wheels"),
-			m.config.TaskContainerDefaults,
 			m.provisioner,
 			provisionerSlotsPerInstance,
-			cert,
 		))
 
 	case m.config.Scheduler.ResourceProvider.KubernetesRPConfig != nil:
 		resourceProvider, _ = m.system.ActorOf(
 			actor.Addr("kubernetesRP"),
 			scheduler.NewKubernetesResourceProvider(
-				m.ClusterID,
 				m.config.Scheduler.ResourceProvider.KubernetesRPConfig,
-				filepath.Join(m.config.Root, "wheels"),
-				m.config.TaskContainerDefaults,
-				cert,
 			),
 		)
 
@@ -330,6 +321,16 @@ func (m *Master) Run() error {
 	m.ClusterID, err = m.db.GetClusterID()
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")
+	}
+	cert, err := m.readTLSCertificate()
+	if err != nil {
+		return errors.Wrap(err, "failed to read TLS certificate")
+	}
+	m.defaultTaskSpec = &tasks.TaskSpec{
+		ClusterID:             m.ClusterID,
+		HarnessPath:           filepath.Join(m.config.Root, "wheels"),
+		TaskContainerDefaults: m.config.TaskContainerDefaults,
+		MasterCert:            cert,
 	}
 
 	go m.cleanUpSearcherEvents()
@@ -374,12 +375,7 @@ func (m *Master) Run() error {
 
 	m.proxy, _ = m.system.ActorOf(actor.Addr("proxy"), &proxy.Proxy{})
 
-	cert, err := m.readTLSCertificate()
-	if err != nil {
-		return errors.Wrap(err, "failed to read TLS certificate")
-	}
-
-	m.initializeResourceProviders(provisionerSlotsPerInstance, cert)
+	m.initializeResourceProviders(provisionerSlotsPerInstance)
 
 	m.system.ActorOf(actor.Addr("experiments"), &actors.Group{})
 
@@ -558,11 +554,10 @@ func (m *Master) Run() error {
 		m.system,
 		m.echo,
 		m.db,
-		m.ClusterID,
 		m.proxy,
 		m.config.TensorBoardTimeout,
 		m.config.Security.DefaultTask,
-		m.config.TaskContainerDefaults,
+		m.defaultTaskSpec,
 		authFuncs...,
 	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)

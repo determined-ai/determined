@@ -5,8 +5,6 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/determined-ai/determined/master/internal/sproto"
-
 	dockerTypes "github.com/docker/docker/api/types"
 	dockerContainer "github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
@@ -15,11 +13,13 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/agent"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 type mockActor struct {
@@ -79,17 +79,18 @@ func TestRendezvousInfo(t *testing.T) {
 	rp, created := system.ActorOf(
 		actor.Addr("resourceProviders"),
 		scheduler.NewDefaultRP(
-			uuid.New().String(),
 			scheduler.NewFairShareScheduler(),
 			scheduler.WorstFit,
-			"/opt/determined",
-			model.TaskContainerDefaultsConfig{},
 			nil,
 			0,
-			nil,
 		))
 	if !created {
 		t.Fatal("unable to create cluster")
+	}
+
+	defaultTaskSpec := &tasks.TaskSpec{
+		HarnessPath:           "/opt/determined",
+		TaskContainerDefaults: model.TaskContainerDefaultsConfig{},
 	}
 
 	// This is the minimal trial to receive scheduler.ContainerStarted messages.
@@ -104,6 +105,7 @@ func TestRendezvousInfo(t *testing.T) {
 		containerOrdinals:  make(map[cproto.ID]int),
 		containerAddresses: make(map[cproto.ID][]agent.Address),
 		sockets:            make(map[cproto.ID]*actor.Ref),
+		defaultTaskSpec:    defaultTaskSpec,
 	}
 	trialRef, created := system.ActorOf(actor.Addr("trial"), trial)
 	if !created {

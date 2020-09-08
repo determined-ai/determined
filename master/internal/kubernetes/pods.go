@@ -43,7 +43,6 @@ type podMetadata struct {
 //        +- requestProcessingWorkers: processes request to create / delete kubernetes resources.
 type pods struct {
 	cluster                  *actor.Ref
-	clusterID                string
 	namespace                string
 	masterServiceName        string
 	leaveKubernetesResources bool
@@ -68,14 +67,12 @@ func Initialize(
 	s *actor.System,
 	e *echo.Echo,
 	c *actor.Ref,
-	clusterID string,
 	namespace string,
 	masterServiceName string,
 	leaveKubernetesResources bool,
 ) *actor.Ref {
 	podsActor, ok := s.ActorOf(actor.Addr("pods"), &pods{
 		cluster:                  c,
-		clusterID:                clusterID,
 		namespace:                namespace,
 		masterServiceName:        masterServiceName,
 		podNameToPodHandler:      make(map[string]*actor.Ref),
@@ -238,7 +235,7 @@ func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
 
 func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
 	newPodHandler := newPod(
-		msg, p.cluster, p.clusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
+		msg, p.cluster, msg.Spec.ClusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
 		p.podInterface, p.configMapInterface, p.resourceRequestQueue, p.leaveKubernetesResources,
 	)
 	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s-%d", msg.Spec.TaskID, msg.Rank), newPodHandler)

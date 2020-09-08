@@ -16,10 +16,11 @@ import (
 
 // TaskSpec provides the necessary information for an agent to start a task.
 type TaskSpec struct {
-	TaskID                string                            `json:"task_id"`
-	ContainerID           string                            `json:"container_id"`
+	TaskID      string          `json:"task_id"`
+	ContainerID string          `json:"container_id"`
+	Devices     []device.Device `json:"devices"`
+
 	ClusterID             string                            `json:"cluster_id"`
-	Devices               []device.Device                   `json:"devices"`
 	HarnessPath           string                            `json:"harness_path"`
 	TaskContainerDefaults model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
 	MasterCert            *tls.Certificate                  `json:"master_cert"`
