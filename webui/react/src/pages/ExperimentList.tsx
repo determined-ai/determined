@@ -180,7 +180,7 @@ const ExperimentList: React.FC = () => {
     const newColumns = [ ...defaultColumns ].map(column => {
       column.sortOrder = null;
       if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
-      if (column.key === 'name') column.render = nameRenderer;
+      if (column.key === V1GetExperimentsRequestSortBy.DESCRIPTION) column.render = nameRenderer;
       if (column.key === 'action') column.render = actionRenderer;
       return column;
     });
