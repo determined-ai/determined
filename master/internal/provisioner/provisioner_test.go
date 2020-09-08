@@ -45,6 +45,7 @@ type mockConfig struct {
 	initTime               time.Time
 	maxAgentStartingPeriod time.Duration
 	maxIdleAgentPeriod     time.Duration
+	maxDisconnectPeriod    time.Duration
 	instanceType           instanceType
 	maxInstances           int
 	initInstances          []*Instance
@@ -63,8 +64,9 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) *mockEnvironment {
 	p := &Provisioner{
 		provider: cluster,
 		scaleDecider: &scaleDecider{
-			maxStartingPeriod: setup.maxAgentStartingPeriod,
-			maxIdlePeriod:     setup.maxIdleAgentPeriod,
+			maxStartingPeriod:   setup.maxAgentStartingPeriod,
+			maxIdlePeriod:       setup.maxIdleAgentPeriod,
+			maxDisconnectPeriod: setup.maxDisconnectPeriod,
 		},
 	}
 	provisioner, created := system.ActorOf(actor.Addr("provisioner"), p)
@@ -153,7 +155,8 @@ func (c *mockProvider) terminate(ctx *actor.Context, instanceIDs []string) {
 
 func TestProvisionerScaleUp(t *testing.T) {
 	setup := &mockConfig{
-		initTime: time.Now(),
+		initTime:            time.Now(),
+		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
 			Name:  "test.instanceType",
 			Slots: 4,
@@ -178,7 +181,8 @@ func TestProvisionerScaleUp(t *testing.T) {
 
 func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 	setup := &mockConfig{
-		initTime: time.Now(),
+		initTime:            time.Now(),
+		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
 			Name:  "test.instanceType",
 			Slots: 4,
@@ -203,8 +207,9 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 
 func TestProvisionerScaleDown(t *testing.T) {
 	setup := &mockConfig{
-		initTime:           time.Now(),
-		maxIdleAgentPeriod: 50 * time.Millisecond,
+		initTime:            time.Now(),
+		maxIdleAgentPeriod:  50 * time.Millisecond,
+		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
 			Name:  "test.instanceType",
 			Slots: 4,
@@ -265,6 +270,7 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 		initTime:               time.Now(),
 		maxAgentStartingPeriod: 100 * time.Millisecond,
 		maxIdleAgentPeriod:     100 * time.Millisecond,
+		maxDisconnectPeriod:    5 * time.Minute,
 		instanceType: TestInstanceType{
 			Name:  "test.instanceType",
 			Slots: 4,
@@ -320,6 +326,7 @@ func TestProvisionerTerminateUnconnectedInstances(t *testing.T) {
 		initTime:               time.Now().Add(-time.Hour),
 		maxAgentStartingPeriod: 3 * time.Minute,
 		maxIdleAgentPeriod:     50 * time.Millisecond,
+		maxDisconnectPeriod:    50 * time.Millisecond,
 		instanceType: TestInstanceType{
 			Name:  "test.instanceType",
 			Slots: 4,
@@ -333,9 +340,7 @@ func TestProvisionerTerminateUnconnectedInstances(t *testing.T) {
 				State:      Running,
 			},
 			{
-				ID: "startingInstance",
-				// This instance should not be terminated because
-				// it is still in the agent startup period.
+				ID:         "startingInstance",
 				LaunchTime: time.Now().Add(-time.Minute),
 				AgentName:  "agent2",
 				State:      Running,

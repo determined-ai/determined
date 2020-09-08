@@ -133,9 +133,9 @@ func (v *FilterableView) newSnapshot() ViewSnapshot {
 	for _, agent := range v.connectedAgents {
 		connectedAgents = append(connectedAgents, agent)
 	}
-	idleAgents := make([]*AgentSummary, 0, len(v.filteredAgents))
+	filteredAgents := make([]*AgentSummary, 0, len(v.filteredAgents))
 	for _, agent := range v.filteredAgents {
-		idleAgents = append(idleAgents, agent)
+		filteredAgents = append(filteredAgents, agent)
 	}
-	return ViewSnapshot{Tasks: tasks, ConnectedAgents: connectedAgents, IdleAgents: idleAgents}
+	return ViewSnapshot{Tasks: tasks, ConnectedAgents: connectedAgents, IdleAgents: filteredAgents}
 }

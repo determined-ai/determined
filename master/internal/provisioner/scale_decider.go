@@ -4,13 +4,13 @@ import (
 	"sort"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
-
 	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 const (
-	minRetryInterval = 10 * time.Second
+	minRetryInterval    = 10 * time.Second
+	maxDisconnectPeriod = 5 * time.Minute
 )
 
 // scaleDecider makes decisions based on the following assumptions:
@@ -27,8 +27,9 @@ const (
 //    b. The instances are already running but agents on them are starting up.
 //    c. The agents are disconnected to the master due to misconfiguration or some unknown reason.
 type scaleDecider struct {
-	maxIdlePeriod     time.Duration
-	maxStartingPeriod time.Duration
+	maxIdlePeriod       time.Duration
+	maxStartingPeriod   time.Duration
+	maxDisconnectPeriod time.Duration
 
 	lastProvision          time.Time
 	lastSchedulerUpdated   time.Time
@@ -46,8 +47,9 @@ func newScaleDecider(
 	maxIdlePeriod time.Duration, maxStartingPeriod time.Duration,
 ) *scaleDecider {
 	return &scaleDecider{
-		maxStartingPeriod: maxStartingPeriod,
-		maxIdlePeriod:     maxIdlePeriod,
+		maxStartingPeriod:   maxStartingPeriod,
+		maxIdlePeriod:       maxIdlePeriod,
+		maxDisconnectPeriod: maxDisconnectPeriod,
 	}
 }
 
@@ -117,7 +119,8 @@ func (s *scaleDecider) findInstancesToTerminate(
 	idleInstances := make(map[string]bool)
 	disconnectedInstances := make(map[string]bool)
 
-	// Terminate stopped instances and find idle instances.
+	// Terminate stopped instances and find idle and stopping instances.
+	now := time.Now()
 	for _, inst := range s.instanceSnapshot {
 		switch inst.State {
 		case Stopped:
@@ -127,36 +130,26 @@ func (s *scaleDecider) findInstancesToTerminate(
 			if _, ok := s.idleAgentSnapshot[inst.AgentName]; ok {
 				idleInstances[inst.ID] = true
 			}
-		}
-	}
 
-	// Identify instances that are not currently connected to the master.
-	now := time.Now()
-	for _, inst := range s.instanceSnapshot {
-		// If instance is connected no need to do anything here.
-		if _, connected := s.connectedAgentSnapshot[inst.AgentName]; connected {
-			continue
-		}
+			// If instance is connected no need to do anything here.
+			if _, connected := s.connectedAgentSnapshot[inst.AgentName]; connected {
+				continue
+			}
 
-		// If instance instance is still in the start-up period, do not terminate it for
-		// being disconnected.
-		if inst.LaunchTime.Add(s.maxStartingPeriod).After(now) {
-			continue
-		}
+			// If instance instance is still in the start-up period, do not terminate it for
+			// being disconnected.
+			if inst.LaunchTime.Add(s.maxStartingPeriod).After(now) {
+				continue
+			}
 
-		// Don't terminate instances that are already stopped or are stopping.
-		switch inst.State {
-		case Stopping, Stopped:
-			continue
+			disconnectedInstances[inst.ID] = true
 		}
-
-		disconnectedInstances[inst.ID] = true
 	}
 
 	// Terminate instances that have not connected to the master for a long time.
 	var longUnconnected map[string]bool
 	s.pastDisconnectedInstances, longUnconnected = findInstancesLongInSameState(
-		s.pastDisconnectedInstances, disconnectedInstances, s.maxIdlePeriod)
+		s.pastDisconnectedInstances, disconnectedInstances, s.maxDisconnectPeriod)
 	for id := range longUnconnected {
 		toTerminate[id] = true
 	}
