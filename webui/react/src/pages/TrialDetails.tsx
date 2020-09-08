@@ -27,7 +27,7 @@ import { forkExperiment } from 'services/api';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { TrialDetailsParams } from 'services/types';
 import {
-  CheckpointDetail, ExperimentDetails, MetricName, RawJson, Step, TrialDetails,
+  CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step, TrialDetails,
 } from 'types';
 import { clone, numericSorter } from 'utils/data';
 import { humanReadableFloat } from 'utils/string';
@@ -347,7 +347,9 @@ If the problem persists please contact support.',
         // Default to selecting config search metric only.
         const storageMetricsKey = `experiments/${response.id}/${STORAGE_METRICS_KEY}`;
         const searcherName = response.config?.searcher?.metric;
-        const defaultMetric = metricNames.find(metricName => metricName.name === searcherName);
+        const defaultMetric = metricNames.find(metricName => {
+          return metricName.name === searcherName && metricName.type === MetricType.Validation;
+        });
         const defaultMetrics = defaultMetric ? [ defaultMetric ] : [];
         const initMetrics = storage.getWithDefault(storageMetricsKey, defaultMetrics);
         setMetrics(initMetrics);
