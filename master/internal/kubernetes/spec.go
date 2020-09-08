@@ -346,16 +346,16 @@ func (p *pod) createPodSpecForGC(ctx *actor.Context) error {
 	return nil
 }
 
-func configureUniqueName(t tasks.TaskSpec, rank int) string {
+func configureUniqueName(t tasks.TaskSpec) string {
 	uniqueName := petName.Generate(2, "-")
 	switch {
 	case t.StartCommand != nil:
 		return fmt.Sprintf("cmd-%s-%s", t.TaskID, uniqueName)
 	case t.StartContainer != nil:
 		return fmt.Sprintf(
-			"exp-%d-trial-%d-%d-%s",
+			"exp-%d-trial-%d-%s",
 			t.StartContainer.InitialWorkload.ExperimentID,
-			t.StartContainer.InitialWorkload.TrialID, rank,
+			t.StartContainer.InitialWorkload.TrialID,
 			uniqueName,
 		)
 	case t.GCCheckpoints != nil:

@@ -238,7 +238,7 @@ func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
 		msg, p.cluster, msg.Spec.ClusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
 		p.podInterface, p.configMapInterface, p.resourceRequestQueue, p.leaveKubernetesResources,
 	)
-	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s-%d", msg.Spec.TaskID, msg.Rank), newPodHandler)
+	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", msg.Spec.ContainerID), newPodHandler)
 	if !ok {
 		return errors.Errorf("pod actor %s already exists", ref.Address().String())
 	}

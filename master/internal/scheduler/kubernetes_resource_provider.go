@@ -260,13 +260,12 @@ func (p podAssignment) Summary() ContainerSummary {
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
 func (p podAssignment) StartContainer(ctx *actor.Context, spec image.TaskSpec) {
 	handler := p.agent.handler
-	spec.ContainerID = string(p.container.ID())
+	spec.ContainerID = string(p.container.id)
 	spec.TaskID = string(p.req.ID)
 	ctx.Tell(handler, sproto.StartPod{
 		TaskHandler: p.req.Handler,
 		Spec:        spec,
-		Slots:       p.container.Slots(),
-		Rank:        p.container.ordinal,
+		Slots:       p.container.slots,
 	})
 }
 
@@ -274,6 +273,6 @@ func (p podAssignment) StartContainer(ctx *actor.Context, spec image.TaskSpec) {
 func (p podAssignment) KillContainer(ctx *actor.Context) {
 	handler := p.agent.handler
 	ctx.Tell(handler, sproto.KillContainer{
-		ContainerID: cproto.ID(p.container.ID()),
+		ContainerID: cproto.ID(p.container.id),
 	})
 }

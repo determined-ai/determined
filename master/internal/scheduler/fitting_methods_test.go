@@ -16,7 +16,7 @@ func consumeSlots(agent *agentState, consume int) *agentState {
 		CanTerminate: true,
 	}
 	container := newContainer(req, agent, req.SlotsNeeded, 0)
-	agent.assignFreeDevices(req.SlotsNeeded, cproto.ID(container.ID()))
+	agent.assignFreeDevices(req.SlotsNeeded, cproto.ID(container.id))
 	return agent
 }
 

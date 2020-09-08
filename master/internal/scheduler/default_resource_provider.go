@@ -302,7 +302,7 @@ func (c containerAssignment) Summary() ContainerSummary {
 // StartContainer notifies the agent to start a container.
 func (c containerAssignment) StartContainer(ctx *actor.Context, spec image.TaskSpec) {
 	handler := c.agent.handler
-	spec.ContainerID = string(c.container.ID())
+	spec.ContainerID = string(c.container.id)
 	spec.TaskID = string(c.req.ID)
 	spec.Devices = c.devices
 	ctx.Tell(handler, sproto.StartTaskOnAgent{
@@ -322,6 +322,6 @@ func (c containerAssignment) StartContainer(ctx *actor.Context, spec image.TaskS
 // KillContainer notifies the agent to kill the container.
 func (c containerAssignment) KillContainer(ctx *actor.Context) {
 	ctx.Tell(c.agent.handler, sproto.KillContainer{
-		ContainerID: cproto.ID(c.container.ID()),
+		ContainerID: cproto.ID(c.container.id),
 	})
 }

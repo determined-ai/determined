@@ -39,7 +39,6 @@ type pod struct {
 	masterPort               int32
 	taskSpec                 tasks.TaskSpec
 	gpus                     int
-	rank                     int
 	podInterface             typedV1.PodInterface
 	configMapInterface       typedV1.ConfigMapInterface
 	resourceRequestQueue     *actor.Ref
@@ -80,7 +79,7 @@ func newPod(
 		ID:     container.ID(msg.Spec.ContainerID),
 		State:  container.Assigned,
 	}
-	uniqueName := configureUniqueName(msg.Spec, msg.Rank)
+	uniqueName := configureUniqueName(msg.Spec)
 
 	return &pod{
 		cluster:                  cluster,
@@ -92,7 +91,6 @@ func newPod(
 		masterPort:               masterPort,
 		taskSpec:                 msg.Spec,
 		gpus:                     msg.Slots,
-		rank:                     msg.Rank,
 		podInterface:             podInterface,
 		configMapInterface:       configMapInterface,
 		resourceRequestQueue:     resourceRequestQueue,
