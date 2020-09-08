@@ -17,9 +17,6 @@
 # Actor infrastructure
 /master/pkg/actor              @dzhu
 
-# D-train
-# @aaron276h @armandmcqueen
-
 # HP Search
 /master/pkg/searcher/          @stoksc @liamcli
 
@@ -46,6 +43,13 @@
 
 # Harness, container
 /harness/                      @rb-determined-ai @aaron276h @shiyuann
+
+# D-train
+/harness/determined/horovod.py                @aaron276h @armandmcqueen
+/harness/determined/ipc.py                    @aaron276h @armandmcqueen
+/harness/determined/layers/_worker_process.py @aaron276h @armandmcqueen
+/harness/determined/_trial_controller.py      @aaron276h @armandmcqueen
+/harness/determined/exec/worker_process.py    @aaron276h @armandmcqueen
 
 # Tensorboard
 /master/internal/command/tensorboard_manager.go  @eecsliu
