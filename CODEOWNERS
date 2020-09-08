@@ -5,7 +5,8 @@
 /master/internal/provisioner/  @shiyuann
 
 # Model registry
-# @eecsliu @katport
+/master/pkg/model              @eecsliu @katport
+/proto/pkg/modelv1             @eecsliu @katport
 
 # WebUI
 /webui/                        @hkang1 @hamidzr
