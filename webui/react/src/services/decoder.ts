@@ -21,7 +21,7 @@ import { capitalize } from 'utils/string';
 
 import { Determinedexperimentv1State, V1Experiment } from './api-ts-sdk';
 
-const dropNullMetrics = (ioMetrics: ioTypeMetric): Record<string, number> => {
+const dropNonNumericMetrics = (ioMetrics: ioTypeMetric): Record<string, number> => {
   const metrics: Record<string, number> = {};
   Object.entries(ioMetrics).forEach(([ name, value ]) => {
     if (isNumber(value)) metrics[name] = value;
@@ -199,13 +199,13 @@ const ioToCheckpoint = (io: ioTypeCheckpoint): Checkpoint => {
 const ioToValidationMetrics = (io: ioTypeValidationMetrics): ValidationMetrics => {
   return {
     numInputs: io.num_inputs,
-    validationMetrics: dropNullMetrics(io.validation_metrics),
+    validationMetrics: dropNonNumericMetrics(io.validation_metrics),
   };
 };
 
 const ioToStep = (io: ioTypeStep): Step => {
   return {
-    avgMetrics: io.avg_metrics ? dropNullMetrics(io.avg_metrics) : undefined,
+    avgMetrics: io.avg_metrics ? dropNonNumericMetrics(io.avg_metrics) : undefined,
     checkpoint: io.checkpoint ? ioToCheckpoint(io.checkpoint) : undefined,
     endTime: io.end_time || undefined,
     id: io.id,
