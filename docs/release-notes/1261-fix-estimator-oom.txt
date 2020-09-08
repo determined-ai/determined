@@ -1,0 +1,5 @@
+:orphan:
+
+**Bug Fixes**
+
+- Fix issue where detecting GPU availabilitiy in Tensorflow code would cause EstimatorTrial models to OOM.
