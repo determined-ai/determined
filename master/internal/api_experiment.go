@@ -118,7 +118,7 @@ func (a *apiServer) PreviewHPSearch(
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error parsing experiment config: %s", err)
 	}
-	config := model.DefaultExperimentConfig()
+	config := model.DefaultExperimentConfig(&a.m.config.TaskContainerDefaults)
 	if err = json.Unmarshal(bytes, &config); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "error parsing experiment config: %s", err)
 	}

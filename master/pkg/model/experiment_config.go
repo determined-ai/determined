@@ -125,7 +125,7 @@ func (e *ExperimentConfig) Scan(src interface{}) error {
 	if !ok {
 		return errors.Errorf("unable to convert to []byte: %v", src)
 	}
-	config := DefaultExperimentConfig()
+	config := DefaultExperimentConfig(nil)
 	if err := json.Unmarshal(data, &config); err != nil {
 		return err
 	}

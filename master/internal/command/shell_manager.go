@@ -73,7 +73,7 @@ func (s *shellManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 			return
 		}
 
-		req, err := parseCommandRequest(apiCtx, s.db, &params)
+		req, err := parseCommandRequest(apiCtx, s.db, &params, &s.taskContainerDefaults)
 		if err != nil {
 			respondBadRequest(ctx, err)
 			return

@@ -22,7 +22,7 @@ var (
 
 // DefaultConfig returns the default configuration of the master.
 func DefaultConfig() *Config {
-	defaultExp := model.DefaultExperimentConfig()
+	defaultExp := model.DefaultExperimentConfig(nil)
 	var c CheckpointStorageConfig
 	if err := c.FromModel(&defaultExp.CheckpointStorage); err != nil {
 		panic(err)

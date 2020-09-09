@@ -116,7 +116,7 @@ func (t *tensorboardManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Co
 			return
 		}
 
-		commandReq, err := parseCommandRequest(apiCtx, t.db, &req.commandParams)
+		commandReq, err := parseCommandRequest(apiCtx, t.db, &req.commandParams, &t.taskContainerDefaults)
 		if err != nil {
 			respondBadRequest(ctx, err)
 			return

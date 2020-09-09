@@ -354,7 +354,7 @@ func (m *Master) parseExperiment(body []byte) (*model.Experiment, bool, error) {
 		return nil, false, errors.Wrap(err, "invalid experiment params")
 	}
 
-	config := model.DefaultExperimentConfig()
+	config := model.DefaultExperimentConfig(&m.config.TaskContainerDefaults)
 
 	checkpointStorage, err := m.config.CheckpointStorage.ToModel()
 	if err != nil {

@@ -9,7 +9,7 @@ import (
 )
 
 func TestASHAMaxConcurrentTrials(t *testing.T) {
-	var actual = DefaultExperimentConfig().Searcher
+	var actual = DefaultExperimentConfig(nil).Searcher
 	assert.NilError(t, json.Unmarshal([]byte(`
 {
   "name": "adaptive_asha",
@@ -33,7 +33,7 @@ func TestASHAMaxConcurrentTrials(t *testing.T) {
 }
 
 func TestDefaultSmallerIsBetter(t *testing.T) {
-	var actual1 = DefaultExperimentConfig().Searcher
+	var actual1 = DefaultExperimentConfig(nil).Searcher
 	assert.NilError(t, json.Unmarshal([]byte(`
 {
   "name": "adaptive_simple",
@@ -55,7 +55,7 @@ func TestDefaultSmallerIsBetter(t *testing.T) {
 	}
 	assert.DeepEqual(t, actual1, expected1)
 
-	var actual2 = DefaultExperimentConfig().Searcher
+	var actual2 = DefaultExperimentConfig(nil).Searcher
 	assert.NilError(t, json.Unmarshal([]byte(`
 {
   "name": "adaptive_simple",
@@ -76,7 +76,7 @@ func TestDefaultSmallerIsBetter(t *testing.T) {
 	}
 	assert.DeepEqual(t, actual2, expected2)
 
-	var actual3 = DefaultExperimentConfig().Searcher
+	var actual3 = DefaultExperimentConfig(nil).Searcher
 	assert.NilError(t, json.Unmarshal([]byte(`
 {
   "name": "adaptive_simple",

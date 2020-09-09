@@ -25,13 +25,13 @@ func zeroizeRandomSeedsBeforeCompare(a *ExperimentConfig, b *ExperimentConfig) {
 }
 
 func TestLabelsMap(t *testing.T) {
-	actual := DefaultExperimentConfig()
+	actual := DefaultExperimentConfig(nil)
 	assert.NilError(t, json.Unmarshal([]byte(`{
   "description": "provided",
   "labels": {"l1": true, "l2": true}
 }`), &actual))
 
-	expected := DefaultExperimentConfig()
+	expected := DefaultExperimentConfig(nil)
 	expected.Description = description
 	expected.Labels = map[string]bool{
 		"l1": true, "l2": true,
@@ -41,13 +41,13 @@ func TestLabelsMap(t *testing.T) {
 }
 
 func TestLabelsList(t *testing.T) {
-	actual := DefaultExperimentConfig()
+	actual := DefaultExperimentConfig(nil)
 	assert.NilError(t, json.Unmarshal([]byte(`{
   "description": "provided",
   "labels": ["l1", "l2"]
 }`), &actual))
 
-	expected := DefaultExperimentConfig()
+	expected := DefaultExperimentConfig(nil)
 	expected.Description = description
 	expected.Labels = map[string]bool{
 		"l1": true, "l2": true,
@@ -57,14 +57,14 @@ func TestLabelsList(t *testing.T) {
 }
 
 func TestLabelsJoin(t *testing.T) {
-	actual := DefaultExperimentConfig()
+	actual := DefaultExperimentConfig(nil)
 	actual.Labels = map[string]bool{"l3": true}
 	assert.NilError(t, json.Unmarshal([]byte(`{
   "description": "provided",
   "labels": {"l1": true, "l2": true}
 }`), &actual))
 
-	expected := DefaultExperimentConfig()
+	expected := DefaultExperimentConfig(nil)
 	expected.Description = description
 	expected.Labels = map[string]bool{
 		"l1": true, "l2": true, "l3": true,
@@ -74,7 +74,7 @@ func TestLabelsJoin(t *testing.T) {
 }
 
 func TestRecordsPerEpochMissing(t *testing.T) {
-	conf := DefaultExperimentConfig()
+	conf := DefaultExperimentConfig(nil)
 	assert.NilError(t, json.Unmarshal([]byte(`{
   "searcher": {
     "name": "single",
@@ -103,23 +103,23 @@ func TestDefaultDescription(t *testing.T) {
 }`)
 
 	// Check that user provided description persists.
-	config1 := DefaultExperimentConfig()
+	config1 := DefaultExperimentConfig(nil)
 	assert.NilError(t, json.Unmarshal(json1, &config1))
 	assert.DeepEqual(t, config1.Description, "test")
 
 	// Check that user provided null string persists.
-	config2 := DefaultExperimentConfig()
+	config2 := DefaultExperimentConfig(nil)
 	assert.NilError(t, json.Unmarshal(json2, &config2))
 	assert.DeepEqual(t, config2.Description, "")
 
 	// Check that unprovided description field will get filled.
-	config3 := DefaultExperimentConfig()
+	config3 := DefaultExperimentConfig(nil)
 	assert.NilError(t, json.Unmarshal(json3, &config3))
 	assert.Assert(t, strings.HasPrefix(config3.Description, "Experiment"))
 }
 
 func validGridSearchConfig() ExperimentConfig {
-	config := DefaultExperimentConfig()
+	config := DefaultExperimentConfig(nil)
 
 	// This is unrelated to grid search but must be set to make the default config pass validation.
 	config.CheckpointStorage.SharedFSConfig.HostPath = "/"
@@ -295,7 +295,7 @@ func TestExperiment(t *testing.T) {
 	}
   }
 }`)
-	config1 := DefaultExperimentConfig()
+	config1 := DefaultExperimentConfig(nil)
 	assert.NilError(t, json.Unmarshal(json1, &config1))
 
 	accessKey := "my key"
