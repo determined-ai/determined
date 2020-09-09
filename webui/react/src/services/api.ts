@@ -159,10 +159,6 @@ export const login = async (credentials: Credentials): Promise<DetSwagger.V1Logi
   return response;
 };
 
-// TODO set up a generic error handler for swagger sdk
-// It would be nice to have the input and output types be set automatically
-// One this can be achieved is by directly exposing sApi and expecting the user to
-// use processApiError.
 export const logout = async (): Promise<DetSwagger.V1LogoutResponse> => {
   try {
     const response = await detAuthApi.determinedLogout();
