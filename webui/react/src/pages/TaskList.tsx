@@ -169,7 +169,7 @@ const TaskList: React.FC = () => {
 
       return <div className={css.sourceName}>
         <span>{record.name}</span>
-        <button onClick={() => handleSourceShow(info)}>
+        <button className="ignoreTableRowClick" onClick={() => handleSourceShow(info)}>
           Show {info.sources.length} {info.label} Source{info.plural}
         </button>
       </div>;
