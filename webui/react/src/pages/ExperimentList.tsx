@@ -303,12 +303,13 @@ const ExperimentList: React.FC = () => {
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
-  const handleTableRow = useCallback((record: ExperimentItem) => ({
-    onClick: (event: React.MouseEvent) => {
+  const handleTableRow = useCallback((record: ExperimentItem) => {
+    const handleClick = (event: React.MouseEvent) => {
       if (isAlternativeAction(event)) return;
       handlePath(event, { path: record.url });
-    },
-  }), []);
+    };
+    return { onAuxClick: handleClick, onClick: handleClick };
+  }, []);
 
   return (
     <Page id="experiments" title="Experiments">
