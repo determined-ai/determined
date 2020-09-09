@@ -1,5 +1,6 @@
 import { CancelToken } from 'axios';
 
+import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import { ApiSorter, CreateNotebookParams, CreateTensorboardParams,
@@ -18,7 +19,7 @@ import { decodeExperimentList, encodeExperimentState } from './decoder';
 
 export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
 
-const address = `${window.location.protocol}//${window.location.host}`;
+const address = serverAddress();
 
 export const detApi = {
   Auth: new Api.AuthenticationApi(undefined, address),

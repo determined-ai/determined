@@ -25,7 +25,7 @@ const Link: React.FC<Props> = ({
 }: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
   const rel = windowOpenFeatures.join(' ');
-  const linkPath = noProxy ? serverAddress(path) : path;
+  const linkPath = noProxy ? serverAddress(true, path) : path;
 
   if (props.className) classes.push(props.className);
   if (!props.disabled) classes.push(css.link);

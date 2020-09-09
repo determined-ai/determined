@@ -92,7 +92,7 @@ export const consumeStream = async <T = unknown>(
   onEvent: (event: T) => void,
 ): Promise<void> => {
   try {
-    const response = await fetch(serverAddress(fetchArgs.url), fetchArgs.options);
+    const response = await fetch(serverAddress(true, fetchArgs.url), fetchArgs.options);
     const reader = ndjsonStream(response.body).getReader();
     let result;
     while (!result || !result.done) {
