@@ -1,5 +1,5 @@
 import { PlotData } from 'plotly.js/lib/core';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import MetricChart from 'components/MetricChart';
 import MetricSelectFilter from 'components/MetricSelectFilter';
