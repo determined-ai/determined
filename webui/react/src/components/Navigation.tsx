@@ -22,6 +22,7 @@ interface ItemProps extends LinkProps {
   badge?: number;
   icon: string;
   label: string;
+  subLabel?: string;
   status?: string;
 }
 
@@ -39,13 +40,17 @@ const NavigationItem: React.FC<ItemProps> = ({ path, status, ...props }: ItemPro
   const link = (
     <Link className={classes.join(' ')} path={path} {...props}>
       <Icon name={props.icon} size="large" />
-      <div className={css.label}>{props.label}</div>
+      <div className={css.label}>{props.label}
+        {props.subLabel && <sub> {props.subLabel}</sub>}
+      </div>
       {status && <div className={css.status}>{status}</div>}
     </Link>
   );
 
+  let title = props.label;
+  if (props.subLabel) title += ` ${props.subLabel}`;
   return ui.chromeCollapsed ? (
-    <Tooltip placement="right" title={props.label}><div>{link}</div></Tooltip>
+    <Tooltip placement="right" title={title}><div>{link}</div></Tooltip>
   ) : link;
 };
 
@@ -167,7 +172,13 @@ const Navigation: React.FC = () => {
           <section className={css.bottom}>
             <NavigationItem icon="logs" label="Master Logs" path="/det/logs" popout />
             <NavigationItem icon="docs" label="Docs" noProxy path="/docs" popout />
-            <NavigationItem icon="cloud" label="API (Beta)" noProxy path="/swagger-ui" popout />
+            <NavigationItem
+              icon="cloud"
+              label="API"
+              noProxy
+              path="/swagger-ui"
+              popout
+              subLabel="(Beta)" />
             <NavigationItem
               icon={isCollapsed ? 'expand' : 'collapse'}
               label={isCollapsed ? 'Expand' : 'Collapse'}
