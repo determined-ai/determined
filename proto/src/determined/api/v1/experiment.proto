@@ -60,7 +60,7 @@ message GetExperimentsRequest {
     int32 limit = 4;
     // Limit experiments to those that match the description.
     string description = 5;
-    // Limit experiments to those that match one the provided labels.
+    // Limit experiments to those that match the provided labels.
     repeated string labels = 6;
     // Limit experiments to those that are archived.
     google.protobuf.BoolValue archived = 7;

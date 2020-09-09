@@ -92,23 +92,33 @@ func (a *apiServer) GetExperiments(
 		if len(req.Users) != 0 && !found {
 			return false
 		}
-		found = false
-		for _, reqLabel := range req.Labels {
-			for _, expLabel := range v.Labels {
-				fmt.Printf("checking %s against %s \n", reqLabel, expLabel)
-				hasLabel := strings.Contains(strings.ToLower(expLabel), strings.ToLower(reqLabel))
-				if hasLabel {
-					found = true
+
+		if len(req.Labels) != 0 {
+			found = true
+
+			if len(v.Labels) == 0 {
+				return false
+			}
+
+			for _, reqLabel := range req.Labels {
+				hasAMatch := false
+				for _, expLabel := range v.Labels {
+					if hasLabel := strings.Contains(strings.ToLower(expLabel), strings.ToLower(reqLabel)); hasLabel {
+						hasAMatch = true
+						break
+					}
+				}
+				if !hasAMatch {
+					found = false
 					break
 				}
 			}
-			if found {
-				break
+
+			if !found {
+				return false
 			}
 		}
-		if len(req.Labels) != 0 && !found {
-			return false
-		}
+
 		return strings.Contains(strings.ToLower(v.Description), strings.ToLower(req.Description))
 	})
 	a.sort(resp.Experiments, req.OrderBy, req.SortBy, apiv1.GetExperimentsRequest_SORT_BY_ID)
