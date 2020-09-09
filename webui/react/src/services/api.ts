@@ -71,6 +71,7 @@ export const getExperimentList = async (
       pagination.offset,
       pagination.limit,
       search,
+      (filters.labels && filters.labels.length === 0) ? undefined : filters.labels,
       filters.showArchived ? undefined : false,
       filters.states.includes(ALL_VALUE) ? undefined : filters.states.map(state => {
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any */

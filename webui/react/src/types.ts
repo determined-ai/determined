@@ -375,6 +375,7 @@ export type TaskType = CommandType | 'Experiment';
 
 export interface ExperimentFilters {
   showArchived: boolean;
+  labels?: string[];
   states: string[];
   username?: string;
 }
