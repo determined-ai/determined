@@ -1,0 +1,7 @@
+:orphan:
+
+**Improvements**
+
+- Added support for configuring the default task images, docker pull policy and docker registry
+  credentials via the :ref:`master-configuration` and :ref:`helm-config`. Please note that
+  individual task configurations will continue to overwrite these defaults.
