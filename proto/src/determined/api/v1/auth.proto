@@ -4,9 +4,15 @@ package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "determined/user/v1/user.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // Login the user.
 message LoginRequest {
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+        json_schema: {
+            required: ["username", "password"]
+        }
+    };
     // The username of the user.
     string username = 1;
     // The password of the user.
