@@ -30,13 +30,7 @@
   button:focus { box-shadow: var(--theme-outline); }
 }
 .sourceLinks {
-  display: flex;
-  flex-direction: column;
-
   label {
     font-size: var(--theme-sizes-font-small);
-  }
-  a {
-    margin-left: var(--theme-sizes-layout-small);
   }
 }

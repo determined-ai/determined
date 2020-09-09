@@ -3,6 +3,7 @@ import { Button, Input, Modal, Table } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import Grid from 'components/Grid';
 import Icon from 'components/Icon';
 import Link from 'components/Link';
 import Page from 'components/Page';
@@ -24,6 +25,7 @@ import {
   getCommands, getNotebooks, getShells, getTensorboards, killCommand,
 } from 'services/api';
 import { ApiSorter, EmptyParams } from 'services/types';
+import { ShirtSize } from 'themes';
 import { ALL_VALUE, Command, CommandTask, CommandType, TaskFilters } from 'types';
 import { getPath, numericSorter } from 'utils/data';
 import { openBlank } from 'utils/routes';
@@ -325,9 +327,11 @@ const TaskList: React.FC = () => {
         visible={!!sourcesModal}
         onCancel={handleSourceDismiss}>
         <div className={css.sourceLinks}>
-          {sourcesModal?.sources.map(source => <Link
-            key={source}
-            path={`${sourcesModal?.path}/${source}`}>{sourcesModal?.label} {source}</Link>)}
+          <Grid gap={ShirtSize.medium} minItemWidth={12}>
+            {sourcesModal?.sources.map(source => <Link
+              key={source}
+              path={`${sourcesModal?.path}/${source}`}>{sourcesModal?.label} {source}</Link>)}
+          </Grid>
         </div>
       </Modal>
     </Page>
