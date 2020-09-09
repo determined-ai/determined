@@ -26,7 +26,7 @@
     font-size: var(--theme-sizes-font-small);
     outline: 0;
   }
-  button:hover { border-color: var(--theme-colors-core-action); }
+  button:hover { border-color: var(--theme-colors-action-normal); }
   button:focus { box-shadow: var(--theme-outline); }
 }
 .sourceLinks {
