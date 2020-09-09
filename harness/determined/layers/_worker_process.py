@@ -46,25 +46,20 @@ class WorkerProcessContext:
 
 class SubprocessReceiver(workload.Source):
     """
-    SubprocessReceiver is a lightweight wrapper around the ZMQBroadcastClient.  ZMQ details are
+    SubprocessReceiver is a lightweight wrapper around the ZMQBroadcastClient. ZMQ details are
     handled automatically, while any received workloads are passed along blindly, resulting in a
-    newtork-transparent WorkloadIterator.
+    network-transparent WorkloadIterator.
     """
 
     def __init__(self, broadcast_client: ipc.ZMQBroadcastClient):
         self._broadcast_client = broadcast_client
 
+        # Signal to the SubprocessLauncher that the subprocess has started and
+        # send the process id so that the SubprocessLauncher can perform health
+        # checks on it.
         self._broadcast_client.send(ipc.ConnectedMessage(process_id=os.getpid()))
-        response = self._broadcast_client.recv()
-        check.is_instance(
-            response,
-            ipc.ConnectedMessageAck,
-            f"Did not receive ConnectedMessageAck from worker. Got: {response}.",
-        )
 
     def __iter__(self) -> workload.Stream:
-        # Signal to the CoordinatingTrialController that we are ready for workloads.
-        self._broadcast_client.send(ipc.ReadyMessage())
         while True:
             obj = self._broadcast_client.recv()
 
@@ -261,21 +256,6 @@ class SubprocessLauncher:
             )
             response = cast(ipc.ConnectedMessage, response)
             self._worker_process_ids.append(response.process_id)
-
-        # Send an Ack so that worker process is able to send ReadyMessage once it is ready.
-        self.broadcast_server.broadcast(ipc.ConnectedMessageAck())
-
-        # Wait for a ReadyMessage from every worker.
-        responses, exception_received = self.broadcast_server.gather_with_polling(
-            self._health_check
-        )
-
-        for response in responses:
-            check.is_instance(
-                response,
-                ipc.ReadyMessage,
-                f"Did not receive ReadyMessage from worker. Got: {response}",
-            )
 
     def run(self) -> None:
         """
