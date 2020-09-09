@@ -11,33 +11,32 @@ interface PollingOptions {
   triggers?: unknown[];
 }
 
-const usePolling =
-  (pollingFn: PollingFn, { delay }: PollingOptions = {}): (() => void) => {
-    const timerId = useRef<NodeJS.Timeout>();
-    const countId = useRef(0);
+const usePolling = (pollingFn: PollingFn, { delay }: PollingOptions = {}): (() => void) => {
+  const timerId = useRef<NodeJS.Timeout>();
+  const countId = useRef(0);
 
-    const pollingRoutine = useCallback(async (): Promise<void> => {
-      countId.current++;
-      isAsyncFunction(pollingFn) ? await pollingFn() : pollingFn();
-      timerId.current = setTimeout(() => {
-        pollingRoutine();
-      }, delay || DEFAULT_DELAY);
-    }, [ pollingFn, delay ]);
-
-    const stopPolling = useCallback((): void => {
-      if (timerId.current) {
-        clearTimeout(timerId.current);
-        timerId.current = undefined;
-      }
-    }, []);
-
-    useEffect(() => {
-      stopPolling();
+  const pollingRoutine = useCallback(async (): Promise<void> => {
+    countId.current++;
+    isAsyncFunction(pollingFn) ? await pollingFn() : pollingFn();
+    timerId.current = setTimeout(() => {
       pollingRoutine();
-      return stopPolling;
-    }, [ pollingRoutine, stopPolling ]);
+    }, delay || DEFAULT_DELAY);
+  }, [ pollingFn, delay ]);
 
+  const stopPolling = useCallback((): void => {
+    if (timerId.current) {
+      clearTimeout(timerId.current);
+      timerId.current = undefined;
+    }
+  }, []);
+
+  useEffect(() => {
+    stopPolling();
+    pollingRoutine();
     return stopPolling;
-  };
+  }, [ delay, pollingRoutine, stopPolling ]);
+
+  return stopPolling;
+};
 
 export default usePolling;
