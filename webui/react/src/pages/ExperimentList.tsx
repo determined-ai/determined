@@ -293,6 +293,7 @@ const ExperimentList: React.FC = () => {
     storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
     setSorter({ descend: order === 'descend', key: columnKey as V1GetExperimentsRequestSortBy });
 
+    storage.set(STORAGE_LIMIT_KEY, tablePagination.pageSize);
     setPagination(prev => ({
       ...prev,
       limit: tablePagination.pageSize,
