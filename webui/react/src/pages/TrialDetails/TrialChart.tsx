@@ -17,53 +17,61 @@ const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }
     return metricName.name === validationMetric && metricName.type === MetricType.Validation;
   });
   const fallbackMetric = metricNames && metricNames.length !== 0 ? metricNames[0] : undefined;
-  const [ metric, setMetric ] = useState<MetricName | undefined>(defaultMetric || fallbackMetric);
+  const initMetric = defaultMetric || fallbackMetric;
+  const [ metrics, setMetrics ] = useState<MetricName[]>(initMetric ? [ initMetric ] : []);
 
   const data: Partial<PlotData>[] = useMemo(() => {
-    const textData: string[] = [];
-    const xData: number[] = [];
-    const yData: number[] = [];
+    const dataMap: Record<string, Partial<PlotData>> = {};
 
     (props.steps || []).forEach(step => {
-      if (!metric) return;
+      metrics.forEach(metric => {
+        if (!metric) return;
 
-      const trainingSource = step.avgMetrics || {};
-      const validationSource = step.validation?.metrics?.validationMetrics || {};
-      const x = step.numBatches + step.priorBatchesProcessed;
-      const y = metric.type === MetricType.Validation ?
-        validationSource[metric.name] : trainingSource[metric.name];
+        const trainingSource = step.avgMetrics || {};
+        const validationSource = step.validation?.metrics?.validationMetrics || {};
+        const x = step.numBatches + step.priorBatchesProcessed;
+        const y = metric.type === MetricType.Validation ?
+          validationSource[metric.name] : trainingSource[metric.name];
 
-      const text = [
-        `Batches: ${x}`,
-        `Metric Value: ${y}`,
-      ].join('<br>');
+        const text = [
+          `Batches: ${x}`,
+          `Metric Value: ${y}`,
+        ].join('<br>');
 
-      if (text && x && y) {
-        textData.push(text);
-        xData.push(x);
-        yData.push(y);
-      }
+        if (text && x && y) {
+          if (!dataMap[metric.name]) {
+            dataMap[metric.name] = {
+              hovertemplate: '%{text}<extra></extra>',
+              mode: 'lines+markers',
+              name: metric.name,
+              text: [],
+              type: 'scatter',
+              x: [],
+              y: [],
+            };
+          }
+          (dataMap[metric.name].text as string[]).push(text);
+          (dataMap[metric.name].x as number[]).push(x);
+          (dataMap[metric.name].y as number[]).push(y);
+        }
+      });
     });
 
-    return [ {
-      hovermode: 'y unified',
-      hovertemplate: '%{text}<extra></extra>',
-      mode: 'lines+markers',
-      text: textData,
-      type: 'scatter',
-      x: xData,
-      y: yData,
-    } ];
-  }, [ metric, props.steps ]);
+    return Object.values(dataMap).reduce((acc, value) => {
+      acc.push(value);
+      return acc;
+    }, [] as Partial<PlotData>[]);
+  }, [ metrics, props.steps ]);
 
-  const handleMetricChange = useCallback((value: MetricName) => setMetric(value), []);
+  const handleMetricChange = useCallback((value: MetricName[]) => setMetrics(value), []);
 
   return <MetricChart
     data={data}
     id={props.id}
     options={<MetricSelectFilter
       metricNames={metricNames}
-      value={metric}
+      multiple
+      value={metrics}
       onChange={handleMetricChange} />}
     title="Metrics"
     xLabel="Batches"
