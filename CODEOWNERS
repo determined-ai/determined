@@ -1,0 +1,75 @@
+# Scheduler
+/master/internal/scheduler/    @aaron276h @rb-determined-ai
+
+# Provisioner
+/master/internal/provisioner/  @shiyuann
+
+# Model registry
+/master/pkg/model              @eecsliu @katport
+/proto/pkg/modelv1             @eecsliu @katport
+
+# WebUI
+/webui/                        @hkang1 @hamidzr
+
+# Experiment/trial actors
+/master/internal/trial.go      @rb-determined-ai @dzhu @aaron276h
+/master/internal/experiment.go @rb-determined-ai @dzhu @aaron276h
+
+# Actor infrastructure
+/master/pkg/actor              @dzhu
+
+# HP Search
+/master/pkg/searcher/          @stoksc @liamcli
+
+# Checkpoint export
+# 
+
+# Restart
+/master/internal/experiment.go @rb-determined-ai @stoksc
+
+# CLI
+/cli/                          @dzhu
+
+# API
+/proto/                        @hamidzr
+/master/internal/api           @hamidzr
+/master/internal/grpc          @hamidzr
+/master/internal/api*.go       @hamidzr
+
+# Kubernetes
+/master/internal/kubernetes/   @aaron276h @dzhu @rb-determined-ai
+
+# Agent, container
+/agent/                        @stoksc
+
+# Harness, container
+/harness/                      @rb-determined-ai @aaron276h @shiyuann
+
+# D-train
+/harness/determined/horovod.py                @aaron276h @armandmcqueen
+/harness/determined/ipc.py                    @aaron276h @armandmcqueen
+/harness/determined/layers/_worker_process.py @aaron276h @armandmcqueen
+/harness/determined/_trial_controller.py      @aaron276h @armandmcqueen
+/harness/determined/exec/worker_process.py    @aaron276h @armandmcqueen
+
+# Tensorboard
+/master/internal/command/tensorboard_manager.go  @eecsliu
+
+# Notebooks
+/master/internal/command/notebook_manager.go     @naren-determined @armandmcqueen
+
+# Commands/shell
+/master/internal/command/command_manager.go      @dzhu
+/master/internal/command/shell_manager.go        @dzhu
+
+# CI infrastructure
+/.circleci/                    @aaron276h @rb-determined-ai @dzhu
+
+# Build/packaging
+packaging/                     @dzhu @rb-determined-ai
+
+# Documentation
+/docs/                         @neilconway
+
+# Deployment
+/deploy/                       @davidhershey @seanr15
