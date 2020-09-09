@@ -1,0 +1,5 @@
+:orphan:
+
+**NEW FEATURES**
+
+- Add middle mouse button click detection for table row clicks to open new tab/page.
