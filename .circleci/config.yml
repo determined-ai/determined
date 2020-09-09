@@ -882,6 +882,7 @@ jobs:
       - run: make -C deploy check
       - run: make -C e2e_tests check
       - run: make -C examples check
+      - run: make -C tools check
 
   test-unit-harness:
     docker:

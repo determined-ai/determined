@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 from tests import command as cmd
@@ -8,7 +10,7 @@ from tests import command as cmd
 def test_basic_notebook_start_and_kill() -> None:
     with cmd.interactive_command("notebook", "start") as notebook:
         for line in notebook.stdout:
-            if "Jupyter Notebook is running" in line:
+            if re.search("Jupyter Notebook .*is running at", line) is not None:
                 return
 
     raise AssertionError()
