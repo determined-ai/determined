@@ -36,7 +36,7 @@ describe('Sign in/out', () => {
     cy.checkLoggedOut();
   });
 
-  it('should be able to log in', () => {
+  it.only('should be able to log in', () => {
     const username = 'determined';
 
     cy.logout();
@@ -46,11 +46,16 @@ describe('Sign in/out', () => {
       .type(username, { delay: 100 })
       .should('have.value', username);
 
-    cy.server();
-    cy.route('POST', /\/login.*/).as('loginRequest');
-    cy.get('button[type="submit"]').click();
-    cy.wait('@loginRequest');
-    cy.checkLoggedIn(username);
+    cy.get('button[type="submit"]').contains('Sign In').click();
+
+    /*
+     * Cypress is unable to capture /api/v1/auth/login POST requests properly
+     * via `cy.route`, instead having to rely on a time-based wait.
+     * https://github.com/cypress-io/cypress/issues/2188
+     */
+    /* eslint-disable-next-line cypress/no-unnecessary-waiting */
+    cy.wait(500);
+    cy.checkLoggedIn(username, false);
   });
 
   it('should redirect away from login when visiting login while logged in', () => {

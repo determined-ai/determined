@@ -3,8 +3,8 @@
 // https://on.cypress.io/custom-commands
 // ***********************************************
 
-const DEFAULT_TEST_USERNAME = 'user-w-pw';
-const DEFAULT_TEST_PASSWORD = 'special-pw';
+export const DEFAULT_TEST_USERNAME = 'user-w-pw';
+export const DEFAULT_TEST_PASSWORD = 'special-pw';
 
 const sha512 = require('js-sha512').sha512;
 
@@ -23,12 +23,12 @@ Cypress.Commands.add('dataCy', (value) => {
   return cy.get(`[data-test=${value}]`);
 });
 
-Cypress.Commands.add('checkLoggedIn', username => {
+Cypress.Commands.add('checkLoggedIn', (username = null, visit = true) => {
   // Check for the presence/absence of the icons for the user dropdown and
   // cluster page link in the top bar, which should be present if and only if
   // the user is logged in.
   username = username || DEFAULT_TEST_USERNAME;
-  cy.visit('/');
+  if (visit) cy.visit('/');
   cy.get('#avatar').should('exist');
   cy.get('#avatar').should('have.text', username.charAt(0).toUpperCase());
 });
@@ -51,7 +51,7 @@ Cypress.Commands.add('login', credentials => {
     password: saltAndHashPassword(DEFAULT_TEST_PASSWORD),
     username: DEFAULT_TEST_USERNAME,
   };
-  cy.request('POST', '/login', credentials)
+  cy.request('POST', '/api/v1/auth/login', credentials)
     .then(response => {
       expect(response.body).to.have.property('token');
       return cy.setCookie('auth', response.body.token);
@@ -66,7 +66,7 @@ Cypress.Commands.add('logout', () => {
   cy.request({
     failOnStatusCode: false, // make this command idempotent
     method: 'POST',
-    url: '/logout',
+    url: '/api/v1/auth/logout',
   })
     .then(() => {
       return cy.clearCookie('auth');
