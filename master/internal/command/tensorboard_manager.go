@@ -303,7 +303,7 @@ func (t *tensorboardManager) newTensorBoard(
 		"TensorBoard (%s)",
 		petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),
 	)
-	config.Entrypoint = []string{tensorboardEntrypointFile, "--logdir", strings.Join(logDirs, ",")}
+	config.Entrypoint = append(entrypoint, config.Entrypoint...)
 	config.Resources.Slots = tensorboardResourcesSlots
 
 	cpuEnvVars := append(config.Environment.EnvironmentVariables.CPU, envVars...)
