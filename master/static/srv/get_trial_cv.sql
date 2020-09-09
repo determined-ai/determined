@@ -51,11 +51,14 @@ best_validation AS (
   ORDER BY v.searcher_metric_value DESC
   LIMIT 1
 )
-SELECT bv.searcher_metric AS bv_sm,
-  lv.searcher_metric AS lv_sm,
-  bc.id AS bc_id
-FROM trials t
-  INNER JOIN best_validation bv ON bv.trial_id = t.id
-  INNER JOIN latest_validation lv ON lv.trial_id = t.id
-  INNER JOIN best_checkpoint bc ON bc.trial_id = t.id -- WHERE t.id = 20
-LIMIT 1
+SELECT row_to_json(sq1) AS results
+FROM (
+    SELECT bv.searcher_metric AS bv_sm,
+      lv.searcher_metric AS lv_sm,
+      bc.id AS bc_id
+    FROM trials t
+      INNER JOIN best_validation bv ON bv.trial_id = t.id
+      INNER JOIN latest_validation lv ON lv.trial_id = t.id
+      INNER JOIN best_checkpoint bc ON bc.trial_id = t.id
+    LIMIT 1
+  ) as sq1
