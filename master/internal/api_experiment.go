@@ -23,6 +23,31 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
 
+func isInList(srcList []string, item string) bool {
+	item = strings.ToLower(item)
+	for _, src := range srcList {
+		if matchesSrc := strings.Contains(strings.ToLower(src), item); matchesSrc {
+			return true
+		}
+	}
+	return false
+}
+
+// matchesList checks whether srcList contains all strings provided in matchList.
+func matchesList(srcList []string, matchList []string) bool {
+	if len(matchList) != 0 && len(srcList) == 0 {
+		return false
+	}
+
+	for _, match := range matchList {
+		if !isInList(srcList, match) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (a *apiServer) checkExperimentExists(id int) error {
 	ok, err := a.m.db.CheckExperimentExists(id)
 	switch {
@@ -93,30 +118,8 @@ func (a *apiServer) GetExperiments(
 			return false
 		}
 
-		if len(req.Labels) != 0 {
-			found = true
-
-			if len(v.Labels) == 0 {
-				return false
-			}
-
-			for _, reqLabel := range req.Labels {
-				hasAMatch := false
-				for _, expLabel := range v.Labels {
-					if hasLabel := strings.Contains(strings.ToLower(expLabel), strings.ToLower(reqLabel)); hasLabel {
-						hasAMatch = true
-						break
-					}
-				}
-				if !hasAMatch {
-					found = false
-					break
-				}
-			}
-
-			if !found {
-				return false
-			}
+		if !matchesList(v.Labels, req.Labels) {
+			return false
 		}
 
 		return strings.Contains(strings.ToLower(v.Description), strings.ToLower(req.Description))
