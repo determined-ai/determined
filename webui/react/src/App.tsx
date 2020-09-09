@@ -19,7 +19,7 @@ import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
 import useRouteTracker from 'hooks/useRouteTracker';
 import useTheme from 'hooks/useTheme';
-import { appRoutes } from 'routes/routes';
+import appRoutes from 'routes';
 import { parseUrl } from 'routes/utils';
 import { getInfo } from 'services/api';
 import { EmptyParams } from 'services/types';

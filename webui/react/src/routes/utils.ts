@@ -5,11 +5,12 @@ import history from 'routes/history';
 import { Command, CommandType } from 'types';
 import { clone } from 'utils/data';
 
-import { appRoutes } from './routes';
+import routes from './routes';
 
-export const serverAddress = (path: string): string => {
-  const { host, protocol } = window.location;
-  const address = process.env.IS_DEV ? 'http://localhost:8080' : `${protocol}//${host}`;
+export const serverAddress = (avoidDevProxy = false, path = ''): string => {
+  const address = avoidDevProxy && process.env.IS_DEV
+    ? 'http://localhost:8080'
+    : `${window.location.protocol}//${window.location.host}`;
   return address + path;
 };
 
@@ -45,7 +46,7 @@ export const waitPageUrl = (command: Partial<Command>): string | undefined => {
   if (!eventUrl || !proxyUrl) return;
   const event = encodeURIComponent(eventUrl);
   const jump = encodeURIComponent(proxyUrl);
-  return serverAddress(`/wait?event=${event}&jump=${jump}`);
+  return serverAddress(true, `/wait?event=${event}&jump=${jump}`);
 };
 
 export const windowOpenFeatures = [ 'noopener', 'noreferrer' ];
@@ -97,7 +98,7 @@ const isReactRoute = (url: string): boolean => {
 
   // Check to see if the path matches any of the defined app routes.
   const pathname = parseUrl(url).pathname;
-  return !!appRoutes
+  return !!routes
     .filter(route => route.path !== '*')
     .find(route => {
       return route.exact ? pathname === route.path : !!pathToRegexp(route.path).exec(pathname);
