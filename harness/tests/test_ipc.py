@@ -84,7 +84,7 @@ class BroadcastClientSubproc(Subproc):
     def main(self) -> None:
         with ipc.ZMQBroadcastClient(self._pub_url, self._pull_url) as broadcast_client:
             # Start the server-client communication test.
-            broadcast_client.send(ipc.ReadyMessage())
+            broadcast_client.send(ipc.ConnectedMessage(process_id=0))
             for exp in self._exp_msgs:
                 msg = broadcast_client.recv()
                 assert msg == exp
@@ -111,7 +111,7 @@ def test_broadcast_server_client() -> None:
                     assert subproc.is_alive()
 
             gathered, _ = broadcast_server.gather_with_polling(health_check)
-            assert all(isinstance(g, ipc.ReadyMessage) for g in gathered)
+            assert all(isinstance(g, ipc.ConnectedMessage) for g in gathered)
 
             for msg in msgs:
                 broadcast_server.broadcast(msg)

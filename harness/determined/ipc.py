@@ -32,21 +32,13 @@ class MetricsInfo:
 
 class ConnectedMessage:
     """
-    ConnectedMessage is sent by a ZMQBroadcastClient to a ZMQBroadcastServer as the very first
-    message. The ZMQBroadcastServer must gather one ConnectedMessage from each client before it is
-    safe to broadcast.
+    ConnectedMessage is sent by a SubprocessReceiver to the SubprocessLauncher when it is starts
+    and contains the SubprocessReceiver's process id so that the SubprocessLauncher can
+    perform health check on it.
     """
 
-    pass
-
-
-class ReadyMessage:
-    """
-    ReadyMessage is sent by a SubprocessReceiver to the SubprocessLauncher when it is ready to
-    start receiving workloads.
-    """
-
-    pass
+    def __init__(self, process_id: int) -> None:
+        self.process_id = process_id
 
 
 class _SerialMessage:

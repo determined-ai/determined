@@ -6,6 +6,8 @@ import subprocess
 import time
 from typing import Any, Dict, List, Optional, Tuple, cast
 
+import psutil
+
 import determined as det
 from determined import constants, horovod, ipc, workload
 from determined_common import check
@@ -44,17 +46,20 @@ class WorkerProcessContext:
 
 class SubprocessReceiver(workload.Source):
     """
-    SubprocessReceiver is a lightweight wrapper around the ZMQBroadcastClient.  ZMQ details are
+    SubprocessReceiver is a lightweight wrapper around the ZMQBroadcastClient. ZMQ details are
     handled automatically, while any received workloads are passed along blindly, resulting in a
-    newtork-transparent WorkloadIterator.
+    network-transparent WorkloadIterator.
     """
 
     def __init__(self, broadcast_client: ipc.ZMQBroadcastClient):
         self._broadcast_client = broadcast_client
 
+        # Signal to the SubprocessLauncher that the subprocess has started and
+        # send the process id so that the SubprocessLauncher can perform health
+        # checks on it.
+        self._broadcast_client.send(ipc.ConnectedMessage(process_id=os.getpid()))
+
     def __iter__(self) -> workload.Stream:
-        # Signal to the CoordinatingTrialController that we are ready for workloads.
-        self._broadcast_client.send(ipc.ReadyMessage())
         while True:
             obj = self._broadcast_client.recv()
 
@@ -83,6 +88,10 @@ class SubprocessLauncher:
         self.rendezvous_info = rendezvous_info
         self.hvd_config = hvd_config
         self._python_subprocess_entrypoint = python_subprocess_entrypoint
+
+        # The process ids for the workers that are launched by Horovod. These are different
+        # from the main horovod process and sshd processes.
+        self._worker_process_ids = []  # type: List[int]
 
         self.num_gpus = len(self.env.container_gpus)
         self.debug = self.env.experiment_config.debug_enabled()
@@ -231,7 +240,7 @@ class SubprocessLauncher:
         return subprocess.Popen(python_cmd)
 
     def _do_startup_message_sequence(self) -> None:
-        # Wait for a ReadyMessage from every worker.
+        # Wait for a ConnectedMessage from every worker.
         responses, exception_received = self.broadcast_server.gather_with_polling(
             self._health_check
         )
@@ -242,9 +251,11 @@ class SubprocessLauncher:
         for response in responses:
             check.is_instance(
                 response,
-                ipc.ReadyMessage,
-                f"Did not receive ReadyMessage from worker. Got: {response}",
+                ipc.ConnectedMessage,
+                f"Did not receive ConnectedMessage from worker. Got: {response}",
             )
+            response = cast(ipc.ConnectedMessage, response)
+            self._worker_process_ids.append(response.process_id)
 
     def run(self) -> None:
         """
@@ -273,6 +284,10 @@ class SubprocessLauncher:
 
         if self._subproc.poll() is not None:
             raise det.errors.WorkerError("Training process died.")
+
+        for subprocess_id in self._worker_process_ids:
+            if not psutil.pid_exists(subprocess_id):
+                raise det.errors.WorkerError("Training process died.")
 
     def _send_recv_workload(self, wkld: workload.Workload, args: List[Any]) -> workload.Response:
         # Broadcast every workload to every worker on this machine.
