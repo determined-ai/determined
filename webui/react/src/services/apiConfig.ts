@@ -22,7 +22,7 @@ import {
 
 /* Helpers */
 
-const saltAndHashPassword = (password?: string): string => {
+export const saltAndHashPassword = (password?: string): string => {
   if (!password) return '';
   const passwordSalt = 'GubPEmmotfiK9TMD6Zdw';
   return sha512(passwordSalt + password);
