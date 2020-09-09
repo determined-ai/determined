@@ -64,6 +64,19 @@ data:
       {{- if .Values.taskContainerDefaults.gpuPodSpec }}
       gpu_pod_spec: {{ .Values.taskContainerDefaults.gpuPodSpec | toJson }}
       {{- end }}
+      {{- if and .Values.taskContainerDefaults.cpuImage .Values.taskContainerDefaults.gpuImage }}
+      image:
+         cpu_image: {{ .Values.taskContainerDefaults.cpuImage | quote }}
+         gpu_iamge: {{ .Values.taskContainerDefaults.gpuImage | quote }}
+      {{- else }}
+      {{- if or .Values.taskContainerDefaults.cpuImage .Values.taskContainerDefaults.gpuImage }}
+        {{ required "A valid .Values.taskContainerDefaults.cpuImage entry is required if setting .Values.taskContainerDefaults.gpuImage!" .Values.taskContainerDefaults.cpuImage }}
+        {{ required "A valid .Values.taskContainerDefaults.gpuImage entry is required if setting .Values.taskContainerDefaults.cpuImage!" .Values.taskContainerDefaults.gpuImage }}
+      {{- end }}
+      {{- end }}
+      {{- if .Values.taskContainerDefaults.forcePullImage }}
+      force_pull_image: {{ .Values.taskContainerDefaults.forcePullImage }}
+      {{- end }}
     {{ end }}
 
     {{- if .Values.telemetry }}
