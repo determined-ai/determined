@@ -483,14 +483,21 @@ commands:
       det-version:
         type: string
     steps:
-      - run: det-deploy local cluster-up --no-gpu --delete-db --det-version <<parameters.det-version>>
+      - run: |
+          export DET_VERSION=<<parameters.det-version>>
+          export MASTER_HOST=$(ip route | grep docker0 | sed "s/^.*src \(.*\) linkdown.*$/\1/g")
+          docker-compose -f .circleci/compose/e2e/docker-compose.yaml up -d
+      - wait-for-master:
+          host: localhost
 
   dump-local-cluster-logs:
     steps:
       - run:
-          name: Dump det-deploy logs
+          name: Dump docker-compose logs
           when: always
-          command: det-deploy local logs --no-follow
+          command:
+            docker-compose -f .circleci/compose/e2e/docker-compose.yaml logs
+
 
   run-e2e-webui-tests:
     steps:
@@ -499,7 +506,7 @@ commands:
           mkdir -p webui/tests/results
           docker run \
             --name e2e_cypress \
-            --network=determined_default \
+            --network=e2e_default \
             --mount type=bind,source=$(pwd)/webui,target=/webui \
             -w /webui/tests \
             --env DET_MASTER=determined-master:8080 \
@@ -767,7 +774,6 @@ jobs:
       - setup-python-venv:
           determined-common: true
           determined-cli: true
-          determined-deploy: true
           extra-requirements-file: "webui/tests/requirements.txt"
           executor: ubuntu-1604:202004-01
       - setup-local-cluster:
