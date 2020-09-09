@@ -145,10 +145,14 @@ export const defaultRowClassName = (clickable = true): string=> {
   return clickable ? 'clickable' : '';
 };
 
-export const getPaginationConfig = (count: number): Partial<TablePaginationConfig> => {
+export const getPaginationConfig = (
+  count: number,
+  pageSize?: number,
+): Partial<TablePaginationConfig> => {
   return {
     defaultPageSize: MINIMUM_PAGE_SIZE,
     hideOnSinglePage: count < MINIMUM_PAGE_SIZE,
+    pageSize,
     showSizeChanger: true,
   };
 };
