@@ -26,6 +26,6 @@ message Trial {
   int32 total_batches_processed = 7;
 
   float best_validation = 8;
-  float latest_validaiton = 9;
+  float latest_validation = 9;
   int32 best_checkpoint = 10;
 }

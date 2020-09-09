@@ -54,9 +54,9 @@ best_validation AS (
   ORDER BY v.searcher_metric_value DESC
   LIMIT 1
 )
-SELECT bv.searcher_metric AS bv_sm,
-  lv.searcher_metric AS lv_sm,
-  bc.id AS bc_id
+SELECT bv.searcher_metric AS best_validation,
+  lv.searcher_metric AS latest_validation,
+  bc.id AS best_checkpoint
 FROM trials t
   INNER JOIN best_validation bv ON bv.trial_id = t.id
   INNER JOIN latest_validation lv ON lv.trial_id = t.id
