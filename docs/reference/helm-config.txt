@@ -152,11 +152,26 @@ Helm Chart </helm/determined-helm-chart.tgz>`.
       use during distributed training. A valid port range is in the
       format of ``MIN:MAX``.
 
+   -  ``forcePullImage``: Defines the default policy for forcibly pulling images from
+      the docker registry and bypassing the docker cache. If a pull policy is specified
+      in the :ref:`experiment config <exp-environment-image>` this default  is overriden.
+      Defaults to ``false``.
+
    -  ``cpuPodSpec``: Sets the default pod spec for all non-gpu tasks.
       See :ref:`custom-pod-specs` for details.
 
    -  ``gpuPodSpec``: Sets the default pod spec for all ngpu tasks. See
       :ref:`custom-pod-specs` for details.
+
+   -  ``cpuImage``: Sets the default docker image for all non-gpu tasks. If a docker image
+      is specified in the :ref:`experiment config <exp-environment-image>`
+      this default is overriden. Default to:
+      ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.5.0``.
+
+  -   ``gpuImage``: Sets the default docker image for all gpu tasks. If a docker image
+      is specified in the :ref:`experiment config <exp-environment-image>`
+      this default is overriden. Default to:
+      ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.5.0``.
 
 -  ``enterpriseEdition``: Specifies whether to use Determined enterprise
    edition.
