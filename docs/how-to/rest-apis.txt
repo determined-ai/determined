@@ -20,14 +20,15 @@ it easy for back end implementation and client side consumption.
 
 
 
-Reach the Swagger UI for your Determined installation by click API icon from the
+Reach the Swagger UI for your Determined installation by clicking the API icon from the
 Determined WebUI or by visiting the path `/swagger-ui` on your Determined cluster.
 
 .. image:: /assets/images/swagger-ui-location.png
 
+
 The Swagger UI gives you an up-to-date view of what APIs your Determined cluster is
 providing in a readable and interactive fashion.
-In this page you'll see a list of all the available endpoints grouped by their workflows.
+On this page you'll see a list of all the available endpoints grouped by their workflows.
 If you click on each endpoint you'll be presented with expected inputs and outputs for it
 as well as an interactive tool that let's you try out the endpoint. Note that for the
 interactive portion to work, you'd need to have the appropriate cookie set and have a
@@ -50,7 +51,8 @@ endpoint, currently at `/api/v1/auth/login` with the following format:
     "password": "string"
   }
 
-Example:
+
+Sample request:
 
 .. code:: bash
 
@@ -58,7 +60,7 @@ Example:
     -H 'Content-Type: application/json' \
     --data-binary '{"username":"john","password":"2k34h5@$"}' \
 
-Sample Response: 
+Sample response: 
 
 .. code:: json
 
@@ -75,9 +77,12 @@ Sample Response:
     }
   }
 
-Now store and attach the provided token to your future API calls under
+Once we have the token we can store and attach to our future API calls under
 `Authorization` header and with the following format: `Bearer $TOKEN`.
 
+
+Example:
+--------
 
 For example let's find an archived example to un-archive:
 
