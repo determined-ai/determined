@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/docker/docker/api/types"
+
 	"github.com/google/go-cmp/cmp"
 	"gotest.tools/assert"
 
@@ -414,4 +416,123 @@ func TestExperiment(t *testing.T) {
 	config3 := ExperimentConfig{}
 	assert.NilError(t, json.Unmarshal(json2, &config3))
 	assert.DeepEqual(t, config1, config3)
+}
+
+func TestMasterConfigImage(t *testing.T) {
+	masterDefault := &TaskContainerDefaultsConfig{
+		Image: &RuntimeItem{
+			CPU: "test/cpu",
+			GPU: "test/gpu",
+		},
+	}
+	actual := DefaultExperimentConfig(masterDefault)
+	actual.Description = description
+
+	expected := DefaultExperimentConfig(nil)
+	expected.Environment.Image.CPU = "test/cpu"
+	expected.Environment.Image.GPU = "test/gpu"
+	expected.Description = description
+
+	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
+	assert.DeepEqual(t, actual, expected)
+}
+
+func TestOverrideMasterConfigImage(t *testing.T) {
+	masterDefault := &TaskContainerDefaultsConfig{
+		Image: &RuntimeItem{
+			CPU: "test/cpu",
+			GPU: "test/gpu",
+		},
+	}
+	actual := DefaultExperimentConfig(masterDefault)
+	assert.NilError(t, json.Unmarshal([]byte(`{
+  "description": "provided",
+  "environment": {"image":  "my-test-image"}
+}`), &actual))
+
+	expected := DefaultExperimentConfig(nil)
+	myTestImage := "my-test-image"
+	expected.Environment.Image.CPU = myTestImage
+	expected.Environment.Image.GPU = myTestImage
+	expected.Environment.Image.GPU = myTestImage
+	expected.Environment.Image.GPU = myTestImage
+	expected.Description = description
+
+	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
+	assert.DeepEqual(t, actual, expected)
+}
+
+func TestMasterConfigPullPolicy(t *testing.T) {
+	masterDefault := &TaskContainerDefaultsConfig{
+		ForcePullImage: true,
+	}
+	actual := DefaultExperimentConfig(masterDefault)
+	actual.Description = description
+
+	expected := DefaultExperimentConfig(nil)
+	expected.Environment.ForcePullImage = true
+	expected.Description = description
+
+	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
+	assert.DeepEqual(t, actual, expected)
+}
+
+func TestOverrideMasterConfigPullPolicy(t *testing.T) {
+	masterDefault := &TaskContainerDefaultsConfig{
+		ForcePullImage: true,
+	}
+	actual := DefaultExperimentConfig(masterDefault)
+	assert.NilError(t, json.Unmarshal([]byte(`{
+  "description": "provided",
+  "environment": {"force_pull_image": false}
+}`), &actual))
+
+	expected := DefaultExperimentConfig(nil)
+	expected.Description = description
+
+	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
+	assert.DeepEqual(t, actual, expected)
+}
+
+func TestMasterConfigRegistryAuth(t *testing.T) {
+	masterDefault := &TaskContainerDefaultsConfig{
+		RegistryAuth: &types.AuthConfig{
+			Username: "best-user",
+			Password: "secret-password",
+		},
+	}
+	actual := DefaultExperimentConfig(masterDefault)
+	actual.Description = description
+
+	expected := DefaultExperimentConfig(nil)
+	expected.Environment.RegistryAuth = &types.AuthConfig{
+		Username: "best-user",
+		Password: "secret-password",
+	}
+	expected.Description = description
+
+	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
+	assert.DeepEqual(t, actual, expected)
+}
+
+func TestOverrideMasterConfigRegistryAuth(t *testing.T) {
+	masterDefault := &TaskContainerDefaultsConfig{
+		RegistryAuth: &types.AuthConfig{
+			Username: "best-user",
+		},
+	}
+	actual := DefaultExperimentConfig(masterDefault)
+	assert.NilError(t, json.Unmarshal([]byte(`{
+  "description": "provided",
+  "environment": {"registry_auth": {"username": "worst-user"}}
+}`), &actual))
+
+	expected := DefaultExperimentConfig(nil)
+	expected.Environment.RegistryAuth = &types.AuthConfig{
+		Username: "worst-user",
+	}
+	expected.Description = description
+
+	zeroizeRandomSeedsBeforeCompare(&actual, &expected)
+	assert.DeepEqual(t, actual, expected)
 }
