@@ -119,7 +119,7 @@ func (s *scaleDecider) findInstancesToTerminate(
 	idleInstances := make(map[string]bool)
 	disconnectedInstances := make(map[string]bool)
 
-	// Terminate stopped instances and find idle and stopping instances.
+	// Terminate stopped instances and find idle and disconnected instances.
 	now := time.Now()
 	for _, inst := range s.instanceSnapshot {
 		switch inst.State {
@@ -131,17 +131,14 @@ func (s *scaleDecider) findInstancesToTerminate(
 				idleInstances[inst.ID] = true
 			}
 
-			// If instance is connected no need to do anything here.
 			if _, connected := s.connectedAgentSnapshot[inst.AgentName]; connected {
 				continue
 			}
-
 			// If instance instance is still in the start-up period, do not terminate it for
 			// being disconnected.
 			if inst.LaunchTime.Add(s.maxStartingPeriod).After(now) {
 				continue
 			}
-
 			disconnectedInstances[inst.ID] = true
 		}
 	}
