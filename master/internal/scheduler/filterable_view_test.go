@@ -5,17 +5,15 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-
-	cproto "github.com/determined-ai/determined/master/pkg/container"
-
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
+	cproto "github.com/determined-ai/determined/master/pkg/container"
 )
 
-func (d *DefaultRP) addAssignedTask(req *AddTask, assigned *ResourceAssigned) {
-	d.reqList.AddTask(req)
-	d.reqList.SetAssignments(req.Handler, assigned)
+func (d *DefaultRP) addAllocatedTask(req *AllocateRequest, allocated *ResourcesAllocated) {
+	d.taskList.AddTask(req)
+	d.taskList.SetAllocations(req.TaskActor, allocated)
 }
 
 func (d *DefaultRP) addAgent(
@@ -164,21 +162,21 @@ func addTask(
 	system *actor.System,
 	d *DefaultRP,
 	taskID string,
-	numAssigned int,
+	numAllocated int,
 	slotsNeeded int,
-) *AddTask {
-	req := &AddTask{
+) *AllocateRequest {
+	req := &AllocateRequest{
 		ID:           TaskID(taskID),
 		Group:        newGroup(t, system, taskID+"-group"),
-		Handler:      newGroup(t, system, taskID+"-handler"),
+		TaskActor:    newGroup(t, system, taskID+"-handler"),
 		SlotsNeeded:  slotsNeeded,
 		CanTerminate: true,
 	}
-	assigned := &ResourceAssigned{Assignments: []Assignment{}}
-	for i := 0; i < numAssigned; i++ {
-		assigned.Assignments = append(assigned.Assignments, containerAssignment{})
+	allocated := &ResourcesAllocated{ID: req.ID, Allocations: []Allocation{}}
+	for i := 0; i < numAllocated; i++ {
+		allocated.Allocations = append(allocated.Allocations, containerAllocation{})
 	}
-	d.addAssignedTask(req, assigned)
+	d.addAllocatedTask(req, allocated)
 	return req
 }
 
@@ -212,7 +210,6 @@ func TestNoUpdate(t *testing.T) {
 
 	snapshot1, _ := c.provisionerView.Update(c)
 	addTask(t, system, c, "task3", 1, 1)
-	c.addAgent(t, system, "agent-a", 4, 1, 0)
 
 	snapshot2, updated := c.provisionerView.Update(c)
 	assert.Check(t, !updated)
@@ -304,8 +301,9 @@ func TestTaskStateChange(t *testing.T) {
 	assert.Equal(t, 6, len(snapshot1.ConnectedAgents))
 	assert.Check(t, updated)
 
-	c.reqList.SetAssignments(pendingTask.Handler, &ResourceAssigned{
-		Assignments: make([]Assignment, 1),
+	c.taskList.SetAllocations(pendingTask.TaskActor, &ResourcesAllocated{
+		ID:          pendingTask.ID,
+		Allocations: make([]Allocation, 1),
 	})
 
 	snapshot2, updated := c.provisionerView.Update(c)

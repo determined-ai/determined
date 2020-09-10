@@ -17,6 +17,8 @@ func (r *requestProcessingWorker) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		ctx.Tell(ctx.Self().Parent(), workerAvailable{})
 	case actor.PostStop:
+		// This should not happen since the request worker actors would not stop during
+		// the master is running.
 
 	case createKubernetesResources:
 		r.receiveCreateKubernetesResources(ctx, msg)

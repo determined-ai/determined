@@ -5,10 +5,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/docker/docker/api/types"
-	docker "github.com/docker/docker/api/types/container"
-	"github.com/docker/go-connections/nat"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -123,7 +119,7 @@ func (p *pod) Receive(ctx *actor.Context) error {
 	case sproto.ContainerLog:
 		p.receiveContainerLogs(ctx, msg)
 
-	case sproto.KillContainer:
+	case sproto.KillTaskContainer:
 		ctx.Log().Info("received request to stop pod")
 		p.deleteKubernetesResources(ctx)
 
@@ -228,14 +224,14 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 				p.container.State, container.Pulling)
 			p.container = p.container.Transition(container.Pulling)
 
-			rsc := sproto.ContainerStateChanged{Container: p.container}
+			rsc := sproto.TaskContainerStateChanged{Container: p.container}
 			ctx.Tell(p.taskHandler, rsc)
 		}
 
 		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(containerState)
 
-		rsc := sproto.ContainerStateChanged{Container: p.container}
+		rsc := sproto.TaskContainerStateChanged{Container: p.container}
 		ctx.Tell(p.taskHandler, rsc)
 
 	case k8sV1.PodRunning:
@@ -252,29 +248,16 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 			return errors.Errorf("log streamer already exists")
 		}
 
-		// This is a hack to construct a Docker container info struct for pod since
-		// the Docker container info struct is used in the protocol between the resource
-		// provider and the task handler.
-		transPort := func(ports []int) nat.PortSet {
-			res := make(nat.PortSet)
-			for _, port := range ports {
-				res[nat.Port(strconv.Itoa(port))] = struct{}{}
-			}
-			return res
+		addresses := []container.Address{}
+		for _, port := range p.ports {
+			addresses = append(addresses, container.Address{
+				ContainerIP:   p.pod.Status.PodIP,
+				ContainerPort: port,
+				HostIP:        p.pod.Status.PodIP,
+				HostPort:      port,
+			})
 		}
-		p.informTaskContainerStarted(ctx, agent.ContainerStarted{
-			ProxyAddress: p.pod.Status.PodIP,
-			ContainerInfo: types.ContainerJSON{
-				ContainerJSONBase: &types.ContainerJSONBase{
-					HostConfig: &docker.HostConfig{
-						NetworkMode: "host",
-					},
-				},
-				Config: &docker.Config{
-					ExposedPorts: transPort(p.ports),
-				},
-			},
-		})
+		p.informTaskContainerStarted(ctx, sproto.TaskContainerStarted{Addresses: addresses})
 
 	case k8sV1.PodFailed:
 		if p.container.State == container.Terminated {
@@ -289,15 +272,16 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 
 		p.container = p.container.Transition(container.Terminated)
 		exitCodeConverted := agent.ExitCode(exitCode)
-		containerStopped := agent.ContainerStopped{
-			Failure: &agent.ContainerFailure{
-				FailureType: agent.ContainerFailed,
-				ErrMsg:      exitMessage,
-				ExitCode:    &exitCodeConverted,
-			},
-		}
 
-		p.informTaskContainerStopped(ctx, containerStopped)
+		p.informTaskContainerStopped(ctx, sproto.TaskContainerStopped{
+			ContainerStopped: agent.ContainerStopped{
+				Failure: &agent.ContainerFailure{
+					FailureType: agent.ContainerFailed,
+					ErrMsg:      exitMessage,
+					ExitCode:    &exitCodeConverted,
+				},
+			},
+		})
 		ctx.Self().Stop()
 
 	case k8sV1.PodSucceeded:
@@ -307,9 +291,7 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		p.container = p.container.Transition(container.Terminated)
 
 		ctx.Log().Infof("pod exited successfully")
-		containerStopped := agent.ContainerStopped{}
-
-		p.informTaskContainerStopped(ctx, containerStopped)
+		p.informTaskContainerStopped(ctx, sproto.TaskContainerStopped{})
 		ctx.Self().Stop()
 
 	default:
@@ -336,13 +318,14 @@ func (p *pod) processMissingPodDeletion(ctx *actor.Context) {
 	// Missed pod deletions occur only when a pod is deleted so we assume
 	// that the container was killed.
 	exitCodeConverted := agent.ExitCode(137)
-	containerStopped := agent.ContainerStopped{
-		Failure: &agent.ContainerFailure{
-			FailureType: agent.ContainerFailed,
-			ExitCode:    &exitCodeConverted,
+	p.informTaskContainerStopped(ctx, sproto.TaskContainerStopped{
+		ContainerStopped: agent.ContainerStopped{
+			Failure: &agent.ContainerFailure{
+				FailureType: agent.ContainerFailed,
+				ExitCode:    &exitCodeConverted,
+			},
 		},
-	}
-	p.informTaskContainerStopped(ctx, containerStopped)
+	})
 	ctx.Self().Stop()
 }
 
@@ -390,18 +373,18 @@ func (p *pod) finalizeTaskState(ctx *actor.Context) {
 		ctx.Log().Warnf("updating container state after pod actor exited unexpectedly")
 		p.container = p.container.Transition(container.Terminated)
 
-		containerStopped := agent.ContainerError(
-			agent.TaskError, errors.New("agent failed while container was running"))
-
-		p.informTaskContainerStopped(ctx, containerStopped)
+		p.informTaskContainerStopped(ctx, sproto.TaskContainerStopped{
+			ContainerStopped: agent.ContainerError(
+				agent.TaskError, errors.New("agent failed while container was running")),
+		})
 	}
 }
 
 func (p *pod) informTaskContainerStarted(
 	ctx *actor.Context,
-	containerStarted agent.ContainerStarted,
+	containerStarted sproto.TaskContainerStarted,
 ) {
-	ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
+	ctx.Tell(p.taskHandler, sproto.TaskContainerStateChanged{
 		Container:        p.container,
 		ContainerStarted: &containerStarted,
 	})
@@ -409,9 +392,9 @@ func (p *pod) informTaskContainerStarted(
 
 func (p *pod) informTaskContainerStopped(
 	ctx *actor.Context,
-	containerStopped agent.ContainerStopped,
+	containerStopped sproto.TaskContainerStopped,
 ) {
-	ctx.Tell(p.taskHandler, sproto.ContainerStateChanged{
+	ctx.Tell(p.taskHandler, sproto.TaskContainerStateChanged{
 		Container:        p.container,
 		ContainerStopped: &containerStopped,
 	})

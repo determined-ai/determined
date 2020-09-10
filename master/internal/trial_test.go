@@ -5,10 +5,6 @@ import (
 	"strconv"
 	"testing"
 
-	dockerTypes "github.com/docker/docker/api/types"
-	dockerContainer "github.com/docker/docker/api/types/container"
-	"github.com/docker/go-connections/nat"
-
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 
@@ -16,7 +12,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
-	"github.com/determined-ai/determined/master/pkg/agent"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -37,7 +32,7 @@ func (a *mockActor) Receive(ctx *actor.Context) error {
 }
 
 func TestRendezvousInfo(t *testing.T) {
-	addresses := [][]agent.Address{
+	addresses := [][]cproto.Address{
 		{
 			{
 				ContainerPort: 1,
@@ -97,13 +92,13 @@ func TestRendezvousInfo(t *testing.T) {
 	trial := &trial{
 		rp:                 rp,
 		experiment:         &model.Experiment{},
-		resourceRequest:    &scheduler.AddTask{},
+		task:               &scheduler.AllocateRequest{},
 		experimentState:    model.ActiveState,
 		numContainers:      len(addresses),
 		startedContainers:  make(map[cproto.ID]bool),
 		containers:         make(map[cproto.ID]cproto.Container),
 		containerOrdinals:  make(map[cproto.ID]int),
-		containerAddresses: make(map[cproto.ID][]agent.Address),
+		containerAddresses: make(map[cproto.ID][]cproto.Address),
 		sockets:            make(map[cproto.ID]*actor.Ref),
 		defaultTaskSpec:    defaultTaskSpec,
 	}
@@ -138,25 +133,10 @@ func TestRendezvousInfo(t *testing.T) {
 		trial.sockets[c.ID] = ref
 
 		// Simulate the scheduling of a container.
-		ports := make(nat.PortSet)
-		for _, addrs := range caddrs {
-			ports[nat.Port(strconv.Itoa(addrs.ContainerPort))] = struct{}{}
-		}
-		info := dockerTypes.ContainerJSON{
-			ContainerJSONBase: &dockerTypes.ContainerJSONBase{
-				HostConfig: &dockerContainer.HostConfig{
-					NetworkMode: "host",
-				},
-			},
-			Config: &dockerContainer.Config{
-				ExposedPorts: ports,
-			},
-		}
-		system.Ask(trialRef, sproto.ContainerStateChanged{
+		system.Ask(trialRef, sproto.TaskContainerStateChanged{
 			Container: *c,
-			ContainerStarted: &agent.ContainerStarted{
-				ProxyAddress:  caddrs[0].ContainerIP,
-				ContainerInfo: info,
+			ContainerStarted: &sproto.TaskContainerStarted{
+				Addresses: caddrs,
 			},
 		}).Get()
 

@@ -56,33 +56,17 @@ type ContainerStarted struct {
 	ContainerInfo types.ContainerJSON
 }
 
-// Address represents an exposed port on a container.
-type Address struct {
-	// ContainerIP is the IP address from inside the container.
-	ContainerIP string `json:"container_ip"`
-	// ContainerPort is the port from inside the container.
-	ContainerPort int `json:"container_port"`
-
-	// HostIP is the IP address from outside the container. This can be
-	// different than the ContainerIP because of network forwarding on the host
-	// machine.
-	HostIP string `json:"host_ip"`
-	// HostPort is the IP port from outside the container. This can be different
-	// than the ContainerPort because of network forwarding on the host machine.
-	HostPort int `json:"host_port"`
-}
-
 // Addresses calculates the address of containers and hosts based on the container
 // started information.
-func (c ContainerStarted) Addresses() []Address {
+func (c ContainerStarted) Addresses() []container.Address {
 	proxy := c.ProxyAddress
 	info := c.ContainerInfo
 
-	var addresses []Address
+	var addresses []container.Address
 	switch info.HostConfig.NetworkMode {
 	case "host":
 		for port := range info.Config.ExposedPorts {
-			addresses = append(addresses, Address{
+			addresses = append(addresses, container.Address{
 				ContainerIP:   proxy,
 				ContainerPort: port.Int(),
 				HostIP:        proxy,
@@ -109,7 +93,7 @@ func (c ContainerStarted) Addresses() []Address {
 					if err != nil {
 						panic(errors.Wrapf(err, "unexpected host port: %s", binding.HostPort))
 					}
-					addresses = append(addresses, Address{
+					addresses = append(addresses, container.Address{
 						ContainerIP:   ip,
 						ContainerPort: port.Int(),
 						HostIP:        hostIP,

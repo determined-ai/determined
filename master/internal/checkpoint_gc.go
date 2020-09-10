@@ -28,15 +28,15 @@ type checkpointGCTask struct {
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		ctx.Tell(t.rp, scheduler.AddTask{
+		ctx.Tell(t.rp, scheduler.AllocateRequest{
 			Name: fmt.Sprintf("Checkpoint GC (Experiment %d)", t.experiment.ID),
 			FittingRequirements: scheduler.FittingRequirements{
 				SingleAgent: true,
 			},
-			Handler: ctx.Self(),
+			TaskActor: ctx.Self(),
 		})
 
-	case scheduler.ResourceAssigned:
+	case scheduler.ResourcesAllocated:
 		config := t.experiment.Config.CheckpointStorage
 
 		checkpoints, err := t.db.ExperimentCheckpointsToGCRaw(t.experiment.ID,
@@ -47,7 +47,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 
 		ctx.Log().Info("starting checkpoint garbage collection")
 
-		for _, a := range msg.Assignments {
+		for _, a := range msg.Allocations {
 			taskSpec := tasks.TaskSpec{}
 			if t.defaultTaskSpec != nil {
 				taskSpec = *t.defaultTaskSpec
@@ -60,9 +60,9 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			}
 			a.StartContainer(ctx, taskSpec)
 		}
-	case scheduler.ReleaseResource:
+	case scheduler.ReleaseResources:
 
-	case sproto.ContainerStateChanged:
+	case sproto.TaskContainerStateChanged:
 		if msg.Container.State != container.Terminated {
 			return nil
 		}

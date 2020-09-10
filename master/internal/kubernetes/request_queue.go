@@ -138,6 +138,8 @@ func (r *requestQueue) Receive(ctx *actor.Context) error {
 			}
 		}
 	case actor.PostStop:
+		// This should not happen since the request queue actor would not stop during
+		// the master is running.
 
 	case createKubernetesResources:
 		r.receiveCreateKubernetesResources(ctx, msg)

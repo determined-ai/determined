@@ -40,18 +40,18 @@ func (summary1 *TaskSummary) equals(summary2 *TaskSummary) bool {
 	return true
 }
 
-func newTaskSummary(request *AddTask, assigned *ResourceAssigned) TaskSummary {
+func newTaskSummary(request *AllocateRequest, allocated *ResourcesAllocated) TaskSummary {
 	// Summary returns a new immutable view of the task state.
 	containerSummaries := make([]ContainerSummary, 0)
-	if assigned != nil {
-		for _, c := range assigned.Assignments {
+	if allocated != nil {
+		for _, c := range allocated.Allocations {
 			containerSummaries = append(containerSummaries, c.Summary())
 		}
 	}
 	return TaskSummary{
 		ID:             request.ID,
 		Name:           request.Name,
-		RegisteredTime: request.Handler.RegisteredTime(),
+		RegisteredTime: request.TaskActor.RegisteredTime(),
 		SlotsNeeded:    request.SlotsNeeded,
 		Containers:     containerSummaries,
 	}
@@ -82,7 +82,7 @@ func newAgentSummary(state *agentState) AgentSummary {
 
 func getTaskSummary(reqList *taskList, id TaskID) *TaskSummary {
 	if req, ok := reqList.GetTaskByID(id); ok {
-		summary := newTaskSummary(req, reqList.GetAssignments(req.Handler))
+		summary := newTaskSummary(req, reqList.GetAllocations(req.TaskActor))
 		return &summary
 	}
 	return nil
@@ -92,7 +92,7 @@ func getTaskSummaries(reqList *taskList) map[TaskID]TaskSummary {
 	ret := make(map[TaskID]TaskSummary)
 	for it := reqList.iterator(); it.next(); {
 		req := it.value()
-		ret[req.ID] = newTaskSummary(req, reqList.GetAssignments(req.Handler))
+		ret[req.ID] = newTaskSummary(req, reqList.GetAllocations(req.TaskActor))
 	}
 	return ret
 }

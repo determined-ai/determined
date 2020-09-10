@@ -9,14 +9,14 @@ type ContainerID string
 
 // container tracks an actual task container running in the cluster.
 type container struct {
-	req   *AddTask
+	req   *AllocateRequest
 	id    ContainerID
 	slots int
 	agent *agentState
 }
 
 // newContainer returns a new container state assigned to the specified agent.
-func newContainer(req *AddTask, agent *agentState, slots, ordinal int) *container {
+func newContainer(req *AllocateRequest, agent *agentState, slots, ordinal int) *container {
 	return &container{
 		req:   req,
 		id:    ContainerID(uuid.New().String()),

@@ -79,8 +79,8 @@ func newMockTask(
 
 func (t *mockTask) Receive(ctx *actor.Context) error {
 	switch ctx.Message().(type) {
-	case ResourceAssigned:
-	case ReleaseResource:
+	case ResourcesAllocated:
+	case ReleaseResources:
 	case getSlots:
 		ctx.Respond(t.slotsNeeded)
 	case getGroup:
@@ -137,7 +137,7 @@ func setupCluster(
 		agents:        make(map[*actor.Ref]*agentState),
 		groups:        make(map[*actor.Ref]*group),
 
-		reqList:         newTaskList(),
+		taskList:        newTaskList(),
 		provisionerView: newProvisionerView(0),
 
 		reschedule: false,
@@ -154,11 +154,11 @@ func setupCluster(
 		slots := system.Ask(handler, getSlots{}).Get().(int)
 		label := system.Ask(handler, getLabel{}).Get().(string)
 
-		d.addAssignedTask(&AddTask{
+		d.addAllocatedTask(&AllocateRequest{
 			ID:           TaskID(handler.Address().String()),
 			Name:         handler.Address().Local(),
 			Group:        g,
-			Handler:      handler,
+			TaskActor:    handler,
 			SlotsNeeded:  slots,
 			CanTerminate: true,
 			Label:        label,
@@ -179,11 +179,11 @@ func assertSchedulerState(
 ) {
 	for index, handler := range actual {
 		expectedState := expected[index]
-		actualAssigned := rp.reqList.GetAssignments(handler)
+		actualAllocated := rp.taskList.GetAllocations(handler)
 		actualContainers := make(map[*agentState]int)
-		if actualAssigned != nil {
-			for _, assignment := range actualAssigned.Assignments {
-				container := assignment.(*containerAssignment).container
+		if actualAllocated != nil {
+			for _, allocation := range actualAllocated.Allocations {
+				container := allocation.(*containerAllocation).container
 				actualContainers[container.agent] = container.slots
 			}
 		}
@@ -194,15 +194,15 @@ func assertSchedulerState(
 }
 
 func forceSchedule(rp *DefaultRP, handler *actor.Ref, agent *agentState) {
-	req, _ := rp.reqList.GetTask(handler)
-	assigned := rp.reqList.GetAssignments(handler)
-	if assigned == nil {
-		assigned = &ResourceAssigned{}
+	req, _ := rp.taskList.GetTaskByHandler(handler)
+	allocated := rp.taskList.GetAllocations(handler)
+	if allocated == nil {
+		allocated = &ResourcesAllocated{ID: req.ID}
 	}
-	assigned.Assignments = append(assigned.Assignments, &containerAssignment{
+	allocated.Allocations = append(allocated.Allocations, &containerAllocation{
 		req:       req,
 		agent:     agent,
 		container: newContainer(req, agent, req.SlotsNeeded, 1),
 	})
-	rp.reqList.SetAssignments(handler, assigned)
+	rp.taskList.SetAllocations(handler, allocated)
 }

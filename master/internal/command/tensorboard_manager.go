@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
@@ -187,7 +185,7 @@ func (t *tensorboardManager) newTensorBoard(
 	uniqMounts := map[model.BindMount]bool{}
 	uniqEnvVars := map[string]string{}
 
-	taskID := scheduler.TaskID(uuid.New().String())
+	taskID := scheduler.NewTaskID()
 	serviceAddress := fmt.Sprintf(tensorboardServiceAddress, taskID)
 
 	config := commandReq.Config

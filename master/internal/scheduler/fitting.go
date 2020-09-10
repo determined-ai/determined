@@ -11,11 +11,11 @@ import (
 )
 
 // HardConstraint returns true if the task can be assigned to the agent and false otherwise.
-type HardConstraint func(req *AddTask, agent *agentState) bool
+type HardConstraint func(req *AllocateRequest, agent *agentState) bool
 
 // SoftConstraint returns a score from 0 (lowest) to 1 (highest) representing how optimal is the
 // state of the cluster if the task were assigned to the agent.
-type SoftConstraint func(req *AddTask, agent *agentState) float64
+type SoftConstraint func(req *AllocateRequest, agent *agentState) float64
 
 // fittingState is the basis for assigning a task to one or more agents for execution.
 type fittingState struct {
@@ -64,7 +64,7 @@ func (c candidateList) Swap(i, j int) {
 }
 
 func findFits(
-	req *AddTask, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
+	req *AllocateRequest, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 ) []*fittingState {
 	// TODO(DET-4035): Some of this code is duplicated in filterable_view.go to prevent
 	// the provisioner from scaling up for jobs that can never be scheduled in the
@@ -81,7 +81,7 @@ func findFits(
 	return nil
 }
 
-func isViable(req *AddTask, agent *agentState, constraints ...HardConstraint) bool {
+func isViable(req *AllocateRequest, agent *agentState, constraints ...HardConstraint) bool {
 	for _, constraint := range constraints {
 		if !constraint(req, agent) {
 			return false
@@ -91,7 +91,7 @@ func isViable(req *AddTask, agent *agentState, constraints ...HardConstraint) bo
 }
 
 func findDedicatedAgentFits(
-	req *AddTask, agentStates map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
+	req *AllocateRequest, agentStates map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 ) []*fittingState {
 	if len(agentStates) == 0 {
 		return nil
@@ -171,7 +171,7 @@ func findDedicatedAgentFits(
 }
 
 func findSharedAgentFit(
-	req *AddTask, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
+	req *AllocateRequest, agents map[*actor.Ref]*agentState, fittingMethod SoftConstraint,
 ) *fittingState {
 	var candidates candidateList
 	for _, agent := range agents {
@@ -202,6 +202,6 @@ func stringHashNumber(s string) uint64 {
 	return binary.LittleEndian.Uint64(hash[:])
 }
 
-func hashDistance(req *AddTask, agent *agentState) uint64 {
+func hashDistance(req *AllocateRequest, agent *agentState) uint64 {
 	return stringHashNumber(string(req.ID)) - stringHashNumber(agent.handler.Address().String())
 }

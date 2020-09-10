@@ -15,7 +15,7 @@ type agentState struct {
 	devices map[device.Device]*cproto.ID
 	label   string
 
-	// Since we only model GPUs as devices/slots and assume each slot can be assigned with
+	// Since we only model GPUs as devices/slots and assume each slot can be allocated with
 	// one container, we add one additional field to keep track of zero-slot containers.
 	// We need this field to know if the agent is idle.
 	zeroSlotContainers map[cproto.ID]bool
@@ -50,7 +50,7 @@ func (a *agentState) numUsedSlots() (slots int) {
 	return slots
 }
 
-func (a *agentState) assignFreeDevices(slots int, id cproto.ID) []device.Device {
+func (a *agentState) allocateFreeDevices(slots int, id cproto.ID) []device.Device {
 	if slots == 0 {
 		a.zeroSlotContainers[id] = true
 		return nil

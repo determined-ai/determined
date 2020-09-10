@@ -67,8 +67,8 @@ func (k *kubernetesResourceProvider) Receive(ctx *actor.Context) error {
 		groupActorStopped,
 		SetGroupMaxSlots,
 		SetGroupWeight,
-		AddTask,
-		RemoveTask:
+		AllocateRequest,
+		ResourcesReleased:
 		return k.receiveRequestMsg(ctx)
 
 	case GetTaskSummary:
@@ -114,10 +114,10 @@ func (k *kubernetesResourceProvider) receiveRequestMsg(ctx *actor.Context) error
 	case SetGroupWeight:
 		// SetGroupWeight is not supported by the Kubernetes RP.
 
-	case AddTask:
+	case AllocateRequest:
 		k.addTask(ctx, msg)
 
-	case RemoveTask:
+	case ResourcesReleased:
 		k.resourcesReleased(ctx, msg.Handler)
 
 	default:
@@ -126,14 +126,14 @@ func (k *kubernetesResourceProvider) receiveRequestMsg(ctx *actor.Context) error
 	return nil
 }
 
-func (k *kubernetesResourceProvider) addTask(ctx *actor.Context, msg AddTask) {
-	actors.NotifyOnStop(ctx, msg.Handler, RemoveTask{Handler: msg.Handler})
+func (k *kubernetesResourceProvider) addTask(ctx *actor.Context, msg AllocateRequest) {
+	actors.NotifyOnStop(ctx, msg.TaskActor, ResourcesReleased{Handler: msg.TaskActor})
 
 	if len(msg.ID) == 0 {
 		msg.ID = TaskID(uuid.New().String())
 	}
 	if msg.Group == nil {
-		msg.Group = msg.Handler
+		msg.Group = msg.TaskActor
 	}
 	k.getOrCreateGroup(ctx, msg.Group)
 	if len(msg.Name) == 0 {
@@ -141,13 +141,13 @@ func (k *kubernetesResourceProvider) addTask(ctx *actor.Context, msg AddTask) {
 	}
 
 	ctx.Log().Infof(
-		"resources are requested by %s (request ID: %s)",
-		msg.Handler.Address(), msg.ID,
+		"resources are requested by %s (Task ID: %s)",
+		msg.TaskActor.Address(), msg.ID,
 	)
 	k.reqList.AddTask(&msg)
 }
 
-func (k *kubernetesResourceProvider) assignResources(ctx *actor.Context, req *AddTask) {
+func (k *kubernetesResourceProvider) assignResources(ctx *actor.Context, req *AllocateRequest) {
 	numPods := 1
 	slotsPerPod := req.SlotsNeeded
 	if req.SlotsNeeded > 1 {
@@ -175,31 +175,31 @@ func (k *kubernetesResourceProvider) assignResources(ctx *actor.Context, req *Ad
 
 	k.slotsUsedPerGroup[k.groups[req.Group]] += req.SlotsNeeded
 
-	assignments := make([]Assignment, 0, numPods)
+	allocations := make([]Allocation, 0, numPods)
 	for pod := 0; pod < numPods; pod++ {
-		container := newContainer(req, k.agent, slotsPerPod, len(assignments))
-		assignments = append(assignments, &podAssignment{
+		container := newContainer(req, k.agent, slotsPerPod, len(allocations))
+		allocations = append(allocations, &podAllocation{
 			req:       req,
 			agent:     k.agent,
 			container: container,
 		})
 	}
 
-	assigned := ResourceAssigned{Assignments: assignments}
-	k.reqList.SetAssignments(req.Handler, &assigned)
-	req.Handler.System().Tell(req.Handler, assigned)
+	assigned := ResourcesAllocated{ID: req.ID, Allocations: allocations}
+	k.reqList.SetAllocations(req.TaskActor, &assigned)
+	req.TaskActor.System().Tell(req.TaskActor, assigned)
 
 	ctx.Log().
 		WithField("task-id", req.ID).
-		WithField("task-handler", req.Handler.Address()).
+		WithField("task-handler", req.TaskActor.Address()).
 		Infof("resources assigned with %d pods", numPods)
 }
 
 func (k *kubernetesResourceProvider) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
 	ctx.Log().Infof("resources are released for %s", handler.Address())
-	k.reqList.RemoveTask(handler)
+	k.reqList.RemoveTaskByHandler(handler)
 
-	if req, ok := k.reqList.GetTask(handler); ok {
+	if req, ok := k.reqList.GetTaskByHandler(handler); ok {
 		group := k.groups[handler]
 
 		if group != nil {
@@ -229,8 +229,8 @@ func (k *kubernetesResourceProvider) schedulePendingTasks(ctx *actor.Context) {
 	for it := k.reqList.iterator(); it.next(); {
 		req := it.value()
 		group := k.groups[req.Group]
-		assigned := k.reqList.GetAssignments(req.Handler)
-		if assigned == nil || len(assigned.Assignments) == 0 {
+		assigned := k.reqList.GetAllocations(req.TaskActor)
+		if unassigned := assigned == nil || len(assigned.Allocations) == 0; unassigned {
 			if maxSlots := group.maxSlots; maxSlots != nil {
 				if k.slotsUsedPerGroup[group]+req.SlotsNeeded > *maxSlots {
 					continue
@@ -242,14 +242,14 @@ func (k *kubernetesResourceProvider) schedulePendingTasks(ctx *actor.Context) {
 	}
 }
 
-type podAssignment struct {
-	req       *AddTask
+type podAllocation struct {
+	req       *AllocateRequest
 	container *container
 	agent     *agentState
 }
 
-// Summary summerizes a container assignment.
-func (p podAssignment) Summary() ContainerSummary {
+// Summary summarizes a container allocation.
+func (p podAllocation) Summary() ContainerSummary {
 	return ContainerSummary{
 		TaskID: p.req.ID,
 		ID:     p.container.id,
@@ -258,21 +258,21 @@ func (p podAssignment) Summary() ContainerSummary {
 }
 
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
-func (p podAssignment) StartContainer(ctx *actor.Context, spec image.TaskSpec) {
+func (p podAllocation) StartContainer(ctx *actor.Context, spec image.TaskSpec) {
 	handler := p.agent.handler
 	spec.ContainerID = string(p.container.id)
 	spec.TaskID = string(p.req.ID)
 	ctx.Tell(handler, sproto.StartPod{
-		TaskHandler: p.req.Handler,
+		TaskHandler: p.req.TaskActor,
 		Spec:        spec,
 		Slots:       p.container.slots,
 	})
 }
 
 // Kill notifies the pods actor that it should stop the pod.
-func (p podAssignment) KillContainer(ctx *actor.Context) {
+func (p podAllocation) KillContainer(ctx *actor.Context) {
 	handler := p.agent.handler
-	ctx.Tell(handler, sproto.KillContainer{
+	ctx.Tell(handler, sproto.KillTaskContainer{
 		ContainerID: cproto.ID(p.container.id),
 	})
 }

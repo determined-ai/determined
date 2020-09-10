@@ -11,17 +11,17 @@ import (
 // taskList maintains all tasks in time order.
 type taskList struct {
 	taskByTime    *treeset.Set
-	taskByHandler map[*actor.Ref]*AddTask
-	taskByID      map[TaskID]*AddTask
-	assignments   map[*actor.Ref]*ResourceAssigned
+	taskByHandler map[*actor.Ref]*AllocateRequest
+	taskByID      map[TaskID]*AllocateRequest
+	allocations   map[*actor.Ref]*ResourcesAllocated
 }
 
 func newTaskList() *taskList {
 	return &taskList{
 		taskByTime:    treeset.NewWith(taskComparator),
-		taskByHandler: make(map[*actor.Ref]*AddTask),
-		taskByID:      make(map[TaskID]*AddTask),
-		assignments:   make(map[*actor.Ref]*ResourceAssigned),
+		taskByHandler: make(map[*actor.Ref]*AllocateRequest),
+		taskByID:      make(map[TaskID]*AllocateRequest),
+		allocations:   make(map[*actor.Ref]*ResourcesAllocated),
 	}
 }
 
@@ -33,29 +33,29 @@ func (l *taskList) len() int {
 	return len(l.taskByHandler)
 }
 
-func (l *taskList) GetTask(handler *actor.Ref) (*AddTask, bool) {
+func (l *taskList) GetTaskByHandler(handler *actor.Ref) (*AllocateRequest, bool) {
 	req, ok := l.taskByHandler[handler]
 	return req, ok
 }
 
-func (l *taskList) GetTaskByID(id TaskID) (*AddTask, bool) {
+func (l *taskList) GetTaskByID(id TaskID) (*AllocateRequest, bool) {
 	req, ok := l.taskByID[id]
 	return req, ok
 }
 
-func (l *taskList) AddTask(req *AddTask) bool {
-	if _, ok := l.GetTask(req.Handler); ok {
+func (l *taskList) AddTask(req *AllocateRequest) bool {
+	if _, ok := l.GetTaskByHandler(req.TaskActor); ok {
 		return false
 	}
 
 	l.taskByTime.Add(req)
-	l.taskByHandler[req.Handler] = req
+	l.taskByHandler[req.TaskActor] = req
 	l.taskByID[req.ID] = req
 	return true
 }
 
-func (l *taskList) RemoveTask(handler *actor.Ref) *AddTask {
-	req, ok := l.GetTask(handler)
+func (l *taskList) RemoveTaskByHandler(handler *actor.Ref) *AllocateRequest {
+	req, ok := l.GetTaskByHandler(handler)
 	if !ok {
 		return nil
 	}
@@ -63,33 +63,29 @@ func (l *taskList) RemoveTask(handler *actor.Ref) *AddTask {
 	l.taskByTime.Remove(req)
 	delete(l.taskByHandler, handler)
 	delete(l.taskByID, req.ID)
-	delete(l.assignments, handler)
+	delete(l.allocations, handler)
 	return req
 }
 
-func (l *taskList) GetAssignments(handler *actor.Ref) *ResourceAssigned {
-	return l.assignments[handler]
+func (l *taskList) GetAllocations(handler *actor.Ref) *ResourcesAllocated {
+	return l.allocations[handler]
 }
 
-func (l *taskList) SetAssignments(handler *actor.Ref, assigned *ResourceAssigned) {
-	l.assignments[handler] = assigned
-}
-
-func (l *taskList) ClearAssignments(handler *actor.Ref) {
-	delete(l.assignments, handler)
+func (l *taskList) SetAllocations(handler *actor.Ref, assigned *ResourcesAllocated) {
+	l.allocations[handler] = assigned
 }
 
 type taskIterator struct{ it treeset.Iterator }
 
-func (i *taskIterator) next() bool      { return i.it.Next() }
-func (i *taskIterator) value() *AddTask { return i.it.Value().(*AddTask) }
+func (i *taskIterator) next() bool              { return i.it.Next() }
+func (i *taskIterator) value() *AllocateRequest { return i.it.Value().(*AllocateRequest) }
 
 func taskComparator(a interface{}, b interface{}) int {
-	t1, t2 := a.(*AddTask), b.(*AddTask)
-	if t1.Handler.RegisteredTime().Equal(t2.Handler.RegisteredTime()) {
+	t1, t2 := a.(*AllocateRequest), b.(*AllocateRequest)
+	if t1.TaskActor.RegisteredTime().Equal(t2.TaskActor.RegisteredTime()) {
 		return strings.Compare(string(t1.ID), string(t2.ID))
 	}
-	if t1.Handler.RegisteredTime().Before(t2.Handler.RegisteredTime()) {
+	if t1.TaskActor.RegisteredTime().Before(t2.TaskActor.RegisteredTime()) {
 		return -1
 	}
 	return 1

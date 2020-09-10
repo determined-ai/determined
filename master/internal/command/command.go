@@ -15,8 +15,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
-	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -80,11 +80,12 @@ type command struct {
 	serviceAddress       *string
 
 	registeredTime time.Time
+	task           *scheduler.AllocateRequest
 	container      *container.Container
-	assignment     scheduler.Assignment
+	allocation     scheduler.Allocation
 	proxyNames     []string
 	exitStatus     *string
-	addresses      []aproto.Address
+	addresses      []container.Address
 
 	proxy       *actor.Ref
 	rps         *actor.Ref
@@ -101,7 +102,8 @@ func (c *command) Receive(ctx *actor.Context) error {
 		// Schedule the command with the cluster.
 		c.rps = ctx.Self().System().Get(actor.Addr("resourceProviders"))
 		c.proxy = ctx.Self().System().Get(actor.Addr("proxy"))
-		ctx.Tell(c.rps, scheduler.AddTask{
+
+		c.task = &scheduler.AllocateRequest{
 			ID:           c.taskID,
 			Name:         c.config.Description,
 			SlotsNeeded:  c.config.Resources.Slots,
@@ -110,14 +112,15 @@ func (c *command) Receive(ctx *actor.Context) error {
 			FittingRequirements: scheduler.FittingRequirements{
 				SingleAgent: true,
 			},
-			Handler: ctx.Self(),
-		})
+			TaskActor: ctx.Self(),
+		}
+		ctx.Tell(c.rps, *c.task)
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ScheduledEvent: &c.taskID})
 
 	case actor.PostStop:
 		c.terminate(ctx)
 
-	case scheduler.ResourceAssigned, scheduler.ReleaseResource:
+	case scheduler.ResourcesAllocated, scheduler.ReleaseResources:
 		return c.receiveSchedulerMsg(ctx)
 
 	case getSummary:
@@ -192,12 +195,12 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.terminate(ctx)
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
 
-	case sproto.ContainerStateChanged:
+	case sproto.TaskContainerStateChanged:
 		c.container = &msg.Container
 
 		switch {
 		case msg.Container.State == container.Running:
-			c.addresses = msg.ContainerStarted.Addresses()
+			c.addresses = msg.ContainerStarted.Addresses
 
 			names := make([]string, 0, len(c.addresses))
 			for _, address := range c.addresses {
@@ -267,8 +270,16 @@ func (c *command) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 
 func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case scheduler.ResourceAssigned:
-		c.assignment = msg.Assignments[0]
+	case scheduler.ResourcesAllocated:
+		// Ignore this message if the command has exited.
+		if c.task == nil || msg.ID != c.task.ID {
+			ctx.Log().Info("ignoring resource allocation since the command has exited.")
+			return nil
+		}
+
+		check.Panic(check.Equal(len(msg.Allocations), 1,
+			"Command should only receive an allocation of one container"))
+		c.allocation = msg.Allocations[0]
 
 		taskSpec := tasks.TaskSpec{}
 		if c.defaultTaskSpec != nil {
@@ -280,7 +291,7 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 			UserFiles:       c.userFiles,
 			AdditionalFiles: c.additionalFiles,
 		}
-		msg.Assignments[0].StartContainer(ctx, taskSpec)
+		msg.Allocations[0].StartContainer(ctx, taskSpec)
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 
@@ -290,7 +301,7 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 		c.userFiles = nil
 		c.additionalFiles = nil
 
-	case scheduler.ReleaseResource:
+	case scheduler.ReleaseResources:
 		c.terminate(ctx)
 
 	default:
@@ -300,30 +311,30 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 }
 
 // terminate handles the following cases of command termination:
-// 1. Command is aborted before being assigned.
+// 1. Command is aborted before being allocated.
 // 2. Forcible terminating a command by killing containers.
 func (c *command) terminate(ctx *actor.Context) {
-	if msg, ok := ctx.Message().(scheduler.ReleaseResource); ok {
+	if msg, ok := ctx.Message().(scheduler.ReleaseResources); ok {
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), TerminateRequestEvent: &msg})
 	}
 
-	if c.assignment == nil {
+	if c.allocation == nil {
 		c.exit(ctx, "command is terminated without being scheduled")
 	} else {
 		ctx.Log().Info("forcible terminating")
-		c.assignment.KillContainer(ctx)
+		c.allocation.KillContainer(ctx)
 	}
 }
 
 // exit handles the following cases of command exiting:
-// 1. Command is aborted before being assigned.
+// 1. Command is aborted before being allocated.
 // 2. Forcible terminating a command by killing containers.
 // 3. The command container exits itself.
 func (c *command) exit(ctx *actor.Context, exitStatus string) {
 	c.exitStatus = &exitStatus
 	ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ExitedEvent: c.exitStatus})
 
-	ctx.Tell(c.rps, scheduler.RemoveTask{Handler: ctx.Self()})
+	ctx.Tell(c.rps, scheduler.ResourcesReleased{Handler: ctx.Self()})
 	actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 }
 

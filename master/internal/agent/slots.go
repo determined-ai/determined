@@ -41,7 +41,7 @@ func (s *slots) Receive(ctx *actor.Context) error {
 		for _, child := range ctx.Children() {
 			ctx.Tell(child, msg)
 		}
-	case sproto.ContainerStateChanged:
+	case aproto.ContainerStateChanged:
 		s.sendToSlots(ctx, msg.Container, msg)
 	case echo.Context:
 		s.handleAPIRequest(ctx, msg)
@@ -83,9 +83,8 @@ func (s *slots) summarize(ctx *actor.Context) SlotsSummary {
 func (s *slots) sendToSlots(ctx *actor.Context, c container.Container, msg actor.Message) {
 	if len(c.Devices) == 0 && c.State == container.Terminated {
 		ctx.Tell(s.cluster, sproto.FreeDevice{
-			DeviceID:    sproto.DeviceID{
-				Agent: ctx.Self().Parent(), Device: device.Device{Type: device.Unspecified,
-			}},
+			DeviceID: sproto.DeviceID{
+				Agent: ctx.Self().Parent(), Device: device.Device{Type: device.Unspecified}},
 			ContainerID: &c.ID,
 		})
 	} else {

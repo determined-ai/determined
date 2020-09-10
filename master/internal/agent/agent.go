@@ -64,7 +64,7 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		} else {
 			a.address = msg.Ctx.Request().RemoteAddr[0:lastColonIndex]
 		}
-	case sproto.KillContainer:
+	case sproto.KillTaskContainer:
 		ctx.Log().Infof("killing container id: %s", msg.ContainerID)
 		killMsg := aproto.SignalContainer{
 			ContainerID: msg.ContainerID, Signal: syscall.SIGKILL,
@@ -148,7 +148,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 	case msg.ContainerLog != nil:
 		ref, ok := a.containers[msg.ContainerLog.Container.ID]
 		check.Panic(check.True(ok,
-			"container not assigned to agent: container %s", msg.ContainerLog.Container.ID))
+			"container not allocated to agent: container %s", msg.ContainerLog.Container.ID))
 		ctx.Tell(ref, sproto.ContainerLog{
 			Container:   msg.ContainerLog.Container,
 			Timestamp:   msg.ContainerLog.Timestamp,
@@ -163,26 +163,27 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 
 func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerStateChanged) {
 	task, ok := a.containers[sc.Container.ID]
-	check.Panic(check.True(ok, "container not assigned to agent: container %s", sc.Container.ID))
+	check.Panic(check.True(ok, "container not allocated to agent: container %s", sc.Container.ID))
 
+	rsc := sproto.TaskContainerStateChanged{Container: sc.Container}
 	switch sc.Container.State {
 	case container.Running:
 		if sc.ContainerStarted.ProxyAddress == "" {
 			sc.ContainerStarted.ProxyAddress = a.address
 		}
+		rsc.ContainerStarted = &sproto.TaskContainerStarted{
+			Addresses: sc.ContainerStarted.Addresses(),
+		}
 	case container.Terminated:
 		ctx.Log().Infof("stopped container id: %s", sc.Container.ID)
 		delete(a.containers, sc.Container.ID)
-	}
-
-	rsc := sproto.ContainerStateChanged{
-		Container:        sc.Container,
-		ContainerStarted: sc.ContainerStarted,
-		ContainerStopped: sc.ContainerStopped,
+		rsc.ContainerStopped = &sproto.TaskContainerStopped{
+			ContainerStopped: *sc.ContainerStopped,
+		}
 	}
 
 	ctx.Tell(task, rsc)
-	ctx.Tell(a.slots, rsc)
+	ctx.Tell(a.slots, sc)
 }
 
 func (a *agent) summarize(ctx *actor.Context) AgentSummary {

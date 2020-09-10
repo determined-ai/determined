@@ -9,7 +9,7 @@ type FilterableView struct {
 	tasks           map[TaskID]*TaskSummary
 	filteredAgents  map[*actor.Ref]*AgentSummary
 	connectedAgents map[*actor.Ref]*AgentSummary
-	taskFilter      func(*AddTask, *ResourceAssigned) bool
+	taskFilter      func(*AllocateRequest, *ResourcesAllocated) bool
 	agentFilter     func(*agentState) bool
 }
 
@@ -27,14 +27,14 @@ func newProvisionerView(provisionerSlotsPerInstance int) *FilterableView {
 
 func schedulableTaskFilter(
 	provisionerSlotsPerInstance int,
-) func(*AddTask, *ResourceAssigned) bool {
+) func(*AllocateRequest, *ResourcesAllocated) bool {
 	// We only tell the provisioner about pending tasks that are compatible with the
 	// provisioner's configured instance type.
-	return func(req *AddTask, assigned *ResourceAssigned) bool {
+	return func(req *AllocateRequest, assigned *ResourcesAllocated) bool {
 		slotsNeeded := req.SlotsNeeded
 
 		switch {
-		case assigned != nil && len(assigned.Assignments) > 0:
+		case assigned != nil && len(assigned.Allocations) > 0:
 			return false
 		// TODO(DET-4035): This code is duplicated from the fitting functions in the
 		// scheduler. To determine is a task is schedulable, we would ideally interface
@@ -66,11 +66,11 @@ func (v *FilterableView) Update(rp *DefaultRP) (ViewSnapshot, bool) {
 func (v *FilterableView) updateTasks(rp *DefaultRP) bool {
 	newTasks := make(map[TaskID]*TaskSummary)
 
-	for iterator := rp.reqList.iterator(); iterator.next(); {
+	for iterator := rp.taskList.iterator(); iterator.next(); {
 		req := iterator.value()
 
-		if v.taskFilter(req, rp.reqList.GetAssignments(req.Handler)) {
-			newTasks[req.ID] = getTaskSummary(rp.reqList, req.ID)
+		if v.taskFilter(req, rp.taskList.GetAllocations(req.TaskActor)) {
+			newTasks[req.ID] = getTaskSummary(rp.taskList, req.ID)
 		}
 	}
 

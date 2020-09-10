@@ -3,7 +3,7 @@ package scheduler
 import (
 	"github.com/google/uuid"
 
-	"github.com/determined-ai/determined/master/pkg/device"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/agent"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -12,6 +12,7 @@ import (
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/check"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/device"
 	image "github.com/determined-ai/determined/master/pkg/tasks"
 )
 
@@ -21,8 +22,8 @@ type DefaultRP struct {
 	fittingMethod SoftConstraint
 	agents        map[*actor.Ref]*agentState
 
-	reqList *taskList
-	groups  map[*actor.Ref]*group
+	taskList *taskList
+	groups   map[*actor.Ref]*group
 
 	provisioner     *actor.Ref
 	provisionerView *FilterableView
@@ -47,7 +48,7 @@ func NewDefaultRP(
 		agents:        make(map[*actor.Ref]*agentState),
 		groups:        make(map[*actor.Ref]*group),
 
-		reqList: newTaskList(),
+		taskList: newTaskList(),
 
 		provisioner:     provisioner,
 		provisionerView: newProvisionerView(provisionerSlotsPerInstance),
@@ -57,14 +58,14 @@ func NewDefaultRP(
 	return d
 }
 
-func (d *DefaultRP) addTask(ctx *actor.Context, msg AddTask) {
-	d.notifyOnStop(ctx, msg.Handler, RemoveTask{Handler: msg.Handler})
+func (d *DefaultRP) addTask(ctx *actor.Context, msg AllocateRequest) {
+	d.notifyOnStop(ctx, msg.TaskActor, ResourcesReleased{Handler: msg.TaskActor})
 
 	if len(msg.ID) == 0 {
 		msg.ID = TaskID(uuid.New().String())
 	}
 	if msg.Group == nil {
-		msg.Group = msg.Handler
+		msg.Group = msg.TaskActor
 	}
 	d.getOrCreateGroup(ctx, msg.Group)
 	if len(msg.Name) == 0 {
@@ -72,35 +73,36 @@ func (d *DefaultRP) addTask(ctx *actor.Context, msg AddTask) {
 	}
 
 	ctx.Log().Infof(
-		"resources are requested by %s (request ID: %s)",
-		msg.Handler.Address(), msg.ID,
+		"resources are requested by %s (Task ID: %s)",
+		msg.TaskActor.Address(), msg.ID,
 	)
-	d.reqList.AddTask(&msg)
+	d.taskList.AddTask(&msg)
 }
 
-// assignResources assigns resources based on a request and notifies the request
-// handler of the assignment. It returns true if it is successfully assigned.
-func (d *DefaultRP) assignResources(req *AddTask) bool {
+// allocateResources assigns resources based on a request and notifies the request
+// handler of the assignment. It returns true if it is successfully allocated.
+func (d *DefaultRP) allocateResources(req *AllocateRequest) bool {
 	fits := findFits(req, d.agents, d.fittingMethod)
 
 	if len(fits) == 0 {
 		return false
 	}
 
-	assignments := make([]Assignment, 0, len(fits))
+	allocations := make([]Allocation, 0, len(fits))
 	for _, fit := range fits {
-		container := newContainer(req, fit.Agent, fit.Slots, len(assignments))
-		assignments = append(assignments, &containerAssignment{
+		container := newContainer(req, fit.Agent, fit.Slots, len(allocations))
+		allocations = append(allocations, &containerAllocation{
 			req:       req,
 			agent:     fit.Agent,
 			container: container,
-			devices:   fit.Agent.assignFreeDevices(fit.Slots, cproto.ID(container.id)),
+			devices:   fit.Agent.allocateFreeDevices(fit.Slots, cproto.ID(container.id)),
 		})
 	}
 
-	assigned := ResourceAssigned{Assignments: assignments}
-	d.reqList.SetAssignments(req.Handler, &assigned)
-	req.Handler.System().Tell(req.Handler, assigned)
+	allocated := ResourcesAllocated{ID: req.ID, Allocations: allocations}
+	d.taskList.SetAllocations(req.TaskActor, &allocated)
+	req.TaskActor.System().Tell(req.TaskActor, allocated)
+	log.Infof("allocated resources to %s", req.TaskActor.Address())
 
 	return true
 }
@@ -109,17 +111,17 @@ func (d *DefaultRP) releaseResource(handler *actor.Ref) {
 	// The request handler is removed so that it would not take up resources.
 	// In practice, the request handler might gracefully wait for the containers
 	// to exit themselves, which might take very long time or might not happen at all.
-	// In the mean time, resources are re-assigned to other requests, which might let
+	// In the mean time, resources are re-allocated to other requests, which might let
 	// the old container exiting and the new container run slower than normal.
 	// The task handler should kill the containers to physically release the resources
 	// after a timeout.
-	d.reqList.RemoveTask(handler)
-	handler.System().Tell(handler, ReleaseResource{})
+	d.taskList.RemoveTaskByHandler(handler)
+	handler.System().Tell(handler, ReleaseResources{})
 }
 
 func (d *DefaultRP) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
 	ctx.Log().Infof("resources are released for %s", handler.Address())
-	d.reqList.RemoveTask(handler)
+	d.taskList.RemoveTaskByHandler(handler)
 }
 
 func (d *DefaultRP) getOrCreateGroup(ctx *actor.Context, handler *actor.Ref) *group {
@@ -175,19 +177,19 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 		groupActorStopped,
 		SetGroupMaxSlots,
 		SetGroupWeight,
-		AddTask,
-		RemoveTask:
+		AllocateRequest,
+		ResourcesReleased:
 		return d.receiveRequestMsg(ctx)
 
 	case GetTaskSummary:
 		reschedule = false
-		if resp := getTaskSummary(d.reqList, *msg.ID); resp != nil {
+		if resp := getTaskSummary(d.taskList, *msg.ID); resp != nil {
 			ctx.Respond(*resp)
 		}
 
 	case GetTaskSummaries:
 		reschedule = false
-		ctx.Respond(getTaskSummaries(d.reqList))
+		ctx.Respond(getTaskSummaries(d.taskList))
 
 	case sproto.GetEndpointActorAddress:
 		reschedule = false
@@ -267,10 +269,10 @@ func (d *DefaultRP) receiveRequestMsg(ctx *actor.Context) error {
 	case SetGroupWeight:
 		d.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight
 
-	case AddTask:
+	case AllocateRequest:
 		d.addTask(ctx, msg)
 
-	case RemoveTask:
+	case ResourcesReleased:
 		d.resourcesReleased(ctx, msg.Handler)
 
 	default:
@@ -279,16 +281,16 @@ func (d *DefaultRP) receiveRequestMsg(ctx *actor.Context) error {
 	return nil
 }
 
-// containerAssignment contains information for tasks have been assigned but not yet started.
-type containerAssignment struct {
-	req       *AddTask
+// containerAllocation contains information for tasks have been allocated but not yet started.
+type containerAllocation struct {
+	req       *AllocateRequest
 	container *container
 	agent     *agentState
 	devices   []device.Device
 }
 
-// Summary summerizes a container assignment.
-func (c containerAssignment) Summary() ContainerSummary {
+// Summary summarizes a container allocation.
+func (c containerAllocation) Summary() ContainerSummary {
 	return ContainerSummary{
 		TaskID: c.req.ID,
 		ID:     c.container.id,
@@ -297,16 +299,16 @@ func (c containerAssignment) Summary() ContainerSummary {
 }
 
 // StartContainer notifies the agent to start a container.
-func (c containerAssignment) StartContainer(ctx *actor.Context, spec image.TaskSpec) {
+func (c containerAllocation) StartContainer(ctx *actor.Context, spec image.TaskSpec) {
 	handler := c.agent.handler
 	spec.ContainerID = string(c.container.id)
 	spec.TaskID = string(c.req.ID)
 	spec.Devices = c.devices
 	ctx.Tell(handler, sproto.StartTaskOnAgent{
-		Task: c.req.Handler,
+		Task: c.req.TaskActor,
 		StartContainer: aproto.StartContainer{
 			Container: cproto.Container{
-				Parent:  c.req.Handler.Address(),
+				Parent:  c.req.TaskActor.Address(),
 				ID:      cproto.ID(c.container.id),
 				State:   cproto.Assigned,
 				Devices: c.devices,
@@ -317,8 +319,8 @@ func (c containerAssignment) StartContainer(ctx *actor.Context, spec image.TaskS
 }
 
 // KillContainer notifies the agent to kill the container.
-func (c containerAssignment) KillContainer(ctx *actor.Context) {
-	ctx.Tell(c.agent.handler, sproto.KillContainer{
+func (c containerAllocation) KillContainer(ctx *actor.Context) {
+	ctx.Tell(c.agent.handler, sproto.KillTaskContainer{
 		ContainerID: cproto.ID(c.container.id),
 	})
 }
