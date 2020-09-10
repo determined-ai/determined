@@ -1,100 +1,109 @@
 .. _topic-guides_yaml:
 
-YAML Topic Guide
-================
+##################
+ YAML Topic Guide
+##################
 
-YAML is a markup language often used for configuration. In Determined, we use YAML
-for configuring tasks such as experiments and notebooks, as well as :ref:`configuring
-the Determined cluster <cluster-configuration>`.
+YAML is a markup language often used for configuration. In Determined,
+we use YAML for configuring tasks such as experiments and notebooks, as
+well as :ref:`configuring the Determined cluster
+<cluster-configuration>`.
 
-Overview
---------
+**********
+ Overview
+**********
 
 Key-Value Pairs
-~~~~~~~~~~~~~~~
-At its core, YAML is a set of key-value pairs. These pairs are written like
-``key: value``. We use snake-case for words in Determined. The values in a YAML file
-can be ints, floats, booleans, strings, or more complex types like maps and
-arrays.
+===============
 
+At its core, YAML is a set of key-value pairs. These pairs are written
+like ``key: value``. We use snake-case for words in Determined. The
+values in a YAML file can be ints, floats, booleans, strings, or more
+complex types like maps and arrays.
 
 Maps
-~~~~
-Maps represent hierarchical relationships of keys and values. Maps in YAML are
-represented by providing additional key-value pairs as the value of a
-particular key. Maps can be nested and combined with other YAML structures like
-arrays. Indents should be two spaces.
+====
 
-We use a map in the experiment configuration to configure hyperparameters:
+Maps represent hierarchical relationships of keys and values. Maps in
+YAML are represented by providing additional key-value pairs as the
+value of a particular key. Maps can be nested and combined with other
+YAML structures like arrays. Indents should be two spaces.
+
+We use a map in the experiment configuration to configure
+hyperparameters:
 
 .. code:: yaml
 
-  hyperparameters:
-    base_learning_rate: 0.001
-    weight_cost: 0.0001
-    global_batch_size: 64
-    n_filters1: 40
-    n_filters2: 40
+   hyperparameters:
+     base_learning_rate: 0.001
+     weight_cost: 0.0001
+     global_batch_size: 64
+     n_filters1: 40
+     n_filters2: 40
 
 Arrays
-~~~~~~
-We use arrays to provide multiple values for a given key. In arrays, each value
-is on its own line and is preceded by a ``-`` and a space. Arrays can be nested
-and combined with other YAML structures like maps.
+======
+
+We use arrays to provide multiple values for a given key. In arrays,
+each value is on its own line and is preceded by a ``-`` and a space.
+Arrays can be nested and combined with other YAML structures like maps.
 
 We use an array in the experiment configuration to configure environment
 variables:
 
 .. code:: yaml
 
-  environment:
-    environment_variables:
-      - A=A
-      - B=B
-      - C=C
+   environment:
+     environment_variables:
+       - A=A
+       - B=B
+       - C=C
 
+*************************
+ Putting It All Together
+*************************
 
-Putting It All Together
------------------------
-Configurations usually use some combination of key-value pairs, maps, and
-arrays. In this example experiment configuration, we use key-value pairs,
-floats, integers, strings, a map, and an array:
+Configurations usually use some combination of key-value pairs, maps,
+and arrays. In this example experiment configuration, we use key-value
+pairs, floats, integers, strings, a map, and an array:
 
 .. code:: yaml
 
-  description: mnist_tf_const
-  data:
-    base_url: https://s3-us-west-2.amazonaws.com/determined-ai-datasets/mnist/
-    training_data: train-images-idx3-ubyte.gz
-    training_labels: train-labels-idx1-ubyte.gz
-    validation_set_size: 10000
-  hyperparameters:
-    base_learning_rate: 0.001
-    weight_cost: 0.0001
-    global_batch_size: 64
-    n_filters1: 40
-    n_filters2: 40
-  searcher:
-    name: single
-    metric: error
-    max_length:
-      batches: 500
-    smaller_is_better: true
-  environment:
-    environment_variables:
-      - A=A
-      - B=B
-      - C=C
+   description: mnist_tf_const
+   data:
+     base_url: https://s3-us-west-2.amazonaws.com/determined-ai-datasets/mnist/
+     training_data: train-images-idx3-ubyte.gz
+     training_labels: train-labels-idx1-ubyte.gz
+     validation_set_size: 10000
+   hyperparameters:
+     base_learning_rate: 0.001
+     weight_cost: 0.0001
+     global_batch_size: 64
+     n_filters1: 40
+     n_filters2: 40
+   searcher:
+     name: single
+     metric: error
+     max_length:
+       batches: 500
+     smaller_is_better: true
+   environment:
+     environment_variables:
+       - A=A
+       - B=B
+       - C=C
 
-Next Steps
-----------
+************
+ Next Steps
+************
 
-- :ref:`experiment-configuration`
-- :ref:`command-notebook-configuration`
-- :ref:`cluster-configuration`
+-  :ref:`experiment-configuration`
+-  :ref:`command-notebook-configuration`
+-  :ref:`cluster-configuration`
 
-Reference
----------
+***********
+ Reference
+***********
 
-- Read more about YAML: https://learnxinyminutes.com/docs/yaml/
-- Validate your YAML: http://www.yamllint.com/
+-  Read more about YAML: https://learnxinyminutes.com/docs/yaml/
+-  Validate your YAML: http://www.yamllint.com/

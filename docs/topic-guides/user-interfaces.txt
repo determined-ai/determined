@@ -1,29 +1,32 @@
-User Interfaces
-===============
+#################
+ User Interfaces
+#################
 
-WebUI
------
+*******
+ WebUI
+*******
 
 The WebUI allows users to create and monitor the progress of
 experiments. It is accessible by visiting ``http://master-addr:8080``,
 where ``master-addr`` is the hostname or IP address where the Determined
 master is running.
 
-CLI
----
+*****
+ CLI
+*****
 
-Users can also interact with Determined using a command-line interface. The
-CLI is distributed as a Python wheel package; once the wheel has been
-installed (see :ref:`install-cli` for details), the CLI can be
-used via the ``det`` command.
+Users can also interact with Determined using a command-line interface.
+The CLI is distributed as a Python wheel package; once the wheel has
+been installed (see :ref:`install-cli` for details), the CLI can be used
+via the ``det`` command.
 
 The CLI should be installed on any machine where a user would like to
-access Determined. The ``-m`` or ``--master`` flag determines the network
-address of the Determined master that the CLI connects to. If this flag is not
-specified, the value of the ``DET_MASTER`` environment variable is
-used; if that environment variable is not set, the default address is
-``localhost``. The master address can be specified in three different
-formats:
+access Determined. The ``-m`` or ``--master`` flag determines the
+network address of the Determined master that the CLI connects to. If
+this flag is not specified, the value of the ``DET_MASTER`` environment
+variable is used; if that environment variable is not set, the default
+address is ``localhost``. The master address can be specified in three
+different formats:
 
 -  ``example.org:port`` (if ``port`` is omitted, it defaults to
    ``8080``)
@@ -85,5 +88,5 @@ do the same thing:
    $ det s
 
 For a complete description of the available nouns and abbreviations, see
-the output of ``det help``. Each noun also provides a ``help`` verb
-that describes the possible verbs for that noun.
+the output of ``det help``. Each noun also provides a ``help`` verb that
+describes the possible verbs for that noun.

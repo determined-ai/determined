@@ -1,7 +1,8 @@
 .. _terminology-concepts:
 
-Terminology and Concepts
-========================
+##########################
+ Terminology and Concepts
+##########################
 
 agent
    A machine, typically with GPUs, that is used for training models and
@@ -18,8 +19,8 @@ command-line interface (CLI)
 configuration file
    A :ref:`YAML <topic-guides_yaml>` file that contains options to pass
    to Determined. For example, an experiment configuration file contains
-   information on the training length, data location, hyperparameters, and
-   other options for an experiment. More information can be found at
+   information on the training length, data location, hyperparameters,
+   and other options for an experiment. More information can be found at
    :ref:`experiment-configuration`, :ref:`cluster-configuration`, and
    :ref:`command-notebook-configuration`.
 

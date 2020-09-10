@@ -2,4 +2,5 @@
 
 **Bug Fixes**
 
-- Handle rare corner cases where distributed training jobs would fail and hang indefinitely.
+-  Handle rare corner cases where distributed training jobs would fail
+   and hang indefinitely.

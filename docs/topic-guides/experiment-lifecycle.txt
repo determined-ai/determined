@@ -1,15 +1,17 @@
 .. _experiment-lifecycle:
 
-Experiment Lifecycle
-====================
+######################
+ Experiment Lifecycle
+######################
 
 In this guide, we'll go over some of what happens under the hood when a
 user submits an experiment to Determined. We'll cover how the experiment
 gets to the master, how it's turned into concrete trials to run on the
 cluster, and what happens within each trial.
 
-Uploading
----------
+***********
+ Uploading
+***********
 
 First, the CLI gathers all the necessary information about the
 experiment and sends it to the master. The ``det experiment create``
@@ -29,8 +31,9 @@ data from an external source.
 If the context is valid, the CLI takes its contents, along with the
 configuration file, and sends them to the master over the network.
 
-Trial Setup
------------
+*************
+ Trial Setup
+*************
 
 Once the context and configuration for an experiment have reached the
 master, the experiment waits for the scheduler to assign slots to it.
@@ -44,8 +47,9 @@ appropriate agent (or agents, in the case of distributed training),
 which creates `Docker <https://www.docker.com>`_ containers holding the
 user model code, along with the Determined harness.
 
-Importing the Model
--------------------
+*********************
+ Importing the Model
+*********************
 
 From this point on, most of the work happens inside the Docker
 containers running on the agent machines. It's also here that Determined
@@ -62,28 +66,30 @@ application framework; together, the classes provide a consistent
 interface so that models of any framework can interact with the master
 in the same way.
 
-Running the Code
-----------------
+******************
+ Running the Code
+******************
 
 After loading the necessary code, each trial runs a series of workloads.
 Each workload is a discrete unit of work with one purpose related to
 training the model:
 
-- training the model,
-- taking a checkpoint of the model's state, or
-- validating the model's performance.
+-  training the model,
+-  taking a checkpoint of the model's state, or
+-  validating the model's performance.
 
 After each workload, the trial communicates with the master to send back
 the results of the workload and obtain the next workload to run.
 Depending on the searcher in use, the results of validation workloads
 may affect what workloads are run in the future.
 
-While running training or validation workloads, the trial may need to load
-data from an external source; the model code has to specify how to do
-that by defining data loaders.
+While running training or validation workloads, the trial may need to
+load data from an external source; the model code has to specify how to
+do that by defining data loaders.
 
-Pausing and Activating
-----------------------
+************************
+ Pausing and Activating
+************************
 
 An important feature of Determined is the ability to have trials stop
 running and then start again later without losing any training progress.
@@ -99,8 +105,9 @@ either because more slots become available in the cluster or because a
 user activates the experiment, it loads the saved checkpoint, allowing
 it to continue training from the same state it had before.
 
-Next Steps
-----------
+************
+ Next Steps
+************
 
-- :ref:`cli`
-- :ref:`det-system-architecture`
+-  :ref:`cli`
+-  :ref:`det-system-architecture`

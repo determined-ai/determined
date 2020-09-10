@@ -2,5 +2,6 @@
 
 **Improvements**
 
-- Remove support for ``dataflow_to_tf_dataset`` in EstimatorTrial. As a replacement, please use
-  ``wrap_dataset(shard=false)`` to wrap your dataflow.
+-  Remove support for ``dataflow_to_tf_dataset`` in EstimatorTrial. As a
+   replacement, please use ``wrap_dataset(shard=false)`` to wrap your
+   dataflow.

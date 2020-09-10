@@ -1,16 +1,16 @@
-.. _upgrades-troubleshootings:
-
 .. _upgrades:
 
-Upgrades
---------
+.. _upgrades-troubleshootings:
+
+##########
+ Upgrades
+##########
 
 .. warning::
 
    Newer versions of master configuration might not be compatible with
    older versions. Please see the breaking changes in the
    :ref:`release-notes` for upgrading the configuration.
-
 
 Upgrading an existing Determined installation requires the same steps as
 installing Determined for the first time. You should additionally follow
@@ -24,11 +24,11 @@ suspended experiments will be resumed automatically.
 
       det -m <MASTER_ADDRESS> agent disable --all
 
-   where ``MASTER_ADDRESS`` is the IP address or host name where the Determined
-   master can be found. This will cause all tasks running on those agents
-   to be checkpointed and terminated. The checkpoint process might take
-   some time to complete; you can monitor which tasks are still running via
-   ``det slot list``.
+   where ``MASTER_ADDRESS`` is the IP address or host name where the
+   Determined master can be found. This will cause all tasks running on
+   those agents to be checkpointed and terminated. The checkpoint
+   process might take some time to complete; you can monitor which tasks
+   are still running via ``det slot list``.
 
 #. Take a backup of the Determined database using `pg_dump
    <https://www.postgresql.org/docs/10/app-pgdump.html>`_. This is a
@@ -46,16 +46,18 @@ old version of the CLI.
 
 .. _troubleshoot:
 
-Troubleshooting Tips
---------------------
+######################
+ Troubleshooting Tips
+######################
 
 .. _validate-nvidia-container-toolkit:
 
-Validating Nvidia Container Toolkit
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*************************************
+ Validating Nvidia Container Toolkit
+*************************************
 
-To verify that a Determined agent instance can run containers that use GPUs,
-run:
+To verify that a Determined agent instance can run containers that use
+GPUs, run:
 
 .. code::
 
@@ -64,7 +66,7 @@ run:
 You should see output that describes the GPUs available on the agent
 instance, such as:
 
-::
+.. code::
 
    +-----------------------------------------------------------------------------+
    | NVIDIA-SMI 418.39       Driver Version: 418.39       CUDA Version: 10.1     |
@@ -92,10 +94,11 @@ instance, such as:
    |    0      4638      C   python3.6                                  10719MiB |
    +-----------------------------------------------------------------------------+
 
-Error messages
-~~~~~~~~~~~~~~
+****************
+ Error messages
+****************
 
-::
+.. code::
 
    docker: Error response from daemon: OCI runtime create failed: container_linux.go:345: starting container process caused "process_linux.go:424: container init caused \"process_linux.go:407: running prestart hook 1 caused \\\"error running hook: exit status 1, stdout: , stderr: exec command: [/usr/bin/nvidia-container-cli --load-kmods configure --ldconfig=@/sbin/ldconfig --device=all --compute --utility --require=cuda>=10.0 brand=tesla,driver>=384,driver<385 brand=tesla,driver>=410,driver<411 --pid=35777 /var/lib/docker/devicemapper/mnt/7b5b6d59cd4fe9307b7523f1cc9ce3bc37438cc793ff4a5a18a0c0824ec03982/rootfs]\\\\nnvidia-container-cli: requirement error: unsatisfied condition: brand = tesla\\\\n\\\"\"": unknown.
 
@@ -103,8 +106,8 @@ If you see the above error message, the GPU hardware and/or NVIDIA
 drivers installed on the agent are not compatible with CUDA 10, but you
 are trying to run a Docker image that depends on CUDA 10. Please run the
 commands below; if the first succeeds and the second fails, you should
-be able to use Determined as long as you use Docker images based on
-CUDA 9.
+be able to use Determined as long as you use Docker images based on CUDA
+9.
 
 .. code::
 
