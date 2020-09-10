@@ -10,7 +10,6 @@ from typing import Any, Dict, List
 import tensorflow as tf
 import tensorpack
 from tensorflow.python.keras.backend import _preprocess_conv2d_input
-from visualize import visualize_conv_activations, visualize_conv_weights
 
 from determined.estimator import EstimatorTrial, EstimatorTrialContext
 
@@ -65,10 +64,6 @@ class Model(tensorpack.ModelDesc):  # type: ignore
             fc1 = tensorpack.FullyConnected("fc0", c3, 512, nl=tf.nn.relu)
             fc1 = tensorpack.Dropout("dropout", fc1, 0.5)
             logits = tensorpack.FullyConnected("fc1", fc1, out_dim=10, nl=tf.identity)
-
-        if self.hparams.get("visualize", False):
-            visualize_conv_weights(c0.variables.W, "conv0")
-            visualize_conv_activations(c0, "conv0")
 
         # This line will cause Tensorflow to detect GPU usage. If session is not properly
         # configured it causes multi-GPU runs to crash.
