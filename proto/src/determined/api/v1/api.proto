@@ -22,9 +22,9 @@ import "determined/api/v1/user.proto";
 
 option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
     info: {
-        title: "Determined API",
+        title: "Determined API (Beta)",
         description: "Determined helps deep learning teams train models more quickly, easily share GPU resources, and effectively collaborate. Determined allows deep learning engineers to focus on building and training models at scale, without needing to worry about DevOps or writing custom code for common tasks like fault tolerance or experiment tracking.\n\nYou can think of Determined as a platform that bridges the gap between tools like TensorFlow and PyTorch --- which work great for a single researcher with a single GPU --- to the challenges that arise when doing deep learning at scale, as teams, clusters, and data sets all increase in size.",
-        version: "1.0",
+        version: "0.1",
         contact: {
             name: "Determined AI",
             url: "https://determined.ai/",
@@ -38,7 +38,7 @@ option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
     schemes: [HTTP, HTTPS],
     external_docs: {
         description: "Determined AI Documentation",
-        url: "https://docs.determined.ai/",
+        url: "/docs",
     }
 };
 
