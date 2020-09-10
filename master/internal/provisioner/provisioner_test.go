@@ -42,9 +42,9 @@ func newInstanceIDSet(instanceIDs []string) map[string]bool {
 }
 
 type mockConfig struct {
-	initTime               time.Time
 	maxAgentStartingPeriod time.Duration
 	maxIdleAgentPeriod     time.Duration
+	maxDisconnectPeriod    time.Duration
 	instanceType           instanceType
 	maxInstances           int
 	initInstances          []*Instance
@@ -63,8 +63,9 @@ func newMockEnvironment(t *testing.T, setup *mockConfig) *mockEnvironment {
 	p := &Provisioner{
 		provider: cluster,
 		scaleDecider: &scaleDecider{
-			maxStartingPeriod: setup.maxAgentStartingPeriod,
-			maxIdlePeriod:     setup.maxIdleAgentPeriod,
+			maxStartingPeriod:   setup.maxAgentStartingPeriod,
+			maxIdlePeriod:       setup.maxIdleAgentPeriod,
+			maxDisconnectPeriod: setup.maxDisconnectPeriod,
 		},
 	}
 	provisioner, created := system.ActorOf(actor.Addr("provisioner"), p)
@@ -153,7 +154,7 @@ func (c *mockProvider) terminate(ctx *actor.Context, instanceIDs []string) {
 
 func TestProvisionerScaleUp(t *testing.T) {
 	setup := &mockConfig{
-		initTime: time.Now(),
+		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
 			Name:  "test.instanceType",
 			Slots: 4,
@@ -178,7 +179,7 @@ func TestProvisionerScaleUp(t *testing.T) {
 
 func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 	setup := &mockConfig{
-		initTime: time.Now(),
+		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
 			Name:  "test.instanceType",
 			Slots: 4,
@@ -203,8 +204,8 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 
 func TestProvisionerScaleDown(t *testing.T) {
 	setup := &mockConfig{
-		initTime:           time.Now(),
-		maxIdleAgentPeriod: 50 * time.Millisecond,
+		maxIdleAgentPeriod:  50 * time.Millisecond,
+		maxDisconnectPeriod: 5 * time.Minute,
 		instanceType: TestInstanceType{
 			Name:  "test.instanceType",
 			Slots: 4,
@@ -228,15 +229,20 @@ func TestProvisionerScaleDown(t *testing.T) {
 	mock := newMockEnvironment(t, setup)
 
 	mock.system.Ask(mock.provisioner, scheduler.ViewSnapshot{
-		Agents: []*scheduler.AgentSummary{
+		IdleAgents: []*scheduler.AgentSummary{
 			{
 				Name: "agent1",
 			},
 			{
 				Name: "agent2",
 			},
+		},
+		ConnectedAgents: []*scheduler.AgentSummary{
 			{
-				Name: "agent3",
+				Name: "agent1",
+			},
+			{
+				Name: "agent2",
 			},
 		},
 	}).Get()
@@ -257,9 +263,9 @@ func TestProvisionerScaleDown(t *testing.T) {
 
 func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 	setup := &mockConfig{
-		initTime:               time.Now(),
 		maxAgentStartingPeriod: 100 * time.Millisecond,
 		maxIdleAgentPeriod:     100 * time.Millisecond,
+		maxDisconnectPeriod:    5 * time.Minute,
 		instanceType: TestInstanceType{
 			Name:  "test.instanceType",
 			Slots: 4,
@@ -284,7 +290,7 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 
 	// Start the master.
 	mock.system.Ask(mock.provisioner, scheduler.ViewSnapshot{
-		Agents: []*scheduler.AgentSummary{
+		IdleAgents: []*scheduler.AgentSummary{
 			{
 				Name: "agent1",
 			},
@@ -308,4 +314,48 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 
 	assert.NilError(t, mock.system.StopAndAwaitTermination())
 	assert.DeepEqual(t, mock.cluster.history[len(mock.cluster.history)-1], newMockFuncCall("list"))
+}
+
+func TestProvisionerTerminateUnconnectedInstances(t *testing.T) {
+	setup := &mockConfig{
+		maxAgentStartingPeriod: 3 * time.Minute,
+		maxIdleAgentPeriod:     50 * time.Millisecond,
+		maxDisconnectPeriod:    50 * time.Millisecond,
+		instanceType: TestInstanceType{
+			Name:  "test.instanceType",
+			Slots: 4,
+		},
+		maxInstances: 100,
+		initInstances: []*Instance{
+			{
+				ID:         "disconnectedInstance",
+				LaunchTime: time.Now().Add(-time.Hour),
+				AgentName:  "agent1",
+				State:      Running,
+			},
+			{
+				ID:         "startingInstance",
+				LaunchTime: time.Now().Add(-time.Minute),
+				AgentName:  "agent2",
+				State:      Running,
+			},
+		},
+	}
+	mock := newMockEnvironment(t, setup)
+
+	mock.system.Ask(mock.provisioner, scheduler.ViewSnapshot{
+		ConnectedAgents: []*scheduler.AgentSummary{},
+	}).Get()
+	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+	time.Sleep(100 * time.Millisecond)
+	mock.system.Ask(mock.provisioner, provisionerTick{}).Get()
+
+	assert.NilError(t, mock.system.StopAndAwaitTermination())
+	assert.DeepEqual(t, mock.cluster.history, []mockFuncCall{
+		newMockFuncCall("list"),
+		newMockFuncCall("list"),
+		newMockFuncCall("terminate", newInstanceIDSet([]string{
+			"disconnectedInstance",
+		})),
+	})
 }

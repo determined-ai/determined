@@ -5,9 +5,13 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-const minRetryInterval = 10 * time.Second
+const (
+	minRetryInterval    = 10 * time.Second
+	maxDisconnectPeriod = 5 * time.Minute
+)
 
 // scaleDecider makes decisions based on the following assumptions:
 // 1. All pending tasks cannot fit into all agents when receiving the snapshots from
@@ -23,25 +27,29 @@ const minRetryInterval = 10 * time.Second
 //    b. The instances are already running but agents on them are starting up.
 //    c. The agents are disconnected to the master due to misconfiguration or some unknown reason.
 type scaleDecider struct {
-	maxIdlePeriod     time.Duration
-	maxStartingPeriod time.Duration
+	maxIdlePeriod       time.Duration
+	maxStartingPeriod   time.Duration
+	maxDisconnectPeriod time.Duration
 
-	lastProvision        time.Time
-	lastSchedulerUpdated time.Time
-	lastProviderUpdated  time.Time
-	instanceSnapshot     map[string]*Instance
-	agentSnapshot        map[string]*scheduler.AgentSummary
-	taskSnapshot         []*scheduler.TaskSummary
+	lastProvision          time.Time
+	lastSchedulerUpdated   time.Time
+	lastProviderUpdated    time.Time
+	instanceSnapshot       map[string]*Instance
+	idleAgentSnapshot      map[string]*scheduler.AgentSummary
+	connectedAgentSnapshot map[string]*scheduler.AgentSummary
+	taskSnapshot           []*scheduler.TaskSummary
 
-	pastIdleInstances map[string]time.Time
+	pastIdleInstances         map[string]time.Time
+	pastDisconnectedInstances map[string]time.Time
 }
 
 func newScaleDecider(
 	maxIdlePeriod time.Duration, maxStartingPeriod time.Duration,
 ) *scaleDecider {
 	return &scaleDecider{
-		maxStartingPeriod: maxStartingPeriod,
-		maxIdlePeriod:     maxIdlePeriod,
+		maxStartingPeriod:   maxStartingPeriod,
+		maxIdlePeriod:       maxIdlePeriod,
+		maxDisconnectPeriod: maxDisconnectPeriod,
 	}
 }
 
@@ -67,10 +75,16 @@ func (s *scaleDecider) needScale() bool {
 }
 
 func (s *scaleDecider) updateSchedulerSnapshot(snapshot *scheduler.ViewSnapshot) {
-	s.agentSnapshot = make(map[string]*scheduler.AgentSummary)
-	for _, agent := range snapshot.Agents {
-		s.agentSnapshot[agent.Name] = agent
+	s.idleAgentSnapshot = make(map[string]*scheduler.AgentSummary)
+	for _, agent := range snapshot.IdleAgents {
+		s.idleAgentSnapshot[agent.Name] = agent
 	}
+
+	s.connectedAgentSnapshot = make(map[string]*scheduler.AgentSummary)
+	for _, agent := range snapshot.ConnectedAgents {
+		s.connectedAgentSnapshot[agent.Name] = agent
+	}
+
 	s.taskSnapshot = snapshot.Tasks
 	s.lastSchedulerUpdated = time.Now()
 }
@@ -98,27 +112,47 @@ func (s *scaleDecider) updateInstanceSnapshot(instances []*Instance) bool {
 }
 
 func (s *scaleDecider) findInstancesToTerminate(
+	ctx *actor.Context,
 	maxInstanceNum int,
 ) []string {
 	toTerminate := make(map[string]bool)
 	idleInstances := make(map[string]bool)
+	disconnectedInstances := make(map[string]bool)
 
-	// Terminate stopped instances and find idle instances.
+	// Terminate stopped instances and find idle and disconnected instances.
+	now := time.Now()
 	for _, inst := range s.instanceSnapshot {
 		switch inst.State {
 		case Stopped:
 			toTerminate[inst.ID] = true
 
 		case Running:
-			if _, ok := s.agentSnapshot[inst.AgentName]; ok {
+			if _, ok := s.idleAgentSnapshot[inst.AgentName]; ok {
 				idleInstances[inst.ID] = true
 			}
+
+			if _, connected := s.connectedAgentSnapshot[inst.AgentName]; connected {
+				continue
+			}
+			if inst.LaunchTime.Add(s.maxStartingPeriod).After(now) {
+				continue
+			}
+			disconnectedInstances[inst.ID] = true
 		}
+	}
+
+	// Terminate instances that have not connected to the master for a long time.
+	var longUnconnected map[string]bool
+	s.pastDisconnectedInstances, longUnconnected = findInstancesLongInSameState(
+		s.pastDisconnectedInstances, disconnectedInstances, s.maxDisconnectPeriod)
+	for id := range longUnconnected {
+		toTerminate[id] = true
 	}
 
 	// Terminate instances that are idle for a long time.
 	var longIdle map[string]bool
-	s.pastIdleInstances, longIdle = findLongIdle(s.pastIdleInstances, idleInstances, s.maxIdlePeriod)
+	s.pastIdleInstances, longIdle = findInstancesLongInSameState(
+		s.pastIdleInstances, idleInstances, s.maxIdlePeriod)
 	for id := range longIdle {
 		toTerminate[id] = true
 	}
@@ -205,21 +239,23 @@ func min(a, b int) int {
 	return b
 }
 
-func findLongIdle(
-	pastIdle map[string]time.Time, presentIdle map[string]bool, duration time.Duration,
+func findInstancesLongInSameState(
+	pastInstancesInState map[string]time.Time,
+	presentInstanceInState map[string]bool,
+	duration time.Duration,
 ) (map[string]time.Time, map[string]bool) {
-	updatedPastIdle := make(map[string]time.Time)
-	longIdle := make(map[string]bool)
+	updatedInstancesInState := make(map[string]time.Time)
+	durationExceededInState := make(map[string]bool)
 	now := time.Now()
-	for id := range presentIdle {
-		switch t, ok := pastIdle[id]; {
+	for id := range presentInstanceInState {
+		switch t, ok := pastInstancesInState[id]; {
 		case ok && now.After(t.Add(duration)):
-			longIdle[id] = true
+			durationExceededInState[id] = true
 		case ok:
-			updatedPastIdle[id] = t
+			updatedInstancesInState[id] = t
 		default:
-			updatedPastIdle[id] = now
+			updatedInstancesInState[id] = now
 		}
 	}
-	return updatedPastIdle, longIdle
+	return updatedInstancesInState, durationExceededInState
 }

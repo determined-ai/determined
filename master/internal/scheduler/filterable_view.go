@@ -6,20 +6,22 @@ import "github.com/determined-ai/determined/master/pkg/actor"
 // The `TaskSummary`s and `AgentSummary` should not be modified because a reference to
 // this struct is contained in another goroutine.
 type FilterableView struct {
-	tasks       map[TaskID]*TaskSummary
-	agents      map[*actor.Ref]*AgentSummary
-	taskFilter  func(*Task) bool
-	agentFilter func(*agentState) bool
+	tasks           map[TaskID]*TaskSummary
+	filteredAgents  map[*actor.Ref]*AgentSummary
+	connectedAgents map[*actor.Ref]*AgentSummary
+	taskFilter      func(*Task) bool
+	agentFilter     func(*agentState) bool
 }
 
 // Return a view of the scheduler state that is relevant to the provisioner. Specifically, the
 // provisioner cares about (1) idle agents (2) pending tasks.
 func newProvisionerView(provisionerSlotsPerInstance int) *FilterableView {
 	return &FilterableView{
-		tasks:       make(map[TaskID]*TaskSummary),
-		agents:      make(map[*actor.Ref]*AgentSummary),
-		taskFilter:  schedulableTaskFilter(provisionerSlotsPerInstance),
-		agentFilter: idleAgentFilter,
+		tasks:           make(map[TaskID]*TaskSummary),
+		filteredAgents:  make(map[*actor.Ref]*AgentSummary),
+		connectedAgents: make(map[*actor.Ref]*AgentSummary),
+		taskFilter:      schedulableTaskFilter(provisionerSlotsPerInstance),
+		agentFilter:     idleAgentFilter,
 	}
 }
 
@@ -88,29 +90,38 @@ func (v *FilterableView) updateTasks(rp *DefaultRP) bool {
 }
 
 func (v *FilterableView) updateAgents(rp *DefaultRP) bool {
-	newAgents := make(map[*actor.Ref]*AgentSummary)
+	newFilteredAgents := make(map[*actor.Ref]*AgentSummary)
+	newConnectedAgents := make(map[*actor.Ref]*AgentSummary)
 
 	for actorRef, state := range rp.agents {
+		agentSummary := newAgentSummary(state)
 		if v.agentFilter(state) {
-			agentSummary := newAgentSummary(state)
-			newAgents[actorRef] = &agentSummary
+			newFilteredAgents[actorRef] = &agentSummary
 		}
+		newConnectedAgents[actorRef] = &agentSummary
 	}
 
-	updateMade := false
-	if len(newAgents) != len(v.agents) {
-		updateMade = true
-	} else {
-		for agentRef, newAgent := range newAgents {
-			oldAgent, ok := v.agents[agentRef]
-			if !ok || !oldAgent.equals(newAgent) {
-				updateMade = true
+	haveAgentsUpdated := func(updatedAgents, previousAgents map[*actor.Ref]*AgentSummary) bool {
+		updateMade := false
+		if len(updatedAgents) != len(previousAgents) {
+			updateMade = true
+		} else {
+			for agentRef, newAgent := range updatedAgents {
+				oldAgent, ok := previousAgents[agentRef]
+				if !ok || !oldAgent.equals(newAgent) {
+					updateMade = true
+				}
 			}
 		}
+		return updateMade
 	}
 
-	v.agents = newAgents
-	return updateMade
+	agentsUpdated := haveAgentsUpdated(newFilteredAgents, v.filteredAgents) || haveAgentsUpdated(
+		newConnectedAgents, v.connectedAgents)
+
+	v.filteredAgents = newFilteredAgents
+	v.connectedAgents = newConnectedAgents
+	return agentsUpdated
 }
 
 func (v *FilterableView) newSnapshot() ViewSnapshot {
@@ -118,9 +129,13 @@ func (v *FilterableView) newSnapshot() ViewSnapshot {
 	for _, taskSummary := range v.tasks {
 		tasks = append(tasks, taskSummary)
 	}
-	agents := make([]*AgentSummary, 0, len(v.agents))
-	for _, agent := range v.agents {
-		agents = append(agents, agent)
+	connectedAgents := make([]*AgentSummary, 0, len(v.connectedAgents))
+	for _, agent := range v.connectedAgents {
+		connectedAgents = append(connectedAgents, agent)
 	}
-	return ViewSnapshot{Tasks: tasks, Agents: agents}
+	filteredAgents := make([]*AgentSummary, 0, len(v.filteredAgents))
+	for _, agent := range v.filteredAgents {
+		filteredAgents = append(filteredAgents, agent)
+	}
+	return ViewSnapshot{Tasks: tasks, ConnectedAgents: connectedAgents, IdleAgents: filteredAgents}
 }

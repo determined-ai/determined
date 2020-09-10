@@ -1,0 +1,6 @@
+:orphan:
+
+**Improvements**
+
+- Add connection checks for dynamic agents. If a dynamically provisioned agent is not
+  actively connected for a period of 5 minutes to the master, it is terminated.
