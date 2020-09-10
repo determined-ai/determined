@@ -117,6 +117,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case actor.PostStop:
 		c.terminate(ctx)
 
+	case scheduler.ResourceAssigned, scheduler.ReleaseResource:
+		return c.receiveSchedulerMsg(ctx)
+
 	case getSummary:
 		if msg.userFilter == "" || c.owner.Username == msg.userFilter {
 			ctx.Respond(newSummary(c))
@@ -225,34 +228,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 			if msg.ContainerStopped.Failure != nil {
 				exitStatus = msg.ContainerStopped.Failure.Error()
 			}
+
 			c.exit(ctx, exitStatus)
 		}
-
-	case scheduler.ResourceAssigned:
-		c.assignment = msg.Assignments[0]
-
-		taskSpec := tasks.TaskSpec{}
-		if c.defaultTaskSpec != nil {
-			taskSpec = *c.defaultTaskSpec
-		}
-		taskSpec.StartCommand = &tasks.StartCommand{
-			AgentUserGroup:  c.agentUserGroup,
-			Config:          c.config,
-			UserFiles:       c.userFiles,
-			AdditionalFiles: c.additionalFiles,
-		}
-		msg.Assignments[0].StartContainer(ctx, taskSpec)
-
-		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
-
-		// Evict the context from memory after starting the command as it is no longer needed. We
-		// evict as soon as possible to prevent the master from hitting an OOM.
-		// TODO: Consider not storing the userFiles in memory at all.
-		c.userFiles = nil
-		c.additionalFiles = nil
-
-	case scheduler.ReleaseResource:
-		c.terminate(ctx)
 
 	case sproto.ContainerLog:
 		if !c.readinessMessageSent && c.readinessChecksPass(ctx, msg) {
@@ -287,17 +265,66 @@ func (c *command) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	}
 }
 
-func (c *command) terminate(ctx *actor.Context) {
-	ctx.Log().Info("terminating")
-	ctx.Tell(c.rps, scheduler.RemoveTask{Handler: ctx.Self()})
-	if c.assignment != nil {
-		c.assignment.KillContainer(ctx)
-	} else {
-		c.exit(ctx, "command terminated without being scheduled")
+func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case scheduler.ResourceAssigned:
+		c.assignment = msg.Assignments[0]
+
+		taskSpec := tasks.TaskSpec{}
+		if c.defaultTaskSpec != nil {
+			taskSpec = *c.defaultTaskSpec
+		}
+		taskSpec.StartCommand = &tasks.StartCommand{
+			AgentUserGroup:  c.agentUserGroup,
+			Config:          c.config,
+			UserFiles:       c.userFiles,
+			AdditionalFiles: c.additionalFiles,
+		}
+		msg.Assignments[0].StartContainer(ctx, taskSpec)
+
+		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
+
+		// Evict the context from memory after starting the command as it is no longer needed. We
+		// evict as soon as possible to prevent the master from hitting an OOM.
+		// TODO: Consider not storing the userFiles in memory at all.
+		c.userFiles = nil
+		c.additionalFiles = nil
+
+	case scheduler.ReleaseResource:
+		c.terminate(ctx)
+
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
 	}
+	return nil
+}
+
+// terminate handles the following cases of command termination:
+// 1. Command is aborted before being assigned.
+// 2. Forcible terminating a command by killing containers.
+func (c *command) terminate(ctx *actor.Context) {
 	if msg, ok := ctx.Message().(scheduler.ReleaseResource); ok {
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), TerminateRequestEvent: &msg})
 	}
+
+	if c.assignment == nil {
+		c.exit(ctx, "command is terminated without being scheduled")
+	} else {
+		ctx.Log().Info("forcible terminating")
+		c.assignment.KillContainer(ctx)
+	}
+}
+
+// exit handles the following cases of command exiting:
+// 1. Command is aborted before being assigned.
+// 2. Forcible terminating a command by killing containers.
+// 3. The command container exits itself.
+func (c *command) exit(ctx *actor.Context, exitStatus string) {
+	c.exitStatus = &exitStatus
+	ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ExitedEvent: c.exitStatus})
+
+	ctx.Tell(c.rps, scheduler.RemoveTask{Handler: ctx.Self()})
+	actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 }
 
 func (c *command) readinessChecksPass(ctx *actor.Context, log sproto.ContainerLog) bool {
@@ -308,13 +335,6 @@ func (c *command) readinessChecksPass(ctx *actor.Context, log sproto.ContainerLo
 		}
 	}
 	return len(c.readinessChecks) == 0
-}
-
-func (c *command) exit(ctx *actor.Context, exitStatus string) {
-	c.exitStatus = &exitStatus
-	ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ExitedEvent: c.exitStatus})
-	ctx.Tell(c.rps, scheduler.RemoveTask{Handler: ctx.Self()})
-	actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 }
 
 func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {

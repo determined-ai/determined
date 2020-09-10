@@ -964,6 +964,60 @@ func classifyStatus(state terminatedContainerWithState) aproto.ContainerStopped 
 	}
 }
 
+func (t *trial) restore(ctx *actor.Context) {
+	// If the trial has not been created in the database yet (which can happen during master restart),
+	// it can't have any state to restore.
+	if !t.idSet {
+		return
+	}
+
+	trial, err := t.db.TrialByID(t.id)
+	if err != nil {
+		ctx.Log().Error(err)
+	} else if _, ok := model.TerminalStates[trial.State]; ok {
+		ctx.Self().Stop()
+		return
+	}
+
+	step := t.sequencer.RollBackSequencer()
+
+	ctx.Log().Infof("restoring trial %d to end of step %d", t.id, step)
+
+	// Delete things in the database that are now invalid. (Even if the last completed
+	// step had its checkpoint done, the following step may have been started and thus
+	// added to the database already.)
+	if err := t.db.RollBackTrial(t.id, step); err != nil {
+		ctx.Log().Error(err)
+	}
+}
+
+func (t *trial) trialClosing() bool {
+	return t.earlyExit || t.killed || t.restarts > t.experiment.Config.MaxRestarts ||
+		(t.close != nil && t.sequencer.UpToDate()) ||
+		model.StoppingStates[t.experimentState]
+}
+
+func (t *trial) terminate(ctx *actor.Context, kill bool) {
+	switch {
+	case len(t.assignments) == 0:
+		ctx.Log().Info("aborting trial")
+		t.terminated(ctx)
+		ctx.Tell(ctx.Self(), trialAborted{})
+	case kill:
+		ctx.Log().Info("forcibly terminating trial")
+		if t.resourceRequest != nil {
+			if t.assignments != nil {
+				for _, assignment := range t.assignments {
+					assignment.KillContainer(ctx)
+				}
+			}
+		}
+	default:
+		ctx.Log().Info("gracefully terminating trial")
+		t.pendingGracefulTermination = true
+	}
+}
+
 func (t *trial) terminated(ctx *actor.Context) {
 	// Get container termination states.
 	// If there are no containers terminated, consider as aborted.
@@ -1046,60 +1100,5 @@ func (t *trial) terminated(ctx *actor.Context) {
 	}
 	if err := t.processCompletedWorkload(ctx, erroredMessage); err != nil {
 		ctx.Log().Error(err)
-	}
-}
-
-func (t *trial) restore(ctx *actor.Context) {
-	// If the trial has not been created in the database yet (which can happen during master restart),
-	// it can't have any state to restore.
-	if !t.idSet {
-		return
-	}
-
-	trial, err := t.db.TrialByID(t.id)
-	if err != nil {
-		ctx.Log().Error(err)
-	} else if _, ok := model.TerminalStates[trial.State]; ok {
-		ctx.Self().Stop()
-		return
-	}
-
-	step := t.sequencer.RollBackSequencer()
-
-	ctx.Log().Infof("restoring trial %d to end of step %d", t.id, step)
-
-	// Delete things in the database that are now invalid. (Even if the last completed
-	// step had its checkpoint done, the following step may have been started and thus
-	// added to the database already.)
-	if err := t.db.RollBackTrial(t.id, step); err != nil {
-		ctx.Log().Error(err)
-	}
-}
-
-func (t *trial) trialClosing() bool {
-	return t.earlyExit || t.killed || t.restarts > t.experiment.Config.MaxRestarts ||
-		(t.close != nil && t.sequencer.UpToDate()) ||
-		model.StoppingStates[t.experimentState]
-}
-
-func (t *trial) terminate(ctx *actor.Context, kill bool) {
-	switch {
-	case len(t.assignments) == 0:
-		ctx.Log().Info("aborting trial")
-		t.terminated(ctx)
-		ctx.Tell(ctx.Self(), trialAborted{})
-	case kill:
-		ctx.Log().Info("forcibly terminating trial")
-		if t.resourceRequest != nil {
-			if t.assignments != nil {
-				for _, assignment := range t.assignments {
-					assignment.KillContainer(ctx)
-				}
-			}
-			ctx.Tell(t.rp, scheduler.RemoveTask{Handler: ctx.Self()})
-		}
-	default:
-		ctx.Log().Info("gracefully terminating trial")
-		t.pendingGracefulTermination = true
 	}
 }
