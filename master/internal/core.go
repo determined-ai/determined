@@ -169,23 +169,22 @@ func (m *Master) startServers(cert *tls.Certificate) error {
 		return errors.New("master was not configured to listen on any port")
 	}
 
+	if err := grpc.RegisterHTTPProxy(m.echo, m.config.GRPCPort, m.config.EnableCors); err != nil {
+		return errors.Wrap(err, "failed to register gPRC proxy")
+	}
+
 	// Start all servers.
 	errs := make(chan error)
 	defer close(errs)
 
-	runServer := func(server *http.Server) {
-		errs <- errors.Wrap(m.echo.StartServer(server), servers[server]+" failed")
-	}
 	go func() {
-		if err := grpc.RegisterHTTPProxy(m.echo, m.config.GRPCPort, m.config.EnableCors); err != nil {
-			errs <- err
-			return
-		}
 		errs <- grpc.StartGRPCServer(m.db, &apiServer{m: m}, m.config.GRPCPort)
 	}()
 
 	for server := range servers {
-		go runServer(server)
+		go func(server *http.Server) {
+			errs <- errors.Wrap(m.echo.StartServer(server), servers[server]+" failed")
+		}(server)
 	}
 
 	// Wait for all servers to terminate; return only the first error received, if any (since we close
