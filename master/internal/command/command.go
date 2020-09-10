@@ -123,6 +123,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 	case scheduler.ResourcesAllocated, scheduler.ReleaseResources:
 		return c.receiveSchedulerMsg(ctx)
 
+		// TODO propagate command kill to subscribed logActors
+		// OR just to the event manager always?
+		// message to terminate logActor
 	case GetSummary:
 		if msg.userFilter == "" || c.owner.Username == msg.userFilter {
 			ctx.Respond(newSummary(c))

@@ -74,6 +74,20 @@ func (a *apiServer) NotebookLogs(
 	cmdManagerAddr := actor.Addr("notebooks", req.NotebookId)
 	eventManagerAddr := cmdManagerAddr.Child("events")
 
+	// TODO create an actor (logActor)
+	// register actor using logReq and context with eventManager
+	// block while the actor is running.
+	// Q how does the actor shutdown? check context, and termination?
+	// receive:
+	//   logmessages: push through the context
+	//   unregistering: command and event mgr
+
+	// TODO a general subscriber management for actors (for events and commands actors):
+	// 1. add subscriber with parameters (logrequest, identifier)
+	// 2. remove subscribers
+	// 3. find active and matching subscribers for termination and log events
+	//   a. publish to subscribers based on parameters for: new events and termination
+
 	// CHECK Here we might have a synchronization issue which would only affect negative offsets since
 	// those are reliant on the total event number. Still it wouldn't cause any real miscalculations
 	// from an external POV would it? same situation with trial logs

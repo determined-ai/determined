@@ -93,6 +93,9 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 				child.Stop()
 			}
 		}
+	// case logactor:
+	// filter and stream to logActor based on the logRequest
+	// message to terminate logActor
 
 	case GetEventCount:
 		// OPT we could use log_buffer here instead of a plain ring buffer.
