@@ -170,7 +170,7 @@ func (m *Master) startServers(cert *tls.Certificate) error {
 	}
 
 	if err := grpc.RegisterHTTPProxy(m.echo, m.config.GRPCPort, m.config.EnableCors); err != nil {
-		return errors.Wrap(err, "failed to register gPRC proxy")
+		return errors.Wrap(err, "failed to register gRPC proxy")
 	}
 
 	// Start all servers.
@@ -595,7 +595,9 @@ func (m *Master) Run() error {
 	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
 
-	m.system.Tell(m.rp, sproto.ConfigureEndpoints{System: m.system, Echo: m.echo})
+	// The Echo server registrations must be serialized, so we block until the ResourceProvider is
+	// finished with its ConfigureEndpoints call.
+	m.system.Ask(m.rp, sproto.ConfigureEndpoints{System: m.system, Echo: m.echo}).Get()
 
 	if m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "" {
 		if telemetry, err := telemetry.NewActor(
