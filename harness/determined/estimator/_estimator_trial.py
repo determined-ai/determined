@@ -12,6 +12,7 @@ from typing import Any, Callable, Dict, List, Optional, cast
 import numpy as np
 import tensorflow as tf
 from packaging import version
+from tensorflow.python.util import function_utils
 
 import determined as det
 from determined import estimator, horovod, ipc, tensorboard, workload
@@ -374,8 +375,10 @@ class EstimatorTrialController(det.LoopTrialController):
         # Set the default session before importing any user code. If the default session isn't
         # set and users call TF code that detects GPUs, it would map the processes to all of
         # the GPUs. We set the default session before importing any user code to prevent this
-        # this problem.
-        EstimatorTrialController._set_default_tensorflow_session(env=env, hvd_config=hvd_config)
+        # this problem. This default session does not have any effect within the Estimator itself.
+        EstimatorTrialController._set_default_tensorflow_session(
+            env=env, hvd_config=hvd_config, session_config=None
+        )
 
     @staticmethod
     def set_random_seed(seed: int) -> None:
@@ -387,10 +390,12 @@ class EstimatorTrialController(det.LoopTrialController):
 
     @staticmethod
     def _set_default_tensorflow_session(
-        env: det.EnvContext, hvd_config: horovod.HorovodContext
+        env: det.EnvContext,
+        hvd_config: horovod.HorovodContext,
+        session_config: Optional[tf.compat.v1.ConfigProto],
     ) -> None:
         session_config = EstimatorTrialController._init_session_config(
-            session_config=None,
+            session_config=session_config,
             env=env,
             hvd_config=hvd_config,
         )
@@ -493,13 +498,47 @@ class EstimatorTrialController(det.LoopTrialController):
 
         return wrapper
 
+    def _set_default_session_before_building_model(self, f: Callable) -> Callable:
+        # Estimators does not apply the passed in session config prior to building the
+        # model graph. If there are calls within the graph that detect GPU availability
+        # (e.g., _has_nchw_support) this will cause all devices to be visible and lead
+        # to OOM or errors when processes are pinned to individual GPUs as specified
+        # in the session config. To avoid this, we set the default session prior to
+        # calling the user's model_fn.
+
+        @functools.wraps(f)
+        def wrapper(features: Any, labels: Any, mode: Any, params: Any, config: Any) -> Any:
+            # Tensorflow inspects the arguments of `model_fn()`. We provide all the possible
+            # arguments and then inspect the ones that are used by the `model_fn()`.
+            model_fn_args = function_utils.fn_args(f)
+
+            kwargs = {}
+            if "labels" in model_fn_args:
+                kwargs["labels"] = labels
+            if "mode" in model_fn_args:
+                kwargs["mode"] = mode
+            if "params" in model_fn_args:
+                kwargs["params"] = params
+            if "config" in model_fn_args:
+                kwargs["config"] = config
+
+            self._set_default_tensorflow_session(
+                env=self.env,
+                hvd_config=self.hvd_config,
+                session_config=config.session_config,
+            )
+
+            return f(features, **kwargs)
+
+        return wrapper
+
     def _init_model(self) -> None:
         self._init_train_hooks()
         self._init_val_hooks()
         self._init_paths()
 
         self.estimator = tf.estimator.Estimator(
-            model_fn=self.estimator._model_fn,
+            model_fn=self._set_default_session_before_building_model(self.estimator._model_fn),
             config=self._init_run_config(self.estimator.config),
             params=self.estimator.params if self.estimator.params != {} else None,
             warm_start_from=self.estimator._warm_start_settings,

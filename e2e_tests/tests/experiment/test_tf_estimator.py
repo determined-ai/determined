@@ -159,3 +159,14 @@ def test_mnist_estimator_adaptive_with_data_layer() -> None:
     exp.run_basic_test_with_temp_config(
         config, conf.experimental_path("trial/data_layer_mnist_estimator"), None
     )
+
+
+@pytest.mark.parallel  # type: ignore
+def test_estimator_when_detecting_gpus() -> None:
+    config = conf.load_config(conf.fixtures_path("estimator_gpu_detection/const.yaml"))
+    config = conf.set_slots_per_trial(config, 8)
+    config = conf.set_max_length(config, {"batches": 200})
+
+    exp.run_basic_test_with_temp_config(
+        config, conf.fixtures_path("estimator_gpu_detection/"), 1, has_zeroth_step=False
+    )
