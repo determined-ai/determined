@@ -12,6 +12,7 @@ import (
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/device"
 )
 
 type slots struct {
@@ -31,8 +32,7 @@ func (s *slots) Receive(ctx *actor.Context) error {
 				agentEnabled: true,
 				userEnabled:  true,
 			}
-			s := &slot{cluster: s.cluster, enabled: enabled, device: d}
-			_, ok := ctx.ActorOf(d.ID, s)
+			_, ok := ctx.ActorOf(d.ID, &slot{cluster: s.cluster, enabled: enabled, device: d})
 			check.Panic(check.True(ok, "error registering slot, slot %s already created", d.ID))
 		}
 	case aproto.StartContainer:
@@ -81,7 +81,16 @@ func (s *slots) summarize(ctx *actor.Context) SlotsSummary {
 }
 
 func (s *slots) sendToSlots(ctx *actor.Context, c container.Container, msg actor.Message) {
-	for _, d := range c.Devices {
-		ctx.Tell(ctx.Child(d.ID), msg)
+	if len(c.Devices) == 0 && c.State == container.Terminated {
+		ctx.Tell(s.cluster, sproto.FreeDevice{
+			DeviceID:    sproto.DeviceID{
+				Agent: ctx.Self().Parent(), Device: device.Device{Type: device.Unspecified,
+			}},
+			ContainerID: &c.ID,
+		})
+	} else {
+		for _, d := range c.Devices {
+			ctx.Tell(ctx.Child(d.ID), msg)
+		}
 	}
 }

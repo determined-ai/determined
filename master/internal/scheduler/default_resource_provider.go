@@ -168,8 +168,7 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 		sproto.AddDevice,
 		sproto.FreeDevice,
 		sproto.RemoveDevice,
-		sproto.RemoveAgent,
-		sproto.ContainerStateChanged:
+		sproto.RemoveAgent:
 		return d.receiveAgentMsg(ctx)
 
 	case
@@ -221,19 +220,25 @@ func (d *DefaultRP) receiveAgentMsg(ctx *actor.Context) error {
 		d.agents[msg.Agent] = newAgentState(msg)
 
 	case sproto.AddDevice:
-		ctx.Log().Infof("adding device: %s (%s)", msg.Device.String(), msg.Agent.Address().Local())
+		ctx.Log().Infof("adding device: %s on %s", msg.Device.String(), msg.Agent.Address().Local())
 		state, ok := d.agents[msg.Agent]
 		check.Panic(check.True(ok, "error adding device, agent not found: %s", msg.Agent.Address()))
 		state.devices[msg.Device] = msg.ContainerID
 
 	case sproto.FreeDevice:
-		ctx.Log().Infof("freeing device: %s (%s)", msg.Device.String(), msg.Agent.Address().Local())
+		ctx.Log().Infof("freeing device from container %s: %s on %s",
+			msg.ContainerID, msg.Device.String(), msg.Agent.Address().Local())
 		state, ok := d.agents[msg.Agent]
 		check.Panic(check.True(ok, "error freeing device, agent not found: %s", msg.Agent.Address()))
-		id, ok := d.agents[msg.Agent].devices[msg.Device]
-		check.Panic(check.True(ok, "error freeing device, device not found: %s", msg.Device))
-		check.Panic(check.True(id != nil, "error freeing device, device not assigned: %s", msg.Device))
-		state.devices[msg.Device] = nil
+
+		if msg.Device.Type == device.Unspecified {
+			delete(state.zeroSlotContainers, *msg.ContainerID)
+		} else {
+			id, ok := d.agents[msg.Agent].devices[msg.Device]
+			check.Panic(check.True(ok, "error freeing device, device not found: %s", msg.Device))
+			check.Panic(check.True(id != nil, "error freeing device, device not assigned: %s", msg.Device))
+			state.devices[msg.Device] = nil
+		}
 
 	case sproto.RemoveDevice:
 		ctx.Log().Infof("removing device: %s (%s)", msg.Device.String(), msg.Agent.Address().Local())
@@ -244,14 +249,6 @@ func (d *DefaultRP) receiveAgentMsg(ctx *actor.Context) error {
 	case sproto.RemoveAgent:
 		ctx.Log().Infof("removing agent: %s", msg.Agent.Address().Local())
 		delete(d.agents, msg.Agent)
-
-	case sproto.ContainerStateChanged:
-		// This is a hack to know which zero-slot containers are terminated.
-		if msg.ContainerStopped != nil && len(msg.Container.Devices) == 0 {
-			if a := d.agents[ctx.Sender()]; a != nil {
-				delete(a.zeroSlotContainers, &msg.Container.ID)
-			}
-		}
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

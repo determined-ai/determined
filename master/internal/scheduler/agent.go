@@ -15,9 +15,10 @@ type agentState struct {
 	devices map[device.Device]*cproto.ID
 	label   string
 
-	// This is a hack for letting the provisioner knows which agents are being used
-	// since we don't model CPU as a resource type.
-	zeroSlotContainers map[*cproto.ID]bool
+	// Since we only model GPUs as devices/slots and assume each slot can be assigned with
+	// one container, we add one additional field to keep track of zero-slot containers.
+	// We need this field to know if the agent is idle.
+	zeroSlotContainers map[cproto.ID]bool
 }
 
 // newAgentState returns a new agent empty agent state backed by the handler.
@@ -26,7 +27,7 @@ func newAgentState(msg sproto.AddAgent) *agentState {
 		handler:            msg.Agent,
 		label:              msg.Label,
 		devices:            make(map[device.Device]*cproto.ID),
-		zeroSlotContainers: make(map[*cproto.ID]bool),
+		zeroSlotContainers: make(map[cproto.ID]bool),
 	}
 }
 
@@ -51,7 +52,7 @@ func (a *agentState) numUsedSlots() (slots int) {
 
 func (a *agentState) assignFreeDevices(slots int, id cproto.ID) []device.Device {
 	if slots == 0 {
-		a.zeroSlotContainers[&id] = true
+		a.zeroSlotContainers[id] = true
 		return nil
 	}
 	cid := id

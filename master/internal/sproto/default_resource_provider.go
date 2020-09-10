@@ -28,6 +28,7 @@ type (
 	// FreeDevice notifies the cluster that the device's container is no longer running.
 	FreeDevice struct {
 		DeviceID
+		ContainerID *container.ID
 	}
 	// RemoveDevice removes the device from scheduling.
 	RemoveDevice struct {

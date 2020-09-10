@@ -66,8 +66,7 @@ func createAgent(
 		}
 	}
 	for i := 0; i < numZeroSlotContainers; i++ {
-		id := cproto.ID(uuid.New().String())
-		state.zeroSlotContainers[&id] = true
+		state.zeroSlotContainers[cproto.ID(uuid.New().String())] = true
 	}
 	return state
 }

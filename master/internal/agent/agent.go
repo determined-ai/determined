@@ -181,7 +181,6 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 		ContainerStopped: sc.ContainerStopped,
 	}
 
-	ctx.Tell(a.cluster, rsc)
 	ctx.Tell(task, rsc)
 	ctx.Tell(a.slots, rsc)
 }
