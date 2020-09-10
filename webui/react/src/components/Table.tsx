@@ -134,7 +134,7 @@ export const experimentArchivedRenderer: ExperimentRenderer = (_, record) => {
 export const isAlternativeAction = (event: React.MouseEvent): boolean => {
   const target = event.target as Element;
   if (target.className.includes('ant-checkbox-wrapper') ||
-      target.className.includes('ignoreEvent')) return true;
+      target.className.includes('ignoreTableRowClick')) return true;
   return false;
 };
 

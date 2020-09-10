@@ -1,0 +1,5 @@
+:orphan:
+
+**New Features**
+
+- WebUI: Move TensorBoard sources from experiment table column into a dedicated modal.

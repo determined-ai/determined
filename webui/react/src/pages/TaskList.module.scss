@@ -13,22 +13,24 @@
     max-width: 30rem;
   }
 }
-.sourceLinks {
-  label {
-    font-size: var(--theme-sizes-font-small);
-  }
-  a {
-    margin-left: var(--theme-sizes-layout-small);
-  }
+.sourceName {
+  display: flex;
+  flex-wrap: wrap;
+
+  span { margin-right: var(--theme-sizes-layout-tiny); }
   button {
     background-color: var(--theme-colors-monochrome-17);
     border: solid var(--theme-sizes-border-width) var(--theme-colors-monochrome-11);
     border-radius: var(--theme-sizes-border-radius);
     cursor: pointer;
     font-size: var(--theme-sizes-font-small);
-    margin-left: var(--theme-sizes-layout-small);
     outline: 0;
   }
-  button:hover { border-color: var(--theme-colors-core-action); }
+  button:hover { border-color: var(--theme-colors-action-normal); }
   button:focus { box-shadow: var(--theme-outline); }
+}
+.sourceLinks {
+  label {
+    font-size: var(--theme-sizes-font-small);
+  }
 }

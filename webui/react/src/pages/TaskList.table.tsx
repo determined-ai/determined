@@ -1,4 +1,4 @@
-import { ColumnType } from 'antd/lib/table';
+import { ColumnType } from 'antd/es/table';
 
 import {
   relativeTimeRenderer, stateRenderer, taskIdRenderer, taskTypeRenderer, userRenderer,
@@ -7,6 +7,8 @@ import { CommandTask } from 'types';
 import {
   alphanumericSorter, commandSourceSorter, commandStateSorter, stringTimeSorter,
 } from 'utils/data';
+
+import { SourceInfo } from './TaskList';
 
 export const columns: ColumnType<CommandTask>[] = [
   {
@@ -23,7 +25,6 @@ export const columns: ColumnType<CommandTask>[] = [
     title: 'Type',
   },
   {
-    dataIndex: 'name',
     key: 'name',
     sorter: (a: CommandTask, b: CommandTask): number => alphanumericSorter(a.name, b.name),
     title: 'Name',
@@ -57,5 +58,13 @@ export const columns: ColumnType<CommandTask>[] = [
     className: 'fullCell',
     key: 'action',
     title: '',
+  },
+];
+
+export const sourceColumns: ColumnType<SourceInfo>[] = [
+  {
+    key: 'name',
+    sorter: (a: SourceInfo, b: SourceInfo): number => alphanumericSorter(a.label, b.label),
+    title: 'Name',
   },
 ];

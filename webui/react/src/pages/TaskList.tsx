@@ -3,7 +3,9 @@ import { Button, Input, Modal, Table } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
 import React, { useCallback, useMemo, useState } from 'react';
 
+import Grid from 'components/Grid';
 import Icon from 'components/Icon';
+import Link from 'components/Link';
 import Page from 'components/Page';
 import { Indicator } from 'components/Spinner';
 import {
@@ -23,16 +25,28 @@ import {
   getCommands, getNotebooks, getShells, getTensorboards, killCommand,
 } from 'services/api';
 import { ApiSorter, EmptyParams } from 'services/types';
+import { ShirtSize } from 'themes';
 import { ALL_VALUE, Command, CommandTask, CommandType, TaskFilters } from 'types';
 import { getPath, numericSorter } from 'utils/data';
-import { handlePath, openBlank } from 'utils/routes';
+import { openBlank } from 'utils/routes';
 import { canBeOpened, filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
 
 import css from './TaskList.module.scss';
 import { columns as defaultColumns } from './TaskList.table';
 
-const MAX_SOURCES = 5;
+export interface TensorBoardSource {
+  id: number;
+  path: string;
+  type: string;
+}
+
+export interface SourceInfo {
+  label: string;
+  path: string;
+  plural: string;
+  sources: number[];
+}
 
 const defaultFilters: TaskFilters<CommandType> = {
   limit: MINIMUM_PAGE_SIZE,
@@ -71,8 +85,8 @@ const TaskList: React.FC = () => {
   const initSorter = storage.getWithDefault(STORAGE_SORTER_KEY, { ...defaultSorter });
   const [ sorter, setSorter ] = useState<ApiSorter>(initSorter);
   const [ search, setSearch ] = useState('');
+  const [ sourcesModal, setSourcesModal ] = useState<SourceInfo>();
   const [ selectedRowKeys, setSelectedRowKeys ] = useState<string[]>([]);
-  const [ sourceExpanded, setSourceExpanded ] = useState<Record<string, boolean>>({});
   const [ commandsResponse, triggerCommandsRequest ] =
     useRestApi<EmptyParams, Command[]>(getCommands, {});
   const [ notebooksResponse, triggerNotebooksRequest ] =
@@ -128,59 +142,39 @@ const TaskList: React.FC = () => {
     triggerTensorboardsRequest,
   ]);
 
-  const handleSourceExpand = useCallback((event: React.MouseEvent, id: string) => {
-    event.stopPropagation();
-    setSourceExpanded(prev => {
-      const newSourceExpanded = { ...prev };
-      if (!newSourceExpanded[id]) newSourceExpanded[id] = true;
-      else delete newSourceExpanded[id];
-      return newSourceExpanded;
-    });
-  }, []);
+  const handleSourceShow = useCallback((info: SourceInfo) => setSourcesModal(info), []);
+  const handleSourceDismiss = useCallback(() => setSourcesModal(undefined), []);
 
   const handleActionComplete = useCallback(() => fetchTasks(), [ fetchTasks ]);
 
   const columns = useMemo(() => {
-    const sourceRenderer: TaskRenderer = (_, record) => {
+    const nameRenderer: TaskRenderer = (_, record) => {
+      if (record.type !== CommandType.Tensorboard) return record.name;
+
       const info = {
-        isPlural: false,
         label: '',
         path: '',
-        source: [] as number[],
+        plural: '',
+        sources: [] as number[],
       };
       if (record.misc?.experimentIds) {
         info.label = 'Experiment';
         info.path = '/det/experiments';
-        info.source = record.misc.experimentIds || [];
+        info.sources = record.misc.experimentIds || [];
       } else if (record.misc?.trialIds) {
         info.label = 'Trial';
         info.path = '/det/trials';
-        info.source = record.misc.trialIds || [];
+        info.sources = record.misc.trialIds || [];
       }
-      info.isPlural = info.source.length > 1;
-      info.source.sort(numericSorter);
+      info.plural = info.sources.length > 1 ? 's' : '';
+      info.sources.sort(numericSorter);
 
-      const isExpanded = sourceExpanded[record.id];
-      const sourceCount = info.source.length - MAX_SOURCES;
-      const showToggle = info.source.length > MAX_SOURCES;
-      const toggleLabel = isExpanded ? 'Collapse' : `Show ${sourceCount}+`;
-
-      return sourceCount !== 0 ? (
-        <div className={css.sourceLinks}>
-          <label>{info.label}{info.isPlural ? 's' : ''}</label>
-          {info.source.map((id, index) => {
-            const display = index < MAX_SOURCES || isExpanded ? 'inline' : 'none';
-            const handleClick = (event: React.MouseEvent) => {
-              event.stopPropagation();
-              handlePath(event, { path: `${info.path}/${id}` });
-            };
-            return <a key={id} style={{ display }} onClick={handleClick}>{id}</a>;
-          })}
-          {showToggle && <button onClick={e => handleSourceExpand(e, record.id)}>
-            {toggleLabel}
-          </button>}
-        </div>
-      ) : null;
+      return <div className={css.sourceName}>
+        <span>{record.name}</span>
+        <button className="ignoreTableRowClick" onClick={() => handleSourceShow(info)}>
+          Show {info.sources.length} {info.label} Source{info.plural}
+        </button>
+      </div>;
     };
 
     const actionRenderer: TaskRenderer = (_, record) => (
@@ -190,13 +184,13 @@ const TaskList: React.FC = () => {
     const newColumns = [ ...defaultColumns ].map(column => {
       column.sortOrder = null;
       if (column.key === sorter.key) column.sortOrder = sorter.descend ? 'descend' : 'ascend';
-      if (column.key === 'sources') column.render = sourceRenderer;
+      if (column.key === 'name') column.render = nameRenderer;
       if (column.key === 'action') column.render = actionRenderer;
       return column;
     });
 
     return newColumns;
-  }, [ handleActionComplete, handleSourceExpand, sorter, sourceExpanded ]);
+  }, [ handleActionComplete, handleSourceShow, sorter ]);
 
   /*
    * Check once every second to see if all task endpoints have resolved.
@@ -322,6 +316,24 @@ const TaskList: React.FC = () => {
           onChange={handleTableChange}
           onRow={handleTableRow} />
       </div>
+      <Modal
+        footer={null}
+        style={{ minWidth: '60rem' }}
+        title={`
+          ${sourcesModal?.sources.length}
+          TensorBoard ${sourcesModal?.label}
+          Source${sourcesModal?.plural}
+        `}
+        visible={!!sourcesModal}
+        onCancel={handleSourceDismiss}>
+        <div className={css.sourceLinks}>
+          <Grid gap={ShirtSize.medium} minItemWidth={12}>
+            {sourcesModal?.sources.map(source => <Link
+              key={source}
+              path={`${sourcesModal?.path}/${source}`}>{sourcesModal?.label} {source}</Link>)}
+          </Grid>
+        </div>
+      </Modal>
     </Page>
   );
 };
