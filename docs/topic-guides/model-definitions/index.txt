@@ -1,22 +1,24 @@
 .. _model-definitions:
 
-Model Definitions
-=================
+###################
+ Model Definitions
+###################
 
 The model definition is the interface between Determined and the user's
 application framework (e.g., Keras, TensorFlow), in terms of loading
 training data, describing a model architecture, and specifying the
 underlying iterative optimization training algorithms.
 
-There are two interfaces you can use to write model definitions: Native and
-Trial. With the :ref:`model-definitions_native-api` (TensorFlow Keras and
-Estimators), developers instrument training scripts adhering to these
-frameworks' native patterns including their training loops. With the
-:ref:`model-definitions_trial-api`, developers expose the components of a model
-definition to Determined’s training loop implementation.
+There are two interfaces you can use to write model definitions: Native
+and Trial. With the :ref:`model-definitions_native-api` (TensorFlow
+Keras and Estimators), developers instrument training scripts adhering
+to these frameworks' native patterns including their training loops.
+With the :ref:`model-definitions_trial-api`, developers expose the
+components of a model definition to Determined’s training loop
+implementation.
 
-The Python SDK supports the Native API for TF Keras and Estimators. The command
-line interface and Python SDK support the Trial API.
+The Python SDK supports the Native API for TF Keras and Estimators. The
+command line interface and Python SDK support the Trial API.
 
 To read more about the Native API, see:
 
@@ -30,15 +32,16 @@ To read more about the Trial API, see:
 -  :ref:`tf-keras-trial`
 -  :ref:`estimator-trial`
 
-Best Practices
---------------
+****************
+ Best Practices
+****************
 
 To learn more about some best practices when writing Trial API model
 definitions, see :ref:`model-definitions_best-practices`.
 
 .. toctree::
-  :hidden:
+   :hidden:
 
-  trial-api
-  native-api
-  best-practices
+   trial-api
+   native-api
+   best-practices

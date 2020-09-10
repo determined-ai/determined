@@ -1,5 +1,6 @@
-determined
-==========
+############
+ determined
+############
 
 .. automodule:: determined
-    :members: Categorical, Constant, Double, Integer, Log
+   :members: Categorical, Constant, Double, Integer, Log

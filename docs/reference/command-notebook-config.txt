@@ -1,7 +1,8 @@
 .. _command-notebook-configuration:
 
-Tensorboard and Notebook Configuration
-======================================
+########################################
+ Tensorboard and Notebook Configuration
+########################################
 
 The behavior of tensorboard and notebook workloads can be influenced by
 setting a variety of configuration variables. Configuration settings can
@@ -10,15 +11,15 @@ workload via the Determined CLI:
 
 .. code::
 
-  $ det tensorboard start experiment_id --config-file=my_config.yaml
-  $ det notebook start --config-file=my_config.yaml
+   $ det tensorboard start experiment_id --config-file=my_config.yaml
+   $ det notebook start --config-file=my_config.yaml
 
 For notebooks, configuration variables can also be set directly on the
 command-line when the workload is launched:
 
 .. code::
 
-  $ det notebook start --config resources.slots=2
+   $ det notebook start --config resources.slots=2
 
 Options set via ``--config`` take precedence over values specified in
 the configuration file.
@@ -27,88 +28,99 @@ The same configuration methods also work for commands and shells:
 
 .. code::
 
-    $ det cmd run --config-file=my_config.yaml
-    $ det cmd run --config resources.slots=2 ...
+   $ det cmd run --config-file=my_config.yaml
+   $ det cmd run --config resources.slots=2 ...
 
-    $ det shell start --config-file=my_config.yaml
-    $ det shell start --config resources.slots=2 ...
+   $ det shell start --config-file=my_config.yaml
+   $ det shell start --config resources.slots=2 ...
 
-Configuration Settings
-**********************
+************************
+ Configuration Settings
+************************
 
 The following configuration settings are supported:
 
-- ``description``: A human-readable description of the
-  command/notebook. This does not need to be unique. The default
-  description consists of a timestamp and the entrypoint of the
-  command.
-- ``environment``: Specifies the environment of the container that is
-  used to execute the command/notebook.
+-  ``description``: A human-readable description of the
+   command/notebook. This does not need to be unique. The default
+   description consists of a timestamp and the entrypoint of the
+   command.
 
-  - ``image``: Specifies a Docker image to use when executing the
-    workload. The image must be available via ``docker pull`` to every
-    Determined agent machine in the cluster. Users can customize the image
-    used for GPU vs. CPU agents by specifying a dict with two keys,
-    ``cpu`` and ``gpu``. Defaults to
-    ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.5.0``
-    for CPU agents and
-    ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.5.0``
-    for GPU agents.
-  - ``force_pull_image``: Forcibly pull the image from the Docker
-    registry and bypass the Docker cache. Defaults to ``false``.
-  - ``environment_variables``: Specifies a list of environment
-    variables for the container. Each element of the list
-    should be a string of the form ``NAME=VALUE``. See :ref:`environment-variables`
-    for more details. Users
-    can customize environment variables for GPU vs. CPU agents differently by
-    specifying a dict with two keys, ``cpu`` and ``gpu``.
-  - ``pod_spec``: Only applicable when running Determined on Kubernetes. Applies
-    a pod spec to the pods that are launched by Determined for this task. See
-    :ref:`custom-pod-specs` for details.
-  - ``registry_auth``: Specifies the `Docker registry
-    credentials <https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__
-    to use when pulling a Docker image, if needed.
+-  ``environment``: Specifies the environment of the container that is
+   used to execute the command/notebook.
 
-    - ``username`` (required)
-    - ``password`` (required)
-    - ``server`` (optional)
-    - ``email`` (optional)
+   -  ``image``: Specifies a Docker image to use when executing the
+      workload. The image must be available via ``docker pull`` to every
+      Determined agent machine in the cluster. Users can customize the
+      image used for GPU vs. CPU agents by specifying a dict with two
+      keys, ``cpu`` and ``gpu``. Defaults to
+      ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.5.0``
+      for CPU agents and
+      ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.5.0``
+      for GPU agents.
 
-- ``resources``: The resources Determined allows a command/notebook to use.
+   -  ``force_pull_image``: Forcibly pull the image from the Docker
+      registry and bypass the Docker cache. Defaults to ``false``.
 
-  - ``slots``: Specifies the number of slots to use for the
-    command/notebook. The default value is ``1``. The maximum value is the
-    number of slots on the agent in the cluster with the most slots.
-    For example, Determined will be unable to schedule a command that
-    requests 4 slots if the Determined cluster is composed of agents with 2
-    slots each. The number of slots for Tensorboard is fixed at ``0`` and
-    may not be changed.
+   -  ``environment_variables``: Specifies a list of environment
+      variables for the container. Each element of the list should be a
+      string of the form ``NAME=VALUE``. See
+      :ref:`environment-variables` for more details. Users can customize
+      environment variables for GPU vs. CPU agents differently by
+      specifying a dict with two keys, ``cpu`` and ``gpu``.
 
-  - ``agent_label``: If set, the command/notebook will _only_ be scheduled on
-    agents that have the given label set. If this is not set (the default
-    behavior), the command/notebook will only be scheduled on unlabeled
-    agents. An agent's label can be configured via the ``label`` field in the
-    :ref:`agent configuration <agent-configuration>`.
+   -  ``pod_spec``: Only applicable when running Determined on
+      Kubernetes. Applies a pod spec to the pods that are launched by
+      Determined for this task. See :ref:`custom-pod-specs` for details.
 
+   -  ``registry_auth``: Specifies the `Docker registry credentials
+      <https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__
+      to use when pulling a Docker image, if needed.
 
-- ``bind_mounts``: Specifies a collection of directories that are
-  bind-mounted into the Docker containers for execution. This can be
-  used to allow commands to access additional data that is not
-  contained in the command context. This field should consist of an
-  array of entries. Note that users should ensure that the specified
-  host paths are accessible on all agent hosts (e.g., by configuring a
-  network file system appropriately). Defaults to an empty list.
+      -  ``username`` (required)
+      -  ``password`` (required)
+      -  ``server`` (optional)
+      -  ``email`` (optional)
 
-  - ``host_path``: (required) The file system path on each agent to
-    use. Must be an absolute filepath.
-  - ``container_path``: (required) The file system path in the
-    container to use. May be a relative filepath, in which case it
-    will be mounted relative to the working directory inside the
-    container. It is not allowed to mount directly into the working
-    directory (``container_path == "."``) to reduce the risk of
-    cluttering the host filesystem.
-  - ``read_only``: Whether the bind-mount should be a read-only mount.
-    Defaults to ``false``.
-  - ``propagation``: (Advanced users only) Optional `propagation
-    behavior <https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__
-    for replicas of the bind-mount. Defaults to ``rprivate``.
+-  ``resources``: The resources Determined allows a command/notebook to
+   use.
+
+   -  ``slots``: Specifies the number of slots to use for the
+      command/notebook. The default value is ``1``. The maximum value is
+      the number of slots on the agent in the cluster with the most
+      slots. For example, Determined will be unable to schedule a
+      command that requests 4 slots if the Determined cluster is
+      composed of agents with 2 slots each. The number of slots for
+      Tensorboard is fixed at ``0`` and may not be changed.
+
+   -  ``agent_label``: If set, the command/notebook will _only_ be
+      scheduled on agents that have the given label set. If this is not
+      set (the default behavior), the command/notebook will only be
+      scheduled on unlabeled agents. An agent's label can be configured
+      via the ``label`` field in the :ref:`agent configuration
+      <agent-configuration>`.
+
+-  ``bind_mounts``: Specifies a collection of directories that are
+   bind-mounted into the Docker containers for execution. This can be
+   used to allow commands to access additional data that is not
+   contained in the command context. This field should consist of an
+   array of entries. Note that users should ensure that the specified
+   host paths are accessible on all agent hosts (e.g., by configuring a
+   network file system appropriately). Defaults to an empty list.
+
+   -  ``host_path``: (required) The file system path on each agent to
+      use. Must be an absolute filepath.
+
+   -  ``container_path``: (required) The file system path in the
+      container to use. May be a relative filepath, in which case it
+      will be mounted relative to the working directory inside the
+      container. It is not allowed to mount directly into the working
+      directory (``container_path == "."``) to reduce the risk of
+      cluttering the host filesystem.
+
+   -  ``read_only``: Whether the bind-mount should be a read-only mount.
+      Defaults to ``false``.
+
+   -  ``propagation``: (Advanced users only) Optional `propagation
+      behavior
+      <https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__
+      for replicas of the bind-mount. Defaults to ``rprivate``.

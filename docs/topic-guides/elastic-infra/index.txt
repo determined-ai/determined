@@ -1,7 +1,8 @@
 .. _elastic-infra-index:
 
-Elastic Infrastructure
-======================
+########################
+ Elastic Infrastructure
+########################
 
 When running in a cloud environment, Determined can automatically
 provision and terminate GPU instances as the set of deep learning
@@ -16,38 +17,42 @@ dynamic agents:
 
 Following the diagram, the execution would be:
 
-#. The master collects information on the agents and workloads in the cluster.
-#. The master calculates the ideal size of the cluster, and decides how many
-   agents to launch and which agents to terminate.
+#. The master collects information on the agents and workloads in the
+   cluster.
+#. The master calculates the ideal size of the cluster, and decides how
+   many agents to launch and which agents to terminate.
 #. The master makes API calls to agent providers, such as AWS and GCP,
    to provision and terminate agents as necessary.
 
-Architecture Details
-~~~~~~~~~~~~~~~~~~~~
+**********************
+ Architecture Details
+**********************
 
 The master periodically collects information on idle agents (agents with
-no active workloads) and pending workloads (agents waiting to be scheduled),
-and then uses this information to scale the cluster automatically.
+no active workloads) and pending workloads (agents waiting to be
+scheduled), and then uses this information to scale the cluster
+automatically.
 
-- When workloads are pending and cannot be scheduled due to lack of
-  available agents, the master calculates the number of agents that are
-  needed to execute these pending workloads. The calculation is done
-  based on the configuration of scaling behavior and agent type. Within
-  a few seconds of a new pending workload arriving, the master will
-  attempt to provision a new instance from the current cloud
-  provider. Once the agent instance has been created, it will
-  automatically connect to the current master. The time it takes to
-  create a new instance depends on the cloud provider and the configured
-  instance type, but ~60 seconds is typical.
-- An agent that is not running any containers is considered *idle*. By
-  default, idle dynamic agents will automatically be terminated after 5
-  minutes of inactivity. This behavior gives agents a chance to run
-  multiple workloads after they have been provisioned.
+-  When workloads are pending and cannot be scheduled due to lack of
+   available agents, the master calculates the number of agents that are
+   needed to execute these pending workloads. The calculation is done
+   based on the configuration of scaling behavior and agent type. Within
+   a few seconds of a new pending workload arriving, the master will
+   attempt to provision a new instance from the current cloud provider.
+   Once the agent instance has been created, it will automatically
+   connect to the current master. The time it takes to create a new
+   instance depends on the cloud provider and the configured instance
+   type, but ~60 seconds is typical.
+
+-  An agent that is not running any containers is considered *idle*. By
+   default, idle dynamic agents will automatically be terminated after 5
+   minutes of inactivity. This behavior gives agents a chance to run
+   multiple workloads after they have been provisioned.
 
 The full list of our topic guides can be found below:
 
 .. toctree::
-  :maxdepth: 1
+   :maxdepth: 1
 
-  dynamic-agents-aws
-  dynamic-agents-gcp
+   dynamic-agents-aws
+   dynamic-agents-gcp

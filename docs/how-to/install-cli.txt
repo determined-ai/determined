@@ -1,13 +1,14 @@
 .. _install-cli:
 
-Install Determined CLI
-======================
+########################
+ Install Determined CLI
+########################
 
-Determined includes a **command-line tool** called ``det`` that ML engineers
-can use to launch new workloads and interact with Determined.
+Determined includes a **command-line tool** called ``det`` that ML
+engineers can use to launch new workloads and interact with Determined.
 
-Each ML engineer that wants to use Determined should install a copy of the
-Determined CLI on their local development machine. The CLI can be
+Each ML engineer that wants to use Determined should install a copy of
+the Determined CLI on their local development machine. The CLI can be
 installed via ``pip``:
 
 .. code::
@@ -20,8 +21,8 @@ optional. To install the CLI into a virtualenv, first activate the
 virtualenv and then type the command above.
 
 After the CLI has been installed, it should be configured to connect to
-the Determined master at the appropriate IP address. This can be accomplished
-by setting the ``DET_MASTER`` environment variable:
+the Determined master at the appropriate IP address. This can be
+accomplished by setting the ``DET_MASTER`` environment variable:
 
 .. code::
 

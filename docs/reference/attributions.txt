@@ -1,10 +1,14 @@
-Open Source Licenses
-====================
+######################
+ Open Source Licenses
+######################
 
-The following sets forth attribution notices for third party software that may be contained in Determined. We thank the open source community for all of their contributions.
+The following sets forth attribution notices for third party software
+that may be contained in Determined. We thank the open source community
+for all of their contributions.
 
-WebUI
------
+*******
+ WebUI
+*******
 
 +-------------------------------------+-----------------------------------------------+
 | Package                             | License                                       |
@@ -58,8 +62,9 @@ WebUI
 | tailwindcss                         | :ref:`MIT <tailwindcss>`                      |
 +-------------------------------------+-----------------------------------------------+
 
-Determined Master
------------------
+*******************
+ Determined Master
+*******************
 
 +--------------------------------------------+---------------------------------------+
 | Package                                    | License                               |
@@ -169,8 +174,9 @@ Determined Master
 | gotest.tools                               | :ref:`Apache-2.0 <gotest.tools>`      |
 +--------------------------------------------+---------------------------------------+
 
-Determined Agent
-----------------
+******************
+ Determined Agent
+******************
 
 +--------------------------------------------+---------------------------------------+
 | Package                                    | License                               |
@@ -216,8 +222,9 @@ Determined Agent
 
 .. _storybook:
 
-@storybook
-----------
+************
+ @storybook
+************
 
 .. code::
 
@@ -245,8 +252,9 @@ Determined Agent
 
 .. _ace:
 
-ace
----
+*****
+ ace
+*****
 
 .. code::
 
@@ -280,8 +288,9 @@ ace
 
 .. _antd:
 
-antd
-----
+******
+ antd
+******
 
 .. code::
 
@@ -310,8 +319,9 @@ antd
 
 .. _axios:
 
-axios
------
+*******
+ axios
+*******
 
 .. code::
 
@@ -337,8 +347,9 @@ axios
 
 .. _can-ndjson-stream:
 
-can-ndjson-stream
------------------
+*******************
+ can-ndjson-stream
+*******************
 
 .. code::
 
@@ -368,8 +379,9 @@ can-ndjson-stream
 
 .. _elm:
 
-elm
----
+*****
+ elm
+*****
 
 .. code::
 
@@ -403,8 +415,9 @@ elm
 
 .. _fp-ts:
 
-fp-ts
------
+*******
+ fp-ts
+*******
 
 .. code::
 
@@ -432,8 +445,9 @@ fp-ts
 
 .. _history:
 
-history
--------
+*********
+ history
+*********
 
 .. code::
 
@@ -461,8 +475,9 @@ history
 
 .. _humanize-duration:
 
-humanize-duration
------------------
+*******************
+ humanize-duration
+*******************
 
 .. code::
 
@@ -493,8 +508,9 @@ humanize-duration
 
 .. _io-ts:
 
-io-ts
------
+*******
+ io-ts
+*******
 
 .. code::
 
@@ -522,8 +538,9 @@ io-ts
 
 .. _js-sha512:
 
-js-sha512
----------
+***********
+ js-sha512
+***********
 
 .. code::
 
@@ -550,8 +567,9 @@ js-sha512
 
 .. _js-yaml:
 
-js-yaml
--------
+*********
+ js-yaml
+*********
 
 .. code::
 
@@ -579,8 +597,9 @@ js-yaml
 
 .. _monaco-editor:
 
-monaco-editor
--------------
+***************
+ monaco-editor
+***************
 
 .. code::
 
@@ -608,8 +627,9 @@ monaco-editor
 
 .. _plotly.js:
 
-plotly.js
----------
+***********
+ plotly.js
+***********
 
 .. code::
 
@@ -637,8 +657,9 @@ plotly.js
 
 .. _portable-fetch:
 
-portable-fetch
---------------
+****************
+ portable-fetch
+****************
 
 .. code::
 
@@ -666,8 +687,9 @@ portable-fetch
 
 .. _pretty-bytes:
 
-pretty-bytes
-------------
+**************
+ pretty-bytes
+**************
 
 .. code::
 
@@ -695,8 +717,9 @@ pretty-bytes
 
 .. _query-string:
 
-query-string
-------------
+**************
+ query-string
+**************
 
 .. code::
 
@@ -724,8 +747,9 @@ query-string
 
 .. _react:
 
-react
------
+*******
+ react
+*******
 
 .. code::
 
@@ -753,8 +777,9 @@ react
 
 .. _react-transition-group:
 
-react-transition-group
-----------------------
+************************
+ react-transition-group
+************************
 
 .. code::
 
@@ -791,8 +816,9 @@ react-transition-group
 
 .. _screenfull:
 
-screenfull
-----------
+************
+ screenfull
+************
 
 .. code::
 
@@ -820,8 +846,9 @@ screenfull
 
 .. _smoothscroll-polyfill:
 
-smoothscroll-polyfill
----------------------
+***********************
+ smoothscroll-polyfill
+***********************
 
 .. code::
 
@@ -848,8 +875,9 @@ smoothscroll-polyfill
 
 .. _sprintf-js:
 
-sprintf-js
-----------
+************
+ sprintf-js
+************
 
 .. code::
 
@@ -880,8 +908,9 @@ sprintf-js
 
 .. _timeago-react:
 
-timeago-react
--------------
+***************
+ timeago-react
+***************
 
 .. code::
 
@@ -909,8 +938,9 @@ timeago-react
 
 .. _tailwindcss:
 
-tailwindcss
------------
+*************
+ tailwindcss
+*************
 
 .. code::
 
@@ -939,8 +969,9 @@ tailwindcss
 
 .. _go:
 
-cloud.google.com/go
--------------------
+*********************
+ cloud.google.com/go
+*********************
 
 .. code::
 
@@ -1148,8 +1179,9 @@ cloud.google.com/go
 
 .. _aws-sdk-go:
 
-github.com/aws/aws-sdk-go
--------------------------
+***************************
+ github.com/aws/aws-sdk-go
+***************************
 
 .. code::
 
@@ -1357,8 +1389,9 @@ github.com/aws/aws-sdk-go
 
 .. _go-ansiterm:
 
-github.com/Azure/go-ansiterm
-----------------------------
+******************************
+ github.com/Azure/go-ansiterm
+******************************
 
 .. code::
 
@@ -1386,8 +1419,9 @@ github.com/Azure/go-ansiterm
 
 .. _containerd:
 
-github.com/containerd/containerd
---------------------------------
+**********************************
+ github.com/containerd/containerd
+**********************************
 
 .. code::
 
@@ -1584,8 +1618,9 @@ github.com/containerd/containerd
 
 .. _distribution:
 
-github.com/docker/distribution
-------------------------------
+********************************
+ github.com/docker/distribution
+********************************
 
 .. code::
 
@@ -1793,8 +1828,9 @@ github.com/docker/distribution
 
 .. _docker:
 
-github.com/docker/docker
-------------------------
+**************************
+ github.com/docker/docker
+**************************
 
 .. code::
 
@@ -1991,8 +2027,9 @@ github.com/docker/docker
 
 .. _go-connections:
 
-github.com/docker/go-connections
---------------------------------
+**********************************
+ github.com/docker/go-connections
+**********************************
 
 .. code::
 
@@ -2189,8 +2226,9 @@ github.com/docker/go-connections
 
 .. _go-units:
 
-github.com/docker/go-units
---------------------------
+****************************
+ github.com/docker/go-units
+****************************
 
 .. code::
 
@@ -2387,8 +2425,9 @@ github.com/docker/go-units
 
 .. _golang-petname:
 
-github.com/dustinkirkland/golang-petname
-----------------------------------------
+******************************************
+ github.com/dustinkirkland/golang-petname
+******************************************
 
 .. code::
 
@@ -2596,8 +2635,9 @@ github.com/dustinkirkland/golang-petname
 
 .. _gods:
 
-github.com/emirpasic/gods
--------------------------
+***************************
+ github.com/emirpasic/gods
+***************************
 
 .. code::
 
@@ -2645,8 +2685,9 @@ github.com/emirpasic/gods
 
 .. _yaml:
 
-github.com/ghodss/yaml
-----------------------
+************************
+ github.com/ghodss/yaml
+************************
 
 .. code::
 
@@ -2703,8 +2744,9 @@ github.com/ghodss/yaml
 
 .. _go-ole:
 
-github.com/go-ole/go-ole
-------------------------
+**************************
+ github.com/go-ole/go-ole
+**************************
 
 .. code::
 
@@ -2732,8 +2774,9 @@ github.com/go-ole/go-ole
 
 .. _mysql:
 
-github.com/go-sql-driver/mysql
-------------------------------
+********************************
+ github.com/go-sql-driver/mysql
+********************************
 
 .. code::
 
@@ -3113,8 +3156,9 @@ github.com/go-sql-driver/mysql
 
 .. _packr:
 
-github.com/gobuffalo/packr
---------------------------
+****************************
+ github.com/gobuffalo/packr
+****************************
 
 .. code::
 
@@ -3129,8 +3173,9 @@ github.com/gobuffalo/packr
 
 .. _migrate:
 
-github.com/golang-migrate/migrate
----------------------------------
+***********************************
+ github.com/golang-migrate/migrate
+***********************************
 
 .. code::
 
@@ -3165,8 +3210,9 @@ github.com/golang-migrate/migrate
 
 .. _protobuf:
 
-github.com/golang/protobuf
---------------------------
+****************************
+ github.com/golang/protobuf
+****************************
 
 .. code::
 
@@ -3200,8 +3246,9 @@ github.com/golang/protobuf
 
 .. _go-cmp:
 
-github.com/google/go-cmp
-------------------------
+**************************
+ github.com/google/go-cmp
+**************************
 
 .. code::
 
@@ -3235,8 +3282,9 @@ github.com/google/go-cmp
 
 .. _uuid:
 
-github.com/google/uuid
-----------------------
+************************
+ github.com/google/uuid
+************************
 
 .. code::
 
@@ -3270,8 +3318,9 @@ github.com/google/uuid
 
 .. _websocket:
 
-github.com/gorilla/websocket
-----------------------------
+******************************
+ github.com/gorilla/websocket
+******************************
 
 .. code::
 
@@ -3300,8 +3349,9 @@ github.com/gorilla/websocket
 
 .. _tail:
 
-github.com/hpcloud/tail
------------------------
+*************************
+ github.com/hpcloud/tail
+*************************
 
 .. code::
 
@@ -3329,8 +3379,9 @@ github.com/hpcloud/tail
 
 .. _sqlx:
 
-github.com/jmoiron/sqlx
------------------------
+*************************
+ github.com/jmoiron/sqlx
+*************************
 
 .. code::
 
@@ -3359,8 +3410,9 @@ github.com/jmoiron/sqlx
 
 .. _echo:
 
-github.com/labstack/echo
-------------------------
+**************************
+ github.com/labstack/echo
+**************************
 
 .. code::
 
@@ -3388,8 +3440,9 @@ github.com/labstack/echo
 
 .. _gommon:
 
-github.com/labstack/gommon
---------------------------
+****************************
+ github.com/labstack/gommon
+****************************
 
 .. code::
 
@@ -3417,8 +3470,9 @@ github.com/labstack/gommon
 
 .. _pq:
 
-github.com/lib/pq
------------------
+*******************
+ github.com/lib/pq
+*******************
 
 .. code::
 
@@ -3433,8 +3487,9 @@ github.com/lib/pq
 
 .. _go-colorable:
 
-github.com/mattn/go-colorable
------------------------------
+*******************************
+ github.com/mattn/go-colorable
+*******************************
 
 .. code::
 
@@ -3462,8 +3517,9 @@ github.com/mattn/go-colorable
 
 .. _go-isatty:
 
-github.com/mattn/go-isatty
---------------------------
+****************************
+ github.com/mattn/go-isatty
+****************************
 
 .. code::
 
@@ -3479,8 +3535,9 @@ github.com/mattn/go-isatty
 
 .. _go-sqlite3:
 
-github.com/mattn/go-sqlite3
----------------------------
+*****************************
+ github.com/mattn/go-sqlite3
+*****************************
 
 .. code::
 
@@ -3508,8 +3565,9 @@ github.com/mattn/go-sqlite3
 
 .. _go-winio:
 
-github.com/Microsoft/go-winio
------------------------------
+*******************************
+ github.com/Microsoft/go-winio
+*******************************
 
 .. code::
 
@@ -3537,8 +3595,9 @@ github.com/Microsoft/go-winio
 
 .. _aec:
 
-github.com/morikuni/aec
------------------------
+*************************
+ github.com/morikuni/aec
+*************************
 
 .. code::
 
@@ -3566,8 +3625,9 @@ github.com/morikuni/aec
 
 .. _gotty:
 
-github.com/Nvveen/Gotty
------------------------
+*************************
+ github.com/Nvveen/Gotty
+*************************
 
 .. code::
 
@@ -3600,8 +3660,9 @@ github.com/Nvveen/Gotty
 
 .. _paseto:
 
-github.com/o1egl/paseto
------------------------
+*************************
+ github.com/o1egl/paseto
+*************************
 
 .. code::
 
@@ -3629,8 +3690,9 @@ github.com/o1egl/paseto
 
 .. _ginkgo:
 
-github.com/onsi/ginkgo
-----------------------
+************************
+ github.com/onsi/ginkgo
+************************
 
 .. code::
 
@@ -3657,8 +3719,9 @@ github.com/onsi/ginkgo
 
 .. _gomega:
 
-github.com/onsi/gomega
-----------------------
+************************
+ github.com/onsi/gomega
+************************
 
 .. code::
 
@@ -3685,8 +3748,9 @@ github.com/onsi/gomega
 
 .. _go-digest:
 
-github.com/opencontainers/go-digest
------------------------------------
+*************************************
+ github.com/opencontainers/go-digest
+*************************************
 
 .. code::
 
@@ -3884,8 +3948,9 @@ github.com/opencontainers/go-digest
 
 .. _image-spec:
 
-github.com/opencontainers/image-spec
-------------------------------------
+**************************************
+ github.com/opencontainers/image-spec
+**************************************
 
 .. code::
 
@@ -4082,8 +4147,9 @@ github.com/opencontainers/image-spec
 
 .. _errors:
 
-github.com/pkg/errors
----------------------
+***********************
+ github.com/pkg/errors
+***********************
 
 .. code::
 
@@ -4113,8 +4179,9 @@ github.com/pkg/errors
 
 .. _backo-go:
 
-github.com/segmentio/backo-go
------------------------------
+*******************************
+ github.com/segmentio/backo-go
+*******************************
 
 .. code::
 
@@ -4142,8 +4209,9 @@ github.com/segmentio/backo-go
 
 .. _gopsutil:
 
-github.com/shirou/gopsutil
---------------------------
+****************************
+ github.com/shirou/gopsutil
+****************************
 
 .. code::
 
@@ -4211,8 +4279,9 @@ github.com/shirou/gopsutil
 
 .. _logrus:
 
-github.com/sirupsen/logrus
---------------------------
+****************************
+ github.com/sirupsen/logrus
+****************************
 
 .. code::
 
@@ -4240,8 +4309,9 @@ github.com/sirupsen/logrus
 
 .. _cobra:
 
-github.com/spf13/cobra
-----------------------
+************************
+ github.com/spf13/cobra
+************************
 
 .. code::
 
@@ -4422,8 +4492,9 @@ github.com/spf13/cobra
 
 .. _pflag:
 
-github.com/spf13/pflag
-----------------------
+************************
+ github.com/spf13/pflag
+************************
 
 .. code::
 
@@ -4458,8 +4529,9 @@ github.com/spf13/pflag
 
 .. _viper:
 
-github.com/spf13/viper
-----------------------
+************************
+ github.com/spf13/viper
+************************
 
 .. code::
 
@@ -4487,8 +4559,9 @@ github.com/spf13/viper
 
 .. _wmi:
 
-github.com/stackexchange/wmi
-----------------------------
+******************************
+ github.com/stackexchange/wmi
+******************************
 
 .. code::
 
@@ -4515,8 +4588,9 @@ github.com/stackexchange/wmi
 
 .. _bytebufferpool:
 
-github.com/valyala/bytebufferpool
----------------------------------
+***********************************
+ github.com/valyala/bytebufferpool
+***********************************
 
 .. code::
 
@@ -4544,8 +4618,9 @@ github.com/valyala/bytebufferpool
 
 .. _fasttemplate:
 
-github.com/valyala/fasttemplate
--------------------------------
+*********************************
+ github.com/valyala/fasttemplate
+*********************************
 
 .. code::
 
@@ -4573,8 +4648,9 @@ github.com/valyala/fasttemplate
 
 .. _xtgo-uuid:
 
-github.com/xtgo/uuid
---------------------
+**********************
+ github.com/xtgo/uuid
+**********************
 
 .. code::
 
@@ -4608,8 +4684,9 @@ github.com/xtgo/uuid
 
 .. _crypto:
 
-golang.org/x/crypto
--------------------
+*********************
+ golang.org/x/crypto
+*********************
 
 .. code::
 
@@ -4643,8 +4720,9 @@ golang.org/x/crypto
 
 .. _net:
 
-golang.org/x/net
-----------------
+******************
+ golang.org/x/net
+******************
 
 .. code::
 
@@ -4678,8 +4756,9 @@ golang.org/x/net
 
 .. _sys:
 
-golang.org/x/sys
-----------------
+******************
+ golang.org/x/sys
+******************
 
 .. code::
 
@@ -4713,8 +4792,9 @@ golang.org/x/sys
 
 .. _api:
 
-google.golang.org/api
----------------------
+***********************
+ google.golang.org/api
+***********************
 
 .. code::
 
@@ -4748,8 +4828,9 @@ google.golang.org/api
 
 .. _gobrake.v2:
 
-gopkg.in/airbrake/gobrake.v2
-----------------------------
+******************************
+ gopkg.in/airbrake/gobrake.v2
+******************************
 
 .. code::
 
@@ -4777,8 +4858,9 @@ gopkg.in/airbrake/gobrake.v2
 
 .. _fsnotify.v1:
 
-gopkg.in/fsnotify.v1
---------------------
+**********************
+ gopkg.in/fsnotify.v1
+**********************
 
 .. code::
 
@@ -4813,8 +4895,9 @@ gopkg.in/fsnotify.v1
 
 .. _logrus-airbrake-hook.v2:
 
-gopkg.in/gemnasium/logrus-airbrake-hook.v2
-------------------------------------------
+********************************************
+ gopkg.in/gemnasium/logrus-airbrake-hook.v2
+********************************************
 
 .. code::
 
@@ -4842,8 +4925,9 @@ gopkg.in/gemnasium/logrus-airbrake-hook.v2
 
 .. _null.v3:
 
-gopkg.in/guregu/null.v3
------------------------
+*************************
+ gopkg.in/guregu/null.v3
+*************************
 
 .. code::
 
@@ -4860,8 +4944,9 @@ gopkg.in/guregu/null.v3
 
 .. _analytics-go.v3:
 
-gopkg.in/segmentio/analytics-go.v3
-----------------------------------
+************************************
+ gopkg.in/segmentio/analytics-go.v3
+************************************
 
 .. code::
 
@@ -4877,8 +4962,9 @@ gopkg.in/segmentio/analytics-go.v3
 
 .. _tomb.v1:
 
-gopkg.in/tomb.v1
-----------------
+******************
+ gopkg.in/tomb.v1
+******************
 
 .. code::
 
@@ -4914,8 +5000,9 @@ gopkg.in/tomb.v1
 
 .. _gotest.tools:
 
-gotest.tools
-------------
+**************
+ gotest.tools
+**************
 
 .. code::
 

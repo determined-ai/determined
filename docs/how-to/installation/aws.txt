@@ -1,50 +1,54 @@
 .. _install-aws:
 
-Install Determined on AWS
-=========================
+###########################
+ Install Determined on AWS
+###########################
+
 This document describes how to deploy a Determined cluster on Amazon Web
-Services (AWS). We provide the
-:ref:`determined-deploy <determined-deploy>` package for easy creation
-and deployment of these resources. If you would rather create the cluster manually, see the
+Services (AWS). We provide the :ref:`determined-deploy
+<determined-deploy>` package for easy creation and deployment of these
+resources. If you would rather create the cluster manually, see the
 :ref:`aws-manual-deployment` section below.
 
-For more information about using Determined on AWS, see the :ref:`topic_guide_aws`
-topic guide.
-
+For more information about using Determined on AWS, see the
+:ref:`topic_guide_aws` topic guide.
 
 .. _determined-deploy:
 
-
-``determined-deploy`` Python Package
-------------------------------------
+**************************************
+ ``determined-deploy`` Python Package
+**************************************
 
 The ``determined-deploy`` package uses `AWS CloudFormation
 <https://aws.amazon.com/cloudformation/>`__ to automatically deploy and
-configure a Determined cluster. CloudFormation builds the necessary components
-for Determined into a single CloudFormation stack.
+configure a Determined cluster. CloudFormation builds the necessary
+components for Determined into a single CloudFormation stack.
 
 Requirements
-~~~~~~~~~~~~
+============
 
-- Either AWS credentials or an IAM role with permissions to access AWS
-  CloudFormation APIs. See the `AWS Documentation
-  <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html>`__
-  for information on how to use AWS credentials.
+-  Either AWS credentials or an IAM role with permissions to access AWS
+   CloudFormation APIs. See the `AWS Documentation
+   <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html>`__
+   for information on how to use AWS credentials.
 
-- An `AWS EC2 Keypair <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html>`__.
+-  An `AWS EC2 Keypair
+   <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html>`__.
 
 You may also want to increase the `EC2 instance limits
 <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html>`__
 on your account --- the `default instance limits
 <https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-on-demand-instances.html#ec2-on-demand-instances-limits>`__
-are quite low, particularly for GPU instances. For example, by default an AWS
-account can only create 128 vCPUs worth of P-type instances in a given AWS
-region. The default configuration for ``det-deploy`` can result in launching up
-to 5 ``p2.8xlarge`` instances (which have 32 vCPUs each), which would exceed the
-default quota. AWS instance limits can be increased by submitting a request to the `AWS Support Center <https://console.aws.amazon.com/support/home?#/case/create?issueType=service-limit-increase&limitType=service-code-ec2-instances>`__.
+are quite low, particularly for GPU instances. For example, by default
+an AWS account can only create 128 vCPUs worth of P-type instances in a
+given AWS region. The default configuration for ``det-deploy`` can
+result in launching up to 5 ``p2.8xlarge`` instances (which have 32
+vCPUs each), which would exceed the default quota. AWS instance limits
+can be increased by submitting a request to the `AWS Support Center
+<https://console.aws.amazon.com/support/home?#/case/create?issueType=service-limit-increase&limitType=service-code-ec2-instances>`__.
 
 Installation
-~~~~~~~~~~~~
+============
 
 ``determined-deploy`` can be installed using ``pip``:
 
@@ -53,7 +57,7 @@ Installation
    pip install determined-deploy
 
 Deploying
-~~~~~~~~~
+=========
 
 The basic command to deploy a cluster is as follows:
 
@@ -61,51 +65,51 @@ The basic command to deploy a cluster is as follows:
 
    det-deploy aws up --cluster-id CLUSTER_ID --keypair KEYPAIR_NAME
 
-``CLUSTER_ID`` is an arbitrary unique ID for the new cluster.
-We recommend choosing a cluster ID that is memorable and
-helps identify what the cluster is being used for. The cluster ID will be
-used as the AWS CloudFormation stack name.
+``CLUSTER_ID`` is an arbitrary unique ID for the new cluster. We
+recommend choosing a cluster ID that is memorable and helps identify
+what the cluster is being used for. The cluster ID will be used as the
+AWS CloudFormation stack name.
 
-``KEYPAIR_NAME`` is the name of the AWS EC2 key pair to use when provisioning
-the cluster. If the AWS CLI is installed on your machine, you can get a
-list of the available keypair names by running ``aws ec2 describe-key-pairs``.
+``KEYPAIR_NAME`` is the name of the AWS EC2 key pair to use when
+provisioning the cluster. If the AWS CLI is installed on your machine,
+you can get a list of the available keypair names by running ``aws ec2
+describe-key-pairs``.
 
-The deployment process may take 5--10 minutes. When it completes, summary
-information about the newly deployed cluster will be printed, including the URL
-of the Determined master.
+The deployment process may take 5--10 minutes. When it completes,
+summary information about the newly deployed cluster will be printed,
+including the URL of the Determined master.
 
 .. _determined-deploy-deployment-types:
 
 Deployment Types
-~~~~~~~~~~~~~~~~
+================
 
 ``determined-deploy`` supports multiple different deployment types to
 work with different security needs. The deployment type can be specified
-using the ``--deployment-type`` argument (e.g., ``det-deploy
-aws --deployment-type secure``).
+using the ``--deployment-type`` argument (e.g., ``det-deploy aws
+--deployment-type secure``).
 
-- ``simple``: The simple deployment provides an easy way to deploy a
-  Determined cluster in AWS. This creates the master instance in the
-  default subnet for the account.
+-  ``simple``: The simple deployment provides an easy way to deploy a
+   Determined cluster in AWS. This creates the master instance in the
+   default subnet for the account.
 
-- ``vpc``: The VPC deployment creates a separate VPC with public
-  subnets; the Determined cluster is deployed into these subnets.
+-  ``vpc``: The VPC deployment creates a separate VPC with public
+   subnets; the Determined cluster is deployed into these subnets.
 
-- ``secure``: The secure deployment creates resources to lock down the
-  Determined cluster. These resources are:
+-  ``secure``: The secure deployment creates resources to lock down the
+   Determined cluster. These resources are:
 
-  - A VPC with a public and private subnet
-  - A NAT gateway for the private subnet to make outbound connections
-  - An S3 VPC gateway so the private subnet can access S3
-  - A bastion instance in the public subnet
-  - A master instance in the private subnet
-
+   -  A VPC with a public and private subnet
+   -  A NAT gateway for the private subnet to make outbound connections
+   -  An S3 VPC gateway so the private subnet can access S3
+   -  A bastion instance in the public subnet
+   -  A master instance in the private subnet
 
 CLI Arguments
-~~~~~~~~~~~~~
+=============
 
 Spinning up the Cluster
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 
 .. code::
 
@@ -115,57 +119,67 @@ Spinning up the Cluster
    :widths: 25 50 25
    :header-rows: 1
 
-   * - Argument
-     - Description
-     - Default Value
+   -  -  Argument
+      -  Description
+      -  Default Value
 
-   * - ``--cluster-id``
-     - Unique ID for the cluster; it will be used as the CloudFormation stack name.
-     - *required*
+   -  -  ``--cluster-id``
+      -  Unique ID for the cluster; it will be used as the
+         CloudFormation stack name.
+      -  *required*
 
-   * - ``--keypair``
-     - The name of the AWS EC2 key pair to use for both master and agent instances.
-     - *required*
+   -  -  ``--keypair``
+      -  The name of the AWS EC2 key pair to use for both master and
+         agent instances.
+      -  *required*
 
-   * - ``--master-instance-type``
-     - AWS instance type to use for the master.
-     - m5.large
+   -  -  ``--master-instance-type``
+      -  AWS instance type to use for the master.
+      -  m5.large
 
-   * - ``--agent-instance-type``
-     - AWS instance type to use for the agents. Must be one of the following instance types: ``g4dn.xlarge``, ``g4dn.2xlarge``, ``g4dn.4xlarge``, ``g4dn.8xlarge``, ``g4dn.16xlarge``, ``g4dn.12xlarge``, ``g4dn.metal``, ``p2.xlarge``, ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``, ``p3.8xlarge``, ``p3.16xlarge``, or ``p3dn.24xlarge``.
-     - p2.8xlarge
+   -  -  ``--agent-instance-type``
 
-   * - ``--deployment-type``
-     - The :ref:`deployment template <determined-deploy-deployment-types>` to use.
-     - simple
+      -  AWS instance type to use for the agents. Must be one of the
+         following instance types: ``g4dn.xlarge``, ``g4dn.2xlarge``,
+         ``g4dn.4xlarge``, ``g4dn.8xlarge``, ``g4dn.16xlarge``,
+         ``g4dn.12xlarge``, ``g4dn.metal``, ``p2.xlarge``,
+         ``p2.8xlarge``, ``p2.16xlarge``, ``p3.2xlarge``,
+         ``p3.8xlarge``, ``p3.16xlarge``, or ``p3dn.24xlarge``.
 
-   * - ``--inbound-cidr``
-     - CIDR range for inbound traffic.
-     - 0.0.0.0/0
+      -  p2.8xlarge
 
-   * - ``--db-password``
-     - The password for ``postgres`` user for database.
-     - postgres
+   -  -  ``--deployment-type``
+      -  The :ref:`deployment template
+         <determined-deploy-deployment-types>` to use.
+      -  simple
 
-   * - ``--region``
-     - AWS region to deploy into.
-     - The default region for the AWS user
+   -  -  ``--inbound-cidr``
+      -  CIDR range for inbound traffic.
+      -  0.0.0.0/0
 
-   * - ``--max-idle-agent-period``
-     - The length of time to wait before idle dynamic agents will be automatically terminated.
-     - 10m (10 minutes)
+   -  -  ``--db-password``
+      -  The password for ``postgres`` user for database.
+      -  postgres
 
-   * - ``--max-dynamic-agents``
-     - Maximum number of dynamic agent instances at one time.
-     - 5
+   -  -  ``--region``
+      -  AWS region to deploy into.
+      -  The default region for the AWS user
 
-   * - ``--dry-run``
-     - Print the template but do not execute it.
-     - False
+   -  -  ``--max-idle-agent-period``
+      -  The length of time to wait before idle dynamic agents will be
+         automatically terminated.
+      -  10m (10 minutes)
 
+   -  -  ``--max-dynamic-agents``
+      -  Maximum number of dynamic agent instances at one time.
+      -  5
+
+   -  -  ``--dry-run``
+      -  Print the template but do not execute it.
+      -  False
 
 Tearing Down the Cluster
-^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
 
 .. code::
 
@@ -175,250 +189,250 @@ Tearing Down the Cluster
    :widths: 25 50 25
    :header-rows: 1
 
-   * - Argument
-     - Description
-     - Default Value
+   -  -  Argument
+      -  Description
+      -  Default Value
 
-   * - ``--cluster-id``
-     - Unique ID for the cluster; it will be used for the CloudFormation stack name.
-     - *required*
+   -  -  ``--cluster-id``
+      -  Unique ID for the cluster; it will be used for the
+         CloudFormation stack name.
+      -  *required*
 
 .. _aws-manual-deployment:
 
-Manual Deployment
------------------
+*******************
+ Manual Deployment
+*******************
 
 Database
-~~~~~~~~
-Determined requires a PostgreSQL-compatible database, such as AWS Aurora. Configure the cluster to use the database by
-including the database information in ``master.yaml``. Make sure to create a database before running
-the Determined cluster (e.g., ``CREATE DATABASE <database-name>``).
+========
+
+Determined requires a PostgreSQL-compatible database, such as AWS
+Aurora. Configure the cluster to use the database by including the
+database information in ``master.yaml``. Make sure to create a database
+before running the Determined cluster (e.g., ``CREATE DATABASE
+<database-name>``).
 
 Example ``master.yaml`` snippet:
 
 .. code:: yaml
 
-    db:
-      user: "${database-user}"
-      password: "${database-password}"
-      host: "${database-hostname}"
-      port: 5432
-      name: "${database-name}"
-
+   db:
+     user: "${database-user}"
+     password: "${database-password}"
+     host: "${database-hostname}"
+     port: 5432
+     name: "${database-name}"
 
 Security Groups
-~~~~~~~~~~~~~~~
-VPC Security Groups provide a set of rules for inbound and outbound network traffic. The requirements for a Determined
-cluster are:
+===============
+
+VPC Security Groups provide a set of rules for inbound and outbound
+network traffic. The requirements for a Determined cluster are:
 
 Master
-^^^^^^
-- Egress on all ports to agent security group
+------
 
-- Egress outbound to the Internet
-
-- Ingress on port 8080 to view to the Determined WebUI
-
-- Ingress on port 22 for SSH (not required but strongly advised)
-
-- Ingress on all ports from agent security group
+-  Egress on all ports to agent security group
+-  Egress outbound to the Internet
+-  Ingress on port 8080 to view to the Determined WebUI
+-  Ingress on port 22 for SSH (not required but strongly advised)
+-  Ingress on all ports from agent security group
 
 Example:
 
 .. code:: yaml
 
-  MasterSecurityGroupEgress:
-    Type: AWS::EC2::SecurityGroupEgress
-    Properties:
-      GroupId: !GetAtt MasterSecurityGroup.GroupId
-      DestinationSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
-      FromPort: 0
-      ToPort: 65535
-      IpProtocol: tcp
+   MasterSecurityGroupEgress:
+     Type: AWS::EC2::SecurityGroupEgress
+     Properties:
+       GroupId: !GetAtt MasterSecurityGroup.GroupId
+       DestinationSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+       FromPort: 0
+       ToPort: 65535
+       IpProtocol: tcp
 
-  MasterSecurityGroupInternet:
-    Type: AWS::EC2::SecurityGroupEgress
-    Properties:
-      GroupId: !GetAtt MasterSecurityGroup.GroupId
-      CidrIp: 0.0.0.0/0
-      FromPort: 0
-      ToPort: 65535
-      IpProtocol: tcp
+   MasterSecurityGroupInternet:
+     Type: AWS::EC2::SecurityGroupEgress
+     Properties:
+       GroupId: !GetAtt MasterSecurityGroup.GroupId
+       CidrIp: 0.0.0.0/0
+       FromPort: 0
+       ToPort: 65535
+       IpProtocol: tcp
 
-  MasterSecurityGroupIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !GetAtt MasterSecurityGroup.GroupId
-      FromPort: 8080
-      ToPort: 8080
-      IpProtocol: tcp
-      SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+   MasterSecurityGroupIngress:
+     Type: AWS::EC2::SecurityGroupIngress
+     Properties:
+       GroupId: !GetAtt MasterSecurityGroup.GroupId
+       FromPort: 8080
+       ToPort: 8080
+       IpProtocol: tcp
+       SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
 
-  MasterSecurityGroupIngressUI:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !GetAtt MasterSecurityGroup.GroupId
-      FromPort: 8080
-      ToPort: 8080
-      IpProtocol: tcp
-      CidrIp: !Ref InboundCIDRRange
+   MasterSecurityGroupIngressUI:
+     Type: AWS::EC2::SecurityGroupIngress
+     Properties:
+       GroupId: !GetAtt MasterSecurityGroup.GroupId
+       FromPort: 8080
+       ToPort: 8080
+       IpProtocol: tcp
+       CidrIp: !Ref InboundCIDRRange
 
-  MasterSSHIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !GetAtt MasterSecurityGroup.GroupId
-      IpProtocol: tcp
-      FromPort: 22
-      ToPort: 22
-      CidrIp: !Ref InboundCIDRRange
-
+   MasterSSHIngress:
+     Type: AWS::EC2::SecurityGroupIngress
+     Properties:
+       GroupId: !GetAtt MasterSecurityGroup.GroupId
+       IpProtocol: tcp
+       FromPort: 22
+       ToPort: 22
+       CidrIp: !Ref InboundCIDRRange
 
 Agent
-^^^^^
+-----
 
-- Egress on all ports to the Internet
-
-- Ingress on all ports from master security group
-
-- Ingress on all ports from agent security group
-
-- Ingress on port 22 for SSH (not required but strongly advised)
+-  Egress on all ports to the Internet
+-  Ingress on all ports from master security group
+-  Ingress on all ports from agent security group
+-  Ingress on port 22 for SSH (not required but strongly advised)
 
 Example:
 
 .. code:: yaml
 
-  AgentSecurityGroupEgress:
-    Type: AWS::EC2::SecurityGroupEgress
-    Properties:
-      GroupId: !GetAtt AgentSecurityGroup.GroupId
-      CidrIp: 0.0.0.0/0
-      FromPort: 0
-      ToPort: 65535
-      IpProtocol: tcp
+   AgentSecurityGroupEgress:
+     Type: AWS::EC2::SecurityGroupEgress
+     Properties:
+       GroupId: !GetAtt AgentSecurityGroup.GroupId
+       CidrIp: 0.0.0.0/0
+       FromPort: 0
+       ToPort: 65535
+       IpProtocol: tcp
 
-  AgentSecurityGroupIngressMaster:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !GetAtt AgentSecurityGroup.GroupId
-      FromPort: 0
-      ToPort: 65535
-      IpProtocol: tcp
-      SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
+   AgentSecurityGroupIngressMaster:
+     Type: AWS::EC2::SecurityGroupIngress
+     Properties:
+       GroupId: !GetAtt AgentSecurityGroup.GroupId
+       FromPort: 0
+       ToPort: 65535
+       IpProtocol: tcp
+       SourceSecurityGroupId: !GetAtt MasterSecurityGroup.GroupId
 
-  AgentSecurityGroupIngressAgent:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !GetAtt AgentSecurityGroup.GroupId
-      FromPort: 0
-      ToPort: 65535
-      IpProtocol: tcp
-      SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
+   AgentSecurityGroupIngressAgent:
+     Type: AWS::EC2::SecurityGroupIngress
+     Properties:
+       GroupId: !GetAtt AgentSecurityGroup.GroupId
+       FromPort: 0
+       ToPort: 65535
+       IpProtocol: tcp
+       SourceSecurityGroupId: !GetAtt AgentSecurityGroup.GroupId
 
-  AgentSSHIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !GetAtt AgentSecurityGroup.GroupId
-      IpProtocol: tcp
-      FromPort: 22
-      ToPort: 22
-      CidrIp: !Ref InboundCIDRRange
-
+   AgentSSHIngress:
+     Type: AWS::EC2::SecurityGroupIngress
+     Properties:
+       GroupId: !GetAtt AgentSecurityGroup.GroupId
+       IpProtocol: tcp
+       FromPort: 22
+       ToPort: 22
+       CidrIp: !Ref InboundCIDRRange
 
 IAM Roles
-~~~~~~~~~
+=========
 
-IAM roles comprise IAM policies, which provide access to AWS APIs such as the EC2 or S3 API. The IAM
-policies needed for the Determined cluster are:
+IAM roles comprise IAM policies, which provide access to AWS APIs such
+as the EC2 or S3 API. The IAM policies needed for the Determined cluster
+are:
 
 Master
-^^^^^^
-- Allow EC2 to assume role
+------
 
-- Allow EC2 to dynamically create and terminate instances with agent role
+-  Allow EC2 to assume role
+-  Allow EC2 to dynamically create and terminate instances with agent
+   role
 
 .. code:: yaml
 
-  MasterRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - ec2.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Policies:
-        - PolicyName: determined-agent-policy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - ec2:DescribeInstances
-                  - ec2:TerminateInstances
-                  - ec2:CreateTags
-                  - ec2:RunInstances
-                Resource: "*"
-        - PolicyName: pass-role
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action: iam:PassRole
-                Resource: !GetAtt AgentRole.Arn
+   MasterRole:
+     Type: AWS::IAM::Role
+     Properties:
+       AssumeRolePolicyDocument:
+         Version: 2012-10-17
+         Statement:
+           - Effect: Allow
+             Principal:
+               Service:
+                 - ec2.amazonaws.com
+             Action:
+               - sts:AssumeRole
+       Policies:
+         - PolicyName: determined-agent-policy
+           PolicyDocument:
+             Version: 2012-10-17
+             Statement:
+               - Effect: Allow
+                 Action:
+                   - ec2:DescribeInstances
+                   - ec2:TerminateInstances
+                   - ec2:CreateTags
+                   - ec2:RunInstances
+                 Resource: "*"
+         - PolicyName: pass-role
+           PolicyDocument:
+             Version: 2012-10-17
+             Statement:
+               - Effect: Allow
+                 Action: iam:PassRole
+                 Resource: !GetAtt AgentRole.Arn
 
 Agent
-^^^^^
-- Allow EC2 to assume role
+-----
 
-- Allow S3 access for checkpoint storage
-
-- Allow agent instance to describe instances
+-  Allow EC2 to assume role
+-  Allow S3 access for checkpoint storage
+-  Allow agent instance to describe instances
 
 .. code:: yaml
 
-  AgentRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - ec2.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Policies:
-        - PolicyName: agent-s3-policy
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action: "s3:*"
-                Resource: "*"
-        - PolicyName: determined-ec2
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - ec2:DescribeInstances
-                Resource: "*"
-
+   AgentRole:
+     Type: AWS::IAM::Role
+     Properties:
+       AssumeRolePolicyDocument:
+         Version: 2012-10-17
+         Statement:
+           - Effect: Allow
+             Principal:
+               Service:
+                 - ec2.amazonaws.com
+             Action:
+               - sts:AssumeRole
+       Policies:
+         - PolicyName: agent-s3-policy
+           PolicyDocument:
+             Version: 2012-10-17
+             Statement:
+               - Effect: Allow
+                 Action: "s3:*"
+                 Resource: "*"
+         - PolicyName: determined-ec2
+           PolicyDocument:
+             Version: 2012-10-17
+             Statement:
+               - Effect: Allow
+                 Action:
+                   - ec2:DescribeInstances
+                 Resource: "*"
 
 Master Node
-~~~~~~~~~~~
-The master node should be deployed on an EC2 instance with at least 4 CPUs (Intel Broadwell or later), 8GB of RAM,
-and 200GB of disk storage. This roughly corresponds to an EC2 t2.large instance or better. The AMI should be the default
-Ubuntu 18.04 AMI.
+===========
+
+The master node should be deployed on an EC2 instance with at least 4
+CPUs (Intel Broadwell or later), 8GB of RAM, and 200GB of disk storage.
+This roughly corresponds to an EC2 t2.large instance or better. The AMI
+should be the default Ubuntu 18.04 AMI.
 
 Running Determined
-^^^^^^^^^^^^^^^^^^
+------------------
+
 #. Install Docker and create the ``determined`` Docker network.
 
    .. code::
@@ -441,49 +455,51 @@ Running Determined
 
       docker network create determined
 
-#. Configure the cluster with ``master.yaml``. See :ref:`cluster-configuration` for more
-   information.
+#. Configure the cluster with ``master.yaml``. See
+   :ref:`cluster-configuration` for more information.
 
    Notes:
 
-   - ``image_id`` should be the latest Determined agent AMI.
-   - ``instance_type`` should be any p2 or p3 EC2 instance type.
+   -  ``image_id`` should be the latest Determined agent AMI.
+   -  ``instance_type`` should be any p2 or p3 EC2 instance type.
 
    .. warning::
 
-      An important assumption of Determined with Dynamic Agents is that any EC2 instances with the configured
-      tag_key:tag_value pair are managed by the Determined master. This pair should be unique to your Determined installation.
-      If it is not, Determined may inadvertently manage your non-Determined EC2 instances.
+      An important assumption of Determined with Dynamic Agents is that
+      any EC2 instances with the configured tag_key:tag_value pair are
+      managed by the Determined master. This pair should be unique to
+      your Determined installation. If it is not, Determined may
+      inadvertently manage your non-Determined EC2 instances.
 
    .. code:: yaml
 
-     checkpoint_storage:
-       type: s3
-       bucket: ${CheckpointBucket}
+      checkpoint_storage:
+        type: s3
+        bucket: ${CheckpointBucket}
 
-     db:
-       user: postgres
-       password: "${DBPassword}"
-       host: "${Database.Endpoint.Address}"
-       port: 5432
-       name: determined
+      db:
+        user: postgres
+        password: "${DBPassword}"
+        host: "${Database.Endpoint.Address}"
+        port: 5432
+        name: determined
 
-     provisioner:
-       iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
-       image_id: ${AgentAmiId}
-       agent_docker_image: determinedai/determined-agent:${Version}
-       instance_name: determined-agent-${UserName}
-       instance_type: ${AgentInstanceType}
-       master_url: http://local-ipv4:8080
-       max_idle_agent_period: ${MaxIdleAgentPeriod}
-       max_instances: ${MaxInstances}
-       network_interface:
-         public_ip: true
-         security_group_id: ${AgentSecurityGroup.GroupId}
-       provider: aws
-       ssh_key_name: ${Keypair}
-       tag_key: determined-${UserName}
-       tag_value: determined-${UserName}-agent
+      provisioner:
+        iam_instance_profile_arn: ${AgentInstanceProfile.Arn}
+        image_id: ${AgentAmiId}
+        agent_docker_image: determinedai/determined-agent:${Version}
+        instance_name: determined-agent-${UserName}
+        instance_type: ${AgentInstanceType}
+        master_url: http://local-ipv4:8080
+        max_idle_agent_period: ${MaxIdleAgentPeriod}
+        max_instances: ${MaxInstances}
+        network_interface:
+          public_ip: true
+          security_group_id: ${AgentSecurityGroup.GroupId}
+        provider: aws
+        ssh_key_name: ${Keypair}
+        tag_key: determined-${UserName}
+        tag_value: determined-${UserName}-agent
 
 #. Start the Determined master.
 
@@ -496,4 +512,5 @@ Running Determined
         -v master.yaml:/etc/determined/master.yaml \
         determinedai/determined-master:${Version}
 
-Once you have your Determined cluster running on AWS, try out some of our :ref:`tutorials<tutorials>`.
+Once you have your Determined cluster running on AWS, try out some of
+our :ref:`tutorials <tutorials>`.

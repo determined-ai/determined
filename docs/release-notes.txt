@@ -1,663 +1,1038 @@
 .. _release-notes:
 
-Release Notes
-=============
+###############
+ Release Notes
+###############
 
-Version 0.13
-------------
+**************
+ Version 0.13
+**************
 
 Version 0.13.3
-^^^^^^^^^^^^^^
+==============
 
 **Release Date:** September 8, 2020
 
 **Bug Fixes**
 
-- Deployment: Fix a bug where ``det-deploy local cluster-up`` was failing.
- 
-- WebUI: Fix a bug where experiment labels were not displayed on the experiment list page.
-
-- WebUI: Fix a bug with decoding API responses because of unexpected non-numeric metric values.
+-  Deployment: Fix a bug where ``det-deploy local cluster-up`` was
+   failing.
+-  WebUI: Fix a bug where experiment labels were not displayed on the
+   experiment list page.
+-  WebUI: Fix a bug with decoding API responses because of unexpected
+   non-numeric metric values.
 
 Version 0.13.2
-^^^^^^^^^^^^^^
+==============
 
 **Release Date:** September 3, 2020
 
 **New Features**
 
-- Support deploying Determined on `Kubernetes <https://kubernetes.io/>`__.
+-  Support deploying Determined on `Kubernetes
+   <https://kubernetes.io/>`__.
 
-  - Determined workloads run as a collection of pods, which allows standard Kubernetes tools for logging, metrics, and tracing to be used. Determined is compatible with Kubernetes >= 1.15, including managed Kubernetes services such as Google Kubernetes Engine (GKE) and AWS Elastic Kubernetes Service (EKS).
+   -  Determined workloads run as a collection of pods, which allows
+      standard Kubernetes tools for logging, metrics, and tracing to be
+      used. Determined is compatible with Kubernetes >= 1.15, including
+      managed Kubernetes services such as Google Kubernetes Engine (GKE)
+      and AWS Elastic Kubernetes Service (EKS).
 
-  - When using Determined with Kubernetes, we currently do not support
-    fair-share scheduling, priority scheduling, per-experiment weights, or
-    gang-scheduling for distributed training experiments; workloads will be
-    scheduled according the behavior of the default Kubernetes scheduler.
+   -  When using Determined with Kubernetes, we currently do not support
+      fair-share scheduling, priority scheduling, per-experiment
+      weights, or gang-scheduling for distributed training experiments;
+      workloads will be scheduled according the behavior of the default
+      Kubernetes scheduler.
 
-  - Users can configure the behavior of the pods that are launched for
-    Determined workloads by specifying a :ref:`custom pod spec
-    <custom-pod-specs>`. A default pod spec can be configured when installing
-    Kubernetes, but a custom pod spec can also be specified on a per-task basis
-    (e.g., via the :ref:`environment.pod_spec <exp-environment-pod-spec>` field
-    in the experiment configuration file).
+   -  Users can configure the behavior of the pods that are launched for
+      Determined workloads by specifying a :ref:`custom pod spec
+      <custom-pod-specs>`. A default pod spec can be configured when
+      installing Kubernetes, but a custom pod spec can also be specified
+      on a per-task basis (e.g., via the :ref:`environment.pod_spec
+      <exp-environment-pod-spec>` field in the experiment configuration
+      file).
 
-  - For more information on using Determined with Kubernetes, see the
-    :ref:`documentation <determined-on-kubernetes>`.
+   -  For more information on using Determined with Kubernetes, see the
+      :ref:`documentation <determined-on-kubernetes>`.
 
-- Support running multiple distributed training jobs on a single agent.
+-  Support running multiple distributed training jobs on a single agent.
 
-  - In previous versions of Determined, a distributed training job could only be
-    scheduled on an agent if it was configured to use all of the GPUs on that
-    agent. In this release, that restriction has been lifted: for example, an
-    agent with 8 GPUs can now be used to run two 4-GPU distributed training
-    jobs. This feature is particularly useful as a way to improve utilization
-    and fair resource allocation for smaller clusters.
+   -  In previous versions of Determined, a distributed training job
+      could only be scheduled on an agent if it was configured to use
+      all of the GPUs on that agent. In this release, that restriction
+      has been lifted: for example, an agent with 8 GPUs can now be used
+      to run two 4-GPU distributed training jobs. This feature is
+      particularly useful as a way to improve utilization and fair
+      resource allocation for smaller clusters.
 
 **Improvements**
 
-- WebUI: Update primary navigation. The primary navigation is all to one side, and is now collapsible to maximize content space.
+-  WebUI: Update primary navigation. The primary navigation is all to
+   one side, and is now collapsible to maximize content space.
 
-- WebUI: Trial details improvements:
+-  WebUI: Trial details improvements:
 
-  - Update metrics selector to show the number of metrics selected to improve readability.
+   -  Update metrics selector to show the number of metrics selected to
+      improve readability.
 
-  - Add the "Has Checkpoint or Validation" filter.
+   -  Add the "Has Checkpoint or Validation" filter.
 
-  - Persist the "Has Checkpoint or Validation" filter setting across all trials, and persist the "Metrics" filter on trials of the same experiment.
+   -  Persist the "Has Checkpoint or Validation" filter setting across
+      all trials, and persist the "Metrics" filter on trials of the same
+      experiment.
 
-- WebUI: Improve table pagination behavior. This will improve performance on Determined instances with many experiments.
+-  WebUI: Improve table pagination behavior. This will improve
+   performance on Determined instances with many experiments.
 
-- WebUI: Persist the sort order and sort column for the experiments, tasks, and trials tables to local storage.
+-  WebUI: Persist the sort order and sort column for the experiments,
+   tasks, and trials tables to local storage.
 
-- WebUI: Improve the default axes' ranges for metrics charts. Also, update the range as new data points arrive.
+-  WebUI: Improve the default axes' ranges for metrics charts. Also,
+   update the range as new data points arrive.
 
-- Add a warning when the PyTorch LR scheduler incorrectly uses an unwrapped optimizer. When using PyTorch with Determined, LR schedulers should be constructed using an optimizer that has been wrapped via the :meth:`~determined.pytorch.PyTorchTrialContext.wrap_optimizer` method.
+-  Add a warning when the PyTorch LR scheduler incorrectly uses an
+   unwrapped optimizer. When using PyTorch with Determined, LR
+   schedulers should be constructed using an optimizer that has been
+   wrapped via the
+   :meth:`~determined.pytorch.PyTorchTrialContext.wrap_optimizer`
+   method.
 
-- Add a reminder to remove ``sys.exit()`` if ``SystemExit`` exception is caught.
+-  Add a reminder to remove ``sys.exit()`` if ``SystemExit`` exception
+   is caught.
 
 **Bug Fixes**
 
-- WebUI: Fix an issue where the recent task list did not apply the limit filter properly.
-
-- Fix Keras and Estimator wrapping functions not returning the original objects
-  when exporting checkpoints.
-
-- Fix progress reporting for ``adaptive_asha`` searches that contain failed trials.
-
-- Fix an issue that was causing OOM errors for some distributed ``EstimatorTrial`` experiments.
+-  WebUI: Fix an issue where the recent task list did not apply the
+   limit filter properly.
+-  Fix Keras and Estimator wrapping functions not returning the original
+   objects when exporting checkpoints.
+-  Fix progress reporting for ``adaptive_asha`` searches that contain
+   failed trials.
+-  Fix an issue that was causing OOM errors for some distributed
+   ``EstimatorTrial`` experiments.
 
 Version 0.13.1
-^^^^^^^^^^^^^^
+==============
 
 **Release Date:** August 31, 2020
 
 **Bug Fixes**
 
-- Database migration: Fix a bug with a database migration in Determined version 0.13.0 which caused it to run slow and backfill incorrect values. Users on Determined versions 0.12.13 or earlier are recommended to upgrade to version 0.13.1. Users already on version 0.13.0 should upgrade to version 0.13.1 as usual.
+-  Database migration: Fix a bug with a database migration in Determined
+   version 0.13.0 which caused it to run slow and backfill incorrect
+   values. Users on Determined versions 0.12.13 or earlier are
+   recommended to upgrade to version 0.13.1. Users already on version
+   0.13.0 should upgrade to version 0.13.1 as usual.
 
-- Tensorboard: Fix a bug that prevents Tensorboards from experiments with old experiment configuration versions from being loaded.
+-  Tensorboard: Fix a bug that prevents Tensorboards from experiments
+   with old experiment configuration versions from being loaded.
 
-- WebUI: Fix an API response decoding issue on React where a null checkpoint resource was unhandled and could prevent trial detail page from rendering.
+-  WebUI: Fix an API response decoding issue on React where a null
+   checkpoint resource was unhandled and could prevent trial detail page
+   from rendering.
 
-- WebUI: Fix an issue where terminated Tensorboard and notebook tasks were rendered as openable.
+-  WebUI: Fix an issue where terminated Tensorboard and notebook tasks
+   were rendered as openable.
 
 Version 0.13.0
-^^^^^^^^^^^^^^
+==============
 
 **Release Date:** August 20, 2020
 
-This release of Determined introduces several significant new features and modifications to existing features. When upgrading from a prior release of Determined, users should pay particular attention to the following changes:
+This release of Determined introduces several significant new features
+and modifications to existing features. When upgrading from a prior
+release of Determined, users should pay particular attention to the
+following changes:
 
-- The concept of "steps" has been removed from the CLI, WebUI, APIs, and configuration files. Before upgrading, **terminate all active and paused experiments** (e.g., via ``det experiment cancel`` or ``det experiment kill``). The format of the experiment config file has changed -- configuration files that worked with previous versions of Determined will need to be updated to work with Determined >= 0.13.0. For more details, see the notes below or the :ref:`migration guide <migration-guide_remove-steps>`.
+-  The concept of "steps" has been removed from the CLI, WebUI, APIs,
+   and configuration files. Before upgrading, **terminate all active and
+   paused experiments** (e.g., via ``det experiment cancel`` or ``det
+   experiment kill``). The format of the experiment config file has
+   changed -- configuration files that worked with previous versions of
+   Determined will need to be updated to work with Determined >= 0.13.0.
+   For more details, see the notes below or the :ref:`migration guide
+   <migration-guide_remove-steps>`.
 
-- The WebUI has been partially rewritten, moving several components that were implemented in Elm to now being written in React and TypeScript. As part of this change, many improvements to the performance, appearance, and usability of the WebUI have been made. For more details, see the list of changes below. Please notify the Determined team of any regressions in functionality.
+-  The WebUI has been partially rewritten, moving several components
+   that were implemented in Elm to now being written in React and
+   TypeScript. As part of this change, many improvements to the
+   performance, appearance, and usability of the WebUI have been made.
+   For more details, see the list of changes below. Please notify the
+   Determined team of any regressions in functionality.
 
-- The usability of the ``det shell`` feature has been significantly enhanced. As part of this change, the way in which arguments to ``det shell`` are parsed has changed; see details below.
+-  The usability of the ``det shell`` feature has been significantly
+   enhanced. As part of this change, the way in which arguments to ``det
+   shell`` are parsed has changed; see details below.
 
-*We recommend taking a backup of the database before upgrading Determined.*
+*We recommend taking a backup of the database before upgrading
+Determined.*
 
 **New Features**
 
-- Allow trial containers to connect to the master using TLS.
+-  Allow trial containers to connect to the master using TLS.
 
-- Allow agent's TLS verification to skip verification or use a custom certificate for the master.
+-  Allow agent's TLS verification to skip verification or use a custom
+   certificate for the master.
 
-- For :class:`~determined.keras.TFKerasTrial` and :class:`~determined.estimator.EstimatorTrial`, add support for disabling automatic sharding of the training dataset when doing distributed training. When wrapping a dataset via ``context.wrap_dataset``, users can now pass ``shard_dataset=False``. If this is done, users are responsible for splitting their dataset in such a manner that every GPU (rank) sees unique data.
+-  For :class:`~determined.keras.TFKerasTrial` and
+   :class:`~determined.estimator.EstimatorTrial`, add support for
+   disabling automatic sharding of the training dataset when doing
+   distributed training. When wrapping a dataset via
+   ``context.wrap_dataset``, users can now pass ``shard_dataset=False``.
+   If this is done, users are responsible for splitting their dataset in
+   such a manner that every GPU (rank) sees unique data.
 
 **Improvements**
 
-- **Remove Steps from the UX:** Remove the concept of a "step" from the CLI, WebUI, and configuration files. Add new configuration settings to allow settings previously in terms of steps to be configured instead in terms of records, batches or epochs. See the :ref:`migration guide <migration-guide_remove-steps>` for details on migrating from the old configuration to the new configuration.
+-  **Remove Steps from the UX:** Remove the concept of a "step" from the
+   CLI, WebUI, and configuration files. Add new configuration settings
+   to allow settings previously in terms of steps to be configured
+   instead in terms of records, batches or epochs. See the
+   :ref:`migration guide <migration-guide_remove-steps>` for details on
+   migrating from the old configuration to the new configuration.
 
-  - Many configuration settings can now be set in terms of records, batches or epochs. For example, a single searcher can be configured to run for 100 records by setting ``max_length: {records: 100}``, 100 batches by setting ``max_length: {batches: 100}``, or 100 epochs by setting ``records_per_epoch`` at the root of the config and ``max_length: {epochs: 100}``.
-  - A new configuration setting, ``records_per_epoch``, is added that must be specified when any quantity is configured in terms of epochs.
-  - **Breaking Change:** For single, random and grid searchers ``searcher.max_steps`` has been replaced by ``searcher.max_length``
-  - **Breaking Change:** For ASHA based searchers, ``searcher.target_trial_steps`` and ``searcher.step_budget`` has been replaced by ``searcher.max_length`` and ``searcher.budget``, respectively.
-  - **Breaking Change:** For PBT, ``searcher.steps_per_round`` has been replaced by ``searcher.length_per_round``.
-  - **Breaking Change:** For all experiments, the names for ``min_validation_period`` and ``min_checkpoint_period`` are unchanged but they are now configured in terms of records, batches or epochs.
+   -  Many configuration settings can now be set in terms of records,
+      batches or epochs. For example, a single searcher can be
+      configured to run for 100 records by setting ``max_length:
+      {records: 100}``, 100 batches by setting ``max_length: {batches:
+      100}``, or 100 epochs by setting ``records_per_epoch`` at the root
+      of the config and ``max_length: {epochs: 100}``.
 
-- **Shell Mode Improvements:** Determined supports launching GPU-attached terminal sessions via ``det shell``. This release includes several changes to improve the usability of this feature, including:
+   -  A new configuration setting, ``records_per_epoch``, is added that
+      must be specified when any quantity is configured in terms of
+      epochs.
 
-  - The ``determined`` and ``determined-cli`` Python packages are now automatically installed inside containers launched by ``det shell``.  Any user-defined environment variables for the task image will be passed into the ssh sessions opened via ``det shell start`` or ``det shell open``.
+   -  **Breaking Change:** For single, random and grid searchers
+      ``searcher.max_steps`` has been replaced by
+      ``searcher.max_length``
 
-  - ``det shell`` should now work correctly in "host" networking mode.
+   -  **Breaking Change:** For ASHA based searchers,
+      ``searcher.target_trial_steps`` and ``searcher.step_budget`` has
+      been replaced by ``searcher.max_length`` and ``searcher.budget``,
+      respectively.
 
-  - ``det shell`` should now work correctly with dynamic agents and in cloud environments.
+   -  **Breaking Change:** For PBT, ``searcher.steps_per_round`` has
+      been replaced by ``searcher.length_per_round``.
 
-  - **Breaking Change:** Change how additional arguments to ``ssh`` are passed through ``det shell start`` and ``det shell open``.  Previously they were passed as a single string, like ``det shell open SHELL_ID --ssh-opt '-X -Y -o SomeSetting="some string"'``, but now the ``--ssh-opt`` has been removed and all extra positional arguments are passed through without requiring double-layers of quoting, like ``det shell open SHELL_ID -- -X -Y -o SomeSetting="some string"`` (note the use of ``--`` to indicate all following arguments are positional arguments).
+   -  **Breaking Change:** For all experiments, the names for
+      ``min_validation_period`` and ``min_checkpoint_period`` are
+      unchanged but they are now configured in terms of records, batches
+      or epochs.
 
-- **WebUI changes**
+-  **Shell Mode Improvements:** Determined supports launching
+   GPU-attached terminal sessions via ``det shell``. This release
+   includes several changes to improve the usability of this feature,
+   including:
 
-  - Tasks List: ``/det/tasks``
+   -  The ``determined`` and ``determined-cli`` Python packages are now
+      automatically installed inside containers launched by ``det
+      shell``. Any user-defined environment variables for the task image
+      will be passed into the ssh sessions opened via ``det shell
+      start`` or ``det shell open``.
 
-    - Consolidate notebooks, tensorboards, shells, commands into single list page.
-    - Add type filter to control which task types to display. By default all task types are shown when none of the types are selected.
-    - Add type column with iconography to train users to familiarize task types with visual indicators.
-    - Convert State filter from multi-select to single-select.
-    - Convert actions from expanded buttons to overflow menu (triple vertical dots).
-    - Move notebook launch buttons to task list from notebook list page.
-    - Add pagination support that auto turns on when entries extend beyond 10 entries.
-    - Add list of TensorBoard sources in a table Source column.
+   -  ``det shell`` should now work correctly in "host" networking mode.
 
-  - Experiment List: ``/det/experiments``
+   -  ``det shell`` should now work correctly with dynamic agents and in
+      cloud environments.
 
-    - State filter converted from multi-select to single-select.
-    - Convert actions from expanded buttons to overflow menu (triple vertical dots).
-    - Batch operation logic change to available if the action can be applied to any of the selected experiments
-    - Add pagination support that auto turns on when entries extend beyond 10 entries.
+   -  **Breaking Change:** Change how additional arguments to ``ssh``
+      are passed through ``det shell start`` and ``det shell open``.
+      Previously they were passed as a single string, like ``det shell
+      open SHELL_ID --ssh-opt '-X -Y -o SomeSetting="some string"'``,
+      but now the ``--ssh-opt`` has been removed and all extra
+      positional arguments are passed through without requiring
+      double-layers of quoting, like ``det shell open SHELL_ID -- -X -Y
+      -o SomeSetting="some string"`` (note the use of ``--`` to indicate
+      all following arguments are positional arguments).
 
-  - Experiment Detail: ``/det/experiments/<id>``
+-  **WebUI changes**
 
-    - Implement charting with Plotly with zooming capability.
-    - Trial table paginates on the WebUI side in preparation for API pagination in the near future.
-    - Convert steps to batches in trials table and metric chart.
-    - Update continue trial flow to use batches, epochs or records.
-    - Use Monaco editor for the experiment config with YAML syntax highlighting.
-    - Add links to source for Checkpoint modal view, allowing users to navigate to the corresponding experiment or trial for the checkpoint.
+   -  Tasks List: ``/det/tasks``
 
-  - Trial Detail: ``/det/trials/<id>``
+      -  Consolidate notebooks, tensorboards, shells, commands into
+         single list page.
 
-    - Add trial information table.
-    - Add trial metrics chart.
-    - Implement charting with Plotly with zooming capability.
-    - Trial info table paginates on the WebUI side in preparation for API pagination in the near future.
-    - Add support for batches, records and epochs for experiment config.
-    - Convert metric chart to show batches.
-    - Convert steps table to batches table.
+      -  Add type filter to control which task types to display. By
+         default all task types are shown when none of the types are
+         selected.
 
-  - Master Logs: ``/det/logs``, Trial Logs: ``/det/trials/<id>/logs``, Task Logs: ``/det/<tasktype>/<id>/logs``
+      -  Add type column with iconography to train users to familiarize
+         task types with visual indicators.
 
-    - Limit logs to 1000 lines for initial load and load an additional 1000 for each subsequent fetch of older logs.
-    - Use new log viewer optimized for efficient rendering.
-    - Introduce log line numbers.
-    - Add ANSI color support.
-    - Add error, warning, and debug visual icons and colors.
-    - Add tailing button to enable tailing log behavior.
-    - Add scroll to top button to load older logs out
-    - Fix back and forth scrolling behavior on log viewer.
+      -  Convert State filter from multi-select to single-select.
 
-  - Cluster: ``/det/cluster``
+      -  Convert actions from expanded buttons to overflow menu (triple
+         vertical dots).
 
-    - Separate out GPU from CPU resources.
-    - Show resource availability and resource count (per type).
-    - Render each resource as a donut chart.
+      -  Move notebook launch buttons to task list from notebook list
+         page.
 
-  - Navigation
+      -  Add pagination support that auto turns on when entries extend
+         beyond 10 entries.
 
-    - Update sidebar navigation for new task and experiment list pages.
-    - Add link to new swagger API documentation.
-    - Hide pagination controls for tables with less than 10 entries.
+      -  Add list of TensorBoard sources in a table Source column.
+
+   -  Experiment List: ``/det/experiments``
+
+      -  State filter converted from multi-select to single-select.
+      -  Convert actions from expanded buttons to overflow menu (triple
+         vertical dots).
+      -  Batch operation logic change to available if the action can be
+         applied to any of the selected experiments
+      -  Add pagination support that auto turns on when entries extend
+         beyond 10 entries.
+
+   -  Experiment Detail: ``/det/experiments/<id>``
+
+      -  Implement charting with Plotly with zooming capability.
+
+      -  Trial table paginates on the WebUI side in preparation for API
+         pagination in the near future.
+
+      -  Convert steps to batches in trials table and metric chart.
+
+      -  Update continue trial flow to use batches, epochs or records.
+
+      -  Use Monaco editor for the experiment config with YAML syntax
+         highlighting.
+
+      -  Add links to source for Checkpoint modal view, allowing users
+         to navigate to the corresponding experiment or trial for the
+         checkpoint.
+
+   -  Trial Detail: ``/det/trials/<id>``
+
+      -  Add trial information table.
+      -  Add trial metrics chart.
+      -  Implement charting with Plotly with zooming capability.
+      -  Trial info table paginates on the WebUI side in preparation for
+         API pagination in the near future.
+      -  Add support for batches, records and epochs for experiment
+         config.
+      -  Convert metric chart to show batches.
+      -  Convert steps table to batches table.
+
+   -  Master Logs: ``/det/logs``, Trial Logs: ``/det/trials/<id>/logs``,
+      Task Logs: ``/det/<tasktype>/<id>/logs``
+
+      -  Limit logs to 1000 lines for initial load and load an
+         additional 1000 for each subsequent fetch of older logs.
+      -  Use new log viewer optimized for efficient rendering.
+      -  Introduce log line numbers.
+      -  Add ANSI color support.
+      -  Add error, warning, and debug visual icons and colors.
+      -  Add tailing button to enable tailing log behavior.
+      -  Add scroll to top button to load older logs out
+      -  Fix back and forth scrolling behavior on log viewer.
+
+   -  Cluster: ``/det/cluster``
+
+      -  Separate out GPU from CPU resources.
+      -  Show resource availability and resource count (per type).
+      -  Render each resource as a donut chart.
+
+   -  Navigation
+
+      -  Update sidebar navigation for new task and experiment list
+         pages.
+      -  Add link to new swagger API documentation.
+      -  Hide pagination controls for tables with less than 10 entries.
 
 **Bug Fixes**
 
-- Configuration: Do not load the entire experiment configuration when trying to check if an experiment is valid to be archived or unarchived.
+-  Configuration: Do not load the entire experiment configuration when
+   trying to check if an experiment is valid to be archived or
+   unarchived.
 
-- Configuration: Improve the master to validation hyperparameter configurations when experiments are submitted. Currently, the master checks whether ``global_batch_size`` has been specified and if it is numeric.
+-  Configuration: Improve the master to validation hyperparameter
+   configurations when experiments are submitted. Currently, the master
+   checks whether ``global_batch_size`` has been specified and if it is
+   numeric.
 
-- Logs: Fix issue of not detecting newlines in the log messages, particularly Kubernetes log messages.
+-  Logs: Fix issue of not detecting newlines in the log messages,
+   particularly Kubernetes log messages.
 
-- Logs: Add intermediate step to trial log download to alert user that the CLI is the recommended action, especially for large logs.
+-  Logs: Add intermediate step to trial log download to alert user that
+   the CLI is the recommended action, especially for large logs.
 
-- Searchers: Fix a bug in the SHA searcher caused by the promotion of already-exited trials.
+-  Searchers: Fix a bug in the SHA searcher caused by the promotion of
+   already-exited trials.
 
-- Security: Apply user authentication to streaming endpoints.
+-  Security: Apply user authentication to streaming endpoints.
 
-- Tasks: Allow the master certificate file to be readable even for a non-root task.
+-  Tasks: Allow the master certificate file to be readable even for a
+   non-root task.
 
-- TensorBoard: Fix issue affecting TensorBoards on AWS in us-east-1 region.
+-  TensorBoard: Fix issue affecting TensorBoards on AWS in us-east-1
+   region.
 
-- TensorBoard: Recursively search for tfevents files in subdirectories, not just the top level log directory.
+-  TensorBoard: Recursively search for tfevents files in subdirectories,
+   not just the top level log directory.
 
-- WebUI: Fix scrolling issue that occurs when older logs are loaded, the tailing behavior is enabled, and the view is scrolled up.
+-  WebUI: Fix scrolling issue that occurs when older logs are loaded,
+   the tailing behavior is enabled, and the view is scrolled up.
 
-- WebUI: Fix colors used for different states in the cluster resources chart.
+-  WebUI: Fix colors used for different states in the cluster resources
+   chart.
 
-- WebUI: Correct the numbers in the ``Batches`` column on the experiment list page.
+-  WebUI: Correct the numbers in the ``Batches`` column on the
+   experiment list page.
 
-- WebUI: Fix cluster and dashboard reporting for disabled slots.
+-  WebUI: Fix cluster and dashboard reporting for disabled slots.
 
-- WebUI: Fix issue of archive/unarchive not showing up properly under the task actions.
+-  WebUI: Fix issue of archive/unarchive not showing up properly under
+   the task actions.
 
-Version 0.12
-------------
+**************
+ Version 0.12
+**************
 
 Version 0.12.13
-^^^^^^^^^^^^^^^
+===============
 
 **Release Date:** August 6, 2020
 
 **New Features**
 
-- **Model Registry:** Determined now includes a built-in model registry, which makes it easy to organize trained models by providing versioning and labeling tools. See :ref:`organizing-models` to get started.
+-  **Model Registry:** Determined now includes a built-in model
+   registry, which makes it easy to organize trained models by providing
+   versioning and labeling tools. See :ref:`organizing-models` to get
+   started.
 
-- **New PyTorch API:** Add a new version of the PyTorch API that is more flexible and supports deep learning experiments that use multiple models, optimizers, and LR schedulers. The old API is still supported but is now deprecated and will be removed in a future release. See the :ref:`migration guide <migration-guide-flexible-primitives>` for details on updating your PyTorch model code. *Deprecated methods will be supported until at least the next minor release.*
+-  **New PyTorch API:** Add a new version of the PyTorch API that is
+   more flexible and supports deep learning experiments that use
+   multiple models, optimizers, and LR schedulers. The old API is still
+   supported but is now deprecated and will be removed in a future
+   release. See the :ref:`migration guide
+   <migration-guide-flexible-primitives>` for details on updating your
+   PyTorch model code. *Deprecated methods will be supported until at
+   least the next minor release.*
 
-  - The new API supports PyTorch code that uses multiple models, optimizers, and LR schedulers. In your trial class, you should instantiate those objects and wrap them with :meth:`~determined.pytorch.PyTorchTrialContext.wrap_model`, :meth:`~determined.pytorch.PyTorchTrialContext.wrap_optimizer`, and :meth:`~determined.pytorch.PyTorchTrialContext.wrap_lr_scheduler` in the constructor of your PyTorch trial class. The previous API methods ``build_model``, ``optimizer``, and ``create_lr_scheduler`` in :class:`~determined.pytorch.PyTorchTrial` are now deprecated.
+   -  The new API supports PyTorch code that uses multiple models,
+      optimizers, and LR schedulers. In your trial class, you should
+      instantiate those objects and wrap them with
+      :meth:`~determined.pytorch.PyTorchTrialContext.wrap_model`,
+      :meth:`~determined.pytorch.PyTorchTrialContext.wrap_optimizer`,
+      and
+      :meth:`~determined.pytorch.PyTorchTrialContext.wrap_lr_scheduler`
+      in the constructor of your PyTorch trial class. The previous API
+      methods ``build_model``, ``optimizer``, and
+      ``create_lr_scheduler`` in
+      :class:`~determined.pytorch.PyTorchTrial` are now deprecated.
 
-  - Support customizing forward and backward passes in :meth:`~determined.pytorch.PyTorchTrial.train_batch`. Gradient clipping should now be done by passing a function to the ``clip_grads`` argument of :meth:`~determined.pytorch.PyTorchTrialContext.step_optimizer`. The callback ``on_before_optimizer_step`` is now deprecated.
+   -  Support customizing forward and backward passes in
+      :meth:`~determined.pytorch.PyTorchTrial.train_batch`. Gradient
+      clipping should now be done by passing a function to the
+      ``clip_grads`` argument of
+      :meth:`~determined.pytorch.PyTorchTrialContext.step_optimizer`.
+      The callback ``on_before_optimizer_step`` is now deprecated.
 
-  - Configuring automatic mixed precision (AMP) in PyTorch should now be done by calling :meth:`~determined.pytorch.PyTorchTrialContext.configure_apex_amp` in the constructor of your PyTorch trial class. The ``optimizations.mixed_precision`` experiment configuration key is now deprecated.
+   -  Configuring automatic mixed precision (AMP) in PyTorch should now
+      be done by calling
+      :meth:`~determined.pytorch.PyTorchTrialContext.configure_apex_amp`
+      in the constructor of your PyTorch trial class. The
+      ``optimizations.mixed_precision`` experiment configuration key is
+      now deprecated.
 
-  - The ``model`` arguments to :meth:`~determined.pytorch.PyTorchTrial.train_batch`, :meth:`~determined.pytorch.PyTorchTrial.evaluate_batch`, and :meth:`~determined.pytorch.PyTorchTrial.evaluate_full_dataset` are now deprecated.
+   -  The ``model`` arguments to
+      :meth:`~determined.pytorch.PyTorchTrial.train_batch`,
+      :meth:`~determined.pytorch.PyTorchTrial.evaluate_batch`, and
+      :meth:`~determined.pytorch.PyTorchTrial.evaluate_full_dataset` are
+      now deprecated.
 
-- **More Efficient Hyperparameter Search:** This release introduces a new hyperparameter search method, ``adaptive_asha``. This is based on an asynchronous version of the ``adaptive`` algorithm, and should enable large searches to find high-quality hyperparameter configurations more quickly. See the :ref:`documentation <topic-guides_hp-tuning-det_adaptive-asha>` and the `associated paper <https://arxiv.org/pdf/1810.05934.pdf>`__ for more information.
+-  **More Efficient Hyperparameter Search:** This release introduces a
+   new hyperparameter search method, ``adaptive_asha``. This is based on
+   an asynchronous version of the ``adaptive`` algorithm, and should
+   enable large searches to find high-quality hyperparameter
+   configurations more quickly. See the :ref:`documentation
+   <topic-guides_hp-tuning-det_adaptive-asha>` and the `associated paper
+   <https://arxiv.org/pdf/1810.05934.pdf>`__ for more information.
 
 **Improvements**
 
-- Allow proxy environment variables to be set in the agent config. See :ref:`environment-variables` for more information.
+-  Allow proxy environment variables to be set in the agent config. See
+   :ref:`environment-variables` for more information.
 
-- Preserve random state for PyTorch experiments when checkpointing and restoring.
+-  Preserve random state for PyTorch experiments when checkpointing and
+   restoring.
 
-- Remove ``determined.pytorch.reset_parameters()``. This should have no effect except when using highly customized ``nn.Module`` implementations.
+-  Remove ``determined.pytorch.reset_parameters()``. This should have no
+   effect except when using highly customized ``nn.Module``
+   implementations.
 
-- WebUI: Show total number of resources in the cluster resource charts.
+-  WebUI: Show total number of resources in the cluster resource charts.
 
-- Add support for Nvidia T4 GPUs.
+-  Add support for Nvidia T4 GPUs.
 
-- ``det-deploy``: Add support for ``g4`` instance types on AWS.
+-  ``det-deploy``: Add support for ``g4`` instance types on AWS.
 
-- Upgrade Nvidia drivers on the default AWS and GCP images from ``410.104`` to ``450.51.05``.
+-  Upgrade Nvidia drivers on the default AWS and GCP images from
+   ``410.104`` to ``450.51.05``.
 
 **Bug Fixes**
 
-- Fix an issue with the SHA searcher that could cause searches to stop making progress without finishing.
-
-- Fix an issue where ``$HOME`` was not properly set in notebooks running in nonroot containers.
-
-- Fix an issue where killed experiments had their state reset to the latest checkpoint.
-
-- Randomize the notebook listening port to avoid port binding issues in host mode.
+-  Fix an issue with the SHA searcher that could cause searches to stop
+   making progress without finishing.
+-  Fix an issue where ``$HOME`` was not properly set in notebooks
+   running in nonroot containers.
+-  Fix an issue where killed experiments had their state reset to the
+   latest checkpoint.
+-  Randomize the notebook listening port to avoid port binding issues in
+   host mode.
 
 Version 0.12.12
-^^^^^^^^^^^^^^^
+===============
 
 **Release Date:** July 22, 2020
 
 **Improvements**
 
-- Remove support for ``on_train_step_begin`` and ``on_train_step_end``, deprecate ``on_validation_step_end``, and introduce new callback ``on_validation_end`` with same functionality. Add helper methods ``is_epoch_start`` and ``is_epoch_end`` to PyTorch context.
+-  Remove support for ``on_train_step_begin`` and ``on_train_step_end``,
+   deprecate ``on_validation_step_end``, and introduce new callback
+   ``on_validation_end`` with same functionality. Add helper methods
+   ``is_epoch_start`` and ``is_epoch_end`` to PyTorch context.
 
-- Add a new API to support custom reducers in ``EstimatorTrial``. See :ref:``estimator-trial`` for details.
+-  Add a new API to support custom reducers in ``EstimatorTrial``. See
+   :ref:``estimator-trial`` for details.
 
-- CLI: Add the ``register_version`` command for registering a new version of a model.
+-  CLI: Add the ``register_version`` command for registering a new
+   version of a model.
 
-- CLI: Add a ``--head`` option when printing trial logs.
+-  CLI: Add a ``--head`` option when printing trial logs.
 
-- WebUI: Make it possible to launch TensorBoard from experiment dashboard cards.
+-  WebUI: Make it possible to launch TensorBoard from experiment
+   dashboard cards.
 
 **Bug Fixes**
 
-- Fix distributed training and Determined shell with non-root containers. The default task environments now include a user plugin to support running containers with arbitrary non-root users. Custom images based on the latest default task environments should also work.
+-  Fix distributed training and Determined shell with non-root
+   containers. The default task environments now include a user plugin
+   to support running containers with arbitrary non-root users. Custom
+   images based on the latest default task environments should also
+   work.
 
-- Fix convergence issue for TF 2 multi-GPU models. Change default TF1 version from 1.14 to 1.15.
+-  Fix convergence issue for TF 2 multi-GPU models. Change default TF1
+   version from 1.14 to 1.15.
 
-- Fix issue affecting TensorFlow TensorBoard outputs.
+-  Fix issue affecting TensorFlow TensorBoard outputs.
 
-- Use local log line IDs for trial logs.
+-  Use local log line IDs for trial logs.
 
-- CLI: Improve the CLI's custom TLS certificate handling with non-self-signed certs.
+-  CLI: Improve the CLI's custom TLS certificate handling with
+   non-self-signed certs.
 
-- WebUI: Fix a parsing problem with task start times.
+-  WebUI: Fix a parsing problem with task start times.
 
-- WebUI: Fix log viewer timestamp copy/paste.
+-  WebUI: Fix log viewer timestamp copy/paste.
 
 **Known Issues**
 
-- WebUI: Older trial logs are not loaded by scrolling to the top of the page.
+-  WebUI: Older trial logs are not loaded by scrolling to the top of the
+   page.
 
 Version 0.12.11
-^^^^^^^^^^^^^^^
+===============
 
 **Release Date:** July 8, 2020
 
-- Add logging to console in test mode for the Native API when using :class:`determined.experimental.create`.
+-  Add logging to console in test mode for the Native API when using
+   :class:`determined.experimental.create`.
 
-- Improve reliability of saving checkpoints to GCS in the presence of transient network errors.
+-  Improve reliability of saving checkpoints to GCS in the presence of
+   transient network errors.
 
-- Add `an example <https://github.com/determined-ai/determined/tree/master/examples/experimental/trial/unets_tf_keras>`__ using TensorFlow's *Image Segmentation via UNet* tutorial.
+-  Add `an example
+   <https://github.com/determined-ai/determined/tree/master/examples/experimental/trial/unets_tf_keras>`__
+   using TensorFlow's *Image Segmentation via UNet* tutorial.
 
-- WebUI: Improve trial log rendering performance.
+-  WebUI: Improve trial log rendering performance.
 
-- WebUI: Fix an issue where cluster utilization was displayed incorrectly.
+-  WebUI: Fix an issue where cluster utilization was displayed
+   incorrectly.
 
-- WebUI: Fix an issue where active experiments and commands would not appear on the dashboard.
+-  WebUI: Fix an issue where active experiments and commands would not
+   appear on the dashboard.
 
-- WebUI: Fix an issue where having telemetry enabled with an invalid key would cause the WebUI to render incorrectly.
+-  WebUI: Fix an issue where having telemetry enabled with an invalid
+   key would cause the WebUI to render incorrectly.
 
 Version 0.12.10
-^^^^^^^^^^^^^^^
+===============
 
 **Release Date:** June 26, 2020
 
 **Improvements**
 
-- WebUI: Add a dedicated page for master logs at ``/det/logs``.
+-  WebUI: Add a dedicated page for master logs at ``/det/logs``.
 
-- WebUI: Provide a Swagger UI for exploring the Determined REST API. This can be accessed via the API link on the WebUI.
+-  WebUI: Provide a Swagger UI for exploring the Determined REST API.
+   This can be accessed via the API link on the WebUI.
 
-- WebUI: Default the Experiments view list length to 25 entries. More entries can be shown as needed.
+-  WebUI: Default the Experiments view list length to 25 entries. More
+   entries can be shown as needed.
 
-- WebUI: Improve detection of situations where the WebUI version doesn't match the master version as a result of browser caching.
+-  WebUI: Improve detection of situations where the WebUI version
+   doesn't match the master version as a result of browser caching.
 
-- CLI: Improve performance when retrieving trial logs.
+-  CLI: Improve performance when retrieving trial logs.
 
-- CLI: Add the ``det user rename`` command for administrators to change the username of existing users.
+-  CLI: Add the ``det user rename`` command for administrators to change
+   the username of existing users.
 
-- Expand documentation on :ref:`use-trained-models` by including checkpoint metadata management.
+-  Expand documentation on :ref:`use-trained-models` by including
+   checkpoint metadata management.
 
-- Reorganize examples by splitting :ref:`model-definitions_native-api` and :ref:`model-definitions_trial-api` examples into separate folders.
+-  Reorganize examples by splitting :ref:`model-definitions_native-api`
+   and :ref:`model-definitions_trial-api` examples into separate
+   folders.
 
 **Bug Fixes**
 
-- Allow ``det-deploy local agent-up`` to work with remote masters.
-
-- Ensure network failures during checkpoint upload do not unrecoverably break the associated trial.
-
-- Ensure ``shared_fs`` checkpoint storage is usable for non-root containers for some ``host_path`` values.
-
-- Fix a timeout issue that affected large (40+ machines) distributed experiments.
-
-- Ensure the CLI can make secure connections to the master.
-
-- Fix an issue that affected multi-GPU in ``PyTorchTrial`` with mixed precision enabled.
-
-- Add a timeout to trial containers to ensure they are terminated promptly.
+-  Allow ``det-deploy local agent-up`` to work with remote masters.
+-  Ensure network failures during checkpoint upload do not unrecoverably
+   break the associated trial.
+-  Ensure ``shared_fs`` checkpoint storage is usable for non-root
+   containers for some ``host_path`` values.
+-  Fix a timeout issue that affected large (40+ machines) distributed
+   experiments.
+-  Ensure the CLI can make secure connections to the master.
+-  Fix an issue that affected multi-GPU in ``PyTorchTrial`` with mixed
+   precision enabled.
+-  Add a timeout to trial containers to ensure they are terminated
+   promptly.
 
 Version 0.12.7
-^^^^^^^^^^^^^^
+==============
 
 **Release Date:** June 11, 2020
 
-- **Breaking Change:** Gradient clipping for PyTorchTrial should now be specified via :class:`determined.pytorch.PyTorchCallback` via the ``on_before_optimizer_step()`` method instead of being specified via the experiment configuration. Determined provides two built-in callbacks for gradient clipping: :class:`determined.pytorch.ClipGradsL2Norm` and :class:`determined.pytorch.ClipGradsL2Value`.
+-  **Breaking Change:** Gradient clipping for PyTorchTrial should now be
+   specified via :class:`determined.pytorch.PyTorchCallback` via the
+   ``on_before_optimizer_step()`` method instead of being specified via
+   the experiment configuration. Determined provides two built-in
+   callbacks for gradient clipping:
+   :class:`determined.pytorch.ClipGradsL2Norm` and
+   :class:`determined.pytorch.ClipGradsL2Value`.
 
-- Add a ``metadata`` field to checkpoints. Checkpoints can now have arbitrary key-value pairs associated with them. Metadata can be added, queried, and removed via a :class:`Python API <determined.experimental.Checkpoint>`. See the :ref:`documentation <store-checkpoint-metadata>` for details.
+-  Add a ``metadata`` field to checkpoints. Checkpoints can now have
+   arbitrary key-value pairs associated with them. Metadata can be
+   added, queried, and removed via a :class:`Python API
+   <determined.experimental.Checkpoint>`. See the :ref:`documentation
+   <store-checkpoint-metadata>` for details.
 
-- Add support for Keras callbacks that stop training early, including the `official EarlyStopping callback <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/EarlyStopping>`__. When a stop is requested, Determined will finish the training (or validation) step we are in, checkpoint, and terminate the trial.
+-  Add support for Keras callbacks that stop training early, including
+   the `official EarlyStopping callback
+   <https://www.tensorflow.org/api_docs/python/tf/keras/callbacks/EarlyStopping>`__.
+   When a stop is requested, Determined will finish the training (or
+   validation) step we are in, checkpoint, and terminate the trial.
 
-- Add support for Estimator callbacks that stop training early, including the official `stop_if_no_decrease_hook <https://www.tensorflow.org/api_docs/python/tf/estimator/experimental/stop_if_no_decrease_hook>`__. When a stop is requested, Determined will finish the training (or validation) step we are in, checkpoint, and terminate the trial.
+-  Add support for Estimator callbacks that stop training early,
+   including the official `stop_if_no_decrease_hook
+   <https://www.tensorflow.org/api_docs/python/tf/estimator/experimental/stop_if_no_decrease_hook>`__.
+   When a stop is requested, Determined will finish the training (or
+   validation) step we are in, checkpoint, and terminate the trial.
 
-- Add support for model code that stops training of a trial programmatically.
+-  Add support for model code that stops training of a trial
+   programmatically.
 
-  - We recommend using the official Keras callbacks or Estimator hooks if you are using those frameworks. For PyTorch, you can request that training be stopped by calling :meth:`~determined.TrialContext.set_stop_requested` from a PyTorch callback. When a stop is requested, Determined will finish the current training or validation step, checkpoint, and terminate the trial. Trials that are stopped early are considered to be "completed" (e.g., in the WebUI and CLI).
+   -  We recommend using the official Keras callbacks or Estimator hooks
+      if you are using those frameworks. For PyTorch, you can request
+      that training be stopped by calling
+      :meth:`~determined.TrialContext.set_stop_requested` from a PyTorch
+      callback. When a stop is requested, Determined will finish the
+      current training or validation step, checkpoint, and terminate the
+      trial. Trials that are stopped early are considered to be
+      "completed" (e.g., in the WebUI and CLI).
 
-- More robust error handling for hyperparameter searches where one of the trials in the search encounters a persistent error.
+-  More robust error handling for hyperparameter searches where one of
+   the trials in the search encounters a persistent error.
 
-  - Determined will automatically restart the execution of trials that fail within an experiment, up to ``max_restart`` failures. After this point, any trials that fail are marked as "errored" but the hyperparameter search itself is allowed to continue running. This is particularly useful when some parts of the hyperparameter space result in models that cannot be trained successfully (e.g., the search explores a range of batch sizes and some of those batch sizes cause GPU OOM errors). An experiment can complete successfully as long as at least one of the trials within it completes successfully.
+   -  Determined will automatically restart the execution of trials that
+      fail within an experiment, up to ``max_restart`` failures. After
+      this point, any trials that fail are marked as "errored" but the
+      hyperparameter search itself is allowed to continue running. This
+      is particularly useful when some parts of the hyperparameter space
+      result in models that cannot be trained successfully (e.g., the
+      search explores a range of batch sizes and some of those batch
+      sizes cause GPU OOM errors). An experiment can complete
+      successfully as long as at least one of the trials within it
+      completes successfully.
 
-- Support multi-GPU training for TensorFlow 2 models that use ``IndexedSlices`` for model parameters.
+-  Support multi-GPU training for TensorFlow 2 models that use
+   ``IndexedSlices`` for model parameters.
 
-- ``NaN`` values in training and validation metrics are now treated as errors.
+-  ``NaN`` values in training and validation metrics are now treated as
+   errors.
 
-  - This will result in restarting the trial from the most recently checkpoint if it has been restarted fewer than ``max_restarts`` times. Previously, ``NaN`` values were converted to the maximum floating point value.
+   -  This will result in restarting the trial from the most recently
+      checkpoint if it has been restarted fewer than ``max_restarts``
+      times. Previously, ``NaN`` values were converted to the maximum
+      floating point value.
 
-- Preserve the last used user name on the log-in page.
+-  Preserve the last used user name on the log-in page.
 
-- Add ``on_trial_close`` method to :class:`determined.estimator.RunHook`. Use this for post-trial cleanup.
+-  Add ``on_trial_close`` method to
+   :class:`determined.estimator.RunHook`. Use this for post-trial
+   cleanup.
 
-- Finalize gradient communication prior to applying gradient clipping in PyTorchTrial when perfoming multi-GPU training.
+-  Finalize gradient communication prior to applying gradient clipping
+   in PyTorchTrial when perfoming multi-GPU training.
 
-- WebUI: Add pause, activate, and cancel actions to dashboard tasks.
+-  WebUI: Add pause, activate, and cancel actions to dashboard tasks.
 
-- Add a ``det-nobody`` user (with UID 65533) to default images. This provides an out-of-the-box option for running non-privileged containers with a working home directory.
+-  Add a ``det-nobody`` user (with UID 65533) to default images. This
+   provides an out-of-the-box option for running non-privileged
+   containers with a working home directory.
 
 Version 0.12.5
-^^^^^^^^^^^^^^
+==============
 
 **Release Date:** May 27, 2020
 
-- **Breaking Change:** Alter command-line options for controlling test mode and local mode. Test experiments on the cluster were previously created with ``det e create --test-mode ...`` but now should be created with ``det e create --test ...``. Local testing is started with ``det e create --test --local ...``. Fully local training (meaning ``--local`` without ``--test``) is not yet supported.
+-  **Breaking Change:** Alter command-line options for controlling test
+   mode and local mode. Test experiments on the cluster were previously
+   created with ``det e create --test-mode ...`` but now should be
+   created with ``det e create --test ...``. Local testing is started
+   with ``det e create --test --local ...``. Fully local training
+   (meaning ``--local`` without ``--test``) is not yet supported.
 
-- Add support for TensorFlow 2.2.
+-  Add support for TensorFlow 2.2.
 
-- Add support for post-checkpoint callbacks in :class:`~determined.pytorch.PyTorchTrial`.
+-  Add support for post-checkpoint callbacks in
+   :class:`~determined.pytorch.PyTorchTrial`.
 
-- Add support for checkpoint hooks in :class:`~determined.estimator.EstimatorTrial`.
+-  Add support for checkpoint hooks in
+   :class:`~determined.estimator.EstimatorTrial`.
 
-- Add support for TensorBoard backed by S3-compliant APIs that are not AWS S3.
+-  Add support for TensorBoard backed by S3-compliant APIs that are not
+   AWS S3.
 
-- Add generic callback support for PyTorch.
+-  Add generic callback support for PyTorch.
 
-- TensorBoards now shut down after 10 minutes if metrics are unavailable.
+-  TensorBoards now shut down after 10 minutes if metrics are
+   unavailable.
 
-- Update to NCCL 2.6.4 for distributed training.
+-  Update to NCCL 2.6.4 for distributed training.
 
-- Update minimum required task environment version to 0.4.0.
+-  Update minimum required task environment version to 0.4.0.
 
-- Fix Native API training one step rather than one batch when using TensorFlow Keras and Estimator.
+-  Fix Native API training one step rather than one batch when using
+   TensorFlow Keras and Estimator.
 
-- CLI: Add support for producing CSV and JSON output to ``det slot list`` and ``det agent list``.
+-  CLI: Add support for producing CSV and JSON output to ``det slot
+   list`` and ``det agent list``.
 
-- CLI: Include the number of containers on each agent in the output of ``det agent list``.
+-  CLI: Include the number of containers on each agent in the output of
+   ``det agent list``.
 
 Version 0.12.4
-^^^^^^^^^^^^^^
+==============
 
 **Release Date:** May 14, 2020
 
-- **Breaking Change:** Users are no longer automatically logged in as the "determined" user. Refer to :ref:`users` for more details.
+-  **Breaking Change:** Users are no longer automatically logged in as
+   the "determined" user. Refer to :ref:`users` for more details.
 
-- Support multi-slot notebooks. The number of slots per notebook cannot exceed the size of the largest available agent. The number of slots to use for a notebook task can be configured when the notebook is launched: ``det notebook start --config resources.slots=2``
+-  Support multi-slot notebooks. The number of slots per notebook cannot
+   exceed the size of the largest available agent. The number of slots
+   to use for a notebook task can be configured when the notebook is
+   launched: ``det notebook start --config resources.slots=2``
 
-- Support fetching the configuration of a running master via the CLI (``det master config``).
+-  Support fetching the configuration of a running master via the CLI
+   (``det master config``).
 
-- Authentication sessions now expire after 7 days.
+-  Authentication sessions now expire after 7 days.
 
-- Improve log messages for ``tf.keras`` trial callbacks.
+-  Improve log messages for ``tf.keras`` trial callbacks.
 
-- Add ``nvidia-container-toolkit`` support.
+-  Add ``nvidia-container-toolkit`` support.
 
-- Fix an error in the experimental ``bert_glue_pytorch`` example.
+-  Fix an error in the experimental ``bert_glue_pytorch`` example.
 
-- The ``tf.keras`` examples for the Native and Trial APIs now refer to the same model.
+-  The ``tf.keras`` examples for the Native and Trial APIs now refer to
+   the same model.
 
-- Add a topic guide explaining Determined's approach to :ref:`elastic-infra-index`.
+-  Add a topic guide explaining Determined's approach to
+   :ref:`elastic-infra-index`.
 
-- Add a topic guide explaining the :ref:`model-definitions_native-api`.
+-  Add a topic guide explaining the :ref:`model-definitions_native-api`.
 
-- UI: The Determined favicon acquires a small dot when any slots are in use.
+-  UI: The Determined favicon acquires a small dot when any slots are in
+   use.
 
-- UI: Fix an issue with command sorting in the WebUI.
+-  UI: Fix an issue with command sorting in the WebUI.
 
-- UI: Fix an issue with badges appearing as the wrong color.
+-  UI: Fix an issue with badges appearing as the wrong color.
 
 Version 0.12.3
-^^^^^^^^^^^^^^
+==============
 
 **Release Date:** April 27, 2020
 
-- Add a tutorial for the new (experimental) Native API.
+-  Add a tutorial for the new (experimental) Native API.
 
-- Add support for locally testing experiments via ``det e create --local``.
+-  Add support for locally testing experiments via ``det e create
+   --local``.
 
-- Add :class:`determined.experimental.Determined` class for accessing :class:`~determined.experimental.ExperimentReference`, :class:`~determined.experimental.TrialReference`, and :class:`~determined.experimental.Checkpoint` objects.
+-  Add :class:`determined.experimental.Determined` class for accessing
+   :class:`~determined.experimental.ExperimentReference`,
+   :class:`~determined.experimental.TrialReference`, and
+   :class:`~determined.experimental.Checkpoint` objects.
 
-- TensorBoard logs now appear under the ``storage_path`` for ``shared_fs`` checkpoint configurations.
+-  TensorBoard logs now appear under the ``storage_path`` for
+   ``shared_fs`` checkpoint configurations.
 
-- Allow commands, notebooks, shells, and TensorBoards to be killed before they are scheduled.
+-  Allow commands, notebooks, shells, and TensorBoards to be killed
+   before they are scheduled.
 
-- Print container exit reason in trial logs.
+-  Print container exit reason in trial logs.
 
-- Choose a better default for the ``--tail`` option of command logs.
+-  Choose a better default for the ``--tail`` option of command logs.
 
-- Add REST API endpoints for trials.
+-  Add REST API endpoints for trials.
 
-- Support the execution of a startup script inside the agent docker container
+-  Support the execution of a startup script inside the agent docker
+   container
 
-- Master and agent Docker containers will have the 'unless-stopped' restart policy by default when using ``det-deploy local``.
+-  Master and agent Docker containers will have the 'unless-stopped'
+   restart policy by default when using ``det-deploy local``.
 
-- Prevent the ``det trial logs -f`` command from waiting for too long after the trial being watched reaches a terminal state.
+-  Prevent the ``det trial logs -f`` command from waiting for too long
+   after the trial being watched reaches a terminal state.
 
-- Fix bug where logs disappear when an image is pulled.
+-  Fix bug where logs disappear when an image is pulled.
 
-- Fix bug that affected the use of :class:`~determined.pytorch.LRScheduler` in :class:`~determined.pytorch.PyTorchTrial` for multi-GPU training.
+-  Fix bug that affected the use of
+   :class:`~determined.pytorch.LRScheduler` in
+   :class:`~determined.pytorch.PyTorchTrial` for multi-GPU training.
 
-- Fix bug after master restart where some errored experiments would show progress indicators.
+-  Fix bug after master restart where some errored experiments would
+   show progress indicators.
 
-- Fix ordering of steps from ``det trial describe --json``.
+-  Fix ordering of steps from ``det trial describe --json``.
 
-- Docs: Added topic guide for effective distributed training.
+-  Docs: Added topic guide for effective distributed training.
 
-- Docs: Reorganize install documentation.
+-  Docs: Reorganize install documentation.
 
-- UI: Move the authenticated user to the top of the users list filter on the dashboard, right after "All".
+-  UI: Move the authenticated user to the top of the users list filter
+   on the dashboard, right after "All".
 
 Version 0.12.2
-^^^^^^^^^^^^^^
+==============
 
 **Release Date:** April 21, 2020
 
 **Breaking Changes**
 
-- Rename PEDL to Determined. The canonical way to import it is via ``import determined as det``.
+-  Rename PEDL to Determined. The canonical way to import it is via
+   ``import determined as det``.
 
-- Reorganize source code. The frameworks module was removed, and each framework's submodules were collapsed into the main framework module. For example:
+-  Reorganize source code. The frameworks module was removed, and each
+   framework's submodules were collapsed into the main framework module.
+   For example:
 
-  - ``det.frameworks.pytorch.pytorch_trial.PyTorchTrial`` is now ``det.pytorch.PyTorchTrial``
-  - ``det.frameworks.pytorch.data.DataLoader`` is now ``det.pytorch.DataLoader``
-  - ``det.frameworks.pytorch.checkpoint.load`` is now ``det.pytorch.load``
-  - ``det.frameworks.pytorch.util.reset_parameters`` is now ``det.pytorch.reset_parameters``
-  - ``det.frameworks.keras.tf_keras_trial.TFKerasTrial`` is now ``det.keras.TFKerasTrial``
-  - ``det.frameworks.tensorflow.estimator_trial.EstimatorTrial`` is now ``det.estimator.EstimatorTrial``
-  - ``det.frameworks.tensorpack.tensorpack_trial`` is now ``det.tensorpack.TensorpackTrial``
-  - ``det.frameworks.util`` and ``det.frameworks.pytorch.util`` have been removed entirely
+   -  ``det.frameworks.pytorch.pytorch_trial.PyTorchTrial`` is now
+      ``det.pytorch.PyTorchTrial``
+   -  ``det.frameworks.pytorch.data.DataLoader`` is now
+      ``det.pytorch.DataLoader``
+   -  ``det.frameworks.pytorch.checkpoint.load`` is now
+      ``det.pytorch.load``
+   -  ``det.frameworks.pytorch.util.reset_parameters`` is now
+      ``det.pytorch.reset_parameters``
+   -  ``det.frameworks.keras.tf_keras_trial.TFKerasTrial`` is now
+      ``det.keras.TFKerasTrial``
+   -  ``det.frameworks.tensorflow.estimator_trial.EstimatorTrial`` is
+      now ``det.estimator.EstimatorTrial``
+   -  ``det.frameworks.tensorpack.tensorpack_trial`` is now
+      ``det.tensorpack.TensorpackTrial``
+   -  ``det.frameworks.util`` and ``det.frameworks.pytorch.util`` have
+      been removed entirely
 
-- Unify all plugin functions under the Trial class. ``make_data_loaders`` has been moved to two functions that should be implemented as part of the Trial class. For example, :class:`~determined.pytorch.PyTorchTrial` data loaders should now be implemented in ``build_training_data_loader()`` and ``build_validation_data_loader()`` in the trial definition. Please see updated examples and documentation for changes in each framework.
+-  Unify all plugin functions under the Trial class.
+   ``make_data_loaders`` has been moved to two functions that should be
+   implemented as part of the Trial class. For example,
+   :class:`~determined.pytorch.PyTorchTrial` data loaders should now be
+   implemented in ``build_training_data_loader()`` and
+   ``build_validation_data_loader()`` in the trial definition. Please
+   see updated examples and documentation for changes in each framework.
 
-- Trial classes are now required to define a constructor function. The signature of the constructor function is:
+-  Trial classes are now required to define a constructor function. The
+   signature of the constructor function is:
 
-  .. code:: python
+   .. code:: python
 
-     def __init__(self, context) -> None:
-         ...
+      def __init__(self, context) -> None:
+          ...
 
-  where ``context`` is an instance of the new ``det.TrialContext`` class. This new object is the primary mechanism for querying information about the system. Some of its methods include:
+   where ``context`` is an instance of the new ``det.TrialContext``
+   class. This new object is the primary mechanism for querying
+   information about the system. Some of its methods include:
 
-  - ``get_hparam(name)``: get a hyperparameter by name
-  - ``get_trial_id()``: get the trial ID being trained
-  - ``get_experiment_config()``: get the experiment config for this experiment
-  - ``get_per_slot_batch_size()``: get the batch size appropriate for training (which will be adjusted from the ``global_batch_size`` hyperparameter in distributed training experiments)
-  - ``get_global_batch_size()``: get the effective batch size (which differs from per-slot batch size in distributed training experiments)
-  - ``distributed.get_rank()``: get the unique process rank (one process per slot)
-  - ``distributed.get_local_rank()``: get a unique process rank within the agent
-  - ``distributed.get_size()``: get the number of slots
-  - ``distributed.get_num_agents``: get the number of agents (machines) being used
+   -  ``get_hparam(name)``: get a hyperparameter by name
 
-- The ``global_batch_size`` hyperparameter is required (that is, a hyperparameter with this name must be specified in the configuration of every experiment). Previously, the hyperparameter ``batch_size`` was required and was manipulated automatically for distributed training. Now ``global_batch_size`` will not be manipulated; users should train based on ``context.get_per_slot_batch_size()``. See :ref:`multi-gpu-training` for more context.
+   -  ``get_trial_id()``: get the trial ID being trained
 
-- Remove ``download_data()``. If users wish to download data at runtime, they should make sure that each process (one process per slot) downloads to a unique location. This can be accomplished by appending ``context.get_rank()`` to the download path.
+   -  ``get_experiment_config()``: get the experiment config for this
+      experiment
 
-- Remove ``det.trial_controller.util.get_rank()`` and ``det.trial_controller.util.get_container_gpus()``. Use ``context.distributed.get_rank()`` and ``context.distributed.get_num_agents()`` instead.
+   -  ``get_per_slot_batch_size()``: get the batch size appropriate for
+      training (which will be adjusted from the ``global_batch_size``
+      hyperparameter in distributed training experiments)
+
+   -  ``get_global_batch_size()``: get the effective batch size (which
+      differs from per-slot batch size in distributed training
+      experiments)
+
+   -  ``distributed.get_rank()``: get the unique process rank (one
+      process per slot)
+
+   -  ``distributed.get_local_rank()``: get a unique process rank within
+      the agent
+
+   -  ``distributed.get_size()``: get the number of slots
+
+   -  ``distributed.get_num_agents``: get the number of agents
+      (machines) being used
+
+-  The ``global_batch_size`` hyperparameter is required (that is, a
+   hyperparameter with this name must be specified in the configuration
+   of every experiment). Previously, the hyperparameter ``batch_size``
+   was required and was manipulated automatically for distributed
+   training. Now ``global_batch_size`` will not be manipulated; users
+   should train based on ``context.get_per_slot_batch_size()``. See
+   :ref:`multi-gpu-training` for more context.
+
+-  Remove ``download_data()``. If users wish to download data at
+   runtime, they should make sure that each process (one process per
+   slot) downloads to a unique location. This can be accomplished by
+   appending ``context.get_rank()`` to the download path.
+
+-  Remove ``det.trial_controller.util.get_rank()`` and
+   ``det.trial_controller.util.get_container_gpus()``. Use
+   ``context.distributed.get_rank()`` and
+   ``context.distributed.get_num_agents()`` instead.
 
 **General Improvements**
 
-- ``tf.data.Dataset`` is now supported as input for all versions of TensorFlow (1.14, 1.15, 2.0, 2.1) for TFKerasTrial and EstimatorTrial. Please note that Determined currently does not support checkpointing ``tf.data.Dataset`` inputs. Therefore, when resuming training, it resumes from the start of the dataset. Model weights are loaded correctly as always.
+-  ``tf.data.Dataset`` is now supported as input for all versions of
+   TensorFlow (1.14, 1.15, 2.0, 2.1) for TFKerasTrial and
+   EstimatorTrial. Please note that Determined currently does not
+   support checkpointing ``tf.data.Dataset`` inputs. Therefore, when
+   resuming training, it resumes from the start of the dataset. Model
+   weights are loaded correctly as always.
 
-- ``TFKerasTrial`` now supports five different types of inputs:
+-  ``TFKerasTrial`` now supports five different types of inputs:
 
-  1. A tuple ``(x_train, y_train)`` of NumPy arrays. ``x_train`` must be a NumPy array (or array-like), a list of arrays (in case the model has multiple inputs), or a dict mapping input names to the corresponding array, if the model has named inputs. ``y_train`` should be a NumPy array.
+   #. A tuple ``(x_train, y_train)`` of NumPy arrays. ``x_train`` must
+      be a NumPy array (or array-like), a list of arrays (in case the
+      model has multiple inputs), or a dict mapping input names to the
+      corresponding array, if the model has named inputs. ``y_train``
+      should be a NumPy array.
 
-  2. A tuple ``(x_train, y_train, sample_weights)`` of NumPy arrays.
+   #. A tuple ``(x_train, y_train, sample_weights)`` of NumPy arrays.
 
-  3. A `tf.data.Dataset <https://www.tensorflow.org/api_docs/python/tf/data/Dataset>`__ returning a tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample_weights)``.
+   #. A `tf.data.Dataset
+      <https://www.tensorflow.org/api_docs/python/tf/data/Dataset>`__
+      returning a tuple of either ``(inputs, targets)`` or ``(inputs,
+      targets, sample_weights)``.
 
-  4. A `keras.utils.Sequence <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__ returning a tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
+   #. A `keras.utils.Sequence
+      <https://tensorflow.org/api_docs/python/tf/keras/utils/Sequence>`__
+      returning a tuple of either ``(inputs, targets)`` or ``(inputs,
+      targets, sample weights)``.
 
-  5. A ``det.keras.SequenceAdapter`` returning a tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
+   #. A ``det.keras.SequenceAdapter`` returning a tuple of either
+      ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
 
-- PyTorch trial checkpoints no longer save in MLflow's MLmodel format.
+-  PyTorch trial checkpoints no longer save in MLflow's MLmodel format.
 
-- The ``det trial download`` command now accepts ``-o`` to save a checkpoint to a specific path. PyTorch checkpoints can then be loaded from a specified local filesystem path.
+-  The ``det trial download`` command now accepts ``-o`` to save a
+   checkpoint to a specific path. PyTorch checkpoints can then be loaded
+   from a specified local filesystem path.
 
-- Allow the agent to read configuration values from a YAML file.
+-  Allow the agent to read configuration values from a YAML file.
 
-- Include experiment ID in the downloaded trial logs.
+-  Include experiment ID in the downloaded trial logs.
 
-- Display checkpoint storage location in the checkpoint info modal for trials and experiments.
+-  Display checkpoint storage location in the checkpoint info modal for
+   trials and experiments.
 
-- Preserve recent tasks' filter preferences in the WebUI.
+-  Preserve recent tasks' filter preferences in the WebUI.
 
-- Add task name to ``det slot list`` command output.
+-  Add task name to ``det slot list`` command output.
 
-- Model definitions are now downloaded as compressed tarfiles (.tar.gz) instead of zipfiles (.zip).
+-  Model definitions are now downloaded as compressed tarfiles (.tar.gz)
+   instead of zipfiles (.zip).
 
-- ``startup-hook.sh`` is now executed in the same directory as the model definition.
+-  ``startup-hook.sh`` is now executed in the same directory as the
+   model definition.
 
-- Rename ``projects`` to ``examples`` in the Determined repository.
+-  Rename ``projects`` to ``examples`` in the Determined repository.
 
-- Improve documentation:
+-  Improve documentation:
 
-  - Add documentation page on the lifecycle of an experiment.
-  - Add how-to and topic guides for multi-GPU (both for single-machine parallel and multi-machine) training.
-  - Add a topic guide on best practices for writing model definitions.
+   -  Add documentation page on the lifecycle of an experiment.
+   -  Add how-to and topic guides for multi-GPU (both for single-machine
+      parallel and multi-machine) training.
+   -  Add a topic guide on best practices for writing model definitions.
 
-- Fix bug that occasionally caused multi-machine training to hang on initialization.
+-  Fix bug that occasionally caused multi-machine training to hang on
+   initialization.
 
-- Fix bug that prevented ``TensorpackTrial`` from successfully loading checkpoints.
+-  Fix bug that prevented ``TensorpackTrial`` from successfully loading
+   checkpoints.
 
-- Fix a bug in ``TFKerasTrial`` where runtime errors could cause the trial to hang or would silently drop the stack trace produced by Keras.
+-  Fix a bug in ``TFKerasTrial`` where runtime errors could cause the
+   trial to hang or would silently drop the stack trace produced by
+   Keras.
 
-- Fix trial lifecycle bugs for containers that exit during the pulling phase.
+-  Fix trial lifecycle bugs for containers that exit during the pulling
+   phase.
 
-- Fix bug that led to some distributed trials timing out.
+-  Fix bug that led to some distributed trials timing out.
 
-- Fix bug that caused ``tf.keras`` trials to fail in the multi-GPU setting when using an optimizer specified by its name.
+-  Fix bug that caused ``tf.keras`` trials to fail in the multi-GPU
+   setting when using an optimizer specified by its name.
 
-- Fix bug in the CLI for downloading model definitions.
+-  Fix bug in the CLI for downloading model definitions.
 
-- Fix performance issues for experiments with very large numbers of trials.
+-  Fix performance issues for experiments with very large numbers of
+   trials.
 
-- Optimize performance for scheduling large hyperparameter searches.
+-  Optimize performance for scheduling large hyperparameter searches.
 
-- Add configuration for telemetry in ``master.yaml``.
+-  Add configuration for telemetry in ``master.yaml``.
 
-- Add a utility function for initializing a trial class for development (det.create_trial_instance)
+-  Add a utility function for initializing a trial class for development
+   (det.create_trial_instance)
 
-- Add `security.txt <https://securitytxt.org/>`__.
+-  Add `security.txt <https://securitytxt.org/>`__.
 
-- Add ``det.estimator.load()`` to load TensorFlow Estimator ``saved_model`` checkpoints into memory.
+-  Add ``det.estimator.load()`` to load TensorFlow Estimator
+   ``saved_model`` checkpoints into memory.
 
-- Ensure AWS EC2 keypair exists in account before creating the CloudFormation stack.
+-  Ensure AWS EC2 keypair exists in account before creating the
+   CloudFormation stack.
 
-- Add support for gradient aggregation in Keras trials for TensorFlow 2.1.
+-  Add support for gradient aggregation in Keras trials for TensorFlow
+   2.1.
 
-- Add TrialReference and Checkpoint experimental APIs for exporting and loading checkpoints.
+-  Add TrialReference and Checkpoint experimental APIs for exporting and
+   loading checkpoints.
 
-- Improve performance when starting many tasks simultaneously.
+-  Improve performance when starting many tasks simultaneously.
 
 **Web Improvements**
 
-- Improve discoverability of dashboard actions.
-
-- Add dropdown action menu for killing and archiving recent tasks on the dashboard.
-
-- Add telemetry for web interactions.
-
-- Fix an issue around cluster utilization status showing as "No Agent" for a brief moment during initial load.
-
-- Add Ace editor to attributions list.
-
-- Set UI preferences based on the logged-in user.
-
-- Fix an issue where the indicated user filter was not applied to the displayed tasks.
-
-- Improve error messaging for failed actions.
+-  Improve discoverability of dashboard actions.
+-  Add dropdown action menu for killing and archiving recent tasks on
+   the dashboard.
+-  Add telemetry for web interactions.
+-  Fix an issue around cluster utilization status showing as "No Agent"
+   for a brief moment during initial load.
+-  Add Ace editor to attributions list.
+-  Set UI preferences based on the logged-in user.
+-  Fix an issue where the indicated user filter was not applied to the
+   displayed tasks.
+-  Improve error messaging for failed actions.

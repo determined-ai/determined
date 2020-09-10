@@ -1,14 +1,15 @@
-API Reference
-=============
+###############
+ API Reference
+###############
 
 .. toctree::
-  :maxdepth: 2
+   :maxdepth: 2
 
-  determined
-  keras
-  estimator
-  pytorch
-  tensorpack
-  trial_context
-  native_context
-  experimental
+   determined
+   keras
+   estimator
+   pytorch
+   tensorpack
+   trial_context
+   native_context
+   experimental

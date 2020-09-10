@@ -1,27 +1,30 @@
 .. _tutorials:
 
-Tutorials
-=========
+###########
+ Tutorials
+###########
 
-Tutorials are simple step-by-step guides about getting started with different topics of Determined. These are a good place to get started with using the product.
+Tutorials are simple step-by-step guides about getting started with
+different topics of Determined. These are a good place to get started
+with using the product.
 
 To get started using Determined, check out the :ref:`quick-start`.
 
 Next, follow the tutorial for your preferred deep learning framework:
 
-- :ref:`pytorch-mnist-tutorial`
-- :ref:`tf-mnist-tutorial`
+-  :ref:`pytorch-mnist-tutorial`
+-  :ref:`tf-mnist-tutorial`
 
 The full list of our tutorials can be found below:
 
 .. toctree::
-  :maxdepth: 0
-  :titlesonly:
+   :maxdepth: 0
+   :titlesonly:
 
-  data-access
-  native-tf-keras/index
-  notebook-tutorial
-  model-registry
-  pytorch-mnist-tutorial
-  tf-mnist-tutorial
-  quick-start
+   data-access
+   native-tf-keras/index
+   notebook-tutorial
+   model-registry
+   pytorch-mnist-tutorial
+   tf-mnist-tutorial
+   quick-start

@@ -1,64 +1,71 @@
 .. _experimental:
 
-determined.experimental
-=======================
+#########################
+ determined.experimental
+#########################
 
 .. automodule:: determined.experimental
-    :members: create, create_trial_instance
+   :members: create, create_trial_instance
 
-
-``Checkpoint``
---------------
+****************
+ ``Checkpoint``
+****************
 
 .. autoclass:: determined.experimental.Checkpoint
-    :members:
-    :inherited-members:
-    :member-order: bysource
+   :members:
+   :inherited-members:
+   :member-order: bysource
 
-``Determined``
---------------
+****************
+ ``Determined``
+****************
 
 .. autoclass:: determined.experimental.Determined
-    :members:
-    :inherited-members:
-    :member-order: bysource
+   :members:
+   :inherited-members:
+   :member-order: bysource
 
-``ExperimentReference``
------------------------
+*************************
+ ``ExperimentReference``
+*************************
 
 .. autoclass:: determined.experimental.ExperimentReference
-    :members:
-    :inherited-members:
-    :member-order: bysource
+   :members:
+   :inherited-members:
+   :member-order: bysource
 
-``Model``
----------
+***********
+ ``Model``
+***********
 
 .. autoclass:: determined.experimental.Model
-    :members:
-    :inherited-members:
-    :member-order: bysource
+   :members:
+   :inherited-members:
+   :member-order: bysource
 
-``ModelOrderBy``
-----------------
+******************
+ ``ModelOrderBy``
+******************
 
 .. autoclass:: determined.experimental.ModelOrderBy
-    :members:
-    :inherited-members:
-    :member-order: bysource
+   :members:
+   :inherited-members:
+   :member-order: bysource
 
-``ModelSortBy``
----------------
+*****************
+ ``ModelSortBy``
+*****************
 
 .. autoclass:: determined.experimental.ModelSortBy
-    :members:
-    :inherited-members:
-    :member-order: bysource
+   :members:
+   :inherited-members:
+   :member-order: bysource
 
-``TrialReference``
-------------------
+********************
+ ``TrialReference``
+********************
 
 .. autoclass:: determined.experimental.TrialReference
-    :members:
-    :inherited-members:
-    :member-order: bysource
+   :members:
+   :inherited-members:
+   :member-order: bysource

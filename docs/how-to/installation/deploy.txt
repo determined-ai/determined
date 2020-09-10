@@ -1,7 +1,8 @@
 .. _install-using-deploy:
 
-Install Determined Using det-deploy
-===================================
+#####################################
+ Install Determined Using det-deploy
+#####################################
 
 This document shows how to deploy Determined locally or in a production
 cluster using the ``det-deploy`` command-line tool, which automates the
@@ -12,8 +13,9 @@ separate machines. They can also run on a single machine, which is
 especially useful for local development. This guide provides
 instructions for both scenarios.
 
-Preliminary Setup
------------------
+*******************
+ Preliminary Setup
+*******************
 
 Install ``det-deploy`` by running
 
@@ -21,32 +23,30 @@ Install ``det-deploy`` by running
 
    pip install determined-deploy
 
-
 .. _configuring-cluster-install:
 
-Configuring and Starting the Cluster
-------------------------------------
+**************************************
+ Configuring and Starting the Cluster
+**************************************
 
 A configuration file is needed to set important values in the master,
 such as where to save model checkpoints. For information about how to
-create a configuration file, see :ref:`cluster-configuration`. There are also
-:ref:`sample configuration files available <config-template>`.
-
+create a configuration file, see :ref:`cluster-configuration`. There are
+also :ref:`sample configuration files available <config-template>`.
 
 .. note::
 
-   ``det-deploy`` will use a default configuration file if you don't provide one.
-   It also transparently manages PostgreSQL along with
-   the master, so the configuration options related to those services do
-   not need to be set.
-
+   ``det-deploy`` will use a default configuration file if you don't
+   provide one. It also transparently manages PostgreSQL along with the
+   master, so the configuration options related to those services do not
+   need to be set.
 
 Deploying a Single-Node Cluster
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+===============================
 
-For local development or small clusters (such as a GPU workstation), you may wish to
-install both a master and an agent on the same node. To do this, run one of the
-following commands:
+For local development or small clusters (such as a GPU workstation), you
+may wish to install both a master and an agent on the same node. To do
+this, run one of the following commands:
 
 .. code::
 
@@ -56,9 +56,9 @@ following commands:
    # If the machine doesn't have GPUs:
    det-deploy local cluster-up --no-gpu
 
-This will start a master and an agent on that machine. To verify that the
-master is running, navigate to ``http://<master-hostname>:8080`` in a
-browser, which should bring up the Determined WebUI. If you're using
+This will start a master and an agent on that machine. To verify that
+the master is running, navigate to ``http://<master-hostname>:8080`` in
+a browser, which should bring up the Determined WebUI. If you're using
 your local machine, for example, navigate to ``http://localhost:8080``.
 
 In the WebUI, navigate to the ``Cluster`` page, where you should now see
@@ -71,36 +71,36 @@ configuration file to ``det-deploy``, use:
 
 .. code::
 
-  det-deploy local cluster-up --master-config-path <path to master.yaml>
+   det-deploy local cluster-up --master-config-path <path to master.yaml>
 
 If you want to create more than one agent locally, you can use:
 
 .. code::
 
-  det-deploy local cluster-up --agents <number of agents>
-
+   det-deploy local cluster-up --agents <number of agents>
 
 Stopping a Single-Node Cluster
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+==============================
 
-To stop a Determined cluster, on the machine where a Determined cluster is currently running, run
+To stop a Determined cluster, on the machine where a Determined cluster
+is currently running, run
 
 .. code::
 
    det-deploy local cluster-down
 
-
 .. note::
 
-  ``det-deploy local cluster-down`` will not remove any agents created
-  with ``det-deploy local agent-up``.  To remove these agents,
-  use ``det-deploy local agent-down``.
+   ``det-deploy local cluster-down`` will not remove any agents created
+   with ``det-deploy local agent-up``. To remove these agents, use
+   ``det-deploy local agent-down``.
 
 Deploying a Standalone Master
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=============================
 
-In many cases, your Determined cluster will be split across multiple nodes.  In this case
-you will need to start a master and agents separately.  In order to start a standalone master, run:
+In many cases, your Determined cluster will be split across multiple
+nodes. In this case you will need to start a master and agents
+separately. In order to start a standalone master, run:
 
 .. code::
 
@@ -108,9 +108,10 @@ you will need to start a master and agents separately.  In order to start a stan
 
 .. note::
 
-  For production deployments, you'll want to :ref:`use a cluster configuration file.<configuring-cluster-install>`
-  To provide this configuration file to ``det-deploy``, use the flag
-  ``--master-config-path <path to master.yaml>``.
+   For production deployments, you'll want to :ref:`use a cluster
+   configuration file. <configuring-cluster-install>` To provide this
+   configuration file to ``det-deploy``, use the flag
+   ``--master-config-path <path to master.yaml>``.
 
 To stop a running master, run:
 
@@ -118,11 +119,11 @@ To stop a running master, run:
 
    det-deploy local master-down
 
-
 Deploying Agents
-~~~~~~~~~~~~~~~~
+================
 
-To deploy a standalone agent on a machine, run one of the following commands:
+To deploy a standalone agent on a machine, run one of the following
+commands:
 
 .. code::
 
@@ -140,4 +141,4 @@ To stop a running agent, run:
 
 .. code::
 
-  det-deploy local agent-down
+   det-deploy local agent-down

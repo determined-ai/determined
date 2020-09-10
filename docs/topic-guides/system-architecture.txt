@@ -1,11 +1,12 @@
 .. _det-system-architecture:
 
-System Architecture
-===================
+#####################
+ System Architecture
+#####################
 
-Determined consists of a single **master** and one or more **agents**. There
-is typically one agent per compute server; a single machine can serve as
-both a master and an agent.
+Determined consists of a single **master** and one or more **agents**.
+There is typically one agent per compute server; a single machine can
+serve as both a master and an agent.
 
 The master is responsible for
 
@@ -24,14 +25,15 @@ A slot executes its workload in a containerized environment called the
 deep learning workloads; containers can be customized for specific
 needs. Trial runners are expected to have access to the training data.
 
-The trial runner runs **workloads**, which may be training a
-trial, evaluating a trial on a validation dataset, or other operations
-like checkpointing model state. The master may then send more workloads
-or terminate the trial runner (freeing the slot). When sending a
-workload to the trial runner, the master consults with the searcher to
-determine which workload to run next.
+The trial runner runs **workloads**, which may be training a trial,
+evaluating a trial on a validation dataset, or other operations like
+checkpointing model state. The master may then send more workloads or
+terminate the trial runner (freeing the slot). When sending a workload
+to the trial runner, the master consults with the searcher to determine
+which workload to run next.
 
-Next Steps
-----------
+************
+ Next Steps
+************
 
-- :ref:`terminology-concepts`
+-  :ref:`terminology-concepts`

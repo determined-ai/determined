@@ -1,52 +1,55 @@
-determined.keras
-================
+##################
+ determined.keras
+##################
 
 .. _tf-keras-trial:
 
-``determined.keras.TFKerasTrial``
----------------------------------
+***********************************
+ ``determined.keras.TFKerasTrial``
+***********************************
 
 .. autoclass:: determined.keras.TFKerasTrial
-    :members:
-    :exclude-members: trial_controller_class, trial_context_class
-    :inherited-members:
-    :member-order: bysource
-    :special-members: __init__
+   :members:
+   :exclude-members: trial_controller_class, trial_context_class
+   :inherited-members:
+   :member-order: bysource
+   :special-members: __init__
 
 .. _keras-data-loading:
 
 Data Loading
-~~~~~~~~~~~~
+============
 
-There are five supported data types for loading data into ``tf.keras`` models:
+There are five supported data types for loading data into ``tf.keras``
+models:
 
-#. A tuple ``(x, y)`` of Numpy arrays. x must be a NumPy array (or array-like),
-   a list of arrays (in case the model has multiple inputs), or
-   a dict mapping input names to the corresponding array, if the model has named inputs.
-   y should be a numpy array.
+#. A tuple ``(x, y)`` of Numpy arrays. x must be a NumPy array (or
+   array-like), a list of arrays (in case the model has multiple
+   inputs), or a dict mapping input names to the corresponding array, if
+   the model has named inputs. y should be a numpy array.
 
-#. A tuple ``(x, y, sample_weights)``
-   of Numpy arrays.
+#. A tuple ``(x, y, sample_weights)`` of Numpy arrays.
 
-#. A ``tf.data.dataset`` returning a tuple of either (inputs, targets) or
-   (inputs, targets, sample_weights).
+#. A ``tf.data.dataset`` returning a tuple of either (inputs, targets)
+   or (inputs, targets, sample_weights).
 
-#. A ``keras.utils.Sequence`` returning a tuple of either (inputs, targets) or
-   (inputs, targets, sample weights).
+#. A ``keras.utils.Sequence`` returning a tuple of either (inputs,
+   targets) or (inputs, targets, sample weights).
 
-#. A :class:`determined.keras.SequenceAdapter` returning a tuple of either (inputs, targets) or
-   (inputs, targets, sample weights).
+#. A :class:`determined.keras.SequenceAdapter` returning a tuple of
+   either (inputs, targets) or (inputs, targets, sample weights).
 
-Loading data is done by defining :meth:`~determined.keras.TFKerasTrial.build_training_data_loader` and
+Loading data is done by defining
+:meth:`~determined.keras.TFKerasTrial.build_training_data_loader` and
 :meth:`~determined.keras.TFKerasTrial.build_validation_data_loader`
-methods. Each should return one of the supported data types mentioned above.
-
+methods. Each should return one of the supported data types mentioned
+above.
 
 Optimizing Keras Sequences
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+==========================
 
-To optimize performance of ``tf.keras.Sequence`` which are created from generators,
-Determined provides ``determined.keras.SequenceAdapter``.
+To optimize performance of ``tf.keras.Sequence`` which are created from
+generators, Determined provides ``determined.keras.SequenceAdapter``.
 
 .. autoclass:: determined.keras.SequenceAdapter
    :members: __init__
@@ -55,89 +58,99 @@ Determined provides ``determined.keras.SequenceAdapter``.
 
 -  Use main Python process with no multithreading and no multiprocessing
 
-::
+.. code::
 
    SequenceAdapter(sequence, workers=0, use_multiprocessing=False)
 
 -  Use one background process
 
-::
+.. code::
 
    SequenceAdapter(sequence, workers=1, use_multiprocessing=True)
 
 -  Use two background threads
 
-::
+.. code::
 
    SequenceAdapter(sequence, workers=2, use_multiprocessing=False)
 
-
 Required Wrappers
-~~~~~~~~~~~~~~~~~
+=================
 
 Users are required wrap their model prior to compiling it using
-:meth:`self.context.wrap_model <determined.keras.TFKerasTrialContext.wrap_model>`.
-This is typically done inside :meth:`~determined.keras.TFKerasTrial.build_model`.
+:meth:`self.context.wrap_model
+<determined.keras.TFKerasTrialContext.wrap_model>`. This is typically
+done inside :meth:`~determined.keras.TFKerasTrial.build_model`.
 
-If using ``tf.data.Dataset``, users are required to wrap both their training and
-validation dataset using :meth:`self.context.wrap_dataset
-<determined.keras.TFKerasTrialContext.wrap_dataset>`. This wrapper is used to
-shard the dataset for :ref:`multi-gpu-training`. For optimal performance, users
-should wrap a dataset immediately after creating it.
-
+If using ``tf.data.Dataset``, users are required to wrap both their
+training and validation dataset using :meth:`self.context.wrap_dataset
+<determined.keras.TFKerasTrialContext.wrap_dataset>`. This wrapper is
+used to shard the dataset for :ref:`multi-gpu-training`. For optimal
+performance, users should wrap a dataset immediately after creating it.
 
 Trial Context
-~~~~~~~~~~~~~
+=============
 
 ``determined.keras.TFKerasTrialContext`` is a sub-class of
-:class:`determined.TrialContext` that provides useful methods for writing
-``tf.keras`` trial definitions, as well as functions to wrap the model and dataset.
+:class:`determined.TrialContext` that provides useful methods for
+writing ``tf.keras`` trial definitions, as well as functions to wrap the
+model and dataset.
 
 .. autoclass:: determined.keras.TFKerasTrialContext
-    :members: wrap_model, wrap_dataset
-    :member-order: bysource
+   :members: wrap_model, wrap_dataset
+   :member-order: bysource
 
-    TFKerasTrialContext always has a :class:`~determined._train_context.DistributedContext`
-    accessible via ``context.distributed`` for information related to distributed training.
+   TFKerasTrialContext always has a
+   :class:`~determined._train_context.DistributedContext` accessible via
+   ``context.distributed`` for information related to distributed
+   training.
 
-    TFKerasTrialContext always has a :class:`~determined.keras.TFKerasExperimentalContext`
-    accessible via ``context.experimental`` for information related to experimental features.
+   TFKerasTrialContext always has a
+   :class:`~determined.keras.TFKerasExperimentalContext` accessible via
+   ``context.experimental`` for information related to experimental
+   features.
 
 .. autoclass:: determined.keras.TFKerasExperimentalContext
-    :members: cache_train_dataset, cache_validation_dataset
-    :member-order: bysource
+   :members: cache_train_dataset, cache_validation_dataset
+   :member-order: bysource
 
 Callbacks
-~~~~~~~~~
+=========
 
-To execute arbitrary Python code during the lifecycle of a ``TFKerasTrial``, implement the standard
-Keras callback interface ``tf.keras.callbacks.Callbacks`` and supply them to the ``TFKerasTrial``
+To execute arbitrary Python code during the lifecycle of a
+``TFKerasTrial``, implement the standard Keras callback interface
+``tf.keras.callbacks.Callbacks`` and supply them to the ``TFKerasTrial``
 by implementing :meth:`~determined.keras.TFKerasTrial.keras_callbacks`.
 
 .. autofunction:: determined.keras.TFKerasTrial.keras_callbacks
 
 Native
-~~~~~~
+======
 
-Disregard if using the trial API (subclassing :class:`~determined.keras.TFKerasTrial`).
+Disregard if using the trial API (subclassing
+:class:`~determined.keras.TFKerasTrial`).
 
 .. _keras-init:
 
-``determined.keras.TFKerasTensorBoard``
----------------------------------------
+*****************************************
+ ``determined.keras.TFKerasTensorBoard``
+*****************************************
 
 .. autoclass:: determined.keras.TFKerasTensorBoard
-  :members:
+   :members:
 
-``determined.experimental.keras.init()``
-----------------------------------------
+******************************************
+ ``determined.experimental.keras.init()``
+******************************************
 
 .. autofunction:: determined.experimental.keras.init
 
 .. _keras-context:
 
-Examples
---------
+**********
+ Examples
+**********
 
-- :download:`Fashion MNIST example </examples/fashion_mnist_tf_keras.tgz>`
-- :download:`CIFAR-10 example </examples/cifar10_cnn_tf_keras.tgz>`
+-  :download:`Fashion MNIST example
+   </examples/fashion_mnist_tf_keras.tgz>`
+-  :download:`CIFAR-10 example </examples/cifar10_cnn_tf_keras.tgz>`

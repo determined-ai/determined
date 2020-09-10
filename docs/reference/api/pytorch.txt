@@ -1,37 +1,40 @@
-determined.pytorch
-==================
+####################
+ determined.pytorch
+####################
 
 .. _pytorch-trial:
 
-``determined.pytorch.PyTorchTrial``
------------------------------------
+*************************************
+ ``determined.pytorch.PyTorchTrial``
+*************************************
 
 .. autoclass:: determined.pytorch.PyTorchTrial
-    :members:
-    :exclude-members: trial_controller_class, trial_context_class, build_model, optimizer, create_lr_scheduler
-    :inherited-members:
-    :member-order: bysource
-    :special-members: __init__
+   :members:
+   :exclude-members: trial_controller_class, trial_context_class, build_model, optimizer, create_lr_scheduler
+   :inherited-members:
+   :member-order: bysource
+   :special-members: __init__
 
 .. autoclass:: determined.pytorch.LRScheduler
-    :members:
-    :special-members: __init__
+   :members:
+   :special-members: __init__
 
 .. autoclass:: determined.pytorch.Reducer
-    :members:
+   :members:
 
 .. autoclass:: determined.tensorboard.metric_writers.pytorch.TorchWriter
 
 .. _pytorch-data-loading:
 
 Data Loading
-~~~~~~~~~~~~
+============
 
-Loading data into ``PyTorchTrial`` models is done by defining two functions,
-``build_training_data_loader()`` and ``build_validation_data_loader()``.
-These functions should each return an instance of
-``determined.pytorch.DataLoader``.  ``determined.pytorch.DataLoader`` behaves
-the same as ``torch.utils.data.DataLoader`` and is a drop-in replacement.
+Loading data into ``PyTorchTrial`` models is done by defining two
+functions, ``build_training_data_loader()`` and
+``build_validation_data_loader()``. These functions should each return
+an instance of ``determined.pytorch.DataLoader``.
+``determined.pytorch.DataLoader`` behaves the same as
+``torch.utils.data.DataLoader`` and is a drop-in replacement.
 
 Each ``DataLoader`` is allowed to return batches with arbitrary
 structures of the following types, which will be fed directly to the
@@ -81,36 +84,35 @@ structures of the following types, which will be fed directly to the
       }
 
 Trial Context
-~~~~~~~~~~~~~
+=============
 
-:class:`determined.pytorch.PyTorchTrialContext` subclasses :class:`determined.TrialContext`.
-It provides useful methods for writing ``Trial`` subclasses.
+:class:`determined.pytorch.PyTorchTrialContext` subclasses
+:class:`determined.TrialContext`. It provides useful methods for writing
+``Trial`` subclasses.
 
 .. autoclass:: determined.pytorch.PyTorchTrialContext
-    :members:
-    :exclude-members: get_model, get_optimizer, get_lr_scheduler
-
+   :members:
+   :exclude-members: get_model, get_optimizer, get_lr_scheduler
 
 Gradient Clipping
-^^^^^^^^^^^^^^^^^
+-----------------
 
 Users need to pass a gradient clipping function to
 :meth:`determined.pytorch.PyTorchTrialContext.step_optimizer`.
 
-
 .. _pytorch-callbacks:
 
 Callbacks
-~~~~~~~~~
+=========
 
 To execute arbitrary Python code during the lifecycle of a
 ``PyTorchTrial``, implement the callback interface:
 
 .. autoclass:: determined.pytorch.PyTorchCallback
-    :members:
+   :members:
 
 ``ReduceLROnPlateau``
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
 To use the `torch.optim.lr_scheduler.ReduceLROnPlateau
 <https://pytorch.org/docs/stable/optim.html#torch.optim.lr_scheduler.ReduceLROnPlateau>`_
@@ -118,64 +120,72 @@ class with ``PyTorchTrial``, implement the following callback:
 
 .. code::
 
-    class ReduceLROnPlateauEveryValidationStep(PyTorchCallback):
-        def __init__(self, context):
-            self.reduce_lr = torch.optim.lr_scheduler.ReduceLROnPlateau(
-                context.get_optimizer(), "min", verbose=True
-            )  # customize arguments as desired here
+   class ReduceLROnPlateauEveryValidationStep(PyTorchCallback):
+       def __init__(self, context):
+           self.reduce_lr = torch.optim.lr_scheduler.ReduceLROnPlateau(
+               context.get_optimizer(), "min", verbose=True
+           )  # customize arguments as desired here
 
-        def on_validation_end(self, metrics):
-            self.reduce_lr.step(metrics["validation_error"])
+       def on_validation_end(self, metrics):
+           self.reduce_lr.step(metrics["validation_error"])
 
-        def state_dict(self):
-            return self.reduce_lr.state_dict()
+       def state_dict(self):
+           return self.reduce_lr.state_dict()
 
-        def load_state_dict(self, state_dict):
-            self.reduce_lr.load_state_dict(state_dict)
+       def load_state_dict(self, state_dict):
+           self.reduce_lr.load_state_dict(state_dict)
 
 Then, implement the ``build_callbacks`` function in ``PyTorchTrial``:
 
 .. code::
 
-    def build_callbacks(self):
-        return {"reduce_lr": ReduceLROnPlateauEveryValidationStep(self.context)}
-
+   def build_callbacks(self):
+       return {"reduce_lr": ReduceLROnPlateauEveryValidationStep(self.context)}
 
 .. _migration-guide-flexible-primitives:
 
-Migration from deprecated interface
------------------------------------
+*************************************
+ Migration from deprecated interface
+*************************************
 
-The current PyTorch interface is designed to be flexible and to support multiple
-models, optimizers, and LR schedulers. The ability to run forward and backward
-passes in an arbitrary order affords users much greater flexibility compared to
-the `deprecated approach
-<https://docs.determined.ai/0.12.12/reference/api/pytorch.html>`__ used in
-Determined 0.12.12 and earlier.
+The current PyTorch interface is designed to be flexible and to support
+multiple models, optimizers, and LR schedulers. The ability to run
+forward and backward passes in an arbitrary order affords users much
+greater flexibility compared to the `deprecated approach
+<https://docs.determined.ai/0.12.12/reference/api/pytorch.html>`__ used
+in Determined 0.12.12 and earlier.
 
-To migrate from the previous PyTorch API, please change the following places in
-your code:
+To migrate from the previous PyTorch API, please change the following
+places in your code:
 
-#. Wrap models, optimizers, and LR schedulers in the :meth:`__init__` method with the
-   ``wrap_model``, ``wrap_optimizer``, and ``wrap_lr_scheduler`` methods that are provided by
-   :class:`PyTorchTrialContext <determined.pytorch.PyTorchTrialContext>`. At the same time,
-   remove the implementation of :meth:`build_model`, :meth:`optimizer`,
+#. Wrap models, optimizers, and LR schedulers in the :meth:`__init__`
+   method with the ``wrap_model``, ``wrap_optimizer``, and
+   ``wrap_lr_scheduler`` methods that are provided by
+   :class:`PyTorchTrialContext
+   <determined.pytorch.PyTorchTrialContext>`. At the same time, remove
+   the implementation of :meth:`build_model`, :meth:`optimizer`,
    :meth:`create_lr_scheduler`.
 
-#. If using automatic mixed precision (AMP), configure Apex AMP in the ``__init__`` method
-   with the :meth:`context.configure_apex_amp
-   <determined.pytorch.PyTorchTrialContext>` method.  At the same time, remove
-   the experiment configuration field ``optimizations.mixed_precision``.
+#. If using automatic mixed precision (AMP), configure Apex AMP in the
+   ``__init__`` method with the :meth:`context.configure_apex_amp
+   <determined.pytorch.PyTorchTrialContext>` method. At the same time,
+   remove the experiment configuration field
+   ``optimizations.mixed_precision``.
 
-#. Run backward passes on losses and step optimizers in the :meth:`train_batch` method with
-   the ``backward`` and ``step_optimizer`` methods provided by
-   :class:`PyTorchTrialContext <determined.pytorch.PyTorchTrialContext>`. Clip gradients by passing a function
-   to the ``clip_grads`` argument of ``step_optimizer``
-   while removing the ``PyTorchCallback`` counterpart in the :meth:`build_callbacks` method.
+#. Run backward passes on losses and step optimizers in the
+   :meth:`train_batch` method with the ``backward`` and
+   ``step_optimizer`` methods provided by :class:`PyTorchTrialContext
+   <determined.pytorch.PyTorchTrialContext>`. Clip gradients by passing
+   a function to the ``clip_grads`` argument of ``step_optimizer`` while
+   removing the ``PyTorchCallback`` counterpart in the
+   :meth:`build_callbacks` method.
 
-Examples
---------
+**********
+ Examples
+**********
 
-- :download:`cifar10_cnn_pytorch.tgz </examples/cifar10_cnn_pytorch.tgz>`
-- :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
-- :download:`object_detection_pytorch.tgz </examples/object_detection_pytorch.tgz>`
+-  :download:`cifar10_cnn_pytorch.tgz
+   </examples/cifar10_cnn_pytorch.tgz>`
+-  :download:`mnist_pytorch.tgz </examples/mnist_pytorch.tgz>`
+-  :download:`object_detection_pytorch.tgz
+   </examples/object_detection_pytorch.tgz>`

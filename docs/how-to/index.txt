@@ -1,33 +1,38 @@
-How-To Guides
-=============
+###############
+ How-To Guides
+###############
 
-How-To guides are goal-oriented guides. They provide a detailed set of steps to perform common use-cases for our product. These are in some sense advanced tutorials that assume some knowledge of how Determined works but address key use-cases. Below you will find some suggested starting guides.
+How-To guides are goal-oriented guides. They provide a detailed set of
+steps to perform common use-cases for our product. These are in some
+sense advanced tutorials that assume some knowledge of how Determined
+works but address key use-cases. Below you will find some suggested
+starting guides.
 
 **Installation**
 
-- :ref:`install-cli`
-- :ref:`install-cluster`
+-  :ref:`install-cli`
+-  :ref:`install-cluster`
 
 **Hyperparameter**
 
-- :ref:`hyperparameter-tuning`
+-  :ref:`hyperparameter-tuning`
 
 **Distributed Training**
 
-- :ref:`multi-gpu-training`
+-  :ref:`multi-gpu-training`
 
 The full list of our how-to guides can be found below:
 
 .. toctree::
-  :maxdepth: 1
-  :titlesonly:
+   :maxdepth: 1
+   :titlesonly:
 
-  custom-env
-  data-layer
-  distributed-training
-  hyperparameter-tuning
-  install-cli
-  install-main
-  notebooks
-  tensorboard
-  use-trained-models
+   custom-env
+   data-layer
+   distributed-training
+   hyperparameter-tuning
+   install-cli
+   install-main
+   notebooks
+   tensorboard
+   use-trained-models
