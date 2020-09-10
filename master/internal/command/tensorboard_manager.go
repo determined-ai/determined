@@ -303,7 +303,12 @@ func (t *tensorboardManager) newTensorBoard(
 		"TensorBoard (%s)",
 		petname.Generate(model.TaskNameGeneratorWords, model.TaskNameGeneratorSep),
 	)
-	config.Entrypoint = append(entrypoint, config.Entrypoint...)
+
+	refineArgs(config.TensorBoardArgs)
+	config.Entrypoint = append(
+		[]string{tensorboardEntrypointFile, "--logdir", strings.Join(logDirs, ",")},
+		config.TensorBoardArgs...)
+
 	config.Resources.Slots = tensorboardResourcesSlots
 
 	cpuEnvVars := append(config.Environment.EnvironmentVariables.CPU, envVars...)
@@ -399,4 +404,16 @@ func getEnvVars(m map[string]string) []string {
 	}
 
 	return envVars
+}
+
+func refineArgs(s []string) {
+	trimmed := ""
+	for x := range s {
+		trimmed = strings.TrimLeft(s[x], "-")
+		if trimmed == "h" {
+			s[x] = "-h"
+		} else {
+			s[x] = "--" + trimmed
+		}
+	}
 }

@@ -74,6 +74,7 @@ def main(args: List[str]) -> int:
     tensorboard_addr = f"http://localhost:{port}/proxy/{task_id}"
     url = f"{tensorboard_addr}/data/plugin/scalars/tags"
 
+    print(f"Running: tensorboard --port{port} --path_prefix=/proxy/{task_id}", *args)
     p = subprocess.Popen(
         ["tensorboard", f"--port={port}", f"--path_prefix=/proxy/{task_id}", *args]
     )
