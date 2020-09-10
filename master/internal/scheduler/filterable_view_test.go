@@ -13,8 +13,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
-func (d *DefaultRP) addRequest(req *AssignRequest, assigned *ResourceAssigned) {
-	d.reqList.Add(req)
+func (d *DefaultRP) addAssignedTask(req *AddTask, assigned *ResourceAssigned) {
+	d.reqList.AddTask(req)
 	d.reqList.SetAssignments(req.Handler, assigned)
 }
 
@@ -166,9 +166,9 @@ func addTask(
 	taskID string,
 	numAssigned int,
 	slotsNeeded int,
-) *AssignRequest {
-	req := &AssignRequest{
-		ID:           RequestID(taskID),
+) *AddTask {
+	req := &AddTask{
+		ID:           TaskID(taskID),
 		Group:        newGroup(t, system, taskID+"-group"),
 		Handler:      newGroup(t, system, taskID+"-handler"),
 		SlotsNeeded:  slotsNeeded,
@@ -178,7 +178,7 @@ func addTask(
 	for i := 0; i < numAssigned; i++ {
 		assigned.Assignments = append(assigned.Assignments, containerAssignment{})
 	}
-	d.addRequest(req, assigned)
+	d.addAssignedTask(req, assigned)
 	return req
 }
 

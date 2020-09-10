@@ -137,7 +137,7 @@ func setupCluster(
 		agents:        make(map[*actor.Ref]*agentState),
 		groups:        make(map[*actor.Ref]*group),
 
-		reqList:         newAssignRequestList(),
+		reqList:         newTaskList(),
 		provisionerView: newProvisionerView(0),
 
 		reschedule: false,
@@ -154,8 +154,8 @@ func setupCluster(
 		slots := system.Ask(handler, getSlots{}).Get().(int)
 		label := system.Ask(handler, getLabel{}).Get().(string)
 
-		d.addRequest(&AssignRequest{
-			ID:           RequestID(handler.Address().String()),
+		d.addAssignedTask(&AddTask{
+			ID:           TaskID(handler.Address().String()),
 			Name:         handler.Address().Local(),
 			Group:        g,
 			Handler:      handler,
@@ -194,7 +194,7 @@ func assertSchedulerState(
 }
 
 func forceSchedule(rp *DefaultRP, handler *actor.Ref, agent *agentState) {
-	req, _ := rp.reqList.Get(handler)
+	req, _ := rp.reqList.GetTask(handler)
 	assigned := rp.reqList.GetAssignments(handler)
 	if assigned == nil {
 		assigned = &ResourceAssigned{}

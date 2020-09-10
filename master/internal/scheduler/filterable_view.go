@@ -6,10 +6,10 @@ import "github.com/determined-ai/determined/master/pkg/actor"
 // The `TaskSummary`s and `AgentSummary` should not be modified because a reference to
 // this struct is contained in another goroutine.
 type FilterableView struct {
-	tasks           map[RequestID]*TaskSummary
+	tasks           map[TaskID]*TaskSummary
 	filteredAgents  map[*actor.Ref]*AgentSummary
 	connectedAgents map[*actor.Ref]*AgentSummary
-	taskFilter      func(*AssignRequest, *ResourceAssigned) bool
+	taskFilter      func(*AddTask, *ResourceAssigned) bool
 	agentFilter     func(*agentState) bool
 }
 
@@ -17,7 +17,7 @@ type FilterableView struct {
 // provisioner cares about (1) idle agents (2) pending tasks.
 func newProvisionerView(provisionerSlotsPerInstance int) *FilterableView {
 	return &FilterableView{
-		tasks:           make(map[RequestID]*TaskSummary),
+		tasks:           make(map[TaskID]*TaskSummary),
 		filteredAgents:  make(map[*actor.Ref]*AgentSummary),
 		connectedAgents: make(map[*actor.Ref]*AgentSummary),
 		taskFilter:      schedulableTaskFilter(provisionerSlotsPerInstance),
@@ -27,10 +27,10 @@ func newProvisionerView(provisionerSlotsPerInstance int) *FilterableView {
 
 func schedulableTaskFilter(
 	provisionerSlotsPerInstance int,
-) func(*AssignRequest, *ResourceAssigned) bool {
+) func(*AddTask, *ResourceAssigned) bool {
 	// We only tell the provisioner about pending tasks that are compatible with the
 	// provisioner's configured instance type.
-	return func(req *AssignRequest, assigned *ResourceAssigned) bool {
+	return func(req *AddTask, assigned *ResourceAssigned) bool {
 		slotsNeeded := req.SlotsNeeded
 
 		switch {
@@ -64,7 +64,7 @@ func (v *FilterableView) Update(rp *DefaultRP) (ViewSnapshot, bool) {
 }
 
 func (v *FilterableView) updateTasks(rp *DefaultRP) bool {
-	newTasks := make(map[RequestID]*TaskSummary)
+	newTasks := make(map[TaskID]*TaskSummary)
 
 	for iterator := rp.reqList.iterator(); iterator.next(); {
 		req := iterator.value()

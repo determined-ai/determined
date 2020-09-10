@@ -22,7 +22,7 @@ type (
 	summary struct {
 		RegisteredTime time.Time              `json:"registered_time"`
 		Owner          commandOwner           `json:"owner"`
-		ID             scheduler.RequestID    `json:"id"`
+		ID             scheduler.TaskID       `json:"id"`
 		Config         model.CommandConfig    `json:"config"`
 		State          string                 `json:"state"`
 		ServiceAddress *string                `json:"service_address"`

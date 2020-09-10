@@ -316,11 +316,11 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	if patch.Resources != nil {
 		if patch.Resources.MaxSlots.IsPresent {
 			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
-				scheduler.SetMaxSlots{MaxSlots: patch.Resources.MaxSlots.Value})
+				scheduler.SetGroupMaxSlots{MaxSlots: patch.Resources.MaxSlots.Value})
 		}
 		if patch.Resources.Weight != nil {
 			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
-				scheduler.SetWeight{Weight: *patch.Resources.Weight})
+				scheduler.SetGroupWeight{Weight: *patch.Resources.Weight})
 		}
 	}
 

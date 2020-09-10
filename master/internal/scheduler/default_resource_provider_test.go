@@ -28,7 +28,7 @@ type mockActor struct {
 
 type (
 	AskSchedulerToAddTask struct {
-		task AssignRequest
+		task AddTask
 	}
 	ThrowError struct{}
 	ThrowPanic struct{}
@@ -100,8 +100,8 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 	assert.Assert(t, created)
 
 	system.Ask(mockActor, AskSchedulerToAddTask{
-		task: AssignRequest{
-			ID:           RequestID(uuid.New().String()),
+		task: AddTask{
+			ID:           TaskID(uuid.New().String()),
 			Name:         "mock_task",
 			Group:        mockActor,
 			SlotsNeeded:  1,
@@ -138,8 +138,8 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 	assert.Assert(t, created)
 
 	system.Ask(mockActor, AskSchedulerToAddTask{
-		task: AssignRequest{
-			ID:           RequestID(uuid.New().String()),
+		task: AddTask{
+			ID:           TaskID(uuid.New().String()),
 			Name:         "mock_task",
 			Group:        mockActor,
 			SlotsNeeded:  1,
@@ -177,8 +177,8 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 	assert.Assert(t, created)
 
 	system.Ask(mockActor, AskSchedulerToAddTask{
-		task: AssignRequest{
-			ID:           RequestID(uuid.New().String()),
+		task: AddTask{
+			ID:           TaskID(uuid.New().String()),
 			Name:         "mock_task",
 			Group:        mockActor,
 			SlotsNeeded:  1,
@@ -214,8 +214,8 @@ func testWhenActorsStopOrTaskIsKilled(t *testing.T, r *rand.Rand) {
 	assert.Assert(t, created)
 
 	system.Ask(mockActor, AskSchedulerToAddTask{
-		task: AssignRequest{
-			ID:           RequestID(uuid.New().String()),
+		task: AddTask{
+			ID:           TaskID(uuid.New().String()),
 			Name:         "mock_task",
 			Group:        mockActor,
 			SlotsNeeded:  1,
@@ -225,7 +225,7 @@ func testWhenActorsStopOrTaskIsKilled(t *testing.T, r *rand.Rand) {
 
 	actions := []func(){
 		func() {
-			system.Tell(cluster, ResourceReleased{
+			system.Tell(cluster, RemoveTask{
 				Handler: mockActor,
 			})
 		},

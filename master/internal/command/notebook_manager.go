@@ -66,7 +66,7 @@ func generateNotebookDescription() (string, error) {
 }
 
 func generateServiceAddress(taskID string) (string, error) {
-	tmpl := "/proxy/{{.RequestID}}/lab/tree/Notebook.ipynb?reset"
+	tmpl := "/proxy/{{.TaskID}}/lab/tree/Notebook.ipynb?reset"
 
 	t, err := template.New("").Parse(strings.TrimSpace(tmpl))
 	if err != nil {
@@ -74,7 +74,7 @@ func generateServiceAddress(taskID string) (string, error) {
 	}
 
 	var buf strings.Builder
-	err = t.Execute(&buf, map[string]string{"RequestID": taskID})
+	err = t.Execute(&buf, map[string]string{"TaskID": taskID})
 	if err != nil {
 		return "", errors.Wrap(err, "executing template")
 	}
@@ -83,7 +83,7 @@ func generateServiceAddress(taskID string) (string, error) {
 
 func generateNotebookConfig(taskID string) ([]byte, error) {
 	tmpl := `
-c.NotebookApp.base_url       = "/proxy/{{.RequestID}}/"
+c.NotebookApp.base_url       = "/proxy/{{.TaskID}}/"
 c.NotebookApp.allow_origin   = "*"
 c.NotebookApp.trust_xheaders = True
 c.NotebookApp.open_browser   = False
@@ -98,7 +98,7 @@ c.NotebookApp.token          = ""
 	}
 
 	var buf bytes.Buffer
-	err = t.Execute(&buf, map[string]string{"RequestID": taskID})
+	err = t.Execute(&buf, map[string]string{"TaskID": taskID})
 	if err != nil {
 		return nil, errors.Wrap(err, "executing template")
 	}
@@ -176,7 +176,7 @@ func (n *notebookManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Conte
 
 func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 	config := req.Config
-	taskID := scheduler.RequestID(uuid.New().String())
+	taskID := scheduler.TaskID(uuid.New().String())
 
 	// Postprocess the config. Add Jupyter and configuration to the container.
 

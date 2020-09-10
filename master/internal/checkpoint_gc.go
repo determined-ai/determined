@@ -28,7 +28,7 @@ type checkpointGCTask struct {
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		ctx.Tell(t.rp, scheduler.AssignRequest{
+		ctx.Tell(t.rp, scheduler.AddTask{
 			Name: fmt.Sprintf("Checkpoint GC (Experiment %d)", t.experiment.ID),
 			FittingRequirements: scheduler.FittingRequirements{
 				SingleAgent: true,

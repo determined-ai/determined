@@ -187,7 +187,7 @@ func (t *tensorboardManager) newTensorBoard(
 	uniqMounts := map[model.BindMount]bool{}
 	uniqEnvVars := map[string]string{}
 
-	taskID := scheduler.RequestID(uuid.New().String())
+	taskID := scheduler.TaskID(uuid.New().String())
 	serviceAddress := fmt.Sprintf(tensorboardServiceAddress, taskID)
 
 	config := commandReq.Config

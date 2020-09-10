@@ -9,13 +9,13 @@ type (
 	groupActorStopped struct {
 		Ref *actor.Ref
 	}
-	// SetMaxSlots sets the maximum number of slots that a group can consume in the cluster.
-	SetMaxSlots struct {
+	// SetGroupMaxSlots sets the maximum number of slots that a group can consume in the cluster.
+	SetGroupMaxSlots struct {
 		MaxSlots *int
 		Handler  *actor.Ref
 	}
-	// SetWeight sets the weight of a group in the fair share scheduler.
-	SetWeight struct {
+	// SetGroupWeight sets the weight of a group in the fair share scheduler.
+	SetGroupWeight struct {
 		Weight  float64
 		Handler *actor.Ref
 	}

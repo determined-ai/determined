@@ -38,7 +38,7 @@ func (c Config) Validate() []error {
 }
 
 // FitFunction returns the corresponding function for the Fit field in Config.
-func (c Config) FitFunction() func(*AssignRequest, *agentState) float64 {
+func (c Config) FitFunction() func(*AddTask, *agentState) float64 {
 	switch c.Fit {
 	case "worst":
 		return WorstFit

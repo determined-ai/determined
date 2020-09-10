@@ -21,7 +21,7 @@ type DefaultRP struct {
 	fittingMethod SoftConstraint
 	agents        map[*actor.Ref]*agentState
 
-	reqList *assignRequestList
+	reqList *taskList
 	groups  map[*actor.Ref]*group
 
 	provisioner     *actor.Ref
@@ -47,7 +47,7 @@ func NewDefaultRP(
 		agents:        make(map[*actor.Ref]*agentState),
 		groups:        make(map[*actor.Ref]*group),
 
-		reqList: newAssignRequestList(),
+		reqList: newTaskList(),
 
 		provisioner:     provisioner,
 		provisionerView: newProvisionerView(provisionerSlotsPerInstance),
@@ -57,11 +57,11 @@ func NewDefaultRP(
 	return d
 }
 
-func (d *DefaultRP) addAssignRequest(ctx *actor.Context, msg AssignRequest) {
-	d.notifyOnStop(ctx, msg.Handler, ResourceReleased{Handler: msg.Handler})
+func (d *DefaultRP) addTask(ctx *actor.Context, msg AddTask) {
+	d.notifyOnStop(ctx, msg.Handler, RemoveTask{Handler: msg.Handler})
 
 	if len(msg.ID) == 0 {
-		msg.ID = RequestID(uuid.New().String())
+		msg.ID = TaskID(uuid.New().String())
 	}
 	if msg.Group == nil {
 		msg.Group = msg.Handler
@@ -75,12 +75,12 @@ func (d *DefaultRP) addAssignRequest(ctx *actor.Context, msg AssignRequest) {
 		"resources are requested by %s (request ID: %s)",
 		msg.Handler.Address(), msg.ID,
 	)
-	d.reqList.Add(&msg)
+	d.reqList.AddTask(&msg)
 }
 
 // assignResources assigns resources based on a request and notifies the request
 // handler of the assignment. It returns true if it is successfully assigned.
-func (d *DefaultRP) assignResources(req *AssignRequest) bool {
+func (d *DefaultRP) assignResources(req *AddTask) bool {
 	fits := findFits(req, d.agents, d.fittingMethod)
 
 	if len(fits) == 0 {
@@ -113,13 +113,13 @@ func (d *DefaultRP) releaseResource(handler *actor.Ref) {
 	// the old container exiting and the new container run slower than normal.
 	// The task handler should kill the containers to physically release the resources
 	// after a timeout.
-	d.reqList.Remove(handler)
+	d.reqList.RemoveTask(handler)
 	handler.System().Tell(handler, ReleaseResource{})
 }
 
 func (d *DefaultRP) resourcesReleased(ctx *actor.Context, handler *actor.Ref) {
 	ctx.Log().Infof("resources are released for %s", handler.Address())
-	d.reqList.Remove(handler)
+	d.reqList.RemoveTask(handler)
 }
 
 func (d *DefaultRP) getOrCreateGroup(ctx *actor.Context, handler *actor.Ref) *group {
@@ -173,10 +173,10 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 
 	case
 		groupActorStopped,
-		SetMaxSlots,
-		SetWeight,
-		AssignRequest,
-		ResourceReleased:
+		SetGroupMaxSlots,
+		SetGroupWeight,
+		AddTask,
+		RemoveTask:
 		return d.receiveRequestMsg(ctx)
 
 	case GetTaskSummary:
@@ -261,16 +261,16 @@ func (d *DefaultRP) receiveRequestMsg(ctx *actor.Context) error {
 	case groupActorStopped:
 		delete(d.groups, msg.Ref)
 
-	case SetMaxSlots:
+	case SetGroupMaxSlots:
 		d.getOrCreateGroup(ctx, msg.Handler).maxSlots = msg.MaxSlots
 
-	case SetWeight:
+	case SetGroupWeight:
 		d.getOrCreateGroup(ctx, msg.Handler).weight = msg.Weight
 
-	case AssignRequest:
-		d.addAssignRequest(ctx, msg)
+	case AddTask:
+		d.addTask(ctx, msg)
 
-	case ResourceReleased:
+	case RemoveTask:
 		d.resourcesReleased(ctx, msg.Handler)
 
 	default:
@@ -281,7 +281,7 @@ func (d *DefaultRP) receiveRequestMsg(ctx *actor.Context) error {
 
 // containerAssignment contains information for tasks have been assigned but not yet started.
 type containerAssignment struct {
-	req       *AssignRequest
+	req       *AddTask
 	container *container
 	agent     *agentState
 	devices   []device.Device

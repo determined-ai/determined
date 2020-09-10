@@ -197,7 +197,7 @@ type trial struct {
 	earlyExit bool
 	killed    bool
 
-	resourceRequest            *scheduler.AssignRequest
+	resourceRequest            *scheduler.AddTask
 	pendingGracefulTermination bool
 	terminationSent            bool
 	cancelUnready              bool
@@ -292,7 +292,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 	case trialAborted:
 		// This is a hack to handle trial being aborted. Previously, the scheduler
 		// sends TaskTerminated and TaskAborted message to notify trial that the
-		// resources are released. Now, the trial sends ResourceReleased message
+		// resources are released. Now, the trial sends RemoveTask message
 		// to the scheduler to notify it releases the resources and receives no
 		// messages. This change on the message protocol making the previous way
 		// for the trial to handle canceling and pausing not work. To avoid
@@ -343,7 +343,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 				name = fmt.Sprintf("Trial %d", t.id)
 			}
 
-			t.resourceRequest = &scheduler.AssignRequest{
+			t.resourceRequest = &scheduler.AddTask{
 				Name:         fmt.Sprintf("%s (Experiment %d)", name, t.experiment.ID),
 				Group:        ctx.Self().Parent(),
 				SlotsNeeded:  slotsNeeded,
@@ -988,7 +988,7 @@ func (t *trial) terminated(ctx *actor.Context) {
 
 	t.runID++
 	t.resourceRequest = nil
-	ctx.Tell(t.rp, scheduler.ResourceReleased{Handler: ctx.Self()})
+	ctx.Tell(t.rp, scheduler.RemoveTask{Handler: ctx.Self()})
 	t.pendingGracefulTermination = false
 	t.terminationSent = false
 	t.terminatedContainers = nil
@@ -1096,7 +1096,7 @@ func (t *trial) terminate(ctx *actor.Context, kill bool) {
 					assignment.KillContainer(ctx)
 				}
 			}
-			ctx.Tell(t.rp, scheduler.ResourceReleased{Handler: ctx.Self()})
+			ctx.Tell(t.rp, scheduler.RemoveTask{Handler: ctx.Self()})
 		}
 	default:
 		ctx.Log().Info("gracefully terminating trial")

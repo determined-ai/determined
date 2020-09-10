@@ -71,7 +71,7 @@ type command struct {
 	agentUserGroup  *model.AgentUserGroup
 	defaultTaskSpec *tasks.TaskSpec
 
-	taskID               scheduler.RequestID
+	taskID               scheduler.TaskID
 	userFiles            archive.Archive
 	additionalFiles      archive.Archive
 	readinessChecks      map[string]readinessCheck
@@ -101,7 +101,7 @@ func (c *command) Receive(ctx *actor.Context) error {
 		// Schedule the command with the cluster.
 		c.rps = ctx.Self().System().Get(actor.Addr("resourceProviders"))
 		c.proxy = ctx.Self().System().Get(actor.Addr("proxy"))
-		ctx.Tell(c.rps, scheduler.AssignRequest{
+		ctx.Tell(c.rps, scheduler.AddTask{
 			ID:           c.taskID,
 			Name:         c.config.Description,
 			SlotsNeeded:  c.config.Resources.Slots,
@@ -289,7 +289,7 @@ func (c *command) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 
 func (c *command) terminate(ctx *actor.Context) {
 	ctx.Log().Info("terminating")
-	ctx.Tell(c.rps, scheduler.ResourceReleased{Handler: ctx.Self()})
+	ctx.Tell(c.rps, scheduler.RemoveTask{Handler: ctx.Self()})
 	if c.assignment != nil {
 		c.assignment.KillContainer(ctx)
 	} else {
@@ -313,7 +313,7 @@ func (c *command) readinessChecksPass(ctx *actor.Context, log sproto.ContainerLo
 func (c *command) exit(ctx *actor.Context, exitStatus string) {
 	c.exitStatus = &exitStatus
 	ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ExitedEvent: c.exitStatus})
-	ctx.Tell(c.rps, scheduler.ResourceReleased{Handler: ctx.Self()})
+	ctx.Tell(c.rps, scheduler.RemoveTask{Handler: ctx.Self()})
 	actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 }
 

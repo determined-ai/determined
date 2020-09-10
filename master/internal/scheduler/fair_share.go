@@ -27,9 +27,9 @@ type groupState struct {
 	offered int
 
 	// reqs contains the contents of both pendingReqs and assignedReqs.
-	reqs         []*AssignRequest
-	pendingReqs  []*AssignRequest
-	assignedReqs []*AssignRequest
+	reqs         []*AddTask
+	pendingReqs  []*AddTask
+	assignedReqs []*AddTask
 }
 
 func (g groupState) String() string {
@@ -217,7 +217,7 @@ func allocateSlotOffers(states []*groupState, capacity int) {
 	}
 }
 
-func calculateSmallestAllocatableTask(state *groupState) (smallest *AssignRequest) {
+func calculateSmallestAllocatableTask(state *groupState) (smallest *AddTask) {
 	for _, req := range state.pendingReqs {
 		if smallest == nil || req.SlotsNeeded < smallest.SlotsNeeded {
 			smallest = req

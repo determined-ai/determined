@@ -128,7 +128,7 @@ func (s *shellManager) newShell(
 		)
 	}
 
-	taskID := scheduler.RequestID(uuid.New().String())
+	taskID := scheduler.TaskID(uuid.New().String())
 	serviceAddress := fmt.Sprintf("/proxy/%s/", taskID)
 
 	// Select a random port from the range to assign to sshd. In host

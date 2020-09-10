@@ -283,11 +283,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		telemetry.ReportExperimentCreated(ctx.Self().System(), *e.Experiment)
 
-		ctx.Tell(e.rp, scheduler.SetMaxSlots{
+		ctx.Tell(e.rp, scheduler.SetGroupMaxSlots{
 			MaxSlots: e.Config.Resources.MaxSlots,
 			Handler:  ctx.Self(),
 		})
-		ctx.Tell(e.rp, scheduler.SetWeight{Weight: e.Config.Resources.Weight, Handler: ctx.Self()})
+		ctx.Tell(e.rp, scheduler.SetGroupWeight{Weight: e.Config.Resources.Weight, Handler: ctx.Self()})
 		ops, err := e.searcher.InitialOperations()
 		e.processOperations(ctx, ops, err)
 	case trialCreated:
@@ -353,11 +353,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	// Patch experiment messages.
 	case model.State:
 		e.updateState(ctx, msg)
-	case scheduler.SetMaxSlots:
+	case scheduler.SetGroupMaxSlots:
 		e.Config.Resources.MaxSlots = msg.MaxSlots
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rp, msg)
-	case scheduler.SetWeight:
+	case scheduler.SetGroupWeight:
 		e.Config.Resources.Weight = msg.Weight
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rp, msg)

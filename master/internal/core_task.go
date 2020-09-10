@@ -20,7 +20,7 @@ func (m *Master) getTask(c echo.Context) (interface{}, error) {
 	if err := api.BindArgs(&args, c); err != nil {
 		return nil, err
 	}
-	id := scheduler.RequestID(args.TaskID)
+	id := scheduler.TaskID(args.TaskID)
 	resp := m.system.Ask(m.rp, scheduler.GetTaskSummary{ID: &id})
 	if resp.Empty() {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "task not found: %s", args.TaskID)

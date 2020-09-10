@@ -106,7 +106,7 @@ func (c *commandManager) newCommand(req *commandRequest) *command {
 	setPodSpec(&config, c.defaultTaskSpec.TaskContainerDefaults)
 
 	return &command{
-		taskID:    scheduler.RequestID(uuid.New().String()),
+		taskID:    scheduler.TaskID(uuid.New().String()),
 		config:    config,
 		userFiles: req.UserFiles,
 

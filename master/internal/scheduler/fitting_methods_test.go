@@ -11,7 +11,7 @@ import (
 )
 
 func consumeSlots(agent *agentState, consume int) *agentState {
-	req := &AssignRequest{
+	req := &AddTask{
 		SlotsNeeded:  consume,
 		CanTerminate: true,
 	}

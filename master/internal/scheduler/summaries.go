@@ -6,7 +6,7 @@ import (
 
 // TaskSummary contains information about a task for external display.
 type TaskSummary struct {
-	ID             RequestID          `json:"id"`
+	ID             TaskID             `json:"id"`
 	Name           string             `json:"name"`
 	RegisteredTime time.Time          `json:"registered_time"`
 	SlotsNeeded    int                `json:"slots_needed"`
@@ -40,7 +40,7 @@ func (summary1 *TaskSummary) equals(summary2 *TaskSummary) bool {
 	return true
 }
 
-func newTaskSummary(request *AssignRequest, assigned *ResourceAssigned) TaskSummary {
+func newTaskSummary(request *AddTask, assigned *ResourceAssigned) TaskSummary {
 	// Summary returns a new immutable view of the task state.
 	containerSummaries := make([]ContainerSummary, 0)
 	if assigned != nil {
@@ -68,7 +68,7 @@ func (summary1 *AgentSummary) equals(summary2 *AgentSummary) bool {
 
 // ContainerSummary contains information about a task container for external display.
 type ContainerSummary struct {
-	TaskID RequestID   `json:"task_id"`
+	TaskID TaskID      `json:"task_id"`
 	ID     ContainerID `json:"id"`
 	Agent  string      `json:"agent"`
 }
@@ -80,16 +80,16 @@ func newAgentSummary(state *agentState) AgentSummary {
 	}
 }
 
-func getTaskSummary(reqList *assignRequestList, id RequestID) *TaskSummary {
-	if req, ok := reqList.GetByID(id); ok {
+func getTaskSummary(reqList *taskList, id TaskID) *TaskSummary {
+	if req, ok := reqList.GetTaskByID(id); ok {
 		summary := newTaskSummary(req, reqList.GetAssignments(req.Handler))
 		return &summary
 	}
 	return nil
 }
 
-func getTaskSummaries(reqList *assignRequestList) map[RequestID]TaskSummary {
-	ret := make(map[RequestID]TaskSummary)
+func getTaskSummaries(reqList *taskList) map[TaskID]TaskSummary {
+	ret := make(map[TaskID]TaskSummary)
 	for it := reqList.iterator(); it.next(); {
 		req := it.value()
 		ret[req.ID] = newTaskSummary(req, reqList.GetAssignments(req.Handler))

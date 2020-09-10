@@ -23,6 +23,6 @@ func TestResourceProviderForwardMessage(t *testing.T) {
 	assert.Assert(t, created)
 
 	taskSummary := system.Ask(rpActor, GetTaskSummaries{}).Get()
-	assert.DeepEqual(t, taskSummary, make(map[RequestID]TaskSummary))
+	assert.DeepEqual(t, taskSummary, make(map[TaskID]TaskSummary))
 	assert.NilError(t, rpActor.StopAndAwaitTermination())
 }

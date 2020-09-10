@@ -12,7 +12,7 @@ import (
 
 func TestIsViable(t *testing.T) {
 	system := actor.NewSystem(t.Name())
-	req := &AssignRequest{SlotsNeeded: 2}
+	req := &AddTask{SlotsNeeded: 2}
 
 	assert.Assert(t, isViable(req, newMockAgent(t, system, "agent1", 4, ""), slotsSatisfied))
 	assert.Assert(t, !isViable(req, newMockAgent(t, system, "agent2", 1, ""), slotsSatisfied))
@@ -206,10 +206,10 @@ func TestFindFit(t *testing.T) {
 
 	for idx := range testCases {
 		tc := testCases[idx]
-		reqID := RequestID(fmt.Sprintf("task%d", idx))
+		reqID := TaskID(fmt.Sprintf("task%d", idx))
 
 		t.Run(tc.Name, func(t *testing.T) {
-			req := &AssignRequest{
+			req := &AddTask{
 				ID:                  reqID,
 				SlotsNeeded:         tc.SlotsNeeded,
 				Label:               tc.TaskLabel,
@@ -308,7 +308,7 @@ func TestFindDedicatedAgentFits(t *testing.T) {
 				agentIndex[agent] = idx
 			}
 
-			req := &AssignRequest{
+			req := &AddTask{
 				SlotsNeeded:         tc.SlotsNeeded,
 				FittingRequirements: tc.FittingRequirements,
 			}
