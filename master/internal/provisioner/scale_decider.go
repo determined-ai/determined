@@ -134,8 +134,6 @@ func (s *scaleDecider) findInstancesToTerminate(
 			if _, connected := s.connectedAgentSnapshot[inst.AgentName]; connected {
 				continue
 			}
-			// If instance instance is still in the start-up period, do not terminate it for
-			// being disconnected.
 			if inst.LaunchTime.Add(s.maxStartingPeriod).After(now) {
 				continue
 			}
