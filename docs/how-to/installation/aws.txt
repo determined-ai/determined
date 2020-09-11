@@ -100,9 +100,9 @@ using the ``--deployment-type`` argument (e.g., ``det-deploy aws
    cluster into a separate VPC. The EFS drive attaches to agent
    instances at `/mnt/efs`.
 
--  ``fsx``: The FSX deployment creates a Lustre FSx drive and a Determined
-   cluster into a separate VPC. The FSx drive attaches to agent
-   instances at `/mnt/fsx`.
+-  ``fsx``: The FSX deployment creates a Lustre FSx drive and a
+   Determined cluster into a separate VPC. The FSx drive attaches to
+   agent instances at `/mnt/fsx`.
 
 -  ``secure``: The secure deployment creates resources to lock down the
    Determined cluster. These resources are:
