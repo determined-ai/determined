@@ -56,10 +56,6 @@ func (m *mockPodActor) Receive(ctx *actor.Context) error {
 
 	case resourceCreationCancelled:
 
-	case resourceCreationFailed, resourceDeletionFailed:
-		ctx.Log().Errorf("should not hit these messages during testing %T", msg)
-		return actor.ErrUnexpectedMessage(ctx)
-
 	default:
 		ctx.Log().Errorf("unexpected message %T", msg)
 		return actor.ErrUnexpectedMessage(ctx)
@@ -93,10 +89,10 @@ func TestRequestQueueCreatingManyPod(t *testing.T) {
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
-	k8RequestQueue := newRequestQueue(podInterface, configMapInterface)
+	k8sRequestQueue := newRequestQueue(podInterface, configMapInterface)
 	requestQueueActor, _ := system.ActorOf(
 		actor.Addr("request-queue"),
-		k8RequestQueue,
+		k8sRequestQueue,
 	)
 
 	numPods := 15
@@ -111,7 +107,7 @@ func TestRequestQueueCreatingManyPod(t *testing.T) {
 	}
 	system.AskAll(mockPodActorPing{}, podActors...).GetAll()
 
-	waitForPendingRequestToFinish(k8RequestQueue)
+	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, getNumberOfActivePods(podInterface), numPods)
 }
 
@@ -121,10 +117,10 @@ func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
-	k8RequestQueue := newRequestQueue(podInterface, configMapInterface)
+	k8sRequestQueue := newRequestQueue(podInterface, configMapInterface)
 	requestQueueActor, _ := system.ActorOf(
 		actor.Addr("request-queue"),
-		k8RequestQueue,
+		k8sRequestQueue,
 	)
 
 	numPods := 15
@@ -140,7 +136,7 @@ func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
 	system.AskAll(deleteMockPod{}, podActors...)
 	system.AskAll(mockPodActorPing{}, podActors...).GetAll()
 
-	waitForPendingRequestToFinish(k8RequestQueue)
+	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, getNumberOfActivePods(podInterface), 0)
 }
 
@@ -150,10 +146,10 @@ func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
-	k8RequestQueue := newRequestQueue(podInterface, configMapInterface)
+	k8sRequestQueue := newRequestQueue(podInterface, configMapInterface)
 	requestQueueActor, _ := system.ActorOf(
 		actor.Addr("request-queue"),
-		k8RequestQueue,
+		k8sRequestQueue,
 	)
 
 	numPods := 15
@@ -168,13 +164,13 @@ func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 	}
 	system.AskAll(mockPodActorPing{}, podActors...).GetAll()
 
-	waitForPendingRequestToFinish(k8RequestQueue)
+	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, getNumberOfActivePods(podInterface), numPods)
 
 	system.AskAll(deleteMockPod{}, podActors...)
 	system.AskAll(mockPodActorPing{}, podActors...).GetAll()
 
-	waitForPendingRequestToFinish(k8RequestQueue)
+	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, getNumberOfActivePods(podInterface), 0)
 }
 
@@ -187,10 +183,10 @@ func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
 	}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
-	k8RequestQueue := newRequestQueue(podInterface, configMapInterface)
+	k8sRequestQueue := newRequestQueue(podInterface, configMapInterface)
 	requestQueueActor, _ := system.ActorOf(
 		actor.Addr("request-queue"),
-		k8RequestQueue,
+		k8sRequestQueue,
 	)
 
 	numPods := 15
@@ -206,6 +202,6 @@ func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
 	system.AskAll(deleteMockPod{}, podActors...)
 	system.AskAll(mockPodActorPing{}, podActors...).GetAll()
 
-	waitForPendingRequestToFinish(k8RequestQueue)
+	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, getNumberOfActivePods(podInterface), 0)
 }
