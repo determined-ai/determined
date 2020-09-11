@@ -26,7 +26,7 @@ import (
 func isInList(srcList []string, item string) bool {
 	item = strings.ToLower(item)
 	for _, src := range srcList {
-		if matchesSrc := strings.Contains(strings.ToLower(src), item); matchesSrc {
+		if strings.Contains(strings.ToLower(src), item) {
 			return true
 		}
 	}
@@ -35,10 +35,6 @@ func isInList(srcList []string, item string) bool {
 
 // matchesList checks whether srcList contains all strings provided in matchList.
 func matchesList(srcList []string, matchList []string) bool {
-	if len(matchList) != 0 && len(srcList) == 0 {
-		return false
-	}
-
 	for _, match := range matchList {
 		if !isInList(srcList, match) {
 			return false
