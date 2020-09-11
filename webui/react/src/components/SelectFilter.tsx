@@ -1,6 +1,6 @@
 import { Select } from 'antd';
 import { SelectProps, SelectValue } from 'antd/es/select';
-import React, { PropsWithChildren, useCallback, useMemo } from 'react';
+import React, { PropsWithChildren, useCallback, useMemo, useState } from 'react';
 
 import Icon from './Icon';
 import Label from './Label';
@@ -39,21 +39,26 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = ({
   showSearch = true,
   ...props
 }: PropsWithChildren<Props>) => {
+  const [ isOpen, setIsOpen ] = useState(false);
   const classes = [ css.base ];
 
-  if (disableTags) classes.push('disableTags');
+  if (disableTags) classes.push(css.disableTags);
 
   const optionsCount = useMemo(() => countOptions(props.children), [ props.children ]);
 
   const [ maxTagCount, maxTagPlaceholder ] = useMemo(() => {
-    if (disableTags) {
-      const count = Array.isArray(props.value) ? props.value.length : (props.value ? 1 : 0);
-      return [ 0, count === optionsCount ? 'All' : `${count} selected` ];
-    }
-    return [ undefined, props.maxTagPlaceholder ];
-  }, [ disableTags, optionsCount, props.maxTagPlaceholder, props.value ]);
+    if (!disableTags) return [ undefined, props.maxTagPlaceholder ];
+
+    const count = Array.isArray(props.value) ? props.value.length : (props.value ? 1 : 0);
+    const placeholder = count === optionsCount ? 'All' : `${count} selected`;
+    return isOpen ? [ 0, '' ] : [ 0, placeholder ];
+  }, [ disableTags, isOpen, optionsCount, props.maxTagPlaceholder, props.value ]);
 
   const getPopupContainer = useCallback((triggerNode) => triggerNode, []);
+
+  const handleDropdownVisibleChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+  }, []);
 
   const handleFilter = useCallback((search: string, option) => {
     /*
@@ -64,10 +69,15 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = ({
      */
     let label = null;
     if (option.children) {
-      if (Array.isArray(option.children)) label = option.children.join(' ').toLocaleLowerCase();
-      else label = option.children.toLocaleLowerCase();
+      if (Array.isArray(option.children)) {
+        label = option.children.join(' ');
+      } else if (option.children.props?.label) {
+        label = option.children.props?.label;
+      } else if (typeof option.children === 'string') {
+        label = option.children;
+      }
     }
-    return label && label.indexOf(search.toLocaleLowerCase()) !== -1;
+    return label && label.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
   }, []);
 
   return (
@@ -81,6 +91,7 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = ({
         maxTagPlaceholder={maxTagPlaceholder}
         showSearch={showSearch}
         suffixIcon={<Icon name="arrow-down" size="tiny" />}
+        onDropdownVisibleChange={handleDropdownVisibleChange}
         {...props}>
         {props.children}
       </Select>

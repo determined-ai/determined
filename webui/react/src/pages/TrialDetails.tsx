@@ -27,7 +27,7 @@ import { forkExperiment } from 'services/api';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
 import { TrialDetailsParams } from 'services/types';
 import {
-  CheckpointDetail, ExperimentDetails, MetricName, RawJson, Step, TrialDetails,
+  CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step, TrialDetails,
 } from 'types';
 import { clone, numericSorter } from 'utils/data';
 import { humanReadableFloat } from 'utils/string';
@@ -344,8 +344,14 @@ If the problem persists please contact support.',
         const response = await getExperimentDetails({ id: experimentId });
         setExperiment(response);
 
+        // Default to selecting config search metric only.
         const storageMetricsKey = `experiments/${response.id}/${STORAGE_METRICS_KEY}`;
-        const initMetrics = storage.getWithDefault(storageMetricsKey, []);
+        const searcherName = response.config?.searcher?.metric;
+        const defaultMetric = metricNames.find(metricName => {
+          return metricName.name === searcherName && metricName.type === MetricType.Validation;
+        });
+        const defaultMetrics = defaultMetric ? [ defaultMetric ] : [];
+        const initMetrics = storage.getWithDefault(storageMetricsKey, defaultMetrics);
         setMetrics(initMetrics);
       } catch (e) {
         handleError({
@@ -360,18 +366,7 @@ If the problem persists please contact support.',
     };
 
     fetchExperimentDetails();
-  }, [ experimentId, storage ]);
-
-  /*
-   * By default enable all metric columns for table because:
-   * 1. The metric columns as sorted by order of relevance.
-   * 2. The table supports horizontal scrolling to show additional columns.
-   */
-  useEffect(() => {
-    if (metrics && metrics?.length !== 0) return;
-    if (metricNames.length === 0) return;
-    setMetrics(metricNames);
-  }, [ metricNames, metrics ]);
+  }, [ experimentId, metricNames, storage ]);
 
   if (isNaN(trialId)) return <Message title={`Invalid Trial ID ${trialIdParam}`} />;
   if (trialResponse.error !== undefined) {
@@ -382,22 +377,23 @@ If the problem persists please contact support.',
   }
   if (!trial || !experiment || !upgradedConfig) return <Spinner />;
 
-  const options = metrics ? (
+  const options = (
     <Space size="middle">
       <SelectFilter
         label="Show"
+        style={{ width: 242 }}
         value={hasCheckpointOrValidation}
         onSelect={handleHasCheckpointOrValidationSelect}>
         <Option key={ALL_VALUE} value={ALL_VALUE}>All</Option>
         {Object.values(TrialInfoFilter).map(key => <Option key={key} value={key}>{key}</Option>)}
       </SelectFilter>
-      <MetricSelectFilter
+      {metrics && <MetricSelectFilter
         metricNames={metricNames}
         multiple
         value={metrics}
-        onChange={handleMetricChange} />
+        onChange={handleMetricChange} />}
     </Space>
-  ) : null;
+  );
 
   return (
     <Page
