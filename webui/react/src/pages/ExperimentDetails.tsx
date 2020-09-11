@@ -139,11 +139,10 @@ const ExperimentDetailsComp: React.FC = () => {
     setSorter({ descend: order === 'descend', key: columnKey as string });
   }, [ columns, setSorter, storage ]);
 
-  const handleTableRow = useCallback((record: TrialItem) => ({
-    onClick: (event: React.MouseEvent) => {
-      return handlePath(event, { path: record.url });
-    },
-  }), []);
+  const handleTableRow = useCallback((record: TrialItem) => {
+    const handleClick = (event: React.MouseEvent) => handlePath(event, { path: record.url });
+    return { onAuxClick: handleClick, onClick: handleClick };
+  }, []);
 
   const handleCheckpointShow = (event: React.MouseEvent, checkpoint: CheckpointDetail) => {
     event.stopPropagation();
