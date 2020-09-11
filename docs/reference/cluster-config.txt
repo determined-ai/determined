@@ -322,7 +322,10 @@ The master supports the following configuration settings:
    -  ``force_pull_image``: Defines the default policy for forcibly pulling images from
       the docker registry and bypassing the docker cache. If a pull policy is specified
       in the :ref:`experiment config <exp-environment-image>` this default value is
-      overriden. Defaults to ``false``.
+      overriden. Please note that as of November 1st, 2020 unauthenticated users will be
+      `capped at 100 pulls from Docker per 6 hours
+      <https://www.docker.com/blog/scaling-docker-to-serve-millions-more-developers-network-egress/>`__.
+      Defaults to ``false``.
 
    -  ``registry_auth``: Defines the default `docker registry credentials
       <https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__ to use

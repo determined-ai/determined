@@ -35,14 +35,6 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 		"Experiment (%s)",
 		petname.Generate(TaskNameGeneratorWords, TaskNameGeneratorSep))
 
-	cpuImage := defaultCPUImage
-	gpuImage := defaultGPUImage
-
-	if taskContainerDefaults != nil && taskContainerDefaults.Image != nil {
-		cpuImage = taskContainerDefaults.Image.CPU
-		gpuImage = taskContainerDefaults.Image.GPU
-	}
-
 	defaultConfig := ExperimentConfig{
 		Description: defaultDescription,
 		CheckpointStorage: CheckpointStorageConfig{
@@ -111,8 +103,8 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 		SchedulingUnit:  100,
 		Environment: Environment{
 			Image: RuntimeItem{
-				CPU: cpuImage,
-				GPU: gpuImage,
+				CPU: defaultCPUImage,
+				GPU: defaultGPUImage,
 			},
 		},
 		Reproducibility: ReproducibilityConfig{
@@ -121,9 +113,16 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 		MaxRestarts: 5,
 	}
 
-	if taskContainerDefaults != nil {
-		defaultConfig.Environment.RegistryAuth = taskContainerDefaults.RegistryAuth
-		defaultConfig.Environment.ForcePullImage = taskContainerDefaults.ForcePullImage
+	if taskContainerDefaults == nil {
+		return defaultConfig
+	}
+
+	defaultConfig.Environment.RegistryAuth = taskContainerDefaults.RegistryAuth
+	defaultConfig.Environment.ForcePullImage = taskContainerDefaults.ForcePullImage
+
+	if taskContainerDefaults.Image != nil {
+		defaultConfig.Environment.Image.CPU = taskContainerDefaults.Image.CPU
+		defaultConfig.Environment.Image.GPU = taskContainerDefaults.Image.GPU
 	}
 
 	return defaultConfig
