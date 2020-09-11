@@ -2,7 +2,7 @@
 
 **BUG FIXES**
 
-- Update trial detail table metric filter to only select config searcher metric by default.
+- Update trial detail table metric filter to only select searcher metric by default.
 
 **NEW FEATURES**
 

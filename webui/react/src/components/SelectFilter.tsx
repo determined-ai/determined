@@ -70,14 +70,14 @@ const SelectFilter: React.FC<PropsWithChildren<Props>> = ({
     let label = null;
     if (option.children) {
       if (Array.isArray(option.children)) {
-        label = option.children.join(' ').toLocaleLowerCase();
+        label = option.children.join(' ');
       } else if (option.children.props?.label) {
-        label = option.children.props?.label.toLocaleLowerCase();
+        label = option.children.props?.label;
       } else if (typeof option.children === 'string') {
-        label = option.children.toLocaleLowerCase();
+        label = option.children;
       }
     }
-    return label && label.indexOf(search.toLocaleLowerCase()) !== -1;
+    return label && label.toLocaleLowerCase().indexOf(search.toLocaleLowerCase()) !== -1;
   }, []);
 
   return (
