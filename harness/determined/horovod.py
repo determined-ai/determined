@@ -151,8 +151,9 @@ def create_run_command(
     if debug:
         horovod_process_cmd.append("--verbose")
     horovod_process_cmd.extend(optional_args)
+    # Use "python3" instead of sys.executable since the remote machine may have differing paths.
     horovod_process_cmd += [
-        "python",
+        "python3",
         "-m",
         "determined.exec.worker_process",
         str(worker_process_env_path),

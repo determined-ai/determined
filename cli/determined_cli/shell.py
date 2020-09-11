@@ -1,5 +1,6 @@
 import getpass
 import subprocess
+import sys
 import tempfile
 from argparse import ONE_OR_MORE, FileType, Namespace
 from pathlib import Path
@@ -78,7 +79,8 @@ def _open_shell(master: str, shell: Command, additional_opts: List[str]) -> None
 
         # Use determined_cli.tunnel as a portable script for using the HTTP CONNECT mechanism,
         # similar to `nc -X CONNECT -x ...` but without any dependency on external binaries.
-        proxy_cmd = "python -m determined_cli.tunnel {} %h".format(master)
+        python = sys.executable
+        proxy_cmd = "{} -m determined_cli.tunnel {} %h".format(python, master)
         if request.get_master_cert_bundle():
             proxy_cmd += ' "{}"'.format(request.get_master_cert_bundle())
 
