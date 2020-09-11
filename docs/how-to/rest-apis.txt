@@ -12,12 +12,10 @@ Swagger UI
 
 As Swagger puts it:
 
-Swagger UI allows anyone — be it your development team or your end consumers —
-to visualize and interact with the API’s resources without having any of the
-implementation logic in place. It’s automatically generated from your OpenAPI
-(formerly known as Swagger) Specification, with the visual documentation making
-it easy for back end implementation and client-side consumption.
-
+  "Swagger UI allows anyone — be it your development team or your end consumers — to visualize
+  and interact with the API’s resources without having any of the implementation logic in place.
+  It’s automatically generated from your OpenAPI (formerly known as Swagger) Specification, with
+  the visual documentation making it easy for back end implementation and client-side consumption."
 
 
 Reach the Swagger UI for your Determined installation by clicking the API icon from the
@@ -84,7 +82,7 @@ Once we have the token we can store and attach to our future API calls under
 Example:
 --------
 
-For example, let's find an archived example to un-archive:
+For example, let's find an archived experiment to un-archive:
 
 By looking at the archive endpoint entry from our API docs (Swagger UI) we see that all we need is an
 experiment id.
