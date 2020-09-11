@@ -8,6 +8,8 @@ import { clone } from 'utils/data';
 import routes from './routes';
 
 export const serverAddress = (avoidDevProxy = false, path = ''): string => {
+  if (!!path && !isAbsolutePath(path)) return path;
+
   const address = avoidDevProxy && process.env.IS_DEV
     ? 'http://localhost:8080'
     : `${window.location.protocol}//${window.location.host}`;
