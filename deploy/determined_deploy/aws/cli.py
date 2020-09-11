@@ -140,7 +140,7 @@ def deploy_aws(args: argparse.Namespace) -> None:
         constants.deployment_types.VPC: vpc.VPC,
         constants.deployment_types.EFS: vpc.EFS,
         constants.deployment_types.FSX: vpc.FSx,
-    }  # type: Dict[str, Union[Type[simple.Simple], Type[secure.Secure], Type[vpc.VPC]]]
+    }  # type: Dict[str, Union[Type[simple.Simple], Type[secure.Secure], Type[vpc.VPC], Type[vpc.EFS, Type[vpc.FSx]]]]
 
     det_configs = {
         constants.cloudformation.KEYPAIR: args.keypair,
