@@ -3,10 +3,11 @@
 // https://on.cypress.io/custom-commands
 // ***********************************************
 
-export const DEFAULT_TEST_USERNAME = 'user-w-pw';
-export const DEFAULT_TEST_PASSWORD = 'special-pw';
-
 const sha512 = require('js-sha512').sha512;
+
+const API_PATH = Cypress.env('apiPath');
+const DEFAULT_TEST_USERNAME = Cypress.env('authUsername');
+const DEFAULT_TEST_PASSWORD = Cypress.env('authPassword');
 
 const saltAndHashPassword = password => {
   if (!password) return '';
@@ -51,7 +52,7 @@ Cypress.Commands.add('login', credentials => {
     password: saltAndHashPassword(DEFAULT_TEST_PASSWORD),
     username: DEFAULT_TEST_USERNAME,
   };
-  cy.request('POST', '/api/v1/auth/login', credentials)
+  cy.request('POST', `${API_PATH}/auth/login`, credentials)
     .then(response => {
       expect(response.body).to.have.property('token');
       return cy.setCookie('auth', response.body.token);
@@ -66,7 +67,7 @@ Cypress.Commands.add('logout', () => {
   cy.request({
     failOnStatusCode: false, // make this command idempotent
     method: 'POST',
-    url: '/api/v1/auth/logout',
+    url: `${API_PATH}/auth/logout`,
   })
     .then(() => {
       return cy.clearCookie('auth');

@@ -36,8 +36,8 @@ describe('Sign in/out', () => {
     cy.checkLoggedOut();
   });
 
-  it.only('should be able to log in', () => {
-    const username = 'determined';
+  it('should be able to log in', () => {
+    const username = Cypress.env('noAuthUsername');
 
     cy.logout();
     cy.visit(LOGIN_ROUTE);
@@ -54,7 +54,7 @@ describe('Sign in/out', () => {
      * https://github.com/cypress-io/cypress/issues/2188
      */
     /* eslint-disable-next-line cypress/no-unnecessary-waiting */
-    cy.wait(500);
+    cy.wait(5000);
     cy.checkLoggedIn(username, false);
   });
 
