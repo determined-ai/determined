@@ -1,3 +1,5 @@
+import { DEFAULT_WAIT_TIME, USERNAME_WITHOUT_PASSWORD } from '../constants';
+
 describe('Sign in/out', () => {
 
   const LOGIN_ROUTE = '/det/login';
@@ -37,14 +39,12 @@ describe('Sign in/out', () => {
   });
 
   it('should be able to log in', () => {
-    const username = Cypress.env('noAuthUsername');
-
     cy.logout();
     cy.visit(LOGIN_ROUTE);
 
     cy.get('input#login_username')
-      .type(username, { delay: 100 })
-      .should('have.value', username);
+      .type(USERNAME_WITHOUT_PASSWORD, { delay: 100 })
+      .should('have.value', USERNAME_WITHOUT_PASSWORD);
 
     cy.get('button[type="submit"]').contains('Sign In').click();
 
@@ -54,8 +54,8 @@ describe('Sign in/out', () => {
      * https://github.com/cypress-io/cypress/issues/2188
      */
     /* eslint-disable-next-line cypress/no-unnecessary-waiting */
-    cy.wait(5000);
-    cy.checkLoggedIn(username, false);
+    cy.wait(DEFAULT_WAIT_TIME);
+    cy.checkLoggedIn(USERNAME_WITHOUT_PASSWORD, false);
   });
 
   it('should redirect away from login when visiting login while logged in', () => {
