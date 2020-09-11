@@ -22,7 +22,7 @@ build:
 
 .PHONY: check
 check:
-	golangci-lint run
+	golangci-lint run --timeout 10m
 
 .PHONY: fmt
 fmt:
