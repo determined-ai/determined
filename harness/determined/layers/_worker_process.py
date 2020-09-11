@@ -3,6 +3,7 @@ import os
 import pathlib
 import pickle
 import subprocess
+import sys
 import time
 from typing import Any, Dict, List, Optional, Tuple, cast
 
@@ -231,8 +232,9 @@ class SubprocessLauncher:
         self._python_subprocess_entrypoint = cast(str, self._python_subprocess_entrypoint)
 
         # Construct the command to launch the non-horovod training subprocess.
+        python = sys.executable
         python_cmd = [
-            "python",
+            python,
             "-m",
             self._python_subprocess_entrypoint,
             str(self._worker_process_env_path),
