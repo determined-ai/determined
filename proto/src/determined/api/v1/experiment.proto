@@ -60,12 +60,14 @@ message GetExperimentsRequest {
     int32 limit = 4;
     // Limit experiments to those that match the description.
     string description = 5;
+    // Limit experiments to those that match the provided labels.
+    repeated string labels = 6;
     // Limit experiments to those that are archived.
-    google.protobuf.BoolValue archived = 6;
+    google.protobuf.BoolValue archived = 7;
     // Limit experiments to those that match the provided state.
-    repeated determined.experiment.v1.State states = 7;
+    repeated determined.experiment.v1.State states = 8;
     // Limit experiments to those that are owned by the specified users.
-    repeated string users = 8;
+    repeated string users = 9;
 }
 // Response to GetExperimentsRequest.
 message GetExperimentsResponse {
