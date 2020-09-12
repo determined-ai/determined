@@ -2,7 +2,9 @@ class deployment_types:
     SIMPLE = "simple"
     SECURE = "secure"
     VPC = "vpc"
-    DEPLOYMENT_TYPES = [SIMPLE, SECURE, VPC]
+    EFS = "efs"
+    FSX = "fsx"
+    DEPLOYMENT_TYPES = [SIMPLE, SECURE, VPC, EFS, FSX]
 
 
 class defaults:
