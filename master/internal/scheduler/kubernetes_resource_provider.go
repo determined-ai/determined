@@ -262,10 +262,10 @@ func (p podAllocation) StartContainer(ctx *actor.Context, spec image.TaskSpec) {
 	handler := p.agent.handler
 	spec.ContainerID = string(p.container.id)
 	spec.TaskID = string(p.req.ID)
-	ctx.Tell(handler, sproto.StartPod{
-		TaskHandler: p.req.TaskActor,
-		Spec:        spec,
-		Slots:       p.container.slots,
+	ctx.Tell(handler, sproto.StartTaskPod{
+		TaskActor: p.req.TaskActor,
+		Spec:      spec,
+		Slots:     p.container.slots,
 	})
 }
 

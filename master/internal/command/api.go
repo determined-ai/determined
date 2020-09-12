@@ -3,14 +3,13 @@ package command
 import (
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/tasks"
-
 	"github.com/labstack/echo"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 // RegisterAPIHandler initializes and registers the API handlers for all command related features.

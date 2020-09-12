@@ -108,14 +108,7 @@ func (d *DefaultRP) allocateResources(req *AllocateRequest) bool {
 }
 
 func (d *DefaultRP) releaseResource(handler *actor.Ref) {
-	// The request handler is removed so that it would not take up resources.
-	// In practice, the request handler might gracefully wait for the containers
-	// to exit themselves, which might take very long time or might not happen at all.
-	// In the mean time, resources are re-allocated to other requests, which might let
-	// the old container exiting and the new container run slower than normal.
-	// The task handler should kill the containers to physically release the resources
-	// after a timeout.
-	d.taskList.RemoveTaskByHandler(handler)
+	log.Infof("releasing resources taken by %s", handler.Address())
 	handler.System().Tell(handler, ReleaseResources{})
 }
 
@@ -304,8 +297,8 @@ func (c containerAllocation) StartContainer(ctx *actor.Context, spec image.TaskS
 	spec.ContainerID = string(c.container.id)
 	spec.TaskID = string(c.req.ID)
 	spec.Devices = c.devices
-	ctx.Tell(handler, sproto.StartTaskOnAgent{
-		Task: c.req.TaskActor,
+	ctx.Tell(handler, sproto.StartTaskContainer{
+		TaskActor: c.req.TaskActor,
 		StartContainer: aproto.StartContainer{
 			Container: cproto.Container{
 				Parent:  c.req.TaskActor.Address(),

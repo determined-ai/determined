@@ -290,15 +290,9 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		t.processLog(ctx, msg)
 
 	case trialAborted:
-		// Here is to handle trial being aborted. Before refactoring the scheduler
-		// to reduce its complexity, the scheduler sent TaskTerminated and TaskAborted
-		// message to notify trial that the resources are released. Now, the trial
-		// sends RemoveTaskByHandler message to the scheduler to notify it releases the resources
-		// and receives no messages. This change on the message protocol making the previous
-		// way for the trial to handle canceling and pausing not work. To avoid
-		// fundamentally changing the trial logic, when a trial is being aborted,
-		// the trial send a message to itself to reuse the previous logic of handling
-		// canceling and pausing.
+		// Here is to handle trial being aborted. It does nothing here but requires
+		// the code below this switch statement to handle releasing resources in
+		// the scheduler. This should be refactored into the terminating logic.
 
 	case actor.PostStop:
 		if !t.idSet {
@@ -902,6 +896,9 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 func (t *trial) processContainerRunning(
 	ctx *actor.Context, msg sproto.TaskContainerStateChanged,
 ) error {
+	ctx.Log().Infof("found one running container: %s (ordinal %d)",
+		msg.Container.ID, len(t.containerOrdinals))
+
 	t.containers[msg.Container.ID] = msg.Container
 	t.containerAddresses[msg.Container.ID] = msg.ContainerStarted.Addresses
 	t.containerOrdinals[msg.Container.ID] = len(t.containerOrdinals)

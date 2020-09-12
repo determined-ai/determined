@@ -113,9 +113,9 @@ func newMockAgent(
 
 func (m mockAgent) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case sproto.StartTaskOnAgent:
+	case sproto.StartTaskContainer:
 		if ctx.ExpectingResponse() {
-			ctx.Respond(msg.Task)
+			ctx.Respond(msg.TaskActor)
 		}
 
 	default:

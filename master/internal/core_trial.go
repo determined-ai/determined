@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
-	cproto "github.com/determined-ai/determined/master/pkg/container"
-
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 

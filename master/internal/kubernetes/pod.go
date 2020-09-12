@@ -28,7 +28,7 @@ const (
 type pod struct {
 	cluster                  *actor.Ref
 	clusterID                string
-	taskHandler              *actor.Ref
+	taskActor                *actor.Ref
 	clientSet                *k8sClient.Clientset
 	namespace                string
 	masterIP                 string
@@ -58,7 +58,7 @@ type podNodeInfo struct {
 }
 
 func newPod(
-	msg sproto.StartPod,
+	msg sproto.StartTaskPod,
 	cluster *actor.Ref,
 	clusterID string,
 	clientSet *k8sClient.Clientset,
@@ -71,7 +71,7 @@ func newPod(
 	leaveKubernetesResources bool,
 ) *pod {
 	podContainer := container.Container{
-		Parent: msg.TaskHandler.Address(),
+		Parent: msg.TaskActor.Address(),
 		ID:     container.ID(msg.Spec.ContainerID),
 		State:  container.Assigned,
 	}
@@ -80,7 +80,7 @@ func newPod(
 	return &pod{
 		cluster:                  cluster,
 		clusterID:                clusterID,
-		taskHandler:              msg.TaskHandler,
+		taskActor:                msg.TaskActor,
 		clientSet:                clientSet,
 		namespace:                namespace,
 		masterIP:                 masterIP,
@@ -180,7 +180,7 @@ func (p *pod) createPodSpecAndSubmit(ctx *actor.Context) error {
 func (p *pod) receiveResourceCreationFailed(ctx *actor.Context, msg resourceCreationFailed) {
 	ctx.Log().WithError(msg.err).Error("pod actor notified that resource creation failed")
 	errMsg := msg.err.Error()
-	ctx.Tell(p.taskHandler, sproto.ContainerLog{
+	ctx.Tell(p.taskActor, sproto.ContainerLog{
 		Container:   p.container,
 		Timestamp:   time.Now(),
 		PullMessage: nil,
@@ -225,14 +225,14 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 			p.container = p.container.Transition(container.Pulling)
 
 			rsc := sproto.TaskContainerStateChanged{Container: p.container}
-			ctx.Tell(p.taskHandler, rsc)
+			ctx.Tell(p.taskActor, rsc)
 		}
 
 		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(containerState)
 
 		rsc := sproto.TaskContainerStateChanged{Container: p.container}
-		ctx.Tell(p.taskHandler, rsc)
+		ctx.Tell(p.taskActor, rsc)
 
 	case k8sV1.PodRunning:
 		if p.container.State == container.Running {
@@ -384,7 +384,7 @@ func (p *pod) informTaskContainerStarted(
 	ctx *actor.Context,
 	containerStarted sproto.TaskContainerStarted,
 ) {
-	ctx.Tell(p.taskHandler, sproto.TaskContainerStateChanged{
+	ctx.Tell(p.taskActor, sproto.TaskContainerStateChanged{
 		Container:        p.container,
 		ContainerStarted: &containerStarted,
 	})
@@ -394,7 +394,7 @@ func (p *pod) informTaskContainerStopped(
 	ctx *actor.Context,
 	containerStopped sproto.TaskContainerStopped,
 ) {
-	ctx.Tell(p.taskHandler, sproto.TaskContainerStateChanged{
+	ctx.Tell(p.taskActor, sproto.TaskContainerStateChanged{
 		Container:        p.container,
 		ContainerStopped: &containerStopped,
 	})
@@ -402,7 +402,7 @@ func (p *pod) informTaskContainerStopped(
 
 func (p *pod) receiveContainerLogs(ctx *actor.Context, msg sproto.ContainerLog) {
 	msg.Container = p.container
-	ctx.Tell(p.taskHandler, msg)
+	ctx.Tell(p.taskActor, msg)
 }
 
 func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
@@ -417,7 +417,7 @@ func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 	}
 
 	message := fmt.Sprintf("Pod %s: %s", msg.event.InvolvedObject.Name, msg.event.Message)
-	ctx.Tell(p.taskHandler, sproto.ContainerLog{
+	ctx.Tell(p.taskActor, sproto.ContainerLog{
 		Container:   p.container,
 		Timestamp:   msg.event.CreationTimestamp.Time,
 		PullMessage: nil,

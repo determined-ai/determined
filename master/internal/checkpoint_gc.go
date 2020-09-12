@@ -61,6 +61,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 			a.StartContainer(ctx, taskSpec)
 		}
 	case scheduler.ReleaseResources:
+		// Ignore the release resource message and wait for the GC job to finish.
 
 	case sproto.TaskContainerStateChanged:
 		if msg.Container.State != container.Terminated {

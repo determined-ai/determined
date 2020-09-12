@@ -103,8 +103,8 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		p.startPodInformer(ctx)
 		p.startEventListener(ctx)
 
-	case sproto.StartPod:
-		if err := p.receiveStartPod(ctx, msg); err != nil {
+	case sproto.StartTaskPod:
+		if err := p.receiveStartTaskPod(ctx, msg); err != nil {
 			return err
 		}
 
@@ -233,7 +233,7 @@ func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
 	)
 }
 
-func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
+func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg sproto.StartTaskPod) error {
 	newPodHandler := newPod(
 		msg, p.cluster, msg.Spec.ClusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
 		p.podInterface, p.configMapInterface, p.resourceRequestQueue, p.leaveKubernetesResources,

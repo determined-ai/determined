@@ -72,15 +72,15 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &killMsg}})
 	case aproto.SignalContainer:
 		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &msg}})
-	case sproto.StartTaskOnAgent:
+	case sproto.StartTaskContainer:
 		start := ws.WriteMessage{Message: aproto.AgentMessage{StartContainer: &msg.StartContainer}}
 		ctx.Log().Infof("starting container id: %s slots: %d task handler: %s",
 			msg.StartContainer.Container.ID, len(msg.StartContainer.Container.Devices),
-			msg.Task.Address())
+			msg.TaskActor.Address())
 
 		ctx.Ask(a.socket, start)
 		ctx.Tell(a.slots, msg.StartContainer)
-		a.containers[msg.Container.ID] = msg.Task
+		a.containers[msg.Container.ID] = msg.TaskActor
 	case aproto.MasterMessage:
 		a.handleIncomingWSMessage(ctx, msg)
 	case *proto.GetAgentRequest:
@@ -162,7 +162,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 }
 
 func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerStateChanged) {
-	task, ok := a.containers[sc.Container.ID]
+	taskActor, ok := a.containers[sc.Container.ID]
 	check.Panic(check.True(ok, "container not allocated to agent: container %s", sc.Container.ID))
 
 	rsc := sproto.TaskContainerStateChanged{Container: sc.Container}
@@ -182,7 +182,7 @@ func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerSta
 		}
 	}
 
-	ctx.Tell(task, rsc)
+	ctx.Tell(taskActor, rsc)
 	ctx.Tell(a.slots, sc)
 }
 
