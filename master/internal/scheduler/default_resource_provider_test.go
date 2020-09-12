@@ -215,7 +215,7 @@ func testWhenActorsStopOrTaskIsKilled(t *testing.T, r *rand.Rand) {
 	actions := []func(){
 		func() {
 			system.Tell(cluster, ResourcesReleased{
-				Handler: mockActor,
+				TaskActor: mockActor,
 			})
 		},
 		func() {

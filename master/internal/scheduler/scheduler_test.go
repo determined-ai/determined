@@ -7,6 +7,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
+	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/device"
 )
 
@@ -14,23 +15,9 @@ type getMaxSlots struct{}
 type getWeight struct{}
 
 type mockGroup struct {
+	id       string
 	maxSlots *int
 	weight   float64
-}
-
-func newCustomGroup(
-	t *testing.T,
-	system *actor.System,
-	id string,
-	maxSlots int,
-	weight float64,
-) *actor.Ref {
-	ref, created := system.ActorOf(
-		actor.Addr(id),
-		&mockGroup{maxSlots: &maxSlots, weight: weight},
-	)
-	assert.Assert(t, created)
-	return ref
 }
 
 func newGroup(t *testing.T, system *actor.System, id string) *actor.Ref {
@@ -52,9 +39,11 @@ func (g *mockGroup) Receive(ctx *actor.Context) error {
 }
 
 type mockTask struct {
-	group       *actor.Ref
-	slotsNeeded int
-	label       string
+	id             TaskID
+	slotsNeeded    int
+	label          string
+	group          *mockGroup
+	allocatedAgent *mockAgent
 }
 
 type (
@@ -62,20 +51,6 @@ type (
 	getGroup struct{}
 	getLabel struct{}
 )
-
-func newMockTask(
-	t *testing.T,
-	system *actor.System,
-	group *actor.Ref,
-	id string,
-	slotsNeeded int,
-	label string,
-) *actor.Ref {
-	ref, created := system.ActorOf(actor.Addr(id),
-		&mockTask{group: group, slotsNeeded: slotsNeeded, label: label})
-	assert.Assert(t, created)
-	return ref
-}
 
 func (t *mockTask) Receive(ctx *actor.Context) error {
 	switch ctx.Message().(type) {
@@ -93,7 +68,11 @@ func (t *mockTask) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-type mockAgent struct{}
+type mockAgent struct {
+	id    string
+	slots int
+	label string
+}
 
 func newMockAgent(
 	t *testing.T,
@@ -122,10 +101,6 @@ func (m mockAgent) Receive(ctx *actor.Context) error {
 		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
-}
-
-type schedulerState struct {
-	containers map[*agentState]int
 }
 
 func setupCluster(
@@ -174,35 +149,126 @@ func setupCluster(
 	return &d
 }
 
-func assertSchedulerState(
-	t *testing.T, rp *DefaultRP, actual []*actor.Ref, expected []schedulerState,
+func setupClusterStates(
+	t *testing.T,
+	system *actor.System,
+	mockTasks []*mockTask,
+	mockGroups []*mockGroup,
+	mockAgents []*mockAgent,
+) (
+	*taskList,
+	map[*actor.Ref]*group,
+	map[*actor.Ref]*agentState,
 ) {
-	for index, handler := range actual {
-		expectedState := expected[index]
-		actualAllocated := rp.taskList.GetAllocations(handler)
-		actualContainers := make(map[*agentState]int)
-		if actualAllocated != nil {
-			for _, allocation := range actualAllocated.Allocations {
-				container := allocation.(*containerAllocation).container
-				actualContainers[container.agent] = container.slots
-			}
+	agents := make(map[*actor.Ref]*agentState)
+	for _, mockAgent := range mockAgents {
+		ref, created := system.ActorOf(actor.Addr(mockAgent.id), mockAgent)
+		assert.Assert(t, created)
+
+		agent := &agentState{
+			handler:            ref,
+			label:              mockAgent.label,
+			devices:            make(map[device.Device]*cproto.ID),
+			zeroSlotContainers: make(map[cproto.ID]bool),
 		}
-		assert.DeepEqual(t, expectedState.containers, actualContainers)
+		for i := 0; i < mockAgent.slots; i++ {
+			agent.devices[device.Device{ID: i}] = nil
+		}
+		agents[ref] = agent
 	}
-	assert.Equal(t, len(actual), len(expected),
-		"actual tasks and expected task states must have the same length")
+
+	groups := make(map[*actor.Ref]*group)
+	groupActors := make(map[*mockGroup]*actor.Ref)
+	for _, mockGroup := range mockGroups {
+		ref, created := system.ActorOf(actor.Addr(mockGroup.id), mockGroup)
+		assert.Assert(t, created)
+
+		group := &group{
+			handler:  ref,
+			maxSlots: mockGroup.maxSlots,
+			weight:   mockGroup.weight,
+		}
+		groups[ref] = group
+		groupActors[mockGroup] = ref
+	}
+
+	taskList := newTaskList()
+	for _, mockTask := range mockTasks {
+		ref, created := system.ActorOf(actor.Addr(mockTask.id), mockTask)
+		assert.Assert(t, created)
+
+		groups[ref] = &group{handler: ref}
+
+		req := &AllocateRequest{
+			ID:          mockTask.id,
+			SlotsNeeded: mockTask.slotsNeeded,
+			Label:       mockTask.label,
+			TaskActor:   ref,
+		}
+		if mockTask.group == nil {
+			req.Group = ref
+		} else {
+			req.Group = groupActors[mockTask.group]
+		}
+		taskList.AddTask(req)
+
+		if mockTask.allocatedAgent != nil {
+			agentRef := system.Get(actor.Addr(mockTask.allocatedAgent.id))
+			agentState := agents[agentRef]
+
+			allocated := &ResourcesAllocated{ID: req.ID}
+			allocated.Allocations = append(allocated.Allocations, &containerAllocation{
+				req:       req,
+				agent:     agentState,
+				container: newContainer(req, agentState, req.SlotsNeeded, 1),
+			})
+			taskList.SetAllocations(req.TaskActor, allocated)
+		}
+	}
+
+	return taskList, groups, agents
 }
 
-func forceSchedule(rp *DefaultRP, handler *actor.Ref, agent *agentState) {
-	req, _ := rp.taskList.GetTaskByHandler(handler)
-	allocated := rp.taskList.GetAllocations(handler)
-	if allocated == nil {
-		allocated = &ResourcesAllocated{ID: req.ID}
+func assertEqualToAllocate(
+	t *testing.T,
+	actual []*AllocateRequest,
+	expected []*mockTask,
+) {
+	expectedMap := map[TaskID]bool{}
+	for _, task := range expected {
+		expectedMap[task.id] = true
 	}
-	allocated.Allocations = append(allocated.Allocations, &containerAllocation{
-		req:       req,
-		agent:     agent,
-		container: newContainer(req, agent, req.SlotsNeeded, 1),
-	})
-	rp.taskList.SetAllocations(handler, allocated)
+	for _, task := range actual {
+		_, ok := expectedMap[task.ID]
+		assert.Assert(t, ok)
+	}
+	assert.Equal(t, len(actual), len(expected),
+		"actual tasks and expected tasks must have the same length")
+}
+
+func assertEqualToRelease(
+	t *testing.T,
+	taskList *taskList,
+	actual []*actor.Ref,
+	expected []*mockTask,
+) {
+	expectedMap := map[TaskID]bool{}
+	for _, task := range expected {
+		expectedMap[task.id] = true
+	}
+	for _, taskActor := range actual {
+		task, _ := taskList.GetTaskByHandler(taskActor)
+		assert.Assert(t, task != nil)
+
+		if task != nil {
+			_, ok := expectedMap[task.ID]
+			assert.Assert(t, ok)
+		}
+	}
+	assert.Equal(t, len(actual), len(expected),
+		"actual tasks and expected tasks must have the same length")
+}
+
+func newMaxSlot(maxSlot int) *int {
+	return &maxSlot
 }

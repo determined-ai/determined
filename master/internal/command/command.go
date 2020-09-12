@@ -334,7 +334,7 @@ func (c *command) exit(ctx *actor.Context, exitStatus string) {
 	c.exitStatus = &exitStatus
 	ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ExitedEvent: c.exitStatus})
 
-	ctx.Tell(c.rps, scheduler.ResourcesReleased{Handler: ctx.Self()})
+	ctx.Tell(c.rps, scheduler.ResourcesReleased{TaskActor: ctx.Self()})
 	actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 }
 

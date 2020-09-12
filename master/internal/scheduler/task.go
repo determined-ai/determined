@@ -20,7 +20,7 @@ type (
 		TaskActor           *actor.Ref
 	}
 	// ResourcesReleased notifies resource providers to return resources from a task.
-	ResourcesReleased struct{ Handler *actor.Ref }
+	ResourcesReleased struct{ TaskActor *actor.Ref }
 	// GetTaskSummary returns the summary of the specified task.
 	GetTaskSummary struct{ ID *TaskID }
 	// GetTaskSummaries returns the summaries of all the tasks in the cluster.

@@ -59,7 +59,7 @@ func NewDefaultRP(
 }
 
 func (d *DefaultRP) addTask(ctx *actor.Context, msg AllocateRequest) {
-	d.notifyOnStop(ctx, msg.TaskActor, ResourcesReleased{Handler: msg.TaskActor})
+	d.notifyOnStop(ctx, msg.TaskActor, ResourcesReleased{TaskActor: msg.TaskActor})
 
 	if len(msg.ID) == 0 {
 		msg.ID = TaskID(uuid.New().String())
@@ -190,7 +190,13 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 
 	case schedulerTick:
 		if d.reschedule {
-			d.scheduler.Schedule(d)
+			toAllocate, toRelease := d.scheduler.Schedule(d)
+			for _, req := range toAllocate {
+				d.allocateResources(req)
+			}
+			for _, taskActor := range toRelease {
+				d.releaseResource(taskActor)
+			}
 			d.sendProvisionerView(ctx)
 		}
 		d.reschedule = false
@@ -266,7 +272,7 @@ func (d *DefaultRP) receiveRequestMsg(ctx *actor.Context) error {
 		d.addTask(ctx, msg)
 
 	case ResourcesReleased:
-		d.resourcesReleased(ctx, msg.Handler)
+		d.resourcesReleased(ctx, msg.TaskActor)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)

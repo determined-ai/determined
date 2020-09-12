@@ -3,6 +3,10 @@ package scheduler
 import (
 	"fmt"
 	"sort"
+
+	"github.com/determined-ai/determined/master/pkg/check"
+
+	"github.com/determined-ai/determined/master/pkg/actor"
 )
 
 type fairShare struct{}
@@ -41,12 +45,27 @@ func (g groupState) String() string {
 		address, g.disabled, g.slotDemand, g.activeSlots, g.offered)
 }
 
-func (f *fairShare) Schedule(rp *DefaultRP) {
-	for it := rp.taskList.iterator(); it.next(); {
+func (f *fairShare) Schedule(rp *DefaultRP) ([]*AllocateRequest, []*actor.Ref) {
+	return fairshareSchedule(rp.taskList, rp.groups, rp.agents, rp.fittingMethod)
+}
+
+func fairshareSchedule(
+	taskList *taskList,
+	groups map[*actor.Ref]*group,
+	agents map[*actor.Ref]*agentState,
+	fittingMethod SoftConstraint,
+) ([]*AllocateRequest, []*actor.Ref) {
+	allToAllocate := make([]*AllocateRequest, 0)
+	allToRelease := make([]*actor.Ref, 0)
+
+	for it := taskList.iterator(); it.next(); {
 		req := it.value()
-		allocations := rp.taskList.GetAllocations(req.TaskActor)
+		allocations := taskList.GetAllocations(req.TaskActor)
 		if req.SlotsNeeded == 0 && allocations == nil {
-			rp.allocateResources(req)
+			if fits := findFits(req, agents, fittingMethod); len(fits) == 0 {
+				continue
+			}
+			allToAllocate = append(allToAllocate, req)
 		}
 	}
 
@@ -61,36 +80,41 @@ func (f *fairShare) Schedule(rp *DefaultRP) {
 	// fit on any agent due to hard contraints. This may cause the scheduler to
 	// not schedule any tasks and therefore not make progress. Slot offers and
 	// reclaiming slots should be rethought in scheduler v2.
-	capacity := capacityByAgentLabel(rp)
-	states := calculateGroupStates(rp, capacity)
+	capacity := capacityByAgentLabel(agents)
+	states := calculateGroupStates(taskList, groups, capacity)
 
 	for label, groupStates := range states {
 		allocateSlotOffers(groupStates, capacity[label])
-		assignTasks(rp, groupStates)
+		toAllocate, toRelease := assignTasks(agents, groupStates, fittingMethod)
+		allToAllocate = append(allToAllocate, toAllocate...)
+		allToRelease = append(allToRelease, toRelease...)
 	}
+	return allToAllocate, allToRelease
 }
 
-func capacityByAgentLabel(rp *DefaultRP) map[string]int {
+func capacityByAgentLabel(agents map[*actor.Ref]*agentState) map[string]int {
 	agentCap := map[string]int{}
 
-	for _, agent := range rp.agents {
+	for _, agent := range agents {
 		agentCap[agent.label] += agent.numSlots()
 	}
 
 	return agentCap
 }
 
-func calculateGroupStates(rp *DefaultRP, capacities map[string]int) map[string][]*groupState {
+func calculateGroupStates(
+	taskList *taskList, groups map[*actor.Ref]*group, capacities map[string]int,
+) map[string][]*groupState {
 	// Group all tasks by their respective task group and calculate the slot demand of each group.
 	// Demand is calculated by summing the slots needed for each schedulable task.
 	states := make(map[string][]*groupState)
 	groupMapping := make(map[*group]*groupState)
-	for it := rp.taskList.iterator(); it.next(); {
+	for it := taskList.iterator(); it.next(); {
 		req := it.value()
 		if req.SlotsNeeded == 0 || req.SlotsNeeded > capacities[req.Label] {
 			continue
 		}
-		group := rp.groups[req.Group]
+		group := groups[req.Group]
 		state, ok := groupMapping[group]
 		if !ok {
 			state = &groupState{
@@ -104,8 +128,9 @@ func calculateGroupStates(rp *DefaultRP, capacities map[string]int) map[string][
 	}
 	for _, group := range states {
 		for _, state := range group {
+			check.Panic(check.True(state.group != nil, "the group of a task must not be nil"))
 			for _, req := range state.reqs {
-				allocated := rp.taskList.GetAllocations(req.TaskActor)
+				allocated := taskList.GetAllocations(req.TaskActor)
 				state.slotDemand += req.SlotsNeeded
 				switch {
 				case allocated == nil || len(allocated.Allocations) == 0:
@@ -226,14 +251,19 @@ func calculateSmallestAllocatableTask(state *groupState) (smallest *AllocateRequ
 	return smallest
 }
 
-func assignTasks(rp *DefaultRP, states []*groupState) {
+func assignTasks(
+	agents map[*actor.Ref]*agentState, states []*groupState, fittingMethod SoftConstraint,
+) ([]*AllocateRequest, []*actor.Ref) {
+	toAllocate := make([]*AllocateRequest, 0)
+	toRelease := make([]*actor.Ref, 0)
+
 	for _, state := range states {
 		if state.activeSlots > state.offered {
 			// Terminate tasks while the count of slots consumed by active tasks is greater than
 			// the count of offered slots.
 			// TODO: We should terminate running tasks more intelligently.
 			for _, req := range state.allocatedReqs {
-				rp.releaseResource(req.TaskActor)
+				toRelease = append(toRelease, req.TaskActor)
 				state.activeSlots -= req.SlotsNeeded
 				if state.activeSlots <= state.offered {
 					break
@@ -245,11 +275,14 @@ func assignTasks(rp *DefaultRP, states []*groupState) {
 			state.offered -= state.activeSlots
 			for _, req := range state.pendingReqs {
 				if req.SlotsNeeded <= state.offered {
-					if ok := rp.allocateResources(req); ok {
-						state.offered -= req.SlotsNeeded
+					if fits := findFits(req, agents, fittingMethod); len(fits) == 0 {
+						continue
 					}
+					toAllocate = append(toAllocate, req)
+					state.offered -= req.SlotsNeeded
 				}
 			}
 		}
 	}
+	return toAllocate, toRelease
 }

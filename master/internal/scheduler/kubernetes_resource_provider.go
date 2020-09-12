@@ -118,7 +118,7 @@ func (k *kubernetesResourceProvider) receiveRequestMsg(ctx *actor.Context) error
 		k.addTask(ctx, msg)
 
 	case ResourcesReleased:
-		k.resourcesReleased(ctx, msg.Handler)
+		k.resourcesReleased(ctx, msg.TaskActor)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -127,7 +127,7 @@ func (k *kubernetesResourceProvider) receiveRequestMsg(ctx *actor.Context) error
 }
 
 func (k *kubernetesResourceProvider) addTask(ctx *actor.Context, msg AllocateRequest) {
-	actors.NotifyOnStop(ctx, msg.TaskActor, ResourcesReleased{Handler: msg.TaskActor})
+	actors.NotifyOnStop(ctx, msg.TaskActor, ResourcesReleased{TaskActor: msg.TaskActor})
 
 	if len(msg.ID) == 0 {
 		msg.ID = TaskID(uuid.New().String())
