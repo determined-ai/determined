@@ -148,12 +148,18 @@ export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promis
   });
 };
 
-export const login = generateApi<Credentials, void>(Config.login);
+/*
+ * Login is an exception where the caller will perform the error handling,
+ * so it is one of the few API calls that will not have a try/catch block.
+ */
+export const login = async (credentials: Credentials): Promise<DetSwagger.V1LoginResponse> => {
+  const response = await detAuthApi.determinedLogin({
+    password: Config.saltAndHashPassword(credentials.password),
+    username: credentials.username,
+  } as DetSwagger.V1LoginRequest);
+  return response;
+};
 
-// TODO set up a generic error handler for swagger sdk
-// It would be nice to have the input and output types be set automatically
-// One this can be achieved is by directly exposing sApi and expecting the user to
-// use processApiError.
 export const logout = async (): Promise<DetSwagger.V1LogoutResponse> => {
   try {
     const response = await detAuthApi.determinedLogout();

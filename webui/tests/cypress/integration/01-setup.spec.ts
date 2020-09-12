@@ -1,3 +1,5 @@
+import { DEFAULT_WAIT_TIME } from '../constants';
+
 describe('setup', () => {
   const recordSelector = 'tr.ant-table-row';
 
@@ -24,7 +26,7 @@ describe('setup', () => {
     cy.get('[class*="TableBatch_base_').contains(/pause/i).click();
     cy.get('.ant-modal-body button').contains(/pause/i).click();
     /* eslint-disable-next-line cypress/no-unnecessary-waiting */
-    cy.wait(5000);
+    cy.wait(DEFAULT_WAIT_TIME);
     cy.get(recordSelector)
       .each(($tr) => cy.wrap($tr).should('contain', 'Paused'));
     cy.get('thead input[type=checkbox]').click();

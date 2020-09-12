@@ -2,9 +2,7 @@
 // For examples of custom commands please read more here:
 // https://on.cypress.io/custom-commands
 // ***********************************************
-
-const DEFAULT_TEST_USERNAME = 'user-w-pw';
-const DEFAULT_TEST_PASSWORD = 'special-pw';
+import { ACCOUNT_PASSWORD, ACCOUNT_USERNAME, API_PATH } from '../constants';
 
 const sha512 = require('js-sha512').sha512;
 
@@ -23,12 +21,12 @@ Cypress.Commands.add('dataCy', (value) => {
   return cy.get(`[data-test=${value}]`);
 });
 
-Cypress.Commands.add('checkLoggedIn', username => {
+Cypress.Commands.add('checkLoggedIn', (username = null, visit = true) => {
   // Check for the presence/absence of the icons for the user dropdown and
   // cluster page link in the top bar, which should be present if and only if
   // the user is logged in.
-  username = username || DEFAULT_TEST_USERNAME;
-  cy.visit('/');
+  username = username || ACCOUNT_USERNAME;
+  if (visit) cy.visit('/');
   cy.get('#avatar').should('exist');
   cy.get('#avatar').should('have.text', username.charAt(0).toUpperCase());
 });
@@ -48,10 +46,10 @@ Cypress.Commands.add('checkLoggedOut', () => {
 // TODO use Cypress.env to share (and bring in) some of the contants used.
 Cypress.Commands.add('login', credentials => {
   credentials = credentials || {
-    password: saltAndHashPassword(DEFAULT_TEST_PASSWORD),
-    username: DEFAULT_TEST_USERNAME,
+    password: saltAndHashPassword(ACCOUNT_PASSWORD),
+    username: ACCOUNT_USERNAME,
   };
-  cy.request('POST', '/login', credentials)
+  cy.request('POST', `${API_PATH}/auth/login`, credentials)
     .then(response => {
       expect(response.body).to.have.property('token');
       return cy.setCookie('auth', response.body.token);
@@ -66,7 +64,7 @@ Cypress.Commands.add('logout', () => {
   cy.request({
     failOnStatusCode: false, // make this command idempotent
     method: 'POST',
-    url: '/logout',
+    url: `${API_PATH}/auth/logout`,
   })
     .then(() => {
       return cy.clearCookie('auth');

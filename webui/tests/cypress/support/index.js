@@ -15,6 +15,4 @@
 
 import './commands';
 
-Cypress.Cookies.defaults({
-  whitelist: /auth/,
-});
+Cypress.Cookies.defaults({ whitelist: /auth/ });

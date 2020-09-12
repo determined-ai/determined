@@ -1,3 +1,5 @@
+import { DEFAULT_WAIT_TIME, USERNAME_WITHOUT_PASSWORD } from '../constants';
+
 describe('Sign in/out', () => {
 
   const LOGIN_ROUTE = '/det/login';
@@ -37,20 +39,23 @@ describe('Sign in/out', () => {
   });
 
   it('should be able to log in', () => {
-    const username = 'determined';
-
     cy.logout();
     cy.visit(LOGIN_ROUTE);
 
     cy.get('input#login_username')
-      .type(username, { delay: 100 })
-      .should('have.value', username);
+      .type(USERNAME_WITHOUT_PASSWORD, { delay: 100 })
+      .should('have.value', USERNAME_WITHOUT_PASSWORD);
 
-    cy.server();
-    cy.route('POST', /\/login.*/).as('loginRequest');
-    cy.get('button[type="submit"]').click();
-    cy.wait('@loginRequest');
-    cy.checkLoggedIn(username);
+    cy.get('button[type="submit"]').contains('Sign In').click();
+
+    /*
+     * Cypress is unable to capture /api/v1/auth/login POST requests properly
+     * via `cy.route`, instead having to rely on a time-based wait.
+     * https://github.com/cypress-io/cypress/issues/2188
+     */
+    /* eslint-disable-next-line cypress/no-unnecessary-waiting */
+    cy.wait(DEFAULT_WAIT_TIME);
+    cy.checkLoggedIn(USERNAME_WITHOUT_PASSWORD, false);
   });
 
   it('should redirect away from login when visiting login while logged in', () => {
