@@ -155,6 +155,9 @@ Helm Chart </helm/determined-helm-chart.tgz>`.
    -  ``forcePullImage``: Defines the default policy for forcibly pulling images from
       the docker registry and bypassing the docker cache. If a pull policy is specified
       in the :ref:`experiment config <exp-environment-image>` this default  is overriden.
+      Please note that as of November 1st, 2020 unauthenticated users will be
+      `capped at 100 pulls from Docker per 6 hours
+      <https://www.docker.com/blog/scaling-docker-to-serve-millions-more-developers-network-egress/>`__.
       Defaults to ``false``.
 
    -  ``cpuPodSpec``: Sets the default pod spec for all non-gpu tasks.

@@ -121,8 +121,7 @@ func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig)
 	defaultConfig.Environment.ForcePullImage = taskContainerDefaults.ForcePullImage
 
 	if taskContainerDefaults.Image != nil {
-		defaultConfig.Environment.Image.CPU = taskContainerDefaults.Image.CPU
-		defaultConfig.Environment.Image.GPU = taskContainerDefaults.Image.GPU
+		defaultConfig.Environment.Image = *taskContainerDefaults.Image
 	}
 
 	return defaultConfig
