@@ -14,6 +14,8 @@ been ported to Determined's APIs. These examples can be found in the
 <https://github.com/determined-ai/determined/tree/master/examples>`__;
 download links to each example can also be found below.
 
+.. _examples-trial-api:
+
 Trial API
 =========
 
@@ -77,6 +79,8 @@ tutorials.
    -  -  Tensorpack
       -  MNIST
       -  :download:`mnist_tp.tgz </examples/mnist_tp.tgz>`
+
+.. _examples-native-api:
 
 Native API
 ==========

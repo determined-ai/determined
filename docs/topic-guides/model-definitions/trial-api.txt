@@ -21,6 +21,8 @@ application frameworks it supports:
 -  :ref:`tf-keras-trial`
 -  :ref:`estimator-trial`
 
+.. _model-definitions_trial-api-create:
+
 ********************************************************
  Create an Experiment via ``det.experimental.create()``
 ********************************************************
@@ -42,13 +44,13 @@ for a majority of users this is the current working directory (`.`). The
 ``create()`` API also accepts two boolean keyword arguments:
 
 ``local`` (``bool``):
-   ``local=False`` will sumbit the experiment to a Determined cluster.
+   ``local=False`` will submit the experiment to a Determined cluster.
    ``local=True`` will execute the the training loop in your local
    Python environment (although currently, local training is not
    implemented, so you must also set ``test=True``). Defaults to False.
 
 ``test`` (``bool``):
-   ``test=True`` will execute a minimal trianing loop rather than a full
+   ``test=True`` will execute a minimal training loop rather than a full
    experiment. This can be useful for porting or debugging a model
    because many common errors will surface quickly. Defaults to False.
 
