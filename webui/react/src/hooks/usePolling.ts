@@ -8,36 +8,42 @@ type PollingFn = (() => Promise<void>) | (() => void);
 
 interface PollingOptions {
   delay?: number;
-  triggers?: unknown[];
 }
 
-const usePolling =
-  (pollingFn: PollingFn, { delay }: PollingOptions = {}): (() => void) => {
-    const timerId = useRef<NodeJS.Timeout>();
-    const countId = useRef(0);
+const usePolling = (pollingFn: PollingFn, { delay }: PollingOptions = {}): (() => void) => {
+  const timerId = useRef<NodeJS.Timeout>();
+  const countId = useRef(0);
 
-    const pollingRoutine = useCallback(async (): Promise<void> => {
-      countId.current++;
-      isAsyncFunction(pollingFn) ? await pollingFn() : pollingFn();
-      timerId.current = setTimeout(() => {
-        pollingRoutine();
-      }, delay || DEFAULT_DELAY);
-    }, [ pollingFn, delay ]);
+  const stopPolling = useCallback((): void => {
+    if (timerId.current) {
+      clearTimeout(timerId.current);
+      timerId.current = undefined;
+    }
+  }, []);
 
-    const stopPolling = useCallback((): void => {
-      if (timerId.current) {
-        clearTimeout(timerId.current);
-        timerId.current = undefined;
-      }
-    }, []);
+  const pollingRoutine = useCallback(async (): Promise<void> => {
+    countId.current++;
 
-    useEffect(() => {
-      stopPolling();
-      pollingRoutine();
-      return stopPolling;
-    }, [ pollingRoutine, stopPolling ]);
+    const count = countId.current;
 
+    isAsyncFunction(pollingFn) ? await pollingFn() : pollingFn();
+
+    timerId.current = setTimeout(() => {
+      /*
+         * When the polling function changes rapidly it's possible for several timers
+         * to be active. The count checks ensures that only the most recently set
+         * timer is allowed to continue polling behavior.
+         */
+      if (count === countId.current) pollingRoutine();
+    }, delay || DEFAULT_DELAY);
+  }, [ pollingFn, delay ]);
+
+  useEffect(() => {
+    pollingRoutine();
     return stopPolling;
-  };
+  }, [ pollingRoutine, stopPolling ]);
+
+  return stopPolling;
+};
 
 export default usePolling;
