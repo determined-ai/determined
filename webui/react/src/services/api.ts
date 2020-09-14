@@ -52,6 +52,7 @@ export const getExperimentList = async (
   try {
     const sortBy = Object.values(Api.V1GetExperimentsRequestSortBy).includes(sorter.key) ?
       sorter.key : Api.V1GetExperimentsRequestSortBy.UNSPECIFIED;
+    const labels = search ? search.split(/\s+/) : undefined;
 
     const response = await detApi.Experiments.determinedGetExperiments(
       /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -60,7 +61,7 @@ export const getExperimentList = async (
       pagination.offset,
       pagination.limit,
       search,
-      (filters.labels && filters.labels.length === 0) ? undefined : filters.labels,
+      labels,
       filters.showArchived ? undefined : false,
       filters.states.includes(ALL_VALUE) ? undefined : filters.states.map(state => {
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
