@@ -21,7 +21,7 @@ import Users from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
-import { handlePath, openBlank } from 'routes/utils';
+import { openBlank } from 'routes/utils';
 import {
   getCommands, getNotebooks, getShells, getTensorboards, killCommand,
 } from 'services/api';
