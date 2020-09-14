@@ -49,8 +49,8 @@ type commandOwner struct {
 // DefaultConfig is the default configuration used by all
 // commands (e.g., commands, notebooks, shells) if a request
 // does not specify any configuration options.
-func DefaultConfig() model.CommandConfig {
-	environment := model.DefaultExperimentConfig().Environment
+func DefaultConfig(taskContainerDefaults *model.TaskContainerDefaultsConfig) model.CommandConfig {
+	environment := model.DefaultExperimentConfig(taskContainerDefaults).Environment
 	return model.CommandConfig{
 		Resources: model.ResourcesConfig{
 			Slots:  1,

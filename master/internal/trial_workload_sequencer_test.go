@@ -35,7 +35,7 @@ reproducibility:
 checkpoint_policy: none
 `
 
-	expConfig := model.DefaultExperimentConfig()
+	expConfig := model.DefaultExperimentConfig(nil)
 	assert.NilError(t, yaml.Unmarshal([]byte(yam), &expConfig, yaml.DisallowUnknownFields))
 
 	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
@@ -45,7 +45,7 @@ checkpoint_policy: none
 		model.GlobalBatchSize: 64,
 	}, model.TrialWorkloadSequencerType)
 
-	schedulingUnit := model.DefaultExperimentConfig().SchedulingUnit
+	schedulingUnit := model.DefaultExperimentConfig(nil).SchedulingUnit
 	train := searcher.NewTrain(create.RequestID, model.NewLength(model.Batches, 500))
 	validate := searcher.NewValidate(create.RequestID)
 	checkpoint := searcher.NewCheckpoint(create.RequestID)
@@ -283,7 +283,7 @@ checkpoint_policy: none
 }
 
 func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
-	expConfig := model.DefaultExperimentConfig()
+	expConfig := model.DefaultExperimentConfig(nil)
 	expConfig.MinCheckpointPeriod = model.NewLengthInBatches(100)
 	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
 
@@ -329,7 +329,7 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 }
 
 func TestTrialWorkloadSequencerOperationLessThanBatchSize(t *testing.T) {
-	expConfig := model.DefaultExperimentConfig()
+	expConfig := model.DefaultExperimentConfig(nil)
 	experiment := &model.Experiment{ID: 1, State: model.ActiveState, Config: expConfig}
 
 	rand := nprand.New(0)

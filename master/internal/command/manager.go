@@ -46,8 +46,9 @@ func parseCommandRequest(
 	c echo.Context,
 	db *db.PgDB,
 	params *commandParams,
+	taskContainerDefaults *model.TaskContainerDefaultsConfig,
 ) (*commandRequest, error) {
-	config := DefaultConfig()
+	config := DefaultConfig(taskContainerDefaults)
 	if params.Template != nil {
 		template, err := db.TemplateByName(*params.Template)
 		if err != nil {

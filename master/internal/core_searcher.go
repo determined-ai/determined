@@ -17,7 +17,7 @@ func (m *Master) getSearcherPreview(c echo.Context) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	config := model.DefaultExperimentConfig()
+	config := model.DefaultExperimentConfig(&m.config.TaskContainerDefaults)
 	if uerr := yaml.Unmarshal(body, &config); uerr != nil {
 		return nil, uerr
 	}

@@ -69,7 +69,7 @@ func TestValidateGlobalBatchSize(t *testing.T) {
 
 	runTestCase := func(t *testing.T, tc testCase) {
 		t.Run(tc.name, func(t *testing.T) {
-			conf := DefaultExperimentConfig()
+			conf := DefaultExperimentConfig(nil)
 			assert.NilError(t, json.Unmarshal([]byte(tc.config), &conf))
 			if tc.errorMessage != "" {
 				assert.ErrorContains(t, check.Validate(conf.Hyperparameters), tc.errorMessage)

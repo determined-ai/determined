@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/docker/docker/api/types"
+
 	k8sV1 "k8s.io/api/core/v1"
 
 	"github.com/docker/docker/api/types/container"
@@ -21,6 +23,9 @@ type TaskContainerDefaultsConfig struct {
 	NetworkMode            container.NetworkMode `json:"network_mode,omitempty"`
 	CPUPodSpec             *k8sV1.Pod            `json:"cpu_pod_spec"`
 	GPUPodSpec             *k8sV1.Pod            `json:"gpu_pod_spec"`
+	Image                  *RuntimeItem          `json:"image,omitempty"`
+	RegistryAuth           *types.AuthConfig     `json:"registry_auth,omitempty"`
+	ForcePullImage         bool                  `json:"force_pull_image,omitempty"`
 }
 
 func validatePortRange(portRange string) []error {

@@ -309,6 +309,35 @@ The master supports the following configuration settings:
       applied to all GPU tasks when running on Kubernetes. See
       :ref:`custom-pod-specs` for details.
 
+   -  ``image``: Defines the default docker image to use when executing the workload.
+      If a docker image is specified in the :ref:`experiment config <exp-environment-image>`
+      this default is overriden. This image must be accessible via ``docker pull`` to every
+      Determined agent machine in the cluster. Users can use different container images for GPU
+      vs. CPU agents differently by specifying a dict with two keys, ``cpu`` and ``gpu``.
+      Default values:
+
+      - ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.5.0`` for CPU agents
+      - ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.5.0`` for GPU agents.
+
+   -  ``force_pull_image``: Defines the default policy for forcibly pulling images from
+      the docker registry and bypassing the docker cache. If a pull policy is specified
+      in the :ref:`experiment config <exp-environment-image>` this default value is
+      overriden. Please note that as of November 1st, 2020 unauthenticated users will be
+      `capped at 100 pulls from Docker per 6 hours
+      <https://www.docker.com/blog/scaling-docker-to-serve-millions-more-developers-network-egress/>`__.
+      Defaults to ``false``.
+
+   -  ``registry_auth``: Defines the default `docker registry credentials
+      <https://docs.docker.com/engine/api/v1.30/#operation/SystemAuth>`__ to use
+      when pulling a custom base docker image, if needed. If credentials are specified is
+      in the :ref:`experiment config <exp-environment-image>` this default value is
+      overriden. Credentials are specified as the following nested fields:
+
+      - ``username`` (required)
+      - ``password`` (required)
+      - ``server`` (optional)
+      - ``email`` (optional)
+
 -  ``root``: Specifies the root directory of the state files. Defaults
    to ``/usr/share/determined/master``.
 

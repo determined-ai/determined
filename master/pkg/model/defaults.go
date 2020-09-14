@@ -23,13 +23,19 @@ const (
 	NoneCheckpointPolicy = "none"
 )
 
+// Default task environment docker image names.
+const (
+	defaultCPUImage = "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-aaa3750"
+	defaultGPUImage = "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-aaa3750"
+)
+
 // DefaultExperimentConfig returns a new default experiment config.
-func DefaultExperimentConfig() ExperimentConfig {
+func DefaultExperimentConfig(taskContainerDefaults *TaskContainerDefaultsConfig) ExperimentConfig {
 	defaultDescription := fmt.Sprintf(
 		"Experiment (%s)",
 		petname.Generate(TaskNameGeneratorWords, TaskNameGeneratorSep))
 
-	return ExperimentConfig{
+	defaultConfig := ExperimentConfig{
 		Description: defaultDescription,
 		CheckpointStorage: CheckpointStorageConfig{
 			SaveExperimentBest: 0,
@@ -97,8 +103,8 @@ func DefaultExperimentConfig() ExperimentConfig {
 		SchedulingUnit:  100,
 		Environment: Environment{
 			Image: RuntimeItem{
-				CPU: "determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-aaa3750",
-				GPU: "determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-aaa3750",
+				CPU: defaultCPUImage,
+				GPU: defaultGPUImage,
 			},
 		},
 		Reproducibility: ReproducibilityConfig{
@@ -106,4 +112,17 @@ func DefaultExperimentConfig() ExperimentConfig {
 		},
 		MaxRestarts: 5,
 	}
+
+	if taskContainerDefaults == nil {
+		return defaultConfig
+	}
+
+	defaultConfig.Environment.RegistryAuth = taskContainerDefaults.RegistryAuth
+	defaultConfig.Environment.ForcePullImage = taskContainerDefaults.ForcePullImage
+
+	if taskContainerDefaults.Image != nil {
+		defaultConfig.Environment.Image = *taskContainerDefaults.Image
+	}
+
+	return defaultConfig
 }
