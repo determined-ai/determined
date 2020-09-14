@@ -33,7 +33,7 @@ const initialTally = Object.values(ResourceState).reduce((acc, key) => {
   return acc;
 }, {} as Tally);
 
-const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
+const genPlotInfo = (title: string, resources: Resource[]): PlotInfo => {
   const tally = clone(initialTally) as Tally;
 
   resources.forEach(resource => {
@@ -93,7 +93,7 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
 const SlotChart: React.FC<Props> = (props: Props) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const [ id ] = useState(generateAlphaNumeric());
-  const [ oldPlotInfo, setOldPlotInfo ] = useState<PlotInfo | null>(null);
+  const [ oldPlotInfo, setOldPlotInfo ] = useState<PlotInfo>(genPlotInfo(props.title, []));
 
   const plotInfo = useMemo(() => {
     const newPlotInfo = genPlotInfo(props.title, props.resources || []);
@@ -109,8 +109,6 @@ const SlotChart: React.FC<Props> = (props: Props) => {
     const args: PlotArguments = [ elementId, pInfo.data, pInfo.layout, pInfo.config ];
     await Plotly.react.apply(null, args);
   }, [ id, plotInfo, props.resources ]);
-
-  if (plotInfo === null) return <React.Fragment />;
 
   useEffect(() => {
     renderPlot(id, plotInfo);
