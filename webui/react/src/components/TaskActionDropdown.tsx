@@ -6,9 +6,9 @@ import React from 'react';
 
 import Icon from 'components/Icon';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
+import { openBlank, openCommand } from 'routes/utils';
 import { archiveExperiment, createTensorboard, killTask, setExperimentState } from 'services/api';
 import { AnyTask, CommandTask, ExperimentTask, RunState, TBSourceType } from 'types';
-import { openBlank, openCommand } from 'utils/routes';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
 import { cancellableRunStates, isTaskKillable, terminalRunStates } from 'utils/types';

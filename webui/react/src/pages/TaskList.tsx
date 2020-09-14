@@ -21,6 +21,7 @@ import Users from 'contexts/Users';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
+import { openBlank } from 'routes/utils';
 import {
   getCommands, getNotebooks, getShells, getTensorboards, killCommand,
 } from 'services/api';
@@ -28,7 +29,6 @@ import { ApiSorter, EmptyParams } from 'services/types';
 import { ShirtSize } from 'themes';
 import { ALL_VALUE, Command, CommandTask, CommandType, TaskFilters } from 'types';
 import { getPath, numericSorter } from 'utils/data';
-import { openBlank } from 'utils/routes';
 import { canBeOpened, filterTasks } from 'utils/task';
 import { commandToTask, isTaskKillable } from 'utils/types';
 

@@ -1,13 +1,13 @@
 import { CancelToken } from 'axios';
 
-import * as DetSwagger from 'services/api-ts-sdk';
-import { V1GetExperimentsRequestSortBy, V1Pagination } from 'services/api-ts-sdk';
-import { generateApi, processApiError, serverAddress } from 'services/apiBuilder';
+import { serverAddress } from 'routes/utils';
+import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
 import { ApiSorter, CreateNotebookParams, CreateTensorboardParams,
   EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
   KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams, PatchExperimentState,
   TaskLogsParams, TrialDetailsParams, TrialLogsParams } from 'services/types';
+import { generateApi, processApiError } from 'services/utils';
 import {
   Agent, ALL_VALUE, AnyTask, Command, CommandTask, Credentials,
   DetailedUser, DeterminedInfo, ExperimentBase, ExperimentDetails,
@@ -17,28 +17,17 @@ import { isExperimentTask } from 'utils/task';
 
 import { decodeExperimentList, encodeExperimentState } from './decoder';
 
+export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
+
 const address = serverAddress();
-export const detAuthApi = new DetSwagger.AuthenticationApi(undefined, address);
-export const detExperimentApi = new DetSwagger.ExperimentsApi(undefined, address);
-export const detExperimentsStreamingApi = DetSwagger.ExperimentsApiFetchParamCreator();
+
+export const detApi = {
+  Auth: new Api.AuthenticationApi(undefined, address),
+  Experiments: new Api.ExperimentsApi(undefined, address),
+  StreamingExperiments: Api.ExperimentsApiFetchParamCreator(),
+};
 
 /* Authentication */
-
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const isAuthFailure = (e: any): boolean => {
-  return e.response && e.response.status && e.response.status === 401;
-};
-
-// is a failure received from a failed login attempt due to bad credentials
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const isLoginFailure = (e: any): boolean => {
-  return e.response && e.response.status && e.response.status === 403;
-};
-
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-export const isNotFound = (e: any): boolean => {
-  return e.response && e.response.status && e.response.status === 404;
-};
 
 export const getCurrentUser = generateApi<EmptyParams, DetailedUser>(Config.getCurrentUser);
 
@@ -55,16 +44,16 @@ export const getAgents = generateApi<EmptyParams, Agent[]>(Config.getAgents);
 /* Experiments */
 
 export const getExperimentList = async (
-  sorter: ApiSorter<V1GetExperimentsRequestSortBy>,
+  sorter: ApiSorter<Api.V1GetExperimentsRequestSortBy>,
   pagination: Pagination,
   filters: ExperimentFilters,
   search?: string,
-): Promise<{ experiments: ExperimentItem[], pagination?: V1Pagination }> => {
+): Promise<{ experiments: ExperimentItem[], pagination?: Api.V1Pagination }> => {
   try {
-    const sortBy = Object.values(V1GetExperimentsRequestSortBy).includes(sorter.key) ?
-      sorter.key : V1GetExperimentsRequestSortBy.UNSPECIFIED;
+    const sortBy = Object.values(Api.V1GetExperimentsRequestSortBy).includes(sorter.key) ?
+      sorter.key : Api.V1GetExperimentsRequestSortBy.UNSPECIFIED;
 
-    const response = await detExperimentApi.determinedGetExperiments(
+    const response = await detApi.Experiments.determinedGetExperiments(
       /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
       sortBy as any,
       sorter.descend ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
@@ -106,8 +95,8 @@ export const patchExperiment = generateApi<PatchExperimentParams, void>(Config.p
 export const archiveExperiment = async (id: number, archive = true): Promise<void> => {
   try {
     await archive ?
-      detExperimentApi.determinedArchiveExperiment(id) :
-      detExperimentApi.determinedUnarchiveExperiment(id);
+      detApi.Experiments.determinedArchiveExperiment(id) :
+      detApi.Experiments.determinedUnarchiveExperiment(id);
   } catch (e) {
     processApiError('archiveExperiment', e);
     throw e;
@@ -152,17 +141,17 @@ export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promis
  * Login is an exception where the caller will perform the error handling,
  * so it is one of the few API calls that will not have a try/catch block.
  */
-export const login = async (credentials: Credentials): Promise<DetSwagger.V1LoginResponse> => {
-  const response = await detAuthApi.determinedLogin({
+export const login = async (credentials: Credentials): Promise<Api.V1LoginResponse> => {
+  const response = await detApi.Auth.determinedLogin({
     password: Config.saltAndHashPassword(credentials.password),
     username: credentials.username,
-  } as DetSwagger.V1LoginRequest);
+  } as Api.V1LoginRequest);
   return response;
 };
 
-export const logout = async (): Promise<DetSwagger.V1LogoutResponse> => {
+export const logout = async (): Promise<Api.V1LogoutResponse> => {
   try {
-    const response = await detAuthApi.determinedLogout();
+    const response = await detApi.Auth.determinedLogout();
     return response;
   } catch (e) {
     throw processApiError('logout', e);

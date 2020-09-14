@@ -1,4 +1,21 @@
+import { AxiosResponse, Method } from 'axios';
+
 import { CommandType, RunState, TBSourceType } from 'types';
+
+export interface HttpOptions {
+  url?: string;
+  method?: Method;
+  headers?: Record<string, unknown>;
+  body?: Record<keyof unknown, unknown> | string;
+}
+
+export interface HttpApi<Input, Output>{
+  name: string;
+  httpOptions: (params: Input) => HttpOptions;
+  postProcess?: (response: AxiosResponse<unknown>) => Output; // io type decoder.
+  stubbedResponse?: unknown;
+  // middlewares?: Middleware[]; // success/failure middlewares
+}
 
 export interface ApiSorter<T = string> {
   descend: boolean;

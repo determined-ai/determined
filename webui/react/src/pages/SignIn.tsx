@@ -10,10 +10,9 @@ import Auth from 'contexts/Auth';
 import UI from 'contexts/UI';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
-import { routeAll } from 'routes';
-import { defaultAppRoute } from 'routes';
+import { defaultRoutePath } from 'routes';
+import { locationToPath, routeAll } from 'routes/utils';
 import { getPath } from 'utils/data';
-import { locationToPath } from 'utils/routes';
 
 import css from './SignIn.module.scss';
 
@@ -53,7 +52,7 @@ const SignIn: React.FC = () => {
       // Reroute the authenticated user to the app.
       const loginRedirect = getPath<Location>(location, 'state.loginRedirect');
       const redirect = queries.redirect || locationToPath(loginRedirect);
-      routeAll(redirect || defaultAppRoute.path);
+      routeAll(redirect || defaultRoutePath);
     } else if (auth.checked) {
       setUI({ type: UI.ActionType.HideSpinner });
     }

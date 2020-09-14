@@ -2,7 +2,6 @@ import { sha512 } from 'js-sha512';
 import queryString from 'query-string';
 
 import { decode, ioDetailedUser, ioTypeDetailedUser } from 'ioTypes';
-import { Api } from 'services/apiBuilder';
 import {
   jsonToAgents, jsonToCommands, jsonToDeterminedInfo,
   jsonToExperimentDetails, jsonToExperiments, jsonToLogs, jsonToNotebook, jsonToNotebooks,
@@ -15,6 +14,7 @@ import {
   ForkExperimentParams, KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams,
   TaskLogsParams, TrialDetailsParams, TrialLogsParams,
 } from 'services/types';
+import { HttpApi } from 'services/types';
 import {
   Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
   ExperimentDetails, Log, TBSourceType, TrialDetails,
@@ -37,7 +37,7 @@ export const commandToEndpoint: Record<CommandType, string> = {
 
 /* Authentication */
 
-export const login: Api<Credentials, void> = {
+export const login: HttpApi<Credentials, void> = {
   httpOptions: ({ password, username }) => {
     return {
       body: { password: saltAndHashPassword(password), username },
@@ -48,7 +48,7 @@ export const login: Api<Credentials, void> = {
   name: 'login',
 };
 
-export const getCurrentUser: Api<EmptyParams, DetailedUser> = {
+export const getCurrentUser: HttpApi<EmptyParams, DetailedUser> = {
   httpOptions: () => ({ url: '/users/me' }),
   name: 'getCurrentUser',
   postProcess: (response) => {
@@ -62,7 +62,7 @@ export const getCurrentUser: Api<EmptyParams, DetailedUser> = {
   },
 };
 
-export const getUsers: Api<EmptyParams, DetailedUser[]> = {
+export const getUsers: HttpApi<EmptyParams, DetailedUser[]> = {
   httpOptions: () => ({ url: '/users' }),
   name: 'getUsers',
   postProcess: (response) => jsonToUsers(response.data),
@@ -70,7 +70,7 @@ export const getUsers: Api<EmptyParams, DetailedUser[]> = {
 
 /* Info */
 
-export const getInfo: Api<EmptyParams, DeterminedInfo> = {
+export const getInfo: HttpApi<EmptyParams, DeterminedInfo> = {
   httpOptions: () => ({ url: '/info' }),
   name: 'getInfo',
   postProcess: (response) => jsonToDeterminedInfo(response.data),
@@ -78,7 +78,7 @@ export const getInfo: Api<EmptyParams, DeterminedInfo> = {
 
 /* Agent */
 
-export const getAgents: Api<EmptyParams, Agent[]> = {
+export const getAgents: HttpApi<EmptyParams, Agent[]> = {
   httpOptions: () => ({ url: '/agents' }),
   name: 'getAgents',
   postProcess: (response) => jsonToAgents(response.data),
@@ -86,7 +86,7 @@ export const getAgents: Api<EmptyParams, Agent[]> = {
 
 /* Experiment */
 
-export const forkExperiment: Api<ForkExperimentParams, number> = {
+export const forkExperiment: HttpApi<ForkExperimentParams, number> = {
   httpOptions: (params) => {
     return {
       body: {
@@ -103,7 +103,7 @@ export const forkExperiment: Api<ForkExperimentParams, number> = {
   postProcess: (response: any) => response.data.id,
 };
 
-export const patchExperiment: Api<PatchExperimentParams, void> = {
+export const patchExperiment: HttpApi<PatchExperimentParams, void> = {
   httpOptions: (params) => {
     return {
       body: params.body,
@@ -115,7 +115,7 @@ export const patchExperiment: Api<PatchExperimentParams, void> = {
   name: 'patchExperiment',
 };
 
-export const killExperiment: Api<KillExpParams, void> = {
+export const killExperiment: HttpApi<KillExpParams, void> = {
   httpOptions: (params) => {
     return {
       method: 'POST',
@@ -125,7 +125,7 @@ export const killExperiment: Api<KillExpParams, void> = {
   name: 'killExperiment',
 };
 
-export const getExperimentSummaries: Api<ExperimentsParams, ExperimentBase[]> = {
+export const getExperimentSummaries: HttpApi<ExperimentsParams, ExperimentBase[]> = {
   httpOptions: (params) => ({
     url: [
       '/experiment-summaries',
@@ -136,13 +136,13 @@ export const getExperimentSummaries: Api<ExperimentsParams, ExperimentBase[]> = 
   postProcess: (response) => jsonToExperiments(response.data),
 };
 
-export const getExperimentDetails: Api<ExperimentDetailsParams, ExperimentDetails> = {
+export const getExperimentDetails: HttpApi<ExperimentDetailsParams, ExperimentDetails> = {
   httpOptions: (params) => ({ url: `/experiments/${params.id}/summary` }),
   name: 'getExperimentDetails',
   postProcess: (response) => jsonToExperimentDetails(response.data),
 };
 
-export const getTrialDetails: Api<TrialDetailsParams, TrialDetails> = {
+export const getTrialDetails: HttpApi<TrialDetailsParams, TrialDetails> = {
   httpOptions: (params: TrialDetailsParams) => ({ url: `/trials/${params.id}/details` }),
   name: 'getTrialDetails',
   postProcess: response => jsonToTrialDetails(response.data),
@@ -150,31 +150,31 @@ export const getTrialDetails: Api<TrialDetailsParams, TrialDetails> = {
 
 /* Tasks */
 
-export const getCommands: Api<EmptyParams, Command[]> = {
+export const getCommands: HttpApi<EmptyParams, Command[]> = {
   httpOptions: () => ({ url: '/commands' }),
   name: 'getCommands',
   postProcess: (response) => jsonToCommands(response.data),
 };
 
-export const getNotebooks: Api<EmptyParams, Command[]> = {
+export const getNotebooks: HttpApi<EmptyParams, Command[]> = {
   httpOptions: () => ({ url: '/notebooks' }),
   name: 'getNotebooks',
   postProcess: (response) => jsonToNotebooks(response.data),
 };
 
-export const getShells: Api<EmptyParams, Command[]> = {
+export const getShells: HttpApi<EmptyParams, Command[]> = {
   httpOptions: () => ({ url: '/shells' }),
   name: 'getShells',
   postProcess: (response) => jsonToShells(response.data),
 };
 
-export const getTensorboards: Api<EmptyParams, Command[]> = {
+export const getTensorboards: HttpApi<EmptyParams, Command[]> = {
   httpOptions: () => ({ url: '/tensorboard' }),
   name: 'getTensorboards',
   postProcess: (response) => jsonToTensorboards(response.data),
 };
 
-export const killCommand: Api<KillCommandParams, void> = {
+export const killCommand: HttpApi<KillCommandParams, void> = {
   httpOptions: (params) => {
     return {
       method: 'DELETE',
@@ -184,7 +184,7 @@ export const killCommand: Api<KillCommandParams, void> = {
   name: 'killCommand',
 };
 
-export const createNotebook: Api<CreateNotebookParams, Command> = {
+export const createNotebook: HttpApi<CreateNotebookParams, Command> = {
   httpOptions: (params) => {
     return {
       body: {
@@ -199,7 +199,7 @@ export const createNotebook: Api<CreateNotebookParams, Command> = {
   postProcess: (response) => jsonToNotebook(response.data),
 };
 
-export const createTensorboard: Api<CreateTensorboardParams, Command> = {
+export const createTensorboard: HttpApi<CreateTensorboardParams, Command> = {
   httpOptions: (params) => {
     const attrName = params.type === TBSourceType.Trial ? 'trial_ids' : 'experiment_ids';
     return {
@@ -221,13 +221,13 @@ const buildQuery = (params: LogsParams): string => {
   return queryString.stringify(queryParams);
 };
 
-export const getMasterLogs: Api<LogsParams, Log[]> = {
+export const getMasterLogs: HttpApi<LogsParams, Log[]> = {
   httpOptions: (params: LogsParams) => ({ url: [ '/logs', buildQuery(params) ].join('?') }),
   name: 'getMasterLogs',
   postProcess: response => jsonToLogs(response.data),
 };
 
-export const getTaskLogs: Api<TaskLogsParams, Log[]> = {
+export const getTaskLogs: HttpApi<TaskLogsParams, Log[]> = {
   httpOptions: (params: TaskLogsParams) => ({
     url: [
       `${commandToEndpoint[params.taskType]}/${params.taskId}/events`,
@@ -238,7 +238,7 @@ export const getTaskLogs: Api<TaskLogsParams, Log[]> = {
   postProcess: response => jsonToTaskLogs(response.data),
 };
 
-export const getTrialLogs: Api<TrialLogsParams, Log[]> = {
+export const getTrialLogs: HttpApi<TrialLogsParams, Log[]> = {
   httpOptions: (params: TrialLogsParams) => ({
     url: [
       `/trials/${params.trialId}/logs`,

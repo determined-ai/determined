@@ -1,7 +1,7 @@
 import React, { MouseEvent, MouseEventHandler, PropsWithChildren, useCallback } from 'react';
 
-import { serverAddress } from 'services/apiBuilder';
-import { handlePath, windowOpenFeatures } from 'utils/routes';
+import { handlePath, windowOpenFeatures } from 'routes/utils';
+import { serverAddress } from 'routes/utils';
 
 import css from './Link.module.scss';
 
@@ -25,7 +25,7 @@ const Link: React.FC<Props> = ({
 }: PropsWithChildren<Props>) => {
   const classes = [ css.base ];
   const rel = windowOpenFeatures.join(' ');
-  const linkPath = noProxy ? `${serverAddress(true)}${path}` : path;
+  const linkPath = noProxy ? serverAddress(true, path) : path;
 
   if (props.className) classes.push(props.className);
   if (!props.disabled) classes.push(css.link);

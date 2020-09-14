@@ -151,6 +151,7 @@ export interface Command {
   registeredTime: string;
   serviceAddress?: string;
   state: CommandState;
+  url: string;
 }
 
 export enum CheckpointStorageType {

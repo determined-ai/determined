@@ -9,11 +9,11 @@ import Message from 'components/Message';
 import UI from 'contexts/UI';
 import handleError, { ErrorType } from 'ErrorHandler';
 import useRestApi from 'hooks/useRestApi';
-import { detExperimentsStreamingApi, getTrialDetails } from 'services/api';
-import * as DetSwagger from 'services/api-ts-sdk';
-import { consumeStream } from 'services/apiBuilder';
+import { detApi, getTrialDetails } from 'services/api';
+import { V1TrialLogsResponse } from 'services/api-ts-sdk';
 import { jsonToTrialLog } from 'services/decoder';
 import { TrialDetailsParams } from 'services/types';
+import { consumeStream } from 'services/utils';
 import { Log, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 
@@ -42,8 +42,8 @@ const TrialLogs: React.FC = () => {
 
     let buffer: Log[] = [];
 
-    consumeStream<DetSwagger.V1TrialLogsResponse>(
-      detExperimentsStreamingApi.determinedTrialLogs(id, offset - TAIL_SIZE, TAIL_SIZE),
+    consumeStream<V1TrialLogsResponse>(
+      detApi.StreamingExperiments.determinedTrialLogs(id, offset - TAIL_SIZE, TAIL_SIZE),
       event => buffer.push(jsonToTrialLog(event)),
     ).then(() => {
       if (!logsRef.current) return;
@@ -114,8 +114,8 @@ const TrialLogs: React.FC = () => {
       setIsLoading(false);
     });
 
-    consumeStream<DetSwagger.V1TrialLogsResponse>(
-      detExperimentsStreamingApi.determinedTrialLogs(id, -TAIL_SIZE, 0, true),
+    consumeStream<V1TrialLogsResponse>(
+      detApi.StreamingExperiments.determinedTrialLogs(id, -TAIL_SIZE, 0, true),
       event => {
         buffer.push(jsonToTrialLog(event));
         throttleFunc();

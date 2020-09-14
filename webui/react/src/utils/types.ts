@@ -1,4 +1,3 @@
-import { serverAddress } from 'services/apiBuilder';
 import {
   AnyTask, Checkpoint, Command, CommandState, CommandType, ExperimentHyperParams,
   ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
@@ -8,21 +7,6 @@ import { deletePathList, getPathList, isNumber, setPathList } from './data';
 import { getDuration } from './time';
 
 /* Conversions to Tasks */
-
-const commandToEventUrl = (command: Command): string | undefined => {
-  if (command.kind === CommandType.Notebook) return `/notebooks/${command.id}/events`;
-  if (command.kind === CommandType.Tensorboard) return `/tensorboard/${command.id}/events?tail=1`;
-  return undefined;
-};
-
-export const waitPageUrl = (command: Command): string | undefined => {
-  const eventUrl = commandToEventUrl(command);
-  const proxyUrl = command.serviceAddress;
-  if (!eventUrl || !proxyUrl) return;
-  const event = encodeURIComponent(eventUrl);
-  const jump = encodeURIComponent(proxyUrl);
-  return `${serverAddress(true)}/wait?event=${event}&jump=${jump}`;
-};
 
 export const commandToTask = (command: Command): RecentCommandTask => {
   // We expect the name to be in the form of 'Type (pet-name-generated)'.
@@ -38,7 +22,7 @@ export const commandToTask = (command: Command): RecentCommandTask => {
     startTime: command.registeredTime,
     state: command.state as CommandState,
     type: command.kind,
-    url: waitPageUrl(command),
+    url: command.url,
     username: command.user.username,
   };
   return task;

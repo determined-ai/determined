@@ -1,36 +1,35 @@
-import axios, { AxiosResponse, CancelToken, Method } from 'axios';
+import axios, { AxiosResponse, CancelToken } from 'axios';
 
 import handleError, { DaError, ErrorLevel, ErrorType, isDaError } from 'ErrorHandler';
-import { isAuthFailure } from 'services/api';
-import * as DetSwagger from 'services/api-ts-sdk';
+import { serverAddress } from 'routes/utils';
+import * as Api from 'services/api-ts-sdk';
+
+import { HttpApi } from './types';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const ndjsonStream = require('can-ndjson-stream');
 
-export interface HttpOptions {
-  url?: string;
-  method?: Method;
-  headers?: Record<string, unknown>;
-  body?: Record<keyof unknown, unknown> | string;
-}
+/* Response Helpers */
 
-export interface Api<Input, Output>{
-  name: string;
-  httpOptions: (params: Input) => HttpOptions;
-  postProcess?: (response: AxiosResponse<unknown>) => Output; // io type decoder.
-  stubbedResponse?: unknown; // optional stubbed response body.
-  // middlewares?: Middleware[]; // success/failure middlewares
-}
-
-export const http = axios.create({
-  responseType: 'json',
-  withCredentials: true,
-});
-
-export const serverAddress = (avoidDevProxy = false): string => {
-  if (avoidDevProxy && process.env.IS_DEV) return 'http://localhost:8080';
-  return `${window.location.protocol}//${window.location.host}`;
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const isAuthFailure = (e: any): boolean => {
+  return e.response && e.response.status && e.response.status === 401;
 };
+
+// is a failure received from a failed login attempt due to bad credentials
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const isLoginFailure = (e: any): boolean => {
+  return e.response && e.response.status && e.response.status === 403;
+};
+
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+export const isNotFound = (e: any): boolean => {
+  return e.response && e.response.status && e.response.status === 404;
+};
+
+/* HTTP Helpers */
+
+export const http = axios.create({ responseType: 'json', withCredentials: true });
 
 export const processApiError = (name: string, e: Error): DaError => {
   const isAuthError = isAuthFailure(e);
@@ -54,7 +53,7 @@ export const processApiError = (name: string, e: Error): DaError => {
   });
 };
 
-export function generateApi<Input, Output>(api: Api<Input, Output>) {
+export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
   return async function(params: Input & { cancelToken?: CancelToken }): Promise<Output> {
     const httpOpts = api.httpOptions(params);
 
@@ -76,24 +75,28 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
   };
 }
 
+/* gRPC Helpers */
+
 /*
   consumeStream is used to consume streams from the generated TS client.
   We use the provided fetchParamCreator to create fetch arguments and use that
   to make a request and handle events one by one.
   Example:
-  consumeStream<DetSwagger.V1TrialLogsResponse>(
-    DetSwagger.ExperimentsApiFetchParamCreator().determinedTrialLogs(1, undefined, undefined, true),
+  consumeStream<Api.V1TrialLogsResponse>(
+    Api.ExperimentsApiFetchParamCreator().determinedTrialLogs(1, undefined, undefined, true),
     console.log,
   ).then(() => console.log('finished'));
 */
 export const consumeStream = async <T = unknown>(
-  fetchArgs: DetSwagger.FetchArgs, onEvent: (event: T) => void): Promise<void> => {
+  fetchArgs: Api.FetchArgs,
+  onEvent: (event: T) => void,
+): Promise<void> => {
   try {
-    const response = await fetch(serverAddress(true) + fetchArgs.url, fetchArgs.options);
-    const exampleReader = ndjsonStream(response.body).getReader();
+    const response = await fetch(serverAddress(true, fetchArgs.url), fetchArgs.options);
+    const reader = ndjsonStream(response.body).getReader();
     let result;
     while (!result || !result.done) {
-      result = await exampleReader.read();
+      result = await reader.read();
       if (result.done) return;
       onEvent(result.value.result);
     }
