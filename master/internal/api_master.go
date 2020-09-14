@@ -88,5 +88,9 @@ func (a *apiServer) MasterLogs(
 		} else if req.Follow {
 			limit = -1
 		}
+		if err := resp.Context().Err(); err != nil {
+			// context is closed
+			return nil
+		}
 	}
 }
