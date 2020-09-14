@@ -141,15 +141,15 @@ export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promis
  * Login is an exception where the caller will perform the error handling,
  * so it is one of the few API calls that will not have a try/catch block.
  */
-export const login = async (credentials: Credentials): Promise<DetSwagger.V1LoginResponse> => {
-  const response = await detAuthApi.determinedLogin({
+export const login = async (credentials: Credentials): Promise<Api.V1LoginResponse> => {
+  const response = await detApi.Auth.determinedLogin({
     password: Config.saltAndHashPassword(credentials.password),
     username: credentials.username,
-  } as DetSwagger.V1LoginRequest);
+  } as Api.V1LoginRequest);
   return response;
 };
 
-export const logout = async (): Promise<DetSwagger.V1LogoutResponse> => {
+export const logout = async (): Promise<Api.V1LogoutResponse> => {
   try {
     const response = await detApi.Auth.determinedLogout();
     return response;

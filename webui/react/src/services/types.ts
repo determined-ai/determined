@@ -13,7 +13,7 @@ export interface HttpApi<Input, Output>{
   name: string;
   httpOptions: (params: Input) => HttpOptions;
   postProcess?: (response: AxiosResponse<unknown>) => Output; // io type decoder.
-  stubbedResponse?: unknown; // optional stubbed response body.
+  stubbedResponse?: unknown;
   // middlewares?: Middleware[]; // success/failure middlewares
 }
 

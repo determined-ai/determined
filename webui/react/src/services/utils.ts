@@ -1,4 +1,4 @@
-import axios, { CancelToken } from 'axios';
+import axios, { AxiosResponse, CancelToken } from 'axios';
 
 import handleError, { DaError, ErrorLevel, ErrorType, isDaError } from 'ErrorHandler';
 import { serverAddress } from 'routes/utils';
