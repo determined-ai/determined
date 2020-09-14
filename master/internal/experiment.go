@@ -92,8 +92,8 @@ type experiment struct {
 
 	pendingEvents []*model.SearcherEvent
 
-	agentUserGroup  *model.AgentUserGroup
-	defaultTaskSpec *tasks.TaskSpec
+	agentUserGroup *model.AgentUserGroup
+	taskSpec       *tasks.TaskSpec
 }
 
 // Create a new experiment object from the given model experiment object, along with its searcher
@@ -142,8 +142,8 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 		warmStartCheckpoint: checkpoint,
 		pendingEvents:       make([]*model.SearcherEvent, 0, searcherEventBuffer),
 
-		agentUserGroup:  agentUserGroup,
-		defaultTaskSpec: master.defaultTaskSpec,
+		agentUserGroup: agentUserGroup,
+		taskSpec:       master.taskSpec,
 	}, nil
 }
 
@@ -397,11 +397,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		ctx.Log().Infof("experiment state changed to %s", e.State)
 		addr := actor.Addr(fmt.Sprintf("experiment-%d-checkpoint-gc", e.ID))
 		ctx.Self().System().ActorOf(addr, &checkpointGCTask{
-			agentUserGroup:  e.agentUserGroup,
-			defaultTaskSpec: e.defaultTaskSpec,
-			rp:              e.rp,
-			db:              e.db,
-			experiment:      e.Experiment,
+			agentUserGroup: e.agentUserGroup,
+			taskSpec:       e.taskSpec,
+			rp:             e.rp,
+			db:             e.db,
+			experiment:     e.Experiment,
 		})
 
 		// Discard searcher events for all terminal experiments (even failed ones).

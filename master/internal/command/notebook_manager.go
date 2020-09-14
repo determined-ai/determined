@@ -106,7 +106,7 @@ type notebookManager struct {
 	db *db.PgDB
 
 	defaultAgentUserGroup model.AgentUserGroup
-	defaultTaskSpec       *tasks.TaskSpec
+	taskSpec              *tasks.TaskSpec
 }
 
 func (n *notebookManager) Receive(ctx *actor.Context) error {
@@ -192,7 +192,7 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 
 	config.Entrypoint = notebookEntrypoint
 
-	setPodSpec(&config, n.defaultTaskSpec.TaskContainerDefaults)
+	setPodSpec(&config, n.taskSpec.TaskContainerDefaults)
 
 	if config.Description == "" {
 		var err error
@@ -245,8 +245,8 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 		},
 		serviceAddress: &serviceAddress,
 
-		owner:           req.Owner,
-		agentUserGroup:  req.AgentUserGroup,
-		defaultTaskSpec: n.defaultTaskSpec,
+		owner:          req.Owner,
+		agentUserGroup: req.AgentUserGroup,
+		taskSpec:       n.taskSpec,
 	}, nil
 }

@@ -20,34 +20,34 @@ func RegisterAPIHandler(
 	proxyRef *actor.Ref,
 	timeout int,
 	defaultAgentUserGroup model.AgentUserGroup,
-	defaultTaskSpec *tasks.TaskSpec,
+	taskSpec *tasks.TaskSpec,
 	middleware ...echo.MiddlewareFunc,
 ) {
 	system.ActorOf(actor.Addr("commands"), &commandManager{
 		defaultAgentUserGroup: defaultAgentUserGroup,
 		db:                    db,
-		defaultTaskSpec:       defaultTaskSpec,
+		taskSpec:              taskSpec,
 	})
 	echo.Any("/commands*", api.Route(system, nil), middleware...)
 
 	system.ActorOf(actor.Addr("notebooks"), &notebookManager{
 		defaultAgentUserGroup: defaultAgentUserGroup,
 		db:                    db,
-		defaultTaskSpec:       defaultTaskSpec,
+		taskSpec:              taskSpec,
 	})
 	echo.Any("/notebooks*", api.Route(system, nil), middleware...)
 
 	system.ActorOf(actor.Addr("shells"), &shellManager{
 		defaultAgentUserGroup: defaultAgentUserGroup,
 		db:                    db,
-		defaultTaskSpec:       defaultTaskSpec,
+		taskSpec:              taskSpec,
 	})
 	echo.Any("/shells*", api.Route(system, nil), middleware...)
 
 	system.ActorOf(actor.Addr("tensorboard"), &tensorboardManager{
 		defaultAgentUserGroup: defaultAgentUserGroup,
 		db:                    db,
-		defaultTaskSpec:       defaultTaskSpec,
+		taskSpec:              taskSpec,
 		proxyRef:              proxyRef,
 		timeout:               time.Duration(timeout) * time.Second,
 	})

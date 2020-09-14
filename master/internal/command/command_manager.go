@@ -27,7 +27,7 @@ type commandManager struct {
 	db *db.PgDB
 
 	defaultAgentUserGroup model.AgentUserGroup
-	defaultTaskSpec       *tasks.TaskSpec
+	taskSpec              *tasks.TaskSpec
 }
 
 func (c *commandManager) Receive(ctx *actor.Context) error {
@@ -100,15 +100,15 @@ func (c *commandManager) newCommand(req *commandRequest) *command {
 	if len(config.Entrypoint) == 1 {
 		config.Entrypoint = append(shellFormEntrypoint, config.Entrypoint...)
 	}
-	setPodSpec(&config, c.defaultTaskSpec.TaskContainerDefaults)
+	setPodSpec(&config, c.taskSpec.TaskContainerDefaults)
 
 	return &command{
 		taskID:    scheduler.NewTaskID(),
 		config:    config,
 		userFiles: req.UserFiles,
 
-		owner:           req.Owner,
-		agentUserGroup:  req.AgentUserGroup,
-		defaultTaskSpec: c.defaultTaskSpec,
+		owner:          req.Owner,
+		agentUserGroup: req.AgentUserGroup,
+		taskSpec:       c.taskSpec,
 	}
 }

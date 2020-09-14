@@ -58,7 +58,7 @@ type tensorboardManager struct {
 	defaultAgentUserGroup model.AgentUserGroup
 	timeout               time.Duration
 	proxyRef              *actor.Ref
-	defaultTaskSpec       *tasks.TaskSpec
+	taskSpec              *tasks.TaskSpec
 }
 
 type tensorboardTick struct{}
@@ -258,14 +258,14 @@ func (t *tensorboardManager) newTensorBoard(
 
 		if len(exp.TrialIDs) == 0 {
 			expDir := fmt.Sprintf("%s/%s/tensorboard/experiment/%d/",
-				logBasePath, t.defaultTaskSpec.ClusterID, exp.ID)
+				logBasePath, t.taskSpec.ClusterID, exp.ID)
 			logDirs = append(logDirs, expDir)
 			continue
 		}
 
 		for _, id := range exp.TrialIDs {
 			trialDir := fmt.Sprintf("trial_%d:%s/%s/tensorboard/experiment/%d/trial/%d/",
-				id, logBasePath, t.defaultTaskSpec.ClusterID, exp.ID, id)
+				id, logBasePath, t.taskSpec.ClusterID, exp.ID, id)
 
 			logDirs = append(logDirs, trialDir)
 		}
@@ -317,7 +317,7 @@ func (t *tensorboardManager) newTensorBoard(
 	config.Environment.EnvironmentVariables = model.RuntimeItems{CPU: cpuEnvVars, GPU: gpuEnvVars}
 	config.BindMounts = append(config.BindMounts, getMounts(uniqMounts)...)
 
-	setPodSpec(&config, t.defaultTaskSpec.TaskContainerDefaults)
+	setPodSpec(&config, t.taskSpec.TaskContainerDefaults)
 
 	return &command{
 		taskID:          taskID,
@@ -333,10 +333,10 @@ func (t *tensorboardManager) newTensorBoard(
 				return strings.Contains(log.String(), "TensorBoard contains metrics")
 			},
 		},
-		serviceAddress:  &serviceAddress,
-		owner:           commandReq.Owner,
-		agentUserGroup:  commandReq.AgentUserGroup,
-		defaultTaskSpec: t.defaultTaskSpec,
+		serviceAddress: &serviceAddress,
+		owner:          commandReq.Owner,
+		agentUserGroup: commandReq.AgentUserGroup,
+		taskSpec:       t.taskSpec,
 	}, nil
 }
 

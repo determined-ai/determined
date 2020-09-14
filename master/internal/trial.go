@@ -219,8 +219,8 @@ type trial struct {
 	// sockets maps each running container for this trial to the corresponding websocket actor.
 	sockets map[cproto.ID]*actor.Ref
 
-	agentUserGroup  *model.AgentUserGroup
-	defaultTaskSpec *tasks.TaskSpec
+	agentUserGroup *model.AgentUserGroup
+	taskSpec       *tasks.TaskSpec
 }
 
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
@@ -254,8 +254,8 @@ func newTrial(
 		containerAddresses: make(map[cproto.ID][]cproto.Address),
 		sockets:            make(map[cproto.ID]*actor.Ref),
 
-		agentUserGroup:  exp.agentUserGroup,
-		defaultTaskSpec: exp.defaultTaskSpec,
+		agentUserGroup: exp.agentUserGroup,
+		taskSpec:       exp.taskSpec,
 	}
 }
 
@@ -597,10 +597,7 @@ func (t *trial) processAllocated(ctx *actor.Context, msg scheduler.ResourcesAllo
 	}
 
 	for _, a := range msg.Allocations {
-		taskSpec := tasks.TaskSpec{}
-		if t.defaultTaskSpec != nil {
-			taskSpec = *t.defaultTaskSpec
-		}
+		taskSpec := *t.taskSpec
 		taskSpec.StartContainer = &tasks.StartContainer{
 			ExperimentConfig:    t.experiment.Config,
 			ModelDefinition:     t.modelDefinition,

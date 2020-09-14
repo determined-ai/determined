@@ -67,9 +67,9 @@ func DefaultConfig(taskContainerDefaults *model.TaskContainerDefaultsConfig) mod
 type command struct {
 	config model.CommandConfig
 
-	owner           commandOwner
-	agentUserGroup  *model.AgentUserGroup
-	defaultTaskSpec *tasks.TaskSpec
+	owner          commandOwner
+	agentUserGroup *model.AgentUserGroup
+	taskSpec       *tasks.TaskSpec
 
 	taskID               scheduler.TaskID
 	userFiles            archive.Archive
@@ -281,10 +281,7 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 			"Command should only receive an allocation of one container"))
 		c.allocation = msg.Allocations[0]
 
-		taskSpec := tasks.TaskSpec{}
-		if c.defaultTaskSpec != nil {
-			taskSpec = *c.defaultTaskSpec
-		}
+		taskSpec := *c.taskSpec
 		taskSpec.StartCommand = &tasks.StartCommand{
 			AgentUserGroup:  c.agentUserGroup,
 			Config:          c.config,

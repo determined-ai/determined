@@ -100,7 +100,7 @@ func TestRendezvousInfo(t *testing.T) {
 		containerOrdinals:  make(map[cproto.ID]int),
 		containerAddresses: make(map[cproto.ID][]cproto.Address),
 		sockets:            make(map[cproto.ID]*actor.Ref),
-		defaultTaskSpec:    defaultTaskSpec,
+		taskSpec:           defaultTaskSpec,
 	}
 	trialRef, created := system.ActorOf(actor.Addr("trial"), trial)
 	if !created {

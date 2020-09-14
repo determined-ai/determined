@@ -18,8 +18,8 @@ type checkpointGCTask struct {
 	db         *db.PgDB
 	experiment *model.Experiment
 
-	agentUserGroup  *model.AgentUserGroup
-	defaultTaskSpec *tasks.TaskSpec
+	agentUserGroup *model.AgentUserGroup
+	taskSpec       *tasks.TaskSpec
 
 	// TODO (DET-789): Set up proper log handling for checkpoint GC.
 	logs []sproto.ContainerLog
@@ -48,10 +48,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 		ctx.Log().Info("starting checkpoint garbage collection")
 
 		for _, a := range msg.Allocations {
-			taskSpec := tasks.TaskSpec{}
-			if t.defaultTaskSpec != nil {
-				taskSpec = *t.defaultTaskSpec
-			}
+			taskSpec := *t.taskSpec
 			taskSpec.GCCheckpoints = &tasks.GCCheckpoints{
 				AgentUserGroup:   t.agentUserGroup,
 				ExperimentID:     t.experiment.ID,

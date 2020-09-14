@@ -40,7 +40,7 @@ type shellManager struct {
 	db *db.PgDB
 
 	defaultAgentUserGroup model.AgentUserGroup
-	defaultTaskSpec       *tasks.TaskSpec
+	taskSpec              *tasks.TaskSpec
 }
 
 func (s *shellManager) Receive(ctx *actor.Context) error {
@@ -139,7 +139,7 @@ func (s *shellManager) newShell(
 		shellEntrypointScript, "-f", shellSSHDConfigFile, "-p", strconv.Itoa(port), "-D", "-e",
 	}
 
-	setPodSpec(&config, s.defaultTaskSpec.TaskContainerDefaults)
+	setPodSpec(&config, s.taskSpec.TaskContainerDefaults)
 
 	additionalFiles := archive.Archive{
 		req.AgentUserGroup.OwnedArchiveItem(shellSSHDir, nil, 0700, tar.TypeDir),
@@ -181,9 +181,9 @@ func (s *shellManager) newShell(
 			},
 		},
 
-		serviceAddress:  &serviceAddress,
-		owner:           req.Owner,
-		agentUserGroup:  req.AgentUserGroup,
-		defaultTaskSpec: s.defaultTaskSpec,
+		serviceAddress: &serviceAddress,
+		owner:          req.Owner,
+		agentUserGroup: req.AgentUserGroup,
+		taskSpec:       s.taskSpec,
 	}
 }

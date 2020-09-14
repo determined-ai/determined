@@ -47,8 +47,8 @@ type Master struct {
 	MasterID  string
 	Version   string
 
-	config          *Config
-	defaultTaskSpec *tasks.TaskSpec
+	config   *Config
+	taskSpec *tasks.TaskSpec
 
 	logs          *logger.LogBuffer
 	system        *actor.System
@@ -326,7 +326,7 @@ func (m *Master) Run() error {
 	if err != nil {
 		return errors.Wrap(err, "failed to read TLS certificate")
 	}
-	m.defaultTaskSpec = &tasks.TaskSpec{
+	m.taskSpec = &tasks.TaskSpec{
 		ClusterID:             m.ClusterID,
 		HarnessPath:           filepath.Join(m.config.Root, "wheels"),
 		TaskContainerDefaults: m.config.TaskContainerDefaults,
@@ -557,7 +557,7 @@ func (m *Master) Run() error {
 		m.proxy,
 		m.config.TensorBoardTimeout,
 		m.config.Security.DefaultTask,
-		m.defaultTaskSpec,
+		m.taskSpec,
 		authFuncs...,
 	)
 	template.RegisterAPIHandler(m.echo, m.db, authFuncs...)
