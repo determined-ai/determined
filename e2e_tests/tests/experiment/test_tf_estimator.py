@@ -170,24 +170,3 @@ def test_estimator_when_detecting_gpus() -> None:
     exp.run_basic_test_with_temp_config(
         config, conf.fixtures_path("estimator_gpu_detection/"), 1, has_zeroth_step=False
     )
-
-
-@pytest.mark.parallel  # type: ignore
-def test_estimator_fails_when_train_distribute_is_set() -> None:
-    config = conf.load_config(
-        conf.fixtures_path("mnist_estimator/train_distribute_causes_failure.yaml")
-    )
-    exp.run_failure_test(
-        config,
-        conf.official_examples_path("trial/mnist_estimator"),
-    )
-
-
-@pytest.mark.parallel  # type: ignore
-def test_estimator_succeeds_when_train_distribute_is_empty() -> None:
-    config = conf.load_config(
-        conf.fixtures_path("mnist_estimator/train_distribute_is_empty_object_and_succeeds.yaml")
-    )
-    exp.run_basic_test_with_temp_config(
-        config, conf.official_examples_path("trial/mnist_estimator"), 1, has_zeroth_step=False
-    )
