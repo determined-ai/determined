@@ -1,0 +1,12 @@
+:orphan:
+
+**Bug Fixes**
+
+- Prevent users from setting the DistributeConfig for an Estimator
+
+  - If an Estimator has been configured to do distributed training via a tf.distribute.Strategy,
+    that can conflict with how Determined does distributed training, leading to errors (mostly
+    crashes and OOMs). With this change, Determined will try to catch this problem to give
+    the user an informative error message. An Estimator can still be configured with an empty
+    DistributeConfig, as this does not cause TF to try to do distributed training.
+
