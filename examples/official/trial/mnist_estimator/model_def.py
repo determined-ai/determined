@@ -81,6 +81,7 @@ class MNistTrial(EstimatorTrial):
         )
         # Call `wrap_optimizer` immediately after creating your optimizer.
         optimizer = self.context.wrap_optimizer(optimizer)
+
         return tf.compat.v1.estimator.DNNClassifier(
             feature_columns=[
                 tf.feature_column.numeric_column(
