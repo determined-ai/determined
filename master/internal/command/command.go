@@ -316,9 +316,9 @@ func (c *command) terminate(ctx *actor.Context) {
 	}
 
 	if c.allocation == nil {
-		c.exit(ctx, "command is terminated without being scheduled")
+		c.exit(ctx, "task is aborted without being scheduled")
 	} else {
-		ctx.Log().Info("forcible terminating")
+		ctx.Log().Info("task forcible terminating")
 		c.allocation.KillContainer(ctx)
 	}
 }

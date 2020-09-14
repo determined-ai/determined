@@ -211,7 +211,7 @@ type trial struct {
 	numContainers              int
 	startedContainers          map[cproto.ID]bool
 	containers                 map[cproto.ID]cproto.Container
-	containerOrdinals          map[cproto.ID]int
+	containerRank              map[cproto.ID]int
 	containerAddresses         map[cproto.ID][]cproto.Address
 	terminatedContainers       []terminatedContainerWithState
 	lastContainerConnectedTime time.Time
@@ -250,7 +250,7 @@ func newTrial(
 
 		startedContainers:  make(map[cproto.ID]bool),
 		containers:         make(map[cproto.ID]cproto.Container),
-		containerOrdinals:  make(map[cproto.ID]int),
+		containerRank:      make(map[cproto.ID]int),
 		containerAddresses: make(map[cproto.ID][]cproto.Address),
 		sockets:            make(map[cproto.ID]*actor.Ref),
 
@@ -290,7 +290,7 @@ func (t *trial) Receive(ctx *actor.Context) error {
 		t.processLog(ctx, msg)
 
 	case trialAborted:
-		// Here is to handle trial being aborted. It does nothing here but requires
+		// This is to handle trial being aborted. It does nothing here but requires
 		// the code below this switch statement to handle releasing resources in
 		// the scheduler. This should be refactored into the terminating logic.
 
@@ -812,7 +812,7 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 		caddr := CAddress{
 			Container: v,
 			Addresses: t.containerAddresses[k],
-			Ordinal:   t.containerOrdinals[k],
+			Ordinal:   t.containerRank[k],
 		}
 		caddrs = append(caddrs, caddr)
 
@@ -893,12 +893,12 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 func (t *trial) processContainerRunning(
 	ctx *actor.Context, msg sproto.TaskContainerStateChanged,
 ) error {
-	ctx.Log().Infof("found one running container: %s (ordinal %d)",
-		msg.Container.ID, len(t.containerOrdinals))
+	ctx.Log().Infof("found container running: %s (rank %d)",
+		msg.Container.ID, len(t.containerRank))
 
 	t.containers[msg.Container.ID] = msg.Container
 	t.containerAddresses[msg.Container.ID] = msg.ContainerStarted.Addresses
-	t.containerOrdinals[msg.Container.ID] = len(t.containerOrdinals)
+	t.containerRank[msg.Container.ID] = len(t.containerRank)
 	if err := t.pushRendezvous(ctx); err != nil {
 		return errors.Wrap(err, "failed to push rendezvous to trial containers")
 	}
@@ -911,7 +911,7 @@ func (t *trial) processContainerTerminated(
 	_, ok := t.containers[msg.Container.ID]
 	delete(t.containers, msg.Container.ID)
 	delete(t.containerAddresses, msg.Container.ID)
-	delete(t.containerOrdinals, msg.Container.ID)
+	delete(t.containerRank, msg.Container.ID)
 
 	t.killAndRemoveSocket(ctx, msg.Container.ID)
 
@@ -925,7 +925,7 @@ func (t *trial) processContainerTerminated(
 	if ok {
 		t.terminatedContainers = append(t.terminatedContainers, terminatedContainerWithState{
 			exitStatus:                 *msg.ContainerStopped,
-			isLeader:                   t.containerOrdinals[msg.Container.ID] == 0,
+			isLeader:                   t.containerRank[msg.Container.ID] == 0,
 			pendingGracefulTermination: t.pendingGracefulTermination,
 			needsCheckpoint:            t.sequencer.PrecloseCheckpointWorkload() != nil,
 		})
@@ -934,7 +934,7 @@ func (t *trial) processContainerTerminated(
 	// Terminate the task if the container never started (since this prevents the gang
 	// from ever being able to start), if the leader of the gang has exited out, or if
 	// one of the containers exited with a failure.
-	if !ok || t.containerOrdinals[msg.Container.ID] == 0 || msg.ContainerStopped.Failure != nil {
+	if !ok || t.containerRank[msg.Container.ID] == 0 || msg.ContainerStopped.Failure != nil {
 		t.terminate(ctx, true)
 	}
 
@@ -1011,14 +1011,12 @@ func (t *trial) terminate(ctx *actor.Context, kill bool) {
 		ctx.Tell(ctx.Self(), trialAborted{})
 	case kill:
 		ctx.Log().Info("forcibly terminating trial")
-		if t.task != nil {
-			if t.allocations != nil {
-				for _, allocation := range t.allocations {
-					allocation.KillContainer(ctx)
-				}
+		if t.task != nil && t.allocations != nil {
+			for _, allocation := range t.allocations {
+				allocation.KillContainer(ctx)
 			}
 		}
-	default:
+	case !t.pendingGracefulTermination:
 		ctx.Log().Info("gracefully terminating trial")
 		t.pendingGracefulTermination = true
 	}

@@ -139,7 +139,7 @@ func (n *notebookManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Conte
 			return
 		}
 
-		req, err := parseCommandRequest(apiCtx, n.db, &params, &n.taskContainerDefaults)
+		req, err := parseCommandRequest(apiCtx, n.db, &params, &n.taskSpec.TaskContainerDefaults)
 		if err != nil {
 			respondBadRequest(ctx, err)
 			return

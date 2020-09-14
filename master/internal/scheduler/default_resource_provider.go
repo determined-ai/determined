@@ -232,7 +232,7 @@ func (d *DefaultRP) receiveAgentMsg(ctx *actor.Context) error {
 		state, ok := d.agents[msg.Agent]
 		check.Panic(check.True(ok, "error freeing device, agent not found: %s", msg.Agent.Address()))
 
-		if msg.Device.Type == device.Unspecified {
+		if msg.Device.Type == device.ZeroSlot {
 			delete(state.zeroSlotContainers, *msg.ContainerID)
 		} else {
 			id, ok := d.agents[msg.Agent].devices[msg.Device]

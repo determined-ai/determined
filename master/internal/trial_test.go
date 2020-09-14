@@ -97,7 +97,7 @@ func TestRendezvousInfo(t *testing.T) {
 		numContainers:      len(addresses),
 		startedContainers:  make(map[cproto.ID]bool),
 		containers:         make(map[cproto.ID]cproto.Container),
-		containerOrdinals:  make(map[cproto.ID]int),
+		containerRank:      make(map[cproto.ID]int),
 		containerAddresses: make(map[cproto.ID][]cproto.Address),
 		sockets:            make(map[cproto.ID]*actor.Ref),
 		taskSpec:           defaultTaskSpec,
