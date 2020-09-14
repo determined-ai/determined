@@ -4,7 +4,7 @@ import React, { useCallback, useState } from 'react';
 import { ConditionalButton } from 'components/types';
 import { openCommand } from 'routes/utils';
 import {
-  archiveExperiment, openOrCreateTensorboard, killExperiment, setExperimentState,
+  archiveExperiment, killExperiment, openOrCreateTensorboard, setExperimentState,
 } from 'services/api';
 import { ExperimentDetails, RunState, TBSourceType } from 'types';
 import { cancellableRunStates, killableRunStates, terminalRunStates } from 'utils/types';

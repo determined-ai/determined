@@ -152,6 +152,10 @@ export const applyMappers = <T>(data: unknown, mappers: Mapper | Mapper[]): T =>
 
 export const isEqual = (a: unknown, b: unknown): boolean => {
   if (a === b) return true;
+  if (Array.isArray(a) && Array.isArray(b)) {
+    a.sort();
+    b.sort();
+  }
   return JSON.stringify(a) === JSON.stringify(b);
 };
 

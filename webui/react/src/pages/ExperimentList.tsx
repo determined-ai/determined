@@ -23,7 +23,7 @@ import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { handlePath, openBlank } from 'routes/utils';
 import {
-  archiveExperiment, openOrCreateTensorboard, getExperimentList, killExperiment, setExperimentState,
+  archiveExperiment, getExperimentList, killExperiment, openOrCreateTensorboard, setExperimentState,
 } from 'services/api';
 import { patchExperiment } from 'services/api';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
