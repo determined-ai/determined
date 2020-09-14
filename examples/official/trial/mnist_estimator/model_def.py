@@ -156,7 +156,7 @@ class MNistTrial(EstimatorTrial):
         user sets train_distribute to something like MirroredStrategy (training should fail)
         or if the user setting train_distribute to an empty DistributeConfig (training should succeed)
         """
-        run_config_setting = self.context.get_data_config().get("train_distribute_setting", False)
+        run_config_setting = self.context.get_data_config().get("train_distribute_setting", "None")
         assert run_config_setting in ["UseMirroredStrategy", "UseEmptyTrainDistribute", "None"]
         if run_config_setting == "None":
             return run_config
