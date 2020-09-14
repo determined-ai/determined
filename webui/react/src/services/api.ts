@@ -14,7 +14,7 @@ import {
   ExperimentFilters, ExperimentItem, Log, Pagination, RunState, TrialDetails,
 } from 'types';
 import { isExperimentTask } from 'utils/task';
-import { tsbMatchesSource } from 'utils/types';
+import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 
 import { decodeExperimentList, encodeExperimentState } from './decoder';
 
@@ -131,7 +131,9 @@ export const openOrCreateTensorboard = async (
   params: CreateTensorboardParams,
 ): Promise<Command> => {
   const tensorboards = await getTensorboards({});
-  const match = tensorboards.find(tensorboard => tsbMatchesSource(tensorboard, params));
+  const match = tensorboards.find(tensorboard =>
+    !terminalCommandStates.has(tensorboard.state)
+    && tsbMatchesSource(tensorboard, params));
   if (match) return match;
   return createTensorboard(params);
 };
