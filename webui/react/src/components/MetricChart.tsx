@@ -134,6 +134,7 @@ const MetricChart: React.FC<Props> = (props: Props) => {
     layout.xaxis.title = props.xLabel;
     layout.yaxis.title = props.yLabel;
     layout.yaxis.type = scale;
+    layout.yaxis.autorange = scale === Scale.Log;
     layout.xaxis.range = range ? range.xaxis : (maxRange ? maxRange.xaxis : undefined);
     layout.yaxis.range = range ? range.yaxis : (maxRange ? maxRange.yaxis : undefined);
 
