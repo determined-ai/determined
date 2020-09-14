@@ -258,7 +258,7 @@ const TaskList: React.FC = () => {
     });
   }, [ handleBatchKill ]);
 
-  const handleTableChange = useCallback((pagination, filters, sorter) => {
+  const handleTableChange = useCallback((tablePagination, tableFilters, sorter) => {
     if (Array.isArray(sorter)) return;
 
     const { columnKey, order } = sorter as SorterResult<CommandTask>;
@@ -266,7 +266,9 @@ const TaskList: React.FC = () => {
 
     storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
     setSorter({ descend: order === 'descend', key: columnKey as string });
-  }, [ columns, setSorter, storage ]);
+
+    storage.set(STORAGE_FILTERS_KEY, { ...filters, limit: tablePagination.pageSize });
+  }, [ columns, filters, setSorter, storage ]);
 
   const handleTableRowSelect = useCallback(rowKeys => setSelectedRowKeys(rowKeys), []);
 
@@ -307,7 +309,7 @@ const TaskList: React.FC = () => {
             indicator: <Indicator />,
             spinning: !hasLoaded,
           }}
-          pagination={getPaginationConfig(filteredTasks.length)}
+          pagination={getPaginationConfig(filteredTasks.length, filters.limit)}
           rowClassName={record => defaultRowClassName(canBeOpened(record))}
           rowKey="id"
           rowSelection={{ onChange: handleTableRowSelect, selectedRowKeys }}

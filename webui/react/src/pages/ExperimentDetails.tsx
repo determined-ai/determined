@@ -12,7 +12,7 @@ import Message from 'components/Message';
 import Page from 'components/Page';
 import Section from 'components/Section';
 import Spinner, { Indicator } from 'components/Spinner';
-import { defaultRowClassName, getPaginationConfig } from 'components/Table';
+import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
@@ -37,6 +37,7 @@ interface Params {
 }
 
 const STORAGE_PATH = 'experiment-detail';
+const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_SORTER_KEY = 'sorter';
 
 const ExperimentDetailsComp: React.FC = () => {
@@ -49,7 +50,9 @@ const ExperimentDetailsComp: React.FC = () => {
   const [ experimentResponse, triggerExperimentRequest ] =
     useRestApi<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
   const storage = useStorage(STORAGE_PATH);
+  const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initSorter: ApiSorter | null = storage.get(STORAGE_SORTER_KEY);
+  const [ pageSize, setPageSize ] = useState(initLimit);
   const [ sorter, setSorter ] = useState<ApiSorter | null>(initSorter);
 
   const experiment = experimentResponse.data;
@@ -129,7 +132,7 @@ const ExperimentDetailsComp: React.FC = () => {
     setForkModalVisible(true);
   }, [ setForkModalVisible ]);
 
-  const handleTableChange = useCallback((pagination, filters, sorter) => {
+  const handleTableChange = useCallback((tablePagination, tableFilters, sorter) => {
     if (Array.isArray(sorter)) return;
 
     const { columnKey, order } = sorter as SorterResult<TrialItem>;
@@ -137,6 +140,9 @@ const ExperimentDetailsComp: React.FC = () => {
 
     storage.set(STORAGE_SORTER_KEY, { descend: order === 'descend', key: columnKey as string });
     setSorter({ descend: order === 'descend', key: columnKey as string });
+
+    storage.set(STORAGE_LIMIT_KEY, tablePagination.pageSize);
+    setPageSize(tablePagination.pageSize);
   }, [ columns, setSorter, storage ]);
 
   const handleTableRow = useCallback((record: TrialItem) => {
@@ -216,7 +222,7 @@ const ExperimentDetailsComp: React.FC = () => {
                 indicator: <Indicator />,
                 spinning: !experimentResponse.hasLoaded,
               }}
-              pagination={getPaginationConfig(experiment?.trials.length || 0)}
+              pagination={getPaginationConfig(experiment?.trials.length || 0, pageSize)}
               rowClassName={defaultRowClassName()}
               rowKey="id"
               showSorterTooltip={false}

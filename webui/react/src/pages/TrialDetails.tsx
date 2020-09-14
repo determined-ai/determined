@@ -15,7 +15,7 @@ import Page from 'components/Page';
 import Section from 'components/Section';
 import SelectFilter, { ALL_VALUE } from 'components/SelectFilter';
 import Spinner, { Indicator } from 'components/Spinner';
-import { defaultRowClassName, getPaginationConfig } from 'components/Table';
+import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
 import useRestApi from 'hooks/useRestApi';
@@ -80,6 +80,7 @@ const trialContinueConfig = (
 };
 
 const STORAGE_PATH = 'trial-detail';
+const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_CHECKPOINT_VALIDATION_KEY = 'checkpoint-validation';
 const STORAGE_METRICS_KEY = 'metrics';
 
@@ -90,10 +91,12 @@ const TrialDetailsComp: React.FC = () => {
     useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
   const [ experiment, setExperiment ] = useState<ExperimentDetails>();
   const storage = useStorage(STORAGE_PATH);
+  const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initFilter = storage.getWithDefault(
     STORAGE_CHECKPOINT_VALIDATION_KEY,
     TrialInfoFilter.HasCheckpointOrValidation,
   );
+  const [ pageSize, setPageSize ] = useState(initLimit);
   const [ hasCheckpointOrValidation, setHasCheckpointOrValidation ] = useState(initFilter);
   const [ contModalVisible, setContModalVisible ] = useState(false);
   const [ contFormVisible, setContFormVisible ] = useState(false);
@@ -321,6 +324,11 @@ If the problem persists please contact support.',
     setContModalVisible(true);
   }, [ updateStatesFromForm ]);
 
+  const handleTableChange = useCallback((tablePagination) => {
+    storage.set(STORAGE_LIMIT_KEY, tablePagination.pageSize);
+    setPageSize(tablePagination.pageSize);
+  }, [ storage ]);
+
   usePolling(pollTrialDetails);
 
   useEffect(() => {
@@ -432,12 +440,13 @@ If the problem persists please contact support.',
                 indicator: <Indicator />,
                 spinning: !trialResponse.hasLoaded,
               }}
-              pagination={getPaginationConfig(steps.length)}
+              pagination={getPaginationConfig(steps.length, pageSize)}
               rowClassName={defaultRowClassName(false)}
               rowKey="id"
               scroll={{ x: 1000 }}
               showSorterTooltip={false}
-              size="small" />
+              size="small"
+              onChange={handleTableChange} />
           </Section>
         </Col>
       </Row>
