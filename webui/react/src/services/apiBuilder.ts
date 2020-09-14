@@ -59,7 +59,7 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
     const httpOpts = api.httpOptions(params);
 
     try {
-      const response = api.stubbedResponse? { data: api.stubbedResponse } as AxiosResponse<unknown>
+      const response = api.stubbedResponse ? { data: api.stubbedResponse } as AxiosResponse<unknown>
         : await http.request({
           cancelToken: params.cancelToken,
           data: httpOpts.body,
