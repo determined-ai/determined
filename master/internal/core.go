@@ -473,7 +473,6 @@ func (m *Master) Run() error {
 		{"/manifest.json", "manifest.json"},
 		{"/favicon.ico", "favicon.ico"},
 		{"/favicon.ico", "favicon.ico"},
-		{"/wait", "wait/index.html"},
 	}
 
 	reactDirs := [...]fileRoute{
