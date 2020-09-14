@@ -80,6 +80,7 @@ func waitForPendingRequestToFinish(k8RequestQueue *requestQueue) {
 	for len(k8RequestQueue.queue) > 0 &&
 		len(k8RequestQueue.blockedResourceDeletions) == 0 &&
 		len(k8RequestQueue.availableWorkers) < numKubernetesWorkers {
+		time.Sleep(time.Millisecond * 100)
 	}
 }
 
