@@ -18,6 +18,7 @@ export interface Api<Input, Output>{
   name: string;
   httpOptions: (params: Input) => HttpOptions;
   postProcess?: (response: AxiosResponse<unknown>) => Output; // io type decoder.
+  stubbedResponse?: unknown; // optional stubbed response body.
   // middlewares?: Middleware[]; // success/failure middlewares
 }
 
@@ -58,13 +59,14 @@ export function generateApi<Input, Output>(api: Api<Input, Output>) {
     const httpOpts = api.httpOptions(params);
 
     try {
-      const response = await http.request({
-        cancelToken: params.cancelToken,
-        data: httpOpts.body,
-        headers: httpOpts.headers,
-        method: httpOpts.method || 'GET',
-        url: httpOpts.url as string,
-      });
+      const response = api.stubbedResponse ? { data: api.stubbedResponse } as AxiosResponse<unknown>
+        : await http.request({
+          cancelToken: params.cancelToken,
+          data: httpOpts.body,
+          headers: httpOpts.headers,
+          method: httpOpts.method || 'GET',
+          url: httpOpts.url as string,
+        });
 
       return api.postProcess ? api.postProcess(response) : response.data as Output;
     } catch (e) {
