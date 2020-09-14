@@ -1,15 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import { PlotData } from 'plotly.js/lib/core';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import Plotly, { Data } from 'Plotly';
 import { getStateColor, lightTheme } from 'themes';
 import { CommandState, CommonProps, Resource, ResourceState } from 'types';
 import { clone } from 'utils/data';
-// The react-plotly import needs to come after Plotly import
-/* eslint-disable import/order */
-import Plotly, { Data, Layout } from 'Plotly';
-import createPlotlyComponent from 'react-plotly.js/factory';
-/* eslint-enable import/order */
 
-const Plot = createPlotlyComponent(Plotly);
+import { generateAlphaNumeric } from '../utils/string';
+
 interface Props extends CommonProps {
   title: string;
   resources?: Resource[];
@@ -17,8 +15,16 @@ interface Props extends CommonProps {
 
 export interface PlotInfo {
   data: Data[];
-  layout: Partial<Layout>;
+  layout: Partial<Plotly.Layout>;
+  config: Partial<Plotly.Config>
 }
+
+type PlotArguments = [
+  string,
+  Partial<PlotData>[],
+  Partial<Plotly.Layout>,
+  Partial<Plotly.Config>,
+];
 
 type Tally = Record<ResourceState, number>;
 
@@ -66,6 +72,7 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
   }
 
   return {
+    config: { displayModeBar: false },
     data,
     layout: {
       annotations: [
@@ -83,25 +90,37 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo | null => {
   };
 };
 
-const SlotChart: React.FC<Props> = ({ title, resources, ...rest }: Props) => {
+const SlotChart: React.FC<Props> = (props: Props) => {
+  const chartRef = useRef<HTMLDivElement>(null);
+  const [ id ] = useState(generateAlphaNumeric());
   const [ oldPlotInfo, setOldPlotInfo ] = useState<PlotInfo | null>(null);
 
   const plotInfo = useMemo(() => {
-    const newPlotInfo = genPlotInfo(title, resources || []);
+    const newPlotInfo = genPlotInfo(props.title, props.resources || []);
     if (JSON.stringify(newPlotInfo) === JSON.stringify(oldPlotInfo)) return oldPlotInfo;
     setOldPlotInfo(newPlotInfo);
     return newPlotInfo;
-  }, [ oldPlotInfo, resources, title ]);
+  }, [ oldPlotInfo, props.resources, props.title ]);
+
+  const renderPlot = useCallback(async (
+    elementId: string,
+    pInfo: PlotInfo,
+  ) => {
+    const args: PlotArguments = [ elementId, pInfo.data, pInfo.layout, pInfo.config ];
+    await Plotly.react.apply(null, args);
+  }, [ id, plotInfo, props.resources ]);
 
   if (plotInfo === null) return <React.Fragment />;
 
+  useEffect(() => {
+    renderPlot(id, plotInfo);
+  }, [ id, plotInfo, props.resources ]);
+
   return (
-    <Plot
-      {...rest}
-      config={{ displaylogo: false, displayModeBar: false, responsive: false }}
-      data={plotInfo.data}
-      layout={plotInfo.layout}
-    />
+    // <div className={css.base}>
+    <div>
+      <div id={id} ref={chartRef} />
+    </div>
   );
 };
 
