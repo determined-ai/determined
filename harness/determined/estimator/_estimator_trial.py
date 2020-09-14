@@ -344,13 +344,13 @@ class EstimatorTrialController(det.LoopTrialController):
                 estimator.config.train_distribute.train_distribute,
                 f"TensorFlow's approach to distributed training can conflict with Determined's. Currently "
                 f"Determined requires that the train_distribute field of the RunConfig not be set. Your "
-                f"estimator has train_distribute={str(estimator.config.train_distribute.train_distribute)}"
+                f"estimator has train_distribute={str(estimator.config.train_distribute.train_distribute)}",
             )
             check.is_none(
                 estimator.config.train_distribute.eval_distribute,
                 f"TensorFlow's approach to distributed training can conflict with Determined's. Currently "
                 f"Determined requires that the eval_distribute field of the RunConfig not be set. Your "
-                f"estimator has eval_distribute={str(estimator.config.train_distribute.eval_distribute)}"
+                f"estimator has eval_distribute={str(estimator.config.train_distribute.eval_distribute)}",
             )
         self.estimator = estimator
         self.user_train_spec = user_train_spec
