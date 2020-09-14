@@ -1,6 +1,8 @@
 package provisioner
 
 import (
+	"crypto/tls"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -8,7 +10,11 @@ import (
 )
 
 // Setup initializes and registers the actor for the provisioner.
-func Setup(system *actor.System, config *Config) (*Provisioner, *actor.Ref, error) {
+func Setup(
+	system *actor.System,
+	config *Config,
+	cert *tls.Certificate,
+) (*Provisioner, *actor.Ref, error) {
 	if config == nil {
 		log.Info("cannot find provisioner configuration, disabling provisioner")
 		return nil, nil, nil
@@ -20,7 +26,7 @@ func Setup(system *actor.System, config *Config) (*Provisioner, *actor.Ref, erro
 	if config.GCP != nil {
 		log.Info("connecting to GCP")
 	}
-	provisioner, err := New(config)
+	provisioner, err := New(config, cert)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "error creating provisioner")
 	}

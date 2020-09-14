@@ -1,7 +1,9 @@
 package provisioner
 
 import (
+	"crypto/tls"
 	"encoding/base64"
+	"encoding/pem"
 	"fmt"
 	"net/url"
 
@@ -51,7 +53,7 @@ type awsCluster struct {
 	client      *ec2.EC2
 }
 
-func newAWSCluster(config *Config) (*awsCluster, error) {
+func newAWSCluster(config *Config, cert *tls.Certificate) (*awsCluster, error) {
 	if err := config.AWS.initDefaultValues(); err != nil {
 		return nil, errors.Wrap(err, "failed to initialize auto configuration")
 	}
@@ -86,6 +88,19 @@ func newAWSCluster(config *Config) (*awsCluster, error) {
 
 	startupScriptBase64 := base64.StdEncoding.EncodeToString([]byte(config.StartupScript))
 	containerScriptBase64 := base64.StdEncoding.EncodeToString([]byte(config.ContainerStartupScript))
+
+	var certBytes []byte
+	if masterURL.Scheme == secureScheme && cert != nil {
+		for _, c := range cert.Certificate {
+			b := pem.EncodeToMemory(&pem.Block{
+				Type:  "CERTIFICATE",
+				Bytes: c,
+			})
+			certBytes = append(certBytes, b...)
+		}
+	}
+	masterCertBase64 := base64.StdEncoding.EncodeToString(certBytes)
+
 	cluster := &awsCluster{
 		AWSClusterConfig: config.AWS,
 		masterURL:        *masterURL,
@@ -95,6 +110,7 @@ func newAWSCluster(config *Config) (*awsCluster, error) {
 			MasterPort:                   masterURL.Port(),
 			StartupScriptBase64:          startupScriptBase64,
 			ContainerStartupScriptBase64: containerScriptBase64,
+			MasterCertBase64:             masterCertBase64,
 			AgentDockerRuntime:           config.AgentDockerRuntime,
 			AgentNetwork:                 config.AgentDockerNetwork,
 			AgentDockerImage:             config.AgentDockerImage,
