@@ -38,7 +38,10 @@ const TrialActions: React.FC<Props> = ({ trial, trials, onClick, onSettled }: Pr
 
   const handleCreateTensorboard = useCallback(async () => {
     setButtonStates(state => ({ ...state, tensorboard: true }));
-    const tensorboard = await openOrCreateTensorboard({ ids: [ trial.id ], type: TBSourceType.Trial });
+    const tensorboard = await openOrCreateTensorboard({
+      ids: [ trial.id ],
+      type: TBSourceType.Trial,
+    });
     openCommand(tensorboard);
     onSettled();
     setButtonStates(state => ({ ...state, tensorboard: false }));

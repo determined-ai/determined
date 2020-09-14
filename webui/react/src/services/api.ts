@@ -127,7 +127,9 @@ export const createNotebook = generateApi<CreateNotebookParams, Command>(Config.
 export const createTensorboard =
   generateApi<CreateTensorboardParams, Command>(Config.createTensorboard);
 
-export const openOrCreateTensorboard = async (params: CreateTensorboardParams): Promise<Command> => {
+export const openOrCreateTensorboard = async (
+  params: CreateTensorboardParams,
+): Promise<Command> => {
   const tensorboards = await getTensorboards({});
   const match = tensorboards.find(tensorboard => tsbMatchesSource(tensorboard, params));
   if (match) return match;

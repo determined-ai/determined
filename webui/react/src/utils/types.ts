@@ -1,6 +1,7 @@
 import {
   AnyTask, Checkpoint, Command, CommandState, CommandType, ExperimentHyperParams,
-  ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step, TBSource, TBSourceType,
+  ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
+  TBSource, TBSourceType,
 } from 'types';
 
 import { deletePathList, getPathList, isEqual, isNumber, setPathList } from './data';

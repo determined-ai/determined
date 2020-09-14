@@ -7,7 +7,9 @@ import React from 'react';
 import Icon from 'components/Icon';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { openBlank, openCommand } from 'routes/utils';
-import { archiveExperiment, killTask, openOrCreateTensorboard, setExperimentState } from 'services/api';
+import {
+  archiveExperiment, killTask, openOrCreateTensorboard, setExperimentState,
+} from 'services/api';
 import { AnyTask, CommandTask, ExperimentTask, RunState, TBSourceType } from 'types';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
