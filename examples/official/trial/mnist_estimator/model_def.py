@@ -81,6 +81,10 @@ class MNistTrial(EstimatorTrial):
         )
         # Call `wrap_optimizer` immediately after creating your optimizer.
         optimizer = self.context.wrap_optimizer(optimizer)
+
+        run_config = tf.estimator.RunConfig(tf_random_seed=self.context.get_trial_seed())
+        run_config = self.maybe_alter_run_config(run_config)  # Allow us to inject an error during tests
+
         return tf.compat.v1.estimator.DNNClassifier(
             feature_columns=[
                 tf.feature_column.numeric_column(
@@ -93,7 +97,7 @@ class MNistTrial(EstimatorTrial):
                 self.context.get_hparam("hidden_layer_2"),
                 self.context.get_hparam("hidden_layer_3"),
             ],
-            config=tf.estimator.RunConfig(tf_random_seed=self.context.get_trial_seed()),
+            config=run_config,
             optimizer=optimizer,
             dropout=self.context.get_hparam("dropout"),
         )
@@ -145,3 +149,26 @@ class MNistTrial(EstimatorTrial):
 
         val_files = self._get_filenames(os.path.join(self.download_directory, "validation"))
         return tf.estimator.EvalSpec(self._input_fn(val_files, shuffle=False), steps=None)
+
+    def maybe_alter_run_config(self, run_config: tf.estimator.RunConfig):
+        """
+        This function is used in tests and makes sure that Determined is able to handle if the
+        user sets train_distribute to something like MirroredStrategy (training should fail)
+        or if the user setting train_distribute to an empty DistributeConfig (training should succeed)
+        """
+        run_config_setting = self.context.get_data_config().get("train_distribute_setting", False)
+        assert run_config_setting in ["UseMirroredStrategy", "UseEmptyTrainDistribute", "None"]
+        if run_config_setting == "None":
+            return run_config
+        elif run_config_setting == "UseMirroredStrategy":
+            return tf.estimator.RunConfig(
+                tf_random_seed=self.context.get_trial_seed(),
+                train_distribute=tf.distribute.MirroredStrategy())
+        elif run_config_setting == "UseEmptyTrainDistribute":
+            return tf.estimator.RunConfig(
+                tf_random_seed=self.context.get_trial_seed(),
+                train_distribute=tf.contrib.distribute.DistributeConfig(
+                    train_distribute=None,
+                    eval_distribute=None)
+            )
+

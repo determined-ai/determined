@@ -1,0 +1,21 @@
+description: mnist_estimator_const_distributed
+data:
+  # "UseMirroredStrategy", "UseEmptyTrainDistribute" or "None" (equivalent to not set)
+  train_distribute_setting: "UseEmptyTrainDistribute"
+hyperparameters:
+  learning_rate: 1e-3
+  global_batch_size: 64
+  hidden_layer_1: 2500
+  hidden_layer_2: 1000
+  hidden_layer_3: 500
+  dropout: 0.5
+resources:
+  slots_per_trial: 8
+max_restarts: 0
+searcher:
+  name: single
+  metric: accuracy
+  max_length:
+    batches: 200
+  smaller_is_better: false
+entrypoint: model_def:MNistTrial

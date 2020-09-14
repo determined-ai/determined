@@ -334,6 +334,24 @@ class EstimatorTrialController(det.LoopTrialController):
     ) -> None:
         super().__init__(context, *args, **kwargs)  # type: ignore
 
+        # Catch if the estimator has been configured to use a tf.distribute.Strategy as this can conflict
+        # with Determined's distributed training and lead to crashes/OOM. We cannot reliable tell the user
+        # that this was the cause of their failure, because the code may crash before this point in user
+        # code during build_estimator().
+        # train_distribute is valid if it is None or if it is an empty tf.contrib.distribute.DistributeConfig
+        if estimator.config.train_distribute is not None:
+            check.is_none(
+                estimator.config.train_distribute.train_distribute,
+                f"TensorFlow's approach to distributed training can conflict with Determined's. Currently "
+                f"Determined requires that the train_distribute field of the RunConfig not be set. Your "
+                f"estimator has train_distribute={str(estimator.config.train_distribute.train_distribute)}"
+            )
+            check.is_none(
+                estimator.config.train_distribute.eval_distribute,
+                f"TensorFlow's approach to distributed training can conflict with Determined's. Currently "
+                f"Determined requires that the eval_distribute field of the RunConfig not be set. Your "
+                f"estimator has eval_distribute={str(estimator.config.train_distribute.eval_distribute)}"
+            )
         self.estimator = estimator
         self.user_train_spec = user_train_spec
         self.val_spec = val_spec
