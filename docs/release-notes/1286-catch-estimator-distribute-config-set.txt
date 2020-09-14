@@ -1,6 +1,6 @@
 :orphan:
 
-**Bug Fixes**
+**Improvements**
 
 - Prevent users from setting the DistributeConfig for an Estimator
 
