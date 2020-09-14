@@ -1,6 +1,6 @@
 import { AxiosResponse, Method } from 'axios';
 
-import { CommandType, RunState, TBSourceType } from 'types';
+import { CommandType, RunState, TBSource } from 'types';
 
 export interface HttpOptions {
   url?: string;
@@ -63,11 +63,7 @@ export interface CreateNotebookParams {
   slots: number;
 }
 
-export interface CreateTensorboardParams {
-  // currently we don't support launching from a mix of both trial ids and experiment ids
-  ids: number[];
-  type: TBSourceType;
-}
+export type CreateTensorboardParams = TBSource;
 
 export interface LogsParams {
   tail?: number;
