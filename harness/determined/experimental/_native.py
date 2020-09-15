@@ -409,7 +409,9 @@ def submit(
     return experiment_id
 
 
-def _construct_experiment(context_dir: str, config: Dict[str, Any], master_url: str):
+def _construct_experiment(
+    context_dir: str, config: Optional[Dict[str, Any]], master_url: Optional[str]
+) -> Tuple[Dict[str, Any], context.Context, str]:
     if context_dir == "":
         raise errors.InvalidExperimentException("Cannot specify the context directory to be empty.")
 
