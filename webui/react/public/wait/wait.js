@@ -32,11 +32,7 @@ function msgHandler(event, waitType, readyAction) {
     if (state === 'RUNNING' && msg.snapshot.is_ready) {
       document.getElementById('tip').innerHTML = 'Redirecting momentarily..';
       document.title = `${titlePrefix} ${state} - Redirecting momentarily`;
-      // This is a bit redundant given the code at the end of the msgHandler function,
-      // but it helps avoid panics that occur in the master in the rare instances when
-      // a redirect happens after the state is marked as RUNNING and before the
-      // "service_ready_event" flag is raised.
-      setTimeout(readyAction, 3000);
+      readyAction();
     } else if (isFatalError(state)) {
       const waitLabel = waitType === 'notebook' ? 'Notebook' : 'TensorBoard';
       document.title = `${titlePrefix} ${state}`;
@@ -63,7 +59,7 @@ function createWsUrl(eventUrl) {
   }
 }
 
-function waitForEvents(eventUrl, msgHandler, jumpDest) {
+function waitForEvents(eventUrl,jumpDest) {
   const url = createWsUrl(eventUrl);
   const socket = new WebSocket(url);
   socket.addEventListener('open', function() {
@@ -95,6 +91,6 @@ function waitForEvents(eventUrl, msgHandler, jumpDest) {
   }
   if (typeof eventUrl === 'string' && eventUrl.length >= 2 &&
       typeof jumpDest === 'string' && jumpDest.length >= 2) {
-    waitForEvents(eventUrl, msgHandler, jumpDest);
+    waitForEvents(eventUrl, jumpDest);
   }
 })();
