@@ -1,0 +1,115 @@
+.. _ide-setup:
+
+#####################
+ IDE Setup (PyCharm)
+#####################
+
+Model developers may develop and debug models with their preferred IDE.
+In this guide, we show how to configure `PyCharm
+<https://www.jetbrains.com/pycharm/>`__ in order to develop and debug
+experiments submitted from Python, i.e., via :ref:`this pattern
+<model-definitions_trial-api-init>` for the Native API or :ref:`this
+pattern <model-definitions_trial-api-create>` for the Trial API.
+
+***************
+ Prerequisites
+***************
+
+This guide assumes that you have created a `virtualenv
+<https://virtualenv.pypa.io/en/latest/>`__ or `Conda
+<https://docs.conda.io/en/latest/>`__ environment in which you have
+installed the dependencies required for local development. For example,
+to create a Python 3.7 virtualenv:
+
+.. code::
+
+   python3.7 -m venv /path/to/env/
+   source /path/to/env/bin/activate
+
+You will then want to install the ``determined`` Python package, as well
+the TensorFlow or PyTorch library versions that your code will run
+against when submitting to the cluster. For example, if you are using
+Determined's `default task container image
+<https://github.com/determined-ai/environments/blob/master/Makefile>`__
+for a PyTorch model, you would install the following dependencies in
+your virtualenv:
+
+.. code::
+
+   pip install determined==<Determined version>
+   pip install torch==<Determined's default image PyTorch version, e.g., 1.4.0>
+   pip install torchvision==<Determined's default image torchvision version, e.g., 0.5.0>
+
+If you are using a :ref:`custom Docker image <custom-docker-images>` for
+running task containers, you must also install the same dependencies in
+your local development environment.
+
+.. warning::
+
+   Determined's :ref:`Native API <tutorials_native-api>` supports local
+   test execution that does not run in a task container. Therefore, you
+   must install the same task container dependencies in your local
+   development environment in order to reliably run locally.
+
+***********************
+ PyCharm Configuration
+***********************
+
+The following steps show how to locally develop and debug Determined
+model code. These steps are based on our Native PyTorch MNIST
+:ref:`example <examples-native-api>`.
+
+#. Open the top-level model directory in PyCharm.
+
+#. In PyCharm Preferences, navigate to your project, then ``Project
+   Interpreter``.
+
+#. Click the gear icon next to the interpreter dropdown, then
+   ``Add...``.
+
+   .. image:: /assets/images/ide_setup1.png
+      :width: 80%
+      :align: center
+
+#. With ``Virtualenv Environment`` selected, click the ``Existing
+   environment`` radio button, then ``...`` next to the ``Interpreter``
+   dropdown.
+
+   .. image:: /assets/images/ide_setup2.png
+      :width: 80%
+      :align: center
+
+#. Navigate to your virtualenv's interpreter. If you followed the
+   prerequisites above, you will find this at
+   ``/path/to/env/bin/python3.7``.
+
+#. Validate that all imports in ``model_def.py`` are recognized (i.e.,
+   not underlined in red).
+
+   .. image:: /assets/images/ide_setup3.png
+      :width: 80%
+      :align: center
+
+#. Next create a run configuration in PyCharm. Go to ``Run``, then
+   ``Edit Configurations...``, and select ``Python``. In the ``Script
+   path`` field, select ``trial_impl.py``. Add ``--local --test`` to the
+   ``Parameters`` field and click ``OK``.
+
+   .. image:: /assets/images/ide_setup4.png
+      :width: 80%
+      :align: center
+
+#. You can now set break points in your model definition and debug
+   locally by going to ``Run``, ``Debug...``, and selecting
+   ``trial_impl``. For example, to step into the training data loader:
+
+   .. image:: /assets/images/ide_setup5.png
+      :width: 80%
+      :align: center
+
+************
+ Next Steps
+************
+
+-  :ref:`model-definitions_trial-api`
+-  :ref:`model-definitions_native-api`

@@ -33,6 +33,7 @@ The full list of our how-to guides can be found below:
    hyperparameter-tuning
    install-cli
    install-main
+   ide-setup
    notebooks
    tensorboard
    use-trained-models

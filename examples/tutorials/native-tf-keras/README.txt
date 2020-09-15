@@ -24,3 +24,5 @@ Prerequisites
   <install-cluster>`.
 - The ``determined`` Python package should be installed in your local development
   environment, including TensorFlow: ``pip install 'determined[tensorflow]'``.
+  For more detailed instructions on setting up an IDE like PyCharm for local
+  development with Determined, refer to the :ref:`IDE Setup How-To <ide-setup>`.

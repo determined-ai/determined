@@ -16,6 +16,8 @@ guide is meant as deep-dive for advanced users. For a tutorial on
 getting started with the Native API, see the
 :ref:`tutorials_native-api`.
 
+.. _model-definitions_trial-api-init:
+
 *************************************
  Create an Experiment via ``init()``
 *************************************
