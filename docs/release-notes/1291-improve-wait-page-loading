@@ -1,0 +1,5 @@
+:orphan:
+
+**Improvements**
+
+- Improve wait page loading and speed up TensorBoard and Notebook open up.
