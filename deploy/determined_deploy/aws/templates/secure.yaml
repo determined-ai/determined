@@ -2,10 +2,42 @@ Description:  This template deploys a VPC, with a public and private subnet. It 
   with a default route on the public subnet with a NAT gateway, and default routes for them in the private subnet.
 Mappings:
   RegionMap:
+    ap-northeast-1:
+      Master: junk-ami-ap_northeast_1_master_ami
+      Agent: junk-ami-ap_northeast_1_agent_ami
+      Bastion: junk-ami-ap_northeast_1_bastion_ami
+    ap-northeast-2:
+      Master: junk-ami-ap_northeast_2_master_ami
+      Agent: junk-ami-ap_northeast_2_agent_ami
+      Bastion: junk-ami-ap_northeast_2_bastion_ami
+    ap-southeast-1:
+      Master: junk-ami-ap_southeast_1_master_ami
+      Agent: junk-ami-ap_southeast_1_agent_ami
+      Bastion: junk-ami-ap_southeast_1_bastion_ami
+    ap-southeast-2:
+      Master: junk-ami-ap_southeast_2_master_ami
+      Agent: junk-ami-ap_southeast_2_agent_ami
+      Bastion: junk-ami-ap_southeast_2_bastion_ami
+    eu-central-1:
+      Master: junk-ami-eu_central_1_master_ami
+      Agent: junk-ami-eu_central_1_agent_ami
+      Bastion: junk-ami-eu_central_1_bastion_ami
+    eu-west-1:
+      Master: junk-ami-eu_west_1_master_ami
+      Agent: junk-ami-eu_west_1_agent_ami
+      Bastion: junk-ami-eu_west_1_bastion_ami
+    eu-west-2:
+      Master: junk-ami-eu_west_2_master_ami
+      Agent: junk-ami-eu_west_2_agent_ami
+      Bastion: junk-ami-eu_west_2_bastion_ami
     us-east-1:
       Master: ami-66506c1c
       Agent: ami-035df2edf93f67c5d
       Bastion: ami-0a1262fb77d0911ef
+    us-east-2:
+      Master: junk-ami-us_east_2_master_ami
+      Agent: junk-ami-us_east_2_agent_ami
+      Bastion: junk-ami-us_east_2_bastion_ami
     us-west-2:
       Master: ami-79873901
       Agent: ami-0a0b109aeb7ca72fc
