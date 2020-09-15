@@ -13,4 +13,5 @@ from determined.experimental._native import (
     test_one_batch,
     init_native,
     _load_trial_on_local,
+    submit,
 )

@@ -13,9 +13,14 @@ import pytest
 import requests
 
 import determined_common.api.authentication as auth
+from determined import experimental
 from determined_common import api, yaml
 from tests import cluster
 from tests import config as conf
+
+
+def native_experiment_submit(context_dir, configuration, follow_logs=False):
+    experimental.submit(context_dir=context_dir, config=configuration, follow_logs=follow_logs)
 
 
 def maybe_create_native_experiment(context_dir: str, command: List[str]) -> Optional[int]:

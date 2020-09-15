@@ -68,17 +68,7 @@ def _submit_experiment(
     config["internal"]["native"] = {"command": _set_command_default(context_path, command)}
     logging.info(f"Creating an experiment with config: {config}")
 
-    if master_url is None:
-        master_url = util.get_default_master_address()
-
-    exp_context = context.Context.from_local(context_path)
-
-    # When a requested_user isn't specified to initialize_session(), the
-    # authentication module will attempt to use the token store to grab the
-    # current logged-in user. If there is no logged in user found, it will
-    # default to constants.DEFAULT_DETERMINED_USER.
-    auth.initialize_session(master_url, requested_user=None, try_reauth=True)
-
+    config, exp_context, master_url = _construct_experiment(context_dir, config, master_url)
     if test:
         return api.create_test_experiment_and_follow_logs(master_url, config, exp_context)
     else:
@@ -392,3 +382,47 @@ def create_trial_instance(
     env, rendezvous_info, hvd_config = det._make_local_execution_env(False, config, hparams)
     trial_context = trial_def.trial_context_class(env, hvd_config)
     return trial_def(trial_context)
+
+
+def submit(
+    context_dir: str,
+    config: Optional[Dict[str, Any]] = None,
+    test: bool = False,
+    master_url: Optional[str] = None,
+    follow_logs: bool = False,
+) -> Any:
+    determined_common.set_logger(
+        util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
+    )
+
+    config, exp_context, master_url = _construct_experiment(context_dir, config, master_url)
+    logging.info(f"Creating an experiment with config: {config}")
+
+    if test:
+        return api.create_test_experiment_and_follow_logs(master_url, config, exp_context)
+
+    elif follow_logs:
+        return api.create_experiment_and_follow_logs(master_url, config, exp_context)
+
+    experiment_id = api.create_experiment(master_url, config, exp_context)
+    logging.info(f"Successfully submitted experiment {experiment_id}")
+    return experiment_id
+
+
+def _construct_experiment(context_dir: str, config: Dict[str, Any], master_url: str):
+    if context_dir == "":
+        raise errors.InvalidExperimentException("Cannot specify the context directory to be empty.")
+
+    context_path = pathlib.Path(context_dir)
+    config = {**constants.DEFAULT_EXP_CFG, **(config or {})}
+    if master_url is None:
+        master_url = util.get_default_master_address()
+
+    exp_context = context.Context.from_local(context_path)
+
+    # When a requested_user isn't specified to initialize_session(), the
+    # authentication module will attempt to use the token store to grab the
+    # current logged-in user. If there is no logged in user found, it will
+    # default to constants.DEFAULT_DETERMINED_USER.
+    auth.initialize_session(master_url, requested_user=None, try_reauth=True)
+    return config, exp_context, master_url
