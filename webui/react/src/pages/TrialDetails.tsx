@@ -419,6 +419,7 @@ If the problem persists please contact support.',
       ]}
       options={<TrialActions
         trial={trial}
+        trials={experiment.trials}
         onClick={handleActionClick}
         onSettled={pollTrialDetails} />}
       showDivider

@@ -1,11 +1,11 @@
-import { Button, Space } from 'antd';
-import React, { useCallback, useState } from 'react';
+import { Button, Space, Tooltip } from 'antd';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import Link from 'components/Link';
 import { ConditionalButton } from 'components/types';
 import { openCommand } from 'routes/utils';
 import { createTensorboard } from 'services/api';
-import { RunState, TBSourceType, TrialDetails } from 'types';
+import { RunState, TBSourceType, TrialDetails, TrialItem } from 'types';
 import { terminalRunStates } from 'utils/types';
 
 export enum Action {
@@ -16,6 +16,7 @@ export enum Action {
 
 interface Props {
   trial: TrialDetails;
+  trials: TrialItem[],
   onClick: (action: Action) => (() => void);
   onSettled: () => void; // A callback to trigger after an action is done.
 }
@@ -28,7 +29,7 @@ const trialWillNeverHaveData = (trial: TrialDetails): boolean => {
   return isTerminal && stepsWithSomeMetric.length === 0;
 };
 
-const TrialActions: React.FC<Props> = ({ trial, onClick, onSettled }: Props) => {
+const TrialActions: React.FC<Props> = ({ trial, trials, onClick, onSettled }: Props) => {
   const [ buttonStates, setButtonStates ] = useState<ButtonLoadingStates>({
     Continue: false,
     Logs: false,
@@ -43,11 +44,19 @@ const TrialActions: React.FC<Props> = ({ trial, onClick, onSettled }: Props) => 
     setButtonStates(state => ({ ...state, tensorboard: false }));
   }, [ trial.id, onSettled ]);
 
+  const trialCompletedCheckpointSum = useMemo(() => {
+    return trials.reduce((acc, trial) => acc + trial.numCompletedCheckpoints, 0);
+  }, [ trials ]);
+
   const actionButtons: ConditionalButton<TrialDetails>[] = [
     {
-      button: <Button
-        key={Action.Continue}
-        onClick={onClick(Action.Continue)}>Continue Trial</Button>,
+      button: (trialCompletedCheckpointSum > 0 ? (
+        <Button key={Action.Continue} onClick={onClick(Action.Continue)}>Continue Trial</Button>
+      ) : (
+        <Tooltip key={Action.Continue} title={'No checkpoints found. Cannot continue trial.'}>
+          <Button disabled>Continue Trial</Button>
+        </Tooltip>
+      )),
     },
     {
       button: <Button
