@@ -41,13 +41,17 @@ type PlotArguments = [
 
 const defaultLayout: Partial<Plotly.Layout> = {
   height: 400,
+  hovermode: 'x unified',
+  legend: { xanchor: 'right' },
   margin: { b: 50, l: 50, pad: 6, r: 10, t: 10 },
+  showlegend: true,
   xaxis: { hoverformat: '' },
   yaxis: { type: Scale.Linear },
 };
 
 const defaultConfig: Partial<Plotly.Config> = {
   displayModeBar: false,
+  doubleClick: false,
   responsive: true,
 };
 
@@ -60,7 +64,13 @@ const MetricChart: React.FC<Props> = (props: Props) => {
   const [ range, setRange ] = useState<Range>();
   const [ maxRange, setMaxRange ] = useState<Range>();
   const [ isRendered, setIsRendered ] = useState(false);
+  const [ isZoomed, setIsZoomed ] = useState(false);
   const resize = useResize(chartRef);
+
+  const handleDoubleClick = useCallback(() => {
+    setRange(clone(maxRange));
+    setIsZoomed(false);
+  }, [ maxRange ]);
 
   const handleRelayout = useCallback((event: PlotRelayoutEvent) => {
     // Brute force check to keep Typescript happy.
@@ -74,8 +84,7 @@ const MetricChart: React.FC<Props> = (props: Props) => {
         xaxis: [ event['xaxis.range[0]'], event['xaxis.range[1]'] ],
         yaxis: [ event['yaxis.range[0]'], event['yaxis.range[1]'] ],
       });
-    } else if (event['xaxis.autorange'] || event['yaxis.autorange']) {
-      setRange(undefined);
+      setIsZoomed(true);
     }
   }, []);
 
@@ -93,10 +102,12 @@ const MetricChart: React.FC<Props> = (props: Props) => {
       await Plotly.react.apply(null, args);
     } else {
       const chart: PlotlyHTMLElement = await Plotly.newPlot.apply(null, args);
+      chart.on('plotly_doubleclick', handleDoubleClick);
       chart.on('plotly_relayout', handleRelayout);
+      chart.on('plotly_legendclick', () => false);
       setIsRendered(true);
     }
-  }, [ handleRelayout, isRendered ]);
+  }, [ handleDoubleClick, handleRelayout, isRendered ]);
 
   const handleScaleSelect = useCallback((newValue: SelectValue) => setScale(newValue as Scale), []);
 
@@ -122,23 +133,27 @@ const MetricChart: React.FC<Props> = (props: Props) => {
     const [ xPad, yPad ] = [ (xMax - xMin) * PADDING_PERCENT, (yMax - yMin) * PADDING_PERCENT ];
     const [ xMinEdge, xMaxEdge ] = [ xMin - xPad, xMax + xPad ];
     const [ yMinEdge, yMaxEdge ] = [ yMin - yPad, yMax + yPad ];
-
-    setMaxRange({
+    const newMaxRange: Range = {
       xaxis: [ Math.max(0, xMinEdge), xMaxEdge ],
       yaxis: [ yMinEdge < 0 ? yMinEdge : Math.max(0, yMinEdge), yMaxEdge ],
-    });
-  }, [ props.data ]);
+    };
+
+    setMaxRange(newMaxRange);
+
+    if (!isZoomed) setRange(clone(newMaxRange));
+  }, [ isZoomed, props.data ]);
 
   useEffect(() => {
     const layout = clone(defaultLayout);
+    const maxRangeCopy = clone(maxRange);
     layout.xaxis.title = props.xLabel;
     layout.yaxis.title = props.yLabel;
     layout.yaxis.type = scale;
-    layout.xaxis.range = range ? range.xaxis : (maxRange ? maxRange.xaxis : undefined);
-    layout.yaxis.range = range ? range.yaxis : (maxRange ? maxRange.yaxis : undefined);
+    layout.xaxis.range = range ? range.xaxis : (maxRangeCopy ? maxRangeCopy.xaxis : undefined);
+    layout.yaxis.range = range ? range.yaxis : (maxRangeCopy ? maxRangeCopy.yaxis : undefined);
 
     renderPlot(id, props.data || [], layout);
-  }, [ id, maxRange, props.data, props.xLabel, props.yLabel, renderPlot, range, scale ]);
+  }, [ id, maxRange, props.data, props.xLabel, props.yLabel, range, renderPlot, scale ]);
 
   /*
    * Dynamcially swapping out chart handlers is needed otherwise
@@ -146,13 +161,19 @@ const MetricChart: React.FC<Props> = (props: Props) => {
    */
   useEffect(() => {
     const chart = chartRef.current as unknown as PlotlyHTMLElement;
-    if (!chart) return;
+    if (!chart || !chart.removeAllListeners) return;
 
+    chart.removeAllListeners('plotly_doubleclick');
     chart.removeAllListeners('plotly_relayout');
+    chart.on('plotly_doubleclick', handleDoubleClick);
     chart.on('plotly_relayout', handleRelayout);
 
-    return () => chart.removeAllListeners('plotly_relayout');
-  }, [ handleRelayout, id ]);
+    return () => {
+      chart.removeAllListeners('plotly_legendclick');
+      chart.removeAllListeners('plotly_doubleclick');
+      chart.removeAllListeners('plotly_relayout');
+    };
+  }, [ handleDoubleClick, handleRelayout, id ]);
 
   useLayoutEffect(() => {
     if (!chartRef.current) return;
