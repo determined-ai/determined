@@ -2,4 +2,4 @@
 
 **Improvements**
 
-- Improve wait page loading and speed up TensorBoard and Notebook open up.
+- Improve wait page loading and optimize startup for TensorBoard and Notebook tasks.
