@@ -82,7 +82,8 @@ const trialContinueConfig = (
 const STORAGE_PATH = 'trial-detail';
 const STORAGE_LIMIT_KEY = 'limit';
 const STORAGE_CHECKPOINT_VALIDATION_KEY = 'checkpoint-validation';
-const STORAGE_METRICS_KEY = 'metrics';
+const STORAGE_CHART_METRICS_KEY = 'metrics/chart';
+const STORAGE_TABLE_METRICS_KEY = 'metrics/table';
 
 const TrialDetailsComp: React.FC = () => {
   const { trialId: trialIdParam } = useParams<Params>();
@@ -113,6 +114,11 @@ const TrialDetailsComp: React.FC = () => {
   const hparams = trial?.hparams;
   const experimentId = trial?.experimentId;
   const experimentConfig = experiment?.config;
+  const storageMetricsPath = experiment ? `experiments/${experiment.id}` : undefined;
+  const storageChartMetricsKey =
+    storageMetricsPath && `${storageMetricsPath}/${STORAGE_CHART_METRICS_KEY}`;
+  const storageTableMetricsKey =
+    storageMetricsPath && `${storageMetricsPath}/${STORAGE_TABLE_METRICS_KEY}`;
 
   const metricNames = useMemo(() => extractMetricNames(trial?.steps), [ trial?.steps ]);
 
@@ -313,10 +319,8 @@ If the problem persists please contact support.',
 
   const handleMetricChange = useCallback((value: MetricName[]) => {
     setMetrics(value);
-
-    if (!experiment) return;
-    storage.set(`experiments/${experiment.id}/${STORAGE_METRICS_KEY}`, value);
-  }, [ experiment, storage ]);
+    if (storageTableMetricsKey) storage.set(storageTableMetricsKey, value);
+  }, [ storage, storageTableMetricsKey ]);
 
   const handleEditContConfig = useCallback(() => {
     updateStatesFromForm();
@@ -353,13 +357,12 @@ If the problem persists please contact support.',
         setExperiment(response);
 
         // Default to selecting config search metric only.
-        const storageMetricsKey = `experiments/${response.id}/${STORAGE_METRICS_KEY}`;
         const searcherName = response.config?.searcher?.metric;
         const defaultMetric = metricNames.find(metricName => {
           return metricName.name === searcherName && metricName.type === MetricType.Validation;
         });
         const defaultMetrics = defaultMetric ? [ defaultMetric ] : [];
-        const initMetrics = storage.getWithDefault(storageMetricsKey, defaultMetrics);
+        const initMetrics = storage.getWithDefault(storageTableMetricsKey || '', defaultMetrics);
         setMetrics(initMetrics);
       } catch (e) {
         handleError({
@@ -374,7 +377,7 @@ If the problem persists please contact support.',
     };
 
     fetchExperimentDetails();
-  }, [ experimentId, metricNames, storage ]);
+  }, [ experimentId, metricNames, storage, storageTableMetricsKey ]);
 
   if (isNaN(trialId)) return <Message title={`Invalid Trial ID ${trialIdParam}`} />;
   if (trialResponse.error !== undefined) {
@@ -429,6 +432,7 @@ If the problem persists please contact support.',
           <TrialChart
             metricNames={metricNames}
             steps={trial?.steps}
+            storageKey={storageChartMetricsKey}
             validationMetric={experimentConfig?.searcher.metric} />
         </Col>
         <Col span={24}>

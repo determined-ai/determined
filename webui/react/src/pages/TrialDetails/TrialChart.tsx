@@ -3,22 +3,33 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import MetricChart from 'components/MetricChart';
 import MetricSelectFilter from 'components/MetricSelectFilter';
+import useStorage from 'hooks/useStorage';
 import { MetricName, MetricType, Step } from 'types';
 
 interface Props {
   id?: string;
   metricNames: MetricName[];
   steps?: Step[];
+  storageKey?: string;
   validationMetric?: string;
 }
 
-const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }: Props) => {
+const STORAGE_PATH = 'trial-detail';
+
+const TrialChart: React.FC<Props> = ({
+  metricNames,
+  storageKey,
+  validationMetric,
+  ...props
+}: Props) => {
+  const storage = useStorage(STORAGE_PATH);
   const defaultMetric = metricNames.find(metricName => {
     return metricName.name === validationMetric && metricName.type === MetricType.Validation;
   });
   const fallbackMetric = metricNames && metricNames.length !== 0 ? metricNames[0] : undefined;
   const initMetric = defaultMetric || fallbackMetric;
-  const [ metrics, setMetrics ] = useState<MetricName[]>(initMetric ? [ initMetric ] : []);
+  const initMetrics = storage.getWithDefault(storageKey || '', initMetric ? [ initMetric ] : []);
+  const [ metrics, setMetrics ] = useState<MetricName[]>(initMetrics);
 
   const data: Partial<PlotData>[] = useMemo(() => {
     const dataMap: Record<string, Partial<PlotData>> = {};
@@ -63,7 +74,11 @@ const TrialChart: React.FC<Props> = ({ metricNames, validationMetric, ...props }
     }, [] as Partial<PlotData>[]);
   }, [ metrics, props.steps ]);
 
-  const handleMetricChange = useCallback((value: MetricName[]) => setMetrics(value), []);
+  const handleMetricChange = useCallback((value: MetricName[]) => {
+    setMetrics(value);
+
+    if (storageKey) storage.set(storageKey, value);
+  }, [ storage, storageKey ]);
 
   return <MetricChart
     data={data}
