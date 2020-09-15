@@ -11,7 +11,7 @@ const useRouteTracker = (): void => {
     recordPageAccess(location.pathname);
 
     // Listen for route changes
-    const unlisten = listen((location) => recordPageAccess(location.pathname));
+    const unlisten = listen((newLocation) => recordPageAccess(newLocation.pathname));
 
     // Return listener remover
     return unlisten;
