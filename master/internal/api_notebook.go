@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpc"
@@ -13,6 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/pkg/errors"
 )
 
 func (a *apiServer) GetNotebooks(
@@ -72,7 +71,7 @@ func (a *apiServer) NotebookLogs(
 	}
 
 	cmdManagerAddr := actor.Addr("notebooks", req.NotebookId)
-	eventManagerAddr := cmdManagerAddr.Child("events")
+	// eventManagerAddr := cmdManagerAddr.Child("events")
 
 	// TODO create an actor (logActor)
 	// register actor using logReq and context with eventManager
@@ -92,17 +91,9 @@ func (a *apiServer) NotebookLogs(
 	// those are reliant on the total event number. Still it wouldn't cause any real miscalculations
 	// from an external POV would it? same situation with trial logs
 
-	var total int
-	err := api.ActorRequest(a.m.system, eventManagerAddr, command.GetEventCount{}, &total)
-	if err != nil {
-		return errors.Wrapf(err, "failed to get event count from %s actor", eventManagerAddr)
-	}
-
-	offset, limit := api.EffectiveOffsetNLimit(int(req.Offset), int(req.Limit), total)
-
 	logRequest := api.LogsRequest{
-		Offset: offset,
-		Limit:  limit,
+		Offset: int(req.Offset),
+		Limit:  int(req.Limit),
 		Follow: req.Follow,
 	}
 
@@ -110,13 +101,28 @@ func (a *apiServer) NotebookLogs(
 		return resp.Send(&apiv1.NotebookLogsResponse{LogEntry: api.LogEntryToProtoLogEntry(log)})
 	}
 
-	terminationCheck := commandIsTermianted(cmdManagerAddr, a.m.system)
-
-	return api.ProcessLogs(
-		resp.Context(),
-		logRequest,
-		fetchCommandLogs(eventManagerAddr, a.m.system),
-		onLogEntry,
-		&terminationCheck,
+	myActor, ok := a.m.system.ActorOf(
+		cmdManagerAddr.Child("logStream"+"1"), // TODO unique id
+		api.NewCommandLogStreamActor(
+			resp.Context(),
+			logRequest,
+			onLogEntry,
+		),
 	)
+
+	if !ok {
+		return errors.New("failed to create actor")
+	}
+
+	return myActor.AwaitTermination()
+
+	// terminationCheck := commandIsTermianted(cmdManagerAddr, a.m.system)
+
+	// return api.ProcessLogs(
+	// 	resp.Context(),
+	// 	logRequest,
+	// 	fetchCommandLogs(eventManagerAddr, a.m.system),
+	// 	onLogEntry,
+	// 	&terminationCheck,
+	// )
 }

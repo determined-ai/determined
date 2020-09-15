@@ -7,6 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 )
@@ -21,7 +22,7 @@ type LogsRequest struct {
 }
 
 // TODO rename? or define inline
-type onLogEntry func(*logger.Entry) error
+type OnLogEntry func(*logger.Entry) error
 
 // LogFetcher fetchs returns a subset of logs based on a LogRequest.
 type LogFetcher func(LogsRequest) ([]*logger.Entry, error)
@@ -33,7 +34,7 @@ type TerminationCheck func() (bool, error)
 func ProcessLogs(ctx context.Context,
 	req LogsRequest,
 	logFetcher LogFetcher, // TODO a better name
-	cb onLogEntry,
+	cb OnLogEntry,
 	terminateCheck *TerminationCheck,
 ) error {
 	// FIXME how does it terminate when the caller goes away
@@ -79,4 +80,34 @@ func ProcessLogs(ctx context.Context,
 // LogEntryToProtoLogEntry turns a logger.LogEntry into logv1.LogEntry.
 func LogEntryToProtoLogEntry(logEntry *logger.Entry) *logv1.LogEntry {
 	return &logv1.LogEntry{Id: int32(logEntry.ID), Message: logEntry.Message}
+}
+
+type commandLogStreamActor struct {
+	req  LogsRequest
+	ctx  context.Context
+	send OnLogEntry
+}
+
+type CloseStream struct{}
+
+func NewCommandLogStreamActor(
+	ctx context.Context,
+	request LogsRequest,
+	send OnLogEntry,
+) *commandLogStreamActor {
+	return &commandLogStreamActor{req: request, ctx: ctx, send: send}
+}
+
+func (l *commandLogStreamActor) Receive(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case actor.PreStart:
+		ctx.Tell(ctx.Self().Parent(), l.req) // CHECK
+	case logger.Entry:
+		l.send(&msg)
+	case CloseStream:
+		ctx.Self().Stop()
+	default:
+		return errors.New("unsupported message")
+	}
+	return nil
 }

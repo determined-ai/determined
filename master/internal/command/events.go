@@ -48,12 +48,14 @@ type event struct {
 
 // GetEventCount is an actor message used to get the number of events in buffer.
 type GetEventCount struct{}
+type Unsubscribe = actor.Address
 
 type eventManager struct {
 	bufferSize int
 	buffer     *ring.Ring
 	closed     bool
 	seq        int
+	logStreams map[*actor.Ref]webAPI.LogsRequest
 }
 
 func newEventManager() *eventManager {
@@ -61,6 +63,17 @@ func newEventManager() *eventManager {
 		bufferSize: defaultEventBufferSize,
 		buffer:     ring.New(defaultEventBufferSize),
 	}
+}
+
+func countNonNullRingValues(ring *ring.Ring) int {
+	// OPT we could use log_buffer here instead of a plain ring buffer.
+	count := 0
+	ring.Do(func(val interface{}) {
+		if val != nil {
+			count++
+		}
+	})
+	return count
 }
 
 func (e *eventManager) Receive(ctx *actor.Context) error {
@@ -93,24 +106,36 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 				child.Stop()
 			}
 		}
-	// case logactor:
-	// filter and stream to logActor based on the logRequest
-	// message to terminate logActor
-
-	case GetEventCount:
-		// OPT we could use log_buffer here instead of a plain ring buffer.
-		count := 0
-		e.buffer.Do(func(val interface{}) {
-			if val != nil {
-				count++
+		// Publish.
+		for streamActor, logRequest := range e.logStreams {
+			if eventSatisfiesLogRequest(logRequest, &msg) {
+				ctx.Tell(streamActor, eventToLogEntry(&msg))
 			}
-		})
-
-		ctx.Respond(count)
+		}
 
 	case webAPI.LogsRequest:
+		// normalize the request.
+		total := countNonNullRingValues(e.buffer)
+		offset, limit := webAPI.EffectiveOffsetNLimit(msg.Offset, msg.Limit, total)
+		msg.Limit = limit
+		msg.Offset = offset
+
+		// stream existing matching entries
 		logEntries := e.getLogEntries(msg)
-		ctx.Respond(logEntries)
+		for _, entry := range logEntries {
+			ctx.Respond(entry)
+		}
+
+		if msg.Follow {
+			e.logStreams[ctx.Sender()] = msg
+		} else {
+			ctx.Respond(webAPI.CloseStream{})
+		}
+
+	case actor.PostStop:
+		for actorRef := range e.logStreams {
+			ctx.Tell(actorRef, webAPI.CloseStream{})
+		}
 
 	case api.WebSocketConnected:
 		follow, err := strconv.ParseBool(msg.Ctx.QueryParam("follow"))
@@ -202,6 +227,10 @@ func eventToLogEntry(ev *event) *logger.Entry {
 	}
 }
 
+func eventSatisfiesLogRequest(req webAPI.LogsRequest, event *event) bool {
+	return event.Seq >= req.Offset
+}
+
 func (e *eventManager) getLogEntries(req webAPI.LogsRequest) []*logger.Entry {
 	events := e.buffer
 	var logs []*logger.Entry
@@ -209,7 +238,7 @@ func (e *eventManager) getLogEntries(req webAPI.LogsRequest) []*logger.Entry {
 	for i := 0; i < e.bufferSize; i++ {
 		if events.Value != nil {
 			event := events.Value.(event)
-			if event.Seq >= req.Offset && (req.Limit < 1 || len(logs) < req.Limit) {
+			if eventSatisfiesLogRequest(req, &event) && (req.Limit < 1 || len(logs) < req.Limit) {
 				logEntry := eventToLogEntry(&event)
 				logs = append(logs, logEntry)
 			}
