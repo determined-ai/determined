@@ -20,9 +20,14 @@ from tests import config as conf
 
 
 def native_experiment_submit(
-    context_dir: str, configuration: Dict[str, Any], follow_logs: bool = False
-) -> None:
-    experimental.submit(context_dir=context_dir, config=configuration, follow_logs=follow_logs)
+    context_dir: str, configuration: Dict[str, Any], master_url: str, follow_logs: bool = False
+) -> Any:
+    return experimental.submit(
+        context_dir=context_dir,
+        config=configuration,
+        master_url=master_url,
+        follow_logs=follow_logs,
+    )
 
 
 def maybe_create_native_experiment(context_dir: str, command: List[str]) -> Optional[int]:

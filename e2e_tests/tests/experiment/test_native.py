@@ -9,7 +9,12 @@ import typing
 import pytest
 
 from tests import config as conf
-from tests.experiment import create_native_experiment, experiment, native_experiment_submit
+from tests.experiment import (
+    create_native_experiment,
+    experiment,
+    native_experiment_submit,
+    wait_for_experiment_state,
+)
 
 NativeImplementation = collections.namedtuple(
     "NativeImplementation",
@@ -232,6 +237,8 @@ def test_pytorch_warm_start(implementation: NativeImplementation) -> None:
 
 @pytest.mark.e2e_cpu  # type: ignore
 def test_native_experiment_submit() -> None:
+    master_url = conf.make_master_url()
     context_dir = conf.official_examples_path("trial/mnist_pytorch")
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
-    native_experiment_submit(context_dir, config, follow_logs=True)
+    experiment_id = native_experiment_submit(context_dir, config, master_url)
+    wait_for_experiment_state(experiment_id, "COMPLETED", max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS)
