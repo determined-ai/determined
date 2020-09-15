@@ -81,6 +81,10 @@ func (a *apiServer) TrialLogs(
 			}
 		}
 		time.Sleep(batchWaitTime)
+		if err := resp.Context().Err(); err != nil {
+			// context is closed
+			return nil
+		}
 	}
 }
 
