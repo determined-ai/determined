@@ -104,6 +104,7 @@ const MetricChart: React.FC<Props> = (props: Props) => {
       const chart: PlotlyHTMLElement = await Plotly.newPlot.apply(null, args);
       chart.on('plotly_doubleclick', handleDoubleClick);
       chart.on('plotly_relayout', handleRelayout);
+      chart.on('plotly_legendclick', () => false);
       setIsRendered(true);
     }
   }, [ handleDoubleClick, handleRelayout, isRendered ]);
@@ -168,6 +169,7 @@ const MetricChart: React.FC<Props> = (props: Props) => {
     chart.on('plotly_relayout', handleRelayout);
 
     return () => {
+      chart.removeAllListeners('plotly_legendclick');
       chart.removeAllListeners('plotly_doubleclick');
       chart.removeAllListeners('plotly_relayout');
     };
