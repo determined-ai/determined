@@ -230,8 +230,8 @@ def test_pytorch_warm_start(implementation: NativeImplementation) -> None:
     run_warm_start_test(implementation)
 
 
-@pytest.mark.e2e_cpu
-def test_native_experiment_submit():
+@pytest.mark.e2e_cpu  # type: ignore
+def test_native_experiment_submit() -> None:
     context_dir = conf.official_examples_path("trial/mnist_pytorch")
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
     native_experiment_submit(context_dir, config, follow_logs=True)

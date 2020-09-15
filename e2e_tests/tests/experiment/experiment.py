@@ -19,7 +19,9 @@ from tests import cluster
 from tests import config as conf
 
 
-def native_experiment_submit(context_dir, configuration, follow_logs=False):
+def native_experiment_submit(
+    context_dir: str, configuration: Dict[str, Any], follow_logs: bool = False
+) -> None:
     experimental.submit(context_dir=context_dir, config=configuration, follow_logs=follow_logs)
 
 
