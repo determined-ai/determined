@@ -130,19 +130,19 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 			e.RemoveSusbscribers(ctx)
 		}
 
-	case webAPI.Unsubscribe:
+	case webAPI.CloseStream:
 		delete(e.logStreams, ctx.Sender().Address())
 
-	case webAPI.Subscribe:
+	case webAPI.LogsRequest:
 		// case webAPI.LogsRequest:
 		// normalize the request.
 		total := countNonNullRingValues(e.buffer)
-		offset, limit := webAPI.EffectiveOffsetNLimit(msg.Request.Offset, msg.Request.Limit, total)
-		msg.Request.Limit = limit
-		msg.Request.Offset = offset
+		offset, limit := webAPI.EffectiveOffsetNLimit(msg.Offset, msg.Limit, total)
+		msg.Limit = limit
+		msg.Offset = offset
 
 		// stream existing matching entries
-		logEntries := e.getLogEntries(msg.Request)
+		logEntries := e.getLogEntries(msg)
 
 		// QUESTION can't we get the sender information from the msg?
 		// QUESTION  how do i get actor ref from address.
@@ -159,8 +159,8 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		if msg.Request.Follow && !e.isTerminated {
-			e.logStreams[ctx.Sender().Address()] = msg.Request
+		if msg.Follow && !e.isTerminated {
+			e.logStreams[ctx.Sender().Address()] = msg
 		} else {
 			fmt.Println("sending close msg")
 			ctx.Tell(ctx.Sender(), webAPI.CloseStream{})

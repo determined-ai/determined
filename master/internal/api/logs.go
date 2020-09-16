@@ -90,12 +90,6 @@ type commandLogStreamActor struct {
 
 type CloseStream struct{}
 
-type Subscribe struct {
-	Request LogsRequest
-}
-
-type Unsubscribe struct{}
-
 func NewCommandLogStreamActor(
 	ctx context.Context,
 	request LogsRequest,
@@ -110,7 +104,7 @@ func (l *commandLogStreamActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		// CHECK set this as a child to event manager
-		ctx.Tell(eventMgrRef, Subscribe{Request: l.req})
+		ctx.Tell(eventMgrRef, l.req)
 	case logger.Entry:
 		// CHECK check context before sending?
 		l.send(&msg)
@@ -118,7 +112,7 @@ func (l *commandLogStreamActor) Receive(ctx *actor.Context) error {
 		fmt.Println("got closing stream")
 		ctx.Self().Stop()
 	case actor.PostStop:
-		ctx.Tell(eventMgrRef, Unsubscribe{})
+		ctx.Tell(eventMgrRef, CloseStream{})
 		break
 
 	default:
