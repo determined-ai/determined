@@ -1,9 +1,10 @@
 import {
   AnyTask, Checkpoint, Command, CommandState, CommandType, ExperimentHyperParams,
   ExperimentItem, RawJson, RecentCommandTask, RecentExperimentTask, RecentTask, RunState, Step,
+  TBSource, TBSourceType,
 } from 'types';
 
-import { deletePathList, getPathList, isNumber, setPathList } from './data';
+import { deletePathList, getPathList, isEqual, isNumber, setPathList } from './data';
 import { getDuration } from './time';
 
 /* Conversions to Tasks */
@@ -221,4 +222,19 @@ export const upgradeConfig = (config: RawJson): void => {
   });
 
   delete config.batches_per_step;
+};
+
+// Checks whether tensorboard source matches a given source list.
+export const tsbMatchesSource = (tensorboard: Command, source: TBSource): boolean => {
+  source.ids.sort();
+  switch (source.type) {
+    case TBSourceType.Experiment:
+      tensorboard.misc?.experimentIds?.sort();
+      return isEqual(tensorboard.misc?.experimentIds, source.ids);
+    case TBSourceType.Trial:
+      tensorboard.misc?.trialIds?.sort();
+      return isEqual(tensorboard.misc?.trialIds, source.ids);
+    default:
+      return false;
+  }
 };

@@ -23,7 +23,7 @@ import usePolling from 'hooks/usePolling';
 import useStorage from 'hooks/useStorage';
 import { handlePath, openBlank } from 'routes/utils';
 import {
-  archiveExperiment, createTensorboard, getExperimentList, killExperiment, setExperimentState,
+  archiveExperiment, getExperimentList, killExperiment, openOrCreateTensorboard, setExperimentState,
 } from 'services/api';
 import { patchExperiment } from 'services/api';
 import { V1GetExperimentsRequestSortBy } from 'services/api-ts-sdk';
@@ -217,7 +217,7 @@ const ExperimentList: React.FC = () => {
 
   const sendBatchActions = useCallback((action: Action): Promise<void[] | Command> => {
     if (action === Action.OpenTensorBoard) {
-      return createTensorboard({
+      return openOrCreateTensorboard({
         ids: selectedExperiments.map(experiment => experiment.id),
         type: TBSourceType.Experiment,
       });

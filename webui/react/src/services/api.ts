@@ -14,6 +14,7 @@ import {
   ExperimentFilters, ExperimentItem, Log, Pagination, RunState, TrialDetails,
 } from 'types';
 import { isExperimentTask } from 'utils/task';
+import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 
 import { decodeExperimentList, encodeExperimentState } from './decoder';
 
@@ -125,6 +126,17 @@ export const createNotebook = generateApi<CreateNotebookParams, Command>(Config.
 
 export const createTensorboard =
   generateApi<CreateTensorboardParams, Command>(Config.createTensorboard);
+
+export const openOrCreateTensorboard = async (
+  params: CreateTensorboardParams,
+): Promise<Command> => {
+  const tensorboards = await getTensorboards({});
+  const match = tensorboards.find(tensorboard =>
+    !terminalCommandStates.has(tensorboard.state)
+    && tsbMatchesSource(tensorboard, params));
+  if (match) return match;
+  return createTensorboard(params);
+};
 
 export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promise<void> => {
   if (isExperimentTask(task)) {
