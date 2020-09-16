@@ -39,14 +39,14 @@ class RuntimeErrorTrial(TFKerasTrial):
 
 if __name__ == "__main__":
     experimental.create(
-        trial_def=RuntimeErrorTrial,
         config={
             "description": "keras_runtime_error",
             "hyperparameters": {"global_batch_size": det.Constant(1)},
             "searcher": {"metric": "accuracy"},
             "data_layer": {"type": "lfs", "container_storage_path": "/tmp"},
+            "entrypoint": "tf_keras_runtime_error:RuntimeErrorTrial"
         },
         local=True,
         test=True,
-        context_dir=str(pathlib.Path.cwd()),
+        context_dir=pathlib.Path(__file__).parent,
     )
