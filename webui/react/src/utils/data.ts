@@ -1,4 +1,4 @@
-import { CommandMisc, CommandState, MetricName, MetricType, RawJson, RunState, State } from 'types';
+import { CommandState, MetricName, MetricType, RawJson, RunState, State } from 'types';
 
 export const isMap = <T>(data: T): boolean => data instanceof Map;
 export const isNumber = (data: unknown): data is number => typeof data === 'number';
@@ -83,12 +83,6 @@ const commandStateSortValues: Record<CommandState, number> = {
 
 export const alphanumericSorter = (a: string|number, b: string|number): number => {
   return a.toString().localeCompare(b.toString(), 'en', { numeric: true });
-};
-
-export const commandSourceSorter = (a: CommandMisc = {}, b: CommandMisc = {}): number => {
-  const aCount = Math.max((a.experimentIds || []).length, (a.trialIds || []).length, 0);
-  const bCount = Math.max((b.experimentIds || []).length, (b.trialIds || []).length, 0);
-  return aCount - bCount;
 };
 
 export const commandStateSorter = (a: CommandState, b: CommandState): number => {
