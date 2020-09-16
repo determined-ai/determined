@@ -110,8 +110,6 @@ const TaskList: React.FC = () => {
     return filterTasks(loadedTasks, filters, users.data || [], search);
   }, [ filters, loadedTasks, search, users.data ]);
 
-  const showBatch = selectedRowKeys.length !== 0;
-
   const taskMap = useMemo(() => {
     return (loadedTasks || []).reduce((acc, task) => {
       acc[task.id] = task;
@@ -295,7 +293,7 @@ const TaskList: React.FC = () => {
             showLimit={false}
             onChange={handleFilterChange} />
         </div>
-        <TableBatch message="Apply batch operations to multiple tasks." show={showBatch}>
+        <TableBatch selectedRowCount={selectedRowKeys.length}>
           <Button
             danger
             disabled={!hasKillable}
