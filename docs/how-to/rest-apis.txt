@@ -59,7 +59,7 @@ Sample request:
 
   curl -s "${DET_MASTER}/api/v1/auth/login" \
     -H 'Content-Type: application/json' \
-    --data-binary '{"username":"determined","password":""}' \
+    --data-binary '{"username":"determined","password":""}'
 
 Sample response: 
 
