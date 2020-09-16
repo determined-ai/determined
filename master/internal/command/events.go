@@ -131,7 +131,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		}
 
 	case webAPI.Unsubscribe:
-		delete(e.logStreams, msg.Sender)
+		delete(e.logStreams, ctx.Sender().Address())
 
 	case webAPI.Subscribe:
 		// case webAPI.LogsRequest:
@@ -150,17 +150,20 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		// CHECK is it safe to store and msg.Handler actors from actor ref pointer vs address.
 		// if sender != nil {
 		// }
+		if ctx.Sender() == nil {
+			break // TODO
+		}
 		for _, entry := range logEntries {
 			if entry != nil {
-				ctx.Self().System().TellAt(msg.Sender, *entry)
+				ctx.Tell(ctx.Sender(), *entry)
 			}
 		}
 
 		if msg.Request.Follow && !e.isTerminated {
-			e.logStreams[msg.Sender] = msg.Request
+			e.logStreams[ctx.Sender().Address()] = msg.Request
 		} else {
 			fmt.Println("sending close msg")
-			ctx.Self().System().TellAt(msg.Sender, webAPI.CloseStream{})
+			ctx.Tell(ctx.Sender(), webAPI.CloseStream{})
 		}
 
 	case actor.PostStop:
