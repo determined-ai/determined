@@ -1,5 +1,8 @@
 project_name: determined-agent
 
+env:
+  - CGO_ENABLED=0
+
 snapshot:
   name_template: "{{ .Env.VERSION }}"
 

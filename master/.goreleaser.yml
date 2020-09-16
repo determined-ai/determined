@@ -1,5 +1,8 @@
 project_name: determined-master
 
+env:
+  - CGO_ENABLED=0
+
 before:
   hooks:
     - make pre-package
