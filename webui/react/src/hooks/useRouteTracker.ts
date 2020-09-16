@@ -11,11 +11,18 @@ const useRouteTracker = (): void => {
     recordPageAccess(location.pathname);
 
     // Listen for route changes
-    const unlisten = listen((location) => recordPageAccess(location.pathname));
+    const unlisten = listen((newLocation) => recordPageAccess(newLocation.pathname));
 
     // Return listener remover
     return unlisten;
-  }, [ listen, location.pathname ]);
+
+    /*
+     * Explicitly avoid adding `location.pathname` as a dependency to avoid
+     * having the listener recreated each time `useRouteTracker` gets called
+     * during a render.
+     */
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [ listen ]);
 };
 
 export default useRouteTracker;
