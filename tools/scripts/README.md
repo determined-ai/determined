@@ -28,8 +28,14 @@ be registered in the determined repo. Here is the process:
    environments repository, parse out the image tags, and update the relevant
    entries in `bumpenvs.yaml`.  For every artifact found, this will set that
    artifact's `old` value to the previous `new` value, and set the new `new`
-   value to the artifact produced by CI.
+   value to the artifact produced by CI, including the task environments and
+   the agent AMIs.
 
-5. Run `./bumpenvs.py bumpenvs.yaml`.  This will do a simple string replacement
+5. (optional) Run `./refresh-ubuntu-amis.py bumpenvs.yaml`.  This will fetch
+   the up-to-date Ubuntu AMIs for each region for each of the `*_master_ami`
+   and `*_bastion_ami` image tags in bumpenvs.yaml.  This isn't strictly
+   necessary; we just need to run it periodically, and now is a fine time.
+
+6. Run `./bumpenvs.py bumpenvs.yaml`.  This will do a simple string replacement
    in the repository, replacing the `old` values with the `new` values for
    every image type identified in `bumpenvs.yaml`.
