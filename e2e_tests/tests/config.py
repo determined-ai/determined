@@ -20,16 +20,36 @@ def fixtures_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "fixtures", path)
 
 
-def official_examples_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/official", path)
-
-
-def experimental_path(path: str) -> str:
-    return os.path.join(os.path.dirname(__file__), "../../examples/experimental", path)
-
-
 def tutorials_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "../../examples/tutorials", path)
+
+
+def cv_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../examples/computer-vision", path)
+
+
+def nlp_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../examples/NLP", path)
+
+
+def nas_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../examples/NAS", path)
+
+
+def meta_learning_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../examples/meta-learning", path)
+
+
+def gan_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../examples/GAN", path)
+
+
+def decision_trees_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../examples/decision-trees", path)
+
+
+def data_layer_examples_path(path: str) -> str:
+    return os.path.join(os.path.dirname(__file__), "../../examples/data-layer", path)
 
 
 def load_config(config_path: str) -> Any:
