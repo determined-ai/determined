@@ -91,7 +91,6 @@ const genPlotInfo = (title: string, resources: Resource[]): PlotInfo => {
 };
 
 const SlotChart: React.FC<Props> = (props: Props) => {
-  const chartRef = useRef<HTMLDivElement>(null);
   const [ id ] = useState(generateAlphaNumeric());
   const [ oldPlotInfo, setOldPlotInfo ] = useState<PlotInfo>(genPlotInfo(props.title, []));
 
@@ -108,17 +107,14 @@ const SlotChart: React.FC<Props> = (props: Props) => {
   ) => {
     const args: PlotArguments = [ elementId, pInfo.data, pInfo.layout, pInfo.config ];
     await Plotly.react.apply(null, args);
-  }, [ id, plotInfo, props.resources ]);
+  }, [ ]);
 
   useEffect(() => {
     renderPlot(id, plotInfo);
-  }, [ id, plotInfo, props.resources ]);
+  }, [ id, plotInfo, renderPlot ]);
 
   return (
-    // <div className={css.base}>
-    <div>
-      <div id={id} ref={chartRef} />
-    </div>
+    <div id={id} />
   );
 };
 
