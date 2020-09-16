@@ -1,7 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
-- The log stream handlers could get into a situation where the requester
-has abandoned the request yet the handler still stays up and polls for
-new entries indefinitely. This fixes that by checking the context.

@@ -1,5 +1,0 @@
-:orphan:
-
-**IMPROVEMENTS**
-
-- WebUI: Before launching a new TensorBoard through the UI, direct the user to an already running TensorBoards if one exists.
