@@ -69,7 +69,7 @@ func (a *apiServer) NotebookLogs(
 	}
 
 	cmdManagerAddr := actor.Addr("notebooks", req.NotebookId)
-	// eventManagerAddr := cmdManagerAddr.Child("events")
+	eventManagerAddr := cmdManagerAddr.Child("events")
 
 	// TODO create an actor (logActor)
 	// register actor using logReq and context with eventManager
@@ -96,11 +96,12 @@ func (a *apiServer) NotebookLogs(
 	}
 
 	streamID := rand.Int() // FIXME
-	myActorAddr := cmdManagerAddr.Child("logStream" + string(streamID))
-	myActor, created := a.m.system.ActorOf(
-		myActorAddr,
+	logStreamActorAddr := cmdManagerAddr.Child("logStream" + string(streamID))
+	logStreamActor, created := a.m.system.ActorOf(
+		logStreamActorAddr,
 		api.NewCommandLogStreamActor(
 			resp.Context(),
+			a.m.system.Get(eventManagerAddr),
 			logRequest,
 			onLogEntry,
 		),
@@ -111,20 +112,8 @@ func (a *apiServer) NotebookLogs(
 		return errors.New("failed to create actor")
 	}
 
-	// QUESTION how do I set up logStreamActor to check this so here we can just
-	// awaitTermination
-	// If context and actor both give me channels? I could `select` on them?
-	return myActor.AwaitTermination()
-	// for {
-	// 	time.Sleep(200 * time.Millisecond)
-	// 	if resp.Context().Err() != nil {
-	// 		// Context is closed.
-	// 		myActor.Stop()
-	// 	}
-	// 	// myActor.isStopped..
-	// 	if a.m.system.Get(myActorAddr) == nil {
-	// 		break
-	// 	}
-	// }
-	return nil
+	// We delegate checking for context closure to logStreamActor accepting that
+	// it could stay up if there are no log messages coming in instead of busy checking
+	// to kill the actor.
+	return logStreamActor.AwaitTermination()
 }

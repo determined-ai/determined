@@ -146,6 +146,11 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		delete(e.logStreams, ctx.Sender().Address())
 
 	case webAPI.LogsRequest:
+		// CHECK is it safe to store and msg.Handler actors from actor ref pointer vs address.
+		if ctx.Sender() == nil {
+			return errors.New(ctxMissingSender)
+		}
+
 		total := countNonNullRingValues(e.buffer)
 		offset, limit := webAPI.EffectiveOffsetNLimit(msg.Offset, msg.Limit, total)
 		msg.Limit = limit
@@ -153,11 +158,6 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 
 		// stream existing matching entries
 		logEntries := e.getLogEntries(msg)
-
-		// CHECK is it safe to store and msg.Handler actors from actor ref pointer vs address.
-		if ctx.Sender() == nil {
-			return errors.New(ctxMissingSender)
-		}
 		for _, entry := range logEntries {
 			if entry != nil {
 				ctx.Tell(ctx.Sender(), *entry)

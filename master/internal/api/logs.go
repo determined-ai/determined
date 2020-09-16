@@ -81,9 +81,10 @@ func ProcessLogs(ctx context.Context,
 
 // CommandLogStreamActor handles streaming log messages for commands.
 type CommandLogStreamActor struct {
-	req  LogsRequest
-	ctx  context.Context
-	send OnLogEntry
+	req          LogsRequest
+	ctx          context.Context
+	send         OnLogEntry
+	eventManager *actor.Ref
 }
 
 // CloseStream indicates that the log stream should close.
@@ -93,22 +94,21 @@ type CloseStream struct{}
 // TODO get the event manger.
 func NewCommandLogStreamActor(
 	ctx context.Context,
+	eventManager *actor.Ref,
 	request LogsRequest,
 	send OnLogEntry,
 ) *CommandLogStreamActor {
-	return &CommandLogStreamActor{req: request, ctx: ctx, send: send}
+	return &CommandLogStreamActor{req: request, ctx: ctx, send: send, eventManager: eventManager}
 }
 
 // Receive implements the actor.Actor interface.
 func (l *CommandLogStreamActor) Receive(ctx *actor.Context) error {
-	eventMgrAddress := ctx.Self().Parent().Address().Child("events")
-	eventMgrRef := ctx.Self().System().Get(eventMgrAddress)
 
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		// CHECK set this as a child to event manager
 		// FIXME what if the eventmanager is in postStop
-		ctx.Tell(eventMgrRef, l.req)
+		ctx.Tell(l.eventManager, l.req)
 
 	case logger.Entry:
 		// TODO check context before sending
@@ -120,7 +120,7 @@ func (l *CommandLogStreamActor) Receive(ctx *actor.Context) error {
 		ctx.Self().Stop()
 
 	case actor.PostStop:
-		ctx.Tell(eventMgrRef, CloseStream{})
+		ctx.Tell(l.eventManager, CloseStream{})
 
 	default:
 		return errors.New(fmt.Sprintf("unsupported message %v %v", msg, ctx.Message()))
