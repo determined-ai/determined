@@ -1,4 +1,4 @@
-import { CommandMisc, CommandState, MetricName, MetricType, RawJson, RunState, State } from 'types';
+import { CommandState, MetricName, MetricType, RawJson, RunState, State } from 'types';
 
 export const isMap = <T>(data: T): boolean => data instanceof Map;
 export const isNumber = (data: unknown): data is number => typeof data === 'number';
