@@ -3,6 +3,8 @@ package internal
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"time"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
@@ -87,10 +89,6 @@ func (a *apiServer) NotebookLogs(
 	// 3. find active and matching subscribers for termination and log events
 	//   a. publish to subscribers based on parameters for: new events and termination
 
-	// CHECK Here we might have a synchronization issue which would only affect negative offsets since
-	// those are reliant on the total event number. Still it wouldn't cause any real miscalculations
-	// from an external POV would it? same situation with trial logs
-
 	logRequest := api.LogsRequest{
 		Offset: int(req.Offset),
 		Limit:  int(req.Limit),
@@ -101,8 +99,10 @@ func (a *apiServer) NotebookLogs(
 		return resp.Send(&apiv1.NotebookLogsResponse{LogEntry: api.LogEntryToProtoLogEntry(log)})
 	}
 
-	myActor, ok := a.m.system.ActorOf(
-		cmdManagerAddr.Child("logStream"+"1"), // TODO unique id
+	streamID := rand.Int() // FIXME
+	myActorAddr := cmdManagerAddr.Child("logStream" + string(streamID))
+	myActor, created := a.m.system.ActorOf(
+		myActorAddr,
 		api.NewCommandLogStreamActor(
 			resp.Context(),
 			logRequest,
@@ -110,19 +110,23 @@ func (a *apiServer) NotebookLogs(
 		),
 	)
 
-	if !ok {
+	if !created {
 		return errors.New("failed to create actor")
 	}
 
-	return myActor.AwaitTermination()
-
-	// terminationCheck := commandIsTermianted(cmdManagerAddr, a.m.system)
-
-	// return api.ProcessLogs(
-	// 	resp.Context(),
-	// 	logRequest,
-	// 	fetchCommandLogs(eventManagerAddr, a.m.system),
-	// 	onLogEntry,
-	// 	&terminationCheck,
-	// )
+	// QUESTION how do I set up logStreamActor to check this so here we can just
+	// awaitTermination
+	// return myActor.AwaitTermination()
+	for {
+		time.Sleep(1 * time.Second)
+		if resp.Context().Err() != nil {
+			// Context is closed.
+			myActor.Stop()
+		}
+		// FIXME myActor.isStopped
+		if a.m.system.Get(myActorAddr) == nil {
+			break
+		}
+	}
+	return nil
 }

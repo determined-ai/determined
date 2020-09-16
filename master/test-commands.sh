@@ -10,10 +10,16 @@ echo start asking for logs;
 echo
 
 curl-da.sh "http://localhost:8080/api/v1/notebooks/$id/logs?limit=-1"
+echo
 curl-da.sh "http://localhost:8080/api/v1/notebooks/$id/logs?limit=0"
+echo
 curl-da.sh "http://localhost:8080/api/v1/notebooks/$id/logs?limit=1"
+echo
 curl-da.sh "http://localhost:8080/api/v1/notebooks/$id/logs?offset=0&limit=2"
+echo
 curl-da.sh "http://localhost:8080/api/v1/notebooks/$id/logs?offset=1&limit=2"
+echo
 curl-da.sh "http://localhost:8080/api/v1/notebooks/$id/logs?offset=-1&limit=2"
+echo
 curl-da.sh "http://localhost:8080/api/v1/notebooks/$id/logs?follow=true"
 

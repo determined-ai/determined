@@ -88,7 +88,18 @@ type commandLogStreamActor struct {
 	send OnLogEntry
 }
 
-type CloseStream struct{}
+type CloseStream struct {
+	Address actor.Address
+}
+
+type Subscribe struct {
+	Request LogsRequest
+	Sender  actor.Address // FIXME can't we get this from actor.Context in events?
+}
+
+type Unsubscribe struct {
+	Sender actor.Address
+}
 
 func NewCommandLogStreamActor(
 	ctx context.Context,
@@ -99,15 +110,22 @@ func NewCommandLogStreamActor(
 }
 
 func (l *commandLogStreamActor) Receive(ctx *actor.Context) error {
+	eventMgrAddress := ctx.Self().Parent().Address().Child("events")
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		ctx.Tell(ctx.Self().Parent(), l.req) // CHECK
+		ctx.Self().System().TellAt(eventMgrAddress, Subscribe{Request: l.req, Sender: ctx.Self().Address()})
 	case logger.Entry:
+		// CHECK check context before sending?
 		l.send(&msg)
 	case CloseStream:
+		fmt.Println("got closing stream")
 		ctx.Self().Stop()
+	case actor.PostStop:
+		ctx.Self().System().TellAt(eventMgrAddress, Unsubscribe{Sender: ctx.Self().Address()})
+		break
+
 	default:
-		return errors.New("unsupported message")
+		return errors.New(fmt.Sprintf("unsupported message %v %v", msg, ctx.Message()))
 	}
 	return nil
 }

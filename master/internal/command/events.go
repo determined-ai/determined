@@ -48,20 +48,22 @@ type event struct {
 
 // GetEventCount is an actor message used to get the number of events in buffer.
 type GetEventCount struct{}
-type Unsubscribe = actor.Address
 
 type eventManager struct {
-	bufferSize int
-	buffer     *ring.Ring
-	closed     bool
-	seq        int
-	logStreams map[*actor.Ref]webAPI.LogsRequest
+	bufferSize   int
+	buffer       *ring.Ring
+	closed       bool
+	seq          int
+	isTerminated bool
+	logStreams   map[actor.Address]webAPI.LogsRequest
 }
 
 func newEventManager() *eventManager {
 	return &eventManager{
-		bufferSize: defaultEventBufferSize,
-		buffer:     ring.New(defaultEventBufferSize),
+		bufferSize:   defaultEventBufferSize,
+		buffer:       ring.New(defaultEventBufferSize),
+		logStreams:   make(map[actor.Address]webAPI.LogsRequest),
+		isTerminated: false,
 	}
 }
 
@@ -74,6 +76,14 @@ func countNonNullRingValues(ring *ring.Ring) int {
 		}
 	})
 	return count
+}
+
+func (e *eventManager) RemoveSusbscribers(ctx *actor.Context) {
+	for actorAddr := range e.logStreams {
+		ctx.Self().System().TellAt(actorAddr, webAPI.CloseStream{})
+		// OPT this will trigger a bunch of Unsubscribe message.
+	}
+	e.logStreams = make(map[actor.Address]webAPI.LogsRequest)
 }
 
 func (e *eventManager) Receive(ctx *actor.Context) error {
@@ -106,36 +116,58 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 				child.Stop()
 			}
 		}
+
 		// Publish.
 		for streamActor, logRequest := range e.logStreams {
 			if eventSatisfiesLogRequest(logRequest, &msg) {
-				ctx.Tell(streamActor, eventToLogEntry(&msg))
+				entry := eventToLogEntry(&msg)
+				ctx.Self().System().TellAt(streamActor, *entry)
 			}
 		}
 
-	case webAPI.LogsRequest:
-		// normalize the request.
-		total := countNonNullRingValues(e.buffer)
-		offset, limit := webAPI.EffectiveOffsetNLimit(msg.Offset, msg.Limit, total)
-		msg.Limit = limit
-		msg.Offset = offset
-
-		// stream existing matching entries
-		logEntries := e.getLogEntries(msg)
-		for _, entry := range logEntries {
-			ctx.Respond(entry)
+		if msg.TerminateRequestEvent != nil || msg.ExitedEvent != nil {
+			e.isTerminated = true
+			e.RemoveSusbscribers(ctx)
 		}
 
-		if msg.Follow {
-			e.logStreams[ctx.Sender()] = msg
+	case webAPI.Unsubscribe:
+		delete(e.logStreams, msg.Sender)
+
+	case webAPI.Subscribe:
+		// case webAPI.LogsRequest:
+		// normalize the request.
+		total := countNonNullRingValues(e.buffer)
+		offset, limit := webAPI.EffectiveOffsetNLimit(msg.Request.Offset, msg.Request.Limit, total)
+		msg.Request.Limit = limit
+		msg.Request.Offset = offset
+
+		// stream existing matching entries
+		logEntries := e.getLogEntries(msg.Request)
+
+		// QUESTION can't we get the sender information from the msg?
+		// QUESTION  how do i get actor ref from address.
+		// we can do this between trial and experiment: sendNextWorkload
+		// CHECK is it safe to store and msg.Handler actors from actor ref pointer vs address.
+		// if sender != nil {
+		// }
+		for _, entry := range logEntries {
+			if entry != nil {
+				ctx.Self().System().TellAt(msg.Sender, *entry)
+			}
+		}
+
+		if msg.Request.Follow && !e.isTerminated {
+			e.logStreams[msg.Sender] = msg.Request
 		} else {
-			ctx.Respond(webAPI.CloseStream{})
+			fmt.Println("sending close msg")
+			ctx.Self().System().TellAt(msg.Sender, webAPI.CloseStream{})
 		}
 
 	case actor.PostStop:
-		for actorRef := range e.logStreams {
-			ctx.Tell(actorRef, webAPI.CloseStream{})
-		}
+		// Whenever the event manager goes does we should stop all logStreamActors.
+		// QUESTION should we make logStreamActors a child of eventmanager? this would
+		// automatically be handled.
+		e.RemoveSusbscribers(ctx)
 
 	case api.WebSocketConnected:
 		follow, err := strconv.ParseBool(msg.Ctx.QueryParam("follow"))
@@ -233,7 +265,8 @@ func eventSatisfiesLogRequest(req webAPI.LogsRequest, event *event) bool {
 
 func (e *eventManager) getLogEntries(req webAPI.LogsRequest) []*logger.Entry {
 	events := e.buffer
-	var logs []*logger.Entry
+	// var logs []*logger.Entry
+	logs := make([]*logger.Entry, 0)
 
 	for i := 0; i < e.bufferSize; i++ {
 		if events.Value != nil {
