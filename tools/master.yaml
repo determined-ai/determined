@@ -16,6 +16,9 @@ db:
   name: determined
   password: postgres
 
+log:
+  level: trace
+
 root: build
 
 enable_cors: true
