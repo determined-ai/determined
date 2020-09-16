@@ -3,12 +3,10 @@ import pathlib
 import determined as det
 from determined import experimental
 
-import model_def
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--mode", dest="mode", help="Specifies test mode or submit mode.", default="submit"
+        "--test", dest='test', action="store_true", help="Specifies test mode", default=False
     )
     args = parser.parse_args()
 
@@ -41,11 +39,11 @@ if __name__ == "__main__":
             "num_training_steps": det.Constant(value=459),
             "max_seq_length": det.Constant(value=128),
         },
+        "entrypoint": "model_def:BertPytorch"
     }
 
     experimental.create(
-        trial_def=model_def.BertPytorch,
-        mode=experimental.Mode(args.mode),
+        test=args.test,
         context_dir=str(pathlib.Path.cwd()),
         config=config,
     )

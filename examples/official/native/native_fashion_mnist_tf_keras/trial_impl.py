@@ -9,8 +9,6 @@ import pathlib
 import determined as det
 from determined import experimental
 
-import model_def
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -37,11 +35,11 @@ if __name__ == "__main__":
                 "epochs": 5,
             }
         },
+        "entrypoint": "model_def:FashionMNISTTrial"
     }
     config.update(json.loads(args.config))
 
     experimental.create(
-        trial_def=model_def.FashionMNISTTrial,
         config=config,
         local=args.local,
         test=args.test,
