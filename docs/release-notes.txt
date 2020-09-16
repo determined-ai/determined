@@ -43,7 +43,7 @@ Version 0.13.4
 
 - Improve handling of certain corner cases where distributed training jobs could hang indefinitely.
 
-- Fix an issue where detecting GPU availability in TensorFlow code would cause EstimatorTrial models to OOM.
+- Fix an issue where detecting GPU availability in TensorFlow code would cause ``EstimatorTrial`` models to OOM.
 
 - Fix an issue where accessing logs could create a memory leak.
 
