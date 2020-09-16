@@ -1,5 +1,13 @@
 # httpPort configures the port at which the Determined master listens for connections on.
-httpPort: 8080 
+httpPort: 8080
+
+# When useNodePortForMaster is set to false (default), a LoadBalancer service is deployed
+# to make the Determined master reachable from outside the cluster. When useNodePortForMaster
+# is set to true, the master will instead be exposed behind a NodePort service. When using a
+# NodePort service, users will typically have to configure an Ingress to make the Determined
+# master reachable from outside the cluster. NodePort service is recommended when configuring
+# TLS termination in a load-balancer.
+useNodePortForMaster: false
 
 # db sets the configurations for the database.
 db:

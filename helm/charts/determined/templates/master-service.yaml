@@ -10,6 +10,10 @@ spec:
   ports:
   - port: {{ .Values.httpPort | default 8080 }}
     protocol: TCP
-  type: LoadBalancer
+  {{ $serviceType := "LoadBalancer" }}
+  {{- if .Values.useNodePortForMaster | default false -}}
+    {{ $serviceType = "NodePort" }}
+  {{- end }}
+  type: {{ $serviceType }}
   selector:
     app: determined-master-{{ .Release.Name }}
