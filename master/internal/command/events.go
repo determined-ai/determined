@@ -21,7 +21,7 @@ import (
 )
 
 const defaultEventBufferSize = 200
-const ctxMissingSender = "message is missing sender infromation"
+const ctxMissingSender = "message is missing sender information"
 
 // event is the union of all event types during the parent lifecycle.
 type event struct {
@@ -48,6 +48,9 @@ type event struct {
 	LogEvent *string `json:"log_event"`
 }
 
+type logSubscribers = map[*actor.Ref]webAPI.LogsRequest // CHECK could we get different pointers to
+// the same ref? thus resulting in different map keys
+
 // GetEventCount is an actor message used to get the number of events in buffer.
 type GetEventCount struct{}
 
@@ -57,14 +60,14 @@ type eventManager struct {
 	closed       bool
 	seq          int
 	isTerminated bool
-	logStreams   map[actor.Address]webAPI.LogsRequest // TODO actor.Ref
+	logStreams   logSubscribers // TODO actor.Ref
 }
 
 func newEventManager() *eventManager {
 	return &eventManager{
 		bufferSize:   defaultEventBufferSize,
 		buffer:       ring.New(defaultEventBufferSize),
-		logStreams:   make(map[actor.Address]webAPI.LogsRequest),
+		logStreams:   make(logSubscribers),
 		isTerminated: false,
 	}
 }
@@ -82,11 +85,11 @@ func countNonNullRingValues(ring *ring.Ring) int {
 }
 
 func (e *eventManager) RemoveSusbscribers(ctx *actor.Context) {
-	for actorAddr := range e.logStreams {
+	for actor := range e.logStreams {
 		// OPT this will trigger a bunch of CloseStream message that'll come back to eventManager.
-		ctx.Self().System().TellAt(actorAddr, webAPI.CloseStream{})
+		ctx.Tell(actor, webAPI.CloseStream{})
 	}
-	e.logStreams = make(map[actor.Address]webAPI.LogsRequest)
+	e.logStreams = make(logSubscribers)
 }
 
 func (e *eventManager) ProcessNewLogEvent(ctx *actor.Context, msg event) {
@@ -95,7 +98,7 @@ func (e *eventManager) ProcessNewLogEvent(ctx *actor.Context, msg event) {
 		// OPT we could probably use actor hirearchy to message multiple logStreamActors at once.
 		if eventSatisfiesLogRequest(logRequest, &msg) {
 			entry := eventToLogEntry(&msg)
-			ctx.Self().System().TellAt(streamActor, *entry)
+			ctx.Tell(streamActor, *entry)
 		}
 	}
 
@@ -143,7 +146,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		if ctx.Sender() == nil {
 			return errors.New(ctxMissingSender)
 		}
-		delete(e.logStreams, ctx.Sender().Address())
+		delete(e.logStreams, ctx.Sender())
 
 	case webAPI.LogsRequest:
 		// CHECK is it safe to store and msg.Handler actors from actor ref pointer vs address.
@@ -165,7 +168,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		}
 
 		if msg.Follow && !e.isTerminated {
-			e.logStreams[ctx.Sender().Address()] = msg
+			e.logStreams[ctx.Sender()] = msg
 		} else {
 			ctx.Tell(ctx.Sender(), webAPI.CloseStream{})
 		}
