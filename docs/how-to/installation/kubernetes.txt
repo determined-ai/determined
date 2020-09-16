@@ -43,13 +43,21 @@ When the Determined Helm chart is installed, the following entities will
 be created:
 
 #. Deployment of the Determined master.
+
 #. ConfigMap containing configurations for the Determined master.
-#. LoadBalancer service to make the Determined master accessible.
+
+#. LoadBalancer service to make the Determined master accessible. Later
+   in this guide, we descrive how it is possible to replace this with a
+   NodePort service.
+
 #. ServiceAcccount which will be used by the Determined master.
+
 #. Deployment of a Postgres database. Later in this guide, we describe
    how an external database can be used instead.
+
 #. PersistentVolumeClaim for the Postgres database. Omitted if using an
    external database.
+
 #. Service to allow the Determined master to communicate with the
    Postgres database. Omitted if using an external database.
 
@@ -151,6 +159,78 @@ undesirable, users can configure the Helm chart to use an external
 Postgres database by setting ``db.hostAddress`` to the IP address of
 their database. If ``db.hostAddress`` is configured, the Determined Helm
 chart will not deploy a database.
+
+TLS (Optional)
+==============
+
+By default, the Helm chart will deploy a load-balancer which makes the
+Determined master accessible over HTTP. To secure your cluster, Determined
+supports configuring `TLS encryption
+<https://en.wikipedia.org/wiki/Transport_Layer_Security>`__ which can be
+configured to terminate inside a load-balancer or inside the Determined
+master itself. To configure TLS, users should set ``useNodePortForMaster``
+to ``true``. This will instruct Determined to deploy a NodePort service
+for the master. Users can then configure an `Ingress
+<https://kubernetes.io/docs/concepts/services-networking/ingress/#tls>`__
+that performs TLS termination in the load balancer and forward plain test
+to the NodePort service, or forwards TLS encrypted data. Please note
+when configuring an Ingress that you need to have an `Ingress controller
+<https://github.com/bitnami/charts/tree/master/bitnami/nginx-ingress-controller>`__
+runing your cluster.
+
+#. **TLS termination in a load-balancer (e.g., nginx).** This option will
+   provide TLS encryption between the client and the load-balancer, with all
+   communication inside the cluster performed via http. To configure
+   this option set ``useNodePortForMaster`` to ``true`` and then configure an
+   Ingress service to perform TLS termination and forward the plain text traffic
+   to the Determined master.
+
+
+#. **TLS termination in the Determined master.** This option will provide TLS
+   encrytption inside the Kubernetes cluster. All communication with the
+   master will encrypted. Communication between task containers
+   (distributed triaining) will not be encrypted.  To configure
+   this option create a Kuberentes TLS secret within the
+   namespace where Determined is being installed and set ``tlsSecret``
+   to be the name of this secret. When using TLS termination in the master,
+   ``masterPort`` must be configured to a value other than 8080 (e.g., 8443).
+   Users will also have to set ``useNodePortForMaster`` to ``true``. Once the
+   the NodePort service is created, users can configure an Ingress to
+   forward TLS encrypted data to the NodePord service.
+
+An example of how to configure an Ingress, by default this Ingress will perform
+TLS termination in the load-balancer:
+
+.. code:: yaml
+
+     apiVersion: networking.k8s.io/v1beta1
+     kind: Ingress
+     metadata:
+       name: determined-ingress
+       annotations:
+         kubernetes.io/ingress.class: "nginx"
+
+         # Uncommenting this option instucts the created load-balancer
+         # to forward TLS encrypted data to the NodePort service and
+         # perform TLS termination in the Determined master. In order
+         # to configure ssl-passthrough, your nginx ingress controller
+         # must be running with --enable-ssl-passthrough option enabled.
+         #
+         # nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+     spec:
+       tls:
+       - hosts:
+         - your-hostname-for-determined.ai
+         secretName: your-tls-secret-name
+       rules:
+       - host: your-hostname-for-determined.ai
+         http:
+           paths:
+             - path: /
+               backend:
+                 serviceName: determined-master-service-<name for your deployment>
+                 servicePort: masterPort configured in values.yaml
+
 
 ***********************
  Installing Determined

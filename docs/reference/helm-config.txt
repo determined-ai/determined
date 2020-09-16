@@ -33,8 +33,25 @@ Helm Chart </helm/determined-helm-chart.tgz>`.
  ``values.yaml`` Settings
 **************************
 
--  ``httpPort``: The port at which the Determined master listens for
+-  ``masterPort``: The port at which the Determined master listens for
    connections on. (*Required*)
+
+-  ``useNodePortForMaster``: When set to false
+   (default), a LoadBalancer service is deployed to make the Determined
+   master reachable from outside the cluster. When set to true, the master
+   will instead be exposed behind a NodePort service. When using a NodePort
+   service users will typically have to configure an Ingress to make the
+   Determined master reachable from outside the cluster. NodePort service is
+   recommended when configuring TLS termination in a load-balancer.
+
+-  ``tlsSecret``: enables TLS encryption for all communication with the
+   Determined master (TLS termination is performed in the Determined
+   master). This includes communication between the Determined master
+   and the task containers it launches, but does not include
+   communication between the task containers (distributed
+   training). The specified Secret of type tls must already exist in the
+   same namespace in which Determined is being installed. If a ``tlsSecret``
+   is specified, ``masterPort`` can not be set to 8080 (8443 recommended).
 
 -  ``db``: Specifies the configuration of the database.
 
@@ -152,10 +169,11 @@ Helm Chart </helm/determined-helm-chart.tgz>`.
       use during distributed training. A valid port range is in the
       format of ``MIN:MAX``.
 
-   -  ``forcePullImage``: Defines the default policy for forcibly pulling images from
-      the docker registry and bypassing the docker cache. If a pull policy is specified
-      in the :ref:`experiment config <exp-environment-image>` this default  is overriden.
-      Please note that as of November 1st, 2020 unauthenticated users will be
+   -  ``forcePullImage``: Defines the default policy for forcibly
+      pulling images from the docker registry and bypassing the docker
+      cache. If a pull policy is specified in the :ref:`experiment
+      config <exp-environment-image>` this default is overriden. Please
+      note that as of November 1st, 2020 unauthenticated users will be
       `capped at 100 pulls from Docker per 6 hours
       <https://www.docker.com/blog/scaling-docker-to-serve-millions-more-developers-network-egress/>`__.
       Defaults to ``false``.
@@ -166,14 +184,14 @@ Helm Chart </helm/determined-helm-chart.tgz>`.
    -  ``gpuPodSpec``: Sets the default pod spec for all ngpu tasks. See
       :ref:`custom-pod-specs` for details.
 
-   -  ``cpuImage``: Sets the default docker image for all non-gpu tasks. If a docker image
-      is specified in the :ref:`experiment config <exp-environment-image>`
-      this default is overriden. Defaults to:
+   -  ``cpuImage``: Sets the default docker image for all non-gpu tasks.
+      If a docker image is specified in the :ref:`experiment config
+      <exp-environment-image>` this default is overriden. Defaults to:
       ``determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-0.5.0``.
 
-   -  ``gpuImage``: Sets the default docker image for all gpu tasks. If a docker image
-      is specified in the :ref:`experiment config <exp-environment-image>`
-      this default is overriden. Defaults to:
+   -  ``gpuImage``: Sets the default docker image for all gpu tasks. If
+      a docker image is specified in the :ref:`experiment config
+      <exp-environment-image>` this default is overriden. Defaults to:
       ``determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-0.5.0``.
 
 -  ``enterpriseEdition``: Specifies whether to use Determined enterprise
