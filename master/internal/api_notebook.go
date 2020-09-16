@@ -34,32 +34,6 @@ func (a *apiServer) KillNotebook(
 	return resp, a.actorRequest(fmt.Sprintf("/notebooks/%s", req.NotebookId), req, &resp)
 }
 
-/* Command Helpers */
-// REMOVE
-// func fetchCommandLogs(
-// 	eventMgrAddr actor.Address,
-// 	system *actor.System,
-// ) api.LogFetcher {
-// 	return func(req api.LogsRequest) ([]*logger.Entry, error) {
-// 		logEntries := make([]*logger.Entry, 0)
-// 		err := api.ActorRequest(system, eventMgrAddr, req, &logEntries)
-// 		return logEntries, err
-// 	}
-// }
-
-// REMOVE
-// func commandIsTermianted(
-// 	cmdManagerAddr actor.Address,
-// 	system *actor.System,
-// ) api.TerminationCheck {
-// 	return func() (bool, error) {
-// 		cmd := command.Summary{}
-// 		err := api.ActorRequest(system, cmdManagerAddr, command.GetSummary{}, &cmd)
-// 		isTerminated := cmd.State == container.Terminated.String()
-// 		return isTerminated, err
-// 	}
-// }
-
 func (a *apiServer) NotebookLogs(
 	req *apiv1.NotebookLogsRequest, resp apiv1.Determined_NotebookLogsServer) error {
 	if err := grpc.ValidateRequest(
