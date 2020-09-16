@@ -228,6 +228,14 @@ const TaskList: React.FC = () => {
         .filter(task => isTaskKillable(task))
         .map(task => killCommand({ commandId: task.id, commandType: task.type }));
       await Promise.all(promises);
+
+      /*
+       * Deselect selected rows since their states may have changed where they
+       * are no longer part of the filter criteria.
+       */
+      setSelectedRowKeys([]);
+
+      // Refetch task list to get updates based on batch action.
       fetchTasks();
       await checkForTaskListUpdate();
     } catch (e) {

@@ -251,6 +251,12 @@ const ExperimentList: React.FC = () => {
         if (url) openBlank(url);
       }
 
+      /*
+       * Deselect selected rows since their states may have changed where they
+       * are no longer part of the filter criteria.
+       */
+      setSelectedRowKeys([]);
+
       // Refetch experiment list to get updates based on batch action.
       await fetchExperiments();
     } catch (e) {
