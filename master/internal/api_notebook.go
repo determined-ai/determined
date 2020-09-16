@@ -7,10 +7,8 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/pkg/errors"
@@ -38,31 +36,30 @@ func (a *apiServer) KillNotebook(
 }
 
 /* Command Helpers */
-// TODO reorder args?
-// CHECK parts of this code could live on the command and events actors but the idea is to
-// keep the api code out of there.
-func fetchCommandLogs(
-	eventMgrAddr actor.Address,
-	system *actor.System,
-) api.LogFetcher {
-	return func(req api.LogsRequest) ([]*logger.Entry, error) {
-		logEntries := make([]*logger.Entry, 0)
-		err := api.ActorRequest(system, eventMgrAddr, req, &logEntries)
-		return logEntries, err
-	}
-}
+// REMOVE
+// func fetchCommandLogs(
+// 	eventMgrAddr actor.Address,
+// 	system *actor.System,
+// ) api.LogFetcher {
+// 	return func(req api.LogsRequest) ([]*logger.Entry, error) {
+// 		logEntries := make([]*logger.Entry, 0)
+// 		err := api.ActorRequest(system, eventMgrAddr, req, &logEntries)
+// 		return logEntries, err
+// 	}
+// }
 
-func commandIsTermianted(
-	cmdManagerAddr actor.Address,
-	system *actor.System,
-) api.TerminationCheck {
-	return func() (bool, error) {
-		cmd := command.Summary{}
-		err := api.ActorRequest(system, cmdManagerAddr, command.GetSummary{}, &cmd)
-		isTerminated := cmd.State == container.Terminated.String()
-		return isTerminated, err
-	}
-}
+// REMOVE
+// func commandIsTermianted(
+// 	cmdManagerAddr actor.Address,
+// 	system *actor.System,
+// ) api.TerminationCheck {
+// 	return func() (bool, error) {
+// 		cmd := command.Summary{}
+// 		err := api.ActorRequest(system, cmdManagerAddr, command.GetSummary{}, &cmd)
+// 		isTerminated := cmd.State == container.Terminated.String()
+// 		return isTerminated, err
+// 	}
+// }
 
 func (a *apiServer) NotebookLogs(
 	req *apiv1.NotebookLogsRequest, resp apiv1.Determined_NotebookLogsServer) error {
@@ -111,19 +108,21 @@ func (a *apiServer) NotebookLogs(
 	)
 
 	if !created {
+		// either there is a collision in actor address or actor creation failed.
 		return errors.New("failed to create actor")
 	}
 
 	// QUESTION how do I set up logStreamActor to check this so here we can just
 	// awaitTermination
+	// If context and actor both give me channels? I could `select` on them?
 	// return myActor.AwaitTermination()
 	for {
-		time.Sleep(1 * time.Second)
+		time.Sleep(200 * time.Millisecond)
 		if resp.Context().Err() != nil {
 			// Context is closed.
 			myActor.Stop()
 		}
-		// FIXME myActor.isStopped
+		// myActor.isStopped..
 		if a.m.system.Get(myActorAddr) == nil {
 			break
 		}

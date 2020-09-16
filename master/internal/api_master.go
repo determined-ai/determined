@@ -34,7 +34,7 @@ func logToProtoMasterLog(log *logger.Entry) *apiv1.MasterLogsResponse {
 	return &apiv1.MasterLogsResponse{Id: int32(log.ID), Message: log.Message}
 }
 
-func fetchMasterLogs(logBuffer *logger.LogBuffer) api.LogFetcher {
+func fetchMasterLogs(logBuffer *logger.LogBuffer) api.LogFetcherFn {
 	return func(req api.LogsRequest) ([]*logger.Entry, error) {
 		return logBuffer.Entries(req.Offset, -1, req.Limit), nil
 	}

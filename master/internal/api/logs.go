@@ -21,27 +21,29 @@ type LogsRequest struct {
 	Follow bool
 }
 
-// TODO rename? or define inline
+// OnLogEntry is a callback called on each log entry.
 type OnLogEntry func(*logger.Entry) error
 
-// LogFetcher fetchs returns a subset of logs based on a LogRequest.
-type LogFetcher func(LogsRequest) ([]*logger.Entry, error)
+// LogFetcherFn fetchs returns a subset of logs based on a LogRequest.
+type LogFetcherFn func(LogsRequest) ([]*logger.Entry, error)
 
 // TerminationCheck checks whether a log processing should stop or not.
 type TerminationCheck func() (bool, error)
 
+// LogEntryToProtoLogEntry turns a logger.LogEntry into logv1.LogEntry.
+func LogEntryToProtoLogEntry(logEntry *logger.Entry) *logv1.LogEntry {
+	return &logv1.LogEntry{Id: int32(logEntry.ID), Message: logEntry.Message}
+}
+
 // ProcessLogs handles fetching and processing logs from a log store.
 func ProcessLogs(ctx context.Context,
 	req LogsRequest,
-	logFetcher LogFetcher, // TODO a better name
+	logFetcher LogFetcherFn, // TODO a better name
 	cb OnLogEntry,
 	terminateCheck *TerminationCheck,
 ) error {
-	// FIXME how does it terminate when the caller goes away
 	for {
-		fmt.Printf("sending log request %v. ", req)
 		logEntries, err := logFetcher(req)
-		fmt.Printf("received %d logs.\n", len(logEntries))
 
 		if err != nil {
 			return errors.Wrapf(err, "failed to fetch logs for %v", req)
@@ -77,43 +79,46 @@ func ProcessLogs(ctx context.Context,
 	}
 }
 
-// LogEntryToProtoLogEntry turns a logger.LogEntry into logv1.LogEntry.
-func LogEntryToProtoLogEntry(logEntry *logger.Entry) *logv1.LogEntry {
-	return &logv1.LogEntry{Id: int32(logEntry.ID), Message: logEntry.Message}
-}
-
-type commandLogStreamActor struct {
+// CommandLogStreamActor handles streaming log messages for commands.
+type CommandLogStreamActor struct {
 	req  LogsRequest
 	ctx  context.Context
 	send OnLogEntry
 }
 
+// CloseStream indicates that the log stream should close.
 type CloseStream struct{}
 
+// NewCommandLogStreamActor creates a new command logStreamActor.
 func NewCommandLogStreamActor(
 	ctx context.Context,
 	request LogsRequest,
 	send OnLogEntry,
-) *commandLogStreamActor {
-	return &commandLogStreamActor{req: request, ctx: ctx, send: send}
+) *CommandLogStreamActor {
+	return &CommandLogStreamActor{req: request, ctx: ctx, send: send}
 }
 
-func (l *commandLogStreamActor) Receive(ctx *actor.Context) error {
+// Receive implements the actor.Actor interface.
+func (l *CommandLogStreamActor) Receive(ctx *actor.Context) error {
 	eventMgrAddress := ctx.Self().Parent().Address().Child("events")
 	eventMgrRef := ctx.Self().System().Get(eventMgrAddress)
+
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		// CHECK set this as a child to event manager
 		ctx.Tell(eventMgrRef, l.req)
+
 	case logger.Entry:
 		// CHECK check context before sending?
-		l.send(&msg)
+		if err := l.send(&msg); err != nil {
+			ctx.Self().Stop()
+		}
+
 	case CloseStream:
-		fmt.Println("got closing stream")
 		ctx.Self().Stop()
+
 	case actor.PostStop:
 		ctx.Tell(eventMgrRef, CloseStream{})
-		break
 
 	default:
 		return errors.New(fmt.Sprintf("unsupported message %v %v", msg, ctx.Message()))

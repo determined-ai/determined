@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
+	"github.com/pkg/errors"
 
 	webAPI "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/scheduler"
@@ -20,6 +21,7 @@ import (
 )
 
 const defaultEventBufferSize = 200
+const ctxMissingSender = "message is missing sender infromation"
 
 // event is the union of all event types during the parent lifecycle.
 type event struct {
@@ -67,6 +69,7 @@ func newEventManager() *eventManager {
 	}
 }
 
+// QUESTION where do we house these utilities?
 func countNonNullRingValues(ring *ring.Ring) int {
 	// OPT we could use log_buffer here instead of a plain ring buffer.
 	count := 0
@@ -80,10 +83,27 @@ func countNonNullRingValues(ring *ring.Ring) int {
 
 func (e *eventManager) RemoveSusbscribers(ctx *actor.Context) {
 	for actorAddr := range e.logStreams {
+		// OPT this will trigger a bunch of CloseStream message that'll come back to eventManager.
 		ctx.Self().System().TellAt(actorAddr, webAPI.CloseStream{})
-		// OPT this will trigger a bunch of Unsubscribe message.
 	}
 	e.logStreams = make(map[actor.Address]webAPI.LogsRequest)
+}
+
+func (e *eventManager) ProcessNewLogEvent(ctx *actor.Context, msg event) {
+	// Publish.
+	for streamActor, logRequest := range e.logStreams {
+		// OPT we could probably use actor hirearchy to message multiple logStreamActors at once.
+		if eventSatisfiesLogRequest(logRequest, &msg) {
+			entry := eventToLogEntry(&msg)
+			ctx.Self().System().TellAt(streamActor, *entry)
+		}
+	}
+
+	// Remove terminated subscribers.
+	if msg.TerminateRequestEvent != nil || msg.ExitedEvent != nil {
+		e.isTerminated = true
+		e.RemoveSusbscribers(ctx)
+	}
 }
 
 func (e *eventManager) Receive(ctx *actor.Context) error {
@@ -116,26 +136,15 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 				child.Stop()
 			}
 		}
-
-		// Publish.
-		for streamActor, logRequest := range e.logStreams {
-			if eventSatisfiesLogRequest(logRequest, &msg) {
-				entry := eventToLogEntry(&msg)
-				ctx.Self().System().TellAt(streamActor, *entry)
-			}
-		}
-
-		if msg.TerminateRequestEvent != nil || msg.ExitedEvent != nil {
-			e.isTerminated = true
-			e.RemoveSusbscribers(ctx)
-		}
+		e.ProcessNewLogEvent(ctx, msg)
 
 	case webAPI.CloseStream:
+		if ctx.Sender() == nil {
+			return errors.New(ctxMissingSender)
+		}
 		delete(e.logStreams, ctx.Sender().Address())
 
 	case webAPI.LogsRequest:
-		// case webAPI.LogsRequest:
-		// normalize the request.
 		total := countNonNullRingValues(e.buffer)
 		offset, limit := webAPI.EffectiveOffsetNLimit(msg.Offset, msg.Limit, total)
 		msg.Limit = limit
@@ -144,14 +153,9 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		// stream existing matching entries
 		logEntries := e.getLogEntries(msg)
 
-		// QUESTION can't we get the sender information from the msg?
-		// QUESTION  how do i get actor ref from address.
-		// we can do this between trial and experiment: sendNextWorkload
 		// CHECK is it safe to store and msg.Handler actors from actor ref pointer vs address.
-		// if sender != nil {
-		// }
 		if ctx.Sender() == nil {
-			break // TODO
+			return errors.New(ctxMissingSender)
 		}
 		for _, entry := range logEntries {
 			if entry != nil {
@@ -162,7 +166,6 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		if msg.Follow && !e.isTerminated {
 			e.logStreams[ctx.Sender().Address()] = msg
 		} else {
-			fmt.Println("sending close msg")
 			ctx.Tell(ctx.Sender(), webAPI.CloseStream{})
 		}
 
