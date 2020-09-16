@@ -6,6 +6,7 @@ declare namespace NodeJS {
   export interface ProcessEnv {
     IS_DEV: boolean;
     VERSION: string;
+    SERVER_ADDRESS?: string;
   }
 }
 

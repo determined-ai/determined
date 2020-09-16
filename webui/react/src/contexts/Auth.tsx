@@ -1,4 +1,6 @@
 import { generateContext } from 'contexts';
+import { globalStorage } from 'globalStorage';
+import { updateDetApi } from 'services/api';
 import { Auth } from 'types';
 
 enum ActionType {
@@ -9,7 +11,6 @@ enum ActionType {
 }
 
 export const AUTH_COOKIE_KEY = 'auth';
-
 /*
  * `checkCount` allows the `useAuthCheck` hook to keep tabs of how many times
  * is has been called in sign in. It is kept here to avoid a situation where
@@ -41,10 +42,16 @@ const reducer = (state: State, action: Action): State => {
       return { ...state, checked: true };
     case ActionType.Reset:
       clearAuthCookie();
+      globalStorage.removeAuthToken();
+      updateDetApi({ apiKey: undefined });
       return { ...defaultAuth };
     case ActionType.ResetChecked:
       return { ...state, checked: false };
     case ActionType.Set:
+      if (action.value.token) {
+        globalStorage.authToken = action.value.token;
+        updateDetApi({ apiKey: 'Bearer ' + action.value.token });
+      }
       return { ...action.value, checked: true };
     default:
       return state;

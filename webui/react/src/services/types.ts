@@ -1,9 +1,14 @@
-import { AxiosResponse, CancelTokenSource, Method } from 'axios';
+import { AxiosResponse, CancelToken, CancelTokenSource, Method } from 'axios';
 
 import { CommandType, RunState, TBSource } from 'types';
 
+export interface ApiCommonParams {
+  cancelToken?: CancelToken,
+  authToken?: string
+}
+
 export interface HttpOptions {
-  url?: string;
+  url: string;
   method?: Method;
   headers?: Record<string, unknown>;
   body?: Record<keyof unknown, unknown> | string;
@@ -12,6 +17,7 @@ export interface HttpOptions {
 interface ApiBase {
   name: string;
   stubbedResponse?: unknown;
+  unAuthenticated?: boolean;
   // middlewares?: Middleware[]; // success/failure middlewares
 }
 
@@ -33,6 +39,10 @@ export interface ApiState<T> {
   source?: CancelTokenSource;
 }
 
+export interface LoginResponse {
+  token: string;
+}
+
 export interface ApiSorter<T = string> {
   descend: boolean;
   key: T;
@@ -48,8 +58,6 @@ export interface SingleEntityParams {
 
 export type ExperimentDetailsParams = SingleEntityParams;
 export type TrialDetailsParams = SingleEntityParams;
-
-// TODO in the following types the default id should probably be just "id"
 
 export interface KillExpParams {
   experimentId: number;

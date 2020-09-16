@@ -208,12 +208,12 @@ const ExperimentDetailsComp: React.FC = () => {
 
   return (
     <Page
-      backPath={'/det/experiments'}
+      backPath={'/experiments'}
       breadcrumb={[
-        { breadcrumbName: 'Experiments', path: '/det/experiments' },
+        { breadcrumbName: 'Experiments', path: '/experiments' },
         {
           breadcrumbName: `Experiment ${experimentId}`,
-          path: `/det/experiments/${experimentId}`,
+          path: `/experiments/${experimentId}`,
         },
       ]}
       options={<ExperimentActions

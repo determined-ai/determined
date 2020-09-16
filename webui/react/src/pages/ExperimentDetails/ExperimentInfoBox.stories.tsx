@@ -34,7 +34,7 @@ const experimentDetails: ExperimentDetails = {
       startTime: Date.now.toString(),
       state: RunState.Completed,
       totalBatchesProcessed: 10000,
-      url: '/det/trials/1',
+      url: '/trials/1',
     },
   ],
   username: 'hamid',

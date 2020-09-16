@@ -1,10 +1,12 @@
 import { CancelToken } from 'axios';
 
+import { globalStorage } from 'globalStorage';
+import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import * as Config from 'services/apiConfig';
-import { ApiSorter, CreateNotebookParams, CreateTensorboardParams,
-  EmptyParams, ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams,
-  KillCommandParams, KillExpParams, LogsParams, PatchExperimentParams, PatchExperimentState,
+import { ApiSorter, CreateNotebookParams, CreateTensorboardParams, EmptyParams,
+  ExperimentDetailsParams, ExperimentsParams, ForkExperimentParams, KillCommandParams,
+  KillExpParams, LoginResponse, LogsParams, PatchExperimentParams, PatchExperimentState,
   TaskLogsParams, TrialDetailsParams, TrialLogsParams } from 'services/types';
 import { generateApi, generateDetApi, processApiError } from 'services/utils';
 import {
@@ -18,6 +20,28 @@ import { terminalCommandStates, tsbMatchesSource } from 'utils/types';
 import { decodeExperimentList, encodeExperimentState } from './decoder';
 
 export { isAuthFailure, isLoginFailure, isNotFound } from './utils';
+
+const initialApiConfig = {
+  apiKey: 'Bearer ' + globalStorage.getAuthToken,
+  basePath: serverAddress(),
+};
+export const detApi = {
+  Auth: new Api.AuthenticationApi(initialApiConfig),
+  Experiments: new Api.ExperimentsApi(initialApiConfig),
+  StreamingExperiments: Api.ExperimentsApiFetchParamCreator(initialApiConfig),
+};
+
+// Update references to generated API code with new configuration.
+export const updateDetApi = (apiConfig: Api.Configuration): void => {
+  const config: Api.Configuration = {
+    apiKey: 'Bearer ' + globalStorage.getAuthToken,
+    basePath: serverAddress(),
+    ...apiConfig,
+  };
+  detApi.Auth = new Api.AuthenticationApi(config);
+  detApi.Experiments = new Api.ExperimentsApi(config);
+  detApi.StreamingExperiments = Api.ExperimentsApiFetchParamCreator(config);
+};
 
 /* Authentication */
 
@@ -154,7 +178,7 @@ export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promis
   });
 };
 
-export const login = generateApi<Credentials, void>(Config.login);
+export const login = generateApi<Credentials, LoginResponse>(Config.login);
 
 /*
  * Login is an exception where the caller will perform the error handling,

@@ -3,11 +3,8 @@ import { DEFAULT_WAIT_TIME } from '../constants';
 describe('setup', () => {
   const recordSelector = 'tr.ant-table-row';
 
-  before(() => {
-    cy.login();
-  });
-
   beforeEach(() => {
+    cy.login();
     cy.visit('/det/experiments');
   });
 

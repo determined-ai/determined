@@ -9,7 +9,7 @@ import 'styles/index.scss';
 
 import App from './App';
 import * as serviceWorker from './serviceWorker';
-import 'Dev';
+import 'dev';
 
 ReactDOM.render(<Router history={history}><App /></Router>, document.getElementById('root'));
 

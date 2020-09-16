@@ -5,8 +5,11 @@ describe('Sign in/out', () => {
   const LOGIN_ROUTE = '/det/login';
   const LOGOUT_ROUTE = '/det/logout';
 
-  it('should be logged in React side', () => {
+  before(() => {
     cy.login();
+  });
+
+  it('should be logged in React side', () => {
     cy.visit('/det');
     cy.checkLoggedIn();
   });

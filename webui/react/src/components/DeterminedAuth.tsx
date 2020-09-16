@@ -30,9 +30,9 @@ const DeterminedAuth: React.FC = () => {
     setUI({ type: UI.ActionType.ShowSpinner });
     setCanSubmit(false);
     try {
-      await login(creds as Credentials);
-      const user = await getCurrentUser({});
-      setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, user } });
+      const { token } = await login(creds as Credentials);
+      const user = await getCurrentUser({ authToken: token });
+      setAuth({ type: Auth.ActionType.Set, value: { isAuthenticated: true, token, user } });
       storage.set(STORAGE_KEY_LAST_USERNAME, creds.username);
     } catch (e) {
       const isBadCredentialsSync = isLoginFailure(e);

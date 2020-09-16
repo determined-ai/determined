@@ -1,5 +1,5 @@
 describe('Navigation', () => {
-  before(() => {
+  beforeEach(() => {
     cy.login();
   });
 

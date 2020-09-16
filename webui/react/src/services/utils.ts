@@ -1,11 +1,12 @@
-import axios, { AxiosResponse, CancelToken } from 'axios';
+import axios, { AxiosResponse } from 'axios';
 
 import handleError, { DaError, ErrorLevel, ErrorType, isDaError } from 'ErrorHandler';
+import { globalStorage } from 'globalStorage';
 import { serverAddress } from 'routes/utils';
 import * as Api from 'services/api-ts-sdk';
 import { isObject } from 'utils/data';
 
-import { DetApi, HttpApi } from './types';
+import { ApiCommonParams, DetApi, HttpApi } from './types';
 
 /* eslint-disable @typescript-eslint/no-var-requires */
 const ndjsonStream = require('can-ndjson-stream');
@@ -42,7 +43,7 @@ export const isNotFound = (e: any): boolean => {
 
 /* HTTP Helpers */
 
-export const http = axios.create({ responseType: 'json', withCredentials: true });
+export const http = axios.create({ responseType: 'json', withCredentials: false });
 
 export const processApiError = (name: string, e: Error): DaError => {
   const isAuthError = isAuthFailure(e);
@@ -67,17 +68,24 @@ export const processApiError = (name: string, e: Error): DaError => {
 };
 
 export function generateApi<Input, Output>(api: HttpApi<Input, Output>) {
-  return async function(params: Input & { cancelToken?: CancelToken }): Promise<Output> {
+  return async function(params: Input & ApiCommonParams): Promise<Output> {
     const httpOpts = api.httpOptions(params);
 
     try {
+      let headers = httpOpts.headers;
+      if (!api.unAuthenticated) {
+        headers = {
+          Authorization: 'Bearer ' + (params.authToken || globalStorage.getAuthToken),
+          ...headers,
+        };
+      }
       const response = api.stubbedResponse ? { data: api.stubbedResponse } as AxiosResponse<unknown>
         : await http.request({
           cancelToken: params.cancelToken,
           data: httpOpts.body,
-          headers: httpOpts.headers,
+          headers,
           method: httpOpts.method || 'GET',
-          url: httpOpts.url as string,
+          url: serverAddress() + httpOpts.url,
         });
 
       return api.postProcess ? api.postProcess(response) : response.data as Output;
@@ -113,7 +121,7 @@ export const consumeStream = async <T = unknown>(
      */
     if (process.env.IS_DEV) options.credentials = 'include';
 
-    const response = await fetch(serverAddress(true, fetchArgs.url), options);
+    const response = await fetch(serverAddress(fetchArgs.url), options);
     const reader = ndjsonStream(response.body).getReader();
     let result;
     while (!result || !result.done) {
@@ -131,7 +139,7 @@ export const consumeStream = async <T = unknown>(
 export const noOp = (): void => {}
 
 export function generateDetApi<Input, DetOutput, Output>(api: DetApi<Input, DetOutput, Output>) {
-  return async function(params: Input & { cancelToken?: CancelToken }): Promise<Output> {
+  return async function(params: Input & ApiCommonParams): Promise<Output> {
     try {
       const response = api.stubbedResponse ? api.stubbedResponse : await api.request(params);
       return api.postProcess(response);

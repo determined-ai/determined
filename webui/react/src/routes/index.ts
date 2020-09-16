@@ -30,9 +30,6 @@ const routeComponentMap: Record<string, FC> = {
 };
 
 const defaultRouteId = 'dashboard';
-const defaultRoute = Routes.find(route => route.id === defaultRouteId);
-
-export const defaultRoutePath = defaultRoute?.path || '/det/dashboard';
 
 const appRoutes: RouteConfig[] = Routes.map(route => {
   if (!routeComponentMap[route.id]) throw new Error(`Missing route component for ${route.id}`);
@@ -42,10 +39,13 @@ const appRoutes: RouteConfig[] = Routes.map(route => {
   };
 });
 
+export const defaultRoute = appRoutes
+  .find(route => route.id === defaultRouteId) as RouteConfig;
+
 appRoutes.push({
   id: 'catch-all',
   path: '*',
-  redirect: defaultRoutePath,
+  redirect: defaultRoute.path,
 });
 
 export default appRoutes;

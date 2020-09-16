@@ -297,7 +297,7 @@ If the problem persists please contact support.',
         experimentConfig: JSON.stringify(updatedConfig),
         parentId: experimentId,
       });
-      routeAll(`/det/experiments/${newExperimentId}`);
+      routeAll(`/experiments/${newExperimentId}`);
     } catch (e) {
       handleError({
         error: e,
@@ -440,14 +440,14 @@ If the problem persists please contact support.',
 
   return (
     <Page
-      backPath={`/det/experiments/${experimentId}`}
+      backPath={`/experiments/${experimentId}`}
       breadcrumb={[
-        { breadcrumbName: 'Experiments', path: '/det/experiments' },
+        { breadcrumbName: 'Experiments', path: '/experiments' },
         {
           breadcrumbName: `Experiment ${experimentId}`,
-          path: `/det/experiments/${experimentId}`,
+          path: `/experiments/${experimentId}`,
         },
-        { breadcrumbName: `Trial ${trialId}`, path: `/det/trials/${trialId}` },
+        { breadcrumbName: `Trial ${trialId}`, path: `/trials/${trialId}` },
       ]}
       options={<TrialActions
         trial={trial}

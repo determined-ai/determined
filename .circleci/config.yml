@@ -392,6 +392,8 @@ commands:
     steps:
       - set-cluster-id:
           cluster-id: <<parameters.cluster-id>>
+      - set-master-cors:
+          enable-cors: true
       - deploy-aws-cluster:
           cluster-id: ${CLUSTER_ID}
           det-version: <<parameters.det-version>>
@@ -546,6 +548,14 @@ commands:
         type: string
     steps:
       - run: echo "export CLUSTER_ID=\"<<parameters.cluster-id>>\"" >> $BASH_ENV
+
+  set-master-cors:
+    parameters:
+      enable-cors:
+        type: boolean
+        default: false
+    steps:
+      - run: echo "export ENABLE_CORS=\"<<parameters.enable-cors>>\"" >> $BASH_ENV
 
   wait-for-master:
     parameters:
@@ -783,6 +793,19 @@ jobs:
       - checkout
       - react-get-deps
       - run: make -C webui/react check
+
+  build-react-preview:
+    docker:
+      - image: cimg/node:12.16
+    environment:
+      PUBLIC_URL: /0
+    steps:
+      - checkout
+      - react-get-deps
+      - run: make -C webui/react build
+      - store_artifacts:
+          path: webui/react/build
+          destination: /
 
   build-react:
     docker:
@@ -1255,6 +1278,9 @@ workflows:
       - build-and-package-ts-sdk:
           requires:
             - build-proto
+      - build-react-preview:
+          requires:
+            - build-and-package-ts-sdk
       - build-react:
           requires:
             - build-and-package-ts-sdk

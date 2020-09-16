@@ -1,7 +1,7 @@
 describe('Experiment List', () => {
   const recordSelector = 'tr.ant-table-row';
 
-  before(() => {
+  beforeEach(() => {
     cy.login();
     cy.visit('/det/experiments');
   });
@@ -13,6 +13,7 @@ describe('Experiment List', () => {
     });
 
     it('should have 2 disabled buttons', () => {
+      cy.get('thead input[type=checkbox]').click();
       cy.get('[class*="TableBatch_actions_"] button[disabled]').should('have.lengthOf', 2);
     });
 

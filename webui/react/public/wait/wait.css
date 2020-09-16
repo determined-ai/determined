@@ -4,10 +4,10 @@
   font-style: normal;
   font-weight: normal;
   src:
-    url('/fonts/objektiv-mk3-regular.woff2?07a67e') format('woff2'),
-    url('/fonts/objektiv-mk3-regular.woff?07a67e') format('woff'),
-    url('/fonts/objektiv-mk3-regular.ttf?07a67e') format('truetype'),
-    url('/fonts/objektiv-mk3-regular.svg?07a67e#determined-ai') format('svg');
+    url('fonts/objektiv-mk3-regular.woff2?07a67e') format('woff2'),
+    url('fonts/objektiv-mk3-regular.woff?07a67e') format('woff'),
+    url('fonts/objektiv-mk3-regular.ttf?07a67e') format('truetype'),
+    url('fonts/objektiv-mk3-regular.svg?07a67e#determined-ai') format('svg');
 }
 
 @font-face {
@@ -16,10 +16,10 @@
   font-style: normal;
   font-weight: normal;
   src:
-    url('/fonts/determined-ai.woff2?n1pu2b') format('woff2'),
-    url('/fonts/determined-ai.woff?n1pu2b') format('woff'),
-    url('/fonts/determined-ai.ttf?n1pu2b') format('truetype'),
-    url('/fonts/determined-ai.svg?n1pu2b#determined-ai') format('svg');
+    url('fonts/determined-ai.woff2?n1pu2b') format('woff2'),
+    url('fonts/determined-ai.woff?n1pu2b') format('woff'),
+    url('fonts/determined-ai.ttf?n1pu2b') format('truetype'),
+    url('fonts/determined-ai.svg?n1pu2b#determined-ai') format('svg');
 }
 
 /* Wait page specific CSS */
