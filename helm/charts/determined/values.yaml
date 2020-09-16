@@ -1,13 +1,21 @@
-# httpPort configures the port at which the Determined master listens for connections on.
-httpPort: 8080
+# masterPort configures the port at which the Determined master listens for connections on.
+masterPort: 8080
 
 # When useNodePortForMaster is set to false (default), a LoadBalancer service is deployed
 # to make the Determined master reachable from outside the cluster. When useNodePortForMaster
 # is set to true, the master will instead be exposed behind a NodePort service. When using a
-# NodePort service, users will typically have to configure an Ingress to make the Determined
+# NodePort service users will typically have to configure an Ingress to make the Determined
 # master reachable from outside the cluster. NodePort service is recommended when configuring
 # TLS termination in a load-balancer.
 useNodePortForMaster: false
+
+# tlsSecret enables TLS encryption for all communication with the Determined master (TLS
+# termination is performed in the Determined master). This includes communication between
+# the Determined master and the task containers it launches, but does not include communication
+# between the task containers (distributed training). The specified Secret of type tls must
+# already exist in the same namespace in which Determined is being installed. If a tlsSecret
+# is specified, masterPort can not be set to 8080 (8443 recommended).
+# tlsSecret:
 
 # db sets the configurations for the database.
 db:

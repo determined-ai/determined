@@ -1,10 +1,43 @@
 Thank you for installing {{ .Chart.Name }}. Your release is named: {{ .Release.Name }}.
+It may take several minutes for your deployment to start up.
 
-It may take several minutes for your deployment to start up. 
+{{- if .Values.useNodePortForMaster }}
+
+You have configured Determined to deploy the master service with NodePort. To make the
+Determined master accessible from outside the cluster you will likely need to configure
+an Ingress for: determined-master-service-{{ .Release.Name }}.
+
+To have Determined configure an externally accessible load balancer for the
+maser, please set "Values.useNodePortForMaster" to false.
+{{ else }}
+
 Once it is up you can get the IP address of your deployment by running:
 
-kubectl get service determined-master-service-{{ .Release.Name }} -n {{ .Release.Namespace}} --output jsonpath='{.status.loadBalancer.ingress[0].ip}'
+kubectl get service determined-master-service-{{ .Release.Name }} -n {{ .Release.Namespace }} --output jsonpath='{.status.loadBalancer.ingress[0].ip}'
 
-Once you have the IP address set the master address with `export DET_MASTER=<ip address>`.
+{{ end -}}
+
+{{ $httpOrHttps := "http" }}
+{{- if .Values.tlsSecret }}
+{{ $httpOrHttps = "https" }}
+{{- if eq ($.Values.masterPort | toString) "8080" }}
+ERROR: TLS termination is configured in the master but .Values.masterPort is set to 8080.
+If you wish to perform TLS termination in the master please set .Values.masterPort to a
+different value (e.g., 8443).
+{{ end -}}
+
+{{ $secret := (lookup "v1" "Secret" .Release.Namespace (.Values.tlsSecret | toString) ) }}
+{{- if eq (len $secret) 0 }}
+ERROR: Secret {{ .Values.tlsSecret }} does not exist in namespace: {{ .Release.Namespace }}. Please update ".Values.tlsSecret".
+{{ end }}
+{{- else }}
+{{- if eq ($.Values.masterPort | toString) "8443" }}
+ERROR: TLS termination is not configured but the  .Values.masterPort is set to 8443.
+If you do not with perform TLS termination in the master please set .Values.masterPort
+to a different value (e.g., 8080).
+{{ end }}
+{{ end -}}
+
+Once you have the IP address, configure master address locally by running: `export DET_MASTER=<ip address>:{{ .Values.masterPort }}`.
 To submit experiments please install the Determined CLI locally: `pip install determined-cli`.
-To access the WebUI go to: http://<ip address>:{{ .Values.httpPort }}.
+To access the WebUI go to: {{ $httpOrHttps }}://<ip address>:{{ .Values.masterPort }}.

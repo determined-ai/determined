@@ -8,7 +8,7 @@ metadata:
     release: {{ .Release.Name }}
 spec:
   ports:
-  - port: {{ .Values.httpPort | default 8080 }}
+  - port: {{ required "A valid Values.masterPort entry required!" .Values.masterPort }}
     protocol: TCP
   {{ $serviceType := "LoadBalancer" }}
   {{- if .Values.useNodePortForMaster | default false -}}
