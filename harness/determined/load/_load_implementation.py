@@ -11,7 +11,7 @@ from determined import horovod
 from determined_common import check
 
 
-def load_trial_implementation(entrypoint_spec: str) -> Type[det.Trial]:
+def load_trial_implementation(entrypoint_spec: Any) -> Type[det.Trial]:
     """
     Load and initialize a Trial class from an entrypoint specification.
 

@@ -12,7 +12,7 @@ from tests import config as conf
 from tests.experiment import (
     create_native_experiment,
     experiment,
-    native_experiment_submit,
+    native_experiment_create,
     wait_for_experiment_state,
 )
 
@@ -240,5 +240,5 @@ def test_native_experiment_submit() -> None:
     master_url = conf.make_master_url()
     context_dir = conf.official_examples_path("trial/mnist_pytorch")
     config = conf.load_config(conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"))
-    experiment_id = native_experiment_submit(context_dir, config, master_url)
+    experiment_id = native_experiment_create(context_dir, config, master_url)
     wait_for_experiment_state(experiment_id, "COMPLETED", max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS)

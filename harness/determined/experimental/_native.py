@@ -276,86 +276,6 @@ def init_native(
         )
 
 
-def create(
-    trial_def: Type[det.Trial],
-    config: Optional[Dict[str, Any]] = None,
-    local: bool = False,
-    test: bool = False,
-    context_dir: str = "",
-    command: Optional[List[str]] = None,
-    master_url: Optional[str] = None,
-) -> Any:
-    # TODO: Add a reference to the local development tutorial.
-    """
-    Create an experiment.
-
-    Arguments:
-        trial_def:
-            A class definition implementing the :class:`determined.Trial`
-            interface.
-
-        config:
-            A dictionary representing the experiment configuration to be
-            associated with the experiment.
-
-        local:
-            A boolean indicating if training should be done locally. When
-            ``False``, the experiment will be submitted to the Determined
-            cluster. Defaults to ``False``.
-
-        test:
-            A boolean indicating if the experiment should be shortened
-            to a minimal loop of training on a small amount of data,
-            performing validation, and checkpointing.  ``test=True`` is
-            useful for quick iteration during model porting or debugging
-            because common errors will surface more quickly.  Defaults
-            to ``False``.
-
-        context_dir:
-            A string filepath that defines the context directory. All model
-            code will be executed with this as the current working directory.
-
-            When ``local=False``, this argument is required. All files in this
-            directory will be uploaded to the Determined cluster. The total
-            size of this directory must be under 96 MB.
-
-            When ``local=True``, this argument is optional and defaults to
-            the current working directory.
-
-        command:
-            A list of strings that is used as the entrypoint of the training
-            script in the Determined task environment. When executing this
-            function via a Python script, this argument is inferred to be
-            ``sys.argv`` by default. When executing this function via IPython
-            or Jupyter notebook, this argument is required.
-
-            Example: When creating an experiment by running ``python train.py
-            --flag value``, the default command is inferred as ``["train.py",
-            "--flag", "value"]``.
-
-        master_url:
-            An optional string to use as the Determined master URL when
-            ``local=False``. If not specified, will be inferred from the
-            environment variable ``DET_MASTER``.
-    """
-
-    if local and not test:
-        raise NotImplementedError(
-            "det.create(local=True, test=False) is not yet implemented. Please set local=False "
-            "or test=True."
-        )
-
-    return init_native(
-        trial_def=trial_def,
-        config=config,
-        local=local,
-        test=test,
-        context_dir=context_dir,
-        command=command,
-        master_url=master_url,
-    )
-
-
 def create_trial_instance(
     trial_def: Type[det.Trial],
     checkpoint_dir: str,
@@ -384,9 +304,10 @@ def create_trial_instance(
     return trial_def(trial_context)
 
 
-def submit(
+def create(
+    config: Dict[str, Any],
     context_dir: str,
-    config: Optional[Dict[str, Any]] = None,
+    local: bool = False,
     test: bool = False,
     master_url: Optional[str] = None,
     follow_logs: bool = False,
@@ -394,14 +315,59 @@ def submit(
     determined_common.set_logger(
         util.debug_mode() or det.ExperimentConfig(config or {}).debug_enabled()
     )
+    """
+    Create an experiment.
+
+    Arguments:
+        config:
+            A dictionary representing the experiment configuration to be
+            associated with the experiment.
+
+        context_dir:
+            A string filepath that defines the context directory. All model
+            code will be executed with this as the current working directory.
+
+        local:
+            A boolean indicating if training should be done locally. When
+            ``False``, the experiment will be submitted to the Determined
+            cluster. Defaults to ``False``.
+
+        test:
+            A boolean indicating if the experiment should be shortened
+            to a minimal loop of training on a small amount of data,
+            performing validation, and checkpointing.  ``test=True`` is
+            useful for quick iteration during model porting or debugging
+            because common errors will surface more quickly.  Defaults
+            to ``False``.
+
+        master_url:
+            An optional string to use as the Determined master URL when
+            ``local=False``. If not specified, will be inferred from the
+            environment variable ``DET_MASTER``.
+
+        follow_logs:
+            An optional flag that will follow the logs when set to true.
+            This is set to False by default.
+    """
+
+    if local and not test:
+        raise NotImplementedError(
+            "det.create(local=True, test=False) is not yet implemented. Please set local=False "
+            "or test=True."
+        )
+
+    if local:
+        with det._local_execution_manager(pathlib.Path(context_dir)):
+            trial_class = load.load_trial_implementation(config["entrypoint"])
+            test_one_batch(trial_class=trial_class, config=config)
+        return
 
     config, exp_context, master_url = _construct_experiment(context_dir, config, master_url)
     logging.info(f"Creating an experiment with config: {config}")
-
     if test:
         return api.create_test_experiment_and_follow_logs(master_url, config, exp_context)
 
-    elif follow_logs:
+    if follow_logs:
         return api.create_experiment_and_follow_logs(master_url, config, exp_context)
 
     experiment_id = api.create_experiment(master_url, config, exp_context)

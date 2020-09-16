@@ -19,10 +19,10 @@ from tests import cluster
 from tests import config as conf
 
 
-def native_experiment_submit(
+def native_experiment_create(
     context_dir: str, configuration: Dict[str, Any], master_url: str, follow_logs: bool = False
 ) -> Any:
-    return experimental.submit(
+    return experimental.create(
         context_dir=context_dir,
         config=configuration,
         master_url=master_url,
