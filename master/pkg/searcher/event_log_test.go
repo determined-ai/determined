@@ -1,6 +1,7 @@
 package searcher
 
 import (
+	"github.com/determined-ai/determined/master/pkg/workload"
 	"testing"
 
 	"gotest.tools/assert"
@@ -30,8 +31,8 @@ func TestEventLog(t *testing.T) {
 
 	for i, trialID := range trialIDs {
 		// Check that units completed are recorded and workloads saved.
-		msg := CompletedMessage{
-			Workload: Workload{
+		msg := workload.CompletedMessage{
+			Workload: workload.Workload{
 				StepID: trialID*trialID + i,
 			},
 		}

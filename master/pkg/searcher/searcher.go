@@ -1,6 +1,7 @@
 package searcher
 
 import (
+	"github.com/determined-ai/determined/master/pkg/workload"
 	"math"
 
 	"github.com/pkg/errors"
@@ -73,7 +74,7 @@ func (s *Searcher) TrialExitedEarly(trialID int) ([]Operation, error) {
 
 // WorkloadCompleted informs the searcher that the workload is completed. This relays the message
 // to the event log and records the units as complete for search method progress.
-func (s *Searcher) WorkloadCompleted(msg CompletedMessage, unitsCompleted float64) {
+func (s *Searcher) WorkloadCompleted(msg workload.CompletedMessage, unitsCompleted float64) {
 	s.eventLog.WorkloadCompleted(msg, unitsCompleted)
 }
 
@@ -95,10 +96,10 @@ func (s *Searcher) OperationCompleted(
 		operations, err = s.method.trainCompleted(s.context(), requestID, tOp)
 	case Checkpoint:
 		operations, err = s.method.checkpointCompleted(
-			s.context(), requestID, tOp, *metrics.(*CheckpointMetrics))
+			s.context(), requestID, tOp, *metrics.(*workload.CheckpointMetrics))
 	case Validate:
 		operations, err = s.method.validationCompleted(
-			s.context(), requestID, tOp, *metrics.(*ValidationMetrics))
+			s.context(), requestID, tOp, *metrics.(*workload.ValidationMetrics))
 	default:
 		return nil, errors.Errorf("unexpected op: %s", tOp)
 	}

@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"github.com/determined-ai/determined/master/pkg/workload"
 	"math"
 
 	"github.com/pkg/errors"
@@ -56,11 +57,11 @@ type trialWorkloadSequencerState struct {
 	// trial is descheduled or paused. For example, a trial that plans to do:
 	//     RUN_STEP, COMPUTE_VALIDATION_METRICS, CHECKPOINT_MODEL.
 	// that is paused during the run step, receives its checkpoint completed message out of order.
-	cachedCheckpoints map[searcher.Workload]searcher.CompletedMessage
+	cachedCheckpoints map[workload.Workload]workload.CompletedMessage
 }
 
 func (s *trialWorkloadSequencerState) deepCopy() trialWorkloadSequencerState {
-	cachedCheckpoints := map[searcher.Workload]searcher.CompletedMessage{}
+	cachedCheckpoints := map[workload.Workload]workload.CompletedMessage{}
 	for v, k := range s.cachedCheckpoints {
 		cachedCheckpoints[v] = k
 	}
@@ -86,7 +87,7 @@ func newTrialWorkloadSequencer(
 	state := trialWorkloadSequencerState{
 		needInitialValidation: exp.Config.PerformInitialValidation,
 		latestCheckpoint:      firstCheckpoint,
-		cachedCheckpoints:     map[searcher.Workload]searcher.CompletedMessage{},
+		cachedCheckpoints:     map[workload.Workload]workload.CompletedMessage{},
 	}
 	return &trialWorkloadSequencer{
 		trialWorkloadSequencerState:       state,
@@ -157,13 +158,13 @@ func (s *trialWorkloadSequencer) CompleteCachedCheckpoints() (
 // It snapshots this state whenever we've just completed a checkpoint, and should be the only method
 // to alter the snapshot, too.
 func (s *trialWorkloadSequencer) WorkloadCompleted(
-	msg searcher.CompletedMessage, isBestValFuture actor.Response,
+	msg workload.CompletedMessage, isBestValFuture actor.Response,
 ) (op searcher.Runnable, metrics interface{}, err error) {
 	// Checkpoints are allowed even if they were not specified by sequencer.workload(). This can
 	// occur after a call to precloseCheckpointWorkload or during a replay of a trial that was
 	// descheduled.
 	if s.UpToDate() {
-		if msg.Workload.Kind != searcher.CheckpointModel {
+		if msg.Workload.Kind != workload.CheckpointModel {
 			return nil, nil, errors.Errorf(
 				"illegal non-checkpoint workload completed message received: %s", msg.Workload)
 		}
@@ -173,7 +174,7 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 			return nil, nil, errors.Wrap(err, "error checking workload")
 		}
 		if msg.Workload != w {
-			if msg.Workload.Kind != searcher.CheckpointModel {
+			if msg.Workload.Kind != workload.CheckpointModel {
 				return nil, nil, errors.Errorf(
 					"illegal completed message received: expected checkpoint or %s, got %s", w, msg.Workload)
 			}
@@ -181,7 +182,7 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 	}
 	if msg.ExitedReason != nil {
 		s.exitingEarly = true
-		if *msg.ExitedReason == searcher.UserCanceled {
+		if *msg.ExitedReason == workload.UserCanceled {
 			s.userRequestedStop = true
 		} else {
 			return nil, nil, nil
@@ -189,12 +190,12 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 	}
 
 	switch msg.Workload.Kind {
-	case searcher.RunStep:
+	case workload.RunStep:
 		return s.runStepCompleted(msg), nil, nil
-	case searcher.CheckpointModel:
+	case workload.CheckpointModel:
 		op, metrics := s.checkpointModelCompleted(msg)
 		return op, metrics, nil
-	case searcher.ComputeValidationMetrics:
+	case workload.ComputeValidationMetrics:
 		op, metrics := s.computeValidationMetricsCompleted(msg, isBestValFuture)
 		return op, metrics, nil
 	default:
@@ -204,7 +205,7 @@ func (s *trialWorkloadSequencer) WorkloadCompleted(
 
 // runStepCompleted updates the internal state of the sequencer to account for a completed
 // RUN_STEP workload.
-func (s *trialWorkloadSequencer) runStepCompleted(msg searcher.CompletedMessage) searcher.Runnable {
+func (s *trialWorkloadSequencer) runStepCompleted(msg workload.CompletedMessage) searcher.Runnable {
 	s.curStepID++
 	s.totalBatchesProcessed += msg.Workload.NumBatches
 	s.batchesTowardsCurrentOp += msg.Workload.NumBatches
@@ -223,7 +224,7 @@ func (s *trialWorkloadSequencer) runStepCompleted(msg searcher.CompletedMessage)
 // computeValidationMetricsCompleted updates the internal state of the sequencer to account for a
 // completed COMPUTE_VALIDATION_METRICS worklaod.
 func (s *trialWorkloadSequencer) computeValidationMetricsCompleted(
-	msg searcher.CompletedMessage, isBestValFuture actor.Response,
+	msg workload.CompletedMessage, isBestValFuture actor.Response,
 ) (searcher.Runnable, interface{}) {
 	s.batchesSinceLastVal = 0
 	if s.needInitialValidation {
@@ -257,7 +258,7 @@ func (s *trialWorkloadSequencer) computeValidationMetricsCompleted(
 // checkpointModelCompleted updates the internal state of the sequencer to account for a completed
 // CHECKPOINT_MODEL workload.
 func (s *trialWorkloadSequencer) checkpointModelCompleted(
-	msg searcher.CompletedMessage,
+	msg workload.CompletedMessage,
 ) (searcher.Runnable, interface{}) {
 	defer s.snapshotState()
 	checkpoint := checkpointFromCheckpointMetrics(*msg.CheckpointMetrics)
@@ -278,14 +279,14 @@ func (s *trialWorkloadSequencer) checkpointModelCompleted(
 
 // Workload introspects the current state of the trialWorkloadSequencer, without altering it, and
 // determines the next workload to run with the information it has. It should not alter state.
-func (s trialWorkloadSequencer) Workload() (searcher.Workload, error) {
+func (s trialWorkloadSequencer) Workload() (workload.Workload, error) {
 	if s.UpToDate() {
-		return searcher.Workload{},
+		return workload.Workload{},
 			errors.New("cannot call sequencer.Workload() with sequencer.UpToDate() == true")
 	}
 
 	if !s.trialIDValid {
-		return searcher.Workload{},
+		return workload.Workload{},
 			errors.New("cannot call sequencer.Workload() before sequencer.SetTrialID()")
 	}
 
@@ -332,12 +333,12 @@ func (s trialWorkloadSequencer) Workload() (searcher.Workload, error) {
 		), 1)
 		return s.train(batchesThisStep), nil
 	default:
-		return searcher.Workload{}, errors.New("unexpected op type determining workload")
+		return workload.Workload{}, errors.New("unexpected op type determining workload")
 	}
 }
 
 // PrecloseCheckpointWorkload determines what the preclose checkpoint workload should be.
-func (s trialWorkloadSequencer) PrecloseCheckpointWorkload() *searcher.Workload {
+func (s trialWorkloadSequencer) PrecloseCheckpointWorkload() *workload.Workload {
 	if s.batchesSinceLastCkpt == 0 {
 		return nil
 	}
@@ -351,9 +352,9 @@ func (s trialWorkloadSequencer) PrecloseCheckpointWorkload() *searcher.Workload 
 }
 
 // TerminateWorkload determines what the terminate workload should be.
-func (s trialWorkloadSequencer) TerminateWorkload() *searcher.Workload {
-	return &searcher.Workload{
-		Kind:         searcher.Terminate,
+func (s trialWorkloadSequencer) TerminateWorkload() *workload.Workload {
+	return &workload.Workload{
+		Kind:         workload.Terminate,
 		ExperimentID: s.experiment.ID,
 		TrialID:      s.trialID,
 		StepID:       s.curStepID,
@@ -373,9 +374,9 @@ func (s *trialWorkloadSequencer) UpToDate() bool {
 	return len(s.ops) == s.curOpIdx || s.exitingEarly && !s.postUserCancellationCheckpointNeeded()
 }
 
-func (s trialWorkloadSequencer) train(numBatches int) searcher.Workload {
-	return searcher.Workload{
-		Kind:                  searcher.RunStep,
+func (s trialWorkloadSequencer) train(numBatches int) workload.Workload {
+	return workload.Workload{
+		Kind:                  workload.RunStep,
 		ExperimentID:          s.experiment.ID,
 		TrialID:               s.trialID,
 		StepID:                s.curStepID + 1,
@@ -384,9 +385,9 @@ func (s trialWorkloadSequencer) train(numBatches int) searcher.Workload {
 	}
 }
 
-func (s trialWorkloadSequencer) validate() searcher.Workload {
-	return searcher.Workload{
-		Kind:                  searcher.ComputeValidationMetrics,
+func (s trialWorkloadSequencer) validate() workload.Workload {
+	return workload.Workload{
+		Kind:                  workload.ComputeValidationMetrics,
 		ExperimentID:          s.experiment.ID,
 		TrialID:               s.trialID,
 		StepID:                s.curStepID,
@@ -394,9 +395,9 @@ func (s trialWorkloadSequencer) validate() searcher.Workload {
 	}
 }
 
-func (s trialWorkloadSequencer) checkpoint() searcher.Workload {
-	return searcher.Workload{
-		Kind:                  searcher.CheckpointModel,
+func (s trialWorkloadSequencer) checkpoint() workload.Workload {
+	return workload.Workload{
+		Kind:                  workload.CheckpointModel,
 		ExperimentID:          s.experiment.ID,
 		TrialID:               s.trialID,
 		StepID:                s.curStepID,

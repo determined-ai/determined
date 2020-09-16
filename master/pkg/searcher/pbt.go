@@ -1,6 +1,7 @@
 package searcher
 
 import (
+	"github.com/determined-ai/determined/master/pkg/workload"
 	"math"
 	"sort"
 
@@ -52,7 +53,7 @@ func (s *pbtSearch) initialOperations(ctx context) ([]Operation, error) {
 }
 
 func (s *pbtSearch) validationCompleted(
-	ctx context, requestID RequestID, validate Validate, metrics ValidationMetrics,
+	ctx context, requestID RequestID, validate Validate, metrics workload.ValidationMetrics,
 ) ([]Operation, error) {
 	// Extract the relevant metric as a float.
 	rawMetric := metrics.Metrics[s.Metric]
@@ -194,7 +195,7 @@ func (s *pbtSearch) exploreParams(ctx context, old hparamSample) hparamSample {
 }
 
 func (s *pbtSearch) checkpointCompleted(
-	ctx context, requestID RequestID, checkpoint Checkpoint, metrics CheckpointMetrics,
+	ctx context, requestID RequestID, checkpoint Checkpoint, metrics workload.CheckpointMetrics,
 ) ([]Operation, error) {
 	ops := s.waitingOps[checkpoint]
 	delete(s.waitingOps, checkpoint)

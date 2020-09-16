@@ -1,6 +1,7 @@
 package searcher
 
 import (
+	"github.com/determined-ai/determined/master/pkg/workload"
 	"math"
 	"sort"
 
@@ -135,7 +136,7 @@ func (s *syncHalvingSearch) initialOperations(ctx context) ([]Operation, error) 
 }
 
 func (s *syncHalvingSearch) validationCompleted(
-	ctx context, requestID RequestID, validate Validate, metrics ValidationMetrics,
+	ctx context, requestID RequestID, validate Validate, metrics workload.ValidationMetrics,
 ) ([]Operation, error) {
 	// Extract the relevant metric as a float.
 	metric, err := metrics.Metric(s.Metric)

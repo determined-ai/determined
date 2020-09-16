@@ -3,13 +3,13 @@ package tasks
 import (
 	"crypto/tls"
 	"encoding/json"
+	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
@@ -75,7 +75,7 @@ type StartContainer struct {
 	HParams             map[string]interface{}    `json:"hparams"`
 	TrialSeed           uint32                    `json:"trial_seed"`
 	LatestCheckpoint    *model.Checkpoint         `json:"latest_checkpoint"`
-	InitialWorkload     searcher.Workload         `json:"initial_workload"`
+	InitialWorkload     workload.Workload         `json:"initial_workload"`
 	WorkloadManagerType model.WorkloadManagerType `json:"workload_manager_type"`
 	AdditionalFiles     archive.Archive           `json:"additional_files"`
 
@@ -90,5 +90,5 @@ type KillContainer struct{}
 
 // RunWorkload is the information sent to an agent to run a workload.
 type RunWorkload struct {
-	Workload searcher.Workload `json:"workload"`
+	Workload workload.Workload `json:"workload"`
 }

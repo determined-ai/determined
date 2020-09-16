@@ -2,6 +2,7 @@ package searcher
 
 import (
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 // Event is the type of searcher events stored by the event log.
@@ -82,7 +83,7 @@ func (el *EventLog) TrialExitedEarly(requestID RequestID) {
 }
 
 // WorkloadCompleted records that the workload has been completed.
-func (el *EventLog) WorkloadCompleted(msg CompletedMessage, unitsCompleted float64) {
+func (el *EventLog) WorkloadCompleted(msg workload.CompletedMessage, unitsCompleted float64) {
 	el.TotalUnitsCompleted += unitsCompleted
 	el.uncommitted = append(el.uncommitted, msg)
 }

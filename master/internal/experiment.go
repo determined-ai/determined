@@ -3,6 +3,7 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -32,14 +33,14 @@ type (
 	}
 	trialCompletedWorkload struct {
 		trialID          int
-		completedMessage searcher.CompletedMessage
+		completedMessage workload.CompletedMessage
 		// unitsCompleted is passed as a float because while the searcher will only request integral
 		// units, a trial may complete partial units (especially in the case of epochs).
 		unitsCompleted float64
 	}
 	trialExitedEarly struct {
 		trialID      int
-		exitedReason *searcher.ExitedReason
+		exitedReason *workload.ExitedReason
 	}
 	getProgress    struct{}
 	getTrial       struct{ trialID int }
@@ -196,7 +197,7 @@ func newSearcherEventCallback(master *Master, ref *actor.Ref) func(model.Searche
 			}
 			// Convert the JSON representation of the message to an actual message object.
 			obj := event.Content["msg"]
-			var msg searcher.CompletedMessage
+			var msg workload.CompletedMessage
 			if err := marshalInto(obj, &msg); err != nil {
 				return errors.Wrap(err, "failed to process completed message")
 			}
@@ -296,7 +297,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case trialCompletedWorkload:
 		e.searcher.WorkloadCompleted(msg.completedMessage, msg.unitsCompleted)
 		e.processOperations(ctx, nil, nil) // We call processOperations to flush searcher events.
-		if msg.completedMessage.Workload.Kind == searcher.ComputeValidationMetrics &&
+		if msg.completedMessage.Workload.Kind == workload.ComputeValidationMetrics &&
 			// Messages indicating trial failures won't have metrics (or need their status).
 			msg.completedMessage.ExitedReason == nil {
 			ctx.Respond(e.isBestValidation(*msg.completedMessage.ValidationMetrics))
@@ -550,7 +551,7 @@ func (e *experiment) processOperations(
 	}
 }
 
-func (e *experiment) isBestValidation(metrics searcher.ValidationMetrics) bool {
+func (e *experiment) isBestValidation(metrics workload.ValidationMetrics) bool {
 	metricName := e.Config.Searcher.Metric
 	validation, err := metrics.Metric(metricName)
 	if err != nil {

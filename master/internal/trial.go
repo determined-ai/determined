@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"encoding/json"
 	"fmt"
+	"github.com/determined-ai/determined/master/pkg/workload"
 	"sort"
 	"time"
 
@@ -359,7 +360,7 @@ func (t *trial) runningReceive(ctx *actor.Context) error {
 	case *websocket.Conn, *apiv1.KillTrialRequest:
 		return t.processAPIMsg(ctx)
 
-	case searcher.CompletedMessage:
+	case workload.CompletedMessage:
 		if err := t.processCompletedWorkload(ctx, msg); err != nil {
 			return err
 		}
@@ -465,7 +466,7 @@ func (t *trial) processContainerMsg(ctx *actor.Context) error {
 func (t *trial) processAPIMsg(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case *websocket.Conn:
-		a := api.WrapSocket(msg, searcher.CompletedMessage{}, false)
+		a := api.WrapSocket(msg, workload.CompletedMessage{}, false)
 		if ref, created := ctx.ActorOf("socket", a); created {
 			ctx.Respond(ref)
 		}
@@ -601,8 +602,8 @@ func (t *trial) processAssigned(ctx *actor.Context, msg scheduler.TaskAssigned) 
 	return nil
 }
 
-func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.CompletedMessage) error {
-	if !t.replaying && (msg.ExitedReason == nil || *msg.ExitedReason == searcher.UserCanceled) {
+func (t *trial) processCompletedWorkload(ctx *actor.Context, msg workload.CompletedMessage) error {
+	if !t.replaying && (msg.ExitedReason == nil || *msg.ExitedReason == workload.UserCanceled) {
 		if err := markWorkloadCompleted(t.db, msg); err != nil {
 			ctx.Log().Error(err)
 		}
@@ -634,7 +635,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 		ctx.Log().Info("exiting trial early")
 		ctx.Tell(ctx.Self().Parent(), trialExitedEarly{t.id, msg.ExitedReason})
 		t.earlyExit = true
-		if *msg.ExitedReason == searcher.Errored {
+		if *msg.ExitedReason == workload.Errored {
 			return nil
 		}
 	}
@@ -650,7 +651,7 @@ func (t *trial) processCompletedWorkload(ctx *actor.Context, msg searcher.Comple
 
 func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 	terminateNow := false
-	var w searcher.Workload
+	var w workload.Workload
 	var err error
 	switch {
 	// We have another workload to run.
@@ -664,7 +665,7 @@ func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 	// We have no workloads, but the current step needs to be checkpointed before we can terminate.
 	case t.sequencer.PrecloseCheckpointWorkload() != nil:
 		w = *t.sequencer.PrecloseCheckpointWorkload()
-		if w.Kind != searcher.CheckpointModel {
+		if w.Kind != workload.CheckpointModel {
 			return errors.New(
 				"sequencer.PrecloseCheckpointWorkload() returned a non-checkpoint workload")
 		}
@@ -723,7 +724,7 @@ func (t *trial) processContainerConnected(ctx *actor.Context, msg containerConne
 			return nil
 		}
 	}
-	a := api.WrapSocket(msg.socket, searcher.CompletedMessage{}, false)
+	a := api.WrapSocket(msg.socket, workload.CompletedMessage{}, false)
 	ref, _ := ctx.ActorOf(fmt.Sprintf("socket-%s", msg.ContainerID), a)
 	t.sockets[msg.ContainerID] = ref
 	ctx.Respond(ref)
@@ -1007,13 +1008,13 @@ func (t *trial) resetTrial(
 			}
 		}
 	}
-	e := searcher.Errored
+	e := workload.Errored
 	w, err := t.sequencer.Workload()
 	if err != nil {
 		ctx.Log().Error(err)
 		panic(err)
 	}
-	erroredMessage := searcher.CompletedMessage{
+	erroredMessage := workload.CompletedMessage{
 		Workload:     w,
 		ExitedReason: &e,
 	}

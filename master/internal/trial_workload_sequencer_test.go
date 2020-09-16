@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"github.com/determined-ai/determined/master/pkg/workload"
 	"testing"
 
 	"github.com/ghodss/yaml"
@@ -50,90 +51,90 @@ checkpoint_policy: none
 	validate := searcher.NewValidate(create.RequestID)
 	checkpoint := searcher.NewCheckpoint(create.RequestID)
 
-	trainWorkload1 := searcher.Workload{
-		Kind:                  searcher.RunStep,
+	trainWorkload1 := workload.Workload{
+		Kind:                  workload.RunStep,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                1,
 		NumBatches:            schedulingUnit,
 		TotalBatchesProcessed: 0,
 	}
-	trainWorkload2 := searcher.Workload{
-		Kind:                  searcher.RunStep,
+	trainWorkload2 := workload.Workload{
+		Kind:                  workload.RunStep,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                2,
 		NumBatches:            schedulingUnit,
 		TotalBatchesProcessed: schedulingUnit,
 	}
-	trainWorkload3 := searcher.Workload{
-		Kind:                  searcher.RunStep,
+	trainWorkload3 := workload.Workload{
+		Kind:                  workload.RunStep,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                3,
 		NumBatches:            schedulingUnit,
 		TotalBatchesProcessed: 2 * schedulingUnit,
 	}
-	trainWorkload4 := searcher.Workload{
-		Kind:                  searcher.RunStep,
+	trainWorkload4 := workload.Workload{
+		Kind:                  workload.RunStep,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                4,
 		NumBatches:            schedulingUnit,
 		TotalBatchesProcessed: 3 * schedulingUnit,
 	}
-	trainWorkload5 := searcher.Workload{
-		Kind:                  searcher.RunStep,
+	trainWorkload5 := workload.Workload{
+		Kind:                  workload.RunStep,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                5,
 		NumBatches:            schedulingUnit,
 		TotalBatchesProcessed: 4 * schedulingUnit,
 	}
-	checkpointWorkload1 := searcher.Workload{
-		Kind:                  searcher.CheckpointModel,
+	checkpointWorkload1 := workload.Workload{
+		Kind:                  workload.CheckpointModel,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                1,
 		TotalBatchesProcessed: schedulingUnit,
 	}
-	checkpointWorkload2 := searcher.Workload{
-		Kind:                  searcher.CheckpointModel,
+	checkpointWorkload2 := workload.Workload{
+		Kind:                  workload.CheckpointModel,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                2,
 		TotalBatchesProcessed: schedulingUnit * 2,
 	}
-	checkpointWorkload4 := searcher.Workload{
-		Kind:                  searcher.CheckpointModel,
+	checkpointWorkload4 := workload.Workload{
+		Kind:                  workload.CheckpointModel,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                4,
 		TotalBatchesProcessed: schedulingUnit * 4,
 	}
-	checkpointWorkload5 := searcher.Workload{
-		Kind:                  searcher.CheckpointModel,
+	checkpointWorkload5 := workload.Workload{
+		Kind:                  workload.CheckpointModel,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                5,
 		TotalBatchesProcessed: schedulingUnit * 5,
 	}
-	validationWorkload2 := searcher.Workload{
-		Kind:                  searcher.ComputeValidationMetrics,
+	validationWorkload2 := workload.Workload{
+		Kind:                  workload.ComputeValidationMetrics,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                2,
 		TotalBatchesProcessed: schedulingUnit * 2,
 	}
-	validationWorkload4 := searcher.Workload{
-		Kind:                  searcher.ComputeValidationMetrics,
+	validationWorkload4 := workload.Workload{
+		Kind:                  workload.ComputeValidationMetrics,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                4,
 		TotalBatchesProcessed: schedulingUnit * 4,
 	}
-	validationWorkload5 := searcher.Workload{
-		Kind:                  searcher.ComputeValidationMetrics,
+	validationWorkload5 := workload.Workload{
+		Kind:                  workload.ComputeValidationMetrics,
 		ExperimentID:          1,
 		TrialID:               1,
 		StepID:                5,
@@ -165,7 +166,7 @@ checkpoint_policy: none
 	assert.Assert(t, s.PrecloseCheckpointWorkload() == nil)
 
 	// Complete first RUN_STEP.
-	op, _, err := s.WorkloadCompleted(searcher.CompletedMessage{Workload: trainWorkload1}, nil)
+	op, _, err := s.WorkloadCompleted(workload.CompletedMessage{Workload: trainWorkload1}, nil)
 	assert.NilError(t, err)
 	assert.Equal(t, op, nil, "should not have finished %v yet", op)
 	w, err = s.Workload()
@@ -174,7 +175,7 @@ checkpoint_policy: none
 	assert.Equal(t, *s.PrecloseCheckpointWorkload(), checkpointWorkload1)
 
 	// Complete second RUN_STEP.
-	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{Workload: trainWorkload2}, nil)
+	op, _, err = s.WorkloadCompleted(workload.CompletedMessage{Workload: trainWorkload2}, nil)
 	assert.NilError(t, err)
 	assert.Equal(t, op, nil, "should not have finished %v yet", op)
 	w, err = s.Workload()
@@ -183,7 +184,7 @@ checkpoint_policy: none
 	assert.Equal(t, *s.PrecloseCheckpointWorkload(), checkpointWorkload2)
 
 	// Complete first COMPUTE_VALIDATION_METRICS.
-	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{Workload: validationWorkload2}, nil)
+	op, _, err = s.WorkloadCompleted(workload.CompletedMessage{Workload: validationWorkload2}, nil)
 	assert.NilError(t, err)
 	assert.Equal(t, op, nil, "should not have finished %v yet", op)
 	w, err = s.Workload()
@@ -191,14 +192,14 @@ checkpoint_policy: none
 	assert.Equal(t, w, trainWorkload3)
 
 	// Complete third and fourth RUN_STEP.
-	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{Workload: trainWorkload3}, nil)
+	op, _, err = s.WorkloadCompleted(workload.CompletedMessage{Workload: trainWorkload3}, nil)
 	assert.NilError(t, err)
 	assert.Equal(t, op, nil, "should not have finished %v yet", op)
 	w, err = s.Workload()
 	assert.NilError(t, err)
 	assert.Equal(t, w, trainWorkload4)
 
-	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{Workload: trainWorkload4}, nil)
+	op, _, err = s.WorkloadCompleted(workload.CompletedMessage{Workload: trainWorkload4}, nil)
 	assert.NilError(t, err)
 	assert.Equal(t, op, nil, "should not have finished %v yet", op)
 	w, err = s.Workload()
@@ -206,9 +207,9 @@ checkpoint_policy: none
 	assert.Equal(t, w, validationWorkload4)
 
 	// Complete second COMPUTE_VALIDATION_METRICS.
-	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{
+	op, _, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload:          validationWorkload4,
-		ValidationMetrics: &searcher.ValidationMetrics{},
+		ValidationMetrics: &workload.ValidationMetrics{},
 	}, nil)
 	assert.NilError(t, err)
 	assert.Equal(t, op, nil, "should not have finished %v yet", op)
@@ -217,8 +218,8 @@ checkpoint_policy: none
 	assert.Equal(t, w, checkpointWorkload4)
 
 	// Complete first CHECKPOINT_MODEL.
-	fakeCheckpointMetrics := searcher.CheckpointMetrics{UUID: uuid.New()}
-	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{
+	fakeCheckpointMetrics := workload.CheckpointMetrics{UUID: uuid.New()}
+	op, _, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload:          checkpointWorkload4,
 		CheckpointMetrics: &fakeCheckpointMetrics,
 	}, nil)
@@ -227,7 +228,7 @@ checkpoint_policy: none
 	assert.Assert(t, s.PrecloseCheckpointWorkload() == nil)
 
 	// Complete last RUN_STEP.
-	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{Workload: trainWorkload5}, nil)
+	op, _, err = s.WorkloadCompleted(workload.CompletedMessage{Workload: trainWorkload5}, nil)
 	assert.NilError(t, err)
 	assert.Equal(t, op, train, "expected searcher op to be returned")
 	w, err = s.Workload()
@@ -241,7 +242,7 @@ checkpoint_policy: none
 	assert.Equal(t, w, trainWorkload5)
 
 	// Replay last RUN_STEP after rollback.
-	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{Workload: trainWorkload5}, nil)
+	op, _, err = s.WorkloadCompleted(workload.CompletedMessage{Workload: trainWorkload5}, nil)
 	assert.NilError(t, err)
 	assert.Equal(t, op, train, "expected searcher op to be returned")
 	w, err = s.Workload()
@@ -249,8 +250,8 @@ checkpoint_policy: none
 	assert.Equal(t, w, checkpointWorkload5)
 
 	// Complete last CHECKPOINT_MODEL.
-	fakeCheckpointMetrics = searcher.CheckpointMetrics{UUID: uuid.New()}
-	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{
+	fakeCheckpointMetrics = workload.CheckpointMetrics{UUID: uuid.New()}
+	op, _, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload:          checkpointWorkload5,
 		CheckpointMetrics: &fakeCheckpointMetrics,
 	}, nil)
@@ -261,9 +262,9 @@ checkpoint_policy: none
 	assert.Equal(t, w, validationWorkload5)
 
 	// Complete last COMPUTE_VALIDATION_METRICS.
-	op, _, err = s.WorkloadCompleted(searcher.CompletedMessage{
+	op, _, err = s.WorkloadCompleted(workload.CompletedMessage{
 		Workload:          validationWorkload5,
-		ValidationMetrics: &searcher.ValidationMetrics{},
+		ValidationMetrics: &workload.ValidationMetrics{},
 	}, nil)
 	assert.NilError(t, err)
 	assert.Equal(t, op, validate, "expected searcher op to be returned")
@@ -299,9 +300,9 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 		searcher.NewTrain(create.RequestID, model.NewLength(model.Batches, 500)),
 	))
 
-	_, _, err := s.WorkloadCompleted(searcher.CompletedMessage{
-		Workload: searcher.Workload{
-			Kind:                  searcher.RunStep,
+	_, _, err := s.WorkloadCompleted(workload.CompletedMessage{
+		Workload: workload.Workload{
+			Kind:                  workload.RunStep,
 			ExperimentID:          1,
 			TrialID:               1,
 			StepID:                1,
@@ -311,10 +312,10 @@ func TestTrialWorkloadSequencerFailedWorkloads(t *testing.T) {
 	}, nil)
 	assert.NilError(t, err)
 
-	exitedReason := searcher.ExitedReason("not ok")
-	op, _, err := s.WorkloadCompleted(searcher.CompletedMessage{
-		Workload: searcher.Workload{
-			Kind:                  searcher.CheckpointModel,
+	exitedReason := workload.ExitedReason("not ok")
+	op, _, err := s.WorkloadCompleted(workload.CompletedMessage{
+		Workload: workload.Workload{
+			Kind:                  workload.CheckpointModel,
 			ExperimentID:          1,
 			TrialID:               1,
 			StepID:                1,
@@ -345,9 +346,9 @@ func TestTrialWorkloadSequencerOperationLessThanBatchSize(t *testing.T) {
 		train,
 	))
 
-	op, _, err := s.WorkloadCompleted(searcher.CompletedMessage{
-		Workload: searcher.Workload{
-			Kind:                  searcher.RunStep,
+	op, _, err := s.WorkloadCompleted(workload.CompletedMessage{
+		Workload: workload.Workload{
+			Kind:                  workload.RunStep,
 			ExperimentID:          1,
 			TrialID:               1,
 			StepID:                1,

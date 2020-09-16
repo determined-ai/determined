@@ -1,12 +1,12 @@
 package internal
 
 import (
+	"github.com/determined-ai/determined/master/pkg/workload"
 	"testing"
 
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/searcher"
 )
 
 type metricCase struct {
@@ -27,8 +27,8 @@ func testBestValidationCase(t *testing.T, smallerIsBetter bool, metrics []metric
 	}
 
 	for _, metric := range metrics {
-		msg := searcher.CompletedMessage{
-			ValidationMetrics: &searcher.ValidationMetrics{
+		msg := workload.CompletedMessage{
+			ValidationMetrics: &workload.ValidationMetrics{
 				Metrics: map[string]interface{}{"metric": metric.value},
 			},
 		}

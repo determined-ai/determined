@@ -2,6 +2,7 @@ package internal
 
 import (
 	"encoding/json"
+	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -75,13 +76,13 @@ func convertSearcherEvent(id int, event searcher.Event) (
 			"request_id": event.RequestID.String(),
 		}
 
-	case searcher.CompletedMessage:
+	case workload.CompletedMessage:
 		switch event.Workload.Kind {
-		case searcher.RunStep:
+		case workload.RunStep:
 			event.RawMetrics = json.RawMessage("")
-		case searcher.CheckpointModel:
+		case workload.CheckpointModel:
 			flush = true
-		case searcher.ComputeValidationMetrics:
+		case workload.ComputeValidationMetrics:
 			flush = true
 		}
 		workloadBytes, err := json.Marshal(event)
@@ -104,7 +105,7 @@ func convertSearcherEvent(id int, event searcher.Event) (
 
 // checkpointFromCheckpointMetrics converts a workload.CheckpointMetrics into a model.Checkpoint
 // with the UUID, and Resources fields filled out.
-func checkpointFromCheckpointMetrics(metrics searcher.CheckpointMetrics) model.Checkpoint {
+func checkpointFromCheckpointMetrics(metrics workload.CheckpointMetrics) model.Checkpoint {
 	resources := model.JSONObj{}
 	for key, value := range metrics.Resources {
 		resources[key] = value
@@ -119,43 +120,43 @@ func checkpointFromCheckpointMetrics(metrics searcher.CheckpointMetrics) model.C
 	}
 }
 
-func saveWorkload(db *db.PgDB, w searcher.Workload) error {
+func saveWorkload(db *db.PgDB, w workload.Workload) error {
 	switch w.Kind {
-	case searcher.RunStep:
+	case workload.RunStep:
 		return db.AddStep(model.NewStep(w.TrialID, w.StepID, w.NumBatches, w.TotalBatchesProcessed))
-	case searcher.CheckpointModel:
+	case workload.CheckpointModel:
 		return db.AddCheckpoint(model.NewCheckpoint(w.TrialID, w.StepID))
-	case searcher.ComputeValidationMetrics:
+	case workload.ComputeValidationMetrics:
 		return db.AddValidation(model.NewValidation(w.TrialID, w.StepID))
 	default:
 		return errors.Errorf("unexpected workload in saveWorkload: %v", w)
 	}
 }
 
-func markWorkloadErrored(db *db.PgDB, w searcher.Workload) error {
+func markWorkloadErrored(db *db.PgDB, w workload.Workload) error {
 	switch w.Kind {
-	case searcher.RunStep:
+	case workload.RunStep:
 		return db.UpdateStep(w.TrialID, w.StepID, model.ErrorState, nil)
-	case searcher.CheckpointModel:
+	case workload.CheckpointModel:
 		return db.UpdateCheckpoint(w.TrialID, w.StepID, model.Checkpoint{State: model.ErrorState})
-	case searcher.ComputeValidationMetrics:
+	case workload.ComputeValidationMetrics:
 		return db.UpdateValidation(w.TrialID, w.StepID, model.ErrorState, nil)
 	default:
 		return errors.Errorf("unexpected workload in markWorkloadErrored: %v", w)
 	}
 }
 
-func markWorkloadCompleted(db *db.PgDB, msg searcher.CompletedMessage) error {
+func markWorkloadCompleted(db *db.PgDB, msg workload.CompletedMessage) error {
 	switch msg.Workload.Kind {
-	case searcher.RunStep:
+	case workload.RunStep:
 		return db.UpdateStep(
 			msg.Workload.TrialID, msg.Workload.StepID, model.CompletedState, msg.RunMetrics)
-	case searcher.CheckpointModel:
+	case workload.CheckpointModel:
 		checkpoint := checkpointFromCheckpointMetrics(*msg.CheckpointMetrics)
 		checkpoint.State = model.CompletedState
 		return db.UpdateCheckpoint(
 			msg.Workload.TrialID, msg.Workload.StepID, checkpoint)
-	case searcher.ComputeValidationMetrics:
+	case workload.ComputeValidationMetrics:
 		metrics := make(model.JSONObj)
 		metrics["num_inputs"] = msg.ValidationMetrics.NumInputs
 		metrics["validation_metrics"] = msg.ValidationMetrics.Metrics

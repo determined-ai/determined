@@ -1,6 +1,7 @@
 package searcher
 
 import (
+	"github.com/determined-ai/determined/master/pkg/workload"
 	"strconv"
 	"strings"
 	"testing"
@@ -364,7 +365,7 @@ func simulateOperationComplete(
 		if vErr != nil {
 			return nil, errors.Wrap(err, "error checking Validate with predefinedTrial")
 		}
-		metrics := ValidationMetrics{
+		metrics := workload.ValidationMetrics{
 			Metrics: map[string]interface{}{
 				"error": val,
 			},
@@ -378,7 +379,7 @@ func simulateOperationComplete(
 		if err = trial.Checkpoint(opIndex); err != nil {
 			return nil, errors.Wrap(err, "error checking Checkpoint with predefinedTrial")
 		}
-		metrics := CheckpointMetrics{}
+		metrics := workload.CheckpointMetrics{}
 		ops, err = method.checkpointCompleted(ctx, operation.RequestID, operation, metrics)
 		if err != nil {
 			return nil, errors.Wrap(err, "checkpointCompleted")
