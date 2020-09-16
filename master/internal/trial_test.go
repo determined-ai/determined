@@ -31,6 +31,15 @@ func (a *mockActor) Receive(ctx *actor.Context) error {
 	return nil
 }
 
+type mockAllocation struct {
+}
+
+func (mockAllocation) Summary() scheduler.ContainerSummary {
+	return scheduler.ContainerSummary{}
+}
+func (mockAllocation) StartContainer(ctx *actor.Context, spec tasks.TaskSpec) {}
+func (mockAllocation) KillContainer(ctx *actor.Context)                       {}
+
 func TestRendezvousInfo(t *testing.T) {
 	addresses := [][]cproto.Address{
 		{
@@ -90,17 +99,18 @@ func TestRendezvousInfo(t *testing.T) {
 
 	// This is the minimal trial to receive scheduler.ContainerStarted messages.
 	trial := &trial{
-		rp:                 rp,
-		experiment:         &model.Experiment{},
-		task:               &scheduler.AllocateRequest{},
-		experimentState:    model.ActiveState,
-		numContainers:      len(addresses),
-		startedContainers:  make(map[cproto.ID]bool),
-		containers:         make(map[cproto.ID]cproto.Container),
-		containerRank:      make(map[cproto.ID]int),
-		containerAddresses: make(map[cproto.ID][]cproto.Address),
-		sockets:            make(map[cproto.ID]*actor.Ref),
-		taskSpec:           defaultTaskSpec,
+		rp:                   rp,
+		experiment:           &model.Experiment{},
+		task:                 &scheduler.AllocateRequest{},
+		allocations:          []scheduler.Allocation{mockAllocation{}, mockAllocation{}},
+		experimentState:      model.ActiveState,
+		startedContainers:    make(map[cproto.ID]bool),
+		terminatedContainers: make(map[cproto.ID]terminatedContainerWithState),
+		containers:           make(map[cproto.ID]cproto.Container),
+		containerRank:        make(map[cproto.ID]int),
+		containerAddresses:   make(map[cproto.ID][]cproto.Address),
+		containerSockets:     make(map[cproto.ID]*actor.Ref),
+		taskSpec:             defaultTaskSpec,
 	}
 	trialRef, created := system.ActorOf(actor.Addr("trial"), trial)
 	if !created {
@@ -114,7 +124,7 @@ func TestRendezvousInfo(t *testing.T) {
 		t.Fatal("unable to create cluster")
 	}
 	strayID := cproto.ID("stray-container-id")
-	trial.sockets[strayID] = strayRef
+	trial.containerSockets[strayID] = strayRef
 
 	containers := make([]*cproto.Container, 0)
 	mockActors := make(map[*cproto.Container]*mockActor)
@@ -130,7 +140,7 @@ func TestRendezvousInfo(t *testing.T) {
 		}
 
 		// Simulate trial containers connecting to the trial actor.
-		trial.sockets[c.ID] = ref
+		trial.containerSockets[c.ID] = ref
 
 		// Simulate the scheduling of a container.
 		system.Ask(trialRef, sproto.TaskContainerStateChanged{
@@ -144,7 +154,7 @@ func TestRendezvousInfo(t *testing.T) {
 	}
 
 	t.Run("Stray sockets are dropped", func(t *testing.T) {
-		_, strayRemains := trial.sockets[strayID]
+		_, strayRemains := trial.containerSockets[strayID]
 		assert.Assert(t, !strayRemains)
 	})
 

@@ -194,33 +194,31 @@ type trial struct {
 	runID int
 
 	replaying bool
-	earlyExit bool
-	killed    bool
 
-	task                       *scheduler.AllocateRequest
+	// The following fields tracks the reasons for termination.
+	earlyExit                  bool
 	pendingGracefulTermination bool
 	terminationSent            bool
 	cancelUnready              bool
+	killed                     bool
 
-	privateKey []byte
-	publicKey  []byte
+	// The following fields tracks the interaction with the resource providers.
+	task        *scheduler.AllocateRequest
+	allocations []scheduler.Allocation
 
-	// numContainers is the number of containers that the scheduler has most recently allocated to run
-	// this trial.
-	allocations                []scheduler.Allocation
-	numContainers              int
-	startedContainers          map[cproto.ID]bool
-	containers                 map[cproto.ID]cproto.Container
-	containerRank              map[cproto.ID]int
-	containerAddresses         map[cproto.ID][]cproto.Address
-	terminatedContainers       []terminatedContainerWithState
+	// The following fields tracks containers and their states.
 	lastContainerConnectedTime time.Time
-
-	// sockets maps each running container for this trial to the corresponding websocket actor.
-	sockets map[cproto.ID]*actor.Ref
+	startedContainers          map[cproto.ID]bool
+	containers                 map[cproto.ID]cproto.Container // only for running containers.
+	containerRank              map[cproto.ID]int              // only for running containers.
+	containerAddresses         map[cproto.ID][]cproto.Address // only for running containers.
+	containerSockets           map[cproto.ID]*actor.Ref       // only for running containers.
+	terminatedContainers       map[cproto.ID]terminatedContainerWithState
 
 	agentUserGroup *model.AgentUserGroup
 	taskSpec       *tasks.TaskSpec
+	privateKey     []byte
+	publicKey      []byte
 }
 
 // newTrial creates a trial which will try to schedule itself after it receives its first workload.
@@ -248,11 +246,12 @@ func newTrial(
 		create:    create,
 		replaying: exp.replaying,
 
-		startedContainers:  make(map[cproto.ID]bool),
-		containers:         make(map[cproto.ID]cproto.Container),
-		containerRank:      make(map[cproto.ID]int),
-		containerAddresses: make(map[cproto.ID][]cproto.Address),
-		sockets:            make(map[cproto.ID]*actor.Ref),
+		startedContainers:    make(map[cproto.ID]bool),
+		containers:           make(map[cproto.ID]cproto.Container),
+		containerRank:        make(map[cproto.ID]int),
+		containerAddresses:   make(map[cproto.ID][]cproto.Address),
+		containerSockets:     make(map[cproto.ID]*actor.Ref),
+		terminatedContainers: make(map[cproto.ID]terminatedContainerWithState),
 
 		agentUserGroup: exp.agentUserGroup,
 		taskSpec:       exp.taskSpec,
@@ -498,9 +497,10 @@ func (t *trial) processID(ctx *actor.Context, id int) {
 }
 
 func (t *trial) processAllocated(ctx *actor.Context, msg scheduler.ResourcesAllocated) error {
-	// Ignore this message if the trial is terminated or the message is from the last run of the trial.
+	// Ignore this message if the resources are already released or
+	// it is from the last run of the trial.
 	if t.task == nil {
-		ctx.Log().Info("ignoring resource allocation since the trial is terminated.")
+		ctx.Log().Info("ignoring resource allocation since the resources are already released.")
 		return nil
 	} else if msg.ID != t.task.ID {
 		ctx.Log().Info("ignoring resource allocation since it is from the last run of the trial.")
@@ -554,8 +554,6 @@ func (t *trial) processAllocated(ctx *actor.Context, msg scheduler.ResourcesAllo
 		return errors.Wrap(err, "error getting workload from sequencer")
 	}
 
-	t.numContainers = len(msg.Allocations)
-
 	if err = saveWorkload(t.db, w); err != nil {
 		ctx.Log().WithError(err).Error("failed to save workload to the database after allocated")
 	}
@@ -608,7 +606,7 @@ func (t *trial) processAllocated(ctx *actor.Context, msg scheduler.ResourcesAllo
 			WorkloadManagerType: t.sequencer.WorkloadManagerType(),
 			AdditionalFiles:     additionalFiles,
 			AgentUserGroup:      t.agentUserGroup,
-			IsMultiAgent:        t.numContainers > 1,
+			IsMultiAgent:        len(t.allocations) > 1,
 		}
 		a.StartContainer(ctx, taskSpec)
 	}
@@ -714,7 +712,7 @@ func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 				},
 			}
 		}
-		for _, socket := range t.sockets {
+		for _, socket := range t.containerSockets {
 			if err := api.WriteSocketJSON(ctx, socket, msg); err != nil {
 				ctx.Log().WithError(err).Error("cannot write to websocket")
 			}
@@ -725,13 +723,13 @@ func (t *trial) sendNextWorkload(ctx *actor.Context) error {
 
 func (t *trial) processContainerConnected(ctx *actor.Context, msg containerConnected) error {
 	t.lastContainerConnectedTime = time.Now()
-	if len(t.containers) < t.numContainers {
+	if len(t.containers) < len(t.allocations) {
 		actors.NotifyAfter(ctx, allReadyTimeoutPeriod, allReadyTimeout{runID: t.runID})
 	}
 
 	// If we have all of the container IDs from ContainerStarted messages, we can guard against
 	// stale containers trying to connect.
-	if len(t.containers) == t.numContainers {
+	if len(t.containers) == len(t.allocations) {
 		if _, ok := t.containers[msg.ContainerID]; !ok {
 			ctx.Respond(errors.Errorf(
 				"socket connection from stale container: %s", msg.ContainerID))
@@ -740,7 +738,7 @@ func (t *trial) processContainerConnected(ctx *actor.Context, msg containerConne
 	}
 	a := api.WrapSocket(msg.socket, workload.CompletedMessage{}, false)
 	ref, _ := ctx.ActorOf(fmt.Sprintf("socket-%s", msg.ContainerID), a)
-	t.sockets[msg.ContainerID] = ref
+	t.containerSockets[msg.ContainerID] = ref
 	ctx.Respond(ref)
 
 	if err := t.pushRendezvous(ctx); err != nil {
@@ -755,14 +753,14 @@ func formatAddress(p cproto.Address) string {
 }
 
 func (t *trial) killAndRemoveSocket(ctx *actor.Context, id cproto.ID) {
-	if skt, ok := t.sockets[id]; ok {
+	if skt, ok := t.containerSockets[id]; ok {
 		addr := skt.Address().Local()
 		if ref := ctx.Child(addr); ref != nil {
 			if ok := ctx.Kill(addr); !ok {
 				ctx.Log().Warnf("failed to kill container socket: %s", id)
 			}
 		}
-		delete(t.sockets, id)
+		delete(t.containerSockets, id)
 	}
 }
 
@@ -771,7 +769,7 @@ func (t *trial) killAndRemoveSocket(ctx *actor.Context, id cproto.ID) {
 // are not guaranteed to come in-order.
 func (t *trial) allReady(ctx *actor.Context) bool {
 	// Ensure all ContainerStarted messages have arrived.
-	if len(t.containers) < t.numContainers {
+	if len(t.containers) < len(t.allocations) {
 		return false
 	}
 
@@ -781,7 +779,7 @@ func (t *trial) allReady(ctx *actor.Context) bool {
 	// master restart. Since ContainerStarted and containerConnected messages can come in any
 	// order, it is not possible to detect which connections are from stale containers until after
 	// all of the ContainerStarted messages have arrived.
-	for id := range t.sockets {
+	for id := range t.containerSockets {
 		if _, ok := t.containers[id]; !ok {
 			ctx.Log().Warnf("detected stray socket for unknown container: %s", id)
 			t.killAndRemoveSocket(ctx, id)
@@ -789,7 +787,7 @@ func (t *trial) allReady(ctx *actor.Context) bool {
 	}
 
 	// Finally, ensure all sockets have connected.
-	return len(t.sockets) == t.numContainers
+	return len(t.containerSockets) == len(t.allocations)
 }
 
 // pushRendezvous gathers up the external addresses for the exposed ports and sends them to all the
@@ -873,7 +871,7 @@ func (t *trial) pushRendezvous(ctx *actor.Context) error {
 
 	for rank, caddr := range caddrs {
 		c := caddr.Container
-		socket := t.sockets[c.ID]
+		socket := t.containerSockets[c.ID]
 
 		if err := api.WriteSocketJSON(ctx, socket, &trialMessage{
 			RendezvousInfo: &rendezvousInfoMessage{
@@ -908,6 +906,13 @@ func (t *trial) processContainerRunning(
 func (t *trial) processContainerTerminated(
 	ctx *actor.Context, msg sproto.TaskContainerStateChanged,
 ) {
+	t.terminatedContainers[msg.Container.ID] = terminatedContainerWithState{
+		exitStatus:                 *msg.ContainerStopped,
+		isLeader:                   t.containerRank[msg.Container.ID] == 0,
+		pendingGracefulTermination: t.pendingGracefulTermination,
+		needsCheckpoint:            t.sequencer.PrecloseCheckpointWorkload() != nil,
+	}
+
 	_, ok := t.containers[msg.Container.ID]
 	delete(t.containers, msg.Container.ID)
 	delete(t.containerAddresses, msg.Container.ID)
@@ -922,15 +927,6 @@ func (t *trial) processContainerTerminated(
 		AuxMessage: &exitMsg,
 	})
 
-	if ok {
-		t.terminatedContainers = append(t.terminatedContainers, terminatedContainerWithState{
-			exitStatus:                 *msg.ContainerStopped,
-			isLeader:                   t.containerRank[msg.Container.ID] == 0,
-			pendingGracefulTermination: t.pendingGracefulTermination,
-			needsCheckpoint:            t.sequencer.PrecloseCheckpointWorkload() != nil,
-		})
-	}
-
 	// Terminate the task if the container never started (since this prevents the gang
 	// from ever being able to start), if the leader of the gang has exited out, or if
 	// one of the containers exited with a failure.
@@ -938,7 +934,10 @@ func (t *trial) processContainerTerminated(
 		t.terminate(ctx, true)
 	}
 
-	t.terminated(ctx)
+	// If all containers are terminated, the trial is considered terminated.
+	if len(t.terminatedContainers) == len(t.allocations) {
+		t.terminated(ctx)
+	}
 }
 
 func (t *trial) processLog(ctx *actor.Context, msg sproto.ContainerLog) {
@@ -1022,9 +1021,10 @@ func (t *trial) terminate(ctx *actor.Context, kill bool) {
 	}
 }
 
+// terminated handles errors and restarting for trials when they are failed, paused, canceled,
+// or killed.
 func (t *trial) terminated(ctx *actor.Context) {
-	// Get container termination states.
-	// If there are no containers terminated, consider as aborted.
+	// Collect container terminated states.
 	getLeaderState := func() (terminatedContainerWithState, bool) {
 		for _, c := range t.terminatedContainers {
 			if c.isLeader {
@@ -1035,8 +1035,8 @@ func (t *trial) terminated(ctx *actor.Context) {
 	}
 	status := aproto.ContainerError(aproto.AgentError, errors.New("no error status provided"))
 	if len(t.startedContainers) == 0 {
-		// If we have no containers, we haven't started executing anything, so
-		// let resetTrial reset our state rather than treating this as an error.
+		// If there are no containers started executing, consider as aborted.
+		// The trial state will be reset.
 		status = aproto.ContainerError(aproto.TaskAborted, errors.New("task aborted"))
 	} else if leaderState, ok := getLeaderState(); ok {
 		status = classifyStatus(leaderState)
@@ -1049,7 +1049,7 @@ func (t *trial) terminated(ctx *actor.Context) {
 	ctx.Tell(t.rp, scheduler.ResourcesReleased{TaskActor: ctx.Self()})
 	t.pendingGracefulTermination = false
 	t.terminationSent = false
-	t.terminatedContainers = nil
+	t.terminatedContainers = make(map[cproto.ID]terminatedContainerWithState)
 	t.startedContainers = make(map[cproto.ID]bool)
 
 	switch {
