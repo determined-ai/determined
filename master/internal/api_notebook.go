@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
-	"time"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpc"
@@ -115,17 +114,17 @@ func (a *apiServer) NotebookLogs(
 	// QUESTION how do I set up logStreamActor to check this so here we can just
 	// awaitTermination
 	// If context and actor both give me channels? I could `select` on them?
-	// return myActor.AwaitTermination()
-	for {
-		time.Sleep(200 * time.Millisecond)
-		if resp.Context().Err() != nil {
-			// Context is closed.
-			myActor.Stop()
-		}
-		// myActor.isStopped..
-		if a.m.system.Get(myActorAddr) == nil {
-			break
-		}
-	}
+	return myActor.AwaitTermination()
+	// for {
+	// 	time.Sleep(200 * time.Millisecond)
+	// 	if resp.Context().Err() != nil {
+	// 		// Context is closed.
+	// 		myActor.Stop()
+	// 	}
+	// 	// myActor.isStopped..
+	// 	if a.m.system.Get(myActorAddr) == nil {
+	// 		break
+	// 	}
+	// }
 	return nil
 }

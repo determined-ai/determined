@@ -90,6 +90,7 @@ type CommandLogStreamActor struct {
 type CloseStream struct{}
 
 // NewCommandLogStreamActor creates a new command logStreamActor.
+// TODO get the event manger.
 func NewCommandLogStreamActor(
 	ctx context.Context,
 	request LogsRequest,
@@ -106,10 +107,11 @@ func (l *CommandLogStreamActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		// CHECK set this as a child to event manager
+		// FIXME what if the eventmanager is in postStop
 		ctx.Tell(eventMgrRef, l.req)
 
 	case logger.Entry:
-		// CHECK check context before sending?
+		// TODO check context before sending
 		if err := l.send(&msg); err != nil {
 			ctx.Self().Stop()
 		}

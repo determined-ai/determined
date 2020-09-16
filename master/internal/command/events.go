@@ -57,7 +57,7 @@ type eventManager struct {
 	closed       bool
 	seq          int
 	isTerminated bool
-	logStreams   map[actor.Address]webAPI.LogsRequest
+	logStreams   map[actor.Address]webAPI.LogsRequest // TODO actor.Ref
 }
 
 func newEventManager() *eventManager {
@@ -100,6 +100,7 @@ func (e *eventManager) ProcessNewLogEvent(ctx *actor.Context, msg event) {
 	}
 
 	// Remove terminated subscribers.
+	// TODO let the logstreamactor handle this.
 	if msg.TerminateRequestEvent != nil || msg.ExitedEvent != nil {
 		e.isTerminated = true
 		e.RemoveSusbscribers(ctx)
