@@ -37,7 +37,7 @@ Version 0.13.4
 
 - WebUI: Move TensorBoard sources from a table column into a separate modal.
 
-- WebUI: Reduce the time it takes to load active TensorBoards and notebooks.
+- WebUI: Optimize loading of active TensorBoards and notebooks.
 
 **Bug Fixes**
 
