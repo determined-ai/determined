@@ -135,7 +135,7 @@ using a POST request as specified by the endpoint:
 
 .. code:: bash
 
-  curl -H "Authorization: Bearer ${token}" -X POST 'http://localhost:8080/api/v1/experiments/16/unarchive'
+  curl -H "Authorization: Bearer ${token}" -X POST "${DET_MASTER}/api/v1/experiments/16/unarchive"
 
 
 How Our REST APIs work
