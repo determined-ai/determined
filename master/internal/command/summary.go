@@ -9,15 +9,15 @@ import (
 )
 
 type (
-	// GetSummary is an actor message for getting the summary of the command.
-	GetSummary struct {
+	// getSummary is an actor message for getting the summary of the command.
+	getSummary struct {
 		userFilter string
 	}
 )
 
 type (
-	// Summary holds an immutable snapshot of the command.
-	Summary struct {
+	// summary holds an immutable snapshot of the command.
+	summary struct {
 		RegisteredTime time.Time              `json:"registered_time"`
 		Owner          commandOwner           `json:"owner"`
 		ID             scheduler.TaskID       `json:"id"`
@@ -33,7 +33,7 @@ type (
 )
 
 // newSummary returns a new summary of the command.
-func newSummary(c *command) Summary {
+func newSummary(c *command) summary {
 	state := "PENDING"
 	switch {
 	case c.container != nil:
@@ -41,7 +41,7 @@ func newSummary(c *command) Summary {
 	case c.exitStatus != nil:
 		state = container.Terminated.String()
 	}
-	return Summary{
+	return summary{
 		RegisteredTime: c.registeredTime,
 		Owner:          c.owner,
 		ID:             c.taskID,

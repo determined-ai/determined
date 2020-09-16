@@ -25,7 +25,7 @@ const ctxMissingSender = "message is missing sender information"
 
 // event is the union of all event types during the parent lifecycle.
 type event struct {
-	Snapshot Summary   `json:"snapshot"`
+	Snapshot summary   `json:"snapshot"`
 	ParentID string    `json:"parent_id"`
 	ID       string    `json:"id"`
 	Seq      int       `json:"seq"`
