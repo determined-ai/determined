@@ -312,7 +312,7 @@ export type ioTypeLog = io.TypeOf<typeof ioLog>;
 export type ioTypeLogs = io.TypeOf<typeof ioLogs>;
 
 const ioTaskLog = io.type({
-  assigned_event: optional(io.type({ NumContainers: io.number })),
+  assigned_event: io.unknown,
   container_started_event: optional(io.type({ Container: io.type({}) })),
   exited_event: optional(io.string),
   id: io.string,
