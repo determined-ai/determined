@@ -1,0 +1,7 @@
+:orphan:
+
+**NEW FEATURES**
+
+-  `create()` does not require an instantiated trial class to submit jobs to Determined.
+   Calling `create` will not execute code locally and on the cluster anymore; it will
+   run exclusively on the cluster.
