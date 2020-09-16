@@ -133,10 +133,6 @@ using a POST request as specified by the endpoint:
   curl -H "Authorization: Bearer ${token}" -X POST 'http://localhost:8080/api/v1/experiments/16/unarchive'
 
 
-Find experimental dev-scripts for working with Determined APIs at
-https://github.com/determined-ai/dev-scripts/tree/master/apis
-
-
 How Our REST APIs work
 ----------------------
 
