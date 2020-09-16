@@ -57,9 +57,9 @@ Sample request:
 
 .. code:: bash
 
-  curl -s "${host}/api/v1/auth/login" \
+  curl -s "${DET_MASTER}/api/v1/auth/login" \
     -H 'Content-Type: application/json' \
-    --data-binary '{"username":"john","password":"2k34h5@$"}' \
+    --data-binary '{"username":"determined","password":""}' \
 
 Sample response: 
 
