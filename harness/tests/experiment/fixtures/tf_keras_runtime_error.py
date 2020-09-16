@@ -44,7 +44,7 @@ if __name__ == "__main__":
             "hyperparameters": {"global_batch_size": det.Constant(1)},
             "searcher": {"metric": "accuracy"},
             "data_layer": {"type": "lfs", "container_storage_path": "/tmp"},
-            "entrypoint": "tf_keras_runtime_error:RuntimeErrorTrial"
+            "entrypoint": "tf_keras_runtime_error:RuntimeErrorTrial",
         },
         local=True,
         test=True,
