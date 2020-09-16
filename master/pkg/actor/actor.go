@@ -31,9 +31,11 @@ type Actor interface {
 	Receive(context *Context) error
 }
 
-// ActorFunc is a function that encapsulates behavior. It is a stateless actor, useful for a mocking.
+// ActorFunc is a function that encapsulates behavior. It is a stateless actor, useful for a
+// mocking.
 type ActorFunc func(context *Context) error
 
+// Receive implements actor.Actor.
 func (f ActorFunc) Receive(context *Context) error {
 	return f(context)
 }
