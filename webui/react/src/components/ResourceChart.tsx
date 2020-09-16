@@ -1,5 +1,4 @@
-import { PlotData } from 'plotly.js/lib/core';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import Plotly, { Data } from 'Plotly';
 import { getStateColor, lightTheme } from 'themes';
@@ -18,13 +17,6 @@ export interface PlotInfo {
   layout: Partial<Plotly.Layout>;
   config: Partial<Plotly.Config>
 }
-
-type PlotArguments = [
-  string,
-  Partial<PlotData>[],
-  Partial<Plotly.Layout>,
-  Partial<Plotly.Config>,
-];
 
 type Tally = Record<ResourceState, number>;
 
@@ -101,17 +93,9 @@ const SlotChart: React.FC<Props> = (props: Props) => {
     return newPlotInfo;
   }, [ oldPlotInfo, props.resources, props.title ]);
 
-  const renderPlot = useCallback(async (
-    elementId: string,
-    pInfo: PlotInfo,
-  ) => {
-    const args: PlotArguments = [ elementId, pInfo.data, pInfo.layout, pInfo.config ];
-    await Plotly.react.apply(null, args);
-  }, [ ]);
-
   useEffect(() => {
-    renderPlot(id, plotInfo);
-  }, [ id, plotInfo, renderPlot ]);
+    Plotly.react.apply(null, [ id, plotInfo.data, plotInfo.layout, plotInfo.config ]);
+  }, [ id, plotInfo ]);
 
   return (
     <div id={id} />
