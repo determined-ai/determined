@@ -371,7 +371,7 @@ def create(
         return api.create_experiment_and_follow_logs(master_url, config, exp_context)
 
     experiment_id = api.create_experiment(master_url, config, exp_context)
-    logging.info(f"Successfully submitted experiment {experiment_id}")
+    logging.info(f"Created experiment {experiment_id}")
     return experiment_id
 
 
