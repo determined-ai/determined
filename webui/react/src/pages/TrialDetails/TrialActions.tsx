@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import Link from 'components/Link';
 import { ConditionalButton } from 'components/types';
 import { openCommand } from 'routes/utils';
-import { createTensorboard } from 'services/api';
+import { openOrCreateTensorboard } from 'services/api';
 import { RunState, TBSourceType, TrialDetails, TrialItem } from 'types';
 import { terminalRunStates } from 'utils/types';
 
@@ -38,7 +38,10 @@ const TrialActions: React.FC<Props> = ({ trial, trials, onClick, onSettled }: Pr
 
   const handleCreateTensorboard = useCallback(async () => {
     setButtonStates(state => ({ ...state, tensorboard: true }));
-    const tensorboard = await createTensorboard({ ids: [ trial.id ], type: TBSourceType.Trial });
+    const tensorboard = await openOrCreateTensorboard({
+      ids: [ trial.id ],
+      type: TBSourceType.Trial,
+    });
     openCommand(tensorboard);
     onSettled();
     setButtonStates(state => ({ ...state, tensorboard: false }));

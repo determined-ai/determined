@@ -7,7 +7,9 @@ import React from 'react';
 import Icon from 'components/Icon';
 import handleError, { ErrorLevel, ErrorType } from 'ErrorHandler';
 import { openBlank, openCommand } from 'routes/utils';
-import { archiveExperiment, createTensorboard, killTask, setExperimentState } from 'services/api';
+import {
+  archiveExperiment, killTask, openOrCreateTensorboard, setExperimentState,
+} from 'services/api';
 import { AnyTask, CommandTask, ExperimentTask, RunState, TBSourceType } from 'types';
 import { capitalize } from 'utils/string';
 import { isExperimentTask } from 'utils/task';
@@ -59,8 +61,8 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
           });
           if (onComplete) onComplete();
           break;
-        case 'createTensorboard': {
-          const tensorboard = await createTensorboard({
+        case 'openOrCreateTensorboard': {
+          const tensorboard = await openOrCreateTensorboard({
             ids: [ id ],
             type: TBSourceType.Experiment,
           });
@@ -111,7 +113,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete }: Props) => {
   if (isCancelable) menuItems.push(<Menu.Item key="cancel">Cancel</Menu.Item>);
   if (isKillable) menuItems.push(<Menu.Item key="kill">Kill</Menu.Item>);
   if (isExperiment) {
-    menuItems.push(<Menu.Item key="createTensorboard">Open Tensorboard</Menu.Item>);
+    menuItems.push(<Menu.Item key="openOrCreateTensorboard">Open Tensorboard</Menu.Item>);
   } else {
     menuItems.push(<Menu.Item key="viewLogs">View Logs</Menu.Item>);
   }

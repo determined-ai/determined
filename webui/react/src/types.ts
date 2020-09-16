@@ -393,6 +393,11 @@ export enum TBSourceType {
   Experiment
 }
 
+export interface TBSource {
+  ids: number[];
+  type: TBSourceType;
+}
+
 export type CommonProps = {
   className?: string;
   children?: React.ReactNode;

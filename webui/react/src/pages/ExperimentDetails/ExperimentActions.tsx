@@ -4,7 +4,7 @@ import React, { useCallback, useState } from 'react';
 import { ConditionalButton } from 'components/types';
 import { openCommand } from 'routes/utils';
 import {
-  archiveExperiment, createTensorboard, killExperiment, setExperimentState,
+  archiveExperiment, killExperiment, openOrCreateTensorboard, setExperimentState,
 } from 'services/api';
 import { ExperimentDetails, RunState, TBSourceType } from 'types';
 import { cancellableRunStates, killableRunStates, terminalRunStates } from 'utils/types';
@@ -75,7 +75,7 @@ const ExperimentActions: React.FC<Props> = ({ experiment, onClick, onSettled }: 
   const handleCreateTensorboard = useCallback(async () => {
     setButtonStates(state => ({ ...state, tensorboard: true }));
     try {
-      const tensorboard = await createTensorboard({
+      const tensorboard = await openOrCreateTensorboard({
         ids: [ experiment.id ],
         type: TBSourceType.Experiment,
       });
