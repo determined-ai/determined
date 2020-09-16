@@ -43,21 +43,7 @@ func (a *apiServer) NotebookLogs(
 	}
 
 	cmdManagerAddr := actor.Addr("notebooks", req.NotebookId)
-	eventManagerAddr := cmdManagerAddr.Child("events")
-
-	// TODO create an actor (logActor)
-	// register actor using logReq and context with eventManager
-	// block while the actor is running.
-	// Q how does the actor shutdown? check context, and termination?
-	// receive:
-	//   logmessages: push through the context
-	//   unregistering: command and event mgr
-
-	// TODO a general subscriber management for actors (for events and commands actors):
-	// 1. add subscriber with parameters (logrequest, identifier)
-	// 2. remove subscribers
-	// 3. find active and matching subscribers for termination and log events
-	//   a. publish to subscribers based on parameters for: new events and termination
+	eventManager := a.m.system.Get(cmdManagerAddr.Child("events"))
 
 	logRequest := api.LogsRequest{
 		Offset: int(req.Offset),
@@ -69,20 +55,19 @@ func (a *apiServer) NotebookLogs(
 		return resp.Send(&apiv1.NotebookLogsResponse{LogEntry: api.LogEntryToProtoLogEntry(log)})
 	}
 
-	streamID := rand.Int() // FIXME
-	logStreamActorAddr := cmdManagerAddr.Child("logStream" + string(streamID))
+	logStreamActorAddr := cmdManagerAddr.Child("logStream-" + string(rand.Int()))
 	logStreamActor, created := a.m.system.ActorOf(
 		logStreamActorAddr,
 		api.NewCommandLogStreamActor(
 			resp.Context(),
-			a.m.system.Get(eventManagerAddr),
+			eventManager,
 			logRequest,
 			onLogEntry,
 		),
 	)
 
 	if !created {
-		// either there is a collision in actor address or actor creation failed.
+		// Either there is a collision in actor address or actor creation failed.
 		return errors.New("failed to create actor")
 	}
 

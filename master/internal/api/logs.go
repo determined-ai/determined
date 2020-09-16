@@ -79,6 +79,8 @@ func ProcessLogs(ctx context.Context,
 	}
 }
 
+/* Commands */
+
 // CommandLogStreamActor handles streaming log messages for commands.
 type CommandLogStreamActor struct {
 	req          LogsRequest
@@ -111,9 +113,15 @@ func (l *CommandLogStreamActor) Receive(ctx *actor.Context) error {
 		ctx.Tell(l.eventManager, l.req)
 
 	case logger.Entry:
-		// TODO check context before sending
+		// Make sure the context is still open.
+		if l.ctx.Err() != nil {
+			// Context is closed.
+			ctx.Self().Stop()
+			break
+		}
 		if err := l.send(&msg); err != nil {
 			ctx.Self().Stop()
+			break
 		}
 
 	case CloseStream:

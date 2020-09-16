@@ -59,8 +59,10 @@ type eventManager struct {
 	buffer       *ring.Ring
 	closed       bool
 	seq          int
-	isTerminated bool
-	logStreams   logSubscribers // TODO actor.Ref
+	isTerminated bool // DISCUSS If we don't want to don't keep track of this here we'd either need to
+	// expose event externally or define and send a new message. also the logActor might not receive
+	// the termination log message (based on LogRequest) if we rely on exposing Event..
+	logStreams logSubscribers
 }
 
 func newEventManager() *eventManager {
@@ -84,18 +86,22 @@ func countNonNullRingValues(ring *ring.Ring) int {
 	return count
 }
 
+// TODO inline this.
 func (e *eventManager) RemoveSusbscribers(ctx *actor.Context) {
 	for actor := range e.logStreams {
 		// OPT this will trigger a bunch of CloseStream message that'll come back to eventManager.
 		ctx.Tell(actor, webAPI.CloseStream{})
 	}
+	// REMOVE ME
 	e.logStreams = make(logSubscribers)
 }
 
+// TODO inline this?
 func (e *eventManager) ProcessNewLogEvent(ctx *actor.Context, msg event) {
 	// Publish.
 	for streamActor, logRequest := range e.logStreams {
-		// OPT we could probably use actor hirearchy to message multiple logStreamActors at once.
+		// OPT we could probably use actor hirearchy to message multiple logStreamActors at once and say
+		// utilize multicast if we were over a capable network..
 		if eventSatisfiesLogRequest(logRequest, &msg) {
 			entry := eventToLogEntry(&msg)
 			ctx.Tell(streamActor, *entry)
