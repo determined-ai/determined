@@ -100,7 +100,7 @@ func (e *eventManager) RemoveSusbscribers(ctx *actor.Context) {
 func (e *eventManager) ProcessNewLogEvent(ctx *actor.Context, msg event) {
 	// Publish.
 	for streamActor, logRequest := range e.logStreams {
-		// OPT we could probably use actor hirearchy to message multiple logStreamActors at once and say
+		// OPT we could probably use actor hierarchy to message multiple logStreamActors at once and say
 		// utilize multicast if we were over a capable network..
 		if eventSatisfiesLogRequest(logRequest, &msg) {
 			entry := eventToLogEntry(&msg)
@@ -109,7 +109,6 @@ func (e *eventManager) ProcessNewLogEvent(ctx *actor.Context, msg event) {
 	}
 
 	// Remove terminated subscribers.
-	// TODO let the logstreamactor handle this.
 	if msg.TerminateRequestEvent != nil || msg.ExitedEvent != nil {
 		e.isTerminated = true
 		e.RemoveSusbscribers(ctx)
@@ -155,10 +154,10 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		delete(e.logStreams, ctx.Sender())
 
 	case webAPI.LogsRequest:
-		// CHECK is it safe to store and msg.Handler actors from actor ref pointer vs address.
 		if ctx.Sender() == nil {
 			return errors.New(ctxMissingSender)
 		}
+		ctx.Respond(true)
 
 		total := countNonNullRingValues(e.buffer)
 		offset, limit := webAPI.EffectiveOffsetNLimit(msg.Offset, msg.Limit, total)

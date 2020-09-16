@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -93,7 +95,6 @@ type CommandLogStreamActor struct {
 type CloseStream struct{}
 
 // NewCommandLogStreamActor creates a new command logStreamActor.
-// TODO get the event manger.
 func NewCommandLogStreamActor(
 	ctx context.Context,
 	eventManager *actor.Ref,
@@ -105,12 +106,13 @@ func NewCommandLogStreamActor(
 
 // Receive implements the actor.Actor interface.
 func (l *CommandLogStreamActor) Receive(ctx *actor.Context) error {
-
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
 		// CHECK set this as a child to event manager
-		// FIXME what if the eventmanager is in postStop
-		ctx.Tell(l.eventManager, l.req)
+		if response := ctx.Ask(l.eventManager, l.req); response.Empty() {
+			ctx.Self().Stop()
+			return status.Errorf(codes.NotFound, "event manager did not respond")
+		}
 
 	case logger.Entry:
 		// Make sure the context is still open.
@@ -121,7 +123,7 @@ func (l *CommandLogStreamActor) Receive(ctx *actor.Context) error {
 		}
 		if err := l.send(&msg); err != nil {
 			ctx.Self().Stop()
-			break
+			return status.Errorf(codes.Internal, "failed to send log message")
 		}
 
 	case CloseStream:
@@ -131,7 +133,7 @@ func (l *CommandLogStreamActor) Receive(ctx *actor.Context) error {
 		ctx.Tell(l.eventManager, CloseStream{})
 
 	default:
-		return errors.New(fmt.Sprintf("unsupported message %v %v", msg, ctx.Message()))
+		return status.Errorf(codes.Internal, fmt.Sprintf("received unsupported message %v", msg))
 	}
 	return nil
 }
