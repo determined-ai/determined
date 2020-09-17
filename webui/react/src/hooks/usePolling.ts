@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { isAsyncFunction } from 'utils/data';
 
@@ -15,13 +15,19 @@ const usePolling = (pollingFn: PollingFn, { delay }: PollingOptions = {}): (() =
   const timerId = useRef<NodeJS.Timeout>();
   const countId = useRef(0);
 
+  // Normalize polling function to be an async function.
+  const asyncPollingFn = useMemo(() => {
+    if (isAsyncFunction(pollingFn)) return pollingFn;
+    return async () => await pollingFn();
+  }, [ pollingFn ]);
+
   const pollingRoutine = useCallback(async (): Promise<void> => {
     countId.current++;
-    isAsyncFunction(pollingFn) ? await pollingFn() : pollingFn();
+    await asyncPollingFn();
     timerId.current = setTimeout(() => {
       pollingRoutine();
     }, delay || DEFAULT_DELAY);
-  }, [ pollingFn, delay ]);
+  }, [ asyncPollingFn, delay ]);
 
   const stopPolling = useCallback((): void => {
     if (timerId.current) {
