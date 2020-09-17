@@ -19,7 +19,7 @@ Version 0.13.4
 
 - Add connection checks for dynamic agents. A dynamically provisioned agent will be terminated if it is not actively connected to the master for at least five minutes.
 
-- Emit a warning if ``DistributeConfig`` is specified for an Estimator. Configuring an Estimator via ``tf.distribute.Strategy`` can conflict with how Determined performs distributed training. With this change, Determined will attempt to catch this problem and surface an error message in the experiment logs. An Estimator can still be configured with an empty ``DistributeConfig`` without issue.
+- Emit a warning if ``DistributeConfig`` is specified for an ``Estimator``. Configuring an ``Estimator`` via ``tf.distribute.Strategy`` can conflict with how Determined performs distributed training. With this change, Determined will attempt to catch this problem and surface an error message in the experiment logs. An ``Estimator`` can still be configured with an empty ``DistributeConfig`` without issue.
 
 - Remove support for ``dataflow_to_tf_dataset`` in :class:`~determined.estimator.EstimatorTrial`. Dataflows should be wrapped using ``wrap_dataset(shard=False)`` instead.
 
