@@ -3,6 +3,7 @@ package tasks
 import (
 	"crypto/tls"
 	"encoding/json"
+
 	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/pkg/errors"

@@ -3,12 +3,13 @@ package searcher
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/determined-ai/determined/master/pkg/workload"
 	"io"
 	"math/rand"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"

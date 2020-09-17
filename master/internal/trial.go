@@ -4,9 +4,10 @@ import (
 	"archive/tar"
 	"encoding/json"
 	"fmt"
-	"github.com/determined-ai/determined/master/pkg/workload"
 	"sort"
 	"time"
+
+	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"

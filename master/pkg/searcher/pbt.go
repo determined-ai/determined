@@ -1,9 +1,10 @@
 package searcher
 
 import (
-	"github.com/determined-ai/determined/master/pkg/workload"
 	"math"
 	"sort"
+
+	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/pkg/errors"
 

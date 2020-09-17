@@ -2,6 +2,7 @@ package internal
 
 import (
 	"encoding/json"
+
 	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/google/uuid"

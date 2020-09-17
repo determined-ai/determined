@@ -1,8 +1,9 @@
 package internal
 
 import (
-	"github.com/determined-ai/determined/master/pkg/workload"
 	"testing"
+
+	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/ghodss/yaml"
 	"github.com/google/uuid"

@@ -1,8 +1,9 @@
 package internal
 
 import (
-	"github.com/determined-ai/determined/master/pkg/workload"
 	"testing"
+
+	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"gotest.tools/assert"
 

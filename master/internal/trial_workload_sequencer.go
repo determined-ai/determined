@@ -1,8 +1,9 @@
 package internal
 
 import (
-	"github.com/determined-ai/determined/master/pkg/workload"
 	"math"
+
+	"github.com/determined-ai/determined/master/pkg/workload"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
