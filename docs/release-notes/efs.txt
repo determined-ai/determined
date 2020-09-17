@@ -1,5 +1,0 @@
-:orphan:
-
-**New Features**
-
--  Det Deploy: Add EFS and FSx Deployment Types.

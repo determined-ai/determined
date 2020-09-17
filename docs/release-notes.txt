@@ -8,6 +8,57 @@
  Version 0.13
 **************
 
+Version 0.13.4
+==============
+
+**Release Date:** September 16, 2020
+
+**Improvements**
+
+- Support configuring default values for the task image, Docker pull policy, and Docker registry credentials via the :ref:`master-configuration` and the :ref:`helm-config`. In previous versions of Determined, these values had to be specified on a per-task basis (e.g., in the experiment configuration). Per-task configuration is still supported and will overwrite the default value (if any).
+
+- Add connection checks for dynamic agents. A dynamically provisioned agent will be terminated if it is not actively connected to the master for at least five minutes.
+
+- Emit a warning if ``DistributeConfig`` is specified for an ``Estimator``. Configuring an ``Estimator`` via ``tf.distribute.Strategy`` can conflict with how Determined performs distributed training. With this change, Determined will attempt to catch this problem and surface an error message in the experiment logs. An ``Estimator`` can still be configured with an empty ``DistributeConfig`` without issue.
+
+- Remove support for ``dataflow_to_tf_dataset`` in :class:`~determined.estimator.EstimatorTrial`. Dataflows should be wrapped using ``wrap_dataset(shard=False)`` instead.
+
+- WebUI: Add middle mouse button click detection on tables to open in a new tab/page.
+
+- WebUI: Improve the trial detail metrics view.
+
+  - Support metrics with non-numeric values.
+
+  - Default to showing only the searcher metric on initial page load.
+
+  - Add search capability to the metric select filter. This should improve the experience when there are many metrics.
+
+  - Add support for displaying multiple metrics on the metric chart.
+
+- WebUI: Move TensorBoard sources from a table column into a separate modal.
+
+- WebUI: Optimize loading of active TensorBoards and notebooks.
+
+**Bug Fixes**
+
+- Improve handling of certain corner cases where distributed training jobs could hang indefinitely.
+
+- Fix an issue where detecting GPU availability in TensorFlow code would cause ``EstimatorTrial`` models to OOM.
+
+- Fix an issue where accessing logs could create a memory leak.
+
+- Fix an issue that prevents resuming from checkpoints that contain a large number of files.
+
+- WebUI: Fix an issue where table page sizes were not saved between page loads.
+
+- WebUI: Fix an issue where opening a TensorBoard on an experiment would not direct the user to an already running TensorBoard, but instead create a new one.
+
+- WebUI: Fix an issue where batch actions on the experiments table would cause rows to disappear.
+
+**Known Issues**
+
+- WebUI: In the trial detail metrics view, experiments that have both a training metric and a validation metric of the same name will not be displayed correctly on the metrics chart.
+
 Version 0.13.3
 ==============
 

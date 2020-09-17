@@ -1,9 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
-- Update trial detail table metric filter to only select searcher metric by default.
-
-**NEW FEATURES**
-
-- Add searching capability to metric select filter for large list of metrics.
