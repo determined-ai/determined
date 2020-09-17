@@ -1,5 +1,0 @@
-:orphan:
-
-**BUG FIXES**
-
-- Fix issue of table page sizes not being saved in user preferences.

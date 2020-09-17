@@ -1,5 +1,0 @@
-:orphan:
-
-**NEW FEATURES**
-
-- Add support for displaying multiple metrics on the trial detail metric chart.
