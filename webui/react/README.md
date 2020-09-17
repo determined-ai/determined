@@ -1,9 +1,5 @@
 # React WebUI
 
-There are currently two WebUI webapps that run in conjunction. One is written in **Elm** and the other is written in **React**. They will both continue to exist until the **Elm** webapp is completely ported over to **React**.
-
-Refer to [WebUI README.md](https://github.com/determined-ai/determined/tree/master/webui) to get the current state of how the WebUI is setup.
-
 ## Brief Architecture
 
 The **React** webapp was bootstrapped using [Create React App](https://github.com/facebook/create-react-app#create-react-app--) because it brings a lot to the table with minimal setup and package management. Such as DOM router, Typescript, bundle analyzer, linting, style normalizer and webpack config (gzip, minify, hasing, source maps, tree shaking, code splitting, etc).

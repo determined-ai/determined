@@ -127,21 +127,6 @@ commands:
           key: det-go-deps-v1dev7-{{ checksum  "master/go.sum" }}-{{ checksum  "agent/go.sum" }}-{{ checksum  "proto/go.sum" }}
           paths:
             - "/home/circleci/go/pkg/mod/"
-  elm-get-deps:
-    steps:
-      - restore_cache:
-          keys:
-            - det-elm-deps-v1dev3-{{ checksum  "webui/elm/package-lock.json" }}
-      - run:
-          name: Get Elm dependencies
-          command: |
-            if [ ! -d "webui/elm/node_modules" ]; then
-              make -C webui/elm get-deps
-            fi
-      - save_cache:
-          key: det-elm-deps-v1dev3-{{ checksum  "webui/elm/package-lock.json" }}
-          paths:
-            - "webui/elm/node_modules"
   react-get-deps:
     steps:
       - attach_workspace:
@@ -741,34 +726,6 @@ jobs:
       - store_artifacts:
           path: webui/tests/results/recordings
 
-  lint-elm:
-    docker:
-      - image: cimg/node:12.16
-    steps:
-      - checkout
-      - elm-get-deps
-      - run: make -C webui/elm check
-
-  build-elm:
-    docker:
-      - image: cimg/node:12.16
-    steps:
-      - checkout
-      - elm-get-deps
-      - run: make -C webui/elm build
-      - persist_to_workspace:
-          root: .
-          paths:
-            - webui/elm/public
-
-  test-unit-elm:
-    docker:
-      - image: cimg/node:12.16
-    steps:
-      - checkout
-      - elm-get-deps
-      - run: make -C webui/elm test
-
   lint-react:
     docker:
       - image: cimg/node:12.16
@@ -1152,7 +1109,6 @@ workflows:
             - build-proto
       - lint-python
       - lint-go
-      - lint-elm
       - lint-react:
           requires:
             - build-and-package-ts-sdk
@@ -1178,7 +1134,6 @@ workflows:
       - build-and-package-ts-sdk:
           requires:
             - build-proto
-      - test-unit-elm
       - test-unit-react:
           requires:
             - build-and-package-ts-sdk
@@ -1188,7 +1143,6 @@ workflows:
 
   test-e2e:
     jobs:
-      - build-elm
       - build-proto
       - build-and-package-ts-sdk:
           requires:
@@ -1203,13 +1157,11 @@ workflows:
       - build-go
       - package-and-push-system-local:
           requires:
-            - build-elm
             - build-react
             - build-docs
 
       - package-and-push-system-dev:
           requires:
-            - build-elm
             - build-react
             - build-docs
           filters:
@@ -1455,9 +1407,6 @@ workflows:
 
   release:
     jobs:
-      - build-elm:
-          context: determined-production
-          filters: *release-and-rc-filters
       - build-proto:
           filters: *release-and-rc-filters
       - build-and-package-ts-sdk:
@@ -1482,7 +1431,6 @@ workflows:
 
       - package-and-push-system-rc:
           requires:
-            - build-elm
             - build-react
             - build-docs
           context: determined-production
@@ -1490,7 +1438,6 @@ workflows:
 
       - package-and-push-system-release:
           requires:
-            - build-elm
             - build-react
             - build-docs
           context: determined-production
