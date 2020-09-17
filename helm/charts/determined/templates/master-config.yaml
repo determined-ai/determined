@@ -4,7 +4,7 @@ metadata:
    name: determined-master-config-{{ .Release.Name }}
    namespace: {{ .Release.Namespace }}
    labels:
-     app: deteremined-master-{{ .Release.Name }}
+     app: determined-master-{{ .Release.Name }}
      release: {{ .Release.Name }}
 data:
   master.yaml: |

@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: deteremined-master-deployment-{{ .Release.Name }}
+  name: determined-master-deployment-{{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
   labels:
     app: determined-master-{{ .Release.Name }}

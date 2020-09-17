@@ -4,7 +4,7 @@ metadata:
   name: determined-master-{{ .Release.Name }}
   namespace: {{ .Release.Namespace }}
   labels:
-     app: deteremined-master-{{ .Release.Name }}
+     app: determined-master-{{ .Release.Name }}
      release: {{ .Release.Name }}
 
 
@@ -14,7 +14,7 @@ kind: ClusterRole
 metadata:
   name: determined-master-{{ .Release.Name }}
   labels:
-     app: deteremined-master-{{ .Release.Name }}
+     app: determined-master-{{ .Release.Name }}
      release: {{ .Release.Name }}
 rules:
   - apiGroups: [""]
@@ -37,7 +37,7 @@ kind: ClusterRoleBinding
 metadata:
   name: determined-master-{{ .Release.Name }}
   labels:
-     app: deteremined-master-{{ .Release.Name }}
+     app: determined-master-{{ .Release.Name }}
      release: {{ .Release.Name }}
 subjects:
   - kind: ServiceAccount
