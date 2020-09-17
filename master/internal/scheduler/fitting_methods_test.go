@@ -3,8 +3,6 @@ package scheduler
 import (
 	"testing"
 
-	cproto "github.com/determined-ai/determined/master/pkg/container"
-
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -15,8 +13,8 @@ func consumeSlots(agent *agentState, consume int) *agentState {
 		SlotsNeeded:  consume,
 		CanTerminate: true,
 	}
-	container := newContainer(req, agent, req.SlotsNeeded, 0)
-	agent.allocateFreeDevices(req.SlotsNeeded, cproto.ID(container.id))
+	container := newContainer(req, agent, req.SlotsNeeded)
+	agent.allocateFreeDevices(req.SlotsNeeded, container.id)
 	return agent
 }
 

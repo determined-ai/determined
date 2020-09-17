@@ -84,6 +84,8 @@ type StartContainer struct {
 	// This is used to hint the resource provider to override defaults and start
 	// the container in host mode iff it has been scheduled across multiple agents.
 	IsMultiAgent bool `json:"is_multi_agent"`
+
+	Rank int `json:"rank"`
 }
 
 // KillContainer is the information sent to an agent to kill a task (i.e., container or

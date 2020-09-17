@@ -353,9 +353,10 @@ func configureUniqueName(t tasks.TaskSpec) string {
 		return fmt.Sprintf("cmd-%s-%s", t.TaskID, uniqueName)
 	case t.StartContainer != nil:
 		return fmt.Sprintf(
-			"exp-%d-trial-%d-%s",
+			"exp-%d-trial-%d-rank-%d-%s",
 			t.StartContainer.InitialWorkload.ExperimentID,
 			t.StartContainer.InitialWorkload.TrialID,
+			t.StartContainer.Rank,
 			uniqueName,
 		)
 	case t.GCCheckpoints != nil:

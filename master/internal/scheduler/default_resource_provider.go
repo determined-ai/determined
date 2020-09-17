@@ -90,12 +90,12 @@ func (d *DefaultRP) allocateResources(req *AllocateRequest) bool {
 
 	allocations := make([]Allocation, 0, len(fits))
 	for _, fit := range fits {
-		container := newContainer(req, fit.Agent, fit.Slots, len(allocations))
+		container := newContainer(req, fit.Agent, fit.Slots)
 		allocations = append(allocations, &containerAllocation{
 			req:       req,
 			agent:     fit.Agent,
 			container: container,
-			devices:   fit.Agent.allocateFreeDevices(fit.Slots, cproto.ID(container.id)),
+			devices:   fit.Agent.allocateFreeDevices(fit.Slots, container.id),
 		})
 	}
 
@@ -308,7 +308,7 @@ func (c containerAllocation) StartContainer(ctx *actor.Context, spec image.TaskS
 		StartContainer: aproto.StartContainer{
 			Container: cproto.Container{
 				Parent:  c.req.TaskActor.Address(),
-				ID:      cproto.ID(c.container.id),
+				ID:      c.container.id,
 				State:   cproto.Assigned,
 				Devices: c.devices,
 			},
@@ -320,6 +320,6 @@ func (c containerAllocation) StartContainer(ctx *actor.Context, spec image.TaskS
 // KillContainer notifies the agent to kill the container.
 func (c containerAllocation) KillContainer(ctx *actor.Context) {
 	ctx.Tell(c.agent.handler, sproto.KillTaskContainer{
-		ContainerID: cproto.ID(c.container.id),
+		ContainerID: c.container.id,
 	})
 }

@@ -2,6 +2,8 @@ package scheduler
 
 import (
 	"time"
+
+	cproto "github.com/determined-ai/determined/master/pkg/container"
 )
 
 // TaskSummary contains information about a task for external display.
@@ -25,7 +27,7 @@ func (summary1 *TaskSummary) equals(summary2 *TaskSummary) bool {
 		return false
 	}
 
-	containers := make(map[ContainerID]*ContainerSummary)
+	containers := make(map[cproto.ID]*ContainerSummary)
 	for i := 0; i < len(summary1.Containers); i++ {
 		c := summary1.Containers[i]
 		containers[c.ID] = &c
@@ -68,9 +70,9 @@ func (summary1 *AgentSummary) equals(summary2 *AgentSummary) bool {
 
 // ContainerSummary contains information about a task container for external display.
 type ContainerSummary struct {
-	TaskID TaskID      `json:"task_id"`
-	ID     ContainerID `json:"id"`
-	Agent  string      `json:"agent"`
+	TaskID TaskID    `json:"task_id"`
+	ID     cproto.ID `json:"id"`
+	Agent  string    `json:"agent"`
 }
 
 // newAgentSummary returns a new immutable view of the agent.

@@ -220,7 +220,7 @@ func setupClusterStates(
 			allocated.Allocations = append(allocated.Allocations, &containerAllocation{
 				req:       req,
 				agent:     agentState,
-				container: newContainer(req, agentState, req.SlotsNeeded, 1),
+				container: newContainer(req, agentState, req.SlotsNeeded),
 			})
 			taskList.SetAllocations(req.TaskActor, allocated)
 		}

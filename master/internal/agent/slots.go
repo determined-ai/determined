@@ -82,8 +82,8 @@ func (s *slots) summarize(ctx *actor.Context) SlotsSummary {
 
 func (s *slots) sendToSlots(ctx *actor.Context, c container.Container, msg actor.Message) {
 	if len(c.Devices) == 0 && c.State == container.Terminated {
-		// This is to handle the case that there is no GPU devices running since we
-		// model CPU as a special case when there are other GPU devices.
+		// This is to handle the case where the task is not using GPU devices and is running
+		// on agent where only GPUs are modeled as devices.
 		ctx.Tell(s.cluster, sproto.FreeDevice{
 			DeviceID: sproto.DeviceID{
 				Agent: ctx.Self().Parent(), Device: device.Device{Type: device.ZeroSlot}},

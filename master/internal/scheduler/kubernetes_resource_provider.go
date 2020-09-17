@@ -3,8 +3,6 @@ package scheduler
 import (
 	"github.com/google/uuid"
 
-	cproto "github.com/determined-ai/determined/master/pkg/container"
-
 	"github.com/determined-ai/determined/master/internal/kubernetes"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
@@ -177,7 +175,7 @@ func (k *kubernetesResourceProvider) assignResources(ctx *actor.Context, req *Al
 
 	allocations := make([]Allocation, 0, numPods)
 	for pod := 0; pod < numPods; pod++ {
-		container := newContainer(req, k.agent, slotsPerPod, len(allocations))
+		container := newContainer(req, k.agent, slotsPerPod)
 		allocations = append(allocations, &podAllocation{
 			req:       req,
 			agent:     k.agent,
@@ -273,6 +271,6 @@ func (p podAllocation) StartContainer(ctx *actor.Context, spec image.TaskSpec) {
 func (p podAllocation) KillContainer(ctx *actor.Context) {
 	handler := p.agent.handler
 	ctx.Tell(handler, sproto.KillTaskContainer{
-		ContainerID: cproto.ID(p.container.id),
+		ContainerID: p.container.id,
 	})
 }
