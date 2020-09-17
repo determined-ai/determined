@@ -1,6 +1,0 @@
-:orphan:
-
-**Bug Fixes**
-
--  Fix an issue with decoding API responses because of unexpected
-   non-numeric metric values.
