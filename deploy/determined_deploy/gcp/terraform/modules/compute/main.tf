@@ -45,7 +45,7 @@ resource "google_compute_instance" "master_instance" {
       max_idle_agent_period: ${var.max_idle_agent_period}
       max_agent_starting_period: ${var.max_agent_starting_period}
       provider: gcp
-      name_prefix: det-dynamic-agent-${var.unique_id}-
+      name_prefix: det-dynamic-agent-${var.unique_id}-${var.det_version_key}-
       network_interface:
         network: projects/${var.project_id}/global/networks/${var.network_name}
         subnetwork: projects/${var.project_id}/regions/${var.region}/subnetworks/${var.subnetwork_name}
@@ -109,7 +109,7 @@ resource "google_compute_instance" "master_instance" {
 
 // Create configured number of static agents
 resource "google_compute_instance" "agent_instance" {
-  name = "det-static-agent-${count.index}-${var.unique_id}-${var.det_version_key}"
+  name = "det-static-agent-${var.unique_id}-${var.det_version_key}-${count.index}"
   machine_type = var.agent_instance_type
   zone = var.zone
   tags = [var.tag_master_port, var.tag_allow_internal, var.tag_allow_ssh]
