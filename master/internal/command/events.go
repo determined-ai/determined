@@ -254,8 +254,8 @@ func eventToLogEntry(ev *event) *logger.Entry {
 	case ev.LogEvent != nil:
 		message = fmt.Sprintf(*ev.LogEvent)
 	default:
-		// We rely on log entry IDs to provide pagination and since some of these events aren't actually
-		// log events we'd need to notify of them about these non existing logs either by adding a new
+		// The client could rely on logEntry IDs and since some of these events aren't actually log
+		// events we'd need to notify of them about these non existing logs either by adding a new
 		// attribute to our response or a sentient log entry or we could keep it simple and normalize
 		// command events as log struct by setting a special message.
 		message = ""
