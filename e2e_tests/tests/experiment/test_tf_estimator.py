@@ -163,12 +163,12 @@ def test_mnist_estimator_adaptive_with_data_layer() -> None:
 
 @pytest.mark.parallel  # type: ignore
 def test_on_trial_close_callback() -> None:
-    config = conf.load_config(conf.experimental_path("trial/mnist_tp_to_estimator/const.yaml"))
+    config = conf.load_config(conf.fixtures_path("estimator_no_op/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_max_length(config, {"batches": 200})
 
     exp_id = exp.run_basic_test_with_temp_config(
-        config, conf.fixtures_path("mnist_tp_to_estimator"), 1, has_zeroth_step=False
+        config, conf.fixtures_path("estimator_no_op"), 1, has_zeroth_step=False
     )
 
     assert exp.check_if_string_present_in_trial_logs(
