@@ -1,5 +1,6 @@
 import { Button, Col, Row, Space, Table, Tooltip } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
+import axios from 'axios';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
@@ -15,14 +16,13 @@ import Spinner, { Indicator } from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
-import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
 import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
 import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
 import { handlePath } from 'routes/utils';
 import { getExperimentDetails, isNotFound } from 'services/api';
-import { ApiSorter, ExperimentDetailsParams } from 'services/types';
+import { ApiSorter, ApiState } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
 import { clone } from 'utils/data';
 import { numericSorter } from 'utils/data';
@@ -47,15 +47,19 @@ const ExperimentDetailsComp: React.FC = () => {
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
   const [ forkModalVisible, setForkModalVisible ] = useState(false);
   const [ forkModalConfig, setForkModalConfig ] = useState('Loading');
-  const [ experimentResponse, triggerExperimentRequest ] =
-    useRestApi<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initSorter: ApiSorter | null = storage.get(STORAGE_SORTER_KEY);
   const [ pageSize, setPageSize ] = useState(initLimit);
   const [ sorter, setSorter ] = useState<ApiSorter | null>(initSorter);
+  const [ experimentDetails, setExperimentDetails ] = useState<ApiState<ExperimentDetails>>({
+    data: undefined,
+    error: undefined,
+    isLoading: true,
+    source: axios.CancelToken.source(),
+  });
 
-  const experiment = experimentResponse.data;
+  const experiment = experimentDetails.data;
   const experimentConfig = experiment?.config;
 
   const columns = useMemo(() => {
@@ -108,9 +112,19 @@ const ExperimentDetailsComp: React.FC = () => {
     return newColumns;
   }, [ experimentConfig, id, sorter ]);
 
-  const pollExperimentDetails = useCallback(() => {
-    triggerExperimentRequest({ id });
-  }, [ id, triggerExperimentRequest ]);
+  const fetchExperimentDetails = useCallback(async () => {
+    try {
+      const response = await getExperimentDetails({
+        cancelToken: experimentDetails.source?.token,
+        id,
+      });
+      setExperimentDetails(prev => ({ ...prev, data: response, isLoading: false }));
+    } catch (e) {
+      if (!experimentDetails.error && !axios.isCancel(e)) {
+        setExperimentDetails(prev => ({ ...prev, error: e }));
+      }
+    }
+  }, [ id, experimentDetails.error, experimentDetails.source ]);
 
   const setFreshForkConfig = useCallback(() => {
     if (!experiment?.configRaw) return;
@@ -158,7 +172,11 @@ const ExperimentDetailsComp: React.FC = () => {
 
   const handleCheckpointDismiss = useCallback(() => setShowCheckpoint(false), []);
 
-  usePolling(pollExperimentDetails);
+  usePolling(fetchExperimentDetails);
+
+  useEffect(() => {
+    return () => experimentDetails.source?.cancel();
+  }, [ experimentDetails.source ]);
 
   useEffect(() => {
     try {
@@ -174,8 +192,8 @@ const ExperimentDetailsComp: React.FC = () => {
   }, [ setFreshForkConfig ]);
 
   if (isNaN(id)) return <Message title={`Invalid Experiment ID ${experimentId}`} />;
-  if (experimentResponse.error) {
-    const message = isNotFound(experimentResponse.error) ?
+  if (experimentDetails.error) {
+    const message = isNotFound(experimentDetails.error) ?
       `Unable to find Experiment ${experimentId}` :
       `Unable to fetch Experiment ${experimentId}`;
     return <Message title={message} />;
@@ -195,7 +213,7 @@ const ExperimentDetailsComp: React.FC = () => {
       options={<ExperimentActions
         experiment={experiment}
         onClick={{ Fork: showForkModal }}
-        onSettled={pollExperimentDetails} />}
+        onSettled={fetchExperimentDetails} />}
       showDivider
       subTitle={<Space align="center" size="small">
         {experiment?.config.description}
@@ -220,7 +238,7 @@ const ExperimentDetailsComp: React.FC = () => {
               dataSource={experiment?.trials}
               loading={{
                 indicator: <Indicator />,
-                spinning: !experimentResponse.hasLoaded,
+                spinning: experimentDetails.isLoading,
               }}
               pagination={getPaginationConfig(experiment?.trials.length || 0, pageSize)}
               rowClassName={defaultRowClassName()}

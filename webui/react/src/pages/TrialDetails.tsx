@@ -1,5 +1,6 @@
 import { Button, Col, Form, Input, Modal, Row, Select, Space, Table, Tooltip } from 'antd';
 import { SelectValue } from 'antd/lib/select';
+import axios from 'axios';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
@@ -18,14 +19,13 @@ import Spinner, { Indicator } from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
-import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
 import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { routeAll } from 'routes/utils';
 import { forkExperiment } from 'services/api';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
-import { TrialDetailsParams } from 'services/types';
+import { ApiState } from 'services/types';
 import {
   CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step, TrialDetails,
 } from 'types';
@@ -88,9 +88,6 @@ const STORAGE_TABLE_METRICS_KEY = 'metrics/table';
 const TrialDetailsComp: React.FC = () => {
   const { trialId: trialIdParam } = useParams<Params>();
   const trialId = parseInt(trialIdParam);
-  const [ trialResponse, triggerTrialRequest ] =
-    useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
-  const [ experiment, setExperiment ] = useState<ExperimentDetails>();
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initFilter = storage.getWithDefault(
@@ -109,8 +106,15 @@ const TrialDetailsComp: React.FC = () => {
   const [ form ] = Form.useForm();
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
+  const [ experiment, setExperiment ] = useState<ExperimentDetails>();
+  const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
+    data: undefined,
+    error: undefined,
+    isLoading: true,
+    source: axios.CancelToken.source(),
+  });
 
-  const trial = trialResponse.data;
+  const trial = trialDetails.data;
   const hparams = trial?.hparams;
   const experimentId = trial?.experimentId;
   const experimentConfig = experiment?.config;
@@ -201,9 +205,19 @@ const TrialDetailsComp: React.FC = () => {
       });
   }, [ hasCheckpointOrValidation, trial?.steps ]);
 
-  const pollTrialDetails = useCallback(() => {
-    triggerTrialRequest({ id: trialId });
-  }, [ triggerTrialRequest, trialId ]);
+  const fetchTrialDetails = useCallback(async () => {
+    try {
+      const response = await getTrialDetails({
+        cancelToken: trialDetails.source?.token,
+        id: trialId,
+      });
+      setTrialDetails(prev => ({ ...prev, data: response, isLoading: false }));
+    } catch (e) {
+      if (!trialDetails.error && !axios.isCancel(e)) {
+        setTrialDetails(prev => ({ ...prev, error: e }));
+      }
+    }
+  }, [ trialDetails.error, trialDetails.source, trialId ]);
 
   const handleActionClick = useCallback((action: TrialAction) => (): void => {
     switch (action) {
@@ -333,7 +347,11 @@ If the problem persists please contact support.',
     setPageSize(tablePagination.pageSize);
   }, [ storage ]);
 
-  usePolling(pollTrialDetails);
+  usePolling(fetchTrialDetails);
+
+  useEffect(() => {
+    return () => trialDetails.source?.cancel();
+  }, [ trialDetails.source ]);
 
   useEffect(() => {
     try {
@@ -353,7 +371,10 @@ If the problem persists please contact support.',
 
     const fetchExperimentDetails = async () => {
       try {
-        const response = await getExperimentDetails({ id: experimentId });
+        const response = await getExperimentDetails({
+          cancelToken: trialDetails.source?.token,
+          id: experimentId,
+        });
         setExperiment(response);
 
         // Default to selecting config search metric only.
@@ -365,6 +386,7 @@ If the problem persists please contact support.',
         const initMetrics = storage.getWithDefault(storageTableMetricsKey || '', defaultMetrics);
         setMetrics(initMetrics);
       } catch (e) {
+        if (axios.isCancel(e)) return;
         handleError({
           error: e,
           message: 'Failed to load experiment details.',
@@ -377,14 +399,14 @@ If the problem persists please contact support.',
     };
 
     fetchExperimentDetails();
-  }, [ experimentId, metricNames, storage, storageTableMetricsKey ]);
+  }, [ experimentId, metricNames, trialDetails.source, storage, storageTableMetricsKey ]);
 
   if (isNaN(trialId)) return <Message title={`Invalid Trial ID ${trialIdParam}`} />;
-  if (trialResponse.error !== undefined) {
-    const message = isNotFound(trialResponse.error) ?
+  if (trialDetails.error !== undefined) {
+    const message = isNotFound(trialDetails.error) ?
       `Unable to find Trial ${trialId}` :
       `Unable to fetch Trial ${trialId}`;
-    return <Message message={trialResponse.error.message} title={message} />;
+    return <Message message={trialDetails.error.message} title={message} />;
   }
   if (!trial || !experiment || !upgradedConfig) return <Spinner />;
 
@@ -421,7 +443,7 @@ If the problem persists please contact support.',
         trial={trial}
         trials={experiment.trials}
         onClick={handleActionClick}
-        onSettled={pollTrialDetails} />}
+        onSettled={fetchTrialDetails} />}
       showDivider
       subTitle={<Badge state={trial?.state} type={BadgeType.State} />}
       title={`Trial ${trialId}`}>
@@ -443,7 +465,7 @@ If the problem persists please contact support.',
               dataSource={steps}
               loading={{
                 indicator: <Indicator />,
-                spinning: !trialResponse.hasLoaded,
+                spinning: trialDetails.isLoading,
               }}
               pagination={getPaginationConfig(steps.length, pageSize)}
               rowClassName={defaultRowClassName(false)}

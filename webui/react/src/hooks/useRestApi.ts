@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Dispatch, Reducer, SetStateAction, useEffect, useReducer, useState } from 'react';
 
+import { ApiState } from 'services/types';
 import { clone, isEqual } from 'utils/data';
 
 export enum ActionType {
@@ -9,15 +10,10 @@ export enum ActionType {
   SetLoading,
 }
 
-type State<T> = {
-  data?: T;
-  error?: Error;
+export interface RestApiState<T> extends ApiState<T> {
   errorCount: number;
   hasLoaded: boolean;
-  isLoading: boolean;
-};
-
-export type RestApiState<T> = State<T>;
+}
 
 type Action<T> =
   | { type: ActionType.SetData; value: T }
@@ -28,11 +24,11 @@ type Action<T> =
 type Mapper = (x: any) => any;
 
 type Output<In, Out> = [
-  State<Out>,
+  RestApiState<Out>,
   Dispatch<SetStateAction<In>>,
 ];
 
-const defaultReducer = <T>(state: State<T>, action: Action<T>): State<T> => {
+const defaultReducer = <T>(state: RestApiState<T>, action: Action<T>): RestApiState<T> => {
   switch (action.type) {
     case ActionType.SetData: {
       const data = isEqual(action.value, state.data) ? state.data : action.value;
@@ -69,7 +65,7 @@ const useRestApi = <In, Out>(
   initialParams: In,
 ): Output<In, Out> => {
   const [ params, setParams ] = useState<In>(initialParams);
-  const [ state, dispatch ] = useReducer<Reducer<State<Out>, Action<Out>>>(defaultReducer, {
+  const [ state, dispatch ] = useReducer<Reducer<RestApiState<Out>, Action<Out>>>(defaultReducer, {
     errorCount: 0,
     hasLoaded: false,
     isLoading: false,

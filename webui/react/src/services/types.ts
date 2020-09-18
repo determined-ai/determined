@@ -1,4 +1,4 @@
-import { AxiosResponse, Method } from 'axios';
+import { AxiosResponse, CancelTokenSource, Method } from 'axios';
 
 import { CommandType, RunState, TBSource } from 'types';
 
@@ -15,6 +15,13 @@ export interface HttpApi<Input, Output>{
   postProcess?: (response: AxiosResponse<unknown>) => Output; // io type decoder.
   stubbedResponse?: unknown;
   // middlewares?: Middleware[]; // success/failure middlewares
+}
+
+export interface ApiState<T> {
+  data?: T;
+  error?: Error;
+  isLoading: boolean;
+  source?: CancelTokenSource;
 }
 
 export interface ApiSorter<T = string> {
