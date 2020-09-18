@@ -5,6 +5,7 @@ export const isNumber = (data: unknown): data is number => typeof data === 'numb
 export const isObject = <T>(data: T): boolean => typeof data === 'object' && data !== null;
 export const isPrimitive = <T>(data: T): boolean => data !== Object(data);
 export const isSet = <T>(data: T): boolean => data instanceof Set;
+
 export const isFunction = (fn: unknown): boolean => {
   return typeof fn === 'function';
 };
@@ -16,6 +17,10 @@ export const isAsyncFunction = (fn: unknown): boolean => {
 
 export const isSyncFunction = (fn: unknown): boolean => {
   return isFunction(fn) && !isAsyncFunction(fn);
+};
+
+export const isPromise = <T>(data: unknown): boolean => {
+  return isObject(data) && typeof Object(data).then === 'function';
 };
 
 /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
