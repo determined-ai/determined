@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/workload"
+
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
@@ -130,8 +132,8 @@ func Simulate(
 			if train, ok := operation.(Train); ok {
 				// If it's a train simulate we ran it to the event log as one huge workload,
 				// so that progress is correctly updated.
-				s.WorkloadCompleted(CompletedMessage{Workload: Workload{
-					Kind:    RunStep,
+				s.WorkloadCompleted(workload.CompletedMessage{Workload: workload.Workload{
+					Kind:    workload.RunStep,
 					TrialID: trialIDs[requestID],
 					StepID:  trialOpIdxs[requestID],
 				}}, float64(train.Length.Units))
@@ -252,12 +254,12 @@ func generateMetrics(
 		if err != nil {
 			return nil, err
 		}
-		return &CheckpointMetrics{
+		return &workload.CheckpointMetrics{
 			UUID:      requestID,
 			Resources: map[string]int{},
 		}, nil
 	case Validate:
-		return &ValidationMetrics{
+		return &workload.ValidationMetrics{
 			NumInputs: 1,
 			Metrics: map[string]interface{}{
 				metric: valFunc(random, trialID, opIdx),

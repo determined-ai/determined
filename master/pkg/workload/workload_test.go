@@ -1,4 +1,4 @@
-package searcher
+package workload
 
 import (
 	"encoding/json"

@@ -4,6 +4,8 @@ import (
 	"math"
 	"sort"
 
+	"github.com/determined-ai/determined/master/pkg/workload"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -131,7 +133,7 @@ func (s *asyncHalvingSearch) trialClosed(ctx context, requestID RequestID) ([]Op
 }
 
 func (s *asyncHalvingSearch) validationCompleted(
-	ctx context, requestID RequestID, validate Validate, metrics ValidationMetrics,
+	ctx context, requestID RequestID, validate Validate, metrics workload.ValidationMetrics,
 ) ([]Operation, error) {
 	// Extract the relevant metric as a float.
 	metric, err := metrics.Metric(s.Metric)

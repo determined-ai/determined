@@ -2,6 +2,7 @@ package searcher
 
 import (
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 // tournamentSearch runs multiple search methods in tandem. Callbacks for completed operations
@@ -49,7 +50,7 @@ func (s *tournamentSearch) trainCompleted(
 }
 
 func (s *tournamentSearch) checkpointCompleted(
-	ctx context, requestID RequestID, checkpoint Checkpoint, metrics CheckpointMetrics,
+	ctx context, requestID RequestID, checkpoint Checkpoint, metrics workload.CheckpointMetrics,
 ) ([]Operation, error) {
 	subSearch := s.trialTable[requestID]
 	ops, err := subSearch.checkpointCompleted(ctx, requestID, checkpoint, metrics)
@@ -57,7 +58,7 @@ func (s *tournamentSearch) checkpointCompleted(
 }
 
 func (s *tournamentSearch) validationCompleted(
-	ctx context, requestID RequestID, validate Validate, metrics ValidationMetrics,
+	ctx context, requestID RequestID, validate Validate, metrics workload.ValidationMetrics,
 ) ([]Operation, error) {
 	subSearch := s.trialTable[requestID]
 	ops, err := subSearch.validationCompleted(ctx, requestID, validate, metrics)

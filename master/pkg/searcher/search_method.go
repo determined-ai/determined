@@ -3,6 +3,7 @@ package searcher
 import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/nprand"
+	"github.com/determined-ai/determined/master/pkg/workload"
 )
 
 type context struct {
@@ -27,13 +28,13 @@ type SearchMethod interface {
 	// searcher has completed. It returns any new operations as a result of this workload
 	// completing.
 	checkpointCompleted(
-		ctx context, requestID RequestID, checkpoint Checkpoint, metrics CheckpointMetrics,
+		ctx context, requestID RequestID, checkpoint Checkpoint, metrics workload.CheckpointMetrics,
 	) ([]Operation, error)
 	// validationCompleted informs the searcher that the validation workload initiated by the same
 	// searcher has completed. It returns any new operations as a result of this workload
 	// completing.
 	validationCompleted(
-		ctx context, requestID RequestID, validate Validate, metrics ValidationMetrics,
+		ctx context, requestID RequestID, validate Validate, metrics workload.ValidationMetrics,
 	) ([]Operation, error)
 	// trialClosed informs the searcher that the trial has been closed as a result of a Close
 	// operation.
@@ -83,12 +84,12 @@ func (defaultSearchMethod) trainCompleted(context, RequestID, Train) ([]Operatio
 }
 
 func (defaultSearchMethod) checkpointCompleted(
-	context, RequestID, Checkpoint, CheckpointMetrics,
+	context, RequestID, Checkpoint, workload.CheckpointMetrics,
 ) ([]Operation, error) {
 	return nil, nil
 }
 func (defaultSearchMethod) validationCompleted(
-	context, RequestID, Validate, ValidationMetrics,
+	context, RequestID, Validate, workload.ValidationMetrics,
 ) ([]Operation, error) {
 	return nil, nil
 }
