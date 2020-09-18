@@ -81,36 +81,34 @@ func ProcessLogs(ctx context.Context,
 	}
 }
 
-/* Commands */
-
-// CommandLogStreamActor handles streaming log messages for commands.
-type CommandLogStreamActor struct {
-	req          LogsRequest
-	ctx          context.Context
-	send         OnLogEntry
-	eventManager *actor.Ref
+// LogStreamActor handles streaming log messages.
+type LogStreamActor struct {
+	req      LogsRequest
+	ctx      context.Context
+	send     OnLogEntry
+	logStore *actor.Ref
 }
 
 // CloseStream indicates that the log stream should close.
 type CloseStream struct{}
 
-// NewCommandLogStreamActor creates a new command logStreamActor.
-func NewCommandLogStreamActor(
+// NewLogStreamActor creates a new logStreamActor.
+func NewLogStreamActor(
 	ctx context.Context,
 	eventManager *actor.Ref,
 	request LogsRequest,
 	send OnLogEntry,
-) *CommandLogStreamActor {
-	return &CommandLogStreamActor{req: request, ctx: ctx, send: send, eventManager: eventManager}
+) *LogStreamActor {
+	return &LogStreamActor{req: request, ctx: ctx, send: send, logStore: eventManager}
 }
 
 // Receive implements the actor.Actor interface.
-func (l *CommandLogStreamActor) Receive(ctx *actor.Context) error {
+func (l *LogStreamActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		if response := ctx.Ask(l.eventManager, l.req); response.Empty() {
+		if response := ctx.Ask(l.logStore, l.req); response.Empty() {
 			ctx.Self().Stop()
-			return status.Errorf(codes.NotFound, "event manager did not respond")
+			return status.Errorf(codes.NotFound, "logStore did not respond")
 		}
 
 	case logger.Entry:
@@ -121,14 +119,14 @@ func (l *CommandLogStreamActor) Receive(ctx *actor.Context) error {
 		}
 		if err := l.send(&msg); err != nil {
 			ctx.Self().Stop()
-			return status.Errorf(codes.Internal, "failed to send log message")
+			return status.Errorf(codes.Internal, "failed to send log message %d", msg.ID)
 		}
 
 	case CloseStream:
 		ctx.Self().Stop()
 
 	case actor.PostStop:
-		ctx.Tell(l.eventManager, CloseStream{})
+		ctx.Tell(l.logStore, CloseStream{})
 
 	default:
 		return status.Errorf(codes.Internal, fmt.Sprintf("received unsupported message %v", msg))

@@ -59,7 +59,7 @@ func (a *apiServer) NotebookLogs(
 	logStreamActorAddr := cmdManagerAddr.Child("logStream-" + string(rand.Int()))
 	logStreamActor, created := a.m.system.ActorOf(
 		logStreamActorAddr,
-		api.NewCommandLogStreamActor(
+		api.NewLogStreamActor(
 			resp.Context(),
 			eventManager,
 			logRequest,
