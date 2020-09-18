@@ -116,8 +116,6 @@ message GetExperimentTrialsRequest {
     repeated determined.experiment.v1.State states = 5;
     // Limit trials to those that are owned by the specified experiments.
     int32 experiment_id = 6;
-    // Include bext checkpoint, best validations, and latest validation.
-    bool include_checkpoint_validation = 7;
 }
 // Response to GetExperimentTrialsRequest.
 message GetExperimentTrialsResponse {

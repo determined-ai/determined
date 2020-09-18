@@ -201,10 +201,6 @@ func (a *apiServer) GetExperimentTrials(
 		return nil, err
 	}
 
-	if !req.IncludeCheckpointValidation {
-		return resp, nil
-	}
-
 	trialIds := make([]string, 0)
 	for _, trial := range resp.Trials {
 		trialIds = append(trialIds, strconv.Itoa(int(trial.Id)))
