@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
 
-import { isAsyncFunction } from 'utils/data';
-
 const DEFAULT_DELAY = 5000;
 
 type PollingFn = (() => Promise<void>) | (() => void);
@@ -12,7 +10,6 @@ interface PollingOptions {
 
 const usePolling = (pollingFn: PollingFn, { delay }: PollingOptions = {}): (() => void) => {
   const timerId = useRef<NodeJS.Timeout>();
-  const countId = useRef(0);
 
   const stopPolling = useCallback((): void => {
     if (timerId.current) {
@@ -22,20 +19,11 @@ const usePolling = (pollingFn: PollingFn, { delay }: PollingOptions = {}): (() =
   }, []);
 
   const pollingRoutine = useCallback(async (): Promise<void> => {
-    countId.current++;
+    await pollingFn();
 
-    const count = countId.current;
+    if (timerId.current) clearTimeout(timerId.current);
 
-    isAsyncFunction(pollingFn) ? await pollingFn() : pollingFn();
-
-    timerId.current = setTimeout(() => {
-      /*
-         * When the polling function changes rapidly it's possible for several timers
-         * to be active. The count checks ensures that only the most recently set
-         * timer is allowed to continue polling behavior.
-         */
-      if (count === countId.current) pollingRoutine();
-    }, delay || DEFAULT_DELAY);
+    timerId.current = setTimeout(() => pollingRoutine(), delay || DEFAULT_DELAY);
   }, [ pollingFn, delay ]);
 
   useEffect(() => {
