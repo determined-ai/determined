@@ -25,6 +25,7 @@ import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { routeAll } from 'routes/utils';
 import { forkExperiment } from 'services/api';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
+import { ApiState } from 'services/types';
 import {
   CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step, TrialDetails,
 } from 'types';
@@ -87,7 +88,6 @@ const STORAGE_TABLE_METRICS_KEY = 'metrics/table';
 const TrialDetailsComp: React.FC = () => {
   const { trialId: trialIdParam } = useParams<Params>();
   const trialId = parseInt(trialIdParam);
-  const [ experiment, setExperiment ] = useState<ExperimentDetails>();
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initFilter = storage.getWithDefault(
@@ -106,11 +106,15 @@ const TrialDetailsComp: React.FC = () => {
   const [ form ] = Form.useForm();
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
-  const [ trial, setTrial ] = useState<TrialDetails>();
-  const [ isLoading, setIsLoading ] = useState(true);
-  const [ error, setError ] = useState<Error>();
-  const [ source ] = useState(axios.CancelToken.source());
+  const [ experiment, setExperiment ] = useState<ExperimentDetails>();
+  const [ trialDetails, setTrialDetails ] = useState<ApiState<TrialDetails>>({
+    data: undefined,
+    error: undefined,
+    isLoading: true,
+    source: axios.CancelToken.source(),
+  });
 
+  const trial = trialDetails.data;
   const hparams = trial?.hparams;
   const experimentId = trial?.experimentId;
   const experimentConfig = experiment?.config;
@@ -203,13 +207,17 @@ const TrialDetailsComp: React.FC = () => {
 
   const fetchTrialDetails = useCallback(async () => {
     try {
-      const response = await getTrialDetails({ cancelToken: source.token, id: trialId });
-      setTrial(response);
-      setIsLoading(false);
+      const response = await getTrialDetails({
+        cancelToken: trialDetails.source?.token,
+        id: trialId,
+      });
+      setTrialDetails(prev => ({ ...prev, data: response, isLoading: false }));
     } catch (e) {
-      if (!error && !axios.isCancel(e)) setError(e);
+      if (!trialDetails.error && !axios.isCancel(e)) {
+        setTrialDetails(prev => ({ ...prev, error: e }));
+      }
     }
-  }, [ error, source, trialId ]);
+  }, [ trialDetails.error, trialDetails.source, trialId ]);
 
   const handleActionClick = useCallback((action: TrialAction) => (): void => {
     switch (action) {
@@ -342,8 +350,8 @@ If the problem persists please contact support.',
   usePolling(fetchTrialDetails);
 
   useEffect(() => {
-    return () => source.cancel();
-  }, [ source ]);
+    return () => trialDetails.source?.cancel();
+  }, [ trialDetails.source ]);
 
   useEffect(() => {
     try {
@@ -364,7 +372,7 @@ If the problem persists please contact support.',
     const fetchExperimentDetails = async () => {
       try {
         const response = await getExperimentDetails({
-          cancelToken: source.token,
+          cancelToken: trialDetails.source?.token,
           id: experimentId,
         });
         setExperiment(response);
@@ -391,14 +399,14 @@ If the problem persists please contact support.',
     };
 
     fetchExperimentDetails();
-  }, [ experimentId, metricNames, source, storage, storageTableMetricsKey ]);
+  }, [ experimentId, metricNames, trialDetails.source, storage, storageTableMetricsKey ]);
 
   if (isNaN(trialId)) return <Message title={`Invalid Trial ID ${trialIdParam}`} />;
-  if (error !== undefined) {
-    const message = isNotFound(error) ?
+  if (trialDetails.error !== undefined) {
+    const message = isNotFound(trialDetails.error) ?
       `Unable to find Trial ${trialId}` :
       `Unable to fetch Trial ${trialId}`;
-    return <Message message={error.message} title={message} />;
+    return <Message message={trialDetails.error.message} title={message} />;
   }
   if (!trial || !experiment || !upgradedConfig) return <Spinner />;
 
@@ -457,7 +465,7 @@ If the problem persists please contact support.',
               dataSource={steps}
               loading={{
                 indicator: <Indicator />,
-                spinning: isLoading,
+                spinning: trialDetails.isLoading,
               }}
               pagination={getPaginationConfig(steps.length, pageSize)}
               rowClassName={defaultRowClassName(false)}

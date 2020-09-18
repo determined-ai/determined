@@ -22,7 +22,7 @@ import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
 import { handlePath } from 'routes/utils';
 import { getExperimentDetails, isNotFound } from 'services/api';
-import { ApiSorter } from 'services/types';
+import { ApiSorter, ApiState } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
 import { clone } from 'utils/data';
 import { numericSorter } from 'utils/data';
@@ -52,11 +52,14 @@ const ExperimentDetailsComp: React.FC = () => {
   const initSorter: ApiSorter | null = storage.get(STORAGE_SORTER_KEY);
   const [ pageSize, setPageSize ] = useState(initLimit);
   const [ sorter, setSorter ] = useState<ApiSorter | null>(initSorter);
-  const [ experiment, setExperiment ] = useState<ExperimentDetails>();
-  const [ isLoading, setIsLoading ] = useState(true);
-  const [ error, setError ] = useState<Error>();
-  const [ source ] = useState(axios.CancelToken.source());
+  const [ experimentDetails, setExperimentDetails ] = useState<ApiState<ExperimentDetails>>({
+    data: undefined,
+    error: undefined,
+    isLoading: true,
+    source: axios.CancelToken.source(),
+  });
 
+  const experiment = experimentDetails.data;
   const experimentConfig = experiment?.config;
 
   const columns = useMemo(() => {
@@ -111,13 +114,17 @@ const ExperimentDetailsComp: React.FC = () => {
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
-      const response = await getExperimentDetails({ cancelToken: source.token, id });
-      setExperiment(response);
-      setIsLoading(false);
+      const response = await getExperimentDetails({
+        cancelToken: experimentDetails.source?.token,
+        id,
+      });
+      setExperimentDetails(prev => ({ ...prev, data: response, isLoading: false }));
     } catch (e) {
-      if (!error && !axios.isCancel(e)) setError(e);
+      if (!experimentDetails.error && !axios.isCancel(e)) {
+        setExperimentDetails(prev => ({ ...prev, error: e }));
+      }
     }
-  }, [ error, id, source ]);
+  }, [ id, experimentDetails.error, experimentDetails.source ]);
 
   const setFreshForkConfig = useCallback(() => {
     if (!experiment?.configRaw) return;
@@ -168,8 +175,8 @@ const ExperimentDetailsComp: React.FC = () => {
   usePolling(fetchExperimentDetails);
 
   useEffect(() => {
-    return () => source.cancel();
-  }, [ source ]);
+    return () => experimentDetails.source?.cancel();
+  }, [ experimentDetails.source ]);
 
   useEffect(() => {
     try {
@@ -185,8 +192,8 @@ const ExperimentDetailsComp: React.FC = () => {
   }, [ setFreshForkConfig ]);
 
   if (isNaN(id)) return <Message title={`Invalid Experiment ID ${experimentId}`} />;
-  if (error) {
-    const message = isNotFound(error) ?
+  if (experimentDetails.error) {
+    const message = isNotFound(experimentDetails.error) ?
       `Unable to find Experiment ${experimentId}` :
       `Unable to fetch Experiment ${experimentId}`;
     return <Message title={message} />;
@@ -231,7 +238,7 @@ const ExperimentDetailsComp: React.FC = () => {
               dataSource={experiment?.trials}
               loading={{
                 indicator: <Indicator />,
-                spinning: isLoading,
+                spinning: experimentDetails.isLoading,
               }}
               pagination={getPaginationConfig(experiment?.trials.length || 0, pageSize)}
               rowClassName={defaultRowClassName()}
