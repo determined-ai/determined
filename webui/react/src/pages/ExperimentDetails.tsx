@@ -1,5 +1,6 @@
 import { Button, Col, Row, Space, Table, Tooltip } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
+import axios from 'axios';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
@@ -54,6 +55,7 @@ const ExperimentDetailsComp: React.FC = () => {
   const [ experiment, setExperiment ] = useState<ExperimentDetails>();
   const [ isLoading, setIsLoading ] = useState(true);
   const [ error, setError ] = useState<Error>();
+  const [ source ] = useState(axios.CancelToken.source());
 
   const experimentConfig = experiment?.config;
 
@@ -107,15 +109,15 @@ const ExperimentDetailsComp: React.FC = () => {
     return newColumns;
   }, [ experimentConfig, id, sorter ]);
 
-  const pollExperimentDetails = useCallback(async () => {
+  const fetchExperimentDetails = useCallback(async () => {
     try {
-      const response = await getExperimentDetails({ id });
+      const response = await getExperimentDetails({ cancelToken: source.token, id });
       setExperiment(response);
       setIsLoading(false);
     } catch (e) {
-      if (!experiment) setError(e);
+      if (!error && !axios.isCancel(e)) setError(e);
     }
-  }, [ experiment, id ]);
+  }, [ error, id, source ]);
 
   const setFreshForkConfig = useCallback(() => {
     if (!experiment?.configRaw) return;
@@ -163,7 +165,11 @@ const ExperimentDetailsComp: React.FC = () => {
 
   const handleCheckpointDismiss = useCallback(() => setShowCheckpoint(false), []);
 
-  usePolling(pollExperimentDetails);
+  usePolling(fetchExperimentDetails);
+
+  useEffect(() => {
+    return () => source.cancel();
+  }, [ source ]);
 
   useEffect(() => {
     try {
@@ -200,7 +206,7 @@ const ExperimentDetailsComp: React.FC = () => {
       options={<ExperimentActions
         experiment={experiment}
         onClick={{ Fork: showForkModal }}
-        onSettled={pollExperimentDetails} />}
+        onSettled={fetchExperimentDetails} />}
       showDivider
       subTitle={<Space align="center" size="small">
         {experiment?.config.description}
