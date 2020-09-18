@@ -24,7 +24,7 @@ type (
 		Config         model.CommandConfig    `json:"config"`
 		State          string                 `json:"state"`
 		ServiceAddress *string                `json:"service_address"`
-		Addresses      []scheduler.Address    `json:"addresses"`
+		Addresses      []container.Address    `json:"addresses"`
 		ExitStatus     *string                `json:"exit_status"`
 		Misc           map[string]interface{} `json:"misc"`
 		IsReady        bool                   `json:"is_ready"`

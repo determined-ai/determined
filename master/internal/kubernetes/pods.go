@@ -43,7 +43,6 @@ type podMetadata struct {
 //        +- requestProcessingWorkers: processes request to create / delete kubernetes resources.
 type pods struct {
 	cluster                  *actor.Ref
-	clusterID                string
 	namespace                string
 	masterServiceName        string
 	leaveKubernetesResources bool
@@ -68,14 +67,12 @@ func Initialize(
 	s *actor.System,
 	e *echo.Echo,
 	c *actor.Ref,
-	clusterID string,
 	namespace string,
 	masterServiceName string,
 	leaveKubernetesResources bool,
 ) *actor.Ref {
 	podsActor, ok := s.ActorOf(actor.Addr("pods"), &pods{
 		cluster:                  c,
-		clusterID:                clusterID,
 		namespace:                namespace,
 		masterServiceName:        masterServiceName,
 		podNameToPodHandler:      make(map[string]*actor.Ref),
@@ -106,8 +103,8 @@ func (p *pods) Receive(ctx *actor.Context) error {
 		p.startPodInformer(ctx)
 		p.startEventListener(ctx)
 
-	case sproto.StartPod:
-		if err := p.receiveStartPod(ctx, msg); err != nil {
+	case sproto.StartTaskPod:
+		if err := p.receiveStartTaskPod(ctx, msg); err != nil {
 			return err
 		}
 
@@ -117,8 +114,8 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case podEventUpdate:
 		p.receivePodEventUpdate(ctx, msg)
 
-	case sproto.StopPod:
-		p.receiveStopPod(ctx, msg)
+	case sproto.KillTaskPod:
+		p.receiveKillPod(ctx, msg)
 
 	case resourceDeletionFailed:
 		if msg.err != nil {
@@ -236,12 +233,12 @@ func (p *pods) startResourceRequestQueue(ctx *actor.Context) {
 	)
 }
 
-func (p *pods) receiveStartPod(ctx *actor.Context, msg sproto.StartPod) error {
+func (p *pods) receiveStartTaskPod(ctx *actor.Context, msg sproto.StartTaskPod) error {
 	newPodHandler := newPod(
-		msg, p.cluster, p.clusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
+		msg, p.cluster, msg.Spec.ClusterID, p.clientSet, p.namespace, p.masterIP, p.masterPort,
 		p.podInterface, p.configMapInterface, p.resourceRequestQueue, p.leaveKubernetesResources,
 	)
-	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s-%d", msg.Spec.TaskID, msg.Rank), newPodHandler)
+	ref, ok := ctx.ActorOf(fmt.Sprintf("pod-%s", msg.Spec.ContainerID), newPodHandler)
 	if !ok {
 		return errors.Errorf("pod actor %s already exists", ref.Address().String())
 	}
@@ -288,13 +285,13 @@ func (p *pods) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 	ctx.Tell(ref, msg)
 }
 
-func (p *pods) receiveStopPod(ctx *actor.Context, msg sproto.StopPod) {
-	ref, ok := p.containerIDToPodHandler[msg.ContainerID]
+func (p *pods) receiveKillPod(ctx *actor.Context, msg sproto.KillTaskPod) {
+	ref, ok := p.containerIDToPodHandler[string(msg.PodID)]
 	if !ok {
 		// For multi-pod tasks, when the the chief pod exits,
 		// the scheduler will request to terminate pods all other pods
 		// that have notified the scheduler that they have exited.
-		ctx.Log().WithField("container-id", msg.ContainerID).Info(
+		ctx.Log().WithField("pod-id", msg.PodID).Info(
 			"received stop pod command for unregistered container id")
 		return
 	}
@@ -352,7 +349,7 @@ func (p *pods) summarize(ctx *actor.Context) map[string]agent.AgentSummary {
 		info := result.(podNodeInfo)
 		if len(info.nodeName) == 0 {
 			// If a pod doesn't have a nodeName it means it has not yet
-			// been assigned to a node.
+			// been allocated to a node.
 			continue
 		}
 		podByNode[info.nodeName] = append(podByNode[info.nodeName], info)

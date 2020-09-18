@@ -5,30 +5,27 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/docker/docker/api/types"
-	docker "github.com/docker/docker/api/types/container"
+	"github.com/google/uuid"
+
 	"github.com/pkg/errors"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
-	"github.com/determined-ai/determined/master/pkg/agent"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 )
 
 var errMock = errors.New("mock error")
 
 type mockActor struct {
-	system             *actor.System
-	cluster            *actor.Ref
-	onAssigned         func(TaskAssigned) error
-	onContainerStarted func(ContainerStarted) error
-	onTaskTerminated   func(TaskTerminated) error
+	system      *actor.System
+	cluster     *actor.Ref
+	onAllocated func(ResourcesAllocated) error
 }
 
 type (
 	AskSchedulerToAddTask struct {
-		task AddTask
+		task AllocateRequest
 	}
 	ThrowError struct{}
 	ThrowPanic struct{}
@@ -37,7 +34,7 @@ type (
 func (h *mockActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case AskSchedulerToAddTask:
-		msg.task.TaskHandler = ctx.Self()
+		msg.task.TaskActor = ctx.Self()
 		if ctx.ExpectingResponse() {
 			ctx.Respond(ctx.Ask(h.cluster, msg.task).Get())
 		} else {
@@ -50,37 +47,23 @@ func (h *mockActor) Receive(ctx *actor.Context) error {
 	case ThrowPanic:
 		panic(errMock)
 
-	case TaskAssigned:
-		if h.onAssigned != nil {
-			return h.onAssigned(msg)
+	case ResourcesAllocated:
+		if h.onAllocated != nil {
+			return h.onAllocated(msg)
 		}
 
-		h.system.Tell(h.cluster, sproto.TaskStartedOnAgent{
-			ContainerID: cproto.ID("random-container-name"),
-			ContainerStarted: &agent.ContainerStarted{
-				ContainerInfo: types.ContainerJSON{
-					ContainerJSONBase: &types.ContainerJSONBase{
-						HostConfig: &docker.HostConfig{
-							NetworkMode: "bridge",
-						},
-					},
-				},
-			},
+		// Mock a container is started.
+		h.system.Tell(h.cluster, sproto.TaskContainerStateChanged{
+			Container:        cproto.Container{ID: "random-container-name"},
+			ContainerStarted: &sproto.TaskContainerStarted{},
 		})
 
-	case ContainerStarted:
-		if h.onContainerStarted != nil {
-			return h.onContainerStarted(msg)
-		}
-
-		h.system.Tell(h.cluster, sproto.TaskTerminatedOnAgent{
-			ContainerID:      cproto.ID(msg.Container.ID()),
-			ContainerStopped: &agent.ContainerStopped{},
-		})
-
-	case TaskTerminated:
-		if h.onTaskTerminated != nil {
-			return h.onTaskTerminated(msg)
+	case sproto.TaskContainerStateChanged:
+		if msg.Container.State == cproto.Running {
+			h.system.Tell(h.cluster, sproto.TaskContainerStateChanged{
+				Container:        cproto.Container{ID: msg.Container.ID},
+				ContainerStopped: &sproto.TaskContainerStopped{},
+			})
 		}
 
 	default:
@@ -101,24 +84,20 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 		&mockActor{
 			cluster: cluster,
 			system:  system,
-			onContainerStarted: func(ContainerStarted) error {
-				return nil
-			},
 		},
 	)
 	assert.Assert(t, created)
-	taskID := NewTaskID()
 
 	system.Ask(mockActor, AskSchedulerToAddTask{
-		task: AddTask{
-			ID:           &taskID,
+		task: AllocateRequest{
+			ID:           TaskID(uuid.New().String()),
 			Name:         "mock_task",
 			Group:        mockActor,
 			SlotsNeeded:  1,
 			CanTerminate: true,
 		},
 	}).Get()
-	assert.Equal(t, len(c.tasksByHandler), 1)
+	assert.Equal(t, c.taskList.len(), 1)
 
 	system.Ask(mockActor, ThrowError{})
 	assert.ErrorType(t, mockActor.StopAndAwaitTermination(), errMock)
@@ -128,7 +107,7 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 	}
 
 	assert.NilError(t, cluster.StopAndAwaitTermination())
-	assert.Equal(t, len(c.tasksByHandler), 0)
+	assert.Equal(t, c.taskList.len(), 0)
 }
 
 func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
@@ -143,17 +122,13 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 		&mockActor{
 			cluster: cluster,
 			system:  system,
-			onContainerStarted: func(ContainerStarted) error {
-				return nil
-			},
 		},
 	)
 	assert.Assert(t, created)
 
-	taskID := NewTaskID()
 	system.Ask(mockActor, AskSchedulerToAddTask{
-		task: AddTask{
-			ID:           &taskID,
+		task: AllocateRequest{
+			ID:           TaskID(uuid.New().String()),
 			Name:         "mock_task",
 			Group:        mockActor,
 			SlotsNeeded:  1,
@@ -161,7 +136,7 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 		},
 	}).Get()
 
-	assert.Equal(t, len(c.tasksByHandler), 1)
+	assert.Equal(t, c.taskList.len(), 1)
 	system.Ask(mockActor, ThrowPanic{})
 	assert.ErrorType(t, mockActor.StopAndAwaitTermination(), errMock)
 
@@ -170,7 +145,7 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 	}
 
 	assert.NilError(t, cluster.StopAndAwaitTermination())
-	assert.Equal(t, len(c.tasksByHandler), 0)
+	assert.Equal(t, c.taskList.len(), 0)
 }
 
 func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
@@ -186,17 +161,13 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 		&mockActor{
 			cluster: cluster,
 			system:  system,
-			onContainerStarted: func(ContainerStarted) error {
-				return nil
-			},
 		},
 	)
 	assert.Assert(t, created)
 
-	taskID := NewTaskID()
 	system.Ask(mockActor, AskSchedulerToAddTask{
-		task: AddTask{
-			ID:           &taskID,
+		task: AllocateRequest{
+			ID:           TaskID(uuid.New().String()),
 			Name:         "mock_task",
 			Group:        mockActor,
 			SlotsNeeded:  1,
@@ -204,7 +175,7 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 		},
 	}).Get()
 
-	assert.Equal(t, len(c.tasksByHandler), 1)
+	assert.Equal(t, c.taskList.len(), 1)
 
 	assert.NilError(t, mockActor.StopAndAwaitTermination())
 
@@ -213,7 +184,7 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 	}
 
 	assert.NilError(t, cluster.StopAndAwaitTermination())
-	assert.Equal(t, len(c.tasksByHandler), 0)
+	assert.Equal(t, c.taskList.len(), 0)
 }
 
 func testWhenActorsStopOrTaskIsKilled(t *testing.T, r *rand.Rand) {
@@ -231,10 +202,9 @@ func testWhenActorsStopOrTaskIsKilled(t *testing.T, r *rand.Rand) {
 		})
 	assert.Assert(t, created)
 
-	taskID := NewTaskID()
 	system.Ask(mockActor, AskSchedulerToAddTask{
-		task: AddTask{
-			ID:           &taskID,
+		task: AllocateRequest{
+			ID:           TaskID(uuid.New().String()),
 			Name:         "mock_task",
 			Group:        mockActor,
 			SlotsNeeded:  1,
@@ -244,14 +214,8 @@ func testWhenActorsStopOrTaskIsKilled(t *testing.T, r *rand.Rand) {
 
 	actions := []func(){
 		func() {
-			system.Tell(cluster, taskActorStopped{
-				Ref: mockActor,
-			})
-		},
-		func() {
-			system.Tell(cluster, TerminateTask{
-				TaskID:   taskID,
-				Forcible: false,
+			system.Tell(cluster, ResourcesReleased{
+				TaskActor: mockActor,
 			})
 		},
 		func() {
@@ -270,7 +234,7 @@ func testWhenActorsStopOrTaskIsKilled(t *testing.T, r *rand.Rand) {
 	}
 
 	assert.NilError(t, cluster.StopAndAwaitTermination())
-	assert.Equal(t, len(c.tasksByHandler), 0)
+	assert.Equal(t, c.taskList.len(), 0)
 }
 
 func TestCleanUpTaskWhenActorsStopOrTaskIsKilled(t *testing.T) {

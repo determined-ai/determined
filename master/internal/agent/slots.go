@@ -12,6 +12,7 @@ import (
 	aproto "github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/device"
 )
 
 type slots struct {
@@ -31,8 +32,7 @@ func (s *slots) Receive(ctx *actor.Context) error {
 				agentEnabled: true,
 				userEnabled:  true,
 			}
-			s := &slot{cluster: s.cluster, enabled: enabled, device: d}
-			_, ok := ctx.ActorOf(d.ID, s)
+			_, ok := ctx.ActorOf(d.ID, &slot{cluster: s.cluster, enabled: enabled, device: d})
 			check.Panic(check.True(ok, "error registering slot, slot %s already created", d.ID))
 		}
 	case aproto.StartContainer:
@@ -41,7 +41,7 @@ func (s *slots) Receive(ctx *actor.Context) error {
 		for _, child := range ctx.Children() {
 			ctx.Tell(child, msg)
 		}
-	case sproto.ContainerStateChanged:
+	case aproto.ContainerStateChanged:
 		s.sendToSlots(ctx, msg.Container, msg)
 	case echo.Context:
 		s.handleAPIRequest(ctx, msg)
@@ -81,7 +81,17 @@ func (s *slots) summarize(ctx *actor.Context) SlotsSummary {
 }
 
 func (s *slots) sendToSlots(ctx *actor.Context, c container.Container, msg actor.Message) {
-	for _, d := range c.Devices {
-		ctx.Tell(ctx.Child(d.ID), msg)
+	if len(c.Devices) == 0 && c.State == container.Terminated {
+		// This is to handle the case where the task is not using GPU devices and is running
+		// on agent where only GPUs are modeled as devices.
+		ctx.Tell(s.cluster, sproto.FreeDevice{
+			DeviceID: sproto.DeviceID{
+				Agent: ctx.Self().Parent(), Device: device.Device{Type: device.ZeroSlot}},
+			ContainerID: &c.ID,
+		})
+	} else {
+		for _, d := range c.Devices {
+			ctx.Tell(ctx.Child(d.ID), msg)
+		}
 	}
 }

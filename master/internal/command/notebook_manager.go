@@ -21,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/notebookv1"
 )
@@ -105,8 +106,7 @@ type notebookManager struct {
 	db *db.PgDB
 
 	defaultAgentUserGroup model.AgentUserGroup
-	clusterID             string
-	taskContainerDefaults model.TaskContainerDefaultsConfig
+	taskSpec              *tasks.TaskSpec
 }
 
 func (n *notebookManager) Receive(ctx *actor.Context) error {
@@ -139,7 +139,7 @@ func (n *notebookManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Conte
 			return
 		}
 
-		req, err := parseCommandRequest(apiCtx, n.db, &params, &n.taskContainerDefaults)
+		req, err := parseCommandRequest(apiCtx, n.db, &params, &n.taskSpec.TaskContainerDefaults)
 		if err != nil {
 			respondBadRequest(ctx, err)
 			return
@@ -192,7 +192,7 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 
 	config.Entrypoint = notebookEntrypoint
 
-	setPodSpec(&config, n.taskContainerDefaults)
+	setPodSpec(&config, n.taskSpec.TaskContainerDefaults)
 
 	if config.Description == "" {
 		var err error
@@ -247,5 +247,6 @@ func (n *notebookManager) newNotebook(req *commandRequest) (*command, error) {
 
 		owner:          req.Owner,
 		agentUserGroup: req.AgentUserGroup,
+		taskSpec:       n.taskSpec,
 	}, nil
 }

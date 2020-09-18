@@ -8,10 +8,9 @@ import (
 
 	"github.com/labstack/echo"
 
-	"github.com/determined-ai/determined/master/pkg/actor"
-
 	"github.com/docker/docker/pkg/jsonmessage"
 
+	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/container"
 )
@@ -28,12 +27,20 @@ type (
 		RunMessage  *agent.RunMessage
 		AuxMessage  *string
 	}
-
-	// ContainerStateChanged notifies that the recipient container state has been transitioned.
+	// TaskContainerStarted contains the information needed by tasks from container started.
+	TaskContainerStarted struct {
+		Addresses []container.Address
+	}
+	// TaskContainerStopped contains the information needed by tasks from container stopped.
+	TaskContainerStopped struct {
+		agent.ContainerStopped
+	}
+	// TaskContainerStateChanged notifies that the task actor container state has been transitioned.
 	// It is used by the resource providers to communicate with the task handlers.
-	ContainerStateChanged struct {
+	TaskContainerStateChanged struct {
 		Container        container.Container
-		ContainerStopped *agent.ContainerStopped
+		ContainerStarted *TaskContainerStarted
+		ContainerStopped *TaskContainerStopped
 	}
 )
 

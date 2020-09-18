@@ -1,7 +1,10 @@
 package agent
 
 import (
+	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/pkg/jsonmessage"
@@ -51,6 +54,56 @@ type ContainerStateChanged struct {
 type ContainerStarted struct {
 	ProxyAddress  string
 	ContainerInfo types.ContainerJSON
+}
+
+// Addresses calculates the address of containers and hosts based on the container
+// started information.
+func (c ContainerStarted) Addresses() []container.Address {
+	proxy := c.ProxyAddress
+	info := c.ContainerInfo
+
+	var addresses []container.Address
+	switch info.HostConfig.NetworkMode {
+	case "host":
+		for port := range info.Config.ExposedPorts {
+			addresses = append(addresses, container.Address{
+				ContainerIP:   proxy,
+				ContainerPort: port.Int(),
+				HostIP:        proxy,
+				HostPort:      port.Int(),
+			})
+		}
+	default:
+		if info.NetworkSettings == nil {
+			return nil
+		}
+		networks := info.NetworkSettings.Networks
+		ipAddresses := make([]string, 0, len(networks))
+		for _, network := range networks {
+			ipAddresses = append(ipAddresses, network.IPAddress)
+		}
+		for port, bindings := range info.NetworkSettings.Ports {
+			for _, binding := range bindings {
+				for _, ip := range ipAddresses {
+					hostIP := binding.HostIP
+					if hostIP == "" || hostIP == "0.0.0.0" {
+						hostIP = proxy
+					}
+					hostPort, err := strconv.Atoi(binding.HostPort)
+					if err != nil {
+						panic(errors.Wrapf(err, "unexpected host port: %s", binding.HostPort))
+					}
+					addresses = append(addresses, container.Address{
+						ContainerIP:   ip,
+						ContainerPort: port.Int(),
+						HostIP:        hostIP,
+						HostPort:      hostPort,
+					})
+				}
+			}
+		}
+	}
+	return addresses
 }
 
 // ContainerStopped notifies the master that a container was stopped on the agent.

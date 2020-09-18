@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/google/uuid"
@@ -63,17 +64,23 @@ func (a *agent) Receive(ctx *actor.Context) error {
 		} else {
 			a.address = msg.Ctx.Request().RemoteAddr[0:lastColonIndex]
 		}
+	case sproto.KillTaskContainer:
+		ctx.Log().Infof("killing container id: %s", msg.ContainerID)
+		killMsg := aproto.SignalContainer{
+			ContainerID: msg.ContainerID, Signal: syscall.SIGKILL,
+		}
+		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &killMsg}})
 	case aproto.SignalContainer:
 		ctx.Ask(a.socket, ws.WriteMessage{Message: aproto.AgentMessage{SignalContainer: &msg}})
-	case sproto.StartTaskOnAgent:
+	case sproto.StartTaskContainer:
 		start := ws.WriteMessage{Message: aproto.AgentMessage{StartContainer: &msg.StartContainer}}
 		ctx.Log().Infof("starting container id: %s slots: %d task handler: %s",
 			msg.StartContainer.Container.ID, len(msg.StartContainer.Container.Devices),
-			msg.Task.Address())
+			msg.TaskActor.Address())
 
 		ctx.Ask(a.socket, start)
 		ctx.Tell(a.slots, msg.StartContainer)
-		a.containers[msg.Container.ID] = msg.Task
+		a.containers[msg.Container.ID] = msg.TaskActor
 	case aproto.MasterMessage:
 		a.handleIncomingWSMessage(ctx, msg)
 	case *proto.GetAgentRequest:
@@ -141,7 +148,7 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 	case msg.ContainerLog != nil:
 		ref, ok := a.containers[msg.ContainerLog.Container.ID]
 		check.Panic(check.True(ok,
-			"container not assigned to agent: container %s", msg.ContainerLog.Container.ID))
+			"container not allocated to agent: container %s", msg.ContainerLog.Container.ID))
 		ctx.Tell(ref, sproto.ContainerLog{
 			Container:   msg.ContainerLog.Container,
 			Timestamp:   msg.ContainerLog.Timestamp,
@@ -155,36 +162,28 @@ func (a *agent) handleIncomingWSMessage(ctx *actor.Context, msg aproto.MasterMes
 }
 
 func (a *agent) containerStateChanged(ctx *actor.Context, sc aproto.ContainerStateChanged) {
-	task, ok := a.containers[sc.Container.ID]
-	check.Panic(check.True(ok, "container not assigned to agent: container %s", sc.Container.ID))
+	taskActor, ok := a.containers[sc.Container.ID]
+	check.Panic(check.True(ok, "container not allocated to agent: container %s", sc.Container.ID))
 
-	rsc := sproto.ContainerStateChanged{
-		Container:        sc.Container,
-		ContainerStopped: sc.ContainerStopped,
-	}
-
-	ctx.Tell(task, rsc)
-	ctx.Tell(a.slots, rsc)
-
+	rsc := sproto.TaskContainerStateChanged{Container: sc.Container}
 	switch sc.Container.State {
 	case container.Running:
 		if sc.ContainerStarted.ProxyAddress == "" {
 			sc.ContainerStarted.ProxyAddress = a.address
 		}
-
-		ctx.Tell(a.cluster, sproto.TaskStartedOnAgent{
-			ContainerID:      sc.Container.ID,
-			ContainerStarted: sc.ContainerStarted,
-		})
+		rsc.ContainerStarted = &sproto.TaskContainerStarted{
+			Addresses: sc.ContainerStarted.Addresses(),
+		}
 	case container.Terminated:
 		ctx.Log().Infof("stopped container id: %s", sc.Container.ID)
 		delete(a.containers, sc.Container.ID)
-
-		ctx.Tell(a.cluster, sproto.TaskTerminatedOnAgent{
-			ContainerID:      sc.Container.ID,
-			ContainerStopped: sc.ContainerStopped,
-		})
+		rsc.ContainerStopped = &sproto.TaskContainerStopped{
+			ContainerStopped: *sc.ContainerStopped,
+		}
 	}
+
+	ctx.Tell(taskActor, rsc)
+	ctx.Tell(a.slots, sc)
 }
 
 func (a *agent) summarize(ctx *actor.Context) AgentSummary {

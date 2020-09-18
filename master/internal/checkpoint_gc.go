@@ -19,6 +19,7 @@ type checkpointGCTask struct {
 	experiment *model.Experiment
 
 	agentUserGroup *model.AgentUserGroup
+	taskSpec       *tasks.TaskSpec
 
 	// TODO (DET-789): Set up proper log handling for checkpoint GC.
 	logs []sproto.ContainerLog
@@ -27,15 +28,15 @@ type checkpointGCTask struct {
 func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		ctx.Tell(t.rp, scheduler.AddTask{
+		ctx.Tell(t.rp, scheduler.AllocateRequest{
 			Name: fmt.Sprintf("Checkpoint GC (Experiment %d)", t.experiment.ID),
 			FittingRequirements: scheduler.FittingRequirements{
 				SingleAgent: true,
 			},
-			TaskHandler: ctx.Self(),
+			TaskActor: ctx.Self(),
 		})
 
-	case scheduler.TaskAssigned:
+	case scheduler.ResourcesAllocated:
 		config := t.experiment.Config.CheckpointStorage
 
 		checkpoints, err := t.db.ExperimentCheckpointsToGCRaw(t.experiment.ID,
@@ -46,18 +47,20 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 
 		ctx.Log().Info("starting checkpoint garbage collection")
 
-		for _, a := range msg.Assignments {
-			a.StartTask(tasks.TaskSpec{
-				GCCheckpoints: &tasks.GCCheckpoints{
-					AgentUserGroup:   t.agentUserGroup,
-					ExperimentID:     t.experiment.ID,
-					ExperimentConfig: t.experiment.Config,
-					ToDelete:         checkpoints,
-				},
-			})
+		for _, a := range msg.Allocations {
+			taskSpec := *t.taskSpec
+			taskSpec.GCCheckpoints = &tasks.GCCheckpoints{
+				AgentUserGroup:   t.agentUserGroup,
+				ExperimentID:     t.experiment.ID,
+				ExperimentConfig: t.experiment.Config,
+				ToDelete:         checkpoints,
+			}
+			a.Start(ctx, taskSpec)
 		}
+	case scheduler.ReleaseResources:
+		// Ignore the release resource message and wait for the GC job to finish.
 
-	case sproto.ContainerStateChanged:
+	case sproto.TaskContainerStateChanged:
 		if msg.Container.State != container.Terminated {
 			return nil
 		}
@@ -76,10 +79,6 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 	case sproto.ContainerLog:
 		t.logs = append(t.logs, msg)
 
-	case scheduler.TerminateRequest:
-	case scheduler.ContainerStarted:
-	case scheduler.TaskAborted:
-	case scheduler.TaskTerminated:
 	case actor.PostStop:
 
 	default:

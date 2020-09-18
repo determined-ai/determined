@@ -14,6 +14,8 @@ const (
 	CPU Type = "cpu"
 	// GPU represents a GPU device.
 	GPU Type = "gpu"
+	// ZeroSlot represents cpu devices on agents where only GPUs are modeled.
+	ZeroSlot Type = ""
 )
 
 // Proto returns the proto representation of the device type.
@@ -23,6 +25,8 @@ func (t Type) Proto() devicev1.Type {
 		return devicev1.Type_TYPE_CPU
 	case GPU:
 		return devicev1.Type_TYPE_GPU
+	case ZeroSlot:
+		return devicev1.Type_TYPE_UNSPECIFIED
 	default:
 		return devicev1.Type_TYPE_UNSPECIFIED
 	}

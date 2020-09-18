@@ -137,6 +137,9 @@ func (r *requestQueue) Receive(ctx *actor.Context) error {
 				return errors.Errorf("%s actor already exists", newWorker.Address())
 			}
 		}
+	case actor.PostStop:
+		// This should not happen since the request queue actor would not stop during
+		// the master is running.
 
 	case createKubernetesResources:
 		r.receiveCreateKubernetesResources(ctx, msg)

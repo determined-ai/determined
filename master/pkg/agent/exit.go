@@ -72,9 +72,6 @@ const (
 	// TaskAborted denotes that the task was canceled before it was started.
 	TaskAborted = FailureType("task was aborted before the task was started")
 
-	// TaskCreateError denotes that the task failed to create a task spec for an agent.
-	TaskCreateError = FailureType("task failed to create a container spec for an agent")
-
 	// TaskError denotes that the task failed without an associated exit code.
 	TaskError = FailureType("task failed without an associated exit code")
 

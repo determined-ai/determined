@@ -16,10 +16,11 @@ import (
 
 // TaskSpec provides the necessary information for an agent to start a task.
 type TaskSpec struct {
-	TaskID                string                            `json:"task_id"`
-	ContainerID           string                            `json:"container_id"`
+	TaskID      string          `json:"task_id"`
+	ContainerID string          `json:"container_id"`
+	Devices     []device.Device `json:"devices"`
+
 	ClusterID             string                            `json:"cluster_id"`
-	Devices               []device.Device                   `json:"devices"`
 	HarnessPath           string                            `json:"harness_path"`
 	TaskContainerDefaults model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
 	MasterCert            *tls.Certificate                  `json:"master_cert"`
@@ -83,6 +84,8 @@ type StartContainer struct {
 	// This is used to hint the resource provider to override defaults and start
 	// the container in host mode iff it has been scheduled across multiple agents.
 	IsMultiAgent bool `json:"is_multi_agent"`
+
+	Rank int `json:"rank"`
 }
 
 // KillContainer is the information sent to an agent to kill a task (i.e., container or

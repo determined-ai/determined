@@ -316,11 +316,11 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 	if patch.Resources != nil {
 		if patch.Resources.MaxSlots.IsPresent {
 			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
-				scheduler.SetMaxSlots{MaxSlots: patch.Resources.MaxSlots.Value})
+				scheduler.SetGroupMaxSlots{MaxSlots: patch.Resources.MaxSlots.Value})
 		}
 		if patch.Resources.Weight != nil {
 			m.system.TellAt(actor.Addr("experiments", args.ExperimentID),
-				scheduler.SetWeight{Weight: *patch.Resources.Weight})
+				scheduler.SetGroupWeight{Weight: *patch.Resources.Weight})
 		}
 	}
 
@@ -328,6 +328,7 @@ func (m *Master) patchExperiment(c echo.Context) (interface{}, error) {
 		m.system.ActorOf(actor.Addr(fmt.Sprintf("patch-checkpoint-gc-%s", uuid.New().String())),
 			&checkpointGCTask{
 				agentUserGroup: agentUserGroup,
+				taskSpec:       m.taskSpec,
 				rp:             m.rp,
 				db:             m.db,
 				experiment:     dbExp,
@@ -486,6 +487,7 @@ func (m *Master) deleteExperiment(c echo.Context) (interface{}, error) {
 	addr := actor.Addr(fmt.Sprintf("delete-checkpoint-gc-%s", uuid.New().String()))
 	m.system.ActorOf(addr, &checkpointGCTask{
 		agentUserGroup: agentUserGroup,
+		taskSpec:       m.taskSpec,
 		rp:             m.rp,
 		db:             m.db,
 		experiment:     dbExp,

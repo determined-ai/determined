@@ -9,13 +9,12 @@ import (
 )
 
 func consumeSlots(agent *agentState, consume int) *agentState {
-	t := newTask(&Task{
-		slotsNeeded:  consume,
-		canTerminate: true,
-	})
-	c := newContainer(t, agent, t.slotsNeeded, len(t.containers))
-	agent.assignFreeDevices(t.slotsNeeded, c.id)
-	t.containers[c.id] = c
+	req := &AllocateRequest{
+		SlotsNeeded:  consume,
+		CanTerminate: true,
+	}
+	container := newContainer(req, agent, req.SlotsNeeded)
+	agent.allocateFreeDevices(req.SlotsNeeded, container.id)
 	return agent
 }
 

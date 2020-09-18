@@ -30,9 +30,11 @@ func NewResourceProviders(resourceProvider *actor.Ref) *ResourceProviders {
 // Receive implements the actor.Actor interface.
 func (rp *ResourceProviders) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
-	case AddTask, sproto.ContainerStateChanged, SetMaxSlots, SetWeight,
-		SetTaskName, TerminateTask, GetTaskSummary, GetTaskSummaries, sproto.ConfigureEndpoints,
-		sproto.GetEndpointActorAddress:
+	case
+		AllocateRequest, ResourcesReleased,
+		SetGroupMaxSlots, SetGroupWeight,
+		GetTaskSummary, GetTaskSummaries,
+		sproto.ConfigureEndpoints, sproto.GetEndpointActorAddress:
 		rp.forward(ctx, msg)
 
 	default:

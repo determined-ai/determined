@@ -7,16 +7,16 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/proxy"
-
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 
+	"github.com/determined-ai/determined/master/internal/proxy"
 	"github.com/determined-ai/determined/master/internal/scheduler"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 	"github.com/determined-ai/determined/master/pkg/archive"
+	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
@@ -69,21 +69,23 @@ type command struct {
 
 	owner          commandOwner
 	agentUserGroup *model.AgentUserGroup
+	taskSpec       *tasks.TaskSpec
 
 	taskID               scheduler.TaskID
 	userFiles            archive.Archive
 	additionalFiles      archive.Archive
-	harnessPath          string
 	readinessChecks      map[string]readinessCheck
 	readinessMessageSent bool
 	metadata             map[string]interface{}
 	serviceAddress       *string
 
 	registeredTime time.Time
+	task           *scheduler.AllocateRequest
 	container      *container.Container
+	allocation     scheduler.Allocation
 	proxyNames     []string
 	exitStatus     *string
-	addresses      []scheduler.Address
+	addresses      []container.Address
 
 	proxy       *actor.Ref
 	rps         *actor.Ref
@@ -100,8 +102,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 		// Schedule the command with the cluster.
 		c.rps = ctx.Self().System().Get(actor.Addr("resourceProviders"))
 		c.proxy = ctx.Self().System().Get(actor.Addr("proxy"))
-		ctx.Tell(c.rps, scheduler.AddTask{
-			ID:           &c.taskID,
+
+		c.task = &scheduler.AllocateRequest{
+			ID:           c.taskID,
 			Name:         c.config.Description,
 			SlotsNeeded:  c.config.Resources.Slots,
 			Label:        c.config.Resources.AgentLabel,
@@ -109,9 +112,16 @@ func (c *command) Receive(ctx *actor.Context) error {
 			FittingRequirements: scheduler.FittingRequirements{
 				SingleAgent: true,
 			},
-			TaskHandler: ctx.Self(),
-		})
+			TaskActor: ctx.Self(),
+		}
+		ctx.Tell(c.rps, *c.task)
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ScheduledEvent: &c.taskID})
+
+	case actor.PostStop:
+		c.terminate(ctx)
+
+	case scheduler.ResourcesAllocated, scheduler.ReleaseResources:
+		return c.receiveSchedulerMsg(ctx)
 
 	case getSummary:
 		if msg.userFilter == "" || c.owner.Username == msg.userFilter {
@@ -185,9 +195,33 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.terminate(ctx)
 		ctx.Respond(&apiv1.KillTensorboardResponse{Tensorboard: c.toTensorboard(ctx)})
 
-	case sproto.ContainerStateChanged:
+	case sproto.TaskContainerStateChanged:
 		c.container = &msg.Container
-		if msg.Container.State == container.Terminated {
+
+		switch {
+		case msg.Container.State == container.Running:
+			c.addresses = msg.ContainerStarted.Addresses
+
+			names := make([]string, 0, len(c.addresses))
+			for _, address := range c.addresses {
+				// We are keying on task ID instead of container ID. Revisit this when we need to
+				// proxy multi-container tasks or when containers are created prior to being
+				// assigned to an agent.
+				ctx.Ask(c.proxy, proxy.Register{
+					ServiceID: string(c.taskID),
+					URL: &url.URL{
+						Scheme: "http",
+						Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
+					},
+				})
+				names = append(names, string(c.taskID))
+			}
+			c.proxyNames = names
+			ctx.Tell(c.eventStream, event{
+				Snapshot: newSummary(c), ContainerStartedEvent: msg.ContainerStarted,
+			})
+
+		case msg.Container.State == container.Terminated:
 			for _, name := range c.proxyNames {
 				ctx.Tell(c.proxy, proxy.Unregister{ServiceID: name})
 			}
@@ -197,59 +231,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 			if msg.ContainerStopped.Failure != nil {
 				exitStatus = msg.ContainerStopped.Failure.Error()
 			}
+
 			c.exit(ctx, exitStatus)
 		}
-
-	case scheduler.TaskAssigned:
-		for _, a := range msg.Assignments {
-			a.StartTask(tasks.TaskSpec{
-				StartCommand: &tasks.StartCommand{
-					AgentUserGroup:  c.agentUserGroup,
-					Config:          c.config,
-					UserFiles:       c.userFiles,
-					AdditionalFiles: c.additionalFiles,
-				},
-				HarnessPath: c.harnessPath,
-			})
-		}
-
-		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
-
-		// Evict the context from memory after starting the command as it is no longer needed. We
-		// evict as soon as possible to prevent the master from hitting an OOM.
-		// TODO: Consider not storing the userFiles in memory at all.
-		c.userFiles = nil
-		c.additionalFiles = nil
-
-	case scheduler.ContainerStarted:
-		c.addresses = msg.Container.Addresses()
-
-		names := make([]string, 0, len(msg.Container.Addresses()))
-		for _, address := range msg.Container.Addresses() {
-			// We are keying on task ID instead of container ID. Revisit this when we need to
-			// proxy multi-container tasks or when containers are created prior to being
-			// assigned to an agent.
-			ctx.Ask(c.proxy, proxy.Register{
-				ServiceID: string(c.taskID),
-				URL: &url.URL{
-					Scheme: "http",
-					Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
-				},
-			})
-			names = append(names, string(c.taskID))
-		}
-		c.proxyNames = names
-
-		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ContainerStartedEvent: &msg})
-
-	case scheduler.TerminateRequest:
-		c.terminate(ctx)
-
-	case scheduler.TaskAborted:
-		c.exit(ctx, "command terminated without being scheduled")
-
-	case scheduler.TaskTerminated:
-		// This message is being deprecated; ignore it.
 
 	case sproto.ContainerLog:
 		if !c.readinessMessageSent && c.readinessChecksPass(ctx, msg) {
@@ -264,6 +248,9 @@ func (c *command) Receive(ctx *actor.Context) error {
 
 	case echo.Context:
 		c.handleAPIRequest(ctx, msg)
+
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
 	}
 	return nil
 }
@@ -281,11 +268,71 @@ func (c *command) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context) {
 	}
 }
 
+func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
+	switch msg := ctx.Message().(type) {
+	case scheduler.ResourcesAllocated:
+		// Ignore this message if the command has exited.
+		if c.task == nil || msg.ID != c.task.ID {
+			ctx.Log().Info("ignoring resource allocation since the command has exited.")
+			return nil
+		}
+
+		check.Panic(check.Equal(len(msg.Allocations), 1,
+			"Command should only receive an allocation of one container"))
+		c.allocation = msg.Allocations[0]
+
+		taskSpec := *c.taskSpec
+		taskSpec.StartCommand = &tasks.StartCommand{
+			AgentUserGroup:  c.agentUserGroup,
+			Config:          c.config,
+			UserFiles:       c.userFiles,
+			AdditionalFiles: c.additionalFiles,
+		}
+		msg.Allocations[0].Start(ctx, taskSpec)
+
+		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
+
+		// Evict the context from memory after starting the command as it is no longer needed. We
+		// evict as soon as possible to prevent the master from hitting an OOM.
+		// TODO: Consider not storing the userFiles in memory at all.
+		c.userFiles = nil
+		c.additionalFiles = nil
+
+	case scheduler.ReleaseResources:
+		c.terminate(ctx)
+
+	default:
+		return actor.ErrUnexpectedMessage(ctx)
+	}
+	return nil
+}
+
+// terminate handles the following cases of command termination:
+// 1. Command is aborted before being allocated.
+// 2. Forcible terminating a command by killing containers.
 func (c *command) terminate(ctx *actor.Context) {
-	ctx.Ask(c.rps, scheduler.TerminateTask{TaskID: c.taskID, Forcible: true}).Get()
-	if msg, ok := ctx.Message().(scheduler.TerminateRequest); ok {
+	if msg, ok := ctx.Message().(scheduler.ReleaseResources); ok {
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), TerminateRequestEvent: &msg})
 	}
+
+	if c.allocation == nil {
+		c.exit(ctx, "task is aborted without being scheduled")
+	} else {
+		ctx.Log().Info("task forcible terminating")
+		c.allocation.Kill(ctx)
+	}
+}
+
+// exit handles the following cases of command exiting:
+// 1. Command is aborted before being allocated.
+// 2. Forcible terminating a command by killing containers.
+// 3. The command container exits itself.
+func (c *command) exit(ctx *actor.Context, exitStatus string) {
+	c.exitStatus = &exitStatus
+	ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ExitedEvent: c.exitStatus})
+
+	ctx.Tell(c.rps, scheduler.ResourcesReleased{TaskActor: ctx.Self()})
+	actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 }
 
 func (c *command) readinessChecksPass(ctx *actor.Context, log sproto.ContainerLog) bool {
@@ -296,12 +343,6 @@ func (c *command) readinessChecksPass(ctx *actor.Context, log sproto.ContainerLo
 		}
 	}
 	return len(c.readinessChecks) == 0
-}
-
-func (c *command) exit(ctx *actor.Context, exitStatus string) {
-	c.exitStatus = &exitStatus
-	ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), ExitedEvent: c.exitStatus})
-	actors.NotifyAfter(ctx, terminatedDuration, terminateForGC{})
 }
 
 func (c *command) toNotebook(ctx *actor.Context) (*notebookv1.Notebook, error) {

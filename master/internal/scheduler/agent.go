@@ -11,19 +11,23 @@ import (
 // agentState holds the scheduler state for an agent. The implementation of agent-related operations
 // (e.g., socket I/O) is deferred to the actor.
 type agentState struct {
-	handler    *actor.Ref
-	devices    map[device.Device]*cproto.ID
-	containers map[ContainerID]*container
-	label      string
+	handler *actor.Ref
+	devices map[device.Device]*cproto.ID
+	label   string
+
+	// Since we only model GPUs as devices/slots and assume each slot can be allocated with
+	// one container, we add one additional field to keep track of zero-slot containers.
+	// We need this field to know if the agent is idle.
+	zeroSlotContainers map[cproto.ID]bool
 }
 
 // newAgentState returns a new agent empty agent state backed by the handler.
 func newAgentState(msg sproto.AddAgent) *agentState {
 	return &agentState{
-		handler:    msg.Agent,
-		label:      msg.Label,
-		devices:    make(map[device.Device]*cproto.ID),
-		containers: make(map[ContainerID]*container),
+		handler:            msg.Agent,
+		label:              msg.Label,
+		devices:            make(map[device.Device]*cproto.ID),
+		zeroSlotContainers: make(map[cproto.ID]bool),
 	}
 }
 
@@ -46,11 +50,12 @@ func (a *agentState) numUsedSlots() (slots int) {
 	return slots
 }
 
-func (a *agentState) assignFreeDevices(slots int, id ContainerID) []device.Device {
+func (a *agentState) allocateFreeDevices(slots int, id cproto.ID) []device.Device {
 	if slots == 0 {
+		a.zeroSlotContainers[id] = true
 		return nil
 	}
-	cid := cproto.ID(id)
+	cid := id
 	devices := make([]device.Device, 0, slots)
 	for d, dcid := range a.devices {
 		if dcid == nil {

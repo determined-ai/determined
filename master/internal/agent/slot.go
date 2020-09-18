@@ -2,7 +2,6 @@ package agent
 
 import (
 	"net/http"
-	"syscall"
 
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
@@ -58,16 +57,18 @@ func (s *slot) Receive(ctx *actor.Context) error {
 		s.enabled.userEnabled = msg.Enabled
 		s.patch(ctx)
 	case aproto.StartContainer:
-		check.Panic(check.True(s.enabled.Enabled(), "container assigned but slot is not enabled"))
-		check.Panic(check.True(s.container == nil, "container already assigned to slot"))
+		check.Panic(check.True(s.enabled.Enabled(), "container allocated but slot is not enabled"))
+		check.Panic(check.True(s.container == nil, "container already allocated to slot"))
 		s.container = &msg.Container
-	case sproto.ContainerStateChanged:
+	case aproto.ContainerStateChanged:
 		check.Panic(check.Equal(s.container.ID, msg.Container.ID, "Invalid container id sent to slot"))
 		s.container = &msg.Container
 		if msg.Container.State == container.Terminated {
 			s.container = nil
 			if s.enabled.Enabled() {
-				ctx.Tell(s.cluster, sproto.FreeDevice{DeviceID: s.deviceID(ctx)})
+				ctx.Tell(s.cluster, sproto.FreeDevice{
+					DeviceID: s.deviceID(ctx), ContainerID: &msg.Container.ID,
+				})
 			}
 		}
 	case *proto.GetSlotRequest:
@@ -122,8 +123,7 @@ func (s *slot) patch(ctx *actor.Context) {
 		remove := sproto.RemoveDevice{DeviceID: s.deviceID(ctx)}
 		ctx.Tell(s.cluster, remove)
 		if s.container != nil {
-			kill := aproto.SignalContainer{ContainerID: s.container.ID, Signal: syscall.SIGKILL}
-			ctx.Tell(remove.Agent, kill)
+			ctx.Tell(remove.Agent, sproto.KillTaskContainer{ContainerID: s.container.ID})
 		}
 	}
 }

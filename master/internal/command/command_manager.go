@@ -12,6 +12,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/commandv1"
 )
@@ -26,8 +27,7 @@ type commandManager struct {
 	db *db.PgDB
 
 	defaultAgentUserGroup model.AgentUserGroup
-	clusterID             string
-	taskContainerDefaults model.TaskContainerDefaultsConfig
+	taskSpec              *tasks.TaskSpec
 }
 
 func (c *commandManager) Receive(ctx *actor.Context) error {
@@ -60,7 +60,7 @@ func (c *commandManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Contex
 			return
 		}
 
-		req, err := parseCommandRequest(apiCtx, c.db, &params, &c.taskContainerDefaults)
+		req, err := parseCommandRequest(apiCtx, c.db, &params, &c.taskSpec.TaskContainerDefaults)
 		if err != nil {
 			respondBadRequest(ctx, err)
 			return
@@ -100,7 +100,7 @@ func (c *commandManager) newCommand(req *commandRequest) *command {
 	if len(config.Entrypoint) == 1 {
 		config.Entrypoint = append(shellFormEntrypoint, config.Entrypoint...)
 	}
-	setPodSpec(&config, c.taskContainerDefaults)
+	setPodSpec(&config, c.taskSpec.TaskContainerDefaults)
 
 	return &command{
 		taskID:    scheduler.NewTaskID(),
@@ -109,5 +109,6 @@ func (c *commandManager) newCommand(req *commandRequest) *command {
 
 		owner:          req.Owner,
 		agentUserGroup: req.AgentUserGroup,
+		taskSpec:       c.taskSpec,
 	}
 }

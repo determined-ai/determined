@@ -9,10 +9,12 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/api"
-	"github.com/determined-ai/determined/master/pkg/agent"
+	cproto "github.com/determined-ai/determined/master/pkg/container"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
 type mockActor struct {
@@ -29,24 +31,17 @@ func (a *mockActor) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-type mockContainer struct {
-	id        string
-	slots     int
-	addresses []scheduler.Address
-	mockActor mockActor
-	isLeader  bool
+type mockAllocation struct {
 }
 
-func (c *mockContainer) ID() scheduler.ContainerID          { return scheduler.ContainerID(c.id) }
-func (c *mockContainer) TaskID() scheduler.TaskID           { panic("not implemented") }
-func (c *mockContainer) Slots() int                         { return c.slots }
-func (c *mockContainer) Addresses() []scheduler.Address     { return c.addresses }
-func (c *mockContainer) IsLeader() bool                     { return c.isLeader }
-func (c *mockContainer) ExitStatus() agent.ContainerStopped { panic("not implemented") }
-func (c *mockContainer) Tell(message actor.Message)         { panic("not implemented") }
+func (mockAllocation) Summary() scheduler.ContainerSummary {
+	return scheduler.ContainerSummary{}
+}
+func (mockAllocation) Start(ctx *actor.Context, spec tasks.TaskSpec) {}
+func (mockAllocation) Kill(ctx *actor.Context)                       {}
 
 func TestRendezvousInfo(t *testing.T) {
-	addresses := [][]scheduler.Address{
+	addresses := [][]cproto.Address{
 		{
 			{
 				ContainerPort: 1,
@@ -88,27 +83,34 @@ func TestRendezvousInfo(t *testing.T) {
 	rp, created := system.ActorOf(
 		actor.Addr("resourceProviders"),
 		scheduler.NewDefaultRP(
-			uuid.New().String(),
 			scheduler.NewFairShareScheduler(),
 			scheduler.WorstFit,
-			"/opt/determined",
-			model.TaskContainerDefaultsConfig{},
 			nil,
 			0,
-			nil,
 		))
 	if !created {
 		t.Fatal("unable to create cluster")
 	}
 
+	defaultTaskSpec := &tasks.TaskSpec{
+		HarnessPath:           "/opt/determined",
+		TaskContainerDefaults: model.TaskContainerDefaultsConfig{},
+	}
+
 	// This is the minimal trial to receive scheduler.ContainerStarted messages.
 	trial := &trial{
-		rp:            rp,
-		experiment:    &model.Experiment{},
-		containers:    make(map[scheduler.ContainerID]scheduler.Container),
-		sockets:       make(map[scheduler.ContainerID]*actor.Ref),
-		task:          &scheduler.Task{},
-		numContainers: len(addresses),
+		rp:                   rp,
+		experiment:           &model.Experiment{},
+		task:                 &scheduler.AllocateRequest{},
+		allocations:          []scheduler.Allocation{mockAllocation{}, mockAllocation{}},
+		experimentState:      model.ActiveState,
+		startedContainers:    make(map[cproto.ID]bool),
+		terminatedContainers: make(map[cproto.ID]terminatedContainerWithState),
+		containers:           make(map[cproto.ID]cproto.Container),
+		containerRanks:       make(map[cproto.ID]int),
+		containerAddresses:   make(map[cproto.ID][]cproto.Address),
+		containerSockets:     make(map[cproto.ID]*actor.Ref),
+		taskSpec:             defaultTaskSpec,
 	}
 	trialRef, created := system.ActorOf(actor.Addr("trial"), trial)
 	if !created {
@@ -121,41 +123,44 @@ func TestRendezvousInfo(t *testing.T) {
 	if !created {
 		t.Fatal("unable to create cluster")
 	}
-	strayID := scheduler.ContainerID("stray-container-id")
-	trial.sockets[strayID] = strayRef
+	strayID := cproto.ID("stray-container-id")
+	trial.containerSockets[strayID] = strayRef
 
-	var containers []*mockContainer
+	containers := make([]*cproto.Container, 0)
+	mockActors := make(map[*cproto.Container]*mockActor)
 	for idx, caddrs := range addresses {
-		c := &mockContainer{
-			id:        strconv.Itoa(idx),
-			slots:     1,
-			addresses: caddrs,
-			isLeader:  idx == 0,
+		c := &cproto.Container{
+			ID:    cproto.ID(strconv.Itoa(idx)),
+			State: cproto.Running,
 		}
-		ref, created := system.ActorOf(actor.Addr(uuid.New().String()), &c.mockActor)
+		mockActors[c] = &mockActor{}
+		ref, created := system.ActorOf(actor.Addr(uuid.New().String()), mockActors[c])
 		if !created {
 			t.Fatal("cannot make socket")
 		}
 
 		// Simulate trial containers connecting to the trial actor.
-		trial.sockets[c.ID()] = ref
+		trial.containerSockets[c.ID] = ref
 
 		// Simulate the scheduling of a container.
-		system.Ask(trialRef, scheduler.ContainerStarted{
-			Container: c,
+		system.Ask(trialRef, sproto.TaskContainerStateChanged{
+			Container: *c,
+			ContainerStarted: &sproto.TaskContainerStarted{
+				Addresses: caddrs,
+			},
 		}).Get()
 
 		containers = append(containers, c)
 	}
 
 	t.Run("Stray sockets are dropped", func(t *testing.T) {
-		_, strayRemains := trial.sockets[strayID]
+		_, strayRemains := trial.containerSockets[strayID]
 		assert.Assert(t, !strayRemains)
 	})
 
 	var rmsgs []*rendezvousInfoMessage
 	for _, c := range containers {
-		for _, msg := range c.mockActor.Messages {
+		for _, msg := range mockActors[c].Messages {
 			tmsg, ok := msg.(*trialMessage)
 			if !ok {
 				continue

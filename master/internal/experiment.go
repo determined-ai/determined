@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/searcher"
+	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
@@ -91,8 +92,8 @@ type experiment struct {
 
 	pendingEvents []*model.SearcherEvent
 
-	agentUserGroup        *model.AgentUserGroup
-	taskContainerDefaults *model.TaskContainerDefaultsConfig
+	agentUserGroup *model.AgentUserGroup
+	taskSpec       *tasks.TaskSpec
 }
 
 // Create a new experiment object from the given model experiment object, along with its searcher
@@ -141,8 +142,8 @@ func newExperiment(master *Master, expModel *model.Experiment) (*experiment, err
 		warmStartCheckpoint: checkpoint,
 		pendingEvents:       make([]*model.SearcherEvent, 0, searcherEventBuffer),
 
-		agentUserGroup:        agentUserGroup,
-		taskContainerDefaults: &master.config.TaskContainerDefaults,
+		agentUserGroup: agentUserGroup,
+		taskSpec:       master.taskSpec,
 	}, nil
 }
 
@@ -282,11 +283,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	case actor.PreStart:
 		telemetry.ReportExperimentCreated(ctx.Self().System(), *e.Experiment)
 
-		ctx.Tell(e.rp, scheduler.SetMaxSlots{
+		ctx.Tell(e.rp, scheduler.SetGroupMaxSlots{
 			MaxSlots: e.Config.Resources.MaxSlots,
 			Handler:  ctx.Self(),
 		})
-		ctx.Tell(e.rp, scheduler.SetWeight{Weight: e.Config.Resources.Weight, Handler: ctx.Self()})
+		ctx.Tell(e.rp, scheduler.SetGroupWeight{Weight: e.Config.Resources.Weight, Handler: ctx.Self()})
 		ops, err := e.searcher.InitialOperations()
 		e.processOperations(ctx, ops, err)
 	case trialCreated:
@@ -352,11 +353,11 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 	// Patch experiment messages.
 	case model.State:
 		e.updateState(ctx, msg)
-	case scheduler.SetMaxSlots:
+	case scheduler.SetGroupMaxSlots:
 		e.Config.Resources.MaxSlots = msg.MaxSlots
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rp, msg)
-	case scheduler.SetWeight:
+	case scheduler.SetGroupWeight:
 		e.Config.Resources.Weight = msg.Weight
 		msg.Handler = ctx.Self()
 		ctx.Tell(e.rp, msg)
@@ -397,6 +398,7 @@ func (e *experiment) Receive(ctx *actor.Context) error {
 		addr := actor.Addr(fmt.Sprintf("experiment-%d-checkpoint-gc", e.ID))
 		ctx.Self().System().ActorOf(addr, &checkpointGCTask{
 			agentUserGroup: e.agentUserGroup,
+			taskSpec:       e.taskSpec,
 			rp:             e.rp,
 			db:             e.db,
 			experiment:     e.Experiment,
