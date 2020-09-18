@@ -29,6 +29,34 @@ enum State {
   STATE_DELETED = 4;
 }
 
+
+// TODO extended checkpoint instead?
+
+// CheckpointBase is an artifact created by a trial during training.
+message CheckpointBase {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+      json_schema: {
+          required: ["uuid"]
+      }
+  };
+  // UUID of the checkpoint.
+  string uuid = 1;
+  // The step the checkpoint was created in.
+  int32 step_id  = 2;
+  // The ID of the trial that created this checkpoint.
+  int32 trial_id  = 3;
+  // Timestamp when the checkpoint began being saved to persistent storage.
+  google.protobuf.Timestamp start_time  = 4;
+  // Timestamp when the checkpoint completed being saved to persistent storage.
+  google.protobuf.Timestamp end_time  = 5;
+  // Dictionary of file paths to file sizes in bytes of all files in the checkpoint.
+  map<string, int64> resources = 6;
+  // User defined metadata associated with the checkpoint.
+  google.protobuf.Struct metadata = 7;
+  // The state of the checkpoint.
+  State state = 8;
+}
+
 // Checkpoint is an artifact created by a trial during training.
 message Checkpoint {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

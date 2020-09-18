@@ -60,7 +60,14 @@ latest_validation AS (
   WHERE s.rk = 1
 ),
 best_checkpoint AS (
-  SELECT s.*
+  SELECT s.uuid::text AS uuid,
+    s.trial_id,
+    s.step_id,
+    s.start_time AS start_time,
+    s.end_time AS end_time,
+    s.resources AS resources,
+    COALESCE(s.metadata, '{}') AS metadata,
+    'STATE_' || s.state AS state
   FROM (
       SELECT c.*,
         ROW_NUMBER() OVER(
@@ -78,7 +85,7 @@ best_checkpoint AS (
 )
 SELECT bv.signed_searcher_metric * const.sign AS best_validation,
   lv.signed_searcher_metric * const.sign AS latest_validation,
-  bc.step_id AS best_checkpoint,
+  row_to_json(bc) AS best_checkpoint,
   t.id AS id,
   t.experiment_id,
   'STATE_' || t.state AS state,

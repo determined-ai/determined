@@ -35,5 +35,5 @@ message Trial {
   // Latest validation.
   float latest_validation = 9;
   // Best checkpoint.
-  int32 best_checkpoint = 10;
+  determined.checkpoint.v1.CheckpointBase best_checkpoint = 10;
 }
