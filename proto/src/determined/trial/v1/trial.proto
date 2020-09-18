@@ -5,7 +5,6 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/trialv1";
 
 import "google/protobuf/struct.proto";
 import "determined/experiment/v1/experiment.proto";
-import "determined/checkpoint/v1/checkpoint.proto";
 import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 

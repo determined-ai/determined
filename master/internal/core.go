@@ -461,6 +461,8 @@ func (m *Master) Run() error {
 	m.echo.Static("/swagger-ui", filepath.Join(m.config.Root, "static/swagger-ui"))
 	m.echo.Static("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
+	// Support the old experiment creation endpoint under the new API route.
+	m.echo.POST("/api/v1/experiments", api.Route(m.postExperiment), authFuncs...)
 
 	m.echo.GET("/config", api.Route(m.getConfig))
 	m.echo.GET("/info", api.Route(m.getInfo))
