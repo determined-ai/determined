@@ -21,6 +21,7 @@ WITH const AS (
 w_validations AS (
   SELECT v.trial_id,
     v.step_id,
+    v.start_time,
     v.end_time,
     v.state,
     (
@@ -36,7 +37,12 @@ w_validations AS (
     ) IS NOT NULL
 ),
 best_validation AS (
-  SELECT s.*
+  SELECT s.trial_Id,
+    s.step_id,
+    s.start_time,
+    s.end_time,
+    'STATE_' || s.state AS state,
+    s.signed_searcher_metric as searcher_metric -- FIXME
   FROM (
       SELECT v.*,
         ROW_NUMBER() OVER(
@@ -48,7 +54,12 @@ best_validation AS (
   WHERE s.rk = 1
 ),
 latest_validation AS (
-  SELECT s.*
+  SELECT s.trial_Id,
+    s.step_id,
+    s.start_time,
+    s.end_time,
+    'STATE_' || s.state AS state,
+    s.signed_searcher_metric as searcher_metric -- FIXME
   FROM (
       SELECT v.*,
         ROW_NUMBER() OVER(
@@ -83,8 +94,8 @@ best_checkpoint AS (
     ) s
   WHERE s.rk = 1
 )
-SELECT bv.signed_searcher_metric * const.sign AS best_validation,
-  lv.signed_searcher_metric * const.sign AS latest_validation,
+SELECT row_to_json(bv) AS best_validation,
+  row_to_json(lv) AS latest_validation,
   row_to_json(bc) AS best_checkpoint,
   t.id AS id,
   t.experiment_id,
