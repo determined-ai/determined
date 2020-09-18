@@ -3,9 +3,11 @@ package internal
 import (
 	"context"
 	"fmt"
-	"math/rand"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/grpc"
@@ -56,7 +58,11 @@ func (a *apiServer) NotebookLogs(
 		return resp.Send(&apiv1.NotebookLogsResponse{LogEntry: api.LogEntryToProtoLogEntry(log)})
 	}
 
-	logStreamActorAddr := cmdManagerAddr.Child("logStream-" + string(rand.Int()))
+	streamID, err := uuid.NewUUID()
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to generate the stream uuid")
+	}
+	logStreamActorAddr := cmdManagerAddr.Child("logStream-" + streamID.String())
 	logStreamActor, created := a.m.system.ActorOf(
 		logStreamActorAddr,
 		api.NewLogStreamActor(
