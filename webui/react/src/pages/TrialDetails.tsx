@@ -1,5 +1,6 @@
 import { Button, Col, Form, Input, Modal, Row, Select, Space, Table, Tooltip } from 'antd';
 import { SelectValue } from 'antd/lib/select';
+import axios from 'axios';
 import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
@@ -18,14 +19,12 @@ import Spinner, { Indicator } from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
-import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
 import TrialActions, { Action as TrialAction } from 'pages/TrialDetails/TrialActions';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { routeAll } from 'routes/utils';
 import { forkExperiment } from 'services/api';
 import { getExperimentDetails, getTrialDetails, isNotFound } from 'services/api';
-import { TrialDetailsParams } from 'services/types';
 import {
   CheckpointDetail, ExperimentDetails, MetricName, MetricType, RawJson, Step, TrialDetails,
 } from 'types';
@@ -88,8 +87,6 @@ const STORAGE_TABLE_METRICS_KEY = 'metrics/table';
 const TrialDetailsComp: React.FC = () => {
   const { trialId: trialIdParam } = useParams<Params>();
   const trialId = parseInt(trialIdParam);
-  const [ trialResponse, triggerTrialRequest ] =
-    useRestApi<TrialDetailsParams, TrialDetails>(getTrialDetails, { id: trialId });
   const [ experiment, setExperiment ] = useState<ExperimentDetails>();
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
@@ -109,8 +106,11 @@ const TrialDetailsComp: React.FC = () => {
   const [ form ] = Form.useForm();
   const [ activeCheckpoint, setActiveCheckpoint ] = useState<CheckpointDetail>();
   const [ metrics, setMetrics ] = useState<MetricName[]>([]);
+  const [ trial, setTrial ] = useState<TrialDetails>();
+  const [ isLoading, setIsLoading ] = useState(true);
+  const [ error, setError ] = useState<Error>();
+  const [ source ] = useState(axios.CancelToken.source());
 
-  const trial = trialResponse.data;
   const hparams = trial?.hparams;
   const experimentId = trial?.experimentId;
   const experimentConfig = experiment?.config;
@@ -201,9 +201,15 @@ const TrialDetailsComp: React.FC = () => {
       });
   }, [ hasCheckpointOrValidation, trial?.steps ]);
 
-  const pollTrialDetails = useCallback(() => {
-    triggerTrialRequest({ id: trialId });
-  }, [ triggerTrialRequest, trialId ]);
+  const fetchTrialDetails = useCallback(async () => {
+    try {
+      const response = await getTrialDetails({ cancelToken: source.token, id: trialId });
+      setTrial(response);
+      setIsLoading(false);
+    } catch (e) {
+      if (!error && !axios.isCancel(e)) setError(e);
+    }
+  }, [ error, source, trialId ]);
 
   const handleActionClick = useCallback((action: TrialAction) => (): void => {
     switch (action) {
@@ -333,7 +339,11 @@ If the problem persists please contact support.',
     setPageSize(tablePagination.pageSize);
   }, [ storage ]);
 
-  usePolling(pollTrialDetails);
+  usePolling(fetchTrialDetails);
+
+  useEffect(() => {
+    return () => source.cancel();
+  }, [ source ]);
 
   useEffect(() => {
     try {
@@ -353,7 +363,10 @@ If the problem persists please contact support.',
 
     const fetchExperimentDetails = async () => {
       try {
-        const response = await getExperimentDetails({ id: experimentId });
+        const response = await getExperimentDetails({
+          cancelToken: source.token,
+          id: experimentId,
+        });
         setExperiment(response);
 
         // Default to selecting config search metric only.
@@ -365,6 +378,7 @@ If the problem persists please contact support.',
         const initMetrics = storage.getWithDefault(storageTableMetricsKey || '', defaultMetrics);
         setMetrics(initMetrics);
       } catch (e) {
+        if (axios.isCancel(e)) return;
         handleError({
           error: e,
           message: 'Failed to load experiment details.',
@@ -377,14 +391,14 @@ If the problem persists please contact support.',
     };
 
     fetchExperimentDetails();
-  }, [ experimentId, metricNames, storage, storageTableMetricsKey ]);
+  }, [ experimentId, metricNames, source, storage, storageTableMetricsKey ]);
 
   if (isNaN(trialId)) return <Message title={`Invalid Trial ID ${trialIdParam}`} />;
-  if (trialResponse.error !== undefined) {
-    const message = isNotFound(trialResponse.error) ?
+  if (error !== undefined) {
+    const message = isNotFound(error) ?
       `Unable to find Trial ${trialId}` :
       `Unable to fetch Trial ${trialId}`;
-    return <Message message={trialResponse.error.message} title={message} />;
+    return <Message message={error.message} title={message} />;
   }
   if (!trial || !experiment || !upgradedConfig) return <Spinner />;
 
@@ -421,7 +435,7 @@ If the problem persists please contact support.',
         trial={trial}
         trials={experiment.trials}
         onClick={handleActionClick}
-        onSettled={pollTrialDetails} />}
+        onSettled={fetchTrialDetails} />}
       showDivider
       subTitle={<Badge state={trial?.state} type={BadgeType.State} />}
       title={`Trial ${trialId}`}>
@@ -443,7 +457,7 @@ If the problem persists please contact support.',
               dataSource={steps}
               loading={{
                 indicator: <Indicator />,
-                spinning: !trialResponse.hasLoaded,
+                spinning: isLoading,
               }}
               pagination={getPaginationConfig(steps.length, pageSize)}
               rowClassName={defaultRowClassName(false)}
