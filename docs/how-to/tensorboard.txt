@@ -168,24 +168,6 @@ There is no configuration necessary for trials using
 otherwise, Estimators automatically log TensorBoard events to the
 ``model_dir``, which Determined then moves to ``/tmp/tensorboard``.
 
-Tensorpack
-==========
-
-To add TensorBoard support for models that use :ref:`Tensorpack
-<tensorpack>`, add a :class:`~determined.tensorpack.TFEventWriter`
-callback to your trial:
-
-.. code:: python
-
-   from determined.tensorpack import TensorpackTrial, TFEventWriter
-
-
-   class MyModel(TensorpackTrial):
-       ...
-
-       def tensorpack_monitors(self):
-           return [TFEventWriter()]
-
 PyTorch
 =======
 

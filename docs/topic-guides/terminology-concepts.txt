@@ -58,7 +58,6 @@ model definition
    (:class:`~determined.keras.TFKerasTrial`,
    :class:`~determined.pytorch.PyTorchTrial`,
    :class:`~determined.estimator.EstimatorTrial`, or
-   :class:`~determined.tensorpack.TensorpackTrial`). More information
    can be found at :ref:`model-definitions`.
 
 searcher, search algorithm
