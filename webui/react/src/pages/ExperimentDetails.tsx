@@ -15,14 +15,13 @@ import Spinner, { Indicator } from 'components/Spinner';
 import { defaultRowClassName, getPaginationConfig, MINIMUM_PAGE_SIZE } from 'components/Table';
 import handleError, { ErrorType } from 'ErrorHandler';
 import usePolling from 'hooks/usePolling';
-import useRestApi from 'hooks/useRestApi';
 import useStorage from 'hooks/useStorage';
 import ExperimentActions from 'pages/ExperimentDetails/ExperimentActions';
 import ExperimentChart from 'pages/ExperimentDetails/ExperimentChart';
 import ExperimentInfoBox from 'pages/ExperimentDetails/ExperimentInfoBox';
 import { handlePath } from 'routes/utils';
 import { getExperimentDetails, isNotFound } from 'services/api';
-import { ApiSorter, ExperimentDetailsParams } from 'services/types';
+import { ApiSorter } from 'services/types';
 import { CheckpointDetail, ExperimentDetails, TrialItem } from 'types';
 import { clone } from 'utils/data';
 import { numericSorter } from 'utils/data';
@@ -47,15 +46,15 @@ const ExperimentDetailsComp: React.FC = () => {
   const [ showCheckpoint, setShowCheckpoint ] = useState(false);
   const [ forkModalVisible, setForkModalVisible ] = useState(false);
   const [ forkModalConfig, setForkModalConfig ] = useState('Loading');
-  const [ experimentResponse, triggerExperimentRequest ] =
-    useRestApi<ExperimentDetailsParams, ExperimentDetails>(getExperimentDetails, { id });
   const storage = useStorage(STORAGE_PATH);
   const initLimit = storage.getWithDefault(STORAGE_LIMIT_KEY, MINIMUM_PAGE_SIZE);
   const initSorter: ApiSorter | null = storage.get(STORAGE_SORTER_KEY);
   const [ pageSize, setPageSize ] = useState(initLimit);
   const [ sorter, setSorter ] = useState<ApiSorter | null>(initSorter);
+  const [ experiment, setExperiment ] = useState<ExperimentDetails>();
+  const [ isLoading, setIsLoading ] = useState(true);
+  const [ error, setError ] = useState<Error>();
 
-  const experiment = experimentResponse.data;
   const experimentConfig = experiment?.config;
 
   const columns = useMemo(() => {
@@ -108,9 +107,15 @@ const ExperimentDetailsComp: React.FC = () => {
     return newColumns;
   }, [ experimentConfig, id, sorter ]);
 
-  const pollExperimentDetails = useCallback(() => {
-    triggerExperimentRequest({ id });
-  }, [ id, triggerExperimentRequest ]);
+  const pollExperimentDetails = useCallback(async () => {
+    try {
+      const response = await getExperimentDetails({ id });
+      setExperiment(response);
+      setIsLoading(false);
+    } catch (e) {
+      if (!experiment) setError(e);
+    }
+  }, [ experiment, id ]);
 
   const setFreshForkConfig = useCallback(() => {
     if (!experiment?.configRaw) return;
@@ -174,8 +179,8 @@ const ExperimentDetailsComp: React.FC = () => {
   }, [ setFreshForkConfig ]);
 
   if (isNaN(id)) return <Message title={`Invalid Experiment ID ${experimentId}`} />;
-  if (experimentResponse.error) {
-    const message = isNotFound(experimentResponse.error) ?
+  if (error) {
+    const message = isNotFound(error) ?
       `Unable to find Experiment ${experimentId}` :
       `Unable to fetch Experiment ${experimentId}`;
     return <Message title={message} />;
@@ -220,7 +225,7 @@ const ExperimentDetailsComp: React.FC = () => {
               dataSource={experiment?.trials}
               loading={{
                 indicator: <Indicator />,
-                spinning: !experimentResponse.hasLoaded,
+                spinning: isLoading,
               }}
               pagination={getPaginationConfig(experiment?.trials.length || 0, pageSize)}
               rowClassName={defaultRowClassName()}
