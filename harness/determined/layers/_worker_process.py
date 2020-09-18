@@ -295,6 +295,10 @@ class SubprocessLauncher:
         # Broadcast every workload to every worker on this machine.
         self.broadcast_server.broadcast((wkld, args))
 
+        if wkld.kind == workload.Workload.Kind.TERMINATE:
+            # Do not perform health checks once worker have been instructed to terminate.
+            self._worker_process_ids = []
+
         try:
             responses, exception_received = self.broadcast_server.gather_with_polling(
                 self._health_check
