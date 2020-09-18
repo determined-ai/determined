@@ -23,6 +23,17 @@ import (
 const defaultEventBufferSize = 200
 const ctxMissingSender = "message is missing sender information"
 
+func countNonNullRingValues(ring *ring.Ring) int {
+	// OPT we could use log_buffer here instead of a plain ring buffer.
+	count := 0
+	ring.Do(func(val interface{}) {
+		if val != nil {
+			count++
+		}
+	})
+	return count
+}
+
 // event is the union of all event types during the parent lifecycle.
 type event struct {
 	Snapshot summary   `json:"snapshot"`
@@ -48,8 +59,8 @@ type event struct {
 	LogEvent *string `json:"log_event"`
 }
 
-type logSubscribers = map[*actor.Ref]webAPI.LogsRequest // CHECK could we get different pointers to
-// the same ref? thus resulting in different map keys
+// CHECK could we get different pointers to the same ref? thus resulting in different map keys
+type logSubscribers = map[*actor.Ref]webAPI.LogsRequest
 
 // GetEventCount is an actor message used to get the number of events in buffer.
 type GetEventCount struct{}
@@ -59,9 +70,8 @@ type eventManager struct {
 	buffer       *ring.Ring
 	closed       bool
 	seq          int
-	isTerminated bool // DISCUSS If we don't want to don't keep track of this here we'd either need to
-	// expose event externally or define and send a new message.
-	logStreams logSubscribers
+	isTerminated bool
+	logStreams   logSubscribers
 }
 
 func newEventManager() *eventManager {
@@ -71,18 +81,6 @@ func newEventManager() *eventManager {
 		logStreams:   make(logSubscribers),
 		isTerminated: false,
 	}
-}
-
-// QUESTION where do we house these utilities?
-func countNonNullRingValues(ring *ring.Ring) int {
-	// OPT we could use log_buffer here instead of a plain ring buffer.
-	count := 0
-	ring.Do(func(val interface{}) {
-		if val != nil {
-			count++
-		}
-	})
-	return count
 }
 
 func (e *eventManager) RemoveSusbscribers(ctx *actor.Context) {
@@ -173,9 +171,6 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		}
 
 	case actor.PostStop:
-		// Whenever the event manager goes does we should stop all logStreamActors.
-		// QUESTION should we make logStreamActors a child of eventmanager? this would
-		// automatically be handled.
 		e.RemoveSusbscribers(ctx)
 
 	case api.WebSocketConnected:
@@ -300,7 +295,6 @@ func (e *eventManager) handleAPIRequest(ctx *actor.Context, apiCtx echo.Context)
 			ctx.Respond(echo.NewHTTPError(http.StatusBadRequest))
 			return
 		}
-		// TODO maybe rewrite using clientEvents?
 		events := e.buffer
 		clientEvents := make([]event, 0)
 
