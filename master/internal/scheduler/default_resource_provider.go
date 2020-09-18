@@ -298,7 +298,7 @@ func (c containerAllocation) Summary() ContainerSummary {
 }
 
 // StartContainer notifies the agent to start a container.
-func (c containerAllocation) StartContainer(ctx *actor.Context, spec image.TaskSpec) {
+func (c containerAllocation) Start(ctx *actor.Context, spec image.TaskSpec) {
 	handler := c.agent.handler
 	spec.ContainerID = string(c.container.id)
 	spec.TaskID = string(c.req.ID)
@@ -318,7 +318,7 @@ func (c containerAllocation) StartContainer(ctx *actor.Context, spec image.TaskS
 }
 
 // KillContainer notifies the agent to kill the container.
-func (c containerAllocation) KillContainer(ctx *actor.Context) {
+func (c containerAllocation) Kill(ctx *actor.Context) {
 	ctx.Tell(c.agent.handler, sproto.KillTaskContainer{
 		ContainerID: c.container.id,
 	})

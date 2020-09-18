@@ -614,7 +614,7 @@ func (t *trial) processAllocated(ctx *actor.Context, msg scheduler.ResourcesAllo
 			IsMultiAgent:        len(t.allocations) > 1,
 			Rank:                rank,
 		}
-		a.StartContainer(ctx, taskSpec)
+		a.Start(ctx, taskSpec)
 	}
 
 	return nil
@@ -1019,7 +1019,7 @@ func (t *trial) terminate(ctx *actor.Context, kill bool) {
 		ctx.Log().Info("forcibly terminating trial")
 		if t.task != nil && t.allocations != nil {
 			for _, allocation := range t.allocations {
-				allocation.KillContainer(ctx)
+				allocation.Kill(ctx)
 			}
 		}
 	case !t.pendingGracefulTermination:

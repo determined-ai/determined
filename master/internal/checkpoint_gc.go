@@ -55,7 +55,7 @@ func (t *checkpointGCTask) Receive(ctx *actor.Context) error {
 				ExperimentConfig: t.experiment.Config,
 				ToDelete:         checkpoints,
 			}
-			a.StartContainer(ctx, taskSpec)
+			a.Start(ctx, taskSpec)
 		}
 	case scheduler.ReleaseResources:
 		// Ignore the release resource message and wait for the GC job to finish.

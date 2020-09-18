@@ -9,6 +9,6 @@ import (
 // to start tasks on assigned resources.
 type Allocation interface {
 	Summary() ContainerSummary
-	StartContainer(ctx *actor.Context, spec image.TaskSpec)
-	KillContainer(ctx *actor.Context)
+	Start(ctx *actor.Context, spec image.TaskSpec)
+	Kill(ctx *actor.Context)
 }

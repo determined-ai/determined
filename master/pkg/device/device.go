@@ -14,7 +14,7 @@ const (
 	CPU Type = "cpu"
 	// GPU represents a GPU device.
 	GPU Type = "gpu"
-	// ZeroSlot represents a unspecified device.
+	// ZeroSlot represents cpu devices on agents where only GPUs are modeled.
 	ZeroSlot Type = ""
 )
 

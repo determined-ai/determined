@@ -114,8 +114,8 @@ func (p *pods) Receive(ctx *actor.Context) error {
 	case podEventUpdate:
 		p.receivePodEventUpdate(ctx, msg)
 
-	case sproto.KillTaskContainer:
-		p.receiveKillContainer(ctx, msg)
+	case sproto.KillTaskPod:
+		p.receiveKillPod(ctx, msg)
 
 	case resourceDeletionFailed:
 		if msg.err != nil {
@@ -285,13 +285,13 @@ func (p *pods) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 	ctx.Tell(ref, msg)
 }
 
-func (p *pods) receiveKillContainer(ctx *actor.Context, msg sproto.KillTaskContainer) {
-	ref, ok := p.containerIDToPodHandler[string(msg.ContainerID)]
+func (p *pods) receiveKillPod(ctx *actor.Context, msg sproto.KillTaskPod) {
+	ref, ok := p.containerIDToPodHandler[string(msg.PodID)]
 	if !ok {
 		// For multi-pod tasks, when the the chief pod exits,
 		// the scheduler will request to terminate pods all other pods
 		// that have notified the scheduler that they have exited.
-		ctx.Log().WithField("container-id", msg.ContainerID).Info(
+		ctx.Log().WithField("pod-id", msg.PodID).Info(
 			"received stop pod command for unregistered container id")
 		return
 	}

@@ -288,7 +288,7 @@ func (c *command) receiveSchedulerMsg(ctx *actor.Context) error {
 			UserFiles:       c.userFiles,
 			AdditionalFiles: c.additionalFiles,
 		}
-		msg.Allocations[0].StartContainer(ctx, taskSpec)
+		msg.Allocations[0].Start(ctx, taskSpec)
 
 		ctx.Tell(c.eventStream, event{Snapshot: newSummary(c), AssignedEvent: &msg})
 
@@ -319,7 +319,7 @@ func (c *command) terminate(ctx *actor.Context) {
 		c.exit(ctx, "task is aborted without being scheduled")
 	} else {
 		ctx.Log().Info("task forcible terminating")
-		c.allocation.KillContainer(ctx)
+		c.allocation.Kill(ctx)
 	}
 }
 

@@ -256,7 +256,7 @@ func (p podAllocation) Summary() ContainerSummary {
 }
 
 // Start notifies the pods actor that it should launch a pod for the provided task spec.
-func (p podAllocation) StartContainer(ctx *actor.Context, spec image.TaskSpec) {
+func (p podAllocation) Start(ctx *actor.Context, spec image.TaskSpec) {
 	handler := p.agent.handler
 	spec.ContainerID = string(p.container.id)
 	spec.TaskID = string(p.req.ID)
@@ -268,9 +268,9 @@ func (p podAllocation) StartContainer(ctx *actor.Context, spec image.TaskSpec) {
 }
 
 // Kill notifies the pods actor that it should stop the pod.
-func (p podAllocation) KillContainer(ctx *actor.Context) {
+func (p podAllocation) Kill(ctx *actor.Context) {
 	handler := p.agent.handler
-	ctx.Tell(handler, sproto.KillTaskContainer{
-		ContainerID: p.container.id,
+	ctx.Tell(handler, sproto.KillTaskPod{
+		PodID: p.container.id,
 	})
 }

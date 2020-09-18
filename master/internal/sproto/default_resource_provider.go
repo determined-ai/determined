@@ -47,4 +47,8 @@ type (
 		TaskActor *actor.Ref
 		agent.StartContainer
 	}
+	// KillTaskContainer notifies the agent to kill a task container.
+	KillTaskContainer struct {
+		ContainerID container.ID
+	}
 )
