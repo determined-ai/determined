@@ -158,10 +158,11 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		msg.Offset = offset
 
 		// stream existing matching entries
-		logEntries := e.getLogEntries(msg)
-		for _, entry := range logEntries {
-			if entry != nil {
-				ctx.Tell(ctx.Sender(), *entry)
+		matchingEvents := e.getMatchingEvents(msg)
+		for _, ev := range matchingEvents {
+			logEntry := eventToLogEntry(ev)
+			if logEntry != nil {
+				ctx.Tell(ctx.Sender(), *logEntry)
 			}
 		}
 
@@ -270,17 +271,15 @@ func eventSatisfiesLogRequest(req webAPI.LogsRequest, event *event) bool {
 	return event.Seq >= req.Offset
 }
 
-func (e *eventManager) getLogEntries(req webAPI.LogsRequest) []*logger.Entry {
+func (e *eventManager) getMatchingEvents(req webAPI.LogsRequest) []*event {
 	events := e.buffer
-	// var logs []*logger.Entry
-	logs := make([]*logger.Entry, 0)
+	var logs []*event
 
 	for i := 0; i < e.bufferSize; i++ {
 		if events.Value != nil {
 			event := events.Value.(event)
 			if eventSatisfiesLogRequest(req, &event) && (req.Limit < 1 || len(logs) < req.Limit) {
-				logEntry := eventToLogEntry(&event)
-				logs = append(logs, logEntry)
+				logs = append(logs, &event)
 			}
 		}
 		events = events.Next()
