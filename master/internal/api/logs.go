@@ -108,7 +108,6 @@ func NewCommandLogStreamActor(
 func (l *CommandLogStreamActor) Receive(ctx *actor.Context) error {
 	switch msg := ctx.Message().(type) {
 	case actor.PreStart:
-		// CHECK set this as a child to event manager
 		if response := ctx.Ask(l.eventManager, l.req); response.Empty() {
 			ctx.Self().Stop()
 			return status.Errorf(codes.NotFound, "event manager did not respond")
@@ -117,7 +116,6 @@ func (l *CommandLogStreamActor) Receive(ctx *actor.Context) error {
 	case logger.Entry:
 		// Make sure the context is still open.
 		if l.ctx.Err() != nil {
-			// Context is closed.
 			ctx.Self().Stop()
 			break
 		}

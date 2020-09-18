@@ -9,7 +9,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 message LogEntry {
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
         json_schema: {
-            required: ["id", "message"]
+            required: ["id"]
         }
     };
     // The id of the log.

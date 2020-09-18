@@ -68,7 +68,6 @@ func (a *apiServer) NotebookLogs(
 	)
 
 	if !created {
-		// Either there is a collision in actor address or actor creation failed.
 		return errors.New("failed to create actor")
 	}
 

@@ -84,6 +84,7 @@ func (s *System) Get(address Address) *Ref {
 }
 
 // ActorOf adds the actor with the provided address.
+// The second return value denotes whether a new actor was created or not.
 func (s *System) ActorOf(address Address, actor Actor) (*Ref, bool) {
 	parent := s.Get(address.Parent())
 	if parent == nil {
