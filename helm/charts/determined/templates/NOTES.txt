@@ -19,23 +19,11 @@ kubectl get service determined-master-service-{{ .Release.Name }} -n {{ .Release
 
 {{ $httpOrHttps := "http" }}
 {{- if .Values.tlsSecret }}
-{{ $httpOrHttps = "https" }}
-{{- if eq ($.Values.masterPort | toString) "8080" }}
-ERROR: TLS termination is configured in the master but .Values.masterPort is set to 8080.
-If you wish to perform TLS termination in the master please set .Values.masterPort to a
-different value (e.g., 8443).
-{{ end -}}
-
-{{ $secret := (lookup "v1" "Secret" .Release.Namespace (.Values.tlsSecret | toString) ) }}
-{{- if eq (len $secret) 0 }}
+  {{ $httpOrHttps = "https" }}
+  {{ $secret := (lookup "v1" "Secret" .Release.Namespace (.Values.tlsSecret | toString) ) }}
+  {{- if eq (len $secret) 0 }}
 ERROR: Secret {{ .Values.tlsSecret }} does not exist in namespace: {{ .Release.Namespace }}. Please update ".Values.tlsSecret".
-{{ end }}
-{{- else }}
-{{- if eq ($.Values.masterPort | toString) "8443" }}
-ERROR: TLS termination is not configured but the  .Values.masterPort is set to 8443.
-If you do not with perform TLS termination in the master please set .Values.masterPort
-to a different value (e.g., 8080).
-{{ end }}
+  {{ end }}
 {{ end -}}
 
 Once you have the IP address, configure master address locally by running: `export DET_MASTER=<ip address>:{{ .Values.masterPort }}`.

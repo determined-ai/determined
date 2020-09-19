@@ -50,8 +50,7 @@ Helm Chart </helm/determined-helm-chart.tgz>`.
    and the task containers it launches, but does not include
    communication between the task containers (distributed
    training). The specified Secret of type tls must already exist in the
-   same namespace in which Determined is being installed. If a ``tlsSecret``
-   is specified, ``masterPort`` can not be set to 8080 (8443 recommended).
+   same namespace in which Determined is being installed.
 
 -  ``db``: Specifies the configuration of the database.
 

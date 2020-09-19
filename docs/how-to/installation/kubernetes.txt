@@ -192,8 +192,7 @@ runing your cluster.
    (distributed triaining) will not be encrypted.  To configure
    this option create a Kuberentes TLS secret within the
    namespace where Determined is being installed and set ``tlsSecret``
-   to be the name of this secret. When using TLS termination in the master,
-   ``masterPort`` must be configured to a value other than 8080 (e.g., 8443).
+   to be the name of this secret.
    Users will also have to set ``useNodePortForMaster`` to ``true``. Once the
    the NodePort service is created, users can configure an Ingress to
    forward TLS encrypted data to the NodePord service.

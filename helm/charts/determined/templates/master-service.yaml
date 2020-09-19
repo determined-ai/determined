@@ -9,6 +9,11 @@ metadata:
 spec:
   ports:
   - port: {{ required "A valid Values.masterPort entry required!" .Values.masterPort }}
+    {{ $targetPort := 8080 }}
+    {{- if .Values.tlsSecret -}}
+      {{ $targetPort = 8443 }}
+    {{- end }}
+    targetPort: {{ $targetPort }}
     protocol: TCP
   {{ $serviceType := "LoadBalancer" }}
   {{- if .Values.useNodePortForMaster | default false -}}

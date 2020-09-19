@@ -36,14 +36,13 @@ data:
       name: {{ .Values.db.name | quote }}
 
     {{- if .Values.tlsSecret }}
-    https_port: {{ required "A valid Values.masterPort entry required!" .Values.masterPort }}
     security:
       tls:
         cert: /mount/determined/secrets/tls.crt
         key: /mount/determined/secrets/tls.key
-    {{ else }}
-    http_port: {{ required "A valid Values.masterPort entry required!" .Values.masterPort }}
-    {{- end }}
+    {{ end }}
+    http_port: 8080
+    https_port: 8443
 
     scheduler:
       resource_provider:
