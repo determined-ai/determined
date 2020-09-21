@@ -224,7 +224,11 @@ func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 	*apiv1.GetTrialResponse, error,
 ) {
 	resp := &apiv1.GetTrialResponse{Trial: &trialv1.Trial{}}
-	switch err := a.m.db.QueryProto("proto_get_trials_plus", resp.Trial, strconv.Itoa(int(req.TrialId))); {
+	switch err := a.m.db.QueryProto(
+		"proto_get_trials_plus",
+		resp.Trial,
+		strconv.Itoa(int(req.TrialId)),
+	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.TrialId)
 	case err != nil:
