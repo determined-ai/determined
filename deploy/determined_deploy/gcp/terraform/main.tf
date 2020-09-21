@@ -15,7 +15,7 @@ provider "google-beta" {
 
 locals {
   unique_id = "${var.cluster_id}"
-  det_version_key = "${substr(replace(var.det_version, ".", "-"), 0, 8)}"
+  det_version_key = "${var.det_version_key}"
 }
 
 terraform {

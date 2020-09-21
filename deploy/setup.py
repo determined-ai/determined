@@ -16,6 +16,7 @@ setup(
     install_requires=[
         "requests>=2.20.0",
         "docker[ssh]>=3.7.3",
+        "google-api-python-client>=1.12.1",
         "paramiko>=2.4.2",  # explicitly pull in paramiko to prevent DistributionNotFound error
         "docker-compose>=1.13.0",
         "determined-common==0.13.5.dev0",

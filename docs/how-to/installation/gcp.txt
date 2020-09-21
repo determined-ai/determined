@@ -93,14 +93,18 @@ inside that directory.
 
 .. note::
 
-   The deployment process will create a state file in the directory
-   where it is run. The state file keeps track of deployed resources and
-   their state and is used to update or delete the cluster in the
-   future. Any future update or deletion commands should be run inside
-   the same directory so ``determined-deploy`` can read the state file.
-   If the state file is deleted, it will be difficult to manage the
-   deployment afterward. Storing the state file in a safe location is
-   strongly recommended.
+   The deployment process will create Terraform state and variables
+   files in the directory where it is run. The state file keeps track of
+   deployed resources and their state and is used to update or delete
+   the cluster in the future. The variables files includes all Terraform
+   variables used for deployment (e.g., service account keypath, cluster
+   ID, GCP region and zone).
+
+   Any future update or deletion commands should be run inside the same
+   directory so ``determined-deploy`` can read the state and variables
+   files. If either of these files is deleted, it will be difficult to
+   manage the deployment afterward. Storing these files in a safe
+   location is strongly recommended.
 
 To deploy the cluster, run:
 
@@ -274,38 +278,13 @@ you ran ``det-deploy gcp up``:
 
 .. code::
 
-   det-deploy gcp down [optional args]
+   det-deploy gcp down
 
-``det-deploy`` will use the ``.tfstate`` file in the current directory
-to determine which resources to destroy. In addition, the following
-optional arguments are supported:
-
-.. list-table::
-   :widths: 25 50 25
-   :header-rows: 1
-
-   -  -  Argument
-      -  Description
-      -  Default Value
-
-   -  -  ``--keypath``
-
-      -  The path to the service account JSON key file if using a
-         service account. Including this flag will supersede default
-         Google Cloud user credentials.
-
-      -  *none*
-
-.. warning::
-
-   ``determined-deploy`` will not delete active agent instances when you
-   deprovision the cluster. Generally, the master instance will shut
-   down any inactive agents after an idle period, but if you'd like to
-   deprovision the cluster while these agent instances exist, you must
-   delete all agent instances first. You can find these agent instances
-   by filtering for instances named ``det-agent-<cluster-id>``; these
-   agents will have full names of the form ``det-agent-<cluster-id>-<pet
-   name>``.
+``det-deploy`` will use the ``.tfstate`` and ``terraform.tfvars.json``
+files in the current directory to determine which resources to destroy.
+If you deployed with a service account JSON key file, the same
+credentials file will be used for deprovisioning. Otherwise, default
+Google Cloud credentials are used.
 
 **********
  Appendix

@@ -130,6 +130,9 @@ variable "det_version" {
   type = string
 }
 
+variable "det_version_key" {
+  type = string
+}
 
 // MASTER
 

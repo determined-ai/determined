@@ -15,12 +15,6 @@ def make_down_subparser(subparsers: argparse._SubParsersAction) -> None:
         default=os.getcwd(),
         help=argparse.SUPPRESS,
     )
-    optional_named.add_argument(
-        "--keypath",
-        type=str,
-        default=None,
-        help="path to service account key if not using default credentials",
-    )
 
 
 def make_up_subparser(subparsers: argparse._SubParsersAction) -> None:
@@ -207,16 +201,7 @@ def deploy_gcp(args: argparse.Namespace) -> None:
 
     # Delete
     if args.command == "down":
-
-        # Set placeholders for required variables
-        det_configs["cluster_id"] = "will-be-ignored"
-        det_configs["project_id"] = "will-be-ignored"
-        det_configs["network"] = "will-be-ignored"
-        det_configs["region"] = "will-be-ignored"
-        det_configs["det_version"] = "will-be-ignored"
-        det_configs["environment_image"] = "will-be-ignored"
-
-        gcp.delete(det_configs, env, variables_to_exclude)
+        gcp.delete(det_configs, env)
         print("Delete Successful")
         return
 
