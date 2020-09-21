@@ -294,6 +294,23 @@ commands:
             --junit-xml="<<parameters.junit-path>>" \
             $(cat /tmp/tests-to-run)
 
+  run-det-deploy-tests:
+    parameters:
+      mark:
+        type: string
+        default: ""
+      det-version:
+        type: string
+        default: ""
+    steps:
+      - run:
+          name: Run det-deploy tests
+          working_directory: ~/project/e2e_tests
+          command: |
+            pytest -vv -s \
+            -m <<parameters.mark>> \
+            --det-version="<<parameters.det-version>>"
+
   deploy-aws-cluster:
     parameters:
       cluster-id:
@@ -1100,6 +1117,42 @@ jobs:
           mentions: <<parameters.slack-mentions>>
           channel: <<parameters.slack-channel>>
 
+  test-det-deploy:
+    parameters:
+      mark:
+        type: string
+      parallelism:
+        type: integer
+        default: 1
+      det-version:
+        type: string
+    machine:
+      image: ubuntu-1604:202004-01
+    resource_class: large
+    parallelism: <<parameters.parallelism>>
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run: docker load --input build/master.image
+      - run: docker load --input build/agent.image
+
+      - run: pyenv global 3.6.10
+      - setup-python-venv:
+          determined-common: true
+          determined-cli: true
+          determined: true
+          determined-deploy: true
+          extra-requirements-file: "e2e_tests/tests/requirements.txt"
+          executor: ubuntu-1604:202004-01
+
+      - pull-task-images:
+          tf1: True
+
+      - run-det-deploy-tests:
+          mark: <<parameters.mark>>
+          det-version: <<parameters.det-version>>
+
 workflows:
   lint:
     jobs:
@@ -1373,6 +1426,17 @@ workflows:
               machine-type: ["n1-standard-32"]
               gpus-per-machine: [4]
               num-machines: [2]
+
+      - test-det-deploy:
+          name: test-det-deploy-local
+          requires:
+            - package-and-push-system-local
+          matrix:
+            parameters:
+              parallelism: [2]
+              mark: ["det_deploy_local"]
+              det-version: [$CIRCLE_SHA1]
+
 
 
   nightly:

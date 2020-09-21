@@ -5,6 +5,7 @@ from determined_common import yaml
 
 MASTER_IP = "localhost"
 MASTER_PORT = "8080"
+DET_VERSION = None
 DEFAULT_MAX_WAIT_SECS = 1800
 MAX_TASK_SCHEDULED_SECS = 30
 MAX_TRIAL_BUILD_SECS = 90
