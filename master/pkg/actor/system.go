@@ -1,6 +1,7 @@
 package actor
 
 import (
+	"context"
 	"sync"
 	"time"
 )
@@ -32,7 +33,7 @@ func (s *System) Tell(actor *Ref, message Message) {
 	if actor == nil {
 		return
 	}
-	actor.tell(nil, message)
+	actor.tell(context.Background(), nil, message)
 }
 
 // TellAt sends the specified message to the actor (fire-and-forget semantics) at the provided
@@ -47,7 +48,7 @@ func (s *System) Ask(actor *Ref, message Message) Response {
 	if actor == nil {
 		return emptyResponse(nil)
 	}
-	return actor.ask(nil, message)
+	return actor.ask(context.Background(), nil, message)
 }
 
 // AskAt sends the specified message to the actor at the provided address, returning a future to the
@@ -60,7 +61,7 @@ func (s *System) AskAt(addr Address, message Message) Response {
 // Results are returned in arbitrary order. The result channel is closed after all actors respond.
 // The context's sender is set to `nil`.
 func (s *System) AskAll(message Message, actors ...*Ref) Responses {
-	return askAll(message, nil, nil, actors)
+	return askAll(context.Background(), message, nil, nil, actors)
 }
 
 // AskAllTimeout sends the specified message to all actors, returning a future to all results of the
@@ -68,7 +69,7 @@ func (s *System) AskAll(message Message, actors ...*Ref) Responses {
 // respond. The context's sender is set to `nil`. If the timeout is reached, nil responses are
 // returned.
 func (s *System) AskAllTimeout(message Message, timeout time.Duration, actors ...*Ref) Responses {
-	return askAll(message, &timeout, nil, actors)
+	return askAll(context.Background(), message, &timeout, nil, actors)
 }
 
 // Get returns the actor reference with the id, or nil if no actor with that id is found.

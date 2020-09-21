@@ -2,6 +2,7 @@ package actor
 
 import (
 	"container/list"
+	"context"
 	"sync"
 )
 
@@ -23,23 +24,23 @@ func (i *inbox) _add(ctx *Context) {
 	i.queueEmpty.Signal()
 }
 
-func (i *inbox) tell(owner *Ref, sender *Ref, message Message) {
+func (i *inbox) tell(ctx context.Context, owner *Ref, sender *Ref, message Message) {
 	i.qLock.Lock()
 	defer i.qLock.Unlock()
 	if i.closed {
 		return
 	}
-	i._add(wrap(owner, sender, message, nil))
+	i._add(wrap(ctx, owner, sender, message, nil))
 }
 
-func (i *inbox) ask(owner *Ref, sender *Ref, message Message) Response {
+func (i *inbox) ask(ctx context.Context, owner *Ref, sender *Ref, message Message) Response {
 	i.qLock.Lock()
 	defer i.qLock.Unlock()
 	if i.closed {
 		return emptyResponse(sender)
 	}
 	resp := &response{source: owner, future: make(chan Message, 1)}
-	i._add(wrap(owner, sender, message, resp.future))
+	i._add(wrap(ctx, owner, sender, message, resp.future))
 	return resp
 }
 
@@ -75,6 +76,6 @@ func (i *inbox) close() {
 	}
 }
 
-func wrap(r *Ref, sender *Ref, message Message, result chan Message) *Context {
-	return &Context{recipient: r, message: message, sender: sender, result: result}
+func wrap(ctx context.Context, r *Ref, sender *Ref, message Message, result chan Message) *Context {
+	return &Context{inner: ctx, recipient: r, message: message, sender: sender, result: result}
 }

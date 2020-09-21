@@ -1,11 +1,14 @@
 package actor
 
 import (
+	"context"
+
 	log "github.com/sirupsen/logrus"
 )
 
 // Context holds contextual information for the context's recipient and the current message.
 type Context struct {
+	inner      context.Context
 	message    Message
 	sender     *Ref
 	recipient  *Ref
@@ -32,20 +35,20 @@ func (c *Context) AddLabel(key string, value interface{}) {
 // Tell sends the specified message to the actor (fire-and-forget semantics). The new context's
 // sender is set to the recipient of this context.
 func (c *Context) Tell(actor *Ref, message Message) {
-	actor.tell(c.recipient, message)
+	actor.tell(c.inner, c.recipient, message)
 }
 
 // Ask sends the specified message to the actor, returning a future to the result of the call. The
 // new context's sender is set to the recipient of this context.
 func (c *Context) Ask(actor *Ref, message Message) Response {
-	return actor.ask(c.recipient, message)
+	return actor.ask(c.inner, c.recipient, message)
 }
 
 // AskAll sends the specified message to all actors, returning a future to all results of the call.
 // Results are returned in arbitrary order. The result channel is closed after all actors respond.
 // The new context's sender is set to recipient of this context.
 func (c *Context) AskAll(message Message, actors ...*Ref) Responses {
-	return askAll(message, nil, c.recipient, actors)
+	return askAll(c.inner, message, nil, c.recipient, actors)
 }
 
 // ActorOf adds the actor to the system as a child of the context's recipient. If an actor with that
