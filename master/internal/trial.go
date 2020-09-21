@@ -776,7 +776,8 @@ func (t *trial) killAndRemoveSocket(ctx *actor.Context, id cproto.ID) {
 // containerConnected message have been received from each container in the trial. The two messages
 // are not guaranteed to come in-order.
 func (t *trial) allReady(ctx *actor.Context) bool {
-	// If a trial has passed allReady it can never return to a state of not ready.
+	// If a trial has passed allReady it can never return to a state of not ready until the
+	// current containers are all terminated.
 	if t.allReadySucceeded {
 		return true
 	}
