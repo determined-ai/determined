@@ -37,7 +37,6 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-monaco-editor": "^0.37.0",
-    "react-plotly.js": "^2.4.0",
     "react-router-dom": "^5.2.0",
     "react-scripts": "^3.4.3",
     "react-transition-group": "^4.4.1",
