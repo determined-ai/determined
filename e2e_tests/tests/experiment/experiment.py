@@ -241,6 +241,14 @@ def trial_logs(trial_id: int) -> List[str]:
     return [t["message"] for t in r.json()]
 
 
+def check_if_string_present_in_trial_logs(trial_id: int, target_string: str) -> bool:
+    logs = trial_logs(trial_id)
+    for log_line in logs:
+        if target_string in log_line:
+            return True
+    return False
+
+
 def assert_equivalent_trials(A: int, B: int, validation_metrics: List[str]) -> None:
     full_trial_metrics1 = trial_metrics(A)
     full_trial_metrics2 = trial_metrics(B)
