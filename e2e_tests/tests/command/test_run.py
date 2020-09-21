@@ -43,6 +43,7 @@ def _run_and_verify_exit_code_zero(args: List[str], **kwargs: Any) -> None:
 
 def _run_and_verify_failure(args: List[str], message: str, **kwargs: Any) -> None:
     output = subprocess.check_output(args, **kwargs)
+    print(output)
     if re.search(message.encode(), output):
         raise subprocess.CalledProcessError(1, " ".join(args), output=output)
 
@@ -400,5 +401,66 @@ def test_k8_mount(using_k8s: bool) -> None:
                 "--config-file",
                 tf.name,
                 f"sleep 3; touch {mount_path}",
+            ]
+        )
+
+
+@pytest.mark.e2e_gpu  # type: ignore
+def test_k8_init_containers(using_k8s: bool) -> None:
+    if not using_k8s:
+        pytest.skip("only need to run test on kubernetes")
+
+    config = {
+        "environment": {
+            "pod_spec": {
+                "spec": {
+                    "initContainers": [
+                        {
+                            "image": conf.TF1_CPU_IMAGE,
+                            "name": "simple-init-container",
+                            "command": ["/bin/sh"],
+                            "args": ["-c", "exit 1"],
+                        }
+                    ]
+                }
+            }
+        }
+    }
+
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+
+        with pytest.raises(subprocess.CalledProcessError):
+            _run_and_verify_failure(
+                [
+                    "det",
+                    "-m",
+                    conf.make_master_url(),
+                    "cmd",
+                    "run",
+                    "--config-file",
+                    tf.name,
+                    "sleep 3",
+                ],
+                "exit code 1",
+            )
+
+    config["environment"]["pod_spec"]["spec"]["initContainers"][0]["args"] = ["-c", "exit 0"]
+
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+
+        _run_and_verify_exit_code_zero(
+            [
+                "det",
+                "-m",
+                conf.make_master_url(),
+                "cmd",
+                "run",
+                "--config-file",
+                tf.name,
+                "sleep 3",
             ]
         )
