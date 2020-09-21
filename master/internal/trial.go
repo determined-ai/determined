@@ -214,6 +214,8 @@ type trial struct {
 	containerAddresses         map[cproto.ID][]cproto.Address // only for running containers.
 	containerSockets           map[cproto.ID]*actor.Ref       // only for running containers.
 	terminatedContainers       map[cproto.ID]terminatedContainerWithState
+	// tracks if allReady check has passed successfully.
+	allReadySucceeded bool
 
 	agentUserGroup *model.AgentUserGroup
 	taskSpec       *tasks.TaskSpec
@@ -353,7 +355,6 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			ctx.Tell(t.rp, *t.task)
 		}
 	} else if t.experimentState != model.ActiveState {
-		ctx.Log().Info("releasing resources because the experiment is not active")
 		_ = t.releaseResource(ctx)
 	}
 
@@ -775,6 +776,12 @@ func (t *trial) killAndRemoveSocket(ctx *actor.Context, id cproto.ID) {
 // containerConnected message have been received from each container in the trial. The two messages
 // are not guaranteed to come in-order.
 func (t *trial) allReady(ctx *actor.Context) bool {
+	// If a trial has passed allReady it can never return to a state of not ready until the
+	// current containers are all terminated.
+	if t.allReadySucceeded {
+		return true
+	}
+
 	// Ensure all ContainerStarted messages have arrived.
 	if len(t.containers) < len(t.allocations) {
 		return false
@@ -794,7 +801,8 @@ func (t *trial) allReady(ctx *actor.Context) bool {
 	}
 
 	// Finally, ensure all sockets have connected.
-	return len(t.containerSockets) == len(t.allocations)
+	t.allReadySucceeded = len(t.containerSockets) == len(t.allocations)
+	return t.allReadySucceeded
 }
 
 // pushRendezvous gathers up the external addresses for the exposed ports and sends them to all the
@@ -1058,6 +1066,7 @@ func (t *trial) terminated(ctx *actor.Context) {
 	t.containerRanks = make(map[cproto.ID]int)
 	ctx.Tell(t.rp, scheduler.ResourcesReleased{TaskActor: ctx.Self()})
 
+	t.allReadySucceeded = false
 	t.pendingGracefulTermination = false
 	t.terminationSent = false
 	t.terminatedContainers = make(map[cproto.ID]terminatedContainerWithState)
