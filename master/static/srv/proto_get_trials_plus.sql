@@ -37,12 +37,13 @@ w_validations AS (
     ) IS NOT NULL
 ),
 best_validation AS (
-  SELECT s.trial_Id,
-    s.step_id,
-    s.start_time,
-    s.end_time,
-    'STATE_' || s.state AS state,
-    s.signed_searcher_metric as searcher_metric -- FIXME
+  SELECT v.trial_Id,
+    v.step_id,
+    v.start_time,
+    v.end_time,
+    'STATE_' || v.state AS state,
+    v.signed_searcher_metric * const.sign as searcher_metric,
+    s.prior_batches_processed + s.num_batches AS batch_number
   FROM (
       SELECT v.*,
         ROW_NUMBER() OVER(
@@ -50,16 +51,20 @@ best_validation AS (
           ORDER BY v.signed_searcher_metric DESC
         ) AS rk
       FROM w_validations v
-    ) s
-  WHERE s.rk = 1
+    ) v
+    JOIN steps s ON v.step_id = s.id
+    AND v.trial_id = s.trial_id
+    JOIN const ON const.trial_id = v.trial_id
+  WHERE v.rk = 1
 ),
 latest_validation AS (
-  SELECT s.trial_Id,
-    s.step_id,
-    s.start_time,
-    s.end_time,
-    'STATE_' || s.state AS state,
-    s.signed_searcher_metric as searcher_metric -- FIXME
+  SELECT v.trial_Id,
+    v.step_id,
+    v.start_time,
+    v.end_time,
+    'STATE_' || v.state AS state,
+    v.signed_searcher_metric * const.sign as searcher_metric,
+    s.prior_batches_processed + s.num_batches AS batch_number
   FROM (
       SELECT v.*,
         ROW_NUMBER() OVER(
@@ -67,17 +72,21 @@ latest_validation AS (
           ORDER BY v.end_time DESC
         ) AS rk
       FROM w_validations v
-    ) s
-  WHERE s.rk = 1
+    ) v
+    JOIN steps s ON v.step_id = s.id
+    AND v.trial_id = s.trial_id
+    JOIN const ON const.trial_id = v.trial_id
+  WHERE v.rk = 1
 ),
 best_checkpoint AS (
-  SELECT s.uuid::text AS uuid,
-    s.trial_id,
-    s.step_id,
-    s.start_time AS start_time,
-    s.end_time AS end_time,
-    s.resources AS resources,
-    'STATE_' || s.state AS state
+  SELECT c.uuid::text AS uuid,
+    c.trial_id,
+    c.step_id,
+    c.start_time AS start_time,
+    c.end_time AS end_time,
+    c.resources AS resources,
+    'STATE_' || c.state AS state,
+    s.prior_batches_processed + s.num_batches AS batch_number
   FROM (
       SELECT c.*,
         ROW_NUMBER() OVER(
@@ -90,8 +99,10 @@ best_checkpoint AS (
           AND c.trial_id = v.trial_id
         )
       WHERE c.state = 'COMPLETED'
-    ) s
-  WHERE s.rk = 1
+    ) c
+    JOIN steps s ON c.step_id = s.id
+    AND c.trial_id = s.trial_id
+  WHERE c.rk = 1
 )
 SELECT row_to_json(bv) AS best_validation,
   row_to_json(lv) AS latest_validation,

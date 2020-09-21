@@ -17,11 +17,13 @@ message TrialValidation {
    }
   };
   // The step the checkpoint was created in.
-  int32 step_id = 1; // TODO batch number?
+  int32 step_id = 1;
+  // The batch number where validation was evaluated.
+  int32 batch_number = 3;
   // The time validation was started.
   google.protobuf.Timestamp start_time = 2;
   // The time validaiton ended.
-  google.protobuf.Timestamp end_time = 3;
+  google.protobuf.Timestamp end_time = 7;
   // The current validation state.
   determined.experiment.v1.State state = 4;
   // The value of the `searcher.metric`, indicated by the experiment config, for the validation.
@@ -40,7 +42,9 @@ message TrialCheckpoint {
   // UUID of the checkpoint.
   string uuid = 1;
   // The step the checkpoint was created in.
-  int32 step_id  = 2; // TODO batch_number
+  int32 step_id  = 2;
+  // The batch number where checkpoint was evaluated.
+  int32 batch_number = 3;
   // Timestamp when the checkpoint began being saved to persistent storage.
   google.protobuf.Timestamp start_time  = 4;
   // Timestamp when the checkpoint completed being saved to persistent storage.
