@@ -38,7 +38,6 @@ w_validations AS (
 ),
 best_validation AS (
   SELECT v.trial_Id,
-    v.step_id,
     v.start_time,
     v.end_time,
     'STATE_' || v.state AS state,
@@ -59,7 +58,6 @@ best_validation AS (
 ),
 latest_validation AS (
   SELECT v.trial_Id,
-    v.step_id,
     v.start_time,
     v.end_time,
     'STATE_' || v.state AS state,
@@ -81,7 +79,6 @@ latest_validation AS (
 best_checkpoint AS (
   SELECT c.uuid::text AS uuid,
     c.trial_id,
-    c.step_id,
     c.start_time AS start_time,
     c.end_time AS end_time,
     c.resources AS resources,
@@ -104,9 +101,9 @@ best_checkpoint AS (
     AND c.trial_id = s.trial_id
   WHERE c.rk = 1
 )
-SELECT row_to_json(bv) AS best_validation,
-  row_to_json(lv) AS latest_validation,
-  row_to_json(bc) AS best_checkpoint,
+SELECT row_to_json(bv)::jsonb - 'trial_id' AS best_validation,
+  row_to_json(lv)::jsonb - 'trial_id' AS latest_validation,
+  row_to_json(bc)::jsonb - 'trial_id' AS best_checkpoint,
   t.id AS id,
   t.experiment_id,
   'STATE_' || t.state AS state,

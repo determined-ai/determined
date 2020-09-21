@@ -13,36 +13,30 @@ import "protoc-gen-swagger/options/annotations.proto";
 message TrialValidation {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
       json_schema: {
-      required: ["id", "experiment_id", "start_time", "state", "hparams", "total_batches_processed"]
+      required: ["batch_number", "start_time", "state", "searcher_metric"]
    }
   };
-  // The step the checkpoint was created in.
-  int32 step_id = 1;
   // The batch number where validation was evaluated.
-  int32 batch_number = 3;
+  int32 batch_number = 1;
   // The time validation was started.
   google.protobuf.Timestamp start_time = 2;
   // The time validaiton ended.
-  google.protobuf.Timestamp end_time = 7;
+  google.protobuf.Timestamp end_time = 3;
   // The current validation state.
   determined.experiment.v1.State state = 4;
   // The value of the `searcher.metric`, indicated by the experiment config, for the validation.
   float searcher_metric = 5;
-  // trial id
-  int32 trial_id = 6;
 }
 
 // CheckpointBase is an artifact created by a trial during training.
 message TrialCheckpoint {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
       json_schema: {
-          required: ["uuid"]
+          required: ["uuid", "batch_number", "start_time", "state"]
       }
   };
   // UUID of the checkpoint.
   string uuid = 1;
-  // The step the checkpoint was created in.
-  int32 step_id  = 2;
   // The batch number where checkpoint was evaluated.
   int32 batch_number = 3;
   // Timestamp when the checkpoint began being saved to persistent storage.
@@ -52,9 +46,7 @@ message TrialCheckpoint {
   // Dictionary of file paths to file sizes in bytes of all files in the checkpoint.
   map<string, int64> resources = 6;
   // The state of the checkpoint.
-  determined.checkpoint.v1.State state = 8;
-  // trial id
-  int32 trial_id = 9;
+  determined.checkpoint.v1.State state = 7;
 }
 
 // Trial is a set of workloads and are exploring a determined set of hyperparameters.

@@ -7,8 +7,6 @@ import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
-// TODO move to metrics
-
 // Metrics calculated during validation.
 message Metrics {
   // Number of inputs to the model.
@@ -31,7 +29,6 @@ enum State {
   STATE_DELETED = 4;
 }
 
-// hparams, validation, expconfig, 
 // Checkpoint is an artifact created by a trial during training.
 message Checkpoint {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
