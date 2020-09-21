@@ -56,9 +56,9 @@ model definition
    learning framework. The model definition contains training code that
    inherits from a Python class provided by Determined
    (:class:`~determined.keras.TFKerasTrial`,
-   :class:`~determined.pytorch.PyTorchTrial`,
-   :class:`~determined.estimator.EstimatorTrial`, or
-   can be found at :ref:`model-definitions`.
+   :class:`~determined.pytorch.PyTorchTrial`, or
+   :class:`~determined.estimator.EstimatorTrial`). More information can
+   be found at :ref:`model-definitions`.
 
 searcher, search algorithm
    A type of hyperparameter search to use. The search algorithm
