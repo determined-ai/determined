@@ -10,25 +10,47 @@ import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 
-message Validation {
+message TrialValidation {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
       json_schema: {
       required: ["id", "experiment_id", "start_time", "state", "hparams", "total_batches_processed"]
    }
   };
-  // The id of the trial.
-  int32 trial_id = 1;
   // The step the checkpoint was created in.
-  int32 step_id = 2; // TODO batch number?
+  int32 step_id = 1; // TODO batch number?
   // The time validation was started.
-  google.protobuf.Timestamp start_time = 3;
+  google.protobuf.Timestamp start_time = 2;
   // The time validaiton ended.
-  google.protobuf.Timestamp end_time = 4;
+  google.protobuf.Timestamp end_time = 3;
   // The current validation state.
-  determined.experiment.v1.State state = 5;
+  determined.experiment.v1.State state = 4;
   // The value of the `searcher.metric`, indicated by the experiment config, for the validation.
-  float searcher_metric = 6;
-  // all
+  float searcher_metric = 5;
+  // trial id
+  int32 trial_id = 6;
+}
+
+// CheckpointBase is an artifact created by a trial during training.
+message TrialCheckpoint {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+      json_schema: {
+          required: ["uuid"]
+      }
+  };
+  // UUID of the checkpoint.
+  string uuid = 1;
+  // The step the checkpoint was created in.
+  int32 step_id  = 2; // TODO batch_number
+  // Timestamp when the checkpoint began being saved to persistent storage.
+  google.protobuf.Timestamp start_time  = 4;
+  // Timestamp when the checkpoint completed being saved to persistent storage.
+  google.protobuf.Timestamp end_time  = 5;
+  // Dictionary of file paths to file sizes in bytes of all files in the checkpoint.
+  map<string, int64> resources = 6;
+  // The state of the checkpoint.
+  determined.checkpoint.v1.State state = 8;
+  // trial id
+  int32 trial_id = 9;
 }
 
 // Trial is a set of workloads and are exploring a determined set of hyperparameters.
@@ -53,9 +75,9 @@ message Trial {
   // The current processed batches.
   int32 total_batches_processed = 7;
   // Best validation.
-  Validation best_validation = 8;
+  TrialValidation best_validation = 8;
   // Latest validation.
-  Validation latest_validation = 9;
+  TrialValidation latest_validation = 9;
   // Best checkpoint.
-  determined.checkpoint.v1.CheckpointBase best_checkpoint = 10;
+  TrialCheckpoint best_checkpoint = 10;
 }

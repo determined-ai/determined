@@ -77,7 +77,6 @@ best_checkpoint AS (
     s.start_time AS start_time,
     s.end_time AS end_time,
     s.resources AS resources,
-    COALESCE(s.metadata, '{}') AS metadata,
     'STATE_' || s.state AS state
   FROM (
       SELECT c.*,
