@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"net/http"
 	"runtime/debug"
 
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -18,6 +19,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
 	proto "github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -52,9 +54,8 @@ func NewGRPCServer(db *db.PgDB, srv proto.DeterminedServer) *grpc.Server {
 	return grpcS
 }
 
-// RegisterHTTPProxy registers grpc-gateway with the master echo server.
-func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certificate) error {
-	addr := fmt.Sprintf(":%d", port)
+// NewGRPCMux creates a new gRPC server mux.
+func NewGRPCMux() *runtime.ServeMux {
 	serverOpts := []runtime.ServeMuxOption{
 		runtime.WithMarshalerOption(jsonPretty,
 			&runtime.JSONPb{EmitDefaults: true, Indent: "    "}),
@@ -63,7 +64,37 @@ func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certif
 		runtime.WithProtoErrorHandler(errorHandler),
 		runtime.WithForwardResponseOption(userTokenResponse),
 	}
-	mux := runtime.NewServeMux(serverOpts...)
+	return runtime.NewServeMux(serverOpts...)
+}
+
+func echoToMux(c echo.Context) (*http.Request, *echo.Response) {
+	request := c.Request()
+	if c.Request().Header.Get("Authorization") == "" {
+		if cookie, err := c.Cookie(cookieName); err == nil {
+			request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cookie.Value))
+		}
+	}
+	if _, ok := request.URL.Query()["pretty"]; ok {
+		request.Header.Set("Accept", jsonPretty)
+	}
+	return request, c.Response()
+}
+
+// PassToGRPCProxy passes an echo server request to gRPC-gateway servermux.
+func PassToGRPCProxy(c echo.Context, mux http.Handler) {
+	request, response := echoToMux(c)
+	mux.ServeHTTP(response, request)
+}
+
+// RegisterHTTPProxy registers grpc-gateway with the master echo server.
+func RegisterHTTPProxy(
+	e *echo.Echo,
+	mux *runtime.ServeMux,
+	port int,
+	enableCORS bool,
+	cert *tls.Certificate,
+) error {
+	addr := fmt.Sprintf(":%d", port)
 	var opts []grpc.DialOption
 	if cert == nil {
 		opts = append(opts, grpc.WithInsecure())
@@ -77,20 +108,12 @@ func RegisterHTTPProxy(e *echo.Echo, port int, enableCORS bool, cert *tls.Certif
 	if err != nil {
 		return err
 	}
-	e.Any("/api/v1/*", func(c echo.Context) error {
-		request := c.Request()
-		if origin := request.Header.Get("Origin"); enableCORS && origin != "" {
-			c.Response().Header().Set("Access-Control-Allow-Origin", origin)
+	apiV1 := e.Group("/api/v1")
+	apiV1.Any("/*", func(c echo.Context) error {
+		if enableCORS {
+			api.AddCORSHeader(c)
 		}
-		if c.Request().Header.Get("Authorization") == "" {
-			if cookie, err := c.Cookie(cookieName); err == nil {
-				request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", cookie.Value))
-			}
-		}
-		if _, ok := request.URL.Query()["pretty"]; ok {
-			request.Header.Set("Accept", jsonPretty)
-		}
-		mux.ServeHTTP(c.Response(), request)
+		PassToGRPCProxy(c, mux)
 		return nil
 	}, middleware.RemoveTrailingSlash())
 	return nil

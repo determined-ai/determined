@@ -14,6 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	gatewayRuntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/pkg/errors"
@@ -54,6 +55,7 @@ type Master struct {
 
 	logs          *logger.LogBuffer
 	system        *actor.System
+	gRPCHandler   *gatewayRuntime.ServeMux
 	echo          *echo.Echo
 	rp            *actor.Ref
 	rwCoordinator *actor.Ref
@@ -144,16 +146,18 @@ func (m *Master) startServers(cert *tls.Certificate) error {
 		})
 	}
 
-	// Initialize listeners and multiplexing.
-	if err := grpc.RegisterHTTPProxy(m.echo, m.config.Port, m.config.EnableCors, cert); err != nil {
-		return errors.Wrap(err, "failed to register gRPC gateway")
-	}
-
 	mux := cmux.New(baseListener)
 	grpcListener := mux.MatchWithWriters(
 		cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"),
 	)
 	httpListener := mux.Match(cmux.HTTP1(), cmux.HTTP2())
+
+	// Initialize listeners and multiplexing.
+	m.gRPCHandler = grpc.NewGRPCMux()
+	if err := grpc.RegisterHTTPProxy(m.echo, m.gRPCHandler, m.config.Port, m.config.EnableCors,
+		cert); err != nil {
+		return errors.Wrap(err, "failed to register gRPC proxy")
+	}
 
 	// Start all servers and return the first error. This leaks a channel, but the complexity of
 	// perfectly handling cleanup and all the error cases doesn't seem worth it for a function that is
@@ -462,7 +466,14 @@ func (m *Master) Run() error {
 	m.echo.Static("/api/v1/api.swagger.json",
 		filepath.Join(m.config.Root, "swagger/determined/api/v1/api.swagger.json"))
 	// Support the old experiment creation endpoint under the new API route.
-	m.echo.POST("/api/v1/experiments", api.Route(m.postExperiment), authFuncs...)
+	m.echo.Any("/api/v1/experiments", func(c echo.Context) error {
+		if c.Request().Method == "POST" {
+			return userService.ProcessAuthentication(api.Route(m.postExperiment))(c)
+		}
+		ctx := c.(*context.DetContext).Context
+		grpc.PassToGRPCProxy(ctx, m.gRPCHandler)
+		return nil
+	})
 
 	m.echo.GET("/config", api.Route(m.getConfig))
 	m.echo.GET("/info", api.Route(m.getInfo))
