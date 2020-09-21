@@ -97,9 +97,7 @@ const SlotChart: React.FC<Props> = (props: Props) => {
     Plotly.react.apply(null, [ id, plotInfo.data, plotInfo.layout, plotInfo.config ]);
   }, [ id, plotInfo ]);
 
-  return (
-    <div id={id} />
-  );
+  return <div id={id} />;
 };
 
 export default SlotChart;
