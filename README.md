@@ -2,32 +2,26 @@
 
 # Determined: Deep Learning Training Platform
 
-Determined helps deep learning teams **train models more quickly**, **easily
-share GPU resources**, and **effectively collaborate**. Determined allows deep
-learning engineers to focus on building and training models at scale, without
-needing to worry about DevOps or writing custom code for common tasks like
-fault tolerance or experiment tracking.
+Determined is an open-source deep learning training platform that makes building
+models fast and easy. Determined enables you to:
 
-You can think of Determined as a platform that bridges the gap between tools
-like TensorFlow and PyTorch --- which work great for a single researcher with a
-single GPU --- to the challenges that arise when doing deep learning at scale,
-as teams, clusters, and data sets all increase in size.
+- **Train models faster** using state-of-the-art distributed training, without
+  changing your model code
+- **Automatically find high-quality models** with advanced hyperparameter tuning
+  from the creators of Hyperband
+- **Get more from your GPUs** with smart scheduling and cut cloud GPU costs by
+  seamlessly using preemptible instances
+- **Track and reproduce your work** with experiment tracking that works
+  out-of-the-box, covering code versions, metrics, checkpoints, and
+  hyperparameters
 
-## Key Features
-
-  - high-performance distributed training without any additional changes to
-    your model code
-  - intelligent hyperparameter tuning based on cutting-edge research
-  - flexible GPU scheduling, including dynamically resizing training jobs
-    on-the-fly, automatic management of cloud resources on AWS and GCP and
-    optional support for Kubernetes
-  - built-in experiment tracking, metrics visualization, and model registry
-  - automatic fault tolerance for DL training jobs
-  - integrated support for TensorBoard and GPU-powered Jupyter notebooks
+Determined integrates these features into an easy-to-use, high-performance deep
+learning environment — which means you can spend your time building models
+instead of managing infrastructure.
 
 To use Determined, you can continue using popular DL frameworks such as
-TensorFlow and PyTorch; you just need to modify your model code to implement
-the Determined API.
+TensorFlow and PyTorch; you just need to update your model code to integrate
+with the Determined API.
 
 ## Installation
 
@@ -42,7 +36,7 @@ the Determined API.
 For a brief introduction to using Determined, start with the
 [Quick Start Guide](https://docs.determined.ai/latest/tutorials/quick-start.html).
 
-To port an existing deep learning model to Determined, follow the
+To use an existing deep learning model with Determined, follow the
 tutorial for your preferred deep learning framework:
 
 * [PyTorch MNIST Tutorial](https://docs.determined.ai/latest/tutorials/pytorch-mnist-tutorial.html)
