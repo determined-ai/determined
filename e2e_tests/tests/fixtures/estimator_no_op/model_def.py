@@ -38,9 +38,6 @@ class ChiefPauseOnTerminateRunHook(estimator.RunHook):
 class NoopEstimator(estimator.EstimatorTrial):
     def __init__(self, context: estimator.EstimatorTrialContext) -> None:
         self.context = context
-        self.hparams = context.get_hparams()
-        self.batch_size = self.context.get_per_slot_batch_size()
-        self.dense = None
 
     def build_estimator(self) -> tf.estimator.Estimator:
         _ = [tf.feature_column.numeric_column("x", shape=(), dtype=tf.int64)]

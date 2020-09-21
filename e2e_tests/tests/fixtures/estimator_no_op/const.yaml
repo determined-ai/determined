@@ -1,14 +1,6 @@
 description: estimator_no_op
 hyperparameters:
-  base_learning_rate: 0.001
-  weight_cost: 0.00001
   global_batch_size: 64
-  n_filters: 40
-  decay_steps: 4680
-  decay_rate: 0.3
-  synthetic_data: False
-  image_size: 28
-  visualize: False
 searcher:
   name: single
   metric: loss
