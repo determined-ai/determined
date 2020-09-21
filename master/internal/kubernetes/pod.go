@@ -443,14 +443,23 @@ func getContainerState(conditions []k8sV1.PodCondition) container.State {
 }
 
 func getExitCodeAndMessage(pod *k8sV1.Pod) (int, string, error) {
-	if len(pod.Status.InitContainerStatuses) != 1 {
+	if len(pod.Status.InitContainerStatuses) == 0 {
 		return 0, "", errors.Errorf(
 			"unexpected number of init containers when processing failure for pod %s", pod.Name)
 	}
 
-	initContainerStatus := pod.Status.InitContainerStatuses[0].State.Terminated
-	if initContainerStatus.ExitCode != agent.SuccessExitCode {
-		return int(initContainerStatus.ExitCode), initContainerStatus.Message, nil
+	for _, initContainerStatus := range pod.Status.InitContainerStatuses {
+		if initContainerStatus.State.Terminated == nil {
+			continue
+		}
+		exitCode := initContainerStatus.State.Terminated.ExitCode
+		if initContainerStatus.State.Terminated.ExitCode != agent.SuccessExitCode {
+			errMessage := fmt.Sprintf(
+				"container %s: %s", initContainerStatus.Name,
+				initContainerStatus.State.Terminated.Message,
+			)
+			return int(exitCode), errMessage, nil
+		}
 	}
 
 	if len(pod.Status.ContainerStatuses) != 1 {

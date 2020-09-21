@@ -108,9 +108,6 @@ func validatePodSpec(podSpec *k8sV1.Pod) []error {
 			check.Equal(podSpec.Name, "", "pod Name is not a configurable option"),
 			check.Equal(podSpec.Namespace, "", "pod Namespace is not a configurable option"),
 			check.False(podSpec.Spec.HostNetwork, "host networking must be configured via master.yaml"),
-			check.Equal(
-				len(podSpec.Spec.InitContainers), 0,
-				"init containers are not a configurable option"),
 			check.LessThanOrEqualTo(
 				len(podSpec.Spec.Containers), 1,
 				"can specify at most one container in pod_spec"),

@@ -164,7 +164,7 @@ func (p *pod) configurePodSpec(
 
 	podSpec.Spec.Volumes = append(podSpec.Spec.Volumes, volumes...)
 	podSpec.Spec.HostNetwork = p.taskSpec.TaskContainerDefaults.NetworkMode.IsHost()
-	podSpec.Spec.InitContainers = initContainers
+	podSpec.Spec.InitContainers = append(podSpec.Spec.InitContainers, initContainers...)
 	podSpec.Spec.Containers = containers
 	podSpec.Spec.RestartPolicy = k8sV1.RestartPolicyNever
 
