@@ -10,7 +10,6 @@ concepts of the product.
 
 -  :ref:`tf-keras-trial`
 -  :ref:`pytorch-trial`
--  :ref:`tensorpack-trial`
 -  :ref:`estimator-trial`
 
 **Configurations**

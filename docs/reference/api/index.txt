@@ -9,7 +9,6 @@
    keras
    estimator
    pytorch
-   tensorpack
    trial_context
    native_context
    experimental

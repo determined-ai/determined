@@ -1,0 +1,5 @@
+:orphan:
+
+**Update**
+
+- Removed support for TensorpackTrial.
