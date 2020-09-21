@@ -1,13 +1,17 @@
 package actor
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"reflect"
 	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/opentracing/opentracing-go"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -53,6 +57,11 @@ type Ref struct {
 	err       error
 	listeners []chan error
 	shutdown  bool
+
+	tracing struct {
+		tracer opentracing.Tracer
+		closer io.Closer
+	}
 }
 
 func newRef(system *System, parent *Ref, address Address, actor Actor) *Ref {
@@ -74,6 +83,11 @@ func newRef(system *System, parent *Ref, address Address, actor Actor) *Ref {
 		deadChildren: make(map[Address]bool),
 		inbox:        newInbox(),
 	}
+
+	if TraceEnabled {
+		ref = addTracer(ref)
+	}
+
 	go ref.run()
 	return ref
 }
@@ -103,12 +117,18 @@ func (r *Ref) String() string {
 		r.actor, r.actor, r.registeredTime, r.system.id, r.address.String())
 }
 
-func (r *Ref) tell(sender *Ref, message Message) {
-	r.inbox.tell(r, sender, message)
+func (r *Ref) tell(ctx context.Context, sender *Ref, message Message) {
+	if TraceEnabled {
+		ctx = traceSend(ctx, sender, r, message, TellOperation)
+	}
+	r.inbox.tell(ctx, r, sender, message)
 }
 
-func (r *Ref) ask(sender *Ref, message Message) Response {
-	return r.inbox.ask(r, sender, message)
+func (r *Ref) ask(ctx context.Context, sender *Ref, message Message) Response {
+	if TraceEnabled {
+		ctx = traceSend(ctx, sender, r, message, AskOperation)
+	}
+	return r.inbox.ask(ctx, r, sender, message)
 }
 
 // sendInternalMessage sends an actor framework message. These messages can be safely ignored by the
@@ -149,21 +169,24 @@ func (r *Ref) deleteChild(address Address) {
 }
 
 func (r *Ref) processMessage() bool {
-	context := r.inbox.get()
+	aContext := r.inbox.get()
 
-	r.log.Tracef("get %T, inbox length: %v", context.message, r.inbox.len())
+	r.log.Tracef("get %T, inbox length: %v", aContext.message, r.inbox.len())
 
+	if TraceEnabled {
+		defer traceReceive(aContext, r)()
+	}
 	defer func() {
-		if context.ExpectingResponse() {
-			context.Respond(errNoResponse)
+		if aContext.ExpectingResponse() {
+			aContext.Respond(errNoResponse)
 		}
 	}()
 
 	// Handle any internal state change messages first.
-	switch typed := context.Message().(type) {
+	switch typed := aContext.Message().(type) {
 	case createChild:
 		child, created := r.createChild(typed.address, typed.actor)
-		context.Respond(childCreated{
+		aContext.Respond(childCreated{
 			child:   child,
 			created: created,
 		})
@@ -174,7 +197,7 @@ func (r *Ref) processMessage() bool {
 			return false
 		}
 		r.deleteChild(typed.Child.address)
-		if r.err = r.sendInternalMessage(context.Message()); r.err != nil {
+		if r.err = r.sendInternalMessage(aContext.Message()); r.err != nil {
 			return true
 		}
 		return false
@@ -184,7 +207,7 @@ func (r *Ref) processMessage() bool {
 			return false
 		}
 		r.deleteChild(typed.Child.address)
-		if r.err = r.sendInternalMessage(context.Message()); r.err != nil {
+		if r.err = r.sendInternalMessage(aContext.Message()); r.err != nil {
 			return true
 		}
 		return false
@@ -193,8 +216,8 @@ func (r *Ref) processMessage() bool {
 	}
 
 	// Any message not handled internally is sent to the actor implementation.
-	if context.Sender() == nil || !r.deadChildren[context.Sender().address] {
-		r.err = r.actor.Receive(context)
+	if aContext.Sender() == nil || !r.deadChildren[aContext.Sender().address] {
+		r.err = r.actor.Receive(aContext)
 	}
 
 	return r.err != nil
@@ -214,7 +237,7 @@ func (r *Ref) run() {
 
 // Stop asynchronously notifies the actor to stop.
 func (r *Ref) Stop() {
-	r.tell(nil, stop{})
+	r.tell(context.Background(), nil, stop{})
 }
 
 // AwaitTermination waits for the actor to stop, returning an error if the actor has failed during
@@ -280,9 +303,9 @@ func (r *Ref) close() {
 	// Notify the parent that the actor is no longer processing messages.
 	if r != r.system.Ref {
 		if r.err != nil {
-			r.parent.tell(r, ChildFailed{Child: r, Error: r.err})
+			r.parent.tell(context.Background(), r, ChildFailed{Child: r, Error: r.err})
 		} else {
-			r.parent.tell(r, ChildStopped{Child: r})
+			r.parent.tell(context.Background(), r, ChildStopped{Child: r})
 		}
 	}
 
@@ -293,6 +316,12 @@ func (r *Ref) close() {
 		}
 		close(listener)
 	}
+
+	// Close all resources used for tracing.
+	if TraceEnabled {
+		closeTracer(r)
+	}
+
 	r.shutdown = true
 }
 
