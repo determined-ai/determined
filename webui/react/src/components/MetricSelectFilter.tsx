@@ -11,13 +11,13 @@ import SelectFilter from './SelectFilter';
 
 const { OptGroup, Option } = Select;
 
-type SingleHander = (value: MetricName) => void;
+type SingleHandler = (value: MetricName) => void;
 type MultipleHandler = (value: MetricName[]) => void;
 
 interface Props {
   metricNames: MetricName[];
   multiple?: boolean;
-  onChange?: SingleHander | MultipleHandler;
+  onChange?: SingleHandler | MultipleHandler;
   value?: MetricName | MetricName[];
 }
 
@@ -40,15 +40,33 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
   const handleMetricSelect = useCallback((newValue: SelectValue) => {
     if (!onChange) return;
 
-    const metricName = valueToMetricName(newValue as string);
-    if (!metricName) return;
+    let metricName;
+    if ((newValue as string) !== 'All' && (newValue as string) !== 'None') {
+      metricName = valueToMetricName(newValue as string);
+      if (!metricName) return;
+    } else {
+      metricName = {
+        name: newValue as string,
+        type: MetricType.Placeholder,
+      };
+    }
 
     if (multiple) {
-      const newMetric = Array.isArray(value) ? [ ...value ] : [];
-      if (newMetric.indexOf(metricName) === -1) newMetric.push(metricName);
-      (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
+      if (newValue === 'All') {
+        const newMetric = metricNames.filter((metricName: MetricName) => metricName.name !== 'All' && metricName.name !== 'None');
+        (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
+      } else if (newValue === 'None') {
+        const newMetric: MetricName[] = [];
+        (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
+      } else {
+        const newMetric = Array.isArray(value) ? [ ...value ] : [];
+        if (newMetric.indexOf(metricName) === -1) newMetric.push(metricName);
+        (onChange as MultipleHandler)(newMetric.sort(metricNameSorter));
+      }
+
     } else {
-      (onChange as SingleHander)(metricName);
+
+      (onChange as SingleHandler)(metricName);
     }
   }, [ multiple, onChange, value ]);
 
@@ -72,6 +90,14 @@ const MetricSelectFilter: React.FC<Props> = ({ metricNames, multiple, onChange, 
     value={metricValues}
     onDeselect={handleMetricDeselect}
     onSelect={handleMetricSelect}>
+    {multiple && <OptGroup label="Convenience (TODO: Better Name)">
+      {[ 'All', 'None' ].map(key => {
+        return <Option key={key} value={key}>
+          <BadgeTag label={key} />
+        </Option>;
+      })}
+    </OptGroup>}
+
     {validationMetricNames.length > 0 && <OptGroup label="Validation Metrics">
       {validationMetricNames.map(key => {
         const value = metricNameToValue(key);
