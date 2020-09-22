@@ -41,6 +41,7 @@ const (
 	tickInterval              = 5 * time.Second
 )
 
+// TensorboardRequest describes a request for a new Tensorboard.
 type TensorboardRequest struct {
 	commandParams
 
@@ -48,6 +49,7 @@ type TensorboardRequest struct {
 	TrialIDs      []int `json:"trial_ids"`
 }
 
+// TensorboardRequestWithUser accompanies TensorboardRequest with a user.
 type TensorboardRequestWithUser struct {
 	Tensorboard TensorboardRequest
 	User        *model.User
@@ -105,8 +107,7 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 	case TensorboardRequestWithUser:
 		summaryResp, err := t.handleTensorboardRequest(ctx, msg.User, &msg.Tensorboard)
 		if err != nil {
-			// TODO wrap
-			return err
+			return errors.Wrap(err, "failed to launch tensorboard")
 		}
 		ctx.Respond(summaryResp.Get().(summary).ID)
 	}
@@ -114,7 +115,11 @@ func (t *tensorboardManager) Receive(ctx *actor.Context) error {
 	return nil
 }
 
-func (t *tensorboardManager) handleTensorboardRequest(ctx *actor.Context, user *model.User, req *TensorboardRequest) (actor.Response, error) {
+func (t *tensorboardManager) handleTensorboardRequest(
+	ctx *actor.Context,
+	user *model.User,
+	req *TensorboardRequest,
+) (actor.Response, error) {
 	fmt.Println(req)
 	commandReq, err := parseCommandRequestWithUser(
 		*user, t.db, &req.commandParams, &t.taskSpec.TaskContainerDefaults)
