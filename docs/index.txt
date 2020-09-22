@@ -18,49 +18,32 @@
  Overview
 **********
 
-Determined is an open-source Deep Learning Training Platform that
-incorporates cutting-edge research and years of practical experience to
-help deep learning teams **train models more quickly, easily share GPU
-resources, and effectively collaborate**. Determined allows deep
-learning engineers to focus on building and training models at scale,
-without needing to worry about DevOps or writing custom code for common
-tasks like fault tolerance or experiment tracking. More information
-about Determined can be found on the `website
-<https://determined.ai/>`_.
+Determined is an open-source deep learning training platform that makes building
+models fast and easy. Determined enables you to:
 
-**************************************
- What does Determined handle for you?
-**************************************
+- **Train models faster** using state-of-the-art :ref:`distributed training
+  <multi-gpu-training>`, without changing your model code
 
-You can think of Determined as a platform that bridges the gap between
-tools like TensorFlow and PyTorch---which work great for a single
-researcher with a single GPU---and the challenges that arise when doing
-deep learning at scale, as teams, clusters, and data sets all increase
-in size.
+- **Automatically find high-quality models** with advanced :ref:`hyperparameter
+  tuning <hyperparameter-tuning>` from the creators of Hyperband
 
-Determined's key capabilities include:
+- **Get more from your GPUs** with smart scheduling and cut cloud GPU costs by
+  seamlessly using preemptible instances
 
--  high-performance :ref:`distributed training <multi-gpu-training>`
-   without any additional changes to your model code
+- **Track and reproduce your work** with experiment tracking that works
+  out-of-the-box, covering code versions, metrics, checkpoints, and
+  hyperparameters
 
--  intelligent :ref:`hyperparameter tuning <hyperparameter-tuning>`
-   based on cutting-edge research
+Determined integrates these features into an easy-to-use, high-performance deep
+learning environment --- which means you can spend your time building models
+instead of managing infrastructure.
 
--  flexible GPU scheduling, including dynamically resizing training jobs
-   on-the-fly, automatic management of cloud resources on AWS and GCP,
-   and optional :ref:`support for Kubernetes <determined-on-kubernetes>`
+To use Determined, you can continue using popular DL frameworks such as
+TensorFlow and PyTorch; you just need to update your model code to integrate
+with the Determined API.
 
--  built-in experiment tracking, metrics visualization, and :ref:`model
-   registry <organizing-models>`
-
--  automatic fault tolerance for deep learning training jobs
-
--  integrated support for :ref:`TensorBoard <how-to-tensorboard>` and
-   GPU-powered :ref:`Jupyter notebooks <how-to-notebooks>`
-
-To use Determined, you can continue using popular deep learning
-frameworks such as TensorFlow and PyTorch; you just need to modify your
-model code to implement the Determined API.
+More information about Determined can be found on the `website
+<https://determined.ai/>`__.
 
 *************
  Quick Start
