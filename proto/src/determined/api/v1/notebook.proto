@@ -67,6 +67,7 @@ message KillNotebookResponse {
 
 // Stream notebook logs.
 message NotebookLogsRequest {
+    // Requested Notebook id.
     string notebook_id = 1;
     // Skip the number of notebook logs before returning results. Negative values
     // denote number of notebook logs to skip from the end before returning results.
