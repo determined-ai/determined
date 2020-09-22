@@ -15,7 +15,6 @@ from determined.experimental import Determined, ModelSortBy
 from determined_common import check, storage
 from tests import config as conf
 from tests import experiment as exp
-from tests import cluster
 from tests.fixtures.metric_maker.metric_maker import structure_equal, structure_to_metrics
 
 
