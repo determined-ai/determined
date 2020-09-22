@@ -3,7 +3,7 @@ It may take several minutes for your deployment to start up.
 
 {{- if .Values.useNodePortForMaster }}
 
-You have configured Determined to deploy the master service with NodePort. To make the
+You have configured Determined to deploy the master with a NodePort service. To make the
 Determined master accessible from outside the cluster you will likely need to configure
 an Ingress for: determined-master-service-{{ .Release.Name }}.
 
