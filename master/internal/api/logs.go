@@ -83,10 +83,11 @@ func ProcessLogs(ctx context.Context,
 
 // LogStreamActor handles streaming log messages.
 type LogStreamActor struct {
-	req      LogsRequest
-	ctx      context.Context
-	send     OnLogEntry
-	logStore *actor.Ref
+	req         LogsRequest
+	ctx         context.Context
+	send        OnLogEntry
+	logStore    *actor.Ref
+	sendCounter int
 }
 
 // CloseStream indicates that the log stream should close.
@@ -118,8 +119,11 @@ func (l *LogStreamActor) Receive(ctx *actor.Context) error {
 			break
 		}
 		if err := l.send(&msg); err != nil {
-			ctx.Self().Stop()
 			return status.Errorf(codes.Internal, "failed to send log message %d", msg.ID)
+		}
+		l.sendCounter++
+		if l.req.Limit > 0 && l.sendCounter >= l.req.Limit {
+			ctx.Self().Stop()
 		}
 
 	case CloseStream:

@@ -151,8 +151,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		ctx.Respond(true)
 
 		total := countNonNullRingValues(e.buffer)
-		offset, limit := webAPI.EffectiveOffsetNLimit(msg.Offset, msg.Limit, total)
-		msg.Limit = limit
+		offset := webAPI.EffectiveOffset(msg.Offset, total)
 		msg.Offset = offset
 
 		// stream existing matching entries
@@ -164,7 +163,9 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 			}
 		}
 
-		if msg.Follow && !e.isTerminated {
+		limitMet := msg.Limit > 0 && len(matchingEvents) >= msg.Limit
+
+		if msg.Follow && !e.isTerminated && !limitMet {
 			e.logStreams[ctx.Sender()] = msg
 		} else {
 			ctx.Tell(ctx.Sender(), webAPI.CloseStream{})
