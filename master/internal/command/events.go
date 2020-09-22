@@ -24,7 +24,7 @@ const defaultEventBufferSize = 200
 const ctxMissingSender = "message is missing sender information"
 
 func countNonNullRingValues(ring *ring.Ring) int {
-	// OPT we could use log_buffer here instead of a plain ring buffer.
+	// OPTIMIZE if this proves to be slow we could add a constant time solution.
 	count := 0
 	ring.Do(func(val interface{}) {
 		if val != nil {
@@ -59,7 +59,6 @@ type event struct {
 	LogEvent *string `json:"log_event"`
 }
 
-// CHECK could we get different pointers to the same ref? thus resulting in different map keys
 type logSubscribers = map[*actor.Ref]webAPI.LogsRequest
 
 // GetEventCount is an actor message used to get the number of events in buffer.
@@ -83,14 +82,14 @@ func newEventManager() *eventManager {
 	}
 }
 
-func (e *eventManager) RemoveSusbscribers(ctx *actor.Context) {
+func (e *eventManager) removeSusbscribers(ctx *actor.Context) {
 	for actor := range e.logStreams {
 		ctx.Tell(actor, webAPI.CloseStream{})
 	}
 	e.logStreams = nil
 }
 
-func (e *eventManager) ProcessNewLogEvent(ctx *actor.Context, msg event) {
+func (e *eventManager) processNewLogEvent(ctx *actor.Context, msg event) {
 	// Publish.
 	for streamActor, logRequest := range e.logStreams {
 		if eventSatisfiesLogRequest(logRequest, &msg) {
@@ -102,7 +101,7 @@ func (e *eventManager) ProcessNewLogEvent(ctx *actor.Context, msg event) {
 	// Remove terminated subscribers.
 	if msg.TerminateRequestEvent != nil || msg.ExitedEvent != nil {
 		e.isTerminated = true
-		e.RemoveSusbscribers(ctx)
+		e.removeSusbscribers(ctx)
 	}
 }
 
@@ -136,13 +135,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 				child.Stop()
 			}
 		}
-		e.ProcessNewLogEvent(ctx, msg)
-
-	case webAPI.CloseStream:
-		if ctx.Sender() == nil {
-			return errors.New(ctxMissingSender)
-		}
-		delete(e.logStreams, ctx.Sender())
+		e.processNewLogEvent(ctx, msg)
 
 	case webAPI.LogsRequest:
 		if ctx.Sender() == nil {
@@ -154,7 +147,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 		offset := webAPI.EffectiveOffset(msg.Offset, total)
 		msg.Offset = offset
 
-		// stream existing matching entries
+		// Stream existing matching entries.
 		matchingEvents := e.getMatchingEvents(msg)
 		for _, ev := range matchingEvents {
 			logEntry := eventToLogEntry(ev)
@@ -171,8 +164,14 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 			ctx.Tell(ctx.Sender(), webAPI.CloseStream{})
 		}
 
+	case webAPI.CloseStream:
+		if ctx.Sender() == nil {
+			return errors.New(ctxMissingSender)
+		}
+		delete(e.logStreams, ctx.Sender())
+
 	case actor.PostStop:
-		e.RemoveSusbscribers(ctx)
+		e.removeSusbscribers(ctx)
 
 	case api.WebSocketConnected:
 		follow, err := strconv.ParseBool(msg.Ctx.QueryParam("follow"))

@@ -14,7 +14,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 )
 
-const logCheckWaitTime = 500 * time.Millisecond
+const logCheckWaitTime = 200 * time.Millisecond
 
 // LogsRequest describes the parameters needed to target a subset of logs.
 type LogsRequest struct {
@@ -40,7 +40,7 @@ func LogEntryToProtoLogEntry(logEntry *logger.Entry) *logv1.LogEntry {
 // ProcessLogs handles fetching and processing logs from a log store.
 func ProcessLogs(ctx context.Context,
 	req LogsRequest,
-	logFetcher LogFetcherFn, // TODO a better name
+	logFetcher LogFetcherFn,
 	cb OnLogEntry,
 	terminateCheck *TerminationCheck,
 ) error {

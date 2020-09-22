@@ -36,7 +36,6 @@ func trialStatus(d *db.PgDB, trialID int32) (model.State, int, error) {
 	return trialStatus.State, trialStatus.NumLogs, err
 }
 
-// CHECK migrate to api.ProcessLogs?
 func (a *apiServer) TrialLogs(
 	req *apiv1.TrialLogsRequest, resp apiv1.Determined_TrialLogsServer) error {
 	if err := grpc.ValidateRequest(
