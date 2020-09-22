@@ -1,0 +1,246 @@
+####### EXISTING OUTLINE
+
+X=delete  G=gallery (or example)  ?=not sure where this would go
+
+    Tutorials
+?       tut: Quick Start Guide
+G       tut: Trial API: PyTorch MNIST Tutorial
+G       tut: Trial API: TensorFlow Keras Fashion MNIST Tutorial
+        tut: Accessing Data
+X       tut: Native API Tutorial
+        tut: Notebooks Tutorial
+        tut: Organizing Models in the Model Registry
+
+    How-To Guides
+        how: Install Determined CLI
+        how: Hyperparameter Tuning
+        how: Distributed Training
+        how: Environment Configuration
+        how: Data Layer
+        how: How to Install Determined
+        how: Notebooks
+        how: TensorBoard
+        how: Using Checkpoints
+X       how: IDE setup
+        how: Using the Determined REST APIs
+
+    Topic Guides
+        top: Benefits of Determined
+        top: Determined on Kubernetes
+        top: Specifying Custom Pod Specs
+        top: Effective Distributed Training
+        top: Experiment Lifecycle
+        top: Exporting Models and Checkpoints
+        top: Hyperparameter Tuning Defined
+        top: Hyperparameter Tuning With Determined
+        top: Model Definitions
+X       top: Native API
+X       top: Trial API
+        top: Best Practices for Model Definitions
+        top: Optimizing Distributed Training
+        top: Reproducibility
+        top: Scheduling
+        top: System Architecture
+        top: Determined on AWS
+        top: Determined on GCP
+        top: Elastic Infrastructure
+        top: Dynamic Agents on AWS
+        top: Dynamic Agents on GCP
+        top: Terminology and Concepts
+X       top: User Interfaces
+        top: Users
+X       top: YAML Topic Guide
+
+    Reference
+        ref: API Reference
+        ref: Cluster Configuration
+        ref: Command-line Interface
+        ref: Tensorboard and Notebook Configuration
+        ref: Configuration Templates
+        ref: Experiment Configuration
+        ref: Helm Chart Configuration
+        ref: Open Source Licenses
+
+    Frequently Asked Questions
+    Examples
+    Release Notes
+
+
+####### PROPOSED REORG
+
+# Guiding principles of reorg:
+#  - topical organization
+#  - fewer pages = better ctrl-f and less hierarchy to navigate
+
+N=new content   *=doc-level item   ?=not sure if we have this already
+
+    Quick Start
+N     * Running Your First Experiment
+            prereqs:
+                docker works
+            goals:
+                have working installation (docker method)
+                have cli installed
+                    how: Install Determined CLI
+                hands-on use of cli and webui (tensorboard?), and nothing else
+            details:
+                use one-variable model (copy/paste rather than download code)
+N     * Porting A PyTorch Model
+            prereqs:
+                have a working installation
+            steps:
+                start with a one-variable model  (use mnist instead?)
+                show a DummyContext with a skeleton training loop
+                implement build_model + train_batch
+                implement build_*_data_loader
+                run in local test mode
+                run in remote test mode
+                run a full experiment
+            (is that too many steps?)
+N     * Porting A Keras Model
+            prereqs:
+                have a working installation
+            steps:
+                start with a one-variable model  (use mnist instead?)
+                show a DummyContext with a skeleton training loop
+                implement build_model
+                implement build_*_data_loader
+                run in local test mode
+                run in remote test mode
+                run a full experiment
+            (is that too many steps?)
+  * Concepts
+        top: Benefits of Determined  (cannabalize this)
+        Training Models
+            top: Model Definitions
+            top: Experiment Lifecycle
+        Hyperparameter Tuning
+        Notebooks
+        Tensorboard
+        Model Management
+        System Components (basically a glossary)
+            top: System Architecture
+            top: Terminology and Concepts
+  * Training Models
+N       Model APIs
+            Why we need a trial API in the first place
+            Concepts that apply to all of the trial APIs (e.g., trial context)
+            Concepts that apply to each framework
+                how/why the PyTorch API works the way it does vs. how the Keras API works).
+            links to API references for each Trial API
+        Accessing Data
+            top: Best Practices for Model Definitions
+            tut: Accessing Data
+            how: Data Layer
+        Distributed Training
+            how: Distributed Training
+            top: Effective Distributed Training
+                top: Optimizing Distributed Training
+        Reproducibility
+            top: Reproducibility
+        Experiment Configuration
+            how: Environment Configuration
+            ref: Experiment Configuration
+            ref: Configuration Templates
+            link to how: Environment Configuration
+N       Debugging Models in Determined
+            Is the docker environment ok? (before porting)
+              - run the known-good original training script inside a shell or notebook
+            Is your ported Trial correct? (during porting)
+              - test various parts with a DummyContext
+              - test whole shebang with local test mode
+              - test whole shebang with local test mode in a shell or notebook
+            Debugging OOM errors (after porting)
+              - Distinguishing CPU OOM vs GPU OOM
+              - Enabling resource tracking in debug logs (and visualizing them)
+              - Symptoms and solutions (fix leaks vs buy more memory vs aggregation frequency)
+            Pinpointing performance issues
+              - Enabling system profiling in debug logs (and visualizing them)
+              - recognizing data latency issues (easy fix: prefetching or precomputing)
+              - recognizing bottlenecks (cpu vs gpu vs disk vs network (dtrain))
+            Distributed training issues
+              - Can machines communicate? (dtrain functionality)
+              - Convergence issues (dtrain correctness)
+              - Data splitting (dtrain correctness)
+                  - patterns to guarantee proper splits
+                  - checklist for those handling splits manually
+  * Hyperparameter Tuning
+        how: Hyperparameter Tuning
+        top: Hyperparameter Tuning Defined
+        top: Hyperparameter Tuning With Determined
+  * Notebooks
+        Tutorial
+            tut: Notebooks Tutorial
+        Saving and Restoring State
+            how: Notebooks
+        Configuration
+            ref: Tensorboard and Notebook Configuration
+  * Tensorboard
+        Tutorial
+            how: TensorBoard
+        Configuration
+            ref: Tensorboard and Notebook Configuration
+  * Model Management
+?       Experiment Tracking
+        Exporting Models
+            top: Exporting Models and Checkpoints
+            how: Using Checkpoints
+        Model Registry
+            tut: Organizing Models in the Model Registry
+  * System Administration
+        Installation
+            how: How to Install Determined  (cannabalize this)
+            On-Prem
+            Cloud
+                top: Elastic Infrastructure
+                top: Determined on AWS
+                top: Dynamic Agents on AWS
+                top: Determined on GCP
+                top: Dynamic Agents on GCP
+            Kubernetes
+                top: Determined on Kubernetes
+                top: Specifying Custom Pod Specs
+                ref: Helm Chart Configuration
+        System Configuration
+            Master
+                ref: Cluster Configuration (master portion)
+            Agent
+                ref: Cluster Configuration (agent portion)
+        Task Environments
+            how: Environment Configuration
+        Scheduling
+            top: Scheduling
+        Security
+            Users
+                top: Users
+            Networking
+N       Debugging A Determined Installation
+          - GPUs and docker
+          - Network Connectivity issues
+             - connect to master HTTP server from master machine
+             - connect to master HTTP server from outside master machine
+             - verify agent can connect to master
+             - verify task container can connect to master
+             - verify task containers can connect to each other (same agent)
+             - verify task containers can connect to each other (multi agent)
+             - verify master can proxy connections to notebooks/shells
+          - Debugging EE-specific features
+             - Okta issues?
+  * Reference
+        Python APIs
+            ref: API Reference
+        REST APIs
+            how: Using the Determined REST APIs
+        CLI
+            ref: Command-line Interface
+        Configuration references
+            link to experiment config
+            link to command configs
+            link to master configs?
+            link to agent configs?
+
+  * Frequently Asked Questions
+  * Examples
+        details TBD by @naren
+  * Release Notes
+  * Open Source Licenses
