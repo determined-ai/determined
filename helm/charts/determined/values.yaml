@@ -99,12 +99,12 @@ taskContainerDefaults:
   # cpuImage:
   # gpuImage:
 
-# Configure Determined enterprise edition.
+# Install Determined enterprise edition.
 enterpriseEdition: false
 
 # Should be configured if using the Determined enterprise edition master. Used to access
 # the master image.
-# imagePullSecretName: regcred
+# imagePullSecretName:
 
 ## Configure whether we collect anonymous information about the usage of Determined.
 telemetry:
