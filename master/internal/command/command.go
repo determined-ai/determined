@@ -104,11 +104,11 @@ func (c *command) Receive(ctx *actor.Context) error {
 		c.proxy = ctx.Self().System().Get(actor.Addr("proxy"))
 
 		c.task = &scheduler.AllocateRequest{
-			ID:           c.taskID,
-			Name:         c.config.Description,
-			SlotsNeeded:  c.config.Resources.Slots,
-			Label:        c.config.Resources.AgentLabel,
-			CanTerminate: true,
+			ID:             c.taskID,
+			Name:           c.config.Description,
+			SlotsNeeded:    c.config.Resources.Slots,
+			Label:          c.config.Resources.AgentLabel,
+			NonPreemptible: true,
 			FittingRequirements: scheduler.FittingRequirements{
 				SingleAgent: true,
 			},

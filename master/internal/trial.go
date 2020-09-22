@@ -341,12 +341,12 @@ func (t *trial) Receive(ctx *actor.Context) error {
 			}
 
 			t.task = &scheduler.AllocateRequest{
-				ID:           scheduler.NewTaskID(),
-				Name:         name,
-				Group:        ctx.Self().Parent(),
-				SlotsNeeded:  slotsNeeded,
-				CanTerminate: true,
-				Label:        label,
+				ID:             scheduler.NewTaskID(),
+				Name:           name,
+				Group:          ctx.Self().Parent(),
+				SlotsNeeded:    slotsNeeded,
+				NonPreemptible: false,
+				Label:          label,
 				FittingRequirements: scheduler.FittingRequirements{
 					SingleAgent: false,
 				},

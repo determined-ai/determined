@@ -118,11 +118,10 @@ func TestCleanUpTaskWhenTaskActorStopsWithError(t *testing.T) {
 
 	system.Ask(mockActor, AskSchedulerToAddTask{
 		task: AllocateRequest{
-			ID:           TaskID(uuid.New().String()),
-			Name:         "mock_task",
-			Group:        mockActor,
-			SlotsNeeded:  1,
-			CanTerminate: true,
+			ID:          TaskID(uuid.New().String()),
+			Name:        "mock_task",
+			Group:       mockActor,
+			SlotsNeeded: 1,
 		},
 	}).Get()
 	assert.Equal(t, c.taskList.len(), 1)
@@ -156,11 +155,10 @@ func TestCleanUpTaskWhenTaskActorPanics(t *testing.T) {
 
 	system.Ask(mockActor, AskSchedulerToAddTask{
 		task: AllocateRequest{
-			ID:           TaskID(uuid.New().String()),
-			Name:         "mock_task",
-			Group:        mockActor,
-			SlotsNeeded:  1,
-			CanTerminate: true,
+			ID:          TaskID(uuid.New().String()),
+			Name:        "mock_task",
+			Group:       mockActor,
+			SlotsNeeded: 1,
 		},
 	}).Get()
 
@@ -195,11 +193,10 @@ func TestCleanUpTaskWhenTaskActorStopsNormally(t *testing.T) {
 
 	system.Ask(mockActor, AskSchedulerToAddTask{
 		task: AllocateRequest{
-			ID:           TaskID(uuid.New().String()),
-			Name:         "mock_task",
-			Group:        mockActor,
-			SlotsNeeded:  1,
-			CanTerminate: true,
+			ID:          TaskID(uuid.New().String()),
+			Name:        "mock_task",
+			Group:       mockActor,
+			SlotsNeeded: 1,
 		},
 	}).Get()
 
@@ -232,11 +229,10 @@ func testWhenActorsStopOrTaskIsKilled(t *testing.T, r *rand.Rand) {
 
 	system.Ask(mockActor, AskSchedulerToAddTask{
 		task: AllocateRequest{
-			ID:           TaskID(uuid.New().String()),
-			Name:         "mock_task",
-			Group:        mockActor,
-			SlotsNeeded:  1,
-			CanTerminate: true,
+			ID:          TaskID(uuid.New().String()),
+			Name:        "mock_task",
+			Group:       mockActor,
+			SlotsNeeded: 1,
 		},
 	}).Get()
 
