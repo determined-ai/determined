@@ -39,7 +39,7 @@ func TestAWSRequestWorkflowCloud(t *testing.T) {
 	err := check.Validate(config)
 	assert.NilError(t, err)
 
-	cluster, err := newAWSCluster(config)
+	cluster, err := newAWSCluster(config, nil)
 	assert.NilError(t, err)
 	err = cluster.dryRunRequests()
 	assert.NilError(t, err)

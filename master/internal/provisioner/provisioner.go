@@ -1,6 +1,7 @@
 package provisioner
 
 import (
+	"crypto/tls"
 	"time"
 
 	"github.com/pkg/errors"
@@ -12,6 +13,7 @@ import (
 
 const (
 	actionCooldown = 5 * time.Second
+	secureScheme   = "https"
 )
 
 // provisionerTick periodically triggers the provisioner to act.
@@ -43,7 +45,7 @@ type provider interface {
 }
 
 // New creates a new Provisioner.
-func New(config *Config) (*Provisioner, error) {
+func New(config *Config, cert *tls.Certificate) (*Provisioner, error) {
 	if err := config.initMasterAddress(); err != nil {
 		return nil, err
 	}
@@ -51,12 +53,12 @@ func New(config *Config) (*Provisioner, error) {
 	switch {
 	case config.AWS != nil:
 		var err error
-		if cluster, err = newAWSCluster(config); err != nil {
+		if cluster, err = newAWSCluster(config, cert); err != nil {
 			return nil, errors.Wrap(err, "cannot create an EC2 cluster")
 		}
 	case config.GCP != nil:
 		var err error
-		if cluster, err = newGCPCluster(config); err != nil {
+		if cluster, err = newGCPCluster(config, cert); err != nil {
 			return nil, errors.Wrap(err, "cannot create a GCP cluster")
 		}
 	}

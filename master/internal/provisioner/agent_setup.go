@@ -12,6 +12,7 @@ type agentSetupScriptConfig struct {
 	MasterPort                   string
 	StartupScriptBase64          string
 	ContainerStartupScriptBase64 string
+	MasterCertBase64             string
 	AgentDockerRuntime           string
 	AgentNetwork                 string
 	AgentDockerImage             string
