@@ -35,7 +35,13 @@ data:
       port: {{ .Values.db.port }}
       name: {{ .Values.db.name | quote }}
 
-    http_port: {{ .Values.httpPort }}
+    {{- if .Values.tlsSecret }}
+    security:
+      tls:
+        cert: {{ include "determined.secretPath" . }}tls.crt
+        key: {{ include "determined.secretPath" . }}tls.key
+    {{ end }}
+    port: {{ include "determined.masterPort" . }}
 
     scheduler:
       resource_provider:
