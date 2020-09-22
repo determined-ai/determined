@@ -9,7 +9,7 @@ masterPort: 8080
 # TLS termination in a load-balancer.
 useNodePortForMaster: false
 
-# tlsSecret enables TLS encryption for all communication with the Determined master (TLS
+# tlsSecret enables TLS encryption for all communication made to the Determined master (TLS
 # termination is performed in the Determined master). This includes communication between
 # the Determined master and the task containers it launches, but does not include communication
 # between the task containers (distributed training). The specified Secret of type tls must

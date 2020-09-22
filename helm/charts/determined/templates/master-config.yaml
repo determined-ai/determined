@@ -38,11 +38,10 @@ data:
     {{- if .Values.tlsSecret }}
     security:
       tls:
-        cert: /mount/determined/secrets/tls.crt
-        key: /mount/determined/secrets/tls.key
+        cert: {{- include "determined.secretPath" . | indent 1 -}}tls.crt
+        key: {{- include "determined.secretPath" . | indent 1 -}}tls.key
     {{ end }}
-    http_port: 8080
-    https_port: 8443
+    port: {{- include "determined.masterPort" . | indent 1 }}
 
     scheduler:
       resource_provider:

@@ -47,7 +47,7 @@ be created:
 #. ConfigMap containing configurations for the Determined master.
 
 #. LoadBalancer service to make the Determined master accessible. Later
-   in this guide, we descrive how it is possible to replace this with a
+   in this guide, we describe how it is possible to replace this with a
    NodePort service.
 
 #. ServiceAcccount which will be used by the Determined master.
