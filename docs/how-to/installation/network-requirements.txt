@@ -55,10 +55,10 @@ Master
 
 The Determined master needs the following network access:
 
--  Inbound TCP to the master's HTTP and/or HTTPS ports from the
-   Determined agent instances, as well as all machines where developers
-   want to use the Determined CLI. The default HTTP port is ``8080``. If
-   HTTPS is enabled, the default HTTPS port is ``8443``.
+-  Inbound TCP to the master's network port from the Determined agent
+   instances, as well as all machines where developers want to use the
+   Determined CLI or WebUI. The default port is ``8443`` if TLS is
+   enabled and ``8080`` if not.
 
 -  Outbound TCP to all ports on the Determined agents.
 
@@ -69,8 +69,8 @@ Determined agents need the following network access:
 
 -  Inbound TCP from all ports on the master to all ports on the agent.
 
--  Outbound TCP from all ports on the agent to the master's HTTP port
-   (``8080`` by default).
+-  Outbound TCP from all ports on the agent to the master's network
+   port.
 
 -  Inbound and outbound TCP on all ports to and from each Determined
    agent.

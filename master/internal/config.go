@@ -2,6 +2,7 @@ package internal
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 
 	"github.com/pkg/errors"
@@ -45,11 +46,9 @@ func DefaultConfig() *Config {
 				User:  "root",
 				Group: "root",
 			},
-			HTTP: true,
 		},
-		GRPCPort:          8090,
-		HTTPPort:          8080,
-		HTTPSPort:         8443,
+		// If left unspecified, the port is later filled in with 8080 (no TLS) or 8443 (TLS).
+		Port:              0,
 		CheckpointStorage: c,
 		HarnessPath:       "/opt/determined",
 		Root:              "/usr/share/determined/master",
@@ -76,9 +75,7 @@ type Config struct {
 	Security              SecurityConfig                    `json:"security"`
 	CheckpointStorage     CheckpointStorageConfig           `json:"checkpoint_storage"`
 	TaskContainerDefaults model.TaskContainerDefaultsConfig `json:"task_container_defaults"`
-	GRPCPort              int                               `json:"grpc_port"`
-	HTTPPort              int                               `json:"http_port"`
-	HTTPSPort             int                               `json:"https_port"`
+	Port                  int                               `json:"port"`
 	HarnessPath           string                            `json:"harness_path"`
 	Root                  string                            `json:"root"`
 	Telemetry             TelemetryConfig                   `json:"telemetry"`
@@ -210,13 +207,38 @@ func (c *CheckpointStorageConfig) UnmarshalJSON(data []byte) error {
 type SecurityConfig struct {
 	DefaultTask model.AgentUserGroup `json:"default_task"`
 	TLS         TLSConfig            `json:"tls"`
-	HTTP        bool                 `json:"http"`
 }
 
 // TLSConfig is the configuration for setting up serving over TLS.
 type TLSConfig struct {
 	Cert string `json:"cert"`
 	Key  string `json:"key"`
+}
+
+// Validate implements the check.Validatable interface.
+func (t *TLSConfig) Validate() []error {
+	var errs []error
+	if t.Cert == "" && t.Key != "" {
+		errs = append(errs, errors.New("TLS key file provided without a cert file"))
+	} else if t.Key == "" && t.Cert != "" {
+		errs = append(errs, errors.New("TLS cert file provided without a key file"))
+	}
+	return errs
+}
+
+// Enabled returns whether this configuration makes it possible to enable TLS.
+func (t *TLSConfig) Enabled() bool {
+	return t.Cert != "" && t.Key != ""
+}
+
+// ReadCertificate returns the certificate described by this configuration (nil if it does not allow
+// TLS to be enabled).
+func (t *TLSConfig) ReadCertificate() (*tls.Certificate, error) {
+	if !t.Enabled() {
+		return nil, nil
+	}
+	cert, err := tls.LoadX509KeyPair(t.Cert, t.Key)
+	return &cert, err
 }
 
 // TelemetryConfig is the configuration for telemetry.

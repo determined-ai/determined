@@ -3,6 +3,7 @@ package internal
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/pprof"
 	"path/filepath"
@@ -17,6 +18,7 @@ import (
 	"github.com/labstack/echo/middleware"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/soheilhy/cmux"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/command"
@@ -127,82 +129,53 @@ func (m *Master) getMasterLogs(c echo.Context) (interface{}, error) {
 	return entries, nil
 }
 
-func (m *Master) readTLSCertificate() (*tls.Certificate, error) {
-	certFile := m.config.Security.TLS.Cert
-	keyFile := m.config.Security.TLS.Key
-	switch {
-	case certFile == "" && keyFile != "":
-		return nil, errors.New("TLS key was provided without a cert")
-	case certFile != "" && keyFile == "":
-		return nil, errors.New("TLS cert was provided without a key")
-	case certFile != "" && keyFile != "":
-		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to load TLS files")
-		}
-		return &cert, nil
-	}
-	return nil, nil
-}
-
 func (m *Master) startServers(cert *tls.Certificate) error {
-	// Create the desired server configurations. The values of the servers map are descriptions to be
-	// used in making error messages more informative.
-	servers := make(map[*http.Server]string)
-
-	if m.config.Security.HTTP {
-		servers[&http.Server{
-			Addr: fmt.Sprintf(":%d", m.config.HTTPPort),
-		}] = "http server"
+	// Create the base TCP socket listener and, if configured, set up TLS wrapping.
+	baseListener, err := net.Listen("tcp", fmt.Sprintf(":%d", m.config.Port))
+	if err != nil {
+		return err
 	}
 
 	if cert != nil {
-		servers[&http.Server{
-			Addr: fmt.Sprintf(":%d", m.config.HTTPSPort),
-			TLSConfig: &tls.Config{
-				Certificates:             []tls.Certificate{*cert},
-				MinVersion:               tls.VersionTLS12,
-				PreferServerCipherSuites: true,
-			},
-		}] = "https server"
+		baseListener = tls.NewListener(baseListener, &tls.Config{
+			Certificates:             []tls.Certificate{*cert},
+			MinVersion:               tls.VersionTLS12,
+			PreferServerCipherSuites: true,
+		})
 	}
 
-	if len(servers) == 0 {
-		return errors.New("master was not configured to listen on any port")
+	// Initialize listeners and multiplexing.
+	if err := grpc.RegisterHTTPProxy(m.echo, m.config.Port, m.config.EnableCors, cert); err != nil {
+		return errors.Wrap(err, "failed to register gRPC gateway")
 	}
 
-	if err := grpc.RegisterHTTPProxy(m.echo, m.config.GRPCPort, m.config.EnableCors); err != nil {
-		return errors.Wrap(err, "failed to register gRPC proxy")
-	}
+	mux := cmux.New(baseListener)
+	grpcListener := mux.MatchWithWriters(
+		cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"),
+	)
+	httpListener := mux.Match(cmux.HTTP1(), cmux.HTTP2())
 
-	// Start all servers.
+	// Start all servers and return the first error. This leaks a channel, but the complexity of
+	// perfectly handling cleanup and all the error cases doesn't seem worth it for a function that is
+	// called exactly once and causes the whole process to exit immediately when it returns.
 	errs := make(chan error)
-	defer close(errs)
-
-	go func() {
-		errs <- grpc.StartGRPCServer(m.db, &apiServer{m: m}, m.config.GRPCPort)
-	}()
-
-	for server := range servers {
-		go func(server *http.Server) {
-			errs <- errors.Wrap(m.echo.StartServer(server), servers[server]+" failed")
-		}(server)
+	start := func(name string, run func() error) {
+		go func() {
+			errs <- errors.Wrap(run(), name+" failed")
+		}()
 	}
+	start("gRPC server", func() error {
+		return grpc.NewGRPCServer(m.db, &apiServer{m: m}).Serve(grpcListener)
+	})
+	start("HTTP server", func() error {
+		m.echo.Listener = httpListener
+		m.echo.HidePort = true
+		return m.echo.StartServer(m.echo.Server)
+	})
+	start("cmux listener", mux.Serve)
 
-	// Wait for all servers to terminate; return only the first error received, if any (since we close
-	// all servers on error, other servers are likely to return unhelpful "server closed" errors).
-	var firstErr error
-	for range servers {
-		if err := <-errs; err != nil && firstErr == nil {
-			firstErr = err
-			for server, desc := range servers {
-				if cErr := server.Close(); cErr != nil {
-					log.Errorf("failed to close %s: %s", desc, cErr)
-				}
-			}
-		}
-	}
-	return firstErr
+	log.Infof("accepting incoming connections on port %d", m.config.Port)
+	return <-errs
 }
 
 func (m *Master) restoreExperiment(e *model.Experiment) {
@@ -322,7 +295,7 @@ func (m *Master) Run() error {
 	if err != nil {
 		return errors.Wrap(err, "could not fetch cluster id from database")
 	}
-	cert, err := m.readTLSCertificate()
+	cert, err := m.config.Security.TLS.ReadCertificate()
 	if err != nil {
 		return errors.Wrap(err, "failed to read TLS certificate")
 	}
