@@ -60,7 +60,7 @@ message KillTensorboardResponse {
     determined.tensorboard.v1.Tensorboard tensorboard = 1;
 }
 
-// Launch the requested tensorboard.
+// Request to launch a tensorboard.
 message LaunchTensorboardRequest {
     // List of source experiment ids.
     repeated int32 experiment_ids = 1;
