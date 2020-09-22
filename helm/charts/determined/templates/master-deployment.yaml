@@ -45,7 +45,7 @@ spec:
             readOnly: true
           {{- if .Values.tlsSecret }}
           - name: tls-secret
-            mountPath: {{- include "determined.secretPath" . | indent 1 }}
+            mountPath: {{ include "determined.secretPath" . }}
             readOnly: true
           {{ end }}
         resources:

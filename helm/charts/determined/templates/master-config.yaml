@@ -38,10 +38,10 @@ data:
     {{- if .Values.tlsSecret }}
     security:
       tls:
-        cert: {{- include "determined.secretPath" . | indent 1 -}}tls.crt
-        key: {{- include "determined.secretPath" . | indent 1 -}}tls.key
+        cert: {{ include "determined.secretPath" . }}tls.crt
+        key: {{ include "determined.secretPath" . }}tls.key
     {{ end }}
-    port: {{- include "determined.masterPort" . | indent 1 }}
+    port: {{ include "determined.masterPort" . }}
 
     scheduler:
       resource_provider:

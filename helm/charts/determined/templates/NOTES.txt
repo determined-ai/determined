@@ -18,7 +18,7 @@ kubectl get service determined-master-service-{{ .Release.Name }} -n {{ .Release
 {{ end -}}
 
 {{ $httpOrHttps := "http" }}
-{{- if .Values.tlsSecret }}
+{{- if .Values.tlsSecret -}}
   {{ $httpOrHttps = "https" }}
   {{ $secret := (lookup "v1" "Secret" .Release.Namespace (.Values.tlsSecret | toString) ) }}
   {{- if eq (len $secret) 0 }}
