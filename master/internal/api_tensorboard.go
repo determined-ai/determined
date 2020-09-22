@@ -3,8 +3,12 @@ package internal
 import (
 	"context"
 
+	"github.com/determined-ai/determined/master/internal/command"
+	"github.com/determined-ai/determined/master/internal/grpc"
+	"github.com/determined-ai/determined/master/internal/scheduler"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
 )
 
 var tensorboardsAddr = actor.Addr("tensorboard")
@@ -30,4 +34,45 @@ func (a *apiServer) KillTensorboard(
 	_ context.Context, req *apiv1.KillTensorboardRequest,
 ) (resp *apiv1.KillTensorboardResponse, err error) {
 	return resp, a.actorRequest(tensorboardsAddr.Child(req.TensorboardId).String(), req, &resp)
+}
+
+func (a *apiServer) LaunchTensorboard(
+	ctx context.Context, req *apiv1.LaunchTensorboardRequest,
+) (resp *apiv1.LaunchTensorboardResponse, err error) {
+
+	experimentIds := make([]int, 0)
+	trialIds := make([]int, 0)
+	for _, id := range req.ExperimentIds {
+		experimentIds = append(experimentIds, int(id))
+	}
+	for _, id := range req.TrialIds {
+		trialIds = append(trialIds, int(id))
+	}
+	tensorboardReq := command.TensorboardRequest{
+		ExperimentIDs: experimentIds,
+		TrialIDs:      trialIds,
+	}
+	user, _, err := grpc.GetUser(ctx, a.m.db)
+	if err != nil {
+		// TODO wrap errors
+		return nil, err
+	}
+
+	var tensorboardID scheduler.TaskID
+	err = a.actorRequest(
+		tensorboardsAddr.String(),
+		command.TensorboardRequestWithUser{Tensorboard: tensorboardReq, User: user},
+		&tensorboardID,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var tensorboardv1 *tensorboardv1.Tensorboard
+	err = a.actorRequest(tensorboardsAddr.Child(tensorboardID).String(), tensorboardv1, &tensorboardv1)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.LaunchTensorboardResponse{Tensorboard: tensorboardv1}, err
 }

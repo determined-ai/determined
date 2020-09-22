@@ -84,8 +84,18 @@ func unaryAuthInterceptor(db *db.PgDB) grpc.UnaryServerInterceptor {
 		ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
 	) (resp interface{}, err error) {
 		if info.FullMethod != "/determined.api.v1.Determined/Login" {
-			if _, _, err := GetUser(ctx, db); err != nil {
+			_, _, err := GetUser(ctx, db)
+			switch {
+			case err != nil:
 				return nil, err
+				// case !user.Active:
+				// 	return nil, echo.NewHTTPError(http.StatusForbidden)
+				// default:
+				// 	// Set data on the request context that might be useful to
+				// 	// event handlers.
+				// 	ctx.(*internalContext.DetContext).SetUser(*user)
+				// 	ctx.(*internalContext.DetContext).SetUserSession(*userSession)
+				// }
 			}
 		}
 		return handler(ctx, req)
