@@ -9,6 +9,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/tensorboardv1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/internal/status"
 )
 
 var tensorboardsAddr = actor.Addr("tensorboard")
@@ -54,8 +56,7 @@ func (a *apiServer) LaunchTensorboard(
 	}
 	user, _, err := grpc.GetUser(ctx, a.m.db)
 	if err != nil {
-		// TODO wrap errors
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to get the user")
 	}
 
 	var tensorboardID scheduler.TaskID
@@ -65,13 +66,17 @@ func (a *apiServer) LaunchTensorboard(
 		&tensorboardID,
 	)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to launch tensorboard")
 	}
 
 	var tensorboardv1 *tensorboardv1.Tensorboard
 	err = a.actorRequest(tensorboardsAddr.Child(tensorboardID).String(), tensorboardv1, &tensorboardv1)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to get the created tensorboard %s",
+			tensorboardID,
+		)
 	}
 
 	return &apiv1.LaunchTensorboardResponse{Tensorboard: tensorboardv1}, err
