@@ -27,7 +27,6 @@
     "history": "^4.10.1",
     "humanize-duration": "^3.23.1",
     "io-ts": "^2.2.8",
-    "js-sha512": "^0.8.0",
     "js-yaml": "^3.14.0",
     "monaco-editor-webpack-plugin": "^1.9.0",
     "plotly.js": "^1.54.7",
