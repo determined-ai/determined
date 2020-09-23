@@ -103,6 +103,7 @@ html_logo = "assets/images/logo.png"
 html_favicon = "assets/images/favicon.ico"
 
 html_theme_options = {
+    "canonical_url": "https://docs.determined.ai/latest/",
     "analytics_id": "UA-110089850-1",
     "kickfire_id": "258260",
     "collapse_navigation": False,
