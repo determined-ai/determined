@@ -10,6 +10,7 @@ import "google/protobuf/timestamp.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 
+// TrialValidation represents a validation entry presenting the searcher_metric.
 message TrialValidation {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
       json_schema: {
