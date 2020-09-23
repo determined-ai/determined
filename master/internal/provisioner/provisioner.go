@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/actor/actors"
 )
@@ -38,7 +38,6 @@ type Provisioner struct {
 
 type provider interface {
 	instanceType() instanceType
-	maxInstanceNum() int
 	list(ctx *actor.Context) ([]*Instance, error)
 	launch(ctx *actor.Context, instanceType instanceType, instanceNum int)
 	terminate(ctx *actor.Context, instanceIDs []string)
@@ -68,6 +67,8 @@ func New(config *Config, cert *tls.Certificate) (*Provisioner, error) {
 		scaleDecider: newScaleDecider(
 			time.Duration(config.MaxIdleAgentPeriod),
 			time.Duration(config.MaxAgentStartingPeriod),
+			maxDisconnectPeriod,
+			config.MaxInstances,
 		),
 	}, nil
 }
@@ -82,8 +83,8 @@ func (p *Provisioner) Receive(ctx *actor.Context) error {
 		p.provision(ctx)
 		actors.NotifyAfter(ctx, actionCooldown, provisionerTick{})
 
-	case scheduler.ViewSnapshot:
-		p.scaleDecider.updateSchedulerSnapshot(&msg)
+	case sproto.ScalingInfo:
+		p.scaleDecider.updateScalingInfo(&msg)
 
 	default:
 		return actor.ErrUnexpectedMessage(ctx)
@@ -110,18 +111,14 @@ func (p *Provisioner) provision(ctx *actor.Context) {
 	}
 
 	ctx.Log().Debug("scale happening")
-	toTerminate := p.scaleDecider.findInstancesToTerminate(
-		ctx, p.provider.maxInstanceNum(),
-	)
-	if len(toTerminate) > 0 {
-		p.provider.terminate(ctx, toTerminate)
+	if toTerminate := p.scaleDecider.findInstancesToTerminate(); len(toTerminate.InstanceIDs) > 0 {
+		ctx.Log().Infof("terminating %d instances: %s",
+			len(toTerminate.InstanceIDs), toTerminate.String())
+		p.provider.terminate(ctx, toTerminate.InstanceIDs)
 	}
 
-	numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(
-		p.provider.instanceType(),
-		p.provider.maxInstanceNum(),
-	)
-	if numToLaunch > 0 {
+	if numToLaunch := p.scaleDecider.calculateNumInstancesToLaunch(); numToLaunch > 0 {
+		ctx.Log().Infof("launching %d instances", numToLaunch)
 		p.provider.launch(ctx, p.provider.instanceType(), numToLaunch)
 	}
 }

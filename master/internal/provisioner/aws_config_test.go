@@ -48,7 +48,6 @@ func TestUnmarshalAWSClusterConfig(t *testing.T) {
 	"tag_value": "agent",
 	"root_volume_size": 120,
 	"instance_type": "p2.xlarge",
-	"max_instances": 10,
 	"iam_instance_profile_arn": "test_instance_profile"
 }`,
 		AWSClusterConfig{
@@ -65,7 +64,6 @@ func TestUnmarshalAWSClusterConfig(t *testing.T) {
 			TagValue:              "agent",
 			RootVolumeSize:        120,
 			InstanceType:          "p2.xlarge",
-			MaxInstances:          10,
 			IamInstanceProfileArn: "test_instance_profile",
 		},
 	}

@@ -54,7 +54,6 @@ func TestUnmarshalGCPClusterConfig(t *testing.T) {
 		"gpu_type": "nvidia-tesla-v100",
 		"gpu_num": 2
 	},
-	"max_instances": 100,
 	"operation_timeout_period": "5m"
 }`,
 		unmarshaled: GCPClusterConfig{
@@ -80,7 +79,6 @@ func TestUnmarshalGCPClusterConfig(t *testing.T) {
 				GPUType:     "nvidia-tesla-v100",
 				GPUNum:      2,
 			},
-			MaxInstances:           100,
 			OperationTimeoutPeriod: Duration(5 * time.Minute),
 		},
 	}

@@ -25,8 +25,9 @@ type DefaultRP struct {
 	taskList *taskList
 	groups   map[*actor.Ref]*group
 
-	provisioner     *actor.Ref
-	provisionerView *FilterableView
+	provisioner         *actor.Ref
+	slotsPerInstance    int
+	previousScalingInfo *sproto.ScalingInfo
 
 	reschedule bool
 
@@ -50,8 +51,9 @@ func NewDefaultRP(
 
 		taskList: newTaskList(),
 
-		provisioner:     provisioner,
-		provisionerView: newProvisionerView(provisionerSlotsPerInstance),
+		provisioner:         provisioner,
+		slotsPerInstance:    provisionerSlotsPerInstance,
+		previousScalingInfo: &sproto.ScalingInfo{},
 
 		reschedule: false,
 	}
@@ -136,11 +138,19 @@ func (d *DefaultRP) notifyOnStop(ctx *actor.Context, ref *actor.Ref, msg actor.M
 	}
 }
 
-func (d *DefaultRP) sendProvisionerView(ctx *actor.Context) {
-	if d.provisioner != nil {
-		if snapshot, updateMade := d.provisionerView.Update(d); updateMade {
-			ctx.Tell(d.provisioner, snapshot)
-		}
+func (d *DefaultRP) updateScalingInfo() bool {
+	desiredInstanceNum := calculateDesiredNewInstanceNum(d.taskList, d.slotsPerInstance)
+	agents := make(map[string]sproto.AgentSummary)
+	for _, agentState := range d.agents {
+		summary := newAgentSummary(agentState)
+		agents[summary.Name] = summary
+	}
+	return d.previousScalingInfo.Update(desiredInstanceNum, agents)
+}
+
+func (d *DefaultRP) sendScalingInfo(ctx *actor.Context) {
+	if d.provisioner != nil && d.updateScalingInfo() {
+		ctx.Tell(d.provisioner, *d.previousScalingInfo)
 	}
 }
 
@@ -197,7 +207,7 @@ func (d *DefaultRP) Receive(ctx *actor.Context) error {
 			for _, taskActor := range toRelease {
 				d.releaseResource(taskActor)
 			}
-			d.sendProvisionerView(ctx)
+			d.sendScalingInfo(ctx)
 		}
 		d.reschedule = false
 		reschedule = false

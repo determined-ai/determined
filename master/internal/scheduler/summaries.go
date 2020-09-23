@@ -3,6 +3,7 @@ package scheduler
 import (
 	"time"
 
+	"github.com/determined-ai/determined/master/internal/sproto"
 	cproto "github.com/determined-ai/determined/master/pkg/container"
 )
 
@@ -13,33 +14,6 @@ type TaskSummary struct {
 	RegisteredTime time.Time          `json:"registered_time"`
 	SlotsNeeded    int                `json:"slots_needed"`
 	Containers     []ContainerSummary `json:"containers"`
-}
-
-func (summary1 *TaskSummary) equals(summary2 *TaskSummary) bool {
-	if summary1.ID != summary2.ID ||
-		summary1.Name != summary2.Name ||
-		summary1.RegisteredTime != summary2.RegisteredTime ||
-		summary1.SlotsNeeded != summary2.SlotsNeeded {
-		return false
-	}
-
-	if len(summary1.Containers) != len(summary2.Containers) {
-		return false
-	}
-
-	containers := make(map[cproto.ID]*ContainerSummary)
-	for i := 0; i < len(summary1.Containers); i++ {
-		c := summary1.Containers[i]
-		containers[c.ID] = &c
-	}
-
-	for _, c2 := range summary2.Containers {
-		if c, ok := containers[c2.ID]; !ok || *c != c2 {
-			return false
-		}
-	}
-
-	return true
 }
 
 func newTaskSummary(request *AllocateRequest, allocated *ResourcesAllocated) TaskSummary {
@@ -59,15 +33,6 @@ func newTaskSummary(request *AllocateRequest, allocated *ResourcesAllocated) Tas
 	}
 }
 
-// AgentSummary contains information about an agent for external display.
-type AgentSummary struct {
-	Name string `json:"name"`
-}
-
-func (summary1 *AgentSummary) equals(summary2 *AgentSummary) bool {
-	return summary1.Name == summary2.Name
-}
-
 // ContainerSummary contains information about a task container for external display.
 type ContainerSummary struct {
 	TaskID TaskID    `json:"task_id"`
@@ -76,9 +41,10 @@ type ContainerSummary struct {
 }
 
 // newAgentSummary returns a new immutable view of the agent.
-func newAgentSummary(state *agentState) AgentSummary {
-	return AgentSummary{
-		Name: state.handler.Address().Local(),
+func newAgentSummary(state *agentState) sproto.AgentSummary {
+	return sproto.AgentSummary{
+		Name:   state.handler.Address().Local(),
+		IsIdle: state.numUsedSlots() == 0 && len(state.zeroSlotContainers) == 0,
 	}
 }
 

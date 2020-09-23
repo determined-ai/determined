@@ -111,10 +111,6 @@ func (c *gcpCluster) instanceType() instanceType {
 	return c.InstanceType
 }
 
-func (c *gcpCluster) maxInstanceNum() int {
-	return c.MaxInstances
-}
-
 func (c *gcpCluster) idFromInstance(inst *compute.Instance) string {
 	return fmt.Sprintf("%v", inst.Name)
 }
@@ -176,7 +172,6 @@ func (c *gcpCluster) launch(ctx *actor.Context, instanceType instanceType, insta
 		return
 	}
 
-	ctx.Log().Infof("inserting %d GCE instances", instanceNum)
 	var ops []*compute.Operation
 	for i := 0; i < instanceNum; i++ {
 		resp, err := c.insertInstance(instType)
@@ -217,11 +212,6 @@ func (c *gcpCluster) terminate(ctx *actor.Context, instances []string) {
 		return
 	}
 
-	ctx.Log().Infof(
-		"deleting %d GCE instances: %s",
-		len(instances),
-		instances,
-	)
 	var ops []*compute.Operation
 	for _, inst := range instances {
 		resp, err := c.deleteInstance(inst)

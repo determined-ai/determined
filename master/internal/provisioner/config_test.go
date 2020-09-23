@@ -20,6 +20,7 @@ func TestProvisionerConfigMissingFields(t *testing.T) {
 	expected := Config{
 		MaxIdleAgentPeriod:     Duration(5 * time.Minute),
 		MaxAgentStartingPeriod: Duration(5 * time.Minute),
+		MaxInstances:           5,
 		AgentDockerRuntime:     "runc",
 		AgentDockerNetwork:     "default",
 	}
@@ -56,6 +57,7 @@ func TestUnmarshalProvisionerConfigMasterURL(t *testing.T) {
 		AWS:                    &awsConfig,
 		MaxIdleAgentPeriod:     Duration(30 * time.Second),
 		MaxAgentStartingPeriod: Duration(30 * time.Second),
+		MaxInstances:           5,
 	}
 	assert.DeepEqual(t, config, unmarshaled)
 }
@@ -105,6 +107,7 @@ func TestUnmarshalProvisionerConfigWithAWS(t *testing.T) {
 		AgentDockerNetwork:     "default",
 		MaxIdleAgentPeriod:     Duration(30 * time.Second),
 		MaxAgentStartingPeriod: Duration(30 * time.Second),
+		MaxInstances:           5,
 	}
 	assert.DeepEqual(t, config, unmarshaled)
 }
@@ -137,6 +140,7 @@ func TestUnmarshalProvisionerConfigWithGCP(t *testing.T) {
 		AgentDockerNetwork:     "default",
 		MaxIdleAgentPeriod:     Duration(5 * time.Minute),
 		MaxAgentStartingPeriod: Duration(5 * time.Minute),
+		MaxInstances:           5,
 	}
 	assert.DeepEqual(t, config, unmarshaled)
 }

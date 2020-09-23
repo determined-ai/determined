@@ -6,7 +6,7 @@ import (
 
 	"gotest.tools/assert"
 
-	"github.com/determined-ai/determined/master/internal/scheduler"
+	"github.com/determined-ai/determined/master/internal/sproto"
 )
 
 func assertEqualInstancesMarked(t *testing.T, left, right map[string]time.Time) {
@@ -79,8 +79,7 @@ func TestFindInstancesToTerminate(t *testing.T) {
 	type testcase struct {
 		name string
 
-		scaleDecider   scaleDecider
-		maxInstanceNum int
+		scaleDecider scaleDecider
 
 		pastIdleInstanceAfter map[string]time.Time
 		toTerminate           []string
@@ -90,121 +89,149 @@ func TestFindInstancesToTerminate(t *testing.T) {
 			name: "terminate stopped instances",
 			scaleDecider: scaleDecider{
 				instanceSnapshot: map[string]*Instance{
-					"instance1": {
-						ID:        "instance1",
+					"stopped instance": {
+						ID:        "stopped instance",
 						AgentName: "agent1",
 						State:     Stopped,
 					},
-					"instance2": {
-						ID:         "instance2",
+					"running instance": {
+						ID:         "running instance",
 						LaunchTime: time.Now().Add(-time.Hour),
 						AgentName:  "agent2",
 						State:      Running,
 					},
 				},
-				connectedAgentSnapshot: map[string]*scheduler.AgentSummary{
-					"agent1": {
-						Name: "agent1",
-					},
-					"agent2": {
-						Name: "agent2",
-					},
+				connectedAgentSnapshot: map[string]sproto.AgentSummary{
+					"agent1": {Name: "agent1"},
+					"agent2": {Name: "agent2"},
 				},
+				maxInstanceNum: 10,
 			},
-			maxInstanceNum:        10,
 			pastIdleInstanceAfter: map[string]time.Time{},
-			toTerminate: []string{
-				"instance1",
-			},
+			toTerminate:           []string{"stopped instance"},
 		},
 		{
-			name: "terminate agents that are idle for a long time",
+			name: "terminate long idle agents",
 			scaleDecider: scaleDecider{
 				maxIdlePeriod: 10 * time.Minute,
-				idleAgentSnapshot: map[string]*scheduler.AgentSummary{
-					"agent1": {
-						Name: "agent1",
-					},
-					"agent2": {
-						Name: "agent2",
-					},
-					"agent3": {
-						Name: "agent3",
-					},
+				idleAgentSnapshot: map[string]sproto.AgentSummary{
+					"agent3": {Name: "agent3", IsIdle: true},
+					"agent4": {Name: "agent4", IsIdle: true},
+					"agent5": {Name: "agent5", IsIdle: true},
 				},
-				connectedAgentSnapshot: map[string]*scheduler.AgentSummary{
-					"agent1": {
-						Name: "agent1",
-					},
-					"agent2": {
-						Name: "agent2",
-					},
-					"agent3": {
-						Name: "agent3",
-					},
-					"agent4": {
-						Name: "agent4",
-					},
+				connectedAgentSnapshot: map[string]sproto.AgentSummary{
+					"agent1": {Name: "agent1"},
+					"agent2": {Name: "agent2"},
+					"agent3": {Name: "agent3", IsIdle: true},
+					"agent4": {Name: "agent4", IsIdle: true},
+					"agent5": {Name: "agent5", IsIdle: true},
 				},
 				instanceSnapshot: map[string]*Instance{
-					"instance1": {
-						ID:         "instance1",
+					"long occupied instance": {
+						ID:         "long occupied instance",
 						LaunchTime: time.Now().Add(-time.Hour),
 						AgentName:  "agent1",
 						State:      Running,
 					},
-					"instance2": {
-						ID:         "instance2",
+					"previous idle instance": {
+						ID:         "previous idle instance",
 						LaunchTime: time.Now().Add(-time.Hour),
 						AgentName:  "agent2",
 						State:      Running,
 					},
-					"instance3": {
-						ID:         "instance3",
+					"new idle instance": {
+						ID:         "new idle instance",
 						LaunchTime: time.Now().Add(-time.Hour),
 						AgentName:  "agent3",
 						State:      Running,
 					},
-					"instance4": {
-						ID:         "instance4",
+					"short idle instance": {
+						ID:         "short idle instance",
 						LaunchTime: time.Now().Add(-time.Hour),
 						AgentName:  "agent4",
 						State:      Running,
 					},
+					"long idle instance": {
+						ID:         "long idle instance",
+						LaunchTime: time.Now().Add(-time.Hour),
+						AgentName:  "agent5",
+						State:      Running,
+					},
 				},
 				pastIdleInstances: map[string]time.Time{
-					"instance1": time.Now().Add(-time.Hour),
-					"instance2": time.Now().Add(-time.Minute),
+					"previous idle instance": time.Now().Add(-time.Hour),
+					"short idle instance":    time.Now().Add(-time.Minute),
+					"long idle instance":     time.Now().Add(-time.Hour),
 				},
+				maxInstanceNum: 10,
 			},
-			maxInstanceNum: 10,
 			pastIdleInstanceAfter: map[string]time.Time{
-				"instance2": time.Now(),
-				"instance3": time.Now(),
+				"new idle instance":   time.Now(),
+				"short idle instance": time.Now(),
 			},
-			toTerminate: []string{
-				"instance1",
-			},
+			toTerminate: []string{"long idle instance"},
 		},
 		{
-			name: "terminate instances to the instance limit",
+			name: "terminate long disconnected instances",
 			scaleDecider: scaleDecider{
-				maxIdlePeriod: 10 * time.Minute,
-				idleAgentSnapshot: map[string]*scheduler.AgentSummary{
-					"agent1": {
-						Name: "agent1",
+				maxDisconnectPeriod: 10 * time.Minute,
+				instanceSnapshot: map[string]*Instance{
+					"connected instance": {
+						ID:         "connected instance",
+						LaunchTime: time.Now().Add(-time.Hour),
+						AgentName:  "agent1",
+						State:      Running,
+					},
+					"previous disconnected instance": {
+						ID:         "previous disconnected instance",
+						LaunchTime: time.Now().Add(-time.Hour),
+						AgentName:  "agent2",
+						State:      Running,
+					},
+					"new disconnected instance": {
+						ID:         "new disconnected instance",
+						LaunchTime: time.Now().Add(-time.Hour),
+						AgentName:  "agent3",
+						State:      Running,
+					},
+					"short disconnected instance": {
+						ID:         "short disconnected instance",
+						LaunchTime: time.Now().Add(-time.Hour),
+						AgentName:  "agent4",
+						State:      Running,
+					},
+					"long disconnected instance": {
+						ID:         "long disconnected instance",
+						LaunchTime: time.Now().Add(-time.Hour),
+						AgentName:  "agent5",
+						State:      Running,
 					},
 				},
-				connectedAgentSnapshot: map[string]*scheduler.AgentSummary{
-					"agent1": {
-						Name: "agent1",
-					},
-					"agent2": {
-						Name: "agent2",
-					},
-					"agent3": {
-						Name: "agent3",
-					},
+				connectedAgentSnapshot: map[string]sproto.AgentSummary{
+					"agent1": {Name: "agent1"},
+					"agent2": {Name: "agent2"},
+				},
+				pastDisconnectedInstances: map[string]time.Time{
+					"previous disconnected instance": time.Now().Add(-time.Hour),
+					"short disconnected instance":    time.Now().Add(-time.Minute),
+					"long disconnected instance":     time.Now().Add(-time.Hour),
+				},
+				maxInstanceNum: 10,
+			},
+			pastIdleInstanceAfter: map[string]time.Time{},
+			toTerminate:           []string{"long disconnected instance"},
+		},
+		{
+			name: "terminate instances due to max instance",
+			scaleDecider: scaleDecider{
+				maxIdlePeriod: 10 * time.Minute,
+				idleAgentSnapshot: map[string]sproto.AgentSummary{
+					"agent1": {Name: "agent1", IsIdle: true},
+				},
+				connectedAgentSnapshot: map[string]sproto.AgentSummary{
+					"agent1": {Name: "agent1", IsIdle: true},
+					"agent2": {Name: "agent2"},
+					"agent3": {Name: "agent3"},
 				},
 				instanceSnapshot: map[string]*Instance{
 					"instance1": {
@@ -227,134 +254,16 @@ func TestFindInstancesToTerminate(t *testing.T) {
 					},
 				},
 				pastIdleInstances: map[string]time.Time{},
+				maxInstanceNum:    1,
 			},
-			maxInstanceNum: 1,
-			toTerminate: []string{
-				"instance1",
-				"instance3",
-			},
-		},
-		{
-			name: "overall besides the instance limit",
-			scaleDecider: scaleDecider{
-				maxIdlePeriod: 10 * time.Minute,
-				idleAgentSnapshot: map[string]*scheduler.AgentSummary{
-					"agent1": {
-						Name: "agent1",
-					},
-					"agent2": {
-						Name: "agent2",
-					},
-					"agent3": {
-						Name: "agent3",
-					},
-					"agent4": {
-						Name: "agent4",
-					},
-				},
-				connectedAgentSnapshot: map[string]*scheduler.AgentSummary{
-					"agent1": {
-						Name: "agent1",
-					},
-					"agent2": {
-						Name: "agent2",
-					},
-					"agent3": {
-						Name: "agent3",
-					},
-					"agent4": {
-						Name: "agent4",
-					},
-					"agent5": {
-						Name: "agent5",
-					},
-				},
-				instanceSnapshot: map[string]*Instance{
-					"instance1": {
-						ID:         "instance1",
-						LaunchTime: time.Now().Add(-time.Hour),
-						AgentName:  "agent1",
-						State:      Stopped,
-					},
-					"instance2": {
-						ID:         "instance2",
-						LaunchTime: time.Now().Add(-time.Hour),
-						AgentName:  "agent2",
-						State:      Running,
-					},
-					"instance3": {
-						ID:         "instance3",
-						LaunchTime: time.Now().Add(-time.Hour),
-						AgentName:  "agent3",
-						State:      Running,
-					},
-					"instance4": {
-						ID:         "instance4",
-						LaunchTime: time.Now().Add(-time.Hour),
-						AgentName:  "agent4",
-						State:      Running,
-					},
-					"instance5": {
-						ID:         "instance5",
-						LaunchTime: time.Now().Add(-time.Hour),
-						AgentName:  "agent5",
-						State:      Running,
-					},
-				},
-				pastIdleInstances: map[string]time.Time{
-					"instance1": time.Now().Add(-time.Hour),
-					"instance2": time.Now().Add(-time.Hour),
-					"instance3": time.Now().Add(-time.Minute),
-				},
-			},
-			maxInstanceNum: 10,
-			pastIdleInstanceAfter: map[string]time.Time{
-				"instance3": time.Now(),
-				"instance4": time.Now(),
-			},
-			toTerminate: []string{
-				"instance1",
-				"instance2",
-			},
-		},
-		{
-			name: "terminate un-connected instances",
-			scaleDecider: scaleDecider{
-				instanceSnapshot: map[string]*Instance{
-					"instance1": {
-						ID:         "instance1",
-						LaunchTime: time.Now().Add(-time.Hour),
-						AgentName:  "agent1",
-						State:      Running,
-					},
-					"instance2": {
-						ID:         "instance2",
-						LaunchTime: time.Now().Add(-time.Hour),
-						AgentName:  "agent2",
-						State:      Running,
-					},
-				},
-				connectedAgentSnapshot: map[string]*scheduler.AgentSummary{
-					"agent2": {
-						Name: "agent2",
-					},
-				},
-				pastDisconnectedInstances: map[string]time.Time{
-					"instance1": time.Now().Add(-time.Hour),
-				},
-			},
-			maxInstanceNum:        10,
-			pastIdleInstanceAfter: map[string]time.Time{},
-			toTerminate: []string{
-				"instance1",
-			},
+			toTerminate: []string{"instance1", "instance3"},
 		},
 	}
 	for idx := range tcs {
 		tc := tcs[idx]
 		t.Run(tc.name, func(t *testing.T) {
-			toTerminate := tc.scaleDecider.findInstancesToTerminate(nil, tc.maxInstanceNum)
-			assert.DeepEqual(t, newInstanceIDSet(toTerminate), newInstanceIDSet(tc.toTerminate))
+			toTerminate := tc.scaleDecider.findInstancesToTerminate()
+			assert.DeepEqual(t, newInstanceIDSet(toTerminate.InstanceIDs), newInstanceIDSet(tc.toTerminate))
 			assertEqualInstancesMarked(t, tc.scaleDecider.pastIdleInstances, tc.pastIdleInstanceAfter)
 		})
 	}
@@ -362,188 +271,80 @@ func TestFindInstancesToTerminate(t *testing.T) {
 
 func TestCalculateNumInstancesToLaunch(t *testing.T) {
 	type testcase struct {
-		name string
-
-		maxAgentStartingPeriod time.Duration
-
-		slotsNeeded      []int
-		instanceSnapshot map[string]*Instance
-		instanceType     instanceType
-		maxInstanceNum   int
-
-		numToLaunch int
+		name         string
+		scaleDecider scaleDecider
+		numToLaunch  int
 	}
 	var tcs = []testcase{
 		{
-			name:                   "empty pending tasks",
-			maxAgentStartingPeriod: 10 * time.Minute,
-			slotsNeeded:            nil,
-			instanceType: TestInstanceType{
-				Name:  "test.instanceType",
-				Slots: 1,
-			},
-			maxInstanceNum: 10,
-			numToLaunch:    0,
-		},
-		{
-			name:        "zero instance slot",
-			slotsNeeded: []int{1, 2, 1, 1},
-			instanceType: TestInstanceType{
-				Name:  "test.instanceType",
-				Slots: 0,
-			},
-			maxInstanceNum: 10,
-			numToLaunch:    0,
-		},
-		{
-			name:        "zero size task",
-			slotsNeeded: []int{0, 0, 0, 0},
-			instanceType: TestInstanceType{
-				Name:  "test.instanceType",
-				Slots: 2,
-			},
-			maxInstanceNum: 10,
-			numToLaunch:    1,
-		},
-		{
-			name:        "zero size task",
-			slotsNeeded: []int{0, 2},
-			instanceType: TestInstanceType{
-				Name:  "test.instanceType",
-				Slots: 2,
-			},
-			maxInstanceNum: 10,
-			numToLaunch:    1,
-		},
-		{
-			name:        "oversized task",
-			slotsNeeded: []int{1, 2, 3, 1},
-			instanceType: TestInstanceType{
-				Name:  "test.instanceType",
-				Slots: 1,
-			},
-			maxInstanceNum: 10,
-			numToLaunch:    7,
-		},
-		{
-			name:        "big task",
-			slotsNeeded: []int{3, 3, 3, 3},
-			instanceType: TestInstanceType{
-				Name:  "test.instanceType",
-				Slots: 4,
-			},
-			maxInstanceNum: 10,
-			numToLaunch:    3,
-		},
-		{
-			name:        "fill small gap",
-			slotsNeeded: []int{3, 3, 3, 1},
-			instanceType: TestInstanceType{
-				Name:  "test.instanceType",
-				Slots: 4,
-			},
-			maxInstanceNum: 10,
-			numToLaunch:    3,
-		},
-		{
-			name:        "fill gaps",
-			slotsNeeded: []int{3, 2, 1, 1, 3},
-			instanceType: TestInstanceType{
-				Name:  "test.instanceType",
-				Slots: 4,
-			},
-			maxInstanceNum: 10,
-			numToLaunch:    3,
-		},
-		{
-			name:        "fill gaps",
-			slotsNeeded: []int{3, 2, 1, 1, 3},
-			instanceType: TestInstanceType{
-				Name:  "test.instanceType",
-				Slots: 4,
-			},
-			maxInstanceNum: 10,
-			numToLaunch:    3,
-		},
-		{
-			name:        "max instance num",
-			slotsNeeded: []int{3, 3, 3, 3},
-			instanceSnapshot: map[string]*Instance{
-				"instance1": {
-					ID:         "instance1",
-					LaunchTime: time.Now().Add(-time.Hour),
-					AgentName:  "agent1",
-					State:      Running,
+			name: "keep under max instance num",
+			scaleDecider: scaleDecider{
+				maxStartingPeriod: time.Minute,
+				maxInstanceNum:    2,
+				instanceSnapshot: map[string]*Instance{
+					"instance1": {
+						ID:         "instance1",
+						LaunchTime: time.Now().Add(-time.Hour),
+						AgentName:  "agent1",
+						State:      Running,
+					},
 				},
+				desiredNewInstanceNum: 4,
 			},
-			instanceType: TestInstanceType{
-				Name:  "test.instanceType",
-				Slots: 4,
-			},
-			maxInstanceNum: 2,
-			numToLaunch:    1,
+			numToLaunch: 1,
 		},
 		{
-			name:                   "provision less if having starting instances",
-			maxAgentStartingPeriod: 10 * time.Minute,
-			slotsNeeded:            []int{3, 3, 3, 3},
-			instanceSnapshot: map[string]*Instance{
-				"instance1": {
-					ID:         "instance1",
-					LaunchTime: time.Now().Add(-time.Hour),
-					AgentName:  "agent1",
-					State:      Running,
+			name: "provision less if having starting instances",
+			scaleDecider: scaleDecider{
+				maxStartingPeriod: 10 * time.Minute,
+				maxInstanceNum:    10,
+				instanceSnapshot: map[string]*Instance{
+					"running instance": {
+						ID:         "running instance",
+						LaunchTime: time.Now().Add(-time.Hour),
+						AgentName:  "agent1",
+						State:      Running,
+					},
+					"starting instance": {
+						ID:         "starting instance",
+						LaunchTime: time.Now().Add(-time.Minute),
+						AgentName:  "agent2",
+						State:      Running,
+					},
 				},
-				"instance2": {
-					ID:         "instance2",
-					LaunchTime: time.Now().Add(-time.Minute),
-					AgentName:  "agent2",
-					State:      Running,
-				},
+				desiredNewInstanceNum: 4,
 			},
-			instanceType: TestInstanceType{
-				Name:  "test.instanceType",
-				Slots: 3,
-			},
-			maxInstanceNum: 10,
-			numToLaunch:    3,
+			numToLaunch: 3,
 		},
 		{
-			name:                   "starting instances already more than needed",
-			maxAgentStartingPeriod: 10 * time.Minute,
-			slotsNeeded:            []int{3},
-			instanceSnapshot: map[string]*Instance{
-				"instance1": {
-					ID:         "instance1",
-					LaunchTime: time.Now().Add(-time.Hour),
-					AgentName:  "agent1",
-					State:      Running,
+			name: "starting instances already more than needed",
+			scaleDecider: scaleDecider{
+				maxStartingPeriod: 10 * time.Minute,
+				maxInstanceNum:    10,
+				instanceSnapshot: map[string]*Instance{
+					"instance1": {
+						ID:         "instance1",
+						LaunchTime: time.Now().Add(-time.Minute),
+						AgentName:  "agent1",
+						State:      Running,
+					},
+					"instance2": {
+						ID:         "instance2",
+						LaunchTime: time.Now().Add(-time.Minute),
+						AgentName:  "agent2",
+						State:      Running,
+					},
 				},
-				"instance2": {
-					ID:         "instance2",
-					LaunchTime: time.Now().Add(-time.Minute),
-					AgentName:  "agent2",
-					State:      Running,
-				},
+				desiredNewInstanceNum: 1,
 			},
-			instanceType: TestInstanceType{
-				Name:  "test.instanceType",
-				Slots: 3,
-			},
-			maxInstanceNum: 10,
-			numToLaunch:    0,
+			numToLaunch: 0,
 		},
 	}
 
 	for idx := range tcs {
 		tc := tcs[idx]
 		t.Run(tc.name, func(t *testing.T) {
-			s := &scaleDecider{
-				maxStartingPeriod: tc.maxAgentStartingPeriod,
-				taskSnapshot:      newTasks(tc.slotsNeeded),
-				instanceSnapshot:  tc.instanceSnapshot,
-			}
-			actual := s.calculateNumInstancesToLaunch(tc.instanceType, tc.maxInstanceNum)
+			actual := tc.scaleDecider.calculateNumInstancesToLaunch()
 			assert.Equal(t, actual, tc.numToLaunch)
 		})
 	}

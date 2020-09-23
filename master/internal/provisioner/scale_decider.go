@@ -4,8 +4,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/determined-ai/determined/master/internal/scheduler"
-	"github.com/determined-ai/determined/master/pkg/actor"
+	"github.com/determined-ai/determined/master/internal/sproto"
 )
 
 const (
@@ -30,26 +29,29 @@ type scaleDecider struct {
 	maxIdlePeriod       time.Duration
 	maxStartingPeriod   time.Duration
 	maxDisconnectPeriod time.Duration
+	maxInstanceNum      int
 
 	lastProvision          time.Time
 	lastSchedulerUpdated   time.Time
 	lastProviderUpdated    time.Time
 	instanceSnapshot       map[string]*Instance
-	idleAgentSnapshot      map[string]*scheduler.AgentSummary
-	connectedAgentSnapshot map[string]*scheduler.AgentSummary
-	taskSnapshot           []*scheduler.TaskSummary
+	idleAgentSnapshot      map[string]sproto.AgentSummary
+	connectedAgentSnapshot map[string]sproto.AgentSummary
+
+	desiredNewInstanceNum int
 
 	pastIdleInstances         map[string]time.Time
 	pastDisconnectedInstances map[string]time.Time
 }
 
 func newScaleDecider(
-	maxIdlePeriod time.Duration, maxStartingPeriod time.Duration,
+	maxIdlePeriod, maxStartingPeriod, maxDisconnectPeriod time.Duration, maxInstanceNum int,
 ) *scaleDecider {
 	return &scaleDecider{
 		maxStartingPeriod:   maxStartingPeriod,
 		maxIdlePeriod:       maxIdlePeriod,
 		maxDisconnectPeriod: maxDisconnectPeriod,
+		maxInstanceNum:      maxInstanceNum,
 	}
 }
 
@@ -58,6 +60,7 @@ func newScaleDecider(
 // 1. The time has passed over the minimum retrying interval since last provision.
 // 2. last provision < last update + the maximum agent starting period.
 // 3. last provision < last update + the maximum agent idle period.
+// 3. last provision < last update + the maximum agent disconnected period.
 func (s *scaleDecider) needScale() bool {
 	lastUpdated := s.lastProviderUpdated
 	if lastUpdated.Before(s.lastSchedulerUpdated) {
@@ -67,25 +70,24 @@ func (s *scaleDecider) needScale() bool {
 	now := time.Now()
 	if now.After(s.lastProvision.Add(minRetryInterval)) ||
 		s.lastProvision.Before(lastUpdated.Add(s.maxStartingPeriod)) ||
-		s.lastProvision.Before(lastUpdated.Add(s.maxIdlePeriod)) {
+		s.lastProvision.Before(lastUpdated.Add(s.maxIdlePeriod)) ||
+		s.lastProvision.Before(lastUpdated.Add(s.maxDisconnectPeriod)) {
 		s.lastProvision = now
 		return true
 	}
 	return false
 }
 
-func (s *scaleDecider) updateSchedulerSnapshot(snapshot *scheduler.ViewSnapshot) {
-	s.idleAgentSnapshot = make(map[string]*scheduler.AgentSummary)
-	for _, agent := range snapshot.IdleAgents {
-		s.idleAgentSnapshot[agent.Name] = agent
-	}
-
-	s.connectedAgentSnapshot = make(map[string]*scheduler.AgentSummary)
-	for _, agent := range snapshot.ConnectedAgents {
+func (s *scaleDecider) updateScalingInfo(info *sproto.ScalingInfo) {
+	s.desiredNewInstanceNum = info.DesiredNewInstanceNum
+	s.idleAgentSnapshot = make(map[string]sproto.AgentSummary)
+	s.connectedAgentSnapshot = make(map[string]sproto.AgentSummary)
+	for _, agent := range info.Agents {
+		if agent.IsIdle {
+			s.idleAgentSnapshot[agent.Name] = agent
+		}
 		s.connectedAgentSnapshot[agent.Name] = agent
 	}
-
-	s.taskSnapshot = snapshot.Tasks
 	s.lastSchedulerUpdated = time.Now()
 }
 
@@ -111,11 +113,8 @@ func (s *scaleDecider) updateInstanceSnapshot(instances []*Instance) bool {
 	return false
 }
 
-func (s *scaleDecider) findInstancesToTerminate(
-	ctx *actor.Context,
-	maxInstanceNum int,
-) []string {
-	toTerminate := make(map[string]bool)
+func (s *scaleDecider) findInstancesToTerminate() sproto.TerminateDecision {
+	toTerminate := make(map[string]string)
 	idleInstances := make(map[string]bool)
 	disconnectedInstances := make(map[string]bool)
 
@@ -124,7 +123,7 @@ func (s *scaleDecider) findInstancesToTerminate(
 	for _, inst := range s.instanceSnapshot {
 		switch inst.State {
 		case Stopped:
-			toTerminate[inst.ID] = true
+			toTerminate[inst.ID] = sproto.TerminateStoppedInstances
 
 		case Running:
 			if _, ok := s.idleAgentSnapshot[inst.AgentName]; ok {
@@ -142,11 +141,11 @@ func (s *scaleDecider) findInstancesToTerminate(
 	}
 
 	// Terminate instances that have not connected to the master for a long time.
-	var longUnconnected map[string]bool
-	s.pastDisconnectedInstances, longUnconnected = findInstancesLongInSameState(
+	var longDisconnected map[string]bool
+	s.pastDisconnectedInstances, longDisconnected = findInstancesLongInSameState(
 		s.pastDisconnectedInstances, disconnectedInstances, s.maxDisconnectPeriod)
-	for id := range longUnconnected {
-		toTerminate[id] = true
+	for id := range longDisconnected {
+		toTerminate[id] = sproto.TerminateLongDisconnectedInstances
 	}
 
 	// Terminate instances that are idle for a long time.
@@ -154,19 +153,19 @@ func (s *scaleDecider) findInstancesToTerminate(
 	s.pastIdleInstances, longIdle = findInstancesLongInSameState(
 		s.pastIdleInstances, idleInstances, s.maxIdlePeriod)
 	for id := range longIdle {
-		toTerminate[id] = true
+		toTerminate[id] = sproto.TerminateLongIdleInstances
 	}
 
-	// Terminate instances to keep the number of instances less than the limit. We start by
-	// terminating instances that are idle and haven't been terminated.
-	// Then we terminate the ones that are most recently provisioned.
-	numExceeds := len(s.instanceSnapshot) - maxInstanceNum
+	// Terminate instances to keep the number of instances less than than the desired size.
+	// We start by terminating idle instances then terminating the most recently
+	// provisioned instances
+	numExceeds := len(s.instanceSnapshot) - s.maxInstanceNum
 	for inst := range s.pastIdleInstances {
 		if len(toTerminate) >= numExceeds {
 			break
 		}
 		delete(s.pastIdleInstances, inst)
-		toTerminate[inst] = true
+		toTerminate[inst] = sproto.InstanceNumberExceedsMaximum
 	}
 	instances := make([]*Instance, 0)
 	for _, inst := range s.instanceSnapshot {
@@ -176,53 +175,36 @@ func (s *scaleDecider) findInstancesToTerminate(
 		return instances[i].LaunchTime.After(instances[j].LaunchTime)
 	})
 	for i := 0; i < len(instances) && len(toTerminate) < numExceeds; i++ {
-		toTerminate[instances[i].ID] = true
+		toTerminate[instances[i].ID] = sproto.InstanceNumberExceedsMaximum
 	}
 
-	res := make([]string, 0, len(toTerminate))
+	res := sproto.TerminateDecision{}
+	res.Reasons = toTerminate
+	res.InstanceIDs = make([]string, 0, len(toTerminate))
 	for inst := range toTerminate {
-		res = append(res, inst)
+		res.InstanceIDs = append(res.InstanceIDs, inst)
 	}
 	return res
 }
 
-func (s *scaleDecider) calculateNumInstancesToLaunch(
-	instanceType instanceType,
-	maxInstanceNum int,
-) int {
-	if instanceType.slots() == 0 {
-		return 0
-	}
-
-	instances := make([]*Instance, 0, len(s.instanceSnapshot))
+func (s *scaleDecider) calculateNumInstancesToLaunch() int {
+	now := time.Now()
+	numRecentlyLaunched := 0
 	for _, inst := range s.instanceSnapshot {
 		switch inst.State {
 		case Starting, Running:
-			instances = append(instances, inst)
+			// Check recently launched unconnected instances.
+			if _, connected := s.connectedAgentSnapshot[inst.AgentName]; connected {
+				continue
+			}
+			if inst.LaunchTime.Add(s.maxStartingPeriod).After(now) {
+				numRecentlyLaunched++
+			}
 		}
 	}
 
-	slotSum := 0
-	for _, t := range s.taskSnapshot {
-		slotSum += t.SlotsNeeded
-	}
-	numNeeded := (slotSum + instanceType.slots() - 1) / instanceType.slots()
-	if len(instances) == 0 && len(s.taskSnapshot) > 0 && numNeeded == 0 {
-		numNeeded = 1
-	}
-
-	// Check recently launched instances and subtract them from the total needed number.
-	now := time.Now()
-	numRecentlyLaunched := 0
-	for _, inst := range instances {
-		if inst.LaunchTime.Add(s.maxStartingPeriod).After(now) {
-			numRecentlyLaunched++
-		}
-	}
-
-	numToLaunch := numNeeded - numRecentlyLaunched
-	numToLaunch = min(numToLaunch, maxInstanceNum-len(instances))
-	return max(0, numToLaunch)
+	desiredNum := min(s.desiredNewInstanceNum, s.maxInstanceNum-len(s.instanceSnapshot))
+	return max(0, desiredNum-numRecentlyLaunched)
 }
 
 func max(a, b int) int {
