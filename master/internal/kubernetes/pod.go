@@ -11,6 +11,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/agent"
 	"github.com/determined-ai/determined/master/pkg/container"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	k8sV1 "k8s.io/api/core/v1"
@@ -47,6 +48,7 @@ type pod struct {
 	container        container.Container
 	ports            []int
 	resourcesDeleted bool
+	containerNames   map[string]bool
 }
 
 type getPodNodeInfo struct{}
@@ -77,6 +79,10 @@ func newPod(
 	}
 	uniqueName := configureUniqueName(msg.Spec)
 
+	// The lifecycle of the containers specified in this map will be monitored.
+	// As soon as one or more of them exits outs, the pod will be terminated.
+	containerNames := map[string]bool{model.DeterminedK8ContainerName: true}
+
 	return &pod{
 		cluster:                  cluster,
 		clusterID:                clusterID,
@@ -94,6 +100,7 @@ func newPod(
 		podName:                  uniqueName,
 		configMapName:            uniqueName,
 		container:                podContainer,
+		containerNames:           containerNames,
 	}
 }
 
@@ -196,48 +203,33 @@ func (p *pod) receiveResourceCreationFailed(ctx *actor.Context, msg resourceCrea
 func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) error {
 	p.pod = msg.updatedPod
 
-	switch msg.updatedPod.Status.Phase {
-	case k8sV1.PodPending:
-		// When pods are deleted, Kubernetes sometimes transitions pod statuses to pending prior
-		// to deleting them. In these cases we have observed that we do not always receive a PodFailed
-		// or a PodSucceeded message. We check if pods have a set pod deletion timestamp to see if this
-		// is the case.
-		if p.pod.ObjectMeta.DeletionTimestamp != nil {
-			p.processMissingPodDeletion(ctx)
-			return nil
-		}
+	containerState, err := getContainerState(ctx, p.pod, p.containerNames)
+	if err != nil {
+		return err
+	}
 
-		containerState := getContainerState(msg.updatedPod.Status.Conditions)
-		if containerState == container.Running {
-			ctx.Log().Errorf("unexpected containers status while pod is pending")
-		}
+	if containerState == p.container.State {
+		return nil
+	}
 
-		if containerState == p.container.State {
-			return nil
-		}
+	switch containerState {
+	case container.Assigned:
+		// Don't need to do anything.
 
-		if containerState == container.Starting {
-			// Kubernetes does not have an explicit state for pulling container
-			// images. We insert it here because our  current implementation of
-			// the trial actor requires it.
-			ctx.Log().Infof("transitioning pod state from %s to %s",
-				p.container.State, container.Pulling)
-			p.container = p.container.Transition(container.Pulling)
-
-			rsc := sproto.TaskContainerStateChanged{Container: p.container}
-			ctx.Tell(p.taskActor, rsc)
-		}
+	case container.Starting:
+		// Kubernetes does not have an explicit state for pulling container images.
+		// We insert it here because our  current implementation of the trial actor requires it.
+		ctx.Log().Infof(
+			"transitioning pod state from %s to %s", p.container.State, container.Pulling)
+		p.container = p.container.Transition(container.Pulling)
+		ctx.Tell(p.taskActor, sproto.TaskContainerStateChanged{Container: p.container})
 
 		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
-		p.container = p.container.Transition(containerState)
+		p.container = p.container.Transition(container.Starting)
+		ctx.Tell(p.taskActor, sproto.TaskContainerStateChanged{Container: p.container})
 
-		rsc := sproto.TaskContainerStateChanged{Container: p.container}
-		ctx.Tell(p.taskActor, rsc)
-
-	case k8sV1.PodRunning:
-		if p.container.State == container.Running {
-			return nil
-		}
+	case container.Running:
+		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(container.Running)
 
 		logStreamer, err := newPodLogStreamer(p.podInterface, p.podName, ctx.Self())
@@ -259,74 +251,44 @@ func (p *pod) receivePodStatusUpdate(ctx *actor.Context, msg podStatusUpdate) er
 		}
 		p.informTaskContainerStarted(ctx, sproto.TaskContainerStarted{Addresses: addresses})
 
-	case k8sV1.PodFailed:
-		if p.container.State == container.Terminated {
-			return nil
-		}
-
-		exitCode, exitMessage, err := getExitCodeAndMessage(p.pod)
+	case container.Terminated:
+		exitCode, exitMessage, err := getExitCodeAndMessage(p.pod, p.containerNames)
 		if err != nil {
-			return err
+			// When a pod is deleted, it is possible that it will exit before the
+			// determined containers generates an exit code. To check if this is
+			// the case we check if a deletion timestamp has been set.
+			if p.pod.ObjectMeta.DeletionTimestamp != nil {
+				ctx.Log().Info("unable to get exit code for pod setting exit code to 137")
+				exitCode = 137
+				exitMessage = ""
+			} else {
+				return err
+			}
 		}
-		ctx.Log().Infof("pod failed with exit code: %d %s", exitCode, exitMessage)
 
-		p.container = p.container.Transition(container.Terminated)
-		exitCodeConverted := agent.ExitCode(exitCode)
-
-		p.informTaskContainerStopped(ctx, sproto.TaskContainerStopped{
-			ContainerStopped: agent.ContainerStopped{
-				Failure: &agent.ContainerFailure{
-					FailureType: agent.ContainerFailed,
-					ErrMsg:      exitMessage,
-					ExitCode:    &exitCodeConverted,
-				},
-			},
-		})
-		ctx.Self().Stop()
-
-	case k8sV1.PodSucceeded:
-		if p.container.State == container.Terminated {
-			return nil
-		}
+		ctx.Log().Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(container.Terminated)
 
-		ctx.Log().Infof("pod exited successfully")
-		p.informTaskContainerStopped(ctx, sproto.TaskContainerStopped{})
+		taskContainerStopped := sproto.TaskContainerStopped{}
+		if exitCode == agent.SuccessExitCode {
+			ctx.Log().Infof("pod exited successfully")
+		} else {
+			ctx.Log().Infof("pod failed with exit code: %d %s", exitCode, exitMessage)
+			exitCodeConverted := agent.ExitCode(exitCode)
+			taskContainerStopped.ContainerStopped.Failure = &agent.ContainerFailure{
+				FailureType: agent.ContainerFailed,
+				ErrMsg:      exitMessage,
+				ExitCode:    &exitCodeConverted,
+			}
+		}
+		p.informTaskContainerStopped(ctx, taskContainerStopped)
 		ctx.Self().Stop()
 
 	default:
-		return errors.Errorf(
-			"unexpected pod status %s for pod %s", msg.updatedPod.Status.Phase, p.podName)
+		panic(fmt.Sprintf("unexpected container state %s", containerState))
 	}
 
 	return nil
-}
-
-func (p *pod) processMissingPodDeletion(ctx *actor.Context) {
-	ctx.Log().Warn("processing missing pod deletion")
-	if p.container.State == container.Terminated {
-		ctx.Log().Info(
-			"skipping processing missing pod deletion as container is in a terminated state")
-		return
-	}
-
-	if !p.resourcesDeleted {
-		ctx.Log().Errorf("processing missing pod deletion for a pod that was never deleted")
-	}
-
-	p.container = p.container.Transition(container.Terminated)
-	// Missed pod deletions occur only when a pod is deleted so we assume
-	// that the container was killed.
-	exitCodeConverted := agent.ExitCode(137)
-	p.informTaskContainerStopped(ctx, sproto.TaskContainerStopped{
-		ContainerStopped: agent.ContainerStopped{
-			Failure: &agent.ContainerFailure{
-				FailureType: agent.ContainerFailed,
-				ExitCode:    &exitCodeConverted,
-			},
-		},
-	})
-	ctx.Self().Stop()
 }
 
 func (p *pod) deleteKubernetesResources(ctx *actor.Context) {
@@ -426,26 +388,66 @@ func (p *pod) receivePodEventUpdate(ctx *actor.Context, msg podEventUpdate) {
 	})
 }
 
-func getContainerState(conditions []k8sV1.PodCondition) container.State {
-	conditionsMap := make(map[k8sV1.PodConditionType]bool)
-	for _, condition := range conditions {
-		conditionsMap[condition.Type] = condition.Status == k8sV1.ConditionTrue
-	}
+func getContainerState(
+	ctx *actor.Context,
+	pod *k8sV1.Pod,
+	containerNames map[string]bool,
+) (container.State, error) {
+	switch pod.Status.Phase {
+	case k8sV1.PodPending:
+		// When pods are deleted, Kubernetes sometimes transitions pod statuses to pending
+		// prior to deleting them. In these cases we have observed that we do not always
+		// receive a PodFailed or a PodSucceeded message. We check if pods have a set pod
+		// deletion timestamp to see if this is the case.
+		if pod.ObjectMeta.DeletionTimestamp != nil {
+			ctx.Log().Warn("marking pod as terminated due to deletion timestamp")
+			return container.Terminated, nil
+		}
 
-	switch {
-	case conditionsMap[k8sV1.PodReady]:
-		return container.Running
-	case conditionsMap[k8sV1.PodScheduled]:
-		return container.Starting
-	}
+		for _, condition := range pod.Status.Conditions {
+			if condition.Type == k8sV1.PodScheduled && condition.Status == k8sV1.ConditionTrue {
+				return container.Starting, nil
+			}
+		}
+		return container.Assigned, nil
 
-	return container.Assigned
+	case k8sV1.PodRunning:
+		// Pods are in a running state as long as at least one container has not terminated.
+		// We check the status of the Determined containers directly to determined if they
+		// are still running.
+		containerStatuses, err := getDeterminedContainersStatus(
+			pod.Status.ContainerStatuses, containerNames)
+		if err != nil {
+			return "", err
+		}
+
+		for _, containerStatus := range containerStatuses {
+			if containerStatus.State.Terminated != nil {
+				return container.Terminated, nil
+			}
+		}
+
+		for _, containerStatus := range containerStatuses {
+			if containerStatus.State.Running != nil {
+				return container.Running, nil
+			}
+		}
+
+		return container.Starting, nil
+
+	case k8sV1.PodFailed, k8sV1.PodSucceeded:
+		return container.Terminated, nil
+
+	default:
+		return "", errors.Errorf(
+			"unexpected pod status %s for pod %s", pod.Status.Phase, pod.Name)
+	}
 }
 
-func getExitCodeAndMessage(pod *k8sV1.Pod) (int, string, error) {
+func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames map[string]bool) (int, string, error) {
 	if len(pod.Status.InitContainerStatuses) == 0 {
 		return 0, "", errors.Errorf(
-			"unexpected number of init containers when processing failure for pod %s", pod.Name)
+			"unexpected number of init containers when processing exit code for pod %s", pod.Name)
 	}
 
 	for _, initContainerStatus := range pod.Status.InitContainerStatuses {
@@ -453,7 +455,7 @@ func getExitCodeAndMessage(pod *k8sV1.Pod) (int, string, error) {
 			continue
 		}
 		exitCode := initContainerStatus.State.Terminated.ExitCode
-		if initContainerStatus.State.Terminated.ExitCode != agent.SuccessExitCode {
+		if exitCode != agent.SuccessExitCode {
 			errMessage := fmt.Sprintf(
 				"container %s: %s", initContainerStatus.Name,
 				initContainerStatus.State.Terminated.Message,
@@ -462,11 +464,46 @@ func getExitCodeAndMessage(pod *k8sV1.Pod) (int, string, error) {
 		}
 	}
 
-	if len(pod.Status.ContainerStatuses) != 1 {
+	if len(pod.Status.ContainerStatuses) < len(containerNames) {
 		return 0, "", errors.Errorf(
-			"unexpected number of containers when processing failure for pod %s", pod.Name)
+			"unexpected number of containers when processing exit for pod %s", pod.Name)
 	}
 
-	containerStatus := pod.Status.ContainerStatuses[0].State.Terminated
-	return int(containerStatus.ExitCode), containerStatus.Message, nil
+	containerStatuses, err := getDeterminedContainersStatus(
+		pod.Status.ContainerStatuses, containerNames)
+	if err != nil {
+		return 0, "", err
+	}
+
+	for _, containerStatus := range containerStatuses {
+		terminationStatus := containerStatus.State.Terminated
+		if terminationStatus != nil {
+			return int(terminationStatus.ExitCode), terminationStatus.Message, nil
+		}
+	}
+
+	return 0, "", errors.Errorf("unable to get exit code from pod %s", pod.Name)
+}
+
+func getDeterminedContainersStatus(
+	statuses []k8sV1.ContainerStatus,
+	containerNames map[string]bool,
+) ([]*k8sV1.ContainerStatus, error) {
+	containerStatuses := make([]*k8sV1.ContainerStatus, 0)
+	for idx, containerStatus := range statuses {
+		if _, match := containerNames[containerStatus.Name]; !match {
+			continue
+		}
+		containerStatuses = append(containerStatuses, &statuses[idx])
+	}
+
+	if len(containerStatuses) != len(containerNames) {
+		containerNamesFound := make([]string, 0, len(containerStatuses))
+		for _, containerStatus := range containerStatuses {
+			containerNamesFound = append(containerNamesFound, containerStatus.Name)
+		}
+		return nil, errors.Errorf("found container statuses only for: %v", containerNamesFound)
+	}
+
+	return containerStatuses, nil
 }

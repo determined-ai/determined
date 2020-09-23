@@ -14,6 +14,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/actor"
 	"github.com/determined-ai/determined/master/pkg/agent"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 type (
@@ -33,9 +34,9 @@ func newPodLogStreamer(
 	podHandler *actor.Ref,
 ) (*podLogStreamer, error) {
 	logs := podInterface.GetLogs(podName, &k8sV1.PodLogOptions{
-		Follow: true,
-		// TODO(DET-3541): switch over to using k8 timestamps.
+		Follow:     true,
 		Timestamps: false,
+		Container:  model.DeterminedK8ContainerName,
 	})
 
 	logReader, err := logs.Stream()

@@ -165,7 +165,7 @@ func (p *pod) configurePodSpec(
 	podSpec.Spec.Volumes = append(podSpec.Spec.Volumes, volumes...)
 	podSpec.Spec.HostNetwork = p.taskSpec.TaskContainerDefaults.NetworkMode.IsHost()
 	podSpec.Spec.InitContainers = append(podSpec.Spec.InitContainers, initContainers...)
-	podSpec.Spec.Containers = containers
+	podSpec.Spec.Containers = append(podSpec.Spec.Containers, containers...)
 	podSpec.Spec.RestartPolicy = k8sV1.RestartPolicyNever
 
 	return podSpec
@@ -209,7 +209,7 @@ func (p *pod) createPodSpecForTrial(ctx *actor.Context) error {
 
 	containers := []k8sV1.Container{
 		{
-			Name:            "determined-trial",
+			Name:            model.DeterminedK8ContainerName,
 			Command:         []string{"/run/determined/train/entrypoint.sh"},
 			Image:           exp.ExperimentConfig.Environment.Image.For(deviceType),
 			ImagePullPolicy: configureImagePullPolicy(exp.ExperimentConfig.Environment),
@@ -268,7 +268,7 @@ func (p *pod) createPodSpecForCommand(ctx *actor.Context) error {
 
 	containers := []k8sV1.Container{
 		{
-			Name:            "determined-task",
+			Name:            model.DeterminedK8ContainerName,
 			Command:         cmd.Config.Entrypoint,
 			Env:             envVars,
 			Image:           cmd.Config.Environment.Image.For(deviceType),
@@ -323,7 +323,7 @@ func (p *pod) createPodSpecForGC(ctx *actor.Context) error {
 
 	containers := []k8sV1.Container{
 		{
-			Name:            "determined-gc",
+			Name:            model.DeterminedK8ContainerName,
 			Command:         tasks.GCCmd(),
 			Env:             envVars,
 			Image:           gcc.ExperimentConfig.Environment.Image.For(deviceType),
