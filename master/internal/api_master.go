@@ -29,11 +29,6 @@ func (a *apiServer) GetMaster(
 	}, err
 }
 
-// TODO update the response format to wrap logv1.LogEntry.
-func logToProtoMasterLog(log *logger.Entry) *apiv1.MasterLogsResponse {
-	return &apiv1.MasterLogsResponse{Id: int32(log.ID), Message: log.Message}
-}
-
 func fetchMasterLogs(logBuffer *logger.LogBuffer) api.LogFetcherFn {
 	return func(req api.LogsRequest) ([]*logger.Entry, error) {
 		return logBuffer.Entries(req.Offset, -1, req.Limit), nil
@@ -53,7 +48,9 @@ func (a *apiServer) MasterLogs(
 	logRequest := api.LogsRequest{Offset: offset, Limit: limit, Follow: req.Follow}
 
 	onLogEntry := func(log *logger.Entry) error {
-		return resp.Send(logToProtoMasterLog(log))
+		return resp.Send(&apiv1.MasterLogsResponse{
+			LogEntry: api.LogEntryToProtoLogEntry(log),
+		})
 	}
 
 	return api.ProcessLogs(

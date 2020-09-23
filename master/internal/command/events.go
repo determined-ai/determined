@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
-	"github.com/pkg/errors"
 
 	webAPI "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/scheduler"
@@ -24,7 +23,8 @@ const defaultEventBufferSize = 200
 const ctxMissingSender = "message is missing sender information"
 
 func countNonNullRingValues(ring *ring.Ring) int {
-	// OPTIMIZE if this proves to be slow we could add a constant time solution.
+	// TODO we could add a constant time solution.
+	// https://determinedai.atlassian.net/browse/DET-4206
 	count := 0
 	ring.Do(func(val interface{}) {
 		if val != nil {
@@ -139,7 +139,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 
 	case webAPI.LogsRequest:
 		if ctx.Sender() == nil {
-			return errors.New(ctxMissingSender)
+			panic(ctxMissingSender)
 		}
 		ctx.Respond(true)
 
@@ -166,7 +166,7 @@ func (e *eventManager) Receive(ctx *actor.Context) error {
 
 	case webAPI.CloseStream:
 		if ctx.Sender() == nil {
-			return errors.New(ctxMissingSender)
+			panic(ctxMissingSender)
 		}
 		delete(e.logStreams, ctx.Sender())
 

@@ -5,6 +5,8 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/struct.proto";
 
+import "determined/log/v1/log.proto";
+
 // Get master information.
 message GetMasterRequest {}
 // Response to GetMasterRequest.
@@ -31,8 +33,6 @@ message MasterLogsRequest {
 }
 // Response to MasterLogsRequest.
 message MasterLogsResponse {
-    // The id of the master log.
-    int32 id = 1;
-    // The log message.
-    string message = 2;
+    // The log entry.
+    determined.log.v1.LogEntry log_entry = 1;
 }
