@@ -113,9 +113,9 @@ message GetExperimentTrialsRequest {
     // Limit the number of trials. A value of 0 denotes no limit.
     int32 limit = 4;
     // Limit trials to those that match the provided state.
-    repeated determined.experiment.v1.State states = 7;
+    repeated determined.experiment.v1.State states = 5;
     // Limit trials to those that are owned by the specified experiments.
-    int32 experiment_id = 8;
+    int32 experiment_id = 6;
 }
 // Response to GetExperimentTrialsRequest.
 message GetExperimentTrialsResponse {

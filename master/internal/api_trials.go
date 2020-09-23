@@ -2,6 +2,8 @@ package internal
 
 import (
 	"context"
+	"strconv"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -195,14 +197,38 @@ func (a *apiServer) GetExperimentTrials(
 	})
 
 	a.sort(resp.Trials, req.OrderBy, req.SortBy, apiv1.GetExperimentTrialsRequest_SORT_BY_ID)
-	return resp, a.paginate(&resp.Pagination, &resp.Trials, req.Offset, req.Limit)
+	if err := a.paginate(&resp.Pagination, &resp.Trials, req.Offset, req.Limit); err != nil {
+		return nil, err
+	}
+
+	trialIds := make([]string, 0)
+	for _, trial := range resp.Trials {
+		trialIds = append(trialIds, strconv.Itoa(int(trial.Id)))
+	}
+
+	switch err := a.m.db.QueryProto(
+		"proto_get_trials_plus",
+		&resp.Trials,
+		"{"+strings.Join(trialIds, ",")+"}",
+	); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "trials %v not found:", trialIds)
+	case err != nil:
+		return nil, errors.Wrapf(err, "failed to get trials for experiment %d", req.ExperimentId)
+	}
+
+	return resp, nil
 }
 
 func (a *apiServer) GetTrial(_ context.Context, req *apiv1.GetTrialRequest) (
 	*apiv1.GetTrialResponse, error,
 ) {
 	resp := &apiv1.GetTrialResponse{Trial: &trialv1.Trial{}}
-	switch err := a.m.db.QueryProto("proto_get_trial", resp.Trial, req.TrialId); {
+	switch err := a.m.db.QueryProto(
+		"proto_get_trials_plus",
+		resp.Trial,
+		"{"+strconv.Itoa(int(req.TrialId))+"}",
+	); {
 	case err == db.ErrNotFound:
 		return nil, status.Errorf(codes.NotFound, "trial %d not found:", req.TrialId)
 	case err != nil:
