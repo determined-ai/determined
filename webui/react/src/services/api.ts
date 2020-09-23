@@ -155,7 +155,7 @@ export const killTask = async (task: AnyTask, cancelToken?: CancelToken): Promis
  */
 export const login = async (credentials: Credentials): Promise<Api.V1LoginResponse> => {
   const response = await detApi.Auth.determinedLogin({
-    password: Config.saltAndHashPassword(credentials.password),
+    password: credentials.password,
     username: credentials.username,
   } as Api.V1LoginRequest);
   return response;
