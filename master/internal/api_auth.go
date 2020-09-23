@@ -2,11 +2,24 @@ package internal
 
 import (
 	"context"
+	"crypto/sha512"
+	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
+
+const clientSidePasswordSalt = "GubPEmmotfiK9TMD6Zdw" // #nosec G101
+
+// replicateClientSideSaltAndHash replicates the password salt and hash done on the client side.
+// We need this because we hash passwords on the client side, but when SCIM posts a user with
+// a password to password sync, it doesn't - so when we try to log in later, we get a weird,
+// unrecognizable sha512 hash from the frontend.
+func replicateClientSideSaltAndHash(password string) string {
+	sum := sha512.Sum512([]byte(clientSidePasswordSalt + password))
+	return fmt.Sprintf("%x", sum)
+}
 
 func (a *apiServer) Login(
 	_ context.Context, req *apiv1.LoginRequest) (*apiv1.LoginResponse, error) {
@@ -19,7 +32,7 @@ func (a *apiServer) Login(
 		return nil, err
 	}
 
-	if !user.ValidatePassword(req.Password) {
+	if !user.ValidatePassword(replicateClientSideSaltAndHash(req.Password)) {
 		return nil, grpc.ErrInvalidCredentials
 	}
 
