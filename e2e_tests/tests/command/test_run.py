@@ -1,9 +1,10 @@
+import copy
 import re
 import subprocess
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, List
+from typing import Any, Dict, List
 
 import docker
 import docker.errors
@@ -43,9 +44,50 @@ def _run_and_verify_exit_code_zero(args: List[str], **kwargs: Any) -> None:
 
 def _run_and_verify_failure(args: List[str], message: str, **kwargs: Any) -> None:
     output = subprocess.check_output(args, **kwargs)
-    print(output)
     if re.search(message.encode(), output):
         raise subprocess.CalledProcessError(1, " ".join(args), output=output)
+
+
+def _run_cmd_with_config_expecting_success(cmd: str, config: Dict[str, Any]) -> None:
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+
+        _run_and_verify_exit_code_zero(
+            [
+                "det",
+                "-m",
+                conf.make_master_url(),
+                "cmd",
+                "run",
+                "--config-file",
+                tf.name,
+                cmd,
+            ]
+        )
+
+
+def _run_cmd_with_config_expecting_failure(
+    cmd: str, expected_failure: str, config: Dict[str, Any]
+) -> None:
+    with tempfile.NamedTemporaryFile() as tf:
+        with open(tf.name, "w") as f:
+            yaml.dump(config, f)
+
+        with pytest.raises(subprocess.CalledProcessError):
+            _run_and_verify_failure(
+                [
+                    "det",
+                    "-m",
+                    conf.make_master_url(),
+                    "cmd",
+                    "run",
+                    "--config-file",
+                    tf.name,
+                    cmd,
+                ],
+                expected_failure,
+            )
 
 
 @pytest.mark.e2e_cpu  # type: ignore
@@ -374,35 +416,23 @@ def test_k8_mount(using_k8s: bool) -> None:
             "No such file or directory",
         )
 
-    with tempfile.NamedTemporaryFile() as tf:
-        config = {
-            "environment": {
-                "pod_spec": {
-                    "spec": {
-                        "containers": [
-                            {"volumeMounts": [{"name": "temp1", "mountPath": mount_path}]}
-                        ],
-                        "volumes": [{"name": "temp1", "emptyDir": {}}],
-                    }
+    config = {
+        "environment": {
+            "pod_spec": {
+                "spec": {
+                    "containers": [
+                        {
+                            "name": "determined-container",
+                            "volumeMounts": [{"name": "temp1", "mountPath": mount_path}],
+                        }
+                    ],
+                    "volumes": [{"name": "temp1", "emptyDir": {}}],
                 }
             }
         }
+    }
 
-        with open(tf.name, "w") as f:
-            yaml.dump(config, f)
-
-        _run_and_verify_exit_code_zero(
-            [
-                "det",
-                "-m",
-                conf.make_master_url(),
-                "cmd",
-                "run",
-                "--config-file",
-                tf.name,
-                f"sleep 3; touch {mount_path}",
-            ]
-        )
+    _run_cmd_with_config_expecting_success(cmd=f"sleep 3; touch {mount_path}", config=config)
 
 
 @pytest.mark.e2e_gpu  # type: ignore
@@ -418,7 +448,7 @@ def test_k8_init_containers(using_k8s: bool) -> None:
                         {
                             "image": conf.TF1_CPU_IMAGE,
                             "name": "simple-init-container",
-                            "command": ["/bin/sh"],
+                            "command": ["/bin/bash"],
                             "args": ["-c", "exit 1"],
                         }
                     ]
@@ -427,40 +457,44 @@ def test_k8_init_containers(using_k8s: bool) -> None:
         }
     }
 
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            yaml.dump(config, f)
-
-        with pytest.raises(subprocess.CalledProcessError):
-            _run_and_verify_failure(
-                [
-                    "det",
-                    "-m",
-                    conf.make_master_url(),
-                    "cmd",
-                    "run",
-                    "--config-file",
-                    tf.name,
-                    "sleep 3",
-                ],
-                "exit code 1",
-            )
+    _run_cmd_with_config_expecting_failure(
+        cmd="sleep 3", expected_failure="exit code 1", config=config
+    )
 
     config["environment"]["pod_spec"]["spec"]["initContainers"][0]["args"] = ["-c", "exit 0"]
+    _run_cmd_with_config_expecting_success(cmd="sleep 3", config=config)
 
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            yaml.dump(config, f)
 
-        _run_and_verify_exit_code_zero(
-            [
-                "det",
-                "-m",
-                conf.make_master_url(),
-                "cmd",
-                "run",
-                "--config-file",
-                tf.name,
-                "sleep 3",
-            ]
+@pytest.mark.e2e_gpu  # type: ignore
+def test_k8_sidecars(using_k8s: bool) -> None:
+    if not using_k8s:
+        pytest.skip("only need to run test on kubernetes")
+
+    base_config = {
+        "environment": {
+            "pod_spec": {
+                "spec": {
+                    "containers": [
+                        {
+                            "image": conf.TF1_CPU_IMAGE,
+                            "name": "sidecar",
+                            "command": ["/bin/bash"],
+                        }
+                    ]
+                }
+            }
+        }
+    }
+
+    def set_arg(arg: str) -> Dict[str, Any]:
+        new_config = copy.deepcopy(base_config)
+        new_config["environment"]["pod_spec"]["spec"]["containers"][0]["args"] = ["-c", arg]
+        return new_config
+
+    configs = [set_arg("sleep 1; exit 1"), set_arg("sleep 99999999")]
+    for config in configs:
+        _run_cmd_with_config_expecting_failure(
+            cmd="sleep 3; exit 1", expected_failure="exit code 1", config=config
         )
+
+        _run_cmd_with_config_expecting_success(cmd="sleep 3", config=config)
