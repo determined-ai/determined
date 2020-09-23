@@ -135,4 +135,6 @@ message GetTrialRequest {
 message GetTrialResponse {
     // The requested trial.
     determined.trial.v1.Trial trial = 1;
+    // Trial workloads.
+    repeated determined.trial.v1.Workload workloads = 2;
 }
