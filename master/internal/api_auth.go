@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha512"
 	"fmt"
-
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpc"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -17,6 +16,9 @@ const clientSidePasswordSalt = "GubPEmmotfiK9TMD6Zdw" // #nosec G101
 // a password to password sync, it doesn't - so when we try to log in later, we get a weird,
 // unrecognizable sha512 hash from the frontend.
 func replicateClientSideSaltAndHash(password string) string {
+	if password == "" {
+		return password
+	}
 	sum := sha512.Sum512([]byte(clientSidePasswordSalt + password))
 	return fmt.Sprintf("%x", sum)
 }
