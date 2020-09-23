@@ -1,4 +1,3 @@
-import { sha512 } from 'js-sha512';
 import queryString from 'query-string';
 
 import { decode, ioDetailedUser, ioTypeDetailedUser } from 'ioTypes';
@@ -16,18 +15,11 @@ import {
 } from 'services/types';
 import { HttpApi } from 'services/types';
 import {
-  Agent, Command, CommandType, Credentials, DetailedUser, DeterminedInfo, ExperimentBase,
+  Agent, Command, CommandType, DetailedUser, DeterminedInfo, ExperimentBase,
   ExperimentDetails, Log, TBSourceType, TrialDetails,
 } from 'types';
 
 /* Helpers */
-
-export const saltAndHashPassword = (password?: string): string => {
-  if (!password) return '';
-  const passwordSalt = 'GubPEmmotfiK9TMD6Zdw';
-  return sha512(passwordSalt + password);
-};
-
 export const commandToEndpoint: Record<CommandType, string> = {
   [CommandType.Command]: '/commands',
   [CommandType.Notebook]: '/notebooks',
@@ -36,18 +28,6 @@ export const commandToEndpoint: Record<CommandType, string> = {
 };
 
 /* Authentication */
-
-export const login: HttpApi<Credentials, void> = {
-  httpOptions: ({ password, username }) => {
-    return {
-      body: { password: saltAndHashPassword(password), username },
-      method: 'POST',
-      url: '/login?cookie=true',
-    };
-  },
-  name: 'login',
-};
-
 export const getCurrentUser: HttpApi<EmptyParams, DetailedUser> = {
   httpOptions: () => ({ url: '/users/me' }),
   name: 'getCurrentUser',
