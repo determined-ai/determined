@@ -7,8 +7,8 @@ WITH searcher_info AS (
               config->'searcher'->>'smaller_is_better'
             )::boolean,
             true
-          ) THEN -1
-          ELSE 1
+          ) THEN 1
+          ELSE -1
         END
     ) AS sign,
     t.id AS trial_id
@@ -47,7 +47,7 @@ best_validation AS (
       SELECT v.*,
         ROW_NUMBER() OVER(
           PARTITION BY v.trial_id
-          ORDER BY v.signed_searcher_metric DESC
+          ORDER BY v.signed_searcher_metric ASC
         ) AS rank
       FROM trial_validations v
     ) v
@@ -88,7 +88,7 @@ best_checkpoint AS (
       SELECT c.*,
         ROW_NUMBER() OVER(
           PARTITION BY v.trial_id
-          ORDER BY v.signed_searcher_metric DESC
+          ORDER BY v.signed_searcher_metric ASC
         ) AS rank
       FROM trial_validations v
         INNER JOIN checkpoints c ON (
