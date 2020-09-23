@@ -20,7 +20,6 @@ _INTEG_MARKERS = {
     "e2e_gpu",
     "distributed",
     "cloud",
-    "performance",
     "parallel",
     "nightly",
 }
