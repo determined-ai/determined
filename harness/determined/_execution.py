@@ -58,7 +58,7 @@ def _make_local_execution_exp_config(input_config: Optional[Dict[str, Any]]) -> 
 
 
 def _make_local_execution_env(
-    training: bool,
+    managed_training: bool,
     config: Optional[Dict[str, Any]],
     hparams: Optional[Dict[str, Any]] = None,
 ) -> Tuple[det.EnvContext, det.RendezvousInfo, horovod.HorovodContext]:
@@ -91,7 +91,7 @@ def _make_local_execution_env(
         det_experiment_id="",
         det_cluster_id="",
         trial_seed=config.experiment_seed(),
-        training=training,
+        managed_training=managed_training,
     )
     rendezvous_ports = env.rendezvous_ports()
     rendezvous_info = det.RendezvousInfo(
