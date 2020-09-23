@@ -23,21 +23,16 @@ spec:
       serviceAccount: determined-master-{{ .Release.Name }}
       containers:
       - name: determined-master-{{ .Release.Name }}
-        {{- if .Values.enterpriseEdition }}
-        {{- if .Values.detVersion }}
-        # detVersion is used for CI to override the appVersion.
-        image: determinedai/determined-ee-master:{{ .Values.detVersion }}
-        {{- else }}
-        image: determinedai/determined-ee-master:{{ required "A valid Chart.AppVersion entry required!" .Chart.AppVersion }}
-        {{- end }}
-        {{ else }}
-        {{- if .Values.detVersion }}
-        # detVersion is used for CI to override the appVersion.
-        image: determinedai/determined-master:{{ .Values.detVersion }}
-        {{- else }}
-        image: determinedai/determined-master:{{ required "A valid Chart.AppVersion entry required!" .Chart.AppVersion }}
-        {{- end }}
-        {{- end }}
+        {{ $image := "determinedai/determined-master" }}
+        {{- if .Values.enterpriseEdition -}}
+          {{ $image = "determinedai/determined-ee-master" }}
+        {{- end -}}
+        {{ $tag := (required "A valid Chart.AppVersion entry required!" .Chart.AppVersion) }}
+        {{- /* detVersion is used for CI to override the appVersion. */ -}}
+        {{- if .Values.detVersion -}}
+          {{ $tag = .Values.detVersion }}
+        {{- end -}}
+        image: {{ $image }}:{{ $tag }}
         imagePullPolicy: "Always"
         volumeMounts:
           - name: master-config

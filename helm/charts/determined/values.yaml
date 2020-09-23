@@ -66,7 +66,7 @@ checkpointStorage:
 # GPUs. Distributed tasks with sizes that are not divisible by `maxSlotsPerPod` are never scheduled.
 # If you have a cluster of different size nodes (e.g., 4 and 8 GPUs per node), set the `maxSlotsPerPod`
 # to the smallest common denominator.
-maxSlotsPerPod:
+maxSlotsPerPod: 4
 
 # Memory and CPU requirements for the master instance should be adjusted for scale.
 masterCpuRequest: "4"
@@ -99,12 +99,12 @@ taskContainerDefaults:
   # cpuImage:
   # gpuImage:
 
-# Configure Determined enterprise edition.
+# Install Determined enterprise edition.
 enterpriseEdition: false
 
 # Should be configured if using the Determined enterprise edition master. Used to access
 # the master image.
-# imagePullSecretName: regcred
+# imagePullSecretName:
 
 ## Configure whether we collect anonymous information about the usage of Determined.
 telemetry:
