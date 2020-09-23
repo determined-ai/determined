@@ -4,14 +4,6 @@
 // ***********************************************
 import { ACCOUNT_PASSWORD, ACCOUNT_USERNAME, API_PATH } from '../constants';
 
-const sha512 = require('js-sha512').sha512;
-
-const saltAndHashPassword = password => {
-  if (!password) return '';
-  const passwordSalt = 'GubPEmmotfiK9TMD6Zdw';
-  return sha512(passwordSalt + password);
-};
-
 Cypress.on('uncaught:exception', () => {
   // returning false here prevents Cypress from failing the test
   return false;
@@ -46,7 +38,7 @@ Cypress.Commands.add('checkLoggedOut', () => {
 // TODO use Cypress.env to share (and bring in) some of the contants used.
 Cypress.Commands.add('login', credentials => {
   credentials = credentials || {
-    password: saltAndHashPassword(ACCOUNT_PASSWORD),
+    password: ACCOUNT_PASSWORD,
     username: ACCOUNT_USERNAME,
   };
   cy.request('POST', `${API_PATH}/auth/login`, credentials)

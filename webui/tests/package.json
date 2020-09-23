@@ -16,7 +16,6 @@
     "eslint-plugin-cypress": "^2.11.1",
     "eslint-plugin-import": "^2.21.2",
     "eslint-plugin-sort-keys-fix": "^1.1.1",
-    "js-sha512": "^0.8.0",
     "ts-loader": "^7.0.5",
     "typescript": "^3.9.5",
     "webpack": "^4.43.0"
